@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2001/06/06 23:12:49 scottr Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2001/11/17 02:06:47 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,11 +115,20 @@ main(argc, argv)
 		__menu_initerror();
 		exit(1);
 	}
+
 	/*
 	 * XXX the following is bogus.  if screen is too small, message
 	 * XXX window will be overwritten by menus.
 	 */
 	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
+	if (has_colors()) {
+		/*
+		 * XXX This color trick should be done so much better,
+		 * but is it worth it?
+		 */
+		wbkgd(win, COLOR_PAIR(1));
+		wattrset(win, COLOR_PAIR(1));
+	}
 	if (win == NULL) {
 		(void)fprintf(stderr,
 			 "sysinst: screen too small\n");
