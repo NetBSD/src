@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.58 1997/03/15 18:09:56 is Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.59 1997/03/17 18:37:17 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -133,7 +133,7 @@ aesetup(sc, lladdr)
 	struct ae_softc *sc;
 	u_int8_t *lladdr;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i;
 
 	sc->cr_proto = ED_CR_RD2;
@@ -237,7 +237,7 @@ aewatchdog(ifp)
 	struct ae_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ec.ec_if.if_oerrors;
 
 	aereset(sc);
 }
@@ -249,7 +249,7 @@ void
 aeinit(sc)
 	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int     i;
 	u_char  mcaf[8];
 
@@ -318,10 +318,10 @@ aeinit(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(sc, ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
+		NIC_PUT(sc, ED_P1_PAR0 + i, LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
-	ae_getmcaf(&sc->sc_arpcom, mcaf);
+	ae_getmcaf(&sc->sc_ec, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(sc, ED_P1_MAR0 + i, mcaf[i]);
 
@@ -366,7 +366,7 @@ static inline void
 ae_xmit(sc)
 	struct ae_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -554,13 +554,13 @@ loop:
 			/* Go get packet. */
 			aeread(sc, packet_ptr + sizeof(struct ae_ring),
 			    len - sizeof(struct ae_ring));
-			++sc->sc_arpcom.ac_if.if_ipackets;
+			++sc->sc_ec.ec_if.if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++sc->sc_ec.ec_if.if_ierrors;
 			aereset(sc);
 			return;
 		}
@@ -588,7 +588,7 @@ aeintr(arg, slot)
 	int slot;
 {
 	struct ae_softc *sc = (struct ae_softc *)arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -775,7 +775,7 @@ aeioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			aeinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -786,11 +786,11 @@ aeioctl(ifp, cmd, data)
 
 				if (ns_nullhost(*ina))
 					ina->x_host =
-					    *(union ns_host *) (sc->sc_arpcom.ac_enaddr);
+					    *(union ns_host *)LLADDR(ifp->if_sadl);
 				else
 					bcopy(ina->x_host.c_host,
-					    sc->sc_arpcom.ac_enaddr,
-					    sizeof(sc->sc_arpcom.ac_enaddr));
+					    LLADDR(ifp->if_sadl),
+					    ETHER_ADDR_LEN);
 				/* Set new address. */
 				aeinit(sc);
 				break;
@@ -833,8 +833,8 @@ aeioctl(ifp, cmd, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
 
 		if (error == ENETRESET) {
 			/*
@@ -866,7 +866,7 @@ aeread(sc, buf, len)
 	int buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -897,7 +897,7 @@ aeread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -958,7 +958,7 @@ aeget(sc, src, total_len)
 	int src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -1000,11 +1000,11 @@ aeget(sc, src, total_len)
  * need to listen to.
  */
 void
-ae_getmcaf(ac, af)
-	struct arpcom *ac;
+ae_getmcaf(ec, af)
+	struct ethercom *ec;
 	u_char *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -1027,7 +1027,7 @@ ae_getmcaf(ac, af)
 	}
 	for (i = 0; i < 8; i++)
 		af[i] = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 			sizeof(enm->enm_addrlo)) != 0) {
