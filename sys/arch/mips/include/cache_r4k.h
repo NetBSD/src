@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.1.2.1 2001/10/24 16:49:20 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.1.2.2 2001/11/12 02:08:02 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -203,5 +203,12 @@ void	r4k_sdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
 void	r4k_sdcache_inv_range_32(vaddr_t, vsize_t);
 void	r4k_sdcache_wb_range_32(vaddr_t, vsize_t);
+
+void	r4k_sdcache_wbinv_all_generic(void);
+void	r4k_sdcache_wbinv_range_generic(vaddr_t, vsize_t);
+void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
+
+void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
+void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.1.2.1 2001/10/24 16:49:20 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.1.2.2 2001/11/12 02:08:03 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -230,7 +230,7 @@ void
 r4k_sdcache_wbinv_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_sdcache_size;
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va,
@@ -319,6 +319,85 @@ r4k_sdcache_wb_range_32(vaddr_t va, vsize_t size)
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
 		va += 32;
+	}
+}
+
+#undef round_line
+#undef trunc_line
+
+#define	round_line(x)		(((x) + mips_sdcache_line_size - 1) & ~(mips_sdcache_line_size - 1))
+#define	trunc_line(x)		((x) & ~(mips_sdcache_line_size - 1))
+
+void
+r4k_sdcache_wbinv_all_generic(void)
+{
+	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
+	vaddr_t eva = va + mips_sdcache_size;
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
+		va += mips_sdcache_line_size;
+	}
+}
+
+void
+r4k_sdcache_wbinv_range_generic(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB_INV);
+		va += mips_sdcache_line_size;
+	}
+}
+
+void
+r4k_sdcache_wbinv_range_index_generic(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+
+	eva = round_line(va + size);
+	va = trunc_line(va);
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
+		va += mips_sdcache_line_size;
+	}
+}
+
+void
+r4k_sdcache_inv_range_generic(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_INV);
+		va += mips_sdcache_line_size;
+	}
+}
+
+void
+r4k_sdcache_wb_range_generic(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
+		va += mips_sdcache_line_size;
 	}
 }
 
