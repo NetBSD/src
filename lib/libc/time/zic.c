@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.12 1998/09/10 15:58:40 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.13 1998/09/11 10:55:55 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zic.c	7.94";
 #else
-__RCSID("$NetBSD: zic.c,v 1.12 1998/09/10 15:58:40 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.13 1998/09/11 10:55:55 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -15,6 +15,7 @@ __RCSID("$NetBSD: zic.c,v 1.12 1998/09/10 15:58:40 kleink Exp $");
 #include "locale.h"
 #include "tzfile.h"
 #include "sys/stat.h"			/* for umask manifest constants */
+#include "unistd.h"
 
 /*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
@@ -469,9 +470,9 @@ char *	argv[];
 	register int	j;
 	register int	c;
 
-#ifdef unix
+#ifdef _POSIX_VERSION
 	(void) umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
-#endif /* defined unix */
+#endif /* defined _POSIX_VERSION */
 #if HAVE_GETTEXT - 0
 	(void) setlocale(LC_MESSAGES, "");
 #ifdef TZ_DOMAINDIR
@@ -2166,7 +2167,7 @@ char * const	argname;
 	cp = name = ecpyalloc(argname);
 	while ((cp = strchr(cp + 1, '/')) != 0) {
 		*cp = '\0';
-#ifndef unix
+#ifndef __NetBSD__
 		/*
 		** DOS drive specifier?
 		*/
@@ -2175,7 +2176,7 @@ char * const	argname;
 				*cp = '/';
 				continue;
 		}
-#endif /* !defined unix */
+#endif /* !defined __NetBSD__ */
 		if (!itsdir(name)) {
 			/*
 			** It doesn't seem to exist, so we try to create it.
