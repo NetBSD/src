@@ -667,6 +667,7 @@
 ./usr/share/man/cat8/mrouted.0
 ./usr/share/man/cat8/mtrace.0
 ./usr/share/man/cat8/mtree.0
+./usr/share/man/cat8/named-bootconf.0
 ./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
 ./usr/share/man/cat8/named.reload.0
@@ -1739,6 +1740,7 @@
 ./usr/share/man/man8/mrouted.8
 ./usr/share/man/man8/mtrace.8
 ./usr/share/man/man8/mtree.8
+./usr/share/man/man8/named-bootconf.8
 ./usr/share/man/man8/named-xfer.8
 ./usr/share/man/man8/named.8
 ./usr/share/man/man8/named.reload.8
