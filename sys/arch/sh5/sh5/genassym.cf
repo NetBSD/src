@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2002/09/10 12:08:49 scw Exp $
+#	$NetBSD: genassym.cf,v 1.10 2002/09/12 12:44:14 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -48,6 +48,7 @@ include <machine/frame.h>
 include <machine/pcb.h>
 include <machine/trap.h>
 include <machine/proc.h>
+include <machine/pmap.h>
 include <machine/memregion.h>
 
 include <sh5/pte.h>
@@ -291,6 +292,7 @@ define	SH5_PTEH_TLBCOOKIE_MASK	SH5_PTEH_TLBCOOKIE_MASK
 define	SH5_PTEL_CB_NOCACHE	SH5_PTEL_CB_NOCACHE
 define	SH5_PTEL_CB_WRITETHRU	SH5_PTEL_CB_WRITETHRU
 define	SH5_PTEL_CB_WRITEBACK	SH5_PTEL_CB_WRITEBACK
+define	SH5_PTEL_SZ_4KB		SH5_PTEL_SZ_4KB
 define	SH5_PTEL_SZ_512MB	SH5_PTEL_SZ_512MB
 define	SH5_PTEL_PR_R		SH5_PTEL_PR_R
 define	SH5_PTEL_PR_W		SH5_PTEL_PR_W
@@ -304,6 +306,8 @@ define	SH5_PTEL_RM_MASK	SH5_PTEL_RM_MASK
 
 define	SH5_PTE_PN_MASK_MOVI	SH5_PTE_PN_MASK_MOVI
 
+# Pmap contstants
+define	PMAP_ASID_CACHEOPS	PMAP_ASID_CACHEOPS
 
 # Control register bits
 define	SH5_CONREG_SR_S			SH5_CONREG_SR_S
