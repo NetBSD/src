@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.46 2003/01/17 23:36:11 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.47 2003/05/24 14:37:31 kristerw Exp $	*/
 
 /*
  * Mach Operating System
@@ -217,7 +217,7 @@ void
 cpu_Debugger(void)
 {
 
-	asm("break");
+	__asm("break");
 }
 #endif	/* !KGDB */
 
@@ -401,7 +401,7 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 do {									\
 	uint32_t __val;							\
 									\
-	asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));		\
+	__asm __volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
 } while (0)
@@ -411,7 +411,7 @@ do {									\
 do {									\
 	uint64_t __val;							\
 									\
-	asm volatile(							\
+	__asm __volatile(						\
 		".set push 			\n\t"			\
 		".set mips3			\n\t"			\
 		".set noat			\n\t"			\
