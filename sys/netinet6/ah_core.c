@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.11 1999/09/17 12:26:04 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.12 1999/12/15 06:28:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1105,7 +1105,8 @@ again:
 		bcopy(p, &ip6copy, sizeof(struct ip6_hdr));
 		/* RFC2402 */
 		ip6copy.ip6_flow = 0;
-		ip6copy.ip6_vfc = IPV6_VERSION;
+		ip6copy.ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6copy.ip6_vfc |= IPV6_VERSION;
 		ip6copy.ip6_hlim = 0;
 		if (IN6_IS_ADDR_LINKLOCAL(&ip6copy.ip6_src))
 			ip6copy.ip6_src.s6_addr16[1] = 0x0000;

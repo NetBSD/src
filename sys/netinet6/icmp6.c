@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.12 1999/12/13 15:17:21 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.13 1999/12/15 06:28:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1458,7 +1458,8 @@ icmp6_reflect(m, off)
 	ip6->ip6_src = *src;
 
 	ip6->ip6_flow = 0;
-	ip6->ip6_vfc = IPV6_VERSION;
+	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
@@ -1793,7 +1794,8 @@ icmp6_redirect_output(m0, rt)
 	/* ip6 */
 	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_flow = 0;
-	ip6->ip6_vfc = IPV6_VERSION;
+	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc |= IPV6_VERSION;
 	/* ip6->ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	ip6->ip6_hlim = 255;

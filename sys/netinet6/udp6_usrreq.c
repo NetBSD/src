@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.14 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.15 1999/12/15 06:28:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -694,7 +694,8 @@ udp6_output(in6p, m, addr6, control)
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_flow	= in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
-		ip6->ip6_vfc 	= IPV6_VERSION;
+		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc 	|= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
 		ip6->ip6_plen	= htons((u_short)plen);
 #endif

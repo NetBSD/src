@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.84 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.85 1999/12/15 06:28:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -311,7 +311,8 @@ tcp_template(tp)
 			ip6->ip6_flow |= 
 				(htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
 		}
-		ip6->ip6_vfc = IPV6_VERSION;
+		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc |= IPV6_VERSION;
 		break;
 	    }
 #endif
