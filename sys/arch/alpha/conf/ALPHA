@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.50 1997/04/18 19:41:18 cgd Exp $
+# $NetBSD: ALPHA,v 1.51 1997/04/21 14:47:33 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -184,6 +184,8 @@ com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet (untested)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
+awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
+awdc1	at	isa? port 0x170 irq 15
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 # EISA devices
@@ -207,6 +209,9 @@ se*	at	scsibus? target ? lun ?		# Cabletron SCSI<->Ethernet
 ss*	at	scsibus? target ? lun ?		# SCSI scanners
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
+
+# ST506/ESDI/IDE devices
+awd*	at	awdc? drive ?
 
 # Workstation Console attachments
 #wscons* at	cfb?

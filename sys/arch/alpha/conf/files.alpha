@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.45 1997/04/14 18:23:18 mjacob Exp $
+# $NetBSD: files.alpha,v 1.46 1997/04/21 14:47:37 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -159,7 +159,15 @@ file	dev/tc/if_le_tc.c		le_tc
 
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
-major { wd = 4 }
+
+# Hacked version of ISA "wd" (ESDI/IDE/etc.) controller driver
+device	awdc {drive = -1}
+attach	awdc at isa
+device	awd: disk
+attach	awd at awdc
+file	arch/alpha/isa/awd.c		awdc needs-flag
+
+major { awd = 4 }
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
