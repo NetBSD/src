@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2002/03/03 14:28:51 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2002/03/04 14:36:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -178,5 +178,18 @@ struct pcb;
 void savectx(struct pcb *);
 void dumpsys(void);
 #endif /* _KERNEL */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_LOADANDRESET	2	/* load kernel image and reset */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES {						\
+	{ 0, 0 },							\
+	{ "console_device",	CTLTYPE_STRUCT },			\
+	{ "load_and_reset",	CTLTYPE_INT },				\
+}
 
 #endif /* !_SH3_CPU_H_ */
