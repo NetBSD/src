@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.60 1999/09/24 12:52:18 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.61 1999/09/24 14:28:14 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.60 1999/09/24 12:52:18 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.61 1999/09/24 14:28:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2197,7 +2197,7 @@ restart(argc, argv)
 	else
 		fprintf(ttyout,
 #ifndef NO_QUAD
-		    "Restarting at %qd for next get, put or append\n",
+		    "Restarting at %lld for next get, put or append\n",
 		    (long long)restart_point);
 #else
 		    "Restarting at %ld for next get, put or append\n",
@@ -2300,7 +2300,7 @@ sizecmd(argc, argv)
 	if (size != -1)
 		fprintf(ttyout,
 #ifndef NO_QUAD
-		    "%s\t%qd\n", argv[1], (long long)size);
+		    "%s\t%lld\n", argv[1], (long long)size);
 #else
 		    "%s\t%ld\n", argv[1], (long)size);
 #endif

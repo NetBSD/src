@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.65 1999/09/24 06:57:37 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.66 1999/09/24 14:28:14 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.65 1999/09/24 06:57:37 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.66 1999/09/24 14:28:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -760,7 +760,7 @@ sendrequest(cmd, local, remote, printnames)
 			goto cleanupsend;
 		}
 #ifndef NO_QUAD
-		if (command("REST %qd", (long long) restart_point) !=
+		if (command("REST %lld", (long long) restart_point) !=
 #else
 		if (command("REST %ld", (long) restart_point) !=
 #endif
@@ -1092,7 +1092,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		goto abort;
 	if (is_retr && restart_point &&
 #ifndef NO_QUAD
-	    command("REST %qd", (long long) restart_point) != CONTINUE)
+	    command("REST %lld", (long long) restart_point) != CONTINUE)
 #else
 	    command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
@@ -1933,7 +1933,7 @@ proxtrans(cmd, local, remote)
 	oldintr = signal(SIGINT, abortpt);
 	if ((restart_point &&
 #ifndef NO_QUAD
-	    (command("REST %qd", (long long) restart_point) != CONTINUE)
+	    (command("REST %lld", (long long) restart_point) != CONTINUE)
 #else
 	    (command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
@@ -1947,7 +1947,7 @@ proxtrans(cmd, local, remote)
 	secndflag++;
 	if ((restart_point &&
 #ifndef NO_QUAD
-	    (command("REST %qd", (long long) restart_point) != CONTINUE)
+	    (command("REST %lld", (long long) restart_point) != CONTINUE)
 #else
 	    (command("REST %ld", (long) restart_point) != CONTINUE)
 #endif
