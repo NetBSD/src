@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.26 2003/04/23 17:32:09 mycroft Exp $
+#	$NetBSD: RESPONSIBLE,v 1.27 2003/04/24 20:22:22 ragge Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -132,8 +132,9 @@ kern/general:
 
 ddb		jhawk, mycroft
 emulation	christos, fvdl, manu, jdolecek
-lwp/pthread	nathanw
 kevents		jdolecek
+ksyms		ragge
+lwp/pthread	nathanw
 ntp		simonb, jonathan
 pipes		jdolecek
 systrace	provos
