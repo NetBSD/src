@@ -1,11 +1,11 @@
-.\"	$NetBSD: whatis,v 1.7 2003/05/14 14:31:48 wiz Exp $
+.\"	$NetBSD: whatis,v 1.8 2003/12/23 16:36:59 martin Exp $
 .
 .Nx \*V
 is the second major release for the \*M!
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Support for a native seriell driver on non-SBUS machines
+Support for a native serial driver on non-SBUS machines
 .Pq Em sab
 .It
 Support for the SBUS PCMCIA adapter
