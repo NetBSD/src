@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.64 2004/04/26 01:53:59 jonathan Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.65 2004/06/24 16:49:51 drochner Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.64 2004/04/26 01:53:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.65 2004/06/24 16:49:51 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -498,7 +498,7 @@ in6_pcbdetach(in6p)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
-	sotoin6pcb(so) = 0;
+	so->so_pcb = 0;
 	sofree(so);
 	if (in6p->in6p_options)
 		m_freem(in6p->in6p_options);
