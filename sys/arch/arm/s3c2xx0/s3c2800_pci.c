@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.3 2003/04/01 23:19:11 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.4 2003/05/12 07:49:10 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -264,7 +264,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	SLIST_INIT(&sc->sc_irq_handlers);
-	if (!s3c2800_intr_establish(S3C2800_INT_PCI, IPL_AUDIO,
+	if (!s3c2800_intr_establish(S3C2800_INT_PCI, IPL_AUDIO, IST_LEVEL,
 		sspci_intr, sc))
 		FAIL("intr_establish");
 
