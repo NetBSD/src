@@ -1,14 +1,7 @@
-#	$NetBSD: bsd.subdir.mk,v 1.45 2001/10/04 16:29:54 tv Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.46 2001/11/02 05:21:51 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
 .for dir in ${SUBDIR}
 .if exists(${dir}.${MACHINE})
@@ -59,5 +52,4 @@ ${targ}: subdir-${targ}
 .endif
 .endfor
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-${TARGETS}:
+${TARGETS}:	# ensure existence
