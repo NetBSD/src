@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$Id: tar.1,v 1.1 1994/08/07 00:44:33 deraadt Exp $
+.\"	$Id: tar.1,v 1.2 1994/08/08 06:21:50 mycroft Exp $
 .\"
 .Dd 6 August 1994
 .Os NetBSD
@@ -32,7 +32,7 @@ program creates, adds files to, or extracts files from an archive file
 in
 .Dq tar
 format, called a
-.Em tarfile .
+.Ar tarfile .
 A tarfile is often a magnetic tape, but can be a floppy diskette or any
 regular disk file.
 .Pp
@@ -61,44 +61,44 @@ pattern matching strings.
 Exactly one of the following functions must be specified.
 .Pp
 .Bl -tag -width "--concatenate" -compact
-.It -A,
-.It --catenate,
-.It "--concatenate"
+.It Fl A
+.It Fl -catenate
+.It Fl "-concatenate"
 Add the named files to the end an archive.
 .Em Note:
 This option requires a rewritable tarfile,
 and therefore does not work on quarter-inch cartridge tapes.
-.It -c,
-.It --create
+.It Fl c
+.It Fl -create
 Create a new archive (or truncates an old one) and writes the named files
 to it.
-.It -d,
-.It --diff,
-.It --compare
+.It Fl d
+.It Fl -diff
+.It Fl -compare
 Find differences between files in the archive and corresponding files in
 the file system.
-.It --delete
+.It Fl -delete
 Delete named files from the archive (Does not work on quarter-inch tapes).
-.It -r,
-.It --append
+.It Fl r
+.It Fl -append
 Append files to the end of an archive (Does not work on quarter-inch tapes).
-.It -t,
-.It --list
+.It Fl t
+.It Fl -list
 List the contents of an archive; if filename arguments are given, only those
 files are listed, otherwise the entire table of contents is listed.
-.It -u,
-.It --update
+.It Fl u
+.It Fl -update
 Append the named files if the on-disk version has a modification date
 more recent than their copy in the archive (if any).  Does not work on
 quarter-inch tapes.
-.It -x,
-.It --extract,
-.It --get
+.It Fl x
+.It Fl -extract
+.It Fl -get
 Extract files from an archive.  The owner, modification time, and file
 permissions are restored, if possible.  If no
-.Em filename
+.Ar filename
 arguments are given, extract all the files in the archive.  If a
-.Em filename
+.Ar filename
 argument matches the name of a directory on the tape, that directory and
 its contents are extracted (as well as all directories under that directory).
 If the archive contains multiple entries corresponding to the same file
@@ -117,147 +117,170 @@ successive command line arguments (see the
 below).
 .Pp
 .Bl -tag -width "--preserve-permissions" -compact
-.It --help
+.It Fl -help
 Prints a message listing and briefly describing all the command
 options to tar.
-.It --atime-preserve
+.It Fl -atime-preserve
 Restore the access times on files which are written to tape (note that
 this will change the inode-change time!).
-.It -b,
-.It --block-size N
+.It Fl b
+.It Fl -block-size Ar number
 Sets the block size for reading or writing to N 512-byte blocks.
-.It -B,
-.It --read-full-blocks
+.It Fl B
+.It Fl -read-full-blocks
 Re-assemble short readsinto full blocks (for reading 4.2BSD pipes).
-.It -C,
-.It directory DIR
-Change to directory DIR for extraction.
-.It --checkpoint
+.It Fl C Ar directory
+.It Fl -directory Ar directory
+Change to
+.Ar directory
+for extraction.
+.It Fl -checkpoint
 Print directory names while reading the archive.
-.It -f,
-.It --filename [HOSTNAME:]F
-Use archive file or devicename F (default is /dev/rst0).
-.It -F,
-.It --info-script F,
-.It --new-volume-script F
+.It Fl f Ar [hostname:]file
+.It Fl -filename  Ar [hostname:]file
+Read or write the specified
+.Ar file
+(default is /dev/rst0).  If a
+.Ar hostname
+is specified,
+.Nm
+will use
+.Xr rmt 8
+to read or write the specified
+.Ar file
+on a remote machine.
+.It Fl F Ar file
+.It Fl -info-script Ar file
+.It Fl -new-volume-script Ar file
 Run a script at the end of each archive volume (implies
 .Fl M ) .
-.It -G,
-.It --incremental
+.It Fl G
+.It Fl -incremental
 Create/list/extract old GNU-format incremental backup.
-.It -g,
-.It --listed-incremental F
+.It Fl g Ar file
+.It Fl -listed-incremental Ar file
 Create/list/extract new GNU-format incremental backup.
-.It -h,
-.it --dereference
+.It Fl h
+.it Fl -dereference
 Don't write symlinks as symlinks; write the data of the files they name.
-.It -i,
-.It --ignore-zeros
+.It Fl i
+.It Fl -ignore-zeros
 Ignore blocks of zeroes in archive (usually means End-Of-File).
-.It --ignore-failed-read
+.It Fl -ignore-failed-read
 Don't exit with non-zero status on unreadable files.
-.It -k,
--It --keep-old-files
+.It Fl k
+-It Fl -keep-old-files
 Keep files which already exist on disk; don't overwrite them from the archive.
-.It -K,
-.It --starting-file F
-Begin at file F in the archive.
-.It -l,
-.It --one-file-system
+.It Fl K Ar file
+.It Fl -starting-file Ar file
+Begin at
+.Ar file
+in the archive.
+.It Fl l
+.It Fl -one-file-system
 Stay in local filesystem when creating an archive (do not cross mount
 points).
-.It -L,
-.It --tape-length N
+.It Fl L Ar number
+.It Fl -tape-length Ar number
 Change tapes after writing N*1024 bytes.
-.It -m,
-.It --modification-time
+.It Fl m
+.It Fl -modification-time
 Don't extract file modified time.
-.It -M,
-.It --multi-volume
+.It Fl M
+.It Fl -multi-volume
 Create/list/extract multi-volume archive.
-.It -N,
-.It --after-date DATE,
-.It --newer DATE
-Only store files newer than DATE
-.It -o,
-.It --old-archive,
-.It --portability
+.It Fl N Ar date
+.It Fl -after-date Ar date
+.It Fl -newer Ar date
+Only store files newer than
+.Ar date .
+.It Fl o
+.It Fl -old-archive
+.It Fl -portability
 Write a V7 format archive, rather than POSIX format.
-.It -O,
-.It --to-stdout
+.It Fl O
+.It Fl -to-stdout
 Extract files to standard output.
-.It -p,
-.It --same-permissions,
-.It --preserve-permissions
+.It Fl p
+.It Fl -same-permissions
+.It Fl -preserve-permissions
 Extract all protection information.
-.It --preserve
+.It Fl -preserve
 Has the effect of
 .Fl p s.
-.It -R,
-.It --record-number
+.It Fl R
+.It Fl -record-number
 Show record number within archive with each message.
-.It --remove-files
+.It Fl -remove-files
 Remove files after adding them to the archive.
-.It -s,
-.It --same-order,
-.It --preserve-order
+.It Fl s
+.It Fl -same-order
+.It Fl -preserve-order
 List of names to extract is sorted to match archive.
-.It -S,
-.It --sparse
+.It Fl S
+.It Fl -sparse
 Handle "sparse" files efficiently.
-.It -T,
-.It --files-from F
-Get names of files to extract or create from file F, one per line.
-.It --null
+.It Fl T Ar file
+.It Fl -files-from Ar file
+Get names of files to extract or create from
+.Ar file ,
+one per line.
+.It Fl -null
 Modifies behavior of
 .Fl T
 to expect null-terminated names; disables
 .Fl C.
-.It --totals
+.It Fl -totals
 Prints total bytes written with --create.
-.It -v,
-.It --verbose
+.It Fl v
+.It Fl -verbose
 Lists files written to archive with --create or extracted with --extract;
 lists file protection information along with file names with --list.
-.It -V,
-.It --label NAME
-Create archive with volume name NAME.
-.It --version
+.It Fl V Ar volume-name
+.It Fl -label Ar volume-name
+Create archive with the given
+.Ar volume-name .
+.It Fl -version
 Print tar program version number.
-.It -w,
-.It --interactive,
-.It --confirmation
+.It Fl w
+.It Fl -interactive
+.It Fl -confirmation
 Ask for confirmation for every action.
-.It -W,
-.It --verify
+.It Fl W
+.It Fl -verify
 Attempt to verify the archive after writing it.
-.It --exclude FILE
-Exclude FILE (don't extract it, don't add it, don't list it).
-.It -X,
-.It --exclude-from FILE
-Exclude files listed in FILE.
-.It -Z,
-.It --compress,
-.It --uncompress
+.It Fl -exclude Ar pattern
+Exclude files matching the
+.Ar pattern
+(don't extract them, don't add them, don't list them).
+.It Fl X Ar file
+.It Fl -exclude-from Ar file
+Exclude files listed in
+.Ar file .
+.It Fl Z
+.It Fl -compress
+.It Fl -uncompress
 Filter the archive through
-.Em compress ( 1 ) .
-.It -z,
-.It --gzip,
-.It --gunzip
+.Xr compress 1 .
+.It Fl z
+.It Fl -gzip
+.It Fl -gunzip
 Filter the archive through
-.Em gzip ( 1 ) .
-.It --use-compress-program PROG
-Filter the archive through PROG (which must accept
+.Xr gzip 1 .
+.It Fl -use-compress-program Ar program
+Filter the archive through
+.Ar program
+(which must accept
 .Fl d
-to mean "decompress").
-.It --block-compress
+to mean ``decompress'').
+.It Fl -block-compress
 Block the output of compression program for tapes or floppies
 (otherwise writes will be of odd length, which device drivers may reject).
-.It -[0-7][lmh]
+.It Fl [0-7][lmh]
 Specify tape drive and density.
-.It --norecurse
+.It Fl -norecurse
 Don't recurse into subdirectories when creating.
-.It --unlink
+.It Fl -unlink
 Unlink files before creating them.
 .El
 .Sh EXAMPLES
@@ -267,9 +290,9 @@ blocks, containing files named "bert" and "ernie", you can enter
 or
 .Dl tar --create --file /dev/rst0 --block-size 20 bert ernie
 Note that the
-.Em f
+.Fl f
 and
-.Em b
+.Fl b
 flags both require arguments, which they take from the command line in
 the order they were listed in the command word.
 .Pp
@@ -318,10 +341,10 @@ The default tape drive.
 .\"     (command return values (to shell) and fprintf/stderr type diagnostics)
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
-.Bl -tag -width "pax"
-.Xr pax 1
-POSIX archiver.
-.El
+.Xr compress 1 ,
+.Xr gzip 1 ,
+.Xr pax 1 ,
+.Xr rmt 8
 .\" .Sh STANDARDS
 .Sh HISTORY
 The tar format has a rich history, dating back to Sixth Edition UNIX.
@@ -334,5 +357,7 @@ domain version), Jay Fenlason (first GNU author), Joy Kendall, Jim
 Kingdon, David J. MacKenzie, Michael I Bushnell, Noah Friedman, and
 innumerable others who have contributed fixes and additions.
 .Sh BUGS
-The -C feature does not work like historical tar programs, and is probably
+The
+.Fl C
+feature does not work like historical tar programs, and is probably
 untrustworthy.
