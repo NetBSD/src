@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.15 1997/03/18 06:17:17 perry Exp $
+.\"	$NetBSD: options.4,v 1.16 1997/03/25 16:42:52 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -651,6 +651,12 @@ is 1, forwarding of source routed IP datagrams is on. See
 and
 .Xr sysctl 3
 for details.
+.It Cd options MROUTING
+Includes support for IP multicast routers. You certainly want 
+.Em INET
+with this. Multicast routing is controlled by the
+.Xr mrouted 8
+daemon.
 .It Cd options INET
 Includes support for the TCP/IP protocol stack. You almost certainly
 want this. See
@@ -840,6 +846,7 @@ between 5% and 10% of total available RAM.
 .Xr inet 4 ,
 .Xr ns 4 ,
 .Xr iso 4 ,
+.Xr mrouted 8 ,
 .Xr mount_lfs 8 ,
 .Xr newlfs 8 ,
 .Xr mount_mfs 8 ,
