@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC64,v 1.3 1999/03/27 17:58:20 eeh Exp $
+# 	$NetBSD: GENERIC64,v 1.4 1999/04/13 18:45:42 ad Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -19,8 +19,10 @@ options		_LP64		# we're using a 64-bit compiler
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
 # XXX broken on sparc64
-#options 	RASTERCONSOLE	# fast rasterop console
-
+#options 	RASTERCONSOLE		# fast rasterop console
+#options	RASOPS1			# 1-bit operations (XXX)
+#options	RASOPS8			# 8-bit operations (XXX)
+#options	FONT_LUCIDA16x29	# the console font
 
 #### System options that are the same for all ports
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.70 1999/02/14 12:36:50 pk Exp $
+#	$NetBSD: files.sparc,v 1.71 1999/04/13 18:45:41 ad Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -244,6 +244,8 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 # Raster Console
 #
 include "../../../dev/rcons/files.rcons"
+include "../../../dev/rasops/files.rasops"
+include "../../../dev/wsfont/files.wsfont"
 
 #
 # Compatibility modules
