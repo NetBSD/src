@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.5 1997/02/03 22:03:02 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.6 1997/09/15 10:38:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: parms.c,v 1.5 1997/02/03 22:03:02 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: parms.c,v 1.6 1997/09/15 10:38:17 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -313,7 +314,7 @@ gwkludge(void)
 		}
 
 		ifp = (struct interface *)malloc(sizeof(*ifp));
-		bzero(ifp, sizeof(*ifp));
+		memset(ifp, 0, sizeof(*ifp));
 
 		ifp->int_state = state;
 		if (netmask == HOST_MASK)
@@ -437,7 +438,7 @@ parse_ts(time_t *tp,
 		return buf;
 	}
 	strcat(buf,"\n");
-	bzero(&tm, sizeof(tm));
+	memset(&tm, 0, sizeof(tm));
 	if (5 != sscanf(buf, "%u/%u/%u@%u:%u\n",
 			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
 			&tm.tm_hour, &tm.tm_min)) {
@@ -482,7 +483,7 @@ get_passwd(char *tgt,
 			return "too many passwords";
 	}
 
-	bzero(&k, sizeof(k));
+	memset(&k, 0, sizeof(k));
 	k.type = type;
 	k.end = -1-DAY;
 
@@ -552,7 +553,7 @@ parse_parms(char *line,
 	struct intnet *intnetp;
 	struct tgate *tg;
 	naddr addr, mask;
-	char delim, *val0, *tgt, *val, *p;
+	char delim, *val0 = NULL, *tgt, *val, *p;
 	char buf[64];
 
 
@@ -581,7 +582,7 @@ parse_parms(char *line,
 		return 0;
 	}
 
-	bzero(&parm, sizeof(parm));
+	memset(&parm, 0, sizeof(parm));
 
 	tgt = "null";
 	for (;;) {

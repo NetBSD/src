@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 1997/02/03 22:03:08 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.5 1997/09/15 10:38:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,13 +36,21 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: table.c,v 1.4 1997/02/03 22:03:08 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: table.c,v 1.5 1997/09/15 10:38:21 lukem Exp $");
 #endif
 
 #include "defs.h"
 
 static struct rt_spare *rts_better(struct rt_entry *);
 static struct rt_spare rts_empty = {0,0,0,HOPCNT_INFINITY,0,0};
+
+void	set_need_flash(void);
+#ifdef _HAVE_SIN_LEN
+void	masktrim(struct sockaddr_in *ap);
+#else
+void	masktrim(struct sockaddr_in_new *ap);
+#endif
 
 struct radix_node_head *rhead;		/* root of the radix tree */
 
@@ -625,7 +633,7 @@ masktrim(struct sockaddr_in *ap)
 masktrim(struct sockaddr_in_new *ap)
 #endif
 {
-	register char *cp;
+	char *cp;
 
 	if (ap->sin_addr.s_addr == 0) {
 		ap->sin_len = 0;
@@ -663,7 +671,7 @@ rtioctl(int action,			/* RTM_DELETE, etc */
 #   define ARGS rtm_type_name(action), rtname(dst,mask,gate), metric, flags
 
 again:
-	bzero(&w, sizeof(w));
+	memset(&w, 0, sizeof(w));
 	w.w_rtm.rtm_msglen = sizeof(w);
 	w.w_rtm.rtm_version = RTM_VERSION;
 	w.w_rtm.rtm_type = action;
@@ -773,7 +781,7 @@ kern_add(naddr dst, naddr mask)
 
 	k = (struct khash *)malloc(sizeof(*k));
 
-	bzero(k, sizeof(*k));
+	memset(k, 0, sizeof(*k));
 	k->k_dst = dst;
 	k->k_mask = mask;
 	k->k_state = KS_NEW;
@@ -1552,7 +1560,7 @@ rtadd(naddr	dst,
 	struct rt_spare *rts;
 
 	rt = (struct rt_entry *)rtmalloc(sizeof (*rt), "rtadd");
-	bzero(rt, sizeof(*rt));
+	memset(rt, 0, sizeof(*rt));
 	for (rts = rt->rt_spares, i = NUM_SPARES; i != 0; i--, rts++)
 		rts->rts_metric = HOPCNT_INFINITY;
 

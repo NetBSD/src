@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 1997/02/03 22:02:53 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 1997/09/15 10:38:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -589,7 +589,6 @@ extern void	rtbad_sub(struct rt_entry *);
 extern void	rtswitch(struct rt_entry *, struct rt_spare *);
 extern void	rtbad(struct rt_entry *);
 
-
 #define S_ADDR(x)	(((struct sockaddr_in *)(x))->sin_addr.s_addr)
 #define INFO_DST(I)	((I)->rti_info[RTAX_DST])
 #define INFO_GATE(I)	((I)->rti_info[RTAX_GATEWAY])
@@ -608,7 +607,7 @@ extern naddr	ripv1_mask_host(naddr,struct interface *);
 extern int	check_dst(naddr);
 extern struct interface *check_dup(naddr, naddr, naddr, int);
 extern int	check_remote(struct interface *);
-extern int	addrouteforif(register struct interface *);
+extern int	addrouteforif(struct interface *);
 extern void	ifinit(void);
 extern int	walk_bad(struct radix_node *, struct walkarg *);
 extern int	if_ok(struct interface *, char *);

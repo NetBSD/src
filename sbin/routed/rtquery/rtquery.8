@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtquery.8,v 1.6 1997/02/03 22:03:18 christos Exp $
+.\"	$NetBSD: rtquery.8,v 1.7 1997/09/15 10:38:24 lukem Exp $
 .\"
 .Dd June 1, 1996
 .Dt RTQUERY 8
@@ -13,12 +13,11 @@
 .Op Fl r Ar addr
 .Op Fl a Ar secret
 .Ar host ...
-
 .Nm
 .Op Fl t Ar op
 .Ar host ...
 .Sh DESCRIPTION
-.Nm Rtquery
+.Nm
 is used to query a RIP network routing daemon,
 .Xr routed 8
 or
@@ -38,7 +37,7 @@ command.
 When the
 .Ar -p
 option is specified,
-.Nm rtquery
+.Nm
 uses the
 .Em poll
 command, an
@@ -58,7 +57,7 @@ is also used to turn tracing on or off in
 .Em routed .
 .Pp
 Options supported by
-.Nm rtquery :
+.Nm "" :
 .Bl -tag -width Ds
 .It Fl n
 Normally network and host numbers are displayed both symbolically

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.5 1997/02/03 22:03:04 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.6 1997/09/15 10:38:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: rdisc.c,v 1.5 1997/02/03 22:03:04 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rdisc.c,v 1.6 1997/09/15 10:38:19 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -184,7 +185,7 @@ set_rdisc_mg(struct interface *ifp,
 	if (ifp->int_if_flags & IFF_POINTOPOINT)
 		return;
 #endif
-	bzero(&m, sizeof(m));
+	memset(&m, 0, sizeof(m));
 	m.imr_interface.s_addr = ((ifp->int_if_flags & IFF_POINTOPOINT)
 				  ? ifp->int_dstaddr
 				  : ifp->int_addr);
@@ -438,6 +439,8 @@ rdisc_sort(void)
 	/* Find the best discovered route.
 	 */
 	new_drp = 0;
+	new_st = 0;
+	new_pref = 0;
 	for (drp = drs; drp < &drs[MAX_ADS]; drp++) {
 		if (drp->dr_ts == 0)
 			continue;
@@ -680,7 +683,7 @@ send_rdisc(union ad_u *p,
 	naddr tgt_mcast;
 
 
-	bzero(&sin, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	sin.sin_addr.s_addr = dst;
 	sin.sin_family = AF_INET;
 #ifdef _HAVE_SIN_LEN
@@ -772,7 +775,7 @@ send_adv(struct interface *ifp,
 	n_long pref;
 
 
-	bzero(&u,sizeof(u.ad));
+	memset(&u, 0, sizeof(u.ad));
 
 	u.ad.icmp_type = ICMP_ROUTERADVERT;
 	u.ad.icmp_ad_num = 1;
@@ -851,7 +854,7 @@ rdisc_sol(void)
 			continue;
 
 		if (!timercmp(&ifp->int_rdisc_timer, &now, >)) {
-			bzero(&u,sizeof(u.so));
+			memset(&u, 0, sizeof(u.so));
 			u.so.icmp_type = ICMP_ROUTERSOLICIT;
 			u.so.icmp_cksum = in_cksum((u_short*)&u.so,
 						   sizeof(u.so));

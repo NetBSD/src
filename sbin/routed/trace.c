@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.16 1997/02/03 22:03:10 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.17 1997/09/15 10:38:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,8 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: trace.c,v 1.16 1997/02/03 22:03:10 christos Exp $";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: trace.c,v 1.17 1997/09/15 10:38:22 lukem Exp $");
 #endif
 
 #define	RIPCMDS

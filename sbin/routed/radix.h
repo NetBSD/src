@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.3 1996/10/16 15:41:06 perry Exp $	*/
+/*	$NetBSD: radix.h,v 1.4 1997/09/15 10:38:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -136,11 +136,11 @@ struct radix_node_head {
 };
 
 
-#define Bcmp(a, b, n) bcmp(((char *)(a)), ((char *)(b)), (n))
-#define Bcopy(a, b, n) bcopy(((char *)(a)), ((char *)(b)), (unsigned)(n))
-#define Bzero(p, n) bzero((char *)(p), (int)(n));
-#define R_Malloc(p, t, n) (p = (t) malloc((unsigned int)(n)))
-#define Free(p) free((char *)p);
+#define Bcmp(a, b, n) memcmp(((void *)(a)), ((void *)(b)), (n))
+#define Bcopy(a, b, n) memmove(((void *)(b)), ((void *)(a)), (size_t)(n))
+#define Bzero(p, n) memset((void *)(p), 0, (size_t)(n));
+#define R_Malloc(p, t, n) (p = (t) malloc((size_t)(n)))
+#define Free(p) free((void *)p);
 
 void	 rn_init __P((void));
 int	 rn_inithead __P((void **, int));
@@ -148,6 +148,7 @@ int	 rn_refines __P((void *, void *));
 int	 rn_walktree __P((struct radix_node_head *,
 		     int (*)__P((struct radix_node *, struct walkarg *)),
 		     struct walkarg *));
+
 struct radix_node
 	 *rn_addmask __P((void *, int, int)),
 	 *rn_addroute __P((void *, void *, struct radix_node_head *,
@@ -159,5 +160,7 @@ struct radix_node
 	 *rn_newpair __P((void *, int, struct radix_node[2])),
 	 *rn_search __P((void *, struct radix_node *)),
 	 *rn_search_m __P((void *, struct radix_node *, void *));
+
+struct radix_node *rn_lookup __P((void *, void *, struct radix_node_head *));
 
 #endif /* __RADIX_H_ */
