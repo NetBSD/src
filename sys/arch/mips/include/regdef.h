@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.9 2002/11/02 02:00:17 thorpej Exp $	*/
+/*	$NetBSD: regdef.h,v 1.10 2002/11/04 03:38:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,5 +87,25 @@
 #define sp	$29	/* stack pointer */
 #define s8	$30	/* one more callee saved */
 #define ra	$31	/* return address */
+
+/*
+ * These are temp registers whose names can be used in either the old
+ * or new ABI, although they map to different physical registers.  In
+ * the old ABI, they map to t4-t7, and in the new ABI, they map to a4-a7.
+ *
+ * Because they overlap with the last 4 arg regs in the new ABI, ta0-ta3
+ * should be used only when we need more than t0-t3.
+ */
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	ta0	$8
+#define	ta1	$9
+#define	ta2	$10
+#define	ta3	$11
+#else
+#define	ta0	$12
+#define	ta1	$13
+#define	ta2	$14
+#define	ta3	$15
+#endif /* __mips_n32 || __mips_n64 */
 
 #endif /* _MIPS_REGDEF_H */
