@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.12 2003/08/07 16:34:22 agc Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.13 2003/11/29 10:02:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,6 +82,7 @@ struct	unpcb {
 
 /* unp_flags */
 #define	UNP_WANTCRED	0x0001		/* credentials wanted */
+#define	UNP_CONNWAIT	0x0002		/* connect blocks until accepted */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
