@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.45 2003/07/08 11:58:57 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.46 2003/07/08 17:38:56 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1291,9 +1291,14 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 				next_ext = mbrp->mbrp_start;
 				if (ext_base == 0)
 					ext_size = mbrp->mbrp_size;
-			} else
+			} else {
 				mbri->last_mounted[i] = strdup(get_last_mounted(
 					fd, mbri->sector + mbrp->mbrp_start));
+				if (ombri->install == 0 &&
+				    strcmp(mbri->last_mounted[i], "/") == 0)
+					ombri->install = mbri->sector +
+							mbrp->mbrp_start;
+			}
 #if BOOTSEL
 			if (mbri->nametab[i][0] != 0 && bootkey-- == 0)
 				ombri->bootsec = mbri->sector +
