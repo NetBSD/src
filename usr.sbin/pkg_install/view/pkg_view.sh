@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.18 2003/07/28 21:55:36 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.19 2003/07/29 01:46:13 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -55,7 +55,7 @@ usage() {
 }
 
 version() {
-	echo "20030725"
+	echo "20030728"
 	exit 0
 }
 
