@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.10 1998/02/24 05:44:39 mycroft Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.11 1998/02/24 07:10:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -147,9 +147,8 @@ ofdisk_open(dev, flags, fmt, p)
 
 	if (!of->sc_ihandle) {
 		if ((l = OF_package_to_path(of->sc_phandle, path,
-		    sizeof path - 3)) < 0)
-			return ENXIO;
-		if (l >= sizeof path - 3)
+		    sizeof path - 3)) < 0 ||
+		    l >= sizeof path - 3)
 			return ENXIO;
 		path[l] = 0;
 
