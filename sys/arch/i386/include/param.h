@@ -34,14 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.5 1993/06/05 23:11:10 cgd Exp $
+ *	$Id: param.h,v 1.6 1993/06/18 06:51:03 cgd Exp $
  */
 
 /*
  * Machine dependent constants for Intel 386.
  */
 
-#define MACHINE "i386"
+#define MACHINE		"i386"
+#define MID_MACHINE	MID_I386
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

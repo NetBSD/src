@@ -30,6 +30,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    trouble.
  */
 
+#include <sys/param.h>
+#include <a.out.h>
 #include "as.h"
 #include "md.h"
 #include "subsegs.h"
@@ -46,10 +48,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #endif
 
 void	append();
-
-#ifdef hpux
-#define EXEC_MACHINE_TYPE HP9000S200_ID
-#endif
 
 #ifdef DOT_LABEL_PREFIX
 #define LOCAL_LABEL(name) (name[0] =='.' \
@@ -572,16 +570,10 @@ write_object_file()
   md_number_to_chars((char *)&the_exec.a_trsize, tr_siz ,sizeof(the_exec.a_trsize));
   dr_siz=sizeof(struct relocation_info) * fixup_segment (data_fix_root, N_DATA);
   md_number_to_chars((char *)&the_exec.a_drsize, dr_siz, sizeof(the_exec.a_drsize));
-  md_number_to_chars((char *)&the_exec.a_info,omagic,sizeof(the_exec.a_info));
+  md_number_to_chars((char *)&the_exec.a_midmag, htonl(MID_MACHINE<<16 | omagic),
+	sizeof(the_exec.a_midmag));
   md_number_to_chars((char *)&the_exec.a_entry,0,sizeof(the_exec.a_entry));
 
-#ifdef EXEC_MACHINE_TYPE
-  md_number_to_chars((char *)&the_exec.a_machtype, EXEC_MACHINE_TYPE, sizeof(the_exec.a_machtype));
-#endif
-#ifdef EXEC_VERSION
-  md_number_to_chars((char *)&the_exec.a_version,EXEC_VERSION,sizeof(the_exec.a_version));
-#endif
-  
   /* the_exec . a_entry = 0; */
 
   size_of_the_object_file =

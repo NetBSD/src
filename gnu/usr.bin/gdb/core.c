@@ -49,7 +49,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifdef COFF_FORMAT
 #define N_MAGIC(exec) ((exec).magic)
 #else
-#define N_MAGIC(exec) ((exec).a_magic)
+#define N_MAGIC(exec) (N_GETMAGIC(exec))
 #endif
 #endif
 #include <signal.h>
