@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 1998/05/14 00:01:30 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.25 1998/06/24 01:06:26 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 1998/05/14 00:01:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 1998/06/24 01:06:26 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,9 @@ cpuattach(parent, dev, aux)
 #endif
 	u_int32_t major, minor;
 
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-	    (ma->ma_slot * hwrpb->rpb_pcs_size));
-	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
-	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
+	p = LOCATE_PCS(hwrpb, ma->ma_slot);
+	major = PCS_CPU_MAJORTYPE(p);
+	minor = PCS_CPU_MINORTYPE(p);
 
 	printf(": ID %d%s, ", ma->ma_slot,
 	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
