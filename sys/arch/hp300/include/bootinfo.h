@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 1999/12/14 21:42:34 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 1999/12/14 21:48:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -72,7 +72,8 @@ struct btinfo_symtab {
 };
 
 #define	BTINFO_CONSOLE_INTIO_FB		-1
-#define	BTINFO_CONSOLE_SGC_FB		-2
+#define	BTINFO_CONSOLE_APCI		-2
+#define	BTINFO_CONSOLE_SGC_FB		-3
 #define	BTINFO_CONSOLE_HIL_KBD		0
 #define	BTINFO_CONSOLE_DOMAIN_KBD	1
 struct btinfo_console {
