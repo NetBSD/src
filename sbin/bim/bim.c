@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.11 2001/02/19 22:56:18 cgd Exp $	*/
+/*	$NetBSD: bim.c,v 1.12 2001/11/22 23:24:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.11 2001/02/19 22:56:18 cgd Exp $");
+__RCSID("$NetBSD: bim.c,v 1.12 2001/11/22 23:24:44 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -86,7 +86,7 @@ int	yesmode;
 
 struct disklabel *dk_label = (struct disklabel *) & disk_info[LABELOFFSET];
 struct imageinfo *im_table =
-(struct imageinfo *) (&disk_info[LABELOFFSET] + sizeof(struct disklabel));
+    (struct imageinfo *) (&disk_info[LABELOFFSET] + sizeof(struct disklabel));
 
 int     label_changed = FALSE;
 int     images_changed = FALSE;
@@ -100,6 +100,7 @@ void
 usage()
 {
 	printf("usage: %s [-y] [-c command [-c command ...]] [device]\n",
+
 	    getprogname());
 	printf("  Maximum of %d commands\n", MAXARGCMDS);
 	exit(1);
@@ -109,6 +110,7 @@ void
 getlf(inchar)
 	char	inchar;
 {
+
 	while (inchar != '\n')
 		inchar = getchar();
 }
@@ -261,6 +263,7 @@ display_head(num, args, syntax)
 	char  **args;
 	char   *syntax;
 {
+
 	printf("\nDisk: %s   Type: %s\n", dk_label->d_packname,
 	    dk_label->d_typename);
 	printf("Physical Sector Size = %d\n", dk_label->d_secsize);
@@ -392,9 +395,8 @@ add_image(num, args, syntax)
 		im_run_adr = im_run_adr & 0xFFFFFF;
 		printf("%s has a load address greater than 0xFFFFFF.\n",
 		    args[1]);
-		printf(
-		    "using the address:\n\tload address = 0x%x\n\trun address = 0x%x\n",
-		    im_load_adr, im_run_adr);
+		printf("using the address:\n\tload address = 0x%x\n"
+		    "\trun address = 0x%x\n", im_load_adr, im_run_adr);
 	}
 	/* Check the sizes.  */
 	boot_start = 
@@ -544,6 +546,7 @@ initialize(num, args, syntax)
 	char  **args;
 	char   *syntax;
 {
+
 	/* Check the args */
 	if (num > 1) {
 		printf("Syntax: %s\n", syntax);
@@ -560,6 +563,7 @@ write_exit(num, args, syntax)
 	char  **args;
 	char   *syntax;
 {
+
 	if (images_changed)
 		save_images();
 
@@ -575,7 +579,7 @@ main(argc, argv)
 	char   *argv[];
 {
 	int     count;		/* Used by reads. */
-	char    *fname;
+	char   *fname;
 	int     cmdscnt;	/* Number of argument line commands. */
 	char   *argcmds[MAXARGCMDS];
 	char    optchar;
