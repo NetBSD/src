@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.16 1998/12/15 21:28:28 pk Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.17 1999/03/19 22:06:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
  * library scheme.
  */
 
-#ifndef _LINK_H_
-#define _LINK_H_
+#ifndef _LINK_AOUT_H_
+#define _LINK_AOUT_H_
 
 #include <dlfcn.h>			/* for Dl_info */
 #include <a.out.h>			/* for struct nlist */
@@ -292,5 +292,4 @@ struct hints_bucket {
 
 #define _PATH_LD_HINTS		"/var/run/ld.so.hints"
 
-#endif /* _LINK_H_ */
-
+#endif /* _LINK_AOUT_H_ */

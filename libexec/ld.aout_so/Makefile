@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1999/02/09 20:27:04 christos Exp $
+#	$NetBSD: Makefile,v 1.28 1999/03/19 22:06:37 thorpej Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -20,9 +20,6 @@ LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 .endif
 LDADD+=	-lc_pic
 DPADD+=	${LIBC_PIC}
-HDRS=	link.h
-INCS=${HDRS}
-INCSDIR=/usr/include
 
 .PATH: ${CLIB}/stdio $(.CURDIR)/arch/$(MACHINE_ARCH)
 

@@ -1,10 +1,11 @@
-/*	$NetBSD: link_elf.h,v 1.4 1999/03/01 16:40:07 christos Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.5 1999/03/19 22:06:36 thorpej Exp $	*/
 
 /*
  * This only exists for GDB.
  */
-#ifndef _LINK_H
-#define	_LINK_H
+
+#ifndef _LINK_ELF_H_
+#define	_LINK_ELF_H_
 
 #include <sys/types.h>
 
@@ -32,5 +33,4 @@ struct r_debug {
 	} r_state;
 };
 
-#endif	/* _LINK_H */
-
+#endif	/* _LINK_ELF_H_ */
