@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/01/24 06:11:40 jmc Exp $
+#	$NetBSD: Makefile,v 1.13 2001/04/09 20:23:00 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 .include <bsd.kernobj.mk>
 
 IMAGE=		boot.fs
-KERN=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -17,23 +16,18 @@ FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
 MDEC=		${DESTDIR}/usr/mdec
 
-STRIP?=		strip
-
-RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk; ${MAKE} print-objdir
-RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+KERNDIR!=	cd ${.CURDIR}/../md-kernel; ${MAKE} print-objdir
 
 DISKTYPE=	floppy
 
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp
-
-dependall all: netbsd.ram.gz
+dependall all:
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 56000 -c 80 -f 512 -b 4096 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i 65536 -c 80 -f 512 -b 4096 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${MDEC}/ofwboot ${MOUNT_POINT}/boot
-	cp netbsd.ram.gz ${MOUNT_POINT}/netbsd
+	cp ${KERNDIR}/netbsd.INSTALL.gz ${MOUNT_POINT}/netbsd
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -47,15 +41,8 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
-	${STRIP} netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
 clean cleandir distclean:
-	rm -f *.core ${IMAGE} ${CLEANFILES}
+	rm -f *.core ${IMAGE}
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=45k
