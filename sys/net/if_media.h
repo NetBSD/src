@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.4 1998/01/30 01:24:40 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.5 1998/01/30 08:37:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -237,7 +237,7 @@ struct ifmedia_description {
 	{ IFM_100_VG,	"100VG" },					\
 	{ IFM_100_T2,	"100T2" },					\
 	{ IFM_1000_FX,	"1000FX" },					\
-	{ IFM_10_STP,	"STP", }					\
+	{ IFM_10_STP,	"STP" },					\
 	{ 0, NULL },							\
 }
 
