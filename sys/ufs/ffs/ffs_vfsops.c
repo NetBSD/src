@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.51 1999/07/17 01:08:29 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.52 1999/08/03 19:22:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -472,7 +472,10 @@ ffs_mountfs(devvp, mp, p)
 	struct partinfo dpart;
 	caddr_t base, space;
 	int blks;
-	int error, i, size, ronly, needswap;
+	int error, i, size, ronly;
+#ifdef FFS_EI
+	int needswap;
+#endif
 	int32_t *lp;
 	struct ucred *cred;
 	extern struct vnode *rootvp;
@@ -511,12 +514,12 @@ ffs_mountfs(devvp, mp, p)
 
 	fs = (struct fs*)bp->b_data;
 	if (fs->fs_magic == FS_MAGIC) {
-		needswap = 0;
 		sbsize = fs->fs_sbsize;
 #ifdef FFS_EI
+		needswap = 0;
 	} else if (fs->fs_magic == bswap32(FS_MAGIC)) {
-		needswap = 1;
 		sbsize = bswap32(fs->fs_sbsize);
+		needswap = 1;
 #endif
 	} else {
 		error = EINVAL;
