@@ -1,7 +1,7 @@
-/*	$NetBSD: pt_tcp.c,v 1.10 1997/09/15 05:58:31 lukem Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.11 1997/09/16 12:32:25 lukem Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	@(#)pt_tcp.c	8.3 (Berkeley) 3/27/94
+ *	@(#)pt_tcp.c	8.5 (Berkeley) 4/28/95
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.10 1997/09/15 05:58:31 lukem Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.11 1997/09/16 12:32:25 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -127,9 +127,10 @@ portal_tcp(pcr, key, v, kso, fdp)
 	if (sp != 0)
 		s_port = sp->s_port;
 	else {
-		s_port = htons(atoi(port));
-		if (s_port == 0)
+		s_port = strtoul(port, &p, 0);
+		if (s_port == 0 || *p != '\0')
 			return (EINVAL);
+		s_port = htons(s_port);
 	}
 
 	memset(&sain, 0, sizeof(sain));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.6 1997/09/15 06:10:24 lukem Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.7 1997/09/16 12:32:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -44,9 +44,9 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.6 1997/09/15 06:10:24 lukem Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.7 1997/09/16 12:32:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ main(argc, argv)
 			gmapfile = optarg;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case 'u':
 			mapfile = optarg;
@@ -209,7 +209,8 @@ main(argc, argv)
 #endif
 
 	for (count = 0; count < gnentries; ++count) {
-		if ((fscanf(gfp, "%lu %lu\n", &d1, &d2)) != 2) {
+		if ((fscanf(gfp, "%lu %lu\n",
+		    &(gmapdata[count][0]), &(gmapdata[count][1]))) != 2) {
 			if (ferror(gfp))
 				err(1, "%s%s", gmapfile, not);
 			if (feof(gfp))

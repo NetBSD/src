@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.8 1997/09/15 05:58:30 lukem Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.9 1997/09/16 12:32:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: Id: pt_file.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	@(#)pt_file.c	8.2 (Berkeley) 3/27/94
+ *	@(#)pt_file.c	8.3 (Berkeley) 7/3/94
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.8 1997/09/15 05:58:30 lukem Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.9 1997/09/16 12:32:24 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
