@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.17 1996/02/03 00:44:30 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.18 1996/02/09 02:21:38 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ VAX=	../..
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
 CFLAGS=		${DEBUG} -O2 -Werror
-AFLAGS=		-D_LOCORE
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Z -Ttext 80000000 -e _start
 
 ### find out what to use for libkern
@@ -67,8 +67,8 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
@@ -144,10 +144,10 @@ SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s lim.c \
 	vnode_if.c param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} vnode_if.h param.c
-	mkdep -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
+	mkdep ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} lim.c
 	mkdep -a ${CFLAGS} ${CPPFLAGS} vnode_if.c param.c ioconf.c ${CFILES}
-	mkdep -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 
 
 # depend on root or device configuration
