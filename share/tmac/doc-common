@@ -181,19 +181,23 @@
 .\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
 .\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
-.	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
-.	if "\\$3"atari" .as vT \ (ATARI Architecture)
-.	if "\\$3"da30"  .as vT \ (DA30 Architecture)
-.	if "\\$3"hp300" .as vT \ (HP300 Architecture)
-.	if "\\$3"i386"  .as vT \ (I386 Architecture)
-.	if "\\$3"mac68k" .as vT \ (MAC68K Architecture)
-.	if "\\$3"pc532" .as vT \ (PC532 Architecture)
-.	if "\\$3"pmax"  .as vT \ (PMAX  Architecture)
-.	if "\\$3"sparc" .as vT \ (SPARC Architecture)
-.	if "\\$3"sun3"  .as vT \ (SUN3 Architecture)
-.	if "\\$3"tahoe" .as vT \ (TAHOE Architecture)
-.	if "\\$3"vax"   .as vT \ (VAX Architecture)
-.	if "\\$3"x68k"  .as vT \ (X68K Architecture)
+.	if "\\$3"alpha"   .as vT \ (ALPHA Architecture)
+.	if "\\$3"amiga"   .as vT \ (AMIGA Architecture)
+.	if "\\$3"arm32"   .as vT \ (ARM32 Architecture)
+.	if "\\$3"atari"   .as vT \ (ATARI Architecture)
+.	if "\\$3"da30"    .as vT \ (DA30 Architecture)
+.	if "\\$3"hp300"   .as vT \ (HP300 Architecture)
+.	if "\\$3"i386"    .as vT \ (I386 Architecture)
+.	if "\\$3"mac68k"  .as vT \ (MAC68K Architecture)
+.	if "\\$3"mvme68k" .as vT \ (MVME68K Architecture)
+.	if "\\$3"pc532"   .as vT \ (PC532 Architecture)
+.	if "\\$3"pica"    .as vT \ (PICA Architecture)
+.	if "\\$3"pmax"    .as vT \ (PMAX  Architecture)
+.	if "\\$3"sparc"   .as vT \ (SPARC Architecture)
+.	if "\\$3"sun3"    .as vT \ (SUN3 Architecture)
+.	if "\\$3"tahoe"   .as vT \ (TAHOE Architecture)
+.	if "\\$3"vax"     .as vT \ (VAX Architecture)
+.	if "\\$3"x68k"    .as vT \ (X68K Architecture)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
