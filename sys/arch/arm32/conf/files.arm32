@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.111 2001/05/06 18:38:58 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.112 2001/05/26 17:49:47 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -294,11 +294,6 @@ file	arch/arm32/podulebus/ptsc.c		ptsc
 device	csc: scsi, sfas
 attach	csc at podulebus
 file	arch/arm32/podulebus/csc.c		csc
-
-# Oak specific layer for ncr5380
-device	oak: scsi, ncr5380sbc
-attach	oak at podulebus
-file	arch/arm32/podulebus/oak.c		oak
 
 # Cumana SCSI1 specific layer for ncr5380
 device	csa: scsi, ncr5380sbc
