@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.263 2003/04/08 23:35:48 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.264 2003/04/11 22:02:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,13 +75,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2003/04/08 23:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2003/04/11 22:02:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/sched.h>
@@ -2088,6 +2089,7 @@ cpu_getmcontext(l, mcp, flags)
 {
 	struct trapframe *frame = l->l_md.md_tf;
 	__greg_t *gr = mcp->__gregs;
+	__greg_t ras_pc;
 
 	/* Save register context. */
 	frametoreg(frame, (struct reg *)gr);
@@ -2104,6 +2106,11 @@ cpu_getmcontext(l, mcp, flags)
 	}
 	gr[_REG_PC] = frame->tf_regs[FRAME_PC];
 	gr[_REG_PS] = frame->tf_regs[FRAME_PS];
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_PC])) != -1)
+		gr[_REG_PC] = ras_pc;
+
 	*flags |= _UC_CPU | _UC_UNIQUE;
 
 	/* Save floating point register context, if any, and copy it. */

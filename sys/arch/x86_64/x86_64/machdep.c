@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2003/04/01 15:08:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2003/04/11 22:02:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
@@ -1755,8 +1756,14 @@ void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
+	__greg_t ras_rip;
 
 	memcpy(mcp->__gregs, tf, sizeof *tf);
+
+	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_RIP])) != -1)
+		gr[_REG_RIP] = ras_rip;
+
 	*flags |= _UC_CPU;
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {

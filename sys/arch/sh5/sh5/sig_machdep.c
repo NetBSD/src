@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.12 2003/01/22 13:40:57 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.13 2003/04/11 22:02:33 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
@@ -259,8 +260,14 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
+	__greg_t ras_pc;
 
 	process_read_regs(l, (struct reg *)(void *)gr);
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_PC])) != -1)
+		gr[_REG_PC] = ras_pc;
+
 	*flags |= _UC_CPU;
 
 	/* Save FP state if necessary */

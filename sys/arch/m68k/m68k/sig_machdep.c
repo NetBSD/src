@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.18 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19 2003/04/11 22:02:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
@@ -465,6 +466,7 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = frame->f_format;
+	__greg_t ras_pc;
 
 	/* Save general registers. */
 	gr[_REG_D0] = frame->f_regs[D0];
@@ -485,6 +487,11 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_A7] = frame->f_regs[SP];
 	gr[_REG_PS] = frame->f_sr;
 	gr[_REG_PC] = frame->f_pc;
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_PC])) != -1)
+		gr[_REG_PC] = ras_pc;
+
 	*flags |= _UC_CPU;
 
 	/* Save exception frame information. */

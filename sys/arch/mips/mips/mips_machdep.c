@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.159 2003/04/02 03:27:35 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.160 2003/04/11 22:02:32 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.159 2003/04/02 03:27:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.160 2003/04/11 22:02:32 nathanw Exp $");
 
 #include "opt_cputype.h"
 
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.159 2003/04/02 03:27:35 thorpej E
 #include <sys/device.h>
 #include <sys/kcore.h>
 #include <sys/pool.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -1689,6 +1690,7 @@ cpu_getmcontext(l, mcp, flags)
 {
 	const struct frame *f = (struct frame *)l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
+	__greg_t ras_pc;
 
 	/* Save register context. Dont copy R0 - it is always 0 */
 	memcpy(&gr[_REG_AT], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
@@ -1698,6 +1700,10 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_CAUSE] = f->f_regs[CAUSE];
 	gr[_REG_EPC]   = f->f_regs[PC];
 	gr[_REG_SR]    = f->f_regs[SR];
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_EPC])) != -1)
+		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;
 

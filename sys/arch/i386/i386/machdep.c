@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.518 2003/04/01 20:54:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.519 2003/04/11 22:02:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.518 2003/04/01 20:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.519 2003/04/11 22:02:30 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.518 2003/04/01 20:54:23 thorpej Exp $"
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -2220,6 +2221,7 @@ cpu_getmcontext(l, mcp, flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
+	__greg_t ras_eip;
 
 	/* Save register context. */
 #ifdef VM86
@@ -2252,6 +2254,11 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_SS]     = tf->tf_ss;
 	gr[_REG_TRAPNO] = tf->tf_trapno;
 	gr[_REG_ERR]    = tf->tf_err;
+
+	if ((ras_eip = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_EIP])) != -1)
+		gr[_REG_EIP] = ras_eip;
+
 	*flags |= _UC_CPU;
 
 	/* Save floating point register context, if any. */

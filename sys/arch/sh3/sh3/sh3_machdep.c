@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.47 2003/04/02 02:56:41 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.48 2003/04/11 22:02:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
@@ -585,6 +586,7 @@ cpu_getmcontext(l, mcp, flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
+	__greg_t ras_pc;
 
 	/* Save register context. */
 	gr[_REG_EXPEVT] = tf->tf_expevt;
@@ -609,6 +611,11 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_R1]     = tf->tf_r1;
 	gr[_REG_R0]     = tf->tf_r0;
 	gr[_REG_R15]    = tf->tf_r15;
+
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (caddr_t) gr[_REG_PC])) != -1)
+		gr[_REG_PC] = ras_pc;
+
 	*flags |= _UC_CPU;
 
 	/* FPU context is currently not handled by the kernel. */
