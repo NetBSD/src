@@ -1,7 +1,7 @@
 #
 # Matthias Drochner's development machine
 #
-#	$NetBSD: ZELMWU,v 1.1.2.1 1998/10/19 20:04:06 drochner Exp $
+#	$NetBSD: ZELMWU,v 1.1.2.2 1999/03/29 18:09:48 drochner Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -86,6 +86,8 @@ options 	"HZ=256"	# RTC rate required
 # The pmax proms need bootp anyway, so just use bootp.
 options 	NFS_BOOT_DHCP
 
+options WSEMUL_VT100
+
 config		netbsd		root on ? type ?
 
 mainbus0	at root
@@ -101,7 +103,7 @@ asc0	at	ioasic?	offset ?	# NCR53C94 SCSI with IOASIC
 le0	at	ioasic?	offset ?	# LANCE
 zsc*	at	ioasic? offset ?	# Z85C30
 zstty*	at	zsc?
-zskbd0	at	zsc?
+lkkbd0	at	zsc?
 #dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 #isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
 #fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)
@@ -146,7 +148,7 @@ cd*	at scsibus? target ? lun ?
 wsdisplay* at	sfb?
 #wsdisplay* at	tfb?
 #wsdisplay* at	xcfb?
-wskbd0 at zskbd?
+wskbd0 at lkkbd?
 
 # Pseudo-devices                            ###
 pseudo-device	loop		1	# network loopback
