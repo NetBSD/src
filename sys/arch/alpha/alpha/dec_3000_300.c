@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.29 1999/11/20 00:01:14 mrg Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.29 1999/11/20 00:01:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -181,7 +181,8 @@ dec_3000_300_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
