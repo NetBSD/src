@@ -1,4 +1,4 @@
-/*	$NetBSD: xditview.c,v 1.1.1.1 2001/04/19 12:52:33 wiz Exp $	*/
+/*	$NetBSD: xditview.c,v 1.1.1.2 2003/06/30 17:52:18 wiz Exp $	*/
 
 /*
  * Copyright 1991 Massachusetts Institute of Technology
@@ -181,7 +181,9 @@ int main(argc, argv)
     toplevel = XtAppInitialize(&xtcontext, "GXditview",
 			    options, XtNumber (options),
  			    &argc, argv, fallback_resources, NULL, 0);
-    if (argc > 2)
+    if (argc > 2
+	|| (argc == 2 && (!strcmp(argv[1], "-help")
+			  || !strcmp(argv[1], "--help"))))
 	Syntax(argv[0]);
 
     XtGetApplicationResources(toplevel, (XtPointer)&app_resources,
