@@ -1,4 +1,4 @@
-.\"	$NetBSD: linkaddr.3,v 1.5 1999/03/22 19:44:52 garbled Exp $
+.\"	$NetBSD: linkaddr.3,v 1.6 1999/06/25 16:13:21 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,6 +65,13 @@ takes a link-level address and returns an
 string representing some of the information present, including the
 link level address itself, and the interface name or number, if present.
 This facility is experimental and is still subject to change.
+.Pp
+Prior to a call to 
+.Fn link_addr ,
+.Fa sdl->sdl_len 
+must be initialized to the size of the link-level socket structure,
+typically 
+.Fa sizeof(struct sockaddr_dl) .
 .Pp
 For
 .Fn link_addr ,
