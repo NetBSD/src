@@ -1,3 +1,5 @@
+/* $NetBSD: fpu.h,v 1.2 1999/01/18 20:36:22 ross Exp $ */
+
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
