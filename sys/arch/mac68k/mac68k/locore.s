@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 1995/09/18 13:51:25 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1995/10/10 03:49:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -588,20 +588,19 @@ _lev2intr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-	.globl _ser_intr
+	.globl _zshard
 
 _lev4intr:
 	/* handle level 4 (SCC) interrupt special... */
 	addql	#1,_intrcnt+12
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-	| save registers
-	movl	sp,sp@-		| push pointer to frame
-	jsr	_ser_intr	| call C routine to deal with it (console.c)
-	addl	#4,sp		| throw away frame pointer
+	clrl	sp@-		| push 0
+	jsr	_zshard		| call C routine to deal with it (ser.c/zs.c)
+	addl	#4,sp		| throw away arg
 	moveml	sp@+, #0xFFFF	| restore registers
 	addql	#4,sp
 	rte			| return from exception
-|	jra	rei		| Apparently we don't know what we're doing.
 
 	.globl _rtclock_intr
 
@@ -1060,12 +1059,6 @@ _esigcode:
  */ 
 
 #include "m68k/asm.h"
-
-/*
- * For gcc2
- */
-ENTRY(__main)
-	rts
 
 /*
  * copypage(fromaddr, toaddr)
@@ -1768,8 +1761,7 @@ ENTRY(_remque)
 /*
  * bzero(addr, count)
  */
-ALTENTRY(blkclr, _bzero)
-ENTRY(bzero)
+ENTRY(blkclr)
 	movl	sp@(4),a0	| address
 	movl	sp@(8),d0	| count
 	jeq	Lbzdone		| if zero, nothing to do
@@ -1798,37 +1790,6 @@ Lbzbyte:
 Lbzdone:
 	rts
 
-/*
- * strlen(str)
- */
-ENTRY(strlen)
-	moveq	#-1,d0
-	movl	sp@(4),a0	| string
-Lslloop:
-	addql	#1,d0		| increment count
-	tstb	a0@+		| null?
-	jne	Lslloop		| no, keep going
-	rts
-
-/*
- * bcmp(s1, s2, len)
- *
- * WARNING!  This guy only works with counts up to 64K
- */
-ENTRY(bcmp)
-	movl	sp@(4),a0		| string 1
-	movl	sp@(8),a1		| string 2
-	moveq	#0,d0
-	movw	sp@(14),d0		| length
-	jeq	Lcmpdone		| if zero, nothing to do
-	subqw	#1,d0			| set up for DBcc loop
-Lcmploop:
-	cmpmb	a0@+,a1@+		| equal?
-	dbne	d0,Lcmploop		| yes, keep going
-	addqw	#1,d0			| +1 gives zero on match
-Lcmpdone:
-	rts
-	
 ENTRY(memcpy)
 	movl	sp@(12),d0		| get count
 	jeq	Lcpyexit		| if zero, return
