@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.19 1998/05/15 15:08:42 fvdl Exp $	
+	$NetBSD: install,v 1.20 1998/07/04 18:51:00 is Exp $	
 
 
 0. Introduction
@@ -434,7 +434,7 @@
 
 9. Extracting the distribution sets
 
-	After you the install sets containing the NetBSD distribution
+	After the install sets containing the NetBSD distribution
 	have been made available, you can either extract all the
 	sets (a full installation), or only extract sets that
 	you have selected. In the latter case you will be shown the
