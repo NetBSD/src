@@ -1,3 +1,4 @@
+#	$NetBSD: VERSION,v 1.7 1995/02/27 13:19:33 cgd Exp $
 #	@(#)VERSION	8.17 (Berkeley) 6/20/94
 
 This is version 1.79 of the Berkeley DB code.
