@@ -1,4 +1,4 @@
-/*	$NetBSD: jmptest.c,v 1.1 1994/12/29 00:32:25 cgd Exp $	*/
+/*	$NetBSD: jmptest.c,v 1.2 1995/01/01 20:55:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,20 +39,23 @@
 #include <unistd.h>
 
 #if (TEST_SETJMP + TEST_U_SETJMP + TEST_SIGSETJMP) != 1
-#error one of TEST_SETJMP, TEST_U_SETJMP, or TEST_U_SETJMP must be defined
+#error one of TEST_SETJMP, TEST_U_SETJMP, or TEST_SIGSETJMP must be defined
 #endif
 
 #ifdef TEST_SETJMP
+#define BUF		jmp_buf
 #define	SET(b, m)	setjmp(b)
 #define	JMP(b, v)	longjmp(b, v)
 #endif
 
 #ifdef TEST_U_SETJMP
+#define BUF		jmp_buf
 #define	SET(b, m)	_setjmp(b)
 #define	JMP(b, v)	_longjmp(b, v)
 #endif
 
 #ifdef TEST_SIGSETJMP
+#define BUF		sigjmp_buf
 #define	SET(b, m)	sigsetjmp(b, m)
 #define	JMP(b, v)	siglongjmp(b, v)
 #endif
@@ -76,7 +79,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sigaction sa;
-	jmp_buf	jb;
+	BUF jb;
 	sigset_t ss;
 	int i, x;
 
@@ -104,16 +107,16 @@ main(argc, argv)
 		err(1, "sigaction failed");
 
 	if (sigemptyset(&ss) == -1)
-		err(1, "sigemptyset faield");
+		err(1, "sigemptyset failed");
 	if (sigaddset(&ss, SIGABRT) == -1)
-		err(1, "sigaddset faield");
+		err(1, "sigaddset failed");
 	if (sigprocmask(SIG_BLOCK, &ss, NULL) == -1)
 		err(1, "sigprocmask (1) failed");
 
 	x = SET(jb, !expectsignal);
 	if (x != 0) {
 		if (x != i)
-			errx(1, "setjmp returnd wrong value");
+			errx(1, "setjmp returned wrong value");
 
 		kill(i, SIGABRT);
 		if (expectsignal)
