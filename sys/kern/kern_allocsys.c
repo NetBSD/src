@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.24 2003/08/07 16:31:42 agc Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.25 2003/10/26 10:32:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,23 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.24 2003/08/07 16:31:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_allocsys.c,v 1.25 2003/10/26 10:32:24 jdolecek Exp $");
 
 #include "opt_bufcache.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #include <uvm/uvm_extern.h>
 /*
  * Declare these as initialized data so we can patch them.
@@ -123,23 +113,6 @@ u_int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 caddr_t
 allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 {
-
-#ifdef SYSVSHM
-	ALLOCSYS(v, shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	ALLOCSYS(v, sema, struct semid_ds, seminfo.semmni);
-	ALLOCSYS(v, sem, struct __sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	ALLOCSYS(v, semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	ALLOCSYS(v, msgpool, char, msginfo.msgmax);
-	ALLOCSYS(v, msgmaps, struct msgmap, msginfo.msgseg);
-	ALLOCSYS(v, msghdrs, struct __msg, msginfo.msgtql);
-	ALLOCSYS(v, msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
 	/*
 	 * Determine how many buffers to allocate.
 	 *
