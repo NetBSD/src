@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.12 1998/01/19 07:38:48 jtc Exp $	*/
+/*	$NetBSD: fseek.c,v 1.13 1998/02/03 01:40:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.12 1998/01/19 07:38:48 jtc Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.13 1998/02/03 01:40:49 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,6 +71,11 @@ fseek(fp, offset, whence)
 	size_t n;
 	struct stat st;
 	int havepos;
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &curoff;
+#endif
 
 	/* make sure stdio is set up */
 	if (!__sdidinit)
