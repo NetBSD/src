@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.25 2002/01/16 08:33:12 enami Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.26 2002/01/18 00:30:03 enami Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.25 2002/01/16 08:33:12 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.26 2002/01/18 00:30:03 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5347,13 +5347,11 @@ softdep_lookupvp(fs, ino)
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_op == &ffs_vfsops &&
 		    VFSTOUFS(mp)->um_fs == fs) {
-			break;
+			return (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino));
 		}
 	}
-	if (mp == NULL) {
-		return NULL;
-	}
-	return ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino);
+
+	return (NULL);
 }
 
 /*
