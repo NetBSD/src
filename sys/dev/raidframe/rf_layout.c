@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.7 2001/01/26 04:40:03 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.8 2001/01/27 02:13:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -88,12 +88,21 @@ RF_AccessState_t *NothingAtAll = DefaultStates;
 
 #if defined(__NetBSD__) && defined(_KERNEL)
 /* XXX Remove static so GCC doesn't complain about these being unused! */
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 int     distSpareYes = 1;
+#endif 
+#if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 int     distSpareNo = 0;
+#endif
 #else
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 static int distSpareYes = 1;
+#endif 
+#if  (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
 static int distSpareNo = 0;
 #endif
+#endif
+
 #ifdef _KERNEL
 #define RF_NK2(a,b)
 #else				/* _KERNEL */
