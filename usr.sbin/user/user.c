@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.76 2004/07/02 12:01:00 agc Exp $ */
+/* $NetBSD: user.c,v 1.77 2005/02/05 10:43:14 jmmv Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.76 2004/07/02 12:01:00 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.77 2005/02/05 10:43:14 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1521,8 +1521,8 @@ usermgmt_usage(const char *prog)
 		(void) fprintf(stderr, "usage: %s [-e] [-v] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
-		(void) fprintf(stderr, "usage: %s [-g gid] [-o] [-v] group\n",
-		    prog);
+		(void) fprintf(stderr, "usage: %s [-g gid] [-o]"
+		    " [-r lowgid..highgid] [-v] group\n", prog);
 	} else if (strcmp(prog, "groupdel") == 0) {
 		(void) fprintf(stderr, "usage: %s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
@@ -1891,7 +1891,7 @@ userdel(int argc, char **argv)
 }
 
 #ifdef EXTENSIONS
-#define GROUP_ADD_OPT_EXTENSIONS	"v"
+#define GROUP_ADD_OPT_EXTENSIONS	"r:v"
 #else
 #define GROUP_ADD_OPT_EXTENSIONS	
 #endif
@@ -1903,9 +1903,13 @@ groupadd(int argc, char **argv)
 	int	dupgid;
 	int	gid;
 	int	c;
+	int	lowgid;
+	int	highgid;
 
 	gid = -1;
 	dupgid = 0;
+	lowgid = LowGid;
+	highgid = HighGid;
 	while ((c = getopt(argc, argv, "g:o" GROUP_ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'g':
@@ -1918,6 +1922,11 @@ groupadd(int argc, char **argv)
 			dupgid = 1;
 			break;
 #ifdef EXTENSIONS
+		case 'r':
+			if (sscanf(optarg, "%d..%d", &lowgid, &highgid) != 2) {
+				errx(EXIT_FAILURE, "Bad range `%s`", optarg);
+			}
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -1933,7 +1942,7 @@ groupadd(int argc, char **argv)
 		usermgmt_usage("groupadd");
 	}
 	checkeuid();
-	if (gid < 0 && !getnextgid(&gid, LowGid, HighGid)) {
+	if (gid < 0 && !getnextgid(&gid, lowgid, highgid)) {
 		err(EXIT_FAILURE, "can't add group: can't get next gid");
 	}
 	if (!dupgid && getgrgid((gid_t) gid) != NULL) {

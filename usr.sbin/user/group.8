@@ -1,4 +1,4 @@
-.\" $NetBSD: group.8,v 1.10 2003/02/25 10:36:21 wiz Exp $ */
+.\" $NetBSD: group.8,v 1.11 2005/02/05 10:43:14 jmmv Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd February 5, 2005
 .Dt GROUP 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Cm add
 .Op Fl ov
 .Op Fl g Ar gid
+.Op Fl r Ar low Ns Li .. Ns Ar high
 .Ar group
 .Nm
 .Cm del
