@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.157 1999/09/29 00:07:15 thorpej Exp $
+$NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -513,6 +513,7 @@ vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor ADMTEK		0x1317	ADMtek
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
+vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor DELTA		0x1500	Delta Electronics
 vendor SOLIDUM          0x1588  Solidum Systems Corp. www.solidum.com/pcisig.html
 vendor GEOCAST		0x15a1	Geocast Network Systems
@@ -844,6 +845,9 @@ product DELTA 8139	0x1360	8139 Ethernet
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
+
+/* D-Link Systems products */
+product DLINK DFE550TX	0x1002	DFE-550TX 10/100 Ethernet
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID
@@ -1218,6 +1222,9 @@ product SUN EBUS	0x1000	SPARC Ebus
 product SUN HMENETWORK	0x1001	SUNW,hme compatible Ethernet
 product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
+
+/* Sundance Technology products */
+product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
 
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
