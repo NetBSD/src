@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.7 1993/12/12 09:08:43 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.8 1994/02/04 08:20:56 glass Exp $
  */
 
 .globl _cnt

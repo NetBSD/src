@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.c,v 1.5 1994/01/23 23:42:49 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.c,v 1.6 1994/02/04 08:21:11 glass Exp $
  */
 
 #include "sys/systm.h"

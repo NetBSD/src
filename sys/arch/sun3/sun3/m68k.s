@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.9 1994/01/23 23:42:39 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.10 1994/02/04 08:21:01 glass Exp $
  */
 
 ENTRY(getvbr)

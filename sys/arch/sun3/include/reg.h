@@ -1,5 +1,5 @@
 /*
- *	$Id: reg.h,v 1.8 1994/01/27 02:12:44 cgd Exp $
+ *	$Id: reg.h,v 1.9 1994/02/04 08:20:07 glass Exp $
  */
 
 #ifndef _MACHINE_REG_H_
