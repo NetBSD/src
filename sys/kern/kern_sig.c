@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.26 2002/08/29 17:16:23 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.27 2002/09/06 20:40:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.26 2002/08/29 17:16:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.27 2002/09/06 20:40:07 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -753,8 +753,7 @@ trapsignal(struct lwp *l, int signum, u_long code)
 			    SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(signum, &p->p_sigctx.ps_sigmask,
-		    code);
+		psendsig(l, signum, &p->p_sigctx.ps_sigmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -1046,7 +1045,7 @@ psignal1(struct proc *p, int signum,
 }
 
 void
-psendsig(struct lwp *l, sig_t catcher, int sig, sigset_t *mask, u_long code)
+psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *le, *li;
@@ -1445,7 +1444,7 @@ postsig(int signum)
 			p->p_sigctx.ps_code = 0;
 			p->p_sigctx.ps_sig = 0;
 		}
-		(*p->p_emul->e_sendsig)(signum, returnmask, code);
+		psendsig(l, signum, returnmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
