@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.1 2002/10/04 18:02:00 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.2 2002/10/09 14:04:08 elric Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 		DPRINTF_FOLLOW(("dk_stragy: not inited\n"));
 		bp->b_error  = ENXIO;
 		bp->b_flags |= B_ERROR;
+		biodone(bp);
 		return;
 	}
 
