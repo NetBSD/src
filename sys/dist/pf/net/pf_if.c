@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.4 2004/07/26 13:45:40 yamt Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.5 2004/07/26 13:46:43 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*
@@ -87,6 +87,9 @@ char			  pfi_interface_ruleset[PF_RULESET_NAME_SIZE] =
 
 void		 pfi_dynaddr_update(void *);
 void		 pfi_kifaddr_update(void *);
+#ifdef __NetBSD__
+void		 pfi_kifaddr_update_if(struct ifnet *);
+#endif
 void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
 		    int, int);
 void		 pfi_instance_add(struct ifnet *, int, int);
@@ -111,6 +114,7 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 static void	*hook_establish(struct hook_desc_head *, int, void (*)(void *),
 			void *);
 static void	hook_disestablish(struct hook_desc_head *, void *);
+static void	dohooks(struct hook_desc_head *, int);
 
 #define HOOK_REMOVE	0x01
 #define HOOK_FREE	0x02
@@ -580,6 +584,19 @@ pfi_kifaddr_update(void *v)
 	splx(s);
 }
 
+#ifdef __NetBSD__
+void
+pfi_kifaddr_update_if(struct ifnet *ifp)
+{
+	struct pfi_kif *p;
+
+	p = pfi_lookup_if(ifp->if_xname);
+	if (p == NULL)
+		panic("can't find interface");
+	pfi_kifaddr_update(p);
+}
+#endif
+
 int
 pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
 {
@@ -869,11 +886,8 @@ pfi_unmask(void *addr)
 void
 pfi_dohooks(struct pfi_kif *p)
 {
-
-#ifdef __OpenBSD__
 	for (; p != NULL; p = p->pfik_parent)
 		dohooks(p->pfik_ah_head, 0);
-#endif
 }
 
 int
@@ -940,5 +954,24 @@ hook_disestablish(struct hook_desc_head *head, void *vhook)
 	hdp = vhook;
 	TAILQ_REMOVE(head, hdp, hd_list);
 	free(hdp, M_DEVBUF);
+}
+
+static void
+dohooks(struct hook_desc_head *head, int flags)
+{
+	struct hook_desc *hdp;
+
+	if ((flags & HOOK_REMOVE) == 0) {
+		TAILQ_FOREACH(hdp, head, hd_list) {
+			(*hdp->hd_fn)(hdp->hd_arg);
+		}
+	} else {
+		while ((hdp = TAILQ_FIRST(head)) != NULL) {
+			TAILQ_REMOVE(head, hdp, hd_list);
+			(*hdp->hd_fn)(hdp->hd_arg);
+			if ((flags & HOOK_FREE) != 0)
+				free(hdp, M_DEVBUF);
+		}
+	}
 }
 #endif
