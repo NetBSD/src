@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.73 2002/12/15 11:24:56 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.74 2002/12/15 16:29:11 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2657,3 +2657,8 @@ sys/arch/arm/include/varargs.h			1.3
 
 	Fix pasto which caused compile problem.
 	[he, ticket #1034]
+
+sys/dev/pci/eap.c				1.59
+
+	Don't use tsleep() in attach, use delay().  Makes the driver
+	work properly with ``Ensoniq CT5880''-based audio card.
