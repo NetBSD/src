@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2000/07/27 17:53:36 mason Exp $
+# $NetBSD: GENERIC,v 1.8 2000/08/13 01:31:17 itojun Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -58,7 +58,6 @@ options 	EXEC_SCRIPT
 options 	GATEWAY		# packet forwarding
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.75 2000/08/01 08:23:37 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.76 2000/08/13 01:31:19 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 maxusers	32
 
@@ -72,7 +72,6 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
