@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.6 1996/12/08 00:22:10 cgd Exp $	*/
+/* $NetBSD: mcclock_isa.c,v 1.7 1997/04/06 23:22:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/kernel.h>

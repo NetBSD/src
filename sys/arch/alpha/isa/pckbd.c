@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.15 1996/12/08 00:22:11 cgd Exp $	*/
+/* $NetBSD: pckbd.c,v 1.16 1997/04/06 23:22:28 cgd Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/conf.h>
