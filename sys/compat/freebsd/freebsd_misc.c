@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.4 1998/05/02 18:14:06 christos Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.5 2000/04/21 16:18:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -103,22 +103,4 @@ freebsd_ntp_adjtime(p, v, retval)
 #endif
 
 	return ENOSYS;	/* XXX */
-}
-
-int
-freebsd_sys_issetugid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	/*
-	 * Note: OpenBSD sets a P_SUGIDEXEC flag set at execve() time,
-	 * we use P_SUGID because we consider changing the owners as
-	 * "tainting" as well.
-	 * This is significant for procs that start as root and "become"
-	 * a user without an exec - programs cannot know *everything*
-	 * that libc *might* have put in their data segment.
-	 */
-	*retval = (p->p_flag & P_SUGID) != 0;
-	return 0;
 }
