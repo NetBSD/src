@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.24 2002/03/17 19:41:01 atatat Exp $	*/
+/*	$NetBSD: qd.c,v 1.24.4.1 2002/05/16 11:53:26 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.24 2002/03/17 19:41:01 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.24.4.1 2002/05/16 11:53:26 gehenna Exp $");
 
 #include "opt_ddb.h"
 
@@ -239,8 +239,6 @@ int nNQD = NQD;
 int DMAbuf_size = DMA_BUFSIZ;
 int QDlast_DMAtype;             /* type of the last DMA operation */
 
-/* #define QDSSMAJOR	41 */	/* QDSS major device number.  We don't care! */
-
 /*
  * macro to get system time.  Used to time stamp event queue entries 
  */
@@ -335,7 +333,6 @@ extern	char *q_special[];
  */
 extern struct cdevsw *consops;
 cons_decl(qd);
-cdev_decl(qd);
 void setup_dragon __P((int));
 void init_shared __P((int));
 void clear_qd_screen __P((int));
@@ -350,6 +347,19 @@ void led_control __P((int, int, int));
 void qdstart(struct tty *);
 void qdearly(void);
 int qdpolling = 0;
+
+dev_type_open(qdopen);
+dev_type_close(qdclose);
+dev_type_read(qdread);
+dev_type_write(qdwrite);
+dev_type_ioctl(qdioctl);
+dev_type_stop(qdstop);
+dev_type_poll(qdpoll);
+
+const struct cdevsw qd_cdevsw = {
+	qdopen, qdclose, qdread, qdwrite, qdioctl,
+	qdstop, notty, qdpoll, nommap,
+};
 
 /*
  * LK-201 state storage for input console keyboard conversion to ASCII 
@@ -448,12 +458,8 @@ qdcnprobe(cndev)
 		return;
 
 	/* Find the console device corresponding to the console QDSS */
-	for (i = 0; i < nchrdev; i++)
-		if (cdevsw[i].d_open == qdopen)  {
-			      cndev->cn_dev = makedev(i,0);
-			      cndev->cn_pri = CN_INTERNAL;
-			      return;
-		 }
+	cndev->cn_dev = makedev(cdevsw_lookup_major(&qd_cdevsw), 0);
+	cndev->cn_pri = CN_INTERNAL;
 	return;
 }
 
@@ -1568,6 +1574,7 @@ int
 qdwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;
@@ -1597,6 +1604,7 @@ int
 qdread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;
