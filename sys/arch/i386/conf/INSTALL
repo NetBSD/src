@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.180 2001/12/28 17:37:04 augustss Exp $
+#	$NetBSD: INSTALL,v 1.181 2001/12/30 14:49:08 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -569,7 +569,7 @@ uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
 # USB HID device
-#uhidev*	at uhub? port ? configuration ? interface ?
+uhidev*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 #ums*	at uhidev? reportid ?
