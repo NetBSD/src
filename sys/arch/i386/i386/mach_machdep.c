@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.1 2001/07/14 02:04:25 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.2 2001/07/29 19:31:41 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <sys/exec_elf.h>
 
 #include <compat/mach/mach_types.h>
-#include <compat/mach/mach_syscallargs.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -89,5 +88,15 @@ mach_trap(frame)
 		return;
 	}
 
-	uprintf("unknown mach trap %d\n", frame.tf_eax);
+	switch (frame.tf_eax) {
+	case 0:
+		DPRINTF(("mach_pthread_self();\n"));
+		break;
+	case 1:
+		DPRINTF(("mach_pthread_set_self();\n"));
+		break;
+	default:
+		uprintf("unknown mach trap %d\n", frame.tf_eax);
+		break;
+	}
 }
