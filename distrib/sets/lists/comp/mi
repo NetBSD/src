@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.272 2000/11/08 16:28:00 itojun Exp $
+#	$NetBSD: mi,v 1.273 2000/11/09 12:39:30 ad Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -93,6 +93,8 @@
 ./usr/include/dev/i2c	comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h	comp-c-include
 ./usr/include/dev/i2c/i2c_eeprom.h	comp-c-include
+./usr/include/dev/i2o/i2o.h	comp-c-include
+./usr/include/dev/i2o/iopvar.h	comp-c-include
 ./usr/include/dev/ic	comp-c-include
 ./usr/include/dev/ic/ad1848reg.h	comp-c-include
 ./usr/include/dev/ic/ahareg.h	comp-c-include
