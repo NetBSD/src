@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 1998/03/02 19:57:01 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1998/12/11 12:18:46 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=		installboot
-NOMAN=
+NOMAN=		built in share/man/man8/man8.sparc
 
 LDSTATIC?=	-static
 
