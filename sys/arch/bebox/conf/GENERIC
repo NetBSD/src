@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 1997/12/01 15:21:50 kleink Exp $
+#	$NetBSD: GENERIC,v 1.4 1997/12/15 08:00:27 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -110,9 +110,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
-#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq ?
-#wd*	at wdc? drive ?
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wd*	at wdc? drive ?
 
 ed0	at isa? port 0x300 iomem 0xd0000 irq 5	# WD/SMC, 3C503, and NE[12]000
 #ipkdbif0 at ed?
