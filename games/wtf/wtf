@@ -1,18 +1,18 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.10 2003/04/10 09:21:19 jmmv Exp $
+#	$NetBSD: wtf,v 1.11 2003/04/25 19:08:31 jmmv Exp $
 #
 # Public domain
 #
 
 usage() {
-	echo "usage: `basename $0` [-f dbfile] [is] <acronym>"
+	echo "usage: `basename $0` [-f dbfile] [-t type] [is] <acronym>"
 	exit 1
 }
 
 acronyms=${ACRONYMDB:-/usr/share/misc/acronyms}
 
-args=`getopt f: $*`
+args=`getopt f:t: $*`
 if [ $? -ne 0 ]; then
 	usage
 fi
@@ -21,6 +21,9 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		-f)
 			acronyms=$2; shift
+			;;
+		-t)
+			acronyms=/usr/share/misc/acronyms.$2; shift
 			;;
 		--)
 			shift; break
