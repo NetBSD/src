@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.3 1997/05/08 13:39:04 matthias Exp $	*/
+/*	$NetBSD: fork.S,v 1.4 2000/06/26 06:33:01 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,12 +24,12 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fork.S,v 1.3 1997/05/08 13:39:04 matthias Exp $")
+	RCSID("$NetBSD: fork.S,v 1.4 2000/06/26 06:33:01 kleink Exp $")
 #endif
 
 /* r0  = pid. r1 = 0 in parent, 1 in child */
 
-SYSCALL(fork)
+_SYSCALL(_fork,fork)
 	cmpqd	0,r1
 	beq	0f
 	movqd	0,r0
