@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.38 2002/05/29 09:41:51 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.39 2002/07/09 12:49:10 pooka Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.38 2002/05/29 09:41:51 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.39 2002/07/09 12:49:10 pooka Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -203,7 +203,8 @@ int main(int argc, char **argv)
 void usage(void)
 {
     fprintf(stderr, 
-	"%s [-fq] [-m <makefile>] [-c <c file>] [-e <exec file>] <conffile>\n",
+	"%s [-foq] [-m <makefile>] [-c <c file>] [-e <exec file>]\n"
+	"\t  [-d <buildopts] [-D <src root>] [-L <lib dir>] <conffile>\n",
 	    pname);
     exit(1);
 }
