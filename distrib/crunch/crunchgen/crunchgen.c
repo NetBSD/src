@@ -742,6 +742,7 @@ void top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
+    fprintf(outmk, "STRIP=strip\n");
     fprintf(outmk, "LIBS=");
     fprintf(outmk, "-L%s ", libdir);
     output_strlst(outmk, libs);
@@ -760,7 +761,7 @@ void top_makefile_rules(FILE *outmk)
 	    execfname, execfname);
     fprintf(outmk, "\t$(CC) -static -o %s %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
 	    execfname, execfname);
-    fprintf(outmk, "\tstrip %s\n", execfname);
+    fprintf(outmk, "\t$(STRIP) %s\n", execfname);
     fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
     fprintf(outmk, "clean:\n\trm -f %s *.lo *.o *_stub.c\n",
