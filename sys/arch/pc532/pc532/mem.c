@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.32 2002/10/23 09:11:45 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.33 2002/11/21 00:22:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
