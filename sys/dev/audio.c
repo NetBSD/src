@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.175 2003/04/06 18:20:11 wiz Exp $	*/
+/*	$NetBSD: audio.c,v 1.176 2003/04/25 03:02:11 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.175 2003/04/06 18:20:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.176 2003/04/25 03:02:11 gmcgarry Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1854,26 +1854,9 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case AUDIO_SETINFO:
-	    {
-		struct audio_info *info = (struct audio_info *)addr;
-
 		DPRINTF(("AUDIO_SETINFO mode=0x%x\n", sc->sc_mode));
-
-		/* Ensure PLAY/RECORD mode is set correctly */
-		if (info->mode != ~0) {
-			if (sc->sc_mode & AUMODE_PLAY)
-				info->mode |= AUMODE_PLAY;
-			else
-				info->mode &= ~(AUMODE_PLAY|AUMODE_PLAY_ALL);
-			if (sc->sc_mode & AUMODE_RECORD)
-				info->mode |= AUMODE_RECORD;
-			else
-				info->mode &= ~AUMODE_RECORD;
-		}
-
-		error = audiosetinfo(sc, info);
+		error = audiosetinfo(sc, (struct audio_info *)addr);
 		break;
-	    }
 
 	case AUDIO_GETINFO:
 		DPRINTF(("AUDIO_GETINFO\n"));
@@ -1948,7 +1931,7 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 
 	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, sc->sc_mode));
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		/*
   		 * If half duplex and playing, audio_read() will generate
 		 * silence at the play rate; poll for silence being
@@ -1958,8 +1941,9 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 		    sc->sc_pr.stamp > sc->sc_wstamp :
 		    sc->sc_rr.used > sc->sc_rr.usedlow)
 			revents |= events & (POLLIN | POLLRDNORM);
+	}
 
-	if (events & (POLLOUT | POLLWRNORM))
+	if (events & (POLLOUT | POLLWRNORM)) {
 		/*
 		 * If half duplex and recording, audio_write() will throw
 		 * away play data, which means we are always ready to write.
@@ -1969,6 +1953,7 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||
 		    sc->sc_pr.used <= sc->sc_pr.usedlow)
 			revents |= events & (POLLOUT | POLLWRNORM);
+	}
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
