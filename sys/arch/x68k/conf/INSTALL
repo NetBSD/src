@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.25 2000/06/14 22:02:43 veego Exp $
+#	$NetBSD: INSTALL,v 1.26 2000/06/18 10:30:35 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.25 $"
+#ident 		"INSTALL-$Revision: 1.26 $"
 
 maxusers	8
 
@@ -168,7 +168,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
