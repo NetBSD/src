@@ -483,7 +483,7 @@
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/if.h
-./usr/include/net/if_arc.h
+./usr/include/net/if_arp.h
 ./usr/include/net/if_dl.h
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_llc.h
