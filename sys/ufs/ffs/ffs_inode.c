@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.67 2004/08/14 02:26:57 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.68 2004/08/15 07:19:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.67 2004/08/14 02:26:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.68 2004/08/15 07:19:56 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -186,7 +186,7 @@ ffs_truncate(v)
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
-	struct inode *oip;
+	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	daddr_t blks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
@@ -197,14 +197,14 @@ ffs_truncate(v)
 	int error, allerror = 0;
 	off_t osize;
 	int sync;
+	struct ufsmount *ump = oip->i_ump;
 
 	if (length < 0)
 		return (EINVAL);
-	oip = VTOI(ovp);
+
 	if (ovp->v_type == VLNK &&
-	    (oip->i_size < ovp->v_mount->mnt_maxsymlinklen ||
-	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
-	      DIP(oip, blocks) == 0))) {
+	    (oip->i_size < ump->um_maxsymlinklen ||
+	     (ump->um_maxsymlinklen == 0 && DIP(oip, blocks) == 0))) {
 		KDASSERT(length == 0);
 		memset(SHORTLINK(oip), 0, (size_t)oip->i_size);
 		oip->i_size = 0;
@@ -221,7 +221,7 @@ ffs_truncate(v)
 		return (error);
 #endif
 	fs = oip->i_fs;
-	if (length > fs->fs_maxfilesize)
+	if (length > ump->um_maxfilesize)
 		return (EFBIG);
 
 	if ((oip->i_flags & SF_SNAPSHOT) != 0)
@@ -243,9 +243,8 @@ ffs_truncate(v)
 		    blkroundup(fs, osize) != osize) {
 			error = ufs_balloc_range(ovp, osize,
 			    blkroundup(fs, osize) - osize, ap->a_cred, aflag);
-			if (error) {
+			if (error)
 				return error;
-			}
 			if (ioflag & IO_SYNC) {
 				ovp->v_size = blkroundup(fs, osize);
 				simple_lock(&ovp->v_interlock);
@@ -260,12 +259,12 @@ ffs_truncate(v)
 		if (error) {
 			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
 			    ap->a_cred, ap->a_p);
-			return error;
+			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(ovp->v_size == oip->i_size);
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 
 	/*
@@ -367,8 +366,8 @@ ffs_truncate(v)
 			DIP_ASSIGN(oip, db[i], 0);
 		}
 	}
+	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (sync) {
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
 		if (error && !allerror)
 			allerror = error;
@@ -499,8 +498,6 @@ done:
 	DIP_ADD(oip, blocks, -blocksreleased);
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
-	if (!sync)
-		oip->i_flag |= IN_UPDATE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif

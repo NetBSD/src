@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.57 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.58 2004/08/15 07:19:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.57 2004/05/25 14:55:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.58 2004/08/15 07:19:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ int	dirchk = 1;
 int	dirchk = 0;
 #endif
 
-#define FSFMT(vp)   ((vp)->v_mount->mnt_maxsymlinklen <= 0)
+#define FSFMT(vp)   (((vp)->v_mount->mnt_iflag & IMNT_DTYPE) ==  0)
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -105,8 +105,8 @@ ufs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	struct vnode *vdp;		/* vnode for directory being searched */
-	struct inode *dp;		/* inode for directory being searched */
+	struct vnode *vdp = ap->a_dvp;	/* vnode for directory being searched */
+	struct inode *dp = VTOI(vdp);	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
 	struct direct *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
@@ -130,12 +130,10 @@ ufs_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
-	const int needswap = UFS_MPNEEDSWAP(ap->a_dvp->v_mount);
-	int dirblksiz = DIRBLKSIZ;
+	struct ufsmount *ump = dp->i_ump;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
-	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
-		dirblksiz = APPLEUFS_DIRBLKSIZ;
-	}
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
@@ -143,12 +141,8 @@ ufs_lookup(v)
 	bp = NULL;
 	slotoffset = -1;
 	*vpp = NULL;
-	vdp = ap->a_dvp;
-	dp = VTOI(vdp);
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
-
-
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -180,8 +174,7 @@ ufs_lookup(v)
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN)) {
 		slotstatus = NONE;
-		slotneeded = (sizeof(struct direct) - MAXNAMLEN +
-			cnp->cn_namelen + 3) &~ 3;
+		slotneeded = DIRECTSIZ(cnp->cn_namelen);
 	}
 
 	/*
@@ -224,7 +217,7 @@ searchloop:
 			if (bp != NULL)
 				brelse(bp);
 			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL,
-					     &bp);
+			    &bp);
 			if (error)
 				return (error);
 			entryoffsetinblock = 0;
@@ -273,7 +266,7 @@ searchloop:
 					slotstatus = FOUND;
 					slotoffset = dp->i_offset;
 					slotsize = ufs_rw16(ep->d_reclen,
-						needswap);
+					    needswap);
 				} else if (slotstatus == NONE) {
 					slotfreespace += size;
 					if (slotoffset == -1)
@@ -282,8 +275,8 @@ searchloop:
 						slotstatus = COMPACT;
 						slotsize = dp->i_offset +
 						    ufs_rw16(ep->d_reclen,
-							     needswap)
-						    - slotoffset;
+							     needswap) -
+						    slotoffset;
 					}
 				}
 			}
@@ -294,28 +287,25 @@ searchloop:
 		 */
 		if (ep->d_ino) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (vdp->v_mount->mnt_maxsymlinklen > 0 ||
-			    needswap != 0)
-				namlen = ep->d_namlen;
-			else
+			if (FSFMT(vdp) && needswap == 0)
 				namlen = ep->d_type;
+			else
+				namlen = ep->d_namlen;
 #else
-			if (vdp->v_mount->mnt_maxsymlinklen <= 0
-			    && needswap != 0) 
+			if (FSFMT(vdp) && needswap != 0) 
 				namlen = ep->d_type;
 			else
 				namlen = ep->d_namlen;
 #endif
 			if (namlen == cnp->cn_namelen &&
 			    !memcmp(cnp->cn_nameptr, ep->d_name,
-				(unsigned)namlen)) {
+			    (unsigned)namlen)) {
 				/*
 				 * Save directory entry's inode number and
 				 * reclen in ndp->ni_ufs area, and release
 				 * directory buffer.
 				 */
-				if (vdp->v_mount->mnt_maxsymlinklen > 0 &&
-				    ep->d_type == DT_WHT) {
+				if (!FSFMT(vdp) && ep->d_type == DT_WHT) {
 					slotstatus = FOUND;
 					slotoffset = dp->i_offset;
 					slotsize = ufs_rw16(ep->d_reclen,
@@ -641,22 +631,20 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 {
 	int i;
 	int namlen;
-	const int needswap = UFS_MPNEEDSWAP(dp->v_mount);
-	int dirblksiz = DIRBLKSIZ;
-	if (UFS_MPISAPPLEUFS(dp->v_mount)) {
-		dirblksiz = APPLEUFS_DIRBLKSIZ;
-	}
+	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	int dirblksiz = ump->um_dirblksiz;
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	if (dp->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
+	if (FSFMT(dp) && needswap == 0)
+		namlen = ep->d_type;
+	else
 		namlen = ep->d_namlen;
-	else
-		namlen = ep->d_type;
 #else
-	if (dp->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
+	if (FSFMT(dp) && needswap != 0)
 		namlen = ep->d_type;
 	else
-	namlen = ep->d_namlen;
+		namlen = ep->d_namlen;
 #endif
 	if ((ufs_rw16(ep->d_reclen, needswap) & 0x3) != 0 ||
 	    ufs_rw16(ep->d_reclen, needswap) >
@@ -706,11 +694,10 @@ ufs_makedirentry(ip, cnp, newdirp)
 	newdirp->d_namlen = cnp->cn_namelen;
 	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);
 	newdirp->d_name[cnp->cn_namelen] = '\0';
-	if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0)
-		newdirp->d_type = IFTODT(ip->i_mode);
-	else {
+	if (FSFMT(ITOV(ip)))
 		newdirp->d_type = 0;
-	}
+	else
+		newdirp->d_type = IFTODT(ip->i_mode);
 }
 
 /*
@@ -740,11 +727,9 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	int error, ret, blkoff, loc, spacefree, flags;
 	char *dirbuf;
 	struct timespec ts;
-	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
-	int dirblksiz = DIRBLKSIZ;
-	if (UFS_MPISAPPLEUFS(dvp->v_mount)) {
-		dirblksiz = APPLEUFS_DIRBLKSIZ;
-	}
+	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	int dirblksiz = ump->um_dirblksiz;
 
 	error = 0;
 	cr = cnp->cn_cred;
@@ -777,7 +762,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		uvm_vnp_setsize(dvp, dp->i_size);
 		dirp->d_reclen = ufs_rw16(dirblksiz, needswap);
 		dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
+		if (FSFMT(dvp)) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (needswap == 0) {
 #else
@@ -788,8 +773,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				dirp->d_type = tmp;
 			}
 		}
-		blkoff = dp->i_offset &
-		    (VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_iosize - 1);
+		blkoff = dp->i_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
 		memcpy((caddr_t)bp->b_data + blkoff, (caddr_t)dirp,
 		    newentrysize);
 		if (DOINGSOFTDEP(dvp)) {
@@ -917,7 +901,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	}
 	dirp->d_reclen = ufs_rw16(dirp->d_reclen, needswap);
 	dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
-	if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
+	if (FSFMT(dvp)) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (needswap == 0) {
 #else
@@ -1065,7 +1049,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(vdp->v_mount));
-	if (vdp->v_mount->mnt_maxsymlinklen > 0)
+	if (!FSFMT(vdp))
 		ep->d_type = newtype;
 	oip->i_ffs_effnlink--;
 	if (DOINGSOFTDEP(vdp)) {
@@ -1130,12 +1114,12 @@ ufs_dirempty(ip, parentino, cred)
 			continue;
 		/* accept only "." and ".." */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
-			namlen = dp->d_namlen;
-		else
+		if (FSFMT(ITOV(ip)) && needswap == 0)
 			namlen = dp->d_type;
+		else
+			namlen = dp->d_namlen;
 #else
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
+		if (FSFMT(ITOV(ip)) && needswap != 0)
 			namlen = dp->d_type;
 		else
 			namlen = dp->d_namlen;
@@ -1196,14 +1180,12 @@ ufs_checkpath(source, target, cred)
 		if (error != 0)
 			break;
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (vp->v_mount->mnt_maxsymlinklen > 0 ||
-			needswap != 0)
-			namlen = dirbuf.dotdot_namlen;
-		else
+		if (FSFMT(vp) && needswap == 0)
 			namlen = dirbuf.dotdot_type;
+		else
+			namlen = dirbuf.dotdot_namlen;
 #else
-		if (vp->v_mount->mnt_maxsymlinklen == 0 &&
-		    needswap != 0)
+		if (FSFMT(vp) && needswap != 0)
 			namlen = dirbuf.dotdot_type;
 		else
 			namlen = dirbuf.dotdot_namlen;
