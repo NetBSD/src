@@ -5,8 +5,6 @@ CFLAGS+=-I. -I${.CURDIR}
 SRCS=	config.c main.c lang.c mkioconf.c mkmakefile.c mkglue.c mkheaders.c \
 	mkswapconf.c specfile.c
 MAN8=	config.0
-DPADD=	${LIBLN}
-LDADD=	-lln
 CLEANFILES+=y.tab.h lang.c config.c y.tab.c
 
 .include <bsd.prog.mk>
