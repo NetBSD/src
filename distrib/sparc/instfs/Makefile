@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/11/08 16:52:20 tron Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/05 21:16:52 thorpej Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -10,6 +10,7 @@ TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 
 MOUNT_POINT?=	/mnt
 # DEV/RDEV file system device, CDEV/RDEV vnconfig device
@@ -20,9 +21,8 @@ VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 INSTFS?=	instfs.tgz
 
-MINIROOT_IMAGE!=cd ${MINIROOT}; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/miniroot.fs\n" | \
-		${MAKE} -s -f-
+MINIROOTDIR!=	cd ${MINIROOT} && ${PRINTOBJDIR}
+MINIROOT_IMAGE=	${MINIROOTDIR}/miniroot.fs
 
 all: ${INSTFS}
 
