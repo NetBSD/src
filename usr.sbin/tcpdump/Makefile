@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1993/11/14 21:19:50 deraadt Exp $
+# $Id: Makefile,v 1.2 1993/12/05 01:01:38 deraadt Exp $
 #
 # Possible Options:
 #  -DCSLIP	include support for kernel slip interface
@@ -12,6 +12,9 @@ PROG=	tcpdump
 MAN8=	tcpdump.0
 DEFINES = -DCSLIP -DPPP -DFDDI
 CFLAGS+=-I. -I${.CURDIR} ${DEFINES}
+
+LDADD=  -ll
+DPADD=  ${LIBL}
 
 SRCS=	tcpdump.c addrtoname.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \
