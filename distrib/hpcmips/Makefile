@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/11 15:34:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/12 05:33:59 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -30,3 +30,5 @@ release: check_RELEASEDIR .WAIT ${KERNELS}
 	${MAKESUMS} -t ${ITARGET} '*.gz' '*.exe'
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
+
+.include <bsd.prog.mk>
