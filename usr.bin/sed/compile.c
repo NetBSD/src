@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: compile.c,v 1.13 1994/11/15 19:03:25 mycroft Exp $";
+static char *rcsid = "$Id: compile.c,v 1.14 1995/03/09 11:19:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static char	 *compile_subst __P((char *, struct s_subst *));
 static char	 *compile_text __P((void));
 static char	 *compile_tr __P((char *, char **));
 static struct s_command
-		**compile_stream __P((char *, struct s_command **, char *));
+		**compile_stream __P((struct s_command **));
 static char	 *duptoeol __P((char *, char *));
 static void	  enterlabel __P((struct s_command *));
 static struct s_command
@@ -92,6 +92,7 @@ struct s_format {
 
 static struct s_format cmd_fmts[] = {
 	{'{', 2, GROUP},
+	{'}', 0, ENDGROUP},
 	{'a', 1, TEXT},
 	{'b', 2, BRANCH},
 	{'c', 2, TEXT},
@@ -131,7 +132,7 @@ struct s_command *prog;
 void
 compile()
 {
-	*compile_stream(NULL, &prog, NULL) = NULL;
+	*compile_stream(&prog) = NULL;
 	fixuplabel(prog, NULL);
 	uselabel();
 	appends = xmalloc(sizeof(struct s_appends) * appendnum);
@@ -145,21 +146,19 @@ compile()
 	} while (0)
 
 static struct s_command **
-compile_stream(terminator, link, p)
-	char *terminator;
+compile_stream(link)
 	struct s_command **link;
-	register char *p;
 {
+	register char *p;
 	static char lbuf[_POSIX2_LINE_MAX + 1];	/* To save stack */
-	struct s_command *cmd, *cmd2;
+	struct s_command *cmd, *cmd2, *stack;
 	struct s_format *fp;
 	int naddr;				/* Number of addresses */
 
-	if (p != NULL)
-		goto semicolon;
+	stack = 0;
 	for (;;) {
 		if ((p = cu_fgets(lbuf, sizeof(lbuf))) == NULL) {
-			if (terminator != NULL)
+			if (stack != 0)
 				err(COMPILE, "unexpected EOF (pending }'s)");
 			return (link);
 		}
@@ -167,11 +166,6 @@ compile_stream(terminator, link, p)
 semicolon:	EATSPACE();
 		if (p && (*p == '#' || *p == '\0'))
 			continue;
-		if (*p == '}') {
-			if (terminator == NULL)
-				err(COMPILE, "unexpected }");
-			return (link);
-		}
 		*link = cmd = xmalloc(sizeof(struct s_command));
 		link = &cmd->next;
 		cmd->nonsel = cmd->inrange = 0;
@@ -218,20 +212,24 @@ nonsel:		/* Now parse the command */
 		case GROUP:			/* { */
 			p++;
 			EATSPACE();
-			if (!*p)
-				p = NULL;
-			cmd2 = xmalloc(sizeof(struct s_command));
-			cmd2->code = '}';
-			*compile_stream("}", &cmd->u.c, p) = cmd2;
-			cmd->next = cmd2;
-			link = &cmd2->next;
+			cmd->next = stack;
+			stack = cmd;
+			link = &cmd->u.c;
+			if (*p)
+				goto semicolon;
+			break;
+		case ENDGROUP:
 			/*
 			 * Short-circuit command processing, since end of
 			 * group is really just a noop.
 			 */
-			cmd2->nonsel = 1;
-			cmd2->a1 = cmd2->a2 = 0;
-			break;
+			cmd->nonsel = 1;
+			if (stack == 0)
+				err(COMPILE, "unexpected }");
+			cmd2 = stack;
+			stack = cmd2->next;
+			cmd2->next = cmd;
+			/*FALLTHROUGH*/
 		case EMPTY:		/* d D g G h H l n N p P q x = \0 */
 			p++;
 			EATSPACE();
