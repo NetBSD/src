@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.4 2001/09/10 12:33:25 ad Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.5 2003/04/17 00:29:43 thorpej Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,13 +15,23 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.4 2001/09/10 12:33:25 ad Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.5 2003/04/17 00:29:43 thorpej Exp $");
 #endif /* not lint */
+
+/*
+ * NOTE: We are also built for inclusion in libcrypto; when built for that
+ * environment, use the libcrypto versions of the MD5 routines, so save
+ * having to pull two versions into the same program.
+ */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef libcrypto
+#include <openssl/md5.h>
+#else
 #include <md5.h>
+#endif
 #include <string.h>
 
 #define MD5_MAGIC	"$1$"
@@ -32,7 +42,15 @@ char	*__md5crypt(const char *pw, const char *salt);	/* XXX */
 static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static void to64(char *, u_int32_t, int);
+#ifdef libcrypto
+#define	INIT(x)			MD5_Init((x))
+#define	UPDATE(x, b, l)		MD5_Update((x), (b), (l))
+#define	FINAL(v, x)		MD5_Final((v), (x))
+#else
+#define	INIT(x)			MD5Init((x))
+#define	UPDATE(x, b, l)		MD5Update((x), (b), (l))
+#define	FINAL(v, x)		MD5Final((v), (x))
+#endif
 
 static void
 to64(char *s, u_int32_t v, int n)
@@ -74,26 +92,26 @@ __md5crypt(const char *pw, const char *salt)
 	/* get the length of the true salt */
 	sl = ep - sp;
 
-	MD5Init(&ctx);
+	INIT(&ctx);
 
 	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx, (const unsigned char *)pw, pwl);
+	UPDATE(&ctx, (const unsigned char *)pw, pwl);
 
 	/* Then our magic string */
-	MD5Update(&ctx, (const unsigned char *)MD5_MAGIC, MD5_MAGIC_LEN);
+	UPDATE(&ctx, (const unsigned char *)MD5_MAGIC, MD5_MAGIC_LEN);
 
 	/* Then the raw salt */
-	MD5Update(&ctx, (const unsigned char *)sp, sl);
+	UPDATE(&ctx, (const unsigned char *)sp, sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
-	MD5Init(&ctx1);
-	MD5Update(&ctx1, (const unsigned char *)pw, pwl);
-	MD5Update(&ctx1, (const unsigned char *)sp, sl);
-	MD5Update(&ctx1, (const unsigned char *)pw, pwl);
-	MD5Final(final, &ctx1);
+	INIT(&ctx1);
+	UPDATE(&ctx1, (const unsigned char *)pw, pwl);
+	UPDATE(&ctx1, (const unsigned char *)sp, sl);
+	UPDATE(&ctx1, (const unsigned char *)pw, pwl);
+	FINAL(final, &ctx1);
 
 	for (pl = pwl; pl > 0; pl -= 16)
-		MD5Update(&ctx, final, (unsigned int)(pl > 16 ? 16 : pl));
+		UPDATE(&ctx, final, (unsigned int)(pl > 16 ? 16 : pl));
 
 	/* Don't leave anything around in vm they could use. */
 	memset(final, 0, sizeof(final));
@@ -101,16 +119,16 @@ __md5crypt(const char *pw, const char *salt)
 	/* Then something really weird... */
 	for (i = pwl; i != 0; i >>= 1)
 		if ((i & 1) != 0)
-		    MD5Update(&ctx, final, 1);
+		    UPDATE(&ctx, final, 1);
 		else
-		    MD5Update(&ctx, (const unsigned char *)pw, 1);
+		    UPDATE(&ctx, (const unsigned char *)pw, 1);
 
 	/* Now make the output string */
 	memcpy(passwd, MD5_MAGIC, MD5_MAGIC_LEN);
 	strlcpy(passwd + MD5_MAGIC_LEN, sp, sl + 1);
 	strcat(passwd, "$");
 
-	MD5Final(final, &ctx);
+	FINAL(final, &ctx);
 
 	/*
 	 * And now, just to make sure things don't run too fast. On a 60 MHz
@@ -118,25 +136,25 @@ __md5crypt(const char *pw, const char *salt)
 	 * a 1000 entry dictionary...
 	 */
 	for (i = 0; i < 1000; i++) {
-		MD5Init(&ctx1);
+		INIT(&ctx1);
 
 		if ((i & 1) != 0)
-			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
+			UPDATE(&ctx1, (const unsigned char *)pw, pwl);
 		else
-			MD5Update(&ctx1, final, 16);
+			UPDATE(&ctx1, final, 16);
 
 		if ((i % 3) != 0)
-			MD5Update(&ctx1, (const unsigned char *)sp, sl);
+			UPDATE(&ctx1, (const unsigned char *)sp, sl);
 
 		if ((i % 7) != 0)
-			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
+			UPDATE(&ctx1, (const unsigned char *)pw, pwl);
 
 		if ((i & 1) != 0)
-			MD5Update(&ctx1, final, 16);
+			UPDATE(&ctx1, final, 16);
 		else
-			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
+			UPDATE(&ctx1, (const unsigned char *)pw, pwl);
 
-		MD5Final(final, &ctx1);
+		FINAL(final, &ctx1);
 	}
 
 	p = passwd + sl + MD5_MAGIC_LEN + 1;
