@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.44 2001/12/31 15:00:58 uwe Exp $ */
+/*	$NetBSD: sbus.c,v 1.45 2002/03/11 16:27:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,8 +110,7 @@ static paddr_t sbus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 				  int, int));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
-		bus_type_t,		/*slot*/
-		bus_addr_t,		/*offset*/
+		bus_addr_t,		/*coded slot+offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
@@ -290,12 +289,11 @@ sbus_attach_mainbus(parent, self, aux)
 	if (ma->ma_size == 0)
 		printf("%s: no Sbus registers", self->dv_xname);
 
-	if (bus_space_map2(ma->ma_bustag,
-			  (bus_type_t)ma->ma_iospace,
-			  (bus_addr_t)ma->ma_paddr,
-			  (bus_size_t)ma->ma_size,
+	if (bus_space_map(ma->ma_bustag,
+			  ma->ma_paddr,
+			  ma->ma_size,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &sc->sc_bh) != 0) {
+			  &sc->sc_bh) != 0) {
 		panic("%s: can't map sbusbusreg", self->dv_xname);
 	}
 #endif
@@ -333,12 +331,12 @@ sbus_attach_iommu(parent, self, aux)
 	if (ia->iom_nreg == 0)
 		panic("%s: no Sbus registers", self->dv_xname);
 
-	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)ia->iom_reg[0].ior_iospace,
-			  (bus_addr_t)ia->iom_reg[0].ior_pa,
+	if (bus_space_map(ia->iom_bustag,
+			  BUS_ADDR(ia->iom_reg[0].ior_iospace,
+				   ia->iom_reg[0].ior_pa),
 			  (bus_size_t)ia->iom_reg[0].ior_size,
 			  BUS_SPACE_MAP_LINEAR,
-			  0, &sc->sc_bh) != 0) {
+			  &sc->sc_bh) != 0) {
 		panic("%s: can't map sbusbusreg", self->dv_xname);
 	}
 
@@ -547,58 +545,56 @@ sbus_destroy_attach_args(sa)
 
 
 int
-_sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
+_sbus_bus_map(t, ba, size, flags, va, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
+	bus_addr_t ba;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t va;
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
-	int slot = btype;
+	int slot = BUS_ADDR_IOSPACE(ba);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
-		bus_type_t iospace;
+		struct sbus_range *rp = &sc->sc_range[i];
 
-		if (sc->sc_range[i].cspace != slot)
+		if (rp->cspace != slot)
 			continue;
 
 		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].poffset + BUS_ADDR_PADDR(offset);
-		iospace = sc->sc_range[i].pspace;
-		return (bus_space_map2(sc->sc_bustag, iospace, paddr,
-					size, flags, vaddr, hp));
+		return (bus_space_map2(sc->sc_bustag,
+				BUS_ADDR(rp->pspace,
+					 rp->poffset + BUS_ADDR_PADDR(ba)),
+				size, flags, va, hp));
 	}
 
 	return (EINVAL);
 }
 
 static paddr_t
-sbus_bus_mmap(t, baddr, off, prot, flags)
+sbus_bus_mmap(t, ba, off, prot, flags)
 	bus_space_tag_t t;
-	bus_addr_t baddr;
+	bus_addr_t ba;
 	off_t off;
 	int prot;
 	int flags;
 {
 	struct sbus_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(baddr);
+	int slot = BUS_ADDR_IOSPACE(ba);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
+		struct sbus_range *rp = &sc->sc_range[i];
 
-		if (sc->sc_range[i].cspace != slot)
+		if (rp->cspace != slot)
 			continue;
 
-		paddr = BUS_ADDR(sc->sc_range[i].pspace,
-			    sc->sc_range[i].poffset + BUS_ADDR_PADDR(baddr));
-		return (bus_space_mmap(sc->sc_bustag, paddr, off,
-				       prot, flags));
+		return (bus_space_mmap(sc->sc_bustag,
+				BUS_ADDR(rp->pspace,
+					 rp->poffset + BUS_ADDR_PADDR(ba)),
+				off, prot, flags));
 	}
 
 	return (-1);

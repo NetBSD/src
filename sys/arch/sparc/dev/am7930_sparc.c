@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.48 2001/10/03 00:04:48 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.49 2002/03/11 16:27:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -181,14 +181,10 @@ am7930attach_mainbus(parent, self, aux)
 
 	sc->sc_bustag = ma->ma_bustag;
 
-	if (bus_space_map2(
+	if (bus_space_map(
 			ma->ma_bustag,
-			ma->ma_iospace,
-			ma->ma_paddr,
-			sizeof(struct am7930),
-			BUS_SPACE_MAP_LINEAR,
-			0,
-			&bh) != 0) {
+			ma->ma_iospace, ma->ma_paddr, sizeof(struct am7930),
+			BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
@@ -207,13 +203,9 @@ am7930attach_sbus(parent, self, aux)
 
 	sc->sc_bustag = sa->sa_bustag;
 
-	if (sbus_bus_map(
-			sa->sa_bustag,
-			sa->sa_slot,
-			sa->sa_offset,
-			sizeof(struct am7930),
-			0, 0,
-			&bh) != 0) {
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset, sizeof(struct am7930),
+			 0, &bh) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.c,v 1.2 2000/03/14 21:18:27 jdc Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.3 2002/03/11 16:27:03 pk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,8 +93,7 @@ auxiotwoattach(parent, self, aux)
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset,
 			 sizeof(long),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("auxiotwoattach: can't map register\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.86 2002/02/25 16:18:19 kleink Exp $ */
+/*	$NetBSD: clock.c,v 1.87 2002/03/11 16:27:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -286,7 +286,7 @@ oclockmatch(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -307,13 +307,11 @@ oclockattach(parent, self, aux)
 
 	oldclk = 1;  /* we've got an oldie! */
 
-	if (obio_bus_map(bt,
-			 oba->oba_paddr,
-			 0,			/* offset */
-			 sizeof(struct intersil7170),
-			 BUS_SPACE_MAP_LINEAR,	/* flags */
-			 0,			/* vaddr */
-			 &bh) != 0) {
+	if (bus_space_map(bt,
+			  oba->oba_paddr,
+			  sizeof(struct intersil7170),
+			  BUS_SPACE_MAP_LINEAR,	/* flags */
+			  &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
@@ -402,7 +400,7 @@ eeprom_match(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -422,13 +420,11 @@ eeprom_attach(parent, self, aux)
 	eeprom_attached = 1;
 	printf("\n");
 
-	if (obio_bus_map(oba->oba_bustag,
-			 oba->oba_paddr,
-			 0,			/* offset */
-			 EEPROM_SIZE,
-			 BUS_SPACE_MAP_LINEAR,	/* flags */
-			 0,			/* vaddr */
-			 &bh) != 0) {
+	if (bus_space_map(oba->oba_bustag,
+			  oba->oba_paddr,
+			  EEPROM_SIZE,
+			  BUS_SPACE_MAP_LINEAR,	/* flags */
+			  &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
@@ -479,7 +475,7 @@ clockmatch_obio(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -504,12 +500,10 @@ clockattach_mainbus(parent, self, aux)
 	 * of reloading the cpu type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
-	if (bus_space_map2(bt,
-			   ma->ma_iospace,
+	if (bus_space_map(bt,
 			   ma->ma_paddr,
 			   ma->ma_size,
 			   BUS_SPACE_MAP_LINEAR,
-			   0,
 			   &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
@@ -535,10 +529,8 @@ clockattach_obio(parent, self, aux)
 		node = sa->sa_node;
 		bt = sa->sa_bustag;
 		if (sbus_bus_map(bt,
-				 sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+			sa->sa_slot, sa->sa_offset, sa->sa_size,
+			BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
@@ -552,13 +544,11 @@ clockattach_obio(parent, self, aux)
 		 */
 		node = 0;
 		bt = oba->oba_bustag;
-		if (obio_bus_map(bt,
-				 oba->oba_paddr,
-				 0,			/* offset */
-				 2048,			/* size */
-				 BUS_SPACE_MAP_LINEAR,	/* flags */
-				 0,			/* vaddr */
-				 &bh) != 0) {
+		if (bus_space_map(bt,
+				  oba->oba_paddr,
+				  2048,			/* size */
+				  BUS_SPACE_MAP_LINEAR,	/* flags */
+				  &bh) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
@@ -699,7 +689,7 @@ timermatch_obio(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				4,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
@@ -721,7 +711,6 @@ timerattach_mainbus(parent, self, aux)
 	 * microtime() faster.
 	 */
 	if (bus_space_map2(ma->ma_bustag,
-			   ma->ma_iospace,
 			   ma->ma_paddr,
 			   sizeof(struct timerreg_4),
 			   BUS_SPACE_MAP_LINEAR,
@@ -755,9 +744,10 @@ timerattach_obio(parent, self, aux)
 
 		/* Map the system timer */
 		i = sa->sa_nreg - 1;
-		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_reg[i].sbr_slot,
-				 sa->sa_reg[i].sbr_offset,
+		if (bus_space_map2(sa->sa_bustag,
+				 BUS_ADDR(
+					sa->sa_reg[i].sbr_slot,
+					sa->sa_reg[i].sbr_offset),
 				 sizeof(struct timer_4m),
 				 BUS_SPACE_MAP_LINEAR,
 				 TIMERREG_VA, &bh) != 0) {
@@ -790,7 +780,7 @@ timerattach_obio(parent, self, aux)
 					 sa->sa_reg[i].sbr_offset,
 					 sizeof(struct timer_4m),
 					 BUS_SPACE_MAP_LINEAR,
-					 0, &bh) != 0) {
+					 &bh) != 0) {
 				printf("%s: can't map register\n",
 					self->dv_xname);
 				return;
@@ -810,13 +800,12 @@ timerattach_obio(parent, self, aux)
 		struct obio4_attach_args *oba = &uoba->uoba_oba4;
 		bus_space_handle_t bh;
 
-		if (obio_bus_map(oba->oba_bustag,
-				 oba->oba_paddr,
-				 0,	/* offset */
-				 sizeof(struct timerreg_4),
-				 BUS_SPACE_MAP_LINEAR,
-				 (void *)TIMERREG_VA,
-				 &bh) != 0) {
+		if (bus_space_map2(oba->oba_bustag,
+				  oba->oba_paddr,
+				  sizeof(struct timerreg_4),
+				  BUS_SPACE_MAP_LINEAR,
+				  TIMERREG_VA,
+				  &bh) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
