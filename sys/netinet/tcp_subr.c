@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.111 2001/06/02 16:17:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.112 2001/06/12 15:17:28 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1564,7 +1564,7 @@ tcp_mss_to_advertise(ifp, af)
  * We are passed the TCPCB for the actual connection.  If we
  * are the server, we are called by the compressed state engine
  * when the 3-way handshake is complete.  If we are the client,
- * we are called when we recieve the SYN,ACK from the server.
+ * we are called when we receive the SYN,ACK from the server.
  *
  * NOTE: Our advertised MSS value must be initialized in the TCPCB
  * before this routine is called!

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.4 2001/05/03 23:07:08 reinoud Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.5 2001/06/12 15:17:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -419,7 +419,7 @@ rpckbd_cngetc(void *v, u_int *type, int *data)
 	int val;
 
 	for (;;) {
-		/* wait for a recieve event */
+		/* wait for a receive event */
 		while ((bus_space_read_1(console_kbd.sc_iot, console_kbd.sc_ioh, KBD_STATUS) & KBD_ST_RXF) == 0) ;
 		delay(10);
 

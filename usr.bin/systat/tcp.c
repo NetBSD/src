@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.8 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: tcp.c,v 1.9 2001/06/12 15:17:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.8 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.9 2001/06/12 15:17:29 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ labeltcpsyn(void)
 	LHD(0,  "entries added");		
 	LHD(1,  "connections completed");
 	LHD(2,  "entries timed out");
-	LHD(3,  "duplicate SYNs recieved");
+	LHD(3,  "duplicate SYNs received");
 	LHD(4,  "hash collisions");
 	LHD(5,  "retransmissions");
 	LHD(6,  "entries aborted (no memory)");

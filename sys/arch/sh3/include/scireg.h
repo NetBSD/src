@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
+/* $NetBSD: scireg.h,v 1.3 2001/06/12 15:17:20 wiz Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -58,7 +58,7 @@
 #endif
 
 #define SCSCR_TIE	0x80	/* Transmit Interrupt Enable */
-#define SCSCR_RIE	0x40	/* Recieve Interrupt Enable */
+#define SCSCR_RIE	0x40	/* Receive Interrupt Enable */
 #define SCSCR_TE	0x20	/* Transmit Enable */
 #define SCSCR_RE	0x10	/* Receive Enable */
 #define SCSCR_MPIE	0x08	/* Multi Processor Interrupt Enable */

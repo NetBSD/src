@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.2 2001/06/12 15:17:16 wiz Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ void snreset __P((struct sn_softc *sc));
 #define FCSSIZE	4		/* size of FCS append te received packets */
 
 /*
- * maximum recieve packet size plus 2 byte pad to make each
+ * maximum receive packet size plus 2 byte pad to make each
  * one aligned. 4 byte slop (required for eobc)
  */
 #define RBASIZE	(sizeof(struct ether_header) + ETHERMTU	+ FCSSIZE + 2 + 4)
@@ -1152,7 +1152,7 @@ printf("%lx,%lx\n",SRD(rxp->pkt_ptrlo),SRD(p_rra[orra].buff_ptrlo));
 		wbflush();
 
 		/*
-		 * give recieve descriptor back to chip simple
+		 * give receive descriptor back to chip simple
 		 * list is circular
 		 */
 		SWR(rxp->in_use, 1);

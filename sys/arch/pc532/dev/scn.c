@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.48 2001/05/30 15:24:36 lukem Exp $ */
+/*	$NetBSD: scn.c,v 1.49 2001/06/12 15:17:19 wiz Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1086,7 +1086,7 @@ scnopen(dev, flag, mode, p)
 		/* Turn on DTR and RTS. */
 		SCN_OP_BIS(sc, sc->sc_op_rts | sc->sc_op_dtr);
 
-		/* enable reciever interrupts */
+		/* enable receiver interrupts */
 		scn_rxenable(sc);
 		hwset = 1;
 
@@ -1497,7 +1497,7 @@ scnrxintr(arg)
 /*
  * Here on soft interrupt (at spltty) to empty ring buffers.
  *
- * Dave's original scheme was to use the DUART reciever timeout
+ * Dave's original scheme was to use the DUART receiver timeout
  * interrupt. This requires 2692's (which my board doesn't have), and
  * I also liked the idea of using the C/T to generate alternate and/or
  * arbitrary bauds. -plb
