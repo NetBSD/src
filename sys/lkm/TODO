@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 1996/08/22 20:18:11 explorer Exp $
+$NetBSD: TODO,v 1.2 1996/11/05 02:34:24 explorer Exp $
 
 Always a lot to do.  :)
 
@@ -9,9 +9,6 @@ o  Learn how loadable devices can configure themselves, like the interrupt,
 o  Figgure out if binary emulation (freebsd, linux, ultrix, etc) can be
    made loadable or not.  [They can be.  I have some kernel mods which
    will make freebsd and linux loadable at least]
-
-o  decide if fifofs is useful in any way as is, or if it should install
-   syscalls as well.  [it will have to install syscalls]
 
 o  decide if lfs is useful in any way as is, or if it should install
    syscalls as well.  Of course, it's broken in other ways, but...
