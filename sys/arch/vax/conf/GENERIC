@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2004/06/26 07:32:09 abs Exp $
+# $NetBSD: GENERIC,v 1.123 2004/06/28 21:07:49 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -126,6 +126,7 @@ options 	SYSVSEM
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
