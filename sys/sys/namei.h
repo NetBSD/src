@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.29 2003/06/29 22:32:26 fvdl Exp $	*/
+/*	$NetBSD: namei.h,v 1.30 2003/07/08 06:49:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -186,11 +186,10 @@ MALLOC_DECLARE(M_NAMEI);
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
-int	namei __P((struct nameidata *ndp));
+int	namei __P((struct nameidata *));
 uint32_t namei_hash __P((const char *, const char **));
-int	lookup __P((struct nameidata *ndp));
-int	relookup __P((struct vnode *dvp, struct vnode **vpp,
-		      struct componentname *cnp));
+int	lookup __P((struct nameidata *));
+int	relookup __P((struct vnode *, struct vnode **, struct componentname *));
 void cache_purge __P((struct vnode *));
 int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
 int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));

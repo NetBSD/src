@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97 2003/06/29 22:32:23 fvdl Exp $	*/
+/*	$NetBSD: exec.h,v 1.98 2003/07/08 06:49:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -159,7 +159,7 @@ struct exec_package {
 #define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
-	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
+	int	(*ev_proc) __P((struct proc *, struct exec_vmcmd *));
 				/* procedure to run for region of vmspace */
 	u_long	ev_len;		/* length of the segment to map */
 	u_long	ev_addr;	/* address in the vmspace to place it at */
@@ -185,7 +185,7 @@ void	kill_vmcmd		__P((struct exec_vmcmd **));
 int	exec_makecmds		__P((struct proc *, struct exec_package *));
 int	exec_runcmds		__P((struct proc *, struct exec_package *));
 void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
-void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
+void	kill_vmcmds		__P((struct exec_vmcmd_set *));
 int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
@@ -216,10 +216,9 @@ int	exec_remove		__P((const struct execsw *));
 #endif /* LKM */
 
 #ifdef DEBUG
-void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
-		    int (*proc) __P((struct proc *p, struct exec_vmcmd *)),
-		    u_long len, u_long addr, struct vnode *vp, u_long offset,
-		    u_int prot, int flags));
+void	new_vmcmd __P((struct exec_vmcmd_set *,
+		    int (*) __P((struct proc *, struct exec_vmcmd *)),
+		    u_long, u_long, struct vnode *, u_long, u_int, int));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \

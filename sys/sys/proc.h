@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166 2003/06/29 22:32:26 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.167 2003/07/08 06:49:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -114,8 +114,7 @@ struct emul {
 					/* Per-process hooks */
 	void		(*e_proc_exec) __P((struct proc *,
 					    struct exec_package *));
-	void		(*e_proc_fork) __P((struct proc *p,
-					    struct proc *parent));
+	void		(*e_proc_fork) __P((struct proc *, struct proc *));
 	void		(*e_proc_exit) __P((struct proc *));
 
 #ifdef __HAVE_SYSCALL_INTERN
@@ -125,7 +124,7 @@ struct emul {
 #endif
 					/* Emulation specific sysctl */
 	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
-				void *, size_t, struct proc *p));
+				void *, size_t, struct proc *));
 					/* Specific VM fault handling */
 	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
@@ -217,7 +216,7 @@ struct proc {
 					 * Malloc type M_EMULDATA 
 					 */
 	
-	void 		(*p_userret)(struct lwp *l, void *arg); 
+	void 		(*p_userret)(struct lwp *, void *); 
 					/* Function to call at userret(). */ 
 	void		*p_userret_arg;
 	
@@ -405,22 +404,22 @@ struct proc *pfind(pid_t);		/* Find process by id */
 struct pgrp *pgfind(pid_t);		/* Find process group by id */
 
 struct simplelock;
-int	chgproccnt(uid_t uid, int diff);
-int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
-void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
-int	inferior(struct proc *p, struct proc *q);
-int	leavepgrp(struct proc *p);
+int	chgproccnt(uid_t, int);
+int	enterpgrp(struct proc *, pid_t, int);
+void	fixjobc(struct proc *, struct pgrp *, int);
+int	inferior(struct proc *, struct proc *);
+int	leavepgrp(struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
 struct lwp *chooselwp(void);
-void	pgdelete(struct pgrp *pgrp);
+void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(const void *chan, int pri, const char *wmesg, int timo,
+int	ltsleep(const void *, int, const char *, int,
 	    __volatile struct simplelock *);
-void	wakeup(const void *chan);
-void	wakeup_one(const void *chan);
+void	wakeup(const void *);
+void	wakeup_one(const void *);
 void	reaper(void *);
 void	exit1(struct lwp *, int);
 void	exit2(struct lwp *);
