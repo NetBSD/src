@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.18 2002/11/09 02:30:05 nathanw Exp $	*/
+/*	$NetBSD: savar.h,v 1.1.2.19 2002/12/29 21:07:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

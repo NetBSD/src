@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.20 2002/12/15 23:31:59 thorpej Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.1.2.21 2002/12/29 21:07:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

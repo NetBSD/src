@@ -1,4 +1,4 @@
-/*	$Id: sa.h,v 1.1.2.5 2002/08/30 23:55:30 nathanw Exp $	*/
+/*	$NetBSD: sa.h,v 1.1.2.6 2002/12/29 21:07:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
