@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rec_put.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_put.c,v 1.4 1993/09/09 02:42:26 cgd Exp $";
+static char *rcsid = "$Id: rec_put.c,v 1.5 1994/02/21 08:39:53 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -120,12 +120,22 @@ einval:		errno = EINVAL;
 		    t->bt_irec(t, nrec) == RET_ERROR)
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
-			tdata.data = NULL;
-			tdata.size = 0;
+			if (ISSET(t,R_FIXLEN)) {
+				tdata.data = malloc(t->bt_reclen);
+				if (tdata.data == NULL)
+					return (RET_ERROR);
+				tdata.size = t->bt_reclen;
+				memset(tdata.data, t->bt_bval, tdata.size);
+			} else {
+				tdata.data = NULL;
+				tdata.size = 0;
+			}
 			while (nrec > t->bt_nrecs + 1)
 				if (__rec_iput(t,
 				    t->bt_nrecs, &tdata, 0) != RET_SUCCESS)
 					return (RET_ERROR);
+			if (ISSET(t,R_FIXLEN))
+				free(tdata.data);
 		}
 	}
 
