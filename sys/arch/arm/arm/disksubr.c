@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2004/09/25 18:24:55 chris Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2004/09/25 18:54:36 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10 2004/09/25 18:24:55 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.11 2004/09/25 18:54:36 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,26 +217,8 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
-	if (found == 0)	{
-		/* 
-		 * we must return an error, when we don't find a disklabel,
-		 * so that the driver above can fake a sensible label.
-		 * Really readdisklabel should be able to return a value
-		 * indicating we faked the label, and the driver can then
-		 * decide to take the one we faked, or fake a new one.
-		 * 
-		 * Faking a label at this level could generate the wrong
-		 * label, as we don't know correct FS we should use.
-		 * 
-		 * By returning an error, we allow cd's to get the
-		 * correct faked label.
-		 *
-		 * Note this does go against PR kern/21408.
-		 */
-		msg = "no disk label";
-	}
 
-	if (msg != NULL)
+	if (msg != NULL || found == 0)
 		goto done;
 
 	/* obtain bad sector table if requested and present */
