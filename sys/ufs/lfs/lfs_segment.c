@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.110 2003/03/15 02:27:18 kristerw Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.111 2003/03/15 06:58:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.110 2003/03/15 02:27:18 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.111 2003/03/15 06:58:50 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -109,7 +109,6 @@ MALLOC_DEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */
-extern int lfs_subsys_pages; 
 
 static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
 static void lfs_super_aiodone(struct buf *);
@@ -405,11 +404,15 @@ lfs_vflush(struct vnode *vp)
 	 * We compare the iocount against 1, not 0, because it is
 	 * artificially incremented by lfs_seglock().
 	 */
+	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock > 1) {
+		simple_unlock(&fs->lfs_interlock);
 		while (fs->lfs_iocount > 1)
 			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
 				     "lfs_vflush", 0);
-	}
+	} else
+		simple_unlock(&fs->lfs_interlock);
+
 	lfs_segunlock(fs);
 
 	CLR_FLUSHING(fs,vp);
@@ -543,31 +546,6 @@ lfs_segwrite(struct mount *mp, int flags)
 
 	lfs_imtime(fs);
 
-	/* printf("lfs_segwrite: ifile flags are 0x%lx\n",
-	       (long)(VTOI(fs->lfs_ivnode)->i_flag)); */
-
-#if 0	
-	/*
-	 * If we are not the cleaner, and there is no space available,
-	 * wait until cleaner writes.
-	 */
-	if (!(flags & SEGM_CLEAN) && !(fs->lfs_seglock && fs->lfs_sp &&
-				      (fs->lfs_sp->seg_flags & SEGM_CLEAN)))
-	{
-		while (fs->lfs_avail <= 0) {
-			LFS_CLEANERINFO(cip, fs, bp);
-			LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
-	
-			wakeup(&lfs_allclean_wakeup);
-			wakeup(&fs->lfs_nextseg);
-			error = tsleep(&fs->lfs_avail, PRIBIO + 1, "lfs_av2",
-				       0);
-			if (error) {
-				return (error);
-			}
-		}
-	}
-#endif
 	/*
 	 * Allocate a segment structure and enough space to hold pointers to
 	 * the maximum possible number of buffers which can be described in a
@@ -2293,7 +2271,6 @@ lfs_cluster_aiodone(struct buf *bp)
 			simple_unlock(&global_v_numoutput_slock);
 			splx(s);
 			wakeup(vp);
-
 		}
 	}
 

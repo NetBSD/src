@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.38 2003/02/28 07:36:32 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.39 2003/03/15 06:58:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.38 2003/02/28 07:36:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.39 2003/03/15 06:58:50 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.38 2003/02/28 07:36:32 perseant Exp
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-extern int lfs_subsys_pages;
 
 int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
 
