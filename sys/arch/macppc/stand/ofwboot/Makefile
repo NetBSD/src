@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.11.2.3 2000/11/09 23:12:06 tv Exp $
+#	$NetBSD: Makefile,v 1.11.2.4 2001/04/24 22:57:25 he Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
+SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
