@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2002/04/26 00:15:24 petrov Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2002/05/21 01:24:10 petrov Exp $ */
 
 
 /*
@@ -20,48 +20,82 @@
 
 #define NOTREACHED	illtrap	10
 
+#if 0
+#define DBP(n)		\
+	or	%g0,n,%o3	; \
+	mov	%i0,%o0		; \
+	mov	%i1,%o1		; \
+	call	_C_LABEL(pthread__md_debug); \
+	 mov	%i2,%o2
+
+#define DBR(n,a0,a1,a2)		\
+	or	%g0,n,%o3	; \
+	mov	a0,%o0		; \
+	mov	a1,%o1		; \
+	call	_C_LABEL(pthread__md_debug); \
+	 mov	a2,%o2
+
+#define DBSNAP(x)		\
+	call _C_LABEL(pthread__md_snapshot); \
+	 mov	x,%o0
+
+#else
+#define DBP(n)
+#define DBR(n,a0,a1,a2)
+#define DBSNAP(x)
+#endif
 
 ENTRY(pthread__switch)
-!	ta 1; nop
 	/*
 	 * XXX Get space on stack for return address and ucontext,
 	 * save return address, put ucontext address into pthread
 	 * then swapcontext
 	 */
-	save	%sp, -STACK_ALIGN(CC64FSZ /* + 8*/ + CONTEXTSIZE), %sp
+	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
 
-!	stx	%i7, [%fp + BIAS - (CONTEXTSIZE + 8)]
+DBP(1)
+
 	add	%fp, BIAS - CONTEXTSIZE, %l0
 	stx	%l0, [%i0 + PT_UC]
-	mov	%l0, %o0
+	ldx	[%i1 + PT_UC], %o1
 	call	_C_LABEL(_swapcontext_u)
-	 ldx	[%i1 + PT_UC], %o1
-!	ldx	[%fp + BIAS - (CONTEXTSIZE + 8)], %i7
+	 mov	%l0, %o0
 
 	ret
 	 restore
-
 
 
 /* 		*** WARNING ***
  * STACK_SWITCH is more subtle than it looks. Please go read the extended
  * comment in the i386 pthread_switch.S file.
  */
-	
+
+
+/*
+ * pt register which contains *pthread, which stack will be used
+ * tmp temporary register which will have *ucontext_t for that pthread
+ */
 #define STACK_SWITCH(pt,tmp)		  \
-	ldx	[pt + PT_UC], tmp	; \
-	add	tmp, - STACK_ALIGN(STACKSPACE) - BIAS, %sp
+	ldx	[pt + PT_UC], tmp		; \
+	add	tmp, - STACK_ALIGN(STACKSPACE + CONTEXTSIZE) - BIAS, %sp
+
 
 /*
  * Helper switch code used by pthread__locked_switch() and 
  * pthread__upcall_switch() when they discover spinlock preemption.
- * 
+ */
+
+/*
+ * pthread__switch_away
  * %i0 who's lock to release
  * %i1 thread to switch to
  * %i2 flag to clear lock
  */
 
 ENTRY(pthread__switch_away)
+
+DBP(2)
+
 	STACK_SWITCH(%i1,%l2)
 
 	/* If we're invoked from the switch-to-next provisions of
@@ -87,15 +121,19 @@ ENTRY(pthread__switch_away)
  */
 ENTRY(pthread__upcall_switch)
 	save	%sp, -CC64FSZ, %sp
+
 	/* Create a "fake" lock count so that this code will be continued */
 	ld	[%i1 + PT_SPINLOCKS], %l0
 	inc	%l0
 	st	%l0, [%i1 + PT_SPINLOCKS]
 
+DBP(3)
 	/*
 	 * switch to next thread stack so we could recycle self's one
 	 */
 	STACK_SWITCH(%i1,%l2)
+
+DBP(4)
 
 	/* Check if the upcall code was preempted and continued to here. */
 	ldx	[%i0 + PT_NEXT], %l0
@@ -143,7 +181,8 @@ ENTRY(pthread__upcall_switch)
 	 nop
 
 	/* No new-upcall-preemption */
-2:	call	_C_LABEL(_setcontext_u)
+2:
+	call	_C_LABEL(_setcontext_u)
 	 ldx	[%i1 + PT_UC], %o0
 	NOTREACHED
 
@@ -158,13 +197,8 @@ ENTRY(pthread__upcall_switch)
 ENTRY(pthread__locked_switch)
 	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
 
-#if 0
-	brgez,a	%i1, 10f
-	 nop
-	ta	1
-	 nop
-10:
-#endif
+DBR(5,%i0,%i1,%fp)
+
 	/* Make sure we get continuted */
 	ld	[%i1 + PT_SPINLOCKS], %l0
 	inc	%l0
@@ -180,7 +214,15 @@ ENTRY(pthread__locked_switch)
 	set _C_LABEL(locked_return_point), %l1
 	stx %l1, [%l3 + UC_GREGS + _REG_PC * 8]
 
+DBR(6,%i0,%sp,%l3)
+DBSNAP(%i0)
+DBSNAP(%i1)
+
 	STACK_SWITCH(%i1, %l2)
+
+DBR(61,%i0, %sp, %l2)
+
+DBSNAP(%i1)
 
 	/* Check if the switcher was preempted and continued to here. */
 	ldx	[%i0 + PT_NEXT], %l0
@@ -226,7 +268,7 @@ ENTRY(pthread__locked_switch)
 	st	%l0, [%i0 + PT_SPINLOCKS]
 
 	/* ... actually release the lock.. */
-	/* mb XXX */
+!	membar	#Sync
 
 	st	%g0, [%i2]
 	/* .. and remove the fake lock */
@@ -251,16 +293,26 @@ ENTRY(pthread__locked_switch)
 
 2:	/* %l2 points to next thread's ucontext */
 #if 0
-	brgez,a	%i1, 10f
-	 nop
-	ta	1
-	 nop
-10:
+DBSNAP(%i1)
 #endif
+DBR(7,%l2,%fp,%i0)
+DBSNAP(%i0)
+DBSNAP(%i1)
+
 	call	_C_LABEL(_setcontext_u)
 	 mov	 %l2, %o0
 	NOTREACHED
 
 locked_return_point:
+DBR(8,%i0,%o7,%fp)
 	ret
 	 restore
+
+
+ENTRY(__caller_pc)
+	retl
+	 mov	%i7, %o0
+
+ENTRY(__get_fp)
+	retl
+	 mov %fp, %o0
