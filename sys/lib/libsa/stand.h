@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.38 1999/11/12 12:24:42 simonb Exp $	*/
+/*	$NetBSD: stand.h,v 1.39 1999/11/13 21:08:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -201,10 +201,8 @@ extern struct open_file files[];
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define tolower(c)	((c) - 'A' + 'a')
-#define	toupper(c)	((c) >= 'a' && (c) <= 'z' ? (c) - 'a' + 'A' : (c))
-#define isspace(c)	(((c) == ' ') || ((c) == '\t') || ((c) == '\n'))
+#define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
-#define	isxdigit(c)	(((c) >= 'A') && ((c) <= 'F'))
 
 int	devopen __P((struct open_file *, const char *, char **));
 #ifdef HEAP_VARIABLE
@@ -228,12 +226,9 @@ int	getfile __P((char *prompt, int mode));
 char	*strerror __P((int));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
-int	bcmp __P((const void *, const void *, size_t));
 void	bcopy __P((const void *, void *, size_t));
-void	bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
-void	*memset __P((void *, int, size_t));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
 int	close __P((int));
@@ -242,23 +237,6 @@ ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 off_t	lseek __P((int, off_t, int));
 int	ioctl __P((int, u_long, char *));
-
-size_t	strlen __P((const char *));
-int	strcmp __P((const char *, const char *));
-int	strncmp __P((const char *, const char *, size_t));
-char	*strcpy __P((char *, const char *));
-char	*strncpy __P((char *, const char *, size_t));
-char	*strcat __P((char *, const char *));
-
-u_int32_t inet_addr __P((const char *));
-const char *intoa __P((u_int32_t));
-#define	inet_ntoa(a)	intoa((a).s_addr)
-
-u_int32_t htonl __P((u_int32_t));
-u_int16_t htons __P((u_int16_t));
-
-u_int32_t ntohl __P((u_int32_t));
-u_int16_t ntohs __P((u_int16_t));
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
@@ -291,13 +269,3 @@ int	oclose __P((int));
 ssize_t	oread __P((int, void *, size_t));
 off_t	olseek __P((int, off_t, int));
 #endif
-
-static __inline u_int max __P((u_int, u_int)) __attribute__((__unused__));
-
-static __inline u_int
-max(a, b)
-	u_int a, b;
-{
-
-	return (a > b ? a : b);
-}
