@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.26 1999/01/10 13:11:25 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.27 1999/01/10 18:36:57 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ struct ukbd_data {
 #define CODEMASK 0x0ff
 
 /* Translate USB bitmap to USB keycode. */
-#define NMOD 6
+#define NMOD 8
 static struct {
 	int mask, key;
 } ukbd_mods[NMOD] = {
@@ -127,6 +127,8 @@ static struct {
 	{ MOD_SHIFT_R,   229 },
 	{ MOD_ALT_L,     226 },
 	{ MOD_ALT_R,     230 },
+	{ MOD_WIN_L,     227 },
+	{ MOD_WIN_R,     231 },
 };
 
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -150,7 +152,7 @@ static u_int8_t ukbd_trtab[256] = {
 	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
           72,  73,  82,  83, 221,  NN,  NN,  NN, /* 60 - 67 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
-          NN,  NN,  NN,  NN,  NN,  NN, 221,  NN, /* 70 - 77 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 70 - 77 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 80 - 87 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 88 - 8F */
@@ -523,6 +525,9 @@ ukbd_intr(reqh, addr, status)
 					sc->sc_rep[npress++] = 0xe0;
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
+			DPRINTFN(1,("ukbd_intr: raw = %s0x%02x\n", 
+				    c & 0x80 ? "0xe0 " : "",
+				    cbuf[j]));
 			j++;
 		}
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
