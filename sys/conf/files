@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.225 1998/07/21 17:26:45 drochner Exp $
+#	$NetBSD: files,v 1.226 1998/07/24 15:26:27 rvb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -76,6 +76,7 @@ deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
+deffs	fs_cfs.h CFS
 
 # file system options
 defopt	QUOTA
@@ -309,6 +310,7 @@ file	dev/usb/ohci.c			ohci
 pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device md: disk
+pseudo-device vcfs
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -327,6 +329,13 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
+file cfs/cfs_namecache.c		cfs
+file cfs/cfs_nbsd.c			cfs
+file cfs/cfs_psdev.c			vcfs			needs-count
+file cfs/cfs_subr.c			cfs
+file cfs/cfs_venus.c			cfs
+file cfs/cfs_vfsops.c			cfs
+file cfs/cfs_vnodeops.c			cfs
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb

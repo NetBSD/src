@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.56 1998/06/26 00:07:26 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.57 1998/07/24 15:25:14 rvb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -339,6 +339,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, ioctl, select */
+#define cdev_vc_nb_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl),  \
+	(dev_type_stop((*))) nullop, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];
