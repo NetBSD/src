@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2001/05/30 12:28:50 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2001/08/26 02:47:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,52 +33,9 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
-
-#include <machine/frame.h>
-#include <machine/psl.h>
-#include <machine/intr.h>
-
-#include <sys/sched.h>
-struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
-};
-
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
-
-#define	curcpu()		(&cpu_info_store)
-#endif
-
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth > 0)
-
-#define	cpu_swapout(p)
-#define cpu_wait(p)
-#define	cpu_number()		0
-
-extern void delay __P((unsigned int));
-#define	DELAY(n)		delay(n)
-
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
+#define	CPU_MAXNUM	1
 extern char *bootpath;
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	CACHELINESIZE	32
 #endif
 
 #include <powerpc/cpu.h>

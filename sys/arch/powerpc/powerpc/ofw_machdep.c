@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.10 2001/07/22 13:21:04 wiz Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.11 2001/08/26 02:47:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -57,8 +57,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-mem_regions(memp, availp)
-	struct mem_region **memp, **availp;
+mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle, i, cnt;
 
@@ -108,14 +107,13 @@ error:
 }
 
 void
-ppc_exit()
+ppc_exit(void)
 {
 	OF_exit();
 }
 
 void
-ppc_boot(str)
-	char *str;
+ppc_boot(char *str)
 {
 	OF_boot(str);
 }
@@ -133,12 +131,12 @@ struct ofb_disk {
 	int ofb_unit;
 };
 
+#include <machine/autoconf.h>
+
 static LIST_HEAD(ofb_list, ofb_disk) ofb_head;	/* LIST_INIT?		XXX */
 
 void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
+dk_establish(struct disk *dk, struct device *dev)
 {
 	struct ofb_disk *od;
 	struct ofbus_softc *ofp = (void *)dev;
@@ -160,7 +158,7 @@ dk_establish(dk, dev)
  * Cleanup the list.
  */
 void
-dk_cleanup()
+dk_cleanup(void)
 {
 	struct ofb_disk *od, *nd;
 
@@ -172,9 +170,7 @@ dk_cleanup()
 }
 
 static void
-dk_setroot(od, part)
-	struct ofb_disk *od;
-	int part;
+dk_setroot(struct ofb_disk *od, int part)
 {
 	char type[8];
 	int maj, unit;
@@ -251,8 +247,7 @@ dk_setroot(od, part)
  * or the NetBSD device name, both with optional trailing partition.
  */
 int
-dk_match(name)
-	char *name;
+dk_match(char *name)
 {
 	struct ofb_disk *od;
 	char *cp;
