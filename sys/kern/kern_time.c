@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.80 2003/12/02 01:34:30 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.81 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.80 2003/12/02 01:34:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.81 2004/01/02 18:52:17 cl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -860,19 +860,13 @@ timerupcall(struct lwp *l, void *arg)
 	unsigned int i, fired, done;
 	extern struct pool siginfo_pool;	/* XXX Ew. */
 
+	KDASSERT(l->l_proc->p_sa);
+	/* Bail out if we do not own the virtual processor */
+	if (l->l_proc->p_sa->sa_vp != l)
+		return ;
+	
 	KERNEL_PROC_LOCK(l);
 
-	{
-		struct proc	*p = l->l_proc;
-		struct sadata *sa = p->p_sa;	
-
-		/* Bail out if we do not own the virtual processor */
-		if (sa->sa_vp != l) {
-			KERNEL_PROC_UNLOCK(l);
-			return ;
-		}
-	}
-	
 	fired = pt->pts_fired;
 	done = 0;
 	while ((i = ffs(fired)) != 0) {

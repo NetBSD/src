@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2003/11/06 00:35:23 he Exp $     */
+/*	$NetBSD: trap.c,v 1.91 2004/01/02 18:52:17 cl Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/11/06 00:35:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2004/01/02 18:52:17 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -158,7 +158,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.134 2003/11/15 01:19:38 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.135 2004/01/02 18:52:17 cl Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -668,7 +668,8 @@
 329	UNIMPL
 ; Scheduler activation syscalls
 330	STD		{ int sys_sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags); }
+				sa_upcall_t *old, int flags, \
+				ssize_t stackinfo_offset); }
 331	STD		{ int sys_sa_stacks(int num, stack_t *stacks); }
 332	STD		{ int sys_sa_enable(void); }
 333	STD		{ int sys_sa_setconcurrency(int concurrency); }
