@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.7 1997/10/13 09:28:11 lukem Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.8 1998/02/13 23:15:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.7 1997/10/13 09:28:11 lukem Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.8 1998/02/13 23:15:16 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,13 +175,15 @@ doit(sinp)
 	char *xpasswd;
 	struct passwd *pw;
 
-	alarm(60);
-	printf("login: "); fflush(stdout);
-	if (readline(user, sizeof user) < 0) {
-		fprintf(stderr, "user read\n");
-		return;
-	}
-	/* truncate username to 8 characters */
+        alarm(60);
+        do {
+                printf("login: "); fflush(stdout);
+                if (readline(user, sizeof user) < 0) {
+                        fprintf(stderr, "user read\n");
+                        return;
+                }
+        } while (user[0] == '\0');
+        /* truncate username to 8 characters */
 	user[8] = '\0';
 	pw = getpwnam(user);
 	if (pw == NULL) {
