@@ -1,4 +1,4 @@
-/*	$NetBSD: mopa.out.c,v 1.7 2001/02/19 23:22:44 cgd Exp $	*/
+/*	$NetBSD: mopa.out.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $	*/
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopa.out.c,v 1.7 2001/02/19 23:22:44 cgd Exp $");
+__RCSID("$NetBSD: mopa.out.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -94,20 +94,14 @@ main (int argc, char **argv)
 	if (dl.ldfd == -1)
 		err(2, "open `%s'", argv[1]);
 	
-	GetFileInfo(dl.ldfd,
-		    &dl.loadaddr,
-		    &dl.xferaddr,
-		    &dl.aout,
-		    &dl.a_text,&dl.a_text_fill,
-		    &dl.a_data,&dl.a_data_fill,
-		    &dl.a_bss ,&dl.a_bss_fill );
+	GetFileInfo(&dl);
 
-	if (dl.aout == -1)
+	if (dl.image_type != IMAGE_TYPE_AOUT)
 		errx(3, "`%s' is not an a.out file", argv[1]);
 
-	if (dl.aout != MID_VAX)
+	if (dl.a_mid != MID_VAX)
 		printf("WARNING: `%s' is not a VAX image (mid=%d)\n",
-		    argv[1], dl.aout);
+		    argv[1], dl.a_mid);
 
 	i = dl.a_text + dl.a_text_fill + dl.a_data + dl.a_data_fill +
 	    dl.a_bss  + dl.a_bss_fill;
