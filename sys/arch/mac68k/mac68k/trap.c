@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 1997/04/07 22:54:44 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 1997/04/08 06:02:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -591,6 +591,8 @@ copyfault:
 		return;
 out:
 	userret(p, &frame, sticks, v, 1); 
+
+done:
 }
 
 #if defined(M68040)
