@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3.2.5 1999/11/15 23:33:42 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3.2.6 1999/11/18 08:25:49 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -318,7 +318,7 @@ kbd_processevent(event, ksc)
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
 #if NAED > 0
-	if (!aed_input(&new_event))
+	if (adb_polling || !aed_input(&new_event))
 #endif
 #if NWSKBD > 0
 		kbd_intr(&new_event);
@@ -330,7 +330,7 @@ kbd_processevent(event, ksc)
 		new_event.bytes[0] = event->bytes[1];
 		new_event.bytes[1] = 0xff;
 #if NAED > 0
-		if (!aed_input(&new_event))
+		if (adb_polling || !aed_input(&new_event))
 #endif
 #if NWSKBD > 0
 			kbd_intr(&new_event);
