@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.10 1997/05/19 17:29:12 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.11 1997/05/19 23:05:14 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -511,6 +511,7 @@ oss_ioctl_mixer(p, uap, retval)
 			mc.un.ord = di->devmap[i];
 		} else {
 			mc.type = AUDIO_MIXER_SET;
+			mc.un.mask = 0;
 			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++) {
 				if (idat & (1 << i)) {
 					if (di->devmap[i] == -1)
