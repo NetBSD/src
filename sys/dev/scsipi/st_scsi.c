@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.3 2001/07/18 18:21:06 thorpej Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.4 2001/07/18 18:25:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ st_scsibus_mode_sense(st, flags)
 	    ("%sbuffered\n",
 	    scsipi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->page_0_size)
-		bcopy(scsipi_sense.sense_data, st->sense_data,
+		memcpy(st->sense_data, scsipi_sense.sense_data,
 		    st->page_0_size);
 	periph->periph_flags |= PERIPH_MEDIA_LOADED;
 	return (0);
@@ -283,7 +283,7 @@ st_scsibus_mode_select(st, flags)
 	if (st->flags & ST_FIXEDBLOCKS)
 		_lto3b(st->blksize, scsi_select.blk_desc.blklen);
 	if (st->page_0_size)
-		bcopy(st->sense_data, scsi_select.sense_data, st->page_0_size);
+		memcpy(scsi_select.sense_data, st->sense_data, st->page_0_size);
 
 	/*
 	 * do the command
