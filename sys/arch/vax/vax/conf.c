@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1996/04/08 18:32:29 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1996/07/01 21:50:29 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -63,14 +63,14 @@ bdev_decl(sw);
 #include "te.h"
 bdev_decl(tm);
 
-#include "tmscp.h"
-bdev_decl(tmscp);
+#include "mt.h"
+bdev_decl(mt);
 
 #include "ts.h"
 bdev_decl(ts);
 
 #include "mu.h"
-bdev_decl(mt);
+bdev_decl(mu);
 
 #if defined(VAX750)
 #define	NCTU	1
@@ -79,11 +79,8 @@ bdev_decl(mt);
 #endif
 bdev_decl(ctu);
 
-#include "uda.h"
-bdev_decl(uda);
-
-#include "kdb.h"
-bdev_decl(kdb);
+#include "ra.h"
+bdev_decl(ra);
 
 #include "up.h"
 bdev_decl(up);
@@ -118,16 +115,16 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
-	bdev_tape_init(NMU,mt),		/* 7: TU78 */
+	bdev_tape_init(NMU,mu),		/* 7: TU78 */
 	bdev_tape_init(NCTU,ctu),	/* 8: Console TU58 on 730/750 */
-	bdev_disk_init(NUDA,uda),	/* 9: UDA50/RA?? */
+	bdev_disk_init(NRA,ra),		/* 9: MSCP disk */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
 	bdev_disk_init(NRX,rx),		/* 12: RX01/02 on unibus */
 	bdev_disk_init(NUU,uu),		/* 13: TU58 on DL11 */
 	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
-	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
-	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
+	bdev_tape_init(NMT,mt),		/* 15: MSCP tape */
+	bdev_notdef(),			/* 16: was: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
 };
@@ -213,10 +210,10 @@ cdev_decl(lkm);
 cdev_decl(hp);
 cdev_decl(rk);
 cdev_decl(tm);
-cdev_decl(tmscp);
-cdev_decl(ts);
 cdev_decl(mt);
-cdev_decl(uda);
+cdev_decl(ts);
+cdev_decl(mu);
+cdev_decl(ra);
 cdev_decl(up);
 cdev_decl(ut);
 cdev_decl(idc);
@@ -224,7 +221,6 @@ cdev_decl(fd);
 cdev_decl(gencn);
 cdev_decl(rx);
 cdev_decl(rl);
-cdev_decl(kdb);
 cdev_decl(ccd);
 
 #include "ct.h"
@@ -331,7 +327,7 @@ struct cdevsw	cdevsw[] =
 	cdev_plotter_init(NVP,vp),	/* 6: Versatec plotter */
 	cdev_swap_init(1,sw),		/* 7 */
 	cdev_cnstore_init(NFL,fl),	/* 8: 11/780 console floppy */
-	cdev_disk_init(NUDA,uda),	/* 9: MSCP disk interface */
+	cdev_disk_init(NRA,ra),		/* 9: MSCP disk interface */
 	cdev_plotter_init(NVA,va),	/* 10: Benson-Varian plotter */
 	cdev_disk_init(NRK,rk),		/* 11: RK06/07 */
 	cdev_tty_init(NDH,dh),		/* 12: DH-11/DM-11 */
@@ -341,7 +337,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NTS,ts),		/* 16: TS11 */
 	cdev_tape_init(NTJ,ut),		/* 17: TU45 */
 	cdev_lp_init(NCT,ct),		/* 18: phototypesetter interface */
-	cdev_tape_init(NMU,mt),		/* 19: TU78 */
+	cdev_tape_init(NMU,mu),		/* 19: TU78 */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_tty_init(NDMF,dmf),	/* 22: DMF32 */
@@ -360,7 +356,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cnstore_init(NCRL,crl),	/* 35: Console RL02 on 8600 */
 	cdev_notdef(),			/* 36: was vs100 interface. ??? */
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
-	cdev_tape_init(NTMSCP,tmscp),	/* 38: TMSCP tape */
+	cdev_tape_init(NMT,mt),		/* 38: MSCP tape */
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
@@ -374,7 +370,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
-	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
+	cdev_notdef(),			/* 52: was: KDB50/RA?? */
 	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
