@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.10 2000/10/05 04:49:17 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.35 2000/10/05 03:25:23 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.11 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -181,7 +181,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	const struct esp_algorithm *algo;
 	u_int32_t spi;
 	u_int8_t nxt = 0;
-	size_t plen;	/*payload length to be encrypted*/
+	size_t plen;	/* payload length to be encrypted */
 	size_t espoff;
 	int ivlen;
 	int afnumber;
@@ -224,7 +224,7 @@ esp_output(m, nexthdrp, md, isr, af)
 			ipsecstat.out_inval++;
 			break;
 		    }
-#endif /*INET*/
+#endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			ipseclog((LOG_DEBUG, "esp6_output: internal error: "
@@ -232,7 +232,7 @@ esp_output(m, nexthdrp, md, isr, af)
 				(u_int32_t)ntohl(sav->spi)));
 			ipsec6stat.out_inval++;
 			break;
-#endif /*INET6*/
+#endif /* INET6 */
 		default:
 			panic("esp_output: should not reach here");
 		}
@@ -267,9 +267,9 @@ esp_output(m, nexthdrp, md, isr, af)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
-	size_t esplen;	/*sizeof(struct esp/newesp)*/
-	size_t esphlen;	/*sizeof(struct esp/newesp) + ivlen*/
-	size_t hlen = 0;	/*ip header len*/
+	size_t esplen;	/* sizeof(struct esp/newesp) */
+	size_t esphlen;	/* sizeof(struct esp/newesp) + ivlen */
+	size_t hlen = 0;	/* ip header len */
 
 	if (sav->flags & SADB_X_EXT_OLD) {
 		/* RFC 1827 */
@@ -402,7 +402,6 @@ esp_output(m, nexthdrp, md, isr, af)
     {
 	/*
 	 * find the last mbuf. make some room for ESP trailer.
-	 * XXX new-esp authentication data
 	 */
 #ifdef INET
 	struct ip *ip = NULL;
@@ -428,8 +427,9 @@ esp_output(m, nexthdrp, md, isr, af)
 		n = n->m_next;
 
 	/*
-	 * if M_EXT, the external part may be shared among
-	 * two consequtive TCP packets.
+	 * if M_EXT, the external mbuf data may be shared among
+	 * two consequtive TCP packets, and it may be unsafe to use the
+	 * trailing space.
 	 */
 	if (!(n->m_flags & M_EXT) && extendsiz < M_TRAILINGSPACE(n)) {
 		extend = mtod(n, u_char *) + n->m_len;
@@ -560,7 +560,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	while (n->m_next)
 		n = n->m_next;
 
-	if (!(n->m_flags & M_EXT) && siz < M_TRAILINGSPACE(n)) {	/*XXX*/
+	if (!(n->m_flags & M_EXT) && siz < M_TRAILINGSPACE(n)) { /* XXX */
 		n->m_len += siz;
 		m->m_pkthdr.len += siz;
 		p = mtod(n, u_char *) + n->m_len - siz;
@@ -643,7 +643,7 @@ esp4_output(m, isr)
 	/* XXX assumes that m->m_next points to payload */
 	return esp_output(m, &ip->ip_p, m->m_next, isr, AF_INET);
 }
-#endif /*INET*/
+#endif /* INET */
 
 #ifdef INET6
 int
@@ -660,4 +660,4 @@ esp6_output(m, nexthdrp, md, isr)
 	}
 	return esp_output(m, nexthdrp, md, isr, AF_INET6);
 }
-#endif /*INET6*/
+#endif /* INET6 */

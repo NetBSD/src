@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.16 2001/09/10 03:08:18 itojun Exp $	*/
-/*	$KAME: esp_core.c,v 1.50 2000/11/02 12:27:38 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.17 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$KAME: esp_core.c,v 1.52 2001/09/10 04:04:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,10 +160,8 @@ esp_algorithm_lookup(idx)
 		return &esp_algorithms[3];
 	case SADB_X_EALG_CAST128CBC:
 		return &esp_algorithms[4];
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	case SADB_X_EALG_RIJNDAELCBC:
 		return &esp_algorithms[5];
-#endif
 	default:
 		return NULL;
 	}
@@ -423,9 +421,7 @@ esp_cbc_mature(sav)
 	case SADB_X_EALG_BLOWFISHCBC:
 	case SADB_X_EALG_CAST128CBC:
 		break;
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	case SADB_X_EALG_RIJNDAELCBC:
-#endif
 		/* allows specific key sizes only */
 		if (!(keylen == 128 || keylen == 192 || keylen == 256)) {
 			ipseclog((LOG_ERR,
@@ -629,8 +625,8 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/*offset from the head of chain, to head of this mbuf */
-	int sn, dn;	/*offset from the head of the mbuf, to meat */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
+	int sn, dn;	/* offset from the head of the mbuf, to meat  */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -833,8 +829,8 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/*offset from the head of chain, to head of this mbuf */
-	int sn, dn;	/*offset from the head of the mbuf, to meat */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf  */
+	int sn, dn;	/* offset from the head of the mbuf, to meat  */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -1124,7 +1120,7 @@ esp_auth(m0, skip, length, sav, sum)
 		}
 	}
 	(*algo->result)(&s, sumbuf);
-	bcopy(sumbuf, sum, siz);	/*XXX*/
+	bcopy(sumbuf, sum, siz);	/* XXX */
 	
 	return 0;
 }
