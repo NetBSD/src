@@ -9,6 +9,7 @@ device	isa at root {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
 file	arch/i386/isa/isa.c		isa needs-flag
+file	arch/i386/isa/intr.c		isa
 
 define	dma {}
 file	arch/i386/isa/dma.c		dma needs-flag
