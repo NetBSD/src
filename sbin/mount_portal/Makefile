@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.6 1994/06/08 19:24:44 mycroft Exp $
+#	$Id: Makefile,v 1.7 1994/06/10 17:35:27 pk Exp $
 
 PROG=	mount_portal
 SRCS=	mount_portal.c activate.c conf.c getmntopts.c pt_conf.c \
@@ -7,7 +7,7 @@ SRCS=	mount_portal.c activate.c conf.c getmntopts.c pt_conf.c \
 MAN8=	mount_portal.0
 
 MOUNT=	${.CURDIR}/../mount
-CFLAGS+= -I/sys -I${MOUNT}
+CFLAGS+= -I${DESTDIR}/sys -I${MOUNT}
 .PATH:	${MOUNT}
 
 DPADD=	$(LIBCOMPAT)
