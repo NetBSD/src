@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.150 2004/03/26 19:31:05 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.151 2004/03/26 21:49:35 drochner Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -158,7 +158,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 shmget.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
-	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 sigtimedwait.2 \
+	sigprocmask.2 sigstack.2 sigsuspend.2 sigtimedwait.2 \
 	socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 timer_create.2 timer_delete.2 \
