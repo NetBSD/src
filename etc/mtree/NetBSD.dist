@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.46 1997/07/16 23:33:59 phil Exp $
+#	$NetBSD: NetBSD.dist,v 1.47 1997/07/17 20:45:01 phil Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1491,6 +1491,11 @@ nls
 
 # ./usr/share/sendmail
 sendmail
+
+# ./usr/share/sendmail/cf
+cf
+# ./usr/share/sendmail/cf
+..
 
 # ./usr/share/sendmail/domain
 domain
