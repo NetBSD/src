@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 1998/06/03 04:35:42 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.115 1998/06/06 21:46:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,11 @@
 #include <sparc/sparc/vaddrs.h>
 
 #include "fb.h"
+#include "power.h"
+
+#if NPOWER > 0
+#include <sparc/dev/power.h>
+#endif
 
 #if defined(UVM)
 vm_map_t exec_map = NULL;
@@ -777,9 +782,10 @@ cpu_reboot(howto, user_boot_string)
 	static char str[128];
 	extern int cold;
 
+	/* If system is cold, just halt. */
 	if (cold) {
-		printf("halted\n\n");
-		romhalt();
+		howto |= RB_HALT;
+		goto haltsys;
 	}
 
 #if NFB > 0
@@ -801,16 +807,39 @@ cpu_reboot(howto, user_boot_string)
 		 */
 		resettodr();
 	}
-	(void) splhigh();		/* ??? */
+
+	/* Disable interrupts. */
+	(void) splhigh();
+
+	/* If rebooting and a dump is requested, do it. */
+#if 0
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+#else
+	if (howto & RB_DUMP)
+#endif
+		dumpsys();
+
+ haltsys:
+
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
+	/* If powerdown was requested, do it. */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#if NPOWER > 0
+		powerdown();
+		printf("WARNING: powerdown failed!\n");
+#endif
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
+	}
+
 	if (howto & RB_HALT) {
-		doshutdownhooks();
 		printf("halted\n\n");
 		romhalt();
 	}
-	if (howto & RB_DUMP)
-		dumpsys();
 
-	doshutdownhooks();
 	printf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
