@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.52 2001/10/25 22:03:38 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.53 2001/10/25 23:07:50 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -220,18 +220,14 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #file	ddb/db_elf.c			ddb
 
 #
-# Raster Console and wscons support
+# Raster Console support
 #
 include "dev/wsfont/files.wsfont"
-include "dev/wscons/files.wscons"
-
-device ofb: wsemuldisplaydev, rasops8
-attach ofb at pci
-file arch/sparc64/dev/ofb.c			ofb needs-flag
-
+include "dev/rcons/files.rcons"
 
 # USB Support
 include "dev/usb/files.usb"
+
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"
 
