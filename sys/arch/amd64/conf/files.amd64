@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.9 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.amd64,v 1.10 2004/03/25 15:32:27 drochner Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -98,8 +98,6 @@ define cpu { [apid = -1] }
 device cpu
 attach cpu at mainbus
 file	arch/amd64/amd64/cpu.c		cpu
-
-file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 
 #
 # PCI-only drivers
