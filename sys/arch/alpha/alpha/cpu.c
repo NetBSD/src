@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.47 2000/06/01 13:50:48 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.48 2000/06/03 14:12:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2000/06/01 13:50:48 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2000/06/03 14:12:54 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -148,15 +148,17 @@ struct cputable_struct {
 	char	*cpu_major_name;
 	char	**cpu_minor_names;
 } cpunametable[] = {
-	{ PCS_PROC_EV3,		"EV3",		0		},
+	{ PCS_PROC_EV3,		"EV3",		NULL		},
 	{ PCS_PROC_EV4,		"21064",	ev4minor	},
-	{ PCS_PROC_SIMULATION,	"Sim",		0		},
+	{ PCS_PROC_SIMULATION,	"Sim",		NULL		},
 	{ PCS_PROC_LCA4,	"LCA",		lcaminor	},
 	{ PCS_PROC_EV5,		"21164",	ev5minor	},
 	{ PCS_PROC_EV45,	"21064A",	ev45minor	},
 	{ PCS_PROC_EV56,	"21164A",	ev56minor	},
 	{ PCS_PROC_EV6,		"21264",	ev6minor	},
-	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	}
+	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	},
+	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
+	{ PCS_PROC_EV67,	"EV67",		NULL		},
 };
 
 /*
