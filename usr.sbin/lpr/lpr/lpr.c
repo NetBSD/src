@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.12 1996/10/25 22:07:53 explorer Exp $	*/
+/*	$NetBSD: lpr.c,v 1.13 1996/12/09 09:57:48 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -294,7 +294,7 @@ main(argc, argv)
 	/*
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
-	(void) snprintf(buf, BUFSIZ, "%s/%s", SD, LO);
+	(void)snprintf(buf, BUFSIZ, "%s/%s", SD, LO);
 	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		fatal2("Printer queue is disabled");
 	/*
@@ -303,7 +303,7 @@ main(argc, argv)
 	mktemps();
 	tfd = nfile(tfname);
 	seteuid(euid);
-	(void) fchown(tfd, DU, -1);	/* owned by daemon for protection */
+	(void)fchown(tfd, DU, -1);	/* owned by daemon for protection */
 	seteuid(uid);
 	card('H', host);
 	card('P', person);
@@ -339,7 +339,7 @@ main(argc, argv)
 			continue;	/* file unreasonable */
 
 		if (sflag && (cp = linked(arg)) != NULL) {
-			(void) snprintf(buf, BUFSIZ,
+			(void)snprintf(buf, BUFSIZ,
 					"%d %d", statb.st_dev, statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
@@ -363,14 +363,14 @@ main(argc, argv)
 			continue;
 		}
 		copy(i, arg);
-		(void) close(i);
+		(void)close(i);
 		if (f && unlink(arg) < 0)
 			printf("%s: %s: not removed\n", name, arg);
 		seteuid(uid);
 	}
 
 	if (nact) {
-		(void) close(tfd);
+		(void)close(tfd);
 		tfname[inchar]--;
 		/*
 		 * Touch the control file to fix position in the queue.
@@ -386,7 +386,7 @@ main(argc, argv)
 				tfname[inchar]++;
 				cleanup(0);
 			}
-			(void) close(tfd);
+			(void)close(tfd);
 		}
 		if (link(tfname, cfname) < 0) {
 			printf("%s: cannot rename %s\n", name, cfname);
@@ -439,7 +439,7 @@ copy(f, n)
 			}
 		}
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (nc==0 && nr==0) 
 		printf("%s: %s: empty input file\n", name, f ? n : "stdin");
 	else
@@ -459,7 +459,8 @@ linked(file)
 	register int ret;
 
 	if (*file != '/') {
-		if (getcwd(buf, BUFSIZ) == NULL) {
+		/* XXX: 2 and file for "/file" */
+		if (getcwd(buf, BUFSIZ - 2 - strlen(file)) == NULL) {
 			return(NULL);
 		}
 		while (file[0] == '.') {
@@ -477,8 +478,8 @@ linked(file)
 			}
 			break;
 		}
-		strcat(buf, "/");
-		strcat(buf, file);
+		strcat(buf, "/");	/* XXX: strcat is safe */
+		strcat(buf, file);	/* XXX: strcat is safe */
 		file = buf;
 	}
 	seteuid(euid);
@@ -523,7 +524,7 @@ nfile(n)
 
 	seteuid(euid);
 	f = open(n, O_WRONLY | O_EXCL | O_CREAT, FILMOD);
-	(void) umask(oldumask);
+	(void)umask(oldumask);
 	if (f < 0) {
 		printf("%s: cannot create %s\n", name, n);
 		cleanup(0);
@@ -615,10 +616,10 @@ test(file)
 	    !N_BADMAG(execb)) {
 			printf("%s: %s is an executable program and is unprintable",
 				name, file);
-			(void) close(fd);
+			(void)close(fd);
 			goto bad;
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (rflag) {
 		if ((cp = rindex(file, '/')) == NULL) {
 			if (access(".", 2) == 0)
@@ -697,7 +698,7 @@ mktemps()
 	char buf[BUFSIZ];
 	char *lmktemp();
 
-	(void) snprintf(buf, BUFSIZ, "%s/.seq", SD);
+	(void)snprintf(buf, BUFSIZ, "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0) {
 		printf("%s: cannot create %s\n", name, buf);
@@ -722,10 +723,10 @@ mktemps()
 	dfname = lmktemp("df", n, len);
 	inchar = strlen(SD) + 3;
 	n = (n + 1) % 1000;
-	(void) lseek(fd, (off_t)0, 0);
+	(void)lseek(fd, (off_t)0, 0);
 	snprintf(buf, BUFSIZ, "%03d\n", n);
-	(void) write(fd, buf, strlen(buf));
-	(void) close(fd);	/* unlocks as well */
+	(void)write(fd, buf, strlen(buf));
+	(void)close(fd);	/* unlocks as well */
 }
 
 /*
@@ -740,7 +741,7 @@ lmktemp(id, num, len)
 
 	if ((s = malloc(len)) == NULL)
 		fatal2("out of memory");
-	(void) snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
+	(void)snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
 	return(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
+/*	$NetBSD: pac.c,v 1.8 1996/12/09 09:57:51 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -164,7 +164,7 @@ fprintf(stderr,
 				exit(1);
 			}
 		}
-		(void) enter(--cp);
+		(void)enter(--cp);
 		allflag = 0;
 	}
 	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
@@ -332,8 +332,7 @@ enter(name)
 	h = hash(name);
 	hcount++;
 	hp = (struct hent *) calloc(sizeof *hp, 1);
-	hp->h_name = (char *) calloc(sizeof(char), strlen(name)+1);
-	strcpy(hp->h_name, name);
+	hp->h_name = strdup(name);
 	hp->h_feetpages = 0.0;
 	hp->h_count = 0;
 	hp->h_link = hashtab[h];
@@ -443,7 +442,7 @@ chkprinter(s)
 		perror("pac");
 		exit(1);
 	}
-	strcpy(sumfile, acctfile);
-	strcat(sumfile, "_sum");
+	strcpy(sumfile, acctfile);	/* XXX: strcpy is safe */
+	strcat(sumfile, "_sum");	/* XXX: strcat is safe */
 	return(1);
 }
