@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.19 1999/09/27 19:14:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.20 1999/09/28 21:56:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -3346,7 +3346,6 @@ tlp_2114x_isv_tmsw_init(sc)
 	case TULIP_CHIP_21140:
 	case TULIP_CHIP_21140A:
 	case TULIP_CHIP_MX98713:
-	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_AX88140:
 	case TULIP_CHIP_AX88141:
 		sc->sc_gp_dir = *cp++;
