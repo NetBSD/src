@@ -1,5 +1,5 @@
-.\"     $NetBSD: stf.4,v 1.12 2001/04/29 03:56:06 itojun Exp $
-.\"     $KAME: stf.4,v 1.33 2001/04/27 09:58:04 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.13 2001/05/02 05:59:02 itojun Exp $
+.\"     $KAME: stf.4,v 1.34 2001/05/02 05:57:54 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -168,7 +168,8 @@ By setting the
 flag on the
 .Nm
 interface, it is possible to disable the input path,
-making the attack from the outside impossible.
+making the direct attacks from the outside impossible.
+Note, however, there are other security risks exist.
 If you wish to use the configuration,
 you must not advertise your 6to4 address to others.
 .\"
