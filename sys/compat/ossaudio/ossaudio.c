@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.40 2003/01/12 08:20:06 jdolecek Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.41 2003/01/18 08:33:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.40 2003/01/12 08:20:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.41 2003/01/18 08:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.40 2003/01/12 08:20:06 jdolecek Exp $
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ossaudio/ossaudio.h>
