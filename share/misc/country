@@ -1,9 +1,9 @@
-# $NetBSD: country,v 1.5 1999/12/02 14:01:46 kleink Exp $
+# $NetBSD: country,v 1.6 2000/10/13 03:22:49 hubertf Exp $
 #
 # ISO 3166-1 Country Codes
 #
 # The format of an entry is:
-# <Country name><TAB><Alpha-2-code><TAB><Alpha-3-code><Numeric-3-code>
+# <Country name><TAB><Alpha-2-code><TAB><Alpha-3-code><TAB><Numeric-3-code>
 #
 # Further information can be found at the ISO 3166 Maintenance Agency
 # (ISO 3166/MA) web site, <http://www.din.de/gremien/nas/nabd/iso3166ma/>.
