@@ -1,0 +1,25 @@
+#	$NetBSD: all.debug,v 1.1.2.2 2000/07/21 16:24:11 jhawk Exp $
+#
+# example /etc/syslog.conf:
+# each facility is logged to a separate file
+#
+auth.debug		/var/log/auth
+authpriv.debug		/var/log/authpriv
+cron.debug		/var/log/cron
+daemon.debug		/var/log/daemon
+ftp.debug		/var/log/ftp
+kern.debug		/var/log/kern
+lpr.debug		/var/log/lpr
+mail.debug		/var/log/mail
+news.debug		/var/log/news
+syslog,mark.debug	/var/log/syslog
+user.debug		/var/log/user
+uucp.debug		/var/log/uucp
+local0.debug		/var/log/local0
+local1.debug		/var/log/local1
+local2.debug		/var/log/local2
+local3.debug		/var/log/local3
+local4.debug		/var/log/local4
+local5.debug		/var/log/local5
+local6.debug		/var/log/local6
+local7.debug		/var/log/local7
