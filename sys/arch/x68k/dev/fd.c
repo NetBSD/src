@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2003/01/25 14:13:46 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2003/02/02 08:37:28 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1223,7 +1223,7 @@ loop:
 		 if (block != fd->sc_blkno) {
 			 printf("C H R N: %d %d %d %d\n",
 				fd->sc_cylin, head, sec, type->secsize);
-			 printf("fdcintr: doio: block %d != blkno %d\n",
+			 printf("fdcintr: doio: block %d != blkno %" PRId64 "\n",
 				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
@@ -1300,7 +1300,7 @@ loop:
 			 * (1 << (type->secsize - 2));
 		 block += (fd->sc_part == SEC_P01) ? 1 : 0;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n",
+			 printf("fdcintr: block %d != blkno %" PRId64 "\n",
 				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
@@ -1385,7 +1385,7 @@ loop:
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %lld nblks %d\n",
+			printf("blkno %" PRId64 " nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
@@ -1424,7 +1424,7 @@ loop:
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %lld nblks %d\n",
+			printf("blkno %" PRId64 " nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
