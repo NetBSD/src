@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.11 2000/01/31 14:24:25 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.12 2000/02/16 00:37:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.11 2000/01/31 14:24:25 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.12 2000/02/16 00:37:02 itojun Exp $");
 #endif
 #endif
 
@@ -222,9 +222,6 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 
-/* for inet_ntop() */
-char ntop_buf[INET6_ADDRSTRLEN];
-
 /* for node addresses */
 u_short naflags;
 
@@ -241,7 +238,7 @@ void	 onalrm __P((int));
 void	 oninfo __P((int));
 void	 onint __P((int));
 void	 pinger __P((void));
-char	*pr_addr __P((struct sockaddr_in6 *));
+const char *pr_addr __P((struct sockaddr_in6 *));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
 void	 pr_nodeaddr __P((struct icmp6_nodeinfo *, int));
@@ -289,12 +286,12 @@ main(argc, argv)
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 #ifndef IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qS:s:vwW")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRS:s:vwW")) != EOF)
 #else
 #ifdef IPSEC_POLICY_IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qS:s:vwWP:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRS:s:vwWP:")) != EOF)
 #else
-	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qS:s:vwWAE")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfh:I:i:l:np:qRS:s:vwWAE")) != EOF)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 		switch(ch) {
@@ -394,10 +391,12 @@ main(argc, argv)
 		case 'q':
 			options |= F_QUIET;
 			break;
-#ifdef IPV6_REACHCONF
 		case 'R':
+#ifdef IPV6_REACHCONF
 			options |= F_REACHCONF;
 			break;
+#else
+			errx(1, "-R is not supported in this configuration");
 #endif
 		case 'S':
 			/* XXX: use getaddrinfo? */
@@ -820,8 +819,8 @@ main(argc, argv)
 #endif 
 
 	printf("PING6(%d=40+8+%d bytes) ", datalen + 48, datalen);
-	printf("%s --> ", inet_ntop(AF_INET6, &src.sin6_addr, ntop_buf, sizeof(ntop_buf)));
-	printf("%s\n", inet_ntop(AF_INET6, &dst.sin6_addr, ntop_buf, sizeof(ntop_buf)));
+	printf("%s --> ", pr_addr(&src));
+	printf("%s\n", pr_addr(&dst));
 
 	while (preload--)		/* Fire off them quickies. */
 		pinger();
@@ -1020,8 +1019,7 @@ pr_pack(buf, cc, mhdr)
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s\n", cc,
-			  inet_ntop(AF_INET6, (void *)&from->sin6_addr,
-				    ntop_buf, sizeof(ntop_buf)));
+			    pr_addr(from));
 		return;
 	}
 	icp = (struct icmp6_hdr *)buf;
@@ -1297,7 +1295,7 @@ pr_rthdr(void *extbuf)
 			printf("   [%d]<NULL>\n", i);
 		else
 			printf("   [%d]%s\n", i,
-			       inet_ntop(AF_INET6, (void *)in6->s6_addr,
+			       inet_ntop(AF_INET6, in6,
 					 ntopbuf, sizeof(ntopbuf)));
 	}
 
@@ -1321,6 +1319,7 @@ pr_nodeaddr(ni, nilen)
 	int nilen;
 {
 	struct in6_addr *ia6 = (struct in6_addr *)(ni + 1);
+	char ntop_buf[INET6_ADDRSTRLEN];
 
 	nilen -= sizeof(struct icmp6_nodeinfo);
 
@@ -1482,6 +1481,8 @@ pr_icmph(icp, end)
 	struct icmp6_hdr *icp;
 	u_char *end;
 {
+	char ntop_buf[INET6_ADDRSTRLEN];
+
 	switch(icp->icmp6_type) {
 	case ICMP6_DST_UNREACH:
 		switch(icp->icmp6_code) {
@@ -1614,6 +1615,7 @@ pr_iph(ip6)
 {
 	u_int32_t flow = ip6->ip6_flow & IPV6_FLOWLABEL_MASK;
 	u_int8_t tc;
+	char ntop_buf[INET6_ADDRSTRLEN];
 
 	tc = *(&ip6->ip6_vfc + 1); /* XXX */
 	tc = (tc >> 4) & 0x0f;
@@ -1625,9 +1627,9 @@ pr_iph(ip6)
 	       ntohs(ip6->ip6_plen),
 	       ip6->ip6_nxt, ip6->ip6_hlim);
 	printf("%s->", inet_ntop(AF_INET6, &ip6->ip6_src,
-				  ntop_buf, INET6_ADDRSTRLEN));
+				  ntop_buf, sizeof(ntop_buf)));
 	printf("%s\n", inet_ntop(AF_INET6, &ip6->ip6_dst,
-				 ntop_buf, INET6_ADDRSTRLEN));
+				 ntop_buf, sizeof(ntop_buf)));
 }
 
 /*
@@ -1635,7 +1637,7 @@ pr_iph(ip6)
  *	Return an ascii host address as a dotted quad and optionally with
  * a hostname.
  */
-char *
+const char *
 pr_addr(addr)
 	struct sockaddr_in6 *addr;
 {
