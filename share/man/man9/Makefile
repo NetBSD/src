@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.30.2.1 1997/11/01 23:28:21 mellon Exp $
+#       $NetBSD: Makefile,v 1.30.2.2 1997/11/12 01:04:12 mrg Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -67,15 +67,18 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=malloc.9 free.9
-MLINKS+=mbuf.9 cltom.9 mbuf.9 m_adj.9 mbuf.9 m_align.9 mbuf.9 m_cat.9 \
-	mbuf.9 m_copy_pkthdr.9 mbuf.9 m_copyback.9 mbuf.9 m_copydata.9 \
-	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_devget.9 \
-	mbuf.9 m_free.9 mbuf.9 m_freem.9 mbuf.9 m_get.9 mbuf.9 m_getclr.9 \
-	mbuf.9 m_gethdr.9 mbuf.9 m_leadingspace.9 mbuf.9 m_prepend.9 \
-	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_trailingspace.9 \
-	mbuf.9 mchtype.9 mbuf.9 mclget.9 mbuf.9 mextadd.9 mbuf.9 mextmalloc.9 \
-	mbuf.9 mextremove.9 mbuf.9 mfree.9 mbuf.9 mget.9 mbuf.9 mgethdr.9 \
-	mbuf.9 mh_align.9 mbuf.9 mtocl.9 mbuf.9 mtod.9
+MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
+	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
+	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_prepend.9 \
+	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
+	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
+	mbuf.9 MGET.9 mbuf.9 MGETHDR.9 mbuf.9 MEXTMALLOC.9 \
+	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 mbuf.9 M_COPY_PKTHDR.9 \
+	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
+	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
+	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
+MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
+	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
