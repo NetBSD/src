@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.77 1999/05/05 18:20:34 ross Exp $
+.\"	$NetBSD: options.4,v 1.78 1999/06/06 19:44:55 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1282,6 +1282,14 @@ Use this option only if the boot block reports the size incorrectly.
 Select a non-US keyboard layout for the 
 .Em pccons
 console driver.
+.It Cd options CYRIX_CACHE_WORKS
+Relevant only to the Cyrix 486DLC cpu. This option is used to turn on
+the cache in hold-flush mode. It is not turned on by default because it
+is known to have problems in certain motherboard implementations.
+.It Cd options CYRIX_CACHE_REALLY_WORKS
+Relevant only to the Cyrix 486DLC cpu. This option is used to turn on
+the cache in write-back mode. It is not turned on by default because it
+is known to have problems in certain motherboard implementations.
 .El
 .Ss m68k-specific Options
 .Bl -ohang
