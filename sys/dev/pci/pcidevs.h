@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp 
+ *	NetBSD: pcidevs,v 1.5 1996/01/31 00:43:02 cgd Exp 
  */
 
 /*
@@ -406,10 +406,15 @@
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 */
 
 /* Adaptec products */
-#define	PCI_PRODUCT_ADP_AIC7850	0x7075		/* AIC-7850 */
+#define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
+#define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
+#define	PCI_PRODUCT_ADP_2940U	0x8178		/* AHA-2940 Ultra */
+#define	PCI_PRODUCT_ADP_3940	0x7278		/* AHA-3940 */
+#define	PCI_PRODUCT_ADP_2944	0x7478		/* AHA-2944 */
+#define	PCI_PRODUCT_ADP_2940	0x7178		/* AHA-2940 */
+#define	PCI_PRODUCT_ADP_AIC7880	0x8078		/* AIC-7880 Ultra */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */
-#define	PCI_PRODUCT_ADP_AIC2940	0x7178		/* AIC-2940 */
-#define	PCI_PRODUCT_ADP_AIC2940U	0x8178		/* AIC-2940 (\"Ultra\") */
+#define	PCI_PRODUCT_ADP_AIC7850	0x5078		/* AIC-7850 */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */

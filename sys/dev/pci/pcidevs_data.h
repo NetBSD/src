@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp 
+ *	NetBSD: pcidevs,v 1.5 1996/01/31 00:43:02 cgd Exp 
  */
 
 /*
@@ -50,10 +50,46 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1435",
 	},
 	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940U,
 	    0,
 	    "Adaptec",
-	    "AIC-7850",
+	    "AHA-3940 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U,
+	    0,
+	    "Adaptec",
+	    "AHA-2944 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940U,
+	    0,
+	    "Adaptec",
+	    "AHA-2940 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940,
+	    0,
+	    "Adaptec",
+	    "AHA-3940",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944,
+	    0,
+	    "Adaptec",
+	    "AHA-2944",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940,
+	    0,
+	    "Adaptec",
+	    "AHA-2940",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7880,
+	    0,
+	    "Adaptec",
+	    "AIC-7880 Ultra",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7870,
@@ -62,16 +98,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7870",
 	},
 	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC2940,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
 	    0,
 	    "Adaptec",
-	    "AIC-2940",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC2940U,
-	    0,
-	    "Adaptec",
-	    "AIC-2940 (\"Ultra\")",
+	    "AIC-7850",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
