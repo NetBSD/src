@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.22 2000/06/03 14:36:37 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.23 2000/06/20 02:24:42 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
-		goto bad;
+		goto freehdrs;
 	}
 
 	error = 0;
@@ -218,7 +218,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		 * This packet is just discarded.
 		 */
 		ipsec6stat.out_polvio++;
-		goto bad;
+		goto freehdrs;
 
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
@@ -231,7 +231,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			/* XXX should be panic ? */
 			printf("ip6_output: No IPsec request specified.\n");
 			error = EINVAL;
-			goto bad;
+			goto freehdrs;
 		}
 		needipsec = 1;
 		break;
