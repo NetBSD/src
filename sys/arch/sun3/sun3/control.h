@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.16 1997/01/27 19:41:00 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.17 1997/04/28 21:46:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #include <sys/types.h>
 
 /* ctrlsp.S */
-unsigned char get_control_byte __P((char *));
+unsigned int get_control_byte __P((char *));
 unsigned int get_control_word __P((char *));
 void set_control_byte __P((char *, unsigned char));
 void set_control_word __P((char *, unsigned int));
