@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.28 1994/04/13 05:43:21 mycroft Exp $
+ *	$Id: st.c,v 1.29 1994/04/24 05:40:05 mycroft Exp $
  */
 
 /*
@@ -892,7 +892,8 @@ ststrategy(bp)
 	/*
 	 * as are out-of-range requests on variable drives.
 	 */
-	else if (bp->b_bcount < st->blkmin || bp->b_bcount > st->blkmax) {
+	else if (bp->b_bcount < st->blkmin ||
+		 (st->blkmax && bp->b_bcount > st->blkmax)) {
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
