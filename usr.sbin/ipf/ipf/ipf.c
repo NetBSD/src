@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.3 1997/03/28 21:54:40 thorpej Exp $	*/
+/*	$NetBSD: ipf.c,v 1.4 1997/05/25 12:04:54 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -7,6 +7,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#ifdef	__FreeBSD__
+# include <osreldate.h>
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -24,7 +27,11 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <sys/time.h>
 #include <net/if.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
@@ -35,7 +42,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipf.c,v 1.3 1997/03/28 21:54:40 thorpej Exp $";
+static	char	rcsid[] = "$Id: ipf.c,v 1.4 1997/05/25 12:04:54 darrenr Exp $";
 #endif
 
 #if	SOLARIS
@@ -215,9 +222,11 @@ char	*name, *file;
 			if (opts & OPT_ZERORULEST)
 				add = SIOCZRLST;
 			else if (opts & OPT_INACTIVE)
-				add = fr->fr_hits ? SIOCINIFR : SIOCADIFR;
+				add = (u_int)fr->fr_hits ? SIOCINIFR :
+							   SIOCADIFR;
 			else
-				add = fr->fr_hits ? SIOCINAFR : SIOCADAFR;
+				add = (u_int)fr->fr_hits ? SIOCINAFR :
+							   SIOCADAFR;
 			if (fr->fr_hits)
 				fr->fr_hits--;
 			if (fr && (opts & OPT_VERBOSE))
@@ -233,7 +242,11 @@ char	*name, *file;
 				if (ioctl(fd, add, fr) == -1)
 					perror("ioctl(SIOCZRLST)");
 				else {
+#ifdef	USE_QUAD_T
+					printf("hits %qd bytes %qd ",
+#else
 					printf("hits %ld bytes %ld ",
+#endif
 						fr->fr_hits, fr->fr_bytes);
 					printfr(fr);
 				}
