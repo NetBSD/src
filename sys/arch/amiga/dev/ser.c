@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.16 1994/05/11 19:06:49 chopps Exp $
+ *	$Id: ser.c,v 1.17 1994/05/16 04:55:11 chopps Exp $
  */
 /*
  * XXX This file needs major cleanup it will never ervice more than one
@@ -1076,39 +1076,4 @@ serspits(cp)
 		serspit(*cp++);
 }
 #endif
-int
-serselect(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
-{
-	struct tty *tp = ser_tty[SERUNIT(dev)];
-	struct proc *selp;
-	int nread, s;
-
-	tp = ser_tty[SERUNIT(dev)];
-	s = spltty();
-
-	switch (rw) {
-	case FREAD:
-		nread = ttnread(tp);
-		if (nread > 0 || ((tp->t_cflag & CLOCAL) == 0
-			&& (tp->t_state & TS_CARR_ON) == 0))
-			goto win;
-		selrecord(p, &tp->t_rsel);
-		break;
-
-	case FWRITE:
-		if (tp->t_outq.c_cc <= tp->t_lowat)
-			goto win;
-		selrecord(p, &tp->t_wsel);
-		break;
-	}
-	splx(s);
-	return (0);
-
-win:
-	splx(s);
-	return (1);
-}
 #endif
