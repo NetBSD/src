@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2000/05/31 05:09:17 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2000/07/05 16:02:39 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1486,3 +1486,25 @@ _C_LABEL(setfault):
 	stmw	12,12(3)
 	xor	3,3,3
 	blr
+
+/* #ifdef MULTIPROCESSOR */
+	.globl	_C_LABEL(cpu_spinup_trampoline)
+_C_LABEL(cpu_spinup_trampoline):
+	li	0,0
+	mtmsr	0
+	isync
+
+	lis	3,cpu_hatchstack@ha
+	lwz	1,cpu_hatchstack@l(3)
+
+	bl	_C_LABEL(cpu_hatch)
+
+1:
+	sync
+	mfmsr	3
+	oris	3,3,PSL_POW@h
+	mtmsr	3
+	isync
+	b	1b
+
+/* #endif */
