@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.56 2002/11/17 02:48:10 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.57 2002/11/23 11:24:03 blymn Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -111,6 +111,7 @@
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/usbd.0
 ./usr/share/man/cat8/vax/installboot.0
+./usr/share/man/cat8/verifiedexec_load.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/xntpd.0
 ./usr/share/man/cat8/xntpdc.0
@@ -224,6 +225,7 @@
 ./usr/share/man/man8/update.8
 ./usr/share/man/man8/usbd.8
 ./usr/share/man/man8/vax/installboot.8
+./usr/share/man/man8/verifiedexec_load.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/xntpd.8
 ./usr/share/man/man8/xntpdc.8
