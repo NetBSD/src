@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.37 2000/06/21 19:39:32 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.38 2000/06/26 02:55:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2388,61 +2388,6 @@ LEAF_NOPROFILE(mips3_TBIA)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips3_TBIA)
-
-/*
- * void mips3_TBRPL(vpn1, vpn2, pte)
- *	probe TLB entry which has vpn1 address; if found, have it new
- *	entryHi and entryLo[01] pair as [vpn2, pte]
- */
-LEAF_NOPROFILE(mips3_TBRPL)
-	mfc0	v1, MIPS_COP_0_STATUS
-	mtc0	zero, MIPS_COP_0_STATUS
-	dmfc0	v0, MIPS_COP_0_TLB_HI
-	li	t0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
-	and	a0, a0, t0
-	dmtc0	a0, MIPS_COP_0_TLB_HI
-	nop
-	nop
-	tlbp
-	nop
-	nop
-	mfc0	t1, MIPS_COP_0_TLB_INDEX
-	nop
-	nop
-	bltz	t1, 9f
-	nop
-	tlbr
-	#nop
-	#nop
-	and	t1, a1, MIPS3_PG_ODDPG
-	and	a1, a1, t0
-	dsll	a2, a2, 34
-	dsrl	a2, a2, 34
-	or	a2, a2, MIPS3_PG_G
-	li	a0, MIPS3_PG_G
-	bnez	t1, 1f
-	nop
-0: #EVEN
-	dmtc0	a1, MIPS_COP_0_TLB_HI
-	dmtc0	a2, MIPS_COP_0_TLB_LO0
-	dmtc0	a0, MIPS_COP_0_TLB_LO1
-	b	2f
-	nop
-1: #ODD
-	dmtc0	a1, MIPS_COP_0_TLB_HI
-	dmtc0	a0, MIPS_COP_0_TLB_LO0
-	dmtc0	a2, MIPS_COP_0_TLB_LO1
-	nop
-	nop
-2:
-	tlbwi
-	nop
-	nop
-9:
-	dmtc0	v0, MIPS_COP_0_TLB_HI
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS
-	END(mips3_TBRPL)
 
 LEAF(mips3_Set64bit)
 	mfc0	v0, MIPS_COP_0_STATUS

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.36 2000/06/20 05:54:03 soda Exp $	*/
+/*	$NetBSD: locore.h,v 1.37 2000/06/26 02:55:45 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -55,7 +55,6 @@ void mips1_SetPID   __P((int pid));
 void mips1_TBIA __P((int));
 void mips1_TBIAP __P((int));
 void mips1_TBIS __P((vaddr_t));
-void mips1_TBRPL __P((vaddr_t, vaddr_t, unsigned int));
 int mips1_TLBUpdate __P((u_int, u_int));
 
 void mips1_wbflush __P((void));
@@ -72,7 +71,6 @@ void mips3_SetPID  __P((int pid));
 void mips3_TBIA __P((int));
 void mips3_TBIAP __P((int));
 void mips3_TBIS __P((vaddr_t));
-void mips3_TBRPL __P((vaddr_t, vaddr_t, unsigned int));
 int mips3_TLBUpdate __P((u_int, u_int));
 struct tlb;
 void mips3_TLBRead __P((int, struct tlb *));
@@ -108,7 +106,6 @@ typedef struct  {
 	void (*setTLBpid)  __P((int pid));
 	void (*TBIAP)	__P((int));
 	void (*TBIS)	__P((vaddr_t));
-	void (*TBRPL)	__P((vaddr_t, vaddr_t, unsigned int));
 	int  (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
 	void (*wbflush) __P((void));
 } mips_locore_jumpvec_t;
@@ -152,7 +149,6 @@ extern long *mips_locoresw[];
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips3_TBIS
-#define MIPS_TBRPL		mips3_TBRPL
 #define MachTLBUpdate		mips3_TLBUpdate
 #define wbflush()		mips3_wbflush()
 #define proc_trampoline		mips3_proc_trampoline
@@ -165,7 +161,6 @@ extern long *mips_locoresw[];
 #define MachSetPID		mips1_SetPID
 #define MIPS_TBIAP()		mips1_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips1_TBIS
-#define MIPS_TBRPL		mips1_TBRPL
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline
@@ -180,7 +175,6 @@ extern long *mips_locoresw[];
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
 #define MIPS_TBIAP()		(*(mips_locore_jumpvec.TBIAP))(mips_num_tlb_entries)
 #define MIPS_TBIS		(*(mips_locore_jumpvec.TBIS))
-#define MIPS_TBRPL		(*(mips_locore_jumpvec.TBRPL))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define MachHitFlushDCache	mips3_HitFlushDCache
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
