@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.3 1997/06/17 18:56:18 christos Exp $	*/
+/*	$NetBSD: libc.h,v 1.4 1998/02/03 05:11:06 perry Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -91,6 +91,10 @@
 
 #ifndef	_STRINGS_H_
 #include <strings.h>
+#endif	/* _STRINGS_H_ */
+
+#ifndef	_STRING_H_
+#include <string.h>
 #endif	/* _STRINGS_H_ */
 
 #ifndef	_TIME_H_

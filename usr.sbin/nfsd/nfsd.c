@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.24 1997/10/18 11:02:19 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.25 1998/02/03 04:55:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.24 1997/10/18 11:02:19 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.25 1998/02/03 04:55:59 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.24 1997/10/18 11:02:19 lukem Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
