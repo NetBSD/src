@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.1 2002/03/17 21:28:54 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/18 01:43:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,10 +46,6 @@ struct mutex {
 
 		/* Spin mutex */
 		struct {
-			/*
-			 * We're little-endian, so mtx_dummy is
-			 * in the bottom-half of mtx_owner.
-			 */
 			unsigned int mtx_dummy;
 			__cpu_simple_lock_t mtx_lock;
 			int mtx_oldspl;
