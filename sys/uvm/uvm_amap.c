@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.7 1998/03/09 00:58:55 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.8 1998/05/05 20:51:04 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -46,15 +46,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <sys/syscallargs.h>
 
 #define UVM_AMAP		/* pull in uvm_amap.h functions */
 #include <uvm/uvm.h>
