@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.8 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.9 2004/08/28 19:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,14 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.8 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.9 2004/08/28 19:11:19 thorpej Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/dkbad.h>
-
-int	isbad __P((struct dkbad *, int, int, int));
 
 /*
  * Search the bad sector table looking for
@@ -48,9 +46,7 @@ int	isbad __P((struct dkbad *, int, int, int));
  */
 
 int
-isbad(bt, cyl, trk, sec)
-	struct dkbad *bt;
-	int cyl, trk, sec;
+isbad(struct dkbad *bt, int cyl, int trk, int sec)
 {
 	int i;
 	long blk, bblk;

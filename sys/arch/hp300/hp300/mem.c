@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.40 2003/08/07 16:27:38 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40 2003/08/07 16:27:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41 2004/08/28 19:11:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,9 @@ extern u_int lowram;
 extern char *extiobase;
 static caddr_t devzeropage;
 
-dev_type_read(mmrw);
+static dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
-dev_type_mmap(mmmmap);
+static dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
@@ -105,11 +105,8 @@ const struct cdevsw mem_cdevsw = {
 };
 
 /*ARGSUSED*/
-int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t o, v;
 	int c;
@@ -226,11 +223,8 @@ unlock:
 	return (error);
 }
 
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+static paddr_t
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this
