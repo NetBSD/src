@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.18 2003/10/15 18:08:40 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.18 2003/10/15 18:08:40 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -210,6 +210,7 @@ parse__escape(const char **const ptr)
 	*ptr = ++p;
 	return (c);
 }
+
 /* parse__string():
  *	Parse the escapes from in and put the raw string out
  */
@@ -231,6 +232,14 @@ parse__string(char *out, const char *in)
 				return (NULL);
 			*out++ = n;
 			break;
+
+		case 'M':
+			if (in[1] == '-' && in[2] != '\0') {
+				*out++ = '\033';
+				in += 2;
+				break;
+			}
+			/*FALLTHROUGH*/
 
 		default:
 			*out++ = *in++;
