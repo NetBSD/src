@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 1999/05/01 19:11:34 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.97 1999/07/31 01:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -243,10 +243,14 @@ Lnot68030:
 	jeq	Lisa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
 	jeq	Lisa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
+	jeq	Lisa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	Lisa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| or a 433s?
 	jeq	Lisa433
+	cmpb	#MMUID_385,d0		| or a 385?
+	jeq	Lisa385
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	Lstart1
 Lisa425:
@@ -254,6 +258,9 @@ Lisa425:
 	jra	Lstart1
 Lisa433:
 	movl	#HP_433,a0@
+	jra	Lstart1
+Lisa385:
+	movl	#HP_385,a0@
 	jra	Lstart1
 
 	/*
