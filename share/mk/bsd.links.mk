@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.20 2002/08/24 13:12:38 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.21 2002/10/22 18:48:28 perry Exp $
 
 ##### Basic targets
 .PHONY:		linksinstall
@@ -22,7 +22,7 @@ linksinstall::	realinstall
 			fi; \
 		fi; \
 		echo "$$t -> $$l"; \
-		${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
 .endif
 .if !empty(LINKS)
@@ -34,7 +34,7 @@ linksinstall::	realinstall
 		echo "realall: $$t"; \
 		echo "$$t!"; \
 		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@${INSTALL_LINK} $$l $$t"; \
+		echo "	@${INSTALL_LINK} ${SYSPKGTAG} $$l $$t"; \
 	 done; \
 	) | ${MAKE} -f- all
 .endif
