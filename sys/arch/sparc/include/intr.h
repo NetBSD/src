@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2001/09/27 02:05:42 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.4 2002/12/06 15:36:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,20 +36,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX - arbitrary numbers; no interpretation is defined yet */
+/*
+ * Device class interrupt levels
+ * Note: sun4 and sun4c hardware only has software interrupt available
+ *	 on level 1, 4 or 6. This limits the choice of the various
+ * 	 IPL_SOFT* symbols to one of those three values.
+ */
 #define IPL_NONE	0	/* nothing */
 #define IPL_SOFTCLOCK	1	/* timeouts */
 #define IPL_SOFTNET	1	/* protocol stack */
-#define IPL_BIO		2	/* block I/O */
-#define IPL_NET		3	/* network */
-#define IPL_SOFTSERIAL	4	/* serial */
-#define IPL_TTY		5	/* terminal */
-#define IPL_IMP		6	/* memory allocation */
-#define IPL_AUDIO	7	/* audio */
-#define IPL_CLOCK	8	/* clock */
-#define IPL_SERIAL	9	/* serial */
-#define IPL_HIGH	10	/* everything */
+#define IPL_SOFTAUDIO	4	/* second-level audio */
+#define IPL_SOFTFDC	4	/* second-level floppy */
+#define IPL_BIO		5	/* block I/O */
+#define IPL_TTY		6	/* terminal */
+#define IPL_SOFTSERIAL	6	/* serial */
+#define IPL_IMP		7	/* memory allocation */
+#define IPL_NET		7	/* network */
+#define IPL_CLOCK	10	/* clock */
+#define IPL_AUDIO	13	/* audio */
+#define IPL_SERIAL	13	/* serial */
+#define IPL_STATCLOCK	14	/* statclock */
+#define IPL_HIGH	15	/* everything */
 
+#if defined(_KERNEL) && !defined(_LOCORE)
 void *
 softintr_establish __P((int level, void (*fun)(void *), void *arg));
 
@@ -57,3 +66,4 @@ void
 softintr_disestablish __P((void *cookie));
 
 #define softintr_schedule(cookie)	setsoftint()
+#endif /* KERNEL && !_LOCORE */
