@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.4 1998/09/11 13:31:40 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.5 1998/10/08 02:31:41 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ extern int sigpid;
 #define SDB_FOLLOW	0x01	/* XXX: dup from machdep.c */
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04
+#define SDB_DDB		0x08
 #endif
 
 #ifdef DEBUG_SVR4
@@ -491,7 +492,8 @@ svr4_sendsig(catcher, sig, mask, code)
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int onstack, oldsp, newsp, addr;
+	int onstack;
+	vaddr_t oldsp, newsp, addr;
 
 	tf = (struct trapframe *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -511,6 +513,14 @@ svr4_sendsig(catcher, sig, mask, code)
 		fp = (struct svr4_sigframe *)oldsp;
 	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
 
+#ifdef DEBUG
+	sigpid = p->p_pid;
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("svr4_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
+		    p->p_comm, p->p_pid, sig, fp, &fp->sf_uc, oldsp);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 	/*
 	 * Build the argument list for the signal handler.
 	 */
@@ -531,9 +541,14 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
 
-	newsp = (int)fp - sizeof(struct rwindow32);
+	newsp = (u_long)fp - sizeof(struct rwindow32);
 	write_user_windows();
 
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK))
+	    printf("svr4_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
+		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+#endif
 	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
 	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
 		/*
@@ -550,18 +565,31 @@ svr4_sendsig(catcher, sig, mask, code)
 		/* NOTREACHED */
 	}
 
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("svr4_sendsig: %s[%d] sig %d scp %p\n",
+		       p->p_comm, p->p_pid, sig, &fp->sf_uc);
+	}
+#endif
 	/*
 	 * Build context to run handler in.
 	 */
-	addr = (int)psp->ps_sigcode;
+	addr = (vaddr_t)psp->ps_sigcode;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_global[1] = (int)catcher;
+	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_out[6] = newsp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("svr4_sendsig: about to return to catcher %p thru %p\n", 
+		       catcher, addr);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
 }
 
 
