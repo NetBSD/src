@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.11 1999/09/04 22:00:32 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.12 1999/09/14 01:07:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ ohci_pci_attach(parent, self, aux)
 	/* Disable interrupts, so we don't can any spurious ones. */
 	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 
-	sc->sc_dmatag = pa->pa_dmat;
+	sc->sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
