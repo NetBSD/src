@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.3 2003/08/29 12:42:13 bsh Exp $
+#	$NetBSD: SMDK2410,v 1.4 2003/08/29 13:54:03 bsh Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -89,9 +89,9 @@ options 	INET6		# IPV6
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
-#options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
-#options 	NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
 
@@ -156,6 +156,7 @@ cpu0		at mainbus?
 
 # Core logic on Samsung S3C2410
 ssio0	at mainbus?
+ssextio0 at ssio0
 
 # integrated UART
 sscom0	at ssio? index 0
@@ -195,6 +196,11 @@ midi*	at midibus?
 
 # Audio support
 audio*	at audiobus?
+
+# on-board CS8900A Ethernet
+cs*	at ssextio? intr 9 addr 0x18000000
+# set MAC address to on-board CS8900A.
+options	SMDK24X0_ETHER_ADDR_FIXED="0,0x0a,0xb1,0,1,0xff"
 
 # built-in OHCI USB controller
 ohci0	at ssio? addr 0x49000000 intr 26
