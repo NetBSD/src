@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.10 1999/03/29 06:55:04 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.11 1999/04/17 13:45:52 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -112,13 +112,16 @@ attach	le at ibus with le_pmax:	le24, le_dec_subr
 file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
 # DC7085 Quad asynchronous serial driver
-device	dc {}: tty
+device	dc { line = -1 }
 attach	dc at ibus with dc_ibus
-file	arch/pmax/ibus/dc_ibus.c	dc needs-flag
+file	arch/pmax/ibus/dc_ibus.c	dc_ibus
 file	arch/pmax/ibus/dc.c		dc
+device	dctty: tty
+attach	dctty at dc
+file	arch/pmax/ibus/dctty.c		dctty needs-flag
 
 # 8530 UARTs using the MI 8530 driver
-device	zsc { [channel = -1] }
+device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic	
 file	arch/pmax/tc/zs_ioasic.c	zsc_ioasic
 file	dev/ic/z8530sc.c		zsc

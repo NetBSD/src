@@ -1,4 +1,4 @@
-/*	$NetBSD: dc7085var.h,v 1.1.2.2 1998/10/26 10:52:50 nisimura Exp $ */
+/*	$NetBSD: dc7085var.h,v 1.1.2.3 1999/04/17 13:45:53 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
@@ -34,49 +34,69 @@
 #define	_PMAX_DC7085REG_H
 
 struct dc7085reg {	
-	u_int16_t	dz_csr;	/* Control and Status */
+	u_int16_t	dz_csr;	/* control and status */
 	unsigned :16; unsigned :32;
-	u_int16_t	dz_xxx;	/* Rcv Buffer(R) or Line Parameter(W) */
+	u_int16_t	dz_xxx;	/* rcv buffer(R) or line parameter(W) */
 	unsigned :16; unsigned :32;
-	u_int16_t	dz_tcr;	/* Xmt Control (R/W) */	
+	u_int16_t	dz_tcr;	/* xmit control (R/W) */	
 	unsigned :16; unsigned :32;
-	u_int16_t	dz_yyy; /* Xmit Buffer(W) or Modem Status(R) */
+	u_int16_t	dz_yyy; /* xmit buffer(W) or modem status(R) */
 	unsigned :16; unsigned :8;
 	u_int8_t	dz_brk;
 };
-#define dccsr	dz_csr
-#define dcrbuf	dz_xxx
-#define dclpr	dz_xxx
-#define dctcr	dz_tcr
-#define dctbuf	dz_yyy
-#define dcmsr	dz_yyy
-#define dcbrk	dz_brk
+#define DCCSR	offsetof(struct dc7085reg, dz_csr)
+#define DCRBUF	offsetof(struct dc7085reg, dz_xxx)
+#define DCLPR	offsetof(struct dc7085reg, dz_xxx)
+#define DCTCR	offsetof(struct dc7085reg, dz_tcr)
+#define DCTBUF	offsetof(struct dc7085reg, dz_yyy)
+#define DCMSR	offsetof(struct dc7085reg, dz_yyy)
+#define DCBRK	offsetof(struct dc7085reg, dz_brk)
+#define	dccsr	dz_csr
+#define	dcrbuf	dz_xxx
+#define	dclpr	dz_xxx
+#define	dctcr	dz_tcr
+#define	dctbuf	dz_yyy
+#define	dcmsr	dz_yyy
+#define	dcbrk	dz_brk
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
 
-#define	LKLINE  0
-#define	VSLINE  1
-#define	COMLINE 2
-#define	PRTLINE 3
+#define	LKKBD 0
+#define	VSMSE 1
+#define	DCCOM 2
+#define	DCPRT 3
+#define	DCMINOR(u,l) ((u)<<2 | (l))
 
 struct dc_softc {
 	struct device sc_dv;
-	struct dc7085reg *sc_reg;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	int sc_unit;
+	int sc_chip38400;
 
 	struct tty *sc_tty[4];
+#define	DC_CHIP_BREAK	0x010
+	int dc_flags[4];
+
+	/* XXX XXX XXX */
+	u_int16_t dc_rbuf[256];
+#define	DC_RX_RING_MASK 255
+	int dc_rbget, dc_rbput;
 	struct {
 		void (*f) __P((void *, int));
 		void *a;
-	} sc_input[4];
+	} sc_line[4];
 	struct {
 		u_char *p, *e;
 	} sc_xmit[4];
-
-	u_int16_t dc_flags[4];
-#define	DC_HW_CLOCALS	0x100
-#define	DC_CHIP_BRK	0x080
-#define	DC_CHIP_38400	0x040
+	/* XXX XXX XXX */
 };
+
+struct dc_attach_args {
+	int line;
+};
+
+#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
 
 #endif
