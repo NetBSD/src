@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.17 2001/10/31 13:31:26 kleink Exp $	*/
+/*	$NetBSD: system.c,v 1.18 2003/03/04 19:44:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.17 2001/10/31 13:31:26 kleink Exp $");
+__RCSID("$NetBSD: system.c,v 1.18 2003/03/04 19:44:10 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,11 @@ __RCSID("$NetBSD: system.c,v 1.17 2001/10/31 13:31:26 kleink Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+#include "reentrant.h"
 
+#ifdef _REENTRANT
+extern rwlock_t __environ_lock;
+#endif
 extern char **environ;
 
 int
@@ -80,8 +84,10 @@ system(command)
 	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
 		return -1;
 
+	rwlock_rdlock(&__environ_lock);
 	switch(pid = vfork()) {
 	case -1:			/* error */
+		rwlock_unlock(&__environ_lock);
 		sigaction(SIGINT, &intsa, NULL);
 		sigaction(SIGQUIT, &quitsa, NULL);
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -93,6 +99,7 @@ system(command)
 		execve(_PATH_BSHELL, argp, environ);
 		_exit(127);
 	}
+	rwlock_unlock(&__environ_lock);
 
 	while (waitpid(pid, &pstat, 0) == -1) {
 		if (errno != EINTR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.25 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: popen.c,v 1.26 2003/03/04 19:44:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.25 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: popen.c,v 1.26 2003/03/04 19:44:10 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,10 +58,15 @@ __RCSID("$NetBSD: popen.c,v 1.25 2000/01/22 22:19:11 mycroft Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(popen,_popen)
 __weak_alias(pclose,_pclose)
+#endif
+
+#ifdef _REENTRANT
+extern rwlock_t __environ_lock;
 #endif
 
 static struct pid {
@@ -107,9 +112,11 @@ popen(command, type)
 		return (NULL);
 	}
 
+	rwlock_rdlock(&__environ_lock);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
+		rwlock_unlock(&__environ_lock);
 		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -143,6 +150,7 @@ popen(command, type)
 		_exit(127);
 		/* NOTREACHED */
 	}
+	rwlock_unlock(&__environ_lock);
 
 	/* Parent; assume fdopen can't fail. */
 	if (*type == 'r') {
