@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67.2.9 2003/02/10 06:05:11 jmc Exp $	*/
+/*	$NetBSD: util.c,v 1.67.2.10 2003/02/11 08:24:31 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -432,7 +432,7 @@ ask_verbose_dist()
 
 	if (verbose < 0) {
 		msg_display(MSG_verboseextract);
-		process_menu(MENU_extract);
+		process_menu(MENU_noyes);
 		verbose = yesno;
 		wclear(stdscr);
 		wrefresh(stdscr);
@@ -462,15 +462,8 @@ extract_file(path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	if (verbose==1)
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "progress -zf %s pax -rpe -O", path);
-	else if (verbose==2)
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "pax -zrvpe -f %s -O", path);
-	else
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "pax -zrpe -f %s -O", path);
+	tarexit = run_prog(RUN_DISPLAY, NULL,
+	    "pax -zr%spe -O -f %s", verbose ? "v" : "", path);
 
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {
