@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.8 2001/01/25 17:47:08 jhawk Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.9 2001/05/26 16:10:03 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -384,7 +384,7 @@ wi_attach(parent, self, aux)
 	    sizeof(WI_DEFAULT_IBSS) - 1);
 
 	sc->wi_portnum = WI_DEFAULT_PORT;
-	sc->wi_ptype = WI_PORTTYPE_ADHOC;
+	sc->wi_ptype = WI_PORTTYPE_BSS;
 	sc->wi_ap_density = WI_DEFAULT_AP_DENSITY;
 	sc->wi_rts_thresh = WI_DEFAULT_RTS_THRESH;
 	sc->wi_tx_rate = WI_DEFAULT_TX_RATE;
