@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)addch.c	5.7 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: addch.c,v 1.4 1993/08/07 05:48:39 mycroft Exp $";
+static char sccsid[] = "@(#)addch.c	8.1 (Berkeley) 6/4/93";
 #endif	/* not lint */
 
 #include <curses.h>
@@ -48,8 +47,20 @@ waddch(win, ch)
 	WINDOW *win;
 	int ch;
 {
-	static char buf[2];
+	__LDATA buf;
 
-	buf[0] = ch;
-	return (waddbytes(win, buf, 1));
+	buf.ch = ch;
+	buf.attr = 0;
+	return (__waddch(win, &buf));
+}
+
+int
+__waddch(win, dp)
+	WINDOW *win;
+	__LDATA *dp;
+{
+	char buf[2];
+
+	buf[0] = dp->ch;
+	return (__waddbytes(win, buf, 1, dp->attr & __STANDOUT));
 }

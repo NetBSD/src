@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1981, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,93 +32,45 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tstp.c	8.2 (Berkeley) 11/2/93";
+static char sccsid[] = "@(#)ctrace.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
-#include <curses.h>
-#include <errno.h>
-#include <signal.h>
-#include <termios.h>
-#include <unistd.h>
+#ifdef DEBUG
+#include <stdio.h>
 
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
-/*
- * stop_signal_handler --
- *	Handle stop signals.
- */
+#ifndef TFILE
+#define	TFILE	"__curses.out"
+#endif
+
+static FILE *tracefp;			/* Curses debugging file descriptor. */
+
 void
-__stop_signal_handler(signo)
-	int signo;
+#if __STDC__
+__CTRACE(const char *fmt, ...)
+#else
+__CTRACE(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
 {
-	struct termios save;
-	sigset_t oset, set;
-
-	/* Get the current terminal state (which the user may have changed). */
-	if (tcgetattr(STDIN_FILENO, &save))
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	if (tracefp == NULL)
+		tracefp = fopen(TFILE, "w");
+	if (tracefp == NULL)
 		return;
-
-	/*
-	 * Block window change and timer signals.  The latter is because
-	 * applications use timers to decide when to repaint the screen.
-	 */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGALRM);
-	(void)sigaddset(&set, SIGWINCH);
-	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	
-	/*
-	 * End the window, which also resets the terminal state to the
-	 * original modes.
-	 */
-	endwin();
-
-	/* Unblock SIGTSTP. */
-	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGTSTP);
-	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
-
-	/* Stop ourselves. */
-	__restore_stophandler();
-	(void)kill(0, SIGTSTP);
-
-	/* Time passes ... */
-
-	/* Reset the curses SIGTSTP signal handler. */
-	__set_stophandler();
-
-	/* save the new "default" terminal state */
-	(void)tcgetattr(STDIN_FILENO, &__orig_termios);
-
-	/* Reset the terminal state to the mode just before we stopped. */
-	(void)tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save);
-
-	/* Restart the screen. */
-	__startwin();
-
-	/* Repaint the screen. */
-	wrefresh(curscr);
-
-	/* Reset the signals. */
-	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)vfprintf(tracefp, fmt, ap);
+	va_end(ap);
+	(void)fflush(tracefp);
 }
-
-static void (*otstpfn)() = SIG_DFL;
-
-/*
- * Set the TSTP handler.
- */
-void
-__set_stophandler()
-{
-	otstpfn = signal(SIGTSTP, __stop_signal_handler);
-}
-
-/*
- * Restore the TSTP handler.
- */
-void
-__restore_stophandler()
-{
-	(void)signal(SIGTSTP, otstpfn);
-}
+#endif
