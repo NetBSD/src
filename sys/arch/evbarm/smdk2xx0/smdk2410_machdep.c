@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.7 2003/09/03 03:17:22 mycroft Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.8 2003/12/17 13:21:33 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.7 2003/09/03 03:17:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.8 2003/12/17 13:21:33 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -453,7 +453,11 @@ initarm(void *arg)
 
 	/* Disable all peripheral interrupts */
 	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
-	    INTCTL_INTMSK, 0);
+	    INTCTL_INTMSK, ~0);
+	/* initialize some variables so that splfoo() doesn't
+	   touch illegal address.  */
+	s3c2xx0_intr_bootstrap((vaddr_t)bus_space_vaddr(&bootstrap_bs_tag, 
+	    temp_softc.sc_sx.sc_intctl_ioh));
 
 	s3c24x0_clock_freq(s3c2xx0_softc);
 
@@ -963,7 +967,7 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c2800_sscom_kgdb_attach(s3c2xx0_softc->sc_iot,
+		s3c2410_sscom_kgdb_attach(s3c2xx0_softc->sc_iot,
 		    unit, kgdb_rate, pclk, kgdb_sscom_mode);
 	}
 #endif
