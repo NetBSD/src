@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.22 2002/10/10 22:41:52 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.23 2002/12/24 14:43:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.22 2002/10/10 22:41:52 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.23 2002/12/24 14:43:37 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -58,11 +58,15 @@ static const u_char **keylist = 0;
 u_char *buffer = 0, *linebuf = 0;
 size_t bufsize = DEFBUFSIZE;
 size_t linebuf_size;
-struct tempfile fstack[MAXFCT];
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
+struct tempfile fstack[MAXFCT];
 #define MSTART		(MAXFCT - MERGE_FNUM)
+#define	CHECKFSTACK(n)					\
+	if (n > MAXFCT)					\
+		errx(2, "fstack: too many temporary files; use -H or sort in pieces")
+	
 #define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
 void
@@ -201,6 +205,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 						    bufend - crec->data);
 					}
 
+					CHECKFSTACK(base + ntfiles);
 					fstack[base + ntfiles].fp = ftmp();
 					fmerge(0, MSTART, filelist,
 					    mfct, geteasy,
@@ -216,6 +221,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 					}
 				}
 			} else {
+				CHECKFSTACK(base + ntfiles);
 				fstack[base + ntfiles].fp= ftmp();
 				onepass(keylist, depth, nelem, sizes,
 				    weights, fstack[base + ntfiles].fp);
