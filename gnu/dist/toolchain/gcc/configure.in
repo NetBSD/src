@@ -3694,8 +3694,8 @@ else
 	/*) realsrcdir=${srcdir};;
 	*) realsrcdir=../${srcdir};;
 	esac
-	CC=${CC_FOR_BUILD} ${realsrcdir}/configure \
-		--target=$target --host=$build --build=$build
+	CC=${CC_FOR_BUILD} LIBS= ${realsrcdir}/configure \
+		--target=$target --host=$build --build=$build || exit 1
 
 	# We just finished tests for the build machine, so rename
 	# the file auto-build.h in the gcc directory.
