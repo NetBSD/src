@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.17 1998/05/07 16:24:18 kleink Exp $	*/
+/*	$NetBSD: resource.h,v 1.18 1998/05/24 19:30:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -93,23 +93,30 @@ struct	rusage {
 
 #define	RLIM_NLIMITS	9		/* number of resource limits */
 
-#define	RLIM_INFINITY	(((u_quad_t)1 << 63) - 1)
+#define	RLIM_INFINITY	(((u_quad_t)1 << 63) - 1)	/* no limit */
+#define	RLIM_SAVED_MAX	RLIM_INFINITY	/* unrepresentable hard limit */
+#define	RLIM_SAVED_CUR	RLIM_INFINITY	/* unrepresentable soft limit */
 
+#if defined(_KERNEL)
+/* 4.3BSD compatibility rlimit argument structure. */
 struct orlimit {
 	int32_t	rlim_cur;		/* current (soft) limit */
 	int32_t	rlim_max;		/* maximum value for rlim_cur */
 };
+#endif
 
 struct rlimit {
 	rlim_t	rlim_cur;		/* current (soft) limit */
 	rlim_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
+#if !defined(_XOPEN_SOURCE)
 /* Load average structure. */
 struct loadavg {
 	fixpt_t	ldavg[3];
 	long	fscale;
 };
+#endif
 
 #ifdef _KERNEL
 extern struct loadavg averunnable;
