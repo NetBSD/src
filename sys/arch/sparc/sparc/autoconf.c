@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 1996/04/04 06:26:06 cgd Exp $ */
+/*	$NetBSD: autoconf.c,v 1.51 1996/04/05 21:44:25 chuck Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -835,7 +835,8 @@ configure()
 		struct rom_reg rr;
 
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
-			if (cf->cf_driver != &memreg_cd)
+			if (cf->cf_driver != &memreg_cd ||
+				cf->cf_loc[0] == -1) /* avoid sun4m memreg0 */
 				continue;
 			/*
 			 * On the 4/100 obio addresses must be mapped at
