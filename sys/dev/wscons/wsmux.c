@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.23 2001/11/07 03:26:06 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.24 2001/11/13 06:17:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * The mux device is a collection of real mice and keyboards and acts as 
  * a merge point for all the events from the different real devices.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.24 2001/11/13 06:17:47 lukem Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
