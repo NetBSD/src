@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.1,v 1.8 2002/05/02 14:20:01 fredb Exp $
+.\"	$NetBSD: vi.1,v 1.9 2003/08/28 13:25:14 dsl Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1177,6 +1177,9 @@ read or written.
 .TP
 .B "magic [on]"
 Treat certain characters specially in regular expressions.
+.TP
+.B "matchchars [[]{}()<>]"
+Character pairs looked for by the % command.
 .TP
 .B "matchtime [7]"
 .I \&Vi

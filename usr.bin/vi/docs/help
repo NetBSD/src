@@ -222,6 +222,7 @@ exrc            matchtime=7     report=5        term="xterm"
 noextended      mesg            ruler           noterse
 cdpath="/usr/src/local/nvi:/tmp"
 directory="/tmp"
+matchchars["[]{}()<>"
 paragraphs="IPLPPPQPP LIpplpipbp"
 recdir="/var/tmp/vi.recover"
 sections="NHSHH HUnhsh"
