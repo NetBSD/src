@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.38 1999/09/28 14:52:32 bouyer Exp $
+.\"	$NetBSD: sysctl.3,v 1.39 1999/10/10 12:32:16 hwr Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -721,6 +721,9 @@ Returns the default UDP send buffer size.
 .It Li udp.recvspace
 Returns the default UDP receive buffer size.
 .El
+.Pp
+For variables net.*.ipsec, please refer to
+.Xr ipsec 4 .
 .El
 .Sh CTL_PROC
 The string and integer information available for the CTL_PROC
@@ -1013,7 +1016,8 @@ definitions for fourth level TCP identifiers
 definitions for fourth level UDP identifiers
 .El
 .Sh SEE ALSO
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr ipsec 4
 .Sh HISTORY
 The
 .Nm
