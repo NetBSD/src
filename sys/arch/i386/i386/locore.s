@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.151 1996/09/08 15:51:39 jtk Exp $	*/
+/*	$NetBSD: locore.s,v 1.152 1996/09/13 00:02:43 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -2185,7 +2185,7 @@ _biostramp_image:
 	.globl	_biostramp_image
 
 8:
-#include "lib/apm_init/biostramp.inc"
+#include "i386/apm_init/biostramp.inc"
 9:
 
 _biostramp_image_size:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.74 1996/09/09 21:07:00 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.75 1996/09/13 00:02:41 jtk Exp $
 
 # Makefile for NetBSD
 #
@@ -145,14 +145,10 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-# depend on APM
-.include "${I386}/apm_init/Makefile.inc"
-locore.o: ${APMINC}
-
 SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC}
+.depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}

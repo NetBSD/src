@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.3 1996/09/09 18:42:51 mycroft Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.4 1996/09/13 00:02:38 jtk Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -58,14 +58,14 @@
  */
 
 #include "assym.h"
-#include "apm.h"
-#if NAPM > 0
-#include <machine/param.h>
-#include <machine/specialreg.h>
-#include <machine/segments.h>
-#include <machine/apmvar.h>
-#include <machine/psl.h>
-#include <machine/asm.h>
+
+#include <i386/include/param.h>
+#include <i386/include/specialreg.h>
+#include <i386/include/segments.h>
+#include <i386/include/apmvar.h>
+#include <i386/include/psl.h>
+#include <i386/include/asm.h>
+
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
 
@@ -331,4 +331,3 @@ x32:
 IDT_bios:			# BIOS IDT descriptor (real-mode)
 	.word 1023
 	.long 0
-#endif
