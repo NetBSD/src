@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1996/06/14 20:40:47 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1996/06/15 03:55:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -501,14 +501,12 @@ alpha_init(pfn, ptb)
 
 	/*
 	 * Determine how many buffers to allocate.
-	 * We allocate the BSD standard of 10% of memory for the first
-	 * 2 Meg, and 5% of remaining memory for buffer space.  Insure a
+	 * We allocate 10% of memory for buffer space.  Insure a
 	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
 	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-		    (20 * CLSIZE);
+		bufpages = (physmem * 10) / (CLSIZE * 100);
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
