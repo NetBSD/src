@@ -1,4 +1,4 @@
-/*	$NetBSD: _def_messages.c,v 1.3 1997/04/29 16:40:14 kleink Exp $	*/
+/*	$NetBSD: _def_messages.c,v 1.4 1997/10/18 05:08:32 mikel Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -10,7 +10,7 @@
 
 const _MessagesLocale _DefaultMessagesLocale = 
 {
-	"^[Yn]",
+	"^[Yy]",
 	"^[Nn]",
 	"yes",
 	"no"
