@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.4 2003/10/06 02:53:33 simonb Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.5 2003/10/06 16:04:15 scw Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.4 2003/10/06 02:53:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.5 2003/10/06 16:04:15 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static u_char ds1743_lock(struct dsrtc_softc *, u_char);
 static void ds1743_unlock(struct dsrtc_softc *, u_char);
 
 /* device and attach structures */
-CFATTACH_DECL(dsrtc, sizeof(struct dsrtc_softc),
+CFATTACH_DECL(ds1743rtc, sizeof(struct dsrtc_softc),
     dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*
