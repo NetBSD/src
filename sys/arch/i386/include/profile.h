@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.3 1994/05/13 10:47:57 mycroft Exp $
+ *	$Id: profile.h,v 1.4 1994/05/13 11:12:38 mycroft Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount
@@ -52,7 +52,7 @@ mcount()								\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("movl (%%ebp),%1;movl 4(%1),%1" : "=r" (frompcindex));	\
+	asm("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
 
