@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 1995/03/27 01:25:20 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.23 1995/04/11 02:41:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -77,8 +77,8 @@
 
 #include <dev/cons.h>
 
-#include "zsreg.h"
-#include "zsvar.h"
+#include <dev/ic/z8530.h>
+#include <sun3/dev/zsvar.h>
 
 /*
  * The default parity REALLY needs to be the same as the PROM uses,
@@ -293,7 +293,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 
 	tp = zs_tty[unit];
 	cs->cs_unit = unit;
-	cs->cs_zc = &addr->zs_chan[CHAN_A];
+	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
 #ifdef	DEBUG
 	mon_printf("zs%da speed %d ",  zs, cs->cs_speed);
@@ -338,7 +338,7 @@ zs_attach(struct device *parent, struct device *self, void *args)
 	tp = zs_tty[unit];
 
 	cs->cs_unit = unit;
-	cs->cs_zc = &addr->zs_chan[CHAN_B];
+	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
 #ifdef	DEBUG
 	mon_printf("zs%db speed %d\n", zs, cs->cs_speed);
@@ -472,8 +472,8 @@ zs_set_conschan(unit, ab)
 
 	addr = zsaddr[unit];
 	zs_conschan = ((ab == 0) ?
-				   &addr->zs_chan[CHAN_A] :
-				   &addr->zs_chan[CHAN_B] );
+				   &addr->zs_chan[ZS_CHAN_A] :
+				   &addr->zs_chan[ZS_CHAN_B] );
 }
 
 /* Attach as console.  Also set zs_conschan */
@@ -1556,7 +1556,7 @@ zs_kgdb_init()
 		panic("kbdb_attach: zs0 not yet mapped");
 	addr = zsaddr[0];
 
-	zc = unit == 0 ? &addr->zs_chan[CHAN_A] : &addr->zs_chan[CHAN_B];
+	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
 	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
 	    zs, unit + 'a', kgdb_rate);
