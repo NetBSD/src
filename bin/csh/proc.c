@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.6 1995/03/21 09:03:16 cgd Exp $	*/
+/*	$NetBSD: proc.c,v 1.7 1995/03/21 13:55:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: proc.c,v 1.6 1995/03/21 09:03:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: proc.c,v 1.7 1995/03/21 13:55:23 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -830,7 +830,7 @@ ptprint(tp)
     tetime = ztime;
     do {
 	ruadd(&ru, &pp->p_rusage);
-	tvsub(&diff, &pp->p_etime, &pp->p_btime);
+	timersub(&pp->p_etime, &pp->p_btime, &diff);
 	if (timercmp(&diff, &tetime, >))
 	    tetime = diff;
     } while ((pp = pp->p_friends) != tp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1995/03/18 15:00:34 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1995/03/21 14:05:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1995/03/18 15:00:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.8 1995/03/21 14:05:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ int	bufspace = 127*1024;	/* max. input buffer size to request */
 struct	rip *msg = (struct rip *)packet;
 
 int getsocket __P((int, int, struct sockaddr_in *));
-void timevalsub __P((struct timeval *, struct timeval *));
 void process __P((int));
 
 int
@@ -204,8 +203,7 @@ main(argc, argv)
 		 * just poll.
 		 */
 		if (needupdate) {
-			waittime = nextbcast;
-			timevalsub(&waittime, &now);
+			timevalsub(&nextbcast, &now, &waittime);
 			if (waittime.tv_sec < 0) {
 				waittime.tv_sec = 0;
 				waittime.tv_usec = 0;
@@ -266,30 +264,6 @@ printf("s %d, ibits %x index %d, mod %d, sh %x, or %x &ibits %x\n",
 			process(s);
 		/* handle ICMP redirects */
 		sigsetmask(omask);
-	}
-}
-
-void
-timevaladd(t1, t2)
-	struct timeval *t1, *t2;
-{
-
-	t1->tv_sec += t2->tv_sec;
-	if ((t1->tv_usec += t2->tv_usec) > 1000000) {
-		t1->tv_sec++;
-		t1->tv_usec -= 1000000;
-	}
-}
-
-void
-timevalsub(t1, t2)
-	struct timeval *t1, *t2;
-{
-
-	t1->tv_sec -= t2->tv_sec;
-	if ((t1->tv_usec -= t2->tv_usec) < 0) {
-		t1->tv_sec--;
-		t1->tv_usec += 1000000;
 	}
 }
 

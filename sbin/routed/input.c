@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.9 1995/03/18 15:00:31 cgd Exp $	*/
+/*	$NetBSD: input.c,v 1.10 1995/03/21 14:05:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.9 1995/03/18 15:00:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.10 1995/03/21 14:05:02 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -351,7 +351,7 @@ rip_input(from, rip, size)
 				    delay);
 			nextbcast.tv_sec = delay / 1000000;
 			nextbcast.tv_usec = delay % 1000000;
-			timevaladd(&nextbcast, &now);
+			timeradd(&nextbcast, &now, &nextbcast);
 			/*
 			 * If the next possibly dynamic update
 			 * is within MIN_WAITTIME of the next full update,

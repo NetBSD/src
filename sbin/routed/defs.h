@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 1995/03/18 15:00:26 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 1995/03/21 14:05:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -126,7 +126,6 @@ int rtioctl __P((int, struct rtuentry *));
 void sigtrace __P((int));
 int sndmsg __P((struct sockaddr *, int, struct interface *, int));
 void timer();
-void timevaladd __P((struct timeval *, struct timeval *));
 void toall __P((int (*)(), int, struct interface *));
 void traceoff();
 void traceon __P((char *));
