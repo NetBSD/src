@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.15 1994/05/08 05:53:17 chopps Exp $
+ *	$Id: ite.c,v 1.16 1994/05/09 06:38:40 chopps Exp $
  */
 
 /*
@@ -104,7 +104,7 @@ int itematch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver itecd = {
 	NULL, "ite", itematch, iteattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
+	sizeof(struct ite_softc), NULL, 0 };
 
 int
 itematch(pdp, cdp, auxp)
