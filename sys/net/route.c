@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.24 1998/12/27 18:27:48 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.24.2.1 1999/10/10 20:22:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -398,11 +398,11 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic ("rtrequest delete");
 		rt = (struct rtentry *)rn;
-		rt->rt_flags &= ~RTF_UP;
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
 			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
 		}
+		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
 		rttrash++;
