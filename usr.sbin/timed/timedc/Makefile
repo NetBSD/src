@@ -5,7 +5,7 @@ SRCS=	cmds.c cmdtab.c timedc.c byteorder.c measure.c cksum.c
 MAN=	timedc.8
 BINOWN=	root
 BINMODE=4555
-.PATH.c: ${.CURDIR}/../timed
+.PATH:	${.CURDIR}/../timed
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
