@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/07/26 20:32:42 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2001/01/09 05:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -74,7 +74,7 @@ int		pass4check __P((struct inodesc *));
 void		pass5 __P((void));
 void		pfatal __P((const char *fmt, ...));
 void		pinode __P((ino_t));
-void		propagate __P((void));
+void		propagate __P((ino_t));
 void		pwarn __P((const char *fmt, ...));
 int		reply __P((char *));
 void		resetinodebuf __P((void));
