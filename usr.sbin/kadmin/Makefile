@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/08/03 04:13:22 assar Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/03 22:47:37 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kadmin
 
@@ -37,6 +37,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H
 
+VERS!=	cd ${.CURDIR}/../../lib/libvers && make print-objdir
+
 LDADD=	-lkadm5clnt \
 	-lkadm5srv \
 	-lhdb \
@@ -46,7 +48,7 @@ LDADD=	-lkadm5clnt \
 	-lcom_err \
 	-lsl \
 	-ledit -ltermcap \
-	-lvers \
+	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
 
