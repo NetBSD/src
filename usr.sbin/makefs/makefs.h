@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.9 2003/03/29 00:12:12 thorpej Exp $	*/
+/*	$NetBSD: makefs.h,v 1.10 2003/03/30 00:05:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -120,6 +120,7 @@ typedef struct {
 		/* image settings */
 	int	fd;		/* file descriptor of image */
 	void	*superblock;	/* superblock */
+	int	onlyspec;	/* only add entries in specfile */
 
 
 		/* global options */
@@ -181,14 +182,12 @@ void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 extern	uint		debug;
 extern	struct timespec	start_time;
 
-extern	int		x_flag;
-
 /*
  * If -x is specified, we want to exclude nodes which do not appear
  * in the spec file.
  */
-#define	FSNODE_EXCLUDE_P(fsnode)	\
-	(x_flag != 0 && ((fsnode)->flags & FSNODE_F_HASSPEC) == 0)
+#define	FSNODE_EXCLUDE_P(opts, fsnode)	\
+	((opts)->onlyspec != 0 && ((fsnode)->flags & FSNODE_F_HASSPEC) == 0)
 
 #define	DEBUG_TIME			0x00000001
 		/* debug bits 1..3 unused at this time */
