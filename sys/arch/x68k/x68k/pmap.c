@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2000/09/21 17:46:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2000/09/28 03:41:50 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1976,7 +1976,7 @@ pmap_zero_page(phys)
  *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
  *	was zero'd, FALSE if we aborted.
  */
-void
+boolean_t
 pmap_zero_page_uncached(phys)
 	paddr_t phys;
 {
