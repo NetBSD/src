@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.20 1994/03/06 17:19:01 mycroft Exp $
+ *	$Id: if_ep.c,v 1.21 1994/03/06 17:21:44 mycroft Exp $
  */
 /*
  * TODO:
@@ -136,7 +136,7 @@ epprobe(is)
 	while (eisa_slot < 8) {
 		port = 0x1000 * eisa_slot;
 		outw(port + EP_COMMAND, GLOBAL_RESET);
-		DELAY(1000);
+		delay(1000);
 		if (inw(port + EP_W0_MFG_ID) == MFG_ID)
 			break;
 		eisa_slot++;
