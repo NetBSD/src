@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.37 1998/06/30 03:30:56 jonathan Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.38 1999/03/30 12:36:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -387,7 +387,6 @@ emitload(fp)
 {
 	struct config *cf;
 	const char *nm, *swname;
-	int first;
 
 	if (fputs("all:", fp) < 0)
 		return (1);
@@ -397,17 +396,13 @@ emitload(fp)
 	}
 	if (fputs("\n\n", fp) < 0)
 		return (1);
-	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
+	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 		nm = cf->cf_name;
 		swname =
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
-		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
+		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o newvers", nm,
+		    swname) < 0)
 			return (1);
-		if (first) {
-			if (fputs(" newvers", fp) < 0)
-				return (1);
-			first = 0;
-		}
 		if (fprintf(fp, "\n\
 \t${SYSTEM_LD_HEAD}\n\
 \t${SYSTEM_LD} swap%s.o\n\
