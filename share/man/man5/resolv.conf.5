@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.18 2001/09/08 01:29:08 wiz Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.19 2001/09/13 11:07:48 itojun Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -159,6 +159,13 @@ _res.options (see
 .Xr resolver 3 ) .
 The option is meaningful with certain kernel configuration only and
 use of this options is discourated.
+.It Sy insecure1
+Do not require IP source address on the reply packet to be equal to the
+servers' address.
+.It Sy insecure2
+Do not check if the query section of the reply packet is equal
+to that of the query packet.
+For testing purposes only.
 .It Sy ndots:n
 sets a threshold for the number of dots which
 must appear in a name given to res_query (see
