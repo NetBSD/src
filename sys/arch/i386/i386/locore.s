@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.182 1998/01/22 00:39:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.183 1998/01/22 00:44:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -43,6 +43,7 @@
 #include "opt_cputype.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
+#include "opt_dummy_nops.h"
 
 #include "npx.h"
 #include "assym.h"

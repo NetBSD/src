@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.103 1998/01/22 00:39:16 thorpej Exp $
+#	$NetBSD: files.i386,v 1.104 1998/01/22 00:44:06 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -19,6 +19,9 @@ defopt	MATH_EMULATE
 
 # User-settable LDT (used by WINE)
 defopt	USER_LDT
+
+# Speed hack; make NOPs dummies (might break on some machines)
+defopt	DUMMY_NOPS
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
