@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.3 1998/10/19 12:26:22 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.4 1998/12/16 12:48:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -68,6 +68,7 @@
 
 /* data port timings controls */
 #define APO_DATATIM 0x48
+#define APO_DATATIM_MASK(channel) (0xffff << ((1 - (channel)) << 4))
 #define APO_DATATIM_RECOV(channel, drive, x) (((x) & 0xf) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_DATATIM_PULSE(channel, drive, x) (((x) & 0xf) << \
@@ -78,6 +79,7 @@
 
 /* Ultra-DMA/33 control (586A/B only) */
 #define APO_UDMA 0x50
+#define AP0_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
 #define APO_UDMA_TIME(channel, drive, x) (((x) & 0x3) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_PIO_MODE(channel, drive) (0x20 << \
