@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.10 1997/09/24 02:15:51 mhitch Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.11 1997/10/08 07:36:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -34,6 +34,8 @@
  * SUCH DAMAGE.
  */
 
+#include <mips/cpu.h>		/* mips CPU architecture levels */
+
 #define ECOFF_LDPGSZ 4096
 
 #define ECOFF_PAD
@@ -43,8 +45,15 @@
         u_long cprmask[4]; \
         u_long gp_value
 
-#define ECOFF_MAGIC_MIPSEL 0x0162
-#define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEL)
+#define ECOFF_MAGIC_MIPSEL	0x0162	/* mips1, little-endian */
+#define ECOFF_MAGIC_MIPSEL3	0x0142	/* mips3, little-endian */
+
+#define ECOFF_BADMAG(ep) \
+    (!								\
+	((ep)->f.f_magic == ECOFF_MAGIC_MIPSEL ||		\
+	 (CPUISMIPS3 && (ep)->f.f_magic == ECOFF_MAGIC_MIPSEL3)) \
+    )
+
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 
