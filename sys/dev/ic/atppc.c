@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.15 2004/02/24 17:41:09 drochner Exp $ */
+/* $NetBSD: atppc.c,v 1.16 2004/04/21 17:38:48 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.15 2004/02/24 17:41:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16 2004/04/21 17:38:48 drochner Exp $");
 
 #include "opt_atppc.h"
 
@@ -154,6 +154,8 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	/* Adapter used to configure ppbus device */
 	struct parport_adapter sc_parport_adapter;
 	char buf[64];
+
+	ATPPC_LOCK_INIT(lsc);
 
 	/* Probe and set up chipset */
 	if (atppc_detect_chipset(lsc) != 0) {
