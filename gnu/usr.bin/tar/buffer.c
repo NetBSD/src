@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: buffer.c,v 1.4 1998/07/06 07:50:27 fair Exp $";
+static char rcsid[] = "$Id: buffer.c,v 1.5 1998/07/21 08:06:56 fair Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,10 @@ time_t time ();
 
 #ifdef XENIX
 #include <sys/inode.h>
+#endif
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #include "tar.h"
@@ -1453,13 +1457,13 @@ tryagain:
 /*
 ** Avoid bogons from the tty
 */
-#if defined(TIOCDRAIN) && defined(TIOCFLUSH)
+#ifdef HAVE_TERMIOS_H
 	    if (flushinput) {
 		    int what = FREAD;
-		    (void) ioctl(fileno(read_file), TIOCDRAIN, (void *)NULL);
-		    (void) ioctl(fileno(read_file), TIOCFLUSH, &what);
+		    (void) tcdrain(fileno(read_file));
+		    (void) tcflush(fileno(read_file), TCIFLUSH);
 	    }
-#endif /* TIOCDRAIN && TIOCFLUSH */
+#endif
 
 	    if (fgets (inbuf, sizeof (inbuf), read_file) == 0)
 	      {
