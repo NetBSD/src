@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.12 2000/01/25 09:33:12 enami Exp $      */
+/*      $NetBSD: ata.c,v 1.13 2000/05/15 08:31:33 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -19,7 +19,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -196,7 +196,7 @@ ata_perror(drvp, errno, buf)
 	    "track 0 not found", "aborted command", "media change requested",
 	    "id not found", "media changed", "uncorrectable data error",
 	    "bad block detected"};
-	static char *errstr4_5[] = {"",
+	static char *errstr4_5[] = {"obsolete (address mark not found)",
 	    "no media/write protected", "aborted command",
 	    "media change requested", "id not found", "media changed",
 	    "uncorrectable data error", "interface CRC error"};
