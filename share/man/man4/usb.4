@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.43 2001/12/29 11:53:48 wiz Exp $
+.\" $NetBSD: usb.4,v 1.44 2002/01/02 03:15:03 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,6 +124,8 @@ driver for CATC USB-EL1201A USB Ethernet.
 driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
 .It uaudio
 driver for audio devices.
+.It udsbr
+driver for D-Link DSB-R100 USB radio.
 .It uftdi
 driver for FTDI based serial adapters.
 .It ugen
@@ -475,6 +477,7 @@ specifications can be found at:
 .Xr pci 4 ,
 .Xr uaudio 4 ,
 .Xr ucom 4 ,
+.Xr udsbr 4 ,
 .Xr ugen 4 ,
 .Xr uhci 4 ,
 .Xr uhid 4 ,
