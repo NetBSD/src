@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.13 2000/05/08 17:49:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -155,10 +155,10 @@
 #define VAX_TYP_NVAX	19
 #define VAX_TYP_V13	19
  
-#define VAX_BTYP_69D	0x13000001	/* VAX 4000 model 500 */
+#define VAX_BTYP_680	0x13000001	/* VAX 4000 model 500 */
 #define VAX_BTYP_1301	0x13000001	/* VAX 4000 model 100 */
 #define VAX_BTYP_1302	0x13000002
-#define VAX_BTYP_1303	0x13000003
+#define VAX_BTYP_53	0x13000003	/* VAX 4000 model 105A */
 #define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
 
 /*
@@ -170,6 +170,7 @@
 #define VAX_BTYP_660	0x14000001	/* VAX 4000 model 200 */
 #define VAX_BTYP_48	0x14000004	/* VAXstation 4000 VLC */
 #define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
+#define	VAX_BTYP_VXT	0x14000008	/* VXT 2000 */
  
 /*
  * NVAX+ chip series (1991)
