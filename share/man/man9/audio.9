@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.5 1997/10/19 07:40:31 augustss Exp $
+.\"	$NetBSD: audio.9,v 1.6 1997/10/19 19:14:34 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -390,7 +390,8 @@ method should define certain mixer controls for
 .Dv AUDIO_SETINFO
 to be able to change the port and gain.
 .Pp
-If the audio hardware is capable of input it should define
+If the audio hardware is capable of input from more
+than one source it should define
 .Dv AudioNsource
 in class
 .Dv AudioCrecord .
@@ -411,7 +412,8 @@ of the input source) then this control should be named
 and be of class
 .Dv AudioCinputs .
 .Pp
-If the audio hardware is capable of output it should define
+If the audio hardware is capable of output to more than
+one destination it should define
 .Dv AudioNoutput
 in class
 .Dv AudioCmonitor .
@@ -431,6 +433,5 @@ of the destination) then this control should be named
 .Dv AudioNmaster
 and be of class
 .Dv AudioCoutputs .
-
 .Sh SEE ALSO
 .Xr audio 4
