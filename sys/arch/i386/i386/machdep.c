@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.484 2002/10/01 12:56:55 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.485 2002/10/03 19:39:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.484 2002/10/01 12:56:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.485 2002/10/03 19:39:51 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1663,7 +1663,7 @@ identifycpu(struct cpu_info *ci)
 			 */
 			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
 			    model >= 8 && ci->ci_brand_id &&
-			    ci->ci_brand_id <= 8)
+			    ci->ci_brand_id < 8)
 				brand = i386_intel_brand[ci->ci_brand_id];
 		}
 	}
