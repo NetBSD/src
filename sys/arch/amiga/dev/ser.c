@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.26 1995/02/12 19:19:26 chopps Exp $	*/
+/*	$NetBSD: ser.c,v 1.27 1995/04/23 18:24:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@ int	serswflags;
 
 struct	vbl_node ser_vbl_node[NSER];
 struct	tty ser_cons;
-struct	tty *ser_tty[NSER + 0x80];
+struct	tty *ser_tty[NSER];
 
 struct speedtab serspeedtab[] = {
 	0,	0,
@@ -248,7 +248,7 @@ seropen(dev, flag, mode, p)
 	if (ser_tty[unit]) 
 		tp = ser_tty[unit];
 	else
-		tp = ser_tty[unit] = ser_tty[unit + 0x80] = ttymalloc();
+		tp = ser_tty[unit] = ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) serstart;
 	tp->t_param = serparam;
@@ -394,6 +394,12 @@ serwrite(dev, uio, flag)
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
+struct tty *
+sertty(dev)
+	dev_t dev;
+{
+	return (ser_tty[SERUNIT(dev)]);
+}
 
 /*
  * We don't do any processing of data here, so we store the raw code

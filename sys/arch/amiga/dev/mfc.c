@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.4 1995/04/02 20:38:49 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.5 1995/04/23 18:24:38 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -207,7 +207,7 @@ int	mfcsswflags[NMFCS];
 #define SWFLAGS(dev) (mfcsswflags[dev & 31] | (((dev) & 0x80) == 0 ? TIOCFLAG_SOFTCAR : 0))
 
 struct	vbl_node mfcs_vbl_node[NMFCS];
-struct	tty *mfcs_tty[NMFCS + 128];
+struct	tty *mfcs_tty[NMFCS];
 
 #ifdef notyet
 /*
@@ -459,7 +459,7 @@ mfcsopen(dev, flag, mode, p)
 	if (mfcs_tty[unit])
 		tp = mfcs_tty[unit];
 	else
-		tp = mfcs_tty[unit] = mfcs_tty[unit + 128] = ttymalloc();
+		tp = mfcs_tty[unit] = ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) mfcsstart;
 	tp->t_param = mfcsparam;
@@ -605,6 +605,14 @@ mfcswrite(dev, uio, flag)
 		return(ENXIO);
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
+
+struct tty *
+mfcstty(dev)
+	dev_t dev;
+{
+	return (mfcs_tty[dev & 31]);
+}
+
 int
 mfcsioctl(dev, cmd, data, flag, p)
 	dev_t	dev;
