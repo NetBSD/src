@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.457 2002/01/02 04:08:41 augustss Exp $
+# $NetBSD: GENERIC,v 1.458 2002/01/03 18:56:40 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.457 $"
+#ident 		"GENERIC-$Revision: 1.458 $"
 
 maxusers	32		# estimated number of users
 
@@ -773,9 +773,14 @@ uaudio*	at uhub? port ? configuration ?
 # USB MIDI
 umidi* at uhub? port ? configuration ?
 
-# USB IrDA bridges
+# USB IrDA
+# USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
