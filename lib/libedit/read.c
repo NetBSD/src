@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.30 2003/10/18 23:48:42 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.31 2004/01/17 17:57:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.30 2003/10/18 23:48:42 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.31 2004/01/17 17:57:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -508,7 +508,7 @@ el_gets(EditLine *el, int *nread)
 		    el->el_chared.c_redo.pos < el->el_chared.c_redo.lim) {
 			if (cmdnum == VI_DELETE_PREV_CHAR &&
 			    el->el_chared.c_redo.pos != el->el_chared.c_redo.buf
-			    && isprint(el->el_chared.c_redo.pos[-1]))
+			    && isprint((unsigned char)el->el_chared.c_redo.pos[-1]))
 				el->el_chared.c_redo.pos--;
 			else
 				*el->el_chared.c_redo.pos++ = ch;
@@ -553,7 +553,7 @@ el_gets(EditLine *el, int *nread)
 			if ((el->el_flags & UNBUFFERED) == 0)
 				num = 0;
 			else if (num == -1) {
-				*el->el_line.lastchar++ = CTRL('d');
+				*el->el_line.lastchar++ = CONTROL('d');
 				el->el_line.cursor = el->el_line.lastchar;
 				num = 1;
 			}
