@@ -1,4 +1,4 @@
-/*	$NetBSD: res_sendsigned.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: res_sendsigned.c,v 1.1.1.2 2001/01/27 06:20:44 itojun Exp $	*/
 
 #include "port_before.h"
 #include "fd_setsize.h"
@@ -80,6 +80,7 @@ res_nsendsigned(res_state statp, const u_char *msg, int msglen,
 	if (ret < 0) {
 		free (nstatp);
 		free (newmsg);
+		dst_free_key(dstkey);
 		if (ret == NS_TSIG_ERROR_NO_SPACE)
 			errno  = EMSGSIZE;
 		else if (ret == -1)
@@ -100,6 +101,7 @@ retry:
 	if (ret < 0) {
 		free (nstatp);
 		free (newmsg);
+		dst_free_key(dstkey);
 		return (ret);
 	}
 
@@ -111,6 +113,7 @@ retry:
 		       (stdout, ";; TSIG invalid (%s)\n", p_rcode(ret)));
 		free (nstatp);
 		free (newmsg);
+		dst_free_key(dstkey);
 		if (ret == -1)
 			errno = EINVAL;
 		else
@@ -128,5 +131,6 @@ retry:
 
 	free (nstatp);
 	free (newmsg);
+	dst_free_key(dstkey);
 	return (anslen);
 }
