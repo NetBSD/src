@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.53 2001/04/23 22:43:48 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.54 2001/04/24 23:17:41 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3961,6 +3961,85 @@ distrib/notes/macppc/prep			1.11
 
 distrib/sets/lists/etc/mi			patch
 distrib/sets/lists/base/mi			patch
+distrib/sets/lists/etc/obsolete.mi		1.6
 distrib/i386/floppies/ramdisk-big/list		patch
 
   /etc/dhclient-script moved to /sbin/dhclient-script.
+
+sys/netinet6/ipsec.c				1.34
+
+  Do not copy TTL field on ipsec tunnel mode encapsulation.
+
+sys/netinet/ip_input.c				1.131,1.133
+sys/netinet/in.h				1.53 via patch
+sbin/sysctl/sysctl.8				1.66
+lib/libc/gen/sysctl.3				1.75
+
+  Introduce net.inet.ip.maxfragpackets, which controls the maximum
+  number of IPv4 fragment reassembly queue entries.  Defends against
+  certain DoS attacks.
+
+usr.sbin/pkg_install/lib/plist.c		1.28
+
+  Prevent some warnings from being printed several times on the
+  same error.
+
+usr.sbin/pkg_install/admin/main.c		1.23
+
+  Do not warn about @src being deprecated, as it's used in every
+  binary package again these days (via pkg_create -L), to assist
+  DESTDIR builds.
+
+sys/arch/m68k/060sp/copyright.S			1.3
+sys/arch/m68k/060sp/fnetbsd.S			1.5
+sys/arch/m68k/060sp/inetbsd.S			1.4
+sys/arch/m68k/060sp/netbsd060sp.S		1.6
+
+  Make these files successfully pass through the C preprocessor,
+  among other things.
+
+lib/libc/sys/Makefile.inc			1.112
+lib/libc/sys/chroot.2				1.13
+distrib/sets/lists/comp/mi			1.332 via patch
+
+  Document fchroot(2).
+
+etc/rc.conf					1.96
+
+  Fix a typo.
+
+distrib/sets/lists/comp/obsolete.mi		patch
+
+  <krb5/kadm5_err.h> was removed.
+
+share/examples/supfiles/ftp.cs.umn.edu		delete
+share/examples/supfiles/Makefile		1.8
+
+  The SUP mirror ftp.cs.umn.edu is gone.
+
+sys/arch/macppc/stand/ofwboot/hfs.c		1.1 (new)
+sys/arch/macppc/stand/ofwboot/hfs.h		1.1 (new)
+sys/arch/macppc/stand/ofwboot/ofdev.c		1.5
+sys/arch/macppc/stand/ofwboot/Makefile		1.19-1.20 via patch
+
+  Add HFS support to the boot loader.
+
+crypto/dist/heimdal/kadmin/del_enctype.c	1.2
+
+  Correct argument processing.  Fixes PR#12696.
+
+lib/libc/sys/nfssvc.2				1.13
+
+  Remove reference to nfsiod(8), which is gone.
+
+sys/dev/pci/pciide.c				1.110
+
+  Revert setting of PDC2xx_SCR for Promise Ultra/100, it seems to
+  break with some adapters.
+
+usr.sbin/pkg_install/add/main.c			1.21-1.22
+
+  Allow PKG_PATH (or parts of it) to refer to local directories,
+  and still let ``pkg_add foo'' work.  Required packages will be
+  pulled in as usual.  If PKG_PATH contains a mixture of local
+  paths and ftp:// URLs, the local paths will be searched first.
