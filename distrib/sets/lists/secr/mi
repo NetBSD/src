@@ -75,7 +75,6 @@
 ./usr/sbin/kstash
 ./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/compile_et.0
-./usr/share/man/cat1/ed.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/kinit.0
@@ -136,7 +135,6 @@
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat8/ext_srvtab.0
-./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdb_destroy.0
@@ -149,7 +147,6 @@
 ./usr/share/man/cat8/telnetd.0
 ./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/compile_et.1
-./usr/share/man/man1/ed.1
 ./usr/share/man/man1/kdestroy.1
 ./usr/share/man/man1/kerberos.1
 ./usr/share/man/man1/kinit.1
@@ -210,7 +207,6 @@
 ./usr/share/man/man5/krb.conf.5
 ./usr/share/man/man5/krb.realms.5
 ./usr/share/man/man8/ext_srvtab.8
-./usr/share/man/man8/init.8
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
 ./usr/share/man/man8/kdb_destroy.8
