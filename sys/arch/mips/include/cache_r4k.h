@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.7 2002/03/05 14:32:26 simonb Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.8 2002/11/17 06:40:43 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,6 +67,44 @@ do {									\
 	__asm __volatile(						\
 		".set noreorder					\n\t"	\
 		"cache %1, 0(%0)				\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va), "i" (op)					\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
+/*
+ * cache_r4k_op_8lines_16:
+ *
+ *	Perform the specified cache operation on 8 16-byte cache lines.
+ */
+#define	cache_r4k_op_8lines_16(va, op)					\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %1, 0x00(%0); cache %1, 0x10(%0)		\n\t"	\
+		"cache %1, 0x20(%0); cache %1, 0x30(%0)		\n\t"	\
+		"cache %1, 0x40(%0); cache %1, 0x50(%0)		\n\t"	\
+		"cache %1, 0x60(%0); cache %1, 0x70(%0)		\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va), "i" (op)					\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
+/*
+ * cache_r4k_op_8lines_32:
+ *
+ *	Perform the specified cache operation on 8 32-byte cache lines.
+ */
+#define	cache_r4k_op_8lines_32(va, op)					\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
+		"cache %1, 0x40(%0); cache %1, 0x60(%0)		\n\t"	\
+		"cache %1, 0x80(%0); cache %1, 0xa0(%0)		\n\t"	\
+		"cache %1, 0xc0(%0); cache %1, 0xe0(%0)		\n\t"	\
 		".set reorder"						\
 	    :								\
 	    : "r" (va), "i" (op)					\
