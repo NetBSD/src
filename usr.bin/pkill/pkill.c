@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.3 2002/03/04 13:47:08 augustss Exp $	*/
+/*	$NetBSD: pkill.c,v 1.4 2002/03/06 12:02:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.3 2002/03/04 13:47:08 augustss Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.4 2002/03/06 12:02:18 ad Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -389,6 +389,9 @@ main(int argc, char **argv)
 			if (inverse)
 				continue;
 		} else if (!inverse)
+			continue;
+
+		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
 
 		rv = 1;
