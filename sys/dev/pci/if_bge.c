@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.28 2003/01/17 08:11:50 itojun Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.29 2003/01/17 08:27:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -444,7 +444,7 @@ bge_miibus_readreg(dev, phy, reg)
 	saved_autopoll = CSR_READ_4(sc, BGE_MI_MODE);
 	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
 		CSR_WRITE_4(sc, BGE_MI_MODE,
-            saved_autopoll &~ BGE_MIMODE_AUTOPOLL);
+		    saved_autopoll &~ BGE_MIMODE_AUTOPOLL);
 		DELAY(40);
 	}
 
@@ -460,7 +460,7 @@ bge_miibus_readreg(dev, phy, reg)
 
 	if (i == BGE_TIMEOUT) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
-        val = 0;
+		val = 0;
 		goto done;
 	}
 
@@ -471,7 +471,7 @@ done:
 		CSR_WRITE_4(sc, BGE_MI_MODE, saved_autopoll);
 		DELAY(40);
 	}
-    
+
 	if (val & BGE_MICOMM_READFAIL)
 		return(0);
 
@@ -484,10 +484,10 @@ bge_miibus_writereg(dev, phy, reg, val)
 	int phy, reg, val;
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
-    u_int32_t saved_autopoll;
-    int i;
+	u_int32_t saved_autopoll;
+	int i;
 
-    /* Touching the PHY while autopolling is on may trigger PCI errors */
+	/* Touching the PHY while autopolling is on may trigger PCI errors */
 	saved_autopoll = CSR_READ_4(sc, BGE_MI_MODE);
 	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
 		delay(40);
@@ -495,7 +495,7 @@ bge_miibus_writereg(dev, phy, reg, val)
 		    saved_autopoll & (~BGE_MIMODE_AUTOPOLL));
 		delay(10); /* 40 usec is supposed to be adequate */
 	}
-    
+
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_WRITE|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg)|val);
 
@@ -509,7 +509,7 @@ bge_miibus_writereg(dev, phy, reg, val)
 		CSR_WRITE_4(sc, BGE_MI_MODE, saved_autopoll);
 		delay(40);
 	}
-    
+
 	if (i == BGE_TIMEOUT) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
 	}
@@ -1908,10 +1908,10 @@ bge_attach(parent, self, aux)
 	DPRINTFN(5, ("pci_mem_find\n"));
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0);
  	switch (memtype) {
-        case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-        case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
-                    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
+		    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
 		    &memaddr, &memsize) == 0)
 			break;
 	default:
@@ -2644,9 +2644,9 @@ bge_encap(sc, m_head, txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int			i = 0;
-	struct mbuf		*n;
-    struct mbuf *prev, *m;
-    int			totlen, prevlen;
+	struct m_tag		*mtag;
+	struct mbuf		*prev, *m;
+	int			totlen, prevlen;
 
 	cur = frag = *txidx;
 
@@ -2658,7 +2658,7 @@ bge_encap(sc, m_head, txidx)
 	}
 
 	if (!(sc->bge_quirks & BGE_QUIRK_5700_SMALLDMA))
-        goto doit;
+		goto doit;
 	/*
 	 * bcm5700 Revision B silicon cannot handle DMA descriptors with
 	 * less than eight bytes.  If we encounter a teeny mbuf 
@@ -2681,7 +2681,7 @@ bge_encap(sc, m_head, txidx)
 		if (m->m_next != 0) {
 			  /* Internal frag. If fits in prev, copy it there. */
 			  if (prev && M_TRAILINGSPACE(prev) >= m->m_len &&
-                  !M_READONLY(prev)) {
+			      !M_READONLY(prev)) {
 			  	bcopy(m->m_data,
 				      prev->m_data+prev->m_len,
 				      mlen);
@@ -2842,8 +2842,8 @@ bge_start(ifp)
 
 	/* Transmit */
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
-    if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
-	    CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
