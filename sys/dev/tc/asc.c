@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.12 1995/08/10 04:21:47 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.13 1995/08/21 21:22:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -396,13 +396,14 @@ typedef struct scsi_state {
 } State;
 
 /* state flags */
-#define DISCONN		0x01	/* true if currently disconnected from bus */
-#define DMA_IN_PROGRESS	0x02	/* true if data DMA started */
-#define DMA_IN		0x04	/* true if reading from SCSI device */
-#define DMA_OUT		0x10	/* true if writing to SCSI device */
-#define DID_SYNC	0x20	/* true if synchronous offset was negotiated */
-#define TRY_SYNC	0x40	/* true if try neg. synchronous offset */
-#define PARITY_ERR	0x80	/* true if parity error seen */
+#define DISCONN		0x001	/* true if currently disconnected from bus */
+#define DMA_IN_PROGRESS	0x002	/* true if data DMA started */
+#define DMA_IN		0x004	/* true if reading from SCSI device */
+#define DMA_OUT		0x010	/* true if writing to SCSI device */
+#define DID_SYNC	0x020	/* true if synchronous offset was negotiated */
+#define TRY_SYNC	0x040	/* true if try neg. synchronous offset */
+#define PARITY_ERR	0x080	/* true if parity error seen */
+#define CHECK_SENSE	0x100	/* true if doing sense command */
 
 /*
  * State kept for each active SCSI host interface (53C94).
@@ -431,7 +432,7 @@ struct asc_softc {
 #ifdef USE_NEW_SCSI
 	struct scsi_link sc_link;		/* scsi lint struct */
 #endif
-} asc_softc[NASC];
+};
 
 #define	ASC_STATE_IDLE		0	/* idle state */
 #define	ASC_STATE_BUSY		1	/* selecting or currently connected */
@@ -450,11 +451,7 @@ extern u_long asc_iomem;
 extern u_long asic_base;
 
 /*
- * Autoconfiguration data for config.new.
- * Use the statically-allocated softc until the config.old program,
- * old autoconfiguration code, and statically-allocated softcs are
- * are completely gone.
- * 
+ * Autoconfiguration data for config.
  */
 int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
@@ -463,8 +460,8 @@ int	ascprint(void*, char*);
 int asc_doprobe __P((void *addr, int unit, int pri, struct device *self));
 
 extern struct cfdriver asccd;
-struct  cfdriver asccd = {
-	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct device), 0
+struct cfdriver asccd = {
+	NULL, "asc", ascmatch, ascattach, DV_DULL, sizeof(struct asc_softc)
 };
 
 #ifdef USE_NEW_SCSI
@@ -505,21 +502,16 @@ ascmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-
-	static int nunits = 0;
+	void *sccaddr;
 
 	if (!BUS_MATCHNAME(ca, "asc") && !BUS_MATCHNAME(ca, "PMAZ-AA "))
 		return (0);
 
-	/*
-	 * Use statically-allocated softc and attach code until
-	 * old config is completely gone.  Don't  over-run softc.
-	 */
-	if (nunits > NASC) {
-		printf("asc: too many units for old config\n");
+	sccaddr = BUS_CVTADDR(ca);
+
+	if (badaddr(sccaddr + ASC_OFFSET_53C94, 4))
 		return (0);
-	}
-	nunits++;
+
 	return (1);
 }
 
@@ -530,39 +522,18 @@ ascattach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
-
-	if (!asc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
-			   self->dv_unit, ca->ca_slot, self)) {
-		printf(": failed to attach");
-		return;
-	}
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, asc_intr, self->dv_unit);
-	printf("\n");
-}
-
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-int
-asc_doprobe(addr, unit, priority, self)
-	void *addr;
-	int unit, priority;
-	struct device *self;
-{
-	register asc_softc_t asc;
+	register asc_softc_t asc = (asc_softc_t) self;
 	register asc_regmap_t *regs;
 	int id, s, i;
 	int bufsiz;
 
-	if (unit >= NASC)
-		return (0);
-	if (badaddr(addr + ASC_OFFSET_53C94, 1))
-		return (0);
+	void *addr;
+	int unit, priority;
 
-	asc = &asc_softc[unit];
-
+	addr = MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	unit = self->dv_unit;
+	priority = ca->ca_slot;
+	
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
@@ -671,12 +642,12 @@ asc_doprobe(addr, unit, priority, self)
 	/* Hack for old-sytle SCSI-device probe */
 	(void) pmax_add_scsi(&ascdriver, unit);
 
-/*XXX*/
-#ifdef USE_NEW_SCSI
-	if (self == NULL)
-	    /* old-style config? */
-	    return (1);
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, asc_intr, self->dv_unit);
+	printf(": target %d\n", id);
 
+
+#ifdef USE_NEW_SCSI
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -686,15 +657,12 @@ asc_doprobe(addr, unit, priority, self)
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
 
-	
 	/*
-	 * Now try to attach all the sub-devices
+	 * Now try to attach all the sub-devices.
 	 */
 	config_found(self, &asc->sc_link, ascprint);
 
 #endif /* USE_NEW_SCSI */
-/*XXX*/
-	return (1);
 }
 
 /*
@@ -707,6 +675,15 @@ ascprint(aux, name)
 {
 	return -1;
 }
+/*
+ *  Per Fogelstrom's SCSI Driver breaks down request transfer size.
+ */
+void
+asc_minphys(bp)
+	struct buf *bp;
+{
+	/*XXX*/
+}
 
 /*
  * Start activity on a SCSI device.
@@ -718,7 +695,7 @@ asc_start(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
 	register struct scsi_device *sdp = scsicmd->sd;
-	register asc_softc_t asc = &asc_softc[sdp->sd_ctlr];
+	register asc_softc_t asc = asccd.cd_devs[sdp->sd_ctlr];
 	int s;
 
 	s = splbio();
@@ -728,7 +705,7 @@ asc_start(scsicmd)
 	 * separate LUNs.
 	 */
 	if (asc->cmd[sdp->sd_drive]) {
-		printf("asc%d: device %s busy at start\n", sdp->sd_ctlr,
+		printf("%s: device %s busy at start\n", sdp->sd_ctlr,
 			sdp->sd_driver->d_name);
 		(*sdp->sd_driver->d_done)(scsicmd->unit, EBUSY,
 			scsicmd->buflen, 0);
@@ -738,6 +715,33 @@ asc_start(scsicmd)
 	asc_startcmd(asc, sdp->sd_drive);
 	splx(s);
 }
+
+
+#ifdef USE_NEW_SCSI
+int
+asc_poll(asc, target)
+	struct asc_softc *asc;
+	int target;
+{
+	struct scsi_xfer *scsicmd = asc->cmd[target];
+	int count = scsicmd->timeout * 10;
+
+	while(count) {
+		if(asc->regs->asc_status &ASC_CSR_INT) {
+			asc_intr(asc);
+		}
+		if(scsicmd->flags & ITSDONE)
+			break;
+		DELAY(5);
+		count--;
+	}
+	if(count == 0) {
+		scsicmd->error = XS_TIMEOUT;
+		asc_end(asc, 0, 0, 0);
+	}
+	return COMPLETE;
+}
+#endif /*USE_NEW_SCSI*/
 
 static void
 asc_reset(asc, regs)
@@ -861,7 +865,7 @@ asc_startcmd(asc, target)
 			scsicmd->cmd[5];
 		asc_debug_sz = (scsicmd->cmd[7] << 8) | scsicmd->cmd[8];
 	}
-	asc_logp->status = PACK(asc - asc_softc, 0, 0, asc_debug_cmd);
+	asc_logp->status = PACK(asc->sc_dev.dv_unit, 0, 0, asc_debug_cmd);
 	asc_logp->target = asc->target;
 	asc_logp->state = asc->script - asc_scripts;
 	asc_logp->msg = SCSI_DIS_REC_IDENTIFY;
@@ -905,7 +909,7 @@ void
 asc_intr(unit)
 	int unit;
 {
-	register asc_softc_t asc = &asc_softc[unit];
+	register asc_softc_t asc = asccd.cd_devs[unit];
 	register asc_regmap_t *regs = asc->regs;
 	register State *state;
 	register script_t *scpt;
@@ -950,8 +954,8 @@ again:
 	 * to request the device for a MSG_OUT phase.
 	 */
 	if (status & ASC_CSR_PE) {
-		printf("asc%d: SCSI device %d: incomming parity error seen\n",
-			asc - asc_softc, asc->target);
+		printf("%s: SCSI device %d: incomming parity error seen\n",
+			asc->sc_dev.dv_xname, asc->target);
 		asc->st[asc->target].flags |= PARITY_ERR;
 	}
 
@@ -960,8 +964,8 @@ again:
 	 * Probably a bug in a device driver.
 	 */
 	if (status & ASC_CSR_GE) {
-		printf("asc%d: SCSI device %d: gross error\n",
-			asc - asc_softc, asc->target);
+		printf("%s: SCSI device %d: gross error\n",
+			asc->sc_dev.dv_xname, asc->target);
 		goto abort;
 	}
 
@@ -1019,9 +1023,11 @@ again:
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 		/* flush any data in the FIFO */
 		if (fifo) {
-			if (state->flags & DMA_OUT)
+			if (state->flags & DMA_OUT) {
+	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
+					fifo, len, state->flags);
 				len += fifo;
-			else if (state->flags & DMA_IN) {
+			} else if (state->flags & DMA_IN) {
 				u_char *cp;
 
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
@@ -1135,7 +1141,7 @@ again:
 	if (ir & ASC_INT_RESET) {
 		register int i;
 
-		printf("asc%d: SCSI bus reset!!\n", asc - asc_softc);
+		printf("%s: SCSI bus reset!!\n", asc->sc_dev.dv_xname);
 		/* need to flush any pending commands */
 		for (i = 0; i < ASC_NCMD; i++) {
 			if (!asc->cmd[i])
@@ -1194,8 +1200,8 @@ again:
 			/* FALLTHROUGH */
 
 		default:
-			printf("asc%d: SCSI device %d: unexpected disconnect\n",
-				asc - asc_softc, asc->target);
+			printf("%s: SCSI device %d: unexpected disconnect\n",
+				asc->sc_dev.dv_xname, asc->target);
 #ifdef DEBUG
 			asc_DumpLog("asc_disc");
 #endif
@@ -1380,6 +1386,30 @@ asc_end(asc, status, ss, ir)
 		asc->script = &asc_scripts[SCRIPT_RESEL];
 		break;
 	}
+
+#ifdef USE_NEW_SCSI
+	if(scsicmd->error == XS_NOERROR && !(state->flags & CHECK_SENSE)) {
+		if((state->statusByte & ST_MASK) == SCSI_CHECK) {
+			struct scsi_sense *ss = (void *)&state->cmd;
+			/* Save return values */
+			scsicmd->resid = state->buflen;
+			scsicmd->status = state->statusByte;
+			/* Set up sense request command */
+			bzero(ss, sizeof(*ss));
+			ss->opcode = REQUEST_SENSE;
+			ss->byte2 = sc_link->lun << 5;
+			ss->length = sizeof(struct scsi_sense_data);
+			state->cmdlen = sizeof(*ss);
+			state->buf = (vm_offset_t)&scsicmd->sense;
+			state->buflen = sizeof(struct scsi_sense_data);
+			state->flags |= CHECK_SENSE;
+			MachFlushDCache(state->buf, state->buflen);
+			asc->cmd[target] = scsicmd;
+			asc_startcmd(asc, target);
+			return(0);
+		}
+	}
+#endif /*USE_NEW_SCSI*/
 
 	/*
 	 * Look for another device that is ready.
@@ -1858,8 +1888,8 @@ asc_msg_in(asc, status, ss, ir)
 				i = asc->min_period;
 			else if (i >= asc->max_period) {
 				/* can't do sync transfer, period too long */
-				printf("asc%d: SCSI device %d: sync xfer period too long (%d)\n",
-					asc - asc_softc, asc->target, i);
+				printf("%s: SCSI device %d: sync xfer period too long (%d)\n",
+					asc->sc_dev.dv_xname, asc->target, i);
 				i = asc->max_period;
 				state->sync_offset = 0;
 			}
@@ -1898,8 +1928,8 @@ asc_msg_in(asc, status, ss, ir)
 			goto done;
 
 		default:
-			printf("asc%d: SCSI device %d: rejecting extended message 0x%x\n",
-				asc - asc_softc, asc->target,
+			printf("%s: SCSI device %d: rejecting extended message 0x%x\n",
+				asc->sc_dev.dv_xname, asc->target,
 				state->msg_in[0]);
 			goto reject;
 		}
@@ -1965,8 +1995,8 @@ asc_msg_in(asc, status, ss, ir)
 		return (0);
 
 	default:
-		printf("asc%d: SCSI device %d: rejecting message 0x%x\n",
-			asc - asc_softc, asc->target, msg);
+		printf("%s: SCSI device %d: rejecting message 0x%x\n",
+			asc->sc_dev.dv_xname, asc->target, msg);
 	reject:
 		/* request a message out before acknowledging this message */
 		state->msg_out = SCSI_MESSAGE_REJECT;
@@ -2117,7 +2147,7 @@ asic_dma_end(asc, state, flag)
 void
 asc_dma_intr()
 {
-	asc_softc_t asc = &asc_softc[0];
+	asc_softc_t asc =  &asccd.cd_devs[0]; /*XXX*/
 	u_int next_phys;
 
 	asc->dma_xfer -= NBPG;
