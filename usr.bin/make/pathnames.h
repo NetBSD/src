@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 1996/11/06 17:59:21 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 1998/12/19 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,4 +39,6 @@
 #define	_PATH_OBJDIRPREFIX	"/usr/obj"
 #define	_PATH_DEFSHELLDIR	"/bin"
 #define	_PATH_DEFSYSMK		"sys.mk"
+#ifndef _PATH_DEFSYSPATH
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"
+#endif
