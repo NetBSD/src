@@ -988,6 +988,17 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     state->where = SMTPD_AFTER_DOT;
 
     /*
+     * Notify the postmaster if there were errors. This usually indicates a
+     * client configuration problem, or that someone is trying nasty things.
+     * Either is significant enough to bother the postmaster. XXX Can't
+     * report problems when running in stand-alone mode: postmaster notices
+     * require availability of the cleanup service.
+     */
+    if (state->history != 0 && state->client != VSTREAM_IN
+      && (state->error_mask & state->notify_mask))
+      smtpd_chat_notify(state);
+    smtpd_chat_reset(state);
+    /*
      * Cleanup. The client may send another MAIL command.
      */
     mail_reset(state);
