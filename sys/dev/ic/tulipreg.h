@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.4 1999/09/14 00:55:39 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.5 1999/09/14 05:52:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -288,6 +288,8 @@ struct tulip_desc {
 #define	TULIP_CSR18	0x90
 #define	TULIP_CSR19	0x98
 #define	TULIP_CSR20	0xa0
+
+#define	TULIP_CSR_INDEX(csr)	((csr) >> 3)
 
 /* CSR0 - Bus Mode */
 #define	CSR_BUSMODE		TULIP_CSR0

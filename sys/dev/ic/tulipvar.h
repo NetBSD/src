@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.7 1999/09/14 00:55:38 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.8 1999/09/14 05:52:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -358,13 +358,16 @@ do {									\
 } while (0)
 
 /* CSR access */
+#define	TULIP_CSR_OFFSET(sc, csr)					\
+	(TULIP_CSR_INDEX(csr) << (sc)->sc_regshift)
+
 #define	TULIP_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh,			\
-	    (reg) >> (sc)->sc_regshift)
+	    TULIP_CSR_OFFSET((sc), (reg)))
 
 #define	TULIP_WRITE(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh,			\
-	    (reg) >> (sc)->sc_regshift, (val))
+	    TULIP_CSR_OFFSET((sc), (reg)), (val))
 
 #define	TULIP_SET(sc, reg, mask)					\
 	TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) | (mask))
