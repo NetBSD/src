@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.6 1999/09/08 00:50:15 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.7 1999/09/13 12:15:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,21 +63,33 @@ int found_first_ifid = 0;
 #define IFID_LEN 8
 static char first_ifid[IFID_LEN];
 
-static void ieee802_to_eui64 __P((u_int8_t *, u_int8_t *));
+static int laddr_to_eui64 __P((u_int8_t *, u_int8_t *, size_t));
 
-static void
-ieee802_to_eui64(dst, src)
+static int
+laddr_to_eui64(dst, src, len)
 	u_int8_t *dst;
 	u_int8_t *src;
+	size_t len;
 {
-	dst[0] = src[0];
-	dst[1] = src[1];
-	dst[2] = src[2];
-	dst[3] = 0xff;
-	dst[4] = 0xfe;
-	dst[5] = src[3];
-	dst[6] = src[4];
-	dst[7] = src[5];
+	switch (len) {
+	case 6:
+		dst[0] = src[0];
+		dst[1] = src[1];
+		dst[2] = src[2];
+		dst[3] = 0xff;
+		dst[4] = 0xfe;
+		dst[5] = src[3];
+		dst[6] = src[4];
+		dst[7] = src[5];
+		break;
+	case 8:
+		bcopy(src, dst, len);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 /*
@@ -115,9 +127,15 @@ in6_ifattach_getifid(ifp0)
 			case IFT_ETHER:
 			case IFT_FDDI:
 			case IFT_ATM:
-			/* what others? */
+				/* IEEE802/EUI64 cases - what others? */
 				addr = LLADDR(sdl);
 				addrlen = sdl->sdl_alen;
+				/*
+				 * to copy ifid from IEEE802/EUI64 interface,
+				 * u bit of the source needs to be 0.
+				 */
+				if ((addr[0] & 0x02) != 0)
+					break;
 				goto found;
 			default:
 				break;
@@ -130,18 +148,8 @@ in6_ifattach_getifid(ifp0)
 	return EADDRNOTAVAIL;
 
 found:
-	switch (addrlen) {
-	case 6:
-		ieee802_to_eui64(first_ifid, addr);
+	if (laddr_to_eui64(first_ifid, addr, addrlen) == 0)
 		found_first_ifid = 1;
-		break;
-	case 8:
-		bcopy(addr, first_ifid, 8);
-		found_first_ifid = 1;
-		break;
-	default:
-		break;
-	}
 
 	if (found_first_ifid) {
 		printf("%s: supplying EUI64: "
@@ -205,8 +213,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 	struct ifnet *ifp;
 	u_int type;
 	caddr_t laddr;
+	/* size_t laddrlen; */
 	int noloop;
-	/* xxx sizeof(laddr) */
 {
 	static size_t if_indexlim = 8;
 	struct sockaddr_in6 mltaddr;
@@ -238,8 +246,10 @@ in6_ifattach(ifp, type, laddr, noloop)
 	if (in6_iflladdr == NULL || if_index >= if_indexlim) {
 		size_t n;
 		caddr_t q;
+		size_t olim;
 
-		while(if_index >= if_indexlim)
+		olim = if_indexlim;
+		while (if_index >= if_indexlim)
 			if_indexlim <<= 1;
 
 		/* grow in6_iflladdr */
@@ -247,7 +257,8 @@ in6_ifattach(ifp, type, laddr, noloop)
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
 		bzero(q, n);
 		if (in6_iflladdr) {
-			bcopy((caddr_t)in6_iflladdr, q, n/2);
+			bcopy((caddr_t)in6_iflladdr, q,
+				olim * sizeof(struct in6_addr *));
 			free((caddr_t)in6_iflladdr, M_IFADDR);
 		}
 		in6_iflladdr = (struct in6_addr **)q;
@@ -266,8 +277,9 @@ in6_ifattach(ifp, type, laddr, noloop)
 			if (IN6_IS_ADDR_LINKLOCAL(&satosin6(ifa->ifa_addr)->sin6_addr))
 				return;
 		}
-	} else
+	} else {
 		TAILQ_INIT(&ifp->if_addrlist);
+	}
 
 	/*
 	 * link-local address
@@ -314,7 +326,11 @@ in6_ifattach(ifp, type, laddr, noloop)
 	case IN6_IFT_P2P802:
 		if (laddr == NULL)
 			break;
-		ieee802_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
+		/* XXX use laddrlen */
+		if (laddr_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8],
+				laddr, 6) != 0) {
+			break;
+		}
 		/* invert u bit to convert EUI64 to RFC2373 interface ID. */
 		ia->ia_addr.sin6_addr.s6_addr8[8] ^= 0x02;
 		if (found_first_ifid == 0) {
@@ -448,7 +464,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 	if (ifp->if_flags & IFF_MULTICAST) {
 		int error;	/* not used */
 
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		/* Restore saved multicast addresses(if any). */
 		in6_restoremkludge(ia, ifp);
 #endif
