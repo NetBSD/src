@@ -1474,7 +1474,9 @@ do									\
     } */								\
   else if (GET_MODE_CLASS (MODE) != MODE_FLOAT				\
 	   && GET_CODE (X) == SYMBOL_REF				\
-	   && CONSTANT_POOL_ADDRESS_P (X))				\
+	   && CONSTANT_POOL_ADDRESS_P (X)				\
+	   && ! (flag_pic						\
+		 && symbol_mentioned_p (get_pool_constant (X))))	\
     goto LABEL;								\
   else if ((GET_CODE (X) == PRE_INC || GET_CODE (X) == POST_DEC)	\
 	   && (GET_MODE_SIZE (MODE) <= 4)				\
@@ -1727,7 +1729,12 @@ extern int arm_pic_register;
 
 #define FINALIZE_PIC arm_finalize_pic ()
 
-#define LEGITIMATE_PIC_OPERAND_P(X) (! symbol_mentioned_p (X))
+/* We can't directly access anything that contains a symbol, nor can
+   we indirect via the constant pool */
+#define LEGITIMATE_PIC_OPERAND_P(X)				\
+	(! symbol_mentioned_p (X)				\
+	 && (! CONSTANT_POOL_ADDRESS_P (X)			\
+	     || ! symbol_mentioned_p (get_pool_constant (X))))
  
 
 
