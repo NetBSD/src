@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.14 1997/01/23 07:01:50 mikel Exp $	*/
+/*	$NetBSD: errno.h,v 1.15 1997/07/08 20:23:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,7 +50,7 @@ __BEGIN_DECLS
 #if !defined(_REENTRANT)
 extern int errno;
 #else
-extern int *__errno();
+extern int *__errno __P((void));
 #define errno (*__errno())
 #endif
 
