@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.18 2000/12/28 22:59:15 sommerfeld Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.19 2001/10/25 01:46:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr, legsup;
+	pcireg_t csr;
 	char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
@@ -138,12 +138,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", devname, intrstr);
 
-        /* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
-	legsup = pci_conf_read(pc, tag, PCI_LEGSUP);
-	if (!(legsup & PCI_LEGSUP_USBPIRQDEN)) {
-		legsup = PCI_LEGSUP_USBPIRQDEN;
-		pci_conf_write(pc, tag, PCI_LEGSUP, legsup);
-        }
+	/* Set LEGSUP register to its default value. */
+	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
