@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.22 2000/03/23 06:37:24 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.23 2000/03/25 20:14:44 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -456,7 +456,7 @@ nhpibdone(hs)
 	if (hs->sc_flags & HPIBF_READ) {
 		if ((hs->sc_flags & HPIBF_TIMO) &&
 		    (hd->hpib_ids & IDS_IR) == 0)
-			calllout_reset(&sc->sc_read_ch, hz >> 2,
+			callout_reset(&sc->sc_read_ch, hz >> 2,
 			    nhpibreadtimo, hs);
 	} else {
 		if (hs->sc_count == 1) {
