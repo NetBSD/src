@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/04/19 01:14:17 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/06/04 05:42:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2002/04/19 01:14:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2002/06/04 05:42:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -269,9 +269,7 @@ microtime(struct timeval *tvp)
 
 	/* 32bit wrap-around during subtraction ok here. */
 	count = mips3_cp0_count_read() - last_cp0_count;
-	asm volatile("multu %1,%2 ; mfhi %0"
-	    : "=r"(res) : "r"(count), "r"(curcpu()->ci_divisor_recip));
-
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
 	tvp->tv_usec += res;
 
 	if (tvp->tv_usec >= 1000000) {
