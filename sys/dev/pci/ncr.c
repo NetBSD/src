@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.98 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.99 2000/04/06 14:42:06 tsutsui Exp $	*/
 
 /**************************************************************************
 **
@@ -1534,7 +1534,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.98 2000/03/23 07:01:39 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.99 2000/04/06 14:42:06 tsutsui Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7799,8 +7799,8 @@ static int ncr_snooptest (struct ncb* np)
 	/*
 	**	Set memory and register.
 	*/
-	ncr_cache = host_wr;
-	OUTL (nc_temp, htole32(ncr_wr));	/* XXX XXX XXX BOGUS htole32 */
+	ncr_cache = htole32(host_wr);
+	OUTL (nc_temp, ncr_wr);
 	/*
 	**	Start script (exchange values)
 	*/
@@ -7818,9 +7818,9 @@ static int ncr_snooptest (struct ncb* np)
 	/*
 	**	Read memory and register.
 	*/
-	host_rd = ncr_cache;
-	ncr_rd  = le32toh(INL (nc_scratcha));	/* XXX XXX XXX BOGUS le32toh */
-	ncr_bk  = le32toh(INL (nc_temp));	/* XXX XXX XXX BOGUS le32toh */
+	host_rd = le32toh(ncr_cache);
+	ncr_rd  = INL (nc_scratcha);
+	ncr_bk  = INL (nc_temp);
 	/*
 	**	Reset ncr chip
 	*/
