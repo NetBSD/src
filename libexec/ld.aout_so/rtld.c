@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.73.2.2 2000/10/31 12:31:25 he Exp $	*/
+/*	$NetBSD: rtld.c,v 1.73.2.3 2001/04/01 15:48:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 #include <sys/time.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
-#ifndef MAP_COPY
-#define MAP_COPY	MAP_PRIVATE
-#endif
 #include <err.h>
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -653,6 +650,10 @@ map_object(sodp, smp)
 	if (smp)
 		name += (long)LM_LDBASE(smp);
 
+#ifdef DEBUG
+	xprintf("map_object: loading %s\n", name);
+#endif
+
 	if (sodp->sod_library) {
 		usehints = 1;
 again:
@@ -711,7 +712,7 @@ again:
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 	         PROT_READ|PROT_EXEC,
-	         MAP_FILE|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	         MAP_FILE|MAP_PRIVATE, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -727,7 +728,7 @@ again:
 
 	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
 		 PROT_READ|PROT_WRITE|PROT_EXEC,
-		 MAP_ANON|MAP_COPY|MAP_FIXED,
+		 MAP_ANON|MAP_PRIVATE|MAP_FIXED,
 		 anon_fd, 0) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
@@ -1083,8 +1084,11 @@ lookup(name, ref_map, src_map, strong)
 	struct rt_symbol	*rtsp;
 	struct	nzlist		*weak_np = 0;
 
-	if ((rtsp = lookup_rts(name)) != NULL)
+	if ((rtsp = lookup_rts(name)) != NULL) {
+		/* common symbol is not a member of particular shlib */
+		*src_map = NULL;
 		return (rtsp->rt_sp);
+	}
 
 	weak_smp = NULL; /* XXX - gcc! */
 
@@ -1210,6 +1214,9 @@ restart:
 	 */
 	rtsp = enter_rts(name, (long)calloc(1, common_size),
 					N_UNDF + N_EXT, 0, common_size, NULL);
+
+	/* common symbol is not a member of particular shlib */
+	*src_map = NULL;
 
 #if DEBUG
 xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp->nz_value);
@@ -1408,7 +1415,7 @@ maphints()
 
 	hsize = (hsize + PAGSIZ - 1) & -PAGSIZ;
 
-	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_COPY, hfd, 0);
+	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_PRIVATE, hfd, 0);
 	if (addr == (caddr_t)-1)
 		goto nohints;
 
@@ -1476,6 +1483,9 @@ findhint(name, major, minor, prefered_path)
 	char	*prefered_path;
 {
 	struct hints_bucket	*bp;
+
+	if (hheader->hh_nbucket == 0)
+		return (NULL);
 
 	bp = hbuckets + (hinthash(name, major, minor) % hheader->hh_nbucket);
 
