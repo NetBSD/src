@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.1.1.2 1997/05/25 11:46:04 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.1.1.3 1997/07/05 05:12:58 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_frag.c,v 1.1.1.2 1997/05/25 11:46:04 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_frag.c,v 1.1.1.3 1997/07/05 05:12:58 darrenr Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -61,11 +61,12 @@ static	char	rcsid[] = "$Id: ip_frag.c,v 1.1.1.2 1997/05/25 11:46:04 darrenr Exp 
 #include "netinet/ip_nat.h"
 #include "netinet/ip_frag.h"
 #include "netinet/ip_state.h"
+#include "netinet/ip_auth.h"
 
 ipfr_t	*ipfr_heads[IPFT_SIZE];
 ipfr_t	*ipfr_nattab[IPFT_SIZE];
 ipfrstat_t ipfr_stats;
-u_long	ipfr_inuse = 0,
+int	ipfr_inuse = 0,
 	fr_ipfrttl = 120;	/* 60 seconds */
 #ifdef _KERNEL
 extern	int	ipfr_timer_id;
@@ -203,7 +204,6 @@ ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
 	u_int	idx;
-	int	ret;
 
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
@@ -263,7 +263,7 @@ ipfr_t *table[];
 
 
 /*
- * functional interface for normal lookups of the fragment cache
+ * functional interface for NAT lookups of the NAT fragment cache
  */
 nat_t *ipfr_nat_knownfrag(ip, fin)
 ip_t *ip;
@@ -273,7 +273,7 @@ fr_info_t *fin;
 	ipfr_t	*ipf;
 
 	MUTEX_ENTER(&ipf_natfrag);
-	ipf = ipfr_lookup(ip, fin, ipfr_heads);
+	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
 	nat = ipf ? ipf->ipfr_data : NULL;
 	MUTEX_EXIT(&ipf_natfrag);
 	return nat;
@@ -281,7 +281,7 @@ fr_info_t *fin;
 
 
 /*
- * functional interface for NAT lookups of the NAT fragment cache
+ * functional interface for normal lookups of the fragment cache
  */
 int ipfr_knownfrag(ip, fin)
 ip_t *ip;
@@ -306,11 +306,7 @@ void ipfr_unload()
 	ipfr_t	**fp, *fr;
 	nat_t	*nat;
 	int	idx;
-#if	!SOLARIS && defined(_KERNEL)
-	int	s;
-#endif
 
-	SPLNET(s);
 	MUTEX_ENTER(&ipf_frag);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_heads[idx]; (fr = *fp); ) {
@@ -332,7 +328,6 @@ void ipfr_unload()
 		}
 	MUTEX_EXIT(&ipf_natfrag);
 	MUTEX_EXIT(&ipf_nat);
-	SPLX(s);
 }
 
 
@@ -411,13 +406,12 @@ int ipfr_slowtimer()
 	MUTEX_EXIT(&ipf_natfrag);
 	MUTEX_EXIT(&ipf_nat);
 	SPLX(s);
-# if	SOLARIS
 	fr_timeoutstate();
 	ip_natexpire();
+	fr_authexpire();
+# if	SOLARIS
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
 # else
-	fr_timeoutstate();
-	ip_natexpire();
 	ip_slowtimo();
 #  if BSD < 199306
 	return 0;

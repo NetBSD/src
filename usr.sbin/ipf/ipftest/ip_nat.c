@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.2 1997/05/25 11:46:06 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.3 1997/07/05 05:13:00 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.2 1997/05/25 11:46:06 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.3 1997/07/05 05:13:00 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -30,7 +30,7 @@ static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.2 1997/05/25 11:46:06 darrenr Exp $
 #include <sys/file.h>
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
-# include <sys/fnctl.h>
+# include <sys/fcntl.h>
 #else
 # include <sys/ioctl.h>
 #endif
@@ -98,6 +98,7 @@ extern	kmutex_t	ipf_natfrag;
 #endif
 
 static	int	flush_nattable __P((void)), clear_natlist __P((void));
+static	void	nat_delete __P((struct nat *));
 
 void fix_outcksum(sp, n)
 u_short *sp;
@@ -166,12 +167,20 @@ u_long n;
  * Handle ioctls which manipulate the NAT.
  */
 int nat_ioctl(data, cmd, mode)
+#ifdef	__NetBSD__
+u_long cmd;
+#else
+int cmd;
+#endif
 caddr_t data;
-int cmd, mode;
+int mode;
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
 	ipnat_t natd;
-	int error = 0, ret, s;
+	int error = 0, ret;
+#if defined(_KERNEL) && !SOLARIS
+	int s;
+#endif
 
 	/*
 	 * For add/delete, look to see if the NAT entry is already present
@@ -181,6 +190,8 @@ int cmd, mode;
 	if ((cmd == SIOCADNAT) || (cmd == SIOCRMNAT)) {
 		IRCOPY(data, (char *)&natd, sizeof(natd));
 		nat = &natd;
+		nat->in_inip &= nat->in_inmsk;
+		nat->in_outip &= nat->in_outmsk;
 		for (np = &nat_list; (n = *np); np = &n->in_next)
 			if (!bcmp((char *)&nat->in_flags, (char *)&n->in_flags,
 					IPN_CMPSIZ))
@@ -203,7 +214,7 @@ int cmd, mode;
 			error = ENOMEM;
 			break;
 		}
-		IRCOPY((char *)data, (char *)n, sizeof(*n));
+		bcopy((char *)nat, (char *)n, sizeof(*n));
 		n->in_ifp = (void *)GETUNIT(n->in_ifname);
 		n->in_apr = ap_match(n->in_p, n->in_plabel);
 		n->in_next = *np;
@@ -310,8 +321,8 @@ struct nat *natd;
 		}
 
 	for (natp = natd->nat_hstart[1]; (nat = *natp);
-	     natp = &nat->nat_hnext[1])
-		if (nat == natd) {
+	     natp = &nat->nat_hnext[1]) {
+		if (nat == natd)
 			*natp = nat->nat_hnext[1];
 			break;
 		}
@@ -327,8 +338,8 @@ struct nat *natd;
 		}
 	}
 	MUTEX_ENTER(&ipf_natfrag);
-	if (nat->nat_frag && nat->nat_frag->ipfr_data == nat)
-		nat->nat_frag->ipfr_data = NULL;
+	if (natd->nat_frag && (natd->nat_frag->ipfr_data == nat))
+		natd->nat_frag->ipfr_data = NULL;
 	MUTEX_EXIT(&ipf_natfrag);
 	KFREE(natd);
 }
@@ -661,13 +672,14 @@ u_short sport, dport;
 	flags &= IPN_TCPUDP;
 
 	nat = nat_table[0][src.s_addr % NAT_SIZE];
-	for (; nat; nat = nat->nat_hnext[0])
+	for (; nat; nat = nat->nat_hnext[0]) {
 		if ((!ifp || ifp == nat->nat_ifp) &&
 		    nat->nat_inip.s_addr == src.s_addr &&
 		    nat->nat_oip.s_addr == dst.s_addr &&
 		    flags == nat->nat_flags && (!flags ||
 		     (nat->nat_inport == sport && nat->nat_oport == dport)))
 			return nat;
+	}
 	return NULL;
 }
 
@@ -712,10 +724,11 @@ register natlookup_t *np;
 	 * If nl_inip is non null, this is a lookup based on the real
 	 * ip address. Else, we use the fake.
 	 */
-	if ((nat = nat_outlookup(NULL, IPN_TCPUDP, np->nl_inip, np->nl_inport,
-				 np->nl_outip, np->nl_outport))) {
-		np->nl_inip = nat->nat_outip;
-		np->nl_inport = nat->nat_outport;
+	if ((nat = nat_outlookup(NULL, np->nl_flags, np->nl_inip,
+				 np->nl_inport, np->nl_outip,
+				 np->nl_outport))) {
+		np->nl_realip = nat->nat_outip;
+		np->nl_realport = nat->nat_outport;
 	}
 	return nat;
 }
@@ -907,16 +920,8 @@ fr_info_t *fin;
 			if ((np->in_ifp == ifp) &&
 			    (!np->in_flags || (nflags & np->in_flags)) &&
 			    ((in.s_addr & np->in_outmsk) == np->in_outip) &&
-			    (np->in_redir & NAT_REDIRECT ||
-			     np->in_pmin == dport)) {
-				/*
-				 * If this rule (np) is a redirection, rather
-				 * than a mapping, then do a nat_new.
-				 * Otherwise, if it's just a mapping, do a
-				 * continue;
-				 */
-				if (!(np->in_redir & NAT_REDIRECT))
-					continue;
+			    (np->in_redir & NAT_REDIRECT) &&
+			     (!np->in_pmin || np->in_pmin == dport)) {
 				if ((nat = nat_new(np, ip, fin, nflags,
 						    NAT_INBOUND)))
 #ifdef	IPFILTER_LOG
@@ -996,14 +1001,10 @@ fr_info_t *fin;
  */
 void ip_natunload()
 {
-	int s;
-
 	MUTEX_ENTER(&ipf_nat);
-	SPLNET(s);
 	(void) clear_natlist();
 	(void) flush_nattable();
 	(void) ap_unload();
-	SPLX(s)
 	MUTEX_EXIT(&ipf_nat);
 }
 
@@ -1015,7 +1016,9 @@ void ip_natunload()
 void ip_natexpire()
 {
 	register struct nat *nat, **natp;
+#if defined(_KERNEL) && !SOLARIS
 	int s;
+#endif
 
 	MUTEX_ENTER(&ipf_nat);
 	SPLNET(s);
@@ -1041,9 +1044,9 @@ void nat_log(nat, type)
 struct nat *nat;
 u_short type;
 {
-	struct	ipnat	*np;
-	struct	natlog	natl;
-	int	rulen;
+	struct ipnat *np;
+	struct natlog natl;
+	int rulen;
 
 	if (iplused[IPL_LOGNAT] + sizeof(natl) > IPLLOGSIZE) {
 		nat_stats.ns_logfail++;
@@ -1054,7 +1057,7 @@ u_short type;
                 iplh[IPL_LOGNAT] = iplbuf[IPL_LOGNAT];
 
 # ifdef	sun
-	uniqtime(&natl);
+	uniqtime(&natl.nl_tv);
 # endif
 # if BSD >= 199306 || defined(__FreeBSD__)
 	microtime((struct timeval *)&natl);

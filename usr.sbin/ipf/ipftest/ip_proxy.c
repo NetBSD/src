@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.3 1997/07/05 05:13:47 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.1 1997/07/05 05:13:03 darrenr Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ip_proxy.c,v 1.1.1.3 1997/07/05 05:13:47 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_proxy.c,v 1.1.1.1 1997/07/05 05:13:03 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)

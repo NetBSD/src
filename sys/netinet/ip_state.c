@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.1.1.4 1997/05/27 22:18:34 thorpej Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.1.1.5 1997/07/05 05:13:39 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.12 1997/05/24 07:34:10 darrenr Exp ";
+static	char	rcsid[] = "$Id: ip_state.c,v 1.1.1.5 1997/07/05 05:13:39 darrenr Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -60,6 +60,8 @@ static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.12 1997/05/24 07:34:10 darrenr Exp
 #include "netinet/ip_compat.h"
 #include "netinet/ip_fil.h"
 #include "netinet/ip_nat.h"
+#include "netinet/ip_frag.h"
+#include "netinet/ip_proxy.h"
 #include "netinet/ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
@@ -96,7 +98,11 @@ ips_stat_t *fr_statetstats()
 
 int fr_state_ioctl(data, cmd, mode)
 caddr_t data;
+#ifdef	__NetBSD__
+u_long cmd;
+#else
 int cmd;
+#endif
 int mode;
 {
 	switch (cmd)
@@ -257,17 +263,22 @@ u_short sport;
 	 */
 	seq = ntohl(tcp->th_seq);
 	ack = ntohl(tcp->th_ack);
-	if (sport == is->is_sport) {
+	source = (sport == is->is_sport);
+
+	if (!(tcp->th_flags & TH_ACK))  /* Pretend an ack was sent */
+		ack = source ? is->is_ack : is->is_seq;
+
+	if (source) {
 		seqskew = seq - is->is_seq;
 		ackskew = ack - is->is_ack;
 	} else {
-		seqskew = ack - is->is_seq;
+		ackskew = seq - is->is_ack;
 		if (!is->is_ack)
 			/*
 			 * Must be a SYN-ACK in reply to a SYN.
 			 */
 			is->is_ack = seq;
-		ackskew = seq - is->is_ack;
+		seqskew = ack - is->is_seq;
 	}
 
 	/*
@@ -283,7 +294,7 @@ u_short sport;
 	 * window size of the connection, store these values and match
 	 * the packet.
 	 */
-	if ((source = (sport == is->is_sport))) {
+	if (source) {
 		swin = is->is_swin;
 		dwin = is->is_dwin;
 	} else {
@@ -442,16 +453,13 @@ void fr_stateunload()
 {
 	register int i;
 	register ipstate_t *is, **isp;
-	int s;
 
 	MUTEX_ENTER(&ipf_state);
-	SPLNET(s);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); ) {
 			*isp = is->is_next;
 			KFREE(is);
 		}
-	SPLX(s);
 	MUTEX_EXIT(&ipf_state);
 }
 
@@ -464,7 +472,9 @@ void fr_timeoutstate()
 {
 	register int i;
 	register ipstate_t *is, **isp;
+#if defined(_KERNEL) && !SOLARIS
 	int s;
+#endif
 
 	MUTEX_ENTER(&ipf_state);
 	SPLNET(s);
@@ -592,7 +602,7 @@ u_short type;
                 iplh[IPL_LOGSTATE] = iplbuf[IPL_LOGSTATE];
 
 # ifdef	sun
-	uniqtime(&ipsl);
+	uniqtime(&ipsl.isl_tv);
 # endif
 # if BSD >= 199306 || defined(__FreeBSD__)
 	microtime((struct timeval *)&ipsl);
