@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.18 2003/08/07 16:27:33 agc Exp $	*/
+/*	$NetBSD: itevar.h,v 1.19 2004/04/08 17:41:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -222,7 +222,8 @@ struct ite_softc {
 #define KBD_EXT_RIGHT_UP      0x93
 
 #define	TABSIZE		8
-#define	TABEND(ip)	((ip)->tty->t_winsize.ws_col - TABSIZE)
+#define	TABEND(ip)	\
+	(((ip)->tty ? (ip)->tty->t_winsize.ws_col : (ip)->cols) - TABSIZE)
 
 #ifdef _KERNEL
 extern	struct ite_data ite_cn;		/* ite_data for console device */
