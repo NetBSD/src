@@ -1,14 +1,11 @@
-#	$Id: Makefile.inc,v 1.5 1993/12/22 04:58:02 cgd Exp $
+#	$Id: Makefile.inc,v 1.6 1993/12/28 11:56:38 davidb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 KERNDIR=	$S/lib/libkern
 
-.if exists($(KERNDIR)/obj.${MACHINE})
-KERNLIBDIR=	$(KERNDIR)/obj.${MACHINE}
-.else
-KERNLIBDIR=	$(KERNDIR)
-.endif
+KERNLIBDIR!=cd $(KERNDIR); \
+	printf "xxx:\n\techo \$${.OBJDIR}\n" | make -r -s -f - xxx
 
 KERNLIB=	$(KERNLIBDIR)/libkern.a
 KERNLIB_PROF=	$(KERNLIBDIR)/libkern_p.a

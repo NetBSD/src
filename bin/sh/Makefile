@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1993/11/14 15:35:34 cgd Exp $
+#	$Id: Makefile,v 1.9 1993/12/28 10:59:05 davidb Exp $
 
 PROG=	sh
 SRCS=	builtins.c cd.c dirent.c echo.c error.c eval.c exec.c expand.c \
@@ -17,7 +17,7 @@ token.def: mktokens
 	sh ${.CURDIR}/mktokens
 
 builtins.h builtins.c: ${.CURDIR}/mkbuiltins ${.CURDIR}/builtins
-	cd ${.CURDIR}; sh mkbuiltins
+	cd ${.CURDIR}; sh mkbuiltins ${.OBJDIR}
 
 init.c: mkinit ${SRCS}
 	./mkinit '${CC} -c ${CFLAGS} init.c' ${.ALLSRC}

@@ -36,14 +36,14 @@
 #
 #	@(#)mkbuiltins	5.2 (Berkeley) 3/8/91
 #
-#	$Header: /cvsroot/src/bin/sh/mkbuiltins,v 1.4 1993/04/18 17:37:21 mycroft Exp $
+#	$Header: /cvsroot/src/bin/sh/mkbuiltins,v 1.5 1993/12/28 10:59:20 davidb Exp $
 
 temp=/tmp/ka$$
 havejobs=0
 if grep '^#define JOBS[	 ]*1' shell.h > /dev/null
 then	havejobs=1
 fi
-if [ -d obj ]; then objdir=obj; else objdir=.; fi
+objdir=$1	# Passed from Makefile
 exec > ${objdir}/builtins.c
 cat <<\!
 /*

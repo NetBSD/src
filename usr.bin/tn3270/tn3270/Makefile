@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1993/12/21 22:16:33 davidb Exp $
+#	$Id: Makefile,v 1.9 1993/12/28 11:39:16 davidb Exp $
 
 .include <../../Makefile.inc>
 
@@ -30,34 +30,17 @@ DEPSRCS += tn3270.c utilities.c
 
 PROG = tn3270
 
-.if exists(${.CURDIR}/../tools/mkastosc/obj.${MACHINE})
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj.${MACHINE}/mkastosc
-.elif exists(${.CURDIR}/../tools/mkastosc/obj)
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj/mkastosc
-.else
-MKASTOSC=	$(.CURDIR)/../tools/mkastosc/mkastosc
-.endif
-.if exists(${.CURDIR}/../tools/mkastods/obj.${MACHINE})
-MKASTODS=	$(.CURDIR)/../tools/mkastods/obj.${MACHINE}/mkastods
-.elif exists(${.CURDIR}/../tools/mkastods/obj)
-MKASTODS=	$(.CURDIR)/../tools/mkastods/obj/mkastods
-.else
-MKASTODS=	$(.CURDIR)/../tools/mkastods/mkastods
-.endif
-.if exists(${.CURDIR}/../tools/mkdstoas/obj.${MACHINE})
-MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/obj.${MACHINE}/mkdstoas
-.elif exists(${.CURDIR}/../tools/mkdstoas/obj)
-MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/obj/mkdstoas
-.else
-MKDSTOAS=	$(.CURDIR)/../tools/mkdstoas/mkdstoas
-.endif
-.if exists(${.CURDIR}/../tools/mkhits/obj.${MACHINE})
-MKHITS=	$(.CURDIR)/../tools/mkhits/obj.${MACHINE}/mkhits
-.elif exists(${.CURDIR}/../tools/mkhits/obj)
-MKHITS=	$(.CURDIR)/../tools/mkhits/obj/mkhits
-.else
-MKHITS=	$(.CURDIR)/../tools/mkhits/mkhits
-.endif
+MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastosc\n" | make -r -s -f - xxx
+
+MKASTODS!=cd $(.CURDIR)/../tools/mkastods; \
+	printf "xxx:\n\techo \$${.OBJDIR}/mkastods\n" | make -r -s -f - xxx
+
+MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
+	printf "xxx:\n\techo \$${.OBJDIR}/mkdstoas\n" | make -r -s -f - xxx
+
+MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
+	printf "xxx:\n\techo \$${.OBJDIR}/mkhits\n" | make -r -s -f - xxx
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
