@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.117 2003/05/03 19:43:00 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.118 2003/06/27 17:59:33 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -119,13 +119,13 @@ and
 set to 0.
 .Pp
 The top level names are defined with a CTL_ prefix in
-.Pa Aq sys/sysctl.h ,
+.Aq Pa sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
 .Pp
 .Bl -column CTLXMACHDEPXXX "Next level namesXXXXXX" -offset indent
-.It Sy Pa Name	Next level names	Description
+.It Sy Name	Next level names	Description
 .It CTL\_KERN	sys/sysctl.h	High kernel limits
 .It CTL\_VM	uvm/uvm_param.h	Virtual memory
 .It CTL\_VFS	sys/mount.h	Filesystem
@@ -210,7 +210,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level nameXXXXXX" "struct disk_sysctlXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It HW\_MACHINE	string	no
 .It HW\_MODEL	string	no
 .It HW\_NCPU	integer	no
@@ -281,7 +281,7 @@ system vnodes, the open file entries, routing table entries,
 virtual memory statistics, load average history, and clock rate
 information.
 .Bl -column "KERNXCHOWNXRESTRICTEDXXXXXX" "struct clockrateXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It KERN\_ARGMAX	integer	no
 .It KERN\_AUTONICETIME	integer	yes
 .It KERN\_AUTONICEVAL	integer	yes
@@ -472,7 +472,7 @@ the third level names for the mbuf variables are detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "MBUFXNMBCLUSTERSXXX" "struct integerXXX" -offset indent
-.It Sy Pa Third level name	Type	Changeable
+.It Sy Third level name	Type	Changeable
 .It MBUF\_MSIZE	integer	yes
 .It MBUF\_MCLBYTES	integer	yes
 .It MBUF\_NMBCLUSTERS	integer	yes
@@ -590,7 +590,7 @@ structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level names are as follows:
 .Bl -column "Third level nameXXXXXX" "Fourth level is:XXXXXX" -offset indent
-.It Pa Third level name	Fourth level is:
+.It Sy Third level name	Fourth level is:
 .It KERN\_PROC\_ALL	None
 .It KERN\_PROC\_PID	A process ID
 .It KERN\_PROC\_PGRP	A process group
@@ -630,7 +630,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX" -offset indent
-.It Sy Pa Third level name	Type	Changeable
+.It Sy Third level name	Type	Changeable
 .It GPROF\_STATE	integer	yes
 .It GPROF\_COUNT	u_short[\|]	yes
 .It GPROF\_FROMS	u_short[\|]	yes
@@ -719,7 +719,7 @@ The third level names for the tty statistic variables are detailed below.
 The changeable column shows whether a process
 with appropriate privilege may change the value.
 .Bl -column "KERNXTKSTATXRAWCCXXX" "struct integerXXX" -offset indent
-.It Sy Pa Third level name	Type	Changeable
+.It Sy Third level name	Type	Changeable
 .It KERN\_TKSTAT\_NIN	quad	no
 .It KERN\_TKSTAT\_NOUT	quad	no
 .It KERN\_TKSTAT\_CANCC	quad	no
@@ -754,7 +754,7 @@ followed by the vnode itself
 The set of variables defined is architecture dependent.
 Most architectures define at least the following variables.
 .Bl -column "CONSOLE_DEVICEXXX" "integerXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It Li CPU_CONSDEV	dev_t	no
 .El
 .Sh CTL_NET
@@ -763,7 +763,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level nameXXXXXX" "routing messagesXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It PF\_ROUTE	routing messages	no
 .It PF\_INET	IPv4 values	yes
 .It PF\_INET6	IPv6 values	yes
@@ -783,7 +783,7 @@ The fourth level name is an address family, which may be set to 0 to
 select all address families.
 The fifth and sixth level names are as follows:
 .Bl -column "Fifth level nameXXXXXX" "Sixth level is:XXX" -offset indent
-.It Pa Fifth level name	Sixth level is:
+.It Sy Fifth level name	Sixth level is:
 .It NET\_RT\_FLAGS	rtflags
 .It NET\_RT\_DUMP	None
 .It NET\_RT\_IFLIST	None
@@ -795,7 +795,7 @@ The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol name" "Variable nameXX" "integer" "yes" -offset indent
-.It Pa Protocol name	Variable name	Type	Changeable
+.It Sy Protocol name	Variable name	Type	Changeable
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
@@ -1290,7 +1290,7 @@ Get or set various global information about the IPsec key management.
 The third level name is the variable name.
 The currently defined variable and names are:
 .Bl -column "blockacq_lifetime" "integer" "yes" -offset indent
-.It Pa Variable name	Type	Changeable
+.It Sy Variable name	Type	Changeable
 .It debug	integer	yes
 .It spi_try	integer	yes
 .It spi_min_value	integer	yes
@@ -1361,7 +1361,7 @@ value of PROC_PID_CORENAME is reset to the system default value.
 The second level name is either the magic value PROC_CURPROC, which
 points to the current process, or the PID of the target process.
 .Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" "yes" -offset indent
-.It Sy Pa Third level name	Type	Changeable
+.It Sy Third level name	Type	Changeable
 .It PROC\_PID\_CORENAME	string	yes
 .It PROC\_STOPEXEC	int	yes
 .It PROC\_STOPFORK	int	yes
@@ -1457,7 +1457,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It USER\_BC\_BASE\_MAX	integer	no
 .It USER\_BC\_DIM\_MAX	integer	no
 .It USER\_BC\_SCALE\_MAX	integer	no
@@ -1558,7 +1558,7 @@ is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It VM\_ANONMAX	int	yes
 .It VM\_ANONMIN	int	yes
 .It VM\_EXECMAX	int	yes
@@ -1619,7 +1619,7 @@ The integer information available for the CTL_DDB level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "DBCTL_TABSTOPSXXX" "integerXXX" -offset indent
-.It Sy Pa Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It DBCTL\_RADIX	integer	yes
 .It DBCTL\_MAXOFF	integer	yes
 .It DBCTL\_LINES	integer	yes
@@ -1662,31 +1662,31 @@ Otherwise \-1 is returned and
 is set appropriately.
 .Sh FILES
 .Bl -tag -width \*[Lt]netinet6/udp6Xvar.h\*[Gt] -compact
-.It Pa Aq sys/sysctl.h
+.It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Pa Aq sys/socket.h
+.It Aq Pa sys/socket.h
 definitions for second level network identifiers
-.It Pa Aq sys/gmon.h
+.It Aq Pa sys/gmon.h
 definitions for third level profiling identifiers
-.It Pa Aq uvm/uvm_param.h
+.It Aq Pa uvm/uvm_param.h
 definitions for second level virtual memory identifiers
-.It Pa Aq netinet/in.h
+.It Aq Pa netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Pa Aq netinet/icmp_var.h
+.It Aq Pa netinet/icmp_var.h
 definitions for fourth level ICMP identifiers
-.It Pa Aq netinet/icmp6.h
+.It Aq Pa netinet/icmp6.h
 definitions for fourth level ICMPv6 identifiers
-.It Pa Aq netinet/tcp_var.h
+.It Aq Pa netinet/tcp_var.h
 definitions for fourth level TCP identifiers
-.It Pa Aq netinet/udp_var.h
+.It Aq Pa netinet/udp_var.h
 definitions for fourth level UDP identifiers
-.It Pa Aq netinet6/udp6_var.h
+.It Aq Pa netinet6/udp6_var.h
 definitions for fourth level IPv6 UDP identifiers
-.It Pa Aq netinet6/ipsec.h
+.It Aq Pa netinet6/ipsec.h
 definitions for fourth level IPsec identifiers
-.It Pa Aq netkey/key_var.h
+.It Aq Pa netkey/key_var.h
 definitions for third level PF_KEY identifiers
 .El
 .Sh ERRORS
