@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.8 2003/02/04 09:02:05 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.9 2003/02/21 20:57:09 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -887,7 +887,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	if (count == 0)
 		goto done;
 
-	if (tsp != NULL) {			/* timeout supplied */
+	if (tsp) {				/* timeout supplied */
 		TIMESPEC_TO_TIMEVAL(&atv, tsp);
 		if (itimerfix(&atv)) {
 			error = EINVAL;
@@ -896,26 +896,23 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		s = splclock();
 		timeradd(&atv, &time, &atv);	/* calc. time to wait until */
 		splx(s);
-		if (tsp->tv_sec == 0 && tsp->tv_nsec < 1000 /*<1us*/)
-			timeout = -1;		/* perform a poll */
-		else 
-			timeout = hzto(&atv);	/* calculate hz till timeout */
+		timeout = hzto(&atv);
+		if (timeout <= 0)
+			timeout = -1;		/* do poll */
 	} else {
-		atv.tv_sec = 0;			/* no timeout, wait forever */
-		atv.tv_usec = 0;
+		/* no timeout, wait forever */
 		timeout = 0;
 	}
 	goto start;
 
  retry:
-	if (atv.tv_sec || atv.tv_usec) {	/* timeout requested */
-		s = splclock();
-		if (timercmp(&time, &atv, >=)) {
-			splx(s);	
-			goto done;		/* timeout reached */
-		}
-		splx(s);
-		timeout = hzto(&atv);		/* recalc. timeout remaining */
+	if (tsp) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timeout = hzto(&atv);
+		if (timeout <= 0)
+			goto done;
 	}
 
  start:
