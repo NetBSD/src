@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.7 1999/02/22 22:23:10 kleink Exp $	*/
+/*	$NetBSD: what.c,v 1.8 1999/12/22 14:39:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,9 +43,10 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.7 1999/02/22 22:23:10 kleink Exp $");
+__RCSID("$NetBSD: what.c,v 1.8 1999/12/22 14:39:18 kleink Exp $");
 #endif /* not lint */
 
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -67,6 +68,8 @@ main(argc, argv)
 	char **argv;
 {
 	int c;
+
+	(void)setlocale(LC_ALL, "");
 
 	matches = sflag = 0;
 	while ((c = getopt(argc, argv, "s")) != -1) {
