@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.69 1996/03/18 23:06:08 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.70 1996/03/22 06:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -892,6 +892,9 @@ sys_mkfifo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifndef FIFO
+	return (EOPNOTSUPP);
+#else
 	register struct sys_mkfifo_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
@@ -900,9 +903,6 @@ sys_mkfifo(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-#ifndef FIFO
-	return (EOPNOTSUPP);
-#else
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
