@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.78 2000/10/13 19:04:06 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.79 2000/10/19 17:33:21 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1604,3 +1604,153 @@ sys/ufs/mfs/mfs_vfsops.c			1.29-1.30 via patch
 
   Move handling of outstanding I/O requests to before the check for
   unmounting the file system.  Fixes PR#10122.
+
+usr.bin/chpass/pw_yp.c				1.16-1.17
+
+  Plug warn() call with variable only.
+
+usr.bin/indent/io.c				1.10
+
+  The type of the difference between pointers is implementation-
+  defined (long on sparc and int on most others).  Compensate when
+  printing.
+
+usr.sbin/mtree/create.c				1.27 via patch
+
+  Format string cleanup for LP64.
+
+usr.sbin/config/config.h			1.51 via patch
+usr.sbin/config/util.c				1.14 via patch
+
+  Format string cleanup.
+
+share/misc/airport				1.12-1.15
+
+  Various updates, synchronize to current head.
+
+usr.sbin/traceroute/traceroute.c		1.40
+
+  Avoid using savestr() on something which will later be passed to
+  free().  Raised as a potential security issue on bugtraq.  No
+  actual exploits known.
+
+include/nl_types.h				1.9
+
+  Allow passthrough format-string checking of catgets, as part
+  of format string audit.
+
+gnu/dist/gcc/c-common.c				1.9-1.10
+gnu/dist/gcc/c-decl.c				1.7-1.9
+gnu/dist/gcc/c-tree.h				1.3
+gnu/dist/gcc/cp/decl2.c				1.5
+gnu/dist/gcc/toplev.c				1.2-1.3
+ 
+  Implement enhanced format string checking.  New options:
+  -Wnetbsd-format-audit and -Wno-format-extra-args.
+
+usr.bin/Makefile.inc				1.6
+usr.bin/compress/compress.c			1.18
+usr.bin/error/Makefile				1.4
+usr.bin/error/touch.c				1.10
+usr.bin/file/Makefile				1.26
+usr.bin/ftp/extern.h				1.60 via patch
+usr.bin/hexdump/Makefile			1.6
+usr.bin/id/Makefile				1.9
+usr.bin/indent/Makefile				1.5
+usr.bin/jot/Makefile				1.3
+usr.bin/kdump/Makefile				1.15 via patch
+usr.bin/lam/Makefile				1.3
+usr.bin/less/less/Makefile			1.8
+usr.bin/lex/Makefile				1.20
+usr.bin/lex/main.c				1.13
+usr.bin/lex/misc.c				1.11
+usr.bin/m4/Makefile				1.9
+usr.bin/m4/eval.c				1.12
+usr.bin/make/Makefile				1.21
+usr.bin/make/nonints.h				1.19
+usr.bin/make/parse.c				1.53
+usr.bin/man/Makefile				1.7
+usr.bin/menuc/defs.h				1.4
+usr.bin/mkstr/mkstr.c				1.9
+usr.bin/netstat/atalk.c				1.6
+usr.bin/netstat/if.c				1.45
+usr.bin/netstat/iso.c				1.20
+usr.bin/netstat/ns.c				1.12
+usr.bin/netstat/route.c				1.50 via patch
+usr.bin/nl/Makefile				1.2
+usr.bin/patch/Makefile				1.6
+usr.bin/patch/util.c				1.8
+usr.bin/patch/util.h				1.5
+usr.bin/printf/Makefile				1.7
+usr.bin/rdist/defs.h				1.13
+usr.bin/rdist/server.c				1.19
+usr.bin/rpcgen/rpc_cout.c			1.17
+usr.bin/rpcgen/rpc_hout.c			1.14
+usr.bin/rpcgen/rpc_main.c			1.17
+usr.bin/rpcgen/rpc_svcout.c			1.11
+usr.bin/rpcgen/rpc_tblout.c			1.8
+usr.bin/rs/rs.c					1.6
+usr.bin/sed/extern.h				1.6
+usr.bin/shlock/shlock.c				1.5
+usr.bin/systat/extern.h				1.25 via patch
+usr.bin/tail/extern.h				1.5
+usr.bin/tip/tip.c				1.23
+usr.bin/top/display.h				1.4
+usr.bin/tput/tput.c				1.14
+usr.bin/tset/tset.c				1.12 via patch
+usr.bin/vi/common/msg.c				1.4
+usr.bin/vi/ex/ex_print.c			1.8
+usr.bin/vi/ex/ex_visual.c			1.8
+usr.bin/vi/include/common_extern.h		1.4
+usr.bin/vi/include/ex_extern.h			1.4
+usr.bin/w/pr_time.c				1.10
+usr.bin/xlint/lint1/Makefile			1.12
+usr.bin/xlint/lint1/externs1.h			1.10
+usr.bin/xlint/lint2/Makefile			1.7
+usr.bin/yacc/defs.h				1.8
+usr.bin/yacc/output.c				1.8
+usr.bin/yacc/reader.c				1.9
+usr.sbin/amd/hlfsd/hlfsd.c			1.9
+usr.sbin/amd/include/am_utils.h			1.9
+usr.sbin/amd/libamu/mount_fs.c			1.2
+usr.sbin/amd/libamu/xutil.c			1.6 1.7
+usr.sbin/arp/arp.c				1.26
+usr.sbin/bind/Makefile.inc			1.7
+usr.sbin/bootp/bootpd/bootpd.c			1.13
+usr.sbin/bootp/bootptest/getether.c		1.4
+usr.sbin/bootp/common/dovend.c			1.4
+usr.sbin/bootp/common/hwaddr.c			1.5
+usr.sbin/bootp/common/report.c			1.5
+usr.sbin/bootp/common/report.h			1.4
+usr.sbin/dhcp/client/dhclient.c			1.33 via patch
+usr.sbin/dhcp/relay/dhcrelay.c			1.7 via patch
+usr.sbin/dhcp/server/dhcpd.c			1.23 via patch
+usr.sbin/gspa/gspa/gsp_ass.h			1.7
+usr.sbin/gspa/gspa/gspa.c			1.7
+usr.sbin/lpr/common_source/displayq.c		1.18
+usr.sbin/lpr/common_source/lp.h			1.15
+usr.sbin/lpr/lpd/printjob.c			1.25 via patch
+usr.sbin/lpr/lpd/recvjob.c			1.12
+usr.sbin/lpr/lpr/lpr.c				1.19
+usr.sbin/map-mbone/mapper.c			1.5
+usr.sbin/mrinfo/mrinfo.c			1.8
+usr.sbin/mrouted/cfparse.y			1.6
+usr.sbin/mrouted/defs.h				1.8
+usr.sbin/mrouted/main.c				1.13
+usr.sbin/mtrace/mtrace.c			1.15
+usr.sbin/mtree/create.c				1.26 via patch
+usr.sbin/mtree/extern.h				1.8
+usr.sbin/pppd/pppd/options.c			1.34 via patch
+usr.sbin/pstat/pstat.c				1.53 via patch
+usr.sbin/rarpd/rarpd.c				1.39
+usr.sbin/rbootd/utils.c				1.12
+usr.sbin/rpc.lockd/lock_proc.c			1.7 via patch
+usr.sbin/rwhod/rwhod.c				1.18
+usr.sbin/sup/source/log.c			1.6 via patch
+usr.sbin/sup/source/supextern.h			1.13 via patch
+usr.sbin/tcpdchk/percent_m.h			1.2
+usr.sbin/tcpdump/print-bootp.c			1.7
+usr.sbin/user/user.c				1.25
+usr.sbin/ypbind/ypbind.c			1.43
+
+  Format string cleanup.
