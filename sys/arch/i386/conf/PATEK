@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.20 1994/11/03 22:18:45 mycroft Exp $
+#	$NetBSD: PATEK,v 1.21 1994/12/08 20:55:05 mycroft Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -106,7 +106,7 @@ pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 #scsibus* at aha?
 #ahb*	at eisa? slot ? irq ?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
-aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -147,7 +147,7 @@ ed0	at isa? port 0x280 iomem 0xd8000 irq 10	# WD/SMC, 3C503, and NE[12]000
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 options	SBPRO
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #spkr0	at isa? ...
 
 pseudo-device	loop	1		# network loopback
