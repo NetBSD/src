@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.86 2004/11/23 23:05:33 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.87 2004/11/24 00:02:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.86 2004/11/23 23:05:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.87 2004/11/24 00:02:50 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -284,10 +284,6 @@ struct wm_softc {
 			/* ...failed due to lack of space in first mbuf */
 	struct evcnt sc_ev_txpullup_fail;
 
-	struct evcnt sc_ev_txctx_init;	/* Tx cksum context cache initialized */
-	struct evcnt sc_ev_txctx_hit;	/* Tx cksum context cache hit */
-	struct evcnt sc_ev_txctx_miss;	/* Tx cksum context cache miss */
-
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
 
@@ -315,9 +311,6 @@ struct wm_softc {
 	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
 	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
 	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
-
-	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum ctx */
-	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum ctx */
 
 	bus_addr_t sc_rdt_reg;		/* offset of RDT register */
 
@@ -1257,13 +1250,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_init, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx init");
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_hit, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx hit");
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_miss, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx miss");
-
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
@@ -1421,20 +1407,12 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	 * MUST provide valid values for IPCSS and TUCSS fields.
 	 */
 
+	ipcs = WTX_TCPIP_IPCSS(offset) |
+	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
+	    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= WTX_IXSM;
-		ipcs = WTX_TCPIP_IPCSS(offset) |
-		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1);
-	} else if (__predict_true(sc->sc_txctx_ipcs != 0xffffffff)) {
-		/* Use the cached value. */
-		ipcs = sc->sc_txctx_ipcs;
-	} else {
-		/* Just initialize it to the likely value anyway. */
-		ipcs = WTX_TCPIP_IPCSS(offset) |
-		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	}
 
 	offset += iphl;
@@ -1445,9 +1423,6 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
-	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
-		/* Use the cached value. */
-		tucs = sc->sc_txctx_tucs;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1455,33 +1430,17 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	}
 
-	if (sc->sc_txctx_ipcs == ipcs &&
-	    sc->sc_txctx_tucs == tucs) {
-		/* Cached context is fine. */
-		WM_EVCNT_INCR(&sc->sc_ev_txctx_hit);
-	} else {
-		/* Fill in the context descriptor. */
-#ifdef WM_EVENT_COUNTERS
-		if (sc->sc_txctx_ipcs == 0xffffffff &&
-		    sc->sc_txctx_tucs == 0xffffffff)
-			WM_EVCNT_INCR(&sc->sc_ev_txctx_init);
-		else
-			WM_EVCNT_INCR(&sc->sc_ev_txctx_miss);
-#endif
-		t = (struct livengood_tcpip_ctxdesc *)
-		    &sc->sc_txdescs[sc->sc_txnext];
-		t->tcpip_ipcs = htole32(ipcs);
-		t->tcpip_tucs = htole32(tucs);
-		t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
-		t->tcpip_seg = 0;
-		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
+	/* Fill in the context descriptor. */
+	t = (struct livengood_tcpip_ctxdesc *)
+	    &sc->sc_txdescs[sc->sc_txnext];
+	t->tcpip_ipcs = htole32(ipcs);
+	t->tcpip_tucs = htole32(tucs);
+	t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
+	t->tcpip_seg = 0;
+	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
-		sc->sc_txctx_ipcs = ipcs;
-		sc->sc_txctx_tucs = tucs;
-
-		sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
-		txs->txs_ndesc++;
-	}
+	sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
+	txs->txs_ndesc++;
 
 	*cmdp = WTX_CMD_DEXT | WTX_DTYP_D;
 	*fieldsp = fields;
@@ -1691,7 +1650,7 @@ wm_start(struct ifnet *ifp)
 		 * the packet.  Note, we always reserve one descriptor
 		 * at the end of the ring due to the semantics of the
 		 * TDT register, plus one more in the event we need
-		 * to re-load checksum offload context.
+		 * to load offload context.
 		 */
 		if (segs_needed > sc->sc_txfree - 2) {
 			/*
@@ -2541,9 +2500,6 @@ wm_init(struct ifnet *ifp)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = WM_NTXDESC(sc);
 	sc->sc_txnext = 0;
-
-	sc->sc_txctx_ipcs = 0xffffffff;
-	sc->sc_txctx_tucs = 0xffffffff;
 
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
