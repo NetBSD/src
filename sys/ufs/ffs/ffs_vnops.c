@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.31 2000/05/29 18:53:35 mycroft Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.31.2.1 2000/12/14 23:36:48 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -64,6 +64,8 @@
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+static int ffs_full_fsync __P((void *));
 
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p) __P((void *));
@@ -229,10 +231,6 @@ int doclusterwrite = 1;
 
 #include <ufs/ufs/ufs_readwrite.c>
 
-/*
- * Synch an open file.
- */
-/* ARGSUSED */
 int
 ffs_fsync(v)
 	void *v;
@@ -241,6 +239,96 @@ ffs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
+		off_t offlo;
+		off_t offhi;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct buf *bp, *nbp, *ibp;
+	int s, num, error, i;
+	struct indir ia[NIADDR + 1];
+	int bsize;
+	daddr_t blk_low, blk_high;
+	struct vnode *vp;
+
+	/*
+	 * XXX no easy way to sync a range in a file with softdep.
+	 */
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp))
+		return ffs_full_fsync(v);
+
+	vp = ap->a_vp;
+
+	bsize = ap->a_vp->v_mount->mnt_stat.f_iosize;
+	blk_low = ap->a_offlo / bsize;
+	blk_high = ap->a_offhi / bsize;
+	if (ap->a_offhi % bsize != 0)
+		blk_high++;
+
+	/*
+	 * First, flush all data blocks in range.
+	 */
+loop:
+	s = splbio();
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if ((bp->b_flags & B_BUSY))
+			continue;
+		if (bp->b_lblkno < blk_low || bp->b_lblkno > blk_high)
+			continue;
+		bp->b_flags |= B_BUSY | B_VFLUSH;
+		splx(s);
+		bawrite(bp);
+		goto loop;
+	}
+
+	/*
+	 * Then, flush possibly unwritten indirect blocks. Without softdeps,
+	 * these should be the only ones left.
+	 */
+	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
+		error = ufs_getlbns(vp, blk_high, ia, &num);
+		if (error != 0)
+			return error;
+		for (i = 0; i < num; i++) {
+			ibp = incore(vp, ia[i].in_lbn);
+			if (ibp != NULL && !(ibp->b_flags & B_BUSY) &&
+			    (ibp->b_flags & B_DELWRI)) {
+				ibp->b_flags |= B_BUSY | B_VFLUSH;
+				splx(s);
+				bawrite(ibp);
+				s = splbio();
+			}
+		}
+	}
+
+	if (ap->a_flags & FSYNC_WAIT) {
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
+			    "fsync_range", 0);
+		}
+	}
+
+	splx(s);
+
+	return (VOP_UPDATE(vp, NULL, NULL,
+	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+}
+
+/*
+ * Synch an open file.
+ */
+/* ARGSUSED */
+static int
+ffs_full_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
