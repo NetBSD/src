@@ -1,4 +1,4 @@
-# $NetBSD: shlib_version,v 1.41 1997/10/06 01:15:00 enami Exp $
+# $NetBSD: shlib_version,v 1.42 1997/10/10 02:19:55 fvdl Exp $
 # Note: the next time $major is changed, look at:
 #	gen/setproctitle.c (XXX __ps_strings)
 #	arch/*/sys/{Ov,}fork.S (no longer needed)
@@ -6,6 +6,7 @@
 #	yp/xdryp.c (xdr_domainname, xdr_mapname, xdr_peername
 #	depricate timezone() and move to libcompat?
 #	depricate swapon() [move to libcompat?]
+#	move getdirentries to libcompat (/4.4), split manpage
 #
 major=12
-minor=18
+minor=19
