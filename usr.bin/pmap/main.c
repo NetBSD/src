@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2004/01/06 14:01:19 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.15 2004/01/31 18:25:27 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2004/01/06 14:01:19 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2004/01/31 18:25:27 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -444,7 +444,8 @@ not_using_lockdebug(kvm_t *kd)
 
 		P(vm_map_entry) = D(header, vm_map_entry)->next;
 		S(vm_map_entry) = sizeof(struct vm_map_entry);
-		KDEREF(kd, vm_map_entry);
+		if (!KDEREFOK(kd, vm_map_entry))
+			return (1);
 
 		/* we have entries, so there must be referential integrity */
 		if (D(vm_map_entry, vm_map_entry)->prev == P(header) &&
