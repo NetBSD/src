@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/05/31 21:21:53 cjs Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/10/23 02:59:00 lukem Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -18,7 +18,7 @@ ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -27,7 +27,7 @@ ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
@@ -35,11 +35,11 @@ ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 ${LPSEUDO}: ${DESTDIR}/usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/posix_//} ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
+	    ${LINT} -z ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} -
