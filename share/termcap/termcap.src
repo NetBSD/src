@@ -1686,10 +1686,13 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 
 # This is xterm for ncurses. It mainly adds mappings for more high-half
 # characters.  Note that these will only work for fixed-width fonts.
+#xterm|vs100|xterms|xterm terminal emulator (X Window System):\
+#	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~..--++\054\054II00:\
+#	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
+#	:tc=xterm-xf86-v32:
+
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
-	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~..--++\054\054II00:\
-	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
-	:tc=xterm-xf86-v32:
+	:tc=xterm-r5:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
 # Note that twm (and possibly window managers descended from it such as tvtwm, 
