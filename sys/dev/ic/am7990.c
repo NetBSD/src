@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.20 1996/07/05 23:56:57 abrown Exp $	*/
+/*	$NetBSD: am7990.c,v 1.21 1996/10/10 22:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -189,8 +189,8 @@ am7990_config(sc)
 		panic("am7990_config: weird memory size");
 	}
 
-	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-	printf("%s: %d receive buffers, %d transmit buffers\n",
+	kprintf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	sc->sc_sh = shutdownhook_establish(am7990_shutdown, sc);
@@ -345,7 +345,7 @@ am7990_init(sc)
 		ifp->if_timer = 0;
 		am7990_start(ifp);
 	} else
-		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+		kprintf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
 }
@@ -446,7 +446,7 @@ am7990_read(sc, boff, len)
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
 #ifdef LEDEBUG
-		printf("%s: invalid packet size %d; dropping\n",
+		kprintf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 #endif
 		ifp->if_ierrors++;
@@ -532,25 +532,25 @@ am7990_rint(sc)
 #ifdef LEDEBUG
 				if ((rmd.rmd1_bits & LE_R1_OFLO) == 0) {
 					if (rmd.rmd1_bits & LE_R1_FRAM)
-						printf("%s: framing error\n",
+						kprintf("%s: framing error\n",
 						    sc->sc_dev.dv_xname);
 					if (rmd.rmd1_bits & LE_R1_CRC)
-						printf("%s: crc mismatch\n",
+						kprintf("%s: crc mismatch\n",
 						    sc->sc_dev.dv_xname);
 				}
 #endif
 			} else {
 				if (rmd.rmd1_bits & LE_R1_OFLO)
-					printf("%s: overflow\n",
+					kprintf("%s: overflow\n",
 					    sc->sc_dev.dv_xname);
 			}
 			if (rmd.rmd1_bits & LE_R1_BUFF)
-				printf("%s: receive buffer error\n",
+				kprintf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 		} else if ((rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
-			printf("%s: dropping chained buffer\n",
+			kprintf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 		} else {
@@ -569,7 +569,7 @@ am7990_rint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("sc->sc_last_rd = %x, rmd: "
+			kprintf("sc->sc_last_rd = %x, rmd: "
 			       "ladr %04x, hadr %02x, flags %02x, "
 			       "bcnt %04x, mcnt %04x\n",
 				sc->sc_last_rd,
@@ -599,11 +599,11 @@ am7990_tint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("trans tmd: "
-			       "ladr %04x, hadr %02x, flags %02x, "
-			       "bcnt %04x, mcnt %04x\n",
-				tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
-				tmd.tmd2, tmd.tmd3);
+			kprintf("trans tmd: "
+			    "ladr %04x, hadr %02x, flags %02x, "
+			    "bcnt %04x, mcnt %04x\n",
+			    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
+			    tmd.tmd2, tmd.tmd3);
 #endif
 
 		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
@@ -616,10 +616,10 @@ am7990_tint(sc)
 
 		if (tmd.tmd1_bits & LE_T1_ERR) {
 			if (tmd.tmd3 & LE_T3_BUFF)
-				printf("%s: transmit buffer error\n",
+				kprintf("%s: transmit buffer error\n",
 				    sc->sc_dev.dv_xname);
 			else if (tmd.tmd3 & LE_T3_UFLO)
-				printf("%s: underflow\n", sc->sc_dev.dv_xname);
+				kprintf("%s: underflow\n", sc->sc_dev.dv_xname);
 			if (tmd.tmd3 & (LE_T3_BUFF | LE_T3_UFLO)) {
 				am7990_reset(sc);
 				return;
@@ -628,13 +628,13 @@ am7990_tint(sc)
 				if (sc->sc_nocarrier)
 					(*sc->sc_nocarrier)(sc);
 				else
-					printf("%s: lost carrier\n",
+					kprintf("%s: lost carrier\n",
 					    sc->sc_dev.dv_xname);
 			}
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {
-				printf("%s: excessive collisions, tdr %d\n",
+				kprintf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
 				    tmd.tmd3 & LE_T3_TDR_MASK);
 				ifp->if_collisions += 16;
@@ -676,7 +676,7 @@ am7990_intr(arg)
 	isr = (*sc->sc_rdcsr)(sc, LE_CSR0);
 #ifdef LEDEBUG
 	if (sc->sc_debug)
-		printf("%s: am7990_intr entering with isr=%04x\n",
+		kprintf("%s: am7990_intr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
 #endif
 	if ((isr & LE_C0_INTR) == 0)
@@ -688,37 +688,37 @@ am7990_intr(arg)
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
 #ifdef LEDEBUG
-			printf("%s: babble\n", sc->sc_dev.dv_xname);
+			kprintf("%s: babble\n", sc->sc_dev.dv_xname);
 #endif
 			ifp->if_oerrors++;
 		}
 #if 0
 		if (isr & LE_C0_CERR) {
-			printf("%s: collision error\n", sc->sc_dev.dv_xname);
+			kprintf("%s: collision error\n", sc->sc_dev.dv_xname);
 			ifp->if_collisions++;
 		}
 #endif
 		if (isr & LE_C0_MISS) {
 #ifdef LEDEBUG
-			printf("%s: missed packet\n", sc->sc_dev.dv_xname);
+			kprintf("%s: missed packet\n", sc->sc_dev.dv_xname);
 #endif
 			ifp->if_ierrors++;
 		}
 		if (isr & LE_C0_MERR) {
-			printf("%s: memory error\n", sc->sc_dev.dv_xname);
+			kprintf("%s: memory error\n", sc->sc_dev.dv_xname);
 			am7990_reset(sc);
 			return (1);
 		}
 	}
 
 	if ((isr & LE_C0_RXON) == 0) {
-		printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
+		kprintf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		am7990_reset(sc);
 		return (1);
 	}
 	if ((isr & LE_C0_TXON) == 0) {
-		printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
+		kprintf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		am7990_reset(sc);
 		return (1);
@@ -774,7 +774,7 @@ am7990_start(ifp)
 
 		if (tmd.tmd1_bits & LE_T1_OWN) {
 			ifp->if_flags |= IFF_OACTIVE;
-			printf("missing buffer, no_td = %d, last_td = %d\n",
+			kprintf("missing buffer, no_td = %d, last_td = %d\n",
 			    sc->sc_no_td, sc->sc_last_td);
 		}
 
@@ -798,7 +798,7 @@ am7990_start(ifp)
 
 #ifdef LEDEBUG
 		if (len > ETHERMTU + sizeof(struct ether_header))
-			printf("packet length %d\n", len);
+			kprintf("packet length %d\n", len);
 #endif
 
 		ifp->if_timer = 5;
@@ -970,18 +970,18 @@ am7990_recv_print(sc, no)
 
 	(*sc->sc_copyfromdesc)(sc, &rmd, LE_RMDADDR(sc, no), sizeof(rmd));
 	len = rmd.rmd3;
-	printf("%s: receive buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
+	kprintf("%s: receive buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
 	    len);
-	printf("%s: status %04x\n", sc->sc_dev.dv_xname,
+	kprintf("%s: status %04x\n", sc->sc_dev.dv_xname,
 	    (*sc->sc_rdcsr)(sc, LE_CSR0));
-	printf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
+	kprintf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
 	    sc->sc_dev.dv_xname,
 	    rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits, rmd.rmd2, rmd.rmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_RBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", sc->sc_dev.dv_xname,
+		kprintf("%s: dst %s", sc->sc_dev.dv_xname,
 			ether_sprintf(eh.ether_dhost));
-		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
+		kprintf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
 			ntohs(eh.ether_type));
 	}
 }
@@ -997,18 +997,18 @@ am7990_xmit_print(sc, no)
 
 	(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, no), sizeof(tmd));
 	len = -tmd.tmd2;
-	printf("%s: transmit buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
+	kprintf("%s: transmit buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
 	    len);
-	printf("%s: status %04x\n", sc->sc_dev.dv_xname,
+	kprintf("%s: status %04x\n", sc->sc_dev.dv_xname,
 	    (*sc->sc_rdcsr)(sc, LE_CSR0));
-	printf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
+	kprintf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
 	    sc->sc_dev.dv_xname,
 	    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits, tmd.tmd2, tmd.tmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_TBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", sc->sc_dev.dv_xname,
+		kprintf("%s: dst %s", sc->sc_dev.dv_xname,
 			ether_sprintf(eh.ether_dhost));
-		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
+		kprintf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
 		    ntohs(eh.ether_type));
 	}
 }
