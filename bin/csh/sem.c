@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.8 1995/03/21 18:35:48 mycroft Exp $	*/
+/*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: sem.c,v 1.8 1995/03/21 18:35:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -596,7 +596,7 @@ doio(t, pipein, pipeout)
 	    (fd = open(tmp, O_WRONLY | O_APPEND)) >= 0);
 #else
 	    (fd = open(tmp, O_WRONLY)) >= 0)
-	    (void) lseek(1, (off_t) 0, L_XTND);
+	    (void) lseek(1, (off_t) 0, SEEK_END);
 #endif
 	else {
 	    if (!(flags & F_OVERWRITE) && adrof(STRnoclobber)) {
