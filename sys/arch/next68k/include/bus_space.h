@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.4 1999/03/24 23:15:57 dbj Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.5 1999/04/10 14:06:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -552,5 +552,7 @@ __NEXT68K_copy_region_N(4)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 #endif /* _NEXT68K_BUS_SPACE_H_ */
