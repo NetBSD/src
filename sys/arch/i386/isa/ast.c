@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.12 1994/11/18 22:07:32 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.13 1995/01/02 22:27:46 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -29,7 +29,7 @@ void astattach();
 int astintr __P((struct ast_softc *));
 
 struct cfdriver astcd = {
-	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc), 1
+	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
 };
 
 int
@@ -100,16 +100,17 @@ astattach(parent, self, aux)
 
 	isa.ia_aux = &aa;
 	for (aa.aa_slave = 0; aa.aa_slave < 4; aa.aa_slave++) {
-		void *match;
+		struct cfdata *cf;
 		isa.ia_iobase = sc->sc_iobase + 8 * aa.aa_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
 		isa.ia_msize = 0;
-		if ((match = config_search(astsubmatch, self, &isa)) != 0) {
-			sc->sc_slaves[aa.aa_slave] = match;
+		if ((cf = config_search(astsubmatch, self, &isa)) != 0) {
+			config_attach(self, cf, &isa, astprint);
+			sc->sc_slaves[aa.aa_slave] =
+			    cf->cf_driver->cd_devs[cf->cf_unit];
 			sc->sc_alive |= 1 << aa.aa_slave;
-			config_attach(self, match, &isa, astprint);
 		}
 	}
 

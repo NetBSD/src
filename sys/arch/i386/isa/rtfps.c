@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.7 1994/11/18 22:25:19 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.8 1995/01/02 22:27:47 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -30,7 +30,7 @@ void rtfpsattach();
 int rtfpsintr __P((struct rtfps_softc *));
 
 struct cfdriver rtfpscd = {
-	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc), 1
+	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc)
 };
 
 int
@@ -108,16 +108,17 @@ rtfpsattach(parent, self, aux)
 
 	isa.ia_aux = &ra;
 	for (ra.ra_slave = 0; ra.ra_slave < 4; ra.ra_slave++) {
-		void *match;
+		struct cfdata *cf;
 		isa.ia_iobase = sc->sc_iobase + 8 * ra.ra_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
 		isa.ia_msize = 0;
-		if ((match = config_search(rtfpssubmatch, self, &isa)) != 0) {
-			sc->sc_slaves[ra.ra_slave] = match;
+		if ((cf = config_search(rtfpssubmatch, self, &isa)) != 0) {
+			config_attach(self, cf, &isa, rtfpsprint);
+			sc->sc_slaves[ra.ra_slave] =
+			    cf->cf_driver->cd_devs[cf->cf_unit];
 			sc->sc_alive |= 1 << ra.ra_slave;
-			config_attach(self, match, &isa, rtfpsprint);
 		}
 	}
 
