@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.20.2.5 2002/07/12 01:39:59 nathanw Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.20.2.6 2002/07/28 05:45:48 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.5 2002/07/12 01:39:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.6 2002/07/28 05:45:48 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -154,7 +154,6 @@ hpux_sys_netioctl(l, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_netioctl_args *uap = v;
-	struct proc *p = l->l_proc;
 	int *args, i;
 	int code;
 	int error;
@@ -166,18 +165,15 @@ hpux_sys_netioctl(l, v, retval)
 	if ((i = hpuxtobsdipc[code].nargs * sizeof (int)) &&
 	    (error = copyin((caddr_t)args, (caddr_t)uap, (u_int)i))) {
 #ifdef KTRACE
-                if (KTRPOINT(p, KTR_SYSCALL))
-                        ktrsyscall(p, code + MINBSDIPCCODE,
-				   hpuxtobsdipc[code].nargs,
-				   (register_t *)uap);
+		if (KTRPOINT(l->l_proc, KTR_SYSCALL))
+			ktrsyscall(l->l_proc, code + MINBSDIPCCODE,
+			    (register_t *)uap);
 #endif
 		return (error);
 	}
 #ifdef KTRACE
-        if (KTRPOINT(p, KTR_SYSCALL))
-                ktrsyscall(l->l_proc, code + MINBSDIPCCODE,
-			   hpuxtobsdipc[code].nargs,
-			   (register_t *)uap);
+	if (KTRPOINT(l->l_proc, KTR_SYSCALL))
+		ktrsyscall(l->l_proc, code + MINBSDIPCCODE, (register_t *)uap);
 #endif
 	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
 }
