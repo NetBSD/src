@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2001/09/17 17:03:45 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2001/11/18 08:19:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -40,6 +40,7 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/platid.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include "locators.h"
 
@@ -82,9 +83,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	
 	printf("\n");
 
-	/* default dumb bus_space */
+	/* system bus_space */
 	ma.ma_iot = hpcmips_system_bus_space();
-	hpcmips_init_bus_space_extent(ma.ma_iot);
+	hpcmips_init_bus_space(ma.ma_iot, NULL, "main bus", 0, 0xffffffff);
 
 	/* search and attach devices in order */
 	for (i = 0; i < sizeof(devnames) / sizeof(devnames[0]); i++) {

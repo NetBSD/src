@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.61 2001/09/17 17:03:44 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.62 2001/11/18 08:19:39 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -53,6 +53,7 @@ file	arch/mips/mips/fp.S		softfloat
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/bus_space.c
+file	arch/hpcmips/hpcmips/bus_space_notimpl.c
 file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.7 2001/09/15 12:47:06 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.8 2001/11/18 08:19:39 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -39,6 +39,7 @@
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -373,7 +374,8 @@ plumpcmcia_chip_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
 
 	pcmhp->memt = ph->ph_memt;
 	/* Address offset from MEM area base */
-	pcmhp->addr = pcmhp->memh - ph->ph_membase - ph->ph_memt->t_base;
+	pcmhp->addr = pcmhp->memh - ph->ph_membase - 
+	    ((struct bus_space_tag_hpcmips*)ph->ph_memt)->base;
 	pcmhp->size = size;
 	pcmhp->realsize = realsize;
 
@@ -531,7 +533,7 @@ plumpcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 		}
 		/* Address offset from IO area base */
 		pcihp->addr = pcihp->ioh - ph->ph_iobase - 
-		    ph->ph_iot->t_base;
+		    ((struct bus_space_tag_hpcmips*)ph->ph_iot)->base;
 		pcihp->flags = PCMCIA_IO_ALLOCATED;
 		DPRINTF(("(allocated) %#x+%#x\n", (unsigned)pcihp->addr,
 		    (unsigned)size));

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.5 2001/06/14 11:09:56 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.6 2001/11/18 08:19:40 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,8 +41,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
@@ -253,10 +254,8 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 
 	iot = hpcmips_alloc_bus_space_tag();
 	sc->sc_cst[cs] = iot;
-
-	iot->t_base = __csmap[cs].cs_addr;
-	iot->t_size = __csmap[cs].cs_size;
-	strcpy(iot->t_name , __csmap[cs].cs_name);
+	hpcmips_init_bus_space(iot, hpcmips_system_bus_space(),
+	    __csmap[cs].cs_name, __csmap[cs].cs_addr, __csmap[cs].cs_size);
 
 	/* CS bus-width (configurationable) */
 	switch (width) {
@@ -341,8 +340,6 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 			    "not allowed", cs);
 		}
 	}
-	
-	hpcmips_init_bus_space_extent(iot);
 
 	return (iot);
 }
