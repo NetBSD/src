@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2000/08/04 08:47:03 tsubai Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.2 2000/08/04 08:47:03 tsubai Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $")
 #endif
 
 /*
@@ -115,4 +115,4 @@ ENTRY(__longjmp14)
 
 	.align	2
 L__sigprocmask14:
-	.long	___sigprocmask14
+	.long	_C_LABEL(__sigprocmask14)
