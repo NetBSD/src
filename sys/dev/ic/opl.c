@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.8 1999/05/23 16:07:04 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.9 1999/10/04 19:31:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@ struct real_voice {
 };
 
 struct opl_voice voicetab[] = {
-/*       No    I/O offs		OP1	OP2	OP3   OP4	*/
-/*	---------------------------------------------------	*/
+/*       No    I/O offs	OP1	OP2	OP3   OP4	*/
+/*	---------------------------------------------	*/
 	{ 0,   OPL_L,	{0x00,	0x03,	0x08, 0x0b}},
 	{ 1,   OPL_L,	{0x01,	0x04,	0x09, 0x0c}},
 	{ 2,   OPL_L,	{0x02,	0x05,	0x0a, 0x0d}},
@@ -117,6 +117,7 @@ void oplsyn_noteon __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void oplsyn_noteoff __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void oplsyn_keypressure __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void oplsyn_ctlchange __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
+void oplsyn_programchange __P((midisyn *, u_int32_t, u_int32_t));
 void oplsyn_pitchbend __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void oplsyn_loadpatch __P((midisyn *, struct sysex_info *, struct uio *));
 
@@ -136,7 +137,7 @@ struct midisyn_methods opl3_midi = {
 	oplsyn_noteoff,
 	oplsyn_keypressure,
 	oplsyn_ctlchange,
-	0,
+	oplsyn_programchange,
 	0,
 	oplsyn_pitchbend,
 	0
@@ -237,7 +238,7 @@ opl_find(sc)
 		sc->model = OPL_2;
 		break;
 	default:
-		return 0;
+		return (0);
 	}
 
 	DPRINTFN(2,("opl_find: OPL%d at 0x%x detected\n", 
@@ -297,7 +298,7 @@ opl_get_block_fnum(freq)
 	u_int32_t f_num = freq / 3125;
 	u_int32_t  block = 0;
 
-	while (f_num > 0x3FF && block < 8) {
+	while (f_num > 0x3ff && block < 8) {
 		block++;
 		f_num >>= 1;
 	}
@@ -555,6 +556,20 @@ oplsyn_ctlchange(ms, voice, parm, w14)
 	struct opl_softc *sc = ms->data;
 	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, voice));
 #endif
+}
+
+/* PROGRAM CHANGE midi event: */
+void
+oplsyn_programchange(ms, chan, prog)
+	midisyn *ms;
+	u_int32_t chan;
+	u_int32_t prog;
+{
+	/* sanity checks */
+	if (chan >= MIDI_MAX_CHANS || prog >= OPL_NINSTR)
+		return;
+
+	ms->pgms[chan] = prog;
 }
 
 void
