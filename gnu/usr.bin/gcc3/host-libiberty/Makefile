@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/10/06 21:40:32 veego Exp $
 
 libiberty:
 	mkdir libiberty
@@ -7,6 +7,6 @@ libiberty:
 cleandir:
 	rm -rf libiberty
 
-dependall all: libiberty
+depend dependall all: libiberty
 	
 .include <bsd.prog.mk>
