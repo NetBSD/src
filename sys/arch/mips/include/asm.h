@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1994/10/26 21:09:44 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 1994/11/14 23:33:46 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,12 +146,12 @@ x: ; \
  */
 #define PANIC(msg) \
 	la	a0, 9f; \
-	jal	panic; \
+	jal	_panic; \
 	MSG(msg)
 
 #define	PRINTF(msg) \
 	la	a0, 9f; \
-	jal	printf; \
+	jal	_printf; \
 	MSG(msg)
 
 #define	MSG(msg) \
