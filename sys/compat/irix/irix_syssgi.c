@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.4 2001/12/01 22:19:38 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.4 2001/12/01 22:19:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.5 2001/12/02 09:22:39 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -132,6 +132,19 @@ irix_sys_syssgi(p, v, retval)
 		 arg3 = SCARG(uap, arg3); /* array's length */
 		return irix_syssgi_mapelf((int)arg1, (Elf_Phdr *)arg2, 
 		    (int)arg3, p, retval);
+		break;
+
+	case IRIX_SGI_USE_FP_BCOPY:	/* bcopy and bzero can use FPU or not */
+		/* 
+		 * Our kernel does not use FPU, hence we do nothing.
+		 */
+		break;
+
+	case IRIX_SGI_TOSSTSAVE:	/* Kill saved pregions */
+		/* 
+		 * Our kernel does not seem to save such "pregions",
+		 * therefore we do not have to do anything.
+		 */
 		break;
 
 	default:
