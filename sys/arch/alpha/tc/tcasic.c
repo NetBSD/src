@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $ */
+/* $NetBSD: tcasic.c,v 1.28 2000/03/26 10:32:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.28 2000/03/26 10:32:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,9 +172,9 @@ tcasicprint(aux, pnp)
 
 #include "cfb.h"
 #include "sfb.h"
-#include <alpha/tc/sfbvar.h>
-#include <alpha/tc/cfbvar.h>
 
+extern int	sfb_cnattach __P((tc_addr_t));
+extern int	cfb_cnattach __P((tc_addr_t));
 extern int	tc_checkslot __P((tc_addr_t, char *));
 
 /*
