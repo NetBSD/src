@@ -1,4 +1,4 @@
-/*  $NetBSD: tlphy.h,v 1.1 1997/10/17 17:34:07 bouyer Exp $   */
+/*  $NetBSD: tlphy.h,v 1.1.2.1 1997/10/21 08:25:27 mrg Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -32,7 +32,7 @@
  /* control register */
 #   define  CTRL_PDOWN      0x0800 /* power down */
 
-/* Thunderland specific registers */
+/* ThunderLAN specific registers */
 #define	PHY_TL_CTRL	0x11	/* Read/Write */
 #	define	TL_CTRL_ILINK	0x8000 /* Ignore link */
 #	define	TL_CTRL_SWPOL	0x4000 /* swap polarity */
