@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2001/07/27 23:01:22 eeh Exp $
+#	$NetBSD: Makefile,v 1.102 2001/07/30 16:04:18 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -23,9 +23,6 @@ SUBDIR+=	gas
      (${MACHINE_ARCH} == "sparc") ||	\
      (${MACHINE_ARCH} == "vax"))
 SUBDIR+=	ld
-.endif
-.if (${MACHINE_ARCH} == "sparc64")
-SUBDIR+= gcc
 .endif
 
 .include <bsd.subdir.mk>
