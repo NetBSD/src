@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsreg.h,v 1.3 1997/04/06 22:30:43 cgd Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.4 1998/05/25 01:14:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,6 +36,9 @@
 /*
  * TCDS register offsets, bit masks.
  */
+#define	TCDS_EEPROM		  0x000000	/* EEPROM offset */
+#define	TCDS_EEPROM_IDS		  0x000008	/* SCSI IDs offset in EEPROM */
+
 #define	TCDS_CIR		  0x040000	/* CIR offset */
 
 /*
