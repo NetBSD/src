@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/22 21:15:41 fredette Exp $
+#	$NetBSD: Makefile,v 1.5 2002/05/15 04:07:42 lukem Exp $
 
 SA_PROG= bootxx
-SRCS=   bootxx.c conf.c
+SRCS=   bootxx.c conf.c panic_putstr.c
 
 PROG=	${SA_PROG}
 NOMAN= # defined
