@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2000/03/07 00:05:59 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.58 2000/03/08 23:49:10 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,10 @@
 #include <machine/sid.h>
 
 #include <sys/syscallargs.h>
+
+#include "opt_vax46.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
 
 volatile int whichqs;
 
@@ -321,10 +325,15 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
+#if VAX46 || VAX48 || VAX49
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
 
+	if (vax_boardtype != VAX_BTYP_46
+	    && vax_boardtype != VAX_BTYP_48
+	    && vax_boardtype != VAX_BTYP_49)
+		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
@@ -343,6 +352,7 @@ vmapbuf(bp, len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
+#endif
 }
 
 /*
@@ -353,8 +363,13 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
+#if VAX46 || VAX48 || VAX49
 	vaddr_t addr, off;
 
+	if (vax_boardtype != VAX_BTYP_46
+	    && vax_boardtype != VAX_BTYP_48
+	    && vax_boardtype != VAX_BTYP_49)
+		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
@@ -363,4 +378,5 @@ vunmapbuf(bp, len)
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+#endif
 }
