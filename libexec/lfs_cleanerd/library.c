@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.16 2000/09/09 04:49:56 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.17 2000/11/03 17:52:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.16 2000/09/09 04:49:56 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.17 2000/11/03 17:52:56 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,6 +353,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	int nelem, nblocks, nsegs, sumsize, i, ssize;
 
 	i = 0;
+	bip = NULL;
 	lfsp = &fsp->fi_lfs;
 	nelem = 2 * lfsp->lfs_ssize;
 	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO))))
@@ -375,9 +376,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 		if (nblocks <= 0) {
                         syslog(LOG_DEBUG, "Warning: invalid segment summary at 0x%x",
 			    pseg_addr);
-			*bcount = 0;
-			return -1;
-			/* break; */
+			goto err0;
 		}
 
 #ifdef DIAGNOSTIC
@@ -427,7 +426,10 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	*blocks = bip;
 	return (0);
 
-err0:	*bcount = 0;
+    err0:
+	if (bip)
+		free(bip);
+	*bcount = 0;
 	return (-1);
 
 }
