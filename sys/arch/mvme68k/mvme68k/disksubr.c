@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1996/05/08 01:45:46 chuck Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1996/05/16 17:59:57 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -362,6 +362,22 @@ bsdtocpulabel(lp, clp)
 	bzero(clp->cfg_4, sizeof(struct partition) * 12);
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) 
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
+
+	/*
+	 * here are the parts of the cpu_disklabel the kernel must init.
+	 * see disklabel.h for more details
+	 * [note: this used to be handled by 'wrtvid']
+	 */
+	bcopy(VID_ID, clp->vid_id, sizeof(clp->vid_id));
+	clp->vid_oss = VID_OSS;
+	clp->vid_osl = VID_OSL;
+	clp->vid_osa_u = VID_OSAU;
+	clp->vid_osa_l = VID_OSAL;
+	clp->vid_cas = VID_CAS;
+	clp->vid_cal = VID_CAL;
+	bcopy(VID_MOT, clp->vid_mot, sizeof(clp->vid_mot));
+	clp->cfg_rec = CFG_REC;
+	clp->cfg_psm = CFG_PSM;
 }
 
 static void
