@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.h,v 1.2 1998/01/05 07:03:11 perry Exp $	*/
+/*	$NetBSD: lk201.h,v 1.3 1998/03/22 09:27:07 jonathan Exp $	*/
 
 
 /*
