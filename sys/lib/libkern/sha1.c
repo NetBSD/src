@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.4 1999/05/09 00:22:46 eeh Exp $	*/
+/*	$NetBSD: sha1.c,v 1.5 1999/09/16 00:06:46 sommerfeld Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -20,19 +20,11 @@
 #include <sys/param.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-#include <sys/systm.h>
+#include <lib/libkern/libkern.h>
 #include <sys/sha1.h>
 #else
 #include <string.h>
 #include <sys/sha1.h>
-#endif
-
-/*
- * XXX Kludge until there is resolution regarding mem*() functions
- * XXX in the kernel.
- */
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	memcpy(s, d, l)		bcopy((d), (s), (l))
 #endif
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
