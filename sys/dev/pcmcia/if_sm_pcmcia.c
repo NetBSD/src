@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.38 2004/08/09 20:30:08 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.39 2004/08/10 05:23:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.38 2004/08/09 20:30:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.39 2004/08/10 05:23:04 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,17 +69,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.38 2004/08/09 20:30:08 mycroft Ex
 #include <dev/pcmcia/pcmciadevs.h>
 
 int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
+int	sm_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
 int	sm_pcmcia_detach __P((struct device *, int));
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
 
-	/* PCMCIA-specific goo. */
-	struct	pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int	sc_io_window;			/* our i/o window */
 	void	*sc_ih;				/* interrupt cookie */
+
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
+	int	sc_state;
+#define	SM_PCMCIA_ATTACHED	3
 };
 
 CFATTACH_DECL(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
@@ -130,6 +131,18 @@ sm_pcmcia_match(parent, match, aux)
 	return (0);
 }
 
+int
+sm_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1 ||
+	    cfe->iospace[0].length < SMC_IOSIZE)
+		return (EINVAL);
+	return (0);
+}
+
 void
 sm_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -140,50 +153,31 @@ sm_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	const struct pcmcia_product *pp;
+	int error;
 
 	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (cfe->num_iospace != 1)
-			continue;
-
-		/* Allocate I/O space for the card. */
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, cfe->iospace[0].length,
-		    &psc->sc_pcioh) == 0)
-			break;
-	}
-	if (!cfe) {
-		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
-		goto ioalloc_failed;
+	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	sc->sc_bst = psc->sc_pcioh.iot;
-	sc->sc_bsh = psc->sc_pcioh.ioh;
+	cfe = pa->pf->cfe;
+	sc->sc_bst = cfe->iospace[0].handle.iot;
+	sc->sc_bsh = cfe->iospace[0].handle.ioh;
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window)) {
-		aprint_error("%s: can't map i/o space\n", self->dv_xname);
-		goto iomap_failed;
-	}
-
-	if (sm_pcmcia_enable(sc)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
+	error = sm_pcmcia_enable(sc);
+	if (error) {
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
+		goto fail;
 	}
 
 	sc->sc_enable = sm_pcmcia_enable;
 	sc->sc_disable = sm_pcmcia_disable;
-
-	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
-	    sizeof sm_pcmcia_products[0], NULL);
-	if (pp == NULL)
-		panic("sm_pcmcia_attach: impossible");
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
@@ -201,15 +195,12 @@ sm_pcmcia_attach(parent, self, aux)
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
+	psc->sc_state = SM_PCMCIA_ATTACHED;
 	sm_pcmcia_disable(sc);
 	return;
 
-enable_failed:
-	pcmcia_io_unmap(pa->pf, psc->sc_io_window);
-iomap_failed:
-	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
-ioalloc_failed:
-	psc->sc_io_window = -1;
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -218,21 +209,17 @@ sm_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
-	int rv;
+	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != SM_PCMCIA_ATTACHED)
 		return (0);
 
-	rv = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
-	if (rv != 0)
-		return (rv);
+	error = smc91cxx_detach((struct device *)&psc->sc_smc, flags);
+	if (error)
+		return (error);
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	return (0);
 }
 
@@ -304,4 +291,5 @@ sm_pcmcia_disable(sc)
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }
