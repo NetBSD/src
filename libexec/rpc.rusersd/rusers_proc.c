@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #ifdef XIDLE
+#include <setjmp.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/xidle.h>
 #endif
@@ -129,8 +130,8 @@ XqueryIdle(char *display)
         (void) signal (SIGALRM, SIG_DFL);
         (void) alarm ((unsigned) 0);
 
-        idleTime /= 1000;
-        return((idleTime + 30) / 60);
+        IdleTime /= 1000;
+        return((IdleTime + 30) / 60);
 }
 #endif
 
@@ -140,16 +141,17 @@ getidle(char *tty, char *display)
         struct stat st;
         char devname[PATH_MAX];
         time_t now;
-        u_long idle = 0;
+        u_long idle;
         
         /*
          * If this is an X terminal or console, then try the
          * XIdle extension
          */
 #ifdef XIDLE
-        if (display && (idle = XqueryIdle(display)) >= 0)
+        if (display && *display && (idle = XqueryIdle(display)) >= 0)
                 return(idle);
 #endif
+        idle = 0;
         if (*tty == 'X') {
                 u_long kbd_idle, mouse_idle;
                 kbd_idle = getidle("kbd", NULL);
