@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.19 2000/01/09 18:44:40 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.20 2000/01/09 18:55:11 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -125,6 +125,7 @@ isp_match(parent, cf, aux)
 	return (rv);
 }
 
+
 static void
 isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
@@ -180,7 +181,7 @@ isp_sbus_attach(parent, self, aux)
 	 */
 	if (strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 	    strcmp("ptisp", sa->sa_name) == 0) {
-		sbc->sbus_mdvec.dv_fwlen = 0;
+		sbc->sbus_mdvec.dv_ispfw = NULL;
 	}
 
 	isp->isp_mdvec = &sbc->sbus_mdvec;
