@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.14 1999/02/05 08:27:46 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.15 1999/02/05 08:42:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -256,10 +256,11 @@ static int vr_list_tx_init	__P((struct vr_softc *));
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void vr_mii_sync(sc)
-	struct vr_softc		*sc;
+static void
+vr_mii_sync(sc)
+	struct vr_softc *sc;
 {
-	register int		i;
+	int i;
 
 	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAOUT);
 
@@ -276,12 +277,13 @@ static void vr_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void vr_mii_send(sc, bits, cnt)
-	struct vr_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+static void
+vr_mii_send(sc, bits, cnt)
+	struct vr_softc *sc;
+	u_int32_t bits;
+	int cnt;
 {
-	int			i;
+	int i;
 
 	SIO_CLR(VR_MIICMD_CLK);
 
@@ -301,7 +303,8 @@ static void vr_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int vr_mii_readreg(self, phy, reg)
+static int
+vr_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
@@ -381,7 +384,8 @@ static int vr_mii_readreg(self, phy, reg)
 /*
  * Write to a PHY register through the MII.
  */
-static void vr_mii_writereg(self, phy, reg, val)
+static void
+vr_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
@@ -416,7 +420,8 @@ static void vr_mii_writereg(self, phy, reg, val)
 	SIO_CLR(VR_MIICMD_DIR);
 }
 
-static void vr_mii_statchg(self)
+static void
+vr_mii_statchg(self)
 	struct device *self;
 {
 	struct vr_softc *sc = (struct vr_softc *)self;
@@ -446,12 +451,13 @@ static void vr_mii_statchg(self)
 /*
  * Calculate CRC of a multicast group address, return the lower 6 bits.
  */
-static u_int8_t vr_calchash(addr)
-	u_int8_t		*addr;
+static u_int8_t
+vr_calchash(addr)
+	u_int8_t *addr;
 {
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
+	u_int32_t crc, carry;
+	int i, j;
+	u_int8_t c;
 
 	/* Compute CRC for the address value. */
 	crc = 0xFFFFFFFF; /* initial value */
@@ -474,16 +480,17 @@ static u_int8_t vr_calchash(addr)
 /*
  * Program the 64-bit multicast hash filter.
  */
-static void vr_setmulti(sc)
-	struct vr_softc		*sc;
+static void
+vr_setmulti(sc)
+	struct vr_softc *sc;
 {
-	struct ifnet		*ifp;
-	int			h = 0;
-	u_int32_t		hashes[2] = { 0, 0 };
-	struct ether_multistep	step;
-	struct ether_multi	*enm;
-	int			mcnt = 0;
-	u_int8_t		rxfilt;
+	struct ifnet *ifp;
+	int h = 0;
+	u_int32_t hashes[2] = { 0, 0 };
+	struct ether_multistep step;
+	struct ether_multi *enm;
+	int mcnt = 0;
+	u_int8_t rxfilt;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -529,10 +536,11 @@ static void vr_setmulti(sc)
 	return;
 }
 
-static void vr_reset(sc)
-	struct vr_softc		*sc;
+static void
+vr_reset(sc)
+	struct vr_softc *sc;
 {
-	register int		i;
+	int i;
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RESET);
 
@@ -554,12 +562,13 @@ static void vr_reset(sc)
 /*
  * Initialize the transmit descriptors.
  */
-static int vr_list_tx_init(sc)
-	struct vr_softc		*sc;
+static int
+vr_list_tx_init(sc)
+	struct vr_softc *sc;
 {
-	struct vr_chain_data	*cd;
-	struct vr_list_data	*ld;
-	int			i;
+	struct vr_chain_data *cd;
+	struct vr_list_data *ld;
+	int i;
 
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
@@ -585,12 +594,13 @@ static int vr_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int vr_list_rx_init(sc)
-	struct vr_softc		*sc;
+static int
+vr_list_rx_init(sc)
+	struct vr_softc *sc;
 {
-	struct vr_chain_data	*cd;
-	struct vr_list_data	*ld;
-	int			i;
+	struct vr_chain_data *cd;
+	struct vr_list_data *ld;
+	int i;
 
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
@@ -625,11 +635,12 @@ static int vr_list_rx_init(sc)
  * MCLBYTES is 2048, so we have to subtract one otherwise we'll
  * overflow the field and make a mess.
  */
-static int vr_newbuf(sc, c)
-	struct vr_softc		*sc;
-	struct vr_chain_onefrag	*c;
+static int
+vr_newbuf(sc, c)
+	struct vr_softc *sc;
+	struct vr_chain_onefrag *c;
 {
-	struct mbuf		*m_new = NULL;
+	struct mbuf *m_new = NULL;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
@@ -658,15 +669,16 @@ static int vr_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void vr_rxeof(sc)
-	struct vr_softc		*sc;
+static void
+vr_rxeof(sc)
+	struct vr_softc *sc;
 {
-	struct ether_header	*eh;
-	struct mbuf		*m;
-	struct ifnet		*ifp;
-	struct vr_chain_onefrag	*cur_rx;
-	int			total_len = 0;
-	u_int32_t		rxstat;
+	struct ether_header *eh;
+	struct mbuf *m;
+	struct ifnet *ifp;
+	struct vr_chain_onefrag *cur_rx;
+	int total_len = 0;
+	u_int32_t rxstat;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -768,12 +780,11 @@ static void vr_rxeof(sc)
 		m_adj(m, sizeof (struct ether_header));
 		ether_input(ifp, eh, m);
 	}
-
-	return;
 }
 
-void vr_rxeoc(sc)
-	struct vr_softc		*sc;
+void
+vr_rxeoc(sc)
+	struct vr_softc *sc;
 {
 
 	vr_rxeof(sc);
@@ -781,8 +792,6 @@ void vr_rxeoc(sc)
 	CSR_WRITE_4(sc, VR_RXADDR, vtophys(sc->vr_cdata.vr_rx_head->vr_ptr));
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_GO);
-
-	return;
 }
 
 /*
@@ -790,12 +799,13 @@ void vr_rxeoc(sc)
  * the list buffers.
  */
 
-static void vr_txeof(sc)
-	struct vr_softc		*sc;
+static void
+vr_txeof(sc)
+	struct vr_softc *sc;
 {
-	struct vr_chain		*cur_tx;
-	struct ifnet		*ifp;
-	register struct mbuf	*n;
+	struct vr_chain *cur_tx;
+	struct ifnet *ifp;
+	register struct mbuf *n;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -811,7 +821,7 @@ static void vr_txeof(sc)
 	 * frames that have been transmitted.
 	 */
 	while (sc->vr_cdata.vr_tx_head->vr_mbuf != NULL) {
-		u_int32_t		txstat;
+		u_int32_t txstat;
 
 		cur_tx = sc->vr_cdata.vr_tx_head;
 		txstat = cur_tx->vr_ptr->vr_status;
@@ -841,17 +851,16 @@ static void vr_txeof(sc)
 
 		sc->vr_cdata.vr_tx_head = cur_tx->vr_nextdesc;
 	}
-
-	return;
 }
 
 /*
  * TX 'end of channel' interrupt handler.
  */
-static void vr_txeoc(sc)
-	struct vr_softc		*sc;
+static void
+vr_txeoc(sc)
+	struct vr_softc *sc;
 {
-	struct ifnet		*ifp;
+	struct ifnet *ifp;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -861,16 +870,15 @@ static void vr_txeoc(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->vr_cdata.vr_tx_tail = NULL;
 	}
-
-	return;
 }
 
-static void vr_intr(arg)
-	void			*arg;
+static void
+vr_intr(arg)
+	void *arg;
 {
-	struct vr_softc		*sc;
-	struct ifnet		*ifp;
-	u_int16_t		status;
+	struct vr_softc *sc;
+	struct ifnet *ifp;
+	u_int16_t status;
 
 	sc = arg;
 	ifp = &sc->vr_ec.ec_if;
@@ -885,7 +893,6 @@ static void vr_intr(arg)
 	CSR_WRITE_2(sc, VR_IMR, 0x0000);
 
 	for (;;) {
-
 		status = CSR_READ_2(sc, VR_ISR);
 		if (status)
 			CSR_WRITE_2(sc, VR_ISR, status);
@@ -929,23 +936,22 @@ static void vr_intr(arg)
 	if (ifp->if_snd.ifq_head != NULL) {
 		vr_start(ifp);
 	}
-
-	return;
 }
 
 /*
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int vr_encap(sc, c, m_head)
-	struct vr_softc		*sc;
-	struct vr_chain		*c;
-	struct mbuf		*m_head;
+static int
+vr_encap(sc, c, m_head)
+	struct vr_softc *sc;
+	struct vr_chain *c;
+	struct mbuf *m_head;
 {
-	int			frag = 0;
-	struct vr_desc		*f = NULL;
-	int			total_len;
-	struct mbuf		*m;
+	int frag = 0;
+	struct vr_desc *f = NULL;
+	int total_len;
+	struct mbuf *m;
 
 	m = m_head;
 	total_len = 0;
@@ -1009,13 +1015,13 @@ static int vr_encap(sc, c, m_head)
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-
-static void vr_start(ifp)
-	struct ifnet		*ifp;
+static void
+vr_start(ifp)
+	struct ifnet *ifp;
 {
-	struct vr_softc		*sc;
-	struct mbuf		*m_head = NULL;
-	struct vr_chain		*cur_tx = NULL, *start_tx;
+	struct vr_softc *sc;
+	struct mbuf *m_head = NULL;
+	struct vr_chain *cur_tx = NULL, *start_tx;
 
 	sc = ifp->if_softc;
 
@@ -1072,18 +1078,17 @@ static void vr_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 /*
  * Initialize the interface.  Must be called at splnet.
  */
-static void vr_init(xsc)
-	void			*xsc;
+static void
+vr_init(xsc)
+	void *xsc;
 {
-	struct vr_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->vr_ec.ec_if;
+	struct vr_softc *sc = xsc;
+	struct ifnet *ifp = &sc->vr_ec.ec_if;
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1153,15 +1158,14 @@ static void vr_init(xsc)
 
 	/* Start one second timer. */
 	timeout(vr_tick, sc, hz);
-
-	return;
 }
 
 /*
  * Set media options.
  */
-static int vr_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+static int
+vr_ifmedia_upd(ifp)
+	struct ifnet *ifp;
 {
 	struct vr_softc *sc = ifp->if_softc;
 
@@ -1173,9 +1177,10 @@ static int vr_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void vr_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+static void
+vr_ifmedia_sts(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
 {
 	struct vr_softc *sc = ifp->if_softc;
 
@@ -1184,15 +1189,16 @@ static void vr_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_active = sc->vr_mii.mii_media_active;
 }
 
-static int vr_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+static int
+vr_ioctl(ifp, command, data)
+	struct ifnet *ifp;
+	u_long command;
+	caddr_t data;
 {
-	struct vr_softc		*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *)data;
-	struct ifaddr		*ifa = (struct ifaddr *)data;
-	int			s, error = 0;
+	struct vr_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -1261,10 +1267,11 @@ static int vr_ioctl(ifp, command, data)
 	return (error);
 }
 
-static void vr_watchdog(ifp)
-	struct ifnet		*ifp;
+static void
+vr_watchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct vr_softc		*sc;
+	struct vr_softc *sc;
 
 	sc = ifp->if_softc;
 
@@ -1302,11 +1309,12 @@ vr_tick(arg)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void vr_stop(sc)
-	struct vr_softc		*sc;
+static void
+vr_stop(sc)
+	struct vr_softc *sc;
 {
-	register int		i;
-	struct ifnet		*ifp;
+	struct ifnet *ifp;
+	int i;
 
 	/* Cancel one second timer. */
 	untimeout(vr_tick, sc);
@@ -1346,8 +1354,6 @@ static void vr_stop(sc)
 		sizeof (sc->vr_ldata->vr_tx_list));
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 static struct vr_type *vr_lookup __P((struct pci_attach_args *));
@@ -1391,14 +1397,13 @@ vr_probe(parent, match, aux)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void vr_shutdown(arg)
+static void
+vr_shutdown(arg)
 	void *arg;
 {
-	struct vr_softc		*sc = (struct vr_softc *)arg;
+	struct vr_softc *sc = (struct vr_softc *)arg;
 
 	vr_stop(sc);
-
-	return;
 }
 
 /*
@@ -1407,21 +1412,22 @@ static void vr_shutdown(arg)
  */
 static void
 vr_attach(parent, self, aux)
-	struct device * const parent;
-	struct device * const self;
-	void * const aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
+	struct vr_softc *sc = (struct vr_softc *) self;
+	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct vr_type *vrt;
+	int i;
+	u_int32_t command;
+	struct ifnet *ifp;
+	unsigned int round;
+	caddr_t roundptr;
+	u_char eaddr[ETHER_ADDR_LEN];
+
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
-	struct vr_softc * const sc = (struct vr_softc *) self;
-	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
-	struct vr_type *vrt;
-	int			i;
-	u_int32_t		command;
-	struct ifnet		*ifp;
-	unsigned int		round;
-	caddr_t			roundptr;
-	u_char			eaddr[ETHER_ADDR_LEN];
 
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {
@@ -1437,10 +1443,9 @@ vr_attach(parent, self, aux)
 
 	command = PCI_CONF_READ(VR_PCI_CAPID) & 0x000000FF;
 	if (command == 0x01) {
-
 		command = PCI_CONF_READ(VR_PCI_PWRMGMTCTRL);
 		if (command & VR_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			u_int32_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = PCI_CONF_READ(VR_PCI_LOIO);
@@ -1512,7 +1517,7 @@ vr_attach(parent, self, aux)
 				pa->pa_intrline, &intrhandle)) {
 			printf("%s: couldn't map interrupt\n",
 				sc->vr_dev.dv_xname);
-			goto fail;
+			return;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
@@ -1618,7 +1623,4 @@ vr_attach(parent, self, aux)
 	if (sc->vr_ats == NULL)
 		printf("%s: warning: couldn't establish shutdown hook\n",
 			sc->vr_dev.dv_xname);
-
-fail:
-	return;
 }
