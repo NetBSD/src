@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.26 1998/05/22 00:19:42 cgd Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.27 1998/07/27 09:09:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -106,6 +106,15 @@
 #define	volatile	__volatile
 #endif /* !NO_ANSI_KEYWORDS */
 #endif	/* !(__STDC__ || __cplusplus) */
+
+/*
+ * Used for internal auditing of the NetBSD source tree.
+ */
+#ifdef __AUDIT__
+#define	__aconst	__const
+#else
+#define	__aconst
+#endif
 
 /*
  * GCC1 and some versions of GCC2 declare dead (non-returning) and

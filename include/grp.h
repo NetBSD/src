@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.11 1998/07/26 18:29:10 mycroft Exp $	*/
+/*	$NetBSD: grp.h,v 1.12 1998/07/27 09:09:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -52,10 +52,10 @@
 #endif
 
 struct group {
-	const char *gr_name;		/* group name */
-	const char *gr_passwd;		/* group password */
-	gid_t	    gr_gid;		/* group id */
-	const char *const *gr_mem;	/* group members */
+	__aconst char *gr_name;			/* group name */
+	__aconst char *gr_passwd;		/* group password */
+	gid_t	gr_gid;				/* group id */
+	__aconst char *__aconst *gr_mem;	/* group members */
 };
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.7 1998/07/26 17:53:10 mycroft Exp $	*/
+/*	$NetBSD: nlist.h,v 1.8 1998/07/27 09:09:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,8 @@
 #ifndef _NLIST_H_
 #define	_NLIST_H_
 
+#include <sys/cdefs.h>
+
 /*
  * Symbol table entry format.  The #ifdef's are so that programs including
  * nlist.h can initialize nlist structures statically.
@@ -50,11 +52,11 @@
 struct nlist {
 #ifdef _AOUT_INCLUDE_
 	union {
-		const char *n_name;	/* symbol name (in memory) */
+		__aconst char *n_name;	/* symbol name (in memory) */
 		long n_strx;		/* file string table offset (on disk) */
 	} n_un;
 #else
-	const char *n_name;		/* symbol name (in memory) */
+	__aconst char *n_name;		/* symbol name (in memory) */
 #endif
 
 #define	N_UNDF	0x00		/* undefined */
