@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.30 2001/05/21 01:48:22 jhawk Exp $
+.\"	$NetBSD: main,v 1.61.2.31 2001/05/21 01:58:33 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,7 +330,7 @@ used running under a 1.5 kernel.
 The
 .Nx 1.5
 release 
-provided numerous significant functional enhancements, including
+provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many userland enhancements. The
 result of these improvements is a stable operating system fit for
