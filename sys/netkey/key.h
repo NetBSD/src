@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.12 2003/08/22 05:46:38 itojun Exp $	*/
-/*	$KAME: key.h,v 1.28 2003/06/29 07:00:54 sakane Exp $	*/
+/*	$NetBSD: key.h,v 1.13 2003/08/22 05:48:28 itojun Exp $	*/
+/*	$KAME: key.h,v 1.19 2000/10/05 04:02:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,15 +46,14 @@ struct socket;
 struct sadb_msg;
 struct sadb_x_policy;
 
-extern struct secpolicy *key_allocsp __P((u_int16_t, struct secpolicyindex *,
-	u_int));
+extern struct secpolicy *key_allocsp __P((struct secpolicyindex *, u_int));
 extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
 extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,
 					u_int, u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
 extern void key_freesav __P((struct secasvar *));
-extern struct secpolicy *key_newsp __P((u_int32_t));
+extern struct secpolicy *key_newsp __P((void));
 extern struct secpolicy *key_msg2sp __P((struct sadb_x_policy *,
 	size_t, int *));
 extern struct mbuf *key_sp2msg __P((struct secpolicy *));
