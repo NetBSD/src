@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.27 1999/03/07 11:02:08 mycroft Exp $
+.\"	$NetBSD: ping.8,v 1.27.2.1 1999/06/24 16:23:58 perry Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm ""
 .Bk -words
-.Op Fl dfnoqrvDPQRL
+.Op Fl adfnoqrvDPQRL
 .Ek
 .Bk -words
 .Op Fl c Ar count
@@ -96,6 +96,11 @@ and then an arbitrary number of ``pad'' bytes used to fill out the
 packet.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Emit an audible beep (by sending an ascii BEL character to the
+standard error output) after each non-duplicate response is received.
+This is disabled for flood pings as it would probably cause temporary
+insanity.
 .It Fl c Ar count
 Stop after sending (and waiting the specified delay to receive)
 .Ar count
@@ -164,7 +169,7 @@ For example,
 will cause the sent packet to be filled with all
 ones.
 .It Fl P
-Use a psuedo-random sequence for the data instead of the default,
+Use a pseudo-random sequence for the data instead of the default,
 fixed sequence of incrementing 8-bit integers.
 This is useful to foil compression on PPP and other links.
 .It Fl q
@@ -174,16 +179,6 @@ when finished.
 .It Fl Q
 Do not display responses such as Network Unreachable ICMP messages
 concerning the ECHO_REQUESTs sent.
-.It Fl R
-Record route.
-Includes the
-.Tn RECORD_ROUTE
-option in the
-.Tn ECHO_REQUEST
-packet and displays
-the route buffer on returned packets.
-Note that the IP header is only large enough for nine such routes.
-Many hosts ignore or discard this option.
 .It Fl r
 Bypass the normal routing tables and send directly to a host on an attached
 network.
