@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $NetBSD: newvers.sh,v 1.1 1999/04/05 06:56:23 cgd Exp $
+# $NetBSD: newvers.sh,v 1.2 1999/04/07 06:30:34 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,9 @@
 #
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
-u=${USER-root} h=`hostname` t=`date`
+u=${USER-root}
+h=`hostname`
+t=`date +"%b %e %H:%M:%S %Z %Y" | sed -e 's,  *, ,g'`
 r=`awk '/^Version:/ { print $2 } ' $1`
 
 echo "char bootprog_rev[] = \"${r}\";" > vers.c
