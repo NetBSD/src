@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.20 1996/04/11 21:05:42 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.21 1996/05/07 01:24:48 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -122,7 +122,7 @@ file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
 file	arch/sparc/dev/bt_subr.c	bt_dac
 
-device le: ifnet, ether
+# device definition in sys/conf/files
 attach le at sbus, ledma, obio
 file	arch/sparc/dev/if_le.c		le
 
