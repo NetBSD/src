@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.3 2000/03/21 19:47:59 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.4 2000/03/29 12:02:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.3 2000/03/21 19:47:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.4 2000/03/29 12:02:01 ad Exp $");
 
 #include "rnd.h"
 
@@ -124,13 +124,13 @@ struct ca_softc {
 static int	calock __P((struct ca_softc *));
 static void	caunlock __P((struct ca_softc *));
 static int	camatch __P((struct device *, struct cfdata *, void *));
-static void	cacttach __P((struct device *, struct device *, void *));
+static void	caattach __P((struct device *, struct device *, void *));
 static void	cadone __P((struct cac_ccb *, int));
 static void	cagetdisklabel __P((struct ca_softc *));
 static void	cagetdefaultlabel __P((struct ca_softc *, struct disklabel *));
 
 struct cfattach ca_ca = {
-	sizeof(struct ca_softc), camatch, cacttach
+	sizeof(struct ca_softc), camatch, caattach
 };
 
 extern struct cfdriver ca_cd;
@@ -148,7 +148,7 @@ camatch(parent, match, aux)
 }
 
 static void
-cacttach(parent, self, aux)
+caattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
