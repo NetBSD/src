@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/02/25 16:53:22 pk Exp $
+#	$NetBSD: Makefile,v 1.19 2000/02/26 11:48:15 pk Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
@@ -12,11 +12,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
 
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
 .include <bsd.own.mk>
-.include <bsd.obj.mk>
 
 OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 
@@ -46,11 +42,4 @@ boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 boot.net: boot.${RELOC_DEFAULT}
 	(printf '\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'; cat ${.ALLSRC} ) > ${.TARGET}
 
-clean cleandir: cleanprog
-
-cleanprog:
-	rm -f ${OBJS} ${CLEANFILES}
-
-.include <bsd.files.mk>
-.include <bsd.links.mk>
-.include <bsd.sys.mk>
+.include <bsd.prog.mk>
