@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.11 2000/02/22 15:49:17 chopps Exp $ */
+/* $NetBSD: pnpbios.c,v 1.12 2000/03/01 20:23:55 groo Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
  * Copyright (c) 1999
@@ -1168,6 +1168,26 @@ pnpbios_io_map(pbt, resc, idx, tagp, hdlp)
 	*tagp = I386_BUS_SPACE_IO;
 	return (i386_memio_map(I386_BUS_SPACE_IO, io->minbase, io->len,
 			       0, hdlp));
+}
+
+void
+pnpbios_io_unmap(pbt, resc, idx, tag, hdl)
+	pnpbios_tag_t pbt;
+	struct pnpresources *resc;
+	int idx;
+	bus_space_tag_t tag;
+	bus_space_handle_t hdl;
+{
+	struct pnp_io *io;
+
+	if (idx >= resc->numio)
+		return;
+
+	io = SIMPLEQ_FIRST(&resc->io);
+	while (idx--)
+		io = SIMPLEQ_NEXT(io, next);
+
+	i386_memio_unmap(tag, hdl, io->len);
 }
 
 int
