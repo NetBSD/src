@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.25 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /*
  *
@@ -79,6 +79,7 @@ struct uvm {
 
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	int page_free_nextcolor;	/* next color to allocate from */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */

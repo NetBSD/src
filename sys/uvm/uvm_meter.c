@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.17 2001/03/09 01:02:12 chs Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.18 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -286,6 +286,8 @@ sysctl_uvmexp(oldp, oldlenp)
 	u.anonpages = uvmexp.anonpages;
 	u.vnodepages = uvmexp.vnodepages;
 	u.vtextpages = uvmexp.vtextpages;
+	u.colorhit = uvmexp.colorhit;
+	u.colormiss = uvmexp.colormiss;
 
 	return (sysctl_rdminstruct(oldp, oldlenp, NULL, &u, sizeof(u)));
 }
