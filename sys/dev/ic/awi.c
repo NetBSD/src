@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.20 2000/07/04 14:27:57 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -460,8 +460,7 @@ awi_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error;
-	size_t nwidlen;
-	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
+	struct ieee80211_nwid nwid;
 	u_int8_t *p;
 
 	s = splnet();
@@ -521,22 +520,22 @@ awi_ioctl(ifp, cmd, data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCS80211NWID:
-		error = copyinstr(ifr->ifr_data, nwid, sizeof(nwid), &nwidlen);
+		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (error)
 			break;
-		nwidlen--;	/* eliminate trailing '\0' */
-		if (nwidlen > IEEE80211_NWID_LEN) {
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
 			error = EINVAL;
 			break;
 		}
-		if (sc->sc_mib_mac.aDesired_ESS_ID[1] == nwidlen &&
-		    memcmp(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid,
-		    nwidlen) == 0)
+		if (sc->sc_mib_mac.aDesired_ESS_ID[1] == nwid.i_len &&
+		    memcmp(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid.i_nwid,
+		    nwid.i_len) == 0)
 			break;
 		memset(sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
 		sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
-		sc->sc_mib_mac.aDesired_ESS_ID[1] = nwidlen;
-		memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid, nwidlen);
+		sc->sc_mib_mac.aDesired_ESS_ID[1] = nwid.i_len;
+		memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid.i_nwid,
+		    nwid.i_len);
 		if (sc->sc_enabled) {
 			awi_stop(sc);
 			error = awi_init(sc);
@@ -547,7 +546,7 @@ awi_ioctl(ifp, cmd, data)
 			p = sc->sc_bss.essid;
 		else
 			p = sc->sc_mib_mac.aDesired_ESS_ID;
-		error = copyout(p + 2, ifr->ifr_data, IEEE80211_NWID_LEN);
+		error = copyout(p + 1, ifr->ifr_data, 1 + IEEE80211_NWID_LEN);
 		break;
 #ifdef IFM_IEEE80211
 	case SIOCSIFMEDIA:

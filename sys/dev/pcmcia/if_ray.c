@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.20 2000/05/29 17:37:16 jhawk Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -179,8 +179,8 @@ struct ray_softc {
 	u_int		sc_txfree;	/* a free count for efficiency */
 
 	u_int8_t	sc_bssid[ETHER_ADDR_LEN];	/* current net values */
-	u_int8_t	sc_cnwid[IEEE80211_NWID_LEN];	/* last nwid */
-	u_int8_t	sc_dnwid[IEEE80211_NWID_LEN];	/* desired nwid */
+	struct ieee80211_nwid	sc_cnwid;	/* last nwid */
+	struct ieee80211_nwid	sc_dnwid;	/* desired nwid */
 	u_int8_t	sc_omode;	/* old operating mode SC_MODE_xx */
 	u_int8_t	sc_mode;	/* current operating mode SC_MODE_xx */
 	u_int8_t	sc_countrycode;	/* current country code */
@@ -578,10 +578,13 @@ ray_attach(parent, self, aux)
 	/*
 	 * set the parameters that will survive stop/init
 	 */
-	memset(sc->sc_cnwid, 0, sizeof(sc->sc_cnwid));
-	memset(sc->sc_dnwid, 0, sizeof(sc->sc_dnwid));
-	strncpy(sc->sc_dnwid, RAY_DEF_NWID, sizeof(sc->sc_dnwid));
-	strncpy(sc->sc_cnwid, RAY_DEF_NWID, sizeof(sc->sc_dnwid));
+	memset(&sc->sc_dnwid, 0, sizeof(sc->sc_dnwid));
+	sc->sc_dnwid.i_len = strlen(RAY_DEF_NWID);
+	if (sc->sc_dnwid.i_len > IEEE80211_NWID_LEN)
+		sc->sc_dnwid.i_len = IEEE80211_NWID_LEN;
+	if (sc->sc_dnwid.i_len > 0)
+		memcpy(sc->sc_dnwid.i_nwid, RAY_DEF_NWID, sc->sc_dnwid.i_len);
+	memcpy(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid));
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
 	sc->sc_countrycode = sc->sc_dcountrycode =
 	    RAY_PID_COUNTRY_CODE_DEFAULT;
@@ -958,12 +961,12 @@ ray_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	u_int8_t nwid[IEEE80211_NWID_LEN];
+	struct ieee80211_nwid nwid;
 	struct ray_param_req pr;
 	struct ray_softc *sc;
 	struct ifreq *ifr;
 	struct ifaddr *ifa;
-	int error, error2, s;
+	int error, error2, s, i;
 
 	sc = ifp->if_softc;
 	error = 0;
@@ -1053,24 +1056,31 @@ ray_ioctl(ifp, cmd, data)
 		error = error2 ? error2 : error;
 		break;
 	case SIOCS80211NWID:
-		RAY_DPRINTF(("%s: ioctl: cmd SIOCSNWID\n", ifp->if_xname));
+		RAY_DPRINTF(("%s: ioctl: cmd SIOCS80211NWID\n", ifp->if_xname));
 		/*
 		 * if later people overwrite thats ok -- the latest version
 		 * will always get start/joined even if it was set by
 		 * a previous command
 		 */
-		if ((error = copyin(ifr->ifr_data, nwid, sizeof(nwid))))
+		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))))
 			break;
-		if (!memcmp(sc->sc_dnwid, nwid, sizeof(nwid)))
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
 			break;
-		memcpy(sc->sc_dnwid, nwid, sizeof(nwid));
+		}
+		/* clear trailing garbages */
+		for (i = nwid.i_len; i < IEEE80211_NWID_LEN; i++)
+			nwid.i_nwid[i] = 0;
+		if (!memcmp(&sc->sc_dnwid, &nwid, sizeof(nwid)))
+			break;
+		memcpy(&sc->sc_dnwid, &nwid, sizeof(nwid));
 		if (ifp->if_flags & IFF_RUNNING)
 			ray_start_join_net(sc);
 		break;
 	case SIOCG80211NWID:
-		RAY_DPRINTF(("%s: ioctl: cmd SIOCHNWID\n", ifp->if_xname));
-		error = copyout(sc->sc_cnwid, ifr->ifr_data,
-		    IEEE80211_NWID_LEN);
+		RAY_DPRINTF(("%s: ioctl: cmd SIOCG80211NWID\n", ifp->if_xname));
+		error = copyout(&sc->sc_cnwid, ifr->ifr_data,
+		    sizeof(sc->sc_cnwid));
 		break;
 #ifdef RAY_DO_SIGLEV
 	case SIOCGRAYSIGLEV:
@@ -1869,7 +1879,7 @@ ray_ccs_done(sc, ccs)
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 
 		sc->sc_omode = sc->sc_mode;
-		memcpy(sc->sc_cnwid, sc->sc_dnwid, sizeof(sc->sc_cnwid));
+		memcpy(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid));
 
 		rcmd = ray_start_join_net;
 		break;
@@ -2435,7 +2445,8 @@ ray_download_params(sc)
 		memset(sp4, 0, sizeof(*sp4));
 	else
 		memset(sp5, 0, sizeof(*sp5));
-	memcpy(sp->sp_ssid, sc->sc_dnwid, sizeof(sp->sp_ssid));
+	/* XXX: Raylink firmware doesn't have length field for ssid */
+	memcpy(sp->sp_ssid, sc->sc_dnwid.i_nwid, sizeof(sp->sp_ssid));
 	sp->sp_scan_mode = 0x1;
 	memcpy(sp->sp_mac_addr, sc->sc_ecf_startup.e_station_addr,
 	    ETHER_ADDR_LEN);
@@ -2629,14 +2640,14 @@ ray_start_join_net(sc)
 		return;
 	sc->sc_startccs = ccs;
 	sc->sc_startcmd = cmd;
-	if (!memcmp(sc->sc_cnwid, sc->sc_dnwid, sizeof(sc->sc_cnwid))
+	if (!memcmp(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid))
 	    && sc->sc_omode == sc->sc_mode)
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param, 0);
 	else {
 		sc->sc_havenet = 0;
 		memset(&np, 0, sizeof(np));
 		np.p_net_type = sc->sc_mode;
-		memcpy(np.p_ssid, sc->sc_dnwid, sizeof(np.p_ssid));
+		memcpy(np.p_ssid, sc->sc_dnwid.i_nwid, sizeof(np.p_ssid));
 		ray_write_region(sc, RAY_HOST_TO_ECF_BASE, &np, sizeof(np));
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param, 1);
 	}
@@ -2672,6 +2683,7 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 	bus_size_t ccs;
 	u_int stat;
 {
+	int i;
 	struct ray_net_params np;
 
 	callout_stop(&sc->sc_start_join_timo_ch);
@@ -2692,13 +2704,14 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 			return (0);
 
 		/* see if our nwid is up to date */
-		if (!memcmp(sc->sc_cnwid, sc->sc_dnwid, sizeof(sc->sc_cnwid))
+		if (!memcmp(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid))
 		    && sc->sc_omode == sc->sc_mode)
 			SRAM_WRITE_FIELD_1(sc,ccs, ray_cmd_net, c_upd_param, 0);
 		else {
 			memset(&np, 0, sizeof(np));
 			np.p_net_type = sc->sc_mode;
-			memcpy(np.p_ssid, sc->sc_dnwid, sizeof(np.p_ssid));
+			memcpy(np.p_ssid, sc->sc_dnwid.i_nwid,
+			    sizeof(np.p_ssid));
 			ray_write_region(sc, RAY_HOST_TO_ECF_BASE, &np,
 			    sizeof(np));
 			SRAM_WRITE_FIELD_1(sc,ccs, ray_cmd_net, c_upd_param, 1);
@@ -2734,13 +2747,19 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 
 	if (SRAM_READ_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param)) {
 		ray_read_region(sc, RAY_HOST_TO_ECF_BASE, &np, sizeof(np));
-		memcpy(sc->sc_cnwid, np.p_ssid, sizeof(sc->sc_cnwid));
+		/* XXX: Raylink firmware doesn't have length field for ssid */
+		for (i = 0; i < sizeof(np.p_ssid); i++) {
+			if (np.p_ssid[i] == '\0')
+				break;
+		}
+		sc->sc_cnwid.i_len = i;
+		memcpy(sc->sc_cnwid.i_nwid, np.p_ssid, sizeof(sc->sc_cnwid));
 		sc->sc_omode = sc->sc_mode;
 		if (np.p_net_type != sc->sc_mode)
 			return (ray_start_join_net);
 	}
 	RAY_DPRINTF(("%s: net start/join nwid %.32s bssid %s inited %d\n",
-	    sc->sc_xname, sc->sc_cnwid, ether_sprintf(sc->sc_bssid),
+	    sc->sc_xname, sc->sc_cnwid.i_nwid, ether_sprintf(sc->sc_bssid),
 		SRAM_READ_FIELD_1(sc, ccs, ray_cmd_net, c_inited)));
 
 	/* network is now active */
