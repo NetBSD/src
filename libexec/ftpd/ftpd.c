@@ -35,7 +35,7 @@
 static char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-static char rcsid[] = "$Id: ftpd.c,v 1.8 1994/06/29 01:49:45 deraadt Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.8.2.1 1994/09/25 05:45:09 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -494,7 +494,7 @@ checkuser(fname, name)
 				*p = '\0';
 				if (line[0] == '#')
 					continue;
-				if (strcmp(p, name) == 0) {
+				if (strcmp(line, name) == 0) {
 					found = 1;
 					break;
 				}
