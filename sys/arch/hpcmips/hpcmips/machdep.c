@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1999/11/03 04:00:04 takemura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1999/11/04 09:39:10 sato Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 1999/11/03 04:00:04 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 1999/11/04 09:39:10 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -254,6 +254,14 @@ mach_init(argc, argv, bi)
 	}
 	printf("\n");
 	printf("platform ID: %08lx %08lx\n", platid.dw.dw0, platid.dw.dw1);
+
+	/*
+	 * rtc_offset from bootinfo.timezone set by pbsdboot.exe
+	 */
+	if (rtc_offset == 0 && bootinfo
+	   && bootinfo->timezone > (-12*60)
+	   && bootinfo->timezone <= (12*60))
+		rtc_offset = bootinfo->timezone;
 
 	/* Compute bootdev */
 	makebootdev("wd0"); /* XXX Should be passed up from boot lorder */
