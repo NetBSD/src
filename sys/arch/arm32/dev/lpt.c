@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.15 1997/07/28 18:07:19 mark Exp $	*/
+/*	$NetBSD: lpt.c,v 1.16 1997/10/14 19:04:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -64,14 +64,9 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
-
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
-
-#include <arm32/mainbus/mainbus.h>
-#include <arm32/mainbus/lptreg.h>
-
-#include "locators.h"
+#include <arm32/dev/lptreg.h>
+#include <arm32/dev/lptvar.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -86,44 +81,8 @@
 int lptdebug = 1;
 #endif
 
-struct lpt_softc {
-	struct device sc_dev;
-	void *sc_ih;
-
-	size_t sc_count;
-	struct buf *sc_inbuf;
-	u_char *sc_cp;
-	int sc_spinmax;
-	int sc_iobase;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	int sc_irq;
-	u_char sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char sc_flags;
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-	u_char sc_control;
-	u_char sc_laststatus;
-};
-
 /* XXX does not belong here */
 cdev_decl(lpt);
-
-#ifdef __BROKEN_INDIRECT_CONFIG
-int lptprobe __P((struct device *, void *, void *));
-#else
-int lptprobe __P((struct device *, struct cfdata *, void *));
-#endif
-void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((void *));
-
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptprobe, lptattach
-};
 
 struct cfdriver lpt_cd = {
 	NULL, "lpt", DV_TTY
@@ -192,22 +151,13 @@ lpt_port_test(iot, ioh, base, off, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 int
-lptprobe(parent, match, aux)
-	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
-	void *aux;
-{
-	struct mainbus_attach_args *mb = aux;
+lptprobe(iot, iobase)
 	bus_space_tag_t iot;
+	u_int iobase;
+{
 	bus_space_handle_t ioh;
-	u_long base;
 	u_char mask, data;
 	int i, rv;
-
 #ifdef DEBUG
 #define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
 		    goto out;} while (0)
@@ -215,79 +165,39 @@ lptprobe(parent, match, aux)
 #define	ABORT	goto out
 #endif
 
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
-		return(0);
-
-	iot = mb->mb_iot;
-	base = mb->mb_iobase;
-	if (bus_space_map(iot, base, LPT_NPORTS, 0, &ioh))
+	if (bus_space_map(iot, iobase, LPT_NPORTS, 0, &ioh))
 		return 0;
-
 	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(iot, ioh, iobase, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(iot, ioh, iobase, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(iot, ioh, iobase, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(iot, ioh, iobase, lpt_data, data, mask))
 			ABORT;
 	}
 
 	bus_space_write_1(iot, ioh, lpt_data, 0);
 	bus_space_write_1(iot, ioh, lpt_control, 0);
 
-	mb->mb_iosize = LPT_NPORTS;
-
-	rv = 1;
+	rv = LPT_NPORTS;
 
 out:
 	bus_space_unmap(iot, ioh, LPT_NPORTS);
 	return rv;
-}
-
-void
-lptattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct lpt_softc *sc = (void *)self;
-	struct mainbus_attach_args *mb = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	if (mb->mb_irq != IRQUNK)
-		printf("\n");
-	else
-		printf(": polled\n");
-
-	sc->sc_iobase = mb->mb_iobase;
-	sc->sc_irq = mb->mb_irq;
-	sc->sc_state = 0;
-
-	iot = sc->sc_iot = mb->mb_iot;
-	if (bus_space_map(iot, sc->sc_iobase, LPT_NPORTS, 0, &ioh))
-		panic("lptattach: couldn't map I/O ports");
-	sc->sc_ioh = ioh;
-
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-
-	if (mb->mb_irq != IRQUNK)
-		sc->sc_ih = intr_claim(mb->mb_irq, IPL_TTY, "lpt",
-		    lptintr, sc);
 }
 
 /*
@@ -315,7 +225,7 @@ lptopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
-	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
+	if (sc->sc_irq == LPT_NOIRQ && (flags & LPT_NOINTR) == 0)
 		return ENXIO;
 
 #ifdef DIAGNOSTIC
