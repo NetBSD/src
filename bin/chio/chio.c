@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.15 2001/02/19 22:39:39 cgd Exp $	*/
+/* $NetBSD: chio.c,v 1.16 2001/09/13 10:00:44 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,13 +46,14 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.15 2001/02/19 22:39:39 cgd Exp $");
+__RCSID("$NetBSD: chio.c,v 1.16 2001/09/13 10:00:44 wiz Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/chio.h> 
 #include <sys/cdio.h>	/* for ATAPI CD changer; too bad it uses a lame API */
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -66,24 +67,24 @@ __RCSID("$NetBSD: chio.c,v 1.15 2001/02/19 22:39:39 cgd Exp $");
 #include "defs.h"
 #include "pathnames.h"
 
-int	main __P((int, char *[]));
-static	void usage __P((void));
-static	void cleanup __P((void));
-static	int parse_element_type __P((const char *));
-static	int parse_element_unit __P((const char *));
-static	int parse_special __P((const char *));
-static	int is_special __P((const char *));
-static	const char *bits_to_string __P((int, const char *));
+int main(int, char *[]);
+static void usage(void);
+static void cleanup(void);
+static int parse_element_type(const char *);
+static int parse_element_unit(const char *);
+static int parse_special(const char *);
+static int is_special(const char *);
+static const char *bits_to_string(int, const char *);
 
-static	int do_move __P((const char *, int, char **));
-static	int do_exchange __P((const char *, int, char **));
-static	int do_position __P((const char *, int, char **));
-static	int do_params __P((const char *, int, char **));
-static	int do_getpicker __P((const char *, int, char **));
-static	int do_setpicker __P((const char *, int, char **));
-static	int do_status __P((const char *, int, char **));
-static	int do_ielem __P((const char *, int, char **));
-static	int do_cdlu __P((const char *, int, char **));
+static int do_move(const char *, int, char **);
+static int do_exchange(const char *, int, char **);
+static int do_position(const char *, int, char **);
+static int do_params(const char *, int, char **);
+static int do_getpicker(const char *, int, char **);
+static int do_setpicker(const char *, int, char **);
+static int do_status(const char *, int, char **);
+static int do_ielem(const char *, int, char **);
+static int do_cdlu(const char *, int, char **);
 
 /* Valid changer element types. */
 const struct element_type elements[] = {
@@ -137,13 +138,11 @@ const struct special_word specials[] = {
 	{ NULL,			0 },
 };
 
-static	int changer_fd;
-static	const char *changer_name;
+static const char *changer_name;
+static int changer_fd;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, i;
 
@@ -152,7 +151,6 @@ main(argc, argv)
 		case 'f':
 			changer_name = optarg;
 			break;
-
 		default:
 			usage();
 		}
@@ -190,10 +188,7 @@ main(argc, argv)
 }
 
 static int
-do_move(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_move(const char *cname, int argc, char **argv)
 {
 	struct changer_move_request cmd;
 	int val;
@@ -212,7 +207,7 @@ do_move(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		usage();
 	}
-	(void) memset(&cmd, 0, sizeof(cmd));
+	(void)memset(&cmd, 0, sizeof(cmd));
 
 	/* <from ET>  */
 	cmd.cm_fromtype = parse_element_type(*argv);
@@ -237,7 +232,6 @@ do_move(cname, argc, argv)
 		case SW_INVERT:
 			cmd.cm_flags |= CM_INVERT;
 			break;
-
 		default:
 			errx(1, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
@@ -253,10 +247,7 @@ do_move(cname, argc, argv)
 }
 
 static int
-do_exchange(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_exchange(const char *cname, int argc, char **argv)
 {
 	struct changer_exchange_request cmd;
 	int val;
@@ -275,7 +266,7 @@ do_exchange(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		usage();
 	}
-	(void) memset(&cmd, 0, sizeof(cmd));
+	(void)memset(&cmd, 0, sizeof(cmd));
 
 	/* <src ET>  */
 	cmd.ce_srctype = parse_element_type(*argv);
@@ -321,11 +312,9 @@ do_exchange(cname, argc, argv)
 		case SW_INVERT1:
 			cmd.ce_flags |= CE_INVERT1;
 			break;
-
 		case SW_INVERT2:
 			cmd.ce_flags |= CE_INVERT2;
 			break;
-
 		default:
 			errx(1, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
@@ -341,10 +330,7 @@ do_exchange(cname, argc, argv)
 }
 
 static int
-do_position(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_position(const char *cname, int argc, char **argv)
 {
 	struct changer_position_request cmd;
 	int val;
@@ -363,7 +349,7 @@ do_position(cname, argc, argv)
 		warnx("%s: too many arguments", cname);
 		usage();
 	}
-	(void) memset(&cmd, 0, sizeof(cmd));
+	(void)memset(&cmd, 0, sizeof(cmd));
 
 	/* <to ET>  */
 	cmd.cp_type = parse_element_type(*argv);
@@ -380,7 +366,6 @@ do_position(cname, argc, argv)
 		case SW_INVERT:
 			cmd.cp_flags |= CP_INVERT;
 			break;
-
 		default:
 			errx(1, "%s: inappropriate modifier `%s'",
 			    cname, *argv);
@@ -397,10 +382,7 @@ do_position(cname, argc, argv)
 
 /* ARGSUSED */
 static int
-do_params(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_params(const char *cname, int argc, char **argv)
 {
 	struct changer_params data;
 
@@ -411,24 +393,24 @@ do_params(cname, argc, argv)
 	}
 
 	/* Get params from changer and display them. */
-	(void) memset(&data, 0, sizeof(data));
+	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 #define	PLURAL(n)	(n) > 1 ? "s" : ""
 
-	(void) printf("%s: %d slot%s, %d drive%s, %d picker%s",
+	(void)printf("%s: %d slot%s, %d drive%s, %d picker%s",
 	    changer_name,
 	    data.cp_nslots, PLURAL(data.cp_nslots),
 	    data.cp_ndrives, PLURAL(data.cp_ndrives),
 	    data.cp_npickers, PLURAL(data.cp_npickers));
 	if (data.cp_nportals)
-		(void) printf(", %d portal%s", data.cp_nportals,
+		(void)printf(", %d portal%s", data.cp_nportals,
 		    PLURAL(data.cp_nportals));
 
 #undef PLURAL
 
-	(void) printf("\n%s: current picker: %d\n", changer_name,
+	(void)printf("\n%s: current picker: %d\n", changer_name,
 	    data.cp_curpicker);
 
 	return (0);
@@ -436,10 +418,7 @@ do_params(cname, argc, argv)
 
 /* ARGSUSED */
 static int
-do_getpicker(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_getpicker(const char *cname, int argc, char **argv)
 {
 	int picker;
 
@@ -453,16 +432,13 @@ do_getpicker(cname, argc, argv)
 	if (ioctl(changer_fd, CHIOGPICKER, &picker))
 		err(1, "%s: CHIOGPICKER", changer_name);
 
-	(void) printf("%s: current picker: %d\n", changer_name, picker);
+	(void)printf("%s: current picker: %d\n", changer_name, picker);
 
 	return (0);
 }
 
 static int
-do_setpicker(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_setpicker(const char *cname, int argc, char **argv)
 {
 	int picker;
 
@@ -484,17 +460,18 @@ do_setpicker(cname, argc, argv)
 }
 
 static int
-do_status(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_status(const char *cname, int argc, char **argv)
 {
 	struct changer_element_status_request cmd;
 	struct changer_params data;
 	struct changer_element_status *ces;
-	int i, chet, schet, echet, count, ucount, unit;
-	int have_ucount = 0, have_unit = 0, flags = 0;
+	int i, chet, count, echet, flags, have_ucount, have_unit;
+	int schet, ucount, unit;
 	size_t size;
+	
+	flags = 0;
+	have_ucount = 0;
+	have_unit = 0;
 
 	/*
 	 * On a status command, we expect the following:
@@ -515,7 +492,7 @@ do_status(cname, argc, argv)
 	 * Get params from changer.  Specifically, we need the element
 	 * counts.
 	 */
-	(void) memset(&data, 0, sizeof(data));
+	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
@@ -581,19 +558,15 @@ do_status(cname, argc, argv)
 		case CHET_MT:
 			count = data.cp_npickers;
 			break;
-
 		case CHET_ST:
 			count = data.cp_nslots;
 			break;
-
 		case CHET_IE:
 			count = data.cp_nportals;
 			break;
-
 		case CHET_DT:
 			count = data.cp_ndrives;
 			break;
-
 		default:
 			/* To appease gcc -Wuninitialized. */
 			count = 0;
@@ -603,7 +576,7 @@ do_status(cname, argc, argv)
 			if (schet != echet)
 				continue;
 			else {
-				(void) printf("%s: no %s elements\n",
+				(void)printf("%s: no %s elements\n",
 				    changer_name,
 				    elements[chet].et_name);
 				return (0);
@@ -634,8 +607,8 @@ do_status(cname, argc, argv)
 		if ((ces = malloc(size)) == NULL)
 			errx(1, "can't allocate status storage");
 
-		(void) memset(ces, 0, size);
-		(void) memset(&cmd, 0, sizeof(cmd));
+		(void)memset(ces, 0, size);
+		(void)memset(&cmd, 0, sizeof(cmd));
 
 		cmd.cesr_type = chet;
 		cmd.cesr_unit = unit;
@@ -655,33 +628,33 @@ do_status(cname, argc, argv)
 
 		/* Dump the status for each element of this type. */
 		for (i = 0; i < ucount; i++) {
-			(void) printf("%s %d: ", elements[chet].et_name,
+			(void)printf("%s %d: ", elements[chet].et_name,
 			    unit + i);
 			if ((ces[i].ces_flags & CESTATUS_STATUS_VALID) == 0) {
-				(void) printf("status not available\n");
+				(void)printf("status not available\n");
 				continue;
 			}
-			(void) printf("%s", bits_to_string(ces[i].ces_flags,
+			(void)printf("%s", bits_to_string(ces[i].ces_flags,
 			    CESTATUS_BITS));
 			if (ces[i].ces_flags & CESTATUS_XNAME_VALID)
-				(void) printf(" (%s)", ces[i].ces_xname);
-			(void) printf("\n");
+				(void)printf(" (%s)", ces[i].ces_xname);
+			(void)printf("\n");
 			if (ces[i].ces_flags & CESTATUS_PVOL_VALID)
-				(void) printf("\tPrimary volume tag: %s "
+				(void)printf("\tPrimary volume tag: %s "
 				    "ver. %d\n",
 				    ces[i].ces_pvoltag.cv_tag,
 				    ces[i].ces_pvoltag.cv_serial);
 			if (ces[i].ces_flags & CESTATUS_AVOL_VALID)
-				(void) printf("\tAlternate volume tag: %s "
+				(void)printf("\tAlternate volume tag: %s "
 				    "ver. %d\n",
 				    ces[i].ces_avoltag.cv_tag,
 				    ces[i].ces_avoltag.cv_serial);
 			if (ces[i].ces_flags & CESTATUS_FROM_VALID)
-				(void) printf("\tFrom: %s %d\n",
+				(void)printf("\tFrom: %s %d\n",
 				    elements[ces[i].ces_from_type].et_name,
 				    ces[i].ces_from_unit);
 			if (ces[i].ces_vendor_len)
-				(void) printf("\tVendor-specific data size: "
+				(void)printf("\tVendor-specific data size: "
 				    "%lu\n", (u_long)ces[i].ces_vendor_len);
 		}
 		free(ces);
@@ -692,10 +665,7 @@ do_status(cname, argc, argv)
 
 /* ARGSUSED */
 static int
-do_ielem(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_ielem(const char *cname, int argc, char **argv)
 {
 	if (ioctl(changer_fd, CHIOIELEM, NULL))
 		err(1, "%s: CHIOIELEM", changer_name);
@@ -705,19 +675,16 @@ do_ielem(cname, argc, argv)
 
 /* ARGSUSED */
 static int
-do_cdlu(cname, argc, argv)
-	const char *cname;
-	int argc;
-	char **argv;
+do_cdlu(const char *cname, int argc, char **argv)
 {
-	struct ioc_load_unload cmd;
-	int i;
 	static const struct special_word cdlu_subcmds[] = {
 		{ "load",	CD_LU_LOAD },
 		{ "unload",	CD_LU_UNLOAD },
 		{ "abort",	CD_LU_ABORT },
 		{ NULL,		0 },
 	};
+	struct ioc_load_unload cmd;
+	int i;
 
 	/*
 	 * This command is a little different, since we are mostly dealing
@@ -756,8 +723,7 @@ do_cdlu(cname, argc, argv)
 }
 
 static int
-parse_element_type(cp)
-	const char *cp;
+parse_element_type(const char *cp)
 {
 	int i;
 
@@ -770,11 +736,10 @@ parse_element_type(cp)
 }
 
 static int
-parse_element_unit(cp)
-	const char *cp;
+parse_element_unit(const char *cp)
 {
-	int i;
 	char *p;
+	int i;
 
 	i = (int)strtol(cp, &p, 10);
 	if ((i < 0) || (*p != '\0'))
@@ -784,8 +749,7 @@ parse_element_unit(cp)
 }
 
 static int
-parse_special(cp)
-	const char *cp;
+parse_special(const char *cp)
 {
 	int val;
 
@@ -798,8 +762,7 @@ parse_special(cp)
 }
 
 static int
-is_special(cp)
-	const char *cp;
+is_special(const char *cp)
 {
 	int i;
 
@@ -811,14 +774,12 @@ is_special(cp)
 }
 
 static const char *
-bits_to_string(v, cp)
-	int v;
-	const char *cp;
+bits_to_string(int v, const char *cp)
 {
-	const char *np;
-	char f, *bp;
-	int first;
 	static char buf[128];
+	const char *np;
+	char *bp, f;
+	int first;
 
 	bp = buf;
 	*bp++ = '<';
@@ -831,7 +792,7 @@ bits_to_string(v, cp)
 			first = 0;
 		else
 			*bp++ = ',';
-		(void) memcpy(bp, cp, np - cp);
+		(void)memcpy(bp, cp, np - cp);
 		bp += np - cp;
 	}
 	*bp++ = '>';
@@ -841,23 +802,23 @@ bits_to_string(v, cp)
 }
 
 static void
-cleanup()
+cleanup(void)
 {
 	/* Simple enough... */
 	(void)close(changer_fd);
 }
 
 static void
-usage()
+usage(void)
 {
 	int i;
 
-	(void) fprintf(stderr, "Usage: %s command arg1 arg2 ...\n",
+	(void)fprintf(stderr, "Usage: %s command arg1 arg2 ...\n",
 	    getprogname());
 	
-	(void) fprintf(stderr, "Where command (and args) are:\n");
+	(void)fprintf(stderr, "Where command (and args) are:\n");
 	for (i = 0; commands[i].cc_name != NULL; i++)
-		(void) fprintf(stderr, "\t%s%s\n", commands[i].cc_name,
+		(void)fprintf(stderr, "\t%s%s\n", commands[i].cc_name,
 		    commands[i].cc_args);
 	exit(1);
 	/* NOTREACHED */
