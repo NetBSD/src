@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.43 2001/05/16 03:52:10 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.44 2001/05/25 21:45:55 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -80,13 +80,17 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
+static void ispminphys_1020(struct buf *);
 static void ispminphys(struct buf *);
-static void isprequest (struct scsipi_channel *, scsipi_adapter_req_t, void *);
+static INLINE void ispcmd(struct ispsoftc *, XS_T *);
+static void isprequest(struct scsipi_channel *, scsipi_adapter_req_t, void *);
 static int
 ispioctl(struct scsipi_channel *, u_long, caddr_t, int, struct proc *);
 
 static void isp_polled_cmd(struct ispsoftc *, XS_T *);
 static void isp_dog(void *);
+static void isp_create_fc_worker(void *);
+static void isp_fc_worker(void *);
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -106,7 +110,11 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._adapter.adapt_max_periph = min(isp->isp_maxcmds, 255);
 	isp->isp_osinfo._adapter.adapt_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.adapt_request = isprequest;
-	isp->isp_osinfo._adapter.adapt_minphys = ispminphys;
+	if (isp->isp_type <= ISP_HA_SCSI_1020A) {
+		isp->isp_osinfo._adapter.adapt_minphys = ispminphys_1020;
+	} else {
+		isp->isp_osinfo._adapter.adapt_minphys = ispminphys;
+	}
 
 	isp->isp_osinfo._chan.chan_adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._chan.chan_bustype = &scsi_bustype;
@@ -117,13 +125,19 @@ isp_attach(struct ispsoftc *isp)
 	 */
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
-	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* The 2nd bus will share.. */
-
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
+		isp->isp_osinfo.threadwork = 1;
+		/*
+		 * Note that isp_create_fc_worker won't get called
+		 * until much much later (after proc0 is created).
+		 */
+		kthread_create(isp_create_fc_worker, isp);
 	} else {
+		int bus = 0;
 		sdparam *sdp = isp->isp_param;
+
 		isp->isp_osinfo._chan.chan_ntargets = MAX_TARGETS;
 		isp->isp_osinfo._chan.chan_id = sdp->isp_initiator_id;
 		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
@@ -135,23 +149,12 @@ isp_attach(struct ispsoftc *isp)
 			isp->isp_osinfo._chan_b.chan_id = sdp->isp_initiator_id;
 			isp->isp_osinfo._chan_b.chan_channel = 1;
 		}
-	}
-
-	/*
-	 * Send a SCSI Bus Reset.
-	 */
-	if (IS_SCSI(isp)) {
-		int bus = 0;
 		ISP_LOCK(isp);
 		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
 		if (IS_DUALBUS(isp)) {
 			bus++;
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
 		}
-		ISP_UNLOCK(isp);
-	} else {
-		ISP_LOCK(isp);
-		isp_fc_runstate(isp, 2 * 1000000);
 		ISP_UNLOCK(isp);
 	}
 
@@ -165,28 +168,30 @@ isp_attach(struct ispsoftc *isp)
 	/*
 	 * And attach children (if any).
 	 */
-	config_found((void *)isp, &isp->isp_osinfo._chan, scsiprint);
+	config_found((void *)isp, &isp->isp_chanA, scsiprint);
 	if (IS_DUALBUS(isp)) {
-		config_found((void *)isp, &isp->isp_osinfo._chan_b, scsiprint);
+		config_found((void *)isp, &isp->isp_chanB, scsiprint);
 	}
 }
 
 /*
  * minphys our xfers
- *
- * Unfortunately, the buffer pointer describes the target device- not the
- * adapter device, so we can't use the pointer to find out what kind of
- * adapter we are and adjust accordingly.
  */
+
+static void
+ispminphys_1020(struct buf *bp)
+{
+	if (bp->b_bcount >= (1 << 24)) {
+		bp->b_bcount = (1 << 24);
+	}
+	minphys(bp);
+}
 
 static void
 ispminphys(struct buf *bp)
 {
-	/*
-	 * XX: Only the 1020 has a 24 bit limit.
-	 */
-	if (bp->b_bcount >= (1 << 24)) {
-		bp->b_bcount = (1 << 24);
+	if (bp->b_bcount >= (1 << 30)) {
+		bp->b_bcount = (1 << 30);
 	}
 	minphys(bp);
 }
@@ -196,16 +201,16 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 	struct proc *p)
 {
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
-	int s, retval = ENOTTY;
+	int retval = ENOTTY;
 	
 	switch (cmd) {
 	case SCBUSIORESET:
-		s = splbio();
+		ISP_LOCK(isp);
 		if (isp_control(isp, ISPCTL_RESET_BUS, &chan->chan_channel))
 			retval = EIO;
 		else
 			retval = 0;
-		(void) splx(s);
+		ISP_UNLOCK(isp);
 		break;
 	case ISP_SDBLEV:
 	{
@@ -272,69 +277,153 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 	return (retval);
 }
 
+static INLINE void
+ispcmd(struct ispsoftc *isp, XS_T *xs)
+{
+	ISP_LOCK(isp);
+	if (isp->isp_state < ISP_RUNSTATE) {
+		DISABLE_INTS(isp);
+		isp_init(isp);
+		if (isp->isp_state != ISP_INITSTATE) {
+			ENABLE_INTS(isp);
+			ISP_UNLOCK(isp);
+			XS_SETERR(xs, HBA_BOTCH);
+			scsipi_done(xs);
+			return;
+		}
+		isp->isp_state = ISP_RUNSTATE;
+		ENABLE_INTS(isp);
+	}
+	/*
+	 * Handle the case of a FC card where the FC thread hasn't
+	 * fired up yet and we have loop state to clean up. If we
+	 * can't clear things up and we've never seen loop up, bounce
+	 * the command.
+	 */
+	if (IS_FC(isp) && isp->isp_osinfo.threadwork &&
+	    isp->isp_osinfo.thread == 0) {
+		volatile u_int8_t ombi = isp->isp_osinfo.no_mbox_ints;
+		int delay_time;
+
+		if (xs->xs_control & XS_CTL_POLL) {
+			isp->isp_osinfo.no_mbox_ints = 1;
+		}
+
+		if (isp->isp_osinfo.loop_checked == 0) {
+			delay_time = 10 * 1000000;
+			isp->isp_osinfo.loop_checked = 1;
+		} else {
+			delay_time = 250000;
+		}
+
+		if (isp_fc_runstate(isp, delay_time) != 0) {
+			if (xs->xs_control & XS_CTL_POLL) {
+				isp->isp_osinfo.no_mbox_ints = ombi;
+			}
+			if (FCPARAM(isp)->loop_seen_once == 0) {
+				XS_SETERR(xs, HBA_SELTIMEOUT);
+				scsipi_done(xs);
+				ISP_UNLOCK(isp);
+				return;
+			}
+			/*
+			 * Otherwise, fall thru to be queued up for later.
+			 */
+		} else {
+			int wasblocked =
+			    (isp->isp_osinfo.blocked || isp->isp_osinfo.paused);
+			isp->isp_osinfo.threadwork = 0;
+			isp->isp_osinfo.blocked =
+			    isp->isp_osinfo.paused = 0;
+isp_prt(isp, ISP_LOGALL, "ispcmd, manual runstate, (freeze count %d)", isp->isp_chanA.chan_qfreeze);
+			if (wasblocked) {
+				scsipi_channel_thaw(&isp->isp_chanA, 1);
+			}
+		}
+		if (xs->xs_control & XS_CTL_POLL) {
+			isp->isp_osinfo.no_mbox_ints = ombi;
+		}
+	}
+
+	if (isp->isp_osinfo.paused) {
+		isp_prt(isp, ISP_LOGWARN, "I/O while paused");
+		xs->error = XS_RESOURCE_SHORTAGE;
+		scsipi_done(xs);
+		ISP_UNLOCK(isp);
+		return;
+	}
+	if (isp->isp_osinfo.blocked) {
+		isp_prt(isp, ISP_LOGWARN, "I/O while blocked");
+		xs->error = XS_REQUEUE;
+		scsipi_done(xs);
+		ISP_UNLOCK(isp);
+		return;
+	}
+
+	if (xs->xs_control & XS_CTL_POLL) {
+		volatile u_int8_t ombi = isp->isp_osinfo.no_mbox_ints;
+		isp->isp_osinfo.no_mbox_ints = 1;
+		isp_polled_cmd(isp, xs);
+		isp->isp_osinfo.no_mbox_ints = ombi;
+		ISP_UNLOCK(isp);
+		return;
+	}
+
+	switch (isp_start(xs)) {
+	case CMD_QUEUED:
+		if (xs->timeout) {
+			callout_reset(&xs->xs_callout, _XT(xs), isp_dog, xs);
+		}
+		break;
+	case CMD_EAGAIN:
+		isp->isp_osinfo.paused = 1;
+		xs->error = XS_RESOURCE_SHORTAGE;
+		scsipi_channel_freeze(&isp->isp_chanA, 1);
+		if (IS_DUALBUS(isp)) {
+			scsipi_channel_freeze(&isp->isp_chanB, 1);
+		}
+		scsipi_done(xs);
+		break;
+	case CMD_RQLATER:
+		/*
+		 * We can only get RQLATER from FC devices (1 channel only)
+		 *
+		 * Also, if we've never seen loop up, bounce the command
+		 * (somebody has booted with no FC cable connected)
+		 */
+		if (FCPARAM(isp)->loop_seen_once == 0) {
+			XS_SETERR(xs, HBA_SELTIMEOUT);
+			scsipi_done(xs);
+			break;
+		}
+		if (isp->isp_osinfo.blocked == 0) {
+			isp->isp_osinfo.blocked = 1;
+			scsipi_channel_freeze(&isp->isp_chanA, 1);
+isp_prt(isp, ISP_LOGALL, "ispcmd, RQLATER, (freeze count %d)", isp->isp_chanA.chan_qfreeze);
+		}
+		xs->error = XS_REQUEUE;
+		scsipi_done(xs);
+		break;
+	case CMD_COMPLETE:
+		scsipi_done(xs);
+		break;
+	}
+	ISP_UNLOCK(isp);
+}
 
 static void
 isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
-	struct scsipi_periph *periph;
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
-	XS_T *xs;
-	int s, result;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
-		xs = arg;
-		periph = xs->xs_periph;
-		s = splbio();
-		if (isp->isp_state < ISP_RUNSTATE) {
-			DISABLE_INTS(isp);
-			isp_init(isp);
-			if (isp->isp_state != ISP_INITSTATE) {
-				ENABLE_INTS(isp);
-				(void) splx(s);
-      			        XS_SETERR(xs, HBA_BOTCH);
-				scsipi_done(xs);
-				return;
-			}
-			isp->isp_state = ISP_RUNSTATE;
-			ENABLE_INTS(isp);
-		}
-
-		if (xs->xs_control & XS_CTL_POLL) {
-			volatile u_int8_t ombi = isp->isp_osinfo.no_mbox_ints;
-			isp->isp_osinfo.no_mbox_ints = 1;
-			isp_polled_cmd(isp, xs);
-			isp->isp_osinfo.no_mbox_ints = ombi;
-			(void) splx(s);
-			return;
-		}
-
-		result = isp_start(xs);
-		switch (result) {
-		case CMD_QUEUED:
-			if (xs->timeout) {
-				callout_reset(&xs->xs_callout, _XT(xs),
-				    isp_dog, xs);
-			}
-			break;
-		case CMD_EAGAIN:
-			xs->error = XS_REQUEUE;
-			scsipi_done(xs);
-			break;
-		case CMD_RQLATER:
-			xs->error = XS_RESOURCE_SHORTAGE;
-			scsipi_done(xs);
-			break;
-		case CMD_COMPLETE:
-			scsipi_done(xs);
-			break;
-		}
-		(void) splx(s);
-		return;
+		ispcmd(isp, (XS_T *) arg);
+		break;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
-		/* XXX Not supported. */
-		return;
+		/* Not supported. */
+		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 	if (IS_SCSI(isp)) {
@@ -349,12 +438,12 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 			dflags |= DPARM_WIDE;
 		if (xm->xm_mode & PERIPH_CAP_SYNC)
 			dflags |= DPARM_SYNC;
-		s = splbio();
+		ISP_LOCK(isp);
 		sdp->isp_devparam[xm->xm_target].dev_flags |= dflags;
 		dflags = sdp->isp_devparam[xm->xm_target].dev_flags;
 		sdp->isp_devparam[xm->xm_target].dev_update = 1;
 		isp->isp_update |= (1 << chan->chan_channel);
-		splx(s);
+		ISP_UNLOCK(isp);
 		isp_prt(isp, ISP_LOGDEBUG1,
 		    "ispioctl: device flags 0x%x for %d.%d.X",
 		    dflags, chan->chan_channel, xm->xm_target);
@@ -366,7 +455,7 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 }
 
 static void
-isp_polled_cmd( struct ispsoftc *isp, XS_T *xs)
+isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 {
 	int result;
 	int infinite = 0, mswait;
@@ -377,9 +466,12 @@ isp_polled_cmd( struct ispsoftc *isp, XS_T *xs)
 	case CMD_QUEUED:
 		break;
 	case CMD_RQLATER:
-	case CMD_EAGAIN:
 		if (XS_NOERR(xs)) {
 			xs->error = XS_REQUEUE;
+		}
+	case CMD_EAGAIN:
+		if (XS_NOERR(xs)) {
+			xs->error = XS_RESOURCE_SHORTAGE;
 		}
 		/* FALLTHROUGH */
 	case CMD_COMPLETE:
@@ -431,6 +523,20 @@ isp_done(XS_T *xs)
 			    "finished command on borrowed time");
 		}
 		XS_CMD_S_CLEAR(xs);
+		/*
+		 * Fixup- if we get a QFULL, we need
+		 * to set XS_BUSY as the error.
+		 */
+		if (xs->status == SCSI_QUEUE_FULL) {
+			xs->error = XS_BUSY;
+		}
+		if (isp->isp_osinfo.paused) {
+			isp->isp_osinfo.paused = 0;
+			scsipi_channel_timed_thaw(&isp->isp_chanA);
+			if (IS_DUALBUS(isp)) {
+				scsipi_channel_timed_thaw(&isp->isp_chanB);
+			}
+		}
 		scsipi_done(xs);
 	}
 }
@@ -526,6 +632,74 @@ isp_dog(void *arg)
 }
 
 /*
+ * Fibre Channel state cleanup thread
+ */
+static void
+isp_create_fc_worker(void *arg)
+{
+	struct ispsoftc *isp = arg;
+
+	if (kthread_create1(isp_fc_worker, isp, &isp->isp_osinfo.thread,
+	    "%s:fc_thrd", isp->isp_name)) {
+		isp_prt(isp, ISP_LOGERR, "unable to create FC worker thread");
+		panic("isp_create_fc_worker");
+	}
+
+}
+
+static void
+isp_fc_worker(void *arg)
+{
+	void scsipi_run_queue(struct scsipi_channel *);
+	struct ispsoftc *isp = arg;
+	
+	for (;;) {
+		int s;
+
+		/*
+		 * Note we do *not* use the ISP_LOCK/ISP_UNLOCK macros here.
+		 */
+		s = splbio();
+		while (isp->isp_osinfo.threadwork) {
+			isp->isp_osinfo.threadwork = 0;
+			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
+				break;
+			}
+			isp->isp_osinfo.threadwork = 1;
+			splx(s);
+			delay(500 * 1000);
+			s = splbio();
+		}
+		if (FCPARAM(isp)->isp_fwstate != FW_READY ||
+		    FCPARAM(isp)->isp_loopstate != LOOP_READY) {
+			isp_prt(isp, ISP_LOGINFO, "isp_fc_runstate in vain");
+			isp->isp_osinfo.threadwork = 1;
+			splx(s);
+			continue;
+		}
+
+		if (isp->isp_osinfo.blocked) {
+			isp->isp_osinfo.blocked = 0;
+			isp_prt(isp, /* ISP_LOGDEBUG0 */ ISP_LOGALL, "restarting queues (freeze count %d)", isp->isp_chanA.chan_qfreeze);
+			
+			scsipi_channel_thaw(&isp->isp_chanA, 1);
+		}
+
+		if (isp->isp_osinfo.thread == NULL)
+			break;
+
+		(void) tsleep(&isp->isp_osinfo.thread, PRIBIO, "fcclnup", 0);
+
+		splx(s);
+	}
+
+	/* In case parent is waiting for us to exit. */
+	wakeup(&isp->isp_osinfo.thread);
+
+	kthread_exit(0);
+}
+
+/*
  * Free any associated resources prior to decommissioning and
  * set the card to a known state (so it doesn't wake up and kick
  * us when we aren't expecting it to).
@@ -547,7 +721,7 @@ int
 isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 {
 	int bus, tgt;
-	int s = splbio();
+
 	switch (cmd) {
 	case ISPASYNC_NEW_TGT_PARAMS:
 	if (IS_SCSI(isp) && isp->isp_dblev) {
@@ -572,37 +746,61 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			xm.xm_mode |= PERIPH_CAP_WIDE16;
 		if (flags & DPARM_TQING)
 			xm.xm_mode |= PERIPH_CAP_TQING;
-		scsipi_async_event(
-		    bus ? (&isp->isp_osinfo._chan_b) : (&isp->isp_osinfo._chan),
-		    ASYNC_EVENT_XFER_MODE,
-		    &xm);
+		scsipi_async_event(bus? &isp->isp_chanB : &isp->isp_chanA,
+		    ASYNC_EVENT_XFER_MODE, &xm);
 		break;
 	}
 	case ISPASYNC_BUS_RESET:
-		if (arg)
-			bus = *((int *) arg);
-		else
-			bus = 0;
+		bus = *((int *) arg);
+		scsipi_async_event(bus? &isp->isp_chanB : &isp->isp_chanA,
+		    ASYNC_EVENT_RESET, NULL);
 		isp_prt(isp, ISP_LOGINFO, "SCSI bus %d reset detected", bus);
+		break;
+	case ISPASYNC_LIP:
+		/*
+		 * Don't do queue freezes or blockage until we have the
+		 * thread running that can unfreeze/unblock us.
+		 */
+		if (isp->isp_osinfo.blocked == 0)  {
+			if (isp->isp_osinfo.thread) {
+				isp->isp_osinfo.blocked = 1;
+				scsipi_channel_freeze(&isp->isp_chanA, 1);
+			}
+		}
+		isp_prt(isp, ISP_LOGINFO, "LIP Received");
+		break;
+	case ISPASYNC_LOOP_RESET:
+		/*
+		 * Don't do queue freezes or blockage until we have the
+		 * thread running that can unfreeze/unblock us.
+		 */
+		if (isp->isp_osinfo.blocked == 0) {
+			if (isp->isp_osinfo.thread) {
+				isp->isp_osinfo.blocked = 1;
+				scsipi_channel_freeze(&isp->isp_chanA, 1);
+			}
+		}
+		isp_prt(isp, ISP_LOGINFO, "Loop Reset Received");
 		break;
 	case ISPASYNC_LOOP_DOWN:
 		/*
-		 * Hopefully we get here in time to minimize the number
-		 * of commands we are firing off that are sure to die.
+		 * Don't do queue freezes or blockage until we have the
+		 * thread running that can unfreeze/unblock us.
 		 */
-		scsipi_channel_freeze(&isp->isp_osinfo._chan, 1);
-		if (IS_DUALBUS(isp))
-			scsipi_channel_freeze(&isp->isp_osinfo._chan_b, 1);
+		if (isp->isp_osinfo.blocked == 0) {
+			if (isp->isp_osinfo.thread) {
+				isp->isp_osinfo.blocked = 1;
+				scsipi_channel_freeze(&isp->isp_chanA, 1);
+			}
+		}
 		isp_prt(isp, ISP_LOGINFO, "Loop DOWN");
 		break;
         case ISPASYNC_LOOP_UP:
-		callout_reset(&isp->isp_osinfo._restart, 1,
-		    scsipi_channel_timed_thaw, &isp->isp_osinfo._chan);
-		if (IS_DUALBUS(isp)) {
-			callout_reset(&isp->isp_osinfo._restart, 1,
-			    scsipi_channel_timed_thaw,
-			    &isp->isp_osinfo._chan_b);
-		}
+		/*
+		 * Let the subsequent ISPASYNC_CHANGE_NOTIFY invoke
+		 * the FC worker thread. When the FC worker thread
+		 * is done, let *it* call scsipi_channel_thaw...
+		 */
 		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
 	case ISPASYNC_PROMENADE:
@@ -631,6 +829,30 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		} else if (arg == ISPASYNC_CHANGE_SNS) {
 			isp_prt(isp, ISP_LOGINFO,
 			    "Name Server Database Changed");
+		}
+
+		/*
+		 * We can set blocked here because we know it's now okay
+		 * to try and run isp_fc_runstate (in order to build loop
+		 * state). But we don't try and freeze the midlayer's queue
+		 * if we have no thread that we can wake to later unfreeze
+		 * it.
+		 */
+		if (isp->isp_osinfo.blocked == 0) {
+			isp->isp_osinfo.blocked = 1;
+			if (isp->isp_osinfo.thread) {
+				scsipi_channel_freeze(&isp->isp_chanA, 1);
+			}
+		}
+		/*
+		 * Note that we have work for the thread to do, and
+		 * if the thread is here already, wake it up.
+		 */
+		isp->isp_osinfo.threadwork++;
+		if (isp->isp_osinfo.thread) {
+			wakeup(&isp->isp_osinfo.thread);
+		} else {
+			isp_prt(isp, ISP_LOGDEBUG1, "no FC thread yet");
 		}
 		break;
 	case ISPASYNC_FABRIC_DEV:
@@ -750,7 +972,6 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 	default:
 		break;
 	}
-	(void) splx(s);
 	return (0);
 }
 
