@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 2003/04/26 11:05:20 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.73 2003/05/10 13:35:10 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -212,7 +212,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#if (NKSYMS || defined(DDB) || defined(LKM)) && defined(DB_ELF_SYMBOLS)
+#if (NKSYMS || defined(DDB) || defined(LKM))
 	extern void *ssym, *esym;
 #endif
 #ifndef	__arch64__
@@ -237,11 +237,7 @@ bootstrap(nctx)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #if NKSYMS || defined(DDB) || defined(LKM)
-#ifdef DB_ELF_SYMBOLS
 	ksyms_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
-#else
-	ksyms_init();
-#endif
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
