@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.28 2000/07/07 21:12:21 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.29 2000/07/10 13:54:54 mrg Exp $	*/
 
 /*
  *
@@ -72,8 +72,6 @@
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
