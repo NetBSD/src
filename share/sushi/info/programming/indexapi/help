@@ -1,4 +1,4 @@
-The index programing interface to Sushi consists of a flat ascii file, with
+The index programming interface to Sushi consists of a flat ascii file, with
 three fields.  The fields are whitespace separated.
 
 The first field, is the name of a subdirectory, which must exist.  No spaces
@@ -12,7 +12,7 @@ The final field is the description.  The description must be contained on one
 line, and can have embedded whitespace.  The description is limited to about
 70 characters, due to screen width.
 
-The special keywork "BLANK" can be used to insert a blank line in the menu.
+The special keyword "BLANK" can be used to insert a blank line in the menu.
 
 A simple index file is shown below:
 
@@ -20,4 +20,4 @@ test	test	This is a test menu
 BLANK	BLANK	BLANK
 more	more	Another test menu item
 
-$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $
+$NetBSD: help,v 1.2 2001/08/06 06:24:52 kei Exp $
