@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1995/01/25 04:48:19 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1995/02/05 04:57:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -437,19 +437,6 @@ cdev_decl(clock);
 	0 }
 
 cdev_decl(vnd);
-/* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vnd_init(c,n) { \
-	dev_init(c,n,open), \
-	(dev_type_close((*))) nullop, \
-	dev_init(c,n,read), \
-	dev_init(c,n,write), \
-	dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, \
-	0, \
-	seltrue, \
-	(dev_type_map((*))) enodev, \
-	0 }
 
 dev_type_open(fdopen);
 /* open */
@@ -551,7 +538,7 @@ struct cdevsw	cdevsw[] =
 /*	cdev_disk_init(NCH,ch),		 17: scsi changer device */
 	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
-	cdev_vnd_init(NVND,vnd),	/* 19: vnode disk */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
