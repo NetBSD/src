@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_ifattach.c,v 1.29 2000/04/27 15:39:05 itojun Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.53 2000/04/16 14:01:42 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.30 2000/05/05 08:03:12 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.56 2000/05/05 06:54:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -793,7 +793,7 @@ in6_ifdetach(ifp)
 	struct ifnet *ifp;
 {
 	struct in6_ifaddr *ia, *oia;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa, *next;
 	struct rtentry *rt;
 	short rtflags;
 	struct sockaddr_in6 sin6;
@@ -804,8 +804,21 @@ in6_ifdetach(ifp)
 	/* remove neighbor management table */
 	nd6_purge(ifp);
 
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
+	/* nuke any of IPv6 addresses we have */
+	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
 	{
+		next = ifa->ifa_list.tqe_next;
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		in6_purgeaddr(ifa, ifp);
+	}
+
+	/* undo everything done by in6_ifattach(), just in case */
+	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
+	{
+		next = ifa->ifa_list.tqe_next;
+
+
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
 			continue;
@@ -827,6 +840,7 @@ in6_ifdetach(ifp)
 
 		/* remove from the linked list */
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+		IFAFREE(&ia->ia_ifa);
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */
 		oia = ia;
@@ -844,11 +858,14 @@ in6_ifdetach(ifp)
 #endif
 		}
 
-		free(oia, M_IFADDR);
+		IFAFREE(&oia->ia_ifa);
 	}
 
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
+
+	/* remove neighbor management table */
+	nd6_purge(ifp);
 
 	/* remove route to link-local allnodes multicast (ff02::1) */
 	bzero(&sin6, sizeof(sin6));
