@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/06/17 18:56:02 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/07 01:27:14 thorpej Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -80,10 +80,6 @@ MAN8			= supservers.8
 AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
-.if exists(/usr/lib/libcrypt.a) && exists(${.CURDIR}/crypt/crypt.c) && !defined(EXPORTABLE_SYSTEM)
-USE_CRYPT		= yes
-.endif
-
 NETBSD_LIBS		= -lcrypt -lutil
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
@@ -101,10 +97,6 @@ LIBS			= ${EXTRALIBS} ${${i}_LIBS}
 .endfor
 
 all: ${PROGRAMS}
-.if defined(USE_CRYPT)
-	@echo "WARNING: You have built a NON-exportable version of sup because it uses crypt()!"
-	@echo "	To build a crypt-clean version define EXPORTABLE_SYSTEM=true and make."
-.endif
 
 sup: ${sup_OFILES} ${LIBS}
 	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${LIBS}
@@ -127,13 +119,9 @@ install: ${PROGRAMS}
 	install -c -m 444 -o bin -g bin ${MAN1} ${NETBSD_MAN1}
 	install -c -m 444 -o bin -g bin ${MAN8} ${NETBSD_MAN8}
 
-netcrypt.c: crypt.diffs
-.if defined(USE_CRYPT)
-	ed - crypt/crypt.c < crypt.diffs
-.else
+netcrypt.c:
 	@echo "[ Using netcryptvoid.c ]"
 	cp netcryptvoid.c netcrypt.c
-.endif
 
 scan.o:	sup.h
 scm.o:	sup.h
