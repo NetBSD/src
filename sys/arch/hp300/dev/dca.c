@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.28 1996/10/13 03:14:07 christos Exp $	*/
+/*	$NetBSD: dca.c,v 1.29 1996/10/14 07:14:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -242,6 +242,9 @@ dcaattach(hd)
 		}
 	}
 #endif
+
+	/* XXX Set the device class. */
+	hd->hp_dev.dv_class = DV_TTY;
 }
 
 /* ARGSUSED */

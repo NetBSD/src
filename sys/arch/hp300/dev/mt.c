@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.5 1996/10/13 03:14:18 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.6 1996/10/14 07:14:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -149,6 +149,9 @@ mtattach(hd)
 	sc->sc_dq.dq_unit = unit;
 	sc->sc_dq.dq_slave = slave;
 	sc->sc_dq.dq_driver = &mtdriver;
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_TAPE;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.24 1996/10/13 03:14:21 christos Exp $	*/
+/*	$NetBSD: rd.c,v 1.25 1996/10/14 07:14:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -274,6 +274,9 @@ rdattach(hd)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_DISK;
 }
 
 int

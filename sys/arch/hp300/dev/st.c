@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.17 1996/10/13 03:14:24 christos Exp $	*/
+/*	$NetBSD: st.c,v 1.18 1996/10/14 07:14:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -257,6 +257,9 @@ stattach(hd)
 	sc->sc_dq.dq_driver = &stdriver;
 	sc->sc_blkno = 0;
 	sc->sc_flags = STF_ALIVE;
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_TAPE;
 }
 
 int

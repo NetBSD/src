@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.17 1996/10/13 03:14:06 christos Exp $	*/
+/*	$NetBSD: ct.c,v 1.18 1996/10/14 07:14:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -167,6 +167,9 @@ ctattach(hd)
 	sc->sc_dq.dq_slave = hd->hp_slave;
 	sc->sc_dq.dq_driver = &ctdriver;
 	sc->sc_flags |= CTF_ALIVE;
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_TAPE;
 }
 
 int

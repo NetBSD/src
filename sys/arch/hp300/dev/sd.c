@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.26 1996/10/13 03:14:23 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.27 1996/10/14 07:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -366,6 +366,9 @@ sdattach(hd)
 	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_flags |= SDF_ALIVE;
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_DISK;
 }
 
 void
