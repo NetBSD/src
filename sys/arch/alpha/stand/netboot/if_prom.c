@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.13 1999/05/26 06:22:04 cgd Exp $ */
+/* $NetBSD: if_prom.c,v 1.14 1999/11/12 13:11:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,6 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 #include <machine/prom.h>
-#include <lib/libkern/libkern.h>
 
 #include "stand/common/common.h"
 #include "stand/common/bbinfo.h"
