@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.85 2001/12/28 01:32:40 lukem Exp $
+#	$NetBSD: bsd.README,v 1.86 2001/12/31 23:11:05 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -77,9 +77,21 @@ UNPRIVED	If defined, don't set the owner/group/mode when installing
 		the owner/group/mode should be.  This allows a
 		non-root "make install".
 
+MKBFD		If "no", don't build libbfd, libiberty, or any of
+		the things that depend on them (binutils/gas/ld,
+		gdb, dbsym, mdsetimage).  Only meaningful if
+		USE_NEW_TOOLCHAIN is set.
+
 MKCATPAGES	If "no", don't build or install the catman pages.
 
 MKDOC		If "no", don't build or install the documentation.
+
+MKGDB		If "no", don't build gdb.  Only meaningful if
+		USE_NEW_TOOLCHAIN is set.
+
+MKGCC		If "no", don't build gcc or any of the gcc-related
+		libraries (libg2c, libgcc, libobjc, libstdc++).
+		Only meaningful if USE_NEW_TOOLCHAIN is set.
 
 MKINFO		If "no", don't build or install Info documentation from
 		Texinfo source files.
