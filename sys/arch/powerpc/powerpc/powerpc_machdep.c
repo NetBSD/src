@@ -1,3 +1,5 @@
+/*	$NetBSD: powerpc_machdep.c,v 1.3 2001/04/03 13:10:26 jdolecek Exp $	*/
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.2 2001/02/24 22:39:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.3 2001/04/03 13:10:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
