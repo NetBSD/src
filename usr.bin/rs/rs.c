@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.6 2000/10/11 14:46:18 is Exp $	*/
+/*	$NetBSD: rs.c,v 1.7 2001/10/24 17:27:18 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.6 2000/10/11 14:46:18 is Exp $");
+__RCSID("$NetBSD: rs.c,v 1.7 2001/10/24 17:27:18 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,7 @@ prepfile()
 				colwidths[i] = max + gutter;
 			}
 		else
-			for (i = 0; i < ocols; i++) {
+			for (ep = elem, i = 0; i < ocols; i++) {
 				for (j = i; j < nelem; j += ocols)
 					if ((n = strlen(ep[j])) > max)
 						max = n;
