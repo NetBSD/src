@@ -66,7 +66,7 @@ hash_insn_array (cd, insns, count, entsize, htable, hentbuf)
      CGEN_CPU_DESC cd;
      const CGEN_INSN *insns;
      int count;
-     int entsize;
+     int entsize ATTRIBUTE_UNUSED;
      CGEN_INSN_LIST **htable;
      CGEN_INSN_LIST *hentbuf;
 {
@@ -198,7 +198,7 @@ cgen_asm_lookup_insn (cd, insn)
 
 const char *
 cgen_parse_keyword (cd, strp, keyword_table, valuep)
-     CGEN_CPU_DESC cd;
+     CGEN_CPU_DESC cd ATTRIBUTE_UNUSED;
      const char **strp;
      CGEN_KEYWORD *keyword_table;
      long *valuep;

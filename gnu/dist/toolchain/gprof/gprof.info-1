@@ -9,18 +9,12 @@ END-INFO-DIR-ENTRY
    Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
 Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: gprof.info,  Node: Top,  Next: Introduction,  Up: (dir)
@@ -32,6 +26,10 @@ Profiling a Program: Where Does It Spend Its Time?
 it to determine which parts of a program are taking most of the
 execution time.  We assume that you know how to write, compile, and
 execute programs.  GNU `gprof' was written by Jay Fenlason.
+
+   This document is distributed under the terms of the GNU Free
+Documentation License.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 * Menu:
 
@@ -47,6 +45,7 @@ execute programs.  GNU `gprof' was written by Jay Fenlason.
 * How do I?::           Answers to common questions
 * Incompatibilities::   (between GNU `gprof' and Unix `gprof'.)
 * Details::             Details of how profiling is done
+* GNU Free Documentation License::  GNU Free Documentation License
 
 
 File: gprof.info,  Node: Introduction,  Next: Compiling,  Prev: Top,  Up: Top
@@ -408,11 +407,14 @@ which prints a flat profile and call graph analysis for all functions.
      annotated by repeating the annotation for the first line.  This
      behavior is similar to `tcov''s `-a'.
 
-`--demangle'
+`--demangle[=STYLE]'
 `--no-demangle'
      These options control whether C++ symbol names should be demangled
      when printing output.  The default is to demangle symbols.  The
      `--no-demangle' option may be used to turn off demangling.
+     Different compilers have different mangling styles.  The optional
+     demangling style argument can be used to choose an appropriate
+     demangling style for your compiler.
 
 
 File: gprof.info,  Node: Analysis Options,  Next: Miscellaneous Options,  Prev: Output Options,  Up: Invoking

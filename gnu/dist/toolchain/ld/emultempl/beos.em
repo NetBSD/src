@@ -2,7 +2,7 @@
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright 1995, 96, 97, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1995, 96, 97, 98, 99, 2000 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,11 +35,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "ldgram.h"
 #include "ldexp.h"
 #include "ldlang.h"
+#include "ldfile.h"
 #include "ldemul.h"
 #include "ldlex.h"
 #include "ldmisc.h"
 #include "ldctor.h"
-#include "ldfile.h"
 #include "coff/internal.h"
 #include "../bfd/libcoff.h"
 
