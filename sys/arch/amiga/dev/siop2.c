@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.3 1999/03/13 21:30:55 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.4 1999/03/13 22:43:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -174,6 +174,13 @@ void siopng_dump_trace __P((void));
 #define SIOP_TRACE(a,b,c,d)
 #endif
 
+
+static char *siopng_chips[] = {
+	"720", "720SE", "770", "0x3",
+	"0x4", "0x5", "0x6", "0x7",
+	"0x8", "0x9", "0xA", "0xB",
+	"0xC", "0xD", "0xE", "0xF",
+};
 
 /*
  * default minphys routine for siopng based controllers
@@ -672,7 +679,10 @@ siopngreset(sc)
 		for (i = 0; i < 16; ++i)
 			siopng_allow_disc[i] = 0;
 	}
-	printf("siopng id %d reset V%d\n", sc->sc_link.scsipi_scsi.adapter_target,
+
+	printf("siopng type %s id %d reset V%d\n",
+	    siopng_chips[rp->siop_macntl>>4],
+	    sc->sc_link.scsipi_scsi.adapter_target,
 	    rp->siop_ctest3 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {
