@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpd.8,v 1.6 2001/12/26 15:10:57 mason Exp $
+.\"	$NetBSD: ntpd.8,v 1.7 2001/12/26 15:13:57 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -35,7 +35,7 @@ RFC-1119, respectively.
 does most computations in 64-bit
 floating point arithmetic and does relatively clumsy 64-bit fixed point
 operations only when necessary to preserve the ultimate precision,
-about 232 picoseconds. While the ultimate precision, is not achievable
+about 232 picoseconds. While the ultimate precision is not achievable
 with ordinary workstations and networks of today, it may be required
 with future nanosecond CPU clocks and gigabit LANs.
 .Pp
@@ -234,7 +234,7 @@ the default name of the key file
 .Sh BUGS
 .Nm
 has gotten rather fat. While not huge, it has gotten
-larger than might be desireable for an elevated-priority daemon running
+larger than might be desirable for an elevated-priority daemon running
 on a workstation, particularly since many of the fancy features which
 consume the space were designed more with a busy primary server, rather
 than a high stratum workstation, in mind.
