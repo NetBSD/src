@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.13 2002/04/09 20:47:24 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.13 2002/04/09 20:47:24 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.12 2002/03/30 11:15:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.13 2002/04/09 20:47:24 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -222,7 +222,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 	
 	s = splnet();
 
-	NDBGL1(L1_PRIM, "bri %d, status=%d, parm=%d", l2sc->bri, status, parm);
+	NDBGL2(L2_PRIM, "bri %d, status=%d, parm=%d", l2sc->bri, status, parm);
 
 	switch(status)
 	{
