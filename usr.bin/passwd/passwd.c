@@ -148,7 +148,7 @@ main(argc, argv)
 #endif
 #ifdef	YP
         if (force_yp || ((status = local_passwd(uname)) && use_yp))
-		exit(nis_passwd(uname));
+		exit(yp_passwd(uname));
         exit(status);
 #endif
 	exit(local_passwd(uname));
