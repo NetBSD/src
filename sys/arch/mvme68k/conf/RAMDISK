@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.8 2001/06/10 14:40:47 scw Exp $
+#	$NetBSD: RAMDISK,v 1.9 2001/07/03 17:36:01 scw Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -68,7 +68,7 @@ wdsc0		at pcc? ipl 2
 pcctwo0		at mainbus0
 clock0		at pcctwo? ipl 5
 ie0		at pcctwo? ipl 3
-siop0		at pcctwo? ipl 2
+osiop0		at pcctwo? ipl 2
 
 # MVME162/MVME172 specific devices
 zsc*		at pcctwo? ipl 4
@@ -80,7 +80,7 @@ clmpcc0		at pcctwo? ipl 4
 zstty*		at zsc? channel ?
 
 scsibus*	at wdsc?
-scsibus*	at siop?
+scsibus*	at osiop?
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
 cd*		at scsibus? target ? lun ?
