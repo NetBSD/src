@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.127 2002/09/12 18:22:23 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.128 2002/09/25 21:25:39 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
+#include <sys/extent.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/time.h>
@@ -108,8 +108,15 @@ int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;
 
-#define	IOMAPSZ	100
-static	struct map iomap[IOMAPSZ];
+/*
+ * Extent map to manage I/O register space.  We allocate storage for
+ * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
+ * safe to use malloc() to dynamically allocate region descriptors in
+ * case we run out.
+ */
+static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
+static struct extent *iomap_ex;
+static int iomap_ex_malloc_safe;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -241,6 +248,8 @@ cpu_startup()
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	iomap_ex_malloc_safe = 1;
 }
 
 u_int32_t dumpmag = 0x8fca0101;
@@ -297,11 +306,20 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	extern vaddr_t iospace;
+
 	/*
-	 * Init I/O memory resource map. Must be done before cninit()
+	 * Init I/O memory extent map. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
+	 *
+	 * NOTE: We need to reserve the first vax-page of iospace
+	 * for the console routines.
 	 */
-	rminit(iomap, IOSPSZ, (long)1, "iomap", IOMAPSZ);
+	KASSERT(iospace != 0);
+	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
+	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
+	    (caddr_t) iomap_ex_storage, sizeof(iomap_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
@@ -797,9 +815,8 @@ vax_map_physmem(phys, size)
 	paddr_t phys;
 	int size;
 {
-	extern vaddr_t iospace;
 	vaddr_t addr;
-	int pageno;
+	int error;
 	static int warned = 0;
 
 #ifdef DEBUG
@@ -811,13 +828,14 @@ vax_map_physmem(phys, size)
 		if (addr == 0)
 			panic("vax_map_physmem: kernel map full");
 	} else {
-		pageno = rmalloc(iomap, size);
-		if (pageno == 0) {
+		error = extent_alloc(iomap_ex, size * VAX_NBPG, VAX_NBPG, 0,
+		    EX_FAST | EX_NOWAIT |
+		    (iomap_ex_malloc_safe ? EX_MALLOCOK : 0), &addr);
+		if (error) {
 			if (warned++ == 0) /* Warn only once */
 				printf("vax_map_physmem: iomap too small");
 			return 0;
 		}
-		addr = iospace + (pageno * VAX_NBPG);
 	}
 	ioaccess(addr, phys, size);
 #ifdef PHYSMEMDEBUG
@@ -835,17 +853,19 @@ vax_unmap_physmem(addr, size)
 	vaddr_t addr;
 	int size;
 {
-	extern vaddr_t iospace;
-	int pageno = (addr - iospace) / VAX_NBPG;
 #ifdef PHYSMEMDEBUG
 	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
 	    size, addr);
 #endif
+	addr &= ~VAX_PGOFSET;
 	iounaccess(addr, size);
 	if (size >= LTOHPN)
 		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
-	else
-		rmfree(iomap, size, pageno);
+	else if (extent_free(iomap_ex, addr, size * VAX_NBPG,
+			     EX_NOWAIT |
+			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
+		printf("vax_unmap_physmem: addr 0x%lx size %dvpg: "
+		    "can't free region\n", addr, size);
 }
 
 void *
