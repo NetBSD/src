@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 2002/08/31 22:21:39 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 2002/09/01 09:00:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -724,7 +724,7 @@ static const struct format_mnd0 format_mnd0[][16] = {
 	{"trapa",	FMT_MND0_OP_R, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
 	{"synci",	FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
 	{"rte",		FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
-	{NULL,		0},
+	{"illegal",	FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
 	{"brk",		FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
 	{"synco",	FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
 	{"sleep",	FMT_MND0_OP_NONE, FMT_MND0_OP_NONE, FMT_MND0_OP_NONE},
@@ -1099,7 +1099,11 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 	} else
 		op = *((opcode_t *)loc);
 
-	if ((fp = major_format_funcs[SH5_OPCODE_FORMAT(op)]) != NULL)
+	/*
+	 * The lowest 4 bits must be zero
+	 */
+	if ((op & 0xf) == 0 &&
+	    (fp = major_format_funcs[SH5_OPCODE_FORMAT(op)]) != NULL)
 		mnemonic = (fp)(op, loc, oper1, oper2, oper3);
 	else
 		mnemonic = NULL;
