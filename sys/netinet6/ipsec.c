@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.32 2001/01/24 09:04:17 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.87 2001/01/23 08:59:38 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.33 2001/02/08 15:04:26 itojun Exp $	*/
+/*	$KAME: ipsec.c,v 1.90 2001/02/05 08:21:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1577,6 +1577,8 @@ ipsec_in_reject(sp, m)
 	need_conf = 0;
 	need_icv = 0;
 
+	/* XXX should compare policy against ipsec header history */
+
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 
 		/* get current level */
@@ -2411,9 +2413,6 @@ ipsec4_output(state, sp, flags)
 	struct secasindex saidx;
 	int s;
 	int error;
-#ifdef IPSEC_SRCSEL
-	struct in_ifaddr *ia;
-#endif
 	struct sockaddr_in *dst4;
 	struct sockaddr_in *sin;
 
@@ -2555,19 +2554,11 @@ ipsec4_output(state, sp, flags)
 				goto bad;
 			}
 
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec4_encapsulate().
-			 */
-			ia = (struct in_ifaddr *)(state->ro->ro_rt->rt_ifa);
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
-			ip->ip_src = IA_SIN(ia)->sin_addr;
-#endif
 		} else
 			splx(s);
 
@@ -2712,6 +2703,18 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 			 */
 			ipsec6stat.out_nosa++;
 			error = ENOENT;
+
+			/*
+			 * Notify the fact that the packet is discarded
+			 * to ourselves. I believe this is better than
+			 * just silently discarding. (jinmei@kame.net)
+			 * XXX: should we restrict the error to TCP packets?
+			 * XXX: should we directly notify sockets via
+			 *      pfctlinputs?
+			 */
+			icmp6_error(state->m, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_ADMIN, 0);
+			state->m = NULL; /* icmp6_error freed the mbuf */
 			goto bad;
 		}
 
@@ -2802,9 +2805,6 @@ ipsec6_output_tunnel(state, sp, flags)
 	struct secasindex saidx;
 	int error = 0;
 	int plen;
-#ifdef IPSEC_SRCSEL
-	struct in6_addr *ia6;
-#endif
 	struct sockaddr_in6* dst6;
 	int s;
 
@@ -2924,28 +2924,12 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EHOSTUNREACH;
 				goto bad;
 			}
-#if 0	/* XXX Is the following need ? */
+
+			/* adjust state->dst if tunnel endpoint is offlink */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst6 = (struct sockaddr_in6 *)state->dst;
 			}
-#endif
-#ifdef IPSEC_SRCSEL
-			/*
-			 * Which address in SA or in routing table should I
-			 * select from ?  But I had set from SA at
-			 * ipsec6_encapsulate().
-			 */
-			ia6 = in6_selectsrc(dst6, NULL, NULL,
-					    (struct route_in6 *)state->ro,
-					    NULL, &error);
-			if (ia6 == NULL) {
-				ip6stat.ip6s_noroute++;
-				ipsec6stat.out_noroute++;
-				goto bad;
-			}
-			ip6->ip6_src = *ia6;
-#endif
 		} else
 			splx(s);
 
@@ -3216,7 +3200,7 @@ ipsec_copypkt(m)
 				 */
 				remain = n->m_len;
 				copied = 0;
-				while(1) {
+				while (1) {
 					int len;
 					struct mbuf *mn;
 
