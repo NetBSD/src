@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.69 2000/10/02 03:57:53 sato Exp $
+# 	$NetBSD: GENERIC,v 1.70 2000/10/03 03:13:04 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	8
 
@@ -103,8 +103,8 @@ hpcapm0	at mainbus0			# power management
 apmdev0	at hpcapm0			# APM
 
 vrip*	at mainbus0
-vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrbcu*	at vrip? addr 0x0b000000 size 0x20
+vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
@@ -115,6 +115,7 @@ vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
+vrled*  at vrip? addr 0x0b000240 size 0x10 intr 17
 
 mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
 hpcfb*		at	mqvideo?
