@@ -171,17 +171,18 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 {
 	struct stat st;
 
-	kd->vmfd = -1;
+	kd->db = 0;
 	kd->pmfd = -1;
+	kd->vmfd = -1;
 	kd->swfd = -1;
 	kd->nlfd = -1;
-	kd->vmst = 0;
-	kd->db = 0;
 	kd->procbase = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
 	kd->argv = 0;
+	kd->vmst = 0;
+	kd->vm_page_buckets = 0;
 
 	if (uf == 0)
 		uf = _PATH_UNIX;

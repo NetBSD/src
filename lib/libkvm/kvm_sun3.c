@@ -103,20 +103,6 @@ _kvm_initvtop(kd)
 #define VA_OFF(va) (va & (NBPG - 1))
 
 /*
- * Translate a user virtual address to a physical address.
- */
-int
-_kvm_uvatop(kd, p, va, pa)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long va;
-	u_long *pa;
-{
-	_kvm_err(kd, 0, "_kvm_uvatop: not supported");
-	return (0);
-}
-
-/*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
  * the number of bytes that are contiguously available from this 

@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_m68k.c,v 1.2 1994/09/18 03:32:51 mycroft Exp $";
+static char *rcsid = "$Id: kvm_m68k.c,v 1.3 1995/01/09 08:59:28 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -238,52 +238,4 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	return (_kvm_vatop(kd, (u_long)kd->vmst->Sysseg, va, pa));
-}
-
-/*
- * Translate a user virtual address to a physical address.
- */
-int
-_kvm_uvatop(kd, p, va, pa)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long va;
-	u_long *pa;
-{
-	register struct vmspace *vms = p->p_vmspace;
-	int kva;
-
-	/*
-	 * If this is a live kernel we just look it up in the kernel
-	 * virtually allocated flat 4mb page table (i.e. let the kernel
-	 * do the table walk).  In this way, we avoid needing to know
-	 * the MMU type.
-	 */
-	if (ISALIVE(kd)) {
-		pt_entry_t *ptab;
-		int pte, offset;
-
-		kva = (int)&vms->vm_pmap.pm_ptab;
-		if (KREAD(kd, kva, &ptab)) {
-			_kvm_err(kd, 0, "invalid address (%x)", va);
-			return (0);
-		}
-		kva = (int)&ptab[btop(va)];
-		if (KREAD(kd, kva, &pte) || (pte & PG_V) == 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", va);
-			return (0);
-		}
-		offset = va & PGOFSET;
-		*pa = (pte & PG_FRAME) | offset;
-		return (NBPG - offset);
-	}
-	/*
-	 * Otherwise, we just walk the table ourself.
-	 */
-	kva = (int)&vms->vm_pmap.pm_stab;
-	if (KREAD(kd, kva, &kva)) {
-		_kvm_err(kd, 0, "invalid address (%x)", va);
-		return (0);
-	}
-	return (_kvm_vatop(kd, kva, va, pa));
 }

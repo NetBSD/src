@@ -66,6 +66,12 @@ struct __kvm {
 	 * only allocate it if necessary.
 	 */
 	struct vmstate *vmst;
+	/*
+	 * These kernel variables are used for looking up user addresses,
+	 * and are cached for efficiency.
+	 */
+	struct pglist *vm_page_buckets;
+	int vm_page_hash_mask;
 };
 
 /*
@@ -80,4 +86,3 @@ void	*_kvm_malloc __P((kvm_t *kd, size_t));
 void	*_kvm_realloc __P((kvm_t *kd, void *, size_t));
 void	 _kvm_syserr
 	    __P((kvm_t *kd, const char *program, const char *fmt, ...));
-int	 _kvm_uvatop __P((kvm_t *, const struct proc *, u_long, u_long *));
