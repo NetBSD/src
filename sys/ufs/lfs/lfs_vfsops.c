@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.1 2003/07/02 15:27:25 darrenr Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.2 2003/08/19 19:53:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.1 2003/07/02 15:27:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.2 2003/08/19 19:53:50 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -431,7 +431,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
 	return set_statfs_info(path, UIO_USERSPACE, args.fspec,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 }
 
 /*
@@ -1691,7 +1691,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp, struct lwp *l)
 			return ESTALE;
 	}
 
-	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp));
+	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp, l));
 }
 
 /*
