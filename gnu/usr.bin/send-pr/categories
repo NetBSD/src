@@ -3,6 +3,7 @@ misc
 lib
 bin
 port-amiga
+port-atari
 port-hp300
 port-i386
 port-m68k
