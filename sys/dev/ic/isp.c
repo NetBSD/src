@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.83 2001/10/23 16:24:33 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.84 2001/10/23 23:21:00 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -2799,7 +2799,7 @@ isp_start(XS_T *xs)
 		reqp->req_time = 5;
 	}
 	if (isp_save_xs(isp, xs, &handle)) {
-		isp_prt(isp, ISP_LOGDEBUG1, "out of xflist pointers");
+		isp_prt(isp, ISP_LOGDEBUG0, "out of xflist pointers");
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_EAGAIN);
 	}
@@ -3311,6 +3311,11 @@ isp_intr(struct ispsoftc *isp, u_int16_t isr, u_int16_t sema, u_int16_t mbox)
 				*XS_STSP(xs) = SCSI_QFULL;
 				XS_SETERR(xs, HBA_NOERROR);
 			} else if (XS_NOERR(xs)) {
+				/*
+				 * ????
+				 */
+				isp_prt(isp, ISP_LOGDEBUG0,
+				    "Request Queue Entry bounced back");
 				XS_SETERR(xs, HBA_BOTCH);
 			}
 			XS_RESID(xs) = XS_XFRLEN(xs);
@@ -3930,18 +3935,30 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 		break;
 
 	case RQCS_QUEUE_FULL:
-		isp_prt(isp, ISP_LOGDEBUG1,
+		isp_prt(isp, ISP_LOGDEBUG0,
 		    "internal queues full for %d.%d.%d status 0x%x", XS_TGT(xs),
 		    XS_LUN(xs), XS_CHANNEL(xs), *XS_STSP(xs));
+
 		/*
 		 * If QFULL or some other status byte is set, then this
 		 * isn't an error, per se.
-		 */
+		 *
+		 * Unfortunately, some QLogic f/w writers have, in
+		 * some cases, ommitted to *set* status to QFULL.
+		 *
+
 		if (*XS_STSP(xs) != SCSI_GOOD && XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_NOERROR);
 			return;
 		}
-		break;
+
+		 *
+		 *
+		 */
+
+		*XS_STSP(xs) = SCSI_QFULL;
+		XS_SETERR(xs, HBA_NOERROR);
+		return;
 
 	case RQCS_PHASE_SKIPPED:
 		isp_prt(isp, ISP_LOGERR, pskip, XS_CHANNEL(xs),
