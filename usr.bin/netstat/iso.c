@@ -32,13 +32,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)iso.c	5.6 (Berkeley) 4/27/91";
+/* from: static char sccsid[] = "@(#)iso.c	5.6 (Berkeley) 4/27/91"; */
+static char rcsid = "$Id: iso.c,v 1.2 1993/05/20 10:40:48 cgd Exp $";
 #endif /* not lint */
 
-/*
- * $Header: /cvsroot/src/usr.bin/netstat/Attic/iso.c,v 1.1 1993/03/21 18:04:42 cgd Exp $
- * $Source: /cvsroot/src/usr.bin/netstat/Attic/iso.c,v $
- */
 /*******************************************************************************
 	          Copyright IBM Corporation 1987
 
@@ -67,6 +64,7 @@ SOFTWARE.
  */
 
 #include <sys/param.h>
+#include <sys/select.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/domain.h>
