@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.2 2001/12/02 16:29:25 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.3 2001/12/02 20:06:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -274,18 +274,6 @@ irframepoll(dev_t dev, int events, struct proc *p)
 		return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
 	else
 		return (0);
-}
-
-void
-irframe_frame_available(struct device *dev)
-{
-	struct irframe_softc *sc = (struct irframe_softc *)dev;
-	int s;
-
-	s = splir();
-	sc->sc_rdframes++;
-	selwakeup(&sc->sc_rdsel);
-	splx(s);
 }
 
 /*********/
