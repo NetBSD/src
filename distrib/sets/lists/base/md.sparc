@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.50 2000/06/20 01:28:37 minoura Exp $
+# $NetBSD: md.sparc,v 1.51 2000/09/04 16:29:49 abs Exp $
 ./dev/apm
 ./sbin/edlabel
 ./usr/bin/fdformat
@@ -21,6 +21,7 @@
 ./usr/mdec/boot
 ./usr/mdec/boot.200000
 ./usr/mdec/boot.300000
+./usr/mdec/boot.3E0000
 ./usr/mdec/boot.400000
 ./usr/mdec/boot.700000
 ./usr/mdec/boot.net
