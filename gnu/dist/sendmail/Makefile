@@ -1,4 +1,5 @@
 #       Id: Makefile.dist,v 8.15 2001/08/23 20:44:39 ca Exp
+#       $NetBSD: Makefile,v 1.4 2003/06/01 14:06:40 atatat Exp $
 
 SHELL= /bin/sh
 SUBDIRS= libsm libsmutil libsmdb sendmail editmap mail.local \

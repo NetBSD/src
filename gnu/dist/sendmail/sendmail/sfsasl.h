@@ -1,3 +1,4 @@
+/* $NetBSD: sfsasl.h,v 1.5 2003/06/01 14:07:08 atatat Exp $ */
 /*
  * Copyright (c) 1999, 2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

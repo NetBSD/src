@@ -24,6 +24,7 @@ POPDIVERT
 ####################################
 
 VERSIONID(`Id: pop.m4,v 8.22 2001/11/12 23:11:34 ca Exp')
+VERSIONID(`$NetBSD: pop.m4,v 1.4 2003/06/01 14:06:49 atatat Exp $')
 
 Mpop,		P=POP_MAILER_PATH, F=_MODMF_(CONCAT(`lsDFMq', POP_MAILER_FLAGS), `POP'), S=EnvFromL, R=EnvToL/HdrToL,
 		T=DNS/RFC822/X-Unix,_POP_QGRP

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: dgux.m4,v 8.14 1999/04/12 17:34:37 ca Exp')
+VERSIONID(`$NetBSD: dgux.m4,v 1.3 2003/06/01 14:06:50 atatat Exp $')
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `m9')dnl
 define(`confTIME_ZONE', `USE_TZ')dnl
 define(`confEBINDIR', `/usr/lib')dnl

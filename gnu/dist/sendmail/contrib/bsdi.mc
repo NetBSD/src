@@ -36,6 +36,7 @@ and examples describing most of the common things people need to setup.
 #
 include(`../m4/cf.m4')
 VERSIONID(`@(#)Id: bsdi.mc,v 8.1 1999/02/06 18:44:08 gshapiro Exp')
+VERSIONID(`@(#)$NetBSD: bsdi.mc,v 1.3 2003/06/01 14:06:52 atatat Exp $')
 
 dnl # Specify your OS type below
 OSTYPE(`bsd4.4')

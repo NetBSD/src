@@ -1,3 +1,9 @@
+/* $NetBSD: udb.c,v 1.6 2003/06/01 14:07:09 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: udb.c,v 1.6 2003/06/01 14:07:09 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

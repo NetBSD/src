@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: amdahl-uts.m4,v 8.16 1999/04/24 05:37:40 gshapiro Exp')
+VERSIONID(`$NetBSD: amdahl-uts.m4,v 1.3 2003/06/01 14:06:49 atatat Exp $')
 divert(-1)
 
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `fSn9')

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: linux.m4,v 8.13 2000/09/17 17:30:00 gshapiro Exp')
+VERSIONID(`$NetBSD: linux.m4,v 1.6 2003/06/01 14:06:50 atatat Exp $')
 define(`confEBINDIR', `/usr/sbin')
 ifdef(`PROCMAIL_MAILER_PATH',,
 	define(`PROCMAIL_MAILER_PATH', `/usr/bin/procmail'))

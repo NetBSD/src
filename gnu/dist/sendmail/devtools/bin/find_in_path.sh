@@ -1,6 +1,7 @@
 #! /bin/sh
 #
 # Id: find_in_path.sh,v 8.2 1999/09/23 20:42:22 gshapiro Exp
+# $NetBSD: find_in_path.sh,v 1.3 2003/06/01 14:06:56 atatat Exp $
 #
 EX_OK=0
 EX_NOT_FOUND=1

@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: no_default_msa.m4,v 8.2 2001/02/14 05:03:22 gshapiro Exp')
+VERSIONID(`$NetBSD: no_default_msa.m4,v 1.5 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 define(`_NO_MSA_', `1')

@@ -1,3 +1,4 @@
+/* $NetBSD: milter.h,v 1.8 2003/06/01 14:06:58 atatat Exp $ */
 /*
  * Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

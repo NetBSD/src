@@ -23,6 +23,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: ucbvax.mc,v 8.14 1999/02/07 07:26:05 gshapiro Exp')
+VERSIONID(`$NetBSD: ucbvax.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(bsd4.3)
 DOMAIN(CS.Berkeley.EDU)
 MASQUERADE_AS(CS.Berkeley.EDU)

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: genericstable.m4,v 8.21 2001/03/16 00:51:26 gshapiro Exp')
+VERSIONID(`$NetBSD: genericstable.m4,v 1.4 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 define(`_GENERICS_TABLE_', `')

@@ -1,3 +1,9 @@
+/* $NetBSD: handler.c,v 1.6 2003/06/01 14:07:00 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: handler.c,v 1.6 2003/06/01 14:07:00 atatat Exp $");
+#endif
+
 /*
  *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

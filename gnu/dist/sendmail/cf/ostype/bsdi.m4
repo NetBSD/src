@@ -14,4 +14,5 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: bsdi.m4,v 8.1 1999/11/19 05:18:13 gshapiro Exp')
+VERSIONID(`$NetBSD: bsdi.m4,v 1.3 2003/06/01 14:06:49 atatat Exp $')
 include(_CF_DIR_`'ostype/bsd4.4.m4)dnl

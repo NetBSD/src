@@ -16,8 +16,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by ca@wiz.smi.sendmail.com on Tue Feb 11 11:23:20 PST 2003
-##### in /extra/home/ca/sm-8.12.8/OpenSource/sendmail-8.12.8/cf/cf
+##### built by ca@wiz.smi.sendmail.com on Sat Mar 29 06:04:50 PST 2003
+##### in /extra/home/ca/sm-8.12.9/OpenSource/sendmail-8.12.9/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -27,7 +27,7 @@
 ######################################################################
 ######################################################################
 
-#####  Id: cfhead.m4,v 8.108.2.1 2002/08/27 20:19:08 gshapiro Exp  #####
+#####  Id: cfhead.m4,v 8.108.2.2 2003/03/11 21:24:20 ca Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
 #####  Id: generic-hpux9.mc,v 8.11 1999/02/07 07:26:02 gshapiro Exp  #####
 
@@ -42,7 +42,7 @@
 
 
 
-#####  Id: proto.m4,v 8.649.2.14 2002/12/30 15:46:02 ca Exp  #####
+#####  Id: proto.m4,v 8.649.2.17 2003/03/28 17:20:53 ca Exp  #####
 
 # level 10 config file format
 V10/Berkeley
@@ -122,7 +122,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.12.8
+DZ8.12.9
 
 
 ###############
@@ -295,10 +295,12 @@ O Timeout.queuereturn=5d
 #O Timeout.queuereturn.normal=5d
 #O Timeout.queuereturn.urgent=2d
 #O Timeout.queuereturn.non-urgent=7d
+
 O Timeout.queuewarn=4h
 #O Timeout.queuewarn.normal=4h
 #O Timeout.queuewarn.urgent=1h
 #O Timeout.queuewarn.non-urgent=12h
+
 #O Timeout.hoststatus=30m
 #O Timeout.resolver.retrans=5s
 #O Timeout.resolver.retrans.first=5s
@@ -449,7 +451,7 @@ O OperatorChars=.:%@!^/[]+
 #O ControlSocketName=/var/spool/mqueue/.control
 
 # Maximum MIME header length to protect MUAs
-#O MaxMimeHeaderLength=0/0
+#O MaxMimeHeaderLength=2048/1024
 
 # Maximum length of the sum of all headers
 O MaxHeadersLength=32768
@@ -760,7 +762,7 @@ SParse1
 
 # handle numeric address spec
 R$* < @ [ $+ ] > $*	$: $>ParseLocal $1 < @ [ $2 ] > $3	numeric internet spec
-R$* < @ [ $+ ] > $*	$1 < @ [ $2 ] : $S > $3		Add smart host to path
+R$* < @ [ $+ ] > $*	$: $1 < @ [ $2 ] : $S > $3	Add smart host to path
 R$* < @ [ $+ ] : > $*		$#esmtp $@ [$2] $: $1 < @ [$2] > $3	no smarthost: send
 R$* < @ [ $+ ] : $- : $*> $*	$#$3 $@ $4 $: $1 < @ [$2] > $5	smarthost with mailer
 R$* < @ [ $+ ] : $+ > $*	$#esmtp $@ $3 $: $1 < @ [$2] > $4	smarthost without mailer

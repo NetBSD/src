@@ -21,6 +21,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: generic-hpux10.mc,v 8.13 2001/05/29 17:29:52 ca Exp')
+VERSIONID(`$NetBSD: generic-hpux10.mc,v 1.5 2003/06/01 14:06:43 atatat Exp $')
 OSTYPE(hpux10)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

@@ -17,6 +17,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: uxpds.m4,v 8.16 1999/10/21 00:31:42 gshapiro Exp')
+VERSIONID(`$NetBSD: uxpds.m4,v 1.3 2003/06/01 14:06:51 atatat Exp $')
 
 define(`confDEF_GROUP_ID', `6')
 define(`LOCAL_MAILER_PATH', `/usr/ucblib/binmail')dnl

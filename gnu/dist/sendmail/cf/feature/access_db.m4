@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: access_db.m4,v 8.24 2002/03/06 21:50:25 ca Exp')
+VERSIONID(`$NetBSD: access_db.m4,v 1.4 2003/06/01 14:06:45 atatat Exp $')
 divert(-1)
 
 define(`_ACCESS_TABLE_', `')

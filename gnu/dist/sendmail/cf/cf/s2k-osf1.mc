@@ -24,6 +24,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: s2k-osf1.mc,v 8.13 1999/02/07 07:26:04 gshapiro Exp')
+VERSIONID(`$NetBSD: s2k-osf1.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(osf1)dnl
 DOMAIN(S2K.Berkeley.EDU)dnl
 MAILER(local)dnl

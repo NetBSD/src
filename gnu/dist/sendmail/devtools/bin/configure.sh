@@ -9,6 +9,7 @@
 #
 #
 #	Id: configure.sh,v 8.45 2001/12/13 23:56:43 gshapiro Exp
+#	$NetBSD: configure.sh,v 1.5 2003/06/01 14:06:56 atatat Exp $
 
 #
 #  Special script to autoconfigure for M4 generation of Makefile

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: bestmx_is_local.m4,v 8.26 2000/09/17 17:30:00 gshapiro Exp')
+VERSIONID(`$NetBSD: bestmx_is_local.m4,v 1.4 2003/06/01 14:06:45 atatat Exp $')
 divert(-1)
 
 define(`_BESTMX_IS_LOCAL_', _ARG_)

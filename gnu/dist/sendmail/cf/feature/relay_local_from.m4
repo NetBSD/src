@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: relay_local_from.m4,v 8.6 2001/02/06 15:55:21 ca Exp')
+VERSIONID(`$NetBSD: relay_local_from.m4,v 1.4 2003/06/01 14:06:47 atatat Exp $')
 divert(-1)
 
 define(`_RELAY_LOCAL_FROM_', 1)

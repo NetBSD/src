@@ -11,6 +11,7 @@ divert(-1)
 #  Definitions for Makefile construction for sendmail
 #
 #	Id: footer.m4,v 8.2 1999/05/13 16:16:35 gshapiro Exp
+#	$NetBSD: footer.m4,v 1.3 2003/06/01 14:06:53 atatat Exp $
 #
 divert(0)dnl
 ################  Dependency scripts

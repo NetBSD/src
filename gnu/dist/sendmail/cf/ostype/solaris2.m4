@@ -18,6 +18,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: solaris2.m4,v 8.22 1999/09/24 21:43:53 ca Exp')
+VERSIONID(`$NetBSD: solaris2.m4,v 1.3 2003/06/01 14:06:51 atatat Exp $')
 divert(-1)
 
 ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', `/usr/lib/mail.local')')

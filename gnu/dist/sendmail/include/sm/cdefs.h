@@ -1,3 +1,4 @@
+/* $NetBSD: cdefs.h,v 1.3 2003/06/01 14:06:58 atatat Exp $ */
 /*
  * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

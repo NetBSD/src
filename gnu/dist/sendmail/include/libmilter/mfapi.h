@@ -1,3 +1,4 @@
+/* $NetBSD: mfapi.h,v 1.6 2003/06/01 14:06:57 atatat Exp $ */
 /*
  * Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

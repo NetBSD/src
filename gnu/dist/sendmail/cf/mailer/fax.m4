@@ -29,6 +29,7 @@ POPDIVERT
 ####################################
 
 VERSIONID(`Id: fax.m4,v 8.16 2001/11/12 23:11:34 ca Exp')
+VERSIONID(`$NetBSD: fax.m4,v 1.4 2003/06/01 14:06:48 atatat Exp $')
 
 Mfax,		P=FAX_MAILER_PATH, F=DFMhu, S=14, R=24,
 		M=FAX_MAILER_MAX, T=X-Phone/X-FAX/X-Unix,_FAX_QGRP
