@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.45 1998/06/26 21:45:56 ross Exp $ */
+/* $NetBSD: cia.c,v 1.46 1998/07/29 01:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.45 1998/06/26 21:45:56 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.46 1998/07/29 01:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,12 +127,21 @@ struct cia_config cia_configuration;
  * This determines if we attempt to use BWX for PCI bus and config space
  * access.  Some systems, notably with Pyxis, don't fare so well unless
  * BWX is used.
+ *
+ * EXCEPT!  Some devices have a really hard time if BWX is used (WHY?!).
+ * So, we decouple the uses for PCI config space and PCI bus space.
  */
-#ifndef CIA_USE_BWX
-#define	CIA_USE_BWX	1
+
+#ifndef CIA_PCI_USE_BWX
+#define	CIA_PCI_USE_BWX	1
 #endif
 
-int	cia_use_bwx = CIA_USE_BWX;
+#ifndef	CIA_BUS_USE_BWX
+#define	CIA_BUS_USE_BWX	0
+#endif
+
+int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
+int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 
 int
 ciamatch(parent, match, aux)
@@ -192,13 +201,16 @@ cia_init(ccp, mallocsafe)
 	 *	- BWX is enabled in the CPU's capabilities mask (yes,
 	 *	  the bit is really cleared if the capability exists...)
 	 */
-	if (cia_use_bwx != 0 &&
+	if ((cia_pci_use_bwx || cia_bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
 	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
 	    alpha_amask(ALPHA_AMASK_BWX) == 0) {
 		u_int32_t ctrl;
 
-		ccp->cc_flags |= CCF_USEBWX;
+		if (cia_pci_use_bwx)
+			ccp->cc_flags |= CCF_PCI_USE_BWX;
+		if (cia_bus_use_bwx)
+			ccp->cc_flags |= CCF_BUS_USE_BWX;
 
 		/*
 		 * For whatever reason, the firmware seems to enable PCI
@@ -215,7 +227,7 @@ cia_init(ccp, mallocsafe)
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
-		if (ccp->cc_flags & CCF_USEBWX) {
+		if (ccp->cc_flags & CCF_BUS_USE_BWX) {
 			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);
 			cia_bwx_bus_mem_init(&ccp->cc_memt, ccp);
 		} else {
@@ -267,11 +279,23 @@ ciaattach(parent, self, aux)
 		printf("%s: extended capabilities: %s\n", self->dv_xname,
 		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
 		    bits, sizeof(bits)));
-#if 1
-	if (ccp->cc_flags & CCF_USEBWX)
-		printf("%s: using BWX for PCI config and device access\n",
-		    self->dv_xname);
-#endif
+
+	switch (ccp->cc_flags & (CCF_PCI_USE_BWX|CCF_BUS_USE_BWX)) {
+	case CCF_PCI_USE_BWX|CCF_BUS_USE_BWX:
+		name = "PCI config and bus";
+		break;
+	case CCF_PCI_USE_BWX:
+		name = "PCI config";
+		break;
+	case CCF_BUS_USE_BWX:
+		name = "bus";
+		break;
+	default:
+		name = NULL;
+		break;
+	}
+	if (name != NULL)
+		printf("%s: using BWX for %s access\n", self->dv_xname, name);
 
 #ifdef DEC_550
 	if (hwrpb->rpb_type == ST_DEC_550 &&

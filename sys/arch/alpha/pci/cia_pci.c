@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.22 1998/06/04 21:34:45 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.23 1998/07/29 01:28:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.22 1998/06/04 21:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.23 1998/07/29 01:28:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ cia_conf_read(cpv, tag, offset)
 	 * We just inline the BWX support, since this is the only
 	 * difference between BWX and swiz for config space.
 	 */
-	if (ccp->cc_flags & CCF_USEBWX) {
+	if (ccp->cc_flags & CCF_PCI_USE_BWX) {
 		if (secondary) {
 			datap =
 			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
@@ -232,7 +232,7 @@ cia_conf_write(cpv, tag, offset, data)
 	 * We just inline the BWX support, since this is the only
 	 * difference between BWX and swiz for config space.
 	 */
-	if (ccp->cc_flags & CCF_USEBWX) {
+	if (ccp->cc_flags & CCF_PCI_USE_BWX) {
 		if (secondary) {
 			datap =
 			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
