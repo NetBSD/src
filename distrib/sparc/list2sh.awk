@@ -1,4 +1,4 @@
-#	$NetBSD: list2sh.awk,v 1.3 1999/04/30 05:09:43 abs Exp $
+#	$NetBSD: list2sh.awk,v 1.4 2000/08/22 14:08:47 abs Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -12,6 +12,12 @@ $1 == "COPY" {
 	printf("echo '%s'\n", $0);
 	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
+	next;
+}
+$1 == "COPYSTRIPCOMMENTS" {
+	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
+	printf("sed -e 's/	*#.*//' -e 's/		*/	/g' -e '/^$/d' %s > ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
 $1 == "LINK" {
