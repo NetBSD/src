@@ -1,4 +1,4 @@
-/*	$NetBSD: as.h,v 1.1 2001/11/04 23:14:36 atatat Exp $	*/
+/*	$NetBSD: as.h,v 1.2 2002/07/06 21:52:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	*as_setup __P((char *));
-int	as_lookup __P((void *, struct in_addr *));
-void	as_shutdown __P((void *));
+void	*as_setup(char *);
+int	as_lookup(void *, struct in_addr *);
+void	as_shutdown(void *);
