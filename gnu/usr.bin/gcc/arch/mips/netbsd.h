@@ -125,9 +125,29 @@ Boston, MA 02111-1307, USA.  */
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{p:-lprof1} %{pg:-lprof1} -lc /usr/lib/crtn.o%s"
+#define LIB_SPEC "%{p:-lprof1} %{pg:-lprof1} -lc%s"
+
+/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we add
+   the crtbegin.o file (see crtstuff.c) which provides part of the
+   support for getting C++ file-scope static object constructed
+   before entering `main'. */
+   
+#undef	STARTFILE_SPEC
 #define STARTFILE_SPEC \
-   "%{!shared:%{pg:gcrt1.o%s}%{!pg:%{p:mcrt1.o%s libprof1.a%s}%{!p:crt1.o%s}}}"
+ "%{!shared: \
+     %{pg:gcrt0.o%s} \
+     %{!pg: \
+	%{p:gcrt0.o%s} \
+	%{!p:crt0.o%s}}} \
+   %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
+
+/* Provide a ENDFILE_SPEC appropriate for NetBSD.  Here we tack on
+   the file which provides part of the support for getting C++
+   file-scope static object deconstructed after exiting `main' */
+
+#undef	ENDFILE_SPEC
+#define ENDFILE_SPEC \
+  "%{!shared:crtend.o%s} %{shared:crtendS.o%s}"
 
 #ifndef MACHINE_TYPE
 #define MACHINE_TYPE "NetBSD/mips"
@@ -296,7 +316,127 @@ do {									 \
       }									\
   } while (0)
 
-/* Since gas and gld are standard on NetBSD, we don't need these */
+/* Since gas is standard on NetBSD, we don't need this */
 #undef ASM_FINAL_SPEC
-#undef STARTFILE_SPEC
 
+
+/* Stuff for constructors.  Start here.  */
+
+/* Define the pseudo-ops used to switch to the .ctors and .dtors sections.
+
+   Note that we want to give these sections the SHF_WRITE attribute
+   because these sections will actually contain data (i.e. tables of
+   addresses of functions in the current root executable or shared library
+   file) and, in the case of a shared library, the relocatable addresses
+   will have to be properly resolved/relocated (and then written into) by
+   the dynamic linker when it actually attaches the given shared library
+   to the executing process.  (Note that on SVR4, you may wish to use the
+   `-z text' option to the ELF linker, when building a shared library, as
+   an additional check that you are doing everything right.  But if you do
+   use the `-z text' option when building a shared library, you will get
+   errors unless the .ctors and .dtors sections are marked as writable
+   via the SHF_WRITE attribute.)  */
+
+#define CONST_SECTION_ASM_OP_32	"\t.rdata"
+#define CONST_SECTION_ASM_OP_64	".section\t.rodata"
+#define CTORS_SECTION_ASM_OP	".section\t.ctors,\"aw\""
+#define DTORS_SECTION_ASM_OP	".section\t.dtors,\"aw\""
+
+/* On svr4, we *do* have support for the .init and .fini sections, and we
+   can put stuff in there to be executed before and after `main'.  We let
+   crtstuff.c and other files know this by defining the following symbols.
+   The definitions say how to change sections to the .init and .fini
+   sections.  This is the same for all known svr4 assemblers.  */
+
+#define INIT_SECTION_ASM_OP	".section\t.init"
+#define FINI_SECTION_ASM_OP	".section\t.fini"
+
+/* This is the pseudo-op used to generate a 32-bit word of data with a
+   specific value in some section.  This is the same for all known svr4
+   assemblers.  */
+
+#define INT_ASM_OP		".word"
+
+/* A default list of other sections which we might be "in" at any given
+   time.  For targets that use additional sections (e.g. .tdesc) you
+   should override this definition in the target-specific file which
+   includes this file.  */
+
+#undef EXTRA_SECTIONS
+#define EXTRA_SECTIONS in_sdata, in_rdata, in_const, in_ctors, in_dtors, in_bss
+
+/* A default list of extra section function definitions.  For targets
+   that use additional sections (e.g. .tdesc) you should override this
+   definition in the target-specific file which includes this file.  */
+
+/* ??? rdata_section is now same as svr4 const_section.  */
+
+#undef EXTRA_SECTION_FUNCTIONS
+#define EXTRA_SECTION_FUNCTIONS						\
+void									\
+sdata_section ()							\
+{									\
+  if (in_section != in_sdata)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", SDATA_SECTION_ASM_OP);		\
+      in_section = in_sdata;						\
+    }									\
+}									\
+									\
+void									\
+rdata_section ()							\
+{									\
+  if (in_section != in_rdata)						\
+    {									\
+      if (mips_isa >= 3)						\
+	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_64);	\
+      else								\
+	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_32);	\
+      in_section = in_rdata;						\
+    }									\
+}									\
+  CTORS_SECTION_FUNCTION						\
+  DTORS_SECTION_FUNCTION
+
+#define CTORS_SECTION_FUNCTION						\
+void									\
+ctors_section ()							\
+{									\
+  if (in_section != in_ctors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", CTORS_SECTION_ASM_OP);		\
+      in_section = in_ctors;						\
+    }									\
+}
+
+#define DTORS_SECTION_FUNCTION						\
+void									\
+dtors_section ()							\
+{									\
+  if (in_section != in_dtors)						\
+    {									\
+      fprintf (asm_out_file, "%s\n", DTORS_SECTION_ASM_OP);		\
+      in_section = in_dtors;						\
+    }									\
+}
+
+#define OBJECT_FORMAT_ELF
+/* A C statement (sans semicolon) to output an element in the table of
+   global constructors.  */
+#define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
+  do {									\
+    ctors_section ();							\
+    fprintf (FILE, "\t%s\t ", INT_ASM_OP);				\
+    assemble_name (FILE, NAME);						\
+    fprintf (FILE, "\n");						\
+  } while (0)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global destructors.  */
+#define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)       				\
+  do {									\
+    dtors_section ();                   				\
+    fprintf (FILE, "\t%s\t ", INT_ASM_OP);				\
+    assemble_name (FILE, NAME);              				\
+    fprintf (FILE, "\n");						\
+  } while (0)
