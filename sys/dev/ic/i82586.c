@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.12 1998/02/28 01:14:57 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.13 1998/06/04 20:35:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -382,19 +382,16 @@ check_eh(sc, eh, to_bpf)
 #if NBPFILTER > 0
 		*to_bpf = (ifp->if_bpf != 0);
 #endif
-		/* If for us, accept and hand up to BPF */
+		/*
+		 * If for us, accept and hand up to BPF.
+		 */
 		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
 			return (1);
 
-#if NBPFILTER > 0
-		if (*to_bpf)
-			*to_bpf = 2; /* we don't need to see it */
-#endif
-
 		/*
-		 * Not a multicast, so BPF wants to see it but we don't.
+		 * If it's the broadcast address, accept and hand up to BPF.
 		 */
-		if ((eh->ether_dhost[0] & 1) == 0)
+		if (ether_equal(eh->ether_dhost, etherbroadcastaddr))
 			return (1);
 
 		/*
@@ -411,6 +408,13 @@ check_eh(sc, eh, to_bpf)
 				return (1);
 			}
 		}
+
+#if NBPFILTER > 0
+		/* Not for us; BPF wants to see it but we don't. */
+		if (*to_bpf)
+			*to_bpf = 2;
+#endif
+
 		return (1);
 
 	case IFF_ALLMULTI | IFF_PROMISC:
