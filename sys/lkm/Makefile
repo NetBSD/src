@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 1996/08/22 20:18:07 explorer Exp $
+# $NetBSD: Makefile,v 1.2 1997/01/07 10:48:19 mrg Exp $
 
-SUBDIR=	compat vfs
+SUBDIR=	compat netinet vfs
 
 .include <bsd.subdir.mk>
