@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.32 1998/01/08 11:36:18 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.33 1998/01/21 22:24:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,6 +40,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_kmemstats.h"
+#include "opt_malloclog.h"
 #endif
 
 /*
@@ -305,7 +306,8 @@ struct kmembuckets {
 /*
  * Macro versions for the usual cases of malloc/free
  */
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM) || \
+    defined(MALLOCLOG)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), type, flags)
 #define	FREE(addr, type) free((caddr_t)(addr), type)
@@ -346,8 +348,20 @@ extern struct kmemstats kmemstats[];
 extern struct kmemusage *kmemusage;
 extern char *kmembase;
 extern struct kmembuckets bucket[];
+
+#ifdef MALLOCLOG
+extern void *_malloc __P((unsigned long size, int type, int flags,
+	const char *file, long line));
+extern void _free __P((void *addr, int type, const char *file, long line));
+#define	malloc(size, type, flags) \
+	_malloc((size), (type), (flags), __FILE__, __LINE__)
+#define	free(addr, type) \
+	_free((addr), (type), __FILE__, __LINE__)
+#else
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
+#endif /* MALLOCLOG */
+
 extern void *realloc __P((void *curaddr, unsigned long newsize, int type,
 			int flags));
 #endif /* _KERNEL */
