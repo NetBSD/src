@@ -1,4 +1,4 @@
-.\" $NetBSD: umidi.4,v 1.1 2001/01/31 04:32:18 augustss Exp $
+.\" $NetBSD: umidi.4,v 1.2 2001/05/29 08:18:11 tshiozak Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,6 +49,8 @@ It also supports the following vendor specific devices:
 .Bl -tag -width -offset indent -compact
 .It Tn Roland UM1
 .It Tn Yamaha UX256
+.It Tn Yamaha UX96
+.It Tn other Yamaha MIDI devices (hopefully)
 .El
 .Pp
 The
@@ -59,6 +61,11 @@ driver.
 .Sh SEE ALSO
 .Xr midi 4 ,
 .Xr usb 4
+.Sh BUGS
+The
+.Nm
+driver has been only tested with the vendor specific devices listed above;
+not yet tested with the devices that follow the USB MIDI standard.
 .Sh HISTORY
 The
 .Nm
