@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.39 2004/01/04 16:04:18 jschauma Exp $ */
+/* $NetBSD: rm.c,v 1.40 2004/01/11 02:04:05 tls Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.39 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: rm.c,v 1.40 2004/01/11 02:04:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,20 +314,57 @@ rm_file(char **argv)
  * rm_overwrite --
  *	Overwrite the file 3 times with varying bit patterns.
  *
- * XXX
  * This is a cheap way to *really* delete files.  Note that only regular
  * files are deleted, directories (and therefore names) will remain.
  * Also, this assumes a fixed-block file system (like FFS, or a V7 or a
  * System V file system).  In a logging file system, you'll have to have
  * kernel support.
+ *
+ * A note on standards:  U.S. DoD 5220.22-M "National Industrial Security
+ * Program Operating Manual" ("NISPOM") is often cited as a reference
+ * for clearing and sanitizing magnetic media.  In fact, a matrix of
+ * "clearing" and "sanitization" methods for various media was given in
+ * Chapter 8 of the original 1995 version of NISPOM.  However, that
+ * matrix was *removed from the document* when Chapter 8 was rewritten
+ * in Change 2 to the document in 2001.  Recently, the Defense Security
+ * Service has made a revised clearing and sanitization matrix available
+ * in Microsoft Word format on the DSS web site.  The standardization
+ * status of this matrix is unclear.  Furthermore, one must be very
+ * careful when referring to this matrix: it is intended for the "clearing"
+ * prior to reuse or "sanitization" prior to disposal of *entire media*,
+ * not individual files and the only non-physically-destructive method of
+ * "sanitization" that is permitted for magnetic disks of any kind is
+ * specifically noted to be prohibited for media that have contained
+ * Top Secret data.
+ *
+ * It is impossible to actually conform to the exact procedure given in
+ * the matrix if one is overwriting a file, not an entire disk, because
+ * the procedure requires examination and comparison of the disk's defect
+ * lists.  Any program that claims to securely erase *files* while 
+ * conforming to the standard, then, is not correct.  We do everything
+ *
+ * Furthermore, the presence of track caches, disk and controller write
+ * caches, and so forth make it extremely difficult to ensure that data
+ * have actuolly been written to the disk, particularly when one tries
+ * to repeatedly overwrite the same sectors in quick succession.  We call
+ * fsync(), but controllers with nonvolatile cache, as well as IDE disks
+ * that just plain lie about the stable storage of data, will defeat this.
+ *
+ * Finally, widely respected research suggests that the given procedure
+ * is nowhere near sufficient to prevent the recovery of data using special
+ * forensic equipment and techniques that are well-known.  This is 
+ * presumably one reason that the matrix requires physical media destruction,
+ * rather than any technique of the sort attempted here, for secret data.
+ *
+ * Caveat Emptor.
  */
+
 void
 rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
-	off_t len;
-	int fd, wlen;
-	char buf[8 * 1024];
+	int fd, randint;
+	char randchar;
 
 	fd = -1;
 	if (sbp == NULL) {
@@ -337,25 +374,99 @@ rm_overwrite(char *file, struct stat *sbp)
 	}
 	if (!S_ISREG(sbp->st_mode))
 		return;
-	if ((fd = open(file, O_WRONLY, 0)) == -1)
+
+	/* flags to try to defeat hidden caching by forcing seeks */
+	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC, 0)) == -1)
 		goto err;
 
-#define	PASS(byte) do {							\
-	memset(buf, byte, sizeof(buf));					\
+#define RAND_BYTES	1
+#define THIS_BYTE	0
+
+#define	WRITE_PASS(mode, byte) do {					\
+	off_t len;							\
+	int wlen, i;							\
+	char buf[8 * 1024];						\
+									\
+	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))			\
+		goto err;						\
+									\
+	if (mode == THIS_BYTE)						\
+		memset(buf, byte, sizeof(buf));				\
 	for (len = sbp->st_size; len > 0; len -= wlen) {		\
+		if (mode == RAND_BYTES) {				\
+			for (i = 0; i < sizeof(buf); 			\
+			    i+= sizeof(u_int32_t))			\
+				*(int *)(buf + i) = arc4random();	\
+		}							\
 		wlen = len < sizeof(buf) ? len : sizeof(buf);		\
 		if (write(fd, buf, wlen) != wlen)			\
 			goto err;					\
 	}								\
+	sync();		/* another poke at hidden caches */		\
 } while (/* CONSTCOND */ 0)
-	PASS(0xff);
-	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
-		goto err;
-	PASS(0x00);
-	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
-		goto err;
-	PASS(0xff);
-	if (!fsync(fd) && !close(fd))
+
+#define READ_PASS(byte) do {						\
+	off_t len;							\
+	int rlen;							\
+	char pattern[8 * 1024];						\
+	char buf[8 * 1024];						\
+									\
+	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))			\
+		goto err;						\
+									\
+	memset(pattern, byte, sizeof(pattern));				\
+	for(len = sbp->st_size; len > 0; len -= rlen) {			\
+		rlen = len < sizeof(buf) ? len : sizeof(buf);		\
+		if(read(fd, buf, rlen) != rlen)				\
+			goto err;					\
+		if(memcmp(buf, pattern, rlen))				\
+			goto err;					\
+	}								\
+	sync();		/* another poke at hidden caches */		\
+} while (/* CONSTCOND */ 0)
+
+	/*
+	 * DSS sanitization matrix "clear" for magnetic disks: 
+	 * option 'c' "Overwrite all addressable locations with a single 
+	 * character."
+	 */
+	randint = arc4random();
+	randchar = *(char *)&randint;
+	WRITE_PASS(THIS_BYTE, randchar);
+
+	/*
+	 * DSS sanitization matrix "sanitize" for magnetic disks: 
+	 * option 'd', sub 2 "Overwrite all addressable locations with a
+	 * character, then its complement.  Verify "complement" character
+	 * was written successfully to all addressable locations, then
+	 * overwrite all addressable locations with random characters; or
+	 * verify third overwrite of random characters."  The rest of the
+	 * text in d-sub-2 specifies requirements for overwriting spared
+	 * sectors; we cannot conform to it when erasing only a file, thus
+	 * we do not conform to the standard.
+	 */
+
+	/* 1. "a character" */
+	WRITE_PASS(THIS_BYTE, 0xff);
+
+	/* 2. "its complement" */
+	WRITE_PASS(THIS_BYTE, 0x00);
+
+	/* 3. "Verify 'complement' character" */
+	READ_PASS(0x00);
+
+	/* 4. "overwrite all addressable locations with random characters" */
+
+	WRITE_PASS(RAND_BYTES, 0x00);
+
+	/*
+	 * As the file might be huge, and we note that this revision of
+	 * the matrix says "random characters", not "a random character"
+	 * as the original did, we do not verify the random-character
+	 * write; the "or" in the standard allows this.
+	 */
+
+	if (!close(fd))
 		return;
 
 err:	eval = 1;
