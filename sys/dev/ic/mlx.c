@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.16.4.1 2003/07/28 18:08:37 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16.4.1 2003/07/28 18:08:37 he Exp $");
 
 #include "ld.h"
 
@@ -145,6 +145,7 @@ struct {
 	int	hwid;
 	const char	*name;
 } static const mlx_cname[] = {
+	{ 0x00, "960E/960M" },
 	{ 0x01, "960P/PD" },
 	{ 0x02,	"960PL" },
 	{ 0x10, "960PG" },
@@ -268,6 +269,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 {
 	struct mlx_ccb *mc;
 	struct mlx_enquiry_old *meo;
+	struct mlx_enquiry2 *me2;
+	struct mlx_cinfo *ci;
 	int rv, fwminor, hscode, hserr, hsparam1, hsparam2, hsmsg;
 	int size, i, rseg;
 	const char *wantfwstr;
@@ -385,22 +388,36 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		}
 	}
 
-	/* Send an ENQUIRY2 request to the controller... */
-	mlx->mlx_enq2 = mlx_enquire(mlx, MLX_CMD_ENQUIRY2,
-	    sizeof(struct mlx_enquiry2), NULL, 0);
-	if (mlx->mlx_enq2 == NULL) {
-		printf("%s: ENQUIRY2 failed\n", mlx->mlx_dv.dv_xname);
-		return;
-	}
-
 	/*
 	 * Do quirk/feature related things.
 	 */
-	switch (mlx->mlx_iftype) {
-	case 2:
+	ci = &mlx->mlx_ci;
+
+	if (ci->ci_iftype > 1) {
+		me2 = mlx_enquire(mlx, MLX_CMD_ENQUIRY2,
+		    sizeof(struct mlx_enquiry2), NULL, 0);
+		if (me2 == NULL) {
+			printf("%s: ENQUIRY2 failed\n", mlx->mlx_dv.dv_xname);
+			return;
+		}
+
+		ci->ci_firmware_id[0] = me2->me_firmware_id[0];
+		ci->ci_firmware_id[1] = me2->me_firmware_id[1];
+		ci->ci_firmware_id[2] = me2->me_firmware_id[2];
+		ci->ci_firmware_id[3] = me2->me_firmware_id[3];
+		ci->ci_hardware_id = me2->me_hardware_id[0];
+		ci->ci_mem_size = le32toh(me2->me_mem_size);
+		ci->ci_max_sg = le16toh(me2->me_max_sg);
+		ci->ci_max_commands = le16toh(me2->me_max_commands);
+		ci->ci_nchan = me2->me_actual_channels;
+
+		free(me2, M_DEVBUF);
+	}
+
+	if (ci->ci_iftype <= 2) {
 		/*
 		 * These controllers may not report the firmware version in
-		 * the ENQUIRY2 response.
+		 * the ENQUIRY2 response, or may not even support it.
 		 */
 		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
 		    sizeof(struct mlx_enquiry_old), NULL, 0);
@@ -408,19 +425,27 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 			printf("%s: ENQUIRY_OLD failed\n", mlx->mlx_dv.dv_xname);
 			return;
 		}
-		mlx->mlx_enq2->me_firmware_id[0] = meo->me_fwmajor;
-		mlx->mlx_enq2->me_firmware_id[1] = meo->me_fwminor;
-		mlx->mlx_enq2->me_firmware_id[2] = 0;
-		mlx->mlx_enq2->me_firmware_id[3] = '0';
+		ci->ci_firmware_id[0] = meo->me_fwmajor;
+		ci->ci_firmware_id[1] = meo->me_fwminor;
+		ci->ci_firmware_id[2] = 0;
+		ci->ci_firmware_id[3] = '0';
+
+		if (ci->ci_iftype == 1) {
+			ci->ci_hardware_id = 0;	/* XXX */
+			ci->ci_mem_size = 0;	/* XXX */
+			ci->ci_max_sg = 17;	/* XXX */
+			ci->ci_max_commands = meo->me_max_commands;
+		}
+
 		free(meo, M_DEVBUF);
 	}
 
 	wantfwstr = NULL;
-	fwminor = mlx->mlx_enq2->me_firmware_id[1];
+	fwminor = ci->ci_firmware_id[1];
 
-	switch (mlx->mlx_enq2->me_firmware_id[0]) {
+	switch (ci->ci_firmware_id[0]) {
 	case 2:
-		if ((mlx->mlx_flags & MLXF_EISA) != 0) {
+		if (ci->ci_iftype == 1) {
 			if (fwminor < 14)
 				wantfwstr = "2.14";
 		} else if (fwminor < 42)
@@ -462,13 +487,13 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* Set maximum number of queued commands for `regular' operations. */
 	mlx->mlx_max_queuecnt =
-	    min(le16toh(mlx->mlx_enq2->me_max_commands), MLX_MAX_QUEUECNT) -
-	    MLX_NCCBS_RESERVE;
+	    min(ci->ci_max_commands, MLX_MAX_QUEUECNT) -
+	    MLX_NCCBS_CONTROL;
 #ifdef DIAGNOSTIC
-	if (mlx->mlx_max_queuecnt < MLX_NCCBS_RESERVE + MLX_MAX_DRIVES)
+	if (mlx->mlx_max_queuecnt < MLX_NCCBS_CONTROL + MLX_MAX_DRIVES)
 		printf("%s: WARNING: few CCBs available\n",
 		    mlx->mlx_dv.dv_xname);
-	if (le16toh(mlx->mlx_enq2->me_max_sg) < MLX_MAX_SEGS) {
+	if (ci->ci_max_sg < MLX_MAX_SEGS) {
 		printf("%s: oops, not enough S/G segments\n",
 		    mlx->mlx_dv.dv_xname);
 		return;
@@ -499,31 +524,33 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 static void
 mlx_describe(struct mlx_softc *mlx)
 {
-	struct mlx_enquiry2 *me;
+	struct mlx_cinfo *ci;
 	static char buf[80];
 	const char *model;
 	int i;
 
 	model = NULL;
-	me = mlx->mlx_enq2;
+	ci = &mlx->mlx_ci;
 
 	for (i = 0; i < sizeof(mlx_cname) / sizeof(mlx_cname[0]); i++)
-		if (me->me_hardware_id[0] == mlx_cname[i].hwid) {
+		if (ci->ci_hardware_id == mlx_cname[i].hwid) {
 			model = mlx_cname[i].name;
 			break;
 		}
 
 	if (model == NULL) {
-		sprintf(buf, " model 0x%x", me->me_hardware_id[0]);
+		sprintf(buf, " model 0x%x", ci->ci_hardware_id);
 		model = buf;
 	}
 
-	printf("%s: DAC%s, %d channel%s, firmware %d.%02d-%c-%02d, %dMB RAM\n",
-	    mlx->mlx_dv.dv_xname, model, me->me_actual_channels,
-	    me->me_actual_channels > 1 ? "s" : "",
-	    me->me_firmware_id[0], me->me_firmware_id[1],
-	    me->me_firmware_id[3], me->me_firmware_id[2],
-	    le32toh(me->me_mem_size) >> 20);
+	printf("%s: DAC%s, %d channel%s, firmware %d.%02d-%c-%02d",
+	    mlx->mlx_dv.dv_xname, model, ci->ci_nchan,
+	    ci->ci_nchan > 1 ? "s" : "",
+	    ci->ci_firmware_id[0], ci->ci_firmware_id[1],
+	    ci->ci_firmware_id[3], ci->ci_firmware_id[2]);
+	if (ci->ci_mem_size != 0)
+		printf(", %dMB RAM", ci->ci_mem_size >> 20);
+	printf("\n");
 }
 
 /*
@@ -542,7 +569,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 
 	mlx->mlx_flags |= MLXF_RESCANNING;
 
-	if (mlx->mlx_iftype == 2) {
+	if (mlx->mlx_ci.ci_iftype <= 2) {
 		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
 		    sizeof(struct mlx_enquiry_old), NULL, waitok);
 		if (meo == NULL) {
@@ -770,7 +797,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		/* Fix for legal channels. */
-		mp->mp_which &= ((1 << mlx->mlx_enq2->me_actual_channels) -1);
+		mp->mp_which &= ((1 << mlx->mlx_ci.ci_nchan) -1);
 
 		/* Check time values. */
 		if (mp->mp_when < 0 || mp->mp_when > 3600 ||
@@ -861,6 +888,13 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				}
 		}
 		return (ENOENT);
+
+	case MLX_GET_CINFO:
+		/*
+		 * Return controller info.
+		 */
+		memcpy(arg, &mlx->mlx_ci, sizeof(mlx->mlx_ci));
+		return (0);
 	}
 
 	switch (cmd) {
@@ -942,7 +976,7 @@ mlx_periodic_create(void *cookie)
 	int rv;
 
 	rv = kthread_create1(mlx_periodic_thread, NULL, &mlx_periodic_proc,
-	    "mlxmonitor");
+	    "mlxtask");
 	if (rv == 0)
 		return;
 
@@ -958,9 +992,10 @@ mlx_periodic_thread(void *cookie)
 	for (;;) {
 		for (i = 0; i < mlx_cd.cd_ndevs; i++)
 			if ((mlx = device_lookup(&mlx_cd, i)) != NULL)
-				mlx_periodic(mlx);
+				if (mlx->mlx_ci.ci_iftype > 1)
+					mlx_periodic(mlx);
 
-		tsleep(mlx_periodic_thread, PWAIT, "mlxzzz", hz);
+		tsleep(mlx_periodic_thread, PWAIT, "mlxzzz", hz * 2);
 	}
 }
 
@@ -1002,7 +1037,7 @@ mlx_periodic(struct mlx_softc *mlx)
 		if ((mlx->mlx_flags & MLXF_PERIODIC_CTLR) == 0) {
 			mlx->mlx_flags |= MLXF_PERIODIC_CTLR;
 
-			if (mlx->mlx_iftype == 2)
+			if (mlx->mlx_ci.ci_iftype <= 2)
 				etype = MLX_CMD_ENQUIRY_OLD;
 			else
 				etype =  MLX_CMD_ENQUIRY;
@@ -1473,7 +1508,7 @@ mlx_pause_action(struct mlx_softc *mlx)
 	}
 
 	/* Build commands for every channel requested. */
-	for (i = 0; i < mlx->mlx_enq2->me_actual_channels; i++) {
+	for (i = 0; i < mlx->mlx_ci.ci_nchan; i++) {
 		if ((1 << i) & mlx->mlx_pause.mp_which) {
 			if (mlx_ccb_alloc(mlx, &mc, 1) != 0) {
 				printf("%s: %s failed for channel %d\n",
@@ -1844,21 +1879,23 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
  * Allocate and initialise a CCB.
  */
 int
-mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int special)
+mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int control)
 {
 	struct mlx_ccb *mc;
 	int s;
 
 	s = splbio();
-	if ((!special && mlx->mlx_nccbs_free < MLX_NCCBS_RESERVE) ||
-	    SLIST_FIRST(&mlx->mlx_ccb_freelist) == NULL) {
-		splx(s);
-		*mcp = NULL;
-		return (EAGAIN);
+	if (control) {
+		if (mlx->mlx_nccbs_ctrl >= MLX_NCCBS_CONTROL) {
+			splx(s);
+			*mcp = NULL;
+			return (EAGAIN);
+		}
+		mc->mc_flags |= MC_CONTROL;
+		mlx->mlx_nccbs_ctrl++;
 	}
 	mc = SLIST_FIRST(&mlx->mlx_ccb_freelist);
 	SLIST_REMOVE_HEAD(&mlx->mlx_ccb_freelist, mc_chain.slist);
-	mlx->mlx_nccbs_free--;
 	splx(s);
 
 	*mcp = mc;
@@ -1874,9 +1911,10 @@ mlx_ccb_free(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	int s;
 
 	s = splbio();
+	if ((mc->mc_flags & MC_CONTROL) != 0)
+		mlx->mlx_nccbs_ctrl--;
 	mc->mc_flags = 0;
 	SLIST_INSERT_HEAD(&mlx->mlx_ccb_freelist, mc, mc_chain.slist);
-	mlx->mlx_nccbs_free++;
 	splx(s);
 }
 
@@ -2049,7 +2087,7 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	int i, s, r;
 
 	/* Save the ident so we can handle this command when complete. */
-	mc->mc_mbox[1] = (u_int8_t)mc->mc_ident;
+	mc->mc_mbox[1] = (u_int8_t)(mc->mc_ident + 1);
 
 	/* Mark the command as currently being processed. */
 	mc->mc_status = MLX_STATUS_BUSY;
@@ -2113,6 +2151,7 @@ mlx_intr(void *cookie)
 
 	while ((*mlx->mlx_findcomplete)(mlx, &ident, &status) != 0) {
 		result = 1;
+		ident--;
 
 		if (ident >= MLX_MAX_QUEUECNT) {
 			printf("%s: bad completion returned\n",
