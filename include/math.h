@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.26 2003/05/17 20:42:28 thorpej Exp $	*/
+/*	$NetBSD: math.h,v 1.27 2003/10/25 22:35:46 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -48,13 +48,23 @@ extern __const union __double_u __infinity;
 /*
  * ISO C99
  */
-#if defined(__HAVE_NANF) && \
-    (!defined(_ANSI_SOURCE) && \
-     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-      defined(_NETBSD_SOURCE)))
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+extern __const union __float_u __infinityf;
+#define	HUGE_VALF	__infinityf.__val
+
+extern __const union __long_double_u __infinityl;
+#define	HUGE_VALL	__infinityl.__val
+
+#ifdef __HAVE_NANF
 extern __const union __float_u __nanf;
 #define	NAN		__nanf.__val
-#endif /* __HAVE_NANF && (!_ANSI_SOURCE && ....) */
+#endif /* __HAVE_NANF */
+#endif /* !_ANSI_SOURCE && ... */
 
 /*
  * XOPEN/SVID
