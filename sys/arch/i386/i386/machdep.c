@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.43 1993/08/27 23:52:28 brezak Exp $
+ *	$Id: machdep.c,v 1.44 1993/09/04 01:29:22 cgd Exp $
  */
 
 #include "npx.h"
@@ -467,7 +467,7 @@ sendsig(catcher, sig, mask, code)
 				- sizeof(struct sigframe));
 	}
 
-	if ((unsigned)fp <= (unsigned)p->p_vmspace->vm_maxsaddr + MAXSSIZ - ctob(p->p_vmspace->vm_ssize)) 
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 
 	if (useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {

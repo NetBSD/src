@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.13 1993/08/02 23:19:18 mycroft Exp $
+ *	$Id: trap.c,v 1.14 1993/09/04 01:29:24 cgd Exp $
  */
 
 /*
@@ -273,8 +273,7 @@ copyfault:
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-			nss = clrnd(btoc((unsigned)vm->vm_maxsaddr
-				+ MAXSSIZ - (unsigned)va));
+			nss = clrnd(btoc(USRSTACK-(unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 /*pg("trap rlimit %d, maxsaddr %x va %x ", nss, vm->vm_maxsaddr, va);*/
 				rv = KERN_FAILURE;
