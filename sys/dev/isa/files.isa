@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.113 2001/03/31 00:26:54 jdolecek Exp $
+#	$NetBSD: files.isa,v 1.114 2001/07/21 16:08:17 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -199,7 +199,7 @@ file	dev/isa/if_ntwoc_isa.c          ntwoc_isa
 # (Allied Telesis AT1700)
 # device in sys/conf/files
 attach	ate at isa with ate_isa
-file	dev/isa/if_ate.c		ate
+file	dev/isa/if_ate.c		ate_isa
 
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
 device	cs: arp, ether, ifnet, isadma
