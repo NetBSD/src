@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.11 1997/07/07 20:17:36 cgd Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.12 1998/01/05 18:45:02 perry Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -126,6 +126,8 @@ awk_parser='
 # This is put after the copyright on each generated file.
 warning="\
 /*
+ * \$NetBSD\$
+ *
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
