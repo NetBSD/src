@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.31 1997/11/02 08:50:31 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.32 1997/11/02 08:55:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -931,10 +931,12 @@ zsparam(tp, t)
 	} else {
 		/* This impossible value prevents a "high water" trigger. */
 		zst->zst_rbhiwat = zstty_rbuf_size;
+		s = splzs();
 		if (zst->zst_rx_blocked) {
 			zst->zst_rx_blocked = 0;
 			zs_hwiflow(zst);
 		}
+		splx(s);
 		if (zst->zst_tx_stopped) {
 			zst->zst_tx_stopped = 0;
 			zsstart(tp);

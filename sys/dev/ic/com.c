@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.122 1997/11/02 08:50:33 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.123 1997/11/02 08:55:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1095,6 +1095,7 @@ comparam(tp, t)
 
 	/* Block or unblock as needed. */
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
+		s = splserial();
 		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
 			com_schedrx(sc);
@@ -1103,6 +1104,7 @@ comparam(tp, t)
 			CLR(sc->sc_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
 			com_hwiflow(sc);
 		}
+		splx(s);
 		if (sc->sc_tx_stopped) {
 			sc->sc_tx_stopped = 0;
 			comstart(tp);
