@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.22 2000/01/15 01:13:15 christos Exp $	*/
+/*	$NetBSD: cat.c,v 1.23 2000/04/14 05:52:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.22 2000/01/15 01:13:15 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.23 2000/04/14 05:52:56 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch;
 
 	(void)setlocale(LC_ALL, "");

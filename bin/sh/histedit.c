@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.22 2000/01/27 23:39:40 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.23 2000/04/14 05:52:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.22 2000/01/27 23:39:40 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.23 2000/04/14 05:52:58 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,8 +183,6 @@ histcmd(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind, optopt, optreset;
 	int ch;
 	const char *editor = NULL;
 	HistEvent he;
