@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.4 2001/06/08 22:22:59 chris Exp $
+#	$NetBSD: files.cats,v 1.5 2001/06/12 08:30:47 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -20,6 +20,7 @@ defopt	XSERVER
 
 # Architectures and core logic
 defopt	EBSA285
+defopt	NETWINDER
 
 define todservice {}
 
@@ -71,9 +72,9 @@ major   {sd = 24}
 major   {cd = 26}
 
 # Generic MD files
-file	arch/arm32/arm32/autoconf.c
+file	arch/cats/cats/autoconf.c
+file	arch/cats/cats/conf.c
 file	arch/arm32/arm32/bus_dma.c
-file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/exception.S
 file	arch/arm32/arm32/fault.c
