@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.2 1999/12/23 06:52:31 tsubai Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.3 2002/04/13 07:34:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -87,7 +87,7 @@ netif_open(machdep_hint)
 		errno = ENFILE;
 		return (-1);
 	}
-	bzero(io, sizeof(*io));
+	memset(io, 0, sizeof(*io));
 
 	netif_prom.nif_devdata = pd;
 	io->io_netif = &netif_prom;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2002/04/13 02:43:44 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2002/04/13 07:34:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -66,7 +66,7 @@ boot(a0, a1, a2, a3, a4, a5)
 	struct btinfo_systype bi_sys;
 
 	/* Clear BSS. */
-	bzero(_edata, _end - _edata);
+	memset(_edata, 0, _end - _edata);
 
 	/*
 	 * XXX a3 contains:
