@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.6 1997/10/18 12:04:07 lukem Exp $	*/
+/*	$NetBSD: at.c,v 1.7 1997/10/18 12:23:37 lukem Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,7 +64,7 @@
 
 /* File scope variables */
 #ifndef lint
-__RCSID("$NetBSD: at.c,v 1.6 1997/10/18 12:04:07 lukem Exp $");
+__RCSID("$NetBSD: at.c,v 1.7 1997/10/18 12:23:37 lukem Exp $");
 #endif
 
 char *no_export[] =
@@ -502,7 +502,7 @@ main(argc, argv)
 
 	/* process whatever options we can process */
 	opterr = 1;
-	while ((c = getopt(argc, argv, options)) != EOF)
+	while ((c = getopt(argc, argv, options)) != -1)
 		switch (c) {
 		case 'v':	/* verify time settings */
 			atverify = 1;
