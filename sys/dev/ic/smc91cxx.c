@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.23 2000/02/03 16:20:49 itojun Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.24 2000/02/04 04:05:50 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1219,13 +1219,7 @@ smc91cxx_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ec.ec_if);
-#endif
-
-		/* Now disable the interface. */
-		smc91cxx_disable(sc);
+		if_deactivate(&sc->sc_ec.ec_if);
 		break;
 	}
 	splx(s);
@@ -1240,7 +1234,7 @@ smc91cxx_detach(self, flags)
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
-	/* dp8390_disable() checks sc->sc_enabled */
+	/* smc91cxx_disable() checks sc->sc_enabled */
 	smc91cxx_disable(sc);
 
 	/* smc91cxx_attach() never fails */
