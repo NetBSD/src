@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.5 1995/04/22 20:26:46 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.6 1995/04/28 23:11:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -311,7 +311,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
-	extern char esigcode[], svr4_sigcode[];
+	extern char svr4_esigcode[], svr4_sigcode[];
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
@@ -361,7 +361,8 @@ svr4_sendsig(catcher, sig, mask, code)
 	 * Build context to run handler in.
 	 */
 	tf->tf_esp = (int)fp;
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - svr4_sigcode));
+	tf->tf_eip = (int)(((char *)PS_STRINGS) -
+				(svr4_esigcode - svr4_sigcode));
 	tf->tf_eflags &= ~PSL_VM;
 	tf->tf_cs = _ucodesel;
 	tf->tf_ds = _udatasel;
