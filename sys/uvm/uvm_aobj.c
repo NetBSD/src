@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.43 2001/05/26 21:27:20 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.44 2001/06/22 06:20:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -662,7 +662,7 @@ uao_detach_locked(uobj)
 	struct uvm_object *uobj;
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	struct vm_page *pg;
+	struct vm_page *pg, *nextpg;
 	boolean_t busybody;
 	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
 
@@ -694,9 +694,8 @@ uao_detach_locked(uobj)
 	 * mark for release any that are.
  	 */
 	busybody = FALSE;
-	for (pg = TAILQ_FIRST(&uobj->memq);
-	     pg != NULL;
-	     pg = TAILQ_NEXT(pg, listq)) {
+	for (pg = TAILQ_FIRST(&uobj->memq); pg != NULL; pg = nextpg) {
+		nextpg = TAILQ_NEXT(pg, listq);
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_RELEASED;
 			busybody = TRUE;
