@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.28 1993/11/08 20:17:35 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.29 1993/11/27 01:24:07 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -949,7 +949,7 @@ fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
 	register struct buf *bp;
-	struct fd_softc *fd;
+	struct fd_softc *fd = fdc->sc_afd;
 
 	bp = fd->sc_bufq.b_actf;
 
