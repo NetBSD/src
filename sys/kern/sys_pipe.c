@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.20 2001/12/11 18:15:09 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.21 2001/12/18 08:49:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.20 2001/12/11 18:15:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.21 2001/12/18 08:49:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,7 +963,6 @@ pipe_loan_free(wpipe)
 	vsize_t len;
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
-	pmap_kremove(wpipe->pipe_map.kva, len);
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len);
 	wpipe->pipe_map.kva = NULL;
 	amountpipekva -= len;
@@ -1095,8 +1094,10 @@ retry:
 
 cleanup:
 	pipelock(wpipe, 0);
-	if (pgs != NULL)
+	if (pgs != NULL) {
+		pmap_kremove(wpipe->pipe_map.kva, blen);
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
+	}
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
 	pipeunlock(wpipe);
