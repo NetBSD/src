@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.629 2003/10/13 06:33:52 dyoung Exp $
+#	$NetBSD: mi,v 1.630 2003/10/13 07:29:28 dyoung Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -407,6 +407,14 @@
 ./usr/include/net/slcompress.h		comp-c-include
 ./usr/include/net/slip.h		comp-c-include
 ./usr/include/net/zlib.h		comp-c-include
+./usr/include/net80211/ieee80211.h		comp-c-include
+./usr/include/net80211/ieee80211_compat.h	comp-c-include
+./usr/include/net80211/ieee80211_crypto.h	comp-c-include
+./usr/include/net80211/ieee80211_ioctl.h	comp-c-include
+./usr/include/net80211/ieee80211_node.h		comp-c-include
+./usr/include/net80211/ieee80211_proto.h	comp-c-include
+./usr/include/net80211/ieee80211_radiotap.h	comp-c-include
+./usr/include/net80211/ieee80211_var.h		comp-c-include
 ./usr/include/netatalk/aarp.h		comp-c-include
 ./usr/include/netatalk/at.h		comp-c-include
 ./usr/include/netatalk/at_extern.h	comp-c-include
