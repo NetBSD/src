@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.73 2003/05/12 15:17:37 dsl Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.74 2003/05/28 20:02:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.73 2003/05/12 15:17:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.74 2003/05/28 20:02:59 dsl Exp $");
 
 #include "opt_ktrace.h"
 
@@ -580,7 +580,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 				struct iovec iov;
 				iov.iov_base = SCARG(uap, data);
 				iov.iov_len = size;
-				ktrgenio(p, SCARG(uap, fd), UIO_READ, &iov,
+				ktrgenio(p, SCARG(uap, fd), UIO_WRITE, &iov,
 					size, 0);
 			}
 #endif
@@ -658,7 +658,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 				struct iovec iov;
 				iov.iov_base = SCARG(uap, data);
 				iov.iov_len = size;
-				ktrgenio(p, SCARG(uap, fd), UIO_WRITE, &iov,
+				ktrgenio(p, SCARG(uap, fd), UIO_READ, &iov,
 					size, error);
 			}
 #endif
