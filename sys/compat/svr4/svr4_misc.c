@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.43 1997/03/15 00:01:18 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.44 1997/05/08 10:57:29 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -373,7 +373,7 @@ svr4_sys_fchroot(p, v, retval)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
+		error = VOP_ACCESS(vp, VLOOKUP, p->p_ucred, p);
 	VOP_UNLOCK(vp);
 	if (error)
 		return error;

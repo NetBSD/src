@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.72 1997/03/05 02:08:06 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.73 1997/05/08 10:57:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -329,7 +329,7 @@ nfs_access(v)
 			if (ap->a_mode & VWRITE)
 				mode |= (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND |
 					 NFSV3ACCESS_DELETE);
-			if (ap->a_mode & VEXEC)
+			if (ap->a_mode & VLOOKUP)
 				mode |= NFSV3ACCESS_LOOKUP;
 		} else {
 			if (ap->a_mode & VWRITE)

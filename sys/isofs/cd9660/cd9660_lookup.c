@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.16 1997/01/24 00:27:30 cgd Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.17 1997/05/08 10:57:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -144,7 +144,7 @@ cd9660_lookup(v)
 	 */
 	if (vdp->v_type != VDIR)
 		return (ENOTDIR);
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VLOOKUP, cred, cnp->cn_proc)) != 0)
 		return (error);
 	
 	/*
