@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.17 1997/02/11 08:15:10 mrg Exp $	*/
+/*	$NetBSD: login.c,v 1.18 1997/06/23 01:20:40 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.17 1997/02/11 08:15:10 mrg Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.18 1997/06/23 01:20:40 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,7 @@ static char rcsid[] = "$NetBSD: login.c,v 1.17 1997/02/11 08:15:10 mrg Exp $";
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <skey.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -194,7 +195,7 @@ main(argc, argv)
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
 		ttyn = tname;
 	}
-	if (tty = strrchr(ttyn, '/'))
+	if ((tty = strrchr(ttyn, '/')))
 		++tty;
 	else
 		tty = ttyn;
@@ -239,7 +240,7 @@ main(argc, argv)
 		}
 		(void)strncpy(tbuf, username, sizeof(tbuf) - 1);
 
-		if (pwd = getpwnam(username))
+		if ((pwd = getpwnam(username)))
 			salt = pwd->pw_passwd;
 		else
 			salt = "xx";
