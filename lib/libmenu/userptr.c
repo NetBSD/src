@@ -1,4 +1,4 @@
-/*	$NetBSD: userptr.c,v 1.5 1999/12/22 14:38:13 kleink Exp $	*/
+/*	$NetBSD: userptr.c,v 1.6 2000/03/05 04:09:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -46,11 +46,7 @@ set_item_userptr(param_item, userptr)
 {
 	ITEM *item = (param_item != NULL) ? param_item : &_menui_default_item;
 	
-        if ((item->userptr = (char *) malloc(strlen(userptr))) == NULL)
-                return E_SYSTEM_ERROR;
-
-	strcpy(item->userptr, userptr);
-
+        item->userptr = userptr;
         return E_OK;
 }
 
@@ -85,15 +81,13 @@ menu_userptr(menu)
  * Set the user pointer for the given menu
  */
 int
-set_menu_userptr(menu, userptr)
-        MENU *menu;
+set_menu_userptr(param_menu, userptr)
+        MENU *param_menu;
         char *userptr;
 {
+	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
 
-        if ((menu->userptr = (char *) malloc(strlen(userptr))) == NULL)
-                return E_SYSTEM_ERROR;
-
-        strcpy(menu->userptr, userptr);
+        menu->userptr = userptr;
 
         return E_OK;
 }
