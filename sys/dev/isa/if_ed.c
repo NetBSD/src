@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.68 1995/02/19 18:05:45 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.69 1995/02/27 09:10:45 glass Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -162,7 +162,7 @@ edprobe(parent, match, aux)
 /*
  * Generic probe routine for testing for the existance of a DS8390.  Must be
  * called after the NIC has just been reset.  This routine works by looking at
- * certain register values that are gauranteed to be initialized a certain way
+ * certain register values that are guaranteed to be initialized a certain way
  * after power-up or reset.  Seems not to currently work on the 83C690.
  *
  * Specifically:

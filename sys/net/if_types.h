@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.6 1994/06/29 06:36:29 cgd Exp $	*/
+/*	$NetBSD: if_types.h,v 1.7 1995/02/27 09:10:24 glass Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -53,7 +53,7 @@
 #define	IFT_ISO88026	0xa		/* MAN */
 #define	IFT_STARLAN	0xb
 #define	IFT_P10		0xc		/* Proteon 10MBit ring */
-#define	IFT_P80		0xd		/* Proteon 10MBit ring */
+#define	IFT_P80		0xd		/* Proteon 80MBit ring */
 #define	IFT_HY		0xe		/* Hyperchannel */
 #define	IFT_FDDI	0xf
 #define	IFT_LAPB	0x10
