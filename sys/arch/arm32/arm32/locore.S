@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.9 1996/05/12 21:54:05 mark Exp $ */
+/* $NetBSD: locore.S,v 1.10 1996/05/17 11:00:45 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -67,6 +67,14 @@ pc	.req	r15
 
 .text
 	.align	0
+
+/* This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+
+	.global kernel_text
+kernel_text:
+
 	.global	start
 start:
 	add	r1, pc, #(Lstart - . - 8)
