@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.c	7.20 (Berkeley) 6/27/91
- *	$Id: param.c,v 1.7 1994/05/17 04:16:58 cgd Exp $
+ *	$Id: param.c,v 1.8 1994/05/21 08:32:32 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@
  * the kernel; it should be modified there to suit local taste
  * if necessary.
  *
- * Compiled with -DHZ=xx -DTIMEZONE=x -DDST=x -DMAXUSERS=xx -DMAXFDESCS=xx
+ * Compiled with -DHZ=xx -DTIMEZONE=x -DDST=x -DMAXUSERS=xx
  */
 
 #ifndef HZ
@@ -84,7 +84,6 @@ int	maxproc = NPROC;
 #define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
 #define	NVNODE (NPROC + NTEXT + 100)
 long	desiredvnodes = NVNODE;
-int	maxfdescs = MAXFDESCS;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
 int	nclist = 60 + 12 * MAXUSERS;
