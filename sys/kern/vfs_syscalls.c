@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.128 1999/02/28 14:12:54 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.129 1999/03/02 07:47:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -285,6 +285,7 @@ sys_mount(p, v, retval)
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	mp->mnt_op = vfs;
 	vfs->vfs_refcount++;
+	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 update:
 	/*
@@ -321,7 +322,6 @@ update:
 	cache_purge(vp);
 	if (!error) {
 		vp->v_mountedhere = mp;
-		mp->mnt_vnodecovered = vp;
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
