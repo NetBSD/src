@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.18 1995/02/01 01:37:33 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.19 1995/03/31 03:06:21 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -1128,4 +1128,21 @@ svr4_alarm(p, uap, retval)
         *retval = (register_t) tp.it_value.tv_sec;
 
         return 0;
+}
+
+
+int
+svr4_gettimeofday(p, uap, retval)
+	register struct proc 			*p;
+	register struct svr4_gettimeofday_args	*uap;
+	register_t				*retval;
+{
+	if (SCARG(uap, tp)) {
+		struct timeval atv;
+
+		microtime(&atv);
+		return copyout(&atv, SCARG(uap, tp), sizeof (atv));
+	}
+
+	return 0;
 }

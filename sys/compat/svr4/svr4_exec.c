@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.7 1994/10/29 00:43:16 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.8 1995/03/31 03:06:17 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -200,18 +200,35 @@ svr4_check_header(eh, type)
 	Elf32_Ehdr     *eh;
 	int             type;
 {
+#ifdef sparc
+  /* #$%@#$%@#$%! */
+# define memcmp bcmp
+#endif
 	if (memcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0) {
 		DPRINTF(("Not an elf file\n"));
 		return ENOEXEC;
 	}
-	if (eh->e_machine != Elf32_em_386 && eh->e_machine != Elf32_em_486) {
-		DPRINTF(("Not an elf/386 or 486 executable\n"));
+
+	switch (eh->e_machine) {
+#ifdef i386
+	case Elf32_em_386:
+	case Elf32_em_486:
+#endif
+#ifdef sparc
+	case Elf32_em_sparc:
+#endif
+		break;
+
+	default:
+		DPRINTF(("Unsupported elf machine type %d\n", eh->e_machine));
 		return ENOEXEC;
 	}
+
 	if (eh->e_type != type) {
 		DPRINTF(("Not an elf executable\n"));
 		return ENOEXEC;
 	}
+
 	return 0;
 }
 
@@ -401,7 +418,7 @@ svr4_load_interp(p, path, epp, ap, last)
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
-		DPRINTF(("Can't find interpreter %s\n", path));
+		uprintf("cannot find interpreter %s\n", path);
 		if (bp != NULL)
 			free((char *) bp, M_TEMP);
 		return error;
