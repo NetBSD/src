@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.49 1999/11/04 19:11:51 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.50 2000/02/01 19:29:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.49 1999/11/04 19:11:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.50 2000/02/01 19:29:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,12 @@ struct cia_config cia_configuration;
  *
  * EXCEPT!  Some devices have a really hard time if BWX is used (WHY?!).
  * So, we decouple the uses for PCI config space and PCI bus space.
+ *
+ * FURTHERMORE!  The Pyxis, most notably earlier revs, really don't
+ * do so well if you don't use BWX for bus access.  So we default to
+ * forcing BWX on those chips.
+ *
+ * Geez.
  */
 
 #ifndef CIA_PCI_USE_BWX
@@ -140,8 +146,13 @@ struct cia_config cia_configuration;
 #define	CIA_BUS_USE_BWX	0
 #endif
 
+#ifndef CIA_PYXIS_FORCE_BWX
+#define	CIA_PYXIS_FORCE_BWX 1
+#endif
+
 int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
 int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
+int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
 ciamatch(parent, match, aux)
@@ -169,6 +180,8 @@ cia_init(ccp, mallocsafe)
 	struct cia_config *ccp;
 	int mallocsafe;
 {
+	int pci_use_bwx = cia_pci_use_bwx;
+	int bus_use_bwx = cia_bus_use_bwx;
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
@@ -181,8 +194,11 @@ cia_init(ccp, mallocsafe)
 	 */
 	if ((cputype == ST_EB164 &&
 	     (hwrpb->rpb_variation & SV_ST_MASK) >= SV_ST_ALPHAPC164LX_400) ||
-	    cputype == ST_DEC_550)
+	    cputype == ST_DEC_550) {
 		ccp->cc_flags |= CCF_ISPYXIS;
+		if (cia_pyxis_force_bwx)
+			pci_use_bwx = bus_use_bwx = 1;
+	}
 
 	/*
 	 * ALCOR/ALCOR2 Revisions >= 2 and Pyxis have the CNFG register.
@@ -201,15 +217,15 @@ cia_init(ccp, mallocsafe)
 	 *	- BWX is enabled in the CPU's capabilities mask (yes,
 	 *	  the bit is really cleared if the capability exists...)
 	 */
-	if ((cia_pci_use_bwx || cia_bus_use_bwx) &&
+	if ((pci_use_bwx || bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
 	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
 	    alpha_amask(ALPHA_AMASK_BWX) == 0) {
 		u_int32_t ctrl;
 
-		if (cia_pci_use_bwx)
+		if (pci_use_bwx)
 			ccp->cc_flags |= CCF_PCI_USE_BWX;
-		if (cia_bus_use_bwx)
+		if (bus_use_bwx)
 			ccp->cc_flags |= CCF_BUS_USE_BWX;
 
 		/*
