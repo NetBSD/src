@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.7 2000/12/03 07:44:43 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.8 2000/12/03 07:55:12 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -21,21 +21,22 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AR?=		ar
-AS?=		as
-CC?=		cc
-CPP?=		cpp
-LD?=		ld
-LORDER?=	lorder
-MKDEP?=		mkdep
-NM?=		nm
-RANLIB?=	ranlib
-SIZE?=		size
-STRIP?=		strip
-TSORT?=		tsort -q
+AR?=		${CROSSDIR}ar
+AS?=		${CROSSDIR}as
+CC?=		${CROSSDIR}cc
+CPP?=		${CROSSDIR}cpp
+LD?=		${CROSSDIR}ld
+LORDER?=	${CROSSDIR}lorder
+MKDEP?=		${CROSSDIR}mkdep
+NM?=		${CROSSDIR}nm
+RANLIB?=	${CROSSDIR}ranlib
+SIZE?=		${CROSSDIR}size
+STRIP?=		${CROSSDIR}strip
+TSORT?=		${CROSSDIR}tsort -q
 
 COPTS?=		-O2
 
+DEFGP?=		-G 0
 TEXTADDR?=	${DEFTEXTADDR}
 
 # source tree is located via $S relative to the compilation directory
@@ -56,7 +57,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 0
+GP?=		${DEFGP}
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
