@@ -42,7 +42,7 @@
  *	@(#)vaddrs.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vaddrs.h,v 1.3 92/11/26 03:05:11 torek Exp 
- * $Id: vaddrs.h,v 1.1 1993/10/02 10:24:31 deraadt Exp $
+ * $Id: vaddrs.h,v 1.2 1994/08/20 01:28:09 deraadt Exp $
  */
 
 /*
@@ -68,7 +68,7 @@
 #ifndef IODEV_0
 #define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
 
-#define	TIMERREG_VA	(IODEV_0 + 0*NBPG)
+#define	TIMERREG_VA	(IODEV_0)
 #define	ZS0_VA		(IODEV_0 + 1*NBPG)
 #define	ZS1_VA		(IODEV_0 + 2*NBPG)
 #define	AUXREG_VA	(IODEV_0 + 3*NBPG)
