@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.16 2002/09/28 11:04:27 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.17 2002/10/01 20:41:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -748,11 +748,6 @@ Ltrapagain:
 	blink	tr0, r18		/* trap(curproc, trapframe); */
 
 Ltrapepilogue:
-	/* Check for Software Interrupts */
-	LEAF(Lcheck_softint, r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r18
-
 	/* Check for ASTs */
 	pta/l	Ltrapexit, tr0		/* Preload the No-AST path */
 	ld.l	r15, TF_SSR, r2		/* Fetch saved Status Register */
@@ -824,6 +819,7 @@ Lsh5_event_interrupt:
 	/* Check for Software Interrupts */
 	LEAF(Lcheck_softint, r0)
 	ptabs/l	r0, tr0
+	ld.q	r15, SFO(SF_SSR, SZ_INTRFRAME), r2
 	blink	tr0, r18
 
 	/* Update interrupt nesting level */
@@ -1239,10 +1235,9 @@ Lcheck_softint:
 	beq/l	r1, r63, tr0		/* Return if no soft ints pending */
 
 	/*
-	 * There are softints pending. Lets see if the current spl it
-	 * low enough to handle any of them...
+	 * There are softints pending. The new ipl is in r2. See if it
+	 * is low enough to handle any of the pending softints...
 	 */
-	getcon	sr, r2
 
 Lcheck_softint_lower:
 	pta/u	1f, tr1			/* Preload the exit path */
