@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.88 2002/04/05 18:27:50 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.88.4.1 2002/09/01 13:57:49 lukem Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.88 2002/04/05 18:27:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.88.4.1 2002/09/01 13:57:49 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -1330,6 +1330,7 @@ ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 static void
 ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 {
+#ifndef AHC_NO_TAGS
 	struct ahc_initiator_tinfo *tinfo;
 	struct tmode_tstate *tstate;
 
@@ -1342,6 +1343,7 @@ ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 		tstate->tagenable &= ~devinfo->target_mask;
 		tstate->tagdisable |= devinfo->target_mask;
 	}
+#endif
 }
 
 static void
