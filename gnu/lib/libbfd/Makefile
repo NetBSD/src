@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/04/30 14:41:38 kleink Exp $
+#	$NetBSD: Makefile,v 1.11 1999/08/01 04:25:39 sommerfeld Exp $
 
 LIB=		bfd
 
@@ -22,6 +22,7 @@ BFD_SLIM=
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "sparc64")
 BFD64=
+CPPFLAGS += -DBFD_TARG_64
 .endif
 
 DIST=		${.CURDIR}/../../dist
