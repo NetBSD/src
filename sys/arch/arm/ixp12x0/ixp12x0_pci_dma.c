@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.3 2002/08/17 20:46:27 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.4 2002/10/09 00:12:05 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -42,6 +42,8 @@
 
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+
+#include <arm/ixp12x0/ixp12x0var.h>
 
 void
 ixp12x0_pci_dma_init(bus_dma_tag_t dmat, void *cookie)
