@@ -1,4 +1,4 @@
-/*	$NetBSD: ptm.c,v 1.1 2004/05/26 01:24:03 christos Exp $	*/
+/*	$NetBSD: ptm.c,v 1.2 2004/05/27 03:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,12 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptm.c,v 1.1 2004/05/26 01:24:03 christos Exp $");
+__RCSID("$NetBSD: ptm.c,v 1.2 2004/05/27 03:18:19 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
@@ -54,8 +55,11 @@ main(int argc, char *argv[])
 	int fdm, fds;
 	struct group *gp;
 
-	if ((fdm = open("/dev/ptm", O_RDWR)) == -1)
+	if ((fdm = open("/dev/ptm", O_RDWR)) == -1) {
+		if (errno == ENOENT || errno == ENODEV)
+			return 0;
 		err(1, "open multiplexor");
+	}
 
 	if (fstat(fdm, &stm) == -1)
 		err(1, "fstat multiplexor");
