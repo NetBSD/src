@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 12:31:17 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.3 2004/07/03 05:10:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,9 +88,10 @@ __longjmp14(jmp_buf env, int val)
 	/* Copy FP state */
 	if (sc->sc_fpused) {
 		/* FP saved regs are $f20 .. $f31 */
-		memcpy(&uc.uc_mcontext.__fpregs.__fp_r.
-		    __fp_regs32.__fp32_regs[20], &sc->sc_fpregs[20], 32 - 20);
-		uc.uc_mcontext.__fpregs.__fp_csr = sc->sc_regs[_R_FSR];
+		memcpy(&uc.uc_mcontext.__fpregs.__fp_r.__fp_regs[20],
+		    &sc->sc_fpregs[20], 32 - 20);
+		uc.uc_mcontext.__fpregs.__fp_csr =
+		    sc->sc_fpregs[_R_FSR - _FPBASE];
 		/* XXX sc_fp_control */
 		uc.uc_flags |= _UC_FPU;
 	}
