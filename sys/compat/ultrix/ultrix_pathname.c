@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.3 1996/09/03 03:12:43 mycroft Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.4 1996/09/29 10:52:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,16 +85,16 @@ ultrix_sys_creat(p, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_creat_args *uap = v;
-	struct sys_open_args ouap;
+	struct sys_open_args ap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	SCARG(&ouap, mode) = SCARG(uap, mode);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
+	SCARG(&ap, mode) = SCARG(uap, mode);
 
-	return (sys_open(p, &ouap, retval));
+	return (sys_open(p, &ap, retval));
 }
 
 
@@ -153,9 +153,9 @@ ultrix_sys_execv(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, argp) = SCARG(uap, argp);
-	SCARG(&ouap, envp) = NULL;
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
 
 	return (sys_execve(p, &ap, retval));
 }
@@ -177,9 +177,9 @@ ultrix_sys_execve(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, argp) = SCARG(uap, argp);
-	SCARG(&ouap, envp) = SCARG(uap, envp);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
 
 	return (sys_execve(p, &ap, retval));
 }
