@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.100 2000/08/06 08:51:22 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.101 2000/08/27 06:31:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.100 2000/08/06 08:51:22 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.101 2000/08/27 06:31:23 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -900,6 +900,12 @@ progressmeter(int flag)
 	if (!progress || filesize <= 0)
 		return;
 
+	/*
+	 * print progress bar only if we are foreground process.
+	 */
+	if (! foregroundproc())
+		return;
+
 	(void)gettimeofday(&now, NULL);
 	cursize = bytes + restart_point;
 	timersub(&now, &lastupdate, &wait);
@@ -908,12 +914,6 @@ progressmeter(int flag)
 		lastsize = cursize;
 		wait.tv_sec = 0;
 	}
-
-	/*
-	 * print progress bar only if we are foreground process.
-	 */
-	if (! foregroundproc())
-		return;
 
 	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
@@ -1088,10 +1088,10 @@ void
 list_vertical(StringList *sl)
 {
 	int i, j, w;
-	int columns, width, lines, items;
+	int columns, width, lines;
 	char *p;
 
-	width = items = 0;
+	width = 0;
 
 	for (i = 0 ; i < sl->sl_cur ; i++) {
 		w = strlen(sl->sl_str[i]);
