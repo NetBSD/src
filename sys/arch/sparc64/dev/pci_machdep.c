@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2000/04/08 04:33:10 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2000/05/17 09:25:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -374,13 +374,19 @@ pci_intr_map(pc, tag, pin, line, ihp)
 {
 	int rv;
 
+	/*
+	 * XXX
+	 * UltraSPARC IIi PCI does not use PCI_INTERRUPT_REG, but we have
+	 * used this space for our own purposes...
+	 */
 	DPRINTF(SPDB_INTR, ("pci_intr_map: tag %lx; pin %d; line %d", (long)tag, pin, line));
-	
+#if 1
 	if (line == 255) {
 		*ihp = -1;
 		rv = 1;
 		goto out;
 	}
+#endif
 	if (pin > 4)
 		panic("pci_intr_map: pin > 4");
 
