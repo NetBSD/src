@@ -1,4 +1,4 @@
-.\"	$NetBSD: pstat.8,v 1.35 2004/12/09 01:14:59 matt Exp $
+.\"	$NetBSD: pstat.8,v 1.36 2004/12/09 06:57:19 snj Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)pstat.8	8.5 (Berkeley) 5/13/94
 .\"
-.Dd December 20, 2003
+.Dd December 9, 2004
 .Dt PSTAT 8
 .Os
 .Sh NAME
@@ -63,7 +63,8 @@ The following options are available:
 .Bl -tag -width Ds
 .It Fl T
 Prints the number of used and free slots for open files, used vnodes, and swap
-space.  This option is useful for checking to see how large system tables
+space.
+This option is useful for checking to see how large system tables
 become if the system is under heavy load.
 .It Fl f
 Print the open file table with these headings:
@@ -122,8 +123,9 @@ Print devices by major/minor number rather than by name.
 .It Fl s
 Print information about swap space usage on all the
 swap areas compiled into the kernel.
-The first column is the device name of the partition.  The next column is
-the total space available in the partition.  The
+The first column is the device name of the partition.
+The next column is the total space available in the partition.
+The
 .Ar Used
 column indicates the total blocks used so far;  the
 .Ar Available
@@ -222,9 +224,10 @@ for STRIPDISC (see
 for HDLCDISC.
 .El
 .It Fl v
-Print the active vnodes.  Each group of vnodes corresponding
-to a particular filesystem is preceded by a two line header.  The
-first line consists of the following:
+Print the active vnodes.
+Each group of vnodes corresponding to a particular filesystem is preceded
+by a two line header.
+The first line consists of the following:
 .Pp
 .Df I
 .No *** MOUNT Em fstype from
@@ -248,9 +251,10 @@ the filesystem is mounted on; and
 is a list
 of optional flags applied to the mount (see
 .Xr mount 8 ) .
-The second line is a header for the individual fields ,
+The second line is a header for the individual fields,
 the first part of which are fixed, and the second part are filesystem
-type specific.  The headers common to all vnodes are:
+type specific.
+The headers common to all vnodes are:
 .Bl -tag -width indent
 .It ADDR
 Location of this vnode.
