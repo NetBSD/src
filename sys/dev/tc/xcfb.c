@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.9 1999/04/30 00:44:11 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.10 1999/04/30 09:43:23 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.9 1999/04/30 00:44:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.10 1999/04/30 09:43:23 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,13 +291,8 @@ xcfbattach(parent, self, aux)
 	struct xcfb_softc *sc = (struct xcfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-#if 1
 	struct hwcmap *cm;
 	int console;
-#else
-	struct hwcmap *cm;
-	int console, i;
-#endif
 
 	console = (ta->ta_addr == xcfb_consaddr);
 	if (console) {
@@ -312,17 +307,10 @@ xcfbattach(parent, self, aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-#if 1
 	cm = &sc->sc_cmap;
 	memset(cm, 255, sizeof(struct hwcmap));		/* XXX */
 	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
-#else
-	cm = &sc->sc_cmap;
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;
-	for (i = 1; i < CMAP_SIZE; i++) {
-		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
-	}
-#endif
+
 	sc->sc_csr = IMS332_BPP_8 | IMS332_CSR_A_VTG_ENABLE;
 
         tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, xcfbintr, sc);
