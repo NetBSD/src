@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.20 2003/12/15 16:10:58 martin Exp $
+.\"	$NetBSD: netboot,v 1.20.2.1 2004/06/15 22:38:43 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,6 +112,9 @@ use a combination of RARP and BOOTP for the discovery stage.
 In the past, these systems used RARP and BOOTPARAMS. JavaStations
 booting from OpenFirmware use DHCP.
 .\}
+.if \n[sparc64] \{\
+All \*M systems use a combination of RARP and DHCP for the discovery stage.
+.\}
 .if !\n[hp300]:\n[hp700] \{\
 TFTP is used in the bootstrap phase to download
 .if \n[macppc] \{\
@@ -131,6 +134,12 @@ JavaStations with OpenFirmware need a special bootstrap program,
 .Pa bootjs.net ,
 which is a version of boot.net in ELF format.
 It is not linked to the IP address.
+.\}
+.if \n[sparc64] \{\
+the bootstrap program,
+.Pa ofwboot.net ,
+which has been linked to a file name appropriate to the client's
+IP address as described in the TFTP section below.
 .\}
 .if \n[evbppc] \{\
 the kernel via the on-board Ethernet card by the firmware.
@@ -227,7 +236,7 @@ or later, you can achieve this with:
 .Pp
 .It
 .\} \" ! \n[hp300]:\n[hp700]
-.if \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc] \{\
+.if \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
 .ie !\n[hp300] \{\
 .Xr dhcpd 8
 in
@@ -295,7 +304,6 @@ group {
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
-                #
 .if \n[sparc] \{\
 
                 #
@@ -304,15 +312,19 @@ group {
                 filename                "bootjs.net";
 .\}
 .ie \n[hp700] \{\
+                #
                 filename                "SYSNBSD";
 .\}
 .ie \n[macppc] \{\
+                #
                 filename                "ofwboot.xcf";
 .\}
 .el .if \n[next68k] \{\
+                #
                 filename                "boot";
 .\} \" \n[next68k]
 .\} \" !\n[hp300]
+
                 #
                 # The path on the NFS server.
                 #
@@ -329,6 +341,11 @@ group {
                 # If your DHCP server is not your NFS server, supply the
                 # address of the NFS server. Since we assume you run everything
                 # on one server, this is not needed.
+.if \n[macppc] \{\
+                #
+                # macppc machines will look for their bootloader, 
+                # ofwboot.xcf, on the next-server as well.
+.\}
                 #
                 # next-server server.test.net;
         }
@@ -365,8 +382,8 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/dhcpd restart"
 .disp)
 .Pp
-.\} \" ! \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]
-.if \n[sparc] \{\
+.\} \" ! \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64]
+.if \n[sparc]:\n[sparc64] \{\
 .Pp
 .It
 .Xr rarpd 8
@@ -405,7 +422,7 @@ or later, you can achieve this with:
 .No # Ic "/etc/rc.d/rarpd restart"
 .disp)
 .Pp
-.\} \" ! \n[sparc]
+.\} \" ! \n[sparc]:\n[sparc64]
 .if !\n[hp300] \{\
 .Pp
 .It
@@ -471,25 +488,36 @@ directory of the distribution.
 .No # Ic "cp boot /tftpboot"
 .disp)
 .\}
-.if \n[sparc] \{\
+.if \n[sparc]:\n[sparc64] \{\
 Get
-.Pa boot.net
+.if \n[sparc] .Pa boot.net
+.if \n[sparc64] .Pa ofwboot.net
 from the
 .Pa installation/netboot
 directory of the distribution.
 .(disp
-.No # Ic "cp boot.net /tftpboot"
+.if \n[sparc] .No # Ic "cp boot.net /tftpboot"
+.if \n[sparc64] .No # Ic "cp ofwboot.net /tftpboot"
 .disp)
 .Pp
 Now, you need to link
-.Pa boot.net
+.if \n[sparc] .Pa boot.net
+.if \n[sparc64] .Pa ofwboot.net
 to the filename that your \*M will look for.
 It will look for a filename composed of the machine's IP address
+.if \n[sparc] \{\
 (in hexadecimal) followed by the machine's architecture,
 separated by a period.
 For example, a sun4c machine which has been assigned IP address
 192.168.1.10, will make a TFTP request for
 .Pa C0A8010A.SUN4C .
+.\}
+.if \n[sparc64] \{\
+(in hexadecimal).
+For example, a machine which has been assigned IP address
+192.168.1.10, will make a TFTP request for
+.Pa C0A8010A .
+.\}
 .Pp
 You can use
 .Xr bc 1
@@ -507,10 +535,11 @@ A8
 A
 .Ic quit
 .No # Ic "cd /tftpboot"
-.No # Ic "ln -s boot.net C0A8010A.SUN4C"
+.if \n[sparc] .No # Ic "ln -s boot.net C0A8010A.SUN4C"
+.if \n[sparc64] .No # Ic "ln -s ofwboot.net C0A8010A"
 .disp)
 .Pp
-.\} \" \n[sparc]
+.\} \" \n[sparc]:\n[sparc64]
 .if \n[sparc] \{\
 For OpenFirmware based JavaStations you use the file
 .Pa bootjs.net
@@ -681,7 +710,7 @@ Use
 .No # Ic "mv netbsd-GENERIC /export/client/root/netbsd"
 .disp)
 .\}
-.if \n[sparc] \{\
+.if \n[sparc]:\n[sparc64] \{\
 Use
 .Pa binary/kernel/netbsd-GENERIC.gz ) .
 .Pp
@@ -692,12 +721,14 @@ Use
 .Pp
 If you are netbooting the installer, copy the distribution files to
 the client's root directory and extract the tools from
-.Pa installation/netboot/rootfs.tgz .
+.if \n[sparc] .Pa installation/netboot/rootfs.tgz .
+.if \n[sparc64] .Pa installation/misc/instfs.tgz .
 .Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
 .No # Ic "cd /export/client/root"
-.No # Ic "tar -xpzf rootfs.tgz"
+.if \n[sparc] .No # Ic "tar -xpzf rootfs.tgz"
+.if \n[sparc64] .No # Ic "tar -xpzf instfs.tgz"
 .disp)
 .\}
 .if \n[evbppc] \{\
@@ -822,10 +853,10 @@ your server, make sure the following lines are present in your
 .if \n[hp300]:\n[hp700] \{\
 rbootd=YES       rbootd_flags=""
 .\}
-.if \n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc] \{\
+.if \n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
 dhcpd=YES        dhcpd_flags="-q"
 .\}
-.if \n[sparc] \{\
+.if \n[sparc]:\n[sparc64] \{\
 rarpd=YES        rarpd_flags="-a"
 .\}
 nfs_server=YES         # enable server daemons
