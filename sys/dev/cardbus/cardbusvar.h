@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.8 1999/11/08 19:59:08 joda Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.9 1999/11/08 20:21:24 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -326,7 +326,7 @@ struct cardbus_cis_info {
     struct cb_bar_info {
 	unsigned int flags;
 	unsigned int size;
-    } bar[5];
+    } bar[7];
     unsigned int	funcid;
     union {
 	struct {
