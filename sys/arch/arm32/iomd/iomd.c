@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.13 2001/07/09 23:42:18 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.14 2001/07/10 00:36:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -55,9 +55,6 @@
 #include <arm32/iomd/iomdvar.h>
 
 #include "iomd.h"
-#if NIOMD != 1
-#error Need one IOMD device configured
-#endif
 
 /*
  * IOMD device.
