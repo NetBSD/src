@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)float.h	7.1 (Berkeley) 5/8/90
- *	$Id: float.h,v 1.2 1993/05/22 07:58:20 cgd Exp $
+ *	$Id: float.h,v 1.3 1993/08/15 15:45:51 mycroft Exp $
  */
 
 #define FLT_RADIX	2		/* b */
@@ -54,7 +54,7 @@
 #define DBL_MIN		2.225073858507201E-308
 #define DBL_MIN_10_EXP	-307
 #define DBL_MAX_EXP	1024
-#define DBL_MAX		1.797693134862316E+308
+#define DBL_MAX		1.7976931348623157E+308
 #define DBL_MAX_10_EXP	308
 
 #define LDBL_MANT_DIG	DBL_MANT_DIG
