@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.44.4.3 2002/07/29 14:41:49 lukem Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.44.4.4 2002/11/18 02:19:33 he Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1403,6 +1403,10 @@ arm6_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm6_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1444,6 +1448,10 @@ arm7_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1478,6 +1486,10 @@ arm7tdmi_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7tdmi_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1522,6 +1534,10 @@ arm8_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm8_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Get clock configuration */
 	clocktest = arm8_clock_config(0, 0) & 0x0f;
@@ -1600,6 +1616,10 @@ arm9_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm9_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1646,6 +1666,10 @@ sa110_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, sa110_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1700,6 +1724,10 @@ sa11x0_setup(args)
 
 	cpuctrl = parse_cpu_options(args, sa11x0_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1751,6 +1779,14 @@ xscale_setup(args)
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1761,14 +1797,5 @@ xscale_setup(args)
 	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
-
-#if 0
-	/*
-	 * XXX FIXME
-	 * Disable write buffer coalescing, PT ECC, and set
-	 * the mini-cache to write-back/read-allocate.
-	 */
-	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
-#endif
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
