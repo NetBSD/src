@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5 2001/05/28 00:12:21 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.6 2002/07/04 20:22:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -69,10 +69,6 @@ sendsig(catcher, sig, mask, code)
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
 
 	/* Save register context. */
 	frame.sf_sc.sc_frame = *tf;
