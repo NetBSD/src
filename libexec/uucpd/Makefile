@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/22 06:17:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1998/07/03 18:09:48 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	uucpd
-NOMAN=	noman
-CPPFLAGS+= -DBSDINETD
+MAN=	uucpd.8
 LDADD+= -lcrypt
 DPADD+=	${LIBCRYPT}
 
