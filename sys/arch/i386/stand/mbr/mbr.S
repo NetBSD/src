@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.1 2003/04/28 12:19:05 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2 2003/04/29 10:24:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 The NetBSD Foundation, Inc. 
@@ -521,12 +521,10 @@ mbr_space	= defkey - .
  */
 defkey:
 	.byte	SCAN_ENTER		/* ps/2 code */
-flags:
-#ifdef BOOTSEL_FLAGS
-	.byte	BOOTSEL_FLAGS
-#else
-	.byte	0x00
-#endif	/* BOOTSEL */
+#ifndef BOOTSEL_FLAGS
+#define	BOOTSEL_FLAGS	0
+#endif
+flags:	.byte	BFL_NEWMBR | BOOTSEL_FLAGS
 /*
  * Timeout value. ~65536 ticks per hour, which is ~18.2 times per second.
  * 0xffff means never timeout.
