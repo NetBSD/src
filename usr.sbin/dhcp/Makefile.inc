@@ -32,12 +32,11 @@
 
 WARNS?=	0
 
-COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-OMOBJDIR!=cd $(.CURDIR)/../omapip; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-MROBJDIR!=cd $(.CURDIR)/../minires; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}
+OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
+MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
