@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.271 2000/10/27 17:37:03 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.272 2000/10/27 22:44:05 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.267 2000/10/27 17:36:44 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.268 2000/10/27 22:43:28 thorpej Exp 
  */
 
 /*
@@ -2266,6 +2266,84 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82434LX/NX PCI, Cache and Memory Controller (PCMC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
+	    0,
+	    "Intel",
+	    "i960 RM PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RN,
+	    0,
+	    "Intel",
+	    "i960 RN PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
+	    0,
+	    "Intel",
+	    "Pro/1000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	    0,
+	    "Intel",
+	    "82815 Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_AGP,
+	    0,
+	    "Intel",
+	    "82815 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_GRAPH,
+	    0,
+	    "Intel",
+	    "82815 Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
 	    0,
 	    "Intel",
@@ -2428,6 +2506,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
+	    0,
+	    "Intel",
+	    "82840 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP,
+	    0,
+	    "Intel",
+	    "82840 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI,
+	    0,
+	    "Intel",
+	    "82840 PCI",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
 	    0,
 	    "Intel",
@@ -2564,6 +2660,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
+	    0,
+	    "Intel",
+	    "82820 MCH (Camino)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_AGP,
+	    0,
+	    "Intel",
+	    "82820 AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
