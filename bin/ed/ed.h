@@ -216,7 +216,7 @@ long exec_global __P((int, int));
 void expand_des_key __P((char *, char *));
 int extract_addr_range __P((void));
 char *extract_pattern __P((int));
-int extract_subst_tail __P((int *, int *));
+int extract_subst_tail __P((int *, long *));
 char *extract_subst_template __P((void));
 int filter_lines __P((long, long, char *));
 int flush_des_file __P((FILE *));
