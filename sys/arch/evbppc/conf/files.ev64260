@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.6 2004/06/24 18:32:38 he Exp $
+#	$NetBSD: files.ev64260,v 1.7 2004/09/13 14:38:37 drochner Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -39,8 +39,7 @@ file	dev/md_root.c				memory_disk_hooks
 #
 # System bus types
 #
-define mainbus { }
-device	mainbus: isabus, pcibus, mainbus
+device	mainbus {}
 attach	mainbus at root
 file	arch/evbppc/ev64260/mainbus.c		mainbus|cpu needs-flag
 
@@ -60,8 +59,6 @@ file	arch/evbppc/ev64260/wdc_obio.c		wdc_obio
 
 #
 # PCI-only drivers
-# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
-# XXX devices to 'pci'.
 #
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
@@ -72,7 +69,7 @@ attach	pcib at pci
 file	arch/evbppc/pci/pcib.c			pcib
 
 #
-# ISA and mixed ISA+PCI drivers
+# ISA drivers
 #
 
 include "dev/isa/files.isa"
