@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2000/02/29 15:21:46 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2000/03/25 04:12:20 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -59,10 +59,8 @@
 #include <dev/pci/pcidevs.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0x0cf8)
-#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0x0cfc)
-
-#define	PCI_CONF_SPACE		(PREP_BUS_SPACE_IO + 0x00800000)
+#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
+#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
 
 /*
  * PCI constants.
@@ -126,6 +124,7 @@ pci_attach_hook(parent, self, pba)
 			nfunctions = 1;
 
 		for (function = 0; function < nfunctions; function++) {
+			int i;
 
 			tag = pci_make_tag(pc, bus, device, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -143,18 +142,20 @@ pci_attach_hook(parent, self, pba)
 			case 12:
 			case 18:
 			case 22:
-			  csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-			  csr |= (PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
-			  pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-			  break;
+				csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+				csr |= (PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+				pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+				break;
 			}
 
-			address = pci_conf_read(pc, tag, PCI_CBIO);
-			if (address > 0x10000000) {
-				/* Fixup insane address */
-				address &= 0x00ffffff;
-				address |= 0x01000000;
-				pci_conf_write(pc, tag, PCI_CBIO, address);
+			/* Fixup insane address */
+			for (i = 0; i < 6; i ++) {
+			address = pci_conf_read(pc, tag, PCI_CBIO + i * 4);
+				if (address > 0x10000000) {
+					address &= 0x00ffffff;
+					address |= 0x01000000;
+					pci_conf_write(pc, tag, PCI_CBIO + i * 4, address);
+				}
 			}
 
 			/* Fixup intr */
@@ -171,9 +172,9 @@ pci_attach_hook(parent, self, pba)
 			}
 
 			if (line) {
-			    intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-			    pci_conf_write(pc, tag, PCI_INTERRUPT_REG,
-				(intr & ~0xff) | line);
+				intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+				pci_conf_write(pc, tag, PCI_INTERRUPT_REG,
+				    (intr & ~0xff) | line);
 			}
 		}
 	}
