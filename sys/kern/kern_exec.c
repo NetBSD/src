@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.141 2001/06/15 17:24:19 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.142 2001/06/18 02:00:55 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -131,6 +131,7 @@ const struct emul emul_netbsd = {
 	NULL,
 #endif
 	sendsig,
+	trapsignal,
 	sigcode,
 	esigcode,
 	NULL,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.26 2001/06/12 17:13:34 tsubai Exp $
+#	$NetBSD: files.bebox,v 1.27 2001/06/18 02:00:49 christos Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -29,7 +29,8 @@ include "compat/ossaudio/files.ossaudio"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
+file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
+file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # Machine-independent SCSI drivers

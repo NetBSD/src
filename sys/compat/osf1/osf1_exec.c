@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.24 2001/06/16 21:44:30 manu Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.25 2001/06/18 02:00:53 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -60,6 +60,7 @@ const struct emul emul_osf1 = {
 	osf1_sysent,
 	osf1_syscallnames,
 	sendsig,
+	trapsignal,
 	osf1_sigcode,
 	osf1_esigcode,
 	NULL,

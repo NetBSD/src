@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.5 2001/05/30 11:37:22 mrg Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.6 2001/06/18 02:00:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct emul emul_netbsd_aoutm68k = {
 	NULL,
 #endif
 	sendsig,
+	trapsignal,
 	sigcode,
 	esigcode,
 	NULL,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.38 2001/05/02 13:00:19 minoura Exp $
+#	$NetBSD: files.x68k,v 1.39 2001/06/18 02:00:51 christos Exp $
 #
 # new style config file for x68k architecture
 #
@@ -196,6 +196,7 @@ include "compat/svr4/files.svr4"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.107 2001/05/08 06:09:30 is Exp $
+#	$NetBSD: files.amiga,v 1.108 2001/06/18 02:00:48 christos Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -468,6 +468,7 @@ include "compat/svr4/files.svr4"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
