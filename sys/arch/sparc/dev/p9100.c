@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.12 2000/06/29 07:40:07 mrg Exp $ */
+/*	$NetBSD: p9100.c,v 1.13 2000/07/09 20:38:34 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,21 +58,22 @@
 #include <machine/autoconf.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #if 0
 #include <sparc/dev/p9100reg.h>
 #endif
-#include <sparc/dev/sbusvar.h>
+
+#include <dev/sbus/sbusvar.h>
 
 #include "tctrl.h"
 #if NTCTRL > 0
 #include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>
 #endif
+
+#include <machine/conf.h>
 
 /* per-display variables */
 struct p9100_softc {
