@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.663 2004/03/01 00:37:18 perry Exp $
+# $NetBSD: mi,v 1.664 2004/03/13 19:51:11 bjh21 Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -494,7 +494,7 @@
 ./usr/share/man/cat4/acorn32/asc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/beep.0		man-obsolete		obsolete
-./usr/share/man/cat4/acorn32/busmouse.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/busmouse.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acorn32/cosc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/csc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/ie.0		man-sys-catman		.cat
@@ -504,12 +504,12 @@
 ./usr/share/man/cat4/acorn32/lpt.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/mainbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/mem.0		man-sys-catman		.cat
-./usr/share/man/cat4/acorn32/opms.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/opms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acorn32/podulebus.0	man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/ptsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/qms.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/vidcaudio.0	man-sys-catman		.cat
-./usr/share/man/cat4/acorn32/wsqms.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/wsqms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiacad.0			man-sys-catman		.cat
@@ -2554,7 +2554,7 @@
 ./usr/share/man/man4/acorn32/asc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/beep.4		man-obsolete		obsolete
-./usr/share/man/man4/acorn32/busmouse.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/busmouse.4		man-obsolete		obsolete
 ./usr/share/man/man4/acorn32/cosc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/csc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/ie.4		man-sys-man		.man
@@ -2564,12 +2564,12 @@
 ./usr/share/man/man4/acorn32/lpt.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/mainbus.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/mem.4		man-sys-man		.man
-./usr/share/man/man4/acorn32/opms.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/opms.4		man-obsolete		obsolete
 ./usr/share/man/man4/acorn32/podulebus.4	man-sys-man		.man
 ./usr/share/man/man4/acorn32/ptsc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/qms.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/vidcaudio.4	man-sys-man		.man
-./usr/share/man/man4/acorn32/wsqms.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/wsqms.4		man-obsolete		obsolete
 ./usr/share/man/man4/acphy.4			man-sys-man		.man
 ./usr/share/man/man4/acpi.4			man-sys-man		.man
 ./usr/share/man/man4/acpiacad.4			man-sys-man		.man
