@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/09/21 16:49:25 veego Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1997/10/30 05:31:07 mrg Exp $
 
 FILESDIR= /usr/share/samples/ipf
 

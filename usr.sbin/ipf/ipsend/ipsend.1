@@ -4,9 +4,9 @@ ipsend \- sends IP packets
 .SH SYNOPSIS
 .B ipsend
 [
-.B \-ITU
+.B \-dITUv
 ] [
-.B \-d
+.B \-i
 <interface>
 ] [
 .B \-f
@@ -46,8 +46,8 @@ attempt at making a TCP connection using a with ipsend resending the SYN
 packet as per the command line options.
 .SH OPTIONS
 .TP
-.BR \-d \0<interface>
-Set the interface name to be the name supplied.
+.BR \-d
+enable debugging mode.
 .TP
 .BR \-f \0<offset>
 The \fI-f\fP allows the IP offset field in the IP header to be set to an
@@ -57,6 +57,10 @@ arbitrary value, which can be specified in decimal or hexidecimal.
 Specify the hostname of the gateway through which to route packets.  This
 is required whenever the destination host isn't directly attached to the
 same network as the host from which you're sending.
+.TP
+.BR \-i \0<interface>
+Set the interface name to be the name supplied.
+.TP
 .TP
 .BR \-m \0<MTU>
 Specify the MTU to be used when sending out packets.  This option allows you
@@ -91,6 +95,9 @@ Set the protocol to TCP.
 .TP
 .B \-U
 Set the protocol to UDP.
+.TP
+.BR \-d
+enable verbose mode.
 .DT
 .SH SEE ALSO
 ipsend(1), ipresend(1), iptest(1), protocols(4), bpf(4), dlpi(7p)
