@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.9 1998/12/08 00:20:16 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.10 2000/02/28 17:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	xs->retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
+	xs->req_sense_length = 0;	/* XXX field is not really useful */
 
 	return (xs);
 }
