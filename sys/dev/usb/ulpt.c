@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.21 1999/09/09 12:26:45 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.22 1999/09/10 19:28:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,9 +151,6 @@ USB_ATTACH(ulpt)
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id = usbd_get_interface_descriptor(iface);
-	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
-	usb_device_request_t req;
-	int len, alen;
 	char devinfo[1024];
 	usb_endpoint_descriptor_t *ed;
 	usbd_status r;
@@ -189,6 +186,17 @@ USB_ATTACH(ulpt)
 	}
 	sc->sc_ifaceno = id->bInterfaceNumber;
 
+#if 0
+/*
+ * This code is disabled because for some mysterious it causes
+ * printing not to work.  But only sometimes, and mostly with
+ * UHCI and less often with OHCI.  *sigh*
+ */
+	{
+	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
+	usb_device_request_t req;
+	int len, alen;
+
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = UR_GET_DEVICE_ID;
 	USETW(req.wValue, cd->bConfigurationValue);
@@ -210,6 +218,8 @@ USB_ATTACH(ulpt)
 		ieee1284_print_id(devinfo+2);
 		printf(">\n");
 	}
+	}
+#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 
@@ -478,6 +488,7 @@ ulptioctl(dev, cmd, data, flag, p)
 	return (error);
 }
 
+#if 0
 /* XXX This does not belong here. */
 /*
  * Print select parts of a IEEE 1284 device ID.
@@ -500,6 +511,7 @@ ieee1284_print_id(str)
 		}
 	}
 }
+#endif
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(ulpt, usb, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
