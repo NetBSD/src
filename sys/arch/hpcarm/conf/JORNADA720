@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.26 2002/07/22 20:55:09 manu Exp $
+#	$NetBSD: JORNADA720,v 1.27 2002/09/16 19:50:27 manu Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 # estimated number of users
 maxusers	32
@@ -227,7 +227,7 @@ hpcfb*		at sed?
 wsdisplay*	at hpcfb?
 j720ssp0	at saip?	addr 0x80070000 size 0x100
 wskbd*		at j720ssp?	mux 1
-wsmouse*	at j720ssp?	mux 1
+wsmouse*	at j720ssp?	mux 0
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
