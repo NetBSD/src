@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/03/29 21:24:01 ragge Exp $
+#	$NetBSD: Makefile,v 1.3 1995/04/25 14:14:19 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -7,14 +7,17 @@ CC=	cc
 AS=	as
 
 RELOC=	100000
-
+VAXTYP=	-DVAX750 -DVAX630
 CFLAGS=	-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC}
 MACH=	-DVAX750
 
 DEVS=	autoconf.o hp.o ra.o
 LIBS=	libsa.a libsvax.a libkern.a
 
-all:	boot xxboot bootxx
+all:	boot xxboot
+
+machine:
+	ln -s ../include machine
 
 libsa.a: ../../../lib/libsa/libsa.a
 	@rm -f libsa.a
@@ -43,7 +46,7 @@ srt0.o:	srt0.s
 	${CC} -x assembler-with-cpp -E -DREL srt0.s | as -o srt0.o
 
 
-boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBS} 
+boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBS} machine
 	ld -N -T ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
 	conf.o ${DEVS} ${LIBS}
 	@strip boot
@@ -64,18 +67,12 @@ conf.o:	conf.c
 boot.o:	boot.c
 	${CC} -c ${CFLAGS} $*.c
 
-bootblocks:	start.o bootxx.o init.o romread.o ${LIBS}
+xxboot:	start.o bootxx.o init.o romread.o ${LIBS} machine
 	ld -N -T ${RELOC} -o a.out start.o bootxx.o init.o romread.o ${LIBS}
 	@strip a.out
 	@size a.out
-	@dd if=a.out of=bootblocks bs=32 skip=1
+	@dd if=a.out of=xxboot bs=32 skip=1
 	@rm -f a.out
-
-xxboot:	bootblocks
-	dd if=bootblocks of=xxboot bs=512 count=1
-
-bootxx:	bootblocks
-	dd if=bootblocks of=bootxx bs=512 skip=1
 
 start.o: start.s
 	${CC} -x assembler-with-cpp -E start.s | as -o start.o
@@ -91,5 +88,5 @@ bootxx.o: bootxx.c
 
 clean:
 	rm -f start.o romread.o bootxx.o init.o xxboot bootxx bootblocks \
-	libsvax.a libsa.a libkern.a udiv.o urem.o consio.o
+	libsvax.a libsa.a libkern.a udiv.o urem.o consio.o machine
 	rm -f autoconf.o conf.o boot.o hp.o boot srt0.o devopen.o

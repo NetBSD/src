@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1995/03/29 21:24:07 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.3 1995/04/25 14:14:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,28 +30,28 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
-
 
 #include "sys/param.h"
+
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
+
 #include "vaxstand.h"
 
 int	rastrategy(), raopen();
 int	hpopen(),hpstrategy();
 
 struct	devsw devsw[]={
-	{"hp",hpstrategy, hpopen, nullsys, noioctl},
-	{"ht",nodev, nodev, nullsys, noioctl},
-	{"up",nodev, nodev, nullsys, noioctl},
-	{"hk",nodev, nodev, nullsys, noioctl},
-	{ 0  ,nodev, nodev, nullsys, noioctl},
-	{"tm",nodev, nodev, nullsys, noioctl},
-	{"ts",nodev, nodev, nullsys, noioctl},
-	{"mt",nodev, nodev, nullsys, noioctl},
-	{"tu",nodev, nodev, nullsys, noioctl},
-	{"ra",rastrategy, raopen, nullsys, noioctl},
+	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
+	SADEV("ht",nullsys, nodev, nullsys, noioctl),
+	SADEV("up",nullsys, nodev, nullsys, noioctl),
+	SADEV("hk",nullsys, nodev, nullsys, noioctl),
+	SADEV( 0  ,nullsys, nodev, nullsys, noioctl),
+	SADEV("tm",nullsys, nodev, nullsys, noioctl),
+	SADEV("ts",nullsys, nodev, nullsys, noioctl),
+	SADEV("mt",nullsys, nodev, nullsys, noioctl),
+	SADEV("tu",nullsys, nodev, nullsys, noioctl),
+	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));

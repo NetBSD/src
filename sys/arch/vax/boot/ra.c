@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.1 1995/03/29 21:24:13 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.2 1995/04/25 14:14:30 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,14 +35,17 @@
 #define NCMD 0 /* Kludge */
 
 #include "sys/param.h"
-#include "lib/libsa/stand.h"
 #include "sys/disklabel.h"
-#include "vaxstand.h"
+
+#include "lib/libsa/stand.h"
+
 #include "../include/pte.h"
 #include "../include/macros.h"
 #include "../uba/ubareg.h"
 #include "../uba/udareg.h"
 #include "../vax/mscp.h"
+
+#include "vaxstand.h"
 
 /*
  * These routines for RA disk standalone boot is wery simple,

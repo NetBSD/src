@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1995/02/13 00:41:10 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.2 1995/04/25 14:14:26 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -38,52 +38,42 @@ u_int opendev;
 
 #define ispart(c)	((c) >= 'a' && (c) <= 'h')
 
-#if 0
-static int isdigit(char c){
-	return(((c>='0')&&(c<='9'))?1:0);
-}
-
-static int isupper(char c){
-	return(((c>='A')&&(c<='Z'))?1:0);
-}
-
-static char tolower(char c){
-	return(((c>='A')&&(c<='Z'))?c+32:c);
-}
-#endif
-
-atoi(char *cp)
+int
+atoi(cp)
+	char *cp;
 {
-    int val = 0;
-    while(isdigit(*cp))
-	val = val * 10 + (*cp++ - '0');
-    return(val);
+	int val = 0;
+	while(isdigit(*cp))
+		val = val * 10 + (*cp++ - '0');
+	return(val);
 }
 
 usage()
 {
-    printf("\
-Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitonletter>:file\n\
-");
+	printf("\
+	    Usage: device(adaptor, controller, drive, partition)file\n\
+            <device><unit><partitonletter>:file\n\
+	    ");
 }
 
-devlookup(char *d, int len)
+devlookup(d,len)
+	char *d;
+	int len;
 {
-    struct devsw *dp = devsw;
-    int i;
+	struct devsw *dp = devsw;
+	int i;
     
-    for (i = 0; i < ndevs; i++, dp++)
-	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
-	    return(i);
+	for (i = 0; i < ndevs; i++, dp++)
+		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
+	    		return(i);
 
-    printf("No such device - Configured devices are:\n");
-    for (dp = devsw, i = 0; i < ndevs; i++, dp++)
-	if (dp->dv_name)
-	    printf(" %s", dp->dv_name);
-    printf("\n");
-    errno = ENODEV;
-    return(-1);
+	printf("No such device - Configured devices are:\n");
+	for (dp = devsw, i = 0; i < ndevs; i++, dp++)
+		if (dp->dv_name)
+	    		printf(" %s", dp->dv_name);
+	printf("\n");
+	errno = ENODEV;
+	return(-1);
 }
 
 /*
@@ -93,89 +83,96 @@ devlookup(char *d, int len)
  * [A-Za-z]*[0-9]*[A-Za-z]:file
  *    dev   unit  part
  */
-devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, char **file)
+devparse(fname, dev, adapt, ctlr, unit, part, file)
+	char *fname;
+	int *dev, *adapt, *ctlr, *unit, *part;
+	char **file;
 {
-    int *argp, i;
-    char *s, *args[4];
+	int *argp, i;
+	char *s, *args[4];
     
-    /* get device name and make lower case */
-    for (s = fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-	if (isupper(*s)) *s = tolower(*s);
+	/* get device name and make lower case */
+	for(s = fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
+		if(isupper(*s))
+			*s = tolower(*s);
 
-    /* first form */
-    if (*s == '(') {
-	/* lookup device and get index */
-	if ((*dev = devlookup(fname, s - fname)) < 0)
-	    goto baddev;
+	/* first form */
+	if(*s == '('){
+		/* lookup device and get index */
+		if ((*dev = devlookup(fname, s - fname)) < 0)
+			goto baddev;
 
-	/* tokenize device ident */
-	args[0] = ++s;
-	for (args[0] = s, i = 1; *s && *s != ')'; s++) {
-	    if (*s == ',')
-		args[i++] = ++s;
-	}
-	switch(i) {
-	case 4:
-	    *adapt = atoi(args[0]);
-	    *ctlr  = atoi(args[1]);
-	    *unit  = atoi(args[2]);
-	    *part  = atoi(args[3]);
-	    break;
-	case 3:
-	    *ctlr  = atoi(args[0]);
-	    *unit  = atoi(args[1]);
-	    *part  = atoi(args[2]);
-	    break;
-	case 2:
-	    *unit  = atoi(args[0]);
-	    *part  = atoi(args[1]);
-	    break;
-	case 1:
-	    *part  = atoi(args[0]);
-	    break;
-	case 0:
-	    break;
-	}
-	*file = ++s;
-    }
+		/* tokenize device ident */
+		args[0] = ++s;
+		for (args[0] = s, i = 1; *s && *s != ')'; s++)
+			if (*s == ',')
+				args[i++] = ++s;
+		
 
-    /* second form */
-    else if (*s == ':') {
-	/* isolate device */
-	for (s = fname; *s != ':' && !isdigit(*s); s++);
+		switch(i) {
+		case 4:
+			*adapt = atoi(args[0]);
+			*ctlr  = atoi(args[1]);
+			*unit  = atoi(args[2]);
+			*part  = atoi(args[3]);
+			break;
+		case 3:
+	    		*ctlr  = atoi(args[0]);
+	    		*unit  = atoi(args[1]);
+	    		*part  = atoi(args[2]);
+	    		break;
+		case 2:
+	    		*unit  = atoi(args[0]);
+	    		*part  = atoi(args[1]);
+	    		break;
+		case 1:
+	    		*part  = atoi(args[0]);
+	    		break;
+		case 0:
+	    		break;
+		}
+		*file = ++s;
+
+	/* second form */
+	} else if (*s == ':') {
+
+		/* isolate device */
+		for(s = fname; *s != ':' && !isdigit(*s); s++)
+			;
 	
-	/* lookup device and get index */
-	if ((*dev = devlookup(fname, s - fname)) < 0)
-	    goto baddev;
+		/* lookup device and get index */
+		if ((*dev = devlookup(fname, s - fname)) < 0)
+	    		goto baddev;
 
-	/* isolate unit */
-	if ((*unit = atoi(s)) > sizeof(char))
-	    goto bad;
-	for (; isdigit(*s); s++);
+		/* isolate unit */
+		if ((*unit = atoi(s)) > sizeof(char))
+	    		goto bad;
+		for (; isdigit(*s); s++)
+			;
 	
-	/* translate partition */
-	if (!ispart(*s))
-	    goto bad;
+		/* translate partition */
+		if(!ispart(*s))
+	    		goto bad;
 	
-	*part = *s++ - 'a';
-	if (*s != ':')
-	    goto bad;
-	*file = ++s;
-    }
+		*part = *s++ - 'a';
+		if(*s != ':')
+	    		goto bad;
+		*file = ++s;
 
-    /* no device present */
-    else
-	*file = fname;
+	/* no device present */
+    	} else
+		*file = fname;
     
-    /* return the remaining unparsed part as the file to boot */
-    return(0);
+	/* return the remaining unparsed part as the file to boot */
+	return(0);
     
- bad:
-    usage();
+bad:
+	usage();
 
- baddev:
-    return(-1);
-}    
+	baddev:
+		return(-1);
+}
+
 extern int bootdev;
 
 devopen(f, fname, file)
@@ -194,7 +191,7 @@ devopen(f, fname, file)
 	part  = B_PARTITION(bootdev);
 	
 	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
-	    return(error);
+		return(error);
 	
 	dp = &devsw[dev];
 	
@@ -206,10 +203,10 @@ devopen(f, fname, file)
 	f->f_dev = dp;
     
 	if ((error = (*dp->dv_open)(f, adapt, ctlr, unit, part)) == 0)
-	    return(0);
+		return(0);
 	
 	printf("%s(%d,%d,%d,%d): %s\n", devsw[dev].dv_name,
-	    adapt, ctlr, unit, part, strerror(error));
+		adapt, ctlr, unit, part, strerror(error));
 
 	return(error);
-}    
+}
