@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.22 2000/03/14 05:53:33 nisimura Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.23 2000/03/26 10:32:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.22 2000/03/14 05:53:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.23 2000/03/26 10:32:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.22 2000/03/14 05:53:33 nisimura Ex
 #include "sfb.h"
 
 #if NSFB > 0
-#include <alpha/tc/sfbvar.h>
+extern int	sfb_cnattach __P((tc_addr_t));
 #endif
 
 int	tc_3000_300_intrnull __P((void *));

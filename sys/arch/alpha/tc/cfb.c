@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.23 1999/12/06 19:25:56 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.24 2000/03/26 10:32:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.23 1999/12/06 19:25:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.24 2000/03/26 10:32:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.23 1999/12/06 19:25:56 drochner Exp $");
 #include <dev/tc/tcvar.h>
 #include <machine/cfbreg.h>
 #include <alpha/tc/cfbvar.h>
-#if 0
-#include <alpha/tc/bt459reg.h>
-#endif
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
