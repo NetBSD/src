@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.16 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aac.c,v 1.17 2005/03/01 03:31:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.16 2005/02/27 00:27:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.17 2005/03/01 03:31:45 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,9 +340,18 @@ aac_describe_code(const struct aac_code_lookup *table, u_int32_t code)
 	return (table[i + 1].string);
 }
 
+/*
+ * bitmask_snprintf(9) format string for the adapter options.
+ */
+static char *optfmt = 
+    "\20\1SNAPSHOT\2CLUSTERS\3WCACHE\4DATA64\5HOSTTIME\6RAID50"
+    "\7WINDOW4GB"
+    "\10SCSIUPGD\11SOFTERR\12NORECOND\13SGMAP64\14ALARM\15NONDASD";
+
 static void
 aac_describe_controller(struct aac_softc *sc)
 {
+	u_int8_t fmtbuf[256];
 	u_int8_t buf[AAC_FIB_DATASIZE];
 	u_int16_t bufsize;
 	struct aac_adapter_info *info;
@@ -386,6 +395,11 @@ aac_describe_controller(struct aac_softc *sc)
 	    info->MonitorRevision.buildNumber,
 	    ((u_int32_t)info->SerialNumber & 0xffffff));
 
+	aprint_verbose("%s: Controller supports: %s\n",
+	    sc->sc_dv.dv_xname,
+	    bitmask_snprintf(sc->sc_supported_options, optfmt, fmtbuf,
+			     sizeof(fmtbuf)));
+
 	/* Save the kernel revision structure for later use. */
 	sc->sc_revision = info->KernelRevision;
 }
@@ -397,7 +411,7 @@ aac_describe_controller(struct aac_softc *sc)
 static int
 aac_check_firmware(struct aac_softc *sc)
 {
-	u_int32_t major, minor;
+	u_int32_t major, minor, opts;
 
 	if ((sc->sc_quirks & AAC_QUIRK_PERC2QC) != 0) {
 		if (aac_sync_command(sc, AAC_MONKER_GETKERNVER, 0, 0, 0, 0,
@@ -408,8 +422,8 @@ aac_check_firmware(struct aac_softc *sc)
 		}
 
 		/* These numbers are stored as ASCII! */
-		major = (AAC_GETREG4(sc, AAC_SA_MAILBOX + 4) & 0xff) - 0x30;
-		minor = (AAC_GETREG4(sc, AAC_SA_MAILBOX + 8) & 0xff) - 0x30;
+		major = (AAC_GET_MAILBOX(sc, 1) & 0xff) - 0x30;
+		minor = (AAC_GET_MAILBOX(sc, 2) & 0xff) - 0x30;
 		if (major == 1) {
 			aprint_error(
 			    "%s: firmware version %d.%d not supported.\n",
@@ -417,6 +431,15 @@ aac_check_firmware(struct aac_softc *sc)
 			return (1);
 		}
 	}
+
+	if (aac_sync_command(sc, AAC_MONKER_GETINFO, 0, 0, 0, 0, NULL)) {
+		aprint_error("%s: GETINFO failed\n", sc->sc_dv.dv_xname);
+		return (1);
+	}
+	opts = AAC_GET_MAILBOX(sc, 1);
+	sc->sc_supported_options = opts;
+
+	/* XXX -- Enable 64-bit sglists if we can */
 
 	return (0);
 }
@@ -732,6 +755,8 @@ aac_shutdown(void *cookie)
 		    &i, sizeof(i), NULL, NULL))
 			printf("%s: unable to halt controller\n",
 			    sc->sc_dv.dv_xname);
+
+		sc->sc_flags &= ~AAC_ONLINE;
 	}
 }
 
@@ -967,7 +992,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	fib->Header.Size = htole16(sizeof(*fib) + datasize);
 	fib->Header.SenderSize = htole16(sizeof(*fib));
-	fib->Header.SenderFibAddress = htole32((u_int32_t)fib);	/* XXX */
+	fib->Header.SenderFibAddress = 0; /* htole32((u_int32_t)fib);	* XXX */
 	fib->Header.ReceiverFibAddress = htole32(fibpa);
 
 	/*
@@ -988,6 +1013,10 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	 */
 	if (aac_sync_command(sc, AAC_MONKER_SYNCFIB, fibpa, 0, 0, 0, &status))
 		return (EIO);
+	if (status != 1) {
+		printf("%s: syncfib command %04x status %08x\n",
+			sc->sc_dv.dv_xname, command, status);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
 	    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
