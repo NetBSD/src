@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.1 2000/02/01 03:08:37 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.2 2000/03/13 21:23:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -139,11 +139,11 @@ rule
 	|	protocol SLASH mode SLASH SLASH level
 	|	protocol SLASH mode
 	|	protocol SLASH {
-			ipsec_errcode = EIPSEC_FEW_ARGUMENTS;
+			__ipsec_errcode = EIPSEC_FEW_ARGUMENTS;
 			return -1;
 		}
 	|	protocol {
-			ipsec_errcode = EIPSEC_FEW_ARGUMENTS;
+			__ipsec_errcode = EIPSEC_FEW_ARGUMENTS;
 			return -1;
 		}
 	;
@@ -181,13 +181,13 @@ addresses
 		}
 	|	ME HYPHEN ANY {
 			if (p_dir != IPSEC_DIR_OUTBOUND) {
-				ipsec_errcode = EIPSEC_INVAL_DIR;
+				__ipsec_errcode = EIPSEC_INVAL_DIR;
 				return -1;
 			}
 		}
 	|	ANY HYPHEN ME {
 			if (p_dir != IPSEC_DIR_INBOUND) {
-				ipsec_errcode = EIPSEC_INVAL_DIR;
+				__ipsec_errcode = EIPSEC_INVAL_DIR;
 				return -1;
 			}
 		}
@@ -225,19 +225,19 @@ parse_sockaddr(buf)
 	error = getaddrinfo(buf->buf, serv, &hints, &res);
 	if (error != 0) {
 		yyerror("invalid IP address");
-		ipsec_set_strerror(gai_strerror(error));
+		__ipsec_set_strerror(gai_strerror(error));
 		return NULL;
 	}
 
 	if (res->ai_addr == NULL) {
 		yyerror("invalid IP address");
-		ipsec_set_strerror(gai_strerror(error));
+		__ipsec_set_strerror(gai_strerror(error));
 		return NULL;
 	}
 
 	newaddr = malloc(res->ai_addr->sa_len);
 	if (newaddr == NULL) {
-		ipsec_errcode = EIPSEC_NO_BUFS;
+		__ipsec_errcode = EIPSEC_NO_BUFS;
 		freeaddrinfo(res);
 		return NULL;
 	}
@@ -245,7 +245,7 @@ parse_sockaddr(buf)
 
 	freeaddrinfo(res);
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return newaddr;
 }
 
@@ -254,29 +254,29 @@ rule_check()
 {
 	if (p_type == IPSEC_POLICY_IPSEC) {
 		if (p_protocol == IPPROTO_IP) {
-			ipsec_errcode = EIPSEC_NO_PROTO;
+			__ipsec_errcode = EIPSEC_NO_PROTO;
 			return -1;
 		}
 
 		if (p_mode != IPSEC_MODE_TRANSPORT
 		 && p_mode != IPSEC_MODE_TUNNEL) {
-			ipsec_errcode = EIPSEC_INVAL_MODE;
+			__ipsec_errcode = EIPSEC_INVAL_MODE;
 			return -1;
 		}
 
 		if (p_src == NULL && p_dst == NULL) {
 			 if (p_mode != IPSEC_MODE_TRANSPORT) {
-				ipsec_errcode = EIPSEC_INVAL_ADDRESS;
+				__ipsec_errcode = EIPSEC_INVAL_ADDRESS;
 				return -1;
 			}
 		}
 		else if (p_src->sa_family != p_dst->sa_family) {
-			ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+			__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 			return -1;
 		}
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -289,7 +289,7 @@ init_x_policy()
 
 	pbuf = malloc(tlen);
 	if (pbuf == NULL) {
-		ipsec_errcode = EIPSEC_NO_BUFS;
+		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
 	p = (struct sadb_x_policy *)pbuf;
@@ -300,7 +300,7 @@ init_x_policy()
 	p->sadb_x_policy_reserved = 0;
 	offset = tlen;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -318,7 +318,7 @@ set_x_request(src, dst)
 
 	pbuf = realloc(pbuf, tlen);
 	if (pbuf == NULL) {
-		ipsec_errcode = EIPSEC_NO_BUFS;
+		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
@@ -332,7 +332,7 @@ set_x_request(src, dst)
 	if (set_sockaddr(src) || set_sockaddr(dst))
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -341,7 +341,7 @@ set_sockaddr(addr)
 	struct sockaddr *addr;
 {
 	if (addr == NULL) {
-		ipsec_errcode = EIPSEC_NO_ERROR;
+		__ipsec_errcode = EIPSEC_NO_ERROR;
 		return 0;
 	}
 
@@ -351,7 +351,7 @@ set_sockaddr(addr)
 
 	offset += addr->sa_len;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -399,7 +399,7 @@ policy_parse(msg, msglen)
 	/* update total length */
 	((struct sadb_x_policy *)pbuf)->sadb_x_policy_len = PFKEY_UNIT64(tlen);
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 
 	return pbuf;
 }
@@ -413,12 +413,12 @@ ipsec_set_policy(msg, msglen)
 
 	policy = policy_parse(msg, msglen);
 	if (policy == NULL) {
-		if (ipsec_errcode == EIPSEC_NO_ERROR)
-			ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		if (__ipsec_errcode == EIPSEC_NO_ERROR)
+			__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return NULL;
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return policy;
 }
 
