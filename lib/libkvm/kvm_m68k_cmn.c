@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.6 1997/10/12 10:56:46 briggs Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.7 1997/10/12 11:01:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.6 1997/10/12 10:56:46 briggs Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.7 1997/10/12 11:01:23 briggs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,7 +111,6 @@ _kvm_cmn_kvatop(kd, va, pa)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	struct vmstate *vm = kd->vmst;
 	int (*vtopf) __P((kvm_t *, u_int32_t, u_long, u_long *));
 
 	if (ISALIVE(kd)) {
@@ -240,7 +239,7 @@ vatop_040(kd, stpa, va, pa)
 	u_long addr;
 	u_int32_t stpa2;
 	u_int32_t ste, pte;
-	u_int p, offset;
+	u_int offset;
 
 	offset = va & vm->pgofset;
 
