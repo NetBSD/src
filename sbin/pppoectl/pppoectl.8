@@ -1,4 +1,4 @@
-.\" $NetBSD: pppoectl.8,v 1.2 2001/12/10 23:57:48 wiz Exp $
+.\" $NetBSD: pppoectl.8,v 1.3 2002/01/06 20:23:55 martin Exp $
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.2 2001/12/10 23:57:48 wiz Exp $
+.\" $Id: pppoectl.8,v 1.3 2002/01/06 20:23:55 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -47,6 +47,7 @@
 .Fl e Ar ethernet-ifname
 .Op Fl s Ar service-name
 .Op Fl a Ar access-concentrator-name
+.Op Fl d
 .Ar ifname
 .Sh DESCRIPTION
 There are two basic modes of operation: configuring security related
@@ -65,6 +66,9 @@ access concentrator (typically via a DSL modem).
 specifies the name of the access concentrator.
 .It Fl s
 specifies the name of the service connected to.
+.It Fl d
+dump the current connection state information (this parameter is typically
+used alone, for informational purposes, not during interface configuration).
 .El
 .Pp
 Typically, not both the access concentrator name and the service name are
@@ -196,15 +200,17 @@ through approximately 800 seconds.)  This is the default, and will not
 be explicitly displayed in
 .Ql list
 mode.
+.It Ar idle-timeout Ns \&= Ns Em idle-seconds
+For services that are charged by connection time the interface can optionaly
+disconnect after a configured idle time. If set to 0, this feature is disabled.
+Note: for ISDN devices, it is preferable to use the 
+.Xr isdnd 8
+based timeout mechanism, as isdnd can predict the next charging unit for
+ISDN connections and optimize the timeout with this information.
 .It Ar lcp-timeout Ns \&= Ns Em timeout-value
-Allows to change the value of the LCP timeout. The default value of the
-LCP timeout is currently set to 3 seconds which is too high for some
-remote PPP implementations. The timeout-value must be specified in
+Allows to change the value of the LCP timeout. The default value of the LCP
+timeout is currently set to 1 second. The timeout-value must be specified in
 milliseconds.
-.It Ar enable-vj
-Enable negotiation of Van Jacobsen header compression.
-.It Ar disable-vj
-Disable negotiation of Van Jacobsen header compression.
 .El
 .Sh EXAMPLES
 .Bd -literal
@@ -213,7 +219,6 @@ isp0:	phase=dead
 	myauthproto=chap myauthname="uriah"
 	hisauthproto=chap hisauthname="ifb-gw" norechallenge
 	lcp timeout: 3.000 s
-	enable_vj: on
 .Ed
 .Pp
 Display the settings for isp0.  The interface is currently in
