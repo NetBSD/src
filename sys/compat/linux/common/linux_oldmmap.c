@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.60 2002/12/17 10:42:02 tron Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.61 2003/01/18 08:04:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.60 2002/12/17 10:42:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.61 2003/01/18 08:04:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_param.h>
@@ -70,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.60 2002/12/17 10:42:02 tron Exp 
  * They just pass everything in a structure.
  */
 int
-linux_sys_old_mmap(p, v, retval)
-	struct proc *p;
+linux_sys_old_mmap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -97,6 +98,6 @@ linux_sys_old_mmap(p, v, retval)
 	DPRINTF(("old_mmap(%p, %d, %d, %d, %d, %d)\n",
 	    lmap.lm_addr, lmap.lm_len, lmap.lm_prot, lmap.lm_flags,
 	    lmap.lm_fd, lmap.lm_pos));
-	return linux_sys_mmap(p, &nlmap, retval);
+	return linux_sys_mmap(l, &nlmap, retval);
 }
 

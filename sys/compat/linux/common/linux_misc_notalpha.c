@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.64 2003/01/18 08:02:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.64 2003/01/18 08:02:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tro
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -78,39 +80,49 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tro
  * Fiddle with the timers to make it work.
  */
 int
-linux_sys_alarm(p, v, retval)
-	struct proc *p;
+linux_sys_alarm(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int s;
 	struct itimerval *itp, it;
+	struct ptimer *ptp;
 
-	itp = &p->p_realtimer;
+	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
+	else
+		itp = NULL;
 	s = splclock();
 	/*
 	 * Clear any pending timer alarms.
 	 */
-	callout_stop(&p->p_realit_ch);
-	timerclear(&itp->it_interval);
-	if (timerisset(&itp->it_value) &&
-	    timercmp(&itp->it_value, &time, >))
-		timersub(&itp->it_value, &time, &itp->it_value);
-	/*
-	 * Return how many seconds were left (rounded up)
-	 */
-	retval[0] = itp->it_value.tv_sec;
-	if (itp->it_value.tv_usec)
-		retval[0]++;
+	if (itp) {
+		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
+		timerclear(&itp->it_interval);
+		if (timerisset(&itp->it_value) &&
+		    timercmp(&itp->it_value, &time, >))
+			timersub(&itp->it_value, &time, &itp->it_value);
+		/*
+		 * Return how many seconds were left (rounded up)
+		 */
+		retval[0] = itp->it_value.tv_sec;
+		if (itp->it_value.tv_usec)
+			retval[0]++;
+	} else {
+		retval[0] = 0;
+	} 
 
 	/*
 	 * alarm(0) just resets the timer.
 	 */
 	if (SCARG(uap, secs) == 0) {
-		timerclear(&itp->it_value);
+		if (itp)
+			timerclear(&itp->it_value);
 		splx(s);
 		return 0;
 	}
@@ -126,24 +138,35 @@ linux_sys_alarm(p, v, retval)
 		return (EINVAL);
 	}
 
+	if (p->p_timers == NULL)
+		timers_alloc(p);
+	ptp = p->p_timers->pts_timers[ITIMER_REAL];
+	if (ptp == NULL) {
+		ptp = pool_get(&ptimer_pool, PR_WAITOK);
+		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		ptp->pt_ev.sigev_signo = SIGALRM;
+		ptp->pt_type = CLOCK_REALTIME;
+		callout_init(&ptp->pt_ch);
+	}
+
 	if (timerisset(&it.it_value)) {
 		/*
 		 * Don't need to check hzto() return value, here.
 		 * callout_reset() does it for us.
 		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		callout_reset(&p->p_realit_ch, hzto(&it.it_value),
-		    realitexpire, p);
+		callout_reset(&ptp->pt_ch, hzto(&it.it_value),
+		    realtimerexpire, ptp);
 	}
-	p->p_realtimer = it;
+	ptp->pt_time = it;
 	splx(s);
 
 	return 0;
 }
 
 int
-linux_sys_nice(p, v, retval)
-	struct proc *p;
+linux_sys_nice(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -155,7 +178,7 @@ linux_sys_nice(p, v, retval)
         SCARG(&bsa, which) = PRIO_PROCESS;
         SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = SCARG(uap, incr);
-        return sys_setpriority(p, &bsa, retval);
+        return sys_setpriority(l, &bsa, retval);
 }
 
 /*
@@ -168,8 +191,8 @@ linux_sys_nice(p, v, retval)
  * really is the reclen, not the namelength.
  */
 int
-linux_sys_readdir(p, v, retval)
-	struct proc *p;
+linux_sys_readdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -180,7 +203,7 @@ linux_sys_readdir(p, v, retval)
 	} */ *uap = v;
 
 	SCARG(uap, count) = 1;
-	return linux_sys_getdents(p, uap, retval);
+	return linux_sys_getdents(l, uap, retval);
 }
 
 /*
@@ -188,8 +211,8 @@ linux_sys_readdir(p, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(p, v, retval)
-	struct proc *p;
+linux_sys_time(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -215,8 +238,8 @@ linux_sys_time(p, v, retval)
  * and pass it on.
  */
 int
-linux_sys_utime(p, v, retval)
-	struct proc *p;
+linux_sys_utime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -224,6 +247,7 @@ linux_sys_utime(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct linux_utimbuf *)times;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg;
 	int error;
 	struct sys_utimes_args ua;
@@ -249,7 +273,7 @@ linux_sys_utime(p, v, retval)
 	else
 		SCARG(&ua, tptr) = NULL;
 
-	return sys_utimes(p, &ua, retval);
+	return sys_utimes(l, &ua, retval);
 }
 
 /*
@@ -258,8 +282,8 @@ linux_sys_utime(p, v, retval)
  * it to what Linux wants.
  */
 int
-linux_sys_waitpid(p, v, retval)
-	struct proc *p;
+linux_sys_waitpid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -268,6 +292,7 @@ linux_sys_waitpid(p, v, retval)
 		syscallarg(int *) status;
 		syscallarg(int) options;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_wait4_args w4a;
 	int error, *status, tstat;
 	caddr_t sg;
@@ -283,7 +308,7 @@ linux_sys_waitpid(p, v, retval)
 	SCARG(&w4a, options) = SCARG(uap, options);
 	SCARG(&w4a, rusage) = NULL;
 
-	if ((error = sys_wait4(p, &w4a, retval)))
+	if ((error = sys_wait4(l, &w4a, retval)))
 		return error;
 
 	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
@@ -300,8 +325,8 @@ linux_sys_waitpid(p, v, retval)
 }
 
 int
-linux_sys_setresgid(p, v, retval)
-	struct proc *p;
+linux_sys_setresgid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -310,6 +335,7 @@ linux_sys_setresgid(p, v, retval)
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	gid_t rgid, egid, sgid;
 	int error;
@@ -367,8 +393,8 @@ linux_sys_setresgid(p, v, retval)
 }
 
 int
-linux_sys_getresgid(p, v, retval)
-	struct proc *p;
+linux_sys_getresgid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -377,6 +403,7 @@ linux_sys_getresgid(p, v, retval)
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	int error;
 
@@ -403,14 +430,15 @@ linux_sys_getresgid(p, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_stime(p, v, retval)
-	struct proc *p;
+linux_sys_stime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct timeval atv;
 	linux_time_t tt;
 	int error;

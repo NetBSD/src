@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.27 2003/01/18 08:02:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.27 2003/01/18 08:02:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp 
 #include <sys/malloc.h>
 #include <sys/conf.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -62,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.26 2001/11/13 02:08:54 lukem Exp 
  * This appears to be part of a Linux attempt to switch to 64 bits file sizes.
  */
 int
-linux_sys_llseek(p, v, retval)
-	struct proc *p;
+linux_sys_llseek(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -84,7 +85,7 @@ linux_sys_llseek(p, v, retval)
 	SCARG(&bla, offset) = off;
 	SCARG(&bla, whence) = SCARG(uap, whence);
 
-	if ((error = sys_lseek(p, &bla, retval)))
+	if ((error = sys_lseek(l, &bla, retval)))
 		return error;
 
 	if ((error = copyout(retval, SCARG(uap, res), sizeof (off_t))))
