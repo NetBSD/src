@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2002/01/31 22:44:01 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.67.8.1 2002/05/16 13:04:39 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,6 +213,10 @@ usage:
 	defparamtab = ht_new();
 	defflagtab = ht_new();
 	optfiletab = ht_new();
+	bdevmtab = ht_new();
+	maxbdevm = 0;
+	cdevmtab = ht_new();
+	maxcdevm = 0;
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextfsopt = &fsoptions;
