@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wr_atab.c,v 1.4 1997/07/24 23:18:34 christos Exp $
+ * $Id: wr_atab.c,v 1.5 1997/09/22 22:11:03 christos Exp $
  *
  */
 
@@ -325,7 +325,7 @@ write_atab(qelem *q)
 
   if (mount_pref) {
     auto_tree *tp;
-    show_area_being_processed("write automount", 0);
+    show_area_being_processed("write automount", 5);
     ITER(tp, auto_tree, q)
       errors += write_amount(tp->t_mount, tp->t_defaults);
   }

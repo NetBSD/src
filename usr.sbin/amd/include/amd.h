@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amd.h,v 1.2 1997/07/24 23:18:46 christos Exp $
+ * $Id: amd.h,v 1.3 1997/09/22 22:11:09 christos Exp $
  *
  */
 
@@ -55,9 +55,11 @@
 #define CFM_MOUNT_TYPE_AUTOFS		0x0002
 #define CFM_ENABLE_DEFAULT_SELECTORS	0x0004
 #define CFM_NORMALIZE_HOSTNAMES		0x0008
-#define CFM_NOSWAP			0x0010
+#define CFM_PROCESS_LOCK		0x0010
 #define CFM_PRINT_PID			0x0020
 #define CFM_RESTART_EXISTING_MOUNTS	0x0040
+#define CFM_SHOW_STATFS_ENTRIES		0x0080
+#define CFM_FULLY_QUALIFIED_HOSTS	0x0100
 
 
 /* some systems (SunOS 4.x) neglect to define the mount null message */
@@ -109,15 +111,19 @@ struct amu_global_options {
   int afs_timeo;		/* NFS retry interval */
   int am_timeo;			/* cache duration */
   int am_timeo_w;		/* dismount interval */
+  int portmap_program;		/* amd RPC program number */
 #ifdef HAVE_MAP_LDAP
   char *ldap_base;		/* LDAP base */
   char *ldap_hostports;		/* LDAP host ports */
+  long ldap_cache_seconds; 	/* LDAP internal cache - keep seconds */
+  long ldap_cache_maxmem;	/* LDAP internal cache - max memory (bytes) */
 #endif /* HAVE_MAP_LDAP */
 #ifdef HAVE_MAP_NIS
   char *nis_domain;		/* YP domain name */
 #endif /* HAVE_MAP_NIS */
 };
 
+/* if you add anything here, update conf.c:reset_cf_map() */
 struct cf_map {
   char *cfm_dir;		/* /home, /u, /src */
   char *cfm_name;		/* amd.home, /etc/amd.home ... */
@@ -170,26 +176,33 @@ extern amq_mount_stats *amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_list *amqproc_export_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_p *amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_string *amqproc_getvers_1_svc(voidp argp, struct svc_req *rqstp);
+extern int *amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_null_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
 
-extern SVCXPRT *nfs_program_2_transp;	/* For quick_reply() */
 extern am_nfs_fh *root_fh(char *dir);
+extern am_node * autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+extern am_node *find_ap(char *);
+extern am_node *find_ap2(char *, am_node *);
 extern bool_t xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead);
 extern fserver *find_nfs_srvr(mntfs *mf);
 extern int mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *mf);
 extern int process_last_regular_map(void);
 extern int set_conf_kv(const char *section, const char *k, const char *v);
+extern int yyparse (void);
 extern nfsentry *make_entry_chain(am_node *mp, const nfsentry *current_chain);
+extern void afs_mkcacheref(mntfs *mf);
 extern void flush_srvr_nfs_cache(void);
 extern void mf_mounted(mntfs *mf);
 extern void quick_reply(am_node *mp, int error);
+extern void root_newmap(const char *, const char *, const char *, const cf_map_t *);
+
 
 /* amd global variables */
-extern struct amu_global_options gopt;	/* where global options are stored */
 extern FILE *yyin;
+extern SVCXPRT *nfs_program_2_transp;	/* For quick_reply() */
 extern am_ops cdfs_ops;
 extern am_ops lofs_ops;
 extern am_ops nfs_ops;
@@ -201,10 +214,9 @@ extern int fwd_sock;
 extern int select_intr_valid;
 extern int usage;
 extern int use_conf_file;	/* use amd configuration file */
-extern int yyparse (void);
 extern jmp_buf select_intr;
 extern qelem mfhead;
-extern void root_newmap(const char *, const char *, const char *, const cf_map_t *);
+extern struct amu_global_options gopt;	/* where global options are stored */
 
 #ifdef HAVE_SIGACTION
 extern sigset_t masked_sigs;
@@ -218,5 +230,17 @@ extern int sfs_fumount(mntfs *mf);
 #if defined(HAVE_FS_NFS3) && !defined(HAVE_XDR_MOUNTRES3)
 extern bool_t xdr_mountres3(XDR *xdrs, mountres3 *objp);
 #endif /* defined(HAVE_FS_NFS3) && !defined(HAVE_XDR_MOUNTRES3) */
+
+#ifdef HAVE_FS_AUTOFS
+extern SVCXPRT *autofsxprt;
+extern u_short autofs_port;
+
+extern int autofs_mount(am_node *mp);
+extern int autofs_umount(am_node *mp);
+extern int create_autofs_service(int *soAUTOFSp, u_short *autofs_portp, SVCXPRT **autofs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
+extern int svc_create_local_service(void (*dispatch) (), u_long prognum, u_long versnum, char *nettype, char *servname);
+extern void autofs_mounted(mntfs *mf);
+extern void autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp);
+#endif /* HAVE_FS_AUTOFS */
 
 #endif /* not _AMD_H */
