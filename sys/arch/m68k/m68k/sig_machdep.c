@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.8 2001/12/02 10:47:29 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.9 2001/12/02 12:40:47 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@
 
 extern int fputype;
 extern short exframesize[];
+struct fpframe m68k_cached_fpu_idle_frame;
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
