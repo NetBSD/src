@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.37 2002/06/10 17:12:22 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.38 2002/06/10 17:30:16 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.37 2002/06/10 17:12:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.38 2002/06/10 17:30:16 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -195,7 +195,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
-		return ENETDOWN;
+		error = ENETDOWN;
+		goto end;
 	}
 
 	gh = NULL;
@@ -252,7 +253,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				if (m0 == NULL) {
 					IF_DROP(&ifp->if_snd);
 					m_freem(m);
-					return (ENOBUFS);
+					error = ENOBUFS;
+					goto end;
 				}
 				m0->m_next = m;
 				m->m_data += sizeof(struct ip);
@@ -270,14 +272,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				memmove(mtod(m, caddr_t), inp,
 					sizeof(struct ip));
 			}
-			inp=mtod(m, struct ip *);
+			inp = mtod(m, struct ip *);
 			memcpy((caddr_t)(inp + 1), &mob_h, (unsigned)msiz);
 			NTOHS(inp->ip_len);
 			inp->ip_len += msiz;
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
-			return (EINVAL);
+			error = EINVAL;
+			goto end;
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
 		switch (dst->sa_family) {
@@ -298,19 +301,21 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		default:
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
-			return (EAFNOSUPPORT);
+			error = EAFNOSUPPORT;
+			goto end;
 		}
 		M_PREPEND(m, sizeof(struct greip), M_DONTWAIT);
 	} else {
-		error = EINVAL;
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		return (error);
+		error = EINVAL;
+		goto end;
 	}
 
-	if (m == NULL) {
+	if (m == NULL) {	/* impossible */
 		IF_DROP(&ifp->if_snd);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto end;
 	}
 
 	gh = mtod(m, struct greip *);
@@ -335,6 +340,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ifp->if_obytes += m->m_pkthdr.len;
 	/* send it off */
 	error = ip_output(m, NULL, &sc->route, 0, NULL);
+  end:
 	if (error)
 		ifp->if_oerrors++;
 	return (error);
