@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.2 2004/12/12 06:37:59 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.3 2004/12/13 00:48:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -409,7 +409,9 @@ struct rtw_softc {
 	int			sc_do_tick;	/* indicate 1s ticks */
 	struct timeval		sc_tick0;	/* first tick */
 
-	uint8_t		sc_rev;			/* PCI/Cardbus revision */
+	uint8_t			sc_rev;		/* PCI/Cardbus revision */
+
+	uint32_t		sc_anaparm;	/* register RTW_ANAPARM */
 
 	union {
 		struct rtw_rx_radiotap_header	tap;
@@ -426,7 +428,11 @@ struct rtw_softc {
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
 
-void rtw_txdac_enable(struct rtw_regs *, int);
+extern int rtw_host_rfio;
+extern int rtw_flush_rfio;
+extern int rtw_rfio_delay;
+
+void rtw_txdac_enable(struct rtw_softc *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
 void rtw_config0123_enable(struct rtw_regs *, int);
 void rtw_continuous_tx_enable(struct rtw_softc *, int);
