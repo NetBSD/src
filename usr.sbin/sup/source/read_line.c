@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.7 2003/04/04 23:10:10 christos Exp $	*/
+/*	$NetBSD: read_line.c,v 1.8 2003/10/16 06:26:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(lint) && defined(__RCSID)
-__RCSID("$NetBSD: read_line.c,v 1.7 2003/04/04 23:10:10 christos Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.8 2003/10/16 06:26:06 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ read_line(FILE * fp, size_t * size, size_t * lineno, const char *delim,
 		free(buf);
 	return (buf = fparseln(fp, size, lineno, delim, flags));
 #else
+	char *n;
 #ifndef HAS_FGETLN
 	char sbuf[1024];
 #endif
@@ -117,11 +118,12 @@ read_line(FILE * fp, size_t * size, size_t * lineno, const char *delim,
 		}
 
 		if (len + s + 1 > buflen) {
+			n = realloc(buf, len + s + 1);
+			if (n == NULL)
+				err(1, "can't realloc");
+			buf = n;
 			buflen = len + s + 1;
-			buf = realloc(buf, buflen);
 		}
-		if (buf == NULL)
-			err(1, "can't realloc");
 		memcpy(buf + len, ptr, s);
 		len += s;
 		buf[len] = '\0';
