@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.11 1995/02/25 06:20:29 cgd Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.12 1995/02/27 01:03:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.11 1995/02/25 06:20:29 cgd Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.12 1995/02/27 01:03:47 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -441,7 +441,7 @@ again:
 	/* THIS STUFF IS INTERNET SPECIFIC */
 	h_addr_ptrs[0] = (char *)&host_addr;
 	h_addr_ptrs[1] = NULL;
-	*((u_int32_t *)host_addr.s_addr) = inet_addr(p);
+	*((u_int32_t *)&host_addr.s_addr) = inet_addr(p);
 	host.h_addr_list = h_addr_ptrs;
 	host.h_length = sizeof(u_int32_t);
 	host.h_addrtype = AF_INET;
