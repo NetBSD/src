@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.57.4.2 1996/06/04 09:38:53 is Exp $
+#	$NetBSD: GENERIC,v 1.57.4.3 1996/06/04 10:32:59 is Exp $
 
 #
 # GENERIC AMIGA
@@ -233,6 +233,7 @@ scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 scsibus*	at empsc0
+scsibus*	at drsc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
