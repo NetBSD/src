@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 1995/04/07 00:59:09 jtc Exp $
+#	$NetBSD: Makefile,v 1.54 1995/04/16 19:03:55 mycroft Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -73,8 +73,8 @@ copies:
 	done
 	cd ../sys; \
 	pax -rw -pa -L \
-	    `find ${LDIRS} -type f -name '*.h' '!' -path 'netiso/xebec/*' \
-	    -print` ${DESTDIR}/usr/include
+	    `find ${LDIRS} -follow -type f -name '*.h' '!' -path \
+	    'netiso/xebec/*' -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/machine
