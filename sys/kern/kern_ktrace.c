@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.26 1998/03/29 05:19:43 mrg Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.27 1998/04/28 22:27:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -304,15 +304,9 @@ sys_ktrace(curp, v, retval)
 	 */
 	if (ops == KTROP_CLEARFILE) {
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-			if (p->p_tracep == vp) {
-				if (ktrcanset(curp, p)) {
-					p->p_tracep = NULL;
-					p->p_traceflag = 0;
-					(void) vn_close(vp, FREAD|FWRITE,
-						p->p_ucred, p);
-				} else
-					error = EPERM;
-			}
+			if (p->p_tracep == vp &&
+			    !ktrops(curp, p, KTROP_CLEAR, ~0, vp))
+				error = EPERM;
 		}
 		goto done;
 	}
