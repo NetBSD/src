@@ -67,6 +67,14 @@ extern	struct vfsops mfs_vfsops;
 extern	struct vfsops isofs_vfsops;
 #endif
 
+#ifdef FDESC
+extern	struct vfsops fdesc_vfsops;
+#endif
+
+#ifdef KERNFS
+extern	struct vfsops kernfs_vfsops;
+#endif
+
 struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 0 = MOUNT_NONE */
 	&ufs_vfsops,		/* 1 = MOUNT_UFS */
@@ -83,6 +91,16 @@ struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 4 = MOUNT_MSDOS */
 #ifdef ISOFS
 	&isofs_vfsops,		/* 5 = MOUNT_ISOFS */
+#else
+	(struct vfsops *)0,
+#endif
+#ifdef FDESC
+	&fdesc_vfsops,		/* 6 = MOUNT_FDESC */
+#else
+	(struct vfsops *)0,
+#endif
+#ifdef KERNFS
+	&kernfs_vfsops,		/* 5 = MOUNT_KERNFS */
 #else
 	(struct vfsops *)0,
 #endif
