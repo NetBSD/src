@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.159 1999/09/10 19:56:51 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.160 1999/09/11 06:27:36 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1442,6 +1442,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Efficent Networks",
 	    "155P-MF1 ATM (ASIC)",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI25P,
+	    0,
+	    "Efficent Networks",
+	    "SpeedStream ENI-25p",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS3000,
+	    0,
+	    "Efficent Networks",
+	    "SpeedStream 3000",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
