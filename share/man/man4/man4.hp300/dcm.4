@@ -1,4 +1,4 @@
-.\"	$NetBSD: dcm.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: dcm.4,v 1.6 2001/04/11 19:06:12 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,7 @@ Each port on the
 has a 128 byte input silo and a 16 byte output silo.
 Interrupts happen on a per character basis unless the interrupt
 rate for the card reaches 70 interrupts per second at which time the
-driver changes to a 16.7ms (60 interrupts per second) polling scheme until 
+driver changes to a 16.7ms (60 interrupts per second) polling scheme until
 the interrupt rate drops.
 .Sh FILES
 .Bl -tag -width /dev/tty0[0-9a-f] -compact
