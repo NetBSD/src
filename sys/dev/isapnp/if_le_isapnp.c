@@ -1,7 +1,8 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.1 1997/03/31 20:22:20 jonathan Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.2 1997/03/31 20:36:38 jonathan Exp $	*/
 
 /*
- * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and 
+ * Mattias Drochner. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,14 +97,21 @@ struct cfattach ep_isapnp_ca = {
 	sizeof(struct le_softc), le_isapnp_match, le_isapnp_attach
 };
 
-
-int le_isapnp_intredge __P((void *));
-
-hide void le_isapnp_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_isapnp_rdcsr __P((struct am7990_softc *, u_int16_t));
+int	le_isapnp_intredge __P((void *));
+static void le_isapnp_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+static u_int16_t le_isapnp_rdcsr __P((struct am7990_softc *, u_int16_t));
 
 
-hide void
+/*
+ * Names accepted by the match routine.
+ */
+static char *if_le_isapnp_devnames[] = {
+    "TKN0010",
+    0
+};
+
+
+static void
 le_isapnp_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
@@ -116,7 +124,7 @@ le_isapnp_wrcsr(sc, port, val)
 	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
-hide u_int16_t
+static u_int16_t
 le_isapnp_rdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
@@ -142,9 +150,11 @@ le_isapnp_match(parent, match, aux)
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
+	char **card_name = &if_le_isapnp_devnames[0];
 
-	if (strcmp(ipa->ipa_devlogic, "TKN0010"))
-		return (0);
+	while (*card_name)
+	    if(!strcmp(ipa->ipa_devlogic, *card_name++))
+		return(1);
 
 	return (1);
 }
@@ -168,8 +178,6 @@ le_isapnp_attach(parent, self, aux)
 	lesc->sc_rap = PCNET_RAP;
 	lesc->sc_rdp = PCNET_RDP;
 
-	/* XXX SHOULD RE-MAP I/O SPACE HERE? */
-
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n",
 		    sc->sc_dev.dv_xname);
@@ -181,9 +189,6 @@ le_isapnp_attach(parent, self, aux)
 	 */
 	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
 		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, PCNET_SAPROM+i);
-
-	if (ipa->ipa_ndrq > 0)
-		isa_dmacascade(ipa->ipa_drq[0].num);
 
 	/* XXX SHOULD GET DMA-CAPABLE BUFFER SPACE */
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
@@ -210,6 +215,9 @@ le_isapnp_attach(parent, self, aux)
 	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
 	am7990_config(sc);
+
+	if (ipa->ipa_ndrq > 0)
+		isa_dmacascade(ipa->ipa_drq[0].num);
 
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    IST_EDGE, IPL_NET, le_isapnp_intredge, sc);
