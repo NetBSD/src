@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.182 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.183 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -255,6 +255,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		from ftp(1).  [jhawk 20030122]
 	sysinst: Leverage progress(1) for reasonable-looking file extraction
 		displays.  [jhawk 20030122]
+	sh(1): Improve Posix conformance [dsl 20030122]
 	build.sh: Rework command line into command line options followed
 		by a list of operations to perform.  [lukem 20030123]
 	gcore(1): Add it back.  [christos 20030123]
@@ -431,3 +432,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libcrypto: upgrade to 0.9.7b. [itojun 20030724]
 	ipsec: support hmac-ripemd160 and aes-xcbc-mac for AH/ESP auth.
 		support aes-ctr for ESP. [itojun 20030725]
+	i386: New boot code. Uses MI installboot and filesystem code to load
+		2nd level bootstrap. [dsl 20030728]
+	sysinst: New disk editing menus and general rototil. [dsl 20030728]
