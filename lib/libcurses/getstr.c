@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.13 2001/04/20 13:03:24 jdc Exp $	*/
+/*	$NetBSD: getstr.c,v 1.14 2001/04/20 13:14:42 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.13 2001/04/20 13:03:24 jdc Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.14 2001/04/20 13:14:42 jdc Exp $");
 #endif
 #endif				/* not lint */
 
