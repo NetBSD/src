@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.15 1998/07/05 14:26:06 mrg Exp $	*/
+/*	$NetBSD: chpass.c,v 1.16 1998/12/19 02:13:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.15 1998/07/05 14:26:06 mrg Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.16 1998/12/19 02:13:43 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,11 +257,16 @@ main(argc, argv)
 	pw_init();
 	tfd = pw_lock(0);
 	if (tfd < 0) {
-		warnx ("The passwd file is busy, waiting...");
+		if (errno != EEXIST)
+			err(1, "unable to open temp passwd file");
+		warnx("The passwd file is busy, waiting...");
 		tfd = pw_lock(10);
-		if (tfd < 0)
+		if (tfd < 0) {
+			if (errno != EEXIST)
+				err(1, "unable to open temp passwd file");
 			errx(1, "The passwd file is still busy, "
 			     "try again later.");
+		}
 	}
 
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
