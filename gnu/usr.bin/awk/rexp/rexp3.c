@@ -11,12 +11,16 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: rexp3.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:39  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 3.5  92/01/21  17:33:20  brennan
+ * Revision 3.6  1992/12/24  00:44:53  mike
+ * fixed potential LMDOS bozo with M_STR+U_ON+END_ON
+ * fixed minor bug in M_CLASS+U_ON+END_ON
+ *
+ * Revision 3.5  1992/01/21  17:33:20  brennan
  * added some casts so that character classes work with signed chars
- * 
+ *
  * Revision 3.4  91/10/29  10:54:09  brennan
  * SIZE_T
  * 
@@ -49,7 +53,8 @@ RT_STATE  *RE_new_run_stack() ;
 
 #define  push(mx,sx,ssx,ux)   if (++stackp == RE_run_stack_limit)\
                                 stackp = RE_new_run_stack() ;\
-               stackp->m=mx;stackp->s=sx;stackp->ss=ssx;stackp->u=ux;
+               stackp->m=(mx);stackp->s=(sx);stackp->ss=(ssx);\
+	       stackp->u=(ux)
 
 
 #define   CASE_UANY(x)  case  x + U_OFF :  case  x + U_ON
@@ -65,7 +70,7 @@ char *REmatch(str, machine, lenp)
   register char *s = str ;
   char *ss ;
   register RT_STATE *stackp ;
-  int u_flag ;
+  int u_flag, t ;
   char *str_end, *ts ;
 
   /* state of current best match stored here */
@@ -132,8 +137,9 @@ reswitch  :
 
     case M_STR + U_ON + END_ON :
             if ( !str_end )  str_end = s + strlen(s) ;
-            ts = str_end - m->len ;
-            if (ts < s || memcmp(ts,m->data.str,SIZE_T(m->len+1))) goto refill ;
+            t  = (str_end - s) - m->len ;
+            if (t < 0 || memcmp(ts=s+t,m->data.str,SIZE_T(m->len)))
+					goto refill ;
 	    if ( !ss )  
 		if ( cb_ss && ts > cb_ss )  goto refill ;
 		else  ss = ts ;
@@ -171,7 +177,8 @@ reswitch  :
 
     case M_CLASS + U_ON + END_ON :
             if ( ! str_end )  str_end = s + strlen(s) ;
-            if ( ! ison(*m->data.bvp, str_end[-1]) ) goto refill ;
+            if ( s[0] == 0 || ! ison(*m->data.bvp, str_end[-1]) )
+					goto refill ;
 	    if ( !ss )
 		if ( cb_ss && str_end-1 > cb_ss )  goto refill ;
 		else  ss = str_end-1 ;

@@ -11,9 +11,17 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: rexp0.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:35  jtc
+/*Updated to mawk 1.1.4
 /*
+ * Revision 3.8  1992/04/21  20:22:38  brennan
+ * 1.1 patch2
+ * [c1-c2] now works if c2 is an escaped character
+ *
+ * Revision 3.7  1992/03/24  09:33:12  brennan
+ * 1.1 patch2
+ * When backing up in do_str, check if last character was escaped
+ *
  * Revision 3.6  92/01/21  17:32:51  brennan
  * added some casts so that character classes work with signed chars
  * 
@@ -188,16 +196,22 @@ int   RE_lex( mp )
     return prev ;
 }
 
+/*
+  collect a run of characters into a string
+  machine
+*/
+
 static  int  do_str( c, pp, mp)
   int c ; /* the first character */
   char **pp ;  /* where to put the re_char pointer on exit */
   MACHINE  *mp ;  /* where to put the string machine */
 { register char *p , *s ;
-  char *str ;
-  unsigned len ;
+  char *p_entry ;
+  char *str ;    /* collect it here */
+  unsigned len ; /* length collected */
 
 
-  p = *pp ;
+  p = p_entry = *pp ;
   s = str = RE_malloc( re_len ) ;
   *s++ = c ;  len = 1 ;
 
@@ -221,7 +235,20 @@ static  int  do_str( c, pp, mp)
 out:
   /* if len > 1 and we failed on a ? + or * , need to back up */
   if ( len > 1 && (*p == '*' || *p == '+' || *p == '?' ) )
-  { len-- ; p-- ; s-- ; }
+  { len-- ; p-- ; s-- ; 
+
+    /* if the last character was escaped, back up one more */
+    {
+      int cnt = 0 ;
+      char *bp = p-1 ;
+
+      while ( bp >= p_entry && *bp == '\\' )
+      {
+	cnt++ ; bp-- ;
+      }
+      if ( cnt & 1 )  p-- ;
+    }
+  }
 
   *s = 0 ;
   *pp = p ;
@@ -234,14 +261,16 @@ out:
   BUILD A CHARACTER CLASS
  *---------------------------*/
 
-#define  on( b, x)  ( (b)[((unsigned char)(x))>>3] |= ( 1 << ((x)&7) ))
+#define  on( b, x)  ((b)[(x)>>3] |= ( 1 << ((x)&7) ))
 
 static  void  PROTO(block_on, (BV,int,int) ) ;
 
 static  void  block_on( b, x, y)
-  BV b ; int x, y ; 
-{ int lo = (x&0xff) >> 3 ;
-  int hi = (y&0xff) >> 3 ;
+  BV b ; 
+  int x, y ; 
+  /* caller makes sure x<=y and x>0 y>0 */
+{ int lo = x >> 3 ;
+  int hi = y >> 3 ;
   int  i, j, bit  ;
 
   if ( lo == hi )
@@ -269,7 +298,7 @@ static int  do_class( start, mp)
   int  cnt ;
   int comp_flag ;
 
-  p = (*start) + 1 ;
+  p = t = (*start) + 1 ;
   if ( *p == ']' || *p == '^' && *(p+1) == ']' )
          RE_error_trap(-E3) ;
   while ( 1 )  /* find the back of the class */
@@ -282,41 +311,69 @@ static int  do_class( start, mp)
       p = q+1 ;
     }
   /*  q  now  pts at the back of the class   */
-  p = (*start) + 1 ;
+  p = t ;
   *start = q + 1 ;
 
   bvp = (BV *) RE_malloc( sizeof(BV) ) ;
   (void) memset( bvp, 0, SIZE_T(sizeof(BV)) ) ;
 
-  comp_flag = *p == '^' ? (p++ , 1) : 0 ;
+  if ( *p == '^' ) { comp_flag = 1 ; p++ ; }
+  else comp_flag = 0 ;
+
   prev = -1 ;  /* indicates  -  cannot be part of a range  */
 
   while ( p < q )
   {
      switch( *p )
-      { case '\\' :
-          t = ++p ;
+      { 
+	case '\\' :
+
+          t = p+1 ;
           prev = escape(&t) ;
           on(*bvp, prev) ;
           p = t ;
-          continue ;
+	  break ;
 
         case '-' :
-          if ( prev == -1 || p+1 == q || prev > *(unsigned char*)(p+1) )
-             { prev = '-' ; on(*bvp, '-') ; }
-          else
-             { p++ ;
-               block_on(*bvp, prev, *p) ;
-               prev = -1 ;
-             }
-          break ;
 
+	  if ( prev == -1 || p+1 == q )
+	  {
+	    prev = '-' ; 
+	    on(*bvp,'-') ;
+	    p++ ;
+	  }
+	  else
+	  {
+	    int c ;
+	    char *mark = ++p ;
+
+	    if ( *p != '\\' )  c = *(unsigned char *) p++ ;
+	    else
+	    {
+	      t = p+1 ;
+	      c = escape(&t) ;
+	      p = t ;
+	    }
+
+	    if ( prev <= c )
+	    {
+	      block_on(*bvp, prev, c) ;
+	      prev = -1 ;
+	    }
+	    else /* back up */
+	    { 
+	      p = mark ;
+	      prev = '-' ;
+	      on(*bvp,'-') ;
+	    }
+	  }
+	  break ;
+	      
         default :
-          prev = *(unsigned char*)p ;
-          on(*bvp, *p) ;
+          prev = *(unsigned char*)p++ ;
+          on(*bvp, prev) ;
           break ;
       }
-      p++ ;
   }
 
   if ( comp_flag )
@@ -457,5 +514,5 @@ static int escape(start_p)
   }
   /* anything else \c -> c */
   *start_p = p ;
-  return p[-1]  ;
+  return  *(unsigned char*)(p-1) ;
 }
