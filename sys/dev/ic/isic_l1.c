@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.5 2002/03/30 17:54:17 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.6 2002/03/30 19:13:44 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.5 2002/03/30 17:54:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.6 2002/03/30 19:13:44 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -232,6 +232,7 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
 			sc->sc_enabled = 0;
+			isic_enable_intr(sc, 0);
 			pass_down = 1;
 			break;
 
@@ -251,6 +252,9 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 
 	if (pass_down && sc->drv_command != NULL)
 		sc->drv_command(sc, command, parm);
+
+	if (command == CMR_DOPEN)
+		isic_enable_intr(sc, 1);
 
 	return(0);
 }
