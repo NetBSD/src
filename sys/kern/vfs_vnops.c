@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.64 2003/03/03 21:25:09 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.65 2003/03/16 08:26:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.64 2003/03/03 21:25:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.65 2003/03/16 08:26:48 jdolecek Exp $");
 
 #include "fs_union.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.64 2003/03/03 21:25:09 jdolecek Exp 
 #include <uvm/uvm_extern.h>
 
 #ifdef UNION
-#include <miscfs/union/union.h>
+#include <fs/union/union.h>
 #endif
 
 #ifdef VERIFIED_EXEC

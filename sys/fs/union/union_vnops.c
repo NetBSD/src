@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.59 2002/09/27 15:37:48 provos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.59 2002/09/27 15:37:48 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.59 2002/09/27 15:37:48 provos Exp 
 #include <sys/buf.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
-#include <miscfs/union/union.h>
+#include <fs/union/union.h>
 #include <miscfs/genfs/genfs.h>
 
 int union_lookup	__P((void *));

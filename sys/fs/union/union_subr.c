@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.1 2003/03/16 08:26:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.1 2003/03/16 08:26:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <miscfs/union/union.h>
+#include <fs/union/union.h>
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
