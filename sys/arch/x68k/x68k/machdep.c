@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2001/12/05 18:04:35 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2001/12/27 02:23:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -592,7 +592,7 @@ cpu_init_kcore_hdr()
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
@@ -682,7 +682,7 @@ cpu_dump(dump, blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
 
-	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);

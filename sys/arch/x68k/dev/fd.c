@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 2001/12/19 14:53:26 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 2001/12/27 02:23:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1289,17 +1289,15 @@ loop:
 		 }}
 #endif
 		if ((read = bp->b_flags & B_READ)) {
-			bcopy(fd->sc_copybuf
-			      + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
-			      bp->b_data + fd->sc_skip,
-			      FDC_BSIZE);
+			memcpy(bp->b_data + fd->sc_skip, fd->sc_copybuf
+			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
+			    FDC_BSIZE);
 			fdc->sc_state = IOCOMPLETE;
 			goto iocomplete2;
 		} else {
-			bcopy(bp->b_data + fd->sc_skip,
-			      fd->sc_copybuf
-			      + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
-			      FDC_BSIZE);
+			memcpy(fd->sc_copybuf
+			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
+			    bp->b_data + fd->sc_skip, FDC_BSIZE);
 			fdc_dmastart(fdc, read, fd->sc_copybuf, 1024);
 		}
 		out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
@@ -1675,7 +1673,7 @@ fdgetdisklabel(sc, dev)
 
 	part = DISKPART(dev);
 	lp = sc->sc_dk.dk_label;
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize     = 128 << sc->sc_type->secsize;
 	lp->d_ntracks     = sc->sc_type->heads;
