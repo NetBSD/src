@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2003/12/28 17:26:00 wiz Exp $
+#	$NetBSD: Makefile,v 1.8 2004/01/01 02:44:09 mrg Exp $
 
 PROG=		gzip
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
-DPADD=		${LIBZ}
-LDADD=		-lz
+DPADD=		${LIBZ} ${LIBBZ2}
+LDADD=		-lz -lbz2
 
 SCRIPTS=	gzexe zdiff zforce zgrep zmore znew
 
