@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.39 2002/09/23 02:51:43 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.40 2002/10/22 03:15:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.39 2002/09/23 02:51:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.40 2002/10/22 03:15:28 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1021,12 +1021,20 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	unsigned int bs;
 	int spare_number;
 
+	ret=0;
+
 	if (raidPtr->numSpare >= RF_MAXSPARE) {
 		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
 		return(EINVAL);
 	}
 
 	RF_LOCK_MUTEX(raidPtr->mutex);
+	while (raidPtr->adding_hot_spare==1) {
+		ltsleep(&(raidPtr->adding_hot_spare), PRIBIO, "raidhs", 0,
+			&(raidPtr->mutex));
+	}
+	raidPtr->adding_hot_spare=1;
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[0][raidPtr->numCol];
@@ -1090,13 +1098,16 @@ rf_add_hot_spare(raidPtr, sparePtr)
 				 &raidPtr->shutdownList,
 				 raidPtr->cleanupList);
 				 
-
+	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->numSpare++;
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	return (0);
 
 fail:
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	raidPtr->adding_hot_spare=0;
+	wakeup(&(raidPtr->adding_hot_spare));
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	return(ret);
 }
 
