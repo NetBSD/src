@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.33 2000/06/14 11:15:58 tron Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.34 2000/06/28 01:30:56 thorpej Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.33 2000/06/14 11:15:58 tron Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.34 2000/06/28 01:30:56 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -19,9 +19,11 @@ __RCSID("$NetBSD: bootparamd.c,v 1.33 2000/06/14 11:15:58 tron Exp $");
 #include <sys/stat.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <err.h>
+#include <fnmatch.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -306,7 +308,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 	static int ypbuflen = 0;
 #endif
 	static char buf[BUFSIZ];
-	char   *bp, *word = NULL;
+	char   *canon = NULL, *bp, *word = NULL;
 	size_t  idlen = id == NULL ? 0 : strlen(id);
 	int     contin = 0;
 	int     found = 0;
@@ -348,9 +350,29 @@ lookup_bootparam(client, client_canonical, id, server, path)
 #endif
 			if (debug)
 				warnx("match %s with %s", word, client);
+
+#define	HASGLOB(str) \
+	(strchr(str, '*') != NULL || \
+	 strchr(str, '?') != NULL || \
+	 strchr(str, '[') != NULL || \
+	 strchr(str, ']') != NULL)
+
 			/* See if this line's client is the one we are
 			 * looking for */
-			if (strcasecmp(word, client) != 0) {
+			if (fnmatch(word, client, FNM_CASEFOLD) == 0) {
+				/*
+				 * Match.  The token may be globbed, we
+				 * can't just return that as the canonical
+				 * name.  Check to see if the token has any
+				 * globbing characters in it (*, ?, [, ]).
+				 * If so, just return the name we already
+				 * have.  Otherwise, return the token.
+				 */
+				if (HASGLOB(word))
+					canon = client;
+				else
+					canon = word;
+			} else {
 				/*
 				 * If it didn't match, try getting the
 				 * canonical host name of the client
@@ -358,7 +380,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				 * the client we are looking for
 				 */
 				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL ) {
+				if (hp == NULL) {
 					if (debug)
 						warnx(
 					    "Unknown bootparams host %s", word);
@@ -367,9 +389,18 @@ lookup_bootparam(client, client_canonical, id, server, path)
 					    "Unknown bootparams host %s", word);
 					continue;
 				}
-				if (strcasecmp(hp->h_name, client))
-					continue;
+				if (fnmatch(word, hp->h_name,
+					    FNM_CASEFOLD) == 0) {
+					/* See above. */
+					if (HASGLOB(word))
+						canon = hp->h_name;
+					else
+						canon = word;
+				}
 			}
+
+#undef HASGLOB
+
 			contin *= -1;
 			break;
 		case 1:
@@ -377,8 +408,9 @@ lookup_bootparam(client, client_canonical, id, server, path)
 			break;
 		}
 
+		assert(canon != NULL);
 		if (client_canonical)
-			strncpy(client_canonical, word, MAX_MACHINE_NAME);
+			strncpy(client_canonical, canon, MAX_MACHINE_NAME);
 
 		/* We have found a line for CLIENT */
 		if (id == NULL) {
