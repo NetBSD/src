@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.4 1997/03/13 06:19:11 mikel Exp $	*/
+/*	$NetBSD: cron.c,v 1.5 1997/10/17 00:10:42 lukem Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -19,7 +19,7 @@
 
 #if !defined(lint) && !defined(LINT)
 /*static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: cron.c,v 1.4 1997/03/13 06:19:11 mikel Exp $";
+static char rcsid[] = "$NetBSD: cron.c,v 1.5 1997/10/17 00:10:42 lukem Exp $";
 #endif
 
 
@@ -281,7 +281,7 @@ parse_args(argc, argv)
 {
 	int	argch;
 
-	while (EOF != (argch = getopt(argc, argv, "x:"))) {
+	while (-1 != (argch = getopt(argc, argv, "x:"))) {
 		switch (argch) {
 		default:
 			usage();
