@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/10/19 11:00:51 oki Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1998/10/13 21:25:40 cgd Exp $
 
 # Define all target-dependent utilities as macros in case of cross compilation.
 # These definitions can be overridden by  <sys.mk>
@@ -70,7 +70,7 @@ ${DESTDIR}/usr/mdec/fdboot:	${DESTDIR}/usr/mdec/sdboot
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/fdboot
 
 install: ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/fdboot
-	install -c -o bin -g bin -m 755 writefdboot ${DESTDIR}/usr/mdec
+	install -c -o bin -g bin -m 755 ${.CURDIR}/writefdboot ${DESTDIR}/usr/mdec
 
 # make package
 dist: ${.CURDIR}/$(BOOT)

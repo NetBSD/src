@@ -16,7 +16,7 @@ boot="$1"
 rootdev="$2"
 temp=/tmp/writeboot$$
 
-set - `ls -lLd "$boot"`
+set - `ls -lLgd "$boot"`
 case "$5" in [1-9]*) :;; *) exit 1;; esac
 nblock=`expr \( $5 + 1023 \) / 1024 `
 
@@ -26,5 +26,5 @@ rm -f $temp
 	dd if="$rootdev" bs=1024 count=1 | dd bs=4 skip=16 count=69
 	dd if="$boot" bs=340 skip=1	) > $temp
 
-cat $temp /dev/zero | dd bs=1024 count=$nblock of="$rootdev"
+cat $temp /dev/zero | dd conv=notrunc bs=1024 count=$nblock of="$rootdev"
 rm -f $temp
