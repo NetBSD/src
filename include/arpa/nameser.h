@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nameser.h	5.25 (Berkeley) 4/3/91
- *	$Id: nameser.h,v 1.5 1994/04/07 06:59:03 deraadt Exp $
+ *	$Id: nameser.h,v 1.6 1994/10/15 07:56:55 deraadt Exp $
  */
 
 #ifndef _NAMESER_H_
@@ -189,16 +189,16 @@ typedef struct {
  * Structure for passing resource records around.
  */
 struct rrec {
-	short	r_zone;			/* zone number */
-	short	r_class;		/* class number */
-	short	r_type;			/* type number */
-	u_long	r_ttl;			/* time to live */
-	int	r_size;			/* size of data area */
-	char	*r_data;		/* pointer to data */
+	int16_t		r_zone;			/* zone number */
+	int16_t		r_class;		/* class number */
+	int16_t		r_type;			/* type number */
+	u_int32_t	r_ttl;			/* time to live */
+	int		r_size;			/* size of data area */
+	char		*r_data;		/* pointer to data */
 };
 
-extern	u_short	_getshort();
-extern	u_long	_getlong();
+extern	u_int16_t	_getshort();
+extern	u_int32_t	_getlong();
 
 /*
  * Inline versions of get/put short/long.
@@ -208,26 +208,26 @@ extern	u_long	_getlong();
  */
 #define GETSHORT(s, cp) { \
 	register u_char *t_cp = (u_char *)(cp); \
-	(s) = ((u_short)t_cp[0] << 8) \
-	    | ((u_short)t_cp[1]) ;\
-	(cp) += 2; \
+	(s) = ((u_int16_t)t_cp[0] << 8) \
+	    | ((u_int16_t)t_cp[1]) ;\
+	(cp) += sizeof(u_int16_t); \
 }
 
 #define GETLONG(l, cp) { \
 	register u_char *t_cp = (u_char *)(cp); \
-	(l) = ((u_long)t_cp[0] << 24) \
-	    | ((u_long)t_cp[1] << 16) \
-	    | ((u_long)t_cp[2] << 8) \
-	    | ((u_long)t_cp[3]) ;\
-	(cp) += 4; \
+	(l) = ((u_int32_t)t_cp[0] << 24) \
+	    | ((u_int32_t)t_cp[1] << 16) \
+	    | ((u_int32_t)t_cp[2] << 8) \
+	    | ((u_int32_t)t_cp[3]) ;\
+	(cp) += sizeof(u_int32_t); \
 }
 
 #define PUTSHORT(s, cp) { \
-	register u_short t_s = (u_short)(s); \
+	register u_int16_t t_s = (u_int16_t)(s); \
 	register u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_s >> 8; \
 	*t_cp   = t_s; \
-	(cp) += 2; \
+	(cp) += sizeof(u_int16_t); \
 }
 
 /*
@@ -235,13 +235,13 @@ extern	u_long	_getlong();
  * were depending on this "feature", you will lose.
  */
 #define PUTLONG(l, cp) { \
-	register u_long t_l = (u_long)(l); \
+	register u_int32_t t_l = (u_int32_t)(l); \
 	register u_char *t_cp = (u_char *)(cp); \
 	*t_cp++ = t_l >> 24; \
 	*t_cp++ = t_l >> 16; \
 	*t_cp++ = t_l >> 8; \
 	*t_cp   = t_l; \
-	(cp) += 4; \
+	(cp) += sizeof(u_int32_t); \
 }
 
 #endif /* !_NAMESER_H_ */

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.7 1994/04/14 07:47:37 deraadt Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.8 1994/10/15 07:58:54 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -76,13 +76,13 @@ static int stayopen = 0;
 #endif
 
 typedef union {
-    HEADER hdr;
-    u_char buf[MAXPACKET];
+	HEADER hdr;
+	u_char buf[MAXPACKET];
 } querybuf;
 
 typedef union {
-    long al;
-    char ac;
+	int32_t	al;
+	char ac;
 } align;
 
 static int qcomp __P((struct in_addr **, struct in_addr **));
@@ -152,11 +152,11 @@ getanswer(answer, anslen, iquery)
 			break;
 		cp += n;
 		type = _getshort(cp);
- 		cp += sizeof(u_short);
+ 		cp += sizeof(u_int16_t);
 		class = _getshort(cp);
- 		cp += sizeof(u_short) + sizeof(u_long);
+ 		cp += sizeof(u_int16_t) + sizeof(u_int32_t);
 		n = _getshort(cp);
-		cp += sizeof(u_short);
+		cp += sizeof(u_int16_t);
 		if (type == T_CNAME) {
 			cp += n;
 			if (ap >= &host_aliases[MAXALIASES-1])
@@ -266,7 +266,7 @@ gethostbyname(name)
 				host.h_aliases = host_aliases;
 				host_aliases[0] = NULL;
 				host.h_addrtype = AF_INET;
-				host.h_length = sizeof(u_long);
+				host.h_length = sizeof(u_int32_t);
 				h_addr_ptrs[0] = (char *)&host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
@@ -417,7 +417,7 @@ again:
 	h_addr_ptrs[1] = NULL;
 	host_addr.s_addr = inet_addr(p);
 	host.h_addr_list = h_addr_ptrs;
-	host.h_length = sizeof (u_long);
+	host.h_length = sizeof(u_int32_t);
 	host.h_addrtype = AF_INET;
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
@@ -511,7 +511,7 @@ _yphostent(line)
 
 	host.h_name = NULL;
 	host.h_addr_list = h_addr_ptrs;
-	host.h_length = sizeof (u_long);
+	host.h_length = sizeof(u_int32_t);
 	host.h_addrtype = AF_INET;
 	hap = h_addr_ptrs;
 	buf = host_addrs;
