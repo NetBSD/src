@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.6 1995/09/04 05:07:16 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.7 1995/09/12 22:31:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -395,7 +395,7 @@ transfer_pdma(phasep, data, count)
 #if DEBUG
 		pdma_5380_state = "using transfer_pio.";
 #endif
-		transfer_pio(phasep, data, count);
+		transfer_pio(phasep, data, count, 0);
 		return -1;
 	}
 
