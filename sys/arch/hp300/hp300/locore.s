@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 2002/06/27 08:45:25 gmcgarry Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 2002/08/28 08:57:00 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1380,8 +1380,26 @@ Lswnofpsave:
 	pea	%a0@			| push proc
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
 	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
 
+/*
+ *  Check for restartable atomic sequences (RAS)
+ */
+	movl	_C_LABEL(curproc),%a0
+	tstl	%a0@(P_NRAS)
+	jeq	1f
+	movl	%a0@(P_MD_REGS),%a1
+	movl	%a1@(TF_PC),%sp@-
+	movl	%a0,%sp@-
+	jbsr	_C_LABEL(ras_lookup)
+	addql	#8,%sp
+	movql	#-1,%d0
+	cmpl	%a0,%d0
+	jeq	1f
+	movl	_C_LABEL(curproc),%a1
+	movl	%a1@(P_MD_REGS),%a1
+	movel	%a0,%a1@(TF_PC)
+1:
+	movl	_C_LABEL(curpcb),%a1	| restore p_addr
 	lea	_ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
 
 	moveml	%a1@(PCB_REGS),#0xFCFC	| and registers
