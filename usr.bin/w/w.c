@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.31 1999/01/29 14:17:21 pk Exp $	*/
+/*	$NetBSD: w.c,v 1.32 1999/10/11 12:00:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.31 1999/01/29 14:17:21 pk Exp $");
+__RCSID("$NetBSD: w.c,v 1.32 1999/10/11 12:00:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,8 @@ main(argc, argv)
 		}
 		(void)printf("%-*.*s %-2.2s %-*.*s ",
 		    UT_NAMESIZE, UT_NAMESIZE, ep->utmp.ut_name,
-		    strncmp(ep->utmp.ut_line, "tty", 3) ?
+		    (strncmp(ep->utmp.ut_line, "tty", 3) &&
+		    strncmp(ep->utmp.ut_line, "dty", 3)) ?
 		    ep->utmp.ut_line : ep->utmp.ut_line + 3,
 		    UT_HOSTSIZE, UT_HOSTSIZE, *p ? p : "-");
 		pr_attime(&ep->utmp.ut_time, &now);
