@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.26 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.27 2000/06/27 06:14:24 simonb Exp $	*/
 
 /*
  *
@@ -407,7 +407,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	vaddr_t curr_va;
-	int curr_offset;
+	off_t curr_offset;
 	paddr_t paddr, mdpgno;
 	int lcv, retval;
 	dev_t device;
@@ -448,7 +448,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 * addresses in a submap must match the main map, this is ok.
 	 */
 	/* udv offset = (offset from start of entry) + entry's offset */
-	curr_offset = (int)((vaddr - entry->start) + entry->offset);
+	curr_offset = entry->offset + (vaddr - entry->start);
 	/* pmap va = vaddr (virtual address of pps[0]) */
 	curr_va = vaddr;
 	
@@ -473,8 +473,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		paddr = pmap_phys_address(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
-		    ufi->orig_map->pmap, curr_va, (int)paddr, mapprot);
+		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
+		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != KERN_SUCCESS) {
 			/*
