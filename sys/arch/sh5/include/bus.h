@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2002/09/28 10:49:10 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2002/10/01 07:55:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -904,6 +904,7 @@ struct sh5_bus_dma_segment {
 
 	/* Internal Use only */
 	bus_addr_t	_ds_cpuaddr;	/* CPU address */
+	vaddr_t		_ds_vaddr;	/* VA of seg */
 	int		_ds_flags;
 };
 typedef struct sh5_bus_dma_segment	bus_dma_segment_t;
