@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.31 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: ssh.c,v 1.32 2005/02/15 16:22:12 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: ssh.c,v 1.224 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: ssh.c,v 1.31 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.32 2005/02/15 16:22:12 he Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -1334,7 +1334,7 @@ control_client(const char *path)
 	}
 
 	if (control_client_terminate)
-		debug2("Exiting on signal %d", control_client_terminate);
+		debug2("Exiting on signal %d", (int)control_client_terminate);
 
 	close(sock);
 
