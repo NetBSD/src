@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.13 2003/07/12 14:48:10 itojun Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.14 2003/09/06 19:35:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.13 2003/07/12 14:48:10 itojun Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.14 2003/09/06 19:35:35 martin Exp $");
 #endif
 
 
@@ -56,7 +56,7 @@ static void usage(void);
 static void print_error(const char *ifname, int error, const char * str);
 static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 	int lcp_timeout, time_t idle_timeout, int authfailures, 
-	int max_auth_failures);
+	int max_auth_failures, u_int maxalive, time_t max_noreceive);
 const char *phase_name(int phase);
 const char *proto_name(int proto);
 const char *authflags(int flags);
@@ -65,7 +65,9 @@ static void pppoectl_argument(char *arg);
 int hz = 0;
 
 int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
-    clear_auth_failure_count;
+    clear_auth_failure_count, set_keepalive;
+int maxalive = -1;
+int max_noreceive = -1;
 struct spppauthcfg spr;
 struct sppplcpcfg lcp;
 struct spppstatus status;
@@ -73,6 +75,7 @@ struct spppidletimeout timeout;
 struct spppauthfailurestats authfailstats;
 struct spppauthfailuresettings authfailset;
 struct spppdnssettings dnssettings;
+struct spppkeepalivesettings keepalivesettings;
 
 int
 main(int argc, char **argv)
@@ -240,6 +243,8 @@ main(int argc, char **argv)
 	strncpy(authfailset.ifname, ifname, sizeof authfailset.ifname);
 	memset(&dnssettings, 0, sizeof dnssettings);
 	strncpy(dnssettings.ifname, ifname, sizeof dnssettings.ifname);
+	memset(&keepalivesettings, 0, sizeof keepalivesettings);
+	strncpy(keepalivesettings.ifname, ifname, sizeof keepalivesettings.ifname);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -275,8 +280,14 @@ main(int argc, char **argv)
 			err(EX_OSERR, "SPPPGETIDLETO");
 		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
 			err(EX_OSERR, "SPPPGETAUTHFAILURES");
+		if (ioctl(s, SPPPGETKEEPALIVE, &keepalivesettings) == -1)
+			err(EX_OSERR, "SPPPGETKEEPALIVE");
 
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds, authfailstats.auth_failures, authfailstats.max_failures);
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout,
+		    timeout.idle_seconds, authfailstats.auth_failures,
+		    authfailstats.max_failures,
+		    keepalivesettings.maxalive,
+		    keepalivesettings.max_noreceive);
 
 		if (spr.hisname) free(spr.hisname);
 		if (spr.myname) free(spr.myname);
@@ -327,11 +338,27 @@ main(int argc, char **argv)
 		if (ioctl(s, SPPPSETDNSOPTS, &dnssettings) == -1)
 			err(EX_OSERR, "SPPPSETDNSOPTS");
 	}
+	if (set_keepalive) {
+		if (ioctl(s, SPPPGETKEEPALIVE, &keepalivesettings) == -1)
+			err(EX_OSERR, "SPPPGETKEEPALIVE");
+		if (max_noreceive >= 0)
+			keepalivesettings.max_noreceive = max_noreceive;
+		if (maxalive >= 0)
+			keepalivesettings.maxalive = maxalive;
+		if (ioctl(s, SPPPSETKEEPALIVE, &keepalivesettings) == -1)
+			err(EX_OSERR, "SPPPSETKEEPALIVE");
+	}
 
 	if (verbose) {
 		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
 			err(EX_OSERR, "SPPPGETAUTHFAILURES");
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds, authfailstats.auth_failures, authfailstats.max_failures);
+		if (ioctl(s, SPPPGETKEEPALIVE, &keepalivesettings) == -1)
+			err(EX_OSERR, "SPPPGETKEEPALIVE");
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout,
+		    timeout.idle_seconds, authfailstats.auth_failures,
+		    authfailstats.max_failures,
+		    keepalivesettings.maxalive,
+		    keepalivesettings.max_noreceive);
 	}
 
 	return 0;
@@ -394,6 +421,24 @@ pppoectl_argument(char *arg)
 		spr.hissecret = arg + off;
 		spr.hissecret_length = strlen(spr.hissecret)+1;
 		set_auth = 1;
+	} else if (startswith(arg, "max-noreceive=")) {
+		max_noreceive = atoi(arg+off);
+		if (max_noreceive < 0) {
+			fprintf(stderr,
+			    "max-noreceive value must be at least 0\n");
+			max_noreceive = -1;
+		} else {
+			set_keepalive = 1;
+		}
+	} else if (startswith(arg, "max-alive-missed=")) {
+		maxalive = atoi(arg+off);
+		if (maxalive < 0) {
+			fprintf(stderr, 
+			    "max-alive-missed value must be at least 0\n");
+			maxalive = -1;
+		} else {
+			set_keepalive = 1;
+		}
 	} else if (strcmp(arg, "callin") == 0)
 		spr.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
 	else if (strcmp(arg, "always") == 0)
@@ -443,6 +488,7 @@ usage(void)
 	    "           to set authentication names, passwords\n"
 	    "           and (optional) paramaters\n"
 	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|\n"
+	    "                      max-noreceive=s|max-alive-missed=cnt|\n"
 	    "                      max-auth-failure=count|clear-auth-failure\n"
 	    "           to set general parameters\n"
 	    "   or\n"
@@ -460,7 +506,8 @@ usage(void)
 
 static void
 print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout,
-	time_t idle_timeout, int authfailures, int max_auth_failures)
+	time_t idle_timeout, int authfailures, int max_auth_failures,
+	u_int maxalive_cnt, time_t max_noreceive_time)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
@@ -497,7 +544,10 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 	if (authfailures != 0)
 		printf("\tauthentication failures = %d\n", authfailures);
 	printf("\tmax-auth-failure = %d\n", max_auth_failures);
-	
+
+	printf("\tmax-noreceive = %ld seconds\n", (long)max_noreceive_time);
+	printf("\tmax-alive-missed = %u unanwsered echo requests\n", maxalive_cnt);
+
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
 	       sp->defs.enable_vj ? "on" : "off");
