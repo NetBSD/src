@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.10 2003/04/14 02:56:46 mrg Exp $	*/
+/*	$NetBSD: command.c,v 1.11 2004/10/30 20:17:19 dsl Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -416,7 +416,7 @@ mca_char(c)
 				if (cmd_char(c) == CC_QUIT)
 					return (MCA_DONE);
 				p = get_cmdbuf();
-				lc = islower(p[0]);
+				lc = islower((unsigned char)p[0]);
 				o = findopt_name(&p, &oname, NULL);
 				if (o != NULL)
 				{
@@ -426,14 +426,14 @@ mca_char(c)
 					 * display the full option name.
 					 */
 					optchar = o->oletter;
-					if (!lc && islower(optchar))
-						optchar = toupper(optchar);
+					if (!lc)
+						optchar = toupper((unsigned char)optchar);
 					cmd_reset();
 					mca_opt_toggle();
 					for (p = oname;  *p != '\0';  p++)
 					{
-						c = *p;
-						if (!lc && islower(c))
+						c = (unsigned char)*p;
+						if (!lc)
 							c = toupper(c);
 						if (cmd_char(c) != CC_OK)
 							return (MCA_DONE);
