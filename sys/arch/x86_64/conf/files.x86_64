@@ -1,0 +1,199 @@
+#	$NetBSD: files.x86_64,v 1.1 2001/06/19 00:19:48 fvdl Exp $
+#
+# new style config file for x86_64 architecture
+#
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 16
+
+maxusers 2 16 64
+
+# delay before cpu_reset() for reboot.
+defopt	CPURESET_DELAY
+
+# Large page size
+defopt	LARGEPAGES
+
+#
+# XXX these are just here at the moment so that we can share files
+# with the i386 (they include the opt_*.h for these)
+#
+
+defopt USER_LDT
+defopt VM86
+
+file	arch/x86_64/x86_64/autoconf.c
+file	arch/x86_64/x86_64/bus_machdep.c
+file	arch/x86_64/x86_64/conf.c
+file	arch/x86_64/x86_64/consinit.c
+file	arch/x86_64/x86_64/db_dbgreg.s	ddb
+file	arch/x86_64/x86_64/db_disasm.c	ddb
+file	arch/x86_64/x86_64/db_interface.c	ddb
+file	arch/x86_64/x86_64/db_memrw.c	ddb | kgdb
+file	arch/x86_64/x86_64/db_trace.c	ddb
+file	arch/x86_64/x86_64/disksubr.c	disk
+file	arch/x86_64/x86_64/gdt.c
+
+#
+# Write the optimized versions for these.
+#
+file    netinet/in_cksum.c 	    inet
+file    netinet/in4_cksum.c             inet
+
+#file	arch/x86_64/x86_64/in_cksum.S	inet
+
+file	arch/x86_64/x86_64/ipkdb_glue.c	ipkdb
+file	arch/x86_64/x86_64/kgdb_machdep.c	kgdb
+file	arch/x86_64/x86_64/machdep.c
+file	arch/x86_64/x86_64/math_emulate.c	math_emulate
+file	arch/x86_64/x86_64/mem.c
+file	arch/x86_64/x86_64/microtime.s
+file	netns/ns_cksum.c		ns
+file	arch/x86_64/x86_64/pmap.c
+file	arch/x86_64/x86_64/process_machdep.c
+#file	arch/x86_64/x86_64/procfs_machdep.c	procfs
+file	arch/x86_64/x86_64/sys_machdep.c
+file	arch/x86_64/x86_64/syscall.c
+file	arch/x86_64/x86_64/trap.c
+file	arch/x86_64/x86_64/vm_machdep.c
+file	arch/x86_64/x86_64/fpu.c
+file	dev/cons.c
+
+file	arch/x86_64/x86_64/pmc.c		perfctrs
+
+#
+# Machine-independent SCSI drivers
+#
+
+include	"dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+#
+# Machine-independent ATA drivers
+#
+
+include	"dev/ata/files.ata"
+major	{wd = 0}
+
+# Memory Disk for install floppy
+file	arch/x86_64/x86_64/md_root.c	memory_disk_hooks
+major	{md = 17}
+
+# RAIDframe
+major	{raid = 18}
+
+# Logical disk
+major	{ld = 19}
+
+#
+# Machine-independent I2O drivers
+#
+
+include	"dev/i2o/files.i2o"
+
+# BIOS32 routines
+define	bios32
+file	arch/x86_64/x86_64/bios32.c		bios32 needs-flag
+
+#
+# System bus types
+#
+
+define	mainbus { }
+# XXX BIOS32 only if something that uses it is configured!
+device	mainbus: isabus, pcibus, mainbus, bios32
+attach	mainbus at root
+file	arch/x86_64/x86_64/mainbus.c	mainbus
+
+#
+# PCI-only drivers
+# XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
+# XXX devices to 'pci'.
+#
+
+include	"dev/pci/files.pci"
+file	arch/x86_64/pci/pci_machdep.c	pci
+defopt	PCI_CONF_MODE
+file	arch/x86_64/pci/pciide_machdep.c	pciide
+
+# PCI-Host bridge chipsets
+device	pchb: pcibus
+attach	pchb at pci
+file	arch/x86_64/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/x86_64/pci/pcib.c		pcib
+
+#
+# ISA or ISA+PCI drivers
+#
+
+include	"dev/isa/files.isa"
+major	{mcd = 7}
+#major	{scd = 15}
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
+# XXX (when the conf/files and files.isa bogons are fixed, this can
+# XXX be fixed as well.)
+
+attach	lpt at puc with lpt_puc
+file	dev/pci/lpt_puc.c	lpt_puc
+
+file	arch/x86_64/isa/isa_machdep.c	isa
+
+# PC clock
+file	arch/x86_64/isa/clock.c		isa
+file	dev/clock_subr.c		isa
+
+# attribute used to represent the "keyboard controller"
+# XXX should be a real device
+define	pckbcport { [irq = -1], [port = -1] }
+
+# PC console support a la "pccons"
+device	pc: tty, pckbcport
+attach	pc at isa
+device	pcconskbd
+attach	pcconskbd at pckbc
+file	arch/x86_64/isa/pccons.c		pc | pcconskbd needs-flag
+
+include	"dev/wscons/files.wscons"
+
+include	"dev/pckbc/files.pckbc"
+
+device	sysbeep
+attach	sysbeep at pcppi
+
+# Floppy disk controller
+device	fdc {drive = -1}: isadma
+file	dev/isa/fd.c			fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c		fdc_isa
+
+device	fd: disk
+attach	fd at fdc
+major	{fd = 2}
+
+#
+# Compatibility modules
+#
+
+# NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
+include "compat/netbsd32/files.netbsd32"
+file    arch/x86_64/x86_64/netbsd32_machdep.c	compat_netbsd32
+file	arch/x86_64/x86_64/netbsd32_sigcode.S	compat_netbsd32
+file	arch/x86_64/x86_64/netbsd32_syscall.c	compat_netbsd32
+
+# OSS audio driver compatibility
+include	"compat/ossaudio/files.ossaudio"
+
+# network devices MII bus
+include	"dev/mii/files.mii"
+
+include	"dev/usb/files.usb"
+
+include	"dev/ieee1394/files.ieee1394"
