@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7 2002/04/02 05:30:36 lukem Exp $
+#	$NetBSD: INSTALL,v 1.8 2002/04/10 20:10:08 thorpej Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.7 $"
+#ident		"INSTALL-$Revision: 1.8 $"
 
 # estimated number of users
 maxusers	32
@@ -39,9 +39,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # For StrongARM only kernels
 #makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
-
-# Architecture options
-options 	RISCPC		# We are a RiscPC
 
 # FPA options
 #options 	ARMFPE		# ARM Ltd FPE
