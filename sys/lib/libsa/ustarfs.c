@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.19 2002/05/10 11:07:01 lukem Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.20 2003/03/11 19:43:04 jmmv Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -284,7 +284,11 @@ get_volume(f, vn)
 #ifdef HAVE_CHANGEDISK_HOOK
 		changedisk_hook(f);
 #else
-		getchar();
+		for (;;) {
+			int c = getchar();
+			if ((c == '\n') || (c == '\r'))
+				break;
+		}
 #endif
 		printf("\n");
 		e = ustarfs_cylinder_read(f, 0, needvolume != 0);
