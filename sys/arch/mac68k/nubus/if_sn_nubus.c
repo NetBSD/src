@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.19 1998/07/05 00:51:10 jonathan Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.20 1999/09/29 06:04:51 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -91,6 +91,7 @@ sn_nubus_match(parent, cf, aux)
 
 		case SN_VENDOR_APPLE:
 		case SN_VENDOR_APPLE16:
+		case SN_VENDOR_ASANTELC:
 		case SN_VENDOR_DAYNA:
 			rv = 1;
 			break;
@@ -116,6 +117,7 @@ sn_nubus_attach(parent, self, aux)
 	bus_space_tag_t	bst;
 	bus_space_handle_t bsh, tmp_bsh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+	char *cardtype;
 
 	(void)(&offset);	/* Work around lame gcc initialization bug */
 
@@ -126,6 +128,8 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	sc->sc_regt = bst;
+
+	cardtype = nubus_get_card_name(bst, bsh, na->fmt);
 
 	success = 0;
 
@@ -204,6 +208,30 @@ sn_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
+	case SN_VENDOR_ASANTELC: /* Macintosh LC Ethernet Adapter */
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 |
+		    DCR_DMABLOCK | DCR_PO1 | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
+		sc->bitmode = 0; /* 16 bit card */
+
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
+			printf(": failed to map register space.\n");
+			break;
+		}
+
+		if (bus_space_subregion(bst, bsh,
+		    0x400000, ETHER_ADDR_LEN, &tmp_bsh)) {
+			printf(": failed to map ROM space.\n");
+			break;
+		}
+
+		sn_get_enaddr(bst, tmp_bsh, 0, myaddr);
+
+		offset = 0;
+		success = 1;
+		break;
+
 	default:
 		/*
 		 * You can't actually get this default, the snmatch
@@ -227,6 +255,8 @@ sn_nubus_attach(parent, self, aux)
 	for (i = 0; i < SN_NREGS; i++) {
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + offset);
 	}
+
+	printf(": %s\n", cardtype);
 
 	/* snsetup returns 1 if something fails */
 	if (snsetup(sc, myaddr)) {
@@ -255,6 +285,11 @@ sn_nb_card_vendor(bst, bsh, na)
 			vendor = SN_VENDOR_APPLE16;
 		break;
 	case NUBUS_DRSW_APPLE:
+		if (na->drhw == NUBUS_DRHW_ASANTE_LC)
+			vendor = SN_VENDOR_ASANTELC;
+		else
+			vendor = SN_VENDOR_APPLE;
+		break;
 	case NUBUS_DRSW_TECHWORKS:
 		vendor = SN_VENDOR_APPLE;
 		break;
