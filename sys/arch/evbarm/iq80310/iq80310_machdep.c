@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.39 2002/04/12 00:58:49 briggs Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.40 2002/04/12 20:50:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -265,6 +265,7 @@ cpu_reboot(int howto, char *bootstr)
 	IRQdisable;
 
 	if (howto & RB_HALT) {
+		iq80310_7seg('.', '.');
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
