@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.12 1995/09/08 01:06:28 tls Exp $      */
+/*      $NetBSD: ftp.c,v 1.13 1995/09/16 22:32:59 pk Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.12 1995/09/08 01:06:28 tls Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.13 1995/09/16 22:32:59 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -1162,7 +1162,7 @@ ptransfer(direction, bytes, t0, t1)
 	long bs;
 
 	if (verbose) {
-		timersub(&td, t1, t0);
+		timersub(t1, t0, &td);
 		s = td.tv_sec + (td.tv_usec / 1000000.);
 #define	nz(x)	((x) == 0 ? 1 : (x))
 		bs = bytes / nz(s);
