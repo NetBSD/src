@@ -815,6 +815,8 @@ c_decode_option (argc, argv)
     { /* XXX: NetBSD compatibility until next gcc release */ }
   else if (!strcmp (p, "-Wno-format-extra-args"))
     { /* XXX: NetBSD compatibility until next gcc release */ }
+  else if (!strcmp (p, "-Wno-format-zero-length"))
+    { /* XXX: NetBSD compatibility until GCC 3.2 */ }
   else if (!strcmp (p, "-Wno-format"))
     warn_format = 0;
   else if (!strcmp (p, "-Wchar-subscripts"))
