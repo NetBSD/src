@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.25 2002/08/04 16:43:08 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.26 2002/12/23 12:15:04 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -114,7 +114,8 @@ struct __window {		/* Window structure. */
 #define	__LEAVEOK	0x00000100	/* If cursor left */
 #define	__KEYPAD	0x00010000	/* If interpreting keypad codes */
 #define	__NOTIMEOUT	0x00020000	/* Wait indefinitely for func keys */
-#define __IDCHAR        0x00040000      /* insert/delete char sequences */
+#define __IDCHAR	0x00040000	/* insert/delete char sequences */
+#define __ISPAD		0x00080000	/* "window" is a pad */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -260,7 +261,7 @@ int      _cursesi_gettmode(SCREEN *);
 void     _cursesi_reset_acs(SCREEN *);
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
-int      _cursesi_wnoutrefresh(SCREEN *, WINDOW *);
+int      _cursesi_wnoutrefresh(SCREEN *, WINDOW *, int, int, int, int, int, int);
 int	 __delay(void);
 u_int	 __hash_more(char *, size_t, u_int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
@@ -269,7 +270,7 @@ void	 __init_getch(SCREEN *);
 void	 __init_acs(SCREEN *);
 char	*__longname(char *, char *);	/* Original BSD version */
 int	 __mvcur(int, int, int, int, int);
-WINDOW  *__newwin(SCREEN *, int, int, int, int);
+WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
 int	 __nodelay(void);
 int	 __notimeout(void);
 char	*__parse_cap(const char *, ...);
