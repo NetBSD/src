@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.2 1997/02/12 16:52:16 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.3 1997/02/13 20:26:27 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -110,6 +110,42 @@ static void db_print_ifa __P((struct ifaddr *));
 static void db_print_llinfo __P((caddr_t));
 static int db_show_radix_node __P((struct radix_node *, void *));
 #endif
+
+/*
+ * this should be elsewhere.
+ */
+
+static char *
+lla_snprintf __P((u_int8_t *, int));
+
+static char *
+lla_snprintf(adrp, len)
+	u_int8_t *adrp;
+	int len;
+{
+	static char buf[16*3];
+	static const char hexdigits[] = {
+	    '0','1','2','3','4','5','6','7',
+	    '8','9','a','b','c','d','e','f'
+	};
+		
+	int i;
+	char *p;
+
+	p = buf;
+
+	*p++ = hexdigits[(*adrp)>>4];
+	*p++ = hexdigits[(*adrp++)&0xf];
+
+	for (i=1; i<len && i<16; i++) {
+		*p++ = ':';
+		*p++ = hexdigits[(*adrp)>>4];
+		*p++ = hexdigits[(*adrp++)&0xf];
+	}
+
+	*p = 0;
+	return buf;
+}
 
 /*
  * Timeout routine.  Age arp_tab entries periodically.
@@ -391,7 +427,7 @@ arpintr()
 			panic("arpintr");
 		if (m->m_len >= sizeof(struct arphdr) &&
 		    (ar = mtod(m, struct arphdr *)) &&
-		    ntohs(ar->ar_hrd) == ARPHRD_ETHER &&
+		    /* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
 		    m->m_len >=
 		      sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
 			switch (ntohs(ar->ar_pro)) {
@@ -423,9 +459,8 @@ static void
 in_arpinput(m)
 	struct mbuf *m;
 {
-	register struct ether_arp *ea;
+	struct arphdr *ah;
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct ether_header *eh;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
 	struct in_ifaddr *ia, *maybe_ia = 0;
@@ -434,10 +469,10 @@ in_arpinput(m)
 	struct in_addr isaddr, itaddr, myaddr;
 	int op;
 
-	ea = mtod(m, struct ether_arp *);
-	op = ntohs(ea->arp_op);
-	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
-	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
+	ah = mtod(m, struct arphdr *);
+	op = ntohs(ah->ar_op);
+	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
+	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 		if (ia->ia_ifp == ifp) {
 			maybe_ia = ia;
@@ -448,31 +483,35 @@ in_arpinput(m)
 	if (maybe_ia == 0)
 		goto out;
 	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
-	if (!bcmp((caddr_t)ea->arp_sha, LLADDR(ifp->if_sadl),
-	    sizeof (ea->arp_sha)))
+	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
+	    ifp->if_data.ifi_addrlen))
 		goto out;	/* it's from me, ignore it. */
-	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
-	    sizeof (ea->arp_sha))) {
-		log(LOG_ERR,
-		    "arp: ether address is broadcast for IP address %x!\n",
-		    ntohl(isaddr.s_addr));
-		goto out;
-	}
+/*
+ *  XXX
+ *	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)etherbroadcastaddr,
+ *	    sizeof (ea->arp_sha))) {
+ *		log(LOG_ERR,
+ *		    "arp: ether address is broadcast for IP address %x!\n",
+ *		    ntohl(isaddr.s_addr));
+ *		goto out;
+ *	}
+ */
 	if (in_hosteq(isaddr, myaddr)) {
 		log(LOG_ERR,
 		   "duplicate IP address %08x sent from ethernet address %s\n",
-		   ntohl(isaddr.s_addr), ether_sprintf(ea->arp_sha));
+		   ntohl(isaddr.s_addr), lla_snprintf(ar_sha(ah), ah->ar_hln));
 		itaddr = myaddr;
 		goto reply;
 	}
 	la = arplookup(&isaddr, in_hosteq(itaddr, myaddr), 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
-		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen))
+		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen))
 			log(LOG_INFO, "arp info overwritten for %08x by %s\n",
-			    ntohl(isaddr.s_addr), ether_sprintf(ea->arp_sha));
-		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
-		    sdl->sdl_alen = sizeof(ea->arp_sha));
+			    ntohl(isaddr.s_addr),
+			    lla_snprintf(ar_sha(ah), ah->ar_hln));
+		bcopy((caddr_t)ar_sha(ah), LLADDR(sdl),
+		    sdl->sdl_alen = ah->ar_hln);
 		if (rt->rt_expire)
 			rt->rt_expire = time.tv_sec + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
@@ -491,31 +530,24 @@ reply:
 	}
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
-		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
-		    sizeof(ea->arp_sha));
-		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_sha,
-		    sizeof(ea->arp_sha));
+		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
+		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	} else {
 		la = arplookup(&itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
-		    sizeof(ea->arp_sha));
+		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
 		sdl = SDL(rt->rt_gateway);
-		bcopy(LLADDR(sdl), (caddr_t)ea->arp_sha, sizeof(ea->arp_sha));
+		bcopy(LLADDR(sdl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	}
 
-	bcopy((caddr_t)ea->arp_spa, (caddr_t)ea->arp_tpa, sizeof(ea->arp_spa));
-	bcopy((caddr_t)&itaddr, (caddr_t)ea->arp_spa, sizeof(ea->arp_spa));
-	ea->arp_op = htons(ARPOP_REPLY);
-	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
-	eh = (struct ether_header *)sa.sa_data;
-	bcopy((caddr_t)ea->arp_tha, (caddr_t)eh->ether_dhost,
-	    sizeof(eh->ether_dhost));
-	eh->ether_type = htons(ETHERTYPE_ARP);
-	sa.sa_family = AF_UNSPEC;
-	sa.sa_len = sizeof(sa);
+	bcopy((caddr_t)ar_spa(ah), (caddr_t)ar_tpa(ah), ah->ar_pln);
+	bcopy((caddr_t)&itaddr, (caddr_t)ar_spa(ah), ah->ar_pln);
+	ah->ar_op = htons(ARPOP_REPLY);
+	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
+	sa.sa_family = AF_ARP;
+	sa.sa_len = 2;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 	return;
 }
