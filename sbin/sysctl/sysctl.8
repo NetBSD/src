@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.103 2003/10/15 19:58:24 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.104 2003/12/30 14:17:41 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 27, 2003
+.Dd December 18, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -37,20 +37,35 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
-.Op Fl en
+.Op Fl AeMn
+.Oo
+.Fl r |
+.Fl x
+.Oc
+.Oo
 .Ar name ...
+.Oc
 .Nm sysctl
 .Op Fl nq
+.Oo
+.Fl r |
+.Fl x
+.Oc
 .Fl w
 .Ar name Ns Li = Ns Ar value ...
 .Nm sysctl
 .Op Fl en
+.Oo
+.Fl r |
+.Fl x
+.Oc
 .Fl a
 .Nm sysctl
-.Op Fl en
-.Fl A
-.Nm sysctl
 .Op Fl nq
+.Oo
+.Fl r |
+.Fl x
+.Oc
 .Fl f
 .Ar file
 .Sh DESCRIPTION
@@ -61,17 +76,42 @@ appropriate privilege to set kernel state.
 The state to be retrieved or set is described using a
 ``Management Information Base'' (``MIB'') style name,
 described as a dotted set of components.
+The
+.Sq /
+character may also be used as a separator and a leading separator
+character is accepted.
+If
+.Ar name
+specifies a non-leaf node in the MIB, all the nodes underneath
+.Ar name
+will be printed.
 .Pp
 The following options are available:
 .Bl -tag -width indent
 .It Fl A
-List all the known MIB names including tables.
+List all the known MIB names including tables, unless any MIB
+arguments or
+.Fl f Ar file
+are given.
 Those with string or integer values will be printed as with the
 .Fl a
-flag; for the table values,
+flag; for table or structure values that
+.Nm
+is not able to print,
 the name of the utility to retrieve them is given.
+Errors in retrieving or setting values will be directed to stdout
+instead of stderr.
 .It Fl a
 List all the currently available string or integer values.
+The use of a solitary separator character (either
+.Sq \&.
+or
+.Sq / )
+by
+itself has the same effect.
+Any given
+.Ar name
+arguments are ignored if this option is specified.
 .It Fl e
 Separate the name and the value of the variable(s) with
 .Ql = .
@@ -98,6 +138,18 @@ The
 .Fl w
 flag is implied by
 .Fl f .
+Any
+.Ar name
+arguments are ignored.
+.It Fl M
+Makes
+.Nm
+print the MIB instead of any of the actual values contained in the
+MIB.
+This causes the entire MIB to be printed unless specific MIB arguments
+or
+.Fl f Ar file
+are also given.
 .It Fl n
 Specifies that the printing of the field name should be
 suppressed and that only its value should be output.
@@ -109,11 +161,35 @@ set psize=`sysctl -n hw.pagesize`
 .It Fl q
 Used to indicate that nothing should be printed for writes unless an
 error is detected.
+.It Fl r
+Raw output form.
+Values printed are in their raw binary forms as retrieved directly
+from the kernel.
+Some additional nodes that
+.Nm
+cannot print directly can be retrieved with this flag.
+This option conflicts with the
+.Fl x
+option.
 .It Fl w
 Sets the MIB style name given to the value given.
 The MIB style name and value must be separated by
 .Ql =
 with no whitespace.
+Only integral and string values can be set via this method.
+.It Fl x
+Makes
+.Nm
+print the requested value in a hexadecimal representation instead of
+its regular form.
+If specified more than once, the output for each value resembles that of
+.Xr hexdump 1
+when given the
+.Fl C
+flag.
+This option conflicts with the
+.Fl r
+option.
 .Pp
 .El
 The
@@ -148,12 +224,12 @@ privilege can change the value.
 .Bl -column proc.xpidx.rlimit.coredumpsize.hardxxxxxx integerxxx
 .It Sy Name	Type	Changeable
 .It ddb.fromconsole	integer 	yes
-.It ddb.lines	integer		yes
-.It ddb.maxoff	integer 	yes
-.It ddb.maxwidth	integer		yes
-.It ddb.onpanic	integer		yes
-.It ddb.radix	integer		yes
-.It ddb.tabstops	integer		yes
+.It ddb.lines	integer	yes
+.It ddb.maxoff	integer	yes
+.It ddb.maxwidth	integer	yes
+.It ddb.onpanic	integer	yes
+.It ddb.radix	integer	yes
+.It ddb.tabstops	integer	yes
 .It hw.alignbytes	integer	no
 .It hw.byteorder	integer	no
 .It hw.disknames	string	no
@@ -164,9 +240,9 @@ privilege can change the value.
 .It hw.ncpu	integer	no
 .It hw.pagesize	integer	no
 .It hw.physmem	integer	no
-.It hw.physmem64	quad no
+.It hw.physmem64	quad	no
 .It hw.usermem	integer	no
-.It hw.usermem64	quad no
+.It hw.usermem64	quad	no
 .It hw.cnmagic	string	yes
 .It kern.argmax	integer	no
 .It kern.autonicetime	integer	yes
@@ -264,7 +340,7 @@ privilege can change the value.
 .It net.inet.ip.anonportmax	integer	yes
 .It net.inet.ip.anonportmin	integer	yes
 .It net.inet.ip.checkinterface	integer	yes
-.It net.inet.ip.directed-broadcast	integer		yes
+.It net.inet.ip.directed-broadcast	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.forwsrcrt	integer	yes
 .It net.inet.ip.maxfragpacket	integer	yes
@@ -427,6 +503,190 @@ using the
 operating system in their products.
 Values and structure are vendor-defined, and no registry
 exists right now.
+.Sh CREATION AND DELETION
+New nodes are allowed to be created by the superuser when the kernel
+is running at security level 0.
+These new nodes may refer to existing kernel data or to new data that
+is only instrumented by
+.Xr sysctl 3
+itself.
+.Pp
+The syntax for creating new nodes is
+.Dq //create=new.node.path
+followed by one or more of the following attributes separated by
+commas.
+The use of a double separator (both
+.Sq /
+and
+.Sq \&.
+can be used as
+separators) as the prefix tells sysctl that the first series of tokens
+is not a MIB name, but a command.
+It is recommended that the double separator preceding the command not
+be the same as the separator used in naming the MIB entry so as to
+avoid possible parse conflicts.
+The
+.Dq value
+assigned, if one is given, must be last.
+.Pp
+.Bl -bullet -compact
+.It
+.Ar type= Ns Aq Ar T
+where
+.Ar T
+must be one of
+.Dq node ,
+.Dq int ,
+.Dq string ,
+.Dq quad ,
+or
+.Dq struct .
+If the type is omitted, the
+.Dq node
+type is assumed.
+.It
+.Ar type= Ns Aq Ar S
+here,
+.Ar S
+asserts the size of the new node.
+Nodes of type
+.Dq node
+should not have a size set.
+The size may be omitted for nodes of types
+.Dq int
+or
+.Dq quad .
+If the size is omitted for a node of type
+.Dq string ,
+the size will be determined by the length of the given value, or by
+the kernel for kernel strings.
+Nodes of type
+.Dq struct
+must have their size explicitly set.
+.It
+.Ar addr= Ns Aq Ar A
+or
+.Ar symbol= Ns Aq Ar A
+The kernel address of the data being instrumented.
+If
+.Dq symbol
+is used, the symbol must be globally visible to the in-kernel
+.Xr ksyms 4
+driver.
+.It
+.Ar n= Ns Aq Ar N
+The MIB number to be assigned to the new node.
+If no number is specified, the kernel will assign a value.
+.It
+.Ar flags= Ns Aq Ar F
+A concatenated string of single letters that govern the behavior of
+the node.
+Flags currently available are:
+.Bl -tag -width www
+.It a
+Allow anyone to write to the node, if it is writable.
+.It h
+.Dq Hidden .
+.Nm
+must be invoked with
+.Fl A
+or the hidden node must be specifically requested in order to see it
+.It i
+.Dq Immediate .
+Makes the node store data in itself, rather than allocating new space
+for it.
+This is the default for nodes of type
+.Dq int
+and
+.Dq quad .
+This is the opposite of owning data.
+.It o
+.Dq Own .
+When the node is created, separate space will be allocated to store
+the data to be instrumented.
+This is the default for nodes of type
+.Dq string
+and
+.Dq struct
+where it is not possible to guarantee sufficient space to store the
+data in the node itself.
+.It p
+.Dq Private .
+Nodes that are marked private, and children of nodes so marked, are
+only viewable by the superuser.
+Be aware that the immediate data that some nodes may store is not
+necessarily protected by this.
+.It x
+.Dq Hexadecimal .
+Make
+.Nm
+default to hexadecimal display of the retrieved value
+.It r
+.Dq Read-only .
+The data instrumented by the given node is read-only.
+Note that other mechanisms may still exist for changing the data.
+This is the default for nodes that instrument data.
+.It w
+.Dq Writable .
+The data instrumented by the given node is writable at any time.
+This is the default for nodes that can have children.
+.It 1
+.Dq Read-only at securelevel 1 .
+The data instrumented by this node is writable until the securelevel
+reaches or passes securelevel 1.
+Examples of this include some network tunables.
+.It 2
+.Dq Read-only at securelevel 2 .
+The data instrumented by this node is writable until the securelevel
+reaches or passes securelevel 2.
+An example of this is the per-process core filename setting.
+.El
+.Pp
+.It
+.Ar value= Ns Aq Ar V
+An initial starting value for a new node that does not reference
+existing kernel data.
+Initial values can only be assigned for nodes of the
+.Dq int ,
+.Dq quad ,
+and
+.Dq string
+types.
+.El
+.Pp
+New nodes must fit the following set of criteria:
+.Pp
+.Bl -bullet -compact
+.It
+If the new node is to address an existing kernel object, only one of the
+.Dq symbol
+or
+.Dq addr
+arguments may be given.
+.It
+The size for a
+.Dq struct
+type node must be specified; no initial value is expected or permitted.
+.It
+Either the size or the initial value for a
+.Dq string
+node must be given.
+.It
+The node which will be the parent of the new node must be writable.
+.El
+.Pp
+If any of the given parameters describes an invalid configuration,
+.Nm
+will emit a diagnostic message to the standard error and exit.
+.Pp
+When destroying nodes, only the path to the node is necessary, i.e.,
+.Dq //destroy=old.node.path .
+No other parameters are expected or permitted.
+Nodes being destroyed must have no children, and their parent must be
+writable.
+Nodes that are marked with the
+.Dq Dv PERMANENT
+flag (as assigned by the kernel) may not be deleted.
 .Sh FILES
 .Bl -tag -width xnetinet6/udp6Xvar.hx -compact
 .It Pa /etc/sysctl.conf
@@ -496,14 +756,33 @@ directory,
 .Bd -literal -offset indent -compact
 sysctl -w proc.$$.corename=/var/tmp/%u/%n.core
 .Ed
-Shall be used.
+should be used.
 .Bd -literal -offset indent -compact
 sysctl -w proc.curproc.corename=/var/tmp/%u/%n.core
 .Ed
 changes the value for the sysctl process itself, and will not have the desired
 effect.
+.Pp
+To create the root of a new sub-tree called
+.Dq local
+and then some children of that new node:
+.Bd -literal -offset indent -compact
+sysctl -w //create=local
+sysctl -w //create=local.esm_debug,type=int,symbol=esm_debug,flags=w
+sysctl -w //create=local.audiodebug,type=int,symbol=audiodebug,flags=w
+.Ed
+Note that the children are made writable so that the two debug
+settings in question can be tuned arbitrarily.
+.Pp
+To destroy that same subtree:
+.Bd -literal -offset indent -compact
+sysctl -w //destroy=local.esm_debug
+sysctl -w //destroy=local.audiodebug
+sysctl -w //destroy=local
+.Ed
 .Sh SEE ALSO
-.Xr sysctl 3
+.Xr sysctl 3 ,
+.Xr ksyms 4
 .Sh HISTORY
 .Nm sysctl
 first appeared in
