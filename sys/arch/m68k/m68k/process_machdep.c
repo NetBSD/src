@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 1994/10/26 07:51:14 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 1995/01/26 19:46:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -64,6 +64,30 @@
 
 extern char kstack[];		/* XXX */
 
+static inline struct frame *
+process_frame(p)
+	struct proc *p;
+{
+	void *ptr;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (NULL);
+
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
+	return (ptr);
+}
+
+static inline struct fpframe *
+process_fpframe(p)
+	struct proc *p;
+{
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (NULL);
+
+	return (&p->p_addr->u_pcb.pcb_fpregs);
+}
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -71,15 +95,32 @@ process_read_regs(p, regs)
 {
 	struct frame *frame;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	frame = process_frame(p)
+	if (frame == NULL)
 		return (EIO);
-
-	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	bcopy(frame->f_regs, regs->r_regs, sizeof(frame->f_regs));
 	regs->r_sr = frame->f_sr;
 	regs->r_pc = frame->f_pc;
+
+	return (0);
+}
+
+int
+process_read_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct fpframe *frame;
+
+	frame = process_fpframe(p)
+	if (frame == NULL)
+		return (EIO);
+
+	bcopy(frame->fpf_regs, regs->r_regs, sizeof(frame->fpf_regs));
+	regs->r_fpcr = frame->fpf_fpcr;
+	regs->r_fpsr = frame->fpf_fpsr;
+	regs->r_fpiar = frame->fpf_fpiar;
 
 	return (0);
 }
@@ -91,11 +132,9 @@ process_write_regs(p, regs)
 {
 	struct frame *frame;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	frame = process_frame(p)
+	if (frame == NULL)
 		return (EIO);
-
-	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	/*
 	 * in the hp300 machdep.c _write_regs, PC alignment wasn't
@@ -124,17 +163,34 @@ process_write_regs(p, regs)
 }
 
 int
+process_write_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct fpframe *frame;
+
+	frame = process_fpframe(p)
+	if (frame == NULL)
+		return (EIO);
+
+	bcopy(regs->r_regs, frame->fpf_regs, sizeof(frame->fpf_regs));
+	frame->fpf_fpcr = regs->r_fpcr;
+	frame->fpf_fpsr = regs->r_fpsr;
+	frame->fpf_fpiar = regs->r_fpiar;
+
+	return (0);
+}
+
+int
 process_sstep(p, sstep)
 	struct proc *p;
 	int sstep;
 {
 	struct frame *frame;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	frame = process_frame(p)
+	if (frame == NULL)
 		return (EIO);
-
-	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	if (sstep)
 		frame->f_sr |= PSL_T;
@@ -151,11 +207,9 @@ process_set_pc(p, addr)
 {
 	struct frame *frame;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	frame = process_frame(p)
+	if (frame == NULL)
 		return (EIO);
-
-	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	/*
 	 * in the hp300 machdep.c _set_pc, PC alignment is guaranteed
