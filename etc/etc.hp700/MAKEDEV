@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2002/10/21 03:58:38 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2002/12/14 05:28:47 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -181,10 +181,10 @@ ccd*|cgd*|cd*|fd*|sd*|vnd*)
 	  vnd*) name=vnd; blk=2; chr=8;;
 	esac
 	case $unit in
-	  [0-7]) offset=$(($unit * 8));;
+	  [0-7]) offset=$(($unit * 16));;
 	  *) echo bad unit for $name in: $arg;;
 	esac
-	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7
+	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7 i.8 j.9 k.10 l.11 m.12 n.13 o.14 p.15
 	do
 	(
 		tmp="$IFS" ; IFS="$IFS."
@@ -224,10 +224,10 @@ fd)
 md*)
 # XXX fredette - need to put in MD:
 #	name=md; blk=13; chr=52
-#	mk  md${unit}a b $blk $(($unit * 8 + 0)) 640 operator
-#	mk  md${unit}c b $blk $(($unit * 8 + 2)) 640 operator
-##	mk rmd${unit}a c $chr $(($unit * 8 + 0)) 640 operator
-##	mk rmd${unit}c c $chr $(($unit * 8 + 2)) 640 operator
+#	mk  md${unit}a b $blk $(($unit * 16 + 0)) 640 operator
+#	mk  md${unit}c b $blk $(($unit * 16 + 2)) 640 operator
+##	mk rmd${unit}a c $chr $(($unit * 16 + 0)) 640 operator
+##	mk rmd${unit}c c $chr $(($unit * 16 + 2)) 640 operator
 	;;
 
 lkm)
