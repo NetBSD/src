@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/06/10 02:50:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2000/06/11 11:35:20 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,6 +56,8 @@ COPTS=	-Os
 
 # turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
+
+release:
 
 clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
