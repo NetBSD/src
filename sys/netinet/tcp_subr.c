@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.64 1999/01/20 03:39:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.65 1999/01/26 08:28:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -217,18 +217,9 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	struct sockaddr_in *dst;
 	int error, tlen, win = 0;
 
-	if (tp != NULL) {
-		if ((flags & TH_RST) == 0)
-			win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
-		ro = &tp->t_inpcb->inp_route;
-#ifdef DIAGNOSTIC
-		if (!in_hosteq(ti->ti_dst, tp->t_inpcb->inp_faddr))
-			panic("tcp_respond: ti_dst != inp_faddr");
-#endif
-	} else {
-		ro = &iproute;
-		bzero(ro, sizeof(*ro));
-	}
+	if (tp != NULL && (flags & TH_RST) == 0)
+		win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
+
 	if (m == 0) {
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
@@ -287,6 +278,18 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	 * ip_output() could do this for us, but it's convenient to just
 	 * do it here unconditionally.
 	 */
+	if (tp != NULL) {
+		ro = &tp->t_inpcb->inp_route;
+#ifdef DIAGNOSTIC
+		if (!in_hosteq(ti->ti_dst, tp->t_inpcb->inp_faddr))
+			panic("tcp_respond: ti_dst %x != inp_faddr %x",
+			    ntohl(ti->ti_dst.s_addr),
+			    ntohl(tp->t_inpcb->inp_faddr.s_addr));
+#endif
+	} else {
+		ro = &iproute;
+		bzero(ro, sizeof(*ro));
+	}
 	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
 		if (ro->ro_rt != NULL) {
 			RTFREE(ro->ro_rt);
