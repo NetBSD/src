@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.141 2000/01/07 05:25:45 enami Exp $
+#	$NetBSD: rc,v 1.142 2000/01/07 05:53:21 enami Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -269,7 +269,7 @@ fi
 if checkyesno ypserv; then
 	if ! checkyesno portmap; then
 		echo
-		logger -s "WARNING: set portmap=YES in /etc/rc.conf " \
+		logger -s "WARNING: set portmap=YES in /etc/rc.conf" \
 		    "if ypserv=YES."
 	fi
 
@@ -283,7 +283,7 @@ fi
 if checkyesno yppasswdd; then
 	if ! checkyesno ypserv; then
 		echo
-		logger -s "WARNING: set ypserv=YES in /etc/rc.conf " \
+		logger -s "WARNING: set ypserv=YES in /etc/rc.conf" \
 		    "if yppasswdd=YES."
 	fi
 
@@ -295,7 +295,7 @@ if checkyesno bootparamd; then
 		echo -n ' rpc.bootparamd'; rpc.bootparamd $bootparamd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/bootparams not found. " \
+		logger -s "WARNING: /etc/bootparams not found." \
 		    "bootparamd not started."
 	fi
 fi
@@ -320,7 +320,7 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 
 	if checkyesno nfs_server && ! checkyesno portmap; then
 		echo
-		logger -s "WARNING: set portmap=YES in /etc/rc.conf " \
+		logger -s "WARNING: set portmap=YES in /etc/rc.conf" \
 		    "if nfs_server=YES."
 	fi
 
@@ -335,7 +335,7 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 			nfs_locking=YES
 		else
 			echo
-			logger -s "WARNING: /etc/exports not readable; " \
+			logger -s "WARNING: /etc/exports not readable;" \
 			    "NFS server not started."
 		fi
 	fi
@@ -362,13 +362,13 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 				`sed s/#.*$// <$amd_master`  >/var/run/amd.pid
 			else
 				echo
-				logger -s "WARNING: \$amd_master " \
-				    "($amd_master) not readable; " \
+				logger -s "WARNING: \$amd_master" \
+				    " ($amd_master) not readable;" \
 				    "amd not started."
 			fi
 		else
 			echo
-			logger -s "WARNING: \$amd_dir ($amd_dir) not a " \
+			logger -s "WARNING: \$amd_dir ($amd_dir) not a" \
 			    "directory; amd not started."
 		fi
 	fi
@@ -459,7 +459,7 @@ if checkyesno accounting; then
 		echo 'turning on accounting'
 		accton /var/account/acct
 	else
-		logger -s "WARNING: /var/account/acct doesn't exist; " \
+		logger -s "WARNING: /var/account/acct doesn't exist;" \
 		    "accounting not enabled."
 	fi
 fi
@@ -475,7 +475,7 @@ echo -n starting network daemons:
 
 if checkyesno gated && checkyesno routed; then
 	echo
-	logger -s "WARNING: gated and routed both requested to be run: " \
+	logger -s "WARNING: gated and routed both requested to be run:" \
 	    "running only gated."
 	routed=NO
 fi
@@ -532,7 +532,7 @@ if checkyesno dhcpd; then
 		echo -n ' dhcpd';		dhcpd $dhcpd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/dhcpd.conf not readable; " \
+		logger -s "WARNING: /etc/dhcpd.conf not readable;" \
 		    "dhcpd not started."
 	fi
 elif checkyesno dhcrelay; then
@@ -553,7 +553,7 @@ if checkyesno sendmail; then
 		echo -n ' sendmail';	/usr/sbin/sendmail $sendmail_flags
 	else
 		echo
-		logger -s "WARNING: /etc/sendmail.cf not readable; " \
+		logger -s "WARNING: /etc/sendmail.cf not readable;" \
 		    "sendmail not started."
 	fi
 fi
@@ -569,7 +569,7 @@ if checkyesno rarpd; then
 		echo -n ' rarpd';	rarpd $rarpd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/ethers not readable; " \
+		logger -s "WARNING: /etc/ethers not readable;" \
 		    "rarpd not started."
 	fi
 fi
@@ -579,7 +579,7 @@ if checkyesno rbootd; then
 		echo -n ' rbootd';	rbootd $rbootd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/rbootd.conf not readable; " \
+		logger -s "WARNING: /etc/rbootd.conf not readable;" \
 		    "rbootd not started."
 	fi
 fi
@@ -601,7 +601,7 @@ if checkyesno inetd; then
 		echo -n ' inetd';	inetd $inetd_flags
 	else
 		echo
-		logger -s "WARNING: /etc/inetd.conf not readable; " \
+		logger -s "WARNING: /etc/inetd.conf not readable;" \
 		    "inetd not started."
 	fi
 fi
