@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117 1999/09/23 11:53:13 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.118 1999/11/01 18:06:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2705,6 +2705,13 @@ audiosetinfo(sc, ai)
 			int bs = ai->blocksize;
 			if (hw->round_blocksize)
 				bs = hw->round_blocksize(sc->hw_hdl, bs);
+			/* 
+			 * The blocksize should never be 0, but a faulty
+			 * driver might set it wrong.  Just use something.
+			 */
+			if (bs <= 0)
+				bs = 512;
+
 			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
 		}
