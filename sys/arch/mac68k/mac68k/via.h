@@ -115,10 +115,10 @@
 
 #define ACR_T1LATCH	0x40
 
-#define VIA1_addr	0x50000000
-/* #define VIA2_addr	0x50002000 */	/* Not correct for IIci */
-#define VIA2OFF		1		/* VIA2 addr * 0x2000 */
-#define RBVOFF		0x13		/* RBV addr * 0x13000 */
+extern volatile unsigned char *Via1Base;
+#define VIA1_addr	Via1Base	/* at PA 0x50f00000 */
+#define VIA2OFF		1		/* VIA2 addr = VIA1_addr * 0x2000 */
+#define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
 
 #define VIA1		0
 extern int VIA2;
@@ -162,12 +162,9 @@ extern int VIA2;
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
 #define RBVMonIDBW	0x30	/* No internal video */
 
-
-#define via_reg(v, r) (*((volatile unsigned char *)VIA1_addr+(v)*0x2000+(r)))
-
+#define via_reg(v, r) (*(VIA1_addr+(v)*0x2000+(r)))
 
 #define vDirA_ADBState	0x30
-
 
 long		VIA_set_handler  (long vianum, long bitnum, long (*handle)());
 long		VIA_unset_handler(long vianum, long bitnum, long (*handle)());
