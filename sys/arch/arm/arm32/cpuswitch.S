@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.10 2002/08/05 19:51:45 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.11 2002/08/05 23:08:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -593,12 +593,17 @@ ENTRY(cpu_preempt)
 	mov	r6, r0		/* save old lwp */
 	mov	r7, r1		/* save new lwp */
 
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
 #ifdef spl0
 	mov	r0, #(_SPL_0)
 	bl	_C_LABEL(splx)
 #else
 	bl	_C_LABEL(spl0)
-#endif
+#endif /* spl0 */
+#endif /* __NEWINTR */
 
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
