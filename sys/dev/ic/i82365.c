@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.38 2000/02/03 06:07:06 chopps Exp $	*/
+/*	$NetBSD: i82365.c,v 1.39 2000/02/03 08:59:20 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1348,7 +1348,7 @@ pcic_chip_socket_enable(pch)
 #endif
 
 	/* disable interrupts */
-	intr = pcic_read(h, PCIC_INTR);;
+	intr = pcic_read(h, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, intr);
 
@@ -1450,7 +1450,7 @@ pcic_chip_socket_disable(pch)
 	DPRINTF(("pcic_chip_socket_disable\n"));
 
 	/* disable interrupts */
-	intr = pcic_read(h, PCIC_INTR);;
+	intr = pcic_read(h, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, intr);
 
