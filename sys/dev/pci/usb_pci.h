@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.h,v 1.1 2001/11/06 03:17:36 augustss Exp $	*/
+/*	$NetBSD: usb_pci.h,v 1.2 2002/01/12 02:06:23 enami Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,5 +49,9 @@ struct usb_pci {
 	u_int		function;
 	struct usbd_bus *usb;
 };
+
+TAILQ_HEAD(usb_pci_alldevs, usb_pci);
+extern struct usb_pci_alldevs ehci_pci_alldevs;
+
 void usb_pci_add(struct usb_pci *, struct pci_attach_args *, struct usbd_bus *);
 void usb_pci_rem(struct usb_pci *);
