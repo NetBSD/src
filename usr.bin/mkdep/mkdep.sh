@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
+#	$NetBSD: mkdep.sh,v 1.4 1998/03/31 04:25:30 perry Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 #	@(#)mkdep.sh	8.1 (Berkeley) 6/6/93
 #
 
-PATH=/bin:/usr/bin:/usr/ucb:/usr/old/bin
+PATH=/bin:/usr/bin
 export PATH
 
 D=.depend			# default dependency file is .depend
