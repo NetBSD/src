@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1995/12/28 19:17:02 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.41 1996/01/11 21:54:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -656,6 +656,7 @@ configure()
 		extern struct cfdriver memregcd, obiocd;
 		struct cfdata *cf, *memregcf = NULL;
 		register short *p;
+		struct rom_reg rr;
 
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
 			if (cf->cf_driver != &memregcd)
@@ -678,7 +679,11 @@ configure()
 		}
 		if (memregcf==NULL)
 			panic("configure: no memreg found!");
-		par_err_reg = (int *)bus_map(memregcf->cf_loc[0], NBPG, BUS_OBIO);
+
+		rr.rr_iospace = BUS_OBIO;
+		rr.rr_paddr = (void *)memregcf->cf_loc[0];
+		rr.rr_len = NBPG;
+		par_err_reg = (int *)bus_map(&rr, NBPG, BUS_OBIO);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -1000,7 +1005,6 @@ void *
 findzs(zs)
 	int zs;
 {
-	register int node, addr;
 
 #ifdef SUN4
 #define ZS0_PHYS	0xf1000000
@@ -1008,29 +1012,34 @@ findzs(zs)
 #define ZS2_PHYS	0xe0000000
 
 	if (cputyp == CPU_SUN4) {
-		void *paddr;
+		struct rom_reg rr;
+		register void *vaddr;
 
 		switch (zs) {
 		case 0:
-			paddr = (void *)ZS0_PHYS;
+			rr.rr_paddr = (void *)ZS0_PHYS;
 			break;
 		case 1:
-			paddr = (void *)ZS1_PHYS;
+			rr.rr_paddr = (void *)ZS1_PHYS;
 			break;
 		case 2:
-			paddr = (void *)ZS2_PHYS;
+			rr.rr_paddr = (void *)ZS2_PHYS;
 			break;
 		default:
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		addr = bus_map(paddr, NBPG, BUS_OBIO);
-		if (addr)
-			return ((void *)addr);
+		rr.rr_iospace = BUS_OBIO;
+		rr.rr_len = NBPG;
+		vaddr = bus_map(&rr, NBPG, BUS_OBIO);
+		if (vaddr)
+			return (vaddr);
 	}
 #endif
 #if defined(SUN4C) || defined(SUN4M)
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		register int node, addr;
+
 		node = firstchild(findroot());
 		while ((node = findnode(node, "zs")) != 0) {
 			if (getpropint(node, "slave", -1) == zs) {
