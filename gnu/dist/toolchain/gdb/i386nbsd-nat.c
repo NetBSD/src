@@ -59,8 +59,8 @@ struct xmmctx
   {
     unsigned short control;
     unsigned short status;
-    unsigned char r0;
     unsigned char tag;        /* abridged */
+    unsigned char r0;
     unsigned short opcode;
     unsigned long eip;
     unsigned short code_seg;
@@ -308,6 +308,7 @@ store_inferior_registers (regno)
       RS (FCOFF_REGNUM,   inferior_xmmregisters.eip);
       RS (FDS_REGNUM,     inferior_xmmregisters.operand_seg);
       RS (FDOFF_REGNUM,   inferior_xmmregisters.operand);
+      RS (FOP_REGNUM,     inferior_xmmregisters.opcode);
 
       /* GDB has provided as the "tag" info in i387 format, but the
          kernel expects it to be in XMM format; convert it.  */
@@ -327,7 +328,7 @@ store_inferior_registers (regno)
 #endif
       for (i = 0; i < 8; i++)
         {
-          RF (FP0_REGNUM + i, inferior_fpregisters.regs[i]);
+          RS (FP0_REGNUM + i, inferior_fpregisters.regs[i]);
         }
 
       RS (FCTRL_REGNUM,   inferior_fpregisters.control);
