@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.29 1999/06/07 16:34:04 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.30 1999/06/15 23:27:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -140,15 +140,23 @@ struct vm_map {
 	vm_map_entry_t		hint;		/* hint for quick lookups */
 	simple_lock_data_t	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
-	int			flags;		/* flags (read-only) */
+	/*
+	 * Locking note: read-only flags need not be locked to read
+	 * them; they are set once at map creation time, and never
+	 * changed again.  Only read-write flags require that the
+	 * appropriate map lock be acquired before reading or writing
+	 * the flag.
+	 */
+	int			flags;		/* flags */
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
 };
 
 /* vm_map flags */
-#define	VM_MAP_PAGEABLE		0x01		/* entries are pageable */
-#define	VM_MAP_INTRSAFE		0x02		/* interrupt safe map */
+#define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
+#define	VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
+#define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 
 /*
  *	Interrupt-safe maps must also be kept on a special list,
