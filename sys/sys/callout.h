@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.18 2003/07/20 16:25:58 he Exp $	*/
+/*	$NetBSD: callout.h,v 1.19 2003/09/25 10:44:11 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -68,10 +68,26 @@
 #ifndef _SYS_CALLOUT_H_
 #define _SYS_CALLOUT_H_
 
+/*
+ * The following funkyness is to appease gcc3's strict aliasing.
+ */
+struct callout;
 struct callout_circq {
-	struct callout_circq *cq_next;	/* next element */
-	struct callout_circq *cq_prev;	/* previous element */
+	/* next element */
+	union {
+		struct callout		*elem;
+		struct callout_circq	*list;
+	} cq_next;
+	/* previous element */
+	union {
+		struct callout		*elem;
+		struct callout_circq	*list;
+	} cq_prev;
 };
+#define	cq_next_e	cq_next.elem
+#define	cq_prev_e	cq_prev.elem
+#define	cq_next_l	cq_next.list
+#define	cq_prev_l	cq_prev.list
 
 struct callout {
 	struct callout_circq c_list;		/* linkage on queue */
@@ -86,7 +102,7 @@ struct callout {
 #define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
 
 #define	CALLOUT_INITIALIZER_SETFUNC(func, arg)				\
-				{ { NULL, NULL }, func, arg, 0, 0 }
+				{ {{NULL}, {NULL}}, func, arg, 0, 0 }
 
 #define	CALLOUT_INITIALIZER	CALLOUT_INITIALIZER_SETFUNC(NULL, NULL)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.10 2003/09/07 21:28:16 scw Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.11 2003/09/25 10:44:11 scw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.10 2003/09/07 21:28:16 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.11 2003/09/25 10:44:11 scw Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -139,40 +139,41 @@ do {									\
  * Circular queue definitions.
  */
 
-#define CIRCQ_INIT(elem)						\
+#define CIRCQ_INIT(list)						\
 do {									\
-        (elem)->cq_next = (elem);					\
-        (elem)->cq_prev = (elem);					\
+        (list)->cq_next_l = (list);					\
+        (list)->cq_prev_l = (list);					\
 } while (/*CONSTCOND*/0)
 
 #define CIRCQ_INSERT(elem, list)					\
 do {									\
-        (elem)->cq_prev = (list)->cq_prev;				\
-        (elem)->cq_next = (list);					\
-        (list)->cq_prev->cq_next = (elem);				\
-        (list)->cq_prev = (elem);					\
+        (elem)->cq_prev_e = (list)->cq_prev_e;				\
+        (elem)->cq_next_l = (list);					\
+        (list)->cq_prev_l->cq_next_l = (elem);				\
+        (list)->cq_prev_l = (elem);					\
 } while (/*CONSTCOND*/0)
 
 #define CIRCQ_APPEND(fst, snd)						\
 do {									\
         if (!CIRCQ_EMPTY(snd)) {					\
-                (fst)->cq_prev->cq_next = (snd)->cq_next;		\
-                (snd)->cq_next->cq_prev = (fst)->cq_prev;		\
-                (snd)->cq_prev->cq_next = (fst);			\
-                (fst)->cq_prev = (snd)->cq_prev;			\
+                (fst)->cq_prev_l->cq_next_l = (snd)->cq_next_l;		\
+                (snd)->cq_next_l->cq_prev_l = (fst)->cq_prev_l;		\
+                (snd)->cq_prev_l->cq_next_l = (fst);			\
+                (fst)->cq_prev_l = (snd)->cq_prev_l;			\
                 CIRCQ_INIT(snd);					\
         }								\
 } while (/*CONSTCOND*/0)
 
 #define CIRCQ_REMOVE(elem)						\
 do {									\
-        (elem)->cq_next->cq_prev = (elem)->cq_prev;			\
-        (elem)->cq_prev->cq_next = (elem)->cq_next;			\
+        (elem)->cq_next_l->cq_prev_e = (elem)->cq_prev_e;		\
+        (elem)->cq_prev_l->cq_next_e = (elem)->cq_next_e;		\
 } while (/*CONSTCOND*/0)
 
-#define CIRCQ_FIRST(elem) ((elem)->cq_next)
-
-#define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
+#define CIRCQ_FIRST(list)	((list)->cq_next_e)
+#define CIRCQ_NEXT(elem)	((elem)->cq_next_e)
+#define CIRCQ_LAST(elem,list)	((elem)->cq_next_l == (list))
+#define CIRCQ_EMPTY(list)	((list)->cq_next_l == (list))
 
 /*
  * Some of the "math" in here is a bit tricky.
@@ -379,8 +380,7 @@ softclock(void *v)
 	CALLOUT_LOCK(s);
 
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
-
-		c = (struct callout *)CIRCQ_FIRST(&timeout_todo); /* XXX */
+		c = CIRCQ_FIRST(&timeout_todo);
 		CIRCQ_REMOVE(&c->c_list);
 
 		/* If due run it, otherwise insert it into the right bucket. */
@@ -412,12 +412,13 @@ static void
 db_show_callout_bucket(struct callout_circq *bucket)
 {
 	struct callout *c;
-	struct callout_circq *p;
 	db_expr_t offset;
 	char *name;
 
-	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
-		c = (struct callout *)p; /* XXX */
+	if (CIRCQ_EMPTY(bucket))
+		return;
+
+	for (c = CIRCQ_FIRST(bucket); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
 		db_find_sym_and_offset((db_addr_t)(intptr_t)c->c_func, &name,
 		    &offset);
 		name = name ? name : "?";
@@ -430,6 +431,9 @@ db_show_callout_bucket(struct callout_circq *bucket)
 		    c->c_time - hardclock_ticks,
 		    (int)((bucket - timeout_wheel) / WHEELSIZE),
 		    (int)(bucket - timeout_wheel), (u_long) c->c_arg, name);
+
+		if (CIRCQ_LAST(&c->c_list, bucket))
+			break;
 	}
 }
 
