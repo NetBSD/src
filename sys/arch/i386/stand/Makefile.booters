@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.41 2003/02/01 14:48:16 dsl Exp $
+#	$NetBSD: Makefile.booters,v 1.42 2003/02/03 00:08:30 briggs Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,7 @@ PXESTART= start_pxe.o
 
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
+CPPFLAGS+= -D__daddr_t=int32_t
 
 # XXX
 .if ${MACHINE_ARCH} == "x86_64"
