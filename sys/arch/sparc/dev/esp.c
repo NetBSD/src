@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)esp.c	8.1 (Berkeley) 6/11/93
+ *	@(#)esp.c	8.4 (Berkeley) 5/6/94
  *
- * from: Header: esp.c,v 1.29 93/11/06 12:36:27 torek Locked  (LBL)
- * $Id: esp.c,v 1.4 1993/11/12 00:50:48 deraadt Exp $
+ * from: Header: esp.c,v 1.28 93/04/27 14:40:44 torek Exp (LBL)
+ * $Id: esp.c,v 1.5 1994/05/27 02:38:15 deraadt Exp $
  *
  * Loosely derived from Mary Baker's devSCSIC90.c from the Berkeley
  * Sprite project, which is:
@@ -87,49 +87,35 @@
 #include <sparc/sbus/espreg.h>
 #include <sparc/sbus/sbusvar.h>
 
-#ifdef DEBUG
-int espdebug = 1;
-#endif
-
 /*
- * This driver is organized as a collection of state machines.  The
- * primary machine is the SCSI sequencer:
+ * This driver is largely a giant state machine:
  *
- *	Given some previous SCSI state (as set up or tracked by us earlier)
- *	and the interrupt registers provided on the chips (dmacsr, espstat,
- *	espstep, and espintr), derive an action.  In many cases this is
- *	just a matter of reading the target's phase and following its orders,
- *	which sets a new state.
+ *	Given some previous SCSI state (as set up or tracked by us
+ *	earlier) and the interrupt registers provided on the chips
+ *	(dmacsr, espstat, espstep, and espintr), derive an action.
+ *	In many cases this is just a matter of reading the target's
+ *	phase and following its orders, which sets a new state.
  *
  * This sequencing is done in espact(); the state is primed in espselect().
  *
- * There will be (update this comment when there is) another state machine
- * used to handle transfers that fall afoul of chip limits (16 bit DMA
- * counter; 24 bit address counter in 32 bit address field).
- *
- * Another state bit is used to recover from bus resets:
- *
- *	A single TEST UNIT READY is attempted on each target before any
- *	real communication begins; this TEST UNIT READY is allowed to
- *	fail in any way.  This is required for the Quantum ProDrive 100
- *	MB disks, for instance, which respond to their first selection
- *	with status phase, and for anything that insists on implementing
- *	the broken SCSI-2 synch transfer initial message.
- *
- * This is done in espclear() (which calls espselect(); functions that
- * call espselect() must check for clearing first).
- *
- * The state machines actually intermingle, as some SCSI sequences are
- * only allowed during clearing.
+ * Data transfer is always done via DMA.  Unfortunately, there are
+ * limits in the DMA and ESP chips on how much data can be moved
+ * in a single operation.  The ESP chip has a 16-bit counter, so
+ * it is limited to 65536 bytes.  More insidiously, while the DMA
+ * chip has a 32-bit address, this is composed of a 24-bit counter
+ * with an 8-bit latch, so it cannot cross a 16 MB boundary.  To
+ * handle these, we program a smaller count than our caller requests;
+ * when this shorter transfer is done, if the target is still up
+ * for data transfer, we simply keep going (updating the DMA address)
+ * as needed.
  */
 
 /* per-DMA variables */
 struct dma_softc {
-	struct	device	sc_dev;		/* base device */
-	volatile struct dmareg *sc_dma;	/* register virtual address */
-	int	sc_dmarev;		/* revision */
-	char	*sc_dmafmt;		/* format for error messages */
-
+	struct	device dc_dev;		/* base device */
+	volatile struct dmareg *dc_dma;	/* register virtual address */
+	int	dc_dmarev;		/* revision */
+	char	*dc_dmafmt;		/* format for error messages */
 };
 void	dmaattach(struct device *, struct device *, void *);
 struct cfdriver dmacd =
@@ -141,10 +127,11 @@ struct esp_softc {
 	 * External interfaces.
 	 */
 	struct	hba_softc sc_hba;	/* base device + hba, must be first */
+#define	sc_dev	sc_hba.hba_dev
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt entry */
 	struct	evcnt sc_intrcnt;	/* interrupt counter */
-	struct	dma_softc *sc_dsc;	/* pointer to corresponding dma sc */
+	struct	dma_softc *sc_dc;	/* pointer to corresponding dma sc */
 
 	/*
 	 * Addresses mapped to hardware registers.
@@ -154,11 +141,13 @@ struct esp_softc {
 
 	/*
 	 * Copies of registers cleared/unlatched by reading.
+	 * (FIFO flags is not cleared, but we want it for debugging.)
 	 */
 	u_long	sc_dmacsr;
 	u_char	sc_espstat;
 	u_char	sc_espstep;
 	u_char	sc_espintr;
+	u_char	sc_espfflags;
 
 	/* miscellaneous */
 	int	sc_clockfreq;		/* clock frequency */
@@ -179,6 +168,7 @@ struct esp_softc {
 	 * since we do message-in simply by allowing the fifo to fill.
 	 */
 	char	sc_probing;		/* used during autoconf; see below */
+	char	sc_iwant;		/* true => icmd needs wakeup on idle */
 	char	sc_state;		/* SCSI protocol state; see below */
 	char	sc_sentcmd;		/* set once we get cmd out */
 	char	sc_dmaactive;		/* true => doing dma */
@@ -188,15 +178,18 @@ struct esp_softc {
 	u_char	sc_stat[2];		/* status from last `status' phase */
 	u_char	sc_msg[16];		/* message from device */
 	u_short	sc_dmactl;		/* control to load into dma csr */
-	u_long	sc_dmaaddr;		/* addr to load into dma addr */
+	u_long	sc_dmaaddr;		/* address for next xfer */
+	int	sc_dmasize;		/* size of current xfer */
+	int	sc_resid;		/* count of bytes not yet xferred */
 	int	sc_targ;		/* the target involved */
-	int	sc_resid;		/* count of bytes not xferred */
-	struct	scsi_cdb sc_cdb;	/* current command (not in dvma) */
+	struct	scsi_cdb *sc_curcdb;	/* ptr to current command */
+	/* might cdbspace eventually be per-target? */
+	struct	scsi_cdb sc_cdbspace;	/* space for one command */
 };
 
 /*
- * Values for sc_esptype (used to control configuration reset).
- * The order is important; see espreset().
+ * Values for sc_esptype (used to control configuration reset, and for
+ * workarounds for chip bugs).  The order is important; see espreset().
  */
 #define	ESP100	0
 #define	ESP100A	1
@@ -214,7 +207,7 @@ struct esp_softc {
 /*
  * States in sc_state.
  *
- * Note that S_CMDSVC is rare: normally we load the SCSI command into the
+ * Note that S_SVC is rare: normally we load the SCSI command into the
  * ESP fifo and get interrupted only when the device has gone to data
  * or status phase.  If the device wants to play games, though, we end
  * up doing things differently.
@@ -224,38 +217,40 @@ char *espstates[] = {
 	"idle",
 #define	S_SEL		1	/* expecting select done interrupt */
 	"selecting",
-#define	S_CMDSVC	2	/* expecting service req interrupt */
-	"waiting for service request after command",
-#define	S_IOSVC		3	/* expecting service req interrupt */
-	"waiting for service request after io",
-#define	S_DI		4	/* expecting data-in done interrupt */
+#define	S_SVC		2	/* expecting service req interrupt */
+	"waiting for svc req",
+#define	S_DI		3	/* expecting data-in done interrupt */
 	"receiving data",
-#define	S_DO		5	/* expecting data-out done interrupt */
+#define	S_DO		4	/* expecting data-out done interrupt */
 	"sending data",
-#define	S_STAT		6	/* expecting status done interrupt */
+#define	S_STAT		5	/* expecting status done interrupt */
 	"receiving status",
-#define	S_MI		7	/* expecting message-in done interrupt */
+#define	S_MI		6	/* expecting message-in done interrupt */
 	"receiving message",
-#define	S_FI		8	/* expecting final disconnect interrupt */
+#define	S_FI		7	/* expecting final disconnect interrupt */
 	"waiting for disconnect"
 };
+
+/*
+ * Hardware limits on transfer sizes (see comments at top).
+ */
+#define	ESPMAX		(64 * 1024)
+#define	DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
 
 /*
  * Return values from espact().
  */
 #define	ACT_CONT	0	/* espact() handled everything */
-#define	ACT_READ	1	/* target said it is sending us data */
-#define	ACT_WRITE	2	/* target said it is expecting data */
-#define	ACT_DONE	3	/* handled everything, and op is now done */
-#define	ACT_ERROR	4	/* an error occurred, op has been trashed */
-#define	ACT_RESET	5	/* please reset ESP, then do ACT_ERROR */
-#define	ACT_QUICKINTR	6	/* another interrupt is expected immediately */
+#define	ACT_IO		1	/* espact() is xferring data */
+#define	ACT_DONE	2	/* handled everything, and op is now done */
+#define	ACT_ERROR	3	/* an error occurred, op has been trashed */
+#define	ACT_RESET	4	/* please reset ESP, then do ACT_ERROR */
+#define	ACT_QUICKINTR	5	/* another interrupt is expected immediately */
 
 /* autoconfiguration driver */
 void	espattach(struct device *, struct device *, void *);
 struct cfdriver espcd =
-    { NULL, "esp", matchbyname, espattach, DV_DULL, sizeof(struct esp_softc),
-      "intr" };
+    { NULL, "esp", matchbyname, espattach, DV_DULL, sizeof(struct esp_softc) };
 
 /* Sbus driver */
 void	espsbreset(struct device *);
@@ -275,20 +270,18 @@ void	esphbareset(struct hba_softc *, int);
 static struct hbadriver esphbadriver =
     { espicmd, espdump, espstart, espgo, esprel, esphbareset };
 
-/* forward declarations */
-static void espdoattach(int unit);
-static void espreset(struct esp_softc *);
+/* other prototypes */
+static void espdoattach(int);
+static void dmareset(struct esp_softc *);
+static void espreset(struct esp_softc *, int);
+static void esperror(struct esp_softc *, const char *);
+static int espact(struct esp_softc *);
+void espselect(struct esp_softc *, int, struct scsi_cdb *);
 
-/*
- * The transfer size is limited to 16 bits since the scsi ctrl transfer
- * counter is only 2 bytes.  A 0 value means the biggest transfer size
- * (2 ** 16) == 64k.
- */
-#define MAX_TRANSFER_SIZE	(64 * 1024)
-
-/* Return true if this transfer will cross a dma boundary */
-#define CROSS_DMA(addr, len) \
-    (((int)(addr) & 0xff000000) != (((int)(addr) + (len) - 1) & 0xff000000))
+/* second arg to espreset() */
+#define	RESET_ESPCHIP	0x1
+#define	RESET_SCSIBUS	0x2
+#define	RESET_BOTH	(RESET_ESPCHIP | RESET_SCSIBUS)
 
 /*
  * Attach a found DMA chip.
@@ -300,7 +293,7 @@ dmaattach(parent, dev, args)
 	struct device *dev;
 	void *args;
 {
-	register struct dma_softc *dsc = (struct dma_softc *)dev;
+	register struct dma_softc *dc = (struct dma_softc *)dev;
 	register struct sbus_attach_args *sa = args;
 	register volatile struct dmareg *dma;
 	register int rev;
@@ -311,29 +304,29 @@ dmaattach(parent, dev, args)
 	else
 		dma = (volatile struct dmareg *)
 		    mapiodev(sa->sa_ra.ra_paddr, sizeof(struct dmareg));
-	dsc->sc_dma = dma;
+	dc->dc_dma = dma;
 
 	switch (rev = DMA_REV(dma->dma_csr)) {
 	case DMAREV_1:
 		printf(": rev 1\n");
-		dsc->sc_dmafmt = DMA_REV1_BITS;
+		dc->dc_dmafmt = DMA_REV1_BITS;
 		break;
 	case DMAREV_2:
 		printf(": rev 2\n");
-		dsc->sc_dmafmt = DMA_REV2_BITS;
+		dc->dc_dmafmt = DMA_REV2_BITS;
 		break;
 	case DMAREV_3:
 		printf(": rev 3\n");
 		printf("WARNING: esp.c not yet updated for rev 3\n");
-		dsc->sc_dmafmt = DMA_REV3_BITS;
+		dc->dc_dmafmt = DMA_REV3_BITS;
 		break;
 	default:
 		printf(": unknown revision code 0x%x\n", rev);
-		dsc->sc_dmafmt = DMA_REV3_BITS;	/* cross fingers */
+		dc->dc_dmafmt = DMA_REV3_BITS;	/* cross fingers */
 		break;
 	}
-	dsc->sc_dmarev = rev;
-	espdoattach(dsc->sc_dev.dv_unit);
+	dc->dc_dmarev = rev;
+	espdoattach(dc->dc_dev.dv_unit);
 }
 
 /*
@@ -351,7 +344,6 @@ espattach(parent, self, args)
 	register struct sbus_attach_args *sa = args;
 	register volatile struct espreg *esp;
 	register struct bootpath *bp;
-	struct dma_softc *dsc;
 	int node, pri, freq, t;
 
 	if (sa->sa_ra.ra_nintr != 1) {
@@ -370,7 +362,8 @@ espattach(parent, self, args)
 	sc->sc_id = getpropint(node, "initiator-id", 7);
 	freq = getpropint(node, "clock-frequency", -1);
 	if (freq < 0)
-		freq = ((struct sbus_softc *)sc->sc_hba.hba_dev.dv_parent)->sc_clockfreq;
+		freq =
+		    ((struct sbus_softc *)sc->sc_dev.dv_parent)->sc_clockfreq;
 
 	/* MIGHT NEED TO RESET ESP CHIP HERE ...? */
 
@@ -424,20 +417,20 @@ espattach(parent, self, args)
 	 * Link into sbus; set interrupt handler.
 	 */
 	sc->sc_sd.sd_reset = espsbreset;
-	sbus_establish(&sc->sc_sd, &sc->sc_hba.hba_dev);
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	sc->sc_ih.ih_fun = espintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih);
-	evcnt_attach(&sc->sc_hba.hba_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 #define SAME_ESP(bp, sa) \
 	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_hba.hba_dev.dv_unit))
+	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 	bp = sa->sa_ra.ra_bp;
 	if (bp != NULL && strcmp(bp->name, "esp") == 0 && SAME_ESP(bp, sa))
 		sc->sc_bp = bp + 1;
-	espdoattach(sc->sc_hba.hba_dev.dv_unit);
+	espdoattach(sc->sc_dev.dv_unit);
 }
 
 /*
@@ -450,7 +443,7 @@ espdoattach(unit)
 	int unit;
 {
 	register struct esp_softc *sc;
-	register struct dma_softc *dsc;
+	register struct dma_softc *dc;
 	register struct bootpath *bp;
 	register struct targ *t;
 	register int targ, u;
@@ -459,20 +452,21 @@ espdoattach(unit)
 	if (espcd.cd_ndevs <= unit ||
 	    dmacd.cd_ndevs <= unit ||
 	    (sc = espcd.cd_devs[unit]) == NULL ||
-	    (dsc = dmacd.cd_devs[unit]) == NULL)
+	    (dc = dmacd.cd_devs[unit]) == NULL)
 		return;
-	sc->sc_dsc = dsc;
-	sc->sc_dma = dsc->sc_dma;
+	sc->sc_dc = dc;
+	sc->sc_dma = dc->dc_dma;
 	sc->sc_hba.hba_driver = &esphbadriver;
 
-	espreset(sc);
+	sc->sc_dma->dma_csr = 0;	/* ??? */
+	espreset(sc, RESET_ESPCHIP);
 
 	/* MAYBE THIS SHOULD BE MOVED TO scsi_subr.c? */
 	for (targ = 0; targ < 8; targ++) {
 		if (targ == sc->sc_id)
 			continue;
 		sc->sc_probing = PROBE_TESTING;
-		(void) scsi_test_unit_ready(&sc->sc_hba, targ, 0);
+		(void)scsi_test_unit_ready(&sc->sc_hba, targ, 0);
 		if (sc->sc_probing != PROBE_NO_TARGET) {
 			sc->sc_probing = 0;
 			SCSI_FOUNDTARGET(&sc->sc_hba, targ);
@@ -480,21 +474,27 @@ espdoattach(unit)
 	}
 	sc->sc_probing = 0;
 
-	if ((bp = sc->sc_bp) == NULL || (u_int)(targ = bp->val[0]) >= 8 ||
-	    (u_int)(u = bp->val[1]) >= 8)
-		return;
-
 	/*
-	 * Did we find it? We could compare bp->name against the unit's
-	 * name but there's no real need since a target and unit
-	 * uniquely specify a scsi device.
+	 * See if we booted from a unit on this target.  We could
+	 * compare bp->name against the unit's name but there's no
+	 * real need since a target and unit uniquely specify a
+	 * scsi device.
 	 */
-	if ((t = sc->sc_hba.hba_targets[targ]) != NULL && t->t_units[u] != NULL)
+	if ((bp = sc->sc_bp) != NULL && (u_int)(targ = bp->val[0]) < 8 &&
+	    (u_int)(u = bp->val[1]) < 8 &&
+	    (t = sc->sc_hba.hba_targets[targ]) != NULL && t->t_units[u] != NULL)
 		bootdv = t->t_units[u]->u_dev;
 }
 
 /*
- * Internal DMA reset.
+ * We are not allowed to touch the DMA "flush" and "drain" bits
+ * while it is still thinking about a request (DMA_RP).
+ */
+#define	DMAWAIT(dma)	while ((dma)->dma_csr & DMA_RP) DELAY(1)
+#define	DMAWAIT1(dma)	while ((dma)->dma_csr & DMA_PC) DELAY(1)
+
+/*
+ * Reset the DMA chip.
  */
 static void
 dmareset(sc)
@@ -502,53 +502,66 @@ dmareset(sc)
 {
 	register volatile struct dmareg *dma = sc->sc_dma;
 
-	/* reset DMA chip */
+	DMAWAIT(dma);
 	dma->dma_csr |= DMA_RESET;
 	DELAY(200);
 	dma->dma_csr &= ~DMA_RESET;	/* ??? */
-	sc->sc_state = S_IDLE;
 	sc->sc_dmaactive = 0;
-	if (sc->sc_dsc->sc_dmarev == DMAREV_2 && sc->sc_esptype != ESP100)
+	if (sc->sc_dc->dc_dmarev == DMAREV_2 && sc->sc_esptype != ESP100)
 		dma->dma_csr |= DMA_TURBO;
 	dma->dma_csr |= DMA_IE;		/* enable interrupts */
 	DELAY(200);
 }
 
 /*
- * Reset the chip.  N.B.: this causes a SCSI bus reset!
+ * Reset the chip and/or SCSI bus (always resets DMA).
  */
 static void
-espreset(sc)
+espreset(sc, how)
 	register struct esp_softc *sc;
+	int how;
 {
 	register volatile struct espreg *esp = sc->sc_esp;
 
 	dmareset(sc);
-	esp->esp_cmd = ESPCMD_RESET_CHIP;
-	DELAY(200);
-	esp->esp_cmd = ESPCMD_NOP;
-	DELAY(200);
-
-	/*
-	 * Reload configuration registers (cleared by RESET_CHIP command).
-	 * Reloading conf2 on an ESP100 goofs it up, so out of paranoia
-	 * we load only the registers that exist.
-	 */
-	esp->esp_conf1 = sc->sc_conf1;
-	if (sc->sc_esptype > ESP100) {		/* 100A, 2XX */
-		esp->esp_conf2 = sc->sc_conf2;
-		if (sc->sc_esptype > ESP100A)	/* 2XX only */
-			esp->esp_conf3 = sc->sc_conf3;
+	if (how & RESET_ESPCHIP) {
+		esp->esp_cmd = ESPCMD_RESET_CHIP;
+		esp->esp_cmd = ESPCMD_NOP;
+		/*
+		 * Reload configuration registers (cleared by
+		 * RESET_CHIP command).  Reloading conf2 on an
+		 * ESP100 goofs it up, so out of paranoia we load
+		 * only the registers that exist.
+		 */
+		esp->esp_conf1 = sc->sc_conf1;
+		if (sc->sc_esptype > ESP100) {		/* 100A, 2XX */
+			esp->esp_conf2 = sc->sc_conf2;
+			if (sc->sc_esptype > ESP100A)	/* 2XX only */
+				esp->esp_conf3 = sc->sc_conf3;
+		}
+		esp->esp_ccf = sc->sc_ccf;
+		esp->esp_timeout = sc->sc_sel_timeout;
+		/* We set synch offset later. */
 	}
-	esp->esp_ccf = sc->sc_ccf;
-	esp->esp_timeout = sc->sc_sel_timeout;
-	/* We set synch offset later. */
+	if (how & RESET_SCSIBUS) {
+		/*
+		 * The chip should retain most of its parameters
+		 * (including esp_ccf) across this kind of reset
+		 * (see section 3.5 of Emulex documentation).
+		 */
+		/* turn off scsi bus reset interrupts and reset scsi bus */
+		esp->esp_conf1 = sc->sc_conf1 | ESPCONF1_REPORT;
+		esp->esp_cmd = ESPCMD_RESET_BUS;
+		esp->esp_cmd = ESPCMD_NOP;
+		DELAY(100000);	/* ??? */
+		(void)esp->esp_intr;
+		esp->esp_conf1 = sc->sc_conf1;
+	}
+	sc->sc_state = S_IDLE;
 }
 
 /*
  * Reset the SCSI bus and, optionally, all attached targets.
- * The chip should retain most of its parameters (including esp_ccf)
- * across this kind of reset (see section 3.5 of Emulex documentation).
  */
 void
 esphbareset(hba, resetunits)
@@ -556,21 +569,8 @@ esphbareset(hba, resetunits)
 	int resetunits;
 {
 	register struct esp_softc *sc = (struct esp_softc *)hba;
-	register volatile struct espreg *esp = sc->sc_esp;
 
-	dmareset(sc);
-
-	/* BEGIN ??? */
-	/* turn off scsi bus reset interrupts and reset scsi bus */
-	esp->esp_conf1 = sc->sc_conf1 | ESPCONF1_REPORT;
-	DELAY(200);
-	esp->esp_cmd = ESPCMD_RESET_BUS;
-	DELAY(800);
-	esp->esp_cmd = ESPCMD_NOP;
-	DELAY(200);
-	esp->esp_conf1 = sc->sc_conf1;
-	/* END ??? */
-
+	espreset(sc, RESET_SCSIBUS);
 	if (resetunits)
 		scsi_reset_units(&sc->sc_hba);
 }
@@ -587,29 +587,76 @@ espsbreset(dev)
 {
 	struct esp_softc *sc = (struct esp_softc *)dev;
 
-	if (sc->sc_dsc) {
-		printf(" %s %s", sc->sc_dsc->sc_dev.dv_xname,
-		    sc->sc_hba.hba_dev.dv_xname);
+	if (sc->sc_dc) {
+		printf(" %s %s", sc->sc_dc->dc_dev.dv_xname,
+		    sc->sc_dev.dv_xname);
 		esphbareset(&sc->sc_hba, 1);
 	}
 }
 
+/*
+ * Log an error.
+ */
 static void
 esperror(sc, err)
-	char *err;
 	register struct esp_softc *sc;
+	const char *err;
 {
+	int stat;
 
-	printf("%s: %s (target=%d): stat=%b step=%x dmacsr=%b intr=%b\n",
-	    sc->sc_hba.hba_dev.dv_xname, err, sc->sc_targ,
-	    sc->sc_espstat, ESPSTAT_BITS, sc->sc_espstep,
-	    sc->sc_dmacsr, sc->sc_dsc->sc_dmafmt,
-	    sc->sc_espintr, ESPINTR_BITS);
+	stat = sc->sc_espstat;
+	printf(
+"%s target %d cmd 0x%x (%s): %s:\n\
+\tstat=%b (%s) step=%x dmacsr=%b fflags=%x intr=%b\n",
+	    sc->sc_dev.dv_xname, sc->sc_targ, sc->sc_curcdb->cdb_bytes[0],
+	    espstates[sc->sc_state], err,
+	    stat, ESPSTAT_BITS, espphases[stat & ESPSTAT_PHASE],
+	    sc->sc_espstep, sc->sc_dmacsr, sc->sc_dc->dc_dmafmt,
+	    sc->sc_espfflags, sc->sc_espintr, ESPINTR_BITS);
 }
 
 /*
- * An interrupt has occurred.  Sequence through the SCSI state machine.
- * Return the action to take.
+ * Issue a select, loading command into the FIFO.
+ * Return nonzero on error, 0 if OK.
+ * Sets state to `selecting'; espact() will sequence state FSM.
+ */
+void
+espselect(sc, targ, cdb)
+	register struct esp_softc *sc;
+	register int targ;
+	register struct scsi_cdb *cdb;
+{
+	register volatile struct espreg *esp;
+	register int i, cmdlen;
+
+	sc->sc_targ = targ;
+	sc->sc_state = S_SEL;
+	sc->sc_curcdb = cdb;
+	sc->sc_sentcmd = 0;
+	sc->sc_stat[0] = 0xff;		/* ??? */
+	sc->sc_msg[0] = 0xff;		/* ??? */
+
+	/*
+	 * Try to talk to target.
+	 * Synch offset 0 => asynchronous transfer.
+	 */
+	esp = sc->sc_esp;
+	esp->esp_id = targ;
+	esp->esp_syncoff = 0;
+
+	/*
+	 * Stuff the command bytes into the fifo.
+	 * Select without attention since we do not do disconnect yet.
+	 */
+	cmdlen = SCSICMDLEN(cdb->cdb_bytes[0]);
+	for (i = 0; i < cmdlen; i++)
+		esp->esp_fifo = cdb->cdb_bytes[i];
+	esp->esp_cmd = ESPCMD_SEL_NATN;
+	/* the rest is done elsewhere */
+}
+
+/*
+ * Sequence through the SCSI state machine.  Return the action to take.
  *
  * Most of the work happens here.
  *
@@ -621,19 +668,21 @@ esperror(sc, err)
  *	DOES THIS OCCUR AT ALL HERE?  THERE IS NOTHING TO HANDLE IT!
  */
 static int
-espact(sc, esp, dma, cdb)
+espact(sc)
 	register struct esp_softc *sc;
+{
 	register volatile struct espreg *esp;
 	register volatile struct dmareg *dma;
+	register int reg, i, resid, newstate;
 	register struct scsi_cdb *cdb;
-{
-	register char *xname = sc->sc_hba.hba_dev.dv_xname;
-	register int reg, phase, i;
 
+	dma = sc->sc_dma;
 	/* check various error conditions, using as little code as possible */
 	if (sc->sc_dmacsr & DMA_EP) {
 		esperror(sc, "DMA error");
+		DMAWAIT(dma);
 		dma->dma_csr |= DMA_FLUSH;
+		DMAWAIT1(dma);
 		return (ACT_ERROR);
 	}
 	reg = sc->sc_espstat;
@@ -647,7 +696,7 @@ espact(sc, esp, dma, cdb)
 			sc->sc_probing = PROBE_NO_TARGET;
 			return (ACT_RESET);
 		}
-esperror(sc, "DIAGNOSTIC: gross error (ignored)");
+esperror(sc, "DIAG: gross error (ignored)");
 	}
 	if (reg & ESPSTAT_PE) {
 		esperror(sc, "parity error");
@@ -661,7 +710,8 @@ esperror(sc, "DIAGNOSTIC: gross error (ignored)");
 		else if (reg & ESPINTR_ILC)
 			esperror(sc, "illegal command (driver bug)");
 		else {
-			printf("%s: target %d", xname, sc->sc_targ);
+			printf("%s: target %d", sc->sc_dev.dv_xname,
+			    sc->sc_targ);
 			if (reg & ESPINTR_RSL)
 				printf(" tried to reselect;");
 			if (reg & ESPINTR_SAT)
@@ -673,6 +723,8 @@ esperror(sc, "DIAGNOSTIC: gross error (ignored)");
 		return (ACT_ERROR);
 	}
 #undef ERR
+
+	esp = sc->sc_esp;
 
 	/*
 	 * Disconnect currently only allowed in `final interrupt' states.
@@ -693,8 +745,9 @@ esperror(sc, "DIAGNOSTIC: gross error (ignored)");
 		}
 		/* flush fifo, in case we were selecting or sending data */
 		esp->esp_cmd = ESPCMD_FLUSH_FIFO;
+		DELAY(1);
 		printf("%s: target %d not responding\n",
-		    xname, sc->sc_targ);
+		    sc->sc_dev.dv_xname, sc->sc_targ);
 		return (ACT_ERROR);
 	}
 
@@ -703,7 +756,6 @@ esperror(sc, "DIAGNOSTIC: gross error (ignored)");
 	 * What were we doing the last time we did something,
 	 * and did it complete normally?
 	 */
-	phase = sc->sc_espstat & ESPSTAT_PHASE;
 	switch (sc->sc_state) {
 
 	case S_SEL:
@@ -727,56 +779,55 @@ esperror(sc, "DIAGNOSTIC: gross error (ignored)");
 			 * Just pretend things are normal; the
 			 * device will ask for the command later.
 			 */
-esperror(sc, "DIAGNOSTIC: esp step 2");
+esperror(sc, "DIAG: esp step 2");
 		} else if (sc->sc_espstep == 3) {
 			/*
 			 * Device entered command phase and then exited it
 			 * before we finished handing out the command.
-			 * Let's see what happens if we pretend things
-			 * are normal.
+			 * Do not know how to handle this.
 			 */
-esperror(sc, "DIAGNOSTIC: esp step 3");
+esperror(sc, "DIAG: esp step 3");
 		} else {
 			printf("%s: mysterious esp step %d\n",
-			    xname, sc->sc_espstep);
+			    sc->sc_dev.dv_xname, sc->sc_espstep);
 			return (ACT_RESET);
 		}
+
 		/*
 		 * Part of the command may still be lodged in the FIFO.
 		 */
-		esp->esp_cmd = ESPCMD_FLUSH_FIFO;
+		if (ESP_NFIFO(sc->sc_espfflags)) {
+			esp->esp_cmd = ESPCMD_FLUSH_FIFO;
+			DELAY(1);
+		}
 		break;
 
-	case S_CMDSVC:
+	case S_SVC:
 		/*
 		 * We were waiting for phase change after stuffing the command
 		 * into the FIFO.  Make sure it got out.
 		 */
-		reg = ESP_NFIFO(esp);
-		if (reg) {
-esperror(sc, "DIAGNOSTIC: CMDSVC, fifo not empty");
-printf("\tfifo count = %x\n", reg);
+		if (ESP_NFIFO(sc->sc_espfflags)) {
+esperror(sc, "DIAG: CMDSVC, fifo not empty");
 			esp->esp_cmd = ESPCMD_FLUSH_FIFO;
+			DELAY(1);
 		} else
 			sc->sc_sentcmd = 1;
-		break;
-
-	case S_IOSVC:
-		/*
-		 * We were waiting for phase change after I/O.
-		 */
 		break;
 
 	case S_DI:
 		/*
 		 * We were doing DMA data in, and expecting a
 		 * transfer-count-zero interrupt or a phase change.
-		 * We got that; drain the pack register and
-		 * handle as for data out.
+		 * We got that; drain the pack register and handle
+		 * as for data out -- but ignore FIFO (it should be
+		 * empty, except for sync mode which we are not
+		 * using anyway).
 		 */
+		DMAWAIT(dma);
 		dma->dma_csr |= DMA_DRAIN;
-		DELAY(1);	/* allow time for draining (???) */
-		reg = 0;		/* FIFO auto flushed? */
+		DMAWAIT1(dma);
+		resid = 0;
 		goto dma_data_done;
 
 	case S_DO:
@@ -784,35 +835,39 @@ printf("\tfifo count = %x\n", reg);
 		 * We were doing DMA data out.  If there is data in the
 		 * FIFO, it is stuff that got DMAed out but never made
 		 * it to the device, so it counts as residual.
-		 *
-		 * XXX	handle DMA IO with large count or address
-		 *	boundary condition by resuming here, or below?
 		 */
-		if ((reg = ESP_NFIFO(esp)) != 0)
+		if ((resid = ESP_NFIFO(sc->sc_espfflags)) != 0) {
 			esp->esp_cmd = ESPCMD_FLUSH_FIFO;
+			DELAY(1);
+		}
 dma_data_done:
 		if (sc->sc_dmaactive == 0) {
-			printf("%s: dma done while %s, dmaactive==0\n",
-			    xname, espstates[sc->sc_state]);
+			esperror(sc, "dma done w/o dmaactive");
 			panic("espact");
 		}
 		sc->sc_dmaactive = 0;
-		reg += esp->esp_tcl | (esp->esp_tch << 8);
+
+		/* Finish computing residual count. */
+		reg = esp->esp_tcl | (esp->esp_tch << 8);
 		if (reg == 0 && (sc->sc_espstat & ESPSTAT_TC) == 0)
 			reg = 65536;
-		if (reg > sc->sc_resid) {
+		resid += reg;
+
+		/* Compute xfer count (requested - resid). */
+		i = sc->sc_dmasize - resid;
+		if (i < 0) {
 			printf("%s: xfer resid (%d) > xfer req (%d)\n",
-			    xname, reg, sc->sc_resid);
-			reg = sc->sc_resid;
+			    sc->sc_dev.dv_xname, resid, sc->sc_dmasize);
+			i = sc->sc_dmasize;	/* forgiving... */
 		}
-		/*
-		 * If data came in we must flush cache.
-		 */
+
+		/* If data came in we must flush cache. */
 		if (sc->sc_state == S_DI)
-			cache_flush(sc->sc_dmaaddr, sc->sc_resid - reg);
-		sc->sc_resid = reg;
+			cache_flush(sc->sc_dmaaddr, i);
+		sc->sc_dmaaddr += i;
+		sc->sc_resid -= i;
 		if ((sc->sc_espintr & ESPINTR_SVC) == 0) {
-			printf("%s: no bus service req\n", xname);
+			esperror(sc, "no bus service req");
 			return (ACT_RESET);
 		}
 		break;
@@ -831,11 +886,11 @@ dma_data_done:
 			esperror(sc, "bad status interrupt state");
 			return (ACT_RESET);
 		}
-		reg = ESP_NFIFO(esp);
+		reg = ESP_NFIFO(sc->sc_espfflags);
 		if (reg < 2) {
 			printf(
-		"%s: command done but fifo count = %d; must be >= 2\n", xname,
-			    reg);
+		"%s: command done but fifo count = %d; must be >= 2\n",
+			    sc->sc_dev.dv_xname, reg);
 			return (ACT_RESET);
 		}
 		/*
@@ -852,11 +907,11 @@ dma_data_done:
 		}
 		if (SCSIMSGLEN(reg) != 1) {
 			printf("%s: target %d is naughty\n",
-			    xname, sc->sc_targ);
+			    sc->sc_dev.dv_xname, sc->sc_targ);
 			return (ACT_RESET);
 		}
 		printf("%s: warning: target %d returned msg 0x%x\n",
-		    xname, sc->sc_targ, reg);
+		    sc->sc_dev.dv_xname, sc->sc_targ, reg);
 		sc->sc_state = S_FI;
 		return (ACT_CONT);
 
@@ -865,7 +920,7 @@ dma_data_done:
 			esperror(sc, "missing phase after msg in");
 			return (ACT_RESET);
 		}
-		reg = ESP_NFIFO(esp);
+		reg = ESP_NFIFO(sc->sc_espfflags);
 		for (i = 0; i < reg; i++)
 			sc->sc_msg[i] = esp->esp_fifo;
 		break;
@@ -879,28 +934,60 @@ dma_data_done:
 	 * Things are still moving along.  The phase tells us
 	 * what the device wants next.  Do it.
 	 */
-	switch (phase) {
+	switch (sc->sc_espstat & ESPSTAT_PHASE) {
 
 	case ESPPHASE_DATA_OUT:
-if (!sc->sc_sentcmd) esperror(sc, "DIAGNOSTIC: data out without command");
-		sc->sc_state = S_DO;
-		return (ACT_WRITE);
+if (!sc->sc_sentcmd) esperror(sc, "DIAG: data out without command");
+		if (sc->sc_dmactl & DMA_READ) {
+			esperror(sc, "wrong phase (want to read)");
+			return (ACT_RESET);
+		}
+		newstate = S_DO;
+		goto do_data_xfer;
 
 	case ESPPHASE_DATA_IN:
-if (!sc->sc_sentcmd) esperror(sc, "DIAGNOSTIC: data in without command");
-		sc->sc_state = S_DI;
-		return (ACT_READ);
+if (!sc->sc_sentcmd) esperror(sc, "DIAG: data in without command");
+		if (!(sc->sc_dmactl & DMA_READ)) {
+			esperror(sc, "wrong phase (want to write)");
+			return (ACT_RESET);
+		}
+		newstate = S_DI;
+do_data_xfer:
+		if (sc->sc_resid == 0) {
+			esperror(sc, "data count error");
+			return (ACT_RESET);
+		}
+
+		/*
+		 * Compute DMA count based on chip limits.
+		 * Set DMA address and load transfer count into
+		 * ESP via DMA NOP, then set DMA control, and
+		 * then we can start the DMA.
+		 */
+		sc->sc_state = newstate;
+		i = min(sc->sc_resid, ESPMAX);
+		i = min(i, DMAMAX(sc->sc_dmaaddr));
+		sc->sc_dmasize = i;
+		dma->dma_addr = sc->sc_dmaaddr;
+		esp->esp_tch = i >> 8;
+		esp->esp_tcl = i;
+		esp->esp_cmd = ESPCMD_DMA | ESPCMD_NOP;
+		dma->dma_csr = sc->sc_dmactl;
+		sc->sc_dmaactive = 1;
+		esp->esp_cmd = ESPCMD_DMA | ESPCMD_XFER_INFO;
+		return (ACT_IO);
 
 	case ESPPHASE_CMD:
 		/*
 		 * Silly thing wants the command again.
-		 * Load it into the FIFO and go to CMDSVC state.
+		 * Load it into the FIFO and go to SVC state.
 		 */
-printf("%s: redoing command\n", xname);
+printf("%s: redoing command\n", sc->sc_dev.dv_xname);
+		cdb = sc->sc_curcdb;
 		reg = SCSICMDLEN(cdb->cdb_bytes[0]);
 		for (i = 0; i < reg; i++)
 			esp->esp_fifo = cdb->cdb_bytes[i];
-		sc->sc_state = S_CMDSVC;
+		sc->sc_state = S_SVC;
 		esp->esp_cmd = ESPCMD_XFER_INFO;
 		return (ACT_CONT);
 
@@ -910,54 +997,17 @@ printf("%s: redoing command\n", xname);
 		return (ACT_CONT);
 
 	case ESPPHASE_MSG_IN:
-printf("%s: accepting (& ignoring) msg from target %d\n", xname, sc->sc_targ);
+printf("%s: accepting (& ignoring) msg from target %d\n",
+    sc->sc_dev.dv_xname, sc->sc_targ);
 		sc->sc_state = S_MI;
 		esp->esp_cmd = ESPCMD_MSG_ACCEPT;
 		return (ACT_CONT);
 
 	default:
-		printf("%s: target %d asked for strange phase (%s)\n",
-		    xname, sc->sc_targ, espphases[phase]);
+		esperror(sc, "bad phase");
 		return (ACT_RESET);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Issue a select, loading command into the FIFO.
- * Return nonzero on error, 0 if OK.
- * Sets state to `selecting'; espact() will sequence state FSM.
- */
-void
-espselect(sc, esp, targ, cdb)
-	register struct esp_softc *sc;
-	register volatile struct espreg *esp;
-	register int targ;
-	register struct scsi_cdb *cdb;
-{
-	register int i, cmdlen = SCSICMDLEN(cdb->cdb_bytes[0]);
-
-	sc->sc_targ = targ;
-	sc->sc_state = S_SEL;
-	sc->sc_sentcmd = 0;
-	sc->sc_stat[0] = 0xff;		/* ??? */
-	sc->sc_msg[0] = 0xff;		/* ??? */
-
-	/*
-	 * Try to talk to target.
-	 * Synch offset 0 => asynchronous transfer.
-	 */
-	esp->esp_id = targ;
-	esp->esp_syncoff = 0;
-
-	/*
-	 * Stuff the command bytes into the fifo.
-	 * Select without attention since we do not do disconnect yet.
-	 */
-	for (i = 0; i < cmdlen; i++)
-		esp->esp_fifo = cdb->cdb_bytes[i];
-	esp->esp_cmd = ESPCMD_SEL_NATN;
-	/* the rest is done elsewhere */
 }
 
 /*
@@ -965,235 +1015,111 @@ espselect(sc, esp, targ, cdb)
  */
 	/* name		howlong		purpose */
 #define	SELECT_WAIT	300000		/* wait for select to complete */
-#define	CMD_WAIT	1000		/* wait for next phase, generic */
-#define	IO_WAIT		1000000		/* time to xfer data in/out */
-#define	POSTDATA_WAIT	10000000	/* wait for next phase, after dataio */
-
-/*
- * Transfer data out via polling.  Return success (0) iff all
- * the bytes were sent and we got an interrupt.
- *
- * This returns -1 on timeout, resid count on early interrupt,
- * but no one really cares....
- */
-static int
-espixfer_out(sc, esp, dma, buf, len)
-	register struct esp_softc *sc;
-	register volatile struct espreg *esp;
-	register volatile struct dmareg *dma;
-	register caddr_t buf;
-	register int len;
-{
-	register int wait, n;
-
-	if (CROSS_DMA(buf, len))
-		panic("espixfer_out: 16MB boundary");
-
-	/* set dma address and transfer count */
-	dma->dma_addr = (int)buf;
-	esp->esp_tch = len >> 8;
-	esp->esp_tcl = len;
-
-	/* load count into counter via DMA NOP */
-	esp->esp_cmd = ESPCMD_DMA | ESPCMD_NOP;
-
-	/* enable dma (but not interrupts) */
-	dma->dma_csr = DMA_ENA;
-
-	/* and go */
-	esp->esp_cmd = ESPCMD_DMA | ESPCMD_XFER_INFO;
-
-	/* wait for completion */
-	for (wait = IO_WAIT; wait > 0; --wait) {
-		n = dma->dma_csr;
-		if (DMA_INTR(n)) {
-			sc->sc_espstat = esp->esp_stat;
-			sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
-			sc->sc_espintr = esp->esp_intr;
-			sc->sc_dmacsr = n;
-			n = esp->esp_tcl | (esp->esp_tch << 8);
-			if (n == 0 && (sc->sc_espstat & ESPSTAT_TC) == 0)
-				n = 65536;
-
-			return (n);
-		}
-		DELAY(1);
-	}
-	return (-1);
-}
-
-/*
- * Transfer data in via polling.
- * Return resid count on interrupt, -1 if timed out.
- */
-static int
-espixfer_in(sc, esp, dma, buf, len)
-	register struct esp_softc *sc;
-	register volatile struct espreg *esp;
-	register volatile struct dmareg *dma;
-	register caddr_t buf;
-	register int len;
-{
-	register int wait, n;
-
-	if (CROSS_DMA(buf, len))
-		panic("espixfer_in: 16MB boundary");
-
-	/* set dma address and transfer count */
-	dma->dma_addr = (int)buf;
-	esp->esp_tch = len >> 8;
-	esp->esp_tcl = len;
-
-	/* load count into counter via DMA NOP */
-	esp->esp_cmd = ESPCMD_DMA | ESPCMD_NOP;
-
-	/* enable dma (but not interrupts) */
-	dma->dma_csr = DMA_ENA | DMA_READ;
-
-	/* and go */
-	esp->esp_cmd = ESPCMD_DMA | ESPCMD_XFER_INFO;
-
-	/* wait for completion */
-	for (wait = IO_WAIT; wait > 0; --wait) {
-		n = dma->dma_csr;
-		if (DMA_INTR(n)) {
-			sc->sc_espstat = esp->esp_stat;
-			sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
-			sc->sc_espintr = esp->esp_intr;
-			dma->dma_csr |= DMA_DRAIN;
-			DELAY(1);	/* allow time for draining (???) */
-			sc->sc_dmacsr = n;
-			n = esp->esp_tcl | (esp->esp_tch << 8);
-			if (n == 0 && (sc->sc_espstat & ESPSTAT_TC) == 0)
-				n = 65536;
-
-			cache_flush(buf, (u_int)len - n);
-			return (n);
-		}
-		DELAY(1);
-	}
-	return (-1);
-}
+#define	CMD_WAIT	100000		/* wait for next phase, generic */
+#define	DATA_WAIT	100000		/* time to xfer data in/out */
 
 /*
  * Send an `immediate' command, i.e., poll until the whole thing is done.
- * Return the status byte from the device, or -1 if we timed out.
+ * Return the status byte from the device, or -1 if we timed out.  We use
+ * DMA to transfer the data as the fifo only moves one byte at a time.
  */
 int
 espicmd(hba, targ, cdb, buf, len, rw)
-	register struct hba_softc *hba;
+	struct hba_softc *hba;
 	int targ;
-	register struct scsi_cdb *cdb;
+	struct scsi_cdb *cdb;
 	caddr_t buf;
-	register int len;
-	int rw;
+	int len, rw;
 {
 	register struct esp_softc *sc = (struct esp_softc *)hba;
 	register volatile struct espreg *esp = sc->sc_esp;
 	register volatile struct dmareg *dma = sc->sc_dma;
-	register int r, wait;
-	char *msg;
-
-	if ((unsigned)len > MAX_TRANSFER_SIZE) {
-		printf("%s: bad length %d\n", sc->sc_hba.hba_dev.dv_xname, len);
-		panic("espicmd");
-	}
+	register int r, s, wait;
+	register struct sq *sq;
 
 	/*
-	 * Disable hardware interrupts, start select sequence.
-	 * Wait for interrupt-pending bit, then call espact() to
-	 * sequence the state machine.  When it tells us to do
-	 * data transfer, we do programmed I/O.
-	 * In any case, we loop calling espact() until done.
+	 * Wait for any ongoing operation to complete.
 	 */
-	dma->dma_csr = 0;	/* disable hardware interrupts */
-	espselect(sc, esp, targ, cdb);
+	s = splbio();
+	while (sc->sc_state != S_IDLE) {
+		sc->sc_iwant = 1;
+		tsleep((caddr_t)&sc->sc_iwant, PRIBIO, "espicmd", 0);
+	}
+	sc->sc_hba.hba_busy = 1;
+	splx(s);
+
+	/*
+	 * Set up DMA transfer control (leaving interrupts disabled).
+	 */
+	sc->sc_dmactl = rw & B_READ ? DMA_ENA | DMA_READ : DMA_ENA;
+	sc->sc_dmaaddr = (u_long)buf;
+	sc->sc_resid = len;
+
+	/*
+	 * Disable hardware interrupts and start select sequence,
+	 * then loop, calling espact() after each ``interrupt''.
+	 */
+	DMAWAIT(dma);		/* ??? */
+	dma->dma_csr = 0;
+	espselect(sc, targ, cdb);
 	wait = SELECT_WAIT;
-loop:
 	for (;;) {
 		r = dma->dma_csr;
 		if (!DMA_INTR(r)) {
 			if (--wait < 0) {
-				msg = "timeout waiting for phase change";
-				goto err;
+				esperror(sc, "timeout");
+				goto reset;
 			}
 			DELAY(1);
 			continue;
 		}
-		break;
-	}
-	sc->sc_espstat = esp->esp_stat;
-	sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
-	sc->sc_espintr = esp->esp_intr;
-	sc->sc_dmacsr = r;
-	/*
-	 * The action happens `twice around' for read and write.
-	 * All the rest `goto loop' or return or some such.
-	 */
-	wait = CMD_WAIT;
-	for (;;) {
-		switch (r = espact(sc, esp, dma, cdb)) {
+		sc->sc_espstat = esp->esp_stat;
+		sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
+		sc->sc_espintr = esp->esp_intr;
+		sc->sc_espfflags = esp->esp_fflags;
+		sc->sc_dmacsr = r;
+		switch (r = espact(sc)) {
 
 		case ACT_CONT:
 		case ACT_QUICKINTR:
-			goto loop;
-
-		case ACT_READ:
-			if (len == 0 || (rw & B_READ) == 0) {
-				msg = "wrong phase";
-				goto err;
-			}
-			r = espixfer_in(sc, esp, dma, buf, len);
-			if (r < 0) {
-				msg = "timeout reading from device";
-				goto err;
-			}
-			buf += len - r;
-			len = r;
-			/* we did the io, expecting `generic service' */
-			sc->sc_state = S_IOSVC;
-			wait = POSTDATA_WAIT;
+			wait = CMD_WAIT;
 			break;
 
-		case ACT_WRITE:
-			if (len == 0 || rw & B_READ) {
-				msg = "wrong phase";
-				goto err;
-			}
-			if (espixfer_out(sc, esp, dma, buf, len)) {
-				msg = "timeout writing to device";
-				goto err;
-			}
-			sc->sc_state = S_IOSVC;
-			wait = POSTDATA_WAIT;
+		case ACT_IO:
+			wait = DATA_WAIT;
 			break;
 
 		case ACT_RESET:
-			sc->sc_state = S_IDLE;
 			goto reset;
 
 		case ACT_DONE:
-			sc->sc_state = S_IDLE;
-			return (sc->sc_stat[0]);
+			r = sc->sc_stat[0];
+			goto done;
 
 		case ACT_ERROR:
-			sc->sc_state = S_IDLE;
-			return (-1);
+			r = -1;
+			goto done;
 
 		default:
 			panic("espicmd action");
 		}
 	}
-err:
-	printf("%s: target %d: %s (phase = %s)\n",
-	    sc->sc_hba.hba_dev.dv_xname, targ, msg,
-	    espphases[sc->sc_espstat & ESPSTAT_PHASE]);
-	printf("reset %s", sc->sc_hba.hba_dev.dv_xname);
-	esphbareset(&sc->sc_hba, 1);	/* ??? */
-	return (-1);
 reset:
-	espreset(sc);		/* ??? */
-	return (-1);
+	espreset(sc, RESET_ESPCHIP);		/* ??? */
+	r = -1;
+done:
+	sc->sc_state = S_IDLE;
+	s = splbio();
+	if (sc->sc_iwant) {
+		sc->sc_iwant = 0;
+		wakeup((caddr_t)&sc->sc_iwant);
+	} else if ((sq = sc->sc_hba.hba_head) != NULL) {
+		sc->sc_hba.hba_head = sq->sq_forw;
+		(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdbspace);
+	} else
+		sc->sc_hba.hba_busy = 0;
+	splx(s);
+	return (r);
 }
 
 /*
@@ -1205,11 +1131,17 @@ int
 espdump(hba, targ, cdb, buf, len)
 	register struct hba_softc *hba;
 	int targ;
-	register struct scsi_cdb *cdb;
+	struct scsi_cdb *cdb;
 	caddr_t buf;
 	register int len;
 {
+	register struct esp_softc *sc = (struct esp_softc *)hba;
 
+	/*
+	 * If we crashed in the middle of a bus transaction...
+	 */
+	if (sc->sc_state != S_IDLE)
+		espreset(sc, RESET_BOTH);       /* ??? */
 	return (espicmd(hba, targ, cdb, buf, len, B_WRITE));
 }
 
@@ -1235,7 +1167,7 @@ espstart(self, sq, bp, dgo, dev)
 		 * this target or unit that it has the SCSI bus.
 		 */
 		sc->sc_hba.hba_busy = 1;
-		(*dgo)(dev, &sc->sc_cdb);
+		(*dgo)(dev, &sc->sc_cdbspace);
 	} else {
 		/*
 		 * Bus is busy; just enqueue.
@@ -1252,7 +1184,7 @@ espstart(self, sq, bp, dgo, dev)
 }
 
 /*
- * Send a `dma' command, i.e., send the cdb and use DMA to send the data.
+ * Start buffered I/O.
  * Return 0 on success, 1 on failure.
  */
 int
@@ -1265,41 +1197,21 @@ espgo(self, targ, intr, dev, bp, pad)
 	int pad;
 {
 	register struct esp_softc *sc = (struct esp_softc *)self;
-	register int len = bp->b_bcount;
-	register u_long addr;
 
-	if ((unsigned)len > MAX_TRANSFER_SIZE) {
-		printf("%s: %s\n", sc->sc_hba.hba_dev.dv_xname,
-		    len < 0 ? "negative length" : "transfer too big");
-		return (1);
-	}
-
-	/*
-	 * Set dma registers later, on data transfer,
-	 * but compute the contents now.
-	 * COULD JUST REMEMBER bp HERE...?
-	 *
-	 * The DMA chip cannot cross a 16 MB address boundary.
-	 * We should do this as multiple DMA transactions on a
-	 * single SCSI command, but I have not written that yet.
-	 */
-	sc->sc_dmactl = bp->b_flags & B_READ ? DMA_ENA | DMA_READ | DMA_IE :
-	    DMA_ENA | DMA_IE;
-	addr = (u_long)bp->b_un.b_addr;
-	/* dma chip cannot cross 16MB boundary  XXX */
-	if (CROSS_DMA(addr, len))
-		panic("dma crosses 16MB boundary: fix esp.c");
-	sc->sc_dmaaddr = addr;
-	sc->sc_resid = len;
+	/* Set up dma control for espact(). */
+	sc->sc_dmactl = bp->b_flags & B_READ ?
+	    DMA_ENA | DMA_READ | DMA_IE : DMA_ENA | DMA_IE;
+	sc->sc_dmaaddr = (u_long)bp->b_un.b_addr;
+	sc->sc_resid = bp->b_bcount;
 
 	/*
 	 * Enable interrupts and start selection.
-	 * The rest is done in our interrupt handler.
+	 * The rest is done in espintr() and espact().
 	 */
 	sc->sc_hba.hba_intr = intr;	/* remember dev done function */
 	sc->sc_hba.hba_intrdev = dev;	/* and its first arg */
 	sc->sc_dma->dma_csr = DMA_IE;
-	espselect(sc, sc->sc_esp, targ, &sc->sc_cdb);
+	espselect(sc, targ, &sc->sc_cdbspace);
 	return (0);
 }
 
@@ -1325,68 +1237,53 @@ again:
 	sc->sc_espstat = esp->esp_stat;
 	sc->sc_espstep = esp->esp_step & ESPSTEP_MASK;
 	sc->sc_espintr = esp->esp_intr;
+	sc->sc_espfflags = esp->esp_fflags;
 	sc->sc_dmacsr = r;
 
 	if (sc->sc_state == S_IDLE) {
-		printf("%s: stray interrupt\n", sc->sc_hba.hba_dev.dv_xname);
+		printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
 		dma->dma_csr &= ~DMA_IE;	/* ??? */
 		return (1);
 	}
-	switch (r = espact(sc, esp, dma, &sc->sc_cdb)) {
+	switch (r = espact(sc)) {
 
 	case ACT_CONT:		/* just return */
-		break;
-
-	case ACT_READ:
-	case ACT_WRITE:
-		/*
-		 * We have to do this ourselves since another
-		 * user of espact() wants to do programmed I/O.
-		 * If we already did dma, and are done, stop.
-		 */
-		if (sc->sc_resid == 0) {
-			printf("%s: target %d sent too much data\n",
-			    sc->sc_hba.hba_dev.dv_xname, sc->sc_targ);
-			goto reset;
-		}
-		sc->sc_dmaactive = 1;
-		dma->dma_addr = sc->sc_dmaaddr;
-		esp->esp_tch = sc->sc_resid >> 8;
-		esp->esp_tcl = sc->sc_resid;
-		/* load count into counter via DMA NOP */
-		esp->esp_cmd = ESPCMD_DMA | ESPCMD_NOP;
-		/* enable dma */
-		dma->dma_csr = sc->sc_dmactl;
-		/* and go */
-		esp->esp_cmd = ESPCMD_DMA | ESPCMD_XFER_INFO;
+	case ACT_IO:
 		break;
 
 	case ACT_RESET:		/* please reset esp */
 reset:
-		espreset(sc);	/* ??? */
+		espreset(sc, RESET_ESPCHIP);	/* ??? */
 		/* FALLTHROUGH */
 
 	case ACT_DONE:		/* this one is done, successfully */
 	case ACT_ERROR:		/* this one is done due to `severe' error */
-		sc->sc_state = S_IDLE;
 		if (!sc->sc_hba.hba_busy)
 			panic("espintr sq");
 		/*
-		 * This transaction is done.
-		 * Call the driver's intr routine,
-		 * then start the next guy if any.
+		 * This transaction is done.  Call the driver's intr routine.
+		 * If an immediate command is pending, let it run in front
+		 * of us, otherwise start the next transation.  Note that
+		 * the interrupt routine may run its own immediate commands
+		 * (`request sense' for errors, eg) before we get around to
+		 * the process waiting to do immediate command, but that
+		 * is OK; if we did not set S_IDLE here we could deadlock.
 		 */
+		sc->sc_state = S_IDLE;
 		(*sc->sc_hba.hba_intr)(sc->sc_hba.hba_intrdev,
 		    r == ACT_DONE ? sc->sc_stat[0] : -1, sc->sc_resid);
-		if ((sq = sc->sc_hba.hba_head) != NULL) {
+		if (sc->sc_iwant) {
+			wakeup((caddr_t)&sc->sc_iwant);
+			sc->sc_iwant = 0;
+		} else if ((sq = sc->sc_hba.hba_head) != NULL) {
 			sc->sc_hba.hba_head = sq->sq_forw;
-			(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdb);
+			(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdbspace);
 		} else
 			sc->sc_hba.hba_busy = 0;
 		break;
 
 	case ACT_QUICKINTR:	/* wait a short while for another interrupt */
-printf("%s: quickintr: ", sc->sc_hba.hba_dev.dv_xname);
+printf("%s: quickintr: ", sc->sc_dev.dv_xname);
 		wait = 100;
 		do {
 			r = dma->dma_csr;
@@ -1415,8 +1312,12 @@ esprel(self)
 	register struct sq *sq;
 
 	/* if there is someone else waiting, give them a crack at it */
-	if ((sq = sc->sc_hba.hba_head) != NULL)
-		(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdb);
-	else
+	if (sc->sc_iwant) {
+		wakeup((caddr_t)&sc->sc_iwant);
+		sc->sc_iwant = 0;
+	} else if ((sq = sc->sc_hba.hba_head) != NULL) {
+		sc->sc_hba.hba_head = sq->sq_forw;
+		(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdbspace);
+	} else
 		sc->sc_hba.hba_busy = 0;
 }
