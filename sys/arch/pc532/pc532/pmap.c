@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  *
- *	$Id: pmap.c,v 1.5 1994/05/03 07:30:33 phil Exp $
+ *	$Id: pmap.c,v 1.6 1994/05/25 00:03:17 phil Exp $
  */
 
 /*
@@ -83,17 +83,19 @@
  *	and to when physical maps must be made correct.
  */
 
-#include "param.h"
-#include "proc.h"
-#include "malloc.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/user.h>
 
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
-/* #include "vm/vm_pageout.h" */
+/* XXX where should this really go? */
+
+vm_offset_t pmap_extract(pmap_t, vm_offset_t);
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -210,6 +212,39 @@ struct msgbuf	*msgbufp;
 
 vm_offset_t KPTphys;
 extern int PDRPDROFF;
+
+/*
+ * Bootstrap memory allocator. This function allows for early dynamic
+ * memory allocation until the virtual memory system has been bootstrapped.
+ * After that point, either kmem_alloc or malloc should be used. This
+ * function works by stealing pages from the (to be) managed page pool,
+ * stealing virtual address space, then mapping the pages and zeroing them.
+ *
+ * It should be used from pmap_bootstrap till vm_page_startup, afterwards
+ * it cannot be used, and will generate a panic if tried. Note that this
+ * memory will never be freed, and in essence it is wired down.
+ */
+void *
+pmap_bootstrap_alloc(size)
+        int size;
+{
+        extern boolean_t vm_page_startup_initialized;
+        vm_offset_t val;
+
+        if (vm_page_startup_initialized)
+                panic("pmap_bootstrap_alloc: called after startup initialized")\
+;
+        size = round_page(size);
+        val = virtual_avail;
+
+        virtual_avail = pmap_map(virtual_avail, avail_start,
+                avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
+        avail_start += size;
+
+        blkclr ((caddr_t) val, size);
+        return ((void *) val);
+}
+
 
 
 /* static */
@@ -1457,11 +1492,11 @@ pmap_activate(pmap, pcbp)
  *	Function:
  *		Returns the physical map handle for the kernel.
  */
-pmap_t
+/* pmap_t
 pmap_kernel()
 {
     	return (kernel_pmap);
-}
+} */
 
 /*
  *	pmap_zero_page zeros the specified (machine independent)
@@ -1525,6 +1560,7 @@ pmap_copy_page(src, dst)
  *		will specify that these pages are to be wired
  *		down (or not) as appropriate.
  */
+void
 pmap_pageable(pmap, sva, eva, pageable)
 	pmap_t		pmap;
 	vm_offset_t	sva, eva;

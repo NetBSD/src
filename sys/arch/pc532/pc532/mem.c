@@ -1,7 +1,6 @@
-/*-
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+/*- Copyright (c) 1988 University of Utah.  Copyright (c) 1982, 1986,
+ *1990 The Regents of the University of California.  All rights
+ *reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -39,26 +38,23 @@
  * from: Utah $Hdr: mem.c 1.13 89/10/08$
  *	@(#)mem.c	7.2 (Berkeley) 5/9/91
  *
- *	mem.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
- */
+ *	mem.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp /
 
 /*
  * Memory special file
  */
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/fcntl.h>
 
-#include "param.h"
-#include "conf.h"
-#include "buf.h"
-#include "systm.h"
-#include "uio.h"
-#include "malloc.h"
+#include <machine/cpu.h>
 
-#include "machine/cpu.h"
-
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <vm/vm.h>
 
 extern        char *vmmap;		/* poor name! */
 
@@ -162,7 +158,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			pmap_enter(pmap_kernel(), vmmap, v,
+			pmap_enter(kernel_pmap, vmmap, v,
 				uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
 				TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
@@ -170,7 +166,7 @@ mmrw(dev, uio, flags)
 			c = MIN(c, (u_int)(NBPG - o));
 			c = MIN(c, (u_int)iov->iov_len);
 			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
+			pmap_remove(kernel_pmap, vmmap, &vmmap[NBPG]);
 			continue;
 
 /* minor device 1 is kernel memory */

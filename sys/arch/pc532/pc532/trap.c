@@ -42,27 +42,24 @@
  * 532 Trap and System call handling
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/acct.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/acct.h>
 #include <sys/kernel.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/vmmeter.h>
-#include "sys/syscall.h"
+#include <sys/syscall.h>
 
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
+#include <vm/vm_param.h>
+#include <vm/pmap.h>
+#include <vm/vm_map.h>
 
-#include "machine/cpu.h"
-#include "machine/trap.h"
-#include "machine/psl.h"
-
-
+#include <machine/cpu.h>
+#include <machine/trap.h>
+#include <machine/psl.h>
 
 
 
