@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.4 2003/04/20 19:49:45 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.5 2003/04/20 21:25:59 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -243,7 +243,8 @@ ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr, int flag,
 	switch (cmd) {
 	case SCBUSIORESET:
 		s = splbio();
-		ahc_reset_channel(ahc, ahc->channel, TRUE);
+		ahc_reset_channel(ahc, channel->chan_channel == 1 ? 'B' : 'A',
+		    TRUE);
 		splx(s);
 		ret = 0;
 		break;
