@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.22.2.1 2004/07/23 06:53:52 tron Exp $	*/
+/*	$NetBSD: console.c,v 1.22.2.2 2004/07/23 06:58:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.22.2.1 2004/07/23 06:53:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.22.2.2 2004/07/23 06:58:42 tron Exp $");
 
 #include "opt_kgdb.h"
 
@@ -102,6 +102,7 @@ consinit()
 			    KBCMDP, PCKBC_KBD_SLOT);
 		}
 #endif
+	case MACH_SGI_IP12:
 #if (NZSC > 0)
 		if ((strlen(consdev) == 9) &&
 		    (!strncmp(consdev, "serial", 6)) &&
@@ -148,8 +149,12 @@ kgdb_port_init()
 # endif	/* (NCOM > 0) */
 
 # if (NZSC > 0)
-	if (mach_type == MACH_SGI_IP20 || mach_type == MACH_SGI_IP22)
+	switch(mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
 		zs_kgdb_init();			/* XXX */
+	}
 # endif
 }
 #endif	/* KGDB */
