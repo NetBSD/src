@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.16 2003/03/04 13:28:20 soren Exp $	*/
+/*	$NetBSD: awacs.c,v 1.17 2003/04/02 03:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -606,8 +606,8 @@ awacs_round_blocksize(h, size)
 	void *h;
 	int size;
 {
-	if (size < NBPG)
-		size = NBPG;
+	if (size < PAGE_SIZE)
+		size = PAGE_SIZE;
 	return size & ~PGOFSET;
 }
 
@@ -913,7 +913,7 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
-	sc->sc_opages = ((char *)end - (char *)start) / NBPG;
+	sc->sc_opages = ((char *)end - (char *)start) / PAGE_SIZE;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_opages > 16)
@@ -923,7 +923,7 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 	va = (vaddr_t)start;
 	len = 0;
 	for (i = sc->sc_opages; i > 0; i--) {
-		len += NBPG;
+		len += PAGE_SIZE;
 		if (len < bsize)
 			intmode = DBDMA_INT_NEVER;
 		else {
@@ -931,9 +931,9 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 			intmode = DBDMA_INT_ALWAYS;
 		}
 
-		DBDMA_BUILD(cmd, DBDMA_CMD_OUT_MORE, 0, NBPG, vtophys(va),
+		DBDMA_BUILD(cmd, DBDMA_CMD_OUT_MORE, 0, PAGE_SIZE, vtophys(va),
 			intmode, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		va += NBPG;
+		va += PAGE_SIZE;
 		cmd++;
 	}
 
