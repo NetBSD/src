@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_node.h,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_node.h,v 1.1 2001/04/10 07:59:05 bp Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_node.h,v 1.1 2001/04/10 07:59:05 bp Exp
  */
 #ifndef _FS_SMBFS_NODE_H_
 #define _FS_SMBFS_NODE_H_
@@ -82,14 +84,14 @@ struct ucred;
 struct uio;
 struct smbfattr;
 
-int  smbfs_inactive(struct vop_inactive_args *);
-int  smbfs_reclaim(struct vop_reclaim_args *);
+int  smbfs_inactive(void *);
+int  smbfs_reclaim(void *);
 int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp);
 u_int32_t smbfs_hash(const u_char *name, int nmlen);
 
-int  smbfs_getpages(struct vop_getpages_args *);
-int  smbfs_putpages(struct vop_putpages_args *);
+int  smbfs_getpages(void *);
+int  smbfs_putpages(void *);
 int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
 int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
 void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);

@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_node.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_node.c,v 1.5 2001/12/20 22:42:26 dillon Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_node.c,v 1.5 2001/12/20 22:42:26 dillon Exp
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +39,7 @@
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
@@ -47,8 +50,8 @@
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_subr.h>
 
-#include <vm/vm.h>
-#include <vm/vm_extern.h>
+#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 /*#include <vm/vm_page.h>
 #include <vm/vm_object.h>*/
 
@@ -57,14 +60,24 @@
 #include <fs/smbfs/smbfs_subr.h>
 
 #define	SMBFS_NOHASH(smp, hval)	(&(smp)->sm_hash[(hval) & (smp)->sm_hashlen])
-#define	smbfs_hash_lock(smp, td)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL, td)
-#define	smbfs_hash_unlock(smp, td)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL, td)
+#define	smbfs_hash_lock(smp)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL)
+#define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
+#ifndef __NetBSD__
 
 extern vop_t **smbfs_vnodeop_p;
 
 MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
+
+#endif /* !NetBSD */
+
+#ifdef __NetBSD__
+#define VI_LOCK(vp) simple_lock(&(vp)->v_interlock)
+#define VI_UNLOCK(vp) simple_unlock(&(vp)->v_interlock)
+#define VLKTIMEOUT      (hz / 20 + 1)
+extern int (**smbfs_vnodeop_p) __P((void *));
+#endif
 
 int smbfs_hashprint(struct mount *mp);
 
@@ -164,7 +177,6 @@ static int
 smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	const char *name, int nmlen, struct smbfattr *fap, struct vnode **vpp)
 {
-	struct thread *td = curthread;	/* XXX */
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smbnode_hashhead *nhpp;
 	struct smbnode *np, *np2, *dnp;
@@ -181,7 +193,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
-		error = vget(vp, LK_EXCLUSIVE, td);
+		error = vget(vp, LK_EXCLUSIVE);
 		if (error == 0)
 			*vpp = vp;
 		return error;
@@ -196,7 +208,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	}
 	hashval = smbfs_hash(name, nmlen);
 retry:
-	smbfs_hash_lock(smp, td);
+	smbfs_hash_lock(smp);
 loop:
 	nhpp = SMBFS_NOHASH(smp, hashval);
 	LIST_FOREACH(np, nhpp, n_hash) {
@@ -205,13 +217,13 @@ loop:
 		    np->n_nmlen != nmlen || bcmp(name, np->n_name, nmlen) != 0)
 			continue;
 		VI_LOCK(vp);
-		smbfs_hash_unlock(smp, td);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, td) != 0)
+		smbfs_hash_unlock(smp);
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
 		*vpp = vp;
 		return 0;
 	}
-	smbfs_hash_unlock(smp, td);
+	smbfs_hash_unlock(smp);
 	/*
 	 * If we don't have node attributes, then it is an explicit lookup
 	 * for an existing vnode.
@@ -244,9 +256,9 @@ loop:
 		SMBERROR("new vnode '%s' born without parent ?\n", np->n_name);
 
 	lockinit(&vp->v_lock, PINOD, "smbnode", VLKTIMEOUT, LK_CANRECURSE);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, td);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	smbfs_hash_lock(smp, td);
+	smbfs_hash_lock(smp);
 	LIST_FOREACH(np2, nhpp, n_hash) {
 		if (np2->n_parent != dnp ||
 		    np2->n_nmlen != nmlen || bcmp(name, np2->n_name, nmlen) != 0)
@@ -257,7 +269,7 @@ loop:
 		goto loop;
 	}
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
-	smbfs_hash_unlock(smp, td);
+	smbfs_hash_unlock(smp);
 	*vpp = vp;
 	return 0;
 }
@@ -285,21 +297,21 @@ smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
  * Free smbnode, and give vnode back to system
  */
 int
-smbfs_reclaim(ap)                     
+smbfs_reclaim(v)                     
+     void *v;
+{
         struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 		struct thread *a_p;
-        } */ *ap;
-{
+        } */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct thread *td = ap->a_td;
 	struct vnode *dvp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
 	
 	SMBVDEBUG("%s,%d\n", np->n_name, vp->v_usecount);
 
-	smbfs_hash_lock(smp, td);
+	smbfs_hash_lock(smp);
 
 	dvp = (np->n_parent && (np->n_flag & NREFPARENT)) ?
 	    np->n_parent->n_vnode : NULL;
@@ -312,7 +324,7 @@ smbfs_reclaim(ap)
 		smp->sm_root = NULL;
 	}
 	vp->v_data = NULL;
-	smbfs_hash_unlock(smp, td);
+	smbfs_hash_unlock(smp);
 	if (np->n_name)
 		smbfs_name_free(np->n_name);
 	FREE(np, M_SMBNODE);
@@ -330,14 +342,15 @@ smbfs_reclaim(ap)
 }
 
 int
-smbfs_inactive(ap)
+smbfs_inactive(v)
+     void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct thread *a_td;
-	} */ *ap;
-{
-	struct thread *td = ap->a_td;
-	struct ucred *cred = td->td_proc->p_ucred;
+	} */ *ap = v;
+	struct proc *p = ap->a_p;
+	struct ucred *cred = p->p_ucred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
@@ -345,13 +358,13 @@ smbfs_inactive(ap)
 
 	SMBVDEBUG("%s: %d\n", VTOSMB(vp)->n_name, vp->v_usecount);
 	if (np->n_opencount) {
-		error = smbfs_vinvalbuf(vp, V_SAVE, cred, td, 1);
-		smb_makescred(&scred, td, cred);
+		error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+		smb_makescred(&scred, p, cred);
 		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
 		   &np->n_mtime, &scred);
 		np->n_opencount = 0;
 	}
-	VOP_UNLOCK(vp, 0, td);
+	VOP_UNLOCK(vp, 0);
 	return (0);
 }
 /*
@@ -366,7 +379,7 @@ smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 	if (vp->v_type == VREG) {
 		if (np->n_size != fap->fa_size) {
 			np->n_size = fap->fa_size;
-			vnode_pager_setsize(vp, np->n_size);
+			uvm_vnp_setsize(vp, np->n_size);
 		}
 	} else if (vp->v_type == VDIR) {
 		np->n_size = 16384; 		/* should be a better way ... */
@@ -374,7 +387,9 @@ smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap)
 		return;
 	np->n_mtime = fap->fa_mtime;
 	np->n_dosattr = fap->fa_attr;
+#ifndef __NetBSD__
 	np->n_attrage = time_second;
+#endif
 	return;
 }
 
@@ -383,11 +398,13 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 {
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
+#ifndef __NetBSD__
 	int diff;
 
 	diff = time_second - np->n_attrage;
 	if (diff > 2)	/* XXX should be configurable */
 		return ENOENT;
+#endif
 	va->va_type = vp->v_type;		/* vnode type (for create) */
 	if (vp->v_type == VREG) {
 		va->va_mode = smp->sm_args.file_mode;	/* files access mode and type */
