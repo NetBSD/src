@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.10 2002/04/10 23:51:08 martin Exp $ 
+ *	$Id: isic_isapnp.c,v 1.11 2002/04/13 10:28:37 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.10 2002/04/10 23:51:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.11 2002/04/13 10:28:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -309,9 +309,7 @@ isic_isapnp_attach(parent, self, aux)
 			break;
 	};
 
-	/* ISAC setup */
-
-	isic_isac_init(sc);
+        sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
 	/* HSCX setup */
 

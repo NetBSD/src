@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.9 2002/04/10 23:51:06 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.10 2002/04/13 10:28:36 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.9 2002/04/10 23:51:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.10 2002/04/13 10:28:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -267,42 +267,15 @@ isic_enable_intr(struct isic_softc *sc, int enabled)
 {
 	if (sc->sc_ipac) {
 		if (enabled) {
-			IPAC_WRITE(IPAC_MASK, 0xc0);
+			isic_isac_init(sc);
 		} else {
 			IPAC_WRITE(IPAC_MASK, 0xff);
 		}
 	} else {
 		if (enabled) {
-			ISAC_WRITE(I_MASK, ISAC_IMASK);
+			isic_isac_init(sc);
 		} else {
 			ISAC_WRITE(I_MASK, 0xff);
 		}
-	}
-	if (enabled) {
-		/* try to clear any pending interrupts */
-		u_int8_t v;
-
-		if (sc->sc_ipac) {
-			v = IPAC_READ(IPAC_ISTA);
-			v = ISAC_READ(I_STAR);
-			if (v & ISAC_ISTA_EXI)
-				v = ISAC_READ(I_EXIR);
-			v = ISAC_READ(I_MODE);
-			v = ISAC_READ(I_ADF2);
-			v = ISAC_READ(I_STAR);
-			if (v & ISAC_ISTA_EXI)
-				v = ISAC_READ(I_EXIR);
-		} else {
-			v = ISAC_READ(I_STAR);
-			if (v & ISAC_ISTA_EXI)
-				v = ISAC_READ(I_EXIR);
-			v = ISAC_READ(I_MODE);
-			v = ISAC_READ(I_ADF2);
-			v = ISAC_READ(I_STAR);
-			if (v & ISAC_ISTA_EXI)
-				v = ISAC_READ(I_EXIR);
-		}
-		if (sc->clearirq)
-			sc->clearirq(sc);
 	}
 }
