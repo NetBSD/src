@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.6 1999/05/22 20:33:56 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@
 
 #include <machine/bus.h>
 
+#include <sparc64/dev/iommuvar.h>
+
 /*
  * Most devices are configured according to information kept in
  * the FORTH PROMs.  In particular, we extract the `name', `reg',
@@ -96,29 +98,20 @@
 
 /* variables per Sbus */
 struct sbus_softc {
-	struct	device sc_dev;		/* base device */
-	bus_space_tag_t	sc_bustag;
-	bus_dma_tag_t	sc_dmatag;
-	int	sc_clockfreq;		/* clock frequency (in Hz) */
-	struct	sbusdev *sc_sbdev;	/* list of all children */
-	struct	sbus_range *sc_range;
-	int	sc_nrange;
-	int	sc_burst;		/* burst transfer sizes supported */
-	int	*sc_intr2ipl;		/* Interrupt level translation */
-	int	*sc_intr_compat;	/* `intr' property to sbus compat */
+	struct	device		sc_dev;		/* base device */
+	bus_space_tag_t		sc_bustag;
+	bus_dma_tag_t		sc_dmatag;
+	int			sc_clockfreq;	/* clock frequency (in Hz) */
+	struct sbusdev		*sc_sbdev;	/* list of all children */
+	struct sbus_range	*sc_range;
+	int			sc_nrange;
+	int			sc_burst;	/* burst transfer sizes supported */
+	int			*sc_intr2ipl;	/* Interrupt level translation */
+	int			*sc_intr_compat;/* `intr' property to sbus compat */
 
-	struct sysioreg* sc_sysio;	/* SBUS control registers */
-	paddr_t		sc_ptsb;	/* TSB physaddr */
-        int64_t		*sc_tsb;	/* TSB vaddr */
-	int		sc_tsbsize;
-	u_int		sc_pagesize;
-	u_int		sc_dvmabase;
-	struct extent	*sc_dvmamap;	/* DVMA map for this instance */
-	int		sc_ign;		/* Interrupt group number for this sysio */
-
-	paddr_t		sc_flushpa;	/* used to flush the SBUS */
-	volatile			/* Needs to be volatile or egcs optimizes away loads */
-	int64_t		sc_flush;
+	struct sysioreg		*sc_sysio;	/* SBUS control registers */
+	int			sc_ign;		/* Interrupt group number for this sysio */
+	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
 };
 
 #endif /* _SBUS_VAR_SPARC64_H_ */
