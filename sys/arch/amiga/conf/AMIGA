@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.67 2004/06/26 07:34:43 abs Exp $
+# $NetBSD: AMIGA,v 1.68 2004/06/28 21:09:22 bouyer Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.22 2004/06/26 07:32:05 abs Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.23 2004/06/28 21:07:47 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.68 $"
 
 
 maxusers	8
@@ -159,6 +159,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #
 # Support for various kernel options

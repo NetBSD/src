@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.31 2004/06/26 07:34:43 abs Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.32 2004/06/28 21:10:09 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.16 2003/12/14 01:32:01 thorpej Exp $
-#		NetBSD: GENERIC.in,v 1.37 2004/06/26 07:32:05 abs Exp $
+#		NetBSD: GENERIC.in,v 1.38 2004/06/28 21:07:47 bouyer Exp $
 include "arch/atari/conf/std.milan"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -81,6 +81,9 @@ options EXEC_AOUT # a.out format executables
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages
 options SYSVSEM # System V semaphores
+
+options P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
 options KTRACE # Add kernel tracing system call
 options SYSTRACE # system call vetting via systrace(1)
 options DIAGNOSTIC # Add additional error checking code

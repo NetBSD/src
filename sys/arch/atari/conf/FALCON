@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.61 2004/06/26 07:34:43 abs Exp $
+# $NetBSD: FALCON,v 1.62 2004/06/28 21:10:09 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.37 2004/06/26 07:32:05 abs Exp $
+#		NetBSD: GENERIC.in,v 1.38 2004/06/28 21:07:47 bouyer Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -79,6 +79,9 @@ options EXEC_AOUT # a.out format executables
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages
 options SYSVSEM # System V semaphores
+
+options P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
 options KTRACE # Add kernel tracing system call
 options SYSTRACE # system call vetting via systrace(1)
 options DIAGNOSTIC # Add additional error checking code
