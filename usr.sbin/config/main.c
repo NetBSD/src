@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2000/12/12 17:49:20 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2000/12/14 22:14:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -905,16 +905,10 @@ badstar(void)
 void
 setupdirs(void)
 {
-#define KERNNAMEOPTPREFIX	"_KERNEL_"
-	char		*p, buf[sizeof(KERNNAMEOPTPREFIX) + PATH_MAX + 1];
-	const char	*name;
-	struct stat	 st;
+	struct stat st;
 
-			/*
-			 * srcdir must be specified if builddir is not
-			 * specified or if no configuration filename was
-			 * specified.
-			 */
+	/* srcdir must be specified if builddir is not specified or if
+	 * no configuration filename was specified. */
 	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir) {
 		error("source directory must be specified");
 		exit(1);
@@ -946,21 +940,6 @@ setupdirs(void)
 			      srcdir);
 		exit(2);
 	}
-
-			/*
-			 * add option `KERNEL_foo', where `foo' is the
-			 * basename of either the build dir (if set)
-			 * or the basename of the config file
-			 */
-	name = (builddir) ? builddir : conffile;
-	if ((p = strrchr(name, '/')) != NULL)
-		name = p + 1;
-	snprintf(buf, sizeof(buf), "%s%s", KERNNAMEOPTPREFIX, name);
-	for (p = buf; *p; p++) {		/* prevent pain... */
-		if (! isalnum(*p))
-			*p = '_';
-	}
-	(void)addoption(intern(buf), NULL);
 }
 
 /*
