@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.27.4.1 2002/06/11 01:32:11 lukem Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.27.4.2 2002/06/11 16:23:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.27.4.1 2002/06/11 01:32:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.27.4.2 2002/06/11 16:23:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,7 +666,20 @@ const struct puc_device_description puc_devices[] = {
                 { PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
             },
         },
-
+	{   "Titan PCI-800L",
+	    {	0x14d2,	0x8080,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x28, COM_FREQ * 8 },
+	    },
+	},
 	/* NEC PK-UG-X001 K56flex PCI Modem card.
 	   NEC MARTH bridge chip and Rockwell RCVDL56ACF/SP using. */
 	{   "NEC PK-UG-X001 K56flex PCI Modem",
