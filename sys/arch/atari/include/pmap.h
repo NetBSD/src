@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1996/07/20 20:52:42 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1996/11/06 15:33:56 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -166,6 +166,7 @@ struct pmap	kernel_pmap_store;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 void	pmap_bootstrap __P((vm_offset_t, u_int, u_int));
+void	pmap_changebit __P((vm_offset_t, int, boolean_t));
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */
