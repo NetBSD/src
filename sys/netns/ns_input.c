@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.5 1994/06/29 06:41:41 cgd Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.6 1994/09/20 06:42:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -81,7 +81,6 @@ long	ns_pexseq;
 
 ns_init()
 {
-	extern struct timeval time;
 
 	ns_broadhost = * (union ns_host *) allones;
 	ns_broadnet = * (union ns_net *) allones;
