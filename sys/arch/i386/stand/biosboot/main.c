@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1997/09/17 19:39:37 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1997/09/20 12:36:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -205,8 +205,11 @@ print_banner(void)
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
-	printf("Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-	    "Press return to boot now, any other key for boot menu\n");
+	printf(
+#ifdef COMPAT_OLDBOOT
+	       "Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
+#endif
+	       "Press return to boot now, any other key for boot menu\n");
 }
 
 
