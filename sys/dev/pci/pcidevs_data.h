@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.179 1999/12/04 05:43:02 castor Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.180 1999/12/15 11:55:36 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp 
+ *	NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp 
  */
 
 /*
@@ -1474,6 +1474,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RoadRunner Gig-E Interface",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 2",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
 	    0,
 	    "ESS Technology Inc",
@@ -2850,13 +2856,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_AMD971,
 	    0,
-	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
+	    "Solidum Systems Corp.",
 	    "SNP8023: AMD 971",
 	},
 	{
 	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_CLASS802,
 	    0,
-	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
+	    "Solidum Systems Corp.",
 	    "SNP8023: Classifier Engine",
 	},
 	{
@@ -6442,9 +6448,15 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_TERRATEC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "TerraTec Electronic",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_SOLIDUM, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
+	    "Solidum Systems Corp.",
 	    NULL,
 	},
 	{

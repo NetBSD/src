@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.181 1999/12/04 05:43:02 castor Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.182 1999/12/15 11:55:35 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp 
+ *	NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp 
  */
 
 /*
@@ -526,7 +526,8 @@
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
-#define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. www.solidum.com/pcisig.html */
+#define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
+#define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -904,6 +905,7 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
 
 /* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH_MAESTRO2	0x1968		/* Maestro 2 */
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* Solo-1 PCI AudioDrive */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2E	0x1978		/* Maestro 2E */
 
