@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtaip.c,v 1.2 1998/01/09 06:06:32 perry Exp $	*/
+/*	$NetBSD: clk_trimtaip.c,v 1.3 1998/04/01 15:01:21 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_trimtaip.c,v 1.4 1997/01/19 12:44:41 kardel Exp
@@ -45,15 +45,18 @@ static struct format trimsv6_fmt =
   0
 };
 
-static unsigned long cvt_trimtaip();
+
+
+/* clk_trimtaip.c */
+static u_long cvt_trimtaip P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_trimtaip =
 {
-  (unsigned long (*)())0,	/* no input handling */
+  NULL,				/* no input handling */
   cvt_trimtaip,			/* Trimble conversion */
   syn_simple,			/* easy time stamps for RS232 (fallback) */
   pps_simple,			/* easy PPS monitoring */
-  (unsigned long (*)())0,	/* no time code synthesizer monitoring */
+  NULL,				/* no time code synthesizer monitoring */
   (void *)&trimsv6_fmt,		/* conversion configuration */
   "Trimble SV6/TAIP",
   37,				/* string buffer */
@@ -65,13 +68,15 @@ clockformat_t clock_trimtaip =
   '\0'
 };
 
-static unsigned long
-cvt_trimtaip(buffer, size, format, clock)
+static u_long
+cvt_trimtaip(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void		 *vf;
   register clocktime_t   *clock;
+  register void		 *vt;
 {
+  register struct format *format = vf;
   long gpsfix;
   u_char calc_csum = 0;
   long   recv_csum;

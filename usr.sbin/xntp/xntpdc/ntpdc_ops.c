@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.3 1998/03/06 18:17:26 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.4 1998/04/01 15:01:25 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -30,6 +30,7 @@ static	void	peers		P((struct parse *, FILE *));
 static	void	dmpeers		P((struct parse *, FILE *));
 static	void	dopeers		P((struct parse *, FILE *, int));
 static	void	printpeer	P((struct info_peer *, FILE *));
+static	char*	refid_string	P((u_int32, int));
 static	void	showpeer	P((struct parse *, FILE *));
 static	void	peerstats	P((struct parse *, FILE *));
 static	void	loopinfo	P((struct parse *, FILE *));
@@ -48,8 +49,8 @@ static	void	set		P((struct parse *, FILE *));
 static	void	sys_clear	P((struct parse *, FILE *));
 static	void	doset		P((struct parse *, FILE *, int));
 static	void	reslist		P((struct parse *, FILE *));
-static	void	restrict	P((struct parse *, FILE *));
-static	void	unrestrict	P((struct parse *, FILE *));
+static	void	restrict_addr	P((struct parse *, FILE *));
+static	void	unrestrict_addr	P((struct parse *, FILE *));
 static	void	delrestrict	P((struct parse *, FILE *));
 static	void	do_restrict	P((struct parse *, FILE *, int));
 static	void	monlist		P((struct parse *, FILE *));
@@ -135,12 +136,12 @@ struct xcmd opcmds[] = {
 	{ "reslist",	reslist,	{ NO, NO, NO, NO },
 					{ "", "", "", "" },
 			"display the server's restrict list" },
-	{ "restrict",	restrict,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
+	{ "restrict",	restrict_addr,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
 		{ "address", "mask",
 		"ntpport|ignore|noserve|notrust|noquery|nomodify|nopeer",
 		"..." },
 			"create restrict entry/add flags to entry" },
-	{ "unrestrict", unrestrict,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
+	{ "unrestrict", unrestrict_addr,{ ADD, ADD, NTP_STR, OPT|NTP_STR },
 		{ "address", "mask",
 		"ntpport|ignore|noserve|notrust|noquery|nomodify|nopeer",
 		"..." },
@@ -1371,7 +1372,7 @@ reslist(pcmd, fp)
  * restrict - create/add a set of restrictions
  */
 static void
-restrict(pcmd, fp)
+restrict_addr(pcmd, fp)
 	struct parse *pcmd;
 	FILE *fp;
 {
@@ -1383,7 +1384,7 @@ restrict(pcmd, fp)
  * unrestrict - remove restriction flags from existing entry
  */
 static void
-unrestrict(pcmd, fp)
+unrestrict_addr(pcmd, fp)
 	struct parse *pcmd;
 	FILE *fp;
 {

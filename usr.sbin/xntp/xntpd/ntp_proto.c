@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.3 1998/03/06 18:17:21 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.4 1998/04/01 15:01:22 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 3 protocol machinery
@@ -105,6 +105,7 @@ extern int peer_hash_count[];
 extern int debug;
 
 static	void	clear_all	P((void));
+static	int	default_get_precision P((void));
 
 /*
  * transmit - Transmit Procedure. See Section 3.4.2 of the
@@ -358,7 +359,7 @@ receive(rbufp)
 	register struct peer *peer;
 	register struct pkt *pkt;
 	register u_char hismode;
-	int restrict;
+	int restrict_addr;
 	int has_mac;
 	int trustable;
 	int is_authentic;
@@ -379,8 +380,8 @@ receive(rbufp)
 	 * Get the restrictions on this guy.  If we're to ignore him,
 	 * go no further.
 	 */
-	restrict = restrictions(&rbufp->recv_srcadr);
-	if (restrict & RES_IGNORE)
+	restrict_addr = restrictions(&rbufp->recv_srcadr);
+	if (restrict_addr & RES_IGNORE)
 		return;
 
 	/*
@@ -2245,7 +2246,7 @@ fast_xmit(rbufp, rmode, authentic)
  * happen to hit a fat interrupt, we do this for MINLOOPS times and
  * keep the minimum value obtained.
  */  
-int default_get_precision()
+static int default_get_precision()
 {
 	struct timeval tp;
 #if !defined(SYS_WINNT) && !defined(VMS) && !defined(_SEQUENT_)

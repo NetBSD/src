@@ -525,6 +525,9 @@ static  void    arc_shutdown    P((int, struct peer *));
 static  void    arc_receive     P((struct recvbuf *));
 static  void    arc_poll        P((int, struct peer *));
 
+static int space_left P((struct arcunit *));
+static int send_slow  P((struct arcunit *, int, char *));
+
 /*
  * Transfer vector
  */

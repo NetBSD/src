@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.5 1998/03/30 02:27:57 mrg Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.6 1998/04/01 15:01:25 christos Exp $	*/
 
 /*
  * xntpdc - control and monitor your xntpd daemon
@@ -92,6 +92,11 @@ static	void	warning		P((char *, char *, char *));
 static	void	error		P((char *, char *, char *));
 static	u_int32	getkeyid	P((char *));
 
+#ifndef NO_MAIN_ALLOWED
+int main P((int, char *[]));
+#else
+int xntpdcmain P((int, char *[]));
+#endif
 
 
 /*
@@ -262,9 +267,7 @@ void clear_globals()
 /*
  * main - parse arguments and handle options
  */
-#if !defined(VMS)
 int
-#endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
 main
 #else

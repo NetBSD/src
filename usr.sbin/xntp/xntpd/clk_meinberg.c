@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.2 1998/01/09 06:06:29 perry Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.3 1998/04/01 15:01:20 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_meinberg.c,v 3.23 1997/01/19 12:44:38 kardel Exp
@@ -144,17 +144,18 @@ static struct format meinberg_fmt[] =
   }
 };
 
-static u_long cvt_meinberg();
-static u_long cvt_mgps();
+
+static u_long cvt_meinberg P((char *, unsigned int, void *, clocktime_t *, void *));
+static u_long cvt_mgps P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_meinberg[] =
 {
   {
-    (unsigned long (*)())0,	/* no input handling */
+    NULL,			/* no input handling */
     cvt_meinberg,		/* Meinberg conversion */
     syn_simple,			/* easy time stamps for RS232 (fallback) */
     pps_simple,			/* easy PPS monitoring */
-    (u_long (*)())0,		/* no time code synthesizer monitoring */
+    NULL,			/* no time code synthesizer monitoring */
     (void *)&meinberg_fmt[0],	/* conversion configuration */
     "Meinberg Standard",	/* Meinberg simple format - beware */
     32,				/* string buffer */
@@ -166,11 +167,11 @@ clockformat_t clock_meinberg[] =
     '\0'
   },
   {
-    (unsigned long (*)())0,	/* no input handling */
+    NULL,			/* no input handling */
     cvt_meinberg,		/* Meinberg conversion */
     syn_simple,			/* easy time stamps for RS232 (fallback) */
     pps_simple,			/* easy PPS monitoring */
-    (u_long (*)())0,		/* no time code synthesizer monitoring */
+    NULL,			/* no time code synthesizer monitoring */
     (void *)&meinberg_fmt[1],	/* conversion configuration */
     "Meinberg Extended",	/* Meinberg enhanced format */
     32,				/* string buffer */
@@ -182,11 +183,11 @@ clockformat_t clock_meinberg[] =
     '\0'
   },
   {
-    (unsigned long (*)())0,	/* no input handling */
+    NULL,			/* no input handling */
     cvt_mgps,			/* Meinberg GPS166 conversion */
     syn_simple,			/* easy time stamps for RS232 (fallback) */
     pps_simple,			/* easy PPS monitoring */
-    (u_long (*)())0,		/* no time code synthesizer monitoring */
+    NULL,			/* no time code synthesizer monitoring */
     (void *)&meinberg_fmt[2],	/* conversion configuration */
     "Meinberg GPS Extended",	/* Meinberg FAU GPS format */
     70,				/* string buffer */
@@ -205,12 +206,14 @@ clockformat_t clock_meinberg[] =
  * convert simple type format
  */
 static u_long
-cvt_meinberg(buffer, size, format, clock)
+cvt_meinberg(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void          *vf;
   register clocktime_t   *clock;
+  register void          *vt;
 {
+  register struct format *format = vf;
   if (!Strok(buffer, format->fixed_string))
     {
       return CVT_NONE;
@@ -334,12 +337,14 @@ cvt_meinberg(buffer, size, format, clock)
  * convert Meinberg GPS format
  */
 static u_long
-cvt_mgps(buffer, size, format, clock)
+cvt_mgps(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void          *vf;
   register clocktime_t   *clock;
+  register void          *vt;
 {
+  register struct format *format = vf;
   if (!Strok(buffer, format->fixed_string))
     {
       return CVT_NONE;

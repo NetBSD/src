@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.h,v 1.2 1998/01/09 06:06:18 perry Exp $	*/
+/*	$NetBSD: parse.h,v 1.3 1998/04/01 15:01:17 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/include/parse.h,v 3.31 1996/12/01 16:02:46 kardel Exp
@@ -337,11 +337,16 @@ typedef struct clocktime clocktime_t;
 
 struct clockformat
 {
-  u_long	(*input)();	/* special input protocol - implies fixed format */
-  u_long        (*convert)();	/* conversion routine */
-  void          (*syncevt)();	/* routine for handling RS232 sync events (time stamps) */
-  u_long        (*syncpps)();	/* PPS input routine */
-  u_long        (*synth)();	/* time code synthesizer */
+  u_long	(*input)	/* special input protocol - implies fixed format */
+	P((parse_t *, unsigned int, timestamp_t *));
+  u_long        (*convert)	/* conversion routine */
+	P((char *, unsigned int, void *, clocktime_t *, void *));
+  void          (*syncevt)	/* routine for handling RS232 sync events (time stamps) */
+	P((parse_t *, timestamp_t *, void *, u_long));
+  u_long        (*syncpps)	/* PPS input routine */
+	P((parse_t *, int, timestamp_t *));
+  u_long        (*synth)	/* time code synthesizer */
+	P((parse_t *, timestamp_t *));
   void           *data;		/* local parameters */
   char           *name;		/* clock format name */
   unsigned short  length;	/* maximum length of data packet */
@@ -373,7 +378,7 @@ extern int Stoi P((char *, long *, int));
 
 extern time_t parse_to_unixtime P((clocktime_t *, u_long *));
 extern u_long updatetimeinfo P((parse_t *, time_t, u_long, u_long));
-extern void syn_simple P((parse_t *, timestamp_t *, struct format *, u_long));
+extern void syn_simple P((parse_t *, timestamp_t *, void *, u_long));
 extern u_long pps_simple P((parse_t *, int, timestamp_t *));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.4 1998/03/30 02:27:57 mrg Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.5 1998/04/01 15:01:23 christos Exp $	*/
 
 #define	HAVE_POSIX_MMAN
 /*
@@ -171,6 +171,12 @@ static	RETSIGTYPE	no_debug	P((int));
 
 #ifdef NO_MAIN_ALLOWED
 CALL(xntpd,"xntpd",xntpdmain);
+#endif
+
+#ifndef NO_MAIN_ALLOWED
+int main P((int, char *[]));
+#else
+int xntpdmain P((int, char *[]));
 #endif
 
 /*

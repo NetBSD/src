@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.5 1998/03/30 02:27:57 mrg Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.6 1998/04/01 15:01:18 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -269,6 +269,12 @@ static	int	assoccmp	P((struct association *, struct association *));
 #endif /* sgi || bsdi */
 
 
+#ifndef NO_MAIN_ALLOWED
+int main P((int, char *[]));
+#else
+int ntpqmain P((int, char *[]));
+#endif
+
 /*
  * Built-in commands we understand
  */
@@ -455,9 +461,7 @@ void clear_globals()
 /*
  * main - parse arguments and handle options
  */
-#if !defined(VMS)
 int
-#endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
 main
 #else

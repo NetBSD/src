@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.4 1998/04/01 15:01:24 christos Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000 Most Accurate Clock
@@ -135,6 +135,8 @@ static	int	heath_start	P((int, struct peer *));
 static	void	heath_shutdown	P((int, struct peer *));
 static	void	heath_receive	P((struct recvbuf *));
 static	void	heath_poll	P((int, struct peer *));
+static	int	comparetm 	P((struct tm *, struct tm *));
+static	time_t	invert		P((struct tm *, struct tm *(*)(const time_t *)));
 
 /*
  * Transfer vector
@@ -182,14 +184,14 @@ struct tm *a, *b;
         return 0;
 }
 
-static long
+static time_t
 invert(x, func)
 struct tm *x;
-struct tm *(*func)();
+struct tm *(*func) P((const time_t *));
 {
         struct tm *y;
         int result;
-        long trial;
+        time_t trial;
         long lower=0L;
         long upper=(long)((unsigned long)(~lower) >> 1);
 

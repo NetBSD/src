@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.3 1998/03/06 18:17:18 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.4 1998/04/01 15:01:17 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes for xntpd.
@@ -178,7 +178,7 @@ extern	void	process_private	P((struct recvbuf *, int));
 /* ntp_restrict.c */
 extern	void	init_restrict	P((void));
 extern	int	restrictions	P((struct sockaddr_in *));
-extern	void	restrict	P((int, struct sockaddr_in *, struct sockaddr_in *, int, int));
+extern	void	restrict_addr	P((int, struct sockaddr_in *, struct sockaddr_in *, int, int));
 
 /* ntp_timer.c */
 extern	void	init_timer	P((void));

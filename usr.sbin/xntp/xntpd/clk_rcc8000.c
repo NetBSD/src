@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rcc8000.c,v 1.2 1998/01/09 06:06:30 perry Exp $	*/
+/*	$NetBSD: clk_rcc8000.c,v 1.3 1998/04/01 15:01:20 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_rcc8000.c,v 3.5 1997/01/19 12:44:40 kardel Exp
@@ -54,15 +54,15 @@ static struct format rcc8000_fmt =
   0 
 };
 
-static unsigned long cvt_rcc8000();
+static u_long cvt_rcc8000 P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_rcc8000 =
 {
-  (unsigned long (*)())0,       /* no input handling */
-  cvt_rcc8000,		/* Radiocode clock conversion */
+  NULL,				/* no input handling */
+  cvt_rcc8000,			/* Radiocode clock conversion */
   syn_simple,			/* easy time stamps for RS232 (fallback) */
-  (unsigned long (*)())0,       /* no direct PPS monitoring */
-  (unsigned long (*)())0,	/* no time code synthesizer monitoring */
+  NULL,				/* no direct PPS monitoring */
+  NULL,				/* no time code synthesizer monitoring */
   (void *)&rcc8000_fmt,		/* conversion configuration */
   "Radiocode RCC8000",
   31,				/* string buffer */
@@ -75,12 +75,14 @@ clockformat_t clock_rcc8000 =
 };
 
 static unsigned long
-cvt_rcc8000(buffer, size, format, clock)
+cvt_rcc8000(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void          *vf;
   register clocktime_t   *clock;
+  register void          *vt;
 {
+  register struct format *format = vf;
   if (!Strok(buffer, format->fixed_string)) return CVT_NONE;
 #define	OFFS(x) format->field_offsets[(x)].offset
 #define STOI(x, y) Stoi(&buffer[OFFS(x)], y, format->field_offsets[(x)].length)

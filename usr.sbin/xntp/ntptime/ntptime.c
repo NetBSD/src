@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.7 1998/03/30 02:27:57 mrg Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.8 1998/04/01 15:01:18 christos Exp $	*/
 
 /*
  * NTP test program
@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <unistd.h>
 #include <errno.h>
 #include <setjmp.h>
 #include "ntp_fp.h"
@@ -89,6 +90,8 @@ static volatile int pll_control; /* (0) daemon, (1) kernel loop */
 char* progname;
 static char optargs[] = "cde:f:hm:o:rs:t:";
 
+int main P((int, char *[]));
+
 int
 main(argc, argv)
      int argc;
@@ -106,6 +109,11 @@ main(argc, argv)
   int errflg	= 0;
   int cost	= 0;
   int rawtime	= 0;
+
+#ifdef __GNUC__	/* Avoid longjmp register clobbering */
+  (void) &cost;
+  (void) &rawtime;
+#endif
 
   memset((char *)&ntx, 0, sizeof(ntx));
   progname = argv[0];
@@ -323,7 +331,7 @@ main(argc, argv)
     exit(1);
   }
 #endif
-  exit(0);
+  return(0);
 }
 
 #ifdef SIGSYS

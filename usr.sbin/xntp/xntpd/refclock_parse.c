@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.4 1998/04/01 15:01:24 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/xntpd/refclock_parse.c,v 3.103 1997/07/12 15:35:16 kardel Exp
@@ -195,19 +195,30 @@ struct	refclock refclock_parse = {
  ** function vector for dynamically binding io handling mechanism
  **/
 
+struct parseunit;
 typedef struct bind
 {
   char   *bd_description;	/* name of type of binding */
-  int	(*bd_init)();		/* initialize */
-  void	(*bd_end)();		/* end */
-  int   (*bd_setcs)();		/* set character size */
-  int	(*bd_disable)();	/* disable */
-  int	(*bd_enable)();		/* enable */
-  int	(*bd_getfmt)();		/* get format */
-  int	(*bd_setfmt)();		/* setfmt */
-  int	(*bd_timecode)();	/* get time code */
-  void	(*bd_receive)();	/* receive operation */
-  void	(*bd_poll)();		/* poll operation */
+  int	(*bd_init)		/* initialize */
+	P((struct parseunit *));
+  void	(*bd_end)		/* end */
+	P((struct parseunit *));
+  int   (*bd_setcs)		/* set character size */
+	P((struct parseunit *, parsectl_t *));
+  int	(*bd_disable)		/* disable */
+	P((struct parseunit *));
+  int	(*bd_enable)		/* enable */
+	P((struct parseunit *));
+  int	(*bd_getfmt)		/* get format */
+	P((struct parseunit *, parsectl_t *));
+  int	(*bd_setfmt)		/* setfmt */
+	P((struct parseunit *, parsectl_t *));
+  int	(*bd_timecode)		/* get time code */
+	P((struct parseunit *, parsectl_t *));
+  void	(*bd_receive)	/* receive operation */
+	P((struct recvbuf *));
+  void	(*bd_poll)		/* poll operation */
+	P((struct parseunit *));
 } bind_t;
 
 #define PARSE_END(_X_)			(*(_X_)->binding->bd_end)(_X_)
@@ -399,10 +410,10 @@ typedef struct poll_info
 } poll_info_t;
 
 #define NO_CL_FLAGS	0
-#define NO_POLL		(void (*)())0
-#define NO_INIT		(int  (*)())0
-#define NO_END		(void (*)())0
-#define NO_EVENT	(void (*)())0
+#define NO_POLL		(void (*) P((struct parseunit *)))0
+#define NO_INIT		(int  (*) P((struct parseunit *)))0
+#define NO_END		(void (*) P((struct parseunit *)))0
+#define NO_EVENT	(void (*) P((struct parseunit *, int)))0
 #define NO_DATA		(void *)0
 #define NO_FORMAT	""
 #define NO_PPSDELAY     0
@@ -766,10 +777,14 @@ static poll_info_t rcc8000_pollinfo = { RCC_POLLRATE, RCC_POLLCMD, RCC_CMDSIZE }
 static struct parse_clockinfo
 {
   u_long  cl_flags;		/* operation flags (io modes) */
-  void  (*cl_poll)();		/* active poll routine */
-  int   (*cl_init)();		/* active poll init routine */
-  void  (*cl_event)();		/* special event handling (e.g. reset clock) */
-  void  (*cl_end)();		/* active poll end routine */
+  void  (*cl_poll)		/* active poll routine */
+	P((struct parseunit *));
+  int   (*cl_init)		/* active poll init routine */
+	P((struct parseunit *));
+  void  (*cl_event)		/* special event handling (e.g. reset clock) */
+	P((struct parseunit *, int));
+  void  (*cl_end)		/* active poll end routine */
+	P((struct parseunit *));
   void   *cl_data;		/* local data area for "poll" mechanism */
   u_fp    cl_rootdelay;		/* rootdelay */
   u_long  cl_basedelay;		/* current offset - unsigned l_fp fractional part */
@@ -1262,6 +1277,15 @@ static int  local_setfmt   P((struct parseunit *, parsectl_t *));
 static int  local_timecode P((struct parseunit *, parsectl_t *));
 static void local_receive  P((struct recvbuf *));
 static void local_poll     P((struct parseunit *));
+
+static bind_t *init_iobinding P((struct parseunit *));
+static char *parsestate P((u_long, char *));
+static char *parsestatus P((u_long, char *));
+static char *clockstatus P((u_long));
+static char *mkascii P((char *, long, char *, long));
+static void parse_statistics P((struct parseunit *));
+static void cparse_statistics P((struct peer *));
+
 
 static bind_t io_bindings[] =
 {
@@ -4097,7 +4121,15 @@ struct txbuf
   u_char *txt;			/* pointer to actual data buffer */
 };
 
-void
+static void sendcmd  P((struct txbuf *, u_char));
+static void sendbyte P((struct txbuf *, u_char));
+static void sendetx  P((struct txbuf *, struct parseunit *));
+#if 0
+static void sendint  P((struct txbuf *, int));
+#endif
+static void sendflt  P((struct txbuf *, double));
+
+static void
 sendcmd(buf, c)
   struct txbuf *buf;
   u_char c;
@@ -4107,7 +4139,8 @@ sendcmd(buf, c)
   buf->idx = 2;
 }
 
-void sendbyte(buf, b)
+static void
+sendbyte(buf, b)
   struct txbuf *buf;
   u_char b;
 {
@@ -4116,7 +4149,7 @@ void sendbyte(buf, b)
   buf->txt[buf->idx++] = b;
 }
 
-void
+static void
 sendetx(buf, parse)
   struct txbuf *buf;
   struct parseunit *parse;
@@ -4135,7 +4168,8 @@ sendetx(buf, parse)
     }
 }
 
-void  
+#if 0
+static void  
 sendint(buf, a)
   struct txbuf *buf;
   int a;
@@ -4144,8 +4178,9 @@ sendint(buf, a)
   sendbyte(buf, (a>>8) & 0xff);
   sendbyte(buf, a & 0xff);
 }
+#endif
 
-void
+static void
 sendflt(buf, a)
   struct txbuf *buf;
   float a;
