@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.15 1999/12/13 16:22:56 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.16 1999/12/13 17:05:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -514,9 +514,13 @@ explore_fqdn(pai, hostname, servname, res)
 	struct hostent *hp;
 	int h_error;
 	int af;
-	char *ap = NULL;
+	char **aplist = NULL, *apbuf = NULL;
+	char *ap;
 	struct addrinfo sentinel, *cur;
 	int i;
+#ifndef USE_GETIPNODEBY
+	int naddrs;
+#endif
 	const struct afd *afd;
 	int error;
 
@@ -582,19 +586,37 @@ explore_fqdn(pai, hostname, servname, res)
 	if (hp == NULL)
 		goto free;
 
-	ap = malloc(hp->h_length);
-	if (ap == NULL) {
+#ifdef USE_GETIPNODEBY
+	aplist = hp->h_addr_list;
+#else
+	/*
+	 * hp will be overwritten if we use gethostbyname2().
+	 * always deep copy for simplification.
+	 */
+	for (naddrs = 0; hp->h_addr_list[naddrs] != NULL; naddrs++)
+		;
+	naddrs++;
+	aplist = (char **)malloc(sizeof(aplist[0]) * naddrs);
+	apbuf = (char *)malloc(hp->h_length * naddrs);
+	if (aplist == NULL || apbuf == NULL) {
 		error = EAI_MEMORY;
 		goto free;
 	}
+	memset(aplist, 0, sizeof(aplist[0]) * naddrs);
+	for (i = 0; i < naddrs; i++) {
+		if (hp->h_addr_list[i] == NULL) {
+			aplist[i] = NULL;
+			continue;
+		}
+		memcpy(&apbuf[i * hp->h_length], hp->h_addr_list[i],
+			hp->h_length);
+		aplist[i] = &apbuf[i * hp->h_length];
+	}
+#endif
 
-	for (i = 0; hp->h_addr_list[i] != NULL; i++) {
-		/*
-		 * hp will be overwritten if we use gethostbyname2().
-		 * always deep copy for simplification.
-		 */
+	for (i = 0; aplist[i] != NULL; i++) {
 		af = hp->h_addrtype;
-		memcpy(ap, hp->h_addr_list[i], hp->h_length);
+		ap = aplist[i];
 		if (af == AF_INET6
 		 && IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
 			af = AF_INET;
@@ -635,8 +657,10 @@ free:
 	if (hp)
 		freehostent(hp);
 #endif
-	if (ap)
-		free(ap);
+	if (aplist)
+		free(aplist);
+	if (apbuf)
+		free(apbuf);
 	if (sentinel.ai_next)
 		freeaddrinfo(sentinel.ai_next);
 	return error;
