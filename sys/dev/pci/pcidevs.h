@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.687 2005/01/18 06:24:18 tsubai Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.688 2005/01/23 03:07:05 fredb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.686 2005/01/18 06:23:01 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.687 2005/01/23 03:06:07 fredb Exp 
  */
 
 /*
@@ -1506,6 +1506,7 @@
 #define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
 #define	PCI_PRODUCT_GALILEO_SKNET	0x4320		/* SK-NET Gigabit Ethernet */
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_GALILEO_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64360	0x6460		/* MV6436x System Controller */
