@@ -1,4 +1,4 @@
-/*	$KAME: handler.h,v 1.36 2001/01/26 04:02:46 thorpej Exp $	*/
+/*	$KAME: handler.h,v 1.37 2001/02/06 16:28:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -371,7 +371,6 @@ extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
 	struct sockaddr *));
-extern void purgeph1 __P((struct ph1handle *));
 extern vchar_t *dumpph1 __P((void));
 extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));

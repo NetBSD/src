@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.73 2001/01/26 10:16:26 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.76 2001/02/22 01:11:42 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -138,8 +138,16 @@ See
 .Sx Pre-shared key File .
 .It Ic path certificate Ar path ;
 .Xr racoon 8
-will search this directory if a certificate or certificate request
-is received.
+will search this directory if a certificate or certificate request is received.
+.It Ic path backupsa Ar file ;
+specifies a file to be stored a SA information which is negotiated by racoon.
+.Xr racoon 8
+will install SA(s) from the file with a boot option
+.Fl B .
+The file is increasing because
+.Xr racoon 8
+simply add a SA to the file at the moment.
+You should maintain the file manually.
 .El
 .\"
 .Ss File Include
@@ -563,6 +571,8 @@ and
 .Ic debug2 .
 The default is
 .Ic notify .
+If you put too high logging level on slower machines,
+IKE negotiation can fail due to timing constraint changes.
 .El
 .\"
 .Ss Specifying the way to pad
@@ -589,17 +599,6 @@ The default is on.
 means to be constrained the peer to set the number of pad bytes.
 The default is off.
 .El
-.El
-.\"
-.Ss Static SA configuration
-.Bl -tag -width Ds -compact
-.It Ic static_sa Ar parameters
-specifies static SA.
-This
-.Ar parameters
-will be passed to
-.Xr setkey 8 .
-Not yet.
 .El
 .\"
 .Ss Pre-shared key File

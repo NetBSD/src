@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.72 2001/01/24 05:37:39 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.73 2001/02/02 05:44:04 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1725,9 +1725,7 @@ get_proposal_r(iph2)
 	struct ph2handle *iph2;
 {
 	struct policyindex spidx;
-	struct secpolicy *sp, *sp_out = NULL;
-	struct ipsecrequest *req;
-	struct saprop *newpp = NULL;
+	struct secpolicy *sp_in, *sp_out;
 	int idi2type = 0;	/* switch whether copy IDs into id[src,dst]. */
 	int error;
 
@@ -1856,8 +1854,8 @@ get_proposal_r(iph2)
 		saddr2str((struct sockaddr *)&spidx.dst),
 		spidx.prefd, spidx.ul_proto);
 
-	sp = getsp_r(&spidx);
-	if (sp == NULL) {
+	sp_in = getsp_r(&spidx);
+	if (sp_in == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no policy found: %s\n", spidx2str(&spidx));
 		return ISAKMP_INTERNAL_ERROR;
@@ -1891,102 +1889,19 @@ get_proposal_r(iph2)
 	 * In the responder side, the inbound policy should be using IPSec.
 	 * outbound policy is not checked currently.
 	 */
-	if (sp->policy != IPSEC_POLICY_IPSEC) {
+	if (sp_in->policy != IPSEC_POLICY_IPSEC) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"policy found, but no IPsec required: %s\n",
 			spidx2str(&spidx));
 		return ISAKMP_INTERNAL_ERROR;
 	}
 
-	/* allocate ipsec sa proposal */
-	newpp = newsaprop();
-	if (newpp == NULL) {
+	/* set new proposal derived from a policy into the iph2->proposal. */
+	if (set_proposal_from_policy(iph2, sp_in, sp_out) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to allocate saprop.\n");
-		goto err;
+			"failed to create saprop.\n");
+		return -1;
 	}
-	newpp->prop_no = 1;
-	newpp->lifetime = iph2->sainfo->lifetime;
-	newpp->lifebyte = iph2->sainfo->lifebyte;
-	newpp->pfs_group = iph2->sainfo->pfs_group;
-
-	/* set new saprop */
-	inssaprop(&iph2->proposal, newpp);
-
-	/* from inbound policy */
-	for (req = sp->req; req; req = req->next) {
-		struct saproto *newpr;
-		struct sockaddr *psaddr = NULL;
-		struct sockaddr *pdaddr = NULL;
-
-		/* check if SA bundle ? */
-		if (req->saidx.src.ss_len && req->saidx.dst.ss_len) {
-
-			psaddr = (struct sockaddr *)&req->saidx.src;
-			pdaddr = (struct sockaddr *)&req->saidx.dst;
-
-			/* check end addresses of SA */
-			/*
-			 * NOTE: In inbound, SA's addresses in SP entry are
-			 * reverse against real SA's addresses 
-			 */
-			if (memcmp(iph2->dst, psaddr, iph2->dst->sa_len)
-			 || memcmp(iph2->src, pdaddr, iph2->src->sa_len)) {
-				/* end of SA bundle */
-				break;
-			}
-		}
-
-		/* allocate ipsec sa protocol */
-		newpr = newsaproto();
-		if (newpr == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"failed to allocate saproto.\n");
-			goto err;
-		}
-
-		newpr->proto_id = ipproto2doi(req->saidx.proto);
-		newpr->spisize = 4;
-		newpr->encmode = pfkey2ipsecdoi_mode(req->saidx.mode);
-		newpr->reqid_in = req->saidx.reqid;
-
-		if (set_satrnsbysainfo(newpr, iph2->sainfo) < 0)
-			goto err;
-
-		/* set new saproto */
-		inssaproto(newpp, newpr);
-	}
-
-	/* get reqid_out from outbound policy */
-	if (sp_out) {
-		struct saproto *pr;
-
-		req = sp_out->req;
-		pr = newpp->head;
-		while (req && pr) {
-			pr->reqid_out = req->saidx.reqid;
-			pr = pr->next;
-			req = req->next;
-		}
-		if (pr || req) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"There is a difference "
-				"between your out-bound policies "
-				"and the policy proposed from the peer.\n");
-			goto err;
-		}
-	}
-
-	plog(LLV_DEBUG, LOCATION, NULL, "my single bundle:\n");
-	printsaprop0(LLV_DEBUG, newpp);
-
-	iph2->proposal = newpp;
 
 	return 0;
-
-err:
-	if (newpp)
-		flushsaprop(newpp);
-
-	return -1;
 }

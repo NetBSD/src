@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.42 2001/01/26 04:02:45 thorpej Exp $	*/
+/*	$KAME: handler.c,v 1.43 2001/02/06 16:28:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -130,30 +130,6 @@ getph1byaddr(local, remote)
 	}
 
 	return NULL;
-}
-
-void
-purgeph1(iph1)
-	struct ph1handle *iph1;
-{
-	struct ph1handle *p;
-
-	LIST_FOREACH(p, &ph1tree, chain) {
-		if (cmpsaddrwop(iph1->remote, p->remote))
-			continue;
-		/* don't delete current phase 1 SA */
-		if (memcmp(&iph1->index, &p->index, sizeof(isakmp_index)) == 0)
-			continue;	/* don't delete current phase 1 SA */
-
-		plog(LLV_INFO, LOCATION, iph1->remote,
-			"proto_id ISAKMP purging spi:%s.\n",
-			isakmp_pindex(&p->index, 0));
-
-		if (p->sce)
-			SCHED_KILL(p->sce);
-		p->status = PHASE1ST_EXPIRED;
-		p->sce = sched_new(1, isakmp_ph1delete_stub, p);
-	}
 }
 
 /*
