@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.4 2000/09/29 06:29:54 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.5 2001/10/15 13:19:15 darrenr Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -46,6 +46,9 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -92,6 +95,11 @@ ip6_forward(m, srcrt)
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *origifp;	/* maybe unnecessary */
+#ifdef PFIL_HOOKS
+	struct packet_filter_hook *pfh;
+	struct mbuf *m1;
+	int rv;
+#endif /* PFIL_HOOKS */
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
 #endif
@@ -490,6 +498,27 @@ ip6_forward(m, srcrt)
 			ip6->ip6_dst.s6_addr16[1] = 0;
 	}
 
+#ifdef PFIL_HOOKS
+	/*
+	 * Run through list of hooks for output packets.
+	 */
+	m1 = m;
+	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+	for (; pfh; pfh = pfh->pfil_link.tqe_next)
+		if (pfh->pfil_func) {
+			rv = pfh->pfil_func(ip6, sizeof(*ip6),
+					    rt->rt_ifp, 1, &m1);
+			m = m1;
+			if (m == NULL)
+				goto freecopy;
+			if (rv) {
+				error = EHOSTUNREACH;
+				goto senderr;
+			}
+			ip6 = mtod(m, struct ip6_hdr *);
+		}
+#endif /* PFIL_HOOKS */
+
 #ifdef OLDIP6OUTPUT
 	error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
 					 (struct sockaddr *)dst,
@@ -510,6 +539,10 @@ ip6_forward(m, srcrt)
 				goto freecopy;
 		}
 	}
+
+#ifdef PFIL_HOOKS
+ senderr:
+#endif
 	if (mcopy == NULL)
 		return;
 
