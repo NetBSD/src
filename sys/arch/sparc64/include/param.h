@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1998/09/06 21:53:42 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.6 1998/09/09 02:56:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,10 +48,15 @@
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */
-#define	_MACHINE	sparc
+#define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
+#ifdef _LP64
+#define	_MACHINE_ARCH	sparc64
+#define	MACHINE_ARCH	"sparc64"
+#else
 #define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
+#endif
 #define	MID_MACHINE	MID_SPARC
 
 #ifdef _KERNEL				/* XXX */
@@ -102,8 +107,8 @@ extern int nbpg, pgofset, pgshift;
 #define	CLSIZELOG2	0
 
 /* NOTE: SSIZE must be multiple of CLSIZE */
-#define	SSIZE		2		/* initial stack size in pages */
-#define	USPACE		(2*8192)
+#define	SSIZE		1		/* initial stack size in pages */
+#define	USPACE		(1*8192)
 
 /*
  * Constants related to network buffer management.
@@ -216,87 +221,11 @@ extern int mmumod;
  * extra memory references they'll generate.
  */
 
-#ifdef SUN4U
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(0)
-# define	NBPG		8192		/* bytes/page */
-# define	PGOFSET		(NBPG-1)	/* byte offset into page */
-# define	PGSHIFT		13		/* log2(NBPG) */
-#else
-#if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(1)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(1)
-#	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(1)
-#	define NBPG		4096
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4CM_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
-#	define CPU_ISSUN4M	(0)
-#	define CPU_ISSUN4C	(0)
-#	define CPU_ISSUN4	(1)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(0)
-#	define NBPG		8192
-#	define PGOFSET		(NBPG-1)
-#	define PGSHIFT		SUN4_PGSHIFT
-#elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
-#	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
-#	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#endif
-#endif
+#define CPU_ISSUN4M	(0)
+#define CPU_ISSUN4C	(0)
+#define CPU_ISSUN4	(0)
+#define CPU_ISSUN4OR4C	(0)
+#define CPU_ISSUN4COR4M	(0)
+#define	NBPG		8192		/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	PGSHIFT		13		/* log2(NBPG) */
