@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.1.1.4 1997/05/27 22:16:58 thorpej Exp $	*/
+/*	$NetBSD: fils.c,v 1.1.1.5 1997/07/05 05:12:45 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -33,13 +33,14 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/tcp.h>
-#include <netinet/ip_compat.h>
-#include <netinet/ip_fil.h>
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
 #include "ipf.h"
-#include <netinet/ip_proxy.h>
-#include <netinet/ip_nat.h>
-#include <netinet/ip_frag.h>
-#include <netinet/ip_state.h>
+#include "netinet/ip_proxy.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ip_frag.h"
+#include "netinet/ip_state.h"
+#include "netinet/ip_auth.h"
 #include "kmem.h"
 #ifdef	__NetBSD__
 #include <paths.h>
@@ -47,7 +48,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fils.c,v 2.0.2.9 1997/05/08 10:11:31 darrenr Exp ";
+static	char	rcsid[] = "$Id: fils.c,v 1.1.1.5 1997/07/05 05:12:45 darrenr Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -72,13 +73,14 @@ static	void	showstats __P((int, friostat_t *));
 static	void	showfrstates __P((int, ipfrstat_t *));
 static	void	showlist __P((friostat_t *));
 static	void	showipstates __P((int, ips_stat_t *));
+static	void	showauthstates __P((int, fr_authstat_t *));
 static	void	Usage __P((char *));
 
 
 static void Usage(name)
 char *name;
 {
-	fprintf(stderr, "Usage: %s [-afhIiosv] [-d <device>]\n", name);
+	fprintf(stderr, "Usage: %s [-aAfhIinosv] [-d <device>]\n", name);
 	exit(1);
 }
 
@@ -87,11 +89,12 @@ int main(argc,argv)
 int argc;
 char *argv[];
 {
+	fr_authstat_t	frauthst;
 	friostat_t fio;
 	ips_stat_t ipsst;
 	ipfrstat_t ifrst;
-	char	c, *name = NULL, *device = IPL_NAME;
-	int	fd;
+	char	*name = NULL, *device = IPL_NAME;
+	int	c, fd;
 
 	if (openkmem() == -1)
 		exit(-1);
@@ -99,12 +102,15 @@ char *argv[];
 	(void)setuid(getuid());
 	(void)setgid(getgid());
 
-	while ((c = getopt(argc, argv, "afhIinosvd:")) != -1)
+	while ((c = getopt(argc, argv, "aAfhIinosvd:")) != -1)
 	{
 		switch (c)
 		{
 		case 'a' :
 			opts |= OPT_ACCNT|OPT_SHOWLIST;
+			break;
+		case 'A' :
+			opts |= OPT_AUTHSTATS;
 			break;
 		case 'd' :
 			device = optarg;
@@ -172,6 +178,13 @@ char *argv[];
 
 	if (opts & OPT_VERBOSE)
 		PRINTF("opts %#x name %s\n", opts, name ? name : "<>");
+
+	if ((opts & OPT_AUTHSTATS) &&
+	    (ioctl(fd, SIOCATHST, &frauthst) == -1)) {
+		perror("ioctl(SIOCATHST)");
+		exit(-1);
+	}
+
 	if (opts & OPT_SHOWLIST) {
 		showlist(&fio);
 		if((opts & OPT_OUTQUE) && (opts & OPT_INQUE)){
@@ -183,6 +196,8 @@ char *argv[];
 			showipstates(fd, &ipsst);
 		else if (opts & OPT_FRSTATES)
 			showfrstates(fd, &ifrst);
+		else if (opts & OPT_AUTHSTATS)
+			showauthstates(fd, &frauthst);
 		else
 			showstats(fd, &fio);
 	}
@@ -288,7 +303,7 @@ struct	friostat	*fiop;
 		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
 	if (opts & OPT_VERBOSE)
-		PRINTF("fp %#x set %d\n", (u_int)fp, set);
+		PRINTF("fp %#x set %d\n", (u_long)fp, set);
 	if (!fp) {
 		FPRINTF(stderr, "empty list for %s%s\n",
 			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
@@ -351,8 +366,13 @@ ips_stat_t *ipsp;
 				inet_ntoa(ips.is_dst), ips.is_age,
 				ips.is_pass, ips.is_p, ips.is_state[0],
 				ips.is_state[1]);
+#ifdef	USE_QUAD_T
+			PRINTF("\tpkts %qd bytes %qd",
+				ips.is_pkts, ips.is_bytes);
+#else
 			PRINTF("\tpkts %ld bytes %ld",
 				ips.is_pkts, ips.is_bytes);
+#endif
 			if (ips.is_p == IPPROTO_TCP)
 				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu\n",
 					ntohs(ips.is_sport),
@@ -397,4 +417,23 @@ ipfrstat_t *ifsp;
 				ifr.ipfr_pass);
 			ipfrtab[i] = ifr.ipfr_next;
 		}
+}
+
+
+static void showauthstates(fd, asp)
+int fd;
+fr_authstat_t *asp;
+{
+#ifdef	USE_QUAD_T
+	printf("Authorisation hits: %qd\tmisses %qd\n", asp->fas_hits,
+		asp->fas_miss);
+#else
+	printf("Authorisation hits: %ld\tmisses %ld\n", asp->fas_hits,
+		asp->fas_miss);
+#endif
+	printf("nospace %ld\nadded %ld\nsendfail %ld\nsendok %ld\n",
+		asp->fas_nospace, asp->fas_added, asp->fas_sendfail,
+		asp->fas_sendok);
+	printf("queok %ld\nquefail %ld\nexpire %ld\n",
+		asp->fas_queok, asp->fas_quefail, asp->fas_expire);
 }

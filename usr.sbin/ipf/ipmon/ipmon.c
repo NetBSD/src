@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.4 1997/05/27 22:17:59 thorpej Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.1.1.5 1997/07/05 05:13:26 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -49,15 +49,15 @@
 #include <ctype.h>
 #include <syslog.h>
 
-#include <netinet/ip_compat.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_proxy.h>
-#include <netinet/ip_nat.h>
-#include <netinet/ip_state.h>
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
+#include "netinet/ip_proxy.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ip_state.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: ipmon.c,v 2.0.2.9 1997/04/30 13:54:10 darrenr Exp ";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.1.1.5 1997/07/05 05:13:26 darrenr Exp $";
 #endif
 
 
@@ -80,11 +80,11 @@ struct	flags	tcpfl[] = {
 static	char	line[2048];
 static	int	opts = 0;
 static	void	usage __P((char *));
+static	void	flushlogs __P((char *, FILE *));
 static	void	print_ipflog __P((FILE *, char *, int));
 static	void	print_natlog __P((FILE *, char *, int));
 static	void	print_statelog __P((FILE *, char *, int));
 static	void	dumphex __P((FILE *, u_char *, int));
-static	void	printiplci __P((struct ipl_ci *));
 static	void	resynclog __P((int, struct ipl_ci *, FILE *));
 static	int	read_ipflog __P((int, int *, char *, int, FILE *));
 static	int	read_natlog __P((int, int *, char *, int, FILE *));
@@ -112,13 +112,6 @@ static	void	(*printfunc[3]) __P((FILE *, char *, int)) =
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
 #endif
-
-static void printiplci(icp)
-struct ipl_ci *icp;
-{
-	printf("sec %ld usec %ld hlen %d plen %d\n", icp->sec, icp->usec,
-		icp->hlen, icp->plen);
-}
 
 
 void resynclog(fd, iplcp, log)
@@ -368,7 +361,10 @@ int	len;
 		if (j && !(j & 0xf)) {
 			*t++ = '\n';
 			*t = '\0';
-			fputs(line, stdout);
+			if (!(opts & OPT_SYSLOG))
+				fputs(line, stdout);
+			else
+				syslog(LOG_INFO, "%s", line);
 			t = (u_char *)line;
 			*t = '\0';
 		}
@@ -401,8 +397,11 @@ int	len;
 		*t++ = '\n';
 		*t = '\0';
 	}
-	fputs(line, stdout);
-	fflush(stdout);
+	if (!(opts & OPT_SYSLOG)) {
+		fputs(line, stdout);
+		fflush(stdout);
+	} else
+		syslog(LOG_INFO, "%s", line);
 }
 
 
@@ -579,7 +578,7 @@ int	blen;
 			break;
 	if (lp->ifname[len])
 		len++;
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %*.*s%ld @%hd ",
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %*.*s%u @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
 		len, len, lp->ifname, lp->unit, lp->rule);
 #endif
@@ -590,7 +589,7 @@ int	blen;
 	} else
 		proto = pr->p_name;
 
- 	if (lp->flags & (FI_SHORT << 20)) {
+ 	if (lp->flags & FF_SHORT) {
 		c[0] = 'S';
 		lvl = LOG_ERR;
 	} else if (lp->flags & FR_PASS) {
@@ -656,7 +655,7 @@ int	blen;
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmp len %hu (%hu) icmp %d/%d",
 			hostname(res, ip->ip_dst), hl,
-			ip->ip_len, ic->icmp_type, ic->icmp_code);
+			ntohs(ip->ip_len), ic->icmp_type, ic->icmp_code);
 		if (ic->icmp_type == ICMP_UNREACH ||
 		    ic->icmp_type == ICMP_SOURCEQUENCH ||
 		    ic->icmp_type == ICMP_PARAMPROB ||
@@ -720,7 +719,7 @@ int	blen;
 }
 
 
-void static usage(prog)
+static void usage(prog)
 char *prog;
 {
 	fprintf(stderr, "%s: [-NFhstvxX] [-f <logfile>]\n", prog);
@@ -728,7 +727,7 @@ char *prog;
 }
 
 
-void flushlogs(file, log)
+static void flushlogs(file, log)
 char *file;
 FILE *log;
 {
@@ -762,12 +761,12 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-	struct	stat	stat;
+	struct	stat	sb;
 	FILE	*log = NULL;
-	int	fd[3] = {-1, -1, -1}, flushed = 0, doread, n, i, nfd = 1;
-	int	tr, nr, regular;
+	int	fd[3] = {-1, -1, -1}, doread, n, i, nfd = 1;
+	int	tr, nr, regular, c;
 	int	fdt[3] = {IPL_LOGIPF, IPL_LOGNAT, IPL_LOGSTATE};
-	char	buf[512], c, *iplfile = IPL_NAME;
+	char	buf[512], *iplfile = IPL_NAME;
 	extern	int	optind;
 	extern	char	*optarg;
 
@@ -851,13 +850,13 @@ char *argv[];
 		setvbuf(log, NULL, _IONBF, 0);
 	}
 
-	if (fstat(fd[0], &stat) == -1) {
+	if (stat(iplfile, &sb) == -1) {
 		fprintf(stderr, "%s :", iplfile);
 		perror("fstat");
 		exit(-1);
 	}
 
-	regular = !S_ISCHR(stat.st_mode);
+	regular = !S_ISCHR(sb.st_mode);
 
 	for (doread = 1; doread; ) {
 		nr = 0;
@@ -870,8 +869,7 @@ char *argv[];
 					exit(-1);
 				}
 			} else {
-				tr = (lseek(fd[i], 0, SEEK_CUR) <
-				      stat.st_size);
+				tr = (lseek(fd[i], 0, SEEK_CUR) < sb.st_size);
 				if (!tr && !(opts & OPT_TAIL))
 					doread = 0;
 			}
@@ -907,7 +905,7 @@ char *argv[];
 				break;
 			}
 		}
-		if (!nr && regular && (opts & OPT_TAIL))
+		if (!nr && (opts & OPT_TAIL))
 			sleep(1);
 	}
 	exit(0);

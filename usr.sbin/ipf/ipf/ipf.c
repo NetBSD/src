@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.4 1997/05/27 22:16:44 thorpej Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.5 1997/07/05 05:12:37 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ipf.c,v 2.0.2.6 1997/04/30 13:59:59 darrenr Exp ";
+static	char	rcsid[] = "$Id: ipf.c,v 1.1.1.5 1997/07/05 05:12:37 darrenr Exp $";
 #endif
 
 #if	SOLARIS
@@ -67,24 +67,25 @@ static	void	set_state __P((u_int)), showstats __P((friostat_t *));
 static	void	packetlogon __P((char *)), swapactive __P((void));
 static	int	opendevice __P((void));
 static	char	*getline __P((char *, size_t, FILE *));
+static	char	*ipfname = IPL_NAME;
 
 int main(argc,argv)
 int argc;
 char *argv[];
 {
-	char	c;
+	int c;
 
-	while ((c = getopt(argc, argv, "AdDEf:F:Il:noprsUvyzZ")) != -1) {
+	while ((c = getopt(argc, argv, "AdDEf:F:Il:nopPrsUvyzZ")) != -1) {
 		switch (c)
 		{
+		case 'A' :
+			opts &= ~OPT_INACTIVE;
+			break;
 		case 'E' :
 			set_state((u_int)1);
 			break;
 		case 'D' :
 			set_state((u_int)0);
-			break;
-		case 'A' :
-			opts &= ~OPT_INACTIVE;
 			break;
 		case 'd' :
 			opts |= OPT_DEBUG;
@@ -109,6 +110,9 @@ char *argv[];
 			break;
 		case 'p' :
 			opts |= OPT_PRINTFR;
+			break;
+		case 'P' :
+			ipfname = IPL_AUTH;
 			break;
 		case 'r' :
 			opts |= OPT_REMOVE;
@@ -152,8 +156,8 @@ static int opendevice()
 		return -2;
 
 	if (!(opts & OPT_DONOTHING) && fd == -1)
-		if ((fd = open(IPL_NAME, O_RDWR)) == -1)
-			if ((fd = open(IPL_NAME, O_RDONLY)) == -1)
+		if ((fd = open(ipfname, O_RDWR)) == -1)
+			if ((fd = open(ipfname, O_RDONLY)) == -1)
 				perror("open device");
 	return fd;
 }
