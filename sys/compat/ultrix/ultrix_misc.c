@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.51 1999/05/05 20:01:07 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.52 1999/07/30 16:03:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -139,6 +139,10 @@
 #include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */
 
+#include <compat/ultrix/ultrix_flock.h>
+
+static int ultrix_to_bsd_flock __P((struct ultrix_flock *, struct flock *));
+static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));
 
 extern struct sysent ultrix_sysent[];
 extern char *ultrix_syscallnames[];
@@ -786,4 +790,112 @@ ultrix_sys_shmsys(p, v, retval)
 #else
 	return (EOPNOTSUPP);
 #endif	/* SYSVSHM */
+}
+
+static int
+ultrix_to_bsd_flock(ufl, fl)
+	struct ultrix_flock *ufl;
+	struct flock *fl;
+{
+
+	fl->l_start = ufl->l_start;
+	fl->l_len = ufl->l_len;
+	fl->l_pid = ufl->l_pid;
+	fl->l_whence = ufl->l_whence;
+
+	switch (ufl->l_type) {
+	case ULTRIX_F_RDLCK:
+		fl->l_type = F_RDLCK;
+		break;
+	case ULTRIX_F_WRLCK:
+		fl->l_type = F_WRLCK;
+		break;
+	case ULTRIX_F_UNLCK:
+		fl->l_type = F_UNLCK;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+static void
+bsd_to_ultrix_flock(fl, ufl)
+	struct flock *fl;
+	struct ultrix_flock *ufl;
+{
+
+	ufl->l_start = fl->l_start;
+	ufl->l_len = fl->l_len;
+	ufl->l_pid = fl->l_pid;
+	ufl->l_whence = fl->l_whence;
+
+	switch (fl->l_type) {
+	case F_RDLCK:
+		ufl->l_type = ULTRIX_F_RDLCK;
+		break;
+	case F_WRLCK:
+		ufl->l_type = ULTRIX_F_WRLCK;
+		break;
+	case F_UNLCK:
+		ufl->l_type = ULTRIX_F_UNLCK;
+		break;
+	}
+}
+
+int
+ultrix_sys_fcntl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_fcntl_args *uap = v;
+	int error;
+	struct ultrix_flock ufl;
+	struct flock fl, *flp;
+	caddr_t sg;
+	struct sys_fcntl_args *args, fca;
+
+	switch (SCARG(uap, cmd)) {
+	case F_GETLK:
+	case F_SETLK:
+	case F_SETLKW:
+		error = copyin(SCARG(uap, arg), &ufl, sizeof(ufl));
+		if (error)
+			return (error);
+		error = ultrix_to_bsd_flock(&ufl, &fl);
+		if (error)
+			return (error);
+		sg = stackgap_init(p->p_emul);
+		flp = (struct flock *)stackgap_alloc(&sg, sizeof(*flp));
+		error = copyout(&fl, flp, sizeof(*flp));
+		if (error)
+			return (error);
+
+		SCARG(&fca, fd) = SCARG(uap, fd);
+		SCARG(&fca, cmd) = SCARG(uap, cmd);
+		SCARG(&fca, arg) = flp;
+		args = &fca;
+		break;
+	default:
+		args = v;
+		break;
+	}
+
+	error = sys_fcntl(p, args, retval);
+	if (error)
+		return (error);
+
+	switch (SCARG(uap, cmd)) {
+	case F_GETLK:
+		error = copyin(flp, &fl, sizeof(fl));
+		if (error)
+			return (error);
+		bsd_to_ultrix_flock(&fl, &ufl);
+		error = copyout(&ufl, SCARG(uap, arg), sizeof(ufl));
+		break;
+	}
+
+	return (error);
 }
