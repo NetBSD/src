@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2003/10/21 02:22:21 fvdl Exp $ */
+/*	$NetBSD: pmap.c,v 1.20 2004/01/29 22:19:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.19 2003/10/21 02:22:21 fvdl Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.20 2004/01/29 22:19:12 yamt Exp $");
 #endif
 
 #include <string.h>
@@ -321,10 +321,11 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
 		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
 		printf(" advice = %d,\n", vme->advice);
-		printf("%*s    flags = %x <%s%s > }\n", indent(2), "",
+		printf("%*s    flags = %x <%s%s%s > }\n", indent(2), "",
 		       vme->flags,
-		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
-		       vme->flags & UVM_MAP_KMEM ? " KMEM" : "");
+		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
+		       vme->flags & UVM_MAP_KMAPENT ? " KMAPENT" : "",
+		       vme->flags & UVM_MAP_FIRST ? " FIRST" : "");
 	}
 
 	if ((debug & PRINT_VM_AMAP) && (vme->aref.ar_amap != NULL)) {
