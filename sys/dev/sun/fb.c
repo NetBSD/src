@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 2004/03/16 22:47:10 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.17 2004/03/17 14:00:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16 2004/03/16 22:47:10 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.17 2004/03/17 14:00:46 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,12 +392,14 @@ fbrcons_init(fb)
 #endif /* !SUN4U */
 	if (!CPU_ISSUN4) {
 		char buf[6+1];	/* Enough for six digits */
-		if (prom_getoption("screen-#columns", buf, sizeof buf) != 0)
-			maxcol = 80;
-		maxcol = strtoul(buf, NULL, 10);
-		if (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
-			maxrow = 34;
-		maxrow = strtoul(buf, NULL, 10);
+		maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
+			? strtoul(buf, NULL, 10)
+			: 80;
+
+		maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
+			? strtoul(buf, NULL, 10)
+			: 34;
+
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
 	/*
