@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.30 1996/10/13 02:32:39 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.31 1996/10/15 21:35:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -116,7 +116,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	printf("panic: %:", fmt, ap);
+	printf("panic: %:\n", fmt, ap);
 	va_end(ap);
 
 #if NKGDB > 0
