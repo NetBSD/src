@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.10 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.11 2000/08/28 11:27:44 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -861,6 +861,7 @@ bmac_setladrf(sc)
 	struct ether_multistep step;
 	u_int32_t crc;
 	u_int16_t hash[4];
+	int x;
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -916,7 +917,10 @@ chipit:
 	bmac_write_reg(sc, HASH1, hash[1]);
 	bmac_write_reg(sc, HASH2, hash[2]);
 	bmac_write_reg(sc, HASH3, hash[3]);
-	/* bmac_set_bits(sc, RXCFG, RxHashFilterEnable); */
+	x = bmac_read_reg(sc, RXCFG);
+	x &= ~RxPromiscEnable;
+	x |= RxHashFilterEnable;
+	bmac_write_reg(sc, RXCFG, x);
 }
 
 int
