@@ -1,8 +1,9 @@
-.\"	$NetBSD: upgrade,v 1.12 2000/11/16 17:04:50 tv Exp $
+.\"	$NetBSD: upgrade,v 1.13 2000/11/16 17:14:43 tv Exp $
 .
 .so ../common/upgrade
 .Pp
-.Nx /sparc has switched its executable format from the old a.out format
+.Nx*M
+has switched its executable format from the old a.out format
 to ELF, the now more commonly used and supported format. Your old
 binaries will continue to work just fine. The installation procedure
 will try to take the necessary steps to accomplish this. The most
