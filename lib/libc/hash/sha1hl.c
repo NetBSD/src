@@ -1,4 +1,5 @@
-/*	$NetBSD: sha1hl.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.6 2000/07/05 11:35:36 ad Exp $	*/
+
 /* sha1hl.c
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -23,7 +24,7 @@
 #include <unistd.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.6 2000/07/05 11:35:36 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
