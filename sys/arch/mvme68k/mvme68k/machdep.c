@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1997/10/19 10:53:14 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.1 1997/11/07 22:17:58 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,9 +87,14 @@
 #include <machine/prom.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/vmparam.h>
 #include <dev/cons.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#ifdef MACHINE_NONCONTIG
+#include <mvme68k/mvme68k/seglist.h>
+#endif
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 
@@ -219,10 +224,17 @@ mvme68k_init()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
+#ifdef MACHINE_NONCONTIG
+#define MVME_MSG_BUF_START	phys_seg_list[0].ps_end
+#else
+#define MVME_MSG_BUF_START	avail_end
+#endif
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+		    MVME_MSG_BUF_START + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+
+#undef MVME_MSG_BUF_START
 }
 
 #ifdef MVME147
@@ -334,7 +346,18 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	printf("real mem  = %d", ctob(physmem));
+
+#ifdef MACHINE_NONCONTIG
+    maxaddr = 0;
+	for (i = 1; i < MAX_PHYS_SEGS && phys_seg_list[i].ps_start; i++)
+		maxaddr += phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+
+	if ( maxaddr )
+		printf(" (of which %d is offboard)", maxaddr);
+#endif
+
+	printf("\n");
 
 	/*
 	 * Fine out how much space we need, allocate it,
