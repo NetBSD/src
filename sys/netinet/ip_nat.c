@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.48 2002/05/02 17:13:29 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.49 2002/06/04 10:06:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.48 2002/05/02 17:13:29 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.49 2002/06/04 10:06:27 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.67 2002/04/27 15:23:39 darrenr Exp";
@@ -1147,34 +1147,51 @@ tcp_mss_clamp(tcp, maxmss, fin, csump)
 	fr_info_t *fin;
 	u_short *csump;
 {
-	uint8_t *cp;
-	uint32_t opt, mss, sumd;
+	uint8_t *cp, *ep;
+	uint8_t opt;
+	uint16_t v;
+	uint32_t mss, sumd;
 	int hlen;
+	int advance;
 
 	hlen = tcp->th_off << 2;
 	if (hlen > sizeof(*tcp)) {
 		cp = (uint8_t *)tcp + sizeof(*tcp);
+		ep = cp + hlen;
 
-		while (hlen > 0) {
-			opt = *cp++;
-			switch(opt) {
+		while (cp < ep) {
+			opt = cp[0];
+			if (opt == TCPOPT_EOL)
+				break;
+			else if (opt == TCPOPT_NOP) {
+				cp++;
+				continue;
+			}
+
+			if (&cp[1] > ep)
+				break;
+			advance = cp[1];
+			if (&cp[advance] > ep)
+				break;
+			switch (opt) {
 			case TCPOPT_MAXSEG:
-				++cp;
-				mss = (uint32_t)ntohs(*(short *)cp);
+				if (advance != 4)
+					break;
+				memcpy(&v, &cp[2], sizeof(mss));
+				mss = ntohs(v);
 				if (mss > maxmss) {
-					*(short *)cp = htons((short)(maxmss));
+					v = htons(maxmss);
+					memcpy(&cp[2], &v, sizeof(mss));
 					CALC_SUMD(mss, maxmss, sumd);
 					fix_outcksum(fin, csump, sumd);
 				}
-				hlen = 0;
 				break;
-			case TCPOPT_EOL:
-			case TCPOPT_NOP:
-				hlen--;
 			default:
-				hlen -= *cp;
-				cp += *cp - 2;
+				/* ignore unknown options */
+				break;
 			}
+
+			cp += advance;
 		}
 	}
 }
