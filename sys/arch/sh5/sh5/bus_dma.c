@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2002/10/04 09:20:20 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2002/10/08 15:56:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2002/10/04 09:20:20 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2002/10/08 15:56:13 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,7 +825,8 @@ _bus_dmamem_mmap(void *cookie, bus_dma_segment_t *segs, int nsegs,
 		 * XXXSCW: What about BUS_DMA_COHERENT ??
 		 */
 
-		return (sh5_btop((caddr_t)segs[i]._ds_cpuaddr + off));
+		return (sh5_btop((caddr_t)(intptr_t)(segs[i]._ds_cpuaddr +
+		    off)));
 	}
 
 	/* Page not found. */
