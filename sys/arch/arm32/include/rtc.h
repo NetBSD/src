@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.4 1997/10/14 09:20:32 mark Exp $	*/
+/*	$NetBSD: rtc.h,v 1.5 1998/04/19 03:49:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -76,8 +76,6 @@ typedef struct {
 #ifdef _KERNEL
 int cmos_read __P((int));
 int cmos_write __P((int, int));
-int rtc_read __P((rtc_t *));
-int rtc_write __P((rtc_t *));
 #endif /* _KERNEL */
 
 /* End of rtc.h */
