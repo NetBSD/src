@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.15 1999/11/15 03:41:49 nisimura Exp $ */
+/* $NetBSD: tcvar.h,v 1.16 2000/06/01 00:22:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -69,10 +69,10 @@ struct tc_softc {
 	int	sc_nslots;
 	struct tc_slotdesc *sc_slots;
 
-	void	(*sc_intr_establish) __P((struct device *, void *,
-			int, int (*)(void *), void *));
-	void	(*sc_intr_disestablish) __P((struct device *, void *));
-	bus_dma_tag_t (*sc_get_dma_tag) __P((int));
+	void	(*sc_intr_establish)(struct device *, void *,
+			int, int (*)(void *), void *);
+	void	(*sc_intr_disestablish)(struct device *, void *);
+	bus_dma_tag_t (*sc_get_dma_tag)(int);
 };
 
 /*
@@ -91,10 +91,10 @@ struct tcbus_attach_args {
 	
 
 	/* TC bus resource management; XXX will move elsewhere eventually. */
-	void	(*tba_intr_establish) __P((struct device *, void *,
-			int, int (*)(void *), void *));
-	void	(*tba_intr_disestablish) __P((struct device *, void *));
-	bus_dma_tag_t (*tba_get_dma_tag) __P((int));
+	void	(*tba_intr_establish)(struct device *, void *,
+			int, int (*)(void *), void *);
+	void	(*tba_intr_disestablish)(struct device *, void *);
+	bus_dma_tag_t (*tba_get_dma_tag)(int);
 };
 
 /*
@@ -136,12 +136,12 @@ struct tc_builtin {
 /*
  * Interrupt establishment functions.
  */
-int	tc_checkslot __P((tc_addr_t, char *));
-void	tc_devinfo __P((const char *, char *));
-void	tcattach __P((struct device *, struct device *, void *));
-void	tc_intr_establish __P((struct device *, void *,
-					int, int (*)(void *), void *));
-void	tc_intr_disestablish __P((struct device *, void *));
+int	tc_checkslot(tc_addr_t, char *);
+void	tc_devinfo(const char *, char *);
+void	tcattach(struct device *, struct device *, void *);
+void	tc_intr_establish(struct device *, void *, int, int (*)(void *),
+	    void *);
+void	tc_intr_disestablish(struct device *, void *);
 
 #include "locators.h"
 /*
