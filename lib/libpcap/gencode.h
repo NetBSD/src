@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.9 1999/12/13 01:44:31 itojun Exp $	*/
+/*	$NetBSD: gencode.h,v 1.10 2001/01/06 02:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -189,7 +189,9 @@ void finish_parse(struct block *);
 char *sdup(const char *);
 
 struct bpf_insn *icode_to_fcode(struct block *, int *);
+#ifndef YYRECOVERING
 int pcap_parse(void);
+#endif
 void lex_init(char *);
 void sappend(struct slist *, struct slist *);
 

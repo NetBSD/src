@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.25 2000/12/28 22:04:22 thorpej Exp $	*/
+/*	$NetBSD: gencode.c,v 1.26 2001/01/06 02:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.25 2000/12/28 22:04:22 thorpej Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.26 2001/01/06 02:11:18 christos Exp $");
 #endif
 #endif
 
@@ -281,12 +281,12 @@ syntax()
 static bpf_u_int32 netmask;
 static int snaplen;
 int no_optimize;
+extern int n_errors;
 
 int
 pcap_compile(pcap_t *p, struct bpf_program *program,
 	     char *buf, int optimize, bpf_u_int32 mask)
 {
-	extern int n_errors;
 	int len;
 
 	no_optimize = 0;
@@ -333,7 +333,6 @@ pcap_compile_nopcap(int snaplen_arg, int linktype_arg,
 		    struct bpf_program *program,
 	     char *buf, int optimize, bpf_u_int32 mask, char *errbuf)
 {
-	extern int n_errors;
 	pcap_t p;
 	int len;
 
