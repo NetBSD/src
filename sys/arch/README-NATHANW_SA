@@ -1,4 +1,4 @@
-$NetBSD: README-NATHANW_SA,v 1.1.2.1 2002/06/20 22:40:31 thorpej Exp $
+$NetBSD: README-NATHANW_SA,v 1.1.2.2 2002/12/12 14:06:00 skrll Exp $
 
 The following people are working on various architectures for
 the nathanw_sa branch.  Please contact these people to coordinate
@@ -7,7 +7,7 @@ changes made to these platform's files:
 	alpha		Nathan Williams <nathanw@netbsd.org>
 
 	arm		Jason Thorpe <thorpej@netbsd.org>
-			Ben Harris <thorpej@netbsd.org>
+			Ben Harris <bjh21@netbsd.org>
 
 	i386		Nathan Williams <nathanw@netbsd.org>
 
