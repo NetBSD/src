@@ -1,6 +1,6 @@
 /******************************************************************************
 
-VERSION $Id: mpool.libtp,v 1.1.1.1 1996/05/03 21:05:32 cgd Exp $
+VERSION $NetBSD: mpool.libtp,v 1.2 1997/01/13 20:31:18 tls Exp $
 PACKAGE: 	User Level Shared Memory Manager
 
 DESCRIPTION: 	
