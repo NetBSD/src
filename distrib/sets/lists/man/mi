@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.22 2001/05/01 11:50:22 he Exp $
+# $NetBSD: mi,v 1.253.2.23 2001/05/02 22:52:59 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -925,6 +925,7 @@
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/ifaliases.0
+./usr/share/man/cat5/ifconfig.if.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/intro.0
@@ -2344,6 +2345,7 @@
 ./usr/share/man/man5/hosts_access.5
 ./usr/share/man/man5/hosts_options.5
 ./usr/share/man/man5/ifaliases.5
+./usr/share/man/man5/ifconfig.if.5
 ./usr/share/man/man5/inetd.conf.5
 ./usr/share/man/man5/inode.5
 ./usr/share/man/man5/intro.5
