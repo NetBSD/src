@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.446 2001/12/06 16:51:31 soren Exp $
+#	$NetBSD: GENERIC,v 1.447 2001/12/12 15:32:13 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.446 $"
+#ident 		"GENERIC-$Revision: 1.447 $"
 
 maxusers	32		# estimated number of users
 
@@ -753,6 +753,10 @@ uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
+
+# USB IrDA bridges
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
