@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.4 1998/01/11 22:22:12 marc Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.5 1998/02/01 23:52:25 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -131,16 +131,34 @@ ep_pcmcia_enable(sc)
 	struct ep_softc *sc;
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
+	struct pcmcia_function *pf = psc->sc_pf;
+	int ret;
 
 	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, epintr, sc);
+	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 
-	return (pcmcia_function_enable(psc->sc_pf));
+	if ((ret = pcmcia_function_enable(pf)))
+	    return(ret);
+	
+	if (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) {
+		int reg;
+
+		/* turn off the serial-disable bit */
+
+		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
+		if (reg & 0x08) {
+		    reg &= ~0x08;
+		    pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+		}
+
+	}
+
+	return (ret);
 }
 
 void
@@ -173,18 +191,11 @@ ep_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf))
+	if (ep_pcmcia_enable(sc))
 		printf(": function enable failed\n");
 
 	sc->enabled = 1;
-	/* turn off the bit which disables the modem */
-	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		int reg;
 
-		reg = pcmcia_ccr_read(pa->pf, PCMCIA_CCR_OPTION);
-		reg &= ~0x08;
-		pcmcia_ccr_write(pa->pf, PCMCIA_CCR_OPTION, reg);
-	}
 	if (cfe->num_memspace != 0)
 		printf(": unexpected number of memory spaces %d should be 0\n",
 		    cfe->num_memspace);
@@ -262,7 +273,7 @@ ep_pcmcia_attach(parent, self, aux)
 
 	sc->enabled = 0;
 
-	pcmcia_function_disable(pa->pf);
+	ep_pcmcia_disable(sc);
 }
 
 int
