@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/10/26 07:25:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/02/08 22:23:45 lukem Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -74,6 +74,8 @@ IGENOBJS= ${IGENSRCS:S/.c/.lo/}
 
 ${IGENED_FILES}: run-igen
 run-igen: igen ppc-instructions ppc-cache-rules
+	${_MKMSG_CREATE} ${IGENED_FILES}
+	rm -f ${.TARGET}
 	./igen ${IGEN_FLAGS}
 	${MIC} tmp-icache.h icache.h
 	${MIC} tmp-icache.c icache.c
@@ -87,7 +89,7 @@ run-igen: igen ppc-instructions ppc-cache-rules
 	${MIC} tmp-model.c model.c
 	${MIC} tmp-support.h support.h
 	${MIC} tmp-support.c support.c
-	touch run-igen
+	touch ${.TARGET}
 
 igen: ${IGENOBJS}
 	${HOST_LINK.c} ${IGENOBJS} -o ${.TARGET}
