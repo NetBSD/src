@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.8 1994/07/16 21:32:08 cgd Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.9 1995/01/18 08:35:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -193,6 +193,7 @@ a_mask(s)
 void
 usage()
 {
-	fprintf(stderr, "usage: mount_msdos [-F flags] [-u user] [-g group] [-m mask] bdev dir\n");
+
+	fprintf(stderr, "usage: mount_msdos [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(1);
 }

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: mount_msdos.8,v 1.5 1994/07/16 21:32:07 cgd Exp $
+.\"	$Id: mount_msdos.8,v 1.6 1995/01/18 08:35:42 mycroft Exp $
 .\"
 .Dd April 7, 1994
 .Dt MOUNT_MSDOS 8
@@ -37,6 +37,7 @@
 .Nd mount an MS-DOS file system
 .Sh SYNOPSIS
 .Nm mount_msdos
+.Op Fl o Ar options
 .Op Fl u Ar uid
 .Op Fl g Ar gid
 .Op Fl m Ar mask
@@ -60,17 +61,22 @@ contains the file system).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl u
+.It Fl o Ar options
+Use the specified mount
+.Ar options ,
+as described in
+.Xr mount 8 .
+.It Fl u Ar uid
 Set the owner of the files in the file system to
 .Ar uid .
 The default owner is the owner of the directory
 on which the file system is being mounted.
-.It Fl g
+.It Fl g Ar gid
 Set the group of the files in the file system to
 .Ar gid .
 The default group is the group of the directory
 on which the file system is being mounted.
-.It Fl m
+.It Fl m Ar mask
 Specify the maximum file permissions for files
 in the file system.
 (For example, a mask of
@@ -90,7 +96,8 @@ directory on which the file system is being mounted.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
-.Xr fstab 5
+.Xr fstab 5 ,
+.Xr mount 8
 .Sh CAVEATS
 The
 .Nm msdos
