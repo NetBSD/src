@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.35 1998/11/13 01:59:51 mhitch Exp $	*/
+/*	$NetBSD: dtop.c,v 1.36 1999/03/22 03:25:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.35 1998/11/13 01:59:51 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.36 1999/03/22 03:25:29 ad Exp $");
 
 #include "rasterconsole.h"
 
@@ -827,6 +827,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	register u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
 	int msg_len, c, s;
+	char *cp;
 #ifdef RCONS_BRAINDAMAGE
 	struct tty *tp = DTOP_TTY(0);
 #endif
@@ -918,7 +919,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	retc = 0;
 	for ( ; ns >= ne; ns--)
 	    if (*ns) {
-		c = kbdMapChar(*ns);
+		cp = kbdMapChar(*ns);
 #ifdef DDB
 		if (*ns == LK_DO) {
 			spl0();
@@ -929,16 +930,22 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		    if (dtopDivertXInput) {
 			(*dtopDivertXInput)(*ns);
 			c = -1; /* consumed by X */
-		    } else if (c >= 0 /*&& tp != NULL*/)
+		    } else if (cp /*&& tp != NULL*/) {
+			for (; *cp; cp++) {
 #if 0
-			(*linesw[tp->t_line].l_rint)(c, tp);
+				(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else
-			rcons_input(0, c);
+				rcons_input(0, *cp);
 #endif
+			}
+		    }
 		    dev->keyboard.k_ar_state = K_AR_ACTIVE;
 		}
-		/* return the related keycode anyways */
-		if ((c >= 0) && (retc == 0))
+		/* 
+		 * return the related keycode anyways 
+		 * XXX when in debugger, don't return multi-char sequences
+		 */
+		if (cp && (cp[1] == '\0') &&(retc == 0))
 		    retc = c;
 	    }
 	outc = retc;
@@ -962,6 +969,7 @@ dtop_keyboard_repeat(arg)
 {
 	dtop_device_t dev = (dtop_device_t)arg;
 	register int i, c;
+	char *cp;
 	
 #if 0
 	struct tty *tp = DTOP_TTY(0);
@@ -979,12 +987,14 @@ dtop_keyboard_repeat(arg)
 				continue;
 			}
 
-			if ((c = kbdMapChar(KEY_REPEAT)) >= 0) {
+			if ((cp = kbdMapChar(KEY_REPEAT)) != NULL) {
+				for (; *cp; cp++) {
 #if 0
-				(*linesw[tp->t_line].l_rint)(c, tp);
+					(*linesw[tp->t_line].l_rint)(*cp, tp);
 #else
-				rcons_input(0, c);
+					rcons_input(0, *cp);
 #endif
+				}
 				gotone = 1;
 			}
 		}

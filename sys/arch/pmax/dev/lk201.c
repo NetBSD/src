@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.11 1999/03/15 09:40:56 jonathan Exp $ */
+/* $NetBSD: lk201.c,v 1.12 1999/03/22 03:25:29 ad Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -19,7 +19,7 @@
 
 
 /* Exported functions */
-extern int kbdMapChar __P((int keycode));
+extern char *kbdMapChar __P((int keycode));
 
 extern void KBDReset __P(( dev_t dev, void (*putc) (dev_t, int) ));
 
@@ -192,6 +192,27 @@ static u_char kbdInitString[] = {
 	LK_LED_DISABLE, LED_ALL,	/* clear keyboard leds */
 };
 
+
+/*
+ * Keyboard to what the rcons termcap entry expects.
+ * XXX function keys are handled specially.
+ */
+static struct toString {
+	int	ts_keycode;
+	char	*ts_string;
+} toString[] = {			/* termcap name */
+	{ KBD_UP,	"\033[A" },	/* ku */	
+	{ KBD_DOWN,	"\033[B" },	/* kd */
+	{ KBD_RIGHT,	"\033[C" },	/* kr */
+	{ KBD_LEFT,	"\033[D" },	/* kl */
+	{ KBD_REMOVE,	"\177" },	/* kD */
+	{ KBD_NEXT,	"\033[222z" },	/* kN */
+	{ KBD_PREVIOUS,	"\033[216z" },	/* kP */
+};
+
+#define NUM_TOSTRING (sizeof(toString) / sizeof(toString[0]))
+
+
 static void (*raw_kbd_putc) __P((dev_t dev, int c)) = NULL;
 static dev_t lk_out_dev = NODEV;
 
@@ -235,49 +256,60 @@ lk_bell(ring)
  *
  * kbdMapChar --
  *
- *	Map characters from the keyboard to ASCII. Return -1 if there is
+ *	Map characters from the keyboard to ASCII. Return NULL if there is
  *	no valid mapping.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Remember state of shift and control keys.
+ *	Remember state of shift, control and caps-lock keys.
  *
  * ----------------------------------------------------------------------------
  */
-int
+char *
 kbdMapChar(cc)
 	int cc;
 {
 	static u_char shiftDown;
 	static u_char ctrlDown;
-	static u_char lastChar;
-
+	static u_char capsLock;
+	static char buf[8];
+	static char *lastStr;
+	char *cp = NULL;	
+	
 	switch (cc) {
 	case KEY_REPEAT:
-		cc = lastChar;
+		cp = lastStr;
 		goto done;
 
 	case KEY_UP:
 		shiftDown = 0;
 		ctrlDown = 0;
-		return (-1);
-
+		return (NULL);
+		
+	case KEY_CAPSLOCK:
+		capsLock ^= 1;
+#if 0
+		/* XXX causes lockup due to spl??? */
+		/* XXX may interact badly with Xserver */
+		if (capsLock)
+			(*raw_kbd_putc)(lk_out_dev, LK_LED_ENABLE);
+		else
+			(*raw_kbd_putc)(lk_out_dev, LK_LED_DISABLE);
+		
+		(*raw_kbd_putc)(lk_out_dev, LED_1);
+#endif
+		return (NULL);
+			
 	case KEY_SHIFT:
 	case KEY_R_SHIFT:
-		if (ctrlDown || shiftDown)
-			shiftDown = 0;
-		else
-			shiftDown = 1;
-		return (-1);
+		shiftDown ^= 1;
+		return (NULL);
 
 	case KEY_CONTROL:
-		if (shiftDown || ctrlDown)
-			ctrlDown = 0;
-		else
-			ctrlDown = 1;
-		return (-1);
+		ctrlDown ^= 1;
+		return (NULL);
 
 	case LK_POWER_ERROR:
 	case LK_KDOWN_ERROR:
@@ -285,22 +317,58 @@ kbdMapChar(cc)
 	case LK_OUTPUT_ERROR:
 		log(LOG_WARNING,
 			"lk201: keyboard error, code=%x\n", cc);
-		return (-1);
+		return (NULL);
 	}
 	if (shiftDown)
 		cc = shiftedAscii[cc];
 	else
 		cc = unshiftedAscii[cc];
 	if (cc >= KBD_NOKEY) {
-		/*
-		 * A function key was typed - ignore it.
-		 */
-		return (-1);
+		int i;
+		
+		/* XXX slow, although keyboard interrupts aren't frequent... */
+		
+		/* Check for keys that have multi-character codes */
+		for (i = 0; i < NUM_TOSTRING; i++)
+			if (toString[i].ts_keycode == cc) {
+				cp = toString[i].ts_string;
+				break;
+			}
+		
+		/* Handle function keys specially */
+		if (cp == NULL) {
+			if (cc < KBD_F1 || cc > KBD_F20)
+				return NULL;
+		
+			/* 
+			 * All the function keys (KBD_*) are contigious,
+			 * except for the 'Help' and 'Do' keys, which we
+			 * return as F15 and F16 since that's what they
+			 * really are.
+			 * XXX termcap can only handle F0->F9. Is this right?
+			 */
+			if (cc >= KBD_F1 && cc <= KBD_F6) {
+				buf[3] = '2';
+				buf[4] = '4' + (cc - KBD_F1);
+			} else if (cc >= KBD_F7 && cc <= KBD_DO) {
+				buf[3] = '3';
+				buf[4] = '0' + (cc - KBD_F7);
+			} else /* if (cc >= KBD_F17 && cc <= KBD_F20) */ {
+				buf[3] = '4';
+				buf[4] = '0' + (cc - KBD_F17);
+			}
+		
+			buf[0] = '\033';
+			buf[1] = '[';
+			buf[2] = '2';
+			buf[5] = '\0';
+			cp = buf;
+		}
 	}
 	if (cc >= 'a' && cc <= 'z') {
 		if (ctrlDown)
 			cc = cc - 'a' + '\1'; /* ^A */
-		else if (shiftDown)
+		else if (shiftDown ^ capsLock)
 			cc = cc - 'a' + 'A';
 	} else if (ctrlDown) {
 		if (cc >= '[' && cc <= '_')
@@ -308,9 +376,15 @@ kbdMapChar(cc)
 		else if (cc == ' ' || cc == '@')
 			cc = '\0';
 	}
-	lastChar = cc;
+	
+	if (cp == NULL) {
+		buf[0] = cc;
+		buf[1] = '\0';
+		cp = buf;
+	}
+	lastStr = cp;
 done:
-	return (cc);
+	return (cp);
 }
 
 
@@ -333,8 +407,7 @@ lk_divert(getfn, in_dev)
  * Get an ASCII character off of the keyboard.
  * Simply pass the getc request onto the underlying
  * serial driver, and map the resulting LK-201 keycode to ASCII.
- * FIXME: this design can't handle cursor or keypad keys,
- * and should be thrown away and replaced with a stackable
+ * FIXME: this design should be thrown away and replaced with a stackable
  * "Bstreams"-style driver.
  */
 int
@@ -342,6 +415,7 @@ LKgetc(dev)
 	dev_t dev;	/* ignored */
 {
 	register int c;
+	static char *cp;
 
 #if 0
 /*XXX*/ printf("LK-201 getc 0x%x( [%d %d]) in_dev [%d %d]\n",
@@ -356,6 +430,13 @@ LKgetc(dev)
 	}
 
 	for (;;) {
+		if (cp) {
+			c = *(unsigned char *)cp++;
+			if (*cp == '\0')
+				cp = NULL;
+			break;
+		}
+		
 		/* c = (*cn_tab.cn_kbdgetc)(cn_tab.cn_dev); */
 		c = (*raw_kbd_getc) (lk_in_dev);
 #if 0
@@ -363,8 +444,8 @@ LKgetc(dev)
 #endif
 		if (c == 0)
 			return (-1);
-		if ((c = kbdMapChar(c & 0xff)) >= 0)
-			break;
+
+		cp = kbdMapChar(c & 0xff);
 	}
 	return (c);
 }
