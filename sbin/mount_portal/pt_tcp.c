@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.13 1998/02/03 03:35:06 perry Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.14 2000/12/31 06:03:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.13 1998/02/03 03:35:06 perry Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.14 2000/12/31 06:03:53 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,14 +78,20 @@ portal_tcp(pcr, key, v, kso, fdp)
 	char port[MAXHOSTNAMELEN];
 	char *p = key + (v[1] ? strlen(v[1]) : 0);
 	char *q;
+	int priv = 0;
+#ifdef INET6
+	struct addrinfo hints, *res, *lres;
+	int so = -1;
+	const char *cause = "unknown";
+#else /* ! INET6 */
 	struct hostent *hp;
 	struct servent *sp;
 	struct in_addr **ipp;
 	struct in_addr *ip[2];
 	struct in_addr ina;
 	int s_port;
-	int priv = 0;
 	struct sockaddr_in sain;
+#endif
 
 	q = strchr(p, '/');
 	if (q == 0 || q - p >= sizeof(host))
@@ -112,6 +118,42 @@ portal_tcp(pcr, key, v, kso, fdp)
 		}
 	}
 
+#ifdef INET6
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	if (getaddrinfo(host, port, &hints, &res) != 0)
+		return(EINVAL);
+
+	for (lres = res; lres; lres = lres->ai_next) {
+		if (priv)
+			so = rresvport((int *) 0);
+		else
+			so = socket(lres->ai_family, lres->ai_socktype,
+			    lres->ai_protocol);
+		if (so < 0) {
+			cause = "socket";
+			continue;
+		}
+
+		if (connect(so, lres->ai_addr, lres->ai_addrlen) != 0) {
+			cause = "connect";
+			(void)close(so);
+			so = -1;
+			continue;
+		}
+
+		*fdp = so;
+		errno = 0;
+		break;
+	}
+
+	if (so < 0)
+		syslog(LOG_ERR, "%s: %m", cause);
+		
+	freeaddrinfo(res);
+#else /* ! INET6 */
 	if (inet_aton(host, &ina) == 0) {
 		hp = gethostbyname(host);
 		if (hp == 0)
@@ -160,6 +202,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 
 		ipp++;
 	}
+#endif /* INET6 */
 
 	return (errno);
 }
