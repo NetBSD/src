@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.119 2002/05/07 02:04:09 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.120 2002/06/05 10:20:49 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.119 2002/05/07 02:04:09 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.120 2002/06/05 10:20:49 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.135 2002/05/06 15:03:30 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.136 2002/06/05 10:20:48 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.135 2002/05/06 15:03:30 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.136 2002/06/05 10:20:48 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1206,7 +1206,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		goto cleanup_fetch_url;
 	}
 	progressmeter(1);
-	bytes = 0;
 	(void)fflush(fout);
 	if (closefunc == fclose && mtime != -1) {
 		struct timeval tval[2];
@@ -1225,6 +1224,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	}
 	if (bytes > 0)
 		ptransfer(0);
+	bytes = 0;
 
 	rval = 0;
 	goto cleanup_fetch_url;
