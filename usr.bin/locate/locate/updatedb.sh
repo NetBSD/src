@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.3 2001/03/12 13:29:26 jdolecek Exp $
+#	$NetBSD: updatedb.sh,v 1.4 2001/05/14 14:58:59 jdolecek Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ FCODES="/var/db/locate.database"	# the database
 PATH="/bin:/usr/bin"
 FILELIST="$TMPDIR/locate.list.$$"
 trap 'rm -f $FILELIST' 0
-trap 'rm -f $FILELIST; exit 1' 2 15
+trap 'rm -f $FILELIST; exit 1' 1 2 3 15
 
 # Make a file list and compute common bigrams.
 # Entries of each directory shall be sorted (find -s).
