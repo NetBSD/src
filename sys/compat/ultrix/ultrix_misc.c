@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.82 2003/01/28 21:57:47 atatat Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.83 2003/01/29 07:00:40 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.82 2003/01/28 21:57:47 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.83 2003/01/29 07:00:40 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -331,11 +331,7 @@ ultrix_sys_mmap(l, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_mmap_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mmap_args ouap;
-	struct filedesc *fdp;
-	struct file *fp;
-	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.

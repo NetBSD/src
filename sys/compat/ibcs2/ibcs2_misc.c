@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.62 2003/01/28 21:57:42 atatat Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.63 2003/01/29 07:00:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.62 2003/01/28 21:57:42 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.63 2003/01/29 07:00:35 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1515,9 +1515,7 @@ ibcs2_sys_mmap(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(ibcs2_off_t) off;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mmap_args mm;
-	void *rp;
 
 #define _MAP_NEW	0x80000000 /* XXX why? */
 
