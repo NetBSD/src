@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 1997/06/12 23:57:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 1997/10/20 00:45:03 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -65,10 +65,10 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
-#define	KPTDI		0x3e0		/* start of kernel virtual pde's */
+#define	PTDPTDI		0x3bf		/* ptd entry that points to ptd! */
+#define	KPTDI		0x3c0		/* start of kernel virtual pde's */
 #define	NKPDE_BASE	4		/* min. # of kernel PDEs */ 
-#define	NKPDE_MAX	31		/* max. # of kernel PDEs */ 
+#define	NKPDE_MAX	63		/* max. # of kernel PDEs */ 
 #define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 
