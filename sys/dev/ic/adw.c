@@ -1,4 +1,4 @@
-/*	$NetBSD: adw.c,v 1.1 1998/09/26 16:10:40 dante Exp $	*/
+/* $NetBSD: adw.c,v 1.2 1998/09/26 19:54:22 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -65,7 +65,7 @@
 
 #ifndef DDB
 #define	Debugger()	panic("should call debugger here (adv.c)")
-#endif /* ! DDB */
+#endif				/* ! DDB */
 
 /******************************************************************************/
 
@@ -84,7 +84,7 @@ static void adw_start_ccbs __P((ADW_SOFTC *));
 
 static int adw_scsi_cmd __P((struct scsipi_xfer *));
 static int adw_build_req __P((struct scsipi_xfer *, ADW_CCB *));
-static void adw_build_sglist __P(( ADW_CCB *, ADW_SCSI_REQ_Q *));
+static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *));
 static void adwminphys __P((struct buf *));
 static void adw_wide_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 
@@ -120,7 +120,7 @@ struct scsipi_device adw_dev =
 
 
 /******************************************************************************/
-/*                            scsipi_xfer queue routines                      */
+/* scsipi_xfer queue routines                      */
 /******************************************************************************/
 
 /*
@@ -166,7 +166,7 @@ adw_dequeue(sc)
 
 
 /******************************************************************************/
-/*                             Control Blocks routines                        */
+/* Control Blocks routines                        */
 /******************************************************************************/
 
 
@@ -380,7 +380,7 @@ adw_start_ccbs(sc)
 
 
 /******************************************************************************/
-/*                         SCSI layer interfacing routines                    */
+/* SCSI layer interfacing routines                    */
 /******************************************************************************/
 
 
@@ -388,11 +388,11 @@ int
 adw_init(sc)
 	ADW_SOFTC      *sc;
 {
-	u_int16_t warn_code;
+	u_int16_t       warn_code;
 
 
 	sc->cfg.lib_version = (ADW_LIB_VERSION_MAJOR << 8) |
-			ADW_LIB_VERSION_MINOR;
+		ADW_LIB_VERSION_MINOR;
 	sc->cfg.chip_version =
 		ADW_GET_CHIP_VERSION(sc->sc_iot, sc->sc_ioh, sc->bus_type);
 
@@ -401,20 +401,18 @@ adw_init(sc)
 	 */
 	if (ADW_FIND_SIGNATURE(sc->sc_iot, sc->sc_ioh) == 0) {
 		panic("adw_init: adw_find_signature failed");
-	}
-	else
-	{
+	} else {
 		AdvResetChip(sc->sc_iot, sc->sc_ioh);
 
 		warn_code = AdvInitFromEEP(sc);
-		if(warn_code & ASC_WARN_EEPROM_CHKSUM)
+		if (warn_code & ASC_WARN_EEPROM_CHKSUM)
 			printf("%s: Bad checksum found. "
-			"Setting default values\n",
-			sc->sc_dev.dv_xname);
-		if(warn_code & ASC_WARN_EEPROM_TERMINATION)
+			       "Setting default values\n",
+			       sc->sc_dev.dv_xname);
+		if (warn_code & ASC_WARN_EEPROM_TERMINATION)
 			printf("%s: Bad bus termination setting."
-			"Using automatic termination.\n",
-			sc->sc_dev.dv_xname);
+			       "Using automatic termination.\n",
+			       sc->sc_dev.dv_xname);
 
 		/*
 		 * Reset the SCSI Bus if the EEPROM indicates that SCSI Bus
@@ -440,28 +438,27 @@ adw_attach(sc)
 	/*
 	 * Initialize the ASC3550.
 	 */
-	switch(AdvInitAsc3550Driver(sc))
-	{
-		case ASC_IERR_MCODE_CHKSUM:
-			panic("%s: Microcode checksum error",
-					sc->sc_dev.dv_xname);
-			break;
+	switch (AdvInitAsc3550Driver(sc)) {
+	case ASC_IERR_MCODE_CHKSUM:
+		panic("%s: Microcode checksum error",
+		      sc->sc_dev.dv_xname);
+		break;
 
-		case ASC_IERR_ILLEGAL_CONNECTION:
-			panic("%s: All three connectors are in use",
-					sc->sc_dev.dv_xname);
-			break;
+	case ASC_IERR_ILLEGAL_CONNECTION:
+		panic("%s: All three connectors are in use",
+		      sc->sc_dev.dv_xname);
+		break;
 
-		case ASC_IERR_REVERSED_CABLE:
-			panic("%s: Cable is reversed",
-					sc->sc_dev.dv_xname);
-			break;
+	case ASC_IERR_REVERSED_CABLE:
+		panic("%s: Cable is reversed",
+		      sc->sc_dev.dv_xname);
+		break;
 
-		case ASC_IERR_SINGLE_END_DEVICE:
-			panic("%s: single-ended device is attached to"
-					" one of the connectors",
-					sc->sc_dev.dv_xname);
-			break;
+	case ASC_IERR_SINGLE_END_DEVICE:
+		panic("%s: single-ended device is attached to"
+		      " one of the connectors",
+		      sc->sc_dev.dv_xname);
+		break;
 	}
 
 
@@ -500,10 +497,9 @@ adw_attach(sc)
 		return; /* (ENOMEM) */ ;
 	} else if (i != ADW_MAX_CCB) {
 		printf("%s: WARNING: only %d of %d control blocks"
-			" created\n",
-			sc->sc_dev.dv_xname, i, ADW_MAX_CCB);
+		       " created\n",
+		       sc->sc_dev.dv_xname, i, ADW_MAX_CCB);
 	}
-
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
@@ -520,8 +516,8 @@ adwminphys(bp)
 
 
 /*
- * start a scsi operation given the command and the data address.  Also needs
- * the unit, target and lu.
+ * start a scsi operation given the command and the data address.
+ * Also needs the unit, target and lu.
  */
 static int
 adw_scsi_cmd(xs)
@@ -597,8 +593,7 @@ adw_scsi_cmd(xs)
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
-	if(adw_build_req(xs, ccb))
-	{
+	if (adw_build_req(xs, ccb)) {
 		s = splbio();
 		adw_queue_ccb(sc, ccb);
 		splx(s);
@@ -618,8 +613,7 @@ adw_scsi_cmd(xs)
 				adw_timeout(ccb);
 		}
 	}
-
-	return (COMPLETE);	
+	return (COMPLETE);
 }
 
 
@@ -628,14 +622,14 @@ adw_scsi_cmd(xs)
  */
 static int
 adw_build_req(xs, ccb)
-	struct scsipi_xfer	*xs;
-	ADW_CCB			*ccb;
+	struct scsipi_xfer *xs;
+	ADW_CCB        *ccb;
 {
-	struct scsipi_link	*sc_link = xs->sc_link;
-	ADW_SOFTC		*sc = sc_link->adapter_softc;
-	bus_dma_tag_t		dmat = sc->sc_dmat;
-	ADW_SCSI_REQ_Q		*scsiqp;
-	int			error;
+	struct scsipi_link *sc_link = xs->sc_link;
+	ADW_SOFTC      *sc = sc_link->adapter_softc;
+	bus_dma_tag_t   dmat = sc->sc_dmat;
+	ADW_SCSI_REQ_Q *scsiqp;
+	int             error;
 
 	scsiqp = &ccb->scsiq;
 	bzero(scsiqp, sizeof(ADW_SCSI_REQ_Q));
@@ -658,7 +652,7 @@ adw_build_req(xs, ccb)
 	scsiqp->target_id = sc_link->scsipi_scsi.target;
 	scsiqp->target_lun = sc_link->scsipi_scsi.lun;
 
-	scsiqp->vsense_addr = (ulong) &ccb->scsi_sense;
+	scsiqp->vsense_addr = (ulong) & ccb->scsi_sense;
 	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
 	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
@@ -673,14 +667,16 @@ adw_build_req(xs, ccb)
 #ifdef TFS
 		if (xs->flags & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
-			ccb->dmamap_xfer, (struct uio *) xs->data,
-			(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+				ccb->dmamap_xfer, (struct uio *) xs->data,
+				(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+					BUS_DMA_WAITOK);
 		} else
 #endif				/* TFS */
 		{
 			error = bus_dmamap_load(dmat,
-			ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
+				(xs->flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+					BUS_DMA_WAITOK);
 		}
 
 		if (error) {
@@ -698,10 +694,9 @@ adw_build_req(xs, ccb)
 			adw_free_ccb(sc, ccb);
 			return (0);
 		}
-
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer, 0,
 				ccb->dmamap_xfer->dm_mapsize,
-			      (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			  (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 				BUS_DMASYNC_PREWRITE);
 
 		/*
@@ -711,7 +706,8 @@ adw_build_req(xs, ccb)
 		scsiqp->vdata_addr = (ulong) xs->data;
 		scsiqp->data_addr = ccb->dmamap_xfer->dm_segs[0].ds_addr;
 		scsiqp->sg_list_ptr = &ccb->sg_block[0];
-		bzero(scsiqp->sg_list_ptr, sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
+		bzero(scsiqp->sg_list_ptr,
+				sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
 		adw_build_sglist(ccb, scsiqp);
 	} else {
 		/*
@@ -732,17 +728,17 @@ adw_build_req(xs, ccb)
  */
 static void
 adw_build_sglist(ccb, scsiqp)
-	ADW_CCB		*ccb;
-	ADW_SCSI_REQ_Q	*scsiqp;
+	ADW_CCB        *ccb;
+	ADW_SCSI_REQ_Q *scsiqp;
 {
 	struct scsipi_xfer *xs = ccb->xs;
-	ADW_SOFTC	*sc = xs->sc_link->adapter_softc;
-	ADW_SG_BLOCK	*sg_block = scsiqp->sg_list_ptr;
-	ulong		sg_block_next_addr;     /* block and its next */
-	ulong		sg_block_physical_addr;
-	int		sg_block_index, i;      /* how many SG entries */
+	ADW_SOFTC      *sc = xs->sc_link->adapter_softc;
+	ADW_SG_BLOCK   *sg_block = scsiqp->sg_list_ptr;
+	ulong           sg_block_next_addr;	/* block and its next */
+	ulong           sg_block_physical_addr;
+	int             sg_block_index, i;	/* how many SG entries */
 	bus_dma_segment_t *sg_list = &ccb->dmamap_xfer->dm_segs[0];
-	int		sg_elem_cnt = ccb->dmamap_xfer->dm_nsegs;
+	int             sg_elem_cnt = ccb->dmamap_xfer->dm_nsegs;
 
 
 	sg_block_next_addr = (ulong) sg_block;	/* allow math operation */
@@ -756,20 +752,17 @@ adw_build_sglist(ccb, scsiqp)
 	 */
 
 	sg_block_index = 0;
-	do
-	{
+	do {
 		sg_block->first_entry_no = sg_block_index;
-		for (i = 0; i < NO_OF_SG_PER_BLOCK; i++)
-		{
+		for (i = 0; i < NO_OF_SG_PER_BLOCK; i++) {
 			sg_block->sg_list[i].sg_addr = sg_list->ds_addr;
 			sg_block->sg_list[i].sg_count = sg_list->ds_len;
 
-			if (--sg_elem_cnt == 0)
-			{
+			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
 				scsiqp->sg_entry_cnt = sg_block_index + i + 1;
 				sg_block->last_entry_no = sg_block_index + i;
-				sg_block->sg_ptr = NULL;/* next link = NULL */
+				sg_block->sg_ptr = NULL; /* next link = NULL */
 				return;
 			}
 			sg_list++;
@@ -780,7 +773,7 @@ adw_build_sglist(ccb, scsiqp)
 		sg_block_index += NO_OF_SG_PER_BLOCK;
 		sg_block->sg_ptr = (ADW_SG_BLOCK *) sg_block_physical_addr;
 		sg_block->last_entry_no = sg_block_index - 1;
-		sg_block = (ADW_SG_BLOCK *) sg_block_next_addr; /* virtual addr */
+		sg_block = (ADW_SG_BLOCK *) sg_block_next_addr;	/* virt. addr */
 	}
 	while (1);
 }
@@ -893,7 +886,7 @@ adw_watchdog(arg)
 
 
 /******************************************************************************/
-/*                  NARROW and WIDE boards Interrupt callbacks                */
+/* NARROW and WIDE boards Interrupt callbacks                */
 /******************************************************************************/
 
 
@@ -907,11 +900,11 @@ adw_wide_isr_callback(sc, scsiq)
 	ADW_SOFTC      *sc;
 	ADW_SCSI_REQ_Q *scsiq;
 {
-	bus_dma_tag_t		dmat = sc->sc_dmat;
-	ADW_CCB			*ccb = (ADW_CCB *) scsiq->ccb_ptr;
-	struct scsipi_xfer	*xs = ccb->xs;
+	bus_dma_tag_t   dmat = sc->sc_dmat;
+	ADW_CCB        *ccb = (ADW_CCB *) scsiq->ccb_ptr;
+	struct scsipi_xfer *xs = ccb->xs;
 	struct scsipi_sense_data *s1, *s2;
-//	int			underrun = ASC_FALSE;
+	//int           underrun = ASC_FALSE;
 
 
 	untimeout(adw_timeout, ccb);
@@ -927,23 +920,19 @@ adw_wide_isr_callback(sc, scsiq)
 				BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
-
 	if ((ccb->flags & CCB_ALLOC) == 0) {
 		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
-
-
 	/*
 	 * Check for an underrun condition.
 	 */
-/*	if (xs->request_bufflen != 0 && scsiqp->data_cnt != 0) {
-		ASC_DBG1(1, "adw_isr_callback: underrun condition %lu bytes\n",
-		scsiqp->data_cnt);
-		underrun = ASC_TRUE;
-	}
-*/
+	/*
+	 * if (xs->request_bufflen != 0 && scsiqp->data_cnt != 0) {
+	 * ASC_DBG1(1, "adw_isr_callback: underrun condition %lu bytes\n",
+	 * scsiqp->data_cnt); underrun = ASC_TRUE; }
+	 */
 	/*
 	 * 'done_status' contains the command's ending status.
 	 */
@@ -966,10 +955,10 @@ adw_wide_isr_callback(sc, scsiq)
 		 * Note: There is no way yet to indicate the number
 		 * of underrun bytes.
 		 */
-/*		if (xs->error == XS_NOERROR && underrun == ASC_TRUE) {
-			scp->result = HOST_BYTE(DID_UNDERRUN);
-		}
-*/		break;
+		/*
+		 * if (xs->error == XS_NOERROR && underrun == ASC_TRUE) {
+		 * scp->result = HOST_BYTE(DID_UNDERRUN); }
+		 */ break;
 
 	case QD_WITH_ERROR:
 		switch (scsiq->host_status) {
