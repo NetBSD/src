@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.15 1999/08/02 12:52:27 ad Exp $	*/
+/*	$NetBSD: findcons.c,v 1.16 1999/09/03 06:12:28 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.15 1999/08/02 12:52:27 ad Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.16 1999/09/03 06:12:28 nisimura Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ struct consdev cd;
 #include "dc_ioasic.h"
 #include "dtop.h"
 #include "scc.h"
-#include "asc.h"
 #include "tc.h"
 #include  "rasterconsole.h"
 
