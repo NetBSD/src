@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.95 1996/05/03 17:29:29 christos Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.96 1996/05/03 19:05:30 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -984,7 +984,7 @@ ed_find_Novell(sc, cf, ia)
 
 	/* Make sure that we really have an 8390 based board. */
 	if (!ed_probe_generic8390(bc, ioh, nicbase))
-		goto err;
+		goto out;
 
 	sc->vendor = ED_VENDOR_NOVELL;
 	sc->mem_shared = 0;
@@ -1042,7 +1042,7 @@ ed_find_Novell(sc, cf, ia)
 		ed_pio_readmem(sc, 16384, test_buffer, sizeof(test_pattern));
 
 		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
-			goto err; /* not an NE2000 either */
+			goto out; /* not an NE2000 either */
 
 		sc->type = ED_TYPE_NE2000;
 		sc->type_str = "NE2000";
@@ -1054,7 +1054,7 @@ ed_find_Novell(sc, cf, ia)
 	if (ia->ia_irq == IRQUNK) {
 		printf("%s: %s does not have soft configuration\n",
 		    sc->sc_dev.dv_xname, sc->type_str);
-		goto err;
+		goto out;
 	}
 
 	/* 8k of memory plus an additional 8k if 16-bit. */
@@ -1158,22 +1158,19 @@ ed_find_Novell(sc, cf, ia)
 	NIC_PUT(bc, ioh, nicbase, ED_P0_ISR, 0xff);
 
 	ia->ia_iosize = ED_NOVELL_IO_PORTS;
-	rv = 1;
 
- out:
 	/*
 	 * XXX Sould always unmap, but we can't yet.
 	 * XXX Need to squish "indirect" first.
 	 */
-	if (rv == 0)
-		bus_io_unmap(bc, ioh, ED_NOVELL_IO_PORTS);
-	else {
-		/* XXX this is all "indirect" brokenness */
-		sc->sc_bc = bc;
-		sc->sc_ioh = ioh;
-		/* sc_memh is not used by this driver */
-	}
-	return (rv);
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	/* sc_memh is not used by this driver */
+	return 1;
+ out:
+	bus_io_unmap(bc, ioh, ED_NOVELL_IO_PORTS);
+
+	return 0;
 }
 
 /*
