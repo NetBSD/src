@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.7 1996/02/08 06:05:31 mycroft Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.8 1996/05/21 12:22:31 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,7 @@ static char *rcsid = "$Id: rlogind.c,v 1.7 1996/02/08 06:05:31 mycroft Exp $";
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utmp.h>
 #include "pathnames.h"
 
 #ifndef TIOCPKT_WINDOW
@@ -178,7 +179,7 @@ doit(f, fromp)
 	fromp->sin_port = ntohs((u_short)fromp->sin_port);
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
 	    fromp->sin_family);
-	if (hp)
+	if (hp && (strlen(hp->h_name) <= UT_HOSTSIZE))
 		(void)strcpy(hostname, hp->h_name);
 	else
 		(void)strcpy(hostname, inet_ntoa(fromp->sin_addr));
