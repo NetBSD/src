@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.22 1999/12/22 23:54:09 augustss Exp $
+.\" $NetBSD: usb.4,v 1.23 2000/01/16 11:07:40 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,12 @@ includes machine-independent
 .Tn USB
 drivers, sorted by driver name:
 .Bl -tag -width speaker -offset indent
+.It aue
+driver for ADMtek AN986 Pegasus USB Ethernet.
+.It cue
+driver for CATC USB-EL1201A USB Ethernet.
+.It kue
+driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
 .It uaudio
 driver for audio devices.
 .It ugen
@@ -360,7 +366,10 @@ The
 specifications can be found at
 .Dv http://www.usb.org/developers/docs.htm .
 .Pp
+.Xr aue 4 ,
 .Xr cardbus 4 ,
+.Xr cue 4 ,
+.Xr kue 4 ,
 .Xr pci 4 ,
 .Xr uaudio 4 ,
 .Xr ugen 4 ,
