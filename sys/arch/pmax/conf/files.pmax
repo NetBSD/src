@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.9 1994/11/28 16:28:20 dean Exp $
+#	$NetBSD: files.pmax,v 1.10 1995/01/18 06:37:01 mellon Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -13,6 +13,7 @@ arch/pmax/pmax/sys_machdep.c		standard
 arch/pmax/pmax/trap.c			standard
 arch/pmax/pmax/vm_machdep.c		standard
 arch/pmax/stand/libsa/callvec.c		standard
+arch/pmax/pmax/elf.c			standard
 arch/pmax/dev/fb.c			standard
 arch/pmax/dev/scsi.c			standard
 arch/pmax/dev/asc.c			optional asc device-driver
