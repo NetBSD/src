@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.53 2002/06/17 16:55:05 wiz Exp $
+.\"	$NetBSD: ps.1,v 1.54 2002/06/19 08:11:56 jdolecek Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd process status
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl acCehjKlmrSTuvwx
+.Op Fl acCehjlmrSTuvwx
 .Bk -words
 .Op Fl M Ar core
 .Ek
@@ -111,10 +111,6 @@ header per page of information.
 .It Fl j
 Print information associated with the following keywords:
 user, pid, ppid, pgid, sess, jobc, state, tt, time, and command.
-.It Fl K
-Disable the fallback /proc-based method.  Note that the /proc-based method
-is only used if the ordinary kvm method is not possible.  See below for more
-details.
 .It Fl L
 List the set of available keywords.
 .It Fl l
@@ -205,33 +201,6 @@ will use as many columns as necessary without regard for your window size.
 .It Fl x
 Also display information about processes without controlling terminals.
 .El
-.Pp
-.\"  XXX  IMPORTANT:  If/when the /proc-based code is pulled out,
-.\"  remove all references to the -K option, and the paragraph
-.\"  below.  It might be a good idea to keep -K around for one
-.\"  release, and have it print a warning that -K is deprecated.
-.\"  - bgrayson
-If
-.Nm
-is unable to extract process information directly from the
-kernel (e.g., due to an incorrect
-.Fl N
-option or kvm-based reasons), it currently uses an experimental
-fallback method to gather as much information as possible through the
-limited
-.Dq Pa /proc
-interface, if the
-.Dq Pa /proc
-filesystem is mounted.  See
-.Xr mount_procfs 8
-for more details.
-.Nm
-verifies that
-.Dq Pa /proc
-is a procfs filesystem before proceeding.  This experimental
-fallback method will change in future releases.  The
-.Fl K
-option disables this fallback /proc-based lookup.
 .Pp
 A complete list of the available keywords are listed below.
 Some of these keywords are further specified as follows:
@@ -583,8 +552,6 @@ default kernel memory
 system namelist database
 .It Pa /netbsd
 default system namelist
-.It Pa /proc
-filesystem for obtaining process information
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
@@ -595,7 +562,6 @@ filesystem for obtaining process information
 .Xr w 1 ,
 .Xr kvm 3 ,
 .Xr strftime 3 ,
-.Xr mount_procfs 8 ,
 .Xr pstat 8
 .Sh BUGS
 Since
