@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.19 2000/02/21 20:31:02 erh Exp $	*/
+/* $NetBSD: netisr.h,v 1.20 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef _NET_NETISR_H_
-#define _NET_NETISR_H_
+#define _NET_NETISR_H_		/* checked by netisr_dispatch.h */
 
 /*
  * The networking code runs off software interrupts.
@@ -49,6 +49,69 @@
  * The routine to request a network software interrupt, setsoftnet(),
  * is defined in the machine-specific include files.
  */
+
+#if defined(_KERNEL)
+
+#include "opt_inet.h"    
+#include "opt_atalk.h"
+#include "opt_ccitt.h"   
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_natm.h" 
+
+#if !defined(_LOCORE)
+
+/* XXX struct sockaddr defn for for if.h, if_arp.h */
+#include <sys/socket.h>
+
+/*
+ * XXX IFNAMSIZE for if_ppp.h, natm.h; struct ifnet decl for in6.h, in.h;
+ * XXX struct mbuf decl for in6.h, in.h, route.h (via in_var.h).
+ */
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include "arp.h"
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
+#endif
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet/ip6.h> 
+#include <netinet6/ip6_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
+
+#endif /* !defined(_LOCORE) */
+#endif /* defined(_KERNEL) */
+
 
 /*
  * Each ``pup-level-1'' input queue has a bit in a ``netisr'' status
@@ -68,12 +131,12 @@
 #define	NETISR_ARP	28		/* same as AF_ARP */
 #define	NETISR_PPP	31		/* for PPP processing */
 
+#if defined(_KERNEL) && !defined(_LOCORE)
+
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 
-#ifndef _LOCORE
-#ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
-#endif
-#endif
+
+#endif /* defined(_KERNEL) && !defined(_LOCORE) */
 
 #endif /* _NET_NETISR_H_ */

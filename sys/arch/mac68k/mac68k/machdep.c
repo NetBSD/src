@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2000/07/01 03:35:07 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.256 2000/07/02 04:40:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,6 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
-#include <net/netisr.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -141,7 +140,6 @@
 #include <mac68k/dev/macfbvar.h>
 #endif
 #include <mac68k/dev/zs_cons.h>
-#include "arp.h"
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
