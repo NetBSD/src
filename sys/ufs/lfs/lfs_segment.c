@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.21 1999/03/29 21:51:38 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.22 1999/03/30 16:03:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -188,6 +188,9 @@ lfs_vflush(vp)
 	struct segment *sp;
 	int error;
 
+	ip = VTOI(vp);
+	fs = VFSTOUFS(vp->v_mount)->um_lfs;
+
 	if(ip->i_flag & IN_CLEANING) {
 #ifdef DEBUG_LFS
 		ivndebug(vp,"vflush/in_cleaning");
@@ -208,7 +211,6 @@ lfs_vflush(vp)
 	}
 
 	/* Protect against VXLOCK deadlock in vinvalbuf() */
-	fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	lfs_seglock(fs, SEGM_SYNC);
 	SET_FLUSHING(fs,vp);
 	if (fs->lfs_nactive > LFS_MAX_ACTIVE) {
@@ -219,7 +221,6 @@ lfs_vflush(vp)
 	}
 	sp = fs->lfs_sp;
 
-	ip = VTOI(vp);
 	if (vp->v_dirtyblkhd.lh_first == NULL) {
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_EMPTY);
 	} else if((ip->i_flag & IN_CLEANING) && (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
