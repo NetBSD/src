@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.3 2000/12/14 18:07:30 thorpej Exp $	*/
 /*	$KAME: altq_subr.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef ALTQ
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
 #if (__FreeBSD__ != 2)
@@ -1548,5 +1547,3 @@ init_machclk(void)
 	printf("altq: emulate %uHz cpu clock\n", machclk_freq);
 }
 #endif /* !i386 && !alpha */
-
-#endif /* ALTQ */
