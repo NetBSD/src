@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.6 2002/07/13 11:35:35 itojun Exp $	*/
+/*	$NetBSD: pf.c,v 1.7 2002/08/22 07:18:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.6 2002/07/13 11:35:35 itojun Exp $");
+__RCSID("$NetBSD: pf.c,v 1.7 2002/08/22 07:18:42 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -159,7 +159,7 @@ pfAddMulti(s, interface, addr)
 	struct ifreq ifr;
 	int	fd;
 	
-	strcpy(ifr.ifr_name, interface);
+	strncpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
 
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	memmove(ifr.ifr_addr.sa_data, addr, 6);
@@ -194,7 +194,7 @@ pfDelMulti(s, interface, addr)
 	struct ifreq ifr;
 	int	fd;
 	
-	strcpy(ifr.ifr_name, interface);
+	strncpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
 	
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	memmove(ifr.ifr_addr.sa_data, addr, 6);
