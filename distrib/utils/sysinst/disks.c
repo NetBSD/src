@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.39 2000/12/22 10:12:12 mrg Exp $ */
+/*	$NetBSD: disks.c,v 1.40 2001/01/14 02:38:14 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,8 @@ static void foundffs (struct data *list, int num);
 static int do_fsck(const char *diskpart);
 static int fsck_root (void);
 static int 
-    do_ffs_newfs(const char *partname, int part, const char *mountpoint);
+    do_flfs_newfs(const char *partname, int part, const char *mountpoint);
+static int fsck_num(const char *mp);
 
 static int fsck_with_error_menu(const char *diskpart);
 static int target_mount_with_error_menu(const char *opt, char *diskpart,
@@ -203,10 +204,11 @@ disp_cur_fspart(int disp, int showall)
 			msg_table_add(MSG_fspart_row_start,
 					'a'+i, psize, poffset, pend,
 					fstypenames[bsdlabel[i].pi_fstype]);
-			if (bsdlabel[i].pi_fstype == FS_BSDFFS)
+			if (PI_ISBSDFS(&bsdlabel[i]))
 				msg_table_add(MSG_fspart_row_end_bsd,
 						bsdlabel[i].pi_bsize,
 						bsdlabel[i].pi_fsize,
+						preservemount[i] ? "Yes" : "No",
 						fsmount[i]);
 			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
 				msg_table_add(MSG_fspart_row_end_msdos,
@@ -252,12 +254,12 @@ make_filesystems(void)
 	for (i = 0; i < getmaxpartitions(); i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems. 
-		 * but if this is the  mounted-on root, don't touch it! 
+		 * but if this is the mounted-on root, has no mount
+		 * point defined, or is marked preserve, don't touch it! 
 		 */
 	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a'+i);
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS && 
-		    !is_active_rootpart(partname)) {
-			error = do_ffs_newfs(partname, i, fsmount[i]);
+		if (PI_ISBSDFS(&bsdlabel[i]) && !is_active_rootpart(partname)) {
+			error = do_flfs_newfs(partname, i, fsmount[i]);
 			if (error)
 				return error;
 		}
@@ -267,22 +269,23 @@ make_filesystems(void)
 
 /* newfs and mount an ffs filesystem. */
 static int 
-do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
+do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 {
 	char devname[STRSIZE];
 	int error;
 
-	error = run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    "/sbin/newfs /dev/r%s", partname);
+	if (*mountpoint && !preservemount[partno])
+		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s /dev/r%s",
+		    bsdlabel[partno].pi_fstype == FS_BSDFFS ?
+		    "/sbin/newfs" : "/sbin/newfs_lfs", partname);
+	else
+		error = 0;
 	if (*mountpoint && error == 0) { 
 		snprintf(devname, STRSIZE, "/dev/%s", partname);
-		if (partno > 0) {
+		if (partno > 0)	/* XXX strcmp(mountpoint, "/") ? XXX */
 			make_target_dir(mountpoint);
-			error = target_mount("-v -o async",
-			    devname, mountpoint);
-		} else
-			error = target_mount("-v -o async",
-			    devname, mountpoint);
+		error = target_mount(bsdlabel[partno].pi_fstype == FS_BSDFFS ?
+		    "-v -o async" : "-v", devname, mountpoint);
 		if (error) {
 			msg_display(MSG_mountfail, devname, mountpoint);
 			process_menu (MENU_ok);
@@ -295,15 +298,14 @@ int
 make_fstab(void)
 {
 	FILE *f;
-	int i;
+	int i, swapdev = -1;
 
 	/* Create the fstab. */
 	make_target_dir("/etc");
 	f = target_fopen("/etc/fstab", "w");
 	if (logging)
 		(void)fprintf(log, "Creating %s/etc/fstab.\n", target_prefix());
-	if (scripting)
-		(void)fprintf(script, "cat <<EOF >%s/etc/fstab\n", target_prefix());
+	scripting_fprintf(NULL, "cat <<EOF >%s/etc/fstab\n", target_prefix());
 
 	if (f == NULL) {
 #ifndef DEBUG
@@ -316,31 +318,37 @@ make_fstab(void)
 		f = stdout;
 #endif		
 	}
-	(void)fprintf (f, "/dev/%sa / ffs rw 1 1\n", diskdev);
-	if (scripting)
-		(void)fprintf (script, "/dev/%sa / ffs rw 1 1\n", diskdev);
-	(void)fprintf (f, "/dev/%sb none swap sw 0 0\n", diskdev);
-	if (scripting)
-		(void)fprintf (script, "/dev/%sb none swap sw 0 0\n", diskdev);
-	for (i = getrawpartition() + 1; i < getmaxpartitions(); i++)
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
-			(void)fprintf (f, "/dev/%s%c %s ffs rw 1 2\n",
+	for (i = 0; i < getmaxpartitions(); i++)
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
+			scripting_fprintf(f, "/dev/%s%c %s ffs rw 1 %d\n",
+				       diskdev, 'a'+i, fsmount[i],
+				       fsck_num(fsmount[i]));
+		else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
+			char *s = "#";
+
+			/* If there is no LFS, just comment it out. */
+			if (!check_lfs_progs())
+				s++;
+			scripting_fprintf(f, "%s/dev/%s%c %s lfs rw 1 %d\n", s,
+				       diskdev, 'a'+i, fsmount[i],
+				       fsck_num(fsmount[i]));
+		} else if (bsdlabel[i].pi_fstype == FS_MSDOS)
+			scripting_fprintf(f, "/dev/%s%c %s msdos rw 0 0\n",
 				       diskdev, 'a'+i, fsmount[i]);
-			if (scripting)
-				(void)fprintf (script, "/dev/%s%c %s ffs rw 1 2\n",
-					diskdev, 'a'+i, fsmount[i]);
-		} else if (bsdlabel[i].pi_fstype == FS_MSDOS ) {
-			(void)fprintf(f, "/dev/%s%c %s msdos rw 0 0\n",
-				       diskdev, 'a'+i, fsmount[i]);
-			if (scripting)
-				(void)fprintf(script, "/dev/%s%c %s msdos rw 0 0\n",
-					diskdev, 'a'+i, fsmount[i]);
+		else if (bsdlabel[i].pi_fstype == FS_SWAP) {
+			if (swapdev == -1)
+				swapdev = i;
+			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n", diskdev, 'a'+i);
 		}
-	(void)fprintf(f, "/kern /kern kernfs rw\n");
-	if (scripting) {
-		(void)fprintf(script, "/kern /kern kernfs rw\n");
-		(void)fprintf(script, "EOF\n");
+	if (layout_tmp) {
+		if (swapdev != -1)
+			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw\n", diskdev, 'a'+swapdev);
+		else
+			scripting_fprintf(f, "swap /tmp mfs rw\n");
 	}
+	scripting_fprintf(script, "/kern /kern kernfs rw\n");
+	scripting_fprintf(NULL, "EOF\n");
+
 #ifndef DEBUG
 	fclose(f);
 	fflush(NULL);
@@ -348,6 +356,17 @@ make_fstab(void)
 	/* We added /kern to fstab,  make mountpoint. */
 	make_target_dir("/kern");
 	return 0;
+}
+
+static int
+fsck_num(const char *mp)
+{
+	static int num = 1;
+
+	if (strcmp(mp, "/"))
+		return 1;
+
+	return (++num);
 }
 
 
@@ -402,6 +421,8 @@ inode_kind(char *dev)
                 return -2;
 	}
 	close(fd);
+	if (fs_is_lfs(&fs.fs))
+		return -4;
 	if (fs.fs.fs_magic != FS_MAGIC)
 		return -3;
 	if (fs.fs.fs_inodefmt < FS_44INODEFMT)
@@ -423,18 +444,21 @@ do_fsck(const char *diskpart)
 {
 	char raw[SSTRSIZE];
 	int inodetype;
-	char * upgr = "";
+	char *upgr = "", *prog = "/sbin/fsck_ffs";
 	int err;
 
 	/* cons up raw partition name. */
 	snprintf (raw, SSTRSIZE, "/dev/r%s", diskpart);
 	inodetype = inode_kind (raw);
 
-	if (inodetype < 0) {
+	if (inodetype == -4) {
+		if (check_lfs_progs() == 0)
+			return EOPNOTSUPP;	/* XXX */
+		prog = "/sbin/fsck_lfs";
+	} else if (inodetype < 0) {
 		/* error */
 		return inodetype;
-	}
-	else if (inodetype == 0) {
+	} else if (inodetype == 0) {
 		/* Ask to upgrade */
 		msg_display(MSG_upgrinode, raw);
 		process_menu(MENU_yesno);
@@ -444,11 +468,11 @@ do_fsck(const char *diskpart)
 
 	/*endwin();*/
 #ifndef	DEBUG_SETS
-	err = run_prog(RUN_DISPLAY, NULL, "/sbin/fsck_ffs %s%s", upgr, raw);
+	err = run_prog(RUN_DISPLAY, NULL, "%s %s%s", prog, upgr, raw);
 #else
-	err = run_prog(RUN_DISPLAY, NULL, "/sbin/fsck_ffs -f %s%s", upgr, raw);
+	err = run_prog(RUN_DISPLAY, NULL, "%s -f %s%s", prog, upgr, raw);
 #endif	
-		wrefresh(stdscr);
+	wrefresh(stdscr);
 	return err;
 }
 
@@ -461,8 +485,9 @@ do_fsck(const char *diskpart)
 int
 fsck_with_error_menu(const char *diskpart)
 {
-	register int error;
-	if ((error = do_fsck (diskpart)) != 0) {
+	int error;
+
+	if ((error = do_fsck(diskpart)) != 0) {
 #ifdef DEBUG
 		fprintf(stderr, "sysinst: do_fsck() returned err %d\n", error);
 #endif
@@ -482,7 +507,7 @@ fsck_with_error_menu(const char *diskpart)
 int target_mount_with_error_menu(const char *opt, 
 		 char *diskpart, const char *mntpoint)
 {
-	register int error;
+	int error;
 	char devname[STRSIZE];
 
 	snprintf(devname, STRSIZE, "/dev/%s", diskpart);
