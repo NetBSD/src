@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.373 2000/01/19 20:05:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.374 2000/01/19 23:06:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -264,7 +264,6 @@ cyrix_write_reg(u_char reg, u_char data)
 void
 cpu_startup()
 {
-	unsigned i;
 	caddr_t v;
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
