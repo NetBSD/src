@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.13 1999/11/20 07:18:59 jun Exp $
+# 	$NetBSD: GENERIC,v 1.14 1999/11/21 12:47:33 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -129,10 +129,11 @@ vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 gpbus0 at vrgiu? platform NEC_MCR_3XX comctrl 14 button1 4 button2 6
 gpbus0 at vrgiu? platform NEC_MCR_5XX comctrl 14 button1 4 button2 6
 gpbus0 at vrgiu? platform NEC_MCR_7XX comctrl 46
-gpbus0 at vrgiu? platform NEC_MCCS
+gpbus0 at vrgiu? platform NEC_MCCS comctrl 14
 
 vrisab0 at vrgiu? platform NEC_MCR
 vrisab0 at vrgiu? platform NEC_MCCS
+vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
 isa0	at vrisab0
 pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
 #
