@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.16 2001/05/19 18:15:14 jdolecek Exp $	 */
+/*	$NetBSD: exec.c,v 1.17 2001/06/01 23:26:31 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -49,9 +49,6 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/disklabel.h>
-#endif
 
 #include <lib/libsa/stand.h>
 
@@ -62,36 +59,6 @@
 #include "biosmca.h"
 #endif
 
-#ifdef COMPAT_OLDBOOT
-static int dev2major __P((char *, int *));
-
-static int
-dev2major(devname, major)
-	char           *devname;
-	int            *major;
-{
-	static const struct {
-		const char *name;
-		int maj;
-	} devices[] = {
-		{ "wd", 0  },
-		{ "fd", 2  },
-		{ "sd", 4  },
-#ifdef SUPPORT_PS2
-		{ "ed", 20 },
-#endif
-	};
-#define NUMDEVICES (sizeof(devices)/sizeof(devices[0]))
-	int             i;
-
-	for (i = 0; i < NUMDEVICES; i++)
-		if (!strcmp(devname, devices[i].name)) {
-			*major = devices[i].maj;
-			return (0);
-		}
-	return (-1);
-}
-#endif
 #define BOOT_NARGS	6
 
 extern struct btinfo_console btinfo_console;
@@ -111,13 +78,6 @@ exec_netbsd(file, loadaddr, boothowto)
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
-#endif
-
-#ifdef COMPAT_OLDBOOT
-	char           *fsname, *devname;
-	int             unit, part;
-	const char     *filename;
-	int             bootdevnr;
 #endif
 
 #ifdef	DEBUG
@@ -166,58 +126,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		goto out;
 
 	boot_argv[0] = boothowto;
-
-#ifdef COMPAT_OLDBOOT
-	/* prepare boot device information for kernel */
-	if (parsebootfile(file, &fsname, &devname, &unit, &part, &filename)
-	    || strcmp(fsname, "ufs"))
-		bootdevnr = 0;	/* XXX error out if parse error??? */
-	else {
-		int             major;
-
-		if (strcmp(devname, "hd") == 0) {
-			/* generic BIOS disk, have to guess type */
-			struct open_file *f = &files[fd];	/* XXX */
-
-			switch (biosdisk_gettype(f)) {
-			case DTYPE_SCSI:
-				devname = "sd";
-				break;
-#ifdef SUPPORT_PS2
-			case DTYPE_ESDI:
-				if (biosmca_ps2model) {
-					devname = "ed";
-					break;
-				}
-#endif
-			default:
-				devname = "wd";
-				break;
-			}
-
-			/*
-			 * The old boot block performed the following
-			 * conversion:
-			 *
-			 *	hdN -> Xd0
-			 *
-			 * where X is the type specified by the label.
-			 * We mimmick that here, for lack of any better
-			 * way of doing things.
-			 */
-			unit = 0;
-		}
-
-		if (dev2major(devname, &major))
-			bootdevnr = 0;	/* XXX error out??? */
-		else
-			bootdevnr = MAKEBOOTDEV(major, 0, 0, unit, part);
-	}
-
-	boot_argv[1] = bootdevnr;
-#else
 	boot_argv[1] = 0;
-#endif
 	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
 	/* argv[3] below */
 	boot_argv[4] = extmem;

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2001/05/19 18:15:14 jdolecek Exp $
+$NetBSD: version,v 1.11 2001/06/01 23:26:30 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -18,3 +18,4 @@ is taken as the current.
 2.9:	Recognize PS/2 L40 at runtime and use appropriate gate A20
 	initialization (rather than using a compile flag).
 	Recognize ESDI disks and identify them as ed(4) for COMPAT_OLDBOOT.
+2.10:	g/c COMPAT_OLDBOOT

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2001/05/19 18:15:14 jdolecek Exp $	 */
+/*	$NetBSD: devopen.c,v 1.11 2001/06/01 23:26:30 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -33,9 +33,6 @@
 
 
 #include <sys/types.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/disklabel.h>
-#endif
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -50,51 +47,19 @@
 #include <biosmca.h>
 #endif
 
-extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
-			      unsigned int*, const char**));
+static __inline int dev2bios __P((char *, unsigned int, int *));
 
-static int dev2bios __P((char *, unsigned int, int *));
-
-static struct {
-	char           *name;
-	int             biosdev;
-}               biosdevtab[] = {
-	{
-		"fd", 0
-	},
-	{
-		"hd", 0x80
-	},
-#ifdef COMPAT_OLDBOOT
-	{
-		"wd", 0x80
-	},
-	{
-		"sd", 0x80
-	},
-#ifdef SUPPORT_PS2
-	{
-		"ed", 0x80
-	}
-#endif /* SUPPORT_PS2 */
-#endif /* COMPAT_OLDBOOT */
-};
-#define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
-
-static int
+static __inline int
 dev2bios(devname, unit, biosdev)
 	char           *devname;
 	unsigned int    unit;
 	int            *biosdev;
 {
-	int             i;
-
-	for (i = 0; i < NUMBIOSDEVS; i++)
-		if (!strcmp(devname, biosdevtab[i].name)) {
-			*biosdev = biosdevtab[i].biosdev + unit;
-			break;
-		}
-	if (i == NUMBIOSDEVS)
+	if (strcmp(devname, "hd") == 0)
+		*biosdev = 0x80 + unit;
+	else if (strcmp(devname, "fd") == 0)
+		*biosdev = 0x00 + unit;
+	else
 		return (ENXIO);
 
 	return (0);
@@ -106,30 +71,11 @@ bios2dev(biosdev, devname, unit)
 	char          **devname;
 	unsigned int   *unit;
 {
-	u_int8_t devidx;
+	if (biosdev & 0x80)
+		*devname = "hd";
+	else
+		*devname = "fd";
 
-	if (biosdev & 0x80) {
-#if defined(COMPAT_OLDBOOT) && defined(_STANDALONE)
-		extern struct disklabel disklabel;
-
-		if (disklabel.d_magic == DISKMAGIC) {
-			if (disklabel.d_type == DTYPE_SCSI)
-				devidx = 3;
-#ifdef SUPPORT_PS2
-			else if (disklabel.d_type == DTYPE_ESDI
-				 && biosmca_ps2model)
-				devidx = 4;
-#endif
-			else
-				devidx = 2;
-		} else
-#endif
-			/* call it "hd", we don't know better */
-			devidx = 1;
-	} else
-		devidx = 0;
-
-	*devname = biosdevtab[devidx].name;
 	*unit = biosdev & 0x7f;
 
 	return (0);

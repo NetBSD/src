@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/10/15 22:42:49 wiz Exp $
+#	$NetBSD: Makefile,v 1.18 2001/06/01 23:26:31 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,7 +11,7 @@ SRCS= main.c devopen.c exec.c
 
 CLEANFILES+= ${DOSSTART} ${BASE}.sym
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DXMS
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2001/05/19 18:15:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.37 2001/06/01 23:26:30 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,7 +15,7 @@ SRCS= main.c devopen.c conf.c exec.c
 
 CLEANFILES+= ${BSSTART}
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART -DSUPPORT_PS2
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART -DSUPPORT_PS2
 
 .if (${BASE} == "biosboot")
 # Various serial line configurations

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/03/31 09:45:12 hubertf Exp $
+#	$NetBSD: Makefile,v 1.7 2001/06/01 23:26:31 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -12,7 +12,7 @@ SRCS= main.c devopen.c conf.c exec.c
 
 CLEANFILES+= ${BSSTART}
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART -DDEBUG
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART -DDEBUG
 
 #Sample use of serial line debugger
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0KBD

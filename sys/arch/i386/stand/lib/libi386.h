@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.13 2000/09/24 12:32:35 jdolecek Exp $	*/
+/*	$NetBSD: libi386.h,v 1.14 2001/06/01 23:26:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -73,12 +73,9 @@ void initio __P((int));
 int iskey __P((void));
 char awaitkey __P((int, int));
 
-#ifdef COMPAT_OLDBOOT
-int biosdisk_gettype __P((struct open_file*));
 /* this is in "user code"! */
 int parsebootfile __P((const char *, char**, char**, unsigned int*,
 		       unsigned int*, const char**));
-#endif
 
 #ifdef XMS
 physaddr_t ppbcopy __P((physaddr_t, physaddr_t, int));
@@ -104,4 +101,4 @@ time_t getsecs __P((void));
 
 /* in "user code": */
 void command_help __P((char *));
-extern struct bootblk_command commands[];
+extern const struct bootblk_command commands[];
