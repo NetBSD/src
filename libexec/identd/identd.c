@@ -1,806 +1,767 @@
-/*	$NetBSD: identd.c,v 1.19 2003/09/14 22:38:23 christos Exp $	*/
+/* $NetBSD: identd.c,v 1.20 2004/01/31 21:47:17 christos Exp $ */
 
 /*
-** identd.c                       A TCP/IP link identification protocol server
-**
-** This program is in the public domain and may be used freely by anyone
-** who wants to. 
-**
-** Last update: 7 Oct 1993
-**
-** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
-*/
-
-#if defined(IRIX) || defined(SVR4) || defined(NeXT) || (defined(sco) && sco >= 42) || defined(_AIX4) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(ultrix)
-#  define SIGRETURN_TYPE void
-#  define SIGRETURN_TYPE_IS_VOID
-#else
-#  define SIGRETURN_TYPE int
-#endif
-
-#ifdef SVR4
-#  define STRNET
-#endif
-
-#ifdef NeXT31
-#  include <libc.h>
-#endif
-
-#ifdef sco
-#  define USE_SIGALARM
-#endif
-
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <poll.h>
+ * identd.c - TCP/IP Ident protocol server.
+ *
+ * This software is in the public domain.
+ * Written by Peter Postma <peter@pointless.nl>
+ */
 
 #include <sys/types.h>
-#include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
-#ifndef _AUX_SOURCE
-#  include <sys/file.h>
-#endif
-#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 
-#include <pwd.h>
-#include <grp.h>
-
 #include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
-#ifndef HPUX7
-#  include <arpa/inet.h>
-#endif
+#include <arpa/inet.h>
 
-#if defined(MIPS) || defined(BSD43)
-extern int errno;
-#endif
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <netdb.h>
+#include <poll.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
-#if defined(SOLARIS) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__linux__) || defined(_AIX)
-#  include <unistd.h>
-#  include <stdlib.h>
-#  include <string.h>
-#endif
+#define OPSYS_NAME      "UNIX"
+#define IDENT_SERVICE   "auth"
+#define TIMEOUT         30      /* seconds */
 
-#include "identd.h"
-#include "error.h"
-#include "paths.h"
+static int   idhandle(int, const char *, const char *, const char *,
+		const char *, int);
+static void  idparse(int, int, int, const char *, const char *, const char *);
+static void  iderror(int, int, int, const char *);
+static const char *gethost(struct sockaddr_storage *);
+static int  *socketsetup(const char *, const char *, int);
+static int   sysctl_getuid(struct sockaddr_storage *, socklen_t, uid_t *);
+static int   check_noident(const char *);
+static int   check_userident(const char *, char *, size_t);
+static void  random_string(char *, size_t);
+static void  change_format(const char *, struct passwd *, char *, size_t);
+static void  timeout_handler(int);
+static void  waitchild(int);
+static void  fatal(const char *);
 
+static int   bflag, eflag, fflag, Fflag, iflag, Iflag;
+static int   lflag, Lflag, nflag, Nflag, rflag;
 
-/* Antique unixes do not have these things defined... */
-#ifndef FD_SETSIZE
-#  define FD_SETSIZE 256
-#endif
-
-#ifndef FD_SET
-#  ifndef NFDBITS
-#    define NFDBITS   	(sizeof(int) * NBBY)  /* bits per mask */
-#  endif
-#  define FD_SET(n, p)  ((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#endif
-
-#ifndef FD_ZERO
-#  define FD_ZERO(p)        bzero((char *)(p), sizeof(*(p)))
-#endif
-
-
-char *path_unix = (char *) NULL;
-char *path_kmem = (char *) NULL;
-
-int verbose_flag = 0;
-int debug_flag   = 0;
-int syslog_flag  = 0;
-int multi_flag   = 0;
-int other_flag   = 0;
-int unknown_flag = 0;
-int noident_flag = 0;
-int crypto_flag  = 0;
-int liar_flag    = 0;
-
-int lport = 0;
-int fport = 0;
-
-char *charset_name = (char *) NULL;
-char *indirect_host = (char *) NULL;
-char *indirect_password = (char *) NULL;
-char *lie_string = (char *) NULL;
-
-#ifdef ALLOW_FORMAT
-    int format_flag = 0;
-    char *format = "%u";
-#endif
-
-static int child_pid;
-
-#ifdef LOG_DAEMON
-static int syslog_facility = LOG_DAEMON;
-#endif
-
-static int comparemem __P((void *, void *, int));
-char *clearmem __P((void *, int));
-static SIGRETURN_TYPE child_handler __P((int));
-int main __P((int, char *[]));
-
-/*
-** The structure passing convention for GCC is incompatible with
-** Suns own C compiler, so we define our own inet_ntoa() function.
-** (This should only affect GCC version 1 I think, a well, this works
-** for version 2 also so why bother.. :-)
-*/
-#if defined(__GNUC__) && defined(__sparc__) && !defined(NeXT)
-
-#ifdef inet_ntoa
-#undef inet_ntoa
-#endif
-
-char *inet_ntoa(ad)
-    struct in_addr ad;
+int
+main(int argc, char *argv[])
 {
-    unsigned long int s_ad;
-    int a, b, c, d;
-    static char addr[20];
-    
-    s_ad = ad.s_addr;
-    d = s_ad % 256;
-    s_ad /= 256;
-    c = s_ad % 256;
-    s_ad /= 256;
-    b = s_ad % 256;
-    a = s_ad / 256;
-    snprintf(addr, sizeof(addr), "%d.%d.%d.%d", a, b, c, d);
-    
-    return addr;
-}
-#endif
+	int IPv4or6, ch, *socks, timeout;
+	char *address, *charset, *fmt;
+	const char *osname, *portno;
+	char *p;
+	char user[LOGIN_NAME_MAX];
+	struct group *grp;
+	struct passwd *pw;
+	gid_t gid;
+	uid_t uid;
 
-static int comparemem(vp1, vp2, len)
-     void *vp1;
-     void *vp2;
-     int len;
-{
-    unsigned char *p1 = (unsigned char *) vp1;
-    unsigned char *p2 = (unsigned char *) vp2;
-    int c;
+	IPv4or6 = AF_UNSPEC;
+	osname = OPSYS_NAME;
+	portno = IDENT_SERVICE;
+	timeout = TIMEOUT;
+	address = NULL;
+	charset = NULL;
+	fmt = NULL;
+	socks = NULL;
+	gid = uid = 0;
+	bflag = eflag = fflag = Fflag = iflag = Iflag = 0;
+	lflag = Lflag = nflag = Nflag = rflag = 0;
 
-    while (len-- > 0)
-	if ((c = (int) *p1++ - (int) *p2++) != 0)
-	    return c;
+	/* Started from a tty? then run as daemon */
+	if (isatty(0))
+		bflag = 1;
 
-    return 0;
-}
-
-/*
-** Return the name of the connecting host, or the IP number as a string.
-*/
-char *gethost(addr)
-    struct in_addr *addr;
-{
-    int i;
-    struct hostent *hp;
-
-  
-    hp = gethostbyaddr((char *) addr, sizeof(struct in_addr), AF_INET);
-    if (hp)
-    {
-	char *hname = strdup(hp->h_name);
-
-	if (! hname) {
-	    syslog(LOG_ERR, "strdup(%s): %m", hp->h_name);
-	    exit(1);
-	}
-	/* Found a IP -> Name match, now try the reverse for security reasons */
-	hp = gethostbyname(hname);
-	(void) free(hname);
-	if (hp)
-#ifdef h_addr
-	    for (i = 0; hp->h_addr_list[i]; i++)
-		if (comparemem(hp->h_addr_list[i],
-			       (unsigned char *) addr,
-			       (int) sizeof(struct in_addr)) == 0)
-		    return (char *) hp->h_name;
-#else
-	if (comparemem(hp->h_addr, addr, sizeof(struct in_addr)) == 0)
-	    return hp->h_name;
-#endif
-  }
-
-  return inet_ntoa(*addr);
-}
-
-#ifdef USE_SIGALARM
-/*
-** Exit cleanly after our time's up.
-*/
-static SIGRETURN_TYPE
-alarm_handler(int s)
-{
-    if (syslog_flag)
-	syslog(LOG_DEBUG, "SIGALRM triggered, exiting");
-    
-    exit(0);
-}
-#endif
-
-
-#if !defined(hpux) && !defined(__hpux) && !defined(SVR4) && \
-    !defined(_CRAY) && !defined(sco) && !defined(LINUX)
-/*
-** This is used to clean up zombie child processes
-** if the -w or -b options are used.
-*/
-static SIGRETURN_TYPE
-child_handler(dummy)
-	int dummy;
-{
-#if defined(NeXT) || (defined(__sgi) && defined(__SVR3))
-    union wait status;
-#else
-    int status;
-#endif
-    int saved_errno = errno;
-    
-    while (wait3(&status, WNOHANG, NULL) > 0)
-	;
-
-    errno = saved_errno;
-    
-#ifndef SIGRETURN_TYPE_IS_VOID
-    return 0;
-#endif
-}
-#endif
-
-
-char *clearmem(vbp, len)
-     void *vbp;
-     int len;
-{
-    char *bp = (char *) vbp;
-    char *cp;
-
-    cp = bp;
-    while (len-- > 0)
-	*cp++ = 0;
-    
-    return bp;
-}
-
-
-/*
-** Main entry point into this daemon
-*/
-int main(argc,argv)
-    int argc;
-    char *argv[];
-{
-    int i, len;
-    struct sockaddr_in sin;
-    struct in_addr laddr, faddr;
-    int one = 1;
-
-    int background_flag = 0;
-    int timeout = 0;
-    char *portno = "113";
-    char *bind_address = (char *) NULL;
-    int set_uid = 0;
-    int set_gid = 0;
-    int inhibit_default_config = 0;
-    int opt_count = 0;		/* Count of option flags */
-  
-#ifdef __convex__
-    argc--;    /* get rid of extra argument passed by inetd */
-#endif
-
-
-    if (isatty(0))
-	background_flag = 1;
-    
-    /*
-    ** Prescan the arguments for "-f<config-file>" switches
-    */
-    inhibit_default_config = 0;
-    for (i = 1; i < argc && argv[i][0] == '-'; i++)
-	if (argv[i][1] == 'f')
-	    inhibit_default_config = 1;
-    
-    /*
-    ** Parse the default config file - if it exists
-    */
-    if (!inhibit_default_config)
-	parse_config(NULL, 1);
-  
-    /*
-    ** Parse the command line arguments
-    */
-    for (i = 1; i < argc && argv[i][0] == '-'; i++) {
-	opt_count++;
-	switch (argv[i][1])
-	{
-	  case 'b':    /* Start as standalone daemon */
-	    background_flag = 1;
-	    break;
-	    
-	  case 'w':    /* Start from Inetd, wait mode */
-	    background_flag = 2;
-	    break;
-	    
-	  case 'i':    /* Start from Inetd, nowait mode */
-	    background_flag = 0;
-	    break;
-	    
-	  case 't':
-	    timeout = atoi(argv[i]+2);
-	    break;
-	    
-	  case 'p':
-	    portno = argv[i]+2;
-	    break;
-	    
-	  case 'a':
-	    bind_address = argv[i]+2;
-	    break;
-	    
-	  case 'u':
-	    if (isdigit(argv[i][2]))
-		set_uid = atoi(argv[i]+2);
-	    else
-	    {
-		struct passwd *pwd;
-		
-		pwd = getpwnam(argv[i]+2);
-		if (!pwd)
-		    ERROR1("no such user (%s) for -u option", argv[i]+2);
-		else
-		{
-		    set_uid = pwd->pw_uid;
-		    set_gid = pwd->pw_gid;
+	/* Parse arguments */
+	while ((ch = getopt(argc, argv, "46a:bceF:f:g:IiL:lNno:p:rt:u:")) != -1)
+		switch (ch) {
+		case '4':
+			IPv4or6 = AF_INET;
+			break;
+		case '6':
+			IPv4or6 = AF_INET6;
+			break;
+		case 'a':
+			address = optarg;
+			break;
+		case 'b':
+			bflag = 1;
+			break;
+		case 'c':
+			charset = optarg;
+			break;
+		case 'e':
+			eflag = 1;
+			break;
+		case 'F':
+			Fflag = 1;
+			fmt = optarg;
+			break;
+		case 'f':
+			fflag = 1;
+			(void)strlcpy(user, optarg, sizeof(user));
+			break;
+		case 'g':
+			gid = (gid_t)strtol(optarg, &p, 0);
+			if (*p != '\0') {
+				if ((grp = getgrnam(optarg)) != NULL)
+					gid = grp->gr_gid;
+				else
+					errx(1, "No such group '%s'", optarg);
+			}
+			break;
+		case 'I':
+			Iflag = 1;
+			/* FALLTHROUGH */
+		case 'i':
+			iflag = 1;
+			break;
+		case 'L':
+			Lflag = 1;
+			(void)strlcpy(user, optarg, sizeof(user));
+			break;
+		case 'l':
+			lflag = 1;
+			break;
+		case 'N':
+			Nflag = 1;
+			break;
+		case 'n':
+			nflag = 1;
+			break;
+		case 'o':
+			osname = optarg;
+			break;
+		case 'p':
+			portno = optarg;
+			break;
+		case 'r':
+			rflag = 1;
+			break;
+		case 't':
+			timeout = (int)strtol(optarg, &p, 0);
+			if (*p != '\0') 
+				errx(1, "Invalid timeout value '%s'", optarg);
+			break;
+		case 'u':
+			uid = (uid_t)strtol(optarg, &p, 0);
+			if (*p != '\0') {
+				if ((pw = getpwnam(optarg)) != NULL) {
+					uid = pw->pw_uid;
+					gid = pw->pw_gid;
+				} else
+					errx(1, "No such user '%s'", optarg);
+			}
+			break;
+		default:
+			exit(1);
 		}
-	    }
-	    break;
-	    
-	  case 'g':
-	    if (isdigit(argv[i][2]))
-		set_gid = atoi(argv[i]+2);
-	    else
-	    {
-		struct group *grp;
-		
-		grp = getgrnam(argv[i]+2);
-		if (!grp)
-		    ERROR1("no such group (%s) for -g option", argv[i]+2);
-		else
-		    set_gid = grp->gr_gid;
-	    }
-	    break;
-	    
-	  case 'c':
-	    charset_name = argv[i]+2;
-	    break;
-	    
-	  case 'r':
-	    indirect_host = argv[i]+2;
-	    break;
-	    
-	  case 'l':    /* Use the Syslog daemon for logging */
-	    syslog_flag++;
-	    break;
-	    
-	  case 'o':
-	    other_flag = 1;
-	    break;
-	    
-	  case 'e':
-	    unknown_flag = 1;
-	    break;
-	    
-	  case 'V':    /* Give version of this daemon */
-	    printf("[in.identd, version %s]\r\n", version);
-	    exit(0);
-	    break;
-	    
-	  case 'v':    /* Be verbose */
-	    verbose_flag++;
-	    break;
-	    
-	  case 'd':    /* Enable debugging */
-	    debug_flag++;
-	    break;
-	    
-	  case 'm':    /* Enable multiline queries */
-	    multi_flag++;
-	    break;
-	    
-	  case 'N':    /* Enable users ".noident" files */
-	    noident_flag++;
-	    break;
-	    
-#ifdef INCLUDE_CRYPT
-          case 'C':    /* Enable encryption. */
-	    {
-		FILE *keyfile;
-		
-		if (argv[i][2])
-		    keyfile = fopen(argv[i]+2, "r");
-		else
-		    keyfile = fopen(PATH_DESKEY, "r");
-		
-		if (keyfile == NULL)
-		{
-		    ERROR("cannot open key file for option -C");
-		}
-		else
-		{
-		    char buf[1024];
-		    
-		    if (fgets(buf, 1024, keyfile) == NULL)
-		    {
-			ERROR("cannot read key file for option -C");
-		    }
-		    else
-		    {
-			init_encryption(buf);
-			crypto_flag++;
-		    }
-		    fclose(keyfile);
-		}
-	    }
-            break;
-#endif
 
-#ifdef ALLOW_FORMAT
-	  case 'n': /* Compatibility flag - just send the user number */
-	    format_flag = 1;
-	    format = "%U";
-	    break;
-	    
-          case 'F':    /* Output format */
-	    format_flag = 1;
-	    format = argv[i]+2;
-	    break;
-#endif
+	if (lflag)
+		openlog("identd", LOG_PID, LOG_DAEMON);
 
-	  case 'L':	/* lie brazenly */
-	    liar_flag = 1;
-	    if (*(argv[i]+2) != '\0')
-		lie_string = argv[i]+2;
-	    else
-#ifdef DEFAULT_LIE_USER
-		lie_string = DEFAULT_LIE_USER;
-#else
-		ERROR("-L specified with no user name");
-#endif
-	    break;
-
-	  default:
-	    ERROR1("Bad option %s", argv[i]);
-	    break;
+	/* Setup sockets if -b flag */
+	if (bflag) {
+		socks = socketsetup(address, portno, IPv4or6);
+		if (socks == NULL)
+			return 1;
 	}
-    }
 
-#if defined(_AUX_SOURCE) || defined (SUNOS35)
-    /* A/UX 2.0* & SunOS 3.5 calls us with an argument XXXXXXXX.YYYY
-    ** where XXXXXXXXX is the hexadecimal version of the callers
-    ** IP number, and YYYY is the port/socket or something.
-    ** It seems to be impossible to pass arguments to a daemon started
-    ** by inetd.
-    **
-    ** Just in case it is started from something else, then we only
-    ** skip the argument if no option flags have been seen.
-    */
-    if (opt_count == 0)
-	argc--;
-#endif
-
-    /*
-    ** Path to kernel namelist file specified on command line
-    */
-    if (i < argc)
-	path_unix = argv[i++];
-
-    /*
-    ** Path to kernel memory device specified on command line
-    */
-    if (i < argc)
-	path_kmem = argv[i++];
-
-
-    if (i < argc)
-	ERROR1("Too many arguments: ignored from %s", argv[i]);
-
-
-    /*
-    ** We used to call k_open here. But then the file descriptor
-    ** kd->fd open on /dev/kmem is shared by all child processes.
-    ** From the fork(2) man page:
-    **      o  The child process has its own copy of the parent's descriptors.  These
-    **         descriptors reference the same underlying objects.  For instance, file
-    **         pointers in file objects are shared between the child and the parent
-    **         so that an lseek(2) on a descriptor in the child process can affect a
-    **         subsequent read(2) or write(2) by the parent.
-    ** Thus with concurrent (simultaneous) identd client processes,
-    ** they step on each other's toes when they use kvm_read.
-    ** 
-    ** Calling k_open here was a mistake for another reason too: we
-    ** did not yet honor -u and -g options. Presumably we are
-    ** running as root (unless the in.identd file is setuid), and
-    ** then we can open kmem regardless of -u and -g values.
-    ** 
-    ** 
-    ** Open the kernel memory device and read the nlist table
-    ** 
-    **     if (k_open() < 0)
-    ** 		ERROR("main: k_open");
-    */
-    
-    /*
-    ** Do the special handling needed for the "-b" flag
-    */
-    if (background_flag == 1)
-    {
-	struct sockaddr_in addr;
-	struct servent *sp;
-	int fd;
-	
-
-	if (!debug_flag)
-	{
-	    if (fork())
-		exit(0);
-	    
-	    close(0);
-	    close(1);
-	    close(2);
-	    
-	    if (fork())
-		exit(0);
+	/* Switch to another uid/gid ? */
+	if (gid && setgid(gid) == -1) {
+		if (lflag)
+			syslog(LOG_ERR, "setgid: %m");
+		if (bflag)
+			warn("setgid");
+		exit(1);
 	}
-	
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd == -1)
-	    ERROR("main: socket");
-	
-	if (fd != 0)
-	    dup2(fd, 0);
-	
-	clearmem((void *) &addr, (int) sizeof(addr));
-	
-	addr.sin_family = AF_INET;
-	if (bind_address == (char *) NULL)
-	    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (uid && setuid(uid) == -1) {
+		if (lflag)
+			syslog(LOG_ERR, "setuid: %m");
+		if (bflag)
+			warn("setuid");
+		exit(1);
+	}
+
+	/* Daemonize, setup pollfds and start mainloop if -b flag */
+	if (bflag) {
+		int fd, i, nfds, rv;
+		struct pollfd *rfds;
+
+		(void)signal(SIGCHLD, waitchild);
+		(void)daemon(0, 0);
+
+		rfds = malloc(*socks * sizeof(struct pollfd));
+		if (rfds == NULL)
+			fatal("malloc");
+		nfds = *socks;
+		for (i = 0; i < nfds; i++) {
+			rfds[i].fd = socks[i+1];
+			rfds[i].events = POLLIN;
+			rfds[i].revents = 0;
+		}
+		/* Mainloop for daemon */
+		for (;;) {
+			rv = poll(rfds, nfds, INFTIM);
+			if (rv < 0 && errno == EINTR)
+				continue;
+			if (rv < 0)
+				fatal("poll");
+			for (i = 0; i < nfds; i++) {
+				if (rfds[i].revents & POLLIN) {
+					fd = accept(rfds[i].fd, NULL, NULL);
+					if (fd < 0) {
+						if (lflag)
+							syslog(LOG_ERR,
+							    "accept: %m");
+						continue;
+					}
+					switch (fork()) {
+					case -1:	/* error */
+						if (lflag)
+							syslog(LOG_ERR,
+							    "fork: %m");
+						(void)sleep(1);
+						break;
+					case 0:		/* child */
+						(void)idhandle(fd, charset,
+						    fmt, osname, user, timeout);
+						_exit(0);
+					default:	/* parent */
+						(void)close(fd);
+					}
+				}
+			}
+		}
+	} else
+		(void)idhandle(STDIN_FILENO, charset, fmt, osname, user,
+		    timeout);
+
+	return 0;
+}
+
+static int
+idhandle(int fd, const char *charset, const char *fmt, const char *osname,
+    const char *user, int timeout)
+{
+	struct sockaddr_storage ss[2];
+	char userbuf[LOGIN_NAME_MAX];
+	char idbuf[LOGIN_NAME_MAX];
+	char buf[BUFSIZ], *p;
+	int n, lport, fport;
+	struct passwd *pw;
+	socklen_t len;
+	uid_t uid;
+
+	lport = fport = 0;
+
+	(void)strlcpy(idbuf, user, sizeof(idbuf));
+	(void)signal(SIGALRM, timeout_handler);
+	(void)alarm(timeout);
+
+	/* Get foreign internet address */
+	len = sizeof(ss[0]);
+	if (getpeername(fd, (struct sockaddr *)&ss[0], &len) < 0)
+		fatal("getpeername");
+
+	if (lflag)
+		syslog(LOG_INFO, "Connection from %s", gethost(&ss[0]));
+
+	/* Get local internet address */
+	len = sizeof(ss[1]);
+	if (getsockname(fd, (struct sockaddr *)&ss[1], &len) < 0)
+		fatal("getsockname");
+
+	/* Be sure to have the same address family's */
+	if (ss[0].ss_family != ss[1].ss_family) {
+		if (lflag)
+			syslog(LOG_ERR, "Foreign/local AF are different!");
+		return 1;
+	}
+
+	/* Receive data from the client */
+	if ((n = recv(fd, buf, sizeof(buf) - 1, 0)) < 0) {
+		fatal("recv");
+	} else if (n == 0) {
+		if (lflag)
+			syslog(LOG_NOTICE, "recv: EOF");
+		iderror(fd, 0, 0, "UNKNOWN-ERROR");
+		return 1;
+	}
+	buf[n] = '\0';
+
+	/* Get local and remote ports from the received data */
+	p = buf;
+	while (*p != '\0' && isspace(*p))
+		p++;
+	if ((p = strtok(p, " \t,")) != NULL) {
+		lport = atoi(p);
+		if ((p = strtok(NULL, " \t,")) != NULL)
+			fport = atoi(p);
+	}
+
+	/* Are the ports valid? */
+	if (lport < 1 || lport > 65535 || fport < 1 || fport > 65535) {
+		if (lflag)
+			syslog(LOG_NOTICE, "Invalid port(s): %d, %d from %s",
+			    lport, fport, gethost(&ss[0]));
+		iderror(fd, 0, 0, eflag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		return 1;
+	}
+
+	/* If there is a 'lie' user enabled, then handle it now and quit */
+	if (Lflag) {
+		if (lflag)
+			syslog(LOG_NOTICE, "Lying with name %s to %s",
+			    idbuf, gethost(&ss[0]));
+		idparse(fd, lport, fport, charset, osname, idbuf);
+		return 0;
+	}
+
+	/* Protocol dependent stuff */
+	switch (ss[0].ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)&ss[0])->sin_port = htons(fport);
+		((struct sockaddr_in *)&ss[1])->sin_port = htons(lport);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&ss[0])->sin6_port = htons(fport);
+		((struct sockaddr_in6 *)&ss[1])->sin6_port = htons(lport);
+		break;
+	default:
+		if (lflag)
+			syslog(LOG_ERR, "Unsupported protocol, proto no. %d",
+			    ss[0].ss_family);
+		return 1;
+	}
+
+	/* Do sysctl call */
+	if (sysctl_getuid(ss, sizeof(ss), &uid) == -1) {
+		if (lflag)
+			syslog(LOG_ERR, "sysctl: %m");
+		if (fflag) {
+			if (lflag)
+				syslog(LOG_NOTICE, "Using fallback name %s "
+				    "to %s", idbuf, gethost(&ss[0]));
+			idparse(fd, lport, fport, charset, osname, idbuf);
+			return 0;
+		}
+		iderror(fd, lport, fport, eflag ? "UNKNOWN-ERROR" : "NO-USER");
+		return 1;
+	}
+
+	/* Get username with the uid */
+	if ((pw = getpwuid(uid)) == NULL) {
+		if (lflag)
+			syslog(LOG_ERR, "Couldn't map uid (%u) to name", uid);
+		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
+		idparse(fd, lport, fport, charset, osname, idbuf);
+		return 0;
+	}
+
+	if (lflag)
+		syslog(LOG_INFO, "Successfull lookup: %d, %d: %s for %s",
+		    lport, fport, pw->pw_name, gethost(&ss[0]));
+
+	/* No ident enabled? */
+	if (Nflag && check_noident(pw->pw_dir)) {
+		if (lflag)
+			syslog(LOG_NOTICE, "Returning HIDDEN-USER for user %s"
+			    " to %s", pw->pw_name, gethost(&ss[0]));
+		iderror(fd, lport, fport, "HIDDEN-USER");
+		return 1;
+	}
+
+	/* User ident enabled ? */
+	if (iflag && check_userident(pw->pw_dir, idbuf, sizeof(idbuf))) {
+		(void)strlcpy(userbuf, pw->pw_name, sizeof(userbuf));
+		if (!Iflag) {
+			if (strspn(idbuf, "0123456789") &&
+			    getpwuid(atoi(idbuf)) != NULL)
+				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
+			else if (getpwnam(idbuf) != NULL)
+				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
+		}
+		if (lflag)
+			syslog(LOG_NOTICE, "Returning user specified '%s' for "
+			    "user %s to %s", idbuf, userbuf, gethost(&ss[0]));
+		idparse(fd, lport, fport, charset, osname, idbuf);
+		return 0;
+	}
+
+	/* Send random crap? */
+	if (rflag) {
+		/* Random number or string? */
+		if (nflag)
+			(void)snprintf(idbuf, sizeof(idbuf), "%u",
+			    (unsigned int)(arc4random() % 65535));
+		else
+			random_string(idbuf, sizeof(idbuf));
+
+		if (lflag)
+			syslog(LOG_NOTICE, "Returning random '%s' for user %s"
+			    " to %s", idbuf, pw->pw_name, gethost(&ss[0]));
+		idparse(fd, lport, fport, charset, osname, idbuf);
+		return 0;
+	}
+
+	/* Return number? */
+	if (nflag)
+		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
 	else
-	{
-	    if (isdigit(bind_address[0]))
-		addr.sin_addr.s_addr = inet_addr(bind_address);
-	    else
-	    {
-		struct hostent *hp;
-		
-		hp = gethostbyname(bind_address);
-		if (!hp)
-		    ERROR1("no such address (%s) for -a switch", bind_address);
-		
-		/* This is ugly, should use memcpy() or bcopy() but... */
-		addr.sin_addr.s_addr = * (unsigned long *) (hp->h_addr);
-	    }
+		(void)strlcpy(idbuf, pw->pw_name, sizeof(idbuf));
+
+	if (Fflag) {
+		/* RFC 1413 says that 512 is the limit */
+		change_format(fmt, pw, buf, 512);
+		idparse(fd, lport, fport, charset, osname, buf);
+	} else
+		idparse(fd, lport, fport, charset, osname, idbuf);
+
+	return 0;
+}
+
+/* Send/parse the ident result */
+static void
+idparse(int fd, int lport, int fport, const char *charset, const char *osname,
+    const char *user)
+{
+	char *p;
+
+	if (asprintf(&p, "%d , %d : USERID : %s%s%s : %s\r\n", lport, fport,
+	    osname, charset ? " , " : "", charset ? charset : "", user) < 0)
+		fatal("asprintf");
+	if (send(fd, p, strlen(p), 0) < 0) {
+		free(p);
+		fatal("send");
 	}
-	
-	if (isdigit(portno[0]))
-	    addr.sin_port = htons(atoi(portno));
-	else
-	{
-	    sp = getservbyname(portno, "tcp");
-	    if (sp == (struct servent *) NULL)
-		ERROR1("main: getservbyname: %s", portno);
-	    addr.sin_port = sp->s_port;
+	free(p);
+}
+
+/* Return a specified ident error */
+static void
+iderror(int fd, int lport, int fport, const char *error)
+{
+	char *p;
+
+	if (asprintf(&p, "%d , %d : ERROR : %s\r\n", lport, fport, error) < 0)
+		fatal("asprintf");
+	if (send(fd, p, strlen(p), 0) < 0) {
+		free(p);
+		fatal("send");
+	}
+	free(p);
+}
+
+/* Return the IP address of the connecting host */
+static const char *
+gethost(struct sockaddr_storage *ss)
+{
+	static char host[NI_MAXHOST];
+
+	if (getnameinfo((struct sockaddr *)ss, ss->ss_len, host,
+	    sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
+		return host;
+
+	return "UNKNOWN";
+}
+
+/* Setup sockets, for daemon mode */
+static int *
+socketsetup(const char *address, const char *port, int af)
+{
+	struct addrinfo hints, *res, *res0;
+	int error, maxs, *s, *socks, y = 1;
+	const char *cause = NULL;
+
+	(void)memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(address, port, &hints, &res0);
+	if (error) {
+		if (lflag)
+			syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(error));
+		errx(1, "%s", gai_strerror(error));
+		/*NOTREACHED*/
 	}
 
-#ifdef SO_REUSEADDR
-	setsockopt(0, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
-#endif
+	/* Count max number of sockets we may open */
+	for (maxs = 0, res = res0; res != NULL; res = res->ai_next)
+		maxs++;
 
-	if (bind(0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
-	    ERROR("main: bind");
-    }
-    
-    if (background_flag)
-    {
-      if (listen(0, 3) < 0)
-	ERROR("main: listen");
-    }
-    
-    if (set_gid)
-    {
-	if (setgid(set_gid) == -1)
-	    ERROR("main: setgid");
-	/* Call me paranoid... PSz */
-	if (getgid() != set_gid)
-	    ERROR2("main: setgid failed: wanted %d, got GID %d", set_gid, getgid());
-	if (getegid() != set_gid)
-	    ERROR2("main: setgid failed: wanted %d, got EGID %d", set_gid, getegid());
-    }
-    
-    if (set_uid)
-    {
-	if (setuid(set_uid) == -1)
-	    ERROR("main: setuid");
-	/* Call me paranoid... PSz */
-	if (getuid() != set_uid)
-	    ERROR2("main: setuid failed: wanted %d, got UID %d", set_uid, getuid());
-	if (geteuid() != set_uid)
-	    ERROR2("main: setuid failed: wanted %d, got EUID %d", set_uid, geteuid());
-    }
-    
-    if (syslog_flag) {
-#ifdef LOG_DAEMON
-	openlog("identd", LOG_PID, syslog_facility);
-#else
-	openlog("identd", LOG_PID);
-#endif
-    }
-    (void)getpwnam("xyzzy");
-    (void)gethostbyname("xyzzy");
+	socks = malloc((maxs + 1) * sizeof(int));
+	if (socks == NULL) {
+		if (lflag)
+			syslog(LOG_ERR, "malloc: %m");
+		err(1, "malloc");
+		/* NOTREACHED */
+	}
 
-    /*
-    ** Do some special handling if the "-b" or "-w" flags are used
-    */
-    if (background_flag)
-    {
-	int nfds, fd;
-	struct pollfd set[1];
-	struct sockaddr sad;
-	int sadlen;
-	
-	
-	/*
-	** Set up the SIGCHLD signal child termination handler so
-	** that we can avoid zombie processes hanging around and
-	** handle childs terminating before being able to complete the
-	** handshake.
-	*/
-#if (defined(SVR4) || defined(hpux) || defined(__hpux) || defined(IRIX) || \
-     defined(_CRAY) || defined(_AUX_SOURCE) || defined(sco) || \
-	 defined(LINUX))
-	signal(SIGCHLD, SIG_IGN);
-#else
-	signal(SIGCHLD, child_handler);
-#endif
-    
-	set[0].fd = 0;
-	set[0].events = POLLIN;
+	*socks = 0;
+	s = socks + 1;
+	for (res = res0; res != NULL; res = res->ai_next) {
+		*s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (*s < 0) {
+			cause = "socket";
+			continue;
+		}
+		(void)setsockopt(*s, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(y));
+		if (bind(*s, res->ai_addr, res->ai_addrlen) < 0) {
+			cause = "bind";
+			(void)close(*s);
+			continue;
+		}
+		if (listen(*s, 5) < 0) {
+			cause = "listen";
+			(void)close(*s);
+			continue;
+		}
+		*socks = *socks + 1;
+		s++;
+	}
 
-	/*
-	** Loop and dispatch client handling processes
-	*/
-	do
-	{
-#ifdef USE_SIGALARM
-	    /*
-	    ** Terminate if we've been idle for 'timeout' seconds
-	    */
-	    if (background_flag == 2 && timeout)
-	    {
-		signal(SIGALRM, alarm_handler);
-		alarm(timeout);
-	    }
-#endif
-      
-	    /*
-	    ** Wait for a connection request to occur.
-	    ** Ignore EINTR (Interrupted System Call).
-	    */
-	    do
-	    {
-#ifndef USE_SIGALARM
-		if (timeout)
-		    nfds = poll(set, 1, timeout * 1000);
-		else
-#endif
-		nfds = poll(set, 1, INFTIM);
-	    } while (nfds < 0  && errno == EINTR);
-	    
-	    /*
-	    ** An error occurred in select? Just die
-	    */
-	    if (nfds < 0)
-		ERROR("main: poll");
-	    
-	    /*
-	    ** Timeout limit reached. Exit nicely
-	    */
-	    if (nfds == 0)
-		exit(0);
-      
-#ifdef USE_SIGALARM
-	    /*
-	    ** Disable the alarm timeout
-	    */
-	    alarm(0);
-#endif
-      
-	    /*
-	    ** Accept the new client
-	    */
-	    sadlen = sizeof(sad);
-	    errno = 0;
-	    fd = accept(0, &sad, &sadlen);
-	    if (fd == -1) {
-		WARNING1("main: accept. errno = %d", errno);
+	if (*socks == 0) {
+		free(socks);
+		if (lflag)
+			syslog(LOG_ERR, "%s: %m", cause);
+		err(1, "%s", cause);
+		/* NOTREACHED */
+	}
+	if (res0)
+		freeaddrinfo(res0);
+
+	return socks;
+}
+
+/* Return the UID for the connection owner */
+static int
+sysctl_getuid(struct sockaddr_storage *ss, socklen_t len, uid_t *uid)
+{
+	int mib[4];
+	uid_t myuid;
+	size_t uidlen;
+
+	uidlen = sizeof(myuid);
+
+	mib[0] = CTL_NET;
+	mib[1] = ss->ss_family;
+	mib[2] = IPPROTO_TCP;
+	mib[3] = TCPCTL_IDENT;
+
+	if (sysctl(mib, sizeof(mib)/ sizeof(int), &myuid, &uidlen, ss, len) < 0)
+		return -1;
+	*uid = myuid;
+
+	return 0;
+}
+
+/* Check if a .noident file exists in the user home directory */
+static int
+check_noident(const char *homedir)
+{
+	struct stat sb;
+	char *path;
+	int ret;
+
+	if (homedir == NULL)
+		return 0;
+	if (asprintf(&path, "%s/.noident", homedir) < 0)
+		return 0;
+	ret = stat(path, &sb);
+
+	free(path);
+	return (ret == 0);
+}
+
+/*
+ * Check if a .ident file exists in the user home directory and
+ * return the contents of that file. 
+ */
+static int
+check_userident(const char *homedir, char *username, size_t len)
+{
+	struct stat sb;
+	char *path, *p;
+	int fd, n;
+
+	if (len == 0 || homedir == NULL)
+		return 0;
+	if (asprintf(&path, "%s/.ident", homedir) < 0)
+		return 0;
+	if ((fd = open(path, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
+		free(path);
+		return 0;
+	}
+	if (fstat(fd, &sb) < 0 || !S_ISREG(sb.st_mode)) {
+		(void)close(fd);
+		free(path);
+		return 0;
+	}
+	if ((n = read(fd, username, len - 1)) < 1) {
+		(void)close(fd);
+		free(path);
+		return 0;
+	}
+	username[n] = '\0';
+
+	if ((p = strpbrk(username, "\r\n")))
+		*p = '\0';
+
+	(void)close(fd);
+	free(path);
+	return 1;
+}
+
+/* Generate a random string */
+static void
+random_string(char *str, size_t len)
+{
+	static const char chars[] = "abcdefghijklmnopqrstuvwxyz1234567890";
+	char *p;
+
+	if (len == 0)
+		return;
+	for (p = str; len > 1; len--)
+		*p++ = chars[arc4random() % (sizeof(chars) - 1)];
+	*p = '\0';
+}
+
+/* Change the output format */
+static void
+change_format(const char *format, struct passwd *pw, char *dest, size_t len)
+{
+	struct group *gr;
+	const char *cp;
+	char **gmp;
+	int bp;
+
+	if (len == 0)
+		return;
+	if ((gr = getgrgid(pw->pw_gid)) == NULL)
+		return;
+
+	for (bp = 0, cp = format; *cp != '\0' && bp < 490; cp++) {
+		if (*cp != '%') {
+			dest[bp++] = *cp;
+			continue;
+		}
+		if (*++cp == '\0')
+			break;
+		switch (*cp) {
+		case 'u':
+			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
+			    pw->pw_name);
+			break;
+		case 'U':
+			(void)snprintf(&dest[bp], len - bp, "%d", pw->pw_uid);
+			break;
+		case 'g':
+			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
+			    gr->gr_name);
+			break;
+		case 'G':
+			(void)snprintf(&dest[bp], len - bp, "%d", gr->gr_gid);
+			break;
+		case 'l':
+			(void)snprintf(&dest[bp], len - bp, "%.*s", 490 - bp,
+			    gr->gr_name);
+			bp += strlen(&dest[bp]);
+			if (bp >= 490)
+				break;
+			setgrent();
+			while ((gr = getgrent()) != NULL) {
+				if (gr->gr_gid == pw->pw_gid)
+					continue;
+				for (gmp = gr->gr_mem; *gmp && **gmp; gmp++) {
+					if (strcmp(*gmp, pw->pw_name) == 0) {
+						(void)snprintf(&dest[bp],
+						    len - bp, ",%.*s",
+						    490 - bp, gr->gr_name);
+						bp += strlen(&dest[bp]);
+						break;
+					}
+				}
+				if (bp >= 490)
+					break;
+			}
+			endgrent();
+			break;
+		case 'L':
+			(void)snprintf(&dest[bp], len - bp, "%u", gr->gr_gid);
+			bp += strlen(&dest[bp]);
+			if (bp >= 490)
+				break;
+			setgrent();
+			while ((gr = getgrent()) != NULL) {
+				if (gr->gr_gid == pw->pw_gid)
+					continue;
+				for (gmp = gr->gr_mem; *gmp && **gmp; gmp++) {
+					if (strcmp(*gmp, pw->pw_name) == 0) {
+						(void)snprintf(&dest[bp],
+						    len - bp, ",%u",
+						    gr->gr_gid);
+						bp += strlen(&dest[bp]);
+						break;
+					}
+				}
+				if (bp >= 490)
+					break;
+			}
+			endgrent();
+			break;
+		default:
+			dest[bp] = *cp;
+			dest[bp+1] = '\0';
+			break;
+		}
+		bp += strlen(&dest[bp]);
+	}
+	if (bp >= 490) {
+		(void)snprintf(&dest[490], len - 490, "...");
+		bp = 493;
+	}
+	dest[bp] = '\0';
+}
+
+/* Just exit when we caught SIGALRM */
+static void
+timeout_handler(int s)
+{
+	if (lflag)
+		syslog(LOG_DEBUG, "SIGALRM triggered, exiting...");
+	exit(1);
+}
+
+/* This is to clean up zombie processes when in daemon mode */
+static void
+waitchild(int s)
+{
+	while (waitpid(-1, NULL, WNOHANG) > 0)
 		continue;
-	    }
-      
-	    /*
-	    ** And fork, then close the fd if we are the parent.
-	    */
-	    child_pid = fork();
-	} while (child_pid && (close(fd), 1));
+}
 
-	/*
-	** We are now in child, the parent has returned to "do" above.
-	*/
-	if (dup2(fd, 0) == -1)
-	    ERROR("main: dup2: failed fd 0");
-	
-	if (dup2(fd, 1) == -1)
-	    ERROR("main: dup2: failed fd 1");
-	
-	if (dup2(fd, 2) == -1)
-	    ERROR("main: dup2: failed fd 2");
-    }
-    
-    /*
-    ** Get foreign internet address
-    */
-    len = sizeof(sin);
-    if (getpeername(0, (struct sockaddr *) &sin, &len) == -1)
-    {
-	/*
-	** A user has tried to start us from the command line or
-	** the network link died, in which case this message won't
-	** reach to other end anyway, so lets give the poor user some
-	** errors.
-	*/
-	perror("in.identd: getpeername()");
+/* Report errno through syslog and quit */
+static void
+fatal(const char *func)
+{
+	if (lflag)
+		syslog(LOG_ERR, "%s: %m", func);
 	exit(1);
-    }
-    
-    faddr = sin.sin_addr;
-    
-    
-#ifdef STRONG_LOG
-    if (syslog_flag)
-	syslog(LOG_INFO, "Connection from %s", gethost(&faddr));
-#endif
-
-    
-    /*
-    ** Get local internet address
-    */
-    len = sizeof(sin);
-#ifdef ATTSVR4
-    if (t_getsockname(0, (struct sockaddr *) &sin, &len) == -1)
-#else
-    if (getsockname(0, (struct sockaddr *) &sin, &len) == -1)
-#endif
-    {
-	/*
-	** We can just die here, because if this fails then the
-	** network has died and we haven't got anyone to return
-	** errors to.
-	*/
-	exit(1);
-    }
-    laddr = sin.sin_addr;
-    
-
-    /*
-    ** Get the local/foreign port pair from the luser
-    */
-    parse(stdin, &laddr, &faddr);
-
-    exit(0);
 }
