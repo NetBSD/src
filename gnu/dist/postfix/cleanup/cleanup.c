@@ -60,6 +60,15 @@
 /*	this program. See the Postfix \fBmain.cf\fR file for syntax details
 /*	and for default values. Use the \fBpostfix reload\fR command after
 /*	a configuration change.
+/* .SH Content filtering
+/* .IP \fBbody_checks\fR
+/*	Lookup tables with content filters for message body lines.
+/*	These filters see physical lines one at a time, in chunks of
+/*	at most line_length_limit bytes.
+/* .IP \fBheader_checks\fR
+/*	Lookup tables with content filters for message header lines.
+/*	These filters see logical headers one at a time, including headers
+/*	that span multiple lines.
 /* .SH Miscellaneous
 /* .ad
 /* .fi
@@ -175,6 +184,7 @@ char   *var_virtual_maps;		/* virtual maps */
 char   *var_masq_domains;		/* masquerade domains */
 char   *var_masq_exceptions;		/* users not masqueraded */
 char   *var_header_checks;		/* any header checks */
+char   *var_body_checks;		/* any body checks */
 int     var_dup_filter_limit;		/* recipient dup filter */
 char   *var_empty_addr;			/* destination of bounced bounces */
 int     var_delay_warn_time;		/* delay that triggers warning */
@@ -189,6 +199,7 @@ MAPS   *cleanup_comm_canon_maps;
 MAPS   *cleanup_send_canon_maps;
 MAPS   *cleanup_rcpt_canon_maps;
 MAPS   *cleanup_header_checks;
+MAPS   *cleanup_body_checks;
 MAPS   *cleanup_virtual_maps;
 ARGV   *cleanup_masq_domains;
 
@@ -420,6 +431,9 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
     if (*var_header_checks)
 	cleanup_header_checks =
 	    maps_create(VAR_HEADER_CHECKS, var_header_checks, DICT_FLAG_LOCK);
+    if (*var_body_checks)
+	cleanup_body_checks =
+	    maps_create(VAR_BODY_CHECKS, var_body_checks, DICT_FLAG_LOCK);
 }
 
 /* pre_accept - see if tables have changed */
@@ -473,6 +487,7 @@ int     main(int argc, char **argv)
 	VAR_EMPTY_ADDR, DEF_EMPTY_ADDR, &var_empty_addr, 1, 0,
 	VAR_MASQ_EXCEPTIONS, DEF_MASQ_EXCEPTIONS, &var_masq_exceptions, 0, 0,
 	VAR_HEADER_CHECKS, DEF_HEADER_CHECKS, &var_header_checks, 0, 0,
+	VAR_BODY_CHECKS, DEF_BODY_CHECKS, &var_body_checks, 0, 0,
 	VAR_PROP_EXTENSION, DEF_PROP_EXTENSION, &var_prop_extension, 0, 0,
 	VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
 	VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
