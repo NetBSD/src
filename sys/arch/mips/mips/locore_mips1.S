@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.53.2.2 2001/11/17 23:43:42 wdk Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.53.2.3 2001/11/18 00:09:24 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,7 +294,7 @@ END(mips1_KernGenException)
  * Handle an exception during user mode.
  * Save user context atop of kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->p_md.md_regs.
+ * curproc->l_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 	.set	noat
@@ -386,7 +386,7 @@ END(mips1_UserGenException)
  *
  * Save user context atop of kernel stack, then call syscall() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->p_md.md_regs.
+ * curproc->l_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	.set	noat
@@ -1058,8 +1058,8 @@ END(mips1_proc_trampoline)
  * doing that, and make sure TBIS(them) in the case.
  */
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
-	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
-	lw	a2, P_MD_UPTE_1(a0)		# a2 = upte[1]
+	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
+	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 	lw	s0, L_ADDR(a0)			# va = l->l_addr
 	li	s2, MIPS_KSEG2_START
 	blt	s0, s2, resume
