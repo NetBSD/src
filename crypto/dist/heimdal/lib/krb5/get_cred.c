@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_cred.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: get_cred.c,v 1.1.1.1.2.1 2001/04/05 23:25:04 he Exp $");
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -45,7 +45,8 @@ make_pa_tgs_req(krb5_context context,
 		krb5_auth_context ac,
 		KDC_REQ_BODY *body,
 		PA_DATA *padata,
-		krb5_creds *creds)
+		krb5_creds *creds,
+		krb5_key_usage usage)
 {
     u_char *buf;
     size_t buf_size;
@@ -82,12 +83,14 @@ make_pa_tgs_req(krb5_context context,
     in_data.data   = buf + buf_size - len;
     ret = krb5_mk_req_internal(context, &ac, 0, &in_data, creds,
 			       &padata->padata_value,
-			       KRB5_KU_TGS_REQ_AUTH_CKSUM);
+			       KRB5_KU_TGS_REQ_AUTH_CKSUM,
+			       usage
+			       /* KRB5_KU_TGS_REQ_AUTH */);
 out:
     free (buf);
     if(ret)
 	return ret;
-    padata->padata_type = pa_tgs_req;
+    padata->padata_type = KRB5_PADATA_TGS_REQ;
     return 0;
 }
 
@@ -161,7 +164,8 @@ init_tgs_req (krb5_context context,
 	      krb5_creds *krbtgt,
 	      unsigned nonce,
 	      krb5_keyblock **subkey,
-	      TGS_REQ *t)
+	      TGS_REQ *t,
+	      krb5_key_usage usage)
 {
     krb5_error_code ret;
 
@@ -191,6 +195,10 @@ init_tgs_req (krb5_context context,
 	ret = ENOMEM;
 	goto fail;
     }
+
+    /* some versions of some code might require that the client be
+       present in TGS-REQs, but this is clearly against the spec */
+
     ret = copy_PrincipalName(&in_creds->server->name, t->req_body.sname);
     if (ret)
 	goto fail;
@@ -261,7 +269,8 @@ init_tgs_req (krb5_context context,
 			      ac,
 			      &t->req_body, 
 			      t->padata->val,
-			      krbtgt);
+			      krbtgt,
+			      usage);
 	if(ret) {
 	    krb5_free_keyblock (context, key);
 	    krb5_auth_con_free(context, ac);
@@ -273,6 +282,7 @@ init_tgs_req (krb5_context context,
     }
 fail:
     if (ret)
+	/* XXX - don't free addresses? */
 	free_TGS_REQ (t);
     return ret;
 }
@@ -320,7 +330,9 @@ decrypt_tkt_with_subkey (krb5_context context,
     size_t size;
     krb5_crypto crypto;
     
-    krb5_crypto_init(context, key, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
+    if (ret)
+	return ret;
     ret = krb5_decrypt_EncryptedData (context,
 				      crypto,
 				      usage,
@@ -329,7 +341,9 @@ decrypt_tkt_with_subkey (krb5_context context,
     krb5_crypto_destroy(context, crypto);
     if(ret && subkey){
 	/* DCE compat -- try to decrypt with subkey */
-	krb5_crypto_init(context, (krb5_keyblock*)subkey, 0, &crypto);
+	ret = krb5_crypto_init(context, (krb5_keyblock*)subkey, 0, &crypto);
+	if (ret)
+	    return ret;
 	ret = krb5_decrypt_EncryptedData (context,
 					  crypto,
 					  KRB5_KU_TGS_REP_ENC_PART_SUB_KEY,
@@ -356,13 +370,14 @@ decrypt_tkt_with_subkey (krb5_context context,
 }
 
 static krb5_error_code
-get_cred_kdc(krb5_context context, 
+get_cred_kdc_usage(krb5_context context, 
 	     krb5_ccache id, 
 	     krb5_kdc_flags flags,
 	     krb5_addresses *addresses, 
 	     krb5_creds *in_creds, 
 	     krb5_creds *krbtgt,
-	     krb5_creds *out_creds)
+		   krb5_creds *out_creds,
+		   krb5_key_usage usage)
 {
     TGS_REQ req;
     krb5_data enc;
@@ -397,7 +412,8 @@ get_cred_kdc(krb5_context context,
 			krbtgt,
 			nonce,
 			&subkey, 
-			&req);
+			&req,
+			usage);
     if(flags.b.enc_tkt_in_skey)
 	free_Ticket(&second_ticket);
     if (ret)
@@ -494,6 +510,25 @@ out:
 	free (buf);
     return ret;
     
+}
+
+static krb5_error_code
+get_cred_kdc(krb5_context context, 
+	     krb5_ccache id, 
+	     krb5_kdc_flags flags,
+	     krb5_addresses *addresses, 
+	     krb5_creds *in_creds, 
+	     krb5_creds *krbtgt,
+	     krb5_creds *out_creds)
+{
+    krb5_error_code ret;
+
+    ret = get_cred_kdc_usage(context, id, flags, addresses, in_creds,
+			     krbtgt, out_creds, KRB5_KU_TGS_REQ_AUTH);
+    if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY)
+	ret = get_cred_kdc_usage(context, id, flags, addresses, in_creds,
+				 krbtgt, out_creds, KRB5_KU_AP_REQ_AUTH);
+    return ret;
 }
 
 /* same as above, just get local addresses first */
@@ -611,7 +646,7 @@ get_cred_from_kdc_flags(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds *tgt, tmp_creds;
-    krb5_realm client_realm, server_realm;
+    krb5_const_realm client_realm, server_realm, try_realm;
 
     *out_creds = NULL;
 
@@ -621,9 +656,15 @@ get_cred_from_kdc_flags(krb5_context context,
     ret = krb5_copy_principal(context, in_creds->client, &tmp_creds.client);
     if(ret)
 	return ret;
+
+    try_realm = krb5_config_get_string(context, NULL, "libdefaults",
+				       "capath", server_realm, NULL);
+    if (try_realm == NULL)
+	try_realm = client_realm;
+
     ret = krb5_make_principal(context,
 			      &tmp_creds.server,
-			      client_realm,
+			      try_realm,
 			      KRB5_TGS_NAME,
 			      server_realm,
 			      NULL);
@@ -643,8 +684,10 @@ get_cred_from_kdc_flags(krb5_context context,
 	    else {
 		ret = get_cred_kdc_la(context, ccache, flags, 
 				      in_creds, &tgts, *out_creds);
-		if (ret)
+		if (ret) {
 		    free (*out_creds);
+		    *out_creds = NULL;
+		}
 	    }
 	    krb5_free_creds_contents(context, &tgts);
 	    krb5_free_principal(context, tmp_creds.server);
@@ -657,8 +700,7 @@ get_cred_from_kdc_flags(krb5_context context,
     /* XXX this can loop forever */
     while(1){
 	general_string tgt_inst;
-	krb5_kdc_flags f;
-	f.i = 0;
+
 	ret = get_cred_from_kdc_flags(context, flags, ccache, &tmp_creds, 
 				      &tgt, ret_tgts);
 	if(ret) {
@@ -699,8 +741,10 @@ get_cred_from_kdc_flags(krb5_context context,
     else {
 	ret = get_cred_kdc_la(context, ccache, flags, 
 				      in_creds, tgt, *out_creds);
-	if (ret)
+	if (ret) {
 	    free (*out_creds);
+	    *out_creds = NULL;
+	}
     }
     krb5_free_creds(context, tgt);
     return ret;
@@ -730,20 +774,24 @@ krb5_get_credentials_with_flags(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds **tgts;
+    krb5_creds *res_creds;
     int i;
     
-    *out_creds = calloc(1, sizeof(**out_creds));
-    if (*out_creds == NULL)
+    *out_creds = NULL;
+    res_creds = calloc(1, sizeof(*res_creds));
+    if (res_creds == NULL)
 	return ENOMEM;
 
     ret = krb5_cc_retrieve_cred(context,
 				ccache,
 				in_creds->session.keytype ?
 				KRB5_TC_MATCH_KEYTYPE : 0,
-				in_creds, *out_creds);
-    if(ret == 0)
+				in_creds, res_creds);
+    if(ret == 0) {
+	*out_creds = res_creds;
 	return 0;
-    free(*out_creds);
+    }
+    free(res_creds);
     if(ret != KRB5_CC_END)
 	return ret;
     if(options & KRB5_GC_CACHED)
@@ -753,7 +801,7 @@ krb5_get_credentials_with_flags(krb5_context context,
     tgts = NULL;
     ret = get_cred_from_kdc_flags(context, flags, ccache, 
 				  in_creds, out_creds, &tgts);
-    for(i = 0; tgts && tgts[i]; i++){
+    for(i = 0; tgts && tgts[i]; i++) {
 	krb5_cc_store_cred(context, ccache, tgts[i]);
 	krb5_free_creds(context, tgts[i]);
     }

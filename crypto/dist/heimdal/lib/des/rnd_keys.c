@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: rnd_keys.c,v 1.1.1.1 2000/06/16 18:32:28 thorpej Exp $");
+RCSID("$Id: rnd_keys.c,v 1.1.1.1.2.1 2001/04/05 23:25:03 he Exp $");
 #endif
 
 #include <des.h>
@@ -97,13 +97,6 @@ des_set_random_generator_seed(des_cblock *seed);
 
 int
 des_new_random_key(des_cblock *key);
-
-
-
-
-
-
-
 
 /*
  * Generate "random" data by checksumming a file.
@@ -381,9 +374,6 @@ des_rand_data_key(des_cblock *key)
  * It's neccessary to be root to run it. Returns -1 if there were any
  * problems with permissions.
  */
-
-void 
-des_init_random_number_generator(des_cblock *seed);
 
 /*
  * In case the generator does not get initialized use this as fallback.
