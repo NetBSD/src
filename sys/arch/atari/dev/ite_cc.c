@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.11 1996/10/13 04:11:00 christos Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.12 1996/12/20 12:49:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -112,7 +112,7 @@ int ite_default_height = 400;	/* def height		*/
  * grfcc config stuff
  */
 void grfccattach __P((struct device *, struct device *, void *));
-int  grfccmatch __P((struct device *, void *, void *));
+int  grfccmatch __P((struct device *, struct cfdata *, void *));
 int  grfccprint __P((void *, const char *));
 
 struct cfattach grfcc_ca = {
@@ -139,13 +139,13 @@ void	falcon_probe_video __P((MODES *));
 #endif /* FALCON_VIDEO */
 
 int
-grfccmatch(pdp, match, auxp)
+grfccmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void	*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
 	static int	must_probe = 1;
 	grf_auxp_t	*grf_auxp = auxp;
-	struct cfdata	*cfp = match;
 
 	if (must_probe) {
 		/*

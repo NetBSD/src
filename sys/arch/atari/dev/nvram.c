@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.5 1996/10/13 04:11:10 christos Exp $	*/
+/*	$NetBSD: nvram.c,v 1.6 1996/12/20 12:49:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -62,7 +62,7 @@ static u_char	nvram_csum __P((void));
  * Auto config stuff....
  */
 static void	nvr_attach __P((struct device *, struct device *, void *));
-static int	nvr_match __P((struct device *, void *, void *));
+static int	nvr_match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach nvr_ca = {
 	sizeof(struct nvr_softc), nvr_match, nvr_attach
@@ -74,9 +74,10 @@ struct cfdriver nvr_cd = {
 
 /*ARGSUSED*/
 static	int
-nvr_match(pdp, match, auxp)
-struct	device *pdp;
-void	*match, *auxp;
+nvr_match(pdp, cfp, auxp)
+struct	device	*pdp;
+struct	cfdata	*cfp;
+void		*auxp;
 {
 	if (!strcmp((char *)auxp, "nvr"))
 		return (1);

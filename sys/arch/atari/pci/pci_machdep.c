@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 1996/11/08 14:18:20 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 1996/12/20 12:50:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -49,7 +49,7 @@
 #include <atari/atari/device.h>
 
 int	pcibusprint __P((void *auxp, const char *));
-int	pcibusmatch __P((struct device *, void *, void *));
+int	pcibusmatch __P((struct device *, struct cfdata *, void *));
 void	pcibusattach __P((struct device *, struct device *, void *));
 
 static int pci_config_offset __P((pcitag_t));
@@ -70,12 +70,11 @@ struct cfdriver pcibus_cd = {
 };
 
 int
-pcibusmatch(pdp, match, auxp)
+pcibusmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if(atari_realconfig == 0)
 		return (0);
 	if (strcmp((char *)auxp, "pcibus") || cfp->cf_unit != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 1996/12/18 12:35:31 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 1996/12/20 12:49:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,7 +92,7 @@ dev_type_read(rtcread);
 dev_type_write(rtcwrite);
 
 static void	clockattach __P((struct device *, struct device *, void *));
-static int	clockmatch __P((struct device *, void *, void *));
+static int	clockmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
@@ -125,9 +125,10 @@ static int	clk2min;	/* current, from above choises		*/
 #endif
 
 int
-clockmatch(pdp, match, auxp)
+clockmatch(pdp, cfp, auxp)
 struct device	*pdp;
-void		*match, *auxp;
+struct cfdata	*cfp;
+void		*auxp;
 {
 	if (!atari_realconfig) {
 	    /*
