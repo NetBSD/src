@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.19 2003/08/07 16:33:45 agc Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.20 2003/09/30 00:01:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.19 2003/08/07 16:33:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.20 2003/09/30 00:01:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ idp_ctlinput(cmd, sa, arg)
 	struct ns_errp *errp = NULL;
 	int type;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	if (nsctlerrmap[cmd] == 0)
 		return NULL;		/* XXX */
