@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.179 2001/04/27 17:04:39 dmcmahill Exp $
+#	$NetBSD: bsd.lib.mk,v 1.180 2001/06/01 17:49:33 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -14,7 +14,7 @@ __initialized__:
 
 .PHONY:		checkver cleanlib libinstall
 realinstall:	checkver libinstall
-clean cleandir distclean: cleanlib
+clean cleandir: cleanlib
 
 .if exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major

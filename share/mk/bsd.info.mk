@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.19 2001/05/08 03:19:52 sommerfeld Exp $
+#	$NetBSD: bsd.info.mk,v 1.20 2001/06/01 17:49:33 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -16,7 +16,7 @@ INFOFLAGS?=
 INSTALL_INFO?=	install-info
 
 .PHONY:		infoinstall cleaninfo
-cleandir distclean: cleaninfo
+cleandir: cleaninfo
 
 .SUFFIXES: .txi .texi .texinfo .info
 

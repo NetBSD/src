@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.61 2001/05/08 03:19:52 sommerfeld Exp $
+#	$NetBSD: bsd.man.mk,v 1.62 2001/06/01 17:49:33 tv Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -16,7 +16,7 @@ __initialized__:
 .if ${MKMAN} != "no"
 realinstall:	${MANINSTALL}
 .endif
-cleandir distclean: cleanman
+cleandir: cleanman
 
 TMACDIR?=	${DESTDIR}/usr/share/tmac
 HTMLDIR?=	${DESTDIR}/usr/share/man

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.9 2001/01/04 23:52:00 garbled Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.10 2001/06/01 17:49:33 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -13,7 +13,7 @@ __initialized__:
 .endif
 
 .PHONY:		cleanprog 
-clean cleandir distclean: cleanprog
+clean cleandir: cleanprog
 
 CFLAGS+=	${COPTS}
 

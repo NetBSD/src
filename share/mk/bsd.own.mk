@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.159 2001/05/12 22:38:04 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.160 2001/06/01 17:49:33 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -159,7 +159,7 @@ MACHINE_GNU_ARCH=${MACHINE_ARCH}
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 .endif
 
-TARGETS+=	all clean cleandir depend dependall distclean includes \
+TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml
 .PHONY:		all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
@@ -184,6 +184,7 @@ realall:	.NOTMAIN
 depend:		.NOTMAIN realdepend subdir-depend
 subdir-depend:	.NOTMAIN
 realdepend:	.NOTMAIN
+distclean:	.NOTMAIN cleandir
 .endif
 
 PRINTOBJDIR=	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -B -s -f-

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.49 2001/05/08 03:19:51 sommerfeld Exp $
+#	$NetBSD: bsd.doc.mk,v 1.50 2001/06/01 17:49:33 tv Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -14,7 +14,7 @@ __initialized__:
 .if ${MKSHARE} != "no"
 realinstall:	docinstall
 .endif
-clean cleandir distclean: cleandoc
+clean cleandir: cleandoc
 
 BIB?=		bib
 EQN?=		eqn
