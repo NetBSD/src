@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.56 2000/05/12 16:22:36 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.57 2000/06/14 05:10:27 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -474,12 +474,12 @@ ether_output(ifp, m0, dst, rt0)
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:

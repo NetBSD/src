@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.32 2000/05/28 02:49:36 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.33 2000/06/14 05:10:28 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -581,12 +581,12 @@ fddi_output(ifp, m0, dst, rt0)
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:
