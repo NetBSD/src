@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.30 1994/11/14 06:06:24 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.31 1994/12/01 10:16:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,6 +167,7 @@ kernfs_xread(kt, off, bufp, len)
 	}
 
 	case KTT_AVENRUN:
+		averunnable.fscale = FSCALE;
 		sprintf(*bufp, "%ld %ld %ld %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
 		    averunnable.ldavg[2], averunnable.fscale);
