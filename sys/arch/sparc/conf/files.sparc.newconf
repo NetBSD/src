@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.20 1994/12/16 21:53:01 deraadt Exp $
+#	$NetBSD: files.sparc.newconf,v 1.21 1995/01/25 05:35:15 cgd Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -41,7 +41,7 @@ file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
 
 major { sd = 7 }
-major { vn = 8 }
+major { vnd = 8 }
 major { cd = 18 }
 
 device dma at sbus, obio

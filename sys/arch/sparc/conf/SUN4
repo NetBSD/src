@@ -1,4 +1,4 @@
-#	$NetBSD: SUN4,v 1.9 1994/12/17 23:12:43 deraadt Exp $
+#	$NetBSD: SUN4,v 1.10 1995/01/25 05:35:09 cgd Exp $
 
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -87,5 +87,5 @@ pseudo-device	sl	2
 pseudo-device	kbd
 pseudo-device	ppp	2
 pseudo-device	tun	4
-pseudo-device	vn	3
+pseudo-device	vnd	3
 pseudo-device	bpfilter 16
