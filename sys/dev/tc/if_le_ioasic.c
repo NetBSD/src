@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.9 1997/08/26 02:38:47 jonathan Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.10 1998/01/19 02:49:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.9 1997/08/26 02:38:47 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.10 1998/01/19 02:49:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,14 @@ le_ioasic_attach(parent, self, aux)
 	sc->sc_copyfrombuf = le_ioasic_copyfrombuf_gap16;
 	sc->sc_zerobuf = le_ioasic_zerobuf_gap16;
 
+	if (le_iomem == 0) {
+		printf("%s: DMA area not set up\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+#ifndef __alpha__
 	ioasic_lance_dma_setup(le_iomem);	/* XXX more thought */
+#endif
 
 	dec_le_common_attach(sc, ioasic_lance_ether_address());
 
