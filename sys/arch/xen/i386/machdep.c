@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2004/12/10 18:53:43 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2004/12/10 18:53:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.2.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2004/12/10 18:53:43 christos Exp $"
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <machine/evtchn.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -205,6 +206,7 @@ void ddb_trap_hook(int);
 /* #define	XENDEBUG_LOW */
 
 #ifdef XENDEBUG
+extern void printk(char *, ...);
 #define	XENPRINTF(x) printf x
 #define	XENPRINTK(x) printk x
 #else
@@ -233,8 +235,8 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-extern struct bi_devmatch *x86_alldisks;
-extern int x86_ndisks;
+struct bi_devmatch *i386_alldisks = NULL;
+int i386_ndisks = 0;
 
 #ifdef CPURESET_DELAY
 int	cpureset_delay = CPURESET_DELAY;
@@ -461,7 +463,7 @@ i386_switch_context(struct pcb *new)
 
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
 		HYPERVISOR_dom0_op(&op);
 	}
@@ -544,9 +546,9 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = x86_alldisks;
+	node.sysctl_data = i386_alldisks;
 	node.sysctl_size = sizeof(struct disklist) +
-	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
+	    (i386_ndisks - 1) * sizeof(struct nativedisk_info);
         return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -846,6 +848,7 @@ haltsys:
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
 #endif
+		HYPERVISOR_shutdown();
 	}
 
 	if (howto & RB_HALT) {
@@ -955,7 +958,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->pdppaddr = PTDpaddr;
+	cpuhdrp->ptdpaddr = PTDpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*
@@ -2058,7 +2061,6 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
-		extern int *esym;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB
@@ -2074,7 +2076,10 @@ init386(paddr_t first_avail)
 			    (int *)symtab->esym);
 		}
 		else
-			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+			ksyms_init(*(int *)&end, ((int *)&end) + 1,
+				   xen_start_info.mod_start ?
+				   (void *)xen_start_info.mod_start :
+				   (void *)xen_start_info.mfn_list);
 	}
 #endif
 #ifdef DDB
@@ -2101,7 +2106,9 @@ init386(paddr_t first_avail)
 	mca_busprobe();
 #endif
 
-#if !defined(XEN)
+#if defined(XEN)
+	events_default_setup();
+#else
 	intr_default_setup();
 #endif
 
@@ -2256,7 +2263,7 @@ cpu_reset()
 	delay(100000);
 #endif
 
-	HYPERVISOR_exit();
+	HYPERVISOR_reboot();
 
 	for (;;);
 }
@@ -2548,6 +2555,9 @@ ddb_trap_hook(int where)
 
 	db_stack_trace_print((db_expr_t) db_dot, FALSE, 65535,
 	    "", db_printf);
+#ifdef DEBUG
+	db_show_regs((db_expr_t) db_dot, FALSE, 65535, "");
+#endif
 }
 
 #endif /* DDB || KGDB */

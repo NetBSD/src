@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5 2004/05/02 20:38:35 cl Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5 2004/05/02 20:38:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -68,7 +68,6 @@ void printk(char *, ...);
 shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union;
 
-
 void xen_failsafe_handler(void);
 
 void
@@ -95,15 +94,16 @@ void
 xen_set_ldt(vaddr_t base, uint32_t entries)
 {
 	vaddr_t va;
-	pt_entry_t *ptp;
+	pt_entry_t *ptp, *maptp;
 
 	for (va = base; va < base + entries * sizeof(union descriptor);
 	     va += PAGE_SIZE) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
-		XENPRINTF(("xen_set_ldt %p %d %p\n", (void *)base,
-			      entries, ptp));
-		PTE_CLEARBITS(ptp, PG_RW);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)ptp);
+		XENPRINTF(("xen_set_ldt %p %d %p %p\n", (void *)base,
+			      entries, ptp, maptp));
+		PTE_CLEARBITS(ptp, maptp, PG_RW);
 	}
 	PTE_UPDATES_FLUSH();
 
@@ -291,6 +291,7 @@ xpmap_dump_pt(pt_entry_t *ptp, int p)
 	}
 	if (bufpos) {
 		PRINTK((XBUF));
+		PRINTK(("\n"));
 		bufpos = 0;
 	}
 }
@@ -300,7 +301,6 @@ void
 xpmap_init(void)
 {
 	pd_entry_t *xen_pdp;
-	pd_entry_t pde;
 	pt_entry_t *ptp, *sysptp;
 	pt_entry_t pte;
 	uint32_t i, j;
@@ -309,22 +309,15 @@ xpmap_init(void)
 	extern char kernel_text, _etext, __bss_start, end, *esym;
 #endif
 
-	XENPRINTK(("text %p data %p bss %p end %p esym %p\n", &kernel_text,
-		   &_etext, &__bss_start, &end, esym));
-	XENPRINTK(("xpmap_init PTD %p nkpde %d upages %d xen_PTD %p p2m-map %p\n",
-		      (void *)PTDpaddr, nkpde, UPAGES,
-		      (pd_entry_t *)xen_start_info.pt_base,
-		      xpmap_phys_to_machine_mapping));
+	xpmap_phys_to_machine_mapping = (void *)xen_start_info.mfn_list;
 
 	xen_pdp = (pd_entry_t *)xen_start_info.pt_base;
 
-	for (i = 0; i < xen_start_info.nr_pages; i++) {
-		pde = xpmap_get_vbootpde((i << PAGE_SHIFT) + XEN_PAGE_OFFSET) &
-			PG_FRAME;
-		pte = ((pt_entry_t *)pde)[(i + (XEN_PAGE_OFFSET >> PAGE_SHIFT)) &
-		    (PT_MASK >> PAGE_SHIFT)];
-		xpmap_phys_to_machine_mapping[i] = pte >> PAGE_SHIFT;
-	}
+	XENPRINTK(("text %p data %p bss %p end %p esym %p\n", &kernel_text,
+		   &_etext, &__bss_start, &end, esym));
+	XENPRINTK(("xpmap_init PTD %p nkpde %d upages %d xen_PTD %p p2m-map %p\n",
+		   (void *)PTDpaddr, nkpde, UPAGES, xen_pdp,
+		   xpmap_phys_to_machine_mapping));
 
 	bufpos = 0;
 
@@ -343,10 +336,24 @@ xpmap_init(void)
 	/* Install a PDE recursively mapping page directory as a page table! */
 
 	sysptp = (pt_entry_t *)(PTDpaddr + ((1 + UPAGES) << PAGE_SHIFT));
+
+	/* make xen's PDE and PTE pages read-only in our pagetable */
+	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
+		/* mark PTE page read-only in our table */
+		sysptp[((xen_start_info.pt_base +
+			    (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+			   (PD_MASK | PT_MASK)) >> PAGE_SHIFT] &= ~PG_RW;
+	}
+
+	xpq_flush_queue();
+
 	for (i = 0; i < 1 + UPAGES + nkpde; i++) {
 		/* mark PTE page read-only in xen's table */
 		ptp = xpmap_get_bootptep(PTDpaddr + (i << PAGE_SHIFT));
-		xpq_queue_pte_update(ptp, *ptp & ~PG_RW);
+		xpq_queue_pte_update(
+		    (void *)xpmap_ptom((unsigned long)ptp - KERNBASE), *ptp & ~PG_RW);
+		XENPRINTK(("%03x: %p(%p) -> %08x\n", i, ptp,
+			      (unsigned long)ptp - KERNTEXTOFF, *ptp));
 
 		/* mark PTE page read-only in our table */
 		sysptp[((PTDpaddr + (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
@@ -390,13 +397,13 @@ xpmap_init(void)
 		if (i == 0)
 			i = 1 + UPAGES - 1;
 	}
-	xpq_flush_queue();
 
 #if 0
 	for (i = 0x300; i < 0x305; i++)
-		xpmap_dump_pt((pt_entry_t *)
-		    (xpmap_mtop(((pt_entry_t *)xen_start_info.pt_base)[i] &
-			PG_FRAME) + KERNBASE), i);
+		if (((pt_entry_t *)xen_start_info.pt_base)[i] & PG_V)
+			xpmap_dump_pt((pt_entry_t *)
+			    (xpmap_mtop(((pt_entry_t *)xen_start_info.pt_base)[i] &
+				PG_FRAME) + KERNBASE), i);
 	xpmap_dump_pt((pt_entry_t *)xen_start_info.pt_base, 0);
 #endif
 
@@ -410,11 +417,24 @@ xpmap_init(void)
 	xpmap_dump_pt((pt_entry_t *)PTDpaddr, 0);
 #endif
 
+	xpq_flush_queue();
+
 	xpq_queue_pin_table(xpmap_get_bootpte(PTDpaddr) & PG_FRAME,
 	    XPQ_PIN_L2_TABLE);
 	xpq_queue_pt_switch(xpmap_get_bootpte(PTDpaddr) & PG_FRAME);
 	xpq_queue_unpin_table(
 		xpmap_get_bootpte(xen_start_info.pt_base) & PG_FRAME);
+
+	/* make xen's PDE and PTE pages writable in our pagetable */
+	for (i = 0; i < xen_start_info.nr_pt_frames; i++) {
+		/* mark PTE page writable in our table */
+		ptp = &sysptp[((xen_start_info.pt_base +
+				   (i << PAGE_SHIFT) - KERNBASE_LOCORE) & 
+				  (PD_MASK | PT_MASK)) >> PAGE_SHIFT];
+		xpq_queue_pte_update(
+		    (void *)xpmap_ptom((unsigned long)ptp - KERNBASE), *ptp |
+		    PG_RW);
+	}
 
 	xpq_flush_queue();
 	XENPRINTK(("pt_switch done!\n"));
@@ -429,7 +449,7 @@ paddr_t
 find_pmap_mem_end(vaddr_t va)
 {
 	mmu_update_t r;
-	int start, end;
+	int start, end, ok;
 	pt_entry_t old;
 
 	start = xen_start_info.nr_pages;
@@ -441,13 +461,13 @@ find_pmap_mem_end(vaddr_t va)
 	while (start + 1 < end) {
 		r.val = (((start + end) / 2) << PAGE_SHIFT) | PG_V;
 
-		if (HYPERVISOR_mmu_update_fail_ok(&r, 1) < 0)
+		if (HYPERVISOR_mmu_update(&r, 1, &ok) < 0)
 			end = (start + end) / 2;
 		else
 			start = (start + end) / 2;
 	}
 	r.val = old;
-	if (HYPERVISOR_mmu_update_fail_ok(&r, 1) < 0)
+	if (HYPERVISOR_mmu_update(&r, 1, &ok) < 0)
 		printf("pmap_mem_end find: old update failed %08x\n",
 		    old);
 
@@ -517,13 +537,15 @@ static int xpq_idx = 0;
 void
 xpq_flush_queue()
 {
-	int i;
+	int i, ok;
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: %p %08x\n", i, xpq_queue[i].pde.ptr,
 		    xpq_queue[i].pde.val));
-	HYPERVISOR_mmu_update((mmu_update_t *)xpq_queue, xpq_idx);
+	if (xpq_idx != 0 &&
+	    HYPERVISOR_mmu_update((mmu_update_t *)xpq_queue, xpq_idx, &ok) < 0)
+		panic("HYPERVISOR_mmu_update failed\n");
 	xpq_idx = 0;
 }
 
@@ -541,8 +563,8 @@ xpq_queue_invlpg(vaddr_t va)
 {
 
 	XENPRINTK2(("xpq_queue_invlpg %p\n", (void *)va));
-	xpq_queue[xpq_idx].pa.ptr = MMU_EXTENDED_COMMAND;
-	xpq_queue[xpq_idx].pa.val = (va & ~PAGE_MASK) | MMUEXT_INVLPG;
+	xpq_queue[xpq_idx].pa.ptr = (va & PG_FRAME) | MMU_EXTENDED_COMMAND;
+	xpq_queue[xpq_idx].pa.val = MMUEXT_INVLPG;
 	xpq_increment_idx();
 }
 
@@ -568,7 +590,8 @@ void
 xpq_queue_unchecked_pte_update(pt_entry_t *ptr, pt_entry_t val)
 {
 
-	xpq_queue[xpq_idx].pa.ptr = (paddr_t)ptr | MMU_UNCHECKED_PT_UPDATE;
+	xpq_queue[xpq_idx].pa.ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
+	/* XXXcl UNCHECKED_PT_UPDATE */
 	xpq_queue[xpq_idx].pa.val = val;
 	xpq_increment_idx();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2004/04/24 19:18:01 cl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
 /*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -45,9 +45,12 @@
 #include "opt_largepages.h"
 #endif
 
+#include "opt_xen.h"
+
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/xenfunc.h>
+#include <machine/xenpmap.h>
 #include <machine/segments.h>
 #include <uvm/uvm_object.h>
 
@@ -492,6 +495,20 @@ kvtopte(vaddr_t va)
 #endif
 
 	return (PTE_BASE + x86_btop(va));
+}
+
+/*
+ * vtomach: virtual address to machine address.  For use by
+ * machine-dependent code only.
+ */
+
+static inline paddr_t __attribute__((__unused__))
+vtomach(vaddr_t va)
+{
+	pt_entry_t pte;
+
+	pte = PTE_GET(&PTE_BASE[x86_btop(va)]);
+	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)

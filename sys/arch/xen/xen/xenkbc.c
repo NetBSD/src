@@ -1,4 +1,4 @@
-/* $NetBSD: xenkbc.c,v 1.3 2004/04/26 19:44:54 cl Exp $ */
+/* $NetBSD: xenkbc.c,v 1.3.8.1 2004/12/13 17:52:21 bouyer Exp $ */
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.3 2004/04/26 19:44:54 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.3.8.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenkbc.c,v 1.3 2004/04/26 19:44:54 cl Exp $");
 #include <machine/xenkbcvar.h>
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
-#include <machine/hypervisor-ifs/kbd.h>
-#include <machine/events.h>
+#include <machine/xen-public/kbd.h>
+#include <machine/evtchn.h>
 
 #define	KBC_DELAY	DELAY(1000)
 #define	KBC_TIMEOUT	250

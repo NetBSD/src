@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.1 2004/04/24 18:24:14 cl Exp $	*/
+/*	$NetBSD: xencons.c,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1 2004/04/24 18:24:14 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1 2004/04/24 18:24:14 cl Exp $");
 #include <machine/stdarg.h>
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+#include <machine/evtchn.h>
+#include <machine/ctrl_if.h>
 
 #include <dev/cons.h>
 
@@ -87,6 +89,7 @@ const struct cdevsw xencons_cdevsw = {
 };
 
 
+static void xencons_rx(ctrl_msg_t *, unsigned long);
 void xenconscn_attach(void);
 int xenconscn_getc(dev_t);
 void xenconscn_putc(dev_t, int);
@@ -131,6 +134,8 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Set db_max_line to avoid paging. */
 		db_max_line = 0x7fffffff;
+
+		(void)ctrl_if_register_receiver(CMSG_CONSOLE, xencons_rx, 0);
 	}
 }
 
@@ -258,7 +263,6 @@ xencons_start(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
-	u_char buf[XENCONS_BURST+1];
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
@@ -271,8 +275,22 @@ xencons_start(struct tty *tp)
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 	cl = &tp->t_outq;
-	len = q_to_b(cl, buf, XENCONS_BURST);
-	(void)HYPERVISOR_console_write(buf, len);
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		u_char buf[XENCONS_BURST+1];
+
+		len = q_to_b(cl, buf, XENCONS_BURST);
+		(void)HYPERVISOR_console_io(CONSOLEIO_write, len, buf);
+	} else {
+		ctrl_msg_t msg;
+
+		len = q_to_b(cl, msg.msg, sizeof(msg.msg));
+		msg.type = CMSG_CONSOLE;
+		msg.subtype = CMSG_CONSOLE_DATA;
+		msg.length = len;
+		ctrl_if_send_message_noblock(&msg, NULL, 0);
+		/* XXX check return value and queue wait for space
+		 * thread/softint */
+	}
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
@@ -298,12 +316,45 @@ xencons_stop(struct tty *tp, int flag)
 }
 
 
+/* Non-privileged receive callback. */
+static void
+xencons_rx(ctrl_msg_t *msg, unsigned long id)
+{
+	int i;
+	int s;
+	// unsigned long flags;
+	struct xencons_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup(&xencons_cd, XENCONS_UNIT(cn_tab->cn_dev));
+	if (sc == NULL)
+		goto out;
+
+	tp = sc->sc_tty;
+	if (tp == NULL)
+		goto out;
+
+	s = spltty();
+	// save_and_cli(flags);
+	// simple_lock(&xencons_lock);
+	for (i = 0; i < msg->length; i++)
+		(*tp->t_linesw->l_rint)(msg->msg[i], tp);
+	// simple_unlock(&xencons_lock);
+	// restore_flags(flags);
+	splx(s);
+
+ out:
+	msg->length = 0;
+	ctrl_if_send_response(msg);
+}
 
 void
 xenconscn_attach()
 {
 
 	cn_tab = &xencons;
+
+	ctrl_if_early_init();
 
 	xencons_isconsole = 1;
 }
@@ -316,18 +367,29 @@ xenconscn_getc(dev_t dev)
 	for (;;);
 }
 
-#define MAXLINELEN 1024
 void
 xenconscn_putc(dev_t dev, int c)
 {
-	static char buf[1024+1];
-	static int bufpos = 0;
+	extern int ctrl_if_evtchn;
 
-	buf[bufpos++] = c;
-	if (c == '\n') {
-		buf[bufpos] = 0;
-		(void)HYPERVISOR_console_write(buf, bufpos);
-		bufpos = 0;
+	if (xen_start_info.flags & SIF_INITDOMAIN ||
+		ctrl_if_evtchn == -1) {
+		u_char buf[1];
+
+		buf[0] = c;
+		(void)HYPERVISOR_console_io(CONSOLEIO_write, 1, buf);
+	} else {
+		ctrl_msg_t msg;
+
+		msg.type = CMSG_CONSOLE;
+		msg.subtype = CMSG_CONSOLE_DATA;
+		msg.length = 1;
+		msg.msg[0] = c;
+		while (ctrl_if_send_message_noblock(&msg, NULL, 0) == EAGAIN) {
+			HYPERVISOR_yield();
+			/* XXX check return value and queue wait for space
+			 * thread/softint */
+		}
 	}
 }
 

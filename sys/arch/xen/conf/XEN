@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.14 2004/11/10 17:54:08 christos Exp $
+# $NetBSD: XEN,v 1.14.4.1 2004/12/13 17:52:20 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -12,7 +12,7 @@ maxusers	32		# estimated number of users
 
 #
 options		XEN
-options		DOM0OPS
+#options		DOM0OPS
 
 #options 	I586_CPU
 options 	I686_CPU
@@ -69,7 +69,6 @@ options 	COMPAT_16	# NetBSD 1.6
 #options	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
@@ -99,7 +98,6 @@ options 	INET6		# IPV6
 options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 options 	MROUTING	# IP multicast routing
-options 	PIM		# Protocol Independent Multicast
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 
@@ -139,14 +137,14 @@ wd*		at hypervisor?		# Xen vbd (wd identity)
 sd*		at hypervisor?		# Xen vbd (sd identity)
 cd*		at hypervisor?		# Xen vbd (cd identity)
 
-xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
-pckbd*		at xenkbc?		# Keyboard
-vga*		at hypervisor?		# Xen VGA display
-pms*		at xenkbc?		# PS/2 Mouse for wsmouse
+#xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
+#pckbd*		at xenkbc?		# Keyboard
+#vga*		at hypervisor?		# Xen VGA display
+#pms*		at xenkbc?		# PS/2 Mouse for wsmouse
 
-wskbd*		at pckbd? console ?
-wsdisplay*	at vga? console ?
-wsmouse*	at pms? mux 0
+#wskbd*		at pckbd? console ?
+#wsdisplay*	at vga? console ?
+#wsmouse*	at pms? mux 0
 
 
 include	"arch/xen/conf/GENERIC.local"

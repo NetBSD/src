@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2004/04/26 22:05:05 cl Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.8.1 2004/12/13 17:52:21 bouyer Exp $	*/
 /*	NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2 2004/04/26 22:05:05 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.8.1 2004/12/13 17:52:21 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -104,7 +104,7 @@ x86_bus_space_init()
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		dom0_op_t op;
 		op.cmd = DOM0_IOPL;
-		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.domain = DOMID_SELF;
 		op.u.iopl.iopl = 1;
 		if (HYPERVISOR_dom0_op(&op) != 0)
 			panic("Unable to obtain IOPL, "
@@ -285,6 +285,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	pt_entry_t *maptp;
 	int32_t cpumask = 0;
 
 	pa = x86_trunc_page(bpa);
@@ -324,10 +325,11 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
+			maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
 			if (cacheable)
-				PTE_CLEARBITS(pte, PG_N);
+				PTE_CLEARBITS(pte, maptp, PG_N);
 			else
-				PTE_SETBITS(pte, PG_N);
+				PTE_SETBITS(pte, maptp, PG_N);
 			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
 			    &cpumask);
 		}
