@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.12 1998/01/13 02:10:48 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -362,7 +362,6 @@ physconopen(dev, flag, mode, p)
 	TP->t_param = physconparam;
 	TP->t_dev = dev;
 	if ((TP->t_state & TS_ISOPEN) == 0) {
-		TP->t_state |= TS_WOPEN;
 		ttychars(TP);
 		TP->t_iflag = TTYDEF_IFLAG;
 		TP->t_oflag = TTYDEF_OFLAG;

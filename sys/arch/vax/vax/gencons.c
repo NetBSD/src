@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.14 1998/03/21 10:02:40 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.15 1998/03/21 22:53:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -95,7 +95,6 @@ gencnopen(dev, flag, mode, p)
         tp->t_param = gencnparam;
         tp->t_dev = dev;
         if ((tp->t_state & TS_ISOPEN) == 0) {
-                tp->t_state |= TS_WOPEN;
                 ttychars(tp);
                 tp->t_iflag = TTYDEF_IFLAG;
                 tp->t_oflag = TTYDEF_OFLAG;

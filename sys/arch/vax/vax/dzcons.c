@@ -1,4 +1,4 @@
-/*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
+/*	$NetBSD: dzcons.c,v 1.6 1998/03/21 22:53:00 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -125,7 +125,6 @@ dzcnopen(dev, flag, mode, p)
         tp->t_param = dzcnparam;
         tp->t_dev = dev;
         if ((tp->t_state & TS_ISOPEN) == 0) {
-                tp->t_state |= TS_WOPEN;
                 ttychars(tp);
                 tp->t_iflag = TTYDEF_IFLAG;
                 tp->t_oflag = TTYDEF_OFLAG;
