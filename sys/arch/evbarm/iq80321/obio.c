@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2002/10/02 05:10:35 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2002/10/03 20:14:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -61,21 +61,10 @@ CFATTACH_DECL(obio, sizeof(struct device),
     obio_match, obio_attach, NULL, NULL);
 
 int	obio_print(void *, const char *);
-int	obio_submatch(struct device *, struct cfdata *, void *);
+int	obio_search(struct device *, struct cfdata *, void *);
 
 /* there can be only one */
 int	obio_found;
-
-struct {
-	const char *od_name;
-	bus_addr_t od_addr;
-	int od_irq;
-} obio_devices[] =
-{
-	{ "com",	IQ80321_UART1,		ICU_INT_XINT(1) },
-
-	{ NULL,		0,			0 },
-};
 
 int
 obio_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -101,20 +90,16 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 obio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct obio_attach_args oba;
-	int i;
 
 	obio_found = 1;
 
 	printf("\n");
 
-	for (i = 0; obio_devices[i].od_name != NULL; i++) {
-		oba.oba_name = obio_devices[i].od_name;
-		oba.oba_st = &obio_bs_tag;
-		oba.oba_addr = obio_devices[i].od_addr;
-		oba.oba_irq = obio_devices[i].od_irq;
-		(void) config_found_sm(self, &oba, obio_print, obio_submatch);
-	}
+	/*
+	 * Attach all on-board devices as described in the kernel
+	 * configuration file.
+	 */
+	config_search(obio_search, self, NULL);
 }
 
 int
@@ -122,22 +107,29 @@ obio_print(void *aux, const char *pnp)
 {
 	struct obio_attach_args *oba = aux;
 
-	if (pnp)
-		printf("%s at %s", oba->oba_name, pnp);
-
 	printf(" addr 0x%08lx", oba->oba_addr);
+	if (oba->oba_irq != -1)
+		printf(" xint %d", oba->oba_irq - ICU_INT_XINT0);
 
 	return (UNCONF);
 }
 
 int
-obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
+obio_search(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct obio_attach_args *oba = aux;
+	struct obio_attach_args oba;
 
-	if (cf->cf_loc[OBIOCF_ADDR] != OBIOCF_ADDR_DEFAULT &&
-	    cf->cf_loc[OBIOCF_ADDR] != oba->oba_addr)
-		return (0);
+	oba.oba_st = &obio_bs_tag;
 
-	return (config_match(parent, cf, aux));
+	oba.oba_addr = cf->cf_loc[OBIOCF_ADDR];
+
+	if (cf->cf_loc[OBIOCF_XINT] != OBIOCF_XINT_DEFAULT)
+		oba.oba_irq = ICU_INT_XINT(cf->cf_loc[OBIOCF_XINT]);
+	else
+		oba.oba_irq = -1;
+
+	if (config_match(parent, cf, &oba) > 0)
+		config_attach(parent, cf, &oba, obio_print);
+
+	return (0);
 }
