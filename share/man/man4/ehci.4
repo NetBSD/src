@@ -1,4 +1,4 @@
-.\" $NetBSD: ehci.4,v 1.4 2001/11/18 23:13:37 augustss Exp $
+.\" $NetBSD: ehci.4,v 1.5 2001/11/21 16:28:11 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,8 +73,9 @@ driver
 appeared in
 .Nx 1.6 .
 .Sh BUGS
-The driver is not finished and does not work yet.
-.\" There is no support (yet) for hubs that are connected with high speed upstream
-.\" and low or full speed downstream.
-.\" .Pp
-.\" There is no support for isochronous transfers.
+The driver is not finished and is quite buggy.
+.Pp
+There is no support (yet) for hubs that are connected with high speed upstream
+and low or full speed downstream (i.e., for transaction translators).
+.Pp
+There is no support for interrupt or isochronous transfers.
