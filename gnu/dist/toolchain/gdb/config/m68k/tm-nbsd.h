@@ -37,6 +37,6 @@
 #define SIGTRAMP_END(pc) (STACK_END_ADDR)
 
 #include "m68k/tm-m68k.h"
-#include "tm-nbsd.h"
+#include <tm-nbsd.h>
 
 #endif /* TM_NBSD_H */
