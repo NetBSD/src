@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.18 1998/08/18 06:29:31 thorpej Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.19 1998/10/12 09:57:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -305,7 +305,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		panic("cluster_rbuild: size %ld != filesize %ld\n",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
-	if (size * (lbn + run + 1) > filesize)
+	if ((u_quad_t)size * (u_quad_t)(lbn + run + 1) > filesize)
 		--run;
 	if (run == 0) {
 		if (!bp) {
@@ -532,7 +532,7 @@ cluster_write(bp, filesize)
 			 */
 			cursize = vp->v_lastw - vp->v_cstart + 1;
 			if (!doreallocblks ||
-			    (lbn + 1) * bp->b_bcount != filesize ||
+			    (u_quad_t)(lbn + 1) * bp->b_bcount != filesize ||
 			    lbn != vp->v_lastw + 1 || vp->v_clen <= cursize) {
 				cluster_wbuild(vp, NULL, bp->b_bcount,
 				    vp->v_cstart, cursize, lbn);
