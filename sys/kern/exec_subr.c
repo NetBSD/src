@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_subr.c,v 1.6 1994/03/27 09:08:21 cgd Exp $
+ *	$Id: exec_subr.c,v 1.7 1994/05/23 03:04:57 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -40,7 +40,6 @@
 #include <sys/mman.h>
 
 #include <vm/vm.h>
-#include <vm/vm_user.h>
 
 #ifdef DEBUG
 /*
@@ -142,7 +141,7 @@ vmcmd_map_pagedvn(p, cmd)
 	 * call this routine.
 	 */
 	return vm_mmap(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
-	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_COPY, cmd->ev_vp,
+	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_COPY, (caddr_t)cmd->ev_vp,
 	    cmd->ev_offset);
 }
 
@@ -170,8 +169,8 @@ vmcmd_map_readvn(p, cmd)
 	if (error)
 		return error;
 
-	return vm_protect(&p->p_vmspace->vm_map, cmd->ev_addr, cmd->ev_len,
-	    FALSE, cmd->ev_prot);
+	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
+	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
 }
 
 /*
@@ -192,8 +191,8 @@ vmcmd_map_zero(p, cmd)
 	if (error)
 		return error;
 
-	return vm_protect(&p->p_vmspace->vm_map, cmd->ev_addr, cmd->ev_len,
-	    FALSE, cmd->ev_prot);
+	return vm_map_protect(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
+	    round_page(cmd->ev_addr + cmd->ev_len), cmd->ev_prot, FALSE);
 }
 
 void
