@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.14 1993/11/09 10:53:58 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.15 1993/12/14 13:03:19 mycroft Exp $
  */
 
 /*
@@ -97,7 +97,7 @@
  * Allocate various and sundry SYSMAPs used in the days of old VM
  * and not yet converted.  XXX.
  */
-#define BSDVM_COMPAT	1
+#define	BSDVM_COMPAT	1
 
 #ifdef DEBUG
 struct {
@@ -126,20 +126,20 @@ struct {
 
 int debugmap = 0;
 int pmapdebug = 0 /* 0xffff */;
-#define PDB_FOLLOW	0x0001
-#define PDB_INIT	0x0002
-#define PDB_ENTER	0x0004
-#define PDB_REMOVE	0x0008
-#define PDB_CREATE	0x0010
-#define PDB_PTPAGE	0x0020
-#define PDB_CACHE	0x0040
-#define PDB_BITS	0x0080
-#define PDB_COLLECT	0x0100
-#define PDB_PROTECT	0x0200
-#define PDB_PDRTAB	0x0400
-#define PDB_PARANOIA	0x2000
-#define PDB_WIRING	0x4000
-#define PDB_PVDUMP	0x8000
+#define	PDB_FOLLOW	0x0001
+#define	PDB_INIT	0x0002
+#define	PDB_ENTER	0x0004
+#define	PDB_REMOVE	0x0008
+#define	PDB_CREATE	0x0010
+#define	PDB_PTPAGE	0x0020
+#define	PDB_CACHE	0x0040
+#define	PDB_BITS	0x0080
+#define	PDB_COLLECT	0x0100
+#define	PDB_PROTECT	0x0200
+#define	PDB_PDRTAB	0x0400
+#define	PDB_PARANOIA	0x2000
+#define	PDB_WIRING	0x4000
+#define	PDB_PVDUMP	0x8000
 
 int pmapvacflush = 0;
 #define	PVF_ENTER	0x01
@@ -153,21 +153,21 @@ int pmapvacflush = 0;
  */
 #define	pmap_pde(m, v)	(&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&1023]))
 
-#define pmap_pte_pa(pte)	(*(int *)(pte) & PG_FRAME)
+#define	pmap_pte_pa(pte)	(*(int *)(pte) & PG_FRAME)
 
-#define pmap_pde_v(pte)		((pte)->pd_v)
-#define pmap_pte_w(pte)		((pte)->pg_w)
-#define pmap_pte_m(pte)		((pte)->pg_m)
-#define pmap_pte_u(pte)		((pte)->pg_u)
-#define pmap_pte_v(pte)		((pte)->pg_v)
-#define pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
-#define pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v) >> 1)
+#define	pmap_pde_v(pte)		((pte)->pd_v)
+#define	pmap_pte_w(pte)		((pte)->pg_w)
+#define	pmap_pte_m(pte)		((pte)->pg_m)
+#define	pmap_pte_u(pte)		((pte)->pg_u)
+#define	pmap_pte_v(pte)		((pte)->pg_v)
+#define	pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
+#define	pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v) >> 1)
 
 /*
  * Given a map and a machine independent protection code,
  * convert to a vax protection code.
  */
-#define pte_prot(m, p)	(protection_codes[p])
+#define	pte_prot(m, p)	(protection_codes[p])
 int	protection_codes[8];
 
 struct pmap	kernel_pmap_store;
@@ -184,6 +184,7 @@ boolean_t pmap_testbit __P((vm_offset_t, int));
 void pmap_changebit __P((vm_offset_t, int, int));
 
 /* XXX should be in a .h file somewhere */
+#define	PMAP_COPY_ON_WRITE(pa)		pmap_changebit(pa, PG_RO, ~PG_RW)
 #define	PMAP_CLEAR_MODIFY(pa)		pmap_changebit(pa, 0, ~PG_M)
 #define	PMAP_CLEAR_REFERENCE(pa)	pmap_changebit(pa, 0, ~PG_U)
 #define	PMAP_IS_REFERENCED(pa)		pmap_testbit(pa, PG_U)
@@ -192,7 +193,7 @@ void pmap_changebit __P((vm_offset_t, int, int));
 #define	pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
 
 #if BSDVM_COMPAT
-#include "msgbuf.h"
+#include <sys/msgbuf.h>
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -210,8 +211,8 @@ struct pte	*msgbufmap;
  *	and just syncs the pmap module with what has already been done.
  *	[We can't call it easily with mapping off since the kernel is not
  *	mapped with PA == VA, hence we would have to relocate every address
- *	from the linked base (virtual) address 0xFE000000 to the actual
- *	(physical) address starting relative to 0]
+ *	from the linked base (virtual) address to the actual (physical)
+ *	address starting relative to 0]
  */
 struct pte *pmap_pte();
 
@@ -250,13 +251,13 @@ pmap_bootstrap(virtual_start)
 	 * Create Kernel page directory table and page maps.
 	 * [ currently done in locore. i have wild and crazy ideas -wfj ]
 	 */
-	bzero(firstaddr, 4*NBPG);
+	bzero(firstaddr, (1+NKPDE)*NBPG);
 	kernel_pmap->pm_pdir = firstaddr + VM_MIN_KERNEL_ADDRESS;
 	kernel_pmap->pm_ptab = firstaddr + VM_MIN_KERNEL_ADDRESS + NBPG;
 
 	firstaddr += NBPG;
 	for (x = i386_btod(VM_MIN_KERNEL_ADDRESS);
-		x < i386_btod(VM_MIN_KERNEL_ADDRESS)+3; x++) {
+		x < i386_btod(VM_MIN_KERNEL_ADDRESS)+NKPDE; x++) {
 			struct pde *pde;
 		pde = kernel_pmap->pm_pdir + x;
 		*(int *)pde = firstaddr + x*NBPG | PG_V | PG_KW;
@@ -298,13 +299,14 @@ pmap_bootstrap(virtual_start)
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
+	/* undo temporary double mapping */
 	*(int *)PTD = 0;
 	tlbflush();
 }
 
 void pmap_virtual_space(startp, endp)
-	vm_offset_t	*startp;
-	vm_offset_t	*endp;
+	vm_offset_t *startp;
+	vm_offset_t *endp;
 {
 
 	*startp = virtual_avail;
@@ -319,9 +321,9 @@ void pmap_virtual_space(startp, endp)
 void
 pmap_init()
 {
-	vm_offset_t	addr, addr2;
-	vm_size_t	npg, s;
-	int		rv;
+	vm_offset_t addr, addr2;
+	vm_size_t npg, s;
+	int rv;
 	extern int KPTphys;
 
 	if (PAGE_SIZE != NBPG)
@@ -355,23 +357,21 @@ pmap_init()
  *	specified memory.
  */
 vm_offset_t
-pmap_map(virt, start, end, prot)
-	vm_offset_t	virt;
-	vm_offset_t	start;
-	vm_offset_t	end;
-	int		prot;
+pmap_map(va, spa, epa, prot)
+	vm_offset_t va, spa, epa;
+	int prot;
 {
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_map(%x, %x, %x, %x)\n", virt, start, end, prot);
+		printf("pmap_map(%x, %x, %x, %x)\n", va, spa, epa, prot);
 #endif
-	while (start < end) {
-		pmap_enter(kernel_pmap, virt, start, prot, FALSE);
-		virt += NBPG;
-		start += NBPG;
+	while (spa < epa) {
+		pmap_enter(kernel_pmap, va, spa, prot, FALSE);
+		va += NBPG;
+		spa += NBPG;
 	}
-	return virt;
+	return va;
 }
 
 /*
@@ -391,7 +391,7 @@ pmap_map(virt, start, end, prot)
  */
 pmap_t
 pmap_create(size)
-	vm_size_t	size;
+	vm_size_t size;
 {
 	register pmap_t pmap;
 
@@ -438,10 +438,10 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(PTD+KPTDI, pmap->pm_pdir+KPTDI, NKPDE*4);
+	bcopy(PTD + KPTDI, pmap->pm_pdir + KPTDI, NKPDE * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
-	*(int *)(pmap->pm_pdir+PTDPTDI) =
+	*(int *)(pmap->pm_pdir + PTDPTDI) =
 		(int)pmap_extract(kernel_pmap, pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
@@ -491,8 +491,8 @@ pmap_release(pmap)
 		pg("pmap_release(%x)\n", pmap);
 #endif
 
-	/* sometimes 1, sometimes 0; could rearrange pmap_destroy */
 #ifdef DIAGNOSTICx
+	/* sometimes 1, sometimes 0; could rearrange pmap_destroy */
 	if (pmap->pm_count != 1)
 		panic("pmap_release count");
 #endif
@@ -505,19 +505,20 @@ pmap_release(pmap)
  */
 void
 pmap_reference(pmap)
-	pmap_t	pmap;
+	pmap_t pmap;
 {
+
+	if (pmap == NULL)
+		return;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%x)", pmap);
 #endif
 
-	if (pmap != NULL) {
-		simple_lock(&pmap->pm_lock);
-		pmap->pm_count++;
-		simple_unlock(&pmap->pm_lock);
-	}
+	simple_lock(&pmap->pm_lock);
+	pmap->pm_count++;
+	simple_unlock(&pmap->pm_lock);
 }
 
 /*
@@ -571,8 +572,6 @@ pmap_remove(pmap, sva, eva)
 			continue;
 
 		pa = pmap_pte_pa(pte);
-		if (!pmap_valid_page(pa))
-			continue;
 
 #ifdef DEBUG
 		remove_stats.removes++;
@@ -601,6 +600,9 @@ pmap_remove(pmap, sva, eva)
 #ifdef needednotdone
 reduce wiring count on page table pages as references drop
 #endif
+
+		if (!pmap_valid_page(pa))
+			continue;
 
 		/*
 		 * Remove from the PV table (raise IPL since we
@@ -696,32 +698,14 @@ pmap_remove_all(pa)
 }
 
 /*
- *	Routine:	pmap_copy_on_write
- *	Function:
- *		Remove write privileges from all
- *		physical maps for this physical page.
- */
-void
-pmap_copy_on_write(pa)
-	vm_offset_t pa;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
-		printf("pmap_copy_on_write(%x)", pa);
-#endif
-	pmap_changebit(pa, PG_RO, ~PG_RW);
-}
-
-/*
  *	Set the physical protection on the
  *	specified range of this map as requested.
  */
 void
 pmap_protect(pmap, sva, eva, prot)
-	register pmap_t	pmap;
-	vm_offset_t	sva, eva;
-	vm_prot_t	prot;
+	register pmap_t pmap;
+	vm_offset_t sva, eva;
+	vm_prot_t prot;
 {
 	register pt_entry_t *pte;
 	register int i386prot;
@@ -730,9 +714,6 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
 		printf("pmap_protect(%x, %x, %x, %x)", pmap, sva, eva, prot);
 #endif
-
-	if (pmap == NULL)
-		return;
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -1005,7 +986,7 @@ pmap_page_protect(phys, prot)
         switch (prot) {
 	    case VM_PROT_READ:
 	    case VM_PROT_READ|VM_PROT_EXECUTE:
-                pmap_copy_on_write(phys);
+                PMAP_COPY_ON_WRITE(phys);
                 break;
 	    case VM_PROT_ALL:
                 break;
@@ -1024,9 +1005,9 @@ pmap_page_protect(phys, prot)
  */
 void
 pmap_change_wiring(pmap, va, wired)
-	register pmap_t	pmap;
-	vm_offset_t	va;
-	boolean_t	wired;
+	register pmap_t pmap;
+	vm_offset_t va;
+	boolean_t wired;
 {
 	register pt_entry_t *pte;
 
@@ -1073,7 +1054,7 @@ pmap_change_wiring(pmap, va, wired)
  */
 struct pte *
 pmap_pte(pmap, va)
-	register pmap_t	pmap;
+	register pmap_t pmap;
 	vm_offset_t va;
 {
 	struct pte *ptp;
@@ -1110,7 +1091,7 @@ pmap_pte(pmap, va)
  */
 vm_offset_t
 pmap_extract(pmap, va)
-	register pmap_t	pmap;
+	register pmap_t pmap;
 	vm_offset_t va;
 {
 	register struct pte *pte;
@@ -1142,12 +1123,11 @@ pmap_extract(pmap, va)
  *
  *	This routine is only advisory and need not do anything.
  */
-void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	pmap_t		dst_pmap;
-	pmap_t		src_pmap;
-	vm_offset_t	dst_addr;
-	vm_size_t	len;
-	vm_offset_t	src_addr;
+void
+pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
+	pmap_t dst_pmap, src_pmap;
+	vm_offset_t dst_addr, src_addr;
+	vm_size_t len;
 {
 
 #ifdef DEBUG
@@ -1165,7 +1145,8 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *	Generally used to insure that a thread about
  *	to run will see a semantically correct world.
  */
-void pmap_update()
+void
+pmap_update()
 {
 
 #ifdef DEBUG
@@ -1189,7 +1170,7 @@ void pmap_update()
  */
 void
 pmap_collect(pmap)
-	pmap_t		pmap;
+	pmap_t pmap;
 {
 	register vm_offset_t pa;
 	register pv_entry_t pv;
@@ -1198,10 +1179,9 @@ pmap_collect(pmap)
 	int s;
 
 #ifdef DEBUG
-	int *pde;
-	int opmapdebug;
 	printf("pmap_collect(%x) ", pmap);
 #endif
+
 	if (pmap != kernel_pmap)
 		return;
 
@@ -1273,7 +1253,6 @@ pmap_copy_page(src, dst)
 	bcopy(CADDR1, CADDR2, NBPG);
 }
 
-
 /*
  *	Routine:	pmap_pageable
  *	Function:
@@ -1290,9 +1269,9 @@ pmap_copy_page(src, dst)
  */
 void
 pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+	boolean_t pageable;
 {
 
 #ifdef DEBUG
@@ -1329,10 +1308,10 @@ pmap_pageable(pmap, sva, eva, pageable)
 
 		pa = pmap_pte_pa(pte);
 
-#ifdef DEBUG
 		if (!pmap_valid_page(pa))
 			return;
 
+#ifdef DEBUG
 		pv = pa_to_pvh(pa);
 		if (pv->pv_va != sva || pv->pv_next) {
 			pg("pmap_pageable: bad PT page va %x next %x\n",
@@ -1357,12 +1336,25 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
+ *	Routine:	pmap_copy_on_write
+ *	Function:
+ *		Remove write privileges from all
+ *		physical maps for this physical page.
+ */
+void
+pmap_copy_on_write(pa)
+	vm_offset_t pa;
+{
+
+	PMAP_COPY_ON_WRITE(pa);
+}
+
+/*
  *	Clear the modify bits on the specified physical page.
  */
-
 void
 pmap_clear_modify(pa)
-	vm_offset_t	pa;
+	vm_offset_t pa;
 {
 
 	PMAP_CLEAR_MODIFY(pa);
@@ -1373,9 +1365,9 @@ pmap_clear_modify(pa)
  *
  *	Clear the reference bit on the specified physical page.
  */
-
-void pmap_clear_reference(pa)
-	vm_offset_t	pa;
+void
+pmap_clear_reference(pa)
+	vm_offset_t pa;
 {
 
 	PMAP_CLEAR_REFERENCE(pa);
@@ -1387,10 +1379,9 @@ void pmap_clear_reference(pa)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_referenced(pa)
-	vm_offset_t	pa;
+	vm_offset_t pa;
 {
 
 	return PMAP_IS_REFERENCED(pa);
@@ -1402,10 +1393,9 @@ pmap_is_referenced(pa)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_modified(pa)
-	vm_offset_t	pa;
+	vm_offset_t pa;
 {
 
 	return PMAP_IS_MODIFIED(pa);
@@ -1427,13 +1417,13 @@ i386_protection_init()
 {
 
 	protection_codes[VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE] = 0;
-	protection_codes[VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE] =
-	protection_codes[VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE] =
-	protection_codes[VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE] = PG_RO;
-	protection_codes[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE] =
-	protection_codes[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE] =
-	protection_codes[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE] =
-	protection_codes[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE] = PG_RW;
+	protection_codes[VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE] =
+	protection_codes[VM_PROT_NONE | VM_PROT_READ | VM_PROT_NONE] =
+	protection_codes[VM_PROT_NONE | VM_PROT_READ | VM_PROT_EXECUTE] = PG_RO;
+	protection_codes[VM_PROT_WRITE | VM_PROT_NONE | VM_PROT_NONE] =
+	protection_codes[VM_PROT_WRITE | VM_PROT_NONE | VM_PROT_EXECUTE] =
+	protection_codes[VM_PROT_WRITE | VM_PROT_READ | VM_PROT_NONE] =
+	protection_codes[VM_PROT_WRITE | VM_PROT_READ | VM_PROT_EXECUTE] = PG_RW;
 }
 
 boolean_t
