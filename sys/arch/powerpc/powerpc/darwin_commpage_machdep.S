@@ -1,11 +1,11 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.1 2004/07/03 22:17:18 manu Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.2 2004/07/06 14:11:49 manu Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Emmanuel Dreyfus and Peter Grehan.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,12 +38,16 @@
 
 #include <machine/asm.h>
 
+#include <compat/mach/mach_syscall.h>
 #include <compat/darwin/darwin_syscall.h>
 
+/*
+ *	void bzero(void *src, size_t len); 
+ */
 	.globl	_C_LABEL(darwin_commpage_bzero)
 _C_LABEL(darwin_commpage_bzero):
 	cmplwi  r4,0
-	beqlr   
+	beqlr
 	li      r0,0
 	mr      r5,r4
 	mr      r4,r3
@@ -83,13 +87,16 @@ bzero7:
 	bdnz+   bzero7
 bzero6:
 	andi.   r5,r5,3
-	beqlr+  
+	beqlr+
 	addi    r4,r4,3
 	b       bzero8
 	.globl	_C_LABEL(darwin_commpage_bzero_size)
 _C_LABEL(darwin_commpage_bzero_size) = .-_C_LABEL(darwin_commpage_bzero)
 
 
+/*
+ *	mach_cproc_t *pthread_self(void);
+ */
 	.globl	_C_LABEL(darwin_commpage_pthread_self)
 _C_LABEL(darwin_commpage_pthread_self):
 	li 	r0,32754 /* MACH_FASTTRAPS_SYS_cthread_self + MACH_FASTTRAPS */
@@ -98,16 +105,47 @@ _C_LABEL(darwin_commpage_pthread_self):
 	.globl	_C_LABEL(darwin_commpage_pthread_self_size)
 _C_LABEL(darwin_commpage_pthread_self_size) = .-_C_LABEL(darwin_commpage_pthread_self)
 
+/*
+ *	int gettimeofday(struct timeval *tv, struct timezone *tz);
+ */
 	.globl	_C_LABEL(darwin_commpage_gettimeofday)
 _C_LABEL(darwin_commpage_gettimeofday):
 	li 	r0,DARWIN_SYS_gettimeofday
 	sc
+	blr	/* Skipped on success */
 	blr
 	.globl	_C_LABEL(darwin_commpage_gettimeofday_size)
 _C_LABEL(darwin_commpage_gettimeofday_size) = .-_C_LABEL(darwin_commpage_gettimeofday)
-	
+
+/* 
+ *	void bigcopy(void *ignored, void *src, size_t len, ..., void *dst);
+ *
+ * The ... does not mean vararg here. Here is the calling convention:
+ * src => r4
+ * len => r5
+ * dst => r12
+ */
 	.globl	_C_LABEL(darwin_commpage_bigcopy)
 _C_LABEL(darwin_commpage_bigcopy):
+	.long	0x0
+	.globl	_C_LABEL(darwin_commpage_bigcopy_size)
+_C_LABEL(darwin_commpage_bigcopy_size) = .-_C_LABEL(darwin_commpage_bigcopy)
+
+/*
+ *	void bcopy(void *src, void *dst, size_t len);
+ */
+	.globl	_C_LABEL(darwin_commpage_bcopy)
+_C_LABEL(darwin_commpage_bcopy):
+	mr	r6,r3		/* swap $1 and $2 */
+	mr	r3,r4
+	mr	r4,r6
+	ba	0xffff87a0	/* Absolute branch to memcpy */
+	.globl	_C_LABEL(darwin_commpage_bcopy_size)
+_C_LABEL(darwin_commpage_bcopy_size) = .-_C_LABEL(darwin_commpage_bcopy)
+
+/*
+ *	void *memcpy(void *dst, void *src, size_t len);
+ */
 	.globl	_C_LABEL(darwin_commpage_memcpy)
 _C_LABEL(darwin_commpage_memcpy):
 	subfic	r0,r5,0
@@ -168,58 +206,135 @@ memcpy1:
 	blr
 	.globl	_C_LABEL(darwin_commpage_memcpy_size)
 _C_LABEL(darwin_commpage_memcpy_size) = .-_C_LABEL(darwin_commpage_memcpy)
-	.globl	_C_LABEL(darwin_commpage_bigcopy_size)
-_C_LABEL(darwin_commpage_bigcopy_size) = .-_C_LABEL(darwin_commpage_bigcopy)
 
-	.globl	_C_LABEL(darwin_commpage_pthread_specific)
-_C_LABEL(darwin_commpage_pthread_specific):
+
+/*
+ *	int pthread_getspecific(pthread_key key);
+ */
+	.globl	_C_LABEL(darwin_commpage_pthread_getspecific)
+_C_LABEL(darwin_commpage_pthread_getspecific):
 	rlwinm	r5,r3,2,0,29
 	li	r0,32754 /* MACH_FASTTRAPS_SYS_cthread_self + MACH_FASTTRAPS */
 	sc
 	add	r5,r5,r4
 	lwzx	r3,r3,r5
 	blr
-	.globl	_C_LABEL(darwin_commpage_pthread_specific_size)
-_C_LABEL(darwin_commpage_pthread_specific_size) = .-_C_LABEL(darwin_commpage_pthread_specific)
+	.globl	_C_LABEL(darwin_commpage_pthread_getspecific_size)
+_C_LABEL(darwin_commpage_pthread_getspecific_size) = .-_C_LABEL(darwin_commpage_pthread_getspecific)
 
+/* 
+ *	uint64_t mach_absolute_time(void) 
+ */
 	.globl	_C_LABEL(darwin_commpage_mach_absolute_time)
 _C_LABEL(darwin_commpage_mach_absolute_time):
-	.long	0x0
+1:	mftbu	r3
+	mftb	r4
+	mftbu	r5
+	cmpw	r3,r5
+	bne-	1b
+	blr
 	.globl	_C_LABEL(darwin_commpage_mach_absolute_time_size)
 _C_LABEL(darwin_commpage_mach_absolute_time_size) = .-_C_LABEL(darwin_commpage_mach_absolute_time)
 
-	.globl	_C_LABEL(darwin_commpage_spinlock_try)
-_C_LABEL(darwin_commpage_spinlock_try):
-	.long	0x0
-	.globl	_C_LABEL(darwin_commpage_spinlock_try_size)
-_C_LABEL(darwin_commpage_spinlock_try_size) = .-_C_LABEL(darwin_commpage_spinlock_try)
-
-	.globl	_C_LABEL(darwin_commpage_spinlock_lock)
-_C_LABEL(darwin_commpage_spinlock_lock):
-	.long	0x0
-	.globl	_C_LABEL(darwin_commpage_spinlock_lock_size)
-_C_LABEL(darwin_commpage_spinlock_lock_size) = .-_C_LABEL(darwin_commpage_spinlock_lock)
-
-	.globl	_C_LABEL(darwin_commpage_spinlock_unlock)
-_C_LABEL(darwin_commpage_spinlock_unlock):
-	.long	0x0
-	.globl	_C_LABEL(darwin_commpage_spinlock_unlock_size)
-_C_LABEL(darwin_commpage_spinlock_unlock_size) = .-_C_LABEL(darwin_commpage_spinlock_unlock)
-
+/*
+ *	 void sys_dcache_flush(char *addr, size_t len);
+ *
+ * XXX these routines are fine on G3/G4, but on a G5 a different
+ * routine should be used that has a 128-byte cache size
+ */
 	.globl	_C_LABEL(darwin_commpage_sys_dcache_flush)
 _C_LABEL(darwin_commpage_sys_dcache_flush):
-	.long	0x0
+1:	dcbf	0,r3
+	addi	r3,r3,32	/* CACHELINESIZE */
+	addic.	r4,r4,-32	/* len -= CACHELINESIZE */
+	bgt	1b
+	blr
 	.globl	_C_LABEL(darwin_commpage_sys_dcache_flush_size)
 _C_LABEL(darwin_commpage_sys_dcache_flush_size) = .-_C_LABEL(darwin_commpage_sys_dcache_flush)
 
+/* 
+ *	void sys_icache_invalidate(char *addr, size_t len) 
+ */
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate)
 _C_LABEL(darwin_commpage_sys_icache_invalidate):
-	.long	0x0
+1:	icbi	0,r3
+	addi	r3,r3,32	/* CACHELINESIZE */
+	addic.	r4,r4,-32	/* len -= CACHELINESIZE */
+	bgt	1b
+	blr
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate_size)
 _C_LABEL(darwin_commpage_sys_icache_invalidate_size) = .-_C_LABEL(darwin_commpage_sys_icache_invalidate)
 
+/*
+ * Helper definitions for spinlocks operations
+ */
+#define COMMPAGE_THREAD_SWITCH 					\
+	li	r3,0;   /* THREAD_NULL */			\
+	li	r4,1;	/* MACH_SWITCH_OPTION_DEPRESS */	\
+	li	r5,1;	/* 1ms */				\
+	li 	r0,-MACH_SYS_syscall_thread_switch;	 	\
+	sc;
+
+#define COMMPAGE_SPINLOCK 	\
+	li	r4,1;		\
+1:	lwarx	r5,0,r3;	\
+	cmpwi	r5,0;		\
+	bne-	1b;		\
+	stwcx.	r4,0,r3;	\
+	bne-	1b;		\
+	isync;
+
+/* 
+ *	int spinlock_try(int *p) 
+ */
+	.globl	_C_LABEL(darwin_commpage_spinlock_try)
+_C_LABEL(darwin_commpage_spinlock_try):
+	COMMPAGE_SPINLOCK
+	li	r3,0
+	blr
+	.globl	_C_LABEL(darwin_commpage_spinlock_try_size)
+_C_LABEL(darwin_commpage_spinlock_try_size) = .-_C_LABEL(darwin_commpage_spinlock_try)
+
+/* 
+ *	void spinlock_lock(int *p) 
+ */
+	.globl	_C_LABEL(darwin_commpage_spinlock_lock)
+_C_LABEL(darwin_commpage_spinlock_lock):
+	mr	r6,r3	/* copy *p - r6/r7/r8 used for temps */
+	li	r7,1
+1:	lwarx	r8,0,r6
+	cmpwi	r8,0
+	bne-	2f
+	stwcx.	r7,0,r6
+	bne-	2f
+	isync;
+	blr
+2:	COMMPAGE_THREAD_SWITCH
+	ba	1b
+	.globl	_C_LABEL(darwin_commpage_spinlock_lock_size)
+_C_LABEL(darwin_commpage_spinlock_lock_size) = .-_C_LABEL(darwin_commpage_spinlock_lock)
+
+/* 
+ *	void spinlock_unlock(int *p) 
+ */
+	.globl	_C_LABEL(darwin_commpage_spinlock_unlock)
+_C_LABEL(darwin_commpage_spinlock_unlock):
+	sync
+	li	r4,0
+	stw	r4,0(r3)
+	blr
+	.globl	_C_LABEL(darwin_commpage_spinlock_unlock_size)
+_C_LABEL(darwin_commpage_spinlock_unlock_size) = .-_C_LABEL(darwin_commpage_spinlock_unlock)
+
+/* 
+ *	int spinlock_relinquish(int *p) 
+ */
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish)
 _C_LABEL(darwin_commpage_spinlock_relinquish):
-	.long	0x0
+	mr	r6,r3
+	COMMPAGE_THREAD_SWITCH
+	mr	r3,r6
+	COMMPAGE_SPINLOCK
+	blr
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish_size)
 _C_LABEL(darwin_commpage_spinlock_relinquish_size) = .-_C_LABEL(darwin_commpage_spinlock_relinquish)
