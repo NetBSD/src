@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.52 1997/02/24 06:03:55 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.53 1997/02/24 07:34:18 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -225,12 +225,16 @@ aeinit(sc)
 	/* Set interface for page 0, remote DMA complete, stopped. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
-	/*
-	 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
-	 * order=80x86, word-wide DMA xfers,
-	 */
-	NIC_PUT(sc, ED_P0_DCR,
-	    ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+	if (sc->use16bit) {
+		/*
+		 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
+		 * order=80x86, word-wide DMA xfers,
+		 */
+		NIC_PUT(sc, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+	} else {
+		/* Same as above, but byte-wide DMA xfers. */
+		NIC_PUT(sc, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
+	}
 
 	/* Clear remote byte count registers. */
 	NIC_PUT(sc, ED_P0_RBCR0, 0);

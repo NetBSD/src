@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.1 1997/02/24 06:03:58 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.2 1997/02/24 07:34:19 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -102,6 +102,7 @@ ae_nubus_match(parent, cf, aux)
 		case AE_VENDOR_ASANTE:
 		case AE_VENDOR_FARALLON:
 		case AE_VENDOR_INTERLAN:
+		case AE_VENDOR_KINETICS:
 			rv = 1;
 			break;
 		case AE_VENDOR_DAYNA:
@@ -142,6 +143,7 @@ ae_nubus_attach(parent, self, aux)
 	}
 
 	sc->regs_rev = 0;
+	sc->use16bit = 1;
 	sc->vendor = ae_card_vendor(na);
 	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
 	    INTERFACE_NAME_LEN);
@@ -258,6 +260,51 @@ ae_nubus_attach(parent, self, aux)
 		printf(": unsupported Focus hardware\n");
 		break;
 
+	case AE_VENDOR_KINETICS:
+		sc->use16bit = 0;
+		if (bus_space_subregion(bst, bsh,
+		    KE_REG_OFFSET, AE_REG_SIZE, &sc->sc_reg_handle)) {
+			printf(": failed to map register space\n");
+			break;
+		}
+		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
+		    KE_DATA_OFFSET)) == 0) {
+			printf(": failed to determine size of RAM.\n");
+			break;
+		}
+		if (bus_space_subregion(bst, bsh,
+		    KE_DATA_OFFSET, sc->mem_size, &sc->sc_buf_handle)) {
+			printf(": failed to map register space\n");
+			break;
+		}
+
+		/* Get station address from on-board ROM */
+#if 0
+		for (i = 0; i < ETHER_ADDR_LEN; ++i)
+			sc->sc_arpcom.ac_enaddr[i] =
+			    bus_space_read_1(bst, bsh, (KE_ROM_OFFSET + i));
+#else
+		{
+			nubus_dir dir;
+			nubus_dirent dirent;
+
+			/* getting the MAC address */
+			nubus_get_main_dir(na->fmt, &dir);
+			if (nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent) <= 0)
+				break;
+			nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
+			if (nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent) <= 0)
+				break;
+			if (nubus_get_ind_data(na->fmt, &dirent,
+			    (caddr_t)sc->sc_arpcom.ac_enaddr,
+			    ETHER_ADDR_LEN) <= 0)
+				break;
+		}
+#endif
+
+		success = 1;
+		break;
+
 	default:
 		break;
 	}
@@ -356,7 +403,11 @@ ae_card_vendor(na)
 			vendor = AE_VENDOR_INTERLAN;
 			break;
 		case NUBUS_DRHW_KINETICS:
-			vendor = AE_VENDOR_DAYNA;
+			if (strncmp(
+			    nubus_get_card_name(na->fmt), "EtherPort", 9) == 0)
+				vendor = AE_VENDOR_KINETICS;
+			else
+				vendor = AE_VENDOR_DAYNA;
 			break;
 		}
 		break;
