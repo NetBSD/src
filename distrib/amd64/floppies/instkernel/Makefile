@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/05 02:04:12 fvdl Exp $
+#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:44 fvdl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
