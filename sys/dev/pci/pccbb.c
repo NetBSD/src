@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.39 2000/05/08 07:31:20 kleink Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.40 2000/06/07 09:02:46 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -1329,12 +1329,14 @@ cb_reset(sc)
 	    (sc->sc_chipset == CB_RX5C47X ? 400 * 1000 : 40 * 1000);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
-	bcr |= (0x40 << 16);	       /* Reset bit Assert (bit 6 at 0x3E) */
+	/* Reset bit Assert (bit 6 at 0x3E) */
+	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 	delay(reset_duration);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
-		bcr &= ~(0x40 << 16);  /* Reset bit Deassert (bit 6 at 0x3E) */
+		/* Reset bit Deassert (bit 6 at 0x3E) */
+		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 		delay(reset_duration);
 	}
