@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.8 2000/12/09 22:39:12 thorpej Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.9 2001/03/16 22:14:45 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.8 2000/12/09 22:39:12 thorpej Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.9 2001/03/16 22:14:45 tron Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -279,7 +279,7 @@ ypproc_xfr_2_svc(argp, rqstp)
 		snprintf(prog, sizeof(prog), "%d", ypx->proto);
 		snprintf(port, sizeof(port), "%d", ypx->port);
 		if (getnameinfo(caller, caller->sa_len, hbuf, sizeof(hbuf),
-		    NULL, 0, NI_NUMERICHOST))
+		    NULL, 0, 0))
 			_exit(1);	/* XXX report error ? */
 
 		execl(ypxfr_proc, "ypxfr", "-d", ypx->map_parms.domain,
