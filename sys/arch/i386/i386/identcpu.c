@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.1 2003/03/01 16:37:52 fvdl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2 2003/04/05 17:16:06 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -313,7 +313,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III Xeon (Cascades)",
+				"Pentium-M (Banias)",
+				"Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
