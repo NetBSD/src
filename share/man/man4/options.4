@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.174 2002/07/03 03:05:03 yamt Exp $
+.\"	$NetBSD: options.4,v 1.175 2002/07/03 11:05:20 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1747,8 +1747,8 @@ See
 for details.
 .It Cd options KSTACK_CHECK_DR0
 Detect kernel stack overflow using DR0 register. This option uses DR0
-register exclusively so you can't use DR0 register for other purpose if you
-turn this on.
+register exclusively so you can't use DR0 register for other purpose (e.g.
+hardware breakpoint) if you turn this on.
 .El
 .Ss isa-specific Options
 Options specific to
