@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.3.2.2 2002/05/17 15:09:17 gehenna Exp $
+# $NetBSD: files.sbmips,v 1.3.2.3 2002/08/31 13:59:16 gehenna Exp $
 
 maxpartitions 8
 
@@ -121,4 +121,4 @@ device	cpu
 attach	cpu at zbbus
 file	arch/sbmips/sbmips/cpu.c		cpu
 
-include "arch/sbmips/conf/majors.sbmips"
+include "arch/evbmips/conf/majors.evbmips"
