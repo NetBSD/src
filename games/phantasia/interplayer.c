@@ -1,10 +1,11 @@
-/*	$NetBSD: interplayer.c,v 1.7 2004/04/07 17:46:47 ross Exp $	*/
+/*	$NetBSD: interplayer.c,v 1.8 2004/04/11 13:35:06 he Exp $	*/
 
 /*
  * interplayer.c - player to player routines for Phantasia
  */
 
 #include "include.h"
+#undef bool
 #include <curses.h>
 
 void
