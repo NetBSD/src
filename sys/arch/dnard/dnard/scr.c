@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.3 2001/11/23 19:36:49 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.4 2001/12/11 06:00:17 briggs Exp $	*/
 
 /*
  * Copyright 1997
@@ -1081,6 +1081,48 @@ int         flag;
     return ENODEV;
 } 
 
+
+
+
+
+/*
+**++
+**  FUNCTIONAL DESCRIPTION:
+**
+**      scrpoll
+**
+**      not supported
+**
+**  FORMAL PARAMETERS:
+**      
+**      dev  - input : Device identifier consisting of major and minor numbers.
+**      events -input: Events to poll for
+**      p    - input : Process requesting the poll.
+**
+**  IMPLICIT INPUTS:
+**
+**
+**  IMPLICIT OUTPUTS:
+**
+**      none
+**
+**  FUNCTION VALUE:
+**
+**      Returns ENODEV
+**
+**  SIDE EFFECTS:
+**
+**      none
+**--
+*/
+int
+scrpoll(dev, events, p)
+dev_t       dev;
+int         events;
+struct proc *p;
+{
+    return ENODEV;
+} 
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2001/12/02 22:54:26 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2001/12/11 06:00:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -150,6 +150,20 @@ cpu_configure()
 	(void)spl0();
 }
 
+#include "wd.h"
+#include "cd.h"
+#include "sd.h"
+
+#if NWD > 0 || NSD > 0 || NCD > 0
+#include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
+#endif
+#if NSD > 0 || NCD > 0
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+#endif
+
 void
 device_register(struct device *dev, void *aux)
 {
@@ -219,9 +233,9 @@ device_register(struct device *dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		char *cp = strchr(boot_component, '@');
 		if (cp != NULL
-		    && sa->sa_sc_link->type == BUS_ATAPI
-		    && sa->sa_sc_link->scsipi_atapi.channel == 0
-		    && sa->sa_sc_link->scsipi_atapi.drive == strtoul(cp+1, NULL, 16)) {
+		    && sa->sa_periph->periph_channel->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI
+		    && sa->sa_periph->periph_channel->chan_channel == 0
+		    && sa->sa_periph->periph_target == strtoul(cp+1, NULL, 16)) {
 			booted_device = dev;
 		}
 		return;
@@ -241,95 +255,4 @@ device_register(struct device *dev, void *aux)
 			booted_device = dev;
 		}
 	}
-}
-
-#include "ofb.h"
-#include "vga_ofbus.h"
-#include "com.h"
-
-#if (NCOM > 0)
-#ifndef CONSPEED
-#define	CONSPEED	9600
-#endif
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-
-int comcnmode = CONMODE;
-#endif /* (NCOM > 0) */
-
-void
-cninit(void)
-{
-	int chosen, stdin, stdout, node;
-	char type[16], name[16];
-
-	chosen = OF_finddevice("/chosen");
-	if (chosen == 0)
-		goto nocons;
-	
-	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout))
-	    != sizeof(stdout))
-		goto nocons;
-
-	node = OF_instance_to_package(stdout);
-	memset(type, 0, sizeof(type));
-	if (OF_getprop(node, "device_type", type, sizeof(type)) == -1)
-		goto nocons;
-
-	if (strcmp(type, "display") == 0) {
-#if NOFB > 0
-		if (!ofb_cnattach())
-			goto dokbd;
-#endif
-#if NVGA_OFBUS > 0
-		if (!vga_ofbus_cnattach(node, &isa_io_bs_tag, &isa_mem_bs_tag))
-			goto dokbd;
-#endif
-		return;
-	dokbd:
-
-		/*
-		 * We must determine which keyboard type we have.
-		 */
-		if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin))
-		    != sizeof(stdin)) {
-			printf("WARNING: no `stdin' property in /chosen\n");
-			return;
-		}
-
-		node = OF_instance_to_package(stdin);
-		memset(name, 0, sizeof(name));
-		OF_getprop(node, "name", name, sizeof(name));
-		if (strcmp(name, "keyboard") != 0) {
-			printf("WARNING: stdin is not a keyboard: %s\n", name);
-			return;
-		}
-
-#if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
-#endif
-		return;
-	}
-
-#if NCOM > 0
-	if (strcmp(type, "serial") == 0) {
-		int regs[3];
-		int freq;
-		if (OF_getprop(node, "reg", regs, sizeof(regs)) != sizeof(regs))
-			goto nocom;
-		if (OF_getprop(node, "clock-frequency", &freq, sizeof(freq)) 
-		    != sizeof(freq))
-			goto nocom;
-		if (!comcnattach(&isa_io_bs_tag, regs[1], CONSPEED, freq,
-		    comcnmode))
-			return;
-	  nocom:
-		panic("can't init serial console (hanlde=%#x)", node);
-		return;
-	}
-#endif
-
-nocons:
-	return;
 }

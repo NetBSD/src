@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.2 2001/09/14 01:10:12 thorpej Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.3 2001/12/11 06:00:17 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -82,11 +82,11 @@ void
 vga_ofbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vga_ofbus_softc *osc = (void *) self;
-	struct vga_softc *sc = &sc->sc_vga;
+	struct vga_softc *sc = &osc->sc_vga;
 	struct ofbus_attach_args *oba = aux;
 
 	printf("\n");
-	sc->sc_phandle = oba->oba_phandle;
+	osc->sc_phandle = oba->oba_phandle;
 
 	vga_common_attach(sc, &isa_io_bs_tag, &isa_mem_bs_tag,
 	    WSDISPLAY_TYPE_ISAVGA, NULL);
