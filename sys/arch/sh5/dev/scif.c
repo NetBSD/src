@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.9 2002/10/23 09:11:59 jdolecek Exp $	*/
+/*	$NetBSD: scif.c,v 1.10 2003/03/13 13:19:01 scw Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -449,7 +449,8 @@ scif_getc(bus_space_tag_t bt, bus_space_handle_t bh)
 #else
 	unsigned char c;
 
-	while (!(bus_space_read_2(bt, bh, SCIF_REG_SCFSR2) & SCIF_SCFSR2_DR))
+	while (!(bus_space_read_2(bt, bh, SCIF_REG_SCFSR2) &
+	    (SCIF_SCFSR2_DR | SCIF_SCFSR2_RDF)))
 		;
 
 	c = bus_space_read_1(bt, bh, SCIF_REG_SCFRD2);
