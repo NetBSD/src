@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.26.2.2 1999/02/25 04:00:12 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.26.2.3 1999/04/09 04:33:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -186,7 +186,9 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
 
-	*bpp = 0;
+	if (bpp != NULL) {
+		*bpp = 0;
+	}
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
