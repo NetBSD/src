@@ -1,5 +1,4 @@
-#	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile.inc,v 1.3 1993/08/01 05:41:25 mycroft Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 .PATH: ${.CURDIR}/db/btree
 

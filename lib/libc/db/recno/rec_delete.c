@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)rec_delete.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_delete.c,v 1.5 1994/02/17 21:13:26 pk Exp $";
+static char sccsid[] = "@(#)rec_delete.c	8.6 (Berkeley) 6/4/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -155,12 +154,11 @@ int
 __rec_dleaf(t, h, index)
 	BTREE *t;
 	PAGE *h;
-	int index;
+	u_int32_t index;
 {
-	register RLEAF *rl;
-	register indx_t *ip, offset;
-	register size_t nbytes;
-	register int cnt;
+	RLEAF *rl;
+	indx_t *ip, cnt, offset;
+	u_int32_t nbytes;
 	char *from;
 	void *to;
 

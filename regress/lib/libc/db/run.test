@@ -1,7 +1,6 @@
 #!/bin/sh -
 #
-#	from: @(#)run.test	8.7 (Berkeley) 9/16/93
-#	$Id: run.test,v 1.5 1993/09/16 23:15:59 cgd Exp $
+#	@(#)run.test	8.8 (Berkeley) 6/16/94
 #
 
 # db regression tests
@@ -9,8 +8,6 @@ main()
 {
 
 DICT=/usr/share/dict/web2
-#DICT=/usr/share/dict/words
-#DICT=/usr/dict/words
 PROG=./dbtest
 TMP1=t1
 TMP2=t2
@@ -394,9 +391,9 @@ test8()
 			if (i % 8 == 0) {
 				printf("c\nkkey2\nD/bin/csh\n");
 				printf("c\nkkey1\nD/bin/sh\n");
-				printf("e\t%d of 10 (comparison)\r\n", i);
+				printf("e\t%d of 10 (comparison)\n", i);
 			} else
-				printf("e\t%d of 10             \r\n", i);
+				printf("e\t%d of 10             \n", i);
 			printf("r\nkkey1\nr\nkkey2\n");
 		}
 		printf("e\n");

@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)rec_close.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_close.c,v 1.4 1993/09/09 02:42:19 cgd Exp $";
+static char sccsid[] = "@(#)rec_close.c	8.3 (Berkeley) 2/21/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -62,7 +61,7 @@ __rec_close(dbp)
 	DB *dbp;
 {
 	BTREE *t;
-	int rval;
+	int status;
 
 	t = dbp->internal;
 
@@ -76,22 +75,22 @@ __rec_close(dbp)
 		return (RET_ERROR);
 
 	/* Committed to closing. */
-	rval = RET_SUCCESS;
+	status = RET_SUCCESS;
 	if (ISSET(t, R_MEMMAPPED) && munmap(t->bt_smap, t->bt_msize))
-		rval = RET_ERROR;
+		status = RET_ERROR;
 
 	if (!ISSET(t, R_INMEM))
 		if (ISSET(t, R_CLOSEFP)) {
 			if (fclose(t->bt_rfp))
-				rval = RET_ERROR;
+				status = RET_ERROR;
 		} else
 			if (close(t->bt_rfd))
-				rval = RET_ERROR;
+				status = RET_ERROR;
 
 	if (__bt_close(dbp) == RET_ERROR)
-		rval = RET_ERROR;
+		status = RET_ERROR;
 
-	return (rval);
+	return (status);
 }
 
 /*
