@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.7 1994/05/13 08:02:16 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/05/13 21:24:15 cgd Exp $
 
 PROG=	route
 MAN8=	route.0
@@ -21,6 +21,6 @@ keywords.h: keywords
 	    > ${.TARGET}
 	rm -f _keywords.tmp
 
-.include <bsd.prog.mk>
-
 route .depend lint tags: keywords.h
+
+.include <bsd.prog.mk>
