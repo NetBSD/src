@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.81 2003/08/15 07:17:21 itojun Exp $	*/
+/*	$NetBSD: pci.c,v 1.82 2003/08/18 05:39:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.81 2003/08/15 07:17:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.82 2003/08/18 05:39:07 itojun Exp $");
 
 #include "opt_pci.h"
 
@@ -226,7 +226,11 @@ pciprint(aux, pnp)
 			printf(" no quirks");
 		} else {
 			bitmask_snprintf(qd->quirks,
-			    "\20\1multifn", devinfo, sizeof (devinfo));
+			    "\002\001multifn\002singlefn\003skipfunc0"
+			    "\004skipfunc1\005skipfunc2\006skipfunc3"
+			    "\007skipfunc4\010skipfunc5\011skipfunc6"
+			    "\012skipfunc8",
+			    devinfo, sizeof (devinfo));
 			printf(" quirks %s", devinfo);
 		}
 		printf(")");
