@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.3 1997/04/06 08:40:46 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.4 1997/09/06 14:08:29 drochner Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,10 +29,13 @@
 
 #include <sys/param.h>
 
-#include "include/prom.h"
+#include <machine/prom.h>
+#include "stand/common/common.h"
 #include "stand/common/bbinfo.h"
 
 extern _end, start;
+
+extern void puts __P((char*)); /* XXX private, does not append '\n' */
 
 struct bbinfoloc desc = {
 	0xbabefacedeadbeef,
