@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.36 2004/09/22 12:20:25 kent Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.37 2004/10/07 10:42:26 dsainty Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * - inversed stereo at ac97 codec level
  *   (XXX jdolecek - don't see the problem? maybe because auvia(4) has
  *    it swapped too?)
- * - bass disapear when you plug rear jack-in on Cambridge FPS2000 speakers
+ * - bass disappear when you plug rear jack-in on Cambridge FPS2000 speakers
  *   (and presumably all speakers that support front and rear jack-in)
  *
  * TODO:
@@ -51,12 +51,12 @@
  * - (midi/mpu),joystick support
  * - Multiple voices play (problem with /dev/audio architecture)
  * - Multiple sources recording (Pb with audio(4))
- * - Independant modification of each channel's parameters (via mixer ?)
+ * - Independent modification of each channel's parameters (via mixer ?)
  * - DSP FX patches (to make fx like chipmunk)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.36 2004/09/22 12:20:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.37 2004/10/07 10:42:26 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -436,7 +436,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
- /* XXX it's unknown wheather APS is made from Audigy as well */
+ /* XXX it's unknown whether APS is made from Audigy as well */
         if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
                 sc->sc_type = EMUXKI_AUDIGY;
                 if (PCI_REVISION(pa->pa_class) == 0x04) {
@@ -1329,7 +1329,7 @@ emuxki_channel_stop(struct emuxki_channel *chan)
 
 /*
  * Voices management
- * emuxki_voice_dataloc : use(play or rec) independant dataloc union helpers
+ * emuxki_voice_dataloc : use(play or rec) independent dataloc union helpers
  * emuxki_voice_channel_* : play part of dataloc union helpers
  * emuxki_voice_recsrc_* : rec part of dataloc union helpers
  */
@@ -1389,7 +1389,7 @@ emuxki_recsrc_reserve(struct emuxki_voice *voice, emuxki_recsrc_t source)
 {
 	if (source < 0 || source >= EMU_NUMRECSRCS) {
 #ifdef EMUXKI_DEBUG
-		printf("Tryed to reserve invalid source: %d\n", source);
+		printf("Tried to reserve invalid source: %d\n", source);
 #endif
 		return (EINVAL);
 	}
