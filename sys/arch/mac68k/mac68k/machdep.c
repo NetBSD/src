@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 1996/05/08 01:06:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 1996/05/10 20:53:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2572,12 +2572,6 @@ get_mapping(void)
 			 * Kludge for LC internal video
 			 */
 			check_video("LC video kludge", 512 * 1024, 512 * 1024);
-		} else if (0x90000000 <= videoaddr && videoaddr < 0xF0000000) {
-			/*
-			 * Kludge for NuBus Superspace video
-			 */
-			check_video("NuBus Super kludge",
-				    4 * 1024 * 1024, 1 * 1024 * 1024);
 		} else {
 			mac68k_vidphys = videoaddr;
 			printf( "  no internal video at address 0 -- "
