@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.3 2001/11/11 17:18:27 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.4 2001/11/14 01:00:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas
@@ -54,6 +54,22 @@ Lblock_userspace_access:
 	sub	pc, pc, #4		/* branch to next insn */
 
 /*
+ * We need a separate cpu_control() entry point, since we have to
+ * invalidate the Branch Target Buffer in the event the BPRD bit
+ * changes in the control register.
+ */
+ENTRY(xscale_control)
+	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
+	bic	r2, r3, r0		/* Clear bits */
+	eor	r2, r2, r1		/* XOR bits */
+
+	teq	r2, r3			/* Only write if there was a change */
+	mcrne	p15, 0, r0, c7, c5, 6	/* Invalidate the BTB */
+	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
+	mov	r0, r3			/* Return old value */
+	mov	pc, lr
+
+/*
  * Functions to set the MMU Translation Table Base register
  *
  * We need to clean and flush the cache as it uses virtual
@@ -100,7 +116,6 @@ ENTRY(xscale_setttb)
 ENTRY(xscale_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
-	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	mov	pc, lr
 
 /*
@@ -120,7 +135,6 @@ ENTRY(xscale_cache_flushD)
 
 ENTRY(xscale_cache_flushI_SE)
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	mov	pc, lr
 
 ENTRY(xscale_cache_flushD_SE)
@@ -240,7 +254,6 @@ ENTRY(xscale_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
 
@@ -283,7 +296,6 @@ ENTRY(xscale_cache_purgeID_rng)
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	1b
@@ -318,7 +330,6 @@ ENTRY(xscale_cache_syncI_rng)
 
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
-	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	add	r0, r0, #32
 	subs	r1, r1, #32
 	bpl	1b

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.14 2001/11/10 23:12:41 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15 2001/11/14 01:00:05 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -557,7 +557,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	/* MMU functions */
 
-	cpufunc_control,		/* control		*/
+	xscale_control,			/* control		*/
 	cpufunc_domains,		/* domain		*/
 	xscale_setttb,			/* setttb		*/
 	cpufunc_faultstatus,		/* faultstatus		*/
@@ -1449,10 +1449,13 @@ sa110_setup(args)
 #ifdef CPU_XSCALE
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
+	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 #endif	/* COMPAT_12 */
+	{ "cpu.branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "xscale.branchpredict", BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ "xscale.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "xscale.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
 	{ "xscale.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
@@ -1474,7 +1477,8 @@ xscale_setup(args)
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
+		 | CPU_CONTROL_BPRD_ENABLE;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
