@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.7 2000/07/10 20:24:23 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8 2000/09/28 15:23:06 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -171,7 +171,7 @@ prom_cnpollc(dev, on)
 /*****************************************************************/
 
 #ifdef	DEBUG
-#define	DBPRINT(x)	printf x
+#define	DBPRINT(x)	prom_printf x
 #else
 #define	DBPRINT(x)
 #endif
