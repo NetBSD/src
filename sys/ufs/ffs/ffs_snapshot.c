@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.8 2005/02/15 21:34:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.9 2005/02/15 22:00:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -173,8 +173,8 @@ ffs_snapshot(mp, vp, ctime)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	if (suser(p->p_ucred, &p->p_acflag) != 0 &&
-	    VTOI(vp)->i_uid != p->p_ucred->cr_uid)
+	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 &&
+	    VTOI(vp)->i_uid != l->l_proc->p_ucred->cr_uid)
 		return EACCES;
 
 	if (vp->v_size != 0) {
