@@ -1,4 +1,4 @@
-/*	$NetBSD: bfd.h,v 1.3 1997/10/19 02:52:24 jonathan Exp $	*/
+/*	$NetBSD: bfd.h,v 1.4 1998/05/19 19:59:58 tv Exp $	*/
 
 /* Main header file for the bfd library -- portable access to object files.
    Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
@@ -1810,6 +1810,10 @@ not stored in the instruction. */
   BFD_RELOC_ARM_THUMB_IMM,
   BFD_RELOC_ARM_THUMB_SHIFT,
   BFD_RELOC_ARM_THUMB_OFFSET,
+  BFD_RELOC_ARM_GOTPC,
+  BFD_RELOC_ARM_GOT12,
+  BFD_RELOC_ARM_GOT32,
+  BFD_RELOC_ARM_JMPSLOT,
 
 /* Hitachi SH relocs.  Not all of these appear in object files. */
   BFD_RELOC_SH_PCDISP8BY2,
