@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.47 2002/08/25 16:05:41 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.48 2002/08/25 17:54:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,15 +105,6 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct openprom_intr **, int *));
-static paddr_t sbus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
-				  int, int));
-static int _sbus_bus_map __P((
-		bus_space_tag_t,
-		bus_addr_t,		/*coded slot+offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
@@ -415,14 +406,14 @@ sbus_attach_common(sc, busname, busnode, specials)
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
-			&sc->sc_nrange, (void **)&sc->sc_range);
+			&sbt->nranges, (void **) &sbt->ranges);
 	switch (error) {
 	case 0:
 		break;
 	case ENOENT:
 		/* Fall back to our own `range' construction */
-		sc->sc_range = sbus_translations;
-		sc->sc_nrange =
+		sbt->ranges = sbus_translations;
+		sbt->nranges =
 			sizeof(sbus_translations)/sizeof(sbus_translations[0]);
 		break;
 	default:
@@ -540,46 +531,6 @@ sbus_destroy_attach_args(sa)
 		free(sa->sa_promvaddrs, M_DEVBUF);
 
 	bzero(sa, sizeof(struct sbus_attach_args));/*DEBUG*/
-}
-
-
-int
-_sbus_bus_map(t, ba, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;
-	bus_space_handle_t *hp;
-{
-	struct sbus_softc *sc = t->cookie;
-	bus_addr_t addr;
-	int error;
-
-	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
-	    ba, &addr);
-	if (error)
-		return (error);
-	return (bus_space_map2(sc->sc_bustag, addr, size, flags, va, hp));
-}
-
-static paddr_t
-sbus_bus_mmap(t, ba, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t ba;
-	off_t off;
-	int prot;
-	int flags;
-{
-	struct sbus_softc *sc = t->cookie;
-	bus_addr_t addr;
-	int error;
-
-	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
-	    ba, &addr);
-	if (error)
-		return (-1);
-	return (bus_space_mmap(sc->sc_bustag, addr, off, prot, flags));
 }
 
 bus_addr_t
@@ -762,8 +713,8 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_map = sc->sc_bustag->sparc_bus_map;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

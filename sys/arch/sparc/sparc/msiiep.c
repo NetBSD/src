@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.10 2002/06/05 00:23:01 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.11 2002/08/25 17:55:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.10 2002/06/05 00:23:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.11 2002/08/25 17:55:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -153,6 +153,8 @@ static void	*mspcic_intr_establish(bus_space_tag_t, int, int, int,
 static struct sparc_bus_space_tag mspcic_io_tag = {
 	&mspcic_io_cookie,	/* cookie */
 	NULL,			/* parent bus tag */
+	NULL,			/* ranges */
+	0,			/* nranges */
 	mspcic_bus_map,		/* bus_space_map */
 	NULL,			/* bus_space_unmap */
 	NULL,			/* bus_space_subregion */
@@ -164,6 +166,8 @@ static struct sparc_bus_space_tag mspcic_io_tag = {
 static struct sparc_bus_space_tag mspcic_mem_tag = {
 	&mspcic_mem_cookie,	/* cookie */
 	NULL,			/* parent bus tag */
+	NULL,			/* ranges */
+	0,			/* nranges */
 	mspcic_bus_map,		/* bus_space_map */ 
 	NULL,			/* bus_space_unmap */
 	NULL,			/* bus_space_subregion */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2002/07/17 15:57:12 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.198 2002/08/25 17:55:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1779,6 +1779,29 @@ static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
 
+/*
+ * Generic routine to translate an address using OpenPROM `ranges'.
+ */
+int
+bus_translate_address_generic(struct openprom_range *ranges, int nranges,
+    bus_addr_t addr, bus_addr_t *addrp)
+{
+	int i, space = BUS_ADDR_IOSPACE(addr);
+
+	for (i = 0; i < nranges; i++) {
+		struct openprom_range *rp = &ranges[i];
+
+		if (rp->or_child_space != space)
+			continue;
+
+		/* We've found the connection to the parent bus. */
+		*addrp = BUS_ADDR(rp->or_parent_space,
+		    rp->or_parent_base + BUS_ADDR_PADDR(addr));
+		return (0);
+	}
+
+	return (EINVAL);
+}
 
 int
 sparc_bus_map(t, ba, size, flags, va, hp)
@@ -1793,6 +1816,14 @@ sparc_bus_map(t, ba, size, flags, va, hp)
 	unsigned int pmtype;
 static	vaddr_t iobase;
 
+	if (t->ranges != NULL) {
+		bus_addr_t addr;
+		int error;
+
+		error = bus_translate_address_generic(t->ranges, t->nranges,
+		    ba, &addr);
+		return (bus_space_map2(t->parent, addr, size, flags, va, hp));
+	}
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -1863,8 +1894,23 @@ sparc_bus_mmap(t, ba, off, prot, flags)
 	int		prot;
 	int		flags;
 {
-	u_int pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
-	paddr_t pa = trunc_page(BUS_ADDR_PADDR(ba) + off);
+	u_int pmtype;
+	paddr_t pa;
+
+	if (t->ranges != NULL) {
+		bus_addr_t addr;
+		int error;
+
+		error = bus_translate_address_generic(t->ranges, t->nranges,
+		    ba, &addr);
+		if (error)
+			return (-1);
+		return (bus_space_mmap(t->parent, addr, off, prot, flags));
+	}
+
+	pmtype = PMAP_IOENC(BUS_ADDR_IOSPACE(ba));
+	pa = trunc_page(BUS_ADDR_PADDR(ba) + off);
+
 	return (paddr_t)(pa | pmtype | PMAP_NC);
 }
 
@@ -1936,6 +1982,8 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
+	NULL,				/* ranges */
+	0,				/* nranges */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	sparc_bus_subregion,		/* bus_space_subregion */

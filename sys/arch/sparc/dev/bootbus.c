@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.2 2002/08/25 16:05:41 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.3 2002/08/25 17:54:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,9 +59,6 @@ struct bootbus_softc {
 
 	bus_space_tag_t sc_st;			/* ours */
 	bus_space_tag_t sc_bustag;		/* passed on to children */
-
-	struct openprom_range *sc_range;	/* our address ranges */
-	int sc_nrange;
 };
 
 static int bootbus_match(struct device *, struct cfdata *, void *);
@@ -73,13 +70,6 @@ struct cfattach bootbus_ca = {
 
 static int bootbus_submatch(struct device *, struct cfdata *, void *);
 static int bootbus_print(void *, const char *);
-
-static int bootbus_bus_map(bus_space_tag_t, bus_addr_t, size_t, int,
-    vaddr_t, bus_space_handle_t *);
-static paddr_t bootbus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t,
-    int, int);
-static void *bootbus_intr_establish(bus_space_tag_t, int, int, int,
-    int (*)(void *), void *);
 
 static int bootbus_setup_attach_args(struct bootbus_softc *, bus_space_tag_t,
     int, struct bootbus_attach_args *);
@@ -115,16 +105,15 @@ bootbus_attach(struct device *parent, struct device *self, void *aux)
 	    M_WAITOK|M_ZERO);
 	sc->sc_bustag->cookie = sc;
 	sc->sc_bustag->parent = sc->sc_st;
-	sc->sc_bustag->sparc_bus_map = bootbus_bus_map;
-	sc->sc_bustag->sparc_bus_mmap = bootbus_bus_mmap;
-	sc->sc_bustag->sparc_intr_establish = bootbus_intr_establish;
+	sc->sc_bustag->sparc_bus_map = sc->sc_st->sparc_bus_map;
+	sc->sc_bustag->sparc_bus_mmap = sc->sc_st->sparc_bus_mmap;
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(sc->sc_node, "ranges",
-	    sizeof(struct openprom_range), &sc->sc_nrange,
-	    (void **) &sc->sc_range);
+	    sizeof(struct openprom_range), &sc->sc_bustag->nranges,
+	    (void **) &sc->sc_bustag->ranges);
 	if (error) {
 		printf("%s: error %d getting \"ranges\" property\n",
 		    sc->sc_dev.dv_xname, error);
@@ -232,53 +221,4 @@ bootbus_destroy_attach_args(struct bootbus_attach_args *baa)
 
 	if (baa->ba_promvaddrs != NULL)
 		free(baa->ba_promvaddrs, M_DEVBUF);
-}
-
-static int
-bootbus_bus_map(bus_space_tag_t t, bus_addr_t ba, bus_size_t size,
-    int flags, vaddr_t va, bus_space_handle_t *hp)
-{
-	struct bootbus_softc *sc = t->cookie;
-	bus_addr_t addr;
-	int error;
-
-	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
-	    ba, &addr);
-	if (error)
-		return (error);
-	return (bus_space_map2(sc->sc_st, addr, size, flags, va, hp));
-}
-
-static paddr_t
-bootbus_bus_mmap(bus_space_tag_t t, bus_addr_t ba, off_t off, int prot,
-    int flags)
-{
-	struct bootbus_softc *sc = t->cookie;
-	bus_addr_t addr;
-	int error;
-
-	error = bus_translate_address_generic(sc->sc_range, sc->sc_nrange,
-	    ba, &addr);
-	if (error)
-		return (-1);
-	return (bus_space_mmap(sc->sc_st, addr, off, prot, flags));
-}
-
-static void *
-bootbus_intr_establish(bus_space_tag_t t, int pil, int level, int flags,
-    int (*handler)(void *), void *arg)
-{
-	struct intrhand *ih;
-
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(pil, (void (*)__P((void)))handler);
-	else
-		intr_establish(pil, ih);
-	return (ih);
 }
