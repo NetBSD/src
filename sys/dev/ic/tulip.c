@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.30 1999/11/04 01:20:57 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.31 1999/11/04 01:27:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1382,6 +1382,8 @@ tlp_init(sc)
 	case TULIP_CHIP_21140A:
 	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
+	case TULIP_CHIP_82C115:
+	case TULIP_CHIP_MX98725:
 		/*
 		 * If we're allowed to do so, use Memory Read Line
 		 * and Memory Read Multiple.
