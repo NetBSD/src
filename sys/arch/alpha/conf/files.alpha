@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.93 1998/09/29 18:23:55 drochner Exp $
+# $NetBSD: files.alpha,v 1.94 1998/10/01 16:18:53 erh Exp $
 #
 # alpha-specific configuration info
 
@@ -441,6 +441,13 @@ file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
+
+# Linux Binary Compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/alpha/files.linux_alpha"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
