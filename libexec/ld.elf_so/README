@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 1999/03/01 16:33:21 christos Exp $
+$NetBSD: README,v 1.5 1999/05/31 14:52:11 kleink Exp $
 
 BUGS/PROBLEMS:
 
@@ -28,7 +28,7 @@ BUGS/PROBLEMS:
 	(2) C code relocates the rest of the loader, excluding those
 	    RELATIVE relocations already done (via an ... iffy heuristic).
 
-  sparc, i386:
+  i386, m68k, sparc:
 	(1) C code relocates RELATIVE relocations in _rtld_init() carefully
 	    so that it does not touch any globals.
 
