@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.90 1994/03/06 17:20:08 mycroft Exp $
+ *	$Id: machdep.c,v 1.91 1994/03/24 21:50:33 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -411,7 +411,7 @@ sendsig(catcher, sig, mask, code)
 				- sizeof(struct sigframe));
 		ps->ps_onstack = 1;
 	} else {
-		fp = (struct sigframe *)(tf->tf_esp - sizeof(struct sigframe));
+		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
 
 	/* 
@@ -427,19 +427,19 @@ sendsig(catcher, sig, mask, code)
 	 */
 	frame.sf_sc.sc_onstack = oonstack;
 	frame.sf_sc.sc_mask = mask;
-	frame.sf_sc.sc_ebp = tf->tf_ebp;
-	frame.sf_sc.sc_esp = tf->tf_esp;
-	frame.sf_sc.sc_eip = tf->tf_eip;
-	frame.sf_sc.sc_efl = tf->tf_eflags;
-	frame.sf_sc.sc_eax = tf->tf_eax;
-	frame.sf_sc.sc_ebx = tf->tf_ebx;
-	frame.sf_sc.sc_ecx = tf->tf_ecx;
-	frame.sf_sc.sc_edx = tf->tf_edx;
-	frame.sf_sc.sc_esi = tf->tf_esi;
-	frame.sf_sc.sc_edi = tf->tf_edi;
-	frame.sf_sc.sc_cs = tf->tf_cs;
-	frame.sf_sc.sc_ds = tf->tf_ds;
 	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_ds = tf->tf_ds;
+	frame.sf_sc.sc_edi = tf->tf_edi;
+	frame.sf_sc.sc_esi = tf->tf_esi;
+	frame.sf_sc.sc_ebp = tf->tf_ebp;
+	frame.sf_sc.sc_ebx = tf->tf_ebx;
+	frame.sf_sc.sc_edx = tf->tf_edx;
+	frame.sf_sc.sc_ecx = tf->tf_ecx;
+	frame.sf_sc.sc_eax = tf->tf_eax;
+	frame.sf_sc.sc_eip = tf->tf_eip;
+	frame.sf_sc.sc_cs = tf->tf_cs;
+	frame.sf_sc.sc_efl = tf->tf_eflags;
+	frame.sf_sc.sc_esp = tf->tf_esp;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
@@ -554,19 +554,19 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore signal context.
 	 */
-	tf->tf_ebp = context.sc_ebp;
-	tf->tf_esp = context.sc_esp;
-	tf->tf_eip = context.sc_eip;
-	tf->tf_eflags = eflags;
-	tf->tf_eax = context.sc_eax;
-	tf->tf_ebx = context.sc_ebx;
-	tf->tf_ecx = context.sc_ecx;
-	tf->tf_edx = context.sc_edx;
-	tf->tf_esi = context.sc_esi;
-	tf->tf_edi = context.sc_edi;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_ds = context.sc_ds;
 	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_edi = context.sc_edi;
+	tf->tf_esi = context.sc_esi;
+	tf->tf_ebp = context.sc_ebp;
+	tf->tf_ebx = context.sc_ebx;
+	tf->tf_edx = context.sc_edx;
+	tf->tf_ecx = context.sc_ecx;
+	tf->tf_eax = context.sc_eax;
+	tf->tf_eip = context.sc_eip;
+	tf->tf_cs = context.sc_cs;
+	tf->tf_eflags = eflags;
+	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
 	return(EJUSTRETURN);
