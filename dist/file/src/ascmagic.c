@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.1 2003/03/25 22:30:17 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.2 2003/05/25 21:27:41 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -57,9 +57,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.35 2003/03/23 21:16:26 christos Exp")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.38 2003/05/23 21:31:58 christos Exp")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.1 2003/03/25 22:30:17 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.2 2003/05/25 21:27:41 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -105,29 +105,16 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	int has_long_lines = 0;
 
 	/*
-	 * Do the tar test first, because if the first file in the tar
-	 * archive starts with a dot, we can confuse it with an nroff file.
-	 */
-	switch (file_is_tar(buf, nbytes)) {
-	case 1:
-	        if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-tar" : "tar archive") == -1)
-			return -1;
-		return 1;
-	case 2:
-		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-tar, POSIX" : "POSIX tar archive") == -1)
-			return -1;
-		return 1;
-	}
-
-	/*
 	 * Undo the NUL-termination kindly provided by process()
 	 * but leave at least one byte to look at
 	 */
 
 	while (nbytes > 1 && buf[nbytes - 1] == '\0')
 		nbytes--;
+
+	/* nbuf and ubuf relies on this */
+	if (nbytes > HOWMANY)
+		nbytes = HOWMANY;
 
 	/*
 	 * Then try to determine whether it's any character code we can
@@ -143,7 +130,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 		code = "UTF-8 Unicode";
 		code_mime = "utf-8";
 		type = "text";
-	} else if ((i = looks_unicode(buf, nbytes, ubuf, &ulen))) {
+	} else if ((i = looks_unicode(buf, nbytes, ubuf, &ulen)) != 0) {
 		if (i == 1)
 			code = "Little-endian UTF-16 Unicode";
 		else
@@ -262,7 +249,7 @@ subtype_identified:
 			n_cr++;
 			last_line_end = i;
 		}
-		if (ubuf[i] == '\n' && (i - 1 <  0    || ubuf[i - 1] != '\r')) {
+		if (ubuf[i] == '\n' && ((int)i - 1 < 0 || ubuf[i - 1] != '\r')){
 			n_lf++;
 			last_line_end = i;
 		}
@@ -606,7 +593,8 @@ looks_unicode(const unsigned char *buf, size_t nbytes, unichar *ubuf,
 
 		if (ubuf[*ulen - 1] == 0xfffe)
 			return 0;
-		if (ubuf[*ulen - 1] < 128 && text_chars[ubuf[*ulen - 1]] != T)
+		if (ubuf[*ulen - 1] < 128 &&
+		    text_chars[(size_t)ubuf[*ulen - 1]] != T)
 			return 0;
 	}
 

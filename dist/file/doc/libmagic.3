@@ -1,4 +1,4 @@
-.\"	$NetBSD: libmagic.3,v 1.1.1.1 2003/03/25 22:30:13 pooka Exp $
+.\"	$NetBSD: libmagic.3,v 1.1.1.2 2003/05/25 21:27:29 pooka Exp $
 .\"
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libmagic
 .Sh SYNOPSIS
-.Fd #include \*[Lt]magic.h\*[Gt]
+.In magic.h
 .Ft magic_t
 .Fn magic_open "int flags"
 .Ft void
@@ -113,6 +113,9 @@ The
 function returns a textual description of the contents of the
 .Ar filename
 argument, or NULL if an error occurred.
+If the
+.Ar filename
+is NULL, then stdin is used.
 .Pp
 The
 .Fn magic_buffer

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -65,9 +65,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: fsmagic.c,v 1.38 2003/03/23 21:16:26 christos Exp")
+FILE_RCSID("@(#)Id: fsmagic.c,v 1.41 2003/05/23 21:31:58 christos Exp")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -76,19 +76,22 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 {
 	int ret = 0;
 
+	if (fn == NULL)
+		return 0;
+
 	/*
 	 * Fstat is cheaper but fails for files you don't have read perms on.
 	 * On 4.2BSD and similar systems, use lstat() to identify symlinks.
 	 */
 #ifdef	S_IFLNK
-	if ((ms->flags & MAGIC_SYMLINK) != 0)
+	if ((ms->flags & MAGIC_SYMLINK) == 0)
 		ret = lstat(fn, sb);
 	else
 #endif
 	ret = stat(fn, sb);	/* don't merge into if; see "ret =" above */
 
 	if (ret) {
-		if (file_printf(ms, "can't stat `%s' (%s)",
+		if (file_printf(ms, "Can't stat `%s' (%s)",
 		    fn, strerror(errno)) == -1)
 			return -1;
 		return 1;
@@ -223,6 +226,10 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 				tmp = buf; /* in current directory anyway */
 			    }
 			    else {
+				if (tmp - fn + 1 > BUFSIZ) {
+				    file_printf(ms, "path too long: `%s'", fn);
+				    return -1;
+				}
 				strcpy(buf2, fn);  /* take directory part */
 				buf2[tmp-fn+1] = '\0';
 				strcat(buf2, buf); /* plus (relative) symlink */

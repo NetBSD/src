@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2 2003/05/25 21:27:42 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -75,18 +75,20 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.73 2003/03/24 01:34:21 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.77 2003/03/27 22:46:51 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.2 2003/05/25 21:27:42 pooka Exp $");
 #endif
 #endif	/* lint */
 
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-bciknsvzL] [-f namefile] [-m magicfiles] file...\n"
+#define SYMLINKFLAG "L"
 #else
-# define USAGE  "Usage: %s [-bciknsvz] [-f namefile] [-m magicfiles] file...\n"
+#define SYMLINKFLAG ""
 #endif
+
+# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
 
 #ifndef MAGIC
 # define MAGIC "/etc/magic"
@@ -104,7 +106,7 @@ private int 		/* Global command-line options 		*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
-private char separator = ':';	/* Default field separator	*/
+private char *separator = ":";	/* Default field separator	*/
 
 private char *progname;		/* used throughout 		*/
 
@@ -225,7 +227,7 @@ main(int argc, char *argv[])
 			++didsomefiles;
 			break;
 		case 'F':
-			separator = *optarg;
+			separator = optarg;
 			break;
 		case 'i':
 			flags |= MAGIC_MIME;
@@ -251,7 +253,7 @@ main(int argc, char *argv[])
 			flags |= MAGIC_DEVICES;
 			break;
 		case 'v':
-			(void) fprintf(stdout, "%s-%d.%d\n", progname,
+			(void) fprintf(stdout, "%s-%d.%.2d\n", progname,
 				       FILE_VERSION_MAJOR, patchlevel);
 			(void) fprintf(stdout, "magic file from %s\n",
 				       magicfile);
@@ -370,12 +372,13 @@ private void
 process(const char *inname, int wid)
 {
 	const char *type;
+	int std_in = strcmp(inname, "-") == 0;
 
 	if (wid > 0 && !bflag)
-		(void) printf("%s%c%*s ", inname, separator,
-		    (int) (nopad ? 0 : (wid - strlen(inname))), "");
+		(void) printf("%s%s%*s ", std_in ? "/dev/stdin" : inname,
+		    separator, (int) (nopad ? 0 : (wid - strlen(inname))), "");
 
-	type = magic_file(magic, inname);
+	type = magic_file(magic, std_in ? NULL : inname);
 	if (type == NULL)
 		printf("ERROR: %s\n", magic_error(magic));
 	else
@@ -443,8 +446,7 @@ byteconv2(int from, int same, int big_endian)
 private void
 usage(void)
 {
-	(void)fprintf(stderr, USAGE, progname);
-	(void)fprintf(stderr, "Usage: %s -C [-m magic]\n", progname);
+	(void)fprintf(stderr, USAGE, progname, progname);
 #ifdef HAVE_GETOPT_H
 	(void)fputs("Try `file --help' for more information.\n", stderr);
 #endif
@@ -467,7 +469,7 @@ help(void)
 "                               conjunction with -m to debug a new magic file\n"
 "                               before installing it\n"
 "  -f, --files-from FILE      read the filenames to be examined from FILE\n"
-"  -F, --separator char       use char as separator instead of `:'\n"
+"  -F, --separator string     use string as separator instead of `:'\n"
 "  -i, --mime                 output mime type strings\n"
 "  -k, --keep-going           don't stop at the first match\n"
 "  -L, --dereference          causes symlinks to be followed\n"

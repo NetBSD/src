@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.1 2003/03/25 22:30:18 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.2 2003/05/25 21:27:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -41,7 +41,7 @@ protected int
 file_printf(struct magic_set *ms, const char *fmt, ...)
 {
 	va_list ap;
-	int len;
+	size_t len;
 	char *buf;
 
 	va_start(ap, fmt);
@@ -71,21 +71,14 @@ file_printf(struct magic_set *ms, const char *fmt, ...)
  */
 /*VARARGS*/
 protected void
-#ifdef __STDC__
 file_error(struct magic_set *ms, const char *f, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
 {
 	va_list va;
-#ifdef __STDC__
+	/* Only the first error is ok */
+	if (ms->haderr)
+	    return;
 	va_start(va, f);
-#else
-	const char *f;
-	va_start(va);
-	f = va_arg(va, const char *);
-#endif
+
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
@@ -119,15 +112,18 @@ file_buffer(struct magic_set *ms, const void *buf, size_t nb)
     int m;
     /* try compression stuff */
     if ((m = file_zmagic(ms, buf, nb)) == 0) {
-	/* try tests in /etc/magic (or surrogate magic file) */
-	if ((m = file_softmagic(ms, buf, nb)) == 0) {
-	    /* try known keywords, check whether it is ASCII */
-	    if ((m = file_ascmagic(ms, buf, nb)) == 0) {
-		/* abandon hope, all ye who remain here */
-		if (file_printf(ms, ms->flags & MAGIC_MIME ?
-		    "application/octet-stream" : "data") == -1)
-			return -1;
-		m = 1;
+	/* Check if we have a tar file */
+	if ((m = file_is_tar(ms, buf, nb)) == 0) {
+	    /* try tests in /etc/magic (or surrogate magic file) */
+	    if ((m = file_softmagic(ms, buf, nb)) == 0) {
+		/* try known keywords, check whether it is ASCII */
+		if ((m = file_ascmagic(ms, buf, nb)) == 0) {
+		    /* abandon hope, all ye who remain here */
+		    if (file_printf(ms, ms->flags & MAGIC_MIME ?
+			"application/octet-stream" : "data") == -1)
+			    return -1;
+		    m = 1;
+		}
 	    }
 	}
     }
