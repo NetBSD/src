@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2000/03/20 12:26:11 soren Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2000/03/31 14:51:53 soren Exp $	*/
 
 #include <mips/mips_param.h>
 
@@ -37,13 +37,13 @@
 #endif
 #endif
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
 __inline extern void	delay(unsigned long);
 #define DELAY(n)	delay(n)
+
+#include <machine/intr.h>
 
 #endif	/* _LOCORE */
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2000/03/22 20:38:05 soren Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2000/03/31 14:51:49 soren Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@ dk_establish(dk, dev)
 }
 
 /* 
- * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
+ * Scan MBR for NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
  * Otherwise, copy valid MBR partition-table into dp, and if a NetBSD
  * partition is found, return a pointer to it; else return  NULL.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2000/03/27 01:51:17 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2000/03/31 14:51:49 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -82,14 +82,16 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int maxmem;		/* Max memory per process */
-int physmem;		/* Total physical memory */
+int	physmem;		/* Total physical memory */
+
+char	bootstring[512];	/* Boot command */
+int	netboot;		/* Are we netbooting? */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 void	configure(void);
-void	mach_init(void);
+void	mach_init(unsigned int);
 
 #ifdef DEBUG
 /* Stack trace code violates prototypes to get callee's registers. */
@@ -100,109 +102,24 @@ extern void	stacktrace(void);
  * safepri is a safe priority for sleep to set for a spin-wait during
  * autoconfiguration or after a panic.  Used as an argument to splx().
  */
-int	safepri = MIPS3_PSL_LOWIPL;
-
-extern void mips_vector_init(void);
+int	safepri = MIPS1_PSL_LOWIPL;
 
 extern struct user *proc0paddr;
 
 static int cobalt_hardware_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
-/* XXX */
-extern int iointr(unsigned int, struct clockframe *);
-#define ICU_LEN 16
-extern struct intrhand *intrhand[ICU_LEN]; 
-extern struct com_mainbus_softc *com0;
-void *tlp0;
-void *tlp1;
-int comintr(void *); 
-int tlp_intr(void *);
-
-static int
-cobalt_hardware_intr(mask, pc, status, cause)
-	u_int32_t mask;
-	u_int32_t pc;
-	u_int32_t status;
-	u_int32_t cause;
-{
-	struct clockframe cf;
-	static u_int32_t cycles;
-	int s;
-
-
-	/* XXX Reverse hardlock and statclock? */
-
-#define TICK_CYCLES 1250000			/* XXX 250 MHz XXX */
-	if (cause & MIPS_INT_MASK_5) {
-		cycles = mips3_cycle_count();
-		mips3_write_compare(cycles + TICK_CYCLES);
-
-		cf.pc = pc;
-		cf.sr = status;
-
-		s = splstatclock(); /* XXX redo interrupts XXX */
-		statclock(&cf);
-		splx(s);	/* XXX redo interrupts XXX */
-
-		cause &= ~MIPS_INT_MASK_5;
-	}
-
-	if (cause & MIPS_INT_MASK_4) {
-		iointr(mask, &cf);
-		cause &= ~MIPS_INT_MASK_4;
-	}
-
-	if (cause & MIPS_INT_MASK_3) {
-		s = spltty(); /* XXX redo interrupts XXX */
-		comintr(com0);
-		splx(s);	/* XXX redo interrupts XXX */
-		cause &= ~MIPS_INT_MASK_3;
-	}
-
-	if (cause & MIPS_INT_MASK_1) {
-		s = splnet();	/* XXX redo interrupts XXX */
-		tlp_intr(tlp0);
-		splx(s);	/* XXX redo interrupts XXX */
-		cause &= ~MIPS_INT_MASK_1;
-	}
-	if (cause & MIPS_INT_MASK_2) {
-		s = splnet();	/* XXX redo interrupts XXX */
-		tlp_intr(tlp1);
-		splx(s);	/* XXX redo interrupts XXX */
-		cause &= ~MIPS_INT_MASK_1;
-		cause &= ~MIPS_INT_MASK_2;
-	}
-
-	if (cause & MIPS_INT_MASK_0) {
-		volatile u_int32_t *irq_src =
-				(u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000c18);
-
-		if (*irq_src & 0x00000100) {
-			*irq_src = 0;
-
-			cf.pc = pc;
-			cf.sr = status;
-
-			s = splclock();	/* XXX redo interrupts XXX */
-			hardclock(&cf);
-			splx(s);	/* XXX redo interrupts XXX */
-		}
-		cause &= ~MIPS_INT_MASK_0;
-	}
-
-	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-}
-
 /*
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(void)
+mach_init(memsize)
+	unsigned int memsize;
 {
 	caddr_t kernend, v, p0;
         u_long first, last;
 	vsize_t size;
 	extern char edata[], end[];
+	int i;
 
 	/*
 	 * Clear BSS.
@@ -210,11 +127,9 @@ mach_init(void)
 	kernend = (caddr_t)mips_round_page(end);
 	memset(edata, 0, kernend - edata);
 
-	consinit();
+	physmem = btoc(memsize - MIPS_KSEG0_START);
 
-#if 1
-	boothowto = RB_SINGLE;
-#endif
+	consinit();
 
 	uvm_setpagesize();
 
@@ -225,24 +140,57 @@ mach_init(void)
 	 */
 	mips_vector_init();
 
+	/*
+	 * The boot command is passed in the top 512 bytes,
+	 * so don't clobber that.
+	 */
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size = ctob(physmem) - 512;
+	mem_cluster_cnt = 1;
+
+	memcpy(bootstring, (char *)(memsize - 512), 512);
+	bootstring[511] = '\0';
+
+	for (i = 0; i < 512; i++) {
+		switch (bootstring[i]) {
+		case '\0':
+			break;
+		case ' ':
+			continue;
+		case '-':
+			while (bootstring[i] != ' ') {
+				i++;
+				switch (bootstring[i]) {
+				case 'a':
+					boothowto |= RB_ASKNAME;
+					break;
+				case 'd':
+					boothowto |= RB_KDB;
+					break;
+				case 's':
+					boothowto |= RB_SINGLE;
+					break;
+				}
+			}
+		}
+		if (memcmp("single", bootstring + i, 5) == 0)
+			boothowto |= RB_SINGLE;
+		if (memcmp("nfsroot=", bootstring + i, 8) == 0)
+			netboot = 1;
+		/*
+		 * XXX Select root device from 'dev=/dev/hd[abcd][1234]' too.
+		 */
+	}
+
 #ifdef DDB
 	/*
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
 
-	/*
-	 * XXX Also get the symbol table. We wants it, yes, my precious.
-	 */
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
-	
-	physmem = btoc(16 * 1024 * 1024);	/* XXX */
-	maxmem = physmem / 2;
-
-	/* XXX */
-	mem_clusters[0].start = 0;
-	mem_clusters[0].size  = ctob(physmem);
-	mem_cluster_cnt = 1;
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -411,7 +359,7 @@ cpu_reboot(howto, bootstr)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) && (waittime < 0)) {
+	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
 		waittime = 0;
 		vfs_shutdown();
 
@@ -440,9 +388,9 @@ haltsys:
 	}
 
 	printf("rebooting...\n\n");
-	delay(100000);
+	delay(500000);
 
-	*(volatile char *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = 0x0f; /* Hard reset. */
+	*(volatile char *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = LED_RESET;
 	printf("WARNING: reboot failed!\n");
 
 	for (;;);
@@ -497,3 +445,93 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif /* EXEC_ECOFF */
+
+#define NINTR	6
+
+static struct {
+	int (*func)(void *);
+	void *arg;
+} intrtab[NINTR];
+
+void *
+cpu_intr_establish(level, ipl, func, arg)
+	int level;
+	int ipl;
+	int (*func)(void *);
+	void *arg;
+{
+	if (level < 0 || level >= NINTR)
+		panic("invalid interrupt level");
+
+	if (intrtab[level].func != NULL)
+		panic("cannot share CPU interrupts");
+
+	intrtab[level].func = func;
+	intrtab[level].arg = arg;
+
+	return (void *)-1;
+}
+
+static int
+cobalt_hardware_intr(mask, pc, status, cause)
+	u_int32_t mask;
+	u_int32_t pc;
+	u_int32_t status;
+	u_int32_t cause;
+{
+	struct clockframe cf;
+	static u_int32_t cycles;
+
+	if (cause & MIPS_INT_MASK_0) {
+		volatile u_int32_t *irq_src =
+				(u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000c18);
+
+		if (*irq_src & 0x00000100) {
+			*irq_src = 0;
+
+			cf.pc = pc;
+			cf.sr = status;
+
+			hardclock(&cf);
+		}
+		cause &= ~MIPS_INT_MASK_0;
+	}
+
+	if (cause & MIPS_INT_MASK_5) {
+		cycles = mips3_cycle_count();
+		mips3_write_compare(cycles + 1250000);	/* XXX */
+
+		cf.pc = pc;
+		cf.sr = status;
+#if 0
+		statclock(&cf);
+#endif
+		cause &= ~MIPS_INT_MASK_5;
+	}
+
+	if (cause & MIPS_INT_MASK_1) {
+		if (intrtab[1].func != NULL)
+			if ((*intrtab[1].func)(intrtab[1].arg))
+				cause &= ~MIPS_INT_MASK_1;
+	}
+
+	if (cause & MIPS_INT_MASK_2) {
+		if (intrtab[2].func != NULL)
+			if ((*intrtab[2].func)(intrtab[2].arg))
+				cause &= ~MIPS_INT_MASK_2;
+	}
+
+	if (cause & MIPS_INT_MASK_3) {
+		if (intrtab[3].func != NULL)
+			if ((*intrtab[3].func)(intrtab[3].arg))
+				cause &= ~MIPS_INT_MASK_3;
+	}
+
+	if (cause & MIPS_INT_MASK_4) {
+		if (intrtab[4].func != NULL)
+			if ((*intrtab[4].func)(intrtab[4].arg))
+				cause &= ~MIPS_INT_MASK_4;
+	}
+
+	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+}
