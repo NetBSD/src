@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.2 1997/08/11 22:53:38 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.3 1998/02/21 00:37:07 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -31,12 +31,19 @@
  */
 /* From: pm_direct.c 1.22 01/09/97 Takashi Hamada */
 
+#include "opt_adb.h"
 
-/* #define	PM_DEBUG	1 */
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
+
 /* #define	PM_GRAB_SI	1 */
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/systm.h>
 
 #include <machine/viareg.h>
 #include <machine/param.h>
@@ -123,7 +130,7 @@ char pm_receive_cmd_type[] = {
  */
 
 /* for debugging */
-#ifdef PM_DEBUG
+#ifdef ADB_DEBUG
 void pm_printerr __P(( char *, int, int, char * ));
 #endif
 
@@ -176,7 +183,7 @@ extern int zshard(int);			/* from zs.c */
 extern void adb_comp_exec(void);	/* from adb_direct.c */
 
 
-#ifdef PM_DEBUG
+#ifdef ADB_DEBUG
 /*
  * This function dumps contents of the PMData
  */
@@ -514,8 +521,9 @@ pm_intr_pm1(void)
 	pmdata.r_buf = &pmdata.data[2];
 	rval = pm_pmgrop_pm1( &pmdata );
 	if (rval != 0) {
-#ifdef PM_DEBUG
-		printf( "pm: PM is not ready. error code=%08x\n", rval );
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf("pm: PM is not ready. error code=%08x\n", rval);
 #endif
 		splx(s);
 	}
@@ -529,8 +537,10 @@ pm_intr_pm1(void)
 			pm_adb_get_ADB_data(&pmdata);
 		}
 	} else {
-#ifdef PM_DEBUG
-		pm_printerr( "driver does not supported this event.", rval,  pmdata.num_data, pmdata.data );
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			pm_printerr("driver does not supported this event.",
+			    rval, pmdata.num_data, pmdata.data);
 #endif
 	}
 
@@ -773,8 +783,9 @@ pm_intr_pm2(void)
 	pmdata.r_buf = &pmdata.data[2];
 	rval = pm_pmgrop_pm2( &pmdata );
 	if (rval != 0) {
-#ifdef PM_DEBUG
-		printf( "pm: PM is not ready. error code: %08x\n", rval );
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf("pm: PM is not ready. error code: %08x\n", rval);
 #endif
 		splx(s);
 	}
@@ -829,8 +840,11 @@ pm_intr_pm2(void)
 			break;
 		default:
 			{
-#ifdef PM_DEBUG
-			pm_printerr( "driver does not supported this event.", pmdata.data[2], pmdata.num_data, pmdata.data );
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				pm_printerr("driver does not supported this event.",
+				    pmdata.data[2], pmdata.num_data,
+				    pmdata.data);
 #endif
 			}
 			break;

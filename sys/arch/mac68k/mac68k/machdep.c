@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 1998/02/19 04:18:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 1998/02/21 00:37:08 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include "opt_mrg_adb.h"
+#include "opt_adb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
