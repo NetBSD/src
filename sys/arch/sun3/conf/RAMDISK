@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 1996/10/09 00:14:36 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.7 1996/11/19 21:04:48 gwr Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -18,7 +18,6 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	2
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 
 # Debugging options.  Uncomment either this:
 #options 	DDB
