@@ -828,7 +828,7 @@ static const template i386_optab[] = {
 {"paddsw",    2, 0x0fed, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"paddusb",   2, 0x0fdc, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"paddusw",   2, 0x0fdd, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
-{"pand",      2, 0x0fda, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
+{"pand",      2, 0x0fdb, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"pandn",     2, 0x0fdf, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"pcmpeqb",   2, 0x0f74, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"pcmpeqw",   2, 0x0f75, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
