@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.9 2002/03/02 13:57:28 wiz Exp $	*/
+/*	$NetBSD: head.c,v 1.10 2002/03/02 14:00:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.9 2002/03/02 13:57:28 wiz Exp $");
+__RCSID("$NetBSD: head.c,v 1.10 2002/03/02 14:00:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,13 +137,13 @@ char *
 copyin(char *src, char **space)
 {
 	char *cp;
-	char *top;
+	char *begin;
 
-	top = cp = *space;
+	begin = cp = *space;
 	while ((*cp++ = *src++) != '\0')
 		;
 	*space = cp;
-	return (top);
+	return (begin);
 }
 
 /*
