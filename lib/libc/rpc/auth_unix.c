@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.2 1995/02/25 03:01:35 cgd Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.3 1996/03/29 23:00:47 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_unix.c,v 1.2 1995/02/25 03:01:35 cgd Exp $";
+static char *rcsid = "$NetBSD: auth_unix.c,v 1.3 1996/03/29 23:00:47 jtc Exp $";
 #endif
 
 /*
@@ -84,7 +84,7 @@ struct audata {
 };
 #define	AUTH_PRIVATE(auth)	((struct audata *)auth->ah_private)
 
-static bool_t marshal_new_auth();
+static void marshal_new_auth();
 
 
 /*
@@ -305,7 +305,7 @@ authunix_destroy(auth)
  * Marshals (pre-serializes) an auth struct.
  * sets private data, au_marshed and au_mpos
  */
-static bool_t
+static void
 marshal_new_auth(auth)
 	register AUTH *auth;
 {

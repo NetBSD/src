@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.4 1995/04/14 19:48:28 jtc Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.5 1996/03/29 23:00:55 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_simple.c,v 1.4 1995/04/14 19:48:28 jtc Exp $";
+static char *rcsid = "$NetBSD: svc_simple.c,v 1.5 1996/03/29 23:00:55 jtc Exp $";
 #endif
 
 /* 
@@ -60,6 +60,7 @@ static void universal();
 static SVCXPRT *transp;
 struct proglst *pl;
 
+int
 registerrpc(prognum, versnum, procnum, progname, inproc, outproc)
 	char *(*progname)();
 	xdrproc_t inproc, outproc;
