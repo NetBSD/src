@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.8 1996/06/18 12:50:56 pk Exp $
+#	$NetBSD: install.sh,v 1.9 1996/06/25 07:35:20 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,66 +104,10 @@ while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
 
-# Make sure there's a disklabel there.  If there isn't, puke after
-# disklabel prints the error message.
-md_checkfordisklabel ${ROOTDISK}
-case "$resp" in
-	1)
-		cat << \__disklabel_not_present_1
-
-FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
-
-__disklabel_not_present_1
-		exit
-		;;
-
-	2)
-		cat << \__disklabel_corrupted_1
-
-FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
-
-__disklabel_corrupted_1
-		exit
-		;;
-
-	*)
-		;;
-esac
-
-# Give the user the opportinuty to edit the root disklabel.
-cat << \__disklabel_notice_1
-
-You have already placed a disklabel onto the target root disk.
-However, due to the limitations of the standalone program used
-you may want to edit that label to change partition type information.
-You will be given the opporunity to do that now.  Note that you may
-not change the size or location of any presently open partition.
-
-__disklabel_notice_1
-echo -n	"Do you wish to edit the root disklabel? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-		md_prep_disklabel ${ROOTDISK}
-		;;
-
-	*)
-		;;
-esac
-
-cat << \__disklabel_notice_2
-
-You will now be given the opportunity to place disklabels on any additional
-disks on your system.
-__disklabel_notice_2
-
-_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	labelmoredisks
-done
+# Deal with disklabels, including editing the root disklabel
+# and labeling additional disks.  This is machine-dependent since
+# some platforms may not be able to provide this functionality.
+md_prep_disklabel ${ROOTDISK}
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Loop and
 # get the rest.
