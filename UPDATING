@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.135 2005/02/11 17:50:13 jmc Exp $
+$NetBSD: UPDATING,v 1.136 2005/03/26 14:25:25 cube Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20050325:
+	pcppi(4) was separated in two devices, adding attimer(4).  Be sure
+	to add a config line for an attimer(4) device in your kernel
+	configuration, or you won't be able to set the pitch of the beep
+	with wsconsctl.  Also, it is advised to attach both devices the
+	same way (i.e., both on isa or both on acpi) or the pcppi(4) device
+	may fail to find the attimer(4) one.
+
 20050211:
 	Fixes to tools/Makefile.gnuhost may cause UPDATE=1 builds in
 	some of the cross tools to fail if they use configure. Some configure's
