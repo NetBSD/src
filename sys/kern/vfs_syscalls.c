@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.31 1994/06/29 06:34:02 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.31.2.1 1994/08/13 07:08:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -334,6 +334,7 @@ sync(p, uap, retval)
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
 			vfs_unbusy(mp);
+			nmp = mp->mnt_list.tqe_next;
 		}
 	}
 #ifdef DEBUG

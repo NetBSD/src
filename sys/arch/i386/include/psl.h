@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.10 1994/05/05 07:39:28 mycroft Exp $
+ *	$Id: psl.h,v 1.10.2.1 1994/08/13 06:56:13 mycroft Exp $
  */
 
 #ifndef _I386_PSL_H_
@@ -65,7 +65,7 @@
 #define	PSL_MBZ		0xffc08028	/* must be zero bits */
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
-#define	PSL_USERCLR	(PSL_MBZ | PSL_VIP | PSL_VIF | PSL_NT)
+#define	PSL_USERCLR	(PSL_MBZ | PSL_VIP | PSL_VIF | PSL_NT | PSL_VM)
 
 #ifdef KERNEL
 #define	IPL_NONE	-1
