@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.2 1999/09/01 21:03:03 fvdl Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.2.12.1 2000/12/31 20:14:50 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -311,3 +311,4 @@ struct ex_txdesc {
 #define EX_UPD_UDPCKSUMERR	0x08000000	/* UDP cksum error (90xB) */
 
 #define EX_UPD_ERR		0x001f4000	/* Errors we check for */
+#define EX_UPD_ERR_VLAN		0x000f0000	/* same for 802.1q */
