@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 1996/10/01 00:06:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@ struct dos_partition {
 	unsigned char	dp_ecyl;	/* end cylinder */
 	unsigned long	dp_start;	/* absolute starting sector number */
 	unsigned long	dp_size;	/* partition size in sectors */
-} dos_partitions[NDOSPART];
+};
 
 /* Known DOS partition types. */
 #define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
