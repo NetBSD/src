@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 1999/03/24 05:50:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 1999/03/26 22:36:02 bgrayson Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/2/93
 
 PROG=		ps
-SRCS=		fmt.c keyword.c nlist.c print.c ps.c
+SRCS=		fmt.c keyword.c nlist.c print.c ps.c procfs_ops.c
 DPADD=		${LIBM} ${LIBKVM}
 LDADD=		-lm -lkvm
 BINGRP=		kmem
