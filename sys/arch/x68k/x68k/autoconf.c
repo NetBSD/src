@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1998/09/01 20:08:21 itohy Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1998/09/09 16:42:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -81,6 +81,9 @@ configure()
 		panic("no mainbus found");
 
 	cold = 0;
+
+	/* Turn on interrupts */
+	(void) spl0();
 }
 
 void
