@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.56 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.57 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -207,3 +207,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[lukem 20021211]
 	mips: support fully coherent data caches on MIPS32 and MIPS64 cpus
 		(enabled for Au1x00 and SB-1 CPUS).  [simonb 20021217].
+	install(1): added -N dbdir, to specify different location for user
+	    and group databases.  [lukem 20021219]
