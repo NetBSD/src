@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.7 2000/08/18 13:37:44 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.8 2000/08/25 02:03:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1994,11 +1994,10 @@ void cpu_initclocks()
 }
 
 #ifdef MULTIPROCESSOR
-void need_resched()
+void need_resched(struct cpu_info *ci)
 {
-	struct cpu_info *ci = curcpu();
 	ci->ci_want_resched = 1;
-	ci->ci_astpending = 1;
+	aston(ci);
 }
 #endif
 

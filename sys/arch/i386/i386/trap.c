@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.6 2000/08/24 11:26:12 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.7 2000/08/25 02:03:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ userret(p, pc, oticks)
 		postsig(sig);
 
 	p->p_priority = p->p_usrpri;
-	if (want_resched) {
+	if (curcpu()->ci_want_resched) {
 		/*
 		 * We are being preempted.
 		 */
