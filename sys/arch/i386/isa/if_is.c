@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.19 1994/02/15 01:13:17 mycroft Exp $
+ *	$Id: if_is.c,v 1.20 1994/02/15 17:44:53 mycroft Exp $
  */
 
 /* TODO
@@ -1038,6 +1038,7 @@ is_ioctl(ifp, cmd, data)
 		else
 			sc->sc_debug = 0;
 #endif
+		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
