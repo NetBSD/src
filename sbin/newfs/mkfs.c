@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.28 1997/09/21 08:32:04 jeremy Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.29 1997/11/01 18:25:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.28 1997/09/21 08:32:04 jeremy Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.29 1997/11/01 18:25:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/wait.h>
 #include <sys/resource.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -54,7 +53,6 @@ __RCSID("$NetBSD: mkfs.c,v 1.28 1997/09/21 08:32:04 jeremy Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <signal.h>
 
 #ifndef STANDALONE
 #include <a.out.h>
@@ -68,7 +66,6 @@ static void fsinit __P((time_t));
 static int makedir __P((struct direct *, int));
 static daddr_t alloc __P((int, int));
 static void iput __P((struct dinode *, ino_t));
-static void started __P((int));
 static void rdfs __P((daddr_t, int, void *));
 static void wtfs __P((daddr_t, int, void *));
 static int isblock __P((struct fs *, unsigned char *, int));
@@ -155,7 +152,6 @@ mkfs(pp, fsys, fi, fo)
 	off_t usedb;
 	int32_t mapcramped, inodecramped;
 	int32_t postblsize, rotblsize, totalsbsize;
-	int ppid = 0, status;
 	time_t utime;
 	quad_t sizepb;
 
@@ -163,20 +159,6 @@ mkfs(pp, fsys, fi, fo)
 	time(&utime);
 #endif
 	if (mfs) {
-		ppid = getpid();
-		(void) signal(SIGUSR1, started);
-		switch (i = fork()) {
-		case -1:
-			perror("mfs");
-			exit(10);
-		case 0:
-			break;
-		default:
-			if (waitpid(i, &status, 0) != -1 && WIFEXITED(status))
-				exit(WEXITSTATUS(status));
-			exit(11);
-			/* NOTREACHED */
-		}
 		(void)malloc(0);
 		if (fssize * sectorsize > memleft)
 			fssize = (memleft - 16384) / sectorsize;
@@ -648,18 +630,6 @@ next:
 	pp->p_fsize = sblock.fs_fsize;
 	pp->p_frag = sblock.fs_frag;
 	pp->p_cpg = sblock.fs_cpg;
-	/*
-	 * Notify parent process of success.
-	 * Dissociate from session and tty.
-	 */
-	if (mfs) {
-		kill(ppid, SIGUSR1);
-		(void) setsid();
-		(void) close(0);
-		(void) close(1);
-		(void) close(2);
-		(void) chdir("/");
-	}
 }
 
 /*
@@ -1063,17 +1033,6 @@ iput(ip, ino)
 	rdfs(d, sblock.fs_bsize, buf);
 	buf[ino_to_fsbo(&sblock, ino)] = *ip;
 	wtfs(d, sblock.fs_bsize, buf);
-}
-
-/*
- * Notify parent process that the filesystem has created itself successfully.
- */
-void
-started(n)
-	int n;
-{
-
-	exit(0);
 }
 
 /*
