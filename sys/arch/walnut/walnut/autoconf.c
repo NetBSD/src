@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/10/29 01:52:09 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2001/11/06 01:26:48 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,6 +67,7 @@ void
 cpu_configure(void)
 {
 
+	intr_init();
 	calc_delayconst();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
