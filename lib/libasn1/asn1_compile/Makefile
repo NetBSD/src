@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2001/12/12 00:51:00 tv Exp $
+# $NetBSD: Makefile,v 1.14.2.1 2002/11/03 14:02:58 he Exp $
 
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
@@ -42,6 +42,7 @@ HOST_CPPFLAGS+= -I.				\
 	 -I${.CURDIR}/../../../include/heimdal	\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/roken		\
+	 -DKRB5=1				\
 	 -DHAVE_CONFIG_H
 
 DPSRCS=		print_version.h
