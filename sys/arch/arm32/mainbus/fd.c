@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.15 1996/11/13 06:46:12 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.16 1997/01/01 23:32:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1275,14 +1275,14 @@ fdioctl(dev, cmd, addr, flag)
 }
 
 
-#include "rd.h"
-#if NRD > 0
+#include "md.h"
+#if NMD > 0
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 int
-load_ramdisc_from_floppy(rd, dev)
-	struct rd_conf *rd;
+load_memory_disc_from_floppy(md, dev)
+	struct md_conf *md;
 	dev_t dev;
 {
 	struct buf *bp;
@@ -1294,21 +1294,21 @@ load_ramdisc_from_floppy(rd, dev)
 	if (major(dev) != 17)
 		return(EINVAL);
 
-	if (rd->rd_type == RD_UNCONFIGURED || rd->rd_addr == 0)
+	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0)
 		return(EBUSY);
 
 	type = FDTYPE(dev) - 1;
 	if (type < 0) type = 0;
 	floppysize = fd_types[type].size << (fd_types[type].secsize + 7);
         
-	if (rd->rd_size < floppysize) {
+	if (md->md_size < floppysize) {
 		printf("Ramdisc not big enough for floppy image\n");
 		return(EINVAL);
 	}
 
-/* We have the ramdisk ! */
+/* We have the memory disk ! */
 
-	printf("Loading ramdisc : %4dK ", 0);
+	printf("Loading memory disc : %4dK ", 0);
 
 /* obtain a buffer */
 
@@ -1341,7 +1341,7 @@ load_ramdisc_from_floppy(rd, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image\n");
                                                  
-		bcopy((caddr_t)bp->b_data, (caddr_t)rd->rd_addr
+		bcopy((caddr_t)bp->b_data, (caddr_t)md->md_addr
 		    + loop * fd_types[type].sectrac * DEV_BSIZE,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
