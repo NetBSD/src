@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.8 1996/06/10 15:33:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,7 +114,6 @@ abs(j)
 /* Prototypes for non-quad routines. */
 int	 bcmp __P((const void *, const void *, size_t));
 int	 ffs __P((int));
-int	 locc __P((int, char *, u_int));
 u_long	 random __P((void));
 char	*rindex __P((const char *, int));
 int	 scanc __P((u_int, u_char *, u_char *, int));
