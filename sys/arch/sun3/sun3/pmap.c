@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 1997/11/03 16:08:23 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 1997/11/03 16:58:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Some notes:
  *
- * sun3s have contexts (8).  In our mapping of the world, the kernel is mapped
+ * sun3s have contexts (8).  In this pmap design, the kernel is mapped
  * into all contexts.  Processes take up a known portion of the context,
  * and compete for the available contexts on a LRU basis.
  *
@@ -71,7 +71,7 @@
  */
 
 /*
- * Project:  Use a "null" context for processes that have not
+ * Project1:  Use a "null" context for processes that have not
  * touched any user-space address recently.  This is efficient
  * for things that stay in the kernel for a while, waking up
  * to handle some I/O then going back to sleep (i.e. nfsd).
@@ -80,6 +80,10 @@
  *
  * This also lets context switch be fast, because all we need
  * to do there for the MMU is slam the context register.
+ *
+ * Project2:  Use a private pool of PV elements.  This pool can be
+ * fixed size because the total mapped virtual space supported by
+ * the MMU H/W (and this pmap) is fixed for all time.
  */
 
 #include <sys/param.h>
@@ -283,15 +287,22 @@ struct pmap_stats {
  */
 int pv_initialized = 0;
 
+/* One of these for each mapped virtual page. */
 struct pv_entry {
 	struct pv_entry *pv_next;
 	pmap_t	       pv_pmap;
 	vm_offset_t      pv_va;
-	unsigned int     pv_flags;
 };
 typedef struct pv_entry *pv_entry_t;
 
-pv_entry_t pv_head_table = NULL;
+/* Table of PV list heads (per physical page). */
+static struct pv_entry **pv_head_tbl;
+
+/* Free list of PV entries. */
+static struct pv_entry *pv_free_list;
+
+/* Table of flags (per physical page). */
+static u_char *pv_flags_tbl;
 
 /* These are as in the MMU but shifted by PV_SHIFT. */
 #define PV_SHIFT	24
@@ -381,11 +392,11 @@ static void pmeg_free __P((pmeg_t pmegp));
 static pmeg_t pmeg_cache __P((pmap_t pmap, vm_offset_t va));
 static void pmeg_set_wiring __P((pmeg_t pmegp, vm_offset_t va, int));
 
-static int pv_link __P((pmap_t pmap, vm_offset_t, vm_offset_t, u_int));
+static int pv_link __P((pmap_t pmap, vm_offset_t, vm_offset_t, int));
 static void pv_unlink __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pv_remove_all __P((vm_offset_t pa));
-static void pv_changepte __P((pv_entry_t, int, int));
-static void pv_syncflags __P((pv_entry_t head));
+static void pv_changepte __P((vm_offset_t pa, int, int));
+static u_int pv_syncflags __P((pv_entry_t));
 static void pv_init __P((void));
 
 static void pmeg_clean __P((pmeg_t pmegp));
@@ -444,32 +455,41 @@ current_pmap __P((void))
 	return (pmap);
 }
 
-#ifdef	DIAGNOSTIC
-static struct pv_entry *
-pa_to_pvp(vm_offset_t pa)
+static inline struct pv_entry **
+pa_to_pvhead(vm_offset_t pa)
 {
-	struct pv_entry *pvp;
-	if (pa < avail_start || pa >= avail_end) {
-		panic("pmap:pa_to_pvp: bad pa=0x%lx", pa);
-	}
-	pvp = &pv_head_table[PA_PGNUM(pa)];
-	return pvp;
-}
-#else
-#define pa_to_pvp(pa) &pv_head_table[PA_PGNUM(pa)]
-#endif
+	int idx;
 
+	idx = PA_PGNUM(pa);
 #ifdef	DIAGNOSTIC
-static pmeg_t
+	if (idx > physmem)
+		panic("pmap:pa_to_pvhead: bad pa=0x%lx", pa);
+#endif
+	return (&pv_head_tbl[idx]);
+}
+
+static inline u_char *
+pa_to_pvflags(vm_offset_t pa)
+{
+	int idx;
+
+	idx = PA_PGNUM(pa);
+#ifdef	DIAGNOSTIC
+	if (idx > physmem)
+		panic("pmap:pa_to_pvflags: idx=0x%x", idx);
+#endif
+	return (&pv_flags_tbl[idx]);
+}
+
+static inline pmeg_t
 pmeg_p(int sme)
 {
+#ifdef	DIAGNOSTIC
 	if (sme < 0 || sme >= SEGINV)
 		panic("pmeg_p: bad sme");
+#endif
 	return &pmeg_array[sme];
 }
-#else
-#define pmeg_p(x) &pmeg_array[x]
-#endif
 
 #define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
 
@@ -496,7 +516,7 @@ pmeg_set_wiring(pmegp, va, flag)
 static void
 save_modref_bits(int pte)
 {
-	pv_entry_t pvhead;
+	u_char *pv_flags;
 
 	if (pv_initialized == 0)
 		return;
@@ -507,8 +527,8 @@ save_modref_bits(int pte)
 
 	CHECK_SPL();
 
-	pvhead = pa_to_pvp(PG_PA(pte));
-	pvhead->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
+	pv_flags = pa_to_pvflags(PG_PA(pte));
+	*pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
 }
 
 
@@ -1056,22 +1076,58 @@ pmeg_verify_empty(va)
 
 /****************************************************************
  * Physical-to-virutal lookup support
+ *
+ * Need memory for the pv_alloc/pv_free list heads
+ * and elements.  We know how many to allocate since
+ * there is one list head for each physical page, and
+ * at most one element for each PMEG slot.
  */
-
 static void
 pv_init()
 {
-	int sz;
+	int npp, nvp, sz;
+	pv_entry_t pv;
+	char *p;
 
-	sz = PA_PGNUM(avail_end);
-	sz *= sizeof(struct pv_entry);
+	/* total allocation size */
+	sz = 0;
 
-	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
-	if (!pv_head_table) {
-		mon_printf("pmap: kmem_alloc() of pv table failed\n");
-		sunmon_abort();
-	}
-	bzero((caddr_t) pv_head_table, sz);
+	/*
+	 * Data for each physical page.
+	 * Each "mod/ref" flag is a char.
+	 * Each PV head is a pointer.
+	 * Note physmem is in pages.
+	 */
+	npp = ALIGN(physmem);
+	sz += (npp * sizeof(*pv_flags_tbl));
+	sz += (npp * sizeof(*pv_head_tbl));
+
+	/*
+	 * Data for each virtual page (all PMEGs).
+	 * One pv_entry for each page frame.
+	 */
+	nvp = NPMEG * NPAGSEG;
+	sz += (nvp * sizeof(*pv_free_list));
+
+	/* Now allocate the whole thing. */
+	sz = m68k_round_page(sz);
+	p = (char*) kmem_alloc(kernel_map, sz);
+	if (p == NULL)
+		panic("pmap:pv_init: alloc failed");
+	bzero(p, sz);
+
+	/* Now divide up the space. */
+	pv_flags_tbl = (void *) p;
+	p += (npp * sizeof(*pv_flags_tbl));
+	pv_head_tbl = (void*) p;
+	p += (npp * sizeof(*pv_head_tbl));
+	pv_free_list = (void *) p;
+	p += (nvp * sizeof(*pv_free_list));
+
+	/* Finally, make pv_free_list into a list. */
+	for (pv = pv_free_list; (char*)pv < p; pv++)
+		pv->pv_next = &pv[1];
+	pv[-1].pv_next = 0;
 
 	pv_initialized++;
 }
@@ -1081,12 +1137,13 @@ pv_init()
  * Also does syncflags work while we are there...
  */
 static void
-pv_changepte(head, set_bits, clear_bits)
-	pv_entry_t head;
+pv_changepte(pa, set_bits, clear_bits)
+	vm_offset_t pa;
 	int set_bits;
 	int clear_bits;
 {
-	pv_entry_t pv;
+	pv_entry_t *head, pv;
+	u_char *pv_flags;
 	pmap_t pmap;
 	vm_offset_t va;
 	int pte, sme;
@@ -1101,8 +1158,11 @@ pv_changepte(head, set_bits, clear_bits)
 	if ((set_bits == 0) && (clear_bits == 0))
 		return;
 
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
 	/* If no mappings, no work to do. */
-	if (head->pv_pmap == NULL)
+	if (*head == NULL)
 		return;
 
 #ifdef	DIAGNOSTIC
@@ -1113,18 +1173,16 @@ pv_changepte(head, set_bits, clear_bits)
 
 	flags = 0;
 	saved_ctx = get_context();
-	for (pv = head; pv != NULL; pv = pv->pv_next) {
+	for (pv = *head; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
 		sme = SEGINV;	/* kill warning */
 
 #ifdef	DIAGNOSTIC
-		/*
-		 * Only the head may have a null pmap, and
-		 * we checked for that above.
-		 */
 		if (pmap == NULL)
 			panic("pv_changepte: null pmap");
+		if (pmap->pm_segmap == NULL)
+			panic("pv_changepte: null segmap");
 #endif
 
 		/* Is the PTE currently accessable in some context? */
@@ -1153,8 +1211,6 @@ pv_changepte(head, set_bits, clear_bits)
 			/*
 			 * The PTE is not in any context.
 			 */
-			if (pmap->pm_segmap == NULL)
-				panic("pv_changepte: null segmap");
 			sme = pmap->pm_segmap[VA_SEGNUM(va)];
 			if (sme == SEGINV)
 				panic("pv_changepte: SEGINV");
@@ -1188,18 +1244,17 @@ pv_changepte(head, set_bits, clear_bits)
 	}
 	set_context(saved_ctx);
 
-	head->pv_flags |= (flags >> PV_SHIFT);
+	*pv_flags |= (flags >> PV_SHIFT);
 }
 
 /*
- * Sync ref and mod bits in pvlist
- * (turns off same in hardware PTEs).
+ * Return ref and mod bits from pvlist,
+ * and turns off same in hardware PTEs.
  */
-static void
-pv_syncflags(head)
-	pv_entry_t head;
-{
+static u_int
+pv_syncflags(pv)
 	pv_entry_t pv;
+{
 	pmap_t pmap;
 	vm_offset_t va;
 	int pte, sme;
@@ -1210,15 +1265,15 @@ pv_syncflags(head)
 	CHECK_SPL();
 
 	if (!pv_initialized)
-		return;
+		return(0);
 
 	/* If no mappings, no work to do. */
-	if (head->pv_pmap == NULL)
-		return;
+	if (pv == NULL)
+		return (0);
 
 	flags = 0;
 	saved_ctx = get_context();
-	for (pv = head; pv != NULL; pv = pv->pv_next) {
+	for ( ; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
 		sme = SEGINV;	/* kill warning */
@@ -1230,6 +1285,8 @@ pv_syncflags(head)
 		 */
 		if (pmap == NULL)
 			panic("pv_syncflags: null pmap");
+		if (pmap->pm_segmap == NULL)
+			panic("pv_syncflags: null segmap");
 #endif
 
 		/* Is the PTE currently accessable in some context? */
@@ -1260,8 +1317,6 @@ pv_syncflags(head)
 			 * XXX - Consider syncing MODREF bits
 			 * when the PMEG looses its context?
 			 */
-			if (pmap->pm_segmap == NULL)
-				panic("pv_syncflags: null segmap");
 			sme = pmap->pm_segmap[VA_SEGNUM(va)];
 			if (sme == SEGINV)
 				panic("pv_syncflags: SEGINV");
@@ -1291,7 +1346,7 @@ pv_syncflags(head)
 	}
 	set_context(saved_ctx);
 
-	head->pv_flags |= (flags >> PV_SHIFT);
+	return (flags >> PV_SHIFT);
 }
 
 /* Remove all mappings for the physical page. */
@@ -1299,7 +1354,7 @@ static void
 pv_remove_all(pa)
 	vm_offset_t pa;
 {
-	pv_entry_t pv;
+	pv_entry_t *head, pv;
 	pmap_t pmap;
 	vm_offset_t va;
 
@@ -1313,16 +1368,14 @@ pv_remove_all(pa)
 	if (!pv_initialized)
 		return;
 
-	/* The PV head never moves. */
-	pv = pa_to_pvp(pa);
-	while (pv->pv_pmap != NULL) {
+	head = pa_to_pvhead(pa);
+	while ((pv = *head) != NULL) {
 		pmap = pv->pv_pmap;
 		va   = pv->pv_va;
 		pmap_remove1(pmap, va, va + NBPG);
 #ifdef PMAP_DEBUG
 		/* Make sure it went away. */
-		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
-		{
+		if (pv == *head) {
 			db_printf("pv_remove_all: head unchanged for pa=0x%lx\n", pa);
 			Debugger();
 		}
@@ -1341,9 +1394,10 @@ static int
 pv_link(pmap, pa, va, flags)
 	pmap_t pmap;
 	vm_offset_t pa, va;
-	u_int flags;
+	int flags;
 {
-	pv_entry_t head, pv;
+	pv_entry_t *head, pv;
+	u_char *pv_flags;
 
 	if (!pv_initialized)
 		return 0;
@@ -1360,49 +1414,46 @@ pv_link(pmap, pa, va, flags)
 	/* Only the non-cached bit is of interest here. */
 	flags = flags & PV_NC;
 
-	head = pa_to_pvp(pa);
-	if (head->pv_pmap == NULL) {
-		/* not currently mapped anywhere */
-		pmap_stats.ps_enter_firstpv++;
-		head->pv_va = va;
-		head->pv_pmap = pmap,
-		head->pv_next = NULL;
-		head->pv_flags = flags;
-		return (flags);
-	}
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
-#ifdef PMAP_DEBUG
-	/* XXX - See if this mapping is already in the list? */
-	for (pv = head; pv != NULL; pv = pv->pv_next) {
+#ifdef	DIAGNOSTIC
+	/* See if this mapping is already in the list. */
+	for (pv = *head; pv != NULL; pv = pv->pv_next) {
 		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
 			panic("pv_link: duplicate entry for PA=0x%lx", pa);
 	}
 #endif
 
 	/*
-	 * Before entering the new mapping, see if it will cause
-	 * old mappings to become aliased (need cache inhibit).
+	 * Does this new mapping cause VAC alias problems?
 	 */
-	pmap_stats.ps_enter_secondpv++;
-
-	head->pv_flags |= flags;
-	if ((head->pv_flags & PV_NC) == 0) {
-		for (pv = head; pv != NULL; pv = pv->pv_next) {
+	*pv_flags |= flags;
+	if ((*pv_flags & PV_NC) == 0) {
+		for (pv = *head; pv != NULL; pv = pv->pv_next) {
 			if (BADALIAS(va, pv->pv_va)) {
-				head->pv_flags |= PV_NC;
-				pv_changepte(head, PG_NC, 0);
+				*pv_flags |= PV_NC;
+				pv_changepte(pa, PG_NC, 0);
 				pmap_stats.ps_vac_uncached++;
 				break;
 			}
 		}
 	}
-	pv = (pv_entry_t) malloc(sizeof(*pv), M_VMPVENT, M_WAITOK);
-	pv->pv_next = head->pv_next;
+
+	/* Allocate a PV element (pv_alloc()). */
+	pv = pv_free_list;
+	if (pv == NULL)
+		panic("pv_link: pv_alloc");
+	pv_free_list = pv->pv_next;
+	pv->pv_next = 0;
+
+	/* Insert new entry at the head. */
 	pv->pv_pmap = pmap;
 	pv->pv_va   = va;
-	head->pv_next = pv;
+	pv->pv_next = *head;
+	*head = pv;
 
-	return (head->pv_flags & PV_NC);
+	return (*pv_flags & PV_NC);
 }
 
 /*
@@ -1420,7 +1471,8 @@ pv_unlink(pmap, pa, va)
 	pmap_t pmap;
 	vm_offset_t pa, va;
 {
-	pv_entry_t head, pv;
+	pv_entry_t *head, *ppv, pv;
+	u_char *pv_flags;
 
 	if (!pv_initialized)
 		return;
@@ -1434,61 +1486,59 @@ pv_unlink(pmap, pa, va)
 	}
 #endif
 
-	head = pa_to_pvp(pa);
-
-#ifdef DIAGNOSTIC
-	if (head->pv_pmap == NULL)
-		panic("pv_unlink: empty list");
-#endif
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	/*
-	 * First entry is special (sigh).
+	 * Find the entry.
 	 */
-	pv = head->pv_next;
-	if (head->pv_pmap == pmap && head->pv_va == va) {
-		pmap_stats.ps_unlink_pvfirst++;
-		if (pv != NULL) {
-			/* Copy next entry into (fixed) head. */
-			head->pv_next = pv->pv_next;
-			head->pv_pmap = pv->pv_pmap;
-			head->pv_va   = pv->pv_va;
-			free((caddr_t)pv, M_VMPVENT);
-		} else {
-			/* No next entry, list is now empty. */
-			head->pv_pmap = NULL;
-		}
-	} else {
-		register pv_entry_t prev;
-
-		for (prev = head;; prev = pv, pv = pv->pv_next) {
-			pmap_stats.ps_unlink_pvsearch++;
-			if (pv == NULL) {
-#ifdef	PMAP_DEBUG
-				db_printf("pv_unlink: not on list (pa=0x%lx,va=0x%lx)\n",
-					   pa, va);
-				Debugger();
+	ppv = head;
+	pv = *ppv;
+	while (pv) {
+		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
+			goto found;
+		ppv = &pv->pv_next;
+		pv  =  pv->pv_next;
+	}
+#ifdef PMAP_DEBUG
+	db_printf("pv_unlink: not found (pa=0x%lx,va=0x%lx)\n", pa, va);
+	Debugger();
 #endif
-				return;
-			}
-			if (pv->pv_pmap == pmap && pv->pv_va == va)
-				break;
-		}
-		prev->pv_next = pv->pv_next;
-		free((caddr_t)pv, M_VMPVENT);
-	}
+	return;
 
-	if (head->pv_flags & PV_NC) {
-		/*
-		 * Not cached: check to see if we can fix that now.
-		 */
-		va = head->pv_va;
-		for (pv = head->pv_next; pv != NULL; pv = pv->pv_next)
-			if (BADALIAS(va, pv->pv_va))
-				return;
-		head->pv_flags &= ~PV_NC;
-		pv_changepte(head, 0, PG_NC);
-		pmap_stats.ps_vac_recached++;
+found:
+	/* Unlink this entry from the list and clear it. */
+	*ppv = pv->pv_next;
+	pv->pv_pmap = NULL;
+	pv->pv_va   = 0;
+
+	/* Insert it on the head of the free list. (pv_free()) */
+	pv->pv_next = pv_free_list;
+	pv_free_list = pv;
+	pv = NULL;
+
+	/* Do any non-cached mappings remain? */
+	if ((*pv_flags & PV_NC) == 0)
+		return;
+	if ((pv = *head) == NULL)
+		return;
+
+	/*
+	 * Have non-cached mappings.  See if we can fix that now.
+	 */
+	va = pv->pv_va;
+	for (pv = pv->pv_next; pv != NULL; pv = pv->pv_next) {
+		/* If there is a DVMA mapping, leave it NC. */
+		if (va >= DVMA_SPACE_START)
+			return;
+		/* If there are VAC alias problems, leave NC. */
+		if (BADALIAS(va, pv->pv_va))
+			return;
 	}
+	/* OK, there are no "problem" mappings. */
+	*pv_flags &= ~PV_NC;
+	pv_changepte(pa, 0, PG_NC);
+	pmap_stats.ps_vac_recached++;
 }
 
 
@@ -2066,7 +2116,7 @@ pmap_page_protect(pa, prot)
 		break;
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pv_changepte(pa_to_pvp(pa), 0, PG_WRITE);
+		pv_changepte(pa, 0, PG_WRITE);
 		break;
 	default:
 		/* remove mapping for all pmaps that have it */
@@ -2767,7 +2817,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	s = splpmap();
 	if (pmap == kernel_pmap) {
-		/* This can be called recursively through malloc. */
 		pte_proto |= PG_SYSTEM;
 		pmap_enter_kernel(va, pa, prot, wired, pte_proto);
 	} else {
@@ -2913,18 +2962,19 @@ void
 pmap_clear_modify(pa)
 	register vm_offset_t pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
 	int s;
 
 	if (!pv_initialized)
 		return;
-	if (!managed(pa))
-		return;
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
-	pvhead = pa_to_pvp(pa);
-	pv_syncflags(pvhead);
-	pvhead->pv_flags &= ~PV_MOD;
+	*pv_flags |= pv_syncflags(*head);
+	*pv_flags &= ~PV_MOD;
 	splx(s);
 }
 
@@ -2935,19 +2985,20 @@ int
 pmap_is_modified(pa)
 	vm_offset_t pa;
 {
-	pv_entry_t	pvhead;
+	pv_entry_t	*head;
+	u_char *pv_flags;
 	int rv, s;
 
 	if (!pv_initialized)
 		return (0);
-	if (!managed(pa))
-		return (0);
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
-	pvhead = pa_to_pvp(pa);
-	if ((pvhead->pv_flags & PV_MOD) == 0)
-		pv_syncflags(pvhead);
-	rv = pvhead->pv_flags & PV_MOD;
+	if ((*pv_flags & PV_MOD) == 0)
+		*pv_flags |= pv_syncflags(*head);
+	rv = (*pv_flags & PV_MOD);
 	splx(s);
 
 	return (rv);
@@ -2961,18 +3012,19 @@ void
 pmap_clear_reference(pa)
 	register vm_offset_t pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
 	int s;
 
 	if (!pv_initialized)
 		return;
-	if (!managed(pa))
-		return;
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
-	pvhead = pa_to_pvp(pa);
-	pv_syncflags(pvhead);
-	pvhead->pv_flags &= ~PV_REF;
+	*pv_flags |= pv_syncflags(*head);
+	*pv_flags &= ~PV_REF;
 	splx(s);
 }
 
@@ -2984,19 +3036,20 @@ int
 pmap_is_referenced(pa)
 	vm_offset_t	pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
 	int rv, s;
 
 	if (!pv_initialized)
 		return (0);
-	if (!managed(pa))
-		return (0);
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	s = splpmap();
-	pvhead = pa_to_pvp(pa);
-	if ((pvhead->pv_flags & PV_REF) == 0)
-		pv_syncflags(pvhead);
-	rv = pvhead->pv_flags & PV_REF;
+	if ((*pv_flags & PV_REF) == 0)
+		*pv_flags |= pv_syncflags(*head);
+	rv = (*pv_flags & PV_REF);
 	splx(s);
 
 	return (rv);
@@ -3754,14 +3807,23 @@ pv_print(pa)
 	vm_offset_t pa;
 {
 	pv_entry_t pv;
+	int idx;
 
-	if (!pv_initialized)
+	if (!pv_initialized) {
+		db_printf("no pv_flags_tbl\n");
 		return;
+	}
+	idx = PA_PGNUM(pa);
+	if (idx > physmem) {
+		db_printf("bad address\n");
+		return;
+	}
+	db_printf("pa=0x%lx, flags=0x%x\n",
+			  pa, pv_flags_tbl[idx]);
 
-	pv = pa_to_pvp(pa);
-	db_printf("pv_list for pa 0x%lx: flags=0x%x\n", pa, pv->pv_flags);
+	pv = pv_head_tbl[idx];
 	while (pv) {
-		db_printf("pv_entry %p pmap %p va 0x%lx next %p\n",
+		db_printf(" pv_entry %p pmap %p va 0x%lx next %p\n",
 			   pv, pv->pv_pmap, pv->pv_va, pv->pv_next);
 		pv = pv->pv_next;
 	}
