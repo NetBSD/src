@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.1.1.3 1997/09/21 16:49:21 veego Exp $	*/
+/*	$NetBSD: sock.c,v 1.1.1.4 1997/10/30 05:30:38 mrg Exp $	*/
 
 /*
  * sock.c (C) 1995-1997 Darren Reed
@@ -7,8 +7,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9 1997/09/28 07:13:37 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -20,10 +21,16 @@ static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <sys/time.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#ifndef	ultrix
 #include <fcntl.h>
+#endif
 #include <sys/dir.h>
 #define _KERNEL
 #define	KERNEL
+#ifdef	ultrix
+# undef	LOCORE
+# include <sys/smp_lock.h>
+#endif
 #include <sys/file.h>
 #undef  _KERNEL
 #undef  KERNEL
@@ -32,7 +39,9 @@ static	char	sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
-#include <kvm.h>
+#if !defined(ultrix) && !defined(hpux)
+# include <kvm.h>
+#endif
 #ifdef sun
 #include <sys/systm.h>
 #include <sys/session.h>
@@ -107,9 +116,14 @@ int	n;
 	return n;
 }
 
-struct	nlist	names[3] = {
+struct	nlist	names[4] = {
 	{ "_proc" },
 	{ "_nproc" },
+#ifdef	ultrix
+	{ "_u" },
+#else
+	{ NULL },
+#endif
 	{ NULL }
 	};
 
@@ -171,26 +185,35 @@ struct	tcpiphdr *ti;
 
 	if (!(p = getproc()))
 		return NULL;
-
+printf("fl %x ty %x cn %d mc %d\n",
+f->f_flag, f->f_type, f->f_count, f->f_msgcount);
 	up = (struct user *)malloc(sizeof(*up));
+#ifndef	ultrix
 	if (KMCPY(up, p->p_uarea, sizeof(*up)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x) failed\n", p, p->p_uarea);
 		return NULL;
 	    }
+#else
+	if (KMCPY(up, names[2].n_value, sizeof(*up)) == -1)
+	    {
+		fprintf(stderr, "read(%#x,%#x) failed\n", p, names[2].n_value);
+		return NULL;
+	    }
+#endif
 
 	o = (struct file **)calloc(1, sizeof(*o) * (up->u_lastfile + 1));
 	if (KMCPY(o, up->u_ofile, (up->u_lastfile + 1) * sizeof(*o)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x,%d) - u_ofile - failed\n",
-			up->u_ofile_arr, o, sizeof(*o));
+			up->u_ofile, o, sizeof(*o));
 		return NULL;
 	    }
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[fd], sizeof(*f)) == -1)
 	    {
 		fprintf(stderr, "read(%#x,%#x,%d) - o[fd] - failed\n",
-			up->u_ofile_arr[fd], f, sizeof(*f));
+			up->u_ofile[fd], f, sizeof(*f));
 		return NULL;
 	    }
 
@@ -267,39 +290,39 @@ struct	tcpiphdr *ti;
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - u_ofile - failed\n",
-			(u_long)fd->fd_ofiles, (u_long)o, sizeof(*o));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
+			(u_long)fd->fd_ofiles, (u_long)o, (u_long)sizeof(*o));
 		return NULL;
 	    }
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[tfd], sizeof(*f)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - o[tfd] - failed\n",
-			(u_long)o[tfd], (u_long)f, sizeof(*f));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - o[tfd] - failed\n",
+			(u_long)o[tfd], (u_long)f, (u_long)sizeof(*f));
 		return NULL;
 	    }
 
 	s = (struct socket *)calloc(1, sizeof(*s));
 	if (KMCPY(s, f->f_data, sizeof(*s)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - f_data - failed\n",
-			(u_long)f->f_data, (u_long)s, sizeof(*s));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - f_data - failed\n",
+			(u_long)f->f_data, (u_long)s, (u_long)sizeof(*s));
 		return NULL;
 	    }
 
 	i = (struct inpcb *)calloc(1, sizeof(*i));
 	if (KMCPY(i, s->so_pcb, sizeof(*i)) == -1)
 	    {
-		fprintf(stderr, "kvm_read(%#lx,%#lx,%d) - so_pcb - failed\n",
-			(u_long)s->so_pcb, (u_long)i, sizeof(*i));
+		fprintf(stderr, "kvm_read(%#lx,%#lx,%lu) - so_pcb - failed\n",
+			(u_long)s->so_pcb, (u_long)i, (u_long)sizeof(*i));
 		return NULL;
 	    }
 
 	t = (struct tcpcb *)calloc(1, sizeof(*t));
 	if (KMCPY(t, i->inp_ppcb, sizeof(*t)) == -1)
 	    {
-		fprintf(stderr, "read(%#lx,%#lx,%d) - inp_ppcb - failed\n",
-			(u_long)i->inp_ppcb, (u_long)t, sizeof(*t));
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - inp_ppcb - failed\n",
+			(u_long)i->inp_ppcb, (u_long)t, (u_long)sizeof(*t));
 		return NULL;
 	    }
 	return (struct tcpcb *)i->inp_ppcb;

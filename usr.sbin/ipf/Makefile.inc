@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.2 1997/09/21 16:47:45 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.3 1997/10/30 05:27:15 mrg Exp $
 
 WARNS?=	1
 

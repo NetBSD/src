@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.1.1.2 1997/09/21 16:49:12 veego Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.1.1.3 1997/10/30 05:29:57 mrg Exp $	*/
 
 /*
  * ipsend.h (C) 1997 Darren Reed
@@ -29,6 +29,7 @@
 #endif
 #include "tcpip.h"
 #include "ipt.h"
+#include "ipf.h"
 
 extern	int	resolve __P((char *, char *));
 extern	int	arp __P((char *, char *));
@@ -42,6 +43,7 @@ extern	int	send_packet __P((int, int, ip_t *, struct in_addr));
 extern	int	send_packets __P((char *, int, ip_t *, struct in_addr));
 extern	u_short	seclevel __P((char *));
 extern	u_32_t	buildopts __P((char *, char *, int));
+extern	int	addipopt __P((char *, struct ipopt_names *, int, char *));
 extern	int	initdevice __P((char *, int, int));
 extern	int	sendip __P((int, char *, int));
 #ifdef	linux
@@ -59,7 +61,6 @@ extern	void	ip_test5 __P((char *, int, ip_t *, struct in_addr, int));
 extern	void	ip_test6 __P((char *, int, ip_t *, struct in_addr, int));
 extern	void	ip_test7 __P((char *, int, ip_t *, struct in_addr, int));
 extern	int	do_socket __P((char *, int, struct tcpiphdr *, struct in_addr));
-
 extern	int	openkmem __P((void));
 extern	int	kmemcpy __P((char *, void *, int));
 

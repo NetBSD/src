@@ -1,7 +1,7 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.5 1997/09/21 16:49:49 veego Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.6 1997/10/30 05:32:02 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -59,14 +59,14 @@
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
-#ifdef NETBSD_PF
-#include <net/pfil.h>
-#endif
-
 
 extern	int	lkmenodev __P((void));
 
+#if NetBSD >= 199706
+int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
+#else
 int	xxxinit __P((struct lkm_table *, int, int));
+#endif
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
 static	int	ipl_remove __P((void));
@@ -115,8 +115,11 @@ extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
 
-int
-xxxinit(lkmtp, cmd, ver)
+#if NetBSD >= 199706
+int if_ipl_lkmentry(lkmtp, cmd, ver)
+#else
+int xxxinit(lkmtp, cmd, ver)
+#endif
 struct lkm_table *lkmtp;
 int cmd, ver;
 {
@@ -217,12 +220,8 @@ static int ipl_load()
 	(void)ipl_remove();
 
 	error = iplattach();
-#ifdef NETBSD_PF
-	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
-#endif
 	if (error)
 		return error;
-	(void) ipl_remove();
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
