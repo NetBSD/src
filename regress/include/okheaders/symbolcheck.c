@@ -335,7 +335,6 @@
 #include <tcpd.h>
 #include <termcap.h>
 #include <termios.h>
-#include <threadlib.h>
 #include <time.h>
 #include <ttyent.h>
 #include <tzfile.h>
