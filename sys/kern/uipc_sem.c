@@ -1,4 +1,4 @@
-/* $NetBSD: uipc_sem.c,v 1.1 2003/01/20 20:02:57 christos Exp $ */
+/* $NetBSD: uipc_sem.c,v 1.2 2003/01/20 20:24:22 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -77,8 +77,8 @@ struct ksem {
 };
 
 /*
- * available semaphores go here, this includes sys_ksem_init and any semaphores
- * created via sys_ksem_open that have not yet been unlinked.
+ * available semaphores go here, this includes sys__ksem_init and any semaphores
+ * created via sys__ksem_open that have not yet been unlinked.
  */
 LIST_HEAD(, ksem) ksem_head = LIST_HEAD_INITIALIZER(&ksem_head);
 /*
@@ -217,9 +217,9 @@ ksem_create(l, name, ksret, mode, value)
 }
 
 int
-sys_ksem_init(struct lwp *l, void *v, register_t *retval)
+sys__ksem_init(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_init_args /* {
+	struct sys__ksem_init_args /* {
 		unsigned int value;
 		semid_t *idp;
 	} */ *uap = v;
@@ -246,9 +246,9 @@ sys_ksem_init(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_ksem_open(struct lwp *l, void *v, register_t *retval)
+sys__ksem_open(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_open_args /* {
+	struct sys__ksem_open_args /* {
 		const char *name;
 		int oflag;
 		mode_t mode;
@@ -440,9 +440,9 @@ ksem_enter(struct proc *p, struct ksem *ks)
 }
 
 int
-sys_ksem_unlink(struct lwp *l, void *v, register_t *retval)
+sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_unlink_args /* {
+	struct sys__ksem_unlink_args /* {
 		const char *name;
 	} */ *uap = v;
 	char name[SEM_MAX_NAMELEN + 1];
@@ -471,9 +471,9 @@ sys_ksem_unlink(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_ksem_close(struct lwp *l, void *v, register_t *retval)
+sys__ksem_close(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_close_args /* {
+	struct sys__ksem_close_args /* {
 		semid_t id;
 	} */ *uap = v;
 	struct ksem *ks;
@@ -490,9 +490,9 @@ sys_ksem_close(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_ksem_post(struct lwp *l, void *v, register_t *retval)
+sys__ksem_post(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_post_args /* {
+	struct sys__ksem_post_args /* {
 		semid_t id;
 	} */ *uap = v;
 	struct ksem *ks;
@@ -518,9 +518,9 @@ err:
 }
 
 int
-sys_ksem_wait(struct lwp *l, void *v, register_t *retval)
+sys__ksem_wait(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_wait_args /* {
+	struct sys__ksem_wait_args /* {
 		semid_t id;
 	} */ *uap = v;
 
@@ -528,9 +528,9 @@ sys_ksem_wait(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_ksem_trywait(struct lwp *l, void *v, register_t *retval)
+sys__ksem_trywait(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_trywait_args /* {
+	struct sys__ksem_trywait_args /* {
 		semid_t id;
 	} */ *uap = v;
 
@@ -577,9 +577,9 @@ err:
 }
 
 int
-sys_ksem_getvalue(struct lwp *l, void *v, register_t *retval)
+sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_getvalue_args /* {
+	struct sys__ksem_getvalue_args /* {
 		semid_t id;
 		unsigned int *value;
 	} */ *uap = v;
@@ -598,9 +598,9 @@ sys_ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_ksem_destroy(struct lwp *l, void *v, register_t *retval)
+sys__ksem_destroy(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_ksem_destroy_args /*{
+	struct sys__ksem_destroy_args /*{
 		semid_t id;
 	} */ *uap = v;
 	struct ksem *ks;
