@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.3 2001/10/13 19:50:36 leo Exp $	*/
+/*	$NetBSD: aout.c,v 1.4 2001/10/14 19:47:12 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #ifdef TOSTOOLS
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <a_out.h>
