@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
+/*	$NetBSD: fmt.c,v 1.5 1997/05/31 15:13:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,13 +43,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-static char rcsid[] = "$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $";
+static char rcsid[] = "$NetBSD: fmt.c,v 1.5 1997/05/31 15:13:49 kleink Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <locale.h>
 
 /*
  * fmt -- format the concatenation of input files or standard input
@@ -95,6 +96,9 @@ main(argc, argv)
 	setout();
 	lineno = 1;
 	mark = -10;
+
+	setlocale(LC_ALL, "");
+
 	/*
 	 * LIZ@UOM 6/18/85 -- Check for goal and max length arguments 
 	 */
@@ -157,7 +161,7 @@ fmt(fi)
 				c = getc(fi);
 				continue;
 			}
-			if ((c < ' ' || c >= 0177) && c != '\t') {
+			if(!(isprint(c) || c == '\t')) {
 				c = getc(fi);
 				continue;
 			}
