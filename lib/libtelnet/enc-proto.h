@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.5 2003/08/07 16:44:54 agc Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.6 2005/02/06 05:48:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,87 +55,87 @@
 #include <sys/cdefs.h>
 #define P __P
 
-Encryptions *findencryption P((int));
-Encryptions *finddecryption P((int));
-void encrypt_init P((const char *, int));
-void encrypt_list_types P((void));
-int EncryptEnable P((char *, char *));
-int EncryptDisable P((char *, char *));
-int EncryptType P((char *, char *));
-int EncryptStart P((char *));
-int EncryptStartInput P((void));
-int EncryptStartOutput P((void));
-int EncryptStop P((char *));
-int EncryptStopInput P((void));
-int EncryptStopOutput P((void));
-int EncryptStatus P((void));
-void encrypt_send_support P((void));
-int EncryptDebug P((int));
-int EncryptVerbose P((int));
-int EncryptAutoEnc P((int));
-int EncryptAutoDec P((int));
-void encrypt_support P((unsigned char *, int));
-void encrypt_is P((unsigned char *, int));
-void encrypt_reply P((unsigned char *, int));
-void encrypt_start P((unsigned char *, int));
-void encrypt_session_key P((Session_Key *, int));
-void encrypt_end P((void));
-void encrypt_request_end P((void));
-void encrypt_request_start P((unsigned char *, int));
-void encrypt_enc_keyid P((unsigned char *, int));
-void encrypt_dec_keyid P((unsigned char *, int));
+Encryptions *findencryption(int);
+Encryptions *finddecryption(int);
+void encrypt_init(const char *, int);
+void encrypt_list_types(void);
+int EncryptEnable(char *, char *);
+int EncryptDisable(char *, char *);
+int EncryptType(char *, char *);
+int EncryptStart(char *);
+int EncryptStartInput(void);
+int EncryptStartOutput(void);
+int EncryptStop(char *);
+int EncryptStopInput(void);
+int EncryptStopOutput(void);
+int EncryptStatus(void);
+void encrypt_send_support(void);
+int EncryptDebug(int);
+int EncryptVerbose(int);
+int EncryptAutoEnc(int);
+int EncryptAutoDec(int);
+void encrypt_support(unsigned char *, int);
+void encrypt_is(unsigned char *, int);
+void encrypt_reply(unsigned char *, int);
+void encrypt_start(unsigned char *, int);
+void encrypt_session_key(Session_Key *, int);
+void encrypt_end(void);
+void encrypt_request_end(void);
+void encrypt_request_start(unsigned char *, int);
+void encrypt_enc_keyid(unsigned char *, int);
+void encrypt_dec_keyid(unsigned char *, int);
 struct key_info;
-void encrypt_keyid P((struct key_info *, unsigned char *, int));
-void encrypt_send_keyid P((int, unsigned char *, int, int));
-void encrypt_auto P((int));
-void decrypt_auto P((int));
-void encrypt_start_output P((int));
-void encrypt_send_end P((void));
-void encrypt_send_request_start P((void));
-void encrypt_send_request_end P((void));
-void encrypt_wait P((void));
-void encrypt_debug P((int));
-void encrypt_gen_printsub P((unsigned char *, int, unsigned char *, int ));
-void encrypt_printsub P((unsigned char *, int, unsigned char *, int ));
+void encrypt_keyid(struct key_info *, unsigned char *, int);
+void encrypt_send_keyid(int, unsigned char *, int, int);
+void encrypt_auto(int);
+void decrypt_auto(int);
+void encrypt_start_output(int);
+void encrypt_send_end(void);
+void encrypt_send_request_start(void);
+void encrypt_send_request_end(void);
+void encrypt_wait(void);
+void encrypt_debug(int);
+void encrypt_gen_printsub(unsigned char *, int, unsigned char *, int );
+void encrypt_printsub(unsigned char *, int, unsigned char *, int );
 
 #ifdef	TELENTD
-void encrypt_wait P((void));
+void encrypt_wait(void);
 #else
-void printsub P((int, unsigned char *, int));
-int encrypt_cmd P((int, char **));
-void encrypt_display P((void));
+void printsub(char, unsigned char *, int);
+int encrypt_cmd(int, char **);
+void encrypt_display(void);
 #endif
 
-void krbdes_encrypt P((unsigned char *, int));
-int krbdes_decrypt P((int));
-int krbdes_is P((unsigned char *, int));
-int krbdes_reply P((unsigned char *, int));
-void krbdes_init P((int));
-int krbdes_start P((int, int));
-void krbdes_session P((Session_Key *, int));
-void krbdes_printsub P((unsigned char *, int, unsigned char *, int));
+void krbdes_encrypt(unsigned char *, int);
+int krbdes_decrypt(int);
+int krbdes_is(unsigned char *, int);
+int krbdes_reply(unsigned char *, int);
+void krbdes_init(int);
+int krbdes_start(int, int);
+void krbdes_session(Session_Key *, int);
+void krbdes_printsub(unsigned char *, int, unsigned char *, int);
 
-void cfb64_encrypt P((unsigned char *, int));
-int cfb64_decrypt P((int));
-void cfb64_init P((int));
-int cfb64_start P((int, int));
-int cfb64_is P((unsigned char *, int));
-int cfb64_reply P((unsigned char *, int));
-void cfb64_session P((Session_Key *, int));
-int cfb64_keyid P((int, unsigned char *, int *));
-void cfb64_printsub P((unsigned char *, int, unsigned char *, int));
+void cfb64_encrypt(unsigned char *, int);
+int cfb64_decrypt(int);
+void cfb64_init(int);
+int cfb64_start(int, int);
+int cfb64_is(unsigned char *, int);
+int cfb64_reply(unsigned char *, int);
+void cfb64_session(Session_Key *, int);
+int cfb64_keyid(int, unsigned char *, int *);
+void cfb64_printsub(unsigned char *, int, unsigned char *, int);
 
-void ofb64_encrypt P((unsigned char *, int));
-int ofb64_decrypt P((int));
-void ofb64_init P((int));
-int ofb64_start P((int, int));
-int ofb64_is P((unsigned char *, int));
-int ofb64_reply P((unsigned char *, int));
-void ofb64_session P((Session_Key *, int));
-int ofb64_keyid P((int, unsigned char *, int *));
-void ofb64_printsub P((unsigned char *, int, unsigned char *, int));
+void ofb64_encrypt(unsigned char *, int);
+int ofb64_decrypt(int);
+void ofb64_init(int);
+int ofb64_start(int, int);
+int ofb64_is(unsigned char *, int);
+int ofb64_reply(unsigned char *, int);
+void ofb64_session(Session_Key *, int);
+int ofb64_keyid(int, unsigned char *, int *);
+void ofb64_printsub(unsigned char *, int, unsigned char *, int);
 
-void fb64_printsub P((unsigned char *, int, unsigned char *, int,
-    unsigned char *));
+void fb64_printsub(unsigned char *, int, unsigned char *, int,
+    unsigned char *);
 
 #endif	/* ENCRYPTION */
