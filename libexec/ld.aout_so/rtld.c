@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.17 1994/04/07 19:46:30 pk Exp $
+ *	$Id: rtld.c,v 1.18 1994/05/24 10:44:06 pk Exp $
  */
 
 #include <sys/param.h>
@@ -125,19 +125,21 @@ int			errno;
 static uid_t		uid, euid;
 static gid_t		gid, egid;
 static int		careful;
-static char		*main_progname = "main";
+static char		__main_progname[] = "main";
+static char		*main_progname = __main_progname;
+static char		us[] = "/usr/libexec/ld.so";
 
 struct so_map		*link_map_head, *main_map;
 struct so_map		**link_map_tail = &link_map_head;
 struct rt_symbol	*rt_symbol_head;
 
-static void		*dlopen __P((char *, int));
-static int		dlclose __P((void *));
-static void		*dlsym __P((void *, char *));
-static int		dlctl __P((void *, int, void *));
+static void		*__dlopen __P((char *, int));
+static int		__dlclose __P((void *));
+static void		*__dlsym __P((void *, char *));
+static int		__dlctl __P((void *, int, void *));
 
 static struct ld_entry	ld_entry = {
-	dlopen, dlclose, dlsym, dlctl
+	__dlopen, __dlclose, __dlsym, __dlctl
 };
 
        void		xprintf __P((char *, ...));
@@ -309,7 +311,7 @@ struct _dynamic	*dp;
 	LM_PRIVATE(smp)->spd_flags |= RTLD_MAIN;
 
 	/* Make an entry for ourselves */
-	smp = alloc_link_map("/usr/libexec/ld.so", (struct sod *)0, (struct so_map *)0,
+	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
 					(caddr_t)crtp->crt_ba, dp);
 	LM_PRIVATE(smp)->spd_refcount++;
 	LM_PRIVATE(smp)->spd_flags |= RTLD_RTLD;
@@ -372,7 +374,7 @@ struct _dynamic	*dp;
 }
 
 /*
- * Allocate a new link map for an shared object NAME loaded at ADDR as a
+ * Allocate a new link map for shared object NAME loaded at ADDR as a
  * result of the presence of link object LOP in the link map PARENT.
  */
 	static struct so_map *
@@ -782,7 +784,7 @@ lookup(name, src_map, strong)
 	 */
 	for (smp = link_map_head; smp; smp = smp->som_next) {
 		int		buckets = LD_BUCKETS(smp->som_dynamic);
-		long		hashval = 0;
+		long		hashval;
 		struct rrs_hash	*hp;
 		char		*cp;
 		struct	nzlist	*np;
@@ -799,10 +801,11 @@ lookup(name, src_map, strong)
 		if (*src_map && smp != *src_map)
 			continue;
 
+restart:
 		/*
 		 * Compute bucket in which the symbol might be found.
 		 */
-		for (cp = name; *cp; cp++)
+		for (hashval = 0, cp = name; *cp; cp++)
 			hashval = (hashval << 1) + *cp;
 
 		hashval = (hashval & 0x7fffffff) % buckets;
@@ -836,6 +839,15 @@ lookup(name, src_map, strong)
 		/*
 		 * We have a symbol with the name we're looking for.
 		 */
+		if (np->nz_type == N_INDR+N_EXT) {
+			/*
+			 * Next symbol gives the aliased name. Restart
+			 * search with new name and confine to this map.
+			 */
+			name = stringbase + (++np)->nz_strx;
+			*src_map = smp;
+			goto restart;
+		}
 
 		if (np->nz_value == 0)
 			/* It's not a definition */
@@ -1110,7 +1122,7 @@ static struct so_map dlmap = {
 static int dlerrno;
 
 	static void *
-dlopen(name, mode)
+__dlopen(name, mode)
 	char	*name;
 	int	mode;
 {
@@ -1151,7 +1163,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 }
 
 	static int
-dlclose(fd)
+__dlclose(fd)
 	void	*fd;
 {
 	struct so_map	*smp = (struct so_map *)fd;
@@ -1175,7 +1187,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 }
 
 	static void *
-dlsym(fd, sym)
+__dlsym(fd, sym)
 	void	*fd;
 	char	*sym;
 {
@@ -1202,7 +1214,7 @@ dlsym(fd, sym)
 }
 
 	static int
-dlctl(fd, cmd, arg)
+__dlctl(fd, cmd, arg)
 	void	*fd, *arg;
 	int	cmd;
 {
