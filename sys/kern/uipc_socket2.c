@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.59 2004/04/17 15:15:29 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.60 2004/04/18 16:38:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.59 2004/04/17 15:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.60 2004/04/18 16:38:42 matt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -403,17 +403,19 @@ int
 sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
 	struct proc *p = curproc; /* XXX */
-	rlim_t maxcc;
 
 	KDASSERT(sb_max_adj != 0);
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
-	if (p && p->p_ucred->cr_uid == so->so_uid)
-		maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-	else
-		maxcc = RLIM_INFINITY;
-	if (!chgsbsize(so->so_uid, &sb->sb_hiwat, cc, maxcc))
-		return 0;
+	if (so) {
+		rlim_t maxcc;
+		if (p && p->p_ucred->cr_uid == so->so_uid)
+			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+		else
+			maxcc = RLIM_INFINITY;
+		if (!chgsbsize(so->so_uid, &sb->sb_hiwat, cc, maxcc))
+			return 0;
+	}
 	sb->sb_mbmax = min(cc * 2, sb_max);
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
