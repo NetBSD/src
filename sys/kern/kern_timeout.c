@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.3 2003/02/10 19:18:56 drochner Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.4 2003/02/11 09:43:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 	 * and let it be rescheduled later.
 	 */
 	if (callout_pending(c)) {
-		if (c->c_time < old_time) {
+		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
 		}
@@ -295,7 +295,7 @@ callout_schedule(struct callout *c, int to_ticks)
 	 * and let it be rescheduled later.
 	 */
 	if (callout_pending(c)) {
-		if (c->c_time < old_time) {
+		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
 		}
@@ -335,6 +335,7 @@ int
 callout_hardclock(void)
 {
 	int s;
+	int needsoftclock;
 
 	CALLOUT_LOCK(s);
 
@@ -348,9 +349,10 @@ callout_hardclock(void)
 		}
 	}
 
+	needsoftclock = !CIRCQ_EMPTY(&timeout_todo);
 	CALLOUT_UNLOCK(s);
 
-	return (!CIRCQ_EMPTY(&timeout_todo));
+	return needsoftclock;
 }
 
 /* ARGSUSED */
