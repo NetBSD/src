@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.11 1994/10/26 08:46:06 cgd Exp $	*/
+/*	$NetBSD: grf.c,v 1.12 1994/10/30 13:34:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -545,7 +545,7 @@ params
 	gi->gd_planes=1;
 	gi->gd_dwidth=gi->gd_fbwidth=image->right;
 	gi->gd_dheight=gi->gd_fbheight=image->bottom;
-	gi->gd_fbsize=image->right*image->bottom;
+	gi->gd_fbsize=image->rowbytes*image->bottom;
 	gi->gd_fbrowbytes=image->rowbytes;
 	gi->gd_fbaddr=(caddr_t) ((u_long)image->offset+(u_long)nu->addr);
 	gp->g_fbkva=gi->gd_fbaddr;
