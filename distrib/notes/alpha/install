@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 1999/03/25 21:13:04 ross Exp $	
+.\"	$NetBSD: install,v 1.15.2.1 1999/04/20 01:06:59 cjs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -218,6 +218,7 @@ Alpha platform page:
 .Pp
 \~\~\~\~\~
 .Lk http://www.NetBSD.org/Ports/alpha
+.Pp
 At the time of this
 release, the URL for the netbooting instructions is:
 .Pp
@@ -324,12 +325,31 @@ You should permanently set your protocol to
 with:
 .Dl "\*>\*>\*> set ewa0_protocols bootp"
 .Pp
-Systems with the
-.Dq old SRM
+The 3000 series of Turbochannel systems and certain other models use
+.Em old SRM ,
 do not have a
 .Fl Ic proto
 option and use different device names. They also tend to not netboot very
-well so you probably don't need to worry about this section.
+well so you probably don't need to worry about this section. However, if you
+want to give it a try, note the following differences:
+.Bl -bullet -offset indent
+.It
+There is no
+.Fl Ar proto
+argument, or
+.Ic ewa0_protocols
+variable. Old SRM uses bootp if the device name is given as
+.Sy ez0 .
+.It
+The use of the
+.Xr setnetbootinfo 8
+program will probably also be necessary, as it is unlikely that an SRM
+from that era will properly communicate the ethernet HW address to the
+boot program.
+.It
+Example:
+.Dl \*>\*>\*>\ boot\ ez0
+.El
 .El
 .
 .
