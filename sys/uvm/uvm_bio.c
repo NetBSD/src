@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.4.4 1999/07/31 18:56:27 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.4.5 1999/08/09 00:05:55 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -61,8 +61,7 @@ static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t,
 			       vm_page_t *, int,
 			       int, vm_fault_t, vm_prot_t, int));
 
-static struct ubc_map *ubc_find_mapping __P((struct uvm_object *,
-					     vaddr_t));
+static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
 
 /*
  * local data structues
@@ -82,12 +81,12 @@ static struct ubc_map *ubc_find_mapping __P((struct uvm_object *,
 struct ubc_map
 {
 	struct uvm_object *	uobj;		/* mapped object */
-	vaddr_t			offset;		/* offset into uobj */
+	voff_t			offset;		/* offset into uobj */
 	int			refcount;	/* refcount on mapping */
 	/* XXX refcount will turn into a rwlock when vnodes start
 	   using their locks in shared mode. */
 
-	vaddr_t			writeoff;	/* overwrite offset */
+	voff_t			writeoff;	/* overwrite offset */
 	vsize_t			writelen;	/* overwrite len */
 
 	LIST_ENTRY(ubc_map)	hash;		/* hash table */
@@ -406,7 +405,7 @@ again:
 static struct ubc_map *
 ubc_find_mapping(uobj, offset)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 {
 	struct ubc_map *umap;
 
@@ -431,7 +430,7 @@ ubc_find_mapping(uobj, offset)
 void *
 ubc_alloc(uobj, offset, lenp, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	vsize_t *lenp;
 	int flags;
 {
@@ -577,7 +576,7 @@ ubc_release(va, wlen)
 void
 ubc_flush(uobj, start, end)
 	struct uvm_object *uobj;
-	vaddr_t start, end;
+	voff_t start, end;
 {
 	struct ubc_map *umap;
 	vaddr_t va;

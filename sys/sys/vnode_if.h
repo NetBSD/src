@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.15.4.5 1999/08/02 22:18:54 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.15.4.6 1999/08/09 00:05:54 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.16.4.5 1999/08/02 22:18:34 thorpej Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
+ *	NetBSD: vnode_if.sh,v 1.18.8.1 1999/08/02 22:19:16 thorpej Exp 
  */
 
 /*
@@ -1074,7 +1074,7 @@ static __inline int VOP_WHITEOUT(dvp, cnp, flags)
 struct vop_getpages_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	vaddr_t a_offset;
+	voff_t a_offset;
 	vm_page_t *a_m;
 	int *a_count;
 	int a_centeridx;
@@ -1083,11 +1083,11 @@ struct vop_getpages_args {
 	int a_flags;
 };
 extern struct vnodeop_desc vop_getpages_desc;
-static __inline int VOP_GETPAGES __P((struct vnode *, vaddr_t, vm_page_t *, 
+static __inline int VOP_GETPAGES __P((struct vnode *, voff_t, vm_page_t *, 
     int *, int, vm_prot_t, int, int)) __attribute__((__unused__));
 static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
 	struct vnode *vp;
-	vaddr_t offset;
+	voff_t offset;
 	vm_page_t *m;
 	int *count;
 	int centeridx;

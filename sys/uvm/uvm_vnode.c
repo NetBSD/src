@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.6 1999/08/06 12:47:28 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.7 1999/08/09 00:05:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -94,22 +94,18 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
  * functions
  */
 
-static int		uvn_asyncget __P((struct uvm_object *, vaddr_t,
-					    int));
-struct uvm_object *	uvn_attach __P((void *, vm_prot_t));
-static void		uvn_cluster __P((struct uvm_object *, vaddr_t,
-					 vaddr_t *, vaddr_t *));
+static void		uvn_cluster __P((struct uvm_object *, voff_t, voff_t *,
+					 voff_t *));
 static void		uvn_detach __P((struct uvm_object *));
-static int		uvn_findpage __P((struct uvm_object *, vaddr_t,
+static int		uvn_findpage __P((struct uvm_object *, voff_t,
 					  struct vm_page **, int));
-static boolean_t	uvn_flush __P((struct uvm_object *, vaddr_t, 
-				       vaddr_t, int));
-static int		uvn_get __P((struct uvm_object *, vaddr_t,
-				     vm_page_t *, int *, int, 
-				     vm_prot_t, int, int));
+static boolean_t	uvn_flush __P((struct uvm_object *, voff_t, voff_t,
+				       int));
+static int		uvn_get __P((struct uvm_object *, voff_t, vm_page_t *,
+				     int *, int, vm_prot_t, int, int));
 static void		uvn_init __P((void));
-static int		uvn_put __P((struct uvm_object *, vm_page_t *,
-				     int, boolean_t));
+static int		uvn_put __P((struct uvm_object *, vm_page_t *, int,
+				     boolean_t));
 static void		uvn_reference __P((struct uvm_object *));
 static boolean_t	uvn_releasepg __P((struct vm_page *, 
 					   struct vm_page **));
@@ -127,7 +123,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	NULL,			/* no specialized fault routine required */
 	uvn_flush,
 	uvn_get,
-	uvn_asyncget,
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
@@ -253,19 +248,6 @@ uvn_attach(arg, accessprot)
 		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
-	}
-
-
-	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-	if (used_vnode_size > (vaddr_t) -PAGE_SIZE) {
-#ifdef DEBUG
-		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
-		    (long long)used_vnode_size, -PAGE_SIZE);
-#endif    
-		used_vnode_size = (vaddr_t) -PAGE_SIZE;
 	}
 
 	/* relock object */
@@ -509,7 +491,7 @@ uvn_releasepg(pg, nextpgp)
 static boolean_t
 uvn_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	int flags;
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
@@ -519,7 +501,7 @@ uvn_flush(uobj, start, stop, flags)
 	int s;
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, by_list, needs_clean;
-	vaddr_t curoff;
+	voff_t curoff;
 	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
 
@@ -530,8 +512,8 @@ uvn_flush(uobj, start, stop, flags)
 		printf("uvn_flush: size not set vp %p\n", uvn);
 		if ((flags & PGO_ALLPAGES) == 0)
 			printf("... and PGO_ALLPAGES not set: "
-			       "start 0x%lx end 0x%lx flags 0x%x\n",
-			       start, stop, flags);
+			       "start 0x%llx end 0x%llx flags 0x%x\n",
+			       (long long)start, (long long)stop, flags);
 		vprint("uvn_flush VSIZENOTSET", vp);
 		vp_name(uvn);
 #endif
@@ -901,8 +883,9 @@ ReTry:
 				} else {
 					if (result != VM_PAGER_OK) {
 						printf("uvn_flush: obj=%p, "
-						   "offset=0x%lx.  error %d\n",
-						    pp->uobject, pp->offset,
+						   "offset=0x%llx.  error %d\n",
+						    pp->uobject,
+						    (long long)pp->offset,
 						    result);
 						printf("uvn_flush: WARNING: "
 						    "changes to page may be "
@@ -967,8 +950,8 @@ ReTry:
 static void
 uvn_cluster(uobj, offset, loffset, hoffset)
 	struct uvm_object *uobj;
-	vaddr_t offset;
-	vaddr_t *loffset, *hoffset; /* OUT */
+	voff_t offset;
+	voff_t *loffset, *hoffset; /* OUT */
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 
@@ -1016,7 +999,7 @@ uvn_put(uobj, pps, npages, flags)
 static int
 uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	struct vm_page **pps;		/* IN/OUT */
 	int *npagesp;			/* IN (OUT if PGO_LOCKED) */
 	int centeridx;
@@ -1043,7 +1026,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 void
 uvn_findpages(uobj, offset, npagesp, pps, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	int *npagesp;
 	struct vm_page **pps;
 	int flags;
@@ -1062,7 +1045,7 @@ uvn_findpages(uobj, offset, npagesp, pps, flags)
 static int
 uvn_findpage(uobj, offset, pps, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	struct vm_page **pps;
 	int flags;
 {
@@ -1131,28 +1114,6 @@ uvn_findpage(uobj, offset, pps, flags)
 }
 
 /*
- * uvn_asyncget: start async I/O to bring pages into ram
- *
- * => caller must lock object(???XXX: see if this is best)
- * => could be called from uvn_get or a madvise() fault-ahead.
- * => if it fails, it doesn't matter.
- */
-
-static int
-uvn_asyncget(uobj, offset, npages)
-	struct uvm_object *uobj;
-	vaddr_t offset;
-	int npages;
-{
-
-	/*
-	 * XXXCDC: we can't do async I/O yet
-	 */
-	printf("uvn_asyncget called\n");
-	return (KERN_SUCCESS);
-}
-
-/*
  * uvm_vnp_setsize: grow or shrink a vnode uvn
  *
  * grow   => just update size value
@@ -1173,7 +1134,7 @@ uvn_asyncget(uobj, offset, npages)
 void
 uvm_vnp_setsize(vp, newsize)
 	struct vnode *vp;
-	u_quad_t newsize;
+	voff_t newsize;
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 
@@ -1183,29 +1144,14 @@ uvm_vnp_setsize(vp, newsize)
 	simple_lock(&uvn->u_obj.vmobjlock);
 
 	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-
-	if (newsize > (vaddr_t) -PAGE_SIZE) {
-#ifdef DEBUG
-		printf("uvm_vnp_setsize: vn %p size truncated "
-		       "%qx->%lx\n", vp, (long long)newsize,
-		       (vaddr_t)-PAGE_SIZE);
-#endif
-		newsize = (vaddr_t)-PAGE_SIZE;
-	}
-
-	/*
 	 * now check if the size has changed: if we shrink we had better
 	 * toss some pages...
 	 */
 
 	if (uvn->u_size > newsize && uvn->u_size != VSIZENOTSET) {
-		(void) uvn_flush(&uvn->u_obj, (vaddr_t)newsize,
-				 uvn->u_size, PGO_FREE);
+		(void) uvn_flush(&uvn->u_obj, newsize, uvn->u_size, PGO_FREE);
 	}
-	uvn->u_size = (vaddr_t)newsize;
+	uvn->u_size = newsize;
 	simple_unlock(&uvn->u_obj.vmobjlock);
 }
 
