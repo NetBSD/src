@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.18 2001/11/28 10:21:21 lukem Exp $
+#	$NetBSD: files.cardbus,v 1.18.10.1 2004/11/11 23:19:59 he Exp $
 #
 # files.cardbus
 #
@@ -81,3 +81,9 @@ file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
 #
 attach	adv at cardbus with adv_cardbus
 file	dev/cardbus/adv_cardbus.c	adv_cardbus
+
+#
+# Workbit NinjaSCSI-32 controllers
+#
+attach	njs at cardbus with njs_cardbus
+file	dev/cardbus/njs_cardbus.c	njs_cardbus
