@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp $
+$NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1055,7 +1055,8 @@ product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 
 /* Distributed Processing Technology products */
-product DPT SC_RAID	0xa400	SmartCache/SmartRAID
+product DPT SC_RAID	0xa400	SmartCache/SmartRAID (EATA)
+product	DPT I960_PPB	0xa500	PCI-PCI Bridge
 product DPT RAID_I2O	0xa501	SmartRAID (I2O)
 product DPT MEMCTLR	0x1012	Memory Controller
 
