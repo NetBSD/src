@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.11 2001/04/14 18:39:20 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.12 2001/04/19 13:47:07 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.11 2001/04/14 18:39:20 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.12 2001/04/19 13:47:07 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: podulebus.c,v 1.11 2001/04/14 18:39:20 bjh21 Exp $");
 
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
-#include <arch/arm26/podulebus/podulebus.h>
+#include <dev/podulebus/podulebus.h>
 #include <arch/arm26/podulebus/podulebusreg.h>
 
 #include "locators.h"
