@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.41 1998/12/13 19:31:27 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.42 1998/12/15 16:10:42 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -582,10 +582,14 @@ svr4_fasttrap(frame)
 		 */
 		{
 			struct timeval  tv;
+			u_quad_t tm;
 
 			microtime(&tv);
-			frame.tf_eax = tv.tv_sec;
-			frame.tf_edx = tv.tv_usec * 1000;
+
+			tm = (u_quad_t) tv.tv_sec * 1000000000 +
+			    (u_quad_t) tv.tv_usec * 1000;
+			frame.tf_edx = ((u_int32_t *) &tm)[0];
+			frame.tf_eax = ((u_int32_t *) &tm)[1];
 		}
 		break;
 
