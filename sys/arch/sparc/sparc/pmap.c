@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 1997/07/09 21:51:26 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.90 1997/07/16 15:35:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -144,6 +144,7 @@ struct pmap_stats {
 #define	PDB_REMOVE	0x0004
 #define	PDB_CHANGEPROT	0x0008
 #define	PDB_ENTER	0x0010
+#define	PDB_FOLLOW	0x0020
 
 #define	PDB_MMU_ALLOC	0x0100
 #define	PDB_MMU_STEAL	0x0200
@@ -5644,14 +5645,20 @@ pmap_extract4_4c(pm, va)
 	struct segmap *sp;
 
 	if (pm == NULL) {
-		printf("pmap_extract: null pmap\n");
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: null pmap\n");
+#endif
 		return (0);
 	}
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	if (rp->rg_segmap == NULL) {
-		printf("pmap_extract: invalid segment (%d)\n", vr);
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: invalid segment (%d)\n", vr);
+#endif
 		return (0);
 	}
 	sp = &rp->rg_segmap[vs];
@@ -5674,13 +5681,19 @@ pmap_extract4_4c(pm, va)
 		register int *pte = sp->sg_pte;
 
 		if (pte == NULL) {
-			printf("pmap_extract: invalid segment\n");
+#ifdef DEBUG
+			if (pmapdebug & PDB_FOLLOW)
+				printf("pmap_extract: invalid segment\n");
+#endif
 			return (0);
 		}
 		tpte = pte[VA_VPG(va)];
 	}
 	if ((tpte & PG_V) == 0) {
-		printf("pmap_extract: invalid pte\n");
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: invalid pte\n");
+#endif
 		return (0);
 	}
 	tpte &= PG_PFNUM;
@@ -5700,22 +5713,44 @@ pmap_extract4m(pm, va)
 	register struct pmap *pm;
 	vm_offset_t va;
 {
-	register int pte;
+	struct regmap *rm;
+	struct segmap *sm;
+	int pte;
 
 	if (pm == NULL) {
-		printf("pmap_extract: null pmap\n");
-		return (0);
-	}
-
-	pte = getptesw4m(pm, va);
-
 #ifdef DEBUG
-	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
-		printf("pmap_extract: invalid pte of type %d\n",
-		       pte & SRMMU_TETYPE);
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: null pmap\n");
+#endif
 		return (0);
 	}
+
+	rm = &pm->pm_regmap[VA_VREG(va)];
+	if (rm == NULL) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("getptesw4m: no regmap entry");
 #endif
+		return (0);
+	}
+	sm = &rm->rg_segmap[VA_VSEG(va)];
+	if (sm == NULL) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			panic("getptesw4m: no segmap");
+#endif
+		return (0);
+	}
+	pte = sm->sg_pte[VA_SUN4M_VPG(va)];
+
+	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("pmap_extract: invalid pte of type %d\n",
+			       pte & SRMMU_TETYPE);
+#endif
+		return (0);
+	}
 
 	return (ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
 }
