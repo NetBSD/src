@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2003/07/25 08:26:26 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2004/01/17 05:30:02 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,7 +48,7 @@
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
  *      base, etc, comp, games, man, misc, text,
- *      xbase, xfont, xserver, xcontrib, xcomp.
+ *      xbase, xcomp, xfont, xserver.
  */
 #define SET_KERNEL_1_NAME	"kern-ADI_BRH"
 #define SET_KERNEL_2_NAME	"kern-INTEGRATOR"
