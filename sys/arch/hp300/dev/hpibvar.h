@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.10 1997/03/31 07:34:25 scottr Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.11 1997/07/17 01:59:12 jtk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -109,11 +109,13 @@ struct hpibbus_attach_args {
 };
 
 /* Locator short-hand */
-#define	hpibbuscf_slave		cf_loc[0]
-#define	hpibbuscf_punit		cf_loc[1]
+#include "locators.h"
 
-#define	HPIBBUS_SLAVE_UNK	-1
-#define	HPIBBUS_PUNIT_UNK	-1
+#define	hpibbuscf_slave		cf_loc[HPIBBUSCF_SLAVE]
+#define	hpibbuscf_punit		cf_loc[HPIBBUSCF_PUNIT]
+
+#define	HPIBBUS_SLAVE_UNK	HPIBBUSCF_SLAVE_DEFAULT
+#define	HPIBBUS_PUNIT_UNK	HPIBBUSCF_PUNIT_DEFAULT
 
 #define	HPIB_NSLAVES		8	/* number of slaves on a bus */
 #define	HPIB_NPUNITS		2	/* number of punits per slave */
