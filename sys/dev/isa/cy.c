@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.14 1996/09/02 06:44:49 mycroft Exp $	*/
+/*	$NetBSD: cy.c,v 1.15 1996/09/05 15:35:09 mycroft Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -1462,37 +1462,6 @@ cystop(struct tty *tp, int flag)
 
 	splx(s);
 }
-
-
-int
-cyselect(dev_t dev, int rw, struct proc *p)
-{
-	struct tty	*tp = info[UNIT(dev)]->tty;
-	int		s = spltty();
-	int		nread;
-
-	switch (rw) {
-
-	case FREAD:
-		nread = ttnread(tp);
-		if (nread > 0 || 
-		   ((tp->t_cflag&CLOCAL) == 0 && (tp->t_state&TS_CARR_ON) == 0))
-			goto win;
-		selrecord(p, &tp->t_rsel);
-		break;
-
-	case FWRITE:
-		if (tp->t_outq.c_cc <= tp->t_lowat)
-			goto win;
-		selrecord(p, &tp->t_wsel);
-		break;
-	}
-	splx(s);
-	return (0);
-  win:
-	splx(s);
-	return (1);
-} /* end of cyselect() */
 
 
 int
