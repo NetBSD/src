@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.258 2001/05/07 16:51:08 jdolecek Exp $
+# $NetBSD: mi,v 1.259 2001/05/17 23:23:36 fredette Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -743,6 +743,7 @@
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
 ./usr/sbin/stdhosts		base-nis-bin
+./usr/sbin/sunndd		base-bootserver-bin
 ./usr/sbin/sup			base-sup-bin
 ./usr/sbin/supfilesrv		base-sup-bin
 ./usr/sbin/supscan		base-sup-bin
