@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1995/05/24 21:04:51 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1995/06/13 22:06:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -127,7 +127,7 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int *nofault;
+long *nofault;
 
 caddr_t allocsys __P((caddr_t));
 void identifycpu();
@@ -996,13 +996,13 @@ peek_word(addr)
 	jmp_buf		faultbuf;
 	register int x;
 
-	nofault = (int *) &faultbuf;
+	nofault = (long*)&faultbuf;
 	if (setjmp(nofault)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return(-1);
 	}
 	x = *(volatile u_short *)addr;
-	nofault = (int *) 0;
+	nofault = NULL;
 	return(x);
 }
 
@@ -1012,13 +1012,13 @@ peek_byte(addr)
 	jmp_buf 	faultbuf;
 	register int x;
 
-	nofault = (int *) &faultbuf;
+	nofault = (long*)&faultbuf;
 	if (setjmp(nofault)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return(-1);
 	}
 	x = *(volatile u_char *)addr;
-	nofault = (int *) 0;
+	nofault = NULL;
 	return(x);
 }
 
