@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.44 1997/05/07 18:49:10 gwr Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.45 1997/10/09 12:49:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -289,7 +289,7 @@ int
 tsleep(ident, priority, wmesg, timo)
 	void *ident;
 	int priority, timo;
-	char *wmesg;
+	const char *wmesg;
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;

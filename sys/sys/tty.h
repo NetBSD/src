@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.36 1997/02/07 06:35:44 mikel Exp $	*/
+/*	$NetBSD: tty.h,v 1.37 1997/10/09 12:50:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -244,7 +244,7 @@ void	 ttypend __P((struct tty *tp));
 void	 ttyretype __P((struct tty *tp));
 void	 ttyrub __P((int c, struct tty *tp));
 int	 ttysleep __P((struct tty *tp,
-	    void *chan, int pri, char *wmesg, int timeout));
+	    void *chan, int pri, const char *wmesg, int timeout));
 int	 ttywait __P((struct tty *tp));
 int	 ttywflush __P((struct tty *tp));
 

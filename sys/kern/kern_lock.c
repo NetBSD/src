@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.3 1997/07/06 22:51:59 fvdl Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.4 1997/10/09 12:49:44 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -115,7 +115,7 @@ void
 lockinit(lkp, prio, wmesg, timo, flags)
 	struct lock *lkp;
 	int prio;
-	char *wmesg;
+	const char *wmesg;
 	int timo;
 	int flags;
 {
