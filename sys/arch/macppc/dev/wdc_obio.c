@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.24 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.25 2003/06/19 22:36:06 hamajima Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -438,16 +438,17 @@ wdc_obio_detach(self, flags)
 }
 
 int
-wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
+wdc_obio_dma_init(v, channel, drive, databuf, datalen, flags)
 	void *v;
 	void *databuf;
 	size_t datalen;
-	int read;
+	int flags;
 {
 	struct wdc_obio_softc *sc = v;
 	vaddr_t va = (vaddr_t)databuf;
 	dbdma_command_t *cmdp;
 	u_int cmd, offset;
+	int read = flags & WDC_DMA_READ;
 
 	cmdp = sc->sc_dmacmd;
 	cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
