@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.8 1994/07/02 13:01:32 briggs Exp $
+ *	$Id: autoconf.c,v 1.8.2.1 1994/07/24 01:23:26 cgd Exp $
  */
 
 /*
@@ -102,7 +102,6 @@
 
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-int root_scsi_id;           /* CPC: set in locore.s */
 
 #include <machine/vmparam.h>
 #include <machine/param.h>
@@ -188,13 +187,14 @@ mainbus_attach(parent, dev, aux)
 	void		*aux;
 {
 	struct newconf_S	conf_data[] = {
+					{"ite",       1},
 					{"adb",       1},
 /*					{"clock",     1},	*/
 					{"nubus",     1},
 					{"ser",       0},
 					{"ncrscsi",   0},
 					{"ncr96scsi", 0},
-					{"audio",     0},
+					{"asc",       0},
 					{"floppy",    0},
 					{NULL,        0}
 			 	};
