@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.9 1994/02/12 15:52:49 glass Exp $
+ *	$Id: tty_tb.c,v 1.10 1994/02/13 00:10:47 cgd Exp $
  */
 
 #include "tb.h"
@@ -132,7 +132,7 @@ tbclose(tp)
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, &modebits, 0, NULL);
+	tbtioctl(tp, BIOSMODE, &modebits, 0, curproc);
 }
 
 /*
