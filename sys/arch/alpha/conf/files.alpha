@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.26 1996/09/27 17:14:35 cgd Exp $
+#	$NetBSD: files.alpha,v 1.27 1996/10/22 21:15:45 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -68,7 +68,6 @@ include "dev/tc/files.tc"
 device	tcasic: tcbus
 attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
-file	arch/alpha/tc/tc_bus_io.c	tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
