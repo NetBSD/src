@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 1997/06/16 08:41:17 jonathan Exp $	*/
+/*	$NetBSD: dma.c,v 1.8 1997/06/23 02:56:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ picaDmaInit()
 	free_dma_pte->queue.next = NULL;
 	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
 
-	out32(PICA_SYS_TL_BASE, MACH_UNCACHED_TO_PHYS(map));
+	out32(PICA_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
 	out32(PICA_SYS_TL_LIMIT, PICA_TL_SIZE);
 	out32(PICA_SYS_TL_IVALID, 0);
 }
@@ -183,6 +183,7 @@ picaDmaTLBFree(dma_softc_t *dma)
  *  the dma control structure and invalidate dma TLB cache.
  */
 
+void
 picaDmaTLBMap(dma_softc_t *sc)
 {
 	vm_offset_t pa;
@@ -196,7 +197,7 @@ picaDmaTLBMap(dma_softc_t *sc)
 	va = sc->req_va;
 	while(nbytes > 0) {
 		if(va < VM_MIN_KERNEL_ADDRESS) {
-			pa = MACH_CACHED_TO_PHYS(va);
+			pa = MIPS_KSEG0_TO_PHYS(va);
 		}
 		else {
 			pa = pmap_extract(vm_map_pmap(phys_map), va);
@@ -222,7 +223,6 @@ picaDmaStart(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	int mode;
 	pDmaReg regs = sc->dma_reg;
 
 	/* Halt DMA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 1996/10/13 03:31:36 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 1997/06/23 02:56:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,7 +46,7 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
-static int	cpuprint __P((void *, char *pnp));
+extern void cpu_identify __P((void));
 
 static int
 cpumatch(parent, cfdata, aux)
@@ -74,116 +74,6 @@ cpuattach(parent, dev, aux)
 	int needcomma, needrev, i;
 
 	printf(": ");
-
-	switch(cpu_id.cpu.cp_imp) {
-
-	case MIPS_R2000:
-		printf("MIPS R2000 CPU");
-		break;
-	case MIPS_R3000:
-		printf("MIPS R3000 CPU");
-		break;
-	case MIPS_R6000:
-		printf("MIPS R6000 CPU");
-		break;
-	case MIPS_R4000:
-		if(machPrimaryInstCacheSize == 16384)
-			printf("MIPS R4400 CPU");
-		else
-			printf("MIPS R4000 CPU");
-		break;
-	case MIPS_R3LSI:
-		printf("LSI Logic R3000 derivate");
-		break;
-	case MIPS_R6000A:
-		printf("MIPS R6000A CPU");
-		break;
-	case MIPS_R3IDT:
-		printf("IDT R3000 derivate");
-		break;
-	case MIPS_R10000:
-		printf("MIPS R10000/T5 CPU");
-		break;
-	case MIPS_R4200:
-		printf("MIPS R4200 CPU (ICE)");
-		break;
-	case MIPS_R8000:
-		printf("MIPS R8000 Blackbird/TFP CPU");
-		break;
-	case MIPS_R4600:
-		printf("QED R4600 Orion CPU");
-		break;
-	case MIPS_R3SONY:
-		printf("Sony R3000 based CPU");
-		break;
-	case MIPS_R3TOSH:
-		printf("Toshiba R3000 based CPU");
-		break;
-	case MIPS_R3NKK:
-		printf("NKK R3000 based CPU");
-		break;
-	case MIPS_UNKC1:
-	case MIPS_UNKC2:
-	default:
-		printf("Unknown CPU type (0x%x)",cpu_id.cpu.cp_imp);
-		break;
-	}
-	printf(" Rev. %d.%d with ", cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
-
-
-	switch(fpu_id.cpu.cp_imp) {
-
-	case MIPS_SOFT:
-		printf("Software emulation float");
-		break;
-	case MIPS_R2360:
-		printf("MIPS R2360 FPC");
-		break;
-	case MIPS_R2010:
-		printf("MIPS R2010 FPC");
-		break;
-	case MIPS_R3010:
-		printf("MIPS R3010 FPC");
-		break;
-	case MIPS_R6010:
-		printf("MIPS R6010 FPC");
-		break;
-	case MIPS_R4010:
-		printf("MIPS R4010 FPC");
-		break;
-	case MIPS_R31LSI:
-		printf("FPC");
-		break;
-	case MIPS_R10010:
-		printf("MIPS R10000/T5 FPU");
-		break;
-	case MIPS_R4210:
-		printf("MIPS R4200 FPC (ICE)");
-	case MIPS_R8000:
-		printf("MIPS R8000 Blackbird/TFP");
-		break;
-	case MIPS_R4600:
-		printf("QED R4600 Orion FPC");
-		break;
-	case MIPS_R3SONY:
-		printf("Sony R3000 based FPC");
-		break;
-	case MIPS_R3TOSH:
-		printf("Toshiba R3000 based FPC");
-		break;
-	case MIPS_R3NKK:
-		printf("NKK R3000 based FPC");
-		break;
-	case MIPS_UNKF1:
-	default:
-		printf("Unknown FPU type (0x%x)", fpu_id.cpu.cp_imp);
-		break;
-	}
-	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
-	printf("\n");
-
-	printf("        Primary cache size: %dkb Instruction, %dkb Data.\n",
-		machPrimaryInstCacheSize / 1024,
-		machPrimaryDataCacheSize / 1024);
+	cpu_identify();
 }
 

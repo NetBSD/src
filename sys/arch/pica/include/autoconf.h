@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1997/06/22 04:08:06 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 1997/06/23 02:56:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -75,3 +75,4 @@ int	badaddr			__P((void *, u_int64_t));
 
 int	initcpu __P((void));
 void	configure __P((void));
+void	makebootdev __P((char *cp));
