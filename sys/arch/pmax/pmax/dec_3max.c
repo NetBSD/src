@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.6 1999/03/18 07:27:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.6 1999/03/18 07:27:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,12 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Ex
 #include "wsdisplay.h"
 
 /* XXX XXX XXX */
-#define	KN02_INTR_TC_0	0x01
-#define	KN02_INTR_TC_1	0x02
-#define	KN02_INTR_TC_2	0x04
-#define	KN02_INTR_LANCE	0x20
-#define	KN02_INTR_SCSI	0x40
-#define	KN02_INTR_SCC	0x80
 extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
 
@@ -176,12 +170,16 @@ dec_3max_os_init()
 	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 
+#ifdef NEWSPL
+	__spl = &spl_3max;
+#else
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
 	splvec.splimp = MIPS_SPL0;
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
+#endif
 	
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
@@ -225,10 +223,9 @@ dec_3max_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		if (tc_fb_cnattach(crt) > 0) {
-			dckbd_cnattach(KN02_SYS_DZ);
+		dckbd_cnattach(KN02_SYS_DZ);
+		if (tc_fb_cnattach(crt) > 0)
 			return;
-		}
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
@@ -301,20 +298,28 @@ dec_3max_intr(cpumask, pc, status, cause)
 		do {
 			ifound = 0;
 			can_serve = *syscsr;
-
-#define	CHECKINTR(slot, bits)					\
-	if (can_serve & (bits)) {				\
+			can_serve &= (can_serve >> KN02_CSR_IOINTEN_SHIFT);
+#define	CALLINTR(slot) do {					\
 		ifound = 1;					\
 		intrcnt[slot] += 1;				\
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
-
-			CHECKINTR(SYS_DEV_SCC0, KN02_INTR_SCC);
-			CHECKINTR(SYS_DEV_SCSI, KN02_INTR_SCSI);
-			CHECKINTR(SYS_DEV_LANCE, KN02_INTR_LANCE);
-			CHECKINTR(SYS_DEV_OPT2, KN02_INTR_TC_2);
-			CHECKINTR(SYS_DEV_OPT1, KN02_INTR_TC_1);
-			CHECKINTR(SYS_DEV_OPT0, KN02_INTR_TC_0);
+	} while (0)
+			switch (can_serve & 0xf0) {
+			case KN02_IP_DZ:
+				CALLINTR(SYS_DEV_SCC0); break;
+			case KN02_IP_LANCE:
+				CALLINTR(SYS_DEV_LANCE); break;
+			case KN02_IP_SCSI:
+				CALLINTR(SYS_DEV_SCSI); break;
+			}
+			switch (can_serve & 0x0f) {
+			case KN02_IP_SLOT2:
+				CALLINTR(SYS_DEV_OPT2); break;
+			case KN02_IP_SLOT1:
+				CALLINTR(SYS_DEV_OPT1); break;
+			case KN02_IP_SLOT0:
+				CALLINTR(SYS_DEV_OPT0); break;
+			}
 		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_3) {
@@ -349,12 +354,12 @@ struct {
 	int cookie;
 	int intrbit;
 } kn02intrs[] = {
-	{ SYS_DEV_OPT0,  KN02_INTR_TC_0 },
-	{ SYS_DEV_OPT1,  KN02_INTR_TC_1 },
-	{ SYS_DEV_OPT2,  KN02_INTR_TC_2 },
-	{ SYS_DEV_LANCE, KN02_INTR_LANCE },
-	{ SYS_DEV_SCSI,	 KN02_INTR_SCSI },
-	{ SYS_DEV_SCC0,  KN02_INTR_SCC },
+	{ SYS_DEV_SCC0,  KN02_IP_DZ },
+	{ SYS_DEV_LANCE, KN02_IP_LANCE },
+	{ SYS_DEV_SCSI,	 KN02_IP_SCSI },
+	{ SYS_DEV_OPT0,  KN02_IP_SLOT0 },
+	{ SYS_DEV_OPT1,  KN02_IP_SLOT1 },
+	{ SYS_DEV_OPT2,  KN02_IP_SLOT2 },
 };
 
 void
@@ -383,7 +388,7 @@ found:
 	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	kn02_wbflush();
+	tc_mb();
 }
 
 void
