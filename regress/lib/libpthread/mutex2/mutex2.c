@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex2.c,v 1.1 2003/01/30 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: mutex2.c,v 1.2 2003/02/03 16:27:32 martin Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -62,10 +62,10 @@ main(int argc, char *argv[])
 void *
 threadfunc(void *arg)
 {
-	int count = *(int *)arg;
+	long count = *(int *)arg;
 	int ret;
 
-	printf("2: Second thread (%p). Count is %d\n", pthread_self(), count);
+	printf("2: Second thread (%p). Count is %ld\n", pthread_self(), count);
 
 	while (count--) {
 		ret = pthread_mutex_lock(&mutex);
