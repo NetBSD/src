@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.11 1999/04/24 23:36:36 ross Exp $	*/
+/*	$NetBSD: netstat.c,v 1.12 1999/12/20 03:45:03 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.11 1999/04/24 23:36:36 ross Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.12 1999/12/20 03:45:03 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -455,39 +455,58 @@ inetname(in)
 	return (line);
 }
 
-int
-cmdnetstat(cmd, args)
-	char *cmd, *args;
+/* please note: there are also some netstat commands in netcmds.c */
+
+void
+netstat_all (args)
+	char *args;
+{
+	aflag = !aflag;
+	fetchnetstat();
+	shownetstat();
+	refresh();
+}
+
+void
+netstat_names (args)
+	char *args;
 {
 	struct netinfo *p;
 
-	if (prefix(cmd, "all")) {
-		aflag = !aflag;
-		goto fixup;
+	if (nflag == 0)
+		return;
+	
+	p = netcb.ni_forw;
+	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+		if (p->ni_line == -1)
+			continue;
+		p->ni_flags |= NIF_LACHG|NIF_FACHG;
 	}
-	if  (prefix(cmd, "numbers") || prefix(cmd, "names")) {
-		int new;
-
-		new = prefix(cmd, "numbers");
-		if (new == nflag)
-			return (1);
-		p = netcb.ni_forw;
-		for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-			if (p->ni_line == -1)
-				continue;
-			p->ni_flags |= NIF_LACHG|NIF_FACHG;
-		}
-		nflag = new;
-		wclear(wnd);
-		labelnetstat();
-		goto redisplay;
-	}
-	if (!netcmd(cmd, args))
-		return (0);
-fixup:
-	fetchnetstat();
-redisplay:
+	nflag = 0;
+	wclear(wnd);
+	labelnetstat();
 	shownetstat();
 	refresh();
-	return (1);
+}
+
+void
+netstat_numbers (args)
+	char *args;
+{
+	struct netinfo *p;
+
+	if (nflag == 0)
+		return;
+	
+	p = netcb.ni_forw;
+	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+		if (p->ni_line == -1)
+			continue;
+		p->ni_flags |= NIF_LACHG|NIF_FACHG;
+	}
+	nflag = 0;
+	wclear(wnd);
+	labelnetstat();
+	shownetstat();
+	refresh();
 }

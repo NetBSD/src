@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1999/12/16 17:15:48 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1999/12/20 03:45:02 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.19 1999/12/16 17:15:48 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 1999/12/20 03:45:02 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -119,10 +119,10 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	curmode = (struct mode *)NULL;
 
 	for ( ; argc > 0; argc--, argv++) {
 		struct mode *p;
+		int modefound = 0;
 
 		if (isdigit(argv[0][0])) {
 			naptime = atoi(argv[0]);
@@ -134,11 +134,12 @@ main(argc, argv)
 		for (p = modes; p->c_name ; p++) {
 			if (strcmp(argv[0], p->c_name) == 0) {
 				curmode = p;
+				modefound++;
 				break;
 			}
 		}
 
-		if (!curmode)
+		if (!modefound)
 			error("%s: Unknown command.", argv[0]);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.21 1999/10/10 01:07:03 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.22 1999/12/20 03:45:03 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.21 1999/10/10 01:07:03 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.22 1999/12/20 03:45:03 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -488,31 +488,35 @@ showkre()
 #undef nz
 }
 
-int
-cmdkre(cmd, args)
-	char *cmd, *args;
+void
+vmstat_boot (args)
+	char *args;
 {
+	copyinfo(&z, &s1);
+	state = BOOT;
+}
 
-	if (prefix(cmd, "run")) {
-		copyinfo(&s2, &s1);
-		state = RUN;
-		return (1);
-	}
-	if (prefix(cmd, "boot")) {
-		state = BOOT;
-		copyinfo(&z, &s1);
-		return (1);
-	}
-	if (prefix(cmd, "time")) {
-		state = TIME;
-		return (1);
-	}
-	if (prefix(cmd, "zero")) {
-		if (state == RUN)
-			getinfo(&s1, RUN);
-		return (1);
-	}
-	return (dkcmd(cmd, args));
+void
+vmstat_run (args)
+	char *args;
+{
+	copyinfo(&s1, &s2);
+	state = RUN;
+}
+
+void
+vmstat_time (args)
+	char * args;
+{
+	state = TIME;
+}
+
+void
+vmstat_zero (args)
+	char *args;
+{
+	if (state == RUN)
+		getinfo(&s1, RUN);
 }
 
 /* calculate number of users on the system */
