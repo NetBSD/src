@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.9 1996/05/13 06:02:18 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.10 1996/05/16 07:04:58 mycroft Exp 
  */
 
 /*
@@ -427,7 +427,8 @@
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64-GX */
 
 /* BusLogic products */
-#define	PCI_PRODUCT_BUSLOGIC_946C	0x0140		/* 946C */
+#define	PCI_PRODUCT_BUSLOGIC_OLD946C	0x0140		/* 946C */
+#define	PCI_PRODUCT_BUSLOGIC_946C	0x1040		/* 946C */
 
 /* Cirrus Logic products */
 /* product CIRRUS UNK	0x00a4	unknown */
