@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
+#	$NetBSD: GENERIC,v 1.44 1996/10/15 07:25:55 scottr Exp $
 #
 # GENERIC
 
@@ -67,7 +67,6 @@ options		MACHINE_NONCONTIG
 options		ZS_CONSOLE_ABORT
 
 config		netbsd	swap generic
-options		GENERIC
 
 intvid0		at obio?	# Internal video hardware
 
