@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.4 2000/05/23 01:48:55 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.5 2000/05/30 04:33:15 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,8 +74,14 @@ pass5()
 		}
 		if ((su->su_flags & SEGUSE_DIRTY) &&
 		    su->su_nbytes != seg_table[i].su_nbytes) {
-			pwarn("segment %d claims %d bytes but has %d\n",
+			pwarn("segment %d claims %d bytes but has %d",
 			      i, su->su_nbytes, seg_table[i].su_nbytes);
+			if (su->su_nbytes > seg_table[i].su_nbytes)
+				pwarn(" (high by %d)\n", su->su_nbytes -
+				      seg_table[i].su_nbytes);
+			else
+				pwarn(" (low by %d)\n", - su->su_nbytes +
+				      seg_table[i].su_nbytes);
 			if (preen || reply("fix")) {
 				su->su_nbytes = seg_table[i].su_nbytes;
 				dirty(bp);

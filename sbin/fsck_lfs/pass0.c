@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.5 2000/05/23 01:48:54 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.6 2000/05/30 04:33:14 perseant Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -70,28 +70,43 @@ check_segment(int, int, daddr_t, struct lfs *, int,
 
 #define dbshift (sblock.lfs_bshift - sblock.lfs_fsbtodb)
 
-	void            pass0()
+void
+pass0()
 {
 	daddr_t         daddr;
 	IFILE          *ifp;
 	struct bufarea *bp;
-	ino_t           ino, lastino, nextino;
+	ino_t           ino, lastino, nextino, *visited;
 
 	/*
-         * Check the inode free list for inuse inodes.
-         *
-         * XXX should also check for cycles or breaks in the list, and be able
-         * to repair them.
+         * Check the inode free list for inuse inodes, and cycles.
+	 * Make sure that all free inodes are in fact on the list.
          */
+	visited = (ino_t *)malloc((maxino + 1) * sizeof(ino_t));
+	memset(visited, 0, (maxino + 1) * sizeof(ino_t));
+
 	lastino = 0;
 	ino = sblock.lfs_free;
 	while (ino) {
+		if (visited[ino]) {
+			pwarn("! Ino %d already found on the free list!\n",
+			       ino);
+			if (preen || reply("FIX") == 1) {
+				/* lastino can't be zero */
+				ifp = lfs_ientry(lastino, &bp);
+				ifp->if_nextfree = 0;
+				dirty(bp);
+				bp->b_flags &= ~B_INUSE;
+			}
+			break;
+		}
+		++visited[ino];
 		ifp = lfs_ientry(ino, &bp);
 		nextino = ifp->if_nextfree;
 		daddr = ifp->if_daddr;
 		bp->b_flags &= ~B_INUSE;
 		if (daddr) {
-			printf("! Ino %d with daddr 0x%x is on the free list!\n",
+			pwarn("! Ino %d with daddr 0x%x is on the free list!\n",
 			       ino, daddr);
 			if (preen || reply("FIX") == 1) {
 				if (lastino == 0) {
@@ -100,7 +115,7 @@ check_segment(int, int, daddr_t, struct lfs *, int,
 				} else {
 					ifp = lfs_ientry(lastino, &bp);
 					ifp->if_nextfree = nextino;
-					++bp->b_dirty;
+					dirty(bp);
 					bp->b_flags &= ~B_INUSE;
 				}
 				ino = nextino;
@@ -109,6 +124,28 @@ check_segment(int, int, daddr_t, struct lfs *, int,
 		}
 		lastino = ino;
 		ino = nextino;
+	}
+	/*
+	 * Make sure all free inodes were found on the list
+	 */
+	for (ino = ROOTINO+1; ino <= maxino; ++ino) {
+		if (visited[ino])
+			continue;
+
+		ifp = lfs_ientry(ino, &bp);
+		if (ifp->if_daddr) {
+			bp->b_flags &= ~B_INUSE;
+			continue;
+		}
+
+		pwarn("! Ino %d free, but not on the free list\n", ino);
+		if (preen || reply("FIX") == 1) {
+			ifp->if_nextfree = sblock.lfs_free;
+			sblock.lfs_free = ino;
+			sbdirty();
+			dirty(bp);
+		}
+		bp->b_flags &= ~B_INUSE;
 	}
 }
 

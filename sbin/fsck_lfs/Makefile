@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/16 04:55:59 perseant Exp $
+#	$NetBSD: Makefile,v 1.3 2000/05/30 04:33:14 perseant Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	fsck_lfs
@@ -8,6 +8,6 @@ SRCS=	dir.c inode.c main.c pass1.c pass2.c pass3.c pass4.c \
 SRCS+=  pass0.c pass5.c
 FSCK=   ${.CURDIR}/../fsck
 .PATH:	${.CURDIR}/../../sys/ufs/lfs ${FSCK}
-CPPFLAGS+=-I${FSCK}
+CPPFLAGS+=-I${FSCK} -DVERBOSE_BLOCKMAP
 
 .include <bsd.prog.mk>
