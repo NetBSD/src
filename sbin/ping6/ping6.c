@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.43 2002/05/26 13:21:01 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.44 2002/05/30 17:02:17 thorpej Exp $	*/
 /*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.43 2002/05/26 13:21:01 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.44 2002/05/30 17:02:17 thorpej Exp $");
 #endif
 #endif
 
@@ -628,7 +628,7 @@ main(argc, argv)
 
 		error = getaddrinfo(gateway, NULL, &hints, &gres);
 		if (error) {
-			errx(1, "getaddrinfo for the gateway %s",
+			errx(1, "getaddrinfo for the gateway %s: %s",
 			     gateway, gai_strerror(error));
 		}
 		if (gres->ai_next && (options & F_VERBOSE))
