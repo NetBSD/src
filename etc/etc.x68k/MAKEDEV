@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.44 2002/03/03 14:16:12 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.45 2002/03/04 09:56:41 minoura Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -380,7 +380,7 @@ mouse*)
 		mknod mouse${unit} c 15 ${unit}; chmod 600 mouse${unit}
 		if [ $unit = 0 ]
 		then 
-			rm -f mouse; ln -s mouse${unit} mouse
+			ln -fs mouse${unit} mouse
 		fi
 		;;
 	*)
@@ -512,7 +512,7 @@ pow*)
 		mknod pow${unit} c 32 ${unit}; chmod 644 pow${unit}
 		if [ $unit = 0 ]
 		then 
-			rm -f pow; ln -s pow${unit} pow
+			ln -fs pow${unit} pow
 		fi
 		;;
 	*)
