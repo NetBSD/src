@@ -1,4 +1,4 @@
-/*	$NetBSD: mksunbootcd.c,v 1.4 1999/02/16 23:34:10 is Exp $	*/
+/*	$NetBSD: mksunbootcd.c,v 1.5 1999/05/13 12:55:37 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 /*
  * How we work:
@@ -193,7 +194,7 @@ main(argc, argv)
 		sum ^= *sp++;	/* XXX no need to ntohs/htons for XOR */
 	}
 	sdl.sl_cksum = sum;
-	Dprintf(("label size is %d\n", sizeof(sdl)));
+	Dprintf(("label size is %lu\n", (long)sizeof(sdl)));
 	Dprintf(("cksum computed is 0x%04x\n", ntohs(sum)));
 
 	/* copy partition data to cd image */
