@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.10 2003/05/16 14:25:03 itojun Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.11 2003/06/01 00:03:39 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -44,6 +44,9 @@
  *	Export ksyms internal logic for use in post-mortem debuggers?
  *	  Need to move struct symtab to ksyms.h for that.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.11 2003/06/01 00:03:39 jdolecek Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
