@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.20 2004/02/18 23:44:49 matt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.21 2004/02/19 03:42:01 matt Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.20 2004/02/18 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.21 2004/02/19 03:42:01 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -668,6 +668,21 @@ addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
  * New memory for keeping the symbol table is allocated in this function.
  * Returns 0 if success and EEXIST if the module name is in use.
  */
+static int
+specialsym(const char *symname)
+{
+	return	!strcmp(symname, "_bss_start") ||
+		!strcmp(symname, "__bss_start") ||
+		!strcmp(symname, "_bss_end__") ||
+		!strcmp(symname, "__bss_end__") ||
+		!strcmp(symname, "_edata") ||
+		!strcmp(symname, "_end") ||
+		!strcmp(symname, "__end") ||
+		!strcmp(symname, "__end__") ||
+		!strncmp(symname, "__start_link_set_", 17) ||
+		!strncmp(symname, "__stop_link_set_", 16);
+}
+
 int
 ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
     char *strstart, vsize_t strsize)
@@ -721,11 +736,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		    &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval) {
-				if (!strcmp(symname, "__bss_start") ||
-				    !strcmp(symname, "_edata") ||
-				    !strcmp(symname, "_end") ||
-				    !strncmp(symname, "__start_link_set_",17) ||
-				    !strncmp(symname, "__stop_link_set_",16)) {
+				if (specialsym(symname)) {
 					info.maxsyms++;
 					info.maxnamep += strlen(symname) + 1 +
 					    strlen(mod) + 1;
@@ -768,12 +779,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* Check if the symbol exists */
 		if (ksyms_getval_from_kernel(NULL, symname,
 		    &rval, KSYMS_EXTERN) == 0) {
-			if ((sym[i].st_value != rval) &&
-			    (!strcmp(symname, "__bss_start") ||
-			     !strcmp(symname, "_edata") ||
-			     !strcmp(symname, "_end") ||
-			     !strncmp(symname, "__start_link_set_",17) ||
-			     !strncmp(symname, "__stop_link_set_",16))) {
+			if ((sym[i].st_value != rval) && specialsym(symname)) {
 				addsym(&info, &sym[i], symname, mod);
 			}
 		} else
