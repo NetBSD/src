@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.10 1998/07/01 10:52:11 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.11 1998/08/08 16:10:41 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,6 +102,8 @@ getchar()
 	do
 		c = (*get_fp)() & 0177;
 	while (c == 17 || c == 19);		/* ignore XON/XOFF */
+	if (c < 96 && c > 64)
+		c += 32;
 	return c;
 }
 
@@ -157,7 +159,6 @@ setup()
 		break;
 
 	case VAX_BTYP_43:
-	case VAX_BTYP_46:
 	case VAX_BTYP_49:
 	case VAX_BTYP_410:	  
 	case VAX_BTYP_420:
@@ -171,6 +172,13 @@ setup()
 	case VAX_BTYP_630:
 	        ka630_consinit();
 	        break;
+
+	case VAX_BTYP_46:
+		put_fp = rom_putchar;
+		get_fp = rom_getchar;
+		rom_putc = 0x20040068;
+		rom_getc = 0x20040054;
+		break;
 
 #ifdef notdef
 	case VAX_BTYP_630:
