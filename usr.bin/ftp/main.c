@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1997/10/14 16:31:22 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1997/12/12 23:34:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 1997/10/14 16:31:22 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 1997/12/12 23:34:56 gwr Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,8 +154,10 @@ main(argc, argv)
 			editing = 1;	/* editing mode on if tty is usable */
 #endif
 	}
+#ifndef SMALL
 	if (isatty(fileno(stdout)) && !dumbterm)
 		progress = 1;		/* progress bar on if tty is usable */
+#endif
 
 	while ((ch = getopt(argc, argv, "adeginpP:tvV")) != -1) {
 		switch (ch) {
