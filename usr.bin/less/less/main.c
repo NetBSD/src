@@ -1,29 +1,13 @@
-/*	$NetBSD: main.c,v 1.9 2001/02/19 23:03:49 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2001/07/26 13:43:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -32,7 +16,6 @@
  */
 
 #include "less.h"
-#include "position.h"
 
 public char *	every_first_cmd = NULL;
 public int	new_file;
@@ -41,7 +24,6 @@ public IFILE	curr_ifile = NULL_IFILE;
 public IFILE	old_ifile = NULL_IFILE;
 public struct scrpos initial_scrpos;
 public int	any_display = FALSE;
-public int	twiddle = TRUE;
 public POSITION	start_attnpos = NULL_POSITION;
 public POSITION	end_attnpos = NULL_POSITION;
 public int	wscroll;
@@ -108,7 +90,7 @@ main(argc, argv)
 		{
 			char *env = (char *) ecalloc(strlen(drive) + 
 					strlen(path) + 6, sizeof(char));
-			strcpy(env, "PATH=");
+			strcpy(env, "HOME=");
 			strcat(env, drive);
 			strcat(env, path);
 			putenv(env);
@@ -128,7 +110,11 @@ main(argc, argv)
 	init_cmds();
 	init_prompt();
 	init_charset();
+	init_line();
 	init_option();
+	s = lgetenv("LESS");
+	if (s != NULL)
+		scan_option(save(s));
 
 	if (more_mode) {
 		scan_option("-E");
@@ -139,7 +125,7 @@ main(argc, argv)
 	} else
 		scan_option(lgetenv("LESS"));
 
-#if GNU_OPTIONS
+#if GNU_OPTIONS && 0
 	/*
 	 * Special case for "less --help" and "less --version".
 	 */
@@ -157,6 +143,7 @@ main(argc, argv)
 		}
 	}
 #endif
+
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
 	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
 	{
@@ -342,6 +329,41 @@ skipsp(s)
 	while (*s == ' ' || *s == '\t')	
 		s++;
 	return (s);
+}
+
+/*
+ * See how many characters of two strings are identical.
+ * If uppercase is true, the first string must begin with an uppercase
+ * character; the remainder of the first string may be either case.
+ */
+	public int
+sprefix(ps, s, uppercase)
+	char *ps;
+	char *s;
+	int uppercase;
+{
+	register int c;
+	register int sc;
+	register int len = 0;
+
+	for ( ;  *s != '\0';  s++, ps++)
+	{
+		c = *ps;
+		if (uppercase)
+		{
+			if (len == 0 && SIMPLE_IS_LOWER(c))
+				return (-1);
+			if (SIMPLE_IS_UPPER(c))
+				c = SIMPLE_TO_LOWER(c);
+		}
+		sc = *s;
+		if (len > 0 && SIMPLE_IS_UPPER(sc))
+			sc = SIMPLE_TO_LOWER(sc);
+		if (c != sc)
+			break;
+		len++;
+	}
+	return (len);
 }
 
 /*

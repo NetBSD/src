@@ -1,29 +1,13 @@
-/*	$NetBSD: line.c,v 1.4 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: line.c,v 1.5 2001/07/26 13:43:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -34,6 +18,9 @@
  */
 
 #include "less.h"
+
+#define IS_CONT(c)  (((c) & 0xC0) == 0x80)
+#define LINENUM_WIDTH   8       /* Chars to use for line number */
 
 /* Buffer which holds the current output line */
 public char linebuf[LINEBUF_SIZE];
@@ -48,9 +35,10 @@ static int column;		/* Printable length, accounting for
 				   backspaces, etc. */
 static int overstrike;		/* Next char should overstrike previous char */
 static int is_null_line;	/* There is no current line */
+static int lmargin;		/* Left margin */
 static char pendc;
 static POSITION pendpos;
-
+static char *end_ansi_chars;
 
 static void pshift __P((int));
 static int attr_swidth __P((int));
@@ -66,12 +54,27 @@ extern int linenums;
 extern int ctldisp;
 extern int twiddle;
 extern int binattr;
+extern int status_col;
 extern int auto_wrap, ignaw;
 extern int bo_s_width, bo_e_width;
 extern int ul_s_width, ul_e_width;
 extern int bl_s_width, bl_e_width;
 extern int so_s_width, so_e_width;
 extern int sc_width, sc_height;
+extern int utf_mode;
+extern POSITION start_attnpos;
+extern POSITION end_attnpos;
+
+/*
+ * Initialize from environment variables.
+ */
+	public void
+init_line()
+{
+	end_ansi_chars = lgetenv("LESSANSIENDCHARS");
+	if (end_ansi_chars == NULL || *end_ansi_chars == '\0')
+		end_ansi_chars = "m";
+}
 
 /*
  * Rewind the line buffer.
@@ -81,10 +84,14 @@ prewind()
 {
 	curr = 0;
 	column = 0;
-	cshift = 0;
 	overstrike = 0;
 	is_null_line = 0;
 	pendc = '\0';
+	lmargin = 0;
+	if (status_col)
+		lmargin += 1;
+	if (linenums == OPT_ONPLUS)
+		lmargin += LINENUM_WIDTH+1;
 }
 
 /*
@@ -96,42 +103,77 @@ plinenum(pos)
 {
 	register int lno;
 	register int i;
-	register int n;
+
+	if (linenums == OPT_ONPLUS)
+	{
+		/*
+		 * Get the line number and put it in the current line.
+		 * {{ Note: since find_linenum calls forw_raw_line,
+		 *    it may seek in the input file, requiring the caller 
+		 *    of plinenum to re-seek if necessary. }}
+		 * {{ Since forw_raw_line modifies linebuf, we must
+		 *    do this first, before storing anything in linebuf. }}
+		 */
+		lno = find_linenum(pos);
+	}
 
 	/*
-	 * We display the line number at the start of each line
-	 * only if the -N option is set.
+	 * Display a status column if the -J option is set.
 	 */
-	if (linenums != OPT_ONPLUS)
-		return;
-
+	if (status_col)
+	{
+		linebuf[curr] = ' ';
+		if (start_attnpos != NULL_POSITION &&
+		    pos >= start_attnpos && pos < end_attnpos)
+			attr[curr] = AT_STANDOUT;
+		else
+			attr[curr] = 0;
+		curr++;
+		column++;
+	}
 	/*
-	 * Get the line number and put it in the current line.
-	 * {{ Note: since find_linenum calls forw_raw_line,
-	 *    it may seek in the input file, requiring the caller 
-	 *    of plinenum to re-seek if necessary. }}
+	 * Display the line number at the start of each line
+	 * if the -N option is set.
 	 */
-	lno = find_linenum(pos);
-
-	sprintf(&linebuf[curr], "%6d", lno);
-	n = strlen(&linebuf[curr]);
-	column += n;
-	for (i = 0;  i < n;  i++)
-		attr[curr++] = 0;
-
+	if (linenums == OPT_ONPLUS)
+	{
+		sprintf(&linebuf[curr], "%*d", LINENUM_WIDTH, lno);
+		column += LINENUM_WIDTH;
+		for (i = 0;  i < LINENUM_WIDTH;  i++)
+			attr[curr++] = 0;
+	}
 	/*
-	 * Append enough spaces to bring us to the next tab stop.
-	 * {{ We could avoid this at the cost of adding some
-	 *    complication to the tab stop logic in pappend(). }}
+	 * Append enough spaces to bring us to the lmargin.
 	 */
-	if (tabstop == 0)
-		tabstop = 1;
-	do
+	while (column < lmargin)
 	{
 		linebuf[curr] = ' ';
 		attr[curr++] = AT_NORMAL;
 		column++;
-	} while (((column + cshift) % tabstop) != 0);
+	}
+}
+
+/*
+ *
+ */
+	static int
+utf_len(char *s, int len)
+{
+	int ulen = 0;
+
+	while (*s != '\0' && len > 0)
+	{
+		if (!IS_CONT(*s))
+			len--;
+		s++;
+		ulen++;
+	}
+	while (IS_CONT(*s))
+	{
+		s++;
+		ulen++;
+	}
+	return (ulen);
 }
 
 /*
@@ -143,19 +185,28 @@ pshift(shift)
 	int shift;
 {
 	int i;
+	int real_shift;
 
-	if (shift > column)
-		shift = column;
-	if (shift > curr)
-		shift = curr;
+	if (shift > column - lmargin)
+		shift = column - lmargin;
+	if (shift > curr - lmargin)
+		shift = curr - lmargin;
 
-	for (i = 0;  i < curr - shift;  i++)
+	if (!utf_mode)
+		real_shift = shift;
+	else
 	{
-		linebuf[i] = linebuf[i + shift];
-		attr[i] = attr[i + shift];
+		real_shift = utf_len(linebuf + lmargin, shift);
+		if (real_shift > curr)
+			real_shift = curr;
+	}
+	for (i = 0;  i < curr - real_shift;  i++)
+	{
+		linebuf[lmargin + i] = linebuf[lmargin + i + real_shift];
+		attr[lmargin + i] = attr[lmargin + i + real_shift];
 	}
 	column -= shift;
-	curr -= shift;
+	curr -= real_shift;
 	cshift += shift;
 }
 
@@ -208,6 +259,9 @@ pwidth(c, a)
 {
 	register int w;
 
+	if (utf_mode && IS_CONT(c))
+		return (0);
+
 	if (c == '\b')
 		/*
 		 * Backspace moves backwards one position.
@@ -245,6 +299,28 @@ backc()
 }
 
 /*
+ * Are we currently within a recognized ANSI escape sequence?
+ */
+	static int
+in_ansi_esc_seq()
+{
+	int i;
+
+	/*
+	 * Search backwards for either an ESC (which means we ARE in a seq);
+	 * or an end char (which means we're NOT in a seq).
+	 */
+	for (i = curr-1;  i >= 0;  i--)
+	{
+		if (linebuf[i] == ESC)
+			return (1);
+		if (strchr(end_ansi_chars, linebuf[i]) != NULL)
+			return (0);
+	}
+	return (0);
+}
+
+/*
  * Append a character and attribute to the line buffer.
  */
 	static int
@@ -263,8 +339,11 @@ storec(c, a, pos)
 		 */
 		a = AT_STANDOUT;
 #endif
-	w = pwidth(c, a);
-	if (ctldisp > 0 && column + w + attr_ewidth(a) > sc_width)
+	if (ctldisp == OPT_ONPLUS && in_ansi_esc_seq())
+		w = 0;
+	else
+		w = pwidth(c, a);
+	if (ctldisp != OPT_ON && column + w + attr_ewidth(a) > sc_width)
 		/*
 		 * Won't fit on screen.
 		 */
@@ -373,27 +452,7 @@ do_append(c, pos)
 #define	STOREC(c,a) \
 	if (storec((c),(a),pos)) return (1); else curr++
 
-	if (overstrike)
-	{
-		/*
-		 * Overstrike the character at the current position
-		 * in the line buffer.  This will cause either 
-		 * underline (if a "_" is overstruck), 
-		 * bold (if an identical character is overstruck),
-		 * or just deletion of the character in the buffer.
-		 */
-		overstrike = 0;
-		if ((char)c == linebuf[curr]) {
-			STOREC(linebuf[curr], AT_BOLD);
-		} else if (c == '_') { 
-			STOREC(linebuf[curr], AT_UNDERLINE);
-		} else if (linebuf[curr] == '_') {
-			STOREC(c, AT_UNDERLINE);
-		} else if (control_char(c)) {
-			goto do_control_char;
-		} else
-			STOREC(c, AT_NORMAL);
-	} else if (c == '\b')
+	if (c == '\b')
 	{
 		switch (bs_mode)
 		{
@@ -409,6 +468,26 @@ do_append(c, pos)
 			overstrike = 1;
 			break;
 		}
+	} else if (overstrike)
+	{
+		/*
+		 * Overstrike the character at the current position
+		 * in the line buffer.  This will cause either 
+		 * underline (if a "_" is overstruck), 
+		 * bold (if an identical character is overstruck),
+		 * or just deletion of the character in the buffer.
+		 */
+		overstrike = 0;
+		if ((char)c == linebuf[curr])
+			STOREC(linebuf[curr], AT_BOLD);
+		else if (c == '_')
+			STOREC(linebuf[curr], AT_UNDERLINE);
+		else if (linebuf[curr] == '_')
+			STOREC(c, AT_UNDERLINE);
+		else if (control_char(c))
+			goto do_control_char;
+		else
+			STOREC(c, AT_NORMAL);
 	} else if (c == '\t') 
 	{
 		/*
@@ -425,13 +504,13 @@ do_append(c, pos)
 			do
 			{
 				STOREC(' ', AT_NORMAL);
-			} while (((column + cshift) % tabstop) != 0);
+			} while (((column + cshift - lmargin) % tabstop) != 0);
 			break;
 		}
 	} else if (control_char(c))
 	{
 	do_control_char:
-		if (ctldisp == 0)
+		if (ctldisp == OPT_ON || (ctldisp == OPT_ONPLUS && c == ESC))
 		{
 			/*
 			 * Output as a normal character.
@@ -489,7 +568,7 @@ pdone(endline)
 	 * Add a newline if necessary,
 	 * and append a '\0' to the end of the line.
 	 */
-	if (column < sc_width || !auto_wrap || ignaw || ctldisp == 0)
+	if (column < sc_width || !auto_wrap || ignaw || ctldisp == OPT_ON)
 	{
 		linebuf[curr] = '\n';
 		attr[curr] = AT_NORMAL;
@@ -497,6 +576,11 @@ pdone(endline)
 	}
 	linebuf[curr] = '\0';
 	attr[curr] = AT_NORMAL;
+	/*
+	 * If we are done with this line, reset the current shift.
+	 */
+	if (endline)
+		cshift = 0;
 }
 
 /*
@@ -517,7 +601,7 @@ gline(i, ap)
 		 * If there is no current line, we pretend the line is
 		 * either "~" or "", depending on the "twiddle" flag.
 		 */
-		*ap = AT_NORMAL;
+		*ap = AT_BOLD;
 		s = (twiddle) ? "~\n" : "\n";
 		return (s[i]);
 	}
@@ -533,6 +617,7 @@ gline(i, ap)
 null_line()
 {
 	is_null_line = 1;
+	cshift = 0;
 }
 
 /*
