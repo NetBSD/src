@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.66 1998/05/20 00:00:12 pk Exp $
+# 	$NetBSD: GENERIC,v 1.67 1998/05/20 11:50:54 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -157,7 +157,7 @@ options 	ISO,TPIP	# OSI networking
 options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
-#options 	NTP		# Network Time Protocol in-kernel support
+options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 #options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
