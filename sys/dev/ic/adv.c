@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.22 2001/03/08 06:49:49 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.23 2001/03/27 17:24:03 bouyer Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -375,7 +375,7 @@ adv_start_ccbs(sc)
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			callout_reset(&ccb->xs->xs_callout,
-			    (ccb->timeout * hz) / 1000,
+			    ((u_int64_t)ccb->timeout * (u_int64_t)hz) / 1000,
 			    adv_timeout, ccb);
 	}
 }
