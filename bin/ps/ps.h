@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.23 2004/03/27 14:09:10 simonb Exp $	*/
+/*	$NetBSD: ps.h,v 1.24 2004/03/27 14:52:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,11 +53,12 @@ typedef struct var {
 	char	*name;		/* name(s) of variable */
 	char	*header;	/* default header */
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
-#define	LJUST	0x02		/* left adjust on output (trailing blanks) */
-#define	INF127	0x04		/* 127 = infinity: if > 127, print 127. */
-#define	LWP	0x08		/* dispatch to kinfo_lwp routine */
-#define	UAREA	0x10		/* need to check p_uvalid */
-#define	ALIAS	0x20		/* entry is alias for 'header' */
+#define	ARGV0	0x02		/* only print argv[0] */
+#define	LJUST	0x04		/* left adjust on output (trailing blanks) */
+#define	INF127	0x08		/* 127 = infinity: if > 127, print 127. */
+#define	LWP	0x10		/* dispatch to kinfo_lwp routine */
+#define	UAREA	0x20		/* need to check p_uvalid */
+#define	ALIAS	0x40		/* entry is alias for 'header' */
 	u_int	flag;
 				/* output routine */
 	void	(*oproc)(void *, struct varent *, int);
