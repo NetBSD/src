@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2001/06/21 00:10:49 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.69 2001/07/05 06:34:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -584,6 +584,7 @@ trap(type, tstate, pc, tf)
 		 * the FPU.
 		 */
 		if (type == T_FPDISABLED) {
+extern void db_printf(const char * , ...);
 #ifndef NEW_FPSTATE
 			if (fpproc != NULL) {	/* someone else had it */
 				savefpstate(fpproc->p_md.md_fpstate);
@@ -594,22 +595,28 @@ trap(type, tstate, pc, tf)
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
 #else
+			struct proc *newfpproc;
+
 			/* New scheme */
-			if (fpproc != NULL) {	/* someone else had it, maybe? */
-				savefpstate(fpproc->p_md.md_fpstate);
-				fpproc = NULL;
-				/* Enable the FPU */
-			}
 			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
-				fpproc = &proc0;
+				newfpproc = &proc0;
 			} else {
-				fpproc = curproc;
+				newfpproc = curproc;
 			}
-			/* If we have an allocated fpstate then load it */
-			if (fpproc->p_md.md_fpstate != 0)
-				loadfpstate(fpproc->p_md.md_fpstate);
-			else
-				fpproc = NULL;
+			if (fpproc != newfpproc) {
+				if (fpproc != NULL) {
+				/* someone else had it, maybe? */
+					savefpstate(fpproc->p_md.md_fpstate);
+					fpproc = NULL;
+				}
+				/* If we have an allocated fpstate, load it */
+				if (newfpproc->p_md.md_fpstate != 0) {
+					fpproc = newfpproc;
+					loadfpstate(fpproc->p_md.md_fpstate);
+				} else
+					fpproc = NULL;
+			}
+			/* Enable the FPU */
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
 #endif
