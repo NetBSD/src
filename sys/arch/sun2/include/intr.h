@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/04/06 13:13:03 fredette Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2001/04/18 03:30:14 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -48,6 +48,7 @@
 #define IPL_SOFTNET  		_IPL_SOFT_LEVEL1
 #define IPL_SOFTCLOCK		_IPL_SOFT_LEVEL1
 #define IPL_SOFTSERIAL		_IPL_SOFT_LEVEL3
+#define	IPL_BIO			2
 #define	IPL_NET			3
 #define	IPL_CLOCK		5
 #define	IPL_SERIAL		6
