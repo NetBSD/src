@@ -165,6 +165,10 @@ $ EIDRM
 82 Identifierway emovedray
 $ ENOMSG
 83 Onay essagemay ofway esiredday ypetay
+$ EOVERFLOW
+84 Aluevay ootay argelay otay ebay oredstay inway ataday ypetay
+$ EILSEQ
+85 Illegalway ytebay equencesay
 $set 2
 $ SIGHUP
 1 Anguphay
