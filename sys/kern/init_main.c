@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.130 1998/08/13 02:10:56 eeh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.131 1998/08/31 23:55:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -49,6 +49,7 @@
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
+#include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
@@ -252,6 +253,7 @@ main()
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Create the file descriptor table. */
+	finit();
 	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
 
