@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.32 1994/06/24 14:22:08 hpeyerl Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.32.2.1 1994/08/03 13:26:45 hpeyerl Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -135,7 +135,7 @@ comp_config(fp)
 		fprintf(fp, "\t%d,\t%d,\t%d,\t%d,\t{",
 			dp->d_unit, dp->d_pri < 0 ? 0 : dp->d_pri,
 			dp->d_flags, 1);
-		for (fl = fl->f_next; fl->f_type == COMPSPEC && fl->f_next; fl = fl->f_next)
+		for (fl = fl->f_next; fl->f_type == COMPSPEC && fl; fl = fl->f_next)
 			fprintf(fp, " 0x%x,", fl->f_compdev);
 		fprintf(fp, " NODEV },\n");
 	}
