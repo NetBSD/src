@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.26 1994/06/17 22:20:49 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.27 1994/06/29 01:51:06 mycroft Exp $
  */
 
 /*
@@ -369,50 +369,52 @@ extern vm_map_t phys_map;
  * All requests are (re)mapped into kernel VA space via the useriomap
  * (a name with only slightly more meaning than "kernelmap")
  */
-vmapbuf(bp)
+vmapbuf(bp, len)
 	register struct buf *bp;
+	vm_size_t len;
 {
-	register int npf;
-	vm_offset_t addr, off, kva;
-	register vm_offset_t pa;
+	vm_offset_t faddr, taddr, off;
 	struct pmap *fpmap, *tpmap;
+	register vm_offset_t pa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = (vm_offset_t)(bp->b_saveaddr = bp->b_data);
-	off = addr & PAGE_MASK;
-	addr = trunc_page(addr);
-	npf = btoc(round_page(off + bp->b_bufsize));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_data = (caddr_t)(kva + off);
+	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = kmem_alloc_wait(phys_map, len);
+	bp->b_data = (caddr_t)(taddr + off);
 	fpmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	tpmap = vm_map_pmap(phys_map);
 	do {
-		pa = pmap_extract(fpmap, (vm_offset_t)addr);
+		pa = pmap_extract(fpmap, faddr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(tpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		addr += PAGE_SIZE;
-		kva += PAGE_SIZE;
-	} while (--npf);
+		pmap_enter(tpmap, taddr, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	} while (len);
 }
 
 /*
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
-vunmapbuf(bp)
+vunmapbuf(bp, len)
 	register struct buf *bp;
+	vm_size_t len;
 {
-	register vm_offset_t addr;
+	vm_offset_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = (vm_offset_t)bp->b_data;
-	kmem_free_wakeup(phys_map, trunc_page(addr),
-	   round_page((addr & PAGE_MASK) + bp->b_bufsize));
+	addr = trunc_page(bp->b_data);
+	off = bp->b_data - addr;
+	len = round_page(off + len);
+	kmem_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr = 0;
 }
 
 /*
