@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.35 1997/01/30 09:11:24 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.36 1997/03/31 07:29:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -81,22 +81,22 @@
 #endif
 
 struct speedtab dcmspeedtab[] = {
-	0,	BR_0,
-	50,	BR_50,
-	75,	BR_75,
-	110,	BR_110,
-	134,	BR_134,
-	150,	BR_150,
-	300,	BR_300,
-	600,	BR_600,
-	1200,	BR_1200,
-	1800,	BR_1800,
-	2400,	BR_2400,
-	4800,	BR_4800,
-	9600,	BR_9600,
-	19200,	BR_19200,
-	38400,	BR_38400,
-	-1,	-1
+	{	0,	BR_0		},
+	{	50,	BR_50		},
+	{	75,	BR_75		},
+	{	110,	BR_110		},
+	{	134,	BR_134		},
+	{	150,	BR_150		},
+	{	300,	BR_300		},
+	{	600,	BR_600		},
+	{	1200,	BR_1200		},
+	{	1800,	BR_1800		},
+	{	2400,	BR_2400		},
+	{	4800,	BR_4800		},
+	{	9600,	BR_9600		},
+	{	19200,	BR_19200	},
+	{	38400,	BR_38400	},
+	{	-1,	-1		},
 };
 
 /* u-sec per character based on baudrate (assumes 1 start/8 data/1 stop bit) */
@@ -124,8 +124,8 @@ struct	dcmischeme {
  * better.
  */
 static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
-static	int dcm_lastcnpri = CN_DEAD;		/* XXX last priority */
 static	int dcmconsinit;			/* has been initialized */
+/* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
 
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
@@ -257,13 +257,29 @@ struct cfdriver dcm_cd = {
 	NULL, "dcm", DV_TTY
 };
 
-int	dcmparam();
-void	dcmstart();
+cdev_decl(dcm);
 
-void	dcminit __P((struct dcmdevice *, int, int));
 int	dcmintr __P((void *));
+void	dcmpint __P((struct dcm_softc *, int, int));
+void	dcmrint __P((struct dcm_softc *));
+void	dcmreadbuf __P((struct dcm_softc *, int));
+void	dcmxint __P((struct dcm_softc *, int));
+void	dcmmint __P((struct dcm_softc *, int, int));
+
+int	dcmparam __P((struct tty *, struct termios *));
+void	dcmstart __P((struct tty *));
+void	dcmstop __P((struct tty *, int));
+int	dcmmctl __P((dev_t, int, int));
+void	dcmsetischeme __P((int, int));
+void	dcminit __P((struct dcmdevice *, int, int));
 
 int	dcmselftest __P((struct dcm_softc *));
+
+int	dcm_console_scan __P((int, caddr_t, void *));
+void	dcmcnprobe __P((struct consdev *));
+void	dcmcninit __P((struct consdev *));
+int	dcmcngetc __P((dev_t));
+void	dcmcnputc __P((dev_t, int));
 
 int
 dcmmatch(parent, match, aux)
@@ -293,6 +309,8 @@ dcmattach(parent, self, aux)
 	int brd = self->dv_unit;
 	int scode = da->da_scode;
 	int i, mbits, ipl;
+
+	sc->sc_flags = 0;
 
 	if (scode == conscode) {
 		dcm = (struct dcmdevice *)conaddr;
@@ -326,7 +344,7 @@ dcmattach(parent, self, aux)
 
 	/* Extract configuration info from flags. */
 	sc->sc_softCAR = self->dv_cfdata->cf_flags & DCM_SOFTCAR;
-	sc->sc_flags = self->dv_cfdata->cf_flags & DCM_FLAGMASK;
+	sc->sc_flags |= self->dv_cfdata->cf_flags & DCM_FLAGMASK;
 
 	/* Mark our unit as configured. */
 	sc->sc_flags |= DCM_ACTIVE;
@@ -546,7 +564,7 @@ dcmread(dev, uio, flag)
 {
 	int unit, board, port;
 	struct dcm_softc *sc;
-	register struct tty *tp;
+	struct tty *tp;
 
 	unit = DCMUNIT(dev);
 	board = DCMBOARD(unit);
@@ -566,7 +584,7 @@ dcmwrite(dev, uio, flag)
 {
 	int unit, board, port;
 	struct dcm_softc *sc;
-	register struct tty *tp;
+	struct tty *tp;
 
 	unit = DCMUNIT(dev);
 	board = DCMBOARD(unit);
@@ -606,7 +624,7 @@ dcmintr(arg)
 	int pcnd[4], mcode, mcnd[4];
 
 	/*
-	 * Do all guarded register accesses right off to minimize
+	 * Do all guarded accesses right off to minimize
 	 * block out of hardware.
 	 */
 	SEM_LOCK(dcm);
@@ -703,6 +721,7 @@ dcmintr(arg)
  *	First, it might be a special character (exception interrupt);
  *	Second, it may be a buffer empty (transmit interrupt);
  */
+void
 dcmpint(sc, port, code)
 	struct dcm_softc *sc;
 	int port, code;
@@ -714,6 +733,7 @@ dcmpint(sc, port, code)
 		dcmxint(sc, port);
 }
 
+void
 dcmrint(sc)
 	struct dcm_softc *sc;
 {
@@ -723,6 +743,7 @@ dcmrint(sc)
 		dcmreadbuf(sc, port);
 }
 
+void
 dcmreadbuf(sc, port)
 	struct dcm_softc *sc;
 	int port;
@@ -813,6 +834,7 @@ dcmreadbuf(sc, port)
 #endif
 }
 
+void
 dcmxint(sc, port)
 	struct dcm_softc *sc;
 	int port;
@@ -825,6 +847,7 @@ dcmxint(sc, port)
 	(*linesw[tp->t_line].l_start)(tp);
 }
 
+void
 dcmmint(sc, port, mcnd)
 	struct dcm_softc *sc;
 	int port, mcnd;
@@ -868,7 +891,7 @@ dcmmint(sc, port, mcnd)
 int
 dcmioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -985,8 +1008,8 @@ dcmioctl(dev, cmd, data, flag, p)
 
 int
 dcmparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
 	struct dcm_softc *sc;
 	struct dcmdevice *dcm;
@@ -1064,7 +1087,7 @@ dcmparam(tp, t)
  
 void
 dcmstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	struct dcm_softc *sc;
 	struct dcmdevice *dcm;
@@ -1194,7 +1217,7 @@ out:
  */
 void
 dcmstop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
 	int s;
@@ -1211,6 +1234,7 @@ dcmstop(tp, flag)
 /*
  * Modem control
  */
+int
 dcmmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -1270,6 +1294,7 @@ dcmmctl(dev, bits, how)
 /*
  * Set board to either interrupt per-character or at a fixed interval.
  */
+void
 dcmsetischeme(brd, flags)
 	int brd, flags;
 {
@@ -1305,7 +1330,7 @@ dcmsetischeme(brd, flags)
 	 * chars for any port on the board.
 	 */
 	if (!perchar) {
-		register struct tty *tp;
+		struct tty *tp;
 		int c;
 
 		for (i = 0; i < NDCMPORT; i++) {
@@ -1377,8 +1402,8 @@ dcmselftest(sc)
 	struct dcm_softc *sc;
 {
 	struct dcmdevice *dcm = sc->sc_dcm;
-	int i, timo = 0;
-	int s, brd, mbits, rv;
+	int timo = 0;
+	int s, rv;
 
 	rv = 1;
 
@@ -1571,7 +1596,7 @@ dcmcnputc(dev, c)
 {
 	struct dcmpreg *pp;
 	unsigned tail;
-	int s, unit, stat;
+	int s, stat;
 
 	pp = dcm_preg(dcm_cn, DCMCONSPORT);
 
