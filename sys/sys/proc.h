@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.6 2001/11/17 00:37:38 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.7 2001/11/17 01:10:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -184,8 +184,7 @@ struct proc {
 
 	pid_t		p_oppid;	/* Save parent pid during ptrace XXX */
 	int		p_dupfd;	/* Sideways return value from filedescopen XXX */
-	struct callout 	p_realit_ch;	/* real time callout */
-	struct itimerval p_realtimer;	/* Alarm timer */
+	struct ptimer	**p_timers;	/* Timers: real, virtual, profiling */
 	struct timeval 	p_rtime;	/* Real time */
 	u_quad_t 	p_uticks;	/* Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* Statclock hits in system mode */
@@ -377,6 +376,7 @@ extern struct pool	pcred_pool;	/* Memory pool for pcreds */
 extern struct pool	plimit_pool;	/* Memory pool for plimits */
 extern struct pool 	pstats_pool;	/* memory pool for pstats */
 extern struct pool	rusage_pool;	/* Memory pool for rusages */
+extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
 struct proc *pfind(pid_t);		/* Find process by id */
 struct pgrp *pgfind(pid_t);		/* Find process group by id */

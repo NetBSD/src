@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.5 2001/11/14 19:16:35 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.6 2001/11/17 01:10:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.5 2001/11/14 19:16:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.6 2001/11/17 01:10:16 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -318,8 +318,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_pptr = p1;
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
-
-	callout_init(&p2->p_realit_ch);
 
 #ifdef KTRACE
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74.2.4 2001/11/14 19:16:33 nathanw Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.74.2.5 2001/11/17 01:10:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.4 2001/11/14 19:16:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.5 2001/11/17 01:10:16 nathanw Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.4 2001/11/14 19:16:33 nathanw 
 #include <sys/sysctl.h>
 #include <sys/timex.h>
 #include <sys/sched.h>
+#include <sys/time.h>
 #ifdef CALLWHEEL_STATS
 #include <sys/device.h>
 #endif
@@ -532,18 +533,18 @@ hardclock(struct clockframe *frame)
 
 	l = curproc;
 	if (l) {
-		struct pstats *pstats;
 		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
-		pstats = p->p_stats;
 		if (CLKF_USERMODE(frame) &&
-		    timerisset(&pstats->p_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_VIRTUAL], tick) == 0)
+		    p->p_timers && p->p_timers[ITIMER_VIRTUAL] &&
+		    timerisset(&p->p_timers[ITIMER_VIRTUAL]->pt_time.it_value) && 
+		    (itimerdecr(&p->p_timers[ITIMER_VIRTUAL]->pt_time, tick) == 0))
 			psignal(p, SIGVTALRM);
-		if (timerisset(&pstats->p_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pstats->p_timer[ITIMER_PROF], tick) == 0)
+		if (p->p_timers && p->p_timers[ITIMER_PROF] &&
+		    timerisset(&p->p_timers[ITIMER_PROF]->pt_time.it_value) &&
+		    (itimerdecr(&p->p_timers[ITIMER_PROF]->pt_time, tick) == 0))
 			psignal(p, SIGPROF);
 	}
 

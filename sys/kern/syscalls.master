@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108.2.3 2001/08/24 00:11:40 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108.2.4 2001/11/17 01:10:17 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -494,11 +494,15 @@
 			    const struct timespec *tp); }
 234	STD		{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-235	UNIMPL		timer_create
-236	UNIMPL		timer_delete
-237	UNIMPL		timer_settime
-238	UNIMPL		timer_gettime
-239	UNIMPL		timer_getoverrun
+235	STD		{ int sys_timer_create(clockid_t clock_id, \
+			    struct sigevent *evp, timer_t *timerid); }
+236	STD		{ int sys_timer_delete(timer_t timerid); }
+237	STD		{ int sys_timer_settime(timer_t timerid, int flags, \
+			    const struct itimerspec *value, \
+			    struct itimerspec *ovalue); }
+238	STD		{ int sys_timer_gettime(timer_t timerid, struct \
+			    itimerspec *value); }
+239	STD		{ int sys_timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;

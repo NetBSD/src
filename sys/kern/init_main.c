@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.6 2001/11/14 19:16:32 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.7 2001/11/17 01:10:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.6 2001/11/14 19:16:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.7 2001/11/17 01:10:16 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -272,7 +272,6 @@ main(void)
 	l->l_stat = LSONPROC;
 
 
-	callout_init(&p->p_realit_ch);
 	callout_init(&l->l_tsleep_ch);
 
 	/* Create credentials. */
