@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.14 1999/08/18 21:42:46 cgd Exp $
+.\" $NetBSD: installboot.8,v 1.15 1999/09/19 03:07:59 ross Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -97,6 +97,17 @@ Instead of installing a primary bootstrap program, remove any existing
 primary bootstrap program.
 .It Fl n
 Do not actually write anything to the disk.
+.It Fl s
+Arrange for the final checksum to be Sun and
+.Nx Ns /sparc Ns -compatible .
+.if 0 \{\
+by modifying the sector interior so
+the alpha 64-bit checksum also contains the embedded 16-bit sum and
+16-bit magic number expected by such systems.
+.\}
+.Em Note : No The existing
+.Nx Ns /sparc
+disklabel should use no more than 4 partitions.
 .It Fl v
 Print information about what
 .Nm
@@ -145,18 +156,17 @@ file system
 secondary bootstrap
 .El
 .Sh EXAMPLES
-.Dl installboot /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
-Install the Berkeley Fast File System primary bootstrap on to disk sd0.
+.if t .ne 4
+Install the Berkeley Fast File System primary bootstrap on to disk sd0:
+.D1 Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
-.Dl installboot -c /dev/rsd1c
-.Pp
-Remove the primary bootstrap from disk sd1.
-.Pp
-.Dl installboot /tmp/cd-image /usr/mdec/bootxx_cd9660
+Remove the primary bootstrap from disk sd1:
+.Dl Ic installboot -c /dev/rsd1c
 .Pp
 Install the ISO 9660 primary bootstrap in the file
-.Pa /tmp/cd-image .
+.Pa /tmp/cd-image :
+.Dl Ic installboot /tmp/cd-image /usr/mdec/bootxx_cd9660
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr mkbootimage 8
@@ -169,9 +179,10 @@ command first appeared in
 A previous version which operated quite differently was introduced in
 .Nx 1.2 .
 .Sh AUTHORS
-The current version of the
+The
 .Nm
-utility was written by Chris Demetriou.
+utility was written by Chris Demetriou and Ross Harvey.
+.if 0 \{\
 The previous version of the
 .Nx Ns Tn /alpha
 .Nm
@@ -180,6 +191,7 @@ utility was originally written by Paul Kranenburg for
 and modified for use with
 .Nx Ns Tn /alpha
 by Chris Demetriou, Jason Thorpe, Ross Harvey, and others.
+.\}
 .Sh BUGS
 The
 .Nx Ns Tn /alpha
