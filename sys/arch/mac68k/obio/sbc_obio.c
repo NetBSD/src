@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.10.10.1 2000/11/20 20:12:26 bouyer Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.10.10.2 2001/03/27 13:16:24 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -226,11 +226,10 @@ sbc_obio_attach(parent, self, args)
 	if (sbc_debug)
 		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
 		    sc, sc->sc_regs);
-	ncr_sc->sc_link.flags |= sbc_link_flags;
 #endif
 
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = minphys;
+	ncr_sc->sc_channel.chan_id = 7;
+	ncr_sc->sc_adapter.adapt_minphys = minphys;
 
 	/*
 	 *  Initialize the SCSI controller itself.
