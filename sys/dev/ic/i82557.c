@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.29 2000/05/24 07:49:13 soren Exp $	*/
+/*	$NetBSD: i82557.c,v 1.30 2000/05/24 08:04:23 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -666,6 +666,9 @@ fxp_read_eeprom(sc, data, offset, words)
 		}
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(1);
+
+		/* The EEPROM data is little-endian. */
+		data[i] = le16toh(data[i]);
 	}
 }
 
