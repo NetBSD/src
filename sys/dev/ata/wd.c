@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.215 2001/11/13 12:53:09 lukem Exp $ */
+/*	$NetBSD: wd.c,v 1.216 2001/12/02 22:44:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.215 2001/11/13 12:53:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.216 2001/12/02 22:44:32 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -235,19 +235,19 @@ wdprobe(parent, match, aux)
 
 	void *aux;
 {
-	struct ata_atapi_attach *aa_link = aux;
+	struct ata_device *adev = aux;
 
-	if (aa_link == NULL)
+	if (adev == NULL)
 		return 0;
-	if (aa_link->aa_type != T_ATA)
+	if (adev->adev_bustype->bustype_type != SCSIPI_BUSTYPE_ATA)
 		return 0;
 
 	if (match->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT &&
-	    match->cf_loc[ATACF_CHANNEL] != aa_link->aa_channel)
+	    match->cf_loc[ATACF_CHANNEL] != adev->adev_channel)
 		return 0;
 
 	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
-	    match->cf_loc[ATACF_DRIVE] != aa_link->aa_drv_data->drive)
+	    match->cf_loc[ATACF_DRIVE] != adev->adev_drv_data->drive)
 		return 0;
 	return 1;
 }
@@ -258,7 +258,7 @@ wdattach(parent, self, aux)
 	void *aux;
 {
 	struct wd_softc *wd = (void *)self;
-	struct ata_atapi_attach *aa_link= aux;
+	struct ata_device *adev= aux;
 	int i, blank;
 	char buf[41], pbuf[9], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
@@ -266,8 +266,8 @@ wdattach(parent, self, aux)
 	callout_init(&wd->sc_restart_ch);
 	BUFQ_INIT(&wd->sc_q);
 
-	wd->openings = aa_link->aa_openings;
-	wd->drvp = aa_link->aa_drv_data;;
+	wd->openings = adev->adev_openings;
+	wd->drvp = adev->adev_drv_data;;
 	wd->wdc_softc = parent;
 	/* give back our softc to our caller */
 	wd->drvp->drv_softc = &wd->sc_dev;

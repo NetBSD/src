@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.43 2001/11/15 09:48:16 lukem Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.44 2001/12/02 22:44:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.43 2001/11/15 09:48:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.44 2001/12/02 22:44:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,20 +120,32 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 };
 
 int
+atapiprint(aux, pnp)
+	void *aux;
+	const char *pnp; 
+{
+	struct scsipi_channel *chan = aux;
+	if (pnp)
+		printf("atapibus at %s", pnp);
+	printf(" channel %d", chan->chan_channel);
+	return (UNCONF);
+}
+
+int
 atapibusmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ata_atapi_attach *aa = aux;
+	struct scsipi_channel *chan = aux;
 
-	if (aa == NULL)
+	if (chan == NULL)
 		return (0);
 
-	if (aa->aa_type != T_ATAPI)
+	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_ATAPI)
 		return (0);
 
-	if (cf->cf_loc[ATAPICF_CHANNEL] != aa->aa_channel &&
+	if (cf->cf_loc[ATAPICF_CHANNEL] != chan->chan_channel &&
 	    cf->cf_loc[ATAPICF_CHANNEL] != ATAPICF_CHANNEL_DEFAULT)
 		return (0);
 
@@ -161,11 +173,9 @@ atapibusattach(parent, self, aux)
 	void *aux;
 {
 	struct atapibus_softc *sc = (void *) self;
-	struct ata_atapi_attach *aa = aux;
-	struct scsipi_channel *chan = aa->aa_bus_private;
+	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
-	sc->sc_drvs = aa->aa_drv_data;
 
 	/* ATAPI has no LUNs. */
 	chan->chan_nluns = 1;
@@ -235,17 +245,6 @@ atapibusdetach(self, flags)
 		error = config_detach(periph->periph_dev, flags);
 		if (error)
 			return (error);
-
-		/*
-		 * We have successfully detached the child.  Drop the
-		 * direct reference for the child so that wdcdetach
-		 * won't call detach routine twice.
-		 */
-#ifdef DIAGNOSTIC
-		if (periph->periph_dev != sc->sc_drvs[target].drv_softc)
-			panic("softc mismatch");
-#endif
-		sc->sc_drvs[target].drv_softc = NULL;
 
 		scsipi_remove_periph(chan, periph);
 		free(periph, M_DEVBUF);
