@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.24 2002/11/15 22:44:57 wdk Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.25 2002/11/21 15:20:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
-#ifndef LINUX_ELF_AUX_ENTRIES
+#ifndef LINUX_MACHDEP_ELF_COPYARGS
 #define LINUX_ELF_AUX_ENTRIES	13	/* we push 13 parameters */
 #endif
 
