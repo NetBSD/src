@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1999/05/30 19:13:34 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1999/06/05 05:08:25 mrg Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7672,7 +7672,10 @@ ENTRY(subyte)
  */
 	
 /*
- * probeget(asi, addr, size) caddr_t addr; int asi size;
+ * probeget(asi, addr, size)
+ *	int asi;
+ *	caddr_t addr;
+ *	int size;
  *
  * Read or write a (byte,word,longword) from the given address.
  * Like {fu,su}{byte,halfword,word} but our caller is supposed
@@ -7702,7 +7705,10 @@ ENTRY(probeget)
 	 STPTR	%g0, [%o3 + PCB_ONFAULT]
 
 /*
- * probeset(asi, addr, size, val) caddr_t addr; int asi size, val;
+ * probeset(asi, addr, size, val)
+ *	int asi;
+ *	caddr_t addr;
+ *	int size, val;
  *
  * As above, but we return 0 on success.
  */
