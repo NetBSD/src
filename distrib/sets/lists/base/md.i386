@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.68.2.2 2000/09/12 00:51:42 fvdl Exp $
+# $NetBSD: md.i386,v 1.68.2.3 2000/10/18 16:47:35 tv Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/bktr
@@ -7,6 +7,7 @@
 ./dev/tuner
 ./dev/vbi
 ./sbin/fdisk
+./sbin/ldconfig
 ./usr/bin/fdformat
 ./usr/lib/libi386.so
 ./usr/lib/libi386.so.0

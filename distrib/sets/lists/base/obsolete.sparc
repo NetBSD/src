@@ -1,5 +1,4 @@
-# $NetBSD: obsolete.sparc,v 1.2 2000/04/22 00:51:21 hubertf Exp $
-/bin/ldconfig
+# $NetBSD: obsolete.sparc,v 1.2.4.1 2000/10/18 16:47:40 tv Exp $
 /usr/include/sparc
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
