@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.9 1997/07/20 20:32:47 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.10 1998/07/28 17:44:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.9 1997/07/20 20:32:47 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.10 1998/07/28 17:44:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,11 +50,15 @@ __RCSID("$NetBSD: tar.c,v 1.9 1997/07/20 20:32:47 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <string.h>
-#include <stdio.h>
+
 #include <ctype.h>
-#include <unistd.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pax.h"
 #include "extern.h"
 #include "tar.h"
@@ -732,8 +736,6 @@ int
 ustar_strd()
 #endif
 {
-	if ((usrtb_start() < 0) || (grptb_start() < 0))
-		return(-1);
 	return(0);
 }
 
@@ -752,8 +754,6 @@ int
 ustar_stwr()
 #endif
 {
-	if ((uidtb_start() < 0) || (gidtb_start() < 0))
-		return(-1);
 	return(0);
 }
 
@@ -862,10 +862,10 @@ ustar_rd(arcn, buf)
 	 * the posix spec wants).
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
-	if (gid_name(hd->gname, &(arcn->sb.st_gid)) < 0)
+	if (gid_from_group(hd->gname, &(arcn->sb.st_gid)) < 0)
 		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
-	if (uid_name(hd->uname, &(arcn->sb.st_uid)) < 0)
+	if (uid_from_user(hd->uname, &(arcn->sb.st_uid)) < 0)
 		arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 
 	/*
@@ -975,6 +975,7 @@ ustar_wr(arcn)
 	HD_USTAR *hd;
 	char *pt;
 	char hdblk[sizeof(HD_USTAR)];
+	const char *user, *group;
 
 	/*
 	 * check for those file system types ustar cannot store
@@ -1111,8 +1112,10 @@ ustar_wr(arcn)
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
-	zf_strncpy(hd->uname,name_uid(arcn->sb.st_uid, 0),sizeof(hd->uname));
-	zf_strncpy(hd->gname,name_gid(arcn->sb.st_gid, 0),sizeof(hd->gname));
+	user = user_from_uid(arcn->sb.st_uid, 1);
+	group = group_from_gid(arcn->sb.st_gid, 1);
+	zf_strncpy(hd->uname, user ? user : "", sizeof(hd->uname));
+	zf_strncpy(hd->gname, group ? group : "", sizeof(hd->gname));
 
 	/*
 	 * calculate and store the checksum write the header to the archive

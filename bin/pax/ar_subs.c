@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.8 1998/04/01 14:04:52 kleink Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.9 1998/07/28 17:44:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.8 1998/04/01 14:04:52 kleink Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.9 1998/07/28 17:44:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,9 +104,6 @@ list()
 	 */
 	if ((get_arc() < 0) || ((*frmt->options)() < 0) ||
 	    ((*frmt->st_rd)() < 0))
-		return;
-
-	if (vflag && ((uidtb_start() < 0) || (gidtb_start() < 0)))
 		return;
 
 	now = time((time_t *)NULL);

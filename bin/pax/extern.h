@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1998/07/27 16:43:25 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1998/07/28 17:44:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -98,18 +98,6 @@ int rd_wrfile __P((ARCHD *, int, off_t *));
 void cp_file __P((ARCHD *, int, int));
 int buf_fill __P((void));
 int buf_flush __P((int));
-
-/*
- * cache.c
- */
-int uidtb_start __P((void));
-int gidtb_start __P((void));
-int usrtb_start __P((void));
-int grptb_start __P((void));
-const char * name_uid __P((uid_t, int));
-const char * name_gid __P((gid_t, int));
-int uid_name __P((char *, uid_t *));
-int gid_name __P((char *, gid_t *));
 
 /*
  * cpio.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.12 1998/07/27 16:43:25 mycroft Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.13 1998/07/28 17:44:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.12 1998/07/27 16:43:25 mycroft Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.13 1998/07/28 17:44:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,14 +50,18 @@ __RCSID("$NetBSD: gen_subs.c,v 1.12 1998/07/27 16:43:25 mycroft Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <stdio.h>
+
 #include <ctype.h>
-#include <time.h>
-#include <tzfile.h>
-#include <utmp.h>
-#include <unistd.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <tzfile.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #include "pax.h"
 #include "extern.h"
 
@@ -96,7 +100,7 @@ ls_list(arcn, now)
 	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
-	const char *timefrmt;
+	const char *timefrmt, *user, *group;
 
 	/*
 	 * if not verbose, just print the file name
@@ -130,9 +134,10 @@ ls_list(arcn, now)
 	 */
 	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
-	(void)printf("%s%2u %-*s %-*s ", f_mode, sbp->st_nlink, UT_NAMESIZE,
-		name_uid(sbp->st_uid, 1), UT_GRPSIZE,
-		name_gid(sbp->st_gid, 1));
+	user = user_from_uid(sbp->st_uid, 0);
+	group = group_from_gid(sbp->st_gid, 0);
+	(void)printf("%s%2u %-*s %-*s ", f_mode, sbp->st_nlink,
+	    UT_NAMESIZE, user ? user : "", UT_GRPSIZE, group ? group : "");
 
 	/*
 	 * print device id's for devices, or sizes for other nodes
