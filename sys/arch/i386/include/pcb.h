@@ -73,9 +73,9 @@ struct pcb {
 #endif
 #define	FP_USESEMC	0x08	/* process uses EMC memory-mapped mode */
 #define	FP_SOFTFP	0x20	/* process using software fltng pnt emulator */
-	short	pcb_iml;	/* interrupt mask level */
+	int	pcb_iml;	/* interrupt mask level */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
-	int	pcb_cmap2;	/* XXX temporary PTE - will prefault instead */
+	int	unused;
 };
 
 #ifdef KERNEL

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19 1993/07/11 14:12:40 mycroft Exp $
+ *	$Id: icu.s,v 1.20 1993/12/14 05:31:49 mycroft Exp $
  */
 
 /*
@@ -231,7 +231,7 @@ test_resched:
 #endif
 	cmpl	$0,_astpending	# XXX - put it back in netisr to
 	je	2f	# reduce the number of tests
-	testb   $SEL_RPL_MASK,TRAPF_CS_OFF(%esp)
+	testb   $SEL_RPL_MASK,TF_CS(%esp)
 					# to non-kernel (i.e., user)?
 	je	2f	# nope, leave
 	COUNT_EVENT(_intrcnt_spl, 10)
