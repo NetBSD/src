@@ -1,4 +1,4 @@
-/*	$NetBSD: platconf.c,v 1.1 2001/06/13 15:08:05 soda Exp $	*/
+/*	$NetBSD: platconf.c,v 1.2 2002/11/30 19:23:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@ struct platform *const plattab[] = {
 #endif
 #ifdef PLATFORM_NEC_JC94
 	&platform_nec_jc94,
+#endif
+#ifdef PLATFORM_NEC_J96A
+	&platform_nec_j96a,
 #endif
 #ifdef PLATFORM_SNI_RM200PCI
 	&platform_sni_rm200pci,

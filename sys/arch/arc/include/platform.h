@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2001/06/13 15:08:05 soda Exp $	*/
+/*	$NetBSD: platform.h,v 1.2 2002/11/30 19:23:47 tsutsui Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*
@@ -71,6 +71,7 @@ extern struct platform platform_acer_pica_61;
 extern struct platform platform_desktech_arcstation_i;
 extern struct platform platform_desktech_tyne;
 extern struct platform platform_microsoft_jazz;
+extern struct platform platform_nec_j96a;
 extern struct platform platform_nec_jc94;
 extern struct platform platform_nec_r94;
 extern struct platform platform_nec_r96;
