@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.5 2000/03/28 03:11:27 simonb Exp $ */
+/*	$NetBSD: fpemu.c,v 1.6 2000/05/31 00:59:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -87,7 +87,7 @@ update_pc(frame, cause)
 {
 	if (cause & MIPS_CR_BR_DELAY)
 		frame->f_regs[PC] = MachEmulateBranch(frame, frame->f_regs[PC],
-			fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[FSR], 0);
+			curpcb->pcb_fpregs.r_regs[FSR], 0);
 	else
 		frame->f_regs[PC] += 4;
 }
@@ -111,7 +111,7 @@ MachEmulateLWC1(inst, frame, cause)
 		return;
 	}
 
-	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F]);
+	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 	if (copyin((void *)vaddr, t, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
@@ -140,7 +140,7 @@ MachEmulateLDC1(inst, frame, cause)
 		return;
 	}
 
-	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1E]);
+	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1E]);
 
 	if (copyin((void *)vaddr, t, 8) != 0) {
 		send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
@@ -169,7 +169,7 @@ MachEmulateSWC1(inst, frame, cause)
 		return;
 	}
 
-	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1F]);
+	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1F]);
 
 	if (copyout(t, (void *)vaddr, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
@@ -198,7 +198,7 @@ MachEmulateSDC1(inst, frame, cause)
 		return;
 	}
 
-	t = &(fpcurproc->p_addr->u_pcb.pcb_fpregs.r_regs[(inst>>16)&0x1E]);
+	t = &(curpcb->pcb_fpregs.r_regs[(inst>>16)&0x1E]);
 
 	if (copyout(t, (void *)vaddr, 8) != 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
