@@ -507,6 +507,7 @@ kbc_8042cmd(int val)
 	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
 		if (--timeo == 0)
 			return (-1);
+	delay(6);
 	outb(CONTROLLER_CTRL, val);
 	return (0);
 }
@@ -523,6 +524,7 @@ kbd_cmd(int val)
 	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
 		if (--timeo == 0)
 			return (-1);
+	delay(6);
 	outb(CONTROLLER_DATA, val);
 	return (0);
 }
@@ -539,6 +541,7 @@ kbd_response(void)
 	while (!(inb(CONTROLLER_CTRL) & STATUS_OUTPBF))
 		if (--timeo == 0)
 			return (-1);
+	delay(6);
 	return ((u_char) inb(CONTROLLER_DATA));
 }
 
