@@ -49,10 +49,11 @@
  */
 
 /* The registers as pushed from a trap/interrupt with the 
-   exception of the USP, and that is placed by software. */
+   exception of USP and SB, and they are placed by software. */
 struct on_stack {
     long    pcb_reg[8];	/* R7 - R0 from enter */
     long    pcb_usp;	/* User stack pointer, by software. */
+    long    pcb_sb;	/* Static Base pointer, by software. */
     long    pcb_fp;	/* From enter */
     long    pcb_pc;	/* From the trap/interrupt */
     u_short pcb_mod;	/*  in direct exception mode. */
