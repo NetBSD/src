@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.33.2.1 1997/07/30 07:05:29 marc Exp $
+#	$NetBSD: files.isa,v 1.33.2.2 1997/08/23 07:13:17 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -189,6 +189,10 @@ file    dev/isa/if_iy.c			iy
 attach	le at isa with le_isa: isadma
 file	dev/isa/if_le_isa.c		le_isa
 
+# DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
+attach  lc at isa with lc_isa
+file    dev/isa/if_lc_isa.c		lc
+
 #
 # ISA Sound hardware
 #
@@ -198,14 +202,14 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw
+device	sb: audio, isadma, sbdsp, mulaw, auconv
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb_isa needs-flag
 
 # ProAudio Spectrum
-device	pas: audio, isadma, sbdsp, mulaw
+device	pas: audio, isadma, sbdsp, mulaw, auconv
 attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
@@ -223,19 +227,19 @@ device	pss {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	pss at isa
-device	sp: audio, isadma, ad1848, mulaw
+device	sp: audio, isadma, ad1848, auconv
 attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848, mulaw
+device	wss: audio, isadma, ad1848, auconv
 attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus: audio, isadma, ics2101, ad1848, mulaw
+device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
 

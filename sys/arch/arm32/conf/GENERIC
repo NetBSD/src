@@ -94,6 +94,7 @@ options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# manage IRQ statistics
 options		LKM		# loadable kernel modules
 options		KMEMSTATS	# kernel memory statistics
+#options	SCSIVERBOSE	# Verbose SCSI errors
 
 # Development and Debugging options
 
@@ -165,6 +166,7 @@ beep0	at mainbus? base 0x00000000
 
 # Audio device
 vidcaudio0	at mainbus? base 0x00000000
+audio*		at vidcaudio0
 
 # IIC bus device
 iic0	at mainbus?

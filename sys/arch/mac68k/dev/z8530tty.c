@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.12 1997/07/23 07:20:01 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.12.2.1 1997/08/23 07:10:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,7 +66,7 @@
 #include <sys/syslog.h>
 
 /* #include <dev/ic/z8530reg.h> */
-#include "z8530reg.h"
+#include <mac68k/dev/z8530reg.h>
 #include <machine/z8530var.h>
 #include "locators.h"
 

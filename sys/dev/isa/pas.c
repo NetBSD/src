@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.32 1997/07/28 20:56:18 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.32.2.1 1997/08/23 07:13:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -99,7 +99,6 @@ struct pas_softc {
 	int rev;
 };
 
-int	pasopen __P((dev_t, int));
 int	pas_getdev __P((void *, struct audio_device *));
 void	pasconf __P((int, int, int, int));
 
@@ -109,7 +108,7 @@ void	pasconf __P((int, int, int, int));
  */
 
 struct audio_hw_if pas_hw_if = {
-	pasopen,
+	sbdsp_open,
 	sbdsp_close,
 	0,
 	sbdsp_query_encoding,
@@ -138,7 +137,7 @@ struct audio_hw_if pas_hw_if = {
 	sb_free,
 	sb_round,
         sb_mappage,
-	AUDIO_PROP_MMAP
+	sbdsp_get_props,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to
@@ -449,7 +448,6 @@ pasattach(parent, self, aux)
 	register struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	register int iobase = ia->ia_iobase;
-	int err;
 	
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
@@ -465,26 +463,7 @@ pasattach(parent, self, aux)
 	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
 	sprintf(pas_device.version, "%d", sc->rev);
 
-	if ((err = audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp)) != 0)
-		printf("pas: could not attach to audio pseudo-device driver (%d)\n", err);
-}
-
-int
-pasopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct pas_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= pas_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = pas_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return sbdsp_open(&sc->sc_sbdsp, dev, flags);
+	audio_attach_mi(&pas_hw_if, 0, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
 }
 
 int

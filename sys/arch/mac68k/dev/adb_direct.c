@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.5.4.1 1997/08/23 07:09:52 thorpej Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -48,9 +48,9 @@
 #include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include "adb_direct.h"
-#include "adbvar.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adb_direct.h>
+#include <mac68k/dev/adbvar.h>
 #define printf_intr printf
 #else
 #include "via.h"				/* for macos based testing */

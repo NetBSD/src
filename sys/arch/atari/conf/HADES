@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.9 1997/05/07 00:23:47 lukem Exp $
+#	$NetBSD: HADES,v 1.9.4.1 1997/08/23 07:08:29 thorpej Exp $
 #
 # Medusa-Hades
 #
@@ -16,12 +16,18 @@ maxusers	16
 #
 # processors this kernel should support
 #
-options 	M68030		# support for 030
 options 	M68040		# support for 040
+options 	M68060		# support for 060
 
 options 	HZ=64		# Set the clock-rate (48/64/96)
 
-options	FPSP			# 68040 Floatingpoint support
+options 	FPSP		# 68040 Floatingpoint support
+options 	M060SP		# MC68060 software support (Required for 060)
+
+#
+# X11R6 related options
+#
+options 	UCONSOLE	# Allow xconsole to work
 
 #
 # Networking options
@@ -100,7 +106,7 @@ hdfd0	at fdc0 unit 0		# builtin Hades-type floppy drive
 hdfd1	at fdc0 unit 1		# 2nd Hades-type floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer
 grfet0	at grfbus0		# ET4000 consoles
 ite*	at grfet0
 grfet1	at grfbus0

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.6 1997/06/08 08:43:52 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.6.4.1 1997/08/23 07:13:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -61,9 +61,15 @@ static void isapnp_configure __P((struct isapnp_softc *,
     const struct isapnp_attach_args *));
 static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 static int isapnp_print __P((void *, const char *));
+#ifdef _KERNEL
 static int isapnp_submatch __P((struct device *, void *, void *));
-static int isapnp_find __P((struct isapnp_softc *));
+#endif
+static int isapnp_find __P((struct isapnp_softc *, int));
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int isapnp_match __P((struct device *, void *, void *));
+#else
+static int isapnp_match __P((struct device *, struct cfdata *, void *));
+#endif
 static void isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach isapnp_ca = {
@@ -90,7 +96,7 @@ isapnp_init(sc)
 	ISAPNP_WRITE_ADDR(sc, 0);
 
 	/* Send the 32 byte sequence to awake the logic */
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < ISAPNP_LFSR_LENGTH; i++) {
 		ISAPNP_WRITE_ADDR(sc, v);
 		v = ISAPNP_LFSR_NEXT(v);
 	}
@@ -183,7 +189,9 @@ isapnp_free_region(t, r)
 	bus_space_tag_t t;
 	struct isapnp_region *r;
 {
+#ifdef _KERNEL
 	bus_space_unmap(t, r->h, r->length);
+#endif
 }
 
 
@@ -197,8 +205,11 @@ isapnp_alloc_region(t, r)
 {
 	int error = 0;
 
-	for (r->base = r->minbase; r->base <= r->maxbase; r->base += r->align) {
+	for (r->base = r->minbase; r->base <= r->maxbase;
+	     r->base += r->align) {
+#ifdef _KERNEL
 		error = bus_space_map(t, r->base, r->length, 0, &r->h);
+#endif
 		if (error == 0)
 			return 0;
 	}
@@ -505,9 +516,9 @@ isapnp_print(aux, str)
 	struct isapnp_attach_args *ipa = aux;
 
 	if (str != NULL)
-		printf("%s: <%s, %s, %s>",
+		printf("%s: <%s, %s, %s, %s>",
 		    str, ipa->ipa_devident, ipa->ipa_devlogic,
-		    ipa->ipa_devclass);
+		    ipa->ipa_devcompat, ipa->ipa_devclass);
 
 	isapnp_print_region("port", ipa->ipa_io, ipa->ipa_nio);
 	isapnp_print_region("mem", ipa->ipa_mem, ipa->ipa_nmem);
@@ -519,8 +530,9 @@ isapnp_print(aux, str)
 }
 
 
+#ifdef _KERNEL
 /* isapnp_submatch():
- *	Probe the card...
+ *	Probe the logical device...
  */
 static int
 isapnp_submatch(parent, match, aux)
@@ -530,14 +542,16 @@ isapnp_submatch(parent, match, aux)
 	struct cfdata *cf = match;
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
+#endif
 
 
 /* isapnp_find():
  *	Probe and add cards
  */
 static int
-isapnp_find(sc)
+isapnp_find(sc, all)
 	struct isapnp_softc *sc;
+	int all;
 {
 	int p;
 
@@ -564,8 +578,9 @@ isapnp_find(sc)
 		return 0;
 	}
 
-	while (isapnp_findcard(sc))
-		continue;
+	if (all)
+		while (isapnp_findcard(sc))
+			continue;
 
 	return 1;
 }
@@ -716,23 +731,31 @@ isapnp_configure(sc, ipa)
 static int
 isapnp_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	int rv;
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
 
 	sc.sc_iot = ia->ia_iot;
-	ia->ia_iobase = ISAPNP_ADDR;
-	ia->ia_iosize = 1;
+	sc.sc_ncards = 0;
 	(void) strcpy(sc.sc_dev.dv_xname, "(isapnp probe)");
 
 	if (isapnp_map(&sc))
 		return 0;
 
-	rv = isapnp_find(&sc);
+	rv = isapnp_find(&sc, 0);
+	ia->ia_iobase = ISAPNP_ADDR;
+	ia->ia_iosize = 1;
 
 	isapnp_unmap(&sc);
+	if (rv)
+		isapnp_unmap_readport(&sc);
 
 	return (rv);
 }
@@ -757,8 +780,8 @@ isapnp_attach(parent, self, aux)
 	if (isapnp_map(sc))
 		panic("%s: bus map failed\n", sc->sc_dev.dv_xname);
 
-	if (!isapnp_find(sc))
-		panic("%s: no devices found\n", sc->sc_dev.dv_xname);
+	if (!isapnp_find(sc, 1))
+		panic("%s: no cards found\n", sc->sc_dev.dv_xname);
 
 	printf(": read port 0x%x\n", sc->sc_read_port);
 
@@ -771,7 +794,6 @@ isapnp_attach(parent, self, aux)
 		if ((ipa = isapnp_get_resource(sc, c)) == NULL)
 			continue;
 
-
 		DPRINTF(("Selecting attachments\n"));
 		for (d = 0; (lpa = isapnp_bestconfig(sc, &ipa)) != NULL; d++) {
 			isapnp_write_reg(sc, ISAPNP_LOGICAL_DEV_NUM, d);
@@ -779,6 +801,7 @@ isapnp_attach(parent, self, aux)
 #ifdef DEBUG_ISAPNP
 			{
 				struct isapnp_attach_args pa;
+
 				isapnp_get_config(sc, &pa);
 				isapnp_print_config(&pa);
 			}
@@ -786,17 +809,18 @@ isapnp_attach(parent, self, aux)
 
 #ifdef DEBUG
 			/* XXX do we even really need this?  --thorpej */
-			printf("%s: configuring <%s, %s, %s>\n",
+			printf("%s: configuring <%s, %s, %s, %s>\n",
 			    sc->sc_dev.dv_xname,
 			    lpa->ipa_devident, lpa->ipa_devlogic,
-			    lpa->ipa_devclass);
+			    lpa->ipa_devcompat, lpa->ipa_devclass);
 #endif
 
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
-				printf("%s: <%s, %s, %s> ignored; %s\n",
+				printf("%s: <%s, %s, %s, %s> ignored; %s\n",
 				    sc->sc_dev.dv_xname,
 				    lpa->ipa_devident, lpa->ipa_devlogic,
-				    lpa->ipa_devclass, "resource conflict");
+				    lpa->ipa_devcompat, lpa->ipa_devclass,
+				    "resource conflict");
 				ISAPNP_FREE(lpa);
 				continue;
 			}
@@ -808,7 +832,7 @@ isapnp_attach(parent, self, aux)
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL
-			if(config_found_sm(self, lpa, isapnp_print,
+			if (config_found_sm(self, lpa, isapnp_print,
 			    isapnp_submatch) == NULL)
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
 #else

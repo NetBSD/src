@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.15 1997/06/26 21:08:10 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.15.4.1 1997/08/23 07:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -51,9 +51,9 @@
 #include <machine/bus.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "if_snreg.h"
-#include "if_snvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/if_snreg.h>
+#include <mac68k/dev/if_snvar.h>
 
 static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));

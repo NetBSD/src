@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241 1997/07/16 00:01:49 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.1 1997/08/23 07:08:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -163,6 +163,23 @@
 extern struct proc *npxproc;
 #endif
 
+#include "pc.h"
+#if (NPC > 0)
+#include <machine/pccons.h>
+#endif
+
+#include "vt.h"
+#if (NVT > 0)
+#include <i386/isa/pcvt/pcvt_cons.h>
+#endif
+
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
+#endif
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
@@ -193,6 +210,17 @@ int	msgbufmapped;
 
 vm_map_t buffer_map;
 
+#ifndef CONSDEVNAME
+#define CONSDEVNAME "pc"
+#endif
+char consdevname[] = CONSDEVNAME;
+#ifdef KGDB
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "com0"
+#endif
+char kgdb_devname[] = KGDB_DEVNAME;
+#endif
+
 extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
@@ -220,7 +248,13 @@ caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
+#if (NCOM > 0)
+static int initcomport __P((unsigned int, int, int *, bus_space_handle_t *));
+#endif
 void	consinit __P((void));
+#ifdef KGDB
+void kgdb_port_init __P((void));
+#endif
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
@@ -1483,9 +1517,10 @@ init386(first_avail)
 		Debugger();
 #endif
 #ifdef KGDB
+	kgdb_port_init();
 	if (boothowto & RB_KDB) {
 		kgdb_debug_init = 1;
-		kgdb_connect(0);
+		kgdb_connect(1);
 	}
 #endif
 }
@@ -1659,6 +1694,29 @@ pmap_page_index(pa)
 	return -1;
 }
 
+#if (NCOM > 0)
+/* minimal initialization of a com port for use by console or KGDB */
+static int initcomport(idx, rate, iobase, handle)
+unsigned int idx;
+int rate;
+int *iobase;
+bus_space_handle_t *handle;
+{
+	bus_space_tag_t tag = I386_BUS_SPACE_IO;
+	static int combases[] = {0x3f8, 0x2f8, 0x3e8, 0x3e8};
+
+	if(idx >= sizeof(combases) / sizeof(int))
+		return(-1);
+	*iobase = combases[idx];
+
+	if (bus_space_map(tag, *iobase, COM_NPORTS, 0, handle))
+		return(-1);
+
+	cominit(tag, *handle, rate);
+	return(0);
+}
+#endif
+
 /*
  * consinit:
  * initialize the system console.
@@ -1673,8 +1731,57 @@ consinit()
 	if (initted)
 		return;
 	initted = 1;
-	cninit();
+
+#if (NPC > 0) || (NVT > 0)
+	if(!strcmp(consdevname, "pc")) {
+		static struct consdev pccons = { NULL, NULL,
+		pccngetc, pccnputc, pccnpollc, NODEV, 1};
+
+		pccninit(0);
+
+		pccons.cn_dev = makedev(12, 0);  /* XXX */
+		cn_tab = &pccons;
+		return;
+	}
+#endif
+#if (NCOM > 0)
+	if(!strncmp(consdevname, "com", 3)) {
+		static struct consdev comcons = { NULL, NULL,
+		comcngetc, comcnputc, comcnpollc, NODEV, 1};
+
+		if(initcomport(consdevname[3] - '0', comconsrate,
+			       &comconsaddr, &comconsioh)) {
+			panic("can't init console port %s", consdevname);
+		}
+
+		comcons.cn_dev = makedev(8, consdevname[3] - '0');  /* XXX */
+		cn_tab = &comcons;
+		comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+		return;
+	}
+#endif
+	panic("invalid console device %s", consdevname);
 }
+
+#ifdef KGDB
+void
+kgdb_port_init()
+{
+	if(!strcmp(kgdb_devname, consdevname)) /* must be != console */
+		return;
+#if (NCOM > 0)
+	if(!strncmp(kgdb_devname, "com", 3)) {
+		if(initcomport(kgdb_devname[3] - '0', kgdb_rate,
+			       &com_kgdb_addr, &com_kgdb_ioh)) {
+			panic("can't init KGDB device %s", kgdb_devname);
+		}
+
+		kgdb_dev = 123; /* unneeded, only to satisfy some tests */
+		kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+	}
+#endif
+}
+#endif
 
 void
 cpu_reset()
@@ -1715,11 +1822,11 @@ cpu_reset()
 }
 
 int
-i386_memio_map(t, bpa, size, cacheable, bshp)
+i386_memio_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	int error;
@@ -1728,9 +1835,11 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == I386_BUS_SPACE_IO)
+	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	else if (t == I386_BUS_SPACE_MEM)
+	} else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
 		panic("i386_memio_map: bad bus space tag");
@@ -1756,7 +1865,8 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size,
+		(flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -1770,11 +1880,11 @@ i386_memio_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-_i386_memio_map(t, bpa, size, cacheable, bshp)
+_i386_memio_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 
@@ -1782,6 +1892,8 @@ _i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For I/O space, just fill in the handle.
 	 */
 	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		*bshp = bpa;
 		return (0);
 	}
@@ -1790,16 +1902,17 @@ _i386_memio_map(t, bpa, size, cacheable, bshp)
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (i386_mem_add_mapping(bpa, size, cacheable, bshp));
+	return (i386_mem_add_mapping(bpa, size,
+	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp));
 }
 
 int
-i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+i386_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
 	bus_size_t size, alignment, boundary;
-	int cacheable;
+	int flags;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
@@ -1810,9 +1923,11 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == I386_BUS_SPACE_IO)
+	if (t == I386_BUS_SPACE_IO) {
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	else if (t == I386_BUS_SPACE_MEM)
+	} else if (t == I386_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
 		panic("i386_memio_alloc: bad bus space tag");
@@ -1845,7 +1960,8 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = i386_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = i386_mem_add_mapping(bpa, size,
+	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {

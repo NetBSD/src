@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.102 1997/07/05 20:52:40 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.102.2.1 1997/08/23 07:13:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -103,6 +103,9 @@
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
 
+#if defined(DDB) || defined(KGDB)
+static void com_enable_debugport __P((struct com_softc *));
+#endif
 void	com_attach_subr	__P((struct com_softc *sc));
 void	comdiag		__P((void *));
 int	comspeed	__P((long));
@@ -158,10 +161,10 @@ int	comconsrate = CONSPEED;
 int	comconsrate = TTYDEF_SPEED;
 #endif
 int	comconsaddr;
-int	comconsattached;
 bus_space_tag_t comconstag;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
+int	comconsattached;
 
 int	commajor;
 
@@ -177,11 +180,10 @@ extern int kgdb_dev;
 extern int kgdb_rate;
 extern int kgdb_debug_init;
 
+int com_kgdb_addr;
 bus_space_tag_t com_kgdb_iot;
 bus_space_handle_t com_kgdb_ioh;
 
-void	com_kgdb_attach __P((struct com_softc *, bus_space_tag_t,
-	    bus_space_handle_t));
 int	com_kgdb_getc __P((void *));
 void	com_kgdb_putc __P((void *, int));
 #endif /* KGDB */
@@ -326,41 +328,6 @@ comprobeHAYESP(hayespioh, sc)
 #endif
 
 #ifdef KGDB
-void
-com_kgdb_attach(sc, iot, ioh)
-	struct com_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-{
-
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		/*
-		 * Can't debug over the console port.
-		 */
-		kgdb_dev = NODEV;
-		return;
-	}
-
-	/* Turn on interrupts. */
-	sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-
-	SET(sc->sc_hwflags, COM_HW_KGDB);
-	com_kgdb_iot = iot;
-	com_kgdb_ioh = ioh;
-	cominitcons(iot, ioh, kgdb_rate);
-	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
-	if (kgdb_debug_init) {
-		/*
-		 * Print prefix of device name,
-		 * let kgdb_connect print the rest.
-		 */
-		printf("%s: ", sc->sc_dev.dv_xname);
-		kgdb_connect(1);
-	} else
-		printf("%s: kgdb enabled\n", sc->sc_dev.dv_xname);
-}
-
 /* ARGSUSED */
 int
 com_kgdb_getc(arg)
@@ -381,6 +348,22 @@ com_kgdb_putc(arg, c)
 }
 #endif /* KGDB */
 
+#if defined(DDB) || defined(KGDB)
+static void
+com_enable_debugport(sc)
+	struct com_softc *sc;
+{
+	int s;
+
+	/* Turn on line break interrupt, set carrier. */
+	s = splserial();
+	sc->sc_ier = IER_ERXRDY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	splx(s);
+}
+#endif
 
 void
 com_attach_subr(sc)
@@ -470,7 +453,9 @@ com_attach_subr(sc)
 		SET(sc->sc_mcr, MCR_IENABLE);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		cominit(iot, ioh, comconsrate);
+#ifdef DDB
+		com_enable_debugport(sc);
+#endif
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
@@ -479,8 +464,11 @@ com_attach_subr(sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if (makedev(commajor, sc->sc_dev.dv_unit) == kgdb_dev)
-		com_kgdb_attach(sc, iot, ioh);
+	if (iobase == com_kgdb_addr) {
+		SET(sc->sc_hwflags, COM_HW_KGDB);
+		com_enable_debugport(sc);
+		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+	}
 #endif
 
 #ifdef __GENERIC_SOFT_INTERRUPTS
@@ -662,7 +650,13 @@ comclose(dev, flag, mode, p)
 
 	s = splserial();
 	/* Turn off interrupts. */
-	sc->sc_ier = 0;
+#ifdef DDB
+	if(ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
+	else
+#else
+		sc->sc_ier = 0;
+#endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 	splx(s);
 	
@@ -1255,13 +1249,7 @@ comrxint(sc, tp)
 
 	while (cc) {
 		lsr = sc->sc_lbuf[get];
-		if (ISSET(lsr, LSR_BI)) {
-#ifdef DDB 
-			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-				Debugger();
-#endif
-		}
-		else if (ISSET(lsr, LSR_OE)) {
+		if (ISSET(lsr, LSR_OE)) {
 			sc->sc_overflows++;
 			if (sc->sc_errors++ == 0)
 				timeout(comdiag, sc, 60 * hz);
@@ -1451,18 +1439,22 @@ comintr(arg)
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
-#ifdef KGDB
-		/*
-		 * If there is data available, and this is the kgdb
-		 * port, defer it all to the kgdb protocol engine.
-		 */
-		if (ISSET(sc->sc_hwflags, COM_HW_KGDB) &&
-		    ISSET(lsr, LSR_RCV_MASK)) {
-			kgdb_connect(1);
-			/* XXX Should we suck up any remaining characters? */
-			return (1);
-		}
+#if defined(DDB) || defined(KGDB)
+		if (ISSET(lsr, LSR_BI)) {
+#ifdef DDB 
+			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+				Debugger();
+				continue;
+			}
 #endif
+#ifdef KGDB 
+			if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
+				kgdb_connect(1);
+				continue;
+			}
+#endif
+		}
+#endif /* DDB || KGDB */
 
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {

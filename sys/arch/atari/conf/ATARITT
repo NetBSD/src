@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.22 1997/05/07 00:23:43 lukem Exp $
+#	$NetBSD: ATARITT,v 1.22.4.1 1997/08/23 07:08:24 thorpej Exp $
 #
 # ATARI-TT
 #
@@ -114,4 +114,4 @@ ite*	at grfcc1		# second tty
 grfcc2	at grfbus0		# third graphics driver
 ite*	at grfcc2		# third tty
 nvr0	at mainbus0		# nvram driver
-lpt0	at mainbus0		# centronics printer
+lp0	at mainbus0		# centronics printer

@@ -1,14 +1,14 @@
 #
-# Distribition miniroot kernel (any  model) kernel config file
+# Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.14 1997/07/29 00:54:22 mhitch Exp $
+# 	$NetBSD: GENERIC,v 1.14.2.1 1997/08/23 07:11:43 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	64
 
-options		MIPS1			# R2000/R3000 CPUs
+options 	MIPS1			# R2000/R3000 CPUs
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 
@@ -21,19 +21,23 @@ options 	DS5000_240		# 3MAXPLUS (kn03) support
 
 
 # Standard system options
-#options	DIAGNOSTIC		# extra kernel debugging checks
-#options	DEBUG			# extra kernel debugging support
-options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-options		KTRACE			# system call tracing support
-options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+options 	DDB			# in-kernel debugger
+options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
+options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	KTRACE			# system call tracing support
+options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+
+#options	SCSIVERBOSE		# Verbose SCSI errors
 
 #Old 4.4bsd/pmax kgdb options
-#options	KGDB			# support for kernel gdb
-#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB			# support for kernel gdb
+#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
 
-options		NTP			# network time protocol
-#options	UCONSOLE		# users can redirect console (unsafe)
+options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
 
 
 # Filesystem options
@@ -50,14 +54,14 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		NFSSERVER	# Sun NFS-compatible filesystem (server)
-options		QUOTA		# UFS quotas
+options 	FIFO		# POSIX fifo support (in all filesystems)
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	QUOTA		# UFS quotas
 
 # Networking options
-options		INET		# Internet protocols
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
+options 	INET		# Internet protocols
+options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP packet forwarding
 options 	MULTICAST	# Multicast support
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
@@ -66,18 +70,18 @@ options 	MULTICAST	# Multicast support
 #options 	CCITT,LLC,HDLC	# X.25
 
 # NetBSD backwards compatibility
-#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options	COMPAT_11	# NetBSD 1.1,
-options		COMPAT_12	# Netbsd 1.2 reboot()
+#options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
+#options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# Netbsd 1.2 reboot()
 
 
 # pmax specific
-options		COMPAT_ULTRIX	# ultrix compatibility
-options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options		"HZ=256"	# RTC rate required
+options 	COMPAT_ULTRIX	# ultrix compatibility
+options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options 	"HZ=256"	# RTC rate required
 
-# Note that this configuration is unlikely to work, yet...
-config		netbsd	root on ? type ?
+config		netbsd		root on ? type ?
+config		nfsnetbsd	root on ? type nfs
 
 
 ########################################################################

@@ -1,22 +1,20 @@
-#	$NetBSD: Makefile.booters,v 1.7 1997/07/26 01:50:36 thorpej Exp $
+#	$NetBSD: Makefile.booters,v 1.7.2.1 1997/08/23 07:09:21 thorpej Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
 BINMODE=444
 
-.PATH: ${.CURDIR}/../lib/crt/bootsect ${.CURDIR}/../lib
+I386_STAND_DIR?= $S/arch/i386/stand
+
+.PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
 BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o bios_disk.o diskbuf.o
-.PATH: ${.CURDIR}/../lib/crt/rom
+.PATH: ${I386_STAND_DIR}/lib/crt/rom
 ROMSTART= start_rom.o
-.if exists(${.CURDIR}/../genprom/obj)
-GENPROM= ${.CURDIR}/../genprom/obj/genprom
-.else
-GENPROM= ${.CURDIR}/../genprom/genprom
-.endif
-.PATH: ${.CURDIR}/../lib/crt/dos
+GENPROMDIR= ${I386_STAND_DIR}/genprom
+.PATH: ${I386_STAND_DIR}/lib/crt/dos
 DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 
-CPPFLAGS += -I${.OBJDIR} -I$S -I${.CURDIR}/../lib -I$S/lib/libsa
+CPPFLAGS += -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
 
 CLEANFILES+= vers.c vers.o
@@ -49,12 +47,12 @@ SA_AS=		library
 LIBSA=		${SALIB}
 
 ### find out what to use for libi386
-I386DIR= ${.CURDIR}/../lib	# XXX
+I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
 vers.o:
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	sh ${I386_STAND_DIR}/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
 ${PROG}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
@@ -66,7 +64,8 @@ ${PROG}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI38
 	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
 	cp ${PROG}.sym ${PROG}.bin
 	strip ${PROG}.bin
-	dd if=${PROG}.bin ibs=32 skip=1 | ${GENPROM} $(ROM_SIZE) > ${PROG}.rom || (rm ${PROG}.rom; false)
+	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${PROG:Q}.bin \
+		ROMFILE=${.OBJDIR:Q}/${PROG:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
 	rm -f ${PROG}.bin
 
 ${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
@@ -76,7 +75,3 @@ ${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	strip ${PROG}.bin
 	dd if=${PROG}.bin of=${PROG}.com ibs=32 skip=1 obs=1024b
 	rm -f ${PROG}.bin
-
-${GENPROM}:
-	@echo "genprom" missing
-	@false

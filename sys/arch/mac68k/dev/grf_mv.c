@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.28 1997/07/26 08:21:15 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.28.2.1 1997/08/23 07:10:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -47,20 +47,23 @@
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "grfvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/grfvar.h>
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 
 static void	grfmv_intr_generic_1 __P((void *vsc, int slot));
 static void	grfmv_intr_generic_4 __P((void *vsc, int slot));
-static void	grfmv_intr_radius __P((void *vsc, int slot));
-static void	grfmv_intr_cti __P((void *vsc, int slot));
+
 static void	grfmv_intr_cb264 __P((void *vsc, int slot));
 static void	grfmv_intr_cb364 __P((void *vsc, int slot));
+static void	grfmv_intr_cmax __P((void *vsc, int slot));
+static void	grfmv_intr_cti __P((void *vsc, int slot));
+static void	grfmv_intr_radius __P((void *vsc, int slot));
+static void	grfmv_intr_supermacgfx __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static caddr_t	grfmv_phys __P((struct grf_softc *gp));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
@@ -194,7 +197,7 @@ bad:
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)(sc->sc_handle + image.offset); /* XXX evil! */
+	gm->fbbase = (caddr_t)sc->sc_handle; /* XXX evil! */
 	gm->fboff = image.offset;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
@@ -237,6 +240,9 @@ bad:
 		sc->cli_value = 0;
 		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
 		break;
+	case NUBUS_DRHW_COLORMAX:
+		add_nubus_intr(na->slot, grfmv_intr_cmax, sc);
+		break;
 	case NUBUS_DRHW_SE30:
 		/* Do nothing--SE/30 interrupts are disabled */
 		break;
@@ -265,6 +271,9 @@ bad:
 		break;
 	case NUBUS_DRHW_SAM768:
 		add_nubus_intr(na->slot, grfmv_intr_cti, sc);
+		break;
+	case NUBUS_DRHW_SUPRGFX:
+		add_nubus_intr(na->slot, grfmv_intr_supermacgfx, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
@@ -300,12 +309,10 @@ grfmv_mode(gp, cmd, arg)
 }
 
 static caddr_t
-grfmv_phys(gp, addr)
+grfmv_phys(gp)
 	struct grf_softc *gp;
-	vm_offset_t addr;
 {
-	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
-	    (addr - gp->sc_handle));	/* XXX evil hack */
+	return (caddr_t)NUBUS_SLOT2PA(gp->sc_slot->slot);
 }
 
 /* Interrupt handlers... */
@@ -532,4 +539,35 @@ grfmv_intr_cb364(vsc, slot)
 			movl	#0x1,a0@(0xfe6014)
 		_cb364_intr_quit:
 		" : : "g" (slotbase) : "a0","d0","d1","d2");
+}
+
+/*
+ * Interrupt clearing routine for SuperMac GFX card.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_supermacgfx(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xE70D3);
+}
+
+/*
+ * Routine to clear interrupts for the Sigma Designs ColorMax card.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_cmax(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int32_t dummy;
+
+	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf501c);
+	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf5018);
 }
