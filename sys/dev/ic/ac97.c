@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.37 2002/11/06 16:58:37 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.38 2002/12/26 20:56:52 matt Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.37 2002/11/06 16:58:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.38 2002/12/26 20:56:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,6 +364,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Analog Devices AD1886" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
+	  0xffffffff,			"Analog Devices AD1981" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
