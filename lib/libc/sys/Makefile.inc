@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.138 2003/03/01 15:59:03 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.139 2003/03/14 22:26:13 nathanw Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -42,7 +42,7 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
-	dup.S dup2.S execve.S \
+	dup.S dup2.S  \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
 	fdatasync.S fhopen.S fhstat.S fhstatfs.S \
 	fktrace.S flock.S fpathconf.S __fstat13.S fstatfs.S \
@@ -82,7 +82,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
-WEAKASM= accept.S close.S connect.S fcntl.S fsync.S kill.S \
+WEAKASM= accept.S close.S connect.S execve.S fcntl.S fsync.S kill.S \
 	msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S read.S readv.S \
 	select.S __sigsuspend14.S sysarch.S wait4.S write.S writev.S
