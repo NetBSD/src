@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.15 2004/04/13 23:02:28 wiz Exp $
+.\"	$NetBSD: strsep.3,v 1.16 2004/04/13 23:03:22 wiz Exp $
 .\"
 .Dd August 11, 2002
 .Dt STRSEP 3
@@ -88,7 +88,7 @@ argument vector:
 char **ap, *argv[10], *inputstring;
 
 for (ap = argv; ap < \*[Am]argv[9] \*[Am]\*[Am]
-    (*ap = strsep(\*[Am]inputstring, " \et")) != NULL) {
+    (*ap = strsep(\*[Am]inputstring, " \et")) != NULL;) {
 	if (**ap != '\e0')
 		ap++;
 }
