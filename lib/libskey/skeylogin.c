@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.3 1994/05/31 08:51:15 deraadt Exp $
+ * $Id: skeylogin.c,v 1.4 1995/05/17 20:24:39 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -423,7 +423,7 @@ skey_authenticate (username)
   fflush (stdout);
  
   printf ("Response: ");
-  readpass (pbuf, sizeof (pbuf));
+  readskey (pbuf, sizeof (pbuf));
   rip (pbuf);
  
   /* Is it a valid response? */
