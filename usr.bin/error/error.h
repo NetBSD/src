@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.4 1997/10/18 14:44:25 lukem Exp $	*/
+/*	$NetBSD: error.h,v 1.5 1998/10/08 01:29:27 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -110,8 +110,8 @@ extern	int		class_count[];
 #define	TOTHEFILE	1	/* touch the file */
 #define	TOSTDOUT	2	/* just print them out (ho-hum) */
 
-FILE	*errorfile;	/* where error file comes from */
-FILE	*queryfile;	/* where the query responses from the user come from*/
+extern FILE	*errorfile;	/* where error file comes from */
+extern FILE	*queryfile;	/* where the query responses from the user come from*/
 
 extern	char	*currentfilename;
 extern	char	*processname;
@@ -170,8 +170,8 @@ extern struct lang_desc lang_table[];
  */
 
 #define	ERRORNAME	"/.errorrc"
-int	nignored;
-char	**names_ignored;
+extern int	nignored;
+extern char	**names_ignored;
 /* 
  *	Structure definition for a full error
  */
@@ -200,13 +200,13 @@ extern	Eptr	*errors;
  */
 extern	int	nfiles;
 extern	Eptr	**files;	/* array of pointers into errors*/
-boolean	*touchedfiles;			/* which files we touched */
+extern  boolean	*touchedfiles;			/* which files we touched */
 
 /*
- *	The langauge the compilation is in, as intuited from
+ *	The language the compilation is in, as intuited from
  *	the flavor of error messages analyzed.
  */
-extern	int	langauge;
+extern	int	language;
 extern	char	*currentfilename;
 
 /*
