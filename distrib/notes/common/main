@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.60 2002/04/11 21:57:24 he Exp $
+.\"	$NetBSD: main,v 1.61.2.61 2002/07/01 18:35:43 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -493,6 +493,17 @@ The boot code on NetBSD/macppc has been improved.
 .It
 .Xr sendmail 8
 has been upgraded to version 8.11.6.
+.It
+A long file name buffer overrun in gzip has been fixed (SA2002-002).
+.It
+IPSEC policy check has been fixed for forwarded IPv4 packets (SA2002-003).
+.It
+Two security problems in OpenSSH has been fixed (SA2002-004, SA2002-005).
+.It
+A buffer overrun in the resolver part of the C library has been fixed
+(SA2002-006).
+To fix this problem in the BIND user utilities, BIND has been upgraded
+to version 8.3.3.
 .It
 Various other kernel stability and robustness fixes has been applied.
 .El
