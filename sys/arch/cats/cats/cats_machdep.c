@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.18 2002/02/20 20:41:16 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.19 2002/02/21 02:52:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -489,8 +489,8 @@ initarm(bootargs)
 
 	/*
 	 * we require the that the pt's for mapping the kernel be
-	 * contiguous, otherwise map_chunk etc will fail.  To achieve this we
-	 * swap the last 2 pt's for the kernel mapping pt's
+	 * contiguous, otherwise pmap_map_chunk etc will fail.  To achieve
+	 * this we swap the last 2 pt's for the kernel mapping pt's
 	 */
 	{
 	    paddr_t	tmp;
@@ -576,23 +576,23 @@ initarm(bootargs)
 	else {
 		extern int end;
 
-		logical = map_chunk(l1pagetable, l2pagetable,
+		logical = pmap_map_chunk(l1pagetable, l2pagetable,
 			KERNEL_TEXT_BASE,
 			physical_start, kernexec->a_text,
-			AP_KR, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+			VM_PROT_READ, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 			KERNEL_TEXT_BASE + logical,
 			physical_start + logical, kernexec->a_data,
-			AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 			KERNEL_TEXT_BASE + logical,
 			physical_start + logical, kernexec->a_bss,
-			AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(l1pagetable, l2pagetable,
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, l2pagetable,
 			KERNEL_TEXT_BASE + logical,
 			physical_start + logical, kernexec->a_syms + sizeof(int)
 			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-			AP_KRW, PT_CACHEABLE);
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 
 	/*
@@ -615,16 +615,17 @@ initarm(bootargs)
 	    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
 
 	/* Map the stack pages */
-	map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, AP_KRW, 0);
+	pmap_map_chunk(0, l2pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(0, l2pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+	pmap_map_chunk(0, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
