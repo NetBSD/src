@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: lex.l,v 1.1.1.2 2000/08/02 19:59:05 assar Exp $ */
+/* $Id: lex.l,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -80,7 +80,10 @@ EXTERNAL		{ return EXTERNAL; }
 "]"			{ return *yytext; }
 ::=			{ return EEQUAL; }
 --[^\n]*\n		{ ++lineno; }
--?[0-9]+		{ yylval.constant = atoi(yytext); return CONSTANT; }
+-?(0x)?[0-9]+		{ char *e; yylval.constant = strtol(yytext, &e, 0); 
+			  if(e == yytext) 
+			    error_message("malformed constant (%s)", yytext); 
+			  else return CONSTANT; }
 [A-Za-z][-A-Za-z0-9_]*	{ yylval.name =  strdup (yytext); return IDENTIFIER; }
 [ \t]			;
 \n			{ ++lineno; }

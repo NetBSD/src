@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_priv.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
+RCSID("$Id: rd_priv.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
 
 krb5_error_code
 krb5_rd_priv(krb5_context context,
@@ -55,10 +55,12 @@ krb5_rd_priv(krb5_context context,
   if (ret) 
       goto failure;
   if (priv.pvno != 5) {
+      krb5_clear_error_string (context);
       ret = KRB5KRB_AP_ERR_BADVERSION;
       goto failure;
   }
   if (priv.msg_type != krb_priv) {
+      krb5_clear_error_string (context);
       ret = KRB5KRB_AP_ERR_MSG_TYPE;
       goto failure;
   }
@@ -96,6 +98,7 @@ krb5_rd_priv(krb5_context context,
       && !krb5_address_compare (context,
 				auth_context->remote_address,
 				part.s_address)) {
+      krb5_clear_error_string (context);
       ret = KRB5KRB_AP_ERR_BADADDR;
       goto failure_part;
   }
@@ -107,6 +110,7 @@ krb5_rd_priv(krb5_context context,
       && !krb5_address_compare (context,
 				auth_context->local_address,
 				part.r_address)) {
+      krb5_clear_error_string (context);
       ret = KRB5KRB_AP_ERR_BADADDR;
       goto failure_part;
   }
@@ -119,6 +123,7 @@ krb5_rd_priv(krb5_context context,
       if (part.timestamp == NULL ||
 	  part.usec      == NULL ||
 	  abs(*part.timestamp - sec) > context->max_skew) {
+	  krb5_clear_error_string (context);
 	  ret = KRB5KRB_AP_ERR_SKEW;
 	  goto failure_part;
       }
@@ -135,6 +140,7 @@ krb5_rd_priv(krb5_context context,
 	   && auth_context->remote_seqnumber != 0)
 	  || (part.seq_number != NULL
 	      && *part.seq_number != auth_context->remote_seqnumber)) {
+	  krb5_clear_error_string (context);
 	  ret = KRB5KRB_AP_ERR_BADORDER;
 	  goto failure_part;
       }

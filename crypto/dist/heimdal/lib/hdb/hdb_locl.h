@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: hdb_locl.h,v 1.1.1.3 2001/02/11 13:51:40 assar Exp $ */
+/* $Id: hdb_locl.h,v 1.1.1.4 2001/06/19 22:08:16 assar Exp $ */
 
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__
@@ -56,7 +56,11 @@
 #endif
 #include <roken.h>
 
+#ifdef HAVE_OPENSSL_DES_H
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb5.h>
 #include <hdb.h>
 #include <hdb-private.h>
@@ -72,15 +76,5 @@
 #elif defined(HAVE_GDBM_NDBM_H)
 #include <gdbm/ndbm.h>
 #endif
-
-int hdb_principal2key(krb5_context, krb5_principal, krb5_data*);
-int hdb_key2principal(krb5_context, krb5_data*, krb5_principal);
-
-krb5_error_code hdb_lock(int, int);
-krb5_error_code hdb_unlock(int);
-
-krb5_error_code _hdb_fetch(krb5_context, HDB*, unsigned, hdb_entry*);
-krb5_error_code _hdb_store(krb5_context, HDB*, unsigned, hdb_entry*);
-krb5_error_code _hdb_remove(krb5_context, HDB*, hdb_entry*);
 
 #endif /* __HDB_LOCL_H__ */

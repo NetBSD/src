@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: config_file_netinfo.c,v 1.1.1.2 2000/08/02 19:59:25 assar Exp $");
+RCSID("$Id: config_file_netinfo.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
 
 /*
  * Netinfo implementation from Luke Howard <lukeh@xedoc.com.au>
@@ -131,7 +131,9 @@ ni_idlist2binding(void *ni, ni_idlist *idlist, krb5_config_section **ret)
 }
 
 krb5_error_code
-krb5_config_parse_file (const char *fname, krb5_config_section **res)
+krb5_config_parse_file (krb5_context context,
+			const char *fname,
+			krb5_config_section **res)
 {
     void *ni = NULL, *lastni = NULL;
     int i;

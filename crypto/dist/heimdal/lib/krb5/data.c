@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: data.c,v 1.1.1.2 2000/08/02 19:59:26 assar Exp $");
+RCSID("$Id: data.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
 
 void
 krb5_data_zero(krb5_data *p)
@@ -100,10 +100,14 @@ krb5_copy_data(krb5_context context,
 {
     krb5_error_code ret;
     ALLOC(*outdata, 1);
-    if(*outdata == NULL)
+    if(*outdata == NULL) {
+	krb5_set_error_string(context, "malloc: out of memory");
 	return ENOMEM;
+    }
     ret = copy_octet_string(indata, *outdata);
-    if(ret)
+    if(ret) {
+	krb5_clear_error_string (context);
 	free(*outdata);
+    }
     return ret;
 }
