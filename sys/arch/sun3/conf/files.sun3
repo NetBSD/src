@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.66 2002/10/26 13:50:47 jdolecek Exp $
+#	$NetBSD: files.sun3,v 1.67 2002/10/27 23:23:48 chs Exp $
 
 #
 # sun3-specific configuration info
@@ -253,6 +253,14 @@ file dev/sun/ms.c			ms needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
+
+
+#
+# wscons
+#
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Compatibility modules
 

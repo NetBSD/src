@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.11 2002/10/26 13:50:47 jdolecek Exp $
+#	$NetBSD: files.sun2,v 1.12 2002/10/27 23:23:48 chs Exp $
 
 #
 # sun2-specific configuration info
@@ -152,6 +152,13 @@ file dev/sun/sunms.c			ms_tty
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
+
+#
+# wscons
+#
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Compatibility modules
 
