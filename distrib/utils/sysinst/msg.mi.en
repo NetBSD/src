@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.109 2003/06/27 22:20:15 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.110 2003/07/07 12:30:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,8 +121,8 @@ returned to the original menu.
 }
 
 message onedisk
-{I found only one disk, %s.  Therefore I assume you want to %s
-NetBSD on it.
+{I found only one disk, %s. 
+Therefore I assume you want to %s NetBSD on it.
 }
 
 message askdisk
@@ -267,21 +267,12 @@ This is your last chance to change it.
 }
 
 message fspart_header
-{       Start       End      Size FStype Bsize Fsize Preserve Mount point
-   --------- --------- --------- ------ ----- ----- -------- -----------
+{       Start       End      Size FStype Newfs Mount Mount point
+   --------- --------- --------- ------ ----- ----- -----------
 }
 
-message fspart_row_start
-{%9d %9d %9d %-6s }
-
-message fspart_row_end_bsd
-{%5d %5d %-8s %s\n}
-
-message fspart_row_end_msdos
-{                     %s\n}
-
-message fspart_row_end_other
-{\n}
+message fspart_row
+{%9d %9d %9d %-6s %-5s %-5s %s}
 
 message show_all_unused_partitions
 {Show all unused partitions}
@@ -316,19 +307,24 @@ message bsize_fmt
 message fsize_fmt
 {   fsize: %9d bytes}
 
-message preserve_fmt
-{preserve: %9s}
+message newfs_fmt
+{   newfs: %9s}
 
 message mount_fmt
+{   mount: %9s}
+
+message mountpt_fmt
 {mount pt: %9s}
 
 message restore
 {Restore original values}
 
+.if 0
 message not42bsd
 {Partition %c is not of type 4.2BSD and thus does not have a block and
 frag size to set.
 }
+.endif
 
 message Select_the_type
 {MSG Select the type}
@@ -909,10 +905,6 @@ message cmdfail
 	%s
 failed. I can't continue.}
 
-message noactivepart
-{You have not marked a partition active. This may cause your system to not
-start up properly. Should the NetBSD partition of the disk be marked active?}
-
 message upgradeparttype
 {The only suitable partition that was found for NetBSD installation is of
 the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
@@ -930,6 +922,9 @@ the timezone selection.
  Selected:	%s 
  Local time: 	%s %s 
 }
+
+message tz_back
+{ Back to main timezone list}
 
 message choose_crypt
 {Please choose the password cipher to use. NetBSD can be configured to use

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.41 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.42 2003/07/07 12:30:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,7 @@ do_logging(void)
 	int menu_no;
 
 	menu_no = new_menu ("Logging Functions", logmenu, 2, -1, 12,
-		0, 20, MC_SCROLL, NULL, NULL,
+		0, 20, MC_SCROLL, NULL, NULL, NULL,
 		"Pick an option to turn on or off.\n", NULL);
 
 	if (menu_no < 0) {
@@ -260,6 +260,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	char pktdata;
 	struct termios rtt;
 	struct termios tt;
+	struct timeval tmo;
 
 	if (pipe(dataflow) < 0) {
 		*errstr = "pipe() failed";
@@ -357,7 +358,9 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 			errx(1, mmsg);
 		}
 		read_fd_set = active_fd_set;
-		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+		tmo.tv_sec = 1;
+		tmo.tv_usec = 0;
+		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, &tmo) < 0) {
 			if (errno == EINTR)
 				goto loop;
 			warn("select");

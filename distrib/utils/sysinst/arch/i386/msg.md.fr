@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.28 2003/06/13 22:27:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.29 2003/07/07 12:30:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,6 +135,36 @@ que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
 ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
+
+message missing_bootmenu_text	/* XXX translate */
+{You have more than one operating system on this disk, but have not
+specified a 'bootmenu' for either the active partition or the
+Netbsd partition that you are going to install into. 
+
+Do you want to re-edit the partition to add a bootmenu entry?}
+
+message no_extended_bootmenu	/* XXX translate */
+{You have requested that an extended partition be included in the bootmenu.
+However your system BIOS doesn't appear to support the read command used
+by that version of the bootmenu code. 
+Are you sure you that you want to do this?
+
+(Answering 'no' will take you back to the partition edit menu.)}
+
+message installbootsel	/* XXX translate */
+{Your configuration requires the NetBSD bootselect code to
+select which operating system to use. 
+
+It is not currently installed, do you want to install it now?}
+
+message installmbr	/* XXX translate */
+{The bootcode in the Master Boot Record does not appear to be valid.
+
+Do you want to install the NetBSD bootcode?}
+
+message updatembr	/* XXX translate */
+{Do you want to update the bootcode in the Master Boot Record to
+the latest version of the NetBSD bootcode?}
 
 message set_kernel_1
 {Kernel (GENERIC)}

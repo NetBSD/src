@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.21 2003/06/27 22:20:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.22 2003/07/07 12:30:21 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -267,21 +267,12 @@ message fspart
 }
 
 message fspart_header
-{     Rozmiar  Przesun.    Koniec Typ SP Bsize Fsize  Ochrona Mountpoint 
-   --------- --------- --------- ------ ----- ----- -------- -----------
+{     Rozmiar  Przesun.    Koniec Typ SP Ochrona Mount Mountpoint 
+   --------- --------- --------- ------ ------- ----- ----------
 }
 
-message fspart_row_start
-{%9d %9d %9d %-6s }
-
-message fspart_row_end_bsd
-{%5d %5d %-8s %s\n}
-
-message fspart_row_end_msdos
-{                     %s\n}
-
-message fspart_row_end_other
-{\n}
+message fspart_row
+{%9d %9d %9d %-6s %-7s %-5s %s}
 
 message show_all_unused_partitions	/* XXX translate */
 {Show all unused partitions}
@@ -314,19 +305,24 @@ message bsize_fmt		/* XXX translate */
 message fsize_fmt		/* XXX translate */
 {   fsize: %9d bytes}
 
-message preserve_fmt		/* XXX translate */
-{preserve: %9s}
+message newfs_fmt		/* XXX translate */
+{   newfs: %9s}
 
 message mount_fmt		/* XXX translate */
+{   mount: %9s}
+
+message mountpt_fmt		/* XXX translate */
 {mount pt: %9s}
 
 message restore		/* XXX translate */
 {Restore original values}
 
+.if 0
 message not42bsd
 {Partycja %c nie jest typu 4.2BSD i dlatego nie ma mozliwosci ustawienia
 rozmiaru bloku i frag.
 }
+.endif
 
 message Select_the_type
 {Wybierz rodzaj}
@@ -894,10 +890,6 @@ message cmdfail
 	%s
 nie powiodlo sie. Nie moge kontynuowac.}
 
-message noactivepart
-{Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
-uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktynwa?}
-
 message upgradeparttype
 {Jedyna odpowienid partycja, ktora zostala znaleziona dla instalacji NetBSD
 jest starego typu NetBSD/386BSD/FreeBSD. Czy chcesz zmienic typ tej partycji
@@ -914,6 +906,9 @@ Nacisnij ENTER aby wybrac. Nacisnij 'x' a potem ENTER aby wyjsc.
  Wybrana:	%s 
  Lokalny czas:	%s %s 
 }
+
+message tz_back	/* XXX translate */
+{ Back to main timezone list}
 
 message choose_crypt
 {Wybierz sposob szyfrowania hasel, ktorego chcesz uzywac. NetBSD moze korzystac

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2003/06/16 10:42:49 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.34 2003/07/07 12:30:24 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,14 +49,6 @@
 #include "menu_defs.h"
 #include "endian.h"
 #include "mbr.h"
-
-
-#ifdef __mips__
-extern mbr_sector_t mbr;
-#else
-mbr_sector_t mbr;
-#endif
-int mbr_present;
 
 
 /* prototypes */

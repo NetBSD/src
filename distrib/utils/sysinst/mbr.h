@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.15 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.16 2003/07/07 12:30:20 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -36,6 +36,9 @@
  *
  */
 
+#ifndef _MBR_H
+#define _MBR_H
+
 /*
  * mbr.h -- definitions for reading, writing and editing DOS MBRs.
  * Use by including from md.h on ports  which use MBRs (i386, powerpc, arc)
@@ -47,23 +50,36 @@
 #include <sys/disklabel_mbr.h>
 
 /*      
- * XXX  
+ * XXX  I (dsl) haven't the foggiest idea what the MBR extended chain
+ *	looks like if the sector size isn't 512.
  */     
 #define MBR_SECSIZE     512
 
 #define MBR_PUT_LSCYL(c)		((c) & 0xff)
 #define MBR_PUT_MSCYLANDSEC(c,s)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 
+typedef struct mbr_info_t mbr_info_t;
+struct mbr_info_t {
+	mbr_sector_t	mbr;
+#ifdef BOOTSEL
+	char		nametab[NMBRPART][PARTNAMESIZE + 1];
+#endif
+	uint		sector;		/* where we read this from */
+	mbr_info_t	*extended;	/* next in extended partition list */
+	mbr_info_t	*prev_ext;	/* and back ptr */
+	const char	*last_mounted[NMBRPART];
+	/* only in first item... */
+	int		opt;		/* entry being edited */
+	uint		install;	/* start sector of install partition */
+#ifdef BOOTSEL
+	uint		bootsec;	/* start sector of bootmenu default */
+#endif
+};
+
 /* incore fdisk (mbr, bios) geometry */
 EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
 
-/* incore copy of  MBR partitions */
-EXTERN struct mbr_partition *part;
-EXTERN int activepart;
-EXTERN int bsdpart;			/* partition in use by NetBSD */
-EXTERN int usefull;			/* on install, clobber entire disk */
-
-extern mbr_sector_t mbr;
+EXTERN mbr_info_t mbr;
 
 #ifdef BOOTSEL
 struct mbr_bootsel *mbs;
@@ -75,15 +91,15 @@ void	disp_cur_geom(void);
 int	check_geom(void);		/* primitive geometry sanity-check */
 
 void	disp_cur_part(struct mbr_partition *, int, int);
-int	edit_mbr(mbr_sector_t *);
+int	edit_mbr(mbr_info_t *);
 int 	partsoverlap(struct mbr_partition *, int, int);
 
 /* from mbr.c */
  
-int     read_mbr(const char *, mbr_sector_t *);
-int     write_mbr(const char *, mbr_sector_t *, int);
+int     read_mbr(const char *, mbr_info_t *);
+int     write_mbr(const char *, mbr_info_t *, int);
 int     valid_mbr(mbr_sector_t *);
-int	guess_biosgeom_from_mbr(mbr_sector_t *, int *, int *, int *);
+int	guess_biosgeom_from_mbr(mbr_info_t *, int *, int *, int *);
 int	md_bios_info(char *);
 void	set_bios_geom(int, int, int);
 int	otherpart(int);
@@ -99,3 +115,4 @@ void	edit_bootsel_default_disk(int);
 void	configure_bootsel(void);
 #endif
 
+#endif

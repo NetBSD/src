@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.61 2003/06/27 22:20:15 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.62 2003/07/07 12:30:19 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -183,15 +183,23 @@ find_disks(const char *doingwhat)
 	dlsize = disk->dd_totsec;
 	dlcylsize = dlhead * dlsec;
 
+	/* Get existing/default label */
+	incorelabel(diskdev, oldlabel);
+
 	return numdisks;
 }
 
 void
-fmt_fspart(char *buf, size_t len, int ptn)
+fmt_fspart(menudesc *m, int ptn, void *arg)
 {
 	int poffset, psize, pend;
-	int l;
 	const char *desc;
+	static const char *Yes, *No;
+
+	if (Yes == NULL) {
+		Yes = msg_string(MSG_Yes);
+		No = msg_string(MSG_No);
+	}
 
 	poffset = bsdlabel[ptn].pi_offset / sizemult;
 	psize = bsdlabel[ptn].pi_size / sizemult;
@@ -213,68 +221,13 @@ fmt_fspart(char *buf, size_t len, int ptn)
 			desc = msg_string(MSG_NetBSD_partition_cant_change);
 	}
 
-	l = snprintf(buf, len, msg_string(MSG_fspart_row_start),
-			poffset, pend, psize, desc);
-	buf += l;
-	len -= l;
-	if (len <= 0)
-		return;
-	if (PI_ISBSDFS(&bsdlabel[ptn]))
-		snprintf(buf, len, msg_string(MSG_fspart_row_end_bsd),
-			    bsdlabel[ptn].pi_bsize,
-			    bsdlabel[ptn].pi_fsize,
-			    bsdlabel[ptn].pi_newfs ? "No" : "Yes",
-			    bsdlabel[ptn].pi_mount);
-	else if (bsdlabel[ptn].pi_fstype == FS_MSDOS)
-		snprintf(buf, len, msg_string(MSG_fspart_row_end_msdos),
-				bsdlabel[ptn].pi_mount);
-	else
-		snprintf(buf, len, msg_string(MSG_fspart_row_end_other));
-}
-
-void
-disp_cur_fspart(int disp, int showall)
-{
-	int i;
-	int start, stop;
-	int poffset, psize, pend;
-
-	if (disp < 0) {
-		start = 0;
-		stop = getmaxpartitions();
-	} else {
-		start = disp;
-		stop = disp+1;
-	}
-
-	msg_table_add (MSG_fspart_header);
-	for (i = start; i < stop; i++) {
-		if (showall || bsdlabel[i].pi_size > 0) {
-			poffset = bsdlabel[i].pi_offset / sizemult;
-			psize = bsdlabel[i].pi_size / sizemult;
-			if (psize == 0)
-				pend = 0;
-			else
-				pend = (bsdlabel[i].pi_offset +
-				bsdlabel[i].pi_size) / sizemult - 1;
-			msg_table_add("%c: ", 'a' + i);
-			msg_table_add(MSG_fspart_row_start,
-					poffset, pend, psize,
-					fstypenames[bsdlabel[i].pi_fstype]);
-			if (PI_ISBSDFS(&bsdlabel[i]))
-				msg_table_add(MSG_fspart_row_end_bsd,
-					    bsdlabel[i].pi_bsize,
-					    bsdlabel[i].pi_fsize,
-					    bsdlabel[i].pi_newfs ? "No" : "Yes",
-					    bsdlabel[i].pi_mount);
-			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
-				msg_table_add(MSG_fspart_row_end_msdos,
-						bsdlabel[i].pi_mount);
-			else
-				msg_table_add(MSG_fspart_row_end_other);
-		}
-	}
-	msg_display_add(MSG_newline);
+	wprintw(m->mw, msg_string(MSG_fspart_row),
+			poffset, pend, psize, desc,
+			PI_ISBSDFS(&bsdlabel[ptn]) ?
+			    bsdlabel[ptn].pi_flags & PIF_NEWFS ? Yes : No : "",
+			bsdlabel[ptn].pi_mount[0] == '/' ?
+			    bsdlabel[ptn].pi_flags & PIF_MOUNT ? Yes : No : "",
+			bsdlabel[ptn].pi_mount);
 }
 
 /*
@@ -301,26 +254,47 @@ write_disklabel (void)
 #endif
 }
 
+
+static int
+ptn_sort(const void *a, const void *b)
+{
+	return strcmp(bsdlabel[*(int *)a].pi_mount,
+		      bsdlabel[*(int *)b].pi_mount);
+}
+
 int
 make_filesystems(void)
 {
 	int i;
+	int ptn;
+	int ptn_order[nelem(bsdlabel)];
 	char partname[STRSIZE];
 	int error;
+	int maxpart = getmaxpartitions();
 
-	/* Making new file systems and mounting them*/
-	for (i = 0; i < getmaxpartitions(); i++) {
+	if (maxpart > nelem(bsdlabel))
+		maxpart = nelem(bsdlabel);
+
+	/* Making new file systems and mounting them */
+
+	/* sort to ensure /usr/local is mounted after /usr (etc) */
+	for (i = 0; i < maxpart; i++)
+		ptn_order[i] = i;
+	qsort(ptn_order, maxpart, sizeof ptn_order[0], ptn_sort);
+
+	for (i = 0; i < maxpart; i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems.
 		 * but if this is the mounted-on root, has no mount
 		 * point defined, or is marked preserve, don't touch it!
 		 */
-	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + i);
-		if (PI_ISBSDFS(&bsdlabel[i]) && !is_active_rootpart(partname)) {
-			error = do_flfs_newfs(partname, i, bsdlabel[i].pi_mount);
-			if (error)
-				return error;
-		}
+		ptn = ptn_order[i];
+	  	snprintf(partname, STRSIZE, "%s%c", diskdev, 'a' + ptn);
+		if (!PI_ISBSDFS(&bsdlabel[ptn]) || is_active_rootpart(partname))
+			continue;
+		error = do_flfs_newfs(partname, ptn, bsdlabel[ptn].pi_mount);
+		if (error)
+			return error;
 	}
 	return 0;
 }
@@ -336,7 +310,7 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 	if (!*mountpoint)
 		return 0;
 
-	if (bsdlabel[partno].pi_newfs) {
+	if (bsdlabel[partno].pi_flags & PIF_NEWFS) {
 		switch (bsdlabel[partno].pi_fstype) {
 		case FS_BSDFFS:
 			newfs = "/sbin/newfs";
@@ -352,10 +326,9 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 	} else
 		error = 0;
 
-	if (error == 0) {
+	if (error == 0 && bsdlabel[partno].pi_flags & PIF_MOUNT) {
 		snprintf(dev_name, sizeof(dev_name), "/dev/%s", partname);
-		if (partno > 0)	/* XXX strcmp(mountpoint, "/") ? XXX */
-			make_target_dir(mountpoint);
+		make_target_dir(mountpoint);
 		error = target_mount(bsdlabel[partno].pi_fstype == FS_BSDFFS ?
 		    "-v -o async" : "-v", dev_name, mountpoint);
 		if (error) {
@@ -540,7 +513,8 @@ fsck_with_error_menu(const char *diskpart)
  * returns 0 if the mount completed without indicating errors,
  * and an nonzero error code from target_mount() otherwise.
  */
-int target_mount_with_error_menu(const char *opt,
+int
+target_mount_with_error_menu(const char *opt,
 		 char *diskpart, const char *mntpoint)
 {
 	int error;
@@ -653,21 +627,14 @@ fsck_disks(void)
 int
 set_swap(const char *dev, partinfo *pp)
 {
-	partinfo parts[16];
-	int i, maxpart;
+	int i;
 	char *cp;
 	int rval;
 
-	if (pp == NULL) {
-		emptylabel(parts);
-		if (incorelabel(dev, parts) < 0)
-			return -1;
-		pp = parts;
-	}
+	if (pp == NULL)
+		pp = oldlabel;
 
-	maxpart = getmaxpartitions();
-
-	for (i = 0; i < maxpart; i++) {
+	for (i = 0; i < MAXPARTITIONS; i++) {
 		if (pp[i].pi_fstype != FS_SWAP)
 			continue;
 		asprintf(&cp, "/dev/%s%c", dev, 'a' + i);

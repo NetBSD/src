@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:45 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/07/07 12:30:26 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/03/24 22:04:06 scw Exp */
 
@@ -65,18 +65,3 @@ Wyedytuj jeszcze raz tablice partycji.}
 
 message set_kernel_1
 {Kernel (GENERIC)}
-
-/* XXX: not yet implemented
-message existing
-{Do you want to preserve existing BSD partition(s)?}
-
-message nofreepart
-{%s does not have enough free partitions for NetBSD.
-It must have at least 2 free partitions (for root file system and swap).
-}
-
-message notfirst
-{NetBSD/mvme68k must be installed in the first part of the boot disk.
-The first part of %s is not free.
-}
-*/

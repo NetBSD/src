@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 2003/06/11 21:35:45 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 2003/07/07 12:30:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,8 @@ Please re-edit the partition table.}
 message set_kernel_1
 {Kernel (GENERIC)}
 
-/* XXX: not yet implemented
+.if notyet
+/* XXX: not yet implemented */
 message existing
 {Do you want to preserve existing BSD partition(s)?}
 
@@ -77,4 +78,4 @@ message notfirst
 {NetBSD/mvme68k must be installed in the first part of the boot disk.
 The first part of %s is not free.
 }
-*/
+.endif

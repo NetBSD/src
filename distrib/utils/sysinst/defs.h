@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.93 2003/06/27 22:20:14 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.94 2003/07/07 12:30:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,7 +115,8 @@ extern const char * const fstypenames[];
 
 /* Round up to the next full cylinder size */
 #define	ROUNDDOWN(n,d) (((n)/(d)) * (d))
-#define	ROUNDUP(n,d) ((((n) + (d) - 1)/(d)) * (d))
+#define	DIVUP(n,d) (((n) + (d) - 1) / (d))
+#define	ROUNDUP(n,d) (DIVUP((n), (d)) * (d))
 #define NUMSEC(size, sizemult, cylsize) \
 	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
 	 ROUNDUP((size) * (sizemult), (cylsize)))
@@ -132,14 +133,18 @@ typedef struct distinfo {
 } distinfo;
 
 typedef struct _partinfo {
-	int	pi_size;
-	int	pi_offset;
-	int	pi_fstype;
-	int	pi_bsize;
-	int	pi_fsize;
+	struct partition pi_partition;
+#define pi_size		pi_partition.p_size
+#define pi_offset	pi_partition.p_offset
+#define pi_fsize	pi_partition.p_fsize
+#define pi_fstype	pi_partition.p_fstype
+#define pi_frag		pi_partition.p_frag
+#define pi_cpg		pi_partition.p_cpg
 	char	pi_mount[20];
-	int8_t	pi_newfs;
-	int8_t	pi_reset;
+	uint	pi_flags;
+#define PIF_NEWFS	0x001		/* need to 'newfs' partition */
+#define PIF_MOUNT	0x002		/* need to mount partition */
+#define PIF_RESET	0x100		/* internal - restore previous values */
 } partinfo;	/* Single partition from a disklabel */
 
 
@@ -213,7 +218,8 @@ EXTERN int root_limit;
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
-EXTERN partinfo bsdlabel[MAXPARTITIONS];
+EXTERN partinfo oldlabel[MAXPARTITIONS];	/* What we found on the disk */
+EXTERN partinfo bsdlabel[MAXPARTITIONS];	/* What we want it to look like */
 EXTERN int tmp_mfs_size INIT(0);
 
 #define DISKNAME_SIZE 80
@@ -258,7 +264,7 @@ EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
 EXTERN char localfs_dir[STRSIZE] INIT("");
 
-EXTERN char targetroot_mnt[STRSIZE] INIT ("/mnt");
+EXTERN char targetroot_mnt[STRSIZE] INIT ("/targetroot");
 EXTERN char distfs_mnt[STRSIZE] INIT ("/mnt2");
 
 EXTERN int  mnt2_mounted INIT(0);
@@ -322,7 +328,8 @@ void	toplevel(void);
 
 /* from disks.c */
 int	find_disks(const char *);
-void	fmt_fspart(char *, size_t, int);
+struct menudesc;
+void	fmt_fspart(struct menudesc *, int, void *);
 void	disp_cur_fspart(int, int);
 int	write_disklabel(void);
 int	make_filesystems(void);
@@ -336,6 +343,7 @@ int	fs_is_lfs(void *);
 
 /* from label.c */
 
+const char *get_last_mounted(int, int);
 void	emptylabel(partinfo *);
 int	savenewlabel(partinfo *, int);
 int	incorelabel(const char *, partinfo *);
@@ -356,8 +364,8 @@ void	get_disk_info(char *);
 void	set_disk_info(char *);
 
 /* from geom.c */
-int	get_geom(char *, struct disklabel *);
-int	get_real_geom(char *, struct disklabel *);
+int	get_geom(const char *, struct disklabel *);
+int	get_real_geom(const char *, struct disklabel *);
 
 /* from net.c */
 int	get_via_ftp(void);

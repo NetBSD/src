@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.35 2003/06/25 15:45:23 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.36 2003/07/07 12:30:26 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -981,14 +981,6 @@ md_make_bsd_partitions(void)
 	 * The mac68k port has a predefined partition for "c" which
 	 *  is the size of the disk, everything else is unused.
 	 */
-	for (i=0;i<MAXPARTITIONS;i++) {
-		bsdlabel[i].pi_size = 0;
-		bsdlabel[i].pi_offset = 0;
-		bsdlabel[i].pi_fstype = FS_UNUSED;
-		bsdlabel[i].pi_bsize = 0;
-		bsdlabel[i].pi_fsize = 0;
-		bsdlabel[i].pi_mount[0] = 0;
-	}
 	bsdlabel[RAW_PART].pi_size = dlsize;
 	/*
 	 * Now, scan through the Disk Partition Map and transfer the
@@ -1022,7 +1014,7 @@ md_make_bsd_partitions(void)
 		    bsdlabel[pl].pi_size = map.blk[j].pmPartBlkCnt;
 		    bsdlabel[pl].pi_offset = map.blk[j].pmPyPartStart;
 		    if (bsdlabel[pl].pi_fstype != FS_SWAP) {
-		        bsdlabel[pl].pi_bsize = 8192;
+		        bsdlabel[pl].pi_frag = 8;
 		        bsdlabel[pl].pi_fsize = 1024;
 		    }
 		}
@@ -1062,8 +1054,8 @@ md_make_bsd_partitions(void)
 			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i].pi_bsize,
-				       'a'+i, bsdlabel[i].pi_fsize);
+			   'a'+i, bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag,
+			   'a'+i, bsdlabel[i].pi_fsize);
 		if (i < 7)
 			(void)fprintf (f, "\\\n");
 		else

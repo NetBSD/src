@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.3 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.4 2003/07/07 12:30:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.3 2003/06/16 19:42:14 dsl Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.4 2003/07/07 12:30:22 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,8 +88,8 @@ savenewlabel(partinfo *lp, int nparts)
 		    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
 		if (PI_ISBSDFS(&bsdlabel[i]))
 			scripting_fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
-				       'a'+i, bsdlabel[i].pi_bsize,
-				       'a'+i, bsdlabel[i].pi_fsize);
+			   'a'+i, bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag,
+			   'a'+i, bsdlabel[i].pi_fsize);
 	
 		if (i < nparts - 1)
 			scripting_fprintf(f, "\\\n");

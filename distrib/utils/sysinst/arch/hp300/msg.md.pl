@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:42 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/07/07 12:30:24 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/03/15 05:26:37 gmcgarry Exp */
 
@@ -67,18 +67,3 @@ Wyedytuj jeszcze raz tablice partycji.}
 
 message set_kernel_1
 {Kernel (GENERIC)}
-
-/* XXX: not yet implemented
-message existing
-{Do you want to preserve existing BSD partition(s)?}
-
-message nofreepart
-{%s does not have enough free partitions for NetBSD.
-It must have at least 2 free partitions (for root file system and swap).
-}
-
-message notfirst
-{NetBSD/hp300 must be installed in the first part of the boot disk.
-The first part of %s is not free.
-}
-*/

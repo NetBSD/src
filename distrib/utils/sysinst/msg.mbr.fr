@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.6 2003/06/27 22:20:15 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.7 2003/07/07 12:30:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,18 +65,22 @@ message Use_the_entire_disk
 message part_header
 {   Total disksize %d %s.
 
-   Début(%3s) Fin(%3s)   Taille(%3s) Type
-   ---------- ---------- ----------- ----
+.if BOOTSEL
+   Début(%3s) Taille(%3s) Flg Type                   Nom de démarre
+   ---------- ----------- --- ---------------------- --------------
+.else
+   Début(%3s) Taille(%3s) Flg Type
+   ---------- ----------- --- ----
+.endif
 }
 
-message part_row_start_unused
-{%-1d:                                  }
+message part_row_used
+{%10d %11d %c%c%c}
 
-message part_row_start_used
-{%-1d: %-10d %-10d %-11d}
-
-message part_row_end
-{ %s\n}
+message noactivepart
+{Vous n'avez pas choisi de partition active.
+Cela peut empêcher votre système de démarrer correctement.
+Dois-je marquer la partition NetBSD active?}
 
 message setbiosgeom
 {
@@ -134,89 +138,67 @@ message ovrwrite
 vraiment l'écraser par une partition NetBSD ?
 }
 
-.if 0
-message parttable
-{La table des partitions de votre disque est :
-}
-.endif
-
-message editpart
-{La partition %d ressemble à:
-
-}
-
-message Select_to_change
-{Changement}
-message Kind
-{du type de FS}
-message Start_and_size
-{du Début et de la taille}
-message Set_active
-{Rendre la partition active}
 message Partition_OK
 {Partition OK}
 
+message ptn_type
+{type du FS: %s}
+message ptn_start
+{     Début: %d %s}
+message ptn_size
+{    taille: %d %s}
+message ptn_end	/* XXX translate */
+{       fin: %d %s}
+message ptn_active
+{    active: %s}
+message ptn_install
+{   install: %s}
+.if BOOTSEL
+message bootmenu	/* XXX translate */
+{  bootmenu: %s}
+message boot_dflt	/* XXX translate */
+{   default: %s}
+.endif
+
+message get_ptn_size {%staille (maximum %d %s)}	/* XXX translate */
+message Invalid_numeric {Invalid numeric: }	/* XXX translate */
+message Too_large {Too large: }	/* XXX translate */
+message Space_allocated {Space allocated: }	/* XXX translate */
+message ptn_starts {Space at %d..%d %s (taille %d %s)\n}	/* XXX translate */
+message get_ptn_start {%s%sDébut (en %s)}
+message get_ptn_id {Partition kind (0..255)}	/* XXX translate */
+
+
 message editparttable
-{Editez votre table de partition DOS. La partition en surbrillance est
-actuellement active. La table des partitions est :
+{Editez votre table de partition DOS. La table des partitions est :
 
 }
 
-message Choose_your_partition
-{Choisissez votre partition}
-message Edit_partition_0
-{Edition de la partition 0}
-message Edit_partition_1
-{Edition de la partition 1}
-message Edit_partition_2
-{Edition de la partition 2}
-message Edit_partition_3
-{Edition de la partition 3}
-message Reselect_size_specification
-{Changer d'untité}
+message Partition_table_ok
+{Partition table OK}
 
-message Partition_Kind
-{Type de Partition?}
-message NetBSD
-{NetBSD}
-message DOS_LT_32_Meg
-{DOS < 32 Meg}
-message DOS_GT_32_Meg
-{DOS > 32 Meg}
-message unused
-{inutilis'e}
-message dont_change
-{ne pas modifier}
+message Delete_partition
+{Delete Partition}	/* XXX translate */
+message Dont_change
+{Ne pas modifier}
+message Other_kind 
+{Other, input number}	/* XXX translate */
 
-message mbrpart_start_special
+
+message reeditpart	/* XXX translate */
 {
-  Valeurs spéciales qui peuvent être entrées pour la valeur Début:
- -N: commence à la fin de la partition N
-  0: commence au début du disque
-}
 
-message mbrpart_size_special
-{
-  Valeurs spéciales qui peuvent être entrées pour la valeur Taille:
-  -N: dimentionne la partition de façon à finir au début de la partition N
-   0: finit à la fin du disque
-}
-
-message reeditpart
-{Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
-exactement une partition NetBSD. Vous devez éditer de nouveau la table
-des partitions.
-
-Voulez vous la rééditer ?
+Voulez vous rééditer la table des partitions (or abandon the installation)?
 }
 
 message nobsdpart
 {Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
 boot.}
 
-message multbsdpart
+message multbsdpart	/* XXX translate */
 {Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
-boot. La partition %d sera utilisée.}
+boot.
+You should set the 'install' flag on the one you want to use.}
 
 message dofdisk
 {Configuration de la table des partition DOS ...
@@ -225,102 +207,11 @@ message dofdisk
 message wmbrfail
 {L'écriture du MBR a échouée. Je ne peux pas continuer.}
 
-.if BOOTSEL
-message installbootsel
-{Il me semble que vous avez plusieur système d'exploitation sur ce disque.
-Voulez-vous installer un selecteur de boot qui vous permettra de choisir
-quel système chargé lorsque votre ordinateur est (re)démarré?}
-
-message installlbambr
-{Le début de la partition de votre disque réservée à NetBSD se trouve en-dehors
-de l'espace que le BIOS peut adresser. Le programme d'amorcage du secteur de
-demmarage doit utiliser l'interface étendue du BIOS pour ammorcer depuis cette
-partition. Voulez-vous installer le programme d'amorcage de NetBSD pour etre
-sur de pouvoir démarer depuis cette partition ? Notez que cela va écraser
-le programme d'amorcage existant, comme un selecteur de boot.}
-
-message installnormalmbr /* XXX translate */
-{You have chosen not to install a bootselector. If this was because you
-already have a bootselector installed, no further action is needed.
-However, if no bootselector is installed, the normal bootcode must be
-used, or your system will not boot properly. Do you want to use the normal
-NetBSD bootcode?}
-
-message installmbr /* XXX translate */
-{Voulez-vous installer le programme d'amorcage de NetBSD?}
-
-message configbootsel
-{Configurez les differents choix du selecteur de boot. Vous pouvez changer
-le menu proposé pour chaque partition lorsque le système demarre.
-Vous pouvez également préciser le choix par defaut et le temps d'attente.\n
-}
-
-message Change_a_bootmenu_item
-{Changer une entree du menu}
-message Edit_menu_entry_0
-{Changer l'entrée 0 du menu}
-message Edit_menu_entry_1
-{Changer l'entrée 1 du menu}
-message Edit_menu_entry_2
-{Changer l'entrée 2 du menu}
-message Edit_menu_entry_3
-{Changer l'entrée 3 du menu}
+.if BOOTSEL && 0
 message Set_timeout_value
 {Changer le temps d'attente}
-message Set_default_option
-{Changer le choix par defaut}
-
-message Pick_a_default_partition_or_disk_to_boot
-{Choisissez un disque ou partition}
-message First_active_partition
-{Première partition active}
-message Partition_0
-{Partition 0}
-message Partition_1
-{Partition 1}
-message Partition_2
-{Partition 2}
-message Partition_3
-{Partition 3}
-message Harddisk_0
-{Disque dur 0}
-message Harddisk_1
-{Disque dur 1}
-message Harddisk_2
-{Disque dur 2}
-message Harddisk_3
-{Disque dur 3}
-message Harddisk_4
-{Disque dur 4}
-message Harddisk_5
-{Disque dur 5}
 
 message bootseltimeout
 {Temps d'attente: %d\n}
 
-message defbootselopt
-{Action par defaut: }
-
-message defbootseloptactive
-{Démarrer la première partition active.\n}
-
-message defbootseloptpart
-{Démarrer depuis la partition %d.\n}
-
-message defbootseloptdisk
-{Demarrer depuis le disque %d.\n}
-
-message bootselitemname
-{Entrez un nom pour ce choix}
-
-message bootseltimeoutval
-{Temps d'attente en secondes (0-3600)}
-
-message bootsel_header
-{Numéro Type                             Nom
------- -------------------------------- ---
-}
-
-message bootsel_row
-{%-6d %-32s %s\n}
 .endif

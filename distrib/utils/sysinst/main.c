@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2003/06/27 22:20:15 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2003/07/07 12:30:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,7 +236,7 @@ select_language(void)
 	}
 
 	lang_menu = new_menu(NULL, opt, num_lang, -1, 12, 0, 0, MC_NOEXITOPT,
-		NULL, NULL, NULL, NULL);
+		NULL, NULL, NULL, NULL, NULL);
 
 	if (lang_menu != -1) {
 		msg_display(MSG_hello);

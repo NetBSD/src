@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2003/06/14 12:58:48 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.16 2003/07/07 12:30:23 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -47,9 +47,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-
-int mbr_present;
-mbr_sector_t mbr;
 
 /* prototypes */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.44 2003/06/14 12:58:49 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.45 2003/07/07 12:30:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,6 +109,7 @@ EXTERN	char *fdtype INIT("msdos");
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE
+#define _PATH_BOOTEXT	DEFAULT_BOOTDIR "/" DEFAULT_BOOTEXTCODE
 
 extern struct mbr_bootsel *mbs;
  
@@ -116,5 +117,4 @@ extern struct mbr_bootsel *mbs;
 /*
  *  prototypes for MD code.
  */
-
 

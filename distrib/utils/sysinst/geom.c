@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.7 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: geom.c,v 1.8 2003/07/07 12:30:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -44,8 +44,8 @@
 
 #include "defs.h"
 
-int
-get_geom(char *disk, struct disklabel *l)
+static int
+get_label(const char *disk, struct disklabel *l, int cmd)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
@@ -56,7 +56,7 @@ get_geom(char *disk, struct disklabel *l)
 	if (fd < 0) 
 		return 0;
 
-	if (ioctl(fd, DIOCGDEFLABEL, l) < 0) {
+	if (ioctl(fd, cmd, l) < 0) {
 		sv_errno = errno;
 		(void)close(fd);
 		errno = sv_errno;
@@ -67,20 +67,15 @@ get_geom(char *disk, struct disklabel *l)
 }
 
 int
-get_real_geom(char *disk, struct disklabel *l)
+get_geom(const char *disk, struct disklabel *l)
 {
-	char diskpath[MAXPATHLEN];
-	int fd;
 
-	/* Open the disk. */
-	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0) 
-		return 0;
+	return get_label(disk, l, DIOCGDEFLABEL);
+}
 
-	if (ioctl(fd, DIOCGDINFO, l) < 0) {
-		(void)close(fd);
-		return 0;
-	}
-	(void)close(fd);
-	return 1;
+int
+get_real_geom(const char *disk, struct disklabel *l)
+{
+
+	return get_label(disk, l, DIOCGDINFO);
 }

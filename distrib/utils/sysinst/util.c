@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.100 2003/06/27 13:36:06 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.101 2003/07/07 12:30:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@
 #include <sys/stat.h>
 #include <curses.h>
 #include <errno.h>
-#include <fts.h>
+#include <dirent.h>
 #include <util.h>
 #include "defs.h"
 #include "md.h"
@@ -493,7 +493,7 @@ set_toggle(menudesc *menu, menu_ent *ent, void *arg)
 
 	if (set & SET_KERNEL)
 		/* only one kernel set is allowed */
-		sets_selected &= ~SET_KERNEL;
+		sets_selected &= ~SET_KERNEL | set;
 	sets_selected ^= set;
 	return 0;
 }
@@ -504,7 +504,7 @@ set_all(menudesc *menu, menu_ent *ent, void *arg)
 	set_menu_info_t *i = arg;
 
 	sets_selected |= i->sets;
-	return 0;
+	return 1;
 }
 
 static int
@@ -513,7 +513,7 @@ set_none(menudesc *menu, menu_ent *ent, void *arg)
 	set_menu_info_t *i = arg;
 
 	sets_selected &= ~i->sets;
-	return 0;
+	return 1;
 }
 
 static int set_sublist(menudesc *menu, menu_ent *ent, void *arg);
@@ -617,7 +617,7 @@ set_sublist(menudesc *menu, menu_ent *ent, void *arg)
 
 	menu_no = new_menu(NULL, me, sets, 20, 10, 0, 44,
 		MC_SCROLL | MC_DFLTEXIT,
-		set_selected_sets, NULL, NULL, MSG_install_selected_sets);
+		set_selected_sets, NULL, NULL, NULL, MSG_install_selected_sets);
 
 	if (menu_no == -1)
 		return 0;
@@ -665,7 +665,7 @@ customise_sets(void)
 
 	menu_no = new_menu(NULL, me, sets, 0, 5, 0, 44,
 		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT | MC_NOCLEAR,
-		set_selected_sets, NULL, NULL, MSG_install_selected_sets);
+		set_selected_sets, NULL, NULL, NULL, MSG_install_selected_sets);
 
 	if (menu_no == -1)
 		return;
@@ -1168,25 +1168,57 @@ askyesno(int reverse)
  * Some globals to pass things back from callbacks
  */
 static char zoneinfo_dir[STRSIZE];
-static const char *tz_selected;	/* timezonename (relative to share/zoneinfo */
+static int zonerootlen;
+static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
 static const char *tz_default;	/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
+static int save_cursel, save_topline;
 
 /*
  * Callback from timezone menu
  */
 static int
-set_timezone_select(menudesc *m, menu_ent *opt, void *arg)
+set_tz_select(menudesc *m, menu_ent *opt, void *arg)
 {
 	time_t t;
+	char *new;
 
-	if (m)
-		tz_selected = m->opts[m->cursel].opt_name;
-	snprintf(tz_env, sizeof(tz_env), "%s/%s", zoneinfo_dir, tz_selected);
+	if (m) {
+		new = strdup(m->opts[m->cursel].opt_name);
+		if (new == NULL)
+			return 0;
+		free(tz_selected);
+		tz_selected = new;
+	}
+	snprintf(tz_env, sizeof tz_env, "%*s%s",
+		 zonerootlen, zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
+	return 0;
+}
+
+static int
+set_tz_back(menudesc *m, menu_ent *opt, void *arg)
+{
+
+	zoneinfo_dir[zonerootlen] = 0;
+	m->cursel = save_cursel;
+	m->topline = save_topline;
+	return 0;
+}
+
+static int
+set_tz_dir(menudesc *m, menu_ent *opt, void *arg)
+{
+
+	strlcpy(zoneinfo_dir + zonerootlen, m->opts[m->cursel].opt_name,
+		sizeof zoneinfo_dir - zonerootlen);
+	save_cursel = m->cursel;
+	save_topline = m->topline;
+	m->cursel = 0;
+	m->topline = 0;
 	return 0;
 }
 
@@ -1198,8 +1230,88 @@ static void
 timezone_sig(int sig)
 {
 
-	set_timezone_select(NULL, NULL, NULL);
+	set_tz_select(NULL, NULL, NULL);
 	alarm(60);
+}
+
+static int
+tz_sort(const void *a, const void *b)
+{
+	return strcmp(((menu_ent *)a)->opt_name, ((menu_ent *)b)->opt_name);
+}
+
+static void
+tzm_set_names(menudesc *m, void *arg)
+{
+	DIR *dir;
+	struct dirent *dp;
+	static int nfiles;
+	static int maxfiles = 32;
+	static menu_ent *tz_menu;
+	static char **tz_names;
+	void *p;
+	int maxfname;
+	char *fp;
+	struct stat sb;
+
+	if (tz_menu == NULL)
+		tz_menu = malloc(maxfiles * sizeof *tz_menu);
+	if (tz_names == NULL)
+		tz_names = malloc(maxfiles * sizeof *tz_names);
+	if (tz_menu == NULL || tz_names == NULL)
+		return;	/* error - skip timezone setting */
+	while (nfiles > 0)
+		free(tz_names[--nfiles]);
+	
+	dir = opendir(zoneinfo_dir);
+	fp = strchr(zoneinfo_dir, 0);
+	if (fp != zoneinfo_dir + zonerootlen) {
+		tz_names[0] = 0;
+		tz_menu[0].opt_name = MSG_tz_back;
+		tz_menu[0].opt_menu = OPT_NOMENU;
+		tz_menu[0].opt_flags = 0;
+		tz_menu[0].opt_action = set_tz_back;
+		nfiles = 1;
+	}
+	maxfname = zoneinfo_dir + sizeof zoneinfo_dir - fp - 1;
+	if (dir != NULL) {
+		while ((dp = readdir(dir)) != NULL) {
+			if (dp->d_namlen > maxfname || dp->d_name[0] == '.')
+				continue;
+			strlcpy(fp, dp->d_name, maxfname);
+			if (stat(zoneinfo_dir, &sb) == -1)
+				continue;
+			if (nfiles >= maxfiles) {
+				p = realloc(tz_menu, 2 * maxfiles * sizeof *tz_menu);
+				if (p == NULL)
+					break;
+				tz_menu = p;
+				p = realloc(tz_names, 2 * maxfiles * sizeof *tz_names);
+				if (p == NULL)
+					break;
+				tz_names = p;
+				maxfiles *= 2;
+			}
+			if (S_ISREG(sb.st_mode))
+				tz_menu[nfiles].opt_action = set_tz_select;
+			else if (S_ISDIR(sb.st_mode)) {
+				tz_menu[nfiles].opt_action = set_tz_dir;
+				strcat(fp, "/");
+			} else
+				continue;
+			tz_names[nfiles] = strdup(zoneinfo_dir + zonerootlen);
+			tz_menu[nfiles].opt_name = tz_names[nfiles];
+			tz_menu[nfiles].opt_menu = OPT_NOMENU;
+			tz_menu[nfiles].opt_flags = 0;
+			nfiles++;
+		}
+		closedir(dir);
+	}
+	*fp = 0;
+
+	m->opts = tz_menu;
+	m->numopts = nfiles;
+	qsort(tz_menu, nfiles, sizeof *tz_menu, tz_sort);
 }
 
 /*
@@ -1212,25 +1324,17 @@ set_timezone(void)
 	char localtime_target[STRSIZE];
 	int rc;
 	time_t t;
-	FTS *tree;
-	FTSENT *entry;
-	char *argv[2];
-	int skip;
-	struct stat sb;
-	int nfiles, maxfiles;
 	int menu_no;
-	menu_ent *tz_menu, *tz_menu1;
-	char **tz_titles, **tz_titles1;
-
-	signal(SIGALRM, timezone_sig);
-	alarm(1);
        
-	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
+	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
+	    sizeof zoneinfo_dir - 1);
+	zonerootlen = strlen(zoneinfo_dir);
 	strlcpy(localtime_link, target_expand("/etc/localtime"),
 	    sizeof localtime_link);
 
 	/* Add sanity check that /mnt/usr/share/zoneinfo contains
-	 * something useful */
+	 * something useful
+	 */
 
 	rc = readlink(localtime_link, localtime_target,
 		      sizeof(localtime_target) - 1);
@@ -1242,60 +1346,23 @@ set_timezone(void)
 		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/') + 1;
 	}
 
-	tz_selected = tz_default;
-	snprintf(tz_env, sizeof(tz_env), "%s/%s", zoneinfo_dir, tz_selected);
+	tz_selected = strdup(tz_default);
+	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
 
-	skip = strlen(zoneinfo_dir);
-	argv[0] = zoneinfo_dir;
-	argv[1] = NULL;
+	signal(SIGALRM, timezone_sig);
+	alarm(60);
 	
-	nfiles = 0;
-	maxfiles = 32;
-	tz_menu = malloc(maxfiles * sizeof *tz_menu);
-	tz_titles = malloc(maxfiles * sizeof *tz_titles);
-	if (tz_menu == NULL || tz_titles == NULL)
-		goto done;	/* error - skip timezone setting */
-	
-	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL)))
-		goto done;	/* error - skip timezone setting */
-
-	for (; (entry = fts_read(tree)) != NULL; ) {
-		if (stat(entry->fts_accpath, &sb) == -1)
-			continue;
-		if (!S_ISREG(sb.st_mode))
-			continue;
-		if (nfiles >= maxfiles) {
-			maxfiles *= 2;
-			tz_menu1 = realloc(tz_menu, maxfiles * sizeof *tz_menu);
-			tz_titles1 = realloc(tz_titles,
-					     maxfiles * sizeof *tz_titles);
-			if (tz_menu1 == NULL || tz_titles1 == NULL)
-				break;
-			tz_menu = tz_menu1;
-			tz_titles = tz_titles1;
-		}
-		tz_titles[nfiles] = strdup(entry->fts_accpath + skip + 1);
-		if (tz_titles[nfiles] == NULL)
-			break;
-		tz_menu[nfiles].opt_name = tz_titles[nfiles];
-		tz_menu[nfiles].opt_menu = OPT_NOMENU;
-		tz_menu[nfiles].opt_flags = 0;
-		tz_menu[nfiles].opt_action = set_timezone_select;
-
-		nfiles++;
-	}
-	(void)fts_close(tree);  
-	
-	menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
-			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
+	menu_no = new_menu(NULL, NULL, 14, 23, 9,
+			   12, 32, MC_SCROLL | MC_NOSHORTCUT,
+			   tzm_set_names, NULL, NULL,
 			   "\nPlease consult the install documents.", NULL);
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
-
+	
 	process_menu(menu_no, NULL);
 
 	free_menu(menu_no);
@@ -1308,12 +1375,6 @@ set_timezone(void)
 	symlink(localtime_target, localtime_link);
 	
 done:
-	while (nfiles > 0)
-		free(tz_titles[--nfiles]);
-	if (tz_titles != NULL)
-		free(tz_titles);
-	if (tz_menu != NULL)
-		free(tz_menu);
 	return 1;
 }
 

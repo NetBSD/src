@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.6 2003/06/12 11:20:05 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.7 2003/07/07 12:30:23 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -41,10 +41,6 @@
 /* cats machine dependent messages, Polish */
 
 message md_hello
-{
-}
-
-message dobad144
 {
 }
 
