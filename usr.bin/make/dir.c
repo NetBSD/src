@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.15 1997/05/02 14:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.15 1997/05/02 14:23:51 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -853,20 +853,27 @@ Dir_FindFile (name, path)
 
 		Lst_Close (path);
 
-		/*
-		 * We've found another directory to search. We know there's
-		 * a slash in 'file' because we put one there. We nuke it after
-		 * finding it and call Dir_AddDir to add this new directory
-		 * onto the existing search path. Once that's done, we restore
-		 * the slash and triumphantly return the file name, knowing
-		 * that should a file in this directory every be referenced
-		 * again in such a manner, we will find it without having to do
-		 * numerous numbers of access calls. Hurrah!
-		 */
-		cp = strrchr (file, '/');
-		*cp = '\0';
-		Dir_AddDir (path, file);
-		*cp = '/';
+		if (!hasSlash) {
+		    /*
+		     * If the file did not have originally a slash,
+		     * and we've found it after we've added a pathname,
+		     * we've found another directory to search. We
+		     * know there's a slash in 'file' because we
+		     * put one there. We nuke it after finding it
+		     * and call Dir_AddDir to add this new directory
+		     * onto the existing search path. Once that's
+		     * done, we restore the slash and triumphantly
+		     * return the file name, knowing that should
+		     a file in this directory every be referenced
+		     * again in such a manner, we will find it
+		     * without having to do numerous numbers of
+		     * access calls. Hurrah! 
+		     */
+		    cp = strrchr (file, '/');
+		    *cp = '\0';
+		    Dir_AddDir (path, file);
+		    *cp = '/';
+		}
 
 		/*
 		 * Save the modification time so if it's needed, we don't have
