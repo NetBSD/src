@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -88,9 +88,12 @@ devopen(f, fname, file)
 		}
 		
 		if (c == ',') {
-				/* get partition number */
+			/* get partition number */
 			if ((c = *++cp) >= '0' && c <= '9') {
 				part = c - '0';
+				/* dksd(,,8)boot -> dksd(,,) */
+				if (part >= 8)
+					part = 0;
 				c = *++cp;
 			}
 		}

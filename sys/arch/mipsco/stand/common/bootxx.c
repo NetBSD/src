@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,10 +102,7 @@ main(argc, argv)
 
 	prom_init();
 
-	if (argc > 1)
-		cp = argv[1];
-	else
-		cp = "dksd()";
+	cp = *argv;
 
         printf("\nNetBSD/mipsco " NETBSD_VERS " " BOOTXX_FS_NAME " Primary Bootstrap\n");
 
@@ -139,12 +136,13 @@ loadfile(path, name)
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
 
-	src = bootfname;
-	for (dst = path; *dst;/**/)
-		*src++ = *dst++;
-	for (dst = name; *dst;/**/)
-		*src++ = *dst++;
-	*src = (char) 0;
+	dst = bootfname;
+	for (src = path; *src;/**/)
+		if ((*dst++ = *src++) == ')')
+			break;
+	for (src = name; *src;/**/)
+		*dst++ = *src++;
+	*dst = (char) 0;
 
 	if ((fd = open(bootfname, 0)) < 0) {
 		printf("open %s: %d\n", bootfname, errno);

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ char *kernelnames[] = {
 };
 
 
-static char *devname __P((char *));
+static char *devsplit __P((char *, char *));
 int main __P((int, char **));
 
 /*
@@ -127,33 +127,30 @@ main(argc, argv)
 
 	prom_init();
 
-	if (*(int *)argv[0] == *(int *)"boot" && argc > 1) {
-		argc--;
-		argv++;
-	}
-
 	/* print a banner */
 	printf("\n");
-	printf("NetBSD/mipsco " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
-	    bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
-	printf("\n");
+	printf("NetBSD/mipsco " NETBSD_VERS " " BOOT_TYPE_NAME 
+	       " Bootstrap, Revision %s\n", bootprog_rev);
+	printf("(%s, %s)\n\n", bootprog_maker, bootprog_date);
 
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);
 
-	if (strcmp(argv[0], "boot") == 0) {
-		argc--;
-		argv++;
-	}
-	name = argv[0];
-	printf("Boot: %s\n", name);
+	dev = name = NULL;
+	if (argc > 1) {
+		kernel = devsplit(argv[1], bootname);
+		if (*bootname) {
+			dev = bootname;
+			if (*kernel)
+				name = argv[1];
+			++argv;
+			--argc;
+		}
 
-	/* NOTE: devname() can modify bootname[]. */
-	strcpy(bootname, argv[0]);
-	if ((kernel = devname(bootname)) == NULL) {
+	}
+	if (dev == NULL) {
+		(void) devsplit(argv[0], bootname);
 		dev = bootname;
-		name = NULL;
 	}
 
 	memset(marks, 0, sizeof marks);
@@ -197,35 +194,20 @@ fail:
 }
 
 /*
- * Check whether or not fname is a device name only or a full
- * bootpath including the kernel name.  This code to do this
- * is copied from loadfile() in the first stage bootblocks.
- * Returns the kernel name, or NULL if no kernel name specified.
+ * strip out device name and kernel name
  */
 static char *
-devname(fname)
-	char *fname;
+devsplit(fname, devname)
+	char *fname, *devname;
 {
-	char c;
+	char *src, *dst;
 
-	while ((c = *fname++) != '\0') {
-		if (c == ')')
-			break;
-		if (c != '/')
-			continue;
-		while ((c = *fname++) != '\0')
-			if (c == '/')
-				break;
-		/*
-		 * Make "N/rzY" with no trailing '/' valid by adding
-		 * the extra '/' before appending 'boot.mipsco' to the path.
-		 */
-		if (c != '/') {
-			fname--;
-			*fname++ = '/';
-			*fname = '\0';
+	dst = devname;
+	for (src = fname; *src;/**/)
+		if ((*dst++ = *src++) == ')') {
+			*dst = (char) 0;
+			return src;
 		}
-		break;
-	}
-	return (*fname == '\0' ? NULL : fname);
+	*devname = (char) 0;
+	return fname;
 }
