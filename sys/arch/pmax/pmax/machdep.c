@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 1998/04/19 08:22:22 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 1998/04/19 08:22:22 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 1998/06/19 22:44:48 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -100,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 1998/04/19 08:22:22 jonathan Exp $
 
 #ifdef DDB
 #include <mips/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_extern.h>
 #endif
 
 #include <pmax/stand/dec_prom.h>
@@ -233,7 +237,6 @@ extern void stacktrace __P((void)); /*XXX*/
 #endif
 
 extern caddr_t esym;
-void ddb_init(void);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -319,8 +322,11 @@ mach_init(argc, argv, code, cv)
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
+	/* init symbols if present */
 	if (esym)
-		ddb_init();		/* init symbols if present */
+		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 
 	/* look at argv[0] and compute bootdev */
