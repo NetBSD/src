@@ -1259,10 +1259,6 @@ void 	pcvt_scrnsv_reset ( void );
 void 	pcvt_set_scrnsv_tmo ( int );
 #endif /* PCVT_SCREENSAVER */
 
-#ifdef XSERVER
-void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
-#endif /* XSERVER */
-
 void	async_update ( void );
 void	clr_parms ( struct video_state *svsp );
 void	cons_highlight ( void );
@@ -1307,6 +1303,7 @@ void	vga10_vga16 ( u_char *invga, u_char *outvga );
 void	vga10_vga8 ( u_char *invga, u_char *outvga );
 u_char	vga_chipset ( void );
 int	vga_col ( struct video_state *svsp, int cols );
+void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
 void	vga_screen_off ( void );
 void	vga_screen_on ( void );
 char   *vga_string ( int number );
