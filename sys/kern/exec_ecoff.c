@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.18 2002/10/05 22:34:05 chs Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.19 2002/10/13 17:37:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.18 2002/10/05 22:34:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.19 2002/10/13 17:37:16 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	epp->ep_dsize = eap->dsize + eap->bsize;
 	epp->ep_entry = eap->entry;
 
-	error = vn_marktext(epp->ep_vp);
+	error = vn_marktext(vp);
 	if (error)
 		return (error);
 
