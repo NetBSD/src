@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.16 2001/09/24 14:29:30 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.17 2001/09/28 10:25:15 sato Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
@@ -53,6 +53,7 @@
 #include <dev/hpc/hpcbatterytable.h>
 
 #include <hpcmips/hpcmips/machdep.h>
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>
@@ -324,7 +325,7 @@ vrpiu_ad_enable(void *v)
 		return EBUSY;
 
 	/* supply clock to PIU */
-	__vrcmu_supply(CMUMSKPIU, 1);
+	__vrcmu_supply(CMUMASK_PIU, 1);
 
 	/* set scan interval */
 	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
@@ -377,7 +378,7 @@ vrpiu_ad_disable(void *v)
 		vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 		/* mask clock to PIU */
-		__vrcmu_supply(CMUMSKPIU, 0);
+		__vrcmu_supply(CMUMASK_PIU, 0);
 	}
 }
 
@@ -394,7 +395,7 @@ vrpiu_tp_enable(void *v)
 		return EBUSY;
 
 	/* supply clock to PIU */
-	__vrcmu_supply(CMUMSKPIU, 1);
+	__vrcmu_supply(CMUMASK_PIU, 1);
 
 	/* set scan interval */
 	vrpiu_write(sc, PIUSIVL_REG_W, sc->sc_interval);
@@ -449,7 +450,7 @@ vrpiu_tp_disable(void *v)
 		vrpiu_write(sc, PIUCNT_REG_W, 0);
 
 		/* mask clock to PIU */
-		__vrcmu_supply(CMUMSKPIU, 0);
+		__vrcmu_supply(CMUMASK_PIU, 0);
 	}
 }
 

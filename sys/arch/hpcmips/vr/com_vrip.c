@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.9 2001/09/16 05:32:20 uch Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.10 2001/09/28 10:25:16 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -51,6 +51,7 @@
 #include <machine/config_hook.h>
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/siureg.h>
@@ -127,7 +128,7 @@ com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,
 {
 	int port;
 	/* Platform dependent setting */
-	__vrcmu_supply(CMUMSKSSIU | CMUMSKSIU, 1);
+	__vrcmu_supply(CMUMASK_SIU, 1);
 	if (find_comenableport_from_cfdata(&port))
 		__vrgiu_out(port, 1);	
 
@@ -174,7 +175,7 @@ com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (!va->va_cf || !va->va_cf->cf_clock)
 		return 0; /* not yet CMU attached. Try again later. */
 
-	va->va_cf->cf_clock(va->va_cc, CMUMSKSSIU | CMUMSKSIU, 1);
+	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
 
 	if (com_is_console(iot, va->va_addr, 0)) {
 		/*
@@ -221,7 +222,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_frequency = VRCOM_FREQ;
 	/* Power management */
-	va->va_cf->cf_clock(va->va_cc, CMUMSKSSIU | CMUMSKSIU, 1);
+	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
 	/*
 	  va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
 	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmureg.h,v 1.3 2001/05/17 05:04:30 sato Exp $	*/
+/*	$NetBSD: cmureg.h,v 1.4 2001/09/28 10:25:15 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -37,21 +37,90 @@
 /*
  *	CMU (CLock MASK UNIT) Registers.
  *		start 0x0B000060 (Vr4102-4111)
- *		start 0x0F000060 (Vr4122)
+ *		start 0x0F000060 (Vr4122-4131)
+ *		start 0x0A000004 (Vr4181)
  */
+#define CMUNOMASK			0
 
 #define	CMUCLKMASK		0x000	/* CMU Clock Mask Register */
+
+/* vr4102-4121 */
+#define		VR4102_CMUMSKPCIU	CMUNOMASK	/* no PCICLK */
+#define		VR4102_CMUMSKFFIR	(1<<10)		/* 1 supply 48MHz to FIR */
+#define		VR4102_CMUMSKSHSP	(1<<9)		/* 1 supply 18.432MHz to HSP */
+#define		VR4102_CMUMSKSSIU	(1<<8)		/* 1 supply 18.432MHz to SIU */
+#define		VR4102_CMUMSKDSIU	(1<<5)		/* 1 supply Tclock to DSIU */
+#define		VR4102_CMUMSKCSI	CMUNOMASK	/* no CSI clock */
+#define		VR4102_CMUMSKFIR	(1<<4)		/* 1 supply Tclock to FIR */
+#define		VR4102_CMUMSKKIU	(1<<3)		/* 1 supply Tclock to KIU */
+#define		VR4102_CMUMSKAIU	(1<<2)		/* 1 supply Tclock to AIU */
+#define		VR4102_CMUMSKSIU	(1<<1)		/* 1 supply Tclock to SIU */
+#define		VR4102_CMUMSKPIU	(1)		/* 1 supply Tclock to PIU */
+
+/* vr4122-4131 */
 #define		VR4122_CMUMSKPCIU	((1<<13)|(1<<7))	/* 1 supply PCICLK */
 #define		VR4122_CMUMSKSCSI	(1<<12)		/* 1 supply CSI 18.432MHz clock */
 #define		VR4122_CMUMSKDSIU	(1<<11)		/* 1 supply DSIU 18.432MHz clock */
-#define		CMUMSKFFIR		(1<<10)		/* 1 supply 48MHz to FIR */
-#define		CMUMSKSHSP		(1<<9)		/* 1 supply 18.432MHz to HSP */ /* 4102-4121 */
-#define		CMUMSKSSIU		(1<<8)		/* 1 supply 18.432MHz to SIU */
-#define		CMUMSKDSIU		(1<<5)		/* 1 supply Tclock to DSIU */
-#define		CMUMSKFIR		(1<<4)		/* 1 supply Tclock to FIR */
-#define		CMUMSKKIU		(1<<3)		/* 1 supply Tclock to KIU */ /* 4102-4121 */
-#define		CMUMSKAIU		(1<<2)		/* 1 supply Tclock to AIU */ /* 4102-4121 */
-#define		CMUMSKSIU		(1<<1)		/* 1 supply Tclock to SIU */
-#define		CMUMSKPIU		(1)		/* 1 supply Tclock to PIU */ /* 4102-4121 */
+#define		VR4122_CMUMSKFFIR	(1<<10)		/* 1 supply 48MHz to FIR */
+#define		VR4122_CMUMSKSHSP	CMUNOMASK	/* no HSP */
+#define		VR4122_CMUMSKSSIU	(1<<8)		/* 1 supply 18.432MHz to SIU */
+#define		VR4122_CMUMSKCSI	(1<<6)		/* 1 supply Tclock to CSI */
+#define		VR4122_CMUMSKFIR	(1<<4)		/* 1 supply Tclock to FIR */
+#define		VR4122_CMUMSKKIU	CMUNOMASK	/* no KIU */
+#define		VR4122_CMUMSKAIU	CMUNOMASK	/* no AIU */
+#define		VR4122_CMUMSKSIU	(1<<1)		/* 1 supply Tclock to SIU */
+#define		VR4122_CMUMSKPIU	CMUNOMASK	/* no PIU */
 
+/* vr4181 */
+#define		VR4181_CMUMSKPCIU	CMUNOMASK	/* no PCICLK */
+#define		VR4181_CMUMSKHSP	CMUNOMASK	/* no HSP */
+#define		VR4181_CMUMSKDSIU	CMUNOMASK	/* no DSIU */
+#define		VR4181_CMUMSKCSI	(1<<6)		/* 1 supply PCLK to CSI */
+#define		VR4181_CMUMSKFIR	CMUNOMASK	/* no FIR */
+#define		VR4181_CMUMSKKIU	CMUNOMASK	/* no KIU */
+#define		VR4181_CMUMSKAIU	(1<<5)		/* 1 supply PLCK to AIU */
+#define		VR4181_CMUMSKPIU	(1<<4)		/* 1 supply PLCK to PIU */
+#define		VR4181_CMUMSKADU	(1<<3)		/* 1 supply PLCK to ADU */
+#define		VR4181_CMUMSKSSIU	(1<<2)		/* 1 supply 18.432MHz to SIU */
+#define		VR4181_CMUMSKSADU	(1<<1)		/* 1 supply 18.432MHz to ADU */
+
+#if defined SINGLE_VRIP_BASE
+
+#ifdef VRGROUP_4102_4121
+#define CMUMASK_PIU	VR4102_CMUMSKPIU
+#define CMUMASK_SIU	(VR4102_CMUMSKSIU|VR4102_CMUMSKSSIU)
+#define CMUMASK_AIU	VR4102_CMUMSKAIU
+#define CMUMASK_KIU	VR4102_CMUMSKKIU
+#define CMUMASK_FIR	(VR4102_CMUMSKFIR|VR4102_CMUMSKFFIR)
+#define CMUMASK_DSIU	VR4102_CMUMSKDSIU
+#define CMUMASK_HSP	VR4102_CMUMSKHSP
+#define CMUMASK_CSI	VR4102_CMUMSKCSI
+#define CMUMASK_PCIU	VR4102_CMUMSKPCIU
+#endif /* VRGROUP_4102_4121 */
+
+#ifdef VRGROUP_4122_4131
+#define CMUMASK_PIU	VR4122_CMUMSKPIU
+#define CMUMASK_SIU	(VR4122_CMUMSKSIU|VR4122_CMUMSKSSIU)
+#define CMUMASK_AIU	VR4122_CMUMSKAIU
+#define CMUMASK_KIU	VR4122_CMUMSKKIU
+#define CMUMASK_FIR	(VR4122_CMUMSKFIR|VR4122_CMUMSKFFIR)
+#define CMUMASK_DSIU	VR4122_CMUMSKDSIU
+#define CMUMASK_HSP	VR4122_CMUMSKHSP
+#define CMUMASK_CSI	(VR4122_CMUMSKSCSI|VR4122_CMUMSKCSI)
+#define CMUMASK_PCIU	VR4122_CMUMSKPCIU
+#endif /* VRGROUP_4122_4131 */
+
+#ifdef VRGROUP_4181
+#define CMUMASK_PIU	VR4181_CMUMSKPIU
+#define CMUMASK_SIU	VR4181_CMUMSKSSIU
+#define CMUMASK_AIU	VR4181_CMUMSKAIU
+#define CMUMASK_KIU	VR4181_CMUMSKKIU
+#define CMUMASK_FIR	VR4181_CMUMSKFIR
+#define CMUMASK_DSIU	VR4181_CMUMSKDSIU
+#define CMUMASK_HSP	VR4181_CMUMSKHSP
+#define CMUMASK_CSI	VR4181_CMUMSKCSI
+#define CMUMASK_PCIU	VR4181_CMUMSKPCIU
+#endif /* VRGROUP_4181 */
+
+#endif /* SINGLE_VRIP_BASE */
 /* END cmureg.h */
