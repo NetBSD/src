@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 1997/05/02 18:15:18 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.6 1997/10/05 23:58:24 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,6 @@
 #endif
 
 #define _SYSCALL_NOERROR(x,y)						\
-	.text; .align 0;						\
 	ENTRY(x);							\
 	SYSTRAP(y)
 
@@ -75,6 +74,5 @@
 
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
-
 
 	.globl	cerror
