@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.4 1996/02/17 02:28:56 jtk Exp $	*/
+/*	$NetBSD: audioio.h,v 1.5 1996/03/11 05:12:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -77,8 +77,16 @@ struct audio_info {
 };
 typedef struct audio_info audio_info_t;
 
+#ifdef _KERNEL
+#define AUDIO_INITINFO(p)\
+	{ register int n = sizeof(struct audio_info); \
+	  register u_char *q = (u_char *) p; \
+	  while (n-- > 0) *q++ = 0xff; }
+
+#else
 #define AUDIO_INITINFO(p)\
 	(void)memset((void *)(p), 0xff, sizeof(struct audio_info))
+#endif
 
 /*
  * Parameter for the AUDIO_GETDEV ioctl to determine current
