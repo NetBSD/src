@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.14 2002/03/05 01:15:51 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.15 2002/03/14 18:33:05 thorpej Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,6 +257,13 @@ configuration file specified by
 .Sy MAKECONF .
 .
 .Bl -tag -width "MKCATPAGES"
+.
+.It Sy BUILDID
+Identifier for the build.  The identifier will be appended to
+object directory names, and can be consulted in the
+.Xr make 1
+configuration file in order to set additional build parameters,
+such as compiler flags.
 .
 .It Sy DESTDIR
 Directory to contain the built
@@ -771,6 +778,16 @@ Set the value of
 .Sy MACHINE_ARCH
 to
 .Em arch .
+.
+.It Sy -B Em buildid
+Set the value of
+.Sy BUILDID
+to
+.Em buildid .
+This will also append the build idenfitier to the name of the
+.Dq make
+wrapper script so that the resulting name is of the form
+.Dq Sy nbmake-MACHINE-BUILDID .
 .
 .It Sy -b
 Bootstrap
