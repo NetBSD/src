@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.12 1998/05/04 11:11:24 pk Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -289,6 +289,7 @@ struct ncr53c9x_softc {
 	int sc_freq;				/* Freq in HZ */
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
+	int sc_features;			/* chip features */
 	int sc_minsync;				/* minimum sync period / 4 */
 	int sc_maxxfer;				/* maximum transfer size */
 };
@@ -312,6 +313,10 @@ struct ncr53c9x_softc {
 #define NCR_WAITI	0x20	/* Waiting for non-DMA data to arrive */
 #define	NCR_ATN		0x40	/* ATN asserted */
 #define	NCR_EXPECT_ILLCMD	0x80	/* Expect Illegal Command Interrupt */
+
+/* values for sc_features */
+#define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
+#define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
