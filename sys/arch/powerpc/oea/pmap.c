@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2003/03/17 23:15:33 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2003/04/02 02:47:19 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -108,7 +108,7 @@ int pmap_use_altivec;
 volatile struct pteg *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
 unsigned int pmap_pteg_mask;
-paddr_t pmap_memlimit = -NBPG;		/* there is no limit */
+paddr_t pmap_memlimit = -PAGE_SIZE;		/* there is no limit */
 
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
@@ -1708,7 +1708,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	    was_exec == 0) {
 		DPRINTFN(ENTER, (" syncicache"));
 		PMAPCOUNT(exec_synced);
-		pmap_syncicache(pa, NBPG);
+		pmap_syncicache(pa, PAGE_SIZE);
 		if (pg != NULL) {
 			pmap_attr_save(pg, PTE_EXEC);
 			PMAPCOUNT(exec_cached);
@@ -1868,7 +1868,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	s = splvm();
 	msr = pmap_interrupts_off();
 
-	for (; va < endva; va += NBPG) {
+	for (; va < endva; va += PAGE_SIZE) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo == NULL)
 			continue;
@@ -2197,7 +2197,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		} else {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
 			    pg->phys_addr));
-			pmap_syncicache(pg->phys_addr, NBPG);
+			pmap_syncicache(pg->phys_addr, PAGE_SIZE);
 			PMAPCOUNT(exec_synced_clear_modify);
 		}
 	}
@@ -2213,7 +2213,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 
 	s = splvm();
 	while (len > 0) {
-		size_t seglen = NBPG - offset;
+		size_t seglen = PAGE_SIZE - offset;
 		if (seglen > len)
 			seglen = len;
 		pvo = pmap_pvo_find_va(p->p_vmspace->vm_map.pmap, va, NULL);
@@ -2609,12 +2609,12 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
 	    ("pmap_boot_find_memory: size=%lx, alignment=%lx, at_end=%d",
 	    size, alignment, at_end));
 
-	if (alignment < NBPG || (alignment & (alignment-1)) != 0)
+	if (alignment < PAGE_SIZE || (alignment & (alignment-1)) != 0)
 		panic("pmap_boot_find_memory: invalid alignment %lx",
 		    alignment);
 
 	if (at_end) {
-		if (alignment != NBPG)
+		if (alignment != PAGE_SIZE)
 			panic("pmap_boot_find_memory: invalid ending "
 			    "alignment %lx", alignment);
 		
@@ -2816,7 +2816,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		 * If the user imposed a memory limit, enforce it.
 		 */
 		else if (s >= pmap_memlimit) {
-			mp->start = -NBPG;	/* let's know why */
+			mp->start = -PAGE_SIZE;	/* let's know why */
 			mp->size = 0;
 		}
 		else {
@@ -2897,7 +2897,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	 * with pages.  So we just steal them before giving them to UVM.
 	 */
 	size = sizeof(pmap_pvo_table[0]) * pmap_pteg_cnt;
-	pmap_pvo_table = pmap_boot_find_memory(size, NBPG, 0);
+	pmap_pvo_table = pmap_boot_find_memory(size, PAGE_SIZE, 0);
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
 		panic("pmap_bootstrap: pmap_pvo_table end (%p + %lx) > 256MB",
@@ -2911,7 +2911,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	/*
 	 * Allocate msgbuf in high memory.
 	 */
-	msgbuf_paddr = (paddr_t) pmap_boot_find_memory(MSGBUFSIZE, NBPG, 1);
+	msgbuf_paddr =
+	    (paddr_t) pmap_boot_find_memory(MSGBUFSIZE, PAGE_SIZE, 1);
 #endif
 
 #ifdef __HAVE_PMAP_PHYSSEG
@@ -2920,7 +2921,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		for (i = 0, mp = avail; i < avail_cnt; i++, mp++)
 			npgs += btoc(mp->size);
 		size = (sizeof(struct pvo_head) + 1) * npgs;
-		pmap_physseg.pvoh = pmap_boot_find_memory(size, NBPG, 0);
+		pmap_physseg.pvoh = pmap_boot_find_memory(size, PAGE_SIZE, 0);
 		pmap_physseg.attrs = (char *) &pmap_physseg.pvoh[npgs];
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t)pmap_physseg.pvoh + size > SEGMENT_LENGTH)

@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.7 2003/03/29 18:09:59 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.8 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -632,7 +632,7 @@ oea_startup(const char *model)
 				    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
 			panic("startup: cannot allocate VM for msgbuf");
 		v = (caddr_t)minaddr;
-		for (i = 0; i < sz; i += NBPG) {
+		for (i = 0; i < sz; i += PAGE_SIZE) {
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
@@ -684,7 +684,7 @@ oea_startup(const char *model)
 		struct vm_page *pg;
 
 		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base + 1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -743,7 +743,7 @@ oea_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -822,10 +822,10 @@ mapiodev(paddr_t pa, psize_t len)
 	if (va == 0)
 		return NULL;
 
-	for (; len > 0; len -= NBPG) {
+	for (; len > 0; len -= PAGE_SIZE) {
 		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
-		faddr += NBPG;
-		taddr += NBPG;
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);

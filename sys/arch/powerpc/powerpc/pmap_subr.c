@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.8 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.9 2003/04/02 02:47:19 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -150,7 +150,7 @@ pmap_zero_page(paddr_t pa)
 	 */
 	if ((linewidth = curcpu()->ci_ci.dcache_line_size) == 0) {
 		long *dp = (long *)pa;
-		long * const ep = dp + NBPG/sizeof(dp[0]);
+		long * const ep = dp + PAGE_SIZE/sizeof(dp[0]);
 		do {
 			dp[0] = 0; dp[1] = 0; dp[2] = 0; dp[3] = 0;
 			dp[4] = 0; dp[5] = 0; dp[6] = 0; dp[7] = 0;
@@ -160,7 +160,7 @@ pmap_zero_page(paddr_t pa)
 		do {
 			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
 			__asm ("dcbz %0,%1" :: "b"(pa), "r"(i)); i += linewidth;
-		} while (i < NBPG);
+		} while (i < PAGE_SIZE);
 	}
 
 	/*
@@ -216,7 +216,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		/*
 		 * Copy the page (memcpy is optimized, right? :)
 		 */
-		memcpy((void *) dst, (void *) src, NBPG);
+		memcpy((void *) dst, (void *) src, PAGE_SIZE);
 		return;
 	}
 #endif
@@ -233,7 +233,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 */
 	sp = (const register_t *) src;
 	dp = (register_t *) dst;
-	for (i = 0; i < NBPG/sizeof(dp[0]); i += 8, dp += 8, sp += 8) {
+	for (i = 0; i < PAGE_SIZE/sizeof(dp[0]); i += 8, dp += 8, sp += 8) {
 		dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2]; dp[3] = sp[3];
 		dp[4] = sp[4]; dp[5] = sp[5]; dp[6] = sp[6]; dp[7] = sp[7];
 	}
@@ -312,7 +312,7 @@ pmap_pageidlezero(paddr_t pa)
 
 #ifdef PPC_OEA
 	if (pa < SEGMENT_LENGTH) {
-		for (i = 0; i < NBPG / sizeof(dp[0]); i++) {
+		for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
 			if (sched_whichqs != 0)
 				return FALSE;
 			*dp++ = 0;
@@ -333,7 +333,7 @@ pmap_pageidlezero(paddr_t pa)
 	/*
 	 * Zero the page until a process becomes runnable.
 	 */
-	for (i = 0; i < NBPG / sizeof(dp[0]); i++) {
+	for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
 		if (sched_whichqs != 0) {
 			rv = FALSE;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2003/04/02 02:45:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2003/03/13 13:44:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2003/04/02 02:45:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -536,7 +536,7 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	void (*op)(vaddr_t, paddr_t, vsize_t);
 	vsize_t bytes;
 
-	KDASSERT((int)(va & (NBPG - 1)) == (int)(pa & (NBPG - 1)));
+	KDASSERT((int)(va & (PAGE_SIZE - 1)) == (int)(pa & (PAGE_SIZE - 1)));
 
 	if (len == 0)
 		return;
@@ -582,8 +582,8 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	/*
 	 * Align the region to a page boundary
 	 */
-	if ((va & (NBPG-1)) != 0) {
-		bytes = min(NBPG - (vsize_t)(va & (NBPG - 1)), len);
+	if ((va & (PAGE_SIZE-1)) != 0) {
+		bytes = min(PAGE_SIZE - (vsize_t)(va & (PAGE_SIZE - 1)), len);
 		(*op)(va, pa, bytes);
 		len -= bytes;
 		pa += bytes;
@@ -594,7 +594,7 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	 * Do things one page at a time
 	 */
 	while (len) {
-		bytes = min(NBPG, len);
+		bytes = min(PAGE_SIZE, len);
 		(*op)(va, pa, bytes);
 		len -= bytes;
 		pa += bytes;
@@ -757,7 +757,7 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg]._ds_cpuaddr;
 		    addr < (segs[curseg]._ds_cpuaddr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.11 2001/09/24 13:22:33 wiz Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.12 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,8 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
 #include <machine/stdarg.h>
@@ -184,7 +186,7 @@ OF_getprop(handle, prop, buf, buflen)
 	};
 
 	ofw_stack();
-	if (buflen > NBPG)
+	if (buflen > PAGE_SIZE)
 		return -1;
 	args.phandle = handle;
 	args.prop = prop;
@@ -272,7 +274,7 @@ OF_instance_to_path(ihandle, buf, buflen)
 		1,
 	};
 
-	if (buflen > NBPG)
+	if (buflen > PAGE_SIZE)
 		return -1;
 	args.ihandle = ihandle;
 	args.buf = OF_buf;
@@ -307,7 +309,7 @@ OF_package_to_path(phandle, buf, buflen)
 	};
 
 	ofw_stack();
-	if (buflen > NBPG)
+	if (buflen > PAGE_SIZE)
 		return -1;
 	args.phandle = phandle;
 	args.buf = OF_buf;
@@ -433,7 +435,7 @@ OF_open(dname)
 	int l;
 
 	ofw_stack();
-	if ((l = strlen(dname)) >= NBPG)
+	if ((l = strlen(dname)) >= PAGE_SIZE)
 		return -1;
 	ofbcopy(dname, OF_buf, l + 1);
 	args.dname = OF_buf;
@@ -463,7 +465,7 @@ OF_close(handle)
 }
 
 /*
- * This assumes that character devices don't read in multiples of NBPG.
+ * This assumes that character devices don't read in multiples of PAGE_SIZE.
  */
 int
 OF_read(handle, addr, len)
@@ -491,7 +493,7 @@ OF_read(handle, addr, len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(NBPG, len);
+		l = min(PAGE_SIZE, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -535,7 +537,7 @@ OF_write(handle, addr, len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(NBPG, len);
+		l = min(PAGE_SIZE, len);
 		ofbcopy(p, OF_buf, l);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -590,7 +592,7 @@ OF_boot(bootspec)
 	};
 	int l;
 
-	if ((l = strlen(bootspec)) >= NBPG)
+	if ((l = strlen(bootspec)) >= PAGE_SIZE)
 		panic("OF_boot");
 	ofw_stack();
 	ofbcopy(bootspec, OF_buf, l + 1);
