@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.10 2000/03/21 19:59:16 drochner Exp $
+.\"     $NetBSD: wi.4,v 1.11 2000/07/21 17:42:16 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,34 +30,41 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.10 2000/03/21 19:59:16 drochner Exp $
+.\"	$Id: wi.4,v 1.11 2000/07/21 17:42:16 onoe Exp $
 .\"
-.Dd April 21, 1999
+.Dd July 21, 2000
 .Dt WI 4 
 .Os 
 .Sh NAME
 .Nm wi
 .Nd
-Lucent Technologies WaveLAN/IEEE 802.11 PCMCIA wireless network driver
+WaveLAN/IEEE and PRISM-II 802.11 PCMCIA wireless network driver
 .Sh SYNOPSIS
 .Cd "wi* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for WaveLAN/IEEE PCCARD adapters (also known
-as WaveLAN II cards).
+driver provides support for Lucent Technologies WaveLAN/IEEE PCCARD adapters
+(also known as WaveLAN II cards) and various PCCARD adapters which use
+Intersil PRISM-II chipsets.
 Note that while Lucent sells both ISA and PCMCIA WaveLAN/IEEE devices,
 the ISA product is actually a PCMCIA card in an ISA to PCMCIA bridge adapter.
 Consequently, the
 .Nm
 driver is required for both the ISA and PCMCIA NICs.
-Both the original 2Mbps WaveLAN/IEEE cards and
-the newer 6Mbps WaveLAN/IEEE Turbo adapters are supported.
+Also note that some of the PRISM-II adapters works only at 3.3V, hence
+.Xr cardbus 4
+support is required for those cards to set VCC correctly,
+even they are 16bit cards.
 .Pp
 The core of the WaveLAN/IEEE is the Lucent Hermes controller.
 All host/device interaction is via programmed I/O with the Hermes.
 The Hermes supports 802.11 and 802.3 frames, power management, BSS, WDS
-and ad-hoc operation modes.
+and ad-hoc operation modes.  The Silver and the Gold cards of the
+WaveLAN/IEEE also support WEP.  Unlike the other IEEE 802.11 network cards,
+the WaveLAN Gold cards accept 104 bits key (13 characters) for WEP
+encryption.  The Intersil PRISM-II controller supports WEP as well.
+.Pp
 The
 .Nm
 driver encapsulates all IP and ARP traffic as 802.11 frames, however
@@ -65,19 +72,27 @@ it can receive either 802.11 or 802.3 frames.
 Transmit speed is selectable between 1Mbps fixed,
 2Mbps fixed or 2Mbps with auto fallback.
 For WaveLAN/IEEE Turbo adapters, speeds up to 6Mbps are available.
+For WaveLAN/IEEE Turbo 11Mbps adapters and PRISM-II adapters, speeds up to
+11Mbps are available.
 .Pp
 By default, the
 .Nm
-driver configures the WaveLAN card for ad-hoc operation.
-In this mode,
+driver configures the WaveLAN card for special ad-hoc operation.
+In this mode, the nwid is ignored and
 stations can communicate among each other without the aid of an access
 point.
+Note that this mode is out of IEEE 802.11 specification and the driver
+cannot interoperate with other cards.
 To join a service set, the driver must be set for BSS mode using the
+.Xr ifconfig 8
+or
 .Xr wiconfig 8
 utility.
 .Pp
 For more information on configuring this device, see
-.Xr ifconfig 8 .
+.Xr ifconfig 8
+and
+.Xr ifmedia 4 .
 .Sh HARDWARE
 Cards supported by the
 .Nm
@@ -89,10 +104,20 @@ Lucent Wavelan/IEEE 2.0Mb Bronze
 .It
 Lucent Wavelan/IEEE 2.0Mb Silver
 .It
+Lucent WaveLAN/IEEE Turbo
+.It
+Lucent WaveLAN/IEEE Turbo 11Mbps
+.It
 Melco AIR CONNECT WLI-PCM-L11
 .It
 DEC/Cabletron RoamAbout 802.11 DS High Rate
+.It
+Corega Wireless LAN PCC-11
 .El
+.Pp
+The original PRISM-I chipset is supported by the
+.Xr awi 4
+driver.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
@@ -107,8 +132,14 @@ command.
 One reason can be that the board is mis-configured, see
 .Xr wiconfig 8 .
 .El
+.Sh BUGS
+The IBSS mode is not supported.
+The execution of
+.Xr wiconfig 8
+during the interface is down produces some error messages.
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr netintro 4 , 
 .Xr ifconfig 8 ,
 .Xr wiconfig 8
