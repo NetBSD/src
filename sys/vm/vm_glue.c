@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.44 1995/01/09 01:30:46 cgd Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.45 1995/04/10 16:53:51 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -161,10 +161,10 @@ chgkprot(addr, len, rw)
 		 * page 0 from an invalid mapping, not that it
 		 * really matters...
 		 */
-		pa = pmap_extract(kernel_pmap, sva|1);
+		pa = pmap_extract(pmap_kernel(), sva|1);
 		if (pa == 0)
 			panic("chgkprot: invalid page");
-		pmap_enter(kernel_pmap, sva, pa&~1, prot, TRUE);
+		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE);
 	}
 }
 #endif

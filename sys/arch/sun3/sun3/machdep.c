@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 1995/04/10 11:58:33 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1995/04/10 16:49:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -288,7 +288,7 @@ void cpu_startup()
     /*
      * Allocate a map for physio and DVMA
      */
-    phys_map = vm_map_create(kernel_pmap, DVMA_SPACE_START,
+    phys_map = vm_map_create(pmap_kernel(), DVMA_SPACE_START,
 			     DVMA_SPACE_END, TRUE);
     if (phys_map == NULL)
 	panic("cpu_startup: unable to create physmap");

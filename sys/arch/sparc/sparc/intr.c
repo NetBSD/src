@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 1994/12/16 21:52:36 deraadt Exp $ */
+/*	$NetBSD: intr.c,v 1.8 1995/04/10 16:48:48 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -249,12 +249,12 @@ intr_fasttrap(level, vec)
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
 #endif
 	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(kernel_pmap, (vm_offset_t)tv,
+	pmap_changeprot(pmap_kernel(), (vm_offset_t)tv,
 	    VM_PROT_READ|VM_PROT_WRITE, 1);
 	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
 	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
 	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(kernel_pmap, (vm_offset_t)tv, VM_PROT_READ, 1);
+	pmap_changeprot(pmap_kernel(), (vm_offset_t)tv, VM_PROT_READ, 1);
 	fastvec |= 1 << level;
 	splx(s);
 }

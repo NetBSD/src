@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.20 1994/10/29 07:35:12 cgd Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.21 1995/04/10 16:54:00 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1311,7 +1311,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		 *
 		 * HACK HACK HACK HACK
 		 */
-		if (vm_map_pmap(map) == kernel_pmap) {
+		if (vm_map_pmap(map) == pmap_kernel()) {
 		    vm_map_unlock(map);		/* trust me ... */
 		}
 		else {
@@ -1343,7 +1343,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		    entry = entry->next;
 		}
 
-		if (vm_map_pmap(map) == kernel_pmap) {
+		if (vm_map_pmap(map) == pmap_kernel()) {
 		    vm_map_lock(map);
 		}
 		else {

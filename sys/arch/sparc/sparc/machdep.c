@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1995/01/11 21:21:11 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.39 1995/04/10 16:48:52 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,7 +209,7 @@ cpu_startup()
 	 * map, but we want one completely separate, even though it uses
 	 * the same pmap.
 	 */
-	phys_map = vm_map_create(kernel_pmap, DVMA_BASE, DVMA_END, 1);
+	phys_map = vm_map_create(pmap_kernel(), DVMA_BASE, DVMA_END, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 
@@ -251,7 +251,7 @@ cpu_startup()
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
 	 */
 
-	pmap_enter(kernel_pmap, MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
+	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
 	if (cputyp == CPU_SUN4)
 		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
 	else
@@ -940,7 +940,7 @@ mapdev(phys, virt, size, bustype)
 	ret = (void *)v;
 	phys = (void *)trunc_page(phys);
 	do {
-		pmap_enter(kernel_pmap, v,
+		pmap_enter(pmap_kernel(), v,
 		    (vm_offset_t)phys | pmtype | PMAP_NC,
 		    VM_PROT_READ | VM_PROT_WRITE, 1);
 		v += PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:10 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1995/04/10 16:49:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,13 +121,13 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
 			continue;
 

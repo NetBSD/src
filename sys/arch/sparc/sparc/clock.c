@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1995/02/16 21:51:38 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.21 1995/04/10 16:48:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,8 +239,8 @@ clockattach(parent, self, aux)
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_paddr, 2 * NBPG,
 		    ca->ca_bustype);
-		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
-		pmap_changeprot(kernel_pmap, (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
 		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
 	} else {
 		/*
@@ -248,7 +248,7 @@ clockattach(parent, self, aux)
 		 */
 		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg,
 		    ca->ca_bustype);
-		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)cl, VM_PROT_READ, 1);
 		idp = &cl->cl_idprom;
 	}
 
@@ -325,7 +325,7 @@ clk_wenable(onoff)
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
 	if (prot)
-		pmap_changeprot(kernel_pmap, (vm_offset_t)clockreg, prot, 1);
+		pmap_changeprot(pmap_kernel(), (vm_offset_t)clockreg, prot, 1);
 }
 
 /*

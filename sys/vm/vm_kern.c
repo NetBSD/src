@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.16 1995/01/09 02:45:47 cgd Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.17 1995/04/10 16:53:55 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -447,7 +447,7 @@ kmem_init(start, end)
 {
 	register vm_map_t m;
 
-	m = vm_map_create(kernel_pmap, VM_MIN_KERNEL_ADDRESS, end, FALSE);
+	m = vm_map_create(pmap_kernel(), VM_MIN_KERNEL_ADDRESS, end, FALSE);
 	vm_map_lock(m);
 	/* N.B.: cannot use kgdb to debug, starting with this assignment ... */
 	kernel_map = m;

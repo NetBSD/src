@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.136 1995/04/01 10:31:40 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.137 1995/04/10 16:53:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1510,7 +1510,7 @@ wddump(dev)
 		}
 	
 #ifdef notdef	/* Cannot use this since this address was mapped differently. */
-		pmap_enter(kernel_pmap, CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
+		pmap_enter(pmap_kernel(), CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
 #else
 		*CMAP1 = PG_V | PG_KW | ctob((long)addr);
 		tlbflush();

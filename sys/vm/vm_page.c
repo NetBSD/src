@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.24 1995/03/27 09:09:05 cgd Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.25 1995/04/10 16:54:10 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -480,7 +480,7 @@ pmap_steal_memory(size)
 		 *	but some pmap modules barf if they are.
 		 */
 		
-		pmap_enter(kernel_pmap, vaddr, paddr,
+		pmap_enter(pmap_kernel(), vaddr, paddr,
 			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
 	}
 	
