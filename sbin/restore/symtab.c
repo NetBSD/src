@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.17 2002/11/18 04:38:43 enami Exp $	*/
+/*	$NetBSD: symtab.c,v 1.18 2002/11/25 07:16:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.17 2002/11/18 04:38:43 enami Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.18 2002/11/25 07:16:17 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,22 +405,28 @@ char *
 savename(name)
 	char *name;
 {
-	struct strhdr *np;
-	long len;
-	char *cp;
+	struct strhdr *np, *tp;
+	long len, siz;
+	char *cp, *ep;
 
 	if (name == NULL)
 		panic("bad name\n");
 	len = strlen(name);
-	np = strtblhdr[len / STRTBLINCR].next;
-	if (np != NULL) {
-		strtblhdr[len / STRTBLINCR].next = np->next;
-		cp = (char *)np;
-	} else {
-		cp = malloc((unsigned)allocsize(len));
+	tp = &strtblhdr[len / STRTBLINCR];
+	if (tp->next == NULL) {
+		cp = malloc(pagesize);
 		if (cp == NULL)
 			panic("no space for string table\n");
+		for (siz = allocsize(len), ep = (cp + pagesize) - siz;
+		    cp <= ep; cp += siz) {
+			np = (struct strhdr *)cp;
+			np->next = tp->next;
+			tp->next = np;
+		}
 	}
+	np = tp->next;
+	tp->next = np->next;
+	cp = (char *)np;
 	(void) strcpy(cp, name);
 	return (cp);
 }
