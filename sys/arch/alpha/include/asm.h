@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.20 1998/10/01 16:19:59 erh Exp $ */
+/* $NetBSD: asm.h,v 1.21 1998/10/13 11:39:26 kleink Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -614,9 +614,11 @@ label:	ASCIZ msg;						\
  * WEAK_ALIAS: create a weak alias (ELF only).
  */
 #ifdef __ELF__
+#if 0	/* No weak symbols in libc yet! */
 #define WEAK_ALIAS(alias,sym)					\
 	.weak alias;						\
 	alias = sym
+#endif
 #endif
 
 /*
