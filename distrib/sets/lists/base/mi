@@ -359,6 +359,7 @@
 ./usr/include/kerberosIV
 ./usr/include/machine
 ./usr/include/net
+./usr/include/netatalk
 ./usr/include/netccitt
 ./usr/include/netinet
 ./usr/include/netiso
@@ -507,6 +508,9 @@
 ./usr/sbin/nfsd
 ./usr/sbin/nfsiod
 ./usr/sbin/nslookup
+./usr/sbin/ntpdate
+./usr/sbin/ntpq
+./usr/sbin/ntptrace
 ./usr/sbin/pac
 ./usr/sbin/portmap
 ./usr/sbin/pppd
@@ -548,6 +552,8 @@
 ./usr/sbin/update
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
+./usr/sbin/xntpd
+./usr/sbin/xntpdc
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
@@ -764,7 +770,6 @@
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
 ./usr/share/misc/map3270
-./usr/share/misc/more.help
 ./usr/share/misc/na.phone
 ./usr/share/misc/nslookup.help
 ./usr/share/misc/sendmail.hf
@@ -785,8 +790,16 @@
 ./usr/share/nls/de/libc.cat
 ./usr/share/nls/es
 ./usr/share/nls/es/libc.cat
+./usr/share/nls/fi
+./usr/share/nls/fi/libc.cat
 ./usr/share/nls/fr
 ./usr/share/nls/fr/libc.cat
+./usr/share/nls/nl
+./usr/share/nls/nl/libc.cat
+./usr/share/nls/no
+./usr/share/nls/no/libc.cat
+./usr/share/nls/sv
+./usr/share/nls/sv/libc.cat
 ./usr/share/skel
 ./usr/share/skel/dot.cshrc
 ./usr/share/skel/dot.login

@@ -1,6 +1,6 @@
 ./sbin/fdisk
 ./usr/bin/fdformat
-./usr/lib/libc.so.12.11
+./usr/lib/libc.so.12.14
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -9,6 +9,7 @@
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libkvm.so.4.0
 ./usr/lib/libm.so.0.1
+./usr/lib/libntp.so.0.0
 ./usr/lib/libpcap.so.0.0
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0
@@ -36,7 +37,7 @@
 ./usr/mdec/fdboot
 ./usr/mdec/sdboot
 ./usr/mdec/wdboot
-./usr/sbin/bad144
 ./usr/sbin/apm
 ./usr/sbin/apmd
+./usr/sbin/bad144
 ./usr/sbin/zzz

@@ -1,5 +1,5 @@
 ./sbin/edlabel
-./usr/lib/libc.so.12.11
+./usr/lib/libc.so.12.14
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -7,6 +7,7 @@
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libkvm.so.5.0
 ./usr/lib/libm.so.0.1
+./usr/lib/libntp.so.0.0
 ./usr/lib/libpcap.so.0.0
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0

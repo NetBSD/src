@@ -59,6 +59,7 @@
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libntp_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a

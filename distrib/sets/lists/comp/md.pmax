@@ -50,8 +50,8 @@
 ./usr/include/machine/vmparam.h
 ./usr/include/mips
 ./usr/include/mips/ansi.h
-./usr/include/mips/asm.h
 ./usr/include/mips/aout_machdep.h
+./usr/include/mips/asm.h
 ./usr/include/mips/bsd-aout.h
 ./usr/include/mips/cdefs.h
 ./usr/include/mips/cpu.h
@@ -83,5 +83,6 @@
 ./usr/include/mips/types.h
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
+./usr/lib/libntp_pic.a
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0

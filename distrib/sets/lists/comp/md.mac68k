@@ -12,8 +12,8 @@
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
-./usr/include/m68k/profile.h
 ./usr/include/m68k/pcb.h
+./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
@@ -25,8 +25,8 @@
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/machine/adbsys.h
-./usr/include/machine/aout_machdep.h
 ./usr/include/machine/ansi.h
+./usr/include/machine/aout_machdep.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bus.h
@@ -70,6 +70,7 @@
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libntp_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a

@@ -12,8 +12,8 @@
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
-./usr/include/m68k/profile.h
 ./usr/include/m68k/pcb.h
+./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
@@ -38,8 +38,8 @@
 ./usr/include/machine/float.h
 ./usr/include/machine/frame.h
 ./usr/include/machine/ieeefp.h
-./usr/include/machine/limits.h
 ./usr/include/machine/kcore.h
+./usr/include/machine/limits.h
 ./usr/include/machine/mtpr.h
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
@@ -65,6 +65,7 @@
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libntp_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
