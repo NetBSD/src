@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.40 2000/07/20 00:43:07 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.41 2000/07/20 18:14:47 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -389,7 +389,7 @@ mips3_SlowFault:
 NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	la	k0, _C_LABEL(kdbaux)
 	REG_S	s0, SF_REG_S0(k0)
 	REG_S	s1, SF_REG_S1(k0)
@@ -442,7 +442,7 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 /*
  * Call the trap handler.
  */
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	addu	v0, sp, KERNFRAME_SIZ
 	sw	v0, KERNFRAME_SP(sp)
 #endif
@@ -698,7 +698,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	.set	at
 	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK | MIPS_SR_INT_IE)
 	.set	noat
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, CALLFRAME_RA(sp)
 #endif
@@ -820,7 +820,7 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
@@ -934,7 +934,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	.set	at
 	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_INT_IE | MIPS_SR_KSU_MASK)
 	.set	noat
-#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, CALLFRAME_RA(sp)
 #endif
