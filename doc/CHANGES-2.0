@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.364 2004/07/28 21:35:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.365 2004/08/02 07:29:42 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6256,7 +6256,6 @@ bin/ps/keyword.c				1.41
 	From Nicolas Joly in PR bin/26452.
 	[simonb, ticket #723]
 
-
 sys/dev/pci/pccbb.c				1.99
 
 	Add entries for TI CardBus bridges 1520 and 4520Yenta, as found in
@@ -6271,3 +6270,11 @@ etc/Makefile					patch
 	image), make it possible to add a string to the cd-rom image name
 	by setting the optional environment variable CDROM_NAME_ADD.
 	[he, ticket #725]
+
+sys/arch/mac68k/mac68k/fpu.c			1.31
+sys/arch/mac68k/mac68k/machdep.c		1.299
+
+	We can't generate an FPU idle frame until we know which one
+	we have, so defer this until we've probed the FPU type.
+	[scottr, ticket #728]
+
