@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.15 1993/10/01 01:11:42 jtc Exp $
+#	$Id: Makefile.inc,v 1.16 1993/10/04 18:56:51 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
@@ -49,7 +49,7 @@ MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
 	getttyent.0 getusershell.0 glob.0 initgroups.0 insque.0 isalnum.0 \
-	isalpha.0 isascii.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
+	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
 	ldexp.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
 	raise.0 regexp.0 scandir.0 setjmp.0 setmode.0 setuid.0 \
