@@ -1,8 +1,8 @@
-/*	$NetBSD: uhub.c,v 1.73 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: uhub.c,v 1.74 2005/03/02 11:37:27 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.73 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.74 2005/03/02 11:37:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

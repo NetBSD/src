@@ -1,8 +1,8 @@
-/*	$NetBSD: ohci.c,v 1.155 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: ohci.c,v 1.156 2005/03/02 11:37:27 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.155 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.156 2005/03/02 11:37:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: ugen.c,v 1.70 2005/02/27 00:27:51 perry Exp $	*/
+/*	$NetBSD: ugen.c,v 1.71 2005/03/02 11:37:27 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.70 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.71 2005/03/02 11:37:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

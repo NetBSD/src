@@ -1,8 +1,8 @@
-/*	$NetBSD: usb_subr.c,v 1.120 2004/10/23 16:17:56 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.121 2005/03/02 11:37:27 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.120 2004/10/23 16:17:56 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.121 2005/03/02 11:37:27 mycroft Exp $");
 
 #include "opt_usbverbose.h"
 
