@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.4 2000/03/18 16:52:20 mycroft Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.5 2000/03/18 17:14:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -383,7 +383,7 @@ nca_isa_attach(parent, self, aux)
 
 	if (ia->ia_irq != IRQUNK) {
 		esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE,
-				IPL_BIO, (int (*)(void *))ncr5380_intr, esc);
+				IPL_BIO, ncr5380_intr, esc);
 		if (esc->sc_ih == NULL) {
 			printf("nca: couldn't establish interrupt\n");
 			return;
