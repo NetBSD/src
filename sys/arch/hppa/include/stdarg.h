@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 2005/02/03 23:45:37 jmc Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 2005/02/04 12:15:22 skrll Exp $	*/
 
 /*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
@@ -36,32 +36,28 @@
 #ifndef _HPPA_STDARG_H_
 #define	_HPPA_STDARG_H_
 
-typedef double *va_list;
+#include <machine/ansi.h>
+#include <sys/featuretest.h>
+
+typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-
-#define va_start(ap, last)      ((ap) = *(va_list *)0)
-#define va_arg(ap, type)        (*(type *)(void *)&(ap))
-#define va_end(ap)
-
-#else
-
-#ifdef __GNUC__
-#define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())
-#else
-#define	va_start(ap,lastarg)	__builtin_va_start(ap, &lastarg)
-#endif /* __GNUC__ */
-
-#define va_arg(ap,type)							\
-	(sizeof(type) > 8 ?						\
-	    ((ap = (va_list) ((char *)ap - sizeof (int))),		\
-	     (*((type *) (void *) (*((int *) (ap)))))):			\
-	    ((ap = (va_list) ((long)((char *)ap - sizeof (type)) &	\
-	                             (sizeof(type) > 4 ? ~0x7 : ~0x3))),\
-	     (*((type *) (void *) ((char *)ap + ((8 - sizeof(type)) % 4))))))
-
-#define	va_end(ap)
-
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#define	__builtin_stdarg_start(a, l)	((a) = (va_list)(void *)&(l))
+#define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
+#define	__builtin_va_end(a)		/* nothing */
+#define	__builtin_va_copy(d, s)		((d) = (s))
 #endif /* __lint__ */
+
+#define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#define	va_arg			__builtin_va_arg
+#define	va_end			__builtin_va_end
+#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+
+#if !defined(_ANSI_SOURCE) &&						\
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
+     defined(_NETBSD_SOURCE))
+#define	va_copy(dest, src)	__va_copy((dest), (src))
+#endif
 
 #endif /* !_HPPA_STDARG_H */
