@@ -321,7 +321,6 @@
 ./usr/include/dev/wscons/wsdisplayvar.h
 ./usr/include/dev/wscons/wsemulvar.h
 ./usr/include/dev/wscons/wseventvar.h
-./usr/include/dev/wscons/wskbdmap_mfii.h
 ./usr/include/dev/wscons/wskbdvar.h
 ./usr/include/dev/wscons/wsksymdef.h
 ./usr/include/dev/wscons/wsksymvar.h
