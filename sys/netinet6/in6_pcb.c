@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.59 2003/09/30 00:01:18 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.60 2003/11/05 01:20:56 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.59 2003/09/30 00:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.60 2003/11/05 01:20:56 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -103,6 +103,8 @@ extern struct ifnet loif[NLOOP];
 
 struct in6_addr zeroin6_addr;
 
+#define	IN6PCBHASH_PORT(table, lport) \
+	&(table)->inpt_porthashtbl[ntohs(lport) & (table)->inpt_porthash]
 #define IN6PCBHASH_BIND(table, laddr, lport) \
 	&(table)->inpt_bindhashtbl[ \
 	    (((laddr)->s6_addr32[0] ^ (laddr)->s6_addr32[1] ^ \
@@ -171,6 +173,8 @@ in6_pcballoc(so, v)
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, (struct inpcb_hdr*)in6p,
 	    inph_queue);
+	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
+	    &in6p->in6p_head, inph_lhash);
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	splx(s);
 	if (ip6_v6only)
@@ -325,6 +329,10 @@ in6_pcbbind(v, nam, p)
 		in6p->in6p_lport = lport;
 		in6_pcbstate(in6p, IN6P_BOUND);
 	}
+
+	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
+	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
+	    &in6p->in6p_head, inph_lhash);
 
 #if 0
 	in6p->in6p_flowinfo = 0;	/* XXX */
@@ -508,6 +516,7 @@ in6_pcbdetach(in6p)
 	ip6_freemoptions(in6p->in6p_moptions);
 	s = splnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
+	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	CIRCLEQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
 	    inph_queue);
 	splx(s);
@@ -826,12 +835,14 @@ in6_pcblookup_port(table, laddr6, lport_arg, lookup_wildcard)
 	u_int lport_arg;
 	int lookup_wildcard;
 {
+	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 
-	CIRCLEQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
+	head = IN6PCBHASH_PORT(table, lport);
+	LIST_FOREACH(inph, head, inph_lhash) {
 		in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
