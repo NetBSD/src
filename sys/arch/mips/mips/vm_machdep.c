@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.59 2000/05/28 05:49:02 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60 2000/05/29 09:43:33 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2000/05/28 05:49:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2000/05/29 09:43:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		panic("cpu_fork: curproc");
 #endif
 #if !defined(NOFPU) && !defined(SOFTFLOAT)
-	if (p1 == fpcurproc)
+	if ((p1->p_md.md_flags & MDP_FPUSED) && p1 == fpcurproc)
 		savefpregs(p1);
 #endif
 
@@ -186,7 +186,7 @@ cpu_exit(p)
 {
 	void switch_exit __P((struct proc *));
 
-	if (fpcurproc == p)
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;
 
 	uvmexp.swtch++;
