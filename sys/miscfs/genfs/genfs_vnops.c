@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.56 2002/05/06 00:18:15 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.57 2002/05/06 00:42:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.56 2002/05/06 00:18:15 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.57 2002/05/06 00:42:22 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1257,7 +1257,7 @@ genfs_putpages(void *v)
 				pg = TAILQ_NEXT(pg, listq);
 			}
 		} else {
-			off += npages << PAGE_SHIFT;
+			off = tpg->offset + PAGE_SIZE;
 			if (off < endoff) {
 				pg = uvm_pagelookup(uobj, off);
 			}
