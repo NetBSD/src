@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.17 1998/09/01 17:57:44 pk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.18 1998/09/01 17:59:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -49,11 +49,12 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
-#else
+#elif defined(_EXTENT_TESTING)
 /*
  * user-land definitions, so it can fit into a testing harness.
  */
 #include <sys/param.h>
+#include <sys/pool.h>
 #include <sys/extent.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -63,6 +64,9 @@
 #define	free(p, t)			free(p)
 #define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
 #define	wakeup(chan)			((void)0)
+#define	pool_get(pool, flags)		malloc(pool->pr_size,0,0)
+#define	pool_put(pool, rp)		free(rp,0)
+#define	panic(a)			printf(a)
 #endif
 
 static	pool_handle_t expool_create __P((void));
@@ -88,9 +92,14 @@ static pool_handle_t expool;
 
 static pool_handle_t expool_create()
 {
-  expool = pool_create(sizeof(struct extent_region), 0, 0,
-		       0, "extent", 0, 0, 0, 0);
-  return expool;
+#if defined(_KERNEL)
+	expool = pool_create(sizeof(struct extent_region), 0, 0,
+			     0, "extent", 0, 0, 0, 0);
+#else
+	expool = (pool_handle_t)malloc(sizeof(*expool),0,0);
+	expool->pr_size = sizeof(struct extent_region);
+#endif
+	return (expool);
 }
 
 /*
@@ -604,7 +613,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * the way.
 	 */
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
-	    rp = rp->er_link.le_next) {
+	     rp = rp->er_link.le_next) {
 		if (rp->er_start >= newstart)
 			break;
 		last = rp;
