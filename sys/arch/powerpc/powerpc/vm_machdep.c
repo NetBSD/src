@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2002/07/05 18:45:23 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 2002/07/25 23:46:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -226,8 +226,10 @@ cpu_exit(p)
 		ci->ci_fpuproc = NULL;
 #endif
 #ifdef ALTIVEC
-	if (pcb->pcb_veccpu)			/* release the AltiVEC */
+	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
 		ci->ci_vecproc = NULL;
+		__asm __volatile("dssall;sync"); /* stop any streams */
+	}
 	if (pcb->pcb_vr != NULL)
 		pool_put(&vecpool, pcb->pcb_vr);
 #endif

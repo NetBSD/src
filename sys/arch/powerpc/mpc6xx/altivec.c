@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.4 2002/07/18 22:51:58 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.5 2002/07/25 23:46:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -166,8 +166,10 @@ save_vec(struct proc *p)
 	__asm __volatile ("mtmsr %0; isync" :: "r"(msr));
 
 	/*
-	 * Note that we aren't using any CPU resources
+	 * Note that we aren't using any CPU resources and stop any
+	 * data streams.
 	 */
+	__asm __volatile ("dssall;sync");
 	pcb->pcb_veccpu = NULL;
 	curcpu()->ci_vecproc = NULL;
 	tf->srr1 &= ~PSL_VEC;
