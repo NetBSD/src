@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.2 2003/08/01 22:25:55 martin Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.3 2003/08/26 20:15:13 thorpej Exp $	*/
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2 2003/08/01 22:25:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.3 2003/08/26 20:15:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2 2003/08/01 22:25:55 martin Exp $");
 
 #define X(i)	x[i]
 
-static u_char PADDING[64] = {
+static const u_char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
