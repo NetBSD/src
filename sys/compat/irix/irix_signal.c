@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.6 2002/03/26 16:38:12 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.7 2002/03/26 16:58:56 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.6 2002/03/26 16:38:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.7 2002/03/26 16:58:56 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -521,7 +521,7 @@ loop:
 
 			if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 #ifdef DEBUG_IRIX
-				prrintf(("irix_sys_wait(): Don't wait\n"));
+				printf(("irix_sys_wait(): Don't wait\n"));
 #endif
 				return 0;
 			}
