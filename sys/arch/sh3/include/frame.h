@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8.6.2 2002/06/21 21:26:27 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.8.6.3 2002/07/05 02:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -117,7 +117,6 @@ struct saframe {
 	int		sa_interrupted;	/* r7 */
 #endif
 	void *		sa_arg;
-	sa_upcall_t	sa_upcall;
 };
 
 #endif /* !_SH3_FRAME_H_ */

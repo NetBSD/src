@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.6.2 2002/06/21 21:26:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.5.6.3 2002/07/05 02:43:10 thorpej Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,8 +96,6 @@ define	SF_R7_BANK		offsetof(struct switchframe, sf_r7_bank)
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)
 define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
-
-define	SAF_UPCALL		offsetof(struct saframe, sa_upcall)
 
 define	LSONPROC		LSONPROC
 define	LSRUN			LSRUN
