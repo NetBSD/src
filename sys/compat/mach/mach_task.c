@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.26 2003/10/25 18:37:49 christos Exp $ */
+/*	$NetBSD: mach_task.c,v 1.27 2003/10/25 20:15:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.26 2003/10/25 18:37:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.27 2003/10/25 20:15:13 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,6 @@ mach_task_get_special_port(args)
 	struct lwp *l = args->l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
-	int error = 0;
 
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
@@ -103,7 +102,7 @@ mach_task_get_special_port(args)
 	default:
 		uprintf("mach_task_get_special_port(): unimpl. port %d\n",
 		    req->req_which_port);
-		return mach_msg_error(args, error);
+		return mach_msg_error(args, EINVAL);
 		break;
 	}
 
@@ -556,7 +555,7 @@ mach_task_resume(args)
 	size_t *msglen = args->rsize;
 	mach_port_t mn;
 	struct mach_right *mr;
-	struct lwp *l = curlwp;
+	struct lwp *l = args->l;
 	struct proc *p;
 	struct mach_emuldata *med;
 	int s;
