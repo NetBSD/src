@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.102 2003/07/08 11:58:58 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.103 2003/07/10 13:36:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -454,7 +454,6 @@ again:
 void
 cd_dist_dir(char *forwhat)
 {
-	char *cwd;
 
 	/* ask user for the mountpoint. */
 	msg_prompt(MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
@@ -466,9 +465,7 @@ cd_dist_dir(char *forwhat)
 	target_chdir_or_die(dist_dir);
 
 	/* Set ext_dir for absolute path. */
-	cwd = getcwd(NULL,0);
-	strlcpy(ext_dir, cwd, STRSIZE);
-	free (cwd);
+	getcwd(ext_dir, sizeof ext_dir);
 }
 
 
@@ -1025,13 +1022,14 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 			return 1;
 
 		/* Configure the system */
-		run_makedev();
+		if (sets_selected & SET_ETC)
+			run_makedev();
 
 		/* Other configuration. */
 		mnt_net_config();
 		
 		/* Clean up dist dir (use absolute path name) */
-		if (clean_dist_dir)
+		if (clean_dist_dir && ext_dir[0] == '/' && ext_dir[1] != 0)
 			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
 
 		/* Mounted dist dir? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.91 2003/07/08 17:39:00 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.92 2003/07/10 13:36:50 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -364,7 +364,7 @@ int
 md_update(void)
 {
 	move_aout_libs();
-	endwin();
+	/* endwin(); */
 	md_copy_filesystem();
 	md_post_newfs();
 	md_upgrade_mbrtype();
