@@ -287,6 +287,29 @@ void vm_object_deallocate(object)
 		 *	Make sure no one can look us up now.
 		 */
 		vm_object_remove(object->pager);
+#ifdef DIAGNOSTIC
+		/*
+		 * Sanity check on the object hash table.
+		 */
+		{
+		register vm_object_hash_entry_t	entry;
+		int i;
+
+		for (i = 0; i < VM_OBJECT_HASH_COUNT; i++) {
+			queue_t bucket = &vm_object_hashtable[i];
+
+			entry = (vm_object_hash_entry_t) queue_first(bucket);
+			while (!queue_end(bucket, (queue_entry_t) entry)) {
+				if (object == entry->object) {
+					vm_object_print(object,0);
+					panic("object hashtable burb");
+				}
+				entry = (vm_object_hash_entry_t)
+						queue_next(&entry->hash_links);
+			}
+		}
+		}
+#endif
 		vm_object_cache_unlock();
 
 		temp = object->shadow;
@@ -1203,6 +1226,22 @@ void vm_object_collapse(object)
 			 *	unused portion.
 			 */
 
+			/*
+			 * Remove backing_object from the object hashtable now.
+			 * This is necessary since its pager is going away
+			 * and therefore it is not going to be removed from
+			 * hashtable in vm_object_deallocate().
+			 *
+			 * NOTE - backing_object can only get at this stage if
+			 * it has an internal pager. It is not normally on the
+			 * hashtable unless it was put there by eg. vm_mmap()
+			 *
+			 * XXX - Need I worry here about *named* ANON pagers ?
+			 */
+
+			if (backing_object->pager) {
+				vm_object_remove(backing_object->pager);
+			}
 			object->pager = backing_object->pager;
 #if 1
 			/* Mach 3.0 code */
