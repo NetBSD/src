@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.242 2004/06/01 04:32:59 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.243 2004/06/01 04:35:17 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3426,3 +3426,10 @@ sys/arch/macppc/stand/ofwboot/boot.c		1.18
 
 	Support userconf(4) ("boot -c").
 	[schmonz, ticket #428]
+
+sys/arch/amd64/amd64/pmap.c			1.10
+
+	Make pmap_collect() a NOP -- due to the way we deal with the 
+	four-level pte, invalidating the entire address space results in 
+	multi-minute system hangs.
+	[sekiya, ticket #429]
