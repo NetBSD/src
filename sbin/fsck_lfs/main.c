@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2000/05/23 01:48:53 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.6 2000/06/14 18:43:58 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -69,11 +69,12 @@ main(int argc, char **argv)
 {
 	int             ch;
 	int             ret = 0;
-	char           *optstring = "b:C:dm:npy";
+	char           *optstring = "b:C:di:m:npy";
 
 	sync();
 	skipclean = 1;
 	exitonfail = 0;
+	idaddr = 0x0;
 	while ((ch = getopt(argc, argv, optstring)) != EOF) {
 		switch (ch) {
 		case 'b':
@@ -89,6 +90,9 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			exitonfail++;
+			break;
+		case 'i':
+			idaddr = strtol(optarg, NULL, 0);
 			break;
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
@@ -205,7 +209,10 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
          */
 	if (preen == 0)
 		printf("** Phase 0 - Check Segment Summaries and Inode Free List\n");
-	pass0();
+	if (idaddr != sblock.lfs_idaddr)
+		pwarn("-i given, skipping free list check\n");
+	else
+		pass0();
 
 	if (preen == 0) {
 		/*
