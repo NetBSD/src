@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.9 2003/09/30 21:04:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.9 2003/09/30 21:04:54 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp 
  * Send a signal to a Darwin process.
  */
 void
-darwin_sendsig(int sig, const sigset_t *mask, u_long code)
+darwin_sendsig(ksi, mask)
+	const ksiginfo_t *ksi;
+	const sigset_t *mask;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -73,10 +75,16 @@ darwin_sendsig(int sig, const sigset_t *mask, u_long code)
 	struct darwin_sigframe *sfp, sf;
 	int onstack;
 	size_t stack_size;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	sig_t catcher;
+	int sig;
+	u_long code;
 	int error;
 
 	tf = trapframe(l);
+
+	sig = ksi->_signo;
+	code = ksi->_code;
+	catcher = SIGACTION(p, sig).sa_handler;
 
 	/* Use an alternate signal stack? */
 	onstack =

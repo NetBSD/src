@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.14 2003/09/27 04:44:42 matt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.15 2003/09/30 21:04:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.14 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.15 2003/09/30 21:04:54 manu Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -70,36 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.14 2003/09/27 04:44:42 matt Exp $
 #include <machine/macho_machdep.h>
 
 #include <uvm/uvm_extern.h>
-
-void mach_trap(struct trapframe *);
-
-/*
- * Fast syscall gate trap...
- */
-void
-mach_trap(struct trapframe *frame)
-{
-	extern struct emul emul_mach;
-	struct lwp *l = curlwp;
-
-	if (l->l_proc->p_emul != &emul_mach) {
-		DPRINTF(("mach trap %d on bad emulation\n", frame->exc));
-		trapsignal(l, SIGBUS, 0);
-		return;
-	}
-
-	switch (frame->exc) {
-	case 0:
-		DPRINTF(("mach_pthread_self();\n"));
-		break;
-	case 1:
-		DPRINTF(("mach_pthread_set_self();\n"));
-		break;
-	default:
-		uprintf("unknown mach trap %d\n", frame->exc);
-		break;
-	}
-}
 
 void
 mach_host_basic_info(struct mach_host_basic_info *info)
