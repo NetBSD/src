@@ -34,16 +34,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
+__COPYRIGHT("@(#) Copyright (c) 2000\n\
+	The NetBSD Foundation, Inc.  All rights reserved.\n\
+Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
-#else
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.16 1998/07/27 00:52:02 mycroft Exp $");
-#endif
+__SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.17 2000/01/23 19:59:33 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +89,7 @@ void	wr_error __P((char *));
 int	main __P((int, char **));
 void	mv __P((char *, char *));
 void	rm __P((char *));
-int	scan __P((FILE *, struct passwd *, int *));
+int	scan __P((FILE *, struct passwd *, u_int32_t *));
 void	usage __P((void));
 
 int
@@ -105,17 +101,19 @@ main(argc, argv)
 	DBT data, key;
 	FILE *fp, *oldfp;
 	sigset_t set;
-	int ch, cnt, len, makeold, tfd, flags;
+	int ch, len, makeold, tfd;
+	u_int32_t x, cnt, flags;
 	char *p;
 	const char *t;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
 	int hasyp = 0;
 	DBT ypdata, ypkey;
+	int lorder = BYTE_ORDER;
 
 	oldfp = NULL;
 	strcpy(prefix, "/");
 	makeold = 0;
-	while ((ch = getopt(argc, argv, "d:pv")) != -1)
+	while ((ch = getopt(argc, argv, "d:pvBL")) != -1)
 		switch(ch) {
 		case 'd':
 			strncpy(prefix, optarg, sizeof(prefix));
@@ -125,6 +123,12 @@ main(argc, argv)
 			makeold = 1;
 			break;
 		case 'v':			/* backward compatible */
+			break;
+		case 'B':
+			lorder = BIG_ENDIAN;
+			break;
+		case 'L':
+			lorder = LITTLE_ENDIAN;
 			break;
 		case '?':
 		default:
@@ -155,6 +159,8 @@ main(argc, argv)
 	/* Open the original password file */
 	if (!(fp = fopen(pname, "r")))
 		error(pname);
+
+	openinfo.lorder = lorder;
 
 	/* Open the temporary insecure password database. */
 	(void)snprintf(pwd_db_tmp, sizeof(pwd_db_tmp), "%s%s.tmp", prefix,
@@ -220,24 +226,32 @@ main(argc, argv)
 				    cnt);
 		}
 
+		if (lorder != BYTE_ORDER) {
+			M_32_SWAP(pwd.pw_uid);
+			M_32_SWAP(pwd.pw_gid);
+			M_32_SWAP(pwd.pw_change);
+			M_32_SWAP(pwd.pw_expire);
+			M_32_SWAP(flags);
+		}
+
 		/* Create insecure data. */
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT("*");
-		memmove(p, &pwd.pw_uid, sizeof(int));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
+		memmove(p, &pwd.pw_uid, sizeof(pwd.pw_uid));
+		p += sizeof(pwd.pw_uid);
+		memmove(p, &pwd.pw_gid, sizeof(pwd.pw_gid));
+		p += sizeof(pwd.pw_gid);
+		memmove(p, &pwd.pw_change, sizeof(pwd.pw_change));
+		p += sizeof(pwd.pw_change);
 		COMPACT(pwd.pw_class);
 		COMPACT(pwd.pw_gecos);
 		COMPACT(pwd.pw_dir);
 		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
+		memmove(p, &pwd.pw_expire, sizeof(pwd.pw_expire));
+		p += sizeof(pwd.pw_expire);
+		memmove(p, &flags, sizeof(flags));
+		p += sizeof(flags);
 		data.size = p - buf;
 
 		/* Store insecure by name. */
@@ -250,8 +264,11 @@ main(argc, argv)
 
 		/* Store insecure by number. */
 		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
+		x = cnt;
+		if (lorder != BYTE_ORDER)
+			M_32_SWAP(x);
+		memmove(tbuf + 1, &x, sizeof(x));
+		key.size = sizeof(x) + 1;
 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 			wr_error(pwd_db_tmp);
 
@@ -308,24 +325,32 @@ main(argc, argv)
 	rewind(fp);
 	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
+		if (lorder != BYTE_ORDER) {
+			M_32_SWAP(pwd.pw_uid);
+			M_32_SWAP(pwd.pw_gid);
+			M_32_SWAP(pwd.pw_change);
+			M_32_SWAP(pwd.pw_expire);
+			M_32_SWAP(flags);
+		}
+
 		/* Create secure data. */
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(int));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
+		memmove(p, &pwd.pw_uid, sizeof(pwd.pw_uid));
+		p += sizeof(pwd.pw_uid);
+		memmove(p, &pwd.pw_gid, sizeof(pwd.pw_gid));
+		p += sizeof(pwd.pw_gid);
+		memmove(p, &pwd.pw_change, sizeof(pwd.pw_change));
+		p += sizeof(pwd.pw_change);
 		COMPACT(pwd.pw_class);
 		COMPACT(pwd.pw_gecos);
 		COMPACT(pwd.pw_dir);
 		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
+		memmove(p, &pwd.pw_expire, sizeof(pwd.pw_expire));
+		p += sizeof(pwd.pw_expire);
+		memmove(p, &flags, sizeof(flags));
+		p += sizeof(flags);
 		data.size = p - buf;
 
 		/* Store secure by name. */
@@ -338,8 +363,11 @@ main(argc, argv)
 
 		/* Store secure by number. */
 		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
+		x = cnt;
+		if (lorder != BYTE_ORDER)
+			M_32_SWAP(x);
+		memmove(tbuf + 1, &x, sizeof(x));
+		key.size = sizeof(x) + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			wr_error(pwd_Sdb_tmp);
 
@@ -408,11 +436,12 @@ int
 scan(fp, pw, flags)
 	FILE *fp;
 	struct passwd *pw;
-	int *flags;
+	u_int32_t *flags;
 {
 	static int lcnt;
 	static char line[LINE_MAX];
 	char *p;
+	int oflags;
 
 	if (!fgets(line, sizeof(line), fp))
 		return (0);
@@ -430,12 +459,13 @@ scan(fp, pw, flags)
 	*p = '\0';
 	if (strcmp(line, "+") == 0)
 		strcpy(line, "+:::::::::");	/* pw_scan() can't handle "+" */
-	*flags = 0;
-	if (!pw_scan(line, pw, flags)) {
+	oflags = 0;
+	if (!pw_scan(line, pw, &oflags)) {
 		warnx("at line #%d", lcnt);
 fmt:		errno = EFTYPE;	/* XXX */
 		error(pname);
 	}
+	*flags = oflags;
 
 	return (1);
 }
@@ -510,6 +540,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: pwd_mkdb [-p] [-d directory] file\n");
+	(void)fprintf(stderr, "usage: pwd_mkdb [-pBL] [-d directory] file\n");
 	exit(1);
 }

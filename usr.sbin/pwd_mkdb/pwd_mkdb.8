@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.10 1999/12/17 13:11:22 abs Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.11 2000/01/23 19:59:32 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd "generate the password databases"
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
+.Op Fl pBL
 .Op Fl d Ar directory
 .Ar file
 .Sh DESCRIPTION
@@ -71,6 +71,10 @@ Change the root directory of the generated files from
 .Dq Pa /
 to
 .Ar directory .
+.It Fl B
+Store data in big-endian format.
+.It Fl L
+Store data in little-endian format.
 .El
 .Pp
 The two databases differ in that the secure version contains the user's 
@@ -116,6 +120,9 @@ The front-ends to
 and
 .Xr vipw 8
 handle the locking necessary to avoid this problem.
+.Pp
+Although the DB format is endian-transparent, the data stored in the DB is
+not.  This is difficult to fix without breaking compatibility.
 .Sh COMPATIBILITY
 Previous versions of the system had a program similar to
 .Nm
