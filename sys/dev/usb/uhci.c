@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.117 2000/05/30 09:26:06 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.118 2000/05/30 16:56:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1064,7 +1064,9 @@ uhci_intr(arg)
 		ack |= UHCI_STS_USBEI;
 	if (status & UHCI_STS_RD) {
 		ack |= UHCI_STS_RD;
+#ifdef UHCI_DEBUG
 		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
+#endif
 	}
 	if (status & UHCI_STS_HSE) {
 		ack |= UHCI_STS_HSE;
