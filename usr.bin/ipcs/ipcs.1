@@ -27,96 +27,121 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ipcs.1,v 1.1 1994/06/18 21:09:42 cgd Exp $
+.\"	$Id: ipcs.1,v 1.2 1994/06/18 22:28:58 cgd Exp $
 .\"
-.Dd June 4, 1994
+.Dd June 18, 1994
 .Dt "IPCS" 1
-.Os NetBSD 0.9b
+.Os NetBSD 0.9c
 .Sh NAME
 .Nm ipcs
-.Nd report interprocess communications facilities status
-.\"
+.Nd report System V interprocess communication facilities status
 .Sh SYNOPSIS
 .Nm ipcs
-.Op Fl MmQqSsabcoptT
-.Op Fl C Ar namelist
-.Op Fl N Ar memory
+.Op Fl abcmopqstMQST
+.Op Fl C Ar system
+.Op Fl N Ar core
 .Sh DESCRIPTION
 The
 .Nm ipcs
-program provides information on active SVID interprocess communication
-facilities on the system.
-.Sh OPTIONS
-The information is displayed in columns and is controlled by the following
-options:
-.Bl -tag -width "-C namelist"
-.It Nm -M
-Displays system information about shared memory
-.It Nm -m
-Displays information about active shared memory
-.It Nm -Q
-Displays system information about messages queues
-.It Nm -q
-Displays information about active message queues
-.It Nm -S
-Displays system information about semaphores
-.It Nm -s
-Displays information about active semaphores
-.It Nm -T
-Displays system information on both shared memory, message queues
+program provides information on System V interprocess communication
+(IPC) facilities on the system.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Show the maximum amount of information possible when
+displaying active semaphores, message queues,
+and shared memory segments.
+(This is shorthand for specifying the
+.Fl b ,
+.Fl c ,
+.Fl o ,
+.Fl p ,
+and
+.Fl t
+options.)
+.It Fl b
+Show the maximum allowed sizes for active semaphores, message queues,
+and shared memory segments.  The
+.Dq maximum allowed size
+is the maximum number of bytes in a message on a message queue,
+the size of a shared memory segment,
+or the number number of semaphores in a set of semaphores.
+.It Fl c
+Show the creator's name and group for active semaphores, message queues,
+and shared memory segments.
+.It Fl m
+Display information about active shared memory segments.
+.It Fl o
+Show outstanding usage for active message queues,
+and shared memory segments.  The
+.Dq outstanding usage
+is the number of messages in a message queue, or the number
+of processes attached to a shared memory segment.
+.It Fl p
+Show the process ID information for active semaphores, message queues,
+and shared memory segments.  The
+.Dq process ID information
+is the last process to send a message to or receive a message from
+a message queue,
+the process that created a semaphore, or the last process to attach
+or detach a shared memory segment.
+.It Fl q
+Display information about active message queues.
+.It Fl s
+Display information about active semaphores.
+.It Fl t
+Show access times for active semaphores, message queues,
+and shared memory segments.  The access times is the time
+of the last control operation on an IPC object,
+the last send or receive of a message,
+the last attach or detach of a shared memory segment,
+or the last operation on a semaphore.
+.It Fl C Ar system
+Extract the name list from the specified system instead of the
+default
+.Dq Pa /netbsd .
+.It Fl M
+Display system information about shared memory.
+.It Fl N Ar core
+Extract values associated with the name list from the specified
+core instead of the default
+.Dq Pa /dev/kmem .
 and semaphores.
+.It Fl Q
+Display system information about messages queues.
+.It Fl S
+Display system information about semaphores.
+.It Fl T
+Display system information about shared memory, message queues
 .El
 .Pp
-If any of the options -M, -m, -Q, -q, -S or -s are specified, only
-information about that item is listed.  If none of those are
-specified, information about all active interprocess facilities are
-listed, and if the -T option is given all system information about
-the interprocess facilities are listed.
-.Pp
-For the active status listings extra information can be listed with
-the following options:
-.Bl -tag -width "-C namelist"
-.It Nm -a
-Select all the options (short for -b, -c, -o, -p and -t)
-.It Nm -b
-Show the maximum allowed size (number of bytes in a message queue,
-size of shared memory segment or number of semaphores in each set)
-.It Nm -c
-Show the creator's name and group
-.It Nm -o
-Show outstanding usage (number of messages or number of processes
-attached to a shared memory segment)
-.It Nm -p
-Show the process ID information (last process to send and receive
-a message, process that created semaphore or last process to attach
-or detach shared memory)
-.It Nm -t
-Show access times (last control operation, last send or receive,
-last attach or detach of shared memory, last operation on a
-semaphore)
-.El
-There are also options to control the name list and memory image
-to be used as follows:
-.Bl -tag -width "-C namelist"
-.It Nm "-C namelist"
-Use specified namelist in place of /netbsd
-.It Nm "-N memory"
-Use specified file for memory in place of /dev/kmem
-.El
+If none of the
+.Fl M ,
+.Fl m ,
+.Fl Q ,
+.Fl q ,
+.Fl S ,
+or
+.Fl s
+options are specified, information about all active IPC facilities is
+listed.
 .Sh RESTRICTIONS
-The system may well change things around while
+System data structures may change while
 .Nm ipcs
-is running.
+is running; the output of
+.Nm ipcs
+is not guaranteed to be consistent.
+.Sh BUGS
+This manual page is woefully incomplete, because it does not
+at all attempt to explain the information printed by
+.Nm ipcs .
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
-.It Pa /netbsd
-System namelist
 .It Pa /dev/kmem
-Memory
-.It Pa /etc/passwd
-Username lookup
-.It Pa /etc/group
-Group name lookup
+default kernel memory
+.It Pa /netbsd
+default system name list
 .El
 .Sh SEE ALSO
 .Xr ipcrm 1
