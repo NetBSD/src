@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.1 1996/11/09 03:52:51 chuck Exp $	*/
+/*	$NetBSD: lpt.c,v 1.2 1997/03/19 16:24:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -122,7 +122,7 @@ int lptintr __P((void *));
 /*
  * Autoconfig stuff
  */
-static int  lpt_pcc_match  __P((struct device *, void *, void *));
+static int  lpt_pcc_match  __P((struct device *, struct cfdata *, void *));
 static void lpt_pcc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach lpt_pcc_ca = {
@@ -148,11 +148,11 @@ static int pushbytes __P((struct lpt_softc *));
 
 /*ARGSUSED*/
 static	int
-lpt_pcc_match(pdp, match, auxp)
-struct	device *pdp;
-void	*match, *auxp;
+lpt_pcc_match(pdp, cf, auxp)
+	struct device *pdp;
+	struct cfdata *cf;
+	void *auxp;
 {
-	struct cfdata *cf = match;
 	struct pcc_attach_args *pa = auxp;
 
 	if (strcmp(pa->pa_name, lpt_cd.cd_name))
