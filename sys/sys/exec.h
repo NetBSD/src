@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.82 2001/12/08 00:35:32 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.83 2002/03/20 00:26:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -121,12 +121,17 @@ struct execsw {
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
 	int	(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
-				   char **, void *));
+				    char **, void *));
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
-				  u_long));
+				   u_long));
+					/* Dump core */
 	int	(*es_coredump) __P((struct proc *, struct vnode *,
 				    struct ucred *));
+					/* Emulation specific sysctl */
+	int	(*es_sysctl) __P((int *, u_int , void *, size_t *, void *,
+				  size_t, struct proc *p));
+
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
