@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.7 1994/04/05 21:07:19 mycroft Exp $
+ *	from: @(#)mtio.h	8.1 (Berkeley) 6/2/93
+ *	$Id: mtio.h,v 1.8 1994/05/21 07:12:40 cgd Exp $
  */
-
-#ifndef _SYS_MTIO_H_
-#define _SYS_MTIO_H_
 
 /*
  * Structures and definitions for mag tape io control commands
@@ -56,14 +53,14 @@ struct mtop {
 #define MTREW		5	/* rewind */
 #define MTOFFL		6	/* rewind and put the drive offline */
 #define MTNOP		7	/* no operation, sets status only */
-#define	MTRETEN		8	/* retension */
-#define	MTERASE		9	/* erase entire tape */
-#define	MTEOM		10	/* forward to end of media */
-#define	MTNBSF		11	/* backward space to beginning of file */
+#define MTRETEN		8	/* retension */
+#define MTERASE		9	/* erase entire tape */
+#define MTEOM		10	/* forward to end of media */
+#define MTNBSF		11	/* backward space to beginning of file */
 #define MTCACHE		12	/* enable controller cache */
 #define MTNOCACHE	13	/* disable controller cache */
-#define	MTSETBSIZ	14	/* set block size; 0 for variable */
-#define	MTSETDNSTY	15	/* set density code for current mode */
+#define MTSETBSIZ	14	/* set block size; 0 for variable */
+#define MTSETDNSTY	15	/* set density code for current mode */
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -105,10 +102,13 @@ struct mtget {
 #define MT_ISVIPER1	0x0e		/* Archive Viper-150 */
 #define MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
 #define MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
-#define MT_ISWANGTEK	0x11            /* WANGTEK 5150ES */
-#define MT_ISCALIPER	0x12            /* Caliper CP150 */
-#define MT_ISWTEK5099	0x13            /* WANGTEK 5099ES */
-#define MT_ISVIPER2525	0x14            /* Archive Viper 2525 */
+#define MT_ISWANGTEK	0x11		/* WANGTEK 5150ES */
+#define MT_ISCALIPER	0x12		/* Caliper CP150 */
+#define MT_ISWTEK5099	0x13		/* WANGTEK 5099ES */
+#define MT_ISVIPER2525	0x14		/* Archive Viper 2525 */
+#define MT_ISMFOUR	0x11		/* M4 Data 1/2 9track drive */
+#define MT_ISTK50	0x12		/* DEC SCSI TK50 */
+#define MT_ISMT02	0x13		/* Emulex MT02 SCSI tape controller */
 
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
@@ -117,7 +117,7 @@ struct mtget {
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
 #ifndef KERNEL
-#define	DEFTAPE	"/dev/nrst0"
+#define	DEFTAPE	"/dev/rst0"
 #endif
 
 #ifdef	KERNEL
@@ -133,5 +133,3 @@ struct mtget {
 #define	T_6250BPI	020		/* select 6250 bpi */
 #define	T_BADBPI	030		/* undefined selection */
 #endif
-
-#endif /* !_SYS_MTIO_H_ */
