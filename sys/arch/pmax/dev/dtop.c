@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26.6.3 1997/11/24 00:06:51 mellon Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.4 1998/10/29 19:16:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.3 1997/11/24 00:06:51 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.4 1998/10/29 19:16:56 cgd Exp $");
 
 #include "rasterconsole.h"
 
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.3 1997/11/24 00:06:51 mellon Exp $")
 #include <pmax/dev/dtopvar.h>
 
 
-#define	DTOP_MAX_POLL	0x7fff		/* about half a sec */
+#define	DTOP_MAX_POLL	0x70000		/* about half a sec */
 
 typedef volatile unsigned int	*data_reg_t;	/* uC  */
 #define	DTOP_GET_BYTE(data)	(((*(data)) >> 8) & 0xff)
@@ -584,6 +584,8 @@ dtop_get_packet(dtop, pkt)
 	register data_reg_t	data;
 	register int		max, i, len;
 	register unsigned char	c;
+	int state;
+	int escaped;
 
 	poll = dtop->poll;
 	data = dtop->data;
@@ -594,42 +596,50 @@ dtop_get_packet(dtop, pkt)
 	 * else but 0x50.  This is a good thing, it makes
 	 * the average packet exactly one word long, too.
 	 */
-	for (max = 0; (max < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll); max++)
-		DELAY(1);
-	if (max == DTOP_MAX_POLL)
-		goto bad;
-	pkt->src_address = DTOP_GET_BYTE(data);
-
-	for (max = 0; (max < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll); max++)
-		DELAY(1);
-	if (max == DTOP_MAX_POLL)
-		goto bad;
-	pkt->code.bits = DTOP_GET_BYTE(data);
-
-	/*
-	 * Now get data and checksum
-	 */
-	len = pkt->code.val.len + 1;
-	c = 0;
-	for (i = 0; i < len; i++) {
-again:
-		for (max = 0; (max < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll); max++)
+	state = 0;		/* input packet state */
+	escaped = 0;		/* getting escaped code */
+	len = 0;		/* packet data length */
+	i = 0;			/* packet data index */
+	while (1) {
+		for (max = 0; (max < DTOP_MAX_POLL) && !DTOP_RX_AVAIL(poll);
+		    max++)
 			DELAY(1);
-		if (max == DTOP_MAX_POLL)
-			goto bad;
-		if (c == DTOP_ESC_CHAR) {
-			c = dtop_escape(DTOP_GET_BYTE(data) & 0xff);
+		if (max == DTOP_MAX_POLL) {
+			++dtop->bad_pkts;
+			return (-1);
+		}
+		c = DTOP_GET_BYTE(data);
+		if (escaped) {
+			c = dtop_escape(c);
+			if (c == 'O') {
+				++dtop->bad_pkts;
+				return (-1);
+			}
+			escaped = 0;
 		} else {
 			c = DTOP_GET_BYTE(data);
-			if (c == DTOP_ESC_CHAR)
-				goto again;
+			if (c == DTOP_ESC_CHAR) {
+				escaped = 1;
+				continue;
+			}
+		}
+		if (state == 0) {
+			pkt->src_address = c;
+			state = 1;
+			continue;
+		}
+		if (state == 1) {
+			pkt->code.bits = c;
+			state = 2;
+			len = pkt->code.val.len + 1;
+			continue;
 		}
 		pkt->body[i] = c;
+		++i;
+		if (i >= len)
+			break;
 	}
 	return (len);
-bad:
-	dtop->bad_pkts++;
-	return (-1);
 }
 
 /*
