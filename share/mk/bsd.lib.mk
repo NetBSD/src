@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.222 2003/07/18 04:04:03 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.223 2003/07/20 17:01:58 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -69,7 +69,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # add additional suffixes not exported.
 # .po is used for profiling object files.
 # .so is used for PIC object files.
-.SUFFIXES: .out .a .ln .so .po .o .s .S .c .cc .cpp .C .m .F .f .r .y .l .cl .p .h
+.SUFFIXES: .out .a .ln .so .po .o .s .S .c .cc .cpp .cxx .C .m .F .f .r .y .l .cl .p .h
 .SUFFIXES: .sh .m4 .m
 
 
@@ -193,7 +193,7 @@ FFLAGS+=	${FOPTS}
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
-.cc.o .cpp.o .C.o:
+.cc.o .cpp.o .cxx.o .C.o:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	${COMPILE.cc} ${.IMPSRC}
 .else
@@ -203,7 +203,7 @@ FFLAGS+=	${FOPTS}
 	@rm -f ${.TARGET}.o
 .endif
 
-.cc.po .cpp.po .C.po:
+.cc.po .cpp.po .cxx.o .C.po:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	${COMPILE.cc} -pg ${.IMPSRC} -o ${.TARGET}
 .else
@@ -213,7 +213,7 @@ FFLAGS+=	${FOPTS}
 	@rm -f ${.TARGET}.o
 .endif
 
-.cc.so .cpp.so .C.so:
+.cc.so .cpp.so .cxx.so .C.so:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	${COMPILE.cc} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .else

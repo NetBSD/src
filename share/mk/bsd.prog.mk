@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.172 2003/07/18 08:26:10 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.173 2003/07/20 17:01:58 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -71,17 +71,11 @@ CLEANFILES+=strings
 	@${CC} ${CFLAGS} -c x.c -o ${.TARGET}
 	@rm -f x.c
 
-.cc.o:
+.cc.o .cpp.o .cxx.o .C.o:
 	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
 	@mv -f x.c x.cc
 	@${CXX} ${CXXFLAGS} -c x.cc -o ${.TARGET}
 	@rm -f x.cc
-
-.C.o:
-	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.C
-	@${CXX} ${CXXFLAGS} -c x.C -o ${.TARGET}
-	@rm -f x.C
 .endif
 
 .if defined(PROG_CXX)
