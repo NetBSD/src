@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/5/93"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.13 1994/06/24 13:48:22 hpeyerl Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.14 1994/07/05 03:09:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1405,11 +1405,11 @@ usage()
 "or disklabel -R [-r] disk protofile",
 		"(to restore label with existing boot program)",
 #if NUMBOOT > 1
-"or disklabel -B [ -b boot1 [ -s boot2 ] ] disk [ type ]",
+"or disklabel -B [ -b xxboot [ -s bootxx ] ] disk [ type ]",
 		"(to install boot program with existing label)",
-"or disklabel -w -B [ -b boot1 [ -s boot2 ] ] disk type [ packid ]",
+"or disklabel -w -B [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
 		"(to write label and boot program)",
-"or disklabel -R -B [ -b boot1 [ -s boot2 ] ] disk protofile [ type ]",
+"or disklabel -R -B [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
 		"(to restore label and boot program)",
 #else
 "or disklabel -B [ -b bootprog ] disk [ type ]",
