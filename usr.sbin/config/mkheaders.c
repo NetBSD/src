@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.26 2001/02/21 00:03:43 cgd Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.27 2001/11/28 02:47:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,8 +160,6 @@ defopts_print(const char *name, void *value, void *arg)
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
 	int isfsoption;
-	int isparam;
-	int isflag;
 	FILE *fp;
 
 	(void)sprintf(tfname, "tmp_%s", name);
@@ -170,8 +168,6 @@ defopts_print(const char *name, void *value, void *arg)
 
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
 		isfsoption = OPT_FSOPT(nv->nv_name);
-		isparam  = OPT_DEFPARAM(nv->nv_name);
-		isflag  = OPT_DEFFLAG(nv->nv_name);
 
 		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
 		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) {
@@ -188,9 +184,6 @@ defopts_print(const char *name, void *value, void *arg)
 			if (fputc('\n', fp) < 0)
 				goto bad;
 		}
-		if (isflag)
-			fprintcnt(fp, nv);
-
 	}
 
 	if (fclose(fp) == EOF)
