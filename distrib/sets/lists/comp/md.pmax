@@ -102,7 +102,6 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
-./usr/lib/libossaudio_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a
