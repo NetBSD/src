@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.53 2003/07/06 20:01:17 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.54 2003/10/13 08:10:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.53 2003/07/06 20:01:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.54 2003/10/13 08:10:48 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -106,7 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.53 2003/07/06 20:01:17 dyoung Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -144,7 +146,6 @@ static void awi_tx_int(struct awi_softc *);
 static struct mbuf *awi_devget(struct awi_softc *, u_int32_t, u_int16_t);
 static int  awi_hw_init(struct awi_softc *);
 static int  awi_init_mibs(struct awi_softc *);
-static int  awi_chan_check(void *, u_char *);
 static int  awi_mib(struct awi_softc *, u_int8_t, u_int8_t, int);
 static int  awi_cmd(struct awi_softc *, u_int8_t, int);
 static int  awi_cmd_wait(struct awi_softc *);
@@ -154,7 +155,11 @@ static int  awi_lock(struct awi_softc *);
 static void awi_unlock(struct awi_softc *);
 static int  awi_intr_lock(struct awi_softc *);
 static void awi_intr_unlock(struct awi_softc *);
-static int  awi_newstate(void *, enum ieee80211_state);
+static int  awi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static void awi_recv_mgmt(struct ieee80211com *, struct mbuf *,
+    struct ieee80211_node *, int, int, u_int32_t);
+static int  awi_send_mgmt(struct ieee80211com *, struct ieee80211_node *, int,
+    int);
 static struct mbuf *awi_ether_encap(struct awi_softc *, struct mbuf *);
 static struct mbuf *awi_ether_modcap(struct awi_softc *, struct mbuf *);
 
@@ -207,7 +212,6 @@ awi_attach(struct awi_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	int s, i, error, nrate;
 	int mword;
-	struct ifmediareq imr;
 
 	s = splnet();
 	sc->sc_busy = 1;
@@ -234,20 +238,18 @@ awi_attach(struct awi_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ic->ic_flags =
-	    IEEE80211_F_HASWEP | IEEE80211_F_HASIBSS | IEEE80211_F_HASHOSTAP;
+	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_IBSS | IEEE80211_C_HOSTAP;
 	if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
 		ic->ic_phytype = IEEE80211_T_FH;
 	else {
 		ic->ic_phytype = IEEE80211_T_DS;
-		ic->ic_flags |= IEEE80211_F_HASAHDEMO;
+		ic->ic_caps |= IEEE80211_C_AHDEMO;
 	}
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_state = IEEE80211_S_INIT;
-	ic->ic_newstate = awi_newstate;
-	ic->ic_chancheck = awi_chan_check;
 	nrate = sc->sc_mib_phy.aSuprt_Data_Rates[1];
-	memcpy(ic->ic_sup_rates, sc->sc_mib_phy.aSuprt_Data_Rates + 2, nrate);
+	memcpy(ic->ic_sup_rates[IEEE80211_MODE_FH].rs_rates,
+	    sc->sc_mib_phy.aSuprt_Data_Rates + 2, nrate);
+	ic->ic_sup_rates[IEEE80211_MODE_FH].rs_nrates = nrate;
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, sc->sc_mib_addr.aMAC_Address);
 
 	printf("%s: IEEE802.11 %s (firmware %s)\n", sc->sc_dev.dv_xname,
@@ -255,14 +257,22 @@ awi_attach(struct awi_softc *sc)
 	printf("%s: 802.11 address: %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(ic->ic_myaddr));
 
-	/* probe request is handled by hardware */
-	ic->ic_send_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
-	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
-	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
-	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
-
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = awi_newstate;
+#if 0
+	ic->ic_chancheck = awi_chan_check;
+#endif
+
+	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
+	ic->ic_recv_mgmt = awi_recv_mgmt;
+
+	sc->sc_send_mgmt = ic->ic_send_mgmt;
+	ic->ic_send_mgmt = awi_send_mgmt;
+
+	ieee80211_media_init(ifp, awi_media_change, awi_media_status);
 
 	/* Melco compatibility mode. */
 #define	ADD(s, o)	ifmedia_add(&ic->ic_media, \
@@ -270,20 +280,15 @@ awi_attach(struct awi_softc *sc)
 	ADD(IFM_AUTO, IFM_FLAG0);
 
 	for (i = 0; i < nrate; i++) {
-		mword = ieee80211_rate2media(ic->ic_sup_rates[i],
-		    ic->ic_phytype);
+		mword = ieee80211_rate2media(ic,
+		    ic->ic_sup_rates[IEEE80211_MODE_FH].rs_rates[i],
+		    (ic->ic_phytype == IEEE80211_T_FH) ? IEEE80211_MODE_FH
+		                                       : IEEE80211_MODE_11B);
 		if (mword == 0)
 			continue;
 		ADD(mword, IFM_FLAG0);
 	}
 #undef	ADD
-
-	/* override defaults */
-	ic->ic_media.ifm_status = awi_media_status;
-	ic->ic_media.ifm_change = awi_media_change;
-
-	awi_media_status(ifp, &imr);
-	ifmedia_set(&ic->ic_media, imr.ifm_active);
 
 	if ((sc->sc_sdhook = shutdownhook_establish(awi_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
@@ -462,8 +467,8 @@ awi_init(struct ifnet *ifp)
 {
 	struct awi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &ic->ic_bss;
-	int i, error;
+	struct ieee80211_node *ni = ic->ic_bss;
+	int error;
 
 	DPRINTF(("awi_init: enabled=%d\n", sc->sc_enabled));
 	if (sc->sc_enabled) {
@@ -542,6 +547,7 @@ awi_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	ic->ic_state = IEEE80211_S_INIT;
 
 	if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -550,12 +556,8 @@ awi_init(struct ifnet *ifp)
 		ni->ni_rssi = 0;
 		ni->ni_rstamp = 0;
 		memset(ni->ni_tstamp, 0, sizeof(ni->ni_tstamp));
-		ni->ni_nrate = 0;
-		for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-			if (ic->ic_sup_rates[i])
-				ni->ni_rates[ni->ni_nrate++] =
-				    ic->ic_sup_rates[i];
-		}
+		ni->ni_rates =
+		    ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_myaddr);
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
@@ -577,10 +579,11 @@ awi_init(struct ifnet *ifp)
 			ic->ic_flags |= IEEE80211_F_SIBSS;
 		ic->ic_state = IEEE80211_S_SCAN;	/*XXX*/
 		sc->sc_substate = AWI_ST_NONE;
-		ieee80211_new_state(&ic->ic_if, IEEE80211_S_RUN, -1);
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	} else {
-		ni->ni_chan = sc->sc_cur_chan;
-		ieee80211_new_state(&ic->ic_if, IEEE80211_S_SCAN, -1);
+		/* XXX check sc->sc_cur_chan */
+		ni->ni_chan = &ic->ic_channels[sc->sc_cur_chan];
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	}
 	return 0;
 }
@@ -595,7 +598,7 @@ awi_stop(struct ifnet *ifp, int disable)
 
 	DPRINTF(("awi_stop(%d)\n", disable));
 
-	ieee80211_new_state(&sc->sc_ic.ic_if, IEEE80211_S_INIT, -1);
+	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 
 	if (!sc->sc_invalid) {
 		if (sc->sc_cmd_inprog)
@@ -630,6 +633,7 @@ awi_start(struct ifnet *ifp)
 {
 	struct awi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 	struct mbuf *m, *m0;
 	int len, dowep;
@@ -682,11 +686,13 @@ awi_start(struct ifnet *ifp)
 			if ((ifp->if_flags & IFF_LINK0) || sc->sc_adhoc_ap)
 				m0 = awi_ether_encap(sc, m0);
 			else
-				m0 = ieee80211_encap(ifp, m0);
+				m0 = ieee80211_encap(ifp, m0, &ni);
 			if (m0 == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}
+			if (ni != NULL && ni != ic->ic_bss)
+				ieee80211_free_node(ic, ni);
 			wh = mtod(m0, struct ieee80211_frame *);
 			if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
@@ -694,8 +700,7 @@ awi_start(struct ifnet *ifp)
 			    sc->sc_adhoc_ap == 0 &&
 			    (ifp->if_flags & IFF_LINK0) == 0 &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-			    IEEE80211_FC0_TYPE_DATA &&
-			    ieee80211_find_node(ic, wh->i_addr1) == NULL) {
+			    IEEE80211_FC0_TYPE_DATA && ni == NULL) {
 				m_freem(m0);
 				ifp->if_oerrors++;
 				continue;
@@ -723,7 +728,8 @@ awi_start(struct ifnet *ifp)
 
 		if ((ifp->if_flags & IFF_DEBUG) && (ifp->if_flags & IFF_LINK2))
 			ieee80211_dump_pkt(m0->m_data, m0->m_len,
-			    ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate] &
+			    ic->ic_bss->ni_rates.
+			        rs_rates[ic->ic_bss->ni_txrate] &
 			    IEEE80211_RATE_VAL, -1);
 
 		for (m = m0, len = 0; m != NULL; m = m->m_next) {
@@ -732,7 +738,7 @@ awi_start(struct ifnet *ifp)
 			len += m->m_len;
 		}
 		m_freem(m0);
-		rate = (ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate] &
+		rate = (ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate] &
 		    IEEE80211_RATE_VAL) * 5;
 		awi_write_1(sc, ntxd + AWI_TXD_STATE, 0);
 		awi_write_4(sc, txd + AWI_TXD_START, frame);
@@ -778,7 +784,8 @@ awi_watchdog(struct ifnet *ifp)
 	if (sc->sc_rx_timer) {
 		if (--sc->sc_rx_timer == 0) {
 			if (sc->sc_ic.ic_state == IEEE80211_S_RUN) {
-				ieee80211_new_state(ifp, IEEE80211_S_SCAN, -1);
+				ieee80211_new_state(&sc->sc_ic,
+				    IEEE80211_S_SCAN, -1);
 				goto out;
 			}
 		} else
@@ -852,6 +859,8 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 /*
  * Called from ifmedia_ioctl via awi_ioctl with lock obtained.
+ *
+ * TBD factor with ieee80211_media_change
  */
 static int
 awi_media_change(struct ifnet *ifp)
@@ -866,14 +875,17 @@ awi_media_change(struct ifnet *ifp)
 	if (IFM_SUBTYPE(ime->ifm_media) == IFM_AUTO) {
 		i = -1;
 	} else {
-		rate = ieee80211_media2rate(ime->ifm_media, ic->ic_phytype);
+		struct ieee80211_rateset *rs =
+		    &ic->ic_sup_rates[ieee80211_chan2mode(ic,
+		        ic->ic_bss->ni_chan)];
+		rate = ieee80211_media2rate(ime->ifm_media);
 		if (rate == 0)
 			return EINVAL;
-		for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
-			if ((ic->ic_sup_rates[i] & IEEE80211_RATE_VAL) == rate)
+		for (i = 0; i < rs->rs_nrates; i++) {
+			if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == rate)
 				break;
 		}
-		if (i == IEEE80211_RATE_SIZE)
+		if (i == rs->rs_nrates)
 			return EINVAL;
 	}
 	if (ic->ic_fixed_rate != i) {
@@ -932,17 +944,20 @@ awi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	if (ic->ic_state == IEEE80211_S_RUN)
 		imr->ifm_status |= IFM_ACTIVE;
 	imr->ifm_active = IFM_IEEE80211;
-	if (ic->ic_state == IEEE80211_S_RUN)
-		rate = ic->ic_bss.ni_rates[ic->ic_bss.ni_txrate] &
+	if (ic->ic_state == IEEE80211_S_RUN) {
+		rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate] &
 		    IEEE80211_RATE_VAL;
-	else {
+	} else {
 		if (ic->ic_fixed_rate == -1)
 			rate = 0;
 		else
-			rate = ic->ic_sup_rates[ic->ic_fixed_rate] &
-			    IEEE80211_RATE_VAL;
+			rate = ic->ic_sup_rates[
+			    ieee80211_chan2mode(ic, ic->ic_bss->ni_chan)].
+			    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
 	}
-	imr->ifm_active |= ieee80211_rate2media(rate, ic->ic_phytype);
+	imr->ifm_active |= ieee80211_rate2media(ic, rate,
+	    (ic->ic_phytype == IEEE80211_T_FH) ? IEEE80211_MODE_FH
+	                                       : IEEE80211_MODE_11B);
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_MONITOR: /* we should never reach here */
 		break;
@@ -1017,7 +1032,10 @@ awi_mode_init(struct awi_softc *sc)
 static void
 awi_rx_int(struct awi_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
 	u_int8_t state, rate, rssi;
 	u_int16_t len;
 	u_int32_t frame, next, rstamp, rxoff;
@@ -1060,10 +1078,33 @@ awi_rx_int(struct awi_softc *sc)
 				if ((ifp->if_flags & IFF_LINK0) ||
 				    sc->sc_adhoc_ap)
 					m = awi_ether_modcap(sc, m);
-				if (m == NULL)
-					ifp->if_ierrors++;
 				else
-					ieee80211_input(ifp, m, rssi, rstamp);
+					m = m_pullup(m, sizeof(*wh));
+				if (m == NULL) {
+					ifp->if_ierrors++;
+					goto rx_next;
+				}
+				wh = mtod(m, struct ieee80211_frame *);
+				if (ic->ic_opmode != IEEE80211_M_STA) {
+					ni = ieee80211_find_node(ic,
+					    wh->i_addr2);
+					if (ni == NULL)
+						ni = ieee80211_ref_node(
+						    ic->ic_bss);
+				} else
+					ni = ieee80211_ref_node(ic->ic_bss);
+				ieee80211_input(ifp, m, ni, rssi, rstamp);
+				/*
+				 * The frame may have caused the
+				 * node to be marked for reclamation
+				 * (e.g. in response to a DEAUTH
+				 * message) so use free_node here
+				 * instead of unref_node.
+				 */
+				if (ni == ic->ic_bss)
+					ieee80211_unref_node(&ni);
+				else
+					ieee80211_free_node(ic, ni);
 			} else
 				sc->sc_rxpend = m;
   rx_next:
@@ -1283,7 +1324,8 @@ awi_hw_init(struct awi_softc *sc)
 static int
 awi_init_mibs(struct awi_softc *sc)
 {
-	int i, error;
+	int chan, i, error;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct awi_chanset *cs;
 
 	if ((error = awi_mib(sc, AWI_CMD_GET_MIB, AWI_MIB_LOCAL, AWI_WAIT)) ||
@@ -1309,8 +1351,11 @@ awi_init_mibs(struct awi_softc *sc)
 	}
 	if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 		for (i = cs->cs_min; i <= cs->cs_max; i++) {
-			setbit(sc->sc_ic.ic_chan_avail, 
-			    IEEE80211_FH_CHAN(i % 3 + 1, i));
+			chan = IEEE80211_FH_CHAN(i % 3 + 1, i);
+			setbit(sc->sc_ic.ic_chan_avail, chan);
+			/* XXX for FHSS, does frequency matter? */
+			ic->ic_channels[chan].ic_freq = 0;
+			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_FHSS;
 			/*
 			 * According to the IEEE 802.11 specification,
 			 * hop pattern parameter for FH phy should be
@@ -1321,12 +1366,18 @@ awi_init_mibs(struct awi_softc *sc)
 			 * 1 for any hop pattern.  So we also try this
 			 * combination of hop chanset and pattern.
 			 */
-			setbit(sc->sc_ic.ic_chan_avail, 
-			    IEEE80211_FH_CHAN(1, i));
+			chan = IEEE80211_FH_CHAN(1, i);
+			setbit(sc->sc_ic.ic_chan_avail, chan);
+			ic->ic_channels[chan].ic_freq = 0; /* XXX */
+			ic->ic_channels[chan].ic_flags = IEEE80211_CHAN_FHSS;
 		}
 	} else {
-		for (i = cs->cs_min; i <= cs->cs_max; i++)
+		for (i = cs->cs_min; i <= cs->cs_max; i++) {
 			setbit(sc->sc_ic.ic_chan_avail, i);
+			ic->ic_channels[i].ic_freq =
+			    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
+			ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B;
+		}
 	}
 	sc->sc_cur_chan = cs->cs_def;
 
@@ -1365,37 +1416,6 @@ awi_init_mibs(struct awi_softc *sc)
 	sc->sc_mib_mgt.aDTIM_Period = 1;
 	LE_WRITE_2(&sc->sc_mib_mgt.aATIM_Window, 0);
 	return 0;
-}
-
-static int
-awi_chan_check(void *arg, u_char *chanreq)
-{
-	struct awi_softc *sc = arg;
-	int i;
-	struct awi_chanset *cs;
-	u_char chanlist[(IEEE80211_CHAN_MAX+1)/NBBY];
-
-	for (cs = awi_chanset; cs->cs_type != 0; cs++) {
-		if (cs->cs_type != sc->sc_mib_phy.IEEE_PHY_Type)
-			continue;
-		memset(chanlist, 0, sizeof(chanlist));
-		for (i = 0; ; i++) {
-			if (i == IEEE80211_CHAN_MAX) {
-				sc->sc_mib_phy.aCurrent_Reg_Domain =
-				    cs->cs_region;
-				memcpy(sc->sc_ic.ic_chan_avail, chanlist,
-				    sizeof(sc->sc_ic.ic_chan_avail));
-				sc->sc_ic.ic_bss.ni_chan = cs->cs_def;
-				sc->sc_cur_chan = cs->cs_def;
-				return 0;
-			}
-			if (i >= cs->cs_min && i <= cs->cs_max)
-				setbit(chanlist, i);
-			else if (isset(chanreq, i))
-				break;
-		}
-	}
-	return EINVAL;
 }
 
 static int
@@ -1568,7 +1588,7 @@ awi_cmd_done(struct awi_softc *sc)
 		return;
 	}
 	if (sc->sc_substate != AWI_ST_NONE)
-		(void)ieee80211_new_state(&sc->sc_ic.ic_if, sc->sc_nstate, -1);
+		(void)ieee80211_new_state(&sc->sc_ic, sc->sc_nstate, -1);
 }
 
 static int
@@ -1687,10 +1707,9 @@ awi_intr_unlock(struct awi_softc *sc)
 }
 
 static int
-awi_newstate(void *arg, enum ieee80211_state nstate)
+awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
-	struct awi_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
+	struct awi_softc *sc = ic->ic_softc;
 	struct ieee80211_node *ni;
 	struct ifnet *ifp = &ic->ic_if;
 	int error;
@@ -1738,7 +1757,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 	if (nstate == IEEE80211_S_INIT) {
 		sc->sc_substate = AWI_ST_NONE;
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-		return 0;
+		return (*sc->sc_newstate)(ic, nstate, arg);
 	}
 
 	/* state transition */
@@ -1758,7 +1777,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 					printf("%s: no recent beacons from %s;"
 					    " rescanning\n",
 					    ifp->if_xname,
-					    ether_sprintf(ic->ic_bss.ni_bssid));
+					    ether_sprintf(ic->ic_bss->ni_bssid));
 				/* FALLTHRU */
 			case IEEE80211_S_AUTH:
 			case IEEE80211_S_ASSOC:
@@ -1767,7 +1786,6 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 				/* FALLTHRU */
 			case IEEE80211_S_INIT:
 				ic->ic_flags |= IEEE80211_F_ASCAN;
-				ic->ic_scan_timer = 0;
 				/* FALLTHRU */
 			case IEEE80211_S_SCAN:
 				/* scan next */
@@ -1791,33 +1809,31 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 					break;
 			}
 			sc->sc_cmd_inprog = AWI_CMD_SCAN;
-			ni = &ic->ic_bss;
+			ni = ic->ic_bss;
 			awi_write_2(sc, AWI_CA_SCAN_DURATION,
 			    (ic->ic_flags & IEEE80211_F_ASCAN) ?
 			    AWI_ASCAN_DURATION : AWI_PSCAN_DURATION);
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 				awi_write_1(sc, AWI_CA_SCAN_SET,
-				    IEEE80211_FH_CHANSET(ni->ni_chan));
+				    IEEE80211_FH_CHANSET(
+				        ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SCAN_PATTERN,
-				    IEEE80211_FH_CHANPAT(ni->ni_chan));
+				    IEEE80211_FH_CHANPAT(
+				        ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SCAN_IDX, 1);
 			} else {
-				awi_write_1(sc, AWI_CA_SCAN_SET, ni->ni_chan);
+				awi_write_1(sc, AWI_CA_SCAN_SET,
+				    ieee80211_chan2ieee(ic, ni->ni_chan));
 				awi_write_1(sc, AWI_CA_SCAN_PATTERN, 0);
 				awi_write_1(sc, AWI_CA_SCAN_IDX, 0);
 			}
 			awi_write_1(sc, AWI_CA_SCAN_SUSP, 0);
-			sc->sc_cur_chan = ni->ni_chan;
+			sc->sc_cur_chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 			if ((error = awi_cmd(sc, AWI_CMD_SCAN, AWI_NOWAIT))
 			    != 0)
 				break;
 			/* FALLTHRU */
 		case AWI_ST_SCAN_SCCMD:
-			if (ic->ic_scan_timer == 0)
-				ic->ic_scan_timer =
-				    (ic->ic_flags & IEEE80211_F_ASCAN) ?
-				    IEEE80211_ASCAN_WAIT : IEEE80211_PSCAN_WAIT;
-			ifp->if_timer = 1;
 			ic->ic_state = nstate;
 			sc->sc_substate = AWI_ST_NONE;
 			error = EINPROGRESS;
@@ -1829,7 +1845,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			error = EIO;
 			break;
 		}
-		return error;
+		goto out;
 	}
 
 	if (ostate == IEEE80211_S_SCAN) {
@@ -1839,7 +1855,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			sc->sc_nstate = nstate;	/* next state in transition */
 			sc->sc_substate = AWI_ST_SUB_INIT;
 		}
-		ni = &ic->ic_bss;
+		ni = ic->ic_bss;
 		switch (sc->sc_substate) {
 		case AWI_ST_SUB_INIT:
 			sc->sc_substate = AWI_ST_SUB_SETSS;
@@ -1867,15 +1883,18 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			sc->sc_cmd_inprog = AWI_CMD_SYNC;
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
 				awi_write_1(sc, AWI_CA_SYNC_SET,
-				    IEEE80211_FH_CHANSET(ni->ni_chan));
+				    IEEE80211_FH_CHANSET(
+				        ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN,
-				    IEEE80211_FH_CHANPAT(ni->ni_chan));
+				    IEEE80211_FH_CHANPAT(
+				        ieee80211_chan2ieee(ic, ni->ni_chan)));
 				awi_write_1(sc, AWI_CA_SYNC_IDX,
 				    ni->ni_fhindex);
 				awi_write_2(sc, AWI_CA_SYNC_DWELL,
 				    ni->ni_fhdwell);
 			} else {
-				awi_write_1(sc, AWI_CA_SYNC_SET, ni->ni_chan);
+				awi_write_1(sc, AWI_CA_SYNC_SET,
+				    ieee80211_chan2ieee(ic, ni->ni_chan));
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN, 0);
 				awi_write_1(sc, AWI_CA_SYNC_IDX, 0);
 				awi_write_2(sc, AWI_CA_SYNC_DWELL, 0);
@@ -1888,7 +1907,7 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			awi_write_bytes(sc, AWI_CA_SYNC_TIMESTAMP,
 			    ni->ni_tstamp, 8);
 			awi_write_4(sc, AWI_CA_SYNC_REFTIME, ni->ni_rstamp);
-			sc->sc_cur_chan = ni->ni_chan;
+			sc->sc_cur_chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 			if ((error = awi_cmd(sc, AWI_CMD_SYNC, AWI_NOWAIT))
 			    != 0)
 				break;
@@ -1916,19 +1935,48 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			error = EIO;
 			break;
 		}
-		return error;
+		goto out;
 	}
 
 	sc->sc_substate = AWI_ST_NONE;
 
-	return 0;
+	return (*sc->sc_newstate)(ic, nstate, arg);
+out:
+	if (error != 0)
+		return error;
+	return (*sc->sc_newstate)(ic, nstate, arg);
+}
+
+static void
+awi_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
+	struct ieee80211_node *ni,
+	int subtype, int rssi, u_int32_t rstamp)
+{
+	struct awi_softc *sc = ic->ic_softc;
+
+	/* probe request is handled by hardware */
+	if (subtype == IEEE80211_FC0_SUBTYPE_PROBE_REQ)
+		return;
+	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
+}
+
+static int
+awi_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
+	int type, int arg)
+{
+	struct awi_softc *sc = ic->ic_softc;
+
+	/* probe request is handled by hardware */
+	if (type == IEEE80211_FC0_SUBTYPE_PROBE_REQ)
+		return 0;
+	return (*sc->sc_send_mgmt)(ic, ni, type, arg);
 }
 
 static struct mbuf *
 awi_ether_encap(struct awi_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &ic->ic_bss;
+	struct ieee80211_node *ni = ic->ic_bss;
 	struct ether_header *eh;
 	struct ieee80211_frame *wh;
 
