@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.8 1995/03/08 02:16:11 cgd Exp $	*/
+/*	$NetBSD: iso.c,v 1.9 1995/04/11 04:30:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -91,7 +91,6 @@ SOFTWARE.
 #ifdef ISO
 
 int	iso_interfaces = 0;		/* number of external interfaces */
-extern	struct ifnet loif;	/* loopback interface */
 int	ether_output();
 void	llc_rtrequest();
 
@@ -478,7 +477,7 @@ iso_control(so, cmd, data, ifp)
 			ia->ia_ifa.ifa_netmask
 					= (struct sockaddr *)&ia->ia_sockmask;
 			ia->ia_ifp = ifp;
-			if (ifp != &loif)
+			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				iso_interfaces++;
 		}
 		break;
