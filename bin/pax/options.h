@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)options.h	8.2 (Berkeley) 4/18/94
+ *	from: @(#)options.h	8.2 (Berkeley) 4/18/94
+ *	$Id: options.h,v 1.2 1994/06/13 16:34:07 jtc Exp $
  */
 
 /*
