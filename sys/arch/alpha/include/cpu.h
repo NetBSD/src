@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.37 2000/02/29 22:19:54 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.38 2000/04/03 01:47:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,6 +154,9 @@ extern	struct mchkinfo mchkinfo_store;	/* mchkifo for single-cpu configs */
 
 #define	cpu_mchkinfo()	(&mchkinfo_store)
 #endif /* MULTIPROCESSOR */
+
+extern	u_long cpu_implver;		/* from IMPLVER instruction */
+extern	u_long cpu_amask;		/* from AMASK instruction */
 
 /*
  * definitions of cpu-dependent requirements
