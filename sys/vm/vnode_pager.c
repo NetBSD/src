@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.8 (Berkeley) 2/13/94
- *	$Id: vnode_pager.c,v 1.13 1994/06/10 20:01:20 pk Exp $
+ *	$Id: vnode_pager.c,v 1.14 1994/06/13 16:31:54 pk Exp $
  */
 
 /*
@@ -468,11 +468,16 @@ vnode_pager_uncache(vp)
 #ifdef NFSCLIENT
 		extern int (**nfsv2_vnodeop_p)();
 		extern int (**spec_nfsv2nodeop_p)();
+#ifdef FIFO
 		extern int (**fifo_nfsv2nodeop_p)();
+#endif
 
-		if (vp->v_op != nfsv2_vnodeop_p &&
-		    vp->v_op != spec_nfsv2nodeop_p &&
-		    vp->v_op != fifo_nfsv2nodeop_p)
+		if (vp->v_op != nfsv2_vnodeop_p
+		    && vp->v_op != spec_nfsv2nodeop_p
+#ifdef FIFO
+		    && vp->v_op != fifo_nfsv2nodeop_p
+#endif
+		    )
 
 #endif
 			panic("vnode_pager_uncache: vnode not locked!");
