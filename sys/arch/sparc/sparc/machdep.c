@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.9 1993/10/27 18:12:49 deraadt Exp $
+ * $Id: machdep.c,v 1.10 1993/11/05 12:43:04 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -238,12 +238,6 @@ cpu_startup()
 	 * Configure the system.  The cpu code will turn on the cache.
 	 */
 	configure();
-
-	/*
-	 * Turn on the cache (do after configuration due to a bug in
-	 * some versions of the SPARC chips -- this info from Gilmore).
-	 */
-	cache_enable();
 }
 
 /*
