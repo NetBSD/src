@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.9 1998/11/11 19:22:08 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.10 1999/04/29 22:20:42 rvb Exp $	*/
 
 /*
  * 
@@ -52,6 +52,9 @@
 /*
  * HISTORY
  * $Log: coda_psdev.c,v $
+ * Revision 1.10  1999/04/29 22:20:42  rvb
+ * Typo/braino?
+ *
  * Revision 1.9  1998/11/11 19:22:08  rvb
  * Lookup now passes up an extra flag.  But old veni will
  * be ok; new veni will check /dev/cfs0 to make sure that a new
@@ -328,7 +331,7 @@ vc_nb_close (dev, flag, mode, p)
     /* Wakeup clients so they can return. */
     for (vmp = (struct vmsg *)GETNEXT(vcp->vc_requests);
 	 !EOQ(vmp, vcp->vc_requests);
-	 nvmp = vmp)
+	 vmp = nvmp)
     {	    
     	nvmp = (struct vmsg *)GETNEXT(vmp->vm_chain);
 	/* Free signal request messages and don't wakeup cause
