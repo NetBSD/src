@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.14 2003/08/07 09:37:39 agc Exp $	*/
+/*	$NetBSD: rogue.h,v 1.15 2004/01/01 16:05:12 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -192,7 +192,7 @@
 struct id {
 	short value;
 	char title[MAX_ID_TITLE_LEN];
-	char *real;
+	const char *real;
 	unsigned short id_status;
 };
 
