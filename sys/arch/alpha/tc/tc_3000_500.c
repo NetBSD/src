@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.18 1999/02/12 01:49:07 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.19 1999/03/28 13:48:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.18 1999/02/12 01:49:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.19 1999/03/28 13:48:40 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.18 1999/02/12 01:49:07 thorpej Exp
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_500.h>
 
+#include "wsdisplay.h"
 #include "sfb.h"
 
 #if NSFB > 0
@@ -268,6 +269,7 @@ tc_3000_500_iointr(framep, vec)
 	} while (ifound);
 }
 
+#if NWSDISPLAY > 0
 /*
  * tc_3000_500_fb_cnattach --
  *	Attempt to map the CTB output device to a slot and attach the
@@ -306,6 +308,7 @@ tc_3000_500_fb_cnattach(turbo_slot)
 	}
 	return tc_fb_cnattach(tc_3000_500_slots[output_slot-1].tcs_addr);
 }
+#endif /* NWSDISPLAY */
 
 #if 0
 /*
