@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2000/05/27 00:40:33 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.139 2000/06/06 18:52:36 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
