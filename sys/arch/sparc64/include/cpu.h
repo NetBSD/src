@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1998/11/24 12:49:14 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.6 1999/05/30 02:37:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/intr.h>
 #include <sparc64/sparc64/intreg.h>
 
 /*
