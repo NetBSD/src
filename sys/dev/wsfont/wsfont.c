@@ -1,4 +1,4 @@
-/*	$NetBSD: wsfont.c,v 1.2 1999/04/13 00:40:11 ad Exp $ */
+/*	$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.2 1999/04/13 00:40:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -52,11 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.2 1999/04/13 00:40:11 ad Exp $");
 #ifdef FONT_BOLD8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/bold8x16.h>
-#endif
-
-#ifdef FONT_COURIER11x18
-#define HAVE_FONT 1
-#include <dev/wsfont/courier11x18.h>
 #endif
 
 #ifdef FONT_GALLANT12x22
