@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.24 2001/04/10 18:58:56 bjh21 Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.25 2001/04/10 19:08:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -342,7 +342,7 @@ microtime(tvp)
 
 /* One day soon I will actually do this */
 
-int delaycount = 50;
+int delaycount = 100;
 
 void
 delay(n)
