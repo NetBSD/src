@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.591 2004/01/09 18:31:25 perry Exp $
+# $NetBSD: GENERIC,v 1.592 2004/01/16 17:02:05 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.591 $"
+#ident 		"GENERIC-$Revision: 1.592 $"
 
 maxusers	32		# estimated number of users
 
@@ -96,7 +96,7 @@ options 	USERCONF	# userconf(4) support
 #options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
 # Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# high disk I/O load. Likely stable but not yet the default.
 #options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
