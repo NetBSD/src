@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.4 2001/07/03 20:38:03 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,20 +36,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <hpcmenu.h>
+#include <menu/window.h>
+#include <menu/rootwindow.h>
+
 #include <load.h>
 #include <load_elf.h>
 #include <console.h>
 #include <memory.h>
 #include <file.h>
 
+#define ROUND4(x)	(((x) + 3) & ~3)
+
 ElfLoader::ElfLoader(Console *&cons, MemoryManager *&mem)
 	: Loader(cons, mem)
 {
+	_sym_blk.enable = FALSE;
+
 	DPRINTF((TEXT("Loader: ELF\n")));
 }
 
 ElfLoader::~ElfLoader(void)
 {
+	if (_sym_blk.header != NULL)
+		free (_sym_blk.header);
 }
 
 BOOL
@@ -58,14 +68,14 @@ ElfLoader::setFile(File *&file)
 	size_t sz;
 	Loader::setFile(file);
 
-	/* read ELF header and check it */
+	// read ELF header and check it
 	if (!read_header())
 		return FALSE;
-	/* read section header */
+	// read section header
 	sz = _eh.e_shnum * _eh.e_shentsize;
 	_file->read(_sh, _eh.e_shentsize * _eh.e_shnum, _eh.e_shoff);
 
-	/* read program header */
+	// read program header
 	sz = _eh.e_phnum * _eh.e_phentsize;
 
 	return _file->read(_ph, sz, _eh.e_phoff) == sz;
@@ -86,8 +96,13 @@ ElfLoader::memorySize()
 			sz += _mem->roundPage(filesz);
 		}
 	}
-	/* XXX reserve 192kB for symbols */
-	sz += 0x30000;
+
+	// reserve for symbols
+	size_t symblk_sz = symbol_block_size();
+	if (symblk_sz) {
+		sz += symblk_sz;
+		DPRINTF((TEXT(" = 0x%x]"), symblk_sz));
+	}
 
 	DPRINTF((TEXT(" = 0x%x byte\n"), sz));
 	return sz;
@@ -104,12 +119,7 @@ BOOL
 ElfLoader::load()
 {
 	Elf_Phdr *ph;
-	Elf_Shdr *sh, *shstr, *shsym;
-	off_t stroff = 0, symoff = 0, off;
 	vaddr_t kv;
-
-	size_t shstrsize;
-	char buf[1024];
 	int i;
   
 	_load_segment_start();
@@ -127,60 +137,121 @@ ElfLoader::load()
 		}
 	}
 
-	/*
-	 * Prepare ELF headers for symbol table.
-	 *
-	 *   ELF header
-	 *   section header
-	 *   shstrtab
-	 *   strtab
-	 *   symtab
-	 */
-	memcpy(buf, &_eh, sizeof(_eh));
-	((Elf_Ehdr *)buf)->e_phoff = 0;
-	((Elf_Ehdr *)buf)->e_phnum = 0;
-	((Elf_Ehdr *)buf)->e_entry = 0;
-	((Elf_Ehdr *)buf)->e_shoff = sizeof(_eh);
-	off = ((Elf_Ehdr *)buf)->e_shoff;
-	memcpy(buf + off, _sh, _eh.e_shentsize * _eh.e_shnum);
-	sh = (Elf_Shdr *)(buf + off);
-	off += _eh.e_shentsize * _eh.e_shnum;
+	load_symbol_block(kv);
 
-	/* load shstrtab and find desired sections */
-	shstrsize = (sh[_eh.e_shstrndx].sh_size + 3) & ~0x3;
-	_file->read(buf + off, shstrsize, sh[_eh.e_shstrndx].sh_offset);
-	for(i = 0; i < _eh.e_shnum; i++, sh++) {
-		if (strcmp(".strtab", buf + off + sh->sh_name) == 0) {
-			stroff = sh->sh_offset;
-			shstr = sh;
-		} else if (strcmp(".symtab", buf + off + sh->sh_name) == 0) {
-			symoff = sh->sh_offset;
-			shsym = sh;
-		}
-		if (i == _eh.e_shstrndx)
-			sh->sh_offset = off;
-		else
-			sh->sh_offset = 0;
-	}
-	/* silently return if strtab or symtab can't be found */
-	if (! stroff || ! symoff)
-		return TRUE;
-
-	shstr->sh_offset = off + shstrsize;
-	shsym->sh_offset = off + shstrsize + ((shstr->sh_size + 3) & ~0x3);
-	_load_memory(kv, off + shstrsize, buf);
-	kv += off + shstrsize;
-	_load_segment(kv, shstr->sh_size, stroff, shstr->sh_size);
-	kv += (shstr->sh_size + 3) & ~0x3;
-	_load_segment(kv, shsym->sh_size, symoff, shsym->sh_size);
-
-	/* tag chain still opening */
+	// tag chain still opening 
 
 	return TRUE;
 }
 
+//
+// Prepare ELF headers for symbol table.
+//
+//   ELF header
+//   section header
+//   shstrtab
+//   strtab
+//   symtab
+//
+size_t
+ElfLoader::symbol_block_size()
+{
+	size_t shstrsize = ROUND4(_sh[_eh.e_shstrndx].sh_size);
+	size_t shtab_sz = _eh.e_shentsize * _eh.e_shnum;
+	off_t shstrtab_offset = sizeof(Elf_Ehdr) + shtab_sz;
+	int i;
+
+	memset(&_sym_blk, 0, sizeof(_sym_blk));
+	_sym_blk.enable = FALSE;
+	_sym_blk.header_size = sizeof(Elf_Ehdr) + shtab_sz + shstrsize;
+
+	// inquire string and symbol table size
+	_sym_blk.header = static_cast<char *>(malloc(_sym_blk.header_size));
+	if (_sym_blk.header == NULL) {
+		MessageBox(HPC_MENU._root->_window,
+		    TEXT("couldn't determine symbol block size"),
+		    TEXT("WARNING"), 0);
+		return (0);
+	}
+
+	// set pointer for symbol block
+	Elf_Ehdr *eh = reinterpret_cast<Elf_Ehdr *>(_sym_blk.header);
+	Elf_Shdr *sh = reinterpret_cast<Elf_Shdr *>
+	    (_sym_blk.header + sizeof(Elf_Ehdr));
+	char *shstrtab = _sym_blk.header + shstrtab_offset;
+
+	// initialize headers
+	memset(_sym_blk.header, 0, _sym_blk.header_size);
+	memcpy(eh, &_eh, sizeof(Elf_Ehdr));
+	eh->e_phoff = 0;
+	eh->e_phnum = 0;
+	eh->e_entry = 0; // XXX NetBSD kernel check this member. see machdep.c
+	eh->e_shoff = sizeof(Elf_Ehdr);
+	memcpy(sh, _sh, shtab_sz);
+
+	// inquire symbol/string table information
+	_file->read(shstrtab, shstrsize, _sh[_eh.e_shstrndx].sh_offset);
+	for (i = 0; i < _eh.e_shnum; i++, sh++) {
+		if (strcmp(".strtab", shstrtab + sh->sh_name) == 0) {
+			_sym_blk.shstr = sh;
+			_sym_blk.stroff = sh->sh_offset;
+		} else if (strcmp(".symtab", shstrtab + sh->sh_name) == 0) {
+			_sym_blk.shsym = sh;
+			_sym_blk.symoff = sh->sh_offset;
+		}
+
+		sh->sh_offset = (i == _eh.e_shstrndx) ? shstrtab_offset : 0;
+	}
+
+	if (_sym_blk.shstr == NULL || _sym_blk.shsym == NULL) {
+		MessageBox(HPC_MENU._root->_window,
+		    TEXT("no symbol and/or strint table in binary"),
+		    TEXT("Information"), 0);
+		free(_sym_blk.header);
+		_sym_blk.header = NULL;
+
+		return (0);
+	}
+
+	// set Section Headers for symbol/string table
+	_sym_blk.shstr->sh_offset = shstrtab_offset + shstrsize;
+	_sym_blk.shsym->sh_offset = shstrtab_offset + shstrsize +
+	    ROUND4(_sym_blk.shstr->sh_size);
+	_sym_blk.enable = TRUE;
+
+	DPRINTF((TEXT("+[(symbol block: header %d string %d symbol %d byte)"),
+	    _sym_blk.header_size,_sym_blk.shstr->sh_size, 
+	    _sym_blk.shsym->sh_size));
+
+	// return total amount of symbol block
+	return (_sym_blk.header_size + ROUND4(_sym_blk.shstr->sh_size) +
+	    _sym_blk.shsym->sh_size);
+}
+
+void
+ElfLoader::load_symbol_block(vaddr_t kv)
+{
+	size_t sz;
+	
+	if (!_sym_blk.enable)
+		return;
+
+	// load header
+	_load_memory(kv, _sym_blk.header_size, _sym_blk.header);
+	kv += _sym_blk.header_size;
+
+	// load string table
+	sz = _sym_blk.shstr->sh_size;
+	_load_segment(kv, sz, _sym_blk.stroff, sz);
+	kv += ROUND4(sz);
+
+	// load symbol table
+	sz = _sym_blk.shsym->sh_size;
+	_load_segment(kv, sz, _sym_blk.symoff, sz);
+}
+
 BOOL
-ElfLoader::read_header(void)
+ElfLoader::read_header()
 {
 	// read ELF header
 	_file->read(&_eh, sizeof(Elf_Ehdr), 0);
@@ -208,7 +279,7 @@ ElfLoader::read_header(void)
 		return FALSE;
 	}
   
-	/* Check object type */
+	// Check object type
 	if (_eh.e_type != ET_EXEC) {
 		DPRINTF((TEXT("not a executable file. type = %d\n"),
 		    _eh.e_type));
