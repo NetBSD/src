@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.4 2000/06/22 10:57:38 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.5 2000/06/22 13:55:18 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -608,7 +608,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	XDR outxdr;
 	AUTH *auth;
 	int fd = -1;
-	char *uaddr, *m_uaddr, *local_uaddr;
+	char *uaddr, *m_uaddr, *local_uaddr = NULL;
 	u_int32_t *xidp;
 	struct __rpc_sockinfo si;
 	struct sockaddr *localsa;
@@ -883,7 +883,6 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		outbufp = outbuf;
 
 	na = uaddr2taddr(nconf, local_uaddr);
-	free(local_uaddr);
 	if (!na) {
 		if (reply_type == RPCBPROC_INDIRECT)
 			svcerr_systemerr(transp);
@@ -905,6 +904,8 @@ error:
 	if (call_msg.rm_xid != 0)
 		(void) free_slot_by_xid(call_msg.rm_xid);
 out:
+	if (local_uaddr)
+		free(local_uaddr);
 	if (buf_alloc)
 		free((void *) buf_alloc);
 	if (outbuf_alloc)
