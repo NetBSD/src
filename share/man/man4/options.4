@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.65 1998/11/01 09:59:33 lukem Exp $
+.\"	$NetBSD: options.4,v 1.66 1998/11/02 04:39:51 ross Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1157,6 +1157,7 @@ panics.
 .It Cd options BUFCACHE=value
 Size of the buffer cache as a percentage of total available
 .Tn RAM .
+Ignored if BUFPAGES is also specified.
 .It Cd options NBUF=value
 .It Cd options BUFPAGES=value
 These options set the number of pages available for the buffer cache.
