@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.1.2.2 1997/06/03 07:05:14 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.1.2.3 1997/06/05 23:57:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.2 1997/06/03 07:05:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.3 1997/06/05 23:57:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,15 @@ dwlpx_dma_init(ccp)
 	 */
 
 	/*
+	 * Initialize the page table.
+	 */
+	page_table =
+	    (u_int32_t *)ALPHA_PHYS_TO_K0SEG(PCIA_SGMAP_PT + ccp->cc_sysbase);
+	for (i = 0; i < (32*1024); i++)
+		page_table[i] = 0;
+	alpha_mb();
+
+	/*
 	 * Initialize the SGMAP for window A:
 	 *
 	 *	Size: 8M
@@ -182,15 +191,7 @@ dwlpx_dma_init(ccp)
 	sprintf(exname, "%s_sgmap_a", ccp->cc_sc->dwlpx_dev.dv_xname);
 	alpha_sgmap_init(t, &ccp->cc_sgmap, exname,
 	    (8*1024*1024), 0, (8*1024*1024), sizeof(u_int32_t),
-	    (void *)(PCIA_SGMAP_PT + ccp->cc_sysbase));
-
-	/*
-	 * Initialize the page table.
-	 */
-	page_table = (u_int32_t *)(PCIA_SGMAP_PT + ccp->cc_sysbase);
-	for (i = 0; i < (32*1024); i++)
-		page_table[i] = 0;
-	alpha_mb();
+	    (void *)page_table);
 
 	/*
 	 * Set up DMA windows for this DWLPx.
