@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31.2.6 1997/09/29 07:21:07 thorpej Exp $
+$NetBSD: pcidevs,v 1.31.2.7 1997/10/14 01:14:52 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -979,6 +979,7 @@ product WD 90C		0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
+product	WINBOND NEXXX	0x0940	NEXXX
 
 /* Zeinet products */
 product ZEINET 1221	0x0001	1221
