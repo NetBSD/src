@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.9 1997/10/19 05:03:05 lukem Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.10 1998/10/08 17:36:55 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.9 1997/10/19 05:03:05 lukem Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.10 1998/10/08 17:36:55 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -440,16 +440,16 @@ unset(v)
 		h = hash(*ap);
 		if (vp2 == variables[h]) {
 			variables[h] = variables[h]->v_link;
-			vfree(vp2->v_name);
-			vfree(vp2->v_value);
+			v_free(vp2->v_name);
+                        v_free(vp2->v_value);
 			free((char *)vp2);
 			continue;
 		}
 		for (vp = variables[h]; vp->v_link != vp2; vp = vp->v_link)
 			;
 		vp->v_link = vp2->v_link;
-		vfree(vp2->v_name);
-		vfree(vp2->v_value);
+                v_free(vp2->v_name);
+                v_free(vp2->v_value);
 		free((char *) vp2);
 	}
 	return(errs);
