@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.10 2002/12/10 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.11 2002/12/10 03:55:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -67,13 +67,15 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.10 2002/12/10 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.11 2002/12/10 03:55:50 thorpej Exp $");
 
 void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
+#ifdef KTRACE
 	struct proc * const p = l->l_proc;
+#endif
 	struct trapframe * const tf = trapframe(l);
 
 	KERNEL_PROC_UNLOCK(l);
