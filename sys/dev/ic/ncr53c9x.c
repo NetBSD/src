@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.57 2000/11/30 23:01:03 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.58 2000/11/30 23:12:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,38 +107,33 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 int ncr53c9x_notag = 0;
 #endif
 
-/*static*/ void	ncr53c9x_readregs	__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_select		__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *));
-/*static*/ int ncr53c9x_reselect	__P((struct ncr53c9x_softc *, int, int, int));
-/*static*/ void	ncr53c9x_scsi_reset	__P((struct ncr53c9x_softc *));
-/*static*/ int	ncr53c9x_poll		__P((struct ncr53c9x_softc *,
-					    struct scsipi_xfer *, int));
-/*static*/ void	ncr53c9x_sched		__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_done		__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *));
-/*static*/ void	ncr53c9x_msgin		__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_msgout		__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_timeout	__P((void *arg));
-/*static*/ void	ncr53c9x_watch		__P((void *arg));
-/*static*/ void	ncr53c9x_abort		__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *));
-/*static*/ void ncr53c9x_dequeue	__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *));
-/*static*/ int	ncr53c9x_ioctl		__P((struct scsipi_link *, u_long,
-					     caddr_t, int, struct proc *));
+/*static*/ void	ncr53c9x_readregs(struct ncr53c9x_softc *);
+/*static*/ void	ncr53c9x_select(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+/*static*/ int ncr53c9x_reselect(struct ncr53c9x_softc *, int, int, int);
+/*static*/ void	ncr53c9x_scsi_reset(struct ncr53c9x_softc *);
+/*static*/ int	ncr53c9x_poll(struct ncr53c9x_softc *,
+			      struct scsipi_xfer *, int);
+/*static*/ void	ncr53c9x_sched(struct ncr53c9x_softc *);
+/*static*/ void	ncr53c9x_done(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+/*static*/ void	ncr53c9x_msgin(struct ncr53c9x_softc *);
+/*static*/ void	ncr53c9x_msgout(struct ncr53c9x_softc *);
+/*static*/ void	ncr53c9x_timeout(void *arg);
+/*static*/ void	ncr53c9x_watch(void *arg);
+/*static*/ void	ncr53c9x_abort(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+/*static*/ void ncr53c9x_dequeue(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+/*static*/ int	ncr53c9x_ioctl(struct scsipi_link *, u_long,
+			       caddr_t, int, struct proc *);
 
-void ncr53c9x_sense			__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *));
-void ncr53c9x_free_ecb			__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *, int));
-struct ncr53c9x_ecb *ncr53c9x_get_ecb	__P((struct ncr53c9x_softc *, int));
+void ncr53c9x_sense(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
+void ncr53c9x_free_ecb(struct ncr53c9x_softc *, struct ncr53c9x_ecb *, int);
+struct ncr53c9x_ecb *ncr53c9x_get_ecb(struct ncr53c9x_softc *, int);
 
-static inline int ncr53c9x_stp2cpb	__P((struct ncr53c9x_softc *, int));
-static inline void ncr53c9x_setsync	__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_tinfo *));
-static struct ncr53c9x_linfo *ncr53c9x_lunsearch __P((struct ncr53c9x_tinfo *,
-							     int64_t lun));
+static inline int ncr53c9x_stp2cpb(struct ncr53c9x_softc *, int);
+static inline void ncr53c9x_setsync(struct ncr53c9x_softc *,
+				    struct ncr53c9x_tinfo *);
+static struct ncr53c9x_linfo *ncr53c9x_lunsearch(struct ncr53c9x_tinfo *,
+						 int64_t lun);
+
 static int ecb_pool_initialized = 0;
 static struct pool ecb_pool;
 
