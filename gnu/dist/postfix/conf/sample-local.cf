@@ -11,6 +11,10 @@
 # precedence, from highest to lowest priority: mailbox_transport,
 # mailbox_command_maps, mailbox_command, home_mailbox.
 
+#
+# MISCELLANEOUS PARAMETERS
+#
+
 # The biff parameter specifies whether or not to contact the biff
 # server.  This server sends "new mail" notifications to users who
 # have requested new mail notification with "biff y".   

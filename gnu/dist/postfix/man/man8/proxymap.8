@@ -1,0 +1,134 @@
+.TH PROXYMAP 8 
+.ad
+.fi
+.SH NAME
+proxymap
+\-
+Postfix lookup table proxy server
+.SH SYNOPSIS
+.na
+.nf
+\fBproxymap\fR [generic Postfix daemon options]
+.SH DESCRIPTION
+.ad
+.fi
+The \fBproxymap\fR server provides read-only table
+lookup service to Postfix client processes. The purpose
+of the service is:
+.IP \(bu
+To overcome chroot restrictions. For example, a chrooted SMTP
+server needs access to the system passwd file in order to
+reject mail for non-existent local addresses, but it is not
+practical to maintain a copy of the passwd file in the chroot
+jail.  The solution:
+.sp
+local_recipient_maps =
+.ti +4
+proxy:unix:passwd.byname $alias_maps
+.IP \(bu
+To consolidate the number of open lookup tables by sharing
+one open table among multiple processes. For example, making
+mysql connections from every Postfix daemon process results
+in "too many connections" errors. The solution:
+.sp
+virtual_alias_maps =
+.ti +4
+proxy:mysql:/etc/postfix/virtual_alias.cf
+.sp
+The total number of connections is limited by the number of
+proxymap server processes.
+.PP
+The proxymap server implements the following requests:
+.IP "\fBPROXY_REQ_OPEN\fI maptype:mapname flags\fR"
+Open the table with type \fImaptype\fR and name \fImapname\fR,
+as controlled by \fIflags\fR.
+The reply is the request completion status code (below) and the
+map type dependent flags.
+.IP "\fBPROXY_REQ_LOOKUP\fI maptype:mapname flags key\fR"
+Look up the data stored under the requested key.
+The reply is the request completion status code (below) and
+the lookup result value.
+The \fImaptype:mapname\fR and \fIflags\fR are the same
+as with the \fBPROXY_REQ_OPEN\fR request.
+.PP
+There is no close command, nor are tables implicitly closed
+when a client disconnects. One of the purposes of the proxymap
+server is to share tables among multiple client processes.
+
+The request completion status code is one of:
+.IP \fBPROXY_STAT_OK\fR
+The specified table was opened, or the requested entry was found.
+.IP \fBPROXY_STAT_NOKEY\fR
+The requested table entry was not found.
+.IP \fBPROXY_STAT_BAD\fR
+The request was rejected (bad request parameter value).
+.IP \fBPROXY_STAT_RETRY\fR
+The lookup request could not be completed.
+.IP \fBPROXY_STAT_DENY\fR
+The specified table was not approved for access via the
+proxymap service.
+.SH SERVER PROCESS MANAGEMENT
+.na
+.nf
+.ad
+.fi
+The proxymap servers run under control by the Postfix master
+server.  Each server can handle multiple simultaneous connections.
+When all servers are busy while a client connects, the master
+creates a new proxymap server process, provided that the proxymap
+server process limit is not exceeded.
+Each proxymap server terminates after serving
+at least \fB$max_use\fR clients or after \fB$max_idle\fR seconds
+of idle time.
+.SH SECURITY
+.na
+.nf
+.ad
+.fi
+The proxymap server opens only tables that are approved via the
+\fBproxy_read_maps\fR configuration parameter, does not talk to
+users, and can run at fixed low privilege, chrooted or not.
+
+The proxymap server is not a trusted daemon process, and must
+not be used to look up sensitive information such as user or
+group IDs, mailbox file/directory names or external commands.
+.SH DIAGNOSTICS
+.ad
+.fi
+Problems and transactions are logged to \fBsyslogd\fR(8).
+.SH BUGS
+.ad
+.fi
+The proxymap server provides service to multiple clients,
+and must therefore not be used for tables that have high-latency
+lookups.
+.SH CONFIGURATION PARAMETERS
+.na
+.nf
+.ad
+.fi
+The following main.cf parameters are especially relevant
+to this program. Use the \fBpostfix reload\fR command
+after a configuration change.
+.IP \fBproxy_read_maps\fR
+A list of zero or more parameter values that may contain
+references to Postfix lookup tables. Only table references
+that begin with \fBproxy:\fR are approved for read-only
+access via the proxymap server.
+.SH SEE ALSO
+.na
+.nf
+dict_proxy(3) proxy map client
+.SH LICENSE
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH AUTHOR(S)
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

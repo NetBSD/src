@@ -49,6 +49,8 @@ If your system is supported, it is one of
     AIX 3.2.5
     AIX 4.1.x
     AIX 4.2.0
+    AIX 4.3.x
+    AIX 5.2
     BSD/OS 2.x
     BSD/OS 3.x
     BSD/OS 4.x
@@ -64,27 +66,29 @@ If your system is supported, it is one of
     IRIX 6.x
     Linux Debian 1.3.1
     Linux Debian 2.x
+    Linux RedHat 3.x (August 2002)
     Linux RedHat 4.x
     Linux RedHat 5.x
     Linux RedHat 6.x
     Linux RedHat 7.x
-    Linux Slackware 3.x
+    Linux Slackware 3.x (long ago)
     Linux Slackware 4.x
     Linux Slackware 7.x
     Linux SuSE 5.x
     Linux SuSE 6.x
     Linux SuSE 7.x
     Mac OS X
-    NEXTSTEP 3.x
+    NEXTSTEP 3.x (long ago)
     NetBSD 1.x
     OPENSTEP 4.x
     OSF1.V3 (Digital UNIX)
     OSF1.V4 aka Digital UNIX V4
     OSF1.V5 aka Digital UNIX V5
     OpenBSD 2.x
+    OpenBSD 3.x
     Reliant UNIX 5.x
     Rhapsody 5.x
-    SunOS 4.1.x (with Postfix 1.1.0)
+    SunOS 4.1.x (December 2002)
     SunOS 5.4..5.8 (Solaris 2.4..8)
     Ultrix 4.x (well, that was long ago)
 
@@ -135,10 +139,20 @@ and so on. In some cases, optimization is turned off automatically.
 In order to build with non-default settings, for example, with a
 configuration directory other than /etc/postfix, use:
 
-    % make makefiles CCARGS=-DDEF_CONFIG_DIR=\\\\\\\"/some/where\\\\\\\"
+    % make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
     % make
 
-That's seven backslashes :-) But at least this works with sh and csh.
+Be sure to get the quotes right. These details matter a lot.
+
+Other parameters whose defaults can be specified in this way are:
+
+    Macro name          default value for
+    -------------------------------------
+    DEF_COMMAND_DIR     command_directory
+    DEF_DAEMON_DIR      daemon_directory
+    DEF_SENDMAIL_PATH   sendmail_path
+    DEF_MAILQ_PATH      mailq_path
+    DEF_NEWALIAS_PATH   newaliases_path
 
 In order to build Postfix for very large applications, where you
 expect to run more than 1000 delivery processes, you may need to
@@ -152,7 +166,7 @@ In any case, if the command
     % make
 
 produces compiler error messages, it may be time to examine the
-FAQ document (see htlm/faq.html).
+FAQ document (see html/faq.html).
 
 5 - Porting to on an unsupported system
 =======================================
@@ -209,9 +223,13 @@ In order to install or upgrade Postfix:
 
     postfix:*:12345:12345:postfix:/no/where:/no/shell
 
+  Note: there should be no whitespace before "postfix:".
+
 - Make sure there is a corresponding alias in /etc/aliases:
 
     postfix: root
+
+  Note: there should be no whitespace before "postfix:".
 
 - Create a group "postdrop" with a group id that is not used by
   any other user account. Not even by the postfix user account.
@@ -219,8 +237,7 @@ In order to install or upgrade Postfix:
 
     postdrop:*:54321:
 
-  NB: this group was optional with older Postfix releases; it is
-  now required.
+  Note: there should be no whitespace before "postdrop:".
 
 - Optional: If you want to install symbol-stripped (non-debug) versions
   of the Postfix programs and daemons, do:
@@ -285,7 +302,7 @@ In order to inspect the mail queue, use
 
     % sendmail -bp
 
-See also the "Care and feeding" section 13 below.
+See also the "Care and feeding" section 12 below.
 
 8 - Configuring Postfix to send and receive mail (virtual interface)
 ====================================================================
@@ -327,7 +344,7 @@ In order to inspect the mail queue, use
 
     % sendmail -bp
 
-See also the "Care and feeding" section 13 below.
+See also the "Care and feeding" section 12 below.
 
 9 - Turning off sendmail forever
 ================================
@@ -357,7 +374,7 @@ and watch the syslog file for any complaints from the mail system.
 Typical logfile names are: /var/log/maillog or /var/log/syslog.
 See /etc/syslog.conf for actual logfile names.
 
-See also the "Care and feeding" section 13 below.
+See also the "Care and feeding" section 12 below.
 
 10 - Mandatory configuration file edits
 =======================================
@@ -458,7 +475,7 @@ the Postfix queue directories (/var/spool/postfix).  This provides
 a significant barrier against intrusion. The barrier is not
 impenetrable, but every little bit helps.
 
-With the exception of the Postfix local delivery and `pipe' daemons,
+With the exception of the Postfix daemons that deliver mail locally,
 every Postfix daemon can run chrooted.
 
 Sites with high security requirements should consider to chroot
@@ -475,6 +492,24 @@ of a chroot jail,  most UNIX systems require you to bring in some
 files or device nodes.  The examples/chroot-setup directory has a
 collection of scripts that help you set up chroot environments for
 Postfix systems.
+
+IMPORTANT: if you enable chrooted operation of the SMTP server you
+must copy the passwd file into the chroot jail, otherwise the SMTP
+server will reject mail for local addresses.
+
+44BSD systems:
+
+    # mkdir /var/spool/postfix/etc
+    # cp /etc/pwd.db /var/spool/postfix/etc
+
+Other systems:
+
+    # mkdir /var/spool/postfix/etc
+    # cp /etc/passwd /var/spool/postfix/etc
+
+You may also have to copy /etc/nsswitch.conf and the files referenced
+by /etc/nsswitch.conf. See the system dependent scripts in
+examples/chroot-setup for suggestions.
 
 12 - Care and feeding of the Postfix system
 ===========================================

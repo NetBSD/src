@@ -54,73 +54,81 @@ POSTCONF(1)                                           POSTCONF(1)
                      were left behind after abnormal termination.
 
        <b>-m</b>     List the names of all supported lookup table types.
+              Postfix lookup tables are specified  as  <i>type</i><b>:</b><i>name</i>,
+              where  <i>type</i>  is  one of the types listed below. The
+              table <i>name</i> syntax depends on the lookup table type.
 
-              <b>btree</b>  A sorted, balanced tree structure.  This  is
-                     available  only  on systems with support for
+              <b>btree</b>  A  sorted, balanced tree structure.  This is
+                     available only on systems with  support  for
                      Berkeley DB databases.
 
               <b>dbm</b>    An indexed file type based on hashing.  This
-                     is  available  only  on systems with support
+                     is available only on  systems  with  support
                      for DBM databases.
 
               <b>environ</b>
                      The  UNIX  process  environment  array.  The
-                     lookup  key is the variable name. Originally
-                     implemented for testing,  someone  may  find
+                     lookup key is the variable name.  Originally
+                     implemented  for  testing,  someone may find
                      this useful someday.
 
               <b>hash</b>   An indexed file type based on hashing.  This
-                     is available only on  systems  with  support
+                     is  available  only  on systems with support
                      for Berkeley DB databases.
 
               <b>ldap</b> (read-only)
-                     Perform  lookups  using  the  LDAP protocol.
+                     Perform lookups  using  the  LDAP  protocol.
                      This is described in an LDAP_README file.
 
               <b>mysql</b> (read-only)
-                     Perform lookups using  the  MYSQL  protocol.
+                     Perform  lookups  using  the MYSQL protocol.
                      This is described in a MYSQL_README file.
 
               <b>pcre</b> (read-only)
                      A lookup table based on Perl Compatible Reg-
-                     ular  Expressions.  The   file   format   is
+                     ular   Expressions.   The   file  format  is
                      described in <a href="pcre_table.5.html"><b>pcre</b><i>_</i><b>table</b>(5)</a>.
+
+              <b>proxy</b> (read-only)
+                     A lookup table that is implemented  via  the
+                     Postfix  <a href="proxymap.8.html"><b>proxymap</b>(8)</a> service. The table name
+                     syntax is <i>type</i><b>:</b><i>name</i>.
 
               <b>regexp</b> (read-only)
                      A lookup table based on regular expressions.
-                     The  file  format  is  described   in   <a href="regexp_table.5.html"><b>reg-</b>
+                     The   file   format  is  described  in  <a href="regexp_table.5.html"><b>reg-</b>
                      <b>exp</b><i>_</i><b>table</b>(5)</a>.
 
               <b>static</b> (read-only)
-                     A  table  that  always  returns  its name as
-                     lookup result.  For  example,  <b>static:foobar</b>
-                     always  returns  the string <b>foobar</b> as lookup
+                     A table that  always  returns  its  name  as
+                     lookup  result.  For  example, <b>static:foobar</b>
+                     always returns the string <b>foobar</b>  as  lookup
                      result.
 
               <b>unix</b> (read-only)
-                     A limited way to query the UNIX  authentica-
+                     A  limited way to query the UNIX authentica-
                      tion  database.  The  following  tables  are
                      implemented:
 
                      <b>unix:passwd.byname</b>
-                             The  table  is  the  UNIX   password
-                             database.  The  key is a login name.
-                             The result is a password file  entry
+                             The   table  is  the  UNIX  password
+                             database. The key is a  login  name.
+                             The  result is a password file entry
                              in passwd(5) format.
 
                      <b>unix:group.byname</b>
-                             The   table   is   the   UNIX  group
-                             database. The key is a  group  name.
-                             The  result is a group file entry in
+                             The  table   is   the   UNIX   group
+                             database.  The  key is a group name.
+                             The result is a group file entry  in
                              group(5) format.
 
-       Other table types may exist depending on how  Postfix  was
+       Other  table  types may exist depending on how Postfix was
        built.
 
        <b>-n</b>     Print non-default parameter settings only.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple <b>-v</b> options  make  the  software  increasingly
+              tiple  <b>-v</b>  options  make  the software increasingly
               verbose.
 
 <b>DIAGNOSTICS</b>
@@ -131,7 +139,7 @@ POSTCONF(1)                                           POSTCONF(1)
               Directory with Postfix configuration files.
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

@@ -2,8 +2,7 @@
 # for a description of the syntax.
 #
 # Message headers are filtered one at a time. This filter understands
-# multi-line mail headers. However, the message header filter has no
-# knowledge of MIME headers that are embedded in the message body.
+# multi-line mail headers, including MIME headers in the message body.
 #
 # The general format of a table entry is PATTERN RESULT. 
 #
@@ -44,7 +43,8 @@
 #       After the message is queued, send the entire message through
 #       a content filter. This requires different cleanup servers
 #       before and after the filter, with header/body checks turned
-#       off in the second cleanup server.
+#       off in the second cleanup server. This overrides the main.cf
+#	content filter setting.
 
 /^Subject: Make Money Fast/	REJECT
 /^To: friend@public.com/	REJECT

@@ -75,14 +75,24 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
               <b>$relayhost</b>.   The  default nexthop is the recipient
               domain.
 
+<b>SERVER</b> <b>PROCESS</b> <b>MANAGEMENT</b>
+       The trivial-rewrite servers run under control by the Post-
+       fix master server.  Each server can handle multiple simul-
+       taneous connections.  When all servers are  busy  while  a
+       client  connects, the master creates a new server process,
+       provided that the trivial-rewrite server process limit  is
+       not  exceeded.   Each  trivial-rewrite  server  terminates
+       after serving at least <b>$max</b><i>_</i><b>use</b> clients of after <b>$max</b><i>_</i><b>idle</b>
+       seconds of idle time.
+
 <b>STANDARDS</b>
-       None. The command  does  not  interact  with  the  outside
+       None.  The  command  does  not  interact  with the outside
        world.
 
 <b>SECURITY</b>
-       The  <b>trivial-rewrite</b> daemon is not security sensitive.  By
-       default, this daemon does not  talk  to  remote  or  local
-       users.   It can run at a fixed low privilege in a chrooted
+       The <b>trivial-rewrite</b> daemon is not security sensitive.   By
+       default,  this  daemon  does  not  talk to remote or local
+       users.  It can run at a fixed low privilege in a  chrooted
        environment.
 
 <b>DIAGNOSTICS</b>
@@ -90,21 +100,21 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 <b>BUGS</b>
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
        command after a configuration change.
 
 <b>Miscellaneous</b>
        <b>empty</b><i>_</i><b>address</b><i>_</i><b>recipient</b>
-              The  recipient  that  is  substituted  for the null
+              The recipient that  is  substituted  for  the  null
               address.
 
        <b>inet</b><i>_</i><b>interfaces</b>
-              The  network  interfaces  that  this  mail   system
-              receives  mail  on.   This  information  is used to
-              determine if <i>user</i>@[<i>net.work.addr.ess</i>] is  local  or
-              remote.   Mail  for  local  users  is  given to the
+              The   network  interfaces  that  this  mail  system
+              receives mail on.   This  information  is  used  to
+              determine  if  <i>user</i>@[<i>net.work.addr.ess</i>] is local or
+              remote.  Mail for  local  users  is  given  to  the
               <b>$local</b><i>_</i><b>transport</b>.
 
        <b>mydestination</b>
@@ -113,7 +123,7 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
        <b>virtual</b><i>_</i><b>alias</b><i>_</i><b>domains</b>
               List of simulated virtual domains (domains with all
-              recipients aliased to some other  local  or  remote
+              recipients  aliased  to  some other local or remote
               domain).
 
        <b>virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>
@@ -126,10 +136,10 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
        <b>resolve</b><i>_</i><b>unquoted</b><i>_</i><b>address</b>
               When resolving an address, do not quote the address
-              localpart as per <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a>, so that additional  <b>@</b>,  <b>%</b>
-              or  <b>!</b>   characters  remain visible. This is techni-
+              localpart  as  per <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a>, so that additional <b>@</b>, <b>%</b>
+              or <b>!</b>  characters remain visible.  This  is  techni-
               cally  incorrect,  but  allows  us  to  stop  relay
-              attacks  when forwarding mail to a Sendmail primary
+              attacks when forwarding mail to a Sendmail  primary
               MX host.
 
        <b>relocated</b><i>_</i><b>maps</b>
@@ -155,50 +165,50 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
 
 <b>Routing</b>
        <b>local</b><i>_</i><b>transport</b>
-              Where to deliver mail for destinations  that  match
-              <b>$mydestination</b>  or  <b>$inet</b><i>_</i><b>interfaces</b>.   The default
+              Where  to  deliver mail for destinations that match
+              <b>$mydestination</b> or  <b>$inet</b><i>_</i><b>interfaces</b>.   The  default
               transport is <b>local:$myhostname</b>.
+
+              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              details. The :<i>nexthop</i> part is optional.
+
+       <b>virtual</b><i>_</i><b>transport</b>
+              Where to deliver mail for  non-local  domains  that
+              match <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>.  The default trans-
+              port is <b>virtual</b>.
 
               Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
               details. The :<i>nexthop</i> part is optional.
 
-       <b>virtual</b><i>_</i><b>transport</b>
-              Where  to  deliver  mail for non-local domains that
-              match <b>$virtual</b><i>_</i><b>mailbox</b><i>_</i><b>domains</b>.  The default trans-
-              port is <b>virtual</b>.
-
-              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
-              details. The :<i>nexthop</i> part is optional.
-
        <b>relay</b><i>_</i><b>transport</b>
-              Where to deliver mail for  non-local  domains  that
-              match  <b>$relay</b><i>_</i><b>domains</b>.   The  default  transport is
+              Where  to  deliver  mail for non-local domains that
+              match <b>$relay</b><i>_</i><b>domains</b>.   The  default  transport  is
               <b>relay</b> (which normally is a clone of the <b>smtp</b> trans-
               port).
 
-              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
               details. The :<i>nexthop</i> part is optional.
 
        <b>default</b><i>_</i><b>transport</b>
-              Where to deliver all  other  non-local  mail.   The
+              Where  to  deliver  all  other non-local mail.  The
               default transport is <b>smtp</b>.
 
-              Syntax  is  <i>transport</i>:<i>nexthop</i>; see <a href="transport.5.html"><b>transport</b>(5)</a> for
+              Syntax is <i>transport</i>:<i>nexthop</i>; see  <a href="transport.5.html"><b>transport</b>(5)</a>  for
               details. The :<i>nexthop</i> part is optional.
 
        <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
-              List of Postfix features that use  <i>domain.tld</i>  pat-
-              terns   to  match  <i>sub.domain.tld</i>  (as  opposed  to
+              List  of  Postfix features that use <i>domain.tld</i> pat-
+              terns  to  match  <i>sub.domain.tld</i>  (as  opposed   to
               requiring <i>.domain.tld</i> patterns).
 
        <b>relayhost</b>
-              The default host to send non-local mail to when  no
-              host   is   specified   with   <b>$relay</b><i>_</i><b>transport</b>  or
-              <b>$default</b><i>_</i><b>transport</b>, and when the recipient  address
+              The  default host to send non-local mail to when no
+              host  is   specified   with   <b>$relay</b><i>_</i><b>transport</b>   or
+              <b>$default</b><i>_</i><b>transport</b>,  and when the recipient address
               does not match the optional the <a href="transport.5.html"><b>transport</b>(5)</a> table.
 
        <b>transport</b><i>_</i><b>maps</b>
-              List of tables with <i>recipient</i> or <i>domain</i> to  (<i>trans-</i>
+              List  of tables with <i>recipient</i> or <i>domain</i> to (<i>trans-</i>
               <i>port,</i> <i>nexthop</i>) mappings.
 
 <b>SEE</b> <b>ALSO</b>
@@ -208,7 +218,7 @@ TRIVIAL-REWRITE(8)                             TRIVIAL-REWRITE(8)
        <a href="relocated.5.html">relocated(5)</a> format of the "user has moved" table
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

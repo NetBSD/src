@@ -51,7 +51,8 @@
 #			and after the filter, with header/body
 #			checks turned off in the second cleanup
 #			server. More information about content filters
-#			is in the Postfix FILTER_README file.
+#			is in the Postfix FILTER_README file. This feature
+#			overrides the main.cf content_filter setting.
 #
 #	Substitution of sub-strings from the matched expression is
 #	possible using the conventional perl syntax. The macros in the

@@ -4,6 +4,75 @@
 # This file contains example settings of Postfix configuration parameters
 # that control the SMTP server program.
 
+# REJECTING MAIL FOR UNKNOWN LOCAL USERS
+#
+# The local_recipient_maps parameter specifies optional lookup tables
+# with all names or addresses of users that are local with respect
+# to $mydestination and $inet_interfaces.
+#
+# If this parameter is defined, then the SMTP server will reject
+# mail for unknown local users. This parameter is defined by default.
+#
+# To turn off local recipient checking in the SMTP server, specify
+# local_recipient_maps = (i.e. empty).
+#
+# The default setting assumes that you use the default Postfix local
+# delivery agent for local delivery. You need to update the
+# local_recipient_maps setting if:
+#
+# - You define $mydestination domain recipients in files other than
+#   /etc/passwd, /etc/aliases, or the $virtual_alias_maps files.
+#   For example, you define $mydestination domain recipients in    
+#   the $virtual_mailbox_maps files.
+#
+# - You redefine the local delivery agent in master.cf.
+#
+# - You redefine the "local_transport" setting in main.cf.
+#
+# - You use the "luser_relay", "mailbox_transport", or "fallback_transport"
+#   feature of the Postfix local delivery agent (see sample-local.cf).
+#
+# Details are described in the LOCAL_RECIPIENT_README file.
+#
+# Beware: if the Postfix SMTP server runs chrooted, you probably have
+# to access the passwd file via the proxymap service, in order to
+# overcome chroot restrictions. The alternative, having a copy of
+# the system passwd file in the chroot jail is just not practical.
+# 
+# The right-hand side of the lookup tables is conveniently ignored.
+# In the left-hand side, specify a bare username, an @domain.tld
+# wild-card, or specify a user@domain.tld address.
+#
+#local_recipient_maps =
+#local_recipient_maps = unix:passwd.byname $alias_maps
+local_recipient_maps = proxy:unix:passwd.byname $alias_maps
+
+# The unknown_local_recipient_reject_code specifies the SMTP server
+# response code when a recipient domain matches $mydestination or
+# $inet_interfaces, while $local_recipient_maps is non-empty and the
+# recipient address or address local-part is not found.
+#
+# The default setting is 550 (reject mail) but it is safer to start
+# with 450 (try again later) until you are certain that your
+# local_recipient_maps settings are OK.
+#
+#unknown_local_recipient_reject_code = 450
+unknown_local_recipient_reject_code = 550
+
+# REJECTING UNKNOWN RELAY USERS
+#
+# The relay_recipient_maps parameter specifies optional lookup tables
+# with all addresses in the domains that match $relay_domains.
+#
+# If this parameter is defined, then the SMTP server will reject
+# mail for unknown relay users. This feature is off by default.
+#
+# The right-hand side of the lookup tables is conveniently ignored.
+# In the left-hand side, specify an @domain.tld wild-card, or specify
+# a user@domain.tld address.
+# 
+#relay_recipient_maps = hash:/etc/postfix/relay_recipients
+
 #
 # SENDER ANTI-SPOOFING
 #
@@ -207,6 +276,7 @@ mynetworks_style = subnet
 #	Discard the message if the result is DISCARD text...
 #	Hold the message in the queue if the result is HOLD text... 
 #	Release mail "on hold" with the postsuper(1) command.
+#	Filter the message if the result is FILTER transport:nexthop.
 #	Permit the SMTP client if the result is OK or all numerical.
 #   reject_rbl_client domain.tld: reject if the reversed client IP address
 #	is listed in an A record under domain.tld.
@@ -253,6 +323,7 @@ smtpd_helo_required = no
 #	Discard the message if the result is DISCARD text...
 #	Hold the message in the queue if the result is HOLD text... 
 #	Release mail "on hold" with the postsuper(1) command.
+#	Filter the message if the result is FILTER transport:nexthop.
 #	Permit the HELO command if the result is OK or all numerical.
 #   reject: reject the request. Place this at the end of a restriction.
 #   permit: permit the request. Place this at the end of a restriction.
@@ -290,6 +361,7 @@ smtpd_helo_restrictions =
 #	Discard the message if the result is DISCARD text...
 #	Hold the message in the queue if the result is HOLD text... 
 #	Release mail "on hold" with the postsuper(1) command.
+#	Filter the message if the result is FILTER transport:nexthop.
 #	Permit the sender if the result is OK or all numerical.
 #   reject_sender_login_mismatch: reject if $smtpd_sender_login_maps specifies
 #	a MAIL FROM address owner, but the client is not (SASL) logged in as
@@ -361,6 +433,7 @@ smtpd_sender_restrictions =
 #	Discard the message if the result is DISCARD text...
 #	Hold the message in the queue if the result is HOLD text... 
 #	Release mail "on hold" with the postsuper(1) command.
+#	Filter the message if the result is FILTER transport:nexthop.
 #	Permit the recipient if the result is OK or all numerical.
 #   reject_non_fqdn_recipient: reject recipient address that is not in FQDN form
 #   reject: reject the request. Place this at the end of a restriction.

@@ -63,10 +63,13 @@
   * this is "postfix internal" information. However, the pickup server has to
   * allow for the presence of A records in the extracted segment, because it
   * can be requested to re-process already queued mail with `postsuper -r'.
+  * 
+  * Note: REC_TYPE_FILT and REC_TYPE_CONT are encoded with the same 'L'
+  * constant, and it is too late to change that now.
   */
 #define REC_TYPE_ENVELOPE	"MCTFILSDROWVA"
 #define REC_TYPE_CONTENT	"XLN"
-#define REC_TYPE_EXTRACT	"EDROPreAFI"
+#define REC_TYPE_EXTRACT	"EDROPreAFIL"
 
  /*
   * The record at the beginning of the envelope segment specifies the message

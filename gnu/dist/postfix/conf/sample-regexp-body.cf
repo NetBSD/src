@@ -43,7 +43,8 @@
 #       After the message is queued, send the entire message through
 #       a content filter. This requires different cleanup servers
 #       before and after the filter, with header/body checks turned
-#       off in the second cleanup server.
+#       off in the second cleanup server. This overrides the main.cf
+#	content filter setting.
 
 # Skip over base 64 encoded blocks. This saves lots of CPU cycles.
 # Expressions by Liviu Daia. Amended by Victor Duchovni.

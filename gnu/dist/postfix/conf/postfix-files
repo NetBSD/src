@@ -63,6 +63,7 @@ $daemon_directory/master:f:root:-:755
 $daemon_directory/nqmgr:f:root:-:755
 $daemon_directory/pickup:f:root:-:755
 $daemon_directory/pipe:f:root:-:755
+$daemon_directory/proxymap:f:root:-:755
 $daemon_directory/qmgr:f:root:-:755
 $daemon_directory/qmqpd:f:root:-:755
 $daemon_directory/showq:f:root:-:755
@@ -133,6 +134,7 @@ $manpage_directory/man8/master.8:f:root:-:644
 $manpage_directory/man8/nqmgr.8:f:root:-:644
 $manpage_directory/man8/pickup.8:f:root:-:644
 $manpage_directory/man8/pipe.8:f:root:-:644
+$manpage_directory/man8/proxymap.8:f:root:-:644
 $manpage_directory/man8/qmgr.8:f:root:-:644
 $manpage_directory/man8/qmqpd.8:f:root:-:644
 $manpage_directory/man8/showq.8:f:root:-:644

@@ -90,7 +90,7 @@
 #	dependent. In the case of SMTP, specify \fIhost\fR:\fIservice\fR for a
 #	non-default server port, and use [\fIhost\fR] or [\fIhost\fR]:\fIport\fR
 #	in order to disable MX (mail exchanger) DNS lookups. The [] form
-#	can also be used with IP addresses instead of hostnames.
+#	is required when you specify an IP address instead of a hostname.
 #
 #	A null \fItransport\fR and null \fInexthop\fR result means "do
 #	not change": use the delivery transport and nexthop information

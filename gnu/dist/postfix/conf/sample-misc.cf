@@ -143,8 +143,8 @@ inet_interfaces = all
 # The ipc_idle parameter bounds the idle time for internal communication
 # channels after which a client disconnects voluntarily. The purpose
 # is to allow servers to terminate voluntarily after they become
-# idle. Currently this is used by the address resolving and rewriting
-# clients.
+# idle. This is used, for example, by the address resolving and
+# rewriting clients.
 #
 # Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 # The default time unit is s (seconds).
@@ -225,7 +225,7 @@ max_use = 100
 # a name matches a lookup key.  Continue long lines by starting the
 # next line with whitespace.
 #
-# See sample-local.cf for a description of the local_recipient_maps
+# See sample-smtpd.cf for a description of the local_recipient_maps
 # and unknown_local_recipient_reject_code parameters. By default,
 # the SMTP server rejects mail for recipients not listed with the
 # local_recipient_maps parameter.

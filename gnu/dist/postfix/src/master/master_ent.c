@@ -282,12 +282,14 @@ MASTER_SERV *get_master_ent()
 		mymalloc(sizeof(*MASTER_INET_ADDRLIST(serv)));
 	    inet_addr_list_init(MASTER_INET_ADDRLIST(serv));
 	    inet_addr_host(MASTER_INET_ADDRLIST(serv), host);
+	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	} else if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
 	    MASTER_INET_ADDRLIST(serv) = 0;	/* wild-card */
 	    serv->listen_fd_count = 1;
 	} else {
 	    MASTER_INET_ADDRLIST(serv) = own_inet_addr_list();	/* virtual */
+	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}
 	MASTER_INET_PORT(serv) = mystrdup(port);

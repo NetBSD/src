@@ -3,8 +3,8 @@
 #	message header filtering. See pcre_table(5) for syntax description.
 #
 #	Message headers are filtered one at a time. This filter understands
-#	multi-line message headers. However, the message header filter has
-#	no knowledge of MIME headers that are embedded in the message body.
+#	multi-line message headers, including MIME headers in the message
+#	body.
 #
 #	The first field is a perl-like regular expression. The expression
 #	delimiter can be any character except whitespace, or characters
@@ -52,7 +52,8 @@
 #                       and after the filter, with header/body
 #                       checks turned off in the second cleanup
 #                       server. More information about content filters
-#                       is in the Postfix FILTER_README file.
+#                       is in the Postfix FILTER_README file. This feature
+#			overrides the main.cf content_filter setting.
 #
 #	Substitution of sub-strings from the matched expression is
 #	possible using the conventional perl syntax. The macros in the
