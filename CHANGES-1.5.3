@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.10 2001/11/15 23:29:57 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.11 2001/11/24 22:12:57 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -491,3 +491,61 @@ usr.bin/vmstat/vmstat.c				1.82
 
   Change memory display to prevent results from running into
   each other.
+
+games/wargames/wargames.sh			1.4
+
+  If we are going to quote the move, do so correctly.
+
+usr.sbin/faithd/faithd.c			1.14 partial via patch
+
+  Fix missing ntohl().
+
+share/man/man4/Makefile				patch
+
+  Install ld(4) manual page.
+
+sbin/newfs/mkfs.c				1.39-1.47
+sbin/newfs/extern.h				1.2-1.3
+sbin/newfs/newfs.c				1.40-1.41
+sbin/newfs/newfs.8				1.25-1.26,1.28-1.29,1.31
+
+  Jumbo pullup for newfs:
+   o convert to ANSI function prototypes
+   o move external variables to extern.h
+   o allow ``m'' suffix in MFS size
+   o fix cg_firstfield bug introduced in 4.4-Lite
+   o don't swap clustersum[0], it's a bitmap
+   o don't unnecessarily set fs_clean twice
+   o check return vailues of memory allocation functions
+   o cleanup to reduce compile warnings
+   o replace ``filesystem'' with ``file system''
+   o improve warning messages describing the MAXCSBUFS overflow
+   o manual page typos and other corrections
+
+sys/dev/pci/twe.c				1.20 via patch
+sys/dev/pci/twevar.h				1.9
+
+  Improve stability of this driver by un-applying some earlier
+  changes.
+
+sbin/fsck_ffs/dir.c				1.28-1.32
+sbin/fsck_ffs/extern.h				1.11-1.13
+sbin/fsck_ffs/fsck.h				1.21-1.24
+sbin/fsck_ffs/main.c				1.35-1.37
+sbin/fsck_ffs/pass2.c				1.29
+sbin/fsck_ffs/pass3.c				1.11-1.12
+sbin/fsck_ffs/pass5.c				1.25-1.26
+sbin/fsck_ffs/setup.c				1.39-1.43
+sbin/fsck_ffs/utilities.c			1.28-1.30
+
+  Jumbo pullup for fsck_ffs:
+   o fix incorrect error message
+   o mark initialized globals with ``extern''
+   o make reconnect algorithm O(n) instead of O(n^4)
+   o remove dead code
+   o don't swap cg_clustersum(cg)[0], it's a bitmap
+   o ensure rotor values are positive
+   o some code restructuring
+   o fix byte swapping bug
+   o pass5: check alternate superblocks for consistency with in-core master
+   o fix usage message
