@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.39 2001/09/04 17:06:54 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.40 2001/09/07 17:10:13 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -508,7 +508,6 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	if (existing) {
 		vc->active = scr;
-		vc->currenttype = type;
 
 		cpos = vga_6845_read(&vc->hdl, cursorh) << 8;
 		cpos |= vga_6845_read(&vc->hdl, cursorl);
@@ -524,6 +523,11 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
+
+		if (type != vc->currenttype) {
+			vga_setscreentype(&vc->hdl, type);
+			vc->currenttype = type;
+		}
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -558,6 +562,8 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		else
 			printf("vga_init_screen: no font\n");
 	}
+	if (existing)
+		vga_setfont(vc, scr);
 
 	vc->nscreens++;
 	LIST_INSERT_HEAD(&vc->screens, scr, next);
@@ -666,17 +672,10 @@ vga_cnattach(iot, memt, type, check)
 	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
 	if (!scr)
 		panic("vga_cnattach: invalid screen type");
-	if (scr != vga_console_vc.currenttype) {
-		vga_setscreentype(&vga_console_vc.hdl, scr);
-		vga_console_vc.currenttype = scr;
-	}
 #else
 	scr = vga_console_vc.currenttype;
 #endif
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
-#ifdef VGA_CONSOLE_SCREENTYPE
-	vga_setfont(&vga_console_vc, &vga_console_screen);
-#endif
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
 			   vga_console_screen.pcs.vc_ccol,
@@ -819,9 +818,9 @@ vga_free_screen(v, cookie)
 		vc->active = 0;
 }
 
-void vga_usefont(struct vga_config *, struct egavga_font *);
+static void vga_usefont(struct vga_config *, struct egavga_font *);
 
-void
+static void
 vga_usefont(vc, f)
 	struct vga_config *vc;
 	struct egavga_font *f;
