@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.24 2001/12/06 04:29:23 chs Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.25 2002/01/04 07:19:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.24 2001/12/06 04:29:23 chs Exp $
+ *	$Id: null_vnops.c,v 1.25 2002/01/04 07:19:33 chs Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -207,7 +207,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.24 2001/12/06 04:29:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.25 2002/01/04 07:19:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_strategy_desc, layer_strategy },
 	{ &vop_bwrite_desc,   layer_bwrite },
 	{ &vop_bmap_desc,     layer_bmap },
+	{ &vop_getpages_desc, layer_getpages },
 	{ &vop_putpages_desc, layer_putpages },
 
 	{ NULL, NULL }
