@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.272 2004/12/03 18:19:13 jklos Exp $
+.\"	$NetBSD: main,v 1.273 2004/12/04 08:31:54 tnozaki Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1623,6 +1623,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@NetBSD.org
+.It Ta Takehiko NOZAKI Ta Mt tnozaki@NetBSD.org
 .It Ta Jesse Off Ta Mt joff@NetBSD.org
 .It Ta Tatoku Ogaito Ta Mt tacha@NetBSD.org
 .It Ta OKANO Takayoshi Ta Mt kano@NetBSD.org
