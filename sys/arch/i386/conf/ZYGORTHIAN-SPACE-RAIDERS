@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.2 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.3 1999/02/16 17:46:18 abs Exp $
 #	From: GENERIC,v 1.196 1998/10/25 18:40:17 christos Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -315,7 +315,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
-# IDE and Related Devices
+# IDE and related devices
 # PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
@@ -333,6 +333,16 @@ pciide* at pci ? dev ? function ? flags 0x0000
 #wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
 #wd*	at wdc? channel ? drive ?
 wd*	at pciide? channel ? drive ?
 

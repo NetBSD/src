@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.34 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.35 1999/02/16 17:46:18 abs Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -304,7 +304,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
-# IDE and Related Devices
+# IDE and related devices
 
 # ISA IDE controllers
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers

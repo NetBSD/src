@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.37 1999/01/23 16:10:48 drochner Exp $
+#	$NetBSD: HOMEWORLD,v 1.38 1999/02/16 17:46:17 abs Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
@@ -339,7 +339,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
-# IDE and Related Devices
+# IDE and related devices
 # PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx, ...).
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
@@ -356,15 +356,17 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 wdc0	at isa? port 0x1f0 irq 14
 #wdc1	at isa? port 0x170 irq 15
 
-# IDE drives.
-# Flags are used only with controlers that support DMA operations
+# IDE drives
+# Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
-# The first 4 bytes of the flags define the PIO mode to use, the
-# second DMA mode and the third UltraDMA mode. For each group of 4 bytes,
-# the 3 lower define the mode to use, and the last one must be 1 for the
-# setting to be used. For DMA and UDMA, 0xf means 'disable'.
-# 0x0fac means 'use PIO mode 4 DMA mode 2, disable UltraDMA'.
-# 0x0000 means "use whatever the drive claims to support.
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
 wd*	at wdc? channel ? drive ? flags 0x0000
 #wd*	at pciide? channel ? drive ? flags 0x0000
 
