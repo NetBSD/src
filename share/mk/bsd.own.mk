@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.46 1997/05/29 19:53:32 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.47 1997/05/30 05:50:16 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -64,7 +64,7 @@ OBJDIR=	${BSDOBJDIR}
 # this is DESTDIR or just nothing at all (root of current system).
 .if ! defined(BUILDDIR)
 .if exists(${OBJDIR})
-.if defined(OBJMACHINE)
+.if defined(OBJMACHINE) && !defined(USR_OBJMACHINE)
 BUILDDIR= ${OBJDIR}/build.${MACHINE}
 .else
 BUILDDIR= ${OBJDIR}/build
