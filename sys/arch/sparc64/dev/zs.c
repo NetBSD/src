@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.14 2000/03/06 21:36:12 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.15 2000/03/16 02:36:57 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,19 +95,6 @@ int zs_major = 12;
  * The Sun provides a 4.9152 MHz clock to the ZS chips.
  */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
-
-/*
- * Select software interrupt bit based on TTY ipl.
- */
-#if PIL_TTY == 1
-# define IE_ZSSOFT IE_L1
-#elif PIL_TTY == 4
-# define IE_ZSSOFT IE_L4
-#elif PIL_TTY == 6
-# define IE_ZSSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
 
 #define	ZS_DELAY()
 
@@ -590,13 +577,8 @@ zshard(arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = IE_ZSSOFT;
-#if defined(SUN4M)
-		if (CPU_ISSUN4M)
-			raise(0, PIL_TTY);
-		else
-#endif
-			ienab_bis(IE_ZSSOFT);
+		zssoftpending = PIL_TTY;
+		send_softint(-1, PIL_TTY, &levelsoft);
 	}
 	return (rval);
 }
@@ -614,14 +596,6 @@ zssoft(arg)
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
 		return (0);
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.  The order of
-	 * these next two statements prevents our clearing
-	 * the soft intr bit just after zshard has set it.
-	 */
-	/* ienab_bic(IE_ZSSOFT); */
 	zssoftpending = 0;
 
 	/* Make sure we call the tty layer at spltty. */

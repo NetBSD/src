@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.27 2000/01/21 23:29:09 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.28 2000/03/16 02:36:58 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -60,6 +60,17 @@
 
 extern void OF_enter __P((void));
 
+extern struct traptrace {
+	unsigned short tl:3,	/* Trap level */
+		ns:4,		/* PCB nsaved */
+		tt:9;		/* Trap type */
+	unsigned short pid;	/* PID */
+	u_int tstate;		/* tstate */
+	u_int tsp;		/* sp */
+	u_int tpc;		/* pc */
+	u_int tfault;		/* MMU tag access */
+} trap_trace[], trap_trace_end[];
+
 static int nil;
 
 struct db_variable db_regs[] = {
@@ -116,6 +127,7 @@ void db_ctx_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
 void db_setpcb __P((db_expr_t, int, db_expr_t, char *));
@@ -131,6 +143,8 @@ void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watch __P((db_expr_t, int, db_expr_t, char *));
 
 static void db_dump_pmap __P((struct pmap*));
+static void db_print_trace_entry __P((struct traptrace *, int));
+
 
 /*
  * Received keyboard interrupt sequence.
@@ -145,9 +159,6 @@ kdb_kbd_trap(tf)
 	}
 }
 
-/* Flip this to turn on traptrace */
-int traptrace_enabled = 0;
-
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -156,18 +167,13 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe64 *tf;
 {
-	int i, s, tl;
-	struct trapstate {
-		int64_t	tstate;
-		int64_t tpc;
-		int64_t tnpc;
-		int64_t	tt;
-	} ts[5];
-	extern int savetstate(struct trapstate ts[]);
-	extern void restoretstate(int tl, struct trapstate ts[]);
+	int s, tl;
+	struct trapstate *ts = &ddb_regs.ddb_ts;
+	extern int savetstate(struct trapstate *ts);
+	extern void restoretstate(int tl, struct trapstate *ts);
 	extern int trap_trace_dis;
 
-	trap_trace_dis = 1;
+	trap_trace_dis++;
 	fb_unblank();
 
 	switch (type) {
@@ -222,12 +228,8 @@ kdb_trap(type, tf)
 	db_active++;
 	cnpollc(TRUE);
 	/* Need to do spl stuff till cnpollc works */
-	tl = savetstate(ts);
-	for (i=0; i<tl; i++) {
-		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
-		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
-		       (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
-	}
+	tl = ddb_regs.ddb_tl = savetstate(ts);
+	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
 	restoretstate(tl,ts);
 	cnpollc(FALSE);
@@ -239,7 +241,7 @@ kdb_trap(type, tf)
 	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
 #endif
 	*tf = ddb_regs.ddb_tf;
-	trap_trace_dis = traptrace_enabled;
+	trap_trace_dis--;
 
 	return (1);
 }
@@ -380,16 +382,16 @@ struct pmap* pm;
 	
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)(u_long)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			db_printf("pdir %ld at %lx:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)(u_long)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
 					db_printf("\tptable %ld:%ld at %lx:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
-						data0 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
+						data0 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						j++;
-						data1 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
+						data1 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data0 || data1) {
 							db_printf("%p: %lx\t",
 								  (i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
@@ -442,7 +444,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 		db_dump_pmap(&kernel_pmap_);
 	} else {
 		for (j=i=0; i<STSZ; i++) {
-			long seg = (long)ldxa(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -480,7 +482,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 		db_dump_pmap(pm);
 	} else {
 		for (i=0; i<STSZ; i++) {
-			long seg = (long)ldxa(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -679,6 +681,25 @@ db_setpcb(addr, have_addr, count, modif)
 	db_printf("PID %d not found.\n", addr);
 }
 
+static void
+db_print_trace_entry(te, i)
+	struct traptrace *te;
+	int i;
+{
+	db_printf("%d:%d p:%d tt:%x:%lx:%p %p:%p ", i, 
+		  (int)te->tl, (int)te->pid, 
+		  (int)te->tt, (u_long)te->tstate, 
+		  (u_long)te->tfault, (u_long)te->tsp,
+		  (u_long)te->tpc);
+	db_printsym((u_long)te->tpc, DB_STGY_PROC);
+	db_printf(": ");
+	if ((te->tpc && !(te->tpc&0x3)) &&
+	    curproc &&
+	    (curproc->p_pid == te->pid)) {
+		db_disasm((u_long)te->tpc, 0);
+	} else db_printf("\n");
+}
+
 void
 db_traptrace(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -686,17 +707,7 @@ db_traptrace(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern struct traptrace {
-		unsigned short tl:3,	/* Trap level */
-			ns:4,		/* PCB nsaved */
-			tt:9;		/* Trap type */
-		unsigned short pid;	/* PID */
-		u_int tstate;		/* tstate */
-		u_int tsp;		/* sp */
-		u_int tpc;		/* pc */
-		u_int tfault;		/* MMU tag access */
-	} trap_trace[], trap_trace_end[];
-	int i, start, full = 0;
+	int i, start = 0, full = 0, reverse = 0;
 	struct traptrace *end;
 
 	start = 0;
@@ -705,31 +716,42 @@ db_traptrace(addr, have_addr, count, modif)
 	{
 		register char c, *cp = modif;
 		if (modif)
-			while ((c = *cp++) != 0)
+			while ((c = *cp++) != 0) {
 				if (c == 'f')
 					full = 1;
+				if (c == 'r')
+					reverse = 1;
+			}
 	}
 
 	if (have_addr) {
-		start=addr;
+		start = addr / (sizeof (struct traptrace));
+		if (&trap_trace[start] > &trap_trace_end[0]) {
+			db_printf("Address out of range.\n");
+			return;
+		}
 		if (!full) end =  &trap_trace[start+1];
 	}
 
-	for (i=start; &trap_trace[i] < end ; i++) {
-		db_printf("%d:%d p:%d tt:%x:%lx:%p %p:%p", i, 
-			  (int)trap_trace[i].tl, (int)trap_trace[i].pid, 
-			  (int)trap_trace[i].tt, (u_long)trap_trace[i].tstate, 
-			  (u_long)trap_trace[i].tfault, (u_long)trap_trace[i].tsp,
-			  (u_long)trap_trace[i].tpc);
-		db_printsym((u_long)trap_trace[i].tpc, DB_STGY_PROC);
-		db_printf(": ");
-		if ((trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) &&
-		    curproc &&
-		    (curproc->p_pid == trap_trace[i].pid)) {
-			db_disasm((u_long)trap_trace[i].tpc, 0);
-		} else db_printf("\n");
+	db_printf("#:tl p:pid tt:tt:tstate:tfault sp:pc\n");
+	if (reverse) {
+		if (full && start)
+			for (i=start; --i;) {
+				db_print_trace_entry(&trap_trace[i], i);
+			}
+		i = (end - &trap_trace[0]);
+		while(--i > start) {
+			db_print_trace_entry(&trap_trace[i], i);
+		}
+	} else {
+		for (i=start; &trap_trace[i] < end ; i++) {
+			db_print_trace_entry(&trap_trace[i], i);
+		}
+		if (full && start)
+			for (i=0; i < start ; i++) {
+				db_print_trace_entry(&trap_trace[i], i);
+			}
 	}
-
 }
 
 /* 
@@ -848,6 +870,7 @@ struct db_command sparc_db_command_table[] = {
 	{ "pv",		db_dump_pv,	0,	0 },
 	{ "stack",	db_dump_stack,	0,	0 },
 	{ "tf",		db_dump_trap,	0,	0 },
+	{ "ts",		db_dump_ts,	0,	0 },
 	{ "traptrace",	db_traptrace,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 	{ "watch",	db_watch,	0,	0 },

@@ -1,8 +1,8 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/12/30 16:31:18 eeh Exp $	*/
-/* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
+/*	$NetBSD: pmap.c,v 1.48 2000/03/16 02:37:00 eeh Exp $	*/
+#undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
-/* #define BOOT_DEBUG */
-/* #define BOOT1_DEBUG */
+#undef BOOT_DEBUG
+#undef BOOT1_DEBUG
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -434,7 +434,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		    phys_msgbuf);
 #endif
 	if (prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, 
-			  -1/* sunos does this */) != -1)
+			  -1/* sunos does this */) == -1)
 		prom_printf("Failed to map msgbuf\r\n");
 #ifdef BOOT_DEBUG
 	else
@@ -491,7 +491,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * in, copy the kernel over, swap mappings, then finally, free the
 	 * old kernel.  Then we can continue with this.
 	 */
-	ksize = round_page(mp1->start - kernelstart);
+	ksize = round_page(kernelend - kernelstart);
 
 	if (ksegp & (4*MEG-1)) {
 #ifdef BOOT1_DEBUG
@@ -1472,7 +1472,7 @@ pmap_kenter_pa(va, pa, prot)
 	tsb_enter(pm->pm_ctx, va, tte.data.data);
 	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
 #if 1
-#if 0
+#if 1
 	/* this is correct */
 	dcache_flush_page(va);
 #else
@@ -1851,7 +1851,7 @@ pmap_enter(pm, va, pa, prot, flags)
 						}
 						/* Force reload -- protections may be changed */
 						tlb_flush_pte((npv->pv_va&PV_VAMASK), pm->pm_ctx);	
-#if 0
+#if 1
 						/* XXXXXX We should now flush the DCACHE to make sure */
 						dcache_flush_page((npv->pv_va&PV_VAMASK));
 #else
@@ -1904,7 +1904,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ASSERT((tsb[i].data.data & TLB_NFO) == 0);
 	}
 #if 1
-#if 0
+#if 1
 	/* this is correct */
 	dcache_flush_page(va);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1999/12/30 16:26:18 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.16 2000/03/16 02:36:58 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,9 +107,17 @@ union sir {
 #define SIR_NET		0
 #define SIR_CLOCK	1
 
-#define setsoftint()	ienab_bis(IE_L1)
-#define setsoftnet()	(sir.sir_which[SIR_NET] = 1, setsoftint())
-#define setsoftclock()	(sir.sir_which[SIR_CLOCK] = 1, setsoftint())
+extern struct intrhand soft01intr, soft01net, soft01clock;
+
+#if 0
+#define setsoftint()	send_softint(-1, IPL_SOFTINT, &soft01intr)
+#define setsoftnet()	send_softint(-1, IPL_SOFTNET, &soft01net)
+#define setsoftclock()	send_softint(-1, IPL_SOFTCLOCK, &soft01clock)
+#else
+void setsoftint __P((void));
+void setsoftnet __P((void));
+void setsoftclock __P((void));
+#endif
 
 int	want_ast;
 

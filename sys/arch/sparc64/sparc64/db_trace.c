@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 1999/11/06 20:18:50 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.11 2000/03/16 02:36:58 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -39,6 +39,7 @@
 void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
 void db_print_window __P((u_int64_t));
 
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
@@ -348,6 +349,28 @@ db_dump_trap(addr, have_addr, count, modif)
 			  (int64_t)kstack->rw_local[6], (int64_t)kstack->rw_local[7]);
 	}
 #endif
+}
+
+
+void
+db_dump_ts(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct trapstate	*ts;
+	int			i, tl;
+
+	/* Use our last trapframe? */
+	ts = &ddb_regs.ddb_ts;
+	tl = ddb_regs.ddb_tl;
+	for (i=0; i<tl; i++) {
+		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
+		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
+		       (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
+	}
+
 }
 
 

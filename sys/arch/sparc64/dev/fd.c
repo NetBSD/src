@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 2000/02/07 20:16:53 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 2000/03/16 02:36:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -77,6 +77,9 @@
 
 /* XXX misuse a flag to identify format operation */
 #define B_FORMAT B_XXX
+
+/* These machines are fast enough that doing this in assembly is silly. */
+#define	FDC_C_HANDLER
 
 #define FD_DEBUG
 #ifdef FD_DEBUG
@@ -257,24 +260,7 @@ void	fd_do_eject __P((struct fd_softc *));
 void	fd_mountroot_hook __P((struct device *));
 static void fdconf __P((struct fdc_softc *));
 
-#if PIL_FDSOFT == 4
-#define IE_FDSOFT	IE_L4
-#else
-#error 4
-#endif
-
-#ifdef FDC_C_HANDLER
-#if defined(SUN4M)
-#define FD_SET_SWINTR do {		\
-	if (CPU_ISSUN4M)		\
-		raise(0, PIL_FDSOFT);	\
-	else				\
-		ienab_bis(IE_L4);	\
-} while(0)
-#else
-#define AUDIO_SET_SWINTR ienab_bis(IE_FDSOFT)
-#endif /* defined(SUN4M) */
-#endif /* FDC_C_HANDLER */
+#define	FD_SET_SWINTR	send_softint(-1, PIL_FDSOFT, fdc->sc_sih)
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
@@ -1075,7 +1061,7 @@ fdchwintr(fdc)
 		if ((msr & NE7_NDM) == 0) {
 			fdcresult(fdc);
 			fdc->sc_istate = ISTATE_IDLE;
-			ienab_bis(IE_FDSOFT);
+			FD_SET_SWINTR;
 			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
 			break;
 		}

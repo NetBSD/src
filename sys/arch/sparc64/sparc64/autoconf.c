@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2000/01/16 03:10:58 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.27 2000/03/16 02:37:00 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ bootstrap(nctx)
 	 * Eventually we should drop all of this in favor of traversing
 	 * process address spaces during MMU faults.
 	 */
-	pmap_bootstrap(KERNBASE, (u_int)&end, nctx);
+	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
 }
 
 /*
@@ -342,6 +342,15 @@ bootpath_build()
 		case 's':
 			boothowto |= RB_SINGLE;
 			break;
+
+		case 't':
+		{
+			/* turn on traptrace w/o breaking into kdb */
+			extern int trap_trace_dis;
+
+			trap_trace_dis = 0;
+			break;
+		}
 		}
 	}
 }

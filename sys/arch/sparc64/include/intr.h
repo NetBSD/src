@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1999/05/30 02:37:10 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.2 2000/03/16 02:36:58 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define IPL_NONE	0	/* nothing */
+#define IPL_SOFTINT	1	/* softint */
 #define IPL_SOFTCLOCK	1	/* timeouts */
 #define IPL_SOFTNET	1	/* protocol stack */
 #define IPL_BIO		2	/* block I/O */
