@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.68 2004/04/14 04:45:28 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.69 2004/04/14 04:46:04 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.68 2004/04/14 04:45:28 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.69 2004/04/14 04:46:04 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -228,9 +228,6 @@ static struct addrinfo *get_ai __P((const struct addrinfo *,
 static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
-#if 0
-static int addrconfig __P((const struct addrinfo *));
-#endif
 #ifdef INET6
 static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *, u_int32_t *));
 #endif
