@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.1 2000/02/27 00:59:49 groo Exp $
+.\"	$NetBSD: envsys.4,v 1.2 2000/02/27 04:11:14 groo Exp $
 .\"
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -109,14 +109,14 @@ device.
 .It Dv ENVSYS_GRANGE (envsys_range_t)
 The caller fills in the
 .Va units
- member of:
+member of:
 .Bd -literal
 typedef struct envsys_range {
 	u_int low;
 	u_int high;
 
 	u_int units;	/* see GTREDATA */
-};
+} envsys_range_t;
 .Ed
 .Pp
 The driver fills in the
@@ -139,7 +139,7 @@ implies no sensors of the unit type specified exist.
 .It Dv ENVSYS_GTREDATA (envsys_tre_data)
 This command makes use of:
 .Bd -literal
-struct envsys_tre_data {
+typedef struct envsys_tre_data {
 	u_int sensor;
 	union {				/* all data is given */
 		u_int32_t data_us;	/* in microKelvins, */
@@ -150,17 +150,17 @@ struct envsys_tre_data {
 	u_int32_t	warnflags;	/* warning flags */
 	u_int32_t	validflags;	/* sensor valid flags */
 	u_int		units;		/* type of sensor */
-};
+} envsys_tre_data_t;
 .Ed
 .Pp
-At request time, the caller of this command fills the sensor
+At request time, the caller of this command fills only the
+.Va sensor
 member with the sensor number for which data is being
 requested.  The structure is returned with available data
 filled in by the driver.
 .Pp
-Valid
-.Va flags
-are:
+Zero or more of the following bits may be set in
+.Va validflags :
 .Pp
 .Bl -tag -width indent -compact -offset indent
 .It Dv ENVSYS_FVALID
@@ -172,7 +172,9 @@ Not set implies an illegal sensor number was requested.
 .It Dv ENVSYS_FAVGVALID
 Set if these fields are filled with valid data
 .Pp
-Although ENVSYS_FVALID might be implied from the absence of
+Although
+.Dv !ENVSYS_FVALID
+might be implied from the absence of
 all other *VALID flags, it is conceivable that some ICs have
 a period during which valid sensors contain invalid data.
 .El
@@ -206,17 +208,17 @@ are:
 .It Dv ENVSYS_SWATTS
 .Ir Dv ENVSYS_SAMPS
 .El
-.It Dv ENVSYS_STREINFO (envsys_basic_info)
-.It Dv ENVSYS_GTREINFO (envsys_basic_info)
+.It Dv ENVSYS_STREINFO (envsys_basic_info_t)
+.It Dv ENVSYS_GTREINFO (envsys_basic_info_t)
 These commands make use of:
 .Bd -literal
-struct envsys_basic_info {
+typedef struct envsys_basic_info {
 	u_int		sensor;		/* sensor number */
 	u_int		units;		/* type of sensor */
 	char		desc[33];	/* sensor description */
 	u_int		rpms;		/* for fans */
 	u_int32_t	validflags;	/* sensor valid flags */
-};
+} envsys_basic_info_t;
 .Ed
 .Pp
 .Dv ENVSYS_STREINFO is for setting this information in the driver,
@@ -248,5 +250,5 @@ retrieved data from an existing sensor.
 .Sh BUGS
 This entire API should be replaced by a
 .Xr sysctl 8
-or kevents interface.
+interface or a kernel events mechanism, should one be developed.
 
