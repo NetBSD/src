@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/11/13 21:10:57 fvdl Exp $
+#	$NetBSD: Makefile,v 1.5 2001/07/21 14:46:09 jdolecek Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -54,10 +54,20 @@ netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
+netbsd.INSTALL_PS2.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_PS2/netbsd ${RAMDISK_S}
+	cp ${KERNOBJDIR}/INSTALL_PS2/netbsd netbsd.tmp
+	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
+	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_S}
+	nm netbsd.tmp > netbsd.INSTALL_PS2.symbols
+	${STRIP} netbsd.tmp
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+
 KERNELS=netbsd.INSTALL.gz netbsd.INSTALL_TINY.gz netbsd.INSTALL_SMALL.gz \
-	netbsd.INSTALL_LAPTOP.gz
+	netbsd.INSTALL_LAPTOP.gz netbsd.INSTALL_PS2.gz
 KERNELSYMS=netbsd.INSTALL.symbols netbsd.INSTALL_TINY.symbols \
-	   netbsd.INSTALL_SMALL.symbols netbsd.INSTALL_LAPTOP.symbols
+	   netbsd.INSTALL_SMALL.symbols netbsd.INSTALL_LAPTOP.symbols \
+	   netbsd.INSTALL_PS2.symbols
 
 all: ${KERNELS}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/12/14 22:27:29 jmc Exp $
+#	$NetBSD: Makefile,v 1.24 2001/07/21 14:46:08 jdolecek Exp $
 
 SUBDIR=		ramdisk-big
 SUBDIR+=	ramdisk-small
@@ -8,6 +8,7 @@ SUBDIR+=	fdset
 SUBDIR+=	fdset-com
 SUBDIR+=	fdset-laptop
 SUBDIR+=	bootfloppy-big
+SUBDIR+=	bootfloppy-ps2
 SUBDIR+=	bootfloppy-small
 SUBDIR+=	bootfloppy-tiny
 
