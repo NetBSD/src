@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.1.2.2 1997/03/02 16:28:35 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.1.2.3 1997/03/04 14:33:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -40,7 +40,6 @@ struct swapent {
 	int	se_flags;
 	int	se_nblks;
 	int	se_priority;
-	char	se_name[32];	/* XXX MAXPATHNAMELEN */
 };
 
 struct swapinfo {

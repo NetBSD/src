@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.36.2.4 1997/03/04 13:21:17 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.36.2.5 1997/03/04 14:33:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -114,7 +114,6 @@ struct swapdev {
 #define swd_flags		swd_se.se_flags
 #define swd_nblks		swd_se.se_nblks
 #define swd_priority		swd_se.se_priority
-#define swd_name		swd_se.se_name
 	daddr_t			swd_mapoffset;
 	int			swd_mapsize;
 	struct extent		*swd_ex;
@@ -260,9 +259,6 @@ sys_swapon(p, v, retval)
 		nsdp->swd_flags = 0;
 		nsdp->swd_priority = (int)SCARG(uap, misc);
 		nsdp->swd_vp = vp;
-		/* XXX */
-		copyinstr(SCARG(uap, arg), &nsdp->swd_name,
-		    sizeof(nsdp->swd_name) - 1, 0);
 		if ((error = swap_on(p, nsdp)))
 			goto bad;
 		if (nspp) {
@@ -405,8 +401,7 @@ swap_on(p, sdp)
 	}
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWON)
-		printf("swap_on: dev %s: size %d, addr %ld\n", sdp->swd_name,
-		    size, addr);
+		printf("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr);
 #endif /* SWAPDEBUG */
 	sprintf(tmp, "swap0x%04x", count++);
 	ssize = EXTENT_FIXED_STORAGE_SIZE(nswapmap);
@@ -442,7 +437,7 @@ swap_off(p, sdp)
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWOFF)
-		printf("swap_off: %s\n", sdp->swd_name);
+		printf("swap_off: %x\n", sdp->swd_dev);
 #endif /* SWAPDEBUG */
 
 	/*
