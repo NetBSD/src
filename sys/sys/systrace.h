@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.9 2003/03/30 00:40:05 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.10 2003/06/03 05:24:00 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -65,14 +65,16 @@ struct str_msg_child {
 	pid_t new_pid;
 };
 
-#define SYSTR_MSG_ASK	1
-#define SYSTR_MSG_RES	2
-#define SYSTR_MSG_EMUL	3
-#define SYSTR_MSG_CHILD	4
-#define SYSTR_MSG_UGID	5
+#define SYSTR_MSG_ASK		1
+#define SYSTR_MSG_RES		2
+#define SYSTR_MSG_EMUL		3
+#define SYSTR_MSG_CHILD		4
+#define SYSTR_MSG_UGID		5
+#define SYSTR_MSG_POLICYFREE	6
 
 #define SYSTR_MSG_NOPROCESS(x) \
-	((x)->msg.msg_type == SYSTR_MSG_CHILD)
+	((x)->msg.msg_type == SYSTR_MSG_CHILD || \
+	 (x)->msg.msg_type == SYSTR_MSG_POLICYFREE)
 
 struct str_message {
 	int32_t msg_type;
