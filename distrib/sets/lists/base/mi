@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.446 2003/12/29 03:13:26 lukem Exp $
+# $NetBSD: mi,v 1.447 2004/01/02 16:23:02 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -333,6 +333,7 @@
 ./usr/X11R6/lib/modules/extensions		base-x11-root
 ./usr/X11R6/lib/modules/fonts			base-x11-root
 ./usr/X11R6/lib/modules/input			base-x11-root
+./usr/X11R6/libexec				base-x11-root
 ./usr/X11R6/man					base-x11-root
 ./usr/X11R6/man/cat1				base-x11-root
 ./usr/X11R6/man/cat3				base-x11-root
