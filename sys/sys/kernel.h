@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.9 1994/06/29 06:44:28 cgd Exp $	*/
+/*	$NetBSD: kernel.h,v 1.10 1994/09/18 21:48:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,6 +57,7 @@ extern volatile struct timeval time;
 extern struct timezone tz;			/* XXX */
 
 extern int tick;			/* usec per tick (1000000 / hz) */
+extern int tickadj;			/* "standard" clock skew, us./tick */
 extern int hz;				/* system clock's frequency */
 extern int stathz;			/* statistics clock's frequency */
 extern int profhz;			/* profiling clock's frequency */
