@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24 1997/11/13 03:16:54 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.25 1998/01/23 00:44:13 mycroft Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -178,8 +178,8 @@ isa_defaultirq()
 
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
-		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0, SDT_SYS386IGT,
-		    SEL_KPL);
+		setgate(&idt[ICU_OFFSET + i].gd, IDTVEC(intr)[i], 0,
+		    SDT_SYS386IGT, SEL_KPL);
   
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.61 1998/01/12 18:59:15 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.62 1998/01/23 00:44:15 mycroft Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -261,10 +261,10 @@ npxprobe(parent, match, aux)
 	irq = NRSVIDT + ia->ia_irq;
 	save_eflags = read_eflags();
 	disable_intr();
-	save_idt_npxintr = idt[irq];
-	save_idt_npxtrap = idt[16];
-	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
-	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	save_idt_npxintr = idt[irq].gd;
+	save_idt_npxtrap = idt[16].gd;
+	setgate(&idt[irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL);
 	save_imen = imen;
 	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
 	SET_ICUS();
@@ -289,8 +289,8 @@ npxprobe(parent, match, aux)
 
 	imen = save_imen;
 	SET_ICUS();
-	idt[irq] = save_idt_npxintr;
-	idt[16] = save_idt_npxtrap;
+	idt[irq].gd = save_idt_npxintr;
+	idt[16].gd = save_idt_npxtrap;
 	write_eflags(save_eflags);
 	return (result);
 }
