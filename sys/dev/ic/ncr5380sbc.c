@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.32 2000/03/18 16:13:26 mycroft Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.33 2000/03/18 17:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -416,9 +416,10 @@ ncr5380_reset_scsibus(sc)
  * This may also called for a DMA timeout (at splbio).
  */
 int
-ncr5380_intr(sc)
-	struct ncr5380_softc *sc;
+ncr5380_intr(arg)
+	void *arg;
 {
+	struct ncr5380_softc *sc = arg;
 	int claimed = 0;
 
 	/*
