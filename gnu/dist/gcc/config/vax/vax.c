@@ -75,6 +75,12 @@ print_operand_address (file, addr)
   register rtx reg1, reg2, breg, ireg;
   rtx offset;
 
+  if (TARGET_DEBUGADDR)
+    {
+      fprintf(stderr, "\n======= Print Operand\n");
+      debug_rtx(addr);
+    }
+
  retry:
   switch (GET_CODE (addr))
     {
@@ -231,7 +237,9 @@ print_operand_address (file, addr)
       /* If REG1 is non-zero, figure out if it is a base or index register.  */
       if (reg1)
 	{
-	  if (breg != 0 || (offset && GET_CODE (offset) == MEM))
+	  if (breg != 0 || (offset && GET_CODE (offset) == MEM)
+	      || ((flag_pic || TARGET_HALFPIC)
+		  && offset && GET_CODE (offset) == SYMBOL_REF))
 	    {
 	      if (ireg)
 		abort ();
@@ -709,7 +717,7 @@ check_float_value (mode, d, overflow)
      && GET_CODE (XEXP (XEXP ((X), 0), 0)) == SYMBOL_REF))
    
 #define INDIRECTABLE_CONSTANT_ADDRESS_P(X) \
-  (!(flag_pic || TARGET_HALFPIC) ? CONSTANT_ADDRESS_P(X)		\
+  (!(flag_pic /* || TARGET_HALFPIC*/) ? CONSTANT_ADDRESS_P(X)		\
    : (GET_CODE (X) == LABEL_REF						\
       || GET_CODE (X) == SYMBOL_REF					\
       || (GET_CODE (X) == CONST && INDIRECTABLE_CONSTANT_P (X))		\
@@ -723,14 +731,14 @@ check_float_value (mode, d, overflow)
        && GET_CODE (XEXP (X, 0)) == REG					\
        && XREG_OK_FOR_BASE_P (XEXP (X, 0), STRICT)			\
        && GET_CODE (XEXP (X, 1)) != SYMBOL_REF				\
-       && ((flag_pic || TARGET_HALFPIC)					\
+       && ((flag_pic /*|| TARGET_HALFPIC*/)				\
 		    ? GET_CODE (XEXP (X, 1)) == CONST_INT		\
 		    : INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1))))	\
    || (GET_CODE (X) == PLUS						\
        && GET_CODE (XEXP (X, 1)) == REG					\
        && XREG_OK_FOR_BASE_P (XEXP (X, 1), STRICT)			\
        && GET_CODE (XEXP (X, 0)) != SYMBOL_REF				\
-       && ((flag_pic || TARGET_HALFPIC)					\
+       && ((flag_pic /*|| TARGET_HALFPIC*/)				\
 		    ? GET_CODE (XEXP (X, 0)) == CONST_INT		\
 		    : INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1)))))
 
@@ -839,19 +847,19 @@ legitimate_address_p(mode, xbar, strict)
   GO_IF_LEGITIMATE_ADDRESS2(mode, xbar, win, strict);
   return 0;
  win:
-  if (flag_pic)
+  if (flag_pic || TARGET_HALFPIC)
     {
       if (GET_CODE (xbar) == PLUS 
 	  && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
 	       && GET_CODE (XEXP (xbar, 0)) == REG)
+	      || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
+		  && GET_CODE (XEXP (xbar, 1)) == REG)
 	      || (GET_CODE (XEXP (xbar, 0)) == MEM
 		  && GET_CODE (XEXP (XEXP (xbar, 0), 0)) == SYMBOL_REF
 		  && GET_CODE (XEXP (xbar, 1)) == REG)
 	      || (GET_CODE (XEXP (xbar, 1)) == MEM
 		  && GET_CODE (XEXP (XEXP (xbar, 1), 0)) == SYMBOL_REF
-		  && GET_CODE (XEXP (xbar, 0)) == MULT)
-	      || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
-		  && GET_CODE (XEXP (xbar, 1)) == REG)))
+		  && GET_CODE (XEXP (xbar, 0)) == MULT)))
 	return 0;
     }
   if (TARGET_DEBUGADDR
@@ -880,51 +888,8 @@ vax_double_indirect_operand (op, mode)
      register rtx op;
      enum machine_mode mode;
 {
-  int count = 0;
- retry:
-  /* Before reload, a SUBREG isn't in memory (see memory_operand, above).  */
-  if (! reload_completed
-      && GET_CODE (op) == SUBREG && GET_CODE (SUBREG_REG (op)) == MEM)
-    {
-      register int offset = SUBREG_WORD (op) * UNITS_PER_WORD;
-      rtx inner = SUBREG_REG (op);
-
-      if (BYTES_BIG_ENDIAN)
-	offset -= (MIN (UNITS_PER_WORD, GET_MODE_SIZE (GET_MODE (op)))
-		   - MIN (UNITS_PER_WORD, GET_MODE_SIZE (GET_MODE (inner))));
-
-      if (mode != VOIDmode && GET_MODE (op) != mode)
-	return 0;
-
-      /* The only way that we can have a general_operand as the resulting
-	 address is if OFFSET is zero and the address already is an operand
-	 or if the address is (plus Y (const_int -OFFSET)) and Y is an
-	 operand.  */
-
-      if (offset == 0)
-	op = XEXP (inner, 0);
-      else if (GET_CODE (XEXP (inner, 0)) == PLUS
-		&& GET_CODE (XEXP (XEXP (inner, 0), 1)) == CONST_INT
-		&& INTVAL (XEXP (XEXP (inner, 0), 1)) == -offset)
-	op = XEXP (XEXP (inner, 0), 0);
-      else
-	return 0;
-    }
-  else if (GET_CODE (op) == MEM && memory_operand (op, mode))
-    {
-      op = XEXP (op, 0);
-    }
-  else
-    return 0;
-  if (!general_operand (op, Pmode))
-    return 0;
-  mode = Pmode;
-  if (count == 0)
-    {
-      count++;
-      goto retry;
-    }
-  if (count == 1)
+  if (GET_CODE (op) == MEM && GET_CODE (XEXP (op, 0)) == MEM
+      && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF)
     return 1;
   return 0;
 }
@@ -1004,8 +969,6 @@ vax_nonimmediate_operand (op, mode)
 {
   return (vax_general_operand (op, mode) && ! CONSTANT_P (op));
 }
-
-/* Returns 1 if OP is a sum of a symbol reference and a constant.  */
 
 int
 symbolic_operand (op, mode)
