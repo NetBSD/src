@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_ceil.S,v 1.2 1994/03/12 01:30:35 jtc Exp $")
+
 ENTRY(ceil)
 	pushl	%ebp
 	movl	%esp,%ebp

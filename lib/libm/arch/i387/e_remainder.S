@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: e_remainder.S,v 1.2 1994/03/12 01:30:31 jtc Exp $")
+
 ENTRY(__ieee754_remainder)
 	fldl	12(%esp)
 	fldl	4(%esp)
