@@ -138,8 +138,8 @@ return 0,
 and
 .Fn ftell
 returns the current offset.
-Otherwise, \-1 is returned and the global variable errno is set to
-indicate the error.
+Otherwise, a nonzero value is returned and the global variable errno is 
+set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
 .It Bq Er EBADF
