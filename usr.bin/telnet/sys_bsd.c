@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.13 1998/07/09 18:34:02 msaitoh Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.14 1998/12/22 05:26:22 mcr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.13 1998/07/09 18:34:02 msaitoh Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.14 1998/12/22 05:26:22 mcr Exp $");
 #endif
 #endif /* not lint */
 
@@ -1000,36 +1000,33 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		 */
     int returnValue = 0;
     static struct timeval TimeValue = { 0 };
+    int maxfd;
+
+    maxfd = -1;
+#define MAXFD(fd) if(maxfd < (fd)) maxfd=(fd)
 
     if (netout) {
 	FD_SET(net, &obits);
+	MAXFD(net);
     }
     if (ttyout) {
 	FD_SET(tout, &obits);
+	MAXFD(tout);
     }
-#if	defined(TN3270)
     if (ttyin) {
 	FD_SET(tin, &ibits);
+	MAXFD(tin);
     }
-#else	/* defined(TN3270) */
-    if (ttyin) {
-	FD_SET(tin, &ibits);
-    }
-#endif	/* defined(TN3270) */
-#if	defined(TN3270)
     if (netin) {
 	FD_SET(net, &ibits);
+	MAXFD(netin);
     }
-#   else /* !defined(TN3270) */
-    if (netin) {
-	FD_SET(net, &ibits);
-    }
-#   endif /* !defined(TN3270) */
     if (netex) {
 	FD_SET(net, &xbits);
+	MAXFD(net);
     }
-    if ((c = select(16, &ibits, &obits, &xbits,
-			(poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
+    if ((c = select(maxfd+1, &ibits, &obits, &xbits,
+		    (poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
 	if (c == -1) {
 		    /*
 		     * we can get EINTR if we are in line mode,
