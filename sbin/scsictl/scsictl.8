@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.17 2002/10/03 15:41:47 wiz Exp $
+.\"	$NetBSD: scsictl.8,v 1.18 2003/09/01 04:24:55 mycroft Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,6 +188,10 @@ If the drive's cache parameters are savable, specifying
 .Ar save
 after the cache enable state will cause the parameters to be saved in
 non-volatile storage.
+.Pp
+.Nm flushcache
+.Pp
+Explicitly flushes the write cache.
 .Sh BUS COMMANDS
 The following commands are supported for SCSI busses:
 .Pp

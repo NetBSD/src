@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.20 2003/06/23 11:53:43 agc Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.21 2003/09/01 04:24:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.20 2003/06/23 11:53:43 agc Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.21 2003/09/01 04:24:55 mycroft Exp $");
 #endif
 
 
@@ -94,6 +94,7 @@ void	device_stop __P((int, char *[]));
 void	device_tur __P((int, char *[]));
 void	device_getcache __P((int, char *[]));
 void	device_setcache __P((int, char *[]));
+void	device_flushcache __P((int, char *[]));
 
 struct command device_commands[] = {
 	{ "format",	"[blocksize [immediate]]", 	device_format },
@@ -108,6 +109,7 @@ struct command device_commands[] = {
 	{ "tur",	"",			device_tur },
 	{ "getcache",	"",			device_getcache },
 	{ "setcache",	"none|r|w|rw [save]",	device_setcache },
+	{ "flushcache",	"",			device_flushcache },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -698,6 +700,34 @@ device_setcache(argc, argv)
 	    data.caching_params.pg_length;
 
 	scsi_mode_select(fd, byte2, &data, dlen);
+}
+
+/*
+ * device_flushcache:
+ *
+ *      Issue a FLUSH CACHE command to a SCSI drevice
+ */
+#ifndef	SCSI_FLUSHCACHE
+#define	SCSI_FLUSHCACHE	0x35
+#endif
+void
+device_flushcache(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scsipi_test_unit_ready cmd;	/* close enough */
+
+	/* No arguments. */
+	if (argc != 0)
+		usage();
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.opcode = SCSI_FLUSHCACHE;
+
+	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+
+	return;
 }
 
 /*
