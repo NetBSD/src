@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.79 2003/06/16 19:24:51 heas Exp $
+#	$NetBSD: files.sparc64,v 1.80 2003/07/17 21:02:03 petrov Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -166,6 +166,11 @@ file	arch/sparc64/dev/ffb.c			ffb
 
 attach ffb at mainbus with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
+
+# CP1500/1400 watchdog timer
+device	pldwdog: sysmon_wdog
+attach	pldwdog at ebus
+file	arch/sparc64/dev/pld_wdog.c		pldwdog
 
 #
 # Generic Sun stuff
