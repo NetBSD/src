@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.181 2003/04/27 13:31:11 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.182 2003/05/04 01:19:17 gmcgarry Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.181 $"
+ident		"ALPHA-$Revision: 1.182 $"
 
 maxusers 32
 
@@ -594,4 +594,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
