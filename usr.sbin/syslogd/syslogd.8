@@ -1,3 +1,5 @@
+.\"	$NetBSD: syslogd.8,v 1.15 1999/11/30 12:08:49 ad Exp $
+.\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,7 +32,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: syslogd.8,v 1.14 1999/09/10 03:26:49 simonb Exp $
 .\"
 .Dd February 18, 1999
 .Dt SYSLOGD 8
@@ -113,7 +114,7 @@ and from the special device
 .Pp
 .Nm
 creates the file
-.Pa /var/run/syslog.pid ,
+.Pa /var/run/syslogd.pid ,
 and stores its process
 id there.
 This can be used to kill or reconfigure
@@ -140,10 +141,10 @@ This priority code should map into the priorities defined in the
 include file
 .Aq Pa sys/syslog.h .
 .Sh FILES
-.Bl -tag -width /var/run/syslog.pid -compact
+.Bl -tag -width /var/run/syslogd.pid -compact
 .It Pa /etc/syslog.conf
 The configuration file.
-.It Pa /var/run/syslog.pid
+.It Pa /var/run/syslogd.pid
 The process id of current
 .Nm "" .
 .It Pa /var/run/log
