@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.24 1999/06/23 17:12:15 frueauf Exp $
+#	$NetBSD: special,v 1.25 2000/03/10 20:01:51 windsor Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -17,6 +17,11 @@ mem		type=char mode=0640 uname=root gname=kmem
 etc		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel
 aliases.db	type=file mode=0644 uname=root gname=wheel
+amd		type=dir mode=0755 uname=root gname=wheel optional
+..	#etc/amd
+apm		type=dir mode=0755 uname=root gname=wheel optional
+..	#etc/apm
+changelist	type=file mode=0644 uname=root gname=wheel
 # XXX remove crontab entry completely ?
 crontab		type=file mode=0644 uname=root gname=wheel optional
 csh.cshrc	type=file mode=0644 uname=root gname=wheel
@@ -24,29 +29,47 @@ csh.login	type=file mode=0644 uname=root gname=wheel
 csh.logout	type=file mode=0644 uname=root gname=wheel
 daily		type=file mode=0644 uname=root gname=wheel
 daily.conf	type=file mode=0644 uname=root gname=wheel
+dhclient-script	type=file mode=0555 uname=root gname=wheel
 disklabels	type=dir mode=0755 uname=root gname=wheel ignore
-..	#disklabels
+..	#etc/disklabels
+dm.conf		type=file mode=0644 uname=root gname=wheel
 exports		type=file mode=0644 uname=root gname=wheel optional
 fstab		type=file mode=0644 uname=root gname=wheel
+ftpchroot	type=file mode=0644 uname=root gname=wheel
 ftpusers	type=file mode=0644 uname=root gname=wheel
+gettytab	type=file mode=0644 uname=root gname=wheel
 group		type=file mode=0644 uname=root gname=wheel
+hosts		type=file mode=0644 uname=root gname=wheel
 hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
 inetd.conf	type=file mode=0644 uname=root gname=wheel
 kerberosIV	type=dir mode=0755 uname=root gname=wheel ignore optional
-..	#kerberosIV
+..	#etc/kerberosIV
 ld.so.conf	type=file mode=0644 uname=root gname=wheel optional
 lkm.conf	type=file mode=0644 uname=root gname=wheel optional
+localtime	type=link mode=0755 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
+mailer.conf	type=file mode=0644 uname=root gname=wheel
+man.conf	type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
+mk.conf		type=file mode=0644 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.conf	type=file mode=0644 uname=root gname=wheel
+mrouted.conf	type=file mode=0644 uname=root gname=wheel
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0444 uname=root gname=wheel
-..	#mtree
+..	#etc/mtree
 named.boot	type=file mode=0644 uname=root gname=wheel optional
+named.conf	type=file mode=0644 uname=root gname=wheel optional
+namedb		type=dir mode=0755 uname=root gname=wheel
+..	#etc/namedb
 netstart	type=file mode=0644 uname=root gname=wheel
+networks	type=file mode=0644 uname=root gname=wheel
 newsyslog.conf	type=file mode=0644 uname=root gname=wheel
+nsswitch.conf	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
+phones		type=file mode=0644 uname=root gname=wheel
+ppp		type=dir mode=0755 uname=root gname=wheel
+..	#etc/ppp
 printcap	type=file mode=0644 uname=root gname=wheel
 profile		type=file mode=0644 uname=root gname=wheel
 protocols	type=file mode=0644 uname=root gname=wheel
@@ -57,6 +80,8 @@ rc.local	type=file mode=0644 uname=root gname=wheel
 rc.shutdown	type=file mode=0644 uname=root gname=wheel
 rc.shutdown.local	type=file mode=0644 uname=root gname=wheel optional
 rc.subr		type=file mode=0644 uname=root gname=wheel
+rc.wscons	type=file mode=0644 uname=root gname=wheel
+remote		type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 rpc		type=file mode=0644 uname=root gname=wheel
 security	type=file mode=0644 uname=root gname=wheel
@@ -69,6 +94,7 @@ syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel
 weekly.conf	type=file mode=0644 uname=root gname=wheel
+wscons.conf	type=file mode=0644 uname=root gname=wheel
 ..	#etc
 
 root		type=dir mode=0755 uname=root gname=wheel
@@ -103,6 +129,10 @@ bin		type=dir mode=0755 uname=root gname=wheel ignore
 lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/local/lib
 ..	#usr/local
+pkg		type=dir mode=0755 uname=root gname=wheel ignore optional
+..	#usr/pkg
+pkgsrc		type=dir mode=0755 uname=root gname=wheel ignore optional
+..	#usr/pkgsrc
 sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
