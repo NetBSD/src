@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,9 +73,11 @@
 #ifdef _KERNEL
 /* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
 #ifdef __STDC__
-#define IDTVEC(name)    ALIGN_TEXT; .globl X ## name; X ## name:
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl X ## name; .type X ## name,@function; X ## name:
 #else 
-#define IDTVEC(name)    ALIGN_TEXT; .globl X/**/name; X/**/name:
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl X/**/name; .type X/**/name,@function; X/**/name:
 #endif /* __STDC__ */ 
 #endif /* _KERNEL */
 
