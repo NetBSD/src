@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.581 2003/10/18 01:33:16 lukem Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.582 2003/10/18 18:53:09 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.585 2003/10/18 01:32:30 lukem Exp 
+ *	NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp 
  */
 
 /*
@@ -6014,6 +6014,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Philips",
 	    "SAA7135HL PCI A/V broadcast decoder",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7146AH,
+	    0,
+	    "Philips",
+	    "SAA7146AH PCI Multimedia bridge",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
