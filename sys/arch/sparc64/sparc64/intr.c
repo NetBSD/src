@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2000/09/29 00:27:13 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.35 2000/12/03 14:49:50 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,14 +313,14 @@ intr_establish(level, ih)
 void *
 softintr_establish(level, fun, arg)
 	int level; 
-	int (*fun) __P((void *));
+	void (*fun) __P((void *));
 	void *arg;
 {
 	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
 	bzero(ih, sizeof(*ih));
-	ih->ih_fun = fun;
+	ih->ih_fun = (int (*) __P((void *)))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_pending = 0;
