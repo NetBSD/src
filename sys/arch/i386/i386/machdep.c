@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.33 1993/07/04 10:48:39 cgd Exp $
+ *	$Id: machdep.c,v 1.34 1993/07/05 01:53:56 cgd Exp $
  */
 
 #include "npx.h"
@@ -1258,6 +1258,7 @@ cpu_exec_prep_oldzmagic(p, epp)
   epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
   epp->ep_minsaddr = USRSTACK;
   epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+  epp->ep_entry = execp->a_entry;
 
   /* check if vnode is in open for writing, because we want to demand-page
    * out of it.  if it is, don't do it, for various reasons
