@@ -1,13 +1,14 @@
-#	$NetBSD: MALTA,v 1.4 2002/04/02 05:30:40 lukem Exp $
+#	$NetBSD: MALTA,v 1.5 2002/04/08 14:13:14 simonb Exp $
 
 #include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
 include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32
 
 options 	MIPS32
+options 	MIPS64
 options 	NOFPU		# No FPU
 options 	SOFTFLOAT	# emulate FPU insn
 
