@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.17 1997/11/30 15:13:32 drochner Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.18 1997/12/17 01:32:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -122,6 +122,13 @@ sb_isapnp_attach(parent, self, aux)
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isapnp_attach_args *ipa = aux;
 
+	printf("\n");
+
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
 	sc->sc_ic = ipa->ipa_ic;
 
 	sc->sc_iot = ipa->ipa_iot;
@@ -144,13 +151,6 @@ sb_isapnp_attach(parent, self, aux)
 	 * routines
 	 */
 	sc->sc_isa = parent->dv_parent;
-
-	printf("\n");
-
-	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (!sbmatch(sc)) {
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
