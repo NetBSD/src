@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1995/05/16 21:16:37 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.46 1995/06/26 22:41:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,6 +116,14 @@ int	msgbufmapped = 1;	/* message buffer is always mapped */
  */
 int   safepri = 0;
 
+/*
+ * dvmamap is used to manage DVMA memory. Note: this coincides with
+ * the memory range in `phys_map' (which is mostly a place-holder).
+ */
+struct map *dvmamap;
+vm_offset_t dvmabase;
+static int ndvmamap;	/* # of entries in dvmamap */
+
 caddr_t allocsys();
 
 /*
@@ -212,6 +220,13 @@ cpu_startup()
 	phys_map = vm_map_create(pmap_kernel(), DVMA_BASE, DVMA_END, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
+	/*
+	 * For now, allocate half of DVMA space for a (privately managed)
+	 * pool of addresses for double mappings.
+	 */
+	dvmabase = kmem_alloc_wait(phys_map, (DVMA_END-DVMA_BASE)/2);
+	rminit(dvmamap, btoc((DVMA_END-DVMA_BASE)/2),
+		vtorc(dvmabase), "dvmamap", ndvmamap);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -312,6 +327,11 @@ allocsys(v)
 	}
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
+	/*
+	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
+	 * and one for each process too (PHYSIO).
+	 */
+	valloc(dvmamap, struct map, ndvmamap = maxproc + ((nbuf / 4) &~ 1));
 	return (v);
 }
 
