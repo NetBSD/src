@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1996/03/17 01:26:35 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1996/03/20 12:41:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -38,6 +38,7 @@
 #include <sys/disklabel.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
+#include <atari/atari/device.h>
 
 void configure __P((void));
 static void setroot __P((void));

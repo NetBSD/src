@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1996/02/22 10:10:47 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1996/03/20 12:41:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
 #include <machine/ahdilabel.h>
@@ -62,7 +63,9 @@ static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
  * XXX unknown function but needed for /sys/scsi to link
  */
 int
-dk_establish()
+dk_establish(disk, device)
+	struct disk	*disk;
+	struct device	*device;
 {
 	return(-1);
 }
@@ -88,7 +91,6 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_flags |= B_ERROR;
 			return(-1);
 		}
-
 		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	} else {

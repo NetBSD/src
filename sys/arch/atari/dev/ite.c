@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.10 1996/03/19 13:15:34 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.11 1996/03/20 12:41:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,16 +91,58 @@ u_char	cons_tabs[MAX_TABS];
 struct ite_softc *kbd_ite;
 int kbd_init;
 
-static void iteprecheckwrap __P((struct ite_softc *));
-static void itecheckwrap __P((struct ite_softc *));
+static __inline__ int  atoi __P((const char *));
+static __inline__ int  ite_argnum __P((struct ite_softc *));
+static __inline__ int  ite_zargnum __P((struct ite_softc *));
+static __inline__ void ite_cr __P((struct ite_softc *));
+static __inline__ void ite_crlf __P((struct ite_softc *));
+static __inline__ void ite_clrline __P((struct ite_softc *));
+static __inline__ void ite_clrscreen __P((struct ite_softc *));
+static __inline__ void ite_clrtobos __P((struct ite_softc *));
+static __inline__ void ite_clrtobol __P((struct ite_softc *));
+static __inline__ void ite_clrtoeol __P((struct ite_softc *));
+static __inline__ void ite_clrtoeos __P((struct ite_softc *));
+static __inline__ void ite_dnchar __P((struct ite_softc *, int));
+static __inline__ void ite_inchar __P((struct ite_softc *, int));
+static __inline__ void ite_inline __P((struct ite_softc *, int));
+static __inline__ void ite_lf __P((struct ite_softc *));
+static __inline__ void ite_dnline __P((struct ite_softc *, int));
+static __inline__ void ite_rlf __P((struct ite_softc *));
+static __inline__ void ite_sendstr __P((char *));
+static __inline__ void snap_cury __P((struct ite_softc *));
 
+static void	alignment_display __P((struct ite_softc *));
 static char	*index __P((const char *, int));
-static __inline__ int	atoi __P((const char *));
+static struct ite_softc *getitesp __P((dev_t));
+static void	itecheckwrap __P((struct ite_softc *));
+static void	iteprecheckwrap __P((struct ite_softc *));
+static void	itestart __P((struct tty *));
 static void	ite_switch __P((int));
+static void	repeat_handler __P((void *));
+
 void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
-int itematch __P((struct device *, void *, void *));
+int  itematch __P((struct device *, void *, void *));
+
+/*
+ * Standard character device functions.
+ */
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_stop(itestop);
+
+/*
+ * Console specific types.
+ */
+dev_type_cnprobe(itecnprobe);
+dev_type_cninit(itecninit);
+dev_type_cngetc(itecngetc);
+dev_type_cnputc(itecnputc);
 
 struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
@@ -197,7 +239,7 @@ void		*auxp;
 	}
 }
 
-struct ite_softc *
+static struct ite_softc *
 getitesp(dev)
 	dev_t dev;
 {
@@ -445,12 +487,12 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
 }
 
-void
+int
 itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
 
 struct tty *
@@ -824,7 +866,6 @@ static u_char tout_pending;
 
 /*ARGSUSED*/
 static void
-
 repeat_handler(arg)
 void *arg;
 {
@@ -1333,7 +1374,6 @@ index (cp, ch)
   while (*cp && *cp != ch) cp++;
   return *cp ? (char *) cp : 0;
 }
-
 
 
 static __inline__ int
