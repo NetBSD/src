@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.26 2003/03/27 15:36:02 yamt Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.27 2003/04/11 16:15:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 
 int	verbose = 0;
 int	readonly = 0;
+int	force = 0;
 char	*tabname;
 
 int	config __P((char *, char *, char *, int));
@@ -118,8 +119,11 @@ main(argc, argv)
 {
 	int ch, rv, action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "cf:lrt:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "Fcf:lrt:uv")) != -1) {
 		switch (ch) {
+		case 'F':
+			force = 1;
+			break;
 		case 'c':
 			action = VND_CONFIG;
 			break;
@@ -240,12 +244,14 @@ config(dev, file, geom, action)
 	}
 
 	if (readonly)
-		vndio.vnd_flags = VNDIOF_READONLY;
+		vndio.vnd_flags |= VNDIOF_READONLY;
 
 	/*
 	 * Clear (un-configure) the device
 	 */
 	if (action == VND_UNCONFIG) {
+		if (force)
+			vndio.vnd_flags |= VNDIOF_FORCE;
 		rv = ioctl(fd, VNDIOCCLR, &vndio);
 		if (rv)
 			warn("%s: VNDIOCCLR", rdev);
