@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.16 1996/12/20 20:17:30 sommerfe Exp $	*/
+/*	$NetBSD: login.c,v 1.17 1997/02/11 08:15:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.16 1996/12/20 20:17:30 sommerfe Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.17 1997/02/11 08:15:10 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -237,7 +237,7 @@ main(argc, argv)
 				badlogin(tbuf);
 			failures = 0;
 		}
-		(void)strcpy(tbuf, username);
+		(void)strncpy(tbuf, username, sizeof(tbuf) - 1);
 
 		if (pwd = getpwnam(username))
 			salt = pwd->pw_passwd;
@@ -450,8 +450,8 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
-	    p + 1 : pwd->pw_shell);
+	(void)strncpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
+	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 2);
 
 	if (setlogin(pwd->pw_name) < 0)
 		syslog(LOG_ERR, "setlogin() failure: %m");
