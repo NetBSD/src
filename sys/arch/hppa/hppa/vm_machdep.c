@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 2004/09/17 14:11:21 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14.6.1 2005/02/02 09:54:48 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2004/09/17 14:11:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14.6.1 2005/02/02 09:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,11 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
 
-	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
+	kva = vm_map_min(phys_map);
+	if (uvm_map(phys_map, &kva, size, NULL, uva, 0,
+	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_KMF_WAITVA | UVM_FLAG_QUANTUM)))
+		panic("vmapbuf: space");
 	bp->b_data = (caddr_t)(kva + off);
 	npf = btoc(size);
 	while (npf--) {
@@ -305,7 +309,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	pmap = vm_map_pmap(phys_map);
 	pmap_remove(pmap, addr, addr + len);
 	pmap_update(pmap);
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_unmap1(phys_map, addr, len, UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
