@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.6 1995/02/27 05:51:55 cgd Exp $	*/
+/*	$NetBSD: sleep.c,v 1.7 1995/03/04 01:56:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD";
+static char rcsid[] = "$NetBSD: sleep.c,v 1.7 1995/03/04 01:56:08 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
