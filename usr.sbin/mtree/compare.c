@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.17 1998/10/10 07:50:28 mrg Exp $	*/
+/*	$NetBSD: compare.c,v 1.18 1998/12/06 19:07:53 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.17 1998/10/10 07:50:28 mrg Exp $");
+__RCSID("$NetBSD: compare.c,v 1.18 1998/12/06 19:07:53 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
 #include <fts.h>
 #include <errno.h>
+#include <md5.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -79,6 +81,7 @@ compare(name, s, p)
 	u_int32_t len, val;
 	int fd, label;
 	char *cp, *tab;
+	char md5buf[35];
 
 	tab = NULL;
 	label = 0;
@@ -249,6 +252,22 @@ typeerr:		LABEL;
 			tab = "\t";
 		}
 	}
+	if (s->flags & F_MD5) {
+		if (MD5File(p->fts_accpath, md5buf) == NULL) {
+			LABEL;
+			(void)printf("%smd5: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->md5sum, md5buf)) {
+				LABEL;
+				(void)printf("%smd5 (0x%s, 0x%s)\n",
+				    tab, s->md5sum, md5buf);
+			}
+			tab = "\t";
+		}
+	}
+
 	if (s->flags & F_SLINK && strcmp(cp = rlink(name), s->slink)) {
 		LABEL;
 		(void)printf("%slink ref (%s, %s)\n", tab, cp, s->slink);
