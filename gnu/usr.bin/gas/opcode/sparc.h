@@ -20,7 +20,7 @@ along with GAS or GDB; see the file COPYING.	If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.	*/
 
 /*
- * $Id: sparc.h,v 1.4 1994/02/03 23:30:09 pk Exp $
+ * $Id: sparc.h,v 1.5 1997/03/04 16:47:20 pk Exp $
  */
 
  /* FIXME-someday: perhaps the ,a's and such should be embedded in the
@@ -777,6 +777,7 @@ condfc("fbule",	"cb013", 0xe, 0),
 { "unimp",	F2(0x0, 0x0), 0xffc00000, "n", 0, v6 },
 
 { "iflush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"1+2", 0, v6 },
+{ "iflush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|SIMM13(~0),	"1", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"1+i", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"i+1", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"i", 0, v6 },
