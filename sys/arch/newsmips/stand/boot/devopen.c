@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1999/07/08 11:48:05 tsubai Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1999/12/22 05:54:41 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -29,8 +29,12 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <netinet/in.h>
+#include <lib/libsa/nfs.h>
 
+#include <machine/apcall.h>
 #include <machine/romcall.h>
+#include <promdev.h>
 
 #ifdef BOOT_DEBUG
 # define DPRINTF printf
@@ -47,14 +51,18 @@ struct devsw devsw[] = {
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
-struct fs_ops file_system[] = {
+struct fs_ops file_system_ufs[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
 };
+struct fs_ops file_system_nfs[] = {
+	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+};
+struct fs_ops file_system[1];
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
-struct romdev {
-	int fd;
-} romdev;
+struct romdev romdev;
+
+extern int apbus;
 
 int
 devopen(f, fname, file)
@@ -65,23 +73,43 @@ devopen(f, fname, file)
 	int fd;
 	char devname[32];
 	char *cp;
+	int error = 0;
 
 	DPRINTF("devopen: %s\n", fname);
 
 	strcpy(devname, fname);
 	cp = strchr(devname, ')') + 1;
 	*cp = 0;
-	fd = rom_open(devname, 0);
+	if (apbus)
+		fd = apcall_open(devname, 2);
+	else
+		fd = rom_open(devname, 2);
 
 	DPRINTF("devname = %s, fd = %d\n", devname, fd);
 	if (fd == -1)
 		return -1;
 
 	romdev.fd = fd;
+	if (strncmp(devname, "sonic", 5) == 0)
+		romdev.devtype = DT_NET;
+	else
+		romdev.devtype = DT_BLOCK;
 
 	f->f_dev = devsw;
 	f->f_devdata = &romdev;
 	*file = strchr(fname, ')') + 1;
+
+	if (romdev.devtype == DT_BLOCK)
+		bcopy(file_system_ufs, file_system, sizeof(file_system));
+	else {	/* DT_NET */
+		bcopy(file_system_nfs, file_system, sizeof(file_system));
+
+		if ((error = net_open(&romdev)) != 0) {
+			printf("Can't open NFS network connection on `%s'\n",
+			       devname);
+			return error;
+		}
+	}
 
 	return 0;
 }
@@ -100,7 +128,11 @@ dkclose(f)
 	struct romdev *dev = f->f_devdata;
 
 	DPRINTF("dkclose\n");
-	rom_close(dev->fd);
+	if (apbus)
+		apcall_close(dev->fd);
+	else
+		rom_close(dev->fd);
+
 	return 0;
 }
 
@@ -117,8 +149,13 @@ dkstrategy(devdata, rw, blk, size, buf, rsize)
 
 	/* XXX should use partition offset */
 
-	rom_lseek(dev->fd, blk * 512, 0);
-	rom_read(dev->fd, buf, size);
-	*rsize = size;
+	if (apbus) {
+		apcall_lseek(dev->fd, blk * 512, 0);
+		apcall_read(dev->fd, buf, size);
+	} else {
+		rom_lseek(dev->fd, blk * 512, 0);
+		rom_read(dev->fd, buf, size);
+	}
+	*rsize = size;		/* XXX */
 	return 0;
 }
