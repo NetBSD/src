@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.18 2004/01/08 22:48:26 cube Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.19 2004/02/18 20:41:09 matt Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.18 2004/01/08 22:48:26 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.19 2004/02/18 20:41:09 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -629,7 +629,7 @@ addsym(Elf_Sym *sym, char *name)
 #endif
 	if (cursyms == NSAVEDSYMS || 
 	    ((len = strlen(name) + 1) + curnamep) > SZSYMNAMES) {
-		printf("addsym: too many sumbols, skipping '%s'\n", name);
+		printf("addsym: too many symbols, skipping '%s'\n", name);
 		return;
 	}
 	strlcpy(&symnames[curnamep], name, sizeof(symnames) - curnamep);
