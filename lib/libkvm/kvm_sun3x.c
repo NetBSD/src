@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.2 1997/04/09 21:16:00 thorpej Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.3 1997/07/17 22:42:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.2 1997/04/09 21:16:00 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_sun3x.c,v 1.3 1997/07/17 22:42:00 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,7 @@ _kvm_sun3x_kvatop(kd, va, pap)
 	 * is guaranteed to be in the contiguous range.
 	 */
 	if (va < s->contig_end) {
-		len = va - s->contig_end;
+		len = s->contig_end - va;
 		pa = va - h->kernbase;
 		goto done;
 	}
