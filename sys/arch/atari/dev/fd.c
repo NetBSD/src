@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1995/07/11 18:32:07 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 1995/07/24 07:31:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -180,7 +180,7 @@ static void	fd_xfer __P((struct fd_softc *));
 static void	fdcint __P((struct fd_softc *));
 static int	fd_xfer_ok __P((struct fd_softc *));
 static void	fdmotoroff __P((struct fd_softc *));
-static int	fdminphys __P((struct buf *));
+static u_int	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static int	fdselect __P((int, int, int));
@@ -1102,7 +1102,7 @@ struct fd_softc	*sc;
 /*
  * min byte count to whats left of the track in question
  */
-static int
+static u_int
 fdminphys(bp)
 struct buf	*bp;
 {
@@ -1110,7 +1110,7 @@ struct buf	*bp;
 	int		sec, toff, tsz;
 
 	if((sc = getsoftc(fdcd, DISKUNIT(bp->b_dev))) == NULL)
-		return(ENXIO);
+		panic("fdminphys: couldn't get softc");
 
 	sec  = bp->b_blkno % (sc->nsectors * sc->nheads);
 	toff = sec * SECTOR_SIZE;
@@ -1126,7 +1126,7 @@ struct buf	*bp;
 	printf(" after %d\n", bp->b_bcount);
 #endif
 
-	return(bp->b_bcount);
+	return (minphys(bp));
 }
 
 /*
