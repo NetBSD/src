@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.2 1998/11/07 00:56:27 cgd Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 1998/11/09 08:13:33 cgd Exp $
 
 # XXX set MACHINE_GNU_ARCH for _<arch>.mk
 .include <bsd.own.mk>
@@ -12,6 +12,7 @@ YHEADER=1
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${BFDOBJ} -I${DIST}/ld \
 		-I${DIST}/bfd -I${DIST}/include \
+		-I${.CURDIR}/../../lib/bfd \
 		-DDEFAULT_EMULATION='"${DEFAULT_EMUL}"' \
 		-DSCRIPTDIR='"/usr/libdata/ldscripts"' \
 		-DTARGET='"${MACHINE_GNU_ARCH}--netbsd"' \
