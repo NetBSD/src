@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.4 2001/09/17 10:05:57 joda Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.5 2001/11/08 08:05:05 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pci.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,12 +124,13 @@ main(int argc, char *argv[])
 	argnames = commands[i].arg_names;
 
 	/* Open the device. */
-	pcifd = opendisk(dvname, commands[i].open_flags, dvname_store,
-	    sizeof(dvname_store), 1);
-	if (pcifd == -1)
+	if ((strchr(dvname, '/') == NULL) &&
+	    (snprintf(dvname_store, sizeof(dvname_store), _PATH_DEV "%s",
+	     dvname) < sizeof(dvname_store)))
+		dvname = dvname_store;
+	pcifd = open(dvname, commands[i].open_flags);
+	if (pcifd < 0)
 		err(1, "%s", dvname);
-
-	dvname = dvname_store;
 
 	/* Make sure the device is a PCI bus. */
 	if (ioctl(pcifd, PCI_IOC_BUSINFO, &pci_businfo) != 0)
