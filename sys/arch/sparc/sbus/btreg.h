@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1993 The Regents of the University of California.
+ * All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,27 +39,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *    @(#)cgthreereg.h        8.1 (Berkeley) 6/11/93
+ *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/arch/sparc/dev/Attic/cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
- * $Id: cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
+ * from: Header: btreg.h,v 1.1 93/10/12 15:28:52 torek Exp 
+ * $Id: btreg.h,v 1.1 1993/11/11 03:36:50 deraadt Exp $
  */
 
 /*
- * cgthree display registers.  Much like bwtwo registers, except that
- * there is a Brooktree Video DAC in there (so we also use btreg.h).
+ * Several Sun color frame buffers use some kind of Brooktree video
+ * DAC (e.g., the Bt458, -- in any case, Brooktree make the only
+ * decent color frame buffer chips).
+ *
+ * Color map control on these is a bit funky in a SPARCstation.
+ * To update the color map one would normally do byte writes, but
+ * the hardware takes longword writes.  Since there are three
+ * registers for each color map entry (R, then G, then B), we have
+ * to set color 1 with a write to address 0 (setting 0's R/G/B and
+ * color 1's R) followed by a second write to address 1 (setting
+ * color 1's G/B and color 2's R/G).  Software must therefore keep
+ * a copy of the current map.
+ *
+ * The colormap address register increments automatically, so the
+ * above write is done as:
+ *
+ *	bt->bt_addr = 0;
+ *	bt->bt_cmap = R0G0B0R1;
+ *	bt->bt_cmap = G1B1R2G2;
+ *	...
+ *
+ * Yow!
+ *
+ * Bonus complication: on the cg6, only the top 8 bits of each 32 bit
+ * register matter, even though the cg3 takes all the bits from all
+ * bytes written to it.
  */
-
-/* offsets */
-#define	CG3REG_ID	0
-#define	CG3REG_REG	0x400000
-#define	CG3REG_MEM	0x800000
-
-/* same, but for gdb */
-struct cgthree_all {
-	long	ba_id;			/* ID = 0xfe010104 on my IPC */
-	char	ba_xxx0[0x400000-4];
-	struct	bt_regs ba_btreg;	/* Brooktree registers */
-	char	ba_xxx1[0x400000-sizeof(struct bt_regs)];
-	char	ba_ram[4096];		/* actually larger */
+struct bt_regs {
+	u_int	bt_addr;		/* map address register */
+	u_int	bt_cmap;		/* colormap data register */
+	u_int	bt_ctrl;		/* control register */
+	u_int	bt_omap;		/* overlay (cursor) map register */
 };

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1993 The Regents of the University of California.
+ * All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,27 +39,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *    @(#)cgthreereg.h        8.1 (Berkeley) 6/11/93
+ *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/arch/sparc/dev/Attic/cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
- * $Id: cgthreereg.h,v 1.2 1993/11/11 03:36:56 deraadt Exp $
+ * from: Header: btvar.h,v 1.1 93/10/12 15:29:01 torek Exp 
+ * $Id: btvar.h,v 1.1 1993/11/11 03:36:51 deraadt Exp $
  */
 
 /*
- * cgthree display registers.  Much like bwtwo registers, except that
- * there is a Brooktree Video DAC in there (so we also use btreg.h).
+ * Brooktree color frame buffer state variables (see btreg.h).
+ *
+ * Unfortunately, remarkably little code can be shared between the
+ * cg3 and cg6 drivers here, as the cg3 registers do longword-ops
+ * `as expected', but the cg6 ones use only the upper byte.
+ *
+ * Still, the software color map manipulation is not completely trivial.
  */
-
-/* offsets */
-#define	CG3REG_ID	0
-#define	CG3REG_REG	0x400000
-#define	CG3REG_MEM	0x800000
-
-/* same, but for gdb */
-struct cgthree_all {
-	long	ba_id;			/* ID = 0xfe010104 on my IPC */
-	char	ba_xxx0[0x400000-4];
-	struct	bt_regs ba_btreg;	/* Brooktree registers */
-	char	ba_xxx1[0x400000-sizeof(struct bt_regs)];
-	char	ba_ram[4096];		/* actually larger */
+union bt_cmap {
+	u_char  cm_map[256][3];		/* 256 R/G/B entries */
+	u_int   cm_chip[256 * 3 / 4];	/* the way the chip gets loaded */
 };
+
+/*
+ * Routines in bt_subr.c.
+ */
+int	bt_getcmap __P((struct fbcmap *, union bt_cmap *, int));
+int	bt_putcmap __P((struct fbcmap *, union bt_cmap *, int));
+
+/*
+ * Compute (x / 4) * 3 and (x / 4) * 4.  These are used in turning
+ * RGB indices (which are in multiples of three) into `chip RGB' values
+ * (which are in multiples of four).
+ */
+#define	BT_D4M3(x) ((((x) >> 2) << 1) + ((x) >> 2))	/* (x / 4) * 3 */
+#define	BT_D4M4(x) ((x) & ~3)				/* (x / 4) * 4 */
