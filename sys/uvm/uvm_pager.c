@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.12 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13 1998/11/04 07:07:22 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -669,8 +669,9 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 
 				pmap_page_protect(PMAP_PGARG(ppsp[lcv]),
 				    VM_PROT_NONE); /* be safe */
+				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 				/* kills anon and frees pg */
-				uvm_anfree(ppsp[lcv]->uanon);	
+				uvm_anfree(ppsp[lcv]->uanon);
 
 				continue;
 			}
