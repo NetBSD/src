@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.14 1997/04/07 23:39:58 cgd Exp $ */
+/* $NetBSD: mem.c,v 1.15 1997/05/07 17:13:32 mjacob Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,13 +47,14 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 1997/04/07 23:39:58 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 1997/05/07 17:13:32 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/msgbuf.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -66,6 +67,7 @@ cdev_decl(mm);
 
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
+extern struct msgbuf *msgbufp;
 
 /*ARGSUSED*/
 int
@@ -116,11 +118,21 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 kmemphys:
+			if (v == ALPHA_K0SEG_TO_PHYS((vm_offset_t)msgbufp)) {
+				extern int msgbufmapped;
+				if (msgbufmapped == 0) {
+					printf("Message Buf not Mapped\n");
+					error = EFAULT;
+					break;
+				}
+			}
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v < ctob(firstusablepage) ||
-			    v >= ctob(lastusablepage + 1))
-				return (EFAULT);
+			else if ((v < ctob(firstusablepage) ||
+			     v >= ctob(lastusablepage + 1))) {
+				error = EFAULT;
+				break;
+			}
 #endif
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
