@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.6 1993/09/15 21:15:21 phil Exp $";
+static char rcsid[] = "$Id: main.c,v 1.7 1993/10/14 01:22:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,6 +135,10 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 
 	case MACHINE_PC532:
 		pc532_ioconf();		/* Print ioconf.c */
+		break;
+
+	case MACHINE_PMAX:
+		pmax_ioconf();
 		break;
 
 	default:
