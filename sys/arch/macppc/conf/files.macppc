@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.18 1998/12/29 04:40:19 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.18.2.1 1999/05/06 19:45:16 perry Exp $
 #
 # macppc-specific configuration info
 
@@ -57,7 +57,10 @@ device cpu
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
 
+# PCI bus support
 include "dev/pci/files.pci"
+
+file	arch/macppc/pci/pciide_machdep.c	pciide
 
 # network devices MII bus
 include "dev/mii/files.mii"
