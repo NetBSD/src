@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: hardware,v 1.16 2000/11/01 20:56:06 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -88,6 +88,8 @@ RDI PowerLite-85
 RDI PowerLite-110
 .It
 RDI BriteLite
+.It
+Ross sparc 20
 .It
 Transtec SS5/170
 .It
@@ -183,7 +185,7 @@ VME card
 P4
 .It
 .Em cgsix ;
-LEO 8 bpp accelerated framebuffer.
+LEGO 8 bpp accelerated framebuffer.
 P4
 .It
 .Em cgeight ;
@@ -235,7 +237,7 @@ functions do not
 SCSI interfaces
 .(bullet -compact
 .Em esp ;
-5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller,
+5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller.
 On-board (sun4c, sun4m, and 4/300) and Sbus card
 .It
 .Em isp ;
@@ -247,8 +249,9 @@ Sbus card
 VME card (Interrupt driven and polled DMA)
 .It
 .Em sw ;
+5 MB/s NCR 5380 
 .Dq "SCSI Weird"
-controller
+controller.
 Onboard 4/110 (polled DMA only)
 .It
 misc: SCSI functionality is sometimes found on multi-function Sbus cards
@@ -329,20 +332,20 @@ Sun Sbus expander device
 Use of more than one processor in sun4m machines (it boots, but only uses
 one processor)
 .It
-DBRIe-based audio and ISDN on-board some sun4m machines (such as SS10,
+DBRIe-based audio and ISDN.  On-board some sun4m machines (such as SS10,
 SS20, SPARC LX, and Tadpole SPARCbook)
 .It
 .Em sc ;
-Sun SCSI VME card
+Sun SCSI.  VME card
 .It
 .Em bpp ;
-Bi-directional parallel port, on-board and Sbus card
+Bi-directional parallel port.  On-board and Sbus card
 .It
 .Em cgtwelve ;
-I.e. GS, 24 bpp Sbus framebuffer
+I.e. GS, 24 bpp.  Sbus framebuffer
 .It
 .Em leo ;
-I.e. ZX and TZX, 24 bpp Sbus framebuffer
+I.e. ZX and TZX, 24 bpp.  Sbus framebuffer
 .It
 .Em nell ;
 Sbus-to-PCMCIA bridge
