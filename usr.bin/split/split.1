@@ -1,4 +1,4 @@
-.\"	$NetBSD: split.1,v 1.9 2003/06/10 16:32:54 bjh21 Exp $
+.\"	$NetBSD: split.1,v 1.10 2003/06/10 16:57:05 bjh21 Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,12 @@ The
 .Nm
 utility reads the given
 .Ar file
-(or standard input if no file is specified)
 and breaks it up into files of 1000 lines each.
+If
+.Ar file
+is a single dash or absent,
+.Nm
+reads from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
