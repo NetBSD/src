@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.16 2004/03/02 15:55:56 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.17 2004/03/02 16:03:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.16 2004/03/02 15:55:56 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.17 2004/03/02 16:03:00 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -50,13 +50,6 @@ static struct pool rf_revent_pool;
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
-#define DO_WAIT(_rc)  \
-	ltsleep(&(_rc)->eventQueue, PRIBIO,  "raidframe eventq", \
-		0, &((_rc)->eq_mutex))
-
-#define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
-
 
 static void rf_ShutdownReconEvent(void *);
 
@@ -142,7 +135,10 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
 #if RF_RECON_STATS > 0
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
-		DO_WAIT(rctrl);
+
+		ltsleep(&(rctrl)->eventQueue, PRIBIO,  "raidframe eventq",
+			0, &((rctrl)->eq_mutex));
+
 		reconDesc->reconExecTicks = 0;	/* we've just waited */
 	}
 
@@ -181,7 +177,7 @@ rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg,
 	rctrl->eq_count++;
 	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 
-	DO_SIGNAL(rctrl);
+	wakeup(&(rctrl)->eventQueue);
 }
 /* allocates and initializes a recon event descriptor */
 static RF_ReconEvent_t *
