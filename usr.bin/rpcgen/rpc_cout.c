@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.21 2002/02/05 22:41:47 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.22 2002/02/06 02:23:45 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.21 2002/02/05 22:41:47 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.22 2002/02/06 02:23:45 christos Exp $");
 #endif
 #endif
 
@@ -327,6 +327,8 @@ emit_enum(def)
 	print_ifopen(2, "enum");
 	print_ifarg("&et");
 	print_ifclose(2);
+	tabify(fout, 2);
+	f_print(fout, "*objp = (%s)et;\n", def->def_name);
 	tabify(fout, 1);
 	f_print(fout, "}\n");
 }
