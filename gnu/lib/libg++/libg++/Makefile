@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1993/11/07 10:56:02 cgd Exp $
+#	$Id: Makefile,v 1.16 1993/11/17 20:57:58 jtc Exp $
 
 LIB=	g++
 NOPIC=
@@ -17,8 +17,7 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		strstream.C indstream.C PlotFile.C SFile.C fstream.C \
 		parsestream.C stream.C makebuf.C editbuf.C filebuf.C \
 		sgetline.C igetline.C igetsb.C procbuf.C sbufvform.C \
-		sbufvscan.C stdiostream.C floatconv.C outfloat.C iomanip.C \
-		insque.c strerror.c
+		sbufvscan.C stdiostream.C floatconv.C outfloat.C iomanip.C
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
 		-I$(.CURDIR)/../iostream
