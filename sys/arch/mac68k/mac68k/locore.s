@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 1995/01/21 05:21:24 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 1995/02/01 04:49:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1500,6 +1500,7 @@ _szicode:
  */
 	.globl	_sigcode, _esigcode
 	.data
+	.align	2
 _sigcode:
 	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
