@@ -30,6 +30,10 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+.if exists(${.CURDIR}/../Makefile.inc)
+.include "${.CURDIR}/../Makefile.inc"
+.endif
+
 .include <bsd.own.mk>
 
 SUBDIR=	scripts
