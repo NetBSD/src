@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.39 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.40 2003/06/04 19:09:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,8 @@ do_logging(void)
 	int menu_no;
 
 	menu_no = new_menu ("Logging Functions", logmenu, 2, -1, 12,
-		0, 20, MC_SCROLL, NULL, NULL, "Pick an option to turn on or off.\n");
+		0, 20, MC_SCROLL, NULL, NULL,
+		"Pick an option to turn on or off.\n", NULL);
 
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.94 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.95 2003/06/04 19:09:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1055,7 +1055,7 @@ set_timezone()
 	
 	menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
 			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
-			   "\nPlease consult the install documents.");
+			   "\nPlease consult the install documents.", NULL);
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
 
