@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.31 1999/02/06 02:05:01 simonb Exp $	*/
+/*	$NetBSD: strtod.c,v 1.32 1999/02/06 16:01:22 kleink Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.31 1999/02/06 02:05:01 simonb Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.32 1999/02/06 16:01:22 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
@@ -143,6 +143,7 @@ __RCSID("$NetBSD: strtod.c,v 1.31 1999/02/06 02:05:01 simonb Exp $");
 #endif
 #endif
 #include "extern.h"
+#include "reentrant.h"
 
 #ifdef MALLOC
 #ifdef KR_headers
@@ -391,6 +392,10 @@ Bigint {
 
  static Bigint *freelist[Kmax+1];
 
+#ifdef _REENT
+ static mutex_t freelist_mutex = MUTEX_INITIALIZER;
+#endif
+
  static Bigint *
 Balloc
 #ifdef KR_headers
@@ -402,6 +407,7 @@ Balloc
 	int x;
 	Bigint *rv;
 
+	mutex_lock(&freelist_mutex);
 	if ((rv = freelist[k]) != NULL) {
 		freelist[k] = rv->next;
 		}
@@ -412,6 +418,7 @@ Balloc
 		rv->maxwds = x;
 		}
 	rv->sign = rv->wds = 0;
+	mutex_unlock(&freelist_mutex);
 	return rv;
 	}
 
@@ -424,8 +431,10 @@ Bfree
 #endif
 {
 	if (v) {
+		mutex_lock(&freelist_mutex);
 		v->next = freelist[v->k];
 		freelist[v->k] = v;
+		mutex_unlock(&freelist_mutex);
 		}
 	}
 
