@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.3 2002/10/22 21:50:08 perry Exp $	*/
+/*	$NetBSD: arc4.c,v 1.4 2002/11/07 07:03:11 thorpej Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.3 2002/10/22 21:50:08 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.4 2002/11/07 07:03:11 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -53,7 +53,7 @@ void
 arc4_setkey(ctxp, key, keylen)
 	void *ctxp;
 	unsigned char *key;
-	int keylen;
+	unsigned int keylen;
 {
 	struct arc4_ctx *ctx = ctxp;
 	unsigned int i, t, u, ki, si;
