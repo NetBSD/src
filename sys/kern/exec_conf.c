@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.21 1998/01/22 01:32:16 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.22 1998/06/25 22:50:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,6 +31,7 @@
  */
 
 #include "opt_execfmt.h"
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
