@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_os.c,v 1.9 2000/06/30 08:12:11 veego Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.10 2000/07/01 01:39:02 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.10 2000/06/28 15:09:12 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -60,6 +60,12 @@
 #define FIFO_RISC_DISABLED      0
 #define ALL_INTS_DISABLED       0
 
+
+/*******************/
+/* *** FreeBSD *** */
+/*******************/
+#ifdef __FreeBSD__
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -108,7 +114,78 @@
 #include <machine/clock.h>      /* for DELAY */
 #include <pci/pcivar.h>
 #include <pci/pcireg.h>
+
+#if (NSMBUS > 0)
+#include <dev/bktr/bktr_i2c.h>
 #endif
+
+#include <sys/sysctl.h>
+int bt848_card = -1; 
+int bt848_tuner = -1;
+int bt848_reverse_mute = -1; 
+int bt848_format = -1;
+int bt848_slow_msp_audio = -1;
+
+SYSCTL_NODE(_hw, OID_AUTO, bt848, CTLFLAG_RW, 0, "Bt848 Driver mgmt");
+SYSCTL_INT(_hw_bt848, OID_AUTO, card, CTLFLAG_RW, &bt848_card, -1, "");
+SYSCTL_INT(_hw_bt848, OID_AUTO, tuner, CTLFLAG_RW, &bt848_tuner, -1, "");
+SYSCTL_INT(_hw_bt848, OID_AUTO, reverse_mute, CTLFLAG_RW, &bt848_reverse_mute, -1, "");
+SYSCTL_INT(_hw_bt848, OID_AUTO, format, CTLFLAG_RW, &bt848_format, -1, "");
+SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audio, -1, "");
+
+#if (__FreeBSD__ == 2)
+#define PCIR_REVID     PCI_CLASS_REG
+#endif
+
+#endif /* end freebsd section */
+
+
+
+/****************/
+/* *** BSDI *** */
+/****************/
+#ifdef __bsdi__
+#endif /* __bsdi__ */
+
+
+/**************************/
+/* *** OpenBSD/NetBSD *** */
+/**************************/
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/select.h>
+#include <sys/vnode.h>
+
+#include <vm/vm.h>
+
+#ifndef __NetBSD__
+#include <vm/vm_kern.h>
+#include <vm/pmap.h>
+#include <vm/vm_extern.h>
+#endif
+
+#include <sys/device.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
+#define BKTR_DEBUG
+#ifdef BKTR_DEBUG
+int bktr_debug = 0;
+#define DPR(x)	(bktr_debug ? printf x : 0)
+#else
+#define DPR(x)
+#endif
+#endif /* __NetBSD__ || __OpenBSD__ */
+
 
 #ifdef __NetBSD__
 #include <dev/ic/bt8xx.h>	/* NetBSD location for .h files */
@@ -128,56 +205,6 @@
 #include <dev/bktr/bktr_core.h>
 #include <dev/bktr/bktr_os.h>
 #endif
-
-#if defined(__FreeBSD__)
-#if (NSMBUS > 0)
-#include <dev/bktr/bktr_i2c.h>
-#endif
-
-#include <sys/sysctl.h>
-int bt848_card = -1; 
-int bt848_tuner = -1;
-int bt848_reverse_mute = -1; 
-int bt848_format = -1;
-int bt848_slow_msp_audio = -1;
-
-SYSCTL_NODE(_hw, OID_AUTO, bt848, CTLFLAG_RW, 0, "Bt848 Driver mgmt");
-SYSCTL_INT(_hw_bt848, OID_AUTO, card, CTLFLAG_RW, &bt848_card, -1, "");
-SYSCTL_INT(_hw_bt848, OID_AUTO, tuner, CTLFLAG_RW, &bt848_tuner, -1, "");
-SYSCTL_INT(_hw_bt848, OID_AUTO, reverse_mute, CTLFLAG_RW, &bt848_reverse_mute, -1, "");
-SYSCTL_INT(_hw_bt848, OID_AUTO, format, CTLFLAG_RW, &bt848_format, -1, "");
-SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audio, -1, "");
-#endif
-
-#if (__FreeBSD__ == 2)
-#define PCIR_REVID     PCI_CLASS_REG
-#endif
-
-
-/****************/
-/* *** BSDI *** */
-/****************/
-#ifdef __bsdi__
-#endif /* __bsdi__ */
-
-
-/**************************/
-/* *** OpenBSD/NetBSD *** */
-/**************************/
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#include <sys/device.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-
-#define BKTR_DEBUG
-#ifdef BKTR_DEBUG
-int bktr_debug = 0;
-#define DPR(x)	(bktr_debug ? printf x : 0)
-#else
-#define DPR(x)
-#endif
-#endif /* __NetBSD__ || __OpenBSD__ */
 
 
 
@@ -289,6 +316,9 @@ bktr_attach( device_t dev )
 
 	unit = device_get_unit(dev);
 
+	/* build the device name for bktr_name() */
+	snprintf(bktr->bktr_xname, sizeof(bktr->bktr_xname), "bktr%d",unit);
+
 	/*
 	 * Enable bus mastering and Memory Mapped device
 	 */
@@ -299,7 +329,7 @@ bktr_attach( device_t dev )
 	/*
 	 * Map control/status registers.
 	 */
-	rid = PCI_MAP_REG_START;
+	rid = PCIR_MAPS;
 	bktr->res_mem = bus_alloc_resource(dev, SYS_RES_MEMORY, &rid,
                                   0, ~0, 1, RF_ACTIVE);
 
@@ -434,7 +464,7 @@ bktr_detach( device_t dev )
 	 */
 	bus_teardown_intr(dev, bktr->res_irq, bktr->res_ih);
 	bus_release_resource(dev, SYS_RES_IRQ, 0, bktr->res_irq);
-	bus_release_resource(dev, SYS_RES_MEMORY, PCI_MAP_REG_START, bktr->res_mem);
+	bus_release_resource(dev, SYS_RES_MEMORY, PCIR_MAPS, bktr->res_mem);
 
 	return 0;
 }
@@ -850,6 +880,9 @@ bktr_attach( pcici_t tag, int unit )
 		printf("brooktree%d: attach: invalid unit number.\n", unit);
 		return;
 	}
+
+	/* build the device name for bktr_name() */
+	snprintf(bktr->bktr_xname, sizeof(bktr->bktr_xname), "bktr%d",unit);
 
 	/* Enable Memory Mapping */
 	fun = pci_conf_read(tag, PCI_COMMAND_STATUS_REG);
