@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.39 2000/11/03 10:18:55 abs Exp $
+#	$NetBSD: A7000,v 1.40 2001/02/18 00:54:02 reinoud Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -89,6 +89,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
