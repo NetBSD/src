@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.15 1994/03/29 04:36:18 mycroft Exp $
+ *	$Id: npx.c,v 1.16 1994/04/05 08:02:09 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -374,10 +374,9 @@ void
 npxexit(p)
 	struct proc *p;
 {
-	if (p == npxproc) {
-		start_emulating();
-		npxproc = NULL;
-	}
+
+	start_emulating();
+	npxproc = NULL;
 }
 
 /*
