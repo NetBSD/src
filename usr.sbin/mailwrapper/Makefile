@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/05 18:23:25 perry Exp $
+#	$NetBSD: Makefile,v 1.3 1999/02/20 22:10:07 thorpej Exp $
 
 PROG=	mailwrapper
 MAN=	mailwrapper.8
+
+DPADD+=	${LIBUTIL}
+LDADD+=	-lutil
 
 SYMLINKS= 	/usr/sbin/mailwrapper /usr/sbin/sendmail  \
 		/usr/sbin/mailwrapper /usr/bin/newaliases \
