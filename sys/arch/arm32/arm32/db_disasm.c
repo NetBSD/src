@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.4 1996/06/03 21:53:33 mark Exp $ */
+/* $NetBSD: db_disasm.c,v 1.5 1996/08/29 22:25:26 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -275,7 +275,7 @@ db_disasm(loc, altfmt)
 	}
 
 	if (!matchp) {
-		db_printf("undefined\n");
+		db_printf("undefined [%08x]\n", insn);
 		return(loc + 4);
 	}
 
