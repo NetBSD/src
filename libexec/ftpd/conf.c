@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.18 1999/02/24 16:45:13 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1999/05/17 15:14:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.18 1999/02/24 16:45:13 explorer Exp $");
+__RCSID("$NetBSD: conf.c,v 1.19 1999/05/17 15:14:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -379,7 +379,7 @@ show_chdir_messages(code)
 		t = localtime(&then);
 		age -= 365 * t->tm_year + t->tm_yday;
 		lreply(code, "  it was last modified on %.24s - %d day%s ago",
-		    ctime(&then), age, age == 1 ? "" : "s");
+		    ctime(&then), age, PLURAL(age));
 	}
 	globfree(&gl);
 }
@@ -485,6 +485,5 @@ do_conversion(fname)
 	}
 
 	snprintf(cmd, LINE_MAX, cp->command, base);
-	syslog(LOG_DEBUG, "get command: %s", cmd);
 	return(cmd);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 1998/12/28 04:54:01 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 1999/05/17 15:14:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,33 +39,34 @@ void	blkfree __P((char **));
 char   *conffilename __P((const char *));
 char  **copyblk __P((char **));
 void	cwd __P((const char *));
-void	delete __P((char *));
+void	delete __P((const char *));
 char   *do_conversion __P((const char *));
 void	dologout __P((int));
-void	fatal __P((char *));
+void	fatal __P((const char *));
 int	ftpd_pclose __P((FILE *));
 FILE   *ftpd_popen __P((char *, char *, int));
 char   *getline __P((char *, int, FILE *));
-void	logcmd __P((const char *, off_t, const char *, const char *));
+void	logcmd __P((const char *, off_t, const char *, const char *,
+	    const struct timeval *, const char *));
 void	logwtmp __P((const char *, const char *, const char *));
 void	lreply __P((int, const char *, ...));
-void	makedir __P((char *));
+void	makedir __P((const char *));
 void	parse_conf __P((char *));
-void	pass __P((char *));
+void	pass __P((const char *));
 void	passive __P((void));
 void	perror_reply __P((int, const char *));
 void	pwd __P((void));
-void	removedir __P((char *));
-void	renamecmd __P((char *, char *));
+void	removedir __P((const char *));
+void	renamecmd __P((const char *, const char *));
 char   *renamefrom __P((char *));
 void	reply __P((int, const char *, ...));
-void	retrieve __P((char *, char *));
-void	send_file_list __P((char *));
+void	retrieve __P((const char *, const char *));
+void	send_file_list __P((const char *));
 void	show_chdir_messages __P((int));
 void	statcmd __P((void));
-void	statfilecmd __P((char *));
-void	store __P((char *, char *, int));
-void	user __P((char *));
+void	statfilecmd __P((const char *));
+void	store __P((const char *, const char *, int));
+void	user __P((const char *));
 char   *xstrdup __P((const char *));
 void	yyerror __P((char *));
 
@@ -120,3 +121,11 @@ extern	sig_atomic_t	transflag;
 extern	int		type;
 extern	int		usedefault;
 extern	const char	version[];
+
+extern	off_t		total_data_in, total_data_out, total_data;
+extern	off_t		total_files_in, total_files_out, total_files;
+extern	off_t		total_bytes_in, total_bytes_out, total_bytes;
+extern	off_t		total_xfers_in, total_xfers_out, total_xfers;
+
+
+#define PLURAL(s)	((s) == 1 ? "" : "s")
