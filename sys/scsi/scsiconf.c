@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.24 1995/01/30 15:39:33 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.25 1995/02/01 09:37:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -302,9 +302,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "QUANTUM ", "PD1225S         ", "3110", SDEV_NOLUNS},
 
 	{T_SEQUENTIAL, T_REMOV,
-	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
+	 "EXABYTE ", "EXB-8200        ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09", SDEV_NOLUNS},
+	{T_SEQUENTIAL, T_REMOV,
+	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
 
 	{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-5000        ", "3.17", SDEV_NOSYNCWIDE},
