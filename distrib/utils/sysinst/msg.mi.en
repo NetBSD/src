@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.55 1999/07/06 06:10:53 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.56 1999/08/16 08:29:05 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -174,7 +174,7 @@ message secname
 {sec}
 
 message megname
-{meg}
+{MB}
 
 message layout
 {NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk

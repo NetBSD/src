@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 1999/07/09 15:29:45 minoura Exp $	*/
+/*	$NetBSD: md.h,v 1.2 1999/08/16 08:29:07 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,10 +49,19 @@
 
 /* constants and defines */
 
+/*
+ * Symbolic names for disk partitions.
+ */
+#define PART_ROOT	A
+#define PART_SWAP	B
+#define PART_RAW	C
+#define PART_USR	D	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	E
 
-/* Megs required for a full X installation. */
-#define XNEEDMB 35
-
+#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFROOTSIZE	20	/* Default root size */
+#define STDNEEDMB	80	/* Min space for non X install */
+#define XNEEDMB		35	/* Extra megs for full X installation */
 
 /*
  *  Default filesets to fetch and install during installation
