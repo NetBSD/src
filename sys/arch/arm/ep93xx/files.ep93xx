@@ -1,0 +1,27 @@
+#       $NetBSD: files.ep93xx,v 1.1 2004/12/22 19:14:11 joff Exp $
+#
+# Configuration info for Cirrus Logic EP93XX CPU support
+#
+
+file	arch/arm/ep93xx/ep93xx_intr.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/ep93xx/ep93xx_space.c
+file	arch/arm/ep93xx/ep93xx_busdma.c
+
+device	epsoc { [addr=-1], [size=0], [intr=-1] }: bus_space_generic
+file	arch/arm/ep93xx/epsoc.c               epsoc
+
+device	epclk
+attach epclk at epsoc
+file	arch/arm/ep93xx/epclk.c	              epclk needs-flag
+
+device	epe: ether, ifnet, arp, mii
+file	arch/arm/ep93xx/epe.c                 epe
+attach epe at epsoc
+
+device	epohci
+attach ohci at epsoc with epohci
+file	arch/arm/ep93xx/epohci.c              epohci
+
+device epcom : tty
+file	arch/arm/ep93xx/epcom.c               epcom needs-flag
