@@ -36,8 +36,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcmp.s,v 1.2 1993/08/01 18:41:43 mycroft Exp $"
+	.asciz "$Id: bcmp.s,v 1.3 1993/08/26 02:12:48 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* bcmp(s1, s2, n) */

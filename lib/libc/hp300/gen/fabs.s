@@ -36,8 +36,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)fabs.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: fabs.s,v 1.2 1993/08/01 18:42:48 mycroft Exp $"
+	.asciz "$Id: fabs.s,v 1.3 1993/08/26 02:12:03 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* fabs - floating absolute value */

@@ -27,11 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strncmp.s,v 1.4 1993/08/16 17:06:42 jtc Exp $
+ *	$Id: strncmp.s,v 1.5 1993/08/26 02:14:00 mycroft Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-        .asciz "$Id: strncmp.s,v 1.4 1993/08/16 17:06:42 jtc Exp $"
+	.text
+	.asciz "$Id: strncmp.s,v 1.5 1993/08/26 02:14:00 mycroft Exp $"
 #endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
