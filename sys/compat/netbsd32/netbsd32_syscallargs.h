@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscallargs.h,v 1.15 2000/08/07 18:10:26 bjh21 Exp $	*/
+/*	$NetBSD: netbsd32_syscallargs.h,v 1.16 2000/08/18 19:26:57 cgd Exp $	*/
 
 /*
  * System call argument lists.
@@ -1203,306 +1203,306 @@ struct netbsd32___shmctl13_args {
  * System call prototypes.
  */
 
-int	netbsd32_exit	__P((struct proc *, void *, register_t *));
-int	sys_fork	__P((struct proc *, void *, register_t *));
-int	netbsd32_read	__P((struct proc *, void *, register_t *));
-int	netbsd32_write	__P((struct proc *, void *, register_t *));
-int	netbsd32_open	__P((struct proc *, void *, register_t *));
-int	netbsd32_close	__P((struct proc *, void *, register_t *));
-int	netbsd32_wait4	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ocreat	__P((struct proc *, void *, register_t *));
-int	netbsd32_link	__P((struct proc *, void *, register_t *));
-int	netbsd32_unlink	__P((struct proc *, void *, register_t *));
-int	netbsd32_chdir	__P((struct proc *, void *, register_t *));
-int	netbsd32_fchdir	__P((struct proc *, void *, register_t *));
-int	netbsd32_mknod	__P((struct proc *, void *, register_t *));
-int	netbsd32_chmod	__P((struct proc *, void *, register_t *));
-int	netbsd32_chown	__P((struct proc *, void *, register_t *));
-int	netbsd32_break	__P((struct proc *, void *, register_t *));
-int	netbsd32_getfsstat	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_olseek	__P((struct proc *, void *, register_t *));
-int	sys_getpid	__P((struct proc *, void *, register_t *));
-int	netbsd32_mount	__P((struct proc *, void *, register_t *));
-int	netbsd32_unmount	__P((struct proc *, void *, register_t *));
-int	netbsd32_setuid	__P((struct proc *, void *, register_t *));
-int	sys_getuid	__P((struct proc *, void *, register_t *));
-int	sys_geteuid	__P((struct proc *, void *, register_t *));
-int	netbsd32_ptrace	__P((struct proc *, void *, register_t *));
-int	netbsd32_recvmsg	__P((struct proc *, void *, register_t *));
-int	netbsd32_sendmsg	__P((struct proc *, void *, register_t *));
-int	netbsd32_recvfrom	__P((struct proc *, void *, register_t *));
-int	netbsd32_accept	__P((struct proc *, void *, register_t *));
-int	netbsd32_getpeername	__P((struct proc *, void *, register_t *));
-int	netbsd32_getsockname	__P((struct proc *, void *, register_t *));
-int	netbsd32_access	__P((struct proc *, void *, register_t *));
-int	netbsd32_chflags	__P((struct proc *, void *, register_t *));
-int	netbsd32_fchflags	__P((struct proc *, void *, register_t *));
-int	sys_sync	__P((struct proc *, void *, register_t *));
-int	netbsd32_kill	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_stat43	__P((struct proc *, void *, register_t *));
-int	sys_getppid	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_lstat43	__P((struct proc *, void *, register_t *));
-int	netbsd32_dup	__P((struct proc *, void *, register_t *));
-int	sys_pipe	__P((struct proc *, void *, register_t *));
-int	sys_getegid	__P((struct proc *, void *, register_t *));
-int	netbsd32_profil	__P((struct proc *, void *, register_t *));
+int	netbsd32_exit(struct proc *, void *, register_t *);
+int	sys_fork(struct proc *, void *, register_t *);
+int	netbsd32_read(struct proc *, void *, register_t *);
+int	netbsd32_write(struct proc *, void *, register_t *);
+int	netbsd32_open(struct proc *, void *, register_t *);
+int	netbsd32_close(struct proc *, void *, register_t *);
+int	netbsd32_wait4(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ocreat(struct proc *, void *, register_t *);
+int	netbsd32_link(struct proc *, void *, register_t *);
+int	netbsd32_unlink(struct proc *, void *, register_t *);
+int	netbsd32_chdir(struct proc *, void *, register_t *);
+int	netbsd32_fchdir(struct proc *, void *, register_t *);
+int	netbsd32_mknod(struct proc *, void *, register_t *);
+int	netbsd32_chmod(struct proc *, void *, register_t *);
+int	netbsd32_chown(struct proc *, void *, register_t *);
+int	netbsd32_break(struct proc *, void *, register_t *);
+int	netbsd32_getfsstat(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_olseek(struct proc *, void *, register_t *);
+int	sys_getpid(struct proc *, void *, register_t *);
+int	netbsd32_mount(struct proc *, void *, register_t *);
+int	netbsd32_unmount(struct proc *, void *, register_t *);
+int	netbsd32_setuid(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_geteuid(struct proc *, void *, register_t *);
+int	netbsd32_ptrace(struct proc *, void *, register_t *);
+int	netbsd32_recvmsg(struct proc *, void *, register_t *);
+int	netbsd32_sendmsg(struct proc *, void *, register_t *);
+int	netbsd32_recvfrom(struct proc *, void *, register_t *);
+int	netbsd32_accept(struct proc *, void *, register_t *);
+int	netbsd32_getpeername(struct proc *, void *, register_t *);
+int	netbsd32_getsockname(struct proc *, void *, register_t *);
+int	netbsd32_access(struct proc *, void *, register_t *);
+int	netbsd32_chflags(struct proc *, void *, register_t *);
+int	netbsd32_fchflags(struct proc *, void *, register_t *);
+int	sys_sync(struct proc *, void *, register_t *);
+int	netbsd32_kill(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_stat43(struct proc *, void *, register_t *);
+int	sys_getppid(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_lstat43(struct proc *, void *, register_t *);
+int	netbsd32_dup(struct proc *, void *, register_t *);
+int	sys_pipe(struct proc *, void *, register_t *);
+int	sys_getegid(struct proc *, void *, register_t *);
+int	netbsd32_profil(struct proc *, void *, register_t *);
 #if defined(KTRACE) || !defined(_KERNEL)
-int	netbsd32_ktrace	__P((struct proc *, void *, register_t *));
+int	netbsd32_ktrace(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_sigaction	__P((struct proc *, void *, register_t *));
-int	sys_getgid	__P((struct proc *, void *, register_t *));
-int	compat_13_netbsd32_sigprocmask	__P((struct proc *, void *, register_t *));
-int	netbsd32___getlogin	__P((struct proc *, void *, register_t *));
-int	netbsd32_setlogin	__P((struct proc *, void *, register_t *));
-int	netbsd32_acct	__P((struct proc *, void *, register_t *));
-int	compat_13_sys_sigpending	__P((struct proc *, void *, register_t *));
-int	compat_13_netbsd32_sigaltstack13	__P((struct proc *, void *, register_t *));
-int	netbsd32_ioctl	__P((struct proc *, void *, register_t *));
+int	netbsd32_sigaction(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	compat_13_netbsd32_sigprocmask(struct proc *, void *, register_t *);
+int	netbsd32___getlogin(struct proc *, void *, register_t *);
+int	netbsd32_setlogin(struct proc *, void *, register_t *);
+int	netbsd32_acct(struct proc *, void *, register_t *);
+int	compat_13_sys_sigpending(struct proc *, void *, register_t *);
+int	compat_13_netbsd32_sigaltstack13(struct proc *, void *, register_t *);
+int	netbsd32_ioctl(struct proc *, void *, register_t *);
 #ifdef COMPAT_12
-int	compat_12_netbsd32_reboot	__P((struct proc *, void *, register_t *));
+int	compat_12_netbsd32_reboot(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_revoke	__P((struct proc *, void *, register_t *));
-int	netbsd32_symlink	__P((struct proc *, void *, register_t *));
-int	netbsd32_readlink	__P((struct proc *, void *, register_t *));
-int	netbsd32_execve	__P((struct proc *, void *, register_t *));
-int	netbsd32_umask	__P((struct proc *, void *, register_t *));
-int	netbsd32_chroot	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_fstat43	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ogetkerninfo	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getpagesize	__P((struct proc *, void *, register_t *));
-int	compat_12_netbsd32_msync	__P((struct proc *, void *, register_t *));
-int	sys_vfork	__P((struct proc *, void *, register_t *));
-int	netbsd32_sbrk	__P((struct proc *, void *, register_t *));
-int	netbsd32_sstk	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ommap	__P((struct proc *, void *, register_t *));
-int	netbsd32_ovadvise	__P((struct proc *, void *, register_t *));
-int	netbsd32_munmap	__P((struct proc *, void *, register_t *));
-int	netbsd32_mprotect	__P((struct proc *, void *, register_t *));
-int	netbsd32_madvise	__P((struct proc *, void *, register_t *));
-int	netbsd32_mincore	__P((struct proc *, void *, register_t *));
-int	netbsd32_getgroups	__P((struct proc *, void *, register_t *));
-int	netbsd32_setgroups	__P((struct proc *, void *, register_t *));
-int	sys_getpgrp	__P((struct proc *, void *, register_t *));
-int	netbsd32_setpgid	__P((struct proc *, void *, register_t *));
-int	netbsd32_setitimer	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
-int	compat_12_netbsd32_oswapon	__P((struct proc *, void *, register_t *));
-int	netbsd32_getitimer	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ogethostname	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osethostname	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
-int	netbsd32_dup2	__P((struct proc *, void *, register_t *));
-int	netbsd32_fcntl	__P((struct proc *, void *, register_t *));
-int	netbsd32_select	__P((struct proc *, void *, register_t *));
-int	netbsd32_fsync	__P((struct proc *, void *, register_t *));
-int	netbsd32_setpriority	__P((struct proc *, void *, register_t *));
-int	netbsd32_socket	__P((struct proc *, void *, register_t *));
-int	netbsd32_connect	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_oaccept	__P((struct proc *, void *, register_t *));
-int	netbsd32_getpriority	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osend	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_orecv	__P((struct proc *, void *, register_t *));
-int	compat_13_netbsd32_sigreturn	__P((struct proc *, void *, register_t *));
-int	netbsd32_bind	__P((struct proc *, void *, register_t *));
-int	netbsd32_setsockopt	__P((struct proc *, void *, register_t *));
-int	netbsd32_listen	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osigvec	__P((struct proc *, void *, register_t *));
+int	netbsd32_revoke(struct proc *, void *, register_t *);
+int	netbsd32_symlink(struct proc *, void *, register_t *);
+int	netbsd32_readlink(struct proc *, void *, register_t *);
+int	netbsd32_execve(struct proc *, void *, register_t *);
+int	netbsd32_umask(struct proc *, void *, register_t *);
+int	netbsd32_chroot(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_fstat43(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ogetkerninfo(struct proc *, void *, register_t *);
+int	compat_43_sys_getpagesize(struct proc *, void *, register_t *);
+int	compat_12_netbsd32_msync(struct proc *, void *, register_t *);
+int	sys_vfork(struct proc *, void *, register_t *);
+int	netbsd32_sbrk(struct proc *, void *, register_t *);
+int	netbsd32_sstk(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ommap(struct proc *, void *, register_t *);
+int	netbsd32_ovadvise(struct proc *, void *, register_t *);
+int	netbsd32_munmap(struct proc *, void *, register_t *);
+int	netbsd32_mprotect(struct proc *, void *, register_t *);
+int	netbsd32_madvise(struct proc *, void *, register_t *);
+int	netbsd32_mincore(struct proc *, void *, register_t *);
+int	netbsd32_getgroups(struct proc *, void *, register_t *);
+int	netbsd32_setgroups(struct proc *, void *, register_t *);
+int	sys_getpgrp(struct proc *, void *, register_t *);
+int	netbsd32_setpgid(struct proc *, void *, register_t *);
+int	netbsd32_setitimer(struct proc *, void *, register_t *);
+int	compat_43_sys_wait(struct proc *, void *, register_t *);
+int	compat_12_netbsd32_oswapon(struct proc *, void *, register_t *);
+int	netbsd32_getitimer(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ogethostname(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osethostname(struct proc *, void *, register_t *);
+int	compat_43_sys_getdtablesize(struct proc *, void *, register_t *);
+int	netbsd32_dup2(struct proc *, void *, register_t *);
+int	netbsd32_fcntl(struct proc *, void *, register_t *);
+int	netbsd32_select(struct proc *, void *, register_t *);
+int	netbsd32_fsync(struct proc *, void *, register_t *);
+int	netbsd32_setpriority(struct proc *, void *, register_t *);
+int	netbsd32_socket(struct proc *, void *, register_t *);
+int	netbsd32_connect(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_oaccept(struct proc *, void *, register_t *);
+int	netbsd32_getpriority(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osend(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_orecv(struct proc *, void *, register_t *);
+int	compat_13_netbsd32_sigreturn(struct proc *, void *, register_t *);
+int	netbsd32_bind(struct proc *, void *, register_t *);
+int	netbsd32_setsockopt(struct proc *, void *, register_t *);
+int	netbsd32_listen(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osigvec(struct proc *, void *, register_t *);
 #ifdef COMPAT_43
-int	compat_43_netbsd32_sigblock	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_sigsetmask	__P((struct proc *, void *, register_t *));
+int	compat_43_netbsd32_sigblock(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_sigsetmask(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_13_netbsd32_sigsuspend	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osigstack	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_orecvmsg	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osendmsg	__P((struct proc *, void *, register_t *));
-int	netbsd32_gettimeofday	__P((struct proc *, void *, register_t *));
-int	netbsd32_getrusage	__P((struct proc *, void *, register_t *));
-int	netbsd32_getsockopt	__P((struct proc *, void *, register_t *));
-int	netbsd32_readv	__P((struct proc *, void *, register_t *));
-int	netbsd32_writev	__P((struct proc *, void *, register_t *));
-int	netbsd32_settimeofday	__P((struct proc *, void *, register_t *));
-int	netbsd32_fchown	__P((struct proc *, void *, register_t *));
-int	netbsd32_fchmod	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_orecvfrom	__P((struct proc *, void *, register_t *));
-int	netbsd32_setreuid	__P((struct proc *, void *, register_t *));
-int	netbsd32_setregid	__P((struct proc *, void *, register_t *));
-int	netbsd32_rename	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_otruncate	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_oftruncate	__P((struct proc *, void *, register_t *));
-int	netbsd32_flock	__P((struct proc *, void *, register_t *));
-int	netbsd32_mkfifo	__P((struct proc *, void *, register_t *));
-int	netbsd32_sendto	__P((struct proc *, void *, register_t *));
-int	netbsd32_shutdown	__P((struct proc *, void *, register_t *));
-int	netbsd32_socketpair	__P((struct proc *, void *, register_t *));
-int	netbsd32_mkdir	__P((struct proc *, void *, register_t *));
-int	netbsd32_rmdir	__P((struct proc *, void *, register_t *));
-int	netbsd32_utimes	__P((struct proc *, void *, register_t *));
-int	netbsd32_adjtime	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ogetpeername	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_gethostid	__P((struct proc *, void *, register_t *));
+int	compat_13_netbsd32_sigsuspend(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osigstack(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_orecvmsg(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osendmsg(struct proc *, void *, register_t *);
+int	netbsd32_gettimeofday(struct proc *, void *, register_t *);
+int	netbsd32_getrusage(struct proc *, void *, register_t *);
+int	netbsd32_getsockopt(struct proc *, void *, register_t *);
+int	netbsd32_readv(struct proc *, void *, register_t *);
+int	netbsd32_writev(struct proc *, void *, register_t *);
+int	netbsd32_settimeofday(struct proc *, void *, register_t *);
+int	netbsd32_fchown(struct proc *, void *, register_t *);
+int	netbsd32_fchmod(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_orecvfrom(struct proc *, void *, register_t *);
+int	netbsd32_setreuid(struct proc *, void *, register_t *);
+int	netbsd32_setregid(struct proc *, void *, register_t *);
+int	netbsd32_rename(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_otruncate(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_oftruncate(struct proc *, void *, register_t *);
+int	netbsd32_flock(struct proc *, void *, register_t *);
+int	netbsd32_mkfifo(struct proc *, void *, register_t *);
+int	netbsd32_sendto(struct proc *, void *, register_t *);
+int	netbsd32_shutdown(struct proc *, void *, register_t *);
+int	netbsd32_socketpair(struct proc *, void *, register_t *);
+int	netbsd32_mkdir(struct proc *, void *, register_t *);
+int	netbsd32_rmdir(struct proc *, void *, register_t *);
+int	netbsd32_utimes(struct proc *, void *, register_t *);
+int	netbsd32_adjtime(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ogetpeername(struct proc *, void *, register_t *);
+int	compat_43_sys_gethostid(struct proc *, void *, register_t *);
 #ifdef COMPAT_43
-int	compat_43_netbsd32_sethostid	__P((struct proc *, void *, register_t *));
+int	compat_43_netbsd32_sethostid(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_43_netbsd32_ogetrlimit	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_osetrlimit	__P((struct proc *, void *, register_t *));
+int	compat_43_netbsd32_ogetrlimit(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_osetrlimit(struct proc *, void *, register_t *);
 #ifdef COMPAT_43
-int	compat_43_netbsd32_killpg	__P((struct proc *, void *, register_t *));
+int	compat_43_netbsd32_killpg(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_setsid	__P((struct proc *, void *, register_t *));
-int	netbsd32_quotactl	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_quota	__P((struct proc *, void *, register_t *));
-int	compat_43_netbsd32_ogetsockname	__P((struct proc *, void *, register_t *));
+int	sys_setsid(struct proc *, void *, register_t *);
+int	netbsd32_quotactl(struct proc *, void *, register_t *);
+int	compat_43_sys_quota(struct proc *, void *, register_t *);
+int	compat_43_netbsd32_ogetsockname(struct proc *, void *, register_t *);
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-int	netbsd32_nfssvc	__P((struct proc *, void *, register_t *));
+int	netbsd32_nfssvc(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_43_netbsd32_ogetdirentries	__P((struct proc *, void *, register_t *));
-int	netbsd32_statfs	__P((struct proc *, void *, register_t *));
-int	netbsd32_fstatfs	__P((struct proc *, void *, register_t *));
+int	compat_43_netbsd32_ogetdirentries(struct proc *, void *, register_t *);
+int	netbsd32_statfs(struct proc *, void *, register_t *);
+int	netbsd32_fstatfs(struct proc *, void *, register_t *);
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-int	netbsd32_getfh	__P((struct proc *, void *, register_t *));
+int	netbsd32_getfh(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_09_netbsd32_ogetdomainname	__P((struct proc *, void *, register_t *));
-int	compat_09_netbsd32_osetdomainname	__P((struct proc *, void *, register_t *));
-int	compat_09_netbsd32_uname	__P((struct proc *, void *, register_t *));
-int	netbsd32_sysarch	__P((struct proc *, void *, register_t *));
+int	compat_09_netbsd32_ogetdomainname(struct proc *, void *, register_t *);
+int	compat_09_netbsd32_osetdomainname(struct proc *, void *, register_t *);
+int	compat_09_netbsd32_uname(struct proc *, void *, register_t *);
+int	netbsd32_sysarch(struct proc *, void *, register_t *);
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_semsys	__P((struct proc *, void *, register_t *));
+int	netbsd32_compat_10_sys_semsys(struct proc *, void *, register_t *);
 #else
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
+int	netbsd32_compat_10_sys_msgsys(struct proc *, void *, register_t *);
 #else
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
+int	netbsd32_compat_10_sys_shmsys(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_pread	__P((struct proc *, void *, register_t *));
-int	netbsd32_pwrite	__P((struct proc *, void *, register_t *));
-int	netbsd32_ntp_gettime	__P((struct proc *, void *, register_t *));
+int	netbsd32_pread(struct proc *, void *, register_t *);
+int	netbsd32_pwrite(struct proc *, void *, register_t *);
+int	netbsd32_ntp_gettime(struct proc *, void *, register_t *);
 #if defined(NTP) || !defined(_KERNEL)
-int	netbsd32_ntp_adjtime	__P((struct proc *, void *, register_t *));
+int	netbsd32_ntp_adjtime(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_setgid	__P((struct proc *, void *, register_t *));
-int	netbsd32_setegid	__P((struct proc *, void *, register_t *));
-int	netbsd32_seteuid	__P((struct proc *, void *, register_t *));
+int	netbsd32_setgid(struct proc *, void *, register_t *);
+int	netbsd32_setegid(struct proc *, void *, register_t *);
+int	netbsd32_seteuid(struct proc *, void *, register_t *);
 #if defined(LFS) || !defined(_KERNEL)
-int	netbsd32_sys_lfs_bmapv	__P((struct proc *, void *, register_t *));
-int	netbsd32_sys_lfs_markv	__P((struct proc *, void *, register_t *));
-int	netbsd32_sys_lfs_segclean	__P((struct proc *, void *, register_t *));
-int	netbsd32_sys_lfs_segwait	__P((struct proc *, void *, register_t *));
+int	netbsd32_sys_lfs_bmapv(struct proc *, void *, register_t *);
+int	netbsd32_sys_lfs_markv(struct proc *, void *, register_t *);
+int	netbsd32_sys_lfs_segclean(struct proc *, void *, register_t *);
+int	netbsd32_sys_lfs_segwait(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_12_netbsd32_stat12	__P((struct proc *, void *, register_t *));
-int	compat_12_netbsd32_fstat12	__P((struct proc *, void *, register_t *));
-int	compat_12_netbsd32_lstat12	__P((struct proc *, void *, register_t *));
-int	netbsd32_pathconf	__P((struct proc *, void *, register_t *));
-int	netbsd32_fpathconf	__P((struct proc *, void *, register_t *));
-int	netbsd32_getrlimit	__P((struct proc *, void *, register_t *));
-int	netbsd32_setrlimit	__P((struct proc *, void *, register_t *));
-int	compat_12_netbsd32_getdirentries	__P((struct proc *, void *, register_t *));
-int	netbsd32_mmap	__P((struct proc *, void *, register_t *));
-int	netbsd32_lseek	__P((struct proc *, void *, register_t *));
-int	netbsd32_truncate	__P((struct proc *, void *, register_t *));
-int	netbsd32_ftruncate	__P((struct proc *, void *, register_t *));
-int	netbsd32___sysctl	__P((struct proc *, void *, register_t *));
-int	netbsd32_mlock	__P((struct proc *, void *, register_t *));
-int	netbsd32_munlock	__P((struct proc *, void *, register_t *));
-int	netbsd32_undelete	__P((struct proc *, void *, register_t *));
-int	netbsd32_futimes	__P((struct proc *, void *, register_t *));
-int	netbsd32_getpgid	__P((struct proc *, void *, register_t *));
-int	netbsd32_reboot	__P((struct proc *, void *, register_t *));
-int	netbsd32_poll	__P((struct proc *, void *, register_t *));
+int	compat_12_netbsd32_stat12(struct proc *, void *, register_t *);
+int	compat_12_netbsd32_fstat12(struct proc *, void *, register_t *);
+int	compat_12_netbsd32_lstat12(struct proc *, void *, register_t *);
+int	netbsd32_pathconf(struct proc *, void *, register_t *);
+int	netbsd32_fpathconf(struct proc *, void *, register_t *);
+int	netbsd32_getrlimit(struct proc *, void *, register_t *);
+int	netbsd32_setrlimit(struct proc *, void *, register_t *);
+int	compat_12_netbsd32_getdirentries(struct proc *, void *, register_t *);
+int	netbsd32_mmap(struct proc *, void *, register_t *);
+int	netbsd32_lseek(struct proc *, void *, register_t *);
+int	netbsd32_truncate(struct proc *, void *, register_t *);
+int	netbsd32_ftruncate(struct proc *, void *, register_t *);
+int	netbsd32___sysctl(struct proc *, void *, register_t *);
+int	netbsd32_mlock(struct proc *, void *, register_t *);
+int	netbsd32_munlock(struct proc *, void *, register_t *);
+int	netbsd32_undelete(struct proc *, void *, register_t *);
+int	netbsd32_futimes(struct proc *, void *, register_t *);
+int	netbsd32_getpgid(struct proc *, void *, register_t *);
+int	netbsd32_reboot(struct proc *, void *, register_t *);
+int	netbsd32_poll(struct proc *, void *, register_t *);
 #if defined(LKM) || !defined(_KERNEL)
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
-int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
+int	sys_lkmnosys(struct proc *, void *, register_t *);
 #else	/* !LKM || !_KERNEL */
 #endif	/* !LKM || !_KERNEL */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	compat_14_netbsd32___semctl	__P((struct proc *, void *, register_t *));
-int	netbsd32_semget	__P((struct proc *, void *, register_t *));
-int	netbsd32_semop	__P((struct proc *, void *, register_t *));
-int	netbsd32_semconfig	__P((struct proc *, void *, register_t *));
+int	compat_14_netbsd32___semctl(struct proc *, void *, register_t *);
+int	netbsd32_semget(struct proc *, void *, register_t *);
+int	netbsd32_semop(struct proc *, void *, register_t *);
+int	netbsd32_semconfig(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	compat_14_netbsd32_msgctl	__P((struct proc *, void *, register_t *));
-int	netbsd32_msgget	__P((struct proc *, void *, register_t *));
-int	netbsd32_msgsnd	__P((struct proc *, void *, register_t *));
-int	netbsd32_msgrcv	__P((struct proc *, void *, register_t *));
+int	compat_14_netbsd32_msgctl(struct proc *, void *, register_t *);
+int	netbsd32_msgget(struct proc *, void *, register_t *);
+int	netbsd32_msgsnd(struct proc *, void *, register_t *);
+int	netbsd32_msgrcv(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	netbsd32_shmat	__P((struct proc *, void *, register_t *));
-int	compat_14_netbsd32_shmctl	__P((struct proc *, void *, register_t *));
-int	netbsd32_shmdt	__P((struct proc *, void *, register_t *));
-int	netbsd32_shmget	__P((struct proc *, void *, register_t *));
+int	netbsd32_shmat(struct proc *, void *, register_t *);
+int	compat_14_netbsd32_shmctl(struct proc *, void *, register_t *);
+int	netbsd32_shmdt(struct proc *, void *, register_t *);
+int	netbsd32_shmget(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_clock_gettime	__P((struct proc *, void *, register_t *));
-int	netbsd32_clock_settime	__P((struct proc *, void *, register_t *));
-int	netbsd32_clock_getres	__P((struct proc *, void *, register_t *));
-int	netbsd32_nanosleep	__P((struct proc *, void *, register_t *));
-int	netbsd32_fdatasync	__P((struct proc *, void *, register_t *));
-int	netbsd32___posix_rename	__P((struct proc *, void *, register_t *));
-int	netbsd32_swapctl	__P((struct proc *, void *, register_t *));
-int	netbsd32_getdents	__P((struct proc *, void *, register_t *));
-int	netbsd32_minherit	__P((struct proc *, void *, register_t *));
-int	netbsd32_lchmod	__P((struct proc *, void *, register_t *));
-int	netbsd32_lchown	__P((struct proc *, void *, register_t *));
-int	netbsd32_lutimes	__P((struct proc *, void *, register_t *));
-int	netbsd32___msync13	__P((struct proc *, void *, register_t *));
-int	netbsd32___stat13	__P((struct proc *, void *, register_t *));
-int	netbsd32___fstat13	__P((struct proc *, void *, register_t *));
-int	netbsd32___lstat13	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigaltstack14	__P((struct proc *, void *, register_t *));
-int	sys___vfork14	__P((struct proc *, void *, register_t *));
-int	netbsd32___posix_chown	__P((struct proc *, void *, register_t *));
-int	netbsd32___posix_fchown	__P((struct proc *, void *, register_t *));
-int	netbsd32___posix_lchown	__P((struct proc *, void *, register_t *));
-int	netbsd32_getsid	__P((struct proc *, void *, register_t *));
+int	netbsd32_clock_gettime(struct proc *, void *, register_t *);
+int	netbsd32_clock_settime(struct proc *, void *, register_t *);
+int	netbsd32_clock_getres(struct proc *, void *, register_t *);
+int	netbsd32_nanosleep(struct proc *, void *, register_t *);
+int	netbsd32_fdatasync(struct proc *, void *, register_t *);
+int	netbsd32___posix_rename(struct proc *, void *, register_t *);
+int	netbsd32_swapctl(struct proc *, void *, register_t *);
+int	netbsd32_getdents(struct proc *, void *, register_t *);
+int	netbsd32_minherit(struct proc *, void *, register_t *);
+int	netbsd32_lchmod(struct proc *, void *, register_t *);
+int	netbsd32_lchown(struct proc *, void *, register_t *);
+int	netbsd32_lutimes(struct proc *, void *, register_t *);
+int	netbsd32___msync13(struct proc *, void *, register_t *);
+int	netbsd32___stat13(struct proc *, void *, register_t *);
+int	netbsd32___fstat13(struct proc *, void *, register_t *);
+int	netbsd32___lstat13(struct proc *, void *, register_t *);
+int	netbsd32___sigaltstack14(struct proc *, void *, register_t *);
+int	sys___vfork14(struct proc *, void *, register_t *);
+int	netbsd32___posix_chown(struct proc *, void *, register_t *);
+int	netbsd32___posix_fchown(struct proc *, void *, register_t *);
+int	netbsd32___posix_lchown(struct proc *, void *, register_t *);
+int	netbsd32_getsid(struct proc *, void *, register_t *);
 #if defined(KTRACE) || !defined(_KERNEL)
-int	netbsd32_fktrace	__P((struct proc *, void *, register_t *));
+int	netbsd32_fktrace(struct proc *, void *, register_t *);
 #else
 #endif
-int	netbsd32_preadv	__P((struct proc *, void *, register_t *));
-int	netbsd32_pwritev	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigaction14	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigpending14	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigprocmask14	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigsuspend14	__P((struct proc *, void *, register_t *));
-int	netbsd32___sigreturn14	__P((struct proc *, void *, register_t *));
-int	netbsd32___getcwd	__P((struct proc *, void *, register_t *));
-int	netbsd32_fchroot	__P((struct proc *, void *, register_t *));
-int	netbsd32_fhopen	__P((struct proc *, void *, register_t *));
-int	netbsd32_fhstat	__P((struct proc *, void *, register_t *));
-int	netbsd32_fhstatfs	__P((struct proc *, void *, register_t *));
+int	netbsd32_preadv(struct proc *, void *, register_t *);
+int	netbsd32_pwritev(struct proc *, void *, register_t *);
+int	netbsd32___sigaction14(struct proc *, void *, register_t *);
+int	netbsd32___sigpending14(struct proc *, void *, register_t *);
+int	netbsd32___sigprocmask14(struct proc *, void *, register_t *);
+int	netbsd32___sigsuspend14(struct proc *, void *, register_t *);
+int	netbsd32___sigreturn14(struct proc *, void *, register_t *);
+int	netbsd32___getcwd(struct proc *, void *, register_t *);
+int	netbsd32_fchroot(struct proc *, void *, register_t *);
+int	netbsd32_fhopen(struct proc *, void *, register_t *);
+int	netbsd32_fhstat(struct proc *, void *, register_t *);
+int	netbsd32_fhstatfs(struct proc *, void *, register_t *);
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	netbsd32___semctl14	__P((struct proc *, void *, register_t *));
+int	netbsd32___semctl14(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	netbsd32___msgctl13	__P((struct proc *, void *, register_t *));
+int	netbsd32___msgctl13(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	netbsd32___shmctl13	__P((struct proc *, void *, register_t *));
+int	netbsd32___shmctl13(struct proc *, void *, register_t *);
 #else
 #endif
 #endif /* _netbsd32_SYS__SYSCALLARGS_H_ */
