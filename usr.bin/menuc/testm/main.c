@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1998/07/23 17:56:00 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2000/08/15 02:09:12 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,9 +58,9 @@ char  ent_text[5][50] = {"name: ", "strt: ", "city: ", "opt 4", "NUM: "};
 
 /* opt processing routines .. */
 
-int opt_1 (void);
+int opt_1 (struct menudesc *m);
 
-int opt_1 (void)
+int opt_1 (struct menudesc *m)
 {
 	msg_clear();
 	msg_prompt (MSG_name, "", &ent_text[0][6], 40);
@@ -68,9 +68,9 @@ int opt_1 (void)
 	return 0;
 }
 
-int opt_2 (void);
+int opt_2 (struct menudesc *m);
 
-int opt_2 (void)
+int opt_2 (struct menudesc *m)
 {
 	msg_clear();
 	msg_prompt (MSG_street, "", &ent_text[1][6], 40);
@@ -78,9 +78,9 @@ int opt_2 (void)
 	return 0;
 }
 
-int opt_3 (void);
+int opt_3 (struct menudesc *m);
 
-int opt_3 (void)
+int opt_3 (struct menudesc *m)
 {
 	msg_clear();
 	msg_prompt (MSG_city, "", &ent_text[2][6], 40);
@@ -101,7 +101,6 @@ int num = 0;
 
 void do_dynamic(void);
 void dyn_disp (void);
-
 void dyn_disp (void)
 {
     sprintf (&ent_text[4][5], "%d", num++);
