@@ -51,6 +51,7 @@
 ./sbin/badsect
 ./sbin/ccdconfig
 ./sbin/clri
+./sbin/dhclient
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
@@ -458,6 +459,7 @@
 ./usr/sbin/cron
 ./usr/sbin/dev_mkdb
 ./usr/sbin/dhcpd
+./usr/sbin/dhcrelay
 ./usr/sbin/dig
 ./usr/sbin/diskpart
 ./usr/sbin/dnsquery
@@ -469,8 +471,11 @@
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipfstat
+./usr/sbin/ipftest
 ./usr/sbin/ipmon
 ./usr/sbin/ipnat
+./usr/sbin/ipsend
+./usr/sbin/iptest
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/lastlogin
 ./usr/sbin/lpc
@@ -754,6 +759,7 @@
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/birthtoken
+./usr/share/misc/flowers
 ./usr/share/misc/inter.phone
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
