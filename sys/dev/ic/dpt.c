@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.2 1999/10/19 20:10:43 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.3 1999/10/19 23:15:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.2 1999/10/19 20:10:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.3 1999/10/19 23:15:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
 int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
 int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
 
-struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
+struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *));
 
 #if 0 && defined(DEBUG)
 static void	dpt_dump_sp __P((struct eata_sp *));
@@ -626,10 +626,6 @@ dpt_free_ccb(sc, ccb)
 	s = splbio();
 	ccb->ccb_flg = 0;
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_chain);
-
-	/* Wake anybody waiting for a free ccb */
-	if (ccb->ccb_chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ccb);
 	splx(s);
 }
 
@@ -693,29 +689,18 @@ dpt_create_ccbs(sc, ccbstore, count)
  * one becomes free.
  */
 struct dpt_ccb *
-dpt_alloc_ccb(sc, flg)
+dpt_alloc_ccb(sc)
 	struct dpt_softc *sc;
-	int flg;
 {
 	struct dpt_ccb *ccb;
 	int s;
 
 	s = splbio();
-
-	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
-			break;
-		}
-		if ((flg & XS_CTL_NOSLEEP) != 0) {
-			splx(s);
-			return (NULL);
-		}
-		tsleep(&sc->sc_free_ccb, PRIBIO, "dptccb", 0);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
+		ccb->ccb_flg |= CCB_ALLOC;
 	}
-
-	ccb->ccb_flg |= CCB_ALLOC;
 	splx(s);
 	return (ccb);
 }
@@ -848,7 +833,7 @@ dpt_scsipi_request(chan, req, arg)
 		 * Get a CCB. If the transfer is from a buf (possibly from
 		 * interrupt time) then we can't allow it to sleep.
 		 */
-		ccb = dpt_alloc_ccb(sc, flags);
+		ccb = dpt_alloc_ccb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -1093,7 +1078,7 @@ dpt_hba_inquire(sc, ei)
 	dmat = sc->sc_dmat;
 
 	/* Get a CCB and mark as private */
-	if ((ccb = dpt_alloc_ccb(sc, 0)) == NULL)
+	if ((ccb = dpt_alloc_ccb(sc)) == NULL)
 		panic("%s: no CCB for inquiry", sc->sc_dv.dv_xname);
 	
 	ccb->ccb_flg |= CCB_PRIVATE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.63.2.1 1999/10/19 17:47:32 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63.2.2 1999/10/19 23:15:30 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -166,8 +166,8 @@ void	aic_timeout	__P((void *));
 void	aic_sched	__P((struct aic_softc *));
 void	aic_scsi_reset	__P((struct aic_softc *));
 void	aic_reset	__P((struct aic_softc *));
-void	aic_free_acb	__P((struct aic_softc *, struct aic_acb *, int));
-struct aic_acb* aic_get_acb __P((struct aic_softc *, int));
+void	aic_free_acb	__P((struct aic_softc *, struct aic_acb *));
+struct aic_acb* aic_get_acb __P((struct aic_softc *));
 int	aic_reselect	__P((struct aic_softc *, int));
 void	aic_sense	__P((struct aic_softc *, struct aic_acb *));
 void	aic_msgin	__P((struct aic_softc *));
@@ -455,48 +455,33 @@ aic_init(sc, bus_reset)
 }
 
 void
-aic_free_acb(sc, acb, flags)
+aic_free_acb(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
-	int flags;
 {
 	int s;
 
 	s = splbio();
-
 	acb->flags = 0;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (acb->chain.tqe_next == 0)
-		wakeup(&sc->free_list);
-
 	splx(s);
 }
 
 struct aic_acb *
-aic_get_acb(sc, flags)
+aic_get_acb(sc)
 	struct aic_softc *sc;
-	int flags;
 {
 	struct aic_acb *acb;
 	int s;
 
 	s = splbio();
-
-	while ((acb = sc->free_list.tqh_first) == NULL &&
-	       (flags & XS_CTL_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "aicacb", 0);
-	if (acb) {
+	acb = TAILQ_FIRST(&sc->free_list);
+	if (acb != NULL) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 		acb->flags |= ACB_ALLOC;
 	}
-
 	splx(s);
-	return acb;
+	return (acb);
 }
 
 /*
@@ -546,7 +531,7 @@ aic_scsipi_request(chan, req, arg)
 		    periph->periph_target));
 
 		flags = xs->xs_control;
-		acb = aic_get_acb(sc, flags);
+		acb = aic_get_acb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -969,7 +954,7 @@ aic_done(sc, acb)
 	} else
 		aic_dequeue(sc, acb);
 
-	aic_free_acb(sc, acb, xs->xs_control);
+	aic_free_acb(sc, acb);
 	ti->cmds++;
 	scsipi_done(xs);
 }
@@ -1109,8 +1094,8 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				printf("%s: %ld extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, (long)-sc->sc_dleft,
 				    periph->periph_target,
 				    periph->periph_lun);
 				acb->data_length = 0;
@@ -2058,7 +2043,7 @@ dophase:
 	case PH_DATAOUT:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("dataout %d ", sc->sc_dleft));
+		AIC_MISC(("dataout %ld ", (long)sc->sc_dleft));
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -2068,7 +2053,7 @@ dophase:
 	case PH_DATAIN:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("datain %d ", sc->sc_dleft));
+		AIC_MISC(("datain %ld ", (long)sc->sc_dleft));
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;

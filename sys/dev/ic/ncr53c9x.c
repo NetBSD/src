@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.1 1999/10/19 17:47:40 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.2 1999/10/19 23:20:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,8 +123,8 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 void ncr53c9x_sense			__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
 void ncr53c9x_free_ecb			__P((struct ncr53c9x_softc *,
-					    struct ncr53c9x_ecb *, int));
-struct ncr53c9x_ecb *ncr53c9x_get_ecb	__P((struct ncr53c9x_softc *, int));
+					    struct ncr53c9x_ecb *));
+struct ncr53c9x_ecb *ncr53c9x_get_ecb	__P((struct ncr53c9x_softc *));
 
 static inline int ncr53c9x_stp2cpb	__P((struct ncr53c9x_softc *, int));
 static inline void ncr53c9x_setsync	__P((struct ncr53c9x_softc *,
@@ -576,46 +576,31 @@ ncr53c9x_select(sc, ecb)
 }
 
 void
-ncr53c9x_free_ecb(sc, ecb, flags)
+ncr53c9x_free_ecb(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
-	int flags;
 {
 	int s;
 
 	s = splbio();
-
 	ecb->flags = 0;
 	TAILQ_INSERT_HEAD(&sc->free_list, ecb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (ecb->chain.tqe_next == 0)
-		wakeup(&sc->free_list);
-
 	splx(s);
 }
 
 struct ncr53c9x_ecb *
-ncr53c9x_get_ecb(sc, flags)
+ncr53c9x_get_ecb(sc)
 	struct ncr53c9x_softc *sc;
-	int flags;
 {
 	struct ncr53c9x_ecb *ecb;
 	int s;
 
 	s = splbio();
-
-	while ((ecb = sc->free_list.tqh_first) == NULL &&
-	       (flags & XS_CTL_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "especb", 0);
-	if (ecb) {
+	ecb = TAILQ_FIRST(&sc->free_list);
+	if (ecb != NULL) {
 		TAILQ_REMOVE(&sc->free_list, ecb, chain);
 		ecb->flags |= ECB_ALLOC;
 	}
-
 	splx(s);
 	return (ecb);
 }
@@ -653,7 +638,7 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		    periph->periph_target));
 
 		/* Get an ECB to use. */
-		ecb = ncr53c9x_get_ecb(sc, flags);
+		ecb = ncr53c9x_get_ecb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track resources
@@ -915,7 +900,7 @@ ncr53c9x_done(sc, ecb)
 	} else
 		ncr53c9x_dequeue(sc, ecb);
 		
-	ncr53c9x_free_ecb(sc, ecb, xs->xs_control);
+	ncr53c9x_free_ecb(sc, ecb);
 	ti->cmds++;
 	scsipi_done(xs);
 }
