@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.57 2004/12/08 07:43:29 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.58 2005/01/19 15:05:55 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.57 2004/12/08 07:43:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.58 2005/01/19 15:05:55 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -281,6 +281,7 @@ pppoe_clone_destroy(ifp)
 {
 	struct pppoe_softc * sc = ifp->if_softc;
 
+	callout_stop(&sc->sc_timeout);
 	LIST_REMOVE(sc, sc_list);
 #ifdef PFIL_HOOKS
 	if (LIST_EMPTY(&pppoe_softc_list))
@@ -1449,7 +1450,7 @@ pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 static void
 pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 {
-	/* stop timer (we might be about to transmit a PADT ourself) */	
+	/* stop timer */
 	callout_stop(&sc->sc_timeout);
 	if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 		printf("%s: session 0x%x terminated, %s\n",
