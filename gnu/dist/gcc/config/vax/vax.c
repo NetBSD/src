@@ -823,7 +823,7 @@ legitimate_pic_operand_p(xbar, strict)
      register rtx xbar;
      int strict;
 {
-  return INDIRECTABLE_CONSTANT_ADDRESS_P (xbar);
+  return INDIRECTABLE_CONSTANT_P (xbar);
 }
 /*
  * reg
