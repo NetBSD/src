@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2000/12/29 05:22:07 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/04/01 23:47:46 itojun Exp $
 
 FILES=	psk.txt.sample racoon.conf.sample racoon.conf.sample-gssapi
+FILES+=	README.certificate README.gssapi
 
 MKOBJ=no
 
 .include <bsd.prog.mk>
 
-.PATH:	${RACOONSRCDIR}/samples
+.PATH:	${RACOONSRCDIR}/samples ${RACOONSRCDIR}/doc
