@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.12 2003/02/23 21:27:33 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.13 2003/02/23 22:20:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -136,8 +136,10 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		return error;
 
 	if (args.version != SMBFS_VERSION) {
+#ifdef SMB_VNODE_DEBUG
 		printf("mount version mismatch: kernel=%d, mount=%d\n",
 		    SMBFS_VERSION, args.version);
+#endif
 		return EINVAL;
 	}
 	smb_makescred(&scred, p, p->p_ucred);
@@ -177,8 +179,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		vcp->vc_srvname,
 		ssp->ss_name);
 
-	/* protect against invalid mount points */
-	smp->sm_args.mount_point[sizeof(smp->sm_args.mount_point) - 1] = '\0';
 	vfs_getnewfsid(mp);
 	error = smbfs_root(mp, &vp);
 	if (error)
