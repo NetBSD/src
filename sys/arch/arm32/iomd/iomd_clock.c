@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.16 1998/03/26 20:07:18 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.17 1998/03/26 21:27:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -278,8 +278,8 @@ microtime(tvp)
 
 	deltatm = timer0_count - tm;
 	if (deltatm < 0)
-		printf("opps deltatm < 0 tm=%d oldtm=%d deltatm=%d\n",
-		    tm, oldtm, deltatm);
+		printf("opps deltatm < 0 tm=%d deltatm=%d\n",
+		    tm, deltatm);
 
 	/* Fill in the timeval struct */
 	*tvp = time;
