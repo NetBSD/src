@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.6 1997/06/16 06:36:28 scottr Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.7 1997/08/08 17:58:56 ender Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -91,10 +91,22 @@ typedef struct adb_dev_s{
 #define ADBADDR_TABLET	ADBADDR_ABS
 
 
-	/* Interesting handler IDs */
+	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_EXTISOKBD	5
+#define ADB_KBDII	8
+#define ADB_ISOKBDII	9
 #define ADB_PBKBD	12
+#define ADB_PBISOKBD	13
+#define ADB_ADJKPD	14
+#define ADB_ADJKBD	16
+#define ADB_ADJISOKBD	17
+#define ADB_ADJJAPKBD	18
+#define ADB_PB500KBD	19
+#define ADB_PB500ISOKBD	20
+
+	/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
 #define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
