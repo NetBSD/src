@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.10 2002/10/02 16:34:14 thorpej Exp $	*/
+/*	$NetBSD: acphy.c,v 1.11 2003/01/17 06:23:52 gendalia Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.10 2002/10/02 16:34:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.11 2003/01/17 06:23:52 gendalia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,8 @@ const struct mii_phy_funcs acphy_funcs = {
 const struct mii_phydesc acphys[] = {
 	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101,
 	  MII_STR_ALTIMA_AC101 },
+	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101L,
+	  MII_STR_ALTIMA_AC101L },
 
 	/* XXX This is reported to work, but it's not from any data sheet. */
 	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_ACXXX,
