@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.56.2.3 2002/01/10 20:00:14 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.56.2.4 2002/03/15 21:36:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.56.2.3 2002/01/10 20:00:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.56.2.4 2002/03/15 21:36:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1125,7 +1125,6 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct socket	*so;
 	struct sockbuf	*sb;
-	int		s;
 
 	so = (struct socket *)kn->kn_fp->f_data;
 	switch (kn->kn_filter) {
@@ -1143,10 +1142,8 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	default:
 		return (1);
 	}
-	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
-	splx(s);
 	return (0);
 }
 
@@ -1154,14 +1151,11 @@ static void
 filt_sordetach(struct knote *kn)
 {
 	struct socket	*so;
-	int		s;
 
 	so = (struct socket *)kn->kn_fp->f_data;
-	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
 	SLIST_REMOVE(&so->so_rcv.sb_sel.si_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_klist))
 		so->so_rcv.sb_flags &= ~SB_KNOTE;
-	splx(s);
 }
 
 /*ARGSUSED*/
@@ -1188,14 +1182,11 @@ static void
 filt_sowdetach(struct knote *kn)
 {
 	struct socket	*so;
-	int		s;
 
 	so = (struct socket *)kn->kn_fp->f_data;
-	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
 	SLIST_REMOVE(&so->so_snd.sb_sel.si_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_klist))
 		so->so_snd.sb_flags &= ~SB_KNOTE;
-	splx(s);
 }
 
 /*ARGSUSED*/
@@ -1228,20 +1219,11 @@ filt_solisten(struct knote *kn, long hint)
 	struct socket	*so;
 
 	so = (struct socket *)kn->kn_fp->f_data;
-#if 0
+
 	/*
-	 * XXXLUKEM:	this was freebsd's code. it appears that they
-	 * XXXLUKEM:	modified the socket code to store the count
-	 * XXXLUKEM:	of all connections in so_qlen, and separately
-	 * XXXLUKEM:	track the number of incompletes in so_incqlen.
-	 * XXXLUKEM:	as we appear to keep only completed connections
-	 * XXXLUKEM:	on so_qlen we can just return that.
-	 * XXXLUKEM:	that said, a socket guru should double check for me :)
-	 */
-	kn->kn_data = so->so_qlen - so->so_incqlen;
-	return (! TAILQ_EMPTY(&so->so_comp));
-#else
+	 * Set kn_data to number of incoming connections, not
+	 * counting partial (incomplete) connections.
+	 */ 
 	kn->kn_data = so->so_qlen;
 	return (kn->kn_data > 0);
-#endif
 }
