@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155 2000/01/28 13:06:02 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.156 2000/04/17 20:32:00 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1980,7 +1980,6 @@ ctx_free(pm)
 		if (CPU_ISSUN4M)
 			tlb_flush_context();
 #endif
-		setcontext(0);
 	} else {
 #if defined(SUN4M)
 		if (CPU_ISSUN4M) {
@@ -1991,8 +1990,9 @@ ctx_free(pm)
 			tlb_flush_context();
 		}
 #endif
-		CHANGE_CONTEXTS(oldc, 0);
 	}
+	setcontext(oldc);
+
 	c->c_nextfree = ctx_freelist;
 	ctx_freelist = c;
 
