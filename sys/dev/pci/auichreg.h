@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.7 2003/11/22 08:49:41 kent Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.8 2004/12/11 17:48:56 cube Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -118,6 +118,9 @@
 #define		ICH_GSTS_BITS	"\020\01gsci\02miict\03moint\06piint\07point\010mint\011pcr\012scr\013pri\014sri\015b1s12\016b2s12\017b3s12\020rcs\021ad3\022md3"
 #define	ICH_CAS		0x34	/* 1/8 bit */
 #define	ICH_SEMATIMO	1000	/* us */
+
+#define	ICH_SIS_NV_CTL	0x4c	/* some SiS/nVidia register.  From Linux */
+#define		ICH_SIS_CTL_UNMUTE	0x01	/* un-mute the output */
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
