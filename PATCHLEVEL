@@ -1,0 +1,20 @@
+This file describes official patches for the NetBSD 1.1 release.
+
+Jumbo patch 1:
+
+[kernel/i386]: Fix a compilation error when no DMA devices are
+configured.
+
+[kernel/i386]: Fix a problem where processes using the FPU would
+sporadically core dump.  Known to affect httpd and gopherd, in
+particular.
+
+[kernel/i386]: Fix an oversight which caused the Ultrastor 24f probe
+to always fail.
+
+[kernel/generic]: Fix a sgtty emulation problem which caused LITOUT
+and PASS8 modes to sometimes be set erroneously (sometimes referred to
+as `stair-stepping xterms').
+
+[kernel/generic]: Fix a problem in FFS that could cause panics in
+ffs_clusteracct() after running fsck(8).
