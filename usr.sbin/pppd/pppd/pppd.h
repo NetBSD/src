@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.10 1997/05/17 22:14:27 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.11 1997/09/26 19:53:18 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: pppd.h,v 1.18 1997/03/04 03:42:48 paulus Exp 
+ * Id: pppd.h,v 1.19 1997/04/30 05:56:55 paulus Exp 
  */
 
 /*
@@ -113,6 +113,7 @@ extern int	refuse_chap;	/* Don't wanna auth. ourselves with CHAP */
 extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
 extern struct	bpf_program active_filter; /* Filter for link-active pkts */
 #endif
+
 
 #ifdef MSLANMAN
 extern int	ms_lanman;	/* Nonzero if use LanMan password instead of NT */

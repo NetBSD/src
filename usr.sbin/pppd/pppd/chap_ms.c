@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.3 1997/05/17 22:14:17 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.4 1997/09/26 19:52:37 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -33,11 +33,12 @@
  *   You should also use DOMAIN\\USERNAME as described in README.MSCHAP80
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.3 1997/04/30 05:51:40 paulus Exp ";
+static char rcsid[] = "Id: chap_ms.c,v 1.4 1997/05/22 06:46:19 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: chap_ms.c,v 1.3 1997/05/17 22:14:17 christos Exp $";
+__RCSID("$NetBSD: chap_ms.c,v 1.4 1997/09/26 19:52:37 christos Exp $");
 #endif
 #endif
 
@@ -53,7 +54,9 @@ static char rcsid[] = "$NetBSD: chap_ms.c,v 1.3 1997/05/17 22:14:17 christos Exp
 #include "chap_ms.h"
 #include "md4.h"
 
+#ifndef USE_CRYPT
 #include <des.h>
+#endif
 
 typedef struct {
     u_char LANManResp[24];
@@ -270,7 +273,8 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
     ChallengeResponse(rchallenge, (char *)md4Context.buffer, response->NTResp);
 }
 
-static u_char *StdText = "KGS!@#$%"; /* key from rasapi32.dll */
+#ifdef MSLANMAN
+static u_char *StdText = (u_char *)"KGS!@#$%"; /* key from rasapi32.dll */
 
 static ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
     char *rchallenge;
@@ -291,6 +295,7 @@ static ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, response)
     DesEncrypt( StdText, UcasePassword + 7, PasswordHash + 8 );
     ChallengeResponse(rchallenge, PasswordHash, response->LANManResp);
 }
+#endif
 
 void
 ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
@@ -301,6 +306,9 @@ ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
     int secret_len;
 {
     MS_ChapResponse	response;
+#ifdef MSLANMAN
+    extern int ms_lanman;
+#endif
 
 #if 0
     CHAPDEBUG((LOG_INFO, "ChapMS: secret is '%.*s'", secret_len, secret));
@@ -309,10 +317,15 @@ ChapMS(cstate, rchallenge, rchallenge_len, secret, secret_len)
 
     /* Calculate both always */
     ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, &response);
+
+#ifdef MSLANMAN
     ChapMS_LANMan(rchallenge, rchallenge_len, secret, secret_len, &response);
 
     /* prefered method is set by option  */
     response.UseNT = !ms_lanman;
+#else
+    response.UseNT = 1;
+#endif
 
     BCOPY(&response, cstate->response, MS_CHAP_RESPONSE_LEN);
     cstate->resp_length = MS_CHAP_RESPONSE_LEN;
