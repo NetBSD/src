@@ -65,7 +65,8 @@ static char sccsid[] = "@(#)fstat.c	5.32 (Berkeley) 6/17/91";
 #include <sys/kinfo.h>
 #include <sys/filedesc.h>
 #define	KERNEL
-#define NFS
+#define NFSSERVER
+#define NFS_CLIENT
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <ufs/quota.h>
