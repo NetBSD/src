@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.2 1995/01/20 08:51:50 jtc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.3 1995/08/31 22:20:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: cmds.c,v 1.2 1995/01/20 08:51:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.3 1995/08/31 22:20:18 jtc Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -170,7 +170,7 @@ lookup(name)
 				nmatches++;
 		}
 	}
-	if (nmatches > 1)
+	if (nmatches != 1)
 		return ((struct cmdtab *)-1);
 	return (found);
 }
