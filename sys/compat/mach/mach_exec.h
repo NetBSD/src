@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.13 2003/01/03 13:40:05 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.14 2003/01/30 19:14:19 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <compat/mach/mach_types.h>
 
 struct mach_emuldata {
-	mach_cproc_t med_p;		/* Thread id */
 	int med_thpri;			/* Saved priority */
 	LIST_HEAD(med_right, mach_right) med_right;
 	struct lock med_rightlock;	/* process right list and lock */

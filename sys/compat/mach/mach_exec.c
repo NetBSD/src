@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.24 2003/01/03 13:40:04 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.25 2003/01/30 19:14:19 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.24 2003/01/03 13:40:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.25 2003/01/30 19:14:19 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,6 +214,7 @@ mach_e_proc_init(p, vmspace)
 	struct vmspace *vmspace;
 {
 	struct mach_emuldata *med;
+	struct lwp *l;
 
 	/* 
 	 * Initialize various things if needed. 
@@ -227,7 +228,6 @@ mach_e_proc_init(p, vmspace)
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
 	med = (struct mach_emuldata *)p->p_emuldata;
-	med->med_p = 0;
 
 	LIST_INIT(&med->med_right);
 	lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
@@ -250,6 +250,9 @@ mach_e_proc_init(p, vmspace)
 
 	med->med_bootstrap = mach_bootstrap_port;
 	med->med_bootstrap->mp_refcount++;
+
+	l = proc_representative_lwp(p);
+	l->l_private = (void *)0;
 
 	return;
 }
