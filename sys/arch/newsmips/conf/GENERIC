@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.15 2000/01/20 19:12:33 wrstuden Exp $
+# 	$NetBSD: GENERIC,v 1.16 2000/01/23 15:27:43 tsubai Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
@@ -117,9 +117,9 @@ sn*	at ap?				# SONIC Ethernet
 kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
 ms0	at hb0 addr 0xbfd00004 level 2	# mouse
 
-zsc0	at hb0 addr 0xbfec0000 level 1	# on-board
-zsc1	at hb0 addr 0xb8c40100 level 1	# expansion board
-zsc2	at hb0 addr 0xb8c40104 level 1
+zsc0	at hb0 addr 0xbfec0000 level 1 flags 0x0	# on-board
+zsc1	at hb0 addr 0xb8c40100 level 1 flags 0x1	# expansion board
+zsc2	at hb0 addr 0xb8c40104 level 1 flags 0x1
 zsc0	at ap?
 
 zstty0	at zsc0 channel 0		# tty00

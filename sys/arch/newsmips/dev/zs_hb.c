@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.2 1999/12/26 09:05:39 tsubai Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.3 2000/01/23 15:27:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,11 +66,13 @@
 #define NZS 2
 #endif
 
+#define ZSCFLAG_EX	0x01	/* expansion board */
+
 /*
  * The news3400 provides a 4.9152 MHz clock to the ZS chips.
  */
-#define PCLK1	(9600 * 512)	/* PCLK pin input clock rate */
-#define PCLK2	(9600 * 384)
+#define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
+#define PCLK_EX	(9600 * 384)
 
 /*
  * Define interrupt levels.
@@ -114,7 +116,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	((PCLK1/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
@@ -238,10 +240,10 @@ zs_hb_attach(parent, self, aux)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		if (zs_unit == 0)
-			cs->cs_brg_clk = PCLK1 / 16;
+		if ((zsc->zsc_dev.dv_cfdata->cf_flags & ZSCFLAG_EX) == 0)
+			cs->cs_brg_clk = PCLK / 16;
 		else
-			cs->cs_brg_clk = PCLK2 / 16;
+			cs->cs_brg_clk = PCLK_EX / 16;
 
 		zc = zs_get_chan_addr(zs_unit, channel);
 		cs->cs_reg_csr  = &zc->zc_csr;
