@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.104 2002/04/16 20:50:21 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.105 2002/04/27 19:29:08 shiba Exp $
 
 # mac68k-specific configuration info
 
@@ -122,6 +122,14 @@ file	arch/mac68k/obio/esp.c		esp
 #attach	qsc at nubus
 #file	arch/mac68k/nubus/qsc.c		qsc
 
+#
+# Machine-independent ATA drivers
+#
+include	"dev/ata/files.ata"
+
+attach	wdc at obio_norm with wdc_obio
+file	arch/mac68k/obio/wdc_obio.c	wdc_obio
+
 device	zsc { channel = -1 }
 attach	zsc at obio_norm
 file	arch/mac68k/dev/zs.c		zsc needs-flag
@@ -188,6 +196,9 @@ major	{md = 13}
 
 # RAIDframe
 major	{raid = 20}
+
+#ATA disk
+major	{wd = 22}
 
 # Compatibility modules
 
