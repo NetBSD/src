@@ -1,4 +1,4 @@
-#       @(#)Makefile	8.12 (Berkeley) 5/29/95
+#       @(#)Makefile	8.15 (Berkeley) 9/21/96
 
 SUBDIR= src mailstats makemap praliases cf/cf
 .if make(install)

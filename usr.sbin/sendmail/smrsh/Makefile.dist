@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.1 (Berkeley) 7/2/95
+#	@(#)Makefile.dist	8.2 (Berkeley) 9/25/96
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -52,8 +52,13 @@ all: ${ALL}
 smrsh: ${BEFORE} ${OBJS}
 	${CC} -o smrsh ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
+# Which *roff program has -mandoc support
+NROFF=	groff -Tascii
+#NROFF=	nroff -h
+MANDOC=	-mandoc
+
 smrsh.0: smrsh.8
-	nroff -h -mandoc smrsh.8 > smrsh.0
+	${NROFF} ${MANDOC} smrsh.8 > smrsh.0
 
 install: install-smrsh install-docs
 
