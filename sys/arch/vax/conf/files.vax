@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.70 2000/06/12 11:13:17 ragge Exp $
+#       $NetBSD: files.vax,v 1.71 2000/06/19 04:22:16 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -18,7 +18,7 @@ device	mba { drive = -1 }
 
 defopt	opt_cputype.h	VAX780 VAX750 VAX730 VAX8200 VAX8800 VAX8600
 	VAX6200 VAX6400 VAX6500 VAX6600 VAX410 VAX43 VAX46 VAX48
-	VAX49 VAX53 VAX630 VAX650 VAX670 VAX680
+	VAX49 VAX53 VAX630 VAX650 VAX660 VAX670 VAX680
 
 # NBI on KA88
 device	nmi { slot=-1 }
@@ -159,9 +159,9 @@ major	{ sd = 20 }
 major	{ cd = 22 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 
-device	ncr: scsi, ncr5380sbc
-attach	ncr at vsbus
-file	arch/vax/vsa/ncr.c		ncr needs-flag
+device	si: scsi, ncr5380sbc
+attach	si at vsbus with si_vsbus
+file	arch/vax/vsa/ncr.c		si_vsbus
 
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus with le_vsbus:	le24
@@ -175,7 +175,7 @@ file	arch/vax/vsa/smg.c		smg needs-flag
 # builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
-file	arch/vax/vsa/asc_vsbus.c	asc needs-flag
+file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
 device	lkc: qfont
 attach	lkc at dz

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2000/06/15 19:49:37 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2000/06/19 04:22:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -330,13 +330,9 @@ booted_sd(struct device *dev, void *aux)
 
 	ppdev = dev->dv_parent->dv_parent;
 
-	/* VS3100 NCR 53C80 */
-	if ((jmfr("ncr", ppdev, BDEV_SD) == 0) &&
-	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
-			return 1;
-
-	/* VS4000 NCR 53C94 */
-	if ((jmfr("asc", ppdev, BDEV_SD) == 0) &&
+	/* VS3100 NCR 53C80 (si) & VS4000 NCR 53C94 (asc) */
+	if (((jmfr("si",  ppdev, BDEV_SD) == 0) ||	/* new name */
+	     (jmfr("asc", ppdev, BDEV_SD) == 0)) &&
 	    (ppdev->dv_cfdata->cf_loc[0] == rpb.csrphy))
 			return 1;
 
