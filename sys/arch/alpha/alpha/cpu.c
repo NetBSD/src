@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.67 2002/09/27 20:29:25 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.68 2002/10/02 04:06:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2002/09/27 20:29:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2002/10/02 04:06:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -120,9 +120,8 @@ u_long	cpu_implver, cpu_amask;
 static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
 
-const struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+    cpumatch, cpuattach, NULL, NULL);
 
 static void	cpu_announce_extensions(struct cpu_info *);
 

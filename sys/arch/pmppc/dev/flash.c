@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.2 2002/09/27 20:34:57 thorpej Exp $	*/
+/*	$NetBSD: flash.c,v 1.3 2002/10/02 04:11:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,9 +55,8 @@ struct flash_softc {
 static int	flash_match(struct device *, struct cfdata *, void *);
 static void	flash_attach(struct device *, struct device *, void *);
 
-const struct cfattach flash_ca = {
-	sizeof(struct flash_softc), flash_match, flash_attach
-};
+CFATTACH_DECL(flash, sizeof(struct flash_softc),
+    flash_match, flash_attach, NULL, NULL);
 
 int
 flash_match(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.4 2002/09/27 20:29:28 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.4 2002/09/27 20:29:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,8 @@ int	com_jensenio_match(struct device *, struct cfdata *, void *);
 void	com_jensenio_attach(struct device *, struct device *, void *);
 void	com_jensenio_cleanup(void *);
 
-const struct cfattach com_jensenio_ca = {
-	sizeof(struct com_jensenio_softc), com_jensenio_match,
-	    com_jensenio_attach
-};
+CFATTACH_DECL(com_jensenio, sizeof(struct com_jensenio_softc),
+    com_jensenio_match, com_jensenio_attach, NULL, NULL);
 
 void	com_jensenio_intr(void *, u_long);
 

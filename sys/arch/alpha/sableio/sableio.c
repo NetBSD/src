@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.4 2002/09/27 20:29:38 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.5 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.4 2002/09/27 20:29:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.5 2002/10/02 04:06:40 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -105,9 +105,8 @@ struct sableio_softc {
 int	sableio_match(struct device *, struct cfdata *, void *);
 void	sableio_attach(struct device *, struct device *, void *);
 
-const struct cfattach sableio_ca = {
-	sizeof(struct sableio_softc), sableio_match, sableio_attach
-};
+CFATTACH_DECL(sableio, sizeof(struct sableio_softc),
+    sableio_match, sableio_attach, NULL, NULL);
 
 int	sableio_print(void *, const char *);
 int	sableio_submatch(struct device *, struct cfdata *, void *);

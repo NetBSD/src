@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.36 2002/09/27 20:29:38 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.37 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.36 2002/09/27 20:29:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.37 2002/10/02 04:06:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,9 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.36 2002/09/27 20:29:38 thorpej Exp $");
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ioasic_ca = {
-	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
-};
+CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
+    ioasicmatch, ioasicattach, NULL, NULL);
 
 int	ioasic_intr __P((void *));
 int	ioasic_intrnull __P((void *));

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_jensenio.c,v 1.4 2002/09/27 20:29:29 thorpej Exp $ */
+/* $NetBSD: lpt_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.4 2002/09/27 20:29:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.5 2002/10/02 04:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,8 @@ struct lpt_jensenio_softc {
 int	lpt_jensenio_match(struct device *, struct cfdata *, void *);
 void	lpt_jensenio_attach(struct device *, struct device *, void *);
 
-const struct cfattach lpt_jensenio_ca = {
-	sizeof(struct lpt_jensenio_softc), lpt_jensenio_match,
-	    lpt_jensenio_attach
-};
+CFATTACH_DECL(lpt_jensenio, sizeof(struct lpt_jensenio_softc),
+    lpt_jensenio_match, lpt_jensenio_attach, NULL, NULL);
 
 void	lpt_jensenio_intr(void *, u_long);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.13 2002/09/27 20:35:19 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.14 2002/10/02 04:09:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -145,9 +145,8 @@ void sq_trace_dump(struct sq_softc* sc);
 	}								\
 } while (0)
 
-const struct cfattach sq_ca = {
-	sizeof(struct sq_softc), sq_match, sq_attach
-};
+CFATTACH_DECL(sq, sizeof(struct sq_softc),
+    sq_match, sq_attach, NULL, NULL);
 
 static int
 sq_match(struct device *parent, struct cfdata *cf, void *aux)

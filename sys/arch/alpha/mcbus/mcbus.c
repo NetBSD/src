@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.11 2002/09/27 20:29:30 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.12 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.11 2002/09/27 20:29:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.12 2002/10/02 04:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,8 @@ typedef struct {
 	u_int8_t	mcbus_types[MCBUS_MID_MAX];
 } mcbus_softc_t;
 
-const struct cfattach mcbus_ca = {
-	sizeof (mcbus_softc_t), mcbusmatch, mcbusattach
-};
+CFATTACH_DECL(mcbus, sizeof (mcbus_softc_t),
+    mcbusmatch, mcbusattach, NULL, NULL);
 
 /*
  * Tru64 UNIX (formerly Digital UNIX (formerly DEC OSF/1)) probes for MCPCIAs

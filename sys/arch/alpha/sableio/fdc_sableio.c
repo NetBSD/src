@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.3 2002/09/27 20:29:37 thorpej Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.3 2002/09/27 20:29:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,8 @@ struct fdc_sableio_softc {
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
 };
 
-const struct cfattach fdc_sableio_ca = {
-	sizeof(struct fdc_sableio_softc), fdc_sableio_match, fdc_sableio_attach
-};
+CFATTACH_DECL(fdc_sableio, sizeof(struct fdc_sableio_softc),
+    fdc_sableio_match, fdc_sableio_attach, NULL, NULL);
 
 int
 fdc_sableio_match(struct device *parent, struct cfdata *match, void *aux)

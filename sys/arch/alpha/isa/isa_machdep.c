@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.14 2002/09/27 20:29:27 thorpej Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2002/09/27 20:29:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2002/10/02 04:06:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,9 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2002/09/27 20:29:27 thorpej Exp
 int isabeepmatch __P((struct device *, struct cfdata *, void *));
 void isabeepattach __P((struct device *, struct device *, void *));
 
-const struct cfattach isabeep_ca = {
-	sizeof(struct device), isabeepmatch, isabeepattach
-};
+CFATTACH_DECL(isabeep, sizeof(struct device),
+    isabeepmatch, isabeepattach, NULL, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;

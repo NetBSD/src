@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.10 2002/09/27 20:29:40 thorpej Exp $ */
+/* $NetBSD: kftxx.c,v 1.11 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.10 2002/09/27 20:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.11 2002/10/02 04:06:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,8 @@ struct kft_softc {
 
 static int	kftmatch __P((struct device *, struct cfdata *, void *));
 static void	kftattach __P((struct device *, struct device *, void *));
-const struct cfattach kft_ca = {
-	sizeof(struct kft_softc), kftmatch, kftattach
-};
+CFATTACH_DECL(kft, sizeof(struct kft_softc),
+    kftmatch, kftattach, NULL, NULL);
 
 static int	kftprint __P((void *, const char *));
 
