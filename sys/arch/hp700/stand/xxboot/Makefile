@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2004/08/09 16:01:37 chs Exp $
+#	$NetBSD: Makefile,v 1.3 2004/11/07 21:58:45 christos Exp $
 
 PROG=	xxboot
-SRCS=	start.s main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.s
+SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
 
 CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
 # configuration for readufs module
@@ -41,23 +41,23 @@ iplsum: iplsum.c
 	${HOST_CC} -o $@ ${.CURDIR}/iplsum.c
 
 CLEANFILES+=	${PROG}1 ${PROG}2 ${PROG}1.bin ${PROG}2.bin ${PROG}.bin iplsum
-CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.s/}
+CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 
 .include <bsd.prog.mk>
 
 # override default rules
 
 # Place code to data section.
-.s.o:
+.S.o:
 	sed -e 's/\.code/.data/' \
 	-e 's/\.bss/.section .bss,"aw",@nobits/' \
 	-e 's/\.allow$$/.level	1.0/' -e 's/\.allow/.level/' \
-	 $< | ${AS} -o $@
+	 ${.IMPSRC} | ${AS} -o ${.TARGET}
 
 # Place code to data section, and make sure all address calculations
 # are relative to $global$.
 .c.o:
-	${CC} ${CFLAGS} ${CPPFLAGS} -o $@.s -S $<
-	@grep -i 'ldil' $@.s | egrep -v "ldil L'-?[0-9]*," || exit 0; \
+	${CC} ${CFLAGS} ${CPPFLAGS} -o $@.S -S ${.IMPSRC}
+	@grep -i 'ldil' $@.S | egrep -v "ldil L'-?[0-9]*," || exit 0; \
 		echo 'found non-relocatable code' >&2; exit 1
-	sed -e 's/\.text/.data/' $@.s | ${AS} -o $@
+	sed -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
