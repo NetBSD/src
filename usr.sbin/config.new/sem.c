@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sem.c	8.1 (Berkeley) 6/6/93
- *	$Id: sem.c,v 1.6 1994/07/01 09:15:53 pk Exp $
+ *	$Id: sem.c,v 1.7 1995/01/25 20:44:44 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -420,7 +420,7 @@ exclude(nv, name, what)
 }
 
 /* 
- * Map things like "ra0b" => makedev(major("ra"), 0*8 + 'b'-'a').
+ * Map things like "ra0b" => makedev(major("ra"), 0*maxpartitions + 'b'-'a').
  * Handle the case where the device number is given but there is no
  * corresponding name, and map NULL to the default.
  */
@@ -438,7 +438,7 @@ resolve(nvp, name, what, dflt, part)
 	int unit;
 	char buf[NAMESIZE];
 
-	if ((u_int)(part -= 'a') >= 7)
+	if ((u_int)(part -= 'a') >= maxpartitions)
 		panic("resolve");
 	if ((nv = *nvp) == NULL) {
 		dev_t	d = NODEV;
@@ -448,7 +448,7 @@ resolve(nvp, name, what, dflt, part)
 		 */
 		if (dflt->nv_int != NODEV) {
 			maj = major(dflt->nv_int);
-			min = (minor(dflt->nv_int) & ~7) | part;
+			min = (minor(dflt->nv_int) / maxpartitions) + part;
 			d = makedev(maj, min);
 		}
 		*nvp = nv = newnv(NULL, NULL, NULL, d);
@@ -467,7 +467,7 @@ resolve(nvp, name, what, dflt, part)
 			(void)sprintf(buf, "<%d/%d>", maj, min);
 		else
 			(void)sprintf(buf, "%s%d%c", dev->d_name,
-			    min >> 3, (min & 7) + 'a');
+			    min / maxpartitions, (min % maxpartitions) + 'a');
 		nv->nv_str = intern(buf);
 		return (0);
 	}
@@ -485,7 +485,8 @@ resolve(nvp, name, what, dflt, part)
 	 */
 	l = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
-	if (l > 1 && *--cp >= 'a' && *cp <= 'h' && isdigit(cp[-1])) {
+	if (l > 1 && *--cp >= 'a' && *cp <= 'a'+maxpartitions &&
+	    isdigit(cp[-1])) {
 		l--;
 		part = *cp - 'a';
 	}
@@ -501,7 +502,7 @@ resolve(nvp, name, what, dflt, part)
 		return (1);
 	}
 	nv->nv_name = dev->d_name;
-	nv->nv_int = makedev(dev->d_major, unit * 8 + part);
+	nv->nv_int = makedev(dev->d_major, unit * maxpartitions + part);
 	return (0);
 }
 

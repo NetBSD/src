@@ -42,11 +42,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
- *	$Id: gram.y,v 1.5 1994/06/22 10:44:09 pk Exp $
+ *	$Id: gram.y,v 1.6 1995/01/25 20:44:41 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <ctype.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,6 +79,7 @@ static	int	adepth;
 
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
+static	void	setmaxpartitions __P((int));
 
 %}
 
@@ -90,8 +92,8 @@ static	void	setmachine __P((const char *, const char *));
 }
 
 %token	AND AT COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
-%token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MINOR
-%token	ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR
+%token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
+%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
@@ -126,6 +128,7 @@ Configuration:
 	hdrs machine_spec		/* "machine foo" from machine descr. */
 	dev_defs dev_eof		/* ../../conf/devices */
 	dev_defs dev_eof		/* devices.foo */
+	maxpart_spec dev_defs dev_eof	/* ../../conf/devices */
 	specs;				/* rest of machine description */
 
 hdrs:
@@ -144,7 +147,13 @@ machine_spec:
 dev_eof:
 	ENDFILE				= { enddefs(lastfile); checkfiles(); };
 
+maxpart_blanks:
+	maxpart_blanks '\n' |
+	/* empty */;
 
+maxpart_spec:
+	maxpart_blanks MAXPARTITIONS NUMBER	= { setmaxpartitions($3); } |
+	error = { stop("cannot proceed without maxpartitions specifier"); };
 
 /*
  * Various nonterminals shared between the grammars.
@@ -393,10 +402,20 @@ setmachine(mch, mcharch)
 	if (machinearch != NULL)
 		(void)sprintf(archbuf, "../../%s/conf/files.%s.newconf",
 		    machinearch, machinearch);
+	else
+		strncpy(archbuf, _PATH_DEVNULL, MAXPATHLEN);
 	(void)sprintf(buf, "files.%s.newconf", machine);
 
 	if (include(buf, ENDFILE) ||
-	    (machinearch != NULL && include(archbuf, '\n')) ||
+	    include(archbuf, ENDFILE) ||
 	    include("../../../conf/files.newconf", ENDFILE))
 		exit(1);
+}
+
+static void
+setmaxpartitions(n)
+	int n;
+{
+
+	maxpartitions = n;
 }
