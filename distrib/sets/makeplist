@@ -21,7 +21,7 @@ USAGE
 }
 
 # handle args
-while getopts a:m:ps: ch; do
+while getopts a:m:p:s: ch; do
 	case ${ch} in
 	a)
 		MACHINE_ARCH=${OPTARG}
