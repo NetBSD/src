@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.45 2000/06/01 14:29:00 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.46 2000/09/22 02:34:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -471,8 +471,8 @@ uhub_activate(device_ptr_t self, enum devact act)
 		nports = hub->hubdesc.bNbrPorts;
 		for(port = 0; port < nports; port++) {
 			dev = hub->ports[port].device;
-			if (dev != NULL) {
-				for (i = 0; dev->subdevs[i]; i++)
+			if (dev != NULL && dev->subdevs != NULL) {
+				for (i = 0; dev->subdevs[i] != NULL; i++)
 					config_deactivate(dev->subdevs[i]);
 			}
 		}
