@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.3 1995/05/10 18:00:45 cgd Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -81,7 +81,7 @@ ufs_root(mp, vpp)
 	struct vnode *nvp;
 	int error;
 
-	if (error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp))
+	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -98,11 +98,12 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-	int cmd, type, error;
 
 #ifndef QUOTA
 	return (EOPNOTSUPP);
 #else
+	int cmd, type, error;
+
 	if (uid == -1)
 		uid = p->p_cred->p_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
@@ -115,7 +116,7 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 			break;
 		/* fall through */
 	default:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 	}
 
@@ -187,7 +188,7 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 	if (np == NULL)
 		return (EACCES);
 
-	if (error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
