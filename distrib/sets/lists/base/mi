@@ -639,6 +639,7 @@
 ./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
+./usr/sbin/wiconfig
 ./usr/sbin/wire-test
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
