@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 1999/01/13 09:26:00 abs Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.5 1999/01/19 18:18:43 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -52,7 +52,6 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/mount.h>

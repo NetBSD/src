@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.44 1998/08/15 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.45 1999/01/19 18:18:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@
 #include <sys/user.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/signal.h>
