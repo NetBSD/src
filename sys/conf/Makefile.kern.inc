@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.9 2001/12/10 05:24:17 chs Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.10 2001/12/23 22:45:07 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -60,7 +60,7 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .endif
-CFLAGS+=	${DEBUG} ${COPTS} ${CWARNFLAGS}
+CFLAGS+=	-ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	-D_LOCORE
 
 # Define a set of xxx_G variables that will add -g to just those
