@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.6 2000/09/27 08:24:02 aymeric Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.7 2001/02/11 09:54:48 is Exp $	*/
 
 /* public domain */
 
@@ -357,7 +357,7 @@ pcf_mem_map(pch, kind, addr, size, pcmh, offsetp, windowp)
 		break;
 	default:
 		/* This means that this code needs an update/a bugfix */
-		printf(__FILE__ ": Unknown kind of PCMCIA memory\n");
+		printf(__FILE__ ": unknown kind %d of PCMCIA memory\n", kind);
 		return 1;
 	}
 
