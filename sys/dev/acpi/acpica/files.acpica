@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.5 2003/03/04 17:28:01 kochi Exp $
+#	$NetBSD: files.acpica,v 1.6 2003/07/08 15:34:32 kochi Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
@@ -10,25 +10,25 @@ file	dev/acpi/acpica/Osd/OsdStream.c			acpi
 file	dev/acpi/acpica/Osd/OsdSynch.c			acpi
 
 # debugger/
-file	dev/acpi/acpica/Subsystem/dbcmds.c		acpi
-file	dev/acpi/acpica/Subsystem/dbdisply.c		acpi
-file	dev/acpi/acpica/Subsystem/dbexec.c		acpi
-file	dev/acpi/acpica/Subsystem/dbfileio.c		acpi
-file	dev/acpi/acpica/Subsystem/dbhistry.c		acpi
-file	dev/acpi/acpica/Subsystem/dbinput.c		acpi
-file	dev/acpi/acpica/Subsystem/dbstats.c		acpi
-file	dev/acpi/acpica/Subsystem/dbutils.c		acpi
-file	dev/acpi/acpica/Subsystem/dbxface.c		acpi
+file	dev/acpi/acpica/Subsystem/dbcmds.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbdisply.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbexec.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbfileio.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbhistry.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbinput.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbstats.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbutils.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dbxface.c		acpi & acpi_debug & ddb
 
 # disassembler/
-file	dev/acpi/acpica/Subsystem/dmbuffer.c		acpi
-file	dev/acpi/acpica/Subsystem/dmnames.c		acpi
-file	dev/acpi/acpica/Subsystem/dmopcode.c		acpi
-file	dev/acpi/acpica/Subsystem/dmresrc.c		acpi
-file	dev/acpi/acpica/Subsystem/dmresrcl.c		acpi
-file	dev/acpi/acpica/Subsystem/dmresrcs.c		acpi
-file	dev/acpi/acpica/Subsystem/dmutils.c		acpi
-file	dev/acpi/acpica/Subsystem/dmwalk.c		acpi
+file	dev/acpi/acpica/Subsystem/dmbuffer.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmnames.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmopcode.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmresrc.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmresrcl.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmresrcs.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmutils.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmwalk.c		acpi & acpi_debug & ddb
 
 # interpreter/dispatcher/
 file	dev/acpi/acpica/Subsystem/dsfield.c		acpi
