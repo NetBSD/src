@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2002/04/11 06:40:48 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2002/04/12 14:03:59 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -16,7 +16,7 @@ KERNELOBJ!=	cd ${.CURDIR}/kernels && ${PRINTOBJDIR}
 release: check_RELEASEDIR
 	${RELINSTALL} ${RAMDISKOBJ}/ramdisk.fs \
 	    ${ITARGET}/misc/ramdisk-${DISTRIBREV}.fs
-	gzip -9 ${ITARGET}/misc/ramdisk-${DISTRIBREV}.fs
+	gzip -9f ${ITARGET}/misc/ramdisk-${DISTRIBREV}.fs
 .for kern in ${KERNELS}
 	${RELINSTALL} ${KERNELOBJ}/netbsd.${kern}.gz ${ITARGET}/kernel/
 .endfor
