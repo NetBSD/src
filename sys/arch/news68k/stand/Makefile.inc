@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2003/10/30 20:19:25 he Exp $
 
 BINDIR= /usr/mdec
+
+CFLAGS+= -ffreestanding
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
