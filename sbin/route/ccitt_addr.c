@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_addr.c,v 1.13 2003/08/07 10:04:38 agc Exp $	*/
+/*	$NetBSD: ccitt_addr.c,v 1.14 2005/02/05 14:05:23 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -56,12 +56,10 @@
 
 #include "extern.h"
 
-static char *copychar __P((char *, char *));
+static char *copychar(char *, char *);
 
 int
-ccitt_addr (addr, xp)
-	char *addr;
-	struct sockaddr_x25 *xp;
+ccitt_addr(char *addr, struct sockaddr_x25 *xp)
 {
 	char *p, *ap, *limit;
 	int havenet = 0;
@@ -154,8 +152,7 @@ ccitt_addr (addr, xp)
 }
 
 static char *
-copychar (from, to)
-	char *from, *to;
+copychar(char *from, char *to)
 {
 	int n;
 

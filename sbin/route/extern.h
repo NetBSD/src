@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2001/10/24 16:05:06 atatat Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 2005/02/05 14:05:23 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,16 +34,16 @@ struct sockaddr_x25;
 struct sockaddr_ns;
 
 /* show.c */
-void show __P((int, char **));
+void show(int, char **);
 
 /* ccitt_addr.c */
-int ccitt_addr __P((char *, struct sockaddr_x25 *));
+int ccitt_addr(char *, struct sockaddr_x25 *);
 
 /* route.c */
 extern int nflag;
 #define NOTDEFSTRING "0.0.0.0/xxx.xxx.xxx.xxx\0"
-int netmask_length __P((struct sockaddr *, int));
-char *netmask_string __P((struct sockaddr *, int));
-char *routename __P((struct sockaddr *, struct sockaddr *, int));
-char *netname __P((struct sockaddr *, struct sockaddr *));
-char *ns_print __P((struct sockaddr_ns *));
+int netmask_length(struct sockaddr *, int);
+char *netmask_string(struct sockaddr *, int);
+char *routename(struct sockaddr *, struct sockaddr *, int);
+char *netname(struct sockaddr *, struct sockaddr *);
+char *ns_print(struct sockaddr_ns *);
