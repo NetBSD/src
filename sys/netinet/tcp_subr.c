@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.161 2004/04/05 21:49:21 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.162 2004/04/17 15:18:53 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.161 2004/04/05 21:49:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.162 2004/04/17 15:18:53 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1882,7 +1882,7 @@ tcp_mss_from_peer(tp, offer)
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void) sbreserve(&so->so_snd, bufsize);
+		(void) sbreserve(&so->so_snd, bufsize, so);
 	}
 	tp->t_segsz = mss;
 
@@ -1948,7 +1948,7 @@ tcp_established(tp)
 		bufsize = roundup(bufsize, tp->t_ourmss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void) sbreserve(&so->so_rcv, bufsize);
+		(void) sbreserve(&so->so_rcv, bufsize, so);
 	}
 }
 
