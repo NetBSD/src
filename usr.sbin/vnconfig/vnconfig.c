@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.21 2001/11/07 16:18:03 tron Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.22 2001/11/08 02:14:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ config(dev, file, geom, action)
 	char rdev[MAXPATHLEN + 1];
 	int fd, rv;
 
-	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 1);
+	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0);
 	if (fd < 0) {
 		warn("%s: opendisk", rdev);
 		return (1);
