@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.1 2004/03/28 08:56:31 martti Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.2 2004/04/01 09:26:12 martin Exp $	*/
 
 %{
 #include "ipf.h"
@@ -1803,7 +1803,7 @@ int fd;
 ioctlfunc_t ioctlfunc;
 void *ptr;
 {
-	u_int add, del;
+	ioctlcmd_t add, del;
 	frentry_t *fr;
 	ipfobj_t obj;
 
