@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2003/04/22 00:24:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2003/05/08 18:13:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -144,7 +144,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2003/04/22 00:24:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2003/05/08 18:13:14 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -312,8 +312,6 @@ extern paddr_t physical_start;
 extern paddr_t physical_end;
 extern int max_processes;
 
-vaddr_t virtual_avail;
-vaddr_t virtual_end;
 vaddr_t pmap_curmaxkvaddr;
 
 vaddr_t avail_start;
@@ -1013,6 +1011,10 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	pmap_kernel()->pm_obj.uo_npages = 0;
 	pmap_kernel()->pm_obj.uo_refs = 1;
 
+	/*
+	 * Define the boundaries of the managed kernel virtual address
+	 * space.
+	 */
 	virtual_avail = KERNEL_VM_BASE;
 	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
 
@@ -1639,21 +1641,6 @@ pmap_reference(struct pmap *pmap)
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_obj.uo_refs++;
 	simple_unlock(&pmap->pm_lock);
-}
-
-/*
- * void pmap_virtual_space(vaddr_t *start, vaddr_t *end)
- *
- * Return the start and end addresses of the kernel's virtual space.
- * These values are setup in pmap_bootstrap and are updated as pages
- * are allocated.
- */
-
-void
-pmap_virtual_space(vaddr_t *start, vaddr_t *end)
-{
-	*start = virtual_avail;
-	*end = virtual_end;
 }
 
 /*
