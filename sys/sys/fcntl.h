@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.16 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.17 1999/08/31 12:30:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -125,6 +125,13 @@
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
+/*
+ * Note: The below is not a flag that can be used in the struct file. 
+ * It's an option that can be passed to vn_open to make sure it doesn't
+ * follow a symlink on the last lookup
+ */
+#define	FNOSYMLINK	0x00080000	/* Don't follow symlink for last
+					   component */
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
 			 FRSYNC|FALTIO)
