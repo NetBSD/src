@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.34 2001/06/01 20:33:37 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -400,7 +400,7 @@ CompatMake (gnp, pgnp)
 
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
+	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
 		free(p1);
 	}
@@ -494,7 +494,7 @@ CompatMake (gnp, pgnp)
     } else {
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
+	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
 		free(p1);
 	}

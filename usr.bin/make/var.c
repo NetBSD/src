@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -163,6 +163,9 @@ typedef struct Var {
 #define VAR_MATCH_START	0x08	/* Match at start of word */
 #define VAR_MATCH_END	0x10	/* Match at end of word */
 #define VAR_NOSUBST	0x20	/* don't expand vars in VarGetPattern */
+
+/* Var_Set flags */
+#define VAR_NO_EXPORT	0x01	/* do not export */
 
 typedef struct {
     char    	  *lhs;	    /* String to match */
@@ -435,10 +438,11 @@ Var_Delete(name, ctxt)
  *-----------------------------------------------------------------------
  */
 void
-Var_Set (name, val, ctxt)
+Var_Set (name, val, ctxt, flags)
     char           *name;	/* name of variable to set */
     char           *val;	/* value to give to the variable */
     GNode          *ctxt;	/* context in which to set it */
+    int		   flags;
 {
     register Var   *v;
     char *cp = name;
@@ -467,7 +471,7 @@ Var_Set (name, val, ctxt)
      * Any variables given on the command line are automatically exported
      * to the environment (as per POSIX standard)
      */
-    if (ctxt == VAR_CMD) {
+    if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
 
 	setenv(name, val, 1);
 
@@ -1268,7 +1272,7 @@ VarLoopExpand (ctx, word, addSpace, buf, loopp)
     int slen;
 
     if (word && *word) {
-        Var_Set(loop->tvar, word, loop->ctxt);
+        Var_Set(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
         s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
         if (s != NULL && *s != '\0') {
             if (addSpace && *s != '\n')
@@ -2026,7 +2030,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			if (emsg)
 			    Error (emsg, str);
 			else
-			   Var_Set(v->name, newStr,  v_ctxt);
+			   Var_Set(v->name, newStr,  v_ctxt, 0);
 			if (newStr)
 			    free(newStr);
 			break;
@@ -2035,7 +2039,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			    break;
 			/* FALLTHROUGH */
 		    default:
-			Var_Set(v->name, pattern.rhs, v_ctxt);
+			Var_Set(v->name, pattern.rhs, v_ctxt, 0);
 			break;
 		    }
 		    if (v->flags & VAR_JUNK) {

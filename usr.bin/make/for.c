@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.10 2000/06/06 04:56:52 mycroft Exp $	*/
+/*	$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -34,14 +34,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: for.c,v 1.10 2000/06/06 04:56:52 mycroft Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.10 2000/06/06 04:56:52 mycroft Exp $");
+__RCSID("$NetBSD: for.c,v 1.11 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -347,7 +347,7 @@ For_Run()
 	    break;
 
 	for (i = 0; i < arg.nvars; i++) {
-	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL);
+	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL, 0);
 	    if (DEBUG(FOR))
 		(void) fprintf(stderr, "--- %s = %s\n", arg.vars[i], 
 		    values[i]);

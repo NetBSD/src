@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.32 2000/02/15 04:41:45 sjg Exp $	*/
+/*	$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.32 2000/02/15 04:41:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.32 2000/02/15 04:41:45 sjg Exp $");
+__RCSID("$NetBSD: arch.c,v 1.33 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1148,9 +1148,9 @@ Arch_FindLib (gn, path)
     free (libName);
 
 #ifdef LIBRARIES
-    Var_Set (TARGET, gn->name, gn);
+    Var_Set (TARGET, gn->name, gn, 0);
 #else
-    Var_Set (TARGET, gn->path == (char *) NULL ? gn->name : gn->path, gn);
+    Var_Set (TARGET, gn->path == (char *) NULL ? gn->name : gn->path, gn, 0);
 #endif /* LIBRARIES */
 }
 

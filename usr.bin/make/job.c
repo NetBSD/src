@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.50 2001/06/11 04:20:32 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.51 2001/06/12 23:36:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1210,7 +1210,7 @@ Job_CheckCommands(gn, abortProc)
 	     * .DEFAULT itself.
 	     */
 	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn, 0);
 	    if (p1)
 		free(p1);
 	} else if (Dir_MTime(gn) == 0) {

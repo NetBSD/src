@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.21 2001/05/29 17:37:52 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.22 2001/06/12 23:36:18 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -141,7 +141,7 @@ void Targ_Propagate __P((void));
 
 /* var.c */
 void Var_Delete __P((char *, GNode *));
-void Var_Set __P((char *, char *, GNode *));
+void Var_Set __P((char *, char *, GNode *, int));
 void Var_Append __P((char *, char *, GNode *));
 Boolean Var_Exists __P((char *, GNode *));
 char *Var_Value __P((char *, GNode *, char **));
