@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.549 2003/02/18 20:35:29 jdolecek Exp $
+# $NetBSD: mi,v 1.550 2003/02/24 13:29:55 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -541,7 +541,6 @@
 ./usr/share/man/cat4/arm32/podulebus.0		man-sys-catman
 ./usr/share/man/cat4/arm32/ptsc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/quadmouse.0		man-sys-catman
-./usr/share/man/cat4/arm32/wd.0			man-sys-catman
 ./usr/share/man/cat4/arp.0			man-sys-catman
 ./usr/share/man/cat4/ast.0			man-sys-catman
 ./usr/share/man/cat4/atalk.0			man-sys-catman
@@ -2324,7 +2323,6 @@
 ./usr/share/man/man4/arm32/podulebus.4		man-sys-man
 ./usr/share/man/man4/arm32/ptsc.4		man-sys-man
 ./usr/share/man/man4/arm32/quadmouse.4		man-sys-man
-./usr/share/man/man4/arm32/wd.4			man-sys-man
 ./usr/share/man/man4/arp.4			man-sys-man
 ./usr/share/man/man4/ast.4			man-sys-man
 ./usr/share/man/man4/atalk.4			man-sys-man
