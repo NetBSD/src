@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.4 1999/07/28 15:38:46 darrenr Exp $	*/
+/*	$NetBSD: dump.c,v 1.5 1999/07/29 01:53:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.4 1999/07/28 15:38:46 darrenr Exp $");
+__RCSID("$NetBSD: dump.c,v 1.5 1999/07/29 01:53:26 enami Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -271,7 +271,7 @@ fread_tail(buf, size, num, fp)
 
 	while ((i = fread(buf, size, num, fp)) == 0 && tail) {
 		(void)sleep(1);
-		clearerr(stdin);
+		clearerr(fp);
 	}
 	return (i);
 }
