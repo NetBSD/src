@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2001/10/22 14:46:09 thorpej Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.5 2001/10/22 16:44:03 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 
 #include <dev/ofw/openfirm.h>
 
+#include <machine/autoconf.h>
+
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -52,8 +54,6 @@ struct cfattach mainbus_ca = {
 int	mainbus_print(void *, const char *);
 
 extern struct cfdriver mainbus_cd;
-
-char platform_type[64];
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -99,19 +99,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		NULL
 	};
 
-	node = OF_peer(0);
-	if (node == 0) {
-		printf("\n");
-		panic("mainbus_attach: no OpenFirmware root node\n");
-	}
-
-	/*
-	 * Display the type of system we are running on.  Eventually,
-	 * this can be used to look up methods to handle native hardware
-	 * devices.
-	 */
-	OF_getprop(node, "name", platform_type, sizeof(platform_type));
-	printf(": %s\n", platform_type);
+	printf(": %s\n", platform_name);
 
 	/*
 	 * Before we do anything else, attach CPUs.  We do this early,
