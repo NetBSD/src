@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 1999/12/08 08:19:19 soren Exp $
+# $NetBSD: mi,v 1.178 1999/12/08 09:46:01 soren Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -24,6 +24,7 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/addr2line.0
+./usr/share/man/cat1/adduser.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
@@ -120,6 +121,10 @@
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/grep.0
+./usr/share/man/cat1/group.0
+./usr/share/man/cat1/groupadd.0
+./usr/share/man/cat1/groupdel.0
+./usr/share/man/cat1/groupmod.0
 ./usr/share/man/cat1/groups.0
 ./usr/share/man/cat1/gunzip.0
 ./usr/share/man/cat1/gzcat.0
@@ -310,6 +315,10 @@
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
 ./usr/share/man/cat1/usbhidctl.0
+./usr/share/man/cat1/user.0
+./usr/share/man/cat1/useradd.0
+./usr/share/man/cat1/userdel.0
+./usr/share/man/cat1/usermod.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uucp.0
 ./usr/share/man/cat1/uudecode.0
@@ -922,6 +931,7 @@
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/addr2line.1
+./usr/share/man/man1/adduser.8
 ./usr/share/man/man1/alias.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
@@ -1018,6 +1028,10 @@
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getopt.1
 ./usr/share/man/man1/grep.1
+./usr/share/man/man1/group.8
+./usr/share/man/man1/groupadd.8
+./usr/share/man/man1/groupdel.8
+./usr/share/man/man1/groupmod.8
 ./usr/share/man/man1/groups.1
 ./usr/share/man/man1/gunzip.1
 ./usr/share/man/man1/gzcat.1
@@ -1208,6 +1222,10 @@
 ./usr/share/man/man1/unvis.1
 ./usr/share/man/man1/uptime.1
 ./usr/share/man/man1/usbhidctl.1
+./usr/share/man/man1/user.8
+./usr/share/man/man1/useradd.8
+./usr/share/man/man1/userdel.8
+./usr/share/man/man1/usermod.8
 ./usr/share/man/man1/users.1
 ./usr/share/man/man1/uucp.1
 ./usr/share/man/man1/uudecode.1
