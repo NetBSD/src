@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.16 2002/10/28 17:41:15 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.17 2002/11/14 04:18:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ pthread__sched(pthread_t self, pthread_t thread)
 	SDPRINTF(("(sched %p) scheduling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
 	assert (thread->pt_type == PT_THREAD_NORMAL);
+	assert (thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
 	thread->rescheds++;
 #endif
@@ -190,6 +191,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 	pthread_spinlock(self, &runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
+		assert (qhead->pt_spinlocks == 0);
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;
