@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.35 1994/02/09 07:29:36 cgd Exp $
+#	$Id: Makefile,v 1.36 1994/02/09 07:32:23 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -35,8 +35,8 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
-distribution:
-	@echo setenv DESTDIR before running a 'make distribution'.
+distribution distrib-dirs:
+	@echo setenv DESTDIR before doing that!
 	@false
 .else
 distribution: distrib-dirs
