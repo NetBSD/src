@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2001/07/04 16:56:01 thorpej Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.1.2.1 2002/07/09 15:06:38 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- english, arc version */
+/* MD Message catalog -- English, arc version */
 
 message md_hello
 {If you booted from a floppy, you may now remove the disk.
@@ -136,7 +136,7 @@ message parttable
 }
 
 message editpart
-{You are editing partition %d. The highlighthed partition is the partition
+{You are editing partition %d. The highlighted partition is the partition
 you are editing.}
 
 message editparttable
@@ -161,9 +161,9 @@ message mbrpart_size_special
 
 message reeditpart
 {There are overlapping MBR partitions or there is not exactly one NetBSD
-partition. You should reedit the MBR partition table.
+partition. You should re-edit the MBR partition table.
 
-Do you want to reedit it?
+Do you want to re-edit it?
 }
 
 message nobsdpart
