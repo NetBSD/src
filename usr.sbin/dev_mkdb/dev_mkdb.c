@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.7 1997/10/17 00:12:49 lukem Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.8 1997/10/18 08:18:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register DIR *dirp;
-	register struct dirent *dp;
+	DIR *dirp;
+	struct dirent *dp;
 	struct stat sb;
 	struct {
 		mode_t type;
@@ -112,7 +112,7 @@ main(argc, argv)
 	 * that the structure may contain padding, so we have to clear it
 	 * out here.
 	 */
-	bzero(&bkey, sizeof(bkey));
+	memset(&bkey, 0, sizeof(bkey));
 	key.data = &bkey;
 	key.size = sizeof(bkey);
 	data.data = buf;
@@ -135,7 +135,7 @@ main(argc, argv)
 		 * Create the data; nul terminate the name so caller doesn't
 		 * have to.
 		 */
-		bcopy(dp->d_name, buf, dp->d_namlen);
+		memmove(buf, dp->d_name, dp->d_namlen);
 		buf[dp->d_namlen] = '\0';
 		data.size = dp->d_namlen + 1;
 		if ((db->put)(db, &key, &data, 0))
