@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.83 2003/02/27 01:58:56 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.84 2003/02/27 23:10:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.83 2003/02/27 01:58:56 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.84 2003/02/27 23:10:52 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -414,7 +414,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 		/*
 		 * Now compute the size and load address.
 		 */
-		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr,
+		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr + MAXDSIZ,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr));
 	} else
 #endif	/* !ELF_INTERP_NON_RELOCATABLE */
@@ -469,11 +469,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			    eh.e_entry < (ph0->p_vaddr + size)) {
 				*entryoff = eh.e_entry - base_ph->p_vaddr;
 			}
-			/*
-			 * This value is ignored if TOPDOWN.
-			 */
-			if (ph0->p_vaddr != 0)
-				addr += size;
+			addr += size;
 			break;
 		}
 
