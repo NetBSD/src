@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.89 2003/01/18 09:53:18 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.90 2003/01/30 20:03:47 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -169,6 +169,7 @@ struct exec_vmcmd {
 	int	ev_flags;
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
 #define	VMCMD_BASE	0x0002	/* marks a base entry */
+#define	VMCMD_FIXED	0x0004	/* entry must be mapped at ev_addr */
 };
 
 #ifdef _KERNEL
@@ -231,12 +232,12 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 	vcp->ev_len = (len); \
 	vcp->ev_addr = (addr); \
 	if ((vcp->ev_vp = (vp)) != NULLVP) \
-                VREF(vp); \
-        vcp->ev_offset = (offset); \
-        vcp->ev_prot = (prot); \
+		VREF(vp); \
+	vcp->ev_offset = (offset); \
+	vcp->ev_prot = (prot); \
 	vcp->ev_flags = (flags); \
 } while (/* CONSTCOND */ 0)
-#endif /* EXEC_DEBUG */
+#endif /* DEBUG */
 
 #endif /* _KERNEL */
 

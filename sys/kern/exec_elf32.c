@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.78 2003/01/19 22:52:11 simonb Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.79 2003/01/30 20:03:46 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.78 2003/01/19 22:52:11 simonb Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.79 2003/01/30 20:03:46 atatat Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -313,7 +313,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
  */
 int
 ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
-    struct exec_vmcmd_set *vcset, u_long *entry, struct elf_args *ap,
+    struct exec_vmcmd_set *vcset, u_long *entryoff, struct elf_args *ap,
     Elf_Addr *last)
 {
 	int error, i;
@@ -407,12 +407,12 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entry = addr + eh.e_entry - ph[i].p_vaddr;
-				ap->arg_interp = addr;
+				*entryoff = eh.e_entry - ph[i].p_vaddr;
 			}
 			if (base_ph == NULL)
 				base_ph = &ph[i];
-			addr += size;
+			if (ph[i].p_vaddr != 0)
+				addr += size;
 			break;
 
 		case PT_DYNAMIC:
@@ -547,7 +547,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			if (nload++ == 2)
 				goto bad;
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
-			    &ph[i], &addr, &size, &prot, 0);
+			    &ph[i], &addr, &size, &prot, VMCMD_FIXED);
 
 			/*
 			 * Decide whether it's text or data by looking
@@ -601,18 +601,22 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
-	 * it's interpreter
+	 * its interpreter
 	 */
 	if (interp[0]) {
 		struct elf_args *ap;
+		int i = epp->ep_vmcmds.evs_used;
+		u_long interp_offset;
 
 		MALLOC(ap, struct elf_args *, sizeof(struct elf_args),
 		    M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(load_file)(p, epp, interp,
-		    &epp->ep_vmcmds, &epp->ep_entry, ap, &pos)) != 0) {
+		    &epp->ep_vmcmds, &interp_offset, ap, &pos)) != 0) {
 			FREE(ap, M_TEMP);
 			goto bad;
 		}
+		ap->arg_interp = epp->ep_vmcmds.evs_cmds[i].ev_addr;
+		epp->ep_entry = ap->arg_interp + interp_offset;
 		ap->arg_phaddr = phdr;
 
 		ap->arg_phentsize = eh->e_phentsize;
