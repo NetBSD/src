@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.4 1998/03/28 00:54:15 cgd Exp $ */
+/* $NetBSD: start.S,v 1.5 1998/10/15 01:02:55 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -53,10 +53,13 @@ Lstartgp:
 	lda	sp,-ENTRY_FRAME(sp)
 #endif
 
+	or	a0,zero,s0
 	lda	a0,_edata
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
+	or	s0,zero,a0
+
 
 	CALL(main)			/* transfer to C */
 
