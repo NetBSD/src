@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2002/06/06 12:28:44 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.115 2002/06/09 21:57:08 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -782,7 +782,7 @@ grow_p1(struct pmap *pm, int len)
 	bzero(kvtopte(nptespc), vax_btop(nlen-olen) * PPTESZ);
 	if (optespc)
 		bcopy(kvtopte(optespc), kvtopte(nptespc+nlen-olen),
-		    vax_btop(olen));
+		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (struct pte *)nptespc;
 	pm->pm_p1br = (struct pte *)(nptespc+nlen-0x800000);
