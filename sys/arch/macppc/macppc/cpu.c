@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2001/06/06 17:50:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -41,11 +41,11 @@
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
-#include <powerpc/hid.h>
+#include <powerpc/mpc6xx/hid.h>
 #include <powerpc/openpic.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
+#include <powerpc/mpc6xx/bat.h>
 #include <machine/pcb.h>
 #include <machine/pio.h>
 
