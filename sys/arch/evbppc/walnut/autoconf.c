@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2003/07/04 02:21:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2003/07/04 02:35:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,6 +103,19 @@ device_register(struct device *dev, void *aux)
 		if (prop_set(dev_propdb, dev, "frequency",
 			     &freq, sizeof(freq), PROP_INT, 0) != 0)
 			printf("WARNING: unable to set frequency "
+			    "property for %s\n", dev->dv_xname);
+		return;
+	}
+
+	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
+	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+		/* Set the mac-addr of the on-chip Ethernet. */
+		/* XXX 405GP only has one; what about CPUs with two? */
+		if (prop_set(dev_propdb, dev, "mac-addr",
+			     &board_data.mac_address_local,
+			     sizeof(board_data.mac_address_local),
+			     PROP_CONST, 0) != 0)
+			printf("WARNING: unable to set mac-addr "
 			    "property for %s\n", dev->dv_xname);
 		return;
 	}
