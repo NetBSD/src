@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.113 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.114 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -314,3 +314,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		complete coherency between mmap(2) and read(2)/write(2) on
 		LFS, in addition to allowing it to use much more memory for
 		its buffers.  [perseant 20030308]
+	amd: update to 6.1b2 [christos 20030309]
