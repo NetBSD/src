@@ -42,7 +42,7 @@
  *	@(#)event.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
- * $Id: event.c,v 1.1 1993/10/02 10:22:37 deraadt Exp $
+ * $Id: event.c,v 1.2 1994/07/21 22:05:42 deraadt Exp $
  */
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
-#include <sparc/dev/vuid_event.h>
+#include <machine/vuid_event.h>
 #include <sparc/dev/event_var.h>
 
 /*
