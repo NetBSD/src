@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.17 1993/10/07 00:23:03 cgd Exp $
+#	$Id: Makefile.inc,v 1.18 1993/10/07 01:37:01 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
 
-SRCS+=	alarm.c assert.c clock.c crypt.c ctermid.c ctime.c ctype_.c difftime.c \
+SRCS+=	alarm.c assert.c clock.c ctermid.c ctime.c ctype_.c difftime.c \
 	directory.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
 	fstab.c fts.c getcap.c getcwd.c getgrent.c getlogin.c getmntinfo.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
@@ -45,7 +45,7 @@ SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
 SRCS+=	udiv.s urem.s
 .endif
 
-MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
+MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
 	getttyent.0 getusershell.0 glob.0 initgroups.0 insque.0 isalnum.0 \
@@ -58,7 +58,6 @@ MAN3+=	alarm.0 clock.0 crypt.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
 	tolower.0 toupper.0 ttyname.0 tzset.0 \
 	ualarm.0 unvis.0 usleep.0 utime.0 valloc.0 vis.0
 
-MLINKS=	crypt.3 encrypt.3 crypt.3 setkey.3
 MLINKS+=ctime.3 asctime.3 ctime.3 difftime.3 ctime.3 gmtime.3 \
 	ctime.3 localtime.3 ctime.3 mktime.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
