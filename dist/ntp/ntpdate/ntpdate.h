@@ -1,10 +1,12 @@
-/*	$NetBSD: ntpdate.h,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: ntpdate.h,v 1.2 2000/04/17 05:49:54 simonb Exp $	*/
 
 /*
  * ntpdate.h - declarations for the ntpdate and ntptimeset programs
  */
 
 #include "ntp_malloc.h"
+
+extern void	loadservers	P((char *cfgpath));
 
 /*
  * The server structure is a much simplified version of the
