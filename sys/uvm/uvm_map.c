@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.134 2003/03/02 02:55:03 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.135 2003/03/02 08:57:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.134 2003/03/02 02:55:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.135 2003/03/02 08:57:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1219,7 +1219,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	}
  quickfind:
 	SAVE_HINT(map, map->hint, entry);
-	if (topdown && entry->start == hint + length)
+	if (topdown && entry->start >= hint + length)
 		entry = entry->prev;
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
