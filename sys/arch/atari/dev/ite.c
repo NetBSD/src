@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.2 1995/03/28 06:35:44 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.3 1995/04/10 08:53:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -220,7 +220,7 @@ getitesp(dev)
  * is called before any devices have been probed.
  */
 void
-ite_cnprobe(cd)
+itecnprobe(cd)
 	struct consdev *cd;
 {
 	/*
@@ -241,7 +241,7 @@ ite_cnprobe(cd)
 }
 
 void
-ite_cninit(cd)
+itecninit(cd)
 	struct consdev *cd;
 {
 	struct ite_softc *ip;
@@ -269,7 +269,7 @@ ite_cnfinish(ip)
 }
 
 int
-ite_cngetc(dev)
+itecngetc(dev)
 	dev_t dev;
 {
 	int c;
@@ -287,7 +287,7 @@ ite_cngetc(dev)
 }
 
 void
-ite_cnputc(dev, c)
+itecnputc(dev, c)
 	dev_t dev;
 	int c;
 {
@@ -436,6 +436,14 @@ itewrite(dev, uio, flag)
 
 	KDASSERT(tp);
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
+}
+
+int
+itestop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
 }
 
 int
