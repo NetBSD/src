@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.36 2002/02/08 01:30:46 ross Exp $
+.\"	$NetBSD: routed.8,v 1.37 2002/05/12 15:48:37 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ If the host is a router,
 .Nm
 periodically supplies copies
 of its routing tables to any directly connected hosts and networks.
-It also advertise or solicits default routes using Router Discovery
+It also advertises or solicits default routes using Router Discovery
 ICMP messages.
 .Pp
 When started (or when a network interface is later turned on),
@@ -330,7 +330,7 @@ Note that because of security concerns, it is wisest to not run
 .Nm
 routinely with tracing directed to a file.
 .It Fl v
-display and logs the version of daemon.
+displays and logs the version of daemon.
 .It Fl F Ar net[/mask][,metric]
 minimize routes in transmissions via interfaces with addresses that match
 .Em net/mask ,
