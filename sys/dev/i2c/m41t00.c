@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.2 2003/10/20 16:24:10 briggs Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.3 2004/09/30 18:57:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -171,7 +171,7 @@ m41t00_read(dev_t dev, struct uio *uio, int flags)
 		a = (int)uio->uio_offset;
 		cmdbuf[0] = a;
 		if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-				      sc->sc_address, cmdbuf, 0,
+				      sc->sc_address, cmdbuf, 1,
 				      &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf("%s: m41t00_read: read failed at 0x%x\n",
