@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mystring.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: mystring.c,v 1.4 1993/08/01 18:58:05 mycroft Exp $";
+static char rcsid[] = "$Id: mystring.c,v 1.5 1994/05/04 23:46:28 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -45,8 +45,6 @@ static char rcsid[] = "$Id: mystring.c,v 1.4 1993/08/01 18:58:05 mycroft Exp $";
  *	equal(s1, s2)		Return true if strings are equal.
  *	scopy(from, to)		Copy a string.
  *	scopyn(from, to, n)	Like scopy, but checks for overflow.
- *	strchr(s, c)		Find first occurance of c in s.
- *	bcopy(from, to, n)	Copy a block of memory.
  *	number(s)		Convert a string of digits to an integer.
  *	is_number(s)		Return true if s is a string of digits.
  */
@@ -78,50 +76,6 @@ scopyn(from, to, size)
 			return;
 	}
 	*to = '\0';
-}
-
-
-/*
- * strchr - find first occurrence of a character in a string.
- */
-
-#ifndef SYS5
-char *
-mystrchr(s, charwanted)
-	char const *s;
-	register char charwanted;
-	{
-	register char const *scan;
-
-	/*
-	 * The odd placement of the two tests is so NUL is findable.
-	 */
-	for (scan = s ; *scan != charwanted ; )	/* ++ moved down for opt. */
-		if (*scan++ == '\0')
-			return NULL;
-	return (char *)scan;
-}
-#endif
-
-
-
-/*
- * bcopy - copy bytes
- *
- * This routine was derived from code by Henry Spencer.
- */
-
-void
-mybcopy(src, dst, length)
-	pointer dst;
-	const pointer src;
-	register int length;
-	{
-	register char *d = dst;
-	register char *s = src;
-
-	while (--length >= 0)
-		*d++ = *s++;
 }
 
 
