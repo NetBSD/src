@@ -25,10 +25,9 @@ specificially for the Macintosh port (in alphabetical order):
 	Peter Siebold for lending his IIvx in support of ADB and IIvx
 		internal video.
 	Schuyler Stultz for the loan of his Macintosh II when we
-		desperately needed another machine to compile and
-		test on during the '93 Xmas vacation.
+		desperately needed another machine on which to compile
+		and test during the '93 Xmas vacation.
 	Tenon Intersystems for monetary donations, MachTen, and Brad's
 		access to several machines and documentation after hours.
-	Virginia Tech English department for loan of a IIci w/ NuBus
-		video and 32MB of RAM.  The first IIci NetBSD/Mac68k
-		ever ran on.
+	Virginia Tech English Department for loan of a IIci w/ NuBus
+		video and 32MB of RAM--the first IIci to run NetBSD/Mac68k.
