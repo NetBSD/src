@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.110.2.6 2000/10/02 03:11:46 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.110.2.7 2001/01/25 17:54:21 jhawk Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -66,11 +66,6 @@ namedb
 
 # ./etc/openssl
 openssl
-
-# ./etc/openssl/cert.pem
-cert.pem
-# ./etc/openssl/cert.pem
-..
 
 # ./etc/openssl/certs
 certs
