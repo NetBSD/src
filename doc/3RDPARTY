@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.52 2003/02/13 08:07:39 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.53 2003/02/13 09:03:26 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -702,7 +702,7 @@ Responsible:	ross
 Notes:
 
 Package:	texinfo
-Version:	4.3
+Version:	4.5
 Current Vers:	4.5
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
