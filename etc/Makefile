@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 1997/06/21 06:07:38 mikel Exp $
+#	$NetBSD: Makefile,v 1.73 1997/07/30 22:17:55 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -48,6 +48,8 @@ distribution: distrib-dirs
 	pwd_mkdb -p -d ${DESTDIR}/ ${DESTDIR}/etc/master.passwd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
+	${INSTALL} -c -o root -g wheel -m 600 minfree \
+	    ${DESTDIR}/var/crash
 	(cd root; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
