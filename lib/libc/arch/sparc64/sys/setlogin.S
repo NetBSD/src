@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.1 1998/09/11 04:56:35 eeh Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.2 2000/07/18 22:39:25 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)setlogin.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setlogin.S,v 1.1 1998/09/11 04:56:35 eeh Exp $")
+	RCSID("$NetBSD: setlogin.S,v 1.2 2000/07/18 22:39:25 eeh Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@
 SYSCALL(setlogin)
 #ifdef PIC
 	PIC_PROLOGUE(%g1,%g2)
-	ld	[%g1 + _C_LABEL(__logname_valid)], %g1
+	ldx	[%g1 + _C_LABEL(__logname_valid)], %g1
 	retl
 	 st	%g0, [%g1]
 #else
