@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.3 1998/07/26 22:22:26 augustss Exp $
+.\" $NetBSD: usb.4,v 1.4 1998/10/22 10:42:01 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -61,15 +61,15 @@ the controller, the bus, and the device layer.
 The controller attaches to a physical bus (like
 .Xr pci 4 ).
 The USB bus attaches to the controller and the root hub attaches
-to the controller.  Further devices, which includes further hubs,
+to the controller.  Further devices, which include further hubs,
 attach to other hubs.  The attachment forms the same tree structure
 as the physical USB device tree.
 For each USB device there may be further drivers attached to it.
 .Pp
 The
 .Cm uhub
-device controls USB hubs and must always be present (since there
-is at least a root hub in any USB system).
+device controls USB hubs and must always be present since there
+is at least a root hub in any USB system.
 .Pp
 .Sh INTRODUCTION TO USB
 The USB is a 12Mb/s serial bus (1.5 Mb/s for low speed devices).
@@ -77,17 +77,17 @@ Each USB bus has a host controller that is the master of the bus;
 all other devices on the bus only speak when spoken to.
 .Pp
 There can be up to 127 devices (apart from the host controller)
-on a bus each with its own address.  The addresses are assigned
-dynamically by the host when the device is attached to the bus.
+on a bus, each with its own address.  The addresses are assigned
+dynamically by the host when each device is attached to the bus.
 .Pp
 Within each device there can be up to 16 endpoints.  Each endpoint
 is individually addressed and the addresses are static.
 Each of these endpoints will communicate in one of four different modes:
 control, isochronous, bulk, or interrupt.  A device always has
 at least one endpoint.  This endpoint has address 0 and is a control
-endpoint and is used to give commands to and extract basic data
-such as descriptors from the device.
-Each endpoint, except control endpoints, is unidirectional.
+endpoint and is used to give commands to and extract basic data,
+such as descriptors, from the device.
+Each endpoint, except the control endpoint, is unidirectional.
 .Pp
 The endpoints in a device are grouped into interfaces.  An interface
 is a logical unit within a device.  E.g., a compound device with
@@ -156,7 +156,7 @@ and
 fields contain (self-explanatory) descriptions of the device.
 The
 .Va class
-field contans the device class.
+field contains the device class.
 The
 .Va config
 field shows the current configuration of the device.
@@ -189,11 +189,11 @@ The
 field is indexed by the transfer kind, i.e.,
 .Va UE_* ,
 and indicates how many transfers of each kind that has been completed
-for the controller.
+by the controller.
 .It Dv USB_REQUEST (struct usb_ctl_request)
 This command can be used to execute arbitrary requests on the control
 pipe.  This is DANGEROUS and should be used with great care since it 
-can destroy the bus integrety.
+can destroy the bus integrity.
 .El
 .Sh SEE ALSO
 .Xr pci 4 ,
