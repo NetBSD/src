@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.26 2000/12/30 22:11:46 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.27 2001/03/31 00:35:22 enami Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -258,10 +258,7 @@ dzxint(void *arg)
 		else
 			ndflush (&tp->t_outq, cl->c_cc);
 
-		if (tp->t_linesw)
-			(*tp->t_linesw->l_start)(tp);
-		else
-			dzstart(tp);
+		(*tp->t_linesw->l_start)(tp);
 	}
 }
 
