@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2002/08/20 04:22:03 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2002/08/25 20:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2002/08/20 04:22:03 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2002/08/25 20:21:37 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -510,8 +510,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
-	unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -613,7 +612,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.256 2002/07/04 23:32:02 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.257 2002/08/25 20:21:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2002/07/04 23:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2002/08/25 20:21:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,8 +850,7 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 void
 cpu_startup()
 {
-	register unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -955,7 +954,7 @@ cpu_startup()
 	}
 #endif
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %ld buffers containing %s of memory\n", (long)nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

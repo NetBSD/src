@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277 2002/05/30 21:51:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.278 2002/08/25 20:21:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -378,9 +378,8 @@ cpu_startup(void)
 	extern char *start;
 	extern char *etext;
 	caddr_t v;
-	unsigned i;
 	int vers;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size = 0;	/* To avoid compiler warning */
 	int delay;
@@ -485,7 +484,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.

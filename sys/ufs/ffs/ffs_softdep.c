@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.33 2002/07/05 13:49:26 scw Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.34 2002/08/25 20:21:45 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.33 2002/07/05 13:49:26 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.34 2002/08/25 20:21:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.33 2002/07/05 13:49:26 scw Exp $")
 
 #include <uvm/uvm.h>
 struct pool sdpcpool;
-int softdep_lockedbufs;
+u_int softdep_lockedbufs;
 
 /*
  * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
@@ -1794,6 +1794,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
+				KDASSERT(softdep_lockedbufs != 0);
 				softdep_lockedbufs--;
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
@@ -2452,6 +2453,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
+	KDASSERT(softdep_lockedbufs != 0);
 	softdep_lockedbufs--;
 	return (allerror);
 }
@@ -3284,6 +3286,7 @@ softdep_disk_io_initiation(bp)
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
 				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
 				brelse(indirdep->ir_savebp);
+				KDASSERT(softdep_lockedbufs != 0);
 				softdep_lockedbufs--;
 
 				/* inline expand WORKLIST_REMOVE(wk); */

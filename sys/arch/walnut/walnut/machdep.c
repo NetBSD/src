@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2002/08/23 15:03:33 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2002/08/25 20:21:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -366,10 +366,9 @@ char msgbuf[MSGBUFSIZE];
 void
 cpu_startup(void)
 {
-	int sz, i;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
-	int base, residual;
+	u_int sz, i, base, residual;
 	char pbuf[9];
 
 	proc0.p_addr = proc0paddr;
@@ -403,7 +402,7 @@ cpu_startup(void)
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys(NULL, NULL);
+	sz = (u_int)allocsys(NULL, NULL);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v, NULL) - v != sz)
@@ -470,7 +469,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.

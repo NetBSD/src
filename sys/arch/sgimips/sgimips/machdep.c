@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2002/08/04 01:41:29 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2002/08/25 20:21:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -543,8 +543,7 @@ sgimips_count_cpus(struct arcbios_component *node,
 void
 cpu_startup()
 {
-	unsigned i;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -618,7 +617,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(arcsmem));
 	printf(", %s for ARCS", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf(", %s in %d buffers\n", pbuf, nbuf);
+	printf(", %s in %u buffers\n", pbuf, nbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

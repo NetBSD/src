@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/08/25 20:20:01 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/08/25 20:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -830,8 +830,7 @@ cpu_startup()
 {
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	int base, residual;
-	int i;
+	u_int i, base, residual;
 	char pbuf[3][9];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
@@ -921,7 +920,7 @@ cpu_startup()
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
 	format_bytes(pbuf[1], sizeof(pbuf[1]), bufpages * PAGE_SIZE);
 	printf("avail mem = %s\n", pbuf[0]);
-	printf("using %d buffers containing %s of memory\n",
+	printf("using %u buffers containing %s of memory\n",
 	    nbuf, pbuf[1]);
 
 	/*

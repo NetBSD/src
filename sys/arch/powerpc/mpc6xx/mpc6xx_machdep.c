@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.5 2002/08/02 03:46:44 chs Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.6 2002/08/25 20:21:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -417,7 +417,7 @@ mpc6xx_install_extint(void (*handler)(void))
 void
 mpc6xx_startup(const char *model)
 {
-	int sz, i, base, residual;
+	u_int sz, i, base, residual;
 	int error;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
@@ -541,7 +541,7 @@ mpc6xx_startup(const char *model)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers.
