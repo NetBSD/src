@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.49 2004/03/31 01:46:22 wiz Exp $
+.\"	$NetBSD: find.1,v 1.50 2004/04/19 00:18:46 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd March 30, 2004
+.Dd April 19, 2004
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -267,7 +267,7 @@ The
 command can be used to find out the types of filesystems
 that are available on the system:
 .Bd -literal -offset indent
-sysctl vfs
+sysctl vfs.generic.fstypes
 .Pp
 .Ed
 In addition, there are two pseudo-types,
