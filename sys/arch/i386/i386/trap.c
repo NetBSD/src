@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2000/12/02 16:03:24 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.144 2000/12/08 22:32:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -581,8 +581,10 @@ syscall(frame)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;
+#ifdef DEBUG
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
+#endif
 
 	p = curproc;
 	if (p->p_emul->e_syscall) {
@@ -654,11 +656,6 @@ syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
 		frame.tf_eax = rval[0];
 		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
