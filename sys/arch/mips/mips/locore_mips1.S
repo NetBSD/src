@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.2 1999/01/15 01:23:13 castor Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.3 1999/01/15 22:26:43 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
+#include "opt_ddb.h"
 #include <mips/asm.h>
 #include <mips/cpuarch.h>
 #include <machine/param.h>
@@ -62,17 +63,14 @@
 
 	.globl	_C_LABEL(mips1_exceptionentry_start)
 _C_LABEL(mips1_exceptionentry_start):
+
 /*
- *----------------------------------------------------------------------------
+ * mips1_UTLBMiss
  *
- * mips1_UTLBmiss --
- *
- *	Vector code for a MIPS-I user-space TLB miss from user-space.
- *
- *
- * This code is copied to the UTLB exception vector address to
- * handle user level TLB translation misses.
- * NOTE: This code must be relocatable!!!
+ * A reference is made (in either kernel or user mode) to a page in
+ * kuseg that has no matching TLB entry.  This routine is copied down
+ * at 0x80000000 and total length must be less than 32 instructions.
+ * No pc relative jump instruction is allowed.
  */
 	.globl	_C_LABEL(mips1_UTLBMiss)
 _C_LABEL(mips1_UTLBMiss):
@@ -94,10 +92,8 @@ _C_LABEL(mips1_UTLBMiss):
 	nop
 	beq	k0, zero, 2f			# dont load invalid entries
 	mtc0	k0, MIPS_COP_0_TLB_LOW
-	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
+	nop
 	tlbwr					# update TLB
-	j	k1
-	rfe
 1:
 	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
 	nop
@@ -112,18 +108,11 @@ _C_LABEL(mips1_UTLBMissEnd):
 
 
 /*
- *----------------------------------------------------------------------------
+ * mips1_exception
  *
- * mips1_exception --
- *
- *	Vector code for the general exception vector 0x80000080
- *	on an r2000 or r3000.
- *
- * This code is copied to the general exception vector address to
- * handle all exceptions except RESET and UTLBMiss.
- * NOTE: This code must be relocatable!!!
- *
- *----------------------------------------------------------------------------
+ * Handles any exceptions other than reset and UTLB miss.  This routine
+ * is copied down at 0x80000080 and total length must be less than 32
+ * instructions.  No pc relative jump instruction is allowed.
  */
 	.globl	_C_LABEL(mips1_exception)
 _C_LABEL(mips1_exception):
@@ -152,52 +141,59 @@ _C_LABEL(mips1_exception):
 	.globl	_C_LABEL(mips1_exceptionEnd)
 _C_LABEL(mips1_exceptionEnd):
 
-
-
-
-/*----------------------------------------------------------------------------
+/*
+ * mips1_SlowFault
  *
- * mips1_SlowFault --
- *
- * Alternate entry point into the mips1_UserGenExceptionor or
- * or mips1_user_Kern_exception, when the ULTB miss handler couldn't
- * find a TLB entry.
- *
- * Find out what mode we came from and call the appropriate handler.
+ * UTLBMiss handler could not find out a TLB entry for the user process.
+ * Dispatch a general case exception handler.
  */
 mips1_SlowFault:
 	.set	noat
-	mfc0	k0, MIPS_COP_0_STATUS
+	mfc0	k1, MIPS_COP_0_STATUS
+	la	k0, _C_LABEL(mips1_KernGenException)
+	and	k1, k1, MIPS1_SR_KU_PREV
+	beq	k1, zero, 1f
 	nop
-	and	k0, k0, MIPS1_SR_KU_PREV
-	bne	k0, zero, _C_LABEL(mips1_UserGenException)
+	la	k0, _C_LABEL(mips1_UserGenException)
+1:	j	k0
 	nop
 	.set	at
-/*
- * Fall though ...
- */
 
 /*
  * mips1_KernGenException
  *
- * Handle an exception from kernel mode.
+ * Handle an exception during kernel mode.
  * Build trapframe on stack to hold interrupted kernel context, then
  * call trap() to process the condition.
  *
- * trapframe is synthesized on stack as 5th arg {
- *  	register_t cf_args[4];		+0 
- *  	register_t tf_regs[17];		+16	- trapframe begins here
- * 	register_t tf_sr;		+84	-
- * 	register_t tf_mullo;		+88	-
- * 	register_t tf_mulhi;		+92	-
- * 	register_t tf_epc;		+96	- may be changed by trap() call
- *  	register_t cf_sp;		+100
- *  	register_t cf_ra;		+104
+ * trapframe is now pointed by 5th arg {
+ *  	register_t cf_args[4 + 1];
+ *  	register_t cf_sp;
+ *  	register_t cf_ra;
+ *  	mips_reg_t tf_regs[17];		- trapframe begins here
+ * 	mips_reg_t tf_sr;		-
+ * 	mips_reg_t tf_mullo;		-
+ * 	mips_reg_t tf_mulhi;		-
+ * 	register_t tf_epc;		- may be changed by trap() call
  *  };
  */
 NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
-	.mask	0x80000000, -4
+#ifdef DDB
+	la	k0, _C_LABEL(kdbaux)
+	sw	s0, SF_REG_S0(k0)
+	sw	s1, SF_REG_S1(k0)
+	sw	s2, SF_REG_S2(k0)
+	sw	s3, SF_REG_S3(k0)
+	sw	s4, SF_REG_S4(k0)
+	sw	s5, SF_REG_S5(k0)
+	sw	s6, SF_REG_S6(k0)
+	sw	s7, SF_REG_S7(k0)
+	sw	sp, SF_REG_SP(k0)
+	sw	s8, SF_REG_S8(k0)
+	sw	gp, SF_REG_RA(k0)
+#endif
+	.mask	0x80000000, (CALLFRAME_RA - KERNFRAME_SIZ)
 	subu	sp, sp, KERNFRAME_SIZ
 /*
  * Save the relevant kernel registers onto the stack.
@@ -232,12 +228,14 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	sw	v0, TF_BASE+TF_REG_MULLO(sp)
 	sw	v1, TF_BASE+TF_REG_MULHI(sp)
 	sw	a3, TF_BASE+TF_REG_EPC(sp)
-#ifdef DDB
-	addu	v0, sp, KERNFRAME_SIZ 		# SP at trap for debugging
-	sw	v0, KERNFRAME_SP(sp)
+	addu	v0, sp, TF_BASE
+	sw	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
+#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+	move	ra, a3
+	sw	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
 	jal	_C_LABEL(trap)
-	sw	a3, KERNFRAME_RA(sp)		# for debugging
+	nop
 
 	lw	a0, TF_BASE+TF_REG_SR(sp)
 	lw	t0, TF_BASE+TF_REG_MULLO(sp)
@@ -268,250 +266,253 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	j	k0				# return to interrupted point
 	rfe	
 	.set	at
-	.global	_C_LABEL(mips1_KernGenExceptionEnd)
-_C_LABEL(mips1_KernGenExceptionEnd):
 END(mips1_KernGenException)
 
 /*
  * mips1_UserGenException
  *
- * Handle an exception from user mode.
- * Save user context in u_pcb, then call trap() to process the condition.
- * The context can be manipulated alternatively via curproc->p_md.md_regs.
+ * Handle an exception during user mode.
+ * Save user context atop of kernel stack, then call trap() to process
+ * the condition.  The context can be manipulated alternatively via
+ * curproc->p_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
- * Save all of the registers except for the kernel temporaries in u_pcb.
+ * Save all the registers but the kernel temporaries onto stack.
  */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	sw	AT, U_PCB_REGS+FRAME_AST(k1)
-	sw	v0, U_PCB_REGS+FRAME_V0(k1)
-	sw	v1, U_PCB_REGS+FRAME_V1(k1)
+	addiu	k1, k1, USPACE - FRAME_SIZ
+	sw	AT, FRAME_AST(k1)
+	sw	v0, FRAME_V0(k1)
+	sw	v1, FRAME_V1(k1)
 	mflo	v0
-	sw	a0, U_PCB_REGS+FRAME_A0(k1)
-	sw	a1, U_PCB_REGS+FRAME_A1(k1)
-	sw	a2, U_PCB_REGS+FRAME_A2(k1)
-	sw	a3, U_PCB_REGS+FRAME_A3(k1)
+	sw	a0, FRAME_A0(k1)
+	sw	a1, FRAME_A1(k1)
+	sw	a2, FRAME_A2(k1)
+	sw	a3, FRAME_A3(k1)
 	mfhi	v1
-	sw	t0, U_PCB_REGS+FRAME_T0(k1)
-	sw	t1, U_PCB_REGS+FRAME_T1(k1)
-	sw	t2, U_PCB_REGS+FRAME_T2(k1)
-	sw	t3, U_PCB_REGS+FRAME_T3(k1)
+	sw	t0, FRAME_T0(k1)
+	sw	t1, FRAME_T1(k1)
+	sw	t2, FRAME_T2(k1)
+	sw	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	sw	t4, U_PCB_REGS+FRAME_T4(k1)
-	sw	t5, U_PCB_REGS+FRAME_T5(k1)
-	sw	t6, U_PCB_REGS+FRAME_T6(k1)
-	sw	t7, U_PCB_REGS+FRAME_T7(k1)
+	sw	t4, FRAME_T4(k1)
+	sw	t5, FRAME_T5(k1)
+	sw	t6, FRAME_T6(k1)
+	sw	t7, FRAME_T7(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	sw	s0, U_PCB_REGS+FRAME_S0(k1)
-	sw	s1, U_PCB_REGS+FRAME_S1(k1)
-	sw	s2, U_PCB_REGS+FRAME_S2(k1)
-	sw	s3, U_PCB_REGS+FRAME_S3(k1)
+	sw	s0, FRAME_S0(k1)
+	sw	s1, FRAME_S1(k1)
+	sw	s2, FRAME_S2(k1)
+	sw	s3, FRAME_S3(k1)
 	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
-	sw	s4, U_PCB_REGS+FRAME_S4(k1)
-	sw	s5, U_PCB_REGS+FRAME_S5(k1)
-	sw	s6, U_PCB_REGS+FRAME_S6(k1)
-	sw	s7, U_PCB_REGS+FRAME_S7(k1)
+	sw	s4, FRAME_S4(k1)
+	sw	s5, FRAME_S5(k1)
+	sw	s6, FRAME_S6(k1)
+	sw	s7, FRAME_S7(k1)
 	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
-	sw	t8, U_PCB_REGS+FRAME_T8(k1)
-	sw	t9, U_PCB_REGS+FRAME_T9(k1)
-	sw	gp, U_PCB_REGS+FRAME_GP(k1)
-	sw	sp, U_PCB_REGS+FRAME_SP(k1)
-	sw	s8, U_PCB_REGS+FRAME_S8(k1)
-	sw	ra, U_PCB_REGS+FRAME_RA(k1)
-	sw	a0, U_PCB_REGS+FRAME_SR(k1)
-	sw	v0, U_PCB_REGS+FRAME_MULLO(k1)
-	sw	v1, U_PCB_REGS+FRAME_MULHI(k1)
-	sw	a3, U_PCB_REGS+FRAME_EPC(k1)
-	#addu	sp, k1, USPACE - CALLFRAME_SIZ	# switch to kernel SP
-	li	sp, KERNELSTACK - CALLFRAME_SIZ	# XXX switch to kernel SP XXX
+	sw	t8, FRAME_T8(k1)
+	sw	t9, FRAME_T9(k1)
+	sw	gp, FRAME_GP(k1)
+	sw	sp, FRAME_SP(k1)
+	sw	s8, FRAME_S8(k1)
+	sw	ra, FRAME_RA(k1)
+	sw	a0, FRAME_SR(k1)
+	sw	v0, FRAME_MULLO(k1)
+	sw	v1, FRAME_MULHI(k1)
+	sw	a3, FRAME_EPC(k1)
+	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
+#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+	move	ra, a3
+	sw	ra, CALLFRAME_RA(sp)
+#endif
 /*
  * Call the exception handler.
  */
-	sw	a3, CALLFRAME_RA(sp)		# for debugging
 	jal	_C_LABEL(trap)
 	mtc0	t0, MIPS_COP_0_STATUS
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	lw	a1, _C_LABEL(curpcb)
-	nop
-	lw	a0, U_PCB_REGS+FRAME_SR(a1)
-	lw	t0, U_PCB_REGS+FRAME_MULLO(a1)
-	lw	t1, U_PCB_REGS+FRAME_MULHI(a1)
-	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
+	addiu	a1, sp, CALLFRAME_SIZ
+	lw	a0, FRAME_SR(a1)
+	lw	t0, FRAME_MULLO(a1)
+	lw	t1, FRAME_MULHI(a1)
+	mtc0	a0, MIPS_COP_0_STATUS	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	move	k1, a1
-	lw	k0, U_PCB_REGS+FRAME_EPC(k1)	# might be changed in trap()
-	lw	AT, U_PCB_REGS+FRAME_AST(k1)
-	lw	v0, U_PCB_REGS+FRAME_V0(k1)
-	lw	v1, U_PCB_REGS+FRAME_V1(k1)
-	lw	a0, U_PCB_REGS+FRAME_A0(k1)
-	lw	a1, U_PCB_REGS+FRAME_A1(k1)
-	lw	a2, U_PCB_REGS+FRAME_A2(k1)
-	lw	a3, U_PCB_REGS+FRAME_A3(k1)
-	lw	t0, U_PCB_REGS+FRAME_T0(k1)
-	lw	t1, U_PCB_REGS+FRAME_T1(k1)
-	lw	t2, U_PCB_REGS+FRAME_T2(k1)
-	lw	t3, U_PCB_REGS+FRAME_T3(k1)
-	lw	t4, U_PCB_REGS+FRAME_T4(k1)
-	lw	t5, U_PCB_REGS+FRAME_T5(k1)
-	lw	t6, U_PCB_REGS+FRAME_T6(k1)
-	lw	t7, U_PCB_REGS+FRAME_T7(k1)
-	lw	s0, U_PCB_REGS+FRAME_S0(k1)
-	lw	s1, U_PCB_REGS+FRAME_S1(k1)
-	lw	s2, U_PCB_REGS+FRAME_S2(k1)
-	lw	s3, U_PCB_REGS+FRAME_S3(k1)
-	lw	s4, U_PCB_REGS+FRAME_S4(k1)
-	lw	s5, U_PCB_REGS+FRAME_S5(k1)
-	lw	s6, U_PCB_REGS+FRAME_S6(k1)
-	lw	s7, U_PCB_REGS+FRAME_S7(k1)
-	lw	t8, U_PCB_REGS+FRAME_T8(k1)
-	lw	t9, U_PCB_REGS+FRAME_T9(k1)
-	lw	gp, U_PCB_REGS+FRAME_GP(k1)
-	lw	sp, U_PCB_REGS+FRAME_SP(k1)
-	lw	s8, U_PCB_REGS+FRAME_S8(k1)
-	lw	ra, U_PCB_REGS+FRAME_RA(k1)
+	lw	k0, FRAME_EPC(k1)	# might be changed in trap()
+	lw	AT, FRAME_AST(k1)
+	lw	v0, FRAME_V0(k1)
+	lw	v1, FRAME_V1(k1)
+	lw	a0, FRAME_A0(k1)
+	lw	a1, FRAME_A1(k1)
+	lw	a2, FRAME_A2(k1)
+	lw	a3, FRAME_A3(k1)
+	lw	t0, FRAME_T0(k1)
+	lw	t1, FRAME_T1(k1)
+	lw	t2, FRAME_T2(k1)
+	lw	t3, FRAME_T3(k1)
+	lw	t4, FRAME_T4(k1)
+	lw	t5, FRAME_T5(k1)
+	lw	t6, FRAME_T6(k1)
+	lw	t7, FRAME_T7(k1)
+	lw	s0, FRAME_S0(k1)
+	lw	s1, FRAME_S1(k1)
+	lw	s2, FRAME_S2(k1)
+	lw	s3, FRAME_S3(k1)
+	lw	s4, FRAME_S4(k1)
+	lw	s5, FRAME_S5(k1)
+	lw	s6, FRAME_S6(k1)
+	lw	s7, FRAME_S7(k1)
+	lw	t8, FRAME_T8(k1)
+	lw	t9, FRAME_T9(k1)
+	lw	gp, FRAME_GP(k1)
+	lw	sp, FRAME_SP(k1)
+	lw	s8, FRAME_S8(k1)
+	lw	ra, FRAME_RA(k1)
 	j	k0				# return to interrupted point
 	rfe
 	.set	at
-	.globl	_C_LABEL(mips1_UserGenExceptionEnd)
-_C_LABEL(mips1_UserGenExceptionEnd):
 END(mips1_UserGenException)
 
 /*
  * mips1_SystemCall
  *
- * Save user context in u_pcb, then call syscall() to process a system call.
- * The context can be manipulated alternatively via curproc->p_md.md_regs.
+ * Save user context atop of kernel stack, then call syscall() to process
+ * the condition.  The context can be manipulated alternatively via
+ * curproc->p_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
+/*
+ * Save all the registers but kernel temporaries onto stack.
+ */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	sw	AT, U_PCB_REGS+FRAME_AST(k1)
-	sw	v0, U_PCB_REGS+FRAME_V0(k1)
-	sw	v1, U_PCB_REGS+FRAME_V1(k1)
+	addiu	k1, k1, USPACE - FRAME_SIZ
+	sw	AT, FRAME_AST(k1)
+	sw	v0, FRAME_V0(k1)
+	sw	v1, FRAME_V1(k1)
 	mflo	v0
-	sw	a0, U_PCB_REGS+FRAME_A0(k1)
-	sw	a1, U_PCB_REGS+FRAME_A1(k1)
-	sw	a2, U_PCB_REGS+FRAME_A2(k1)
-	sw	a3, U_PCB_REGS+FRAME_A3(k1)
+	sw	a0, FRAME_A0(k1)
+	sw	a1, FRAME_A1(k1)
+	sw	a2, FRAME_A2(k1)
+	sw	a3, FRAME_A3(k1)
 	mfhi	v1
-	sw	t0, U_PCB_REGS+FRAME_T0(k1)
-	sw	t1, U_PCB_REGS+FRAME_T1(k1)
-	sw	t2, U_PCB_REGS+FRAME_T2(k1)
-	sw	t3, U_PCB_REGS+FRAME_T3(k1)
+	sw	t0, FRAME_T0(k1)
+	sw	t1, FRAME_T1(k1)
+	sw	t2, FRAME_T2(k1)
+	sw	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	sw	t4, U_PCB_REGS+FRAME_T4(k1)
-	sw	t5, U_PCB_REGS+FRAME_T5(k1)
-	sw	t6, U_PCB_REGS+FRAME_T6(k1)
-	sw	t7, U_PCB_REGS+FRAME_T7(k1)
+	sw	t4, FRAME_T4(k1)
+	sw	t5, FRAME_T5(k1)
+	sw	t6, FRAME_T6(k1)
+	sw	t7, FRAME_T7(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	sw	s0, U_PCB_REGS+FRAME_S0(k1)
-	sw	s1, U_PCB_REGS+FRAME_S1(k1)
-	sw	s2, U_PCB_REGS+FRAME_S2(k1)
-	sw	s3, U_PCB_REGS+FRAME_S3(k1)
+	sw	s0, FRAME_S0(k1)
+	sw	s1, FRAME_S1(k1)
+	sw	s2, FRAME_S2(k1)
+	sw	s3, FRAME_S3(k1)
 	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
-	sw	s4, U_PCB_REGS+FRAME_S4(k1)
-	sw	s5, U_PCB_REGS+FRAME_S5(k1)
-	sw	s6, U_PCB_REGS+FRAME_S6(k1)
-	sw	s7, U_PCB_REGS+FRAME_S7(k1)
-	sw	t8, U_PCB_REGS+FRAME_T8(k1)
-	sw	t9, U_PCB_REGS+FRAME_T9(k1)
-	sw	gp, U_PCB_REGS+FRAME_GP(k1)
-	sw	sp, U_PCB_REGS+FRAME_SP(k1)
-	sw	s8, U_PCB_REGS+FRAME_S8(k1)
-	sw	ra, U_PCB_REGS+FRAME_RA(k1)
-	sw	a0, U_PCB_REGS+FRAME_SR(k1)
-	sw	v0, U_PCB_REGS+FRAME_MULLO(k1)
-	sw	v1, U_PCB_REGS+FRAME_MULHI(k1)
-	sw	a2, U_PCB_REGS+FRAME_EPC(k1)
-	#addu	sp, k1, USPACE - CALLFRAME_SIZ	# switch to kernel SP
-	li	sp, KERNELSTACK - CALLFRAME_SIZ	# XXX switch to kernel SP XXX
+	sw	s4, FRAME_S4(k1)
+	sw	s5, FRAME_S5(k1)
+	sw	s6, FRAME_S6(k1)
+	sw	s7, FRAME_S7(k1)
+	sw	t8, FRAME_T8(k1)
+	sw	t9, FRAME_T9(k1)
+	sw	gp, FRAME_GP(k1)
+	sw	sp, FRAME_SP(k1)
+	sw	s8, FRAME_S8(k1)
+	sw	ra, FRAME_RA(k1)
+	sw	a0, FRAME_SR(k1)
+	sw	v0, FRAME_MULLO(k1)
+	sw	v1, FRAME_MULHI(k1)
+	sw	a2, FRAME_EPC(k1)
+	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
+#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+	move	ra, a2
+	sw	ra, CALLFRAME_RA(sp)
+#endif
 /*
  * Call the system call handler.
  */
-	sw	a2, CALLFRAME_RA(sp)		# for debugging
 	jal	_C_LABEL(syscall)
 	mtc0	t0, MIPS_COP_0_STATUS
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
-	lw	a1, _C_LABEL(curpcb)
-	nop
-	lw	a0, U_PCB_REGS+FRAME_SR(a1)
-	lw	t0, U_PCB_REGS+FRAME_MULLO(a1)
-	lw	t1, U_PCB_REGS+FRAME_MULHI(a1)
+	addiu	a1, sp, CALLFRAME_SIZ
+	lw	a0, FRAME_SR(a1)
+	lw	t0, FRAME_MULLO(a1)
+	lw	t1, FRAME_MULHI(a1)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	move	k1, a1
-	lw	k0, U_PCB_REGS+FRAME_EPC(k1)	# might be changed in syscall()
-	lw	AT, U_PCB_REGS+FRAME_AST(k1)
-	lw	v0, U_PCB_REGS+FRAME_V0(k1)
-	lw	v1, U_PCB_REGS+FRAME_V1(k1)
-	lw	a0, U_PCB_REGS+FRAME_A0(k1)
-	lw	a1, U_PCB_REGS+FRAME_A1(k1)
-	lw	a2, U_PCB_REGS+FRAME_A2(k1)
-	lw	a3, U_PCB_REGS+FRAME_A3(k1)
-	lw	t0, U_PCB_REGS+FRAME_T0(k1)
-	lw	t1, U_PCB_REGS+FRAME_T1(k1)
-	lw	t2, U_PCB_REGS+FRAME_T2(k1)
-	lw	t3, U_PCB_REGS+FRAME_T3(k1)
-	lw	t4, U_PCB_REGS+FRAME_T4(k1)
-	lw	t5, U_PCB_REGS+FRAME_T5(k1)
-	lw	t6, U_PCB_REGS+FRAME_T6(k1)
-	lw	t7, U_PCB_REGS+FRAME_T7(k1)
-	lw	s0, U_PCB_REGS+FRAME_S0(k1)
-	lw	s1, U_PCB_REGS+FRAME_S1(k1)
-	lw	s2, U_PCB_REGS+FRAME_S2(k1)
-	lw	s3, U_PCB_REGS+FRAME_S3(k1)
-	lw	s4, U_PCB_REGS+FRAME_S4(k1)
-	lw	s5, U_PCB_REGS+FRAME_S5(k1)
-	lw	s6, U_PCB_REGS+FRAME_S6(k1)
-	lw	s7, U_PCB_REGS+FRAME_S7(k1)
-	lw	t8, U_PCB_REGS+FRAME_T8(k1)
-	lw	t9, U_PCB_REGS+FRAME_T9(k1)
-	lw	gp, U_PCB_REGS+FRAME_GP(k1)
-	lw	sp, U_PCB_REGS+FRAME_SP(k1)
-	lw	s8, U_PCB_REGS+FRAME_S8(k1)
-	lw	ra, U_PCB_REGS+FRAME_RA(k1)
+	lw	k0, FRAME_EPC(k1)		# might be changed in syscall()
+	lw	AT, FRAME_AST(k1)
+	lw	v0, FRAME_V0(k1)
+	lw	v1, FRAME_V1(k1)
+	lw	a0, FRAME_A0(k1)
+	lw	a1, FRAME_A1(k1)
+	lw	a2, FRAME_A2(k1)
+	lw	a3, FRAME_A3(k1)
+	lw	t0, FRAME_T0(k1)
+	lw	t1, FRAME_T1(k1)
+	lw	t2, FRAME_T2(k1)
+	lw	t3, FRAME_T3(k1)
+	lw	t4, FRAME_T4(k1)
+	lw	t5, FRAME_T5(k1)
+	lw	t6, FRAME_T6(k1)
+	lw	t7, FRAME_T7(k1)
+	lw	s0, FRAME_S0(k1)
+	lw	s1, FRAME_S1(k1)
+	lw	s2, FRAME_S2(k1)
+	lw	s3, FRAME_S3(k1)
+	lw	s4, FRAME_S4(k1)
+	lw	s5, FRAME_S5(k1)
+	lw	s6, FRAME_S6(k1)
+	lw	s7, FRAME_S7(k1)
+	lw	t8, FRAME_T8(k1)
+	lw	t9, FRAME_T9(k1)
+	lw	gp, FRAME_GP(k1)
+	lw	sp, FRAME_SP(k1)
+	lw	s8, FRAME_S8(k1)
+	lw	ra, FRAME_RA(k1)
 	j	k0				# return to syscall point
 	rfe
 	.set	at
-	.globl	_C_LABEL(mips1_SystemCallEnd)
-_C_LABEL(mips1_SystemCallEnd):
 END(mips1_SystemCall)
 
 /*
  * mips1_KernIntr
  *
  * Handle an interrupt from kernel mode.
- * Build intrframe on stack to hold interrupted kernel context, then
+ * Build kernframe on stack to hold interrupted kernel context, then
  * call interrupt() to process it.
  *
  */
 NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	.set	noat
-	.mask	0x80000000, -4
+	.mask	0x80000000, (CALLFRAME_RA - KERNFRAME_SIZ)
 	subu	sp, sp, KERNFRAME_SIZ
 /*
  * Save the relevant kernel registers onto the stack.
@@ -545,16 +546,15 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	sw	v0, TF_BASE+TF_REG_MULLO(sp)
 	sw	v1, TF_BASE+TF_REG_MULHI(sp)
 	sw	a2, TF_BASE+TF_REG_EPC(sp)
-#ifdef DDB
-	addu	v0, sp, KERNFRAME_SIZ 		# SP at interupt for debugging
-	sw	v0, KERNFRAME_SP(sp)
+#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+	move	ra, a2
+	sw	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
 /*
  * Call the interrupt handler.
  */
 	jal	_C_LABEL(interrupt)
-	sw	a2, KERNFRAME_RA(sp)		# for debugging
-
+	nop
 /*
  * Restore registers and return from the interrupt.
  */
@@ -587,8 +587,6 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	j	k0				# return to interrupted point
 	rfe
 	.set	at
-	.globl	_C_LABEL(mips1_KernIntrEnd)
-_C_LABEL(mips1_KernIntrEnd):
 END(mips1_KernIntr)
 
 /*----------------------------------------------------------------------------
@@ -614,127 +612,126 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
- * Save the relevant user registers into the u_pcb.
+ * Save the relevant user registers onto the stack.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
 	lw	k1, _C_LABEL(curpcb)
 	nop
-	sw	AT, U_PCB_REGS+FRAME_AST(k1)
-	sw	v0, U_PCB_REGS+FRAME_V0(k1)
-	sw	v1, U_PCB_REGS+FRAME_V1(k1)
+	addiu	k1, k1, USPACE - FRAME_SIZ
+	sw	AT, FRAME_AST(k1)
+	sw	v0, FRAME_V0(k1)
+	sw	v1, FRAME_V1(k1)
 	mflo	v0
-	sw	a0, U_PCB_REGS+FRAME_A0(k1)
-	sw	a1, U_PCB_REGS+FRAME_A1(k1)
-	sw	a2, U_PCB_REGS+FRAME_A2(k1)
-	sw	a3, U_PCB_REGS+FRAME_A3(k1)
+	sw	a0, FRAME_A0(k1)
+	sw	a1, FRAME_A1(k1)
+	sw	a2, FRAME_A2(k1)
+	sw	a3, FRAME_A3(k1)
 	mfhi	v1
-	sw	t0, U_PCB_REGS+FRAME_T0(k1)
-	sw	t1, U_PCB_REGS+FRAME_T1(k1)
-	sw	t2, U_PCB_REGS+FRAME_T2(k1)
-	sw	t3, U_PCB_REGS+FRAME_T3(k1)
+	sw	t0, FRAME_T0(k1)
+	sw	t1, FRAME_T1(k1)
+	sw	t2, FRAME_T2(k1)
+	sw	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	sw	t4, U_PCB_REGS+FRAME_T4(k1)
-	sw	t5, U_PCB_REGS+FRAME_T5(k1)
-	sw	t6, U_PCB_REGS+FRAME_T6(k1)
-	sw	t7, U_PCB_REGS+FRAME_T7(k1)
+	sw	t4, FRAME_T4(k1)
+	sw	t5, FRAME_T5(k1)
+	sw	t6, FRAME_T6(k1)
+	sw	t7, FRAME_T7(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	sw	t8, U_PCB_REGS+FRAME_T8(k1)
-	sw	t9, U_PCB_REGS+FRAME_T9(k1)
-	sw	gp, U_PCB_REGS+FRAME_GP(k1)
-	sw	sp, U_PCB_REGS+FRAME_SP(k1)
+	sw	t8, FRAME_T8(k1)
+	sw	t9, FRAME_T9(k1)
+	sw	gp, FRAME_GP(k1)
+	sw	sp, FRAME_SP(k1)
 	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
-	sw	ra, U_PCB_REGS+FRAME_RA(k1)
-	sw	a0, U_PCB_REGS+FRAME_SR(k1)
-	sw	v0, U_PCB_REGS+FRAME_MULLO(k1)
-	sw	v1, U_PCB_REGS+FRAME_MULHI(k1)
-	sw	a2, U_PCB_REGS+FRAME_EPC(k1)
-	#addiu	sp, k1, USPACE - CALLFRAME_SIZ	# switch to kernel SP
-	li	sp, KERNELSTACK-CALLFRAME_SIZ	# XXX switch to kernel SP XXX
+	sw	ra, FRAME_RA(k1)
+	sw	a0, FRAME_SR(k1)
+	sw	v0, FRAME_MULLO(k1)
+	sw	v1, FRAME_MULHI(k1)
+	sw	a2, FRAME_EPC(k1)
+	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 	.set	at
 	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
 	.set	noat
+#if /* ifdef DDB */ defined(DDB) || defined(DEBUG)
+	move	ra, a2
+	sw	ra, CALLFRAME_RA(sp)		# for debugging
+#endif
 /*
  * Call the interrupt handler.
  */
-	sw	a2, CALLFRAME_RA(sp)		# for debugging
 	jal	_C_LABEL(interrupt)
 	mtc0	t0, MIPS_COP_0_STATUS
 /*
  * Check pending asynchoronous traps.
  */
-	lw	a1, _C_LABEL(curpcb)
-	nop
-	lw	a0, U_PCB_REGS+FRAME_SR(a1)
+	addiu	a1, sp, CALLFRAME_SIZ
+	lw	a0, FRAME_SR(a1)
 	lw	v0, _C_LABEL(astpending)	# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
 	nop					# -delay slot-
 /*
- * We have pending asynchronous traps; save remaining user state in u_pcb.
+ * We have pending asynchronous traps; save remaining user state in stack.
  */
-	sw	s0, U_PCB_REGS+FRAME_S0(a1)
-	sw	s1, U_PCB_REGS+FRAME_S1(a1)
-	sw	s2, U_PCB_REGS+FRAME_S2(a1)
-	sw	s3, U_PCB_REGS+FRAME_S3(a1)
-	sw	s4, U_PCB_REGS+FRAME_S4(a1)
-	sw	s5, U_PCB_REGS+FRAME_S5(a1)
-	sw	s6, U_PCB_REGS+FRAME_S6(a1)
-	sw	s7, U_PCB_REGS+FRAME_S7(a1)
-	sw	s8, U_PCB_REGS+FRAME_S8(a1)
+	sw	s0, FRAME_S0(a1)
+	sw	s1, FRAME_S1(a1)
+	sw	s2, FRAME_S2(a1)
+	sw	s3, FRAME_S3(a1)
+	sw	s4, FRAME_S4(a1)
+	sw	s5, FRAME_S5(a1)
+	sw	s6, FRAME_S6(a1)
+	sw	s7, FRAME_S7(a1)
+	sw	s8, FRAME_S8(a1)
 
-	lw	a0, U_PCB_REGS+FRAME_EPC(a1)	# argument is interrupted PC
+	lw	a0, FRAME_EPC(a1)		# argument is interrupted PC
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
 	jal	_C_LABEL(ast)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 
-	lw	a1, _C_LABEL(curpcb)
-	nop
-	lw	a0, U_PCB_REGS+FRAME_SR(a1)
-	lw	s0, U_PCB_REGS+FRAME_S0(a1)
+	addiu	a1, sp, CALLFRAME_SIZ
+	lw	a0, FRAME_SR(a1)
+	lw	s0, FRAME_S0(a1)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
-	lw	s1, U_PCB_REGS+FRAME_S1(a1)
-	lw	s2, U_PCB_REGS+FRAME_S2(a1)
-	lw	s3, U_PCB_REGS+FRAME_S3(a1)
-	lw	s4, U_PCB_REGS+FRAME_S4(a1)
-	lw	s5, U_PCB_REGS+FRAME_S5(a1)
-	lw	s6, U_PCB_REGS+FRAME_S6(a1)
-	lw	s7, U_PCB_REGS+FRAME_S7(a1)
-	lw	s8, U_PCB_REGS+FRAME_S8(a1)
+	lw	s1, FRAME_S1(a1)
+	lw	s2, FRAME_S2(a1)
+	lw	s3, FRAME_S3(a1)
+	lw	s4, FRAME_S4(a1)
+	lw	s5, FRAME_S5(a1)
+	lw	s6, FRAME_S6(a1)
+	lw	s7, FRAME_S7(a1)
+	lw	s8, FRAME_S8(a1)
 1:
-	lw	v0, U_PCB_REGS+FRAME_MULLO(a1)
-	lw	v1, U_PCB_REGS+FRAME_MULHI(a1)
+	lw	v0, FRAME_MULLO(a1)
+	lw	v1, FRAME_MULHI(a1)
 	mtlo	v0
 	mthi	v1
 	move	k1, a1
-	lw	k0, U_PCB_REGS+FRAME_EPC(k1)	# exception PC
-	lw	AT, U_PCB_REGS+FRAME_AST(k1)
-	lw	v0, U_PCB_REGS+FRAME_V0(k1)
-	lw	v1, U_PCB_REGS+FRAME_V1(k1)
-	lw	a0, U_PCB_REGS+FRAME_A0(k1)
-	lw	a1, U_PCB_REGS+FRAME_A1(k1)
-	lw	a2, U_PCB_REGS+FRAME_A2(k1)
-	lw	a3, U_PCB_REGS+FRAME_A3(k1)
-	lw	t0, U_PCB_REGS+FRAME_T0(k1)
-	lw	t1, U_PCB_REGS+FRAME_T1(k1)
-	lw	t2, U_PCB_REGS+FRAME_T2(k1)
-	lw	t3, U_PCB_REGS+FRAME_T3(k1)
-	lw	t4, U_PCB_REGS+FRAME_T4(k1)
-	lw	t5, U_PCB_REGS+FRAME_T5(k1)
-	lw	t6, U_PCB_REGS+FRAME_T6(k1)
-	lw	t7, U_PCB_REGS+FRAME_T7(k1)
-	lw	t8, U_PCB_REGS+FRAME_T8(k1)
-	lw	t9, U_PCB_REGS+FRAME_T9(k1)
-	lw	gp, U_PCB_REGS+FRAME_GP(k1)
-	lw	sp, U_PCB_REGS+FRAME_SP(k1)
-	lw	ra, U_PCB_REGS+FRAME_RA(k1)
+	lw	k0, FRAME_EPC(k1)		# exception PC
+	lw	AT, FRAME_AST(k1)
+	lw	v0, FRAME_V0(k1)
+	lw	v1, FRAME_V1(k1)
+	lw	a0, FRAME_A0(k1)
+	lw	a1, FRAME_A1(k1)
+	lw	a2, FRAME_A2(k1)
+	lw	a3, FRAME_A3(k1)
+	lw	t0, FRAME_T0(k1)
+	lw	t1, FRAME_T1(k1)
+	lw	t2, FRAME_T2(k1)
+	lw	t3, FRAME_T3(k1)
+	lw	t4, FRAME_T4(k1)
+	lw	t5, FRAME_T5(k1)
+	lw	t6, FRAME_T6(k1)
+	lw	t7, FRAME_T7(k1)
+	lw	t8, FRAME_T8(k1)
+	lw	t9, FRAME_T9(k1)
+	lw	gp, FRAME_GP(k1)
+	lw	sp, FRAME_SP(k1)
+	lw	ra, FRAME_RA(k1)
 	j	k0				# return to interrupted point
 	rfe
 	.set	at
-	.globl	_C_LABEL(mips1_UserIntrEnd)
-_C_LABEL(mips1_UserIntrEnd):
 END(mips1_UserIntr)
 
 /*
@@ -814,7 +811,7 @@ LEAF(mips1_TLBMissException)
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
-	beq	k1, zero, 1f			# No. check for valid stack
+	beq	k1, zero, outofworld		# No. falling beyond...
 	nop
 	lw	k1, _C_LABEL(Sysmap)
 	sll	k0, k0, 2			# compute offset from index
@@ -829,52 +826,15 @@ LEAF(mips1_TLBMissException)
 	j	k1
 	rfe
 
-1:
-	subu	k0, sp, UADDR + 0x200		# check to see if we have a
-	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, _C_LABEL(mips1_KernGenException) # Go panic
-	nop
-#ifdef DDB
-	la	sp, start - (22 * 4)		# build trapframe on stack
-	sw	AT, TF_REG_AST(sp)
-	sw	v0, TF_REG_V0(sp)
-	sw	v1, TF_REG_V1(sp)
-	sw	a0, TF_REG_A0(sp)
-	sw	a1, TF_REG_A1(sp)
-	sw	a2, TF_REG_A2(sp)
-	sw	a3, TF_REG_A3(sp)
-	sw	t0, TF_REG_T0(sp)
-	sw	t1, TF_REG_T1(sp)
-	sw	t2, TF_REG_T2(sp)
-	sw	t3, TF_REG_T3(sp)
-	sw	t4, TF_REG_T4(sp)
-	sw	t5, TF_REG_T5(sp)
-	sw	t6, TF_REG_T6(sp)
-	sw	t7, TF_REG_T7(sp)
-	sw	t8, TF_REG_T8(sp)
-	sw	t9, TF_REG_T9(sp)
-	mfc0	a0, MIPS_COP_0_STATUS
-	mflo	v0
-	mfhi	v1
-	mfc0	a1, epc
-	sw	ra, TF_REG_RA(sp)
-	sw	a0, TF_REG_SR(sp)
-	sw	v0, TF_REG_MULLO(sp)
-	sw	v1, TF_REG_MULHI(sp)
-	sw	a1, TF_REG_EPC(sp)
-	move	a1, sp
-	subiu	sp, sp, CALLFRAME_SIZ
-	sw	zero, CALLFRAME_RA(sp)
-	sw	zero, CALLFRAME_SIZ-8(sp)
-	jal	_C_LABEL(ddb_trap)
-	move	a0, zero
-#endif
-	la	sp, start - CALLFRAME_SIZ	# set sp to a valid place
-	PANIC("kernel stack overflow")
+outofworld:
+	move	a1, sp 
+	la	sp, start			# set sp to a valid place
+	PANIC("out of universe: ksp was %p")
 	.set	at
 END(mips1_TLBMissException)
 
 
+#if 0
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBWriteIndexed --
@@ -911,7 +871,6 @@ LEAF(mips1_TLBWriteIndexed)
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBWriteIndexed)
 
-#if 0
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBWriteRandom --
@@ -1215,6 +1174,7 @@ LEAF(mips1_TLBRead)
 	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
 END(mips1_TLBRead)
 
+#if 0
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBGetPID --
@@ -1236,7 +1196,31 @@ LEAF(mips1_TLBGetPID)
 	j	ra
 	srl	v0, v0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
 END(mips1_TLBGetPID)
+#endif
 
+LEAF(mips1_clean_tlb)
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
+	li	t1, MIPS_KSEG0_START		# invalid address
+	mtc0	t1, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# Zero out low entry.
+/*
+ * Align the starting value (t1) and the upper bound (t2).
+ */
+	#li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
+	move	t1, zero
+	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
+1:
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
+	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
+	bne	t1, t2, 1b
+	tlbwi					# Write the TLB entry.
+
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+END(mips1_clean_tlb)
 
 /*----------------------------------------------------------------------------
  *
@@ -1582,7 +1566,7 @@ END(mips1_wbflush)
  * mips1_proc_trampoline()
  *
  * Arrange for a function to be invoked neatly, after a cpu_switch().
- * Invoke the service function with one argument, specified by the s0
+ * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
  */
 LEAF(mips1_proc_trampoline) 
@@ -1591,44 +1575,45 @@ LEAF(mips1_proc_trampoline)
 	.set	noat
 	lw	a1, _C_LABEL(curpcb)
 	nop
-	lw	a0, U_PCB_REGS+FRAME_SR(a1)
-	lw	t0, U_PCB_REGS+FRAME_MULLO(a1)
-	lw	t1, U_PCB_REGS+FRAME_MULHI(a1)
+	addiu	a1, a1, USPACE - FRAME_SIZ
+	lw	a0, FRAME_SR(a1)
+	lw	t0, FRAME_MULLO(a1)
+	lw	t1, FRAME_MULHI(a1)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	nop
 	move	k1, a1
-	lw	k0, U_PCB_REGS+FRAME_EPC(k1)
-	lw	AT, U_PCB_REGS+FRAME_AST(k1)
-	lw	v0, U_PCB_REGS+FRAME_V0(k1)
-	lw	v1, U_PCB_REGS+FRAME_V1(k1)
-	lw	a0, U_PCB_REGS+FRAME_A0(k1)
-	lw	a1, U_PCB_REGS+FRAME_A1(k1)
-	lw	a2, U_PCB_REGS+FRAME_A2(k1)
-	lw	a3, U_PCB_REGS+FRAME_A3(k1)
-	lw	t0, U_PCB_REGS+FRAME_T0(k1)
-	lw	t1, U_PCB_REGS+FRAME_T1(k1)
-	lw	t2, U_PCB_REGS+FRAME_T2(k1)
-	lw	t3, U_PCB_REGS+FRAME_T3(k1)
-	lw	t4, U_PCB_REGS+FRAME_T4(k1)
-	lw	t5, U_PCB_REGS+FRAME_T5(k1)
-	lw	t6, U_PCB_REGS+FRAME_T6(k1)
-	lw	t7, U_PCB_REGS+FRAME_T7(k1)
-	lw	s0, U_PCB_REGS+FRAME_S0(k1)
-	lw	s1, U_PCB_REGS+FRAME_S1(k1)
-	lw	s2, U_PCB_REGS+FRAME_S2(k1)
-	lw	s3, U_PCB_REGS+FRAME_S3(k1)
-	lw	s4, U_PCB_REGS+FRAME_S4(k1)
-	lw	s5, U_PCB_REGS+FRAME_S5(k1)
-	lw	s6, U_PCB_REGS+FRAME_S6(k1)
-	lw	s7, U_PCB_REGS+FRAME_S7(k1)
-	lw	t8, U_PCB_REGS+FRAME_T8(k1)
-	lw	t9, U_PCB_REGS+FRAME_T9(k1)
-	lw	gp, U_PCB_REGS+FRAME_GP(k1)
-	lw	s8, U_PCB_REGS+FRAME_S8(k1)
-	lw	ra, U_PCB_REGS+FRAME_RA(k1)
-	lw	sp, U_PCB_REGS+FRAME_SP(k1)
+	lw	k0, FRAME_EPC(k1)
+	lw	AT, FRAME_AST(k1)
+	lw	v0, FRAME_V0(k1)
+	lw	v1, FRAME_V1(k1)
+	lw	a0, FRAME_A0(k1)
+	lw	a1, FRAME_A1(k1)
+	lw	a2, FRAME_A2(k1)
+	lw	a3, FRAME_A3(k1)
+	lw	t0, FRAME_T0(k1)
+	lw	t1, FRAME_T1(k1)
+	lw	t2, FRAME_T2(k1)
+	lw	t3, FRAME_T3(k1)
+	lw	t4, FRAME_T4(k1)
+	lw	t5, FRAME_T5(k1)
+	lw	t6, FRAME_T6(k1)
+	lw	t7, FRAME_T7(k1)
+	lw	s0, FRAME_S0(k1)
+	lw	s1, FRAME_S1(k1)
+	lw	s2, FRAME_S2(k1)
+	lw	s3, FRAME_S3(k1)
+	lw	s4, FRAME_S4(k1)
+	lw	s5, FRAME_S5(k1)
+	lw	s6, FRAME_S6(k1)
+	lw	s7, FRAME_S7(k1)
+	lw	t8, FRAME_T8(k1)
+	lw	t9, FRAME_T9(k1)
+	lw	gp, FRAME_GP(k1)
+	lw	s8, FRAME_S8(k1)
+	lw	ra, FRAME_RA(k1)
+	lw	sp, FRAME_SP(k1)
 	nop
 	j	k0
 	rfe
@@ -1636,146 +1621,81 @@ LEAF(mips1_proc_trampoline)
 END(mips1_proc_trampoline)
 
 /*
- * switch_exit(struct proc *)
- *
- * Make the named process exit.  Switch SP to nullproc stack, schedule
- * the exiting proc's vmspace and stack to be freed, then jump into the
- * middle of cpu_switch().  MUST BE CALLED AT SPLHIGH.
- */
-	.globl	sw1
-LEAF(mips1_switch_exit)
-	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
-	lw	t0, P_MD_UPTE+0(v1)		# t0 = first u. pte
-	lw	t1, P_MD_UPTE+4(v1)		# t1 = 2nd u. pte
-	li	v0, MIPS_KSEG0_START		# clear wired entries for pcb
-	mtc0	v0,  MIPS_COP_0_TLB_HI
-	mtc0	zero, MIPS_COP_0_TLB_LOW
-	li	v0, 2 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	v0, MIPS_COP_0_TLB_INDEX	# clear wired entry 2
-	nop
-	tlbwi
-	li	v0, 3 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	v0, MIPS_COP_0_TLB_INDEX	# clear wired entry 3
-	nop
-	tlbwi
-	li	v0, UADDR			# still using UADDR for kstack
-	nop
-	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	t0, MIPS_COP_0_TLB_LOW		# init low entry
-	li	t0, 1 << MIPS1_TLB_INDEX_SHIFT
-	tlbwi					# Write the TLB entry.
-	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	t0, MIPS_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MIPS_COP_0_TLB_LOW		# init low entry
-	subu	v0, v0, NBPG			# back to start of u-area
-	tlbwi					# Write the TLB entry.
-
-	addu	sp, v0, USPACE - CALLFRAME_SIZ
-	la	ra, sw1				# rathole to cpu_switch()
-	j	exit2				# proc already in a0
-	nop
-END(mips1_switch_exit)
-
-/*
  * Resume process indicated by the pte's for its u struct
  * NOTE: This is hard coded to UPAGES == 2.
  * Also, there should be no TLB faults at this point.
  *
  * Entered from CPU-common cpu_switch()
- * a0 = p_addr [curpcb]
- * a1 = First u.pte
- * a2 = Second u.pte
- * a3 = TLB Process ID for this process
- */
-/*
- * XXXX - almost done with the UADDR mapping; only the kernel stack should
- * now be using UADDR.  The first TLB entries are are used to map
- * UADDR to the u-area.  Then the following TLB entries are used to
- * map the current u-area.  Also, any current mapping for the u-area
- * address space needs to be flushed as well.
- *
- * Both the UADDR and u-area are now mapped global.
+ * a0 = new proc's p_addr
+ * a1 = 1st u.pte
+ * a2 = 2nd u.pte
+ * a3 = Address Space Identifier (TLB Process ID) for this process
  *
  * NB: cannot be profiled due to weird argument-assing convention.
  *     mcount would trash v0, t0, t1.
  */
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
+	li	s0, MIPS_KSEG2_START
+	blt	a0, s0, 9f			# don't brother proc0/nullproc
 	sll	a3, a3, MIPS1_TLB_PID_SHIFT	# a3 = aligned PID
-	li	v0, UADDR			# HI entry; PID = 0
-	ori	a1, MIPS1_PG_G			# Global
-	ori	a2, MIPS1_PG_G			# Global
-	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# init low entry
-	li	s1, 1 << MIPS1_TLB_INDEX_SHIFT
-	tlbwi					# Write the TLB entry.
-	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	s1, MIPS_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MIPS_COP_0_TLB_HI		# init high entry
-	mtc0	a2, MIPS_COP_0_TLB_LOW		# init low entry
-	nop
-	tlbwi					# Write the TLB entry.
- # now map p_addr; may need to flush random TLB entries
-	mtc0	a0, MIPS_COP_0_TLB_HI		# PID = 0
+
+	ori	a1, MIPS1_PG_G			# PG_G Global
+	ori	a2, MIPS1_PG_G			# PG_G Global
+
+	mtc0	a0, MIPS_COP_0_TLB_HI		# 1st VPN w/ PID = 0
 	nop
 	tlbp					# probe for entry
-	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
+	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
 	nop
-	bltz	s1, 1f				# not found
-	li	s1, MIPS_KSEG0_START
-	mtc0	s1,  MIPS_COP_0_TLB_HI
+	bltz	s0, 1f				# not found
+	li	s0, MIPS_KSEG0_START
+	mtc0	s0, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
 	tlbwi
 	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# restore High
+	mtc0	a0, MIPS_COP_0_TLB_HI		# set 1st VPN again
 1:
-	li	s1, 2 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	s1, MIPS_COP_0_TLB_INDEX
-	mtc0	a1, MIPS_COP_0_TLB_LOW
+	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB index #0
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# 1st PFN w/ PG_G
 	nop
-	tlbwi
-	addu	a0, a0, NBPG
-	mtc0	a0, MIPS_COP_0_TLB_HI		# second page of p_addr
+	tlbwi					# set TLB entry #0
+
+	addu	a1, a0, NBPG
+	mtc0	a1, MIPS_COP_0_TLB_HI		# 2nd VPN w/ PID = 0
 	nop
 	tlbp					# probe for entry
-	mfc0	s1, MIPS_COP_0_TLB_INDEX	# see if we found it
+	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
 	nop
-	bltz	s1, 1f				# not found
-	li	s1, MIPS_KSEG0_START
-	mtc0	s1,  MIPS_COP_0_TLB_HI
+	bltz	s0, 1f				# not found
+	li	s0, MIPS_KSEG0_START
+	mtc0	s0, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
-	tlbwi
+	tlbwi					# purge it from random TLB
 	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# restore High
+	mtc0	a1, MIPS_COP_0_TLB_HI		# restore 2nd VPN
 1:
-	li	s1, 3 << MIPS1_TLB_INDEX_SHIFT
-	mtc0	s1, MIPS_COP_0_TLB_INDEX
-	mtc0	a2, MIPS_COP_0_TLB_LOW
+	li	s0, 1 << MIPS1_TLB_INDEX_SHIFT
+	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB index #1
+	mtc0	a2, MIPS_COP_0_TLB_LOW		# 2nd PFN
 	nop
-	tlbwi
-	mtc0	a3, MIPS_COP_0_TLB_HI		# set PID [UADDR/pcb GLOBAL]
-/*
- * Now running on new u struct.
- * Restore registers and return.
- */
-	lw	t0, _C_LABEL(curpcb)
-	nop
-	lw	v0, U_PCB_CONTEXT+SF_REG_ST(t0)	# restore kernel context
-	lw	ra, U_PCB_CONTEXT+SF_REG_RA(t0)
-	lw	s0, U_PCB_CONTEXT+SF_REG_S0(t0)
-	lw	s1, U_PCB_CONTEXT+SF_REG_S1(t0)
-	lw	s2, U_PCB_CONTEXT+SF_REG_S2(t0)
-	lw	s3, U_PCB_CONTEXT+SF_REG_S3(t0)
-	lw	s4, U_PCB_CONTEXT+SF_REG_S4(t0)
-	lw	s5, U_PCB_CONTEXT+SF_REG_S5(t0)
-	lw	s6, U_PCB_CONTEXT+SF_REG_S6(t0)
-	lw	s7, U_PCB_CONTEXT+SF_REG_S7(t0)
-	lw	sp, U_PCB_CONTEXT+SF_REG_SP(t0)
-	lw	s8, U_PCB_CONTEXT+SF_REG_S8(t0)
+	tlbwi					# set TLB entry #1
+9:
+	mtc0	a3, MIPS_COP_0_TLB_HI		# set PID
+
+	lw	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
+	lw	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
+	lw	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
+	lw	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
+	lw	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
+	lw	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
+	lw	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
+	lw	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
+	lw	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
+	lw	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	lw	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	lw	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
 	nop
 	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra

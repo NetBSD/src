@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.43 1999/01/15 09:58:43 castor Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.44 1999/01/15 22:26:43 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.43 1999/01/15 09:58:43 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.44 1999/01/15 22:26:43 castor Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -597,10 +597,10 @@ cpu_identify()
 	 * good place to do this is mips_vector_init(),
 	 * but printf() doesn't work in it.
 	 */
-#if !defined(MIPS3_FLUSH)
+#if !defined(MIPS3_L2CACHE_ABSENT)
 	if (cpu_arch >= 3 && !mips_L2CachePresent) {
 		printf("This kernel doesn't work without L2 cache.\n"
-		    "Please add \"options MIPS3_FLUSH\""
+		    "Please add \"options MIPS3_L2CACHE_ABSENT\""
 		    "to the kernel config file.\n");
 		cpu_reboot(RB_HALT, NULL);
 	}

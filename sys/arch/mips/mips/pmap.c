@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1999/01/15 01:23:15 castor Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 1999/01/15 22:26:43 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 1999/01/15 01:23:15 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 1999/01/15 22:26:43 castor Exp $");
 
 /*
  *	Manages physical address maps.
@@ -231,8 +231,9 @@ int pmap_is_page_ro __P((pmap_t, vaddr_t, int));
 
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
-static void mips_flushcache_allpvh __P((paddr_t));
 
+#if defined(MIPS3_L2CACHE_ABSENT)
+static void mips_flushcache_allpvh __P((paddr_t));
 
 /* 
  * Flush virtual addresses associated with a given physical address
@@ -246,6 +247,7 @@ mips_flushcache_allpvh(paddr_t pa)
 		pv = pv->pv_next;
 	}
 }
+#endif
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -1509,7 +1511,7 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx) nonphys\n", phys);
 #endif
 	
-#if defined(MIPS3) && defined(MIPS3_FLUSH)
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
 		/* XXX Is this really necessary?  Can't we assure that 
@@ -1543,7 +1545,7 @@ pmap_zero_page(phys)
 		p[15] = 0;
 		p += 16;
 	} while (p != end);
-#if defined(MIPS3) && defined(MIPS3_FLUSH)
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1582,7 +1584,7 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx) dst nonphys\n", dst);
 #endif
 
-#if defined(MIPS3) && defined(MIPS3_FLUSH)
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings,  we must force an
@@ -1645,7 +1647,7 @@ pmap_copy_page(src, dst)
 		s += 16;
 		d += 16;
 	} while (s != end);
-#if defined(MIPS3) && defined(MIPS3_FLUSH)
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/* 
 	 * If  we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1728,18 +1730,6 @@ pmap_is_referenced(pa)
 #endif
 #endif
 	return (FALSE);
-}
-
-void
-pmap_set_referenced(pa)
-	paddr_t pa;
-{
-	if (PAGE_IS_MANAGED(pa))
-		*pa_to_attribute(pa) |= PV_MODIFIED;
-#ifdef DEBUG
-	else
-		printf("pmap_set_referenced(%lx)\n", pa);
-#endif
 }
 
 /*

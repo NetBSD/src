@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.17 1999/01/15 10:07:12 castor Exp $	*/
+/*	$NetBSD: locore.h,v 1.18 1999/01/15 22:26:42 castor Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -59,6 +59,7 @@ extern void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
 extern void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
 extern void mips1_ForceCacheUpdate __P((void));
 extern void mips1_SetPID   __P((int pid));
+extern void mips1_clean_tlb __P((void));
 extern void mips1_TLBFlush __P((int numtlb));
 extern void mips1_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
 					  (vaddr_t addr));
