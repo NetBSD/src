@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.6 1998/08/29 13:27:51 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.7 1998/08/29 17:03:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -30,8 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 
 #include <unistd.h>
 #include <err.h>
