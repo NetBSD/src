@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.20 2000/08/27 01:02:48 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.21 2000/10/17 21:46:42 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -589,12 +589,13 @@ extern	u_char	ip6_protox[];
 __BEGIN_DECLS
 struct cmsghdr;
 
-extern int inet6_option_space(int);
-extern int inet6_option_init(void *, struct cmsghdr **, int);
-extern int inet6_option_append(struct cmsghdr *, const u_int8_t *, int, int);
-extern u_int8_t *inet6_option_alloc(struct cmsghdr *, int, int, int);
-extern int inet6_option_next(const struct cmsghdr *, u_int8_t **);
-extern int inet6_option_find(const struct cmsghdr *, u_int8_t **, int);
+extern int inet6_option_space __P((int));
+extern int inet6_option_init __P((void *, struct cmsghdr **, int));
+extern int inet6_option_append __P((struct cmsghdr *, const u_int8_t *,
+	int, int));
+extern u_int8_t *inet6_option_alloc __P((struct cmsghdr *, int, int, int));
+extern int inet6_option_next __P((const struct cmsghdr *, u_int8_t **));
+extern int inet6_option_find __P((const struct cmsghdr *, u_int8_t **, int));
 
 extern size_t inet6_rthdr_space __P((int, int));
 extern struct cmsghdr *inet6_rthdr_init __P((void *, int));
