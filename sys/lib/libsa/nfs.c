@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.4 1994/10/26 05:44:55 cgd Exp $	*/
+/*	$NetBSD: nfs.c,v 1.5 1995/02/19 23:51:39 mycroft Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -39,7 +39,6 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
-#undef NFSX_FATTR
 
 #include "stand.h"
 #include "net.h"
@@ -57,11 +56,7 @@ struct nfs_call_data {
 /* Data part of nfs rpc reply (also the largest thing we receive) */
 struct nfs_reply_data {
 	u_long	errno;
-#ifndef NFSX_FATTR
 	struct	nfsv2_fattr fa;
-#else
-	u_char	fa[NFSX_FATTR(0)];
-#endif
 	u_long	count;
 	u_char	data[1200];
 };
@@ -153,12 +148,10 @@ getnfsinfo(d, tp, sp, fp, mp, up, gp)
  	    printf("getnfsinfo: called\n");
 #endif
 	rlen = sizeof(rdata);
-#if 0
 #ifdef NFSX_FATTR
 #if NFSX_FATTR(1) > NFSX_FATTR(0)
 	/* nqnfs makes this more painful than it needs to be */
 	rlen -= NFSX_FATTR(1) - NFSX_FATTR(0);
-#endif
 #endif
 #endif
 	if ((cc = callrpc(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_GETATTR,
