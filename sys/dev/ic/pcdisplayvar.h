@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.12 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.12.2.1 2004/06/07 09:38:23 tron Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -43,6 +43,7 @@ struct pcdisplayscreen {
 	int cursorcol, cursorrow;	/* current cursor position */
 
 	int dispoffset; 	/* offset of displayed area in video mem */
+	int visibleoffset;
 };
 
 struct pcdisplay_handle {
