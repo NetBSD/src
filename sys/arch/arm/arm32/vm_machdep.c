@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2002/08/22 01:13:55 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2002/10/18 21:32:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -190,7 +190,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
+	sf->sf_fp = 0;
+	sf->sf_sp = (u_int)tf;
 	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_un.un_32.pcb32_r11 = sf->sf_sp - 4;
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
 }
 

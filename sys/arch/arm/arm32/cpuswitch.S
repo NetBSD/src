@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.25 2002/10/15 20:53:38 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.26 2002/10/18 21:32:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -179,7 +179,9 @@ ENTRY(cpu_switch)
  * r6 = newproc
  * r7 = scratch
  */
-	stmfd	sp!, {r4-r7, lr}
+	mov	ip, sp
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
+	sub	fp, ip, #4
 
 	/*
 	 * Get the current process and indicate that there is no longer
@@ -392,9 +394,9 @@ ENTRY(cpu_switch)
 	/* Get the user structure for the old process. */
 	ldr	r1, [r0, #(P_ADDR)]
 
-	/* Save all the registers in the old process's pcb */
-	add	r7, r1, #(PCB_R8)
-	stmia	r7, {r8-r13}
+	/* Save the remaining registers in the old process's pcb */
+	add	r7, r1, #(PCB_R11)
+	stmia	r7, {r11-r13}
 
 	/*
 	 * This can be optimised... We know we want to go from SVC32
@@ -473,9 +475,9 @@ ENTRY(cpu_switch)
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* Restore all the save registers */
-	add	r7, r1, #PCB_R8
-	ldmia	r7, {r8-r13}
+	/* Restore the saved registers from the PCB */
+	add	r7, r1, #PCB_R11
+	ldmia	r7, {r11-r13}
 
 	mov	r7, r1			/* preserve PCB pointer */
 
@@ -513,7 +515,7 @@ ENTRY(cpu_switch)
 	 * Pull the registers that got pushed when either savectx() or
 	 * cpu_switch() was called and return.
 	 */
-	ldmfd	sp!, {r4-r7, pc}
+	ldmdb	fp, {r4-r10, fp, sp, pc}
 
 .Lswitch_do_ras:
 	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
@@ -584,8 +586,8 @@ ENTRY(switch_exit)
 	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
        
 	/* Restore all the save registers */
-	add	r7, r2, #PCB_R8
-	ldmia	r7, {r8-r13}
+	add	r7, r2, #PCB_R11
+	ldmia	r7, {r11-r13}
 
 	/* This is not really needed ! */
 	/* Yes it is for the su and fu routines */
@@ -618,14 +620,16 @@ ENTRY(savectx)
 	 */
 
 	/* Push registers.*/
-	stmfd	sp!, {r4-r7, lr}
+	mov	ip, sp
+	stmfd	sp!, {r4-r10, fp, ip, lr, pc}
+	sub	fp, ip, #4
 
 	/* Store all the registers in the process's pcb */
-	add	r2, r0, #(PCB_R8)
-	stmia	r2, {r8-r13}
+	add	r2, r0, #(PCB_R11)
+	stmia	r2, {r11-r13}
 
 	/* Pull the regs of the stack */
-	ldmfd	sp!, {r4-r7, pc}
+	ldmdb	fp, {r4-r10, fp, sp, pc}
 
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2002/08/14 23:33:11 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2002/10/18 21:32:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -80,6 +80,7 @@ typedef struct irqframe {
 
 /*
  * Switch frame
+ * Pushed onto the stack at the start of cpu_switch()
  */
 
 struct switchframe {
@@ -88,7 +89,13 @@ struct switchframe {
 	u_int	sf_r5;
 	u_int	sf_r6;
 	u_int	sf_r7;
-	u_int	sf_pc;
+	u_int	sf_r8;
+	u_int	sf_r9;
+	u_int	sf_r10;
+	u_int	sf_fp;
+	u_int	sf_sp;
+	u_int	sf_pc;		/* return address from cpu_switch() */
+	u_int	sf_scp;
 };
  
 /*
