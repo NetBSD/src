@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.11 1998/09/20 17:08:01 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.12 1998/09/20 19:00:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -1152,8 +1152,6 @@ wd_get_params(wd, flags, params)
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
-		if ((wd->drvp->drive_flags & DRIVE_OLD) == 0)
-			return 1;
 		/*
 		 * We `know' there's a drive here; just assume it's old.
 		 * This geometry is only used to read the MBR and print a
