@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.11 1995/05/31 21:50:36 mycroft Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.12 1995/09/30 07:02:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -98,7 +98,7 @@ struct protosw inetsw[] = {
 { SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
-  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,
+  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.16 1995/08/12 23:59:41 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.17 1995/09/30 07:02:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -524,4 +524,32 @@ tcp_usrclosed(tp)
 	if (tp && tp->t_state >= TCPS_FIN_WAIT_2)
 		soisdisconnected(tp->t_inpcb->inp_socket);
 	return (tp);
+}
+
+/*
+ * Sysctl for tcp variables.
+ */
+int
+tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case TCPCTL_RFC1323:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_do_rfc1323));
+
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

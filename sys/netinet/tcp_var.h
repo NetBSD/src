@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.13 1995/06/12 00:48:03 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.14 1995/09/30 07:02:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -233,10 +233,23 @@ struct	tcpstat {
 	u_long	tcps_pcbcachemiss;
 };
 
+/*
+ * Names for TCP sysctl objects.
+ */
+			/* enable/disable RFC1323 timestamps/scaling */
+#define	TCPCTL_RFC1323		1
+#define	TCPCTL_MAXID		2
+
+#define	TCPCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "rfc1323",	CTLTYPE_INT }, \
+}
+
 #ifdef _KERNEL
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
+extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
@@ -274,6 +287,7 @@ struct tcpcb *
 void	 tcp_trace __P((int, int, struct tcpcb *, struct tcpiphdr *, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
+int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
