@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.52 2002/09/16 16:24:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.53 2002/09/22 12:58:23 wiz Exp $
 
-SUBDIR=		gdb.new # gdbreplay gdbserver
+SUBDIR=		gdb # gdbreplay gdbserver
 
 .include <bsd.subdir.mk>
