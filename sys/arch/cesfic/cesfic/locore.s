@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 2001/05/14 18:23:02 drochner Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2001/05/18 11:51:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -93,7 +93,7 @@ ASLOCAL(tmpstk)
  * through ROM until MMU is turned on at which time they will vector
  * through our table (vectors.s).
  */
-	
+
 BSS(lowram,4)
 BSS(esym,4)
 
@@ -347,8 +347,7 @@ Lmainreturned:
 	.asciz	"main() returned"
 	.even
 
-	.globl	_proc_trampoline
-_proc_trampoline:
+GLOBAL(proc_trampoline)
 	movl	%a3,%sp@-
 	jbsr	%a2@
 	addql	#4,%sp
@@ -356,7 +355,7 @@ _proc_trampoline:
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
-	jra	rei			| and return
+	jra	_ASM_LABEL(rei)		| and return
 
 
 /*
@@ -749,7 +748,7 @@ Lbrkpt2:
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
 	movl	%d0,%sp@-		| push trap type
-	jbsr	_trap_kdebug
+	jbsr	_C_LABEL(trap_kdebug)
 	addql	#4,%sp			| pop args
 
 	| The stack pointer may have been modified, or
@@ -793,7 +792,7 @@ ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
-_lev6intr:	/* Level 6: clock */
+ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	INTERRUPT_SAVEREG
 	/* XXX */
 	movl _C_LABEL(clockbase), %a0
@@ -942,7 +941,11 @@ GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
 
 ASLOCAL(mdpflag)
 	.byte	0		| copy of proc md_flags low byte
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 
 ASBSS(nullpcb,SIZEOF_PCB)
 
