@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.31 1996/08/08 04:11:27 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.32 1996/11/25 22:55:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.31 1996/08/08 04:11:27 mycroft Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.32 1996/11/25 22:55:59 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -760,18 +760,17 @@ dointr()
 			    kvm_geterr(kd));
 			exit(1);
 		}
-		if (strcmp(evcnt.ev_name, "intr") == 0) {
-			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
-			    sizeof dev) != sizeof dev) {
-				(void)fprintf(stderr, "vmstat: event chain trashed\n",
-				    kvm_geterr(kd));
-				exit(1);
-			}
-			if (evcnt.ev_count)
-				(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
-				    evcnt.ev_count, evcnt.ev_count / uptime);
-			inttotal += evcnt.ev_count++;
+		if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
+		    sizeof dev) != sizeof dev) {
+			(void)fprintf(stderr, "vmstat: event chain trashed\n",
+			    kvm_geterr(kd));
+			exit(1);
 		}
+		if (evcnt.ev_count)
+			(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
+			    evcnt.ev_count, evcnt.ev_count / uptime);
+		inttotal += evcnt.ev_count++;
+
 		evptr = evcnt.ev_list.tqe_next;
 	}
 	(void)printf("Total          %8ld %8ld\n", inttotal, inttotal / uptime);
