@@ -315,6 +315,20 @@ _trap2:
 	jra	sigreturn		| yes, trap2 is sigreturn
 
 /*
+ * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
+ *	cachectl(command, addr, length)
+ * command in d0, addr in a1, length in d1
+ */
+	.globl	_cachectl
+_trap12:
+	movl	d1,sp@-			| push length
+	movl	a1,sp@-			| push addr
+	movl	d0,sp@-			| push command
+	jbsr	_cachectl		| do it
+	lea	sp@(12),sp		| pop args
+	jra	rei			| all done
+
+/*
  * Trap 15 is used for:
  *	- KGDB traps
  *	- trace traps for SUN binaries (not fully supported yet)
