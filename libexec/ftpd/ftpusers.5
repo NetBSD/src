@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpusers.5,v 1.12 2001/12/01 10:16:06 lukem Exp $
+.\"	$NetBSD: ftpusers.5,v 1.13 2001/12/01 16:24:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,10 +167,11 @@ If there's a positive match, the session's root directory is changed.
 No further comparisons are attempted after the first successful match.
 This syntax is backward-compatible with the old syntax.
 .Sh FILES
-.Bl -tag -width /etc/ftpchroot -compact
+.Bl -tag -width /usr/share/examples/ftpd/ftpusers -compact
 .It Pa /etc/ftpchroot
-List of normal users who should be
-.Xr chroot 2 ed.
+List of normal users who should have their ftp session's root directory
+changed by using
+.Xr chroot 2 .
 .It Pa /etc/ftpusers
 This file.
 .It Pa /usr/share/examples/ftpd/ftpusers
