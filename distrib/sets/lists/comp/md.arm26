@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.4 2001/01/13 17:04:50 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.5 2001/01/18 21:49:50 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -10,6 +10,7 @@
 ./usr/include/arm/elf_machdep.h		comp-c-include
 ./usr/include/arm/float.h		comp-c-include
 ./usr/include/arm/fp.h			comp-c-include
+./usr/include/arm/frame.h		comp-c-include
 ./usr/include/arm/ieee.h		comp-c-include
 ./usr/include/arm/ieeefp.h		comp-c-include
 ./usr/include/arm/int_types.h		comp-c-include
