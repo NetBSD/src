@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.5 2000/07/14 10:29:16 fvdl Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.6 2000/07/16 06:41:43 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -886,7 +886,8 @@ regular_rpcbind:
 		CLNT_CONTROL(client, CLSET_VERS, (char *)(void *)&vers);
 		clnt_st = CLNT_CALL(client, (rpcproc_t)RPCBPROC_GETADDR,
 		    (xdrproc_t) xdr_rpcb, (char *)(void *)&parms,
-		    (xdrproc_t) xdr_wrapstring, (char *)(void *) ua, tottimeout);
+		    (xdrproc_t) xdr_wrapstring, (char *)(void *) &ua,
+		    tottimeout);
 		if (clnt_st == RPC_SUCCESS) {
 			if ((ua == NULL) || (ua[0] == NULL)) {
 				/* address unknown */
