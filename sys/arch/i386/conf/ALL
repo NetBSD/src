@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.18 1993/08/30 07:07:54 deraadt Exp $
+#	$Id: ALL,v 1.19 1993/09/05 22:34:12 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -48,7 +48,7 @@ controller	isa0
 #non-scsi disk controllers
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
 disk		wd0	at wdc0 drive 0
-disk		wd0	at wdc0 drive 1
+disk		wd1	at wdc0 drive 1
 
 #floppy controller
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
