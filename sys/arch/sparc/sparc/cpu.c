@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.112 2001/03/02 17:00:13 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.113 2001/03/03 19:40:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -65,6 +65,7 @@
 #include <machine/reg.h>
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 
 #include <machine/oldmon.h>
@@ -198,7 +199,7 @@ alloc_cpuinfo()
 		va += NBPG;
 	}
 
-	bzero((void *)cpi, sizeof(struct cpu_info));
+	bzero((void *)cpi, sz);
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
 	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
 
@@ -320,7 +321,11 @@ static	int cpu_instance;
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
 		cpi->ci_self = cpi;
 		cpi->curpcb = cpi->idle_u;
-		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
+		cpi->curpcb->pcb_wim = 1;
+		/*
+		 * Note: `idle_u' and `eintstack' are set in alloc_cpuinfo().
+		 * The %wim register will be initialized in cpu_hatch().
+		 */
 		getcpuinfo(cpi, node);
 #else
 		printf(": no SMP support in kernel\n");
