@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 1997/11/20 05:57:50 fair Exp $
+#	$NetBSD: MAKEDEV,v 1.16 1997/11/26 03:09:53 tv Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -87,8 +87,8 @@ fd)
 		mknod fd/$n c 7 $n
 		n=$(($n + 1))
 	done
-	chown -R bin.bin fd
-	chmod 555 fd
+	chown -R root.wheel fd
+	chmod 755 fd
 	chmod 666 fd/*
 	;;
 
