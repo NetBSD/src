@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2000/02/08 16:17:34 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2000/03/10 19:06:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -879,7 +879,7 @@ cpu_exec_aout_makecmds(p, epp)
 
 static volatile u_char *dip_switch, *int_status;
 
-volatile u_char *idrom_addr, *ctrl_int2;
+volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
 volatile u_char *lance_mem, *ctrl_timer, *ctrl_led, *sccport0a;
 
 #ifdef news1700
@@ -947,6 +947,7 @@ news1700_init()
 	int_status	= (u_char *)IIOV(0xe1c00200);
 
 	idrom_addr	= (u_char *)IIOV(0xe1c00000);
+	ctrl_ast	= (u_char *)IIOV(0xe1280000);
 	ctrl_int2	= (u_char *)IIOV(0xe1180000);
 
 	lance_mem	= (u_char *)IIOV(0xe0e00000);
@@ -1037,6 +1038,7 @@ news1200_init()
 	int_status	= (u_char *)IIOV(0xe1200000);
 
 	idrom_addr	= (u_char *)IIOV(0xe1400000);
+	ctrl_ast	= (u_char *)IIOV(0xe1100000);
 	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
 
 	lance_mem	= (u_char *)IIOV(0xe1a00000);

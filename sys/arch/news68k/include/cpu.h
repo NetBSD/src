@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2000/02/08 16:17:33 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2000/03/10 19:06:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,14 +112,14 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define need_resched()	{ want_resched++; aston(); }
+#define need_resched()		do { want_resched++; aston(); } while(0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define need_proftick(p)	do { (p)->p_flag |= P_OWEUPC; aston(); } while(0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -128,7 +128,8 @@ extern int want_resched;	/* resched() was called */
 #define signotify(p)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
-#define aston() (astpending++)
+extern volatile u_char *ctrl_ast;
+#define aston()		do { astpending++; *ctrl_ast = 0xff; } while(0)
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 2000/02/08 16:17:33 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 2000/03/10 19:06:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -440,14 +440,14 @@ Lenab3:
  * and then rei.
  */
 GLOBAL(proc_trampoline)
-	movl    %a3,%sp@-		| push function arg
-	jbsr    %a2@			| call function
-	addql   #4,%sp			| pop arg
-	movl    %sp@(FR_SP),%a0		| grab and load
-	movl    %a0,%usp		|   user SP
-	moveml  %sp@+,#0x7FFF		| restore most user regs
-	addql   #8,%sp			| toss SP and stack adjust
-	jra     _ASM_LABEL(rei)         | and return
+	movl	%a3,%sp@-		| push function arg
+	jbsr	%a2@			| call function
+	addql	#4,%sp			| pop arg
+	movl	%sp@(FR_SP),%a0		| grab and load
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most user regs
+	addql	#8,%sp			| toss SP and stack adjust
+	jra	_ASM_LABEL(rei)		| and return
 
 /*
  * Trap/interrupt vector routines
@@ -781,7 +781,7 @@ Lbrkpt3:
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
+	rte
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
 	INTERRUPT_SAVEREG
@@ -790,31 +790,40 @@ ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
 	jbsr	_C_LABEL(isrdispatch_autovec) | call dispatcher
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
+	rte
+
+ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
+	movl	%a0,%sp@-
+	addql	#1,_C_LABEL(intrcnt)+4
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	movl	_C_LABEL(ctrl_ast),%a0
+	clrb	%a0@			| disable AST interrupt
+	movl	%sp@+,%a0
+	jra	_ASM_LABEL(rei)		| handle AST
 
 ENTRY_NOPROFILE(lev2intr)		/* Level 2: software interrupt */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev2)
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	rte
 
 ENTRY_NOPROFILE(lev3intr)		/* Level 3: fd, lpt, vme etc. */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev3)
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	rte
 
 ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev4)
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	rte
 
 ENTRY_NOPROFILE(lev5intr)		/* Level 5: kb, ms (zs is vectored) */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev5)
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	rte
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
 	INTERRUPT_SAVEREG
@@ -823,7 +832,7 @@ ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
 	jbsr	_C_LABEL(clock_intr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	rte
 
 #if 0
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
@@ -837,7 +846,7 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	rte
 #endif
 
 ENTRY_NOPROFILE(intrhand_vectored)
@@ -850,7 +859,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
 	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
 	lea	%sp@(12),%sp		| pop value args
 	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
+	rte
 
 #undef INTERRUPT_SAVEREG
 #undef INTERRUPT_RESTOREREG
@@ -869,16 +878,19 @@ ENTRY_NOPROFILE(intrhand_vectored)
  * necessitating a stack cleanup.
  */
 /*
- * XXX news68k seems to have hardware support for AST and software
- * XXX interrupt. We should use it rather than emulation.
+ * news68k has hardware support for AST and software interrupt.
+ * We just use it rather than VAX REI emulation.
  */
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Ldorte			| no, done
+	jne	Lrei1			| no, done
+	rte
 Lrei1:
 	btst	#5,%sp@			| yes, are we returning to user mode?
-	jne	Ldorte			| no, done
+	jeq	1f			| no, done
+	rte
+1:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
@@ -907,7 +919,6 @@ Laststkadj:
 	movl	%a0,%sp@(FR_SP)		| new SSP
 	moveml	%sp@+,#0x7FFF		| restore user registers
 	movl	%sp@,%sp		| and our SP
-Ldorte:
 	rte				| real return
 
 /*
