@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.64 2003/07/15 03:36:06 lukem Exp $	*/
+/*	$NetBSD: psycho.c,v 1.65 2003/08/22 00:46:25 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.64 2003/07/15 03:36:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.65 2003/08/22 00:46:25 petrov Exp $");
 
 #include "opt_ddb.h"
 
@@ -463,17 +463,19 @@ found:
 		psycho_set_intr(sc, 15, psycho_bus_a,
 			&sc->sc_regs->pciaerr_int_map, 
 			&sc->sc_regs->pciaerr_clr_int);
-		psycho_set_intr(sc, 15, psycho_bus_b,
-			&sc->sc_regs->pciberr_int_map, 
-			&sc->sc_regs->pciberr_clr_int);
 		psycho_set_intr(sc, 15, psycho_powerfail,
 			&sc->sc_regs->power_int_map, 
 			&sc->sc_regs->power_clr_int);
-		psycho_register_power_button(sc);
-		psycho_set_intr(sc, 1, psycho_wakeup,
-			&sc->sc_regs->pwrmgt_int_map, 
-			&sc->sc_regs->pwrmgt_clr_int);
-
+		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
+			/* sabre doesn't have these interrups */
+			psycho_set_intr(sc, 15, psycho_bus_b,
+					&sc->sc_regs->pciberr_int_map, 
+					&sc->sc_regs->pciberr_clr_int);
+			psycho_register_power_button(sc);
+			psycho_set_intr(sc, 1, psycho_wakeup,
+					&sc->sc_regs->pwrmgt_int_map, 
+					&sc->sc_regs->pwrmgt_clr_int);
+		}
 
 		/*
 		 * Apparently a number of machines with psycho and psycho+
@@ -1223,7 +1225,6 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	 * interrupt which has a full vector that can be set arbitrarily.  
 	 */
 
-
 	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
 	ino = INTINO(vec);
 	DPRINTF(PDB_INTR, (" ino %x", ino));
@@ -1242,7 +1243,7 @@ psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
 	/* Hunt thru obio first */
 	for (intrmapptr = &sc->sc_regs->scsi_int_map,
 		     intrclrptr = &sc->sc_regs->scsi_clr_int;
-	     intrmapptr < &sc->sc_regs->ffb0_int_map;
+	     intrmapptr < &sc->sc_regs->ue_int_map;
 	     intrmapptr++, intrclrptr++) {
 		if (INTINO(*intrmapptr) == ino)
 			goto found;
@@ -1275,15 +1276,6 @@ found:
 	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;
 	ih->ih_clr = intrclrptr;
-
-#ifdef NOT_DEBUG
-	if (psycho_debug & PDB_INTR) {
-		long i;
-
-		for (i = 0; i < 500000000; i++)
-			continue;
-	}
-#endif
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
