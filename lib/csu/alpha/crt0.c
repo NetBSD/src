@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 1997/03/10 23:17:10 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 1997/05/17 16:19:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -68,7 +68,7 @@ static char	*_strrchr __P((char *, char));
 
 char	**environ;
 char	*__progname = "";
-struct ps_strings *__ps_strings = PS_STRINGS;
+struct ps_strings *__ps_strings = 0;
 
 #ifndef ECOFF_COMPAT
 extern void	__init __P((void));
