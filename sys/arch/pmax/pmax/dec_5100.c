@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.10 1999/06/11 00:53:35 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.11 1999/06/11 00:59:59 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.10 1999/06/11 00:53:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.11 1999/06/11 00:59:59 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,12 @@ extern void kn230_wbflush __P((void));
 extern unsigned nullclkread __P((void));
 extern unsigned (*clkread) __P((void));
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
+static u_int32_t kn230imsk;
 extern char cpu_model[];
 
 int _splraise_kn230 __P((int));
 int _spllower_kn230 __P((int));
-int _splx_kn230 __P((int));
+int _splrestore_kn230 __P((int));
 
 struct splsw spl_5100 = {
 	{ _spllower_kn230,	0 },
@@ -82,9 +82,11 @@ struct splsw spl_5100 = {
 	{ _splraise_kn230,	IPL_NET },
 	{ _splraise_kn230,	IPL_TTY },
 	{ _splraise_kn230,	IPL_IMP },
-	{ _splraise_kn230,	IPL_CLOCK },
-	{ _splx_kn230,		0 },
+	{ _splraise,		MIPS_SPL_0_1_2 },
+	{ _splrestore_kn230,	0 },
 };
+
+extern volatile struct chiptime *mcclock_addr;	/* XXX */
 
 /*
  * Fill in platform struct. 
@@ -133,11 +135,11 @@ dec_5100_init()
 void
 dec_5100_bus_reset()
 {
-	u_int32_t *icsrp = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	u_int32_t icsr;
 
-	*icsrp |= KN230_CSR_INTR_WMERR;
-
-	/* nothing else to do */
+	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr |= KN230_CSR_INTR_WMERR;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	kn230_wbflush();
 }
 
@@ -174,10 +176,10 @@ struct {
 	int intrbit;
 } kn230intrs[] = {
 	{ SYS_DEV_SCC0, KN230_CSR_INTR_DZ0 },
-	{ SYS_DEV_SCC1, KN230_CSR_INTR_OPT0 },
-	{ SYS_DEV_SCC2, KN230_CSR_INTR_OPT1 },
 	{ SYS_DEV_LANCE, KN230_CSR_INTR_LANCE },
 	{ SYS_DEV_SCSI, KN230_CSR_INTR_SII },
+	{ SYS_DEV_SCC1, KN230_CSR_INTR_OPT0 },
+	{ SYS_DEV_SCC2, KN230_CSR_INTR_OPT1 },
 };
 
 void
@@ -203,10 +205,7 @@ found:
 	intrtab[dev].ih_arg = arg;
 
 	iplmask[level] |= kn230intrs[i].intrbit;
-	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
-	icsr |= kn230intrs[i].intrbit;
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
-	kn230_wbflush();
+	kn230imsk |= kn230intrs[i].intrbit;
 }
 
 void
@@ -256,7 +255,6 @@ dec_5100_intr(cpumask, pc, status, cause)
 	/* allow clock interrupt posted when enabled */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-
 #define	CHECKINTR(slot, bits) 					\
 	if (icsr & (bits)) {					\
 		intrcnt[slot] += 1;				\
@@ -264,12 +262,11 @@ dec_5100_intr(cpumask, pc, status, cause)
 	}
 
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
-	if (cpumask & MIPS_INT_MASK_0) {
+	icsr &= kn230imsk;	
+	if (cpumask & (MIPS_INT_MASK_0 | MIPS_INT_MASK_1)) {
 		CHECKINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
 		CHECKINTR(SYS_DEV_SCC1, KN230_CSR_INTR_OPT0);
-		CHECKINTR(SYS_DEV_SCC1, KN230_CSR_INTR_OPT1);
-	}
-	if (cpumask & MIPS_INT_MASK_1) {
+		CHECKINTR(SYS_DEV_SCC2, KN230_CSR_INTR_OPT1);
 		CHECKINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
 		CHECKINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
 	}
@@ -294,17 +291,17 @@ dec_5100_intr(cpumask, pc, status, cause)
 void
 dec_5100_memerr()
 {
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	u_int32_t icsr;
 	extern int cold;
 
 	/* read icsr and clear error  */
-	icsr = *p;
-	*p = icsr | KN230_CSR_INTR_WMERR;
+	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr |= KN230_CSR_INTR_WMERR;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 	
 #ifdef DIAGNOSTIC
-		printf("\nMemory interrupt\n");
+	printf("\nMemory interrupt\n");
 #endif
 
 	/* ignore errors during probes */
@@ -322,45 +319,31 @@ dec_5100_memerr()
 /*
  * spl(9) for DECsystem 5100
  */
-
 int
 _splraise_kn230(lvl)
 	int lvl;
 {
-	u_int32_t new;
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
-
-	new = oldiplmask[lvl] = *p;
-	new &= ~iplmask[lvl];
-	*p = new;
-	kn230_wbflush();
-	return lvl | _splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1);
+	oldiplmask[lvl] = kn230imsk;
+	kn230imsk &= ~iplmask[lvl];
+	return lvl;
 }
 
 int
-_spllower_kn230(mask)
-	int mask;
-{
-	int s;
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
-
-	s = IPL_NONE | _spllower(mask);
-	oldiplmask[IPL_NONE] = *p;	/* save current ICSR */
-	*p = iplmask[IPL_HIGH];		/* enable all of established devices */
-	kn230_wbflush();
-	return s;
-}
-
-int
-_splx_kn230(lvl)
+_spllower_kn230(lvl)
 	int lvl;
 {
-	u_int32_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	oldiplmask[lvl] = kn230imsk;
+	kn230imsk = iplmask[IPL_HIGH] &~ iplmask[lvl]
+	return lvl;
+}
 
-	(void)_splset(lvl & MIPS_INT_MASK);
-	if (lvl & 0xff) {
-		*p = oldiplmask[lvl & 0xff];
-		kn230_wbflush();
-	}
-	return 0;
+int
+_splrestore_kn230(lvl)
+	int lvl;
+{
+	if (lvl > IPL_HIGH)
+		_splset(MIPS_SR_INT_IE | lvl);
+	else
+		kn230imsk = oldiplmask[lvl];
+	return lvl;
 }
