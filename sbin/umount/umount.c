@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.35 2004/09/01 01:47:09 chs Exp $	*/
+/*	$NetBSD: umount.c,v 1.36 2005/01/19 20:43:06 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.35 2004/09/01 01:47:09 chs Exp $");
+__RCSID("$NetBSD: umount.c,v 1.36 2005/01/19 20:43:06 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,6 @@ static int	 fflag;
 static char	*getmntname(const char *, mntwhat, char **);
 static int	 umountfs(const char *, const char **, int);
 static void	 usage(void) __attribute__((__noreturn__));
-
-int	 main(int, char *[]);
 
 int
 main(int argc, char *argv[])
