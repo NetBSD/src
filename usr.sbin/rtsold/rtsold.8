@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.14 2002/02/08 01:38:56 ross Exp $
+.\"	$NetBSD: rtsold.8,v 1.15 2002/10/24 16:06:05 jonb Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -130,6 +130,12 @@ Upon receipt of signal
 .Nm
 will dump the current internal state into
 .Pa /var/run/rtsold.dump .
+Also note that
+.Nm
+will not be able to update the kernel routing tables unless 
+.Xr sysctl 8
+reports that
+net.inet6.ip6.accept_rtadv=1.
 .\"
 .Pp
 The options are as follows:
