@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/04/29 18:18:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2003/05/26 15:48:32 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,6 +10,8 @@
 #		KERNEL_name	GZBOOT_name	GZIMG_name
 #		RELOC_ADDR	WHICH_kernel
 #	
+.if ${MACHINE_ARCH} == "arm"
+# Little endian platforms.
 TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 		0x00140000	netbsd-sd0			\
 								\
@@ -30,6 +32,14 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		TEAMASA_NPWR	IQ80310		TEAMASA_NPWR_sd0 \
 		0x00080000	netbsd-sd0
+.else
+# Big endian platforms.
+TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
+		0x00140000	netbsd-sd0			\
+								\
+		ADI_BRH		ADI_BRH		ADI_BRH_wd0	\
+		0x00140000	netbsd-wd0
+.endif
 
 .for K G I R W in ${TARGETS}				# {
 
