@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.26 2002/12/16 16:59:10 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.27 2002/12/19 10:27:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -213,9 +213,9 @@ extern void sparc_noop __P((void));
  */
 void	smp_vcache_flush_context __P((int));	/* flush current context */
 void	smp_vcache_flush_region __P((int,int));	/* flush region in cur ctx */
-void	smp_vcache_flush_segment __P((int, int,int));/* flush seg in cur ctx */
+void	smp_vcache_flush_segment __P((int, int, int));/* flush seg in cur ctx */
 void	smp_vcache_flush_page __P((int va,int));	/* flush page in cur ctx */
-void	smp_cache_flush __P((caddr_t, u_int));	/* flush region */
+void	smp_cache_flush __P((caddr_t, u_int, int));	/* flush region */
 
 
 #define cache_flush_page(va,ctx)	cpuinfo.vcache_flush_page(va,ctx)
