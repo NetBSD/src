@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.c,v 1.3 2003/07/01 08:34:03 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper.c,v 1.4 2003/07/02 17:48:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper.c,v 1.3 2003/07/01 08:34:03 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper.c,v 1.4 2003/07/02 17:48:57 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -182,7 +182,27 @@ quit:
 }
 
 /*
+ * mapper_close:
+ *	simply close a mapper. (without handling hash)
+ */
+static void
+mapper_close(struct _citrus_mapper *cm)
+{
+	if (cm->cm_module) {
+		if (cm->cm_ops) {
+			if (cm->cm_closure)
+				(*cm->cm_ops->mo_uninit)(cm);
+			free(cm->cm_ops);
+		}
+		_citrus_unload_module(cm->cm_module);
+	}
+	free(cm->cm_traits);
+	free(cm);
+}
+
+/*
  * mapper_open:
+ *	simply open a mapper. (without handling hash)
  */
 static int
 mapper_open(struct _citrus_mapper_area *__restrict ma,
@@ -251,8 +271,9 @@ mapper_open(struct _citrus_mapper_area *__restrict ma,
 	*rcm = cm;
 
 	return 0;
+
 err:
-	_citrus_mapper_close(cm);
+	mapper_close(cm);
 	return ret;
 }
 
@@ -354,29 +375,16 @@ _citrus_mapper_close(struct _citrus_mapper *cm)
 {
 	if (cm) {
 		rwlock_wrlock(&lock);
-		if (cm->cm_refcount == REFCOUNT_PERSISTENT) {
-			rwlock_unlock(&lock);
-			return;
-		}
+		if (cm->cm_refcount == REFCOUNT_PERSISTENT)
+			goto quit;
 		if (cm->cm_refcount > 0) {
-			if (--cm->cm_refcount > 0) {
-				rwlock_unlock(&lock);
-				return;
-			} else {
-				_CITRUS_HASH_REMOVE(cm, cm_entry);
-			}
+			if (--cm->cm_refcount > 0)
+				goto quit;
+			_CITRUS_HASH_REMOVE(cm, cm_entry);
+			free(cm->cm_key);
 		}
-		if (cm->cm_module) {
-			if (cm->cm_ops) {
-				if (cm->cm_closure)
-					(*cm->cm_ops->mo_uninit)(cm);
-				free(cm->cm_ops);
-			}
-			_citrus_unload_module(cm->cm_module);
-		}
-		free(cm->cm_key);
-		free(cm->cm_traits);
-		free(cm);
+		mapper_close(cm);
+quit:
 		rwlock_unlock(&lock);
 	}
 }
