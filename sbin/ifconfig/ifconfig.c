@@ -1,4 +1,36 @@
-/*	$NetBSD: ifconfig.c,v 1.23 1996/09/08 14:37:39 mycroft Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.24 1997/03/17 03:08:48 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 1997 Jason R. Thorpe.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project
+ *	by Jason R. Thorpe.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.23 1996/09/08 14:37:39 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.24 1997/03/17 03:08:48 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +84,7 @@ static char rcsid[] = "$NetBSD: ifconfig.c,v 1.23 1996/09/08 14:37:39 mycroft Ex
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -82,7 +115,8 @@ int	flags, metric, setaddr, setipdst, doalias;
 int	clearaddr, s;
 int	newaddr = 1;
 int	nsellength = 1;
-int	af = AF_INET;
+int	af;
+int	mflag;
 
 void 	notealias __P((char *, int));
 void 	notrailers __P((char *, int));
@@ -95,6 +129,9 @@ void 	setifmetric __P((char *));
 void 	setifnetmask __P((char *));
 void 	setnsellength __P((char *));
 void 	setsnpaoffset __P((char *));
+void	setmedia __P((char *));
+void	setmediaopt __P((char *));
+void	unsetmediaopt __P((char *));
 
 #define	NEXTARG		0xffffff
 
@@ -133,6 +170,9 @@ struct	cmd {
 	{ "-link1",	-IFF_LINK1,	setifflags } ,
 	{ "link2",	IFF_LINK2,	setifflags } ,
 	{ "-link2",	-IFF_LINK2,	setifflags } ,
+	{ "media",	NEXTARG,	setmedia },
+	{ "mediaopt",	NEXTARG,	setmediaopt },
+	{ "-mediaopt",	NEXTARG,	unsetmediaopt },
 	{ 0,		0,		setifaddr },
 	{ 0,		0,		setifdstaddr },
 };
@@ -144,6 +184,12 @@ void	printall __P((void));
 void 	printb __P((char *, unsigned short, char *));
 void 	status();
 void 	usage();
+
+void	domediaopt __P((char *, int));
+int	get_media_subtype __P((int, char *));
+int	get_media_options __P((int, char *));
+int	lookup_media_word __P((struct ifmedia_description *, char *));
+void	print_media_word __P((int));
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -181,61 +227,101 @@ struct afswtch {
 
 struct afswtch *afp;	/*the address family being set or asked about*/
 
+struct afswtch *lookup_af __P((const char *));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct afswtch *rafp;
-	int aflag = 0;
+	extern int optind;
+	int ch, aflag;
 
-	if (argc < 2) 
-		usage();
-	argc--, argv++;
-	if (!strcmp(*argv, "-a"))
-		aflag = 1;
-	else
-		strncpy(name, *argv, sizeof(name));
-	argc--, argv++;
-	if (argc > 0) {
-		for (afp = rafp = afs; rafp->af_name; rafp++)
-			if (strcmp(rafp->af_name, *argv) == 0) {
-				afp = rafp; argc--; argv++;
-				break;
-			}
-		rafp = afp;
-		af = ifr.ifr_addr.sa_family = rafp->af_af;
-	}
-	if (aflag) {
-		if (argc > 0)
+	/* Parse command-line options */
+	aflag = mflag = 0;
+	while ((ch = getopt(argc, argv, "am")) != -1) {
+		switch (ch) {
+		case 'a':
+			aflag = 1;
+			break;
+
+		case 'm':
+			mflag = 1;
+			break;
+
+		default:
 			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	/* -a means print all interfaces */
+	if (aflag) {
+		if (argc > 1)
+			usage();
+		else if (argc == 1) {
+			afp = lookup_af(argv[0]);
+			if (afp == NULL)
+				usage();
+		} else
+			afp = afs;
+		af = ifr.ifr_addr.sa_family = afp->af_af;
+
 		printall();
 		exit(0);
 	}
+
+	/* Make sure there's an interface name. */
+	if (argc < 1)
+		usage();
+	strncpy(name, argv[0], sizeof(name));
+	argc--; argv++;
+
+	/* Check for address family. */
+	afp = NULL;
+	if (argc > 0) {
+		afp = lookup_af(argv[0]);
+		if (afp != NULL) {
+			argv++;
+			argc--;
+		}
+	}
+
+	if (afp == NULL)
+		afp = afs;
+	af = ifr.ifr_addr.sa_family = afp->af_af;
+
+	/* Get information about the interface. */
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (getinfo(&ifr) < 0)
 		exit(1);
+
+	/* No more arguments means interface status. */
 	if (argc == 0) {
 		status();
 		exit(0);
 	}
+
+	/* Process commands. */
 	while (argc > 0) {
 		register struct cmd *p;
 
 		for (p = cmds; p->c_name; p++)
-			if (strcmp(*argv, p->c_name) == 0)
+			if (strcmp(argv[0], p->c_name) == 0)
 				break;
 		if (p->c_name == 0 && setaddr)
 			p++;	/* got src, do dst */
 		if (p->c_func) {
 			if (p->c_parameter == NEXTARG) {
-				if (argv[1] == NULL)
+				if (argc < 2)
 					errx(1, "'%s' requires argument",
 					    p->c_name);
 				(*p->c_func)(argv[1]);
 				argc--, argv++;
 			} else
-				(*p->c_func)(*argv, p->c_parameter);
+				(*p->c_func)(argv[0], p->c_parameter);
 		}
 		argc--, argv++;
 	}
@@ -259,8 +345,8 @@ main(argc, argv)
 
 	if (clearaddr) {
 		int ret;
-		strncpy(rafp->af_ridreq, name, sizeof ifr.ifr_name);
-		if ((ret = ioctl(s, rafp->af_difaddr, rafp->af_ridreq)) < 0) {
+		strncpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
+		if ((ret = ioctl(s, afp->af_difaddr, afp->af_ridreq)) < 0) {
 			if (errno == EADDRNOTAVAIL && (doalias >= 0)) {
 				/* means no previous address for interface */
 			} else
@@ -268,11 +354,23 @@ main(argc, argv)
 		}
 	}
 	if (newaddr) {
-		strncpy(rafp->af_addreq, name, sizeof ifr.ifr_name);
-		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
+		strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
+		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
 	}
 	exit(0);
+}
+
+struct afswtch *
+lookup_af(cp)
+	const char *cp;
+{
+	struct afswtch *a;
+
+	for (a = afs; a->af_name != NULL; a++)
+		if (strcmp(a->af_name, cp) == 0)
+			return (a);
+	return (NULL);
 }
 
 void
@@ -460,6 +558,341 @@ setifmetric(val)
 		warn("SIOCSIFMETRIC");
 }
 
+void
+setmedia(val)
+	char *val;
+{
+	struct ifmediareq ifmr;
+	int first_type, subtype;
+
+	memset(&ifmr, 0, sizeof(ifmr));
+	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+	ifmr.ifm_count = 1;
+	ifmr.ifm_ulist = &first_type;
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		/*
+		 * If we get E2BIG, the kernel is telling us
+		 * that there are more, so we can ignore it.
+		 */
+		if (errno != E2BIG)
+			err(1, "SIOCGIFMEDIA");
+	}
+
+	if (ifmr.ifm_count == 0)
+		errx(1, "%s: no media types?", name);
+
+	/*
+	 * We are primarily concerned with the top-level type.
+	 * However, "current" may be only IFM_NONE, so we just look
+	 * for the top-level type in the first "supported type"
+	 * entry.
+	 *
+	 * (I'm assuming that all supported media types for a given
+	 * interface will be the same top-level type..)
+	 */
+	subtype = get_media_subtype(IFM_TYPE(first_type), val);
+
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_media = (ifmr.ifm_current & ~(IFM_NMASK|IFM_TMASK)) |
+	    IFM_TYPE(first_type) | subtype;
+
+	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFMEDIA");
+}
+
+void
+setmediaopt(val)
+	char *val;
+{
+
+	domediaopt(val, 0);
+}
+
+void
+unsetmediaopt(val)
+	char *val;
+{
+
+	domediaopt(val, 1);
+}
+
+void
+domediaopt(val, clear)
+	char *val;
+	int clear;
+{
+	struct ifmediareq ifmr;
+	int first_type, options;
+
+	memset(&ifmr, 0, sizeof(ifmr));
+	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+	ifmr.ifm_count = 1;
+	ifmr.ifm_ulist = &first_type;
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+		err(1, "SIOCGIFMEDIA");
+
+	if (ifmr.ifm_count == 0)
+		errx(1, "%s: no media types?", name);
+
+	options = get_media_options(IFM_TYPE(first_type), val);
+
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_media = ifmr.ifm_current;
+	if (clear)
+		ifr.ifr_media &= ~options;
+	else
+		ifr.ifr_media |= options;
+
+	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFMEDIA");
+}
+
+/**********************************************************************
+ * A good chunk of this is duplicated from sys/net/ifmedia.c
+ **********************************************************************/
+
+struct ifmedia_description ifm_type_descriptions[] =
+    IFM_TYPE_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_ethernet_descriptions[] =
+    IFM_SUBTYPE_ETHERNET_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_ethernet_aliases[] =
+    IFM_SUBTYPE_ETHERNET_ALIASES;
+
+struct ifmedia_description ifm_subtype_ethernet_option_descriptions[] =
+    IFM_SUBTYPE_ETHERNET_OPTION_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_tokenring_descriptions[] =
+    IFM_SUBTYPE_TOKENRING_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_tokenring_aliases[] =
+    IFM_SUBTYPE_TOKENRING_ALIASES;
+
+struct ifmedia_description ifm_subtype_tokenring_option_descriptions[] =
+    IFM_SUBTYPE_TOKENRING_OPTION_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_fddi_descriptions[] =
+    IFM_SUBTYPE_FDDI_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_fddi_aliases[] =
+    IFM_SUBTYPE_FDDI_ALIASES;
+
+struct ifmedia_description ifm_subtype_fddi_option_descriptions[] =
+    IFM_SUBTYPE_FDDI_OPTION_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_shared_descriptions[] =
+    IFM_SUBTYPE_SHARED_DESCRIPTIONS;
+
+struct ifmedia_description ifm_subtype_shared_aliases[] =
+    IFM_SUBTYPE_SHARED_ALIASES;
+
+struct ifmedia_description ifm_shared_option_descriptions[] =
+    IFM_SHARED_OPTION_DESCRIPTIONS;
+
+struct ifmedia_type_to_subtype {
+	struct {
+		struct ifmedia_description *desc;
+		int alias;
+	} subtypes[5];
+	struct {
+		struct ifmedia_description *desc;
+		int alias;
+	} options[3];
+};
+
+/* must be in the same order as IFM_TYPE_DESCRIPTIONS */
+struct ifmedia_type_to_subtype ifmedia_types_to_subtypes[] = {
+	{
+		{
+			{ &ifm_subtype_shared_descriptions[0], 0 },
+			{ &ifm_subtype_shared_aliases[0], 1 },
+			{ &ifm_subtype_ethernet_descriptions[0], 0 },
+			{ &ifm_subtype_ethernet_aliases[0], 1 },
+			{ NULL, 0 },
+		},
+		{
+			{ &ifm_shared_option_descriptions[0], 0 },
+			{ &ifm_subtype_ethernet_option_descriptions[0], 1 },
+			{ NULL, 0 },
+		},
+	},
+	{
+		{
+			{ &ifm_subtype_shared_descriptions[0], 0 },
+			{ &ifm_subtype_shared_aliases[0], 1 },
+			{ &ifm_subtype_tokenring_descriptions[0], 0 },
+			{ &ifm_subtype_tokenring_aliases[0], 1 },
+			{ NULL, 0 },
+		},
+		{
+			{ &ifm_shared_option_descriptions[0], 0 },
+			{ &ifm_subtype_tokenring_option_descriptions[0], 1 },
+			{ NULL, 0 },
+		},
+	},
+	{
+		{
+			{ &ifm_subtype_shared_descriptions[0], 0 },
+			{ &ifm_subtype_shared_aliases[0], 1 },
+			{ &ifm_subtype_fddi_descriptions[0], 0 },
+			{ &ifm_subtype_fddi_aliases[0], 1 },
+			{ NULL, 0 },
+		},
+		{
+			{ &ifm_shared_option_descriptions[0], 0 },
+			{ &ifm_subtype_fddi_option_descriptions[0], 1 },
+			{ NULL, 0 },
+		},
+	},
+};
+
+int
+get_media_subtype(type, val)
+	int type;
+	char *val;
+{
+	struct ifmedia_description *desc;
+	struct ifmedia_type_to_subtype *ttos;
+	int rval, i;
+
+	/* Find the top-level interface type. */
+	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
+	    desc->ifmt_string != NULL; desc++, ttos++)
+		if (type == desc->ifmt_word)
+			break;
+	if (desc->ifmt_string == NULL)
+		errx(1, "unknown media type 0x%x", type);
+
+	for (i = 0; ttos->subtypes[i].desc != NULL; i++) {
+		rval = lookup_media_word(ttos->subtypes[i].desc, val);
+		if (rval)
+			return (rval);
+	}
+	errx(1, "unknown media subtype: %s", val);
+	/* NOTREACHED */
+}
+
+int
+get_media_options(type, val)
+	int type;
+	char *val;
+{
+	struct ifmedia_description *desc;
+	struct ifmedia_type_to_subtype *ttos;
+	char *optlist;
+	int option, i, rval = 0;
+
+	/* We muck with the string, so copy it. */
+	optlist = strdup(val);
+	if (optlist == NULL)
+		err(1, "strdup");
+	val = optlist;
+
+	/* Find the top-level interface type. */
+	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
+	    desc->ifmt_string != NULL; desc++, ttos++)
+		if (type == desc->ifmt_word)
+			break;
+	if (desc->ifmt_string == NULL)
+		errx(1, "unknown media type 0x%x", type);
+
+	/*
+	 * Look up the options in the user-provided comma-separated
+	 * list.
+	 */
+	for (; (val = strtok(val, ",")) != NULL; val = NULL) {
+		for (i = 0; ttos->options[i].desc != NULL; i++) {
+			option = lookup_media_word(ttos->options[i].desc, val);
+			if (option)
+				break;
+		}
+		if (option == 0)
+			errx(1, "unknown option: %s", val);
+		rval |= option;
+	}
+
+	free(optlist);
+	return (rval);
+}
+
+int
+lookup_media_word(desc, val)
+	struct ifmedia_description *desc;
+	char *val;
+{
+
+	for (; desc->ifmt_string != NULL; desc++)
+		if (strcasecmp(desc->ifmt_string, val) == 0)
+			return (desc->ifmt_word);
+
+	return (0);
+}
+
+void
+print_media_word(ifmw)
+	int ifmw;
+{
+	struct ifmedia_description *desc;
+	struct ifmedia_type_to_subtype *ttos;
+	int seen_option = 0, i;
+
+	/* Find the top-level interface type. */
+	for (desc = ifm_type_descriptions, ttos = ifmedia_types_to_subtypes;
+	    desc->ifmt_string != NULL; desc++, ttos++)
+		if (IFM_TYPE(ifmw) == desc->ifmt_word)
+			break;
+	if (desc->ifmt_string == NULL) {
+		printf("<unknown type>");
+		return;
+	}
+
+	/*
+	 * Don't print the top-level type; it's not like we can
+	 * change it, or anything.
+	 */
+
+	/* Find subtype. */
+	for (i = 0; ttos->subtypes[i].desc != NULL; i++) {
+		if (ttos->subtypes[i].alias)
+			continue;
+		for (desc = ttos->subtypes[i].desc;
+		    desc->ifmt_string != NULL; desc++) {
+			if (IFM_SUBTYPE(ifmw) == desc->ifmt_word)
+				goto got_subtype;
+		}
+	}
+
+	/* Falling to here means unknown subtype. */
+	printf("<unknown subtype>");
+	return;
+
+ got_subtype:
+	printf("%s", desc->ifmt_string);
+
+	/* Find options. */
+	for (i = 0; ttos->options[i].desc != NULL; i++) {
+		if (ttos->options[i].alias)
+			continue;
+		for (desc = ttos->options[i].desc;
+		    desc->ifmt_string != NULL; desc++) {
+			if (ifmw & desc->ifmt_word) {
+				if (seen_option == 0)
+					printf(" <");
+				printf("%s%s", seen_option++ ? "," : "",
+				    desc->ifmt_string);
+			}
+		}
+	}
+	printf("%s", seen_option ? ">" : "");
+}
+
+/**********************************************************************
+ * ...until here.
+ **********************************************************************/
+
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
@@ -472,12 +905,80 @@ void
 status()
 {
 	register struct afswtch *p = afp;
+	struct ifmediareq ifmr;
+	int *media_list, i;
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
 	if (metric)
 		printf(" metric %d", metric);
 	putchar('\n');
+
+	memset(&ifmr, 0, sizeof(ifmr));
+	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		/*
+		 * Interface doesn't support SIOC{G,S}IFMEDIA.
+		 */
+		goto proto_status;
+	}
+
+	if (ifmr.ifm_count == 0) {
+		warnx("%s: no media types?", ifr.ifr_name);
+		goto proto_status;
+	}
+
+	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
+	if (media_list == NULL)
+		err(1, "malloc");
+	ifmr.ifm_ulist = media_list;
+
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
+		err(1, "SIOCGIFMEDIA");
+
+	printf("\tmedia: ");
+	print_media_word(ifmr.ifm_current);
+	if (ifmr.ifm_active != ifmr.ifm_current) {
+		putchar('(');
+		print_media_word(ifmr.ifm_current);
+		putchar(')');
+	}
+
+	if (ifmr.ifm_status & IFM_AVALID) {
+		printf(" status: ");
+		switch (IFM_TYPE(ifmr.ifm_active)) {
+		case IFM_ETHER:
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				printf("active");
+			else
+				printf("no carrier");
+			break;
+
+		case IFM_FDDI:
+		case IFM_TOKEN:
+			if (ifmr.ifm_status & IFM_ACTIVE)
+				printf("inserted");
+			else
+				printf("no ring");
+			break;
+		}
+	}
+
+	putchar('\n');
+
+	if (mflag) {
+		printf("\tsupported media:");
+		for (i = 0; i < ifmr.ifm_count; i++) {
+			putchar(' ');
+			print_media_word(media_list[i]);
+		}
+		putchar('\n');
+	}
+
+	free(media_list);
+
+ proto_status:
 	if ((p = afp) != NULL) {
 		(*p->af_status)(1);
 	} else for (p = afs; p->af_name; p++) {
@@ -786,12 +1287,15 @@ adjust_nsellength()
 void
 usage()
 {
-	fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s%s",
+	fprintf(stderr, "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s",
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 		"[ netmask mask ] ]\n",
 		"\t[ metric n ]\n",
 		"\t[ arp | -arp ]\n",
+		"\t[ media mtype ]\n",
+		"\t[ mediaopt mopts ]\n",
+		"\t[ -mediaopt mopts ]\n",
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
-		"       ifconfig -a [ af ]\n");
+		"       ifconfig -a [ -m ] [ af ]\n");
 	exit(1);
 }
