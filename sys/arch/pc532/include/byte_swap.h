@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1 1999/01/15 13:31:26 bouyer Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2 2001/12/06 23:25:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -38,20 +38,21 @@
 #ifndef _PC532_BYTE_SWAP_H_
 #define _PC532_BYTE_SWAP_H_
 
-#define __byte_swap_long_variable(x) __extension__ \
-({ register u_int32_t __x = (x); \
-   __asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
+static __inline unsigned int
+__byte_swap_long_variable(unsigned int x)
+{
 
-#define __byte_swap_word_variable(x) __extension__ \
-({ register u_int16_t __x = (x); \
-   __asm ("rotw 8,%1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
+	__asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" : "=r" (x) : "0" (x));
+	return (x);
+}
 
+static __inline unsigned short
+__byte_swap_word_variable(unsigned short x)
+{
+
+	__asm ("rotw 8,%1" : "=r" (x) : "0" (x));
+	return (x);
+}
 
 #ifdef __OPTIMIZE__
 
