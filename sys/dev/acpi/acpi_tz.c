@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.2 2003/01/05 12:16:22 jdolecek Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.3 2003/10/31 21:44:50 mycroft Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.2 2003/01/05 12:16:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.3 2003/10/31 21:44:50 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ struct acpitz_softc {
 void	acpitz_get_status(void *);
 static void	acpitz_print_status(struct acpitz_softc *);
 void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
-int	acpitz_get_integer(struct acpitz_softc *, char *, UINT32 *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(struct acpitz_softc *);
 static int	acpitz_gtredata(struct sysmon_envsys *,
@@ -153,13 +152,17 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": ACPI Thermal Zone\n");
 
-	if (acpitz_get_integer(sc, "_TZP", &sc->sc_zone.tzp)) {
-#if 0
-		printf("%s: unable to get poll rate, using default\n",
-		    sc->sc_dev.dv_xname);
-#endif
+	if (acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP",
+	    &sc->sc_zone.tzp) != AE_OK) {
+		printf("%s: unable to get polling interval; using default of %ds\n",
+		    sc->sc_dev.dv_xname, ATZ_TZP_RATE);
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
+	} else {
+		printf("%s: polling interval is %d.%ds\n",
+		    sc->sc_dev.dv_xname, sc->sc_zone.tzp / 10,
+		    sc->sc_zone.tsp % 10);
 	}
+
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
@@ -185,9 +188,18 @@ void
 acpitz_get_status(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
+	ACPI_STATUS rv;
 
-	acpitz_get_integer(sc, "_TMP", &sc->sc_zone.tmp);
+	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TMP",
+	    &sc->sc_zone.tmp);
+	if (rv != AE_OK) {
+		printf("%s: failed to evaluate _TMP: 0x%x\n",
+		    sc->sc_dev.dv_xname, rv);
+		return;
+	}
+
 	sc->sc_data[ATZ_SENSOR_TEMP].cur.data_us = sc->sc_zone.tmp * 100000;
+	sc->sc_data[ATZ_SENSOR_TEMP].validflags |= ENVSYS_FCURVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
 		acpitz_print_status(sc);
@@ -230,23 +242,6 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	return;
 }
 
-int
-acpitz_get_integer(struct acpitz_softc *sc, char *cm, UINT32 *rv)
-{
-	ACPI_STATUS status;
-
-	status = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, rv);
-	if (status != AE_OK) {
-#ifdef ACPI_DEBUG
-		printf("%s: failed to evaluate %s: %x\n", sc->sc_dev.dv_xname,
-		    cm, status);
-#endif
-		return 1;
-	}
-
-	return 0;
-}
-
 static void
 acpitz_tick(void *opaque)
 {
@@ -268,7 +263,7 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 
 	for (i = 0; i < ATZ_NUMSENSORS; i++) {
 		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags = (ENVSYS_FVALID | ENVSYS_FCURVALID);
+		sc->sc_data[i].validflags = ENVSYS_FVALID;
 		sc->sc_info[i].validflags = ENVSYS_FVALID;
 		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
 	}
