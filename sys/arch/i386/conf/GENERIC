@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
+#	$NetBSD: GENERIC,v 1.49 1996/07/14 00:10:11 explorer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -125,8 +125,8 @@ aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
-ahc*	at eisa? slot ?			# Adaptec 284x SCSI controllers
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
