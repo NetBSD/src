@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.147.4.1 1999/10/19 12:50:08 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.147.4.2 1999/10/21 19:21:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -294,6 +294,7 @@ sys_mount(p, v, retval)
 	vfs->vfs_refcount++;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
+	mp->mnt_unmounter = NULL;
 update:
 	/*
 	 * Set the mount level flags.
@@ -476,6 +477,7 @@ dounmount(mp, flags, p)
 
 	simple_lock(&mountlist_slock);
 	mp->mnt_flag |= MNT_UNMOUNT;
+	mp->mnt_unmounter = p;
 	vfs_unbusy(mp);
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
@@ -494,6 +496,7 @@ dounmount(mp, flags, p)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
 			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_flag &= ~MNT_UNMOUNT;
+		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
