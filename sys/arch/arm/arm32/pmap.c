@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2002/04/10 00:45:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2002/04/10 01:30:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2002/04/10 00:45:43 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2002/04/10 01:30:42 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1919,7 +1919,8 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 	 * as required.
 	 */
 	*csrc_pte = L2_S_PROTO | src |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) |
+	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
 	*cdst_pte = L2_S_PROTO | dst |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
 	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
@@ -1927,7 +1928,6 @@ pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
-	cpu_dcache_inv_range(csrcp, NBPG);
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
 	xscale_cache_clean_minidata();
 }
