@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.10 1996/10/02 23:56:49 mycroft Exp $
+#	$NetBSD: WARPED,v 1.11 1996/11/15 09:19:39 fvdl Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -7,7 +7,7 @@
 # Also: Adaptec PCI 2940 SCSI, DEC 21040 PCI Ethernet, Mach 64 PCI 2M Video,
 # Intel Pentium Overdrive, 40M RAM, 2 Maxtor 1.2G Magik, Conner 2G tape.
 
-machine		i386		# architecture, used by config; REQUIRED
+include "arch/i386/conf/std.i386"
 
 #options	I386_CPU	# CPU classes; at least one is REQUIRED
 #options	I486_CPU
@@ -23,14 +23,12 @@ options		I586_CPU	# 83MHz P24T
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 #options	INSECURE	# insecure; allow /dev/mem writing for X
-options		MACHINE_NONCONTIG
 
 maxusers	64		# estimated number of users
 options		TIMEZONE=480	# time zone to adjust RTC time by
 options		DST=1		# daylight savings time used by RTC
 #options	NTP		# NTP phase/frequency locked loop
 
-options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
@@ -57,8 +55,6 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 #options	COMPAT_LINUX	# binary compatibility with Linux
 #options	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
 #options	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 #options	USER_LDT	# user-settable LDT; used by WINE
