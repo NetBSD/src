@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.2 2000/07/18 22:39:25 eeh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.3 2000/07/21 03:14:15 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -35,7 +35,7 @@
 #ifdef PIC
 
 ENTRY(__sigsetjmp14)
-	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
+	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
 	cmp %o1,0
 	st %o1,[%o0+0x38]		! jmpbuf[JBLEN]
 	bne,a 1f
@@ -46,9 +46,9 @@ ENTRY(__sigsetjmp14)
 	 nop
 
 ENTRY(__siglongjmp14)
-	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
-	ld [%o0+0x38],%g2		! jmpbuf[JBLEN]
-	cmp %g2,0
+	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
+	ld [%o0+0x38],%o2		! jmpbuf[JBLEN]
+	cmp %o2,0
 	bne,a 1f
 	 ldx [%g1+_C_LABEL(__longjmp14)], %g1	 ! if (%g2 != 0) goto _longjmp;
 	ldx [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
