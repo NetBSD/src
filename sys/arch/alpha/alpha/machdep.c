@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.148 1998/09/29 07:07:09 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.149 1998/09/29 21:59:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 1998/09/29 07:07:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 1998/09/29 21:59:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1328,6 +1328,7 @@ haltsys:
 	doshutdownhooks();
 
 #if defined(MULTIPROCESSOR)
+#if 0 /* XXX doesn't work when called from here?! */
 	/* Kill off any secondary CPUs. */
 	for (cpu_id = 0; cpu_id < hwrpb->rpb_pcs_cnt; cpu_id++) {
 		if (cpu_id == hwrpb->rpb_primary_cpu_id ||
@@ -1335,6 +1336,7 @@ haltsys:
 			continue;
 		cpu_halt_secondary(cpu_id);
 	}
+#endif
 #endif
 
 #ifdef BOOTKEY
