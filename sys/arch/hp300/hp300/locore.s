@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 1996/10/05 07:16:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 1996/10/05 09:19:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -811,6 +811,13 @@ start:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
+/* check for internal HP-IB in SYSFLAG */
+	btst	#5,0xfffffed2		| internal HP-IB?
+	jeq	Lhaveihpib		| yes, have HP-IB just continue
+	RELOC(_internalhpib, a0)
+	movl	#0,a0@			| no, clear associated address
+Lhaveihpib:
+
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
 	movl	#INTIOBASE+MMUBASE,a1
 	movl	#0x200,d0		| data freeze bit
@@ -1019,11 +1026,6 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* check for internal HP-IB in SYSFLAG */
-	btst	#5,0xfffffed2		| internal HP-IB?
-	jeq	Lfinish			| yes, have HP-IB just continue
-	clrl	_internalhpib		| no, clear associated address
-Lfinish:
 /* select the software page size now */
 	lea	tmpstk,sp		| temporary stack
 	jbsr	_vm_set_page_size	| select software page size
