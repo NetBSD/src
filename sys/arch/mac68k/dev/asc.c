@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.7 1995/04/21 02:47:45 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.8 1995/09/21 03:36:25 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -38,6 +38,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/systm.h>
@@ -56,9 +57,9 @@ static int bell_length = 10;
 static int bell_volume = 100;
 static int bell_ringing = 0;
 
-static int ascprobe(struct device *, struct cfdata *, void *);
-static void ascattach(struct device *, struct device *, void *);
-extern int matchbyname(struct device *, struct cfdata *, void *);
+static int ascprobe __P((struct device *, struct cfdata *, void *));
+static void ascattach __P((struct device *, struct device *, void *));
+extern int matchbyname __P((struct device *, void *, void *));
 
 struct cfdriver asccd =
 {NULL, "asc", matchbyname, ascattach,
