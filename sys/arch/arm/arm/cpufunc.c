@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.62 2003/09/03 02:07:07 mycroft Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.63 2003/09/06 09:31:37 rearnsha Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.62 2003/09/03 02:07:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.63 2003/09/06 09:31:37 rearnsha Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -458,6 +458,64 @@ struct cpu_functions arm9_cpufuncs = {
 };
 #endif /* CPU_ARM9 */
 
+#ifdef CPU_ARM10
+struct cpu_functions arm10_cpufuncs = {
+	/* CPU functions */
+
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* Domain		*/
+	arm10_setttb,			/* Setttb		*/
+	cpufunc_faultstatus,		/* Faultstatus		*/
+	cpufunc_faultaddress,		/* Faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	arm10_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	arm10_tlb_flushI_SE,		/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	arm10_icache_sync_all,		/* icache_sync_all	*/
+	arm10_icache_sync_range,	/* icache_sync_range	*/
+
+	arm10_dcache_wbinv_all,		/* dcache_wbinv_all	*/
+	arm10_dcache_wbinv_range,	/* dcache_wbinv_range	*/
+	arm10_dcache_inv_range,		/* dcache_inv_range	*/
+	arm10_dcache_wb_range,		/* dcache_wb_range	*/
+
+	arm10_idcache_wbinv_all,	/* idcache_wbinv_all	*/
+	arm10_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	arm10_context_switch,		/* context_switch	*/
+
+	arm10_setup			/* cpu setup		*/
+
+};
+#endif /* CPU_ARM10 */
+
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
 	/* CPU functions */
@@ -697,9 +755,16 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
+    defined (CPU_ARM10) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 static void get_cachetype_cp15 __P((void));
+
+/* Additional cache information local to this file.  Log2 of some of the
+   above numbers.  */
+static int	arm_dcache_l2_nsets;
+static int	arm_dcache_l2_assoc;
+static int	arm_dcache_l2_linesize;
 
 static void
 get_cachetype_cp15()
@@ -752,7 +817,7 @@ get_cachetype_cp15()
 		if (dsize & CPU_CT_xSIZE_M)
 			arm_pdcache_line_size = 0; /* not present */
 		else
-			arm_pdcache_ways = 0;
+			arm_pdcache_ways = 1;
 	} else {
 		arm_pdcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
@@ -760,6 +825,11 @@ get_cachetype_cp15()
 	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
 
 	arm_dcache_align = arm_pdcache_line_size;
+
+	arm_dcache_l2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
+	arm_dcache_l2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
+	arm_dcache_l2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
+	    CPU_CT_xSIZE_ASSOC(dsize) - CPU_CT_xSIZE_LEN(dsize);
 
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
@@ -906,6 +976,26 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_ARM9 */
+#ifdef CPU_ARM10
+	if (/* cputype == CPU_ID_ARM1020T || */
+	    cputype == CPU_ID_ARM1020E) {
+		/*
+		 * Select write-through cacheing (this isn't really an
+		 * option on ARM1020T).
+		 */
+		cpufuncs = arm10_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
+		get_cachetype_cp15();
+		arm10_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		arm10_dcache_sets_max = 
+		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    arm10_dcache_sets_inc;
+		arm10_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		arm10_dcache_index_max = 0U - arm10_dcache_index_inc;
+		pmap_pte_init_generic();
+		return 0;
+	}
+#endif /* CPU_ARM10 */
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
@@ -1764,6 +1854,56 @@ arm9_setup(args)
 
 }
 #endif	/* CPU_ARM9 */
+
+#ifdef CPU_ARM10
+struct cpu_option arm10_options[] = {
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm10.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "arm10.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "arm10.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ "arm10.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm10_setup(args)
+	char *args;
+{
+	int cpuctrl, cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
+	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE 
+	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_BPRD_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
+	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+	    | CPU_CONTROL_BPRD_ENABLE
+	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
+
+	cpuctrl = parse_cpu_options(args, arm10_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
+	/* Clear out the cache */
+	cpu_idcache_wbinv_all();
+
+	/* Now really make sure they are clean.  */
+	asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
+	cpu_control(0xffffffff, cpuctrl);
+
+	/* And again. */
+	cpu_idcache_wbinv_all();
+}
+#endif	/* CPU_ARM10 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {
