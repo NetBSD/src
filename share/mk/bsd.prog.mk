@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.68 1997/04/03 06:53:18 mikel Exp $
+#	$NetBSD: bsd.prog.mk,v 1.69 1997/04/17 06:40:32 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -10,6 +10,16 @@
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 CFLAGS+=	${COPTS}
+
+# ELF platforms depend on crtbegin.o and crtend.o
+.if (${MACHINE_ARCH} == "alpha")   || \
+    (${MACHINE_ARCH} == "powerpc")
+LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
+LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
+.else
+LIBCRTBEGIN?=
+LIBCRTEND?=
+.endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
@@ -72,12 +82,12 @@ LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(OBJS) && !empty(OBJS)
 .if defined(DESTDIR)
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${OBJS} ${LDADD} -lgcc -lc -lgcc
+${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${LIBCRTEND}
 
 .else
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
+${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(DESTDIR)
@@ -131,8 +141,8 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
 
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
-	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.ALLSRC} ${.TARGET}
+	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 .endif
 
 .if defined(SCRIPTS)
