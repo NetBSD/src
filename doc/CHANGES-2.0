@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.289 2004/06/22 08:00:54 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.290 2004/06/22 09:05:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4300,4 +4300,56 @@ tools/Makefile.gnuhost				1.29
 	POSIX compliant and return errors on r/o source (FreeBSD) for -rf.
 	Fixes PR toolchain/25022.
 	[jmc, ticket #531]
+
+sys/arch/amd64/amd64/machdep.c			1.26
+
+	Include "acpi.h" and some others to be able to powerdown via ACPI.
+	[toshii, ticket #518]
+
+sys/compat/linux/arch/mips/linux_machdep.c	1.21
+
+	Build COMPAT_LINUX again on mips after the siginfo change.
+	[manu, ticket #519]
+
+sys/kern/kern_microtime.c			1.5
+
+	Adjust code that tries to prevent cc_microtime() from going backwards
+	so that it doesn't fire when called twice in the same microsecond,
+	which can lead to large error accumulation.
+	Appears to fix "repeated gettimeofday() goes backwards" on a fast
+	alpha and i386 box.
+	[fredb, ticket #520]
+
+sys/compat/linux/arch/mips/linux_errno.h	1.3
+sys/compat/linux/common/linux_errno.h		1.10
+
+	Fix a reversed errno issue for Linux binaries on mips. While we are
+	there, fix broken includes for alpha and m68k.
+	[manu, ticket #521]
+
+sys/kern/subr_pool.c				1.96
+sys/sys/pool.h					1.44
+
+	Remove PR_IMMEDRELEASE, since setting the high water mark will achieve
+	the same thing.
+	[thorpej, ticket #522]
+
+sys/kern/vfs_bio.c				1.126
+
+	Don't use PR_IMMEDRELEASE on buffer cache pools.  Instead, set a high
+	water mark of 1, which will have the same effect.
+	[thorpej, ticket #523]
+
+sys/kern/vfs_bio.c				1.127
+
+	When initializing the buffer cache memory pools where the size <= 
+	PAGE_SIZE, also use the standard allocator on systems that use a
+	direct-mapped  memory segment for mapping pool pages.
+	[thorpej, ticket #524]
+
+sys/fs/cd9660/cd9660_node.h			1.6
+
+	Use unsigned long for file size and location; avoids sign extension
+	for files >2GB.
+	[dillo, ticket #525]
 
