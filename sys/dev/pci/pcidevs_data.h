@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.451 2002/07/05 14:03:33 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.452 2002/07/07 19:49:10 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp 
+ *	NetBSD: pcidevs,v 1.450 2002/07/07 19:48:41 augustss Exp 
  */
 
 /*
@@ -5636,6 +5636,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Samsung Semiconductors",
 	    "KS8920 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_QE1000,
+	    0,
+	    "Sandburst, Inc.",
+	    "QE1000",
+	},
+	{
+	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_FE1000,
+	    0,
+	    "Sandburst, Inc.",
+	    "FE1000",
 	},
 	{
 	    PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,

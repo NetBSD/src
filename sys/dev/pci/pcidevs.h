@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.453 2002/07/05 14:03:33 enami Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.454 2002/07/07 19:49:09 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp 
+ *	NetBSD: pcidevs,v 1.450 2002/07/07 19:48:41 augustss Exp 
  */
 
 /*
@@ -1837,6 +1837,11 @@
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
+
+/* Sandburst products */
+#define	PCI_PRODUCT_SANDBURST_QE1000	0x0180		/* QE1000 */
+#define	PCI_PRODUCT_SANDBURST_FE1000	0x0200		/* FE1000 */
+/*product SANDBURST	SE1600	0x0100	SE1600*/
 
 /* SEGA Enterprises products */
 #define	PCI_PRODUCT_SEGA_BROADBAND	0x1234		/* Broadband Adapter */
