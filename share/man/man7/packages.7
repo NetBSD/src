@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.2 1998/06/09 14:37:19 agc Exp $
+.\"	$NetBSD: packages.7,v 1.3 1998/06/18 15:03:33 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -408,6 +408,14 @@ is
 .It PATCH_DEBUG
 If set, print out more information about the patches as it attempts to
 apply them.
+.It PKG_VERBOSE
+If set, print out more information about the automatic manual
+page handling, and package deletion (see the
+.Dq install
+and
+.Dq deinstall
+targets),
+and also sets PATCH_DEBUG as well.
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
@@ -442,7 +450,7 @@ form.  The default package installs manpages uncompressed.
 .It MANLANG	
 List of language-subdirs for
 .Pa $PREFIX/man ,
-into which the pkg will install it's man-pages, resulting in
+into which the pkg will install its man-pages, resulting in
 .Pa $PREFIX/man/lang1/catX ,
 etc.  There is no default.
 .It MAN<sect>	
@@ -458,8 +466,21 @@ and
 
 The available sections chars are
 .Dq 123456789LN .
+
+Please note that it is not necessary to set the MAN<sect> definition
+in the package Makefile any longer, as this information will be taken from
+the package's
+.Pa pkg/PLIST
+file.
 .It CAT<sect>    
 The same as MAN<sect>, only for formatted manpages.
+
+Please note that it is not necessary to set the CAT<sect> definition
+in the package Makefile any longer, as this information will be taken from
+the package's
+.Pa pkg/PLIST
+file.
+
 .It MANPREFIX	
 The directory prefix for
 .Dv ${MAN<sect>}.
