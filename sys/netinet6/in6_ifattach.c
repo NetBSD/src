@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_ifattach.c,v 1.20 2000/03/02 07:14:52 itojun Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.38 2000/03/02 07:11:01 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.21 2000/03/02 09:45:01 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.39 2000/03/02 09:24:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -501,6 +501,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ia->ia_next = ib;
 		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ib,
 			ifa_list);
+		IFAREF((struct ifaddr *)ib);
 
 		ib->ia_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_prefixmask.sin6_family = AF_INET6;
@@ -508,6 +509,19 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ib->ia_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ib->ia_addr.sin6_family = AF_INET6;
 		ib->ia_addr.sin6_addr = in6addr_loopback;
+
+		/*
+		 * Always initialize ia_dstaddr (= broadcast address)
+		 * to loopback address, to make getifaddr happier.
+		 *
+		 * For BSDI, it is mandatory.  The BSDI version of
+		 * ifa_ifwithroute() rejects to add a route to the loopback
+		 * interface.  Even for other systems, loopback looks somewhat
+		 * special.
+		 */
+		ib->ia_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
+		ib->ia_dstaddr.sin6_family = AF_INET6;
+		ib->ia_dstaddr.sin6_addr = in6addr_loopback;
 
 		ib->ia_ifa.ifa_metric = ifp->if_metric;
 
