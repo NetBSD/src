@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.2 1996/04/26 20:30:54 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.3 1996/06/03 21:53:35 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -32,6 +32,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/systm.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>

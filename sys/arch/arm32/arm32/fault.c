@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.4 1996/05/12 21:33:18 mark Exp $ */
+/* $NetBSD: fault.c,v 1.5 1996/06/03 21:53:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -125,8 +125,8 @@ data_abort_handler(frame)
 	u_int fault_instruction;
 	u_int s;
 	int fault_code;
-	u_quad_t sticks;
-	int saved_lr;
+	u_quad_t sticks = 0;
+	int saved_lr = 0;
     
 /*
  * OK you did not see this :-) This is worse than your worst nightmare

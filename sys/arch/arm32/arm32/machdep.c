@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 1996/04/26 20:48:25 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.8 1996/06/03 21:53:38 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -73,6 +73,12 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#include <dev/cons.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
 #include <vm/vm_kern.h>
 
@@ -201,11 +207,6 @@ int cold = 1;
 
 /* Prototypes */
 
-void boot0	__P((void));
-void bootsync	__P((void));
-
-char *strstr	__P((char */*s1*/, char */*s2*/));
-
 void physconputchar		__P((char));
 void physcon_display_base	__P((u_int));
 void consinit			__P((void));
@@ -223,17 +224,21 @@ void identify_cpu		__P((void));
 void data_abort_handler		__P((trapframe_t */*frame*/));
 void prefetch_abort_handler	__P((trapframe_t */*frame*/));
 void undefinedinstruction_bounce	__P((trapframe_t */*frame*/));
-void set_boot_devs		__P((void));
-void configure			__P((void));
+extern void set_boot_devs		__P((void));
+extern void configure			__P((void));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
-u_int disassemble		__P((u_int /*addr*/));
+extern u_int disassemble		__P((u_int addr));
 int setup_cursor		__P((void));
-void init_fpe_state		__P((struct proc *));
+extern void init_fpe_state		__P((struct proc *));
+extern int	savectx		__P((struct pcb *pcb));
+extern void dump_spl_masks	__P((void));
+extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
+extern void db_machine_init	__P((void));
 
-void pmap_debug	__P((int /*level*/));
-void dumpsys	__P((void));
-void hydrastop	__P((void));
+extern void pmap_debug	__P((int level));
+extern void dumpsys	__P((void));
+extern void hydrastop	__P((void));
 
 void vtbugreport __P((void));
 
@@ -1147,6 +1152,11 @@ initarm(bootconf)
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
+#ifdef SA110
+	idcflush();
+	tlbflush();
+#endif
+
 /* Diagnostic stuff. while writing the boot code */
 
 /*
@@ -1244,6 +1254,11 @@ cpu_startup()
 
 #ifdef CPU_LATE_ABORT
 	cpu_ctrl |= CPU_CONTROL_LABT_ENABLE;
+#endif
+
+#ifdef CPU_SA110
+	cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE;
 #endif
 
 /* Clear out the cache */
@@ -2013,7 +2028,8 @@ vmem_mapdram()
 
 /* Get the level 2 pagetable for the video memory */
 
-	l2pagetable = pmap_pte(kernel_pmap, videomemory.vidm_vbase);
+	l2pagetable = (u_int)pmap_pte(kernel_pmap,
+	    (vm_offset_t)videomemory.vidm_vbase);
 
 /* Map a block of DRAM into the video memory area */
 
@@ -2059,7 +2075,8 @@ vmem_mapvram()
 
 /* Get the level 2 pagetable for the video memory */
 
-	l2pagetable = pmap_pte(kernel_pmap, videomemory.vidm_vbase);
+	l2pagetable = (u_int)pmap_pte(kernel_pmap,
+	    (vm_offset_t)videomemory.vidm_vbase);
 
 /* Map the VRAM into the video memory area */
 
@@ -2106,7 +2123,8 @@ vmem_cachectl(flag)
 
 /* Get the level 2 pagetable for the video memory */
 
-	l2pagetable = pmap_pte(kernel_pmap, videomemory.vidm_vbase);
+	l2pagetable = (u_int)pmap_pte(kernel_pmap,
+	    (vm_offset_t)videomemory.vidm_vbase);
 
 /* Map the VRAM into the video memory area */
 
