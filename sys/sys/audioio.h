@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.7 1997/01/22 07:09:05 mikel Exp $	*/
+/*	$NetBSD: audioio.h,v 1.8 1997/05/07 18:51:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,18 +103,24 @@ typedef struct audio_device {
  * Supported audio encodings
  */
 /* Encoding ID's */
-#define	AUDIO_ENCODING_NONE	0 /* no encoding assigned */
-#define AUDIO_ENCODING_ULAW	1
-#define AUDIO_ENCODING_ALAW	2
-#define AUDIO_ENCODING_PCM16	3
-#define AUDIO_ENCODING_LINEAR	AUDIO_ENCODING_PCM16
-#define AUDIO_ENCODING_PCM8	4
-#define AUDIO_ENCODING_ADPCM	5
+#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
+#define AUDIO_ENCODING_ULAW		1
+#define AUDIO_ENCODING_ALAW		2
+#define AUDIO_ENCODING_LINEAR		3
+#define AUDIO_ENCODING_ULINEAR		4
+#define AUDIO_ENCODING_ADPCM		5
+#define AUDIO_ENCODING_LINEAR_LE	6
+#define AUDIO_ENCODING_LINEAR_BE	7
+#define AUDIO_ENCODING_ULINEAR_LE	8
+#define AUDIO_ENCODING_ULINEAR_BE	9
 
 typedef struct audio_encoding {
 	int index;
 	char name[MAX_AUDIO_DEV_LEN];
-	int format_id;
+	int encoding;
+	int precision;
+	int flags;
+#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 
 /*
@@ -239,12 +245,15 @@ typedef struct mixer_ctrl {
 #define AudioNmidi	"midi"
 #define AudioNmixerout	"mixerout"
 
-#define AudioElinear "linear"
 #define AudioEmulaw "mulaw"
 #define AudioEalaw "alaw"
-#define AudioEpcm16 "PCM-16"
-#define AudioEpcm8 "PCM-8"
 #define AudioEadpcm "ADPCM"
+#define AudioElinear "linear"
+#define AudioElinear_le "linear_le"
+#define AudioElinear_be "linear_be"
+#define AudioEulinear "ulinear"
+#define AudioEulinear_le "ulinear_le"
+#define AudioEulinear_be "ulinear_be"
 
 #define AudioCInputs	"Inputs"
 #define AudioCOutputs	"Outputs"

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.23 1997/04/29 21:01:43 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.24 1997/05/07 18:51:43 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -918,7 +918,7 @@ gusattach(parent, self, aux)
 	 */
 
 	sc->sc_irate = sc->sc_orate = 44100;
-	sc->sc_encoding = AUDIO_ENCODING_LINEAR;
+	sc->sc_encoding = AUDIO_ENCODING_LINEAR_LE;
 	sc->sc_precision = 16;
 	sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_DATA_SIZE16;
 	sc->sc_voc[GUS_VOICE_RIGHT].voccntl |= GUSMASK_DATA_SIZE16;
@@ -1157,9 +1157,8 @@ gus_dma_output(addr, buf, size, intr, arg)
 	flags = GUSMASK_DMA_WRITE;
 	if (sc->sc_precision == 16)
 	    flags |= GUSMASK_DMA_DATA_SIZE; 
-	/* pcm16 is signed, mulaw & pcm8 are unsigned */
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
-	    sc->sc_encoding == AUDIO_ENCODING_PCM8)
+	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE)
 	    flags |= GUSMASK_DMA_INVBIT;
 
 	if (sc->sc_channels == 2) {
@@ -1406,15 +1405,18 @@ gus_dmaout_dointr(sc)
 	if (sc->sc_dmabuf == sc->sc_nbufs - 1) {
 	  register int i;
 	  switch (sc->sc_encoding) {
-	  case AUDIO_ENCODING_PCM16:
+	  case AUDIO_ENCODING_LINEAR_LE:
+	  case AUDIO_ENCODING_ULINEAR_LE:
+	    if (sc->sc_precision == 8)
+	      goto byte;
 	    /* we have the native format */
 	    for (i = 1; i <= 2; i++)
 	      guspoke(port, sc->sc_gusaddr -
 		      (sc->sc_nbufs - 1) * sc->sc_chanblocksize - i,
 		      sc->sc_dmaoutaddr[sc->sc_dmaoutcnt-i]);
 	    break;
-	  case AUDIO_ENCODING_PCM8:
 	  case AUDIO_ENCODING_ULAW:
+	  byte:
 	    /* we need to fetch the translated byte, then stuff it. */
 	    guspoke(port, sc->sc_gusaddr -
 		    (sc->sc_nbufs - 1) * sc->sc_chanblocksize - 1,
@@ -2171,8 +2173,8 @@ gus_set_io_params(sc, p)
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_PCM16:
-	case AUDIO_ENCODING_PCM8:
+	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_LE:
 		break;
 	default:
 		return (EINVAL);
@@ -3049,7 +3051,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	if (sc->sc_recdrq >= 4)
 		dmac |= GUSMASK_SAMPLE_DATA16;
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
-	    sc->sc_encoding == AUDIO_ENCODING_PCM8)
+	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
@@ -4257,15 +4259,33 @@ gus_query_encoding(addr, fp)
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEmulaw);
-		fp->format_id = AUDIO_ENCODING_ULAW;
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEpcm16);
-		fp->format_id = AUDIO_ENCODING_PCM16;
+		strcpy(fp->name, AudioElinear_le);
+		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->precision = 8;
+		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEpcm8);
-		fp->format_id = AUDIO_ENCODING_PCM8;
+		strcpy(fp->name, AudioElinear_le);
+		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->precision = 16;
+		fp->flags = 0;
+		break;
+	case 3:
+		strcpy(fp->name, AudioEulinear_le);
+		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		fp->precision = 8;
+		fp->flags = 0;
+		break;
+	case 4:
+		strcpy(fp->name, AudioEulinear_le);
+		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		fp->precision = 16;
+		fp->flags = 0;
 		break;
 	default:
 		return(EINVAL);

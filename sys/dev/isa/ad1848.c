@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.25 1997/04/29 21:01:33 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.26 1997/05/07 18:51:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -490,7 +490,7 @@ ad1848_attach(sc)
     struct ad1848_softc *sc;
 {
     int i;
-    struct ad1848_volume vol_mid = {150, 150};
+    struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
     struct audio_params params;
     
@@ -926,19 +926,39 @@ ad1848_query_encoding(addr, fp)
     switch (fp->index) {
     case 0:
 	strcpy(fp->name, AudioEmulaw);
-	fp->format_id = AUDIO_ENCODING_ULAW;
+	fp->encoding = AUDIO_ENCODING_ULAW;
+	fp->precision = 8;
+	fp->flags = 0;
 	break;
     case 1:
 	strcpy(fp->name, AudioEalaw);
-	fp->format_id = AUDIO_ENCODING_ALAW;
+	fp->encoding = AUDIO_ENCODING_ALAW;
+	fp->precision = 8;
+	fp->flags = 0;
 	break;
     case 2:
-	strcpy(fp->name, AudioEpcm16);
-	fp->format_id = AUDIO_ENCODING_PCM16;
+	strcpy(fp->name, AudioEadpcm);
+	fp->encoding = AUDIO_ENCODING_ADPCM;
+	fp->precision = 8;
+	fp->flags = 0;
 	break;
     case 3:
-	strcpy(fp->name, AudioEpcm8);
-	fp->format_id = AUDIO_ENCODING_PCM8;
+	strcpy(fp->name, AudioElinear_le);
+	fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+	fp->precision = 16;
+	fp->flags = 0;
+	break;
+    case 4:
+	strcpy(fp->name, AudioElinear_be);
+	fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+	fp->precision = 16;
+	fp->flags = 0;
+	break;
+    case 5:
+	strcpy(fp->name, AudioEulinear);
+	fp->encoding = AUDIO_ENCODING_ULINEAR;
+	fp->precision = 8;
+	fp->flags = 0;
 	break;
     default:
 	return(EINVAL);
@@ -965,11 +985,27 @@ ad1848_set_params(addr, p)
     case AUDIO_ENCODING_ALAW:
 	bits = FMT_ALAW >> 5;
 	break;
-    case AUDIO_ENCODING_PCM16:
-	bits = FMT_TWOS_COMP >> 5;
+    case AUDIO_ENCODING_ADPCM:
+	bits = FMT_ADPCM >> 5;
 	break;
-    case AUDIO_ENCODING_PCM8:
-	bits = FMT_PCM8 >> 5;
+    case AUDIO_ENCODING_LINEAR_LE:
+	if (p->precision == 16)
+	    bits = FMT_TWOS_COMP >> 5;
+	else
+	    return EINVAL;
+	break;
+    case AUDIO_ENCODING_LINEAR_BE:
+	if (p->precision == 16)
+	    bits = FMT_TWOS_COMP_BE >> 5;
+	else
+	    return EINVAL;
+	break;
+    case AUDIO_ENCODING_ULINEAR_LE:
+    case AUDIO_ENCODING_ULINEAR_BE:
+	if (p->precision == 8)
+	    bits = FMT_PCM8 >> 5;
+	else
+	    return EINVAL;
 	break;
     default:
 	return (EINVAL);

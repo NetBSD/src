@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.5 1997/04/29 21:01:50 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.6 1997/05/07 18:51:31 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -366,7 +366,7 @@ lmcaudio_set_in_params(addr, p)
 {
 	struct vidcaudio_softc *sc = addr;
 
-	if (p->encoding != AUDIO_ENCODING_PCM16 ||
+	if (p->encoding != AUDIO_ENCODING_LINEAR_LE ||
 	    p->precision != 16 ||
 	    p->channels != 2)
 		return EINVAL;
@@ -380,7 +380,7 @@ lmcaudio_set_out_params(addr, p)
 {
 	struct vidcaudio_softc *sc = addr;
 
-	if (p->encoding != AUDIO_ENCODING_PCM16 ||
+	if (p->encoding != AUDIO_ENCODING_LINEAR_LE ||
 	    p->precision != 16 ||
 	    p->channels != 2)
 		return EINVAL;
@@ -395,8 +395,10 @@ lmcaudio_query_encoding(addr, fp)
 {
 	switch (fp->index) {
 	case 0:
-		strcpy (fp->name, AudioElinear);
-		fp->format_id = AUDIO_ENCODING_LINEAR;
+		strcpy (fp->name, AudioElinear_le);
+		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->precision = 16;
+		fp->flags = 0;
 		break;
 
 	default:

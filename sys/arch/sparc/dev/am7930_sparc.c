@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.18 1997/04/29 21:01:48 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.19 1997/05/07 18:51:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -418,8 +418,10 @@ amd7930_query_encoding(addr, fp)
 {
 	switch (fp->index) {	/* ??? */
 	    case 0:
-		    strcpy(fp->name, "MU-Law");
-		    fp->format_id = AUDIO_ENCODING_ULAW;
+		    strcpy(fp->name, AudioEmulaw);
+		    fp->encoding = AUDIO_ENCODING_ULAW;
+		    fp->precision = 8;
+		    fp->flags = 0;
 		    break;
 	    default:
 		    return(EINVAL);
