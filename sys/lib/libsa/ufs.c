@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.38 2003/08/18 15:45:30 dsl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.39 2003/08/21 00:01:28 elric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -740,9 +740,11 @@ out:
 	if (buf)
 		free(buf, fs->fs_bsize);
 #endif
+#ifndef LIBSA_NO_FS_CLOSE
 	if (rc) {
 		ufs_close(f);
 	}
+#endif
 	return (rc);
 }
 
