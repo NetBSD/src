@@ -158,7 +158,7 @@ Boston, MA 02111-1307, USA.  */
     {								\
       fprintf (STREAM, "\t.comm\t");				\
       assemble_name (STREAM, NAME);				\
-      fprintf (STREAM, ", %d, %d\n", SIZE, ALIGN);		\
+      fprintf (STREAM, ", %d, %d\n", SIZE, ALIGN / BITS_PER_UNIT); \
     }								\
   while (0)
 
