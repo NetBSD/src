@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1994/12/22 09:49:15 cgd Exp $
+#	$NetBSD: Makefile,v 1.14 1994/12/22 17:57:02 jtc Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -53,4 +53,4 @@ MAN+=	cuserid.3
 SRCS+=	regerror.c regexp.c regsub.c
 MAN+=	regexp.3
 
-<bsd.lib.m
+.include <bsd.lib.mk>
