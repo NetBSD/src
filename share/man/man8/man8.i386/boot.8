@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.24 2002/02/13 08:18:28 ross Exp $
+.\"	$NetBSD: boot.8,v 1.25 2002/03/19 05:22:33 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,7 @@ input of these commands:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl adqsv
+.Op Fl acdqsv
 .Xc
 The default
 .Va device
@@ -153,6 +153,10 @@ Options are:
 .It Fl a
 Prompt for the location of the root filesystem and the system crash
 dump device.
+.It Fl c
+Bring the system up into the device configuration manager.  From here
+the device locators can be tuned to the hardware; see
+.Xr userconf 4 .
 .It Fl d
 Bring the system up in debug mode.  Here it waits for a kernel
 debugger connect; see
@@ -220,6 +224,7 @@ boot block (written by
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr userconf 4 ,
 .Xr boot_console 8 ,
 .Xr dosboot 8 ,
 .Xr halt 8 ,
