@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile,v 1.21 1997/05/11 08:05:08 mikel Exp $
+#	$NetBSD: Makefile,v 1.22 1997/06/23 13:25:41 mrg Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
+
+.elif	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax")
 .if exists(config/Makefile.$(MACHINE_ARCH))
 .include "config/Makefile.$(MACHINE_ARCH)"
 .endif
@@ -69,5 +75,9 @@ targ-env.h: Makefile config/Makefile.$(MACHINE_ARCH)
 	    cp $(config_targenvfile) targ-env.h )
 
 CLEANFILES+= ${CONF_HEADERS}
+
+.endif
+
+MAN=	as.1
 
 .include <bsd.prog.mk>
