@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.9 2001/01/27 04:49:35 itojun Exp $
+.\"	$NetBSD: route.4,v 1.10 2001/06/11 01:23:24 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Dt ROUTE 4
 .Os
 .Sh NAME
-.Nm route 
+.Nm route
 .Nd kernel packet forwarding database
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
@@ -85,7 +85,7 @@ is requested to address the packet to the gateway listed in the routing entry
 (i.e. the packet is forwarded).
 .Pp
 When routing a packet,
-the kernel will attempt to find 
+the kernel will attempt to find
 the most specific route matching the destination.
 (If there are two different mask and value-under-the-mask pairs
 that match, the more specific is the one with more bits in the mask.
@@ -167,14 +167,14 @@ at the
 .Dv SOL_SOCKET
 level is to be turned off.
 A process may ignore all messages from the routing socket
-by doing a 
+by doing a
 .Xr shutdown 2
 system call for further input.
 .Pp
 If a route is in use when it is deleted,
 the routing entry will be marked down and removed from the routing table,
 but the resources associated with it will not
-be reclaimed until all references to it are released. 
+be reclaimed until all references to it are released.
 User processes can obtain information about the routing
 entry to a specific destination by using a
 .Dv RTM_GET
@@ -220,17 +220,17 @@ struct rt_msghdr {
 
 struct if_msghdr {
     u_short ifm_msglen;        /* to skip over non-understood messages */
-    u_char  ifm_version;       /* future binary compatability */
+    u_char  ifm_version;       /* future binary compatibility */
     u_char  ifm_type;          /* message type */
     int     ifm_addrs;         /* like rtm_addrs */
     int     ifm_flags;         /* value of if_flags */
     u_short ifm_index;         /* index for associated ifp */
     struct  if_data ifm_data;  /* statistics and other data about if */
-}; 
+};
 
 struct ifa_msghdr {
     u_short ifam_msglen;       /* to skip over non-understood messages */
-    u_char  ifam_version;      /* future binary compatability */
+    u_char  ifam_version;      /* future binary compatibility */
     u_char  ifam_type;         /* message type */
     int     ifam_addrs;        /* like rtm_addrs */
     int     ifam_flags;        /* value of ifa_flags */
@@ -248,13 +248,13 @@ struct if_announcemsghdr {
 };
 .Ed
 .Pp
-The 
+The
 .Dv RTM_IFINFO
-message uses a 
+message uses a
 .Ar if_msghdr
-header, the 
+header, the
 .Dv RTM_NEWADDR
-and 
+and
 .Dv RTM_DELADDR
 messages use a
 .Ar ifa_msghdr
