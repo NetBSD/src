@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.17 2002/11/24 02:46:55 takemura Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.18 2003/09/05 01:02:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -95,16 +95,16 @@ struct pcic_handle {
 #define	C1SA	PCIC_CHIP_OFFSET
 #define	C1SB	PCIC_CHIP_OFFSET + PCIC_SOCKET_OFFSET
 
+#define	PCIC_VENDOR_NONE		-1
 #define	PCIC_VENDOR_UNKNOWN		0
 #define	PCIC_VENDOR_I82365SLR0		1
 #define	PCIC_VENDOR_I82365SLR1		2
-#define	PCIC_VENDOR_CIRRUS_PD6710	3
-#define	PCIC_VENDOR_CIRRUS_PD672X	4
-#define PCIC_VENDOR_I82365SL_DF		5
-#define PCIC_VENDOR_IBM			6
-#define PCIC_VENDOR_IBM_KING		7
-#define PCIC_VENDOR_RICOH_5C296		8
-#define PCIC_VENDOR_RICOH_5C396		9
+#define	PCIC_VENDOR_CIRRUS_PD67XX	3
+#define PCIC_VENDOR_I82365SL_DF		4
+#define PCIC_VENDOR_IBM			5
+#define PCIC_VENDOR_IBM_KING		6
+#define PCIC_VENDOR_RICOH_5C296		7
+#define PCIC_VENDOR_RICOH_5C396		8
 
 /*
  * This is sort of arbitrary.  It merely needs to be "enough". It can be
