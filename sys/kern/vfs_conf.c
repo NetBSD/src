@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_conf.c,v 1.25 1997/10/06 09:25:00 thorpej Exp $	*/
+/*	$NetBSD: vfs_conf.c,v 1.26 1997/10/20 17:40:07 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -167,6 +167,18 @@ struct vfsops *vfssw[] = {
 	&ext2fs_vfsops,
 #endif
 #ifdef LKM			/* for LKM's.  add new FS's before these */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
