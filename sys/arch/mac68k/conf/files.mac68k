@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.56 1997/02/10 22:11:27 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.57 1997/02/11 21:25:07 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -10,7 +10,7 @@ maxusers 2 8 64
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
-device	obio { }
+device	obio { [addr = -1] }
 attach	obio at mainbus
 file	arch/mac68k/dev/obio.c		obio
 
