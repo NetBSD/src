@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.10 2002/01/14 21:56:10 jmcneill Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.11 2002/01/25 14:53:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.10 2002/01/14 21:56:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.11 2002/01/25 14:53:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,6 +235,9 @@ do_enable(sc)
 	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pmsi_enable: command error\n");
+
+	if (sc->sc_powerhook == NULL)
+		return;
 
 	if ((res = pmsi_setintellimode(sc->sc_kbctag, sc->sc_kbcslot))) {
 #ifdef DEBUG
