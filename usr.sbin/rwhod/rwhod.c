@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwhod.c	5.20 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.3 1993/08/01 17:56:56 mycroft Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.4 1993/12/15 23:52:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -429,11 +429,15 @@ configure(s)
 		bcopy((char *)&ifr->ifr_addr, np->n_addr, np->n_addrlen);
 		if (ioctl(s, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
 			syslog(LOG_ERR, "ioctl (get interface flags)");
+			free(np->n_addr);
+			free(np->n_name);
 			free((char *)np);
 			continue;
 		}
 		if ((ifreq.ifr_flags & IFF_UP) == 0 ||
 		    (ifreq.ifr_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0) {
+			free(np->n_addr);
+			free(np->n_name);
 			free((char *)np);
 			continue;
 		}
@@ -441,6 +445,8 @@ configure(s)
 		if (np->n_flags & IFF_POINTOPOINT) {
 			if (ioctl(s, SIOCGIFDSTADDR, (char *)&ifreq) < 0) {
 				syslog(LOG_ERR, "ioctl (get dstaddr)");
+				free(np->n_addr);
+				free(np->n_name);
 				free((char *)np);
 				continue;
 			}
@@ -451,6 +457,8 @@ configure(s)
 		if (np->n_flags & IFF_BROADCAST) {
 			if (ioctl(s, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
 				syslog(LOG_ERR, "ioctl (get broadaddr)");
+				free(np->n_addr);
+				free(np->n_name);
 				free((char *)np);
 				continue;
 			}
