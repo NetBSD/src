@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2003/11/19 18:06:13 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -485,6 +485,7 @@ int	include(const char *, int, int, int);
 void	initsem(void);
 
 /* util.c */
+void	*ecalloc(size_t, size_t);
 void	*emalloc(size_t);
 void	*erealloc(void *, size_t);
 char	*estrdup(const char *);

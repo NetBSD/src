@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.22 2003/08/07 11:25:15 agc Exp $	*/
+/*	$NetBSD: files.c,v 1.23 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 	 * Commit this file to memory.  We will decide later whether it
 	 * will be used after all.
 	 */
-	fi = emalloc(sizeof *fi);
+	fi = ecalloc(1, sizeof *fi);
 	if (ht_insert(pathtab, path, fi)) {
 		free(fi);
 		if ((fi = ht_lookup(pathtab, path)) == NULL)
@@ -169,7 +169,7 @@ addobject(const char *path, struct nvlist *optx, int flags)
 	 * Commit this object to memory.  We will decide later whether it
 	 * will be used after all.
 	 */
-	oi = emalloc(sizeof *oi);
+	oi = ecalloc(1, sizeof *oi);
 	if (ht_insert(pathtab, path, oi)) {
 		free(oi);
 		if ((oi = ht_lookup(pathtab, path)) == NULL)

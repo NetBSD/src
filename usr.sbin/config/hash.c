@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.11 2003/08/07 11:25:15 agc Exp $	*/
+/*	$NetBSD: hash.c,v 1.12 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ newhashent(const char *name, u_int h)
 	struct hashent *hp;
 
 	if (TAILQ_EMPTY(&hefreelist))
-		hp = emalloc(sizeof(*hp));
+		hp = ecalloc(1, sizeof(*hp));
 	else {
 		hp = TAILQ_FIRST(&hefreelist);
 		TAILQ_REMOVE(&hefreelist, hp, h_next);
@@ -202,7 +202,7 @@ ht_new(void)
 {
 	struct hashtab *ht;
 
-	ht = emalloc(sizeof *ht);
+	ht = ecalloc(1, sizeof *ht);
 	ht_init(ht, 8);
 	return (ht);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.14 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: pack.c,v 1.15 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ pack(void)
 	}
 
 	/* Allocate and pack loc[]. */
-	locators.vec = emalloc(locspace * sizeof(*locators.vec));
+	locators.vec = ecalloc(locspace, sizeof(*locators.vec));
 	locators.used = 0;
 	packlocs();
 }
@@ -167,7 +167,7 @@ packdevi(void)
 		}
 	}
 
-	packed = emalloc((ndevi + 1) * sizeof *packed);
+	packed = ecalloc(ndevi + 1, sizeof *packed);
 	n = 0;
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		/*
@@ -263,7 +263,7 @@ findvec(const void *ptr, int hash, int len, vec_cmp_func cmp, int nextplace)
 		if (off >= 0 && (*cmp)(ptr, off, len))
 			return (off);
 	}
-	t = emalloc(sizeof(*t));
+	t = ecalloc(1, sizeof(*t));
 	t->t_next = *hp;
 	*hp = t;
 	t->t_ends_at = nextplace + len;
