@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.114 2004/04/30 02:05:43 lukem Exp $	*/
+/*	$NetBSD: cpu.h,v 1.115 2004/05/16 12:32:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -207,7 +207,7 @@ curcpu()
 	__asm __volatile("movl %%fs:%1, %0" :
 	    "=r" (ci) :
 	    "m"
-	    (*(struct cpuinfo * const *)offsetof(struct cpu_info, ci_self)));
+	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
 	return ci;
 }
 
