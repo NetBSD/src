@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.9 2000/07/06 16:29:49 hannken Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.10 2001/10/13 15:56:16 augustss Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,12 +71,12 @@ struct wskbd_mapdata {
 /*
  * Utility functions.
  */
-void	wskbd_get_mapentry __P((const struct wskbd_mapdata *, int,
-                                struct wscons_keymap *));
-void	wskbd_init_keymap __P((int, struct wscons_keymap **, int *));
-int	wskbd_load_keymap __P((const struct wskbd_mapdata *,
-                               struct wscons_keymap **, int *));
-keysym_t wskbd_compose_value __P((keysym_t *));
+void	wskbd_get_mapentry(const struct wskbd_mapdata *, int,
+			   struct wscons_keymap *);
+void	wskbd_init_keymap(int, struct wscons_keymap **, int *);
+int	wskbd_load_keymap(const struct wskbd_mapdata *,
+                          struct wscons_keymap **, int *);
+keysym_t wskbd_compose_value(keysym_t *);
 
 #endif
 

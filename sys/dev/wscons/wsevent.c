@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5 2000/03/30 12:45:44 augustss Exp $ */
+/* $NetBSD: wsevent.c,v 1.6 2001/10/13 15:56:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5 2000/03/30 12:45:44 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.6 2001/10/13 15:56:16 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,8 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5 2000/03/30 12:45:44 augustss Exp $")
  * Initialize a wscons_event queue.
  */
 void
-wsevent_init(ev)
-	struct wseventvar *ev;
+wsevent_init(struct wseventvar *ev)
 {
 
 	ev->get = ev->put = 0;
@@ -111,8 +110,7 @@ wsevent_init(ev)
  * Tear down a wscons_event queue.
  */
 void
-wsevent_fini(ev)
-	struct wseventvar *ev;
+wsevent_fini(struct wseventvar *ev)
 {
 
 	free(ev->q, M_DEVBUF);
@@ -123,10 +121,7 @@ wsevent_fini(ev)
  * (User cannot write an event queue.)
  */
 int
-wsevent_read(ev, uio, flags)
-	struct wseventvar *ev;
-	struct uio *uio;
-	int flags;
+wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
 
@@ -181,10 +176,7 @@ wsevent_read(ev, uio, flags)
 }
 
 int
-wsevent_poll(ev, events, p)
-	struct wseventvar *ev;
-	int events;
-	struct proc *p;
+wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splwsevent();

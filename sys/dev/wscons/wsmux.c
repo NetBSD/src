@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.10 2001/10/13 13:36:02 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.11 2001/10/13 15:56:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,27 +88,26 @@ struct wsplink {
 	struct wsmuxops *sc_ops;
 };
 
-int wsmuxdoclose __P((struct device *, int, int, struct proc *));
-int wsmux_set_display __P((struct device *, struct wsmux_softc *));
+int wsmuxdoclose(struct device *, int, int, struct proc *);
+int wsmux_set_display(struct device *, struct wsmux_softc *);
 
 #if NWSMUX > 0
 cdev_decl(wsmux);
 
-void wsmuxattach __P((int));
+void wsmuxattach(int);
 
 struct wsmuxops wsmux_muxops = {
 	wsmuxopen, wsmuxdoclose, wsmuxdoioctl, wsmux_displayioctl,
 	wsmux_set_display
 };
 
-void wsmux_setmax __P((int n));
+void wsmux_setmax(int n);
 
 int nwsmux = 0;
 struct wsmux_softc **wsmuxdevs;
 
 void
-wsmux_setmax(n)
-	int n;
+wsmux_setmax(int n)
 {
 	int i;
 
@@ -122,7 +121,7 @@ wsmux_setmax(n)
 		else
 			wsmuxdevs = malloc(nwsmux * sizeof (*wsmuxdevs), 
 					   M_DEVBUF, M_NOWAIT);
-		if (wsmuxdevs == 0)
+		if (wsmuxdevs == NULL)
 			panic("wsmux_setmax: no memory\n");
 		for (; i < nwsmux; i++)
 			wsmuxdevs[i] = 0;
@@ -131,15 +130,13 @@ wsmux_setmax(n)
 
 /* From upper level */
 void
-wsmuxattach(n)
-	int n;
+wsmuxattach(int n)
 {
 }
 
 /* Return mux n, create if necessary */
 struct wsmux_softc *
-wsmux_getmux(n)
-	int n;
+wsmux_getmux(int n)
 {
 	struct wsmux_softc *sc;
 
@@ -158,13 +155,8 @@ wsmux_getmux(n)
 
 /* From mouse or keyboard. */
 void
-wsmux_attach(n, type, dsc, ev, psp, ops)
-	int n;
-	int type;
-        struct device *dsc;
-	struct wseventvar *ev;
-	struct wsmux_softc **psp;
-	struct wsmuxops *ops;
+wsmux_attach(int n, int type, struct device *dsc, struct wseventvar *ev,
+	struct wsmux_softc **psp, struct wsmuxops *ops)
 {
 	struct wsmux_softc *sc;
 	int error;
@@ -178,9 +170,7 @@ wsmux_attach(n, type, dsc, ev, psp, ops)
 
 /* From mouse or keyboard. */
 void
-wsmux_detach(n, dsc)
-	int n;
-        struct device *dsc;
+wsmux_detach(int n, struct device *dsc)
 {
 #ifdef DIAGNOSTIC
 	int error;
@@ -197,10 +187,7 @@ wsmux_detach(n, dsc)
 }
 
 int
-wsmuxopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wsmux_softc *sc;
 	struct wsplink *m;
@@ -256,19 +243,13 @@ wsmuxopen(dev, flags, mode, p)
 }
 
 int
-wsmuxclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	return wsmuxdoclose(&wsmuxdevs[minor(dev)]->sc_dv, flags, mode, p);
 }
 
 int
-wsmuxread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+wsmuxread(dev_t dev, struct uio *uio, int flags)
 {
 	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
 
@@ -279,21 +260,13 @@ wsmuxread(dev, uio, flags)
 }
 
 int
-wsmuxioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	return wsmuxdoioctl(&wsmuxdevs[minor(dev)]->sc_dv, cmd, data, flag, p);
 }
 
 int
-wsmuxpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+wsmuxpoll(dev_t dev, int events, struct proc *p)
 {
 	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
 
@@ -304,9 +277,7 @@ wsmuxpoll(dev, events, p)
 }
 
 int
-wsmux_add_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
+wsmux_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmux_softc *sc, *m;
 
@@ -329,9 +300,7 @@ wsmux_add_mux(unit, muxsc)
 }
 
 int
-wsmux_rem_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
+wsmux_rem_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmux_softc *sc;
 
@@ -347,9 +316,7 @@ wsmux_rem_mux(unit, muxsc)
 #endif /* NWSMUX > 0 */
 
 struct wsmux_softc *
-wsmux_create(name, unit)
-	const char *name;
-	int unit;
+wsmux_create(const char *name, int unit)
 {
 	struct wsmux_softc *sc;
 
@@ -366,13 +333,8 @@ wsmux_create(name, unit)
 }
 
 int
-wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
-	struct wsmux_softc *sc;
-	int type;
-        struct device *dsc;
-	struct wseventvar *ev;
-	struct wsmux_softc **psp;
-	struct wsmuxops *ops;
+wsmux_attach_sc(struct wsmux_softc *sc, int type, struct device *dsc,
+	struct wseventvar *ev, struct wsmux_softc **psp, struct wsmuxops *ops)
 {
 	struct wsplink *m;
 	int error;
@@ -433,9 +395,7 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
 }
 
 int
-wsmux_detach_sc(sc, dsc)
-	struct wsmux_softc *sc;
-        struct device *dsc;
+wsmux_detach_sc(struct wsmux_softc *sc, struct device *dsc)
 {
 	struct wsplink *m;
 	int error = 0;
@@ -479,10 +439,7 @@ wsmux_detach_sc(sc, dsc)
 }
 
 int
-wsmuxdoclose(dv, flags, mode, p)
-	struct device *dv;
-	int flags, mode;
-	struct proc *p;
+wsmuxdoclose(struct device *dv, int flags, int mode, struct proc *p)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsplink *m;
@@ -509,12 +466,8 @@ wsmuxdoclose(dv, flags, mode, p)
 }
 
 int
-wsmuxdoioctl(dv, cmd, data, flag, p)
-	struct device *dv;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmuxdoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+	     struct proc *p)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsplink *m;
@@ -641,12 +594,8 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 }
 
 int
-wsmux_displayioctl(dv, cmd, data, flag, p)
-	struct device *dv;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmux_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+		   struct proc *p)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsplink *m;
@@ -687,9 +636,7 @@ wsmux_displayioctl(dv, cmd, data, flag, p)
 }
 
 int
-wsmux_set_display(dv, muxsc)
-	struct device *dv;
-	struct wsmux_softc *muxsc;
+wsmux_set_display(struct device *dv, struct wsmux_softc *muxsc)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 	struct wsmux_softc *nsc = muxsc ? sc : 0;
