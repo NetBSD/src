@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sab.c,v 1.3 2002/09/21 09:29:33 petrov Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -1291,19 +1291,19 @@ sabtty_console_flags(sc)
 	struct sabtty_softc *sc;
 {
 	int node, channel, cookie;
-	u_int chosen;
+	u_int options;
 	char buf[255];
 
 	node = sc->sc_parent->sc_node;
 	channel = sc->sc_portno;
 
-	chosen = OF_finddevice("/chosen");
+	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 
 	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(chosen, "input-device", buf,
+		if (OF_getprop(options, "input-device", buf,
 		    sizeof(buf)) != -1) {
 			if (strcmp("ttyb", buf) == 0)
 				cookie = 1;
@@ -1316,7 +1316,7 @@ sabtty_console_flags(sc)
 	/* Default to same channel if there are no explicit prom args */
 
 	if (node == OF_instance_to_package(OF_stdout())) {
-		if (OF_getprop(chosen, "output-device", buf,
+		if (OF_getprop(options, "output-device", buf,
 		    sizeof(buf)) != -1) {
 			if (strcmp("ttyb", buf) == 0)
 				cookie = 1;
