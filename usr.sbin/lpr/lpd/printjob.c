@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printjob.c	5.13 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: printjob.c,v 1.3 1994/03/07 05:38:21 cgd Exp $";
+static char rcsid[] = "$Id: printjob.c,v 1.4 1994/03/27 09:14:53 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -762,7 +762,7 @@ sendfile(type, file)
 	if ((stb.st_mode & S_IFMT) == S_IFLNK && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
-	(void) sprintf(buf, "%c%d %s\n", type, stb.st_size, file);
+	(void) sprintf(buf, "%c%qd %s\n", type, stb.st_size, file);
 	amt = strlen(buf);
 	for (i = 0;  ; i++) {
 		if (write(pfd, buf, amt) != amt ||
