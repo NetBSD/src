@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.5 1999/11/19 02:40:25 matt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.6 1999/11/30 15:54:55 drochner Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -231,7 +231,7 @@ pnpbios_attach(parent, self, aux)
 	buf = malloc(size, M_DEVBUF, M_NOWAIT);
 
 	idx = 0;
-	for (i = 0; i < num; i++) {
+	for (i = 0; i < num && idx != 0xff; i++) {
 		int node = idx;
 		res = pnpbios_getnode(1, &idx, buf, size);
 		if (res) {
@@ -242,6 +242,8 @@ pnpbios_attach(parent, self, aux)
 			printf("node idx: called %d, got %d\n", node, buf[2]);
 		pnpbios_attachnode(sc, node, buf, buf[0] + (buf[1] << 8));
 	}
+	if (i != num)
+		printf("got only %d nodes\n", i);
 	if (idx != 0xff)
 		printf("last idx=%x\n", idx);
 
