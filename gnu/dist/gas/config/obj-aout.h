@@ -239,10 +239,10 @@ extern void obj_aout_nbsd_frob_file PARAMS ((void));
 #define TARGET_SYMBOL_FIELDS expressionS *sy_sizexp;
 #define obj_frob_file_before_adjust() obj_aout_nbsd_frob_file ()
 
-/* XXX This isn't the right thing to do... */
+/* Hack around a bug in NetBSD's ld.so. */
 #define obj_fix_adjustable(X) (!(aout_pic_flag \
 				 && (S_IS_EXTERNAL (sym)) \
-				 && (strcmp(".data", sec->name) == 0)))
+				 && (obj_datasec(abfd) == sec) ))
 #endif /* TE_NetBSD */
 
 /* end of obj-aout.h */
