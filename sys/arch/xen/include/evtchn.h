@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $	*/
 
 /*
  *
@@ -35,6 +35,7 @@
 #define _XEN_EVENTS_H_
 
 #define	NR_IRQS		32
+#define NR_PIRQS	32 /* XXX is this enouth ? */
 
 extern int evtchn_to_irq[];
 
@@ -47,7 +48,16 @@ unsigned int do_event(int, struct intrframe *);
 int event_set_handler(int, ev_handler_t, void *, int);
 
 int bind_virq_to_irq(int);
+int bind_pirq_to_irq(int);
+void unbind_pirq_from_irq(int);
 void unbind_virq_from_irq(int);
 int bind_evtchn_to_irq(int);
+
+struct pintrhand {
+	int pirq;
+	int irq;
+};
+
+struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int);
 
 #endif /*  _XEN_EVENTS_H_ */
