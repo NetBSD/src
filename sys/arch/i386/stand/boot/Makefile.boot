@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.12 2003/10/26 07:25:36 lukem Exp $
+# $NetBSD: Makefile.boot,v 1.13 2003/11/08 00:02:02 dsl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -7,7 +7,7 @@ STRIPFLAG=
 BINDIR= /usr/mdec
 BINMODE= 0444
 PROG?= boot
-NEWVERSWHAT?= BIOS
+NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
@@ -136,7 +136,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
+vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
