@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.30 1998/07/29 02:46:26 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.31 1998/08/03 01:49:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.30 1998/07/29 02:46:26 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.31 1998/08/03 01:49:26 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -242,8 +242,7 @@ ftp_login(host, user, pass)
 {
 	char tmp[80];
 	const char *acct;
-	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN + 1]; /* user@hostname */
-	char hostname[MAXHOSTNAMELEN + 1];
+	char anonpass[MAXLOGNAME + 2]; /* "user@" */
 	struct passwd *pw;
 	int n, aflag = 0;
 
@@ -260,34 +259,28 @@ ftp_login(host, user, pass)
 	 */
 	if ((user == NULL || pass == NULL) && anonftp) {
 		memset(anonpass, 0, sizeof(anonpass));
-		memset(hostname, 0, sizeof(hostname));
 
 		/*
 		 * Set up anonymous login password.
 		 */
-		if ((user = getlogin()) == NULL) {
-			if ((pw = getpwuid(getuid())) == NULL)
-				user = "anonymous";
-			else
-				user = pw->pw_name;
+		if ((pass = getenv("FTPANONPASS")) == NULL) {
+			if ((pass = getlogin()) == NULL) {
+				if ((pw = getpwuid(getuid())) == NULL)
+					pass = "anonymous";
+				else
+					pass = pw->pw_name;
+			}
+			/*
+			 * Every anonymous FTP server I've encountered
+			 * will accept the string "username@", and will
+			 * append the hostname itself.  We do this by default
+			 * since many servers are picky about not having
+			 * a FQDN in the anonymous password.
+			 * - thorpej@netbsd.org
+			 */
+			snprintf(anonpass, sizeof(anonpass) - 1, "%s@", pass);
+			pass = anonpass;
 		}
-		gethostname(hostname, MAXHOSTNAMELEN);
-		hostname[sizeof(hostname) - 1] = '\0';
-#ifndef DONT_CHEAT_ANONPASS
-		/*
-		 * Every anonymous FTP server I've encountered
-		 * will accept the string "username@", and will
-		 * append the hostname itself.  We do this by default
-		 * since many servers are picky about not having
-		 * a FQDN in the anonymous password. - thorpej@netbsd.org
-		 */
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@",
-		    user);
-#else
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@%s",
-		    user, hp->h_name);
-#endif
-		pass = anonpass;
 		user = "anonymous";	/* as per RFC 1635 */
 	}
 
@@ -508,7 +501,7 @@ globulize(cpp)
 		/* XXX: caller should check if *cpp changed, and
 		 *	free(*cpp) if that is the case
 		 */
-	*cpp = strdup(gl.gl_pathv[0]);
+	*cpp = xstrdup(gl.gl_pathv[0]);
 	globfree(&gl);
 	return (1);
 }
@@ -1055,4 +1048,30 @@ xlisten(sock, backlog)
 
 	setupsockbufsize(sock);
 	return (listen(sock, backlog));
+}
+
+void *
+xmalloc(size)
+	size_t size;
+{
+	void *p;
+
+	p = malloc(size);
+	if (p == NULL)
+		err(1, "Unable to allocate %ld bytes of memory", (long)size);
+	return (p);
+}
+
+char *
+xstrdup(str)
+	const char *str;
+{
+	char *s;
+
+	if (str == NULL)
+		errx(1, "xstrdup() called with NULL argument");
+	s = strdup(str);
+	if (s == NULL)
+		err(1, "Unable to allocate memory for string copy");
+	return (s);
 }
