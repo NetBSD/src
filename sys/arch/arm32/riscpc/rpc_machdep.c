@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.51 2001/07/28 18:12:45 chris Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.52 2001/09/18 23:23:22 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -671,29 +671,33 @@ initarm_new_bootloader(bootconf)
 	/* Now we fill in the L2 pagetable for the kernel code/data */
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
 
+	/*
+	 * The defines are a workaround for a recent problem that occurred
+	 * with ARM 610 processors and some ARM 710 processors
+	 * Other ARM 710 and StrongARM processors don't have a problem.
+	 */
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
-		/*
-		 * This is a work around for a recent problem that occurred
-		 * with ARM 610 processors and some ARM 710 processors
-		 * Other ARM 710 and StrongARM processors don't have a problem.
-		 */
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
-		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
+		logical = map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kernexec->a_text,
 		    AP_KRW, PT_CACHEABLE);
 #else	/* CPU_ARM6 || CPU_ARM7 */
-		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
+		logical = map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kernexec->a_text,
 		    AP_KR, PT_CACHEABLE);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
+		logical += map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE + logical,
 		    physical_start + logical, kerneldatasize - kernexec->a_text,
 		    AP_KRW, PT_CACHEABLE);
-	} else
-		map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
+	} else {	/* !ZMAGIC */
+		/*
+		 * Most likely an ELF kernel ...
+		 * XXX no distinction yet between read only and read/write area's ...
+		 */
+		map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kerneldatasize,
-		    AP_KRW, PT_CACHEABLE)
-	;
+		    AP_KRW, PT_CACHEABLE);
+	};
 
 
 #ifdef VERBOSE_INIT_ARM
@@ -728,9 +732,9 @@ initarm_new_bootloader(bootconf)
 	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_VMEM];
 
-	map_chunk(0, l2pagetable, VMEM_VBASE, videomemory.vidm_pbase,
+	map_chunk(l1pagetable, l2pagetable, VMEM_VBASE, videomemory.vidm_pbase,
 	    videomemory.vidm_size, AP_KRW, PT_CACHEABLE);
-	map_chunk(0, l2pagetable, VMEM_VBASE + videomemory.vidm_size,
+	map_chunk(l1pagetable, l2pagetable, VMEM_VBASE + videomemory.vidm_size,
 	    videomemory.vidm_pbase, videomemory.vidm_size,
 	    AP_KRW, PT_CACHEABLE);
 
