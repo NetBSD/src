@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.73 2004/12/29 11:35:03 agc Exp $ */
+/* $NetBSD: lib.h,v 1.74 2005/02/04 09:03:03 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -143,6 +143,18 @@ enum {
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
+/*
+ * The name of the "metadatadir" environment variable given to scripts.
+ * This variable holds the location of the +-files for this package.
+ */
+#define PKG_METADATA_DIR_VNAME	"PKG_METADATA_DIR"
+
+/*
+ * The name of the environment variable holding the location to the
+ * reference-counts database directory.
+ */
+#define PKG_REFCOUNT_DBDIR_VNAME	"PKG_REFCOUNT_DBDIR"
+
 #define	PKG_PATTERN_MAX	MaxPathSize	/* max length of pattern, including nul */
 #define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
 
@@ -282,6 +294,7 @@ Boolean make_preserve_name(char *, size_t, char *, char *);
 void    write_file(char *, char *);
 void    copy_file(char *, char *, char *);
 void    move_file(char *, char *, char *);
+void    move_files(const char *, const char *, const char *);
 void    remove_files(const char *, const char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
 int     unpack(const char *, const char *);
@@ -319,6 +332,7 @@ char   *pkgdb_retrieve(const char *);
 void	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
+char   *pkgdb_refcount_dir(void);
 char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
 void	_pkgdb_setPKGDB_DIR(const char *);
