@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.591 2003/11/28 20:05:14 chs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.592 2003/12/05 04:28:47 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.595 2003/11/28 20:04:16 chs Exp 
+ *	NetBSD: pcidevs,v 1.596 2003/12/05 04:28:04 grant Exp 
  */
 
 /*
@@ -2612,6 +2612,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CS4281 CrystalClear Audio Interface",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
+	    0,
+	    "CMD Technology",
+	    "AAR-1210SA serial ATA RAID controller",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
