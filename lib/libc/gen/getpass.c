@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $	*/
+/*	$NetBSD: getpass.c,v 1.10 1997/07/13 19:13:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $";
+__RCSID("$NetBSD: getpass.c,v 1.10 1997/07/13 19:13:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +81,7 @@ getpass(prompt)
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	(void)tcgetattr(fileno(fp), &term);
-	if (echo = (term.c_lflag & ECHO)) {
+	if ((echo = (term.c_lflag & ECHO)) != 0) {
 		term.c_lflag &= ~ECHO;
 		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}
