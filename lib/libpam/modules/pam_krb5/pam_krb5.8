@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_krb5.8,v 1.2 2004/12/12 08:18:45 christos Exp $
+.\" $NetBSD: pam_krb5.8,v 1.3 2005/02/20 19:38:01 wiz Exp $
 .\" $FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.8,v 1.6 2001/11/24 23:41:32 dd Exp $
 .Dd January 15, 1999
 .Dt PAM_KRB5 8
@@ -47,7 +47,7 @@ ticket for the local host.
 .Pp
 When prompting for the current password, the authentication
 module will use the prompt
-.Dq Li "Password for <principal>:" .
+.Dq Li "Password for \*[Lt]principal\*[Gt]:" .
 .Pp
 The
 .Fn pam_sm_setcred
