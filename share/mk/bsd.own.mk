@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.166 2001/07/21 16:48:49 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.167 2001/07/21 16:56:07 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -141,7 +141,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # Use as so:  ${GNU_ARCH.${TARGET_ARCH}} or ${MACHINE_GNU_ARCH}
 .ifndef MACHINE_GNU_ARCH
 GNU_ARCH.alpha=alpha
-GNU_ARCH.arm26=armv2
+GNU_ARCH.arm26=arm
 GNU_ARCH.arm32=arm
 GNU_ARCH.i386=i386
 GNU_ARCH.m68k=m68k
