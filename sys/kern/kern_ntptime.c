@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.19 2002/03/17 11:15:49 simonb Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.20 2002/05/03 00:22:16 eeh Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.19 2002/03/17 11:15:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.20 2002/05/03 00:22:16 eeh Exp $");
 
 #include "opt_ntp.h"
 
@@ -207,7 +207,11 @@ sys_ntp_adjtime(p, v, retval)
 	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	return (ntp_adjtime1(&ntv, v, retval));
+	if ((error = ntp_adjtime1(&ntv, v, retval)) != 0)
+		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp),
+			sizeof(ntv));
+
+	return (error);
 }
 
 int
@@ -216,9 +220,6 @@ ntp_adjtime1(ntv, v, retval)
 	void *v;
 	register_t	*retval;
 {
-	struct sys_ntp_adjtime_args /* {
-		syscallarg(struct timex *) tp;
-	} */ *uap = v;
 	int error = 0;
 	int modes;
 	int s;
@@ -279,7 +280,6 @@ ntp_adjtime1(ntv, v, retval)
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	error = copyout((caddr_t)ntv, (caddr_t)SCARG(uap, tp), sizeof(*ntv));
 	if (!error) {
 
 		/*
