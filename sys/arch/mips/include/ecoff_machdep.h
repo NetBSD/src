@@ -28,8 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ecoff_machdep.h,v 1.1 1994/05/27 09:00:43 glass Exp $
+ * $Id: ecoff_machdep.h,v 1.2 1994/05/28 20:21:34 glass Exp $
  */
+
+#define ECOFF_LDPGSZ 4096
 
 #define ECOFF_PAD
 
@@ -41,5 +43,4 @@
 #define ECOFF_MAGIC_MIPSEL 0x0162
 #define ECOFF_BADMAG(ex) (ex->ef_magic != ECOFF_MAGIC_MIPSEL)
 
-#define ECOFF_TXTOFF_ROUND(eap) \
-        (eap->ea_vstamp < 23 ? 7 : 15)
+#define ECOFF_SEGMENT_ALIGNMENT(eap) (eap->ea_vstamp < 23 ? 8 : 16)
