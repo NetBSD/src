@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.3 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops_bitops.h,v 1.4 1999/07/21 19:19:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ NAME(do_cursor)(ri)
 
 
 /*
- * Copy columns. This is slow. Ick!
+ * Copy columns. Ick!
  */
 static void
 NAME(copycols)(cookie, row, src, dst, num)
@@ -198,21 +198,19 @@ NAME(copycols)(cookie, row, src, dst, num)
 		return;
 #endif
 	
-	/* XXX pacify gcc until this is fixed XXX */
-	db = 0;
-	
 	cnt = ri->ri_font->fontwidth << PIXEL_SHIFT;
 	src *= cnt;
 	dst *= cnt;
 	num *= cnt;
 	row *= ri->ri_yscale;
 	height = ri->ri_font->fontheight;
+	db = dst & 31;
 
 	if (db + num <= 32) { 
+		/* Destination is contained within a single word */
 		srp = (int32_t *)(ri->ri_bits + row + ((src >> 3) & ~3));
 		drp = (int32_t *)(ri->ri_bits + row + ((dst >> 3) & ~3));
 		sb = src & 31;
-		db = dst & 31;
 
 		while (height--) {
 			GETBITS(srp, sb, num, tmp);
@@ -224,58 +222,61 @@ NAME(copycols)(cookie, row, src, dst, num)
 		return;
 	}
 
-	lmask = rasops_rmask[dst & 31];
+	lmask = rasops_rmask[db];
 	rmask = rasops_lmask[(dst + num) & 31];
-
-	lnum = (lmask ? 32 - db : 0);  
-	rnum = (rmask ? (dst + num) & 31 : 0); 
-	sb = src < dst && src + num > dst;
+	lnum = (32 - db) & 31;
+	rnum = (dst + num) & 31; 
 		
 	if (lmask)
 		full = (num - (32 - (dst & 31))) >> 5;
 	else
 		full = num >> 5;
 
-	if (sb) {
-		/* Go backwards */
-		/* XXX this is broken! */
+	if (src < dst && src + num > dst) {
+		/* Copy right-to-left */
+		sb = src & 31;
 		src = src + num;
 		dst = dst + num;
 		srp = (int32_t *)(ri->ri_bits + row + ((src >> 3) & ~3));
 		drp = (int32_t *)(ri->ri_bits + row + ((dst >> 3) & ~3));
 
 		src = src & 31;
+		rnum = 32 - lnum;
 		db = dst & 31;
-
+		
+		if ((src -= db) < 0) {
+			sp--;
+			src += 32;
+		}
+		
 		while (height--) {
-			sb = src;
 			sp = srp;
 			dp = drp;
 			DELTA(srp, ri->ri_stride, int32_t *); 
 			DELTA(drp, ri->ri_stride, int32_t *);
 			
 			if (db) {
-				GETBITS(sp, sb, db, tmp);
-				PUTBITS(tmp, db, db, dp);
+				GETBITS(sp, src, db, tmp);
+				PUTBITS(tmp, 0, db, dp);
 				dp--;
-				if ((sb -= rnum) < 0) {
-					sp--;
-					sb += 32;
-				}
+				sp--;
 			}
 
-			/* Now we're aligned to 32-bits with dp :) */
+			/* Now aligned to 32-bits wrt dp */
 			for (cnt = full; cnt; cnt--, sp--) {
-				GETBITS(sp, sb, 32, tmp);
+				GETBITS(sp, src, 32, tmp);
 				*dp-- = tmp;
 			}
 
 			if (lmask) {
-				GETBITS(sp, sb, rnum, tmp);
-				PUTBITS(tmp, 0, rnum, dp);
+//				if (src > sb)
+//					sp++;
+				GETBITS(sp, sb, lnum, tmp);
+				PUTBITS(tmp, rnum, lnum, dp);
  			}
  		}
 	} else {
+		/* Copy left-to-right */
 		srp = (int32_t *)(ri->ri_bits + row + ((src >> 3) & ~3));
 		drp = (int32_t *)(ri->ri_bits + row + ((dst >> 3) & ~3));
 		db = dst & 31;
@@ -298,11 +299,10 @@ NAME(copycols)(cookie, row, src, dst, num)
 				}
 			}
 	
-			/* Now we're aligned to 32-bits with dp :) */
-			for (cnt = full; cnt; cnt--) {
+			/* Now aligned to 32-bits wrt dp */
+			for (cnt = full; cnt; cnt--, sp++) {
 				GETBITS(sp, sb, 32, tmp);
 				*dp++ = tmp;
-				sp++;
 			}
 
 			if (rmask) {
@@ -312,5 +312,4 @@ NAME(copycols)(cookie, row, src, dst, num)
  		}
  	}
 }
-
 #endif /* _RASOPS_BITOPS_H_ */

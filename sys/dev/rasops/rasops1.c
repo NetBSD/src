@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.5 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops1.c,v 1.6 1999/07/21 19:19:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.5 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.6 1999/07/21 19:19:04 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ rasops1_init(ri)
 		break;
 	}
 		
-	if (ri->ri_font->fontwidth & 7) {
+	if ((ri->ri_font->fontwidth & 7) != 0) {
 		ri->ri_ops.erasecols = rasops1_erasecols;
 		ri->ri_ops.copycols = rasops1_copycols;
 		ri->ri_do_cursor = rasops1_do_cursor;

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.11 1999/06/15 22:34:45 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.12 1999/07/21 19:19:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.11 1999/06/15 22:34:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.12 1999/07/21 19:19:03 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -400,8 +400,8 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 #ifdef RASOPS_CLIPPING
 	flg &= 255;
 #endif
-	fg = fg ? 1 : 0;
-	bg = bg ? 1 : 0;
+	fg = (fg ? 1 : 0);
+	bg = (bg ? 1 : 0);
 	
 	if (flg & WSATTR_BLINK)
 		return (EINVAL);
@@ -652,21 +652,21 @@ rasops_init_devcmap(ri)
 		
 	p = rasops_cmap;
 	
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < 16; i++, p++) {
 		if (ri->ri_rnum <= 8)
-			c = (*p++ >> (8 - ri->ri_rnum)) << ri->ri_rpos;
+			c = (*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
 		else 
-			c = (*p++ << (ri->ri_rnum - 8)) << ri->ri_rpos;
+			c = (*p << (ri->ri_rnum - 8)) << ri->ri_rpos;
 
 		if (ri->ri_gnum <= 8)
-			c |= (*p++ >> (8 - ri->ri_gnum)) << ri->ri_gpos;
+			c |= (*p >> (8 - ri->ri_gnum)) << ri->ri_gpos;
 		else 
-			c |= (*p++ << (ri->ri_gnum - 8)) << ri->ri_gpos;
+			c |= (*p << (ri->ri_gnum - 8)) << ri->ri_gpos;
 
 		if (ri->ri_bnum <= 8)
-			c |= (*p++ >> (8 - ri->ri_bnum)) << ri->ri_bpos;
+			c |= (*p >> (8 - ri->ri_bnum)) << ri->ri_bpos;
 		else 
-			c |= (*p++ << (ri->ri_bnum - 8)) << ri->ri_bpos;
+			c |= (*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
 
 		/* Fill the word for generic routines, which want this */
 		if (ri->ri_depth == 24)
