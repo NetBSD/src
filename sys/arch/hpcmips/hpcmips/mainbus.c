@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2000/08/24 11:19:19 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2001/04/11 08:23:27 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
  *
  */
 
-#include "opt_vr41x1.h"
+#include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
 #include <sys/param.h>
@@ -115,9 +115,9 @@ mbattach(parent, self, aux)
 	ma.ma_name = "cpu";
 	config_found(mb, &ma, mbprint);
 
-#if defined VR41X1 && defined TX39XX
+#if defined VR41XX && defined TX39XX
 #error misconfiguration
-#elif defined VR41X1
+#elif defined VR41XX
 	if (!system_bus_iot) 
 	    mb_bus_space_init();
 	hpcmips_init_bus_space_extent(system_bus_iot); /* Now prepare extent */
