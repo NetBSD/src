@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.139 2003/03/14 22:26:13 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.140 2003/05/08 13:19:44 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -112,17 +112,17 @@ ${PSEUDONOERR}: ${ASMDEPS}
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM} ${WEAKASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
