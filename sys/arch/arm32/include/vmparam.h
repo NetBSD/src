@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1997/10/14 09:20:40 mark Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1998/05/08 23:36:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -106,8 +106,44 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
- 
-#endif
+
+#if defined(MACHINE_NEW_NONCONTIG)
+
+/*
+ * max number of non-contig chunks of physical RAM you can have
+ */
+
+#define	VM_PHYSSEG_MAX		32
+
+/*
+ * when converting a physical address to a vm_page structure, we
+ * want to use a binary search on the chunks of physical memory
+ * to find our RAM
+ */
+
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+
+/*
+ * this indicates that we can't add RAM to the VM system after the
+ * vm system is init'd.
+ */
+
+#define	VM_PHYSSEG_NOADD
+
+/*
+ * define structure pmap_physseg: there is one of these structures
+ * for each chunk of noncontig RAM you have.
+ */
+
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv_entry array */
+	char *attrs;			/* attrs array */
+};
+
+#else	/* MACHINE_NEW_NONCONTIG */
+/* revert to MACHINE_NONCONTIG if MACHINE_NEW_NONCONTIG isn't defined */
+#define	MACHINE_NONCONTIG		/* VM <=> pmap interface modifier */
+#endif	/* MACHINE_NEW_NONCONTIG */
+#endif	/* _ARM32_VMPARAM_H_ */
 
 /* End of vmparam.h */
-                                            
