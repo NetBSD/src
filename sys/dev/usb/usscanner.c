@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.10 2002/07/11 21:14:36 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.11 2002/07/26 00:01:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.10 2002/07/11 21:14:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.11 2002/07/26 00:01:30 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,7 +690,7 @@ usscanner_scsipi_request(chan, req, arg)
 		xs = arg;
 		periph = xs->xs_periph;
 
-		DPRINTFN(8, ("%s: usscanner_scsi_request: %d:%d "
+		DPRINTFN(8, ("%s: usscanner_scsipi_request: %d:%d "
 		    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 		    USBDEVNAME(sc->sc_dev),
 		    periph->periph_target, periph->periph_lun,
@@ -717,13 +717,15 @@ usscanner_scsipi_request(chan, req, arg)
 #endif
 
 		if (xs->datalen > USSCANNER_MAX_TRANSFER_SIZE) {
-			printf("umass_cmd: large datalen, %d\n", xs->datalen);
+			printf("%s: usscanner_scsipi_request: large datalen,"
+			    " %d\n", USBDEVNAME(sc->sc_dev), xs->datalen);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto done;
 		}
 
-		DPRINTFN(4, ("usscanner_scsi_cmd: async cmdlen=%d datalen=%d\n",
-			    xs->cmdlen, xs->datalen));
+		DPRINTFN(4, ("%s: usscanner_scsipi_request: async cmdlen=%d"
+		    " datalen=%d\n", USBDEVNAME(sc->sc_dev), xs->cmdlen,
+		    xs->datalen));
 		sc->sc_state = UAS_CMD;
 		sc->sc_xs = xs;
 		memcpy(sc->sc_cmd_buffer, xs->cmd, xs->cmdlen);
