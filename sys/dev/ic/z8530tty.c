@@ -1,7 +1,7 @@
-/*	$NetBSD: z8530tty.c,v 1.44 1998/02/22 03:25:28 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.45 1998/03/21 04:29:29 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995, 1996, 1997
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
  *	Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -200,6 +200,7 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
+static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zstty_softc *zst, int onoff));
@@ -384,6 +385,41 @@ zstty(dev)
 }
 
 
+void
+zs_shutdown(zst)
+	struct zstty_softc *zst;
+{
+	struct tty *tp = zst->zst_tty;
+	int s;
+
+	s = splzs();
+
+	/* If we were asserting flow control, then deassert it. */
+	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
+	zs_hwiflow(zst);
+
+	/* Clear any break condition set with TIOCSBRK. */
+	zs_break(cs, 0);
+
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if (ISSET(tp->t_cflag, HUPCL)) {
+		zs_modem(zst, 0);
+		(void) tsleep(cs, TTIPRI, ttclos, hz);
+	}
+
+	/* Turn off interrupts if not the console. */
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
+		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+	else
+		cs->cs_creg[1] = cs->cs_preg[1] = 0;
+	zs_write_reg(cs, 1, cs->cs_creg[1]);
+
+	splx(s);
+}
+
 /*
  * Open a zs serial (tty) port.
  */
@@ -394,16 +430,17 @@ zsopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct tty *tp;
-	struct zs_chanstate *cs;
+	int unit = minor(dev);
 	struct zstty_softc *zst;
-	int error, s, s2, unit;
+	struct zs_chanstate *cs;
+	struct tty *tp;
+	int s, s2;
+	int error;
 
-	unit = minor(dev);
 	if (unit >= zstty_cd.cd_ndevs)
 		return (ENXIO);
 	zst = zstty_cd.cd_devs[unit];
-	if (zst == NULL)
+	if (zst == 0)
 		return (ENXIO);
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
@@ -419,13 +456,10 @@ zsopen(dev, flags, mode, p)
 
 	s = spltty();
 
-	/* We need to set this early for the benefit of zssoft(). */
-	SET(tp->t_state, TS_WOPEN);
-
 	/*
 	 * Do the following iff this is a first open.
 	 */
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
 		tp->t_dev = dev;
@@ -496,39 +530,39 @@ zsopen(dev, flags, mode, p)
 
 		splx(s2);
 	}
-	error = 0;
 
 	/* If we're doing a blocking open... */
 	if (!ISSET(flags, O_NONBLOCK))
 		/* ...then wait for carrier. */
 		while (!ISSET(tp->t_state, TS_CARR_ON) &&
 		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
+			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    ttopen, 0);
+			tp->t_wopen--;
 			if (error) {
-				/*
-				 * If the open was interrupted and nobody
-				 * else has the device open, then hang up.
-				 */
-				if (!ISSET(tp->t_state, TS_ISOPEN)) {
-					s2 = splzs();
-
-					/* Hang up. */
-					zs_modem(zst, 0);
-
-					CLR(tp->t_state, TS_WOPEN);
-					ttwakeup(tp);
-
-					splx(s2);
-				}
-				break;
+				splx(s);
+				goto bad;
 			}
-			SET(tp->t_state, TS_WOPEN);
 		}
 
 	splx(s);
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	if (error)
+		goto bad;
+
+	return (0);
+
+bad:
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		zs_shutdown(zst);
+	}
+
 	return (error);
 }
 
@@ -545,7 +579,6 @@ zsclose(dev, flags, mode, p)
 	struct zstty_softc *zst = zstty_cd.cd_devs[minor(dev)];
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
-	int s;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -554,32 +587,7 @@ zsclose(dev, flags, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flags);
 	ttyclose(tp);
 
-	s = splzs();
-
-	/* If we were asserting flow control, then deassert it. */
-	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
-	zs_hwiflow(zst);
-
-	/* Clear any break condition set with TIOCSBRK. */
-	zs_break(cs, 0);
-
-	/*
-	 * Hang up if necessary.  Wait a bit, so the other side has time to
-	 * notice even if we immediately open the port again.
-	 */
-	if (ISSET(tp->t_cflag, HUPCL)) {
-		zs_modem(zst, 0);
-		(void) tsleep(cs, TTIPRI, ttclos, hz);
-	}
-
-	/* Turn off interrupts if not the console. */
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
-		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
-	else
-		cs->cs_creg[1] = cs->cs_preg[1] = 0;
-	zs_write_reg(cs, 1, cs->cs_creg[1]);
-
-	splx(s);
+	zs_shutdown(zst);
 
 	return (0);
 }
