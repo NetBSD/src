@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 1998/11/25 01:14:48 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8 1999/01/06 04:11:30 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -66,10 +66,9 @@ void db_trapdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 void db_tlbdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 	 char *modif));
 
-extern int	kdbpeek __P((vm_offset_t addr));
-extern void	kdbpoke __P((vm_offset_t addr, int newval));
-extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
-     unsigned instPC, unsigned fpcCSR, int allowNonBranch));
+extern int	kdbpeek __P((vaddr_t));
+extern void	kdbpoke __P((vaddr_t, int));
+extern vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 extern void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
 extern void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
 
@@ -81,18 +80,20 @@ extern void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
  * Really belongs wherever kdbpeek() is defined.
  */
 void
-kdbpoke(vm_offset_t addr, int newval)
+kdbpoke(addr, newval)
+	vaddr_t addr;
+	int newval;
 {
 	*(int*) addr = newval;
 	wbflush();
 	if (CPUISMIPS3) {
 #ifdef MIPS3
-		mips3_HitFlushDCache((vm_offset_t) addr, sizeof(int));
-		mips3_FlushICache((vm_offset_t) addr, sizeof(int));
+		mips3_HitFlushDCache(addr, sizeof(int));
+		mips3_FlushICache(addr, sizeof(int));
 #endif
 	} else {
 #ifdef MIPS1
-		mips1_FlushICache((vm_offset_t) addr, sizeof(int));
+		mips1_FlushICache(addr, sizeof(int));
 #endif
 	}
 }
@@ -102,7 +103,7 @@ kdbpoke(vm_offset_t addr, int newval)
  */
 void
 kdb_kbd_trap(tf)
-	db_regs_t *tf;
+	int *tf;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
@@ -115,8 +116,8 @@ kdb_kbd_trap(tf)
  */
 int
 kdb_trap(type, tf)
-	int	type;
-	register db_regs_t *tf;
+	int type;
+	int *tf;
 {
 
 	/* fb_unblank(); */
@@ -138,8 +139,8 @@ kdb_trap(type, tf)
 
 	/* Should switch to kdb`s own stack here. */
 
-	/*  XXX copy trapframe to  ddb_regs */
-	ddb_regs = *tf;
+	/*  XXX copy trapframe to ddb_regs */
+	ddb_regs = *(db_regs_t *)tf;
 
 	db_active++;
 	cnpollc(1);
@@ -148,7 +149,7 @@ kdb_trap(type, tf)
 	db_active--;
 
 	/*  write ddb_regs back to trapframe */
-	*tf = ddb_regs;
+	*(db_regs_t *)tf = ddb_regs;
 
 	return (1);
 }
@@ -165,16 +166,16 @@ Debugger()
  */
 void
 db_read_bytes(addr, size, data)
-	register vm_offset_t addr;
-	register size_t	   size;
-	register char *data;
+	vaddr_t addr;
+	size_t size;
+	char *data;
 {
 	while (size >= 4)
 		*((int*)data)++ = kdbpeek(addr), addr += 4, size -= 4;
 
 	if (size) {
 		unsigned tmp;
-		register char *dst = (char*)data;
+		char *dst = (char*)data;
 
 		tmp = kdbpeek(addr);
 		while (size--) {
@@ -197,9 +198,9 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	register vm_offset_t addr;
-	register size_t	   size;
-	register char *data;
+	vaddr_t addr;
+	size_t size;
+	char *data;
 {
 #ifdef DEBUG_DDB
 	printf("db_write_bytes(%lx, %d, %p, val %x)\n", addr, size, data,
@@ -210,7 +211,7 @@ db_write_bytes(addr, size, data)
 		kdbpoke(addr++, *(int*)data), addr += 4, size -= 4;
 	if (size) {
 		unsigned tmp = kdbpeek(addr), tmp1 = 0;
-		register char *src = (char*)data;
+		char *src = (char*)data;
 
 		tmp >>= (size << 3);
 		tmp <<= (size << 3);
@@ -283,82 +284,48 @@ db_machine_init()
 	db_machine_commands_install(mips_db_command_table);
 }
 
-
-/*
- * MD functions for software single-step.
- * see  db_ for a description.
- */
-
-
-/*
- *  inst_branch()
- *	returns TRUE iff the instruction might branch.
- */
 boolean_t
-inst_branch(int inst)
+inst_branch(inst)
+	int inst;
 {
 	InstFmt i;
 	int delay;
 
 	i.word = inst;
 	delay = 0;
-
 	switch (i.JType.op) {
 	case OP_BCOND:
-
-	case OP_BLEZ:
-	case OP_BLEZL:
-	case OP_BGTZ:
-	case OP_BGTZL:
+	case OP_J:
+	case OP_JAL:
 	case OP_BEQ:
-	case OP_BEQL:
 	case OP_BNE:
+	case OP_BLEZ:
+	case OP_BGTZ:
+	case OP_BEQL:
 	case OP_BNEL:
+	case OP_BLEZL:
+	case OP_BGTZL:
 		delay = 1;
 		break;
 
 	case OP_COP0:
+	case OP_COP1:
 		switch (i.RType.rs) {
 		case OP_BCx:
 		case OP_BCy:
 			delay = 1;
 		}
 		break;
-
-	case OP_COP1:
-		switch (i.RType.rs) {
-		case OP_BCx:
-		case OP_BCy:
-			delay = 1;
-			break;
-		default:
-			break;
-		};
-		break;
-
-	case OP_J:
-	case OP_JAL:
-		delay = 1;
-		break;
-
 	}
-#ifdef DEBUG_DDB
-	printf("  inst_branch(0x%x) returns %d\n",
-	        inst, delay);
-#endif	
-
 	return delay;
 }
 
-/*
- *
- */
 boolean_t
 inst_call(inst)
 	int inst;
 {
+	boolean_t call;
 	InstFmt i;
-	int call;
 
 	i.word = inst;
 	if (i.JType.op == OP_SPECIAL
@@ -368,71 +335,44 @@ inst_call(inst)
 		call = 1;
 	else
 		call = 0;
-#ifdef DEBUG_DDB
-	printf("  inst_call(0x%x) returns 0x%d\n", inst, call);
-#endif
 	return call;
 }
 
-
-/*
- * inst_unconditional_flow_transfer()
- *	return TRUE if the instruction is an unconditional
- *	transter of flow (i.e. unconditional branch)
- */
 boolean_t
-inst_unconditional_flow_transfer(int inst)
+inst_unconditional_flow_transfer(inst)
+	int inst;
 {
 	InstFmt i;
-	int jump;
+	boolean_t jump;
 
 	i.word = inst;
 	jump = (i.JType.op == OP_J);
-#ifdef DEBUG_DDB
-	printf("  insn_unconditional_flow_transfer(0x%x) returns %d\n",
-	        inst, jump);
-#endif	
 	return jump;
 }
 
-/* 
- * 
- */
 db_addr_t
-branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
+branch_taken(inst, pc, regs)
+	int inst;
+	db_addr_t pc;
+	db_regs_t *regs;
 {
-	vm_offset_t ra;
+	vaddr_t ra;
+	unsigned fpucsr;
 
-	ra = (vm_offset_t)MachEmulateBranch(regs->f_regs, pc,
-           (curproc) ? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32]: 0, 0);
-#ifdef DEBUG_DDB
-	printf("  branch_taken(0x%lx) returns 0x%lx\n", pc, ra);
-#endif	
-	return (ra);
+	fpucsr = (curproc) ? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32] : 0;
+	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
+	return ra;
 }
 
-
-/*
- *  Returns the address of the first instruction following the
- *  one at "pc", which is either in the taken path of the branch
- *  (bd == TRUE) or not.  This is for machines (e.g. mips) with
- *  branch delays.
- *
- *  XXX (jrs) The above comment makes no sense. Maybe Jason is thinking
- *    of mips3 squashed branches?
- *  In any case, the kernel support can already find the address of the
- *  next instruction. We could just return that and put a single breakpoint
- *  at that address. All the cruft above can go.
- */
 db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
+next_instr_address(pc, bd)
+	db_addr_t pc;
+	boolean_t bd;
 {
-	
-	vm_offset_t ra;
-	ra = (vm_offset_t)MachEmulateBranch(ddb_regs.f_regs, pc,
-           (curproc)? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32]: 0, 1);
-#ifdef DEBUG_DDB
-	printf("  next_instr_addr(0x%lx, %d) returns 0x%lx\n", pc, bd, ra);
-#endif	
-	return ((db_addr_t) ra);
+	vaddr_t ra;
+	unsigned fpucsr;
+
+	fpucsr = (curproc) ? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32] : 0;
+	ra = MachEmulateBranch((struct frame *)&ddb_regs, pc, fpucsr, 1);
+	return ra;
 }

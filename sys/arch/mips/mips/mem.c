@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1998/11/19 15:38:23 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 1999/01/06 04:11:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,8 +63,8 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-extern vm_offset_t avail_end;
-caddr_t zeropage;
+extern paddr_t avail_end;
+void *zeropage;
 
 /*ARGSUSED*/
 int
@@ -95,9 +95,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -118,7 +118,7 @@ mmrw(dev, uio, flags)
 			if (v + c > ctob(physmem))
 				return (EFAULT);
 			v += MIPS_KSEG0_START;
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -131,14 +131,14 @@ mmrw(dev, uio, flags)
 						mips_round_page(MSGBUFSIZE)) &&
 			    (v < MIPS_KSEG2_START ||
 #if defined(UVM)
-			    !uvm_kernacc((caddr_t)v, c,
+			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 #else
-			    !kernacc((caddr_t)v, c,
+			    !kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 #endif
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -154,9 +154,8 @@ mmrw(dev, uio, flags)
 				break;
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				zeropage = malloc(CLBYTES, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);

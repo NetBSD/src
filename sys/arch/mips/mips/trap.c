@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 1998/12/04 04:35:44 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 1999/01/06 04:11:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 1998/12/04 04:35:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 1999/01/06 04:11:29 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -387,7 +387,6 @@ void trapDump __P((char * msg));
 extern void splx_end __P((void));
 extern void cpu_switch_end __P((void));
 extern void idle_end __P((void));
-extern void bcopy_end __P((void));
 extern char start[], edata[];
 
 
@@ -398,10 +397,7 @@ void mips_dump_tlb __P((int, int));
 /*
  * Other forward declarations.
  */
-unsigned MachEmulateBranch __P((unsigned *regsPtr,
-			     unsigned instPC,
-			     unsigned fpcCSR,
-			     int allowNonBranch));
+vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 
 struct proc *fpcurproc;
 struct pcb *curpcb;
@@ -522,7 +518,7 @@ syscall(status, cause, opc, frame)
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
-		frame->f_regs[PC] = MachEmulateBranch(frame->f_regs, opc, 0, 0);
+		frame->f_regs[PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
 		frame->f_regs[PC] = opc + sizeof(int);
 	callp = p->p_emul->e_sysent;
@@ -713,7 +709,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (KERNLAND(vaddr)) {
 			pt_entry_t *pte;
 			unsigned entry;
-			vm_offset_t pa;
+			vaddr_t pa;
 
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
@@ -742,7 +738,7 @@ trap(status, cause, vaddr, opc, frame)
 	    {
 		pt_entry_t *pte;
 		unsigned entry;
-		vm_offset_t pa;
+		vaddr_t pa;
 		pmap_t pmap;
 
 		pmap  = p->p_vmspace->vm_map.pmap;
@@ -797,14 +793,14 @@ trap(status, cause, vaddr, opc, frame)
 		ftype = VM_PROT_WRITE;
 	pagefault: ;
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		struct vmspace *vm; 
 		vm_map_t map;
 		int rv;
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
-		va = trunc_page((vm_offset_t)vaddr);
+		va = trunc_page(vaddr);
 #if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
@@ -852,10 +848,10 @@ trap(status, cause, vaddr, opc, frame)
 		}
 	kernelfault: ;
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		int rv; 
 
-		va = trunc_page((vm_offset_t)vaddr);
+		va = trunc_page(vaddr);
 #if defined(UVM)
 		rv = uvm_fault(kernel_map, va, 0, ftype);
 #else
@@ -884,7 +880,7 @@ trap(status, cause, vaddr, opc, frame)
 
 	case T_BREAK:
 #ifdef DDB
-		kdb_trap(type, &frame);
+		kdb_trap(type, (int *)&frame);
 		return;	/* KERN */
 #else
 		goto dopanic;
@@ -913,9 +909,9 @@ trap(status, cause, vaddr, opc, frame)
 #ifndef NO_PROCFS_SUBR 
 		rv = suiword((caddr_t)va, p->p_md.md_ss_instr);
 		if (rv < 0) {
-			vm_offset_t sa, ea;
-			sa = trunc_page((vm_offset_t)va);
-			ea = round_page((vm_offset_t)va + sizeof(int) - 1);
+			vaddr_t sa, ea;
+			sa = trunc_page(va);
+			ea = round_page(va + sizeof(int) - 1);
 #if defined(UVM)
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
@@ -1152,9 +1148,7 @@ void
 trapDump(msg)
 	char *msg;
 {
-	register int i;
-	int s;
-	int cause;
+	int i, cause, s;
 
 	s = splhigh();
 	printf("trapDump(%s)\n", msg);
@@ -1181,58 +1175,32 @@ trapDump(msg)
 #endif
 
 /*
- * forward declaration
+ * Analyse 'next' PC address taking account of branch/jump instructions
  */
-static unsigned GetBranchDest __P((InstFmt *InstPtr));
-
-
-/*
- * Compute destination of a branch instruction.
- * XXX  Compute desination of r4000 squashed branches?
- */
-static unsigned
-GetBranchDest(InstPtr)
-	InstFmt *InstPtr;
-{
-	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
-}
-
-
-/*
- * Return the resulting PC as if the branch was executed.
- */
-unsigned
-MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
-	unsigned *regsPtr;
-	unsigned instPC;
-	unsigned fpcCSR;
+vaddr_t
+MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
+	struct frame *f;
+	vaddr_t instpc;
+	unsigned fpuCSR;
 	int allowNonBranch;
 {
+#define	BRANCHTARGET(p) (4 + (p) + ((short)((InstFmt *)(p))->IType.imm << 2))
 	InstFmt inst;
-	unsigned retAddr;
-	int condition;
+	vaddr_t nextpc;
 
-	inst.word = (instPC < MIPS_KSEG0_START) ?
-		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
+	if (instpc < MIPS_KSEG0_START)
+		inst.word = fuiword((void *)instpc);
+	else
+		inst.word = *(unsigned *)instpc;
 
-#if 0
-	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
-		inst.word, fpcCSR); /* XXX */
-#endif
 	switch ((int)inst.JType.op) {
 	case OP_SPECIAL:
-		switch ((int)inst.RType.func) {
-		case OP_JR:
-		case OP_JALR:
-			retAddr = regsPtr[inst.RType.rs];
-			break;
-
-		default:
-			if (!allowNonBranch)
-				panic("MachEmulateBranch: Non-branch");
-			retAddr = instPC + 4;
-			break;
-		}
+		if (inst.RType.func == OP_JR || inst.RType.func == OP_JALR)
+			nextpc = f->f_regs[inst.RType.rs];
+		else if (allowNonBranch)
+			nextpc = instpc + 4;
+		else
+			panic("MachEmulateBranch: Non-branch");
 		break;
 
 	case OP_BCOND:
@@ -1241,22 +1209,20 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BLTZAL:
 		case OP_BLTZL:		/* squashed */
 		case OP_BLTZALL:	/* squashed */
-
-			if ((int)(regsPtr[inst.RType.rs]) < 0)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+			if ((int)(f->f_regs[inst.RType.rs]) < 0)
+				nextpc = BRANCHTARGET(instpc);
 			else
-				retAddr = instPC + 8;
+				nextpc = instpc + 8;
 			break;
 
 		case OP_BGEZ:
 		case OP_BGEZAL:
 		case OP_BGEZL:		/* squashed */
 		case OP_BGEZALL:	/* squashed */
-
-			if ((int)(regsPtr[inst.RType.rs]) >= 0)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+			if ((int)(f->f_regs[inst.RType.rs]) >= 0)
+				nextpc = BRANCHTARGET(instpc);
 			else
-				retAddr = instPC + 8;
+				nextpc = instpc + 8;
 			break;
 
 		default:
@@ -1266,78 +1232,66 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 
 	case OP_J:
 	case OP_JAL:
-		retAddr = (inst.JType.target << 2) | 
-			((unsigned)instPC & 0xF0000000);
+		nextpc = (inst.JType.target << 2) | 
+			((unsigned)instpc & 0xF0000000);
 		break;
 
 	case OP_BEQ:
-	case OP_BEQL:			/* squashed */
-
-		if (regsPtr[inst.RType.rs] == regsPtr[inst.RType.rt])
-			retAddr = GetBranchDest((InstFmt *)instPC);
+	case OP_BEQL:	/* squashed */
+		if (f->f_regs[inst.RType.rs] == f->f_regs[inst.RType.rt])
+			nextpc = BRANCHTARGET(instpc);
 		else
-			retAddr = instPC + 8;
+			nextpc = instpc + 8;
 		break;
 
 	case OP_BNE:
-	case OP_BNEL:			/* squashed */
-
-		if (regsPtr[inst.RType.rs] != regsPtr[inst.RType.rt])
-			retAddr = GetBranchDest((InstFmt *)instPC);
+	case OP_BNEL:	/* squashed */
+		if (f->f_regs[inst.RType.rs] != f->f_regs[inst.RType.rt])
+			nextpc = BRANCHTARGET(instpc);
 		else
-			retAddr = instPC + 8;
+			nextpc = instpc + 8;
 		break;
 
 	case OP_BLEZ:
-	case OP_BLEZL:				/* squashed */
-
-		if ((int)(regsPtr[inst.RType.rs]) <= 0)
-			retAddr = GetBranchDest((InstFmt *)instPC);
+	case OP_BLEZL:	/* squashed */
+		if ((int)(f->f_regs[inst.RType.rs]) <= 0)
+			nextpc = BRANCHTARGET(instpc);
 		else
-			retAddr = instPC + 8;
+			nextpc = instpc + 8;
 		break;
 
 	case OP_BGTZ:
-	case OP_BGTZL:				/* squashed */
-
-		if ((int)(regsPtr[inst.RType.rs]) > 0)
-			retAddr = GetBranchDest((InstFmt *)instPC);
+	case OP_BGTZL:	/* squashed */
+		if ((int)(f->f_regs[inst.RType.rs]) > 0)
+			nextpc = BRANCHTARGET(instpc);
 		else
-			retAddr = instPC + 8;
+			nextpc = instpc + 8;
 		break;
 
 	case OP_COP1:
-		switch (inst.RType.rs) {
-		case OP_BCx:
-		case OP_BCy:
-			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fpcCSR & MIPS_FPU_COND_BIT;
-			else
-				condition = !(fpcCSR & MIPS_FPU_COND_BIT);
+		if (inst.RType.rs == OP_BCx || inst.RType.rs == OP_BCy) {
+			int condition = (fpuCSR & MIPS_FPU_COND_BIT) != 0;
+			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
+				condition = !condition;
 			if (condition)
-				retAddr = GetBranchDest((InstFmt *)instPC);
+				nextpc = BRANCHTARGET(instpc);
 			else
-				retAddr = instPC + 8;
-			break;
-
-		default:
-			if (!allowNonBranch)
-				panic("MachEmulateBranch: Bad coproc branch instruction");
-			retAddr = instPC + 4;
+				nextpc = instpc + 8;
 		}
+		else if (allowNonBranch)
+			nextpc = instpc + 4;
+		else
+			panic("MachEmulateBranch: Bad COP1 branch instruction");
 		break;
 
 	default:
 		if (!allowNonBranch)
 			panic("MachEmulateBranch: Non-branch instruction");
-		retAddr = instPC + 4;
+		nextpc = instpc + 4;
 	}
-#if 0
-	printf("Target addr=%x\n", retAddr); /* XXX */
-#endif
-	return (retAddr);
+	return nextpc;
+#undef	BRANCHTARGET
 }
-
 
 /*
  * This routine is called by procxmt() to single step one instruction.
@@ -1350,7 +1304,7 @@ mips_singlestep(p)
 {
 #ifdef NO_PROCFS_SUBR
 	struct frame *f = (struct frame *)p->p_md.md_regs;
-	unsigned va = 0;
+	vaddr_t pc, va;
 	int rv; 
 
 	if (p->p_md.md_ss_addr) {
@@ -1358,8 +1312,9 @@ mips_singlestep(p)
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
 		return EFAULT;
 	}
-	if (fuiword((caddr_t)f->f_regs[PC]) != 0) /* not a NOP instruction */
-		va = MachEmulateBranch(f->f_regs, f->f_regs[PC],
+	pc = (vaddr_t)f->f_regs[PC];
+	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
+		va = MachEmulateBranch(f, pc,
 			p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
 	else
 		va = f->f_regs[PC] + sizeof(int);
@@ -1367,9 +1322,9 @@ mips_singlestep(p)
 	p->p_md.md_ss_instr = fuiword((caddr_t)va);
 	rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 	if (rv < 0) {
-		vm_offset_t sa, ea;
-		sa = trunc_page((vm_offset_t)va);
-		ea = round_page((vm_offset_t)va + sizeof(int) - 1);
+		vaddr_t sa, ea;
+		sa = trunc_page(va);
+		ea = round_page(va + sizeof(int) - 1);
 #if defined(UVM)
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_DEFAULT, FALSE);
@@ -1426,7 +1381,7 @@ mips_singlestep(p)
 
 	/* compute next address after current location */
 	if (curinstr != 0)
-		va = MachEmulateBranch(f->f_regs, pc,
+		va = MachEmulateBranch(f, pc,
 			p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
 	else
 		va = pc + sizeof(int);
@@ -1459,7 +1414,7 @@ mips_singlestep(p)
 #if defined(DEBUG) || defined(DDB)
 int
 kdbpeek(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %lx\n", addr);

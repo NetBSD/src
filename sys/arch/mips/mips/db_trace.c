@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 1998/02/02 12:49:15 jonathan Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 1999/01/06 04:11:31 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,7 +37,7 @@
 #include <ddb/db_sym.h>
 
 extern int __start __P((void));	/* lowest kernel code address */
-extern vm_offset_t getreg_val __P((db_expr_t regno));
+extern vaddr_t getreg_val __P((db_expr_t regno));
 
 #define REG_ARG(i)	(4+i)
 #define SAVES_RA(x)	isa_spill((x),31)
@@ -73,8 +73,8 @@ extern void stacktrace_subr __P((int a0, int a1, int a2, int a3,
 /*
  * Stack trace helper.
  */
-void db_mips_stack_trace __P((int count, vm_offset_t stackp,
-    vm_offset_t the_pc, vm_offset_t the_ra, int flags, vm_offset_t kstackp));
+void db_mips_stack_trace __P((int count, vaddr_t stackp,
+    vaddr_t the_pc, vaddr_t the_ra, int flags, vaddr_t kstackp));
 
 
 #define DB_SETF_REGS FCN_NULL
@@ -143,9 +143,9 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 void
 db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
 	int count;
-	vm_offset_t stackp, the_pc, the_ra;
+	vaddr_t stackp, the_pc, the_ra;
 	int flags;
-	vm_offset_t kstackp;
+	vaddr_t kstackp;
 {
 	return;
 }

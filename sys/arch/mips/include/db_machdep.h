@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 1997/11/18 21:13:17 mhitch Exp $ */
+/* $NetBSD: db_machdep.h,v 1.5 1999/01/06 04:11:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -41,7 +41,7 @@
 #include <mips/proc.h>			/* register state */
 
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct frame db_regs_t;
@@ -78,8 +78,8 @@ db_addr_t  db_disasm_insn __P((int insn, db_addr_t loc,  boolean_t altfmt));
 /*
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
-void 	kdb_kbd_trap __P((db_regs_t *));
-int 	kdb_trap __P((int type, db_regs_t *));
+void 	kdb_kbd_trap __P((int *));
+int 	kdb_trap __P((int type, int *));
 void	db_machine_init __P((void));
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1997/06/21 04:10:42 mhitch Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 1999/01/06 04:11:25 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ typedef union pt_entry {
 #define	mips_pg_nv_bit()	(MIPS1_PG_NV)	/* same on mips1 and mips3 */
 
 
-int pmap_is_page_ro(pmap_t, vm_offset_t, int);
+int pmap_is_page_ro(pmap_t, vaddr_t, int);
 
 
 /* MIPS1-only */
@@ -100,7 +100,7 @@ int pmap_is_page_ro(pmap_t, vm_offset_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS1_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS1_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips1_pfn_to_vad((vm_offset_t)(x))
+#define	pfn_to_vad(x)		mips1_pfn_to_vad((vaddr_t)(x))
 #define	vad_to_pfn(x)		mips1_vad_to_pfn((x))
 #endif /* mips1 */
 
@@ -122,7 +122,7 @@ int pmap_is_page_ro(pmap_t, vm_offset_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS3_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS3_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips3_pfn_to_vad((vm_offset_t)(x))
+#define	pfn_to_vad(x)		mips3_pfn_to_vad((vaddr_t)(x))
 #define	vad_to_pfn(x)		mips3_vad_to_pfn((x))
 #endif /* mips3 */
 
@@ -132,7 +132,7 @@ int pmap_is_page_ro(pmap_t, vm_offset_t, int);
 static __inline int
     mips_pg_v(unsigned int entry),
     mips_pg_wired(unsigned int entry),
-    PAGE_IS_RDONLY(unsigned int pte, vm_offset_t va);
+    PAGE_IS_RDONLY(unsigned int pte, vaddr_t va);
 
 static __inline unsigned int
     mips_pg_wired_bit(void), mips_pg_m_bit(void),
@@ -143,8 +143,8 @@ static __inline unsigned int
     mips_pg_global_bit(void),
     PTE_TO_PADDR(unsigned int entry);
 
-static __inline vm_offset_t pfn_to_vad(unsigned int x);
-static __inline int vad_to_pfn(vm_offset_t x);
+static __inline vaddr_t pfn_to_vad(unsigned int x);
+static __inline int vad_to_pfn(vaddr_t x);
 
 
 static __inline int
@@ -242,14 +242,14 @@ PTE_TO_PADDR(pte)
 static __inline int
 PAGE_IS_RDONLY(pte, va)
 	unsigned int pte;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	if (CPUISMIPS3)
 		return (MIPS3_PAGE_IS_RDONLY(pte, va));
 	return (MIPS1_PAGE_IS_RDONLY(pte, va));
 }
 
-static __inline vm_offset_t
+static __inline vaddr_t
 pfn_to_vad(x)
 	unsigned int x;
 {
@@ -260,7 +260,7 @@ pfn_to_vad(x)
 
 static __inline int
 vad_to_pfn(x)
-	vm_offset_t x;
+	vaddr_t x;
 {
 	if (CPUISMIPS3)
 		return (mips3_vad_to_pfn(x));
@@ -275,7 +275,7 @@ vad_to_pfn(x)
  * Kernel virtual address to page table entry and visa versa.
  */
 #define	kvtopte(va) \
-	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
+	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
 #define	ptetokv(pte) \
 	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 

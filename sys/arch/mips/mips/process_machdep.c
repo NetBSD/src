@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 1997/10/19 21:02:08 jonathan Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 1999/01/06 04:11:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass   
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 1997/10/19 21:02:08 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 1999/01/06 04:11:29 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -87,7 +87,7 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy(p->p_md.md_regs, (caddr_t)regs, sizeof(struct reg));
+	memcpy(regs, p->p_md.md_regs, sizeof(struct reg));
 	return (0);
 }
 
@@ -96,7 +96,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy((caddr_t)regs, p->p_md.md_regs, sizeof(struct reg));
+	memcpy(p->p_md.md_regs, regs, sizeof(struct reg));
 	/*
 	 * XXX: is it safe to let users set system coprocessor regs?
 	 * XXX: Clear to user set bits!!
@@ -107,34 +107,34 @@ process_write_regs(p, regs)
 
 int
 process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+	struct proc *p;
+	struct fpreg *regs;
 {
 	if (p->p_md.md_flags & MDP_FPUSED) {
 		if (p == fpcurproc)
 			savefpregs(p);
-		bcopy(&p->p_addr->u_pcb.pcb_fpregs, regs,
-		    sizeof(struct fpreg));
+		memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs,
+			sizeof(struct fpreg));
 	}
 	else
-		bzero((caddr_t)regs, sizeof(struct fpreg));
+		memset(regs, 0, sizeof(struct fpreg));
 	return 0;
 }
 
 int
 process_write_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+	struct proc *p;
+	struct fpreg *regs;
 {
 	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
 		return EINVAL;
 
 	if (p->p_md.md_flags & MDP_FPUSED) {
 		if (p == fpcurproc)
-		  savefpregs(p);
+			savefpregs(p);
 	}
 	
-	bcopy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
+	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }
 
@@ -143,7 +143,7 @@ process_sstep(p, sstep)
 	struct proc *p;
 {
 	/* XXX what are the correct semantics: sstep once, or forevermore? */
-	if(sstep)
+	if (sstep)
 		mips_singlestep(p);
 	return (0);
 }
@@ -153,6 +153,6 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	p->p_md.md_regs[PC] = (int)addr;
+	((struct frame *)p->p_md.md_regs)->f_regs[PC] = (int)addr;
 	return (0);
 }
