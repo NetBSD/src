@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1999/02/16 20:19:04 tv Exp $
+#	$NetBSD: Makefile,v 1.28 1999/02/16 21:21:09 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ MAN=		gdb.1
 SRCS=		main.c ${COMMON_SRCS} annotate.c inflow.c gnu-regex.c
 OBJS=		init.o
 DPSRCS=		nm.h tm.h
-CLEANFILES=	init.c GDBvn.texi gdb-cfg.texi
+CLEANFILES=	init.c
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/include \
