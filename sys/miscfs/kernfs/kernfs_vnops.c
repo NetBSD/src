@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.11 1993/08/02 23:00:57 mycroft Exp $
+ *	$Id: kernfs_vnops.c,v 1.12 1993/09/07 15:41:21 ws Exp $
  */
 
 /*
@@ -556,11 +556,13 @@ kernfs_write(vp, uio, ioflag, cred)
 	return (kernfs_xwrite(kt, strbuf, xlen));
 }
 
-kernfs_readdir(vp, uio, cred, eofflagp)
+kernfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflagp;
+	u_int *cookies;
+	int ncookies;
 {
 	struct filedesc *fdp;
 	int i;
@@ -568,7 +570,7 @@ kernfs_readdir(vp, uio, cred, eofflagp)
 
 	i = uio->uio_offset / UIO_MX;
 	error = 0;
-	while (uio->uio_resid > 0) {
+	while (uio->uio_resid > 0 && (!cookies || ncookies > 0)) {
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_readdir: i = %d\n", i);
 #endif
@@ -601,6 +603,10 @@ kernfs_readdir(vp, uio, cred, eofflagp)
 			error = uiomove((caddr_t) dp, UIO_MX, uio);
 			if (error)
 				break;
+			if (cookies) {
+				*cookies = (i + 1) * UIO_MX;
+				ncookies--;
+			}
 		}
 		i++;
 	}

@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	5.14 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mountd.c,v 1.7 1993/08/25 02:42:57 brezak Exp $";
+static char rcsid[] = "$Id: mountd.c,v 1.8 1993/09/07 15:40:37 ws Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -452,7 +452,7 @@ get_exportlist()
 	register struct grouplist *grp;
 	register struct exportlist *ep, *ep2;
 	struct statfs stfsbuf;
-	struct ufs_args args;
+	struct export_args args;
 	struct stat sb;
 	FILE *inf;
 	char *cp, *endcp;
@@ -618,13 +618,12 @@ get_exportlist()
 			len = endcp - cp;
 		}
 		if (fep == NULL) {
-			args.fspec = 0;
-			args.exflags = exflags;
 			args.exroot = rootuid;
 			cp = (char *)0;
 			while (statfs(ep->ex_dirp, &stfsbuf) < 0 ||
-			       mount(MOUNT_UFS, ep->ex_dirp,
-				     stfsbuf.f_flags|MNT_UPDATE, &args) < 0) {
+			       mount(MOUNT_EXPORT, ep->ex_dirp,
+				     stfsbuf.f_flags|(MNT_UPDATE|exflags),
+				     &args) < 0) {
 /* 08 Sep 92*/			if (cp)
 					*cp-- = savedc;
 				else

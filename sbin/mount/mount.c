@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.5 1993/08/03 01:25:52 mycroft Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.6 1993/09/07 15:40:25 ws Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -292,11 +292,6 @@ mountfs(spec, name, flags, type, options, mntopts)
 		if (options)
 			getufsopts(options, &flags);
 		args.fspec = spec;
-		args.exroot = DEFAULT_ROOTUID;
-		if (flags & MNT_RDONLY)
-			args.exflags = MNT_EXRDONLY;
-		else
-			args.exflags = 0;
 		argp = (caddr_t)&args;
 		break;
 

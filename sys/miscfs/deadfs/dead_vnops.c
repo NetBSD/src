@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dead_vnops.c	7.13 (Berkeley) 4/15/91
- *	$Id: dead_vnops.c,v 1.4 1993/08/01 19:25:58 mycroft Exp $
+ *	$Id: dead_vnops.c,v 1.5 1993/09/07 15:41:08 ws Exp $
  */
 
 #include "param.h"
@@ -151,7 +151,9 @@ int	dead_select __P((
 		struct vnode *vp, \
 		struct uio *uio, \
 		struct ucred *cred, \
-		int *eofflagp))) dead_ebadf)
+		int *eofflagp, \
+		u_int *cookies, \
+		int ncookies))) dead_ebadf)
 #define dead_readlink ((int (*) __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \
