@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.57 1998/07/21 23:13:13 perry Exp $
+#	$NetBSD: Makefile,v 1.58 1998/07/24 16:48:47 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
+
+HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -74,21 +76,19 @@ build: beforeinstall
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
-.if	(${MACHINE_ARCH} == "arm32") || \
-	(${MACHINE_ARCH} == "i386") || \
-	(${MACHINE_ARCH} == "mips") || \
-	(${MACHINE_ARCH} == "m68k") || \
-	(${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "sparc") || \
-	(${MACHINE_ARCH} == "vax")
 .if defined(USE_EGCS)
+.if defined(DESTDIR)
+.if (${HAVE_GCC28} == "")
+	@echo '***** WARNING ***** Your system compiler is not GCC 2.8 or higher,'
+	@echo 'and you have built a distribution with GCC 2.8 and DESTDIR set.'
+	@echo 'You will need to rebuild libgcc from gnu/usr.bin/egcs/libgcc'
+	@echo 'in order to have full C++ support in the binary set.'
+.endif # HAVE_GCC28
+.else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc &&\
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.else
-	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc &&\
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.endif # DESTDIR
 .endif # USE_EGCS
-.endif # MACHINE_ARCH
 	@echo -n "Build finished at: "
 	@date
 
