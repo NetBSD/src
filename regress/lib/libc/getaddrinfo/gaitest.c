@@ -1,4 +1,4 @@
-/*	$NetBSD: gaitest.c,v 1.5 2004/01/02 15:07:39 itojun Exp $	*/
+/*	$NetBSD: gaitest.c,v 1.6 2005/02/06 06:05:19 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -45,9 +45,9 @@ char host[NI_MAXHOST];
 char serv[NI_MAXSERV];
 int vflag = 0;
 
-static void usage __P((void));
-static void print1 __P((const char *, const struct addrinfo *, char *, char *));
-int main __P((int, char *[]));
+static void usage(void);
+static void print1(const char *, const struct addrinfo *, char *, char *);
+int main(int, char *[]);
 
 static void
 usage()
