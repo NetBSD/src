@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.3 1997/11/07 13:31:16 briggs Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.4 1998/01/13 19:24:54 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -93,7 +93,7 @@ mc_obio_match(parent, cf, aux)
 	 * try to read the CHIPID register. A MACE will always have
 	 * 0x?940, where the ? depends on the chip version.
 	 */
-	if (bus_probe(oa->oa_tag, bsh, 0, 1)) {
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 1)) {
 		if ((bus_space_read_1(
 			oa->oa_tag, bsh, MACE_REG(MACE_CHIPIDL)) == 0x40) &&
 		    ((bus_space_read_1(
@@ -392,7 +392,7 @@ mc_obio_getaddr(sc, lladdr)
 		return (-1);
 	}
 
-	if (!bus_probe(sc->sc_regt, bsh, 0, 1)) {
+	if (!mac68k_bus_space_probe(sc->sc_regt, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_regt, bsh, 8*16);
 		return (-1);
 	}
