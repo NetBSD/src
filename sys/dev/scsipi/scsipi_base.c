@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.31 2000/04/02 03:05:55 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.32 2000/04/02 17:58:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -367,7 +367,7 @@ scsipi_interpret_sense(xs)
 		}
 
 #ifdef SCSIVERBOSE
-		if ((xs->xs_control & XS_CTL_SILENT) == 0)
+		if (key && (xs->xs_control & XS_CTL_SILENT) == 0)
 			scsipi_print_sense(xs, 0);
 #else
 		if (key) {
