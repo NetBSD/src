@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 1996/09/11 00:29:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 1996/10/05 07:06:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -989,7 +989,6 @@ Lnocache0:
 	movc	d0,vbr
 	jbsr	_isrinit		| be ready for stray ints
 	jbsr	_hp300_calibrate_delay	| calibrate delay
-	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
 
