@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.22 1999/01/27 03:03:51 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.22.2.1 1999/04/30 16:11:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)fb.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  *  devGraphics.c --
  *
  *     	This file contains machine-dependent routines for the graphics device.
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -110,7 +110,7 @@
  * are the handlers for user-level requests (open/ioctl/close).
  *
  * Hardware dependencies are handled by calls through the "fbdriver"
- * method table, which the subdriver 
+ * method table, which the subdriver
  */
 
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
@@ -133,7 +133,7 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
 #endif
 
 /*
- * LK-201 and successor keycode mapping 
+ * LK-201 and successor keycode mapping
 */
 #include <pmax/dev/lk201var.h>
 
@@ -149,7 +149,7 @@ struct fbinfo *firstfi = NULL;
 /*
  * The default cursor.
  */
-u_short defCursor[32] = { 
+u_short defCursor[32] = {
 /* plane A */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
 	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
 /* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
@@ -157,7 +157,7 @@ u_short defCursor[32] = {
 
 };
 
- 
+
 /*
  * Pro-tem framebuffer pseudo-device driver
  */
@@ -186,7 +186,7 @@ fbattach(n)
 }
 
 /*
- * Connect a framebuffer, described by a struct fbinfo, to the 
+ * Connect a framebuffer, described by a struct fbinfo, to the
  * raster-console pseudo-device subsystem. )This would be done
  * with BStreams, if only we had them.)
  */
@@ -210,13 +210,16 @@ fbconnect (name, info, silent)
 		    && fbcd.cd_devs [fbix]->fi_unit == info -> fi_unit)
 			break;
 
-	if (fbcd.cd_ndevs >= NFB) {
-		printf ("fb: more frame buffers probed than configured!\n");
-		return;
-	}
+	if (fbix >= fbcd.cd_ndevs) {
+		if (fbcd.cd_ndevs >= NFB) {
+			printf("fb: more frame buffers probed than configured!\n");
+			return;
+		}
 
-	fbix = fbcd.cd_ndevs++;
-	fbcd.cd_devs [fbix] = info;
+		fbix = fbcd.cd_ndevs++;
+		fbcd.cd_devs [fbix] = info;
+	} else
+		info = fbcd.cd_devs [fbix];
 #endif /* FBDRIVER_DOES_ATTACH */
 
 	/*
@@ -235,7 +238,7 @@ fbconnect (name, info, silent)
 	}
 
 	if (!silent)
-		printf (" (%dx%dx%d)%s",
+		printf (": (%dx%dx%d)%s",
 			info -> fi_type.fb_width,
 			info -> fi_type.fb_height,
 			info -> fi_type.fb_depth,
