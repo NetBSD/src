@@ -153,15 +153,15 @@ mmrw(dev, uio, flags)
 				   VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = MIN(c, (u_int)(NBPG - o));
-			c = MIN(c, (u_int)iov->iov_len);
+			c = min(c, (u_int)(NBPG - o));
+			c = min(c, (u_int)iov->iov_len);
 			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
 			pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			c = MIN(iov->iov_len, MAXPHYS);
+			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
@@ -182,7 +182,7 @@ mmrw(dev, uio, flags)
 			o = uio->uio_offset;
 			if (o >= OBIO_EEPROM_SIZE)
 				return (EFAULT);	/* Not ENXIO? -gwr */
-			c = MIN(uio->uio_resid, OBIO_EEPROM_SIZE - o);
+			c = min(uio->uio_resid, OBIO_EEPROM_SIZE - o);
 			error = uiomove(eeprom_va + o, (int)c, uio);
 			return (error);
 
@@ -197,7 +197,7 @@ mmrw(dev, uio, flags)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zbuf, CLBYTES);
 			}
-			c = MIN(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zbuf, (int)c, uio);
 			continue;
 
