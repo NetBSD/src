@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.215 2005/01/27 16:56:06 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.216 2005/01/27 17:10:07 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.215 2005/01/27 16:56:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.216 2005/01/27 17:10:07 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -238,7 +238,7 @@ static struct timeval tcp_rst_ppslim_last;
 static int tcp_ackdrop_ppslim_count = 0;
 static struct timeval tcp_ackdrop_ppslim_last;
 
-#define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
+#define TCP_PAWS_IDLE	(24U * 24 * 60 * 60 * PR_SLOWHZ)
 
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
@@ -1793,8 +1793,7 @@ after_listen:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if ((int)(TCP_TIMESTAMP(tp) - tp->ts_recent_age) >
-		    TCP_PAWS_IDLE) {
+		if (TCP_TIMESTAMP(tp) - tp->ts_recent_age > TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
