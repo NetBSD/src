@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.13 2002/08/23 02:47:08 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.14 2002/08/24 00:36:16 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -476,7 +476,6 @@ userret(l, pc, oticks)
 		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
-;
 }
 
 /*
@@ -708,6 +707,15 @@ badtrap:
 #endif
 
 	case T_AST:
+#if 0
+		if (want_resched) {
+			extern int sadebug;
+			if (sadebug)
+				printf("trap: T_AST, preempt\n");
+			preempt(NULL);
+		}
+		want_ast = 0;
+#endif
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
@@ -2115,14 +2123,13 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
+#ifdef KTRACE
 	struct proc *p = l->l_proc;
+#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-#ifdef NOTDEF_DEBUG
-	printf("child_return: proc=%p\n", p);
-#endif
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -2155,9 +2162,6 @@ startlwp(arg)
 	userret(l, 0, 0);
 }
 
-/*
- * XXX This is a terrible name.
- */
 void
 upcallret(struct lwp *l)
 {

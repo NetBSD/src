@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.15 2002/08/23 02:47:06 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.16 2002/08/24 00:36:15 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/ucontext.h>
@@ -600,6 +599,7 @@ sendsig(sig, mask, code)
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+		addr += 8; /* XXX skip the upcall code */
 		break;
 #endif /* COMPAT_16 */
 
