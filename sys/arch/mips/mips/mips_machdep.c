@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.33 1998/09/14 07:04:06 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.34 1998/10/01 00:42:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.33 1998/09/14 07:04:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.34 1998/10/01 00:42:38 jonathan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
@@ -277,7 +277,7 @@ mips3_ConfigCache()
 	/*
 	 * Clear out the I and D caches.
 	 */
-	mips_L2CachePresent = 0; /* kluge to skip L2 cache flush */
+	mips_L2CacheSize = 0; /* kluge to skip L2 cache flush */
 	mips3_FlushCache();
 
 	i = *(volatile int *)&snoop_check;	/* Read and cache */
@@ -331,6 +331,9 @@ mips3_vector_init()
 #ifdef pmax		/* XXX */
 	mips_L2CachePresent = 1;
 	mips_L2CacheSize = 1024 * 1024;
+#endif
+#ifdef arc
+	mips_L2CacheSize = mips_L2CachePresent ? 1024 * 1024 : 0;
 #endif
 
 	mips3_FlushCache();
@@ -386,7 +389,9 @@ mips_vector_init()
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 0;
 		mips3_cacheflush_bug = 0;
-		mips3_cacheflush_bug = 1; /* XXX FIXME: probably not needed */
+#if 1  /* XXX FIXME: avoid hangs in mips3_vector_init() */
+		mips3_cacheflush_bug = 1;
+#endif
 		break;
 	case MIPS_R4300:
 		cpu_arch = 3;
@@ -436,7 +441,6 @@ mips_vector_init()
 #endif
 #ifdef MIPS3
 	case 3:
-	case 4:
 		mips3_SetWIRED(0);
 		mips3_TLBFlush(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
@@ -531,7 +535,6 @@ cpu_identify()
 #else
 		printf("QED R4700 Orion CPU");
 #endif
-		break;
 		break;
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based CPU");
@@ -663,6 +666,14 @@ cpu_identify()
 	 * good place to do this is mips_vector_init(),
 	 * but printf() doesn't work in it.
 	 */
+#if !defined(MIPS3_FLUSH)
+	if (!mips_L2CachePresent) {
+		printf("This kernel doesn't work without L2 cache.\n"
+		    "Please add \"options MIPS3_FLUSH\""
+		    "to the kernel config file.\n");
+		cpu_reboot(RB_HALT, NULL);
+	}
+#endif
 	if (mips3_L1TwoWayCache &&
 	    (mips_L1ICacheLSize < 32 || mips_L1DCacheLSize < 32)) {
 		/*
