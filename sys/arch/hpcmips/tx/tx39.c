@@ -1,8 +1,7 @@
-/*	$NetBSD: tx39.c,v 1.16 2000/04/24 13:02:14 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.17 2000/05/21 11:24:45 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi
- * All rights reserved.
+/*-
+ * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,6 +11,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -21,9 +22,8 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_tx39_debug.h"
@@ -219,35 +219,43 @@ tx_find_dram(start, end)
 	if (badaddr(page, 4))
 		return;
 
-	*(volatile int *)(page+0) = DRAM_MAGIC0;
-	*(volatile int *)(page+4) = DRAM_MAGIC1;
+	*(volatile int *)(page + 0) = DRAM_MAGIC0;
+	*(volatile int *)(page + 4) = DRAM_MAGIC1;
 	wbflush();
 
-	if (*(volatile int *)(page+0) != DRAM_MAGIC0 ||
-	    *(volatile int *)(page+4) != DRAM_MAGIC1)
+	if (*(volatile int *)(page + 0) != DRAM_MAGIC0 ||
+	    *(volatile int *)(page + 4) != DRAM_MAGIC1)
 		return;
 
 	for (page += NBPG; page < endaddr; page += NBPG) {
 		if (badaddr(page, 4))
 			return;
 
-		if (*(volatile int *)(page+0) == DRAM_MAGIC0 &&
-		    *(volatile int *)(page+4) == DRAM_MAGIC1) {
-			mem_clusters[mem_cluster_cnt].start = start;
-			mem_clusters[mem_cluster_cnt].size = 
-				page - startaddr;
-			/* skip kernel area */
-			if (mem_cluster_cnt == 1)
-				mem_clusters[mem_cluster_cnt].size -= start;
-
-			mem_cluster_cnt++;
-			
-			return;
+		if (*(volatile int *)(page + 0) == DRAM_MAGIC0 &&
+		    *(volatile int *)(page + 4) == DRAM_MAGIC1) {
+			goto memend_found;
 		}
 	}
 
-	/* no memory in this bank */
-	return;
+	/* check for 32MByte memory */
+	page -= NBPG;
+	*(volatile int *)(page + 0) = DRAM_MAGIC0;
+	*(volatile int *)(page + 4) = DRAM_MAGIC1;
+	wbflush();
+
+	if (*(volatile int *)(page + 0) != DRAM_MAGIC0 ||
+	    *(volatile int *)(page + 4) != DRAM_MAGIC1)
+		return; /* no memory in this bank */
+
+ memend_found:
+	mem_clusters[mem_cluster_cnt].start = start;
+	mem_clusters[mem_cluster_cnt].size = page - startaddr;
+
+	/* skip kernel area */
+	if (mem_cluster_cnt == 1)
+		mem_clusters[mem_cluster_cnt].size -= start;
+	
+	mem_cluster_cnt++;
 }
 
 void
