@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.c,v 1.3 2003/03/08 08:03:37 lukem Exp $	*/
+/*	$NetBSD: pthread_md.c,v 1.4 2003/07/26 18:33:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_md.c,v 1.3 2003/03/08 08:03:37 lukem Exp $");
+__RCSID("$NetBSD: pthread_md.c,v 1.4 2003/07/26 18:33:06 mrg Exp $");
 
 #define	__PTHREAD_SIGNAL_PRIVATE
 
+#include <string.h>
 #include <assert.h>
 
 #include "pthread.h"
