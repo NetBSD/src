@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.26 1998/09/22 20:29:03 ross Exp $	*/
+/*	$NetBSD: stand.h,v 1.27 1999/02/11 09:10:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -122,9 +122,11 @@ void	sprintf __P((char *, const char *, ...));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
 void	twiddle __P((void));
 void	gets __P((char *));
+int	getfile __P((char *prompt, int mode));
 char	*strerror __P((int));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
+__dead void	exit __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
@@ -135,6 +137,7 @@ void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 off_t	lseek __P((int, off_t, int));
+int	ioctl __P((int, u_long, char *));
     
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));
