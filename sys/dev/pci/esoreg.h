@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.3 1999/09/23 11:50:19 kleink Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.4 1999/12/10 16:50:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -48,6 +48,7 @@
 /* PCI Revision IDs of the Solo-1 PCI AudioDrive family */
 #define ESO_PCI_REVISION_ES1938	0x00	/* ES1938 */
 #define ESO_PCI_REVISION_ES1946	0x01	/* ES1946 */
+#define ESO_PCI_REVISION_ES1946E 0x02	/* ES1946 Revision E */
 
 /*
  * Check the validity of a PCI I/O space base address for use in
