@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 1997/07/05 20:48:14 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.103 1997/08/12 17:26:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -435,7 +435,7 @@ trap(frame)
 		break;
 	}
 
-#ifndef DDB
+#if !defined(DDB) && !defined(KGDB)
 	/* XXX need to deal with this when DDB is present, too */
 	case T_TRCTRAP:	/* kernel trace trap; someone single stepping lcall's */
 			/* syscall has to turn off the trace bit itself */
