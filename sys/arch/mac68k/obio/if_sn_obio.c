@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.22 2003/04/02 00:44:28 thorpej Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.23 2003/07/15 02:43:25 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.23 2003/07/15 02:43:25 lukem Exp $");
 
 #include "opt_inet.h"
 

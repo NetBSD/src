@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.13 2002/10/02 05:28:13 thorpej Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.14 2003/07/15 02:43:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Glue for the Peripheral Channel Controller timers and the
  * Mostek clock chip found on the MVME-147.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.14 2003/07/15 02:43:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

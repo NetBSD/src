@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2003/06/18 08:58:38 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2003/07/15 02:43:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,9 @@
  *
  * Configure() is called at boot time.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2003/07/15 02:43:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

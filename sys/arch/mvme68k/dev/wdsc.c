@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.25 2003/05/14 12:45:46 wiz Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.26 2003/07/15 02:43:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -35,6 +35,9 @@
  *
  *  @(#)wdsc.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.26 2003/07/15 02:43:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

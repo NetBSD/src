@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.22 2003/06/15 23:09:02 fvdl Exp $	*/
+/*	$NetBSD: bandit.c,v 1.23 2003/07/15 02:43:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.23 2003/07/15 02:43:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

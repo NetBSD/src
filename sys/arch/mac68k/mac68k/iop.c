@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.6 2003/07/03 13:19:30 rjs Exp $	*/
+/*	$NetBSD: iop.c,v 1.7 2003/07/15 02:43:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -30,6 +30,9 @@
 /*
  *	This code handles VIA, RBV, and OSS functionality.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.7 2003/07/15 02:43:20 lukem Exp $");
 
 #include "opt_mac68k.h"
 

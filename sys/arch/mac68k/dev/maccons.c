@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: maccons.c,v 1.4 2003/07/15 02:43:18 lukem Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.4 2003/07/15 02:43:18 lukem Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"

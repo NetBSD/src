@@ -1,4 +1,4 @@
-/* $NetBSD: au_cpureg_mem.c,v 1.1 2002/07/29 15:39:11 simonb Exp $ */
+/* $NetBSD: au_cpureg_mem.c,v 1.2 2003/07/15 02:43:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific SOC register support for the Alchemy Semiconductor Au1X00.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.2 2003/07/15 02:43:34 lukem Exp $");
 
 #include <sys/param.h>
 

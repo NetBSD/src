@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.2 2002/08/18 15:57:55 simonb Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.3 2003/07/15 02:43:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * PCI configuration space support for the Algorithmics BONITO
  * MIPS PCI and memory controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.3 2003/07/15 02:43:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

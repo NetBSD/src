@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.9 2003/06/29 22:28:29 fvdl Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.10 2003/07/15 02:43:13 lukem Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.10 2003/07/15 02:43:13 lukem Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"

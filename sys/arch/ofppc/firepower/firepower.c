@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.9 2003/06/15 23:09:03 fvdl Exp $	*/
+/*	$NetBSD: firepower.c,v 1.10 2003/07/15 02:46:30 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Support routines for Firepower systems.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.10 2003/07/15 02:46:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

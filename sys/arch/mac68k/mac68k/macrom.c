@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.50 2002/09/27 15:36:18 provos Exp $	*/
+/*	$NetBSD: macrom.c,v 1.51 2003/07/15 02:43:21 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -44,6 +44,9 @@
  * can be generalized somewhat for others.  It looks like most machines
  * are similar to the IIsi ("Universal ROMs"?).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.51 2003/07/15 02:43:21 lukem Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"

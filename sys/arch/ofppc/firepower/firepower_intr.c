@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.5 2003/06/16 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Interrupt support for Firepower systems.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.6 2003/07/15 02:46:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

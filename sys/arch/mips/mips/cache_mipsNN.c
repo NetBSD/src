@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.7 2002/12/17 12:04:30 simonb Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.8 2003/07/15 02:43:37 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.8 2003/07/15 02:43:37 lukem Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.4 2002/10/02 15:52:26 thorpej Exp $ */
+/* $NetBSD: sbwdog.c,v 1.5 2003/07/15 02:43:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Watchdog timer support for the Broadcom BCM1250 processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.5 2003/07/15 02:43:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.34 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.35 2003/07/15 02:43:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,6 +75,9 @@
  * (basically consisting of the match, a bit of the attach, and the
  *  "DMA" glue functions).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.35 2003/07/15 02:43:25 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.6 2003/05/25 14:08:21 tsutsui Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.7 2003/07/15 02:43:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * The Alchemy Semiconductor Au1x00's interrupts are wired to two internal
  * interrupt controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.7 2003/07/15 02:43:34 lukem Exp $");
 
 #include "opt_ddb.h"
 

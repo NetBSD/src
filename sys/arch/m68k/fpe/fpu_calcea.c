@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.14 2002/09/27 15:36:12 provos Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.15 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.15 2003/07/15 02:43:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>

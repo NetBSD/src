@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_m68k.c,v 1.2 1997/03/15 18:09:53 is Exp $	*/
+/*	$NetBSD: kgdb_m68k.c,v 1.3 2003/07/15 02:43:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,6 +47,9 @@
 /*
  * Machine-dependent (m68k) part of the KGDB remote "stub"
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.3 2003/07/15 02:43:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>

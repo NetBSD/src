@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.18 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: mesh.c,v 1.19 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.19 2003/07/15 02:43:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2003/01/01 01:51:24 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2003/07/15 02:43:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Derived from the mainbus code in mvme68k/autoconf.c by Chuck Cranor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2003/07/15 02:43:46 lukem Exp $");
 
 #include "vmetwo.h"
 

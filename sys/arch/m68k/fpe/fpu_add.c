@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_add.c,v 1.3 1999/05/30 20:17:48 briggs Exp $ */
+/*	$NetBSD: fpu_add.c,v 1.4 2003/07/15 02:43:09 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,9 @@
  *
  * To subtract, negate y and call add.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_add.c,v 1.4 2003/07/15 02:43:09 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23 2003/05/02 08:45:12 dsl Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.24 2003/07/15 02:43:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,6 +32,10 @@
  * The present implementation supports the GCR format (800K) on
  * non-{DMA,IOP} machines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.24 2003/07/15 02:43:25 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

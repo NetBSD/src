@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_io_chipdep.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: pci_bus_io_chipdep.c,v 1.2 2003/07/15 02:46:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
  *			Size of the device-provided static storage area
  *			for the I/O memory space extent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: pci_bus_io_chipdep.c,v 1.2 2003/07/15 02:46:33 lukem Exp $");
 
 #include <sys/extent.h>
 

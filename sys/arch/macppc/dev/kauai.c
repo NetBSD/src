@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1 2003/06/11 07:35:39 hamajima Exp $	*/
+/*	$NetBSD: kauai.c,v 1.2 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.2 2003/07/15 02:43:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

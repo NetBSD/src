@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_dma.c,v 1.1 2001/10/29 22:28:39 thorpej Exp $	*/
+/*	$NetBSD: firepower_dma.c,v 1.2 2003/07/15 02:46:31 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  * use the generic PowerPC DMA routines for PCI DMA, and supply a set
  * of bounce-capable DMA routines for ISA DMA.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firepower_dma.c,v 1.2 2003/07/15 02:46:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.22 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.23 2003/07/15 02:43:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.23 2003/07/15 02:43:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

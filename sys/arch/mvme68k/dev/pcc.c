@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.24 2003/01/06 13:05:04 wiz Exp $	*/
+/*	$NetBSD: pcc.c,v 1.25 2003/07/15 02:43:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * peripheral channel controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.25 2003/07/15 02:43:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

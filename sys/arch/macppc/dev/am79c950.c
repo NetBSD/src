@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.14 2003/06/04 21:30:06 bjh21 Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.15 2003/07/15 02:43:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -33,6 +33,10 @@
  * Driver for the AMD Am79C940 (MACE) ethernet chip, used for onboard
  * ethernet on the Centris/Quadra 660av and Quadra 840av.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.15 2003/07/15 02:43:27 lukem Exp $");
+
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"

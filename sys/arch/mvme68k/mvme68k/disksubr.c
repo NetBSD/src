@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2003/05/10 23:12:35 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 2003/07/15 02:43:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2003/07/15 02:43:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,7 @@
-/*	$NetBSD: hpux_syscall.c,v 1.1 2002/07/13 08:28:43 scw Exp $	*/
+/*	$NetBSD: hpux_syscall.c,v 1.2 2003/07/15 02:43:13 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_syscall.c,v 1.2 2003/07/15 02:43:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

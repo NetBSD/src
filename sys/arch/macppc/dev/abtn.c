@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.7 2003/03/05 16:52:16 soren Exp $	*/
+/*	$NetBSD: abtn.c,v 1.8 2003/07/15 02:43:26 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.8 2003/07/15 02:43:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

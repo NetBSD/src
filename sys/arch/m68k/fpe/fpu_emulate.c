@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.23 2001/02/05 12:35:13 chs Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.24 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,6 +35,9 @@
  * mc68881 emulator
  * XXX - Just a start at it for now...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.24 2003/07/15 02:43:09 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

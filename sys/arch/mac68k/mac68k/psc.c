@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.c,v 1.6 1999/06/28 01:41:13 briggs Exp $	*/
+/*	$NetBSD: psc.c,v 1.7 2003/07/15 02:43:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -30,6 +30,9 @@
  * Subsystem Controller) interrupts. The PSC is used only on the
  * Centris/Quadra 660av and the Quadra 840av.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.7 2003/07/15 02:43:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

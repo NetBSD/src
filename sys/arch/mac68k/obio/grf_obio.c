@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.49 2002/10/02 05:36:39 thorpej Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.50 2003/07/15 02:43:25 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -58,6 +58,9 @@
  * Graphics display driver for the Macintosh internal video for machines
  * that don't map it into a fake nubus card.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.50 2003/07/15 02:43:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

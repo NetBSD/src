@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.9 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.10 2003/07/15 02:43:40 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.10 2003/07/15 02:43:40 lukem Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

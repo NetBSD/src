@@ -1,4 +1,7 @@
-/*	$NetBSD: svr4_syscall.c,v 1.2 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.3 2003/07/15 02:43:15 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.3 2003/07/15 02:43:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

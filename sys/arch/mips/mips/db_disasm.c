@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2002/11/04 03:30:32 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:43:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,8 @@
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:43:38 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.6 2002/10/23 09:11:28 jdolecek Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.7 2003/07/15 02:43:17 lukem Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -34,6 +34,9 @@
  * reasonable to pass virtually everything up to that driver without
  * modification.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.7 2003/07/15 02:43:17 lukem Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"

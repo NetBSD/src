@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.10 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.11 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -36,6 +36,9 @@
  * the source operand be an integer.  It performs type conversion
  * only if the source operand is *not* an integer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_fscale.c,v 1.11 2003/07/15 02:43:10 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 2003/04/02 03:04:04 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.34 2003/07/15 02:43:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2003/07/15 02:43:32 lukem Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"

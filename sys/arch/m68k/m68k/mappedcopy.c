@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.16 2003/04/02 00:00:46 thorpej Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.17 2003/07/15 02:43:14 lukem Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -45,6 +45,9 @@
  *
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.17 2003/07/15 02:43:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.3 2002/10/02 05:36:39 thorpej Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.4 2003/07/15 02:43:26 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.4 2003/07/15 02:43:26 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
