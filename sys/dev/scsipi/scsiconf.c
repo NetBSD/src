@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.12 2001/04/11 01:19:47 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.13 2001/04/23 16:14:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -182,7 +182,8 @@ scsibus_config_interrupts(self)
 #define SCSI_DELAY 2
 #endif
 
-	if (SCSI_DELAY > 0) {
+	if ((sc->sc_channel->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
+	    SCSI_DELAY > 0) {
 		printf("%s: waiting %d seconds for devices to settle...\n",
 		    self->dv_xname, SCSI_DELAY);
 		/* ...an identifier we know no one will use... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.14 2001/04/22 16:40:29 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.15 2001/04/23 16:14:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -295,6 +295,7 @@ struct scsipi_channel {
 #define	SCSIPI_CHAN_SHUTDOWN	0x01	/* channel is shutting down */
 #define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
 #define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
+#define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
