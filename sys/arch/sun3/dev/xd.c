@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.31 2000/06/26 14:21:02 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.32 2000/06/29 07:19:02 mrg Exp $	*/
 
 /*
  *
@@ -74,7 +74,7 @@
 #include <sys/dkbad.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/dvma.h>
