@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.39 2001/07/07 15:59:37 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.40 2001/11/13 13:01:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,10 +145,10 @@ Mode of operation:
 
 #include "bpfilter.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.40 2001/11/13 13:01:22 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.39 2001/07/07 15:59:37 thorpej Exp $");
-
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
