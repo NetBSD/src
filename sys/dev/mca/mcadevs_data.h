@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.15 2001/04/23 06:10:09 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.16 2001/04/27 18:04:14 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.13 2001/04/20 11:19:27 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp 
  */
 
 /*-
@@ -197,7 +197,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6ABF,	"RM Ethernet MC Adapter" },
     { 0x6AE7,	"Dacom Unity Gold+/2 Modem" },
     { 0x6AFB,	"Miracom Keycard/PS Modem" },
-    { 0x6AFD,	"SKNET Ethernet Adapter/G" },
+    { 0x6AFD,	"SKNET MC2+ Ethernet Adapter/G" },
     { 0x6B76,	"Network Designers Garnet 2 Adapter" },
     { 0x6B80,	"DataFlex Chameleo Modem" },
     { 0x6B95,	"CORE ESDI Fixed Disk Adapter" },
@@ -209,7 +209,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6BBC,	"Apricot Synchronous Communications Adapter" },
     { 0x6BCB,	"CONNECT ARCnet Adapter" },
     { 0x6BE7,	"Symicron dtsx12 Token Ring Adapter" },
-    { 0x6BE9,	"SKNET Ethernet Adapter" },
+    { 0x6BE9,	"SKNET Personal Ethernet Adapter" },
     { 0x6BFF,	"Torus Ethernet Adapter/MC" },
     { 0x6C0F,	"Roland MIDI Processing Unit MPU-IMC" },
     { 0x6DAC,	"Logitech ScanMan Adapter" },
