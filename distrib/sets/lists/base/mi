@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.188 2000/11/03 05:40:58 veego Exp $
+# $NetBSD: mi,v 1.189 2000/11/05 05:33:22 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -140,6 +140,7 @@
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
+./sbin/wdogctl
 ./sbin/wsconsctl
 ./stand
 ./tmp
