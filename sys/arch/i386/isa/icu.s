@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.14 1993/06/27 04:59:47 andrew Exp $
+ *	$Id: icu.s,v 1.15 1993/07/03 09:43:14 cgd Exp $
  */
 
 /*
@@ -74,8 +74,12 @@ _netmask:	.long	0
 	.globl  _ipending
 _ipending:	.long   0
 vec:
-	.long	vec0, vec1, vec2, vec3, vec4, vec5, vec6, vec7
-	.long	vec8, vec9, vec10, vec11, vec12, vec13, vec14, vec15
+	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
+	.long	INTRLOCAL(vec3), INTRLOCAL(vec4), INTRLOCAL(vec5)
+	.long	INTRLOCAL(vec6), INTRLOCAL(vec7), INTRLOCAL(vec8)
+	.long	INTRLOCAL(vec9), INTRLOCAL(vec10), INTRLOCAL(vec11)
+	.long	INTRLOCAL(vec12), INTRLOCAL(vec13), INTRLOCAL(vec14)
+	.long	INTRLOCAL(vec15)
 
 #define	GENSPL(name, mask, event) \
 	.globl  _spl/**/name ; \
@@ -101,32 +105,32 @@ _spl/**/name: ; \
 	.text
 
 	ALIGN_TEXT
-unpend_v:
+INTRLOCAL(unpend_v):
 	COUNT_EVENT(_intrcnt_spl, 0)
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
-	jnc     unpend_v_next           # some intr cleared the in-memory bit
+	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
 	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%eax
 	testl   %eax,%eax
-	je      noresume
+	je      INTRLOCAL(noresume)
 	jmp     %eax
   
 	ALIGN_TEXT
 /*
  * XXX - must be some fastintr, need to register those too.
  */
-noresume:
+INTRLOCAL(noresume):
 #if NSIO > 0
 	call    _softsio1
 #endif
-unpend_v_next:
+INTRLOCAL(unpend_v_next):
 	movl	_cpl,%eax
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
-	je	none_to_unpend
-	jmp	unpend_v
+	je	INTRLOCAL(none_to_unpend)
+	jmp	INTRLOCAL(unpend_v)
 
 /*
  * Handle return from interrupt after device handler finishes
@@ -147,8 +151,8 @@ doreti:
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
-	jne	unpend_v
-none_to_unpend:
+	jne	INTRLOCAL(unpend_v)
+INTRLOCAL(none_to_unpend):
 	testl   %edx,%edx	# returning to zero priority?
 	jne	1f	# nope, going to non-zero priority
 	movl	_netisr,%eax
@@ -286,7 +290,7 @@ over_net_stuff_for_spl0:
 	SHOW_CPL
 	movl	_ipending,%eax
 	testl   %eax,%eax
-	jne	unpend_V
+	jne	INTRLOCAL(unpend_V)
 	popl	%eax	# return old priority
 	ret
 	
@@ -303,22 +307,22 @@ _splx:
 	SHOW_CPL
 	notl	%eax
 	andl	_ipending,%eax
-	jne	unpend_V_result_edx
+	jne	INTRLOCAL(unpend_V_result_edx)
 	movl	%edx,%eax	# return old priority
 	ret
 
 	ALIGN_TEXT
-unpend_V_result_edx:
+INTRLOCAL(unpend_V_result_edx):
 	pushl   %edx
-unpend_V:
+INTRLOCAL(unpend_V):
 	COUNT_EVENT(_intrcnt_spl, 24)
 	bsfl    %eax,%eax
 	btrl    %eax,_ipending
-	jnc     unpend_V_next
+	jnc     INTRLOCAL(unpend_V_next)
 	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%edx
 	testl   %edx,%edx
-	je      noresumeV
+	je      INTRLOCAL(noresumeV)
 /*
  * We would prefer to call the intr handler directly here but that doesn't
  * work for badly behaved handlers that want the interrupt frame.  Also,
@@ -331,21 +335,21 @@ unpend_V:
 /*
  * XXX - must be some fastintr, need to register those too.
  */
-noresumeV:
+INTRLOCAL(noresumeV):
 #if NSIO > 0
 	call    _softsio1
 #endif
-unpend_V_next:
+INTRLOCAL(unpend_V_next):
 	movl	_cpl,%eax
 	notl	%eax
 	andl	_ipending,%eax
-	jne	unpend_V
+	jne	INTRLOCAL(unpend_V)
 	popl	%eax
 	ret
 
 #define BUILD_VEC(irq_num) \
 	ALIGN_TEXT ; \
-vec/**/irq_num: ; \
+INTRLOCAL(vec/**/irq_num): ; \
 	int     $ICU_OFFSET + (irq_num) ; \
 	popl	%eax ; \
 	ret
