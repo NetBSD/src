@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.5 1998/08/13 02:10:57 eeh Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -128,14 +128,14 @@ digit2i(c)
 	u_char c;
 {
 	if (c >= '0' && c <= '9')
-		return(c - '0');
+		return (c - '0');
 	else if (c >= 'a' && c <= 'f')
-		return(c - 'a' + 10);	
+		return (c - 'a' + 10);	
 	else if (c >= 'A' && c <= 'F')
 
-		return(c - 'A' + 10);	
+		return (c - 'A' + 10);	
 	else
-		return(-1);
+		return (-1);
 }
 
 /*
@@ -146,7 +146,7 @@ static u_char
 i2digit(n)
 	int n;
 {
-	return("0123456789abcdef"[n & 0x0f]);
+	return ("0123456789abcdef"[n & 0x0f]);
 }
 
 /*
@@ -185,13 +185,13 @@ hex2mem(vdst, src, maxlen)
 	while (*src && maxlen--) {
 		msb = digit2i(*src++);
 		if (msb < 0)
-			return(src - 1);
+			return (src - 1);
 		lsb = digit2i(*src++);
 		if (lsb < 0)
-			return(NULL);
+			return (NULL);
 		*dst++ = (msb << 4) | lsb;
 	}
-	return(src);
+	return (src);
 }
 
 /*
@@ -213,7 +213,7 @@ hex2i(srcp)
 		src++;
 	}
 	*srcp = src;
-	return(r);
+	return (r);
 }
 
 /*
@@ -293,12 +293,11 @@ kgdb_recv(bp, maxlen)
 #ifdef	DEBUG_KGDB
 	printf("kgdb_recv: %s\n", bp);
 #endif
-	return(len);
+	return (len);
 }
 
 /*
- * This is called by the approprite tty driver.
- * In our case, by dev/scn.c:scn_kgdb_init()
+ * This is called by the appropriate tty driver.
  */
 void
 kgdb_attach(getfn, putfn, ioarg)
@@ -312,7 +311,7 @@ kgdb_attach(getfn, putfn, ioarg)
 }
 
 /*
- * This function does all command procesing for interfacing to
+ * This function does all command processing for interfacing to
  * a remote gdb.  Note that the error codes are ignored by gdb
  * at present, but might eventually become meaningful. (XXX)
  * It might makes sense to use POSIX errno values, because
@@ -390,7 +389,7 @@ kgdb_trap(type, regs)
 	 * Interact with gdb until it lets us go.
 	 * If we cause a trap, resume here.
 	 */
-	(void) setjmp((kgdb_recover = &jmpbuf));
+	(void)setjmp((kgdb_recover = &jmpbuf));
 	for (;;) {
 		kgdb_recv(buffer, sizeof(buffer));
 		switch (buffer[0]) {
