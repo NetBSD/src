@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.147 2003/10/01 21:45:14 itojun Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.148 2003/10/02 09:30:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,13 +39,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.147 2003/10/01 21:45:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.148 2003/10/02 09:30:16 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
+#include "opt_posix.h"
 #include "opt_sysv.h"
 #include "pty.h"
 #include "rnd.h"
