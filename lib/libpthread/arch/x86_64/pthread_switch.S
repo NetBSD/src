@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.7 2003/10/19 21:45:03 fvdl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.8 2003/10/20 14:50:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,11 +135,7 @@ ENTRY(pthread__switch)
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
-#ifdef PIC
-	movq	PIC_GOT(pthread__switch_return_point), %r11
-#else
-	leaq	pthread__switch_return_point, %r11
-#endif
+	leaq	pthread__switch_return_point(%rip), %r11
 	movq	%r11, UC_RIP(%r14)
 	movq	%r14, PT_UC(%r12)
 	
@@ -205,11 +201,7 @@ ENTRY(pthread__locked_switch)
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
-#ifdef PIC
-	movq	PIC_GOT(locked_return_point), %r11
-#else
-	leaq	locked_return_point, %r11
-#endif
+	leaq	locked_return_point(%rip), %r11
 	movq	%r11, UC_RIP(%r15)
 	movq	%r15, PT_UC(%r12)
 	
