@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.175 2002/07/23 23:12:49 rjs Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.176 2002/09/04 00:04:03 mason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -727,6 +727,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "Netgear FA411",	}
+	,
+	{
+	    PCMCIA_VENDOR_NETGEAR_2, PCMCIA_PRODUCT_NETGEAR_2_MA401,
+	    PCMCIA_CIS_NETGEAR_2_MA401,
+	    0,
+	    "Netgear",
+	    "Netgear MA401",	}
 	,
 	{
 	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
@@ -1483,6 +1490,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Fujitsu Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NETGEAR_2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Netgear",
 	    NULL,
 	},
 	{
