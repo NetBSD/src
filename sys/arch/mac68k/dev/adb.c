@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.9 1996/05/05 16:21:20 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.10 1996/09/14 06:01:12 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -33,6 +33,7 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -115,13 +116,15 @@ adb_enqevent(event)
 {
 	int     s;
 
+	s = spladb();
+
+#ifdef DIAGNOSTIC
 	if (adb_evq_tail < 0 || adb_evq_tail >= ADB_MAX_EVENTS)
 		panic("adb: event queue tail is out of bounds");
 
 	if (adb_evq_len < 0 || adb_evq_len > ADB_MAX_EVENTS)
 		panic("adb: event queue len is out of bounds");
-
-	s = splhigh();
+#endif
 
 	if (adb_evq_len == ADB_MAX_EVENTS) {
 		splx(s);
@@ -378,16 +381,16 @@ adbopen(dev, flag, mode, p)
 	if (unit != 0)
 		return (ENXIO);
 
-	s = splhigh();
+	s = spladb();
 	if (adb_isopen) {
 		splx(s);
 		return (EBUSY);
 	}
-	splx(s);
 	adb_evq_tail = 0;
 	adb_evq_len = 0;
 	adb_isopen = 1;
 	adb_ioproc = p;
+	splx(s);
 
 	return (error);
 }
@@ -399,8 +402,12 @@ adbclose(dev, flag, mode, p)
     int flag, mode;
     struct proc *p;
 {
+	int s = spladb();
+
 	adb_isopen = 0;
 	adb_ioproc = NULL;
+	splx(s);
+
 	return (0);
 }
 
@@ -420,7 +427,7 @@ adbread(dev, uio, flag)
 	if (uio->uio_resid < sizeof(adb_event_t))
 		return (EMSGSIZE);	/* close enough. */
 
-	s = splhigh();
+	s = spladb();
 	if (adb_evq_len == 0) {
 		splx(s);
 		return (0);
@@ -534,23 +541,24 @@ adbioctl(dev, cmd, data, flag, p)
 
 
 int 
-adbselect(dev, rw, p)
-    dev_t dev;
-    int rw;
-    struct proc *p;
+adbpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
 {
-	switch (rw) {
-	case FREAD:
-		/* succeed if there is something to read */
-		if (adb_evq_len > 0)
-			return (1);
+	int s, revents;
+
+	revents = events & (POLLOUT | POLLWRNORM);
+	
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
+		return (revents);
+
+	s = spladb();
+	if (adb_evq_len > 0)
+		revents |= events & (POLLIN | POLLRDNORM);
+	else
 		selrecord(p, &adb_selinfo);
-		break;
+	splx(s);
 
-	case FWRITE:
-		return (1);	/* always fails => never blocks */
-		break;
-	}
-
-	return (0);
+	return (revents);
 }
