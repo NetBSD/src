@@ -27,7 +27,7 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: i4b_isicbchan.c,v 1.1.1.1 2001/01/05 12:50:12 martin Exp $
+ *	$Id: i4b_isicbchan.c,v 1.2 2001/01/19 12:44:44 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -92,7 +92,7 @@ isic_bchannel_setup(int unit, int h_chan, int bprot, int activate)
 #endif
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
-	int s = SPLI4B();
+	int s = splnet();
 	
 	if(activate == 0)
 	{
@@ -168,7 +168,7 @@ isic_bchannel_start(int unit, int h_chan)
 	int activity = -1;
 	int cmd = 0;
 
-	s = SPLI4B();				/* enter critical section */
+	s = splnet();				/* enter critical section */
 	if(chan->state & HSCX_TX_ACTIVE)	/* already running ? */
 	{
 		splx(s);
@@ -349,7 +349,7 @@ isic_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp)
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
-	s = SPLI4B();
+	s = splnet();
 	
 	bsp->outbytes = chan->txcount;
 	bsp->inbytes = chan->rxcount;

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.1.1.1 2001/01/05 12:50:03 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -287,18 +287,18 @@ PDEVSTATIC int
 i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x;
-	
+
 	if(minor(dev))
 		return(ENXIO);
 
 	if(openflag)
 		return(EBUSY);
-	
-	x = splimp();
+
+	x = splnet();
 	openflag = 1;
 	i4b_l4_daemon_attached();
 	splx(x);
-	
+
 	return(0);
 }
 
@@ -308,7 +308,7 @@ i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
 PDEVSTATIC int
 i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int x = splimp();	
+	int x = splnet();
 	openflag = 0;
 	i4b_l4_daemon_detached();
 	i4b_Dcleanifq(&i4b_rdqueue);
@@ -329,13 +329,13 @@ i4bread(dev_t dev, struct uio *uio, int ioflag)
 	if(minor(dev))
 		return(ENODEV);
 
-	x = splimp();
+	x = splnet();
 	while(IF_QEMPTY(&i4b_rdqueue))
 	{
 		readflag = 1;
 		error = tsleep((caddr_t) &i4b_rdqueue, (PZERO + 1) | PCATCH, "bird", 0);
 		if (error != 0) {
-		splx(x);
+			splx(x);
 			return error;
 		}
 	}
@@ -683,7 +683,7 @@ i4bioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			if(error != 0)
 				break;
 
-			x = SPLI4B();
+			x = splnet();
 			cd->shorthold_data.shorthold_algorithm = mtu->shorthold_data.shorthold_algorithm;
 			cd->shorthold_data.unitlen_time = mtu->shorthold_data.unitlen_time;
 			cd->shorthold_data.idle_time = mtu->shorthold_data.idle_time;
@@ -916,7 +916,7 @@ i4bselect(dev_t dev, int rw, struct proc *p)
 		case FREAD:
 			if(!IF_QEMPTY(&i4b_rdqueue))
 				return(1);
-			x = splimp();
+			x = splnet();
 			selrecord(p, &select_rd_info);
 			selflag = 1;
 			splx(x);
@@ -948,7 +948,7 @@ i4bpoll(dev_t dev, int events, struct proc *p)
 		if(!IF_QEMPTY(&i4b_rdqueue))
 			return(1);
 
-		x = splimp();
+		x = splnet();
 		selrecord(p, &select_rd_info);
 		selflag = 1;
 		splx(x);
@@ -978,7 +978,7 @@ i4bputqueue(struct mbuf *m)
 		return;
 	}
 
-	x = splimp();
+	x = splnet();
 	
 	if(IF_QFULL(&i4b_rdqueue))
 	{
@@ -1019,7 +1019,7 @@ i4bputqueue_hipri(struct mbuf *m)
 		return;
 	}
 
-	x = splimp();
+	x = splnet();
 	
 	if(IF_QFULL(&i4b_rdqueue))
 	{
