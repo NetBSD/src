@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 1997/03/29 20:55:51 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.2 1997/05/02 18:15:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,45 +43,40 @@
 
 #ifdef __STDC__
 
-#define	SYSCALL_NOERROR(x)	.text				;\
-				.align	2			;\
-			ENTRY(x)				;\
-				li	0,(SYS_ ## x)		;\
-				sc
-
-#define	PSEUDO(x,y)		.text				;\
+#define _SYSCALL_NOERROR(x,y)	.text				;\
 				.align	2			;\
 			ENTRY(x)				;\
 				li	0,(SYS_ ## y)		;\
-				sc				;\
-				blr
+				sc
 
 #else /* !__STDC__ */
 
-#define	SYSCALL_NOERROR(x)	.text				;\
-				.align	2			;\
-			ENTRY(x)				;\
-				li	0,(SYS_/**/x)		;\
-				sc
-
-#define	PSEUDO(x,y)		.text				;\
+#define _SYSCALL_NOERROR(x,y)	.text				;\
 				.align	2			;\
 			ENTRY(x)				;\
 				li	0,(SYS_/**/y)		;\
-				sc				;\
-				blr
+				sc
 
-#endif
+#endif /* __STDC__ */
 
-#define	RSYSCALL_NOERROR(x)	SYSCALL_NOERROR(x)		;\
-				blr
 
-#define	SYSCALL(x)		.text				;\
+#define _SYSCALL(x,y)		.text				;\
 				.align	2			;\
 			2:	b	PIC_PLT(cerror)		;\
-				SYSCALL_NOERROR(x)		;\
+				_SYSCALL_NOERROR(x,y)		;\
 				bso	2b
 
-#define	RSYSCALL(x)		SYSCALL_NOERROR(x)		;\
-				bnslr				;\
+#define SYSCALL_NOERROR(x)	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)		_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)	_SYSCALL_NOERROR(x,y)		;\
+				blr
+
+#define PSEUDO(x,y)		_SYSCALL_NOERROR(x,y)		;\
+				bnlsr				;\
 				b	PIC_PLT(cerror)
+
+#define RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)		PSEUDO(x,x)
