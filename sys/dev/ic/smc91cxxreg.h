@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxreg.h,v 1.4 2001/06/12 15:17:23 wiz Exp $	*/
+/*	$NetBSD: smc91cxxreg.h,v 1.5 2003/04/29 08:47:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Gardner Buchanan <gbuchanan@shl.com>
@@ -172,15 +172,37 @@
 
 #define	MIR_FREE_MASK	0xff00	/* Free memory pages available */
 #define	MIR_TOTAL_MASK	0x00ff	/* Total memory pages available */
+#define	 MIR_MULT_91C111  1
+#define  MIR_SCALE_91C9x  256
+#define  MIR_SCALE_91C111 2048
 
 
 /*
  * Memory Configuration
  */
-#define	MEM_CFG_REG_W	0x0a
+#define	MEM_CFG_REG_W		0x0a
 
 #define	MCR_MEM_MULT(x)	(((x)>>9)&7)	/* Memory size multiplier */
 #define	MCR_TXRSV_MASK	0x001f	/* Count of pages reserved for transmit */
+
+/*
+ * Receive/PHY Control Register (SM91C111 only)
+ */
+#define	RX_PHY_CONTROL_REG_W	0x0a	/* 91C111 only */
+
+#define	RPC_LSB_SHIFT		2	/* Shift for LED-B select bits */
+#define	RPC_LSA_SHIFT		5	/* Shift for LED-A select bits */
+#define	RPC_LS_MASK		0x7	/* LED Select mask */
+#define	RPC_LS_LINK_DETECT	0x0	/* 10/100 link detected */
+#define	RPC_LS_LINK_10MBPS	0x2	/* 10 MBPS link detected */
+#define	RPC_LS_FULL_DUPLEX	0x3	/* Full duplex operation */
+#define	RPC_LS_TXRX		0x4	/* Tx/Rx packet */
+#define	RPC_LS_LINK_100MBPS	0x5	/* 100 MBPS link detected */
+#define	RPC_LS_RX		0x6	/* Rx packet */
+#define	RPC_LS_TX		0x7	/* Tx packet */
+#define	RPC_ANEG		0x0800	/* Autonegotiate enable */
+#define	RPC_DPLX		0x1000	/* Duplex select (set = Full) */
+#define	RPC_SPEED		0x2000	/* Speed (set = 100mbps) */
 
 
 /*
@@ -346,6 +368,7 @@
 #define	IM_RX_OVRN_INT	0x10	/* Receiver was overrun */
 #define	IM_EPH_INT	0x20	/* Misc. EPH conditions (see CONTROL_REG_W) */
 #define	IM_ERCV_INT	0x40	/* not on SMC9192 */
+#define	IM_MD_INT	0x80	/* SMC91C111 Internal PHY status change */
 
 
 /*
@@ -396,6 +419,7 @@
 #define	CHIP_9195	5
 #define	CHIP_91100	7
 #define	CHIP_91100FD	8
+#define	CHIP_91C111	9
 
 
 /*
