@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.24 2001/05/23 03:13:37 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.25 2001/06/18 03:33:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -233,8 +233,15 @@
 	pushl	%ds		; \
 	pushl	%es		; \
 	movl	%ax,%ds		; \
-	movl	%ax,%es
+	movl	%ax,%es		; \
+	pushl	%fs		; \
+	pushl	%gs		; \
+	movl	%ax,%fs		; \
+	movl	%ax,%gs		; \
+
 #define	INTRFASTEXIT \
+	popl	%gs		; \
+	popl	%fs		; \
 	popl	%es		; \
 	popl	%ds		; \
 	popl	%edi		; \
@@ -413,11 +420,14 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	$PSL_MBO
 	popfl
 
-	/* Find out our CPU type. */
-
+	/* Clear segment registers; always null in proc0. */
 	xorl	%eax,%eax
+	movl	%ax,%fs
+	movl	%ax,%gs
 	decl	%eax
 	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+
+	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
@@ -756,11 +766,6 @@ begin:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$4,%esp
 
-	/* Clear segment registers; always null in proc0. */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
-
 #ifdef SAFARI_FIFO_HACK
 	movb	$5,%al
 	movw	$0x37b,%dx
@@ -784,7 +789,7 @@ begin:
 /*
  * XXX We need a comment here (lightly) explaining this. Probably a
  * detailed section 9 man page, too, explaining the proc_trampoline.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void proc_trampoline(void) */
@@ -803,7 +808,7 @@ NENTRY(proc_trampoline)
 
 /*
  * XXX No section 9 man page for sigcode or esigcode. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /*
@@ -814,15 +819,7 @@ NENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SC_FS(%eax),%ecx
-	movl	SC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
@@ -839,9 +836,8 @@ _C_LABEL(esigcode):
 
 /*
  * XXX No section 9 man page for fillw.
- * fillw seems to be very sparsely used, one wonders if a thing named
- * in the manner of memset wouldn't be better. It is defined in cpu.h
- * so it is technically MD but...
+ * fillw seems to be very sparsely used (only in pccons it seems.)
+ * One wonders if it couldn't be done without.
  * -- Perry Metzger, May 7, 2001
  */
 /*
@@ -870,7 +866,7 @@ ENTRY(fillw)
 
 /*
  * XXX No section 9 man page for kcopy. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * so far as I can tell it is used only in one function in the MI kernel,
  * but it still counts.
  * -- Perry Metzger, May 7, 2001
@@ -1640,7 +1636,7 @@ NENTRY(lgdt)
  * XXX We need a comment here (lightly) explaining this. Probably a
  * short section 9 man page, too, explaining how kernel setjmp differs
  * from userland.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: int setjmp (label_t *l) */
@@ -1660,7 +1656,7 @@ ENTRY(setjmp)
  * XXX We need a comment here (lightly) explaining this. Probably a
  * short section 9 man page, too, explaining how kernel longjmp differs
  * from userland.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void longjmp (label_t *l) */
@@ -1697,7 +1693,7 @@ ENTRY(longjmp)
  */
 /*
  * XXX No section 9 man page for setrunqueue. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void setrunqueue(struct proc *p) */
@@ -1734,7 +1730,7 @@ NENTRY(setrunqueue)
  */
 /*
  * XXX No section 9 man page for remrunqueue. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void remrunqueue(struct proc *p) */
@@ -1842,12 +1838,6 @@ ENTRY(cpu_switch)
 
 	movl	P_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -1883,11 +1873,6 @@ ENTRY(cpu_switch)
 	ltr	%dx
 
 	/* We're always in the kernel, so we don't need the LDT. */
-
-	/* Clear segment registers; always null in idle pcb. */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2000,12 +1985,6 @@ switch_dequeue:
 
 	movl	P_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -2045,12 +2024,6 @@ switch_exited:
 	pushl	%edi
 	call	_C_LABEL(pmap_activate)		# pmap_activate(p)
 	addl	$4,%esp
-
-	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
-	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
 
 switch_restored:
 	/* Restore cr0 (including FPU state). */
@@ -2277,12 +2250,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	P_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -2342,11 +2309,6 @@ switch_exited:
 #endif /* USER_LDT */
 
 	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
-	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
-
 switch_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2419,11 +2381,6 @@ ENTRY(switch_exit)
 
 	/* We're always in the kernel, so we don't need the LDT. */
 
-	/* Clear segment registers; always null in proc0. */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
-
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
 	movl	%ecx,%cr0
@@ -2454,12 +2411,6 @@ ENTRY(switch_exit)
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr
   
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%edx)
-	movl	%ecx,PCB_GS(%edx)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
@@ -2642,10 +2593,21 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
+	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%fs
+/* LINTSTUB: Var: char resume_pop_fs[1]; */
+NENTRY(resume_pop_fs)
+	pushl	%gs	
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%gs
+/* LINTSTUB: Var: char resume_pop_gs[1]; */
+NENTRY(resume_pop_gs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 

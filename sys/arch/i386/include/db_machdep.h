@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15.2.3 2000/08/21 00:38:21 sommerfeld Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.2.4 2001/06/18 03:33:32 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -50,7 +50,11 @@ extern db_regs_t *ddb_regp;
 #define ddb_regs	(*ddb_regp)
 #endif
 
+#if defined(lint)
+#define	PC_REGS(regs)	((regs)->tf_eip)
+#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_eip)
+#endif
 
 #define	BKPT_INST	0xcc		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
@@ -107,7 +111,7 @@ boolean_t	db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
  * Constants for KGDB.
  */
 typedef	long		kgdb_reg_t;
-#define	KGDB_NUMREGS	14
+#define	KGDB_NUMREGS	16
 #define	KGDB_BUFLEN	512
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28.4.4 2001/01/23 06:34:56 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.4.5 2001/06/18 03:33:28 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -48,8 +48,10 @@
 static int db_i386_regop (const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
-	{ "es",		dbreg(es),     db_i386_regop },
 	{ "ds",		dbreg(ds),     db_i386_regop },
+	{ "es",		dbreg(es),     db_i386_regop },
+	{ "fs",		dbreg(fs),     db_i386_regop },
+	{ "gs",		dbreg(gs),     db_i386_regop },
 	{ "edi",	dbreg(edi),    db_i386_regop },
 	{ "esi",	dbreg(esi),    db_i386_regop },
 	{ "ebp",	dbreg(ebp),    db_i386_regop },

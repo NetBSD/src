@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.5.4.2 2001/01/07 22:12:40 sommerfeld Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.5.4.3 2001/06/18 03:33:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #endif
