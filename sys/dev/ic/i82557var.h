@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.14 2000/05/12 18:46:33 jhawk Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.15 2000/05/26 19:11:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -247,6 +247,10 @@ struct fxp_softc {
 #define	FXP_CDMCSSYNC(sc, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDMCSOFF, sizeof(struct fxp_cb_mcs), (ops))
+
+#define	FXP_CDSTATSSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDSTATSOFF, sizeof(struct fxp_stats), (ops))
 
 #define	FXP_RXBUFSIZE(m)	((m)->m_ext.ext_size -			\
 				 (sizeof(struct fxp_rfa) +		\
