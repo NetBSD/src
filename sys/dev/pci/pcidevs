@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.360 2001/10/01 00:27:33 thorpej Exp $
+$NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1165,7 +1165,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM 405GP	0x0156	IBM 405GP PCI Bridge
+product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
