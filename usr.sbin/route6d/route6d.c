@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.45 2003/04/15 07:23:20 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.46 2003/04/22 09:56:30 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.45 2003/04/15 07:23:20 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.46 2003/04/22 09:56:30 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -570,7 +570,7 @@ init(void)
 	nifc = 0;
 	nindex2ifc = 0;	/*initial guess*/
 	index2ifc = NULL;
-	snprintf(port, sizeof(port), "%d", RIP6_PORT);
+	snprintf(port, sizeof(port), "%u", RIP6_PORT);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
@@ -1051,7 +1051,7 @@ riprecv(void)
 	rp = (struct rip6 *)buf;
 	np = rp->rip6_nets;
 
-	if (rp->rip6_vers !=  RIP6_VERSION) {
+	if (rp->rip6_vers != RIP6_VERSION) {
 		trace(1, "Incorrect RIP version %d\n", rp->rip6_vers);
 		return;
 	}
