@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.16 2002/11/16 13:47:34 itojun Exp $	*/
+/*	$NetBSD: rsh.c,v 1.17 2003/04/07 01:46:41 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.16 2002/11/16 13:47:34 itojun Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.17 2003/04/07 01:46:41 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,10 +114,12 @@ main(int argc, char **argv)
 	pid_t pid;
 	uid_t uid;
 	char *args, *host, *p, *user, *name;
+	char *service=NULL;
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
 	host = user = NULL;
+	sp = NULL;
 
 #ifndef IN_RCMD
 	/*
@@ -147,24 +149,24 @@ main(int argc, char **argv)
 
 # ifdef KERBEROS
 #  ifdef CRYPT
-#   define	OPTIONS	"8KLdek:l:nu:wx"
+#   define	OPTIONS	"8KLdek:l:np:u:wx"
 #  else
-#   define	OPTIONS	"8KLdek:l:nu:w"
+#   define	OPTIONS	"8KLdek:l:np:u:w"
 #  endif
 # else
-#  define	OPTIONS	"8KLdel:nu:w"
+#  define	OPTIONS	"8KLdel:np:u:w"
 # endif
 
 #else /* IN_RCMD */
 
 # ifdef KERBEROS
 #  ifdef CRYPT
-#   define	OPTIONS	"8KLdek:l:nwx"
+#   define	OPTIONS	"8KLdek:l:np:wx"
 #  else
-#   define	OPTIONS	"8KLdek:l:nw"
+#   define	OPTIONS	"8KLdek:l:np:w"
 #  endif
 # else
-#  define	OPTIONS	"8KLdel:nw"
+#  define	OPTIONS	"8KLdel:np:w"
 # endif
 
 #endif /* IN_RCMD */
@@ -200,6 +202,18 @@ main(int argc, char **argv)
 #endif
 		case 'n':
 			nflag = 1;
+			break;
+		case 'p':
+			service = optarg;
+			sp = getservbyname(service, "tcp");
+			if (sp == NULL) {	/* number given, no name */
+				sp = malloc(sizeof(*sp));
+				memset(sp, 0, sizeof(*sp));
+				sp->s_name = service;
+				sp->s_port = atoi(service);
+				if (sp->s_port <= 0 || sp->s_port > IPPORT_ANONMAX)
+					errx(1,"port must be between 1 and %d", IPPORT_ANONMAX);
+			}
 			break;
 #ifdef IN_RCMD
 		case 'u':
@@ -265,10 +279,11 @@ main(int argc, char **argv)
 
 	args = copyargs(argv);
 
-	sp = NULL;
 #ifdef KERBEROS
 	if (use_kerberos) {
-		sp = getservbyname((doencrypt ? "ekshell" : "kshell"), "tcp");
+		if (sp == NULL) {
+			sp = getservbyname((doencrypt ? "ekshell" : "kshell"), "tcp");
+		}
 		if (sp == NULL) {
 			use_kerberos = 0;
 			warning("can't get entry for %s/tcp service",
@@ -578,7 +593,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-nd%s]%s[-l login]%s [login@]host %s\n", getprogname(),
+	    "usage: %s [-nd%s]%s[-l login] [-p port]%s [login@]host %s\n", getprogname(),
 #ifdef KERBEROS
 #ifdef CRYPT
 	    "x", " [-k realm] ",
