@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)parser.c	5.3 (Berkeley) 4/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.5 1993/05/02 01:28:43 sef Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/parser.c,v 1.6 1993/07/07 01:11:59 jtc Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -631,7 +631,7 @@ readtoken() {
 		 * check for keywords
 		 */
 		if (t == TWORD && !quoteflag) {
-			register char **pp;
+			register char *const *pp;
 
 			for (pp = parsekwd; *pp; pp++) {
 				if (**pp == *wordtext && equal(*pp, wordtext)) {
