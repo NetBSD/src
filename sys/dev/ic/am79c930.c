@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.5 2000/03/23 13:57:58 onoe Exp $ */
+/* $NetBSD: am79c930.c,v 1.6 2000/07/04 14:16:21 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #ifndef __FreeBSD__
 #include <sys/device.h>
 #endif
