@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.8 1996/01/06 20:10:59 leo Exp $
+#	$NetBSD: ATARITT,v 1.9 1996/02/19 09:05:46 leo Exp $
 #
 # ATARI-TT
 #
@@ -60,6 +60,7 @@ options		DDB		# Kernel debugger
 #
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
+options		COMPAT_11	# Compatibility to NetBSD1.1
 
 #
 # Support for System V IPC facilities.
@@ -81,6 +82,8 @@ options		GENERIC			# Mini-root boot support
 #
 options		TT_SCSI			# SCSI-support for TT only
 options		TT_VIDEO		# Graphics support for TT only
+options		DISKLABEL_NBDA		# NetBSD disklabels (required)
+options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 #
 # Build one kernel that can boot from any disk.
