@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.166 1999/10/29 21:31:30 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.167 1999/11/01 20:43:51 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.161 1999/10/29 21:30:19 matt Exp 
+ *	NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp 
  */
 
 /*
@@ -1436,6 +1436,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200e",
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
+	    0,
+	    "Forte Media",
+	    "Forte Media 801 Sound",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
@@ -6295,6 +6301,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADMTEK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ADMtek",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Forte Media",
 	    NULL,
 	},
 	{
