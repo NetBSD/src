@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.153 2001/04/25 03:54:26 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.154 2001/04/26 02:37:59 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2560,6 +2560,67 @@ delexport
 ..
 
 # ./usr/share/sushi/network
+..
+
+# ./usr/share/sushi/procs
+procs
+
+# ./usr/share/sushi/procs/showprocs
+showprocs
+# ./usr/share/sushi/procs/showprocs
+..
+
+# ./usr/share/sushi/procs/startprocs
+startprocs
+# ./usr/share/sushi/procs/startprocs
+..
+
+# ./usr/share/sushi/procs/stopprocs
+stopprocs
+# ./usr/share/sushi/procs/stopprocs
+..
+
+# ./usr/share/sushi/procs/restartprocs
+restartprocs
+# ./usr/share/sushi/procs/restartprocs
+..
+
+# ./usr/share/sushi/procs/restartallprocs
+restartallprocs
+# ./usr/share/sushi/procs/restartallprocs
+..
+
+# ./usr/share/sushi/procs/showallprocs
+showallprocs
+# ./usr/share/sushi/procs/showallprocs
+..
+
+# ./usr/share/sushi/procs/startallprocs
+startallprocs
+# ./usr/share/sushi/procs/startallprocs
+..
+
+# ./usr/share/sushi/procs/stopallprocs
+stopallprocs
+# ./usr/share/sushi/procs/stopallprocs
+..
+
+# ./usr/share/sushi/procs/topmem
+topmem
+# ./usr/share/sushi/procs/topmem
+..
+
+# ./usr/share/sushi/procs/topcpu
+topcpu
+# ./usr/share/sushi/procs/topcpu
+..
+
+# ./usr/share/sushi/procs/toptime
+toptime
+# ./usr/share/sushi/procs/toptime
+..
+
+# ./usr/share/sushi/procs
 ..
 
 # ./usr/share/sushi/util
