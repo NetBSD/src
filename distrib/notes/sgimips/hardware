@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7.2.1 2004/05/05 15:25:38 tron Exp $
+.\"	$NetBSD: hardware,v 1.7.2.2 2004/07/15 15:42:02 tron Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
@@ -51,6 +51,10 @@ Ethernet
 .(bullet -compact
 On-board SGI Seeq 80c03 ethernet controller (IP2x class)
 .Pq Em sq ,
+.bullet)
+.(bullet -compact
+On-board MACE Ethernet controller (IP32)
+.Pq Em mec ,
 .bullet)
 .(bullet -compact
 Most PCI Ethernet controllers (IP32)
