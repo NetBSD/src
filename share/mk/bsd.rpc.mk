@@ -1,15 +1,6 @@
-#	$NetBSD: bsd.rpc.mk,v 1.2 2003/05/07 13:41:22 yamt Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.3 2003/05/19 07:19:10 lukem Exp $
 
-# Resolve rpcgen's path, to allow it to be a dependency.
-
-RPCGEN?=	rpcgen
 RPC_XDIR?=	${.CURDIR}/
-
-_RPCGEN:=	${RPCGEN:M*rpcgen}
-.if ${_RPCGEN:M/*} == ""
-_RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
-.endif
-
 
 # We don't use implicit suffix rules here to avoid dependencies in the
 # Installed files.
@@ -17,7 +8,7 @@ _RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
 .if defined(RPC_INCS)
 
 .for I in ${RPC_INCS}
-${I}: ${I:.h=.x} ${_RPCGEN}
+${I}: ${I:.h=.x}
 	${RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
 .endfor
 
@@ -30,7 +21,7 @@ CLEANFILES += ${RPC_INCS}
 .if defined(RPC_XDRFILES)
 
 .for I in ${RPC_XDRFILES}
-${I}: ${RPC_XDIR}${I:_xdr.c=.x} ${_RPCGEN}
+${I}: ${RPC_XDIR}${I:_xdr.c=.x}
 	${RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
@@ -48,7 +39,7 @@ _RPCS += -s ${I}
 
 .for I in ${RPC_SVCFILES}
 
-${I}: ${RPC_XDIR}${I:_svc.c=.x} ${_RPCGEN}
+${I}: ${RPC_XDIR}${I:_svc.c=.x}
 	${RPCGEN} -C ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
 		-o ${.TARGET}
 .endfor
