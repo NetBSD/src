@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.15 2001/11/13 13:14:41 lukem Exp $	*/
+/*	$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.15 2001/11/13 13:14:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $");
 
 #include "ld.h"
 
@@ -855,8 +855,10 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		for (i = 0; i < MLX_MAX_DRIVES; i++) {
 			ms = &mlx->mlx_sysdrive[i];
 			if (ms->ms_dv != NULL)
-				if (ms->ms_dv->dv_xname[2] == '0' + *arg)
-					return (i);
+				if (ms->ms_dv->dv_xname[2] == '0' + *arg) {
+					*arg = i;
+					return (0);
+				}
 		}
 		return (ENOENT);
 	}
