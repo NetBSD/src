@@ -117,7 +117,7 @@
 /* #undef _GLIBCPP_USE_C99 */
 
 // Define if code specialized for wchar_t should be used.
-/* #undef _GLIBCPP_USE_WCHAR_T */
+#define _GLIBCPP_USE_WCHAR_T 1
 
 // Define if using setrlimit to limit memory usage during 'make check'.
 /* #undef _GLIBCPP_MEM_LIMITS */
@@ -749,7 +749,7 @@
 #define _GLIBCPP_HAVE_WCSCSPN 1
 
 /* Define if you have the wcsftime function.  */
-/* #undef _GLIBCPP_HAVE_WCSFTIME */
+#define _GLIBCPP_HAVE_WCSFTIME 1
 
 /* Define if you have the wcslen function.  */
 #define _GLIBCPP_HAVE_WCSLEN 1
