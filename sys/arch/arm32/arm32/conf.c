@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1996/10/15 01:42:18 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1996/11/23 21:15:31 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -60,15 +60,10 @@ bdev_decl(fd);
 #include "rd.h"
 bdev_decl(rd);
 #include "sd.h"
-bdev_decl(sd);
 #include "st.h"
-bdev_decl(st);
 #include "cd.h"
-bdev_decl(cd);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 
 /* Block devices */
 
@@ -176,8 +171,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #include "vt.h"                                 
 cdev_decl(physcon);
 cdev_decl(vidcvideo);
@@ -189,33 +182,19 @@ cdev_decl(sw);
 #include "pty.h"
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
-cdev_decl(pts);
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 #include "com.h"
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(fd);
-dev_decl(filedesc,open);
 cdev_decl(rd);
 #include "bpfilter.h"
-cdev_decl(bpf);
-cdev_decl(sd);
-cdev_decl(st);
-cdev_decl(cd);
 #include "ch.h"
-cdev_decl(ch);
 #include "uk.h"
-cdev_decl(uk);
 #include "ss.h"
-cdev_decl(ss);
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(vnd);
-cdev_decl(ccd);
 #include "quadmouse.h"
 cdev_decl(quadmouse);
 #include "pms.h"
