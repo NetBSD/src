@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.11 2004/09/13 12:55:48 drochner Exp $ */
+/* $NetBSD: tcds.c,v 1.12 2004/09/13 14:08:39 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.11 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.12 2004/09/13 14:08:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -332,7 +332,6 @@ tcdssubmatch(parent, cf, ldesc, aux)
 	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct tcdsdev_attach_args *tcdsdev = aux;
 
 	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
 	    cf->cf_loc[TCDSCF_CHIP] != ldesc->locs[TCDSCF_CHIP])
