@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2005/01/28 17:38:51 jkunz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,13 +70,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/01/28 17:38:51 jkunz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_hpux.h"
 #include "opt_useleds.h"
+#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $");
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
+#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 
 #include "ksyms.h"
@@ -1337,39 +1339,58 @@ cpu_reboot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
+#ifdef POWER_SWITCH
+	int i;
+#endif /* POWER_SWITCH */
 
 	/* If the system is cold, just give up and halt. */
 	if (cold)
-		goto haltsys;
+		howto |= RB_HALT;
+	else {
 
-	boothowto = howto | (boothowto & RB_HALT);
+		boothowto = howto | (boothowto & RB_HALT);
 
-	if (!(howto & RB_NOSYNC) && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
+		if (!(howto & RB_NOSYNC) && waittime < 0) {
+			waittime = 0;
+			vfs_shutdown();
 #if 0
-		if ((howto & RB_TIMEBAD) == 0)
-			resettodr();
-		else
+			if ((howto & RB_TIMEBAD) == 0)
+				resettodr();
+			else
 #endif
-			printf("WARNING: not updating battery clock\n");
+				printf("WARNING: not updating battery clock\n");
+		}
+
+		/* XXX probably save howto into stable storage */
+
+		/* Disable interrupts. */
+		splhigh();
+
+		/* Make a crash dump. */
+		if (howto & RB_DUMP)
+			dumpsys();
+
+		/* Run any shutdown hooks. */
+		doshutdownhooks();
+
+#ifdef POWER_SWITCH
+		if (pwr_sw_state == 0 &&
+		    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
+			printf("Soft power down in 10 seconds...");
+			for (i = 10; i > 0; i--) {
+				printf(" %d", i);
+				DELAY(1000000);
+			}
+			printf("\n");
+			howto &= ~RB_HALT;
+		}
+		pwr_sw_ctrl(PWR_SW_CTRL_DISABLE);
+		DELAY(1000000);
+#endif /* POWER_SWITCH */
 	}
-
-	/* XXX probably save howto into stable storage */
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* Make a crash dump. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
 	if (howto & RB_HALT) {
-haltsys:
 		printf("System halted!\n");
+		DELAY(1000000);
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (LBCAST_ADDR + iomod_command));
 	} else {
