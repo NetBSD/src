@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.154 2002/02/11 21:15:01 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.155 2002/03/27 05:40:54 eeh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -12,6 +12,9 @@ clean:		cleanprog
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
+.if ${MACHINE_ARCH} == "sparc64"
+CFLAGS+=	-mcmodel=medlow
+.endif
 
 # ELF platforms depend on crtbegin.o and crtend.o
 .if ${OBJECT_FMT} == "ELF"
