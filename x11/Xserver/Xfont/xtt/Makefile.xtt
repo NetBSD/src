@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.xtt,v 1.1 2004/03/03 08:38:09 rtr Exp $
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
+		-I${X11SRCDIR.xc}/extras/FreeType/lib \
+		-I${X11SRCDIR.xc}/extras/FreeType/lib/extend \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${X11SRCDIR.xc}/lib/font/include \
+		-I${X11SRCDIR.xc}/include \
+		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-DFONTMODULE -DMODNAME=${LIB}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
+

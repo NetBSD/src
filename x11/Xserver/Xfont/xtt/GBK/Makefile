@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/06 06:46:51 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/03 08:38:09 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/codeconv
 
@@ -7,14 +7,9 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/codeconv
 .include <bsd.own.mk>
 
 LIB=	GBK
-.PATH:	${X11SRCDIR.xc}/extras/X-TrueType/GBK
 
+.PATH:	${X11SRCDIR.xc}/extras/X-TrueType/GBK
 SRCS=	main.c GBKtoUCS2.c
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
-		-I${X11SRCDIR.xc}/extras/FreeType/lib \
-		-I${X11SRCDIR.xc}/extras/FreeType/lib/extend
+.include "../Makefile.xtt"
 
-.include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
-.include <bsd.lib.mk>
