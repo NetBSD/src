@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.25 2003/07/18 22:33:45 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.26 2003/07/21 22:14:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.25 2003/07/18 22:33:45 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.26 2003/07/21 22:14:57 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -136,6 +136,7 @@ pthread_init(void)
 	PTQ_INIT(&pthread__reidlequeue);
 	PTQ_INIT(&pthread__runqueue);
 	PTQ_INIT(&pthread__idlequeue);
+	nthreads = 1;
 
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
@@ -224,7 +225,6 @@ pthread__start(void)
 		pthread__sched_idle(self, idle);
 	}
 
-	nthreads = 1;
 	/* Start up the SA subsystem */
 	pthread__sa_start();
 	SDPRINTF(("(pthread__start %p) Started.\n", self));
