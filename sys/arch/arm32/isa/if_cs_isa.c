@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.25 1998/07/24 23:25:13 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.26 1998/07/25 01:15:54 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -238,7 +238,6 @@
 #define CS_OUTPUT_LOOP_MAX 100	/* max times round notorious tx loop */
 #define DMA_STATUS_BITS 0x0007	/* bit masks for checking DMA status */
 #define DMA_STATUS_OK 0x0004
-#define CS_MEM_SIZE 4096	/* 4096 bytes of on chip memory */
 #define ETHER_MTU 1518		/* ETHERMTU is defiend in if_ether.h as 1500
 				 * ie. without the header. */
 
@@ -248,7 +247,6 @@
 int	cs_isa_probe __P((struct device *, struct cfdata *, void *));
 void	cs_isa_attach __P((struct device *, struct device *, void *));
 int	cs_get_params __P((struct cs_softc *));
-int	cs_validate_params __P((struct cs_softc *));
 int	cs_get_enaddr __P((struct cs_softc *));
 int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
 int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
@@ -323,6 +321,9 @@ cs_isa_probe(parent, cf, aux)
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t ioh, memh;
 	int rv = 0, have_io = 0, have_mem = 0;
+	u_int16_t isa_cfg, isa_membase;
+	bus_addr_t maddr = ia->ia_maddr;
+	int irq = ia->ia_irq;
 
 	/*
 	 * Disallow wildcarded I/O base.
@@ -331,16 +332,11 @@ cs_isa_probe(parent, cf, aux)
 		return (0);
 
 	/*
-	 * Map the I/O and mem (if specified) space.
+	 * Map the I/O space.
 	 */
 	if (bus_space_map(ia->ia_iot, ia->ia_iobase, CS8900_IOSIZE, 0, &ioh))
 		goto out;
 	have_io = 1;
-
-	if (ia->ia_maddr != ISACF_IOMEM_DEFAULT &&
-	    bus_space_map(ia->ia_memt, ia->ia_maddr, CS_MEM_SIZE, 0, &memh))
-		goto out;
-	have_mem = 1;
 
 	/* Verify that it's a Crystal product. */
 	if (CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_EISA_NUM) !=
@@ -360,15 +356,77 @@ cs_isa_probe(parent, cf, aux)
 		rv = 1;
 	}
 
+	/*
+	 * If the IRQ or memory address were not specified, read the
+	 * ISA_CFG EEPROM location.
+	 */
+	if (maddr == ISACF_IOMEM_DEFAULT || irq == ISACF_IRQ_DEFAULT) {
+		if (cs_verify_eeprom(iot, ioh) == CS_ERROR) {
+			printf("cs_isa_probe: EEPROM bad or missing\n");
+			goto out;
+		}
+		if (cs_read_eeprom(iot, ioh, EEPROM_ISA_CFG, &isa_cfg)
+		    == CS_ERROR) {
+			printf("cs_isa_probe: unable to read ISA_CFG\n");
+			goto out;
+		}
+	}
+
+	/*
+	 * If the IRQ wasn't specified, get it from the EEPROM.
+	 */
+	if (irq == ISACF_IRQ_DEFAULT) {
+		irq = isa_cfg & ISA_CFG_IRQ_MASK;
+		if (irq == 3)
+			irq = 5;
+		else
+			irq += 10;
+	}
+
+	/*
+	 * If the memory address wasn't specified, get it from the EEPROM.
+	 */
+	if (maddr == ISACF_IOMEM_DEFAULT) {
+		if ((isa_cfg & ISA_CFG_MEM_MODE) == 0) {
+			/* EEPROM says don't use memory mode. */
+			goto out;
+		}
+		if (cs_read_eeprom(iot, ioh, EEPROM_MEM_BASE, &isa_membase)
+		    == CS_ERROR) {
+			printf("cs_isa_probe: unable to read MEM_BASE\n");
+			goto out;
+		}
+
+		isa_membase &= MEM_BASE_MASK;
+		maddr = (int)isa_membase << 8;
+	}
+
+	/*
+	 * We now have a valid mem address; attempt to map it.
+	 */
+	if (bus_space_map(ia->ia_memt, maddr, CS8900_MEMSIZE, 0, &memh)) {
+		/* Can't map it; fall back on i/o-only mode. */
+		printf("cs_isa_probe: unable to map memory space\n");
+		maddr = ISACF_IOMEM_DEFAULT;
+	} else
+		have_mem = 1;
+
  out:
 	if (have_io)
 		bus_space_unmap(iot, ioh, CS8900_IOSIZE);
 	if (have_mem)
-		bus_space_unmap(memt, memh, CS_MEM_SIZE);
+		bus_space_unmap(memt, memh, CS8900_MEMSIZE);
+
+	/* We can't run w/ an invalid IRQ. */
+	if (irq == ISACF_IRQ_DEFAULT)
+		rv = 0;
 
 	if (rv) {
 		ia->ia_iosize = CS8900_IOSIZE;
-		ia->ia_msize = CS_MEM_SIZE;
+		ia->ia_maddr = maddr;
+		ia->ia_irq = irq;
+		if (ia->ia_maddr != ISACF_IOMEM_DEFAULT)
+			ia->ia_msize = CS8900_MEMSIZE;
 	}
 	return (rv);
 }
@@ -402,6 +460,41 @@ cs_isa_attach(parent, self, aux)
 		return;
 	}
 
+	/*
+	 * Validate IRQ.
+	 */
+	if (CS8900_IRQ_ISVALID(sc->sc_irq) == 0) {
+		printf("%s: invalid IRQ %d\n", sc->sc_dev.dv_xname, sc->sc_irq);
+		return;
+	}
+
+	/*
+	 * Map the memory space if it was specified.  If we can do this,
+	 * we set ourselves up to use memory mode forever.  Otherwise,
+	 * we fall back on I/O mode.
+	 */
+	if (ia->ia_maddr != ISACF_IOMEM_DEFAULT &&
+	    ia->ia_msize == CS8900_MEMSIZE &&
+	    CS8900_MEMBASE_ISVALID(ia->ia_maddr)) {
+		if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize,
+		    0, &sc->sc_memh)) {
+			printf("%s: unable to map memory space\n",
+			    sc->sc_dev.dv_xname);
+		} else {
+			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
+			sc->sc_pktpgaddr = ia->ia_maddr;
+		}
+	}
+
+	/* XXX get IST from front-end. */
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_LEVEL,
+	    IPL_NET, cs_intr, sc);
+	if (sc->sc_ih == NULL) {
+		printf("%s: unable to establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	reg = CS_READ_PACKET_PAGE_IO(sc->sc_iot, sc->sc_ioh, PKTPG_PRODUCT_ID);
 	sc->sc_prodid = reg & PROD_ID_MASK;
 	sc->sc_prodrev = (reg & PROD_REV_MASK) >> 8;
@@ -419,34 +512,6 @@ cs_isa_attach(parent, self, aux)
 	default:
 		panic("cs_isa_attach: impossible");
 	}
-
-	/*
-	 * XXX We only support the memory-mapped mode of operation right
-	 * XXX now.  (??? --thorpej)
-	 */
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT ||
-	    ia->ia_msize != CS_MEM_SIZE) {
-		printf("%s: only memory-mapped mode is supported\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize,
-	    0, &sc->sc_memh)) {
-		printf("%s: unable to map memory space\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/*
-	 * The default EEPROM configuration is to use programmed IO. If we
-	 * want to use mapped memory we must manually set the chips
-	 * registers.
-	 *
-	 * I think we always want to use the external latch logic.
-	 */
-	sc->sc_pktpgaddr = ia->ia_maddr;
-	sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA | CFGFLG_IOCHRDY;
 
 	/*
 	 * the first thing to do is check that the mbuf cluster size is
@@ -515,6 +580,13 @@ cs_isa_attach(parent, self, aux)
 		/* Return value is malloc'd. */
 		free(media, M_DEVBUF);
 	}
+
+#ifdef SHARK	/* XXX machdep OFW hook. */
+	/*
+	 * I think we always want to use the external latch logic.
+	 */
+	sc->sc_cfgflags |= CFGFLG_USE_SA | CFGFLG_IOCHRDY;
+#endif
     }
 #else
 	/* Initialize ifmedia structures. */
@@ -530,12 +602,6 @@ cs_isa_attach(parent, self, aux)
 	if (cs_get_params(sc) == CS_ERROR) {
 		printf("%s: unable to get settings from EEPROM\n",
 		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Verify that parameters are valid */
-	if (cs_validate_params(sc) == CS_ERROR) {
-		printf("%s: invalid EEPROM settings\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -566,6 +632,16 @@ cs_isa_attach(parent, self, aux)
 	printf("%s: %s rev. %c, address %s, media %s\n", sc->sc_dev.dv_xname,
 	    chipname, sc->sc_prodrev + 'A', ether_sprintf(sc->sc_enaddr),
 	    medname);
+
+	/*
+	 * XXX Driver only supports memory-mode and dma-mode operation for now.
+	 * XXX FIXME!!
+	 */
+	if ((sc->sc_cfgflags & CFGFLG_MEM_MODE) == 0) {
+		printf("%s: driver only supports memory mode\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
 		printf("%s: DMA channel unspecified, not using DMA\n",
@@ -610,15 +686,6 @@ after_dma_block:
 		return;
 	}
 
-	/* XXX get IST from front-end. */
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_LEVEL,
-	    IPL_NET, cs_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -637,15 +704,8 @@ cs_get_params(sc)
 	struct cs_softc *sc;
 {
 	u_int16_t isaConfig;
-	u_int16_t memBase;
 	u_int16_t adapterConfig;
 	u_int16_t xmitCtl;
-
-	/* If all of these parameters were specified */
-	if (sc->sc_cfgflags != 0 && sc->sc_pktpgaddr != (bus_addr_t)MADDRUNK
-	    && sc->sc_irq != 0) {
-		return (CS_OK);
-	}
 
 	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
 		printf("%s: cs_get_params: EEPROM missing or bad\n",
@@ -670,10 +730,6 @@ cs_get_params(sc)
 
 	/* If the configuration flags were not specified */
 	if (sc->sc_cfgflags == 0) {
-		/* Copy the memory mode flag */
-		if (isaConfig & ISA_CFG_MEM_MODE)
-			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
-
 		/* Copy the USE_SA flag */
 		if (isaConfig & ISA_CFG_USE_SA)
 			sc->sc_cfgflags |= CFGFLG_USE_SA;
@@ -685,32 +741,6 @@ cs_get_params(sc)
 		/* Copy the DC/DC Polarity flag */
 		if (adapterConfig & ADPTR_CFG_DCDC_POL)
 			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
-	}
-
-	/* If the PacketPage pointer was not specified */
-	if (sc->sc_pktpgaddr == (bus_addr_t)MADDRUNK) {
-		/* If memory mode is enabled */
-		if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
-			/* Get the memory base address from EEPROM */
-			if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh,
-			    EEPROM_MEM_BASE, &memBase) == CS_ERROR)
-				goto eeprom_bad;
-
-			memBase &= MEM_BASE_MASK;	/* Clear unused bits */
-
-			/* Setup the PacketPage pointer */
-			sc->sc_pktpgaddr = (((u_long) memBase) << 8);
-		}
-	}
-
-	/* If the interrupt level was not specified */
-	if (sc->sc_irq == 0) {
-		/* Get the interrupt level from the ISA config */
-		sc->sc_irq = isaConfig & ISA_CFG_IRQ_MASK;
-		if (sc->sc_irq == 3)
-			sc->sc_irq = 5;
-		else
-			sc->sc_irq += 10;
 	}
 
 	switch (adapterConfig & ADPTR_CFG_MEDIA) {
@@ -734,29 +764,6 @@ cs_get_params(sc)
 	printf("%s: cs_get_params: unable to read from EEPROM\n",
 	    sc->sc_dev.dv_xname);
 	return (CS_ERROR);
-}
-
-int 
-cs_validate_params(sc)
-	struct cs_softc *sc;
-{
-	int memAddr;
-
-	memAddr = sc->sc_pktpgaddr;
-
-	if ((memAddr & 0x000FFF) != 0) {
-		printf("%s: memory address not on 4k boundary\n",
-		    sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
-
-	if (!(sc->sc_irq == 5 || sc->sc_irq == 10 || sc->sc_irq == 11 ||
-	      sc->sc_irq == 12)) {
-		printf("%s: invalid IRQ\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
-
-	return CS_OK;
 }
 
 int 
