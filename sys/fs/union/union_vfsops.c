@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.14 2004/05/12 02:07:39 jrf Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.15 2004/05/22 20:42:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.14 2004/05/12 02:07:39 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.15 2004/05/22 20:42:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,53 +481,38 @@ union_statvfs(mp, sbp, p)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct statvfs mstat;
-	int lbsize;
+	unsigned long l_bsize;
+	fsblkcnt_t l_blocks, l_bfree;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_statvfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
 	    um->um_lowervp, um->um_uppervp);
 #endif
 
-	memset(&mstat, 0, sizeof(mstat));
-
 	if (um->um_lowervp) {
-		error = VFS_STATVFS(um->um_lowervp->v_mount, &mstat, p);
+		error = VFS_STATVFS(um->um_lowervp->v_mount, sbp, p);
 		if (error)
 			return (error);
+		l_bsize = sbp->f_bsize;
+		l_blocks = sbp->f_blocks - sbp->f_bfree;
+		l_files = sbp->f_files - sbp->f_ffree;
+	} else {
+		l_bsize = 0;
+		l_blocks = 0;
+		l_files = 0;
 	}
 
-	/* now copy across the "interesting" information and fake the rest */
-	lbsize = mstat.f_bsize;
-	sbp->f_blocks = mstat.f_blocks - mstat.f_bfree;
-	sbp->f_files = mstat.f_files - mstat.f_ffree;
-
-	error = VFS_STATVFS(um->um_uppervp->v_mount, &mstat, p);
+	error = VFS_STATVFS(um->um_uppervp->v_mount, sbp, p);
 	if (error)
 		return (error);
-
-	sbp->f_flag = mstat.f_flag;
-	sbp->f_bsize = mstat.f_bsize;
-	sbp->f_frsize = mstat.f_frsize;
-	sbp->f_iosize = mstat.f_iosize;
-
 	/*
 	 * The "total" fields count total resources in all layers,
 	 * the "free" fields count only those resources which are
 	 * free in the upper layer (since only the upper layer
 	 * is writable).
 	 */
-
-	if (mstat.f_bsize != lbsize)
-		sbp->f_blocks = sbp->f_blocks * lbsize / mstat.f_bsize;
-	sbp->f_blocks += mstat.f_blocks;
-	sbp->f_bfree = mstat.f_bfree;
-	sbp->f_bavail = mstat.f_bavail;
-	sbp->f_bresvd = mstat.f_bresvd;
-	sbp->f_files += mstat.f_files;
-	sbp->f_ffree = mstat.f_ffree;
-	sbp->f_favail = mstat.f_favail;
-	sbp->f_fresvd = mstat.f_fresvd;
+	sbp->f_blocks += l_blocks * l_bsize / sbp->f_bsize;
+	sbp->f_files += l_files;
 
 	copy_statvfs_info(sbp, mp);
 	return (0);
