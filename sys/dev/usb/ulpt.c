@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.64 2004/07/03 19:33:15 mycroft Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.65 2004/10/23 13:28:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.64 2004/07/03 19:33:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.65 2004/10/23 13:28:27 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,13 +222,13 @@ USB_ATTACH(ulpt)
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
-	usb_interface_descriptor_t *id, *iend;
-	usb_config_descriptor_t *cdesc;
+	usb_interface_descriptor_t *id;
 	usbd_status err;
 	char devinfo[1024];
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i, altno;
+	usbd_desc_iter_t iter;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
@@ -236,27 +236,12 @@ USB_ATTACH(ulpt)
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 
-	/* XXX
-	 * Stepping through the alternate settings needs to be abstracted out.
-	 */
-	cdesc = usbd_get_config_descriptor(dev);
-	if (cdesc == NULL) {
-		printf("%s: failed to get configuration descriptor\n",
-		       USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-	iend = (usb_interface_descriptor_t *)
-		   ((char *)cdesc + UGETW(cdesc->wTotalLength));
-#ifdef DIAGNOSTIC
-	if (ifcd < (usb_interface_descriptor_t *)cdesc ||
-	    ifcd >= iend)
-		panic("ulpt: iface desc out of range");
-#endif
-
-	/* Step through all the descriptors looking for bidir mode */
-	for (id = ifcd, altno = 0;
-	     id < iend;
-	     id = (void *)((char *)id + id->bLength)) {
+	/* Loop through descriptors looking for a bidir mode. */
+	usb_desc_iter_init(dev, &iter);
+	for (altno = 0;;) {
+		id = (usb_interface_descriptor_t *)usb_desc_iter_next(&iter);
+		if (!id)
+			break;
 		if (id->bDescriptorType == UDESC_INTERFACE &&
 		    id->bInterfaceNumber == ifcd->bInterfaceNumber) {
 			if (id->bInterfaceClass == UICLASS_PRINTER &&
@@ -265,7 +250,7 @@ USB_ATTACH(ulpt)
 			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284*/))
 				goto found;
 			altno++;
-		}
+		}		
 	}
 	id = ifcd;		/* not found, use original */
  found:
