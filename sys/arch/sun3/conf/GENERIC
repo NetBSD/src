@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.94 2002/10/06 02:12:02 provos Exp $
+# $NetBSD: GENERIC,v 1.95 2002/10/14 18:39:41 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.94 $"
+#ident 		"GENERIC-$Revision: 1.95 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -248,6 +248,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

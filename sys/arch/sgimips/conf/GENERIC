@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 2002/10/06 02:12:01 provos Exp $
+#	$NetBSD: GENERIC,v 1.10 2002/10/14 18:39:38 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.9 $"
+#ident		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -228,6 +228,7 @@ scsibus*	at wdsc?		# HPC SCSI
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2002/10/06 02:11:57 provos Exp $
+# $NetBSD: GENERIC,v 1.133 2002/10/14 18:39:33 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	16		# estimated number of users
 
@@ -270,6 +270,7 @@ asc0	at obio?			# ASC/EASC audio
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

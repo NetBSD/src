@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2002/10/06 02:11:56 provos Exp $
+# $NetBSD: GENERIC,v 1.15 2002/10/14 18:39:29 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -110,6 +110,7 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vnd		4	# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	rnd
