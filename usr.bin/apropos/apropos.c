@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.18 2002/06/11 05:46:50 itojun Exp $	*/
+/*	$NetBSD: apropos.c,v 1.19 2002/06/11 07:17:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.18 2002/06/11 05:46:50 itojun Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.19 2002/06/11 07:17:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,9 +121,8 @@ main(argc, argv)
 		apropos(argv, p_path, 1);
 	else {
 		config(conffile);
-		ep = (tp = getlist("_whatdb", 0)) == NULL ?
-			NULL : TAILQ_FIRST(&tp->list);
-		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
+		tp = getlist("_whatdb", 1);
+		TAILQ_FOREACH(ep, &tp->list, q) {
 			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
 			    &pg)) != 0) {
 				if (rv == GLOB_NOMATCH)
