@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.5 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.6 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -129,7 +129,7 @@ kb_hb_attach(parent, self, aux)
 	}
 	printf("\n");
 
-	hb_intr_establish(intr, IPL_TTY, kb_hb_intr, sc);
+	hb_intr_establish(intr, INTEN0_KBDINT, IPL_TTY, kb_hb_intr, sc);
 
 	aa.console = cons;
 	aa.keymap = &kb_hb_keymapdata;

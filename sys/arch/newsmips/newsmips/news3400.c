@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.10 2003/05/09 13:36:42 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.11 2003/05/10 09:46:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -84,7 +84,7 @@ news3400_intr(status, cause, pc, ipending)
 		}
 
 		if (stat)
-			hb_intr_dispatch(2);
+			hb_intr_dispatch(2, stat);
 
 		cause &= ~MIPS_INT_MASK_2;
 	}
@@ -142,7 +142,7 @@ news3400_level0_intr()
 	stat = *intst1 & LEVEL0_MASK;
 	*intclr1 = stat;
 
-	hb_intr_dispatch(0);
+	hb_intr_dispatch(0, stat);
 
 	if (stat & INTST1_SLOT1)
 		intrcnt[SLOT1_INTR]++;
@@ -170,7 +170,7 @@ news3400_level1_intr()
 
 	stat1 &= saved_inten1;
 
-	hb_intr_dispatch(1);
+	hb_intr_dispatch(1, stat1);
 
 	*inten1 = saved_inten1;
 

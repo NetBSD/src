@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.6 2003/05/10 03:57:28 tsutsui Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.7 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -107,7 +107,7 @@ ms_hb_attach(parent, self, aux)
 
 	printf(" level %d\n", intr);
 
-	hb_intr_establish(intr, IPL_TTY, ms_hb_intr, sc);
+	hb_intr_establish(intr, INTEN0_MSINT, IPL_TTY, ms_hb_intr, sc);
 
 	aa.accessops = &ms_hb_accessops;
 	aa.accesscookie = sc;

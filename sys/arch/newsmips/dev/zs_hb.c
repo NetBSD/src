@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.14 2003/05/10 03:27:33 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.15 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -296,7 +296,8 @@ zs_hb_attach(parent, self, aux)
 	if (!didintr) {
 		didintr = 1;
 
-		hb_intr_establish(intlevel, IPL_SERIAL, zshard_hb, NULL);
+		hb_intr_establish(intlevel, INTST1_SCC, IPL_SERIAL,
+		    zshard_hb, NULL);
 	}
 	/* XXX; evcnt_attach() ? */
 
