@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.3 1998/11/09 23:12:18 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.4 1999/02/19 06:58:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,24 +111,30 @@ const struct ex_pci_product {
 	const char	*epp_name;	/* device name */
 } ex_pci_products[] = {
 	{ PCI_PRODUCT_3COM_3C900TPO,	0,
-	  "3c900-TPO" },
+	  "3c900-TPO Ethernet" },
 	{ PCI_PRODUCT_3COM_3C900COMBO,	0,
-	  "3c900-COMBO" },
+	  "3c900-COMBO Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C905TX,	EX_CONF_MII,
-	  "3c905-TX" },
+	  "3c905-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905T4,	EX_CONF_MII,
-	  "3c905-T4" },
+	  "3c905-T4 10/100 Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C900BTPO,	EX_CONF_90XB,
-	  "3c900B-TPO" },
+	  "3c900B-TPO Ethernet" },
 	{ PCI_PRODUCT_3COM_3C900BCOMBO,	EX_CONF_90XB,
-	  "3c900B-COMBO" },
+	  "3c900B-COMBO Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C905BTX,	EX_CONF_90XB|EX_CONF_MII|EX_CONF_INTPHY,
-	  "3c905B-TX" },
+	  "3c905B-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905BT4,	EX_CONF_90XB|EX_CONF_MII,
-	  "3c905B-T4" },
+	  "3c905B-T4 10/100 Ethernet" },
+	{ PCI_PRODUCT_3COM_3C905BFX,	EX_CONF_90XB|EX_CONF_MII,
+	  "3c905B-FX 10/100 Ethernet" },
+
+	/* XXX Internal PHY? */
+	{ PCI_PRODUCT_3COM_3C980BSRV,	EX_CONF_90XB|EX_CONF_MII,
+	  "3c980 Server Adapter 10/100 Ethernet" },
 
 	{ 0,				0,
 	  NULL },
@@ -191,7 +197,7 @@ ex_pci_attach(parent, self, aux)
 		panic("ex_pci_attach: impossible");
 	}
 
-	printf(": 3Com %s Ethernet\n", epp->epp_name);
+	printf(": 3Com %s\n", epp->epp_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
