@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 1998/08/23 02:48:28 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 1998/08/27 06:23:33 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,14 +35,6 @@
 #include <sparc64/stand/ofwboot/openfirm.h>
 
 #include <machine/cpu.h>
-
-/* All cells are 8 byte slots */
-typedef u_int64_t cell_t;
-/* 
- * Zero extend -- We force zero extension in case someone else
- *		  sign extended these values elsewhere.
- */
-#define ZEX(x)	(cell_t)(u_int)(int)(x)
 
 vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
 vaddr_t OF_alloc_virt __P((int len, int align));
@@ -85,72 +77,84 @@ _start(vpd, res, openfirm, arg, argl)
 __dead void
 _rtt()
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
-	} args = {
-		(cell_t)&"exit",
-		(cell_t)0,
-		(cell_t)0
-	};
+	} args;
 
+	args.name = ADR2CELL("exit");
+	args.nargs = 0;
+	args.nreturns = 0;
 	openfirmware(&args);
 	while (1);			/* just in case */
 }
 
-u_int
+void
+OF_enter()
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+	} args;
+
+	args.name = ADR2CELL("enter");
+	args.nargs = 0;
+	args.nreturns = 0;
+	openfirmware(&args);
+}
+
+int
 OF_finddevice(name)
 	char *name;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t device;
 		cell_t phandle;
-	} args = {
-		(cell_t)&"finddevice",
-		(cell_t)1,
-		(cell_t)1,
-	};	
+	} args;
 	
-	args.device = (cell_t)name;
+	args.name = ADR2CELL("finddevice");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.device = ADR2CELL(name);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
 }
 
-u_int
+int
 OF_instance_to_package(ihandle)
-	u_int ihandle;
+	int ihandle;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t ihandle;
 		cell_t phandle;
-	} args = {
-		(cell_t)&"instance-to-package",
-		(cell_t)1,
-		(cell_t)1,
-	};
+	} args;
 	
-	args.ihandle = ZEX(ihandle);
+	args.name = ADR2CELL("instance-to-package");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(ihandle);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
 }
 
-u_int
+int
 OF_getprop(handle, prop, buf, buflen)
-	u_int handle;
+	int handle;
 	char *prop;
 	void *buf;
 	int buflen;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -159,15 +163,14 @@ OF_getprop(handle, prop, buf, buflen)
 		cell_t buf;
 		cell_t buflen;
 		cell_t size;
-	} args = {
-		(cell_t)&"getprop",
-		(cell_t)4,
-		(cell_t)1,
-	};
+	} args;
 	
-	args.phandle = ZEX(handle);
-	args.prop = (cell_t)prop;
-	args.buf = (cell_t)buf;
+	args.name = ADR2CELL("getprop");
+	args.nargs = 4;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prop = ADR2CELL(prop);
+	args.buf = ADR2CELL(buf);
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -182,7 +185,7 @@ OF_setprop(handle, prop, buf, len)
 	void *buf;
 	int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -191,15 +194,14 @@ OF_setprop(handle, prop, buf, len)
 		cell_t buf;
 		cell_t len;
 		cell_t size;
-	} args = {
-		(cell_t)&"setprop",
-		(cell_t)4,
-		(cell_t)1,
-	};
+	} args;
 	
-	args.phandle = ZEX(handle);
-	args.prop = (cell_t)prop;
-	args.buf = (cell_t)buf;
+	args.name = ADR2CELL("setprop");
+	args.nargs = 4;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prop = ADR2CELL(prop);
+	args.buf = ADR2CELL(buf);
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -207,25 +209,22 @@ OF_setprop(handle, prop, buf, len)
 }
 #endif
 
-u_int
+int
 OF_open(dname)
 	char *dname;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t dname;
 		cell_t handle;
-	} args = {
-		(cell_t)&"open",
-		(cell_t)1,
-		(cell_t)1,
-		(cell_t)NULL,
-		(cell_t)0
-	};
+	} args;
 	
-	args.dname = (cell_t)dname;
+	args.name = ADR2CELL("open");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.dname = ADR2CELL(dname);
 	if (openfirmware(&args) == -1 ||
 	    args.handle == 0)
 		return -1;
@@ -234,30 +233,29 @@ OF_open(dname)
 
 void
 OF_close(handle)
-	u_int handle;
+	int handle;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t handle;
-	} args = {
-		(cell_t)&"close",
-		1,
-		0,
-	};
+	} args;
 	
-	args.handle = ZEX(handle);
+	args.name = ADR2CELL("close");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.handle = HDL2CELL(handle);
 	openfirmware(&args);
 }
 
 int
 OF_write(handle, addr, len)
-	u_int handle;
+	int handle;
 	void *addr;
 	int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -265,14 +263,13 @@ OF_write(handle, addr, len)
 		cell_t addr;
 		cell_t len;
 		cell_t actual;
-	} args = {
-		(cell_t)&"write",
-		(cell_t)3,
-		(cell_t)1,
-	};
+	} args;
 
-	args.ihandle = ZEX(handle);
-	args.addr = (cell_t)addr;
+	args.name = ADR2CELL("write");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(handle);
+	args.addr = ADR2CELL(addr);
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -281,11 +278,11 @@ OF_write(handle, addr, len)
 
 int
 OF_read(handle, addr, len)
-	u_int handle;
+	int handle;
 	void *addr;
 	int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -293,14 +290,13 @@ OF_read(handle, addr, len)
 		cell_t addr;
 		cell_t len;
 		cell_t actual;
-	} args = {
-		(cell_t)&"read",
-		(cell_t)3,
-		(cell_t)1,
-	};
+	} args;
 
-	args.ihandle = ZEX(handle);
-	args.addr = (cell_t)addr;
+	args.name = ADR2CELL("read");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(handle);
+	args.addr = ADR2CELL(addr);
 	args.len = len;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -309,10 +305,10 @@ OF_read(handle, addr, len)
 
 int
 OF_seek(handle, pos)
-	u_int handle;
+	int handle;
 	u_quad_t pos;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -320,17 +316,20 @@ OF_seek(handle, pos)
 		cell_t poshi;
 		cell_t poslo;
 		cell_t status;
-	} args = {
-		(cell_t)&"seek",
-		(cell_t)3,
-		(cell_t)1,
-	};
+	} args;
 	
-	args.handle = ZEX(handle);
-	args.poshi = ZEX(pos >> 32);
-	args.poslo = ZEX(pos);
-	if (openfirmware(&args) == -1)
+	args.name = ADR2CELL("seek");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.handle = HDL2CELL(handle);
+	args.poshi = HDL2CELL(pos >> 32);
+	args.poslo = HDL2CELL(pos);
+if ((args.poshi<<32)|args.poslo > pos) printf("OF_seek: conversion error\n");
+	if (openfirmware(&args) == -1) {
+printf("OF_seek: to %lx -- error\n", (long)pos);
 		return -1;
+	}
+printf("OF_seek: to %lx status %lx\n", (long)pos, (long)args.status);
 	return args.status;
 }
 
@@ -339,19 +338,18 @@ OF_release(virt, size)
 	void *virt;
 	u_int size;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t virt;
 		cell_t size;
-	} args = {
-		(cell_t)&"release",
-		(cell_t)2,
-		(cell_t)0,
-	};
+	} args;
 	
-	args.virt = (cell_t)virt;
+	args.name = ADR2CELL("release");
+	args.nargs = 2;
+	args.nreturns = 0;
+	args.virt = ADR2CELL(virt);
 	args.size = size;
 	openfirmware(&args);
 }
@@ -359,17 +357,16 @@ OF_release(virt, size)
 int
 OF_milliseconds()
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t ms;
-	} args = {
-		(cell_t)&"milliseconds",
-		(cell_t)0,
-		(cell_t)1,
-	};
+	} args;
 	
+	args.name = ADR2CELL("milliseconds");
+	args.nargs = 0;
+	args.nreturns = 1;
 	openfirmware(&args);
 	return args.ms;
 }
@@ -383,7 +380,7 @@ OF_chain(virt, size, entry, arg, len)
 	u_int len;
 {
 	extern int64_t romp;
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -392,16 +389,15 @@ OF_chain(virt, size, entry, arg, len)
 		cell_t entry;
 		cell_t arg;
 		cell_t len;
-	} args = {
-		(cell_t)&"chain",
-		(cell_t)5,
-		(cell_t)0,
-	};
+	} args;
 
-	args.virt = (cell_t)virt;
+	args.name = ADR2CELL("chain");
+	args.nargs = 5;
+	args.nreturns = 0;
+	args.virt = ADR2CELL(virt);
 	args.size = size;
-	args.entry = (cell_t)entry;
-	args.arg = (cell_t)arg;
+	args.entry = ADR2CELL(entry);
+	args.arg = ADR2CELL(arg);
 	args.len = len;
 	openfirmware(&args);
 	printf("OF_chain: prom returned!\n");
@@ -445,7 +441,7 @@ OF_claim_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -456,18 +452,7 @@ int len;
 		cell_t vaddr;
 		cell_t status;
 		cell_t retaddr;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)5,
-		(cell_t)2,
-		(cell_t)&"claim",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)0, 
-		(cell_t)NULL,
-		(cell_t)0,
-		(cell_t)0
-	};
+	} args;
 
 #ifdef	__notyet
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -475,9 +460,14 @@ int len;
 		return -1LL;
 	}
 #endif
-	args.ihandle = mmuh;
-	args.vaddr = (cell_t)vaddr;
+	args.name = ADR2CELL("call-method");
+	args.nargs = 5;
+	args.nreturns = 2;
+	args.method = ADR2CELL("claim");
+	args.ihandle = HDL2CELL(mmuh);
+	args.align = 0;
 	args.len = len;
+	args.vaddr = ADR2CELL(vaddr);
 	if(openfirmware(&args) != 0)
 		return -1LL;
 	return args.retaddr; /* Kluge till we go 64-bit */
@@ -493,8 +483,8 @@ OF_alloc_virt(len, align)
 int len;
 int align;
 {
-	static int retaddr=-1;
-	static struct {
+	int retaddr=-1;
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -504,17 +494,7 @@ int align;
 		cell_t len;
 		cell_t status;
 		cell_t retaddr;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)4,
-		(cell_t)2,
-		(cell_t)&"claim",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)0, 
-		(cell_t)0,
-		(cell_t)&retaddr
-	};
+	} args;
 
 #ifdef	__notyet
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -522,9 +502,14 @@ int align;
 		return -1LL;
 	}
 #endif
+	args.name = ADR2CELL("call-method");
+	args.nargs = 4;
+	args.nreturns = 2;
+	args.method = ADR2CELL("claim");
 	args.ihandle = mmuh;
 	args.align = align;
 	args.len = len;
+	args.retaddr = ADR2CELL(&retaddr);
 	if(openfirmware(&args) != 0)
 		return -1LL;
 	return (vaddr_t)args.retaddr; /* Kluge till we go 64-bit */
@@ -540,7 +525,7 @@ OF_free_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -548,15 +533,7 @@ int len;
 		cell_t ihandle;
 		cell_t len;
 		cell_t vaddr;
-	} args = {
-		(cell_t)&"call-method",
-		4,
-		0,
-		(cell_t)&"release",
-		0,
-		0,
-		NULL
-	};
+	} args;
 
 #ifdef	__notyet
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -564,8 +541,12 @@ int len;
 		return -1;
 	}
 #endif
-	args.ihandle = mmuh;
-	args.vaddr = (cell_t)vaddr;
+	args.name = ADR2CELL("call-method");
+	args.nargs = 4;
+	args.nreturns = 0;
+	args.method = ADR2CELL("release");
+	args.ihandle = HDL2CELL(mmuh);
+	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -581,7 +562,7 @@ OF_unmap_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -589,15 +570,7 @@ int len;
 		cell_t ihandle;
 		cell_t len;
 		cell_t vaddr;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)4,
-		(cell_t)0,
-		(cell_t)&"unmap",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)NULL
-	};
+	} args;
 
 #ifdef	__notyet
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -605,8 +578,12 @@ int len;
 		return -1;
 	}
 #endif
-	args.ihandle = mmuh;
-	args.vaddr = (cell_t)vaddr;
+	args.name = ADR2CELL("call-method");
+	args.nargs = 4;
+	args.nreturns = 0;
+	args.method = ADR2CELL("unmap");
+	args.ihandle = HDL2CELL(mmuh);
+	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -623,8 +600,7 @@ off_t size;
 vaddr_t vaddr;
 int mode;
 {
-	u_int phys_hi, phys_lo;
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -637,17 +613,7 @@ int mode;
 		cell_t paddr_lo;
 		cell_t status;
 		cell_t retaddr;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)7,
-		(cell_t)1,
-		(cell_t)&"map",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)NULL,
-		(cell_t)NULL,
-		(cell_t)NULL
-	};
+	} args;
 
 #ifdef	__notyet
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -655,15 +621,17 @@ int mode;
 		return 0LL;
 	}
 #endif
-	phys_hi = (cell_t)(paddr>>32);
-	phys_lo = (cell_t)(int)paddr;
-
-	args.ihandle = ZEX(mmuh);
+	args.name = ADR2CELL("call-method");
+	args.nargs = 7;
+	args.nreturns = 1;
+	args.method = ADR2CELL("map");
+	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
 	args.size = size;
-	args.vaddr = (cell_t)vaddr;
-	args.paddr_hi = phys_hi;
-	args.paddr_lo = phys_lo;
+	args.vaddr = ADR2CELL(vaddr);
+	args.paddr_hi = ADR2CELL(paddr>>32);
+	args.paddr_lo = ADR2CELL(paddr);
+
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.status)
@@ -683,7 +651,7 @@ int len;
 int align;
 {
 	paddr_t paddr;
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -694,16 +662,7 @@ int align;
 		cell_t status;
 		cell_t phys_hi;
 		cell_t phys_lo;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)4,
-		(cell_t)3,
-		(cell_t)&"claim",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)0, 
-		(cell_t)0,
-	};
+	} args;
 
 #ifdef	__notyet
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
@@ -711,7 +670,11 @@ int align;
 		return -1LL;
 	}
 #endif
-	args.ihandle = ZEX(memh);
+	args.name = ADR2CELL("call-method");
+	args.nargs = 4;
+	args.nreturns = 3;
+	args.method = ADR2CELL("claim");
+	args.ihandle = HDL2CELL(memh);
 	args.align = align;
 	args.len = len;
 	if(openfirmware(&args) != 0)
@@ -731,7 +694,7 @@ paddr_t phys;
 int len;
 {
 	paddr_t paddr;
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -745,18 +708,7 @@ int len;
 		cell_t res;
 		cell_t rphys_hi;
 		cell_t rphys_lo;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)6,
-		(cell_t)4,
-		(cell_t)&"claim",
-		(cell_t)0,
-		(cell_t)0,
-		(cell_t)0, 
-		(cell_t)NULL,
-		(cell_t)NULL,
-		(cell_t)0
-	};
+	} args;
 
 #ifdef	__notyet
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
@@ -764,13 +716,18 @@ int len;
 		return 0LL;
 	}
 #endif
-	args.ihandle = ZEX(memh);
+	args.name = ADR2CELL("call-method");
+	args.nargs = 6;
+	args.nreturns = 4;
+	args.method = ADR2CELL("claim");
+	args.ihandle = HDL2CELL(memh);
+	args.align = 0;
 	args.len = len;
-	args.phys_hi = ZEX(phys>>32);
-	args.phys_lo = ZEX(phys);
+	args.phys_hi = HDL2CELL(phys>>32);
+	args.phys_lo = HDL2CELL(phys);
 	if(openfirmware(&args) != 0)
 		return 0LL;
-	paddr = (paddr_t)(args.phys_hi<<32)|((unsigned int)(args.phys_lo));
+	paddr = (paddr_t)(args.rphys_hi<<32)|((unsigned int)(args.rphys_lo));
 	return paddr;
 }
 
@@ -784,7 +741,7 @@ OF_free_phys(phys, len)
 paddr_t phys;
 int len;
 {
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -793,16 +750,7 @@ int len;
 		cell_t len;
 		cell_t phys_hi;
 		cell_t phys_lo;
-	} args = {
-		(cell_t)&"call-method",
-		(cell_t)5,
-		(cell_t)0,
-		(cell_t)&"release",
-		(cell_t)0,
-		(cell_t)0, 
-		(cell_t)NULL,
-		(cell_t)NULL,
-	};
+	} args;
 
 #ifdef	__notyet
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
@@ -810,10 +758,14 @@ int len;
 		return -1;
 	}
 #endif
-	args.ihandle = ZEX(memh);
+	args.name = ADR2CELL("call-method");
+	args.nargs = 5;
+	args.nreturns = 0;
+	args.method = ADR2CELL("release");
+	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_hi = ZEX(phys>>32);
-	args.phys_lo = ZEX(phys);
+	args.phys_hi = HDL2CELL(phys>>32);
+	args.phys_lo = HDL2CELL(phys);
 	return openfirmware(&args);
 }
 
@@ -830,7 +782,7 @@ OF_claim(virt, size, align)
 {
 #define SUNVMOF
 #ifndef SUNVMOF
-	static struct {
+	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
@@ -838,13 +790,12 @@ OF_claim(virt, size, align)
 		cell_t size;
 		cell_t align;
 		cell_t baseaddr;
-	} args = {
-		(cell_t)&"claim",
-		(cell_t)3,
-		(cell_t)1,
-	};
+	} args;
 
 
+	args.name = ADR2CELL("claim");
+	args.nargs = 3;
+	args.nreturns = 1;
 	args.virt = virt;
 	args.size = size;
 	args.align = align;

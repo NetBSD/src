@@ -1843,17 +1843,31 @@ intr_setup_msg:
 asmptechk:
 	mov	%o0, %g4	! pmap->pm_segs
 	mov	%o1, %g3	! Addr to lookup -- mind the context
-	
-	srlx	%g3, 32, %g6
-	brnz,pn	%g6, 1f		! >32 bits? not here
-	 srlx	%g3, STSHIFT-2, %g5
-	andn	%g5, 3, %g5
-	lduw	[%g4+%g5], %g4				! Remember -- UNSIGNED
+
+	srax	%g3, HOLESHIFT, %g5			! Check for valid address
+	brz,pt	%g5, 0f					! Should be zero or -1
+	 inc	%g5					! Make -1 -> 0
+	brnz,pn	%g5, 1f					! Error!
+0:	
+	 srlx	%g3, STSHIFT, %g5
+	and	%g5, STMASK, %g5
+	sll	%g5, 3, %g5
+	add	%g4, %g5, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
+	
+	 srlx	%g3, PDSHIFT, %g5
+	and	%g5, PDMASK, %g5
+	sll	%g5, 3, %g5
+	add	%g4, %g5, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	brz,pn	%g4, 1f					! NULL entry? check somewhere else
+	
 	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
-	ldx	[%g4+%g5], %g6
+	add	%g4, %g5, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g6
 	brgez,pn %g6, 1f				! Entry invalid?  Punt
 	 srlx	%g6, 32, %o0	
 	retl
@@ -1885,10 +1899,14 @@ dmmu_write_fault:
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
  	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS	
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+#ifdef _LP64
+	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+#else
 	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+#endif
 	sllx	%g3, (64-13), %g6			! Mask away address
-	srlx	%g6, (64-13-2), %g6			! This is now the offset into ctxbusy
-	lduw	[%g4+%g6], %g4				! Load up our page table.
+	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
+	ldx	[%g4+%g6], %g4				! Load up our page table.
 	
 #if DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -1901,16 +1919,28 @@ dmmu_write_fault:
 	blu,pn	%xcc, winfix				! Next insn in delay slot is unimportant
 #endif
 
-	srlx	%g3, 32, %g6
-	brnz,pn	%g6, winfix				! >32 bits? not here
-	 srlx	%g3, STSHIFT-2, %g5
-	andn	%g5, 3, %g5
+	srax	%g3, HOLESHIFT, %g5			! Check for valid address
+	brz,pt	%g5, 0f					! Should be zero or -1
+	 inc	%g5					! Make -1 + 1 -> 0
+	brnz,pn	%g5, winfix				! Error!
+0:	
+	 srlx	%g3, STSHIFT, %g5
+	and	%g5, STMASK, %g5
+	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
-	lduwa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	
+	srlx	%g3, PDSHIFT, %g5
+	and	%g5, PDMASK, %g5
+	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
+	 add	%g5, %g4, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	
+	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
+	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
@@ -1992,10 +2022,14 @@ data_miss:
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
  	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+#ifdef _LP64
+	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+#else
 	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+#endif
 	sllx	%g3, (64-13), %g6			! Mask away address
-	srlx	%g6, (64-13-2), %g6			! This is now the offset into ctxbusy
-	lduw	[%g4+%g6], %g4				! Load up our page table.
+	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
+	ldx	[%g4+%g6], %g4				! Load up our page table.
 
 #if DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -2018,21 +2052,39 @@ data_miss:
 	 * Try to parse our page table. 
 	 */
 Ludata_miss:
-	srlx	%g3, 32, %g6
-	brnz,pn	%g6, winfix				! >32 bits? not here
-	 srlx	%g3, STSHIFT-2, %g5
 	set	8, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
-	andn	%g5, 3, %g5
+	
+	srax	%g3, HOLESHIFT, %g5			! Check for valid address
+	brz,pt	%g5, 0f					! Should be zero or -1
+	 inc	%g5					! Make -1 -> 0
+	brnz,pn	%g5, winfix				! Error!
+0:	
+	srlx	%g3, STSHIFT, %g5
+	and	%g5, STMASK, %g5
+	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
-	lduwa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+
+	stx	%g4, [%g7+16]	! DEBUG
+
+	srlx	%g3, PDSHIFT, %g5
+	and	%g5, PDMASK, %g5
+	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
+	 add	%g5, %g4, %g4
+	stx	%g4, [%g7]	! DEBUG
+	stx	%g5, [%g7+8]	! DEBUG
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	
 	set	9, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
+	
+	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
-	add	%g5, %g4, %g6
+	brz,pn	%g4, winfix				! NULL entry? check somewhere else
+	 add	%g5, %g4, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 bset	TTE_ACCESS, %g4				! Update the modified bit
@@ -2280,12 +2332,32 @@ winfixspill:
 !	ba	0f					! DEBUG -- don't use phys addresses
 	 wr	%g0, ASI_NUCLEUS, %asi			! In case of problems finding PA
 	sethi	%hi(_C_LABEL(ctxbusy)), %g1
+#ifdef _LP64
+	ldx	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1	! Load start of ctxbusy
+#else
 	lduw	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1
-	srlx	%g6, STSHIFT-2, %g7
-	lduw	[%g1], %g1
-	andn	%g7, 3, %g7
+#endif
+#ifdef DEBUG
+	srax	%g6, HOLESHIFT, %g7			! Check for valid address
+	brz,pt	%g7, 1f					! Should be zero or -1
+	 addcc	%g7, 1, %g7					! Make -1 -> 0
+	tnz	%xcc, 1					! Invalid address??? How did this happen?
+1:
+#endif
+	srlx	%g6, STSHIFT, %g7
+	ldx	[%g1], %g1				! Load pointer to kernel_pmap
+	and	%g7, STMASK, %g7
+	sll	%g7, 3, %g7
 	add	%g7, %g1, %g1
-	lduwa	[%g1] ASI_PHYS_CACHED, %g1		! Also in locked tlb
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
+	
+	srlx	%g6, PDSHIFT, %g7			! Do page directory
+	and	%g7, PDMASK, %g7
+	sll	%g7, 3, %g7
+	brz,pn	%g1, 0f
+	 add	%g7, %g1, %g1
+	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	
 	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
 	and	%g7, PTMASK, %g7
 	brz	%g1, 0f
@@ -2295,7 +2367,7 @@ winfixspill:
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
-	sllx	%g7, PGSHIFT+23, %g7
+	sllx	%g7, PGSHIFT+23, %g7			! There are 23 bits to the left of the PA in the TTE
 	srl	%g6, 32-PGSHIFT, %g6
 	srax	%g7, 23, %g7
 	or	%g7, %g6, %g6				! Then combine them to form PA
@@ -2802,9 +2874,13 @@ instr_miss:
 	
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
 	sllx	%g3, (64-13), %g6			! Mask away address
+#ifdef _LP64
+	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+#else
 	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-	srlx	%g6, (64-13-2), %g6			! This is now the offset into ctxbusy
-	lduw	[%g4+%g6], %g4				! Load up our page table.
+#endif
+	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
+	ldx	[%g4+%g6], %g4				! Load up our page table.
 
 #if 1
 	/* Make sure we don't try to replace a kernel translation */
@@ -2828,23 +2904,37 @@ instr_miss:
 	 * Try to parse our page table. 
 	 */
 Lutext_miss:
-	srlx	%g3, 32, %g6
-	brnz,pn	%g6, prom_textfault			! >32 bits? not here
-	 srlx	%g3, STSHIFT-2, %g5
 	set	8, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
-	andn	%g5, 3, %g5
+	
+	srax	%g3, HOLESHIFT, %g5			! Check for valid address
+	brz,pt	%g5, 0f					! Should be zero or -1
+	 inc	%g5					! Make -1 -> 0
+	brnz,pn	%g5, prom_textfault			! Error!
+0:	
+	srlx	%g3, STSHIFT, %g5
+	and	%g5, STMASK, %g5
+	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
-	lduwa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+
+	srlx	%g3, PDSHIFT, %g5
+	and	%g5, PDMASK, %g5
+	sll	%g5, 3, %g5
 	brz,pn	%g4, prom_textfault			! NULL entry? check somewhere else
-	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
+	 add	%g5, %g4, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	
 	set	9, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
+	
+	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
-	add	%g5, %g4, %g6
+	brz,pn	%g4, prom_textfault			! NULL entry? check somewhere else
+	 add	%g5, %g4, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
-	brgez,pn %g4, prom_textfault			! Entry invalid?  Punt
+	brgez,pn %g4, prom_textfault			
 	 bset	TTE_ACCESS, %g4				! Update accessed bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and store it
 	stx	%g1, [%g2]				! Update TSB entry tag
@@ -3059,181 +3149,6 @@ fp_exception:
 	 done
 	NOTREACHED
 
-#if 0
-/*
- * print out trap then halt then continue
- */
-Ltrapped_once:
-	.word	0
-0:	
-	.asciz	"1 utrap_halt: OF_enter failed\r\n"
-	_ALIGN
-2:	
-	.asciz	"2 sfsr=%08x sfar=%08x afsr=%08x afar=%08x TTR=%08x\r\n"
-	_ALIGN
-3:	
-	.asciz	"3 %%tl=%3x %%tt=%3x %%tpc=%08x %%tnpc=%08x from %08x\r\n"
-	_ALIGN
-4:
-	.asciz	"4 %%tstate=%08x:%08x addr=%08x:%08x ctx=%x\r\n"
-	_ALIGN
-5:
-	.asciz	"5 tsb[i]=%08x tag=%08x:%08x data=%08x:%08x\r\n"
-	_ALIGN
-6:
-	.asciz	"6 pmap_kern segtab[%x]=%08x ptab[%x]=%08x:%08x\r\n"
-	_ALIGN
-
-/* utrap_panic: */
-	!!
-	!! Switch to backup stack and then call utrap_halt
-	!!
- 	set	panicstack - CCFSZ - 80, %g1
-	save	%g1, 0, %sp
-	mov	%i7, %o7
-	
-utrap_panic:
-	.globl	_C_LABEL(utrap_halt)
-_C_LABEL(utrap_halt):	
- 	set	panicstack - CCFSZ - 80, %g1
-	save	%g1, -CC64FSZ, %sp
-!	wrpr	%g0, 4, %tl	! force watchdogs
-	set	2b, %o0					! Print out fault info
-	ldxa	[%g0] ASI_DMMU, %l0			! Load DMMU tag target register
-	set	trapbase, %l2
-	mov	TLB_TAG_ACCESS, %l3	! debug
-	ldxa	[%l3] ASI_DMMU, %l3	! debug
- 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
-	ldxa	[%g0] ASI_DMMU_8KPTR, %l1		! Load DMMU 8K TSB pointer
-!	ldx	[%l2], %l0
-
-#ifdef DEBUG
-	set	Ltrapped_once, %o5
-	ld	[%o5], %o0
-	mov	-1, %o4
-	brnz,pn	%o0, 8f
-	 st	%o4, [%o5]
-#endif
-	
-#if 0
-	mov	%i1, %o1
-	mov	%i2, %o2
-	mov	%i3, %o3
-	mov	%i4, %o4
-	call	prom_printf
-	 sllx	%l0, 22, %o5
-#endif
-
-1:	
-	set	3b, %o0					! Print %tl, %tt, %tpc %tnpc
-	rdpr	%tl, %o1
-	rdpr	%tt, %o2
-	rdpr	%tpc, %o3
-	rdpr	%tnpc, %o4
-	call	prom_printf
-	 mov	%i7, %o5
-
-!	ba	OF_halt		! skip all this other stuff
-	
-	set	4b, %o0					! Print %tstate, trap addr, trap ctx
-	rdpr	%tstate, %o1
-	srl	%o1, 0, %o2
-	srlx	%o1, 32, %o1
-	mov	%l3, %o4
-	srl	%o4, 32, %o3
-	call	prom_printf
-	 srlx	%l0, 48, %o5
-
-	rdpr	%tl, %o0				! Iterate over all traps
-	dec	%o0
-	CLRTT
-	CHKPT(%o1,%o2,0x23)
-	brnz,pt	%o0, 1b
-	 wrpr	%o0, 0, %tl
-
-	ta	1; nop		! Debugger!
-#if 0	
-	set	5b, %o0					! Print tsb[i] data and tag
-	ldx	[%l1], %o2
-	mov	%l1, %o1
-	srl	%o2, 0, %o3
-	srlx	%o2, 32, %o2
-	ldx	[%l1+8], %o4
-	srl	%o4, 0, %o5
-	call	prom_printf
-	 srlx	%o4, 32, %o4
-#endif
-#if 0
-	set	Ltrapped_once, %o5
-	ld	[%o5], %o0
-	mov	-1, %o4
-	brnz,pn	%o0, 8f
-	 st	%o4, [%o5]
-	clr	%o1					! Make sure we have known values in these regs
-	clr	%o2
-	clr	%o3
-	clr	%o4
-	clr	%o5
-
-	
-	srlx	%l0, 48, %o2				! Wrong context?
-	brnz,pn	%o2, 8f					! Skip entire thing if needed
-	 set	_C_LABEL(kernel_pmap_)+PM_SEGS, %o3
-!	andn	%l3, 0x0fff, %o1			! stab[%o1]
-	srlx	%l3, 13, %o1				! stab[%o1]
-	sllx	%o1, 13, %o1
-	srlx	%o1, 32, %o2
-	brnz,pn	%o2, 8f					! >32 bits? not here
-	 srlx	%o1, STSHIFT, %o1
-	sllx	%o1, 2, %o2				! %o2=&stab[%o1]
-	lduw	[%o3+%o2], %o2				! pte
-	srlx	%l3, PTSHIFT, %o3
-	brz,pn	%o2, 7f
-	 and	%o3, PTMASK, %o3
-	sll	%o3, 3, %o5
-	ldx	[%o2+%o5], %o5
-7:	
-	set	6b, %o0					! Print pmap segs & stuff
-	call	prom_printf
- 	 sllx	%o5, 32, %o4
-
-#endif
-8:
-	.globl	_C_LABEL(OF_halt)
-_C_LABEL(OF_halt):	
-	call	_C_LABEL(OF_enter)			! Jump to prom
-	 wrpr	%g0, 0, %tl				! Get out of nucleus mode
-
-#if 0
-	set	0b, %o0
-	call	prom_printf
-	 nop
-#endif
-	
-	ret
-	 restore
-#if 0
-	set	romitsbp, %g2				! Restore PROM trap state
-	ldx	[%g2], %g5				! Restore TSB pointers
-	set	TSB, %g3
-	stxa	%g5, [%g3] ASI_IMMU
-	membar	#Sync
-	set	romdtsbp, %g2
-	ldx	[%g2], %g5
-	stxa	%g5, [%g3] ASI_DMMU
-	membar	#Sync
-	
-	set	romtrapbase, %g3			! Restore trapbase
-	ldx	[%g3], %g5
-	wrpr	%g5, 0, %tba
-	set	romwstate, %g3				! Restore wstate
-	ldx	[%g3], %g5
-	call	OF_enter				! Jump to prom
-	 wrpr	%g5, 0, %wstate
-#endif	
-	NOTREACHED
-
-#endif
 /*
  * slowtrap() builds a trap frame and calls trap().
  * This is called `slowtrap' because it *is*....
@@ -7035,20 +6950,37 @@ Lsw_load:
 	beq	1f
 	
 	 sethi	%hi(_C_LABEL(ctxbusy)), %o4
+#ifdef _LP64
+	ldx	[%o4 + %lo(_C_LABEL(ctxbusy))], %o4
+#else
 	lduw	[%o4 + %lo(_C_LABEL(ctxbusy))], %o4
-	lduw	[%o4], %o4				! Load up our page table.
-	
-	srlx	%g1, 32, %o0
-	brnz,pn	%o0, 1f				! >32 bits? not here
-	 srlx	%g1, STSHIFT-2, %o1
-	andn	%o1, 3, %o1
+#endif
+	ldx	[%o4], %o4				! Load up our page table.
+#ifdef DEBUG
+	srax	%g1, HOLESHIFT, %o1			! Check for valid address
+	brz,pt	%o1, 0f					! Should be zero or -1
+	 incc	%o1					! Make -1 -> 0
+	tnz	1
+0:
+#endif
+	srlx	%g1, STSHIFT, %o1
+	and	%o1, STMASK, %o1
+	sll	%o1, 3, %o1
 	add	%o1, %o4, %o4
-	lduwa	[%o4] ASI_PHYS_CACHED, %o4		! Remember -- UNSIGNED
-	brz,pn	%o4, 1f				! NULL entry? check somewhere else
-	 srlx	%g1, PTSHIFT, %o1			! Convert to ptab offset
+	ldxa	[%o4] ASI_PHYS_CACHED, %o4
+	
+	srlx	%g1, PDSHIFT, %o1
+	and	%o1, PDMASK, %o1
+	sll	%o1, 3, %o1
+	brz,pn	%o4, 1f					! NULL entry? check somewhere else
+	 add	%o1, %o4, %o4
+	ldxa	[%o4] ASI_PHYS_CACHED, %o4
+	
+	srlx	%g1, PTSHIFT, %o1			! Convert to ptab offset
 	and	%o1, PTMASK, %o1
 	sll	%o1, 3, %o1
-	add	%o1, %o4, %o0
+	brz,pn	%o4, 1f					! NULL entry? check somewhere else
+	 add	%o1, %o4, %o0
 	ldxa	[%o0] ASI_PHYS_CACHED, %o4
 	brgez,pn %o4, 1f				! Entry invalid?  Punt
 	 mov	TLB_TAG_ACCESS, %o2
@@ -7802,72 +7734,158 @@ ENTRY(pmap_copy_page)
  */
 ENTRY(pseg_get)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
-#if PADDRT == 8	
-	ldx	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
-#else
-	lduw	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
-#endif
-	srlx	%o1, 32, %o2
-	brnz,pn	%o2, 1f					! >32 bits? not here
-	 srlx	%o1, STSHIFT-2, %o3
-	andn	%o3, 3, %o3
-	add	%o0, %o3, %o0
-	lduwa	[%o0] ASI_PHYS_CACHED, %o0		! Remember -- UNSIGNED
-	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
-	brz,pn	%o0, 1f					! NULL entry? check somewhere else
-	 and	%o3, PTMASK, %o3
+	ldx	[%o0 + PM_PHYS], %o2			! pmap->pm_segs
+	
+	srax	%o1, HOLESHIFT, %o3			! Check for valid address
+	brz,pt	%o3, 0f					! Should be zero or -1
+	 inc	%o3					! Make -1 -> 0
+	brnz,pn	%o3, 1f					! Error! In hole!
+0:	
+	srlx	%o1, STSHIFT, %o3
+	and	%o3, STMASK, %o3			! Index into pm_segs
 	sll	%o3, 3, %o3
-	add	%o0, %o3, %o0
-	ldxa	[%o0] ASI_PHYS_CACHED, %g1		! Use %g1 so we won't lose the top 1/2
-	brgez,pn %g1, 1f				! Entry invalid?  Punt
-	 srlx	%g1, 32, %o0	
-	retl
-	 srl	%g1, 0, %o1	
+	add	%o2, %o3, %o2
+	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page directory pointer
+
+	srlx	%o1, PDSHIFT, %o3
+	and	%o3, PDMASK, %o3
+	sll	%o3, 3, %o3
+	brz,pn	%o2, 1f					! NULL entry? check somewhere else
+	 add	%o2, %o3, %o2
+	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page table pointer
+
+	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
+	and	%o3, PTMASK, %o3
+	sll	%o3, 3, %o3
+	brz,pn	%o2, 1f					! NULL entry? check somewhere else
+	 add	%o2, %o3, %o2
+	ldxa	[%o2] ASI_PHYS_CACHED, %o0
+	brgez,pn %o0, 1f				! Entry invalid?  Punt
+	 btst	1, %sp
+	bz,pn	%icc, 0f				! 64-bit mode?
+	 nop
+	retl						! Yes, return full value
+	 nop
+0:
+#if 0
+	srl	%o0, 0, %o1
+	retl						! No, generate a %o0:%o1 double
+	 srlx	%o0, 32, %o0
+#else
+	retl						! No, generate a %o0:%o1 double
+	 ldda	[%o2] ASI_PHYS_CACHED, %o0
+#endif
 1:
 	clr	%o1
 	retl
 	 clr	%o0
 
 /*
- * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3);
+ * In 32-bit mode:
  *
- * Set a pseg entry to a particular TTE value.  Returns 0 on success, else the pointer
- * to the empty pseg entry.  Allocate a page, put the phys addr in the returned location,
- * and try again.
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3, paddr_t spare %o4:%o5);
+ *
+ * In 64-bit mode:
+ *
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, paddr_t spare %o3);
+ *
+ * Set a pseg entry to a particular TTE value.  Returns 0 on success, 1 if it needs to fill
+ * a pseg, and -1 if the address is in the virtual hole.  (NB: nobody in pmap checks for the
+ * virtual hole, so the system will hang.)  Allocate a page, pass the phys addr in as the spare,
+ * and try again.  If spare is not NULL it is assumed to be the address of a zeroed physical page
+ * that can be used to generate a directory table or page table if needed.
  *
  */
 ENTRY(pseg_set)
-	flushw			! Make sure we don't have stack probs & lose hibits of %o
-#if PADDRT == 8	
+	btst	1, %sp					! 64-bit mode?
+	bnz,pt	%icc, 0f
+	 sllx	%o4, 32, %o4				! Put args into 64-bit format
+
+	sllx	%o2, 32, %o2				! Shift to high 32-bits
+	sll	%o3, 0, %o3				! Zero extend
+	sll	%o5, 0, %o5
+	sll	%o1, 0, %o1
+	or	%o2, %o3, %o2
+	or	%o4, %o5, %o3
+0:
+#ifdef NOT_DEBUG
+	!! Trap any changes to pmap_kernel below 0xf0000000
+	set	_C_LABEL(kernel_pmap_), %o5
+	cmp	%o0, %o5
+	bne	0f
+	 sethi	%hi(0xf0000000), %o5
+	cmp	%o1, %o5
+	tlu	1
+0:	
+#endif
+	!!
+	!! However we managed to get here we now have:
+	!!
+	!! %o0 = *pmap
+	!! %o1 = addr
+	!! %o2 = tte
+	!! %o3 = spare
+	!!
+	srax	%o1, HOLESHIFT, %o4			! Check for valid address
+	brz,pt	%o4, 0f					! Should be zero or -1
+	 inc	%o4					! Make -1 -> 0
+	brz,pt	%o4, 0f
+	 nop
+#ifdef DEBUG
+	ta	1					! Break into debugger
+#endif
+	mov	-1, %o0					! Error -- in hole!
+	retl
+	 mov	-1, %o1
+0:		
 	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
-#else
-	lduw	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
-#endif
-#ifdef DEBUG
-	mov	%o0, %g1				! DEBUG
-#endif
-	srlx	%o1, 32, %o5
-	brnz,pn	%o5, 1f					! >32 bits? not here
-	 srlx	%o1, STSHIFT-2, %o5
-	andn	%o5, 3, %o5
+	srlx	%o1, STSHIFT, %o5
+	and	%o5, STMASK, %o5
+	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-#ifdef DEBUG
-	mov	%o4, %g4				! DEBUG
-	mov	%o5, %g5				! DEBUG
-#endif
-	lduwa	[%o4] ASI_PHYS_CACHED, %o4		! Remember -- UNSIGNED
-	add	%o0, %o5, %o0				! Calculate virt addr of this pseg entry
-	brz,pn	%o4, 1f					! NULL entry? Allocate a page
-	 srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	
+	brnz,a,pt	%o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o3, 1f					! Have a spare?
+	 stxa	%o3, [%o4] ASI_PHYS_CACHED
+	mov	%o3, %o4
+	clr	%o3					! Mark spare as used
+0:	
+	srlx	%o1, PDSHIFT, %o5
+	and	%o5, PDMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o4, %o5, %o4
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	
+	brnz,a,pt	%o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o3, 1f					! Have a spare?
+	 stxa	%o3, [%o4] ASI_PHYS_CACHED
+	mov	%o3, %o4
+	clr	%o3					! Mark spare as used
+0:	
+	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
 	and	%o5, PTMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o5, %o4, %o4
-	stda	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
+	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
+#ifdef DEBUG
+	!! Try pseg_get to verify we did this right
+	mov	%o7, %o4
+	call	pseg_get
+	 mov	%o2, %o5
+	sllx	%o0, 32, %o0
+	or	%o1, %o0, %o0
+	cmp	%o0, %o5
+	tne	1
+	mov	%o4, %o7
+#endif
 	retl
 	 clr	%o0
 1:
 	retl
-	 add	%o0, PM_SEGS, %o0
+	 mov	1, %o0
 
 /*
  * copywords(src, dst, nbytes)

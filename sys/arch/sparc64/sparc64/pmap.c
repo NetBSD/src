@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1998/08/26 12:41:47 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1998/08/27 06:23:32 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -35,6 +35,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_uvm.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -63,7 +64,15 @@
 #include "cache.h"
 #include "asm.h"
 
-#ifndef DDB
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_variables.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+#else
 #define Debugger()
 #endif
 
@@ -86,9 +95,43 @@ struct page_size_map page_size_map[] = {
 extern int64_t asmptechk __P((union sun4u_data* pseg[], int addr)); /* DEBUG XXXXX */
 
 /* These routines are in assembly to allow access thru physical mappings */
-extern int64_t pseg_get __P((struct pmap*, int addr));
-extern int64_t** pseg_set __P((struct pmap*, int addr, int64_t tte));
-			
+#if 1
+extern int64_t pseg_get __P((struct pmap*, vaddr_t addr));
+extern int pseg_set __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
+#else
+static int64_t pseg_get __P((struct pmap*, vaddr_t addr));
+static int pseg_set __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
+
+static int64_t pseg_get(struct pmap* pm, vaddr_t addr) {
+	paddr_t *pdir, *ptbl;
+	
+	if ((pdir = (paddr_t *)ldda(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED)) &&
+	    (ptbl = (paddr_t *)ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED)))
+		return  (ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED));
+	return (0);
+}
+
+static int pseg_set(struct pmap* pm, vaddr_t addr, int64_t tte, paddr_t spare) {
+	int i, j, k, s;
+	paddr_t *pdir, *ptbl;
+
+	if (!(pdir = (paddr_t *)ldda(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED))) {
+		if (!spare) return (1);
+		stda(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
+		pdir = spare;
+		spare = NULL;
+	}
+	if (!(ptbl = (paddr_t *)ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED))) {
+		if (!spare) return (1);
+		stda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
+		ptbl = spare;
+		spare = NULL;
+	}
+	stda(&ptbl[va_to_pte(addr)], ASI_PHYS_CACHED, tte);
+	return (0);
+}
+#endif
+
 extern vm_page_t vm_page_alloc1 __P((void));
 extern void vm_page_free1 __P((vm_page_t));
 
@@ -246,7 +289,7 @@ struct {
 #define	PDB_CACHESTUFF	0x4000
 #define	PDB_ALIAS	0x8000
 #define PDB_EXTRACT	0x10000
-int	pmapdebug = PDB_ALIAS/*|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|PDB_DESTROY|PDB_CHANGEPROT|PDB_ENTER|PDB_DEMAP|PDB_REMOVE*/;
+int	pmapdebug = 0/*PDB_ALIAS|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|PDB_DESTROY|PDB_CHANGEPROT|PDB_ENTER|PDB_REMOVE|PDB_DEMAP|*/;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 #endif
@@ -288,9 +331,9 @@ pv_check()
  * physical addresses, of course.
  *
  */
-int *ctxbusy;	
+paddr_t *ctxbusy;	
 int numctx;
-#define CTXENTRY	(sizeof(int*))
+#define CTXENTRY	(sizeof(paddr_t))
 #define CTXSIZE		(numctx*CTXENTRY)
 
 #if defined(MACHINE_NEW_NONCONTIG)
@@ -381,8 +424,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("We should have the memory at %08x, let's map it in\r\n", 
 		    phys_msgbuf);
 #endif
-	if( prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, 
-			  -1/* sunos does this */) != 0)
+	if (prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, 
+			  -1/* sunos does this */) != -1)
 		prom_printf("Failed to map msgbuf\r\n");
 #ifdef BOOT_DEBUG
 	else
@@ -619,7 +662,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * Allocate and initialize a context table
 	 */
 	numctx = maxctx;
-	valloc(ctxbusy, int, CTXSIZE);
+	valloc(ctxbusy, paddr_t, CTXSIZE);
 	bzero((caddr_t)ctxbusy, CTXSIZE);
 
 	{
@@ -855,18 +898,25 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("End of available physical memory after cleanup\r\n");
 #endif
 	/*
-	 * Clear out pmap_kernel()->pm_segs[]
+	 * Allocate and clear out pmap_kernel()->pm_segs[]
 	 */
-	for (i=0; i<STSZ; i++) pmap_kernel()->pm_segs[i]=NULL;
+	{
+		paddr_t newp;
 
+		do {
+			pmap_get_page(&newp);
+			pmap_zero_page(newp);
+		} while (!newp); /* Throw away page zero */
+		pmap_kernel()->pm_segs=(paddr_t*)newp;
+		pmap_kernel()->pm_physaddr = newp;
+		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr; /* mark kernel context as busy */
+	}
 	/*
 	 * finish filling out kernel pmap.
 	 */
-	pmap_kernel()->pm_physaddr = ((vaddr_t)(pmap_kernel()->pm_segs)) - ksegv + ksegp;
-	ctxbusy[0] = (int)pmap_kernel()->pm_physaddr; /* mark kernel context as busy */
 
 #ifdef BOOT_DEBUG
-	prom_printf("pmap_kernel()->pm_physaddr = %p\r\n", pmap_kernel()->pm_physaddr);
+	prom_printf("pmap_kernel()->pm_physaddr = %lx\r\n", (long)pmap_kernel()->pm_physaddr);
 #endif
 	/*
 	 * Tell pmap about our mesgbuf -- Hope this works already
@@ -879,8 +929,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
 	{
 		pte_t tte;
-		int64_t** ptr;
 		vaddr_t va = (vaddr_t)msgbufp;
+		paddr_t newp;
 
 		prom_map_phys(phys_msgbuf, NBPG, (vaddr_t)msgbufp, -1); 
 #ifdef NO_VCACHE
@@ -902,19 +952,19 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 0 /* No ALIAS */, 
 					 1 /* valid */);
 #endif
-
-		while((ptr = pseg_set(pmap_kernel(), va, tte.data.data))
+		newp = NULL;
+		while(pseg_set(pmap_kernel(), va, tte.data.data, newp)
 		      != NULL) {
-			paddr_t newp;
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
-			*ptr = (int64_t*)newp;
 #ifdef DEBUG
 			enter_stats.ptpneeded ++;
 #endif
 #ifdef BOOT1_DEBUG
-			prom_printf("pset_set: ptr %x newp %x:%x *ptr %x\r\n", 
-				    (int)ptr, (int)(newp>>32), (int)newp, (int)*ptr);
+			prom_printf("pseg_set: pm=%p va=%p data=%x:%x newp %x:%x\r\n", 
+				    pmap_kernel(), va, 
+				    (int)(tte.data.data>>32), (int)tte.data.data,
+				    (int)(newp>>32), (int)newp);
 			{int i; for (i=0; i<140000000; i++) ;}
 #endif
 		}
@@ -931,12 +981,11 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 0 /* No ALIAS */, 
 					 1 /* valid */);
 		tte.data.data |= TLB_L|TLB_NFO;
-		while((ptr = pseg_set(pmap_kernel(), va, tte.data.data))
+		newp = NULL;
+		while(pseg_set(pmap_kernel(), va, tte.data.data, newp)
 		      != NULL) {
-			paddr_t newp;
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
-			*ptr = (int64_t*)newp;
 #ifdef DEBUG
 			enter_stats.ptpneeded ++;
 #endif
@@ -953,8 +1002,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	for(i=0; i<prom_map_size; i++)
 		if(prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0))
 			for(j=0; j<prom_map[i].vsize; j+=NBPG) {
-				int64_t** ptr;
 				int k;
+				paddr_t newp;
 				
 				for (k=0; page_size_map[k].mask; k++) {
 					if (((prom_map[i].vstart | prom_map[i].tte) & page_size_map[k].mask) == 0
@@ -972,13 +1021,12 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 #if 1
 				/* And into pmap_kernel() */
-				while((ptr = pseg_set(pmap_kernel(), prom_map[i].vstart+j, 
-						      (prom_map[i].tte+j)|page_size_map[k].code))
+				newp = NULL;
+				while(pseg_set(pmap_kernel(), prom_map[i].vstart+j, 
+						      (prom_map[i].tte+j)|page_size_map[k].code, newp)
 				      != NULL) {
-					paddr_t newp;
 					pmap_get_page(&newp);
 					pmap_zero_page(newp);
-					*ptr = (int64_t*)newp;
 #ifdef DEBUG
 					enter_stats.ptpneeded ++;
 #endif
@@ -1152,10 +1200,30 @@ pmap_pinit(pm)
 	 */
 	pm->pm_refs = 1;
 	if(pm != pmap_kernel()) {
-		for(i=0; i<STSZ; i++)
-			pm->pm_segs[i] = NULL;
-		pm->pm_physaddr = pmap_extract(pmap_kernel(), (vaddr_t)&pm->pm_segs);
+		vm_page_t page;
+#ifdef NOTDEF_DEBUG
+		printf("pmap_pinit: need to alloc page\n");
+#endif
+		while ((page = vm_page_alloc1()) == NULL) {
+			/*
+			 * Let the pager run a bit--however this may deadlock
+			 */
+#ifdef NOTDEF_DEBUG
+			printf("pmap_pinit: calling uvm_wait()\n");
+#endif
+#if defined(UVM)
+			uvm_wait("pmap_pinit");
+#else
+			VM_WAIT;
+#endif
+		}
+		pm->pm_physaddr = (paddr_t)VM_PAGE_TO_PHYS(page);
+		pmap_zero_page(pm->pm_physaddr);
+		pm->pm_segs = (paddr_t*)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
+#ifdef NOTDEF_DEBUG
+		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
+#endif
 		ctx_alloc(pm);
 	}
 #ifdef DEBUG
@@ -1200,8 +1268,9 @@ void
 pmap_release(pm)
 	struct pmap *pm;
 {
-	int i, j, s;
-	
+	int i, j, k, s;
+	paddr_t *pdir, *ptbl;
+
 #ifdef DIAGNOSTIC
 	if(pm == pmap_kernel())
 		panic("pmap_release: releasing pmap_kernel()");
@@ -1209,17 +1278,25 @@ pmap_release(pm)
 
 	s=splimp();
 	for(i=0; i<STSZ; i++)
-		if(pm->pm_segs[i]) {
-			for (j=0; j<PTSZ; j++) {
-				int64_t data = ldda(&pm->pm_segs[i][j], ASI_PHYS_CACHED);
-				if (data&TLB_V && 
-				    IS_VM_PHYSADDR(data&TLB_PA_MASK))
-					pmap_remove_pv(pm, (i<<STSHIFT)|(j<<PTSHIFT), 
-						       data&TLB_PA_MASK);
+		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+			for (k=0; k<PDSZ; k++) {
+				if (ptbl = (paddr_t *)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+					for (j=0; j<PTSZ; j++) {
+						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						if (data&TLB_V && 
+						    IS_VM_PHYSADDR(data&TLB_PA_MASK))
+							pmap_remove_pv(pm, 
+								       (i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT), 
+								       data&TLB_PA_MASK);
+					}
+					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
+					stxa(&ptbl[k], ASI_PHYS_CACHED, NULL);
+				}
 			}
-			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs[i]));
-			pm->pm_segs[i] = NULL;
+			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pdir));
 		}
+	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs));
+	pm->pm_segs = NULL;
 #ifdef NOTDEF_DEBUG
 	for (i=0; i<physmem; i++) {
 		struct pv_entry *pv;
@@ -1279,23 +1356,35 @@ void
 pmap_collect(pm)
 	struct pmap *pm;
 {
-#if 1
-	int i, j, n;
+#if 0
+	int i, j, k, n, m;
+	paddr_t *pdir, *ptbl;
 	/* This is a good place to scan the pmaps for page tables with
 	 * no valid mappings in them and free them. */
 	
 	for (i=0; i<STSZ; i++) {
-		if (pm->pm_segs[i]) {
-			n = 0;
-			for (j=0; j<PTSZ; j++) {
-				int64_t data = ldda(&pm->pm_segs[i][j], ASI_PHYS_CACHED);
-				if (data&TLB_V)
-					n++;
+		if ((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+			m = 0;
+			for (k=0; k<PDSZ; k++) {
+				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+					m++;
+					n = 0;
+					for (j=0; j<PTSZ; j++) {
+						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						if (data&TLB_V)
+							n++;
+					}
+					if (!n) {
+						/* Free the damn thing */
+						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)ptbl));
+						stxa(&ptbl[k], ASI_PHYS_CACHED, NULL);
+					}
+				}
 			}
-			if (!n) {
+			if (!m) {
 				/* Free the damn thing */
-				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pm->pm_segs[i]));
-				pm->pm_segs[i] = NULL;
+				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)pdir));
+				stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 			}
 		}
 	}
@@ -1423,7 +1512,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pte_t tte;
-	int64_t** pptr;
+	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
 	int i;
 
@@ -1444,8 +1533,8 @@ pmap_kenter_pa(va, pa, prot)
 	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
 	tte.data.data |= TLB_TSB_LOCK;	/* wired */
 	ASSERT((tte.data.data & TLB_NFO) == 0);
-	while ((pptr = pseg_set(pm, va, tte.data.data)) != NULL) {
-		paddr_t pg;
+	pg = NULL;
+	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
 #if defined(UVM)
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
 #else
@@ -1468,10 +1557,9 @@ pmap_kenter_pa(va, pa, prot)
 				VM_WAIT;
 #endif
 			}
-			*pptr = (int64_t*)VM_PAGE_TO_PHYS(page);
-		} else
-			*pptr = (int64_t*)pg;
-		pmap_zero_page((paddr_t)*pptr);
+			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
+		}
+		pmap_zero_page((paddr_t)pg);
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
 #endif
@@ -1564,14 +1652,16 @@ pmap_kremove(va, size)
 			flush |= 1;
 			entry = (data&TLB_PA_MASK);
 			/* We need to flip the valid bit and clear the access statistics. */
-			if (pseg_set(pm, va, 0LL)) {
+			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_remove: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
 			}
 #ifdef DEBUG
 			if (pmapdebug & PDB_REMOVE)
-				printf(" clearing seg %x pte %x\n", va_to_seg(va), va_to_pte(va));
+				printf(" clearing seg %x pdir %x pte %x\n", 
+				       (int)va_to_seg(va), (int)va_to_dir(va), 
+				       (int)va_to_pte(va));
 			remove_stats.removes ++;
 #endif
 			
@@ -1632,7 +1722,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	pte_t tte;
 	int s, i, aliased = 0;
 	register pv_entry_t pv=NULL, npv;
-	int64_t** pptr;
+	paddr_t pg;
 
 	/*
 	 * Is this part of the permanent 4MB mapping?
@@ -1658,7 +1748,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 #ifdef NOTDEF_DEBUG
 	if (pa>>32)
 		prom_printf("pmap_enter: va=%08x 64-bit pa=%x:%08x seg=%08x pte=%08x\r\n", 
-			    va, (int)(pa>>32), (int)pa, va_to_seg(va), va_to_pte(va));
+			    va, (int)(pa>>32), (int)pa, (int)va_to_seg(va), (int)va_to_pte(va));
 #endif
 	/*
 	 * Construct the TTE.
@@ -1711,8 +1801,11 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 #endif
 	if (wired) tte.data.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data.data & TLB_NFO) == 0);
-	while ((pptr = pseg_set(pm, va, tte.data.data)) != NULL) {
-		paddr_t pg;
+	pg = NULL;
+#ifdef NOTDEF_DEBUG
+	printf("pmap_enter_phys: inserting %x:%x at %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
+#endif
+	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
 #if defined(UVM)
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
 #else
@@ -1735,12 +1828,14 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 				VM_WAIT;
 #endif
 			}
-			*pptr = (int64_t*)VM_PAGE_TO_PHYS(page);
-		} else
-			*pptr = (int64_t*)pg;
-		pmap_zero_page((paddr_t)*pptr);
+			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
+		} 
+		pmap_zero_page((paddr_t)pg);
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
+#endif
+#ifdef NOTDEF_DEBUG
+	printf("pmap_enter_phys: inserting %x:%x at %x with %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va, (int)pg);
 #endif
 	}
 
@@ -1839,7 +1934,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 							       npv->pv_va, npv->pv_pmap->pm_ctx);
 #endif
 						/* Turn off cacheing of this TTE */
-						if (pseg_set(npv->pv_pmap, va, pseg_get(npv->pv_pmap, va) & ~TLB_CV)) {
+						if (pseg_set(npv->pv_pmap, va, pseg_get(npv->pv_pmap, va) & ~TLB_CV, 0)) {
 							printf("pmap_enter_phys: aliased pseg empty!\n");
 							Debugger();
 							/* panic? */
@@ -1939,14 +2034,14 @@ pmap_remove(pm, va, endva)
 				pmap_remove_pv(pm, va, entry);
 			
 			/* We need to flip the valid bit and clear the access statistics. */
-			if (pseg_set(pm, va, 0LL)) {
+			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_remove: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
 			}
 #ifdef DEBUG
 			if (pmapdebug & PDB_REMOVE)
-				printf(" clearing seg %x pte %x\n", va_to_seg(va), va_to_pte(va));
+				printf(" clearing seg %x pte %x\n", (int)va_to_seg(va), (int)va_to_pte(va));
 			remove_stats.removes ++;
 #endif
 			i = ptelookup_va(va);
@@ -2044,7 +2139,7 @@ pmap_protect(pm, sva, eva, prot)
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 				prom_printf("pmap_protect: va=%08x data=%x:%08x seg=%08x pte=%08x\r\n", 
-					    sva, (int)(pa>>32), (int)pa, va_to_seg(sva), va_to_pte(sva));
+					    sva, (int)(pa>>32), (int)pa, (int)va_to_seg(sva), (int)va_to_pte(sva));
 /* Catch this before the assertion */
 			if (data & TLB_NFO) {
 				printf("pmap_protect: pm=%x NFO mapping va=%x data=%x:%x\n",
@@ -2055,7 +2150,7 @@ pmap_protect(pm, sva, eva, prot)
 			/* Just do the pmap and TSB, not the pv_list */
 			data &= ~(TLB_W|TLB_REAL_W);
 			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(pm, sva, data)) {
+			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -2092,17 +2187,26 @@ pmap_extract(pm, va)
 		pa = (paddr_t) (ksegp - ksegv + va);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			printf("pmap_extract: va=%x pa=%x\n", va, pa);
+			db_printf("pmap_extract: va=%x pa=%lx\n", va, (long)pa);
 		}
 #endif
 	} else {
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			printf("pmap_extract: va=%x segs[%d]=%x", va, va_to_seg(va), pm->pm_segs[va_to_seg(va)]);
-			if(pm->pm_segs[va_to_seg(va)])
-				printf(" segs[%d][%d]=%x:%x", va_to_seg(va), va_to_pte(va), pseg_get(pm, va)&TLB_PA_MASK);
-			printf("\n");
+			paddr_t pa;
+			pa = ldda(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			printf("pmap_extract: va=%p segs[%d]=%lx", va, (int)va_to_seg(va), (long)pa);
+			if (pa) {
+				pa = ldda(&((paddr_t*)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				printf(" segs[%d][%d]=%lx", va_to_seg(va), (int)va_to_dir(va), (long)pa);
+			}
+			if (pa)	{
+				pa = (paddr_t*)ldda(&((paddr_t*)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+				printf(" segs[%d][%d][%d]=%lx", (int)va_to_seg(va), 
+				       (int)va_to_dir(va), (int)va_to_pte(va), (long)pa);
+			}
+			db_printf(" pseg_get: %lx\n", (long)pa);
 		}
 #endif
 	}
@@ -2193,13 +2297,11 @@ int size;
 		i = ptelookup_va(sva);
 		/* Then update the page table */
 		s = splimp();
-		if (pm->pm_segs[va_to_seg(sva)]) {
-			/* Why would the page not exist? */
-			data = pseg_get(pm, sva);
+		if (data = pseg_get(pm, sva)) {
 			data |= set;
 			data &= ~clr;
 			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(pm, sva, data)) {
+			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_changeprot: gotten empty pseg!\n");
 				Debugger();
 				/* panic? */
@@ -2304,7 +2406,13 @@ pmap_dumpmmu(dump, blkno)
 		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
 	}
 
+#if 0
+	/*
+	 * Since we're not mapping this in we need to re-do some of this
+	 * logic.
+	 */
 	EXPEDITE(&kernel_pmap_.pm_segs[0], sizeof(kernel_pmap_.pm_segs));
+#endif
 
 	if (bp != buffer)
 		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
@@ -2448,7 +2556,6 @@ pv_syncflags(pv)
 			int64_t data;
 
 			/* First clear the mod bit in the PTE and make it R/O */
-			ASSERT(npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]);
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
 			/* Need to both clear the modify and write bits */
 			if (data & (TLB_MODIFY|TLB_W))
@@ -2462,7 +2569,7 @@ pv_syncflags(pv)
 #endif
 			data &= ~(TLB_MODIFY|TLB_ACCESS);
 			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, data)) {
+			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, data, 0)) {
 				printf("pmap_clear_modify: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -2524,7 +2631,6 @@ pmap_clear_modify(pa)
 			int64_t data;
 
 			/* First clear the mod bit in the PTE and make it R/O */
-			ASSERT(pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]);
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 			/* Need to both clear the modify and write bits */
 #if defined(PMAP_NEW)
@@ -2533,7 +2639,7 @@ pmap_clear_modify(pa)
 #endif
 			data &= ~(TLB_MODIFY|TLB_W);
 			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data)) {
+			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data, 0)) {
 				printf("pmap_clear_modify: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -2612,7 +2718,6 @@ pmap_clear_reference(pa)
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
 			
-			ASSERT(pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]);
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 #if defined(PMAP_NEW)
 			if (data & TLB_ACCESS)
@@ -2625,7 +2730,7 @@ pmap_clear_reference(pa)
 				       pv->pv_va, pv->pv_pmap->pm_ctx, (int)(data>>32), (int)data);
 #endif
 			ASSERT((data & TLB_NFO) == 0);
-			if (pseg_set(pv->pv_pmap, pv->pv_va, data)) {
+			if (pseg_set(pv->pv_pmap, pv->pv_va, data, 0)) {
 				printf("pmap_clear_reference: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -2691,7 +2796,6 @@ pmap_is_modified(pa)
 		for (npv = pv; i == 0 && npv && npv->pv_pmap; npv = npv->pv_next) {
 			int64_t data;
 			
-			ASSERT(npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]);
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
 			i = i || (data & (TLB_MODIFY|TLB_W));
 		}
@@ -2743,7 +2847,6 @@ pmap_is_referenced(pa)
 		for (npv = pv; npv; npv = npv->pv_next) {
 			int64_t data;
 			
-			ASSERT(npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]);
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
 			i = i || (data & TLB_ACCESS);
 		}
@@ -2799,7 +2902,6 @@ pmap_change_wiring(pmap, va, wired)
 		return;
 	}
 	s = splimp();
-	ASSERT(pmap->pm_segs[va_to_seg(va&PV_VAMASK)]);
 	data = pseg_get(pmap, va&PV_VAMASK);
 
 	if (wired) 
@@ -2807,7 +2909,7 @@ pmap_change_wiring(pmap, va, wired)
 	else
 		data &= ~TLB_TSB_LOCK;
 
-	if (pseg_set(pmap, va&PV_VAMASK, data)) {
+	if (pseg_set(pmap, va&PV_VAMASK, data, 0)) {
 		printf("pmap_change_wiring: gotten pseg empty!\n");
 		Debugger();
 		/* panic? */
@@ -2877,6 +2979,7 @@ pmap_page_protect(pa, prot)
 					printf("pmap_page_protect: RO va %p of pa %p...\n",
 					       pv->pv_va, pa);
 				}
+#if 0
 				if (!pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]) {
 					printf("pmap_page_protect(%x:%x,%x): pv %x va %x not in pmap %x\n",
 					       (int)(pa>>32), (int)pa, prot, pv, pv->pv_va, pv->pv_pmap);
@@ -2884,12 +2987,12 @@ pmap_page_protect(pa, prot)
 					continue;
 				}
 #endif
-				ASSERT(pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]);
+#endif
 				data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 				data &= ~(clear);
 				data |= (set);
 				ASSERT((data & TLB_NFO) == 0);
-				if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data)) {
+				if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data, 0)) {
 					printf("pmap_page_protect: gotten pseg empty!\n");
 					Debugger();
 					/* panic? */
@@ -2916,6 +3019,7 @@ pmap_page_protect(pa, prot)
 				printf("pmap_page_protect: demap va %p of pa %p...\n",
 				       npv->pv_va, pa);
 			}
+#if 0
 			if (!npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]) {
 				printf("pmap_page_protect(%x:%x,%x): pv %x va %x not in pmap %x\n",
 				       (int)(pa>>32), (int)pa, prot, npv, npv->pv_va, npv->pv_pmap);
@@ -2923,8 +3027,8 @@ pmap_page_protect(pa, prot)
 				continue;
 			}
 #endif
+#endif
 			/* clear the entry in the page table */
-			ASSERT(npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]);
 			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
 
 			/* Save ref/mod info */
@@ -2942,7 +3046,7 @@ pmap_page_protect(pa, prot)
 				continue;
 			}
 			/* Clear mapping */
-			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, 0LL)) {
+			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -2968,6 +3072,7 @@ pmap_page_protect(pa, prot)
 				printf("pmap_page_protect: demap va %p of pa %p...\n",
 				       pv->pv_va, pa);
 			}
+#if 0
 			if (!pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]) {
 				printf("pmap_page_protect(%x:%x,%x): pv %x va %x not in pmap %x\n",
 				       (int)(pa>>32), (int)pa, prot, pv, pv->pv_va, pv->pv_pmap);
@@ -2975,7 +3080,7 @@ pmap_page_protect(pa, prot)
 					goto skipit;
 			}
 #endif
-			ASSERT(pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]);
+#endif
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS) 
@@ -2990,7 +3095,7 @@ pmap_page_protect(pa, prot)
 				/* It's wired, leave it */
 				goto skipit;
 			}
-			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, 0LL)) {
+			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
 				Debugger();
 				/* panic? */
@@ -3027,15 +3132,21 @@ int
 pmap_count_res(pm)
 	pmap_t pm;
 {
-	int i, j, n;
+	int i, j, k, n;
+	paddr_t *pdir, *ptbl;
+	/* Almost the same as pmap_collect() */
 
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if (pm->pm_segs[i]) {
-			for (j=0; j<PTSZ; j++) {
-				int64_t data = ldda(&pm->pm_segs[i][j], ASI_PHYS_CACHED);
-				if (data&TLB_V)
-					n++;
+		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+			for (k=0; k<PDSZ; k++) {
+				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+					for (j=0; j<PTSZ; j++) {
+						int64_t data = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						if (data&TLB_V)
+							n++;
+					}
+				}
 			}
 		}
 	}
@@ -3413,14 +3524,7 @@ vm_page_free1(mem)
 }
 #endif
 
-#ifdef DEBUG
-#include <machine/db_machdep.h>
-#include <ddb/db_command.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_access.h>
-#include <ddb/db_output.h>
+#ifdef DDB
 
 void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
 void
