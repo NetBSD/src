@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.18 2001/07/18 20:42:54 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.19 2001/07/18 20:52:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -359,7 +359,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	sc->sc_xe_togo = cs_xmit_early_table[sc->sc_xe_ent].better_count;
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = cs_start_output;
 	ifp->if_ioctl = cs_ioctl;
@@ -392,7 +392,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	}
 
 	if (enaddr != NULL)
-		bcopy(enaddr, sc->sc_enaddr, sizeof(sc->sc_enaddr));
+		memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
 	else if ((sc->sc_cfgflags & CFGFLG_NOT_EEPROM) == 0) {
 		/* Get and store the Ethernet address */
 		if (cs_get_enaddr(sc) == CS_ERROR) {
@@ -1809,7 +1809,7 @@ cs_process_rx_dma(sc)
 					 * No wrap around. Copy the frame
 					 * header
 					 */
-					bcopy(dma_mem_ptr, pBuff, pkt_length);
+					memcpy(pBuff, dma_mem_ptr, pkt_length);
 					dma_mem_ptr += pkt_length;
 				} else {
 					to_copy = (u_int)
@@ -1817,7 +1817,7 @@ cs_process_rx_dma(sc)
 					    dma_mem_ptr);
 
 					/* Copy the first half of the frame. */
-					bcopy(dma_mem_ptr, pBuff, to_copy);
+					memcpy(pBuff, dma_mem_ptr, to_copy);
 					pBuff += to_copy;
 
 					/*
@@ -1834,7 +1834,7 @@ cs_process_rx_dma(sc)
 					dma_mem_ptr = sc->sc_dmabase;
 
 					/* Copy rest of the frame. */
-					bcopy(dma_mem_ptr, pBuff, to_copy);
+					memcpy(pBuff, dma_mem_ptr, to_copy);
 					dma_mem_ptr += to_copy;
 				}
 
