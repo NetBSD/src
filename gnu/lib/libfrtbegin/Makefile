@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/29 00:53:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2003/08/29 01:00:49 mrg Exp $
 
 LIB=	frtbegin
 
