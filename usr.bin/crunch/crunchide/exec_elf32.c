@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.3 1997/08/02 21:30:19 perry Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.4 1997/08/12 06:07:24 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.3 1997/08/02 21:30:19 perry Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.4 1997/08/12 06:07:24 mikel Exp $");
 #endif
  
 #ifndef ELFSIZE
@@ -41,10 +41,13 @@ __RCSID("$NetBSD: exec_elf32.c,v 1.3 1997/08/02 21:30:19 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 #if (defined(NLIST_ELF32) && (ELFSIZE == 32)) || \
@@ -148,8 +151,6 @@ ELFNAMEEND(hide)(int fd, const char *fn)
 	Elf_Shdr *shdrp = NULL, *symtabshdr, *strtabshdr;
 	Elf_Sym *symtabp = NULL;
 	char *strtabp = NULL;
-	Elf_RelA *relap = NULL;
-	Elf_Rel *relp = NULL;
 	Elf_Word *symfwmap = NULL, *symrvmap = NULL, nsyms, nlocalsyms, ewi;
 	struct listelem *relalist = NULL, *rellist = NULL, *tmpl;
 	ssize_t shdrsize;
