@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.8 2001/04/10 08:08:01 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.9 2001/04/16 03:10:14 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -182,7 +182,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 				pass = ssh_askpass(askpass, msg);
 			}
 			if (strcmp(pass, "") == 0) {
-				xfree(pass);
+				clear_pass();
 				xfree(comment);
 				return;
 			}
