@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.8 1995/05/11 21:28:58 christos Exp $	*/
+/*	$NetBSD: eval.h,v 1.9 1995/09/11 17:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,3 +65,10 @@ int execcmd __P((int, char **));
 /* in_function returns nonzero if we are currently evaluating a function */
 #define in_function()	funcnest
 extern int funcnest;
+extern int evalskip;
+
+/* reasons for skipping commands (see comment on breakcmd routine) */
+#define SKIPBREAK	1
+#define SKIPCONT	2
+#define SKIPFUNC	3
+#define SKIPFILE	4

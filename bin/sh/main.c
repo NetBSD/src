@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1995/07/20 15:04:16 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1995/09/11 17:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1995/07/20 15:04:16 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.22 1995/09/11 17:05:44 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,6 +235,10 @@ cmdloop(top)
 			evaltree(n, 0);
 		}
 		popstackmark(&smark);
+		if (evalskip == SKIPFILE) {
+			evalskip = 0;
+			break;
+		}
 	}
 	popstackmark(&smark);		/* unnecessary */
 }
