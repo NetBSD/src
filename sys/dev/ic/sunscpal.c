@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.14 2003/05/03 18:11:24 wiz Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.15 2004/09/18 02:18:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.14 2003/05/03 18:11:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.15 2004/09/18 02:18:39 mycroft Exp $");
 
 #include "opt_ddb.h"
 
@@ -751,9 +751,6 @@ sunscpal_scsipi_request(chan, req, arg)
 		xs = arg;
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
-
-		if (sc->sc_flags & SUNSCPAL_FORCE_POLLING)
-			flags |= XS_CTL_POLL;
 
 		if (flags & XS_CTL_DATA_UIO)
 			panic("sunscpal: scsi data uio requested");
@@ -2079,8 +2076,6 @@ sunscpal_attach(sc, options)
 	 */
 	printf(": options=0x%x\n", options);
 	sc->sc_parity_disable = (options & SUNSCPAL_OPT_NO_PARITY_CHK);
-	if (options & SUNSCPAL_OPT_FORCE_POLLING)
-		sc->sc_flags |= SUNSCPAL_FORCE_POLLING;
 	if (options & SUNSCPAL_OPT_DISABLE_DMA)
 		sc->sc_flags |= SUNSCPAL_DISABLE_DMA;
 
@@ -2094,6 +2089,8 @@ sunscpal_attach(sc, options)
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_request = sunscpal_scsipi_request;
 	sc->sc_adapter.adapt_minphys = sunscpal_minphys;
+	if (options & SUNSCPAL_OPT_FORCE_POLLING)
+		sc->sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
 
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
