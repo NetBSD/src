@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.81 1997/08/04 09:48:10 bouyer Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.82 1997/10/10 01:47:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -439,7 +439,7 @@ sunos_sys_getdents(p, v, retval)
 	struct sunos_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -481,7 +481,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
@@ -489,6 +489,11 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("sunos_getdents");
+		if ((*cookie >> 32) != 0) {
+			compat_offseterr(vp, "sunos_getdents");
+			error = EINVAL;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			off = *cookie++;
