@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.10 1998/06/09 00:12:18 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.11 1998/06/09 01:06:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,10 @@ void	isa_mem_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 	_isa_dmafinished(&(ic)->ic_dmastate, (c))
 #define	isa_dmadone(ic, c)						\
 	_isa_dmadone(&(ic)->ic_dmastate, (c))
+#define	isa_dmafreeze(ic)						\
+	_isa_dmafreeze(&(ic)->ic_dmastate)
+#define	isa_dmathaw(ic)							\
+	_isa_dmathaw(&(ic)->ic_dmastate)
 #define	isa_dmamem_alloc(ic, c, s, ap, f)				\
 	_isa_dmamem_alloc(&(ic)->ic_dmastate, (c), (s), (ap), (f))
 #define	isa_dmamem_free(ic, c, a, s)					\
