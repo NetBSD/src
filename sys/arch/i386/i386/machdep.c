@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.111.2.5 1994/08/15 22:39:12 mycroft Exp $
+ *	$Id: machdep.c,v 1.111.2.6 1994/08/25 00:11:03 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -362,16 +362,26 @@ identifycpu()
 #if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
 #error No CPU classes configured.
 #endif
-#if !defined(I386_CPU)
-	case CPUCLASS_386:
+#if !defined(I586_CPU)
+	case CPUCLASS_586:
+#endif
+#if defined(I486_CPU) && (!defined(I586_CPU))
+		printf("NOTICE: lowering CPU class to i486\n");
+		cpu_class = CPUCLASS_486;
+		break;
 #endif
 #if !defined(I486_CPU)
 	case CPUCLASS_486:
 #endif
-#if !defined(I586_CPU)
-	case CPUCLASS_586:
+#if defined(I386_CPU) && (!defined(I586_CPU) || !defined(I486_CPU))
+		printf("NOTICE: lowering CPU class to i386\n");
+		cpu_class = CPUCLASS_386;
+		break;
 #endif
-#if !defined(I386_CPU) || !defined(I486_CPU) || !defined(I586_CPU)
+#if !defined(I386_CPU)
+	case CPUCLASS_386:
+#endif
+#if !defined(I586_CPU) || !defined(I486_CPU) || !defined(I386_CPU)
 		panic("CPU class not configured");
 #endif
 	default:
