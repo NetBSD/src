@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/03/27 02:23:28 simonb Exp $
+#	$NetBSD: Makefile,v 1.23 2001/06/06 17:34:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>		# for UNPRIVILEGED
@@ -28,7 +28,7 @@ FILES+=${file}
 
 CLEANFILES+=map setup setup.lo host_phantglobs.lo ${ALLFILES}
 
-${PROG}: ${FILES}
+realall: ${FILES}
 
 ${FILES}: setup
 	${.OBJDIR}/setup -m ${.CURDIR}/monsters.asc
