@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.23 2001/05/01 03:01:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.24 2001/05/02 01:22:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -273,6 +273,7 @@ void uvm_page_own __P((struct vm_page *, char *));
 boolean_t uvm_page_physget __P((paddr_t *));
 #endif
 void uvm_page_rehash __P((void));
+void uvm_page_recolor __P((int));
 void uvm_pageidlezero __P((void));
 
 PAGE_INLINE int uvm_lock_fpageq __P((void));
@@ -312,11 +313,9 @@ static int vm_physseg_find __P((paddr_t, int *));
 
 /*
  * Compute the page color bucket for a given page.
- *
- * The constants we uses here come from <uvm/uvm_param.h>.
  */
 #define	VM_PGCOLOR_BUCKET(pg) \
-	(atop(VM_PAGE_TO_PHYS((pg))) & VM_PGCOLOR_MASK)
+	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
 
 /*
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions
