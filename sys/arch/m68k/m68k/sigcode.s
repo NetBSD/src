@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.7 1999/04/19 21:22:59 kleink Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.8 1999/04/29 16:20:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,21 @@ GLOBAL(sigcode)
 	.align	2
 GLOBAL(esigcode)
 
+#ifdef COMPAT_SUNOS
+ 	.data
+ 	.align	2
+GLOBAL(sunos_sigcode)
+	movl	sp@(12),a0	| signal handler addr	(4 bytes)
+	jsr	a0@		| call signal handler	(2 bytes)
+	addql	#4,sp		| pop signal number	(2 bytes)
+	trap	#1		| special syscall entry	(2 bytes)
+	movl	d0,sp@(4)	| save errno		(4 bytes)
+	moveq	#1,d0		| syscall == exit	(2 bytes)
+	trap	#0		| exit(errno)		(2 bytes)
+	.align	2
+GLOBAL(sunos_esigcode)
+#endif /* COMPAT_SUNOS */
+
 #ifdef COMPAT_SVR4
 	.data
 	.align	2
@@ -96,3 +111,4 @@ GLOBAL(svr4_sigcode)
 	.align	2
 GLOBAL(svr4_esigcode)
 #endif /* COMPAT_SVR4 */
+
