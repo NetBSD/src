@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.20.2.3 2002/08/27 23:52:36 nathanw Exp $	*/
+/*	$NetBSD: netdb.h,v 1.20.2.4 2003/01/08 20:53:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -127,7 +127,7 @@ struct	hostent {
 	int	h_addrtype;	/* host address type */
 	int	h_length;	/* length of address */
 	char	**h_addr_list;	/* list of addresses from name server */
-#define	h_addr	h_addr_list[0]	/* address, for backward compatiblity */
+#define	h_addr	h_addr_list[0]	/* address, for backward compatibility */
 };
 
 /*
