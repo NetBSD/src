@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.3 1996/10/01 14:37:00 cgd Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.4 1996/10/01 19:04:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,8 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/kcore.h>
+#include <machine/kcore.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -64,10 +66,41 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
+	cpu_kcore_hdr_t *cpu_kh;
+	int rv, page_off;
 
-	/* don't forget k0seg translations! */
+        if (ISALIVE(kd)) {
+                _kvm_err(kd, 0, "vatop called in live kernel!");
+                return(0);
+        }
 
-	return (0);
+	cpu_kh = kd->cpu_data;
+	page_off = va & (cpu_kh->page_size - 1);
+
+	if (va >= ALPHA_K0SEG_BASE && va <= ALPHA_K0SEG_END) {
+		/*
+		 * Direct-mapped address.  Just convert it.
+		 */
+		*pa = ALPHA_K0SEG_TO_PHYS(va);
+		rv = cpu_kh->page_size - page_off;
+	} else if (va >= ALPHA_K1SEG_BASE && va <= ALPHA_K1SEG_END) {
+		/*
+		 * Real kernel virtual address.  Do the translation.
+		 */
+		/* XXX TRANSLATE IT! */
+		goto barf; /* XXX */
+	} else {
+		/*
+		 * The address is from space (not a KV address).  Return
+		 * values that indicate that it can't be used.
+		 */
+barf: /* XXX */
+		*pa = -1;
+		rv = 0;
+	}
+
+/* printf("_kvm_kvatop va = 0x%lx, returning pa = 0x%lx, rv = 0x%lx\n", va, *pa, rv); */
+	return (rv);
 }
 
 /*
@@ -78,6 +111,13 @@ _kvm_pa2off(kd, pa)
 	kvm_t *kd;
 	u_long pa;
 {
+	off_t off;
+	cpu_kcore_hdr_t *cpu_kh;
 
-	return (-1);
+	cpu_kh = kd->cpu_data;
+
+	off = 0;
+	pa -= cpu_kh->core_seg.start;
+
+	return (kd->dump_off + off + pa);
 }
