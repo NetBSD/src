@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.29 1997/10/19 19:09:05 mycroft Exp $	*/
+/*	$NetBSD: ftp.c,v 1.29.2.1 1997/11/18 01:01:04 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.29 1997/10/19 19:09:05 mycroft Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.29.2.1 1997/11/18 01:01:04 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,6 @@ jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
 struct	sockaddr_in myctladdr;
-off_t	restart_point = 0;
 
 
 FILE	*cin, *cout;
@@ -466,9 +465,8 @@ sendrequest(cmd, local, remote, printnames)
 			(void)signal(SIGPIPE, oldintp);
 		if (oldinti)
 			(void)signal(SIGINFO, oldinti);
-		progress = oprogress;
 		code = -1;
-		return;
+		goto cleanupsend;
 	}
 	oldintr = signal(SIGINT, abortsend);
 	oldinti = signal(SIGINFO, psummary);
@@ -484,7 +482,7 @@ sendrequest(cmd, local, remote, printnames)
 			(void)signal(SIGPIPE, oldintp);
 			(void)signal(SIGINFO, oldinti);
 			code = -1;
-			return;
+			goto cleanupsend;
 		}
 		progress = 0;
 		closefunc = pclose;
@@ -495,7 +493,7 @@ sendrequest(cmd, local, remote, printnames)
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
 			code = -1;
-			return;
+			goto cleanupsend;
 		}
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode)) {
@@ -504,7 +502,7 @@ sendrequest(cmd, local, remote, printnames)
 			(void)signal(SIGINFO, oldinti);
 			fclose(fin);
 			code = -1;
-			return;
+			goto cleanupsend;
 		}
 		filesize = st.st_size;
 	}
@@ -514,10 +512,9 @@ sendrequest(cmd, local, remote, printnames)
 		if (oldintp)
 			(void)signal(SIGPIPE, oldintp);
 		code = -1;
-		progress = oprogress;
 		if (closefunc != NULL)
 			(*closefunc)(fin);
-		return;
+		goto cleanupsend;
 	}
 	if (setjmp(sendabort))
 		goto abort;
@@ -538,44 +535,37 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		if (rc < 0) {
 			warn("local: %s", local);
-			restart_point = 0;
-			progress = oprogress;
 			if (closefunc != NULL)
 				(*closefunc)(fin);
-			return;
+			goto cleanupsend;
 		}
-		if (command("REST %ld", (long) restart_point)
-			!= CONTINUE) {
-			restart_point = 0;
-			progress = oprogress;
+		if (command("REST %qd", (long long) restart_point) !=
+		    CONTINUE) {
 			if (closefunc != NULL)
 				(*closefunc)(fin);
-			return;
+			goto cleanupsend;
 		}
-		restart_point = 0;
 		lmode = "r+w";
 	}
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
-			progress = oprogress;
 			if (oldintp)
 				(void)signal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
 				(*closefunc)(fin);
-			return;
+			goto cleanupsend;
 		}
 	} else
 		if (command("%s", cmd) != PRELIM) {
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
-			progress = oprogress;
 			if (oldintp)
 				(void)signal(SIGPIPE, oldintp);
 			if (closefunc != NULL)
 				(*closefunc)(fin);
-			return;
+			goto cleanupsend;
 		}
 	dout = dataconn(lmode);
 	if (dout == NULL)
@@ -654,7 +644,6 @@ sendrequest(cmd, local, remote, printnames)
 		break;
 	}
 	progressmeter(1);
-	progress = oprogress;
 	if (closefunc != NULL)
 		(*closefunc)(fin);
 	(void)fclose(dout);
@@ -665,11 +654,10 @@ sendrequest(cmd, local, remote, printnames)
 		(void)signal(SIGPIPE, oldintp);
 	if (bytes > 0)
 		ptransfer(0);
-	return;
+	goto cleanupsend;
 abort:
 	(void)signal(SIGINT, oldintr);
 	(void)signal(SIGINFO, oldinti);
-	progress = oprogress;
 	if (oldintp)
 		(void)signal(SIGPIPE, oldintp);
 	if (!cpend) {
@@ -688,6 +676,9 @@ abort:
 		(*closefunc)(fin);
 	if (bytes > 0)
 		ptransfer(0);
+cleanupsend:
+	progress = oprogress;
+	restart_point = 0;
 }
 
 jmp_buf	recvabort;
@@ -744,7 +735,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	filesize = -1;
 	oprogress = progress;
 	opreserve = preserve;
-	is_retr = strcmp(cmd, "RETR") == 0;
+	is_retr = (strcmp(cmd, "RETR") == 0);
 	if (is_retr && verbose && printnames) {
 		if (local && (ignorespecial || *local != '-'))
 			printf("local: %s ", local);
@@ -841,7 +832,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	if (setjmp(recvabort))
 		goto abort;
 	if (is_retr && restart_point &&
-	    command("REST %ld", (long) restart_point) != CONTINUE)
+	    command("REST %qd", (long long) restart_point) != CONTINUE)
 		return;
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
@@ -903,7 +894,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 
 	case TYPE_I:
 	case TYPE_L:
-		if (restart_point &&
+		if (is_retr && restart_point &&
 		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			warn("local: %s", local);
 			progress = oprogress;
@@ -945,12 +936,13 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		break;
 
 	case TYPE_A:
-		if (restart_point) {
-			int i, n, ch;
+		if (is_retr && restart_point) {
+			int ch;
+			long i, n;
 
 			if (fseek(fout, 0L, SEEK_SET) < 0)
 				goto done;
-			n = restart_point;
+			n = (long)restart_point;
 			for (i = 0; i++ < n;) {
 				if ((ch = getc(fout)) == EOF)
 					goto done;
