@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2004/07/18 23:21:35 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2004/07/27 14:25:34 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -1035,13 +1035,10 @@ switch_exited:
 	copy	%sp, %r3
 	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
-	copy	%rp, %arg2
-	copy	%r3, %arg3
+	copy	%arg1, %arg0
 
 	.import	hppa_ras, code
-	.call
-	bl	hppa_ras, %rp
-	copy	%arg1, %arg0
+	CALL(hppa_ras, %r1)
 
 	/* end stack calling convention */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
