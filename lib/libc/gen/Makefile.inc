@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.115 2002/09/27 15:02:26 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.116 2003/01/15 23:55:42 kleink Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -18,8 +18,9 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	pause.c popen.c psignal.c pwcache.c pw_scan.c raise.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
-	shquote.c shquotev.c siginterrupt.c __siglist14.c siglist.c signal.c \
-	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
+	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
+	__siglist14.c siglist.c signal.c __signame14.c signame.c sigrelse.c \
+	sigset.c __sigsetops14.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c __times13.c \
 	times.c timezone.c toascii.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
@@ -50,7 +51,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
 	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
 	modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 realpath.3 scandir.3 setjmp.3 setmode.3 \
-	setproctitle.3 shquote.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 \
+	setproctitle.3 shquote.3 sighold.3 sigignore.3 siginterrupt.3 \
+	signal.3 sigrelse.3 sigset.3 sigsetops.3 sleep.3 \
 	stringlist.3 sysconf.3 sysctl.3 syslog.3 time.3 times.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
