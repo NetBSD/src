@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1996/01/31 08:47:17 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 1996/03/18 01:22:27 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -65,7 +65,7 @@
 #define wbflush() MachEmptyWriteBuffer()
 
 /* This should be in a header file, but where? */
-extern struct cfdriver mainbuscd;	/* XXX really 3100/5100 b'board */
+extern struct cfdriver mainbus_cd;	/* XXX really 3100/5100 b'board */
 
 #include <pmax/pmax/kn01.h>
 #include <machine/machConst.h>
@@ -93,17 +93,21 @@ void lewritereg();
 
 extern caddr_t le_iomem;
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-int lematch __P((struct device *, void *, void *));
-void leattach __P((struct device *, struct device *, void *));
+int le_tc_match __P((struct device *, void *, void *));
+void le_tc_attach __P((struct device *, struct device *, void *));
 
 int leintr __P((void *sc));
 
 
-struct cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET, sizeof (struct le_softc)
+struct cfattach le_tc_ca = {
+	sizeof(struct le_softc), le_tc_match, le_tc_attach
+};
+
+struct cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 integrate void
@@ -131,7 +135,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch(parent, match, aux)
+le_tc_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -168,7 +172,7 @@ lematch(parent, match, aux)
 }
 
 void
-leattach(parent, self, aux)
+le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -177,7 +181,7 @@ leattach(parent, self, aux)
 	u_char *cp;	/* pointer to MAC address */
 	int i;
 
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/* It's on the system IOCTL ASIC */
 		volatile u_int *ldp;
 		tc_addr_t dma_mask;
@@ -212,7 +216,7 @@ leattach(parent, self, aux)
 		wbflush();
 	}
 	else
-	if (parent->dv_cfdata->cf_driver == &tccd) {
+	if (parent->dv_cfdata->cf_driver == &tc_cd) {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
 		sc->sc_r1 = (struct lereg1 *)
 		    (ca->ca_addr + LE_OFFSET_LANCE);
@@ -227,7 +231,7 @@ leattach(parent, self, aux)
 		sc->sc_zerobuf = zerobuf_contig;
 	}
 #ifdef pmax
-	 else if (parent->dv_cfdata->cf_driver == &mainbuscd) {
+	 else if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
 		sc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
@@ -254,13 +258,13 @@ leattach(parent, self, aux)
 		cp += 4;
 	}
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
 
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/* XXX YEECH!!! */
 		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
 			IOASIC_INTR_LANCE;
