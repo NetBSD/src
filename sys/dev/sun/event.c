@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5 2000/08/20 13:44:14 eeh Exp $	*/
+/*	$NetBSD: event.c,v 1.6 2000/08/22 07:36:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,8 @@
 #include <dev/sun/event_var.h>
 
 #ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+
 int ev_out32 __P((struct firm_event *, int, struct uio *));
 
 /*
