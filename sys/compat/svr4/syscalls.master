@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 1997/03/15 00:01:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.22 1997/06/27 05:29:38 kleink Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -225,7 +225,7 @@
 			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
-134	NOARGS		{ int sys_rename(char *from, char *to); }
+134	NOARGS		{ int sys_posix_rename(char *from, char *to); }
 135	STD		{ int svr4_sys_uname(struct svr4_utsname* name, \
 			    int dummy); }
 136	NOARGS		{ int sys_setegid(gid_t egid); }

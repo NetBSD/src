@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.24 1997/03/26 23:44:29 gwr Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.25 1997/06/27 05:29:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -1377,7 +1377,7 @@ ibcs2_sys_rename(p, v, retval)
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
-	return sys_rename(p, uap, retval);
+	return sys_posix_rename(p, uap, retval);
 }
 
 int
