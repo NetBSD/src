@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.14 1997/09/15 11:17:11 lukem Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.15 1997/09/16 12:57:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
+static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.14 1997/09/15 11:17:11 lukem Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.15 1997/09/16 12:57:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(argc, argv)
 				break;
 			if (p != mbuf)
 				*p++ = ' ';
-			memcpy(p, *argv, arglen);
+			memmove(p, *argv, arglen);
 			p += arglen;
 		}
 		*p = '\n';
