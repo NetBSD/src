@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.15 2001/01/03 20:12:34 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.16 2001/01/03 20:29:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.15 2001/01/03 20:12:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.16 2001/01/03 20:29:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,17 +63,9 @@ vaddr_t		alpha_sgmap_prefetch_spill_page_va;
 bus_addr_t	alpha_sgmap_prefetch_spill_page_pa;
 
 void
-alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
-    minptalign)
-	bus_dma_tag_t t;
-	struct alpha_sgmap *sgmap;
-	const char *name;
-	bus_addr_t wbase;
-	bus_addr_t sgvabase;
-	bus_size_t sgvasize;
-	size_t ptesize;
-	void *ptva;
-	bus_size_t minptalign;
+alpha_sgmap_init(bus_dma_tag_t t, struct alpha_sgmap *sgmap, const char *name,
+    bus_addr_t wbase, bus_addr_t sgvabase, bus_size_t sgvasize, size_t ptesize,
+    void *ptva, bus_size_t minptalign)
 {
 	bus_dma_segment_t seg;
 	size_t ptsize;
@@ -151,11 +143,8 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 }
 
 int
-alpha_sgmap_alloc(map, origlen, sgmap, flags)
-	bus_dmamap_t map;
-	bus_size_t origlen;
-	struct alpha_sgmap *sgmap;
-	int flags;
+alpha_sgmap_alloc(bus_dmamap_t map, bus_size_t origlen,
+    struct alpha_sgmap *sgmap, int flags)
 {
 	int error;
 	bus_size_t len = origlen, boundary, alignment;
@@ -210,9 +199,7 @@ alpha_sgmap_alloc(map, origlen, sgmap, flags)
 }
 
 void
-alpha_sgmap_free(map, sgmap)
-	bus_dmamap_t map;
-	struct alpha_sgmap *sgmap;
+alpha_sgmap_free(bus_dmamap_t map, struct alpha_sgmap *sgmap)
 {
 
 #ifdef DIAGNOSTIC
@@ -228,15 +215,8 @@ alpha_sgmap_free(map, sgmap)
 }
 
 int
-alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+alpha_sgmap_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	bus_dmamap_t map;
 	int error;
@@ -259,9 +239,7 @@ alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 }
 
 void
-alpha_sgmap_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+alpha_sgmap_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
