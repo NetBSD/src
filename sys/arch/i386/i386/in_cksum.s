@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.8 1998/08/15 05:10:23 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.9 1998/12/01 04:31:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -314,7 +314,7 @@ return:
 
 out_of_mbufs:
 	pushl	$1f
-	call	_printf
+	call	_C_LABEL(printf)
 	leal	4(%esp), %esp
 	jmp	return
 1:

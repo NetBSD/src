@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.17 1997/02/13 00:59:14 jonathan Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18 1998/12/01 04:31:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -60,11 +60,11 @@ ENTRY(microtime)
 	inb	$TIMER_CNTR0,%al	# %al has MSB
 
 	# save state of IIR in ICU, and of ipending, for later perusal
-	movb	_ipending + IRQ_BYTE(0),%cl	# %cl is interrupt pending
+	movb	_C_LABEL(ipending) + IRQ_BYTE(0),%cl # %cl is interrupt pending
 	
 	# save the current value of _time
-	movl	_time,%edi		# get time.tv_sec
-	movl	_time+4,%ebx		#  and time.tv_usec
+	movl	_C_LABEL(time),%edi	# get time.tv_sec
+	movl	_C_LABEL(time)+4,%ebx	#  and time.tv_usec
 
 	sti				# enable interrupts, we're done
 
@@ -87,13 +87,13 @@ ENTRY(microtime)
 	jnz	1f			# no, add a tick
 	cmpb	$3,%dl			# is this small number?
 	jbe	2f			# yes, continue
-1:	addl	_isa_timer_tick,%ebx	# add a tick
+1:	addl	_C_LABEL(isa_timer_tick),%ebx	# add a tick
 
 	# We've corrected for pending interrupts.  Now do a table lookup
 	# based on each of the high and low order counter bytes to increment
 	# time.tv_usec
-2:	movw	_isa_timer_msb_table(,%eax,2),%ax
-	subw	_isa_timer_lsb_table(,%edx,2),%ax
+2:	movw	_C_LABEL(isa_timer_msb_table)(,%eax,2),%ax
+	subw	_C_LABEL(isa_timer_lsb_table)(,%edx,2),%ax
 	addl	%eax,%ebx		# add msb increment
 
 	# Normalize the struct timeval.  We know the previous increments
