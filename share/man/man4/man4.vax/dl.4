@@ -1,4 +1,4 @@
-.\"	$NetBSD: dl.4,v 1.9 2002/02/13 08:18:06 ross Exp $
+.\"	$NetBSD: dl.4,v 1.10 2003/04/06 19:29:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Ben Harris.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .Sh NAME
 .Nm dl
 .Nd
-.Tn DL11 Ns / Ns Tn DLV11
+.Tn DL-11 Ns / Ns Tn DLV-11
 serial device driver
 .Sh SYNOPSIS
 .Cd "dl0 at uba? csr 0176500"
@@ -40,10 +40,10 @@ serial device driver
 The
 .Nm
 driver controls a
-.Tn DL11 Ns -compatible
+.Tn DL-11 Ns -compatible
 asynchronous serial card, and probably things compatible with it.  A
 four-port
-.Tn DLV11-J
+.Tn DLV-11J
 will appear four times in the device list, as the ports look like
 separate cards to the driver.
 .Pp
@@ -91,7 +91,7 @@ driver was written for
 Ben Harris \*[Lt]bjh21@netbsd.org\*[Gt]
 .Sh BUGS
 The
-.Tn DL11
+.Tn DL-11
 and friends only have single-character receive and transmit buffers,
 so an interrupt is generated for every character received or
 transmitted.  Attempting to receive data at even moderately high rates
@@ -100,7 +100,7 @@ will cause rx overruns.  Fast transmission seems to be fine though.
 There is no support in the driver for the paper-tape reader on an
 .Tn LT33
 attached via a
-.Tn DLV11-KA
+.Tn DLV-11KA
 or similar.
 .Pp
 The overrun message is logged in the interrupt routine itself, which
@@ -114,5 +114,5 @@ In order to determine the card's interrupt vector, the driver sends a
 to each port.  This may confuse things attached to them.
 .Pp
 The driver has so far only been tested on a
-.Tn DLV11-J .
+.Tn DLV-11J .
 It may or may not work on the other cards it claims to support.
