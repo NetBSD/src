@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.9 1998/01/09 06:56:47 thorpej Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.10 1998/01/30 02:25:28 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp 
+ *	NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp 
  */
 
 /*
@@ -91,6 +91,18 @@
 
 #define	TC_DEVICE_PMAZ_AA	"asc"
 #define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"
+
+#define	TC_DEVICE_PMAZ_DS	"tcds"
+#define	TC_DESCRIPTION_PMAZ_DS	"53c94 TCDS SCSI (baseboard)"
+
+#define	TC_DEVICE_PMAZ_FS	"tcds"
+#define	TC_DESCRIPTION_PMAZ_FS	"53c94 TCDS Fast SCSI (baseboard)"
+
+#define	TC_DEVICE_PMAZB_AA	"tcds"
+#define	TC_DESCRIPTION_PMAZB_AA	"53c94 TCDS SCSI option card"
+
+#define	TC_DEVICE_PMAZC_AA	"tcds"
+#define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI option card"
 
 #define	TC_DEVICE_T1D4PKT	"ds"
 #define	TC_DESCRIPTION_T1D4PKT	"DECWRL Turbochannel T1"
