@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS3X,v 1.6 1997/05/07 02:20:26 lukem Exp $
+#	$NetBSD: DISKLESS3X,v 1.7 1997/05/15 01:49:27 jeremy Exp $
 
 #
 # DISKLESS Sun3x (3/80, 3/470)
@@ -18,7 +18,7 @@ maxusers	4
 options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either these:
-options 	DDB
+#options 	DDB
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"			# debugging symbols for gdb
 #options 	KGDB
@@ -47,11 +47,11 @@ options 	COMPAT_12	# NetBSD 1.2
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3x-specific debugging options
-options 	PMAP_DEBUG
+#options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
-options 	DIAGNOSTIC
+#options 	DIAGNOSTIC
 
 config		netbsd root on ? type nfs
 
