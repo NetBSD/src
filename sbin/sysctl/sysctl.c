@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.80 2004/02/19 06:51:11 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.81 2004/02/20 05:27:39 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.80 2004/02/19 06:51:11 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.81 2004/02/20 05:27:39 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -1794,35 +1794,57 @@ kern_cp_time(HANDLER_ARGS)
 		rc = sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
 		if (rc != 0)
 			return; /* XXX print an error, eh? */
+		n++; /* Add on space for the sum. */
 		sz = n * sizeof(u_int64_t) * CPUSTATES;
 	}
 	else {
-		n = -1; /* just print it */
+		n = -1; /* Just print one data set. */
 		sz = sizeof(u_int64_t) * CPUSTATES;
 	}
-
 
 	cp_time = malloc(sz);
 	if (cp_time == NULL) {
 		sysctlerror(1);
 		return;
 	}
-	
+
 	osz = sz;
-	rc = sysctl(name, namelen, cp_time, &osz, NULL, 0);
+	rc = sysctl(name, namelen, cp_time + (n != -1) * CPUSTATES, &osz,
+		    NULL, 0);
 
 	if (rc == -1) {
 		sysctlerror(1);
 		free(cp_time);
 		return;
 	}
-	if (osz != sz)
+
+	/*
+	 * Check, but account for space we'll occupy with the sum.
+	 */
+	if (osz != sz - (n != -1) * CPUSTATES * sizeof(u_int64_t))
 		errx(1, "%s: !returned size wrong!", sname);
+
+	/*
+	 * Compute the actual sum.  Two calls would be easier (we
+	 * could just call ourselves recursively above), but the
+	 * numbers wouldn't add up.
+	 */
+	if (n != -1) {
+		memset(cp_time, 0, sizeof(u_int64_t) * CPUSTATES);
+		for (i = 1; i < n; i++) {
+			cp_time[CP_USER] += cp_time[i * CPUSTATES + CP_USER];
+                        cp_time[CP_NICE] += cp_time[i * CPUSTATES + CP_NICE];
+                        cp_time[CP_SYS] += cp_time[i * CPUSTATES + CP_SYS];
+                        cp_time[CP_INTR] += cp_time[i * CPUSTATES + CP_INTR];
+                        cp_time[CP_IDLE] += cp_time[i * CPUSTATES + CP_IDLE];
+		}
+	}
 
 	tname = sname;
 	for (i = 0; n == -1 || i < n; i++) {
-		if (n != -1) {
-			(void)snprintf(s, sizeof(s), "%s%s%d", sname, sep, i);
+		if (i > 0) {
+			(void)snprintf(s, sizeof(s), "%s%s%d", sname, sep,
+				       i - 1);
 			tname = s;
 		}
 		if (xflag || rflag)
@@ -1844,6 +1866,9 @@ kern_cp_time(HANDLER_ARGS)
 			       cp_time[i * CPUSTATES + CP_INTR],
 			       cp_time[i * CPUSTATES + CP_IDLE]);
 		}
+		/*
+		 * Just printing the one node.
+		 */
 		if (n == -1)
 			break;
 	}
