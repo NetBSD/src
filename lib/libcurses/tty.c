@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.33 2003/06/20 06:58:53 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.34 2003/07/30 11:07:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.33 2003/06/20 06:58:53 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.34 2003/07/30 11:07:21 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -359,8 +359,8 @@ __timeout(int delay)
 	_cursesi_screen->baset.c_cc[VMIN] = 0;
 	_cursesi_screen->baset.c_cc[VTIME] = delay;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
-			  TCSASOFT | TCSANOW : TCSANOW,
+	return (tcsetattr(fileno(_cursesi_screen->infd),
+			  __tcaction ? TCSASOFT | TCSANOW : TCSANOW,
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
@@ -380,8 +380,8 @@ __notimeout(void)
 	_cursesi_screen->baset.c_cc[VMIN] = 1;
 	_cursesi_screen->baset.c_cc[VTIME] = 0;
 
-	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
-			  TCSASOFT | TCSANOW : TCSANOW,
+	return (tcsetattr(fileno(_cursesi_screen->infd),
+			  __tcaction ? TCSASOFT | TCSANOW : TCSANOW,
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
