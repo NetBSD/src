@@ -48,11 +48,16 @@
  *
  * Thanks, ANSI!
  */
+
 #define	_CLOCK_T_	unsigned long		/* clock() */
 #define	_PTRDIFF_T_	int			/* ptr1 - ptr2 */
 #define	_SIZE_T_	unsigned int		/* sizeof() */
 #define	_TIME_T_	long			/* time() */
-#define	_VA_LIST_	char *			/* va_list */
 #define	_WCHAR_T_	unsigned short		/* wchar_t */
+
+/* va_list is "special" in that it is ONLY defined in stdarg.h AND
+   that _VA_LIST_ is *NOT* undefined as stated in the above comment. */
+
+#define	_VA_LIST_	char *			/* va_list */
 
 #endif	/* _ANSI_H_ */

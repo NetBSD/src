@@ -39,17 +39,13 @@
  */
 
 
-#include <sys/types.h>   /* to make sure _VA_LIST_ gets defined if it
-			    needs to. */
-
 #ifndef _MACHINE_STDARG_H_
 #define _MACHINE_STDARG_H_
 
-/* The macro _VA_LIST_ is the same thing used by this file in Ultrix.  */
-#ifdef _VA_LIST_
+#include <machine/ansi.h> 	/* to make sure _VA_LIST_ is defined. */
+
+/* See comment in machine/ansi.h as to why it is this way. */
 typedef _VA_LIST_ va_list;
-/* #undef _VA_LIST_   This should be done, but stdio barffed if done. PAN */
-#endif
 
 /* Amount of space required in an argument list for an arg of type TYPE.
    TYPE may alternatively be an expression whose type is used.  */
