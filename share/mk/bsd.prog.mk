@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.195 2004/01/23 05:09:58 simonb Exp $
+#	$NetBSD: bsd.prog.mk,v 1.196 2004/01/27 03:31:48 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -272,7 +272,7 @@ scriptsinstall::
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 ##### Pull in related .mk logic

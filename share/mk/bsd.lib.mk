@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.244 2004/01/07 15:27:08 skrll Exp $
+#	$NetBSD: bsd.lib.mk,v 1.245 2004/01/27 03:31:48 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -212,7 +212,10 @@ FFLAGS+=	${FOPTS}
 
 .c.ln:
 	${_MKTARGET_COMPILE}
-	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[-IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} \
+	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    -i ${.IMPSRC}
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
@@ -310,19 +313,25 @@ FFLAGS+=	${FOPTS}
 
 .S.o .s.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} \
+	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
 .S.po .s.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DGPROF -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} -DGPROF -DPROF \
+	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
 .S.so .s.so:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} ${CAPICFLAGS} \
+	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
