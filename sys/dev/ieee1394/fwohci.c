@@ -576,11 +576,19 @@ fwohci_power(int why, void *arg)
 	int s;
 
 	s = splimp();
-	if (why == PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		fwohci_shutdown(sc);
+		break;
+	case PWR_RESUME:
 		fwohci_hw_init(sc);
 		fwohci_phy_busreset(sc);
-	} else {
-		fwohci_shutdown(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
