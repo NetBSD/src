@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/31 15:49:20 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.10 2002/03/31 15:49:58 bjh21 Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
 	@echo "Please understand what you are doing, first."
 	@false
-
-#
-# DETERMINE WHICH CRYPTO SET TO USE
-#
 
 .include <bsd.own.mk>
 
