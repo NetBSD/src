@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 1997/09/20 12:36:05 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.7 1998/05/15 16:38:53 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -42,7 +42,9 @@
 
 #include <libi386.h>
 #include <biosdisk.h>
+#ifdef _STANDALONE
 #include <bootinfo.h>
+#endif
 
 extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
 			      unsigned int*, const char**));
@@ -97,7 +99,7 @@ bios2dev(biosdev, devname, unit)
 	unsigned int   *unit;
 {
 	if (biosdev & 0x80) {
-#ifdef COMPAT_OLDBOOT
+#if defined(COMPAT_OLDBOOT) && defined(_STANDALONE)
 		extern struct disklabel disklabel;
 
 		if(disklabel.d_magic == DISKMAGIC) {
@@ -117,7 +119,9 @@ bios2dev(biosdev, devname, unit)
 	return (0);
 }
 
+#ifdef _STANDALONE
 struct btinfo_bootpath bibp;
+#endif
 
 /*
  * Open the BIOS disk device
@@ -142,8 +146,10 @@ devopen(f, fname, file)
 	dp = &devsw[0];		/* must be biosdisk */
 	f->f_dev = dp;
 
+#ifdef _STANDALONE
 	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
 	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+#endif
 
 	return (biosdiskopen(f, biosdev, partition));
 }
