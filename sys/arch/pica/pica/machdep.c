@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1998/01/24 16:46:41 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1998/02/19 00:32:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
+
+#include "fs_mfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
