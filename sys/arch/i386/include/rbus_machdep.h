@@ -1,3 +1,5 @@
+/*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
+
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -28,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.h,v 1.1 1999/10/15 06:11:17 haya Exp $ */
 
 #if !defined _ARCH_I386_I386_RBUS_MACHDEP_H_
 #define _ARCH_I386_I386_RBUS_MACHDEP_H_

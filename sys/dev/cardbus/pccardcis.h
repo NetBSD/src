@@ -1,4 +1,4 @@
-/*	$Id: pccardcis.h,v 1.1 1999/10/15 06:07:24 haya Exp $	*/
+/*	$NetBSD: pccardcis.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 
 /*
  * Copyright (c) 1997 and 1998
