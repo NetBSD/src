@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.35 2004/08/21 21:55:47 hubertf Exp $
+.\"	$NetBSD: legal.common,v 1.36 2004/08/21 22:30:56 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -511,12 +511,6 @@ This product includes software developed by Yasushi Yamasaki
 .It
 This product includes software developed by Zembu Labs, Inc.
 .It
-This product includes software developed by the
-// University of California, Berkeley and its contributors'' in the
-.It
-This product includes software developed by the
-University of California, Berkeley and its contributors'' in the
-.It
 This product includes software developed by the Alice Group.
 .It
 This product includes software developed by the Center
@@ -647,7 +641,7 @@ for use with "386BSD" and similar operating systems.
 "Similar operating systems" includes mainly non-profit oriented
 systems for research and education, including but not restricted to
 "NetBSD", "FreeBSD", "Mach" (by CMU).
-``.It
+.It
 This software includes software developed by the Computer Systems
 Laboratory at the University of Utah.
 .It
