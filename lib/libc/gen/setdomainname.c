@@ -1,4 +1,4 @@
-/*	$NetBSD: setdomainname.c,v 1.3 1995/03/04 01:55:49 cgd Exp $	*/
+/*	$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: setdomainname.c,v 1.3 1995/03/04 01:55:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,10 +45,10 @@ static char rcsid[] = "$NetBSD: setdomainname.c,v 1.3 1995/03/04 01:55:49 cgd Ex
 #include <sys/sysctl.h>
 
 #if __STDC__
-long
+int
 setdomainname(const char *name, int namelen)
 #else
-long
+int
 setdomainname(name, namelen)
 	char *name;
 	int namelen;
