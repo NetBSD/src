@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.5 2000/08/13 21:55:33 jdolecek Exp $
+#	$NetBSD: PS2,v 1.6 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -124,5 +124,5 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 #pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.7 2000/09/12 17:07:44 minoura Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.8 2000/09/24 15:59:39 jdolecek Exp $
 
 #
 #	INSTALL_SMALL -- `small' installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL_SMALL-$Revision: 1.7 $"
+#ident 		"INSTALL_SMALL-$Revision: 1.8 $"
 
 maxusers	8
 
@@ -312,10 +312,6 @@ pseudo-device	loop
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
 #pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
 

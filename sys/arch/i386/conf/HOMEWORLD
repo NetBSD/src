@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.50 2000/08/21 07:39:43 itohy Exp $
+#	$NetBSD: HOMEWORLD,v 1.51 2000/09/24 15:59:33 jdolecek Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
@@ -604,7 +604,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 #pseudo-device	rnd			# /dev/random and in-kernel generator

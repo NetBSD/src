@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.19 2000/09/13 16:26:15 thorpej Exp $
+#	$NetBSD: GENERIC_TINY,v 1.20 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -514,7 +514,7 @@ pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

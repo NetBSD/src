@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.6 2000/08/12 06:59:02 msaitoh Exp $
+#	$NetBSD: KZSH401,v 1.7 2000/09/24 15:59:31 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -146,7 +146,7 @@ scif0 at shb? port 0xffe80000 irq 12
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	tun		2	# network tunneling over tty
 

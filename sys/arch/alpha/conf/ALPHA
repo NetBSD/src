@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.130 2000/08/11 18:26:09 thorpej Exp $
+# $NetBSD: ALPHA,v 1.131 2000/09/24 15:59:26 jdolecek Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.130 $"
+ident		"ALPHA-$Revision: 1.131 $"
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -451,7 +451,7 @@ pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	ppp		4
-pseudo-device	pty		64
+pseudo-device	pty
 pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4

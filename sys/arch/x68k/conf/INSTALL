@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.31 2000/09/12 17:07:44 minoura Exp $
+#	$NetBSD: INSTALL,v 1.32 2000/09/24 15:59:39 jdolecek Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.31 $"
+#ident 		"INSTALL-$Revision: 1.32 $"
 
 maxusers	4
 
@@ -312,10 +312,6 @@ pseudo-device	sl		1
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
 pseudo-device	pty		4	# pseudo-ttys (for network, etc.)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.23 2000/02/14 08:58:41 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.24 2000/09/24 15:59:34 jdolecek Exp $
 #
 # GENERIC
 
@@ -228,7 +228,7 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
 # rnd is EXPERIMENTAL at this point.

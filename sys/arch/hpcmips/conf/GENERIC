@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.65 2000/09/21 14:17:35 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.66 2000/09/24 15:59:32 jdolecek Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.66 $"
 
 maxusers	8
 
@@ -317,7 +317,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 

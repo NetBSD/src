@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.6 2000/06/14 22:02:34 veego Exp $
+#	$NetBSD: BULLBOX,v 1.7 2000/09/24 15:59:36 jdolecek Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -70,7 +70,7 @@ ss* at scsibus? target ? lun ?		# SCSI scanners
 se* at scsibus0 target ? lun ?		# SCSI ethernet
 uk* at scsibus? target ? lun ?		# All the things we don't know
 
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop		1	# loopback network
 pseudo-device	vnd		2	# vnode devices
 pseudo-device	bpfilter	4	# packet filter

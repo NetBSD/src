@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 2000/08/13 01:31:21 itojun Exp $
+#	$NetBSD: GENERIC,v 1.52 2000/09/24 15:59:38 jdolecek Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	8
 
@@ -304,12 +304,8 @@ pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

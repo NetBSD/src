@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.37 2000/02/12 03:32:47 thorpej Exp $
+#	$NetBSD: DUALITY,v 1.38 2000/09/24 15:59:32 jdolecek Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -154,7 +154,7 @@ sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 #ac*		at oscsi? target ? lun ?	# SCSI changers
 
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
 pseudo-device	bpfilter	16	# Berkeley packet filter

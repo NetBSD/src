@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2000/07/31 02:06:48 briggs Exp $
+#	$NetBSD: INSTALL,v 1.7 2000/09/24 15:59:34 jdolecek Exp $
 #
 # INSTALL
 
@@ -176,4 +176,4 @@ pseudo-device	ppp		1 	# Point-to-Point Protocol
 pseudo-device	sl		1 	# Serial Line IP
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals

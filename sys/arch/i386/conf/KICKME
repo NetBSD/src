@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.55 1999/07/29 10:37:18 augustss Exp $
+#	$NetBSD: KICKME,v 1.56 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -100,6 +100,6 @@ wl*	at pcmcia? function ?
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
 pseudo-device	ppp	2		# PPP
-pseudo-device	pty	64		# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd	16		# vnode-disk driver
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.1 2000/05/25 22:11:58 is Exp $
+# $NetBSD: NULL,v 1.2 2000/09/24 15:59:28 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -310,7 +310,7 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #pseudo-device	ipfilter		# IP Filter package
 
 pseudo-device	view		4	# views (needed for grfcc)
-pseudo-device	pty		16	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 
 #pseudo-device	vnd		4	# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices

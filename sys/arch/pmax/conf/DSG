@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.23 2000/09/13 03:44:38 nisimura Exp $
+# 	$NetBSD: DSG,v 1.24 2000/09/24 15:59:36 jdolecek Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -153,7 +153,7 @@ include 	"arch/pmax/conf/scsi.pmax"
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	strip		 2	# Metricom IP encapsulation
 pseudo-device	ppp		 2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	vnd		 4	# virtual disk ick

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.38 2000/08/13 01:31:17 itojun Exp $
+#	$NetBSD: SHARK,v 1.39 2000/09/24 15:59:29 jdolecek Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.38 $"
+#ident		"GENERIC-$Revision: 1.39 $"
 
 # estimated number of users
 maxusers	32
@@ -211,7 +211,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
 #pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
-pseudo-device	pty	64		# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices

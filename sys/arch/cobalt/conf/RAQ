@@ -1,4 +1,4 @@
-#	$NetBSD: RAQ,v 1.7 2000/06/28 09:45:01 soren Exp $
+#	$NetBSD: RAQ,v 1.8 2000/09/24 15:59:31 jdolecek Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
@@ -65,4 +65,4 @@ wd* 		at pciide? channel ? drive ?
 
 pseudo-device	loop
 pseudo-device	bpfilter	4
-pseudo-device	pty		64
+pseudo-device	pty

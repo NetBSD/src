@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.70 2000/08/13 01:31:17 itojun Exp $
+#	$NetBSD: GENERIC,v 1.71 2000/09/24 15:59:31 jdolecek Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -159,7 +159,7 @@ pseudo-device	mouse		1	# mouse
 pseudo-device	view		2	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter	2	# berkeley packet filters
