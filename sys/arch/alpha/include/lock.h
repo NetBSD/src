@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.17 2003/06/23 11:01:01 martin Exp $ */
+/* $NetBSD: lock.h,v 1.18 2003/06/28 08:42:41 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #ifndef _ALPHA_LOCK_H_
 #define	_ALPHA_LOCK_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
