@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.8 2003/10/24 23:42:25 jdolecek Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.9 2003/10/26 21:32:51 jdolecek Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -45,7 +45,7 @@
 #  - @@@ARCH@@@ with the architecture name
 #
 
-# XXX: uses non-standard AWK functions toupper() and gensub()
+# XXX: uses non-standard AWK function toupper()
 
 BEGIN {
 	MAKEDEV = "../../../etc/MAKEDEV.tmpl";
@@ -103,8 +103,9 @@ function read1line() {
 		sub(/[ \t].*/, "", target);
 		line=r1l;
 		sub(/[^ \t]*[ \t]/, "", line);
-		line=gensub(/\"([^\"]*)"/, "``\\1''", "g", line);
-		line=gensub(/[ \t]*(MAKEDEV(.local)?)[ \t]*/, "\n.Pa \\1\n", "g", line);
+		# replace "foo" with ``foo''
+		gsub(/\"[^\"]*\"/, "``&''", line)
+		gsub(/\"/, "", line)
 		gsub(/[ \t]+/, " ", line);
           	print ".It Ar " target;
 		print toupper(substr(line, 1, 1)) substr(line, 2);
@@ -134,8 +135,13 @@ function read1line() {
 			line=r1l;
 			sub(/[^ \t]*[ \t]+/, "", line);
 			sub(/\*/, "#", target);
-			line=gensub(/\"([^\"]*)"/, "``\\1''", "g", line);
-			line=gensub(/[ \t]*(MAKEDEV(.local)?)[ \t]*/, "\n.Pa \\1\n", "g", line);
+			# replace "foo" with ``foo''
+			gsub(/\"[^\"]*\"/, "``&''", line)
+			gsub(/\"/, "", line)
+			# fix collateral damage of previous
+			sub(/5 1\/4''/, "5 1/4\"", line)
+			sub(/3 1\/2``/, "3 1/2\"", line)
+			# gc whitespace
 			sub(/\(XXX[^)]*\)/, "", line);
 			sub(/[ \t]*$/, "", line);
 
@@ -143,7 +149,7 @@ function read1line() {
 			if (target == "fd#")
 				page = "fdc"
 			else if (target == "pms#")
-				page = "omps"
+				page = "opms"
 			else if (target == "ed#")
 				page = "edc"
 			else if (target == "ttye#")
@@ -164,6 +170,10 @@ function read1line() {
 				page = "cy"
 			else if (target == "ttyB?")
 				page = "scc"
+			else if (target == "random")
+				page = "rnd"
+			else if (target == "scsibus#")
+				page = "scsi"
 			else {
 				page=target;
 				sub(/[^a-zA-Z]+/, "", page);
@@ -182,18 +192,17 @@ function read1line() {
 				sub(/[ \t]*$/, "", line);
 				if (line ~ /see/) {
                       		    # already a manpage there, e.g. scsictl(8)
-				    line = line ", ";
+				    line = line " ,";
 				}
 				else
-				    line = line ", see ";
-                  		line = line $0 "(4)";
+				    line = line ", see";
+				# Add .Xr \&foo 4 - ampersand to work around
+				# manpages that are *roff commands at the same
+				# time
+                  		line = line "\n.Xr \\&" $0 " 4";
 			}
 			close(str)
-              		# Add .Xr \&foo 4 - ampersand to work around manpages that are
-              		# *roff commands at the same time
-			while (line ~ /[a-zA-Z0-9]+\([0-9]\)/) {
-			    line=gensub(/[ \t]*([a-zA-Z0-9\/]+)\(([0-9])\)(.*)/, "\n.Xr \\\\\\&\\1 \\2 \\3", "g", line);
-			}
+
 			gsub(/[ \t]+$/, "", line);
 			gsub(/[ \t]+/, " ", line);
 
