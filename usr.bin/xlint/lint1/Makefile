@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/07/04 01:53:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/12 18:28:55 mycroft Exp $
 
 PROG=	lint1
 SRCS=	cgram.c scan.c mem1.c mem.c err.c main1.c decl.c tree.c func.c \
@@ -12,8 +12,5 @@ LINTFLAGS=-aehpz
 CLEANFILES+=y.tab.h cgram.c scan.c
 
 BINDIR=	/usr/libexec
-
-# XXX: -O causes the gcc to die on the i386, when compiling tree.o
-CFLAGS+= -DXXX_BROKEN_GCC
 
 .include <bsd.prog.mk>
