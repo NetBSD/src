@@ -33,7 +33,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.5 2004/05/08 08:40:08 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.6 2004/05/12 14:25:08 minoura Exp $
  */
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,13 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.5 2004/05/08 08:40:08 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.6 2004/05/12 14:25:08 minoura Exp $
  */
 
 #ifndef _X68K_ITEIOCTL_H_
 #define _X68K_ITEIOCTL_H_
+
+#include <machine/kbdmap.h>
 
 struct itewinsize {
 	int x;			/* leftedge offset to the right */
@@ -95,16 +97,18 @@ struct iterepeat {
 
 #define ITEIOCSKMAP	_IOW('Z',0x70, struct kbdmap)
 #define ITEIOCGKMAP	_IOR('Z',0x71, struct kbdmap)
+#ifdef notyet		/* could be implemented... */
 #define ITEIOCGWINSZ	_IOR('Z',0x72, struct itewinsize)
 #define ITEIOCSWINSZ	_IOW('Z',0x73, struct itewinsize)
 #define ITEIOCDSPWIN	_IO('Z', 0x74)
 #define ITEIOCREMWIN	_IO('Z', 0x75)
-#define ITEIOCGBELL	_IOR('Z', 0x76, struct itebell)
-#define ITEIOCSBELL	_IOW('Z', 0x77, struct itebell)
+#endif
 #define ITEIOCGREPT	_IOR('Z', 0x78, struct iterepeat)
 #define ITEIOCSREPT	_IOW('Z', 0x79, struct iterepeat)
 
+#ifdef notyet
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
+#endif
 
 #define ITELOADFONT	_IOW('Z',0x80, unsigned char [4096])
 
