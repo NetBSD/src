@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.10 2002/12/08 11:20:22 junyoung Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.11 2003/01/18 08:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10 2002/12/08 11:20:22 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11 2003/01/18 08:02:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10 2002/12/08 11:20:22 junyoung E
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm_extern.h>
 
@@ -124,8 +125,8 @@ struct linux_user {
 #define ISSET(t, f)		((t) & (f))
 
 int
-linux_sys_ptrace_arch(p, v, retval)
-	struct proc *p;
+linux_sys_ptrace_arch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -135,8 +136,10 @@ linux_sys_ptrace_arch(p, v, retval)
 		syscallarg(int) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int request, error;
 	struct proc *t;				/* target process */
+	struct lwp *lt;
 	struct reg *regs = NULL;
 	struct fpreg *fpregs = NULL;
 	struct linux_reg *linux_regs = NULL;
@@ -183,6 +186,17 @@ linux_sys_ptrace_arch(p, v, retval)
 	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
 		return EBUSY;
 
+	/* XXX NJWLWP
+	 * The entire ptrace interface needs work to be useful to
+	 * a process with multiple LWPs. For the moment, we'll 
+	 * just kluge this and fail on others.
+	 */
+
+	if (p->p_nlwps > 1)
+		return (ENOSYS);
+
+	lt = LIST_FIRST(&t->p_lwps);
+
 	*retval = 0;
 
 	switch (request) {
@@ -191,7 +205,7 @@ linux_sys_ptrace_arch(p, v, retval)
 		MALLOC(linux_regs, struct linux_reg*, sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
-		error = process_read_regs(t, regs);
+		error = process_read_regs(lt, regs);
 		if (error != 0)
 			goto out;
 
@@ -240,7 +254,7 @@ linux_sys_ptrace_arch(p, v, retval)
 		regs->r_esp = linux_regs->esp;
 		regs->r_ss = linux_regs->xss;
 
-		error = process_write_regs(t, regs);
+		error = process_write_regs(lt, regs);
 		goto out;
 
 	case  LINUX_PTRACE_GETFPREGS:
@@ -249,7 +263,7 @@ linux_sys_ptrace_arch(p, v, retval)
 		MALLOC(linux_fpregs, struct linux_fpctx *,
 			sizeof(struct linux_fpctx), M_TEMP, M_WAITOK);
 
-		error = process_read_fpregs(t, fpregs);
+		error = process_read_fpregs(lt, fpregs);
 		if (error != 0)
 			goto out;
 
@@ -277,13 +291,13 @@ linux_sys_ptrace_arch(p, v, retval)
 		memcpy(fpregs, linux_fpregs,
 			min(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
 
-		error = process_write_regs(t, regs);
+		error = process_write_regs(lt, regs);
 		goto out;
 
 	case  LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
 
-		PHOLD(t);	/* need full process info */
+		PHOLD(lt);	/* need full process info */
 		error = 0;
 		if (addr < LUSR_OFF(lusr_startgdb)) {
 			/* XXX should provide appropriate register */
@@ -328,7 +342,7 @@ linux_sys_ptrace_arch(p, v, retval)
 			error = 1;
 		}
 
-		PRELE(t);
+		PRELE(lt);
 
 		if (!error)
 			return 0;
@@ -345,9 +359,9 @@ linux_sys_ptrace_arch(p, v, retval)
 			if (t->p_emul != &emul_linux)
 				return EINVAL;
 
-			PHOLD(t);
+			PHOLD(lt);
 			((struct linux_emuldata *)t->p_emuldata)->debugreg[off] = data;
-			PRELE(t);
+			PRELE(lt);
 			return (0);
 		}
 

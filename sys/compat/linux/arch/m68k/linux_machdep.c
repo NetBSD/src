@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.14 2002/07/04 23:32:11 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15 2003/01/18 08:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14 2002/07/04 23:32:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2003/01/18 08:02:48 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14 2002/07/04 23:32:11 thorpej E
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -84,7 +85,7 @@ extern int sigpid;
 void setup_linux_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
 				caddr_t usp));
 void setup_linux_rt_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
-				caddr_t usp, struct proc *p));
+				caddr_t usp, struct lwp *l));
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.
@@ -94,13 +95,13 @@ void setup_linux_rt_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
  * Setup registers on program execution.
  */
 void
-linux_setregs(p, epp, stack)
-	struct proc *p;
+linux_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 }
 
 /*
@@ -113,7 +114,8 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	sigset_t *mask;
 	caddr_t usp;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp, kf;
 	short ft;
 
@@ -242,7 +244,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 		 * Process has trashed its stack; give it a segmentation
 		 * violation to halt it in its tracks.
 		 */
-		sigexit(p, SIGSEGV);
+		sigexit(l, SIGSEGV);
 		/* NOTREACHED */
 	}
 
@@ -267,13 +269,14 @@ setup_linux_sigframe(frame, sig, mask, usp)
  * Setup signal frame for new RT signal interface.
  */
 void
-setup_linux_rt_sigframe(frame, sig, mask, usp, p)
+setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	struct frame *frame;
 	int sig;
 	sigset_t *mask;
 	caddr_t usp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *fp, kf;
 	short ft;
 
@@ -422,7 +425,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 		 * Process has trashed its stack; give it a segmentation
 		 * violation to halt it in its tracks.
 		 */
-		sigexit(p, SIGSEGV);
+		sigexit(l, SIGSEGV);
 		/* NOTREACHED */
 	}
 
@@ -453,13 +456,14 @@ linux_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct frame *frame;
 	caddr_t usp;		/* user stack for signal context */
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -474,7 +478,7 @@ linux_sendsig(sig, mask, code)
 
 	/* Setup the signal frame (and part of the trapframe). */
 	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
-		setup_linux_rt_sigframe(frame, sig, mask, usp, p);
+		setup_linux_rt_sigframe(frame, sig, mask, usp, l);
 	else
 		setup_linux_sigframe(frame, sig, mask, usp);
 
@@ -509,11 +513,12 @@ linux_sendsig(sig, mask, code)
  */
 /* ARGSUSED */
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct frame *frame;
 	struct linux_sigc2 tsigc2;	/* extra mask and sigcontext */
 	struct linux_sigcontext *scp;	/* pointer to sigcontext */
@@ -525,7 +530,7 @@ linux_sys_sigreturn(p, v, retval)
 	 * sigreturn of Linux/m68k takes no arguments.
 	 * The user stack points at struct linux_sigc2.
 	 */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 	usp = frame->f_regs[SP];
 	if (usp & 1)
 		goto bad;
@@ -538,7 +543,7 @@ linux_sys_sigreturn(p, v, retval)
 
 	/* Grab whole of the sigcontext. */
 	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2))
-bad:		sigexit(p, SIGSEGV);
+bad:		sigexit(l, SIGSEGV);
 
 	scp = &tsigc2.c_sc;
 
@@ -660,11 +665,12 @@ bad:		sigexit(p, SIGSEGV);
 
 /* ARGSUSED */
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_rt_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct frame *frame;
 	struct linux_ucontext *ucp;	/* ucontext in user space */
 	struct linux_ucontext tuc;	/* copy of *ucp */
@@ -676,7 +682,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	 * usp + 4 is a pointer to siginfo structure,
 	 * usp + 8 is a pointer to ucontext structure.
 	 */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 	ucp = (struct linux_ucontext *) fuword((caddr_t)frame->f_regs[SP] + 8);
 	if ((int) ucp & 1)
 		goto bad;		/* error (-1) or odd address */
@@ -688,7 +694,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 
 	/* Grab whole of the ucontext. */
 	if (copyin(ucp, &tuc, sizeof tuc))
-bad:		sigexit(p, SIGSEGV);
+bad:		sigexit(l, SIGSEGV);
 
 	/*
 	 * Check kernel stack and re-enter to syscall() if needed.
@@ -814,8 +820,8 @@ bad:		sigexit(p, SIGSEGV);
 
 /* ARGSUSED */
 int
-linux_sys_cacheflush(p, v, retval)
-	struct proc *p;
+linux_sys_cacheflush(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -825,6 +831,7 @@ linux_sys_cacheflush(p, v, retval)
 		syscallarg(int)			cache;
 		syscallarg(unsigned long)	len;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int scope, cache;
 	vaddr_t addr;
 	int len;
@@ -914,5 +921,5 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(p, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }

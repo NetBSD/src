@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.60 2002/11/01 19:26:22 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.61 2003/01/18 08:02:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.60 2002/11/01 19:26:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.61 2003/01/18 08:02:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.60 2002/11/01 19:26:22 jdolecek Exp
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -86,8 +87,8 @@ static void linux_e_proc_init __P((struct proc *, struct vmspace *));
  * to the NetBSD execve().
  */
 int
-linux_sys_execve(p, v, retval)
-	struct proc *p;
+linux_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -96,6 +97,7 @@ linux_sys_execve(p, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -106,7 +108,7 @@ linux_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return sys_execve(p, &ap, retval);
+	return sys_execve(l, &ap, retval);
 }
 
 /*

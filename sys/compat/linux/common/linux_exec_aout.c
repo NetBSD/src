@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.50 2002/10/05 22:34:04 chs Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.51 2003/01/18 08:02:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.50 2002/10/05 22:34:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.51 2003/01/18 08:02:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.50 2002/10/05 22:34:04 chs Exp
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

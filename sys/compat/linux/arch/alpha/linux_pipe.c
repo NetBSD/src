@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.6 2001/11/13 02:08:34 lukem Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.7 2003/01/18 08:02:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.6 2001/11/13 02:08:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.7 2003/01/18 08:02:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.6 2001/11/13 02:08:34 lukem Exp $")
 #include <sys/mount.h>
 #include <sys/proc.h>
   
+#include <sys/sa.h>
 #include <sys/syscallargs.h> 
  
 #include <compat/linux/common/linux_types.h>
@@ -65,16 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.6 2001/11/13 02:08:34 lukem Exp $")
 
 
 int
-linux_sys_pipe(p, v, retval)
-	struct proc *p;
+linux_sys_pipe(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	int error;
 
-	if ((error = sys_pipe(p, 0, retval)))
+	if ((error = sys_pipe(l, 0, retval)))
 		return error;
 
-	(p->p_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
+	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
 	return 0;
 }

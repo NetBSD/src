@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.57 2001/11/13 02:08:57 lukem Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.58 2003/01/18 08:04:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.57 2001/11/13 02:08:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.58 2003/01/18 08:04:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.57 2001/11/13 02:08:57 lukem Ex
 #include <sys/mman.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -60,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.57 2001/11/13 02:08:57 lukem Ex
 /* Alpha: XXX Only if we assume osf_utsname is used by Linux programs. */
 
 int
-linux_sys_olduname(p, v, retval)
-	struct proc *p;
+linux_sys_olduname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

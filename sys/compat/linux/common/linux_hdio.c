@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.4 2002/03/16 20:43:53 christos Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.5 2003/01/18 08:02:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.4 2002/03/16 20:43:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.5 2003/01/18 08:02:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.4 2002/03/16 20:43:53 christos Exp 
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

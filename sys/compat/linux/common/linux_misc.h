@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.7 2002/02/20 17:03:04 christos Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.8 2003/01/18 08:02:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct linux_sysinfo {
 #ifdef _KERNEL
 __BEGIN_DECLS
 void bsd_to_linux_wstat __P((int *));
-int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
+int linux_select1 __P((struct lwp *, register_t *, int, fd_set *, fd_set *,
 		       fd_set *, struct timeval *));
 __END_DECLS
 #endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.13 2002/03/22 15:21:29 christos Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.14 2003/01/18 08:04:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct linux_sys_mmap_args {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_mmap __P((struct proc *p, void *v, register_t *retval));
+int linux_sys_mmap __P((struct lwp *p, void *v, register_t *retval));
 __END_DECLS
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.9 2001/11/15 09:48:00 lukem Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.10 2003/01/18 08:02:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.9 2001/11/15 09:48:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.10 2003/01/18 08:02:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.9 2001/11/15 09:48:00 lukem Exp $
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm_extern.h>
 
@@ -102,8 +103,8 @@ struct linux_user {
 #define ISSET(t, f) ((t) & (f))
 
 int
-linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
-	struct proc *p;
+linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -114,7 +115,9 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		syscallarg(int) data;
 	} */ *uap = v;
 	int request, error;
+	struct proc *p = l->l_proc;
 	struct proc *t;				/* target process */
+	struct lwp *lt;
 	struct reg *regs = NULL;
 	struct fpreg *fpregs = NULL;
 	struct linux_pt_regs *linux_regs = NULL;
@@ -164,6 +167,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
 		return EBUSY;
 
+	lt = LIST_FIRST(&t->p_lwps);
 	*retval = 0;
 
 	switch (request) {
@@ -172,7 +176,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(*linux_regs),
 		    M_TEMP, M_WAITOK);
 
-		error = process_read_regs(t, regs);
+		error = process_read_regs(lt, regs);
 		if (error != 0)
 			goto out;
 
@@ -214,7 +218,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		regs->ctr = linux_regs->lctr;
 		regs->pc = linux_regs->lnip; /* XXX */
 
-		error = process_write_regs(t, regs);
+		error = process_write_regs(lt, regs);
 		goto out;
 
 	case  LINUX_PTRACE_GETFPREGS:
@@ -223,7 +227,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		MALLOC(linux_fpreg, double *,
 		    32*sizeof(double), M_TEMP, M_WAITOK);
 
-		error = process_read_fpregs(t, fpregs);
+		error = process_read_fpregs(lt, fpregs);
 		if (error != 0)
 			goto out;
 
@@ -251,17 +255,17 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		memcpy(fpregs, linux_fpreg,
 		    min(32*sizeof(double), sizeof(struct fpreg)));
 
-		error = process_write_fpregs(t, fpregs);
+		error = process_write_fpregs(lt, fpregs);
 		goto out;
 
 	case  LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
 		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		error = process_read_regs(t, regs);
+		error = process_read_regs(lt, regs);
 		if (error)
 			goto out;
 
-		PHOLD(t);	/* need full process info */
+		PHOLD(lt);	/* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) || 
 		    (addr > LUSR_OFF(lu_comm_end))) 
@@ -304,7 +308,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(t);
+		PRELE(lt);
 
 		if (error)
 			goto out;
@@ -320,11 +324,11 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	case  LINUX_PTRACE_POKEUSR: /* XXX Not tested */
 		addr = SCARG(uap, addr);
 		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
-		error = process_read_regs(t, regs);
+		error = process_read_regs(lt, regs);
 		if (error)
 			goto out;
 
-		PHOLD(t);       /* need full process info */
+		PHOLD(lt);       /* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) || 
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -366,9 +370,9 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(t);
+		PRELE(lt);
 
-		error = process_write_regs(t,regs);
+		error = process_write_regs(lt,regs);
 		if (error) 
 			goto out;
 
