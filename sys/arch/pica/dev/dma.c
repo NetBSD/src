@@ -1,5 +1,6 @@
-/*	$NetBSD: dma.c,v 1.2 1996/03/28 12:27:10 jonathan Exp $	*/
+/*	$NetBSD: dma.c,v 1.3 1996/03/31 04:38:46 jonathan Exp $	*/
 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
