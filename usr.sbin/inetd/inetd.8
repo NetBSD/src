@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.31 2000/09/19 16:28:52 ad Exp $
+.\"	$NetBSD: inetd.8,v 1.32 2000/12/02 02:15:34 hubertf Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,6 +116,10 @@ Upon execution,
 reads its configuration information from a configuration
 file which, by default, is
 .Pa /etc/inetd.conf .
+The path given for this configuration file must be absolute, unless
+the
+.Fl d
+option is also given on the command line.
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
 a space.  Comments are denoted by a ``#'' at the beginning
