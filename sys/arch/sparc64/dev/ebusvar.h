@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.2 1999/06/05 14:18:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -50,8 +50,6 @@ struct ebus_attach_args {
 	int			ea_nregs;	/* number of them */
 	int			ea_naddrs;
 	int			ea_nintrs;
-
-	/* XXX */
 };
 
 struct ebus_softc {
