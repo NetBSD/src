@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.40 1996/05/05 06:19:04 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.41 1996/05/20 04:32:33 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -176,7 +176,8 @@ via1_intr(fp)
 	struct frame *fp;
 {
 	register unsigned char intbits;
-	register int bitnum;
+	register unsigned char mask;
+	register unsigned char bitnum;
 
 	intbits = via_reg(VIA1, vIFR);	/* get interrupts pending */
 	intbits &= via_reg(VIA1, vIER);	/* only care about enabled ones */
@@ -184,63 +185,67 @@ via1_intr(fp)
 	if (intbits == 0)
 		return;
 
-	via_reg(VIA1, vIFR) = intbits;
+	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
-		if (intbits & 0x1)
-			via1itab[bitnum]((void *) bitnum);
-		intbits >>= 1;
-	} while (++bitnum != 7 && intbits);
+		if (intbits & mask) {
+			via1itab[bitnum]((void *)((int) bitnum));
+			via_reg(VIA1, vIFR) = mask;
+		}
+		mask <<= 1;
+	} while (intbits >= mask && ++bitnum < 7);
 }
 
 void
 via2_intr(fp)
 	struct frame *fp;
 {
-	register unsigned char	intbits;
-	register int		bitnum;
+	register unsigned char intbits;
+	register unsigned char mask;
+	register unsigned char bitnum;
 
 	intbits = via2_reg(vIFR);	/* get interrupts pending */
 	intbits &= via2_reg(vIER);	/* only care about enabled */
 
-	if (intbits == 0) return;
+	if (intbits == 0)
+		return;
 
-	/*
-	 * Unflag interrupts we're about to process.
-	 */
-	via2_reg(vIFR) = intbits;
+	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
-		if (intbits & 0x1)
+		if (intbits & mask) {
 			via2itab[bitnum](via2iarg[bitnum]);
-		intbits >>= 1;
-	} while (++bitnum != 7 && intbits);
+			via2_reg(vIFR) = mask;
+		}
+		mask <<= 1;
+	} while (intbits >= mask && ++bitnum < 7);
 }
 
 void
 rbv_intr(fp)
 	struct frame *fp;
 {
-	register unsigned char	intbits;
-	register int		bitnum;
+	register unsigned char intbits;
+	register unsigned char mask;
+	register unsigned char bitnum;
 
 	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
-	if (intbits == 0) return;
+	if (intbits == 0)
+		return;
 
-	/*
-	 * Unflag interrupts we're about to process.
-	 */
-	via2_reg(rIFR) = intbits;
+	mask = (unsigned char) 1;
 
 	bitnum = 0;
 	do {
-		if (intbits & 0x1)
+		if (intbits & mask) {
 			via2itab[bitnum](via2iarg[bitnum]);
-		intbits >>= 1;
-	} while (++bitnum != 7 && intbits);
+			via2_reg(rIFR) = mask;
+		}
+		mask <<= 1;
+	} while (intbits >= mask && ++bitnum < 7);
 }
 
 static void
