@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 2000/07/20 13:28:39 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 2000/07/23 20:39:14 mycroft Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -9743,22 +9743,10 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
-	brz,pt	%i2, 4f					! Do we have a pattern to load?
-	 fzero	%f0					! Set up FPU
-
-	btst	1, %fp
-	bnz,pt	%icc, 3f				! 64-bit stack?
-	 nop
-	stw	%i2, [%fp + 0x28]			! Flush this puppy to RAM
-	membar	#StoreLoad
-	ld	[%fp + 0x28], %f0
-	ba,pt	%icc, 4f
-	 fmovsa	%icc, %f0, %f1
-3:
 	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
 	membar	#StoreLoad
 	ldd	[%fp + BIAS + 0x50], %f0
-4:
+
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
 	fmovda	%icc, %f0, %f6
@@ -9766,14 +9754,6 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f10
 	fmovda	%icc, %f0, %f12
 	fmovda	%icc, %f0, %f14
-	fmovda	%icc, %f0, %f16				! And second bank
-	fmovda	%icc, %f0, %f18
-	fmovda	%icc, %f0, %f20
-	fmovda	%icc, %f0, %f22
-	fmovda	%icc, %f0, %f24
-	fmovda	%icc, %f0, %f26
-	fmovda	%icc, %f0, %f28
-	fmovda	%icc, %f0, %f30
 
 	!! Remember: we were 8 bytes too far
 	dec	56, %i1			! Go one iteration too far
