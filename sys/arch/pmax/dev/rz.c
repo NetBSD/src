@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.43 1999/02/28 17:13:42 explorer Exp $	*/
+/*	$NetBSD: rz.c,v 1.44 1999/03/09 00:37:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.43 1999/02/28 17:13:42 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.44 1999/03/09 00:37:01 mrg Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -554,7 +554,7 @@ rzprobe(xxxsd)
 	/*
 	 * attach the device into the random source list
 	 */
-	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif	/* NRND */
 
@@ -813,7 +813,7 @@ rzdone(unit, error, resid, status)
 	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - resid));
 
 #if NRND > 0
-	rnd_add_uint32(&sd->rnd_source, xs->bp->b_blkno);
+	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
 #endif	/* NRND */
 
 	if (sc->sc_flags & RZF_SENSEINPROGRESS) {
