@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.311 2001/03/07 01:44:52 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.312 2001/03/13 17:22:28 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.307 2001/03/07 01:42:37 matt Exp 
+ *	NetBSD: pcidevs,v 1.308 2001/03/13 17:21:16 bouyer Exp 
  */
 
 /*
@@ -4840,6 +4840,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1451 PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-800H",
+	},
+	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
 	    0,
 	    "Toshiba America",
@@ -8713,6 +8719,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COMPAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "COMPAL Electronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TITAN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Titan Electronics, Inc.",
 	    NULL,
 	},
 	{
