@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/09 03:13:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/19 17:48:18 drochner Exp $
 
-SUBDIR=	html libntp .WAIT ntpd ntpdate ntpdc ntpq ntptime ntptimeset ntptrace
+SUBDIR=	html libntp libparse .WAIT ntpd ntpdate ntpdc ntpq ntptime \
+	ntptimeset ntptrace
 
 .include <bsd.subdir.mk>
