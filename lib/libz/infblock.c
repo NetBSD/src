@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.c,v 1.8 2003/03/08 07:42:34 lukem Exp $ */
+/* $NetBSD: infblock.c,v 1.9 2003/03/18 19:53:15 mycroft Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infblock.c,v 1.8 2003/03/08 07:42:34 lukem Exp $");
+__RCSID("$NetBSD: infblock.c,v 1.9 2003/03/18 19:53:15 mycroft Exp $");
 
 #include "zutil.h"
 #include "infblock.h"
@@ -160,7 +160,7 @@ int r;
                  s->last ? " (last)" : ""));
           {
             uInt bl, bd;
-            inflate_huft *tl, *td;
+            const inflate_huft *tl, *td;
 
             inflate_trees_fixed(&bl, &bd, &tl, &td, z);
             s->sub.decode.codes = inflate_codes_new(bl, bd, tl, td, z);
