@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.7 2000/02/03 20:29:15 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.8 2000/02/04 15:43:46 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -2438,7 +2438,7 @@ ADW_SCSI_REQ_Q *scsiq;
 		 */
 #ifndef FAILSAFE
 #ifdef SCSI_ADW_WDTR_DISABLE
-	if(!(tid & SCSI_ADW_WDTR_DISABLE)
+	if(!(tidmask & SCSI_ADW_WDTR_DISABLE))
 #endif /* SCSI_ADW_WDTR_DISABLE */
 		if ((sc->wdtr_able & tidmask) && inq->WBus16) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
@@ -2476,7 +2476,7 @@ ADW_SCSI_REQ_Q *scsiq;
 		 * 'sdtr_able' bit. Write the new value to the microcode.
 		 */
 #ifdef SCSI_ADW_SDTR_DISABLE
-	if(!(tid & SCSI_ADW_SDTR_DISABLE)
+	if(!(tidmask & SCSI_ADW_SDTR_DISABLE))
 #endif /* SCSI_ADW_SDTR_DISABLE */
 		if ((sc->sdtr_able & tidmask) && inq->Sync) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, cfg_word);
@@ -2511,7 +2511,7 @@ ADW_SCSI_REQ_Q *scsiq;
 		 * bugs will at least work with the BIOS.
 		 */
 #ifdef SCSI_ADW_TAGQ_DISABLE
-	if(!(tid & SCSI_ADW_TAGQ_DISABLE)
+	if(!(tidmask & SCSI_ADW_TAGQ_DISABLE))
 #endif /* SCSI_ADW_TAGQ_DISABLE */
 		if ((sc->tagqng_able & tidmask) && inq->CmdQue) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
