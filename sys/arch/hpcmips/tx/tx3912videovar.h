@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912videovar.h,v 1.2 1999/12/12 17:04:55 uch Exp $ */
+/*	$NetBSD: tx3912videovar.h,v 1.3 2000/01/06 18:10:42 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,5 +26,12 @@
  *
  */
 
-int tx3912video_init __P((tx_chipset_tag_t, u_int32_t, int, int, 
+int	tx3912video_init __P((tx_chipset_tag_t, u_int32_t, int, int, 
 			  u_int32_t*, u_int32_t*, int*));
+
+/*
+ * debug functions.
+ */
+void	tx3912video_calibration_pattern __P((void));
+void	tx3912video_line __P((int, int, int, int));
+void	tx3912video_dot __P((int, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.5 2000/01/03 18:29:04 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.6 2000/01/06 18:10:42 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -46,6 +46,8 @@
 #include <arch/hpcmips/dev/fbvar.h>
 #endif
 
+#undef TX3912VIDEO_DEBUG
+
 void tx3912video_framebuffer_init __P((tx_chipset_tag_t, u_int32_t, 
 				       u_int32_t));
 int  tx3912video_framebuffer_alloc __P((tx_chipset_tag_t, u_int32_t, 
@@ -55,16 +57,25 @@ void tx3912video_reset __P((tx_chipset_tag_t));
 void tx3912video_resolution_init __P((tx_chipset_tag_t, int, int));
 int  tx3912video_fbdepth __P((tx_chipset_tag_t, int));
 
-static u_int32_t framebuffer, framebuffersize;
-
 int	tx3912video_match __P((struct device*, struct cfdata*, void*));
 void	tx3912video_attach __P((struct device*, struct device*, void*));
 int	tx3912video_print __P((void*, const char*));
 
+struct tx3912video_chip {
+	u_int32_t vc_fbaddr;
+	u_int32_t vc_fbsize;
+	int	vc_fbdepth;
+	int	vc_fbwidth;
+	int	vc_fbheight;
+
+	void (*vc_drawline) __P((int, int, int, int));
+	void (*vc_drawdot) __P((int, int));
+};
+
 struct tx3912video_softc {
 	struct device sc_dev;
-	u_int32_t sc_fbaddr;
-	u_int32_t sc_fbsize;
+
+	struct tx3912video_chip *sc_chip;
 };
 
 struct fb_attach_args {
@@ -75,6 +86,11 @@ struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
 	tx3912video_attach
 };
+
+/* console */
+struct tx3912video_chip tx3912video_chip;
+
+void	tx3912video_attach_drawfunc __P((struct tx3912video_chip*));
 
 int
 tx3912video_match(parent, cf, aux)
@@ -97,16 +113,16 @@ tx3912video_attach(parent, self, aux)
 	struct fb_attach_args fba;
 	txreg_t reg;
 
-	sc->sc_fbaddr = framebuffer;
-	sc->sc_fbsize = framebuffersize;
+	sc->sc_chip = &tx3912video_chip;
 
 	printf(": ");
 	tx3912video_fbdepth(tc, 1);
-	printf(", frame buffer 0x%08x-0x%08x", sc->sc_fbaddr, 
-	       sc->sc_fbaddr + sc->sc_fbsize);
+	printf(", frame buffer 0x%08x-0x%08x", sc->sc_chip->vc_fbaddr, 
+	       sc->sc_chip->vc_fbaddr + sc->sc_chip->vc_fbsize);
 	
 	printf("\n");
 
+#ifndef TX3912VIDEO_DEBUG
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
 		printf("%s: power off\n", sc->sc_dev.dv_xname);
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
@@ -114,6 +130,10 @@ tx3912video_attach(parent, self, aux)
 			 TX3912_VIDEOCTRL1_ENVID);
 		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 	}
+#endif /* TX3912VIDEO_DEBUG */
+
+	/* attach debug draw routine */
+	tx3912video_attach_drawfunc(sc->sc_chip);
 
 	/* Attach frame buffer device */
 #if NFB > 0
@@ -149,6 +169,9 @@ tx3912video_init(tc, fb_start, fb_width, fb_height, fb_addr, fb_size,
 	
 	/* Inquire bit depth */
 	fb_depth = tx3912video_fbdepth(tc, 0);
+	tx3912video_chip.vc_fbdepth = fb_depth;
+	tx3912video_chip.vc_fbwidth = fb_width;
+	tx3912video_chip.vc_fbheight= fb_height;
 	
 	/* Allocate framebuffer area */
 	if (tx3912video_framebuffer_alloc(tc, fb_start, fb_width, fb_height,
@@ -201,8 +224,9 @@ tx3912video_framebuffer_alloc(tc, start, h, v, depth, fb_addr, fb_size)
 					 EX_FAST|EX_NOWAIT, &addr))) {
 		return 1;
 	}
-	framebuffer = addr;
-	framebuffersize = size;
+	tx3912video_chip.vc_fbaddr = addr;
+	tx3912video_chip.vc_fbsize = size;
+	
 	*fb_addr = addr;
 	*fb_size = size;
 
@@ -284,7 +308,7 @@ tx3912video_resolution_init(tc, h, v)
 	tx_conf_write(tc, TX3912_VIDEOCTRL2_REG, reg);
 }
 
- int
+int
 tx3912video_fbdepth(tc, verbose)
 	tx_chipset_tag_t tc;
 	int verbose;
@@ -343,4 +367,188 @@ tx3912video_reset(tc)
 	delay(1000);
 }
 
+/*
+ * Debug routines.
+ */
 
+void
+tx3912video_calibration_pattern()
+{
+	struct tx3912video_chip *vc = &tx3912video_chip;
+	int x, y;
+
+	x = vc->vc_fbwidth - 40;
+	y = vc->vc_fbheight - 40;
+	tx3912video_line(40, 40, x , 40);
+	tx3912video_line(x , 40, x , y );
+	tx3912video_line(x , y , 40, y );
+	tx3912video_line(40, y , 40, 40);
+	tx3912video_line(40, 40, x , y );
+	tx3912video_line(x,  40, 40, y );
+}
+
+#define BPP2 ({ \
+	u_int8_t bitmap; \
+	bitmap = *(volatile u_int8_t*)MIPS_PHYS_TO_KSEG1(addr); \
+	*(volatile u_int8_t*)MIPS_PHYS_TO_KSEG1(addr) = \
+		(bitmap & ~(0x3 << ((3 - (x % 4)) * 2))); \
+})
+
+#define BPP4 ({ \
+	u_int8_t bitmap; \
+	bitmap = *(volatile u_int8_t*)MIPS_PHYS_TO_KSEG1(addr); \
+	*(volatile u_int8_t*)MIPS_PHYS_TO_KSEG1(addr) = \
+		(bitmap & ~(0xf << ((1 - (x % 2)) * 4))); \
+})
+
+#define BPP8 ({ \
+	*(volatile u_int8_t*)MIPS_PHYS_TO_KSEG1(addr) = 0xff; \
+})
+
+#define BRESENHAM(a, b, c, d, func) ({ \
+	u_int32_t fbaddr = vc->vc_fbaddr; \
+	u_int32_t fbwidth = vc->vc_fbwidth; \
+	u_int32_t fbdepth = vc->vc_fbdepth; \
+	len = a, step = b -1; \
+	if (step == 0) \
+		return; \
+	kstep = len == 0 ? 0 : 1; \
+	for (i = k = 0, j = step / 2; i <= step; i++) { \
+		x = xbase c; \
+		y = ybase d; \
+		addr = fbaddr + (((y * fbwidth + x) * fbdepth) >> 3); \
+		func; \
+		j -= len; \
+		while (j < 0) { \
+			j += step; \
+			k += kstep; \
+		} \
+	} \
+})
+
+#define DRAWLINE(func) ({ \
+	if (x < 0) { \
+		if (y < 0) { \
+			if (_y < _x) { \
+				BRESENHAM(_y, _x, -i, -k, func); \
+			} else { \
+				BRESENHAM(_x, _y, -k, -i, func); \
+			} \
+		} else { \
+			if (_y < _x) { \
+				BRESENHAM(_y, _x, -i, +k, func); \
+			} else { \
+				BRESENHAM(_x, _y, -k, +i, func); \
+			} \
+		} \
+	} else { \
+		if (y < 0) { \
+			if (_y < _x) { \
+				BRESENHAM(_y, _x, +i, -k, func); \
+			} else { \
+				BRESENHAM(_x, _y, +k, -i, func); \
+			} \
+		} else { \
+			if (_y < _x) { \
+				BRESENHAM(_y, _x, +i, +k, func); \
+			} else { \
+				BRESENHAM(_x, _y, +k, +i, func); \
+			} \
+		} \
+	} \
+})
+
+#define LINEFUNC(b) \
+static void linebpp##b __P((int, int, int, int)); \
+static void \
+linebpp##b##(x0, y0, x1, y1) \
+	int x0, y0, x1, y1; \
+{ \
+	struct tx3912video_chip *vc = &tx3912video_chip; \
+	u_int32_t addr; \
+	int i, j, k, len, step, kstep; \
+	int x, _x, y, _y; \
+	int xbase, ybase; \
+	x = x1 - x0; \
+	y = y1 - y0; \
+	_x = abs(x); \
+	_y = abs(y); \
+	xbase = x0; \
+	ybase = y0; \
+	DRAWLINE(BPP##b##); \
+}
+
+#define DOTFUNC(b) \
+static void dotbpp##b __P((int, int)); \
+static void \
+dotbpp##b##(x, y) \
+	int x, y; \
+{ \
+	struct tx3912video_chip *vc = &tx3912video_chip; \
+	u_int32_t addr; \
+	addr = vc->vc_fbaddr + (((y * vc->vc_fbwidth + x) * \
+				 vc->vc_fbdepth) >> 3); \
+	BPP##b; \
+}
+
+static void linebpp_unimpl __P((int, int, int, int));
+static void dotbpp_unimpl __P((int, int));
+static 
+void linebpp_unimpl(x0, y0, x1, y1)
+	int x0, y0, x1, y1;
+{
+	return;
+}
+static 
+void dotbpp_unimpl(x, y)
+	int x, y;
+{
+	return;
+}
+
+LINEFUNC(2)
+LINEFUNC(4)
+LINEFUNC(8)
+DOTFUNC(2)
+DOTFUNC(4)
+DOTFUNC(8)
+
+void
+tx3912video_attach_drawfunc(vc)
+	struct tx3912video_chip *vc;
+{
+	switch (vc->vc_fbdepth) {
+	default:
+		vc->vc_drawline = linebpp_unimpl;
+		vc->vc_drawdot = dotbpp_unimpl;
+		break;
+	case 8:
+		vc->vc_drawline = linebpp8;
+		vc->vc_drawdot = dotbpp8;
+		break;
+	case 4:
+		vc->vc_drawline = linebpp4;
+		vc->vc_drawdot = dotbpp4;
+		break;
+	case 2:
+		vc->vc_drawline = linebpp2;
+		vc->vc_drawdot = dotbpp2;
+		break;
+	}
+}
+
+void
+tx3912video_line(x0, y0, x1, y1)
+	int x0, y0, x1, y1;
+{
+	struct tx3912video_chip *vc = &tx3912video_chip;
+	vc->vc_drawline(x0, y0, x1, y1);
+}
+
+void
+tx3912video_dot(x, y)
+	int x, y;
+{
+	struct tx3912video_chip *vc = &tx3912video_chip;
+	vc->vc_drawdot(x, y);
+}
