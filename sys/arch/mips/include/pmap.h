@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2001/05/26 21:27:09 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2001/08/04 04:26:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -144,12 +144,6 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
  */
 #define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
-
-/*
- * Do idle page zero'ing uncached to avoid polluting the cache.
- */
-boolean_t pmap_zero_page_uncached __P((paddr_t));
-#define PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 #endif	/* _KERNEL */
 #endif	/* _PMAP_MACHINE_ */
