@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.57 2004/03/26 19:53:53 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.58 2004/03/26 20:00:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.57 2004/03/26 19:53:53 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.58 2004/03/26 20:00:32 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,9 +329,9 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	static long blocksize;
 	static int headerlen, timesthrough;
 	static char *header;
+	static const char full[] = "100%";
+	static const char empty[] = "  0%";
 	long used, availblks, inodes;
-	static char *full = "100%";
-	static char *empty = "  0%";
 
 	if (maxwidth < 11)
 		maxwidth = 11;
