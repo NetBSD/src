@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.8 2003/10/28 04:59:18 junyoung Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.9 2003/11/03 17:54:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.8 2003/10/28 04:59:18 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.9 2003/11/03 17:54:39 mycroft Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -350,7 +350,7 @@ acpi_md_sleep(int state)
 		}
 
 		if (status != AE_OK) {
-			printf("acpi: AcpiEnterSleepState failed - %s\n",
+			printf("acpi: AcpiEnterSleepState failed: %s\n",
 			       AcpiFormatException(status));
 			ret = -1;
 			goto out;
