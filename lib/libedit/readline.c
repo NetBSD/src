@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.33 2003/09/14 21:55:39 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.34 2003/09/14 22:15:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.33 2003/09/14 21:55:39 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.34 2003/09/14 22:15:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ int rl_attempted_completion_over = 0;
 char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
-CPFunction *rl_completion_entry_function = NULL;
+Function *rl_completion_entry_function = NULL;
 CPPFunction *rl_attempted_completion_function = NULL;
 Function *rl_pre_input_hook = NULL;
 Function *rl_startup1_hook = NULL;
@@ -103,7 +103,7 @@ int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
-Function *rl_completion_display_matches_hook = NULL;
+VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = NULL;
 VFunction *rl_deprep_term_function = NULL;
 
@@ -1577,7 +1577,7 @@ rl_display_match_list (matches, len, max)
 static int
 rl_complete_internal(int what_to_do)
 {
-	CPFunction *complet_func;
+	Function *complet_func;
 	const LineInfo *li;
 	char *temp, **matches;
 	const char *ctemp;
@@ -1590,7 +1590,7 @@ rl_complete_internal(int what_to_do)
 
 	complet_func = rl_completion_entry_function;
 	if (!complet_func)
-		complet_func = filename_completion_function;
+		complet_func = (Function *)(void *)filename_completion_function;
 
 	/* We now look backwards for the start of a filename/variable word */
 	li = el_line(e);
@@ -1612,7 +1612,7 @@ rl_complete_internal(int what_to_do)
 	rl_end = li->lastchar - li->buffer;
 
 	if (!rl_attempted_completion_function)
-		matches = completion_matches(temp, complet_func);
+		matches = completion_matches(temp, (CPFunction *)complet_func);
 	else {
 		int end = li->cursor - li->buffer;
 		matches = (*rl_attempted_completion_function) (temp, (int)
@@ -1642,7 +1642,8 @@ rl_complete_internal(int what_to_do)
 			 * object is a directory.
 			 */
 			size_t alen = strlen(matches[0]);
-			if ((complet_func != filename_completion_function
+			if ((complet_func !=
+			    (Function *)filename_completion_function
 			      || (alen > 0 && (matches[0])[alen - 1] != '/'))
 			    && rl_completion_append_character) {
 				char buf[2];

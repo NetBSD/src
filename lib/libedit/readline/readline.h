@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.4 2003/09/14 21:55:19 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.5 2003/09/14 22:15:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ extern int		 max_input_history;
 extern char		*rl_basic_word_break_characters;
 extern char		*rl_completer_word_break_characters;
 extern char		*rl_completer_quote_characters;
-extern CPFunction	*rl_completion_entry_function;
+extern Function		*rl_completion_entry_function;
 extern CPPFunction	*rl_attempted_completion_function;
 extern int		rl_completion_type;
 extern int		rl_completion_query_items;
@@ -115,7 +115,7 @@ extern int		rl_filename_completion_desired;
 extern int		rl_ignore_completion_duplicates;
 extern Function		*rl_getc_function;
 extern VFunction	*rl_redisplay_function;
-extern Function		*rl_completion_display_matches_hook;
+extern VFunction	*rl_completion_display_matches_hook;
 extern VFunction	*rl_prep_term_function;
 extern VFunction	*rl_deprep_term_function;
 
