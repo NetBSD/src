@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.2 2001/06/21 20:06:53 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.3 2001/07/09 22:29:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1390,6 +1390,14 @@ sigexit(struct lwp *l, int signum)
 	int		error, exitsig;
 
 	p = l->l_proc;
+
+	/* Don't call coredump() or exit1() multiple times 
+	 * in the same process.
+	 */
+	if (p->p_flag & P_WEXIT)
+		lwp_exit(l);
+	p->p_flag |= P_WEXIT;
+
 	exitsig = signum;
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
