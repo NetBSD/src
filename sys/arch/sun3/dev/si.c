@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.36 1997/08/27 11:24:23 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.37 1997/10/17 03:33:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,7 +215,6 @@ si_attach(sc)
 	/*
 	 *  Initialize si board itself.
 	 */
-	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
 	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
@@ -285,43 +284,6 @@ si_intr(void *arg)
 	}
 
 	return (claimed);
-}
-
-
-void
-si_reset_adapter(struct ncr5380_softc *ncr_sc)
-{
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
-
-#ifdef	DEBUG
-	if (si_debug) {
-		printf("si_reset_adapter\n");
-	}
-#endif
-
-	/*
-	 * The SCSI3 controller has an 8K FIFO to buffer data between the
-	 * 5380 and the DMA.  Make sure it starts out empty.
-	 *
-	 * The reset bits in the CSR are active low.
-	 */
-	si->si_csr = 0;
-	delay(10);
-	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
-	delay(10);
-	si->fifo_count = 0;
-
-	if (sc->sc_adapter_type == BUS_VME16) {
-		si->dma_addrh = 0;
-		si->dma_addrl = 0;
-		si->dma_counth = 0;
-		si->dma_countl = 0;
-		si->si_iv_am = sc->sc_adapter_iv_am;
-		si->fifo_cnt_hi = 0;
-	}
-
-	SCI_CLR_INTR(ncr_sc);
 }
 
 
@@ -406,7 +368,7 @@ found:
 		dh->dh_flags |= SIDH_PHYS;
 #endif
 
-	dh->dh_dvma = (u_long) dvma_mapin((char *)addr, xlen);
+	dh->dh_dvma = dvma_mapin((char *)addr, xlen, 0);
 	if (!dh->dh_dvma) {
 		/* Can't remap segment */
 		printf("si_dma_alloc: can't remap %p/0x%x\n",
@@ -440,7 +402,7 @@ si_dma_free(ncr_sc)
 	if (dh->dh_flags & SIDH_BUSY) {
 		/* XXX - Should separate allocation and mapping. */
 		/* Give back the DVMA space. */
-		dvma_mapout((caddr_t)dh->dh_dvma, dh->dh_maplen);
+		dvma_mapout(dh->dh_dvma, dh->dh_maplen);
 		dh->dh_dvma = 0;
 		dh->dh_flags = 0;
 	}

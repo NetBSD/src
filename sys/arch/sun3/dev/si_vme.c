@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.12 1997/08/27 11:24:27 bouyer Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.13 1997/10/17 03:33:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@ void si_vme_dma_stop __P((struct ncr5380_softc *));
 void si_vme_intr_on  __P((struct ncr5380_softc *));
 void si_vme_intr_off __P((struct ncr5380_softc *));
 
+static void si_vme_reset __P((struct ncr5380_softc *));
+
 /*
  * New-style autoconfig attachment
  */
@@ -134,29 +136,19 @@ int si_vme_options = 0x0f;
 
 
 static int
-si_vmes_match(parent, cf, args)
-	struct device	*parent;
+si_vmes_match(parent, cf, aux)
+	struct device *parent;
 	struct cfdata *cf;
-	void *args;
+	void *aux;
 {
-	struct confargs *ca = args;
+	struct confargs *ca = aux;
 	int probe_addr;
 
-#ifdef	DIAGNOSTIC
-	if (ca->ca_bustype != BUS_VME16) {
-		printf("si_vmes_match: bustype %d?\n", ca->ca_bustype);
-		return (0);
-	}
-#endif
-
-	/*
-	 * Other Sun3 models may have VME "si" or "sc".
-	 * This driver has no default address.
-	 */
+	/* No default VME address. */
 	if (ca->ca_paddr == -1)
 		return (0);
 
-	/* Make sure there is something there... */
+	/* Make sure something is there... */
 	probe_addr = ca->ca_paddr + 1;
 	if (bus_peek(ca->ca_bustype, probe_addr, 1) == -1)
 		return (0);
@@ -178,7 +170,7 @@ si_vmes_match(parent, cf, args)
 		return(0);
 	}
 
-	/* Default interrupt priority (always splbio==2) */
+	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
@@ -229,10 +221,45 @@ si_vmes_attach(parent, self, args)
 	isr_add_vectored(si_intr, (void *)sc,
 		ca->ca_intpri, ca->ca_intvec);
 
+	/* Reset the hardware. */
+	si_vme_reset(ncr_sc);
+
 	/* Do the common attach stuff. */
 	si_attach(sc);
 }
 
+static void
+si_vme_reset(struct ncr5380_softc *ncr_sc)
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	volatile struct si_regs *si = sc->sc_regs;
+
+#ifdef	DEBUG
+	if (si_debug) {
+		printf("si_vme_reset\n");
+	}
+#endif
+
+	/*
+	 * The SCSI3 controller has an 8K FIFO to buffer data between the
+	 * 5380 and the DMA.  Make sure it starts out empty.
+	 *
+	 * The reset bits in the CSR are active low.
+	 */
+	si->si_csr = 0;
+	delay(10);
+	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
+	delay(10);
+	si->fifo_count = 0;
+
+	/* Make sure the DMA engine is stopped. */
+	si->dma_addrh = 0;
+	si->dma_addrl = 0;
+	si->dma_counth = 0;
+	si->dma_countl = 0;
+	si->si_iv_am = sc->sc_adapter_iv_am;
+	si->fifo_cnt_hi = 0;
+}
 
 /*
  * This is called when the bus is going idle,
@@ -445,7 +472,7 @@ si_vme_dma_stop(ncr_sc)
 		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
-		si_reset_adapter(ncr_sc);
+		si_vme_reset(ncr_sc);
 		goto out;
 	}
 
