@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.62 1998/01/10 00:06:24 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.63 1998/02/09 12:01:57 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -112,28 +112,28 @@ hide		uname=root gname=games mode=0750
 ..
 
 # ./usr/include
-include		uname=bin gname=bin mode=0755
+include
 
 # ./usr/include/arpa
-arpa		uname=bin gname=bin mode=0755
+arpa
 # ./usr/include/arpa
 ..
 
 # ./usr/include/bfd
-bfd		uname=bin gname=bin mode=0755
+bfd
 # ./usr/include/bfd
 ..
 
 # ./usr/include/g++
-g++		uname=bin gname=bin mode=0755
+g++
 
 # ./usr/include/g++/gen
-gen		uname=bin gname=bin mode=0755
+gen
 # ./usr/include/g++/gen
 ..
 
 # ./usr/include/g++/std
-std		uname=bin gname=bin mode=0755
+std
 # ./usr/include/g++/std
 ..
 
@@ -141,27 +141,27 @@ std		uname=bin gname=bin mode=0755
 ..
 
 # ./usr/include/objc
-objc		uname=bin gname=bin mode=0755
+objc
 # ./usr/include/objc
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV	uname=bin gname=bin mode=0755
+kerberosIV
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols	uname=bin gname=bin mode=0755
+protocols
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc		uname=bin gname=bin mode=0755
+rpc
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc		uname=bin gname=bin mode=0755
+rpcsvc
 # ./usr/include/rpcsvc
 ..
 
@@ -919,15 +919,15 @@ devlj4
 ..
 
 # ./usr/share/keymaps
-keymaps		uname=bin gname=bin
+keymaps
 
 # ./usr/share/keymaps/amiga
-amiga		uname=bin gname=bin
+amiga
 # ./usr/share/keymaps/amiga
 ..
 
 # ./usr/share/keymaps/atari
-atari		uname=bin gname=bin
+atari
 # ./usr/share/keymaps/atari
 ..
 
@@ -935,20 +935,20 @@ atari		uname=bin gname=bin
 ..
 
 # ./usr/share/lkm
-lkm		uname=bin gname=bin
+lkm
 
 # ./usr/share/lkm/misc
-misc		uname=bin gname=bin
+misc
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall		uname=bin gname=bin
+syscall
 # ./usr/share/lkm/syscall
 ..
 
 # ./usr/share/lkm/vfs
-vfs		uname=bin gname=bin
+vfs
 # ./usr/share/lkm/vfs
 ..
 
@@ -1667,43 +1667,7 @@ catalog
 ..
 
 # ./usr/share/zoneinfo
-zoneinfo	uname=bin gname=bin mode=0555
-
-# ./usr/share/zoneinfo/Australia
-Australia	uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/Australia
-..
-
-# ./usr/share/zoneinfo/Brazil
-Brazil		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/Brazil
-..
-
-# ./usr/share/zoneinfo/Canada
-Canada		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/Canada
-..
-
-# ./usr/share/zoneinfo/Chile
-Chile		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/Chile
-..
-
-# ./usr/share/zoneinfo/Mexico
-Mexico		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/Mexico
-..
-
-# ./usr/share/zoneinfo/SystemV
-SystemV		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/SystemV
-..
-
-# ./usr/share/zoneinfo/US
-US		uname=bin gname=bin mode=0555
-# ./usr/share/zoneinfo/US
-..
-
+zoneinfo
 # ./usr/share/zoneinfo
 ..
 
