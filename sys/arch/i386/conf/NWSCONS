@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.2 1998/06/15 13:10:18 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.3 1998/06/26 01:53:59 lukem Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -103,7 +103,6 @@ file-system 	UNION		# union file system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network File System server
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.1 1998/03/08 19:29:40 gwr Exp $
+# $NetBSD: INSTALL3X,v 1.2 1998/06/26 01:54:11 lukem Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -62,7 +62,6 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 

@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.27 1998/05/24 23:45:30 thorpej Exp $
+# $NetBSD: NOSY,v 1.28 1998/06/26 01:53:46 lukem Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -31,7 +31,6 @@ file-system	FDESC		# user file descriptor file system (/dev/fd)
 #file-system	UNION		# Union filesystem
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 
 # Networking options

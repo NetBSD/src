@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.13 1998/06/09 01:15:48 tv Exp $
+#	$NetBSD: A7INST,v 1.14 1998/06/26 01:53:48 lukem Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -57,7 +57,6 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	NFSSERVER
 
 # Networking options

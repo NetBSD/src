@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.26 1998/02/08 05:10:45 gwr Exp $
+# $NetBSD: DISKLESS,v 1.27 1998/06/26 01:54:10 lukem Exp $
 
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Root and swap on NFS
@@ -56,7 +56,6 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	MFS		# memory-based filesystem
 
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 

@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.23 1998/06/09 01:15:48 tv Exp $
+#	$NetBSD: A7000,v 1.24 1998/06/26 01:53:48 lukem Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -57,7 +57,6 @@ file-system	UNION		# union file system
 
 # File system options
 options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER
 
 # Networking options

@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.21 1998/04/24 18:18:41 thorpej Exp $
+# $NetBSD: BUNNY,v 1.22 1998/06/26 01:53:44 lukem Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -28,7 +28,6 @@ file-system	MFS		# Memory-based file system
 file-system	NFS		# Sun NFS-compatible file system client
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 
 # Networking options
