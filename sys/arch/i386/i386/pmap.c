@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.17 2001/01/01 20:40:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.18 2001/01/02 04:13:16 thorpej Exp $	*/
 
 /*
  *
@@ -4066,18 +4066,6 @@ pmap_dump(pmap, sva, eva)
 	
 #if defined(MULTIPROCESSOR)
 
-static __inline void
-pmap_tlb_sendipi(void)
-{
-	int i, cpu_id = cpu_number();
-	
-	for (i = 0; i < I386_MAXPROCS; i++) {
-		if (i == cpu_id || cpu_info[i] == NULL)
-			continue;
-		i386_send_ipi(cpu_info[i], I386_IPI_TLB);
-	}
-}
-
 #if 0
 static __inline void
 pmap_tlb_ipispin(void)
@@ -4131,7 +4119,6 @@ pmap_tlb_shootnow ()
 {
 #ifdef MULTIPROCESSOR
 	int s;
-	pmap_tlb_sendipi();	/* kick other cpu's */
 	s = splimp();		/* or "splipi"? */
 #endif
 	pmap_do_tlb_shootdown(0); /* do *our* work. */
@@ -4150,32 +4137,28 @@ pmap_tlb_dshootdown(pmap, va, pte)
 	vaddr_t va;
 	pt_entry_t pte;
 {
-	u_long i;
+	struct cpu_info *ci, *self = curcpu();
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
+	CPU_INFO_ITERATOR cii;
 	int s;
-	u_long cpu_id;
 
 	if (!pmap_initialized) {
 		pmap_update_pg(va);
 		return;
 	}
 
-	cpu_id = cpu_number();	
 	/* XXX i386 case? */
 	s = splipi();
 #if 0
 	printf("dshootdown %lx\n", va);
 #endif
 
-	/* XXX should have global containing largest configured cpuid.. */
-	for (i = 0; i < I386_MAXPROCS; i++) {
-#ifdef MULTIPROCESSOR
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		/* Note: we queue shootdown events for ourselves here! */
-		if (cpu_info[i] == NULL)
+		if (pmap_is_active(pmap, ci->ci_cpuid) == 0)
 			continue;
-#endif
-		pq = &pmap_tlb_shootdown_q[i];
+		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 		simple_lock(&pq->pq_slock);
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
@@ -4185,7 +4168,7 @@ pmap_tlb_dshootdown(pmap, va, pte)
 			 * Kill it now for this cpu; otherwise, tell 
 			 * other cpus to kill everything..
 			 */
-			if (i == cpu_id) {
+			if (ci == self) {
 				pmap_update_pg(va); /* XXX overkill? */
 			} else {
 				if (pq->pq_pte & pmap_pg_g)
@@ -4206,6 +4189,11 @@ pmap_tlb_dshootdown(pmap, va, pte)
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
 		}
 		simple_unlock(&pq->pq_slock);
+#if defined(MULTIPROCESSOR)
+		/* Send the shootdown IPI to other CPUs. */
+		if (ci != self)
+			i386_send_ipi(ci, I386_IPI_TLB);
+#endif
 	}
 	splx(s);
 }
@@ -4420,4 +4408,3 @@ pmap_tlb_shootdown(pmap, va, pte)
 	pmap_tlb_shootnow();
 }
 #endif /* MULTIPROCESSOR */
-
