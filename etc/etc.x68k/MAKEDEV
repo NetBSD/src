@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1999/12/05 15:38:58 minoura Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1999/12/18 03:09:51 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -60,6 +60,7 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #	raid*	RAIDframe disk driver
+#	md*	memory pseudo-disk devices
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -78,7 +79,6 @@
 #	par*	motherboard parallel port
 #
 # Special purpose devices:
-#	md	memory pseudo-disk
 #	grf*	builtin video
 #	kbd	keyboard
 #	aconf	autoconfig information (not yet)
@@ -272,18 +272,13 @@ cd*)
 	;;
 
 md*)
-	case $i in
-	md*) name=md;	unit=${i#md};	blk=8; chr=7;;
-	esac
-	rm -f $name$unit? r$name$unit?
-	mknod $name${unit}a	b $blk $(($unit * 8))
-	mknod $name${unit}b	b $blk $(($unit * 8 +  1))
-	mknod $name${unit}c	b $blk $(($unit * 8 +  2))
-	mknod r$name${unit}a	c $chr $((($unit + 16) * 8))
-	mknod r$name${unit}b	c $chr $((($unit + 16) * 8 + 1))
-	mknod r$name${unit}c	c $chr $((($unit + 16) * 8 + 2))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	unit=${i#md}; blk=8; chr=7;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
+	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
+#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
 	;;
 
 ss*)
