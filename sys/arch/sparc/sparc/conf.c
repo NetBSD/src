@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
+/*	$NetBSD: conf.c,v 1.41 1996/06/19 13:28:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@
 #include "cgfour.h"
 #include "cgsix.h"
 #include "cgeight.h"
+#include "tcx.h"
 #include "xd.h"
 #include "xy.h"
 
@@ -217,7 +218,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 106 */
 	cdev_notdef(),			/* 107 */
 	cdev_notdef(),			/* 108 */
-	cdev_notdef(),			/* 109 */
+	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 112: loadable module driver */
