@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
- *	$Id: kbd.c,v 1.7 1994/02/13 21:10:48 chopps Exp $
+ *	$Id: kbd.c,v 1.8 1994/02/17 09:10:54 chopps Exp $
  */
 
 #include "ite.h"
@@ -44,9 +44,10 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+
+#include <dev/cons.h>
 
 #include <amiga/dev/device.h>
 #include <amiga/dev/kbdreg.h>
@@ -209,7 +210,7 @@ kbdintr (mask)
   /* if not in event mode, deliver straight to ite to process key stroke */
   if (! k->k_event_mode)
     {
-      itefilter (c, ITEFILT_TTY);
+      ite_filter (c, ITEFILT_TTY);
       return;
     }
 

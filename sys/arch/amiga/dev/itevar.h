@@ -1,11 +1,6 @@
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,188 +12,234 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Christian E. Hopps.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from: Utah $Hdr: itevar.h 1.1 90/07/09$
- *
- *	@(#)itevar.h	7.2 (Berkeley) 11/4/90
- *	$Id: itevar.h,v 1.6 1994/02/11 07:01:54 chopps Exp $
+ *	$Id: itevar.h,v 1.7 1994/02/17 09:10:52 chopps Exp $
  */
+#if ! defined (_ITEVAR_H)
+#define _ITEVAR_H
 
-#define UNIT(dev)       minor(dev)
-
-struct itesw {
-	int	(*ite_init)();
-	int	(*ite_deinit)();
-	int	(*ite_clear)();
-	int	(*ite_putc)();
-	int	(*ite_cursor)();
-	int	(*ite_scroll)();
+enum ite_arraymaxs {
+	MAX_ARGSIZE = 256,
+	MAX_TABS = 256,
 };
 
-/* maximum number of argument characters (<CSI>33;34;3m for example) */
-#define ARGBUF_SIZE 256
+enum ite_attr {
+	ATTR_NOR = 0,
+	ATTR_INV = 1,
+	ATTR_UL = 2,
+	ATTR_BOLD = 4,
+	ATTR_BLINK = 8,
+	ATTR_ALL = 16-1,
+
+	ATTR_KEYPAD = 0x80		/* XXX */
+};
 
 struct ite_softc {
-	int	flags;
-	int	type;
-	int	open_cnt;
-	struct grf_softc *grf;
+	struct	itesw *itesw;
+	char	argbuf[MAX_ARGSIZE];
+	struct  grf_softc *grf;		/* XXX */
 	void	*priv;
-	short	curx, cury;
-	short   cursorx, cursory;
+	char	*ap;
+	u_char	*tabs;
+	int	flags;
+	int	open_count;
+	short	cursorx;
+	short	cursory;
+	short	rows;
+	short	cols;
 	u_char	*font;
 	u_char	*cursor;
-	u_char	font_lo, font_hi;
-	short	rows, cols;
-	short   cpl;
-	short	ftheight, ftwidth, ftbaseline, ftboldsmear;
-	short   attribute;
-	u_char	*attrbuf;
+	u_char	font_lo;
+	u_char	font_hi;
+	short	cpl;			/* XXX? */
+	short	ftheight;
+	short	ftwidth;
+	short	ftbaseline;
+	short	ftboldsmear;
 	short	planemask;
 	short	pos;
-	char	imode, fpd, hold;
-	u_char  escape, cursor_opt, key_repeat;
-	/* not currently used, but maintained */
-	char	GL, GR, G0, G1, G2, G3;
-	char	linefeed_newline, auto_wrap;
-	char	cursor_appmode, keypad_appmode;
-	char	argbuf[ARGBUF_SIZE], *ap, *tabs;
-	char	emul_level, eightbit_C1;
-	int	top_margin, bottom_margin, inside_margins;
-	short	save_curx, save_cury, save_attribute;
-	/* needed by view code */
-	void    *view;
+	char	imode;
+	char	fpd;
+	char	hold;
+	u_char	escape;
+	u_char	cursor_opt;
+	u_char	key_repeat;
+	char	GL;
+	char	GR;
+	char	G0;
+	char	G1;
+	char	G2;
+	char	G3;
+	char	linefeed_newline;
+	char	auto_wrap;
+	char	cursor_appmode;
+	char	keypad_appmode;
+	short	top_margin;
+	short	bottom_margin;
+	short	inside_margins;
+	short 	eightbit_C1;
+	short	emul_level;
+	enum 	ite_attr attribute;
+	enum 	ite_attr save_attribute;
+	int	curx;
+	int	save_curx;
+	int	cury;
+	int	save_cury;
+	void	*view;			/* XXX */
 };
 
-/* emulation levels: */
-#define EMUL_VT100	1
-#define EMUL_VT300_8	2
-#define EMUL_VT300_7	3
+enum ite_flags {
+	ITE_ALIVE  = 0x1,		/* grf layer is configed */
+	ITE_ISCONS = 0x2,		/* ite is acting console. */
+	ITE_INITED = 0x4,		/* ite has been inited. */
+	ITE_ISOPEN = 0x8,		/* ite has been opened */
+	ITE_INGRF  = 0x10,		/* ite is in graphics mode */
+	ITE_ACTIVE = 0x20,		/* ite is an active terminal */
+};
 
-/* Flags */
-#define ITE_ALIVE	0x01	/* hardware exists */
-#define ITE_INITED	0x02	/* device has been initialized */
-#define ITE_CONSOLE	0x04	/* device can be console */
-#define ITE_ISCONS	0x08	/* device is console */
-#define ITE_ACTIVE	0x10	/* device is being used as ITE */
-#define ITE_INGRF	0x20	/* device in use as non-ITE */
+struct itesw {
+	int	(*ite_cnprobe) __P((int minor));
+	void	(*ite_init) __P((struct ite_softc *));
+	void	(*ite_deinit) __P((struct ite_softc *));
+	void	(*ite_clear) __P((struct ite_softc *,int,int,int,int));
+	void	(*ite_putc) __P((struct ite_softc *,int,int,int,int));
+	void	(*ite_cursor) __P((struct ite_softc *,int));
+	void	(*ite_scroll) __P((struct ite_softc *,int,int,int,int));
+};
 
-/* Types - indices into itesw */
-#define ITE_CUSTOMCHIPS	0
-#define ITE_TIGA_A2410	1
-#define ITE_RETINA	2
+enum ite_replrules {
+	RR_CLEAR = 0,
+	RR_COPY = 0x3,
+	RR_XOR = 0x6,
+	RR_COYINVERTED = 0xC
+};
 
-#ifdef DO_WEIRD_ATTRIBUTES
-#define attrloc(ip, y, x) \
-	(ip->attrbuf + ((y) * ip->cols) + (x))
+enum ite_scrolldir {
+	SCROLL_UP = 1,
+	SCROLL_DOWN,
+	SCROLL_LEFT,
+	SCROLL_RIGHT,
+};
 
-#define attrclr(ip, sy, sx, h, w) \
-	bzero(ip->attrbuf + ((sy) * ip->cols) + (sx), (h) * (w))
-  
-#define attrmov(ip, sy, sx, dy, dx, h, w) \
-	bcopy(ip->attrbuf + ((sy) * ip->cols) + (sx), \
-	      ip->attrbuf + ((dy) * ip->cols) + (dx), \
-	      (h) * (w))
+enum ite_cursact {
+	DRAW_CURSOR = 5,
+	ERASE_CURSOR,
+	MOVE_CURSOR,
+	START_CURSOROPT,
+	END_CURSOROPT
+};
 
-#define attrtest(ip, attr) \
-	((* (u_char *) attrloc(ip, ip->cury, ip->curx)) & attr)
+enum ite_special_keycodes {
+	KBD_LEFT_SHIFT = 0x60,
+	KBD_RIGHT_SHIFT,
+	KBD_CAPS_LOCK,
+	KBD_CTRL,
+	KBD_LEFT_ALT,
+	KBD_RIGHT_ALT,
+	KBD_LEFT_META,
+	KBD_RIGHT_META
+};
 
-#define attrset(ip, attr) \
-	((* (u_char *) attrloc(ip, ip->cury, ip->curx)) = attr)
-#else
+enum ite_modifiers {
+	KBD_MOD_LSHIFT = (1 << (KBD_LEFT_SHIFT - KBD_LEFT_SHIFT)),
+	KBD_MOD_RSHIFT = (1 << (KBD_RIGHT_SHIFT- KBD_LEFT_SHIFT)),
+	KBD_MOD_CTRL = (1 << (KBD_CTRL - KBD_LEFT_SHIFT)),
+	KBD_MOD_LALT = (1 << (KBD_LEFT_ALT - KBD_LEFT_SHIFT)),
+	KBD_MOD_RALT = (1 << (KBD_RIGHT_ALT- KBD_LEFT_SHIFT)),
+	KBD_MOD_LMETA = (1 << (KBD_LEFT_META - KBD_LEFT_SHIFT)),
+	KBD_MOD_RMETA = (1 << (KBD_RIGHT_META- KBD_LEFT_SHIFT)),
+	KBD_MOD_CAPS = (1 << (KBD_CAPS_LOCK - KBD_LEFT_SHIFT)),
+
+	KBD_MOD_SHIFT = (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT),
+	KBD_MOD_ALT = (KBD_MOD_LALT | KBD_MOD_RALT),
+	KBD_MOD_META = (KBD_MOD_LMETA | KBD_MOD_RMETA),
+};
+
+enum caller {
+	ITEFILT_TTY,
+	ITEFILT_CONSOLE,
+	ITEFILT_REPEATER
+};
+
+enum emul_level {
+	EMUL_VT100 = 1,
+	EMUL_VT300_8,
+	EMUL_VT300_7
+};
+
+enum ite_max_getsize { ITEBURST = 64 };
+
+enum tab_size { TABSIZE = 8 };
+#define TABEND(u) (ite_tty[u]->t_windsize.ws_col - TABSIZE) /* XXX */
+
+#define set_attr(ip, attr)	((ip)->attribute |= (attr))
+#define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
 #define attrloc(ip, y, x) 0
 #define attrclr(ip, sy, sx, h, w)
 #define attrmov(ip, sy, sx, dy, dx, h, w)
 #define attrtest(ip, attr) 0
 #define attrset(ip, attr)
+
+/* console related function */
+void	ite_cnprobe __P((struct consdev *));
+void	ite_cninit __P((struct consdev *));
+int	ite_cngetc __P((dev_t));
+void	ite_cnputc __P((dev_t, int));
+void	ite_cnfinish __P((struct ite_softc *));
+
+/* standard ite device entry points. */
+void	iteinit __P((dev_t));
+int	iteopen __P((dev_t, int, int, struct proc *));
+int	iteclose __P((dev_t, int, int, struct proc *));
+int	iteread __P((dev_t, struct uio *, int));
+int	itewrite __P((dev_t, struct uio *, int));
+int	iteioctl __P((dev_t, int, caddr_t, int, struct proc *));
+void	itestart __P((struct tty *));
+
+/* ite functions */
+int	ite_on __P((dev_t, int));
+int	ite_off __P((dev_t, int));
+void	ite_reinit __P((dev_t));
+int	ite_param __P((struct tty *, struct termios *));
+void	ite_reset __P((struct ite_softc *));
+int	ite_cnfilter __P((u_char, enum caller));
+void	ite_filter __P((u_char ,enum caller));
+
+/* lower layer functions */
+int	view_cnprobe __P((int));
+void	view_init __P((struct ite_softc *));
+void	view_deinit __P((struct ite_softc *));
+int	tiga_cnprobe __P((int));
+void	tiga_init __P((struct ite_softc *));
+void	tiga_deinit __P((struct ite_softc *));
+void	tiga_clear __P((struct ite_softc *,int,int,int,int));
+void	tiga_putc __P((struct ite_softc *,int,int,int,int));
+void	tiga_cursor __P((struct ite_softc *,int));
+void	tiga_scroll __P((struct ite_softc *,int,int,int,int));
+int	retina_cnprobe __P((int));
+void	retina_init __P((struct ite_softc *));
+void	retina_deinit __P((struct ite_softc *));
+void	retina_clear __P((struct ite_softc *,int,int,int,int));
+void	retina_putc __P((struct ite_softc *,int,int,int,int));
+void	retina_cursor __P((struct ite_softc *,int));
+void	retina_scroll __P((struct ite_softc *,int,int,int,int));
+
+#if defined (KERNEL)
+extern struct ite_softc ite_softc[];
 #endif
 
-  
-/*
- * X and Y location of character 'c' in the framebuffer, in pixels.
- */
-#define	charX(ip,c)	\
-	(((c) % (ip)->cpl) * (ip)->ftwidth + (ip)->fontx)
-
-#define	charY(ip,c)	\
-	(((c) / (ip)->cpl) * (ip)->ftheight + (ip)->fonty)
-
-/* Character attributes */
-#define ATTR_NOR        0x0             /* normal */
-#define	ATTR_INV	0x1		/* inverse */
-#define	ATTR_UL		0x2		/* underline */
-#define ATTR_BOLD	0x4		/* bold */
-#define ATTR_BLINK	0x8		/* blink */
-#define ATTR_ALL	(ATTR_INV | ATTR_UL|ATTR_BOLD|ATTR_BLINK)
-
-/* Keyboard attributes */
-#define ATTR_KPAD	0x80		/* keypad transmit */
-  
-/* Replacement Rules */
-#define RR_CLEAR		0x0
-#define RR_COPY			0x3
-#define RR_XOR			0x6
-#define RR_COPYINVERTED  	0xc
-
-#define SCROLL_UP	0x01
-#define SCROLL_DOWN	0x02
-#define SCROLL_LEFT	0x03
-#define SCROLL_RIGHT	0x04
-#define DRAW_CURSOR	0x05
-#define ERASE_CURSOR    0x06
-#define MOVE_CURSOR	0x07
-#define START_CURSOROPT	0x08	/* at start of output. May disable cursor */
-#define END_CURSOROPT	0x09	/* at end, make sure cursor state is ok */
-
-/* special key codes */
-#define KBD_LEFT_SHIFT	0x60
-#define KBD_RIGHT_SHIFT	0x61
-#define KBD_CAPS_LOCK	0x62
-#define KBD_CTRL	0x63
-#define KBD_LEFT_ALT	0x64
-#define KBD_RIGHT_ALT	0x65
-#define KBD_LEFT_META	0x66
-#define KBD_RIGHT_META	0x67
-
-/* modifier map for use in itefilter() */
-#define KBD_MOD_LSHIFT	(1<<0)
-#define KBD_MOD_RSHIFT	(1<<1)
-#define KBD_MOD_SHIFT	(KBD_MOD_LSHIFT | KBD_MOD_RSHIFT)
-#define KBD_MOD_CTRL	(1<<2)
-#define KBD_MOD_LALT	(1<<3)
-#define KBD_MOD_RALT	(1<<4)
-#define KBD_MOD_ALT	(KBD_MOD_LALT | KBD_MOD_RALT)
-#define KBD_MOD_LMETA	(1<<5)
-#define KBD_MOD_RMETA	(1<<6)
-#define KBD_MOD_META	(KBD_MOD_LMETA | KBD_MOD_RMETA)
-#define KBD_MOD_CAPS	(1<<7)
-
-/* type for the second argument to itefilter(). Note that the 
-   driver doesn't support key-repeat for console-mode, since it can't use
-   timeout() for polled I/O. */
-   
-enum caller { ITEFILT_TTY, ITEFILT_CONSOLE, ITEFILT_REPEATER };
-
-#define	TABSIZE		8
-#define	TABEND(u)	(ite_tty[u]->t_winsize.ws_col - TABSIZE)
-
-#ifdef KERNEL
-extern	struct ite_softc ite_softc[];
-#endif
+#endif /* _ITEVAR_H */

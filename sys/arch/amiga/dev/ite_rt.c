@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_rt.c,v 1.6 1994/02/13 21:10:47 chopps Exp $
+ *	$Id: ite_rt.c,v 1.7 1994/02/17 09:10:49 chopps Exp $
  */
 
 #include "ite.h"
@@ -11,6 +11,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <dev/cons.h>
 
 #include <amiga/dev/itevar.h>
 
@@ -20,6 +21,21 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
+
+
+/*
+ * retina_cnprobe is called when the console is being initialized
+ * i.e. very early.  grfconfig() has been called, so this implies
+ * that rt_init() was called.  If we are functioning retina_inited
+ * will be true.
+ */
+int
+retina_cnprobe(min)
+	int min;
+{
+	extern int retina_inited;		/* in grf_rt.c */
+	return (retina_inited ? CN_INTERNAL : CN_DEAD);
+}
 
 void retina_init(struct ite_softc *ip)
 {

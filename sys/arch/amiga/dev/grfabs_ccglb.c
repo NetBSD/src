@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccglb.c,v 1.1 1994/02/13 21:10:33 chopps Exp $
+ *	$Id: grfabs_ccglb.c,v 1.2 1994/02/17 09:10:37 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -256,9 +256,9 @@ u_short cc_default_colors[32] = {
 };
 #if defined (GRF_A2024)
 u_short cc_a2024_default_colors[4] = {
+	0x2,			/* LGREY */
 	0x0,			/* BLACK */
 	0x3,			/* WHITE */
-	0x2,			/* LGREY */
 	0x1			/* DGREY */
 };
 #endif /* GRF_A2024 */
