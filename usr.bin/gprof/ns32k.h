@@ -1,3 +1,5 @@
+/*	$NetBSD: ns32k.h,v 1.2 1995/04/19 07:16:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)i386.h	5.1 (Berkeley) 4/18/91
- *	$Id: ns32k.h,v 1.1 1994/03/09 00:25:19 phil Exp $
+ *	@(#)i386.h	5.1 (Berkeley) 4/18/91
  */
 
     /*
