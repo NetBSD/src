@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.417 2001/10/31 18:26:23 skrll Exp $
+# $NetBSD: mi,v 1.418 2001/11/08 09:14:18 jmc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -922,6 +922,7 @@
 ./usr/share/man/cat4/tp.0			man-sys-catman
 ./usr/share/man/cat4/tqphy.0			man-sys-catman
 ./usr/share/man/cat4/tr.0			man-sys-catman
+./usr/share/man/cat4/trm.0			man-sys-catman
 ./usr/share/man/cat4/tty.0			man-sys-catman
 ./usr/share/man/cat4/tun.0			man-sys-catman
 ./usr/share/man/cat4/twe.0			man-sys-catman
@@ -1372,6 +1373,7 @@
 ./usr/share/man/cat8/mailstats.0		man-sendmail-catman
 ./usr/share/man/cat8/mailwrapper.0		man-mailwrapper-catman
 ./usr/share/man/cat8/makedbm.0			man-sendmail-catman
+./usr/share/man/cat8/makefs.0			man-sysutil-catman
 ./usr/share/man/cat8/makekey.0			man-crypto-catman
 ./usr/share/man/cat8/makemap.0			man-sendmail-catman
 ./usr/share/man/cat8/makewhatis.0		man-man-catman
@@ -2558,6 +2560,7 @@
 ./usr/share/man/man4/tp.4			man-sys-man
 ./usr/share/man/man4/tqphy.4			man-sys-man
 ./usr/share/man/man4/tr.4			man-sys-man
+./usr/share/man/man4/trm.4			man-sys-man
 ./usr/share/man/man4/tty.4			man-sys-man
 ./usr/share/man/man4/tun.4			man-sys-man
 ./usr/share/man/man4/twe.4			man-sys-man
@@ -3008,6 +3011,7 @@
 ./usr/share/man/man8/mailstats.8		man-sendmail-man
 ./usr/share/man/man8/mailwrapper.8		man-mailwrapper-man
 ./usr/share/man/man8/makedbm.8			man-sendmail-man
+./usr/share/man/man8/makefs.8			man-sysutil-man
 ./usr/share/man/man8/makekey.8			man-crypto-man
 ./usr/share/man/man8/makemap.8			man-sendmail-man
 ./usr/share/man/man8/makewhatis.8		man-man-man
