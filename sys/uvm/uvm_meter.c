@@ -1,9 +1,9 @@
-/*	$NetBSD: uvm_meter.c,v 1.18 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.19 2001/05/25 04:06:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1982, 1986, 1989, 1993
- *      The Regents of the University of California.  
+ *      The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Charles D. Cranor,
- *      Washington University, and the University of California, Berkeley 
+ *      Washington University, and the University of California, Berkeley
  *      and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -55,7 +55,7 @@ int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
 /*
- * constants for averages over 1, 5, and 15 minutes when sampling at 
+ * constants for averages over 1, 5, and 15 minutes when sampling at
  * 5 second intervals.
  */
 
@@ -86,7 +86,7 @@ uvm_meter()
 }
 
 /*
- * uvm_loadav: compute a tenex style load average of a quantity on 
+ * uvm_loadav: compute a tenex style load average of a quantity on
  * 1, 5, and 15 minute internvals.
  */
 static void

@@ -1,6 +1,6 @@
-/*	$NetBSD: uvm_bio.c,v 1.12 2001/04/24 04:31:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.13 2001/05/25 04:06:12 chs Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1998 Chuck Silvers.
  * All rights reserved.
  *
@@ -53,7 +53,7 @@
  * local functions
  */
 
-static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t, 
+static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t,
 			       vm_page_t *, int, int, vm_fault_t, vm_prot_t,
 			       int));
 static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
@@ -522,13 +522,13 @@ ubc_flush(uobj, start, end)
 	UVMHIST_LOG(ubchist, "uobj %p start 0x%lx end 0x%lx",
 		    uobj, start, end,0);
 
-	s = splbio(); 
+	s = splbio();
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	for (umap = ubc_object.umap;
 	     umap < &ubc_object.umap[ubc_nwins];
 	     umap++) {
 
-		if (umap->uobj != uobj || 
+		if (umap->uobj != uobj ||
 		    umap->offset < start ||
 		    (umap->offset >= end && end != 0) ||
 		    umap->refcount > 0) {

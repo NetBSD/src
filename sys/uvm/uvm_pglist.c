@@ -1,19 +1,19 @@
-/*	$NetBSD: uvm_pglist.c,v 1.14 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.15 2001/05/25 04:06:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
- *  
+ *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.  
+ * NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright 
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
@@ -23,7 +23,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -77,7 +77,7 @@ u_long	uvm_pglistalloc_npages;
  *	low		the low address of the allowed allocation range.
  *	high		the high address of the allowed allocation range.
  *	alignment	memory must be aligned to this power-of-two boundary.
- *	boundary	no segment in the allocation may cross this 
+ *	boundary	no segment in the allocation may cross this
  *			power-of-two boundary (relative to zero).
  */
 
@@ -100,7 +100,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
-	
+
 	/*
 	 * Our allocations are always page granularity, so our alignment
 	 * must be, too.
@@ -231,7 +231,7 @@ out:
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
 	 */
-	 
+
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
 	     uvmexp.inactive < uvmexp.inactarg)) {

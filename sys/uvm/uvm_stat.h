@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.19 2001/02/04 10:55:58 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.20 2001/05/25 04:06:17 chs Exp $	*/
 
 /*
  *
@@ -233,7 +233,7 @@ do { \
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \
 	static char *_uvmhist_name = FNAME; \
-	int _uvmhist_call; 
+	int _uvmhist_call;
 
 static __inline void uvmhist_print __P((struct uvm_history_ent *));
 
