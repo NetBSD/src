@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.4 1994/06/29 06:35:28 cgd Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.5 1994/10/28 22:40:46 mycroft Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -26,7 +26,7 @@ struct bootsector33 {
 	char bsOemName[8];	/* OEM name and version */
 	char bsBPB[19];		/* BIOS parameter block */
 	char bsDriveNumber;	/* drive number (0x80) */
-	char bsBootCode[474];	/* pad so structure is 512 bytes long */
+	char bsBootCode[479];	/* pad so structure is 512 bytes long */
 	u_short bsBootSectSig;
 #define	BOOTSIG	0xaa55
 };
