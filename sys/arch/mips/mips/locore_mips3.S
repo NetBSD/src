@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.56 2000/10/05 01:06:06 cgd Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.57 2000/10/05 02:36:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1246,53 +1246,6 @@ END(mips3_SetPID)
 
 /*--------------------------------------------------------------------------
  *
- * mips3_SetWIRED --
- *
- *	Write the given value into the TLB wired reg.
- *
- *	mips3_SetWIRED(wired)
- *		int wired;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	WIRED set in the wired register.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_SetWIRED)
-	mtc0	a0, MIPS_COP_0_TLB_WIRED
-	nop				# required for 5230
-	nop				# required for 5230
-	j	ra
-	nop
-END(mips3_SetWIRED)
-
-/*--------------------------------------------------------------------------
- *
- * mips3_GetWIRED --
- *
- *	Get the value from the TLB wired reg.
- *
- *	mips3_GetWIRED(void)
- *
- * Results:
- *	Value of wired reg.
- *
- * Side effects:
- *	None.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_GetWIRED)
-	mfc0	v0, MIPS_COP_0_TLB_WIRED
-	j	ra
-	nop
-END(mips3_GetWIRED)
-
-/*--------------------------------------------------------------------------
- *
  * mips3_TLBUpdate --
  *
  *	Update the TLB if highreg is found; otherwise, enter the data.
@@ -2377,96 +2330,6 @@ LEAF_NOPROFILE(mips3_TBIA)
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips3_TBIA)
 
-LEAF(mips3_read_config)
-	mfc0	v0, MIPS_COP_0_CONFIG
-	nop
-	j	ra
-	nop
-END(mips3_read_config)
-
-LEAF(mips3_write_config)
-	mtc0	a0, MIPS_COP_0_CONFIG
-	nop
-	nop
-	j	ra
-	nop
-END(mips3_write_config)
-
-/*----------------------------------------------------------------------------
- *
- * mips3_cycle_count --
- *
- *	u_int32_t mips3_cycle_count(void)
- *
- *	read 32-bit cycle-counter clock in coprocessor 0.
- *
- * Results:
- *	returns 32-bit clock value, incremented automatically by CPU
- *	at nominal cycle rate (i.e., half the maximum issue rate.)
- *
- * Side effects:
- *	none.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(mips3_cycle_count)
-	mfc0	v0, MIPS_COP_0_COUNT
-	nop
-	nop
-	j	ra
-	nop
-END(mips3_cycle_count)
-
-/*--------------------------------------------------------------------------
- *
- * mips3_write_count --
- *
- *	Write the given value into the Compare reg
- *
- *	mips3_write_count(count)
- *		int count;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *
- *	Sets the Count value in the CP0 register (9).
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_write_count)
-	mtc0	a0, MIPS_COP_0_COUNT		# Write the Counter value
-	j	ra
-	nop
-END(mips3_write_count)
-
-/*
- * Read compare register.
- *
- * On mips3, generates a hardint 5 interrupt request is generated
- * each time the COUNT register increments past the COMPARE register.
- */
-LEAF(mips3_read_compare)
-	mfc0	v0, MIPS_COP_0_COMPARE
-	nop
-	j	ra
-	nop
-END(mips3_read_compare)
-
-/*
- * Write value to compare register.
- *
- * Side Effects:
- *	Clears interrupt request from cycle-counter clock.
- */
-LEAF(mips3_write_compare)
-	mtc0	a0, MIPS_COP_0_COMPARE
-	nop
-	j	ra
-	nop
-END(mips3_write_compare)
-
 LEAF(mips3_FetchIcache)
 	lw	t1, mips_L1ICacheSize
 	lw	t2, mips_L1ICacheLSize
@@ -2504,6 +2367,106 @@ LEAF(mips3_FetchDcache)
 	j	ra
 	nop
 END(mips3_FetchDcache)
+
+
+/*
+ * u_int32_t mips3_cp0_compare_read(void)
+ *
+ *	Return the current value of the CP0 Compare register.
+ */
+LEAF(mips3_cp0_compare_read)
+	mfc0	v0, MIPS_COP_0_COMPARE
+	j	ra
+	nop
+END(mips3_cp0_compare_read)
+
+/*
+ * void mips3_cp0_compare_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Compare register.
+ */
+LEAF(mips3_cp0_compare_write)
+	mtc0	a0, MIPS_COP_0_COMPARE
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cp0_compare_write)
+
+
+/*
+ * u_int32_t mips3_cp0_config_read(void)
+ *
+ *	Return the current value of the CP0 Config register.
+ */
+LEAF(mips3_cp0_config_read)
+	mfc0	v0, MIPS_COP_0_CONFIG
+	j	ra
+	nop
+END(mips3_cp0_config_read)
+
+/*
+ * void mips3_cp0_config_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Config register.
+ */
+LEAF(mips3_cp0_config_write)
+	mtc0	a0, MIPS_COP_0_CONFIG
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cp0_config_write)
+
+
+/*
+ * u_int32_t mips3_cp0_count_read(void)
+ *
+ *	Return the current value of the CP0 Count register.
+ */
+LEAF(mips3_cp0_count_read)
+	mfc0	v0, MIPS_COP_0_COUNT
+	j	ra
+	nop
+END(mips3_cp0_count_read)
+
+/*
+ * void mips3_cp0_count_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Count register.
+ */
+LEAF(mips3_cp0_count_write)
+	mtc0	a0, MIPS_COP_0_COUNT
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cp0_count_write)
+
+
+/*
+ * u_int32_t mips3_cp0_wired_read(void)
+ *
+ *	Return the current value of the CP0 Wired register.
+ */
+LEAF(mips3_cp0_wired_read)
+	mfc0	v0, MIPS_COP_0_TLB_WIRED
+	j	ra
+	nop
+END(mips3_cp0_wired_read)
+
+/*
+ * void mips3_cp0_wired_write(u_int32_t)
+ *
+ *	Set the value of the CP0 Wired register.
+ */
+LEAF(mips3_cp0_wired_write)
+	mtc0	a0, MIPS_COP_0_TLB_WIRED
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_cp0_wired_write)
 
 
 #if defined(_MIPS_BSD_API) && \

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2000/09/13 15:00:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2000/10/05 02:36:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -174,7 +174,7 @@ mach_init(argc, argv, envp)
 
 	cpuspeed = strtoul(cpufreq, NULL, 10) / 2;	/* XXX MIPS3 only */
 #if 0	/* XXX create new mips/mips interface */
-	mips3_cycle_count = strtoul(cpufreq, NULL, 10) * 5000000;
+	... something ... = strtoul(cpufreq, NULL, 10) * 5000000;
 #endif
 
 	uvm_setpagesize();
@@ -532,8 +532,8 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 
 
 	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cycle_count();
-		mips3_write_compare(cycles + 900000);	/* XXX */
+		cycles = mips3_cp0_count_read();
+		mips3_cp0_compare_write(cycles + 900000);	/* XXX */
 
 		cf.pc = pc;
 		cf.sr = status;

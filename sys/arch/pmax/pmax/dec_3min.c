@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.42 2000/06/06 00:08:25 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.43 2000/10/05 02:36:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.42 2000/06/06 00:08:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.43 2000/10/05 02:36:45 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ dec_3min_intr(status, cause, pc, ipending)
 				"r"(ioasic_base + IOASIC_SLOT_8_START));
 #ifdef MIPS3
 			if (CPUISMIPS3) {
-				latched_cycle_cnt = mips3_cycle_count();
+				latched_cycle_cnt = mips3_cp0_count_read();
 			}
 #endif
 			cf.pc = pc;
@@ -470,7 +470,7 @@ kn02ba_clkread()
 	if (CPUISMIPS3) {
 		u_int32_t mips3_cycles;
 
-		mips3_cycles = mips3_cycle_count() - latched_cycle_cnt;
+		mips3_cycles = mips3_cp0_count_read() - latched_cycle_cnt;
 		/* XXX divides take 78 cycles: approximate with * 41/2048 */
 		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
 		       (mips3_cycles >> 11));

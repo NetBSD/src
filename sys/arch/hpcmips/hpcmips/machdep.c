@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2000/09/24 12:32:34 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2000/10/05 02:36:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2000/09/24 12:32:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2000/10/05 02:36:45 cgd Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -729,7 +729,7 @@ cpu_intr(status, cause, pc, ipending)
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
-		mips3_write_compare(mips3_cycle_count());
+		mips3_cp0_compare_write(mips3_cp0_count_read());
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.106 2000/10/05 01:06:07 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.107 2000/10/05 02:36:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.106 2000/10/05 01:06:07 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.107 2000/10/05 02:36:45 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -213,7 +213,7 @@ void
 mips3_ConfigCache(mips3_csizebase)
 	int mips3_csizebase;
 {
-	u_int32_t config = mips3_read_config();
+	u_int32_t config = mips3_cp0_config_read();
 	static int snoop_check = 0;
 	int i;
 
@@ -460,9 +460,9 @@ mips_vector_init()
 #endif
 #ifdef MIPS3
 	if (CPUISMIPS3) {
-		mips3_SetWIRED(0);
+		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
-		mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES);
+		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		if (mips3_L1TwoWayCache) {
 			mips3_locore_vec.flushCache = mips3_FlushCache_2way;
 			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
