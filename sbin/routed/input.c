@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.11 1995/04/24 13:24:30 cgd Exp $	*/
+/*	$NetBSD: input.c,v 1.12 1995/05/24 15:22:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.11 1995/04/24 13:24:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.12 1995/05/24 15:22:55 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ rip_input(from, rip, size)
 	int count, changes = 0;
 	register struct afswitch *afp;
 	static struct sockaddr badfrom, badfrom2;
+	char buf1[256], buf2[256];
 
 	ifp = 0;
 	TRACE_INPUT(ifp, from, (char *)rip, size);
@@ -76,7 +77,9 @@ rip_input(from, rip, size)
 	if (rip->rip_vers == 0) {
 		syslog(LOG_ERR,
 		    "RIP version 0 packet received from %s! (cmd %d)",
-		    (*afswitch[from->sa_family].af_format)(from), rip->rip_cmd);
+		    (*afswitch[from->sa_family].af_format)(from, buf1,
+							   sizeof(buf1)),
+		    rip->rip_cmd);
 		return;
 	}
 	switch (rip->rip_cmd) {
@@ -141,13 +144,31 @@ rip_input(from, rip, size)
 		/* verify message came from a privileged port */
 		if ((*afp->af_portcheck)(from) == 0)
 			return;
-		if ((ifp = if_iflookup(from)) == 0 || (ifp->int_flags &
-		    (IFF_BROADCAST | IFF_POINTOPOINT | IFF_REMOTE)) == 0 ||
-		    ifp->int_flags & IFF_PASSIVE) {
+		if ((ifp = if_iflookup(from)) == 0) {
 			syslog(LOG_ERR, "trace command from unknown router, %s",
-			    (*afswitch[from->sa_family].af_format)(from));
+			    (*afswitch[from->sa_family].af_format)(from, buf1,
+							       sizeof(buf1)));
 			return;
 		}
+
+		if ((ifp->int_flags & 
+			(IFF_BROADCAST|IFF_POINTOPOINT|IFF_REMOTE)) == 0) {
+			syslog(LOG_ERR,
+			    "trace command from router %s, with bad flags %x",
+			    (*afswitch[from->sa_family].af_format)(from, buf1,
+							       sizeof(buf1)),
+			    ifp->int_flags);
+			return;
+		}
+
+		if ((ifp->int_flags & IFF_PASSIVE) != 0) {
+			syslog(LOG_ERR,
+				"trace command from  %s on an active interface",
+			    (*afswitch[from->sa_family].af_format)(from, buf1,
+							       sizeof(buf1)));
+			return;
+		}
+
 		((char *)rip)[size] = '\0';
 		if (rip->rip_cmd == RIPCMD_TRACEON)
 			traceon(rip->rip_tracefile);
@@ -166,7 +187,8 @@ rip_input(from, rip, size)
 			if (ifp->int_flags & IFF_PASSIVE) {
 				syslog(LOG_ERR,
 				  "bogus input (from passive interface, %s)",
-				  (*afswitch[from->sa_family].af_format)(from));
+				  (*afswitch[from->sa_family].af_format)(from,
+							 buf1, sizeof(buf1)));
 				return;
 			}
 			rt = rtfind(from);
@@ -200,7 +222,8 @@ rip_input(from, rip, size)
 			if (memcmp(from, &badfrom, sizeof(badfrom)) != 0) {
 				syslog(LOG_ERR,
 				  "packet from unknown router, %s",
-				  (*afswitch[from->sa_family].af_format)(from));
+				  (*afswitch[from->sa_family].af_format)(from,
+							 buf1, sizeof(buf1)));
 				badfrom = *from;
 			}
 			return;
@@ -226,14 +249,18 @@ rip_input(from, rip, size)
 				syslog(LOG_INFO,
 		"route in unsupported address family (%d), from %s (af %d)\n",
 				   n->rip_dst.sa_family,
-				   (*afswitch[from->sa_family].af_format)(from),
+				   (*afswitch[from->sa_family].af_format)(from,
+							  buf1, sizeof(buf1)),
 				   from->sa_family);
 				continue;
 			}
 			if (((*afp->af_checkhost)(&n->rip_dst)) == 0) {
 				syslog(LOG_DEBUG,
-				    "bad host in route from %s (af %d)\n",
-				   (*afswitch[from->sa_family].af_format)(from),
+				   "bad host %s in route from %s (af %d)\n",
+				   (*afswitch[n->rip_dst.sa_family].af_format)(
+					&n->rip_dst, buf1, sizeof(buf1)),
+				   (*afswitch[from->sa_family].af_format)(from,
+					buf2, sizeof(buf2)),
 				   from->sa_family);
 				continue;
 			}
@@ -244,7 +271,8 @@ rip_input(from, rip, size)
 					syslog(LOG_ERR,
 					    "bad metric (%d) from %s\n",
 					    n->rip_metric,
-				  (*afswitch[from->sa_family].af_format)(from));
+				  (*afswitch[from->sa_family].af_format)(from,
+						buf1, sizeof(buf1)));
 					badfrom2 = *from;
 				}
 				continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.12 1995/03/18 15:00:43 cgd Exp $	*/
+/*	$NetBSD: tables.c,v 1.13 1995/05/24 15:22:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: tables.c,v 1.12 1995/03/18 15:00:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: tables.c,v 1.13 1995/05/24 15:22:57 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,7 @@ rtadd(dst, gate, metric, state)
 	struct rthash *rh;
 	int af = dst->sa_family, flags;
 	u_int hash;
+	char buf1[256], buf2[256];
 
 	if (af >= af_max)
 		return;
@@ -208,8 +209,10 @@ rtadd(dst, gate, metric, state)
 		if (errno != EEXIST && gate->sa_family < af_max)
 			syslog(LOG_ERR,
 			"adding route to net/host %s through gateway %s: %m\n",
-			   (*afswitch[dst->sa_family].af_format)(dst),
-			   (*afswitch[gate->sa_family].af_format)(gate));
+			   (*afswitch[dst->sa_family].af_format)(dst, buf1,
+							     sizeof(buf1)),
+			   (*afswitch[gate->sa_family].af_format)(gate, buf2,
+							      sizeof(buf2)));
 		perror("ADD ROUTE");
 		if (errno == ENETUNREACH) {
 			TRACE_ACTION("DELETE", rt);
