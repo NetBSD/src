@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.5 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.6 2001/07/31 10:37:49 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
@@ -53,8 +54,10 @@
 #ifdef PWCTLVRGIUDEBUG
 int	pwctl_debug = 1;
 #define	DPRINTF(arg) if (pwctl_debug) printf arg;
+#define	VPRINTF(arg) if (bootverbose) printf arg;
 #else
 #define	DPRINTF(arg)
+#define	VPRINTF(arg) if (bootverbose) printf arg;
 #endif
 
 struct pwctl_softc {
@@ -169,13 +172,11 @@ pwctl_hardpower(void *ctx, int type, long id, void *msg)
 	struct pwctl_softc *sc = ctx;
 	int why =(int)msg;
 
-#if 1
-	/* XXX debug print cause hang system... Huum...*/
-	DPRINTF(("pwctl hardpower: port %d %s: %s(%d)\n", sc->sc_port,
+	VPRINTF(("pwctl hardpower: port %d %s: %s(%d)\n", sc->sc_port,
 	    why == PWR_RESUME? "resume" 
 	    : why == PWR_SUSPEND? "suspend" : "standby",
 	    sc->sc_save == sc->sc_on ? "on": "off", sc->sc_save));
-#endif /* 0 */
+
 	switch (why) {
 	case PWR_STANDBY:
 		break;
