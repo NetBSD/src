@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.4 1997/09/02 13:18:47 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.5 1998/07/07 22:06:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.4 1997/09/02 13:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.5 1998/07/07 22:06:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,10 @@ alpha_shared_intr_stray(intr, num, basename)
 {
 
 	intr[num].intr_nstrays++;
+
+	if (intr[num].intr_maxstrays == 0)
+		return;
+
 	if (intr[num].intr_nstrays <= intr[num].intr_maxstrays)
 		log(LOG_ERR, "stray %s %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
