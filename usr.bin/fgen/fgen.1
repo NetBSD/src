@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgen.1,v 1.4 1999/11/03 21:45:57 hwr Exp $
+.\"	$NetBSD: fgen.1,v 1.5 2001/06/05 11:44:56 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Eduardo Horvath, All Rights Reserved.
 .\"
@@ -33,9 +33,9 @@
 .Os
 .Sh NAME
 .Nm fgen
-.Nd IEEE 1275 Open Firmware FCode Tokenizer.
+.Nd IEEE 1275 Open Firmware FCode Tokenizer
 .Sh SYNOPSIS
-.Nm fgen
+.Nm
 .Op Fl d Ar level
 .Op Fl o Ar outfile
 .Ar infile
@@ -57,7 +57,6 @@ Reads Forth source and generates tokenized FCode object file.
 .Sh AUTHORS
 Written by Eduardo E. Horvath <eeh@one-o.com>
 .Sh BUGS
-.Pp
 String escape sequences are not recognized so things such as 
 .Pp
 .Li \&" foo \&"\&(01 02\&) \&"n \&"
