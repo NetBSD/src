@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.340 2001/06/27 18:03:13 mcr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.341 2001/06/28 04:45:57 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.334 2001/06/27 17:57:23 mcr Exp 
+ *	NetBSD: pcidevs,v 1.335 2001/06/28 04:45:09 thorpej Exp 
  */
 
 /*
@@ -532,6 +532,7 @@
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
+#define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics, Inc. */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
@@ -1691,6 +1692,9 @@
 /* Schneider & Koch (really SysKonnect) products */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI	0x4000		/* SK-NET FDDI-xP */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE	0x4300		/* SK-NET GE */
+
+/* Tamarack Microelectronics, Inc. */
+#define	PCI_PRODUCT_TAMARACK_TC9021	0x9021		/* Tamarack TC9021 Gigabit Ethernet */
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */
