@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.1 2000/11/28 05:12:29 thorpej Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.2 2000/11/28 16:57:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -97,38 +97,10 @@
 #define	ICH_CAS		0x34	/* 1/8 bit */
 #define	ICH_SEMATIMO	1000	/* us */
 
-#define	ICH_MIXER_RESET		0x00
-#define	ICH_MIXER_MUTE		0x02
-#define	ICH_MIXER_HDFMUTE	0x04
-#define	ICH_MIXER_MONOMUTE	0x06
-#define	ICH_MIXER_TONE		0x08
-#define	ICH_MIXER_BEEPMUTE	0x0a
-#define	ICH_MIXER_PHONEMUTE	0x0c
-#define	ICH_MIXER_MICMUTE	0x0e
-#define	ICH_MIXER_LINEMUTE	0x10
-#define	ICH_MIXER_CDMUTE	0x12
-#define	ICH_MIXER_VDMUTE	0x14
-#define	ICH_MIXER_AUXMUTE	0x16
-#define	ICH_MIXER_PCMMUTE	0x18
-#define	ICH_MIXER_RECSEL	0x1a
-#define	ICH_MIXER_RECGAIN	0x1c
-#define	ICH_MIXER_RECGAINMIC	0x1e
-#define	ICH_MIXER_GP		0x20
-#define	ICH_MIXER_3DCTRL	0x22
-#define	ICH_MIXER_RESERVED	0x24
-#define	ICH_PM			0x26
+/* Bits in the AC97_REG_POWER register */
 #define		ICH_PM_PCMI	0x100
 #define		ICH_PM_PCMO	0x200
 #define		ICH_PM_MICI	0x400
-#define	ICH_EXTAUDIO		0x28
-#define	ICH_EXTAUCTRL		0x2a
-#define	ICH_PCMRATE		0x2c
-#define	ICH_PCM3dRATE		0x2e
-#define	ICH_PCMLFERATE		0x30
-#define	ICH_PCMLRRATE		0x32
-#define	ICH_MICADCRATE		0x34
-#define	ICH_CLFEMUTE		0x36
-#define	ICH_LR3DMUTE		0x38
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
