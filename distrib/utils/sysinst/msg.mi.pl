@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.16 2003/06/11 21:35:35 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.17 2003/06/12 11:20:01 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -897,11 +897,6 @@ message cmdfail
 	%s
 nie powiodlo sie. Nie moge kontynuowac.}
 
-message aoutfail
-{Katalog do ktorego stare a.out wspoldzielone biblioteki powinny byc
-przeniesione nie moze zostac utworzony. Sproboj jeszcze raz procedury
-aktualizacji i upewnij sie, ze zamountowales wszystkie systemy plikow.}
-
 message noactivepart
 {Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
 uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktynwa?}
@@ -971,3 +966,17 @@ jeden mountpoint z "/".
 
 Nacisnij <enter> aby kontynuowac.
 }
+
+.if AOUT2ELF
+message aoutfail
+{Katalog do ktorego stare a.out wspoldzielone biblioteki powinny byc
+przeniesione nie moze zostac utworzony. Sproboj jeszcze raz procedury
+aktualizacji i upewnij sie, ze zamountowales wszystkie systemy plikow.}
+
+message emulbackup
+{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
+wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
+Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
+zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
+}
+.endif

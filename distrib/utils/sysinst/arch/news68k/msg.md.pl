@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/06/11 21:35:46 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2003/06/12 11:20:10 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/16 17:25:56 tsutsui Exp */
 
@@ -55,13 +55,6 @@ Ktora instalacje chcesz zrobic?
 
 message dobootblks
 {Instalowanie bootblokow na %s....
-}
-
-message emulbackup 
-{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
-wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
-Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
-zajac sie polaczeniem nowo utworzonego /emul/aout ze starym. 
 }
 
 message set_kernel_1

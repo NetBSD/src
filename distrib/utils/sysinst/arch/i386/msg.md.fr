@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.25 2003/06/12 10:51:41 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.26 2003/06/12 11:20:07 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,14 +135,6 @@ que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
 ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
-
-message emulbackup
-{Ou /emul/aout ou répertoire d' /emul sur votre système était un lien symbolique
-se dirigeant à un file system non-monté. Il a été donné une extension d' 'old'. Une
-fois que vous apportez votre copie de sauvegarde améliorée de système, vous
-pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
-d' /emul/aout avec le vieil.
-}
 
 message set_kernel_1
 {Kernel (GENERIC)}

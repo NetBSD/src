@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/11 21:35:36 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/06/12 11:20:02 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:11:21 thorpej Exp */
 
@@ -71,13 +71,6 @@ message notnetbsd
 
 message dobootblks
 {Instalowanie bootblokow na %s....
-}
-
-message emulbackup
-{Jeden z katalogow /emul lub /emul/aout byl polaczeniem symbolicznym
-wskazujacym na niezamontowany system plikow. Zostalo mu nadane rozszerzenie
-'.old'. Kiedy juz uruchomisz swoj zaktualizowany system bedziesz prawdopodobnie
-chcial polaczyc nowo utowrzony katalog /emul/aout ze starym.
 }
 
 message set_kernel_1

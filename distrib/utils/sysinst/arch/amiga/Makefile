@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/01/11 19:44:08 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2003/06/12 11:20:04 dsl Exp $
 #
 # Makefile for i386
 #
@@ -8,7 +8,5 @@
 SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
 	label.c target.c md.c sizemultname.c
-
-fdisk.o md.o:	menu_defs.h msg_defs.h
 
 .include "../../Makefile.inc"

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.35 2003/06/12 10:51:41 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.36 2003/06/12 11:20:07 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,13 +138,6 @@ your machine can address. Booting from it may not be possible. Are you
 sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
-
-message emulbackup
-{Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted file system. It has been given a '.old' extension.
-Once you bring your upgraded system back up, you may need to take care
-of merging the newly created /emul/aout directory with the old one.
-}
 
 message set_kernel_1
 {Kernel (GENERIC)}

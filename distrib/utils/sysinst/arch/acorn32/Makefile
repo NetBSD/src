@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/05/30 22:17:01 dsl Exp $
+#	$NetBSD: Makefile,v 1.6 2003/06/12 11:20:02 dsl Exp $
 #
 # Makefile for acorn32
 #
@@ -10,6 +10,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c aout2elf.c savenewlabel.c sizemultname.c \
 	bsddisklabel.c
 
-md.o:	menu_defs.h msg_defs.h
+MD_OPTIONS=	AOUT2ELF
 
 .include "../../Makefile.inc"

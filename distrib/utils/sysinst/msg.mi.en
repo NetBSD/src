@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.104 2003/06/11 21:35:35 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.105 2003/06/12 11:20:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -912,11 +912,6 @@ message cmdfail
 	%s
 failed. I can't continue.}
 
-message aoutfail
-{The directory where the old a.out shared libraries should be moved to could
-not be created. Please try the upgrade procedure again and make sure you
-have mounted all file systems.}
-
 message noactivepart
 {You have not marked a partition active. This may cause your system to not
 start up properly. Should the NetBSD partition of the disk be marked active?}
@@ -987,3 +982,17 @@ one mount point with "/".
 
 Press <return> to continue.
 }
+
+.if AOUT2ELF
+message aoutfail
+{The directory where the old a.out shared libraries should be moved to could
+not be created. Please try the upgrade procedure again and make sure you
+have mounted all file systems.}
+
+message emulbackup
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted file system. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
+}
+.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 2003/06/11 21:35:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 2003/06/12 11:20:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,13 +49,6 @@ message dobootblks
 
 message catsfspart
 {We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
-}
-
-message emulbackup
-{Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted file system. It has been given a '.old' extension.
-Once you bring your upgraded system back up, you may need to take care
-of merging the newly created /emul/aout directory with the old one.
 }
 
 message set_kernel_1

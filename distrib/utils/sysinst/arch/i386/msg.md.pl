@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.10 2003/06/12 10:51:41 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.11 2003/06/12 11:20:08 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -137,13 +137,6 @@ zaadresowac. Nie mozliwe bedzie bootowanie z tego dysku. Jestes pewien, ze
 chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
-
-message emulbackup
-{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
-wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
-Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
-zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
-}
 
 message set_kernel_1
 {Kernel (GENERIC)}
