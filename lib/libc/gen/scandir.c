@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)scandir.c	5.10 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: scandir.c,v 1.3 1993/08/26 00:45:00 jtc Exp $";
+static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -50,14 +49,15 @@ static char *rcsid = "$Id: scandir.c,v 1.3 1993/08/26 00:45:00 jtc Exp $";
 #include <string.h>
 
 /*
- * The DIRSIZ macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct dirent
- * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ * The DIRSIZ macro is the minimum record length which will hold the directory
+ * entry.  This requires the amount of space in struct dirent without the
+ * d_name field, plus enough space for the name and a terminating nul byte
+ * (dp->d_namlen + 1), rounded up to a 4 byte boundary.
  */
 #undef DIRSIZ
-#define DIRSIZ(dp) \
-    ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+#define DIRSIZ(dp)							\
+	((sizeof(struct dirent) - sizeof(dp)->d_name) +			\
+	    (((dp)->d_namlen + 1 + 3) &~ 3))
 
 int
 scandir(dirname, namelist, select, dcomp)
