@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.3 2000/03/03 15:05:47 tsubai Exp $	*/
+/*	$NetBSD: utils.c,v 1.3.4.1 2000/07/18 16:15:15 tron Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: utils.c,v 1.8 1999/08/13 06:46:22 paulus Exp "
+#define RCSID	"Id: utils.c,v 1.9 1999/09/08 01:13:46 masputra Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.3 2000/03/03 15:05:47 tsubai Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3.4.1 2000/07/18 16:15:15 tron Exp $");
 #endif
 #endif
 
@@ -126,7 +126,7 @@ slprintf __V((char *buf, int buflen, char *fmt, ...))
     va_list args;
     int n;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(args, fmt);
 #else
     char *buf;
@@ -395,7 +395,7 @@ vslp_printer __V((void *arg, char *fmt, ...))
     va_list pvar;
     struct buffer_info *bi;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     void *arg;
@@ -491,7 +491,7 @@ pr_log __V((void *arg, char *fmt, ...))
     va_list pvar;
     char buf[256];
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     void *arg;
@@ -581,7 +581,7 @@ fatal __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -603,7 +603,7 @@ error __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -623,7 +623,7 @@ warn __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -643,7 +643,7 @@ notice __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -663,7 +663,7 @@ info __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
@@ -683,7 +683,7 @@ dbglog __V((char *fmt, ...))
 {
     va_list pvar;
 
-#if __STDC__
+#if defined(__STDC__)
     va_start(pvar, fmt);
 #else
     char *fmt;
