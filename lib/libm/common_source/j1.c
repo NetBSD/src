@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)j1.c	5.5 (Berkeley) 12/16/92";*/
-static char rcsid[] = "$Id: j1.c,v 1.1 1993/08/14 13:42:53 mycroft Exp $";
+static char rcsid[] = "$Id: j1.c,v 1.2 1994/02/06 18:48:02 chopps Exp $";
 #endif /* not lint */
 
 /*
@@ -209,7 +209,7 @@ static double v0[5] = {
 double y1(x) 
 	double x;
 {
-	double z, s,c,ss,cc,u,v,j1();
+	double z, s,c,ss,cc,u,v;
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
 	if (!finite(x))
 		if (!_IEEE) return (infnan(EDOM));
