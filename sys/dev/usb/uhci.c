@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.5 1998/07/23 09:18:37 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.6 1998/07/23 13:44:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1216,8 +1216,9 @@ void
 uhci_device_bulk_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX */
-	usbd_delay_ms(2);	/* make sure it is finished */
+	/* XXX inactivate */
+	usbd_delay_ms(1);	/* make sure it is finished */
+	/* XXX call done */
 }
 
 /* Close a device bulk pipe. */
@@ -1330,8 +1331,9 @@ void
 uhci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX */
-	usbd_delay_ms(2);	/* make sure it is finished */
+	/* XXX inactivate */
+	usbd_delay_ms(1);	/* make sure it is finished */
+	/* XXX call done */
 }
 
 /* Close a device control pipe. */
@@ -1352,6 +1354,7 @@ uhci_device_intr_abort(reqh)
 {
 	struct uhci_pipe *upipe;
 
+	/* XXX inactivate */
 	usbd_delay_ms(2);	/* make sure it is finished */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("uhci_device_intr_abort: remove\n"));
@@ -2238,6 +2241,7 @@ void
 uhci_root_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
+	/* Nothing to do, all transfers are syncronous. */
 }
 
 /* Close the root pipe. */
