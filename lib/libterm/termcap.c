@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.15 1998/10/14 13:51:36 agc Exp $	*/
+/*	$NetBSD: termcap.c,v 1.16 1999/03/22 03:26:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.15 1998/10/14 13:51:36 agc Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.16 1999/03/22 03:26:43 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,12 +95,11 @@ tgetent(bp, name)
 	 * name of a file to use instead of
 	 * /usr/share/misc/termcap. In this case it better start with
 	 * a "/". Or it can be an entry to use so we don't have to
-	 * read the file. In this case it has to already have the
-	 * newlines crunched out.  If TERMCAP does not hold a file
-	 * name then a path of names is searched instead.  The path is
-	 * found in the TERMPATH variable, or becomes _PATH_DEF
-	 * ("$HOME/.termcap /usr/share/misc/termcap") if no TERMPATH
-	 * exists.
+	 * read the file. In this case cgetset() withh crunch out the
+	 * newlines.  If TERMCAP does not hold a file name then a path
+	 * of names is searched instead.  The path is found in the
+	 * TERMPATH variable, or becomes _PATH_DEF ("$HOME/.termcap
+	 * /usr/share/misc/termcap") if no TERMPATH exists.
 	 */
 	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
@@ -148,7 +147,16 @@ tgetent(bp, name)
 	i = cgetent(&dummy, pathvec, name);      
 
 	if (i == 0) {
+		/*
+		 * If the entry is too long, truncate to the last whole cap.
+		 */
 		strncpy(bp, dummy, 1024);
+		if (strlen(dummy) > 1023 && bp[1023] != ':' ) {
+			for (cp = bp+1022 ; cp > bp && *cp != ':' ; --cp)
+				;
+			if (cp > bp)
+				cp[1] = 0;
+		}
 		bp[1023] = '\0';
 	}
 	
