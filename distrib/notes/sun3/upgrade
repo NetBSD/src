@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.6 1999/01/25 23:34:23 garbled Exp $	
+.\"	$NetBSD: upgrade,v 1.7 2000/05/13 08:13:55 lukem Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ Mount all local filesystems:
 If you keep /usr or /usr/share on an NFS server, you
 will want to mount those filesystems as well. To do
 this, you will need to enable the network:
-.D1 Ic sh /etc/netstart
+.D1 Ic sh /etc/rc.d/network
 .It
 Run the update(8) daemon, to ensure that new programs
 are actually stored on disk.

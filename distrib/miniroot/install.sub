@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.34 2000/04/11 08:26:34 pk Exp $
+#	$NetBSD: install.sub,v 1.35 2000/05/13 08:13:55 lukem Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -496,7 +496,7 @@ configure_ifs() {
 	return 1
 }
 
-# Much of this is gratuitously stolen from /etc/netstart.
+# Much of this is gratuitously stolen from /etc/rc.d/network.
 enable_network() {
 
 	# Set up the hostname.

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.instutils,v 1.1 1997/10/18 04:05:28 mark Exp $
+#	$NetBSD: dot.instutils,v 1.2 2000/05/13 08:13:54 lukem Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -136,8 +136,8 @@ Configure()
 		echo    ""
 		echo -n	"WARNING: if you have any more ethernet interfaces, "
 		echo	"you will have to configure"
-		echo -n "them by hand.  Read the comments in /etc/netstart to "
-		echo	"learn how to do this."
+		echo -n "them by hand.  Read the comments in /etc/rc.d/network "
+		echo	"to learn how to do this."
 		;;
 	esac
 	

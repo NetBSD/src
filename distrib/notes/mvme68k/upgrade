@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.4 1999/01/25 23:34:23 garbled Exp $
+.\"	$NetBSD: upgrade,v 1.5 2000/05/13 08:13:55 lukem Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ If you keep /usr or /usr/share on an NFS server, you
 will want to mount those filesystems as well. To do
 this, you will need to enable the network:
 .Pp
-.Dl Ic sh /etc/netstart
+.Dl Ic sh /etc/rc.d/network
 .It
 Run the
 .Xr update 8
