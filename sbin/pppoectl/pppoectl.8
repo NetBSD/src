@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.20 2003/09/06 19:35:34 martin Exp $
+.\"	$NetBSD: pppoectl.8,v 1.21 2003/09/06 20:11:18 wiz Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.20 2003/09/06 19:35:34 martin Exp $
+.\" $Id: pppoectl.8,v 1.21 2003/09/06 20:11:18 wiz Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -185,7 +185,7 @@ e., system name and authentication secret will
 be forgotten).
 .It Ar myauthproto Ns \&= Ns Em protoname
 Same as above, but only for my end of the link.
-I. e., this is the protocol when remote is authenticator,
+I.e., this is the protocol when remote is authenticator,
 and I am the peer required to authenticate.
 .It Ar hisauthproto Ns \&= Ns Em protoname
 Same as above, but only for his end of the link.
@@ -254,14 +254,15 @@ The default value of the LCP timeout is currently set to 1 second.
 The timeout-value must be specified in milliseconds.
 .It Ar max-noreceive Ns \&= Ns Em sec
 Sets the number of seconds after last reception of data from the peer before
-the line state is probed by sending LCP echo requests. The
+the line state is probed by sending LCP echo requests.
+The
 .Em sec
 interval is not used verbatim, the first echo request might be delayed upto
 10 seconds after the configured interval.
 .It Ar max-alive-missed Ns \&= Ns Em count
 Sets the number of unanswered LCP echo requests that we will tolerate before
-considering a connection to be dead. LCP echo requests are sent in 10 seconds
-interval after the configured
+considering a connection to be dead.
+LCP echo requests are sent in 10 seconds interval after the configured
 .Em max-noreceive
 interval has passed with no data received from the peer.
 .It Ar max-auth-failure Ns \&= Ns Em count
@@ -313,7 +314,7 @@ ippp0:	phase=dead
 Display the settings for ippp0.
 The interface is currently in
 .Em dead
-phase, i. e. the LCP layer is down, and no traffic is possible.
+phase, i.e. the LCP layer is down, and no traffic is possible.
 Both ends of the connection use the CHAP protocol,
 my end tells remote the system name
 .Ql uriah ,
