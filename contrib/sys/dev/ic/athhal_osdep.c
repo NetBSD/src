@@ -121,18 +121,25 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 #ifdef AH_DEBUG
 	int debug_nodenum;
 #endif /* AH_DEBUG */
-	int hal_nodenum, root_nodenum, version_nodenum;
+	int ath_nodenum, hal_nodenum, version_nodenum;
 	struct sysctlnode *node = NULL;
 
-	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "ath",
-	    &node, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "hw",
+	    &node, NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
 		goto err;
 
-	root_nodenum = node->sysctl_num;
+	node = NULL;
+
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "ath",
+	    &node, NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_nodenum = node->sysctl_num;
 	node = NULL;
 
 	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "hal",
-	    &node, NULL, 0, NULL, 0, root_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+	    &node, NULL, 0, NULL, 0, CTL_HW, ath_nodenum, CTL_CREATE,
+	    CTL_EOL)) != 0)
 		goto err;
 
 	hal_nodenum = node->sysctl_num;
@@ -141,7 +148,7 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 	/* HAL version */
 	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY,
 	    CTLTYPE_STRING, "version", &node, NULL, 0, &ath_hal_version, 0,
-	    root_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_HW, ath_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	version_nodenum = node->sysctl_num;
@@ -153,7 +160,7 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 	/* control debugging printfs */
 	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE, CTLTYPE_INT,
 	    "debug", &node, NULL, 0, &ath_hal_debug, 0,
-	    root_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_HW, ath_nodenum, hal_nodenum, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	debug_nodenum = node->sysctl_num;
