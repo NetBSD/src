@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.3 1999/06/28 08:48:35 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,10 +44,19 @@
 #include <err.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <sys/ioctl.h>
 
+#ifndef DEBUG
 #include <machine/sram.h>
+#else
+/*
+ * DEBUG -- works on other (faster) platforms;
+ *   store in a regular file instead of actual non-volatile static RAM.
+ */
+#define PATH_RAMFILE "/tmp/sramfile"
+#endif
 
 #include "memswitch.h"
 
@@ -55,6 +64,7 @@ char *progname;
 int nflag = 0;
 u_int8_t *current_values = 0;
 u_int8_t *modified_values = 0;
+
 int main __P((int, char*[]));
 
 void
@@ -295,6 +305,7 @@ alloc_modified_values(void)
 void
 alloc_current_values(void)
 {
+#ifndef DEBUG
 	int i;
 	int sramfd = 0;
 	struct sram_io buffer;
@@ -316,6 +327,48 @@ alloc_current_values(void)
 	}
 
 	close (sramfd);
+#else
+	int i;
+	int fd;
+	struct stat st;
+
+	current_values = malloc (256);
+	if (current_values == 0)
+		err (1, "malloc");
+
+	fd = open (PATH_RAMFILE, O_RDONLY);
+	if (fd < 0 && errno == ENOENT) {
+		modified_values = malloc (256);
+		if (modified_values == 0)
+			err (1, NULL);
+		for (i = 0; i < number_of_props; i++) {
+			properties[i].modified_value
+			    = properties[i].default_value;
+			properties[i].modified = 1;
+			properties[i].flush (&properties[i]);
+		}
+
+		fd = creat (PATH_RAMFILE, 0666);
+		if (fd < 0)
+			err (1, "Creating %s", PATH_RAMFILE);
+		if (write (fd, modified_values, 256) != 256)
+			err (1, "Writing %s", PATH_RAMFILE);
+		close (fd);
+		free (modified_values);
+		modified_values = 0;
+
+		fd = open (PATH_RAMFILE, O_RDONLY);
+	}
+	if (fd < 0)
+		err (1, "Opening %s", PATH_RAMFILE);
+	if (fstat (fd, &st) < 0)
+		err (1, "fstat");
+	if (st.st_size != 256)
+		errx (1, "PANIC! INVALID RAMFILE");
+	if (read (fd, current_values, 256) != 256)
+		err (1, "reading %s", PATH_RAMFILE);
+	close (fd);
+#endif
 
 	properties[PROP_MAGIC1].fill (&properties[PROP_MAGIC1]);
 	properties[PROP_MAGIC2].fill (&properties[PROP_MAGIC2]);
@@ -329,7 +382,9 @@ flush(void)
 {
 	int i;
 	int sramfd = 0;
+#ifndef DEBUG
 	struct sram_io buffer;
+#endif
 
 	for (i = 0; i < number_of_props; i++) {
 		if (properties[i].modified)
@@ -340,6 +395,7 @@ flush(void)
 		/* Not modified at all. */
 		return;
 
+#ifndef DEBUG
 	/* Assume SRAM_IO_SIZE = n * 16. */
 	for (i = 0; i < 256; i += SRAM_IO_SIZE) {
 		if (memcmp (&current_values[i], &modified_values[i],
@@ -353,14 +409,16 @@ flush(void)
 		}
 		buffer.offset = i;
 		memcpy (buffer.sram, &modified_values[i], SRAM_IO_SIZE);
-#if 0				/* debug */
-		printf ("Issuing ioctl(%d, SIOPSRAM, {%d, ...}\n",
-			sramfd, buffer.offset);
-#else
 		if (ioctl (sramfd, SIOPSRAM, &buffer) < 0)
 			err (1, "ioctl");
-#endif
 	}
+#else
+	sramfd = open (PATH_RAMFILE, O_WRONLY);
+	if (sramfd < 0)
+		err (1, "Opening %s", PATH_RAMFILE);
+	if (write (sramfd, modified_values, 256) != 256)
+		err (1, "Writing %s", PATH_RAMFILE);
+#endif
 
 	if (sramfd != 0)
 		close (sramfd);
@@ -372,6 +430,7 @@ int
 save(name)
 	const char *name;
 {
+#ifndef DEBUG
 	int fd;
 
 	alloc_current_values ();
@@ -389,6 +448,9 @@ save(name)
 
 	if (fd != 1)
 		close (fd);
+#else
+	fprintf (stderr, "Skipping save...\n");
+#endif
 
 	return 0;
 }
@@ -397,6 +459,7 @@ int
 restore (name)
 	const char *name;
 {
+#ifndef DEBUG
 	int sramfd, fd, i;
 	struct sram_io buffer;
 
@@ -420,16 +483,14 @@ restore (name)
 	for (i = 0; i < 256; i += SRAM_IO_SIZE) {
 		buffer.offset = i;
 		memcpy (buffer.sram, &modified_values[i], SRAM_IO_SIZE);
-#if 0				/* debug */
-		printf ("Issuing ioctl(%d, SIOPSRAM, {%d, ...}\n",
-			sramfd, buffer.offset);
-#else
 		if (ioctl (sramfd, SIOPSRAM, &buffer) < 0)
 			err (1, "ioctl");
-#endif
 	}
 
 	close (sramfd);
+#else
+	fprintf (stderr, "Skipping restore...\n");
+#endif
 
 	return 0;
 }
