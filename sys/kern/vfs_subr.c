@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.41 1995/04/21 22:03:24 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.42 1995/04/21 22:09:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1514,19 +1514,19 @@ vfs_shutdown()
 
 	printf("syncing disks... ");
 
-	/* Release inodes held by texts before update. */
-	if (panicstr == 0)
+	if (panicstr == 0) {
+		/* Release inodes held by texts before update. */
 		vnode_pager_umount(NULL);
 #ifdef notdef
-	vnshutdown();
+		vnshutdown();
 #endif
 
-	/* Sync once before unmount, in case we hang on something. */
-	sync(&proc0, (void *)0, (int *)0);
+		/* Sync before unmount, in case we hang on something. */
+		sync(&proc0, (void *)0, (int *)0);
 
-	/* Unmount file systems. */
-	if (panicstr == 0)
+		/* Unmount file systems. */
 		vfs_unmountall();
+	}
 
 	/* Sync again after unmount, just in case. */
 	sync(&proc0, (void *)0, (int *)0);
