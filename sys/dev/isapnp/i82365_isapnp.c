@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.16 2004/08/11 00:20:36 mycroft Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.17 2004/09/01 21:26:29 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.16 2004/08/11 00:20:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.17 2004/09/01 21:26:29 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ pcic_isapnp_attach(parent, self, aux)
 	if (ipa->ipa_nirq > 0)
 		sc->irq = ipa->ipa_irq[0].num;
 	else
-		sc->irq = ISACF_IRQ_DEFAULT;
+		sc->irq = -1;
 
 	printf("\n");
 
