@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.23 2001/09/27 19:29:50 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.24 2001/10/09 13:50:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.23 2001/09/27 19:29:50 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.24 2001/10/09 13:50:30 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -255,6 +255,10 @@ el_set(EditLine *el, int op, ...)
 		break;
 	}
 
+	case EL_CLIENTDATA:
+		el->el_data = va_arg(va, void *);
+		break;
+
 	default:
 		rv = -1;
 	}
@@ -367,6 +371,11 @@ el_get(EditLine *el, int op, void *ret)
 
 	case EL_GETCFN:
 		*((el_rfunc_t *)ret) = el_read_getfn(el);
+		rv = 0;
+		break;
+
+	case EL_CLIENTDATA:
+		*((void **)ret) = el->el_data;
 		rv = 0;
 		break;
 
