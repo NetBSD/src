@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.42 1999/01/20 20:24:12 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.43 1999/01/21 22:09:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -162,13 +162,17 @@ sofree(so)
 	register struct socket *so;
 {
 
-	/*
-	 * We must not decommission a socket that's on the accept(2) queue.
-	 * If we do, then accept(2) may hang even after select(2) indicated
-	 * that the listening socket was ready.
-	 */
-	if (so->so_pcb || so->so_head || (so->so_state & SS_NOFDREF) == 0)
+	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
+	if (so->so_head) {
+		/*
+		 * We must not decommission a socket that's on the accept(2)
+		 * queue.  If we do, then accept(2) may hang after select(2)
+		 * indicated that the listening socket was ready.
+		 */
+		if (!soqremque(so, 0))
+			return;
+	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
 	pool_put(&socket_pool, so);
