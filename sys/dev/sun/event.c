@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.11 2002/10/23 09:13:54 jdolecek Exp $	*/
+/*	$NetBSD: event.c,v 1.12 2002/11/26 18:49:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.11 2002/10/23 09:13:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.12 2002/11/26 18:49:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -183,7 +183,7 @@ filt_evrdetach(struct knote *kn)
 	int s;
 
 	s = splev();
-	SLIST_REMOVE(&ev->ev_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -217,7 +217,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->ev_sel.si_klist;
+		klist = &ev->ev_sel.sel_klist;
 		kn->kn_fop = &ev_filtops;
 		break;
 

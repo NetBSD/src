@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.29 2002/10/23 09:13:36 jdolecek Exp $	*/
+/*	$NetBSD: qd.c,v 1.30 2002/11/26 18:49:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.29 2002/10/23 09:13:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.30 2002/11/26 18:49:45 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1565,7 +1565,7 @@ filt_qdrdetach(struct knote *kn)
 	int s;
 
 	s = spl5();
-	SLIST_REMOVE(&qdrsel[unit].si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&qdrsel[unit].sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1617,12 +1617,12 @@ qdkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &qdrsel[unit].si_klist;
+		klist = &qdrsel[unit].sel_klist;
 		kn->kn_fop = &qdread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &qdrsel[unit].si_klist;
+		klist = &qdrsel[unit].sel_klist;
 		kn->kn_fop = &qdwrite_filtops;
 		break;
 
