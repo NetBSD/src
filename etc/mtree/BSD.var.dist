@@ -2,7 +2,7 @@
 #	by: bostic
 #
 #	from: @(#)BSD.var.dist	5.3 (Berkeley) 5/9/91
-#	$Id: BSD.var.dist,v 1.4 1994/01/30 17:17:54 mycroft Exp $
+#	$Id: BSD.var.dist,v 1.5 1994/02/10 02:34:30 cgd Exp $
 #
 
 . type=dir
@@ -37,9 +37,11 @@ run
 rwho
 ..
 
-/set type=dir uname=games gname=bin mode=0755 
+/set type=dir uname=games gname=games mode=0755 
 games
 	hackdir
+		save	mode=700
+		..
 	..
 	larn
 	..
