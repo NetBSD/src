@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.14 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: maple.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -113,9 +113,6 @@ const struct cdevsw maple_cdevsw = {
 static int
 maplematch(struct device *parent, struct cfdata *cf, void *aux)
 {
-
-	if (strcmp("maple", cf->cf_driver->cd_name))
-		return (0);
 
 	return (1);
 }

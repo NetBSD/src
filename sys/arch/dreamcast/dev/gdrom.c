@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.11 2002/09/27 02:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -367,7 +367,7 @@ gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
 	static int gdrom_matched = 0;
 
 	/* Allow only once instance. */
-	if (strcmp("gdrom", cf->cf_driver->cd_name) || gdrom_matched)
+	if (gdrom_matched)
 		return (0);
 	gdrom_matched = 1;
 

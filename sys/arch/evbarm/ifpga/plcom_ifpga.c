@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.2 2002/01/30 03:59:41 thorpej Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.3 2002/09/27 02:17:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -62,9 +62,7 @@ struct cfattach plcom_ifpga_ca = {
 static int
 plcom_ifpga_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	if (strcmp(cf->cf_driver->cd_name, "plcom") == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.2 2001/11/23 19:36:50 thorpej Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.3 2002/09/27 02:17:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -68,9 +68,7 @@ static int timeset = 0;
 static int
 plrtc_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	if (strcmp(cf->cf_driver->cd_name, "plrtc") == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void
