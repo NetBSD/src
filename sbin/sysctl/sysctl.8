@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.56 2000/09/26 13:28:27 jdolecek Exp $
+.\"	$NetBSD: sysctl.8,v 1.57 2000/10/15 13:21:40 bjh21 Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Nm sysctl
 .Op Fl n
 .Fl w
-.Ar name=value ...
+.Ar name Ns Li = Ns Ar value ...
 .Nm sysctl
 .Op Fl n
 .Fl a
@@ -96,22 +96,32 @@ by an equal sign and the new value to be used.
 The
 .Fl f
 flag specifies the name of a file to read and process.  Blank lines and
-comments (beginning with ``#'') are ignored.  Line continuations with
-``\\'' are permitted.  Remaining lines are processed similarly to
+comments (beginning with
+.Ql # )
+are ignored.  Line continuations with
+.Ql \\\\\\\\\\\\\\\\
+are permitted.  Remaining lines are processed similarly to
 command line arguments of the form
 .Ar name
 or
-.Ar name=value .
+.Ar name Ns Li = Ns Ar value .
 The
 .Fl w
 flag is implied by
 .Fl f .
 .Pp
-The proc top-level MIB has a special semantic: it represent per-process values
+The
+.Ql proc
+top-level MIB has a special semantic: it represent per-process values
 and as such may differ from one process to another. The second-level name
-is the pid of the process (in decimal form), or the special word 'curproc'.
-For variables below 'proc.<pid>.rlimit', the integer value may be replaced
-with the string 'unlimited' if it matches the magic value used to disable
+is the pid of the process (in decimal form), or the special word
+.Ql curproc .
+For variables below
+.Ql proc.<pid>.rlimit ,
+the integer value may be replaced
+with the string
+.Ql unlimited
+if it matches the magic value used to disable
 a limit.
 .Pp
 The information available from
