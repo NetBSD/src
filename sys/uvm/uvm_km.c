@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.31 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.32 1999/09/12 01:17:36 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,6 @@
  */
 
 #include "opt_uvmhist.h"
-#include "opt_pmap_new.h"
 
 /*
  * uvm_km.c: handle kernel memory allocation and management
@@ -603,13 +602,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		 * it will need to lock it itself!)
 		 */
 		if (UVM_OBJ_IS_INTRSAFE_OBJECT(obj)) {
-#if defined(PMAP_NEW)
 			pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_ALL);
-#else
-			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-			    UVM_PROT_ALL, TRUE, VM_PROT_READ|VM_PROT_WRITE);
-#endif
 		} else {
 			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
 			    UVM_PROT_ALL, TRUE, VM_PROT_READ|VM_PROT_WRITE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1999/07/08 18:05:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 1999/09/12 01:17:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -930,13 +930,9 @@ pmap_postinit()
  */
 
 pmap_t
-pmap_create(size)
-	vm_size_t size;
+pmap_create()
 {
 	pmap_t pmap;
-
-	/* Software use map does not need a pmap */
-	if (size) return NULL;
 
 	/* Allocate memory for pmap structure and zero it */
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
@@ -2195,6 +2191,38 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 }
 
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
 
 /*
  * pmap_page_protect:
@@ -2203,23 +2231,25 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
  */
 
 void
-pmap_page_protect(phys, prot)
-	vm_offset_t phys;
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
 	vm_prot_t prot;
 {
-	PDEBUG(0, printf("pmap_page_protect(pa=%lx, prot=%d)\n", phys, prot));
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	PDEBUG(0, printf("pmap_page_protect(pa=%lx, prot=%d)\n", pa, prot));
 
 	switch(prot) {
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_copy_on_write(phys);
+		pmap_copy_on_write(pa);
 		break;
 
 	case VM_PROT_ALL:
 		break;
 
 	default:
-		pmap_remove_all(phys);
+		pmap_remove_all(pa);
 		break;
 	}
 }
@@ -2554,21 +2584,31 @@ pmap_clearbit(pa, maskbits)
 }
 
 
-void
-pmap_clear_modify(pa)
-	vm_offset_t pa;
+boolean_t
+pmap_clear_modify(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
 	PDEBUG(0, printf("pmap_clear_modify pa=%08lx\n", pa));
+	rv = pmap_testbit(pa, PT_M);
 	pmap_clearbit(pa, PT_M);
+	return rv;
 }
 
 
-void
-pmap_clear_reference(pa)
-	vm_offset_t pa;
+boolean_t
+pmap_clear_reference(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
 	PDEBUG(0, printf("pmap_clear_reference pa=%08lx\n", pa));
+	rv = pmap_testbit(pa, PT_H);
 	pmap_clearbit(pa, PT_H);
+	return rv;
 }
 
 
@@ -2582,9 +2622,10 @@ pmap_copy_on_write(pa)
 
 
 boolean_t
-pmap_is_modified(pa)
-	vm_offset_t pa;
+pmap_is_modified(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t result;
     
 	result = pmap_testbit(pa, PT_M);
@@ -2594,9 +2635,10 @@ pmap_is_modified(pa)
 
 
 boolean_t
-pmap_is_referenced(pa)
-	vm_offset_t pa;
+pmap_is_referenced(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t result;
 	
 	result = pmap_testbit(pa, PT_H);

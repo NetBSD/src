@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 1999/07/08 18:08:55 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 1999/09/12 01:17:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 1999/07/08 18:08:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 1999/09/12 01:17:12 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -452,8 +452,7 @@ pmap_init()
  *	is bounded by that size.
  */
 pmap_t
-pmap_create(size)
-	vsize_t size;
+pmap_create()
 {
 	pmap_t pmap;
 
@@ -461,18 +460,8 @@ pmap_create(size)
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_create(%lx)\n", size);
 #endif
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return (NULL);
 
-	/* XXX: is it ok to wait here? */
 	pmap = (pmap_t)malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
 	memset(pmap, 0, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
@@ -807,10 +796,11 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(pa, prot)
-	vaddr_t pa;
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
 	vm_prot_t prot;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	vaddr_t va;
 	int s;
@@ -1331,6 +1321,39 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 #endif
 }
 
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
+
 /*
  *	Routine:	pmap_unwire
  *	Function:	Clear the wired attribute for a map/virtual-address
@@ -1677,17 +1700,23 @@ pmap_copy_page(src, dst)
  *
  *	Clear the reference bit on the specified physical page.
  */
-void
-pmap_clear_reference(pa)
-	paddr_t pa;
+boolean_t
+pmap_clear_reference(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-	if (PAGE_IS_MANAGED(pa))
+	rv = FALSE;
+	if (PAGE_IS_MANAGED(pa)) {
+		rv = *pa_to_attribute(pa) & PV_REFERENCED;
 		*pa_to_attribute(pa) &= ~PV_REFERENCED;
+	}
+	return rv;
 }
 
 /*
@@ -1697,9 +1726,11 @@ pmap_clear_reference(pa)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_referenced(pa)
-	paddr_t pa;
+pmap_is_referenced(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
 	if (PAGE_IS_MANAGED(pa))
 		return (*pa_to_attribute(pa)  & PV_REFERENCED);
 #ifdef DEBUG
@@ -1712,17 +1743,23 @@ pmap_is_referenced(pa)
 /*
  *	Clear the modify bits on the specified physical page.
  */
-void
-pmap_clear_modify(pa)
-	paddr_t pa;
+boolean_t
+pmap_clear_modify(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
-	if (PAGE_IS_MANAGED(pa))
+	rv = FALSE;
+	if (PAGE_IS_MANAGED(pa)) {
+		rv = *pa_to_attribute(pa) & PV_MODIFIED;
 		*pa_to_attribute(pa) &= ~PV_MODIFIED;
+	}
+	return rv;
 }
 
 /*
@@ -1732,9 +1769,11 @@ pmap_clear_modify(pa)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_modified(pa)
-	paddr_t pa;
+pmap_is_modified(pg)
+	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
 	if (PAGE_IS_MANAGED(pa))
 		return (*pa_to_attribute(pa)  & PV_MODIFIED);
 #ifdef DEBUG

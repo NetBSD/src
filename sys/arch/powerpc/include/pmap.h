@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 1999/07/11 17:44:08 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 1999/09/12 01:17:18 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,10 +63,10 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-#define pmap_clear_modify(pa)		(ptemodify((pa), PTE_CHG, 0))
-#define	pmap_clear_reference(pa)	(ptemodify((pa), PTE_REF, 0))
-#define	pmap_is_modified(pa)		(ptebits((pa), PTE_CHG))
-#define	pmap_is_referenced(pa)		(ptebits((pa), PTE_REF))
+#define pmap_clear_modify(pg)		(ptemodify((pg), PTE_CHG, 0))
+#define	pmap_clear_reference(pg)	(ptemodify((pg), PTE_REF, 0))
+#define	pmap_is_modified(pg)		(ptebits((pg), PTE_CHG))
+#define	pmap_is_referenced(pg)		(ptebits((pg), PTE_REF))
 #define	pmap_unwire(pm, va)
 
 #define	pmap_phys_address(x)		(x)
@@ -75,8 +75,8 @@ extern struct pmap kernel_pmap_;
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 boolean_t pmap_extract __P((struct pmap *, vaddr_t, paddr_t *));
-void ptemodify __P((paddr_t, u_int, u_int));
-int ptebits __P((paddr_t, int));
+boolean_t ptemodify __P((struct vm_page *, u_int, u_int));
+int ptebits __P((struct vm_page *, int));
 
 #define PMAP_NEED_PROCWR
 void pmap_procwr __P((struct proc *, vaddr_t, size_t));
