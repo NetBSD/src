@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.1 2001/06/19 00:20:12 fvdl Exp $	*/
+/*	$NetBSD: rnd.h,v 1.2 2002/06/04 17:52:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,36 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_RND_H_
-#define	_I386_RND_H_
+#ifndef _X86_64_RND_H_
+#define	_X86_64_RND_H_
+
+#ifdef _KERNEL
 
 /*
  * Machine-specific support for rnd(4)
  */
 
 #include <machine/cpufunc.h>
-#include <machine/specialreg.h>
 
-#include "opt_cputype.h"
-
-#ifdef _KERNEL
-
-static __inline int
-cpu_hascounter(void)
-{
-#if I586_CPU || I686_CPU
-	/*
-	 * Note that:
-	 * 1) Intel documentation is very specific that code *must* test
-	 * the CPU feature flag, even if you "know" that a particular
-	 * rev of the hardware supports it.
-	 * 2) We know that the TSC is busted on some Cyrix CPU's..
-	 */
-	return (cpu_feature & CPUID_TSC) != 0;
-#else
-	return 0;
-#endif
-}
+#define cpu_hascounter()	(1)
 
 static __inline u_int64_t
 cpu_counter(void)
@@ -75,4 +57,4 @@ cpu_counter(void)
 
 #endif /* _KERNEL */
 
-#endif /* !_I386_RND_H_ */
+#endif /* !_X86_64_RND_H_ */
