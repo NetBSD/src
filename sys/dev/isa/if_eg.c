@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.36 1997/04/28 17:04:14 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.37 1997/10/15 05:59:16 explorer Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -39,6 +39,7 @@
  * - get rid of isa indirect stuff
  */
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +51,9 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -113,6 +117,10 @@ struct eg_softc {
 	u_int8_t eg_incount;		/* Number of buffers currently used */
 	caddr_t	eg_inbuf;		/* Incoming packet buffer */
 	caddr_t	eg_outbuf;		/* Outgoing packet buffer */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 int egprobe __P((struct device *, void *, void *));
@@ -475,6 +483,10 @@ egattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, egintr, sc);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+#endif
 }
 
 void
@@ -712,6 +724,10 @@ egintr(arg)
 			egprintpcb(sc);
 			break;
 		}
+
+#if NRND > 0
+		rnd_add_uint32(&sc->rnd_source, sc->eg_pcb[0]);
+#endif
 	}
 
 	return serviced;

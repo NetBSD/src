@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.3 1997/10/14 21:41:01 thorpej Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.4 1997/10/15 05:56:13 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rnd.h"
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 struct smc91cxx_softc {
 	struct	device sc_dev;		/* generic device glue */
 	struct	ethercom sc_ec;		/* ethernet common glue */
@@ -50,6 +56,10 @@ struct smc91cxx_softc {
 	int	(*sc_enable) __P((struct smc91cxx_softc *));
 	void	(*sc_disable) __P((struct smc91cxx_softc *));
 	int	sc_enabled;
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 #define	SMC_SELECT_BANK(sc, x)						\
