@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.17 1998/02/02 02:54:28 perry Exp $	*/
+/*	$NetBSD: popen.c,v 1.18 1998/02/03 01:16:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.17 1998/02/02 02:54:28 perry Exp $");
+__RCSID("$NetBSD: popen.c,v 1.18 1998/02/03 01:16:03 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,8 +76,10 @@ popen(command, type)
 	struct pid *cur, *old;
 	FILE *iop;
 	int pdes[2], pid, twoway;
+
 #ifdef __GNUC__
-	(void) &cur;
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &cur; (void) &twoway; (void) &type;
 #endif
 
 	if (strchr(type, '+')) {
@@ -87,7 +89,7 @@ popen(command, type)
 			return (NULL);
 	} else  {
 		twoway = 0;
-		if (*type != 'r' && *type != 'w' || type[1] ||
+		if ((*type != 'r' && *type != 'w') || type[1] ||
 		    (pipe(pdes) < 0)) {
 			errno = EINVAL;
 			return (NULL);
