@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/12 12:54:55 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/12 13:10:16 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 WARNS?= 1
@@ -12,20 +12,20 @@ INSTALLFLAGS=-fschg
 
 .include <bsd.prog.mk>
 
-.if defined(SKEY)
+.ifdef SKEY
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+=	-lskey
 .endif
 
-.if defined(KERBEROS5)
+.ifdef KERBEROS5
 SRCS+=	k5login.c
+CPPFLAGS+=-DKERBEROS5
 DPADD+=	${LIBKRB5} ${LIBCRYPTO}
 LDADD+=	-lkrb5 -lcrypto -lcom_err
-CPPFLAGS+=-DKERBEROS5
-.elif defined(KERBEROS)
+.elifdef KERBEROS
 SRCS+=	klogin.c
+CPPFLAGS+=-DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
 LDADD+=	-lkrb -ldes
-CPPFLAGS+=-DKERBEROS
 .endif
