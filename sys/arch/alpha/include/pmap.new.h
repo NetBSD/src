@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.1 1996/07/09 22:22:27 cgd Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.2 1996/07/10 03:17:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
@@ -36,24 +36,19 @@
  */
 
 #ifndef	_PMAP_MACHINE_
-#define _PMAP_MACHINE_	1
+#define	_PMAP_MACHINE_
 
-#ifndef	ASSEMBLER
+#include <machine/alpha_cpu.h>
 
-#include <kern/zalloc.h>
-#include <kern/lock.h>
-#include <mach/machine/vm_param.h>
-#include <mach/vm_statistics.h>
-#include <mach/kern_return.h>
+/* XXX */
+typedef struct pcb *pcb_t;
 
 /*
  *	Alpha Page Table Entry
  */
 
-typedef unsigned long	pt_entry_t;
+typedef alpha_pt_entry_t pt_entry_t;
 #define PT_ENTRY_NULL	((pt_entry_t *) 0)
-
-#endif	ASSEMBLER
 
 #define ALPHA_OFFMASK	(ALPHA_PGBYTES-1)	/* offset within page */
 
@@ -88,35 +83,19 @@ typedef unsigned long	pt_entry_t;
 #define NPDES	(alpha_ptob(1)/sizeof(pt_entry_t))
 
 /*
- *	Hardware pte bit definitions (to be used directly on the ptes
- *	without using the bit fields).
+ *	Hardware/PALcode pte bit definitions (to be used directly
+ *	on the ptes without using the bit fields) are defined in
+ *	<machine/alpha_cpu.h>.  Software-defined bits are defined
+ *	here.
  */
 
-#define	ALPHA_PTE_VALID		0x1
+#define ALPHA_PTE_WIRED			0x00010000
+#define ALPHA_PTE_REF			0x00020000
+#define ALPHA_PTE_MOD			0x00040000
 
-#define	ALPHA_PTE_FAULT_ON_x	0xe
 
-#define	ALPHA_PTE_GLOBAL	0x10
-#define	ALPHA_PTE_GRANULARITY	0x60
-
-#define	ALPHA_PTE_PROT		0xff00
-#define	ALPHA_PTE_PROTOFF	8
-#define	ALPHA_PTE_KW		0x10
-#define	ALPHA_PTE_UW		0x80
-#define	ALPHA_PTE_KR		0x01
-#define	ALPHA_PTE_UR		0x08
-
-#define ALPHA_PTE_WRITE		0x00009000
-
-#define	ALPHA_PTE_SOFTWARE	0xffff0000
-#define ALPHA_PTE_WIRED		0x00010000
-#define ALPHA_PTE_REF		0x00020000
-#define ALPHA_PTE_MOD		0x00040000
-
-#define ALPHA_PTE_PFN		0xffffffff00000000
-
-#define	pa_to_pte(a)		(alpha_btop(a) << 32)
-#define	pte_to_pa(p)		(alpha_ptob( (p) >> 32 ))
+#define	pa_to_pte(a)		ALPHA_PTE_FROM_PFN(alpha_btop(a))
+#define	pte_to_pa(p)		alpha_ptob(ALPHA_PTE_TO_PFN(p))
 #define	pte_increment_pa(p)	((p) += pa_to_pte(ALPHA_PGBYTES))
 
 /*
@@ -124,9 +103,10 @@ typedef unsigned long	pt_entry_t;
  */
 #define ptetokv(a)	(phystokv(pte_to_pa(a)))
 
-#ifndef	ASSEMBLER
 typedef	volatile long	cpu_set;	/* set of CPUs - must be <= 64 */
 					/* changed by other processors */
+
+#define	decl_simple_lock_data(x,y)	simple_lock_data_t y;
 
 struct pmap {
 	pt_entry_t	*dirbase;	/* page directory pointer register */
@@ -143,8 +123,9 @@ typedef struct pmap	*pmap_t;
 
 #define PMAP_NULL	((pmap_t) 0)
 
-extern vm_offset_t	kvtophys(vm_offset_t);
-extern void		set_ptbr(/* pmap_t map, pcb_t pcb */);
+#define	vtophys(x)	kvtophys(x)
+extern vm_offset_t	kvtophys __P((vm_offset_t));
+extern void		set_ptbr(pmap_t map, pcb_t pcb, boolean_t);
 
 #if	NCPUS > 1
 /*
@@ -175,13 +156,13 @@ void		process_pmap_updates();
 void		pmap_update_interrupt();
 extern	pmap_t	kernel_pmap;
 
-#endif	NCPUS > 1
+#endif	/* NCPUS > 1 */
 
 /*
  *	Machine dependent routines that are used only for Alpha.
  */
 
-pt_entry_t	*pmap_pte();
+pt_entry_t	*pmap_pte(pmap_t, vm_offset_t);
 
 /*
  *	Macros for speed.
@@ -333,7 +314,7 @@ pt_entry_t	*pmap_pte();
 	splx(s);							\
 }
 
-#else	NCPUS > 1
+#else	/* NCPUS > 1 */
 
 /*
  *	With only one CPU, we just have to indicate whether the pmap is
@@ -364,28 +345,14 @@ pt_entry_t	*pmap_pte();
 	    (pmap)->cpus_using = FALSE;					\
 }
 
-#endif	NCPUS > 1
+#endif	/* NCPUS > 1 */
 
 #define	pmap_kernel()			(kernel_pmap)
 #define pmap_resident_count(pmap)	((pmap)->stats.resident_count)
-#define pmap_phys_address(frame)	((vm_offset_t) (alpha_ptob(frame)))
-#define pmap_phys_to_frame(phys)	((alpha_btop(phys)))
-#define	pmap_copy(dst_pmap,src_pmap,dst_addr,len,src_addr)
-#define	pmap_attribute(pmap,addr,size,attr,value) \
-					(KERN_INVALID_ADDRESS)
 
 /*
  *	Data structures this module exports
  */
 extern pmap_t		kernel_pmap;	/* pointer to the kernel pmap	*/
-
-
-#endif	ASSEMBLER
-
-/*
- *	We want to implement pmap_steal_memory and pmap_startup.
- */
-
-#define	MACHINE_PAGES
 
 #endif	_PMAP_MACHINE_
