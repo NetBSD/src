@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.31 2002/02/11 11:01:52 wiz Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.32 2002/12/07 01:40:24 ichiro Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -50,11 +50,6 @@
  * The maximum transfer per S/G segment.
  */
 #define AHC_MAXTRANSFER_SIZE	ctob(AHC_NSEG - 1)
-
-/*
- * Convert FreeBSD queue macro
- */
-#define STAILQ_ENTRY SIMPLEQ_ENTRY
 
 /*
  * The number of dma segments supported.  The current implementation limits
