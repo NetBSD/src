@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.5 2002/03/15 20:33:50 eeh Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.6 2002/03/16 22:44:41 mjacob Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.5 2002/03/15 20:33:50 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.6 2002/03/16 22:44:41 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	if (type) 
 		*type = prop->kp_type;
 	splx(s);
-	DPRINTF(x, ("copied %d of %d\n", len, prop->kp_len));
+	DPRINTF(x, ("copied %ld of %d\n", (long) len, prop->kp_len));
 	return (prop->kp_len);
 }
 
