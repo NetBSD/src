@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 1999/07/02 11:47:12 itojun Exp $
+# $NetBSD: Makefile,v 1.2 2000/01/19 06:35:23 itojun Exp $
 
 PROG=	rip6query
-NOMAN=	yes
+MAN=	rip6query.8
 
 CPPFLAGS+=	-DINET6 -I${.CURDIR}/../route6d
 
