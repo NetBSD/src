@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi.c,v 1.3 1993/12/15 03:17:54 briggs Exp $
+ * $Id: scsi.c,v 1.4 1994/01/15 03:26:20 briggs Exp $
  *
  */
 
@@ -790,8 +790,7 @@ scsi_gen(int adapter, int id, int lun, struct scsi_generic *cmd,
   register volatile sci_padded_regmap_t *regs = ncr;
   int i,j,sent,ret;
 
-  if (cmd->opcode == TEST_UNIT_READY)
-  	cmd->bytes[0] = ((u_char) lun << 5);
+  cmd->bytes[0] = ((u_char) lun << 5);
 
   i = scsi_request(regs, id, lun, (u_char *) cmd, cmdlen,
 		   databuf, datalen, &sent, &ret);
