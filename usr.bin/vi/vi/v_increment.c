@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_increment.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_increment.c	8.10 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,7 +96,7 @@ v_increment(sp, ep, vp)
 		vip->inc_lastval = vp->count;
 
 	if (vp->character != '+' && vp->character != '-') {
-		msgq(sp, M_ERR, "usage: %s.", vp->kp->usage);
+		msgq(sp, M_ERR, "usage: %s", vp->kp->usage);
 		return (1);
 	}
 	vip->inc_lastch = vp->character;
@@ -127,14 +127,14 @@ v_increment(sp, ep, vp)
 		if (vp->character == '+') {
 			lval = strtol(vp->keyword, NULL, 0);
 			if (lval > 0 && LONG_MAX - lval < vip->inc_lastval) {
-overflow:			msgq(sp, M_ERR, "Resulting number too large.");
+overflow:			msgq(sp, M_ERR, "Resulting number too large");
 				return (1);
 			}
 			lval += vip->inc_lastval;
 		} else {
 			lval = strtol(vp->keyword, NULL, 0);
 			if (lval < 0 && -(LONG_MIN - lval) < vip->inc_lastval) {
-underflow:			msgq(sp, M_ERR, "Resulting number too small.");
+underflow:			msgq(sp, M_ERR, "Resulting number too small");
 				return (1);
 			}
 			lval -= vip->inc_lastval;

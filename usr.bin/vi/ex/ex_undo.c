@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_undo.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_undo.c	8.8 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,23 +53,6 @@ static char sccsid[] = "@(#)ex_undo.c	8.5 (Berkeley) 3/8/94";
 #include "excmd.h"
 
 /*
- * ex_undol -- U
- *	Undo changes to this line.
- */
-int
-ex_undol(sp, ep, cmdp)
-	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
-{
-	if (log_setline(sp, ep))
-		return (1);
-
-	sp->cno = 0;
-	return (0);
-}
-
-/*
  * ex_undo -- u
  *	Undo the last change.
  */
@@ -80,6 +63,15 @@ ex_undo(sp, ep, cmdp)
 	EXCMDARG *cmdp;
 {
 	MARK m;
+
+	/*
+	 * !!!
+	 * Historic undo always set the previous context mark.
+	 */
+	m.lno = sp->lno;
+	m.cno = sp->cno;
+	if (mark_set(sp, ep, ABSMARK1, &m, 1))
+		return (1);
 
 	/*
 	 * !!!

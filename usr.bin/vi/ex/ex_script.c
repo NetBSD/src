@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_script.c	8.12 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)ex_script.c	8.18 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ ex_script(sp, ep, cmdp)
 	/* Vi only command. */
 	if (!IN_VI_MODE(sp)) {
 		msgq(sp, M_ERR,
-		    "The script command is only available in vi mode.");
+		    "The script command is only available in vi mode");
 		return (1);
 	}
 
@@ -149,11 +149,14 @@ sscr_init(sp, ep)
 	}
 
 	/*
-	 * Don't use vfork() here, because the signal semantics
-	 * differ from implementation to implementation.
+	 * Don't use vfork() here, because the signal semantics differ from
+	 * implementation to implementation.
 	 */
+	SIGBLOCK(sp->gp);
 	switch (sc->sh_pid = fork()) {
 	case -1:			/* Error. */
+		SIGUNBLOCK(sp->gp);
+
 		msgq(sp, M_SYSERR, "fork");
 err:		if (sc->sh_master != -1)
 			(void)close(sc->sh_master);
@@ -161,12 +164,8 @@ err:		if (sc->sh_master != -1)
 			(void)close(sc->sh_slave);
 		return (1);
 	case 0:				/* Utility. */
-		/*
-		 * The utility has default signal behavior.  Don't bother
-		 * using sigaction(2) 'cause we want the default behavior.
-		 */
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
+		/* The utility has default signal behavior. */
+		sig_end();
 
 		/*
 		 * XXX
@@ -202,7 +201,8 @@ err:		if (sc->sh_master != -1)
 		msgq(sp, M_ERR,
 		    "Error: execl: %s: %s", sh_path, strerror(errno));
 		_exit(127);
-	default:
+	default:			/* Parent. */
+		SIGUNBLOCK(sp->gp);
 		break;
 	}
 
@@ -225,13 +225,13 @@ sscr_getprompt(sp, ep)
 	EXF *ep;
 {
 	struct timeval tv;
+	CHAR_T *endp, *p, *t, buf[1024];
 	SCRIPT *sc;
 	fd_set fdset;
 	recno_t lline;
 	size_t llen, len;
 	u_int value;
 	int nr;
-	char *endp, *p, *t, buf[1024];
 
 	FD_ZERO(&fdset);
 	endp = buf;
@@ -247,7 +247,7 @@ sscr_getprompt(sp, ep)
 		msgq(sp, M_SYSERR, "select");
 		goto prompterr;
 	case  0:		/* Timeout */
-		msgq(sp, M_ERR, "Error: timed out.");
+		msgq(sp, M_ERR, "Error: timed out");
 		goto prompterr;
 	case  1:		/* Characters to read. */
 		break;
@@ -269,7 +269,7 @@ more:	len = sizeof(buf) - (endp - buf);
 
 	/* If any complete lines, push them into the file. */
 	for (p = t = buf; p < endp; ++p) {
-		value = term_key_val(sp, *p);
+		value = KEY_VAL(sp, *p);
 		if (value == K_CR || value == K_NL) {
 			if (file_lline(sp, ep, &lline) ||
 			    file_aline(sp, ep, 0, lline, t, p - t))
@@ -359,7 +359,7 @@ sscr_exec(sp, ep, lno)
 	/* Delete any prompt. */
 	if (sscr_matchprompt(sp, p, len, &tlen)) {
 		if (tlen == len) {
-empty:			msgq(sp, M_BERR, "Nothing to execute.");
+empty:			msgq(sp, M_BERR, "Nothing to execute");
 			goto err1;
 		}
 		p += (len - tlen);
@@ -398,13 +398,14 @@ sscr_input(sp)
 	SCR *sp;
 {
 	struct timeval tv;
-	SCRIPT *sc;
+	CHAR_T *endp, *p, *t;
 	EXF *ep;
+	SCRIPT *sc;
 	recno_t lno;
 	size_t blen, len, tlen;
 	u_int value;
 	int nr, rval;
-	char *bp, *endp, *p, *t;
+	char *bp;
 
 	/* Find out where the end of the file is. */
 	ep = sp->ep;
@@ -434,7 +435,7 @@ more:	switch (nr = read(sc->sh_master, endp, MINREAD)) {
 
 	/* Append the lines into the file. */
 	for (p = t = bp; p < endp; ++p) {
-		value = term_key_val(sp, *p);
+		value = KEY_VAL(sp, *p);
 		if (value == K_CR || value == K_NL) {
 			len = p - t;
 			if (file_aline(sp, ep, 1, lno++, t, len))

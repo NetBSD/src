@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_sentence.c	8.12 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)v_sentence.c	8.16 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 	 * of the previous line.
 	 *
 	 * Non-motion commands move to the end of the range.  VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_S.  Adjust the
+	 * VC_Y stay at the start.  Ignore VC_C and VC_DEF.  Adjust the
 	 * end of the range for motion commands.
 	 */
 	if (ISMOTION(vp)) {
@@ -366,9 +366,8 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 	 * the buffer is in line mode, and the starting position is the last
 	 * character of the previous line.
 	 *
-	 * VC_D and non-motion commands move to the end of the range.
-	 * VC_Y stays at the start.  Ignore VC_C and VC_S.  Adjust the
-	 * start of the range for motion commands.
+	 * All commands move to the end of the range.  Adjust the start of
+	 * the range for motion commands.
 	 */
 	if (ISMOTION(vp))
 		if (vp->m_start.cno == 0 &&
@@ -382,6 +381,6 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 			F_SET(vp, VM_LMODE);
 		} else
 			--vp->m_start.cno;
-	vp->m_final = F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+	vp->m_final = vp->m_stop;
 	return (0);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_z.c	8.11 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_z.c	8.17 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,41 +104,56 @@ v_z(sp, ep, vp)
 		if (sp->s_fill(sp, ep, lno, P_MIDDLE))
 			return (1);
 		break;
+	case '+':
+		/*
+		 * If the user specified a line number, put that line at the
+		 * top and move the cursor to it.  Otherwise, scroll forward
+		 * a screen from the current screen.
+		 */
+		if (F_ISSET(vp, VC_C1SET)) {
+			if (sp->s_fill(sp, ep, lno, P_TOP))
+				return (1);
+			if (sp->s_position(sp, ep, &vp->m_final, 0, P_TOP))
+				return (1);
+		} else
+			if (sp->s_scroll(sp, ep,
+			    &vp->m_final, sp->t_rows, Z_PLUS))
+				return (1);
+		break;
+	case '^':
+		/*
+		 * If the user specified a line number, put that line at the
+		 * bottom, move the cursor to it, and then display the screen
+		 * before that one.  Otherwise, scroll backward a screen from
+		 * the current screen.
+		 *
+		 * !!!
+		 * Note, we match the off-by-one characteristics of historic
+		 * vi, here.
+		 */
+		if (F_ISSET(vp, VC_C1SET)) {
+			if (sp->s_fill(sp, ep, lno, P_BOTTOM))
+				return (1);
+			if (sp->s_position(sp, ep, &vp->m_final, 0, P_TOP))
+				return (1);
+			if (sp->s_fill(sp, ep, vp->m_final.lno, P_BOTTOM))
+				return (1);
+		} else
+			if (sp->s_scroll(sp, ep,
+			    &vp->m_final, sp->t_rows, Z_CARAT))
+				return (1);
+		break;
 	default:		/* Put the line at the top for <cr>. */
-		value = term_key_val(sp, vp->character);
+		value = KEY_VAL(sp, vp->character);
 		if (value != K_CR && value != K_NL) {
-			msgq(sp, M_ERR, "usage: %s.", vp->kp->usage);
+			msgq(sp, M_ERR, "usage: %s", vp->kp->usage);
 			return (1);
 		}
-		/* FALLTHROUGH */
-	case '+':		/* Put the line at the top. */
 		if (sp->s_fill(sp, ep, lno, P_TOP))
-			return (1);
-		break;
-	case '^':		/* Print the screen before the z- screen. */
-		/*
-		 * !!!
-		 * Historic practice isn't real clear on this one.  It seems
-		 * that the command "70z^" is the same as ":70<cr>z-z^" with
-		 * an off-by-one difference.  So, until I find documentation
-		 * to the contrary, the z^ command in this implementation
-		 * displays the screen immediately before the current one.
-		 * Fill the screen with the selected line at the bottom, then,
-		 * scroll the screen down a page, and move to the middle line
-		 * of the screen.  Historic vi moved the cursor to some random
-		 * place in the screen, as far as I can tell.
-		 */
-		if (sp->s_fill(sp, ep, lno, P_BOTTOM))
-			return (1);
-		if (sp->s_down(sp, ep, &vp->m_final, sp->t_maxrows - 1, 1))
-			return (1);
-		if (sp->s_position(sp, ep, &vp->m_final, 0, P_MIDDLE))
 			return (1);
 		break;
 	}
 
-	/* If the map changes, have to redraw the entire screen. */
-	F_SET(sp, S_REDRAW);
 
 	return (0);
 }

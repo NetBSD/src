@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_equal.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_equal.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,8 +54,6 @@ static char sccsid[] = "@(#)ex_equal.c	8.5 (Berkeley) 3/8/94";
 
 /*
  * ex_equal -- :address =
- *	Print out the line number matching the specified address, or the
- *	last line number in the file if no address specified.
  */
 int
 ex_equal(sp, ep, cmdp)
@@ -65,11 +63,24 @@ ex_equal(sp, ep, cmdp)
 {
 	recno_t lno;
 
+	/*
+	 * Print out the line number matching the specified address,
+	 * or the number of the last line in the file if no address
+	 * specified.
+	 *
+	 * !!!
+	 * Historically, ":0=" displayed 0, and ":=" or ":1=" in an
+	 * empty file displayed 1.  Until somebody complains loudly,
+	 * we're going to do it right.  The tables in excmd.c permit
+	 * lno to get away with any address from 0 to the end of the
+	 * file, which, in an empty file, is 0.
+	 */
 	if (F_ISSET(cmdp, E_ADDRDEF)) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
-		(void)ex_printf(EXCOOKIE, "%ld\n", lno);
 	} else
-		(void)ex_printf(EXCOOKIE, "%ld\n", cmdp->addr1.lno);
+		lno = cmdp->addr1.lno;
+
+	(void)ex_printf(EXCOOKIE, "%ld\n", lno);
 	return (0);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_mark.c	8.6 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_mark.c	8.9 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,9 @@ v_mark(sp, ep, vp)
 	return (mark_set(sp, ep, vp->character, &vp->m_start, 1));
 }
 
-static int mark __P((SCR *, EXF *, VICMDARG *, enum direction));
+enum which {BMARK, FMARK};
+static int mark __P((SCR *, EXF *, VICMDARG *, enum which));
+
 
 /*
  * v_bmark -- `['`a-z]
@@ -86,7 +88,7 @@ v_bmark(sp, ep, vp)
 	EXF *ep;
 	VICMDARG *vp;
 {
-	return (mark(sp, ep, vp, BACKWARD));
+	return (mark(sp, ep, vp, BMARK));
 }
 
 /*
@@ -101,21 +103,25 @@ v_fmark(sp, ep, vp)
 	EXF *ep;
 	VICMDARG *vp;
 {
-	return (mark(sp, ep, vp, FORWARD));
+	return (mark(sp, ep, vp, FMARK));
 }
 
 static int
-mark(sp, ep, vp, dir)
+mark(sp, ep, vp, cmd)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	enum direction dir;
+	enum which cmd;
 {
+	MARK m;
+	size_t len;
+	enum direction dir;
+
 	if (mark_get(sp, ep, vp->character, &vp->m_stop))
 		return (1);
 
 	/* Forward marks move to the first non-blank. */
-	if (dir == FORWARD) {
+	if (cmd == FMARK) {
 		vp->m_stop.cno = 0;
 		if (nonblank(sp, ep, vp->m_stop.lno, &vp->m_stop.cno))
 			return (1);
@@ -138,20 +144,67 @@ mark(sp, ep, vp, dir)
 	}
 
 	/*
-	 * If moving right, VC_D and VC_Y stay at the start.  If moving left,
-	 * VC_D commands move to the end of the range and VC_Y remains at the
-	 * start.  Ignore VC_C and VC_S.  Motion left commands adjust the
-	 * starting point to the character before the current one.
+	 * If the motion is in the reverse direction, switch the start and
+	 * stop MARK's so that it's in a forward direction.  (There's no
+	 * reason for this other than to make the tests below easier.  The
+	 * code in vi.c:vi() would have done the switch.)  Both forward
+	 * and backward motions can happen for either kind of mark command.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
 	    vp->m_start.lno == vp->m_stop.lno &&
 	    vp->m_start.cno > vp->m_stop.cno) {
-		if (F_ISSET(vp, VC_D))
-			vp->m_final = vp->m_stop;
-		else
-			vp->m_final = vp->m_start;
-		--vp->m_start.cno;
+		dir = BACKWARD;
+		m = vp->m_start;
+		vp->m_start = vp->m_stop;
+		vp->m_stop = m;
 	} else
+		dir = FORWARD;
+
+	/*
+	 * BACKWARD:
+	 *	VC_D commands move to the end of the range.  VC_Y stays at
+	 *	the start unless the end of the range is on a different line,
+	 *	when it moves to the end of the range.  Ignore VC_C and
+	 *	VC_DEF.
+	 *
+	 * FORWARD:
+	 *	VC_D and VC_Y commands don't move.  Ignore VC_C and VC_DEF.
+	 */
+	if (dir == BACKWARD)
+		if (F_ISSET(vp, VC_D) ||
+		    F_ISSET(vp, VC_Y) && vp->m_start.lno != vp->m_stop.lno)
+			vp->m_final = vp->m_start;
+		else
+			vp->m_final = vp->m_stop;
+	else
 		vp->m_final = vp->m_start;
+
+	if (cmd == FMARK)
+		return (0);
+
+	/*
+	 * Forward marks are always line oriented, and it's set in the
+	 * vcmd.c table.  Backward marks that start and stop at column
+	 * 0 of the line are also line mode commands. 
+	 */
+	if (vp->m_start.cno == 0 && vp->m_stop.cno == 0)
+		F_SET(vp, VM_LMODE);
+
+	/*
+	 * BMARK'S that move backward and start at column 0, or move forward
+	 * and end at column 0 are corrected to the last column of the previous
+	 * line.  Else, adjust the starting/ending point to the character
+	 * before the current one (this is safe because we know the command had
+	 * to move to succeed).
+	 */
+	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {
+		if (file_gline(sp, ep, --vp->m_stop.lno, &len) == NULL) {
+			GETLINE_ERR(sp, vp->m_stop.lno);
+			return (1);
+		}
+		vp->m_stop.cno = len ? len - 1 : 0;
+	} else
+		--vp->m_stop.cno;
+
 	return (0);
 }
