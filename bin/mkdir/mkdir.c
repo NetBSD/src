@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.33 2003/09/11 17:38:12 christos Exp $ */
+/* $NetBSD: mkdir.c,v 1.34 2003/09/14 19:20:21 jschauma Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.33 2003/09/11 17:38:12 christos Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.34 2003/09/14 19:20:21 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,6 @@ int	stdout_ok;			/* stdout connected to a terminal */
 int	mkpath(char *, mode_t, mode_t);
 void	usage(void);
 int	main(int, char *[]);
-char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -91,7 +90,7 @@ main(int argc, char *argv[])
 		case 'm':
 			if ((set = setmode(optarg)) == NULL) {
 				errx(EXIT_FAILURE, "invalid file mode: %s",
-					printescaped(optarg));
+					optarg);
 				/* NOTREACHED */
 			}
 			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -139,10 +138,7 @@ main(int argc, char *argv[])
 				 */
 				if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
 				    chmod(*argv, mode) == -1) {
-					char *fn;
-					fn = printescaped(*argv);
-					warn("%s", fn);
-					free(fn);
+					warn("%s", *argv);
 					exitval = EXIT_FAILURE;
 				}
 			}
@@ -162,12 +158,11 @@ int
 mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
-	char *slash, *fn;
+	char *slash;
 	int done, rv;
 
 	done = 0;
 	slash = path;
-	fn = printescaped(path);
 
 	for (;;) {
 		slash += strspn(slash, "/");
@@ -188,15 +183,13 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			if (stat(path, &sb) < 0) {
 					/* Not there; use mkdir()s error */
 				errno = sverrno;
-				warn("%s", fn);
-				free(fn);
+				warn("%s", path);
 				return -1;
 			}
 			if (!S_ISDIR(sb.st_mode)) {
 					/* Is there, but isn't a directory */
 				errno = ENOTDIR;
-				warn("%s", fn);
-				free(fn);
+				warn("%s", path);
 				return -1;
 			}
 		} else if (done) {
@@ -211,8 +204,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			 */
 			if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
 			    chmod(path, mode) == -1) {
-				warn("%s", fn);
-				free(fn);
+				warn("%s", path);
 				return -1;
 			}
 		}
@@ -223,7 +215,6 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		*slash = '/';
 	}
 
-	free(fn);
 	return 0;
 }
 
@@ -235,28 +226,4 @@ usage(void)
 	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }
