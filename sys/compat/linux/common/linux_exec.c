@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.41 2000/12/01 20:31:13 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.42 2000/12/02 16:05:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,11 @@ const struct emul emul_linux = {
 	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
 #else
 	0,
+#endif
+#ifdef LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
+	linux_syscall,
+#else
+	NULL,
 #endif
 };
 
