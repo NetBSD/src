@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.13 1997/01/22 07:09:21 mikel Exp $	*/
+/*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,10 +119,6 @@ struct mtget {
 #define	MTIOCGET	_IOR('m', 2, struct mtget)	/* get tape status */
 #define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
-
-#ifndef _KERNEL
-#define	DEFTAPE	"/dev/rst0"
-#endif
 
 #ifdef	_KERNEL
 /*
