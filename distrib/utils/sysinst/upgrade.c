@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.35 2003/06/27 22:20:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,6 @@ int	merge_X (void);
 void
 do_upgrade(void)
 {
-	doingwhat = msg_string(MSG_upgrade);
 
 	msg_display(MSG_upgradeusure);
 	process_menu(MENU_noyes, NULL);
@@ -69,7 +68,7 @@ do_upgrade(void)
 
 	get_ramsize();
 
-	if (find_disks() < 0)
+	if (find_disks(msg_string(MSG_upgrade)) < 0)
 		return;
 
 	if (md_pre_update() < 0)
@@ -246,7 +245,6 @@ merge_X(void)
 void
 do_reinstall_sets(void)
 {
-	doingwhat = msg_string(MSG_reinstall);
 
 	unwind_mounts();
 	msg_display(MSG_reinstallusure);
@@ -254,7 +252,7 @@ do_reinstall_sets(void)
 	if (!yesno)
 		return;
 
-	if (find_disks() < 0)
+	if (find_disks(msg_string(MSG_reinstall)) < 0)
 		return;
 
 	/* if we need the user to mount root, ask them to. */

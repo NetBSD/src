@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.5 2003/06/16 20:12:44 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.6 2003/06/27 22:20:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,9 +134,11 @@ message ovrwrite
 vraiment l'écraser par une partition NetBSD ?
 }
 
+.if 0
 message parttable
 {La table des partitions de votre disque est :
 }
+.endif
 
 message editpart
 {La partition %d ressemble à:
