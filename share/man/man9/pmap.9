@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.7 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.8 2001/09/10 21:25:23 chris Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,7 @@
 .Ft void
 .Fn "pmap_collect" "pmap_t pmap"
 .Ft void
-.Fn "pmap_update" "void"
+.Fn "pmap_update" "pmap_t pmap"
 .Ft void
 .Fn "pmap_activate" "struct proc *p"
 .Ft void
@@ -615,13 +615,13 @@ is merely advisory.  It is recommended, however, that
 be fully implemented by a
 .Nm
 implementation.
-.It void Fn "pmap_update" "void"
+.It void Fn "pmap_update" "pmap_t pmap"
 This function is used to inform the
 .Nm
-module that all physical mappings must now be correct.  That is, all
-delayed virtual-to-physical mappings updates (such as TLB invalidation
-or address space identifier updates) must be completed.  This
-routine must be used after calls to
+module that all physical mappings, for the specified pmap, must now be
+correct.  That is, all delayed virtual-to-physical mappings updates 
+(such as TLB invalidation or address space identifier updates) must
+be completed.  This routine must be used after calls to
 .Fn pmap_enter ,
 .Fn pmap_remove ,
 .Fn pmap_protect ,
