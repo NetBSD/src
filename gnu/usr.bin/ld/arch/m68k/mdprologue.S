@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.3 1994/03/08 06:52:33 chopps Exp $
+ *	$Id: mdprologue.S,v 1.4 1994/03/08 23:50:14 chopps Exp $
  */
 
 /*
@@ -65,7 +65,7 @@ _binder_entry:
 	movel	a0,sp@-
 	jbsr	_binder,a1		| relocate function address
 	addql	#8,sp
-	movel	d0,sp@			| push function address on stack
+	movel	d0,sp@-			| push function address on stack
 	movel	#0x80000004,d0		| CC_EXTPURGE | CC_IPURGE
 	trap	#12			| cachectl
 	rts				| jump into function (via address on stack)
