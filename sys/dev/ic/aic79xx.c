@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.22 2003/09/02 21:02:56 fvdl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.23 2003/09/30 12:34:16 briggs Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.22 2003/09/02 21:02:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.23 2003/09/30 12:34:16 briggs Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5305,9 +5305,8 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * Clear any latched PCI error status and restore
 		 * previous SERR and PERR response enables.
 		 */
-		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, 0x000000FF);
-		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG,
-			       PCI_COMMAND_SERR_ENABLE|PCI_COMMAND_PARITY_ENABLE);
+		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, 0xFF);
+		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, cmd);
 	}
 
 	/*
