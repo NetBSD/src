@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.53 2004/04/07 21:41:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.54 2004/04/07 21:42:38 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -560,3 +560,10 @@ usr.bin/gzip/gzip.c				1.32
 
 	Factor out filetype checking code
 	[mrg, ticket #82]
+
+usr.bin/gzip/gzip.c				1.35
+
+	Completely rewrite print_ratio(). 
+	print_list() was getting the compressed/uncompressed sizes backwards.
+	PR#25072
+	[mrg, ticket #83]
