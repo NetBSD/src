@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.53 2001/04/13 23:30:23 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.54 2001/05/08 10:07:15 itojun Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -41,6 +41,7 @@
 #include <netinet/igmp.h>
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
+#include <netinet/ip_encap.h>
 
 #include <machine/stdarg.h>
 
@@ -81,6 +82,17 @@ u_int		rsvpdebug = 0;	  /* rsvp debug level   */
 extern struct socket *ip_rsvpd;
 extern int rsvp_on;
 #endif /* RSVP_ISI */
+
+/* vif attachment using sys/netinet/ip_encap.c */
+extern struct domain inetdomain;
+static void vif_input __P((struct mbuf *, ...));
+static int vif_encapcheck __P((const struct mbuf *, int, int, void *));
+static struct protosw vif_protosw =
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+  vif_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0,
+};
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
@@ -564,6 +576,12 @@ add_vif(m)
 			return (EOPNOTSUPP);
 		}
 
+		/* attach this vif to decapsulator dispatch table */
+		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
+		    vif_encapcheck, &vif_protosw, vifp);
+		if (!vifp->v_encap_cookie)
+			return (EINVAL);
+
 		/* Create a fake encapsulation interface. */
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
@@ -572,7 +590,10 @@ add_vif(m)
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
 
-		/* Tell mrt_ipip_input() to start looking at encapsulated packets. */
+		/*
+		 * Tell mrt_ipip_input() to start looking at encapsulated
+		 * packets.
+		 */
 		have_encap_tunnel = 1;
 	} else {
 		/* Use the physical interface associated with the address. */
@@ -648,6 +669,10 @@ reset_vif(vifp)
 	struct ifreq ifr;
 
 	callout_stop(&vifp->v_repq_ch);
+
+	/* detach this vif from decapsulator dispatch table */
+	encap_detach(vifp->v_encap_cookie);
+	vifp->v_encap_cookie = NULL;
 
 	for (m = vifp->tbf_q; m != 0; m = n) {
 		n = m->m_nextpkt;
@@ -1446,64 +1471,39 @@ encap_send(ip, vifp, m)
 }
 
 /*
- * De-encapsulate a packet and feed it back through ip input (this
- * routine is called whenever IP gets a packet with proto type
- * ENCAP_PROTO and a local destination address).
- *
- * Return 1 if we handled the packet, 0 if we did not.
- *
- * Called from encap4_input() in sys/netinet/ip_encap.c.
+ * De-encapsulate a packet and feed it back through ip input.
  */
-int
-mrt_ipip_input(m, hlen)
+static void
+#if __STDC__
+vif_input(struct mbuf *m, ...)
+#else
+vif_input(m, va_alist)
 	struct mbuf *m;
-	int hlen;
+	va_dcl
+#endif
 {
-	struct ip *ip = mtod(m, struct ip *);
+	int off, proto;
+	va_list ap;
+	struct ip *ip;
+	struct vif *vifp;
 	int s;
 	struct ifqueue *ifq;
-	struct vif *vifp;
 
-	if (!have_encap_tunnel)
-		return (0);
+	va_start(ap, m);
+	off = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
 
-	/*
-	 * dump the packet if it's not to a multicast destination or if
-	 * we don't have an encapsulating tunnel with the source.
-	 * Note:  This code assumes that the remote site IP address
-	 * uniquely identifies the tunnel (i.e., that this site has
-	 * at most one tunnel with the remote site).
-	 */
-	if (!IN_MULTICAST(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr)) {
-		++mrtstat.mrts_bad_tunnel;
-		return (0);
+	vifp = (struct vif *)encap_getarg(m);
+	if (!vifp || proto != AF_INET) {
+		m_freem(m);
+		mrtstat.mrts_bad_tunnel++;
+		return;
 	}
 
-	if (!in_hosteq(ip->ip_src, last_encap_src)) {
-		struct vif *vife;
-	
-		vifp = viftable;
-		vife = vifp + numvifs;
-		for (; vifp < vife; vifp++)
-			if (vifp->v_flags & VIFF_TUNNEL &&
-			    in_hosteq(vifp->v_rmt_addr, ip->ip_src))
-				break;
-		if (vifp == vife) {
-			mrtstat.mrts_cant_tunnel++; /*XXX*/
-			if (mrtdebug)
-				log(LOG_DEBUG,
-				    "ip_mforward: no tunnel with %x\n",
-				    ntohl(ip->ip_src.s_addr));
-			return (0);
-		}
-		last_encap_vif = vifp;
-		last_encap_src = ip->ip_src;
-	} else
-		vifp = last_encap_vif;
+	ip = mtod(m, struct ip *);
 
-	m->m_data += hlen;
-	m->m_len -= hlen;
-	m->m_pkthdr.len -= hlen;
+	m_adj(m, off);
 	m->m_pkthdr.rcvif = vifp->v_ifp;
 	ifq = &ipintrq;
 	s = splnet();
@@ -1521,7 +1521,55 @@ mrt_ipip_input(m, hlen)
 		 */
 	}
 	splx(s);
-	return (1);
+}
+
+/*
+ * Check if the packet should be grabbed by us.
+ */
+static int
+vif_encapcheck(m, off, proto, arg)
+	const struct mbuf *m;
+	int off;
+	int proto;
+	void *arg;
+{
+	struct vif *vifp;
+	struct ip ip;
+
+#ifdef DIAGNOSTIC
+	if (!arg || proto != IPPROTO_IPV4)
+		panic("unexpected arg in vif_encapcheck");
+#endif
+
+	/*
+	 * do not grab the packet if it's not to a multicast destination or if
+	 * we don't have an encapsulating tunnel with the source.
+	 * Note:  This code assumes that the remote site IP address
+	 * uniquely identifies the tunnel (i.e., that this site has
+	 * at most one tunnel with the remote site).
+	 */
+
+	/* LINTED const cast */
+	m_copydata((struct mbuf *)m, off, sizeof(ip), (caddr_t)&ip);
+	if (!IN_MULTICAST(ip.ip_dst.s_addr))
+		return 0;
+
+	/* LINTED const cast */
+	m_copydata((struct mbuf *)m, 0, sizeof(ip), (caddr_t)&ip);
+	if (!in_hosteq(ip.ip_src, last_encap_src)) {
+		vifp = (struct vif *)arg;
+		if (vifp->v_flags & VIFF_TUNNEL &&
+		    in_hosteq(vifp->v_rmt_addr, ip.ip_src))
+			;
+		else
+			return 0;
+		last_encap_vif = vifp;
+		last_encap_src = ip.ip_src;
+	} else
+		vifp = last_encap_vif;
+
+	/* 32bit match, since we have checked ip_src only */
+	return 32;
 }
 
 /*
