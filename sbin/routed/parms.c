@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.18 2003/04/15 08:20:17 itojun Exp $	*/
+/*	$NetBSD: parms.c,v 1.19 2003/04/21 08:54:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.18 2003/04/15 08:20:17 itojun Exp $");
+__RCSID("$NetBSD: parms.c,v 1.19 2003/04/21 08:54:42 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -283,7 +283,7 @@ gwkludge(void)
 			 * tables to prevent overriding them with something
 			 * else.
 			 */
-			strcpy(qual,"external");
+			strlcpy(qual, "external", sizeof(qual));
 			state = IS_REMOTE | IS_PASSIVE | IS_EXTERNAL;
 			if (metric == 0)
 				metric = 1;
@@ -680,7 +680,7 @@ parse_parms(char *line,
 			if (parm.parm_name[0] != '\0'
 			    || strlen(buf) > IF_NAME_LEN)
 				return bad_str(tgt);
-			strcpy(parm.parm_name, buf);
+			strlcpy(parm.parm_name, buf, sizeof(parm.parm_name));
 
 		} else if (PARSEQ("addr")) {
 			/* This is a bad idea, because the address based

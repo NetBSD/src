@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.19 2003/04/15 08:20:18 itojun Exp $	*/
+/*	$NetBSD: table.c,v 1.20 2003/04/21 08:54:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.19 2003/04/15 08:20:18 itojun Exp $");
+__RCSID("$NetBSD: table.c,v 1.20 2003/04/21 08:54:42 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1231,10 +1231,13 @@ read_rt(void)
 			continue;	/* ignore compat message */
 #endif
 
-		strcpy(str, rtm_type_name(m.r.rtm.rtm_type));
+		strlcpy(str, rtm_type_name(m.r.rtm.rtm_type), sizeof(str));
 		strp = &str[strlen(str)];
-		if (m.r.rtm.rtm_type <= RTM_CHANGE)
-			strp += sprintf(strp," from pid %d",m.r.rtm.rtm_pid);
+		if (m.r.rtm.rtm_type <= RTM_CHANGE) {
+			snprintf(strp, str + sizeof(str) - strp,
+			    " from pid %d",m.r.rtm.rtm_pid);
+			strp += strlen(strp);
+		}
 
 		rt_xaddrs(&info, m.r.addrs, &m.r.addrs[RTAX_MAX],
 			  m.r.rtm.rtm_addrs);
@@ -1256,8 +1259,9 @@ read_rt(void)
 			? HOST_MASK
 			: std_mask(S_ADDR(INFO_DST(&info))));
 
-		strp += sprintf(strp, ": %s",
-				addrname(S_ADDR(INFO_DST(&info)), mask, 0));
+		snprintf(strp, str + sizeof(str) - strp, ": %s",
+		    addrname(S_ADDR(INFO_DST(&info)), mask, 0));
+		strp += strlen(strp);
 
 		if (IN_MULTICAST(ntohl(S_ADDR(INFO_DST(&info))))) {
 			trace_act("ignore multicast %s", str);
@@ -1278,14 +1282,18 @@ read_rt(void)
 
 		if (get_info_gate(&INFO_GATE(&info), &gate_sin)) {
 			gate = S_ADDR(INFO_GATE(&info));
-			strp += sprintf(strp, " --> %s", naddr_ntoa(gate));
+			snprintf(strp, str + sizeof(str) - strp,
+			    " --> %s", naddr_ntoa(gate));
+			strp += strlen(strp);
 		} else {
 			gate = 0;
 		}
 
 		if (INFO_AUTHOR(&info) != 0)
-			strp += sprintf(strp, " by authority of %s",
-					saddr_ntoa(INFO_AUTHOR(&info)));
+			snprintf(strp, str + sizeof(str) - strp,
+			    " by authority of %s",
+			    saddr_ntoa(INFO_AUTHOR(&info)));
+			strp += strlen(strp);
 
 		switch (m.r.rtm.rtm_type) {
 		case RTM_ADD:
