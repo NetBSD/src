@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.85 1997/10/19 01:46:47 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.86 1997/10/20 22:08:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2040,7 +2040,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	struct nfsnode *dnp = VTONFS(vp);
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, bigenough = 1;
-	int attrflag, nrpcs = 0;
+	int attrflag, nrpcs = 0, reclen;
 	int v3 = NFS_ISV3(vp);
 	nfsquad_t cookie;
 
@@ -2128,9 +2128,10 @@ nfs_readdirrpc(vp, uiop, cred)
 			if (tlen == len)
 				tlen += 4;	/* To ensure null termination */
 			tlen += sizeof (off_t) + sizeof (int);
-			tlen = (int)ALIGN(tlen);
+			reclen = ALIGN(tlen + DIRHDSIZ);
+			tlen = reclen - DIRHDSIZ;
 			left = NFS_DIRFRAGSIZ - blksiz;
-			if ((tlen + DIRHDSIZ) > left) {
+			if (reclen > left) {
 				dp->d_reclen += left;
 				uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
@@ -2138,13 +2139,13 @@ nfs_readdirrpc(vp, uiop, cred)
 				blksiz = 0;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
 			}
-			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
+			if (reclen > uiop->uio_resid)
 				bigenough = 0;
 			if (bigenough) {
 				dp = (struct dirent *)uiop->uio_iov->iov_base;
 				dp->d_fileno = (int)fileno;
 				dp->d_namlen = len;
-				dp->d_reclen = tlen + DIRHDSIZ;
+				dp->d_reclen = reclen;
 				dp->d_type = DT_UNKNOWN;
 				blksiz += dp->d_reclen;
 				if (blksiz == NFS_DIRFRAGSIZ)
@@ -2246,7 +2247,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	nfsfh_t *fhp;
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
-	int attrflag, fhsize, nrpcs = 0;
+	int attrflag, fhsize, nrpcs = 0, reclen;
 	struct nfs_fattr fattr, *fp;
 
 #ifdef DIAGNOSTIC
@@ -2307,9 +2308,14 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			if (tlen == len)
 				tlen += 4;	/* To ensure null termination*/
 			tlen += sizeof (off_t) + sizeof (int);
-			tlen = (int)ALIGN(tlen);
+			reclen = ALIGN(tlen + DIRHDSIZ);
+			tlen = reclen - DIRHDSIZ;
 			left = NFS_DIRFRAGSIZ - blksiz;
-			if ((tlen + DIRHDSIZ) > left) {
+			if (reclen > left) {
+				/*
+				 * DIRFRAGSIZ is aligned, no need to align
+				 * again here.
+				 */
 				dp->d_reclen += left;
 				uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
@@ -2317,13 +2323,13 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
 				blksiz = 0;
 			}
-			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
+			if (reclen > uiop->uio_resid)
 				bigenough = 0;
 			if (bigenough) {
 				dp = (struct dirent *)uiop->uio_iov->iov_base;
 				dp->d_fileno = (int)fileno;
 				dp->d_namlen = len;
-				dp->d_reclen = tlen + DIRHDSIZ;
+				dp->d_reclen = reclen;
 				dp->d_type = DT_UNKNOWN;
 				blksiz += dp->d_reclen;
 				if (blksiz == NFS_DIRFRAGSIZ)
