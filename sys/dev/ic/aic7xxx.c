@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.3 1996/02/25 22:56:30 cgd Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.4 1996/03/28 22:39:08 mycroft Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -651,9 +651,15 @@ ahc_scsirate(offset, period, ahc, target)
 #endif /* AHC_DEBUG */
 }
 
-ahcprint()
+int
+ahcprint(aux, name)
+	void *aux;
+	char *name;
 {
 
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
