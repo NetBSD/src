@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.1 2003/05/23 00:57:26 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.2 2003/05/24 23:48:44 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -370,5 +370,42 @@
 #define IXP425_PCI_HWBASE	0xc0000000
 #define IXP425_PCI_VBASE	(IXP425_EXP_VBASE + IXP425_EXP_SIZE)
 #define	IXP425_PCI_SIZE		IXP425_REG_SIZE		/* 0x1000 */
+
+/*
+ * Performance Monitoring Unit          (CP14)
+ *
+ *      CP14.0.1	Performance Monitor Control Register(PMNC)
+ *      CP14.1.1	Clock Counter(CCNT)
+ *      CP14.4.1	Interrupt Enable Register(INTEN)
+ *      CP14.5.1	Overflow Flag Register(FLAG)
+ *      CP14.8.1	Event Selection Register(EVTSEL)
+ *      CP14.0.2	Performance Counter Register 0(PMN0)
+ *      CP14.1.2	Performance Counter Register 0(PMN1)
+ *      CP14.2.2	Performance Counter Register 0(PMN2)
+ *      CP14.3.2	Performance Counter Register 0(PMN3)
+ */
+
+#define	PMNC_E		0x00000001	/* enable all counters */
+#define	PMNC_P		0x00000002	/* reset all PMNs to 0 */
+#define	PMNC_C		0x00000004	/* clock counter reset */
+#define	PMNC_D		0x00000008	/* clock counter / 64 */
+
+#define INTEN_CC_IE	0x00000001	/* enable clock counter interrupt */
+#define	INTEN_PMN0_IE	0x00000002	/* enable PMN0 interrupt */
+#define	INTEN_PMN1_IE	0x00000004	/* enable PMN1 interrupt */
+#define	INTEN_PMN2_IE	0x00000008	/* enable PMN2 interrupt */
+#define	INTEN_PMN3_IE	0x00000010	/* enable PMN3 interrupt */
+
+#define	FLAG_CC_IF	0x00000001	/* clock counter overflow */
+#define	FLAG_PMN0_IF	0x00000002	/* PMN0 overflow */
+#define	FLAG_PMN1_IF	0x00000004	/* PMN1 overflow */
+#define	FLAG_PMN2_IF	0x00000008	/* PMN2 overflow */
+#define	FLAG_PMN3_IF	0x00000010	/* PMN3 overflow */
+
+#define EVTSEL_EVCNT_MASK 0x0000000ff	/* event to count for PMNs */
+#define PMNC_EVCNT0_SHIFT 0
+#define PMNC_EVCNT1_SHIFT 8
+#define PMNC_EVCNT2_SHIFT 16
+#define PMNC_EVCNT3_SHIFT 24
 
 #endif /* _IXP425REG_H_ */
