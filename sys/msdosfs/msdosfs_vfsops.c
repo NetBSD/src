@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.77 2001/11/10 13:26:46 lukem Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.78 2001/12/22 19:45:54 augustss Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.77 2001/11/10 13:26:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.78 2001/12/22 19:45:54 augustss Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -659,8 +659,13 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	}
 
 	/*
-	 * Check and validate (or perhaps invalidate?) the fsinfo structure?		XXX
+	 * Check and validate (or perhaps invalidate?) the fsinfo structure?
+	 * XXX
 	 */
+	if (pmp->pm_fsinfo) {
+		if (pmp->pm_nxtfree == (u_long)-1)
+			pmp->pm_fsinfo = 0;
+	}
 
 	/*
 	 * Allocate memory for the bitmap of allocated clusters, and then
