@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.130 2003/08/07 16:34:39 agc Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.131 2003/09/07 21:00:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.130 2003/08/07 16:34:39 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.131 2003/09/07 21:00:36 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1731,6 +1731,12 @@ lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, si
 	/* NOTREACHED */
 }
 
+/*
+ * ufs_bmaparray callback function for writing.
+ *
+ * Since blocks will be written to the new segment anyway,
+ * we don't care about current daddr of them.
+ */
 static boolean_t
 lfs_issequential_hole(const struct ufsmount *ump,
     daddr_t daddr0, daddr_t daddr1)
@@ -1742,6 +1748,7 @@ lfs_issequential_hole(const struct ufsmount *ump,
 	    (0 <= daddr1 && daddr1 <= LFS_MAX_DADDR));
 
 	/* NOTE: all we want to know here is 'hole or not'. */
+	/* NOTE: UNASSIGNED is converted to 0 by ufs_bmaparray. */
 
 	/*
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
