@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.150 2000/02/16 11:57:46 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.151 2000/03/03 05:21:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -325,13 +325,14 @@ update:
 		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
 		if (error)
 			mp->mnt_flag = flag;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 			if (mp->mnt_syncer == NULL)
 				error = vfs_allocate_syncvnode(mp);
 		} else {
-			if (mp->mnt_syncer != NULL)
+			if (mp->mnt_syncer != NULL) {
 				vgone(mp->mnt_syncer);
-			mp->mnt_syncer = NULL;
+				mp->mnt_syncer = NULL;
+			}
 		}
 		vfs_unbusy(mp);
 		return (error);
@@ -347,7 +348,7 @@ update:
 		simple_unlock(&mountlist_slock);
 		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
 		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
@@ -495,17 +496,19 @@ dounmount(mp, flags, p)
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
 	async = mp->mnt_flag & MNT_ASYNC;
-	mp->mnt_flag &=~ MNT_ASYNC;
+	mp->mnt_flag &= ~MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
-	if (mp->mnt_syncer != NULL)
+	if (mp->mnt_syncer != NULL) {
 		vgone(mp->mnt_syncer);
+		mp->mnt_syncer = NULL;
+	}
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
 	simple_lock(&mountlist_slock);
 	if (error) {
-		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
+		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_flag &= ~MNT_UNMOUNT;
 		mp->mnt_unmounter = NULL;
@@ -513,7 +516,7 @@ dounmount(mp, flags, p)
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-		while(mp->mnt_wcnt > 0) {
+		while (mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
 			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
 		}
