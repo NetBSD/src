@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.12 1997/10/12 01:37:50 mikel Exp $
+#	$NetBSD: bsd.sys.mk,v 1.12.2.1 1997/11/04 21:57:47 thorpej Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -23,7 +23,18 @@ HOST_CPPFLAGS?=
 HOST_LD?=	ld
 HOST_LDFLAGS?=
 
-NM?=		nm
+
+# Objective C
+# (Defined here rather than in <sys.mk> because `.m' is not just
+#  used for Objective C source)
+.SUFFIXES:	.m .o .ln
+
+.m:
+	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+
+.m.o:
+	${COMPILE.m} ${.IMPSRC}
+
 
 .if defined(PARALLEL)
 # Lex
