@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.24 1998/06/26 01:53:59 lukem Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.25 1998/06/26 18:58:38 cgd Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -169,6 +169,8 @@ mainbus0 at root
 #pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 #pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+#puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # EISA bus support
 eisa*	at mainbus?
@@ -209,6 +211,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # Serial Devices
 
 # PCI serial interfaces
+#com*	at puc? port ?			# 16x450s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces
@@ -233,6 +236,9 @@ com2	at isa? port 0x3e8 irq 5
 
 
 # Parallel Printer Interfaces
+
+# PCI parallel printer interfaces
+#lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # ISA parallel printer interfaces
 #lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
