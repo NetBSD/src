@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.13 2001/04/02 16:22:55 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.14 2001/04/02 16:58:59 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2297,7 +2297,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			u_int tag;
 
 			tag = SCB_LIST_NULL;
-			if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0)
+			if ((scb->hscb->control & TAG_ENB) != 0)
 				tag = scb->hscb->tag;
 
 			ahc_abort_scbs(ahc, SCB_TARGET(scb), SCB_CHANNEL(scb),
@@ -2398,8 +2398,8 @@ ahc_setup_initiator_msgout(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 		ahc->msgout_len++;
 
 		if ((scb->hscb->control & TAG_ENB) != 0) {
-			/* XXX fvdl FreeBSD has tag action passed down */
-			ahc->msgout_buf[ahc->msgout_index++] = MSG_SIMPLE_Q_TAG;
+			ahc->msgout_buf[ahc->msgout_index++] =
+						scb->xs->xs_tag_type;
 			ahc->msgout_buf[ahc->msgout_index++] = scb->hscb->tag;
 			ahc->msgout_len += 2;
 		}
@@ -2526,7 +2526,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		       devinfo->channel, devinfo->target);
 #endif
 		ahc_update_xfer_mode(ahc, devinfo);
-	} else if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0) {
+	} else if ((scb->hscb->control & TAG_ENB) != 0) {
 		printf("%s:%c:%d: refuses tagged commands.  Performing "
 		       "non-tagged I/O\n", ahc_name(ahc),
 		       devinfo->channel, devinfo->target);
@@ -3879,12 +3879,13 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		hscb = scb->hscb;
 		hscb->tcl = tcl;
 
-		if (ahc_istagged_device(ahc, xs, 0))
-			if((xs->bp != NULL) && xs->bp->b_flags & B_ASYNC)
-				scb->hscb->control |= MSG_SIMPLE_Q_TAG;
-			else
-				scb->hscb->control |= MSG_ORDERED_Q_TAG;
-		else
+		if (xs->xs_tag_type) {
+#ifdef DIAGNOSTIC
+		if (ahc_istagged_device(ahc, xs, 0) == 0)
+			panic("ahc_action: taggged command for untagged device");
+#endif
+			scb->hscb->control |= TAG_ENB;
+		} else
 			ahc_busy_tcl(ahc, scb);
 
 		splx(s);
@@ -5535,15 +5536,6 @@ ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	u_int our_id, target;
 	struct tmode_tstate *tstate;
 	struct ahc_devinfo devinfo;
-
-	/*
-	 * XXX never do these commands with tags. Should really be
-	 * in a higher layer.
-	 */
-	if (!nocmdcheck && (xs->cmd->opcode == INQUIRY ||
-	     xs->cmd->opcode == TEST_UNIT_READY ||
-	     xs->cmd->opcode == REQUEST_SENSE))
-		return 0;
 
 	channel = SIM_CHANNEL(ahc, xs->xs_periph);
 	our_id = SIM_SCSI_ID(ahc, xs->xs_periph);
