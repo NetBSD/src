@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.288 1999/05/06 15:31:42 christos Exp $
+#	$NetBSD: files,v 1.289 1999/05/20 06:01:16 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -98,9 +98,11 @@ deffs	fs_coda.h CODA
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI LIFFS
 
-# Not entirely MI, but present on multiple arch's
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
+
+
+# Not entirely MI, but present on multiple arch's
 
 # PC-style MBR handling
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART BIOS_VERBOSE
@@ -535,6 +537,7 @@ file kern/exec_subr.c
 file kern/init_main.c
 file kern/init_sysent.c
 file kern/kern_acct.c
+file kern/kern_allocsys.c
 file kern/kern_clock.c
 file kern/kern_descrip.c
 file kern/kern_exec.c
