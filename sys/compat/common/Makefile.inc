@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1996/05/11 16:13:31 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1996/05/20 17:23:59 mrg Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -11,11 +11,11 @@ COMPATLIB_PROF=	${COMPATDST}/libcompat_p.a
 
 COMPATMAKE= \
 	cd ${COMPATDST} && ${MAKE} -f ${COMPATREL}${COMPATDIR}/Makefile \
-	    CC="${CC}" CFLAGS="${CFLAGS}" \
-	    LD="${LD}" \
-	    COMPATCPPFLAGS="${CPPFLAGS}" \
-	    COMPATREL="${COMPATREL}" \
-	    COMPATDIR="${COMPATDIR}"
+	    CC='${CC}' CFLAGS='${CFLAGS}' \
+	    LD='${LD}' \
+	    COMPATCPPFLAGS='${CPPFLAGS}' \
+	    COMPATREL='${COMPATREL}' \
+	    COMPATDIR='${COMPATDIR}'
 
 ${COMPATLIB}:		.NOTMAIN __always_make_compatlib
 	@echo making sure the compat library is up to date...
