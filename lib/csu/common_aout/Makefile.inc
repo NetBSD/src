@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/11/11 11:35:03 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2004/02/14 07:48:37 simonb Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/../common_aout
@@ -8,7 +8,7 @@ SRCS=		crt0.c
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
-.if ${SHLINKINSTALLDIR} != "/usr/libexec"
+.if ${MKPIC} != "no" && ${SHLINKINSTALLDIR} != "/usr/libexec"
 OBJS+=		lcrt0.o
 .endif
 
@@ -47,7 +47,9 @@ CPPFLAGS+= -DDYNAMIC
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
 
+.if ${MKPIC} != "no" && ${SHLINKINSTALLDIR} != "/usr/libexec"
 FILESDIR_lcrt0.o:=${SHLIBINSTALLDIR}
 FILESNAME_lcrt0.o:=crt0.o
+.endif
 
 .include <bsd.prog.mk>
