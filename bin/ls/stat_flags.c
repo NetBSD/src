@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.6 1997/07/20 18:53:12 christos Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.7 1999/01/03 01:30:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.6 1997/07/20 18:53:12 christos Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.7 1999/01/03 01:30:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.6 1997/07/20 18:53:12 christos Exp $");
 #include <string.h>
 #include <fts.h>
 
-#include "ls.h"
-#include "extern.h"
+#include "stat_flags.h"
 
 #define	SAPPEND(s) {							\
 	if (prefix != NULL)						\
@@ -139,6 +138,13 @@ string_to_flags(stringp, setp, clrp)
 			clear = !clear;
 			TEST(p, "dump", UF_NODUMP);
 			return (1);
+		case 'n':
+				/*
+				 * Support `nonodump'. Note that
+				 * the state of clear is not changed.
+				 */
+			TEST(p, "nodump", UF_NODUMP);
+			return (1);
 		case 'o':
 			TEST(p, "opaque", UF_OPAQUE);
 			return (1);
@@ -155,7 +161,7 @@ string_to_flags(stringp, setp, clrp)
 			TEST(p, "uchg", UF_IMMUTABLE);
 			TEST(p, "uchange", UF_IMMUTABLE);
 			TEST(p, "uimmutable", UF_IMMUTABLE);
-			/* FALLTHROUGH */
+			return (1);
 		default:
 			return (1);
 		}
