@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.18 1995/05/15 01:30:46 cgd Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.19 1995/05/16 05:26:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,7 +67,7 @@ struct	ether_header {
 #define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
 #define	ETHERTYPE_NTRAILER	16
 
-#define	ETHER_IS_MULTICAST(addr) (*addr & 0x01)	/* is address mcast/bcast? */
+#define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
 #define	ETHERMTU	1500
 #define	ETHERMIN	(60-14)
