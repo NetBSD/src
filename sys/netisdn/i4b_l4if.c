@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.15 2003/09/25 14:17:57 pooka Exp $ 
+ *	$Id: i4b_l4if.c,v 1.16 2003/09/26 22:20:12 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.15 2003/09/25 14:17:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.16 2003/09/26 22:20:12 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -136,8 +136,10 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 				if(call_desc[i].bri == d->bri)
                 		{
 					i4b_l3_stop_all_timers(&(call_desc[i]));
-					if(call_desc[i].cdid != CDID_UNUSED)
+					if(call_desc[i].cdid != CDID_UNUSED) {
 						sendup++;
+						call_desc[i].cdid = CDID_UNUSED;
+					}
 				}
 			}
 
@@ -149,7 +151,6 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 			if(sendup)
 			{
 				i4b_l4_pdeact(d, sendup);
-				call_desc[i].cdid = CDID_UNUSED;
 			}
 			break;
 
