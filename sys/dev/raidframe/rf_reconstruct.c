@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.58 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.59 2003/12/29 05:58:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.58 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.59 2003/12/29 05:58:34 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -137,18 +137,6 @@ struct RF_ReconDoneProc_s {
 	void   *arg;
 	RF_ReconDoneProc_t *next;
 };
-
-static void 
-SignalReconDone(RF_Raid_t * raidPtr)
-{
-	RF_ReconDoneProc_t *p;
-
-	RF_LOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	for (p = raidPtr->recon_done_procs; p; p = p->next) {
-		p->proc(raidPtr, p->arg);
-	}
-	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-}
 
 /**************************************************************************
  *
@@ -783,7 +771,6 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 	}
 
-	SignalReconDone(raidPtr);
 	return (0);
 }
 /*****************************************************************************
