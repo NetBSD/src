@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.123 2003/01/21 00:02:07 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.124 2003/01/22 12:52:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.123 2003/01/21 00:02:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.124 2003/01/22 12:52:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -899,7 +899,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 
 #ifdef KSTACK_CHECK_MAGIC
-	kstack_check_magic(p);
+	kstack_check_magic(l);
 #endif
 
 	/*
