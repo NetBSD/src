@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.43 2002/09/24 13:31:33 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.44 2002/10/26 01:46:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.43 2002/09/24 13:31:33 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.44 2002/10/26 01:46:31 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ main(int argc, char **argv)
 			signal(SIGTERM, SIG_IGN);
                        	for (i = 0; i < nfds; i++) 
 				(void)close(socks[i].fd);
-			dup2(s, 1);
+			dup2(s, STDOUT_FILENO);
 			(void)close(s);
 			if (from.ss_family != AF_LOCAL) {
 				/* for both AF_INET and AF_INET6 */
@@ -658,7 +658,8 @@ chkhost(struct sockaddr *f, int check_opts)
 	setproctitle("serving %s", from);
 
 #ifdef LIBWRAP
-	request_init(&req, RQ_DAEMON, "lpd", RQ_CLIENT_SIN, f, NULL);
+	request_init(&req, RQ_DAEMON, "lpd", RQ_CLIENT_SIN, f,
+	    RQ_FILE, STDOUT_FILENO, NULL);
 	fromhost(&req);
 	if (!hosts_access(&req))
 		goto denied;
