@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.2 1995/01/03 22:38:55 mycroft Exp $	*/
+/*	$NetBSD: boca.c,v 1.3 1995/01/04 00:47:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -82,10 +82,9 @@ bocasubmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct boca_softc *sc = (void *)parent;
-	struct device *self = match;
+	struct cfdata *cf = match;
 	struct isa_attach_args *ia = aux;
 	struct boca_attach_args *ba = ia->ia_aux;
-	struct cfdata *cf = self->dv_cfdata;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_slave)
 		return (0);
