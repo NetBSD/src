@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.332 2001/06/11 06:36:51 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.333 2001/06/11 21:13:49 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.326 2001/06/11 06:36:23 tron Exp 
+ *	NetBSD: pcidevs,v 1.327 2001/06/11 21:12:29 thorpej Exp 
  */
 
 /*
@@ -527,6 +527,7 @@
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_LEVELONE	0x1394		/* Level One */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -1284,6 +1285,9 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Level One products */
+#define	PCI_PRODUCT_LEVELONE_LXT1001	0x0001		/* LXT-1001 10/100/1000 Ethernet */
 
 /* Linear Systems / CompuModules */
 #define	PCI_PRODUCT_LINEARSYS_DVB_TX	0x7629		/* DVB Transmitter */
