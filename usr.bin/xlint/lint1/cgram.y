@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.25 2002/09/13 14:59:24 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.26 2002/10/21 21:14:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.25 2002/09/13 14:59:24 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.26 2002/10/21 21:14:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1120,6 +1120,7 @@ init_expr:
 	  expr				%prec T_COMMA {
 		mkinit($1);
 	  }
+	| init_by_name init_expr	%prec T_COMMA
 	| init_lbrace init_expr_list init_rbrace
 	| init_lbrace init_expr_list T_COMMA init_rbrace
 	| error
@@ -1128,6 +1129,19 @@ init_expr:
 init_expr_list:
 	  init_expr			%prec T_COMMA
 	| init_expr_list T_COMMA init_expr
+	;
+
+
+init_by_name:
+	  point T_NAME T_ASSIGN {
+		if (!Sflag)
+			warning(313);
+		memberpush($2);
+	  }
+	| T_NAME T_COLON {
+		gnuism(315);
+		memberpush($1);
+	  }
 	;
 
 init_lbrace:
@@ -1616,6 +1630,13 @@ point_or_arrow:
 	  T_STROP {
 		symtyp = FMOS;
 		$$ = $1;
+	  }
+	;
+
+point:
+	  T_STROP {
+		if ($1 != POINT)
+			error(249);
 	  }
 	;
 

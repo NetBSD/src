@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.19 2002/09/13 14:59:24 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.20 2002/10/21 21:14:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.19 2002/09/13 14:59:24 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.20 2002/10/21 21:14:51 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -368,6 +368,9 @@ const	char *msgs[] = {
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s C does not support // comments",			      /* 312 */
+	"struct or union member name in initializer is a C9X feature",/* 313 */
+	"%s is not a structure or a union",			      /* 314 */
+	"GCC style struct or union member name in initializer",	      /* 315 */
 };
 
 /*
@@ -457,8 +460,8 @@ lerror(const char *file, int line, const char *msg, ...)
 
 	va_start(ap, msg);
 	fn = lbasename(curr_pos.p_file);
-	(void)fprintf(stderr, "%s(%d): lint error: %s, %d", fn, curr_pos.p_line,
-	    file, line);
+	(void)fprintf(stderr, "%s(%d): lint error: %s, %d: ",
+	    fn, curr_pos.p_line, file, line);
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
