@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.81 2002/11/09 19:02:27 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.82 2002/11/24 11:52:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.81 2002/11/09 19:02:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.82 2002/11/24 11:52:13 scw Exp $");
 
 #include "opt_scsi.h"
 
@@ -2393,7 +2393,7 @@ scsipi_set_xfer_mode(chan, target, immed)
 	/*
 	 * Find the first LUN we know about on this I_T Nexus.
 	 */
-	for (lun = 0; lun < chan->chan_nluns; lun++) {
+	for (itperiph = NULL, lun = 0; lun < chan->chan_nluns; lun++) {
 		itperiph = scsipi_lookup_periph(chan, target, lun);
 		if (itperiph != NULL)
 			break;
