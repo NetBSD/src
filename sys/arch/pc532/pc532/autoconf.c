@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.5 1994/03/22 00:18:25 phil Exp $
+ *	$Id: autoconf.c,v 1.6 1994/04/01 23:16:54 phil Exp $
  */
 
 /*
@@ -136,10 +136,36 @@ static	char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+
+extern int _boot_flags;
+	/* 0 => no flags */
+
 setroot()
 {
 #if 1
-/* 	boothowto |= RB_SINGLE;  */
+	int  majdev, mindev;
+	char ans;
+	dev_t temp;
+
+	if (_boot_flags & 0x2) {
+	    boothowto |= RB_SINGLE;
+	}
+	if (_boot_flags & 0x1) {
+	    printf ("root dev (0=>/dev/rd, 1=>/dev/sd0a, 2=>/dev/sd1a) ?");
+	    ans = cngetc();
+	    printf ("%c\n", ans);
+	    if (ans < '0' || ans > '2') {
+		printf ("bad root dev, using config root dev \n");
+		return;
+	    }
+	    if (ans == '0') {
+		rootdev = makedev(2,0);
+	    } else if (ans == '1') {
+		rootdev = makedev(0,0);
+	    } else {
+		rootdev = makedev(0,8);
+	    }
+	}
 #else
 	int  majdev, mindev, unit, part, adaptor;
 	dev_t temp, orootdev;
