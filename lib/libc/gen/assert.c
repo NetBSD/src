@@ -28,6 +28,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$Id: assert.c,v 1.2 1993/07/30 08:21:45 mycroft Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 

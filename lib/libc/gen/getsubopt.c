@@ -31,9 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)getsubopt.c	5.2 (Berkeley) 2/24/91";
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char sccsid[] = "from: @(#)getsubopt.c	5.2 (Berkeley) 2/24/91";*/
+static char rcsid[] = "$Id: getsubopt.c,v 1.2 1993/07/30 08:22:39 mycroft Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
 #include <stdlib.h>
