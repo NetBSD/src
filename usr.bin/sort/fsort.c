@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.26 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.27 2003/10/16 07:01:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.26 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.27 2003/10/16 07:01:51 itojun Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	struct recheader *crec;
 	struct field tfield[2];
 	FILE *prevfp, *tailfp[FSORTMAX+1];
+	u_char *nbuffer;
 
 	memset(tailfp, 0, sizeof(tailfp));
 	prevfp = outfp;
@@ -187,12 +188,13 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 
 				/* buffer was too small for data, allocate
 				 * bigger buffer */
-				bufsize *= 2;
-				buffer = realloc(buffer, bufsize);
+				nbuffer = realloc(buffer, bufsize * 2);
 				if (!buffer) {
-					err(2, "failed to realloc buffer to %ld bytes",
-						(unsigned long) bufsize);
+					err(2, "failed to realloc buffer to %lu bytes",
+						(unsigned long) bufsize * 2);
 				}
+				buffer = nbuffer;
+				bufsize *= 2;
 				bufend = buffer + bufsize;
 
 				/* patch up keylist[] */
