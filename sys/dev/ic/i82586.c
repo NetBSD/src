@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.1 1997/07/22 23:32:01 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.2 1997/07/23 12:00:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
@@ -1155,10 +1155,9 @@ command_and_wait(sc, cmd, pcmd, mask)
 	int i;
 
 	scb->ie_command = (u_short)SWAP(cmd);
+	(sc->chan_attn)(sc);
 
 	if (IE_ACTION_COMMAND(cmd) && pcmd) {
-		(sc->chan_attn)(sc);
-
 		/*
 		 * According to the packet driver, the minimum timeout should
 		 * be .369 seconds, which we round up to .4.
@@ -1171,28 +1170,27 @@ command_and_wait(sc, cmd, pcmd, mask)
 		 * be getting called through some other timeout running in the
 		 * kernel.)
 		 */
-		for (i = 0; i < 369; i++) {
-			delay(1000);
+		for (i = 0; i < 369000; i++) {
+			delay(1);
 			if ((SWAP(cc->ie_cmd_status) & mask))
 				return (0);
 		}
-		return (1);
 
 	} else {
 		/*
 		 * Otherwise, just wait for the command to be accepted.
 		 */
-		(sc->chan_attn)(sc);
 
 		/* XXX spin lock; wait at most 0.1 seconds */
-		for (i = 0; i < 10000; i++) {
+		for (i = 0; i < 100000; i++) {
 			if (scb->ie_command)
 				return (0);
-			delay(10);
+			delay(1);
 		}
-
-		return (1);
 	}
+
+	/* Timeout */
+	return (1);
 }
 
 /*
