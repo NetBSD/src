@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.6 2001/01/10 10:00:29 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.7 2001/01/14 21:23:23 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,7 +105,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	initscr();
+	if (initscr() == NULL)
+		bailout("%s", catgets(catalog, 1, 22,
+		    "Cannot initialize curses"));
+		
 	cdkscreen = initCDKScreen(stdscr);
 
 	ioctl(0, TIOCGWINSZ, &ws);
@@ -242,7 +245,8 @@ parse_config(void)
 	if (searchpaths[i] == NULL)
 		bailout("malloc: %s", strerror(errno));
 	if (getenv("HOME") != NULL) {
-		searchpaths[i] = strcat(getenv("HOME"), "/sushi");
+		strcpy(searchpaths[i], getenv("HOME"));
+		strcat(searchpaths[i], "/sushi");
 		i++;
 	}
 	searchpaths[i] = NULL;

@@ -20,6 +20,8 @@ $set 1 errors
 19 No menu hierchy found.
 20 Bad keybinding
 21 Bad keyword in config file
+22 Cannot initialize curses
+23 failed to allocate bottomhelp window
 $set 2 labels
 1 F1=Help
 2 F2=Refresh
