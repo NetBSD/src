@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 2003/10/08 11:12:36 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 2003/12/14 05:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2003/10/08 11:12:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2003/12/14 05:16:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2003/10/08 11:12:36 bouyer Exp $")
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/ic/wdcvar.h>
 
 void canonicalize_bootpath __P((void));
