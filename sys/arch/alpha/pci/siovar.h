@@ -1,4 +1,4 @@
-/*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
+/* $NetBSD: siovar.h,v 1.5.2.1 1997/06/01 04:13:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

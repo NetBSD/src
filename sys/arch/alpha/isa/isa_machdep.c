@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 1996/11/23 06:38:49 cgd Exp $	*/
+/* $NetBSD: isa_machdep.c,v 1.5.2.1 1997/06/01 04:12:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,8 +28,13 @@
  */
 
 /*
- * Machine-specific functions for PCI autoconfiguration.
+ * Machine-specific functions for ISA autoconfiguration.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5.2.1 1997/06/01 04:12:46 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16.2.2 1997/01/31 17:14:39 cgd Exp $	*/
+/* $NetBSD: autoconf.c,v 1.16.2.3 1997/06/01 04:11:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,18 +44,22 @@
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.3 1997/06/01 04:11:06 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
-#include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
 #include <machine/prom.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 struct device		*booted_device;
 int			booted_partition;
@@ -70,9 +74,8 @@ struct devnametobdevmaj alpha_nam2blk[] = {
 	{ "cd",		3 },
 	{ "md",		6 },
 	{ "sd",		8 },
-#if 0
-	{ "fd",		XXX },
-#endif
+	{ "fd",		0 },
+	{ "wd",		4 },
 	{ NULL,		0 },
 };
 
@@ -90,14 +93,17 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
 
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    boot_dev);
 	setroot(booted_device, booted_partition, alpha_nam2blk);
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6 1996/11/15 22:38:45 jtc Exp $	*/
+/* $NetBSD: ansi.h,v 1.6.2.1 1997/06/01 04:12:02 cgd Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,9 +53,9 @@
 #define	_BSD_SSIZE_T_	long			/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
 typedef struct {
-	char *base;
-	int offset;
-	int pad;
+	char *__base;
+	int __offset;
+	int __pad;
 } __va_list;
 #define	_BSD_VA_LIST_	__va_list		/* va_list */
 #define _BSD_CLOCKID_T_	int

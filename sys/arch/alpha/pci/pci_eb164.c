@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_eb164.c,v 1.4 1996/11/25 03:47:05 cgd Exp $	*/
+/* $NetBSD: pci_eb164.c,v 1.4.2.1 1997/06/01 04:13:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.4.2.1 1997/06/01 04:13:27 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +130,10 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
 	int eb164_irq, pinbase, pinoff;
+
+#ifndef DIAGNOSTIC
+	pinbase = pinoff = 0;			/* XXX gcc -Wuninitialized */
+#endif
 
         if (buspin == 0) {
                 /* No IRQ used. */

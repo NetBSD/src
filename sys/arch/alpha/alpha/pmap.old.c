@@ -1,4 +1,71 @@
-/*	$NetBSD: pmap.old.c,v 1.14 1996/11/13 21:13:10 cgd Exp $	*/
+/* $NetBSD: pmap.old.c,v 1.14.2.1 1997/06/01 04:11:34 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -95,6 +162,13 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.14.2.1 1997/06/01 04:11:34 cgd Exp $");
+__KERNEL_COPYRIGHT(0, \
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +346,32 @@ void pmap_check_wiring	__P((char *, vm_offset_t));
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
+
+/*
+ * pv_entry management.
+ */
+struct pv_entry *pmap_alloc_pv __P((void));
+void pmap_free_pv __P((struct pv_entry *));
+void pmap_collect_pv __P((void));
+
+struct pv_page;
+ 
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+ 
+#define NPVPPG ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;    
+	struct pv_entry pvp_pv[NPVPPG];
+};
+
+TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist =
+    TAILQ_HEAD_INITIALIZER(pv_page_freelist);
+int	pv_nfree;
 
 /*
  * pmap_bootstrap:
@@ -789,12 +889,14 @@ pmap_page_protect(pa, prot)
 		return;
 
 	switch (prot) {
+	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
+		alpha_pal_imb();
 	case VM_PROT_READ|VM_PROT_WRITE:
-	case VM_PROT_ALL:
 		return;
 	/* copy_on_write */
-	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
+		alpha_pal_imb();
+	case VM_PROT_READ:
 /* XXX */	pmap_changebit(pa, PG_KWE | PG_UWE, FALSE);
 		return;
 	/* remove_all */
@@ -803,7 +905,7 @@ pmap_page_protect(pa, prot)
 	}
 	pv = pa_to_pvh(pa);
 	s = splimp();
-	while (pv->pv_pmap != NULL) {
+	while (pv != NULL && pv->pv_pmap != NULL) {
 		register pt_entry_t *pte;
 
 		pte = pmap_pte(pv->pv_pmap, pv->pv_va);
@@ -884,6 +986,8 @@ pmap_protect(pmap, sva, eva, prot)
 				pmap_pte_set_prot(pte, bits);
 				if (needtflush)
 					ALPHA_TBIS(sva);
+				if (prot & VM_PROT_EXECUTE)
+					alpha_pal_imb();
 #ifdef PMAPSTATS
 				protect_stats.changed++;
 #endif
@@ -1069,8 +1173,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				if (pmap == npv->pv_pmap && va == npv->pv_va)
 					panic("pmap_enter: already in pv_tab");
 #endif
-			npv = (pv_entry_t)
-				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+			npv = pmap_alloc_pv();
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
 			npv->pv_next = pv->pv_next;
@@ -1128,6 +1231,8 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		ALPHA_TBIS(va);
+	if (prot & VM_PROT_EXECUTE)
+		alpha_pal_imb();
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1260,6 +1365,7 @@ void pmap_update()
 		printf("pmap_update()\n");
 #endif
 	ALPHA_TBIA();
+	alpha_pal_imb();
 }
 
 /*
@@ -1757,7 +1863,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		if (npv) {
 			npv->pv_flags = pv->pv_flags;
 			*pv = *npv;
-			free((caddr_t)npv, M_VMPVENT);
+			pmap_free_pv(npv);
 		} else
 			pv->pv_pmap = NULL;
 #ifdef PMAPSTATS
@@ -1779,7 +1885,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		ste = npv->pv_ptpte;
 		ptpmap = npv->pv_ptpmap;
 		pv->pv_next = npv->pv_next;
-		free((caddr_t)npv, M_VMPVENT);
+		pmap_free_pv(npv);
 		pv = pa_to_pvh(pa);
 	}
 	/*
@@ -2280,3 +2386,119 @@ vtophys(vaddr)
 
 	return (paddr);
 }
+
+struct pv_entry *
+pmap_alloc_pv()
+{
+	struct pv_page *pvp;
+	struct pv_entry *pv;
+	int i;
+
+	if (pv_nfree == 0) {
+		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
+		if (pvp == 0)
+			panic("pmap_alloc_pv: kmem_alloc() failed");
+		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
+		for (i = NPVPPG - 2; i; i--, pv++)
+			pv->pv_next = pv + 1;
+		pv->pv_next = 0;
+		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
+		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		pv = &pvp->pvp_pv[0];
+	} else {
+		--pv_nfree;
+		pvp = pv_page_freelist.tqh_first;
+		if (--pvp->pvp_pgi.pgi_nfree == 0) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		}
+		pv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+		if (pv == 0)
+			panic("pmap_alloc_pv: pgi_nfree inconsistent");
+#endif
+		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
+	}
+	return pv;
+}
+
+void
+pmap_free_pv(pv)
+	struct pv_entry *pv;
+{
+	register struct pv_page *pvp;
+
+	pvp = (struct pv_page *) trunc_page(pv);
+	switch (++pvp->pvp_pgi.pgi_nfree) {
+	case 1:
+		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+	default:
+		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
+		pvp->pvp_pgi.pgi_freelist = pv;
+		++pv_nfree;
+		break;
+	case NPVPPG:
+		pv_nfree -= NPVPPG - 1;
+		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+		break;
+	}
+}
+
+#if 0
+void
+pmap_collect_pv()
+{
+	struct pv_page_list pv_page_collectlist;
+	struct pv_page *pvp, *npvp;
+	struct pv_entry *ph, *ppv, *pv, *npv;
+	int s;
+
+	TAILQ_INIT(&pv_page_collectlist);
+
+	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
+		if (pv_nfree < NPVPPG)
+			break;
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			pvp->pvp_pgi.pgi_nfree = -1;
+		}
+	}
+
+	if (pv_page_collectlist.tqh_first == 0)
+		return;
+
+	for (ph = &pv_table[npages - 1]; ph >= &pv_table[0]; ph--) {
+		if (ph->pv_pmap == 0)
+			continue;
+		s = splimp();
+		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
+			pvp = (struct pv_page *) trunc_page(pv);
+			if (pvp->pvp_pgi.pgi_nfree == -1) {
+				pvp = pv_page_freelist.tqh_first;
+				if (--pvp->pvp_pgi.pgi_nfree == 0) {
+					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+				}
+				npv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+				if (npv == 0)
+					panic("pmap_collect_pv: pgi_nfree inconsistent");
+#endif
+				pvp->pvp_pgi.pgi_freelist = npv->pv_next;
+				*npv = *pv;
+				ppv->pv_next = npv;
+				ppv = npv;
+			} else
+				ppv = pv;
+		}
+		splx(s);
+	}
+
+	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+	}
+}
+#endif

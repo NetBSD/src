@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.14.2.1 1996/12/07 02:09:32 cgd Exp $	*/
+/* $NetBSD: tcds_dma.c,v 1.14.2.2 1997/06/01 04:14:54 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,6 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.14.2.2 1997/06/01 04:14:54 cgd Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +49,13 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
+
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsreg.h>
 #include <alpha/tc/tcdsvar.h>
-#include <alpha/tc/espreg.h>
-#include <alpha/tc/espvar.h>
+#include <alpha/tc/ascvar.h>
 
 void
 tcds_dma_reset(sc)
@@ -73,8 +80,8 @@ tcds_dma_isintr(sc)
 }
 
 /*
- * Pseudo (chained) interrupt from the esp driver to kick the
- * current running DMA transfer. I am replying on espintr() to
+ * Pseudo (chained) interrupt from the asc driver to kick the
+ * current running DMA transfer. I am replying on ascintr() to
  * pickup and clean errors for now
  *
  * return 1 if it was a DMA continue.
@@ -83,12 +90,13 @@ int
 tcds_dma_intr(sc)
 	struct tcds_slotconfig *sc;
 {
+	struct ncr53c9x_softc *nsc = &sc->sc_asc->sc_ncr53c9x;
 	u_int32_t dud;
 	int trans = 0, resid = 0;
 	u_int32_t *addr, dudmask;
 	u_char tcl, tcm, tch;
 
-	ESP_DMA(("tcds_dma %d: intr", sc->sc_slot));
+	NCR_DMA(("tcds_dma %d: intr", sc->sc_slot));
 
 	if (tcds_scsi_iserr(sc))
 		return (0);
@@ -103,28 +111,28 @@ tcds_dma_intr(sc)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		tcl = ESP_READ_REG(sc->sc_esp, ESP_TCL);
-		tcm = ESP_READ_REG(sc->sc_esp, ESP_TCM);
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		tcl = NCR_READ_REG(nsc, NCR_TCL);
+		tcm = NCR_READ_REG(nsc, NCR_TCM);
+		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
 		    tcl | (tcm << 8), tcl, tcm));
 		return 0;
 	}
 
 	if (!sc->sc_iswrite &&
-	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
+	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		DELAY(1);
 	}
 
-	resid += (tcl = ESP_READ_REG(sc->sc_esp, ESP_TCL));
-	resid += (tcm = ESP_READ_REG(sc->sc_esp, ESP_TCM)) << 8;
-	if (sc->sc_esp->sc_rev == ESP200)
-		resid += (tch = ESP_READ_REG(sc->sc_esp, ESP_TCH)) << 16;
+	resid += (tcl = NCR_READ_REG(nsc, NCR_TCL));
+	resid += (tcm = NCR_READ_REG(nsc, NCR_TCM)) << 8;
+	if (nsc->sc_rev == NCR_VARIANT_ESP200)
+		resid += (tch = NCR_READ_REG(nsc, NCR_TCH)) << 16;
 	else
 		tch = 0;
 
-	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
-	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
+	if (resid == 0 && (nsc->sc_rev <= NCR_VARIANT_ESP100A) &&
+	    (nsc->sc_espstat & NCRSTAT_TC) == 0)
 		resid = 65536;
 
 	trans = sc->sc_dmasize - resid;
@@ -134,7 +142,7 @@ tcds_dma_intr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, tch, trans, resid));
 
 	/*
@@ -157,7 +165,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD0_VALID11)
 				dudmask |= TCDS_DUD_BYTE11;
 #endif
-			ESP_DMA(("dud0 at 0x%p dudmask 0x%x\n",
+			NCR_DMA(("dud0 at 0x%p dudmask 0x%x\n",
 			    addr, dudmask));
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
@@ -178,7 +186,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD1_VALID11)
 				panic("tcds_dma: dud1 byte 3 valid");
 #endif
-			ESP_DMA(("dud1 at 0x%p dudmask 0x%x\n",
+			NCR_DMA(("dud1 at 0x%p dudmask 0x%x\n",
 			    addr, dudmask));
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
@@ -191,7 +199,7 @@ tcds_dma_intr(sc)
 
 #if 0 /* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
+	    nsc->sc_phase != nsc->sc_prevphase)
 		return 0;
 
 	/* and again */
@@ -220,7 +228,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmalen = len;
 	sc->sc_iswrite = datain;
 
-	ESP_DMA(("tcds_dma %d: start %ld@%p,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+	NCR_DMA(("tcds_dma %d: start %ld@%p,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -230,7 +238,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	size = min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 	*dmasize = sc->sc_dmasize = size;
 
-	ESP_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
+	NCR_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5.2.2 1996/12/07 23:06:57 cgd Exp $	*/
+/* $NetBSD: types.h,v 1.5.2.3 1997/06/01 04:12:40 cgd Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

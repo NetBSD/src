@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
+/* $NetBSD: proc.h,v 1.2.4.1 1997/06/01 04:12:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.1.2.1 1997/01/24 07:05:57 cgd Exp $	*/
+/* $NetBSD: elf_machdep.h,v 1.1.2.2 1997/06/01 04:12:14 cgd Exp $ */
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\

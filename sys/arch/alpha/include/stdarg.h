@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.4.2.1 1997/01/24 07:05:58 cgd Exp $	*/
+/* $NetBSD: stdarg.h,v 1.4.2.2 1997/06/01 04:12:38 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,16 +51,16 @@ typedef _BSD_VA_LIST_	va_list;
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
+	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs(), (ap).__pad = 0)
 
 #define	__REAL_TYPE_CLASS	8
 #define	__va_arg_offset(ap, type)					\
 	((__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS &&	\
-	    (ap).offset <= (6 * 8) ? -(6 * 8) : 0) - __va_size(type))
+	    (ap).__offset <= (6 * 8) ? -(6 * 8) : 0) - __va_size(type))
 
 #define	va_arg(ap, type)						\
-	(*(type *)((ap).offset += __va_size(type),			\
-		   (ap).base + (ap).offset + __va_arg_offset(ap, type)))
+	(*(type *)((ap).__offset += __va_size(type),			\
+		   (ap).__base + (ap).__offset + __va_arg_offset(ap, type)))
 
 #define	va_end(ap)	((void)0)
 

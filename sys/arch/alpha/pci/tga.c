@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.12.2.3 1997/01/25 01:33:52 cgd Exp $	*/
+/* $NetBSD: tga.c,v 1.12.2.4 1997/06/01 04:13:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,17 +27,22 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.12.2.4 1997/06/01 04:13:51 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/conf.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -120,21 +125,22 @@ tga_getdevconfig(memt, pc, tag, dc)
 	struct raster *rap;
 	struct rcons *rcp;
 	bus_size_t pcisize;
-	int i, cacheable;
+	int i, flags;
 
 	dc->dc_memt = memt;
 	dc->dc_pc = pc;
 
 	dc->dc_pcitag = tag;
 
-	/* XXX MAGIC NUMBER */
-	pci_mem_find(pc, tag, 0x10, &dc->dc_pcipaddr, &pcisize,
-	    &cacheable);
-	if (!cacheable)						/* sanity */
-		panic("tga_getdevconfig: memory not cacheable?");
+	/* XXX magic number */
+	if (pci_mapreg_info(pc, tag, 0x10,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+	    &dc->dc_pcipaddr, &pcisize, &flags))
+		return;
+	if (flags == 0)					/* XXX */
+		panic("tga memory not cachable");
 
-	/* XXX XXX XXX */
-	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, 1, &dc->dc_vaddr))
+	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, flags, &dc->dc_vaddr))
 		return;
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 

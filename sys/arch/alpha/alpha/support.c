@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.4 1996/11/13 22:20:56 cgd Exp $	*/
+/* $NetBSD: support.c,v 1.4.2.1 1997/06/01 04:11:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: support.c,v 1.4.2.1 1997/06/01 04:11:40 cgd Exp $");
 
 /*
  * Some C support functions that aren't (yet) in libkern or assembly.
