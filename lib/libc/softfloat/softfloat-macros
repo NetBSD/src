@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-macros,v 1.1.6.2 2002/03/22 20:42:24 nathanw Exp $ */
+/* $NetBSD: softfloat-macros,v 1.1.6.3 2002/04/03 02:29:30 petrov Exp $ */
 
 /*
 ===============================================================================
@@ -621,7 +621,7 @@ static bits32 estimateSqrt32( int16 aExp, bits32 a )
     return ( (bits32) ( ( ( (bits64) a )<<31 ) / z ) ) + ( z>>1 );
 
 }
-
+#endif
 /*
 -------------------------------------------------------------------------------
 Returns the number of leading 0 bits before the most-significant 1 bit of
