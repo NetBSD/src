@@ -1,0 +1,105 @@
+.\"	$NetBSD: de.4,v 1.1 2000/02/11 09:28:50 fair Exp $
+.Dd February 11, 2000
+.Dt DE 4
+.Os
+.Sh NAME
+.Nm de
+.Nd
+DECchip 21040, 21140, 21141, 21142, and 21143 PCI Ethernet interface driver
+.Sh SYNOPSIS
+.Cd "de* at pci? dev ? function ?"
+.Pp
+Configuration of PHYs may also be necessary.
+See
+.Xr mii 4 .
+.Sh DESCRIPTION
+The
+.Nm
+driver supports
+.Tn Ethernet
+and Fast
+.Tn Ethernet
+interfaces based on the Digital Equipment Corporation DECchip 21040,
+21140, 21141, 21142, and 21143 model controllers for
+.Tn PCI
+bus.
+.Pp
+.Bl -hang -tag -compact
+.It 21040
+10base-T and AUI/BNC
+.It 21140
+10base-T and 100base-TX
+.It 21141
+10base-T and 100base-TX
+.It 21142
+10base-T and 100base-TX
+.It 21143
+10base-T and 100base-TX
+.El
+.Pp
+Supported Network Interface Cards (NIC) include, but are not limited to:
+.Pp
+.Bl -hang -tag -compact
+.It Tn DEC DE435
+.It Tn DEC DE450
+.It Tn DEC DE500
+.It Znyx
+.It Tn SMC 9332DST
+.It Cogent/Adaptec
+.It AsanteFAST 10/100 single- and multi-port
+.El
+.Pp
+Generally, if the NIC is for
+.Tn PCI
+bus, and the major controller chip has the
+.Tn DIGITAL
+logo on it, with one of the model numbers above, the
+.Nm
+driver should recognize and control it.
+.Pp
+Multi-port interfaces are typically configured as a
+.Tn PCI Ns \- Ns Tn PCI
+bridge with multiple
+.Em de
+instances on the
+.Tn PCI
+bus on the other side of the bridge.
+.Pp
+.Tn DEC
+sold its semiconductor divison to
+.Tn Intel .
+In addition, there are many "knock-offs" of the
+.Tn DEC
+.Tn TULIP
+.Tn Ethernet
+controller chips; NICs based on these chips are handled by the
+.Xr tlp 4
+driver.
+.Pp
+This
+.Nm
+driver should not be confused with the
+.Nx
+.Tn VAX
+.Nm
+driver for the
+.Tn DEC
+.Tn DEUNA/DELUA
+.Tn Ethernet
+controller for
+.Tn UniBus .
+.Sh "SEE ALSO"
+.Xr intro 4 ,
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr pci 4 ,
+.Xr tlp 4 ,
+.Xr ifconfig 8 
+.Sh AUTHOR
+Matt Thomas
+.Aq matt@3am-software.com
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.1
