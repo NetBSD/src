@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 2000/12/07 00:59:42 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.108 2000/12/29 18:32:47 eeh Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7757,8 +7757,7 @@ idle:
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,pt	%o3, notidle		! Something to run
 	 nop
-
-#if 1
+#ifdef UVM_PAGE_IDLE_ZERO
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
 	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
@@ -8082,8 +8081,7 @@ Lsw_load:
 2:
 #endif
 	ldx	[%l1 + PCB_SP], %i6
-!	call	_C_LABEL(blast_vcache)		! Clear out I$ and D$
-	 ldx	[%l1 + PCB_PC], %i7
+	ldx	[%l1 + PCB_PC], %i7
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
 	rdpr	%ver, %l7
@@ -8307,7 +8305,6 @@ ENTRY(snapshot)
  * to user mode. This happens in two known cases: after execve(2) of init,
  * and when returning a child to user mode after a fork(2).
  */
-	nop; nop					! Make sure we don't get lost getting here.
 ENTRY(proc_trampoline)
 #ifdef SCHED_DEBUG
 	nop; nop; nop; nop				! Try to make sure we don't vector into the wrong instr
@@ -9422,7 +9419,8 @@ ENTRY(pseg_get)
  *			paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success,
- * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
+ * 1 if it needs to fill a pseg, 2 if it succeeded but didn't need the
+ * spare page, and -1 if the address is in the virtual hole.
  * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
  * Allocate a page, pass the phys addr in as the spare, and try again.
  * If spare is not NULL it is assumed to be the address of a zeroed physical
@@ -9530,8 +9528,9 @@ ENTRY(pseg_set)
 	tne	1
 	mov	%o4, %o7
 #endif
+	mov	2, %o0					! spare unused?
 	retl
-	 clr	%o0
+	 movrz	%o3, %g0, %o0				! No. return 0
 1:
 	retl
 	 mov	1, %o0
