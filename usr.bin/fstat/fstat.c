@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.42.4.1 2000/10/02 03:11:37 enami Exp $	*/
+/*	$NetBSD: fstat.c,v 1.42.4.2 2002/02/13 23:28:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.42.4.1 2000/10/02 03:11:37 enami Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.42.4.2 2002/02/13 23:28:22 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,10 +268,10 @@ main(argc, argv)
 	}
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV    INUM       MODE SZ|DV R/W");
+"USER     CMD          PID   FD  DEV     INUM  MODE  SZ|DV R/W");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT      INUM MODE         SZ|DV R/W");
+"USER     CMD          PID   FD MOUNT       INUM MODE         SZ|DV R/W");
 	if (checkfile && fsflg == 0)
 		printf(" NAME\n");
 	else
@@ -502,7 +502,7 @@ vtrans(vp, i, flag)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %6ld %10s", (long)fst.fileid, mode);
+	(void)printf(" %7ld %*s", (long)fst.fileid, nflg ? 5 : 10, mode);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
