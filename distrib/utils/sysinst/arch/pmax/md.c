@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 1997/11/02 08:16:39 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.8 1997/11/07 08:43:46 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,27 +100,27 @@ int	md_get_info (void)
 	return 1;
 }
 
+
+/* 
+ * hook called before editing new disklabel.
+ */
 void	md_pre_disklabel (void)
 {
 }
 
+
+/* 
+ * hook called after writing  disklabel to new target disk.
+ */
 void	md_post_disklabel (void)
+
 {
 }
 
-void	md_post_newfs (void)
-{
-	/* XXX boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-}
-
-void	md_copy_filesystem (void)
-{
-}
-
-void md_make_bsd_partitions (void)
+/*
+ * md back-end code for menu-driven  BSD disklabel editor.
+ */
+ void md_make_bsd_partitions (void)
 {
 	FILE *f;
 	int i, part;
@@ -335,16 +335,71 @@ void md_make_bsd_partitions (void)
 }
 
 
+
+/*
+ * md_copy_filesystem() -- MD hook called  after the target
+ * disk's filesystems are newfs'ed (install) or /fsck'ed (upgrade)
+ * and mounted.
+ * Gives MD code an opportunity to copy data from the install-tools
+ * boot disk to the  target disk.  (e.g., on i386, put a copy of the 
+ * complete install ramdisk onto the hard disk, so it's at least
+ * minimally bootable.)
+ *
+ * On pmax, we're probably running off a release diskimage.
+ * Copy the diskimage to the target disk, since it's probably
+ * the  same as the  install sets and it makes the target bootable
+ * to standalone.  But don't do anything if the target is
+ * already  the current root: we'd clobber the files we're trying to copy.
+ */
+
+void	md_copy_filesystem (void)
+{
+
+	if (target_already_root()) {
+		return;
+	}
+
+	/* Copy the instbin(s) to the disk. */
+	printf ("%s", msg_string(MSG_dotar));
+	run_prog ("tar --one-file-system -cf - / |"
+		  "(cd /mnt ; tar --unlink -xpf - )");
+#if 0
+	/* pmax diskimage does not yet have a .hdprofile. */
+	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
+#endif
+}
+
+
+/*
+ * MD hook called after upgrade() or install() hasve finished the 
+ * setting up the target disk but immediately before the user is
+ * given thte ``disks are now set up'' message, that if power fails,
+ * they can continue installation by  booting the target  disk and
+ * doing an `upgrade'.
+ *
+ * On pmax, this is a convenient place to write up-to-date bootblocks 
+ * to the target root filesystem.
+ */
+void	md_post_newfs (void)
+{
+	/* XXX boot blocks ... */
+	printf (msg_string(MSG_dobootblks), diskdev);
+	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+}
+
+
+
 /* Upgrade support */
 int
 md_update(void)
 {
-#ifdef notyet	/* stolen from i386 -- untested */
+	/* stolen from i386 -- untested */
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
 	puts (CL);
 	wrefresh(stdscr);
-#endif
+
 	return 1;
 }
