@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dev_mkdb.c	5.9 (Berkeley) 5/17/91";*/
-static char rcsid[] = "$Id: dev_mkdb.c,v 1.3 1993/08/01 17:59:57 mycroft Exp $";
+static char rcsid[] = "$Id: dev_mkdb.c,v 1.4 1993/10/22 10:38:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ main(argc, argv)
 	key.size = sizeof(bkey);
 	data.data = buf;
 	while (dp = readdir(dirp)) {
-		if (stat(dp->d_name, &sb)) {
+		if (lstat(dp->d_name, &sb)) {
 			(void)fprintf(stderr, "dev_mkdb: can't stat %s\n",
 				dp->d_name);
 			continue;
