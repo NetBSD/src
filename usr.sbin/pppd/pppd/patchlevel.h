@@ -1,6 +1,6 @@
-/*	$NetBSD: patchlevel.h,v 1.16 1998/09/02 20:55:57 christos Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.17 1998/09/04 19:13:05 christos Exp $	*/
 
-/* Id: patchlevel.h,v 1.32 1998/03/25 01:29:43 paulus Exp  */
+/* Id: patchlevel.h,v 1.33 1998/05/04 06:10:31 paulus Exp  */
 #define	PATCHLEVEL	5
 
 #define VERSION		"2.3"

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.26 1998/09/02 20:55:57 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp ";
+static char rcsid[] = "Id: options.c,v 1.43 1998/09/04 18:49:15 christos Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.26 1998/09/02 20:55:57 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $");
 #endif
 #endif
 
@@ -178,6 +178,7 @@ static int setdomain __P((char **));
 static int setnetmask __P((char **));
 static int setcrtscts __P((char **));
 static int setnocrtscts __P((char **));
+static int setcdtrcts __P((char **));
 static int setxonxoff __P((char **));
 static int setnodetach __P((char **));
 static int setupdetach __P((char **));
@@ -318,6 +319,9 @@ static struct cmd {
     {"crtscts", 0, setcrtscts},	/* set h/w flow control */
     {"nocrtscts", 0, setnocrtscts}, /* clear h/w flow control */
     {"-crtscts", 0, setnocrtscts}, /* clear h/w flow control */
+    {"cdtrcts", 0, setcdtrcts},  /* set alternate h/w flow control */
+    {"nocdtrcts", 0, setnocrtscts}, /* clear h/w flow control */
+    {"-cdtrcts", 0, setnocrtscts}, /* clear h/w flow control */
     {"xonxoff", 0, setxonxoff},	/* set s/w flow control */
     {"debug", 0, setdebug},	/* Increase debugging level */
     {"kdebug", 1, setkdebug},	/* Enable kernel-level debugging */
@@ -442,6 +446,7 @@ Usage: %s [ options ], where options are:\n\
 	auth		Require authentication from peer\n\
         connect <p>     Invoke shell command <p> to set up the serial line\n\
 	crtscts		Use hardware RTS/CTS flow control\n\
+	cdtrcts		Use hardware DTR/CTS flow control (if supported)\n\
 	defaultroute	Add default route through interface\n\
 	file <f>	Take options from file <f>\n\
 	modem		Use modem control lines\n\
@@ -1857,6 +1862,14 @@ setnocrtscts(argv)
     char **argv;
 {
     crtscts = -1;
+    return (1);
+}
+
+static int
+setcdtrcts(argv)
+    char **argv;
+{
+    crtscts = 2;
     return (1);
 }
 

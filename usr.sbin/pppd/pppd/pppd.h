@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.16 1998/09/02 20:55:57 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.17 1998/09/04 19:13:06 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: pppd.h,v 1.21 1998/03/26 04:46:08 paulus Exp 
+ * Id: pppd.h,v 1.22 1998/05/13 05:49:21 paulus Exp 
  */
 
 /*

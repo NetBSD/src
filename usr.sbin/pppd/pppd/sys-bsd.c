@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.28 1998/09/02 20:55:57 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.29 1998/09/04 19:13:06 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -25,9 +25,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp ";
+static char rcsid[] = "Id: sys-bsd.c,v 1.33 1998/09/04 18:49:16 christos Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.28 1998/09/02 20:55:57 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.29 1998/09/04 19:13:06 christos Exp $");
 #endif
 #endif
 
@@ -395,10 +395,22 @@ set_up_tty(fd, local)
     }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
-    if (crtscts > 0 && !local)
-	tios.c_cflag |= CRTSCTS;
-    else if (crtscts < 0)
+    if (crtscts > 0 && !local) {
+        if (crtscts == 2) {
+#ifdef CDTRCTS
+            tios.c_cflag |= CDTRCTS;
+#else
+	    syslog(LOG_ERR, "System does not support DTR/CTS flow control");
+	    die(1);
+#endif
+	} else
+	    tios.c_cflag |= CRTSCTS;
+    } else if (crtscts < 0) {
 	tios.c_cflag &= ~CRTSCTS;
+#ifdef CDTRCTS
+	tios.c_cflag &= ~CDTRCTS;
+#endif
+    }
 
     tios.c_cflag |= CS8 | CREAD | HUPCL;
     if (local || !modem)

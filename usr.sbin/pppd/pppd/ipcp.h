@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.10 1998/08/06 20:13:14 kleink Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.11 1998/09/04 19:13:04 christos Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: ipcp.h,v 1.10 1997/03/04 03:39:20 paulus Exp 
+ * Id: ipcp.h,v 1.11 1998/04/28 23:38:11 paulus Exp 
  */
 
 /*

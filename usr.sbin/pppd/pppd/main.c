@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1998/09/02 20:55:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1998/09/04 19:13:05 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
+static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 1998/09/02 20:55:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 1998/09/04 19:13:05 christos Exp $");
 #endif
 #endif
 
