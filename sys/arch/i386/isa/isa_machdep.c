@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 1995/06/07 07:06:16 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 1995/07/04 07:09:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -94,11 +94,6 @@ void
 isa_defaultirq()
 {
 	int i;
-
-	imask[IPL_BIO] |= SIR_CLOCKMASK;
-	imask[IPL_NET] |= SIR_NETMASK;
-	imask[IPL_TTY] |= SIR_TTYMASK;
-	imask[IPL_CLOCK] |= SIR_CLOCKMASK;
 
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
@@ -197,8 +192,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		/* Preserve any softintr dependencies we set up earlier. */
-		imask[level] = (imask[level] & -(1 << ICU_LEN)) | irqs;
+		imask[level] = irqs;
 	}
 
 #include "sl.h"
@@ -220,7 +214,7 @@ intr_calculatemasks()
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			if (q->ih_level != IPL_NONE)
 				irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		intrmask[irq] = irqs | SIR_ALLMASK;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */

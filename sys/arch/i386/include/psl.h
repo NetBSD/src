@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.19 1995/06/04 20:22:50 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.20 1995/07/04 07:10:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,7 @@
 #define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define	SIR_TTY		29
 #define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
+#define	SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK | SIR_TTYMASK)
 
 #ifndef LOCORE
 
