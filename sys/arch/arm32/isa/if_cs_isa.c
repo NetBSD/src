@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.4 1998/07/05 00:51:07 jonathan Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.5 1998/07/08 04:53:03 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -218,7 +218,7 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <arm32/isa/isadmavar.h>
+#include <dev/isa/isadmavar.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -348,13 +348,6 @@ struct cfattach cs_ca =
 extern struct cfdriver cs_cd;
 
 int csdebug  = 0x00000000; /* debug status, used with kerndebug macros */
-#ifndef SHARK
-/* SHARKS don't have the kernel in the lower megs of physical
- * and hence this won't work. I don't know any other machines that 
- * this won't work for (I didn't look either) so I ifdef'd it like this.
- */
-char cs_dma_buffer[DMA_BUFFER_SIZE] __attribute__ ((aligned (4096)));
-#endif
 
 
 #ifdef  __BROKEN_INDIRECT_CONFIG
@@ -495,6 +488,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
     sc->inMemoryMode = FALSE;
     sc->sc_iot = ia->ia_iot;
     sc->sc_memt = ia->ia_memt;
+    sc->sc_ic = ia->ia_ic;
     if (bus_space_map(sc->sc_iot, ia->ia_iobase,
                       ia->ia_iosize, 0, &sc->sc_ioh) != 0)
     {
@@ -502,7 +496,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
     }
 #endif
 
-    printf(": %s Ethernet\n", sc->sc_dev.dv_xname);
+    printf(": CS8900 Ethernet\n");
 
     /* the first thing to do is check that the mbuf cluster size is 
      * greater than the MTU for an ethernet frame. The code depends 
@@ -511,7 +505,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
      */
     if (MCLBYTES < ETHER_MTU)
     {
-	panic("%s : Attach failed -> machines mbuf cluster size is insufficient\n",
+	panic("%s: Attach failed -> machines mbuf cluster size is insufficient\n",
 	      sc->sc_dev.dv_xname);
     }
     
@@ -574,7 +568,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
     /* Get parameters, which were not specified, from the EEPROM */
     if ( csGetUnspecifiedParms(sc) == CS_ERROR )
     {
-        printf("%s : Couldn't get the unspecified parameters in the attach\n",\
+        printf("%s: Couldn't get the unspecified parameters in the attach\n",\
                sc->sc_dev.dv_xname);
         return ;
     }
@@ -582,7 +576,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
     /* Verify that parameters are valid */
     if ( csValidateParms(sc) == CS_ERROR )
     {
-        printf("%s : Couldn't get the validate parameters in the attach\n",\
+        printf("%s: Couldn't get the validate parameters in the attach\n",\
                sc->sc_dev.dv_xname );
         return ;
     }
@@ -590,13 +584,13 @@ void csAttach(struct device *parent, struct device *self, void *aux)
     /* Get and store the Ethernet address */
     if ( csGetEthernetAddr(sc) == CS_ERROR )
     {
-        printf("%s : couldn't get the ethernet address in the attach\n",\
+        printf("%s: couldn't get the ethernet address in the attach\n",\
                sc->sc_dev.dv_xname );
         return ;
     }
 #endif
 
-    printf("%s : address %s\n", sc->sc_dev.dv_xname,
+    printf("%s: address %s\n", sc->sc_dev.dv_xname,
            ether_sprintf(sc->sc_enaddr));
     
     /*
@@ -609,25 +603,28 @@ void csAttach(struct device *parent, struct device *self, void *aux)
 
     if ( (sc->sc_drq >= 5) && (sc->sc_drq <= 7) )
     {
-	/* The sharks can't use the cs_dma_buffer because
-	 * kernel is not placed in the lower megs of physical 
-	 * memory. Instead they call a function which returns
-	 * an offset into the isaphysmem, which is a block 
-	 * of memory allocated at boot-time for use as 
-	 * DMA bounce buffers. The SHARKS allocate another 
-	 * 64Kbytes for a possible large buffer and allow
-	 * access to it through isa_dmabuffer_get() defined
-	 * in isadmavar.h
-	 */
-#ifdef SHARK
-	/* If we get the buffer we never relinquish it,
-	 * primarily because I expect the ethernet 
-	 * would be required always.
-	 */
-	sc->dmaBase = (char *) isa_dmabuffer_get();
-#else
-	sc->dmaBase = cs_dma_buffer; 
-#endif
+	bus_addr_t dma_addr;
+
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, CS8900_DMA_BUFFER_SIZE,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf("%s: can't create ISA DMA map\n", sc->sc_dev.dv_xname);
+		goto after_dma_block;
+	}
+
+	if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq, CS8900_DMA_BUFFER_SIZE,
+	    &dma_addr, BUS_DMA_NOWAIT) != 0) {
+		printf("%s: can't allocate DMA buffer\n", sc->sc_dev.dv_xname);
+		goto after_dma_block;
+	}
+
+	if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, dma_addr,
+	    CS8900_DMA_BUFFER_SIZE, &sc->dmaBase,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT /* XXX */) != 0) {
+		printf("%s: can't map DMA buffer\n", sc->sc_dev.dv_xname);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, dma_addr,
+		    CS8900_DMA_BUFFER_SIZE);
+		goto after_dma_block;
+	}
 
 	/* if we couldn't get a dma buffer then we can't 
 	 * go on with DMA.
@@ -650,6 +647,7 @@ void csAttach(struct device *parent, struct device *self, void *aux)
 	}
 	/* now go on and try mapped memory, or programmed IO. */
     } /* if (drq) */
+ after_dma_block:
 
     /* the default EEPROM configuration is to use programmed IO. If 
      * we want to use mapped memory we must manually set the 
@@ -1305,9 +1303,12 @@ void csInitChip( struct cs_softc *sc )
          * and ensure the memory buffer is valid.
          * If it isn't then we just go on without DMA
          */
-        isa_dmastart(DMAMODE_READ | DMAMODE_LOOP, sc->dmaBase, sc->dmaMemSize, 
-                     sc->sc_drq );      
-            
+	if (isa_dmastart(sc->sc_ic, sc->sc_drq, sc->dmaBase, sc->dmaMemSize,
+	    NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT)) {
+		/* XXX XXX XXX */
+		panic("%s: unable to start DMA\n", sc->sc_dev.dv_xname);
+	}
+
         sc->dma_offset = sc->dmaBase;
         /* interrupt when a DMA'd frame is received */
         csWritePacketPage( sc, PKTPG_RX_CFG, RX_CFG_ALL_IE 
@@ -2484,9 +2485,10 @@ void csProcessRxDMA(struct cs_softc *sc)
                            ("csProcessRxDMA : the offset is 0x%x\n", \
                             (int) sc->dma_offset));
                 pIf->if_ierrors++;
+
                 /* skip the rest of the DMA buffer */
-		isa_dmadone(DMAMODE_READ | DMAMODE_LOOP, sc->dmaBase, sc->dmaMemSize,
-			    sc->sc_drq);
+		isa_dmaabort(sc->sc_ic, sc->sc_drq);
+
 		/* now reset the chip and reinitialise */
 		csInit(sc);
                 return ;        
@@ -2506,9 +2508,10 @@ void csProcessRxDMA(struct cs_softc *sc)
                      * may as well drop all the packets I think.
                      */
                     csReadPacketPage( sc, PKTPG_DMA_FRAME_COUNT );
+
                     /* now reset DMA operation */
-		    isa_dmadone(DMAMODE_READ | DMAMODE_LOOP, sc->dmaBase, 
-				sc->dmaMemSize, sc->sc_drq);
+		    isa_dmaabort(sc->sc_ic, sc->sc_drq);
+
 		    /* now reset the chip and reinitialise */
 		    csInit(sc);
                     return ;
@@ -2525,10 +2528,11 @@ void csProcessRxDMA(struct cs_softc *sc)
                     printf("%s : csProcessRxDMA : couldn't allocate \
                             a cluster\n", (sc->sc_dev).dv_xname);
                     m_freem(m);
+
                     /* skip the frame */
                     csReadPacketPage( sc, PKTPG_DMA_FRAME_COUNT );
-		    isa_dmadone(DMAMODE_READ | DMAMODE_LOOP, sc->dmaBase, 
-				sc->dmaMemSize, sc->sc_drq);
+		    isa_dmaabort(sc->sc_ic, sc->sc_drq);
+
 		    /* now reset the chip and reinitialise */
 		    csInit(sc);
                     return ;
