@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.7 1995/03/02 06:40:38 cgd Exp $      */
+/*	$NetBSD: ccd.c,v 1.8 1995/03/09 02:20:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
