@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.46.6.3 2003/06/15 13:02:54 tron Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.46.6.4 2003/09/10 18:54:32 tron Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.46.6.3 2003/06/15 13:02:54 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.46.6.4 2003/09/10 18:54:32 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -831,6 +831,10 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 	return(match);
 }
 
+/*
+ * WARNING: return value (rtentry) could be IPv4 one if in6pcb is connected to
+ * IPv4 mapped address.
+ */
 struct rtentry *
 in6_pcbrtentry(in6p)
 	struct in6pcb *in6p;
@@ -845,6 +849,20 @@ in6_pcbrtentry(in6p)
 		/*
 		 * No route yet, so try to acquire one.
 		 */
+#ifdef INET
+		if (ro->ro_rt == (struct rtentry *)NULL &&
+		    IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+			struct sockaddr_in *dst =
+			    (struct sockaddr_in *)&ro->ro_dst;
+
+			bzero(dst, sizeof(*dst));
+			dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(struct sockaddr_in);
+			bcopy(&in6p->in6p_faddr.s6_addr32[3], &dst->sin_addr,
+			    sizeof(dst->sin_addr));
+			rtalloc((struct route *)ro);
+		} else
+#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 			bzero(dst6, sizeof(*dst6));
 			dst6->sin6_family = AF_INET6;
