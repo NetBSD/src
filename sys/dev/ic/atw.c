@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.17 2004/01/10 07:51:16 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.18 2004/01/10 07:54:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.17 2004/01/10 07:51:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.18 2004/01/10 07:54:55 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2231,8 +2231,7 @@ atw_write_ssid(sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	/* 34 bytes are reserved in ADM8211 SRAM for the SSID */
-	u_int8_t buf[1 /* length */ + IEEE80211_NWID_LEN +
-	             1 /* for a round number */];
+	u_int8_t buf[roundup(1 /* length */ + IEEE80211_NWID_LEN, 2)];
 
 	memset(buf, 0, sizeof(buf));
 	buf[0] = ic->ic_bss->ni_esslen;
@@ -2253,8 +2252,7 @@ atw_write_sup_rates(sc)
 	/* 14 bytes are probably (XXX) reserved in the ADM8211 SRAM for
 	 * supported rates
 	 */
-	u_int8_t buf[1 /* length */ + IEEE80211_RATE_SIZE +
-	             1 /* for a round number */];
+	u_int8_t buf[roundup(1 /* length */ + IEEE80211_RATE_SIZE, 2)];
 
 	memset(buf, 0, sizeof(buf));
 
