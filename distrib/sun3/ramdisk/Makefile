@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 1997/12/12 22:59:47 gwr Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 1998/05/29 17:41:22 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -28,6 +28,8 @@ NBLKS=		512
 NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
 CLEANFILES= netbsd-rd rdsetroot ${IMAGE}.fs
+
+all: netbsd-rd
 
 netbsd-rd : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL} netbsd-tmp
