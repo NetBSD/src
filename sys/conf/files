@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.386 2000/08/17 18:56:17 bjh21 Exp $
+#	$NetBSD: files,v 1.387 2000/09/09 16:54:34 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -742,7 +742,7 @@ file kern/sysv_sem.c			sysvsem
 file kern/sysv_shm.c			sysvshm
 file kern/tty.c
 file kern/tty_conf.c
-file kern/tty_pty.c			pty			needs-count
+file kern/tty_pty.c			pty			needs-flag
 file kern/tty_subr.c
 file kern/tty_tb.c			tb			needs-count
 file kern/tty_tty.c
