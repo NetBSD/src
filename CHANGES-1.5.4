@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.81 2002/11/14 14:37:16 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.82 2002/11/14 14:40:38 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1786,3 +1786,15 @@ sbin/sysctl/sysctl.c				1.59
 lib/libc/net/getnetnamadr.c			1.25-1.26
 
   Fix remote buffer overrun.
+
+dist/bind/bin/named/db_defs.h			1.5
+dist/bind/bin/named/db_sec.c			1.4
+dist/bind/bin/named/ns_ncache.c			1.4
+dist/bind/bin/named/ns_defs.h			1.7
+dist/bind/bin/named/ns_req.c			1.6
+dist/bind/bin/named/ns_resp.c			1.8
+dist/bind/lib/nameser/ns_name.c			1.7
+dist/bind/lib/nameser/ns_samedomain.c		1.2
+
+  Correct multiple DoS holes as well as remote code injection.
+  Patch from ISC.
