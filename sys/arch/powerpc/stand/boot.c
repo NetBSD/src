@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1996/09/30 16:35:01 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1996/10/07 21:43:02 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,6 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 
-#include <machine/exec.h>
 #include <machine/cpu.h>
 
 #include "ofdev.h"
