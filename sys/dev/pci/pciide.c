@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.151 2002/04/23 20:41:17 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.152 2002/04/24 13:49:34 aymeric Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.151 2002/04/23 20:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.152 2002/04/24 13:49:34 aymeric Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3886,14 +3886,13 @@ opti_chip_map(sc, pa)
 	if (PCI_REVISION(pa->pa_class) <= 0x12) {
 		printf(" but disabled due to chip rev. <= 0x12");
 		sc->sc_dma_ok = 0;
-		sc->sc_wdcdev.cap = 0;
-	} else {
-		sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32;
+	} else
 		pciide_mapreg_dma(sc, pa);
-	}
+
 	printf("\n");
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16 |
+		WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
@@ -3999,7 +3998,7 @@ opti_setup_channel(chp)
 			mode[d] = mode[1-d];
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
 			chp->ch_drive[d].DMA_mode = 0;
-			chp->ch_drive[d].drive_flags &= DRIVE_DMA;
+			chp->ch_drive[d].drive_flags &= ~DRIVE_DMA;
 		}
 	}
 
