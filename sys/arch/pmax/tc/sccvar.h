@@ -1,4 +1,4 @@
-/*	$NetBSD: sccvar.h,v 1.2 1996/05/19 18:24:33 jonathan Exp $	*/
+/*	$NetBSD: sccvar.h,v 1.3 1998/11/15 11:21:53 jonathan Exp $	*/
 
 /*
  *
@@ -6,6 +6,8 @@
 extern int		sccGetc __P((dev_t));
 extern void		sccPutc __P((dev_t, int));
 extern int		sccparam __P((struct tty *, struct termios *));
+struct scc_regmap;
+void scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 /*
  * Minor device numbers for scc. Weird because B channel comes
