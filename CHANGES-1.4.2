@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.68 1999/10/26 00:19:26 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.69 1999/10/26 20:40:38 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -904,3 +904,27 @@ sys/dev/ic/wdc.c				1.76
   The WDCF_IRQ_WAIT flag was erroneously cleared when an earlier
   interrupt not for this IDE channel controller was received.
   Fixes the "missing untimeout" problems and PR#8639.
+
+sys/uvm/uvm_device.c				1.17
+
+  Bugfix for device mmap fault handler, fixes serious performance
+  problem with alpha X server.
+
+sys/ufs/lfs/lfs_bio.c				1.12
+
+  Fix LFS buffer starvation under degenerate access patterns.
+
+distrib/notes/pmax/install			1.22
+
+  The netboot kernel is called "install.ecoff", not "install".
+
+sys/arch/i386/conf/INSTALL			patch
+
+  Add "rl" and "vr" PCI Ethernet device drivers.  Remove EXEC_ELF32
+  and "en at pci" to make install kernel still fit in 1.44MB.  ATM-
+  only machines should be rare, and will need to borrow an ethernet
+  card for installation or use a custom install floppy.
+
+sys/arch/i386/conf/GENERIC			patch
+
+  Add "rl" PCI Ethernet device driver.
