@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.13 2000/06/07 16:29:11 matt Exp $
+#	$NetBSD: bsd.info.mk,v 1.14 2000/06/08 03:05:17 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -23,9 +23,6 @@ INSTALL_INFO?=	install-info
 .if defined(TEXINFO) && !empty(TEXINFO) && ${MKINFO} != "no"
 INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
 FILES+=		${INFOFILES}
-.for F in ${INFOFILES}
-FILESDIR_${F}=	${INFODIR}
-.endfor
 .NOPATH:	${INFOFILES}
 
 infoinstall:
