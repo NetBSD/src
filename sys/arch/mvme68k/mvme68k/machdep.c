@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2002/09/10 21:10:18 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -982,6 +982,7 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdev->d_psize == NULL)
 		goto bad;
