@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.3 2000/05/20 13:30:03 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.4 2000/06/04 20:04:21 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,6 +44,7 @@
 #include "../include/rpb.h"
 #include "../include/sid.h"
 #define VAX780 1
+struct proc;
 #include "../include/ka750.h"
 
 #include "../mba/mbareg.h"
@@ -60,9 +61,17 @@
 
 static struct disklabel hplabel;
 static char io_buf[DEV_BSIZE];
-static volatile struct mba_regs *mr;
-static volatile struct hp_drv *hd;
 static int dpart;
+static int adpadr, unitadr;
+
+#define	MBA_WCSR(reg, val) \
+	((void)(*(volatile u_int32_t *)((adpadr) + (reg)) = (val)));
+#define MBA_RCSR(reg) \
+	(*(volatile u_int32_t *)((adpadr) + (reg)))
+#define	HP_WCSR(reg, val) \
+	((void)(*(volatile u_int32_t *)((unitadr) + (reg)) = (val)));
+#define HP_RCSR(reg) \
+	(*(volatile u_int32_t *)((unitadr) + (reg)))
 
 int
 hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
@@ -71,12 +80,12 @@ hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	int i, err;
 
 	if (askname == 0) { /* Take info from RPB */
-		mr = (void *)bootrpb.adpphy;
-		hd = (void *)&mr->mba_md[bootrpb.unit];
+		adpadr = bootrpb.adpphy;
+		unitadr = adpadr + MUREG(bootrpb.unit, 0);
 	} else {
-		mr = (void *)nexaddr;
-		hd = (void *)&mr->mba_md[unit];
-		bootrpb.adpphy = (int)mr;
+		adpadr = nexaddr;
+		unitadr = adpadr + MUREG(unit, 0);
+		bootrpb.adpphy = adpadr;
 		bootrpb.unit = unit;
 	}
 	bzero(&hplabel, sizeof(struct disklabel));
@@ -85,9 +94,9 @@ hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	hplabel.d_nsectors = 32;
 
 	/* Set volume valid and 16 bit format; only done once */
-	mr->mba_cr = MBACR_INIT;
-	hd->hp_cs1 = HPCS_PA;
-	hd->hp_of = HPOF_FMT;
+	MBA_WCSR(MBA_CR, MBACR_INIT);
+	HP_WCSR(HP_CS1, HPCS_PA);
+	HP_WCSR(HP_OF, HPOF_FMT);
 
 	err = hpstrategy(0, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
 	if (err) {
@@ -109,11 +118,12 @@ hpstrategy(void *f, int func, daddr_t dblk,
 
 	pfnum = (u_int)buf >> VAX_PGSHIFT;
 
-	for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0; nsize -= VAX_NBPG)
-		*(int *)&mr->mba_map[mapnr++] = PG_V | pfnum++;
+	for(mapnr = 0, nsize = size; (nsize + VAX_NBPG) > 0;
+	    nsize -= VAX_NBPG, mapnr++, pfnum++)
+		MBA_WCSR(MAPREG(mapnr), PG_V | pfnum);
 
-	mr->mba_var = ((u_int)buf & VAX_PGOFSET);
-	mr->mba_bc = (~size) + 1;
+	MBA_WCSR(MBA_VAR, ((u_int)buf & VAX_PGOFSET));
+	MBA_WCSR(MBA_BC, (~size) + 1);
 	bn = dblk + hplabel.d_partitions[dpart].p_offset;
 
 	if (bn) {
@@ -124,19 +134,19 @@ hpstrategy(void *f, int func, daddr_t dblk,
 	} else
 		cn = sn = tn = 0;
 
-	hd->hp_dc = cn;
-	hd->hp_da = (tn << 8) | sn;
+	HP_WCSR(HP_DC, cn);
+	HP_WCSR(HP_DA, (tn << 8) | sn);
 #ifdef notdef
 	if (func == F_WRITE)
-		hd->hp_cs1 = HPCS_WRITE;
+		HP_WCSR(HP_CS1, HPCS_WRITE);
 	else
 #endif
-		hd->hp_cs1 = HPCS_READ;
+		HP_WCSR(HP_CS1, HPCS_READ);
 
-	while (mr->mba_sr & MBASR_DTBUSY)
+	while (MBA_RCSR(MBA_SR) & MBASR_DTBUSY)
 		;
 
-	if (mr->mba_sr & MBACR_ABORT)
+	if (MBA_RCSR(MBA_SR) & MBACR_ABORT)
 		return 1;
 
 	*rsize = size;
