@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp $
+#	$NetBSD: vnode_if.src,v 1.28.2.1 2001/07/10 13:49:49 lukem Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -225,6 +225,14 @@ vop_poll {
 	IN struct vnode *vp;
 	IN int events;
 	IN struct proc *p;
+};
+
+#
+#% kqfilter     vp      U U U
+#
+vop_kqfilter {
+	IN struct vnode *vp;
+	IN struct knote *kn;
 };
 
 #
