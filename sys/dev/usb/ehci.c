@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.87 2004/10/25 10:29:49 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.88 2004/10/26 20:46:16 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.87 2004/10/25 10:29:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.88 2004/10/26 20:46:16 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -485,7 +485,7 @@ ehci_init(ehci_softc_t *sc)
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
-		 EHCI_CMD_ITC_2 | /* 2 microframes */
+		 EHCI_CMD_ITC_2 | /* 2 microframes interrupt delay */
 		 (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
 		 EHCI_CMD_ASE |
 		 EHCI_CMD_PSE |
@@ -1736,6 +1736,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = ehci_str(buf, len, "\001");
+				break;
 			case 1: /* Vendor */
 				totlen = ehci_str(buf, len, sc->sc_vendor);
 				break;
