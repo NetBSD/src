@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.456 2004/01/11 10:24:59 lukem Exp $
+# $NetBSD: mi,v 1.457 2004/01/11 15:09:51 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2289,7 +2289,7 @@
 ./usr/share/man/man9/sun3			base-man-share
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
-./usr/share/man/whatis.db			base-man-share
+./usr/share/man/whatis.db			base-man-share		man
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-termcap-share
 ./usr/share/misc/acronyms			base-reference-share

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.21 2004/01/11 08:55:55 lukem Exp $
+#	$NetBSD: sets.subr,v 1.22 2004/01/11 15:09:51 lukem Exp $
 #
 
 #
@@ -22,23 +22,28 @@
 #	HAVE_GCC3
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
-#	MKBFD
-#	MKCRYPTO
-#	MKCRYPTO_IDEA
-#	MKCRYPTO_MDC2
-#	MKCRYPTO_RC5
-#	MKCVS
-#	MKHESIOD
-#	MKKERBEROS
-#	MKKERBEROS4
-#	MKLINT
-#	MKPOSTFIX
-#	MKPROFILE
-#	MKSENDMAIL
-#	MKSKEY
-#	MKYP
-
-MKVARS="MKBFD MKCRYPTO MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKCVS MKHESIOD MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKPROFILE MKSENDMAIL MKSKEY MKYP"
+# as well as:
+#
+MKVARS="\
+	MKBFD		\
+	MKCATPAGES	\
+	MKCRYPTO	\
+	MKCRYPTO_IDEA	\
+	MKCRYPTO_MDC2	\
+	MKCRYPTO_RC5	\
+	MKCVS		\
+	MKHESIOD	\
+	MKKERBEROS	\
+	MKKERBEROS4	\
+	MKLINT		\
+	MKMAN		\
+	MKMANZ		\
+	MKPOSTFIX	\
+	MKPROFILE	\
+	MKSENDMAIL	\
+	MKSKEY		\
+	MKYP		\
+"
 
 oIFS=$IFS
 IFS="
@@ -99,7 +104,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.21 2004/01/11 08:55:55 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.22 2004/01/11 15:09:51 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -119,21 +124,30 @@ fi
 #	obsolete		file is obsolete, and only printed if 
 #				${obsolete} != 0
 #
-#	bfd			<bsd.own.mk> ${MKBFD} != no
-#	crypto			<bsd.own.mk> ${MKCRYPTO} != no
-#	crypto_idea		<bsd.own.mk> ${MKCRYPTO_IDEA} != no
-#	crypto_mdc2		<bsd.own.mk> ${MKCRYPTO_MDC2} != no
-#	crypto_rc5		<bsd.own.mk> ${MKCRYPTO_RC5} != no
-#	cvs			<bsd.own.mk> ${MKCVS} != no
-#	hesiod			<bsd.own.mk> ${MKHESIOD} != no
-#	kerberos		<bsd.own.mk> ${MKKERBEROS} != no
-#	kerberos4		<bsd.own.mk> ${MKKERBEROS4} != no
-#	lint			<bsd.own.mk> ${MKLINT} != no
-#	postfix			<bsd.own.mk> ${MKPOSTFIX} != no
-#	profile			<bsd.own.mk> ${MKPROFILE} != no
-#	sendmail		<bsd.own.mk> ${MKSENDMAIL} != no
-#	skey			<bsd.own.mk> ${MKSKEY} != no
-#	yp			<bsd.own.mk> ${MKYP} != no
+#	bfd			${MKBFD} != no
+#	catpages		${MKCATPAGES} != no
+#	crypto			${MKCRYPTO} != no
+#	crypto_idea		${MKCRYPTO_IDEA} != no
+#	crypto_mdc2		${MKCRYPTO_MDC2} != no
+#	crypto_rc5		${MKCRYPTO_RC5} != no
+#	cvs			${MKCVS} != no
+#	hesiod			${MKHESIOD} != no
+#	kerberos		${MKKERBEROS} != no
+#	kerberos4		${MKKERBEROS4} != no
+#	lint			${MKLINT} != no
+#	man			${MKMAN} != no
+#	manz			${MKMANZ} != no
+#	postfix			${MKPOSTFIX} != no
+#	profile			${MKPROFILE} != no
+#	sendmail		${MKSENDMAIL} != no
+#	skey			${MKSKEY} != no
+#	yp			${MKYP} != no
+#
+#	.cat			if ${MKMANZ} != "no" && ${MKCATPAGES} != "no"
+#				  automatically append ".gz" to the filename
+#
+#	.man			if ${MKMANZ} != "no" && ${MKMAN} != "no"
+#				  automatically append ".gz" to the filename
 #
 list_set_files()
 {
@@ -150,6 +164,10 @@ list_set_files()
 					if (ENVIRON[nv] != "no")
 						wanted[kw] = 1 
 				}
+				if ("catpages" in wanted)
+					wanted[".cat"] = 1
+				if ("man" in wanted)
+					wanted[".man"] = 1
 			}
 		}
 
@@ -167,6 +185,9 @@ list_set_files()
 						print
 					next
 				}
+				if (("manz" in wanted) &&
+				    (kw == ".cat" || kw == ".man"))
+					$1 = $1 ".gz"
 				if (! (kw in wanted))
 					show = 0
 			}

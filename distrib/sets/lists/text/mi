@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2004/01/11 09:46:13 lukem Exp $
+# $NetBSD: mi,v 1.17 2004/01/11 15:09:51 lukem Exp $
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
 ./usr/bin/eqn					text-groff-bin
@@ -360,110 +360,110 @@
 ./usr/share/groff_font/devutf8/L		text-groff-font
 ./usr/share/groff_font/devutf8/R		text-groff-font
 ./usr/share/groff_font/devutf8/S		text-groff-font
-./usr/share/man/cat1/addftinfo.0		text-groff-catman
-./usr/share/man/cat1/checknr.0			text-groff-catman
-./usr/share/man/cat1/eqn.0			text-groff-catman
-./usr/share/man/cat1/grn.0			text-groff-catman
-./usr/share/man/cat1/grodvi.0			text-groff-catman
-./usr/share/man/cat1/groff.0			text-groff-catman
-./usr/share/man/cat1/grog.0			text-groff-catman
-./usr/share/man/cat1/grohtml.0			text-groff-catman
-./usr/share/man/cat1/grolbp.0			text-groff-catman
-./usr/share/man/cat1/grolj4.0			text-groff-catman
-./usr/share/man/cat1/grops.0			text-groff-catman
-./usr/share/man/cat1/grotty.0			text-groff-catman
-./usr/share/man/cat1/hpftodit.0			text-groff-catman
-./usr/share/man/cat1/indxbib.0			text-groff-catman
-./usr/share/man/cat1/lkbib.0			text-groff-catman
-./usr/share/man/cat1/lookbib.0			text-groff-catman
-./usr/share/man/cat1/neqn.0			text-groff-catman
-./usr/share/man/cat1/nroff.0			text-groff-catman
-./usr/share/man/cat1/pfbtops.0			text-groff-catman
-./usr/share/man/cat1/pic.0			text-groff-catman
+./usr/share/man/cat1/addftinfo.0		text-groff-catman	.cat
+./usr/share/man/cat1/checknr.0			text-groff-catman	.cat
+./usr/share/man/cat1/eqn.0			text-groff-catman	.cat
+./usr/share/man/cat1/grn.0			text-groff-catman	.cat
+./usr/share/man/cat1/grodvi.0			text-groff-catman	.cat
+./usr/share/man/cat1/groff.0			text-groff-catman	.cat
+./usr/share/man/cat1/grog.0			text-groff-catman	.cat
+./usr/share/man/cat1/grohtml.0			text-groff-catman	.cat
+./usr/share/man/cat1/grolbp.0			text-groff-catman	.cat
+./usr/share/man/cat1/grolj4.0			text-groff-catman	.cat
+./usr/share/man/cat1/grops.0			text-groff-catman	.cat
+./usr/share/man/cat1/grotty.0			text-groff-catman	.cat
+./usr/share/man/cat1/hpftodit.0			text-groff-catman	.cat
+./usr/share/man/cat1/indxbib.0			text-groff-catman	.cat
+./usr/share/man/cat1/lkbib.0			text-groff-catman	.cat
+./usr/share/man/cat1/lookbib.0			text-groff-catman	.cat
+./usr/share/man/cat1/neqn.0			text-groff-catman	.cat
+./usr/share/man/cat1/nroff.0			text-groff-catman	.cat
+./usr/share/man/cat1/pfbtops.0			text-groff-catman	.cat
+./usr/share/man/cat1/pic.0			text-groff-catman	.cat
 ./usr/share/man/cat1/psbb.0			text-groff-catman	obsolete
-./usr/share/man/cat1/refer.0			text-groff-catman
-./usr/share/man/cat1/soelim.0			text-groff-catman
-./usr/share/man/cat1/tbl.0			text-groff-catman
-./usr/share/man/cat1/tfmtodit.0			text-groff-catman
-./usr/share/man/cat1/troff.0			text-groff-catman
-./usr/share/man/cat1/vgrind.0			text-groff-catman
-./usr/share/man/cat5/groff_font.0		text-groff-catman
-./usr/share/man/cat5/groff_out.0		text-groff-catman
-./usr/share/man/cat5/groff_tmac.0		text-groff-catman
-./usr/share/man/cat5/tmac.0			text-groff-catman
-./usr/share/man/cat7/ditroff.0			text-groff-catman
-./usr/share/man/cat7/groff.0			text-groff-catman
-./usr/share/man/cat7/groff_char.0		text-groff-catman
-./usr/share/man/cat7/groff_diff.0		text-groff-catman
-./usr/share/man/cat7/groff_man.0		text-groff-catman
+./usr/share/man/cat1/refer.0			text-groff-catman	.cat
+./usr/share/man/cat1/soelim.0			text-groff-catman	.cat
+./usr/share/man/cat1/tbl.0			text-groff-catman	.cat
+./usr/share/man/cat1/tfmtodit.0			text-groff-catman	.cat
+./usr/share/man/cat1/troff.0			text-groff-catman	.cat
+./usr/share/man/cat1/vgrind.0			text-groff-catman	.cat
+./usr/share/man/cat5/groff_font.0		text-groff-catman	.cat
+./usr/share/man/cat5/groff_out.0		text-groff-catman	.cat
+./usr/share/man/cat5/groff_tmac.0		text-groff-catman	.cat
+./usr/share/man/cat5/tmac.0			text-groff-catman	.cat
+./usr/share/man/cat7/ditroff.0			text-groff-catman	.cat
+./usr/share/man/cat7/groff.0			text-groff-catman	.cat
+./usr/share/man/cat7/groff_char.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_diff.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_man.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_markup.0		text-groff-catman	obsolete
-./usr/share/man/cat7/groff_mdoc.0		text-groff-catman
-./usr/share/man/cat7/groff_me.0			text-groff-catman
-./usr/share/man/cat7/groff_mm.0			text-groff-catman
-./usr/share/man/cat7/groff_mmse.0		text-groff-catman
-./usr/share/man/cat7/groff_ms.0			text-groff-catman
+./usr/share/man/cat7/groff_mdoc.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_me.0			text-groff-catman	.cat
+./usr/share/man/cat7/groff_mm.0			text-groff-catman	.cat
+./usr/share/man/cat7/groff_mmse.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_ms.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_msafer.0		text-groff-catman	obsolete
-./usr/share/man/cat7/groff_trace.0		text-groff-catman
-./usr/share/man/cat7/groff_www.0		text-groff-catman
-./usr/share/man/cat7/man.0			text-groff-catman
-./usr/share/man/cat7/mdoc.samples.0		text-groff-catman
-./usr/share/man/cat7/me.0			text-groff-catman
-./usr/share/man/cat7/mm.0			text-groff-catman
-./usr/share/man/cat7/mmse.0			text-groff-catman
-./usr/share/man/cat7/ms.0			text-groff-catman
-./usr/share/man/cat7/roff.0			text-groff-catman
-./usr/share/man/man1/addftinfo.1		text-groff-man
-./usr/share/man/man1/checknr.1			text-groff-man
-./usr/share/man/man1/eqn.1			text-groff-man
-./usr/share/man/man1/grn.1			text-groff-man
-./usr/share/man/man1/grodvi.1			text-groff-man
-./usr/share/man/man1/groff.1			text-groff-man
-./usr/share/man/man1/grog.1			text-groff-man
-./usr/share/man/man1/grohtml.1			text-groff-man
-./usr/share/man/man1/grolbp.1			text-groff-man
-./usr/share/man/man1/grolj4.1			text-groff-man
-./usr/share/man/man1/grops.1			text-groff-man
-./usr/share/man/man1/grotty.1			text-groff-man
-./usr/share/man/man1/hpftodit.1			text-groff-man
-./usr/share/man/man1/indxbib.1			text-groff-man
-./usr/share/man/man1/lkbib.1			text-groff-man
-./usr/share/man/man1/lookbib.1			text-groff-man
-./usr/share/man/man1/neqn.1			text-groff-man
-./usr/share/man/man1/nroff.1			text-groff-man
-./usr/share/man/man1/pfbtops.1			text-groff-man
-./usr/share/man/man1/pic.1			text-groff-man
+./usr/share/man/cat7/groff_trace.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_www.0		text-groff-catman	.cat
+./usr/share/man/cat7/man.0			text-groff-catman	.cat
+./usr/share/man/cat7/mdoc.samples.0		text-groff-catman	.cat
+./usr/share/man/cat7/me.0			text-groff-catman	.cat
+./usr/share/man/cat7/mm.0			text-groff-catman	.cat
+./usr/share/man/cat7/mmse.0			text-groff-catman	.cat
+./usr/share/man/cat7/ms.0			text-groff-catman	.cat
+./usr/share/man/cat7/roff.0			text-groff-catman	.cat
+./usr/share/man/man1/addftinfo.1		text-groff-man		.man
+./usr/share/man/man1/checknr.1			text-groff-man		.man
+./usr/share/man/man1/eqn.1			text-groff-man		.man
+./usr/share/man/man1/grn.1			text-groff-man		.man
+./usr/share/man/man1/grodvi.1			text-groff-man		.man
+./usr/share/man/man1/groff.1			text-groff-man		.man
+./usr/share/man/man1/grog.1			text-groff-man		.man
+./usr/share/man/man1/grohtml.1			text-groff-man		.man
+./usr/share/man/man1/grolbp.1			text-groff-man		.man
+./usr/share/man/man1/grolj4.1			text-groff-man		.man
+./usr/share/man/man1/grops.1			text-groff-man		.man
+./usr/share/man/man1/grotty.1			text-groff-man		.man
+./usr/share/man/man1/hpftodit.1			text-groff-man		.man
+./usr/share/man/man1/indxbib.1			text-groff-man		.man
+./usr/share/man/man1/lkbib.1			text-groff-man		.man
+./usr/share/man/man1/lookbib.1			text-groff-man		.man
+./usr/share/man/man1/neqn.1			text-groff-man		.man
+./usr/share/man/man1/nroff.1			text-groff-man		.man
+./usr/share/man/man1/pfbtops.1			text-groff-man		.man
+./usr/share/man/man1/pic.1			text-groff-man		.man
 ./usr/share/man/man1/psbb.1			text-groff-man		obsolete
-./usr/share/man/man1/refer.1			text-groff-man
-./usr/share/man/man1/soelim.1			text-groff-man
-./usr/share/man/man1/tbl.1			text-groff-man
-./usr/share/man/man1/tfmtodit.1			text-groff-man
-./usr/share/man/man1/troff.1			text-groff-man
-./usr/share/man/man1/vgrind.1			text-groff-man
-./usr/share/man/man5/groff_font.5		text-groff-man
-./usr/share/man/man5/groff_out.5		text-groff-man
-./usr/share/man/man5/groff_tmac.5		text-groff-man
-./usr/share/man/man5/tmac.5			text-groff-man
-./usr/share/man/man7/ditroff.7			text-groff-man
-./usr/share/man/man7/groff.7			text-groff-man
-./usr/share/man/man7/groff_char.7		text-groff-man
-./usr/share/man/man7/groff_diff.7		text-groff-man
-./usr/share/man/man7/groff_man.7		text-groff-man
+./usr/share/man/man1/refer.1			text-groff-man		.man
+./usr/share/man/man1/soelim.1			text-groff-man		.man
+./usr/share/man/man1/tbl.1			text-groff-man		.man
+./usr/share/man/man1/tfmtodit.1			text-groff-man		.man
+./usr/share/man/man1/troff.1			text-groff-man		.man
+./usr/share/man/man1/vgrind.1			text-groff-man		.man
+./usr/share/man/man5/groff_font.5		text-groff-man		.man
+./usr/share/man/man5/groff_out.5		text-groff-man		.man
+./usr/share/man/man5/groff_tmac.5		text-groff-man		.man
+./usr/share/man/man5/tmac.5			text-groff-man		.man
+./usr/share/man/man7/ditroff.7			text-groff-man		.man
+./usr/share/man/man7/groff.7			text-groff-man		.man
+./usr/share/man/man7/groff_char.7		text-groff-man		.man
+./usr/share/man/man7/groff_diff.7		text-groff-man		.man
+./usr/share/man/man7/groff_man.7		text-groff-man		.man
 ./usr/share/man/man7/groff_markup.7		text-groff-man		obsolete
-./usr/share/man/man7/groff_mdoc.7		text-groff-man
-./usr/share/man/man7/groff_me.7			text-groff-man
-./usr/share/man/man7/groff_mm.7			text-groff-man
-./usr/share/man/man7/groff_mmse.7		text-groff-man
-./usr/share/man/man7/groff_ms.7			text-groff-man
+./usr/share/man/man7/groff_mdoc.7		text-groff-man		.man
+./usr/share/man/man7/groff_me.7			text-groff-man		.man
+./usr/share/man/man7/groff_mm.7			text-groff-man		.man
+./usr/share/man/man7/groff_mmse.7		text-groff-man		.man
+./usr/share/man/man7/groff_ms.7			text-groff-man		.man
 ./usr/share/man/man7/groff_msafer.7		text-groff-man		obsolete
-./usr/share/man/man7/groff_trace.7		text-groff-man
-./usr/share/man/man7/groff_www.7		text-groff-man
-./usr/share/man/man7/man.7			text-groff-man
-./usr/share/man/man7/mdoc.samples.7		text-groff-man
-./usr/share/man/man7/me.7			text-groff-man
-./usr/share/man/man7/mm.7			text-groff-man
-./usr/share/man/man7/mmse.7			text-groff-man
-./usr/share/man/man7/ms.7			text-groff-man
-./usr/share/man/man7/roff.7			text-groff-man
+./usr/share/man/man7/groff_trace.7		text-groff-man		.man
+./usr/share/man/man7/groff_www.7		text-groff-man		.man
+./usr/share/man/man7/man.7			text-groff-man		.man
+./usr/share/man/man7/mdoc.samples.7		text-groff-man		.man
+./usr/share/man/man7/me.7			text-groff-man		.man
+./usr/share/man/man7/mm.7			text-groff-man		.man
+./usr/share/man/man7/mmse.7			text-groff-man		.man
+./usr/share/man/man7/ms.7			text-groff-man		.man
+./usr/share/man/man7/roff.7			text-groff-man		.man
 ./usr/share/me/acm.me				text-groff-share
 ./usr/share/me/chars.me				text-groff-share
 ./usr/share/me/deltext.me			text-groff-share
