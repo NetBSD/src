@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.42 2002/07/05 03:24:07 lukem Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.43 2002/08/03 04:52:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.42 2002/07/05 03:24:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.43 2002/08/03 04:52:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,6 @@ portal_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
-	struct timeval tv;
 
 	memset(vap, 0, sizeof(*vap));
 	vattr_null(vap);
@@ -555,10 +554,12 @@ portal_getattr(v)
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
 	/*
-	 * Make all times be current TOD.
+	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
+	 * We don't guard the read from time(9) with splclock(9) since we
+	 * don't actually need to be THAT sure the access is atomic. 
 	 */
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
+	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;

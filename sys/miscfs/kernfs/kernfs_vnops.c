@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.82 2002/07/19 18:35:44 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.83 2002/08/03 04:52:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.82 2002/07/19 18:35:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.83 2002/08/03 04:52:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,6 @@ kernfs_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
-	struct timeval tv;
 	int error = 0;
 	char strbuf[KSTRING], *buf;
 
@@ -478,10 +477,11 @@ kernfs_getattr(v)
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
 	/*
-	 * Make all times be current TOD.
+	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
+	 * We don't guard the read from time(9) with splclock(9) since we
+	 * don't actually need to be THAT sure the access is atomic. 
 	 */
-	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
