@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.18 1995/06/26 23:26:23 jtc Exp $	*/
+/*	$NetBSD: ping.c,v 1.19 1995/07/27 23:49:45 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.18 1995/06/26 23:26:23 jtc Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.19 1995/07/27 23:49:45 ghudson Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ static char rcsid[] = "$NetBSD: ping.c,v 1.18 1995/06/26 23:26:23 jtc Exp $";
 #define	MAXIPLEN	60
 #define	MAXICMPLEN	76
 #define	MAXPACKET	(65536 - 60 - 8)/* max packet size */
-#define	MAXWAIT		10		/* max seconds to wait for response */
+#define	MAXWAIT_DEFAULT	10		/* max seconds to wait for response */
 #define	NROUTES		9		/* number of record route slots */
 
 #define	A(bit)		rcvd_tbl[(bit)>>3]	/* identify byte in array */
@@ -114,6 +114,7 @@ int options;
 #define	F_SO_DEBUG	0x040
 #define	F_SO_DONTROUTE	0x080
 #define	F_VERBOSE	0x100
+#define	F_SADDR		0x200
 
 /* multicast options */
 int moptions;
@@ -131,6 +132,7 @@ int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
 struct sockaddr whereto;	/* who to ping */
+struct sockaddr_in whence;		/* Which interface we come from */
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[MAXPACKET];
@@ -148,6 +150,7 @@ int interval = 1;		/* interval between packets */
 
 /* timing */
 int timing;			/* flag to do timing */
+int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
@@ -173,7 +176,7 @@ main(argc, argv)
 	struct hostent *hp;
 	struct sockaddr_in *to;
 	struct protoent *proto;
-	struct in_addr ifaddr;
+	struct in_addr ifaddr, saddr;
 	register int i;
 	int ch, fdmask, hold, packlen, preload;
 	u_char *datap, *packet;
@@ -185,7 +188,7 @@ main(argc, argv)
 
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct timeval)];
-	while ((ch = getopt(argc, argv, "I:LRc:dfh:i:l:np:qrs:t:v")) != EOF)
+	while ((ch = getopt(argc, argv, "I:LRS:c:dfh:i:l:np:qrs:t:vw:")) != EOF)
 		switch(ch) {
 		case 'c':
 			npackets = atoi(optarg);
@@ -238,6 +241,15 @@ main(argc, argv)
 		case 'r':
 			options |= F_SO_DONTROUTE;
 			break;
+		case 'S':
+			if (inet_aton(optarg, &saddr) == 0) {
+				if ((hp = gethostbyname(optarg)) == NULL)
+					errx(1, "bad interface address: %s",
+					     optarg);
+				memcpy(&saddr, hp->h_addr, sizeof(saddr));
+			}
+			options |= F_SADDR;
+			break;
 		case 's':		/* size of packet to send */
 			datalen = atoi(optarg);
 			if (datalen <= 0)
@@ -251,9 +263,15 @@ main(argc, argv)
 				errx(1, "bad ttl value: %s", optarg);
 			if (ttl > 255)
 				errx(1, "ttl value too large: %s", optarg);
+			moptions |= MULTICAST_TTL;
 			break;
 		case 'v':
 			options |= F_VERBOSE;
+			break;
+		case 'w':
+			maxwait = atoi(optarg);
+			if (maxwait <= 0)
+				errx(1, "bad maxwait value: %s", optarg);
 			break;
 		default:
 			usage();
@@ -300,6 +318,16 @@ main(argc, argv)
 	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0)
 		err(1, "socket");
 	hold = 1;
+
+	if (options & F_SADDR) {
+		memset(&whence, 0, sizeof(whence));
+		whence.sin_len = sizeof(whence);
+		whence.sin_family = AF_INET;
+		memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
+		if (bind(s, (struct sockaddr*)&whence, sizeof(whence)) < 0)
+			err(1, "bind");
+	}
+
 	if (options & F_SO_DEBUG)
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&hold,
 		    sizeof(hold));
@@ -418,7 +446,7 @@ catcher()
 			if (!waittime)
 				waittime = 1;
 		} else
-			waittime = MAXWAIT;
+			waittime = maxwait;
 		(void)signal(SIGALRM, finish);
 		(void)alarm((u_int)waittime);
 	}
@@ -995,6 +1023,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-dfLnqRrv] [-c count] [-I ifaddr] [-i wait] [-l preload]\n\t[-p pattern] [-s packetsize] [-t ttl] host\n");
+	    "usage: ping [-dfLnqRrv] [-c count] [-I ifaddr] [ -S ifaddr ] [-i wait]\n\t[-l preload] [-p pattern] [-s packetsize] [-t ttl] [-w maxwait] host\n");
 	exit(1);
 }
