@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $	*/
+/*	$NetBSD: parse.c,v 1.44 1999/08/09 21:06:28 aidan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.44 1999/08/09 21:06:28 aidan Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.43 1999/08/04 02:54:57 ross Exp $");
+__RCSID("$NetBSD: parse.c,v 1.44 1999/08/09 21:06:28 aidan Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -257,6 +257,7 @@ static __inline int ParseReadc __P((void));
 static void ParseUnreadc __P((int));
 static void ParseHasCommands __P((ClientData));
 static void ParseDoInclude __P((char *));
+static void ParseSetParseFile __P((char *));
 #ifdef SYSVINCLUDE
 static void ParseTraditionalInclude __P((char *));
 #endif
@@ -1808,6 +1809,8 @@ ParseDoInclude (line)
     fname = fullname;
     lineno = 0;
 
+    ParseSetParseFile(fname);
+
     curFILE = fopen (fullname, "r");
     curPTR = NULL;
     if (curFILE == (FILE * ) NULL) {
@@ -1817,6 +1820,39 @@ ParseDoInclude (line)
 	 * Pop to previous file
 	 */
 	(void) ParseEOF(0);
+    }
+}
+
+
+/*-
+ *---------------------------------------------------------------------
+ * ParseSetParseFile  --
+ *	Set the .PARSEDIR and .PARSEFILE variables to the dirname and
+ *	basename of the given filename
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	The .PARSEDIR and .PARSEFILE variables are overwritten by the
+ *	dirname and basename of the given filename.
+ *---------------------------------------------------------------------
+ */
+static void
+ParseSetParseFile(fname)
+    char *fname;
+{
+    char *slash;
+
+    slash = strrchr(fname, '/');
+    if (slash == 0) {
+	Var_Set(".PARSEDIR", ".", VAR_GLOBAL);
+	Var_Set(".PARSEFILE", fname, VAR_GLOBAL);
+    } else {
+	*slash = '\0';
+	Var_Set(".PARSEDIR", fname, VAR_GLOBAL);
+	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL);
+	*slash = '/';
     }
 }
 
@@ -2041,6 +2077,8 @@ ParseEOF (opened)
     IFile     *ifile;	/* the state on the top of the includes stack */
 
     if (Lst_IsEmpty (includes)) {
+	Var_Delete(".PARSEDIR", VAR_GLOBAL);
+	Var_Delete(".PARSEFILE", VAR_GLOBAL);
 	return (DONE);
     }
 
@@ -2057,6 +2095,9 @@ ParseEOF (opened)
     curFILE = ifile->F;
     curPTR = ifile->p;
     free ((Address)ifile);
+
+    /* pop the PARSEDIR/PARSEFILE variables */
+    ParseSetParseFile(fname);
     return (CONTINUE);
 }
 
@@ -2474,6 +2515,8 @@ Parse_File(name, stream)
     curFILE = stream;
     lineno = 0;
     fatals = 0;
+
+    ParseSetParseFile(fname);
 
     do {
 	while ((line = ParseReadLine ()) != NULL) {
