@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.27.2.2 2000/11/01 03:47:57 tv Exp $
+.\"	$NetBSD: contents,v 1.27.2.3 2000/11/02 23:31:35 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,6 +81,15 @@ A version of
 .Li INSTALL
 intended to run on machines with less than 8 MB.
 .\}
+.
+.if r_mvme68k \{\
+.			It Pa netbsd.VME147.gz
+A kernel for MVME147 boards.
+.			It Pa netbsd.VME162.gz
+A kernel for MVME162-LX boards.
+.			It Pa netbsd.VME167.gz
+A kernel for MVME167 boards.
+.\}
 .		tag)
 .		It Pa sets/
 \*M binary distribution sets;
@@ -90,8 +99,10 @@ see below.
 .
 .	(tag instkernel/ -compact
 .
+.if !r_mvme68k \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
+.\}
 .
 .if r_alpha \{\
 .		It Pa diskimage/
@@ -122,6 +133,7 @@ this image.
 \*M miniroot file system image; see below.
 .\}
 .
+.if !r_mvme68k \{\
 .		It Pa misc/
 .
 .if r_alpha \{\
@@ -142,12 +154,13 @@ Statically-linked versions of
 Miscellaneous \*M installation utilities; see
 installation section, below.
 \}
+.\}
 .
 .if r_mvme68k \{\
 .		It Pa netboot/
-Two programs needed to boot \*M kernels over the network.
+Two programs needed to boot \*M kernels over the network; see below.
 .		It Pa tapeimage/
-Tape boot programs, and a RAMDISK kernel.
+Tape boot programs, and a RAMDISK kernel; see below.
 .\}
 .
 .if \n[sparc]:\n[sparc64] \{\
@@ -246,63 +259,6 @@ initial installation. Some of the kernels only support a particular
 subset of the platforms that arm32 supports (See
 .Pa arm32/kernels/README
 for more details.)
-.\}
-.
-.
-.if r_mvme68k \{\
-.Pp
-The
-.Nx*M
-install distribution contains files that can be
-used to install
-.Nx
-onto completely
-.Sq bare
-MVME147 and MVME167
-boards. The files
-in the
-.Pa mvme68k/installation
-directories are described below.
-.(tag netbsd-rd.gz
-.It Pa miniroot.gz
-A gzipped copy of the miniroot file system.
-This image is to be un-gzipped and copied
-into the swap area of a disk.
-.It Pa netbsd-rd.gz
-A gzipped copy of the
-.Li RAMDISK
-kernel for installing the miniroot file system.
-.It Pa stboot
-A tape boot-block, in the form required to
-allow 1x7-Bug to boot from tape. This is the
-first segment of a boot tape.
-.It Pa bootst
-A copy of the tape boot program, used
-as the second segment of a boot tape.
-.It Pa sboot
-A copy of the MVME147 serial boot program. This is
-necessary if you don't have a tape drive,
-but you
-.Em do
-have another system which can
-act as a boot and NFS server. This is also
-useful if you are installing a diskless
-.Nx
-system on an MVME147 board.
-.It Pa netboot
-A copy of the network boot program. Used
-in conjunction with sboot on the MVME147 to get your system
-booted over a network. The MVME167 can boot this file
-directly using 167Bug's builtin TFTP client.
-.tag)
-.Pp
-These files can be used to make a boot tape suitable for installing
-.Nx*M .
-These files can also be used to configure an NFS server
-to support installation
-.Sq "over the network" . See the section
-.Sx Getting the NetBSD System onto Useful Media
-for instructions on either method.
 .\}
 .
 .
@@ -987,6 +943,70 @@ can be used with
 These files are all binhexed, self-extracting archives. If you need them,
 the sources for these utilities are in the
 .Pa src No subdirectory.
+.\}
+.
+.if r_mvme68k \{\
+.Pp
+The following are included in the
+.Pa mvme68k/installation No directory:
+.
+.(tag miniroot/
+.It Pa miniroot/
+.	(tag miniroot.gz
+.	It Pa miniroot.gz
+A copy of the miniroot file system.
+This filesystem image is copied into the swap partition of the disk which
+you intend to boot
+.Nx
+from. Normally, this step will be performed manually from the ramdisk boot
+environment.
+.	tag)
+.tag)
+.
+.(tag miniroot/
+.It Pa netboot/
+.	(tag sboot
+.	It Pa sboot
+An MVME147 bootstrap program in Motorola S-Record format. This is
+required when you wish to boot an MVME147 over the network since
+the ROM has no built-in network support. Instructions for getting
+this program into memory are discussed later.
+.	tag)
+.	(tag netboot
+.	It Pa netboot
+A standalone 2nd stage bootstrap program loaded over the network
+via TFTP. This is responsible for fetching and starting the
+.Nx
+\*M
+kernel from an NFS server.
+.	tag)
+.tag)
+.
+.(tag tapeimage/
+.It Pa tapeimage/
+.	(tag stboot
+.	It Pa stboot
+This file contains a boot sector for Motorola MVME boards. It must
+be the first file written to a tape in order to make the tape bootable.
+.	tag)
+.	(tag bootst
+.	It Pa bootst
+This file contains a bootstrap program which knows how to load the
+.Nx
+\*M
+ramdisk image from tape. This must be the second file written to the tape.
+.	tag)
+.	(tag netbsd-rd.gz
+.	It Pa netbsd-rd.gz
+This is the
+.Nx
+\*M
+ramdisk image. It contains a GENERIC kernel and a built in RAMDISK
+with just enough tools to partition a disk, dump the miniroot kernel
+to it and make the disk bootable. This must be the third file written
+to the tape.
+.	tag)
+.tag)
 .\}
 .
 .
