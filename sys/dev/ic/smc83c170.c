@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.31 2000/05/12 16:57:30 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.32 2000/05/26 00:14:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -204,14 +204,21 @@ epic_attach(sc)
 	 * Read the Ethernet address from the EEPROM.
 	 */
 	epic_read_eeprom(sc, 0, (sizeof(myea) / sizeof(myea[0])), myea);
-	bcopy(myea, enaddr, sizeof(myea));
+	for (i = 0; i < sizeof(myea)/ sizeof(myea[0]); i++) {
+		enaddr[i * 2]     = myea[i] & 0xff;
+		enaddr[i * 2 + 1] = myea[i] >> 8;
+	}
 
 	/*
 	 * ...and the device name.
 	 */
 	epic_read_eeprom(sc, 0x2c, (sizeof(mydevname) / sizeof(mydevname[0])),
 	    mydevname);
-	bcopy(mydevname, devname, sizeof(mydevname));
+	for (i = 0; i < sizeof(mydevname) / sizeof(mydevname[0]); i++) {
+		devname[i * 2]     = mydevname[i] & 0xff;
+		devname[i * 2 + 1] = mydevname[i] >> 8;
+	}
+
 	devname[sizeof(mydevname)] = '\0';
 	for (i = sizeof(mydevname) - 1; i >= 0; i--) {
 		if (devname[i] == ' ')
