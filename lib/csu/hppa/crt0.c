@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 2003/07/26 19:24:27 salo Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 2003/10/06 05:28:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -40,7 +40,7 @@
 
 int	__global __asm ("$global$") = 0;
 
-static void __start __P((struct ps_strings *,
+static void ___start __P((struct ps_strings *,
     void (*cleanup) __P((void)), const Obj_Entry *, int)) 
 #ifdef __GNUC__
     __attribute__((__unused__))
@@ -51,17 +51,20 @@ __asm("\n"
 "	.text				\n"
 "	.align	4			\n"
 "	.globl	_start			\n"
-"	.type	_start,@function	\n"
-"_start					\n"
+"	.globl	_start			\n"
+"	.type	__start,@function	\n"
+"	.type	__start,@function	\n"
+"_start:				\n"
+"__start:				\n"
 "	.import	$global$, data		\n"
 "	ldil	L%$global$, %r27	\n"
 "	ldo	R%$global$(%r27), %r27	\n"
 "	copy	%r27, %r19		\n"
-"	b	__start			\n"
+"	b	___start		\n"
 "	copy	%r27, %arg3		\n");
 
 static void
-__start(ps_strings, cleanup, obj, dp)
+___start(ps_strings, cleanup, obj, dp)
 	struct ps_strings *ps_strings;
 	void (*cleanup) __P((void));		/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
@@ -149,7 +152,7 @@ __start(ps_strings, cleanup, obj, dp)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.3 2003/07/26 19:24:27 salo Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.4 2003/10/06 05:28:05 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
