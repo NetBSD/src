@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17 2001/06/30 00:00:41 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18 2001/09/21 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -57,7 +57,7 @@
 
 #include <dev/sun/event_var.h>
 
-int ev_out32 __P((struct firm_event *, int, struct uio *));
+static int ev_out32 __P((struct firm_event *, int, struct uio *));
 
 /*
  * Set up registers on exec.
