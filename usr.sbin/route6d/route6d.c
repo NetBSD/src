@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.48 2003/09/19 06:07:52 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.49 2003/10/30 08:46:04 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.48 2003/09/19 06:07:52 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.49 2003/10/30 08:46:04 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -1003,7 +1003,7 @@ riprecv(void)
 	struct	rip6 *rp;
 	struct	netinfo6 *np, *nq;
 	struct	riprt *rrt;
-	int	len, nn, need_trigger, idx;
+	ssize_t	len, nn, need_trigger, idx;
 	char	buf[4 * RIP6_MAXMTU];
 	time_t	t;
 	struct msghdr m;
@@ -1044,6 +1044,11 @@ riprecv(void)
 	}
 	if (idx && IN6_IS_ADDR_LINKLOCAL(&fsock.sin6_addr))
 		SET_IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr, idx);
+
+	if (len < sizeof(struct rip6)) {
+		trace(1, "Packet too short\n");
+		return;
+	}
 
 	nh = fsock.sin6_addr;
 	nn = (len - sizeof(struct rip6) + sizeof(struct netinfo6)) /
@@ -1751,7 +1756,7 @@ rt_del(const struct sockaddr_in6 *sdst, const struct sockaddr_in6 *sgw,
 		 * fresh list.
 		 */
 		struct riprt *longest;
-		trace(1, "\t%s is a interface route, guessing prefixlen\n",
+		trace(1, "\t%s is an interface route, guessing prefixlen\n",
 			inet6_n2p(dst));
 		longest = NULL;
 		for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
