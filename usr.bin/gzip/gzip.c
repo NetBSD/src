@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.2 2003/12/23 06:23:18 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.3 2003/12/23 08:11:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -65,9 +65,9 @@
 /* Define this if you have the NetBSD gzopenfull(3) extension to zlib(3) */
 #define HAVE_ZLIB_GZOPENFULL 0
 
-static	char	gzip_version[] = "NetBSD gzip 2.0";
+static	const char	gzip_version[] = "NetBSD gzip 2.0";
 
-static	char	gzipflags[3] = "";	/* `w' or `r', possible with [1-9] */
+static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
 static	int	fflag;			/* force mode */
@@ -77,7 +77,7 @@ static	int	qflag;			/* quiet mode */
 static	int	rflag;			/* recursive mode */
 static	int	tflag;			/* test */
 static	int	vflag;			/* verbose mode */
-static	char	*Sflag = GZ_SUFFIX;	/* suffix (.gz) */
+static	const char *Sflag = GZ_SUFFIX;	/* suffix (.gz) */
 
 static	int	suffix_len = SUFFIX_LEN; /* length of suffix; includes nul */
 static	char	*newfile;		/* name of newly created file */
@@ -103,7 +103,7 @@ static	void	print_test(char *, int);
 
 int main(int, char *p[]);
 
-struct option longopts[] = {
+static const struct option longopts[] = {
 	{ "stdout",		no_argument,		0,	'c' },
 	{ "to-stdout",		no_argument,		0,	'c' },
 	{ "decompress",		no_argument,		0,	'd' },
