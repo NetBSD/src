@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.11 1997/04/07 23:40:31 cgd Exp $ */
+/* $NetBSD: cia_pci.c,v 1.11.2.1 1997/09/01 20:00:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11 1997/04/07 23:40:31 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.1 1997/09/01 20:00:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

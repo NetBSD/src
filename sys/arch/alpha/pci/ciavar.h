@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.8 1997/06/06 23:54:27 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.8.6.1 1997/09/01 20:00:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

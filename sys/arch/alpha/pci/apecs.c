@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.22 1997/04/10 23:12:16 cgd Exp $ */
+/* $NetBSD: apecs.c,v 1.22.2.1 1997/09/01 20:00:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.22 1997/04/10 23:12:16 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.22.2.1 1997/09/01 20:00:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
