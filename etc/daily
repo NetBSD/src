@@ -45,18 +45,20 @@ find / ! -fstype local -a -prune -o \
 	\( -name '[#,]*' -o -name '.#*' -o -name a.out -o -name core \
 	   -o -name '*.CKP' -o -name '.emacs_[0-9]*' \) \
 		-a -atime +3 -exec rm -f -- {} \;
-msgs -c
+#msgs -c
 if [ -f /etc/news.expire ]; then
 	/etc/news.expire
 fi
 
-echo ""
-echo "Purging accounting records:"
-mv /var/account/acct.2 /var/account/acct.3
-mv /var/account/acct.1 /var/account/acct.2
-mv /var/account/acct.0 /var/account/acct.1
-cp /var/account/acct /var/account/acct.0
-sa -s > /dev/null
+if [ -f /var/account ]; then
+	echo "" ;
+	echo "Purging accounting records:" ;
+	mv /var/account/acct.2 /var/account/acct.3 ;
+	mv /var/account/acct.1 /var/account/acct.2 ;
+	mv /var/account/acct.0 /var/account/acct.1 ;
+	cp /var/account/acct /var/account/acct.0 ;
+	sa -s > /dev/null ;
+fi
 
 echo ""
 echo "Backup passwd and group files:"
@@ -88,18 +90,21 @@ calendar -a
 echo ""
 echo "Rotating mail log:"
 cd /var/log
-rm -f maillog.7
-if [ -f maillog.6 ]; then mv -f maillog.6  maillog.7; fi
-if [ -f maillog.5 ]; then mv -f maillog.5  maillog.6; fi
-if [ -f maillog.4 ]; then mv -f maillog.4  maillog.5; fi
-if [ -f maillog.3 ]; then mv -f maillog.3  maillog.4; fi
-if [ -f maillog.2 ]; then mv -f maillog.2  maillog.3; fi
-if [ -f maillog.1 ]; then mv -f maillog.1  maillog.2; fi
-if [ -f maillog.0 ]; then mv -f maillog.0  maillog.1; fi
+rm -f maillog.7.Z
+if [ -f maillog.6.Z ]; then mv -f maillog.6.Z  maillog.7.Z; fi
+if [ -f maillog.5.Z ]; then mv -f maillog.5.Z  maillog.6.Z; fi
+if [ -f maillog.4.Z ]; then mv -f maillog.4.Z  maillog.5.Z; fi
+if [ -f maillog.3.Z ]; then mv -f maillog.3.Z  maillog.4.Z; fi
+if [ -f maillog.2.Z ]; then mv -f maillog.2.Z  maillog.3.Z; fi
+if [ -f maillog.1.Z ]; then mv -f maillog.1.Z  maillog.2.Z; fi
+if [ -f maillog.0.Z ]; then mv -f maillog.0.Z  maillog.1.Z; fi
 mv -f maillog maillog.0
+compress -f maillog.0
 cp /dev/null maillog
-chmod 644    maillog
+chmod 600    maillog
 kill -1 `cat /var/run/syslog.pid`
+
+
 cd /
 
 if [ -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
@@ -126,7 +131,7 @@ mailq
 if [ -d /var/spool/uucp ]; then
 	echo ""
 	echo "uucp:"
-	uusnap
+	uustat -a
 fi
 
 echo ""
