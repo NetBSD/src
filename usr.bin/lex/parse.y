@@ -33,7 +33,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/parse.y,v 1.7 1995/05/05 05:35:39 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/parse.y,v 1.8 1996/12/10 07:18:51 mikel Exp $ */
 
 
 /* Some versions of bison are broken in that they use alloca() but don't
