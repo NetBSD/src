@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.32 1995/07/24 02:29:59 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.33 1995/07/24 04:12:54 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -899,7 +899,7 @@ leread(sc, buf, len)
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;
 	}
