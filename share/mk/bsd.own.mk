@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.30 1997/02/23 20:53:56 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.31 1997/03/24 21:54:19 christos Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -28,10 +28,11 @@ NONBINMODE?=	444
 # Define MANZ to have the man pages compressed (gzip)
 #MANZ=		1
 
-MANDIR?=	/usr/share/man/cat
+MANDIR?=	/usr/share/man
 MANGRP?=	bin
 MANOWN?=	bin
 MANMODE?=	${NONBINMODE}
+MANINSTALL?=	catinstall
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint

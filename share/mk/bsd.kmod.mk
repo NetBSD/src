@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.9 1997/03/22 22:33:56 perry Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.10 1997/03/24 21:54:16 christos Exp $
 
 S!=	cd ${.CURDIR}/..;pwd
 
@@ -68,38 +68,22 @@ afterinstall:
 .endif
 
 .if !target(realinstall)
-realinstall:
+realinstall: ${DESTDIR}${KMODDIR}/${PROG}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${KMODDIR}/${PROG}
+.endif
+.if !defined(BUILD)
+${DESTDIR}${KMODDIR}/${PROG}: .MADE
+.endif
+
+${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
 	${INSTALL} ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
-		${PROG} ${DESTDIR}${KMODDIR}
+		${.ALLSRC} ${.TARGET}
 .endif
 
-install: maninstall _SUBDIRUSE
-.if defined(LINKS) && !empty(LINKS)
-	@set ${LINKS}; \
-	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		${ECHO} $$t -\> $$l; \
-		rm -f $$t; \
-		ln $$l $$t; \
-	done; true
-.endif
-.if defined(SYMLINKS) && !empty(SYMLINKS)
-	@set ${SYMLINKS}; \
-	while test $$# -ge 2; do \
-		l=$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		${ECHO} $$t -\> $$l; \
-		rm -f $$t; \
-		ln -s $$l $$t; \
-	done; true
-.endif
+install: ${MANINSTALL} _SUBDIRUSE linksinstall
 
-maninstall: afterinstall
+${MANINSTALL}: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
 .endif
@@ -128,6 +112,7 @@ unload: ${PROG}
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.88 1997/03/23 00:52:20 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.89 1997/03/24 21:54:17 christos Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -156,25 +156,27 @@ all: ${_LIBS} _SUBDIRUSE
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
-lib${LIB}.a:: ${OBJS}
+__achivebuild: .USE
+	@rm -f ${.TARGET}
+	@${AR} cq ${.TARGET} `lorder ${.ALLSRC} | tsort -q`
+	${RANLIB} ${.TARGET}
+
+__archiveinstall: .USE
+	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 ${.ALLSRC} \
+		${.TARGET}
+	${RANLIB} -t ${.TARGET}
+	chmod ${LIBMODE} ${.TARGET}
+
+lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
-	@rm -f lib${LIB}.a
-	@${AR} cq lib${LIB}.a `lorder ${OBJS} | tsort -q`
-	${RANLIB} lib${LIB}.a
 
 POBJS+=	${OBJS:.o=.po}
-lib${LIB}_p.a:: ${POBJS}
+lib${LIB}_p.a:: ${POBJS} __archivebuild
 	@echo building profiled ${LIB} library
-	@rm -f lib${LIB}_p.a
-	@${AR} cq lib${LIB}_p.a `lorder ${POBJS} | tsort -q`
-	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
-lib${LIB}_pic.a:: ${SOBJS}
+lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
-	@rm -f lib${LIB}_pic.a
-	@${AR} cq lib${LIB}_pic.a `lorder ${SOBJS} | tsort -q`
-	${RANLIB} lib${LIB}_pic.a
 
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
@@ -182,9 +184,9 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if (${SHLIB_TYPE} == "a.out")
 	$(LD) -x -Bshareable -Bforcearchive \
-	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
+	    -o ${.TARGET} lib${LIB}_pic.a ${LDADD}
 .elif (${SHLIB_TYPE} == "ELF")
-	$(LD) -x -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	$(LD) -x -shared -o ${.TARGET} \
 	    -soname lib${LIB}.so.${SHLIB_SOVERSION}  ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
@@ -224,29 +226,52 @@ afterdepend: .depend
 beforeinstall:
 .endif
 
-realinstall:
-#	ranlib lib${LIB}.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
-	    ${DESTDIR}${LIBDIR}
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
+libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.endif
+.if !defined(BUILD)
+${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
+.endif
+
+${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
+
 .if !defined(NOPROFILE)
-#	ranlib lib${LIB}_p.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
-	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
+.if !defined(BUILD)
+${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
+.endif
+
+${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
+.endif
+
 .if !defined(NOPIC)
-#	ranlib lib${LIB}_pic.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
-	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
-	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
+.if !defined(BUILD)
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
+.endif
+
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
+.endif
+
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
+libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.endif
+.if !defined(BUILD)
+${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
+.endif
+ 
+${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} \
+		${.TARGET}
 .if (${SHLIB_TYPE} == "ELF")
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -256,37 +281,26 @@ realinstall:
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
+
 .if !defined(NOLINT)
+libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
+.endif
+.if !defined(BUILD)
+${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
+.endif
+
+${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln llib-l${LIB}.ln
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .endif
-.if defined(LINKS) && !empty(LINKS)
-	@set ${LINKS}; \
-	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln $$l $$t; \
-	done; true
-.endif
-.if defined(SYMLINKS) && !empty(SYMLINKS)
-	@set ${SYMLINKS}; \
-	while test $$# -ge 2; do \
-		l=$$1; \
-		shift; \
-		t=${DESTDIR}$$1; \
-		shift; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln -s $$l $$t; \
-	done; true
-.endif
 
-install: maninstall _SUBDIRUSE
-maninstall: afterinstall
+libinstall:: linksinstall
+realinstall: libinstall
+
+install: ${MANINSTALL} _SUBDIRUSE
+${MANINSTALL}: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
 .endif
@@ -300,6 +314,8 @@ realinstall: beforeinstall
 .endif
 
 .include <bsd.obj.mk>
+.include <bsd.links.mk>
+.include <bsd.inc.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
