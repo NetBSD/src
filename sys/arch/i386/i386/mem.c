@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.5 1993/09/16 03:24:37 brezak Exp $
+ *	$Id: mem.c,v 1.6 1993/10/02 00:16:25 cgd Exp $
  */
 
 /*
@@ -227,4 +227,31 @@ mmrw(dev, uio, flags)
 	if (zbuf)
 		free(zbuf, M_TEMP);
 	return (error);
+}
+
+/*
+ * mmap() memory sections
+ */
+
+int
+mmmmap(dev, offset, nprot)
+	dev_t dev;
+	int offset;
+	int nprot;
+{
+
+	switch (minor(dev)) {
+/* minor device 0 is physical memory */
+	case 0:
+		if (offset > ctob(physmem))
+			return -1;
+		return i386_btop(offset);
+
+/* minor device 0 is physical memory */
+	case 1:
+		return i386_btop(offset);
+
+	default:
+		return -1;
+	}
 }
