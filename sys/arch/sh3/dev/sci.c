@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.25 2002/04/28 17:10:32 uch Exp $ */
+/* $NetBSD: sci.c,v 1.26 2002/05/19 15:10:47 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -1164,77 +1164,83 @@ sciintr(void *arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	ssr = SHREG_SCSSR;
-	if (ISSET(ssr, SCSSR_FER)) {
-		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
+	do {
+		ssr = SHREG_SCSSR;
+		if (ISSET(ssr, SCSSR_FER)) {
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
 #if defined(DDB) || defined(KGDB)
 #ifdef SH4
-		if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
+			if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
 #else
-		if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
+			if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
 #endif
 #ifdef DDB
-			if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
-				console_debugger();
-			}
+				if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
+					console_debugger();
+				}
 #endif
 #ifdef KGDB
-			if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
-				kgdb_connect(1);
-			}
+				if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
+					kgdb_connect(1);
+				}
 #endif
-		}
+			}
 #endif /* DDB || KGDB */
-	}
-	if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
-		if (cc > 0) {
-			put[0] = SHREG_SCRDR;
-			put[1] = SHREG_SCSSR & 0x00ff;
+		}
+		if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
+			if (cc > 0) {
+				put[0] = SHREG_SCRDR;
+				put[1] = SHREG_SCSSR & 0x00ff;
+
+				put += 2;
+				if (put >= end)
+					put = sc->sc_rbuf;
+				cc--;
+			}
 
 			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER |
-					 SCSSR_RDRF);
+			    SCSSR_RDRF);
 
-			put += 2;
-			if (put >= end)
-				put = sc->sc_rbuf;
-			cc--;
-		}
+				/*
+				 * Current string of incoming characters ended because
+				 * no more data was available or we ran out of space.
+				 * Schedule a receive event if any data was received.
+				 * If we're out of space, turn off receive interrupts.
+				 */
+			sc->sc_rbput = put;
+			sc->sc_rbavail = cc;
+			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
+				sc->sc_rx_ready = 1;
 
-		/*
-		 * Current string of incoming characters ended because
-		 * no more data was available or we ran out of space.
-		 * Schedule a receive event if any data was received.
-		 * If we're out of space, turn off receive interrupts.
-		 */
-		sc->sc_rbput = put;
-		sc->sc_rbavail = cc;
-		if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
-			sc->sc_rx_ready = 1;
-
-		/*
-		 * See if we are in danger of overflowing a buffer. If
-		 * so, use hardware flow control to ease the pressure.
-		 */
-		if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
-		    cc < sc->sc_r_hiwat) {
-			SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+				/*
+				 * See if we are in danger of overflowing a buffer. If
+				 * so, use hardware flow control to ease the pressure.
+				 */
+			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
+			    cc < sc->sc_r_hiwat) {
+				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 #if 0
-			sci_hwiflow(sc);
+				sci_hwiflow(sc);
 #endif
-		}
+			}
 
-		/*
-		 * If we're out of space, disable receive interrupts
-		 * until the queue has drained a bit.
-		 */
-		if (!cc) {
-			SHREG_SCSCR &= ~SCSCR_RIE;
+				/*
+				 * If we're out of space, disable receive interrupts
+				 * until the queue has drained a bit.
+				 */
+			if (!cc) {
+				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
+				SHREG_SCSCR &= ~SCSCR_RIE;
+			}
+		} else {
+			if (SHREG_SCSSR & SCSSR_RDRF) {
+				SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
+				delay(10);
+				SHREG_SCSCR |= SCSCR_TIE | SCSCR_RIE;
+				continue;
+			}
 		}
-	} else {
-		if (SHREG_SCSSR & SCSSR_RDRF) {
-			SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
-		}
-	}
+	} while (SHREG_SCSSR & SCSSR_RDRF);
 
 #if 0
 	msr = bus_space_read_1(iot, ioh, sci_msr);
