@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.6 1997/03/16 05:00:38 lukem Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.7 1997/04/08 06:14:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: mktemp.c,v 1.6 1997/03/16 05:00:38 lukem Exp $";
+static char rcsid[] = "$NetBSD: mktemp.c,v 1.7 1997/04/08 06:14:39 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -121,7 +121,7 @@ _gettemp(path, doopen)
 			if (errno != EEXIST)
 				return (0);
 		}
-		else if (stat(path, &sbuf))
+		else if (lstat(path, &sbuf))
 			return (errno == ENOENT ? 1 : 0);
 
 		/* tricky little algorithm for backward compatibility */
