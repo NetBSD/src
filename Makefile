@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2001/10/12 21:05:08 nathanw Exp $
+#	$NetBSD: Makefile,v 1.137 2001/10/19 02:35:45 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -31,192 +31,137 @@
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
 #     of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
-
 #
 # Targets:
-#   build: builds a full release of netbsd in DESTDIR. If BUILD_DONE is
+#   build:
+#	Builds a full release of NetBSD in DESTDIR.  If BUILD_DONE is
 #	set, this is an empty target.
-#   release: does a `make build,' and then tars up the DESTDIR files
+#   release:
+#	Does a `make build,' and then tars up the DESTDIR files
 #	into RELEASEDIR, in release(7) format. (See etc/Makefile for
 #	more information on this.)
-#   snapshot: a synonym for release.
+#   regression-tests:
+#	Runs the regression tests in "regress" on this host.
 #
-# Sub targets of `make build,' in order:
-#   buildstartmsg: displays the start time of the build.
-#   do-make-tools: builds host toolchain.
+# Targets invoked by `make build,' in order:
+#   obj:             creates object directories.
+#   cleandir:        cleans the tree.
+#   do-make-tools:   builds host toolchain.
 #   do-distrib-dirs: creates the distribution directories.
-#   do-force-domestic: check's that FORCE_DOMESTIC isn't set (deprecated.)
-#   do-cleandir: cleans the tree.
-#   do-make-obj: creates object directories if required.
-#   do-make-includes: install include files.
-#   do-lib-csu: build & install startup object files.
-#   do-lib: build & install system libraries.
-#   do-gnu-lib: build & install gnu system libraries.
-#   do-dependall: builds & install the entire system.
-#   do-domestic: build & install the domestic tree (deprecated.)
-#   do-whatisdb: build & install the `whatis.db' man database.
-#   buildendmsg: displays the end time of the build.
+#   includes:        installs include files.
+#   do-build:        builds and installs the entire system.
 
 .include "${.CURDIR}/share/mk/bsd.own.mk"
 
-MKOBJDIRS ?= no
+# Sanity check: make sure that "make build" is not invoked simultaneously
+# with a standard recursive target.
+
+.if make(build) || make(release) || make(snapshot)
+.for targ in ${TARGETS:Nobj:Ncleandir}
+.if make(${targ}) && !target(.BEGIN)
+.BEGIN:
+	@echo 'BUILD ABORTED: "make build" and "make ${targ}" are mutually exclusive.'
+	@false
+.endif
+.endfor
+.endif
 
 .if defined(NBUILDJOBS)
-_J= -j${NBUILDJOBS}
+_J=		-j${NBUILDJOBS}
 .endif
 
-# NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
-
-SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
-.if make(cleandir) || make(obj)
-SUBDIR+= distrib
 .if ${USETOOLS} != "no"
-SUBDIR+= tools
+_SUBDIR+=	tools
 .endif
-.ifdef MAKEOBJDIRPREFIX
-SUBDIR+= etc
-.endif
-.endif
+_SUBDIR+=	lib include gnu bin games libexec sbin usr.bin \
+		usr.sbin share sys etc distrib regress
 
-includes-lib: includes-include includes-sys
+# Weed out directories that don't exist.
 
-.if exists(games)
-SUBDIR+= games
+.for dir in ${_SUBDIR}
+.if exists(${dir}/Makefile)
+SUBDIR+=	${dir}
 .endif
-
-SUBDIR+= gnu
-# This is needed for libstdc++ and gen-params.
-includes-gnu: includes-include includes-sys
+.endfor
 
 .if exists(regress)
-.ifmake !(install)
-SUBDIR+= regress
-.endif
-
 regression-tests:
 	@echo Running regression tests...
-	@(cd ${.CURDIR}/regress && ${MAKE} ${_M} regress)
+	@cd ${.CURDIR}/regress && ${MAKE} ${_M} regress
 .endif
 
-buildstartmsg:
-	@echo -n "Build started at: "
-	@date
-
-buildendmsg:
-	@echo -n "Build finished at: "
-	@date
-
-afterinstall:
-.if ${MKMAN} != "no" && !defined(_BUILD)
-	${MAKE} ${_M} whatis.db
-.endif
-
+.if ${MKMAN} != "no"
+afterinstall: whatis.db
 whatis.db:
-	(cd ${.CURDIR}/share/man && ${MAKE} ${_M} makedb)
-
-# wrt info/dir below:  It's safe to move this over top of /usr/share/info/dir,
-# as the build will automatically remove/replace the non-pkg entries there.
-
-.if defined(BUILD_DONE)
-build:
-	@echo "Build installed into ${DESTDIR}"
-.else
-build:
-	@${MAKE} ${_M} buildstartmsg
-	@${MAKE} ${_M} do-make-tools
-	@${MAKE} ${_M} do-distrib-dirs
-	@${MAKE} ${_M} do-force-domestic
-	@${MAKE} ${_M} do-cleandir
-	@${MAKE} ${_M} do-make-obj
-	@${MAKE} ${_M} do-make-includes
-	@${MAKE} ${_M} do-lib-csu
-	@${MAKE} ${_M} do-lib
-	@${MAKE} ${_M} do-gnu-lib
-	@${MAKE} ${_M} do-dependall
-	@${MAKE} ${_M} do-domestic
-	@${MAKE} ${_M} do-whatisdb
-	@${MAKE} ${_M} buildendmsg
+	cd ${.CURDIR}/share/man && ${MAKE} ${_M} makedb
 .endif
 
-do-make-tools:
-.if ${USETOOLS} != "no"
-.if ${MKOBJDIRS} != "no"
-	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
-.endif
-	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
-.endif
+# Targets (in order!) called by "make build".
 
-do-distrib-dirs:
-.ifndef NODISTRIBDIRS
-.ifndef DESTDIR
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=/ distrib-dirs)
-.else
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs)
+.if ${MKOBJDIRS:Uno} != "no"
+BUILDTARGETS+=	obj
 .endif
-.endif
-
-do-force-domestic:
-.if defined(FORCE_DOMESTIC)
-	@echo '*** CAPUTE!'
-	@echo '    The FORCE_DOMESTIC flag is not compatible with "make build".'
-	@echo '    Please correct the problem and try again.'
-	@false
-.endif
-
-do-cleandir:
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
-	${MAKE} ${_J} ${_M} cleandir
+BUILDTARGETS+=	cleandir
 .endif
-
-do-make-obj:
-.if ${MKOBJDIRS} != "no"
-	${MAKE} ${_J} ${_M} obj
+.if ${USETOOLS} != "no"
+BUILDTARGETS+=	do-make-tools
 .endif
-
-do-make-includes:
+.if !defined(NODISTRIBDIRS)
+BUILDTARGETS+=	do-distrib-dirs
+.endif
 .if !defined(NOINCLUDES)
-	${MAKE} ${_M} includes
+BUILDTARGETS+=	includes
+.endif
+BUILDTARGETS+=	do-build
+
+# Enforce proper ordering of some rules.
+
+.ORDER:		${BUILDTARGETS}
+includes-lib:	includes-include includes-sys
+includes-gnu:	includes-lib
+
+# Build the system and install into DESTDIR.
+
+build:
+.if defined(BUILD_DONE)
+	@echo "Build already installed into ${DESTDIR}"
+.else
+	@echo -n "Build started at: " && date
+	@${MAKE} ${_J} ${_M} ${BUILDTARGETS}
+	@echo -n "Build finished at: " && date
 .endif
 
-do-lib-csu:
-	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${_M} MKSHARE=no install)
-
-do-lib:
-	(cd ${.CURDIR}/lib && \
-	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${_M} MKSHARE=no install)
-
-do-gnu-lib:
-	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${MAKE} ${_M} MKSHARE=no install)
-
-do-dependall:
-	${MAKE} ${_M} ${_J} dependall && ${MAKE} ${_M} _BUILD= install
-
-do-domestic:
-.if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
-	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_M} ${_J} _SLAVE_BUILD= build)
-.endif
-
-do-whatisdb:
-	${MAKE} ${_M} whatis.db
+# Build a release or snapshot (implies "make build").
 
 release snapshot: build
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release)
+	cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release
 
-# Speedup stubs for some subtrees that don't need to run these rules
+# Special components of the "make build" process.
+
+do-make-tools:
+	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
+
+do-distrib-dirs:
+	cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs
+
+do-build:
+.for dir in lib/csu lib gnu/lib
+.for targ in dependall install
+	cd ${.CURDIR}/${dir} && \
+		${MAKE} ${_M} ${_J} MKSHARE=no MKLINT=no ${targ}
+.endfor
+.endfor
+	${MAKE} ${_M} ${_J} dependall
+	${MAKE} ${_M} ${_J} install
+
+# Speedup stubs for some subtrees that don't need to run these rules.
+# (Tells <bsd.subdir.mk> not to recurse for them.)
+
 includes-bin includes-games includes-libexec includes-regress \
-includes-sbin includes-usr.sbin:
+includes-sbin includes-usr.sbin includes-tools \
+all-tools install-tools install-regress:
 	@true
-
-.if !exists(${.CURDIR}/share/mk)
-.BEGIN:
-	@echo 'BUILD ABORTED: share/mk does not exist, cannot run make.'
-	@false
-.endif
 
 .include "${.CURDIR}/share/mk/bsd.subdir.mk"
 
