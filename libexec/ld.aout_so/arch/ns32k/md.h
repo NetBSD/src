@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 1999/01/15 07:48:07 matthias Exp $  */
+/*	$NetBSD: md.h,v 1.7.2.1 2001/04/01 15:51:07 he Exp $  */
 
 /*
  *	- ns32k dependent definitions
@@ -30,7 +30,6 @@
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
 #define JMPSLOT_NEEDS_RELOC			(0)
 #define RELOC_INIT_SEGMENT_RELOC(r)		((r)->r_disp = 2)
-#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
 #define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 #define md_got_reloc(r)			(0)
