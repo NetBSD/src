@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 1999/04/06 18:43:18 cgd Exp $
+# $NetBSD: Makefile,v 1.23 2000/09/26 05:13:37 simonb Exp $
 
 PROG = bootxx.old
 
@@ -24,7 +24,8 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
 
 NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
-CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
+CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"' \
+	   -DBOOTXX_RAID1_SUPPORT
 
 ${PROG}.sym: ${OBJS} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
