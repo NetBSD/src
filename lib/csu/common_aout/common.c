@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.8 1998/02/20 09:27:19 mycroft Exp $	*/
+/*	$NetBSD: common.c,v 1.9 1998/05/12 21:25:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -191,8 +191,8 @@ dlsym(fd, name)
 
 int
 dlctl(fd, cmd, arg)
-void	*fd, *arg;
-int	cmd;
+	void	*fd, *arg;
+	int	cmd;
 {
 	if (ld_entry == NULL)
 		return -1;
@@ -210,6 +210,17 @@ dlerror()
 		return "Service unavailable";
 
 	return (char *)strerror(error);
+}
+
+int
+dladdr(addr, dli)
+	void	*addr;
+	Dl_info	*dli;
+{
+	if (ld_entry == NULL || ld_entry->dladdr == NULL)
+		return (0);
+
+	return (ld_entry->dladdr)(addr, dli);
 }
 
 /*
