@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.7 1998/08/25 20:59:37 ross Exp $	*/
+/*	$NetBSD: indent.c,v 1.8 1998/09/06 20:17:30 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.7 1998/08/25 20:59:37 ross Exp $");
+__RCSID("$NetBSD: indent.c,v 1.8 1998/09/06 20:17:30 mellon Exp $");
 #endif
 #endif				/* not lint */
 
@@ -220,11 +220,10 @@ main(argc, argv)
 			set_option(argv[i]);
 	}			/* end of for */
 	if (input == 0) {
-		fprintf(stderr, "indent: usage: indent file [ outfile ] [ options ]\n");
-		exit(1);
+		input = stdin;
 	}
 	if (output == 0) {
-		if (troff)
+		if (troff || input == stdin)
 			output = stdout;
 		else {
 			out_name = in_name;
