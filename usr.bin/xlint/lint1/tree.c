@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.32 2002/10/22 18:15:01 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.33 2002/10/22 21:09:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.32 2002/10/22 18:15:01 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.33 2002/10/22 21:09:35 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -775,10 +775,15 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 
 	mp = &modtab[op];
 
-	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
+	if ((ltp = ln->tn_type) == NULL)
+		LERROR("typeok()");
+		
+	if ((lt = ltp->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
 	if (mp->m_binary) {
-		if ((rt = (rtp = rn->tn_type)->t_tspec) == PTR)
+		if ((rtp = rn->tn_type) == NULL)
+			LERROR("typeok()");
+		if ((rt = rtp->t_tspec) == PTR)
 			rst = (rstp = rtp->t_subt)->t_tspec;
 	}
 
