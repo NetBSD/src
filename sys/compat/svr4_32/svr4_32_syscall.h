@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscall.h,v 1.4 2001/07/01 16:55:41 thorpej Exp $ */
+/* $NetBSD: svr4_32_syscall.h,v 1.5 2001/08/15 05:18:11 eeh Exp $ */
 
 /*
  * System call numbers.
@@ -25,8 +25,8 @@
 /* syscall: "open" ret: "int" args: "const netbsd32_charp" "int" "int" */
 #define	SVR4_32_SYS_open	5
 
-/* syscall: "close" ret: "int" args: "int" */
-#define	SVR4_32_SYS_close	6
+/* syscall: "netbsd32_close" ret: "int" args: "int" */
+#define	SVR4_32_SYS_netbsd32_close	6
 
 /* syscall: "wait" ret: "int" args: "netbsd32_intp" */
 #define	SVR4_32_SYS_wait	7
@@ -64,8 +64,8 @@
 /* syscall: "stat" ret: "int" args: "const netbsd32_charp" "svr4_32_statp" */
 #define	SVR4_32_SYS_stat	18
 
-/* syscall: "lseek" ret: "netbsd32_long" args: "int" "netbsd32_long" "int" */
-#define	SVR4_32_SYS_lseek	19
+/* syscall: "compat_43_netbsd32_olseek" ret: "netbsd32_long" args: "int" "netbsd32_long" "int" */
+#define	SVR4_32_SYS_compat_43_netbsd32_olseek	19
 
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	SVR4_32_SYS_getpid	20
@@ -254,8 +254,8 @@
 /* syscall: "vfork" ret: "int" args: */
 #define	SVR4_32_SYS_vfork	119
 
-/* syscall: "fchdir" ret: "int" args: "int" */
-#define	SVR4_32_SYS_fchdir	120
+/* syscall: "netbsd32_fchdir" ret: "int" args: "int" */
+#define	SVR4_32_SYS_netbsd32_fchdir	120
 
 /* syscall: "netbsd32_readv" ret: "int" args: "int" "const netbsd32_iovecp_t" "int" */
 #define	SVR4_32_SYS_netbsd32_readv	121
@@ -449,29 +449,29 @@
 /* syscall: "netbsd32_shutdown" ret: "int" args: "int" "int" */
 #define	SVR4_32_SYS_netbsd32_shutdown	236
 
-/* syscall: "recv" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
-#define	SVR4_32_SYS_recv	237
+/* syscall: "compat_43_netbsd32_orecv" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+#define	SVR4_32_SYS_compat_43_netbsd32_orecv	237
 
-/* syscall: "recvfrom" ret: "netbsd32_ssize_t" args: "int" "netbsd32_voidp" "netbsd32_size_t" "int" "netbsd32_sockaddrp_t" "netbsd32_intp" */
-#define	SVR4_32_SYS_recvfrom	238
+/* syscall: "compat_43_netbsd32_orecvfrom" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_size_t" "int" "netbsd32_caddr_t" "netbsd32_intp" */
+#define	SVR4_32_SYS_compat_43_netbsd32_orecvfrom	238
 
-/* syscall: "recvmsg" ret: "netbsd32_ssize_t" args: "int" "netbsd32_msghdrp_t" "int" */
-#define	SVR4_32_SYS_recvmsg	239
+/* syscall: "compat_43_netbsd32_orecvmsg" ret: "int" args: "int" "netbsd32_omsghdrp_t" "int" */
+#define	SVR4_32_SYS_compat_43_netbsd32_orecvmsg	239
 
-/* syscall: "send" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
-#define	SVR4_32_SYS_send	240
+/* syscall: "compat_43_netbsd32_osend" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+#define	SVR4_32_SYS_compat_43_netbsd32_osend	240
 
-/* syscall: "sendmsg" ret: "netbsd32_ssize_t" args: "int" "const netbsd32_msghdrp_t" "int" */
-#define	SVR4_32_SYS_sendmsg	241
+/* syscall: "compat_43_netbsd32_osendmsg" ret: "int" args: "int" "netbsd32_caddr_t" "int" */
+#define	SVR4_32_SYS_compat_43_netbsd32_osendmsg	241
 
 /* syscall: "netbsd32_sendto" ret: "netbsd32_ssize_t" args: "int" "const netbsd32_voidp" "netbsd32_size_t" "int" "const netbsd32_sockaddrp_t" "int" */
 #define	SVR4_32_SYS_netbsd32_sendto	242
 
-/* syscall: "getpeername" ret: "int" args: "int" "netbsd32_sockaddrp_t" "netbsd32_intp" */
-#define	SVR4_32_SYS_getpeername	243
+/* syscall: "compat_43_netbsd32_ogetpeername" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+#define	SVR4_32_SYS_compat_43_netbsd32_ogetpeername	243
 
-/* syscall: "getsockname" ret: "int" args: "int" "netbsd32_sockaddrp_t" "netbsd32_intp" */
-#define	SVR4_32_SYS_getsockname	244
+/* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+#define	SVR4_32_SYS_compat_43_netbsd32_ogetsockname	244
 
 /* syscall: "netbsd32_getsockopt" ret: "int" args: "int" "int" "int" "netbsd32_voidp" "netbsd32_intp" */
 #define	SVR4_32_SYS_netbsd32_getsockopt	245

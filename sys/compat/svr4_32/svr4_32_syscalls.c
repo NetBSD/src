@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscalls.c,v 1.4 2001/07/01 16:55:41 thorpej Exp $ */
+/* $NetBSD: svr4_32_syscalls.c,v 1.5 2001/08/15 05:18:12 eeh Exp $ */
 
 /*
  * System call names.
@@ -37,7 +37,7 @@ const char *const svr4_32_syscallnames[] = {
 	"netbsd32_read",			/* 3 = netbsd32_read */
 	"netbsd32_write",			/* 4 = netbsd32_write */
 	"open",			/* 5 = open */
-	"close",			/* 6 = close */
+	"netbsd32_close",			/* 6 = netbsd32_close */
 	"wait",			/* 7 = wait */
 	"creat",			/* 8 = creat */
 	"netbsd32_link",			/* 9 = netbsd32_link */
@@ -50,7 +50,7 @@ const char *const svr4_32_syscallnames[] = {
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
 	"stat",			/* 18 = stat */
-	"lseek",			/* 19 = lseek */
+	"compat_43_netbsd32_olseek",			/* 19 = compat_43_netbsd32_olseek */
 	"getpid",			/* 20 = getpid */
 	"#21 (unimplemented old_mount)",		/* 21 = unimplemented old_mount */
 	"#22 (unimplemented System V umount)",		/* 22 = unimplemented System V umount */
@@ -163,7 +163,7 @@ const char *const svr4_32_syscallnames[] = {
 	"netbsd32_munmap",			/* 117 = netbsd32_munmap */
 	"fpathconf",			/* 118 = fpathconf */
 	"vfork",			/* 119 = vfork */
-	"fchdir",			/* 120 = fchdir */
+	"netbsd32_fchdir",			/* 120 = netbsd32_fchdir */
 	"netbsd32_readv",			/* 121 = netbsd32_readv */
 	"netbsd32_writev",			/* 122 = netbsd32_writev */
 	"xstat",			/* 123 = xstat */
@@ -280,14 +280,14 @@ const char *const svr4_32_syscallnames[] = {
 	"compat_43_netbsd32_oaccept",			/* 234 = compat_43_netbsd32_oaccept */
 	"netbsd32_connect",			/* 235 = netbsd32_connect */
 	"netbsd32_shutdown",			/* 236 = netbsd32_shutdown */
-	"recv",			/* 237 = recv */
-	"recvfrom",			/* 238 = recvfrom */
-	"recvmsg",			/* 239 = recvmsg */
-	"send",			/* 240 = send */
-	"sendmsg",			/* 241 = sendmsg */
+	"compat_43_netbsd32_orecv",			/* 237 = compat_43_netbsd32_orecv */
+	"compat_43_netbsd32_orecvfrom",			/* 238 = compat_43_netbsd32_orecvfrom */
+	"compat_43_netbsd32_orecvmsg",			/* 239 = compat_43_netbsd32_orecvmsg */
+	"compat_43_netbsd32_osend",			/* 240 = compat_43_netbsd32_osend */
+	"compat_43_netbsd32_osendmsg",			/* 241 = compat_43_netbsd32_osendmsg */
 	"netbsd32_sendto",			/* 242 = netbsd32_sendto */
-	"getpeername",			/* 243 = getpeername */
-	"getsockname",			/* 244 = getsockname */
+	"compat_43_netbsd32_ogetpeername",			/* 243 = compat_43_netbsd32_ogetpeername */
+	"compat_43_netbsd32_ogetsockname",			/* 244 = compat_43_netbsd32_ogetsockname */
 	"netbsd32_getsockopt",			/* 245 = netbsd32_getsockopt */
 	"netbsd32_setsockopt",			/* 246 = netbsd32_setsockopt */
 	"#247 (unimplemented sockconfig)",		/* 247 = unimplemented sockconfig */

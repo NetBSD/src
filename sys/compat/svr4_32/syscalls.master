@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2001/07/01 16:55:19 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.5 2001/08/15 05:18:12 eeh Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -63,7 +63,7 @@
 4	NOARGS		{ int netbsd32_write(int fd, netbsd32_charp buf, u_int nbyte); }
 5	STD		{ int svr4_32_sys_open(const netbsd32_charp path, int flags, \
 			    int mode); }
-6	NOARGS		{ int sys_close(int fd); }
+6	NOARGS		{ int netbsd32_close(int fd); }
 7	STD		{ int svr4_32_sys_wait(netbsd32_intp status); }
 8	STD		{ int svr4_32_sys_creat(const netbsd32_charp path, int mode); }
 9	NOARGS		{ int netbsd32_link(const netbsd32_charp path, const netbsd32_charp link); }
@@ -79,8 +79,8 @@
 17	STD		{ int svr4_32_sys_break(netbsd32_caddr_t nsize); }
 18	STD		{ int svr4_32_sys_stat(const netbsd32_charp path, \
 			    svr4_32_statp ub); }
-19	NOARGS		{ netbsd32_long compat_43_sys_lseek(int fd, netbsd32_long offset, \
-			    int whence); }
+19	NOARGS		{ netbsd32_long compat_43_netbsd32_olseek(int fd, \
+			    netbsd32_long offset, int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
@@ -222,7 +222,7 @@
 117	NOARGS		{ int netbsd32_munmap(netbsd32_voidp addr, netbsd32_size_t len); }
 118	STD		{ int svr4_32_sys_fpathconf(int fd, int name); }
 119	NOARGS		{ int sys_vfork(void); }
-120	NOARGS		{ int sys_fchdir(int fd); }
+120	NOARGS		{ int netbsd32_fchdir(int fd); }
 121	NOARGS		{ int netbsd32_readv(int fd, const netbsd32_iovecp_t iovp, int iovcnt); }
 122	NOARGS		{ int netbsd32_writev(int fd, const netbsd32_iovecp_t iovp, int iovcnt); }
 123	STD		{ int svr4_32_sys_xstat(int two, const netbsd32_charp path, \
@@ -382,24 +382,24 @@
 235	NOARGS		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, \
 			    int namelen); }
 236	NOARGS		{ int netbsd32_shutdown(int s, int how); }
-237	NOARGS		{ int compat_43_sys_recv(int s, netbsd32_caddr_t buf, int len, \
+237	NOARGS		{ int compat_43_netbsd32_orecv(int s, netbsd32_caddr_t buf, int len, \
 			    int flags); }
-238	NOARGS		{ netbsd32_ssize_t compat_43_sys_recvfrom(int s, netbsd32_voidp buf, \
-			    netbsd32_size_t len, int flags, netbsd32_sockaddrp_t from, \
-			    netbsd32_intp fromlenaddr); }
-239	NOARGS		{ netbsd32_ssize_t compat_43_sys_recvmsg(int s, \
-			    netbsd32_msghdrp_t msg, int flags); }
-240	NOARGS		{ int compat_43_sys_send(int s, netbsd32_caddr_t buf, int len, \
-			    int flags); }
-241	NOARGS		{ netbsd32_ssize_t compat_43_sys_sendmsg(int s, \
-			    const netbsd32_msghdrp_t msg, int flags); }
+238	NOARGS		{ int compat_43_netbsd32_orecvfrom(int s, \
+			    netbsd32_caddr_t buf, netbsd32_size_t len, int flags, \
+			    netbsd32_caddr_t from, netbsd32_intp fromlenaddr); }
+239	NOARGS		{ int compat_43_netbsd32_orecvmsg(int s, \
+			   netbsd32_omsghdrp_t msg, int flags); }
+240	NOARGS		{ int compat_43_netbsd32_osend(int s, netbsd32_caddr_t buf, \
+			  int len, int flags); }
+241	NOARGS		{ int compat_43_netbsd32_osendmsg(int s, netbsd32_caddr_t msg, \
+			  int flags); }
 242	NOARGS		{ netbsd32_ssize_t netbsd32_sendto(int s, const netbsd32_voidp buf, \
 			    netbsd32_size_t len, int flags, const netbsd32_sockaddrp_t to, \
 			    int tolen); }
-243	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
-			    netbsd32_sockaddrp_t asa, netbsd32_intp alen); }
-244	NOARGS		{ int compat_43_sys_getsockname(int fdes, \
-			    netbsd32_sockaddrp_t asa, netbsd32_intp alen); }
+243	NOARGS		{ int compat_43_netbsd32_ogetpeername(int fdes, \
+			    netbsd32_caddr_t asa, netbsd32_intp alen); }
+244	NOARGS		{ int compat_43_netbsd32_ogetsockname(int fdec, \
+			    netbsd32_caddr_t asa, netbsd32_intp alen); }
 245	NOARGS		{ int netbsd32_getsockopt(int s, int level, int name, \
 			    netbsd32_voidp val, netbsd32_intp avalsize); }
 246	NOARGS		{ int netbsd32_setsockopt(int s, int level, int name, \
