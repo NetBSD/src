@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.141 1999/02/22 00:12:36 cjs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.142 1999/03/05 07:26:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -493,7 +493,7 @@ start_init(arg)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
+	char **pathp, *path, *slash, *ucp, **uap, *arg0, *arg1 = NULL;
 
 	/*
 	 * Now in process 1.
@@ -578,7 +578,12 @@ start_init(arg)
 		(void)suword((caddr_t)--uap, 0);	/* terminator */
 		if (options != 0)
 			(void)suword((caddr_t)--uap, (long)arg1);
-		(void)suword((caddr_t)--uap, (long)arg0);
+		slash = strrchr(path, '/');
+		if (slash)
+			(void)suword((caddr_t)--uap,
+			    (long)arg0 + (slash + 1 - path));
+		else
+			(void)suword((caddr_t)--uap, (long)arg0);
 
 		/*
 		 * Point at the arguments.
