@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: denode.h,v 1.2 1993/09/07 15:41:31 ws Exp $
+ *	$Id: denode.h,v 1.2.2.1 1993/10/09 10:58:25 mycroft Exp $
  */
 
 /*
@@ -202,7 +202,7 @@ int msdosfs_lock __P((struct vnode * vp));
 int msdosfs_unlock __P((struct vnode * vp));
 int msdosfs_bmap __P((struct vnode * vp, daddr_t bn, struct vnode ** vpp, daddr_t * bnp));
 int msdosfs_strategy __P((struct buf * bp));
-int msdosfs_print __P((struct vnode * vp));
+void msdosfs_print __P((struct vnode * vp));
 int msdosfs_islocked __P((struct vnode * vp));
 int msdosfs_advlock __P((struct vnode * vp, caddr_t id, int op, struct flock * fl, int flags));
 
