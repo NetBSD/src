@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.4 1998/11/28 19:42:49 ender Exp $	*/
+/*	$Id: aed.c,v 1.5 1998/12/19 21:41:13 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -244,7 +244,9 @@ aed_emulate_mouse(event)
 			aed_handoff(&new_event);
 			break;
 		case ADBK_KEYUP(ADBK_RIGHT):
+#ifdef ALTXBUTTONS
 		case ADBK_KEYUP(ADBK_3):
+#endif
 			aed_sc->sc_buttons &= ~4;	/* right up */
 			new_event.def_addr = ADBADDR_MS;
 			new_event.u.m.buttons = aed_sc->sc_buttons;
