@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.21.2.1 1998/01/29 10:42:13 mellon Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.21.2.2 1999/01/25 05:49:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -134,7 +134,7 @@ soisdisconnected(so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
-	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE);
+	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE|SS_ISDISCONNECTED);
 	wakeup((caddr_t)&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.25.2.1 1998/01/29 10:47:24 mellon Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.25.2.2 1999/01/25 05:49:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -116,6 +116,7 @@ struct socket {
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
+#define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_NBIO			0x080	/* non-blocking ops */
 #define	SS_ASYNC		0x100	/* async i/o notify */
