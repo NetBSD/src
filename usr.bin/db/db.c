@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.5 2002/12/29 11:17:04 seb Exp $	*/
+/*	$NetBSD: db.c,v 1.6 2002/12/29 18:42:49 seb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.5 2002/12/29 11:17:04 seb Exp $");
+__RCSID("$NetBSD: db.c,v 1.6 2002/12/29 18:42:49 seb Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	oi.mode = 0644;
 
 				/* parse arguments */
-	while ( (ch = getopt(argc, argv, "CDdE:F:f:iKm:NqRs:Vw")) != -1) {
+	while ( (ch = getopt(argc, argv, "CDdE:F:f:iKm:NO:qRVw")) != -1) {
 		switch (ch) {
 
 		case 'C':
@@ -175,16 +175,16 @@ main(int argc, char *argv[])
 			flags |= F_NO_NUL;
 			break;
 
+		case 'O':
+			outputsep = optarg;
+			break;
+
 		case 'q':
 			flags |= F_QUIET;
 			break;
 
 		case 'R':
 			flags |= F_REPLACE;
-			break;
-
-		case 's':
-			outputsep = optarg;
 			break;
 
 		case 'V':
@@ -463,7 +463,7 @@ usage(void)
 	fprintf(stderr,
     "Usage: %s [-KV] [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
     "       %s -d [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
-    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod] [-s str]\n"
+    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod] [-O str]\n"
     "             type dbfile [key val [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
@@ -484,7 +484,7 @@ usage(void)
 	    "\t-i\tignore case of key by converting to lower case\n"
 	    "\t-m mod\tmode of created database  [default: 0644]\n"
 	    "\t-q\tquiet operation (missing keys aren't errors)\n"
-	    "\t-s sep\toutput field separator string [default: '\\t']\n"
+	    "\t-O sep\toutput field separator string [default: '\\t']\n"
 	    );
 	exit(1);
 }
