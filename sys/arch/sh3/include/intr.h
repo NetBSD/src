@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2000/08/17 00:01:53 msaitoh Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2000/08/21 02:06:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ spllower(ncpl)
  */
 #define	splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
+#define	splsched()	splhigh()
 #define	spl0()		spllower(0)
 #define	splx(x)		spllower(x)
 
