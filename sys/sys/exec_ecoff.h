@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.9 1996/05/09 23:42:08 cgd Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.10 1996/09/26 22:39:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
 #ifndef	_SYS_EXEC_ECOFF_H_
 #define	_SYS_EXEC_ECOFF_H_
 
-#include <machine/ecoff.h>
+#include <machine/ecoff_machdep.h>
 
 struct ecoff_filehdr {
 	u_short f_magic;	/* magic number */
