@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.16 2001/09/18 19:58:41 ad Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.17 2002/01/12 22:06:01 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,13 +190,13 @@ Modem
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -212,7 +212,8 @@ Berkeley packet filter devices, see
 SCSI media changer, see
 .Xr \&ch 4
 . It Ar fd
-File descriptors (/dev/fd/*)
+File descriptors (/dev/fd/*), see
+.Xr \&fd 4
 . It Ar ipl
 IP filter
 . It Ar kbd
@@ -228,8 +229,8 @@ Random number generator
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsictl 8 ,
-.Xr \&scsi 8
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
 . It Ar ses#
 SES/SAF-TE SCSI Devices, see
 .Xr \&ses 4
@@ -243,7 +244,7 @@ SCSI scanner, see
 Network tunnel driver, see
 .Xr \&tun 4
 . It Ar uk#
-SCSI unknown, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar mlx#
 Mylex DAC960 control interface, see

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2001/11/10 22:57:57 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2002/01/12 22:06:03 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -195,13 +195,13 @@ Modem
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -211,7 +211,8 @@ Trace device
 Memory disk, see
 .Xr \&md 4
 . It Ar fd
-File descriptors
+File descriptors, see
+.Xr \&fd 4
 . It Ar bpf#
 Packet filter, see
 .Xr \&bpf 4
@@ -226,17 +227,17 @@ Loadable kernel modules interface, see
 Network tunnel driver, see
 .Xr \&tun 4
 . It Ar ch#
-SCSI Auto changer, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar uk#
-SCSI Unknown device, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar scsibus#
 SCSI busses, see
 .Xr \&scsi 4 ,
 .Xr \&scsictl 8
 . It Ar ss#
-SCSI scanner device, see
+SCSI scanner, see
 .Xr \&ss 4
 . It Ar cfs#
 Coda file system device

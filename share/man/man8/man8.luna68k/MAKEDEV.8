@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2001/09/08 01:32:43 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2002/01/12 22:06:04 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,7 +140,8 @@ Packet filter, see
 SCSI media changer, see
 .Xr \&ch 4
 . It Ar fd
-File descriptor device
+File descriptor device, see
+.Xr \&fd 4
 . It Ar ipl
 IP filter
 . It Ar lkm
@@ -149,7 +150,9 @@ Loadable kernel modules interface, see
 . It Ar random
 Random number generator
 . It Ar scsibus#
-SCSI busses
+SCSI busses, see
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
 . It Ar ss#
 SCSI scanner, see
 .Xr \&ss 4
@@ -157,7 +160,7 @@ SCSI scanner, see
 Network tunnel driver, see
 .Xr \&tun 4
 . It Ar uk#
-SCSI unknown, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar wskbd0
 Workstation console (``wscons'') keyboard, see

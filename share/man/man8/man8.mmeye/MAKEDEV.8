@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.5 2001/09/08 01:32:45 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.6 2002/01/12 22:06:05 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,8 @@ Interruptless lp
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
-File descriptors
+File descriptors, see
+.Xr \&fd 4
 . It Ar bpf#
 Packet filter, see
 .Xr \&bpf 4
@@ -194,10 +195,10 @@ SCSI busses, see
 SCSI scanner, see
 .Xr \&ss 4
 . It Ar uk#
-SCSI unknown, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar ch#
-SCSI changer, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar cfs#
 Coda file system device

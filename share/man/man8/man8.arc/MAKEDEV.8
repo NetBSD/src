@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.9 2001/09/10 22:17:33 augustss Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.10 2002/01/12 22:06:01 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -157,13 +157,13 @@ PC parallel port driver (``lpt'') units
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -176,7 +176,8 @@ Berkeley packet filter devices, see
 SCSI media changer, see
 .Xr \&ch 4
 . It Ar fd
-File descriptors (/dev/fd/*)
+File descriptors (/dev/fd/*), see
+.Xr \&fd 4
 . It Ar ipl
 IP filter
 . It Ar kbd
@@ -192,8 +193,8 @@ Joystick device
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsictl 8 ,
-.Xr \&scsi 8
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
 . It Ar ss#
 SCSI scanner, see
 .Xr \&ss 4
@@ -201,7 +202,7 @@ SCSI scanner, see
 Network tunnel driver, see
 .Xr \&tun 4
 . It Ar uk#
-SCSI unknown, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar wsmux#
 Wscons event multiplexor, see

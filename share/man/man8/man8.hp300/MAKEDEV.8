@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.18 2001/11/10 22:58:27 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.19 2002/01/12 22:06:03 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,8 @@ Console font control
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
-File descriptors
+File descriptors, see
+.Xr \&fd 4
 . It Ar grf#
 Raw interface to HP300 graphics devices, see
 .Xr \&grf 4
@@ -185,8 +186,8 @@ IPilter control
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsictl 8 ,
-.Xr \&scsi 4
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
 . El
 .El
 .Sh FILES
