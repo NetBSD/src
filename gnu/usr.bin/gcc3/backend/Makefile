@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/08/22 03:06:32 uwe Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/16 03:33:28 lukem Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -15,6 +15,10 @@ HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .include <bsd.lib.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
 
 #
 # Independent generation programs.
