@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.21 1997/04/06 00:33:08 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.22 1997/04/06 00:54:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -222,6 +222,7 @@ wssprobe(parent, match, aux)
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
+    sc->sc_iot = ia->ia_iot;
     if (sc->sc_dev.dv_cfdata->cf_flags & 1)
 	sc->mad_chip_type = madprobe(sc, ia->ia_iobase);
     else
@@ -236,6 +237,7 @@ wssprobe(parent, match, aux)
     if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
 	return 0;
 
+    sc->sc_ad1848.sc_iot = sc->sc_iot;
     sc->sc_ad1848.sc_iobase = ia->ia_iobase + WSS_CODEC;
 
     /* Is there an ad1848 chip at (WSS iobase + WSS_CODEC)? */
