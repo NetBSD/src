@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.196 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: wi.c,v 1.197 2005/03/27 00:49:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.196 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.197 2005/03/27 00:49:14 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2814,11 +2814,11 @@ wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_ALLOC)
 			break;
-		if (i == WI_TIMEOUT) {
-			printf("%s: timeout in alloc\n", sc->sc_dev.dv_xname);
-			return ETIMEDOUT;
-		}
 		DELAY(1);
+	}
+	if (i == WI_TIMEOUT) {
+		printf("%s: timeout in alloc\n", sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
 	}
 	*idp = CSR_READ_2(sc, WI_ALLOC_FID);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
