@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.9 1998/12/01 04:31:00 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.10 2001/03/06 14:55:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,52 @@
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
+ENTRY(in4_cksum)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+
+	movl	16(%esp), %ebp
+	movzbl	20(%esp), %eax
+	shl	$8, %eax		/* sum = w[0] (== nxt << 8) */
+	movzwl	28(%esp), %ebx
+	rorw	$8, %bx
+	addl	%ebx, %eax		/* sum += htons(len) */
+
+	movl	M_DATA(%ebp), %ebx
+	ADC(IP_SRC)			/* sum += mtod(m,struct ip *)->ip_src */
+	ADC(IP_DST)
+	MOP
+
+	movl	24(%esp), %esi
+mbuf_loop_0:
+	testl	%ebp, %ebp
+	jz	skip_done
+	cmpl	$0, %esi
+	jae	skip_done
+	movl	M_LEN(%ebp), %edx
+	cmpl	%edx, %esi
+	ja	skip_done
+	subl	%edx, %esi
+	movl	M_NEXT(%ebp), %ebp
+	jmp	mbuf_loop_0
+skip_done:
+	testl	%ebp, %ebp
+	jz	out_of_mbufs
+
+	movl	M_DATA(%ebp), %ebx
+	movl	M_LEN(%ebp), %edx
+	addl	%esi, %ebx
+	subl	%esi, %edx
+	xorb	%cl, %cl
+
+	movl	28(%esp), %esi
+
+	testl	%esi, %esi
+	jz	done
+
+	jmp	in4_entry
+
 ENTRY(in_cksum)
 	pushl	%ebp
 	pushl	%ebx
@@ -139,6 +185,7 @@ mbuf_loop_2:
 
 	movl	M_DATA(%ebp), %ebx
 	movl	M_LEN(%ebp), %edx
+in4_entry:
 	movl	M_NEXT(%ebp), %ebp
 
 	cmpl	%esi, %edx
