@@ -38,9 +38,10 @@
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
 #endif
+#include <fnmatch.h>
 #include "resolve.h"
 
-RCSID("$Id: principal.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: principal.c,v 1.1.1.1.2.1 2001/04/05 23:24:03 he Exp $");
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
@@ -330,6 +331,72 @@ krb5_princ_set_realm(krb5_context context,
     princ_realm(principal) = *realm;
 }
 
+#if 0
+/*
+ * XXX Implemented in MIT Kerberos, but not here.  MIT Kerberos
+ * XXX internally represents realms as krb5_data, whereas we
+ * XXX use C strings, so it's not particularly straightforward
+ * XXX for us.
+ */
+void
+krb5_princ_set_realm_length(krb5_context context,
+			    krb5_principal principal,
+			    int length)
+{
+
+	/* XXX XXX XXX */
+}
+
+void
+krb5_princ_set_realm_data(krb5_context context,
+			  krb5_principal principal,
+			  char *data)
+{
+
+	/* XXX XXX XXX */
+}
+#endif
+
+unsigned int
+krb5_princ_size(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_string.len);
+}
+
+NAME_TYPE
+krb5_princ_type(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_type);
+}
+
+#if 0
+/*
+ * XXX Implemented in MIT Kerberos, but not here.  MIT Kerberos
+ * XXX internally represents principal name components as krb5_data,
+ * XXX whereas we use C strings, so it's not particularly
+ * XXX straightforward for us.
+ */
+krb5_data *
+krb5_princ_name(krb5_context context,
+		krb5_principal principal)
+{
+
+	return (principal->name.name_string.val);
+}
+
+krb5_data *
+krb5_princ_component(krb5_context context,
+		     krb5_principal principal,
+		     int idx)
+{
+
+	return (&principal->name.name_string.val[idx]);
+}
+#endif
 
 krb5_error_code
 krb5_build_principal(krb5_context context,
@@ -494,6 +561,9 @@ krb5_copy_principal(krb5_context context,
     return 0;
 }
 
+/*
+ * return TRUE iff princ1 == princ2 (without considering the realm)
+ */
 
 krb5_boolean
 krb5_principal_compare_any_realm(krb5_context context,
@@ -510,6 +580,10 @@ krb5_principal_compare_any_realm(krb5_context context,
     return TRUE;
 }
 
+/*
+ * return TRUE iff princ1 == princ2
+ */
+
 krb5_boolean
 krb5_principal_compare(krb5_context context,
 		       krb5_const_principal princ1,
@@ -520,6 +594,9 @@ krb5_principal_compare(krb5_context context,
     return krb5_principal_compare_any_realm(context, princ1, princ2);
 }
 
+/*
+ * return TRUE iff realm(princ1) == realm(princ2)
+ */
 
 krb5_boolean
 krb5_realm_compare(krb5_context context,
@@ -529,14 +606,37 @@ krb5_realm_compare(krb5_context context,
     return strcmp(princ_realm(princ1), princ_realm(princ2)) == 0;
 }
 
+/*
+ * return TRUE iff princ matches pattern
+ */
+
+krb5_boolean
+krb5_principal_match(krb5_context context,
+		     krb5_const_principal princ,
+		     krb5_const_principal pattern)
+{
+    int i;
+    if(princ_num_comp(princ) != princ_num_comp(pattern))
+	return FALSE;
+    if(fnmatch(princ_realm(pattern), princ_realm(princ), 0) != 0)
+	return FALSE;
+    for(i = 0; i < princ_num_comp(princ); i++){
+	if(fnmatch(princ_ncomp(pattern, i), princ_ncomp(princ, i), 0) != 0)
+	    return FALSE;
+    }
+    return TRUE;
+}
+
+
 struct v4_name_convert {
     const char *from;
     const char *to; 
 } default_v4_name_convert[] = {
-    { "ftp", "ftp" },
-    { "hprop", "hprop" },
-    { "pop", "pop" },
-    { "rcmd", "host" },
+    { "ftp",	"ftp" },
+    { "hprop",	"hprop" },
+    { "pop",	"pop" },
+    { "imap",	"imap" },
+    { "rcmd",	"host" },
     { NULL, NULL }
 };
 
@@ -547,9 +647,7 @@ struct v4_name_convert {
  */
 
 static const char*
-get_name_conversion(krb5_context context,
-		    const char *realm,
-		    const char *name)
+get_name_conversion(krb5_context context, const char *realm, const char *name)
 {
     struct v4_name_convert *q;
     const char *p;
@@ -604,8 +702,7 @@ krb5_425_conv_principal_ext(krb5_context context,
     const char *p;
     krb5_error_code ret;
     krb5_principal pr;
-    char host[128];
-    char *low_realm = NULL;
+    char host[MAXHOSTNAMELEN];
 
     /* do the following: if the name is found in the
        `v4_name_convert:host' part, is is assumed to be a `host' type
@@ -651,7 +748,17 @@ krb5_425_conv_principal_ext(krb5_context context,
 	    inst = hp->h_name;
 #endif
 	if(inst) {
-	    ret = krb5_make_principal(context, &pr, realm, name, inst, NULL);
+	    char *low_inst = strdup(inst);
+
+	    if (low_inst == NULL) {
+#ifdef USE_RESOLVER
+		dns_free_data(r);
+#endif
+		return ENOMEM;
+	    }
+	    ret = krb5_make_principal(context, &pr, realm, name, low_inst,
+				      NULL);
+	    free (low_inst);
 	    if(ret == 0) {
 		if(func == NULL || (*func)(context, pr)){
 		    *princ = pr;
@@ -689,19 +796,14 @@ krb5_425_conv_principal_ext(krb5_context context,
     p = krb5_config_get_string(context, NULL, "realms", realm, 
 			       "default_domain", NULL);
     if(p == NULL){
-	low_realm = strdup (realm);
-	if (low_realm == NULL)
-	    return ENOMEM;
-	strlwr (low_realm);
-	p = low_realm;
+	/* this should be an error, just faking a name is not good */
+	return HEIM_ERR_V4_PRINC_NO_CONV;
     }
 	
     if (*p == '.')
 	++p;
     snprintf(host, sizeof(host), "%s.%s", instance, p);
     ret = krb5_make_principal(context, &pr, realm, name, host, NULL);
-    if (low_realm)
-	free (low_realm);
     if(func == NULL || (*func)(context, pr)){
 	*princ = pr;
 	return 0;
@@ -895,7 +997,7 @@ krb5_sname_to_principal (krb5_context context,
 			 krb5_principal *ret_princ)
 {
     krb5_error_code ret;
-    char localhost[128];
+    char localhost[MAXHOSTNAMELEN];
     char **realms, *host = NULL;
 	
     if(type != KRB5_NT_SRV_HST && type != KRB5_NT_UNKNOWN)
