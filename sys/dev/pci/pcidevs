@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.270 2000/11/03 16:31:01 ad Exp $
+$NetBSD: pcidevs,v 1.271 2000/11/04 16:41:57 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1312,10 +1312,13 @@ product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
 
 /* Neomagic products */
+product NEOMAGIC NMMG2070	0x0001	MagicGraph NM2070
+product NEOMAGIC NMMG128V	0x0002	MagicGraph 128V
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
 product NEOMAGIC NMMG2160	0x0004	MagicGraph 128XD
 product NEOMAGIC NMMM256AV_VGA	0x0005	MagicMedia 256AV VGA
 product NEOMAGIC NMMM256ZX_VGA	0x0006	MagicMedia 256ZX VGA
+product NEOMAGIC NMMM256XLP_AU	0x0016	MagicMedia 256XL+ Audio
 product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
