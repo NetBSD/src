@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.11 2001/08/24 00:14:04 wiz Exp $	*/
+/*	$NetBSD: termstat.c,v 1.12 2003/07/14 15:55:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.11 2001/08/24 00:14:04 wiz Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.12 2003/07/14 15:55:56 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 
-#if defined(ENCRYPTION)
+#ifdef ENCRYPTION
 #include <libtelnet/encrypt.h>
 #endif
 
@@ -52,9 +52,7 @@ __RCSID("$NetBSD: termstat.c,v 1.11 2001/08/24 00:14:04 wiz Exp $");
  * local variables
  */
 int def_tspeed = -1, def_rspeed = -1;
-#ifdef	TIOCSWINSZ
 int def_row = 0, def_col = 0;
-#endif
 #ifdef	LINEMODE
 static int _terminit = 0;
 #endif	/* LINEMODE */
@@ -137,7 +135,7 @@ static int _terminit = 0;
  *	   then linemode is off, if server won't SGA, then linemode
  *	   is on.
  */
-	void
+void
 localstat()
 {
 	int need_will_echo = 0;
@@ -353,7 +351,7 @@ done:
  *
  * Check for changes to flow control
  */
-	void
+void
 flowstat()
 {
 	if (his_state_is_will(TELOPT_LFLOW)) {
@@ -383,7 +381,7 @@ flowstat()
  * at a time, and if using kludge linemode, then only linemode may be
  * affected.
  */
-	void
+void
 clientstat(code, parm1, parm2)
 	register int code, parm1, parm2;
 {
@@ -515,7 +513,6 @@ clientstat(code, parm1, parm2)
 #endif	/* LINEMODE */
 
 	case TELOPT_NAWS:
-#ifdef	TIOCSWINSZ
 	    {
 		struct winsize ws;
 
@@ -538,7 +535,6 @@ clientstat(code, parm1, parm2)
 		ws.ws_row = parm2;
 		(void) ioctl(pty, TIOCSWINSZ, (char *)&ws);
 	    }
-#endif	/* TIOCSWINSZ */
 
 		break;
 
@@ -587,7 +583,7 @@ clientstat(code, parm1, parm2)
  * function is called when the pty state has been processed for the first time.
  * It calls other functions that do things that were deferred in each module.
  */
-	void
+void
 defer_terminit()
 {
 
@@ -599,7 +595,6 @@ defer_terminit()
 		def_tspeed = def_rspeed = 0;
 	}
 
-#ifdef	TIOCSWINSZ
 	if (def_col || def_row) {
 		struct winsize ws;
 
@@ -608,7 +603,6 @@ defer_terminit()
 		ws.ws_row = def_row;
 		(void) ioctl(pty, TIOCSWINSZ, (char *)&ws);
 	}
-#endif
 
 	/*
 	 * The only other module that currently defers anything.
@@ -622,7 +616,7 @@ defer_terminit()
  *
  * Returns true if the pty state has been processed yet.
  */
-	int
+int
 terminit()
 {
 	return(_terminit);
