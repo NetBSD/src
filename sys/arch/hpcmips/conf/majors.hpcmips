@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.7 2003/04/25 21:10:53 ragge Exp $
+#	$NetBSD: majors.hpcmips,v 1.8 2003/05/01 07:01:58 igy Exp $
 #
 # Device majors for hpcmips
 #
@@ -59,3 +59,5 @@ device-major	midi		char 52			midi
 device-major	sequencer	char 53			sequencer
 device-major	pci		char 54			pci
 device-major	ksyms		char 55			ksyms
+device-major	flash		char 100		flash
+device-major	vr4181aiu	char 101		vr4181aiu
