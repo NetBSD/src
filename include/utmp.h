@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.h,v 1.8 2002/07/28 21:45:39 christos Exp $	*/
+/*	$NetBSD: utmp.h,v 1.9 2002/07/28 22:48:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -65,10 +65,10 @@ struct utmp {
 };
 
 __BEGIN_DECLS
-int utmpname(const char *);
-void setutent(void);
-struct utmp *getutent(void);
-void endutent(void);
+int utmpname __P((const char *));
+void setutent __P((void));
+struct utmp *getutent __P((void));
+void endutent __P((void));
 __END_DECLS
 
 #endif /* !_UTMP_H_ */
