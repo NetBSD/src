@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.1 1998/08/10 14:31:07 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.2 1998/08/11 17:52:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,23 +54,13 @@
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-#include "smg.h"
-#include "ry.h"
-#include "ncr.h"
-
 static	void	ka46_conf __P((struct device*, struct device*, void*));
 static	void	ka46_steal_pages __P((void));
 static	void	ka46_memerr __P((void));
 static	int	ka46_mchk __P((caddr_t));
 static	void	ka46_halt __P((void));
 static	void	ka46_reboot __P((int));
-#if 0
 static	void	ka46_cache_enable __P((void));
-
-static	caddr_t	l2cache;	/* mapped in address */
-static	long 	*cacr;		/* l2csche ctlr reg */
-#endif
-static	int *io_map;		/* Virtual address of i/o map */
 
 extern  short *clk_page;
 
@@ -97,29 +87,41 @@ ka46_conf(parent, self, aux)
 	void	*aux;
 {
 	printf(": KA46\n");
-#if 0
-	printf("%s: Enabling cache\n", self->dv_xname);
-	ka46_cache_enable();
-#endif
+	printf("%s: turning on floating point chip\n", self->dv_xname);
+	mtpr(2, PR_ACCS); /* Enable floating points */
 }
 
-#if 0
 void
 ka46_cache_enable()
 {
-	int i;
+	int i, *tmp;
 
-	/* Disable and clear cache */
-	mtpr(PCSTS_FLUSH, PR_PCSTS);
-	/* Write valid parity to all cache entries */
+	/* Disable caches */
+	*(int *)KA46_CCR &= ~CCR_SPECIO;/* secondary */
+	mtpr(PCSTS_FLUSH, PR_PCSTS);	/* primary */
+	*(int *)KA46_BWF0 &= ~BWF0_FEN; /* invalidate filter */
+
+	/* Clear caches */
+	tmp = (void *)KA46_INVFLT;	/* inv filter */
+	for (i = 0; i < 32768; i++)
+		tmp[i] = 0;
+
+	/* Write valid parity to all primary cache entries */
 	for (i = 0; i < 256; i++) {
 		mtpr(i << 3, PR_PCIDX);
 		mtpr(PCTAG_PARITY, PR_PCTAG);
 	}
-	mtpr(PCSTS_FLUSH, PR_PCSTS);
+
+	/* Secondary cache */
+	tmp = (void *)KA46_TAGST;
+	for (i = 0; i < KA46_TAGSZ*2; i+=2)
+		tmp[i] = 0;
+
+	/* Enable cache */
+	*(int *)KA46_BWF0 |= BWF0_FEN; /* invalidate filter */
 	mtpr(PCSTS_ENABLE, PR_PCSTS);
+	*(int *)KA46_CCR = CCR_SPECIO | CCR_CENA;
 }
-#endif
 
 void
 ka46_memerr()
@@ -182,6 +184,8 @@ ka46_steal_pages()
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
+	/* Turn on caches (to speed up execution a bit) */
+	ka46_cache_enable();
 	/*
 	 * The I/O MMU maps all 16K device addressable memory to
 	 * the low 16M of the physical memory. In this way the
@@ -192,7 +196,7 @@ ka46_steal_pages()
 	 * This will be reworked the day NetBSD/vax changes to
 	 * 4K pages. (No use before that).
 	 */
-	{	int *lio_map;
+	{	int *io_map, *lio_map;
 
 		avail_end &= ~0x3ffff;
 		lio_map = (int *)avail_end;

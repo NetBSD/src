@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1998/05/03 12:59:57 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.6 1998/08/11 17:52:57 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -106,3 +106,4 @@ define	ENAMETOOLONG	ENAMETOOLONG
 define	SYS_sigreturn	SYS_sigreturn
 
 define	VAX_TYP_UV2	VAX_TYP_UV2
+define	VAX_BTYP_46	VAX_BTYP_46
