@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.c,v 1.1.1.1 1999/06/21 15:56:03 minoura Exp $	*/
+/*	$NetBSD: properties.c,v 1.2 1999/06/28 08:49:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,15 +52,15 @@ struct property properties[] = {
 		0, 4, 0, {longword:0}, 0, {longword:0}, {longword:MAGIC1},
 		parse_dummy, 0, 0,
 		print_magic,
-		fill_ulong, flush_dummy,
-		" Magic.  Must be 0xa3d83638\n"
+		fill_ulong, flush_ulong,
+		" Magic.  Must be 0x82773638\n"
 	},
 	{
 		"special", "magic2",
 		4, 4, 0, {longword:0}, 0, {longword:0}, {longword:MAGIC2},
 		parse_dummy, 0, 0,
 		print_magic,
-		fill_ulong, flush_dummy,
+		fill_ulong, flush_ulong,
 		" Magic.  Must be 0x30303057\n"
 	},
 	{
@@ -230,21 +230,24 @@ struct property properties[] = {
 		" Memory size in byte.\n"
 		" Can be specified by Kilobyte and Megabyte with suffix KB and MB respectively.\n"
 	},
-#ifdef notyet
 	{
 		"hw", "serial",
 		26, 2, 0, {word:{[0] 0}}, 0, {word:{[0] 0}}, {word:{[0] 0x4e07}},
 		parse_serial, 0, 0,
 		print_serial,
 		fill_ushort, flush_ushort,
-		" Serial mode."
+		" Serial mode.\n"
+		" Consist of comma-separated 5 specs.  The first value means speed in bps,\n"
+		" second means the bit width (5-8), third means parity (n for non parity,\n"
+		" o for odd parity, e for even parity), fourth means stop bit (2, 1 or 1.5),\n"
+		" fifth for software flow control (`-' or `s').\n"
+		" Note that the value is ignored on NetBSD.\n"
 	},
-#endif
 	{
 		"hw", "srammode",
 		45, 1, 0, {byte:{[0] 0}}, 0, {byte:{[0] 0}}, {byte:{[0] 0}},
-		parse_uchar, 0, 1,
-		print_uchar,
+		parse_srammode, 0, 1,
+		print_srammode,
 		fill_uchar, flush_uchar,
 		" Usage of the user area of non-volatile static RAM.\n"
 		" 0 for unused, 1 for SRAMDISK, 2 for user program.\n"
