@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.4 1998/09/10 19:24:45 kenh Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.5 1998/09/22 00:21:16 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,12 +44,10 @@ struct wdc_attachment_data {
 	bus_space_handle_t	ioh;
 	bus_space_tag_t		auxiot;
 	bus_space_handle_t	auxioh;
-	/*
-	 * XXX data access (normal and 32-bit) may need to be
-	 * done via a separate iot/ioh on some systems.  Let's
-	 * wait and see if that's the case before implementing
-	 * it.
-	 */
+
+	/* data32{iot,ioh} are only used for 32 bit xfers */
+	bus_space_tag_t		data32iot;
+	bus_space_handle_t	data32ioh;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void			*dma_arg;
@@ -97,6 +95,8 @@ struct wdc_softc {
 #define	sc_ioh		sc_adp->ioh
 #define	sc_auxiot	sc_adp->auxiot
 #define	sc_auxioh	sc_adp->auxioh
+#define	sc_data32iot	sc_adp->data32iot
+#define	sc_data32ioh	sc_adp->data32ioh
 #define	sc_dma_arg	sc_adp->dma_arg
 #define	sc_dma_setup	sc_adp->dma_setup
 #define	sc_dma_start	sc_adp->dma_start
