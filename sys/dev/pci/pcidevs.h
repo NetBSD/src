@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.668 2004/11/19 10:01:20 tacha Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.669 2004/11/22 04:24:25 rumble Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.667 2004/11/19 09:58:42 tacha Exp 
+ *	NetBSD: pcidevs,v 1.668 2004/11/22 04:23:21 rumble Exp 
  */
 
 /*
@@ -2797,7 +2797,7 @@
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
-#define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT3606 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT6306 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233/VT8235 AC-97 Audio Controller */
