@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.10 1997/01/07 12:27:30 tls Exp $	*/
+/*	$NetBSD: quiz.c,v 1.11 1997/07/06 11:19:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: quiz.c,v 1.10 1997/01/07 12:27:30 tls Exp $";
+static char rcsid[] = "$NetBSD: quiz.c,v 1.11 1997/07/06 11:19:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -300,14 +300,22 @@ char *
 next_cat(s)
 	register char *	s;
 {
+	int esc;
+
+	esc = 0;
 	for (;;)
 		switch (*s++) {
 		case '\0':
 			return (NULL);
 		case '\\':
+			esc = 1;
 			break;
 		case ':':
-			return (s);
+			if (!esc)
+				return (s);
+		default:
+			esc = 0;
+			break;
 		}
 	/* NOTREACHED */
 }
