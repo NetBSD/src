@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.12 2003/07/14 15:47:17 lukem Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.13 2003/08/05 14:55:06 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.12 2003/07/14 15:47:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.13 2003/08/05 14:55:06 scw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -347,8 +347,6 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 	GE_FUNC_ENTER(sc, "gfe_dmamem_alloc");
 	gdm->gdm_size = size;
 	gdm->gdm_maxsegs = maxsegs;
-
-	flags |= BUS_DMA_COHERENT;
 
 	error = bus_dmamem_alloc(sc->sc_dmat, gdm->gdm_size, PAGE_SIZE,
 	    gdm->gdm_size, gdm->gdm_segs, gdm->gdm_maxsegs, &gdm->gdm_nsegs,
@@ -1003,10 +1001,11 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	GE_FUNC_ENTER(sc, "gfe_tx_enqueue");
 
 	/*
-	 * Anything in the pending queue to enqueue?  if not, punt.
+	 * Anything in the pending queue to enqueue?  if not, punt. Likewise
+	 * if the txq is not yet created.
 	 * otherwise grab its dmamap.
 	 */
-	if ((m = txq->txq_pendq.ifq_head) == NULL) {
+	if (txq == NULL || (m = txq->txq_pendq.ifq_head) == NULL) {
 		GE_FUNC_EXIT(sc, "-");
 		return 0;
 	}
@@ -1440,6 +1439,11 @@ gfe_intr(void *arg)
 			/* intrmask &= ~ETH_IR_MIIPhySTC; */
 		}
 	}
+
+	while (gfe_tx_enqueue(sc, GE_TXPRIO_HI))
+		continue;
+	while (gfe_tx_enqueue(sc, GE_TXPRIO_LO))
+		continue;
 
 	GE_FUNC_EXIT(sc, "");
 	return claim;
