@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.107 1997/10/17 07:08:55 enami Exp $
+#	$NetBSD: GENERIC,v 1.108 1997/10/17 07:27:02 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -130,6 +130,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
+com*	at isapnp?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #cy*	at pci? dev ? function ?	# Cyclades serial cards
 
@@ -204,12 +205,14 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isapnp?
+fe0	at isa? port 0x2a0 irq ?		# AT1700
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
+ne*	at isapnp?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -217,7 +220,6 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
-fe0	at isa? port 0x2a0 irq ?		# AT1700
 ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
