@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.25 2005/01/30 19:13:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.24 2005/01/26 20:51:47 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25 2005/01/30 19:13:08 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -512,8 +512,11 @@ bmac_rint(v)
 		/* XXX Sometimes bmac reads one extra byte. */
 		if (datalen == ETHER_MAX_LEN + 1)
 			datalen--;
-		m = bmac_get(sc, data, datalen);
 
+		/* Trim the CRC. */
+		datalen -= ETHER_CRC_LEN;
+
+		m = bmac_get(sc, data, datalen);
 		if (m == NULL) {
 			ifp->if_ierrors++;
 			goto next;
@@ -682,7 +685,6 @@ bmac_get(sc, pkt, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_flags |= M_HASFCS;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
