@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.532 2003/06/07 05:08:45 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.533 2003/06/07 09:08:02 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp 
  */
 
 /*
@@ -1618,6 +1618,42 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Radeon Mobility 128 AGP 2x",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9700/9500 Series",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_2,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9700/9500 Series",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9600TX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9700/9500 Series Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S2,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9700/9500 Series Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_2,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9600TX Secondary",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
 	    0,
 	    "ATI Technologies",
@@ -1771,7 +1807,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_8500,
 	    0,
 	    "ATI Technologies",
-	    "Radeon 8500",
+	    "Radeon 8500/8500LE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9100 Series",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7500,
@@ -1784,6 +1826,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Radeon 7000/VE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9100 Series Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI,
