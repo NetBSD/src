@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.4 1996/02/13 22:04:51 christos Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.5 1996/05/07 02:36:08 thorpej Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -2496,7 +2496,7 @@ llc_link_dump(linkp, message)
 	register int    i;
 
 	/* print interface */
-	printf("if %s%d\n", linkp->llcl_if->if_name, linkp->llcl_if->if_unit);
+	printf("if %s\n", linkp->llcl_if->if_xname);
 
 	/* print message */
 	printf(">> %s <<\n", message);
