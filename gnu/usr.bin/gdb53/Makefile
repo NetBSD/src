@@ -1,5 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2003/08/17 22:54:56 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/26 17:51:18 christos Exp $
 
-SUBDIR=		bfd libiberty readline opcodes gdb # gdbreplay gdbserver
+.include "Makefile.inc"
+
+SUBDIR=		bfd libiberty opcodes
+.if ${USE_LIBEDIT} == no || ${USE_TUI} == yes
+SUBDIR+=	readline
+.endif
+SUBDIR+= gdb # gdbreplay gdbserver
 
 .include <bsd.subdir.mk>
