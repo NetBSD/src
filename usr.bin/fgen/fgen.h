@@ -1,4 +1,4 @@
-/*	$NetBSD: fgen.h,v 1.4 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: fgen.h,v 1.5 2001/10/05 22:36:02 eeh Exp $	*/
 /*
  * fgen.h -- stuff for the fcode tokenizer.
  *
@@ -32,7 +32,7 @@
  */
 
 /* Type of a Cell */
-typedef long Cell;
+typedef int64_t Cell;
 
 /* Token from the scanner. */
 struct tok {
