@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.293 2003/09/04 03:17:03 dan Exp $
+#	$NetBSD: Makefile,v 1.294 2003/09/25 16:34:55 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
@@ -16,7 +16,7 @@ MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
 	gem.4 gentbi.4 glxtphy.4 gpib.4 gre.4 gphyter.4 gsip.4 hme.4 \
 	icmp.4 icp.4 icsphy.4 idp.4 ifmedia.4 igsfb.4 iha.4 inet.4 \
 	inphy.4 intersil7170.4 ioasic.4 ioat.4 \
-	iop.4 iophy.4 iopsp.4 ip.4 ipkdb.4 iso.4 isp.4 iwic.4 joy.4 \
+	iop.4 iophy.4 iopsp.4 ip.4 ipkdb.4 iso.4 isp.4 joy.4 \
 	ksyms.4 kttcp.4 lc.4 ld.4 lkm.4 \
 	lo.4 lxtphy.4 mainbus.4 makphy.4 mbe.4 mca.4 mcclock.4 \
 	md.4 mfb.4 mhzc.4 midi.4 mii.4 \
@@ -84,7 +84,7 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 
 # ISDN devices
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
-	ifpci.4 isic.4
+	ifpci.4 isic.4 iwic.4
 
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
