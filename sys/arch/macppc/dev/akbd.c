@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.18 2001/10/02 21:05:39 mycroft Exp $	*/
+/*	$NetBSD: akbd.c,v 1.19 2002/01/02 20:21:12 dbj Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -241,6 +241,10 @@ akbdattach(parent, self, aux)
 	if (adb_debug)
 		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
+
+	if (akbd_is_console) {
+		wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
+	}
 
 	a.console = akbd_is_console;
 	a.keymap = &akbd_keymapdata;
@@ -510,7 +514,6 @@ akbd_cnattach()
 {
 
 	akbd_is_console = 1;
-	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
 	return 0;
 }
 
