@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.20 1993/11/08 20:23:17 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.21 1993/11/09 10:51:49 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -1040,10 +1040,10 @@ init386(first_avail)
 #define BIOS_BASEMEM 640
 #endif
 
-	if (biosbasemem == 0) {
+	if (biosbasemem == 0 || biosbasemem > 640) {
+		printf("warning: nvram reports %dk base memory; assuming %dk\n",
+		       biosbasemem, BIOS_BASEMEM);
 		biosbasemem = BIOS_BASEMEM;
-		printf("warning: nvram reports 0k base memory; assuming %k\n",
-		       biosbasemem);
 	}
 
 	avail_start = 0x1000;	/* BIOS leaves data in low memory */
