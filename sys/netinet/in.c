@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.74 2002/03/01 22:51:28 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.75 2002/03/30 00:40:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.74 2002/03/01 22:51:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.75 2002/03/30 00:40:32 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -1046,6 +1046,7 @@ in_broadcast(in, ifp)
 #define ia (ifatoia(ifa))
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
+		    !in_hosteq(in, ia->ia_addr.sin_addr) &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
 		     in_hosteq(in, ia->ia_netbroadcast) ||
 		     (hostzeroisbroadcast && 
