@@ -70,7 +70,7 @@ int	swapon();
 int	getitimer();
 int	ogethostname();
 int	osethostname();
-int	getdtablesize();
+int	ogetdtablesize();
 int	dup2();
 int	fcntl();
 int	select();
@@ -292,7 +292,7 @@ struct sysent sun_sysent[] = {
 	{ 2, getitimer },			/* 86 = getitimer */
 	{ 2, ogethostname },			/* 87 = ogethostname */
 	{ 2, osethostname },			/* 88 = osethostname */
-	{ 0, getdtablesize },			/* 89 = getdtablesize */
+	{ 0, ogetdtablesize },			/* 89 = ogetdtablesize */
 	{ 2, dup2 },			/* 90 = dup2 */
 	{ 0, nosys },			/* 91 = getdopt */
 	{ 3, fcntl },			/* 92 = fcntl */
