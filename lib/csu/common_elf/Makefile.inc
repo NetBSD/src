@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2001/06/07 15:22:50 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/08/03 05:54:43 thorpej Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -8,6 +8,7 @@ CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=${ELFSIZE}
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 CPPFLAGS+=	-I${.CURDIR}/../common_elf
 CPPFLAGS+=	-I${.CURDIR}/../../libc/dlfcn
+#CPPFLAGS+=	-DDWARF2_EH
 
 .if !defined(MACHINE_ARCH) || ${MACHINE_ARCH} != "m68000"
 COPTS+=		-fPIC
