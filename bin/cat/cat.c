@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cat.c	5.15 (Berkeley) 5/23/91";*/
-static char rcsid[] = "$Id: cat.c,v 1.7 1993/09/10 18:36:17 jtc Exp $";
+static char rcsid[] = "$Id: cat.c,v 1.8 1993/11/19 20:00:51 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$Id: cat.c,v 1.7 1993/09/10 18:36:17 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <ctype.h>
 
 int bflag, eflag, nflag, sflag, tflag, vflag;
@@ -72,6 +73,8 @@ main(argc, argv)
 {
 	extern int optind;
 	int ch;
+
+	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "benstuv")) != -1)
 		switch (ch) {
