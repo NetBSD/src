@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/07 05:04:58 briggs Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/12 01:15:15 briggs Exp $
 
-SUBDIR=	ramdisk md-kernel
-
-TARGETS+=release
+SUBDIR=	ramdisk .WAIT md-kernel
 
 .include <bsd.subdir.mk>

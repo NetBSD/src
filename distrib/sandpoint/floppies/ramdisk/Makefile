@@ -1,73 +1,39 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/06 18:25:29 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/12 01:15:15 briggs Exp $
 
-TOP=		${.CURDIR}/..
+.include "${.CURDIR}/../../../Makefile.inc"
+.include <bsd.own.mk>
 
-.include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
+IMAGESIZE=	2048k
+MAKEFS_FLAGS=	-f 15
 
-AUXDEPENDS=	dot.profile disktab.preinstall termcap.src
+WARNS=		1
+DBG=		-Os -mmultiple -mstring
 
-CBIN=		ramdiskbin
-
-MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-MDEC=		${DESTDIR}/usr/mdec
-
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
-
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
-
-DISKSIZE=	2048k
-DISKTYPE=	floppyinstfs
-DBG=		-Os -mmultiple
-
-realall: ${IMAGE}
-
-${IMAGE}: ${CBIN}  ${AUXDEPENDS} ${MTREECONF} ${LISTS}
-	dd if=/dev/zero of=${IMAGE} bs=${DISKSIZE} count=1
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-rm -f ${IMAGE}
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib -d "${DBG}" \
-	    ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+CRUNCHBIN=	ramdiskbin
+CRUNCHGEN_FLAGS=-d "${DBG}"
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	floppy
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		dot.profile termcap.src \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
-${CBIN}:	libhack.o
+${CRUNCHBIN}:	libhack.o
+
+
+realall: ${IMAGE}
 
 release:
 
-clean cleandir distclean:
-	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;
-	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
-	rm -f *.core *.o *.cro *.c
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
 
-.include <bsd.sys.mk>
-.include <bsd.obj.mk>
 .include <bsd.prog.mk>
