@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1996/01/31 21:34:04 phil Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 1996/03/28 05:00:16 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -199,10 +199,9 @@ trap(frame)
 		/*NOTREACHED*/
 
 	case T_UND | T_USER: {		/* undefined instruction fault */
-		int opcode, cfg;
-		extern int _have_fpu;
-		opcode = fubyte((void *)frame.tf_pc);
+		int cfg;
 #ifndef NS381
+		extern int _have_fpu;
 		if (!_have_fpu) {
 #ifdef MATH_EMULATE
 			int rv;
@@ -214,19 +213,17 @@ trap(frame)
 #endif
 		} else
 #endif
-		if (opcode == 0x3e || opcode == 0xbe || opcode == 0xfe) {
-			sprd(cfg, cfg);
-			if ((cfg & CFG_F) == 0) {
-				lprd(cfg, cfg | CFG_F);
-				if (fpu_proc == p)
-					return;
-				pcb = &p->p_addr->u_pcb;
-				if (fpu_proc != 0)
-					save_fpu_context(&fpu_proc->p_addr->u_pcb);
-				restore_fpu_context(pcb);
-				fpu_proc = p;
+		sprd(cfg, cfg);
+		if ((cfg & CFG_F) == 0) {
+			lprd(cfg, cfg | CFG_F);
+			if (fpu_proc == p)
 				return;
-			}
+			pcb = &p->p_addr->u_pcb;
+			if (fpu_proc != 0)
+				save_fpu_context(&fpu_proc->p_addr->u_pcb);
+			restore_fpu_context(pcb);
+			fpu_proc = p;
+			return;
 		}
 	}
 
