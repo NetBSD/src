@@ -1,6 +1,5 @@
-#	$NetBSD: UVM,v 1.1 1998/06/30 12:22:36 msaitoh Exp $
-include "arch/x68k/conf/ALL"
+#	$NetBSD: UVM,v 1.2 1998/09/07 14:11:09 minoura Exp $
+include "arch/x68k/conf/GENERIC"
 
-options 	MACHINE_NEW_NONCONTIG
 options 	UVM
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
+#options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
