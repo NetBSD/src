@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.54 1997/10/16 13:12:56 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.55 1997/10/16 22:02:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -1495,7 +1495,7 @@ tulip_2114x_media_preset(
     
     sc->tulip_cmdmode &= ~TULIP_CMD_PORTSELECT;
     sc->tulip_flags &= ~TULIP_SQETEST;
-    if (media != TULIP_MEDIA_UNKNOWN) {
+    if (media != TULIP_MEDIA_UNKNOWN && media != TULIP_MEDIA_MAX) {
 #if defined(TULIP_DEBUG)
 	if (media < TULIP_MEDIA_MAX && sc->tulip_mediums[media] != NULL) {
 #endif
@@ -1626,6 +1626,60 @@ tulip_21140_evalboard_media_probe(
 static const tulip_boardsw_t tulip_21140_eb_boardsw = {
     TULIP_21140_DEC_EB,
     tulip_21140_evalboard_media_probe,
+    tulip_media_select,
+    tulip_null_media_poll,
+    tulip_2114x_media_preset,
+};
+
+static void
+tulip_21140_accton_media_probe(
+    tulip_softc_t * const sc)
+{
+    tulip_media_info_t *mip = sc->tulip_mediainfo;
+    unsigned gpdata;
+
+    sc->tulip_gpinit = TULIP_GP_EB_PINS;
+    sc->tulip_gpdata = TULIP_GP_EB_INIT;
+    TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_EB_PINS);
+    TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_EB_INIT);
+    TULIP_CSR_WRITE(sc, csr_command,
+	TULIP_CSR_READ(sc, csr_command) | TULIP_CMD_PORTSELECT |
+	TULIP_CMD_PCSFUNCTION | TULIP_CMD_SCRAMBLER | TULIP_CMD_MUSTBEONE);
+    TULIP_CSR_WRITE(sc, csr_command,
+	TULIP_CSR_READ(sc, csr_command) & ~TULIP_CMD_TXTHRSHLDCTL);
+    DELAY(1000000);
+    gpdata = TULIP_CSR_READ(sc, csr_gp);
+    if ((gpdata & TULIP_GP_EN1207_UTP_INIT) == 0) {
+	sc->tulip_media = TULIP_MEDIA_10BASET;
+    } else {
+	if ((gpdata & TULIP_GP_EN1207_BNC_INIT) == 0) {
+		sc->tulip_media = TULIP_MEDIA_BNC;
+        } else {
+		sc->tulip_media = TULIP_MEDIA_100BASETX;
+        }
+    }
+    tulip_21140_mediainit(sc, mip++, TULIP_MEDIA_BNC,
+			  TULIP_GP_EN1207_BNC_INIT,
+			  TULIP_CMD_TXTHRSHLDCTL);
+    tulip_21140_mediainit(sc, mip++, TULIP_MEDIA_10BASET,
+			  TULIP_GP_EN1207_UTP_INIT,
+			  TULIP_CMD_TXTHRSHLDCTL);
+    tulip_21140_mediainit(sc, mip++, TULIP_MEDIA_10BASET_FD,
+			  TULIP_GP_EN1207_UTP_INIT,
+			  TULIP_CMD_TXTHRSHLDCTL|TULIP_CMD_FULLDUPLEX);
+    tulip_21140_mediainit(sc, mip++, TULIP_MEDIA_100BASETX,
+			  TULIP_GP_EN1207_100_INIT,
+			  TULIP_CMD_PORTSELECT|TULIP_CMD_PCSFUNCTION
+			      |TULIP_CMD_SCRAMBLER);
+    tulip_21140_mediainit(sc, mip++, TULIP_MEDIA_100BASETX_FD,
+			  TULIP_GP_EN1207_100_INIT,
+			  TULIP_CMD_PORTSELECT|TULIP_CMD_PCSFUNCTION
+			      |TULIP_CMD_SCRAMBLER|TULIP_CMD_FULLDUPLEX);
+}
+
+static const tulip_boardsw_t tulip_21140_accton_boardsw = {
+    TULIP_21140_EN1207,
+    tulip_21140_accton_media_probe,
     tulip_media_select,
     tulip_null_media_poll,
     tulip_2114x_media_preset,
@@ -2213,6 +2267,34 @@ tulip_identify_cogent_nic(
 }
 
 static void
+tulip_identify_accton_nic(
+    tulip_softc_t * const sc)
+{
+    strcpy(sc->tulip_boardid, "ACCTON ");
+    switch (sc->tulip_chipid) {
+	case TULIP_21140A:
+	    strcat(sc->tulip_boardid, "EN1207 ");
+	    sc->tulip_boardsw = &tulip_21140_accton_boardsw;
+	    break;
+	case TULIP_21140:
+	    strcat(sc->tulip_boardid, "EN1207TX ");
+	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
+            break;
+        case TULIP_21040:
+	    strcat(sc->tulip_boardid, "EN1203 ");
+            sc->tulip_boardsw = &tulip_21040_boardsw;
+            break;
+        case TULIP_21041:
+	    strcat(sc->tulip_boardid, "EN1203 ");
+            sc->tulip_boardsw = &tulip_21041_boardsw;
+            break;
+	default:
+            sc->tulip_boardsw = &tulip_2114x_isv_boardsw;
+            break;
+    }
+}
+
+static void
 tulip_identify_asante_nic(
     tulip_softc_t * const sc)
 {
@@ -2633,6 +2715,7 @@ static const struct {
     { tulip_identify_znyx_nic,		{ 0x00, 0xC0, 0x95 } },
     { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0x92 } },
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
+    { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
     { NULL }
 };
 
@@ -3487,11 +3570,17 @@ tulip_tx_intr(
 	    } else {
 		const u_int32_t d_status = ri->ri_nextin->d_status;
 		IF_DEQUEUE(&sc->tulip_txq, m);
+		if (m != NULL) {
 #if NBPFILTER > 0
-		if (sc->tulip_bpf != NULL)
-		    TULIP_BPF_MTAP(sc, m);
+		    if (sc->tulip_bpf != NULL)
+			TULIP_BPF_MTAP(sc, m);
 #endif
-		m_freem(m);
+		    m_freem(m);
+#if defined(TULIP_DEBUG)
+		} else {
+		    printf(TULIP_PRINTF_FMT ": tx_intr: failed to dequeue mbuf?!?\n", TULIP_PRINTF_ARGS);
+#endif
+		}
 		if (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) {
 		    tulip_mediapoll_event_t event = TULIP_MEDIAPOLL_TXPROBE_OK;
 		    if (d_status & (TULIP_DSTS_TxNOCARR|TULIP_DSTS_TxEXCCOLL)) {
