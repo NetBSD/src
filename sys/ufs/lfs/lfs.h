@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.71 2004/01/28 10:54:23 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.72 2004/03/09 06:43:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -816,6 +816,9 @@ struct lfs {
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
 
+#define	segsize(fs)	((fs)->lfs_version == 1 ?	     		\
+			   lblktosize((fs), (fs)->lfs_ssize) :		\
+			   (fs)->lfs_ssize)
 #define segtod(fs, seg) (((fs)->lfs_version == 1     ?	     		\
 			   (fs)->lfs_ssize << (fs)->lfs_blktodb :	\
 			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
