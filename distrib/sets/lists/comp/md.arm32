@@ -1,9 +1,9 @@
 ./usr/include/arm32
-./usr/include/machine/bus.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/beep.h
 ./usr/include/machine/bootconfig.h
+./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/cpus.h
@@ -45,4 +45,5 @@
 ./usr/include/machine/vconsole.h
 ./usr/include/machine/vidc.h
 ./usr/include/machine/vmparam.h
+./usr/lib/libntp_pic.a
 ./usr/lib/scrt0.o
