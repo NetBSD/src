@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.83 2001/03/25 13:06:52 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.84 2001/04/03 09:02:24 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.83 $"
+#ident 		"GENERIC-$Revision: 1.84 $"
 
 maxusers	8
 
@@ -136,6 +136,8 @@ ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
 hpcfb*		at	ite8181video?
 
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
