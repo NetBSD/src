@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.23 1998/03/21 20:34:59 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.24 1998/03/29 22:13:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,6 +139,7 @@ memregattach_mainbus(parent, self, aux)
 		printf("memregattach_mainbus: can't map register\n");
 		return;
 	}
+	par_err_reg = (volatile int *)bh;
 }
 
 /* ARGSUSED */
