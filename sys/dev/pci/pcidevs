@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp $
+$NetBSD: pcidevs,v 1.424 2002/05/15 14:14:34 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1113,7 +1113,7 @@ product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
 product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
-product DEC CPQ42XX	0x0046	Compaq SMART RAID 42xx
+product DEC 21554	0x0046	DECchip 21554 PCI-PCI Bridge
 product DEC SWXCR	0x1065	SWXCR RAID
 
 /* Dell Computer products */
