@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1995/10/26 00:59:02 jtc Exp $
+#	$Id: Makefile,v 1.6 1996/10/18 03:03:38 thorpej Exp $
 
 PROG=		indxbib
 SRCS=		indxbib.cc dirnamemax.c signal.c
@@ -10,7 +10,7 @@ DPADD+= 	$(LIBBIB) $(LIBGROFF) $(LIBM)
 COMMON_WORDS_FILE=	"/usr/share/dict/eign"
 
 afterinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/eign \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/eign \
 		$(DESTDIR)$(COMMON_WORDS_FILE)
 
 .include "../../Makefile.inc"
