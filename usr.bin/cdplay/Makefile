@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2000/12/16 01:36:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/01/12 16:42:45 xtraeme Exp $
 
+WARNS=	3
 PROG=	cdplay
 SRCS=	cdplay.c
 
