@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.1 1999/06/27 12:26:32 pk Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.2 1999/12/14 23:54:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,9 +123,10 @@
 #define HME_ETXI_FIFO_SWPTR	(6*4)		/* FIFO shadow write pointer */
 #define HME_ETXI_FIFO_RPTR	(7*4)		/* FIFO read pointer */
 #define HME_ETXI_FIFO_SRPTR	(8*4)		/* FIFO shadow read pointer */
-#define HME_ETXI_FIFO_SMACH	(9*4)		/* State machine */
-#define HME_ETXI_RSIZE		(10*4)		/* Ring size */
-#define HME_ETXI_BPTR		(11*4)		/* Buffer pointer */
+#define HME_ETXI_FIFO_PKTCNT	(9*4)		/* FIFO packet counter */
+#define HME_ETXI_STATEMACHINE	(10*4)		/* State machine */
+#define HME_ETXI_RSIZE		(11*4)		/* Ring size */
+#define HME_ETXI_BPTR		(12*4)		/* Buffer pointer */
 
 
 /* TXI_PENDING bits */
@@ -148,7 +149,7 @@
 #define HME_ERXI_FIFO_SWPTR	(4*4)		/* FIFO shadow write pointer */
 #define HME_ERXI_FIFO_RPTR	(5*4)		/* FIFO read pointer */
 #define HME_ERXI_FIFO_SRPTR	(6*4)		/* FIFO shadow read pointer */
-#define HME_ERXI_FIFO_SMACH	(7*4)		/* State machine */
+#define HME_ERXI_STATEMACHINE	(7*4)		/* State machine */
 
 /* RXI_CFG bits */
 #define HME_ERX_CFG_DMAENABLE	0x00000001	/* Enable RX dma */
