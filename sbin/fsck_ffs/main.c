@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1995/07/12 01:49:21 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1995/07/12 03:39:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.17 1995/07/12 01:49:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.18 1995/07/12 03:39:53 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,8 @@ docheck(fsp)
 	register struct fstab *fsp;
 {
 
-	if (strcmp(fsp->fs_vfstype, "ufs") ||
+	if ((strcmp(fsp->fs_vfstype, "ufs") &&
+	     strcmp(fsp->fs_vfstype, "ffs")) ||
 	    (strcmp(fsp->fs_type, FSTAB_RW) &&
 	     strcmp(fsp->fs_type, FSTAB_RO)) ||
 	    fsp->fs_passno == 0)
