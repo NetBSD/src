@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.117.2.1 1997/11/04 21:52:50 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.117.2.2 1997/11/05 05:35:40 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -110,7 +110,7 @@ CFLAGS+=	${COPTS}
 	@rm -f ${.TARGET}.o
 
 .c.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o:
 	@echo ${COMPILE.cc:Q} ${.IMPSRC}

@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.33.2.1 1997/11/04 21:59:21 thorpej Exp $
+#	$NetBSD: sys.mk,v 1.33.2.2 1997/11/05 05:37:41 thorpej Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -91,7 +91,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f $*.o
 .endif
 .c.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 # C++
 .cc:
