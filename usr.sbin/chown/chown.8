@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.9 1997/11/26 17:37:55 kleink Exp $
+.\"	$NetBSD: chown.8,v 1.10 1997/12/21 18:11:20 kleink Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHOWN 8
@@ -128,6 +128,12 @@ group name.
 .Pp
 The ownership of a file may only be altered by a super-user for
 obvious security reasons.
+.Pp
+Unless invoked by the super-user,
+.Nm
+clears the set-user-id and set-group-id bits on a file to prevent
+accidental or mischievous creation of set-user-id and set-group-id
+programs.
 .Pp
 The
 .Nm
