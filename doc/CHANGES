@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.319 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.320 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,7 +8,6 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 2.0 to NetBSD 2.1:
-	heimdal: import version 0.6.2.  [lha 20040508]
 	which(1): Replaced by a C program that only checks the path.
 		[christos 20040401]
 	heimdal: import version 0.6.1.  [lha 20040402]
@@ -42,6 +41,7 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	postfix: Postfix 2.1.0 imported.  [heas 20040427]
 	i386: Add support for Enhanced SpeedStep Technology, from
 		Michael Eriksson on port-i386.  [lukem 20040430]
+	heimdal: import version 0.6.2.  [lha 20040508]
 	libc: Make gmon / mcount work properly for threaded applications
 		by keeping thread-specific gmonparam structures and then
 		merging them before dumping the profile buffers.  Written
