@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cpufunc.h,v 1.5 1994/01/28 23:44:07 jtc Exp $
+ *	$Id: cpufunc.h,v 1.6 1994/10/09 13:02:56 mycroft Exp $
  */
 
 /*
@@ -66,12 +66,6 @@ ltr(u_short sel)
 }
 
 static __inline void
-tlbflush(void)
-{
-	__asm __volatile("movl %%cr3,%%eax\n\tmovl %%eax,%%cr3" : : : "%eax");
-}
-
-static __inline void
 lcr0(u_int val)
 {
 	__asm __volatile("movl %0,%%cr0" : : "r" (val));
@@ -81,7 +75,7 @@ static __inline u_int
 rcr0(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr0,%0" : "=a" (val));
+	__asm __volatile("movl %%cr0,%0" : "=r" (val));
 	return val;
 }
 
@@ -89,7 +83,7 @@ static __inline u_int
 rcr2(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr2,%0" : "=a" (val));
+	__asm __volatile("movl %%cr2,%0" : "=r" (val));
 	return val;
 }
 
@@ -103,8 +97,16 @@ static __inline u_int
 rcr3(void)
 {
 	u_int val;
-	__asm __volatile("movl %%cr3,%0" : "=a" (val));
+	__asm __volatile("movl %%cr3,%0" : "=r" (val));
 	return val;
+}
+
+static __inline void
+tlbflush(void)
+{
+	u_int val;
+	__asm __volatile("movl %%cr3,%0" : "=r" (val));
+	__asm __volatile("movl %0,%%cr3" : : "r" (val));
 }
 
 #ifdef notyet
