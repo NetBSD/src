@@ -171,7 +171,9 @@
 #define splnet()        spl1()
 #define splbio()        spl3()
 #define splimp()        spl3()
-#define spltty()        spl5()
+/* lowered to spl4 to allow for serial input into
+   private ringbuffer inspite of spltty */
+#define spltty()        spl4()
 #define splclock()      spl6()
 #define splvm()         spl6()
 #define splhigh()       spl7()

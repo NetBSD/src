@@ -40,4 +40,6 @@
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
  */
 
-#define ITESWITCH _IOW('Z',0x69, int)	/* XXX */
+#define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
+#define ITELOADKMAP	_IOW('Z',0x70, struct kbdmap)
+#define ITEGETKMAP	_IOR('Z',0x71, struct kbdmap)
