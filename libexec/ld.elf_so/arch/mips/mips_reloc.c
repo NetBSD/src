@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.33 2002/09/14 23:53:21 thorpej Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.34 2002/09/25 03:52:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -108,27 +108,6 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 			break;
 		}
 	}
-	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
-	for (; rel < rellim; rel++) {
-		where = (Elf_Addr *)(relocbase + rel->r_offset);
-
-		switch (ELF_R_TYPE(rel->r_info)) {
-		case R_TYPE(NONE):
-			break;
-
-		case R_TYPE(REL32):
-			sym = symtab + ELF_R_SYM(rel->r_info);
-			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    ELF_ST_TYPE(sym->st_info) == STT_SECTION)
-				*where += (Elf_Addr)(sym->st_value + relocbase);
-			else
-				abort();
-			break;
-
-		default:
-			abort();
-		}
-	}
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
 	/* Relocate the local GOT entries */
@@ -141,6 +120,26 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 		*got = sym->st_value + relocbase;
 		++sym;
 		++got;
+	}
+
+	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
+	for (; rel < rellim; rel++) {
+		where = (Elf_Addr *)(relocbase + rel->r_offset);
+
+		switch (ELF_R_TYPE(rel->r_info)) {
+		case R_TYPE(NONE):
+			break;
+
+		case R_TYPE(REL32):
+			assert(ELF_R_SYM(rel->r_info) < gotsym);
+			sym = symtab + ELF_R_SYM(rel->r_info);
+			assert(sym->st_info == STT_SECTION);
+			*where += (Elf_Addr)(sym->st_value + relocbase);
+			break;
+
+		default:
+			abort();
+		}
 	}
 }
 
@@ -182,6 +181,60 @@ _rtld_relocate_nonplt_objects(obj, self)
 	if (self)
 		return 0;
 
+	i = (got[1] & 0x80000000) ? 2 : 1;
+	/* Relocate the local GOT entries */
+	got += i;
+	for (; i < obj->local_gotno; i++)
+		*got++ += (Elf_Addr)obj->relocbase;
+	sym = obj->symtab + obj->gotsym;
+	/* Now do the global GOT entries */
+	for (i = obj->gotsym; i < obj->symtabno; i++) {
+		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
+		    sym->st_name + obj->strtab, *got));
+
+		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    sym->st_shndx == SHN_UNDEF) {
+			/*
+			 * XXX DANGER WILL ROBINSON!
+			 * You might think this is stupid, as it intentionally
+			 * defeats lazy binding -- and you'd be right.
+			 * Unfortunately, for lazy binding to work right, we
+			 * need to a way to force the GOT slots used for
+			 * function pointers to be resolved immediately.  This
+			 * is supposed to be done automatically by the linker,
+			 * by not outputting a PLT slot and setting st_value
+			 * to 0, but GNU ld does not do so reliably.
+			 */
+			def = _rtld_find_symdef(i, obj, &defobj, true);
+			if (def == NULL)
+				return -1;
+			*got = def->st_value + (Elf_Addr)defobj->relocbase;
+		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
+		    sym->st_value != 0) {
+			/*
+			 * If there are non-PLT references to the function,
+			 * st_value should be 0, forcing us to resolve the
+			 * address immediately.
+			 */
+			*got = sym->st_value + (Elf_Addr)obj->relocbase;
+		} else if (sym->st_info == ELF_ST_INFO(STB_GLOBAL, STT_SECTION)) {
+			/* Symbols with index SHN_ABS are not relocated. */
+			if (sym->st_shndx != SHN_ABS)
+				*got = sym->st_value +
+				    (Elf_Addr)obj->relocbase;
+		} else {
+			def = _rtld_find_symdef(i, obj, &defobj, true);
+			if (def == NULL)
+				return -1;
+			*got = def->st_value + (Elf_Addr)defobj->relocbase;
+		}
+
+		rdbg(("  --> now %x", *got));
+		++sym;
+		++got;
+	}
+
+	got = obj->pltgot;
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where, tmp;
 		unsigned long	 symnum;
@@ -197,9 +250,16 @@ _rtld_relocate_nonplt_objects(obj, self)
 			/* 32-bit PC-relative reference */
 			def = obj->symtab + symnum;
 
-			if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
-			  (ELF_ST_TYPE(def->st_info) == STT_SECTION ||
-			   ELF_ST_TYPE(def->st_info) == STT_NOTYPE)) {
+			if (symnum >= obj->gotsym) {
+				tmp = *where;
+				tmp += got[obj->local_gotno + symnum - obj->gotsym];
+				*where = tmp;
+
+				rdbg(("REL32/G %s in %s --> %p in %s",
+				    obj->strtab + def->st_name, obj->path,
+				    (void *)tmp, obj->path));
+				break;
+			} else {
 				/*
 				 * XXX: ABI DIFFERENCE!
 				 *
@@ -220,48 +280,18 @@ _rtld_relocate_nonplt_objects(obj, self)
 				 *
 				 * --rkb, Oct 6, 2001
 				 */
-				if (__predict_true(RELOC_ALIGNED_P(where))) {
-					tmp = *where;
+				tmp = *where;
 
-					if (def->st_info == STT_SECTION &&
-					    tmp < def->st_value)
-						tmp += (Elf_Addr)def->st_value;
+				if (def->st_info == STT_SECTION &&
+				    tmp < def->st_value)
+					tmp += (Elf_Addr)def->st_value;
 
-					tmp += (Elf_Addr)obj->relocbase;
-					*where = tmp;
-				} else {
-					tmp = load_ptr(where);
-
-					if (def->st_info == STT_SECTION &&
-					    tmp < def->st_value)
-						tmp += (Elf_Addr)def->st_value;
-					
-					tmp += (Elf_Addr)obj->relocbase;
-					store_ptr(where, tmp);
-				}
+				tmp += (Elf_Addr)obj->relocbase;
+				*where = tmp;
 
 				rdbg(("REL32 %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
 				    (void *)tmp, obj->path));
-			} else {
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-				if (__predict_true(RELOC_ALIGNED_P(where))) {
-					tmp = *where +
-					    (Elf_Addr)(defobj->relocbase +
-						       def->st_value);
-					*where = tmp;
-				} else {
-					tmp = load_ptr(where) +
-					    (Elf_Addr)(defobj->relocbase +
-						       def->st_value);
-					store_ptr(where, tmp);
-				}
-				rdbg(("REL32 %s in %s --> %p in %s",
-				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)tmp, defobj->path));
 			}
 			break;
 
@@ -276,39 +306,6 @@ _rtld_relocate_nonplt_objects(obj, self)
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
 			return -1;
 		}
-	}
-
-	i = (got[1] & 0x80000000) ? 2 : 1;
-	/* Relocate the local GOT entries */
-	got += i;
-	for (; i < obj->local_gotno; i++)
-		*got++ += (Elf_Addr)obj->relocbase;
-	sym = obj->symtab + obj->gotsym;
-	/* Now do the global GOT entries */
-	for (i = obj->gotsym; i < obj->symtabno; i++) {
-		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
-		    sym->st_name + obj->strtab, *got));
-
-		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    sym->st_value != 0)
-			/* The symbol table contains the address of the PLT
-			   slot.  However, sometimes a PLT slot is not
-			   allocated, so we have to check st_value first. */
-			*got = sym->st_value + (Elf_Addr)obj->relocbase;
-		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
-		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			/* Symbols with index SHN_ABS are not relocated. */
-			if (sym->st_shndx != SHN_ABS)
-				*got = sym->st_value +
-				    (Elf_Addr)obj->relocbase;
-		} else {
-			def = _rtld_find_symdef(i, obj, &defobj, true);
-			if (def == NULL)
-				return -1;
-			*got = def->st_value + (Elf_Addr)defobj->relocbase;
-		}
-		++sym;
-		++got;
 	}
 
 	return 0;
