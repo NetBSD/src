@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.171 2002/08/28 08:34:09 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.172 2002/09/21 21:15:01 manu Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171 2002/08/28 08:34:09 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.172 2002/09/21 21:15:01 manu Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -338,7 +338,11 @@ trap(status, cause, vaddr, opc, frame)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
-		rv = uvm_fault(map, va, 0, ftype);
+
+		if (p->p_emul->e_fault)
+			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+		else
+			rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
 	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",

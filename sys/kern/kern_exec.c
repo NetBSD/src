@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.155 2002/08/28 07:16:35 gmcgarry Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.156 2002/09/21 21:15:02 manu Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.155 2002/08/28 07:16:35 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.156 2002/09/21 21:15:02 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -153,6 +153,8 @@ const struct emul emul_netbsd = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };
 
 #ifdef LKM
