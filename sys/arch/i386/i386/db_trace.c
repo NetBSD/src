@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.10 1994/10/09 13:48:40 mycroft Exp $
+ *	$Id: db_trace.c,v 1.11 1994/10/09 14:37:54 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -67,9 +67,10 @@ struct i386_frame {
 	int			f_arg0;
 };
 
+#define	NONE		0
 #define	TRAP		1
-#define	INTERRUPT	2
-#define	SYSCALL		3
+#define	SYSCALL		2
+#define	INTERRUPT	3
 
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
@@ -136,7 +137,7 @@ db_nextframe(fp, ip, argp, is_trap)
 {
 
 	switch (is_trap) {
-	    case 0:
+	    case NONE:
 		*ip = (db_addr_t)
 			db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
 		*fp = (struct i386_frame *)
@@ -144,8 +145,7 @@ db_nextframe(fp, ip, argp, is_trap)
 		break;
 
 	    case SYSCALL:
-	    case TRAP:
-	    default: {
+	    case TRAP: {
 		struct trapframe *tf;
 
 		/* The only argument to trap() or syscall() is the trapframe. */
@@ -157,6 +157,20 @@ db_nextframe(fp, ip, argp, is_trap)
 		db_printf(":\n");
 		*fp = (struct i386_frame *)tf->tf_ebp;
 		*ip = (db_addr_t)tf->tf_eip;
+		break;
+	    }
+
+	    case INTERRUPT: {
+		struct intrframe *if;
+
+		/* We fudged the frame pointer in the interrupt handler so we
+		   could do this. */
+		if = (struct intrframe *)argp;
+		db_printf("--- interrupt ---\n");
+		db_printsym(if->if_eip, DB_STGY_XTRN);
+		db_printf(":\n");
+		*fp = (struct i386_frame *)if->if_ebp;
+		*ip = (db_addr_t)if->if_eip;
 		break;
 	    }
 	}
@@ -231,19 +245,30 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				offset = 0;
 			}
 		}
-#define STRCMP(s1,s2) ((s1) && (s2) && strcmp((s1), (s2)) == 0)
-		if (INKERNEL((int)frame) && STRCMP(name, "_trap")) {
-			narg = 1;
-			is_trap = TRAP;
-		} else if (INKERNEL((int)frame) && STRCMP(name, "_kdintr")) {
-			is_trap = INTERRUPT;
-			narg = 0;
-		} else if (INKERNEL((int)frame) && STRCMP(name, "_syscall")) {
-			is_trap = SYSCALL;
-			narg = 0;
+		if (INKERNEL((int)frame) && name) {
+			if (!strcmp(name, "_trap")) {
+				is_trap = TRAP;
+				narg = 1;
+			} else if (!strcmp(name, "_syscall")) {
+				is_trap = SYSCALL;
+				narg = 1;
+			} else if (name[0] == '_' && name[1] == 'X') {
+				if (!strncmp(name, "_Xintr", 6) ||
+				    !strncmp(name, "_Xresume", 8) ||
+				    !strncmp(name, "_Xstray", 7) ||
+				    !strncmp(name, "_Xhold", 6) ||
+				    !strncmp(name, "_Xrecurse", 9) ||
+				    !strcmp(name, "_Xdoreti") ||
+				    !strncmp(name, "_Xsoft", 6)) {
+					is_trap = INTERRUPT;
+					narg = 0;
+				} else
+					goto normal;
+			} else
+				goto normal;
 		} else {
-#undef STRCMP
-			is_trap = 0;
+		normal:
+			is_trap = NONE;
 			narg = MAXNARG;
 			if (db_sym_numargs(sym, &narg, argnames))
 				argnp = argnames;
