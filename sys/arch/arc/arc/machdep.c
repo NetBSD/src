@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2001/11/14 18:15:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2002/03/05 16:12:35 simonb Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -167,7 +167,6 @@ int mem_cluster_cnt;
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern void mach_init __P((int, char **argv, char **));
 
-void machine_ConfigCache __P((void));
 char *firmware_getenv __P((char *env));
 void arc_sysreset __P((bus_addr_t, bus_size_t));
 
@@ -447,7 +446,7 @@ mach_init(argc, argv, envv)
 }
 
 void
-machine_ConfigCache()
+mips_machdep_cache_config(void)
 {
 	mips_sdcache_size = arc_cpu_l2cache_size;
 }
