@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.4 2003/05/18 08:19:03 lukem Exp $
+#	$NetBSD: bsd.endian.mk,v 1.5 2003/07/27 11:16:30 lukem Exp $
 
 .ifndef TARGET_ENDIANNESS
 
@@ -6,7 +6,8 @@
 
 # find out endianness of target and set proper flag for pwd_mkdb and such,
 # so that it creates database in same endianness.
-.if exists(${DESTDIR}/usr/include/sys/endian.h)
+#
+.if exists(${DESTDIR}/usr/include/sys/endian.h) && exists(${CC:ts::C/:.*$//})
 TARGET_ENDIANNESS!= \
 	printf '\#include <sys/endian.h>\n_BYTE_ORDER\n' | \
 	${CC} -nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -E - | \
