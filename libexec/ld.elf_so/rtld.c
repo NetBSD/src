@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.13 1999/02/24 18:31:00 christos Exp $	*/
+/*	$NetBSD: rtld.c,v 1.14 1999/02/27 10:35:16 pk Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -98,26 +98,26 @@ extern Elf_Dyn _DYNAMIC;
 
 static void
 _rtld_call_fini_functions(
-    Obj_Entry *first)
+	Obj_Entry *first)
 {
-    Obj_Entry *obj;
+	Obj_Entry *obj;
 
-    for (obj = first;  obj != NULL;  obj = obj->next)
-	if (obj->fini != NULL)
-	    (*obj->fini)();
+	for (obj = first;  obj != NULL;  obj = obj->next)
+		if (obj->fini != NULL)
+			(*obj->fini)();
 }
 
 static void
 _rtld_call_init_functions(
-    Obj_Entry *first)
+	Obj_Entry *first)
 {
-    if (first != NULL) {
-	_rtld_call_init_functions(first->next);
-	if (first->init != NULL)
-	    (*first->init)();
-    }
+	if (first != NULL) {
+		_rtld_call_init_functions(first->next);
+		if (first->init != NULL)
+			(*first->init)();
+	}
 }
-
+
 /*
  * Initialize the dynamic linker.  The argument is the address at which
  * the dynamic linker has been mapped into memory.  The primary task of
@@ -127,70 +127,80 @@ static void
 _rtld_init(
     caddr_t mapbase)
 {
-    Obj_Entry objself;	/* The dynamic linker shared object */
+	Obj_Entry objself;	/* The dynamic linker shared object */
 #ifdef RTLD_RELOCATE_SELF
-    int dodebug = false;
+	int dodebug = false;
 #else
-    int dodebug = true;
+	int dodebug = true;
 #endif
 
-    /* Conjure up an Obj_Entry structure for the dynamic linker. */
-    objself.path = NULL;
-    objself.rtld = true;
-    objself.mapbase = mapbase;
+	memset(&objself, 0, sizeof objself);
+
+	/* Conjure up an Obj_Entry structure for the dynamic linker. */
+	objself.path = NULL;
+	objself.rtld = true;
+	objself.mapbase = mapbase;
+
 #if defined(__mips__)
-    /*
-     * mips and ld.so currently linked at load address,
-     * so no relocation needed
-     */
-    objself.relocbase = 0;
+	/*
+	* mips and ld.so currently linked at load address,
+	* so no relocation needed
+	*/
+	objself.relocbase = 0;
 #else
-    objself.relocbase = mapbase;
+	objself.relocbase = mapbase;
 #endif
-    objself.pltgot = NULL;
+
+	objself.pltgot = NULL;
+
 #ifdef OLD_GOT
-    objself.dynamic = (Elf_Dyn *)_GLOBAL_OFFSET_TABLE_[0];
+	objself.dynamic = (Elf_Dyn *)_GLOBAL_OFFSET_TABLE_[0];
 #else
-    objself.dynamic = (Elf_Dyn *)&_DYNAMIC;
+	objself.dynamic = (Elf_Dyn *)&_DYNAMIC;
 #endif
 
 #ifdef RTLD_RELOCATE_SELF
-    /* We have not been relocated yet, so fix the dynamic address */
-    objself.dynamic = (Elf_Dyn *)((u_long)mapbase + (char *) objself.dynamic);
+	/* We have not been relocated yet, so fix the dynamic address */
+	objself.dynamic = (Elf_Dyn *)
+		((u_long)mapbase + (char *) objself.dynamic);
 #endif /* RTLD_RELOCATE_SELF */
 
-    _rtld_digest_dynamic(&objself);
+	_rtld_digest_dynamic(&objself);
+
 #ifdef __alpha__
-    /* XXX XXX XXX */
-    objself.pltgot = NULL;
+	/* XXX XXX XXX */
+	objself.pltgot = NULL;
 #endif
-    assert(objself.needed == NULL);
+	assert(objself.needed == NULL);
+
 #if !defined(__mips__) && !defined(__i386__)
-    /* no relocation for mips/i386 */
-    assert(!objself.textrel);
+	/* no relocation for mips/i386 */
+	assert(!objself.textrel);
 #endif
 
-    _rtld_relocate_objects(&objself, true, dodebug);
+	_rtld_relocate_objects(&objself, true, dodebug);
 
-    /*
-     * Now that we relocated ourselves, we can use globals.
-     */
-    _rtld_objself = objself;
+	/*
+	 * Now that we relocated ourselves, we can use globals.
+	 */
+	_rtld_objself = objself;
 
-    _rtld_objself.path = _rtld_path;
-    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+	_rtld_objself.path = _rtld_path;
+	_rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
 
-    /* Set up the _rtld_objlist pointer, so that rtld symbols can be found. */
-    _rtld_objlist = &_rtld_objself;
+	/*
+	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
+	 */
+	_rtld_objlist = &_rtld_objself;
 
-    /* Make the object list empty again. */
-    _rtld_objlist = NULL;
-    _rtld_objtail = &_rtld_objlist;
+	/* Make the object list empty again. */
+	_rtld_objlist = NULL;
+	_rtld_objtail = &_rtld_objlist;
 
-    _rtld_debug.r_brk = _rtld_debug_state;
-    _rtld_debug.r_state = RT_CONSISTENT;
+	_rtld_debug.r_brk = _rtld_debug_state;
+	_rtld_debug.r_state = RT_CONSISTENT;
 }
-
+
 /*
  * Cleanup procedure.  It will be called (by the atexit() mechanism) just
  * before the process exits.
@@ -198,11 +208,11 @@ _rtld_init(
 static void
 _rtld_exit(void)
 {
-    dbg("rtld_exit()");
+	dbg("rtld_exit()");
 
-    _rtld_call_fini_functions(_rtld_objlist->next);
+	_rtld_call_fini_functions(_rtld_objlist->next);
 }
-
+
 /*
  * Main entry point for dynamic linking.  The argument is the stack
  * pointer.  The stack is expected to be laid out as described in the
@@ -568,7 +578,7 @@ _rtld_error(
     error_message = buf;
     va_end(ap);
 }
-
+
 void
 _rtld_debug_state(
     void)
