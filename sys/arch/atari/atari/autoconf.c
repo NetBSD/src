@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 2002/12/08 21:31:35 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 2003/01/01 00:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -300,6 +300,6 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
+		aprint_normal("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }

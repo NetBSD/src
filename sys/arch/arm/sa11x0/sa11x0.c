@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.9 2002/10/02 05:02:31 thorpej Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.10 2003/01/01 00:46:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -107,17 +107,17 @@ sa11x0_print(aux, name)
 	struct sa11x0_attach_args *sa = (struct sa11x0_attach_args*)aux;
 
 	if (sa->sa_size)
-                printf(" addr 0x%lx", sa->sa_addr);
+                aprint_normal(" addr 0x%lx", sa->sa_addr);
         if (sa->sa_size > 1)
-                printf("-0x%lx", sa->sa_addr + sa->sa_size - 1);
+                aprint_normal("-0x%lx", sa->sa_addr + sa->sa_size - 1);
 	if (sa->sa_memsize)
-		printf(" membase 0x%lx", sa->sa_membase);
+		aprint_normal(" membase 0x%lx", sa->sa_membase);
 	if (sa->sa_memsize > 1)
-		printf("-0x%lx", sa->sa_membase + sa->sa_memsize - 1);
+		aprint_normal("-0x%lx", sa->sa_membase + sa->sa_memsize - 1);
         if (sa->sa_intr > 1)
-                printf(" intr %d", sa->sa_intr);
+                aprint_normal(" intr %d", sa->sa_intr);
 	if (sa->sa_gpio != -1)
-		printf(" gpio %d", sa->sa_gpio);
+		aprint_normal(" gpio %d", sa->sa_gpio);
 
         return (UNCONF);
 }

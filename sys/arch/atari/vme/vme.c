@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.7 2002/10/02 05:04:27 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.8 2003/01/01 00:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,15 +92,15 @@ vmeprint(aux, vme)
 	struct vme_attach_args *va = aux;
 
 	if (va->va_iosize)
-		printf(" port 0x%x", va->va_iobase);
+		aprint_normal(" port 0x%x", va->va_iobase);
 	if (va->va_iosize > 1)
-		printf("-0x%x", va->va_iobase + va->va_iosize - 1);
+		aprint_normal("-0x%x", va->va_iobase + va->va_iosize - 1);
 	if (va->va_msize)
-		printf(" iomem 0x%x", va->va_maddr);
+		aprint_normal(" iomem 0x%x", va->va_maddr);
 	if (va->va_msize > 1)
-		printf("-0x%x", va->va_maddr + va->va_msize - 1);
+		aprint_normal("-0x%x", va->va_maddr + va->va_msize - 1);
 	if (va->va_irq != IRQUNK)
-		printf(" irq %d", va->va_irq);
+		aprint_normal(" irq %d", va->va_irq);
 	return (UNCONF);
 }
 
