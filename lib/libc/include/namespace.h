@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.69 2002/01/14 00:55:57 thorpej Exp $	*/
+/*	$NetBSD: namespace.h,v 1.70 2002/01/24 02:46:34 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -357,6 +357,8 @@
 #define pread			_pread
 #define psignal			_psignal
 #define putenv			_putenv
+#define pwcache_userdb		_pwcache_userdb
+#define pwcache_groupdb		_pwcache_groupdb
 #define pwrite			_pwrite
 #define qabs			_qabs
 #define qdiv			_qdiv
