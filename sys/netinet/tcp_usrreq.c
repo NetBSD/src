@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.17 1995/09/30 07:02:05 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.18 1996/01/31 05:37:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -521,8 +521,11 @@ tcp_usrclosed(tp)
 		tp->t_state = TCPS_LAST_ACK;
 		break;
 	}
-	if (tp && tp->t_state >= TCPS_FIN_WAIT_2)
+	if (tp && tp->t_state >= TCPS_FIN_WAIT_2) {
 		soisdisconnected(tp->t_inpcb->inp_socket);
+		if (tp->t_state == TCPS_FIN_WAIT_2)
+			tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+	}
 	return (tp);
 }
 
