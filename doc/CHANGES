@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.202 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.203 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -433,7 +433,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	ipsec: support hmac-ripemd160 and aes-xcbc-mac for AH/ESP auth.
 		support aes-ctr for ESP. [itojun 20030725]
 	i386: New boot code. Uses MI installboot and filesystem code to load
-		2nd level bootstrap. [dsl 20030728]
+		2nd level bootstrap. Allows NetBSD partition to be
+		in the extended partition. [dsl 20030728]
 	sysinst: New disk editing menus and general rototil. [dsl 20030728]
 	ftp(1): $FTPUSERAGENT overrides the default HTTP User-Agent.
 		[lukem 20030731]
@@ -477,3 +478,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	i2c: New generic i2c framework, supporting bit-bang and
 		"intelligent" controllers.  [thorpej 20030929]
 	pkg_add(1): Added HTTP support. [wiz 20031003]
+	kernel: Add a /dev/constty device (minor 1 on console), use for
+		terminal sessions on 'console'.  Stops terminal output
+		being 'stolen' by the TIOCCONS ioctl. [dsl 20031003]
