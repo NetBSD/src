@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.27 2002/01/20 02:30:11 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.28 2002/01/21 11:40:20 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -987,7 +987,7 @@ different 'modification counters' (one value on the first component
 that failed, one value on the second component that failed, and a
 third value on the remaining components).  In such a situation, the
 RAID set will not autoconfigure, and can only be forcibly re-configured
-with the 
+with the
 .Fl C
 option.  To recover the RAID set, one must first remedy whatever physical
 problem caused the multiple-component failure.  After that is done,
@@ -1046,7 +1046,7 @@ raidctl -I 12345 raid0
 .Pp
 will be required in order to synchronize the component labels.
 At this point the filesystems on the RAID set can then be checked and
-corrected.  To complete the re-construction of the RAID set, 
+corrected.  To complete the re-construction of the RAID set,
 /dev/sd1e is simply hot-added back into the array, and reconstructed
 as described earlier.
 .Ss RAID on RAID
