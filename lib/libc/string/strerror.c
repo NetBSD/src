@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strerror.c,v 1.1 1993/10/07 19:27:53 jtc Exp $";
+static char *rcsid = "$Id: strerror.c,v 1.2 1993/10/09 00:11:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -41,11 +41,11 @@ static char *rcsid = "$Id: strerror.c,v 1.1 1993/10/07 19:27:53 jtc Exp $";
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
  * static buffer, both functions supply their own buffers to the
- * internal function _strerror().
+ * internal function __strerror().
  */
 
 char *
-_strerror(num, buf)
+__strerror(num, buf)
 	int num;
 	char *buf;
 {
@@ -82,5 +82,5 @@ strerror(num)
 	int num;
 {
 	static char buf[40];			/* 64-bit number + slop */
-	return _strerror(num, buf);
+	return __strerror(num, buf);
 }
