@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.29 2001/03/26 06:13:14 mike Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.30 2001/04/06 15:32:41 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.29 2001/03/26 06:13:14 mike Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.30 2001/04/06 15:32:41 darrenr Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.28 2001/01/08 14:04:46 darrenr Exp";
@@ -690,7 +690,7 @@ u_int flags;
 #endif
 	RWLOCK_EXIT(&ipf_state);
 	fin->fin_rev = IP6NEQ(is->is_dst, fin->fin_fi.fi_dst);
-	if (fin->fin_fi.fi_fl & FI_FRAG)
+	if ((fin->fin_fi.fi_fl & FI_FRAG) && (pass & FR_KEEPFRAG))
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return is;
 }
@@ -1347,7 +1347,7 @@ retry_tcpudp:
 		fr_delstate(is);
 #endif
 	RWLOCK_EXIT(&ipf_state);
-	if (fin->fin_fi.fi_fl & FI_FRAG)
+	if ((fin->fin_fi.fi_fl & FI_FRAG) && (pass & FR_KEEPFRAG))
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return fr;
 }
