@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.83 2004/11/30 04:25:44 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.84 2004/12/12 04:46:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.83 2004/11/30 04:25:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.84 2004/12/12 04:46:46 yamt Exp $");
 
 #include "fs_union.h"
 
@@ -775,8 +775,10 @@ vn_lock(vp, flags)
 {
 	int error;
 
+#if 0
 	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
 	    || (vp->v_flag & VONWORKLST) != 0);
+#endif
 
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
