@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.86 2004/01/16 05:03:02 mrg Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.87 2004/02/25 21:34:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.86 2004/01/16 05:03:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.87 2004/02/25 21:34:18 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.86 2004/01/16 05:03:02 mrg Exp $")
 
 #ifdef KTRACE
 
+void	ktrinitheader(struct ktr_header *, struct proc *, int);
+int	ktrwrite(struct proc *, struct ktr_header *);
 int	ktrace_common(struct proc *, int, int, int, struct file *);
 int	ktrops(struct proc *, struct proc *, int, int, struct file *);
 int	ktrsetchildren(struct proc *, struct proc *, int, int,
