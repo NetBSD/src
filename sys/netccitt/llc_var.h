@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.8 1998/07/07 03:24:53 thorpej Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.9 1998/07/07 03:26:42 thorpej Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -614,7 +614,7 @@ extern int af_link_rts_init_done;
 	       } \
 	 }
 
-struct ifqueue llcintrq;
+extern struct ifqueue llcintrq;
 
 extern struct llccb_q llccb_q;
 extern char *frame_names[];
