@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.2 1997/10/17 21:10:56 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.3 1997/11/25 20:35:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,19 +55,19 @@ struct lookfor fdiskbuf[] = {
 	{"PART0ID", "PART0ID=%d", "a $0", &part[0][ID], NULL},
 	{"PART0SIZE", "PART0SIZE=%d", "a $0", &part[0][SIZE], NULL},
 	{"PART0START", "PART0START=%d", "a $0", &part[0][START], NULL},
-	{"PART0FLAG", "PART0FLAG=%d", "a $0", &part[0][FLAG], NULL},
+	{"PART0FLAG", "PART0FLAG=0x%d", "a $0", &part[0][FLAG], NULL},
 	{"PART1ID", "PART1ID=%d", "a $0", &part[1][ID], NULL},
 	{"PART1SIZE", "PART1SIZE=%d", "a $0", &part[1][SIZE], NULL},
 	{"PART1START", "PART1START=%d", "a $0", &part[1][START], NULL},
-	{"PART1FLAG", "PART1FLAG=%d", "a $0", &part[1][FLAG], NULL},
+	{"PART1FLAG", "PART1FLAG=0x%d", "a $0", &part[1][FLAG], NULL},
 	{"PART2ID", "PART2ID=%d", "a $0", &part[2][ID], NULL},
 	{"PART2SIZE", "PART2SIZE=%d", "a $0", &part[2][SIZE], NULL},
 	{"PART2START", "PART2START=%d", "a $0", &part[2][START], NULL},
-	{"PART2FLAG", "PART2FLAG=%d", "a $0", &part[2][FLAG], NULL},
+	{"PART2FLAG", "PART2FLAG=0x%d", "a $0", &part[2][FLAG], NULL},
 	{"PART3ID", "PART3ID=%d", "a $0", &part[3][ID], NULL},
 	{"PART3SIZE", "PART3SIZE=%d", "a $0", &part[3][SIZE], NULL},
 	{"PART3START", "PART3START=%d", "a $0", &part[3][START], NULL},
-	{"PART3FLAG", "PART3FLAG=%d", "a $0", &part[3][FLAG], NULL}
+	{"PART3FLAG", "PART3FLAG=0x%d", "a $0", &part[3][FLAG], NULL}
 };
 
 int numfdiskbuf = sizeof(fdiskbuf) / sizeof(struct lookfor);
@@ -158,6 +158,7 @@ void get_fdisk_info (void)
 {
 	char *textbuf;
 	int   textsize;
+	int   t1, t2;
 
 	/* Get Fdisk information */
 	textsize = collect (T_OUTPUT, &textbuf,
@@ -169,5 +170,20 @@ void get_fdisk_info (void)
 	}
 	walk (textbuf, textsize, fdiskbuf, numfdiskbuf);
 	free (textbuf);
+
+	/* A common failure of fdisk is to get the number of cylinders
+	   wrong and the number of sectors and heads right.  This makes
+	   a disk look very big.  In this case, we can just recompute
+	   the number of cylinders and things should work just fine. */
+
+	if (bcyl > 1023 && bsec < 64) {
+		t1 = disk->geom[0] * disk->geom[1] * disk->geom[2];
+		t2 = bhead * bsec;
+		if (bcyl * t2 > t1) {
+			t2 = t1 / t2;
+			if (t2 < 1024)
+				bcyl = t2;
+		}
+	}
 }
 
