@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.57 2002/07/01 13:17:48 christos Exp $ */
+/* $NetBSD: vga.c,v 1.58 2002/07/01 16:56:09 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.57 2002/07/01 13:17:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.58 2002/07/01 16:56:09 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static struct wsdisplay_font _vga_builtinfont = {
 
 struct egavga_font {
 	struct wsdisplay_font *wsfont;
-	int cookie; /* wsfont handle */
+	int cookie; /* wsfont handle, -1 invalid */
 	int slot; /* in adapter RAM */
 	int usecount;
 	TAILQ_ENTRY(egavga_font) next; /* LRU queue */
@@ -74,7 +74,7 @@ struct egavga_font {
 
 static struct egavga_font vga_builtinfont = {
 	&_vga_builtinfont,
-	0, 0
+	-1, 0
 };
 
 #ifdef VGA_CONSOLE_SCREENTYPE
@@ -422,7 +422,7 @@ egavga_unreffont(struct vga_config *vc, struct egavga_font *f)
 #ifdef VGAFONTDEBUG
 	printf("vga_unreffont: usecount=%d\n", f->usecount);
 #endif
-	if (f->usecount == 0 && f != &vga_builtinfont) {
+	if (f->usecount == 0 && f->cookie != -1) {
 		TAILQ_REMOVE(&vc->vc_fontlist, f, next);
 		if (f->slot != -1) {
 			KASSERT(vc->vc_fonts[f->slot] == f);
@@ -623,17 +623,43 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 		vga_init(vc, iot, memt);
 	}
 
-	vga_builtinfont.wsfont->data = malloc(8192, M_DEVBUF, M_WAITOK);
-	vga_readoutchars(&vc->hdl, vga_builtinfont.slot, 0, 256,
+	if (quirks & VGA_QUIRK_ONEFONT) {
+		vc->vc_nfontslots = 1;
+#ifndef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+		/*
+		 * XXX maybe invalidate font in slot > 0, but this can
+		 * only be happen with VGA_CONSOLE_SCREENTYPE, and then
+		 * we require VGA_CONSOLE_ATI_BROKEN_FONTSEL anyway.
+		 */
+#endif
+	} else {
+		vc->vc_nfontslots = 8;
+#ifndef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+		/*
+		 * XXX maybe validate builtin font shifted to slot 1 if
+		 * slot 0 got overwritten because of VGA_CONSOLE_SCREENTYPE,
+		 * but it will be reloaded anyway if needed.
+		 */
+#endif
+	}
+
+	/*
+	 * Save the builtin font to memory. In case it got overwritten
+	 * in console initialization, use the copy in slot 1.
+	 */
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+#define BUILTINFONTLOC (vga_builtinfont.slot == -1 ? 1 : 0)
+#else
+	KASSERT(vga_builtinfont.slot == 0);
+#define BUILTINFONTLOC (0)
+#endif
+	vga_builtinfont.wsfont->data =
+		malloc(256 * vga_builtinfont.wsfont->fontheight,
+		       M_DEVBUF, M_WAITOK);
+	vga_readoutchars(&vc->hdl, BUILTINFONTLOC, 0, 256,
 			 vga_builtinfont.wsfont->fontheight,
 			 vga_builtinfont.wsfont->data);
 
-	if (quirks & VGA_QUIRK_ONEFONT) {
-		vc->vc_nfontslots = 1;
-		if (vga_builtinfont.slot != 0)
-			vga_builtinfont.slot = -1;
-	} else
-		vc->vc_nfontslots = 8;
 	vc->vc_type = type;
 	vc->vc_funcs = vf;
 
@@ -671,13 +697,10 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	/*
 	 * On some (most/all?) ATI cards, only font slot 0 is usable.
 	 * vga_init_screen() might need font slot 0 for a non-default
-	 * console font, so save the builtin VGA font to another font slot
-	 * for now and free slot 0. The attach() code will take care later.
+	 * console font, so save the builtin VGA font to another font slot.
+	 * The attach() code will take care later.
 	 */
 	vga_copyfont01(&vga_console_vc.hdl);
-	vga_console_vc.vc_fonts[0] = 0;
-	vga_builtinfont.slot = 1;
-	vga_console_vc.vc_fonts[1] = &vga_builtinfont;
 	vga_console_vc.vc_nfontslots = 1;
 #else
 	vga_console_vc.vc_nfontslots = 8;
