@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.71 2003/11/06 08:58:04 dsl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.72 2003/11/24 14:59:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.71 2003/11/06 08:58:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.72 2003/11/24 14:59:38 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -675,9 +675,14 @@ spec_close(v)
 		if (count == 2 && ap->a_p &&
 		    vp == (sess = ap->a_p->p_session)->s_ttyvp) {
 			sess->s_ttyvp = NULL;
-			sess->s_ttyp->t_pgrp = NULL;
-			sess->s_ttyp->t_session = NULL;
-			SESSRELE(sess);
+			if (sess->s_ttyp->t_session != NULL) {
+				if (sess->s_ttyp->t_pgrp == NULL)
+					panic("spec_close: no pgrp");
+				sess->s_ttyp->t_pgrp = NULL;
+				sess->s_ttyp->t_session = NULL;
+				SESSRELE(sess);
+			} else if (sess->s_ttyp->t_pgrp != NULL)
+				panic("spec_close: spurious pgrp ref");
 			vrele(vp);
 			count--;
 		}
@@ -739,7 +744,7 @@ spec_close(v)
 
 	/*
 	 * If we're able to block, release the vnode lock & reacquire. We
-	 * might end up sleaping for someone else who wants our queues. They
+	 * might end up sleeping for someone else who wants our queues. They
 	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
 	 * don't release the lock as we won't be able to regain it.
 	 */
