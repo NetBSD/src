@@ -1,4 +1,71 @@
-/* $NetBSD: tc_bus_mem.c,v 1.13.2.1 1997/06/01 04:14:49 cgd Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.13.2.2 1997/08/12 05:56:42 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,7 +101,9 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.13.2.1 1997/06/01 04:14:49 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.13.2.2 1997/08/12 05:56:42 cgd Exp $");
+__KERNEL_COPYRIGHT(0,
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.13.2.1 1997/06/01 04:14:49 cgd Exp 
 
 #include <machine/bus.h>
 #include <dev/tc/tcvar.h>
+
+#define	__C(A,B)	__CONCAT(A,B)
 
 /* mapping/unmapping */
 int		tc_mem_map __P((void *, bus_addr_t, bus_size_t, int,
@@ -140,13 +211,13 @@ void		tc_mem_set_region_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
 /* copy */
-void		tc_mem_copy_1 __P((void *, bus_space_handle_t,
+void		tc_mem_copy_region_1 __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		tc_mem_copy_2 __P((void *, bus_space_handle_t,
+void		tc_mem_copy_region_2 __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		tc_mem_copy_4 __P((void *, bus_space_handle_t,
+void		tc_mem_copy_region_4 __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		tc_mem_copy_8 __P((void *, bus_space_handle_t,
+void		tc_mem_copy_region_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
 static struct alpha_bus_space tc_mem_space = {
@@ -214,10 +285,10 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_set_region_8,
 
 	/* copy */
-	tc_mem_copy_1,
-	tc_mem_copy_2,
-	tc_mem_copy_4,
-	tc_mem_copy_8,
+	tc_mem_copy_region_1,
+	tc_mem_copy_region_2,
+	tc_mem_copy_region_4,
+	tc_mem_copy_region_8,
 };
 
 bus_space_tag_t
@@ -231,16 +302,23 @@ tc_bus_mem_init(memv)
 }
 
 int
-tc_mem_map(v, memaddr, memsize, cacheable, memhp)
+tc_mem_map(v, memaddr, memsize, flags, memhp)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *memhp;
 {
+	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+
+	/* Requests for linear uncacheable space can't be satisfied. */
+	if (linear && !cacheable)
+		return (EOPNOTSUPP);
 
 	if (memaddr & 0x7)
-		panic("tc_mem_map needs 8 byte alignment");
+		return (EINVAL);
+
 	if (cacheable)
 		*memhp = ALPHA_PHYS_TO_K0SEG(memaddr);
 	else
@@ -267,7 +345,7 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 
 	/* Disallow subregioning that would make the handle unaligned. */
 	if ((offset & 0x7) != 0)
-		return (1);
+		return (EINVAL);
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		*nmemh = memh + (offset << 1);
@@ -278,11 +356,11 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 }
 
 int
-tc_mem_alloc(v, rstart, rend, size, align, boundary, cacheable, addrp, bshp)
+tc_mem_alloc(v, rstart, rend, size, align, boundary, flags, addrp, bshp)
 	void *v;
 	bus_addr_t rstart, rend, *addrp;
 	bus_size_t size, align, boundary;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 
@@ -309,9 +387,9 @@ tc_mem_barrier(v, h, o, l, f)
 	int f;
 {
 
-	if ((f & BUS_BARRIER_READ) != 0)
+	if ((f & BUS_SPACE_BARRIER_READ) != 0)
 		alpha_mb();
-	else if ((f & BUS_BARRIER_WRITE) != 0)
+	else if ((f & BUS_SPACE_BARRIER_WRITE) != 0)
 		alpha_wmb();
 }
 
@@ -386,7 +464,7 @@ tc_mem_read_8(v, memh, off)
 
 #define	tc_mem_read_multi_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_read_multi_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_read_multi_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -394,8 +472,8 @@ __abs_c(tc_mem_read_multi_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_READ);	\
-		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_SPACE_BARRIER_READ); \
+		*a++ = __C(tc_mem_read_,BYTES)(v, h, o);		\
 	}								\
 }
 tc_mem_read_multi_N(1,u_int8_t)
@@ -405,7 +483,7 @@ tc_mem_read_multi_N(8,u_int64_t)
 
 #define	tc_mem_read_region_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_read_region_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_read_region_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -413,7 +491,7 @@ __abs_c(tc_mem_read_region_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		*a++ = __abs_c(tc_mem_read_,BYTES)(v, h, o);		\
+		*a++ = __C(tc_mem_read_,BYTES)(v, h, o);		\
 		o += sizeof *a;						\
 	}								\
 }
@@ -519,7 +597,7 @@ tc_mem_write_8(v, memh, off, val)
 
 #define	tc_mem_write_multi_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_write_multi_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -527,8 +605,8 @@ __abs_c(tc_mem_write_multi_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
-		tc_mem_barrier(v, h, o, sizeof *a, BUS_BARRIER_WRITE);	\
+		__C(tc_mem_write_,BYTES)(v, h, o, *a++);		\
+		tc_mem_barrier(v, h, o, sizeof *a, BUS_SPACE_BARRIER_WRITE); \
 	}								\
 }
 tc_mem_write_multi_N(1,u_int8_t)
@@ -538,7 +616,7 @@ tc_mem_write_multi_N(8,u_int64_t)
 
 #define	tc_mem_write_region_N(BYTES,TYPE)				\
 void									\
-__abs_c(tc_mem_write_region_,BYTES)(v, h, o, a, c)			\
+__C(tc_mem_write_region_,BYTES)(v, h, o, a, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -546,7 +624,7 @@ __abs_c(tc_mem_write_region_,BYTES)(v, h, o, a, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, *a++);		\
+		__C(tc_mem_write_,BYTES)(v, h, o, *a++);		\
 		o += sizeof *a;						\
 	}								\
 }
@@ -557,7 +635,7 @@ tc_mem_write_region_N(8,u_int64_t)
 
 #define	tc_mem_set_multi_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_set_multi_,BYTES)(v, h, o, val, c)			\
+__C(tc_mem_set_multi_,BYTES)(v, h, o, val, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -565,8 +643,8 @@ __abs_c(tc_mem_set_multi_,BYTES)(v, h, o, val, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, val);		\
-		tc_mem_barrier(v, h, o, sizeof val, BUS_BARRIER_WRITE);	\
+		__C(tc_mem_write_,BYTES)(v, h, o, val);			\
+		tc_mem_barrier(v, h, o, sizeof val, BUS_SPACE_BARRIER_WRITE); \
 	}								\
 }
 tc_mem_set_multi_N(1,u_int8_t)
@@ -576,7 +654,7 @@ tc_mem_set_multi_N(8,u_int64_t)
 
 #define	tc_mem_set_region_N(BYTES,TYPE)					\
 void									\
-__abs_c(tc_mem_set_region_,BYTES)(v, h, o, val, c)			\
+__C(tc_mem_set_region_,BYTES)(v, h, o, val, c)				\
 	void *v;							\
 	bus_space_handle_t h;						\
 	bus_size_t o, c;						\
@@ -584,7 +662,7 @@ __abs_c(tc_mem_set_region_,BYTES)(v, h, o, val, c)			\
 {									\
 									\
 	while (c-- > 0) {						\
-		__abs_c(tc_mem_write_,BYTES)(v, h, o, val);		\
+		__C(tc_mem_write_,BYTES)(v, h, o, val);			\
 		o += sizeof val;					\
 	}								\
 }
@@ -593,26 +671,33 @@ tc_mem_set_region_N(2,u_int16_t)
 tc_mem_set_region_N(4,u_int32_t)
 tc_mem_set_region_N(8,u_int64_t)
 
-#define	tc_mem_copy_N(BYTES)						\
+#define	tc_mem_copy_region_N(BYTES)					\
 void									\
-__abs_c(tc_mem_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
+__C(tc_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)			\
 	void *v;							\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
 {									\
-	bus_size_t i, o;						\
+	bus_size_t o;							\
 									\
 	if ((h1 & TC_SPACE_SPARSE) != 0 &&				\
 	    (h2 & TC_SPACE_SPARSE) != 0) {				\
-		bcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES);	\
+		ovbcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
 		return;							\
 	}								\
 									\
-	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
-		__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
-		    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
+	if (h1 + o1 >= h2 + o2)						\
+		/* src after dest: copy forward */			\
+		for (o = 0; c > 0; c--, o += BYTES)			\
+			__C(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
+			    __C(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
+	else								\
+		/* dest after src: copy backwards */			\
+		for (o = (c - 1) * BYTES; c > 0; c--, o -= BYTES)	\
+			__C(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
+			    __C(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
 }
-tc_mem_copy_N(1)
-tc_mem_copy_N(2)
-tc_mem_copy_N(4)
-tc_mem_copy_N(8)
+tc_mem_copy_region_N(1)
+tc_mem_copy_region_N(2)
+tc_mem_copy_region_N(4)
+tc_mem_copy_region_N(8)

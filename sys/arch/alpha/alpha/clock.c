@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.14.2.1 1997/06/01 04:11:07 cgd Exp $ */
+/* $NetBSD: clock.c,v 1.14.2.2 1997/08/12 05:54:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.2.1 1997/06/01 04:11:07 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.2.2 1997/08/12 05:54:35 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.2.1 1997/06/01 04:11:07 cgd Exp $");
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
 
-#include <alpha/alpha/clockvar.h>
+#include <dev/dec/clockvar.h>
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */

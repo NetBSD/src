@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.1.2.2 1997/07/22 05:54:34 cgd Exp $
+# $NetBSD: genassym.awk,v 1.1.2.3 1997/08/12 05:54:41 cgd Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,9 +44,18 @@ BEGIN {
 	len = 0;
 	val = 0;
 	str = "";
+
+	translate = 0;
 }
 
+# This marks the beginning of the part we should translate.
+# Note: leading _ is not allowed on all platforms (e.g. alpha).
+/assyms:/ {
+	translate = 1;
+}
 /\t\.ascii/ {
+	if (!translate)
+		next;
 	len = length($2);
 	str = substr($2,2,len-4);
 	printf("#define\t%s\t", str);
@@ -58,12 +67,14 @@ BEGIN {
 }
 
 /\t\.quad/ {
+	if (!translate)
+		next;
 	printf("%s\n", $2);
 	next;
 }
 
 # This marks the end of the part we should translate.
-# Note: leading _ is allowed but not required.
+# Note: leading _ is not allowed on all platforms (e.g. alpha).
 /nassyms:/ {
 	exit;
 }

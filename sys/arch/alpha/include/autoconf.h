@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.6.2.1 1997/06/01 04:12:05 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.6.2.2 1997/08/12 05:55:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -80,6 +80,40 @@ struct bootdev_data {
 	char	*ctrl_dev_type;
 };
 
+/*
+ * The boot program passes a pointer (in the boot environment virtual
+ * address address space; "BEVA") to a bootinfo to the kernel using
+ * the following convention:
+ *
+ *	a0 contains first free page frame number
+ *	a1 contains page number of current level 1 page table
+ *	if a2 contains BOOTINFO_MAGIC:
+ *		a3 contains pointer (BEVA) to bootinfo
+ */
+
+#define	BOOTINFO_MAGIC		0xdeadbeeffeedface
+
+struct bootinfo_v1 {
+	u_long	ssym;			/* 0: start of kernel sym table	*/
+	u_long	esym;			/* 8: end of kernel sym table	*/
+	char	boot_flags[64];		/* 16: boot flags		*/
+	char	booted_kernel[64];	/* 80: name of booted kernel	*/
+	void	*hwrpb;			/* 144: hwrpb pointer (BEVA)	*/
+	u_long	hwrpbsize;		/* 152: size of hwrpb data	*/
+	int	(*cngetc) __P((void));	/* 160: console getc pointer	*/
+	void	(*cnputc) __P((int));	/* 168: console putc pointer	*/
+	void	(*cnpollc) __P((int));	/* 176: console pollc pointer	*/
+					/* 184: total size		*/
+};
+
+struct bootinfo {
+	u_long	version;		/* 0: version number		*/
+	union {				/* 8: union:			*/
+		struct bootinfo_v1 v1;	/*    version 1 boot info	*/
+		char pad[256];		/*    space rsvd for future use	*/
+	} un;				/*				*/
+					/* 264: total size		*/
+};
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;

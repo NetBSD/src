@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.4.2.3 1997/06/01 04:12:48 cgd Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.4.2.4 1997/08/12 05:55:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.2.3 1997/06/01 04:12:48 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.2.4 1997/08/12 05:55:42 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.2.3 1997/06/01 04:12:48 cgd Exp 
 
 #include <machine/bus.h>
 
-#include <alpha/alpha/clockvar.h>
-#include <alpha/alpha/mcclockvar.h>
+#include <dev/dec/clockvar.h>
+#include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isavar.h>
 

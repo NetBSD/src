@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.27.2.1 1997/06/01 04:11:24 cgd Exp $ */
+/* $NetBSD: locore.s,v 1.27.2.2 1997/08/12 05:54:46 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.27.2.1 1997/06/01 04:11:24 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.27.2.2 1997/08/12 05:54:46 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -130,6 +130,8 @@ bootstack:
  * Arguments:
  *	a0 is the first free page frame number (PFN)
  *	a1 is the page table base register (PTBR)
+ *	a2 is the bootinfo magic number
+ *	a3 is the pointer to the bootinfo structure
  *
  * All arguments are passed to alpha_init().
  */
@@ -149,7 +151,7 @@ Lstart1: LDGP(pv)
 	/*
 	 * Call alpha_init() to do pre-main initialization.
 	 * alpha_init() gets the arguments we were called with,
-	 * which are already in a0 and a1.
+	 * which are already in a0, a1, a2, and a3.
 	 */
 	CALL(alpha_init)
 
@@ -181,22 +183,6 @@ Lstart1: LDGP(pv)
 	 */
 	jmp	zero, exception_return		/* "And that's all she wrote." */
 	END(__start)
-
-/**************************************************************************/
-
-/*
- * Pull in the PROM interface routines; these are needed for
- * prom printf (while bootstrapping), and for determining the
- * boot device, etc.
- */
-#include <alpha/alpha/prom_disp.s>
-
-/**************************************************************************/
-
-/*
- * Pull in the PALcode function stubs.
- */
-#include <alpha/alpha/pal.s>
 
 /**************************************************************************/
 
@@ -1714,5 +1700,28 @@ longjmp_botchmsg:
 	.asciz	"longjmp botch from %p"
 	.text
 END(longjmp)
+
+/**************************************************************************/
+
+/*
+ * Pull in the PROM interface routines; these are needed for
+ * prom printf (while bootstrapping), and for determining the
+ * boot device, etc.
+ */
+#include <alpha/alpha/prom_disp.s>
+
+/**************************************************************************/
+
+/*
+ * Pull in the PALcode function stubs.
+ */
+#include <alpha/alpha/pal.s>
+
+/**************************************************************************/
+
+/*
+ * Pull in the BWX function stubs.
+ */
+#include <alpha/alpha/bwx.s>
 
 /**************************************************************************/
