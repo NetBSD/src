@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.2 2004/02/23 16:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.2 2004/02/23 16:06:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ void
 setservent_r(int f, struct servent_data *sd)
 {
 	if (sd->fp == NULL)
-		sd->fp = fopen(_PATH_SERVICES, "r" );
+		sd->fp = fopen(_PATH_SERVICES, "r");
 	else
 		rewind(sd->fp);
 	sd->stayopen |= f;
@@ -73,13 +73,17 @@ endservent_r(struct servent_data *sd)
 		sd->aliases = NULL;
 		sd->maxaliases = 0;
 	}
+	if (sd->line) {
+		free(sd->line);
+		sd->line = NULL;
+	}
 	sd->stayopen = 0;
 }
 
 struct servent *
 getservent_r(struct servent *sp, struct servent_data *sd)
 {
-	char *l = NULL, *p, *cp, **q;
+	char *p, *cp, **q;
 	size_t i = 0;
 	int oerrno;
 
@@ -87,12 +91,13 @@ getservent_r(struct servent *sp, struct servent_data *sd)
 		return NULL;
 
 	for (;;) {
-		if (l)
-			free(l);
-		l = fparseln(sd->fp, NULL, NULL, NULL, FPARSELN_UNESCALL);
-		if (l == NULL)
+		if (sd->line)
+			free(sd->line);
+		sd->line = fparseln(sd->fp, NULL, NULL, NULL,
+		    FPARSELN_UNESCALL);
+		if (sd->line == NULL)
 			return NULL;
-		sp->s_name = p = l;
+		sp->s_name = p = sd->line;
 		p = strpbrk(p, " \t");
 		if (p == NULL)
 			continue;
@@ -125,14 +130,14 @@ getservent_r(struct servent *sp, struct servent_data *sd)
 			}
 			if (i == sd->maxaliases - 2) {
 				sd->maxaliases *= 2;
-				q = sd->aliases =
-				    realloc(q, sd->maxaliases);
+				q = realloc(q, sd->maxaliases);
 				if (q == NULL) {
 					oerrno = errno;
 					endservent_r(sd);
 					errno = oerrno;
 					return NULL;
 				}
+				sp->s_aliases = sd->aliases = q;
 			}
 			q[i++] = cp;
 			cp = strpbrk(cp, " \t");
