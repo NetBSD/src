@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 1996/10/14 07:58:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 1996/10/14 20:02:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1059,6 +1059,8 @@ Lenab1:
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
+	lea	_proc0,a2		| initialize proc0.p_addr so that
+	movl	a1,a2@(P_ADDR)		|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a1,_curpcb		| proc0 is running
@@ -1079,9 +1081,9 @@ Lenab1:
 	MMUADDR(a0)
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
-/* final setup for C code */
-	jbsr	_isrinit		| be ready for stray ints
-	jbsr	_hp300_calibrate_delay	| calibrate delay
+/* Final setup for call to main(). */
+	jbsr	_isrinit		| initialize interrupt handlers
+	jbsr	_hp300_calibrate_delay	| calibrate delay() loop
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -1097,6 +1099,13 @@ Lnocache0:
 	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
 
 	jra	_main			| main()
+
+	pea	Lmainreturned		| Yow!  Main returned!
+	jbsr	_panic
+	/* NOTREACHED */
+Lmainreturned:
+	.asciz	"main() returned"
+	.even
 
 	.globl	_proc_trampoline
 _proc_trampoline:
