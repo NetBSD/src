@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.16 1997/05/07 19:25:16 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.17 1997/05/07 19:34:16 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -18,7 +18,7 @@ KERN=		$S/kern
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
-CLEANFILES+=	machine ${MACHINE}
+CLEANFILES+=	machine ${MACHINE_ARCH}
 
 DPSRCS+= ${SRCS:M*.h}
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
@@ -35,22 +35,19 @@ ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 MAN=	${KMOD}.4
 .endif
 
-all: machine ${PROG}
+all: machine-links ${PROG}
 
-machine:
-	ln -s $S/arch/${MACHINE}/include machine
-	ln -s machine ${MACHINE}
+.PHONY:	machine-links
+beforedepend: machine-links
+machine-links:
+	-rm -f machine && \
+	    ln -s $S/arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_ARCH} && \
+	    ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 
 cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
 		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
-#
-# if no beforedepend target is defined, generate an empty target here
-#
-.if !target(beforedepend)
-beforedepend: machine
-.endif
 
 #
 # define various install targets
