@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.9 1996/11/24 13:34:44 matthias Exp $	*/
+/*	$NetBSD: icu.h,v 1.10 1997/03/20 12:02:40 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -106,16 +106,6 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 #define IR_TTY3		7
 #define IR_TTY3RDY	6
 #define IR_SOFT		14
-
-/*    edge polarity
- *	0	0	falling edge
- *	0	1	rising edge
- *	1	0	low level
- *	1	1	high level
- *
- */
-#define IEDGE		0
-#define IPOLARITY	0
 
 #define ints_off	bicpsrw	PSL_I ; nop
 #define ints_on		bispsrw	PSL_I
