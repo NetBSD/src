@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.10 1997/10/17 12:40:10 lukem Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.11 1997/10/22 18:43:16 fair Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.10 1997/10/17 12:40:10 lukem Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.11 1997/10/22 18:43:16 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ hasquota(fs, type, qfnamep)
 	char **qfnamep;
 {
 	char *opt;
-	char *cp;
+	char *cp = NULL;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
