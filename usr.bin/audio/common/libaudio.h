@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.5 2000/12/13 08:19:54 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.6 2000/12/22 11:38:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -80,11 +80,11 @@ typedef struct {
 #define	AUDIO_FILE_ENCODING_ADPCM_G723_5	26
 #define	AUDIO_FILE_ENCODING_ALAW_8		27
 
-char	*audio_enc_from_val __P((int));
-int	audio_enc_to_val __P((const char *));
+char	*audio_enc_from_val (int);
+int	audio_enc_to_val (const char *);
 
-int	audio_sun_to_encoding __P((int, int *, int *));
-int	audio_encoding_to_sun __P((int, int, int *));
+int	audio_sun_to_encoding (int, int *, int *);
+int	audio_encoding_to_sun (int, int, int *);
 
 /*
  * M$ WAV files, info gleamed from sox sources
@@ -127,7 +127,7 @@ typedef struct {
 } wav_audioheaderfmt __attribute__((__packed__));
 
 /* returns size of header, or -1 */
-size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *));
+size_t audio_parse_wav_hdr (void *, size_t, int *, int *, int *, int *);
 
 /*
  * audio routine error codes
@@ -141,14 +141,14 @@ size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *));
 #define AUDIO_MAXERRNO		5
 
 /* and something to get a string associated with this error */
-const char *audio_errstring __P((int));
+const char *audio_errstring (int);
 
 /*
  * generic routines?
  */
-void	decode_int __P((const char *, int *));
-void	decode_time __P((const char *, struct timeval *));
-void	decode_encoding __P((const char *, int *));
+void	decode_int (const char *, int *);
+void	decode_time (const char *, struct timeval *);
+void	decode_encoding (const char *, int *);
 
 /*
  * get/put 16/32 bits of big/little endian data
