@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.3 1998/05/04 19:24:53 matt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.4 1998/05/18 17:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ ipflow_reap(
 				 * used or has had the least uses in the
 				 * last 1.5 intervals.
 				 */
-				if (ipf == NULL
+				if (maybe_ipf == NULL
 				    || ipf->ipf_timer < maybe_ipf->ipf_timer
 				    || (ipf->ipf_timer == maybe_ipf->ipf_timer
 					&& ipf->ipf_last_uses + ipf->ipf_uses <
@@ -277,6 +277,7 @@ ipflow_slowtimo(
 		ipf = LIST_FIRST(&ipflows[idx]);
 		while (ipf != NULL) {
 			struct ipflow *next_ipf = LIST_NEXT(ipf, ipf_next);
+			inuse--;
 			if (--ipf->ipf_timer == 0) {
 				ipflow_free(ipf);
 			} else {
@@ -285,7 +286,6 @@ ipflow_slowtimo(
 				ipstat.ips_forward += ipf->ipf_uses;
 				ipstat.ips_fastforward += ipf->ipf_uses;
 				ipf->ipf_uses = 0;
-				inuse--;
 			}
 			ipf = next_ipf;
 		}
