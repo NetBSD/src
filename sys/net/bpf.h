@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)bpf.h	8.1 (Berkeley) 6/10/93
+ *      @(#)bpf.h	8.2 (Berkeley) 1/9/95
  *
- * @(#) $Header: /cvsroot/src/sys/net/bpf.h,v 1.1.1.2 1998/03/01 02:10:05 fvdl Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/bpf.h,v 1.1.1.3 1998/03/01 02:13:22 fvdl Exp $ (LBL)
  */
 
 /*
@@ -236,7 +236,7 @@ int	 bpfopen __P((dev_t, int));
 int	 bpfclose __P((dev_t, int));
 int	 bpfread __P((dev_t, struct uio *));
 int	 bpfwrite __P((dev_t, struct uio *));
-int	 bpfioctl __P((dev_t, int, caddr_t, int));
+int	 bpfioctl __P((dev_t, u_long, caddr_t, int));
 int	 bpf_select __P((dev_t, int, struct proc *));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
