@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.8.1 2002/05/19 08:31:30 gehenna Exp $
+#	$NetBSD: Makefile,v 1.3.8.2 2002/07/15 01:41:07 gehenna Exp $
 
 KDIR=	/sys/arch/x86_64/include
 INCSDIR= /usr/include/x86_64
@@ -19,7 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pccons.h pci_machdep.h pio.h pmap.h pmc.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
-	reg.h rnd.h \
+	reg.h \
 	segments.h setjmp.h signal.h specialreg.h stdarg.h sysarch.h \
 	trap.h tss.h types.h \
 	userret.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1.14.1 2002/05/30 15:36:50 gehenna Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.14.2 2002/07/15 01:41:08 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ struct sigframe {
 	struct	sigcontext *sf_scp;
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
-	struct	fxsave64 *sf_fpp;
 	struct	fxsave64 sf_fp;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.24.4.1 2002/05/19 07:41:22 gehenna Exp $	*/
+/*	$NetBSD: com.c,v 1.24.4.2 2002/07/15 01:41:06 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ comspeed(speed)
 		return -1;
 	return x;
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 static int

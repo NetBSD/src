@@ -1,4 +1,4 @@
-#	$NetBSD: majors.walnut,v 1.1.2.2 2002/05/30 07:14:54 gehenna Exp $
+#	$NetBSD: majors.walnut,v 1.1.2.3 2002/07/15 01:41:05 gehenna Exp $
 #
 # Device majors for walnut
 #
@@ -49,3 +49,4 @@ device-major	isdnbchan	char 56			isdnbchan
 device-major	isdntrc		char 57			isdntrc
 device-major	isdntel		char 58			isdntel
 device-major	clockctl	char 59			clockctl
+device-major	systrace	char 60			systrace

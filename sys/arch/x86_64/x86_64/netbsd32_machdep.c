@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.14.1 2002/05/30 15:37:04 gehenna Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.14.2 2002/07/15 01:41:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -59,14 +59,20 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+/* Provide a the name of the architecture we're emulating */
+char	machine_arch32[] = "i386";	
+
 int process_read_fpregs32(struct proc *, struct fpreg32 *);
 int process_read_regs32(struct proc *, struct reg32 *);
+
+extern void (osyscall_return) __P((void));
 
 void
 netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
+	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
 	if (fpuproc == p)
@@ -78,13 +84,18 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+        pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+        pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+
 
 	p->p_flag |= P_32;
 
 	tf = p->p_md.md_regs;
+#if 0
 	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
+#endif
 
 	/*
 	 * XXXfvdl needs to be revisited
@@ -110,6 +121,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
 	tf->tf_ss = LSEL(LUDATA32_SEL, SEL_UPL);
+
+	/* XXX frob return address to return via old iret method, not sysret */
+	retaddr = (void **)tf - 1;
+	*retaddr = (void *)osyscall_return;
 }
 
 void
@@ -189,8 +204,10 @@ netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
+#if 0
 	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
+#endif
 #if 1
 	/* XXXX */
 	__asm("movl %0,%%es" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));

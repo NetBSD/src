@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.8.2.2 2002/05/17 15:09:23 gehenna Exp $
+#	$NetBSD: files.x86_64,v 1.8.2.3 2002/07/15 01:41:07 gehenna Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -50,7 +50,7 @@ file	arch/x86_64/x86_64/mem.c
 file	netns/ns_cksum.c			ns
 file	arch/x86_64/x86_64/pmap.c
 file	arch/x86_64/x86_64/process_machdep.c
-#file	arch/x86_64/x86_64/procfs_machdep.c	procfs
+file	arch/x86_64/x86_64/procfs_machdep.c	procfs
 file	arch/x86_64/x86_64/sys_machdep.c
 file	arch/x86_64/x86_64/syscall.c
 file	arch/x86_64/x86_64/trap.c

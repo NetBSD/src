@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.2 2002/05/30 15:37:03 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.3 2002/07/15 01:41:09 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -493,16 +493,17 @@ sendsig(catcher, sig, mask, code)
 	 * fxsave and the ABI.
 	 */
 	sp = (char *)((unsigned long)sp & ~15);
+	fp = (struct sigframe *)sp - 1;
+
 	if (p->p_md.md_flags & MDP_USEDFPU) {
-		frame.sf_fpp = &frame.sf_fp;
-		memcpy(frame.sf_fpp, &p->p_addr->u_pcb.pcb_savefpu,	
+		frame.sf_sc.sc_fpstate = &fp->sf_fp;
+		memcpy(&frame.sf_fp, &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64));
 		tocopy = sizeof (struct sigframe);
 	} else {
-		frame.sf_fpp = NULL;
+		frame.sf_sc.sc_fpstate = NULL;
 		tocopy = sizeof (struct sigframe) - sizeof (struct fxsave64);
 	}
-	fp = (struct sigframe *)sp - 1;
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;
@@ -558,9 +559,9 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+#if 0
 	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 #endif
@@ -635,6 +636,15 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_rsp = context.sc_rsp;
 	tf->tf_ss = context.sc_ss;
+
+	/* Restore (possibly fixed up) FP state and force it to be reloaded */
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+		if (copyin(context.sc_fpstate,
+		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    sizeof (struct fxsave64)) != 0)
+			return EFAULT;
+		fpudiscard(p);
+	}
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -992,12 +1002,16 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+
+	p->p_flag &= ~P_32;
 
 	tf = p->p_md.md_regs;
+#if 0
 	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 #endif
@@ -1097,6 +1111,7 @@ set_sys_segment(sd, base, limit, type, dpl, gran)
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector) __P((void));
 extern vector IDTVEC(syscall);
+extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
 extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
@@ -1537,7 +1552,12 @@ init_x86_64(first_avail)
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
 	    ((uint64_t)LSEL(LSYSRETBASE_SEL, SEL_UPL) << 48));
 	wrmsr(MSR_LSTAR, (uint64_t)IDTVEC(syscall));
-	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I);
+	wrmsr(MSR_CSTAR, (uint64_t)IDTVEC(syscall32));
+	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C);
+
+	wrmsr(MSR_FSBASE, 0);
+	wrmsr(MSR_GSBASE, (u_int64_t)&cpu_info_store);
+	wrmsr(MSR_KERNELGSBASE, 0);
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);

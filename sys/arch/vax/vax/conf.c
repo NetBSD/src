@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57.8.1 2002/05/16 13:22:44 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.57.8.2 2002/07/15 01:41:02 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,11 +35,11 @@
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
 
+#include "opt_cputype.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <machine/cpu.h>
-
-#include "opt_cputype.h"
 
 /*
  * Console routines for VAX console.
