@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.3 1993/10/11 04:26:33 deraadt Exp $
+ * $Id: machdep.c,v 1.4 1993/10/11 10:53:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -325,9 +325,10 @@ setregs(p, entry, stack, retval)
 	tf->tf_psr = psr;
 	tf->tf_pc = entry & ~3;
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = (entry+4) & ~3;
+	stack -= sizeof(struct rwindow);
 if(stack & ALIGNBYTES)
-printf("stack misaligned! %8x\n", stack);
-	tf->tf_out[6] = stack + sizeof(struct rwindow);
+printf("stack misaligned %8x!\n", stack);
+	tf->tf_out[6] = stack;
 	retval[1] = 0;
 }
 
@@ -893,6 +894,30 @@ cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
+#ifdef COMPAT_SUNOS
+struct sunos_aout_magic {
+	unsigned char	a_dynamic:1;	/* has a __DYNAMIC */
+	unsigned char	a_toolversion:7;/* version of toolset used to create this file */
+	unsigned char	a_machtype;	/* machine type */
+	unsigned short	a_magic;	/* magic number */
+};
+#define	SUNOS_M_SPARC	3		/* runs only on SPARC */
+
+	struct sunos_aout_magic sunmag;
+
+	bcopy(&epp->ep_execp->a_midmag, &sunmag, sizeof(sunmag));
+	if(sunmag.a_machtype != SUNOS_M_SPARC)
+		return (ENOEXEC);
+
+	switch (sunmag.a_magic) {
+	case ZMAGIC:
+		return exec_aout_prep_zmagic(p, epp);
+	case OMAGIC:
+	case NMAGIC:
+	default:
+		break;
+	}
+#endif /* COMPAT_SUNOS */
 	return (ENOEXEC);
 }
 
