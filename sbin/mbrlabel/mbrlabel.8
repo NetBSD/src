@@ -27,63 +27,63 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.5 2000/11/14 11:06:20 abs Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.6 2000/12/24 13:57:37 lukem Exp $
 .\"
-.Dd November 15, 1998
+.Dd December 24, 2000
 .Dt MBRLABEL 8
 .Os
 .Sh NAME
 .Nm mbrlabel
-.Nd generate incore disklabel from MBR label(s)
+.Nd generate incore disk label from MBR label(s)
 .Sh SYNOPSIS
 .Nm
+.Op Fl fq
 .Ar device
 .Sh DESCRIPTION
 .Nm
-is used to generate an incore disklabel from the MBR label(s) found
+is used to update an incore
+.Nx
+disk label from the Master Boot Record (MBR) label(s) found
 on disks that were previously used on DOS/Windows systems (or
 other MBR using systems).
 .Pp
-The
 .Nm
-utility generates an incore label from the MBR contained in the very first
-block of the disk, then walking through every extended partition found
-and generating additional partition entries for the disk from the
-MBRs found in those extended partitions.
-The partitions are sequentially entered into the constructed disklabel
-as partitions
-.Em a , b
-and so on until no more MBR partitions are found or all available
-entries in the disklabel are used up.
+scans the MBR contained in the very first block of the disk,
+then walks through every extended partition found and generating
+additional partition entries for the disk from the MBRs found in
+those extended partitions.
+.Pp
+Each MBR partition which does not have an equivalent partition in incore
+disk label (equivalent in having the same size and offset) is added to
+the first free partition slot in the incore disk label. A free
+partition slot is defined as one with an
+.Dv fstype
+of
+.Sq Li unused
+and a
+.Dv size
+of zero
+.Pq Sq 0 .
+If there are not enough free slots in the incore disk label, a warning
+will be issued.
+.Pp
 The raw partition (typically partition
 .Em c ,
 but
 .Em d
-on i386) is left alone during this process.
-The resulting disklabel is then placed as the incore disklabel for
-this disk.
-.Sh BUGS
-Due to the way disk drivers currently work in
-.Nx ,
-any incore disklabel is forgotten whenever the last partition of a
-disk is closed.
-Since typically you wouldn't have a partition open on a disk while
-running
-.Nm
-this lossage will most likely happen, if
-.Nm
-is used naively.
+on i386 and some othe platforms) is left alone during this process.
 .Pp
-The workaround until the disk drivers are fixed is to keep the
-raw partition open until you access the partition(s) of the
-disk via e.g.
-.Xr mount 8 .
+If
+.Fl f
+is given, then the incore disk label is updated.
+Otherwise, the proposed changed disk label will be displayed and no
+update will occur.
 .Pp
-E.g. you could use
-.Dl sleep 100</dev/rsd0c &
-.Dl mbrlabel sd0
-.Dl mount -t msdos /dev/sd0a /msdos
-to mount a disk containing only one DOS partition.
+If
+.Fl q
+is given,
+.Nm
+performs its operation in a quiet fashion.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr fdisk 8
