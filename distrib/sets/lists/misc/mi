@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.51 2001/01/04 11:12:24 itojun Exp $
+# $NetBSD: mi,v 1.52 2001/01/04 12:36:56 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -494,6 +494,7 @@
 ./usr/share/sendmail/ostype/aix2.m4
 ./usr/share/sendmail/ostype/aix3.m4
 ./usr/share/sendmail/ostype/aix4.m4
+./usr/share/sendmail/ostype/aix5.m4
 ./usr/share/sendmail/ostype/altos.m4
 ./usr/share/sendmail/ostype/amdahl-uts.m4
 ./usr/share/sendmail/ostype/aux.m4
