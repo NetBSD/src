@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.12 2003/06/26 01:28:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.13 2003/07/21 22:24:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.12 2003/06/26 01:28:14 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.13 2003/07/21 22:24:09 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -89,7 +89,7 @@ void
 pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue, schedqueue;
-	int first = 1;
+	int flags, first = 1;
 	siginfo_t *si;
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
@@ -158,7 +158,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 * it was in the kernel.
 		 */
 		t = pthread__sa_id(sas[1]);
-		if (t->pt_flags & PT_FLAG_SIGDEFERRED)
+		pthread_spinlock(self, &t->pt_flaglock);
+		flags = t->pt_flags;
+		pthread_spinunlock(self, &t->pt_flaglock);
+		if (flags & PT_FLAG_SIGDEFERRED)
 			pthread__signal_deferred(self, t);
 		break;
 	case SA_UPCALL_SIGNAL:
