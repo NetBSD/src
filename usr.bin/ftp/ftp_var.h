@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.31 1999/03/22 07:36:40 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.32 1999/06/20 22:07:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -39,6 +39,15 @@
  * FTP global variables.
  */
 
+#ifdef SMALL
+#undef	NO_ABOUT
+#define	NO_ABOUT
+#undef	NO_EDITCOMPLETE
+#define	NO_EDITCOMPLETE
+#undef	NO_PROGRESS
+#define	NO_PROGRESS
+#endif
+
 #include <sys/param.h>
 
 #include <netinet/in.h>
@@ -47,9 +56,9 @@
 #include <setjmp.h>
 #include <stringlist.h>
 
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 #include <histedit.h>
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 #include "extern.h"
 
@@ -126,14 +135,14 @@ int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
 FILE   *ttyout;			/* stdout, or stderr if retrieving to stdout */
 
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 int	  editing;		/* command line editing enabled */
 EditLine *el;			/* editline(3) status structure */
 History  *hist;			/* editline(3) history structure */
 char	 *cursor_pos;		/* cursor position we're looking for */
 size_t	  cursor_argc;		/* location of cursor in margv */
 size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 off_t	bytes;			/* current # of bytes read */
 off_t	filesize;		/* size of file being transferred */
@@ -185,9 +194,9 @@ struct cmd {
 	char	 c_bell;	/* give bell when command completes */
 	char	 c_conn;	/* must be connected to use command */
 	char	 c_proxy;	/* proxy server may execute */
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	char	*c_complete;	/* context sensitive completion list */
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 	void	(*c_handler) __P((int, char **)); /* function to call */
 };
 

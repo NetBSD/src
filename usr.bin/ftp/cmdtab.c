@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.20 1999/03/08 03:09:08 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.21 1999/06/20 22:07:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.20 1999/03/08 03:09:08 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.21 1999/06/20 22:07:28 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,9 @@ char	deletehelp[] =	"delete remote file";
 char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 char	edithelp[] =	"toggle command line editing";
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 char	formhelp[] =	"set file transfer format";
 char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
@@ -129,13 +129,13 @@ char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 
-#ifdef SMALL
+#ifdef NO_EDITCOMPLETE
 #define CMPL(x)
 #define CMPL0
-#else  /* !SMALL */
+#else  /* !NO_EDITCOMPLETE */
 #define CMPL(x)	__STRING(x),
 #define CMPL0	"",
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 struct cmd cmdtab[] = {
 	{ "!",		shellhelp,	0, 0, 0, CMPL0		shell },
@@ -156,9 +156,9 @@ struct cmd cmdtab[] = {
 	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
 	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },

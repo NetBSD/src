@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.50 1999/06/11 14:12:19 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.51 1999/06/20 22:07:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.50 1999/06/11 14:12:19 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.51 1999/06/20 22:07:28 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -728,9 +728,9 @@ status(argc, argv)
 	    "Hash mark printing: %s; Mark count: %d; Progress bar: %s.\n",
 	    onoff(hash), mark, onoff(progress));
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
@@ -778,7 +778,7 @@ setbell(argc, argv)
 	code = togglevar(argc, argv, &bell, "Bell mode");
 }
 
-#ifndef SMALL
+#ifndef NO_EDITCOMPLETE
 /*
  * Set command line editing
  */
@@ -792,7 +792,7 @@ setedit(argc, argv)
 	code = togglevar(argc, argv, &editing, "Editing mode");
 	controlediting();
 }
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
 
 /*
  * Turn on packet tracing.

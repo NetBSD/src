@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.23 1999/06/12 18:19:53 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.24 1999/06/20 22:07:28 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,11 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SMALL
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.23 1999/06/12 18:19:53 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.24 1999/06/20 22:07:28 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -57,6 +55,8 @@ __RCSID("$NetBSD: complete.c,v 1.23 1999/06/12 18:19:53 christos Exp $");
 #include <string.h>
 
 #include "ftp_var.h"
+
+#ifndef NO_EDITCOMPLETE
 
 static int	     comparstr		__P((const void *, const void *));
 static unsigned char complete_ambiguous	__P((char *, int, StringList *));
@@ -411,4 +411,4 @@ complete(el, ch)
 	return (CC_ERROR);
 }
 
-#endif /* !SMALL */
+#endif /* !NO_EDITCOMPLETE */
