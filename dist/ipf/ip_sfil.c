@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sfil.c,v 1.1.1.8 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: ip_sfil.c,v 1.1.1.9 2002/05/02 16:49:37 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.15 2001/12/26 22:28:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.16 2002/04/05 08:43:25 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -63,6 +63,7 @@ int	fr_running = 0;
 int	ipl_unreach = ICMP_UNREACH_HOST;
 u_long	ipl_frouteok[2] = {0, 0};
 static	int	frzerostats __P((caddr_t));
+static	u_long	*ip_ttl_ptr;
 
 static	int	frrequest __P((minor_t, int, caddr_t, int));
 static	int	send_ip __P((fr_info_t *fin, mblk_t *m));
@@ -109,6 +110,8 @@ int ipldetach()
 
 int iplattach __P((void))
 {
+	int i;
+
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplattach()\n");
 #endif
@@ -135,6 +138,19 @@ int iplattach __P((void))
 		return -1;
 	if (appr_init() == -1)
 		return -1;
+
+	ip_ttl_ptr = NULL;
+	/*
+	 * XXX - There is no terminator for this array, so it is not possible
+	 * to tell if what we are looking for is missing and go off the end
+	 * of the array.
+	 */
+	for (i = 0; ; i++) {
+		if (!strcmp(ip_param_arr[i].ip_param_name, "ip_def_ttl")) {
+			ip_ttl_ptr = &ip_param_arr[i].ip_param_value;
+			break;
+		}
+	}
 	return 0;
 }
 
@@ -776,7 +792,7 @@ mblk_t *m;
 
 		ip = (ip_t *)m->b_rptr;
 		ip->ip_v = IPVERSION;
-		ip->ip_ttl = 60;
+		ip->ip_ttl = (u_char)(*ip_ttl_ptr);
 		ip_wput(((qif_t *)fin->fin_qif)->qf_ill->ill_wq, m);
 	}
 	READ_ENTER(&ipf_solaris);
@@ -896,7 +912,7 @@ int dst;
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_id = oip->ip_id;
 		ip->ip_sum = 0;
-		ip->ip_ttl = 60;
+		ip->ip_ttl = (u_char)(*ip_ttl_ptr);
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_len = (u_short)htons(sz);
 		if (dst == 0) {

@@ -8,5 +8,6 @@ sed \
 -e 's/\$(CPUBOARD)/CPUBOARD/g' \
 -e 's/^#$//' /var/sysgen/Makefile.kernio | \
 /usr/lib/cpp -DCPUBOARD=${CPUNUM} | \
-egrep -v '^$|^#.*|^$|^ROOT=|^include'
+egrep -v '^$|^#.*|^$|^ROOT=|^include' | \
+sed -e 's/CFLAGS *[+]*[=]*//' -e 's/\\//' -e 's/-fullwarn//'
 exit 0

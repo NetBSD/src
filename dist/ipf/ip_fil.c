@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.11 2002/03/14 12:30:08 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.12 2002/05/02 16:48:18 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -27,6 +27,7 @@
 # endif
 #endif
 #ifdef __sgi
+# define _KMEMUSER
 # include <sys/ptimers.h>
 #endif
 #ifndef	_KERNEL
@@ -121,7 +122,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.53 2002/03/13 02:29:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
 #endif
 
 
@@ -361,7 +362,7 @@ int iplattach()
 	}
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if (__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011)
 #   if __NetBSD_Version__ >= 105110000
 	if (
 	    !(ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET))
@@ -528,7 +529,7 @@ int ipldetach()
 	fr_running = 0;
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if ((__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011))
 #   if __NetBSD_Version__ >= 105110000
 	if (ph_inet != NULL)
 		error = pfil_remove_hook((void *)fr_check_wrapper, NULL,
@@ -2138,8 +2139,8 @@ struct uio *uio;
 			num = io->iov_len;
 			if (num > left)
 				num = left;
-			start = io->iov_base + offset;
-			if (start > io->iov_base + io->iov_len) {
+			start = (char *)io->iov_base + offset;
+			if (start > (char *)io->iov_base + io->iov_len) {
 				offset -= io->iov_len;
 				ioc++;
 				continue;

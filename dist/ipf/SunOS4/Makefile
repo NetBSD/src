@@ -52,6 +52,14 @@ all:
 	(cd $(TOP) $(MAKE) $(MFLAGS) sunos4; )
 
 sunos4 solaris1 build: ipf ipfstat ipftest ipmon ipnat ipfs if_ipl.o
+	/bin/rm -f $(TOP)/ipf
+	ln -s `pwd`/ipf $(TOP)
+	/bin/rm -f $(TOP)/ipftest
+	ln -s `pwd`/ipftest $(TOP)
+	/bin/rm -f $(TOP)/ipmon
+	ln -s `pwd`/ipmon $(TOP)
+	/bin/rm -f $(TOP)/ipnat
+	ln -s `pwd`/ipnat $(TOP)
 
 ipfstat: $(FILS)
 	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
@@ -59,16 +67,12 @@ ipfstat: $(FILS)
 
 ipf: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipf
-	ln -s `pwd`/ipf $(TOP)
 
 ipfs: ipfs.o
 	$(CC) $(DEBUG) $(CFLAGS) ipfs.o -o $@ $(LIBS)
 
 ipftest: $(IPT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPT) -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipftest
-	ln -s `pwd`/ipftest $(TOP)
 
 ipnat: $(IPNAT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPNAT) -o $@ $(LIBS) -lkvm
@@ -213,8 +217,6 @@ facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipmon
-	ln -s `pwd`/ipmon $(TOP)
 
 clean:
 	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \

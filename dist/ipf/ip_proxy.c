@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.5 2002/03/14 12:30:09 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.6 2002/05/02 16:49:25 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -77,7 +77,7 @@
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.21 2002/03/06 09:44:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
 #endif
 
 #if defined(_KERNEL) && (SOLARIS || defined(__sgi))
@@ -93,8 +93,8 @@ static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
 #define	AP_SESS_SIZE	53
 
-#if defined(_KERNEL)
 #include "netinet/ip_ftp_pxy.c"
+#if defined(_KERNEL)
 #include "netinet/ip_rcmd_pxy.c"
 #include "netinet/ip_raudio_pxy.c"
 #include "netinet/ip_netbios_pxy.c"

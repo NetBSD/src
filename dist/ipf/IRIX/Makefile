@@ -48,7 +48,9 @@ MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 	"SOLARIS2=$(SOLARIS2)" "DEBUG=$(DEBUG)" "DCPU=$(CPU)" \
 	"CPUDIR=$(CPUDIR)"
 #
-CCARGS=$(SGIREV) -D_STANDALONE $(DEBUG) $(CFLAGS) $(IPFLOG)
+CKFLAGS=$(SGIREV) -O2 -I$(TOP) $(IPFLOG) -D_KMEMUSER
+CCARGS=$(SGIREV) -D_KMEMUSER $(DEBUG) $(CFLAGS) $(IPFLOG)
+#-D_STANDALONE
 #
 ########## ########## ########## ########## ########## ########## ##########
 #
@@ -69,7 +71,15 @@ IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
 IPNAT=ipnat.o kmem.o natparse.o common.o inet_addr.o printnat.o
 FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o printstate.o
 
-build all: ipf ipfstat ipftest ipmon ipnat $(LKM)
+build all: ipf ipfstat ipftest ipmon ipnat ipfs $(LKM)
+	${RM} -f $(TOP)/ipftest
+	ln -s `pwd`/ipftest $(TOP)
+	${RM} -f $(TOP)/ipf
+	ln -s `pwd`/ipf $(TOP)
+	${RM} -f $(TOP)/ipmon
+	ln -s `pwd`/ipmon $(TOP)
+	${RM} -f $(TOP)/ipnat
+	ln -s `pwd`/ipnat $(TOP)
 
 ipfstat: $(FILS)
 	$(CC) $(CCARGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
@@ -77,17 +87,19 @@ ipfstat: $(FILS)
 
 ipf: $(IPF)
 	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS)
-	${RM} -f $(TOP)/ipf
-	ln -s `pwd`/ipf $(TOP)
 
 ipftest: $(IPT)
 	$(CC) $(CCARGS) $(IPT) -o $@ $(LIBS)
-	${RM} -f $(TOP)/ipftest
-	ln -s `pwd`/ipftest $(TOP)
 
 ipnat: $(IPNAT)
 	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lelf
 
+ipfs: ipfs.o
+	$(CC) $(CCARGS) ipfs.o -o $@ $(LIBS)
+
+ipfs.o: $(TOP)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
+	$(TOP)/ip_nat.h
+	$(CC) $(CCARGS) -c $(TOP)/ipfs.c -o $@
 tests:
 	(cd test; make )
 
@@ -100,7 +112,7 @@ fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) -c $(TOP)/fil.c -o $@
 
 fil_k.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h
-	$(CC) $(CCARGS) $(POLICY) $(DFLAGS) -c $(TOP)/fil.c -o $@
+	$(CC) $(CKFLAGS) $(POLICY) $(DFLAGS) -c $(TOP)/fil.c -o $@
 
 ipf.o: $(TOP)/ipf.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(CCARGS) -c $(TOP)/ipf.c -o $@
@@ -168,31 +180,31 @@ $(LKM): $(MODOBJS)
 	ld $(MLFLAGS) -r -d $(MODOBJS) -o $(LKM)
 
 ip_nat.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
 
 ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
 
 ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h $(TOP)/ip_nat.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
 
 ip_auth.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
 
 ip_fil.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ip_nat.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/$(IPFILC) -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/$(IPFILC) -o $@
 
 ip_log.o: $(TOP)/ip_log.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h
-	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
+	$(CC) $(CKFLAGS) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
 
 ml_ipl.o: $(TOP)/$(MLD) $(TOP)/ipl.h
-	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/$(ML) -o $@
+	$(CC) -I. $(CKFLAGS) $(DFLAGS) -c $(TOP)/$(ML) -o $@
 
 kmem.o: $(TOP)/kmem.c
 	$(CC) $(CCARGS) -c $(TOP)/kmem.c -o $@
@@ -208,8 +220,6 @@ facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 ipmon: $(TOP)/ipmon.c
 	$(CC) $(CCARGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
-	${RM} -f $(TOP)/ipmon
-	ln -s `pwd`/ipmon $(TOP)
 
 natparse.o: $(TOP)/natparse.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_proxy.h $(TOP)/ip_nat.h
@@ -238,6 +248,7 @@ install:
 	-$(INSTALL) -F $(SBINDEST) -m 755 -src $(CPUDIR)/ipf -O ipf
 	-$(INSTALL) -F $(SBINDEST) -m 755 -src $(CPUDIR)/ipfstat -O ipfstat
 	-$(INSTALL) -F $(SBINDEST) -m 755 -src $(CPUDIR)/ipnat -O ipnat
+	-$(INSTALL) -F $(SBINDEST) -m 755 -src $(CPUDIR)/ipfs -O ipfs
 
 	-$(INSTALL) -F $(SBINDEST) -m 755 -src $(CPUDIR)/ipmon -O ipmon
 	-$(INSTALL) -F $(BINDEST) -m 755 -src $(CPUDIR)/ipftest -O ipftest

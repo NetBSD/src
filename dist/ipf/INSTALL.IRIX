@@ -17,13 +17,6 @@ follow these steps:
 				CC=gcc
 			to
 				CC=cc
-		b) enable full optimization
-			This means changing the lines reading:
-				DEBUG=-g
-				CFLAGS=-I$$(TOP)
-			to
-				DEBUG=
-				CFLAGS=-O2 -I$$(TOP)
 
         1. do "make irix" (Warning: GNU make is not supported, so if it has
 	been installed on your system, verify your path and/or do "which make"

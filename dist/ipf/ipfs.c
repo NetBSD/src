@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.4 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.1.1.5 2002/05/02 16:50:02 martti Exp $	*/
 
 /*
  * Copyright (C) 1999-2001 by Darren Reed.
@@ -47,7 +47,7 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.8 2001/09/14 18:52:21 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.9 2002/04/17 17:42:59 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -210,7 +210,7 @@ char *argv[];
 	int c, lock = -1, devfd = -1, err = 0, rw = -1, ns = -1, set = 0;
 	char *dirname = NULL, *filename = NULL, *ifs = NULL;
 
-	while ((c = getopt(argc, argv, "d:f:lNnSRruvWw")) != -1)
+	while ((c = getopt(argc, argv, "d:f:i:lNnSRruvWw")) != -1)
 		switch (c)
 		{
 		case 'd' :

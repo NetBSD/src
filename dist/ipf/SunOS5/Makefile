@@ -74,6 +74,21 @@ $(OBJ):
 
 sunos5 solaris2 build: $(OBJ) $(OBJ)/ipf.exe $(OBJ)/ipfstat $(OBJ)/ipftest \
     $(OBJ)/ipmon $(OBJ)/ipnat $(OBJ)/ipf $(OBJ)/ipfs
+	/bin/rm -f $(TOP)/ipf $(TOP)/$(OBJ)/ipf
+	/bin/rm -f $(TOP)/ipftest $(TOP)/$(OBJ)/ipftest
+	/bin/rm -f $(TOP)/ipmon $(TOP)/$(OBJ)/ipmon
+	/bin/rm -f $(TOP)/ipnat $(TOP)/$(OBJ)/ipnat
+	if [ -f /usr/lib/isaexec -a "$(OBJ)" != . ] ; then \
+		mkdir -p $(TOP)/$(OBJ); \
+		cp /usr/lib/isaexec $(TOP)/ipf; \
+		ln $(TOP)/ipf $(TOP)/ipftest; \
+		ln $(TOP)/ipf $(TOP)/ipmon; \
+		ln $(TOP)/ipf $(TOP)/ipnat; \
+	fi
+	ln -s `pwd`/$(OBJ)/ipf.exe $(TOP)/$(OBJ)/ipf
+	ln -s `pwd`/$(OBJ)/ipmon $(TOP)/$(OBJ)/ipmon
+	ln -s `pwd`/$(OBJ)/ipftest $(TOP)/$(OBJ)/ipftest
+	ln -s `pwd`/$(OBJ)/ipnat $(TOP)/$(OBJ)/ipnat
 
 pkg:
 	if [ "$(CPUDIR)" = "" ] ; then \
@@ -88,21 +103,10 @@ $(OBJ)/ipfstat: $(FILS)
 
 $(OBJ)/ipf.exe: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipf $(TOP)/$(OBJ)/ipf
-	if [ -f /usr/lib/isaexec -a "$(OBJ)" != . ] ; then \
-		mkdir -p $(TOP)/$(OBJ); \
-		cp /usr/lib/isaexec $(TOP)/ipf; \
-	fi
-	ln -s `pwd`/$(OBJ)/ipf.exe $(TOP)/$(OBJ)/ipf
 
 # Magic dependency on ipf.exe creates the $(TOP)/sparcv{7,9} directories.
-$(OBJ)/ipftest: $(IPT) $(OBJ)/ipf.exe
+$(OBJ)/ipftest: $(IPT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPT) -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipftest $(TOP)/$(OBJ)/ipftest
-	if [ -f /usr/lib/isaexec -a "$(OBJ)" != . ] ; then \
-		ln $(TOP)/ipf $(TOP)/ipftest; \
-	fi
-	ln -s `pwd`/$(OBJ)/ipftest $(TOP)/$(OBJ)/ipftest
 
 $(OBJ)/ipnat: $(IPNAT)
 	$(CC) $(CFLAGS) $(IPNAT) -o $@ $(LIBS) -lkvm
@@ -242,11 +246,6 @@ $(OBJ)/facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 $(OBJ)/ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
-	/bin/rm -f $(TOP)/ipmon $(TOP)/$(OBJ)/ipmon
-	if [ -f /usr/lib/isaexec -a "$(OBJ)" != . ] ; then \
-		ln $(TOP)/ipf $(TOP)/ipmon; \
-	fi
-	ln -s `pwd`/$(OBJ)/ipmon $(TOP)/$(OBJ)/ipmon
 
 clean:
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \

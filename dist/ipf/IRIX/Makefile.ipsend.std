@@ -7,7 +7,8 @@ LIBS=
 
 CC=cc
 CFLAGS=-g -I$(TOP)
-CCARGS=$(DEBUG) $(CFLAGS) -D_STANDALONE
+CCARGS=$(DEBUG) $(CFLAGS) -D_KMEMUSER
+#-D_STANDALONE
 
 all build irix : ipsend ipresend iptest
 
