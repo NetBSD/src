@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.43 2002/02/26 09:18:54 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.44 2002/02/26 09:29:18 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.43 2002/02/26 09:18:54 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.44 2002/02/26 09:29:18 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -640,7 +640,7 @@ void wi_update_stats(sc)
 		}
 		}
 	default:
-#if WI_DEBUG
+#ifdef WI_DEBUG
 		printf("%s: got info type: 0x%04x len=0x%04x\n",
       sc->sc_dev.dv_xname, gen.wi_type,gen.wi_len);
 #endif
