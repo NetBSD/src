@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
+/* $NetBSD: locore.s,v 1.2 2000/01/14 02:39:22 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1124,30 +1124,30 @@ Lsvnofpsave:
 ENTRY(suline)
 	movl	sp@(4),a0		| address to write
 	movl	_C_LABEL(curpcb),a1	| current pcb
-	movl	#Lslerr,a1@(PCB_ONFAULT) | where to return to o0,dfc
-	.word	0xf508			| pflush a0@
-	moveq	#5,d0			| super space
-	movc	d0,dfc
-	.word	0xf508			| pflush a0@
-	movc	d1,dfc
+	movl	#Lslerr,a1@(PCB_ONFAULT) | where to return to on a fault
+	movl	sp@(8),a1		| address of line
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	movl	a1@+,d0			| get lword
+	movsl	d0,a0@+			| put lword
+	nop				| sync
+	moveq	#0,d0			| indicate no fault
+	jra	Lsldone
+Lslerr:
+	moveq	#-1,d0
+Lsldone:
+	movl	_C_LABEL(curpcb),a1	| current pcb
+	clrl	a1@(PCB_ONFAULT)	| clear fault address
 	rts
-Lmotommu4:
 #endif
-	tstl	_C_LABEL(mmutype)	| is 68851?
-	jpl	Lmc68851b		|
-	movl	sp@(4),a0		| get addr to flush
-	pflush	#0,#0,a0@		| flush address from both sides
-	movl	#DC_CLEAR,d0
-	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,a0@		| flush address from both sides
-	rts
 
-ENTRY(getsr)
-	moveq	#0,d0
-	movw	sr,d0
-	rts
 
 ENTRY(ecacheon)
 	rts
@@ -1225,6 +1225,11 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,sp@		| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
+	rts
+
+ENTRY(getsr)
+	moveq	#0,d0
+	movw	sr,d0
 	rts
 
 /*
@@ -1325,12 +1330,11 @@ Lbootcommon:
 	movl	a0@(4),a0		| *((int (*)(void))base[1])
 	jmp	a0@			| go cold boot!
 
+#if 0
 /*
- * Utility call for LUNA rom monitor routines
+ * int romcngetc(dev_t)
  */
-ENTRY_NOPROFILE(romcall)
-	link	a6,#-8
-	movel	a6@(8),d0		| 1st arg is routine no.
+ENTRY_NOPROFILE(romcngetc)
 	moveq	#0,d1
 	movw	sr,d1			| get old SR for return
 	movel	d1,a6@(-4)
@@ -1338,17 +1342,41 @@ ENTRY_NOPROFILE(romcall)
 	movc	vbr,d1
 	movel	d1,a6@(-8)
 	movl	#0,d1
-	movc	d1,vbr			| switch to monitor VBR
+	movc	d1,vbr
 	movel	#0x41000000,a0		| base = (int **)0x41000000
-	movel	a6@(12),sp@-
-	movel	a0@(d0:l:4),a0		| (*(int (*)(int))base[n])(arg)
-	jbsr	a0@
+	movel	a0@(16),a0		| getc = (int (*)(void))base[4]
+	jbsr	a0@			| d0 = (*getc)()
 	movl	a6@(-8),d1		| restore previous VBR
 	movc	d1,vbr
 	movel	a6@(-4),d1
 	movew	d1,sr			| splx()
 	unlk	a6
 	rts
+
+/*
+ * void romcnputc(dev_t, cc)
+ */
+ENTRY_NOPROFILE(romcnputc)
+	moveq	#0,d1
+	movw	sr,d1			| get old SR for return
+	movel	d1,a6@(-8)
+	movw	#PSL_HIGHIPL,sr		| splhigh()
+	movc	vbr,d1
+	movel	d1,a6@(-8)
+	movl	#0,d1
+	movc	d1,vbr			| switch to monitor VBR
+	movel	a6@(12),sp@-
+	movel	#0x41000000,a0		| base = (int **)0x41000000
+	movl	a0@(20),a0		| putc = (void (*)(int))base[5]
+	jbsr	a0@			| (*putc)(cc)
+	addql	#4,sp			| pop args
+	movl	a6@(-8),d1		| restore previous VBR
+	movc	d1,vbr
+	movel	a6@(-4),d1
+	movew	d1,sr			| splx()
+	unlk	a6
+	rts
+#endif
 
 	.data
 GLOBAL(cputype)
