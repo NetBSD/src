@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 1998/01/13 12:52:28 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 1998/02/06 07:22:02 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -50,6 +50,10 @@
  * from hp300:	@(#)pmap.h	7.2 (Berkeley) 12/16/90
  */
 
+#ifdef PMAP_NEW			/* redirect */
+#include <machine/pmap.new.h>	/* defines _I386_PMAP_H_ */
+#endif
+
 #ifndef	_I386_PMAP_H_
 #define	_I386_PMAP_H_
 
@@ -60,6 +64,12 @@
  * 386 page table entry and page table directory
  * W.Jolitz, 8/89
  */
+
+/*
+ * PG_AVAIL usage ... 
+ */
+
+#define PG_W         PG_AVAIL1       /* "wired" mapping */
 
 /*
  * One page directory, shared between

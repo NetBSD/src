@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.133 1998/01/29 01:53:03 tron Exp $
+#	$NetBSD: GENERIC,v 1.134 1998/02/06 07:21:44 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -44,6 +44,13 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+
+#options 	UVM		# Use UVM instead of Mach VM.
+
+# These are required for Mach VM
+options 	VNODEPAGER	# paging to vnodes
+options 	SWAPPAGER	# pageout
+options 	DEVPAGER	# paging to devices
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
