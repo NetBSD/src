@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.75 1997/04/27 23:17:56 perry Exp $
+#	$NetBSD: rc,v 1.76 1997/04/29 04:58:38 scottr Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -80,7 +80,10 @@ fi
 
 # set hostname, turn on network
 echo 'starting network'
-. /etc/netstart
+sh /etc/netstart
+if [ $? -ne 0 ]; then
+	exit 1
+fi
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
