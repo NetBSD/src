@@ -1,4 +1,41 @@
-/*	$NetBSD: isavar.h,v 1.25 1996/12/05 01:25:41 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.25.8.1 1997/05/13 03:33:06 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -68,6 +105,7 @@ struct isabus_attach_args {
 	char	*iba_busname;		/* XXX should be common */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
+	bus_dma_tag_t iba_dmat;		/* isa DMA tag */
 	isa_chipset_tag_t iba_ic;
 };
 
@@ -77,6 +115,7 @@ struct isabus_attach_args {
 struct isa_attach_args {
 	bus_space_tag_t ia_iot;		/* isa i/o space tag */
 	bus_space_tag_t ia_memt;	/* isa mem space tag */
+	bus_dma_tag_t ia_dmat;		/* DMA tag */
 
 	isa_chipset_tag_t ia_ic;
 
@@ -115,8 +154,27 @@ struct isa_softc {
 
 	bus_space_tag_t sc_iot;		/* isa io space tag */
 	bus_space_tag_t sc_memt;	/* isa mem space tag */
+	bus_dma_tag_t sc_dmat;		/* isa DMA tag */
 
 	isa_chipset_tag_t sc_ic;
+
+	/*
+	 * Bitmap representing the DRQ channels available
+	 * for ISA.
+	 */
+	int	sc_drqmap;
+
+	bus_space_handle_t sc_dma1h;	/* i/o handle for DMA controller #1 */
+	bus_space_handle_t sc_dma2h;	/* i/o handle for DMA controller #2 */
+	bus_space_handle_t sc_dmapgh;	/* i/o handle for DMA page registers */
+
+	/*
+	 * DMA maps used for the 8 DMA channels.
+	 */
+	bus_dmamap_t	sc_dmamaps[8];
+
+	int	sc_dmareads;		/* state for isa_dmadone() */
+	int	sc_dmafinished;		/* DMA completion state */
 
 	/*
 	 * This i/o handle is used to map port 0x84, which is
@@ -126,6 +184,15 @@ struct isa_softc {
 	 */
 	bus_space_handle_t   sc_delaybah;
 };
+
+#define	ISA_DRQ_ISFREE(isadev, drq) \
+	((((struct isa_softc *)(isadev))->sc_drqmap & (1 << (drq))) == 0)
+
+#define	ISA_DRQ_ALLOC(isadev, drq) \
+	((struct isa_softc *)(isadev))->sc_drqmap |= (1 << (drq))
+
+#define	ISA_DRQ_FREE(isadev, drq) \
+	((struct isa_softc *)(isadev))->sc_drqmap &= ~(1 << (drq))
 
 #define		cf_iobase		cf_loc[0]
 #define		cf_iosize		cf_loc[1]
@@ -159,5 +226,11 @@ char	*isa_intr_typename __P((int type));
  */
 void isa_establish __P((struct isadev *, struct device *));
 #endif
+
+/*
+ * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This
+ * flag is passed to bus_dmamap_create() to indicate that fact.
+ */
+#define	ISABUS_DMA_32BIT	BUS_DMA_BUS1
 
 #endif /* _DEV_ISA_ISAVAR_H_ */
