@@ -1,13 +1,14 @@
-#	$NetBSD: SHARK,v 1.36 2000/07/24 22:05:27 is Exp $
-# From:  NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp
+#	$NetBSD: SHARK,v 1.37 2000/08/04 02:23:22 hubertf Exp $
+# From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-# estimated number of users
+#ident		"GENERIC-$Revision: 1.37 $"
 
+# estimated number of users
 maxusers	32
 
 # Standard system options
@@ -60,7 +61,7 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
 
 # Networking options
@@ -68,6 +69,7 @@ file-system	KERNFS		# /kern
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options		PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -208,8 +210,9 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	ipfilter 1		# ip filter
 pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
-
-pseudo-device	pty	32		# pseudo-terminals
+#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
