@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.20 2001/08/17 07:15:16 simonb Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.21 2001/08/18 03:27:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,8 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-#define __builtin_next_arg(t) ((t) ? 0 : 0)
+#define	__builtin_next_arg(t) ((t) ? 0 : 0)
+#define	__alignof__(t) (4)
 #endif
 
 #define	va_start(ap, last) \
