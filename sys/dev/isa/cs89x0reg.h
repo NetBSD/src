@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.1 1998/07/21 00:07:33 thorpej Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.2 1998/07/21 00:39:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -337,7 +337,6 @@
 /* Miscellaneous definitions */
 
 #define MAXLOOP            0x8888
-#define CS_DMA_FRAME_HEADER_SIZE   (sizeof(ushort) * 2)
 #define RXBUFCOUNT         16
 #define MC_LOANED          5
 
