@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.10 1995/05/31 06:08:27 mycroft Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.11 1995/05/31 21:50:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -67,16 +67,20 @@
 
 #ifdef NSIP
 void	idpip_input(), nsip_ctlinput();
-#endif
+#endif /* NSIP */
 
 #ifdef TPIP
 void	tpip_input(), tpip_ctlinput(), tp_init(), tp_slowtimo(), tp_drain();
 int	tp_ctloutput(), tp_usrreq();
-#endif
+#endif /* TPIP */
 
 #ifdef EON
 void	eoninput(), eonctlinput(), eonprotoinit();
 #endif /* EON */
+
+#ifdef MROUTING
+void	ipip_input();
+#endif /* MROUTING */
 
 extern	struct domain inetdomain;
 
@@ -106,6 +110,13 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
+#ifdef MROUTING
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
+  ipip_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/* XXX */
+  0,		0,		0,		0,
+},
+#endif /* MROUTING */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -117,7 +128,7 @@ struct protosw inetsw[] = {
   tp_usrreq,
   tp_init,	0,		tp_slowtimo,	tp_drain,
 },
-#endif
+#endif /* TPIP */
 /* EON (ISO CLNL over IP) */
 #ifdef EON
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
@@ -125,15 +136,15 @@ struct protosw inetsw[] = {
   0,
   eonprotoinit,	0,		0,		0,
 },
-#endif
+#endif /* EON */
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
   idpip_input,	rip_output,	nsip_ctlinput,	0,
   rip_usrreq,
   0,		0,		0,		0,
 },
-#endif
-	/* raw wildcard */
+#endif /* NSIP */
+/* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
