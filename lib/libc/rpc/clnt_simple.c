@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.12 1998/02/13 05:52:18 lukem Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.13 1998/07/09 18:15:18 msaitoh Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.12 1998/02/13 05:52:18 lukem Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.13 1998/07/09 18:15:18 msaitoh Exp $");
 #endif
 #endif
 
@@ -73,7 +73,7 @@ static struct callrpc_private {
 int
 callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	char *host;
-	int versnum, procnum;
+	int prognum, versnum, procnum;
 	xdrproc_t inproc, outproc;
 	char *in, *out;
 {
