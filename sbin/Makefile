@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.41 1997/06/20 20:18:35 pk Exp $
+#	$NetBSD: Makefile,v 1.42 1997/06/23 04:23:46 mrg Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck ncheck
 
-SUBDIR=	badsect disklabel ccdconfig dmesg fastboot fsck fsirand ifconfig init \
-	mknod modload modunload mount nologin ping reboot route \
-	routed savecore shutdown slattach swapctl ttyflags umount
+SUBDIR=	badsect bim disklabel ccdconfig dmesg edlabel fastboot fdisk fsck \
+	fsirand ifconfig init mknod modload modunload mount nologin ping \
+	quotacheck reboot route routed savecore shutdown slattach swapctl \
+	ttyflags umount
 
 # support for various file systems
 SUBDIR+= mount_ados
@@ -24,16 +25,5 @@ SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_ext2fs fsck_ext2fs
-
-.if   make(clean) || make(cleandir)
-SUBDIR+= bim edlabel fdisk
-.elif ${MACHINE} == "i386" || ${MACHINE} == "powerpc"
-SUBDIR+= fdisk
-.elif ${MACHINE} == "pc532"
-SUBDIR+= bim
-.elif (${MACHINE} == "sun3") || (${MACHINE} == "atari") || \
-      (${MACHINE} == "sparc")
-SUBDIR+= edlabel
-.endif
 
 .include <bsd.subdir.mk>
