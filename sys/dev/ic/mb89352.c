@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.19 2003/07/05 19:31:11 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.19 2003/07/05 19:31:11 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -111,7 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $")
  * kernel debugger.  If you set SPC_DEBUG to 0 they are not included (the
  * kernel uses less memory) but you lose the debugging facilities.
  */
+#if 0
 #define SPC_DEBUG		1
+#endif
 
 #define	SPC_ABORT_TIMEOUT	2000	/* time to wait for abort */
 
@@ -153,7 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.18 2003/07/05 19:04:48 tsutsui Exp $")
 int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #endif
 
-void	spc_minphys	__P((struct buf *));
 void	spc_done	__P((struct spc_softc *, struct spc_acb *));
 void	spc_dequeue	__P((struct spc_softc *, struct spc_acb *));
 void	spc_scsipi_request __P((struct scsipi_channel *,
@@ -221,9 +222,11 @@ spc_find(iot, ioh, bdid)
 	/* The following detection is derived from spc.c
 	 * (by Takahide Matsutsuka) in FreeBSD/pccard-test.
 	 */
-	while (bus_space_read_1(iot, ioh, PSNS) && timeout)
+	while (bus_space_read_1(iot, ioh, PSNS) && timeout) {
 		timeout--;
-	if (!timeout) {
+		DELAY(1);
+	}
+	if (timeout == 0) {
 		printf("spc: find failed\n");
 		return 0;
 	}
@@ -265,7 +268,7 @@ spc_attach(sc)
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
-	sc->sc_adapter.adapt_minphys = spc_minphys;
+	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = spc_scsipi_request;
 
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
@@ -300,6 +303,7 @@ spc_reset(sc)
 	 */
 	bus_space_write_1(iot, ioh, SCTL, SCTL_DISABLE | SCTL_CTRLRST);
 	bus_space_write_1(iot, ioh, SCMD, 0);
+	bus_space_write_1(iot, ioh, TMOD, 0);
 	bus_space_write_1(iot, ioh, PCTL, 0);
 	bus_space_write_1(iot, ioh, TEMP, 0);
 	bus_space_write_1(iot, ioh, TCH, 0);
@@ -481,11 +485,18 @@ spc_scsipi_request(chan, req, arg)
 		    periph->periph_target));
 
 		flags = xs->xs_control;
-		if ((acb = spc_get_acb(sc)) == NULL) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsipi_done(xs);
-			return;
+		acb = spc_get_acb(sc);
+#ifdef DIAGNOSTIC
+		/*
+		 * This should nerver happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (acb == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate acb\n");
+			panic("spc_scsipi_request");
 		}
+#endif
 
 		/* Initialize acb */
 		acb->xs = xs;
@@ -497,9 +508,6 @@ spc_scsipi_request(chan, req, arg)
 			acb->data_length = 0;
 		} else {
 			memcpy(&acb->scsipi_cmd, xs->cmd, xs->cmdlen);
-#if 1
-			acb->scsipi_cmd.bytes[0] |= periph->periph_lun << 5; /* XXX? */
-#endif
 			acb->scsipi_cmd_length = xs->cmdlen;
 			acb->data_addr = xs->data;
 			acb->data_length = xs->datalen;
@@ -540,18 +548,6 @@ spc_scsipi_request(chan, req, arg)
 		/* XXX Not supported. */
 		return;
 	}
-}
-
-/*
- * Adjust transfer size in buffer structure
- */
-void
-spc_minphys(bp)
-	struct buf *bp;
-{
-
-	SPC_TRACE(("spc_minphys  "));
-	minphys(bp);
 }
 
 /*
@@ -808,7 +804,7 @@ spc_done(sc, acb)
 			case SCSI_CHECK:
 				/* First, save the return values */
 				xs->resid = acb->data_length;
-				/* FALLBACK */
+				/* FALLTHROUGH */
 			case SCSI_BUSY:
 				xs->status = acb->target_stat;
 				xs->error = XS_BUSY;
@@ -1015,7 +1011,7 @@ nextbyte:
 				printf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    periph->periph_target, periph->periph_lun);
-				acb->data_length = 0;
+				sc->sc_dleft = 0;
 			}
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
 			sc->sc_state = SPC_CMDCOMPLETE;
@@ -1495,8 +1491,6 @@ phasechange:
 		}
 	}
 
-	/* Turn on ENREQINIT again. */
-
 	return out;
 }
 
@@ -1602,8 +1596,6 @@ spc_datain_pio(sc, p, n)
 
 phasechange:
 	/* Stop the FIFO data path. */
-
-	/* Turn on ENREQINIT again. */
 
 	return in;
 }
