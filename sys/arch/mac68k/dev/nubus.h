@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.5 1995/04/29 20:23:48 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.6 1995/05/05 05:40:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -56,9 +56,10 @@
 #define NUBUS_CATEGORY_NETWORK	0x0004
 #define  NUBUS_TYPE_ETHERNET	0x0001
 #define   NUBUS_DRSW_3COM	0x0000
+#define   NUBUS_DRSW_GATOR	0x0103
+#define    NUBUS_DRHW_INTERLAN	0x0100
+#define    NUBUS_DRHW_KINETICS	0x0106
 #define   NUBUS_DRSW_ASANTE	0x0104
-#define   NUBUS_DRSW_DAYNA	0x0105	/* XXX */
-#define   NUBUS_DRSW_INTERLAN	0x0106	/* XXX */
 #define    NUBUS_DRHW_SONIC	0x0110
 
 #define NUBUS_CATEGORY_FONT	0x0009	/* KanjiTalk Font Card? */
