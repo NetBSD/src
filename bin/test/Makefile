@@ -5,10 +5,10 @@ SRCS=   test.c operators.c
 CFLAGS+=-I.
 LINKS=	${BINDIR}/test ${BINDIR}/[
 MLINKS=	test.1 '[.1'
-CLEANFILES+= operators.c operators.h unary_op binary_op
 
-operators.c operators.h: unary_op binary_op mkops
-	cp ${.CURDIR}/unary_op ${.CURDIR}/binary_op .
+
+# use this rule to if you update binary_ops, or unary_ops
+make_op: 
 	sh ${.CURDIR}/mkops
 
 .include <bsd.prog.mk>
