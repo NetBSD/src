@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.129 2001/09/24 20:03:47 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.130 2001/10/14 11:21:10 tron Exp $	*/
 
 
 /*
@@ -180,11 +180,12 @@ void cy693_setup_channel __P((struct channel_softc*));
 
 void sis_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void sis_setup_channel __P((struct channel_softc*));
+static int sis_hostbr_match __P(( struct pci_attach_args *));
 
 void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acer_setup_channel __P((struct channel_softc*));
 int  acer_pci_intr __P((void *));
-int  acer_isabr_match __P(( struct pci_attach_args *));
+static int acer_isabr_match __P(( struct pci_attach_args *));
 
 void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void pdc202xx_setup_channel __P((struct channel_softc*));
@@ -2737,6 +2738,14 @@ cy693_setup_channel(chp)
 	}
 }
 
+static int
+sis_hostbr_match(pa)
+	struct pci_attach_args *pa;
+{
+	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS) &&
+	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735));
+}
+
 void
 sis_chip_map(sc, pa)
 	struct pciide_softc *sc;
@@ -2782,7 +2791,12 @@ sis_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
-		sc->sc_wdcdev.UDMA_cap = 2;
+		/*
+		 * Use UDMA/100 on SiS 735 chipset and UDMA/33 on other
+		 * chipsets.
+		 */
+		sc->sc_wdcdev.UDMA_cap = 
+		    pci_find_device(pa, sis_hostbr_match) ? 5 : 2;
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
@@ -2888,16 +2902,13 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	pciide_print_modes(cp);
 }
 
-int
+static int
 acer_isabr_match(pa)
 	struct pci_attach_args *pa;
 {
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	   PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
-		return 1;
-	return 0;
+	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI) &&
+	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543));
 }
-
 
 void
 acer_chip_map(sc, pa)
