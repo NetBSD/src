@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.7.8.1 2002/05/17 15:40:45 gehenna Exp $	*/
+/*	$NetBSD: sram.c,v 1.7.8.2 2002/06/08 09:11:16 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -128,6 +128,8 @@ sramclose(dev, flags, mode, p)
 		su->flags = 0;
 	}
 	su->flags &= ~(SRF_READ|SRF_WRITE);
+
+	return (0);
 }
 
 /*ARGSUSED*/
