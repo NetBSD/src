@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)docmd.c	5.8 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: docmd.c,v 1.4 1993/12/04 02:11:29 jtc Exp $";
+static char rcsid[] = "$Id: docmd.c,v 1.5 1994/01/23 06:31:35 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -236,9 +236,9 @@ makeconn(rhost)
 	}
 
 	fflush(stdout);
-	setreuid(userid, 0);
+	seteuid(0);
 	rem = rcmd(&rhost, port, user, ruser, buf, 0);
-	setreuid(0, userid);
+	seteuid(userid);
 	if (rem < 0)
 		return(0);
 	cp = buf;
