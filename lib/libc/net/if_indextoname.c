@@ -1,5 +1,5 @@
-/*	$NetBSD: if_indextoname.c,v 1.3 2000/07/06 02:54:55 christos Exp $	*/
-/*	$KAME: if_indextoname.c,v 1.4 2000/04/24 10:08:41 itojun Exp $	*/
+/*	$NetBSD: if_indextoname.c,v 1.4 2000/11/24 08:21:12 itojun Exp $	*/
+/*	$KAME: if_indextoname.c,v 1.7 2000/11/08 03:09:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_indextoname.c,v 1.3 2000/07/06 02:54:55 christos Exp $");
+__RCSID("$NetBSD: if_indextoname.c,v 1.4 2000/11/24 08:21:12 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,38 +39,41 @@ __RCSID("$NetBSD: if_indextoname.c,v 1.3 2000/07/06 02:54:55 christos Exp $");
 #include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(if_indextoname,_if_indextoname)
 #endif
 
 /*
- * From RFC 2133:
+ * From RFC 2533:
  *
- * 4.2.  Index-to-Name
+ * The second function maps an interface index into its corresponding
+ * name.
  *
- *    The second function maps an interface index into its corresponding
- *    name.
+ *    #include <net/if.h>
  *
- *        #include <net/if.h>
+ *    char  *if_indextoname(unsigned int ifindex, char *ifname);
  *
- *        char  *if_indextoname(unsigned int ifindex, char *ifname);
- *
- *    The ifname argument must point to a buffer of at least IFNAMSIZ bytes
- *    into which the interface name corresponding to the specified index is
- *    returned.  (IFNAMSIZ is also defined in <net/if.h> and its value
- *    includes a terminating null byte at the end of the interface name.)
- *    This pointer is also the return value of the function.  If there is
- *    no interface corresponding to the specified index, NULL is returned.
+ * The ifname argument must point to a buffer of at least IF_NAMESIZE
+ * bytes into which the interface name corresponding to the specified
+ * index is returned.  (IF_NAMESIZE is also defined in <net/if.h> and
+ * its value includes a terminating null byte at the end of the
+ * interface name.) This pointer is also the return value of the
+ * function.  If there is no interface corresponding to the specified
+ * index, NULL is returned, and errno is set to ENXIO, if there was a
+ * system error (such as running out of memory), if_indextoname returns
+ * NULL and errno would be set to the proper value (e.g., ENOMEM).
  */
 
 char *
 if_indextoname(unsigned int ifindex, char *ifname)
 {
 	struct ifaddrs *ifaddrs, *ifa;
+	int error = 0;
 
 	if (getifaddrs(&ifaddrs) < 0)
-		return(NULL);
+		return(NULL);	/* getifaddrs properly set errno */
 
 	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr &&
@@ -80,12 +83,15 @@ if_indextoname(unsigned int ifindex, char *ifname)
 			break;
 	}
 
-	if (ifa == NULL)
+	if (ifa == NULL) {
+		error = ENXIO;
 		ifname = NULL;
+	}
 	else
 		strncpy(ifname, ifa->ifa_name, IFNAMSIZ);
 
 	freeifaddrs(ifaddrs);
 
+	errno = error;
 	return(ifname);
 }
