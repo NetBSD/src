@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 1999/01/27 03:12:24 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 1999/01/29 05:33:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 1999/01/27 03:12:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 1999/01/29 05:33:49 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 1999/01/27 03:12:24 simonb Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <mips/locore.h>		/* wbflush() */
 #include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
@@ -103,8 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 1999/01/27 03:12:24 simonb Exp $")
 #include <ddb/db_extern.h>
 #include <ddb/db_extern.h>
 #endif
-
-#include <pmax/stand/libsa/dec_prom.h>
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
