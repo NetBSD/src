@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.8 2002/01/30 14:01:33 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.9 2002/02/11 21:48:48 reinoud Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.8 $"
+#ident		"GENERIC-$Revision: 1.9 $"
 
 # estimated number of users
 maxusers	32
@@ -104,9 +104,6 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-# Bootloader options (has to go !)
-#options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
