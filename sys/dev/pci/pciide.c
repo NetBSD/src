@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.154 2002/06/01 18:07:42 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.155 2002/06/04 08:58:20 fvdl Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.154 2002/06/01 18:07:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.155 2002/06/04 08:58:20 fvdl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -318,6 +318,11 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC768_IDE,
 	  0,
 	  "Advanced Micro Devices AMD768 IDE Controller",
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_AMD_PBC8111_IDE,
+	  0,
+	  "Advanced Micro Devices AMD8111 IDE Controller",
 	  amd7x6_chip_map
 	},
 	{ 0,
@@ -1974,6 +1979,7 @@ amd7x6_chip_map(sc, pa)
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_AMD_PBC766_IDE:
 	case PCI_PRODUCT_AMD_PBC768_IDE:
+	case PCI_PRODUCT_AMD_PBC8111_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
