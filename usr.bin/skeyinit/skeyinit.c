@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.7 1997/02/11 09:25:24 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -57,7 +57,7 @@ main(argc, argv)
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %d", getuid());
-	strcpy(me, pp->pw_name);
+	(void)strncpy(me, pp->pw_name, sizeof(me) - 1);
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
@@ -115,11 +115,13 @@ main(argc, argv)
 		if (l > 0) {
 			lastc = skey.seed[l - 1];
 			if (isdigit(lastc) && lastc != '9') {
-				strcpy(defaultseed, skey.seed);
+				(void)strncpy(defaultseed, skey.seed,
+				    sizeof(defaultseed) - 1);
 				defaultseed[l - 1] = lastc + 1;
 			}
 			if (isdigit(lastc) && lastc == '9' && l < 16) {
-				strcpy(defaultseed, skey.seed);
+				(void)strncpy(defaultseed, skey.seed,
+				    sizeof(defaultseed) - 1);
 				defaultseed[l - 1] = '0';
 				defaultseed[l] = '0';
 				defaultseed[l + 1] = '\0';
@@ -155,7 +157,7 @@ main(argc, argv)
 			seed[16] = '\0';
 		}
 		if (seed[0] == '\0')
-			strcpy(seed, defaultseed);
+			(void)strncpy(seed, defaultseed, sizeof(seed) - 1);
 
 		for (i = 0;; i++) {
 			if (i >= 2)
@@ -200,7 +202,7 @@ main(argc, argv)
 
 			printf("Passwords do not match.\n");
 		}
-		strcpy(seed, defaultseed);
+		(void)strncpy(seed, defaultseed, sizeof(seed) - 1);
 
 		/* Crunch seed and password into starting key */
 		if (keycrunch(key, seed, passwd) != 0)
