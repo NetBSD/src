@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.41 2001/01/26 17:37:16 thorpej Exp $	*/
+/*	$NetBSD: setup.c,v 1.42 2001/02/04 21:25:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.41 2001/01/26 17:37:16 thorpej Exp $");
+__RCSID("$NetBSD: setup.c,v 1.42 2001/02/04 21:25:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,6 @@ __RCSID("$NetBSD: setup.c,v 1.41 2001/01/26 17:37:16 thorpej Exp $");
 #include "extern.h"
 #include "fsutil.h"
 
-struct bufarea asblk;
-struct fs *altsblock;
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 static void badsb __P((int, char *));

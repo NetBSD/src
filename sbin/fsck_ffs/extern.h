@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2001/01/26 17:37:16 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2001/02/04 21:25:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -53,18 +53,15 @@ void		freeblk __P((ufs_daddr_t, long));
 void		freeino __P((ino_t));
 void		freeinodebuf __P((void));
 int		ftypeok __P((struct dinode *));
-int		ftypeok __P((struct dinode *dp));
-void		getblk __P((struct bufarea *bp, ufs_daddr_t blk, long size));
+void		getblk __P((struct bufarea *, ufs_daddr_t, long));
 struct bufarea *getdatablk __P((ufs_daddr_t, long));
 struct inoinfo *getinoinfo __P((ino_t));
-struct dinode  *getnextinode __P((ino_t));
 struct dinode  *ginode __P((ino_t));
 void		getpathname __P((char *, ino_t, ino_t));
 void		inocleanup __P((void));
 void		inodirty __P((void));
 int		linkup __P((ino_t, ino_t));
 int		makeentry __P((ino_t, ino_t, char *));
-void		panic __P((const char *fmt, ...));
 void		pass1 __P((void));
 void		pass1b __P((void));
 int		pass1check __P((struct inodesc *));
@@ -73,10 +70,8 @@ void		pass3 __P((void));
 void		pass4 __P((void));
 int		pass4check __P((struct inodesc *));
 void		pass5 __P((void));
-void		pfatal __P((const char *fmt, ...));
 void		pinode __P((ino_t));
 void		propagate __P((ino_t));
-void		pwarn __P((const char *fmt, ...));
 int		reply __P((char *));
 void		resetinodebuf __P((void));
 int		setup __P((const char *));

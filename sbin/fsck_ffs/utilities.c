@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.29 2001/01/09 09:25:32 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.30 2001/02/04 21:25:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.29 2001/01/09 09:25:32 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.30 2001/02/04 21:25:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: utilities.c,v 1.29 2001/01/09 09:25:32 mycroft Exp $");
 long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror __P((char *, ufs_daddr_t));
+
+extern int returntosingle;
 
 int
 ftypeok(dp)
@@ -544,8 +546,6 @@ void
 catchquit(sig)
 	int sig;
 {
-	extern int returntosingle;
-
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
