@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 1998/09/05 15:20:48 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.5 2000/07/10 22:01:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/cdefs.h>
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -57,12 +58,12 @@ int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
-	{"_block_size"},
+	{ { "_block_size" } },
 #define X_BLOCK_COUNT	1
-	{"_block_count"},
+	{ { "_block_count" } },
 #define X_BLOCK_TABLE	2
-	{"_block_table"},
-	{NULL}
+	{ { "_block_table" } },
+	{ {NULL} }
 };
 
 int *block_size_p;		/* block size var. in prototype image */
@@ -135,7 +136,7 @@ main(argc, argv)
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto bootblock bad size=%d", protosize);
+		err(1, "proto bootblock bad size=%ld", protosize);
 
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
@@ -210,7 +211,7 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	if (N_GETMAGIC(eh) != OMAGIC) {
-		warn("bad magic: 0x%x", eh.a_midmag);
+		warn("bad magic: 0x%lx", eh.a_midmag);
 		goto bad;
 	}
 	/*
@@ -248,9 +249,9 @@ loadprotoblocks(fname, size)
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		printf("%s: entry point %#x\n", fname, eh.a_entry);
+		printf("%s: entry point %#lx\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
-		printf("room for %d filesystem blocks at %#x\n",
+		printf("room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
