@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.21 2002/03/05 14:18:07 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.21 2002/03/05 14:18:07 agc Exp $");
 #endif
 #endif
 
@@ -94,6 +94,7 @@ static show_t showv[] = {
 	"\tIgnore next file installation directive (doesn't belong)"},
 	{PLIST_OPTION, "@option %s", "\tPackage has option: %s"},
 	{PLIST_PKGCFL, "@pkgcfl %s", "\tPackage conflicts with: %s"},
+	{PLIST_BLDDEP, "@blddep %s", "\tPackage depends exactly on: %s"},
 	{-1, NULL, NULL}
 };
 
@@ -195,6 +196,7 @@ show_plist(char *title, package_t *plist, pl_ent_t type)
 			case PLIST_DIR_RM:
 			case PLIST_OPTION:
 			case PLIST_PKGCFL:
+			case PLIST_BLDDEP:
 				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
 				break;
 			default:
