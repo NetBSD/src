@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.14 2003/02/21 17:14:07 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.14 2003/02/21 17:14:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15 2003/05/19 14:56:03 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -219,10 +219,12 @@ spc_find(iot, ioh, bdid)
 	bus_space_write_1(iot, ioh, TCM, 0);
 	bus_space_write_1(iot, ioh, TCL, 0);
 	bus_space_write_1(iot, ioh, INTS, 0);
-	bus_space_write_1(iot, ioh, SCTL, SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_PARITY_ENAB | SCTL_RESEL_ENAB);
+	bus_space_write_1(iot, ioh, SCTL,
+	    SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_PARITY_ENAB | SCTL_RESEL_ENAB);
 	bus_space_write_1(iot, ioh, BDID, bdid);
 	delay(400);
-	bus_space_write_1(iot, ioh, SCTL, bus_space_read_1(iot, ioh, SCTL) & ~SCTL_DISABLE);
+	bus_space_write_1(iot, ioh, SCTL,
+	    bus_space_read_1(iot, ioh, SCTL) & ~SCTL_DISABLE);
 
 	/* The following detection is derived from spc.c
 	 * (by Takahide Matsutsuka) in FreeBSD/pccard-test.
@@ -284,7 +286,7 @@ spcattach(sc)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found((struct device*)sc, &sc->sc_channel, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -312,10 +314,12 @@ spc_reset(sc)
 	bus_space_write_1(iot, ioh, TCM, 0);
 	bus_space_write_1(iot, ioh, TCL, 0);
 	bus_space_write_1(iot, ioh, INTS, 0);
-	bus_space_write_1(iot, ioh, SCTL, SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_PARITY_ENAB | SCTL_RESEL_ENAB);
+	bus_space_write_1(iot, ioh, SCTL,
+	    SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_PARITY_ENAB | SCTL_RESEL_ENAB);
 	bus_space_write_1(iot, ioh, BDID, sc->sc_initiator);
 	delay(400);
-	bus_space_write_1(iot, ioh, SCTL, bus_space_read_1(iot, ioh, SCTL) & ~SCTL_DISABLE);
+	bus_space_write_1(iot, ioh, SCTL,
+	    bus_space_read_1(iot, ioh, SCTL) & ~SCTL_DISABLE);
 }
 
 
@@ -330,9 +334,11 @@ spc_scsi_reset(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	SPC_TRACE(("spc_scsi_reset  "));
-	bus_space_write_1(iot, ioh, SCMD, bus_space_read_1(iot, ioh, SCMD) | SCMD_RST);
+	bus_space_write_1(iot, ioh, SCMD,
+	    bus_space_read_1(iot, ioh, SCMD) | SCMD_RST);
 	delay(500);
-	bus_space_write_1(iot, ioh, SCMD, bus_space_read_1(iot, ioh, SCMD) & ~SCMD_RST);
+	bus_space_write_1(iot, ioh, SCMD,
+	    bus_space_read_1(iot, ioh, SCMD) & ~SCMD_RST);
 	delay(50);
 }
 
@@ -372,7 +378,7 @@ spc_init(sc)
 			callout_stop(&acb->xs->xs_callout);
 			spc_done(sc, acb);
 		}
-		while ((acb = sc->nexus_list.tqh_first) != NULL) {
+		while ((acb = TAILQ_FIRST(&sc->nexus_list)) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			callout_stop(&acb->xs->xs_callout);
 			spc_done(sc, acb);
@@ -647,11 +653,12 @@ spc_select(sc, acb)
 	do {
 		asm ("nop");
 	} while (bus_space_read_1(iot, ioh, SSTS) &
-		 (SSTS_ACTIVE|SSTS_TARGET|SSTS_BUSY));
+	    (SSTS_ACTIVE|SSTS_TARGET|SSTS_BUSY));
 #endif
 
 	bus_space_write_1(iot, ioh, PCTL, 0);
-	bus_space_write_1(iot, ioh, TEMP, (1 << sc->sc_initiator) | (1 << target));
+	bus_space_write_1(iot, ioh, TEMP,
+	    (1 << sc->sc_initiator) | (1 << target));
 	/*
 	 * Setup BSY timeout (selection timeout).
 	 * 250ms according to the SCSI specification.
@@ -690,8 +697,8 @@ spc_reselect(sc, message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
-		    sc->sc_dev.dv_xname, selid);
+		printf("%s: reselect with invalid selid %02x; "
+		    "sending DEVICE RESET\n", sc->sc_dev.dv_xname, selid);
 		SPC_BREAK();
 		goto reset;
 	}
@@ -704,16 +711,15 @@ spc_reselect(sc, message)
 	 */
 	target = ffs(selid) - 1;
 	lun = message & 0x07;
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	     acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain) {
 		periph = acb->xs->xs_periph;
 		if (periph->periph_target == target &&
 		    periph->periph_lun == lun)
 			break;
 	}
 	if (acb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
-		    sc->sc_dev.dv_xname, target, lun);
+		printf("%s: reselect from target %d lun %d with no nexus; "
+		    "sending ABORT\n", sc->sc_dev.dv_xname, target, lun);
 		SPC_BREAK();
 		goto abort;
 	}
@@ -770,8 +776,7 @@ spc_sched(sc)
 	 * Find first acb in ready queue that is for a target/lunit pair that
 	 * is not busy.
 	 */
-	for (acb = sc->ready_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->ready_list, chain) {
 		periph = acb->xs->xs_periph;
 		ti = &sc->sc_tinfo[periph->periph_target];
 		if ((ti->lubusy & (1 << periph->periph_lun)) == 0) {
@@ -823,7 +828,7 @@ spc_done(sc, acb)
 				xs->error = XS_DRIVER_STUFFUP;
 #if SPC_DEBUG
 				printf("%s: spc_done: bad stat 0x%x\n",
-					sc->sc_dev.dv_xname, acb->target_stat);
+				    sc->sc_dev.dv_xname, acb->target_stat);
 #endif
 				break;
 			}
@@ -863,11 +868,10 @@ spc_dequeue(sc, acb)
 {
 
 	SPC_TRACE(("spc_dequeue  "));
-	if (acb->flags & ACB_NEXUS) {
+	if (acb->flags & ACB_NEXUS)
 		TAILQ_REMOVE(&sc->nexus_list, acb, chain);
-	} else {
+	else
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
-	}
 }
 
 /*
@@ -937,16 +941,23 @@ nextbyte:
 		bus_space_write_1(iot, ioh, TCM, 0);
 		bus_space_write_1(iot, ioh, TCL, 1);
 		bus_space_write_1(iot, ioh, PCTL,
-				  sc->sc_phase | PCTL_BFINT_ENAB);
+		    sc->sc_phase | PCTL_BFINT_ENAB);
 #ifdef x68k
-		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR); /* | SCMD_PROG_XFR */
+		bus_space_write_1(iot, ioh, SCMD,
+		    SCMD_XFR /* | SCMD_PROG_XFR */);
 #else
-		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
+		bus_space_write_1(iot, ioh, SCMD,
+		    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
 		for (;;) {
-			/*if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0
-				&& (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)*/
-			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) == 0)
+#if 0
+			if ((bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_BUSY) != 0 &&
+			    (bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_DREG_EMPTY) != 0)
+#endif
+			if ((bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_DREG_EMPTY) == 0)
 				break;
 			if (bus_space_read_1(iot, ioh, INTS) != 0)
 				goto out;
@@ -959,7 +970,8 @@ nextbyte:
 				sc->sc_flags |= SPC_DROP_MSGIN;
 				spc_sched_msgout(sc, SEND_REJECT);
 			} else {
-				*sc->sc_imp++ = bus_space_read_1(iot, ioh, DREG);
+				*sc->sc_imp++ =
+				    bus_space_read_1(iot, ioh, DREG);
 				n++;
 				/*
 				 * This testing is suboptimal, but most
@@ -1083,13 +1095,14 @@ nextbyte:
 				ti->flags &= ~DO_SYNC;
 				if (ti->offset == 0) {
 				} else if (ti->period < sc->sc_minsync ||
-					   ti->period > sc->sc_maxsync ||
-					   ti->offset > 8) {
+				    ti->period > sc->sc_maxsync ||
+				    ti->offset > 8) {
 					ti->period = ti->offset = 0;
 					spc_sched_msgout(sc, SEND_SDTR);
 				} else {
 					scsipi_printaddr(acb->xs->xs_periph);
-					printf("sync, offset %d, period %dnsec\n",
+					printf("sync, offset %d, "
+					    "period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
 				spc_setsync(sc, ti);
@@ -1115,8 +1128,8 @@ nextbyte:
 #endif
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
-				    sc->sc_dev.dv_xname);
+				printf("%s: unrecognized MESSAGE EXTENDED; "
+				    "sending REJECT\n", sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reject;
 			}
@@ -1134,8 +1147,8 @@ nextbyte:
 
 	case SPC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: reselect without IDENTIFY; "
+			    "sending DEVICE RESET\n", sc->sc_dev.dv_xname);
 			SPC_BREAK();
 			goto reset;
 		}
@@ -1208,7 +1221,8 @@ spc_msgout(sc)
 			 * Set ATN.  If we're just sending a trivial 1-byte
 			 * message, we'll clear ATN later on anyway.
 			 */
-			bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ATN); /* XXX? */
+			bus_space_write_1(iot, ioh, SCMD,
+			    SCMD_SET_ATN);	/* XXX? */
 		} else {
 			/* This is a continuation of the previous message. */
 			n = sc->sc_omp - sc->sc_omess;
@@ -1240,7 +1254,7 @@ nextmsg:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[4] = MSG_EXTENDED;
-		sc->sc_omess[3] = 3;
+		sc->sc_omess[3] = MSG_EXT_SDTR_LEN;
 		sc->sc_omess[2] = MSG_EXT_SDTR;
 		sc->sc_omess[1] = ti->period >> 2;
 		sc->sc_omess[0] = ti->offset;
@@ -1253,7 +1267,7 @@ nextmsg:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 		sc->sc_omess[3] = MSG_EXTENDED;
-		sc->sc_omess[2] = 2;
+		sc->sc_omess[2] = MSG_EXT_WDTR_LEN;
 		sc->sc_omess[1] = MSG_EXT_WDTR;
 		sc->sc_omess[0] = ti->width;
 		n = 4;
@@ -1307,7 +1321,8 @@ nextbyte:
 #ifdef x68k
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
-	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);
+	bus_space_write_1(iot, ioh, SCMD,
+	    SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);
 #endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
@@ -1412,7 +1427,8 @@ spc_dataout_pio(sc, p, n)
 #ifdef x68k
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
-	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
+	bus_space_write_1(iot, ioh, SCMD,
+	    SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
 #endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
@@ -1432,7 +1448,8 @@ spc_dataout_pio(sc, p, n)
 		for (;;) {
 			intstat = bus_space_read_1(iot, ioh, INTS);
 			/* Wait till buffer is empty. */
-			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)
+			if ((bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_DREG_EMPTY) != 0)
 				break;
 			/* Break on interrupt. */
 			if (intstat != 0)
@@ -1461,7 +1478,8 @@ spc_dataout_pio(sc, p, n)
 		/* See the bytes off chip */
 		for (;;) {
 			/* Wait till buffer is empty. */
-			if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)
+			if ((bus_space_read_1(iot, ioh, SSTS) &
+			    SSTS_DREG_EMPTY) != 0)
 				break;
 			intstat = bus_space_read_1(iot, ioh, INTS);
 			/* Break on interrupt. */
@@ -1477,9 +1495,9 @@ phasechange:
 		/* Some sort of phase change. */
 		int amount;
 
-		amount = ((bus_space_read_1(iot, ioh, TCH) << 16) |
-			  (bus_space_read_1(iot, ioh, TCM) << 8) |
-			  bus_space_read_1(iot, ioh, TCL));
+		amount = (bus_space_read_1(iot, ioh, TCH) << 16) |
+		    (bus_space_read_1(iot, ioh, TCM) << 8) |
+		    bus_space_read_1(iot, ioh, TCL);
 		if (amount > 0) {
 			out -= amount;
 			SPC_MISC(("+%d ", amount));
@@ -1521,7 +1539,8 @@ spc_datain_pio(sc, p, n)
 #ifdef x68k
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
-	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
+	bus_space_write_1(iot, ioh, SCMD,
+	    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
@@ -1541,8 +1560,8 @@ spc_datain_pio(sc, p, n)
 #define INTSMASK 0xff
 		/* Wait for fifo half full or phase mismatch */
 		for (;;) {
-			intstat = ((bus_space_read_1(iot, ioh, SSTS) << 8) |
-				   bus_space_read_1(iot, ioh, INTS));
+			intstat = (bus_space_read_1(iot, ioh, SSTS) << 8) |
+			    bus_space_read_1(iot, ioh, INTS);
 			if ((intstat & (INTSMASK | (SSTS_DREG_FULL << 8))) !=
 			    0)
 				break;
@@ -1623,7 +1642,8 @@ spcintr(arg)
 	/*
 	 * Disable interrupt.
 	 */
-	bus_space_write_1(iot, ioh, SCTL, bus_space_read_1(iot, ioh, SCTL) & ~SCTL_INTR_ENAB);
+	bus_space_write_1(iot, ioh, SCTL,
+	    bus_space_read_1(iot, ioh, SCTL) & ~SCTL_INTR_ENAB);
 
 	SPC_TRACE(("spcintr  "));
 
@@ -1651,7 +1671,8 @@ loop:
 	/*
 	 * Check for less serious errors.
 	 */
-	if ((bus_space_read_1(iot, ioh, SERR) & (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
+	if ((bus_space_read_1(iot, ioh, SERR) & (SERR_SCSI_PAR|SERR_SPC_PAR))
+	    != 0) {
 		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= SPC_DROP_MSGIN;
@@ -1712,8 +1733,8 @@ loop:
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != SPC_SELECTING) {
-				printf("%s: selection out while idle; resetting\n",
-				    sc->sc_dev.dv_xname);
+				printf("%s: selection out while idle; "
+				    "resetting\n", sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reset;
 			}
@@ -1757,8 +1778,8 @@ loop:
 			SPC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != SPC_SELECTING) {
-				printf("%s: selection timeout while idle; resetting\n",
-				    sc->sc_dev.dv_xname);
+				printf("%s: selection timeout while idle; "
+				    "resetting\n", sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reset;
 			}
@@ -1771,7 +1792,8 @@ loop:
 			goto finish;
 		} else {
 			if (sc->sc_state != SPC_IDLE) {
-				printf("%s: BUS FREE while not idle; state=%d\n",
+				printf("%s: BUS FREE while not idle; "
+				    "state=%d\n",
 				    sc->sc_dev.dv_xname, sc->sc_state);
 				SPC_BREAK();
 				goto out;
@@ -1792,11 +1814,11 @@ loop:
 
 	if ((ints & INTS_DISCON) != 0) {
 		/* We've gone to BUS FREE phase. */
+		/* disable disconnect interrupt */
 		bus_space_write_1(iot, ioh, PCTL,
 		    bus_space_read_1(iot, ioh, PCTL) & ~PCTL_BFINT_ENAB);
-				/* disable disconnect interrupt */
+		/* XXX reset interrput */
 		bus_space_write_1(iot, ioh, INTS, ints);
-				/* XXX reset interrput */
 
 		switch (sc->sc_state) {
 		case SPC_RESELECTED:
@@ -1841,7 +1863,8 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
+				printf("%s: unexpected disconnect; "
+				    "sending REQUEST SENSE\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				acb->target_stat = SCSI_CHECK;
@@ -1866,7 +1889,8 @@ loop:
 		}
 	}
 	else if ((ints & INTS_CMD_DONE) != 0 &&
-		 sc->sc_prevphase == PH_MSGIN && sc->sc_state != SPC_CONNECTED)
+	    sc->sc_prevphase == PH_MSGIN &&
+	    sc->sc_state != SPC_CONNECTED)
 		goto out;
 
 dophase:
@@ -1886,7 +1910,9 @@ dophase:
 	 * State transition.
 	 */
 	sc->sc_phase = bus_space_read_1(iot, ioh, PSNS) & PH_MASK;
-/*	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase);*/
+#if 0
+	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase);
+#endif
 
 	SPC_MISC(("phase=%d\n", sc->sc_phase));
 	switch (sc->sc_phase) {
@@ -1914,7 +1940,7 @@ dophase:
 			SPC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
 			printf("cmd=0x%02x+%d  ",
-			    acb->scsipi_cmd.opcode, acb->scsipi_cmd_length-1);
+			    acb->scsipi_cmd.opcode, acb->scsipi_cmd_length - 1);
 		}
 #endif
 		n = spc_dataout_pio(sc, sc->sc_cp, sc->sc_cleft);
@@ -1948,7 +1974,9 @@ dophase:
 			break;
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		/*acb->target_stat = bus_space_read_1(iot, ioh, DREG);*/
+#if 0
+		acb->target_stat = bus_space_read_1(iot, ioh, DREG);
+#endif
 		spc_datain_pio(sc, &acb->target_stat, 1);
 		SPC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
@@ -2013,9 +2041,10 @@ spc_timeout(arg)
 	struct spc_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct spc_softc *sc = (void*)periph->periph_channel->chan_adapter->adapt_dev;
+	struct spc_softc *sc;
 	int s;
 
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	scsipi_printaddr(periph);
 	printf("timed out");
 
@@ -2067,7 +2096,7 @@ spc_print_acb(acb)
 
 	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
 	printf(" dp=%p dleft=%d target_stat=%x\n",
-	       acb->data_addr, acb->data_length, acb->target_stat);
+	    acb->data_addr, acb->data_length, acb->target_stat);
 	spc_show_scsi_cmd(acb);
 }
 
@@ -2078,15 +2107,13 @@ spc_print_active_acb()
 	struct spc_softc *sc = spc_cd.cd_devs[0]; /* XXX */
 
 	printf("ready list:\n");
-	for (acb = sc->ready_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->ready_list, chain)
 		spc_print_acb(acb);
 	printf("nexus:\n");
 	if (sc->sc_nexus != NULL)
 		spc_print_acb(sc->sc_nexus);
 	printf("nexus list:\n");
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain)
 		spc_print_acb(acb);
 }
 
@@ -2131,8 +2158,8 @@ spc_dump_driver(sc)
 	int i;
 
 	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
-	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
-	    sc->sc_state, sc->sc_imess[0],
+	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x "
+	    "currmsg=%x\n", sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
 	for (i = 0; i < 7; i++) {
 		ti = &sc->sc_tinfo[i];
