@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.8 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: RPC44,v 1.9 2004/11/10 17:54:03 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.8 $"
+#ident		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -81,6 +81,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 # mipsel specific
 options 	COMPAT_ULTRIX	# Ultrix binary compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# fast filesystem

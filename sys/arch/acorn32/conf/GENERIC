@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.44 2004/09/04 23:29:44 manu Exp $
+# 	$NetBSD: GENERIC,v 1.45 2004/11/10 17:54:02 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.44 $"
+#ident		"GENERIC-$Revision: 1.45 $"
 
 # estimated number of users
 maxusers	32
@@ -118,6 +118,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

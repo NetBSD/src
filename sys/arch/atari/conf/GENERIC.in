@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.40 2004/09/04 23:29:46 manu Exp $
+#	$NetBSD: GENERIC.in,v 1.41 2004/11/10 17:54:03 christos Exp $
 #
 # Generic atari
 #
@@ -155,6 +155,7 @@ options 	COMPAT_16	# Compatibility to NetBSD1.6
 #endif
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #ifndef INSTALL_KERNEL
 #
