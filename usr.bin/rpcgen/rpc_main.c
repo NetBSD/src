@@ -56,7 +56,7 @@ struct commandline {
 };
 
 static char *cmdname;
-static char CPP[] = "/lib/cpp";
+static char CPP[] = "/usr/bin/cpp";
 static char CPPFLAGS[] = "-C";
 static char *allv[] = {
 	"rpcgen", "-s", "udp", "-s", "tcp",
