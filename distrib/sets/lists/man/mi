@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.33 2001/12/09 19:16:03 he Exp $
+# $NetBSD: mi,v 1.253.2.34 2001/12/09 19:39:04 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1201,6 +1201,7 @@
 ./usr/share/man/cat8/mknetid.0
 ./usr/share/man/cat8/mknod.0
 ./usr/share/man/cat8/mld6query.0
+./usr/share/man/cat8/mlxctl.0
 ./usr/share/man/cat8/modload.0
 ./usr/share/man/cat8/modstat.0
 ./usr/share/man/cat8/modunload.0
@@ -2628,6 +2629,7 @@
 ./usr/share/man/man8/mknetid.8
 ./usr/share/man/man8/mknod.8
 ./usr/share/man/man8/mld6query.8
+./usr/share/man/man8/mlxctl.8
 ./usr/share/man/man8/modload.8
 ./usr/share/man/man8/modstat.8
 ./usr/share/man/man8/modunload.8

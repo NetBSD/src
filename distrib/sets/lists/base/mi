@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.26 2001/12/09 18:40:34 he Exp $
+# $NetBSD: mi,v 1.169.2.27 2001/12/09 19:39:03 he Exp $
 .
 ./altroot
 ./bin
@@ -630,6 +630,7 @@
 ./usr/sbin/mkalias
 ./usr/sbin/mknetid
 ./usr/sbin/mld6query
+./usr/sbin/mlxctl
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
 ./usr/sbin/mopd
