@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2001/08/03 14:14:30 drochner Exp $
+# $NetBSD: Makefile,v 1.12 2001/08/16 18:29:20 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -14,10 +14,6 @@ FILESDIR= /usr/share/examples/dhcp
 
 FILES=	dhcpd.conf
 .endif
-
-OS_SYSTEM !=	uname -s
-OS_RELEASE !=	uname -r
-CPPFLAGS+=-DOS_VERSION="\"${OS_SYSTEM} ${OS_RELEASE}\""
 
 .include <bsd.prog.mk>
 .include <bsd.files.mk>
