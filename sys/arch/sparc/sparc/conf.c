@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1995/07/04 07:17:06 mycroft Exp $ */
+/*	$NetBSD: conf.c,v 1.33 1995/07/05 15:53:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,7 @@ cdev_decl(ms);
 cdev_decl(log);
 cdev_decl(sd);
 cdev_decl(st);
+cdev_decl(xd);
 #include "ch.h"
 cdev_decl(ch);
 #include "pty.h"
