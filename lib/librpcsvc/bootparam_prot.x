@@ -47,7 +47,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: bootparam_prot.x,v 1.2 1996/02/19 14:33:41 pk Exp $";
+%static char rcsid[] = "$NetBSD: bootparam_prot.x,v 1.3 1996/03/03 16:57:42 thorpej Exp $";
 %#endif /* not lint */
 #endif
 
