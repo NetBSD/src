@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.130 2000/02/03 17:51:51 veego Exp $
+#	$NetBSD: Makefile,v 1.131 2000/02/04 09:24:08 veego Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -71,15 +71,15 @@ _J= -j${NBUILDJOBS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1+=	bootptab changelist csh.cshrc csh.login \
-	csh.logout daily daily.conf dm.conf floppytab ftpchroot \
-	ftpusers ftpwelcome gettytab group hosts hosts.lpd \
-	inetd.conf lkm.conf mailer.conf man.conf \
-	monthly monthly.conf mrouted.conf netstart networks \
-	newsyslog.conf nsswitch.conf phones printcap profile protocols \
-	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
-	rc.shutdown rc.wscons remote rpc security security.conf services \
-	shells syslog.conf weekly weekly.conf wscons.conf \
+BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
+	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
+	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
+	mailer.conf man.conf monthly monthly.conf mrouted.conf \
+	netstart networks newsyslog.conf nsswitch.conf ntp.conf \
+	phones printcap profile protocols rbootd.conf rc rc.conf \
+	rc.lkm rc.local rc.subr rc.shutdown rc.wscons remote rpc \
+	security security.conf services shells syslog.conf weekly \
+	weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 .if	(${MACHINE_ARCH} == "m68k") || \
@@ -100,7 +100,7 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
-NAMEDB=	127 root.cache named.conf
+NAMEDB=	127 root.cache named.conf 0000:0000:0000:0000:0000:0000:000
 PCS=	pcs750.bin
 
 all clean cleandir depend distclean etc includes install lint:
