@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.26 2004/04/10 21:47:33 pooka Exp $	*/
+/*	$NetBSD: console.c,v 1.27 2004/06/09 23:01:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.26 2004/04/10 21:47:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.27 2004/06/09 23:01:01 rumble Exp $");
 
 #include "opt_kgdb.h"
 
@@ -64,75 +64,41 @@ int comcnmode = CONMODE;
 
 extern struct consdev zs_cn;
 
-void zs_kgdb_init(void);
-void kgdb_port_init(void);
+extern void	zs_kgdb_init(void);
+
+void		kgdb_port_init(void);
+static int	zs_serial_init(char *);
+static int	gio_video_init(char *);
+static int	mace_serial_init(char *);
 
 void
 consinit()
 {
-	char* consdev;
-	char* dbaud;
-	int   speed;
-
+	char *consdev;
+	
 	/* Ask ARCS what it is using for console output. */
 	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
+
 	if (consdev == NULL) {
 		printf("WARNING: ConsoleOut environment variable not set\n");
 		return;
 	}
 
-	/* Get comm speed from ARCS */
-	dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
-	speed = strtoul(dbaud, NULL, 10);
-
 	switch (mach_type) {
-	case MACH_SGI_IP22:
-#if (NGIO > 0) && (NPCKBC > 0) 
-		if (strcmp(consdev, "video()") == 0) {
-			/*
-			 * XXX Assumes that if output is video()
-			 * input must be keyboard().
-			 */
-			gio_cnattach();
-
-			/* XXX Hardcoded iotag, HPC address XXX */
-			pckbc_cnattach(1,
-			    0x1fb80000+HPC_PBUS_CH6_DEVREGS+IOC_KB_REGS,
-			    KBCMDP, PCKBC_KBD_SLOT);
-
-			return;
-		}
-#endif
 	case MACH_SGI_IP12:
 	case MACH_SGI_IP20:
-#if (NZSC > 0)
-		if ((strlen(consdev) == 9) &&
-		    (!strncmp(consdev, "serial", 6)) &&
-		    (consdev[7] == '0' || consdev[7] == '1')) {
-			cn_tab = &zs_cn;
-			(*cn_tab->cn_init)(cn_tab);
-			
+		if (zs_serial_init(consdev))
 			return;
-		}
-#endif
+		break;
+
+	case MACH_SGI_IP22:
+		if (gio_video_init(consdev) || zs_serial_init(consdev))
+			return;
 		break;
 
 	case MACH_SGI_IP32:
-#if (NCOM > 0)
-		if ((strlen(consdev) == 9) &&
-		    (!strncmp(consdev, "serial", 6)) &&
-		    (consdev[7] == '0' || consdev[7] == '1')) {
-			delay(10000);
-			/* XXX: hardcoded MACE iotag */
-			if (comcnattach(3,
-			    MIPS_PHYS_TO_KSEG1(MACE_BASE +
-			    ((consdev[7] == '0') ?
-			    MACE_ISA_SER1_BASE:MACE_ISA_SER2_BASE)),
-			    speed, COM_FREQ, COM_TYPE_NORMAL,
-			    comcnmode) == 0)
-				return;
-		}
-#endif
+		if (mace_serial_init(consdev))
+			return;
 		panic("ip32 supports serial console only.  sorry.");
 		break;
 
@@ -142,6 +108,72 @@ consinit()
 	}
 
 	printf("Using ARCS for console I/O.\n");
+}
+
+static int
+zs_serial_init(char *consdev)
+{
+#if (NZSC > 0)
+	if ((strlen(consdev) == 9) && (!strncmp(consdev, "serial", 6)) &&
+	    (consdev[7] == '0' || consdev[7] == '1')) {
+		cn_tab = &zs_cn;
+		(*cn_tab->cn_init)(cn_tab);
+			
+		return (1);
+	}
+#endif
+	
+	return (0);
+}
+
+static int
+gio_video_init(char *consdev)
+{
+#if (NGIO > 0) && (NPCKBC > 0) 
+	if (strcmp(consdev, "video()") == 0) {
+		/*
+		 * XXX Assumes that if output is video()
+		 * input must be keyboard().
+		 */
+		gio_cnattach();
+
+		/* XXX Hardcoded iotag, HPC address XXX */
+		pckbc_cnattach(1, 0x1fb80000+HPC_PBUS_CH6_DEVREGS+IOC_KB_REGS,
+		    KBCMDP, PCKBC_KBD_SLOT);
+
+		return (1);
+	}
+#endif
+
+	return (0);
+}
+
+static int
+mace_serial_init(char *consdev)
+{
+#if (NCOM > 0)
+	char     *dbaud;
+	int       speed;
+	u_int32_t base;
+
+	if ((strlen(consdev) == 9) && (!strncmp(consdev, "serial", 6)) &&
+	    (consdev[7] == '0' || consdev[7] == '1')) {
+		/* Get comm speed from ARCS */
+		dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
+		speed = strtoul(dbaud, NULL, 10);
+		base = (consdev[7] == '0') ? MACE_ISA_SER1_BASE :
+		    MACE_ISA_SER2_BASE;
+
+		delay(10000);
+
+		/* XXX: hardcoded MACE iotag */
+		if (comcnattach(3, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
+		    speed, COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
+			return (1);
+	}
+#endif
+
+	return (0);
 }
 
 #if defined(KGDB)
