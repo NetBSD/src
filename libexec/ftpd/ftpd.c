@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.146 2002/11/16 03:10:34 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.147 2002/11/29 14:40:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.146 2002/11/16 03:10:34 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.147 2002/11/29 14:40:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -800,7 +800,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 	line = 0;
 	for (;
 	    (buf = fparseln(fd, &len, &line, NULL, FPARSELN_UNESCCOMM |
-	    		FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
+			    FPARSELN_UNESCCONT | FPARSELN_UNESCESC)) != NULL;
 	    free(buf), buf = NULL) {
 		word = perm = class = NULL;
 		p = buf;
@@ -1108,11 +1108,13 @@ pass(const char *passwd)
 			(void)display_file(conffilename(curclass.limitfile),
 			    530);
 		reply(530,
-		    "User %s access denied, connection limit of %d reached.",
-		    pw->pw_name, curclass.limit);
+		    "User %s access denied, connection limit of " LLF
+		    " reached.",
+		    pw->pw_name, (LLT)curclass.limit);
 		syslog(LOG_NOTICE,
-    "Maximum connection limit of %d for class %s reached, login refused for %s",
-		    curclass.limit, curclass.classname, pw->pw_name);
+		    "Maximum connection limit of " LLF
+		    " for class %s reached, login refused for %s",
+		    (LLT)curclass.limit, curclass.classname, pw->pw_name);
 		goto bad;
 	}
 
@@ -2096,7 +2098,7 @@ statcmd(void)
 {
 	struct sockinet *su = NULL;
 	static char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-  	u_char *a, *p;
+	u_char *a, *p;
 	int ispassive, af;
 	off_t otbi, otbo, otb;
 
@@ -2137,7 +2139,7 @@ statcmd(void)
 	    strunames[stru], modenames[mode]);
 	ispassive = 0;
 	if (data != -1) {
-  		reply(0, "Data connection open");
+		reply(0, "Data connection open");
 		su = NULL;
 	} else if (pdata != -1) {
 		reply(0, "in Passive mode");
@@ -2261,13 +2263,14 @@ statcmd(void)
 			reply(0, "Display file: %s", curclass.display);
 		if (! EMPTYSTR(curclass.notify))
 			reply(0, "Notify fileglob: %s", curclass.notify);
-		reply(0, "Idle timeout: %d, maximum timeout: %d",
-		    curclass.timeout, curclass.maxtimeout);
+		reply(0, "Idle timeout: " LLF ", maximum timeout: " LLF,
+		    (LLT)curclass.timeout, (LLT)curclass.maxtimeout);
 		reply(0, "Current connections: %d", connections);
 		if (curclass.limit == -1)
 			reply(0, "Maximum connections: unlimited");
 		else
-			reply(0, "Maximum connections: %d", curclass.limit);
+			reply(0, "Maximum connections: " LLF,
+			    (LLT)curclass.limit);
 		if (curclass.limitfile)
 			reply(0, "Connection limit exceeded message file: %s",
 			    conffilename(curclass.limitfile));
@@ -2304,8 +2307,8 @@ statcmd(void)
 				reply(0, "PASV advertise address: %s", bp);
 		}
 		if (curclass.portmin && curclass.portmax)
-			reply(0, "PASV port range: %d - %d",
-			    curclass.portmin, curclass.portmax);
+			reply(0, "PASV port range: " LLF " - " LLF,
+			    (LLT)curclass.portmin, (LLT)curclass.portmax);
 		if (curclass.rateget)
 			reply(0, "Rate get limit: " LLF " bytes/sec",
 			    (LLT)curclass.rateget);
@@ -2316,6 +2319,28 @@ statcmd(void)
 			    (LLT)curclass.rateput);
 		else
 			reply(0, "Rate put limit: disabled");
+		if (curclass.mmapsize)
+			reply(0, "Mmap size: " LLF, (LLT)curclass.mmapsize);
+		else
+			reply(0, "Mmap size: disabled");
+		if (curclass.readsize)
+			reply(0, "Read size: " LLF, (LLT)curclass.readsize);
+		else
+			reply(0, "Read size: default");
+		if (curclass.writesize)
+			reply(0, "Write size: " LLF, (LLT)curclass.writesize);
+		else
+			reply(0, "Write size: default");
+		if (curclass.sendbufsize)
+			reply(0, "Send buffer size: " LLF,
+			    (LLT)curclass.sendbufsize);
+		else
+			reply(0, "Send buffer size: default");
+		if (curclass.sendlowat)
+			reply(0, "Send low water mark: " LLF,
+			    (LLT)curclass.sendlowat);
+		else
+			reply(0, "Send low water mark: default");
 		reply(0, "Umask: %.04o", curclass.umask);
 		for (cp = curclass.conversions; cp != NULL; cp=cp->next) {
 			if (cp->suffix == NULL || cp->types == NULL ||
@@ -3034,7 +3059,7 @@ conffilename(const char *s)
  *	if elapsed != NULL, append "in xxx.yyy seconds"
  *	if error != NULL, append ": " + error
  *
- * 	if doxferlog != 0, bytes != -1, and command is "get", "put",
+ *	if doxferlog != 0, bytes != -1, and command is "get", "put",
  *	or "append", syslog a wu-ftpd style xferlog entry
  */
 void

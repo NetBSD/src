@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.71 2002/10/12 08:35:17 darrenr Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.72 2002/11/29 14:39:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.71 2002/10/12 08:35:17 darrenr Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.72 2002/11/29 14:39:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -570,8 +570,10 @@ cmd
 		{
 			if ($4) {
 				reply(200,
-			    "Current IDLE time limit is %d seconds; max %d",
-				    curclass.timeout, curclass.maxtimeout);
+				    "Current IDLE time limit is " LLF
+				    " seconds; max " LLF,
+				    (LLT)curclass.timeout,
+				    (LLT)curclass.maxtimeout);
 			}
 		}
 
@@ -580,14 +582,16 @@ cmd
 			if ($4) {
 				if ($6.i < 30 || $6.i > curclass.maxtimeout) {
 					reply(501,
-			    "IDLE time limit must be between 30 and %d seconds",
-					    curclass.maxtimeout);
+				"IDLE time limit must be between 30 and "
+					    LLF " seconds",
+					    (LLT)curclass.maxtimeout);
 				} else {
 					curclass.timeout = $6.i;
 					(void) alarm(curclass.timeout);
 					reply(200,
-					    "IDLE time limit set to %d seconds",
-					    curclass.timeout);
+					    "IDLE time limit set to "
+					    LLF " seconds",
+					    (LLT)curclass.timeout);
 				}
 			}
 		}
@@ -603,19 +607,17 @@ cmd
 
 	| SITE SP RATEGET check_login SP STRING CRLF
 		{
+			char errbuf[100];
 			char *p = $6;
 			LLT rate;
 
 			if ($4) {
-				rate = strsuftoll(p);
-				if (rate == -1)
-					reply(501, "Invalid RATEGET %s", p);
-				else if (curclass.maxrateget &&
-				    rate > curclass.maxrateget)
-					reply(501,
-			"RATEGET " LLF " is larger than maximum RATEGET " LLF,
-					    (LLT)rate,
-					    (LLT)curclass.maxrateget);
+				rate = strsuftollx("RATEGET", p, 0,
+				    curclass.maxrateget
+				    ? curclass.maxrateget
+				    : LLTMAX, errbuf, sizeof(errbuf));
+				if (errbuf[0])
+					reply(501, "%s", errbuf);
 				else {
 					curclass.rateget = rate;
 					reply(200,
@@ -637,19 +639,17 @@ cmd
 
 	| SITE SP RATEPUT check_login SP STRING CRLF
 		{
+			char errbuf[100];
 			char *p = $6;
 			LLT rate;
 
 			if ($4) {
-				rate = strsuftoll(p);
-				if (rate == -1)
-					reply(501, "Invalid RATEPUT %s", p);
-				else if (curclass.maxrateput &&
-				    rate > curclass.maxrateput)
-					reply(501,
-			"RATEPUT " LLF " is larger than maximum RATEPUT " LLF,
-					    (LLT)rate,
-					    (LLT)curclass.maxrateput);
+				rate = strsuftollx("RATEPUT", p, 0,
+				    curclass.maxrateput
+				    ? curclass.maxrateput
+				    : LLTMAX, errbuf, sizeof(errbuf));
+				if (errbuf[0])
+					reply(501, "%s", errbuf);
 				else {
 					curclass.rateput = rate;
 					reply(200,
@@ -1454,11 +1454,11 @@ toolong(int signo)
 {
 
 	reply(421,
-	    "Timeout (%d seconds): closing control connection.",
-	    curclass.timeout);
+	    "Timeout (" LLF " seconds): closing control connection.",
+	    (LLT)curclass.timeout);
 	if (logging)
-		syslog(LOG_INFO, "User %s timed out after %d seconds",
-		    (pw ? pw->pw_name : "unknown"), curclass.timeout);
+		syslog(LOG_INFO, "User %s timed out after " LLF " seconds",
+		    (pw ? pw->pw_name : "unknown"), (LLT)curclass.timeout);
 	dologout(1);
 }
 
