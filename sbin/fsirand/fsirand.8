@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsirand.8,v 1.2 1997/09/14 14:58:53 lukem Exp $
+.\"	$NetBSD: fsirand.8,v 1.3 1998/06/08 12:41:43 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas
 .\" All rights reserved.
@@ -60,9 +60,9 @@ Print the current inode generation numbers; the filesystem is not modified.
 .Pp
 .Nm
 exits zero on success, non-zero on failure.
-.Sh BUGS
-The current implementation does not use a good random number generator,
-so the randomization can be predicted.
 .Sh SEE ALSO
 .Xr fsck_ffs 8 ,
 .Xr newfs 8 
+.Sh SECURITY CONSIDERATIONS
+The current implementation does not use a good random number generator,
+so the randomization can be predicted.

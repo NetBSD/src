@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.25 1998/06/08 07:13:13 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.26 1998/06/08 12:41:42 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -581,9 +581,18 @@ The server must run as the super-user to create sockets with
 privileged port numbers.
 It maintains an effective user id of the logged in user, reverting
 to the super-user only when binding addresses to sockets.
-The possible security holes have been extensively scrutinized, but
-are possibly incomplete.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Pp
+The
+.Pa /etc/ftpd.conf
+functionality was implemented in
+.Nx 1.3
+by Luke Mewburn, based on work by Simon Burge.
+.Sh SECURITY CONSIDERATIONS
 .Cm RFC-959
 provides no restrictions on the PORT command, and this can lead
 to security problems, as
@@ -599,14 +608,3 @@ will be rejected.
 Use of this option is
 .Em strongly
 recommended.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .
-.Pp
-The
-.Pa /etc/ftpd.conf
-functionality was implemented in
-.Nx 1.3
-by Luke Mewburn, based on work by Simon Burge.

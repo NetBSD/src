@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcwd.3,v 1.9 1998/02/05 18:46:29 perry Exp $
+.\"	$NetBSD: getcwd.3,v 1.10 1998/06/08 12:41:42 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,10 +150,13 @@ The
 .Fn getwd
 function appeared in 
 .Bx 4.0 .
-.Sh BUGS
-The
+.Sh SECURITY CONSIDERATIONS
+As
 .Fn getwd
-function
-does not do sufficient error checking and is not able to return very
-long, but valid, paths.
-It is provided for compatibility.
+does not know the length of the supplied buffer, it is possible
+for a long (but valid) path to overflow the buffer and provide
+a means for an attacker to exploit the caller.
+.Fn getcwd
+should be used in place of
+.Fn getwd
+(the latter is only provided for compatibility purposes).

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftp.1,v 1.7 1998/04/28 06:00:57 fair Exp $
+.\"	$NetBSD: tftp.1,v 1.8 1998/06/08 12:41:44 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,8 +159,12 @@ Toggle packet tracing.
 .It Cm verbose
 Toggle verbose mode.
 .El
-.Sh BUGS
-.Pp
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+.Sh SECURITY CONSIDERATIONS
 Because there is no user-login or validation within
 the
 .Tn TFTP
@@ -168,8 +172,3 @@ protocol, the remote site will probably have some
 sort of file-access restrictions in place.  The
 exact methods are specific to each site and therefore
 difficult to document here.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.3 .
