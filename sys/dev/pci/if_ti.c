@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.30 2001/06/30 14:16:55 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.31 2001/06/30 14:47:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -158,7 +158,9 @@ static void ti_txeof		__P((struct ti_softc *));
 static void ti_rxeof		__P((struct ti_softc *));
 
 static void ti_stats_update	__P((struct ti_softc *));
-static int ti_encap		__P((struct ti_softc *, struct mbuf *,
+static int ti_encap_tigon1	__P((struct ti_softc *, struct mbuf *,
+					u_int32_t *));
+static int ti_encap_tigon2	__P((struct ti_softc *, struct mbuf *,
 					u_int32_t *));
 
 static int ti_intr		__P((void *));
@@ -1727,8 +1729,26 @@ static void ti_attach(parent, self, aux)
 		printf("%s: chip initialization failed\n", self->dv_xname);
 		goto fail2;
 	}
-	if (sc->ti_hwrev == TI_HWREV_TIGON && nolinear == 1) {
-		printf("%s: memory space not mapped linear\n", self->dv_xname);
+
+	/*
+	 * Deal with some chip diffrences.
+	 */
+	switch (sc->ti_hwrev) {
+	case TI_HWREV_TIGON:
+		sc->sc_tx_encap = ti_encap_tigon1;
+		if (nolinear == 1)
+			printf("%s: memory space not mapped linear\n",
+			    self->dv_xname);
+		break;
+
+	case TI_HWREV_TIGON_II:
+		sc->sc_tx_encap = ti_encap_tigon2;
+		break;
+
+	default:
+		printf("%s: Unknown chip version: %d\n", self->dv_xname,
+		    sc->ti_hwrev);
+		goto fail2;
 	}
 
 	/* Zero out the NIC's on-board SRAM. */
@@ -2198,7 +2218,7 @@ static void ti_stats_update(sc)
  * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
  * pointers to descriptors.
  */
-static int ti_encap(sc, m_head, txidx)
+static int ti_encap_tigon1(sc, m_head, txidx)
 	struct ti_softc		*sc;
 	struct mbuf		*m_head;
 	u_int32_t		*txidx;
@@ -2245,43 +2265,40 @@ static int ti_encap(sc, m_head, txidx)
  	 * of fragments or hit the end of the mbuf chain.
 	 */
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
-			if (sc->ti_hwrev == TI_HWREV_TIGON) {
-				if (frag > 383)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 6144);
-				else if (frag > 255)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 4096);
-				else if (frag > 127)
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE + 2048);
-				else
-					CSR_WRITE_4(sc, TI_WINBASE,
-					    TI_TX_RING_BASE);
-				f = &sc->ti_tx_ring_nic[frag % 128];
-			} else
-				f = &sc->ti_rdata->ti_tx_ring[frag];
-			if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
-				break;
-			TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
-			f->ti_len = dmamap->dm_segs[i].ds_len;
-			f->ti_flags = csum_flags;
-			n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
-			if (n) {
-				f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-				f->ti_vlan_tag = *mtod(n, int *);
-			} else {
-				f->ti_vlan_tag = 0;
-			}
-			/*
-			 * Sanity check: avoid coming within 16 descriptors
-			 * of the end of the ring.
-			 */
-			if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
-				return(ENOBUFS);
-			cur = frag;
-			TI_INC(frag, TI_TX_RING_CNT);
-			cnt++;
+		if (frag > 383)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 6144);
+		else if (frag > 255)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 4096);
+		else if (frag > 127)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 2048);
+		else
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE);
+		f = &sc->ti_tx_ring_nic[frag % 128];
+		if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
+			break;
+		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
+		f->ti_len = dmamap->dm_segs[i].ds_len;
+		f->ti_flags = csum_flags;
+		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
+		if (n) {
+			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
+			f->ti_vlan_tag = *mtod(n, int *);
+		} else {
+			f->ti_vlan_tag = 0;
+		}
+		/*
+		 * Sanity check: avoid coming within 16 descriptors
+		 * of the end of the ring.
+		 */
+		if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
+			return(ENOBUFS);
+		cur = frag;
+		TI_INC(frag, TI_TX_RING_CNT);
+		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs)
@@ -2290,11 +2307,101 @@ static int ti_encap(sc, m_head, txidx)
 	if (frag == sc->ti_tx_saved_considx)
 		return(ENOBUFS);
 
-	if (sc->ti_hwrev == TI_HWREV_TIGON)
-		sc->ti_tx_ring_nic[cur % 128].ti_flags |=
-		    TI_BDFLAG_END;
-	else
-		sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
+	sc->ti_tx_ring_nic[cur % 128].ti_flags |=
+	    TI_BDFLAG_END;
+
+	/* Sync the packet's DMA map. */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->ti_cdata.ti_tx_chain[cur] = m_head;
+	SIMPLEQ_REMOVE_HEAD(&sc->txdma_list, dma, link);
+	sc->txdma[cur] = dma;
+	sc->ti_txcnt += cnt;
+
+	*txidx = frag;
+
+	return(0);
+}
+
+static int ti_encap_tigon2(sc, m_head, txidx)
+	struct ti_softc		*sc;
+	struct mbuf		*m_head;
+	u_int32_t		*txidx;
+{
+	struct ti_tx_desc	*f = NULL;
+	u_int32_t		frag, cur, cnt = 0;
+	struct txdmamap_pool_entry *dma;
+	bus_dmamap_t dmamap;
+	int error, i;
+	struct mbuf *n;
+	u_int16_t csum_flags = 0;
+
+	dma = SIMPLEQ_FIRST(&sc->txdma_list);
+	if (dma == NULL) {
+		return ENOMEM;
+	}
+	dmamap = dma->dmamap;
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head, 0);
+	if (error) {
+		struct mbuf *m;
+		int i = 0;
+		for (m = m_head; m; m = m->m_next)
+			i++;
+		printf("ti_encap: bus_dmamap_load_mbuf (len %d, %d frags) "
+		       "error %d\n", m_head->m_pkthdr.len, i, error);
+		return (ENOMEM);
+	}
+
+	cur = frag = *txidx;
+
+	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		/* IP header checksum field must be 0! */
+		csum_flags |= TI_BDFLAG_IP_CKSUM;
+	}
+	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))
+		csum_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
+
+	/* XXX fragmented packet checksum capability? */
+
+	/*
+ 	 * Start packing the mbufs in this chain into
+	 * the fragment pointers. Stop when we run out
+ 	 * of fragments or hit the end of the mbuf chain.
+	 */
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		f = &sc->ti_rdata->ti_tx_ring[frag];
+		if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
+			break;
+		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
+		f->ti_len = dmamap->dm_segs[i].ds_len;
+		f->ti_flags = csum_flags;
+		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
+		if (n) {
+			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
+			f->ti_vlan_tag = *mtod(n, int *);
+		} else {
+			f->ti_vlan_tag = 0;
+		}
+		/*
+		 * Sanity check: avoid coming within 16 descriptors
+		 * of the end of the ring.
+		 */
+		if ((TI_TX_RING_CNT - (sc->ti_txcnt + cnt)) < 16)
+			return(ENOBUFS);
+		cur = frag;
+		TI_INC(frag, TI_TX_RING_CNT);
+		cnt++;
+	}
+
+	if (i < dmamap->dm_nsegs)
+		return(ENOBUFS);
+
+	if (frag == sc->ti_tx_saved_considx)
+		return(ENOBUFS);
+
+	sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
 
 	/* Sync the packet's DMA map. */
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -2335,7 +2442,7 @@ static void ti_start(ifp)
 		 * don't have room, set the OACTIVE flag and wait
 		 * for the NIC to drain the ring.
 		 */
-		if (ti_encap(sc, m_head, &prodidx)) {
+		if ((*sc->sc_tx_encap)(sc, m_head, &prodidx)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
