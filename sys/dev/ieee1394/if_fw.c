@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.19 2002/10/02 16:33:55 thorpej Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.20 2003/07/03 11:36:18 drochner Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.19 2002/10/02 16:33:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.20 2003/07/03 11:36:18 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,6 +258,7 @@ fw_txint(struct device *self, struct mbuf *m0)
 	struct fw_softc *sc = (struct fw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
+	ifp->if_opackets++;
 	m_freem(m0);
 	if (ifp->if_flags & IFF_OACTIVE) {
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -299,6 +300,7 @@ fw_input(struct device *self, struct mbuf *m0)
 	struct fw_softc *sc = (struct fw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
+	ifp->if_ipackets++;
 	m0->m_pkthdr.rcvif = ifp;
 	(*ifp->if_input)(ifp, m0);
 }
