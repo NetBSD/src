@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2005/01/11 22:42:30 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2005/02/22 01:08:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -58,6 +58,14 @@ int	yp_arg __P((char, const char *));
 int	yp_arg_end __P((void));
 void	yp_end __P((void));
 int	yp_chpw __P((const char *));
+#endif
+#ifdef USE_PAM
+/* PAM */
+int	pwpam_init __P((const char *));
+int	pwpam_arg __P((char, const char *));
+int	pwpam_arg_end __P((void));
+void	pwpam_end __P((void));
+int	pwpam_chpw __P((const char *));
 #endif
 /* local */
 int	local_init __P((const char *));
