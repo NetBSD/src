@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.29 1998/09/13 04:57:24 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.30 1998/10/03 19:21:11 eeh Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -53,6 +53,7 @@ esac
 #	switchname	the name for the 'struct sysent' we define
 #	namesname	the name for the 'char *[]' we define
 #	constprefix	the prefix for the system call constants
+#	registertype	the type for register_t
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'LIBCOMPAT'.
 
@@ -119,6 +120,10 @@ BEGIN {
 	switchname = \"$switchname\"
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
+	registertype = \"$registertype\"
+	if (!registertype) {
+	    registertype = \"register_t\"
+	}
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
@@ -177,8 +182,22 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
-	printf "#define\tsyscallarg(x)\tunion { x datum; register_t pad; }\n" \
-		> sysarghdr
+	printf "#ifdef\tsyscallarg\n" > sysarghdr
+	printf "#undef\tsyscallarg\n" > sysarghdr
+	printf "#endif\n\n" > sysarghdr
+	printf "#define\tsyscallarg(x)\t\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\tunion {\t\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t%s pad;\t\t\t\t\t\t\\\n", registertype > sysarghdr
+	printf "\t\t\tstruct { x datum; } le;\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\tstruct {\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t\tint8_t pad[ (sizeof (%s) < sizeof (x))\t\\\n", \
+		registertype > sysarghdr
+	printf "\t\t\t\t\t? 0\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t\t\t: sizeof (%s) - sizeof (x)];\t\\\n", \
+		registertype > sysarghdr
+	printf "\t\t\t\tx datum;\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t} be;\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t}\n" > sysarghdr
 	next
 }
 NF == 0 || $1 ~ /^;/ {
