@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.55 2001/01/22 20:08:04 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.56 2001/05/24 10:49:31 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1246,6 +1246,7 @@ ibcs2_sys_sysfs(p, v, retval)
 	case IBCS2_GETFSIND:
 	case IBCS2_GETFSTYP:
 	case IBCS2_GETNFSTYP:
+		break;
 	}
 	return EINVAL;		/* XXX - TODO */
 }
