@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.29 2003/04/03 17:26:33 perry Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.30 2003/05/15 00:02:25 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.29 2003/04/03 17:26:33 perry Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.30 2003/05/15 00:02:25 itojun Exp $");
 #endif
 
 struct wi_table {
@@ -196,7 +196,7 @@ static void wi_apscan(iface)
  	 * the ioctl fails
 	 */
 	memset((char *)&ifr, 0, sizeof(ifr));
-        strcpy(ifr.ifr_name, iface);
+        strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
         ifr.ifr_data = (caddr_t)&wreq;
 
 	printf("scanning ...");
@@ -293,7 +293,7 @@ static void wi_getval(iface, wreq)
 
 	bzero((char *)&ifr, sizeof(ifr));
 
-	strcpy(ifr.ifr_name, iface);
+	strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -318,7 +318,7 @@ static void wi_setval(iface, wreq)
 
 	bzero((char *)&ifr, sizeof(ifr));
 
-	strcpy(ifr.ifr_name, iface);
+	strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
