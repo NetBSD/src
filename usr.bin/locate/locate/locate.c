@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $	*/
+/*	$NetBSD: locate.c,v 1.10 2003/04/03 01:20:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $");
+__RCSID("$NetBSD: locate.c,v 1.10 2003/04/03 01:20:26 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 #include <sys/queue.h>
 
 #include "locate.h"
@@ -92,6 +93,7 @@ __RCSID("$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $");
 struct locate_db {
 	LIST_ENTRY(locate_db) db_link;
 	FILE *db_fp;
+	char *db_path;
 };
 LIST_HEAD(db_list, locate_db) db_list;
 
@@ -117,9 +119,10 @@ add_db(path)
 	if ((fp = fopen(path, "r"))) {
 		dbp = NEW(struct locate_db);
 		dbp->db_fp = fp;
+		dbp->db_path = path;
 		LIST_INSERT_HEAD(&db_list, dbp, db_link);
 	} else {
-		(void)fprintf(stderr, "locate: no database file %s.\n", path);
+		warnx("no database file `%s'", path);
 	}
 }
      
@@ -132,6 +135,7 @@ main(argc, argv)
 	char *cp;
 	struct locate_db *dbp;
 	int c;
+	int rc;
 	int found = 0;
 	
 	LIST_INIT(&db_list);
@@ -144,7 +148,8 @@ main(argc, argv)
 		}
 	}
 	if (argc <= optind) {
-		(void)fprintf(stderr, "usage: locate [-d dbpath] pattern ...\n");
+		(void)fprintf(stderr, "Usage: %s [-d dbpath] pattern ...\n",
+		    getprogname());
 		exit(1);
 	}
 	if (!locate_path)
@@ -162,7 +167,15 @@ main(argc, argv)
 	for (; optind < argc; ++optind) {
 		for (dbp = db_list.lh_first; dbp != NULL;
 		     dbp = dbp->db_link.le_next) {
-			found |= fastfind(dbp->db_fp, argv[optind]);
+			rc = fastfind(dbp->db_fp, argv[optind]);
+			if (rc > 0) {
+				/* some results found */
+				found = 1;
+			} else if (rc < 0) {
+				/* error */
+				errx(2, "Invalid data in database file `%s'",
+				    dbp->db_path);
+			}
 		}
 	}
 	exit(found == 0);
@@ -192,13 +205,20 @@ fastfind(fp, pathpart)
 	for (c = getc(fp), count = 0; c != EOF;) {
 		count += ((c == SWITCH) ? getw(fp) : c) - OFFSET;
 		/* overlay old path */
-		for (p = path + count; (c = getc(fp)) > SWITCH;)
+		for (p = path + count; (c = getc(fp)) > SWITCH;) {
+			/* sanity check */
+			if (p < path || p >= path + sizeof(path))
+				return(-1);	/* invalid database file */
 			if (c < PARITY)
 				*p++ = c;
 			else {		/* bigrams are parity-marked */
 				c &= PARITY - 1;
+				/* sanity check */
+				if (c < 0 || c >= sizeof(bigram1)) 
+					return(-1);	/* invalid database file */
 				*p++ = bigram1[c], *p++ = bigram2[c];
 			}
+		}
 		*p-- = '\0';
 		cutoff = (found ? path : path + count);
 		for (found = 0, s = p; s >= cutoff; s--)
