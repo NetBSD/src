@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.4 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.5 2000/04/18 22:43:25 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -44,6 +44,8 @@
 struct __ldata {
 	wchar_t	ch;			/* Character */
 	attr_t	attr;			/* Attributes */
+	wchar_t	bch;			/* Background character */
+	attr_t	battr;			/* Background attributes */
 };
 
 #define __LDATASIZE	(sizeof(__LDATA))
@@ -82,9 +84,13 @@ struct __window {		/* Window structure. */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
-	wchar_t	bchar;			/* Background character */
+	wchar_t	bch;			/* Background character */
 	attr_t	battr;			/* Background attributes */
 };
+
+/* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
+#define	__TERMATTR \
+	(__REVERSE | __BLINK | __DIM | __BOLD | __BLANK | __PROTECT)
 
 struct __winlist {
 	struct __window		*winp;	/* The window. */
