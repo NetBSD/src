@@ -1,4 +1,4 @@
-/*	$KAME: gssapi.c,v 1.18 2001/03/05 23:36:31 thorpej Exp $	*/
+/*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -66,6 +66,7 @@
 #include "isakmp_ident.h"
 #include "isakmp_inf.h"
 #include "vendorid.h"
+#include "gcmalloc.h"
 
 #include "gssapi.h"
 
@@ -106,7 +107,7 @@ static int
 gssapi_vm2gssbuf(vchar_t *vmbuf, gss_buffer_t gsstoken)
 {
 
-	gsstoken->value = malloc(vmbuf->l);
+	gsstoken->value = racoon_malloc(vmbuf->l);
 	if (gsstoken->value == NULL)
 		return -1;
 	memcpy(gsstoken->value, vmbuf->v, vmbuf->l);
@@ -168,9 +169,9 @@ gssapi_init(struct ph1handle *iph1)
 	gss_name_t princ, canon_princ;
 	OM_uint32 maj_stat, min_stat;
 
-	gps = calloc(1, sizeof (struct gssapi_ph1_state));
+	gps = racoon_calloc(1, sizeof (struct gssapi_ph1_state));
 	if (gps == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "calloc failed\n");
+		plog(LLV_ERROR, LOCATION, NULL, "racoon_calloc failed\n");
 		return -1;
 	}
 	gps->gss_context = GSS_C_NO_CONTEXT;
@@ -645,7 +646,7 @@ gssapi_free_state(struct ph1handle *iph1)
 			gssapi_error(min_stat, LOCATION,
 			    "releasing credentials\n");
 	}
-	free(gps);
+	racoon_free(gps);
 }
 
 vchar_t *

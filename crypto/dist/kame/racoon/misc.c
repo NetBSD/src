@@ -1,4 +1,4 @@
-/*	$KAME: misc.c,v 1.20 2000/12/15 15:28:34 itojun Exp $	*/
+/*	$KAME: misc.c,v 1.21 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -147,34 +147,3 @@ getfsize(path)
         else
                 return st.st_size;
 }
-
-#ifdef GC
-/*
- * to make boehm-gc work correctly, we need to allocate every dynamically
- * allocated memory with boehm-gc.  we need to override some of the libc
- * functions to do this.
- */
-void *
-calloc(i, s)
-	size_t i, s;
-{
-	void *p;
-
-	p = malloc(i * s);
-	if (p)
-		memset(p, 0, i * s);
-	return p;
-}
-
-char *
-strdup(s)
-	const char *s;
-{
-	char *p;
-
-	p = malloc(strlen(s) + 1);
-	if (p)
-		strcpy(p, s);
-	return p;
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$KAME: localconf.c,v 1.29 2001/02/21 05:19:11 sakane Exp $	*/
+/*	$KAME: localconf.c,v 1.31 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -54,6 +54,7 @@
 #include "vendorid.h"
 #include "str2val.h"
 #include "safefile.h"
+#include "gcmalloc.h"
 
 struct localconf *lcconf;
 
@@ -63,7 +64,7 @@ static vchar_t *getpsk __P((const char *, const int));
 void
 initlcconf()
 {
-	lcconf = CALLOC(sizeof(*lcconf), struct localconf *);
+	lcconf = racoon_calloc(1, sizeof(*lcconf));
 	if (lcconf == NULL) {
 		fprintf(stderr, "failed to allocate local conf\n");
 		exit(1);
@@ -80,13 +81,6 @@ initlcconf()
 	setdefault();
 
 	lcconf->racoon_conf = LC_DEFAULT_CF;
-
-	/* set hashed vendor id */
-	lcconf->vendorid = set_vendorid();
-	if (lcconf->vendorid == NULL) {
-		fprintf(stderr, "failed to set vendorid.\n");
-		exit(1);
-	}
 }
 
 void
@@ -98,7 +92,7 @@ flushlcconf()
 	clear_myaddr(&lcconf->myaddrs);
 	for (i = 0; i < LC_PATHTYPE_MAX; i++) {
 		if (lcconf->pathinfo[i]) {
-			free(lcconf->pathinfo[i]);
+			racoon_free(lcconf->pathinfo[i]);
 			lcconf->pathinfo[i] = NULL;
 		}
 	}
@@ -142,7 +136,7 @@ getpskbyname(id0)
 	char *id;
 	vchar_t *key = NULL;
 
-	id = CALLOC(1 + id0->l - sizeof(struct ipsecdoi_id_b), char *);
+	id = racoon_calloc(1, 1 + id0->l - sizeof(struct ipsecdoi_id_b));
 	if (id == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get psk buffer.\n");
@@ -156,7 +150,7 @@ getpskbyname(id0)
 
 end:
 	if (id)
-		free(id);
+		racoon_free(id);
 	return key;
 }
 
@@ -243,7 +237,7 @@ getpsk(str, len)
 			}
 			memcpy(key->v, p, key->l);
 			if (k)
-				free(k);
+				racoon_free(k);
 			goto end;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_agg.c,v 1.48 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: isakmp_agg.c,v 1.49 2001/03/27 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -743,6 +743,7 @@ agg_r1send(iph1, msg)
 	int need_cr = 0;
 	int need_cert = 0;
 	vchar_t *cr = NULL;
+	vchar_t *vid = NULL;
 	int error = -1;
 #ifdef HAVE_GSSAPI
 	int gsslen;
@@ -832,8 +833,8 @@ agg_r1send(iph1, msg)
 			+ sizeof(*gen) + iph1->nonce->l
 			+ sizeof(*gen) + iph1->id->l
 			+ sizeof(*gen) + iph1->hash->l;
-		if (lcconf->vendorid)
-			tlen += sizeof(*gen) + lcconf->vendorid->l;
+		if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+			tlen += sizeof(*gen) + vid->l;
 		if (need_cr)
 			tlen += sizeof(*gen) + cr->l;
 
@@ -863,13 +864,13 @@ agg_r1send(iph1, msg)
 
 		/* create isakmp HASH payload */
 		p = set_isakmp_payload(p, iph1->hash,
-			lcconf->vendorid ? ISAKMP_NPTYPE_VID
-					 : (need_cr ? ISAKMP_NPTYPE_CR
-						    : ISAKMP_NPTYPE_NONE));
+			vid ? ISAKMP_NPTYPE_VID
+			    : (need_cr ? ISAKMP_NPTYPE_CR
+				       : ISAKMP_NPTYPE_NONE));
 
 		/* append vendor id, if needed */
-		if (lcconf->vendorid)
-			p = set_isakmp_payload(p, lcconf->vendorid,
+		if (vid)
+			p = set_isakmp_payload(p, vid,
 				need_cr ? ISAKMP_NPTYPE_CR
 					: ISAKMP_NPTYPE_NONE);
 
@@ -898,8 +899,8 @@ agg_r1send(iph1, msg)
 			+ sizeof(*gen) + iph1->sig->l;
 		if (need_cert)
 			tlen += sizeof(*gen) + iph1->cert->pl->l;
-		if (lcconf->vendorid)
-			tlen += sizeof(*gen) + lcconf->vendorid->l;
+		if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+			tlen += sizeof(*gen) + vid->l;
 		if (need_cr)
 			tlen += sizeof(*gen) + cr->l;
 
@@ -934,13 +935,13 @@ agg_r1send(iph1, msg)
 			p = set_isakmp_payload(p, iph1->cert->pl, ISAKMP_NPTYPE_SIG);
 		/* add SIG payload */
 		p = set_isakmp_payload(p, iph1->sig,
-			lcconf->vendorid ? ISAKMP_NPTYPE_VID
-					 : (need_cr ? ISAKMP_NPTYPE_CR
-						    : ISAKMP_NPTYPE_NONE));
+			vid ? ISAKMP_NPTYPE_VID
+			    : (need_cr ? ISAKMP_NPTYPE_CR
+				       : ISAKMP_NPTYPE_NONE));
 
 		/* append vendor id, if needed */
-		if (lcconf->vendorid)
-			p = set_isakmp_payload(p, lcconf->vendorid,
+		if (vid)
+			p = set_isakmp_payload(p, vid,
 				need_cr ? ISAKMP_NPTYPE_CR
 					: ISAKMP_NPTYPE_NONE);
 
@@ -981,6 +982,8 @@ agg_r1send(iph1, msg)
 			+ sizeof(*gen) + iph1->id->l
 			+ sizeof(*gen) + gsslen
 			+ sizeof(*gen) + gsshash->l;
+		if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+			tlen += sizeof(*gen) + vid->l;
 		iph1->sendbuf = vmalloc(tlen);
 		if (iph1->sendbuf == NULL) { 
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -1010,8 +1013,13 @@ agg_r1send(iph1, msg)
 		p = set_isakmp_payload(p, gsstoken, ISAKMP_NPTYPE_HASH);
 
 		/* create isakmp HASH payload */
-		p = set_isakmp_payload(p, gsshash, ISAKMP_NPTYPE_NONE);
+		p = set_isakmp_payload(p, gsshash,
+		    vid != NULL ? ISAKMP_NPTYPE_VID
+				: ISAKMP_NPTYPE_NONE);
 
+		/* append vendor id, if needed */
+		if (vid)
+			p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
 		break;
 #endif
 	}
@@ -1036,6 +1044,8 @@ agg_r1send(iph1, msg)
 end:
 	if (cr)
 		vfree(cr);
+	if (vid)
+		vfree(vid);
 #ifdef HAVE_GSSAPI
 	if (gsstoken)
 		vfree(gsstoken);

@@ -1,4 +1,4 @@
-/*	$KAME: policy.c,v 1.34 2001/01/24 06:23:23 sakane Exp $	*/
+/*	$KAME: policy.c,v 1.39 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,7 @@
 #include "oakley.h"
 #include "handler.h"
 #include "strnames.h"
+#include "gcmalloc.h"
 
 static TAILQ_HEAD(_sptree, secpolicy) sptree;
 
@@ -67,7 +68,7 @@ getsp(spidx)
 	struct secpolicy *p;
 
 	for (p = TAILQ_FIRST(&sptree); p; p = TAILQ_NEXT(p, chain)) {
-		if (!cmpspidx(spidx, &p->spidx))
+		if (!cmpspidxstrict(spidx, &p->spidx))
 			return p;
 	}
 
@@ -88,7 +89,7 @@ getsp_r(spidx)
 	struct secpolicy *p;
 
 	for (p = TAILQ_FIRST(&sptree); p; p = TAILQ_NEXT(p, chain)) {
-		if (!cmpspidx_wild(spidx, &p->spidx))
+		if (!cmpspidxwild(spidx, &p->spidx))
 			return p;
 	}
 
@@ -189,9 +190,41 @@ cmpspidx(a, b)
 	 || a->ul_proto != b->ul_proto)
 		return 1;
 
-	if (cmpsaddr((struct sockaddr *)&a->src, (struct sockaddr *)&b->src))
+	if (cmpsaddrwild((struct sockaddr *)&a->src,
+			   (struct sockaddr *)&b->src))
 		return 1;
-	if (cmpsaddr((struct sockaddr *)&a->dst, (struct sockaddr *)&b->dst))
+	if (cmpsaddrwild((struct sockaddr *)&a->dst,
+			   (struct sockaddr *)&b->dst))
+		return 1;
+
+	return 0;
+}
+
+/*
+ * compare policyindex.
+ * a: subject b: db
+ * OUT:	0:	equal
+ *	1:	not equal
+ */
+int
+cmpspidxstrict(a, b)
+	struct policyindex *a, *b;
+{
+	plog(LLV_DEBUG, LOCATION, NULL, "sub:%p: %s\n", a, spidx2str(a));
+	plog(LLV_DEBUG, LOCATION, NULL, "db :%p: %s\n", b, spidx2str(b));
+
+	/* XXX don't check direction now, but it's to be checked carefully. */
+	if (a->dir != b->dir
+	 || a->prefs != b->prefs
+	 || a->prefd != b->prefd
+	 || a->ul_proto != b->ul_proto)
+		return 1;
+
+	if (cmpsaddrstrict((struct sockaddr *)&a->src,
+			   (struct sockaddr *)&b->src))
+		return 1;
+	if (cmpsaddrstrict((struct sockaddr *)&a->dst,
+			   (struct sockaddr *)&b->dst))
 		return 1;
 
 	return 0;
@@ -204,7 +237,7 @@ cmpspidx(a, b)
  *	1:	not equal
  */
 int
-cmpspidx_wild(a, b)
+cmpspidxwild(a, b)
 	struct policyindex *a, *b;
 {
 	struct sockaddr_storage sa1, sa2;
@@ -215,8 +248,9 @@ cmpspidx_wild(a, b)
 	if (!(b->dir == IPSEC_DIR_ANY || a->dir == b->dir))
 		return 1;
 
-	if (!(a->ul_proto == IPSEC_PROTO_ANY ||
-	      b->ul_proto == IPSEC_PROTO_ANY ||
+	/* IPSEC_ULPROTO_ANY is represented by 0 in ID payload */
+	if (!(a->ul_proto == 0 ||
+	      b->ul_proto == 0 ||
 	      a->ul_proto == b->ul_proto))
 		return 1;
 
@@ -241,7 +275,7 @@ cmpspidx_wild(a, b)
 		a, b->prefs, saddr2str((struct sockaddr *)&sa1));
 	plog(LLV_DEBUG, LOCATION, NULL, "%p masked with /%d: %s\n",
 		b, b->prefs, saddr2str((struct sockaddr *)&sa2));
-	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
+	if (cmpsaddrwild((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
 		return 1;
 
 	/* compare dst address */
@@ -257,7 +291,7 @@ cmpspidx_wild(a, b)
 		a, b->prefd, saddr2str((struct sockaddr *)&sa1));
 	plog(LLV_DEBUG, LOCATION, NULL, "%p masked with /%d: %s\n",
 		b, b->prefd, saddr2str((struct sockaddr *)&sa2));
-	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
+	if (cmpsaddrwild((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
 		return 1;
 
 	return 0;
@@ -268,7 +302,7 @@ newsp()
 {
 	struct secpolicy *new;
 
-	new = CALLOC(sizeof(*new), struct secpolicy *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -283,10 +317,10 @@ delsp(sp)
 
 	for (req = sp->req; req; req = next) {
 		next = req->next;
-		free(req);
+		racoon_free(req);
 	}
 	
-	free(sp);
+	racoon_free(sp);
 }
 
 void
@@ -326,7 +360,7 @@ newipsecreq()
 {
 	struct ipsecrequest *new;
 
-	new = CALLOC(sizeof(*new), struct ipsecrequest *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
