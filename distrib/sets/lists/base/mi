@@ -103,7 +103,6 @@
 ./sbin/route
 ./sbin/routed
 ./sbin/rrestore
-./sbin/rtquery
 ./sbin/savecore
 ./sbin/shutdown
 ./sbin/slattach
@@ -543,6 +542,7 @@
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
+./usr/sbin/rtquery
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sendmail

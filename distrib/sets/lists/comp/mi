@@ -742,6 +742,7 @@
 ./usr/include/setjmp.h
 ./usr/include/sgtty.h
 ./usr/include/signal.h
+./usr/include/skey.h
 ./usr/include/stab.h
 ./usr/include/stdarg.h
 ./usr/include/stddef.h
