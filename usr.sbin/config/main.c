@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2001/12/23 22:41:27 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2002/01/19 06:10:13 mjl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1141,6 +1141,9 @@ logconfig_end(void)
 	}
 
 	fp = fopen("config_file.h", "w");
+	if(!fp)
+		err(1, "Cannot write to \"config_file.h\"");
+
 	while (fgets(line, sizeof(line), cfg) != NULL)
 		fputs(line, fp);
 	fclose(fp);
