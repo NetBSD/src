@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.31 1997/01/31 05:18:51 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.32 1997/03/12 22:31:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -510,7 +510,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
-	int error, part, pmask, s;
+	int error, part, pmask;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -609,11 +609,7 @@ vndioctl(dev, cmd, data, flag, p)
 		/* Detatch the disk. */
 		disk_detach(&vnd->sc_dkdev);
 
-		/* This must be atomic. */
-		s = splhigh();
 		vndunlock(vnd);
-		bzero(vnd, sizeof(struct vnd_softc));
-		splx(s);
 
 		break;
 
