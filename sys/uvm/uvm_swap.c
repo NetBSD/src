@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.44 2001/01/04 06:07:18 enami Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.45 2001/02/12 11:50:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -627,10 +627,9 @@ sys_swapctl(p, v, retval)
 	case SWAP_DUMPDEV:
 		if (vp->v_type != VBLK) {
 			error = ENOTBLK;
-			goto out;
+			break;
 		}
 		dumpdev = vp->v_rdev;
-		
 		break;
 
 	case SWAP_CTL:
@@ -734,9 +733,7 @@ sys_swapctl(p, v, retval)
 		/*
 		 * do the real work.
 		 */
-		if ((error = swap_off(p, sdp)) != 0)
-			goto out;
-
+		error = swap_off(p, sdp);
 		break;
 
 	default:
