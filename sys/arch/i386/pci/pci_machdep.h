@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 1996/03/27 04:01:16 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 1996/12/17 01:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,8 @@ void		pci_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
 int		pci_bus_maxdevs __P((pci_chipset_tag_t, int));
 pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
+void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
+		    int *, int *, int *));
 pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t));
