@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/24 18:39:47 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/24 18:43:16 jdolecek Exp $
 
 DEFS= -DSUN_BOOTPARAMS
 
@@ -6,6 +6,7 @@ SRCS=   boot.c conf.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
 PROG= netboot.tmp
 LIBS= ${LIBSA} ${LIBBUG}
+CLEANFILES+= netboot.bin
 
 netboot.bin: ${PROG}
 	@size ${PROG}
