@@ -1,0 +1,10 @@
+# OBSOLETE # Host: Apollo, System V mode (?)
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-apollo68v.h
+# OBSOLETE XM_CLIBS= -lPW
+# OBSOLETE 
+# OBSOLETE NAT_FILE= nm-apollo68v.h
+# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o a68v-nat.o
+# OBSOLETE 
+# OBSOLETE RANLIB=echo >/dev/null
+# OBSOLETE CC= cc -A ansi -A runtype,any -A systype,any -U__STDC__ -DNO_SYS_FILE

@@ -1,0 +1,316 @@
+# OBSOLETE # Copyright 1992, 1994, 1995, 1996 Free Software Foundation, Inc.
+# OBSOLETE 
+# OBSOLETE # This program is free software; you can redistribute it and/or modify
+# OBSOLETE # it under the terms of the GNU General Public License as published by
+# OBSOLETE # the Free Software Foundation; either version 2 of the License, or
+# OBSOLETE # (at your option) any later version.
+# OBSOLETE # 
+# OBSOLETE # This program is distributed in the hope that it will be useful,
+# OBSOLETE # but WITHOUT ANY WARRANTY; without even the implied warranty of
+# OBSOLETE # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# OBSOLETE # GNU General Public License for more details.
+# OBSOLETE # 
+# OBSOLETE # You should have received a copy of the GNU General Public License
+# OBSOLETE # along with this program; if not, write to the Free Software
+# OBSOLETE # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+# OBSOLETE 
+# OBSOLETE # Please email any bugs, comments, and/or additions to this file to:
+# OBSOLETE # bug-gdb@prep.ai.mit.edu
+# OBSOLETE 
+# OBSOLETE # This file was written by Fred Fish. (fnf@cygnus.com)
+# OBSOLETE 
+# OBSOLETE if $tracelevel then {
+# OBSOLETE 	strace $tracelevel
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE if [skip_chill_tests] then { continue }
+# OBSOLETE 
+# OBSOLETE set testfile "chillvars"
+# OBSOLETE set srcfile ${srcdir}/$subdir/${testfile}.ch
+# OBSOLETE set binfile ${objdir}/${subdir}/${testfile}.exe
+# OBSOLETE if  { [compile "${srcfile} -g -o ${binfile} ${CHILL_RT0} ${CHILL_LIB}"] != "" } {
+# OBSOLETE     perror "Couldn't compile ${srcfile}"
+# OBSOLETE     return -1
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc do_tests {} {
+# OBSOLETE     global prms_id bug_id subdir objdir srcdir binfile gdb_prompt
+# OBSOLETE 
+# OBSOLETE     set prms_id 0
+# OBSOLETE     set bug_id 0
+# OBSOLETE 
+# OBSOLETE     # Start with a fresh gdb.
+# OBSOLETE 
+# OBSOLETE     gdb_exit
+# OBSOLETE     gdb_start
+# OBSOLETE     gdb_reinitialize_dir $srcdir/$subdir
+# OBSOLETE     gdb_load $binfile
+# OBSOLETE 
+# OBSOLETE     gdb_test "set language chill" ""
+# OBSOLETE 
+# OBSOLETE     # This is needed (at least on SunOS4) to make sure the
+# OBSOLETE     # the symbol table is read.
+# OBSOLETE     gdb_test "break chillvars.ch:3" ""
+# OBSOLETE     gdb_test "delete 1" ""
+# OBSOLETE 
+# OBSOLETE     gdb_test "set width 0" ""
+# OBSOLETE     gdb_test "set print sevenbit-strings" ""
+# OBSOLETE     gdb_test "set print address off" ""
+# OBSOLETE 
+# OBSOLETE     test_BOOL
+# OBSOLETE     test_CHAR
+# OBSOLETE     test_BYTE
+# OBSOLETE     test_UBYTE
+# OBSOLETE     test_INT
+# OBSOLETE     test_UINT
+# OBSOLETE     test_LONG
+# OBSOLETE     test_ULONG
+# OBSOLETE     test_REAL
+# OBSOLETE     test_LONG_REAL
+# OBSOLETE     test_POWERSET
+# OBSOLETE     test_arrays
+# OBSOLETE     test_strings
+# OBSOLETE     test_structs
+# OBSOLETE 
+# OBSOLETE     test_ptr
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_BOOL {} {
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype bool_true"		"type = (BOOL|bool)"
+# OBSOLETE     gdb_test "ptype bool_false"		"type = (BOOL|bool)"
+# OBSOLETE     gdb_test "whatis bool_true"		"type = (BOOL|bool)"
+# OBSOLETE     gdb_test "whatis bool_false"	"type = (BOOL|bool)"
+# OBSOLETE     gdb_test "print bool_false"		" = FALSE"
+# OBSOLETE     gdb_test "print bool_true"		" = TRUE"
+# OBSOLETE 
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_CHAR {} {
+# OBSOLETE     gdb_test "ptype control_char"	"type = (CHAR|char)"
+# OBSOLETE     gdb_test "whatis control_char"	"type = (CHAR|char)"
+# OBSOLETE     gdb_test "print control_char"	{ = '\^[(]7[)]'}
+# OBSOLETE     gdb_test "ptype printable_char"	"type = (CHAR|char)"
+# OBSOLETE     gdb_test "whatis printable_char"	"type = (CHAR|char)"
+# OBSOLETE     gdb_test "print printable_char"	" = 'a'"
+# OBSOLETE 
+# OBSOLETE     gdb_test "print lower(char)"	{ = '\^[(]0[)]'}
+# OBSOLETE     gdb_test "print upper(char)"	{ = '\^[(]255[)]'}
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_BYTE {} {
+# OBSOLETE     gdb_test "ptype byte_low"		"type = (BYTE|byte)"
+# OBSOLETE     gdb_test "whatis byte_low"		"type = (BYTE|byte)"
+# OBSOLETE     gdb_test "print byte_low"		" = -128"
+# OBSOLETE     gdb_test "ptype byte_high"		"type = (BYTE|byte)"
+# OBSOLETE     gdb_test "whatis byte_high"		"type = (BYTE|byte)"
+# OBSOLETE     gdb_test "print byte_high"		" = 127"
+# OBSOLETE 
+# OBSOLETE     gdb_test "print lower(byte)"	" = -128"
+# OBSOLETE     gdb_test "print upper(byte)"	" = 127"
+# OBSOLETE     gdb_test "print lower(byte_high)"	" = -128"
+# OBSOLETE     gdb_test "print upper(byte_high)"	" = 127"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_UBYTE {} {
+# OBSOLETE     gdb_test "ptype ubyte_low"		"type = (UBYTE|ubyte)"
+# OBSOLETE     gdb_test "whatis ubyte_low"		"type = (UBYTE|ubyte)"
+# OBSOLETE     gdb_test "print ubyte_low"		" = 0"
+# OBSOLETE     gdb_test "ptype ubyte_high"		"type = (UBYTE|ubyte)"
+# OBSOLETE     gdb_test "whatis ubyte_high"	"type = (UBYTE|ubyte)"
+# OBSOLETE     gdb_test "print ubyte_high"		" = 255"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_INT {} {
+# OBSOLETE     gdb_test "ptype int_low"		"type = (INT|int)"
+# OBSOLETE     gdb_test "whatis int_low"		"type = (INT|int)"
+# OBSOLETE     gdb_test "print int_low"		" = -32768"
+# OBSOLETE     gdb_test "ptype int_high"		"type = (INT|int)"
+# OBSOLETE     gdb_test "whatis int_high"		"type = (INT|int)"
+# OBSOLETE     gdb_test "print int_high"		" = 32767"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_UINT {} {
+# OBSOLETE     gdb_test "ptype uint_low"		"type = (UINT|uint)"
+# OBSOLETE     gdb_test "whatis uint_low"		"type = (UINT|uint)"
+# OBSOLETE     gdb_test "print uint_low"		" = 0"
+# OBSOLETE     gdb_test "ptype uint_high"		"type = (UINT|uint)"
+# OBSOLETE     gdb_test "whatis uint_high"		"type = (UINT|uint)"
+# OBSOLETE     gdb_test "print uint_high"		" = 65535"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_LONG {} {
+# OBSOLETE     gdb_test "ptype long_low"		"type = (LONG|long)"
+# OBSOLETE     gdb_test "whatis long_low"		"type = (LONG|long)"
+# OBSOLETE     gdb_test "print long_low"		" = -2147483648"
+# OBSOLETE     gdb_test "ptype long_high"		"type = (LONG|long)"
+# OBSOLETE     gdb_test "whatis long_high"		"type = (LONG|long)"
+# OBSOLETE     gdb_test "print long_high"		" = 2147483647"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_ULONG {} {
+# OBSOLETE     gdb_test "ptype ulong_low"		"type = (ULONG|ulong)"
+# OBSOLETE     gdb_test "whatis ulong_low"		"type = (ULONG|ulong)"
+# OBSOLETE     gdb_test "print ulong_low"		" = 0"
+# OBSOLETE     gdb_test "ptype ulong_high"		"type = (ULONG|ulong)"
+# OBSOLETE     gdb_test "whatis ulong_high"	"type = (ULONG|ulong)"
+# OBSOLETE     gdb_test "print ulong_high"		" = 4294967295"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_REAL {} {
+# OBSOLETE     gdb_test "ptype real1"		"type = (FLOAT|float)"
+# OBSOLETE     gdb_test "whatis real1"		"type = (FLOAT|float)"
+# OBSOLETE     gdb_test "print real1"		" = 3.14159274"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_LONG_REAL {} {
+# OBSOLETE     gdb_test "ptype long_real1"		"type = (DOUBLE|double)"
+# OBSOLETE     gdb_test "whatis long_real1"	"type = (DOUBLE|double)"
+# OBSOLETE     gdb_test "print long_real1"		" = 3\\.1400000000000001e\\+300"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_POWERSET {} {
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_arrays {} {
+# OBSOLETE     gdb_test "ptype booltable1"		"type = ARRAY \\(+0:3\\)+ (BOOL|bool)"
+# OBSOLETE     gdb_test_exact "print booltable1"	\
+# OBSOLETE 	{ = [(0): TRUE, (1:2): FALSE, (3): TRUE]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype booltable2"		"type = ARRAY \\(+4:7\\)+ (BOOL|bool)"
+# OBSOLETE     gdb_test_exact "print booltable2" { = [(4): TRUE, (5:6): FALSE, (7): TRUE]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype chartable1"		"type = ARRAY \\(+0:2\\)+ (CHAR|char)"
+# OBSOLETE     gdb_test_exact "print chartable1"  {= [(0): '^(0)', (1): '^(1)', (2): '^(2)']}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype chartable2"		"type = ARRAY \\(+3:5\\)+ (CHAR|char)"
+# OBSOLETE     gdb_test_exact "print chartable2"	\
+# OBSOLETE 	{= [(3): '^(0)', (4): '^(1)', (5): '^(2)']}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype bytetable1"		"type = ARRAY \\(+0:4\\)+ (BYTE|byte)"
+# OBSOLETE     gdb_test_exact "print bytetable1"		\
+# OBSOLETE        {= [(0): -2, (1): -1, (2): 0, (3): 1, (4): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype bytetable2"		"type = ARRAY \\(+5:9\\)+ (BYTE|byte)"
+# OBSOLETE     gdb_test_exact "print bytetable2"	\
+# OBSOLETE 	{= [(5): -2, (6): -1, (7): 0, (8): 1, (9): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype bytetable3" \
+# OBSOLETE 	"type = ARRAY \\(1:2\\) ARRAY \\('c':'d'\\) ARRAY \\(FALSE:TRUE\\) (BYTE|byte)"
+# OBSOLETE     gdb_test_exact "print bytetable3" \
+# OBSOLETE     {= [(1): [('c'): [(FALSE): 0, (TRUE): 1], ('d'): [(FALSE): 2, (TRUE): 3]], (2): [('c'): [(FALSE): 4, (TRUE): 5], ('d'): [(FALSE): 6, (TRUE): 7]]]}
+# OBSOLETE     gdb_test "ptype bytetable4" \
+# OBSOLETE 	"type = ARRAY \\(1:2\\) ARRAY \\('c':'d'\\) ARRAY \\(FALSE:TRUE\\) (BYTE|byte)"
+# OBSOLETE     gdb_test_exact "print bytetable4" \
+# OBSOLETE     {= [(1): [('c'): [(FALSE): 0, (TRUE): 1], ('d'): [(FALSE): 2, (TRUE): 3]], (2): [('c'): [(FALSE): 4, (TRUE): 5], ('d'): [(FALSE): 6, (TRUE): 7]]]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype ubytetable1"	"type = ARRAY \\(+0:4\\)+ (UBYTE|ubyte)"
+# OBSOLETE     gdb_test_exact "print ubytetable1"	\
+# OBSOLETE 	{= [(0): 0, (1): 1, (2): 2, (3): 3, (4): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype ubytetable2"	"type = ARRAY \\(+5:9\\)+ (UBYTE|ubyte)"
+# OBSOLETE     gdb_test_exact "print ubytetable2"	\
+# OBSOLETE 	{= [(5): 0, (6): 1, (7): 2, (8): 3, (9): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype inttable1"		"type = ARRAY \\(+0:4\\)+ (INT|int)"
+# OBSOLETE     gdb_test_exact "print inttable1"	\
+# OBSOLETE 	{= [(0): -2, (1): -1, (2): 0, (3): 1, (4): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype inttable2"		"type = ARRAY \\(+5:9\\)+ (INT|int)"
+# OBSOLETE     gdb_test_exact "print inttable2"		\
+# OBSOLETE 	{= [(5): -2, (6): -1, (7): 0, (8): 1, (9): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype uinttable1"		"type = ARRAY \\(+0:4\\)+ (UINT|uint)"
+# OBSOLETE     gdb_test_exact "print uinttable1"	\
+# OBSOLETE 	{= [(0): 0, (1): 1, (2): 2, (3): 3, (4): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype uinttable2"		"type = ARRAY \\(+5:9\\)+ (UINT|uint)"
+# OBSOLETE     gdb_test_exact "print uinttable2"	\
+# OBSOLETE 	{= [(5): 0, (6): 1, (7): 2, (8): 3, (9): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype longtable1"		"type = ARRAY \\(+0:4\\)+ (LONG|long)"
+# OBSOLETE     gdb_test_exact "print longtable1"	\
+# OBSOLETE 	{= [(0): -2, (1): -1, (2): 0, (3): 1, (4): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype longtable2"		"type = ARRAY \\(+5:9\\)+ (LONG|long)"
+# OBSOLETE     gdb_test_exact "print longtable2"	\
+# OBSOLETE 	{= [(5): -2, (6): -1, (7): 0, (8): 1, (9): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype ulongtable1"	"type = ARRAY \\(+0:4\\)+ (ULONG|ulong)"
+# OBSOLETE     gdb_test_exact "print ulongtable1"	\
+# OBSOLETE 	{= [(0): 0, (1): 1, (2): 2, (3): 3, (4): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype ulongtable2"	"type = ARRAY \\(+5:9\\)+ (ULONG|ulong)"
+# OBSOLETE     gdb_test_exact "print ulongtable2"	\
+# OBSOLETE 	{= [(5): 0, (6): 1, (7): 2, (8): 3, (9): 4]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype realtable1"		"type = ARRAY \\(+0:4\\)+ (FLOAT|float)"
+# OBSOLETE     gdb_test_exact "print realtable1"	\
+# OBSOLETE 	{= [(0): -2, (1): -1, (2): 0, (3): 1, (4): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype realtable2"		"type = ARRAY \\(+5:9\\)+ (FLOAT|float)"
+# OBSOLETE     gdb_test_exact "print realtable2"	\
+# OBSOLETE 	{= [(5): -2, (6): -1, (7): 0, (8): 1, (9): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype longrealtable1"	"type = ARRAY \\(+0:4\\)+ (DOUBLE|double)"
+# OBSOLETE     gdb_test_exact "print longrealtable1" \
+# OBSOLETE 	{= [(0): -2, (1): -1, (2): 0, (3): 1, (4): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype longrealtable2"	"type = ARRAY \\(+5:9\\)+ (DOUBLE|double)"
+# OBSOLETE     gdb_test_exact "print longrealtable2"	\
+# OBSOLETE 	{= [(5): -2, (6): -1, (7): 0, (8): 1, (9): 2]}
+# OBSOLETE 
+# OBSOLETE     gdb_test "print length(longrealtable2)" {= 5}
+# OBSOLETE     gdb_test "print lower(longrealtable2)" {= 5}
+# OBSOLETE     gdb_test "print upper(longrealtable2)" {= 9}
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_strings {} {
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype string1"		"type = CHARS \[(\]4\[)\]+"
+# OBSOLETE     gdb_test "print string1"		" = \"abcd\""
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype string2"		"type = CHARS \[(\]+5\[)\]+"
+# OBSOLETE     gdb_test "print string2"		{ = \"ef\^\(0\)gh\"}
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype string3"		"type = CHARS \[(\]+6\[)\]+"
+# OBSOLETE     gdb_test "print string3"		" = \"efghij\""
+# OBSOLETE 
+# OBSOLETE     gdb_test "ptype string4"		"type = CHARS \[(\]+7\[)\]+"
+# OBSOLETE     gdb_test "print string4"		{ = \"zzzzzz\^\(0\)\"}
+# OBSOLETE 
+# OBSOLETE     # These tests require a running process, so run to one of the procs
+# OBSOLETE     # and then do the tests.
+# OBSOLETE 
+# OBSOLETE     if [runto scalar_arithmetic] then {
+# OBSOLETE 	gdb_test "ptype string1//string2"	"type = CHARS \\(9\\)"
+# OBSOLETE 	gdb_test "print string1//string2"    { = \"abcdef\^\(0\)gh\"}
+# OBSOLETE 	gdb_test_exact {ptype "a chill string"} {type = CHARS (14)}
+# OBSOLETE 	gdb_test "print 'a chill string'"	" = \"a chill string\""
+# OBSOLETE 	gdb_test "print \"ef\"//c'00'//\"gh\""	{ = \"ef\^\(0\)gh\"}
+# OBSOLETE 	gdb_test "print string1 // \"efgh\""	" = \"abcdefgh\""
+# OBSOLETE 	gdb_test "print (6) 'z'"		" = \"zzzzzz\""
+# OBSOLETE 	gdb_test "ptype (6) 'z'"		"type = CHARS \[(\]+6\[)\]+"
+# OBSOLETE 	gdb_test "print (1+2*3) 'x'"		" = \"xxxxxxx\""
+# OBSOLETE 	gdb_test "ptype (1+2*3) 'x'"		"type = CHARS \[(\]+7\[)\]+"
+# OBSOLETE     }
+# OBSOLETE 
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_structs {} {
+# OBSOLETE     gdb_test "ptype struct1" \
+# OBSOLETE 	"type = STRUCT \\(+.*abool (BOOL|bool),.*aint (INT|int),.*astring CHARS \\(+8\\)+.*\\)+"
+# OBSOLETE     gdb_test "print struct1" \
+# OBSOLETE 	".* = \\\[\.abool: TRUE, \.aint: 123, \.astring: \"a string\"\\\]"
+# OBSOLETE     gdb_test "ptype struct2" \
+# OBSOLETE 	"type = STRUCT \\(+.*abool (BOOL|bool),.*nstruct simple_struct,.*aint (INT|int).*\\)+"
+# OBSOLETE     gdb_test "print struct2" \
+# OBSOLETE 	".* = \\\[.abool: TRUE, \.nstruct: \\\[\.abool: FALSE, \.aint: 456, \.astring: \"deadbeef\"\\\], \.aint: 789\\\]"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE proc test_ptr {} {
+# OBSOLETE     # This is to test Cygnus PR 6932
+# OBSOLETE     gdb_test "print xptr->int" ".* = 32767"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE do_tests

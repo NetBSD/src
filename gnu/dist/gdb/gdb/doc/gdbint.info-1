@@ -1,0 +1,1179 @@
+This is gdbint.info, produced by makeinfo version 4.1 from
+./gdbint.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+Copyright 1990,1991,1992,1993,1994,1996,1998,1999,2000,2001,2002
+Free Software Foundation, Inc.  Contributed by Cygnus Solutions.
+Written by John Gilmore.  Second Edition by Stan Shebs.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with the Front-Cover Texts being "A GNU Manual,"
+and with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: gdbint.info,  Node: Top,  Next: Requirements,  Up: (dir)
+
+Scope of this Document
+**********************
+
+   This document documents the internals of the GNU debugger, GDB.  It
+includes description of GDB's key algorithms and operations, as well as
+the mechanisms that adapt GDB to specific hosts and targets.
+
+* Menu:
+
+* Requirements::
+* Overall Structure::
+* Algorithms::
+* User Interface::
+* libgdb::
+* Symbol Handling::
+* Language Support::
+* Host Definition::
+* Target Architecture Definition::
+* Target Vector Definition::
+* Native Debugging::
+* Support Libraries::
+* Coding::
+* Porting GDB::
+* Releasing GDB::
+* Testsuite::
+* Hints::
+
+* GNU Free Documentation License::  The license for this documentation
+* Index::
+
+
+File: gdbint.info,  Node: Requirements,  Next: Overall Structure,  Prev: Top,  Up: Top
+
+Requirements
+************
+
+   Before diving into the internals, you should understand the formal
+requirements and other expectations for GDB.  Although some of these
+may seem obvious, there have been proposals for GDB that have run
+counter to these requirements.
+
+   First of all, GDB is a debugger.  It's not designed to be a front
+panel for embedded systems.  It's not a text editor.  It's not a shell.
+It's not a programming environment.
+
+   GDB is an interactive tool.  Although a batch mode is available,
+GDB's primary role is to interact with a human programmer.
+
+   GDB should be responsive to the user.  A programmer hot on the trail
+of a nasty bug, and operating under a looming deadline, is going to be
+very impatient of everything, including the response time to debugger
+commands.
+
+   GDB should be relatively permissive, such as for expressions.  While
+the compiler should be picky (or have the option to be made picky),
+since source code lives for a long time usually, the programmer doing
+debugging shouldn't be spending time figuring out to mollify the
+debugger.
+
+   GDB will be called upon to deal with really large programs.
+Executable sizes of 50 to 100 megabytes occur regularly, and we've
+heard reports of programs approaching 1 gigabyte in size.
+
+   GDB should be able to run everywhere.  No other debugger is
+available for even half as many configurations as GDB supports.
+
+
+File: gdbint.info,  Node: Overall Structure,  Next: Algorithms,  Prev: Requirements,  Up: Top
+
+Overall Structure
+*****************
+
+   GDB consists of three major subsystems: user interface, symbol
+handling (the "symbol side"), and target system handling (the "target
+side").
+
+   The user interface consists of several actual interfaces, plus
+supporting code.
+
+   The symbol side consists of object file readers, debugging info
+interpreters, symbol table management, source language expression
+parsing, type and value printing.
+
+   The target side consists of execution control, stack frame analysis,
+and physical target manipulation.
+
+   The target side/symbol side division is not formal, and there are a
+number of exceptions.  For instance, core file support involves symbolic
+elements (the basic core file reader is in BFD) and target elements (it
+supplies the contents of memory and the values of registers).  Instead,
+this division is useful for understanding how the minor subsystems
+should fit together.
+
+The Symbol Side
+===============
+
+   The symbolic side of GDB can be thought of as "everything you can do
+in GDB without having a live program running".  For instance, you can
+look at the types of variables, and evaluate many kinds of expressions.
+
+The Target Side
+===============
+
+   The target side of GDB is the "bits and bytes manipulator".
+Although it may make reference to symbolic info here and there, most of
+the target side will run with only a stripped executable available--or
+even no executable at all, in remote debugging cases.
+
+   Operations such as disassembly, stack frame crawls, and register
+display, are able to work with no symbolic info at all.  In some cases,
+such as disassembly, GDB will use symbolic info to present addresses
+relative to symbols rather than as raw numbers, but it will work either
+way.
+
+Configurations
+==============
+
+   "Host" refers to attributes of the system where GDB runs.  "Target"
+refers to the system where the program being debugged executes.  In
+most cases they are the same machine, in which case a third type of
+"Native" attributes come into play.
+
+   Defines and include files needed to build on the host are host
+support.  Examples are tty support, system defined types, host byte
+order, host float format.
+
+   Defines and information needed to handle the target format are target
+dependent.  Examples are the stack frame format, instruction set,
+breakpoint instruction, registers, and how to set up and tear down the
+stack to call a function.
+
+   Information that is only needed when the host and target are the
+same, is native dependent.  One example is Unix child process support;
+if the host and target are not the same, doing a fork to start the
+target process is a bad idea.  The various macros needed for finding the
+registers in the `upage', running `ptrace', and such are all in the
+native-dependent files.
+
+   Another example of native-dependent code is support for features that
+are really part of the target environment, but which require `#include'
+files that are only available on the host system.  Core file handling
+and `setjmp' handling are two common cases.
+
+   When you want to make GDB work "native" on a particular machine, you
+have to include all three kinds of information.
+
+
+File: gdbint.info,  Node: Algorithms,  Next: User Interface,  Prev: Overall Structure,  Up: Top
+
+Algorithms
+**********
+
+   GDB uses a number of debugging-specific algorithms.  They are often
+not very complicated, but get lost in the thicket of special cases and
+real-world issues.  This chapter describes the basic algorithms and
+mentions some of the specific target definitions that they use.
+
+Frames
+======
+
+   A frame is a construct that GDB uses to keep track of calling and
+called functions.
+
+   `FRAME_FP' in the machine description has no meaning to the
+machine-independent part of GDB, except that it is used when setting up
+a new frame from scratch, as follows:
+
+     create_new_frame (read_register (FP_REGNUM), read_pc ()));
+
+   Other than that, all the meaning imparted to `FP_REGNUM' is imparted
+by the machine-dependent code.  So, `FP_REGNUM' can have any value that
+is convenient for the code that creates new frames.
+(`create_new_frame' calls `INIT_EXTRA_FRAME_INFO' if it is defined;
+that is where you should use the `FP_REGNUM' value, if your frames are
+nonstandard.)
+
+   Given a GDB frame, define `FRAME_CHAIN' to determine the address of
+the calling function's frame.  This will be used to create a new GDB
+frame struct, and then `INIT_EXTRA_FRAME_INFO' and `INIT_FRAME_PC' will
+be called for the new frame.
+
+Breakpoint Handling
+===================
+
+   In general, a breakpoint is a user-designated location in the program
+where the user wants to regain control if program execution ever reaches
+that location.
+
+   There are two main ways to implement breakpoints; either as
+"hardware" breakpoints or as "software" breakpoints.
+
+   Hardware breakpoints are sometimes available as a builtin debugging
+features with some chips.  Typically these work by having dedicated
+register into which the breakpoint address may be stored.  If the PC
+(shorthand for "program counter") ever matches a value in a breakpoint
+registers, the CPU raises an exception and reports it to GDB.
+
+   Another possibility is when an emulator is in use; many emulators
+include circuitry that watches the address lines coming out from the
+processor, and force it to stop if the address matches a breakpoint's
+address.
+
+   A third possibility is that the target already has the ability to do
+breakpoints somehow; for instance, a ROM monitor may do its own
+software breakpoints.  So although these are not literally "hardware
+breakpoints", from GDB's point of view they work the same; GDB need not
+do nothing more than set the breakpoint and wait for something to
+happen.
+
+   Since they depend on hardware resources, hardware breakpoints may be
+limited in number; when the user asks for more, GDB will start trying
+to set software breakpoints.  (On some architectures, notably the
+32-bit x86 platforms, GDB cannot always know whether there's enough
+hardware resources to insert all the hardware breakpoints and
+watchpoints.  On those platforms, GDB prints an error message only when
+the program being debugged is continued.)
+
+   Software breakpoints require GDB to do somewhat more work.  The
+basic theory is that GDB will replace a program instruction with a
+trap, illegal divide, or some other instruction that will cause an
+exception, and then when it's encountered, GDB will take the exception
+and stop the program.  When the user says to continue, GDB will restore
+the original instruction, single-step, re-insert the trap, and continue
+on.
+
+   Since it literally overwrites the program being tested, the program
+area must be writable, so this technique won't work on programs in ROM.
+It can also distort the behavior of programs that examine themselves,
+although such a situation would be highly unusual.
+
+   Also, the software breakpoint instruction should be the smallest
+size of instruction, so it doesn't overwrite an instruction that might
+be a jump target, and cause disaster when the program jumps into the
+middle of the breakpoint instruction.  (Strictly speaking, the
+breakpoint must be no larger than the smallest interval between
+instructions that may be jump targets; perhaps there is an architecture
+where only even-numbered instructions may jumped to.)  Note that it's
+possible for an instruction set not to have any instructions usable for
+a software breakpoint, although in practice only the ARC has failed to
+define such an instruction.
+
+   The basic definition of the software breakpoint is the macro
+`BREAKPOINT'.
+
+   Basic breakpoint object handling is in `breakpoint.c'.  However,
+much of the interesting breakpoint action is in `infrun.c'.
+
+Single Stepping
+===============
+
+Signal Handling
+===============
+
+Thread Handling
+===============
+
+Inferior Function Calls
+=======================
+
+Longjmp Support
+===============
+
+   GDB has support for figuring out that the target is doing a
+`longjmp' and for stopping at the target of the jump, if we are
+stepping.  This is done with a few specialized internal breakpoints,
+which are visible in the output of the `maint info breakpoint' command.
+
+   To make this work, you need to define a macro called
+`GET_LONGJMP_TARGET', which will examine the `jmp_buf' structure and
+extract the longjmp target address.  Since `jmp_buf' is target
+specific, you will need to define it in the appropriate `tm-TARGET.h'
+file.  Look in `tm-sun4os4.h' and `sparc-tdep.c' for examples of how to
+do this.
+
+Watchpoints
+===========
+
+   Watchpoints are a special kind of breakpoints (*note breakpoints:
+Algorithms.) which break when data is accessed rather than when some
+instruction is executed.  When you have data which changes without your
+knowing what code does that, watchpoints are the silver bullet to hunt
+down and kill such bugs.
+
+   Watchpoints can be either hardware-assisted or not; the latter type
+is known as "software watchpoints."  GDB always uses hardware-assisted
+watchpoints if they are available, and falls back on software
+watchpoints otherwise.  Typical situations where GDB will use software
+watchpoints are:
+
+   * The watched memory region is too large for the underlying hardware
+     watchpoint support.  For example, each x86 debug register can
+     watch up to 4 bytes of memory, so trying to watch data structures
+     whose size is more than 16 bytes will cause GDB to use software
+     watchpoints.
+
+   * The value of the expression to be watched depends on data held in
+     registers (as opposed to memory).
+
+   * Too many different watchpoints requested.  (On some architectures,
+     this situation is impossible to detect until the debugged program
+     is resumed.)  Note that x86 debug registers are used both for
+     hardware breakpoints and for watchpoints, so setting too many
+     hardware breakpoints might cause watchpoint insertion to fail.
+
+   * No hardware-assisted watchpoints provided by the target
+     implementation.
+
+   Software watchpoints are very slow, since GDB needs to single-step
+the program being debugged and test the value of the watched
+expression(s) after each instruction.  The rest of this section is
+mostly irrelevant for software watchpoints.
+
+   GDB uses several macros and primitives to support hardware
+watchpoints:
+
+`TARGET_HAS_HARDWARE_WATCHPOINTS'
+     If defined, the target supports hardware watchpoints.
+
+`TARGET_CAN_USE_HARDWARE_WATCHPOINT (TYPE, COUNT, OTHER)'
+     Return the number of hardware watchpoints of type TYPE that are
+     possible to be set.  The value is positive if COUNT watchpoints of
+     this type can be set, zero if setting watchpoints of this type is
+     not supported, and negative if COUNT is more than the maximum
+     number of watchpoints of type TYPE that can be set.  OTHER is
+     non-zero if other types of watchpoints are currently enabled (there
+     are architectures which cannot set watchpoints of different types
+     at the same time).
+
+`TARGET_REGION_OK_FOR_HW_WATCHPOINT (ADDR, LEN)'
+     Return non-zero if hardware watchpoints can be used to watch a
+     region whose address is ADDR and whose length in bytes is LEN.
+
+`TARGET_REGION_SIZE_OK_FOR_HW_WATCHPOINT (SIZE)'
+     Return non-zero if hardware watchpoints can be used to watch a
+     region whose size is SIZE.  GDB only uses this macro as a
+     fall-back, in case `TARGET_REGION_OK_FOR_HW_WATCHPOINT' is not
+     defined.
+
+`TARGET_DISABLE_HW_WATCHPOINTS (PID)'
+     Disables watchpoints in the process identified by PID.  This is
+     used, e.g., on HP-UX which provides operations to disable and
+     enable the page-level memory protection that implements hardware
+     watchpoints on that platform.
+
+`TARGET_ENABLE_HW_WATCHPOINTS (PID)'
+     Enables watchpoints in the process identified by PID.  This is
+     used, e.g., on HP-UX which provides operations to disable and
+     enable the page-level memory protection that implements hardware
+     watchpoints on that platform.
+
+`target_insert_watchpoint (ADDR, LEN, TYPE)'
+`target_remove_watchpoint (ADDR, LEN, TYPE)'
+     Insert or remove a hardware watchpoint starting at ADDR, for LEN
+     bytes.  TYPE is the watchpoint type, one of the possible values of
+     the enumerated data type `target_hw_bp_type', defined by
+     `breakpoint.h' as follows:
+
+           enum target_hw_bp_type
+             {
+               hw_write   = 0, /* Common (write) HW watchpoint */
+               hw_read    = 1, /* Read    HW watchpoint */
+               hw_access  = 2, /* Access (read or write) HW watchpoint */
+               hw_execute = 3  /* Execute HW breakpoint */
+             };
+
+     These two macros should return 0 for success, non-zero for failure.
+
+`target_remove_hw_breakpoint (ADDR, SHADOW)'
+`target_insert_hw_breakpoint (ADDR, SHADOW)'
+     Insert or remove a hardware-assisted breakpoint at address ADDR.
+     Returns zero for success, non-zero for failure.  SHADOW is the
+     real contents of the byte where the breakpoint has been inserted;
+     it is generally not valid when hardware breakpoints are used, but
+     since no other code touches these values, the implementations of
+     the above two macros can use them for their internal purposes.
+
+`target_stopped_data_address ()'
+     If the inferior has some watchpoint that triggered, return the
+     address associated with that watchpoint.  Otherwise, return zero.
+
+`DECR_PC_AFTER_HW_BREAK'
+     If defined, GDB decrements the program counter by the value of
+     `DECR_PC_AFTER_HW_BREAK' after a hardware break-point.  This
+     overrides the value of `DECR_PC_AFTER_BREAK' when a breakpoint
+     that breaks is a hardware-assisted breakpoint.
+
+`HAVE_STEPPABLE_WATCHPOINT'
+     If defined to a non-zero value, it is not necessary to disable a
+     watchpoint to step over it.
+
+`HAVE_NONSTEPPABLE_WATCHPOINT'
+     If defined to a non-zero value, GDB should disable a watchpoint to
+     step the inferior over it.
+
+`HAVE_CONTINUABLE_WATCHPOINT'
+     If defined to a non-zero value, it is possible to continue the
+     inferior after a watchpoint has been hit.
+
+`CANNOT_STEP_HW_WATCHPOINTS'
+     If this is defined to a non-zero value, GDB will remove all
+     watchpoints before stepping the inferior.
+
+`STOPPED_BY_WATCHPOINT (WAIT_STATUS)'
+     Return non-zero if stopped by a watchpoint.  WAIT_STATUS is of the
+     type `struct target_waitstatus', defined by `target.h'.
+
+x86 Watchpoints
+---------------
+
+   The 32-bit Intel x86 (a.k.a. ia32) processors feature special debug
+registers designed to facilitate debugging.  GDB provides a generic
+library of functions that x86-based ports can use to implement support
+for watchpoints and hardware-assisted breakpoints.  This subsection
+documents the x86 watchpoint facilities in GDB.
+
+   To use the generic x86 watchpoint support, a port should do the
+following:
+
+   * Define the macro `I386_USE_GENERIC_WATCHPOINTS' somewhere in the
+     target-dependent headers.
+
+   * Include the `config/i386/nm-i386.h' header file _after_ defining
+     `I386_USE_GENERIC_WATCHPOINTS'.
+
+   * Add `i386-nat.o' to the value of the Make variable `NATDEPFILES'
+     (*note NATDEPFILES: Native Debugging.) or `TDEPFILES' (*note
+     TDEPFILES: Target Architecture Definition.).
+
+   * Provide implementations for the `I386_DR_LOW_*' macros described
+     below.  Typically, each macro should call a target-specific
+     function which does the real work.
+
+   The x86 watchpoint support works by maintaining mirror images of the
+debug registers.  Values are copied between the mirror images and the
+real debug registers via a set of macros which each target needs to
+provide:
+
+`I386_DR_LOW_SET_CONTROL (VAL)'
+     Set the Debug Control (DR7) register to the value VAL.
+
+`I386_DR_LOW_SET_ADDR (IDX, ADDR)'
+     Put the address ADDR into the debug register number IDX.
+
+`I386_DR_LOW_RESET_ADDR (IDX)'
+     Reset (i.e. zero out) the address stored in the debug register
+     number IDX.
+
+`I386_DR_LOW_GET_STATUS'
+     Return the value of the Debug Status (DR6) register.  This value is
+     used immediately after it is returned by `I386_DR_LOW_GET_STATUS',
+     so as to support per-thread status register values.
+
+   For each one of the 4 debug registers (whose indices are from 0 to 3)
+that store addresses, a reference count is maintained by GDB, to allow
+sharing of debug registers by several watchpoints.  This allows users
+to define several watchpoints that watch the same expression, but with
+different conditions and/or commands, without wasting debug registers
+which are in short supply.  GDB maintains the reference counts
+internally, targets don't have to do anything to use this feature.
+
+   The x86 debug registers can each watch a region that is 1, 2, or 4
+bytes long.  The ia32 architecture requires that each watched region be
+appropriately aligned: 2-byte region on 2-byte boundary, 4-byte region
+on 4-byte boundary.  However, the x86 watchpoint support in GDB can
+watch unaligned regions and regions larger than 4 bytes (up to 16
+bytes) by allocating several debug registers to watch a single region.
+This allocation of several registers per a watched region is also done
+automatically without target code intervention.
+
+   The generic x86 watchpoint support provides the following API for the
+GDB's application code:
+
+`i386_region_ok_for_watchpoint (ADDR, LEN)'
+     The macro `TARGET_REGION_OK_FOR_HW_WATCHPOINT' is set to call this
+     function.  It counts the number of debug registers required to
+     watch a given region, and returns a non-zero value if that number
+     is less than 4, the number of debug registers available to x86
+     processors.
+
+`i386_stopped_data_address (void)'
+     The macros `STOPPED_BY_WATCHPOINT' and
+     `target_stopped_data_address' are set to call this function.  The
+     argument passed to `STOPPED_BY_WATCHPOINT' is ignored.  This
+     function examines the breakpoint condition bits in the DR6 Debug
+     Status register, as returned by the `I386_DR_LOW_GET_STATUS'
+     macro, and returns the address associated with the first bit that
+     is set in DR6.
+
+`i386_insert_watchpoint (ADDR, LEN, TYPE)'
+`i386_remove_watchpoint (ADDR, LEN, TYPE)'
+     Insert or remove a watchpoint.  The macros
+     `target_insert_watchpoint' and `target_remove_watchpoint' are set
+     to call these functions.  `i386_insert_watchpoint' first looks for
+     a debug register which is already set to watch the same region for
+     the same access types; if found, it just increments the reference
+     count of that debug register, thus implementing debug register
+     sharing between watchpoints.  If no such register is found, the
+     function looks for a vacant debug register, sets its mirrored
+     value to ADDR, sets the mirrored value of DR7 Debug Control
+     register as appropriate for the LEN and TYPE parameters, and then
+     passes the new values of the debug register and DR7 to the
+     inferior by calling `I386_DR_LOW_SET_ADDR' and
+     `I386_DR_LOW_SET_CONTROL'.  If more than one debug register is
+     required to cover the given region, the above process is repeated
+     for each debug register.
+
+     `i386_remove_watchpoint' does the opposite: it resets the address
+     in the mirrored value of the debug register and its read/write and
+     length bits in the mirrored value of DR7, then passes these new
+     values to the inferior via `I386_DR_LOW_RESET_ADDR' and
+     `I386_DR_LOW_SET_CONTROL'.  If a register is shared by several
+     watchpoints, each time a `i386_remove_watchpoint' is called, it
+     decrements the reference count, and only calls
+     `I386_DR_LOW_RESET_ADDR' and `I386_DR_LOW_SET_CONTROL' when the
+     count goes to zero.
+
+`i386_insert_hw_breakpoint (ADDR, SHADOW'
+`i386_remove_hw_breakpoint (ADDR, SHADOW)'
+     These functions insert and remove hardware-assisted breakpoints.
+     The macros `target_insert_hw_breakpoint' and
+     `target_remove_hw_breakpoint' are set to call these functions.
+     These functions work like `i386_insert_watchpoint' and
+     `i386_remove_watchpoint', respectively, except that they set up
+     the debug registers to watch instruction execution, and each
+     hardware-assisted breakpoint always requires exactly one debug
+     register.
+
+`i386_stopped_by_hwbp (void)'
+     This function returns non-zero if the inferior has some watchpoint
+     or hardware breakpoint that triggered.  It works like
+     `i386_stopped_data_address', except that it doesn't return the
+     address whose watchpoint triggered.
+
+`i386_cleanup_dregs (void)'
+     This function clears all the reference counts, addresses, and
+     control bits in the mirror images of the debug registers.  It
+     doesn't affect the actual debug registers in the inferior process.
+
+*Notes:*
+  1. x86 processors support setting watchpoints on I/O reads or writes.
+     However, since no target supports this (as of March 2001), and
+     since `enum target_hw_bp_type' doesn't even have an enumeration
+     for I/O watchpoints, this feature is not yet available to GDB
+     running on x86.
+
+  2. x86 processors can enable watchpoints locally, for the current task
+     only, or globally, for all the tasks.  For each debug register,
+     there's a bit in the DR7 Debug Control register that determines
+     whether the associated address is watched locally or globally.  The
+     current implementation of x86 watchpoint support in GDB always
+     sets watchpoints to be locally enabled, since global watchpoints
+     might interfere with the underlying OS and are probably
+     unavailable in many platforms.
+
+
+File: gdbint.info,  Node: User Interface,  Next: libgdb,  Prev: Algorithms,  Up: Top
+
+User Interface
+**************
+
+   GDB has several user interfaces.  Although the command-line interface
+is the most common and most familiar, there are others.
+
+Command Interpreter
+===================
+
+   The command interpreter in GDB is fairly simple.  It is designed to
+allow for the set of commands to be augmented dynamically, and also has
+a recursive subcommand capability, where the first argument to a
+command may itself direct a lookup on a different command list.
+
+   For instance, the `set' command just starts a lookup on the
+`setlist' command list, while `set thread' recurses to the
+`set_thread_cmd_list'.
+
+   To add commands in general, use `add_cmd'.  `add_com' adds to the
+main command list, and should be used for those commands.  The usual
+place to add commands is in the `_initialize_XYZ' routines at the ends
+of most source files.
+
+   To add paired `set' and `show' commands, use `add_setshow_cmd' or
+`add_setshow_cmd_full'.  The former is a slightly simpler interface
+which is useful when you don't need to further modify the new command
+structures, while the latter returns the new command structures for
+manipulation.
+
+   Before removing commands from the command set it is a good idea to
+deprecate them for some time.  Use `deprecate_cmd' on commands or
+aliases to set the deprecated flag.  `deprecate_cmd' takes a `struct
+cmd_list_element' as it's first argument.  You can use the return value
+from `add_com' or `add_cmd' to deprecate the command immediately after
+it is created.
+
+   The first time a command is used the user will be warned and offered
+a replacement (if one exists). Note that the replacement string passed
+to `deprecate_cmd' should be the full name of the command, i.e. the
+entire string the user should type at the command line.
+
+UI-Independent Output--the `ui_out' Functions
+=============================================
+
+   The `ui_out' functions present an abstraction level for the GDB
+output code.  They hide the specifics of different user interfaces
+supported by GDB, and thus free the programmer from the need to write
+several versions of the same code, one each for every UI, to produce
+output.
+
+Overview and Terminology
+------------------------
+
+   In general, execution of each GDB command produces some sort of
+output, and can even generate an input request.
+
+   Output can be generated for the following purposes:
+
+   * to display a _result_ of an operation;
+
+   * to convey _info_ or produce side-effects of a requested operation;
+
+   * to provide a _notification_ of an asynchronous event (including
+     progress indication of a prolonged asynchronous operation);
+
+   * to display _error messages_ (including warnings);
+
+   * to show _debug data_;
+
+   * to _query_ or prompt a user for input (a special case).
+
+This section mainly concentrates on how to build result output,
+although some of it also applies to other kinds of output.
+
+   Generation of output that displays the results of an operation
+involves one or more of the following:
+
+   * output of the actual data
+
+   * formatting the output as appropriate for console output, to make it
+     easily readable by humans
+
+   * machine oriented formatting-a more terse formatting to allow for
+     easy parsing by programs which read GDB's output
+
+   * annotation, whose purpose is to help legacy GUIs to identify
+     interesting parts in the output
+
+   The `ui_out' routines take care of the first three aspects.
+Annotations are provided by separate annotation routines.  Note that use
+of annotations for an interface between a GUI and GDB is deprecated.
+
+   Output can be in the form of a single item, which we call a "field";
+a "list" consisting of identical fields; a "tuple" consisting of
+non-identical fields; or a "table", which is a tuple consisting of a
+header and a body.  In a BNF-like form:
+
+`<table> ==>'
+     `<header> <body>'
+
+`<header> ==>'
+     `{ <column> }'
+
+`<column> ==>'
+     `<width> <alignment> <title>'
+
+`<body> ==>'
+     `{<row>}'
+
+General Conventions
+-------------------
+
+   Most `ui_out' routines are of type `void', the exceptions are
+`ui_out_stream_new' (which returns a pointer to the newly created
+object) and the `make_cleanup' routines.
+
+   The first parameter is always the `ui_out' vector object, a pointer
+to a `struct ui_out'.
+
+   The FORMAT parameter is like in `printf' family of functions.  When
+it is present, there must also be a variable list of arguments
+sufficient used to satisfy the `%' specifiers in the supplied format.
+
+   When a character string argument is not used in a `ui_out' function
+call, a `NULL' pointer has to be supplied instead.
+
+Table, Tuple and List Functions
+-------------------------------
+
+   This section introduces `ui_out' routines for building lists, tuples
+and tables.  The routines to output the actual data items (fields) are
+presented in the next section.
+
+   To recap: A "tuple" is a sequence of "fields", each field containing
+information about an object; a "list" is a sequence of fields where
+each field describes an identical object.
+
+   Use the "table" functions when your output consists of a list of
+rows (tuples) and the console output should include a heading.  Use this
+even when you are listing just one object but you still want the header.
+
+   Tables can not be nested.  Tuples and lists can be nested up to a
+maximum of five levels.
+
+   The overall structure of the table output code is something like
+this:
+
+       ui_out_table_begin
+         ui_out_table_header
+         ...
+         ui_out_table_body
+           ui_out_tuple_begin
+             ui_out_field_*
+             ...
+           ui_out_tuple_end
+           ...
+       ui_out_table_end
+
+   Here is the description of table-, tuple- and list-related `ui_out'
+functions:
+
+ - Function: void ui_out_table_begin (struct ui_out *UIOUT, int
+          NBROFCOLS, int NR_ROWS, const char *TBLID)
+     The function `ui_out_table_begin' marks the beginning of the output
+     of a table.  It should always be called before any other `ui_out'
+     function for a given table.  NBROFCOLS is the number of columns in
+     the table. NR_ROWS is the number of rows in the table.  TBLID is
+     an optional string identifying the table.  The string pointed to
+     by TBLID is copied by the implementation of `ui_out_table_begin',
+     so the application can free the string if it was `malloc'ed.
+
+     The companion function `ui_out_table_end', described below, marks
+     the end of the table's output.
+
+ - Function: void ui_out_table_header (struct ui_out *UIOUT, int WIDTH,
+          enum ui_align ALIGNMENT, const char *COLHDR)
+     `ui_out_table_header' provides the header information for a single
+     table column.  You call this function several times, one each for
+     every column of the table, after `ui_out_table_begin', but before
+     `ui_out_table_body'.
+
+     The value of WIDTH gives the column width in characters.  The
+     value of ALIGNMENT is one of `left', `center', and `right', and it
+     specifies how to align the header: left-justify, center, or
+     right-justify it.  COLHDR points to a string that specifies the
+     column header; the implementation copies that string, so column
+     header strings in `malloc'ed storage can be freed after the call.
+
+ - Function: void ui_out_table_body (struct ui_out *UIOUT)
+     This function delimits the table header from the table body.
+
+ - Function: void ui_out_table_end (struct ui_out *UIOUT)
+     This function signals the end of a table's output.  It should be
+     called after the table body has been produced by the list and
+     field output functions.
+
+     There should be exactly one call to `ui_out_table_end' for each
+     call to `ui_out_table_begin', otherwise the `ui_out' functions
+     will signal an internal error.
+
+   The output of the tuples that represent the table rows must follow
+the call to `ui_out_table_body' and precede the call to
+`ui_out_table_end'.  You build a tuple by calling `ui_out_tuple_begin'
+and `ui_out_tuple_end', with suitable calls to functions which actually
+output fields between them.
+
+ - Function: void ui_out_tuple_begin (struct ui_out *UIOUT, const char
+          *ID)
+     This function marks the beginning of a tuple output.  ID points to
+     an optional string that identifies the tuple; it is copied by the
+     implementation, and so strings in `malloc'ed storage can be freed
+     after the call.
+
+ - Function: void ui_out_tuple_end (struct ui_out *UIOUT)
+     This function signals an end of a tuple output.  There should be
+     exactly one call to `ui_out_tuple_end' for each call to
+     `ui_out_tuple_begin', otherwise an internal GDB error will be
+     signaled.
+
+ - Function: struct cleanup *make_cleanup_ui_out_tuple_begin_end
+          (struct ui_out *UIOUT, const char *ID)
+     This function first opens the tuple and then establishes a cleanup
+     (*note Cleanups: Coding.) to close the tuple.  It provides a
+     convenient and correct implementation of the non-portable(1) code
+     sequence:
+          struct cleanup *old_cleanup;
+          ui_out_tuple_begin (uiout, "...");
+          old_cleanup = make_cleanup ((void(*)(void *)) ui_out_tuple_end,
+                                      uiout);
+
+ - Function: void ui_out_list_begin (struct ui_out *UIOUT, const char
+          *ID)
+     This function marks the beginning of a list output.  ID points to
+     an optional string that identifies the list; it is copied by the
+     implementation, and so strings in `malloc'ed storage can be freed
+     after the call.
+
+ - Function: void ui_out_list_end (struct ui_out *UIOUT)
+     This function signals an end of a list output.  There should be
+     exactly one call to `ui_out_list_end' for each call to
+     `ui_out_list_begin', otherwise an internal GDB error will be
+     signaled.
+
+ - Function: struct cleanup *make_cleanup_ui_out_list_begin_end (struct
+          ui_out *UIOUT, const char *ID)
+     Similar to `make_cleanup_ui_out_tuple_begin_end', this function
+     opens a list and then establishes cleanup (*note Cleanups: Coding.)
+     that will close the list.list.
+
+Item Output Functions
+---------------------
+
+   The functions described below produce output for the actual data
+items, or fields, which contain information about the object.
+
+   Choose the appropriate function accordingly to your particular needs.
+
+ - Function: void ui_out_field_fmt (struct ui_out *UIOUT, char
+          *FLDNAME, char *FORMAT, ...)
+     This is the most general output function.  It produces the
+     representation of the data in the variable-length argument list
+     according to formatting specifications in FORMAT, a `printf'-like
+     format string.  The optional argument FLDNAME supplies the name of
+     the field.  The data items themselves are supplied as additional
+     arguments after FORMAT.
+
+     This generic function should be used only when it is not possible
+     to use one of the specialized versions (see below).
+
+ - Function: void ui_out_field_int (struct ui_out *UIOUT, const char
+          *FLDNAME, int VALUE)
+     This function outputs a value of an `int' variable.  It uses the
+     `"%d"' output conversion specification.  FLDNAME specifies the
+     name of the field.
+
+ - Function: void ui_out_field_core_addr (struct ui_out *UIOUT, const
+          char *FLDNAME, CORE_ADDR ADDRESS)
+     This function outputs an address.
+
+ - Function: void ui_out_field_string (struct ui_out *UIOUT, const char
+          *FLDNAME, const char *STRING)
+     This function outputs a string using the `"%s"' conversion
+     specification.
+
+   Sometimes, there's a need to compose your output piece by piece using
+functions that operate on a stream, such as `value_print' or
+`fprintf_symbol_filtered'.  These functions accept an argument of the
+type `struct ui_file *', a pointer to a `ui_file' object used to store
+the data stream used for the output.  When you use one of these
+functions, you need a way to pass their results stored in a `ui_file'
+object to the `ui_out' functions.  To this end, you first create a
+`ui_stream' object by calling `ui_out_stream_new', pass the `stream'
+member of that `ui_stream' object to `value_print' and similar
+functions, and finally call `ui_out_field_stream' to output the field
+you constructed.  When the `ui_stream' object is no longer needed, you
+should destroy it and free its memory by calling `ui_out_stream_delete'.
+
+ - Function: struct ui_stream *ui_out_stream_new (struct ui_out *UIOUT)
+     This function creates a new `ui_stream' object which uses the same
+     output methods as the `ui_out' object whose pointer is passed in
+     UIOUT.  It returns a pointer to the newly created `ui_stream'
+     object.
+
+ - Function: void ui_out_stream_delete (struct ui_stream *STREAMBUF)
+     This functions destroys a `ui_stream' object specified by
+     STREAMBUF.
+
+ - Function: void ui_out_field_stream (struct ui_out *UIOUT, const char
+          *FIELDNAME, struct ui_stream *STREAMBUF)
+     This function consumes all the data accumulated in
+     `streambuf->stream' and outputs it like `ui_out_field_string'
+     does.  After a call to `ui_out_field_stream', the accumulated data
+     no longer exists, but the stream is still valid and may be used
+     for producing more fields.
+
+   *Important:* If there is any chance that your code could bail out
+before completing output generation and reaching the point where
+`ui_out_stream_delete' is called, it is necessary to set up a cleanup,
+to avoid leaking memory and other resources.  Here's a skeleton code to
+do that:
+
+      struct ui_stream *mybuf = ui_out_stream_new (uiout);
+      struct cleanup *old = make_cleanup (ui_out_stream_delete, mybuf);
+      ...
+      do_cleanups (old);
+
+   If the function already has the old cleanup chain set (for other
+kinds of cleanups), you just have to add your cleanup to it:
+
+       mybuf = ui_out_stream_new (uiout);
+       make_cleanup (ui_out_stream_delete, mybuf);
+
+   Note that with cleanups in place, you should not call
+`ui_out_stream_delete' directly, or you would attempt to free the same
+buffer twice.
+
+Utility Output Functions
+------------------------
+
+ - Function: void ui_out_field_skip (struct ui_out *UIOUT, const char
+          *FLDNAME)
+     This function skips a field in a table.  Use it if you have to
+     leave an empty field without disrupting the table alignment.  The
+     argument FLDNAME specifies a name for the (missing) filed.
+
+ - Function: void ui_out_text (struct ui_out *UIOUT, const char *STRING)
+     This function outputs the text in STRING in a way that makes it
+     easy to be read by humans.  For example, the console
+     implementation of this method filters the text through a built-in
+     pager, to prevent it from scrolling off the visible portion of the
+     screen.
+
+     Use this function for printing relatively long chunks of text
+     around the actual field data: the text it produces is not aligned
+     according to the table's format.  Use `ui_out_field_string' to
+     output a string field, and use `ui_out_message', described below,
+     to output short messages.
+
+ - Function: void ui_out_spaces (struct ui_out *UIOUT, int NSPACES)
+     This function outputs NSPACES spaces.  It is handy to align the
+     text produced by `ui_out_text' with the rest of the table or list.
+
+ - Function: void ui_out_message (struct ui_out *UIOUT, int VERBOSITY,
+          const char *FORMAT, ...)
+     This function produces a formatted message, provided that the
+     current verbosity level is at least as large as given by
+     VERBOSITY.  The current verbosity level is specified by the user
+     with the `set verbositylevel' command.(2)
+
+ - Function: void ui_out_wrap_hint (struct ui_out *UIOUT, char *INDENT)
+     This function gives the console output filter (a paging filter) a
+     hint of where to break lines which are too long.  Ignored for all
+     other output consumers.  INDENT, if non-`NULL', is the string to
+     be printed to indent the wrapped text on the next line; it must
+     remain accessible until the next call to `ui_out_wrap_hint', or
+     until an explicit newline is produced by one of the other
+     functions.  If INDENT is `NULL', the wrapped text will not be
+     indented.
+
+ - Function: void ui_out_flush (struct ui_out *UIOUT)
+     This function flushes whatever output has been accumulated so far,
+     if the UI buffers output.
+
+Examples of Use of `ui_out' functions
+-------------------------------------
+
+   This section gives some practical examples of using the `ui_out'
+functions to generalize the old console-oriented code in GDB.  The
+examples all come from functions defined on the `breakpoints.c' file.
+
+   This example, from the `breakpoint_1' function, shows how to produce
+a table.
+
+   The original code was:
+
+      if (!found_a_breakpoint++)
+        {
+          annotate_breakpoints_headers ();
+     
+          annotate_field (0);
+          printf_filtered ("Num ");
+          annotate_field (1);
+          printf_filtered ("Type           ");
+          annotate_field (2);
+          printf_filtered ("Disp ");
+          annotate_field (3);
+          printf_filtered ("Enb ");
+          if (addressprint)
+            {
+              annotate_field (4);
+              printf_filtered ("Address    ");
+            }
+          annotate_field (5);
+          printf_filtered ("What\n");
+     
+          annotate_breakpoints_table ();
+        }
+
+   Here's the new version:
+
+       nr_printable_breakpoints = ...;
+     
+       if (addressprint)
+         ui_out_table_begin (ui, 6, nr_printable_breakpoints, "BreakpointTable");
+       else
+         ui_out_table_begin (ui, 5, nr_printable_breakpoints, "BreakpointTable");
+     
+       if (nr_printable_breakpoints > 0)
+         annotate_breakpoints_headers ();
+       if (nr_printable_breakpoints > 0)
+         annotate_field (0);
+       ui_out_table_header (uiout, 3, ui_left, "number", "Num");		/* 1 */
+       if (nr_printable_breakpoints > 0)
+         annotate_field (1);
+       ui_out_table_header (uiout, 14, ui_left, "type", "Type");		/* 2 */
+       if (nr_printable_breakpoints > 0)
+         annotate_field (2);
+       ui_out_table_header (uiout, 4, ui_left, "disp", "Disp");		/* 3 */
+       if (nr_printable_breakpoints > 0)
+         annotate_field (3);
+       ui_out_table_header (uiout, 3, ui_left, "enabled", "Enb");	/* 4 */
+       if (addressprint)
+         {
+          if (nr_printable_breakpoints > 0)
+            annotate_field (4);
+          if (TARGET_ADDR_BIT <= 32)
+            ui_out_table_header (uiout, 10, ui_left, "addr", "Address");/* 5 */
+          else
+            ui_out_table_header (uiout, 18, ui_left, "addr", "Address");/* 5 */
+         }
+       if (nr_printable_breakpoints > 0)
+         annotate_field (5);
+       ui_out_table_header (uiout, 40, ui_noalign, "what", "What");	/* 6 */
+       ui_out_table_body (uiout);
+       if (nr_printable_breakpoints > 0)
+         annotate_breakpoints_table ();
+
+   This example, from the `print_one_breakpoint' function, shows how to
+produce the actual data for the table whose structure was defined in
+the above example.  The original code was:
+
+        annotate_record ();
+        annotate_field (0);
+        printf_filtered ("%-3d ", b->number);
+        annotate_field (1);
+        if ((int)b->type > (sizeof(bptypes)/sizeof(bptypes[0]))
+            || ((int) b->type != bptypes[(int) b->type].type))
+          internal_error ("bptypes table does not describe type #%d.",
+                          (int)b->type);
+        printf_filtered ("%-14s ", bptypes[(int)b->type].description);
+        annotate_field (2);
+        printf_filtered ("%-4s ", bpdisps[(int)b->disposition]);
+        annotate_field (3);
+        printf_filtered ("%-3c ", bpenables[(int)b->enable]);
+        ...
+
+   This is the new version:
+
+        annotate_record ();
+        ui_out_tuple_begin (uiout, "bkpt");
+        annotate_field (0);
+        ui_out_field_int (uiout, "number", b->number);
+        annotate_field (1);
+        if (((int) b->type > (sizeof (bptypes) / sizeof (bptypes[0])))
+            || ((int) b->type != bptypes[(int) b->type].type))
+          internal_error ("bptypes table does not describe type #%d.",
+                          (int) b->type);
+        ui_out_field_string (uiout, "type", bptypes[(int)b->type].description);
+        annotate_field (2);
+        ui_out_field_string (uiout, "disp", bpdisps[(int)b->disposition]);
+        annotate_field (3);
+        ui_out_field_fmt (uiout, "enabled", "%c", bpenables[(int)b->enable]);
+        ...
+
+   This example, also from `print_one_breakpoint', shows how to produce
+a complicated output field using the `print_expression' functions which
+requires a stream to be passed.  It also shows how to automate stream
+destruction with cleanups.  The original code was:
+
+         annotate_field (5);
+         print_expression (b->exp, gdb_stdout);
+
+   The new version is:
+
+       struct ui_stream *stb = ui_out_stream_new (uiout);
+       struct cleanup *old_chain = make_cleanup_ui_out_stream_delete (stb);
+       ...
+       annotate_field (5);
+       print_expression (b->exp, stb->stream);
+       ui_out_field_stream (uiout, "what", local_stream);
+
+   This example, also from `print_one_breakpoint', shows how to use
+`ui_out_text' and `ui_out_field_string'.  The original code was:
+
+       annotate_field (5);
+       if (b->dll_pathname == NULL)
+         printf_filtered ("<any library> ");
+       else
+         printf_filtered ("library \"%s\" ", b->dll_pathname);
+
+   It became:
+
+       annotate_field (5);
+       if (b->dll_pathname == NULL)
+         {
+           ui_out_field_string (uiout, "what", "<any library>");
+           ui_out_spaces (uiout, 1);
+         }
+       else
+         {
+           ui_out_text (uiout, "library \"");
+           ui_out_field_string (uiout, "what", b->dll_pathname);
+           ui_out_text (uiout, "\" ");
+         }
+
+   The following example from `print_one_breakpoint' shows how to use
+`ui_out_field_int' and `ui_out_spaces'.  The original code was:
+
+       annotate_field (5);
+       if (b->forked_inferior_pid != 0)
+         printf_filtered ("process %d ", b->forked_inferior_pid);
+
+   It became:
+
+       annotate_field (5);
+       if (b->forked_inferior_pid != 0)
+         {
+           ui_out_text (uiout, "process ");
+           ui_out_field_int (uiout, "what", b->forked_inferior_pid);
+           ui_out_spaces (uiout, 1);
+         }
+
+   Here's an example of using `ui_out_field_string'.  The original code
+was:
+
+       annotate_field (5);
+       if (b->exec_pathname != NULL)
+         printf_filtered ("program \"%s\" ", b->exec_pathname);
+
+   It became:
+
+       annotate_field (5);
+       if (b->exec_pathname != NULL)
+         {
+           ui_out_text (uiout, "program \"");
+           ui_out_field_string (uiout, "what", b->exec_pathname);
+           ui_out_text (uiout, "\" ");
+         }
+
+   Finally, here's an example of printing an address.  The original
+code:
+
+       annotate_field (4);
+       printf_filtered ("%s ",
+             local_hex_string_custom ((unsigned long) b->address, "08l"));
+
+   It became:
+
+       annotate_field (4);
+       ui_out_field_core_addr (uiout, "Address", b->address);
+
+Console Printing
+================
+
+TUI
+===
+
+   ---------- Footnotes ----------
+
+   (1) The function cast is not portable ISO C.
+
+   (2) As of this writing (April 2001), setting verbosity level is not
+yet implemented, and is always returned as zero.  So calling
+`ui_out_message' with a VERBOSITY argument more than zero will cause
+the message to never be printed.
+

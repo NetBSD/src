@@ -1,0 +1,822 @@
+# OBSOLETE # Copyright 1995, 1996, 1997 Free Software Foundation, Inc.
+# OBSOLETE 
+# OBSOLETE # This program is free software; you can redistribute it and/or modify
+# OBSOLETE # it under the terms of the GNU General Public License as published by
+# OBSOLETE # the Free Software Foundation; either version 2 of the License, or
+# OBSOLETE # (at your option) any later version.
+# OBSOLETE # 
+# OBSOLETE # This program is distributed in the hope that it will be useful,
+# OBSOLETE # but WITHOUT ANY WARRANTY; without even the implied warranty of
+# OBSOLETE # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# OBSOLETE # GNU General Public License for more details.
+# OBSOLETE # 
+# OBSOLETE # You should have received a copy of the GNU General Public License
+# OBSOLETE # along with this program; if not, write to the Free Software
+# OBSOLETE # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+# OBSOLETE 
+# OBSOLETE # Please email any bugs, comments, and/or additions to this file to:
+# OBSOLETE # bug-gdb@prep.ai.mit.edu
+# OBSOLETE 
+# OBSOLETE # This file tests various Chill values, expressions, and types.
+# OBSOLETE 
+# OBSOLETE if $tracelevel then {
+# OBSOLETE 	strace $tracelevel
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE if [skip_chill_tests] then { continue }
+# OBSOLETE 
+# OBSOLETE set testfile "tests1"
+# OBSOLETE set srcfile ${srcdir}/$subdir/${testfile}.ch
+# OBSOLETE set binfile ${objdir}/${subdir}/${testfile}.exe
+# OBSOLETE if  { [compile "${srcfile} -g -w -o ${binfile} ${CHILL_RT0} ${CHILL_LIB}"] != "" } {
+# OBSOLETE     perror "Couldn't compile ${srcfile}"
+# OBSOLETE     return -1
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Set the current language to chill.  This counts as a test.  If it
+# OBSOLETE # fails, then we skip the other tests.
+# OBSOLETE 
+# OBSOLETE proc set_lang_chill {} {
+# OBSOLETE     global gdb_prompt
+# OBSOLETE     global binfile objdir subdir
+# OBSOLETE 
+# OBSOLETE     verbose "loading file '$binfile'"
+# OBSOLETE     gdb_load $binfile
+# OBSOLETE     send_gdb "set language chill\n"
+# OBSOLETE     gdb_expect {
+# OBSOLETE 	-re ".*$gdb_prompt $" {}
+# OBSOLETE 	timeout { fail "set language chill (timeout)" ; return 0 }
+# OBSOLETE     }
+# OBSOLETE 
+# OBSOLETE     send_gdb "show language\n"
+# OBSOLETE     gdb_expect {
+# OBSOLETE 	-re ".* source language is \"chill\".*$gdb_prompt $" {
+# OBSOLETE 	    pass "set language to \"chill\""
+# OBSOLETE 	    send_gdb "break dummyfunc\n"
+# OBSOLETE 	    gdb_expect {
+# OBSOLETE 		-re ".*$gdb_prompt $" {
+# OBSOLETE 		    send_gdb "run\n" 
+# OBSOLETE 		    gdb_expect -re ".*$gdb_prompt $" {}
+# OBSOLETE 		    return 1
+# OBSOLETE 		}
+# OBSOLETE 		timeout {
+# OBSOLETE 		    fail "can't set breakpoint (timeout)"
+# OBSOLETE 		    return 0
+# OBSOLETE 		}
+# OBSOLETE 	    }
+# OBSOLETE 	}
+# OBSOLETE 	-re ".*$gdb_prompt $" {
+# OBSOLETE 	    fail "setting language to \"chill\""
+# OBSOLETE 	    return 0
+# OBSOLETE 	}
+# OBSOLETE 	timeout {
+# OBSOLETE 	    fail "can't show language (timeout)"
+# OBSOLETE 	    return 0
+# OBSOLETE 	}
+# OBSOLETE     }
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Testing printing of a specific value.  Increment passcount for
+# OBSOLETE # success or issue fail message for failure.  In both cases, return
+# OBSOLETE # a 1 to indicate that more tests can proceed.  However a timeout
+# OBSOLETE # is a serious error, generates a special fail message, and causes
+# OBSOLETE # a 0 to be returned to indicate that more tests are likely to fail
+# OBSOLETE # as well.
+# OBSOLETE #
+# OBSOLETE # Args are:
+# OBSOLETE #
+# OBSOLETE #	First one is string to send_gdb to gdb
+# OBSOLETE #	Second one is string to match gdb result to
+# OBSOLETE #	Third one is an optional message to be printed
+# OBSOLETE 
+# OBSOLETE proc test_print_accept { args } {
+# OBSOLETE     global gdb_prompt
+# OBSOLETE     global passcount
+# OBSOLETE     global verbose
+# OBSOLETE 
+# OBSOLETE     if [llength $args]==3 then {
+# OBSOLETE 	set message [lindex $args 2]
+# OBSOLETE     } else {
+# OBSOLETE 	set message [lindex $args 0]
+# OBSOLETE     }
+# OBSOLETE     set sendthis [lindex $args 0]
+# OBSOLETE     set expectthis [lindex $args 1]
+# OBSOLETE     set result [gdb_test $sendthis ".* = ${expectthis}" $message]
+# OBSOLETE     if $result==0 {incr passcount}
+# OBSOLETE     return $result
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Testing printing of a specific value.  Increment passcount for
+# OBSOLETE # success or issue fail message for failure.  In both cases, return
+# OBSOLETE # a 1 to indicate that more tests can proceed.  However a timeout
+# OBSOLETE # is a serious error, generates a special fail message, and causes
+# OBSOLETE # a 0 to be returned to indicate that more tests are likely to fail
+# OBSOLETE # as well.
+# OBSOLETE 
+# OBSOLETE # various tests if modes are treated correctly
+# OBSOLETE # using ptype
+# OBSOLETE proc test_modes {} {
+# OBSOLETE     global passcount
+# OBSOLETE 
+# OBSOLETE     verbose "testing chill modes"
+# OBSOLETE     set passcount 0
+# OBSOLETE 
+# OBSOLETE     # discrete modes
+# OBSOLETE     test_print_accept "ptype BYTE" "byte"
+# OBSOLETE     test_print_accept "ptype UBYTE" "ubyte"
+# OBSOLETE     test_print_accept "ptype INT" "int"
+# OBSOLETE     test_print_accept "ptype UINT" "uint"
+# OBSOLETE     test_print_accept "ptype LONG" "long"
+# OBSOLETE     test_print_accept "ptype ULONG" "ulong"
+# OBSOLETE     test_print_accept "ptype BOOL" "bool"
+# OBSOLETE     test_print_accept "ptype CHAR" "char"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype set1" "SET \[(\]aaa, bbb, ccc\[)\]" \
+# OBSOLETE 	"print unnumbered set mode"
+# OBSOLETE     test_print_accept "ptype nset1" "SET \[(\]na = 1, nb = 34, nc = 20\[)\]" \
+# OBSOLETE 	"print numbered set mode"
+# OBSOLETE 
+# OBSOLETE     # mp:
+# OBSOLETE     # display maybe in hex values ?
+# OBSOLETE     #
+# OBSOLETE     test_print_accept "ptype r11" "ubyte \\(0:255\\)" \
+# OBSOLETE 	"print ubyte range mode"
+# OBSOLETE     test_print_accept "ptype r12" "uint \\(0:65535\\)" \
+# OBSOLETE 	"print uint range mode"
+# OBSOLETE #    test_print_accept "ptype r13" "ulong \\(0:4294967295\\)" \
+# OBSOLETE #	"print ulong range mode"
+# OBSOLETE     test_print_accept "ptype r14" "byte \\(-128:127\\)" \
+# OBSOLETE 	"print byte range mode"
+# OBSOLETE     test_print_accept "ptype r15" "int \\(-32768:32767\\)" \
+# OBSOLETE 	"print int range mode"
+# OBSOLETE     test_print_accept "ptype r16" "long \\(-2147483648:2147483647\\)" \
+# OBSOLETE 	"print long range mode"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype r2" "set1 \\(bbb:ccc\\)" \
+# OBSOLETE 	"print unnumbered set range mode"
+# OBSOLETE     test_print_accept "ptype r3" "nset1 \\(na:na\\)" \
+# OBSOLETE 	"print numbered set range mode"
+# OBSOLETE     # really this order ?
+# OBSOLETE     # I'm not sure what should happen for the next two tests.
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype r4" "nset1 \\(nb = 34:nc = 20\\)" \
+# OBSOLETE 	"print numbered set range mode"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype r5" "nset1 \\(na = 1, nb = 34, nc = 20\\)" \
+# OBSOLETE 	"print numbered set range mode"
+# OBSOLETE 
+# OBSOLETE     # powerset modes
+# OBSOLETE     test_print_accept "ptype pm1" \
+# OBSOLETE 	"POWERSET SET \[(\]p1, p2, p3, p4, p5, p6, p7, p8, p9, p10\[)\]" \
+# OBSOLETE 	"print powerset mode 1"
+# OBSOLETE     test_print_accept "ptype pm2" "POWERSET byte \\(1:8\\)" \
+# OBSOLETE 	"print powerset mode 2"
+# OBSOLETE     test_print_accept "ptype pm3" "POWERSET int \\(-32768:32767\\)" \
+# OBSOLETE 	"print powerset mode 3"
+# OBSOLETE     test_print_accept "ptype pm4" "POWERSET long \\(-32768:32768\\)" \
+# OBSOLETE 	"print powerset mode 4"
+# OBSOLETE     test_print_accept "ptype pm5" \
+# OBSOLETE 	"POWERSET long \\(-2147483648:2147483647\\)" \
+# OBSOLETE 	"print powerset mode 5"
+# OBSOLETE     
+# OBSOLETE     # reference modes
+# OBSOLETE     test_print_accept "ptype ref1" "REF pm1" \
+# OBSOLETE 	"print reference to powerset mode"
+# OBSOLETE     test_print_accept "ptype ref2" "REF byte" \
+# OBSOLETE 	"print reference to byte"
+# OBSOLETE     test_print_accept "ptype ref3" "PTR" \
+# OBSOLETE 	"print free reference type"
+# OBSOLETE 
+# OBSOLETE     # procedure modes
+# OBSOLETE     # FIXME: we have to talk about this ... 
+# OBSOLETE     test_print_accept "ptype prm1" \
+# OBSOLETE 	"REF PROC \[(\]\[)\]" \
+# OBSOLETE 	"print procedure mode 1"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype prm2" \
+# OBSOLETE 	"REF PROC \[(\]bool in, int out long inout\[)\] RETURNS \[(\]char\[)\]" \
+# OBSOLETE 	"print procedure mode 2"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype prm3" \
+# OBSOLETE 	"REF PROC \[(\]pm1, ref loc\[)\] RETURNS \[(\]ref3\[)\]" \
+# OBSOLETE 	"print procedure mode 3"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype prm4" \
+# OBSOLETE 	"\[(\] \[)\] EXCEPTIONS \[(\]ex1, ex2, ex3\[)\]" \
+# OBSOLETE 	"print procedure mode 4"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype prm5" \
+# OBSOLETE 	"REF PROC \[(\]r11, r16 inout, r5 out\[)\] RETURNS \[(\]r2\[)\] EXCEPTIONS \[(\]ex1\[)\]" \
+# OBSOLETE 	"print procedure mode 5"
+# OBSOLETE 
+# OBSOLETE     # synchronization modes
+# OBSOLETE     # FIXME: since gdb doesn't process events & buffers so far, this has be 
+# OBSOLETE     #        filled later...
+# OBSOLETE     xfail "synchronization mode handling"
+# OBSOLETE 
+# OBSOLETE     # timing modes
+# OBSOLETE     test_print_accept "ptype DURATION" "duration"
+# OBSOLETE     test_print_accept "ptype TIME" "time"
+# OBSOLETE 
+# OBSOLETE     # string modes
+# OBSOLETE     # some tests are done in chillvars.exp
+# OBSOLETE     test_print_accept "ptype strm1" "CHARS \\(5\\)" "print char string mode"
+# OBSOLETE     test_print_accept "ptype strm2" "CHARS \[(\]7\[)\] VARYING" \
+# OBSOLETE 	"print varying char string mode"
+# OBSOLETE     test_print_accept "ptype bstr1" "BOOLS \\(20\\)" "print bit string mode"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype B'000'" "BOOLS \\(3\\)" "bit string literal"
+# OBSOLETE     test_print_accept "ptype B'11110000'" "BOOLS \\(8\\)" "bit string literal"
+# OBSOLETE     # FIXME: adjust error message
+# OBSOLETE     gdb_test "ptype B'00110211'" {.*Too-large digit.*[.]} \
+# OBSOLETE 	"reject invalid bitstring"
+# OBSOLETE 
+# OBSOLETE     # array modes
+# OBSOLETE     # some tests are done in chillvars.exp
+# OBSOLETE     test_print_accept "ptype arr1m" "ARRAY \\(1:100\\) set1" \
+# OBSOLETE 	"print array mode 1"
+# OBSOLETE     test_print_accept "ptype arr2m" "ARRAY \\(1:100\\) ARRAY \\(1:100\\) set1"\
+# OBSOLETE 	"print array mode 2"
+# OBSOLETE     test_print_accept "ptype arr3m" "ARRAY \\(0:255\\) ARRAY \\(0:65535\\) ARRAY \\(-128:127\\) set1" \
+# OBSOLETE 	"print array mode 3"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype arr4m" "ARRAY \\(b:c\\) ARRAY \\(na = 1:na = 1\\) ARRAY \\(nc:nb\\) ARRAY \\(na = 1:nc = 20\\) POWERSET SET \[(\]p1, p2, p3, p4, p5, p6, p7, p8, p9, p10\[)\]" \
+# OBSOLETE 	"print array mode 4"
+# OBSOLETE     
+# OBSOLETE     # structure modes
+# OBSOLETE     # some checks are in chillvars.exp
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype stru1m" "STRUCT \\(.*a long,.*b long,.*CASE OF.*:.*ch1 CHARS \\(20\\).*:.*ch2 CHARS \\(10\\).*ELSE.*ch3 CHARS \\(1\\).*ESAC.*\\)" \
+# OBSOLETE 	"print structure mode 1"
+# OBSOLETE     #setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype stru2m" "STRUCT \\(.*f set1,.*CASE OF.*:.*ch1 CHARS \\(20\\).*:.*ch2 CHARS \\(10\\) VARYING.*ELSE.*ch3 CHARS \\(0\\) VARYING.*ESAC.*\\)" \
+# OBSOLETE 	"print structure mode 2"
+# OBSOLETE     #setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype stru3m" "STRUCT \\(.*f r3,.*CASE OF.*:.*ch1 CHARS \\(20\\).*ESAC.*\\)" \
+# OBSOLETE 	"print structure mode 3"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype stru4m" "STRUCT \\(.*i long,.*CASE OF.*:.*i1 int,.*i11 int,.*b1 bool,.*c1 char.*:.*i2 long,.*i22 long,.*bs2 BOOLS \\(10\\).*:.*s3 STRUCT \\(.*i3 int,.*CASE OF.*:.*foo long.*ELSE.*bar char.*ESAC.*\\).*ELSE.*x stru2m.*ESAC,.*y stru3m.*\\)" \
+# OBSOLETE 	"print structure mode 4"
+# OBSOLETE    
+# OBSOLETE     
+# OBSOLETE     if $passcount then {
+# OBSOLETE 	pass "$passcount correct modes printed"
+# OBSOLETE     }
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # various tests if locations are treated correctly
+# OBSOLETE # read access using ptype, print, whatis
+# OBSOLETE proc test_locations {} {
+# OBSOLETE     global passcount
+# OBSOLETE 
+# OBSOLETE     set passcount 0
+# OBSOLETE     verbose "testing read access to locations"
+# OBSOLETE     # various location tests can be found in chillvars.exp
+# OBSOLETE 
+# OBSOLETE     # set locations
+# OBSOLETE     test_print_accept "ptype s1l" "SET \\(aaa, bbb, ccc\\)" \
+# OBSOLETE 	"print mode of set location"
+# OBSOLETE     test_print_accept "whatis s1l" "set1" \
+# OBSOLETE 	"print modename of set location"
+# OBSOLETE     test_print_accept "print s1l" "ccc" "print set location"
+# OBSOLETE     test_print_accept "ptype s2l" "SET \\(na = 1, nb = 34, nc = 20\\)" \
+# OBSOLETE 	"print mode of numbered set location"
+# OBSOLETE     test_print_accept "whatis s2l" "nset1" \
+# OBSOLETE 	"print mode name of numbered set location"
+# OBSOLETE     test_print_accept "print s2l" "nb" "print numberes set location"
+# OBSOLETE 
+# OBSOLETE     # range modes
+# OBSOLETE     test_print_accept "ptype rl1" "ubyte \\(0:255\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl1" "r11" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl1" "3" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl2" "ubyte \\(0:255\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl2" "r11" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl2" "0" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl3" "ubyte \\(0:255\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl3" "r11" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl3" "255" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl5" "uint \\(0:65535\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl5" "r12" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl5" "65530" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl6" "uint \\(0:65535\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl6" "r12" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl6" "0" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 	
+# OBSOLETE     test_print_accept "ptype rl7" "uint \\(0:65535\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl7" "r12" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl7" "65535" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 	
+# OBSOLETE #     test_print_accept "ptype rl9" "ulong \\(0:4294967295\\)" \
+# OBSOLETE # 	"print mode of range location"
+# OBSOLETE #     test_print_accept "whatis rl9" "r13" \
+# OBSOLETE # 	"print mode name of range location"
+# OBSOLETE #     test_print_accept "print rl9" "128" \
+# OBSOLETE # 	"print range location"
+# OBSOLETE 	
+# OBSOLETE #     test_print_accept "ptype rl10" "ulong \\(0:4294967295\\)" \
+# OBSOLETE # 	"print mode of range location"
+# OBSOLETE #     test_print_accept "whatis rl10" "r13" \
+# OBSOLETE # 	"print mode name of range location"
+# OBSOLETE #     test_print_accept "print rl10" "0" \
+# OBSOLETE # 	"print range location"
+# OBSOLETE 	
+# OBSOLETE #     test_print_accept "ptype rl11" "ulong \\(0:4294967295\\)" \
+# OBSOLETE # 	"print mode of range location"
+# OBSOLETE #     test_print_accept "whatis rl11" "r13" \
+# OBSOLETE # 	"print mode name of range location"
+# OBSOLETE #     test_print_accept "print rl11" "4294967295" \
+# OBSOLETE # 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl13" "byte \\(-128:127\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl13" "r14" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl13" "-121" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl14" "byte \\(-128:127\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl14" "r14" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl14" "-128" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl15" "byte \\(-128:127\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl15" "r14" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl15" "127" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl17" "int \\(-32768:32767\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl17" "r15" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl17" "-32720" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl18" "int \\(-32768:32767\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl18" "r15" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl18" "-32768" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl19" "int \\(-32768:32767\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl19" "r15" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl19" "32767" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl21" "long \\(-2147483648:2147483647\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl21" "r16" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl21" "2147483643" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl22" "long \\(-2147483648:2147483647\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl22" "r16" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl22" "-2147483648" \
+# OBSOLETE 	"print range location"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype rl23" "long \\(-2147483648:2147483647\\)" \
+# OBSOLETE 	"print mode of range location"
+# OBSOLETE     test_print_accept "whatis rl23" "r16" \
+# OBSOLETE 	"print mode name of range location"
+# OBSOLETE     test_print_accept "print rl23" "2147483647" \
+# OBSOLETE 	"print range location"
+# OBSOLETE     
+# OBSOLETE     # powerset locations
+# OBSOLETE     test_print_accept "ptype pl1" \
+# OBSOLETE 	"POWERSET SET \\(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10\\)" \
+# OBSOLETE 	"print mode of powerset location 1"
+# OBSOLETE     test_print_accept "whatis pl1" "pm1" \
+# OBSOLETE 	"print mode mode name of powerset location"
+# OBSOLETE     test_print_accept "print pl1" \
+# OBSOLETE 	"\[\[\]p1:p10\[\]\]" \
+# OBSOLETE 	"print powerset location 1"
+# OBSOLETE     test_print_accept "print pl2" {\[\]} \
+# OBSOLETE 	"print powerset location 2"
+# OBSOLETE     test_print_accept "print pl3" "\[\[\]p1, p10\[\]\]" \
+# OBSOLETE     	"print powerset location 3"
+# OBSOLETE     test_print_accept "print pl4" {\[p1:p2, p4:p6, p8:p10\]} \
+# OBSOLETE 	"print powerset location 4"
+# OBSOLETE     test_print_accept "print pl5" {\[p1:p4, p6, p8:p10\]} \
+# OBSOLETE 	"print powerset location 5"
+# OBSOLETE     test_print_accept "print pl6" {\[p1, p3:p8, p10\]} \
+# OBSOLETE 	"print powerset location 6"
+# OBSOLETE     
+# OBSOLETE     test_print_accept "ptype pl7" \
+# OBSOLETE 	"POWERSET byte \\(1:8\\)" \
+# OBSOLETE 	"print mode of byte powerset location"
+# OBSOLETE     test_print_accept "whatis pl7" "pm2" \
+# OBSOLETE 	"print modename of byte powerset location"
+# OBSOLETE     test_print_accept "print pl7" {\[1:8\]} \
+# OBSOLETE 	"print powerset location 7"
+# OBSOLETE     
+# OBSOLETE     test_print_accept "ptype pl8" \
+# OBSOLETE 	"POWERSET int \\(-32768:32767\\)" \
+# OBSOLETE 	"print mode of int powerset location"
+# OBSOLETE     test_print_accept "whatis pl8" "pm3" \
+# OBSOLETE 	"print modename of int powerset location"
+# OBSOLETE     test_print_accept "print pl8" {\[-32768:32767\]} \
+# OBSOLETE 	"print powerset location 8"
+# OBSOLETE     
+# OBSOLETE #    test_print_accept "ptype pl9" \
+# OBSOLETE #	"POWERSET long \\(-2147483648:2147483647\\)" \
+# OBSOLETE #	"print mode of long powerset location"
+# OBSOLETE #    test_print_accept "whatis pl9" "pm5" \
+# OBSOLETE #	"print modename of long powerset location"
+# OBSOLETE #    test_print_accept "print pl9" {\[-2147483648:2147483647\]} \
+# OBSOLETE #	"print powerset location 9"
+# OBSOLETE     
+# OBSOLETE     # reference modes
+# OBSOLETE     test_print_accept "ptype ref3l" "PTR" "print mode of reference location"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "whatis ref3l" "ref3" \
+# OBSOLETE 	"print modename of reference location"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "print ref3l" "ref3\\(H'.*\\)" \
+# OBSOLETE 	"print reference location"
+# OBSOLETE     test_print_accept "ptype ref4l" "PTR" "print mode of reference location"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "whatis ref4l" "ref4" \
+# OBSOLETE 	"print modename of reference location"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "print ref4l" "ref4\\(H'.*\\)" \
+# OBSOLETE 	"print reference location"
+# OBSOLETE     test_print_accept "ptype ref5l" "PTR" "print mode of reference location"
+# OBSOLETE     test_print_accept "whatis ref5l" "PTR" \
+# OBSOLETE 	"print modename of reference location"
+# OBSOLETE     test_print_accept "print ref5l" "PTR\\(H'.*\\)" \
+# OBSOLETE 	"print reference location"
+# OBSOLETE 
+# OBSOLETE     # dereference a little bit..
+# OBSOLETE     test_print_accept "print ref6l->syn_int" "42" \
+# OBSOLETE 	"dereference reference to synmode location"
+# OBSOLETE     test_print_accept "print ref7l->int" "-42" \
+# OBSOLETE 	"dereference reference to predefined mode location"
+# OBSOLETE     test_print_accept "print ref8l->pm1" \
+# OBSOLETE 	"\[\[\]p1:p10\[\]\]" \
+# OBSOLETE 	"dereference reference to newmode location"
+# OBSOLETE 
+# OBSOLETE     # synchronization mode locations
+# OBSOLETE     # FIXME: synchronization modes are not supported so far...
+# OBSOLETE     xfail "no synchronization mode location support, not implemented yet"
+# OBSOLETE     
+# OBSOLETE     # timing mode locations
+# OBSOLETE     # FIXME: callbacks to abstime, inttime not implemented
+# OBSOLETE     xfail "timing modes not implemented properly yet"
+# OBSOLETE 
+# OBSOLETE     # char string locations
+# OBSOLETE     # some tests are don in chillvars.exp
+# OBSOLETE     test_print_accept "ptype strl1" \
+# OBSOLETE 	"CHARS \\(7\\) VARYING" \
+# OBSOLETE 	"print varying string location"
+# OBSOLETE     test_print_accept "whatis strl1" "strm2" \
+# OBSOLETE 	"print string locationa mode name"
+# OBSOLETE     test_print_accept "print strl1" \
+# OBSOLETE 	{\"hansi\^\(0\)\"} \
+# OBSOLETE 	"print string location"
+# OBSOLETE     # string elements
+# OBSOLETE     test_print_accept "print strl1(0)" "\'h\'" \
+# OBSOLETE 	"print string element 1"
+# OBSOLETE     test_print_accept "print strl1(5)" {'\^[(]0[)]'} \
+# OBSOLETE 	"print string element 2"
+# OBSOLETE     test_print_accept "print strl1(3)" "\'s\'" \
+# OBSOLETE 	"print string element 3"
+# OBSOLETE     test_print_accept "ptype strl1(0)" "char" \
+# OBSOLETE 	"print mode of string element"
+# OBSOLETE     # slices
+# OBSOLETE     test_print_accept "print strl1(3:4)" "\"si\"" \
+# OBSOLETE 	"print string slice 1"
+# OBSOLETE     test_print_accept "print strl1(0:5)" \
+# OBSOLETE 	{\"hansi\^\(0\)\"} \
+# OBSOLETE 	"print string slice 2"
+# OBSOLETE     test_print_accept "print strl1(0:0)" "\"h\"" \
+# OBSOLETE 	"print string slice 3"
+# OBSOLETE     test_print_accept "print strl1(0 up 6)" \
+# OBSOLETE 	{\"hansi\^\(0\)\"} \
+# OBSOLETE 	"print string slice 4"
+# OBSOLETE     # FIXME: adjust error message, when implented
+# OBSOLETE     gdb_test "print strl1(6 up 1)" \
+# OBSOLETE 	".*slice.*out of range.*" \
+# OBSOLETE 	"print invalid string slice length"
+# OBSOLETE     gdb_test "print strl1(-1 up 5)" \
+# OBSOLETE 	".*slice.*out of range.*" \
+# OBSOLETE 	"print invalid string slice length"
+# OBSOLETE     gdb_test "print strl1(-1:5)" \
+# OBSOLETE 	".*slice.*out of range.*" \
+# OBSOLETE 	"print invalid string slice"
+# OBSOLETE     gdb_test "print strl1(-1:7)" \
+# OBSOLETE 	".*slice.*out of range.*" \
+# OBSOLETE 	"print invalid string slice"
+# OBSOLETE     gdb_test "print strl1(0 up -1)" \
+# OBSOLETE 	".*slice.*out of range.*" \
+# OBSOLETE 	"print invalid string slice length"
+# OBSOLETE     gdb_test "print strl1(0 up 0)" {""}
+# OBSOLETE     
+# OBSOLETE     # bitstring locations
+# OBSOLETE     test_print_accept "ptype bstr1" \
+# OBSOLETE 	"BOOLS \\(20\\)" \
+# OBSOLETE 	"print mode of bitstring location"
+# OBSOLETE     test_print_accept "whatis bstrl1" "bstr1" \
+# OBSOLETE 	"print mode name of bitstring location"
+# OBSOLETE     test_print_accept "print bstrl1" \
+# OBSOLETE 	"B'10101010101010101010'" \
+# OBSOLETE 	"print bitstring location"
+# OBSOLETE     
+# OBSOLETE     test_print_accept "ptype bstrl1(0)" "bool|BOOL" \
+# OBSOLETE 	"print mode of bitstring element"
+# OBSOLETE     test_print_accept "print bstrl1(0)" "TRUE" \
+# OBSOLETE 	"print bitstring element 1"
+# OBSOLETE     test_print_accept "print bstrl1(19)" "FALSE" \
+# OBSOLETE 	"print bitstring element 2"
+# OBSOLETE     test_print_accept "print bstrl1(10)" "TRUE" \
+# OBSOLETE 	"print bitstring element 3"
+# OBSOLETE     
+# OBSOLETE     test_print_accept "print bstrl1(0:19)" \
+# OBSOLETE 	"B'10101010101010101010'" \
+# OBSOLETE 	"print bitstring location slice 1"
+# OBSOLETE     test_print_accept "print bstrl1(0:0)" \
+# OBSOLETE 	"B'1'" \
+# OBSOLETE 	"print bitstring location slice 2"
+# OBSOLETE     test_print_accept "print bstrl1(3:9)" \
+# OBSOLETE 	"B'0101010'" \
+# OBSOLETE 	"print bitstring location slice 3"
+# OBSOLETE     test_print_accept "print bstrl1(0 up 20)" \
+# OBSOLETE 	"B'10101010101010101010'" \
+# OBSOLETE 	"print bitstring location slice 4"
+# OBSOLETE     test_print_accept "print bstrl1(19 up 1)" \
+# OBSOLETE 	"B'0'" \
+# OBSOLETE 	"print bitstring location slice 5"
+# OBSOLETE     gdb_test "print bstrl1(20 up 1)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"print invalid bitstring slice (20 up 1)"
+# OBSOLETE     gdb_test "print bstrl1(-4:5)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"print invalid bitstring slice (-4:5)"
+# OBSOLETE     gdb_test "print bstrl1(-1:up 1)" \
+# OBSOLETE 	".*invalid expression syntax.*" \
+# OBSOLETE 	"print invalid bitstring slice (-1:ip 1)"
+# OBSOLETE     gdb_test "print bstrl1(-1:20)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"print invalid bitstring slice (-1:20)"
+# OBSOLETE     gdb_test "print bstrl1(0 up -1)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"print invalid bitstring slice (0 up -1)"
+# OBSOLETE     test_print_accept "print bstrl1(4 up 0)" "B''"
+# OBSOLETE     
+# OBSOLETE     # array mode locations
+# OBSOLETE     gdb_test_exact "ptype arrl1" \
+# OBSOLETE 	"ARRAY (1:100) set1" \
+# OBSOLETE 	"print mode of array location"
+# OBSOLETE     gdb_test "whatis arrl1" "arr1m" \
+# OBSOLETE 	"print mode name of array location"
+# OBSOLETE     gdb_test_exact "print arrl1" {[(1:100): aaa]} \
+# OBSOLETE 	"print array location"
+# OBSOLETE     test_print_accept "ptype arrl1(1)" \
+# OBSOLETE 	"SET \\(aaa, bbb, ccc\\)" \
+# OBSOLETE 	"print mode of array element"
+# OBSOLETE     gdb_test_exact "print arrl3" \
+# OBSOLETE 	{[(1:5): [(1:3): [(1:2): -2147483648]]]} \
+# OBSOLETE 	"print array location 2"
+# OBSOLETE     gdb_test_exact "print arrl3(1)" \
+# OBSOLETE 	{[(1:3): [(1:2): -2147483648]]} \
+# OBSOLETE 	"print array location 3"
+# OBSOLETE     gdb_test_exact "ptype arrl3(1)" \
+# OBSOLETE 	{ARRAY (1:3) ARRAY (1:2) long} \
+# OBSOLETE 	"print mode of array element"
+# OBSOLETE     test_print_accept "print arrl3(5)" \
+# OBSOLETE 	{\[\(1:3\): \[\(1:2\): -2147483648\]\]} \
+# OBSOLETE 	"print array location 4"
+# OBSOLETE     test_print_accept "print arrl3(1,1)" \
+# OBSOLETE 	{\[\(1:2\): -2147483648\]} \
+# OBSOLETE 	"print array location 5"
+# OBSOLETE     test_print_accept "ptype arrl3(1,1)" \
+# OBSOLETE 	{ARRAY \(1:2\) long} \
+# OBSOLETE 	"print mode of array element"
+# OBSOLETE     test_print_accept "print arrl3(5,3)" \
+# OBSOLETE 	{\[\(1:2\): -2147483648\]} \
+# OBSOLETE 	"print array location 6"
+# OBSOLETE     test_print_accept "print arrl3(1,1,1)" \
+# OBSOLETE 	"-2147483648" \
+# OBSOLETE 	"print array location 7"
+# OBSOLETE     test_print_accept "print arrl3(5,3,2)" \
+# OBSOLETE 	"-2147483648" \
+# OBSOLETE 	"print array location 8"
+# OBSOLETE     test_print_accept "print arrl3(1)(3)(2)" \
+# OBSOLETE 	"-2147483648" \
+# OBSOLETE 	"print array location 9"
+# OBSOLETE 
+# OBSOLETE     # reject the following range fails
+# OBSOLETE     # FIXME: adjust error messages
+# OBSOLETE     gdb_test "print arrl3(-1)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 1"
+# OBSOLETE     gdb_test "print arrl3(6)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 2"
+# OBSOLETE     gdb_test "print arrl3(0,0)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 3"
+# OBSOLETE     gdb_test "print arrl3(1,0)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 4"
+# OBSOLETE     gdb_test "print arrl3(1,4)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 5"
+# OBSOLETE     gdb_test "print arrl3(6,4)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 6"
+# OBSOLETE     gdb_test "print arrl3(1,1,0)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 7"
+# OBSOLETE     gdb_test "print arrl3(6,4,0)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 8"
+# OBSOLETE     gdb_test "print arrl3(1,1,3)" \
+# OBSOLETE 	".*out of range.*" \
+# OBSOLETE 	"check invalid array indices 9"
+# OBSOLETE 
+# OBSOLETE     gdb_test "print arrl3(0)(0)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 10"
+# OBSOLETE     gdb_test "print arrl3(1)(0)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 11"
+# OBSOLETE     gdb_test "print arrl3(1)(4)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 12"
+# OBSOLETE     gdb_test "print arrl3(6)(4)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 13"
+# OBSOLETE     gdb_test "print arrl3(1)(1)(0)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 14"
+# OBSOLETE     gdb_test "print arrl3(6)(4)(0)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 15"
+# OBSOLETE     gdb_test "print arrl3(1)(1)(3)" \
+# OBSOLETE 	".* array or string index out of range.*" \
+# OBSOLETE 	"check invalid array indices 16"
+# OBSOLETE     
+# OBSOLETE     # slices
+# OBSOLETE     test_print_accept "print arrl4(1:3)" \
+# OBSOLETE 	{\[\(1:2\): \[\(1:3\): \[\(1:2\): -2147483648\]\], \(3\): \[\(1:3\): \[\(1:2\): 100\]\]\]} \
+# OBSOLETE 	"print array slice 1"
+# OBSOLETE     test_print_accept "ptype arrl4(1:3)" \
+# OBSOLETE 	{ARRAY \(1:3\) ARRAY \(1:3\) ARRAY \(1:2\) long} \
+# OBSOLETE 	"print mode of array slice"
+# OBSOLETE # The next one is bogus:
+# OBSOLETE #    test_print_accept "print arrl4(5, 2:3, 1)" \
+# OBSOLETE #	# FIXME: maybe the '(1): ' in the inner tupel should be omitted ? \
+# OBSOLETE #	{\[(2): \[\(1\): 100\], \(3\):\[\(1\): 100\]\]} \
+# OBSOLETE #	"print array slice 2"
+# OBSOLETE     test_print_accept "print arrl4(1 up 4)" \
+# OBSOLETE 	{\[\(1:2\): \[\(1:3\): \[\(1:2\): -2147483648\]\], \(3\): \[\(1:3\): \[\(1:2\): 100\]\], \(4\): \[\(1:3\): \[\(1:2\): -2147483648\]\]\]} \
+# OBSOLETE 	"print array slice 3"
+# OBSOLETE # The next two are bogus:
+# OBSOLETE #    test_print_accept "print arrl4(3, 2 up 1)" \
+# OBSOLETE #	{\[\(2:3\): \[\(1:2\): 100\]\]} \
+# OBSOLETE #	"print array slice 4"
+# OBSOLETE #    test_print_accept "print arrl4(1:2, 1 up 1, 2)" \
+# OBSOLETE #	{\[\(1\): \[\(1\): \[\(2\): -2147483648\], \(2\): \[\(2\): -2147483648\]\], \(2\): \[\(1\): \[\(2\): -2147483648\], \(2\): \[\(2\): -2147483648\]\]\]} \
+# OBSOLETE #	"print array slice 4"
+# OBSOLETE     # reject invalid slices
+# OBSOLETE     # FIXME: adjust error messages
+# OBSOLETE     gdb_test "print arrl4(5:6)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 1"
+# OBSOLETE     gdb_test "print arrl4(0:1)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 2"
+# OBSOLETE     gdb_test "print arrl4(0:6)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 3"
+# OBSOLETE     gdb_test "print arrl4(3:2)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 4"
+# OBSOLETE     gdb_test "print arrl4(1,3:4)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 5"
+# OBSOLETE     gdb_test "print arrl4(1,0:1)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 6"
+# OBSOLETE     gdb_test "print arrl4(1,0:4)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 7"
+# OBSOLETE     gdb_test "print arrl4(1,3:2)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 8"
+# OBSOLETE     gdb_test "print arrl4(5 up 2)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 9"
+# OBSOLETE     gdb_test "print arrl4(-1 up 1)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 10"
+# OBSOLETE     gdb_test "print arrl4(-1 up 7)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 11"
+# OBSOLETE     gdb_test "print arrl4(1 up 0)" \
+# OBSOLETE 	".*slice out of range.*" \
+# OBSOLETE 	"check invalid range 12"
+# OBSOLETE     gdb_test "print arrl4(1,3 up 1)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 13"
+# OBSOLETE     gdb_test "print arrl4(1,-1 up 1)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 14"
+# OBSOLETE     gdb_test "print arrl4(1,-1 up 5)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 15"
+# OBSOLETE     gdb_test "print arrl4(1,2 up 0)" \
+# OBSOLETE 	".*syntax error.*" \
+# OBSOLETE 	"check invalid range 16"
+# OBSOLETE 
+# OBSOLETE     # structure modes
+# OBSOLETE     # some tests are in chillvars.exp
+# OBSOLETE     # FIXME: no tag processing implemented do maybe adjust these tests
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "ptype stru1m" \
+# OBSOLETE 	"STRUCT \\(.*a long,.*b long,.*CASE b OF.*\\(42\\):.*ch1 CHARS\\(20\\),.*\\(52\\):.*ch2 CHARS\\(10\\).*ELSE.*ch3 CHARS\\(1\\).*ESAC.*\\)" \
+# OBSOLETE 	"print mode of structure location 1"
+# OBSOLETE     test_print_accept "whatis strul1" "stru1m" \
+# OBSOLETE 	"print mode name of structure location 1"
+# OBSOLETE     setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "print strul1" \
+# OBSOLETE 	{\[\.a: -2147483648, \.b: 42, \.\(b\): \{\(42\) = \[\.ch1: \"12345678900987654321\"\], \(52\) = \[\.ch2: \"1234567890\"\], (else) = \[\.ch3: \"1\"\]\}\]} \
+# OBSOLETE 	"print structure location 1"
+# OBSOLETE     test_print_accept "print strul1.a" \
+# OBSOLETE 	"-2147483648" \
+# OBSOLETE 	"print field of structure location 1"
+# OBSOLETE     test_print_accept "print strul1.b" "42" \
+# OBSOLETE 	"print field of structure location 1"
+# OBSOLETE     test_print_accept "print strul1.ch1" \
+# OBSOLETE 	"\"12345678900987654321\"" \
+# OBSOLETE 	"print field of structure location 1"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "print strul1.ch2" \
+# OBSOLETE 	"\"1234567890\"" \
+# OBSOLETE 	"print field of structure location 1"
+# OBSOLETE     # setup_xfail "*-*-*"
+# OBSOLETE     test_print_accept "print strul1.ch3" \
+# OBSOLETE 	"\"1\"" \
+# OBSOLETE 	"print field of structure location 1"
+# OBSOLETE     
+# OBSOLETE     if $passcount then {
+# OBSOLETE 	pass "$passcount correct locations printed"
+# OBSOLETE     }
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # This is chill/9434
+# OBSOLETE 
+# OBSOLETE proc test_9434 {} {
+# OBSOLETE     global passcount
+# OBSOLETE 
+# OBSOLETE     verbose "testing pr-9434"
+# OBSOLETE 
+# OBSOLETE     test_print_accept "ptype m_xyzmode" "STRUCT \\(.*next REF m_xyzmode,.*i long.*\\)"
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Start with a fresh gdb.
+# OBSOLETE 
+# OBSOLETE gdb_exit
+# OBSOLETE gdb_start
+# OBSOLETE gdb_reinitialize_dir $srcdir/$subdir
+# OBSOLETE 
+# OBSOLETE gdb_test "set print sevenbit-strings" ".*"
+# OBSOLETE 
+# OBSOLETE if [set_lang_chill] then {
+# OBSOLETE     test_modes
+# OBSOLETE     test_locations
+# OBSOLETE     test_9434
+# OBSOLETE } else {
+# OBSOLETE     warning "$test_name tests suppressed."
+# OBSOLETE }

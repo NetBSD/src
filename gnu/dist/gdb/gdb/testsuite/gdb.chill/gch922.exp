@@ -1,0 +1,183 @@
+# OBSOLETE # Copyright 1995, 1996, 1997 Free Software Foundation, Inc.
+# OBSOLETE 
+# OBSOLETE # This program is free software; you can redistribute it and/or modify
+# OBSOLETE # it under the terms of the GNU General Public License as published by
+# OBSOLETE # the Free Software Foundation; either version 2 of the License, or
+# OBSOLETE # (at your option) any later version.
+# OBSOLETE # 
+# OBSOLETE # This program is distributed in the hope that it will be useful,
+# OBSOLETE # but WITHOUT ANY WARRANTY; without even the implied warranty of
+# OBSOLETE # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# OBSOLETE # GNU General Public License for more details.
+# OBSOLETE # 
+# OBSOLETE # You should have received a copy of the GNU General Public License
+# OBSOLETE # along with this program; if not, write to the Free Software
+# OBSOLETE # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+# OBSOLETE 
+# OBSOLETE # Please email any bugs, comments, and/or additions to this file to:
+# OBSOLETE # bug-gdb@prep.ai.mit.edu
+# OBSOLETE 
+# OBSOLETE # This file tests various Chill values, expressions, and types.
+# OBSOLETE 
+# OBSOLETE # This file was written by Wilfried Moser (moser@aut.alcatel.at)
+# OBSOLETE #			   Kurt Fuchs (fuchs_k@aut.alcatel.at)
+# OBSOLETE #
+# OBSOLETE 
+# OBSOLETE if $tracelevel then {
+# OBSOLETE 	strace $tracelevel
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE if [skip_chill_tests] then { continue }
+# OBSOLETE 
+# OBSOLETE set testfile "gch922"
+# OBSOLETE set srcfile ${srcdir}/$subdir/${testfile}.ch
+# OBSOLETE set binfile ${objdir}/${subdir}/${testfile}.exe
+# OBSOLETE if  { [compile "${srcfile} -g -w -o ${binfile} ${CHILL_RT0} ${CHILL_LIB}"] != "" } {
+# OBSOLETE     perror "Couldn't compile ${srcfile}"
+# OBSOLETE     return -1
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Set the current language to chill.  This counts as a test.  If it
+# OBSOLETE # fails, then we skip the other tests.
+# OBSOLETE 
+# OBSOLETE proc set_lang_chill {} {
+# OBSOLETE     global gdb_prompt
+# OBSOLETE     global binfile objdir subdir
+# OBSOLETE 
+# OBSOLETE     verbose "loading file '$binfile'"
+# OBSOLETE     gdb_load $binfile
+# OBSOLETE     send_gdb "set language chill\n"
+# OBSOLETE     gdb_expect {
+# OBSOLETE 	-re ".*$gdb_prompt $" {}
+# OBSOLETE 	timeout { fail "set language chill (timeout)" ; return 0 }
+# OBSOLETE     }
+# OBSOLETE 
+# OBSOLETE     send_gdb "show language\n"
+# OBSOLETE     gdb_expect {
+# OBSOLETE 	-re ".* source language is \"chill\".*$gdb_prompt $" {
+# OBSOLETE 	    pass "set language to \"chill\""
+# OBSOLETE 	    send_gdb "break xx_\n"
+# OBSOLETE 	    gdb_expect {
+# OBSOLETE 		-re ".*$gdb_prompt $" {
+# OBSOLETE 		    send_gdb "run\n" 
+# OBSOLETE 		    gdb_expect -re ".*$gdb_prompt $" {}
+# OBSOLETE 		    return 1
+# OBSOLETE 		}
+# OBSOLETE 		timeout {
+# OBSOLETE 		    fail "can't set breakpoint (timeout)"
+# OBSOLETE 		    return 0
+# OBSOLETE 		}
+# OBSOLETE 	    }
+# OBSOLETE 	}
+# OBSOLETE 	-re ".*$gdb_prompt $" {
+# OBSOLETE 	    fail "setting language to \"chill\""
+# OBSOLETE 	    return 0
+# OBSOLETE 	}
+# OBSOLETE 	timeout {
+# OBSOLETE 	    fail "can't show language (timeout)"
+# OBSOLETE 	    return 0
+# OBSOLETE 	}
+# OBSOLETE     }
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE # Testing printing of a specific value.  Increment passcount for
+# OBSOLETE # success or issue fail message for failure.  In both cases, return
+# OBSOLETE # a 1 to indicate that more tests can proceed.  However a timeout
+# OBSOLETE # is a serious error, generates a special fail message, and causes
+# OBSOLETE # a 0 to be returned to indicate that more tests are likely to fail
+# OBSOLETE # as well.
+# OBSOLETE #
+# OBSOLETE # Args are:
+# OBSOLETE #
+# OBSOLETE #	First one is string to send_gdb to gdb
+# OBSOLETE #	Second one is string to match gdb result to
+# OBSOLETE #	Third one is an optional message to be printed
+# OBSOLETE 
+# OBSOLETE proc test_print_accept { args } {
+# OBSOLETE     global gdb_prompt
+# OBSOLETE     global passcount
+# OBSOLETE     global verbose
+# OBSOLETE 
+# OBSOLETE     if [llength $args]==3 then {
+# OBSOLETE 	set message [lindex $args 2]
+# OBSOLETE     } else {
+# OBSOLETE 	set message [lindex $args 0]
+# OBSOLETE     }
+# OBSOLETE     set sendthis [lindex $args 0]
+# OBSOLETE     set expectthis [lindex $args 1]
+# OBSOLETE     set result [gdb_test $sendthis ".* = ${expectthis}" $message]
+# OBSOLETE     if $result==0 {incr passcount}
+# OBSOLETE     return $result
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE 
+# OBSOLETE proc test_chars {} {
+# OBSOLETE     global passcount gdb_prompt
+# OBSOLETE 
+# OBSOLETE     verbose "Testing Chars"
+# OBSOLETE     set passcount 0
+# OBSOLETE 
+# OBSOLETE     test_print_accept "print a" {'\^\(0\)'<repeats 70 times>//"Jason""\^\(0,5\)""Hugo\^\(10\)"//'\^\(1\)'<repeats 70 times>}
+# OBSOLETE     test_print_accept "print b" {"Jason""\^\(0,5\)""Hugo\^\(10\)"}
+# OBSOLETE     test_print_accept "print c" {'a'<repeats 70 times>//"\^\(0,5\)Jason"//'b'<repeats 70 times>}
+# OBSOLETE     test_print_accept "print d" {'\^\(11\)'}
+# OBSOLETE 
+# OBSOLETE     gdb_test "set var a := (100)'\^(0,255)'" ""
+# OBSOLETE     test_print_accept "print a" {"\^\(0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255\)"}
+# OBSOLETE 
+# OBSOLETE     send_gdb "set var a := (10)'\^(1)'//(26)\"\^(66,67)\"//\" \"//'I'//' '//'a'//'m'//\" Hugo\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {"\^\(1,1,1,1,1,1,1,1,1,1\)BCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBC I am Hugo"}
+# OBSOLETE     send_gdb "set var b := \"Hugo \"\"\^(3,4)\"\"Otto\^(17)\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print b" {"Hugo ""\^\(3,4\)""Otto\^\(17\)"}
+# OBSOLETE     send_gdb "set var c := (70)'b' // \"\^(2,3)Hugo \" // (70)'c' \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print c" {'b'<repeats 70 times>//"\^\(2,3\)Hugo "//'c'<repeats 70 times>}
+# OBSOLETE     gdb_test "set var d := '\^(199)'" ""
+# OBSOLETE     test_print_accept "print d" {'\^\(199\)'}
+# OBSOLETE 
+# OBSOLETE     test_print_accept "print (10)'\^(0)'//(26)\"\^(66,67)\"//\" \"//'I'//' '//'a'//'m'//\" Hugo\"" {"\^\(0,0,0,0,0,0,0,0,0,0\)BCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBCBC I am Hugo"}
+# OBSOLETE     test_print_accept "print \"Jason\"\"\^(0,5)\"\"Hugo\^(10)\"" {"Jason""\^\(0,5\)""Hugo\^\(10\)"}
+# OBSOLETE 
+# OBSOLETE     send_gdb "set var a := \"\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {""}
+# OBSOLETE     send_gdb "set var a := \"\"\"\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {""""}
+# OBSOLETE     send_gdb "set var a := \" \"\"\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {" """}
+# OBSOLETE     send_gdb "set var a := \"\^\^\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {"\^\^"}
+# OBSOLETE     send_gdb "set var a := \"'\" \n" ; gdb_expect -re "$gdb_prompt $"
+# OBSOLETE     test_print_accept "print a" {"'"}
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE 
+# OBSOLETE proc test_code {} {
+# OBSOLETE     global passcount gdb_prompt
+# OBSOLETE 
+# OBSOLETE     verbose "Testing Chars"
+# OBSOLETE     set passcount 0
+# OBSOLETE 
+# OBSOLETE     runto bulk
+# OBSOLETE     test_print_accept "print a" {"\^\(255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127,255,0,222,127\)"}
+# OBSOLETE     test_print_accept "print b" {"\^\(200\)"}
+# OBSOLETE #    test_print_accept "print c" {'a'<repeats 70 times>//"\^\(0,5\)Jason"//'b'<repeats 70 times>}
+# OBSOLETE     test_print_accept "print d" {'a'}
+# OBSOLETE }
+# OBSOLETE 
+# OBSOLETE 
+# OBSOLETE # Start with a fresh gdb.
+# OBSOLETE 
+# OBSOLETE gdb_exit
+# OBSOLETE gdb_start
+# OBSOLETE gdb_reinitialize_dir $srcdir/$subdir
+# OBSOLETE 
+# OBSOLETE gdb_test "set print sevenbit-strings" ".*"
+# OBSOLETE 
+# OBSOLETE 
+# OBSOLETE if [set_lang_chill] then {
+# OBSOLETE     # test builtins as described in chapter 6.20.3 Z.200
+# OBSOLETE 
+# OBSOLETE     test_chars
+# OBSOLETE #    test_code
+# OBSOLETE } else {
+# OBSOLETE     warning "$test_name tests suppressed."
+# OBSOLETE }
