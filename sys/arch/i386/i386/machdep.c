@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 1996/03/08 20:19:48 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 1996/03/30 07:37:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -135,6 +135,7 @@ extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 
+void identifycpu __P((void));
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
 void cpu_reset __P((void));
@@ -358,6 +359,7 @@ struct cpu_nameclass i386_cpus[] = {
 	{ "Cx486DLC",	CPUCLASS_486 },	/* CPU_486DLC (Cyrix) */
 };
 
+void
 identifycpu()
 {
 	int len;
@@ -452,6 +454,7 @@ identifycpu()
 /*  
  * machine dependent system variables.
  */ 
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -613,6 +616,7 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
+int
 sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
