@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2001/09/28 11:59:52 chs Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 2002/07/07 00:22:19 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,11 +65,7 @@ struct evcnt pmax_fpu_evcnt =
 struct evcnt pmax_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
 
-/* XXX XXX XXX */
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
-#define	dealfpu(sr,cr,pc) \
-		MachFPInterrupt((sr), (cr), (pc), curproc->p_md.md_regs)
-/* XXX XXX XXX */
 
 /*
  * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
@@ -98,7 +94,9 @@ cpu_intr(status, cause, pc, ipending)
 		if (!USERMODE(status))
 			goto kerneltouchedFPU;
 		pmax_fpu_evcnt.ev_count++;
-		dealfpu(status, cause, pc);
+#if !defined(SOFTFLOAT)
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+#endif
 	}
 
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
