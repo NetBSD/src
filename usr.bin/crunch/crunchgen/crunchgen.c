@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.46 2003/05/14 11:20:01 dsl Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.47 2003/05/15 17:49:46 dsl Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.46 2003/05/14 11:20:01 dsl Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.47 2003/05/15 17:49:46 dsl Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.46 2003/05/14 11:20:01 dsl Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"0.2"
+#define CRUNCH_VERSION	"0.3"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -857,7 +857,8 @@ void top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "PROG=%s\n\n", execfname);
     
-    fprintf(outmk, "all: ${SUBMAKE_TARGETS} .WAIT ${PROG}.strip\n");
+    fprintf(outmk, "all: ${PROG}.crunched\n");
+    fprintf(outmk, "${PROG}.crunched: ${SUBMAKE_TARGETS} .WAIT ${PROG}.strip\n");
     fprintf(outmk, "${PROG}.strip:\n");
     fprintf(outmk, "\t${MAKE} -f ${PROG}.mk ${PROG}\n");
     fprintf(outmk, "\t[ -f ${PROG}.stripped -a ! ${PROG} -nt ${PROG}.stripped ] || { \\\n");
