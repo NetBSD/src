@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)size.c	5.1 (Berkeley) 3/2/92";*/
-static char rcsid[] = "$Id: size.c,v 1.4 1993/08/07 04:35:31 mycroft Exp $";
+static char rcsid[] = "$Id: size.c,v 1.5 1993/11/18 21:00:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ show(count, name)
 	}
 	if (read(fd, &head, sizeof(head)) != sizeof(head) || N_BADMAG(head)) {
 		err("%s: not in a.out format", name);
+		(void)close(fd);
 		return (1);
 	}
 	(void)close(fd);
