@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/31 17:14:01 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2000/06/12 18:51:15 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -14,16 +14,25 @@ LISTS=		${COMMONDIR}/list
 RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
 	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 		${MAKE} -s -f-
+RAMDISK_T!=	cd ${.CURDIR}/../ramdisk-tiny/; \
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-tiny.fs\n" | \
+		${MAKE} -s -f-
 
-.for kernel in INSTALL INSTALL_SMALL INSTALL_TINY
-netbsd.${kernel}.gz: .NOTMAIN ${KERNOBJDIR}/${kernel}/netbsd ${RAMDISK}
-	cp ${KERNOBJDIR}/${kernel}/netbsd netbsd.tmp
+netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
+	cp ${KERNOBJDIR}/INSTALL/netbsd netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
-KERNELS+=	netbsd.${kernel}.gz
-.endfor
+
+netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
+	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
+	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
+	${STRIP} netbsd.tmp
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+
+KERNELS=netbsd.INSTALL.gz netbsd.INSTALL_TINY.gz
 
 all: ${KERNELS}
 
