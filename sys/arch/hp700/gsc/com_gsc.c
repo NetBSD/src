@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.2 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -111,11 +111,18 @@ com_gsc_attach(parent, self, aux)
 	sc->sc_frequency = COMGSC_FREQUENCY;
 
 	/*
-	 * XXX fredette - don't really attach unit 1,
-	 * as my serial console is on it, and I haven't
-	 * really done any console work yet.
+	 * XXX fredette - don't really attach anything
+	 * unless it happens to be the KGDB port, since
+	 * any other port might be a serial console, and
+	 * I haven't really done any console work yet.
 	 */
-	if (self->dv_unit == 1) {
+	if (
+#ifdef KGDB
+	    ga->ga_hpa != KGDBADDR
+#else
+	    /* CONSTCOND */ 1
+#endif
+	    ) {
 		printf(": untouched, assumed serial console\n");
 		return;
 	}
@@ -126,8 +133,9 @@ com_gsc_attach(parent, self, aux)
 #endif
 
 	com_attach_subr(sc);
-	gsc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
-				       ga->ga_irq, comintr, sc, &sc->sc_dev);
+	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY,
+					  comintr, sc,
+					  ga->ga_int_reg, ga->ga_irq);
 }
 
 #ifdef	KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.1 2002/06/06 19:48:03 fredette Exp $	*/
+/*	$NetBSD: asp.c,v 1.2 2002/08/16 15:02:39 fredette Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -120,7 +120,8 @@ const struct asp_spus_tag {
 
 struct asp_softc {
 	struct  device sc_dev;
-	struct gscbus_ic sc_ic;
+
+	struct hp700_int_reg sc_int_reg;
 
 	volatile struct asp_hwr *sc_hw;
 	volatile struct asp_trs *sc_trs;
@@ -136,6 +137,31 @@ struct cfattach asp_ca = {
 	sizeof(struct asp_softc), aspmatch, aspattach
 };
 
+/*
+ * Before a module is matched, this fixes up its gsc_attach_args.
+ */
+static void asp_fix_args __P((void *, struct gsc_attach_args *)); 
+static void
+asp_fix_args(void *_sc, struct gsc_attach_args *ga)
+{
+	hppa_hpa_t module_offset;
+	struct asp_softc *sc = _sc;
+
+	/*  
+	 * Determine this module's interrupt bit.
+	 */
+	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
+	ga->ga_irq = HP700CF_IRQ_UNDEF;
+#define ASP_IRQ(off, irq) if (module_offset == off) ga->ga_irq = irq
+	ASP_IRQ(0x22000, 6);	/* com1 */
+	ASP_IRQ(0x23000, 5);	/* com0 */
+	ASP_IRQ(0x24000, 7);	/* lpt */
+	ASP_IRQ(0x25000, 9);	/* osiop */
+	ASP_IRQ(0x26000, 8);	/* ie */
+	ASP_IRQ(0x30000, 3);	/* siop */
+#undef ASP_IRQ
+}      
+
 int
 aspmatch(parent, cf, aux)   
 	struct device *parent;
@@ -147,6 +173,10 @@ aspmatch(parent, cf, aux)
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_ASP)
 		return 0;
+
+	/* Make sure we have an IRQ. */
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
+		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
 
 	return 1;
 }
@@ -193,14 +223,18 @@ aspattach(parent, self, aux)
 	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
 	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
-	sc->sc_ic.gsc_type = gsc_asp;
-	sc->sc_ic.gsc_dv = sc;
-	hp700_intr_reg_establish(&sc->sc_ic.gsc_int_reg);
-	sc->sc_ic.gsc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
-	sc->sc_ic.gsc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
+	/* Establish the interrupt register. */
+	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
+	sc->sc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
 
+	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
+	ga.ga_hpa = ASP_CHPA;
+	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_fix_args = asp_fix_args;
+	ga.ga_fix_args_cookie = sc;
+	ga.ga_scsi_target = sc->sc_trs->asp_scsi;
 	config_found(self, &ga, gscprint);
 }
