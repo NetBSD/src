@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: global.c,v 1.3 1994/02/25 03:20:49 cgd Exp $";
+static char *rcsid = "$Id: global.c,v 1.4 1996/02/24 01:22:17 jtk Exp $";
 #endif /* not lint */
 
 /*
@@ -44,6 +44,6 @@ static char *rcsid = "$Id: global.c,v 1.3 1994/02/25 03:20:49 cgd Exp $";
  * we will actually allocate the space.
  */
 
-#include "defs.h"
+#include <defs.h>
 #define extern
-#include "ext.h"
+#include <ext.h>
