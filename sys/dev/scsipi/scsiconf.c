@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.221 2004/08/05 19:45:13 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.222 2004/08/06 09:27:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.221 2004/08/05 19:45:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.222 2004/08/06 09:27:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,6 +308,7 @@ scsibusdetach(self, flags)
 	struct scsipi_periph *periph;
 	int ctarget, clun;
 	struct scsipi_xfer *xs;
+	int error;
 
 
 	/*
@@ -332,12 +333,14 @@ scsibusdetach(self, flags)
 	/*
 	 * Detach all of the periphs.
 	 */
-	return scsipi_target_detach(chan, -1, -1, flags);
+	error = scsipi_target_detach(chan, -1, -1, flags);
 
 	/*
 	 * Now shut down the channel.
+	 * XXX only if no errors ?
 	 */
 	scsipi_channel_shutdown(chan);
+	return (error);
 }
 
 /*
