@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.238 1999/07/03 12:09:52 tron Exp $
+#	$NetBSD: GENERIC,v 1.239 1999/07/05 09:14:09 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -83,9 +83,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-# Executable format options
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 # File systems
 file-system 	FFS		# UFS

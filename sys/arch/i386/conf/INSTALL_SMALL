@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.39 1999/05/19 14:41:54 bouyer Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.40 1999/07/05 09:14:09 fvdl Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -92,9 +92,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-# Executable format options
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 # File systems
 file-system 	FFS		# UFS

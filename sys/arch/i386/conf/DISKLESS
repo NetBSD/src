@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.67 1999/05/01 17:19:52 drochner Exp $
+#	$NetBSD: DISKLESS,v 1.68 1999/07/05 09:14:09 fvdl Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -58,8 +58,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 options 	LKM		# loadable kernel modules
 
