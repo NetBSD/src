@@ -43,6 +43,9 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+/* Define as the size of a pointer in the target profile file format.  */
+#undef GMON_PTR_SIZE
+
 /* Define if you have the __argz_count function.  */
 #undef HAVE___ARGZ_COUNT
 
@@ -103,6 +106,9 @@
 /* Define if you have the <string.h> header file.  */
 #undef HAVE_STRING_H
 
+/* Define if you have the <sys/gmon_out.h> header file.  */
+#undef HAVE_SYS_GMON_OUT_H
+
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
@@ -111,18 +117,6 @@
 
 /* Define if you have the <values.h> header file.  */
 #undef HAVE_VALUES_H
-
-/* Define if you have the stpcpy function */
-#undef HAVE_STPCPY
-
-/* Define if your locale.h file contains LC_MESSAGES. */
-#undef HAVE_LC_MESSAGES
-
-/* Define to 1 if NLS is requested */
-#undef ENABLE_NLS
-
-/* Define as 1 if you have gettext and don't want to use GNU gettext. */
-#undef HAVE_GETTEXT
 
 /* Name of package */
 #undef PACKAGE

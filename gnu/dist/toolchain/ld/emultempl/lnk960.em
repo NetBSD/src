@@ -2,7 +2,7 @@
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
 /* intel coff loader emulation specific stuff
-   Copyright (C) 1991, 93, 94, 95, 96, 99, 2000
+   Copyright 1991, 1992, 1994, 1995, 1996, 1999, 2000
    Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 

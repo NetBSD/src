@@ -1,5 +1,5 @@
 /* Table of opcodes for the Texas Instruments TMS320C54X
-   Copyright (C) 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This program is free software; you can redistribute it and/or modify
