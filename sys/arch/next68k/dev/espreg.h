@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.2 1998/07/05 07:53:45 dbj Exp $ */
+/*	$NetBSD: espreg.h,v 1.3 1999/08/03 10:03:22 dbj Exp $ */
 
 /*
  * Copyright (c) 1995 Rolf Grossmann. All rights reserved.
@@ -150,6 +150,9 @@
 #define	 ESPDCTL_FLUSH	0x04		/*	Flush Fifo		*/
 #define	 ESPDCTL_RESET	0x02		/*	Reset SCSI Chip		*/
 #define	 ESPDCTL_WD3392	0x01		/*	0 = NCR 5390		*/
+
+#define ESP_DCTL_BITS \
+"\20\06INTENB\05DMAMOD\04DMARD\03FLUSH\02RESET\01WD3392"
 
 #define	ESP_DSTAT	0x21		/* RW - DMA Status		*/
 #define	 ESPDSTAT_STATE	0xc0		/*	DMA/SCSI Bank State	*/
