@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.81 1996/09/08 15:59:56 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.82 1996/09/09 15:51:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -60,7 +60,6 @@ bdev_decl(scd);
 bdev_decl(ccd);
 #include "rd.h"
 bdev_decl(rd);
-/* no cdev for rd */
 
 struct bdevsw	bdevsw[] =
 {
@@ -294,7 +293,7 @@ static int chrtoblktbl[] = {
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
-	/* 24 */	NODEV,
+	/* 24 */	17,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	NODEV,
