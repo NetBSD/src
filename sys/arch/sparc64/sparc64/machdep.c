@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2000/08/01 00:40:18 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.86 2000/08/01 16:49:47 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -881,7 +881,7 @@ dumpsys()
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 	register struct mem_region *mp;
-	extern struct mem_region mem[];
+	extern struct mem_region *mem;
 
 	/* copy registers to memory */
 	snapshot(cpcb);
@@ -924,16 +924,15 @@ printf("starting dump, blkno %d\n", blkno);
 		unsigned i = 0, n;
 		paddr_t maddr = mp->start;
 
+#if 0
+		/* Remind me: why don't we dump page 0 ? */
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
 			maddr += NBPG;
 			i += NBPG;
 			blkno += btodb(NBPG);
 		}
-#if 0
-printf("dumping segment at %llx\n", maddr);
 #endif
-
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
 			if (n > BYTES_PER_DUMP)
@@ -944,14 +943,8 @@ printf("dumping segment at %llx\n", maddr);
 				printf("%d ", i / (1024*1024));
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-#if 0
-printf("calling dump of %llx\n", maddr);
-#endif
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
-#if 0
-printf("%llx done\n", maddr);
-#endif
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;
