@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.7 1995/06/14 15:19:40 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.8 1996/03/15 21:52:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.7 1995/06/14 15:19:40 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.8 1996/03/15 21:52:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ Make_OODate (gn)
 	    printf(".JOIN node...");
 	}
 	oodate = gn->childMade;
-    } else if (gn->type & (OP_FORCE|OP_EXEC)) {
+    } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
 	/*
 	 * A node which is the object of the force (!) operator or which has
 	 * the .EXEC attribute is always considered out-of-date.
@@ -221,6 +221,8 @@ Make_OODate (gn)
 	if (DEBUG(MAKE)) {
 	    if (gn->type & OP_FORCE) {
 		printf("! operator...");
+	    } else if (gn->type & OP_PHONY) {
+		printf(".PHONY node...");
 	    } else {
 		printf(".EXEC node...");
 	    }
