@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.5 2001/09/24 13:22:33 wiz Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.6 2001/12/11 03:35:02 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -639,7 +639,13 @@ OF_enter()
 	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
+#if defined(MSIIEP)
+	msiiep_swap_endian(0);
+#endif
 	openfirmware(&args);
+#if defined(MSIIEP)
+	msiiep_swap_endian(1);
+#endif
 }
 
 void
@@ -654,7 +660,13 @@ OF_exit()
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
+#if defined(MSIIEP)
+	msiiep_swap_endian(0);
+#endif
 	openfirmware(&args);
+#if defined(MSIIEP)
+	msiiep_swap_endian(1);
+#endif
 	panic("OF_exit failed");
 }
 
