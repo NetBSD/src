@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.5 2000/06/06 18:19:56 bouyer Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.6 2000/06/09 14:02:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.5 2000/06/06 18:19:56 bouyer Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.6 2000/06/09 14:02:12 fvdl Exp $");
 #endif
 
 #include <errno.h>
@@ -63,14 +63,16 @@ sm_stat_1_svc(arg, req)
 	struct svc_req *req;
 {
 	static sm_stat_res res;
+	struct addrinfo *ai;
 
 	NO_ALARM;
 	if (debug)
 		syslog(LOG_DEBUG, "stat called for host %s", arg->mon_name);
 
-	if (gethostbyname(arg->mon_name))
+	if (getaddrinfo(arg->mon_name, NULL, NULL, &ai) == 0) {
 		res.res_stat = stat_succ;
-	else {
+		freeaddrinfo(ai);
+	} else {
 		syslog(LOG_ERR, "invalid hostname to sm_stat: %s",
 		    arg->mon_name);
 		res.res_stat = stat_fail;
@@ -95,6 +97,7 @@ sm_mon_1_svc(arg, req)
 	struct svc_req *req;
 {
 	static sm_stat_res res;
+	struct addrinfo *ai;
 	HostInfo *hp, h;
 	MonList *lp;
 
@@ -113,11 +116,13 @@ sm_mon_1_svc(arg, req)
 	 * Find existing host entry, or create one if not found.  If
 	 * find_host() fails, it will have logged the error already.
 	 */
-	if (!gethostbyname(arg->mon_id.mon_name)) {
+	if (getaddrinfo(arg->mon_id.mon_name, NULL, NULL, &ai) != 0) {
 		syslog(LOG_ERR, "Invalid hostname to sm_mon: %s",
 		    arg->mon_id.mon_name);
 		return &res;
 	}
+
+	freeaddrinfo(ai);
 
 	if ((hp = find_host(arg->mon_id.mon_name, &h)) == NULL)
 		memset(hp = &h, 0, sizeof(h));
