@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.7 1998/03/16 18:30:44 cgd Exp $
-
-.if	(${MACHINE_ARCH} != "arm32")	# XXX arm32 doesn't use in-tree gdb yet
+# $NetBSD: Makefile,v 1.8 1998/05/22 17:18:02 tv Exp $
 
 LIB=	readline
 
@@ -30,9 +28,3 @@ SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
 libinstall:
 
 .include <bsd.lib.mk>
-
-.else					# XXX arm32 doesn't use in-tree gdb yet
-
-.include <bsd.prog.mk>
-
-.endif					# XXX arm32 doesn't use in-tree gdb yet

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 1998/05/07 00:31:51 mycroft Exp $
+# $NetBSD: Makefile,v 1.16 1998/05/22 17:18:02 tv Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -6,7 +6,7 @@ srcdir= $(dist)/gdb
 
 .PATH:	$(srcdir)
 
-.if	(${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc")
+.if	(${MACHINE_ARCH} != "powerpc")
 
 PROG=	gdb
 
@@ -85,7 +85,7 @@ DPADD+= $(LIBTERMCAP)
 
 DPSRCS+= nm.h tm.h
 
-.endif					# XXX arm32 doesn't use in-tree gdb yet
+.endif
 
 MAN=	gdb.1
 
@@ -113,6 +113,6 @@ tm.h : $(srcdir)/$(TM_FILE)
 
 version.o : version.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) \
-	  -DHOST_NAME=\"$(MACHINE_ARCH)-netbsd\" \
-	  -DTARGET_NAME=\"$(TARGET_ARCH)-netbsd\" \
+	  -DHOST_NAME=\"${MACHINE_GNU_ARCH}-netbsd\" \
+	  -DTARGET_NAME=\"${GNU_ARCH.${TARGET_ARCH}}-netbsd\" \
 	  -c $(.IMPSRC)

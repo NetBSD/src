@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "defs.h"
 #include "frame.h"
 #include "inferior.h"
-#include "arm-opcode.h"
+#include "arm-opc.h"
 
 #include <sys/param.h>
 #include <sys/dir.h>
