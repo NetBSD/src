@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.1 2002/05/30 20:02:03 augustss Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.2 2002/06/12 23:33:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
-	return (!rtc_sc && strcmp(maa->mb_name, "tod") == 0);
+	return (!rtc_sc && strcmp(maa->mb_name, "rtc") == 0);
 }
 
 void
@@ -238,6 +238,7 @@ rtcinit(void)
 	if (!first_rtcopen_ever)
 		return;
 	first_rtcopen_ever = 0;
+	assert(sc);
 
 	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	mc146818_write(sc, MC_REGB, MC_REGB_24HR);
