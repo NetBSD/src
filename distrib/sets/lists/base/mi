@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.157 2000/04/25 14:03:25 hubertf Exp $
+# $NetBSD: mi,v 1.158 2000/05/01 05:28:25 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -795,6 +795,7 @@
 ./usr/share/examples/mount_portal
 ./usr/share/examples/named
 ./usr/share/examples/openssl
+./usr/share/examples/postfix
 ./usr/share/examples/supfiles
 ./usr/share/examples/usermgmt
 ./usr/share/games
@@ -1048,7 +1049,6 @@
 ./usr/share/nls/no/libc.cat
 ./usr/share/nls/sv
 ./usr/share/nls/sv/libc.cat
-./usr/share/postfix
 ./usr/share/sendmail
 ./usr/share/sendmail/LICENSE
 ./usr/share/sendmail/cf
