@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2001/01/16 02:42:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.30 2001/02/16 01:05:32 enami Exp $
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
@@ -19,7 +19,7 @@ MKPIC=		no
 # that's after make has figured out dependencies using the (lack of) values
 # of variables at the time it parses the dependency line.
 .ifnmake getrpcgen
-XRPCGEN != (cd ${.CURDIR} && ${MAKE} -B ${MAKEFLAGS} getrpcgen)
+XRPCGEN != cd ${.CURDIR} && ${MAKE} -B ${MAKEFLAGS} getrpcgen
 .endif
 
 getrpcgen:
