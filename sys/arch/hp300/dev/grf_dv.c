@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.12 1997/10/04 09:59:55 thorpej Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.13 1998/01/11 21:56:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ dvbox_intio_match(parent, match, aux)
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    grf->gr_id2 == DIO_DEVICE_SECID_DAVINCI) {
-		ia->ia_addr = (caddr_t)GRFIADDR;
+		ia->ia_addr = (bus_addr_t)GRFIADDR;
 		return (1);
 	}
 
