@@ -1,4 +1,4 @@
-/*	$NetBSD: md-static-funcs.c,v 1.3 1998/01/05 22:00:45 cgd Exp $	*/
+/*	$NetBSD: md-static-funcs.c,v 1.4 1998/12/15 21:23:57 pk Exp $	*/
 
 /*
  * Simple SPARC relocations for the benefit of self-relocation of ld.so
@@ -9,12 +9,12 @@
  */
 static void
 md_relocate_simple(r, relocation, addr)
-struct relocation_info	*r;
-long			relocation;
-char			*addr;
+	struct relocation_info	*r;
+	long			relocation;
+	char			*addr;
 {
-	register unsigned long	mask;
-	register unsigned long	shift;
+	unsigned long	mask;
+	unsigned long	shift;
 
 	switch (r->r_type) {
 	case RELOC_32:
@@ -25,6 +25,8 @@ char			*addr;
 		mask = 0x003fffff;
 		shift = 10;
 		break;
+	default:
+		return;
 	}
 	relocation += (*(long *)addr & mask) << shift;
 	relocation >>= shift;
