@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/11 19:13:39 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/19 03:44:22 lukem Exp $
 
-WARNS ?= 1
 PROG=	ldd
 SRCS=	ldd.c \
 	xmalloc.c debug.c map_object.c load.c search.c headers.c paths.c
