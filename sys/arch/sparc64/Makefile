@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/09/28 15:19:56 eeh Exp $
+#	$NetBSD: Makefile,v 1.10 2001/04/03 17:12:24 jhawk Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -11,7 +11,6 @@ ASPARC64=	../sparc64/sparc64/*.s
 # Directories in which to place tags links
 DSPARC64=	conf dev fpu include sparc64
 
-SYSDIR=		../..
 .include "../../kern/Make.tags.inc"
 
 tags:
