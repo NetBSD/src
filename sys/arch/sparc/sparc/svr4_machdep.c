@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.32 1998/12/17 22:26:02 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.33 1999/01/21 22:58:57 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -86,17 +86,16 @@ extern int sigpid;
 #endif
 
 #ifdef DEBUG_SVR4
-static void svr4_printcontext __P((const char *, struct svr4_ucontext *));
+static void svr4_printmcontext __P((const char *, struct svr4_mcontext *));
 
 static void
-svr4_printcontext(fun, uc)
+svr4_printmcontext(fun, mc)
 	const char *fun;
-	struct svr4_ucontext *uc;
+	struct svr4_mcontext *mc;
 {
-	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
+	svr4_greg_t *r = mc->greg;
 
-	printf("%s at %p\n", fun, uc);
+	printf("%s at %p\n", fun, mc);
 
 	printf("Regs: ");
 	printf("PSR = 0x%x ", r[SVR4_SPARC_PSR]);
@@ -119,32 +118,25 @@ svr4_printcontext(fun, uc)
 	printf("O6 = 0x%x ",  r[SVR4_SPARC_O6]);
 	printf("O7 = 0x%x ",  r[SVR4_SPARC_O7]);
 	printf("\n");
-
-	printf("Signal Stack: sp %p, size %d, flags 0x%x\n",
-	    s->ss_sp, s->ss_size, s->ss_flags);
-
-	printf("Flags: 0x%lx\n", uc->uc_flags);
 }
 #endif
 
-void
-svr4_getcontext(p, uc, mask)
+void *
+svr4_getmcontext(p, mc, flags)
 	struct proc *p;
-	struct svr4_ucontext *uc;
-	sigset_t *mask;
+	struct svr4_mcontext *mc;
+	u_long *flags;
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
-	svr4_greg_t *r = uc->uc_mcontext.greg;
+	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
-	svr4_fregset_t *f = &uc->uc_mcontext.freg;
+	svr4_fregset_t *f = &mc->freg;
 	struct fpstate *fps = p->p_md.md_fpstate;
 #endif
 
 	write_user_windows();
 	if (rwindow_save(p))
 		sigexit(p, SIGILL);
-
-	memset(uc, 0, sizeof(struct svr4_ucontext));
 
 	/*
 	 * Get the general purpose registers
@@ -168,6 +160,8 @@ svr4_getcontext(p, uc, mask)
 	r[SVR4_SPARC_O5] = tf->tf_out[5];
 	r[SVR4_SPARC_O6] = tf->tf_out[6];
 	r[SVR4_SPARC_O7] = tf->tf_out[7];
+
+	*flags |= SVR4_UC_CPU;
 
 #ifdef FPU_CONTEXT
 	/*
@@ -194,32 +188,19 @@ svr4_getcontext(p, uc, mask)
 		}
 	}
 	f->fp_busy = 0;	/* XXX: How do we determine that? */
+	*flags |= SVR4_UC_FPU;
 #endif
 
-	/* Save signal stack. */
-	native_to_svr4_sigaltstack(&p->p_sigacts->ps_sigstk, &uc->uc_stack);
-
-	/* Save signal mask. */
-	native_to_svr4_sigset(mask, &uc->uc_sigmask);
-
-	/*
-	 * Get the flags
-	 */
-	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
-#ifdef FPU_CONTEXT
-	uc->uc_flags |= SVR4_UC_FPU;
-#endif
 
 #ifdef DEBUG_SVR4
-	svr4_printcontext("getcontext", uc);
+	svr4_printmcontext("getmcontext", mc);
 #endif
+	return (void *)tf->tf_out[6];
 }
 
 
 /*
- * Set to ucontext specified.
- * has been taken.  Reset signal mask and
- * stack state from context.
+ * Set to mcontext specified.
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
@@ -228,20 +209,20 @@ svr4_getcontext(p, uc, mask)
  * This is almost like sigreturn() and it shows.
  */
 int
-svr4_setcontext(p, uc)
+svr4_setmcontext(p, mc, flags)
 	struct proc *p;
-	struct svr4_ucontext *uc;
+	struct svr4_mcontext *mc;
+	u_long flags;
 {
 	register struct trapframe *tf;
-	svr4_greg_t *r = uc->uc_mcontext.greg;
-	sigset_t mask;
+	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
-	svr4_fregset_t *f = &uc->uc_mcontext.freg;
+	svr4_fregset_t *f = &mc->freg;
 	struct fpstate *fps = p->p_md.md_fpstate;
 #endif
 
 #ifdef DEBUG_SVR4
-	svr4_printcontext("setcontext", uc);
+	svr4_printmcontext("setmcontext", uc);
 #endif
 
 	write_user_windows();
@@ -250,11 +231,11 @@ svr4_setcontext(p, uc)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("svr4_setcontext: %s[%d], svr4_ucontext %p\n",
-		    p->p_comm, p->p_pid, uc);
+		printf("svr4_setmcontext: %s[%d], svr4_mcontext %p\n",
+		    p->p_comm, p->p_pid, mc);
 #endif
 
-	if (uc->uc_flags & SVR4_UC_CPU) {
+	if (flags & SVR4_UC_CPU) {
 		/* Restore register context. */
 		tf = (struct trapframe *)p->p_md.md_tf;
 
@@ -296,7 +277,7 @@ svr4_setcontext(p, uc)
 
 
 #ifdef FPU_CONTEXT
-	if (uc->uc_flags & SVR4_UC_FPU) {
+	if (flags & SVR4_UC_FPU) {
 		/*
 		 * Set the floating point registers
 		 */
@@ -304,7 +285,7 @@ svr4_setcontext(p, uc)
 		size_t sz = f->fp_nqel * f->fp_nqsize;
 		if (sz > sizeof(fps->fs_queue)) {
 #ifdef DIAGNOSTIC
-			printf("setcontext: fp_queue too large\n");
+			printf("setmcontext: fp_queue too large\n");
 #endif
 			return EINVAL;
 		}
@@ -315,7 +296,7 @@ svr4_setcontext(p, uc)
 			if ((error = copyin(f->fp_q, fps->fs_queue,
 					    f->fp_nqel * f->fp_nqsize)) != 0) {
 #ifdef DIAGNOSTIC
-				printf("setcontext: copy of fp_queue failed\n");
+				printf("setmcontext: fp_queue copy failed\n");
 #endif
 				return error;
 			}
@@ -323,18 +304,7 @@ svr4_setcontext(p, uc)
 	}
 #endif
 
-	if (uc->uc_flags & SVR4_UC_STACK) {
-		/* Restore signal stack. */
-		svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
-	}
-
-	if (uc->uc_flags & SVR4_UC_SIGMASK) {
-		/* Restore signal mask. */
-		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-		(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
-	}
-
-	return (EJUSTRETURN);
+	return 0;
 }
 
 /*
