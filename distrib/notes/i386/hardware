@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.13 2001/05/15 21:38:42 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.14 2001/05/21 02:13:55 jhawk Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -18,7 +18,7 @@ won't be speedy. Note that until you have around 16 MB of RAM, getting
 more RAM is more important than getting a faster CPU.)
 .
 .Ss2 Supported devices
-Explanation of bracketted footnote tags [] is follows this listing.
+Explanation of bracketted footnote tags [] follows this listing.
 .(bullet -offset indent
 Floppy controllers.
 .It
@@ -50,7 +50,7 @@ VIA Technologies VT82C586, VT82C586A, VT82C596A and VT82C686A IDE Controllers
 .Pp
 Most of these controllers are only available in multifunction PCI chips.
 Other PCI IDE controllers are supported, but performance may not be optimal.
-ISA, ISA plug and play and PCMCIA IDE controllers are supported as well.
+ISA, ISA Plug and Play and PCMCIA IDE controllers are supported as well.
 .It
 SCSI host adapters
 .(bullet -compact
@@ -446,7 +446,7 @@ Ensoniq AudioPCI [*] [+]
 ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 1/2/2E and
 Solo-1 ES1938/1946 [*] [+]
 .It
-Gravis Ultrasound Plug\*&Play [*] [+]
+Gravis Ultrasound Plug and Play [*] [+]
 .It
 Gravis Ultrasound and Ultrasound Max [*] [+]
 .It
@@ -460,7 +460,7 @@ S3 SonicVibes [*] [+]
 .It
 SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
 .It
-VIA VT82C686A southbridge integrated AC'97 audio [*] [+]
+VIA VT82C686A southbridge integrated AC97 audio [*] [+]
 .It
 Windows Sound System [*] [+]
 .It
@@ -509,7 +509,7 @@ Handspring Visor driver [*] [+]
 .It
 PCMCIA Controllers.
 .br
-ISA, PCI, and ISA Plug\*&Play attachments
+ISA, PCI, and ISA Plug and Play attachments
 .(bullet -compact
 Intel 82365 PCIC, rev 0 and rev 1
 .It
