@@ -1,19 +1,18 @@
-	$NetBSD: upgrade,v 1.1.4.2 1998/05/29 03:44:18 mycroft Exp $	
+	$NetBSD: upgrade,v 1.1.4.3 1998/11/07 04:16:36 cgd Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 
-To do the upgrade, you must have the appropriate kernel-copy floppy
-image on a disk, and the upgr12.fs floppy image on another.  You must
-also have at least the "base12" binary distribution set available,
-so that you can upgrade with it, using one of the upgrade methods
-described above.  Finally, you must have sufficient disk space
-available to install the new binaries.  Since the old binaries are
-being overwritten in place, you only need space for the new binaries,
-which weren't previously on the system.  If you have a few megabytes
-free on each of your root and /usr partitions, you should have enough
-space.
+To do the upgrade, you must have the bootable install floppy
+(boot.fs).  You must also have at least the "base.tgz" and "kern.tgz"
+binary distribution sets available, so that you can upgrade with it,
+using one of the upgrade methods described below.  Finally, you must
+have sufficient disk space available to install the new binaries.
+Since the old binaries are being overwritten in place, you only need
+space for the new binaries, which weren't previously on the system.
+If you have a few megabytes free on each of your root and /usr
+partitions, you should have enough space.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
@@ -24,17 +23,14 @@ process.
 
 To upgrade your system, follow the following instructions:
 
-	Boot your machine using of the appropriate kernel-copy floppy.
-
-	You will be prompted to insert a file system floppy.  Remove
-	the kernel-copy floppy and insert the upgr12 floppy, then hit
-	any key to continue booting.
+	Boot your machine using of the boot.fs floppy.
 
 	While booting, you will probably see several warnings.  You
 	should be warned that no swap space is present, and that
 	init(8) cannot find /etc/rc.  Do not be alarmed, these are
 	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+	shell name, just hit return.  Note that once it booted, you
+	may remove the floppy from the drive.
 
 	You will be presented with some information about the upgrade
 	process and a warning message, and will be asked if you wish
@@ -71,9 +67,8 @@ To upgrade your system, follow the following instructions:
 	disk, look in the installation section for information on how
 	to transfer them to your disk.
 
-	If you have only one floppy drive, and don't have the disk
-	space to copy all of the distribution onto the hard drive, you
-	can do the following:
+	If you don't have the disk space to copy all of the
+	distribution onto the hard drive, you can do the following:
 
 		Install a kernel on the hard drive as detailed a few
 		paragraphs below, then boot off the hard drive.  Now
@@ -87,14 +82,16 @@ To upgrade your system, follow the following instructions:
 	transfer them again now!)
 
 	After the software has been transferred to the machine (or
-	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base12" distribution set.  Once you
-	are there, run the "Set_tmp_dir" command, and hit return at
-	the prompt to select the default answer for the temporary
-	directory's path name.  (It should be the path name of the
-	directory that you're in.)
+	mounted, in the case of upgrading via NFS or CD-ROM), change
+	into the directory containing the "base.tgz" distribution set.
+	Once you are there, run the "Set_tmp_dir" command, and hit
+	return at the prompt to select the default answer for the
+	temporary directory's path name.  (It should be the path name
+	of the directory that you're in.)
 
-	Run the command "Extract base12" to upgrade the base
+	Run the command "Extract kern" to upgrade the kernel.
+
+	Run the command "Extract base" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -111,42 +108,12 @@ To upgrade your system, follow the following instructions:
 	When you are done upgrading all of the distribution sets you
 	wish to upgrade, issue the command "Cleanup".  It will clean
 	up the installation, by remaking some system databases.  When
-	it is complete, you should use "halt" to halt the system.
+	it is complete, all you have to do is to reboot(8) your system.
 
-	When the system is halted, remove the "upgr12" floppy from
-	the floppy drive, and replace it with the NetBSD 1.2
-	kernel-copy floppy that you previously booted from. Reboot
-	with that floppy.
-
-	Once again, you will be prompted to insert a file system
-	floppy.  DO NOT replace the kernel-copy floppy, just hit any
-	key.
-
-	Again, While booting, you may see several warnings.  You may
-	be warned that no swap space is present, that init(8) cannot
-	find /etc/rc, and that one or more databases with names like
-	"pwd.db" cannot be found.  Do not be alarmed, as, again, these
-	are completely normal.  Hit return at the prompt asking you
-	for a shell name.
-
-	You will be presented with a shell prompt, at which you should
-	enter the "copy_kernel" command.  It will ask you what
-	partition to copy the kernel to, and you should reply with the
-	name of your root partition (e.g. sd0a or wd0a).
-
-	You will be asked if you are sure that you want to copy the
-	kernel.  Reply affirmatively, and it will check the file
-	system on your root partition, mount it, and copy the kernel.
-	Once the kernel is copied, you should use "halt" to halt the
-	system.
-
-	Once the system is halted, remove the kernel-copy floppy from
-	the floppy disk drive, and hit any key to reboot.
-
-Your system has now been upgraded to NetBSD 1.2.
+Your system has now been upgraded to NetBSD _VER.
 
         After a new kernel has been copied to your hard disk, your
-	machine is a complete NetBSD 1.2 system.  However, that
+	machine is a complete NetBSD _VER system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
@@ -157,7 +124,7 @@ Your system has now been upgraded to NetBSD 1.2.
         with "fsck -c 2".  If you are unsure about the process, it's
         suggested that you read the fsck(8) manual page.
 
-	Second, you will probably want to get the etc12 distribution,
+	Second, you will probably want to get the etc distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
