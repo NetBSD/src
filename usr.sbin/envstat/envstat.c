@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.13 2003/02/21 07:23:43 martin Exp $ */
+/*	$NetBSD: envstat.c,v 1.14 2003/10/31 20:37:53 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.13 2003/02/21 07:23:43 martin Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.14 2003/10/31 20:37:53 mycroft Exp $");
 #endif
 
 #include <fcntl.h>
@@ -163,57 +163,43 @@ main(int argc, char **argv)
 		int i;
 
 		for (i = 0 ; i < ns ; i++) {
-			if (ebis[i].units == ENVSYS_INDICATOR) {
-				if (etds[i].cur.data_s) {
-					printf("%*.*s\n",
-					    (int)width,
-					    (int)width,
-					    ebis[i].desc);
-				}
+			if ((etds[i].validflags & ENVSYS_FCURVALID) == 0)
 				continue;
-			}
 
-			if (ebis[i].units == ENVSYS_INTEGER) {
-				printf("%*.*s:", (int)width, (int)width,
-				       ebis[i].desc);
-				printf(" %10d\n", etds[i].cur.data_s);
+			if (ebis[i].units == ENVSYS_INDICATOR &&
+			    etds[i].cur.data_s == 0)
 				continue;
-			}
 
-			printf("%*.*s:", (int)width, (int)width, ebis[i].desc);
+			printf("%*.*s", (int)width, (int)width, ebis[i].desc);
 			/* different units need some magic */
 			switch (ebis[i].units)
 			{
-			     	case ENVSYS_INDICATOR:
-					printf(" %10s", etds[i].cur.data_us ? 
-					    "ON" : "OFF");
-					break;
-				case ENVSYS_STEMP:
-					{
-					     	double temp =
-						    (etds[i].cur.data_s / 1000000.0)
-						    - 273.15;
-						if (celsius)
-							printf(" %10.3f degC",
-							    temp);
-						else
-						{
-							temp = (9.0 / 5.0) * temp + 32.0;
-							printf(" %10.3f degF",
-							    temp);
-						}
-					}
-					break;
-				case ENVSYS_SFANRPM:
-					printf(" %10u RPM",
-					    etds[i].cur.data_us);
-					break;
-				default:
-					printf(" %10.3f %s",
-					    etds[i].cur.data_s / 1000000.0,
-					    envsysunitnames[ebis[i].units]);
-					break;
+			case ENVSYS_INDICATOR:
+				break;
+			case ENVSYS_INTEGER:
+				printf(": %10d", etds[i].cur.data_s);
+				break;
+			case ENVSYS_STEMP: {
+			     	double temp = (etds[i].cur.data_s / 1000000.0)
+				    - 273.15;
+				if (celsius)
+					printf(": %10.3f degC", temp);
+				else {
+					temp = (9.0 / 5.0) * temp + 32.0;
+					printf(": %10.3f degF", temp);
+				}
+				break;
 			}
+			case ENVSYS_SFANRPM:
+				printf(": %10u RPM", etds[i].cur.data_us);
+				break;
+			default:
+				printf(": %10.3f %s",
+				    etds[i].cur.data_s / 1000000.0,
+				    envsysunitnames[ebis[i].units]);
+				break;
+			}
+
 			if (etds[i].validflags & ENVSYS_FFRACVALID) {
 				printf(" (%5.2f%%)",
 				    (etds[i].cur.data_s * 100.0) /
