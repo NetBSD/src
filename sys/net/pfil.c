@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.4 1996/10/13 02:11:08 christos Exp $	*/
+/*	$NetBSD: pfil.c,v 1.5 1996/12/20 08:40:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -47,7 +47,6 @@
 typedef LIST_HEAD(, packet_filter_hook) pfil_list_t;
 pfil_list_t pfil_in_list;
 pfil_list_t pfil_out_list;
-pfil_list_t pfil_bad_list;
 static int done_pfil_init;
 
 void pfil_init __P((void));
@@ -61,7 +60,6 @@ pfil_init()
 {
 	LIST_INIT(&pfil_in_list);
 	LIST_INIT(&pfil_out_list);
-	LIST_INIT(&pfil_bad_list);
 	done_pfil_init = 1;
 }
 
@@ -70,8 +68,6 @@ pfil_init()
  * flags are:
  *	PFIL_IN		call me on incoming packets
  *	PFIL_OUT	call me on outgoing packets
- *	PFIL_BAD	call me when rejecting a packet (that was
- *			not already reject by in/out filters).
  *	PFIL_ALL	call me on all of the above
  *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
  */
@@ -89,8 +85,6 @@ pfil_add_hook(func, flags)
 		pfil_list_add(&pfil_in_list, func, flags);
 	if (flags & PFIL_OUT)
 		pfil_list_add(&pfil_out_list, func, flags);
-	if (flags & PFIL_BAD)
-		pfil_list_add(&pfil_bad_list, func, flags);
 }
 
 void
@@ -129,8 +123,6 @@ pfil_remove_hook(func, flags)
 		pfil_list_remove(pfil_in_list.lh_first, func);
 	if (flags & PFIL_OUT)
 		pfil_list_remove(pfil_out_list.lh_first, func);
-	if (flags & PFIL_BAD)
-		pfil_list_remove(pfil_bad_list.lh_first, func);
 }
 
 /*
@@ -167,8 +159,6 @@ pfil_hook_get(flag)
 			return (pfil_in_list.lh_first);
 		case PFIL_OUT:
 			return (pfil_out_list.lh_first);
-		case PFIL_BAD:
-			return (pfil_bad_list.lh_first);
 		}
 	return NULL;
 }
