@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30.2.2 2001/09/21 22:37:01 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.30.2.3 2001/11/17 01:10:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,10 @@
 #define _SYS_TIME_H_
 
 #include <sys/types.h>
+#ifdef _KERNEL
+#include <sys/callout.h>
+#include <sys/signal.h>
+#endif
 
 /*
  * Structure returned by gettimeofday(2) system call,
@@ -141,6 +145,15 @@ struct	itimerval {
 };
 
 /*
+ * Structure defined by POSIX.1b to be like a itimerval, but with
+ * timespecs. Used in the timer_*() system calls.
+ */
+struct	itimerspec {
+	struct	timespec it_interval;
+	struct	timespec it_value;
+};
+
+/*
  * Getkerninfo clock information structure
  */
 struct clockinfo {
@@ -159,6 +172,20 @@ struct clockinfo {
 #define TIMER_ABSTIME	0x1	/* absolute timer */
 
 #ifdef _KERNEL
+/*
+ * Structure used to manage timers in a process.
+ */
+struct 	ptimer {
+	struct	callout pt_ch;
+	struct	sigevent pt_ev;
+	struct	itimerval pt_time;
+	int	pt_overruns;
+	int	pt_type;
+	struct proc *pt_proc; 
+};
+
+#define	TIMER_MAX 32
+
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
@@ -168,6 +195,9 @@ int	ppsratecheck __P((struct timeval *, int *, int));
 int	settimeofday1 __P((struct timeval *, struct timezone *, struct proc *));
 int	adjtime1 __P((struct timeval *, struct timeval *, struct proc *));
 int	clock_settime1 __P((clockid_t, struct timespec *));
+void	timers_alloc __P((struct proc *));
+void	timers_free __P((struct proc *));
+void	realtimerexpire __P((void *));
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE

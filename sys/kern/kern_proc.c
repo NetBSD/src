@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.3 2001/11/14 19:16:37 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.4 2001/11/17 01:10:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.3 2001/11/14 19:16:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.4 2001/11/17 01:10:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ struct pool pgrp_pool;
 struct pool rusage_pool;
 struct pool sadata_pool;
 struct pool saupcall_pool;
+struct pool ptimer_pool;
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -223,7 +224,9 @@ procinit()
 	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
 	    "saupcpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
-
+	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+	
 }
 
 /*
