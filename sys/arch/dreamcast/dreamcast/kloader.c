@@ -1,4 +1,4 @@
-/* $NetBSD: kloader.c,v 1.2 2003/07/15 01:31:41 lukem Exp $ */
+/* $NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.2 2003/07/15 01:31:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3 2004/06/14 13:50:08 tsutsui Exp $");
 
 #include "opt_kloader.h"
 #include "debug_kloader.h"
@@ -340,7 +340,7 @@ kloader_read(size_t ofs, size_t size, void *buf)
 void
 kloader_boot(u_int32_t entry, struct kloader_page_tag *p)
 {
-	int tmp;
+	int tmp = 0;
 
 	/* Disable interrupt. block exception. */
 	__asm__ __volatile__(
