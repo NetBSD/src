@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.4 2001/07/07 16:46:34 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.5 2001/07/07 16:47:43 thorpej Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -610,7 +610,7 @@ hifn_ramtype(sc)
 		return;
 	if (hifn_readramaddr(sc, 0, data, 1) < 0)
 		return;
-	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+	if (memcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
 		return;
 	}
@@ -625,7 +625,7 @@ hifn_ramtype(sc)
 		return;
 	if (hifn_readramaddr(sc, 0, data, 1) < 0)
 		return;
-	if (bcmp(data, dataexpect, sizeof(data)) != 0)
+	if (memcmp(data, dataexpect, sizeof(data)) != 0)
 		sc->sc_drammodel = 1;
 }
 
@@ -652,7 +652,7 @@ hifn_sramsize(sc)
 			return (0);
 		if (hifn_readramaddr(sc, a, data, 1) < 0)
 			return (0);
-		if (bcmp(data, dataexpect, sizeof(data)) != 0)
+		if (memcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
 		hifn_reset_board(sc);
 		hifn_init_dma(sc);
@@ -672,7 +672,7 @@ hifn_sramsize(sc)
 		hifn_init_pci_registers(sc);
 		if (hifn_readramaddr(sc, a, data, 0) < 0)
 			return (0);
-		if (a != 0 && bcmp(data, dataexpect, sizeof(data)) == 0)
+		if (a != 0 && memcmp(data, dataexpect, sizeof(data)) == 0)
 			return (0);
 		sc->sc_ramsize = a + 16384;
 	}

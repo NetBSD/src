@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.36 2001/07/07 02:32:38 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.37 2001/07/07 16:47:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2434,7 +2434,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
