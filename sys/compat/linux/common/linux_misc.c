@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.98 2002/02/17 23:56:35 rafal Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.99 2002/02/18 18:51:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.98 2002/02/17 23:56:35 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.99 2002/02/18 18:51:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,9 +345,17 @@ linux_sys_fstatfs(p, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 
+/*
+ * NOTE: DO NOT CHANGE THIS
+ * Linux makes assumptions about specific features being present with
+ * more recent kernels. Specifically, LinuxThreads use RT queued
+ * signals if the kernel release is bigger. Since we don't support them
+ * yet, the version needs to stay this way until we'd have the RT queued
+ * signals implemented.
+ */
 char linux_sysname[] = "Linux";
-char linux_release[] = "2.4.18";
-char linux_version[] = "#13 SMP Thu Feb 14 13:13:13 EST 2002";
+char linux_release[] = "2.0.38";
+char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
 
 /*
  * uname(). Just copy the info from the various strings stored in the
