@@ -1,41 +1,77 @@
-	$NetBSD: install,v 1.3 1998/01/09 18:46:51 perry Exp $	
-
-Installing NetBSD is a relatively complex process, but if you have
+.\"	$NetBSD: install,v 1.4 1999/01/13 07:30:06 ross Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.
+Installing
+.Nx
+is a relatively complex process, but if you have
 this document in hand it should not be too difficult.
-
-There are several ways to install NetBSD onto your disk.  If your
+.Pp
+There are several ways to install
+.Nx
+onto your disk. If your
 machine has a tape drive the easiest way is "Installing from tape"
 (details below). If your machine is on a network with a suitable
 NFS server, then "Installing from NFS" is the next best method.
-Otherwise, if you have another VME147 machine running NetBSD you can
+Otherwise, if you have another VME147 machine running
+.Nx
+you can
 initialize the disk on that machine and then move the disk.
-
-
-* Installing from tape:
-
+.
+.Ss2 Installing from tape:
+.
 Create the NetBSD/mvme68k _VER boot tape as described in the section
 entitled "Preparing a boot tape". Then, with the tape in the drive,
 type the following at the 147Bug prompt:
-
--->     147-Bug> bo 5
-
+.Pp
+.Dl 147-Bug\*> Ic bo 5
+.Pp
 As mentioned earlier, this assumes your tape is jumpered for SCSI-id 5.
-
+.Pp
 As the tape loads (which may take 20 to 30 seconds), you will see a
 series of status messages. It may be useful if you can capture these
 messages to a file, or a scrollable xterm window. In particular, you
 should make a note of the lines which describe the geometry of the
 SCSI disks detected by NetBSD. They are of the form:
-
-sd0 at scsibus0 targ 0 lun 0: <CDC, 94161-9, 2506> SCSI1 0/direct fixed
+.Bd -literal -offset indent
+sd0 at scsibus0 targ 0 lun 0: \*<CDC, 94161-9, 2506\*> SCSI1 0/direct fixed
 sd0: 148MB, 967 cyl, 9 head, 35 sec, 512 bytes/sect x 304605 sectors
-
+.Ed
+.Pp
 The information of most interest is the number of sectors; here it's
 304605. You will need this number when you come to create a disklabel
 for that drive.
-
-[ START OF STATUS MESSAGES ]
-
+.Bd -literal -offset indent
 RAM address from VMEbus = $00000000
 
 Booting from: VME147, Controller 5, Device 0
@@ -44,7 +80,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
->> BSD MVME147 tapeboot [$Revision: 1.3 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.4 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -60,18 +96,18 @@ using 88 buffers containing 360448 bytes of memory
 mainbus0 (root)
 pcc0 at mainbus0: Peripheral Channel Controller, rev 0, vecbase 0x40
 clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
-  .
-  .
+  \&.
+  \&.
 
-[ END OF STATUS MESSAGES ]
-
-Note that the exact text of the messages will vary depending on which
+.Ed
+.Pp
+.(Note
+The exact text of the messages will vary depending on which
 MVME147 variant you're using.
-
+.Note)
+.Pp
 Finally, you will see the following "welcome" message:
-
-[ START OF WELCOME MESSAGE ]
-
+.Bd -literal offset indent
         Welcome to the NetBSD/mvme68k RAMDISK root!
 
 This environment is designed to do only four things:
@@ -96,407 +132,453 @@ use "halt", then at the Bug monitor prompt use a command like:
 
 To view this message again, type:  cat /.welcome
 ssh:
-
-[ END OF WELCOME MESSAGE ]
-
+.Ed
+.Pp
 You must now create a disklabel on the disk you wish to use for the
-root filesystem. This will usually be 'sd0'. The disklabel is used by
+root filesystem. This will usually be
+.Li sd0 .
+The disklabel is used by
 NetBSD to identify the starting block and size of each partition on
 the disk.
-
-Partitions are named 'sd0a', 'sd0b', 'sd0c' etc, up to 'sd0h'. The
-mvme68k port of NetBSD makes some assumptions about the first three
-partitions on a boot disk:
-
-        sd0a    The root filesystem.
-        sd0b    The swap partition.
-        sd0c    The whole disk. Also known as the Raw Partition.
-
-The 'Raw Partition' is special; NetBSD is able to use it even if the
+.Pp
+Partitions are named
+.Li sd0a, sd0b, sd0c
+.No etc, up to Li sd0h .
+The \*m port of
+.Nx
+makes some assumptions about the first three partitions on a boot disk:
+.Pp
+.Bl -tag -compact -width sd0c
+.It Li sd0a
+The root filesystem.
+.It Li sd0b
+The swap partition.
+.It Li sd0c
+The whole disk. Also known as the
+.Em raw partition .
+.El
+.Pp
+The
+.Em raw partition No is special;
+.Nx
+is able to use it even if the
 disk has no label. You should never create a filesystem on the Raw
 Partition, even on a non-boot disk.
-
-It is good practice to put /usr on a different partition than / (sd0a).
-So, the first available partition for /usr is 'sd0d'. Refer to the
-section entitled "NetBSD System Requirements and Supported Devices" for
-information on the recommended sizes of the /, /usr and swap partitions.
-
-You are not required to define any partitions beyond sd0d, but if you
+.Pp
+It is good practice to put
+.Pa /usr No on a different partition
+than / (sd0a). So, the first available partition for
+.Pa /usr No is Li sd0d .
+Refer to the section entitled
+.Sx NetBSD System Requirements and Supported Devices
+for information on the recommended sizes of the /,
+.Pa /usr No and Pa swap
+partitions.
+.Pp
+You are not required to define any partitions beyond
+.Li sd0d , No but if you
 have a large disk drive, you might want to create several other partitions
-for filesystems such as /home or /usr/src. Note that at this time you
+for filesystems such as
+.Pa /home
+.No or Pa /usr/src.
+Note that at this time you
 are only required to partition the root/boot disk; you will get the
 opportunity to partition any other disks in your system from the main
-'miniroot' installation program.
-
-To create the disklabel and partitions, use the 'edlabel' program,
-passing it the name of the Raw Partition of your root/boot disk. Note
-that '-->' at the start of a line in the following examples indicates
-you are being prompted to enter some information. Obviously, you won't
-see this when you run the program for real.
-
--->     ssh: edlabel /dev/rsd0c
-        edlabel menu:
-        print   - display the current disk label
-        modify  - prompt for changes to the label
-        write   - write the new label to disk
-        quit    - terminate program
-        edlabel> 
-
-The program shows what commands it recognises; "print", "modify",
-"write" and "quit". It will accept the first letter of a command if
+.Ic miniroot
+installation program.
+.Pp
+To create the disklabel and partitions, use the
+.Li edlabel No  program,
+passing it the name of the Raw Partition of your root/boot disk.
+.Pp
+.Dl ssh: Ic edlabel /dev/rsd0c
+.Dl edlabel menu:
+.Dl print   - display the current disk label
+.Dl modify  - prompt for changes to the label
+.Dl write   - write the new label to disk
+.Dl quit    - terminate program
+.Dl edlabel\*>
+.Pp
+The program shows what commands it recognizes;
+.Em print , modify , write
+.No and Em quit .
+It will accept the first letter of a command if
 you don't feel like typing each one in full.
-
-To start creating the basic partitions, you should enter 'm' (modify)
+.Pp
+To start creating the basic partitions, you should enter
+.Ic m No (modify)
 at the edlabel prompt, then enter the letter corresponding to the first
-partition, 'a'.
-
--->     edlabel> m
-        modify subcommands:
-         @   : modify disk parameters
-         a-h : modify partition
-         s   : standarize geometry
-         q   : quit this subcommand
--->     edlabel/modify> a
-         a (root)          0       (0/00/00)          0       (0/00/00)  unused
--->     start as <blkno> or <cyls/trks/sects> : 0
--->     length as <nblks> or <cyls/trks/sects> : 38000
--->     type: 4.2BSD
-        edlabel/modify> 
-
+.No partition, Sy a .
+.Dl edlabel\*> Ic m
+.Pp
+.Dl modify subcommands:
+.Dl @   : modify disk parameters
+.Dl a-h : modify partition
+.Dl s   : standarize geometry
+.Dl q   : quit this subcommand
+.Dl edlabel/modify\*> Ic a
+.Dl a (root)          0       (0/00/00)          0       (0/00/00)  unused
+.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 0
+.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 38000
+.Dl type: Ic 4.2BSD
+.Dl edlabel/modify\*>
+.Pp
 When you enter the start and length of a partition, you can use either
 blocks or cylinder/track/sector notation. If this is the first time
 you've partitioned a disk for NetBSD, it's probably easiest to use block
 notation. The above example creates partition 'a', starting at block zero
 and with a size of 38000 blocks. Note that the usual size of a block is
 512 bytes, so this creates a 19Mb partition.
-
+.Pp
 The 'type' of the partition should be "4.2BSD", otherwise you won't
 be able to create a filesystem on it.
-
+.Pp
 Next, create a swap partition (b). Note that the minimum size of this
 swap partition should be 8Mb, otherwise you won't be able to use a
-miniroot to complete the NetBSD installation!
-
--->     edlabel/modify> b
-         b (swap)          0       (0/00/00)          0       (0/00/00)  unused
--->     start as <blkno> or <cyls/trks/sects> : 38000
--->     length as <nblks> or <cyls/trks/sects> : 32768
--->     type: swap
-        edlabel/modify> 
-
+miniroot to complete the
+.Nx
+installation!
+.Pp
+.Dl edlabel/modify\*> Ic b
+.Dl b (swap)          0       (0/00/00)          0       (0/00/00)  unused
+.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 38000
+.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 32768
+.Dl type: Ic swap
+.Dl edlabel/modify\*>
+.Pp
 Here, we specify a value for 'start' such that the swap partition follows
 immediately after partition 'a', i.e. 38000. The length of the swap
 partition should be a multiple of the amount of RAM you have in your
-system. Here, I've chosen 32768, or 16Mb.  The next available block on the
+system. Here, I've chosen 32768, or 16Mb. The next available block on the
 drive is thus 38000 + 32768. We will use this to create partition 'd' for
 our /usr filesystem. (Note that for a busy system, or a system with more
 than 8Mb of RAM, you'll be better off with a 32 or 64Mb swap partition.)
-
--->     edlabel/modify> d
-         d (user)          0       (0/00/00)          0       (0/00/00)  unused
--->     start as <blkno> or <cyls/trks/sects> : 70768
--->     length as <nblks> or <cyls/trks/sects> : 233837
--->     type: 4.2BSD
--->     edlabel/modify> q
-        edlabel>
-
-As you can see, I've chosen to assign the remainder of the disk to /usr.
+.Pp
+.Dl edlabel/modify\*> Ic d
+.Dl d (user)          0       (0/00/00)          0       (0/00/00)  unused
+.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 70768
+.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 233837
+.Dl type: Ic 4.2BSD
+.Dl edlabel/modify\*> Ic q
+.Dl edlabel\*>
+.Pp
+As you can see, I've chosen to assign the remainder of the disk to
+.Pa /usr .
 Since there are 304605 sectors on the example disk (did you remember to
 note down the number of sectors on your disk during boot?), and partition
-'d' starts at sector 70768, a simple bit of arithmetic (304605 - 70768)
-gives 'd' a size of 233837.
-
+.Sy d
+starts at sector 70768, a simple bit of arithmetic (304605 - 70768)
+gives
+.Sy d No a size of 233837.
+.Pp
 You now need to write this new disklabel, together with the partition
 details you've just entered, to disk. You might also try the 'p' command
 to view the partitions. Once written, you can quit back to ssh using 'q'.
+.Pp
+.Dl edlabel\*> Ic p
+.Bd -literal -offset indent
+	type_num: 4
+	sub_type: 0
+       type_name: SCSI disk
+       pack_name: fictitious
+    bytes/sector: 512
+   sectors/track: 35
+ tracks/cylinder: 9
+       cylinders: 967
+sectors/cylinder: 315
+partition      start         (c/t/s)      nblks         (c/t/s)  type
 
--->     edlabel> p
-                type_num: 4
-                sub_type: 0
-               type_name: SCSI disk
-               pack_name: fictitious
-            bytes/sector: 512
-           sectors/track: 35
-         tracks/cylinder: 9
-               cylinders: 967
-        sectors/cylinder: 315
-        partition      start         (c/t/s)      nblks         (c/t/s)  type
-
-         a (root)          0       (0/00/00)      38000     (120/05/25)* 4.2BSD
-         b (swap)      38000     (120/05/25)*     32768     (104/00/08)* swap
-         c (disk)          0       (0/00/00)     304605     (967/00/00)  unused
-         d (user)      70768     (224/05/33)*    233837     (742/03/02)* 4.2BSD
--->     edlabel> w
--->     edlabel> q
-        ssh:
-
-
+ a (root)          0       (0/00/00)      38000     (120/05/25)* 4.2BSD
+ b (swap)      38000     (120/05/25)*     32768     (104/00/08)* swap
+ c (disk)          0       (0/00/00)     304605     (967/00/00)  unused
+ d (user)      70768     (224/05/33)*    233837     (742/03/02)* 4.2BSD
+.Ed
+.Dl edlabel\*> Ic w
+.Dl edlabel\*> Ic q
+.Dl ssh:
+.Pp
 Now that your disk's partitioned, you need to get the proper installation
 miniroot image onto it. The miniroot image is designed to be copied into
 the swap partition of your disk. This is a safe place which won't be
 overwritten by the installation procedure. From the ssh prompt, use the
 following commands to copy the miniroot image from tape to swap (b).
-
--->     ssh: mt -f /dev/nrst0 rewind
--->     ssh: mt -f /dev/nrst0 fsf 3
--->     ssh: dd bs=8k if=/dev/nrst0 of=/dev/rsd0b
-
+.Pp
+.Dl ssh: Ic mt -f /dev/nrst0 rewind
+.Dl ssh: Ic mt -f /dev/nrst0 fsf 3
+.Dl ssh: Ic dd bs=8k if=/dev/nrst0 of=/dev/rsd0b
+.Pp
 The disk and the miniroot must now be made bootable using the
-'installboot' command, To do this, issue the following commands:
-
--->     ssh: mount /dev/sd0b /mnt
--->     ssh: installboot /mnt/usr/mdec/bootsd /bootxx /dev/rsd0b
--->     ssh: umount /dev/sd0b
-
+.Xr installboot 8
+command. To do this, issue the following commands:
+.Pp
+.Dl ssh: Ic mount /dev/sd0b /mnt
+.Dl ssh: Ic installboot /mnt/usr/mdec/bootsd /bootxx /dev/rsd0b
+.Dl ssh: Ic umount /dev/sd0b
+.Pp
 You can now shutdown the system.
-
--->     ssh: halt
-         signal 15
-        ssh: syncing disks... done
-        unmounting /mnt (/dev/sd1b)...
-        unmounting / (root_device)...
-        halted
-
--->     147-Bug>reset
--->     Reset Local SCSI Bus [Y,N] N? y
--->     Automatic reset of known SCSI Buses on RESET [Y,N] = Y? 
--->     Cold/Warm Reset flag [C,W] = C? 
--->     Execute Soft Reset [Y,N] N? y
-
+.Pp
+.Dl ssh: Ic halt
+.Dl signal 15
+.Dl ssh: syncing disks... done
+.Dl unmounting /mnt (/dev/sd1b)...
+.Dl unmounting / (root_device)...
+.Dl halted
+.Pp
+.Dl 147-Bug\*> Ic reset
+.Dl Reset Local SCSI Bus [Y,N] N? Ic y
+.Dl Automatic reset of known SCSI Buses on RESET [Y,N] Y?
+.Dl Cold/Warm Reset flag [C,W] = C?
+.Dl Execute Soft Reset [Y,N] N? Ic y
+.Pp
 You should now reboot from that just installed miniroot. See the section
 entitled "Booting the miniroot" for details.
-
-
-* Installing from NFS:
-
+.
+.Ss2 Installing from NFS:
+.
 Before you can install from NFS, you must have already configured
 your NFS server to support your machine as a bootable client.
 Instructions for configuring the server are found in the section
 entitled "Getting the NetBSD System onto Useful Media" above.
-
+.Pp
 To get started, you need to download "sboot" into RAM (you will find
-'sboot' in the "install" directory of the mvme68k distribution).
+.Ic sboot
+in the 
+.Pa install
+directory of the mvme68k distribution).
 You can either do that through the console line or through a 2nd serial
-connection. For example, a VME147 connected to a sun4/110 and accessed
-via "tip" can be loaded as follows:
-
-        lo 0
-        ~Ccat sboot
-        go 4000
-
+connection. For example, a VME147 connected to a sun4/110 and accessed via
+.Xr tip 1
+can be loaded as follows:
+.Pp
+.Bd -literal -offset indent
+lo 0
+~Ccat sboot
+go 4000
+.Ed
+.Pp
 Which will look like this:
-
--->     147-Bug>lo 0
--->     ~CLocal command? cat sboot
-
-        away for 11 seconds 
-        !
-
--->     147-Bug>g 4000
-        Effective address: 00004000 
-
-        sboot: serial line bootstrap program (&end = 6018)
-
-        >>> 
-
+.Pp
+.Dl 147-Bug\*> Ic lo 0
+.Dl ~CLocal command? Ic cat sboot
+.Pp
+.Em away for 11 seconds
+.Dl !
+.Pp
+.Dl 147-Bug\*> Ic g 4000
+.Dl Effective address: 00004000
+.Pp
+.Dl sboot:\ serial\ line\ bootstrap\ program\ (\*&end\ =\ 6018)
+.Pp
+.Dl \*>\*>\*>
+.Pp
 Now, if you want to do it through serial line 1, then connect serial
-line one to a machine. At the "147-Bug> " prompt do this "tm 1".
-You should then login to whatever machine it is connected to.
-Then hit "^A" to escape to Bug.  do "lo 1;x=cat sboot" ... then when
-that is done you can reconnect "tm 1" and logout. Then do "go 4000"
-and you've got ">>> " prompt of sboot.
-
-Once you've got the ">>> " prompt, you can boot the RAMDISK kernel
+line one to a machine. At the
+.Li 147-Bug\*> No prompt type Ic \&tm 1
+You should then login to the machine it is connected to.
+Then hit "^A" to escape to Bug. do 
+.Ic lo 1;x=cat sboot Em ...
+then when that is done you can reconnect
+.Ic tm 1 No and logout.
+.No Then do Ic go 4000
+and you've got the "\*>\*>\*> " prompt of sboot.
+.Pp
+Once you've got the "\*>\*>\*> " prompt, you can boot the RAMDISK kernel
 from the server:
+.Pp
+.Dl \*>\*>\*> b
+.Pp
+.Bd -literal -offset indent
+le0: ethernet address: 8:0:3e:20:cb:87
+My ip address is: 192.168.1.4
+Server ip address is: 192.168.1.1
+4800
+Download was a success!
+Start @ 0x8000 ...
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.4 $]
+device: le0 attached to 08:00:3e:20:cb:87
+boot: client IP address: 192.168.1.4
+boot: client name: soapy
+root addr=192.168.1.1 path=/export/soapy
+578616+422344+55540+[46032+51284]=0x11a6e4
+Start @ 0x8000 ...
+Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
+Copyright (c) 1982, 1986, 1989, 1991, 1993
+	The Regents of the University of California.  All rights reserved.
 
--->     >>> b
-
-        le0: ethernet address: 8:0:3e:20:cb:87
-        My ip address is: 192.168.1.4
-        Server ip address is: 192.168.1.1
-        4800 
-        Download was a success!
-        Start @ 0x8000 ... 
-        >> BSD MVME147 netboot (via sboot) [$Revision: 1.3 $]
-        device: le0 attached to 08:00:3e:20:cb:87
-        boot: client IP address: 192.168.1.4
-        boot: client name: soapy
-        root addr=192.168.1.1 path=/export/soapy
-        578616+422344+55540+[46032+51284]=0x11a6e4
-        Start @ 0x8000 ...
-        Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
-        Copyright (c) 1982, 1986, 1989, 1991, 1993
-                The Regents of the University of California.  All rights reserved.
-
-        NetBSD 1.3 (RAMDISK) #1: Sun Dec 21 16:19:04 GMT 1997
-            steve@soapy.mctavish.demon.co.uk:/usr/src/sys/arch/mvme68k/compile/RAMDISK
-        Motorola MVME-147S: 25MHz MC68030 CPU+MMU, MC68882 FPU
-        real mem  = 7237632
-        avail mem = 6381568
-        using 88 buffers containing 360448 bytes of memory
-        mainbus0 (root)
-        pcc0 at mainbus0: Peripheral Channel Controller, rev 0, vecbase 0x40
-        clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
-          .
-          .
-
+NetBSD 1.3 (RAMDISK) #1: Sun Dec 21 16:19:04 GMT 1997
+    steve@soapy.mctavish.demon.co.uk:/usr/src/sys/arch/mvme68k/compile/RAMDISK
+Motorola MVME-147S: 25MHz MC68030 CPU+MMU, MC68882 FPU
+real mem  = 7237632
+avail mem = 6381568
+using 88 buffers containing 360448 bytes of memory
+mainbus0 (root)
+pcc0 at mainbus0: Peripheral Channel Controller, rev 0, vecbase 0x40
+clock0 at pcc0 offset 0x0 ipl 5: Mostek MK48T02, 2048 bytes of NVRAM
+  \&.
+  \&.
+.Ed
+.Pp
 After the boot program loads the RAMDISK kernel, you should see the
 welcome screen as shown in the "tape boot" section above.
-
+.Pp
 You now need to create a disklabel with partition information on the
 SCSI disk on which you intend to create your root filesystem. Follow
 the instructions in the previous section entitled "Installing from
 tape" to do this. (But stop short of the part which describes how to
 copy the miniroot from tape.)
-
+.Pp
 You must now configure the network interface before you can access the
 NFS server containing the miniroot image. For example the command:
-
--->     ssh: ifconfig le0 inet 192.168.1.4 up
-
+.Pp
+.Dl ssh: Ic ifconfig\ le0\ inet\ 192.168.1.4 up
+.Pp
 will bring up the network interface 'le0' with that address. The next
 step is to copy the miniroot from your server. This can be done using
 either NFS or remote shell. (In the examples that follow, the server has
 IP address 192.168.1.1) You may then need to add a default route if the
 server is on a different subnet:
-
--->     ssh: route add default 192.168.1.2 1
-
+.Pp
+.Dl ssh: Ic route add default 192.168.1.2 1
+.Pp
 You can look at the route table using:
-
--->     ssh: route show
-
+.Pp
+.Dl ssh: Ic route show
+.Pp
 Now mount the NFS filesystem containing the miniroot image:
-
--->     ssh: mount -r 192.168.1.1:/export/soapy /mnt
-
+.Pp
+.Dl ssh: Ic mount -r 192.168.1.1:/export/soapy /mnt
+.Pp
 The procedure is simpler if you have space for an expanded (not
 compressed) copy of the miniroot image. In that case:
-
--->     ssh: dd bs=8k if=/mnt/miniroot of=/dev/rsd0b
-
+.Pp
+.Dl ssh: Ic dd bs=8k if=/mnt/miniroot of=/dev/rsd0b
+.Pp
 Otherwise, you will need to use "zcat" to expand the miniroot image
 while copying. This is tricky because the "ssh" program (small shell)
 does not handle sh(1) pipeline syntax. Instead, you first run the reader
 in the background with its input set to /dev/pipe and then run the other
 program in the foreground with its output to /dev/pipe. The result looks
 like this:
-
--->     ssh: run -bg dd obs=8k if=/dev/pipe of=/dev/rsd0b
--->     ssh: run -o /dev/pipe zcat /mnt/install/miniroot.gz
-
+.Pp
+.Dl ssh: Ic run -bg dd obs=8k if=/dev/pipe of=/dev/rsd0b
+.Dl ssh: Ic run -o /dev/pipe zcat /mnt/install/miniroot.gz
+.Pp
 To load the miniroot using rsh to the server, you would use a pair
 of commands similar to the above. Here is another example:
-
--->     ssh: run -b dd obs=8k if=/dev/pipe of=/dev/rsd0b
--->     ssh: run -o /dev/pipe rsh 192.168.1.1 zcat miniroot.gz
-
+.Pp
+.Dl ssh: Ic run -b dd obs=8k if=/dev/pipe of=/dev/rsd0b
+.Dl ssh: Ic run -o /dev/pipe rsh 192.168.1.1 zcat miniroot.gz
+.Pp
 You must now make the disk bootable. Refer to the previous section on
 installing from tape, where it describes how to run 'installboot'.
 This is immediately following the part which explains how to copy the
 miniroot from tape.
-
-
-* Booting the miniroot:
-
+.
+.Ss2 Booting the miniroot:
+.
 Assuming the miniroot is installed on partition 'b' of the disk with
 SCSI-id 0, then the 147Bug boot command is:
-
-        147-Bug> bo 0,,b:
-
+.Dl 147-Bug\*> Ic bo 0,,b:
+.Pp
 The command line parameters above are:
-
-        0   controller (usually zero)
-        ,,  bug argument separators
-        b:  tell the bootstrap code to boot from partition 'b'
-
+.Pp
+.Bl -tag -width xxx
+.It Ic 0
+controller (usually zero)
+.It Ic ,,
+bug argument separators
+.It Ic \&b:\&
+tell the bootstrap code to boot from partition
+.Ic b
+.El
+.Pp
 You should see a bunch of boot messages, followed by messages from
 the miniroot kernel just as you did when the RAMDISK kernel booted.
-
+.Pp
 You will then be prompted to enter the root device. Since the miniroot
 was booted from the swap partition, you should enter 'sd0b'. You will
 then be asked for the swap device and filesystem type. Just press
 return twice to accept the defaults. When asked to enter a terminal
 type, either accept the default, or use whatever the TERM environment
 variable is set to in the shell of your host system:
-
-        vmel0 at vmechip0
-        boot device: sd0
--->     root device (default sd0a): sd0b
--->     dump device (default sd0b): 
--->     file system (default generic): 
-        root on sd0b dumps on sd0b
-        mountroot: trying ffs...
-        root file system type: ffs
-        init: copying out path `/sbin/init' 11
-        erase ^H, werase ^W, kill ^U, intr ^C
--->     Terminal type? [vt100] 
-
+.Pp
+.DL vmel0 at vmechip0
+.DL boot device: sd0
+.DL root device (default sd0a): Ic sd0b
+.DL dump device (default sd0b):  Em (return)
+.DL file system (default generic): Em (return)
+.DL root on sd0b dumps on sd0b
+.DL mountroot: trying ffs...
+.DL root file system type: ffs
+.DL init: copying out path `/sbin/init' 11
+.DL erase ^H, werase ^W, kill ^U, intr ^C
+.DL Terminal type? [vt100] Em return
+.Pp
 Congratulations! The system should now be running the miniroot
 installation program.
-
-
-Miniroot install program:
-------------------------
-
+.
+.Ss Miniroot install program:
+.
 The miniroot's install program is very simple to use. It will guide
 you through the entire process, and is well automated. Additional
 improvements are planned for future releases.
-
+.Pp
 The miniroot's install program will:
-
-        * Allow you to place disklabels on additional disks.
-          The disk we are installing on should already have
-          been partitioned using the RAMDISK kernel.
-
-          Note that partition sizes and offsets are expressed
-          in sectors. When you fill out the disklabel, you will
-          need to specify partition types and filesystem parameters.
-          If you're unsure what the these values should be, use the
-          following defaults:
-
-                fstype: 4.2BSD
-                fsize: 1024
-                bsize: 4096
-                cpg: 16
-
-          If the partition will be a swap partition, use the following:
-
-                fstype: swap
-                fsize: 0 (or blank)
-                bsize: 0 (or blank)
-                cpg: 0 (or blank)
-
-          Note that partition 'c' is special; it covers then entire
-          disk and should not be assigned to a filesystem.
-
-          The number of partitions is currently fixed at 8.
-
-        * Create filesystems on target partitions.
-
-        * Allow you to set up your system's network configuration.
-          Remember to specify host names without the domain name
-          appended to the end.  For example use `foo' instead of
-          `foo.bar.org'.  If, during the process of configuring
-          the network interfaces, you make a mistake, you will
-          be able to re-configure that interface by simply selecting
-          it for configuration again.
-
-        * Mount target filesystems.  You will be given the opportunity
-          to manually edit the resulting /etc/fstab.
-
-        * Extract binary sets from the media of your choice.
-
-        * Copy configuration information gathered during the
-          installation process to your root filesystem.
-
-        * Make device nodes in your root filesystem.
-
-        * Copy a new kernel onto your root partition.
-
-        * Install a new boot block.
-
-        * Check your filesystems for integrity.
-
+.Bl -bullet
+.It
+Allow you to place disklabels on additional disks.
+The disk we are installing on should already have
+been partitioned using the RAMDISK kernel.
+.Pp
+Note that partition sizes and offsets are expressed
+in sectors. When you fill out the disklabel, you will
+need to specify partition types and filesystem parameters.
+If you're unsure what the these values should be, use the
+following defaults:
+.Pp
+.Dl fstype: 4.2BSD
+.Dl fsize: 1024
+.Dl bsize: 4096
+.Dl cpg: 16
+.Pp
+If the partition will be a swap partition, use the following:
+.Pp
+.Dl fstype: swap
+.Dl fsize: 0 (or blank)
+.Dl bsize: 0 (or blank)
+.Dl cpg: 0 (or blank)
+.Pp
+Note that partition 'c' is special; it covers then entire
+disk and should not be assigned to a filesystem.
+.Pp
+The number of partitions is currently fixed at 8.
+.It
+Create filesystems on target partitions.
+.It
+Allow you to set up your system's network configuration.
+Remember to specify host names without the domain name
+appended to the end.  For example use `foo' instead of
+`foo.bar.org'.  If, during the process of configuring
+the network interfaces, you make a mistake, you will
+be able to re-configure that interface by simply selecting
+it for configuration again.
+.It
+Mount target filesystems. You will be given the opportunity
+to manually edit the resulting /etc/fstab.
+.It
+Extract binary sets from the media of your choice.
+.It
+Copy configuration information gathered during the
+installation process to your root filesystem.
+.It
+Make device nodes in your root filesystem.
+.It
+Copy a new kernel onto your root partition.
+.It
+Install a new boot block.
+.It
+Check your filesystems for integrity.
+.El
+.Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.

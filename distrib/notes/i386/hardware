@@ -1,19 +1,20 @@
-	$NetBSD: hardware,v 1.37 1998/11/10 14:16:09 bouyer Exp $	
-
-NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors.  It
-does NOT support MCA systems, such as some IBM PS/2 systems.  The
+.\"	$NetBSD: hardware,v 1.38 1999/01/13 07:30:05 ross Exp $	
+.Nx \*V
+runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
+with 386-family processors, with or without math coprocessors. It
+does NOT support MCA systems, such as some IBM PS/2 systems. The
 minimal configuration is said to require 4M of RAM and 50M of disk
 space, though we do not know of anyone running with a system quite
-this minimal today.  To install the entire system requires much more
+this minimal today. To install the entire system requires much more
 disk space (the unpacked binary distribution, without sources,
 requires at least 65M without counting space needed for swap space,
 etc), and to run X or compile the system, more RAM is recommended.
 (4M of RAM will actually allow you to run X and/or compile, but it
-won't be speedy.  Note that until you have around 16M of RAM, getting
+won't be speedy. Note that until you have around 16M of RAM, getting
 more RAM is more important than getting a faster CPU.)
 
 Supported devices include:
+.Bd -literal
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
 		bus-master DMA is supported for the Intel PIIX, CMD Tech
@@ -83,7 +84,7 @@ Supported devices include:
 			SVEC FD0455
 			X/Lan Add-On Adapter
 			IBM #13H9237 PCI Ethernet Adapter
-		AT&T StarLAN 10, EN100, and StarLAN Fiber
+		AT\*&T StarLAN 10, EN100, and StarLAN Fiber
 		3COM 3c501
 		3COM 3c503
 		3COM 3c505 [*]
@@ -159,7 +160,7 @@ Supported devices include:
 			[The following drivers are not extensively tested]
 		Personal Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
-		Gravis Ultrasound Plug&Play [*] [+]
+		Gravis Ultrasound Plug\*&Play [*] [+]
 		Ensoniq AudioPCI [*] [+]
 		Yamaha OPL3-SA3 [*] [+]
 		Aria based sound cards [*] [+]
@@ -179,37 +180,47 @@ Supported devices include:
                 Mice [*] [+]
 		Printers [*] [+]
 		Generic support for HID devices [*] [+]
-
+.Ed
+.Pp
 Drivers for hardware marked with "[*]" are NOT present in kernels on the
 distribution floppies.  Except as noted above, all drivers are present
 on all disks.  Also, at the present time, the distributed kernels
-support only one SCSI host adapter per machine.  NetBSD normally
+support only one SCSI host adapter per machine. 
+.Nx
+normally
 allows more, though, so if you have more than one, you can use all of
-them by compiling a custom kernel once NetBSD is installed.
-
+them by compiling a custom kernel once
+.Nx
+is installed.
+.Pp
 Support for devices marked with "[+]" IS included in the "generic" kernels,
 although it is not in the kernels which are on the distribution floppies.
-
+.Pp
 Support for devices marked with "[b]" requires BIOS support for PCI-PCI
 bridging on your motherboard.  Most reasonably modern Pentium motherboards
 have this support, or can acquire it via a BIOS upgrade.
-
+.Pp
 Hardware the we do NOT currently support, but get many questions
 about:
-	AMD PCscsi SCSI host adapters (though the PCnet portion of the
-					PCnet-SCSI works fine)
-	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
-		run fine using one processor only.)
-	NCR 5380-based SCSI host adapters.
-	PCI WD-7000 SCSI host adapters.
-	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
-		that connect to the floppy disk controller.)
-
+.Bl -bullet
+.It
+AMD PCscsi SCSI host adapters (though the PCnet portion of the PCnet-SCSI works fine)
+.It
+Multiprocessor Pentium and Pentium Pro systems. (Though they should run fine using one processor only.)
+.It
+NCR 5380-based SCSI host adapters.
+.It
+PCI WD-7000 SCSI host adapters.
+.It
+QIC-40 and QIC-80 tape drives.
+(Drives that connect to the floppy disk controller.)
+.El
+.Pp
 We are planning future support for many of these devices.
-
+.Pp
 To be detected by the distributed kernels, the devices must
 be configured as follows:
-
+.Bd -literal
 Device		Name	Port	IRQ	DRQ	Misc
 ------		----	----	---	---	----
 Serial ports	com0	0x3f8	4		[8250/16450/16550/clones]
@@ -282,7 +293,7 @@ SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 		ep0 	any  	any	[you must assign an interrupt in your
 		    	    	   	 PCI BIOS, or let it do so for you]
 
-AT&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
+AT\*&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
 EtherExpress 16 Ethernet boards
 		ie0 	0x360	7		iomem 0xd0000
 		ie1 	0x300	10		iomem 0xd0000
@@ -307,3 +318,4 @@ DC21x4x based Ethernet boards; see above for partial list
 
 Digital EtherWORKS III (DE203/DE204/DE205)
 		lc0 	any  	any
+.Ed

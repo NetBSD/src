@@ -1,41 +1,44 @@
-	$NetBSD: hardware,v 1.2 1998/01/09 18:46:49 perry Exp $	
-
-NetBSD/mvme68k _VER runs on Motorola MVME147 boards.
-
+.\"	$NetBSD: hardware,v 1.3 1999/01/13 07:30:06 ross Exp $	
+.
+NetBSD/mvme68k \*V runs on Motorola
+.Tn MVME147 No boards.
+.Pp
 The minimal configuration requires 4M of RAM and ~100MB of disk space.
 To install the entire system requires much more disk space (approx.
 200MB additional space is necessary for full sources. Double that if you
 want to recompile it all!). To run X (clients only) or compile the system,
 more RAM is recommended. Good performance requires 8MB of RAM, or 16 MB
 when running the X Window System.
-
+.Pp
 Here is a table of recommended HD partition sizes for a full install:
-        partition:      advise          needed
-        root (/)        20M             12M
-        user (/usr)     100M            80M
-        swap            (2 or 3 * RAM)   8M
-        Anything else is up to you!
-
-Note that the mvme68k installation procedure uses a `miniroot' image
-which is placed into the swap area of the disk. The swap partition
-must be large enough to hold this miniroot image (> 6Mb).
-
-The following VME147 hardware is supported:
-
-        Serial ports (RS232):
-                built-in console, tty01, tty02 and tty03
-
-        Parallel port:
-                On-board centronics style printer port
-
-        Network interfaces:
-                On-board Lance Ethernet (le)
-
-        SCSI:  (Most SCSI disks, tapes, CD-ROMs, etc.)
-                On-board wd33c93 SCSI bus interface chip (async only for now).
-
-        Miscellaneous:
-                Battery-backed real-time clock.
-                VMEbus RAM cards.
-
+.Bd -literal -offset indent
+partition:      advise          needed
+root (/)        20M             12M
+user (/usr)     100M            80M
+swap            (2 or 3 * RAM)   8M
+Anything else is up to you!
+.Ed
+.Pp
+Note that the \*m installation procedure uses a
+.Em miniroot
+image which is placed into the swap area of the disk. The swap partition
+must be large enough to hold this miniroot image (\*> 6Mb).
+.Pp
+The following
+.Tn VME147 No hardware is supported:
+.Bl -tag -width Parallel
+.It Em Serial ports (RS232):
+built-in console, tty01, tty02 and tty03
+.It Em Parallel port:
+On-board centronics style printer port
+.It Em Network interfaces:
+On-board Lance Ethernet (le)
+.It Em SCSI: 
+(Most SCSI disks, tapes, CD-ROMs, etc.)
+On-board wd33c93 SCSI bus interface chip (async only for now).
+.It Em Miscellaneous:
+Battery-backed real-time clock.
+VMEbus RAM cards.
+.El
+.Pp
 If it's not on this list, there is no support for it in this release.

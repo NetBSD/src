@@ -1,30 +1,30 @@
-	$NetBSD: prep,v 1.7 1998/01/09 18:47:14 perry Exp $	
-
+.\"	$NetBSD: prep,v 1.8 1999/01/13 07:30:08 ross Exp $	
+.
 Installing NetBSD/pmax using the sysinst tool and an image of a full
 bootable root filesystem is now a relatively painless process.  The
 diskimage is avaiable via (either a diskimage, dd'able to a raw disk
 or tarfile to for NFS .
-
+.Pp
 From most convenient to least convenient, the installation methods
 are:
-
-	1. Booting as a diskless workstation via Ethernet,
-	   followed by initialization of the local disk and
-	   installing onto the local disk over NFS.
-
-	2. Copying a bootable diskimage onto the beginning of a disk
-	   and installing onto that disk 
-
-	3. installation using a helper machine to set up a bootable
-	   NetBSD/pmax  root filesystem, and moving the disk
-	   to the target.
-
-	4. Installation from Ultrix or other OSes by putting a copy
- 	   of the diskimage into the existing swap partition and a copy
-	   of the NetBSD kernel into your Ultrix root filesystem.
-
-
-
+.Bl -enum
+.It
+Booting as a diskless workstation via Ethernet,
+followed by initialization of the local disk and
+installing onto the local disk over NFS.
+.It
+Copying a bootable diskimage onto the beginning of a disk
+and installing onto that disk 
+.It
+installation using a helper machine to set up a bootable
+NetBSD/pmax  root filesystem, and moving the disk
+to the target.
+.It
+Installation from Ultrix or other OSes by putting a copy
+of the diskimage into the existing swap partition and a copy
+of the NetBSD kernel into your Ultrix root filesystem.
+.El
+.Pp
 Before you start, you must choose an installation method.  If you have
 an Ethernet connection to an NFS server that can provide even ~30M for
 a diskless-root filesystem, then installation via the net is best.
@@ -32,53 +32,54 @@ Next best, if your DECstation is already running Ultrix and has two
 disk drives (or one, if you live dangerously), is to copy a diskimage
 onto one drive.  Finally, you can install by using a second machine as
 a helper to prepare a bootable NetBSD/pmax disk.
-
+.Pp
 If your target is going to run diskless, then installation proceeds as
 for method 1.
-
+.Pp
 This release of NetBSD/pmax uses the new sysinst installation utility.
 You should examine the guide on the NetBSD/pmax web site, which has
 more complete and more up-to-date instructions for sysinst.  The
 following is a brief synopsis which has been successfully followed by
 both first-time NetBSD/pmax installers and to upgrade existing
 gsystems.
-
+.Pp
 You should familiarize yourself with the console PROM environment
 and the hardware configuration. The PROMs on the older Decstation
 2100 and 3100 use one syntax. The PROMs on the TurboChannel machines
 use a completely different syntax.  Be sure you know how to print
 the configuration of your machine, and how to boot from disk or
 network, as appropriate.
-
+.Pp
 On the 2100/3100, that's
-	boot -f rz(0,N,0)netbsd		(boot from rzN)
-	boot -f tftp()			(boot diskless via TFTP)
-	boot -f tftp()			(boot via MOP from an Ultrix server)
-
+.Bd -literal -offset indent
+boot -f rz(0,N,0)netbsd (boot from rzN)
+boot -f tftp()          (boot diskless via TFTP)
+boot -f tftp()          (boot via MOP from an Ultrix server)
+.Ed
 On the 5000/200, the equivalent is
-	boot 5/rzN/netbsd
-	boot 6/tftp
-	boot 6/mop
-
+.Bd -literal -offset indent
+boot 5/rzN/netbsd
+boot 6/tftp
+boot 6/mop
+.Ed
 and on other  5000 series machines,
-	boot 3/rzN/netbsd
-	boot 3/tftp
-	boot 3/mop
-
+.Bd -literal -offset indent
+boot 3/rzN/netbsd
+boot 3/tftp
+boot 3/mop
+.Ed
 You will also need to know the total size (in sectors) and the
 approximate geometry of the disks you are installing onto, so that you
 can label your disks for the BSD fast filesystem (FFS).  For most SCSI
 drives (including all SCSI-2 drives), the kernel will correctly detect
 the disk geometry. The sysinst tool will suggest these as the default.
-
-
+.Pp
 If you're installing NetBSD/pmax for the first time it's a very good
 idea to pre-plan partition sizes for the disks on which you're
 installing NetBSD.  Changing the size of partitions after you've
 installed is difficult.  If you do not have a spare bootable disk, it
 may be simpler to re-install NetBSD again from scratch.
-
-
+.Pp
 If you install by copying a disk image, and you want to change the size
 of the root partition from the default 32Mbytes, you will need a second
 `scratch' disk. You should copy the diskimage onto the `scratch' disk,
@@ -90,7 +91,7 @@ and use that system to change the root filesystem size.  DECstation
 PROMs don't reliably support booting off partitions other than the 'a'
 partition, which is why you need two disks to tailor the root filesystem
 size.
-
+.Pp
 Assuming a classic partition scheme with separate root (`/') and /usr
 filesystems, a comfortable size for the NetBSD root filesystem
 partition is about 32M.  A good initial size for the swap partition is

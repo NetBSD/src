@@ -1,3 +1,5 @@
-	$NetBSD: whatis,v 1.3 1998/10/21 14:32:36 minoura Exp $	
-
-NetBSD _VER is the second public release of NetBSD for the x68k platform.
+.\" $NetBSD: whatis,v 1.4 1999/01/13 07:30:10 ross Exp $	
+.Nx \*V
+is the second public release of
+.Nx
+for the x68k platform.
