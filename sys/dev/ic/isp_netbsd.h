@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.42 2001/05/16 21:41:52 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.43 2001/05/25 21:45:55 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -71,6 +71,7 @@
 #include <sys/buf.h> 
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/kthread.h>
 
 
 #include <dev/scsipi/scsi_all.h>
@@ -83,8 +84,8 @@
 #include "opt_isp.h"
 
 
-#define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	1
+#define	ISP_PLATFORM_VERSION_MAJOR	2
+#define	ISP_PLATFORM_VERSION_MINOR	0
 
 struct isposinfo {
 	struct device		_dev;
@@ -95,10 +96,12 @@ struct isposinfo {
 	int	mboxwaiting;
 	u_int32_t	islocked;
 	u_int32_t	onintstack;
-	unsigned int		: 28,
+	unsigned int		: 26,
+		loop_checked	: 1,
 		mbox_wanted	: 1,
 		mbox_locked	: 1,
 		no_mbox_ints	: 1,
+		paused		: 1,
 		blocked		: 1;
 	union {
 		u_int64_t	_wwn;
@@ -106,11 +109,13 @@ struct isposinfo {
 #define	wwn_seed	un._wwn
 #define	discovered	un._discovered
 	} un;
-	TAILQ_HEAD(, scsipi_xfer) waitq; 
-	struct callout _restart;
+	u_int32_t threadwork;
+	struct proc *thread;
 };
 #define	ISP_MUSTPOLL(isp)	\
 	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
+
+#define	HANDLE_LOOPSTATE_IN_OUTER_LAYERS	1
 
 /*
  * Required Macros/Defines
@@ -277,6 +282,9 @@ struct isposinfo {
  */
 #define	isp_name	isp_osinfo._dev.dv_xname
 #define	isp_unit	isp_osinfo._dev.dv_unit
+#define	isp_chanA	isp_osinfo._chan
+#define	isp_chanB	isp_osinfo._chan_b
+
 
 /*
  * Driver prototypes..
