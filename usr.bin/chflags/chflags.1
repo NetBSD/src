@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.8 1999/03/09 17:31:46 bouyer Exp $
+.\"	$NetBSD: chflags.1,v 1.9 1999/07/31 03:24:46 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,6 +126,9 @@ is used to display the flags.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Pp
+The kernel does not allow the flags on block and character
+devices to be changed except by the superuser.
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr chflags 2 ,
