@@ -1,15 +1,12 @@
-#	$NetBSD: Makefile.arc.inc,v 1.4 2001/11/14 23:02:02 thorpej Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.5 2001/12/09 05:00:41 atatat Exp $
 
 CFLAGS+=	-mips2 -mcpu=r4000
 AFLAGS+=	-mips2
 
-# Used if DEBUG != ""
-DEBUG_SYSTEM_LD_TAIL+=; \
-		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
-
 # XXX
-POST_STRIP_SYSTEM_LD_TAIL=; \
+SYSTEM_LD_TAIL_EXTRA=; \
 		echo ${OBJCOPY} -O ecoff-littlemips $@ $@.ecoff; \
 		${OBJCOPY} -O ecoff-littlemips $@ $@.ecoff
+
+# XXX works *only* for kernels with one config line named "netbsd"
+EXTRA_CLEAN+= netbsd.ecoff

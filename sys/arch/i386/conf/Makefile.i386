@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.121 2001/11/23 05:19:00 atatat Exp $
+#	$NetBSD: Makefile.i386,v 1.122 2001/12/09 05:00:45 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,7 @@ locore.o: ${I386}/i386/locore.s assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	c0100000
-EXTRA_LINKFLAGS=	-X
+LINKFLAGS_NORMAL=	-X
 .if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript
 LINKFORMAT=	-T ${I386}/conf/${KERN_LDSCRIPT}

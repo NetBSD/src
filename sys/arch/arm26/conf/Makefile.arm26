@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.16 2001/11/23 05:19:02 atatat Exp $
+#	$NetBSD: Makefile.arm26,v 1.17 2001/12/09 05:00:42 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -32,6 +32,8 @@ GENASSYM=	${ARM26}/arm26/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Darm26
+CWARNFLAGS+=	-Wcomment
+LOOSE_PROTOTYPES= yes
 CFLAGS+=	-ffixed-r14
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 

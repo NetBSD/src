@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.dreamcast.inc,v 1.6 2001/11/20 12:56:25 lukem Exp $
+#	$NetBSD: Makefile.dreamcast.inc,v 1.7 2001/12/09 05:00:43 atatat Exp $
 
 MACHINE_ARCH=sh3el
 
-TEXTADDR=8c010000
+TEXTADDR?=8c010000
 .if ${OBJECT_FMT} == "ELF"
-LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
+LINKFORMAT=	-N
 .endif
