@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.24 2002/01/14 11:02:23 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.25 2002/01/14 15:58:37 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1276,3 +1276,22 @@ sys/miscfs/procfs/procfs_vnops.c		1.88 via patch
   Fix a ptrace/execve race condition which could be used to modify
   the child process' image during execve.  This would be a security
   issue due to setuid programs.
+
+distrib/notes/common/main			1.150
+
+  Edit the list of release engineering people.
+
+lib/libc/stdlib/random.c			1.20
+
+  Make this work on LP64 platforms.  This fixes krb5-enabled logins
+  on the alpha platform.
+
+lib/libc/stdlib/random.3			1.13
+
+  Document alignment requirements of the state array passed to
+  initstate(3).  Earlier only documented in comments in the code.
+
+sys/netinet/ip_output.c				1.91
+
+  Avoid kernel panic on IPv4 multicast packet transmission if there
+  is no IPv4 address assigned to the specified outgoing interface.
