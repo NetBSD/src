@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.59 2002/10/01 12:56:43 fvdl Exp $
+#	$NetBSD: INSTALL_TINY,v 1.60 2002/10/06 12:36:17 fvdl Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -43,6 +43,9 @@ options 	MATH_EMULATE	# floating point emulation
 # This option allows you to force a serial console at the specified
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
+
+# Save a physical page per process by not setting a kernel stack red zone.
+options 	NOREDZONE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct

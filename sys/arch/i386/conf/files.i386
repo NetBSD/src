@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.216 2002/10/04 18:28:29 elric Exp $
+#	$NetBSD: files.i386,v 1.217 2002/10/06 12:36:16 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -57,6 +57,9 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 
 # Large page size
 defflag			LARGEPAGES
+
+# No unmapped page below kernel stack
+defflag			NOREDZONE
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
