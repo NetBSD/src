@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.3 2000/06/25 19:37:11 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.4 2000/08/18 03:22:47 sommerfeld Exp $	*/
 
 /*
  *
@@ -414,7 +414,7 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
 #endif /* MULTIPROCESSOR */
 void	pmap_tlb_dshootdown __P((pmap_t, vaddr_t, pt_entry_t));
-void	pmap_do_tlb_shootdown __P((void));
+void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
