@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1999/01/16 20:48:46 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1999/02/26 22:03:29 is Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3828,6 +3828,22 @@ set_pte(va, pte)
 	kernCbase[idx].attr.raw = pte;
 	TBIS(va);
 }
+
+/*
+ *	Routine:        pmap_procwr
+ * 
+ *	Function:
+ *		Synchronize caches corresponding to [addr, addr+len) in p.
+ */   
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	size_t		len;
+{
+	(void)cachectl1(0x80000004, va, len, p);
+}
+
 
 #ifdef	PMAP_DEBUG
 /************************** DEBUGGING ROUTINES **************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 1998/11/11 06:43:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.65 1999/02/26 22:03:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -352,11 +352,12 @@ GLOBAL(trap0)
  * command in d0, addr in a1, length in d1
  */
 GLOBAL(trap12)
+	movl	_C_LABEL(curproc),sp@-	| push curproc pointer
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
-	jbsr	_C_LABEL(cachectl)	| do it
-	lea	sp@(12),sp		| pop args
+	jbsr	_C_LABEL(cachectl1)	| do it
+	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 1998/03/16 16:25:38 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 1999/02/26 22:03:28 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,5 +51,7 @@ typedef struct pmap *pmap_t;
 #ifdef	_SUN3X_
 #include <machine/pmap3x.h>
 #endif	/* SUN3X */
+
+void pmap_procwr __P((struct proc *, vaddr_t, size_t));
 
 #endif	/* _MACHINE_PMAP_H */
