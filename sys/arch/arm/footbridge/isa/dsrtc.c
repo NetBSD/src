@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.5 2002/02/09 11:43:27 chris Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.1 2002/02/10 12:26:01 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -44,8 +44,8 @@
 
 #include <machine/rtc.h>
 
-#include <arm32/dev/todclockvar.h>
-#include <arm32/isa/ds1687reg.h>
+#include <arm/footbridge/todclockvar.h>
+#include <arm/footbridge/isa/ds1687reg.h>
 
 #include <dev/isa/isavar.h>
 

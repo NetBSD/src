@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_isa.c,v 1.3 2002/02/09 11:43:28 chris Exp $	*/
+/*	$NetBSD: sysbeep_isa.c,v 1.1 2002/02/10 12:26:02 chris Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
