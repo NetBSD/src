@@ -1,8 +1,9 @@
-/*	$Id: defs.h,v 1.3 1993/08/02 17:56:36 mycroft Exp $ */
+/*	$Id: defs.h,v 1.4 1994/12/24 16:57:28 cgd Exp $ */
 
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 
 /*  machine-dependent definitions			*/
