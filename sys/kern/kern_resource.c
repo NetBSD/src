@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.34.4.2 1996/07/11 00:46:04 jtc Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.34.4.3 1996/12/11 09:24:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -231,6 +231,10 @@ dosetrlimit(p, which, limp)
 
 	if (which >= RLIM_NLIMITS)
 		return (EINVAL);
+
+	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
+		return (EINVAL);
+
 	alimp = &p->p_rlimit[which];
 	if (limp->rlim_cur > alimp->rlim_max || 
 	    limp->rlim_max > alimp->rlim_max)
