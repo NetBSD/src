@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.8 1997/11/18 00:32:59 lukem Exp $	*/
+/*	$NetBSD: yppush.c,v 1.9 1997/11/18 22:58:00 thorpej Exp $	*/
 
 /*
  *
@@ -48,6 +48,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
