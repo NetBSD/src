@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.4 1999/09/23 15:10:18 minoura Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.5 1999/09/25 19:27:36 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,16 +86,16 @@
 #define	DCIA()		DCIA_40()
 #define	DCIS()		DCIS_40()
 #define	DCIU()		DCIU_40()
-#define	DCIAS(va)	DCIAS_40((va))
+#define	DCIAS(pa)	DCIAS_40((pa))
 #define	PCIA()		PCIA_40()
 #define	DCFA()		DCFA_40()
-#define	ICPL(va)	ICPL_40((va))
-#define	ICPP(va)	ICPP_40((va))
-#define	DCPL(va)	DCPL_40((va))
-#define	DCPP(va)	DCPP_40((va))
+#define	ICPL(pa)	ICPL_40((pa))
+#define	ICPP(pa)	ICPP_40((pa))
+#define	DCPL(pa)	DCPL_40((pa))
+#define	DCPP(pa)	DCPP_40((pa))
 #define	DCPA()		DCPA_40()
-#define	DCFL(va)	DCFL_40((va))
-#define	DCFP(va)	DCFP_40((va))
+#define	DCFL(pa)	DCFL_40((pa))
+#define	DCFP(pa)	DCFP_40((pa))
 
 #elif defined(M68060) && !(defined(M68020)||defined(M68030)||defined(M68040))
 
@@ -108,16 +108,16 @@
 #define	DCIA()		DCIA_60()
 #define	DCIS()		DCIS_60()
 #define	DCIU()		DCIU_60()
-#define	DCIAS(va)	DCIAS_60((va))
+#define	DCIAS(pa)	DCIAS_60((pa))
 #define	PCIA()		PCIA_60()
 #define	DCFA()		DCFA_60()
-#define	ICPL(va)	ICPL_60((va))
-#define	ICPP(va)	ICPP_60((va))
-#define	DCPL(va)	DCPL_60((va))
-#define	DCPP(va)	DCPP_60((va))
+#define	ICPL(pa)	ICPL_60((pa))
+#define	ICPP(pa)	ICPP_60((pa))
+#define	DCPL(pa)	DCPL_60((pa))
+#define	DCPP(pa)	DCPP_60((pa))
 #define	DCPA()		DCPA_60()
-#define	DCFL(va)	DCFL_60((va))
-#define	DCFP(va)	DCFP_60((va))
+#define	DCFL(pa)	DCFL_60((pa))
+#define	DCFP(pa)	DCFP_60((pa))
 
 #else /* Multi-CPU config */
 
@@ -135,7 +135,7 @@ void	_ICPA __P((void));
 void	_DCIA __P((void));
 void	_DCIS __P((void));
 void	_DCIU __P((void));
-void	_DCIAS __P((vaddr_t));
+void	_DCIAS __P((paddr_t));
 
 #define	TBIA()		_TBIA()
 #define	TBIS(va)	_TBIS((va))
@@ -146,7 +146,7 @@ void	_DCIAS __P((vaddr_t));
 #define	DCIA()		_DCIA()
 #define	DCIS()		_DCIS()
 #define	DCIU()		_DCIU()
-#define	DCIAS(va)	_DCIAS((va))
+#define	DCIAS(pa)	_DCIAS((pa))
 
 #if defined(M68040)||defined(M68060)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_40.h,v 1.3 1998/09/02 11:16:33 leo Exp $	*/
+/*	$NetBSD: cacheops_40.h,v 1.4 1999/09/25 19:27:36 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,14 +132,14 @@ DCIU_40()
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIAS_40 __P((vaddr_t));
+void DCIAS_40 __P((paddr_t));
 extern __inline void
-DCIAS_40(va)
-	vaddr_t	va;
+DCIAS_40(pa)
+	paddr_t	pa;
 {
-	register vaddr_t	r_va __asm("a0") = va;
+	register paddr_t	r_pa __asm("a0") = pa;
 
-	__asm __volatile (" .word 0xf468;" : : "a" (r_va)); /* cpushl dc,a0@ */
+	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
 void PCIA_40 __P((void));
