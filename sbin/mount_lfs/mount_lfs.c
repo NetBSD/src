@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.22 2005/02/09 14:31:29 xtraeme Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.23 2005/03/31 03:07:38 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.22 2005/02/09 14:31:29 xtraeme Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.23 2005/03/31 03:07:38 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static void	usage(void);
 static void	kill_daemon(char *);
 static void	kill_cleaner(char *);
 
-static int short_rds, cleaner_debug, cleaner_bytes;
+static int short_rds, cleaner_debug, cleaner_bytes, fs_idle;
 static char *nsegs;
 
 #ifndef MOUNT_NOMAIN
@@ -101,7 +101,7 @@ mount_lfs(int argc, char *argv[])
 	nsegs = "4";
 	mntflags = noclean = 0;
 	cleaner_bytes = 1;
-	while ((ch = getopt(argc, argv, "bdN:no:s")) != -1)
+	while ((ch = getopt(argc, argv, "bdiN:no:s")) != -1)
 		switch (ch) {
 		case 'b':
 			cleaner_bytes = !cleaner_bytes;
@@ -109,6 +109,9 @@ mount_lfs(int argc, char *argv[])
 		case 'd':
 			cleaner_debug = 1;
 			break;
+                case 'i':
+                        fs_idle = 1;
+                        break;
 		case 'n':
 			noclean = 1;
 			break;
@@ -252,7 +255,7 @@ kill_cleaner(char *name)
 static void
 invoke_cleaner(char *name)
 {
-	char *args[6], **ap = args;
+	char *args[7], **ap = args;
 
 	/* Build the argument list. */
 	*ap++ = _PATH_LFS_CLEANERD;
@@ -266,6 +269,8 @@ invoke_cleaner(char *name)
 		*ap++ = "-s";
 	if (cleaner_debug)
 		*ap++ = "-d";
+        if (fs_idle)
+                *ap++ = "-f";
 	*ap++ = name;
 	*ap = NULL;
 
@@ -277,7 +282,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: %s [-bdns] [-N nsegs] [-o options] special node\n",
+		"usage: %s [-bdins] [-N nsegs] [-o options] special node\n",
 		getprogname());
 	exit(1);
 }
