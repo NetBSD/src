@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.3 2002/02/17 23:45:29 bjh21 Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.4 2002/02/17 23:47:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -35,6 +35,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: lpt_pioc.c,v 1.4 2002/02/17 23:47:56 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
