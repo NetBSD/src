@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.368 2001/10/24 00:14:48 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.369 2001/10/24 00:19:21 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.365 2001/10/24 00:13:41 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.366 2001/10/24 00:18:49 thorpej Exp 
  */
 
 /*
@@ -4370,6 +4370,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PLX Technology",
 	    "9060ES PCI bus controller",
+	},
+	{
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP,
+	    0,
+	    "Powerhouse Systems",
+	    "PowerTop PowerPC system controller",
+	},
+	{
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERPRO,
+	    0,
+	    "Powerhouse Systems",
+	    "PowerPro PowerPC system controller",
 	},
 	{
 	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
