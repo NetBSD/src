@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.29 2004/07/23 08:34:11 mycroft Exp $	*/
+/*	$NetBSD: ath.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.29 2004/07/23 08:34:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $");
 #endif
 
 /*
@@ -3068,14 +3068,13 @@ ath_next_scan(void *arg)
 {
 	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	int s;
 
 	/* don't call ath_start w/o network interrupts blocked */
 	s = splnet();
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
-		ieee80211_next_scan(ifp);
+		ieee80211_next_scan(ic);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.14 2004/07/23 09:22:15 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.15 2004/07/23 10:15:13 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -38,6 +38,19 @@
 /*
  * Definitions for IEEE 802.11 drivers.
  */
+
+/* NB: portability glue must go first */
+#ifdef __NetBSD__
+#include <net80211/ieee80211_netbsd.h>
+#elif __FreeBSD__
+#include <net80211/ieee80211_freebsd.h>
+#elif __linux__
+#include <net80211/ieee80211_linux.h>
+#else
+#error  "No support for your operating system!"
+#endif
+
+#include <sys/queue.h>
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
@@ -146,9 +159,7 @@ struct ieee80211com {
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
-#ifdef __FreeBSD__
-	struct mtx		ic_nodelock;	/* on node table */
-#endif
+	ieee80211_node_lock_t	ic_nodelock;	/* on node table */
 	u_int			ic_scangen;	/* gen# for timeout scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
 	void			(*ic_node_free)(struct ieee80211com *,
