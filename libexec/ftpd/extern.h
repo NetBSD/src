@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.39 2001/04/01 23:04:30 aidan Exp $	*/
+/*	$NetBSD: extern.h,v 1.40 2001/04/01 23:11:55 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -276,7 +276,7 @@ struct ftpclass {
 	mode_t		 umask;		/* Umask to use */
 };
 
-extern void		ftp_loop(void);
+extern void		ftp_loop(void) __attribute__ ((noreturn));
 extern void		ftp_handle_line(char *);
 
 #ifndef	GLOBAL
