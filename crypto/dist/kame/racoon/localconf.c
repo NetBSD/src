@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: localconf.c,v 1.3 2004/10/30 15:15:38 dsl Exp $");
+__RCSID("$NetBSD: localconf.c,v 1.4 2004/11/10 20:23:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,6 +116,7 @@ setdefault()
 	lcconf->wait_ph2complete = LC_DEFAULT_WAIT_PH2COMPLETE;
 	lcconf->strict_address = FALSE;
 	lcconf->complex_bundle = TRUE; /*XXX FALSE;*/
+	lcconf->gss_id_enc = LC_GSSENC_UTF16LE;	/* Windows compatibility */
 }
 
 /*
