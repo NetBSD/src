@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.12 2001/11/13 13:14:31 lukem Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.13 2002/03/06 07:12:02 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.12 2001/11/13 13:14:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.13 2002/03/06 07:12:02 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,7 +893,7 @@ ad1848_query_encoding(addr, fp)
 			return EINVAL;
 		strcpy(fp->name, AudioEadpcm);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;
+		fp->precision = 4;
 		fp->flags = 0;
 		break;
 	default:
