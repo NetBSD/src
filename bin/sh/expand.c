@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.14 1995/02/28 22:46:12 christos Exp $";
+static char *rcsid = "$Id: expand.c,v 1.15 1995/02/28 23:09:43 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -412,9 +412,11 @@ expbackq(cmd, quoted, flag)
 			STPUTC(lastc, dest);
 		}
 	}
-	if (lastc == '\n') {
+
+	/* Eat all trailing newlines */
+	for (p--; lastc == '\n'; lastc = *--p)
 		STUNPUTC(dest);
-	}
+
 	if (in.fd >= 0)
 		close(in.fd);
 	if (in.buf)
