@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.116 2003/04/06 19:57:09 salo Exp $
+$NetBSD: acronyms,v 1.117 2003/04/30 13:04:52 jmmv Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -154,6 +154,7 @@ ROTFL	rolling on the floor laughing
 RP	responsible person
 RSN	real soon now
 RTFB	read the fine/fucking book
+RTFC	read the fine/fucking code
 RTFM	read the fine/fucking manual
 RTFMP	read the fine/fucking man page
 RTFS	read the fine/fucking source
