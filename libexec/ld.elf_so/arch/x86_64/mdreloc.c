@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.19 2002/09/26 20:42:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.20 2002/10/03 20:39:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -205,7 +205,7 @@ _rtld_relocate_plt_lazy(obj)
 {
 	const Elf_Rela *rela;
 
-	if (!obj->isdynamic)
+	if (!obj->relocbase)
 		return 0;
 
 	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
