@@ -1,4 +1,4 @@
-/*	$NetBSD: emulate.S,v 1.3 2003/08/07 16:30:18 agc Exp $ */
+/*	$NetBSD: emulate.S,v 1.4 2003/11/30 10:02:21 ragge Exp $ */
 /*
  * Copyright (c) 1986, 1987 The Regents of the University of California.
  * All rights reserved.
@@ -126,7 +126,7 @@ Lmovtc_2loop:
 	movb	%r11,(%r5)+
 	sobgtr	%r4,Lmovtc_2loop
 Lmovtc_out:
-	cmpl	%r4,%r0
+	cmpw	arg1,arg5
 	savepsl
 	clrl	%r2
 	return
@@ -140,21 +140,27 @@ ALTENTRY(EMmovtuc)
 	argl(4,%r3)		# (4) table address == %r3
 	argl(6,%r5)		# (6) destination address == %r5
 	arguw(5,%r4)		# (5) destination length == %r4
-	jeql	Lmovtuc_out
+	jeql	Lmovtuc_out1
 Lmovtuc_loop:
 	tstl	%r0
-	jeql	Lmovtuc_out
+	jeql	Lmovtuc_out1
 	movzbl	(%r1),%r2
 	movzbl	(%r3)[%r2],%r2
 	cmpl	%r2,%r11
-	jeql	Lmovtuc_out
+	jeql	Lmovtuc_out2
 	movzbl	(%r1)+,%r2
 	movb	(%r3)[%r2],(%r5)+
 	decl	%r0
 	sobgtr	%r4,Lmovtuc_loop
+Lmovtuc_out1:
+	clrl	%r2		# clear V-bit
+	brb	Lmovtuc_out
+Lmovtuc_out2:
+	movl	$2,%r2		# set V-bit
 Lmovtuc_out:
-	cmpl	%r4,%r0
+	cmpw	arg1,arg5
 	savepsl
+	bisl2	%r2,4(%sp)	# merge V-bit into psl
 	clrl	%r2
 	return
 
