@@ -1,9 +1,9 @@
-/*	$NetBSD: locore.s,v 1.122 1995/04/21 06:23:51 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 1995/04/21 06:43:18 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -426,8 +426,8 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
-	leal	(TABLESIZE)(%esi),%ecx		# end of tables
-	subl	%edx,%ecx			# subtract end of text
+	leal	(TABLESIZE)(%esi),%ecx			# end of tables
+	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 
@@ -448,7 +448,7 @@ try586:	/* Use the `cpuid' instruction. */
  * Construct a page table directory.
  */
 	/* Install a PDE for temporary double map of kernel text. */
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		#   pte for KPT in proc 0,
+	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
 	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
 	/* Map kernel PDEs. */
 	movl	$NKPDE,%ecx				# for this many pde s,
@@ -578,20 +578,6 @@ reloc_gdt:
 	pushl	%eax
 	call 	_main
 	addl	$4,%esp
-
-#if defined(I486_CPU) || defined(I586_CPU)
-	/*
-	 * Now we've run main() and determined what CPU type we are, so we can
-	 * enable ring 0 write protection and outer ring alignment checking on
-	 * i486 CPUs and above.
-	 */
-	cmpl	$CPUCLASS_386,_cpu_class
-	je	1f
-	movl	%cr0,%eax
-	orl	$CR0_WP|CR0_AM,%eax
-	movl	%eax,%cr0
-1:
-#endif
 
 	INTRFASTEXIT
 	/* NOTREACHED */
@@ -1513,7 +1499,7 @@ ENTRY(setrunqueue)
 #ifdef DIAGNOSTIC
 1:	pushl	$2f
 	call	_panic
-	/*NOTREACHED*/
+	/* NOTREACHED */
 2:	.asciz	"setrunqueue"
 #endif /* DIAGNOSTIC */
 
@@ -1544,7 +1530,7 @@ ENTRY(remrq)
 #ifdef DIAGNOSTIC
 1:	pushl	$3f
 	call	_panic
-	/*NOTREACHED*/
+	/* NOTREACHED */
 3:	.asciz	"remrq"
 #endif /* DIAGNOSTIC */
 
@@ -1565,7 +1551,7 @@ ENTRY(idle)
 ENTRY(switch_error)
 	pushl	$1f
 	call	_panic
-	/*NOTREACHED*/
+	/* NOTREACHED */
 1:	.asciz	"cpu_switch"
 #endif /* DIAGNOSTIC */
 
