@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.8 2004/07/16 02:36:58 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -164,6 +164,7 @@ struct ieee80211com {
 #else
 	struct arpcom		ic_ac;
 #endif
+	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, u_int32_t);
@@ -242,6 +243,10 @@ struct ieee80211com {
 #define	ic_if		ic_ac.ac_if
 #endif
 #define	ic_softc	ic_if.if_softc
+
+LIST_HEAD(ieee80211com_head, ieee80211com);
+
+extern struct ieee80211com_head ieee80211com_head;
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
