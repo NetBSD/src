@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icmp_var.h	7.5 (Berkeley) 6/28/90
- *	$Id: icmp_var.h,v 1.4 1994/01/08 21:21:28 mycroft Exp $
+ *	$Id: icmp_var.h,v 1.5 1994/01/10 23:27:39 mycroft Exp $
  */
 
 #ifndef _NETINET_ICMP_VAR_H_
@@ -43,17 +43,17 @@
  */
 struct	icmpstat {
 /* statistics related to icmp packets generated */
-	int	icps_error;		/* # of calls to icmp_error */
-	int	icps_oldshort;		/* no error 'cuz old ip too short */
-	int	icps_oldicmp;		/* no error 'cuz old was icmp */
-	int	icps_outhist[ICMP_MAXTYPE + 1];
+	u_long	icps_error;		/* # of calls to icmp_error */
+	u_long	icps_oldshort;		/* no error 'cuz old ip too short */
+	u_long	icps_oldicmp;		/* no error 'cuz old was icmp */
+	u_long	icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
-	int	icps_badcode;		/* icmp_code out of range */
-	int	icps_tooshort;		/* packet < ICMP_MINLEN */
-	int	icps_checksum;		/* bad checksum */
-	int	icps_badlen;		/* calculated bound mismatch */
-	int	icps_reflect;		/* number of responses */
-	int	icps_inhist[ICMP_MAXTYPE + 1];
+	u_long	icps_badcode;		/* icmp_code out of range */
+	u_long	icps_tooshort;		/* packet < ICMP_MINLEN */
+	u_long	icps_checksum;		/* bad checksum */
+	u_long	icps_badlen;		/* calculated bound mismatch */
+	u_long	icps_reflect;		/* number of responses */
+	u_long	icps_inhist[ICMP_MAXTYPE + 1];
 };
 
 #ifdef KERNEL

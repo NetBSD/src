@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_var.h	7.10 (Berkeley) 6/28/90
- *	$Id: tcp_var.h,v 1.6 1994/01/10 00:31:11 mycroft Exp $
+ *	$Id: tcp_var.h,v 1.7 1994/01/10 23:27:47 mycroft Exp $
  */
 
 #ifndef _NETINET_TCP_VAR_H_
@@ -90,7 +90,7 @@ struct tcpcb {
 					 */
 /* congestion control (for slow start, source quench, retransmit after loss) */
 	u_short	snd_cwnd;		/* congestion-controlled window */
-	u_short snd_ssthresh;		/* snd_cwnd size threshhold for
+	u_short	snd_ssthresh;		/* snd_cwnd size threshhold for
 					 * for slow start exponential to
 					 * linear switch
 					 */
