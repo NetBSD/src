@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.41 1998/01/11 05:55:40 scottr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.42 1998/01/12 21:27:12 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * about where to mount root from, what pathnames, etc.
  */
 
+#include "opt_nfs_boot.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -68,10 +70,6 @@
 
 #include <nfs/nfsproto.h>
 #include <nfs/nfsdiskless.h>
-
-#include "opt_nfs_boot_bootp.h"
-#include "opt_nfs_boot_bootparam.h"
-#include "opt_nfs_boot_dhcp.h"
 
 /*
  * There are two implementations of NFS diskless boot.
