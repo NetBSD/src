@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.3 1998/09/01 04:09:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -47,6 +47,7 @@
 #include <sys/namei.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/stat.h>
 
 #include <filecorefs/filecore.h>
@@ -62,6 +63,8 @@ u_long filecorehash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & filecorehash)
 struct simplelock filecore_ihash_slock;
 
+struct pool filecore_node_pool;
+
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 /*
@@ -74,6 +77,9 @@ filecore_init()
 	filecorehashtbl = hashinit(desiredvnodes, M_FILECOREMNT, M_WAITOK,
 	    &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
+	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
+	    0, 0, 0, "filecrnopl", 0, pool_page_alloc_nointr,
+	    pool_page_free_nointr, M_FILECORENODE);
 }
 
 /*
@@ -204,7 +210,7 @@ filecore_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-	FREE(vp->v_data, M_FILECORENODE);
+	pool_put(&filecore_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }
