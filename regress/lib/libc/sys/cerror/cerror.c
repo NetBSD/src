@@ -1,4 +1,4 @@
-/* $NetBSD: cerror.c,v 1.1 2003/02/07 21:00:44 cgd Exp $ */
+/* $NetBSD: cerror.c,v 1.2 2003/07/26 19:38:47 salo Exp $ */
 
 /*
  * Copyright (c) 2003 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: cerror.c,v 1.1 2003/02/07 21:00:44 cgd Exp $");
+__RCSID("$NetBSD: cerror.c,v 1.2 2003/07/26 19:38:47 salo Exp $");
 __COPYRIGHT(
 "@(#) Copyright (c) 2003 Christopher G. Demetriou.  All rights reserved.\n");
 #endif /* not lint */

@@ -1,9 +1,9 @@
-/*	$NetBSD: test.c,v 1.1 2002/10/16 19:12:41 thorpej Exp $	*/
+/*	$NetBSD: test.c,v 1.2 2003/07/26 19:38:45 salo Exp $	*/
 
 /*
  * Regression test for basename(3).
  *
- * Written by Jason R. Thorpe <thorpej@netbsd.org>, Oct. 2002.
+ * Written by Jason R. Thorpe <thorpej@NetBSD.org>, Oct. 2002.
  * Public domain.
  */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: fork.c,v 1.2 2003/04/11 12:56:25 lha Exp $	*/
+/*	$NetBSD: fork.c,v 1.3 2003/07/26 19:38:48 salo Exp $	*/
 
 /*
  * Check that child process doesn't get threads, also make sure sleep
  * works in child.
  *
- * Written by Love Hörnquist Åstrand <lha@netbsd.org>, March 2003.
+ * Written by Love Hörnquist Åstrand <lha@NetBSD.org>, March 2003.
  * Public domain.
  */
 

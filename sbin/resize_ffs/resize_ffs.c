@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.4 2003/04/03 14:55:16 christos Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.5 2003/07/26 19:46:34 salo Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -32,7 +32,7 @@
  *  a historical accident; the original version of this program is
  *  older than bi-endian support in FFS).
  *
- * Many thanks go to John Kohl <jtk@netbsd.org> for finding bugs: the
+ * Many thanks go to John Kohl <jtk@NetBSD.org> for finding bugs: the
  *  one responsible for the "realloccgblk: can't find blk in cyl"
  *  problem and a more minor one which left fs_dsize wrong when
  *  shrinking.  (These actually indicate bugs in fsck too - it should
