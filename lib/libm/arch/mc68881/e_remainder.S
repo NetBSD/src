@@ -1,13 +1,13 @@
-/*	$NetBSD: e_remainder.S,v 1.5 1999/11/10 16:45:39 thorpej Exp $	*/
+/*	$NetBSD: e_remainder.S,v 1.6 2003/07/26 19:25:04 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_remainder.S,v 1.5 1999/11/10 16:45:39 thorpej Exp $")
+RCSID("$NetBSD: e_remainder.S,v 1.6 2003/07/26 19:25:04 salo Exp $")
 
 ENTRY(__ieee754_remainder)
 	fmoved	%sp@(4),%fp0

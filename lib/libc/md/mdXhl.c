@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.5 1999/09/20 04:39:10 lukem Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.6 2003/07/26 19:24:47 salo Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -12,7 +12,7 @@
  */
 
 /*
- * Modifed April 29, 1997 by Jason R. Thorpe <thorpej@netbsd.org>
+ * Modifed April 29, 1997 by Jason R. Thorpe <thorpej@NetBSD.org>
  */
 
 #include <sys/types.h>

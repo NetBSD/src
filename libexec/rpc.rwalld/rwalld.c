@@ -1,4 +1,4 @@
-/* $NetBSD: rwalld.c,v 1.18 2000/06/14 17:25:18 cgd Exp $ */
+/* $NetBSD: rwalld.c,v 1.19 2003/07/26 19:32:09 salo Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.18 2000/06/14 17:25:18 cgd Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.19 2003/07/26 19:32:09 salo Exp $");
 #endif /* not lint */
 
 #include <unistd.h>

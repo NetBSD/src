@@ -1,11 +1,11 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_ilogbf.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_ilogbf.S,v 1.6 2003/07/26 19:25:02 salo Exp $")
 
 ENTRY(ilogbf)
 #ifdef __i386__

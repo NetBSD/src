@@ -1,13 +1,13 @@
-/*	$NetBSD: localeconv.c,v 1.10 2001/01/02 10:53:25 kleink Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.11 2003/07/26 19:24:46 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.10 2001/01/02 10:53:25 kleink Exp $");
+__RCSID("$NetBSD: localeconv.c,v 1.11 2003/07/26 19:24:46 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
