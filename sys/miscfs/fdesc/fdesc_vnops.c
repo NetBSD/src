@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.20 1994/11/14 06:05:08 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.21 1994/12/04 03:13:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -296,28 +296,17 @@ fdesc_open(ap)
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
-	int error = 0;
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fdesc:
-		/*
-		 * XXX Kludge: set p->p_dupfd to contain the value of the
-		 * the file descriptor being sought for duplication. The error 
-		 * return ensures that the vnode for this device will be
-		 * released by vn_open. Open will detect this special error and
-		 * take the actions in dupfdopen.  Other callers of vn_open or
-		 * VOP_OPEN will simply report the error.
-		 */
-		ap->a_p->p_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
-		error = ENODEV;
-		break;
+		/* Do the same thing as fdopen(). */
+		return (fddupopen(VTOFDESC(vp)->fd_fd, ap->a_mode, ap->a_p, ap->a_fp));
 
 	case Fctty:
-		error = cttyopen(devctty, ap->a_mode, 0, ap->a_p);
-		break;
+		return (cttyopen(devctty, ap->a_mode, 0, ap->a_p));
 	}
 
-	return (error);
+	return (0);
 }
 
 static int
