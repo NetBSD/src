@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57.2.1 1998/10/15 03:16:46 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.57.2.2 1998/11/16 10:41:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,9 +99,9 @@ _C_LABEL(kernel_text):
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
 	sw	t0, _C_LABEL(cpu_id)		# save PRID register
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
-	sw	zero, CALLFRAME_SIZ-4(sp)	# zero out old ra for debugger
+	sw	zero, CALLFRAME_RA(sp)		# zero out old ra for debugger
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
-	sw	zero, CALLFRAME_SIZ-8(sp)	# zero out old fp for debugger
+	sw	zero, CALLFRAME_SP(sp)		# zero out old fp for debugger
 
 	li	sp, KERNELSTACK-CALLFRAME_SIZ	# switch to standard stack
 	jal	_C_LABEL(main)			# main()
@@ -152,7 +152,7 @@ NESTED(setrunqueue, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
 	lw	t0, P_BACK(a0)		# firewall: p->p_back must be 0
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	beq	t0, zero, 1f
 	lbu	t0, P_PRIORITY(a0)	# put on p->p_priority / 4 queue
 	PANIC("setrunqueue")		#
@@ -190,7 +190,7 @@ NESTED(remrunqueue, CALLFRAME_SIZ, ra)
 	lw	t2, _C_LABEL(whichqs)	# check corresponding bit
 	sll	t1, t1, t0
 	and	v0, t2, t1
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	bne	v0, zero, 1f
 	lw	v0, P_BACK(a0)		# v0 = p->p_back
 	PANIC("remrunqueue")		# it wasn't recorded to be on its q
@@ -244,20 +244,20 @@ END(idle)
 NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	lw	a0, _C_LABEL(curpcb)
 	mfc0	t0, MIPS_COP_0_STATUS
-	sw	s0, U_PCB_CONTEXT+0(a0)
-	sw	s1, U_PCB_CONTEXT+4(a0)
-	sw	s2, U_PCB_CONTEXT+8(a0)
-	sw	s3, U_PCB_CONTEXT+12(a0)
-	sw	s4, U_PCB_CONTEXT+16(a0)
-	sw	s5, U_PCB_CONTEXT+20(a0)
-	sw	s6, U_PCB_CONTEXT+24(a0)
-	sw	s7, U_PCB_CONTEXT+28(a0)
-	sw	sp, U_PCB_CONTEXT+32(a0)
-	sw	s8, U_PCB_CONTEXT+36(a0)
-	sw	ra, U_PCB_CONTEXT+40(a0)
-	sw	t0, U_PCB_CONTEXT+44(a0)
+	sw	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
+	sw	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
+	sw	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
+	sw	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
+	sw	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
+	sw	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
+	sw	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
+	sw	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	sw	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	sw	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
+	sw	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
+	sw	t0, U_PCB_CONTEXT+SF_REG_ST(a0)
 	subu	sp, sp, CALLFRAME_SIZ
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 #if defined(UVM)
 	lw	t0, uvmexp+UVMEXP_SWTCH
@@ -335,18 +335,18 @@ END(cpu_switch)
  */
 LEAF(savectx)
 	mfc0	v0, MIPS_COP_0_STATUS
-	sw	s0, U_PCB_CONTEXT+0(a0)
-	sw	s1, U_PCB_CONTEXT+4(a0)
-	sw	s2, U_PCB_CONTEXT+8(a0)
-	sw	s3, U_PCB_CONTEXT+12(a0)
-	sw	s4, U_PCB_CONTEXT+16(a0)
-	sw	s5, U_PCB_CONTEXT+20(a0)
-	sw	s6, U_PCB_CONTEXT+24(a0)
-	sw	s7, U_PCB_CONTEXT+28(a0)
-	sw	sp, U_PCB_CONTEXT+32(a0)
-	sw	s8, U_PCB_CONTEXT+36(a0)
-	sw	ra, U_PCB_CONTEXT+40(a0)
-	sw	v0, U_PCB_CONTEXT+44(a0)
+	sw	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
+	sw	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
+	sw	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
+	sw	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
+	sw	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
+	sw	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
+	sw	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
+	sw	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	sw	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	sw	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
+	sw	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
+	sw	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
 	j	ra
 	move	v0, zero
 END(savectx)
@@ -358,35 +358,35 @@ END(savectx)
  */
 LEAF(setjmp)
 	mfc0	v0, MIPS_COP_0_STATUS
-	sw	s0, 0(a0)
-	sw	s1, 4(a0)
-	sw	s2, 8(a0)
-	sw	s3, 12(a0)
-	sw	s4, 16(a0)
-	sw	s5, 20(a0)
-	sw	s6, 24(a0)
-	sw	s7, 28(a0)
-	sw	sp, 32(a0)
-	sw	s8, 36(a0)
-	sw	ra, 40(a0)
-	sw	v0, 44(a0)
+	sw	s0, SF_REG_S0(a0)
+	sw	s1, SF_REG_S1(a0)
+	sw	s2, SF_REG_S2(a0)
+	sw	s3, SF_REG_S3(a0)
+	sw	s4, SF_REG_S4(a0)
+	sw	s5, SF_REG_S5(a0)
+	sw	s6, SF_REG_S6(a0)
+	sw	s7, SF_REG_S7(a0)
+	sw	sp, SF_REG_SP(a0)
+	sw	s8, SF_REG_S8(a0)
+	sw	ra, SF_REG_RA(a0)
+	sw	v0, SF_REG_ST(a0)
 	j	ra
 	move	v0, zero
 END(setjmp)
 
 LEAF(longjmp)
-	lw	v0, 44(a0)
-	lw	ra, 40(a0)
-	lw	s0, 0(a0)
-	lw	s1, 4(a0)
-	lw	s2, 8(a0)
-	lw	s3, 12(a0)
-	lw	s4, 16(a0)
-	lw	s5, 20(a0)
-	lw	s6, 24(a0)
-	lw	s7, 28(a0)
-	lw	sp, 32(a0)
-	lw	s8, 36(a0)
+	lw	v0, SF_REG_ST(a0)
+	lw	ra, SF_REG_RA(a0)
+	lw	s0, SF_REG_S0(a0)
+	lw	s1, SF_REG_S1(a0)
+	lw	s2, SF_REG_S2(a0)
+	lw	s3, SF_REG_S3(a0)
+	lw	s4, SF_REG_S4(a0)
+	lw	s5, SF_REG_S5(a0)
+	lw	s6, SF_REG_S6(a0)
+	lw	s7, SF_REG_S7(a0)
+	lw	sp, SF_REG_SP(a0)
+	lw	s8, SF_REG_S8(a0)
 	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra
 	li	v0, 1
@@ -569,7 +569,7 @@ END(kcopyerr)
 NESTED(copyin, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	blt	a0, zero, _C_LABEL(copyerr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copyerr)
@@ -577,7 +577,7 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)
-	lw	ra, CALLFRAME_SIZ-4(sp)
+	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
@@ -593,7 +593,7 @@ END(copyin)
 NESTED(copyout, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	blt	a1, zero, _C_LABEL(copyerr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(copyerr)
@@ -601,7 +601,7 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)
-	lw	ra, CALLFRAME_SIZ-4(sp)
+	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
@@ -610,7 +610,7 @@ END(copyout)
 
 LEAF(copyerr)
 	lw	v1, _C_LABEL(curpcb)
-	lw	ra, CALLFRAME_SIZ-4(sp)
+	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
@@ -802,10 +802,10 @@ END(fswintrberr)
  * temporary glue for bcopy
  */
 LEAF(bcopy)
-	move	a3, a0
+	move	v0, a0
 	move	a0, a1
 	j	_C_LABEL(memcpy)
-	move	a1, a3
+	move	a1, v0
 END(bcopy)
 #endif
 
@@ -1074,7 +1074,7 @@ ALIAS(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
 	mfc0	t0, MIPS_COP_0_STATUS
-	sw	ra, CALLFRAME_SIZ-4(sp)
+	sw	ra, CALLFRAME_RA(sp)
 	or	t0, t0, MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	nop
@@ -1153,7 +1153,7 @@ ALIAS(MachFPTrap)
  */
 FPReturn:
 	mfc0	t0, MIPS_COP_0_STATUS
-	lw	ra, CALLFRAME_SIZ-4(sp)
+	lw	ra, CALLFRAME_RA(sp)
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	j	ra

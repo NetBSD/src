@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.1.2.1 1998/10/15 03:19:54 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.1.2.2 1998/11/16 10:41:31 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -90,6 +90,8 @@
 
 #include "assym.h"
 
+	.set	noreorder
+	.set	mips3
 /*
  *============================================================================
  *
@@ -126,7 +128,6 @@ _C_LABEL(mips3_exceptionentry_start):
 	.globl	_C_LABEL(mips3_TLBMiss)
 _C_LABEL(mips3_TLBMiss):
 	.set	noat
-	.set	mips3
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, _C_LABEL(curpcb)
 	bltz	k0, 1f				# kernel address space ->
@@ -251,15 +252,15 @@ mips3_SlowFault:
  * Build trapframe on stack to hold interrupted kernel context, then
  * call trap() to process the condition.
  *
- * trapframe is created on stack as 5th arg {
- *  	int cf_args[4];		+0 
- *  	int kf_regs[17];	+16	- trapframe begins here
- * 	int kf_sr;		+84	-
- * 	int kf_mullo;		+88	-
- * 	int kf_mulhi;		+92	-
- * 	int kf_epc;		+96	- may be changed by trap() call
- *  	int cf_sp;		+100
- *  	int cf_ra;		+104
+ * trapframe is symthesized on stack as 5th arg {
+ *  	register_t cf_args[4];		+0 
+ *  	register_t tf_regs[17];		+16	- trapframe begins here
+ * 	register_t tf_sr;		+84	-
+ * 	register_t tf_mullo;		+88	-
+ * 	register_t tf_mulhi;		+92	-
+ * 	register_t tf_epc;		+96	- may be changed by trap() call
+ *  	register_t cf_sp;		+100
+ *  	register_t cf_ra;		+104
  *  };
  */
 NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
@@ -271,44 +272,44 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
-	sw	AT, KF_BASE+KF_REGS_AST(sp)
-	sw	v0, KF_BASE+KF_REGS_V0(sp)
-	sw	v1, KF_BASE+KF_REGS_V1(sp)
+	sw	AT, TF_BASE+TF_REG_AST(sp)
+	sw	v0, TF_BASE+TF_REG_V0(sp)
+	sw	v1, TF_BASE+TF_REG_V1(sp)
 	mflo	v0
 	mfhi	v1
-	sw	a0, KF_BASE+KF_REGS_A0(sp)
-	sw	a1, KF_BASE+KF_REGS_A1(sp)
-	sw	a2, KF_BASE+KF_REGS_A2(sp)
-	sw	a3, KF_BASE+KF_REGS_A3(sp)
+	sw	a0, TF_BASE+TF_REG_A0(sp)
+	sw	a1, TF_BASE+TF_REG_A1(sp)
+	sw	a2, TF_BASE+TF_REG_A2(sp)
+	sw	a3, TF_BASE+TF_REG_A3(sp)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	sw	t0, KF_BASE+KF_REGS_T0(sp)
-	sw	t1, KF_BASE+KF_REGS_T1(sp)
-	sw	t2, KF_BASE+KF_REGS_T2(sp)
-	sw	t3, KF_BASE+KF_REGS_T3(sp)
+	sw	t0, TF_BASE+TF_REG_T0(sp)
+	sw	t1, TF_BASE+TF_REG_T1(sp)
+	sw	t2, TF_BASE+TF_REG_T2(sp)
+	sw	t3, TF_BASE+TF_REG_T3(sp)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	sw	t4, KF_BASE+KF_REGS_T4(sp)
-	sw	t5, KF_BASE+KF_REGS_T5(sp)
-	sw	t6, KF_BASE+KF_REGS_T6(sp)
-	sw	t7, KF_BASE+KF_REGS_T7(sp)
+	sw	t4, TF_BASE+TF_REG_T4(sp)
+	sw	t5, TF_BASE+TF_REG_T5(sp)
+	sw	t6, TF_BASE+TF_REG_T6(sp)
+	sw	t7, TF_BASE+TF_REG_T7(sp)
 	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
-	sw	t8, KF_BASE+KF_REGS_T8(sp)
-	sw	t9, KF_BASE+KF_REGS_T9(sp)
-	sw	ra, KF_BASE+KF_REGS_RA(sp)
-	sw	a0, KF_BASE+KF_REGS_SR(sp)
+	sw	t8, TF_BASE+TF_REG_T8(sp)
+	sw	t9, TF_BASE+TF_REG_T9(sp)
+	sw	ra, TF_BASE+TF_REG_RA(sp)
+	sw	a0, TF_BASE+TF_REG_SR(sp)
 	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
-	sw	v0, KF_BASE+KF_REGS_MULLO(sp)
-	sw	v1, KF_BASE+KF_REGS_MULHI(sp)
-	sw	a3, KF_BASE+KF_REGS_EPC(sp)
+	sw	v0, TF_BASE+TF_REG_MULLO(sp)
+	sw	v1, TF_BASE+TF_REG_MULHI(sp)
+	sw	a3, TF_BASE+TF_REG_EPC(sp)
 #ifdef DDB
 	addu	v0, sp, KERNFRAME_SIZ 		# SP at trap for debugging
-	sw	v0, KERNFRAME_SIZ-8(sp)
+	sw	v0, KERNFRAME_SP(sp)
 #endif
 /*
  * Call the trap handler.
  */
 	mtc0	zero, MIPS_COP_0_STATUS		# Set kernel no error level
 	jal	_C_LABEL(trap)
-	sw	a3, KERNFRAME_SIZ-4(sp)		# for debugging
+	sw	a3, KERNFRAME_RA(sp)		# for debugging
 
 /*
  * Restore registers and return from the exception.
@@ -316,34 +317,34 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	mtc0	zero, MIPS_COP_0_STATUS		# Make sure int disabled
 	nop					# ??? how much delay ???
 	nop
-	lw	a0, KF_BASE+KF_REGS_SR(sp)	# ??? why differs ???
-	lw	t0, KF_BASE+KF_REGS_MULLO(sp)
-	lw	t1, KF_BASE+KF_REGS_MULHI(sp)
-	lw	v0, KF_BASE+KF_REGS_EPC(sp)	# might be changed inside trap
+	lw	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
+	lw	t0, TF_BASE+TF_REG_MULLO(sp)
+	lw	t1, TF_BASE+TF_REG_MULHI(sp)
+	lw	v0, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	mtlo	t0
 	mthi	t1
 	dmtc0	v0, MIPS_COP_0_EXC_PC		# set return address
 	nop					# ??? how much delay ???
 	nop
-	lw	AT, KF_BASE+KF_REGS_AST(sp)
-	lw	v0, KF_BASE+KF_REGS_V0(sp)
-	lw	v1, KF_BASE+KF_REGS_V1(sp)
-	lw	a0, KF_BASE+KF_REGS_A0(sp)
-	lw	a1, KF_BASE+KF_REGS_A1(sp)
-	lw	a2, KF_BASE+KF_REGS_A2(sp)
-	lw	a3, KF_BASE+KF_REGS_A3(sp)
-	lw	t0, KF_BASE+KF_REGS_T0(sp)
-	lw	t1, KF_BASE+KF_REGS_T1(sp) 
-	lw	t2, KF_BASE+KF_REGS_T2(sp)
-	lw	t3, KF_BASE+KF_REGS_T3(sp)
-	lw	t4, KF_BASE+KF_REGS_T4(sp)
-	lw	t5, KF_BASE+KF_REGS_T5(sp)
-	lw	t6, KF_BASE+KF_REGS_T6(sp)
-	lw	t7, KF_BASE+KF_REGS_T7(sp)
-	lw	t8, KF_BASE+KF_REGS_T8(sp)
-	lw	t9, KF_BASE+KF_REGS_T9(sp)	
-	lw	ra, KF_BASE+KF_REGS_RA(sp)
+	lw	AT, TF_BASE+TF_REG_AST(sp)
+	lw	v0, TF_BASE+TF_REG_V0(sp)
+	lw	v1, TF_BASE+TF_REG_V1(sp)
+	lw	a0, TF_BASE+TF_REG_A0(sp)
+	lw	a1, TF_BASE+TF_REG_A1(sp)
+	lw	a2, TF_BASE+TF_REG_A2(sp)
+	lw	a3, TF_BASE+TF_REG_A3(sp)
+	lw	t0, TF_BASE+TF_REG_T0(sp)
+	lw	t1, TF_BASE+TF_REG_T1(sp) 
+	lw	t2, TF_BASE+TF_REG_T2(sp)
+	lw	t3, TF_BASE+TF_REG_T3(sp)
+	lw	t4, TF_BASE+TF_REG_T4(sp)
+	lw	t5, TF_BASE+TF_REG_T5(sp)
+	lw	t6, TF_BASE+TF_REG_T6(sp)
+	lw	t7, TF_BASE+TF_REG_T7(sp)
+	lw	t8, TF_BASE+TF_REG_T8(sp)
+	lw	t9, TF_BASE+TF_REG_T9(sp)	
+	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
 	eret					# return to interrupted point
 	.set	at
@@ -421,7 +422,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
  */
 	mtc0	t0, MIPS_COP_0_STATUS
 	jal	_C_LABEL(trap)
-	sw	a3, CALLFRAME_SIZ-4(sp)		# for debugging
+	sw	a3, CALLFRAME_RA(sp)		# for debugging
 /*
  * Restore user registers and return.
  * First disable interrupts and set exeption level.
@@ -551,7 +552,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
  */
 	mtc0	t0, MIPS_COP_0_STATUS
 	jal	_C_LABEL(syscall)
-	sw	a2, CALLFRAME_SIZ-4(sp)		# for debugging
+	sw	a2, CALLFRAME_RA(sp)		# for debugging
 /*
  * Restore user registers and return.
  * First disable interrupts and set exception level.
@@ -637,43 +638,43 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
-	sw	AT, KF_BASE+KF_REGS_AST(sp)
-	sw	v0, KF_BASE+KF_REGS_V0(sp)
-	sw	v1, KF_BASE+KF_REGS_V1(sp)
+	sw	AT, TF_BASE+TF_REG_AST(sp)
+	sw	v0, TF_BASE+TF_REG_V0(sp)
+	sw	v1, TF_BASE+TF_REG_V1(sp)
 	mflo	v0
 	mfhi	v1
-	sw	a0, KF_BASE+KF_REGS_A0(sp)
-	sw	a1, KF_BASE+KF_REGS_A1(sp)
-	sw	a2, KF_BASE+KF_REGS_A2(sp)
-	sw	a3, KF_BASE+KF_REGS_A3(sp)
+	sw	a0, TF_BASE+TF_REG_A0(sp)
+	sw	a1, TF_BASE+TF_REG_A1(sp)
+	sw	a2, TF_BASE+TF_REG_A2(sp)
+	sw	a3, TF_BASE+TF_REG_A3(sp)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	sw	t0, KF_BASE+KF_REGS_T0(sp)
-	sw	t1, KF_BASE+KF_REGS_T1(sp)
-	sw	t2, KF_BASE+KF_REGS_T2(sp)
-	sw	t3, KF_BASE+KF_REGS_T3(sp)
+	sw	t0, TF_BASE+TF_REG_T0(sp)
+	sw	t1, TF_BASE+TF_REG_T1(sp)
+	sw	t2, TF_BASE+TF_REG_T2(sp)
+	sw	t3, TF_BASE+TF_REG_T3(sp)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	sw	t4, KF_BASE+KF_REGS_T4(sp)
-	sw	t5, KF_BASE+KF_REGS_T5(sp)
-	sw	t6, KF_BASE+KF_REGS_T6(sp)
-	sw	t7, KF_BASE+KF_REGS_T7(sp)
+	sw	t4, TF_BASE+TF_REG_T4(sp)
+	sw	t5, TF_BASE+TF_REG_T5(sp)
+	sw	t6, TF_BASE+TF_REG_T6(sp)
+	sw	t7, TF_BASE+TF_REG_T7(sp)
 	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
-	sw	t8, KF_BASE+KF_REGS_T8(sp)
-	sw	t9, KF_BASE+KF_REGS_T9(sp)
-	sw	ra, KF_BASE+KF_REGS_RA(sp)
-	sw	a0, KF_BASE+KF_REGS_SR(sp)
-	sw	v0, KF_BASE+KF_REGS_MULLO(sp)
-	sw	v1, KF_BASE+KF_REGS_MULHI(sp)
-	sw	a2, KF_BASE+KF_REGS_EPC(sp)
+	sw	t8, TF_BASE+TF_REG_T8(sp)
+	sw	t9, TF_BASE+TF_REG_T9(sp)
+	sw	ra, TF_BASE+TF_REG_RA(sp)
+	sw	a0, TF_BASE+TF_REG_SR(sp)
+	sw	v0, TF_BASE+TF_REG_MULLO(sp)
+	sw	v1, TF_BASE+TF_REG_MULHI(sp)
+	sw	a2, TF_BASE+TF_REG_EPC(sp)
 #ifdef DDB
 	addu	v0, sp, KERNFRAME_SIZ 		# SP at interupt for debugging
-	sw	v0, KERNFRAME_SIZ-8(sp)
+	sw	v0, KERNFRAME_SP(sp)
 #endif
 /*
  * Call the interrupt handler.
  */
 	mtc0	zero, MIPS_COP_0_STATUS	# Reset exl, trap possible.
 	jal	_C_LABEL(interrupt)
-	sw	a2, KERNFRAME_SIZ-4(sp)		# for debugging
+	sw	a2, KERNFRAME_RA(sp)		# for debugging
 /*
  * Restore registers and return from the interrupt.
  */
@@ -681,10 +682,10 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	nop
 	nop
 	nop
-	lw	a0, KF_BASE+KF_REGS_SR(sp)	# ??? why differs ???
-	lw	t0, KF_BASE+KF_REGS_MULLO(sp)
-	lw	t1, KF_BASE+KF_REGS_MULHI(sp)
-	lw	v0, KF_BASE+KF_REGS_EPC(sp)
+	lw	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
+	lw	t0, TF_BASE+TF_REG_MULLO(sp)
+	lw	t1, TF_BASE+TF_REG_MULHI(sp)
+	lw	v0, TF_BASE+TF_REG_EPC(sp)
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	mtlo	t0
 	mthi	t1
@@ -692,24 +693,24 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	nop					# ??? how much delay ???
 	nop
 
-	lw	AT, KF_BASE+KF_REGS_AST(sp)
-	lw	v0, KF_BASE+KF_REGS_V0(sp)
-	lw	v1, KF_BASE+KF_REGS_V1(sp)
-	lw	a0, KF_BASE+KF_REGS_A0(sp)
-	lw	a1, KF_BASE+KF_REGS_A1(sp)
-	lw	a2, KF_BASE+KF_REGS_A2(sp)
-	lw	a3, KF_BASE+KF_REGS_A3(sp)
-	lw	t0, KF_BASE+KF_REGS_T0(sp)
-	lw	t1, KF_BASE+KF_REGS_T1(sp)
-	lw	t2, KF_BASE+KF_REGS_T2(sp)
-	lw	t3, KF_BASE+KF_REGS_T3(sp)
-	lw	t4, KF_BASE+KF_REGS_T4(sp)
-	lw	t5, KF_BASE+KF_REGS_T5(sp)
-	lw	t6, KF_BASE+KF_REGS_T6(sp)
-	lw	t7, KF_BASE+KF_REGS_T7(sp)
-	lw	t8, KF_BASE+KF_REGS_T8(sp)
-	lw	t9, KF_BASE+KF_REGS_T9(sp)
-	lw	ra, KF_BASE+KF_REGS_RA(sp)
+	lw	AT, TF_BASE+TF_REG_AST(sp)
+	lw	v0, TF_BASE+TF_REG_V0(sp)
+	lw	v1, TF_BASE+TF_REG_V1(sp)
+	lw	a0, TF_BASE+TF_REG_A0(sp)
+	lw	a1, TF_BASE+TF_REG_A1(sp)
+	lw	a2, TF_BASE+TF_REG_A2(sp)
+	lw	a3, TF_BASE+TF_REG_A3(sp)
+	lw	t0, TF_BASE+TF_REG_T0(sp)
+	lw	t1, TF_BASE+TF_REG_T1(sp)
+	lw	t2, TF_BASE+TF_REG_T2(sp)
+	lw	t3, TF_BASE+TF_REG_T3(sp)
+	lw	t4, TF_BASE+TF_REG_T4(sp)
+	lw	t5, TF_BASE+TF_REG_T5(sp)
+	lw	t6, TF_BASE+TF_REG_T6(sp)
+	lw	t7, TF_BASE+TF_REG_T7(sp)
+	lw	t8, TF_BASE+TF_REG_T8(sp)
+	lw	t9, TF_BASE+TF_REG_T9(sp)
+	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ		# restore kernel SP
 	eret					# return to interrupted point
 	.set	at
@@ -790,7 +791,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
  */
 	mtc0	t0, MIPS_COP_0_STATUS
 	jal	_C_LABEL(interrupt)
-	sw	a2, CALLFRAME_SIZ-4(sp)		# for debugging
+	sw	a2, CALLFRAME_RA(sp)		# for debugging
 /*
  * Restore registers and return from the interrupt.
  */
@@ -1054,36 +1055,36 @@ sys_stk_chk:
 
 #ifdef DDB
 	la	sp, start - (22 * 4)
-	sw	AT, KF_REGS_AST(sp)
-	sw	v0, KF_REGS_V0(sp)
-	sw	v1, KF_REGS_V1(sp)
-	sw	a0, KF_REGS_A0(sp)
-	sw	a1, KF_REGS_A1(sp)
-	sw	a2, KF_REGS_A2(sp)
-	sw	a3, KF_REGS_A3(sp)
-	sw	t0, KF_REGS_T0(sp)
-	sw	t1, KF_REGS_T1(sp)
-	sw	t2, KF_REGS_T2(sp)
-	sw	t3, KF_REGS_T3(sp)
-	sw	t4, KF_REGS_T4(sp)
-	sw	t5, KF_REGS_T5(sp)
-	sw	t6, KF_REGS_T6(sp)
-	sw	t7, KF_REGS_T7(sp)
-	sw	t8, KF_REGS_T8(sp)
-	sw	t9, KF_REGS_T9(sp)
+	sw	AT, TF_REG_AST(sp)
+	sw	v0, TF_REG_V0(sp)
+	sw	v1, TF_REG_V1(sp)
+	sw	a0, TF_REG_A0(sp)
+	sw	a1, TF_REG_A1(sp)
+	sw	a2, TF_REG_A2(sp)
+	sw	a3, TF_REG_A3(sp)
+	sw	t0, TF_REG_T0(sp)
+	sw	t1, TF_REG_T1(sp)
+	sw	t2, TF_REG_T2(sp)
+	sw	t3, TF_REG_T3(sp)
+	sw	t4, TF_REG_T4(sp)
+	sw	t5, TF_REG_T5(sp)
+	sw	t6, TF_REG_T6(sp)
+	sw	t7, TF_REG_T7(sp)
+	sw	t8, TF_REG_T8(sp)
+	sw	t9, TF_REG_T9(sp)
 	mfc0	a0, MIPS_COP_0_STATUS
 	mflo	v0
 	mfhi	v1
 	dmfc0	a3, MIPS_COP_0_EXC_PC
-	sw	ra, KF_REGS_RA(sp)
-	sw	a0, KF_REGS_SR(sp)
-	sw	v0, KF_REGS_MULLO(sp)
-	sw	v1, KF_REGS_MULHI(sp)
-	sw	a3, KF_REGS_EPC(sp)
+	sw	ra, TF_REG_RA(sp)
+	sw	a0, TF_REG_SR(sp)
+	sw	v0, TF_REG_MULLO(sp)
+	sw	v1, TF_REG_MULHI(sp)
+	sw	a3, TF_REG_EPC(sp)
 	move	a1, sp
 	subiu	sp, sp, CALLFRAME_SIZ
-	sw	zero, CALLFRAME_SIZ-4(sp)
-	sw	zero, CALLFRAME_SIZ-8(sp)
+	sw	zero, CALLFRAME_SP(sp)
+	sw	zero, CALLFRAME_RA(sp)
 	jal	_C_LABEL(ddb_trap)
 	move	a0, zero
 #endif
@@ -1669,7 +1670,7 @@ END(mips3_FlushCache)
  * mips3_FlushICache --
  *
  *	void mips3_FlushICache(addr, len)
- *		vm_offset_t addr, len;
+ *		vaddr_t addr; vsize_t len;
  *
  *	Flush instruction cache for range of addr to addr + len - 1.
  *	The address can be any valid address so long as no TLB misses occur.
@@ -1709,7 +1710,7 @@ END(mips3_FlushICache)
  * mips3_FlushDCache --
  *
  *	void mips3_FlushDCache(addr, len)
- *		vm_offset_t addr, len;
+ *		vaddr_t addr; vsize_t len;
  *
  *	Flush data cache for index range of addr to addr + len - 1.
  *	The address is reduced to a kseg0 index.
@@ -1776,7 +1777,7 @@ END(mips3_FlushDCache)
  * mips3_HitFlushDCache --
  *
  *	void mips3_HitFlushDCache(addr, len)
- *		vm_offset_t addr, len;
+ *		vaddr_t addr; vsize_t len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
  *	The address can be any valid viritual address as long
@@ -1827,7 +1828,7 @@ END(mips3_HitFlushDCache)
  * mips3_InvalidateDCache --
  *
  *	void mips3_FlushDCache(addr, len)
- *		vm_offset_t addr, len;
+ *		vaddr_t addr; vsize_t len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
  *	The address can be any valid address as long as no TLB misses occur.
@@ -1986,7 +1987,7 @@ LEAF(mips3_proc_trampoline)
  #	lw	a0, U_PCB_REGS+FRAME_SR(a1)
 	lw	t0, U_PCB_REGS+FRAME_MULLO(a1)
 	lw	t1, U_PCB_REGS+FRAME_MULHI(a1)
-	lw	v0, U_PCB_REGS+FRAME_EPC(k1)
+	lw	v0, U_PCB_REGS+FRAME_EPC(a1)
 	mtlo	t0
 	mthi	t1
 	dmtc0	v0, MIPS_COP_0_EXC_PC		
@@ -2176,18 +2177,18 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
  */
 	lw	t0, _C_LABEL(curpcb)
 	nop
-	lw	v0, U_PCB_CONTEXT+44(t0)	# restore kernel context
-	lw	ra, U_PCB_CONTEXT+40(t0)
-	lw	s0, U_PCB_CONTEXT+0(t0)
-	lw	s1, U_PCB_CONTEXT+4(t0)
-	lw	s2, U_PCB_CONTEXT+8(t0)
-	lw	s3, U_PCB_CONTEXT+12(t0)
-	lw	s4, U_PCB_CONTEXT+16(t0)
-	lw	s5, U_PCB_CONTEXT+20(t0)
-	lw	s6, U_PCB_CONTEXT+24(t0)
-	lw	s7, U_PCB_CONTEXT+28(t0)
-	lw	sp, U_PCB_CONTEXT+32(t0)
-	lw	s8, U_PCB_CONTEXT+36(t0)
+	lw	v0, U_PCB_CONTEXT+SF_REG_ST(t0)# restore kernel context
+	lw	ra, U_PCB_CONTEXT+SF_REG_RA(t0)
+	lw	s0, U_PCB_CONTEXT+SF_REG_S0(t0)
+	lw	s1, U_PCB_CONTEXT+SF_REG_S1(t0)
+	lw	s2, U_PCB_CONTEXT+SF_REG_S2(t0)
+	lw	s3, U_PCB_CONTEXT+SF_REG_S3(t0)
+	lw	s4, U_PCB_CONTEXT+SF_REG_S4(t0)
+	lw	s5, U_PCB_CONTEXT+SF_REG_S5(t0)
+	lw	s6, U_PCB_CONTEXT+SF_REG_S6(t0)
+	lw	s7, U_PCB_CONTEXT+SF_REG_S7(t0)
+	lw	sp, U_PCB_CONTEXT+SF_REG_SP(t0)
+	lw	s8, U_PCB_CONTEXT+SF_REG_S8(t0)
 	nop
 	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra

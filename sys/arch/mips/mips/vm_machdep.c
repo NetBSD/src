@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29.2.2 1998/11/14 15:44:41 drochner Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29.2.3 1998/11/16 10:41:35 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.2 1998/11/14 15:44:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.3 1998/11/16 10:41:35 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.2 1998/11/14 15:44:41 drochner
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
 
-extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
+extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * cpu_fork() now returns just once.
@@ -94,11 +94,19 @@ cpu_fork(p1, p2)
 
 #ifdef MIPS3
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vm_offset_t)p2->p_addr, USPACE);
+		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
 	
 	if (p1 == fpcurproc)
 		savefpregs(p1);
+
+#ifdef DIAGNOSTIC
+	/*
+	 * If p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	pcb = &p2->p_addr->u_pcb;
@@ -213,7 +221,7 @@ cpu_coredump(p, vp, cred, chdr)
 	error = vn_rdwr(UIO_WRITE, vp,
 			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
 			(off_t)chdr -> c_cpusize,
-	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
+			(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
 			cred, NULL, p);
 
@@ -243,12 +251,12 @@ pagemove(from, to, size)
 	if (CPUISMIPS3 &&
 	    ((int)from & mips_CacheAliasMask) !=
 	    ((int)to & mips_CacheAliasMask)) {
-		mips3_HitFlushDCache((vm_offset_t)from, size);
+		mips3_HitFlushDCache((vaddr_t)from, size);
 	}
 #endif
 	while (size > 0) {
-		MachTLBFlushAddr((vm_offset_t)from);
-		MachTLBUpdate((vm_offset_t)to, fpte->pt_entry);
+		MachTLBFlushAddr((vaddr_t)from);
+		MachTLBUpdate((vaddr_t)to, fpte->pt_entry);
 		*tpte = *fpte;
 		if (CPUISMIPS3)
 			fpte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -273,17 +281,18 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr;
+	vsize_t off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-	register u_int pt_mask;
+	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
+	u_int pt_mask;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
@@ -315,14 +324,15 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 #if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
@@ -351,14 +361,13 @@ vunmapbuf(bp, len)
  * XXX the double-mapped u-area holding the current process's kernel stack
  * and u-area at a fixed address should be fixed.
  */
-vm_offset_t
-kvtophys(vm_offset_t kva)
+vaddr_t
+kvtophys(vaddr_t kva)
 {
 	pt_entry_t *pte;
-	vm_offset_t phys;
+	vaddr_t phys;
 
-        if (kva >= MIPS_KSEG0_START && kva < MIPS_KSEG1_START)
-	{
+	if (kva >= MIPS_KSEG0_START && kva < MIPS_KSEG1_START) {
 		return (MIPS_KSEG0_TO_PHYS(kva));
 	}
 	else if (kva >= MIPS_KSEG1_START && kva < MIPS_KSEG2_START) {
@@ -388,9 +397,9 @@ kvtophys(vm_offset_t kva)
 	else {
 		printf("Virtual address %lx: cannot map to physical\n",
 		       kva);
-                phys = 0;
+		phys = 0;
 		/*panic("non-kernel address to kvtophys\n");*/
 		return(kva); /* XXX -- while debugging ASC */
-        }
-        return(phys);
+	}
+	return(phys);
 }

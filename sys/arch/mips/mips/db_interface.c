@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5.4.3 1998/11/14 15:49:05 drochner Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5.4.4 1998/11/16 10:41:33 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,8 +69,9 @@ void db_trapdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 void db_tlbdump_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
 	 char *modif));
 
-extern void	kdbpoke __P((vm_offset_t addr, int newval));
-extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
+extern int	kdbpeek __P((vaddr_t addr));
+extern void	kdbpoke __P((vaddr_t addr, int newval));
+extern mips_reg_t MachEmulateBranch __P((mips_reg_t *regsPtr,
      unsigned instPC, unsigned fpcCSR, int allowNonBranch));
 
 /*
@@ -80,18 +81,18 @@ extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
  * Really belongs wherever kdbpeek() is defined.
  */
 void
-kdbpoke(vm_offset_t addr, int newval)
+kdbpoke(vaddr_t addr, int newval)
 {
 	*(int*) addr = newval;
 	wbflush();
 #ifdef MIPS1
 	if (cpu_arch == 1)
-		mips1_FlushICache((vm_offset_t) addr, sizeof(int));
+		mips1_FlushICache((vaddr_t) addr, sizeof(int));
 #endif
 #ifdef MIPS3
 	if (cpu_arch == 3) {
-		mips3_HitFlushDCache((vm_offset_t) addr, sizeof(int));
-		mips3_FlushICache((vm_offset_t) addr, sizeof(int));
+		mips3_HitFlushDCache((vaddr_t) addr, sizeof(int));
+		mips3_FlushICache((vaddr_t) addr, sizeof(int));
 	}
 #endif
 }
@@ -208,7 +209,7 @@ Debugger()
  */
 void
 db_read_bytes(addr, size, data)
-	register vm_offset_t addr;
+	register vaddr_t addr;
 	register size_t	   size;
 	register char *data;
 {
@@ -240,7 +241,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	register vm_offset_t addr;
+	register vaddr_t addr;
 	register size_t	   size;
 	register char *data;
 {
@@ -481,9 +482,9 @@ inst_unconditional_flow_transfer(int inst)
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
-	vm_offset_t ra;
+	vaddr_t ra;
 
-	ra = (vm_offset_t)MachEmulateBranch(regs->f_regs, pc,
+	ra = (vaddr_t)MachEmulateBranch(regs->f_regs, pc,
            (curproc) ? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32]: 0, 0);
 #ifdef DEBUG_DDB
 	printf("  branch_taken(0x%lx) returns 0x%lx\n", pc, ra);
@@ -508,8 +509,8 @@ db_addr_t
 next_instr_address(db_addr_t pc, boolean_t bd)
 {
 	
-	vm_offset_t ra;
-	ra = (vm_offset_t)MachEmulateBranch(ddb_regs.f_regs, pc,
+	vaddr_t ra;
+	ra = (vaddr_t)MachEmulateBranch(ddb_regs.f_regs, pc,
            (curproc)? curproc->p_addr->u_pcb.pcb_fpregs.r_regs[32]: 0, 1);
 #ifdef DEBUG_DDB
 	printf("  next_instr_addr(0x%lx, %d) returns 0x%lx\n", pc, bd, ra);

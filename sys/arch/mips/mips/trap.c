@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.2.4 1998/11/15 16:20:49 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.2.5 1998/11/16 10:41:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.4 1998/11/15 16:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.2.5 1998/11/16 10:41:34 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -168,12 +168,12 @@ char *trap_type[] = {
 };
 
 struct trapframe {
-	unsigned tf_regs[17];
-	unsigned tf_ra;
-	unsigned tf_sr;
-	unsigned tf_mullo;
-	unsigned tf_mulhi;
-	unsigned tf_epc;
+	mips_reg_t tf_regs[17];
+	mips_reg_t tf_ra;
+	mips_reg_t tf_sr;
+	mips_reg_t tf_mullo;
+	mips_reg_t tf_mulhi;
+	mips_reg_t tf_epc;
 };
 
 void userret __P((struct proc *, unsigned, u_quad_t));
@@ -184,12 +184,12 @@ void ast __P((unsigned));
 void dealfpu __P((unsigned, unsigned, unsigned));
 
 extern void MachEmulateFP __P((unsigned));
-extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, int *));
+extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, mips_reg_t *));
 
 /*
  * Other forward declarations.
  */
-unsigned MachEmulateBranch __P((unsigned *regsPtr,
+mips_reg_t MachEmulateBranch __P((mips_reg_t *regsPtr,
 			     unsigned instPC,
 			     unsigned fpcCSR,
 			     int allowNonBranch));
@@ -197,13 +197,13 @@ unsigned MachEmulateBranch __P((unsigned *regsPtr,
 #ifdef DEBUG
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
-	u_int	status;
-	u_int	cause;
-	u_int	vadr;
-	u_int	pc;
-	u_int	ra;
-	u_int	sp;
-	u_int	code;
+	u_int		status;
+	u_int		cause;
+	mips_reg_t	vadr;
+	mips_reg_t	pc;
+	mips_reg_t	ra;
+	mips_reg_t	sp;
+	u_int		code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void trapDump __P((char * msg));
@@ -393,9 +393,10 @@ syscall(status, cause, opc)
  * no more FORK_BRAINDAMAGED.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
 	frame->f_regs[V0] = 0;
@@ -473,7 +474,7 @@ trap(status, cause, vaddr, opc, frame)
 		printf(" in %s mode\n", USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, pc=0x%x, v=0x%x\n",
 		    status, cause, opc, vaddr);
-		printf("usp=0x%x ksp=%p\n", p->p_md.md_regs[SP], (int*)&frame);
+		printf("usp=0x%x ksp=%p\n", (int)p->p_md.md_regs[SP], (int*)&frame);
 		if (curproc != NULL)
 			printf("pid=%d cmd=%s\n", p->p_pid, p->p_comm);
 		else
@@ -491,7 +492,7 @@ trap(status, cause, vaddr, opc, frame)
 		if (KERNLAND(vaddr)) {
 			pt_entry_t *pte;
 			unsigned entry;
-			vm_offset_t pa;
+			vaddr_t pa;
 
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
@@ -520,7 +521,7 @@ trap(status, cause, vaddr, opc, frame)
 	    {
 		pt_entry_t *pte;
 		unsigned entry;
-		vm_offset_t pa;
+		vaddr_t pa;
 		pmap_t pmap;
 
 		pmap  = p->p_vmspace->vm_map.pmap;
@@ -575,14 +576,14 @@ trap(status, cause, vaddr, opc, frame)
 		ftype = VM_PROT_WRITE;
 	pagefault: ;
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		struct vmspace *vm; 
 		vm_map_t map;
 		int rv;
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
-		va = trunc_page((vm_offset_t)vaddr);
+		va = trunc_page(vaddr);
 #if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef VMFAULT_TRACE
@@ -630,10 +631,10 @@ trap(status, cause, vaddr, opc, frame)
 	    }
 	kernelfault: ;
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		int rv; 
 
-		va = trunc_page((vm_offset_t)vaddr);
+		va = trunc_page(vaddr);
 #if defined(UVM)
 		rv = uvm_fault(kernel_map, va, 0, ftype);
 #else
@@ -676,7 +677,7 @@ trap(status, cause, vaddr, opc, frame)
 		va = (DELAYBRANCH(cause)) ? opc + sizeof(int) : opc;
 
 		/* read break instruction */
-		instr = fuiword((caddr_t)va);
+		instr = fuiword((void *)va);
 #ifdef DEBUG
 /*XXX*/		printf("break insn  0x%x\n", instr);
 #endif
@@ -689,16 +690,16 @@ trap(status, cause, vaddr, opc, frame)
 		 * Restore original instruction and clear BP
 		 */
 #ifndef NO_PROCFS_SUBR 
-		rv = suiword((caddr_t)va, p->p_md.md_ss_instr);
+		rv = suiword((void *)va, p->p_md.md_ss_instr);
 		if (rv < 0) {
-			vm_offset_t sa, ea;
-			sa = trunc_page((vm_offset_t)va);
-			ea = round_page((vm_offset_t)va + sizeof(int) - 1);
+			vaddr_t sa, ea;
+			sa = trunc_page(va);
+			ea = round_page(va + sizeof(int) - 1);
 #if defined(UVM)
 			rv = uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
 			if (rv == KERN_SUCCESS) {
-				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 				(void)uvm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
@@ -706,7 +707,7 @@ trap(status, cause, vaddr, opc, frame)
 			rv = vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_DEFAULT, FALSE);
 			if (rv == KERN_SUCCESS) {
-				rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+				rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 				(void)vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
@@ -850,7 +851,7 @@ interrupt(status, cause, pc)
 	/* simulated interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
 		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
-		register int isr, sisr;
+		register isr, sisr;
 		isr = netisr; netisr = 0;
 		sisr = softisr; softisr = 0;
 		clearsoftnet();
@@ -960,7 +961,7 @@ dealfpu(status, cause, opc)
 	unsigned opc;
 {
 	struct frame *f = (struct frame *)curproc->p_md.md_regs;
-	unsigned int v0;
+	unsigned v0;
 
 	set_cp0sr(status | MIPS_SR_COP_1_BIT);
 	v0 = get_fpcsr();
@@ -1044,19 +1045,19 @@ GetBranchDest(InstPtr)
 /*
  * Return the resulting PC as if the branch was executed.
  */
-unsigned
+mips_reg_t
 MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
-	unsigned *regsPtr;
+	mips_reg_t *regsPtr;
 	unsigned instPC;
 	unsigned fpcCSR;
 	int allowNonBranch;
 {
 	InstFmt inst;
-	unsigned retAddr;
+	mips_reg_t retAddr;
 	int condition;
 
 	inst.word = (instPC < MIPS_KSEG0_START) ?
-		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
+		fuiword((void *)instPC) : *(unsigned*)instPC;
 
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
@@ -1192,32 +1193,32 @@ mips_singlestep(p)
 	struct proc *p;
 {
 #ifdef NO_PROCFS_SUBR
-        struct frame *f = (struct frame *)p->p_md.md_regs;
-        unsigned va = 0;
-        int rv; 
+	struct frame *f = (struct frame *)p->p_md.md_regs;
+	unsigned va = 0;
+	int rv; 
 
-        if (p->p_md.md_ss_addr) {
+	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
-                return EFAULT;
+		return EFAULT;
 	}
-        if (fuiword((caddr_t)f->f_regs[PC]) != 0) /* not a NOP instruction */
-                va = MachEmulateBranch(f->f_regs, f->f_regs[PC],
-                        p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
-        else
-                va = f->f_regs[PC] + sizeof(int);
+	if (fuiword((void *)f->f_regs[PC]) != 0) /* not a NOP instruction */
+		va = MachEmulateBranch(f->f_regs, f->f_regs[PC],
+			p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
+	else
+		va = f->f_regs[PC] + sizeof(int);
 	p->p_md.md_ss_addr = va;
-	p->p_md.md_ss_instr = fuiword((caddr_t)va);
-        rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
-        if (rv < 0) {
-		vm_offset_t sa, ea;
-		sa = trunc_page((vm_offset_t)va);
-                ea = round_page((vm_offset_t)va + sizeof(int) - 1);
+	p->p_md.md_ss_instr = fuiword((void *)va);
+	rv = suiword((void *)va, MIPS_BREAK_SSTEP);
+	if (rv < 0) {
+		vaddr_t sa, ea;
+		sa = trunc_page(va);
+		ea = round_page(va + sizeof(int) - 1);
 #if defined(UVM)
 		rv = uvm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
-			rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)uvm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
@@ -1225,54 +1226,54 @@ mips_singlestep(p)
 		rv = vm_map_protect(&p->p_vmspace->vm_map,
 		    sa, ea, VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
-			rv = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
+			rv = suiword((void *)va, MIPS_BREAK_SSTEP);
 			(void)vm_map_protect(&p->p_vmspace->vm_map,
 			    sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
 #endif /* UVM */
 	}
 #else
-        struct frame *f = (struct frame *)p->p_md.md_regs;
-        unsigned pc = f->f_regs[PC];
-        unsigned va = 0;
-        int rv;
-        int curinstr, bpinstr = MIPS_BREAK_SSTEP;
+	struct frame *f = (struct frame *)p->p_md.md_regs;
+	unsigned pc = f->f_regs[PC];
+	unsigned va = 0;
+	int rv;
+	int curinstr, bpinstr = MIPS_BREAK_SSTEP;
 	struct uio uio;
 	struct iovec iov;
 
 #define FETCH_INSTRUCTION(i, va) \
-        iov.iov_base = (caddr_t)&(i);\
-        iov.iov_len = sizeof(int); \
-        uio.uio_iov = &iov;\
-        uio.uio_iovcnt = 1;\
-        uio.uio_offset = (off_t)(va);\
-        uio.uio_resid = sizeof(int);\
-        uio.uio_segflg = UIO_SYSSPACE;\
-        uio.uio_rw = UIO_READ;\
-        uio.uio_procp = curproc;\
-        rv = procfs_domem(curproc, p, NULL, &uio)
+	iov.iov_base = (caddr_t)&(i);\
+	iov.iov_len = sizeof(int); \
+	uio.uio_iov = &iov;\
+	uio.uio_iovcnt = 1;\
+	uio.uio_offset = (off_t)(va);\
+	uio.uio_resid = sizeof(int);\
+	uio.uio_segflg = UIO_SYSSPACE;\
+	uio.uio_rw = UIO_READ;\
+	uio.uio_procp = curproc;\
+	rv = procfs_domem(curproc, p, NULL, &uio)
 
 #define STORE_INSTRUCTION(i, va) \
-        iov.iov_base = (caddr_t)&(i);\
-        iov.iov_len = sizeof(int);\
-        uio.uio_iov = &iov;\
-        uio.uio_iovcnt = 1;\
-        uio.uio_offset = (off_t)(va);\
-        uio.uio_resid = sizeof(int);\
-        uio.uio_segflg = UIO_SYSSPACE;\
-        uio.uio_rw = UIO_WRITE;\
-        uio.uio_procp = curproc;\
-        rv = procfs_domem(curproc, p, NULL, &uio)
+	iov.iov_base = (caddr_t)&(i);\
+	iov.iov_len = sizeof(int);\
+	uio.uio_iov = &iov;\
+	uio.uio_iovcnt = 1;\
+	uio.uio_offset = (off_t)(va);\
+	uio.uio_resid = sizeof(int);\
+	uio.uio_segflg = UIO_SYSSPACE;\
+	uio.uio_rw = UIO_WRITE;\
+	uio.uio_procp = curproc;\
+	rv = procfs_domem(curproc, p, NULL, &uio)
 
-        /* Fetch what's at the current location.  */
-        FETCH_INSTRUCTION(curinstr, va);
+	/* Fetch what's at the current location.  */
+	FETCH_INSTRUCTION(curinstr, va);
 
 	/* compute next address after current location */
-        if (curinstr != 0)
-                va = MachEmulateBranch(f->f_regs, pc,
-                        p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
-        else
-                va = pc + sizeof(int);
+	if (curinstr != 0)
+		va = MachEmulateBranch(f->f_regs, pc,
+			p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
+	else
+		va = pc + sizeof(int);
 
 	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
@@ -1281,22 +1282,22 @@ mips_singlestep(p)
 	}
 	p->p_md.md_ss_addr = va;
 
-        /* Fetch what's at the current location. */
-        FETCH_INSTRUCTION(p->p_md.md_ss_instr, va);
+	/* Fetch what's at the current location. */
+	FETCH_INSTRUCTION(p->p_md.md_ss_instr, va);
 
-        /* Store breakpoint instruction at the "next" location now. */
-        STORE_INSTRUCTION(bpinstr, va);
+	/* Store breakpoint instruction at the "next" location now. */
+	STORE_INSTRUCTION(bpinstr, va);
 	MachFlushCache(); /* XXX memory barrier followed by flush icache? */
 #endif
-        if (rv < 0)
+	if (rv < 0)
 		return (EFAULT);
 #if 0
 	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
-        printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
+	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-                p->p_md.md_ss_instr, pc, fuword((caddr_t)va)); /* XXX */
+		p->p_md.md_ss_instr, pc, fuword((void *)va)); /* XXX */
 #endif
-        return 0;
+	return 0;
 }
 
 #if defined(DEBUG) || defined(DDB)
@@ -1306,7 +1307,7 @@ extern void logstacktrace __P((void)); /*XXX*/
 
 int
 kdbpeek(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %lx\n", addr);
@@ -1511,7 +1512,7 @@ specialframe:
 #endif /* MIPS3 */
 
 
- 	if (pcBetween(cpu_switch, cpu_switch_end))
+	if (pcBetween(cpu_switch, cpu_switch_end))
 		subr = (unsigned) cpu_switch;
 	else if (pcBetween(idle, cpu_switch))	{
 		subr = (unsigned) idle;
@@ -1561,7 +1562,7 @@ stackscan:
 	mask = 0;
 	foundframesize = 0;
 	for (va = subr; more; va += sizeof(int),
-	     		      more = (more == 3) ? 3 : more - 1) {
+			      more = (more == 3) ? 3 : more - 1) {
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;

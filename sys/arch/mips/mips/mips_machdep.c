@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.36.2.3 1998/10/20 09:27:14 drochner Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.36.2.4 1998/11/16 10:41:32 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36.2.3 1998/10/20 09:27:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36.2.4 1998/11/16 10:41:32 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -122,17 +122,20 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
 /*
  * Declare these as initialized data so we can patch them.
  */
+#ifndef NBUF
+#define NBUF		0
+#endif
+#ifndef BUFPAGES
+#define BUFPAGES	0
+#endif
+#ifndef BUFCACHE
+#define BUFCACHE	10
+#endif
+
 int	nswbuf = 0;
-#ifdef NBUF
 int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
+int	bufpages = BUFPAGES;	/* optional hardwired count */
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
 int cpu_mhz;
 int mips_num_tlb_entries;
@@ -328,6 +331,9 @@ mips3_vector_init()
 #ifdef __arc__		/* XXX */
 	mips_L2CacheSize = mips_L2CachePresent ? 1024 * 1024 : 0;
 #endif
+#ifdef	GEO		/* XXX */
+	mips_L2_CacheSize = mips_L2CachePresent = 0;
+#endif
 
 	mips3_FlushCache();
 }
@@ -432,8 +438,9 @@ mips_vector_init()
 		mips1_vector_init();
 		break;
 #endif
-#ifdef MIPS3
+#if (MIPS3 + MIPS4) > 0
 	case 3:
+	case 4:
 		mips3_SetWIRED(0);
 		mips3_TLBFlush(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
@@ -698,7 +705,7 @@ sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct sigframe *fp;
-	int *regs;
+	mips_reg_t *regs;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	struct sigcontext ksc;
@@ -823,7 +830,7 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp;
-	int error, *regs;
+	mips_reg_t error, *regs;
 	struct sigcontext ksc;
 
 	/*
@@ -1166,14 +1173,13 @@ allocsys(v)
 #endif
 	
 	/*
-	 * Determine how many buffers to allocate.  We allocate more
-	 * than the BSD standard of using 10% of memory for the first 2 Meg,
-	 * 5% of remaining.  We just allocate a flat 10%.  Ensure a minimum
-	 * of 16 buffers.  We allocate 1/2 as many swap buffer headers
-	 * as file i/o buffers.
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcache % of memory for buffer space.  Ensure a
+	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
+	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+		bufpages = physmem / CLSIZE * bufcache / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -1237,7 +1243,7 @@ mips_init_proc0(space)
 	u_long pa;
 	int i;
 
-	bzero(space, 2 * USPACE);
+	memset(space, 0, 2 * USPACE);
 
 	proc0.p_addr = proc0paddr = (struct user *)space;
 	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
