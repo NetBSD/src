@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1995/02/09 14:38:54 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.34 1995/02/10 20:40:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1112,8 +1112,7 @@ if(pm==NULL)panic("pv_changepte 1");
 				setcontext(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
 				tpte = getpte(va);
-				if (vactype != VAC_NONE)
-					if (tpte & PG_M)
+				if (vactype != VAC_NONE && (tpte & PG_M))
 						cache_flush_page(va);
 			} else {
 				/* XXX per-cpu va? */
@@ -1177,9 +1176,8 @@ pv_syncflags(pv0)
 			setcontext(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
 			tpte = getpte(va);
-			if (vactype != VAC_NONE)
-				if (tpte & PG_M)
-					cache_flush_page(va);
+			if (vactype != VAC_NONE && (tpte & PG_M))
+				cache_flush_page(va);
 		} else {
 			/* XXX per-cpu va? */
 			setcontext(0);
@@ -2083,11 +2081,8 @@ pmap_page_protect(pa, prot)
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
-/*
- * XXX are we sure that "pa" is an OBMEM, so that we can use
- * managed() on it?
- */
-	if (!managed(pa) || prot & VM_PROT_WRITE)
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) ||
+	     !managed(pa) || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
 	if (prot & VM_PROT_READ) {
@@ -2233,7 +2228,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				*pte++ &= ~PG_W;
 		} else {
 			/* in MMU: take away write bits from MMU PTEs */
-			if (vactype != VAC_NONE && pm->pm_ctx) {
+			if (pm->pm_ctx) {
 				register int tpte;
 
 				/*
@@ -2247,7 +2242,8 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 					pmap_stats.ps_npg_prot_all++;
 					if (tpte & PG_W) {
 						pmap_stats.ps_npg_prot_actual++;
-						cache_flush_page(va);
+						if (vactype != VAC_NONE)
+							cache_flush_page(va);
 						setpte(va, tpte & ~PG_W);
 					}
 				}
@@ -2418,30 +2414,34 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 	s = splpmap();		/* XXX way too conservative */
 	if (pm->pm_segmap[vseg] != seginval &&
 	    (tpte = getpte(va)) & PG_V) {
-		register int addr = tpte & PG_PFNUM;
+		register int addr;
 
-		/* old mapping exists */
-		if (addr == (pteproto & PG_PFNUM)) {
+		/* old mapping exists, and is of the same pa type */
+		if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			splx(s);
 			pmap_changeprot(pm, va, prot, wired);
 			return;
 		}
 
+		if ((tpte & PG_TYPE) == PG_OBMEM) {
 /*printf("pmap_enk: changing existing va=>pa entry\n");*/
-		/*
-		 * Switcheroo: changing pa for this va.
-		 * If old pa was managed, remove from pvlist.
-		 * If old page was cached, flush cache.
-		 */
-		if ((addr & PG_TYPE) == PG_OBMEM) {
-			addr = ptoa(HWTOSW(addr));
+			/*
+			 * Switcheroo: changing pa for this va.
+			 * If old pa was managed, remove from pvlist.
+			 * If old page was cached, flush cache.
+			 * We are assuming that non-OBMEM addresses are
+			 * not cached.
+			 */
+			addr = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(addr))
 				pv_unlink(pvhead(addr), pm, va);
-		}
-		if (vactype != VAC_NONE && (tpte & PG_NC) == 0) {
-			setcontext(0);	/* ??? */
-			cache_flush_page((int)va);
+			if ((tpte & PG_NC) == 0) {
+				setcontext(0);	/* ??? */
+				if (vactype != VAC_NONE)
+					cache_flush_page((int)va);
+			}
 		}
 	} else {
 		/* adding new entry */
@@ -2571,10 +2571,11 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			}
 		}
 		if (tpte & PG_V) {
-			register int addr = tpte & PG_PFNUM;
+			register int addr;
 
-			/* old mapping exists */
-			if (addr == (pteproto & PG_PFNUM)) {
+			/* old mapping exists, and is of the same pa type */
+			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
 				splx(s);
 				/* caller should call this directly: */
@@ -2589,17 +2590,19 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * Switcheroo: changing pa for this va.
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
+			 * We are assuming that non-OBMEM addresses are
+			 * not cached.
 			 */
 /*printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
 curproc->p_comm, curproc->p_pid, va);*/
-			if ((addr & PG_TYPE) == PG_OBMEM) {
-				addr = ptoa(HWTOSW(addr));
+			if ((tpte & PG_TYPE) == PG_OBMEM) {
+				addr = ptoa(HWTOSW(tpte & PG_PFNUM));
 				if (managed(addr))
 					pv_unlink(pvhead(addr), pm, va);
+				if (vactype != VAC_NONE &&
+				    doflush && (tpte & PG_NC) == 0)
+					cache_flush_page((int)va);
 			}
-			if (vactype != VAC_NONE &&
-			    doflush && (tpte & PG_NC) == 0)
-				cache_flush_page((int)va);
 		} else {
 			/* adding new entry */
 			pm->pm_npte[vseg]++;
@@ -2749,7 +2752,7 @@ pmap_clear_modify(pa)
 {
 	register struct pvlist *pv;
 
-	if (managed(pa)) {
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags(pv);
 		pv->pv_flags &= ~PV_MOD;
@@ -2765,7 +2768,7 @@ pmap_is_modified(pa)
 {
 	register struct pvlist *pv;
 
-	if (managed(pa)) {
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_MOD || pv_syncflags(pv) & PV_MOD)
 			return (1);
@@ -2782,7 +2785,7 @@ pmap_clear_reference(pa)
 {
 	register struct pvlist *pv;
 
-	if (managed(pa)) {
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags(pv);
 		pv->pv_flags &= ~PV_REF;
@@ -2798,7 +2801,7 @@ pmap_is_referenced(pa)
 {
 	register struct pvlist *pv;
 
-	if (managed(pa)) {
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) == 0 && managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_REF || pv_syncflags(pv) & PV_REF)
 			return (1);
@@ -2849,16 +2852,14 @@ pmap_zero_page(pa)
 	register caddr_t va;
 	register int pte;
 
-	if (managed(pa)) {
+	if (((pa & (PMAP_TNC & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
 		 */
-#if 1
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
-#endif
 		pte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(pa));
 	} else
 		pte = PG_V | PG_S | PG_W | PG_NC | (atop(pa) & PG_PFNUM);
@@ -2894,10 +2895,8 @@ pmap_copy_page(src, dst)
 
 	if (managed(dst)) {
 		/* similar `might not be necessary' comment applies */
-#if 1
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
-#endif
 		dpte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(dst));
 	} else
 		dpte = PG_V | PG_S | PG_W | PG_NC | (atop(dst) & PG_PFNUM);
@@ -2983,7 +2982,7 @@ pmap_prefer(pa, va)
 
 	m = CACHE_ALIAS_DIST;
 
-	if (!managed(pa))
+	if ((pa & (PMAP_TNC & ~PMAP_NC)) || !managed(pa))
 		return va;
 
 	pv = pvhead(pa);
