@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.72 1998/09/14 16:06:27 phil Exp $
+#	$NetBSD: MAKEDEV,v 1.73 1998/10/12 21:05:24 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -184,12 +184,6 @@ ttyv*)
 	rm -f ttyv$unit
 	mknod ttyv$unit	c $chr $unit
 	chown root.wheel ttyv$unit
-	case $unit in
-	0)
-		rm -f vga
-		ln -s ttyv0 vga
-		;;
-	esac
 	;;
 
 wscons)
