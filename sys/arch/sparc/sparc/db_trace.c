@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 1995/02/09 10:34:42 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.4 1995/07/05 18:51:41 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -90,8 +90,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			db_printf("%x, ", frame->fr_arg[i]);
 		db_printf("%x) at ", frame->fr_arg[i]);
 		db_printsym(pc, DB_STGY_PROC);
-db_printf(" [frame cur %x, next %x]",
-	(unsigned int)frame, (unsigned int)frame->fr_fp);
 		db_printf("\n");
 
 	}
