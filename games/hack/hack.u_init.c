@@ -15,7 +15,7 @@ extern char plname[];
 struct you zerou;
 char pl_character[PL_CSIZ];
 char *(roles[]) = {	/* must all have distinct first letter */
-			/* roles[4] may be changed to -man */
+			/* roles[4] may be changed to -woman */
 	"Tourist", "Speleologist", "Fighter", "Knight",
 	"Cave-man", "Wizard"
 };
@@ -103,7 +103,7 @@ extern char readchar();
 	rolesyms[i] = 0;
 
 	if(pc = pl_character[0]) {
-		if('a' <= pc && pc <= 'z') pc += 'A'-'a';
+		if(islower(pc)) pc = toupper(pc);
 		if((i = role_index(pc)) >= 0)
 			goto got_suffix;	/* implies experienced */
 		printf("\nUnknown role: %c\n", pc);
@@ -136,7 +136,7 @@ extern char readchar();
 	printf("? [%s] ", rolesyms);
 
 	while(pc = readchar()) {
-		if('a' <= pc && pc <= 'z') pc += 'A'-'a';
+		if(islower(pc)) pc = toupper(pc);
 		if((i = role_index(pc)) >= 0) {
 			printf("%c\n", pc);	/* echo */
 			(void) fflush(stdout);	/* should be seen */
@@ -164,9 +164,13 @@ beginner:
 		(void) putchar('\n');
 		(void) fflush(stdout);
 	}
+#if 0
+	/* Given the above code, I can't see why this would ever change
+	   anything; it does core pretty well, though.  - cmh 4/20/93 */
 	if(exper) {
 		roles[i][0] = pc;
 	}
+#endif
 
 got_suffix:
 
