@@ -1,0 +1,13 @@
+# $NetBSD: index,v 1.1 2001/04/26 02:26:17 garbled Exp $
+showprocs	showprocs	Show configured and running daemons
+showallprocs	showallprocs	Show all daemons
+startprocs	startprocs	Start configured daemons
+startallprocs	startallprocs	Start any daemon
+stopprocs	stopprocs	Stop configured daemons
+stopallprocs	stopallprocs	Stop any daemon
+restartprocs	restartprocs	Restart configured daemons
+restartallprocs	restartallprocs	Restart any daemon
+BLANK		BLANK		BLANK
+topcpu		topcpu		Show top 15 processes by cpu usage
+topmem		topmem		Show top 15 processes by memory usage
+toptime		toptime		Show top 15 processes by cpu time

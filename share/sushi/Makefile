@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2001/04/25 04:05:04 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2001/04/26 02:26:16 garbled Exp $
 
-SUBDIR= info install system users util network
+SUBDIR= info install system users procs util network
 
 FILES=	help index
 FILESDIR=${BINDIR}/sushi
