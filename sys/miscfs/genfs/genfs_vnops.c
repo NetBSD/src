@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.33 2001/05/26 21:27:19 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.34 2001/05/28 02:50:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -416,6 +416,13 @@ genfs_lease_check(v)
 #else
 	return (0);
 #endif /* NFSSERVER */
+}
+
+int
+genfs_mmap(v)
+	void *v;
+{
+	return 0;
 }
 
 /*
