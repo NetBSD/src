@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.16 2003/06/28 14:21:28 darrenr Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.17 2003/06/29 09:42:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.16 2003/06/28 14:21:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.17 2003/06/29 09:42:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ ultrix_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, l);
 	}
 	return ret;
 }
@@ -300,7 +300,7 @@ ultrix_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, sp, l)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
@@ -329,12 +329,12 @@ ultrix_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATFS(mp, sp, l)) != 0)
 		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
