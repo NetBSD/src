@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1998/08/27 06:23:33 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1999/01/17 20:07:52 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -531,9 +531,7 @@ main()
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
 			gets(bootline);
-printf("You said %s\n", bootline);
 			parseargs(bootline, &boothowto);
-printf("parseargs says you said %s\n", bootline);
 		}
 		if ((fd = open(bootline, 0)) >= 0)
 			break;
