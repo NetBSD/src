@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.4 2000/06/10 08:02:20 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.4.2.1 2001/05/01 10:11:23 he Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -94,6 +94,8 @@
 #ifdef __FreeBSD__
 #include <sys/kernel.h>
 #endif
+#include <sys/queue.h>
+#include <sys/syslog.h>
 #include <machine/cpu.h>
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -179,8 +181,10 @@ static int stf_encapcheck __P((const struct mbuf *, int, int, void *));
 static struct in6_ifaddr *stf_getsrcifa6 __P((struct ifnet *));
 static int stf_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
-static int stf_checkaddr4 __P((struct in_addr *, struct ifnet *));
-static int stf_checkaddr6 __P((struct in6_addr *, struct ifnet *));
+static int stf_checkaddr4 __P((struct stf_softc *, struct in_addr *,
+	struct ifnet *));
+static int stf_checkaddr6 __P((struct stf_softc *, struct in6_addr *,
+	struct ifnet *));
 #if defined(__bsdi__) && _BSDI_VERSION >= 199802
 static void stf_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 #else
@@ -458,9 +462,10 @@ stf_output(ifp, m, dst, rt)
 }
 
 static int
-stf_checkaddr4(in, ifp)
+stf_checkaddr4(sc, in, inifp)
+	struct stf_softc *sc;
 	struct in_addr *in;
-	struct ifnet *ifp;	/* incoming interface */
+	struct ifnet *inifp;	/* incoming interface */
 {
 	struct in_ifaddr *ia4;
 
@@ -497,7 +502,7 @@ stf_checkaddr4(in, ifp)
 	/*
 	 * perform ingress filter
 	 */
-	if (ifp) {
+	if (sc && (sc->sc_if.if_flags & IFF_LINK2) == 0 && inifp) {
 		struct sockaddr_in sin;
 		struct rtentry *rt;
 
@@ -510,10 +515,14 @@ stf_checkaddr4(in, ifp)
 #else
 		rt = rtalloc1((struct sockaddr *)&sin, 0);
 #endif
-		if (!rt)
-			return -1;
-		if (rt->rt_ifp != ifp) {
-			rtfree(rt);
+		if (!rt || rt->rt_ifp != inifp) {
+#if 0
+			log(LOG_WARNING, "%s: packet from 0x%x dropped "
+			    "due to ingress filter\n", if_name(&sc->sc_if),
+			    (u_int32_t)ntohl(sin.sin_addr.s_addr));
+#endif
+			if (rt)
+				rtfree(rt);
 			return -1;
 		}
 		rtfree(rt);
@@ -523,15 +532,16 @@ stf_checkaddr4(in, ifp)
 }
 
 static int
-stf_checkaddr6(in6, ifp)
+stf_checkaddr6(sc, in6, inifp)
+	struct stf_softc *sc;
 	struct in6_addr *in6;
-	struct ifnet *ifp;	/* incoming interface */
+	struct ifnet *inifp;	/* incoming interface */
 {
 	/*
 	 * check 6to4 addresses
 	 */
 	if (IN6_IS_ADDR_6TO4(in6))
-		return stf_checkaddr4(GET_V4(in6), ifp);
+		return stf_checkaddr4(sc, GET_V4(in6), inifp);
 
 	/*
 	 * reject anything that look suspicious.  the test is implemented
@@ -550,7 +560,7 @@ void
 in_stf_input(struct mbuf *m, ...)
 #else
 in_stf_input(m, va_alist)
-	register struct mbuf *m;
+	struct mbuf *m;
 #endif
 {
 	int off, proto;
@@ -588,8 +598,8 @@ in_stf_input(m, va_alist)
 	 * perform sanity check against outer src/dst.
 	 * for source, perform ingress filter as well.
 	 */
-	if (stf_checkaddr4(&ip->ip_dst, NULL) < 0 ||
-	    stf_checkaddr4(&ip->ip_src, m->m_pkthdr.rcvif) < 0) {
+	if (stf_checkaddr4(sc, &ip->ip_dst, NULL) < 0 ||
+	    stf_checkaddr4(sc, &ip->ip_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
 		return;
 	}
@@ -608,8 +618,8 @@ in_stf_input(m, va_alist)
 	 * perform sanity check against inner src/dst.
 	 * for source, perform ingress filter as well.
 	 */
-	if (stf_checkaddr6(&ip6->ip6_dst, NULL) < 0 ||
-	    stf_checkaddr6(&ip6->ip6_src, m->m_pkthdr.rcvif) < 0) {
+	if (stf_checkaddr6(sc, &ip6->ip6_dst, NULL) < 0 ||
+	    stf_checkaddr6(sc, &ip6->ip6_src, m->m_pkthdr.rcvif) < 0) {
 		m_freem(m);
 		return;
 	}
