@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.42.12.1 2000/11/20 18:09:12 bouyer Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.42.12.2 2000/11/22 16:05:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -135,7 +135,6 @@ check_pty(dev)
 		if (minor(dev) >= maxptys) {
 	    limit_reached:
 			tablefull("pty", "increase kern.maxptys");
-			simple_unlock(&pt_softc_mutex);
 			return (ENXIO);
 		}
 
@@ -159,7 +158,7 @@ check_pty(dev)
 			simple_lock(&pt_softc_mutex);
 
 			if (maxptys == npty) {
-				/* we hold the mutex here */
+				simple_unlock(&pt_softc_mutex);
 				goto limit_reached;
 			}
 		} while(newnpty > maxptys);
@@ -301,7 +300,7 @@ ptsopen(dev, flag, devtype, p)
 			if (error)
 				return (error);
 		}
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
 }
@@ -316,7 +315,7 @@ ptsclose(dev, flag, mode, p)
 	struct tty *tp = pti->pt_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_close)(tp, flag);
+	error = (*tp->t_linesw->l_close)(tp, flag);
 	error |= ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
@@ -336,8 +335,7 @@ ptsread(dev, uio, flag)
 again:
 	if (pti->pt_flags & PF_REMOTE) {
 		while (isbackground(p, tp)) {
-			if (sigismember(&p->p_sigignore, SIGTTIN) ||
-			    sigismember(&p->p_sigmask, SIGTTIN) ||
+			if (sigismasked(p, SIGTTIN) ||
 			    p->p_pgrp->pg_jobc == 0 ||
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
@@ -367,7 +365,7 @@ again:
 			return (error);
 	} else
 		if (tp->t_oproc)
-			error = (*linesw[tp->t_line].l_read)(tp, uio, flag);
+			error = (*tp->t_linesw->l_read)(tp, uio, flag);
 	ptcwakeup(tp, FWRITE);
 	return (error);
 }
@@ -388,7 +386,7 @@ ptswrite(dev, uio, flag)
 
 	if (tp->t_oproc == 0)
 		return (EIO);
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 /*
@@ -471,7 +469,7 @@ ptcopen(dev, flag, devtype, p)
 	if (tp->t_oproc)
 		return (EIO);
 	tp->t_oproc = ptsstart;
-	(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+	(void)(*tp->t_linesw->l_modem)(tp, 1);
 	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
 	pti->pt_send = 0;
@@ -489,7 +487,7 @@ ptcclose(dev, flag, devtype, p)
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 
-	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
+	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
 	tp->t_oproc = 0;		/* mark closed */
 	return (0);
@@ -623,7 +621,7 @@ again:
 				wakeup((caddr_t)&tp->t_rawq);
 				goto block;
 			}
-			(*linesw[tp->t_line].l_rint)(*cp++, tp);
+			(*tp->t_linesw->l_rint)(*cp++, tp);
 			cnt++;
 			cc--;
 		}
@@ -820,7 +818,7 @@ ptyioctl(dev, cmd, data, flag, p)
 				ttyinfo(tp);
 			return(0);
 		}
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error < 0)
 		 error = ttioctl(tp, cmd, data, flag, p);
 	if (error < 0) {

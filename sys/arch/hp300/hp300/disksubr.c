@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.22.1 2000/11/22 16:00:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -77,7 +77,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
@@ -98,7 +98,6 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
-	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
 }
@@ -169,7 +168,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
@@ -180,7 +179,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags = B_WRITE;
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.27.8.1 2000/11/20 18:10:19 bouyer Exp $	*/
+/*	$NetBSD: fil.c,v 1.27.8.2 2000/11/22 16:06:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.27.8.1 2000/11/20 18:10:19 bouyer Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.27.8.2 2000/11/22 16:06:06 bouyer Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -713,6 +713,51 @@ void *m;
 	return pass;
 }
 
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000) && \
+    defined(_KERNEL)
+#include <net/pfil.h>
+
+int
+fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	struct ip *ip = mtod(*mp, struct ip *);
+	int rv, hlen = ip->ip_hl << 2;
+
+	/*
+	 * We get the packet with all fields in network byte
+	 * order.  We expect ip_len and ip_off to be in host
+	 * order.  We frob them, call the filter, then frob
+	 * them back.
+	 *
+	 * Note, we don't need to update the checksum, because
+	 * it has already been verified.
+	 */
+	NTOHS(ip->ip_len);
+	NTOHS(ip->ip_off);
+
+	rv = fr_check(ip, hlen, ifp, (dir == PFIL_OUT), mp);
+
+	if (rv == 0 && *mp != NULL) {
+		ip = mtod(*mp, struct ip *);
+		HTONS(ip->ip_len);
+		HTONS(ip->ip_off);
+	}
+
+	return (rv);
+}
+
+#ifdef USE_INET6
+#include <netinet/ip6.h>
+
+int
+fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	
+	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
+	    ifp, (dir == PFIL_OUT), mp));
+}
+#endif
+#endif /* __NetBSD_Version >= 105110000 && _KERNEL */
 
 /*
  * frcheck - filter check

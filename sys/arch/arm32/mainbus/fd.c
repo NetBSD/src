@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25.12.1 2000/11/20 20:04:03 bouyer Exp $	*/
+/*	$NetBSD: fd.c,v 1.25.12.2 2000/11/22 16:00:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1686,7 +1686,7 @@ load_memory_disc_from_floppy(md, dev)
 		    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
 		bp->b_blkno = loop * fd_types[type].sectrac;
 		bp->b_bcount = fd_types[type].sectrac * DEV_BSIZE;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags |= B_READ;
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		fdstrategy(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.4.2.2 2000/11/20 11:43:09 bouyer Exp $ */
+/*	$NetBSD: cgsix.c,v 1.4.2.3 2000/11/22 16:04:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -925,8 +925,8 @@ cgsixmmap(dev, off, prot)
 #ifdef DEBUG
 	{
 	  struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "cgsixmmap(0x%x) (%s[%d])\n",
-		off, p->p_comm, p->p_pid);
+	  log(LOG_NOTICE, "cgsixmmap(0x%llx) (%s[%d])\n",
+		(long long)off, p->p_comm, p->p_pid);
 	}
 #endif
 	return (-1);	/* not a user-map offset */

@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_tuner.c,v 1.6.2.2 2000/11/20 22:35:47 bouyer Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.6.2.3 2000/11/22 16:04:32 bouyer Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.7 2000/06/26 09:41:32 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.8 2000/10/15 14:18:06 phk Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -56,8 +56,11 @@
 #endif
 
 #ifdef __FreeBSD__
-#include <machine/clock.h>      /* for DELAY */
 #include <pci/pcivar.h>
+
+#if (__FreeBSD_version < 500000)
+#include <machine/clock.h>              /* for DELAY */
+#endif
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>          /* for bus space */

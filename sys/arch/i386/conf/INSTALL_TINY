@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.11.2.1 2000/11/20 20:09:16 bouyer Exp $
+#	$NetBSD: INSTALL_TINY,v 1.11.2.2 2000/11/22 16:00:17 bouyer Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -140,6 +140,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
+#options	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 options 	NVNODE=50
@@ -251,6 +252,10 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #lpt1	at isa? port 0x278
 #lpt2	at isa? port 0x3bc
 
+# I2O devices
+#iop*	at pci? dev ? function ?	# I/O processor
+#iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+#lsu*	at iop? tid ?			# block devices
 
 # SCSI Controllers and Devices
 
@@ -298,6 +303,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #scsibus* at aic?
 #scsibus* at bha?
 #scsibus* at dpt?
+#scsibus* at iopsp?
 #scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.42.14.1 2000/11/20 18:09:06 bouyer Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.42.14.2 2000/11/22 16:05:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -96,8 +96,8 @@ scdebug_call(p, code, args)
 	struct proc *p;
 	register_t code, args[];
 {
-	struct sysent *sy;
-	struct emul *em;
+	const struct sysent *sy;
+	const struct emul *em;
 	int i;
 
 	if (!(scdebug & SCDEBUG_CALLS))
@@ -133,8 +133,8 @@ scdebug_ret(p, code, error, retval)
 	int error;
 	register_t retval[];
 {
-	struct sysent *sy;
-	struct emul *em;
+	const struct sysent *sy;
+	const struct emul *em;
 
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;

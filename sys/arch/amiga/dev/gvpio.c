@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.3.8.1 2000/11/20 19:58:35 bouyer Exp $ */
+/*	$NetBSD: gvpio.c,v 1.3.8.2 2000/11/22 15:59:48 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -54,7 +54,6 @@
 #include <amiga/dev/supio.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
-#include <amiga/dev/gvpiovar.h>
 
 struct gvpio_softc {
 	struct device sc_dev;
@@ -68,6 +67,7 @@ int gvpiomatch __P((struct device *, struct cfdata *, void *));
 void gvpioattach __P((struct device *, struct device *, void *));
 int gvpioprint __P((void *auxp, const char *));
 int gvp_com_intr __P((void *));
+void gvp_com_intr_establish(struct device *, struct gvpcom_int_hdl *);
 
 struct cfattach gvpio_ca = {
 	sizeof(struct gvpio_softc), gvpiomatch, gvpioattach
@@ -123,7 +123,7 @@ gvpioattach(parent, self, auxp)
 	gbase = gap->zargs.va;
 	giosc->sc_cntr = &gbase[0x41];
 	giosc->sc_bst.base = (u_long)gbase + 1;
-	giosc->sc_bst.absm = amiga_bus_stride_2;
+	giosc->sc_bst.absm = &amiga_bus_stride_2;
 	LIST_INIT(&giosc->sc_comhdls);
 	giosd = gvpiodevs;
 
@@ -177,9 +177,7 @@ gvpioprint(auxp, pnp)
 }
 
 void
-gvp_com_intr_establish(self, p)
-	struct device *self;
-	struct gvpcom_int_hdl *p;
+gvp_com_intr_establish(struct device *self, struct gvpcom_int_hdl *p) {
 {
 	struct gvpio_softc *sc;
 

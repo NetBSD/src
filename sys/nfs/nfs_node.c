@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.29.2.1 2000/11/20 18:11:16 bouyer Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29.2.2 2000/11/22 16:06:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,7 +77,8 @@ void
 nfs_nhinit()
 {
 
-	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
+	nfsnodehashtbl = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE,
+	    M_WAITOK, &nfsnodehash);
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",

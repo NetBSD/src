@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78.2.1 2000/11/20 20:03:55 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.78.2.2 2000/11/22 16:00:00 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -482,6 +482,9 @@ file	arch/arm32/isa/sysbeep_isa.c			sysbeep_isa
 device dsrtc: todservice
 attach dsrtc at isa
 file	arch/arm32/isa/dsrtc.c				dsrtc
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
 
 # PCI devices
 

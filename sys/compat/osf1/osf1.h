@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.21 1999/06/26 01:21:30 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.21.2.1 2000/11/22 16:02:52 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -590,5 +590,32 @@ struct osf1_utsname {
 
 /* XXX should have status word bits */
 
+
+/* for set/get sysinfo */
+
+struct	osf1_cpu_info {
+	int		current_cpu;
+	int     	cpus_in_box;
+	int		cpu_type;
+	int		ncpus;
+	u_int64_t	cpus_present;
+	u_int64_t 	cpus_running;
+	u_int64_t	cpu_binding;
+	u_int64_t	cpu_ex_binding;
+	int  		mhz;
+	int  		unused[3];
+};
+
+#define	OSF_SET_IEEE_FP_CONTROL  14
+
+#define OSF_GET_MAX_UPROCS      2
+#define OSF_GET_PHYSMEM         19
+#define OSF_GET_MAX_CPU         30
+#define OSF_GET_IEEE_FP_CONTROL 45
+#define OSF_GET_CPUS_IN_BOX     55
+#define OSF_GET_CPU_INFO        59
+#define OSF_GET_PROC_TYPE       60
+#define OSF_GET_HWRPB           101
+#define OSF_GET_PLATFORM_NAME   103
 
 #endif /* _COMPAT_OSF1_OSF1_H_ */

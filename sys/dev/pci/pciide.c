@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44.2.1 2000/11/20 11:42:33 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44.2.2 2000/11/22 16:04:18 bouyer Exp $	*/
 
 
 /*
@@ -95,6 +95,8 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 
@@ -210,7 +212,8 @@ struct pciide_product_desc {
 };
 
 /* Flags for ide_flags */
-#define IDE_PCI_CLASS_OVERRIDE 0x0001 /* accept even if class != pciide */
+#define IDE_PCI_CLASS_OVERRIDE	0x0001 /* accept even if class != pciide */
+#define	IDE_16BIT_IOSPACE	0x0002 /* I/O space BARS ignore upper word */
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
@@ -254,6 +257,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801AB_IDE,
 	  0,
 	  "Intel 82801AB IDE Controller (ICH0)",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801BA_IDE,
+	  0,
+	  "Intel 82801BA IDE Controller (ICH2)",
 	  piix_chip_map,
 	},
 	{ 0,
@@ -325,7 +333,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 
 const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,
-	  0,
+	  IDE_16BIT_IOSPACE,
 	  "Cypress 82C693 IDE Controller",
 	  cy693_chip_map,
 	},
@@ -361,22 +369,22 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA33,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra33/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra66/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100X,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
@@ -679,6 +687,7 @@ pciide_mapreg_dma(sc, pa)
 	struct pci_attach_args *pa;
 {
 	pcireg_t maptype;
+	bus_addr_t addr;
 
 	/*
 	 * Map DMA registers
@@ -700,6 +709,21 @@ pciide_mapreg_dma(sc, pa)
 
 	switch (maptype) {
 	case PCI_MAPREG_TYPE_IO:
+		sc->sc_dma_ok = (pci_mapreg_info(pa->pa_pc, pa->pa_tag,
+		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO,
+		    &addr, NULL, NULL) == 0);
+		if (sc->sc_dma_ok == 0) {
+			printf(", but unused (couldn't query registers)");
+			break;
+		}
+		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
+		    && addr >= 0x10000) {
+			sc->sc_dma_ok = 0;
+			printf(", but unused (registers at unsafe address %#lx)", addr);
+			break;
+		}
+		/* FALLTHROUGH */
+	
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
@@ -1141,28 +1165,7 @@ void
 pciide_print_modes(cp)
 	struct pciide_channel *cp;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int drive;
-	struct channel_softc *chp;
-	struct ata_drive_datas *drvp;
-
-	chp = &cp->wdc_channel;
-	for (drive = 0; drive < 2; drive++) {
-		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
-			continue;
-		printf("%s(%s:%d:%d): using PIO mode %d",
-		    drvp->drv_softc->dv_xname,
-		    sc->sc_wdcdev.sc_dev.dv_xname,
-		    chp->channel, drive, drvp->PIO_mode);
-		if (drvp->drive_flags & DRIVE_DMA)
-			printf(", DMA mode %d", drvp->DMA_mode);
-		if (drvp->drive_flags & DRIVE_UDMA)
-			printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
-			printf(" (using DMA data transfers)");
-		printf("\n");
-	}
+	wdc_print_modes(&cp->wdc_channel);
 }
 
 void
@@ -1332,13 +1335,20 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
+		case PCI_PRODUCT_INTEL_82801BA_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		}
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap =
-	    (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) ? 4 : 2;
+	switch(sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_INTEL_82801AA_IDE:
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 2;
+	}
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.8.2.1 2000/11/20 18:11:54 bouyer Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.8.2.2 2000/11/22 16:06:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -63,7 +63,8 @@ void
 ufs_ihashinit()
 {
 	lockinit(&ufs_hashlock, PINOD, "ufs_hashlock", 0, 0);
-	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
+	ihashtbl =
+	    hashinit(desiredvnodes, HASH_LIST, M_UFSMNT, M_WAITOK, &ihash);
 	simple_lock_init(&ufs_ihash_slock);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.31.2.1 2000/11/20 18:08:46 bouyer Exp $	*/
+/*	$NetBSD: param.c,v 1.31.2.2 2000/11/22 16:03:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -132,7 +132,7 @@ int	mcllowat = MCLLOWAT;
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= NBPG' */
 #define	SHMMIN	1
 #define	SHMMNI	128			/* <= SHMMMNI in shm.h */
-#define	SHMSEG	32
+#define	SHMSEG	128
 #define	SHMALL	SHMMAXPGS
 
 struct	shminfo shminfo = {

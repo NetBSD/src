@@ -1,5 +1,5 @@
-/*	$NetBSD: blowfish.h,v 1.3.2.2 2000/11/20 22:21:43 bouyer Exp $	*/
-/*	$KAME: blowfish.h,v 1.7 2000/08/31 06:21:55 itojun Exp $	*/
+/*	$NetBSD: blowfish.h,v 1.3.2.3 2000/11/22 16:03:04 bouyer Exp $	*/
+/*	$KAME: blowfish.h,v 1.10 2000/09/18 21:21:20 itojun Exp $	*/
 
 /* crypto/bf/blowfish.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
@@ -75,27 +75,13 @@ extern "C" {
 #define BF_ROUNDS	16
 #define BF_BLOCK	8
 
-typedef struct bf_key_st
-	{
+typedef struct bf_key_st {
 	BF_LONG P[BF_ROUNDS+2];
 	BF_LONG S[4*256];
-	} BF_KEY;
+} BF_KEY;
 
 void BF_set_key __P((BF_KEY *, int, unsigned char *));
-void BF_ecb_encrypt __P((unsigned char *, unsigned char *, BF_KEY *, int));
 void BF_encrypt __P((BF_LONG *, BF_KEY *, int));
-void BF_cbc_encrypt __P((unsigned char *, unsigned char *, long,
-	BF_KEY *, unsigned char *, int));
-void BF_cfb64_encrypt __P((unsigned char *, unsigned char *, long,
-	BF_KEY *, unsigned char *, int *, int));
-void BF_ofb64_encrypt __P((unsigned char *, unsigned char *, long,
-	BF_KEY *, unsigned char *, int *));
-char *BF_options __P((void));
-
-/* added by itojun */
-struct mbuf;
-int BF_cbc_encrypt_m __P((struct mbuf *, int, int, BF_KEY *, unsigned char *, int));
-
 #ifdef  __cplusplus
 }
 #endif

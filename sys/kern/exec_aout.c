@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.15.28.1 2000/11/20 18:08:54 bouyer Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.15.28.2 2000/11/22 16:05:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,6 +37,8 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.
@@ -167,7 +169,7 @@ exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	baddr = round_page(epp->ep_daddr + execp->a_data);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
@@ -198,7 +200,7 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	    sizeof(struct exec), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	baddr = round_page(epp->ep_daddr + execp->a_data);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
@@ -212,7 +214,7 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	 * Compensate `ep_dsize' for the amount of data covered by the last
 	 * text page. 
 	 */
-	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
+	dsize = epp->ep_dsize + execp->a_text - round_page(execp->a_text);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
 	return exec_aout_setup_stack(p, epp);
 }

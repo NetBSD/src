@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12.2.1 2000/11/20 20:15:26 bouyer Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12.2.2 2000/11/22 16:00:57 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -133,9 +133,11 @@ pmap_bootstrap(nextpa, firstpa)
 	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
 			       RELOC(intiobase_phys, u_int));
 
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
+#endif
 		kstsize = 1;
 	kstpa = nextpa;
 	nextpa += kstsize * NBPG;
@@ -185,6 +187,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * working.  The 224mb of address space that this allows will most
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		int num;
 
@@ -260,7 +263,9 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = PG_NV;
 		}
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
-	} else {
+	} else
+#endif /* M68040 || M68060 */
+	{
 		/*
 		 * Map the page table pages in both the HW segment table
 		 * and the software Sysptmap.  Note that Sysptmap is also
@@ -322,10 +327,10 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for proc0
+	 * by us so far (kstpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -336,7 +341,21 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
-
+	/*
+	 * map the kernel segment table cache invalidated for 
+	 * these machines (for the 68040 not strictly necessary, but
+	 * recommended by Motorola; for the 68060 mandatory)
+	 */
+	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
+	}
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
@@ -503,6 +522,7 @@ pmap_bootstrap(nextpa, firstpa)
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
 		kpm->pm_stpa = (st_entry_t *)kstpa;
+#if defined(M68040) || defined(M68060)
 		/*
 		 * For the 040 we also initialize the free level 2
 		 * descriptor mask noting that we have used:
@@ -524,6 +544,7 @@ pmap_bootstrap(nextpa, firstpa)
 			     num++)
 				kpm->pm_stfree &= ~l2tobm(num);
 		}
+#endif
 	}
 
 	/*

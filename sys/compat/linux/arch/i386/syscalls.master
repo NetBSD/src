@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36.2.1 2000/11/20 18:08:20 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.36.2.2 2000/11/22 16:02:40 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -248,8 +248,8 @@
 149	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
 150	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }
 151	NOARGS		{ int sys_munlock(caddr_t addr, size_t len); }
-152	UNIMPL		mlockall
-153	UNIMPL		munlockall
+152	NOARGS		{ int sys_mlockall(int flags); }
+153	NOARGS		{ int sys_munlockall(void); }
 154	STD		{ int linux_sys_sched_setparam(pid_t pid, \
 			    const struct linux_sched_param *sp); }
 155	STD		{ int linux_sys_sched_getparam(pid_t pid, \

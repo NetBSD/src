@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.14.8.1 2000/11/20 19:56:56 bouyer Exp $ */
+/* $NetBSD: vmparam.h,v 1.14.8.2 2000/11/22 15:59:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,7 +118,7 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(ALPHA_USEG_END + 1L))    /* 4T */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_BASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
+#define VM_MAX_KERNEL_ADDRESS	trunc_page((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)

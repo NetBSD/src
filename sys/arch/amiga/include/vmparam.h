@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22.2.1 2000/11/20 19:58:50 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22.2.2 2000/11/22 15:59:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,15 @@
 /*
  * Machine dependent constants for HP300
  */
+
+/*
+ * We use 8K pages on the Amiga.  Override the PAGE_* definitions
+ * to be compie-time constants.
+ */
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are

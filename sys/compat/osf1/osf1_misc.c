@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.52.2.1 2000/11/20 18:08:34 bouyer Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.52.2.2 2000/11/22 16:02:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,12 @@
 #include <sys/socketvar.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/user.h>
 #include <sys/wait.h>
+
+#include <machine/alpha.h>
+#include <machine/cpuconf.h>
+#include <machine/rpb.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
@@ -150,14 +155,143 @@ osf1_sys_set_program_attributes(p, v, retval)
 }
 
 int
+osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
+{
+	extern int ncpus;
+	struct osf1_sys_getsysinfo_args *uap = v;
+	int error;
+	int unit;
+	long percpu;
+	long proctype;
+	struct osf1_cpu_info cpuinfo;
+
+	error = 0;
+
+	switch(SCARG(uap, op))
+	{
+	case OSF_GET_MAX_UPROCS:
+		error = copyout(&maxproc, SCARG(uap, buffer), sizeof(maxproc));
+		retval[0] = 1;
+		break;
+	case OSF_GET_PHYSMEM:
+		error = copyout(&physmem, SCARG(uap, buffer),
+		    sizeof(physmem));
+		retval[0] = 1;
+		break;
+	case OSF_GET_MAX_CPU:
+	case OSF_GET_CPUS_IN_BOX:
+		error = copyout(&ncpus, SCARG(uap, buffer), sizeof(ncpus));
+		retval[0] = 1;
+		break;
+	case OSF_GET_IEEE_FP_CONTROL:
+		/*
+		 * XXX This is not correct, but we don't keep track
+		 * XXX of the fp_control.  Return the fpcr just for fun.
+		 */
+		synchronize_fpstate(p, 1);
+		error = copyout(&p->p_addr->u_pcb.pcb_fp.fpr_cr,
+		                SCARG(uap, buffer),
+		                sizeof(p->p_addr->u_pcb.pcb_fp.fpr_cr));
+		retval[0] = 1;
+		break;
+	case OSF_GET_CPU_INFO:
+
+		if (SCARG(uap, nbytes) < sizeof(cpuinfo))
+			error = EINVAL;
+		else {
+			bzero(&cpuinfo, sizeof(cpuinfo));
+			unit = alpha_pal_whami();
+			cpuinfo.current_cpu = unit;
+			cpuinfo.cpus_in_box = ncpus;
+			cpuinfo.cpu_type = 
+			    LOCATE_PCS(hwrpb, unit)->pcs_proc_type;
+			cpuinfo.ncpus = ncpus;
+			cpuinfo.cpus_present = ncpus;
+			cpuinfo.cpus_running = ncpus;
+			cpuinfo.cpu_binding = 1;
+			cpuinfo.cpu_ex_binding = 0;
+			cpuinfo.mhz = hwrpb->rpb_cc_freq / 1000000;
+			error = copyout(&cpuinfo, SCARG(uap, buffer),
+			    sizeof(cpuinfo));
+			retval[0] = 1;
+		}
+		break;
+	case OSF_GET_PROC_TYPE:
+		if(SCARG(uap, nbytes) < sizeof(proctype))
+			error = EINVAL;
+		else {
+			unit = alpha_pal_whami();
+			proctype = LOCATE_PCS(hwrpb, unit)->pcs_proc_type;
+			error = copyout (&proctype, SCARG(uap, buffer),
+			    sizeof(percpu));
+			retval[0] = 1;
+		}
+	break;
+	case OSF_GET_HWRPB: {  /* note -- osf/1 doesn't have rpb_tbhint[8] */
+		unsigned long rpb_size;
+		rpb_size = (unsigned long)hwrpb->rpb_size;
+		if (SCARG(uap, nbytes) < rpb_size){
+			uprintf("nbytes = %ld, sizeof(struct rpb) = %ld\n",
+			    SCARG(uap, nbytes), rpb_size);
+			error = EINVAL;
+		}
+		else {
+			error = copyout(hwrpb, SCARG(uap, buffer), rpb_size);
+			retval[0] = 1;
+		}
+	}
+		break;
+	case OSF_GET_PLATFORM_NAME:
+		error = copyout(platform.model, SCARG(uap, buffer),
+		    strlen(platform.model));
+		retval[0] = 1;
+		break;
+	default:
+		printf("osf1_getsysinfo called with unknown op=%ld\n",
+		       SCARG(uap, op));
+		//return EINVAL;
+		return 0;
+	}
+	return(error);
+}
+
+int
 osf1_sys_setsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+	struct osf1_sys_setsysinfo_args *uap = v;
+	int error;
 
-	/* XXX */
-	return (0);
+	error = 0;
+
+	switch(SCARG(uap, op))
+	{
+	case OSF_SET_IEEE_FP_CONTROL: {
+		u_int64_t temp;
+		/*
+		 * XXX This is definitely not correct.  This should instead
+		 * XXX set the fp_control, but we don't keep track of it.
+		 * XXX The fp_control is then used to reload the fpcr.
+		 */
+#define FPCR_SETTABLE (FP_X_INV | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP)
+		if ((error = copyin(SCARG(uap, buffer), &temp, sizeof(temp))))
+			break;
+
+#if 0
+		synchronize_fpstate(p, 1);
+		p->p_addr->u_pcb.pcb_fp.fp_control = (temp & FPCR_SETTABLE);
+		/* Translate from fp_control => fpr_cr. */
+#endif
+		break;
+	}
+	default:
+		uprintf("osf1_setsysinfo called with op=%ld\n", SCARG(uap, op));
+		//error = EINVAL;
+	}
+	retval[0] = 0;
+	return (error);
 }
 
 int

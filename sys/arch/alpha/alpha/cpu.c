@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39.2.1 2000/11/20 19:56:21 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.39.2.2 2000/11/22 15:59:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.1 2000/11/20 19:56:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.2 2000/11/22 15:59:39 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -370,17 +370,19 @@ recognized:
 		ci->ci_flags |= CPUF_PRIMARY;
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
-#endif /* MULTIPROCESSOR */
 
 	ci->ci_softc = sc;
+#else /* ! MULTIPROCESSOR */
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+		ci->ci_softc = sc;
+#endif /* MULTIPROCESSOR */
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_clock, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "clock");
 	evcnt_attach_dynamic(&sc->sc_evcnt_device, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "device");
 #if defined(MULTIPROCESSOR)
-	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "ipi");
+	alpha_ipi_init(ci);
 #endif
 }
 
@@ -435,18 +437,8 @@ cpu_boot_secondary(ci)
 	 * the primary CPU's PALcode revision info to the secondary
 	 * CPUs PCS.
 	 */
-
-	/*
-	 * XXX Until I can update the boot block on my test system.
-	 * XXX --thorpej
-	 */
-#if 0
 	memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
 	    sizeof(pcsp->pcs_pal_rev));
-#else
-	memcpy(&pcsp->pcs_pal_rev, &pcsp->pcs_palrevisions[PALvar_OSF1],
-	    sizeof(pcsp->pcs_pal_rev));
-#endif
 	pcsp->pcs_flags |= (PCS_CV|PCS_RC);
 	pcsp->pcs_flags &= ~PCS_BIP;
 
@@ -565,9 +557,12 @@ cpu_hatch(ci)
 	trap_init();
 
 	/* Yahoo!  We're running kernel code!  Announce it! */
-	printf("%s: processor ID %lu running\n",
+	printf("%s: CPU %lu running\n",
 	    ci->ci_softc->sc_dev.dv_xname, cpu_number());
 	atomic_setbits_ulong(&cpus_running, cpumask);
+	
+	/* Initialize our base "runtime". */
+	microtime(&ci->ci_schedstate.spc_runtime);
 }
 
 int

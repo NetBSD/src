@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.29.8.1 2000/11/20 18:08:38 bouyer Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.29.8.2 2000/11/22 16:02:57 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -60,15 +60,12 @@
 #include <compat/svr4/svr4_errno.h>
 #include <compat/svr4/svr4_signal.h>
 
-static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
-			       void *, void *));
-
 const char svr4_emul_path[] = "/emul/svr4";
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
-extern char *svr4_syscallnames[];
+extern const char * const svr4_syscallnames[];
 
-struct emul emul_svr4 = {
+const struct emul emul_svr4 = {
 	"svr4",
 	native_to_svr4_errno,
 	svr4_sendsig,
@@ -76,14 +73,11 @@ struct emul emul_svr4 = {
 	SVR4_SYS_MAXSYSCALL,
 	svr4_sysent,
 	svr4_syscallnames,
-	SVR4_AUX_ARGSIZ,
-	svr4_copyargs,
-	svr4_setregs,
 	svr4_sigcode,
 	svr4_esigcode,
 };
 
-static void *
+void *
 svr4_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
@@ -120,9 +114,9 @@ int
 svr4_elf32_probe(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf32_Ehdr *eh;
+	void *eh;
 	char *itp;
-	Elf32_Addr *pos;
+	vaddr_t *pos;
 {
 	const char *bp;
 	int error;
@@ -135,7 +129,6 @@ svr4_elf32_probe(p, epp, eh, itp, pos)
 			return error;
 		free((void *)bp, M_TEMP);
 	}
-	epp->ep_emul = &emul_svr4;
 	*pos = SVR4_INTERP_ADDR;
 	return 0;
 }

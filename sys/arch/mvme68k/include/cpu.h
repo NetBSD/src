@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.2.1 2000/11/20 20:15:21 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.2.2 2000/11/22 16:00:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,9 +161,9 @@ extern int astpending;		/* need to trap before returning to user mode */
 #endif
 
 /*
- * MVME-177 (what about 172?); 68060 CPU
+ * MVME-172/177; 68060 CPU
  */
-#if defined(MVME177) && !defined(M68060)
+#if (defined(MVME172) || defined(MVME177)) && !defined(M68060)
 #define M68060
 #endif
 #endif /* _KERNEL */
@@ -208,9 +208,9 @@ int	dma_cachectl __P((caddr_t, int));
 #define	INTIOBASE147	(0xfffe0000u)
 #define	INTIOTOP147	(0xfffe5000u)
 
-/* ditto for mvme1[67]7 */
-#define	INTIOBASE167	(0xfff40000u)
-#define	INTIOTOP167	(0xfffd0000u)
+/* ditto for mvme1[67][27] */
+#define	INTIOBASE1xx	(0xfff40000u)
+#define	INTIOTOP1xx	(0xfffd0000u)
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.1 2000/11/20 11:42:44 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.2 2000/11/22 16:04:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -317,27 +317,34 @@ wi_attach(parent, self, aux)
 	struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
+	char devinfo[256];
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
+
+	/* Print out what we are. */
+	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
+	printf(": %s\n", devinfo);
 
 	/* Enable the card. */
 	sc->sc_pf = pa->pf;
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
 	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
 		goto enable_failed;
 	}
 
 	/* Allocate/map I/O space. */
 	if (pcmcia_io_alloc(sc->sc_pf, 0, WI_IOSIZ, WI_IOSIZ,
 	    &sc->sc_pcioh) != 0) {
-		printf(": can't allocate i/o space\n");
+		printf("%s: can't allocate i/o space\n",
+		    sc->sc_dev.dv_xname);
 		goto ioalloc_failed;
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n",
+		    sc->sc_dev.dv_xname);
 		goto iomap_failed;
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
@@ -373,11 +380,12 @@ wi_attach(parent, self, aux)
 	 * Or, check against possible vendor?  XXX.
 	 */
 	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
-		printf(": could not get mac address, attach failed\n");
+		printf("%s: could not get mac address, attach failed\n",
+		    sc->sc_dev.dv_xname);
 		goto bad_enaddr;
 	}
 
-	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_macaddr));
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
@@ -454,10 +462,6 @@ wi_attach(parent, self, aux)
 
 	ifp->if_baudrate = IF_Mbps(2);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
@@ -1761,9 +1765,6 @@ wi_detach(self, flags)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

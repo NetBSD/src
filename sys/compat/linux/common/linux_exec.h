@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.12 1998/12/15 19:31:39 itohy Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.12.8.1 2000/11/22 16:02:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 
 /* Defines for a.out executables */
 #define LINUX_AOUT_HDR_SIZE (sizeof (struct exec))
+#define	LINUX_AOUT_AUX_ARGSIZ	2
 
 #define LINUX_N_MAGIC(ep)    ((ep)->a_midmag & 0xffff)
 #define LINUX_N_MACHTYPE(ep) (((ep)->a_midmag >> 16) & 0xff)
@@ -75,16 +76,20 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
+extern const struct emul emul_linux;
+
 void linux_setregs __P((struct proc *, struct exec_package *, u_long));
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
+void *linux_aout_copyargs __P((struct exec_package *,
+    struct ps_strings *, void *, void *));
 
 #ifdef EXEC_ELF32
-int linux_elf32_probe __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
-    char *, Elf32_Addr *));
+int linux_elf32_probe __P((struct proc *, struct exec_package *, void *,
+    char *, vaddr_t *));
 #endif
 #ifdef EXEC_ELF64
-int linux_elf64_probe __P((struct proc *, struct exec_package *, Elf64_Ehdr *,
-    char *, Elf64_Addr *));
+int linux_elf64_probe __P((struct proc *, struct exec_package *, void *,
+    char *, vaddr_t *));
 #endif
 __END_DECLS
 #endif /* !_KERNEL */

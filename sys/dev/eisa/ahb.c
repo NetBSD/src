@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28.2.5 2000/11/20 11:39:55 bouyer Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.6 2000/11/22 16:03:08 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -72,6 +72,8 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -745,7 +747,7 @@ ahb_init(sc)
 	 * Allocate the ECBs.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, ECBSIZE,
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate ecbs, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return (error);

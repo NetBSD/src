@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85.8.1 2000/11/20 20:28:05 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.8.2 2000/11/22 16:02:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -89,12 +89,7 @@ extern struct emul emul_sunos;
 #endif
 
 #ifdef COMPAT_LINUX
-#ifdef EXEC_AOUT
-extern struct emul emul_linux_aout;
-#endif
-#ifdef EXEC_ELF32
-extern struct emul emul_linux_elf32;
-#endif
+extern struct emul emul_linux;
 #endif
 
 /*
@@ -589,7 +584,7 @@ syscall(code, tf)
 	struct trapframe tf;
 {
 	register caddr_t params;
-	register struct sysent *callp;
+	register const struct sysent *callp;
 	register struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -682,14 +677,7 @@ syscall(code, tf)
 		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
-	if (0
-# ifdef EXEC_AOUT
-	    || p->p_emul == &emul_linux_aout
-# endif
-# ifdef EXEC_ELF32
-	    || p->p_emul == &emul_linux_elf32
-# endif
-	     ) {
+	if (p->p_emul == &emul_linux) {
 		/*
 		 * Linux passes the args in d1-d5
 		 */

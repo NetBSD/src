@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.3.2.2 2000/11/20 11:43:11 bouyer Exp $	*/
+/*	$NetBSD: sunms.c,v 1.3.2.3 2000/11/22 16:04:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,6 +91,10 @@ struct cfattach ms_ca = {
 	sizeof(struct ms_softc), sunms_match, sunms_attach
 };
 
+struct  linesw sunms_disc =
+	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	  sunmsinput, ttstart, nullmodem };		/* 8- SUNMOUSEDISC */
+
 /*
  * ms_match: how is this zs channel configured?
  */
@@ -133,15 +137,10 @@ sunms_attach(parent, self, aux)
 
 	printf("\n");
 
-	/* Remove tty from system */
-	tty_detach(tp);
-#if 0
-	callout_stop(&tp->t_outq_ch);
-	callout_stop(&tp->t_rstrt_ch);
-#endif
-
 	/* Initialize the speed, etc. */
-	tp->t_line = 8;
+	if (ttyldisc_add(&sunms_disc, -1) == -1)
+		panic("sunms_attach: sunms_disc");
+	tp->t_linesw = &sunms_disc;
 	tp->t_oflag &= ~OPOST;
 
 	/* Initialize translator. */

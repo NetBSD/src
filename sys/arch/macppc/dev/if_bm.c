@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.3.2.1 2000/11/20 20:12:56 bouyer Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.3.2.2 2000/11/22 16:00:37 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -269,10 +269,6 @@ bmac_attach(parent, self, aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 /*
@@ -508,7 +504,6 @@ bmac_rint(v)
 			ifp->if_ierrors++;
 			goto next;
 		}
-		m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 		/*

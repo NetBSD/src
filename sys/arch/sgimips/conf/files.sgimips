@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.5.2.2 2000/11/20 20:23:41 bouyer Exp $
+#	$NetBSD: files.sgimips,v 1.5.2.3 2000/11/22 16:01:32 bouyer Exp $
 
 maxpartitions 16
 
@@ -62,7 +62,7 @@ file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
 
-file arch/sgimips/sgimips/md_root.c	memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
 major {raid = 5} 
@@ -73,6 +73,9 @@ file dev/cons.c
 
 include "arch/sgimips/gio/files.gio"
 #include "arch/sgimips/hpc/files.hpc"
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file	arch/sgimips/pci/pci_machdep.c	pci

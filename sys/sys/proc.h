@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84.2.1 2000/11/20 18:11:33 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.84.2.2 2000/11/22 16:06:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -91,18 +91,15 @@ struct	emul {
 	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
-	struct sysent *e_sysent;	/* System call array */
-	char	**e_syscallnames;	/* System call name array */
-	int	e_arglen;		/* Extra argument size in words */
-					/* Copy arguments on the new stack */
-	void	*(*e_copyargs) __P((struct exec_package *, struct ps_strings *,
-				    void *, void *));
-					/* Set registers before execution */
-	void	(*e_setregs) __P((struct proc *, struct exec_package *,
-				  u_long));
-
+	const struct sysent *e_sysent;	/* System call array */
+	const char * const *e_syscallnames;	/* System call name array */
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
+
+	/* Per-process hooks */
+	void	(*e_proc_exec) __P((struct proc *, struct exec_package *));
+	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
+	void	(*e_proc_exit) __P((struct proc *));
 };
 
 /*
@@ -182,7 +179,9 @@ struct	proc {
 	int	p_locks;		/* DEBUG: lockmgr count of held locks */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
-	struct	emul *p_emul;		/* Emulation information */
+	const struct emul *p_emul;	/* Emulation information */
+	void	*p_emuldata;		/* Per-process emulation data, or NULL.
+					 * Malloc type M_EMULDATA */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy

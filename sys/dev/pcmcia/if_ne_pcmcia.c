@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.39.2.1 2000/11/20 11:42:43 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.39.2.2 2000/11/22 16:04:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -215,6 +215,11 @@ struct ne2000dev {
       PCMCIA_CIS_DLINK_DE650,
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
+    { PCMCIA_STR_MELCO_LPC2_TX,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_MELCO_LPC2_TX,
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_DL10019 },
+
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
@@ -314,9 +319,14 @@ struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
-    { PCMCIA_STR_SOCEKT_LP_ETHER_CF,
-      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
-      PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+    { PCMCIA_STR_SOCKET_LP_ETHER_CF,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
+      PCMCIA_CIS_SOCKET_LP_ETHER_CF,
+      0, -1, { 0x00, 0xc0, 0x1b } },
+
+    { PCMCIA_STR_SOCKET_LP_ETHER,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
+      PCMCIA_CIS_SOCKET_LP_ETHER,
       0, -1, { 0x00, 0xc0, 0x1b } },
 
     { PCMCIA_STR_XIRCOM_CFE_10,
@@ -338,6 +348,16 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_NDC_ND5100_E,
       0, -1, { 0x00, 0x80, 0xc6 } },
+
+    { PCMCIA_STR_TELECOMDEVICE_TCD_HPC100,
+      PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
+      PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
+      0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_STR_MACNICA_ME1_JEIDA,
+      PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
+      PCMCIA_CIS_MACNICA_ME1_JEIDA,
+      0, 0x00b8, { 0x08, 0x00, 0x42 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
@@ -624,8 +644,10 @@ again:
 	}
 
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
-		if (ne_pcmcia_ax88190_set_iobase(psc))
-			goto fail_5;
+		if (ne_pcmcia_ax88190_set_iobase(psc)) {
+			++i;
+			goto again;
+		}
 		nsc->sc_type = NE2000_TYPE_AX88190;
 		typestr = " (AX88190)";
 	}
@@ -829,10 +851,13 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	struct pcmcia_mem_handle pcmh;
 	bus_addr_t offset;
 	int rv = 1, mwindow;
+	u_int last_liobase, new_liobase;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+#if 0
 		printf("%s: can't alloc mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
+#endif
 		goto fail_1;
 	}
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
@@ -843,21 +868,25 @@ ne_pcmcia_ax88190_set_iobase(psc)
 		goto fail_2;
 	}
 
+	last_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #ifdef DIAGNOSTIC
 	printf("%s: LAN iobase 0x%x (0x%x) ->", dsc->sc_dev.dv_xname,
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8,
-	    (u_int)psc->sc_pcioh.addr);
+	    last_liobase, (u_int)psc->sc_pcioh.addr);
 #endif
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset,
 	    psc->sc_pcioh.addr & 0xff);
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
 	    psc->sc_pcioh.addr >> 8);
+
+	new_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
+	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #ifdef DIAGNOSTIC
-	printf(" 0x%x\n", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
+	printf(" 0x%x\n", new_liobase);
 #endif
-	rv = 0;
+	if ((last_liobase == psc->sc_pcioh.addr)
+	    || (last_liobase != new_liobase))
+		rv = 0;
 
 	pcmcia_mem_unmap(psc->sc_pf, mwindow);
  fail_2:

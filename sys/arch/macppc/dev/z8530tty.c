@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.4.8.1 2000/11/20 20:12:58 bouyer Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.4.8.2 2000/11/22 16:00:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -540,7 +540,7 @@ zsopen(dev, flags, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -575,7 +575,7 @@ zsclose(dev, flags, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flags);
+	(*tp->t_linesw->l_close)(tp, flags);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -602,7 +602,7 @@ zsread(dev, uio, flags)
 	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
+	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
 
 int
@@ -614,7 +614,7 @@ zswrite(dev, uio, flags)
 	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
 	struct tty *tp = zst->zst_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
+	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
 
 int
@@ -631,7 +631,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int error;
 	int s;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1333,7 +1333,7 @@ zstty_rxsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char rr1;
@@ -1436,7 +1436,7 @@ zstty_txsoft(zst, tp)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 integrate void
@@ -1458,14 +1458,14 @@ zstty_stsoft(zst, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {
 		/* Block or unblock output according to flow control. */
 		if (ISSET(rr0, cs->cs_rr0_cts)) {
 			zst->zst_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		} else {
 			zst->zst_tx_stopped = 1;
 		}

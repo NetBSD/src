@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.10.2.1 2000/11/20 11:43:22 bouyer Exp $	*/
+/*	$NetBSD: ucom.c,v 1.10.2.2 2000/11/22 16:05:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -438,7 +438,7 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -482,7 +482,7 @@ ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	sc->sc_refcnt++;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -514,7 +514,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
  
 	sc->sc_refcnt++;
-	error = ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	error = ((*tp->t_linesw->l_read)(tp, uio, flag));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
@@ -531,7 +531,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
  
 	sc->sc_refcnt++;
-	error = ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	error = ((*tp->t_linesw->l_write)(tp, uio, flag));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
@@ -572,7 +572,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
  
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -746,7 +746,7 @@ ucom_status_change(struct ucom_softc *sc)
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
 		    &sc->sc_lsr, &sc->sc_msr);
 		if (ISSET((sc->sc_msr ^ old_msr), UMSR_DCD))
-			(*linesw[tp->t_line].l_modem)(tp,
+			(*tp->t_linesw->l_modem)(tp,
 			    ISSET(sc->sc_msr, UMSR_DCD));
 	} else {
 		sc->sc_lsr = 0;
@@ -807,7 +807,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	 * explicit request.
 	 */
 	DPRINTF(("ucomparam: l_modem\n"));
-	(void) (*linesw[tp->t_line].l_modem)(tp, 1 /* XXX carrier */ );
+	(void) (*tp->t_linesw->l_modem)(tp, 1 /* XXX carrier */ );
 
 #if 0
 XXX what if the hardware is not open
@@ -967,7 +967,7 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, cc);
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 	splx(s);
 }
 
@@ -995,7 +995,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;
-	int (*rint)(int c, struct tty *tp) = linesw[tp->t_line].l_rint;
+	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
 	usbd_status err;
 	u_int32_t cc;
 	u_char *cp;

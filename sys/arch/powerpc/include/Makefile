@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2000/11/20 20:31:07 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2000/11/22 16:01:27 bouyer Exp $
 
 KDIR=	/sys/arch/powerpc/include
 INCSDIR= /usr/include/powerpc
 
 INCS=	ansi.h aout_machdep.h asm.h bat.h bswap.h cdefs.h cpu.h db_machdep.h \
-	elf_machdep.h endian.h endian_machdep.h float.h fpu.h frame.h \
+	elf_machdep.h endian.h endian_machdep.h float.h fpu.h frame.h hid.h \
 	hid_601.h ieee.h ieeefp.h int_types.h ipkdb.h kcore.h limits.h lock.h \
 	machine_type.h math.h param.h pcb.h pmap.h proc.h profile.h \
 	psl.h pte.h ptrace.h reg.h reloc.h setjmp.h signal.h stdarg.h \

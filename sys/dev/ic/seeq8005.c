@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.6.2.2 2000/11/20 11:40:53 bouyer Exp $ */
+/* $NetBSD: seeq8005.c,v 1.6.2.3 2000/11/22 16:03:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.6.2.2 2000/11/20 11:40:53 bouyer Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.6.2.3 2000/11/22 16:03:30 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -122,7 +122,7 @@ __RCSID("$NetBSD: seeq8005.c,v 1.6.2.2 2000/11/20 11:40:53 bouyer Exp $");
  * prototypes
  */
 
-static int ea_init(struct seeq8005_softc *);
+static int ea_init(struct ifnet *);
 static int ea_ioctl(struct ifnet *, u_long, caddr_t);
 static void ea_start(struct ifnet *);
 static void ea_watchdog(struct ifnet *);
@@ -130,16 +130,18 @@ static void ea_chipreset(struct seeq8005_softc *);
 static void ea_ramtest(struct seeq8005_softc *);
 static int ea_stoptx(struct seeq8005_softc *);
 static int ea_stoprx(struct seeq8005_softc *);
-static void ea_stop(struct seeq8005_softc *);
+static void ea_stop(struct ifnet *, int);
 static void ea_await_fifo_empty(struct seeq8005_softc *);
 static void ea_await_fifo_full(struct seeq8005_softc *);
 static void ea_writebuf(struct seeq8005_softc *, u_char *, u_int, size_t);
 static void ea_readbuf(struct seeq8005_softc *, u_char *, u_int, size_t);
 static void ea_select_buffer(struct seeq8005_softc *, int);
+static void ea_set_address(struct seeq8005_softc *, int, const u_int8_t *);
 static void earead(struct seeq8005_softc *, int, int);
 static struct mbuf *eaget(struct seeq8005_softc *, int, int, struct ifnet *);
 static void eagetpackets(struct seeq8005_softc *);
 static void eatxpacket(struct seeq8005_softc *);
+static void ea_mc_reset(struct seeq8005_softc *);
 
 
 #ifdef EA_PACKET_DEBUG
@@ -158,10 +160,8 @@ ea_dump_buffer(struct seeq8005_softc *sc, u_int offset)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int addr;
-	int loop;
+	int loop, ctrl, ptr;
 	size_t size;
-	int ctrl;
-	int ptr;
 	
 	addr = offset;
 
@@ -224,19 +224,15 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;
+	ifp->if_init = ea_init;
+	ifp->if_stop = ea_stop;
 	ifp->if_watchdog = ea_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOTRAILERS;
 
 	/* Now we can attach the interface. */
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-	/* Finally, attach to bpf filter if it is present. */
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	printf("\n");
 
@@ -384,8 +380,9 @@ ea_stoprx(struct seeq8005_softc *sc)
  */
 
 static void
-ea_stop(struct seeq8005_softc *sc)
+ea_stop(struct ifnet *ifp, int disable)
 {
+	struct seeq8005_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	
@@ -570,6 +567,18 @@ ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
 			  sc->sc_config1 | bufcode);
 }
 
+/* Must be called at splnet */
+static void
+ea_set_address(struct seeq8005_softc *sc, int which, u_int8_t const *ea)
+{
+	int i;
+
+	ea_select_buffer(sc, EA_BUFCODE_STATION_ADDR0 + which);
+	for (i = 0; i < ETHER_ADDR_LEN; ++i)
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_BUFWIN,
+				  ea[i]);
+}
+
 /*
  * Initialize interface.
  *
@@ -578,12 +587,12 @@ ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
  */
 
 static int
-ea_init(struct seeq8005_softc *sc)
+ea_init(struct ifnet *ifp)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct seeq8005_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int s, loop;
+	int s;
 
 	dprintf(("ea_init()\n"));
 
@@ -613,10 +622,7 @@ ea_init(struct seeq8005_softc *sc)
 			  (EA_TX_BUFFER_SIZE >> 8) - 1);
 
 	/* Write the station address - the receiver must be off */
-	ea_select_buffer(sc, EA_BUFCODE_STATION_ADDR0);
-	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-				  LLADDR(ifp->if_sadl)[loop]);
+	ea_set_address(sc, 0, LLADDR(ifp->if_sadl));
 
 	/* Configure rx. */
 	dprintf(("Configuring rx...\n"));
@@ -1015,7 +1021,7 @@ eagetpackets(struct seeq8005_softc *sc)
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
 					  sc->sc_config2);
-			ea_init(sc);
+			ea_init(ifp);
 			return;
 		}
 
@@ -1030,7 +1036,7 @@ eagetpackets(struct seeq8005_softc *sc)
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			bus_space_write_2(iot, ioh, EA_8005_CONFIG2,
 					  sc->sc_config2);
-			ea_init(sc);
+			ea_init(ifp);
 			return;
 		}
 
@@ -1177,87 +1183,56 @@ static int
 ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct seeq8005_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
-/*	struct ifreq *ifr = (struct ifreq *)data;*/
 	int s, error = 0;
 
 	s = splnet();
-
 	switch (cmd) {
 
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		dprintf(("if_flags=%08x\n", ifp->if_flags));
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			dprintf(("Interface ea is coming up (AF_INET)\n"));
-			ea_init(sc);
-			break;
-#endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-			/* Set new address. */
-			dprintf(("Interface ea is coming up (AF_NS)\n"));
-			ea_init(sc);
-			break;
-		    }
-#endif
-		default:
-			dprintf(("Interface ea is coming up (default)\n"));
-			ea_init(sc);
-			break;
-		}
-		break;
-
-	case SIOCSIFFLAGS:
-		dprintf(("if_flags=%08x\n", ifp->if_flags));
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			dprintf(("Interface ea is stopping\n"));
-			ea_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			dprintf(("Interface ea is restarting(1)\n"));
-			ea_init(sc);
-		} else {
-			/*
-			 * Some other important flag might have changed, so
-			 * reset.
-			 */
-			dprintf(("Interface ea is reinitialising\n"));
-			ea_init(sc);
-		}
-		break;
-
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			ea_mc_reset(sc);
+			error = 0;
+		}
 		break;
 	}
 
 	splx(s);
 	return error;
+}
+
+/* Must be called at splnet() */
+static void
+ea_mc_reset(struct seeq8005_softc *sc)
+{
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	int naddr, maxaddrs;
+
+	naddr = 0;
+	maxaddrs = (sc->sc_flags & SEEQ8005_80C04) ? 5 : 0;
+	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	while (enm != NULL) {
+		/* Have we got space? */
+		if (naddr >= maxaddrs ||
+		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
+			ea_ioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS, NULL);
+			return;
+		}
+		ea_set_address(sc, naddr, enm->enm_addrlo);
+		sc->sc_config1 |= EA_CFG1_STATION_ADDR0 << naddr;
+		naddr++;
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	for (; naddr < maxaddrs; naddr++)
+		sc->sc_config1 &= ~(EA_CFG1_STATION_ADDR0 << naddr);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EA_8005_CONFIG1,
+			  sc->sc_config1);
 }
 
 /*
@@ -1285,7 +1260,7 @@ ea_watchdog(struct ifnet *ifp)
 
 	/* Kick the interface */
 
-	ea_init(sc);
+	ea_init(ifp);
 
 /*	ifp->if_timer = EA_TIMEOUT;*/
 	ifp->if_timer = 0;

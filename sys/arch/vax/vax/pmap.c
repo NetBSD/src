@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.1 2000/11/20 20:33:27 bouyer Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71.2.2 2000/11/22 16:02:15 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -150,6 +150,10 @@ pmap_bootstrap()
 	struct pcb *pcb = (struct pcb *)proc0paddr;
 	pmap_t pmap = pmap_kernel();
 
+	/* Set logical page size */
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+
 	/*
 	 * Calculation of the System Page Table is somewhat a pain,
 	 * because it must be in contiguous physical memory and all
@@ -201,17 +205,17 @@ pmap_bootstrap()
 	mtpr((unsigned)Sysmap - KERNBASE, PR_SBR);
 
 	/* Map Interrupt stack and set red zone */
-	istack = (unsigned)Sysmap + ROUND_PAGE(sysptsize * 4);
+	istack = (unsigned)Sysmap + round_page(sysptsize * 4);
 	mtpr(istack + ISTACK_SIZE, PR_ISP);
 	kvtopte(istack)->pg_v = 0;
 
 	/* Some scratch pages */
-	scratch = ((u_int)istack + ISTACK_SIZE);
+	scratch = istack + ISTACK_SIZE;
 
 	/* Physical-to-virtual translation table */
-	(unsigned)pv_table = scratch + 4 * VAX_NBPG;
+	pv_table = (struct pv_entry *)(scratch + 4 * VAX_NBPG);
 
-	avail_start = (unsigned)pv_table + (ROUND_PAGE(avail_end >> PGSHIFT)) *
+	avail_start = (vaddr_t)pv_table + (round_page(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
 
 	/* Kernel message buffer */
@@ -220,10 +224,6 @@ pmap_bootstrap()
 
 	/* zero all mapped physical memory from Sysmap to here */
 	memset((void *)istack, 0, (avail_start + KERNBASE) - istack);
-
-	/* Set logical page size */
-	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
 
         /* QDSS console mapping hack */
 #if NQD > 0
@@ -243,9 +243,9 @@ pmap_bootstrap()
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
 
-	avail_start = ROUND_PAGE(avail_start);
-	virtual_avail = ROUND_PAGE(virtual_avail);
-	virtual_end = TRUNC_PAGE(virtual_end);
+	avail_start = round_page(avail_start);
+	virtual_avail = round_page(virtual_avail);
+	virtual_end = trunc_page(virtual_end);
 
 
 #if 0 /* Breaks cninit() on some machines */
@@ -500,8 +500,6 @@ pmap_destroy(pmap)
 #ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
 #endif
-	if (pmap == NULL)
-		return;
 
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->ref_count;
@@ -509,7 +507,7 @@ if(startpmapdebug)printf("pmap_destroy: pmap %p\n",pmap);
   
 	if (count == 0) {
 		pmap_release(pmap);
-		FREE((caddr_t)pmap, M_VMPMAP);
+		FREE(pmap, M_VMPMAP);
 	}
 }
 
@@ -674,9 +672,6 @@ if (startpmapdebug)
 	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
 		    pmap, v, p, prot, wired, flags & VM_PROT_ALL);
 #endif
-	/* Can this happen with UVM??? */
-	if (pmap == 0)
-		return (KERN_SUCCESS);
 
 	RECURSESTART;
 	/* Find addess of correct pte */
@@ -690,9 +685,6 @@ if (startpmapdebug)
 			i = (v >> VAX_PGSHIFT);
 			if (i >= (pmap->pm_p0lr & ~AST_MASK))
 				panic("P0 too small in pmap_enter");
-			patch = (int *)pmap->pm_p0br;
-			newpte = (p >> VAX_PGSHIFT) |
-			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		} else {
 			patch = (int *)pmap->pm_p1br;
 			i = (v - 0x40000000) >> VAX_PGSHIFT;
@@ -700,9 +692,9 @@ if (startpmapdebug)
 				panic("pmap_enter: must expand P1");
 			if (v < pmap->pm_stack)
 				pmap->pm_stack = v;
-			newpte = (p >> VAX_PGSHIFT) |
-			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		}
+		newpte = (p >> VAX_PGSHIFT) |
+		    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 
 		/*
 		 * Check if a pte page must be mapped in.
@@ -728,6 +720,8 @@ if (startpmapdebug)
 				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 				if (pg != NULL)
 					break;
+				if (flags & PMAP_CANFAIL)
+					return (KERN_RESOURCE_SHORTAGE);
 
 				if (pmap == pmap_kernel())
 					panic("pmap_enter: no free pages");
@@ -745,13 +739,6 @@ if (startpmapdebug)
 		newpte |= PG_W;
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
-
-#ifdef DIAGNOSTIC
-	/* No mapping change. Not allowed to happen. */
-	if (newpte == oldpte)
-		panic("pmap_enter onto myself");
-#endif
-
 	pv = pv_table + (p >> PGSHIFT);
 
 	/* wiring change? */
@@ -760,6 +747,13 @@ if (startpmapdebug)
 		RECURSEEND;
 		return (KERN_SUCCESS);
 	}
+
+	/* mapping unchanged? just return. */
+	if (newpte == oldpte) {
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
+
 	/* Changing mapping? */
 	oldpte &= PG_FRAME;
 	if ((newpte & PG_FRAME) == oldpte) {
@@ -1025,8 +1019,7 @@ if (startpmapdebug)
 			pte = (u_int *)mfpr(PR_P0BR);
 		pte += PG_PFNUM(addr);
 		if (bits & 2) { /* PTE reference */
-			pte = (u_int *)TRUNC_PAGE(pte);
-			pte = (u_int *)kvtopte(pte);
+			pte = (u_int *)kvtopte(trunc_page((vaddr_t)pte));
 			if (pte[0] == 0) /* Check for CVAX bug */
 				return 1;	
 			pa = (u_int)pte & ~KERNBASE;
@@ -1309,6 +1302,9 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 {
 	int *pte;
 
+#ifdef PMAPDEBUG
+if(startpmapdebug) printf("pmap_unwire: pmap %p v %lx\n", pmap, v);
+#endif
 	if (v & KERNBASE) {
 		pte = (int *)kvtopte(v);
 	} else {

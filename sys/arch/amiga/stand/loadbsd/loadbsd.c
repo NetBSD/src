@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.23.14.1 2000/11/20 19:58:52 bouyer Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.23.14.2 2000/11/22 15:59:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -230,7 +230,7 @@ main(argc, argv)
 			break;
 		case 'q':
 			boothowto |= AB_QUIET;
-			break
+			break;
 		case 'v':
 			boothowto |= AB_VERBOSE;
 			break;

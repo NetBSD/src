@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.4.8.1 2000/11/20 11:42:35 bouyer Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.4.8.2 2000/11/22 16:04:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -113,4 +113,4 @@ struct idedma_table {
 #define IDEDMA_BYTE_COUNT_ALIGN 0x00010000
 
 /* Number of idedma table needed */
-#define NIDEDMA_TABLES (MAXPHYS/NBPG + 1)
+#define NIDEDMA_TABLES (MAXPHYS/PAGE_SIZE + 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.4.2.1 2000/11/20 18:08:51 bouyer Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.4.2.2 2000/11/22 16:05:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -73,8 +73,8 @@ int prtactive;	/* 1 => print out reclaim of active vnodes */
 void
 filecore_init()
 {
-	filecorehashtbl = hashinit(desiredvnodes, M_FILECOREMNT, M_WAITOK,
-	    &filecorehash);
+	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
+	    M_WAITOK, &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
 	    0, 0, 0, "filecrnopl", 0, pool_page_alloc_nointr,

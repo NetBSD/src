@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.2.1 2000/11/20 20:28:09 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.2 2000/11/22 16:02:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
@@ -290,6 +291,9 @@ vm_offset_t avail_next;
 
 /* These are used by pmap_copy_page(), etc. */
 vm_offset_t tmp_vpages[2];
+
+/* memory pool for pmap structures */
+struct pool	pmap_pmap_pool;
 
 /*
  * The 3/80 is the only member of the sun3x family that has non-contiguous
@@ -1077,6 +1081,10 @@ pmap_init()
 	pmap_init_b_tables();
 	/** Initialize C tables **/
 	pmap_init_c_tables();
+
+	/** Initialize the pmap pools **/
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 }
 
 /* pmap_init_a_tables()			INTERNAL
@@ -2554,7 +2562,7 @@ pmap_create()
 {
 	pmap_t	pmap;
 
-	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	pmap_pinit(pmap);
 	return pmap;
 }
@@ -2676,7 +2684,7 @@ pmap_destroy(pmap)
 		panic("pmap_destroy: kernel_pmap!");
 	if (pmap_dereference(pmap) == 0) {
 		pmap_release(pmap);
-		free(pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 

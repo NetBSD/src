@@ -1,18 +1,23 @@
-#	$NetBSD: GENERIC,v 1.2.2.1 2000/11/20 20:15:15 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.2.2.2 2000/11/22 16:00:48 bouyer Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.2.2.1 $"
+#ident 		"GENERIC-$Revision: 1.2.2.2 $"
 
 # Boards this kernel supports
 options 	MVME147
 options 	MVME162
 options 	MVME167
+options 	MVME172
+options 	MVME177
 
 maxusers	4
 
 # Needed on m68040 boards to emulate some missing FP instructions
 options 	FPSP
+
+# Needed on m68060 boards
+options 	M060SP
 
 #options 	DDB
 options 	DIAGNOSTIC, DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.1.8.1 2000/11/20 20:32:42 bouyer Exp $ */
+/*	$NetBSD: start.s,v 1.1.8.2 2000/11/22 16:02:11 bouyer Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -78,6 +78,11 @@ from_0x08:			# Any machine from VMB
 # must be empty (i.e. filled with zeroes).
 # disklabel(8) checks that before installing
 # the bootblocks over existing label.
+
+.org	LABELOFFSET
+	.globl	_C_LABEL(romlabel)
+_C_LABEL(romlabel):
+	.long	0
 
 .org	LABELOFFSET + d_end_
 start_vmb:

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.2.2 2000/11/20 20:00:19 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.3 2000/11/22 15:59:51 bouyer Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -178,7 +178,8 @@ arc_bus_space_paddr(bst, bsh, pap)
 	paddr_t *pap;
 {
 	if (bsh < MIPS_KSEG0_START) /* KUSEG */
-		panic("arc_bus_space_paddr(0x%lx): bad address", bsh);
+		panic("arc_bus_space_paddr(0x%qx): bad address",
+		    (unsigned long long) bsh);
 	else if (bsh < MIPS_KSEG1_START) /* KSEG0 */
 		*pap = MIPS_KSEG0_TO_PHYS(bsh);
 	else if (bsh < MIPS_KSEG2_START) /* KSEG1 */
@@ -230,8 +231,8 @@ arc_bus_space_unmap(bst, bsh, size)
 		/* bus_space_paddr() becomes unavailable after unmapping */
 		err = bus_space_paddr(bst, bsh, &pa);
 		if (err)
-			panic("arc_bus_space_unmap: %s va 0x%lx: error %d\n",
-			    bst->bs_name, bsh, err);
+			panic("arc_bus_space_unmap: %s va 0x%qx: error %d\n",
+			    bst->bs_name, (unsigned long long) bsh, err);
 		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
 		extent_free(bst->bs_extent, addr, size,
 		    EX_NOWAIT | malloc_safe);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.41.2.1 2000/11/20 20:09:19 bouyer Exp $ */
+/*	$NetBSD: apm.c,v 1.41.2.2 2000/11/22 16:00:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/stdarg.h>
@@ -959,7 +961,7 @@ apmattach(parent, self, aux)
 	struct bioscallregs regs;
 	int error, apm_data_seg_ok;
 	u_int okbases[] = { 0, biosbasemem*1024 };
-	u_int oklimits[] = { NBPG, IOM_END};
+	u_int oklimits[] = { PAGE_SIZE, IOM_END};
 	u_int i;
 #ifdef APMDEBUG
 	char bits[128];

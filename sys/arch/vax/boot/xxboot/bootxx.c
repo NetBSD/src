@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.1.8.1 2000/11/20 20:32:41 bouyer Exp $ */
+/* $NetBSD: bootxx.c,v 1.1.8.2 2000/11/22 16:02:11 bouyer Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -63,6 +63,8 @@
 #include "dev/mscp/mscpreg.h"
 
 #include "../boot/data.h"
+
+#define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
 void	Xmain(void);
 void	hoppabort(int);
@@ -263,6 +265,8 @@ devopen(f, fname, file)
 	return 0;
 }
 
+extern struct disklabel romlabel;
+
 int
 romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *sc;
@@ -274,6 +278,15 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 {
 	int	block = dblk;
 	int     nsize = size;
+
+	if (romlabel.d_magic == DISKMAGIC && romlabel.d_magic2 == DISKMAGIC) {
+		if (romlabel.d_npartitions > 1) {
+			block += romlabel.d_partitions[0].p_offset;
+			if (romlabel.d_partitions[0].p_fstype == FS_RAID) {
+				block += RF_PROTECTED_SECTORS;
+			}
+		}
+	}
 
 	if (from == FROMMV) {
 		romread_uvax(block, size, buf, rpb);

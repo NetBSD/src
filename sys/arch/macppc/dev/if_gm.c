@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.9.2.2 2000/11/20 20:12:56 bouyer Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.9.2.3 2000/11/22 16:00:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -246,10 +246,6 @@ gmac_attach(parent, self, aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, laddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 u_int

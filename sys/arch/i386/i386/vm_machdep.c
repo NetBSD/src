@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83.2.2 2000/11/22 16:00:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -303,7 +303,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 
-	if (size % NBPG)
+	if (size & PAGE_MASK)
 		panic("pagemove");
 	fpte = kvtopte((vaddr_t)from);
 	tpte = kvtopte((vaddr_t)to);
@@ -328,9 +328,9 @@ pagemove(from, to, size)
 			if (ofpte & PG_V)
 				pmap_update_pg((vaddr_t) from);
 		}
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)

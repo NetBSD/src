@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.44.2.1 2000/11/20 18:10:30 bouyer Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.44.2.2 2000/11/22 16:06:11 bouyer Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -413,7 +413,8 @@ ip_mrouter_init(so, m)
 
 	ip_mrouter = so;
 
-	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash);
+	mfchashtbl =
+	    hashinit(MFCTBLSIZ, HASH_LIST, M_MRTABLE, M_WAITOK, &mfchash);
 	bzero((caddr_t)nexpire, sizeof(nexpire));
 
 	pim_assert = 0;

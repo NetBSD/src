@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62.2.1 2000/11/20 18:10:32 bouyer Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62.2.2 2000/11/22 16:06:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -146,6 +146,10 @@ static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 
+#ifdef PFIL_HOOKS
+extern struct pfil_head inet_pfil_hook;			/* XXX */
+#endif
+
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
  * header (with len, off, ttl, proto, tos, src, dst).
@@ -176,15 +180,11 @@ ip_output(m0, va_alist)
 	int mtu;
 	struct ip_moptions *imo;
 	va_list ap;
-#ifdef PFIL_HOOKS
-	struct packet_filter_hook *pfh;
-	struct mbuf *m1;
-	int rv;
-#endif /* PFIL_HOOKS */
 #ifdef IPSEC
 	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
+	u_int16_t ip_len;
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -420,24 +420,26 @@ sendit:
 	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= IP_DF;
 
+	/*
+	 * Remember the current ip_len and ip_off, and swap them into
+	 * network order.
+	 */
+	ip_len = ip->ip_len;
+
+	HTONS(ip->ip_len);
+	HTONS(ip->ip_off);
+
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
-	for (; pfh; pfh = pfh->pfil_link.tqe_next)
-		if (pfh->pfil_func) {
-		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
-			if (rv) {
-				error = EHOSTUNREACH;
-				goto done;
-			}
-			m = m1;
-			if (m == NULL)
-				goto done;
-			ip = mtod(m, struct ip *);
-		}
+	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp,
+				    PFIL_OUT)) != 0)
+		goto done;
+	if (m == NULL)
+		goto done;
+
+	ip = mtod(m, struct ip *);
 #endif /* PFIL_HOOKS */
 
 #ifdef IPSEC
@@ -482,9 +484,10 @@ sendit:
 		printf("ip_output: Invalid policy found. %d\n", sp->policy);
 	}
 
-	ip->ip_len = htons((u_short)ip->ip_len);
-	ip->ip_off = htons((u_short)ip->ip_off);
-	ip->ip_sum = 0;
+	/*
+	 * ipsec4_output() expects ip_len and ip_off in network
+	 * order.  They have been set to network order above.
+	 */
 
     {
 	struct ipsec_output_state state;
@@ -541,6 +544,8 @@ sendit:
 #else
 	hlen = ip->ip_hl << 2;
 #endif
+	ip_len = ntohs(ip->ip_len);
+
 	if (ro->ro_rt == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
@@ -553,16 +558,13 @@ sendit:
 		ifp = ro->ro_rt->rt_ifp;
 	}
 
-	/* make it flipped, again. */
-	ip->ip_len = ntohs((u_short)ip->ip_len);
-	ip->ip_off = ntohs((u_short)ip->ip_off);
 skip_ipsec:
 #endif /*IPSEC*/
 
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
-	if ((u_int16_t)ip->ip_len <= mtu) {
+	if (ip_len <= mtu) {
 #if IFA_STATS
 		/*
 		 * search for the source address structure to
@@ -570,10 +572,8 @@ skip_ipsec:
 		 */
 		INADDR_TO_IA(ip->ip_src, ia);
 		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ip->ip_len;
+			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
 #endif
-		HTONS(ip->ip_len);
-		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
@@ -583,7 +583,14 @@ skip_ipsec:
 	/*
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
+	 *
+	 * Note we swap ip_len and ip_off into host order to make
+	 * the logic below a little simpler.
 	 */
+
+	NTOHS(ip->ip_len);
+	NTOHS(ip->ip_off);
+
 #if 0
 	/*
 	 * If IPsec packet is too big for the interface, try fragment it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25.16.1 2000/11/20 20:05:29 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.25.16.2 2000/11/22 16:00:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,9 +74,10 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 
+#ifdef	_KERNEL
+
 #include <machine/intr.h>
 
-#ifdef	_KERNEL
 void delay __P((int));
 
 #define	DELAY(n)	delay(n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.30.2.1 2000/11/20 18:09:07 bouyer Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.30.2.2 2000/11/22 16:05:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -1150,7 +1150,8 @@ pool_setlowat(pp, n)
 		: roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	/* Make sure we're caught up with the newly-set low water mark. */
-	if ((error = pool_catchup(pp)) != 0) {
+	if ((pp->pr_nitems < pp->pr_minitems) &&
+	    (error = pool_catchup(pp)) != 0) {
 		/*
 		 * XXX: Should we log a warning?  Should we set up a timeout
 		 * to try again in a second or so?  The latter could break

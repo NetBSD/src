@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.50.2.1 2000/11/20 18:10:00 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.50.2.2 2000/11/22 16:05:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,6 +72,7 @@
 #include "opt_ns.h"
 #include "opt_gateway.h"
 #include "vlan.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +93,10 @@
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0 
+#include <net/bpf.h>
+#endif
 
 #include <net/if_ether.h>
 #if NVLAN > 0
@@ -500,6 +505,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	u_int16_t etype;
 	int s;
 	struct ether_header *eh;
+	struct mbuf *n;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -535,6 +541,22 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		   memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
 			  ETHER_ADDR_LEN) != 0) {
 		m_freem(m);
+		return;
+	}
+
+	/* Check if the mbuf has a VLAN tag */
+	n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN);
+	if (n) {
+#if NVLAN > 0
+		/*
+		 * vlan_input() will either recursively call ether_input()
+		 * or drop the packet.
+		 */
+		if (((struct ethercom *)ifp)->ec_nvlans != 0)
+			vlan_input(ifp, m);
+		else
+#endif
+			m_freem(m);
 		return;
 	}
 
@@ -808,6 +830,9 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 void
@@ -817,6 +842,10 @@ ether_ifdetach(struct ifnet *ifp)
 	struct sockaddr_dl *sdl = ifp->if_sadl;
 	struct ether_multi *enm;
 	int s;
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.11.2.1 2000/11/20 11:40:27 bouyer Exp $	*/
+/*	$NetBSD: cy.c,v 1.11.2.2 2000/11/22 16:03:16 bouyer Exp $	*/
 
 /*
  * cy.c
@@ -354,7 +354,7 @@ cyopen(dev, flag, mode, p)
 	}
 	splx(s);
 
-	return (*linesw[tp->t_line].l_open) (dev, tp);
+	return (*tp->t_linesw->l_open) (dev, tp);
 }
 
 /*
@@ -377,7 +377,7 @@ cyclose(dev, flag, mode, p)
 	    sc->sc_dev.dv_xname, port, flag, mode);
 #endif
 
-	(*linesw[tp->t_line].l_close) (tp, flag);
+	(*tp->t_linesw->l_close) (tp, flag);
 	s = spltty();
 
 	if (ISSET(tp->t_cflag, HUPCL) &&
@@ -419,7 +419,7 @@ cyread(dev, uio, flag)
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
-	return ((*linesw[tp->t_line].l_read) (tp, uio, flag));
+	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
 
 /*
@@ -441,7 +441,7 @@ cywrite(dev, uio, flag)
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
-	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
+	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
 
 /*
@@ -484,7 +484,7 @@ cyioctl(dev, cmd, data, flag, p)
 	    sc->sc_dev.dv_xname, port, cmd, data, flag);
 #endif
 
-	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -943,7 +943,7 @@ cy_poll(arg)
 				    sc->sc_dev.dv_xname, port, chr);
 #endif
 
-				(*linesw[tp->t_line].l_rint) (chr, tp);
+				(*tp->t_linesw->l_rint) (chr, tp);
 
 				s = spltty();	/* really necessary? */
 				if ((cy->cy_ibuf_rd_ptr += 2) ==
@@ -1009,7 +1009,7 @@ cy_poll(arg)
 				    card, port, carrier);
 #endif
 				if (CY_DIALIN(tp->t_dev) &&
-				    !(*linesw[tp->t_line].l_modem)(tp, carrier))
+				    !(*tp->t_linesw->l_modem)(tp, carrier))
 					cy_modem_control(sc, cy,
 					    TIOCM_DTR, DMBIC);
 
@@ -1024,7 +1024,7 @@ cy_poll(arg)
 				CLR(cy->cy_flags, CY_F_START);
 				splx(s);
 
-				(*linesw[tp->t_line].l_start) (tp);
+				(*tp->t_linesw->l_start) (tp);
 
 #ifdef CY_DEBUG1
 				did_something = 1;

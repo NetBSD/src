@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.1 2000/11/20 19:56:35 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.2 2000/11/22 15:59:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.1 2000/11/20 19:56:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.2 2000/11/22 15:59:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1903,13 +1903,23 @@ remrunqueue(p)
  * to which tvp points.  Unfortunately, we can't read the hardware registers.
  * We guarantee that the time will be greater than the value obtained by a
  * previous call.
+ *
+ * XXX PLEASE REWRITE ME TO USE THE CYCLE COUNTER AND DEAL WITH
+ * XXX MULTIPLE CPUs IN A SANE WAY!
  */
 void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splclock();
 	static struct timeval lasttime;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	static struct simplelock microtime_slock =
+	    SIMPLELOCK_INITIALIZER;
+#endif
+	int s;
+
+	s = splclock();
+	simple_lock(&microtime_slock);
 
 	*tvp = time;
 #ifdef notdef
@@ -1926,6 +1936,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	lasttime = *tvp;
+
+	simple_unlock(&microtime_slock);
 	splx(s);
 }
 
@@ -1971,10 +1983,7 @@ delay(n)
 	}
 }
 
-#if defined(COMPAT_OSF1) || 1		/* XXX */
-void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-	    u_long));
-
+#if 1		/* XXX */
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -1995,31 +2004,18 @@ cpu_exec_ecoff_setregs(p, epp, stack)
  *
  */
 int
-cpu_exec_ecoff_hook(p, epp)
+cpu_exec_ecoff_probe(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-	extern struct emul emul_netbsd;
 	int error;
-	extern int osf1_exec_ecoff_hook(struct proc *p,
-					struct exec_package *epp);
 
-	switch (execp->f.f_magic) {
-#ifdef COMPAT_OSF1
-	case ECOFF_MAGIC_ALPHA:
-		error = osf1_exec_ecoff_hook(p, epp);
-		break;
-#endif
-
-	case ECOFF_MAGIC_NETBSD_ALPHA:
-		epp->ep_emul = &emul_netbsd;
+	if (execp->f.f_magic == ECOFF_MAGIC_NETBSD_ALPHA)
 		error = 0;
-		break;
-
-	default:
+	else
 		error = ENOEXEC;
-	}
+
 	return (error);
 }
 #endif

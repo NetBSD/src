@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.1 2000/11/20 11:42:48 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.2 2000/11/22 16:04:39 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.98 2000/08/24 07:10:36 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp 
  */
 
 /*-
@@ -164,6 +164,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Digital Mobile Media CD-ROM"	},
 	},
 	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
+	    PCMCIA_CIS_ELSA_MC2_IEEE,
+	    0,
+	    "Elsa",
+	    "AirLancer MC-2 IEEE"	},
+	},
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI300_IEEE,
+	    PCMCIA_CIS_ELSA_XI300_IEEE,
+	    0,
+	    "Elsa",
+	    "XI300 Wireless LAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
 	    PCMCIA_CIS_FUJITSU_SCSI600,
 	    0,
@@ -276,8 +290,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "SkyLINE Wireless"	},
 	},
 	{
-	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH,
-	    PCMCIA_CIS_LEXARMEDIA_COMPATFLASH,
+	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPACTFLASH,
+	    PCMCIA_CIS_LEXARMEDIA_COMPACTFLASH,
 	    0,
 	    "Lexar Media",
 	    "Lexar Media CompactFlash"	},
@@ -423,11 +437,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications Dual RS232"	},
 	},
 	{
-	    PCMCIA_VENDOR_SOCEKT, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
-	    PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
+	    PCMCIA_CIS_SOCKET_LP_ETHER_CF,
 	    0,
-	    "",
-	    "Socket Communications Low Power Ethernet CF"	},
+	    "Socket Communications",
+	    "Socket Communications LP-E CF"	},
+	},
+	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
+	    PCMCIA_CIS_SOCKET_LP_ETHER,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications LP-E"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
@@ -624,6 +645,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Samsung",
 	    "Samsung MagicLAN SWL-2000N"	},
+	},
+	{
+	    PCMCIA_VENDOR_TELECOMDEVICE, PCMCIA_PRODUCT_TELECOMDEVICE_TCD_HPC100,
+	    PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100,
+	    0,
+	    "Telecom Device",
+	    "Telecom Device TCD-HPC100"	},
+	},
+	{
+	    PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
+	    PCMCIA_CIS_MACNICA_ME1_JEIDA,
+	    0,
+	    "MACNICA",
+	    "MACNICA ME1 for JEIDA"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -843,6 +878,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Intersil Prism II"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MELCO_LPC2_TX,
+	    PCMCIA_CIS_MELCO_LPC2_TX,
+	    0,
+	    "Melco Corporation",
+	    "Melco LPC2-TX"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1039,6 +1081,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_TELECOMDEVICE, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Telecom Device",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_NOKIA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1088,6 +1137,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_MACNICA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "MACNICA",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COREGA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1113,6 +1169,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "RATOC System Inc.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ELSA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Elsa",
 	    NULL,
 	},
 	{

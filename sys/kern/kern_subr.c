@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52.2.1 2000/11/20 18:09:04 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52.2.2 2000/11/22 16:05:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -222,37 +222,65 @@ again:
  * suitable for masking a value to use as an index into the returned array.
  */
 void *
-hashinit(elements, type, flags, hashmask)
-	int elements, type, flags;
+hashinit(elements, htype, mtype, mflags, hashmask)
+	int elements;
+	enum hashtype htype;
+	int mtype, mflags;
 	u_long *hashmask;
 {
 	long hashsize;
-	LIST_HEAD(generic, generic) *hashtbl;
-	int i;
+	LIST_HEAD(, generic) *hashtbl_list;
+	TAILQ_HEAD(, generic) *hashtbl_tailq;
+	int i, esize;
+	void *p;
 
 	if (elements <= 0)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
-	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
-	if (hashtbl == NULL)
+
+	switch (htype) {
+	case HASH_LIST:
+		esize = sizeof(*hashtbl_list);
+		break;
+	case HASH_TAILQ:
+		esize = sizeof(*hashtbl_tailq);
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		panic("hashinit: invalid table type");
+#endif
+	}
+
+	if ((p = malloc((u_long)hashsize * esize, mtype, mflags)) == NULL)
 		return (NULL);
-	for (i = 0; i < hashsize; i++)
-		LIST_INIT(&hashtbl[i]);
+
+	switch (htype) {
+	case HASH_LIST:
+		hashtbl_list = p;
+		for (i = 0; i < hashsize; i++)
+			LIST_INIT(&hashtbl_list[i]);
+		break;
+	case HASH_TAILQ:
+		hashtbl_tailq = p;
+		for (i = 0; i < hashsize; i++)
+			TAILQ_INIT(&hashtbl_tailq[i]);
+		break;
+	}
 	*hashmask = hashsize - 1;
-	return (hashtbl);
+	return (p);
 }
 
 /*
  * Free memory from hash table previosly allocated via hashinit().
  */
 void
-hashdone(hashtbl, type)
+hashdone(hashtbl, mtype)
 	void *hashtbl;
-	int type;
+	int mtype;
 {
 
-	free(hashtbl, type);
+	free(hashtbl, mtype);
 }
 
 /*

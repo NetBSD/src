@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.10.2.1 2000/11/20 18:08:54 bouyer Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.10.2.2 2000/11/22 16:05:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -65,7 +65,7 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 	if (ECOFF_BADMAG(execp))
 		return ENOEXEC;
 
-	error = cpu_exec_ecoff_hook(p, epp);
+	error = (*epp->ep_esch->u.ecoff_probe_func)(p, epp);
 
 	/*
 	 * if there was an error or there are already vmcmds set up,

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.40.2.2 2000/11/20 20:33:25 bouyer Exp $	*/
+/*	$NetBSD: locore.c,v 1.40.2.3 2000/11/22 16:02:14 bouyer Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -271,7 +271,7 @@ _start(struct rpb *prpb)
 			avail_end += VAX_NBPG * 128;
 	boothowto = prpb->rpb_bootr5;
 
-	avail_end = TRUNC_PAGE(avail_end); /* be sure */
+	avail_end &= ~PGOFSET; /* be sure */
 
 	proc0.p_addr = (void *)proc0paddr; /* XXX */
 

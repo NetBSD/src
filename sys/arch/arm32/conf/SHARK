@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.25.2.1 2000/11/20 20:03:55 bouyer Exp $
+#	$NetBSD: SHARK,v 1.25.2.2 2000/11/22 15:59:59 bouyer Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.25.2.1 $"
+#ident		"GENERIC-$Revision: 1.25.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -28,7 +28,7 @@ options 	CPU_SA110	# Support the SA110 core
 options 	OFW		# Enable common Open Firmware bits
 options 	SHARK		# We are a Shark
 options 	NSIO		# We are using the National Semi SuperIO
-makeoptions	COPTS="-O2 -march=strongarm -mtune=strongarm"
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # compatibility with old version of OFW, which may have incorrect
 # properties and/or may set up devices incorrectly.
@@ -220,3 +220,4 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
+pseudo-device	openfirm		# /dev/openfirm

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.6.2.2 2000/11/20 11:42:45 bouyer Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.6.2.3 2000/11/22 16:04:38 bouyer Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -497,10 +497,6 @@ xi_pcmcia_attach(parent, self, aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	psc->sc_resource |= XI_RES_MI;
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif	/* NBPFILTER > 0 */
-
 	/*
 	 * Reset and initialize the card again for DINGO (as found in Linux
 	 * driver).  Without this Dingo will get a watchdog timeout the first
@@ -565,9 +561,7 @@ xi_pcmcia_detach(self, flags)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
 		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-#if NBPFILTER > 0
-		bpfdetach(ifp);
-#endif
+
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		psc->sc_resource &= ~XI_RES_MI;

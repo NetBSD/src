@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.8.12.1 2000/11/20 18:08:55 bouyer Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.8.12.2 2000/11/22 16:05:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -36,33 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_compat_linux.h"
-#include "opt_compat_svr4.h"
-
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/fcntl.h>
 #include <sys/resourcevar.h>
-
-#include <sys/mman.h>
-
-#include <machine/cpu.h>
-#include <machine/reg.h>
-
-#ifdef COMPAT_LINUX
-#include <compat/linux/common/linux_exec.h>
-#endif
-
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_exec.h>
-#endif
 
 /*
  * exec_elf_setup_stack(): Set up the stack segment for an a.out

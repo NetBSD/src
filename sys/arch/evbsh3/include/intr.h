@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.1 2000/11/20 20:07:36 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.2 2000/11/22 16:00:08 bouyer Exp $	*/
 #ifndef _EVBSH3_INTR_H_
 #define _EVBSH3_INTR_H_
 
@@ -31,8 +31,9 @@
 #define TMU1_IRQ	2
 #define SCI_IRQ		6
 #define SCIF_IRQ	7
+#define WDOG_IRQ 1
 
-#define IRQ_LOW  2
+#define IRQ_LOW  1
 #define IRQ_HIGH 15
 
 #endif /* _EVBSH3_INTR_H_ */

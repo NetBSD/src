@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.29.2.1 2000/11/20 11:42:55 bouyer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.29.2.2 2000/11/22 16:04:45 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -657,7 +657,7 @@ raidstrategy(bp)
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
-		bp->b_flags = B_ERROR;
+		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
@@ -2173,7 +2173,7 @@ raidread_component_label(dev, b_vp, clabel)
 	/* get our ducks in a row for the read */
 	bp->b_blkno = RF_COMPONENT_INFO_OFFSET / DEV_BSIZE;
 	bp->b_bcount = RF_COMPONENT_INFO_SIZE;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
  	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
 	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
@@ -2192,7 +2192,6 @@ raidread_component_label(dev, b_vp, clabel)
 #endif
 	}
 
-        bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp); 
 	return(error);
 }
@@ -2213,7 +2212,7 @@ raidwrite_component_label(dev, b_vp, clabel)
 	/* get our ducks in a row for the write */
 	bp->b_blkno = RF_COMPONENT_INFO_OFFSET / DEV_BSIZE;
 	bp->b_bcount = RF_COMPONENT_INFO_SIZE;
-	bp->b_flags = B_BUSY | B_WRITE;
+	bp->b_flags |= B_WRITE;
  	bp->b_resid = RF_COMPONENT_INFO_SIZE / DEV_BSIZE;
 
 	memset(bp->b_data, 0, RF_COMPONENT_INFO_SIZE );
@@ -2222,7 +2221,6 @@ raidwrite_component_label(dev, b_vp, clabel)
 
 	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	error = biowait(bp); 
-        bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	if (error) {
 #if 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.4.2.2 2000/11/20 11:42:38 bouyer Exp $	*/
+/*	$NetBSD: twevar.h,v 1.4.2.3 2000/11/22 16:04:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,13 +70,21 @@
 
 #include "locators.h"
 
+#define	TWE_MIN_QUEUECNT	9	/* One per unit + one for AENs */
+
 #ifndef TWE_MAX_QUEUECNT
 #define	TWE_MAX_QUEUECNT	128	/* Maximum per-adapter queue count */
+#elif TWE_MAX_QUEUECNT > TWE_MAX_CMDS
+#error TWE_MAX_QUEUECNT > TWE_MAX_CMDS
+#elif TWE_MAX_QUEUECNT < TWE_MIN_QUEUECNT
+#error TWE_MAX_QUEUECNT < TWE_MIN_QUEUECNT
 #endif
+
 #ifndef TWE_MAX_PU_QUEUECNT
 #define	TWE_MAX_PU_QUEUECNT	32	/* Maximum per-unit queue count */
 #endif
 
+/* XXX NBPG */
 #if TWE_SG_SIZE > (((MAXPHYS + NBPG - 1) / NBPG) + 1)
 #define	TWE_MAX_SEGS	(((MAXPHYS + NBPG - 1) / NBPG) + 1)
 #else
@@ -93,10 +101,11 @@ struct twe_softc {
 	void			*sc_ih;
 	caddr_t			sc_cmds;
 	bus_addr_t		sc_cmds_paddr;
+	int			sc_nccbs;
 	struct twe_ccb		*sc_ccbs;
 	SIMPLEQ_HEAD(, twe_ccb)	sc_ccb_queue;
 	SLIST_HEAD(, twe_ccb)	sc_ccb_freelist;
-	int			sc_ccb_waitcnt;
+	int			sc_nunits;
 	u_int			sc_dsize[TWE_MAX_UNITS];
 };
 
@@ -126,6 +135,8 @@ struct twe_ccb {
 #define	TWE_CCB_DATA_OUT	0x02	/* Map describes outbound xfer */
 #define	TWE_CCB_COMPLETE	0x04	/* Command completed */
 #define	TWE_CCB_ACTIVE		0x08	/* Command active */
+#define	TWE_CCB_PARAM		0x10	/* For parameter retrieval */
+#define	TWE_CCB_ALLOCED		0x20	/* CCB allocated */
 
 struct twe_attach_args {
 	int		twea_unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.31.2.1 2000/11/20 18:11:50 bouyer Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.31.2.2 2000/11/22 16:06:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,6 +142,9 @@ int	lfs_dirvcount = 0;		/* # active dirops */
 int lfs_dostats = 1;
 struct lfs_stats lfs_stats;
 
+extern int locked_queue_count;
+extern long locked_queue_bytes;
+
 /* op values to lfs_writevnodes */
 #define	VN_REG	        0
 #define	VN_DIROP	1
@@ -216,6 +219,8 @@ lfs_vflush(vp)
 					   && tbp->b_lblkno == bp->b_lblkno
 					   && tbp != bp)
 					{
+						fs->lfs_avail += btodb(bp->b_bcount);
+						wakeup(&fs->lfs_avail);
 						lfs_freebuf(bp);
 					}
 				}
@@ -243,14 +248,19 @@ lfs_vflush(vp)
 		s = splbio();
 		for(bp=vp->v_dirtyblkhd.lh_first; bp; bp=nbp) {
 			nbp = bp->b_vnbufs.le_next;
+			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
+				fs->lfs_avail += btodb(bp->b_bcount);
+				wakeup(&fs->lfs_avail);
+			}
 			/* Copied from lfs_writeseg */
 			if (bp->b_flags & B_CALL) {
 				/* if B_CALL, it was created with newbuf */
 				lfs_freebuf(bp);
 			} else {
 				bremfree(bp);
+				LFS_UNLOCK_BUF(bp);
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-                                         B_LOCKED | B_GATHERED);
+                                         B_GATHERED);
 				bp->b_flags |= B_DONE;
 				reassignbuf(bp, vp);
 				brelse(bp);  
@@ -466,10 +476,10 @@ lfs_segwrite(mp, flags)
 	struct segment *sp;
 	struct vnode *vp;
 	SEGUSE *segusep;
-	CLEANERINFO *cip;
 	ufs_daddr_t ibno;
-	int do_ckp, error, i;
+	int do_ckp, did_ckp, error, i;
 	int writer_set = 0;
+	int dirty;
 	
 	fs = VFSTOUFS(mp)->um_lfs;
 
@@ -478,15 +488,21 @@ lfs_segwrite(mp, flags)
 
 	lfs_imtime(fs);
 
+	/* printf("lfs_segwrite: ifile flags are 0x%lx\n",
+	       (long)(VTOI(fs->lfs_ivnode)->i_flag)); */
+
 #if 0	
 	/*
 	 * If we are not the cleaner, and there is no space available,
 	 * wait until cleaner writes.
 	 */
-	if(!(flags & SEGM_CLEAN)
-	   && (!fs->lfs_seglock || !(fs->lfs_sp->seg_flags & SEGM_CLEAN)))
+	if(!(flags & SEGM_CLEAN) && !(fs->lfs_seglock && fs->lfs_sp &&
+				      (fs->lfs_sp->seg_flags & SEGM_CLEAN)))
 	{
 		while (fs->lfs_avail <= 0) {
+			LFS_CLEANERINFO(cip, fs, bp);
+			LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
+	
 			wakeup(&lfs_allclean_wakeup);
 			wakeup(&fs->lfs_nextseg);
 			error = tsleep(&fs->lfs_avail, PRIBIO + 1, "lfs_av2",
@@ -497,14 +513,6 @@ lfs_segwrite(mp, flags)
 		}
 	}
 #endif
-	/*
-	 * Synchronize cleaner information
-	 */
-	LFS_CLEANERINFO(cip, fs, bp);
-	cip->bfree = fs->lfs_bfree;
-	cip->avail = fs->lfs_avail - fs->lfs_ravail;
-	(void) VOP_BWRITE(bp); /* Ifile */
-	
 	/*
 	 * Allocate a segment structure and enough space to hold pointers to
 	 * the maximum possible number of buffers which can be described in a
@@ -550,23 +558,34 @@ lfs_segwrite(mp, flags)
 	if (do_ckp) {
 		for (ibno = fs->lfs_cleansz + fs->lfs_segtabsz;
 		     --ibno >= fs->lfs_cleansz; ) {
+			dirty = 0;
 			if (bread(fs->lfs_ivnode, ibno, fs->lfs_bsize, NOCRED, &bp))
 
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
-			for (i = fs->lfs_sepb; i--; segusep++)
-				segusep->su_flags &= ~SEGUSE_ACTIVE;
+			for (i = fs->lfs_sepb; i--; segusep++) {
+				if (segusep->su_flags & SEGUSE_ACTIVE) {
+					segusep->su_flags &= ~SEGUSE_ACTIVE;
+					++dirty;
+				}
+			}
 				
 			/* But the current segment is still ACTIVE */
 			segusep = (SEGUSE *)bp->b_data;
 			if (datosn(fs, fs->lfs_curseg) / fs->lfs_sepb ==
-			    (ibno-fs->lfs_cleansz))
+			    (ibno-fs->lfs_cleansz)) {
 				segusep[datosn(fs, fs->lfs_curseg) %
 					fs->lfs_sepb].su_flags |= SEGUSE_ACTIVE;
-			error = VOP_BWRITE(bp); /* Ifile */
+				--dirty;
+			}
+			if (dirty)
+				error = VOP_BWRITE(bp); /* Ifile */
+			else
+				brelse(bp);
 		}
 	}
-	
+
+	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
 	redo:
 		vp = fs->lfs_ivnode;
@@ -576,12 +595,16 @@ lfs_segwrite(mp, flags)
 		ip = VTOI(vp);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			lfs_writefile(fs, sp, vp);
-		(void)lfs_writeinode(fs, sp, ip);
+		if (ip->i_flag & IN_ALLMOD)
+			++did_ckp;
+		(void) lfs_writeinode(fs, sp, ip);
 
 		vput(vp);
 
 		if (lfs_writeseg(fs, sp) && do_ckp)
 			goto redo;
+		/* The ifile should now be all clear */
+		LFS_CLR_UINO(ip, IN_ALLMOD);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
@@ -594,7 +617,20 @@ lfs_segwrite(mp, flags)
 	fs->lfs_doifile = 0;
 	if(writer_set && --fs->lfs_writer==0)
 		wakeup(&fs->lfs_dirops);
-	
+
+	/*
+	 * If we didn't write the Ifile, we didn't really do anything.
+	 * That means that (1) there is a checkpoint on disk and (2)
+	 * nothing has changed since it was written.
+	 *
+	 * Take the flags off of the segment so that lfs_segunlock
+	 * doesn't have to write the superblock either.
+	 */
+	if (did_ckp == 0) {
+		sp->seg_flags &= ~(SEGM_SYNC|SEGM_CKP);
+		/* if(do_ckp) printf("lfs_segwrite: no checkpoint\n"); */
+	}
+
 	if(lfs_dostats) {
 		++lfs_stats.nwrites;
 		if (sp->seg_flags & SEGM_SYNC)
@@ -784,7 +820,7 @@ lfs_writeinode(fs, sp, ip)
 		sp->idp = ((struct dinode *)bp->b_data) + 
 			(sp->ninodes % INOPB(fs));
 	if(gotblk) {
-		bp->b_flags |= B_LOCKED;
+		LFS_LOCK_BUF(bp);
 		brelse(bp);
 	}
 	
@@ -818,11 +854,19 @@ lfs_writeinode(fs, sp, ip)
 	}
 	
 	/*
-	 * No need to update segment usage if there was no former inode
-	 * address or if the last inode address is in the current
-	 * partial segment.
+	 * Account the inode: it no longer belongs to its former segment,
+	 * though it will not belong to the new segment until that segment
+	 * is actually written.
 	 */
 #ifdef DEBUG
+	/*
+	 * The inode's last address should not be in the current partial
+	 * segment, except under exceptional circumstances (lfs_writevnodes
+	 * had to start over, and in the meantime more blocks were written
+	 * to a vnode).  Although the previous inode won't be accounted in
+	 * su_nbytes until lfs_writeseg, this shouldn't be a problem as we
+	 * have more data blocks in the current partial segment.
+	 */
 	if (daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)
 		printf("lfs_writeinode: last inode addr in current pseg "
 		       "(ino %d daddr 0x%x)\n", ino, daddr);
@@ -1217,7 +1261,7 @@ lfs_newseg(fs)
 	--cip->clean;
 	++cip->dirty;
 	fs->lfs_nclean = cip->clean;
-	(void) VOP_BWRITE(bp); /* Ifile */
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 	
 	fs->lfs_lastseg = fs->lfs_curseg;
 	fs->lfs_curseg = fs->lfs_nextseg;
@@ -1244,8 +1288,6 @@ lfs_writeseg(fs, sp)
 	struct lfs *fs;
 	struct segment *sp;
 {
-	extern int locked_queue_count;
-	extern long locked_queue_bytes;
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
@@ -1379,10 +1421,18 @@ lfs_writeseg(fs, sp)
 					if (bp->b_flags & B_WANTED)
 						wakeup(bp);
 				 	splx(s);
+					/*
+					 * We have to re-decrement lfs_avail
+					 * since this block is going to come
+					 * back around to us in the next
+					 * segment.
+					 */
+					fs->lfs_avail -= btodb(bp->b_bcount);
 				}
 			} else {
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-						 B_LOCKED | B_GATHERED);
+						 B_GATHERED);
+				LFS_UNLOCK_BUF(bp);
 				if (bp->b_flags & B_CALL)
 					lfs_freebuf(bp);
 				else {
@@ -1489,12 +1539,9 @@ lfs_writeseg(fs, sp)
 				bcopy(bp->b_data, p, bp->b_bcount);
 			p += bp->b_bcount;
 			cbp->b_bcount += bp->b_bcount;
-			if (bp->b_flags & B_LOCKED) {
-				--locked_queue_count;
-				locked_queue_bytes -= bp->b_bufsize;
-			}
+			LFS_UNLOCK_BUF(bp);
 			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-					 B_LOCKED | B_GATHERED);
+					 B_GATHERED);
 			vn = bp->b_vp;
 			if (bp->b_flags & B_CALL) {
 				/* if B_CALL, it was created with newbuf */
@@ -1553,17 +1600,16 @@ lfs_writeseg(fs, sp)
 		vop_strategy_a.a_bp = cbp;
 		(strategy)(&vop_strategy_a);
 	}
+#if 1 || defined(DEBUG)
 	/*
-	 * XXX
-	 * Vinvalbuf can move locked buffers off the locked queue
-	 * and we have no way of knowing about this.  So, after
-	 * doing a big write, we recalculate how many buffers are
+	 * After doing a big write, we recalculate how many buffers are
 	 * really still left on the locked queue.
 	 */
 	s = splbio();
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes);
 	splx(s);
 	wakeup(&locked_queue_count);
+#endif /* 1 || DEBUG */
 	if(lfs_dostats) {
 		++lfs_stats.psegwrites;
 		lfs_stats.blocktot += nblocks - 1;

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.13.2.2 2000/11/20 20:22:56 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.13.2.3 2000/11/22 16:01:30 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.13.2.2 $"
+#ident		"GENERIC-$Revision: 1.13.2.3 $"
 
 maxusers	32
 
@@ -280,6 +280,9 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*	at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

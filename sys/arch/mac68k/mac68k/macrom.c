@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.44.2.1 2000/11/20 20:12:23 bouyer Exp $	*/
+/*	$NetBSD: macrom.c,v 1.44.2.2 2000/11/22 16:00:34 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -753,20 +753,6 @@ mrg_aline_super(struct frame *frame)
 
 #if defined(MRG_DEBUG)
 	printf(" exit\n");
-#endif
-}
-
-	/* handle a user mode A-line trap */
-void
-mrg_aline_user()
-{
-#if 1
-	/* send process a SIGILL; aline traps are illegal as yet */
-#else /* how to handle real Mac App A-lines */
-	/* ignore for now */
-	I have no idea!
-	maybe pass SIGALINE?
-	maybe put global information about aline trap?
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.39 1998/07/20 17:35:17 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.39.14.1 2000/11/22 16:00:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ dcaopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 
  bad:
 	return (error);
@@ -421,7 +421,7 @@ dcaclose(dev, flag, mode, p)
 
 	dca = sc->sc_dca;
 	tp = sc->sc_tty;
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	s = spltty();
 
@@ -461,7 +461,7 @@ dcaread(dev, uio, flag)
  
 	tp = sc->sc_tty;
 	of = sc->sc_oflows;
-	error = (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	error = (*tp->t_linesw->l_read)(tp, uio, flag);
 	/*
 	 * XXX hardly a reasonable thing to do, but reporting overflows
 	 * at interrupt time just exacerbates the problem.
@@ -480,7 +480,7 @@ dcawrite(dev, uio, flag)
 	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -534,12 +534,12 @@ dcaintr(arg)
 				    kgdb_dev == makedev(dcamajor, unit)) \
 					kgdb_connect(0); /* trap into kgdb */ \
 			} else \
-				(*linesw[tp->t_line].l_rint)(code, tp)
+				(*tp->t_linesw->l_rint)(code, tp)
 #else
 #define	RCVBYTE() \
 			code = dca->dca_data; \
 			if (tp != NULL && (tp->t_state & TS_ISOPEN) != 0) \
-				(*linesw[tp->t_line].l_rint)(code, tp)
+				(*tp->t_linesw->l_rint)(code, tp)
 #endif
 			RCVBYTE();
 			if (sc->sc_flags & DCA_HASFIFO) {
@@ -574,7 +574,7 @@ dcaintr(arg)
 				break;
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
+				(*tp->t_linesw->l_start)(tp);
 			else
 				dcastart(tp);
 			break;
@@ -620,7 +620,7 @@ dcaeint(sc, stat)
 		c |= TTY_PE;
 	else if (stat & LSR_OE)
 		sc->sc_oflows++;
-	(*linesw[tp->t_line].l_rint)(c, tp);
+	(*tp->t_linesw->l_rint)(c, tp);
 }
 
 void
@@ -640,8 +640,8 @@ dcamint(sc)
 	if ((stat & MSR_DDCD) &&
 	    (sc->sc_flags & DCA_SOFTCAR) == 0) {
 		if (stat & MSR_DCD)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
+			(void)(*tp->t_linesw->l_modem)(tp, 1);
+		else if ((*tp->t_linesw->l_modem)(tp, 0) == 0)
 			dca->dca_mcr &= ~(MCR_DTR | MCR_RTS);
 	}
 	/*
@@ -673,7 +673,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	struct dcadevice *dca = sc->sc_dca;
 	int error;
  
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);

@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.4.4.1 2000/11/20 11:43:39 bouyer Exp $
+# 	$NetBSD: files.wsfont,v 1.4.4.2 2000/11/22 16:05:11 bouyer Exp $
 
 file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay
 
@@ -8,3 +8,5 @@ defopt	opt_wsfont.h		FONT_BOLD8x16
 				FONT_LUCIDA16x29
 				FONT_VT220L8x8
 				FONT_VT220L8x10
+				FONT_SONY8x16
+				FONT_SONY12x24

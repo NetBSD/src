@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.32.2.1 2000/11/20 20:20:20 bouyer Exp $	*/
+/*	$NetBSD: rcons.c,v 1.32.2.2 2000/11/22 16:01:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -97,15 +97,29 @@ rcons_connect (info)
 	struct fbinfo *info;
 {
 	static struct rasops_info ri;
-	int cookie;
+	int cookie, epwf, bior;
 
-	/* TC mfb has special needs; 8-bits per pel, but monochrome */
-	if (info->fi_type.fb_boardtype == PMAX_FBTYPE_MFB) {
+	/* XXX */
+	switch (info->fi_type.fb_boardtype) {
+	case PMAX_FBTYPE_MFB:
 		ri.ri_depth = 8;
 		ri.ri_flg = RI_CLEAR | RI_FORCEMONO;
-	} else {
+		epwf = 0;
+		bior = WSDISPLAY_FONTORDER_L2R;
+		break;
+	case PMAX_FBTYPE_PM_MONO:
+	case PMAX_FBTYPE_PM_COLOR:
 		ri.ri_depth = info->fi_type.fb_depth;
 		ri.ri_flg = RI_CLEAR;
+		epwf = 1;
+		bior = WSDISPLAY_FONTORDER_R2L;
+		break;
+	default:
+		ri.ri_depth = info->fi_type.fb_depth;
+		ri.ri_flg = RI_CLEAR;
+		epwf = (ri.ri_depth != 8);
+		bior = WSDISPLAY_FONTORDER_L2R;
+		break;
 	}
 
 	ri.ri_width = info->fi_type.fb_width;
@@ -115,9 +129,13 @@ rcons_connect (info)
 
 	wsfont_init();
 
-	/* Choose 'Gallant' font if this is an 8-bit display */
-	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) > 0)
-		wsfont_lock(cookie, &ri.ri_font, WSDISPLAY_FONTORDER_L2R, 
+	if (epwf)
+		cookie = wsfont_find(NULL, 8, 0, 0);
+	else
+		cookie = wsfont_find("Gallant", 0, 0, 0);
+
+	if (cookie > 0)
+		wsfont_lock(cookie, &ri.ri_font, bior,
 		    WSDISPLAY_FONTORDER_L2R);
 
 	/* Get operations set and set framebugger colormap */
@@ -250,6 +268,8 @@ rasterconsoleattach (n)
 	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	/* Set default line discipline. */
+	tp->t_linesw = linesw[0];
 #ifdef DEBUG
 	printf("rconsattach: %d raster consoles\n", n);
 #endif
@@ -300,7 +320,7 @@ rconsopen(dev, flag, mode, p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	status = (*linesw[tp->t_line].l_open)(dev, tp);
+	status = (*tp->t_linesw->l_open)(dev, tp);
 	return status;
 }
 
@@ -313,7 +333,7 @@ rconsclose(dev, flag, mode, p)
 {
 	struct tty *tp = &rcons_tty [0];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	return (0);
@@ -328,7 +348,7 @@ rconsread(dev, uio, flag)
 {
 	struct tty *tp = &rcons_tty [0];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 /* ARGSUSED */
@@ -341,7 +361,7 @@ rconswrite(dev, uio, flag)
 	struct tty *tp;
 
 	tp = &rcons_tty [0];
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -365,7 +385,7 @@ rconsioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = &rcons_tty [0];
-	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
@@ -459,7 +479,7 @@ rcons_later(tpaddr)
 	(*(fbconstty->t_oproc)) (tp);	/* XXX */
 
 	tp->t_state &= ~TS_BUSY;
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 	splx(s);
 }
 #endif	/* notyet */
@@ -488,6 +508,6 @@ rcons_input (dev, ic)
 	if (!(tp -> t_state & TS_ISOPEN)) {
 		return;
 	}
-	(*linesw [tp -> t_line].l_rint)(ic, tp);
+	(*tp->t_linesw->l_rint)(ic, tp);
 }
 #endif /* NRASTERCONSOLE > 0 */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.41.2.1 2000/11/20 20:15:15 bouyer Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.41.2.2 2000/11/22 16:00:49 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -47,6 +47,19 @@ MVME68K=$S/arch/mvme68k
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme68k
+.if empty(IDENT:M-DMVME172) && empty(IDENT:M-DMVME177)
+.if empty(IDENT:M-DMVME147)
+CMACHFLAGS=	-m68040
+.else
+CMACHFLAGS=	-m68030
+.endif
+.else
+.if empty(IDENT:M-DMVME147) && empty(IDENT:M-DMVME162) && empty(IDENT:M-DMVME167)
+CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
+.else
+CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
+.endif
+.endif
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -55,7 +68,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-g
@@ -85,6 +98,9 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
+
+### for the Motorola 68060 Software Support Package
+.include "$S/arch/m68k/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).

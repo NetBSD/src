@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.45.2.2 2000/11/20 11:42:25 bouyer Exp $ */
+/* $NetBSD: isp_pci.c,v 1.45.2.3 2000/11/22 16:04:08 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -747,7 +747,7 @@ isp_pci_mbxdma(isp)
 		return (1);
 	}
 	for (i = 0; i < isp->isp_maxcmds; i++) {
-		if (bus_dmamap_create(dmat, MAXPHYS, (MAXPHYS / NBPG) + 1,
+		if (bus_dmamap_create(dmat, MAXPHYS, (MAXPHYS / PAGE_SIZE) + 1,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT, &pcs->pci_xfer_dmap[i])) {
 			isp_prt(isp, ISP_LOGERR, "cannot create dma maps");
 			break;
@@ -768,7 +768,8 @@ isp_pci_mbxdma(isp)
 	 * Allocate and map the request queue.
 	 */
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
-	if (bus_dmamem_alloc(dmat, len, NBPG, 0, &sg, 1, &rs, BUS_DMA_NOWAIT) ||
+	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
+			     BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pcs->pci_dmat, &sg, rs, len,
 	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
@@ -787,7 +788,8 @@ isp_pci_mbxdma(isp)
 	 * Allocate and map the result queue.
 	 */
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
-	if (bus_dmamem_alloc(dmat, len, NBPG, 0, &sg, 1, &rs, BUS_DMA_NOWAIT) ||
+	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
+			     BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(dmat, &sg, rs, len, (caddr_t *)&isp->isp_result,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
@@ -806,7 +808,8 @@ isp_pci_mbxdma(isp)
 
 	fcp = isp->isp_param;
 	len = ISP2100_SCRLEN;
-	if (bus_dmamem_alloc(dmat, len, NBPG, 0, &sg, 1, &rs, BUS_DMA_NOWAIT) ||
+	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
+			     BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(dmat, &sg, rs, len, (caddr_t *)&fcp->isp_scratch,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;

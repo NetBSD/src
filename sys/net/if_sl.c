@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.55.8.1 2000/11/20 18:10:05 bouyer Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.55.8.2 2000/11/22 16:05:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -81,6 +81,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #if __NetBSD__
@@ -263,7 +264,7 @@ slopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_line == SLIPDISC)
+	if (tp->t_linesw && (tp->t_linesw->l_no == SLIPDISC))
 		return (0);
 
 	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)
@@ -319,7 +320,7 @@ slclose(tp)
 
 	ttywflush(tp);
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_line = 0;
+	tp->t_linesw = linesw[0]; /* default line discipline */
 	tp->t_state = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.16.2.1 2000/11/20 11:43:13 bouyer Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.16.2.2 2000/11/22 16:04:57 bouyer Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -174,7 +174,8 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	/* If not R4K, need to invalidate cache lines for both physical segments */
 	if (!CPUISMIPS3 && flag == ASCDMA_READ) {
 		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys),
-		    nphys == 0xffffffff ?  len : NBPG - (phys & (NBPG - 1)));
+		    nphys == 0xffffffff ?  len + ((vaddr_t)cp & 7) :
+		    NBPG - (phys & (NBPG - 1)));
 		if (nphys != 0xffffffff)
 			MachFlushDCache(MIPS_PHYS_TO_KSEG0(nphys),
 			    NBPG);	/* XXX */

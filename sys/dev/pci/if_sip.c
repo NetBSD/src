@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.2.2.1 2000/11/20 11:42:23 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2.2.2 2000/11/22 16:04:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -588,10 +588,6 @@ sip_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -1415,7 +1411,7 @@ sip_init(ifp)
 	}
 	if (sc->sc_tx_drain_thresh == 0) {
 		/*
-		 * Start at a drain threshold of 128 bytes.  We will
+		 * Start at a drain threshold of 512 bytes.  We will
 		 * increase it if a DMA underrun occurs.
 		 *
 		 * XXX The minimum value of this variable should be
@@ -1424,7 +1420,7 @@ sip_init(ifp)
 		 * may trash the first few outgoing packets if the
 		 * PCI bus is saturated.
 		 */
-		sc->sc_tx_drain_thresh = 4;
+		sc->sc_tx_drain_thresh = 512 / 32;
 	}
 
 	/*

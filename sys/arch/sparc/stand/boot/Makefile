@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2000/11/20 20:25:49 bouyer Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2000/11/22 16:01:43 bouyer Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
 NEWVERSWHAT=	"Secondary Boot"
-FILES=		boot.net boot_big.net ${RELOCS:S/^/boot./g}
+FILES=		boot.net ${RELOCS:S/^/boot./g}
 CLEANFILES:=	vers.c ${FILES}
 LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
@@ -42,9 +42,6 @@ boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
 
 boot.net: boot.${RELOC_DEFAULT}
-	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
-
-boot_big.net: boot.700000
 	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
 .include <bsd.prog.mk>

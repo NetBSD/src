@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4.2.1 2000/11/20 20:07:35 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.4.2.2 2000/11/22 16:00:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1152,8 +1152,12 @@ ENTRY(switch_exit)
 	.globl	_C_LABEL(exit2)
 XLexit2:
 	.long	_C_LABEL(exit2)
+
+#ifdef SH4
 XL_MMUCR_VBITS:
 	.long	MMUCR_VALIDBITS
+#endif
+
 XXL_SHREG_MMUCR:
 	.long	SHREG_MMUCR
 XXLP_ADDR:

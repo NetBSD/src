@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.10.2.1 2000/11/20 18:10:55 bouyer Exp $	*/
-/*	$KAME: ipsec.c,v 1.80 2000/10/01 12:37:20 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.10.2.2 2000/11/22 16:06:24 bouyer Exp $	*/
+/*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3095,6 +3095,9 @@ ipsec4_tunnel_validate(ip, nxt0, sav)
 
 	if (nxt != IPPROTO_IPV4)
 		return 0;
+	/* do not decapsulate if the SA is for transport mode only */
+	if (sav->sah->saidx.mode == IPSEC_MODE_TRANSPORT)
+		return 0;
 #ifdef _IP_VHL
 	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
 #else
@@ -3132,6 +3135,9 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	struct sockaddr_in6 *sin6;
 
 	if (nxt != IPPROTO_IPV6)
+		return 0;
+	/* do not decapsulate if the SA is for transport mode only */
+	if (sav->sah->saidx.mode == IPSEC_MODE_TRANSPORT)
 		return 0;
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.9.2.1 2000/11/20 20:05:27 bouyer Exp $	*/
+/*	$NetBSD: ser.c,v 1.9.2.2 2000/11/22 16:00:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -453,7 +453,7 @@ seropen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
         if (error)
 		goto bad;
 
@@ -485,7 +485,7 @@ serclose(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -509,7 +509,7 @@ serread(dev, uio, flag)
 	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -521,7 +521,7 @@ serwrite(dev, uio, flag)
 	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -547,7 +547,7 @@ serioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -778,7 +778,7 @@ serparam(tp, t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
 	 * lose carrier while carrier detection is on.
 	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(sc->sc_msr, MCR_DCD));
+	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MCR_DCD));
 
 #ifdef SER_DEBUG
 	serstatus(sc, "serparam ");
@@ -1108,7 +1108,7 @@ serrxint(sc, tp)
 		}
 		code = sc->sc_rbuf[get] |
 		    lsrmap[(rsr & (RSR_BREAK|RSR_FERR|RSR_PERR)) >> 3];
-		(*linesw[tp->t_line].l_rint)(code, tp);
+		(*tp->t_linesw->l_rint)(code, tp);
 		get = (get + 1) & RXBUFMASK;
 	}
 
@@ -1137,7 +1137,7 @@ sertxint(sc, tp)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 static void
@@ -1158,14 +1158,14 @@ sermsrint(sc, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MCR_DCD));
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(msr, MCR_DCD));
 	}
 
 	if (ISSET(delta, sc->sc_msr_cts)) {
 		/* Block or unblock output according to flow control. */
 		if (ISSET(msr, sc->sc_msr_cts)) {
 			sc->sc_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		} else {
 			sc->sc_tx_stopped = 1;
 			serstop(tp, 0);

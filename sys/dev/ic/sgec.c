@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.1.2.1 2000/11/20 11:40:54 bouyer Exp $ */
+/*      $NetBSD: sgec.c,v 1.1.2.2 2000/11/22 16:03:30 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -54,6 +54,8 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_dl.h>
@@ -103,7 +105,7 @@ sgec_attach(sc)
          * Allocate DMA safe memory for descriptors and setup memory.
          */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct ze_cdata), NBPG, 0, &seg, 1, &rseg,
+	    sizeof(struct ze_cdata), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate control data, error = %d\n",
 		    error);
@@ -211,9 +213,6 @@ sgec_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	printf("\n%s: hardware address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 	return;

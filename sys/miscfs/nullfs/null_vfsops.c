@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.24.2.1 2000/11/20 18:09:47 bouyer Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.24.2.2 2000/11/22 16:05:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -176,8 +176,8 @@ nullfs_mount(mp, path, data, ndp, p)
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->nullm_vnodeop_p = null_vnodeop_p;
 	simple_lock_init(&nmp->nullm_hashlock);
-	nmp->nullm_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, M_WAITOK,
-			&nmp->nullm_node_hash);
+	nmp->nullm_node_hashtbl = hashinit(NNULLNODECACHE, HASH_LIST, M_CACHE,
+	    M_WAITOK, &nmp->nullm_node_hash);
 
 	/*
 	 * Fix up null node for root vnode

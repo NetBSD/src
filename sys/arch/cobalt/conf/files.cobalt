@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.7.2.2 2000/11/20 20:07:01 bouyer Exp $
+#	$NetBSD: files.cobalt,v 1.7.2.3 2000/11/22 16:00:07 bouyer Exp $
 
 maxpartitions 16
 
@@ -35,11 +35,13 @@ file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/machdep.c
 
-file arch/cobalt/cobalt/md_root.c	memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
 file dev/clock_subr.c
 file dev/cons.c
+
+include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file arch/cobalt/pci/pci_machdep.c	pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18.2.1 2000/11/20 20:15:26 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18.2.2 2000/11/22 16:01:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -141,7 +141,7 @@ cachectl1(req, addr, len, p)
 {
 	int error = 0;
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
 		int doall = 0;
@@ -238,21 +238,11 @@ cachectl1(req, addr, len, p)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		/* fall into... */
-#endif
 	case CC_PURGE:
 	case CC_FLUSH:
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
-		if (ectype == EC_PHYS)
-			PCIA();
-		else
-#endif
 		DCIU();
 		/* fall into... */
 	case CC_IPURGE:
@@ -307,7 +297,7 @@ dma_cachectl(addr, len)
 			addr += inc;
 		} while (addr < end);
 	}
-#endif	/* M68040 */
+#endif	/* M68040 || M68060 */
 	return(0);
 }
 

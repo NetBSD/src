@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.1 2000/11/20 20:26:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.2 2000/11/22 16:01:56 bouyer Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -381,13 +381,16 @@ struct {
 #define PDB_EXTRACT	0x10000
 #define	PDB_BOOT	0x20000
 #define	PDB_BOOT1	0x40000
+#define	PDB_GROW	0x80000
 int	pmapdebug = 0;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 
 #define	BDPRINTF(n, f)	if (pmapdebug & (n)) prom_printf f
+#define	DPRINTF(n, f)	if (pmapdebug & (n)) printf f 
 #else
 #define	BDPRINTF(n, f)
+#define	DPRINTF(n, f)
 #endif
 
 #ifdef NOTDEF_DEBUG
@@ -452,7 +455,7 @@ pmap_enter_kpage(va, data)
 	paddr_t newp;
 
 	newp = NULL;
-	while (pseg_set(pmap_kernel(), va, data, newp) != NULL) {
+	while (pseg_set(pmap_kernel(), va, data, newp) == 1) {
 		newp = NULL;
 		pmap_get_page(&newp);
 		if (!newp) {
@@ -502,7 +505,7 @@ pmap_bootdebug()
 		case '\0':
 			return;
 		case 'V':
-			pmapdebug |= PDB_BOOT;
+			pmapdebug |= PDB_BOOT|PDB_BOOT1;
 			break;
 		case 'D':
 			pmapdebug |= PDB_BOOT1;
@@ -1438,6 +1441,7 @@ pmap_init()
 /*
  * How much virtual space is available to the kernel?
  */
+static vaddr_t kbreak; /* End of kernel VA */
 void
 pmap_virtual_space(start, end)
 	vaddr_t *start, *end;
@@ -1446,10 +1450,69 @@ pmap_virtual_space(start, end)
 	 * Reserve one segment for kernel virtual memory
 	 */
 	/* Reserve two pages for pmap_copy_page && /dev/mem */
-	*start = (vaddr_t)(vmmap + 2*NBPG);
+	*start = kbreak = (vaddr_t)(vmmap + 2*NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
 	BDPRINTF(PDB_BOOT1, ("pmap_virtual_space: %x-%x\r\n", *start, *end));
 }
+
+#ifdef PMAP_GROWKERNEL
+/*
+ * Preallocate kernel page tables to a specified VA.
+ * This simply loops through the first TTE for each
+ * page table from the beginning of the kernel pmap, 
+ * reads the entry, and if the result is
+ * zero (either invalid entry or no page table) it stores
+ * a zero there, populating page tables in the process.
+ * This is not the most efficient technique but i don't
+ * expect it to be called that often.
+ */
+vaddr_t 
+pmap_growkernel(maxkvaddr)
+        vaddr_t maxkvaddr; 
+{
+	int s;
+	paddr_t pg;
+	struct pmap *pm = pmap_kernel();
+	
+	s = splimp();
+	simple_lock(&pm->pm_lock);
+	DPRINTF(PDB_GROW, 
+		("pmap_growkernel(%p...%p)\n", kbreak, maxkvaddr));
+	/* Align with the start of a page table */
+	for (kbreak &= (-1<<PDSHIFT); kbreak < maxkvaddr;
+	     kbreak += (1<<PDSHIFT)) {
+		if (pseg_get(pm, kbreak)) continue;
+
+		pg = 0;
+		while (pseg_set(pm, kbreak, 0, pg) == 1) {
+			DPRINTF(PDB_GROW, 
+				("pmap_growkernel: extending %p\n", kbreak));
+			pg = 0;
+			if (pmap_initialized ||
+			    !uvm_page_physget(&pg)) {
+				vm_page_t page;
+				DPRINTF(PDB_GROW,
+("pmap_growkernel: need to alloc page\n"));
+				while ((page = 
+					vm_page_alloc1()) == NULL) {
+					DPRINTF(PDB_GROW, 
+("pmap_growkernel: calling uvm_wait()\n"));
+					uvm_wait("pmap_growkernel");
+				}
+				pg = (paddr_t)VM_PAGE_TO_PHYS(page);
+			}
+			pmap_zero_page((paddr_t)pg);
+#ifdef DEBUG
+			enter_stats.ptpneeded ++;
+#endif 
+		}
+		
+	}
+	simple_unlock(&pm->pm_lock);
+	splx(s);
+	return (kbreak);
+}
+#endif
 
 /*
  * Create and return a physical map.
@@ -1459,10 +1522,7 @@ pmap_create()
 {
 	struct pmap *pm;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_CREATE))
-		printf("pmap_create()\n");
-#endif
+	DPRINTF(PDB_CREATE, ("pmap_create()\n"));
 
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 	bzero((caddr_t)pm, sizeof *pm);
@@ -1839,7 +1899,7 @@ pmap_kenter_pa(va, pa, prot)
 	tte.data.data |= TLB_TSB_LOCK;	/* wired */
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	pg = NULL;
-	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
+	while (pseg_set(pm, va, tte.data.data, pg) == 1) {
 		pg = NULL;
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
 			vm_page_t page;
@@ -2131,7 +2191,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	printf("pmap_enter: inserting %x:%x at %x\n", 
 	       (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
 #endif
-	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
+	while (pseg_set(pm, va, tte.data.data, pg) == 1) {
 		pg = NULL;
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
 			vm_page_t page;

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.6 2000/11/20 11:40:39 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.7 2000/11/22 16:03:21 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -73,6 +73,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

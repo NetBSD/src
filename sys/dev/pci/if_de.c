@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.86.2.1 2000/11/20 11:42:20 bouyer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.86.2.2 2000/11/22 16:04:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4464,7 +4464,7 @@ tulip_txput(
     do {
 	int len = m0->m_len;
 	caddr_t addr = mtod(m0, caddr_t);
-	unsigned clsize = NBPG - (((u_long) addr) & PGOFSET);
+	unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 	while (len > 0) {
 	    unsigned slen = min(len, clsize);
@@ -4526,7 +4526,7 @@ tulip_txput(
 	    if (partial)
 		continue;
 #endif
-	    clsize = NBPG;
+	    clsize = PAGE_SIZE;
 	}
     } while ((m0 = m0->m_next) != NULL);
 #endif /* TULIP_BUS_DMA */
@@ -5154,10 +5154,6 @@ tulip_attach(
 #endif
 #endif /* __bsdi__ */
 
-#if NBPFILTER > 0
-    TULIP_BPF_ATTACH(sc);
-#endif
-
 #if defined(__NetBSD__) && NRND > 0
     rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,
 		      RND_TYPE_NET, 0);
@@ -5175,7 +5171,7 @@ tulip_busdma_allocmem(
 {
     bus_dma_segment_t segs[1];
     int nsegs, error;
-    error = bus_dmamem_alloc(sc->tulip_dmatag, size, 1, NBPG,
+    error = bus_dmamem_alloc(sc->tulip_dmatag, size, 1, PAGE_SIZE,
 			     segs, sizeof(segs)/sizeof(segs[0]),
 			     &nsegs, BUS_DMA_NOWAIT);
     if (error == 0) {

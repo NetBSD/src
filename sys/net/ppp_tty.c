@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.18.2.1 2000/11/20 18:10:10 bouyer Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.18.2.2 2000/11/22 16:06:01 bouyer Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -184,7 +184,7 @@ pppopen(dev, tp)
 
     s = spltty();
 
-    if (tp->t_line == PPPDISC) {
+    if (tp->t_linesw && tp->t_linesw->l_no == PPPDISC) {
 	sc = (struct ppp_softc *) tp->t_sc;
 	if (sc != NULL && sc->sc_devp == (void *) tp) {
 	    splx(s);
@@ -243,7 +243,7 @@ pppclose(tp, flag)
 
     s = spltty();
     ttyflush(tp, FREAD|FWRITE);
-    tp->t_line = 0;
+    tp->t_linesw = linesw[0]; /* default line discipline */
     sc = (struct ppp_softc *) tp->t_sc;
     if (sc != NULL) {
 	tp->t_sc = NULL;
@@ -308,7 +308,8 @@ pppread(tp, uio, flag)
      */
     s = spltty();
     for (;;) {
-	if (tp != (struct tty *) sc->sc_devp || tp->t_line != PPPDISC) {
+	if (tp != (struct tty *) sc->sc_devp || !tp->t_linesw || 
+	    tp->t_linesw->l_no != PPPDISC) {
 	    splx(s);
 	    return 0;
 	}
@@ -360,7 +361,7 @@ pppwrite(tp, uio, flag)
 
     if ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	return 0;		/* wrote 0 bytes */
-    if (tp->t_line != PPPDISC)
+    if (!tp->t_linesw || tp->t_linesw->l_no != PPPDISC)
 	return (EINVAL);
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return EIO;

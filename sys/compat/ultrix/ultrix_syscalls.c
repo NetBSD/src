@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscalls.c,v 1.36.2.1 2000/11/20 18:08:44 bouyer Exp $ */
+/* $NetBSD: ultrix_syscalls.c,v 1.36.2.2 2000/11/22 16:03:01 bouyer Exp $ */
 
 /*
  * System call names.
@@ -18,7 +18,7 @@
 #include <compat/ultrix/ultrix_syscallargs.h>
 #endif /* _KERNEL && ! _LKM */
 
-char *ultrix_syscallnames[] = {
+const char * const ultrix_syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

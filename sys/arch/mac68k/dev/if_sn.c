@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.24.2.1 2000/11/20 20:12:17 bouyer Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.24.2.2 2000/11/22 16:00:32 bouyer Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -254,9 +254,7 @@ snsetup(sc, lladdr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+
 	if_attach(ifp);
 	ether_ifattach(ifp, lladdr);
 

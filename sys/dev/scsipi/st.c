@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.4 2000/11/20 09:59:29 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.5 2000/11/22 16:04:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct quirkdata {
 #define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 #define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
+#define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
@@ -199,14 +200,14 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, QIC_120}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, 12, {
+	 "ARCHIVE ", "VIPER 150  21247", ""},     {ST_Q_ERASE_NOIMM, 12, {
 		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
 		{0, 0, QIC_24}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "ARCHIVE ", "VIPER 150  21531", ""},     {0, 12, {
+	 "ARCHIVE ", "VIPER 150  21531", ""},     {ST_Q_ERASE_NOIMM, 12, {
 		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
@@ -248,7 +249,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
-	 "STK",      "9490",             ""},    
+	 "STK",      "9490",             ""},
 				{ST_Q_FORCE_BLKSIZE, 0, {
 		{0, 0, 0},				/* minor 0-3 */
 		{0, 0, 0},				/* minor 4-7 */
@@ -568,6 +569,7 @@ st_loadquirks(st)
 			mode2->density = mode->density;
 			st->modeflags[i] |= DENSITY_SET_BY_QUIRK;
 		}
+		mode2->quirks |= mode->quirks;
 		mode++;
 		mode2++;
 	}
@@ -743,8 +745,9 @@ stopen(dev, flags, mode, p)
 	 * If we are not mounted, then we should start a new
 	 * mount session.
 	 */
-	if ((st->flags & ST_MOUNTED) == 0) {
-		st_mount_tape(st, dsty, flags);
+	if (!(st->flags & ST_MOUNTED)) {
+		if ((error = st_mount_tape(dev, flags)) != 0)
+			goto bad;
 		st->last_dsty = dsty;
 	}
 
@@ -826,7 +829,7 @@ stclose(dev, flags, mode, p)
 			 *	operation a write?
 			 *
 			 *	Are there supposed to be 2FM at EOD?
-			 *	
+			 *
 			 * If both statements are true, then we backspace
 			 * one filemark.
 			 */
@@ -962,6 +965,23 @@ st_unmount(st, eject)
 	SC_DEBUG(periph, SCSIPI_DB1, ("unmounting\n"));
 	st_check_eod(st, FALSE, &nmarks, XS_CTL_IGNORE_NOT_READY);
 	st_rewind(st, 0, XS_CTL_IGNORE_NOT_READY);
+
+	/*
+	 * Section 9.3.3 of the SCSI specs states that a device shall return
+	 * the density value specified in the last succesfull MODE SELECT
+	 * after an unload operation, in case it is not able to
+	 * automatically determine the density of the new medium.
+	 *
+	 * So we instruct the device to use the default density, which will
+	 * prevent the use of stale density values (in particular,
+	 * in st_touch_tape().
+	 */
+	st->density = 0;
+	if (st_mode_select(st, 0) != 0) {
+		printf("%s: WARNING: cannot revert to default density\n",
+			st->sc_dev.dv_xname);
+	}
+
 	scsipi_prevent(periph, PR_ALLOW,
 	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 	if (eject)
@@ -1244,7 +1264,7 @@ ststart(periph)
 		}
 		/*
 		 * If we are at EOM but have not reported it
-		 * yet then we should report it now. 
+		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			bp->b_resid = bp->b_bcount;
@@ -1376,8 +1396,15 @@ stioctl(dev, cmd, arg, flag, p)
 		 * (to get the current state of READONLY)
 		 */
 		error = st_mode_sense(st, XS_CTL_SILENT);
-		if (error)
-			break;
+		if (error) {
+			/*
+			 * Ignore the error if in control mode;
+			 * this is mandated by st(4).
+			 */
+			if (STMODE(dev) != CTRL_MODE)
+				break;
+			error = 0;
+		}
 		SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[ioctl: get status]\n"));
 		bzero(g, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
@@ -1543,8 +1570,13 @@ try_new_value:
 	/*
 	 * Check that the mode being asked for is aggreeable to the
 	 * drive. If not, put it back the way it was.
+	 *
+	 * If in control mode, we can make (persistent) mode changes
+	 * even if no medium is loaded (see st(4)).
 	 */
-	if ((error = st_mode_select(st, 0)) != 0) {/* put it back as it was */
+	if ((STMODE(dev) != CTRL_MODE || (st->flags & ST_MOUNTED) != 0) &&
+	    (error = st_mode_select(st, 0)) != 0) {
+		/* put it back as it was */
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		st->density = hold_density;
 		st->blksize = hold_blksize;
@@ -1619,12 +1651,6 @@ st_read_block_limits(st, flags)
 	struct scsi_block_limits_data block_limits;
 	struct scsipi_periph *periph = st->sc_periph;
 	int error;
-
-	/*
-	 * First check if we have it all loaded
-	 */
-	if ((periph->periph_flags & PERIPH_MEDIA_LOADED))
-		return (0);
 
 	/*
 	 * do a 'Read Block Limits'
@@ -1818,7 +1844,7 @@ st_cmprss(st, onoff)
 again:
 	bzero(&scsi_pdata, scsi_dlen);
 	error = scsipi_command(periph,
-	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
+	    (struct scsipi_generic *)&scmd, sizeof(scmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
 	    ST_RETRIES, ST_CTL_TIME, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -1938,17 +1964,20 @@ st_erase(st, full, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = ERASE;
 	if (full) {
-		cmd.byte2 = SE_IMMED|SE_LONG;
+		cmd.byte2 = SE_LONG;
 		tmo = ST_SPC_TIME;
 	} else {
 		tmo = ST_IO_TIME;
-		cmd.byte2 = SE_IMMED;
 	}
 
 	/*
-	 * XXX We always do this asynchronously, for now.  How long should
-	 * we wait if we want to (eventually) to it synchronously?
+	 * XXX We always do this asynchronously, for now, unless the device
+	 * has the ST_Q_ERASE_NOIMM quirk.  How long should we wait if we
+	 * want to (eventually) to it synchronously?
 	 */
+	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
+		cmd.byte2 |= SE_IMMED;
+
 	return (scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, tmo, NULL, flags));
@@ -2450,16 +2479,22 @@ st_interpret_sense(xs)
 			retval = 0;
 		}
 	}
+
+	/*
+	 * If generic sense processing will continue, we should not
+	 * print sense info here.
+	 */
+	if (retval == SCSIRET_CONTINUE)
+		doprint = 0;
+
+	if (doprint) {
 #ifdef	SCSIVERBOSE
-	if (doprint) {
 		scsipi_print_sense(xs, 0);
-	}
 #else
-	if (doprint) {
 		scsipi_printaddr(periph);
 		printf("Sense Key 0x%02x", key);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-			switch (key) { 
+			switch (key) {
 			case SKEY_NOT_READY:
 			case SKEY_ILLEGAL_REQUEST:
 			case SKEY_UNIT_ATTENTION:
@@ -2467,7 +2502,7 @@ st_interpret_sense(xs)
 				break;
 			case SKEY_BLANK_CHECK:
 				printf(", requested size: %d (decimal)", info);
-				break; 
+				break;
 			case SKEY_ABORTED_COMMAND:
 				if (xs->retries)
 					printf(", retrying");
@@ -2477,16 +2512,16 @@ st_interpret_sense(xs)
 			default:
 				printf(", info = %d (decimal)", info);
 			}
-		} 
+		}
 		if (sense->extra_len != 0) {
-			int n; 
-			printf(", data ="); 
+			int n;
+			printf(", data =");
 			for (n = 0; n < sense->extra_len; n++)
 				printf(" %02x", sense->cmd_spec_info[n]);
-		} 
+		}
 		printf("\n");
-	}
 #endif
+	}
 	return (retval);
 }
 
@@ -2520,7 +2555,16 @@ st_touch_tape(st)
 
 	if ((error = st_mode_sense(st, 0)) != 0)
 		goto bad;
-	st->blksize = 1024;
+
+	/*
+	 * If the block size is already known from the
+	 * sense data, use it. Else start probing at 1024.
+	 */
+	if (st->media_blksize > 0)
+		st->blksize = st->media_blksize;
+	else
+		st->blksize = 1024;
+
 	do {
 		switch (st->blksize) {
 		case 512:
@@ -2532,8 +2576,17 @@ st_touch_tape(st)
 			readsize = 1;
 			st->flags &= ~ST_FIXEDBLOCKS;
 		}
-		if ((error = st_mode_select(st, 0)) != 0)
-			goto bad;
+		if ((error = st_mode_select(st, XS_CTL_SILENT)) != 0) {
+			/*
+			 * The device did not agree with the proposed
+			 * block size. If we exhausted our options,
+			 * return failure, else try another.
+			 */
+			if (readsize == 1)
+				goto bad;
+			st->blksize -= 512;
+			continue;
+		}
 		st_read(st, buf, readsize, XS_CTL_SILENT);	/* XXX */
 		if ((error = st_rewind(st, 0, 0)) != 0) {
 bad:			free(buf, M_TEMP);

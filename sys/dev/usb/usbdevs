@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.2 2000/11/20 11:43:30 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.3 2000/11/22 16:05:07 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -686,6 +686,7 @@ product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 /* Prolific products */
 product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
+product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 
 /* Qtronix products */
@@ -724,6 +725,7 @@ product SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
 
 /* SONY products */
 product SONY DSC		0x0010	Sony DSC cameras
+product SONY MSC		0x0032	Sony MSC memory stick slot
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator

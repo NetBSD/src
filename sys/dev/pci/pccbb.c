@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.2 2000/11/20 11:42:29 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.3 2000/11/22 16:04:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -745,6 +745,7 @@ pccbb_chipinit(sc)
 	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
 	reg &= ~CB_BCR_INTR_IREQ_ENABLE;	/* use PCI Intr */
 	reg |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
+	reg |= CB_BCR_RESET_ENABLE;		/* assert reset */
 	pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
 
 	switch (sc->sc_chipset) {
@@ -785,6 +786,15 @@ pccbb_chipinit(sc)
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT0, 0);
 	pci_conf_write(pc, tag, PCI_CB_IOBASE1, 0xffffffff);
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT1, 0);
+
+	/* reset 16-bit pcmcia bus */
+	bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
+	    0x800 + PCIC_INTR,
+	    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
+		0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
+
+	/* turn of power */
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 }
 
 
@@ -829,7 +839,7 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	 *    needs that while in PCMCIA mode.
 	 * 4) Clear any pending CSC interrupt.
 	 */
-	Pcic_write(ph, PCIC_INTR, PCIC_INTR_ENABLE | PCIC_INTR_RESET);
+	Pcic_write(ph, PCIC_INTR, PCIC_INTR_ENABLE);
 	if (sc->sc_chipset == CB_TI113X) {
 		Pcic_write(ph, PCIC_CSC_INTR, 0);
 	} else {

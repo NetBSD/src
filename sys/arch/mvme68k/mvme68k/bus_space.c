@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.2.2 2000/11/20 20:15:23 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.3 2000/11/22 16:00:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ bus_space_map(bust, addr, size, flags, bushp)
 	if ( bust != MVME68K_VME_BUS_SPACE )
 		panic("bus_space_map: bad space tag");
 
-	seg.ds_addr = m68k_trunc_page(addr);
+	seg._ds_cpuaddr = m68k_trunc_page(addr);
 	seg.ds_len = m68k_round_page(size);
 
 	rv = _bus_dmamem_map(NULL, &seg, 1, seg.ds_len, &va,

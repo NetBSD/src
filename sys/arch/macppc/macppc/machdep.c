@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.1 2000/11/20 20:13:02 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.2 2000/11/22 16:00:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -109,7 +109,7 @@ struct ofw_translations {
 };
 
 int ofkbd_cngetc(dev_t);
-void ofkbd_cnpollc(dev_t, int);
+void cninit_kd(void);
 int lcsplx(int);
 void install_extint(void (*)(void));
 int save_ofmap(struct ofw_translations *, int);
@@ -314,6 +314,8 @@ initppc(startkernel, endkernel, args)
 
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 #ifdef IPKDB
 	/*
@@ -813,148 +815,29 @@ mapiodev(pa, len)
 
 #include "akbd.h"
 #include "ukbd.h"
-#include "uhci.h"
-#include "ohci.h"
 #include "ofb.h"
 #include "ite.h"
 #include "zstty.h"
-
-
-int console_node = -1;
 
 void
 cninit()
 {
 	struct consdev *cp;
-	int l, node;
-	int stdout;
-	int akbd_ih, akbd;
+	int stdout, node;
 	char type[16];
 
-	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	if (l != sizeof(stdout))
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout))
+	    != sizeof(stdout))
 		goto nocons;
+
 	node = OF_instance_to_package(stdout);
-
 	bzero(type, sizeof(type));
-	l = OF_getprop(node, "device_type", type, sizeof(type));
-	if (l == -1 || l >= sizeof(type) - 1)
+	if (OF_getprop(node, "device_type", type, sizeof(type)) == -1)
 		goto nocons;
-
-	console_node = node;
 
 #if NOFB > 0
 	if (strcmp(type, "display") == 0) {
-		int stdin;
-
-		/*
-		 * Attach the console output now (so we can see
-		 * debugging messages, if any).
-		 */
-		ofb_cnattach();
-
-		/*
-		 * We must determine which keyboard type we have.
-		 */
-		l = OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
-		if (l != sizeof(stdin)) {
-			printf("WARNING: no `stdin' property in /chosen\n");
-			return;
-		}
-
-		node = OF_instance_to_package(stdin);
-		bzero(type, sizeof(type));
-		l = OF_getprop(node, "name", type, sizeof(type));
-		if (l == -1 || l >= sizeof(type) - 1) {
-			printf("WARNING: bad `name' property for stdin\n");
-			return;
-		}
-
-		if (strcmp(type, "keyboard") != 0) {
-			printf("WARNING: stdin is not a keyboard: %s\n",
-			    type);
-			return;
-		}
-
-		/*
-		 * Newer PowerBook G3 has /psuedo-hid and ADB keyboard.
-		 * So, test "`adb-kbd-ihandle" method and use the value if
-		 * it succeeded.
-		 */
-#if NUKBD > 0
-		if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
-		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
-			stdin = akbd_ih;
-			node = akbd;
-		}
-#endif
-#if NAKBD > 0
-		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
-		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
-			stdin = akbd_ih;
-			node = akbd;
-		}
-#endif
-
-		node = OF_parent(node);
-		bzero(type, sizeof(type));
-		l = OF_getprop(node, "name", type, sizeof(type));
-		if (l == -1 || l >= sizeof(type) - 1) { 
-			printf("WARNING: bad `name' property keyboard "
-			    "parent\n");
-			return;
-		}
-
-		if (strcmp(type, "adb") == 0) {
-#if NAKBD > 0
-			printf("console keyboard type: ADB\n");
-			akbd_cnattach();
-#else
-			panic("akbd support not in kernel");
-#endif
-			return;
-		}
-
-		/*
-		 * We're not an ADB keyboard; must be USB.  Unfortunately,
-		 * we have a few problems:
-		 *
-		 *	(1) The stupid Macintosh firmware uses a
-		 *	    `psuedo-hid' (yes, they even spell it
-		 *	    incorrectly!) which apparently merges
-		 *	    all USB keyboard input into a single
-		 *	    input stream.  Because of this, we can't
-		 *	    actually determine which USB controller
-		 *	    or keyboard is really the console keyboard!
-		 *
-		 *	(2) Even if we could, USB requires a lot of
-		 *	    the kernel to be running in order for it
-		 *	    to work.
-		 *
-		 * So, what we do is this:
-		 *
-		 *	(1) Tell the ukbd driver that it is the console.
-		 *	    At autoconfiguration time, it will attach the
-		 *	    first USB keyboard instance as the console
-		 *	    keyboard.
-		 *
-		 *	(2) Until then, so that we have _something_, we
-		 *	    use the OpenFirmware I/O facilities to read
-		 *	    the keyboard.
-		 */
-#if NUKBD > 0
-		printf("console keyboard type: USB\n");
-		ukbd_cnattach();
-#else
-		panic("ukbd support not in kernel");
-#endif
-
-		/*
-		 * XXX This is a little gross, but we don't get to
-		 * XXX call wskbd_cnattach() twice.
-		 */
-		ofkbd_ihandle = stdin;
-		wsdisplay_set_cons_kbd(ofkbd_cngetc, ofkbd_cnpollc, NULL);
+		cninit_kd();
 		return;
 	}
 #endif /* NOFB > 0 */
@@ -989,6 +872,127 @@ nocons:
 	return;
 }
 
+#if NOFB > 0
+struct usb_kbd_ihandles {
+	struct usb_kbd_ihandles *next;
+	int ihandle;
+};
+
+void
+cninit_kd()
+{
+	int stdin, akbd;
+	int node;
+	struct usb_kbd_ihandles *ukbds;
+	char name[16];
+
+	/*
+	 * Attach the console output now (so we can see debugging messages,
+	 * if any).
+	 */
+	ofb_cnattach();
+
+	/*
+	 * We must determine which keyboard type we have.
+	 */
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin))
+	    != sizeof(stdin)) {
+		printf("WARNING: no `stdin' property in /chosen\n");
+		return;
+	}
+
+	node = OF_instance_to_package(stdin);
+	bzero(name, sizeof(name));
+	OF_getprop(node, "name", name, sizeof(name));
+	if (strcmp(name, "keyboard") != 0) {
+		printf("WARNING: stdin is not a keyboard: %s\n", name);
+		return;
+	}
+
+#if NAKBD > 0
+	bzero(name, sizeof(name));
+	OF_getprop(OF_parent(node), "name", name, sizeof(name));
+	if (strcmp(name, "adb") == 0) {
+		printf("console keyboard type: ADB\n");
+		akbd_cnattach();
+		goto kbd_found;
+	}
+#endif
+
+	/*
+	 * We're not an ADB keyboard; must be USB.  Unfortunately,
+	 * we have a few problems:
+	 *
+	 *	(1) The stupid Macintosh firmware uses a
+	 *	    `psuedo-hid' (yes, they even spell it
+	 *	    incorrectly!) which apparently merges
+	 *	    all USB keyboard input into a single
+	 *	    input stream.  Because of this, we can't
+	 *	    actually determine which USB controller
+	 *	    or keyboard is really the console keyboard!
+	 *
+	 *	(2) Even if we could, USB requires a lot of
+	 *	    the kernel to be running in order for it
+	 *	    to work.
+	 *
+	 * So, what we do is this:
+	 *
+	 *	(1) Tell the ukbd driver that it is the console.
+	 *	    At autoconfiguration time, it will attach the
+	 *	    first USB keyboard instance as the console
+	 *	    keyboard.
+	 *
+	 *	(2) Until then, so that we have _something_, we
+	 *	    use the OpenFirmware I/O facilities to read
+	 *	    the keyboard.
+	 */
+
+	/*
+	 * stdin is /psuedo-hid/keyboard.  Test `adb-kbd-ihandle and
+	 * `usb-kbd-ihandles to figure out the real keyboard(s).
+	 *
+	 * XXX This must be called before pmap_bootstrap().
+	 */
+
+#if NUKBD > 0
+	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) != -1 &&
+	    ukbds != NULL && ukbds->ihandle != 0 &&
+	    OF_instance_to_package(ukbds->ihandle) != -1) {
+
+		printf("console keyboard type: USB\n");
+		ukbd_cnattach();
+		goto kbd_found;
+	}
+#endif
+
+#if NAKBD > 0
+	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
+	    akbd != 0 &&
+	    OF_instance_to_package(akbd) != -1) {
+
+		printf("console keyboard type: ADB\n");
+		stdin = akbd;
+		akbd_cnattach();
+		goto kbd_found;
+	}
+#endif
+
+	/*
+	 * No keyboard is found.  Just return.
+	 */
+	printf("no console keyboard\n");
+	return;
+
+kbd_found:
+	/*
+	 * XXX This is a little gross, but we don't get to call
+	 * XXX wskbd_cnattach() twice.
+	 */
+	ofkbd_ihandle = stdin;
+	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
+}
+#endif
+
 /*
  * Bootstrap console keyboard routines, using OpenFirmware I/O.
  */
@@ -997,20 +1001,11 @@ ofkbd_cngetc(dev)
 	dev_t dev;
 {
 	u_char c = '\0';
-	int l;
+	int len;
 
 	do {
-		l = OF_read(ofkbd_ihandle, &c, 1);
-	} while (l != 1);
+		len = OF_read(ofkbd_ihandle, &c, 1);
+	} while (len != 1);
 
-	return (c);
-}
-
-void
-ofkbd_cnpollc(dev, on)
-	dev_t dev;
-	int on;
-{
-
-	/* Nothing to do; always polled. */
+	return c;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.1 2000/11/20 20:25:43 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.30.2.2 2000/11/22 16:01:40 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -198,7 +198,7 @@ kdb_trap(type, tf)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		printf("kernel: %s trap", trap_type[type & 0xff]);
+		printf("kernel: %s trap\n", trap_type[type & 0xff]);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/

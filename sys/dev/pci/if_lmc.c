@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.1.8.1 2000/11/20 11:42:22 bouyer Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.1.8.2 2000/11/22 16:04:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -948,7 +948,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 	do {
 		int len = m0->m_len;
 		caddr_t addr = mtod(m0, caddr_t);
-		unsigned clsize = NBPG - (((u_long) addr) & PGOFSET);
+		unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 		while (len > 0) {
 			unsigned slen = min(len, clsize);
@@ -1013,7 +1013,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 			if (partial)
 				continue;
 #endif
-			clsize = NBPG;
+			clsize = PAGE_SIZE;
 		}
 	} while ((m0 = m0->m_next) != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.5.10.1 2000/11/20 11:43:13 bouyer Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.5.10.2 2000/11/22 16:04:57 bouyer Exp $	*/
 
 
 /*
@@ -28,7 +28,7 @@ typedef struct scsi_state {
 #define DISCONN		0x001	/* true if currently disconnected from bus */
 #define DMA_IN_PROGRESS	0x002	/* true if data DMA started */
 #define DMA_IN		0x004	/* true if reading from SCSI device */
-#define DMA_RESUME	0x08	/* true if DMA was interrupted by disc. */
+#define DMA_RESUME	0x008	/* true if DMA was interrupted by disc. */
 #define DMA_OUT		0x010	/* true if writing to SCSI device */
 #define DID_SYNC	0x020	/* true if synchronous offset was negotiated */
 #define TRY_SYNC	0x040	/* true if try neg. synchronous offset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1.28.1 2000/11/20 20:31:12 bouyer Exp $	*/
+/*	$NetBSD: trap.h,v 1.1.28.2 2000/11/22 16:01:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,10 +47,17 @@
 #define	EXC_TRC		0x0d00		/* Trace */
 #define	EXC_FPA		0x0e00		/* Floating-point Assist */
 
-/* The following are only available on 604: */
+/* The following are only available on 7400(G4): */
+#define	EXC_VEC		0x0f20		/* AltiVec Unavailable */
+#define	EXC_VECAST	0x1600		/* AltiVec Assist */
+
+/* The following are only available on 604/750/7400: */
 #define	EXC_PERF	0x0f00		/* Performance Monitoring */
 #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
 #define	EXC_SMI		0x1400		/* System Managment Interrupt */
+
+/* The following are only available on 750/7400: */
+#define	EXC_THRM	0x1700		/* Thermal Management Interrupt */
 
 /* And these are only on the 603: */
 #define	EXC_IMISS	0x1000		/* Instruction translation miss */

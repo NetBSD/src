@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27.10.1 2000/11/20 20:12:14 bouyer Exp $	*/
+/*	$NetBSD: adb.c,v 1.27.10.2 2000/11/22 16:00:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -285,8 +285,16 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
 		 *  - stop bit (with SRQ): 140 usec
 		 * Total: 6900 usec
+		 *
+		 * This is the total time allowed by the specification.  Any
+		 * device that doesn't conform to this will fail to operate
+		 * properly on some Apple systems.  In spite of this we
+		 * double the time to wait; some Cuda-based apparently
+		 * queues some commands and allows the main CPU to continue
+		 * processing (radical concept, eh?).  To be safe, allow
+		 * time for two complete ADB transactions to occur.
 		 */
-		for (tmout = 8000; !flag && tmout >= 10; tmout -= 10)
+		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
 			delay(10);
 		if (!flag && tmout > 0)
 			delay(tmout);

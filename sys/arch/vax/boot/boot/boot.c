@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3.2.1 2000/11/20 20:32:35 bouyer Exp $ */
+/*	$NetBSD: boot.c,v 1.3.2.2 2000/11/22 16:02:10 bouyer Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -99,7 +99,7 @@ Xmain(void)
 	int io;
 	int j, nu;
 	u_long marks[MARK_MAX];
-	extern const char *bootprog_rev, *bootprog_date;
+	extern const char bootprog_rev[], bootprog_date[];
 
 	io = 0;
 	skip = 1;

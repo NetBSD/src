@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.41.2.1 2000/11/20 18:08:14 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.41.2.2 2000/11/22 16:02:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -106,9 +106,7 @@
 #include <compat/ibcs2/ibcs2_utime.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_sysi86.h>
-
-extern struct emul emul_ibcs2_coff, emul_ibcs2_xout, emul_ibcs2_elf;
-
+#include <compat/ibcs2/ibcs2_exec.h>
 
 int
 ibcs2_sys_ulimit(p, v, retval)
@@ -775,7 +773,7 @@ ibcs2_sys_time(p, v, retval)
 
 	microtime(&tv);
 	*retval = tv.tv_sec;
-	if (p->p_emul != &emul_ibcs2_xout && SCARG(uap, tp))
+	if (p->p_emuldata == IBCS2_EXEC_XENIX && SCARG(uap, tp))
 		return copyout((caddr_t)&tv.tv_sec, (caddr_t)SCARG(uap, tp),
 			       sizeof(ibcs2_time_t));
 	else

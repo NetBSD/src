@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.2.14.1 2000/11/20 20:33:12 bouyer Exp $	*/
+/*	$NetBSD: cfl.c,v 1.2.14.2 2000/11/22 16:02:13 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -157,7 +157,13 @@ cflrw(dev, uio, flag)
 			if (error)
 				break;
 		}
-		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
+		if (uio->uio_rw == UIO_WRITE) {
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
+		} else {
+			bp->b_flags &= ~(B_WRITE|B_DONE);
+			bp->b_flags |= B_READ;
+		}
 		s = splconsmedia(); 
 		cflstart();
 		while ((bp->b_flags & B_DONE) == 0)

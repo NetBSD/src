@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.49.14.1 2000/11/20 19:58:42 bouyer Exp $	*/
+/*	$NetBSD: ser.c,v 1.49.14.2 2000/11/22 15:59:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -347,7 +347,7 @@ seropen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error =  (*linesw[tp->t_line].l_open)(dev, tp);
+	error =  (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -378,7 +378,7 @@ serclose(dev, flag, mode, p)
 	if (!(tp->t_state & TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
@@ -598,7 +598,7 @@ sereint(stat)
 	if (stat & SERDATRF_OVRUN)
 		log(LOG_WARNING, "ser0: silo overflow\n");
 
-	(*linesw[tp->t_line].l_rint)(c, tp);
+	(*tp->t_linesw->l_rint)(c, tp);
 }
 
 /*
@@ -639,7 +639,7 @@ sermint(unit)
 	istat = stat ^ last;
 
 	if (istat & serdcd) {
-		(*linesw[tp->t_line].l_modem)(tp, ISDCD(stat));
+		(*tp->t_linesw->l_modem)(tp, ISDCD(stat));
 	}
 
 	if ((istat & CIAB_PRA_CTS) && (tp->t_state & TS_ISOPEN) &&
@@ -679,7 +679,7 @@ serioctl(dev, cmd, data, flag, p)
 	if (!tp)
 		return ENXIO;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return(error);
 
@@ -797,7 +797,7 @@ serparam(tp, t)
 		(void)sermctl(tp->t_dev, TIOCM_DTR, DMSET);
 		custom.serper = (0 << 15) | ospeed;
 	}
-	(void)(*linesw[tp->t_line].l_modem)(tp, ISDCD(last_ciab_pra));
+	(void)(*tp->t_linesw->l_modem)(tp, ISDCD(last_ciab_pra));
 	
 	return(0);
 }
@@ -871,7 +871,7 @@ ser_outintr()
 	if (sob_ptr == sob_end) {
 		tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 		if (tp->t_line)
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		else
 			serstart(tp);
 		goto out;

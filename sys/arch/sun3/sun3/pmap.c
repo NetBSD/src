@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115.2.1 2000/11/20 20:28:03 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115.2.2 2000/11/22 16:02:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
@@ -236,6 +237,9 @@ static int pmap_version = 1;
 struct pmap kernel_pmap_store;
 #define kernel_pmap (&kernel_pmap_store)
 static u_char kernel_segmap[NSEGMAP];
+
+/* memory pool for pmap structures */
+struct pool	pmap_pmap_pool;
 
 /* statistics... */
 struct pmap_stats {
@@ -1950,6 +1954,10 @@ pmap_init()
 {
 
 	pv_init();
+
+	/* Initialize the pmap pool. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 }
 
 /*
@@ -2005,7 +2013,7 @@ pmap_create()
 {
 	pmap_t pmap;
 
-	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	pmap_pinit(pmap);
 	return pmap;
 }
@@ -2066,7 +2074,7 @@ pmap_destroy(pmap)
 	pmap_unlock(pmap);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 

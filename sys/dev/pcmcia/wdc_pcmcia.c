@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.3 2000/11/20 11:42:48 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.4 2000/11/22 16:04:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,65 +129,10 @@ struct wdc_pcmcia_product {
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
 };
 
-struct wdc_pcmcia_disk_device_interface_args {
-	int ddi_type;		/* interface type */
-	int ddi_reqfn;		/* function we are requesting iftype */
-	int ddi_curfn;		/* function we are currently parsing in CIS */
-};
-
-int	wdc_pcmcia_disk_device_interface_callback __P((struct pcmcia_tuple *,
-	    void *));
-int	wdc_pcmcia_disk_device_interface __P((struct pcmcia_function *));
 struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
 int	wdc_pcmcia_enable __P((struct device *, int));
-
-int
-wdc_pcmcia_disk_device_interface_callback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
-{
-	struct wdc_pcmcia_disk_device_interface_args *ddi = arg;
-
-	switch (tuple->code) {
-	case PCMCIA_CISTPL_FUNCID:
-		ddi->ddi_curfn++;
-		break;
-
-	case PCMCIA_CISTPL_FUNCE:
-		if (ddi->ddi_reqfn != ddi->ddi_curfn)
-			break;
-
-		/* subcode (disk device interface), data (interface type) */
-		if (tuple->length < 2)
-			break;
-
-		/* check type */
-		if (pcmcia_tuple_read_1(tuple, 0) !=
-		    PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE)
-			break;
-
-		ddi->ddi_type = pcmcia_tuple_read_1(tuple, 1);
-		return (1);
-	}
-	return (0);
-}
-
-int
-wdc_pcmcia_disk_device_interface(pf)
-	struct pcmcia_function *pf;
-{
-	struct wdc_pcmcia_disk_device_interface_args ddi;
-
-	ddi.ddi_reqfn = pf->number;
-	ddi.ddi_curfn = -1;
-	if (pcmcia_scan_cis((struct device *)pf->sc,
-	    wdc_pcmcia_disk_device_interface_callback, &ddi) > 0)
-		return (ddi.ddi_type);
-	else
-		return (-1);
-}
 
 struct wdc_pcmcia_product *
 wdc_pcmcia_lookup(pa)
@@ -223,22 +168,14 @@ wdc_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-	struct pcmcia_softc *sc;
-	int iftype;
+
+	if (pa->pf->function == PCMCIA_FUNCTION_DISK && 
+	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA) {
+		return 10;
+	}
 
 	if (wdc_pcmcia_lookup(pa) != NULL)
 		return (1);
-
-	if (pa->pf->function == PCMCIA_FUNCTION_DISK) {
-		sc = pa->pf->sc;
-
-		pcmcia_chip_socket_enable(sc->pct, sc->pch);
-		iftype = wdc_pcmcia_disk_device_interface(pa->pf);
-		pcmcia_chip_socket_disable(sc->pct, sc->pch);
-
-		if (iftype == PCMCIA_TPLFE_DDI_PCCARD_ATA)
-			return (1);
-	}
 
 	return (0);
 }

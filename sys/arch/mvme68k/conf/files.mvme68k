@@ -1,6 +1,8 @@
-#	$NetBSD: files.mvme68k,v 1.29.2.1 2000/11/20 20:15:15 bouyer Exp $
+#	$NetBSD: files.mvme68k,v 1.29.2.2 2000/11/22 16:00:50 bouyer Exp $
 
 # config file for mvme68k
+
+defopt	opt_m060sp.h		M060SP
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -125,6 +127,9 @@ file arch/mvme68k/mvme68k/vm_machdep.c
 file arch/m68k/m68k/cacheops.c
 file dev/cons.c
 file dev/cninit.c
+
+# Motorola 68060 support package
+include "arch/m68k/060sp/files.060sp"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.5.2.1 2000/11/20 20:24:28 bouyer Exp $ */
+/* $NetBSD: scif.c,v 1.5.2.2 2000/11/22 16:01:34 bouyer Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -277,10 +277,8 @@ void InitializeScif  __P((unsigned int));
 
 static void WaitFor __P((int));
 void PutcScif __P((unsigned char));
-void PutStrScif __P((unsigned char *));
 int ScifErrCheck __P((void));
 unsigned char GetcScif __P((void));
-int GetStrScif __P((unsigned char *, int));
 
 /*
  * WaitFor
@@ -384,19 +382,6 @@ PutcScif(c)
 }
 
 /*
- * PutStrScif
- * : unsigned char *s;
- */
-void
-PutStrScif(s)
-	unsigned char *s;
-{
-
-	while (*s)
-		PutcScif(*s++);
-}
-
-/*
  * : ScifErrCheck
  *	0x80 = error
  *	0x08 = frame error
@@ -439,46 +424,23 @@ GetcScif(void)
 {
 	unsigned char c, err_c;
 
-	/* wait for ready */
-	while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
-		;
-	err_c = SHREG_SCSSR2;
-	if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER | SCSSR2_PER)) != 0)
-		return(err_c |= 0x80);
+	while (1) {
+		/* wait for ready */
+		while ((SHREG_SCFDR2 & SCFDR2_RECVCNT) == 0)
+			;
 
-	c = SHREG_SCFRDR2;
+		c = SHREG_SCFRDR2;
+		err_c = SHREG_SCSSR2;
+		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF
+		    | SCSSR2_DR);
+		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
+		    | SCSSR2_PER)) == 0) {
+			return(c);
+		}
+	}
 
-	SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR);
-
-	return(c);
 }
 #endif
-
-/*
- * GetStrScif
- *  : unsigned char *s;
- *  : int size;
- */
-int
-GetStrScif(s, size)
-	unsigned char *s;
-	int size;
-{
-
-	for (; size ; size--) {
-		*s = GetcScif();
-		if (*s & 0x80)
-			return -1;
-		if (*s == CR) {
-			*s = 0;
-			break;
-		}
-		s++;
-	}
-	if (size == 0)
-		*s = 0;
-	return 0;
-}
 
 #if 0
 #define SCIF_MAX_UNITS 2
@@ -900,7 +862,7 @@ scifopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -924,7 +886,7 @@ scifclose(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
@@ -942,7 +904,7 @@ scifread(dev, uio, flag)
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -954,7 +916,7 @@ scifwrite(dev, uio, flag)
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -983,7 +945,7 @@ scifioctl(dev, cmd, data, flag, p)
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (EIO);
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1125,7 +1087,7 @@ scif_rxsoft(sc, tp)
 	struct scif_softc *sc;
 	struct tty *tp;
 {
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	int (*rint) __P((int c, struct tty *tp)) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr2;
@@ -1217,7 +1179,7 @@ scif_txsoft(sc, tp)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 integrate void
@@ -1240,14 +1202,14 @@ scif_stsoft(sc, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD));
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(msr, MSR_DCD));
 	}
 
 	if (ISSET(delta, sc->sc_msr_cts)) {
 		/* Block or unblock output according to flow control. */
 		if (ISSET(msr, sc->sc_msr_cts)) {
 			sc->sc_tx_stopped = 0;
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		} else {
 			sc->sc_tx_stopped = 1;
 		}
@@ -1576,9 +1538,6 @@ scifcnprobe(cp)
 	cp->cn_pri = CN_NORMAL;
 #endif
 }
-
-#define scif_gets GetStrScif
-#define scif_puts PutStrScif
 
 void
 scifcninit(cp)

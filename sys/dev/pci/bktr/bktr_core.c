@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_core.c,v 1.13.2.2 2000/11/20 22:35:46 bouyer Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.13.2.3 2000/11/22 16:04:29 bouyer Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.112 2000/10/15 14:18:06 phk Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -100,7 +100,6 @@
 
 #ifdef __FreeBSD__
 #include "bktr.h"
-#include "opt_devfs.h"
 #endif /* __FreeBSD__ */
 
 #if (                                                            \
@@ -131,7 +130,10 @@
 #include <sys/bus.h>		/* used by smbus and newbus */
 #endif
 
-#include <machine/clock.h>      /* for DELAY */
+#if (__FreeBSD_version < 500000)
+#include <machine/clock.h>              /* for DELAY */
+#endif
+
 #include <pci/pcivar.h>
 
 #if (__FreeBSD_version >=300000)
@@ -148,8 +150,11 @@
 #include <dev/bktr/bktr_audio.h>
 #include <dev/bktr/bktr_os.h>
 #include <dev/bktr/bktr_core.h>
+#if defined(BKTR_FREEBSD_MODULE)
+#include <dev/bktr/bktr_mem.h>
+#endif
 
-#if (NSMBUS > 0)
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 #include <dev/bktr/bktr_i2c.h>
 #include <dev/smbus/smbconf.h>
 #include <dev/iicbus/iiconf.h>
@@ -190,6 +195,8 @@ typedef unsigned int uintptr_t;
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
 #else
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -445,7 +452,7 @@ static void	remote_read(bktr_ptr_t bktr, struct bktr_remote *remote);
 static int	common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg );
 
 
-#if ((!defined(__FreeBSD__)) || (NSMBUS == 0) )
+#if !defined(BKTR_USE_FREEBSD_SMBUS)
 /*
  * i2c primitives for low level control of i2c bus. Added for MSP34xx control
  */
@@ -463,7 +470,11 @@ static int      i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last );
 void 
 common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 {
-	vm_offset_t	buf;
+#if defined(__NetBSD__)
+	vaddr_t		buf = 0;
+#else
+	vm_offset_t	buf = 0;
+#endif
 
 /***************************************/
 /* *** OS Specific memory routines *** */
@@ -489,25 +500,53 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 #endif
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
-	/* allocate space for dma program */
-	bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
-	bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
+	int		need_to_allocate_memory = 1;
 
-	/* allocte space for the VBI buffer */
-	bktr->vbidata  = get_bktr_mem(unit, VBI_DATA_SIZE);
-	bktr->vbibuffer = get_bktr_mem(unit, VBI_BUFFER_SIZE);
-
-	/* allocate space for pixel buffer */
-	if ( BROOKTREE_ALLOC )
-		buf = get_bktr_mem(unit, BROOKTREE_ALLOC);
-	else
-		buf = 0;
+/* If this is a module, check if there is any currently saved contiguous memory */
+#if defined(BKTR_FREEBSD_MODULE)
+	if (bktr_has_stored_addresses(unit) == 1) {
+		/* recover the addresses */
+		bktr->dma_prog     = bktr_retrieve_address(unit, BKTR_MEM_DMA_PROG);
+		bktr->odd_dma_prog = bktr_retrieve_address(unit, BKTR_MEM_ODD_DMA_PROG);
+		bktr->vbidata      = bktr_retrieve_address(unit, BKTR_MEM_VBIDATA);
+		bktr->vbibuffer    = bktr_retrieve_address(unit, BKTR_MEM_VBIBUFFER);
+		buf                = bktr_retrieve_address(unit, BKTR_MEM_BUF);
+		need_to_allocate_memory = 0;
+	}
 #endif
+
+	if (need_to_allocate_memory == 1) {
+		/* allocate space for dma program */
+		bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
+		bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
+
+		/* allocte space for the VBI buffer */
+		bktr->vbidata  = get_bktr_mem(unit, VBI_DATA_SIZE);
+		bktr->vbibuffer = get_bktr_mem(unit, VBI_BUFFER_SIZE);
+
+		/* allocate space for pixel buffer */
+		if ( BROOKTREE_ALLOC )
+			buf = get_bktr_mem(unit, BROOKTREE_ALLOC);
+		else
+			buf = 0;
+	}
+#endif	/* FreeBSD or BSDi */
+
+
+/* If this is a module, save the current contiguous memory */
+#if defined(BKTR_FREEBSD_MODULE)
+bktr_store_address(unit, BKTR_MEM_DMA_PROG,     bktr->dma_prog);
+bktr_store_address(unit, BKTR_MEM_ODD_DMA_PROG, bktr->odd_dma_prog);
+bktr_store_address(unit, BKTR_MEM_VBIDATA,      bktr->vbidata);
+bktr_store_address(unit, BKTR_MEM_VBIBUFFER,    bktr->vbibuffer);
+bktr_store_address(unit, BKTR_MEM_BUF,          buf);
+#endif
+
 
 	if ( bootverbose ) {
 		printf("%s: buffer size %d, addr 0x%lx\n",
 			bktr_name(bktr), BROOKTREE_ALLOC,
-			(u_long) vtophys((vaddr_t)buf));
+			(u_long) vtophys(buf));
 	}
 
 	if ( buf != 0 ) {
@@ -712,7 +751,7 @@ common_bktr_intr( void *arg )
 			}
 		}
 
-		OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
+		OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
 		OUTW(bktr, BKTR_GPIO_DMA_CTL, FIFO_ENABLED);
 		OUTW(bktr, BKTR_GPIO_DMA_CTL, bktr->capcontrol);
 
@@ -1241,7 +1280,11 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	struct meteor_counts	*counts;
 	struct meteor_video	*video;
 	struct bktr_capture_area *cap_area;
+#if defined(__NetBSD__)
+	vaddr_t			buf;
+#else
 	vm_offset_t		buf;
+#endif
 	int                     i;
 	char                    char_temp;
 
@@ -2690,7 +2733,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		pitch = bktr->video.width;
 	}
 	else {
-		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
+		target_buffer = (u_long) vtophys(bktr->bigbuf);
 		pitch = cols*Bpp;
 	}
 
@@ -2710,7 +2753,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys((vaddr_t)bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
 					(i * VBI_LINE_SIZE));
 	}
 
@@ -2761,7 +2804,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys((vaddr_t)bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 	}
 
@@ -2862,7 +2905,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		pitch = bktr->video.width;
 	}
 	else {
-		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
+		target_buffer = (u_long) vtophys(bktr->bigbuf);
 		pitch = cols*Bpp;
 	}
 
@@ -2909,7 +2952,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 2:
@@ -2918,7 +2961,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 3:
@@ -2926,7 +2969,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP; ;
-		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
 		break;
 	}
 
@@ -2973,7 +3016,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog) ;
+	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3016,7 +3059,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	if (bktr->video.addr)
 		target_buffer = (u_long) bktr->video.addr;
 	else
-		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
+		target_buffer = (u_long) vtophys(bktr->bigbuf);
 
 	buffer = target_buffer;
 
@@ -3042,7 +3085,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 2:
@@ -3050,7 +3093,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = OP_SYNC  | 1 << 24 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 3:
@@ -3058,7 +3101,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = OP_SYNC	 | 1 << 24 | 1 << 15 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3085,10 +3128,10 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC   |  1 << 24  | 1 << 15 |  BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 
 	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3134,7 +3177,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	if (bktr->video.addr)
 		target_buffer = (u_long) bktr->video.addr;
 	else
-		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
+		target_buffer = (u_long) vtophys(bktr->bigbuf);
     
 	buffer = target_buffer;
 
@@ -3159,7 +3202,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP ;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 2:
@@ -3167,7 +3210,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 		return;
 
 	case 3:
@@ -3175,7 +3218,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3201,7 +3244,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC  | 1 << 24 | 1 << 15 |   BKTR_VRE; 
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog) ;
+	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3235,7 +3278,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  	if (bktr->video.addr)
  		target_buffer = (u_long) bktr->video.addr;
  	else
- 		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
+ 		target_buffer = (u_long) vtophys(bktr->bigbuf);
      
 	buffer = target_buffer;
  	t1 = buffer;
@@ -3263,7 +3306,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
  		return;
 
  	case 2:
@@ -3271,14 +3314,14 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
  		return;
  
  	case 3:
  		*dma_prog++ = OP_SYNC |  1 << 24 | 1 << 15 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP ;
-		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3311,7 +3354,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC |  1 << 24 | 1 << 15 | BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
 	*dma_prog++ = 0;  /* NULL WORD */
 }
   
@@ -3471,7 +3514,7 @@ build_dma_prog( bktr_ptr_t bktr, char i_flag )
 		break;
 	}
 
-	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
+	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
 
 	rows = bktr->rows;
 	cols = bktr->cols;
@@ -3580,7 +3623,7 @@ start_capture( bktr_ptr_t bktr, unsigned type )
 	}
 	
 
-	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
+	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
 
 }
 
@@ -3717,7 +3760,7 @@ static int oformat_meteor_to_bt( u_long format )
 				 BT848_DATA_CTL_I2CSDA)
 
 /* Select between old i2c code and new iicbus / smbus code */
-#if (defined(__FreeBSD__) && (NSMBUS > 0))
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 
 /*
  * The hardware interface is actually SMB commands
@@ -3863,7 +3906,7 @@ static void remote_read(bktr_ptr_t bktr, struct bktr_remote *remote) {
 	return;
 }
 
-#else /* defined(__FreeBSD__) && (NSMBUS > 0) */
+#else /* defined(BKTR_USE_FREEBSD_SMBUS) */
 
 /*
  * Program the i2c bus directly
@@ -4119,7 +4162,7 @@ static void remote_read(bktr_ptr_t bktr, struct bktr_remote *remote) {
 	return;
 }
 
-#endif /* defined(__FreeBSD__) && (NSMBUS > 0) */
+#endif /* defined(BKTR_USE_FREEBSD_SMBUS) */
 
 
 #if defined( I2C_SOFTWARE_PROBE )

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74.2.3 2000/11/20 11:41:05 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.4 2000/11/22 16:03:34 bouyer Exp $ */
 
 
 /*
@@ -1082,6 +1082,12 @@ wdc_probe_caps(drvp)
 						continue;
 				if (!printed) {
 					printf("%s Ultra-DMA mode %d", sep, i);
+					if (i == 2)
+						printf(" (Ultra/33)");
+					else if (i == 4)
+						printf(" (Ultra/66)");
+					else if (i == 5)
+						printf(" (Ultra/100)");
 					sep = ",";
 					printed = 1;
 				}
@@ -1577,4 +1583,35 @@ wdc_delref(chp)
 	    adapt->adapt_enable != NULL)
 		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
+}
+
+void
+wdc_print_modes(struct channel_softc *chp)
+{
+	int drive;
+	struct ata_drive_datas *drvp;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		printf("%s(%s:%d:%d): using PIO mode %d",
+			drvp->drv_softc->dv_xname,
+			chp->wdc->sc_dev.dv_xname,
+			chp->channel, drive, drvp->PIO_mode);
+		if (drvp->drive_flags & DRIVE_DMA)
+			printf(", DMA mode %d", drvp->DMA_mode);
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
+			if (drvp->UDMA_mode == 2)
+				printf(" (Ultra/33)");
+			else if (drvp->UDMA_mode == 4)
+				printf(" (Ultra/66)");
+			else if (drvp->UDMA_mode == 5)
+				printf(" (Ultra/100)");
+		}
+		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+			printf(" (using DMA data transfers)");
+		printf("\n");
+	}
 }

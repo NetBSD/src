@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.38.2.1 2000/11/20 11:42:49 bouyer Exp $ */
+/*      $NetBSD: if_qe.c,v 1.38.2.2 2000/11/22 16:04:44 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -366,9 +366,6 @@ qeattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	return;
 
 	/*

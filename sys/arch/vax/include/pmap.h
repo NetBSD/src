@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37.2.1 2000/11/20 20:33:02 bouyer Exp $	   */
+/*	$NetBSD: pmap.h,v 1.37.2.2 2000/11/22 16:02:12 bouyer Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -86,10 +86,6 @@ struct pv_entry {
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };
-
-/* ROUND_PAGE used before vm system is initialized */
-#define ROUND_PAGE(x)	(((uint)(x) + PGOFSET) & ~PGOFSET)
-#define TRUNC_PAGE(x)	((uint)(x) & ~PGOFSET)
 
 /* Mapping macros used when allocating SPT */
 #define MAPVIRT(ptr, count)				\

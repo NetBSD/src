@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.17.2.1 2000/11/20 11:42:14 bouyer Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.17.2.2 2000/11/22 16:03:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -166,9 +166,6 @@ ofnet_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 #ifdef __BROKEN_DK_ESTABLISH
 	dk_establish(0, self);					/* XXX */
 #endif

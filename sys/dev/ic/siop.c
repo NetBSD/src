@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37.2.2 2000/11/20 11:40:54 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.37.2.3 2000/11/22 16:03:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -39,6 +39,8 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/endian.h>
 #include <machine/bus.h>
 
@@ -70,7 +72,7 @@
 #endif
 
 /* number of cmd descriptors per block */
-#define SIOP_NCMDPB (NBPG / sizeof(struct siop_xfer))
+#define SIOP_NCMDPB (PAGE_SIZE / sizeof(struct siop_xfer))
 
 /* Number of scheduler slot (needs to match script) */
 #define SIOP_NSLOTS 40
@@ -125,7 +127,8 @@ siop_script_sync(sc, ops)
 	int ops;
 {
 	if ((sc->features & SF_CHIP_RAM) == 0)
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG, ops);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0,
+		    PAGE_SIZE, ops);
 }
 
 static __inline__ u_int32_t siop_script_read __P((struct siop_softc *, u_int));
@@ -168,36 +171,36 @@ siop_attach(sc)
 	 * Allocate DMA-safe memory for the script and map it.
 	 */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
-		error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
-		    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, 
+		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: unable to allocate script DMA memory, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return;
 		}
-		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
 		    (caddr_t *)&sc->sc_script, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
 			printf("%s: unable to map script DMA memory, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return;
 		}
-		error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
-		    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
+		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 		if (error) {
 			printf("%s: unable to create script DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
-		    sc->sc_script, NBPG, NULL, BUS_DMA_NOWAIT);
+		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: unable to load script DMA map, "
 			    "error = %d\n", sc->sc_dev.dv_xname, error);
 			return;
 		}
 		sc->sc_scriptaddr = sc->sc_scriptdma->dm_segs[0].ds_addr;
-		sc->ram_size = NBPG;
+		sc->ram_size = PAGE_SIZE;
 	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->ready_list);
@@ -322,7 +325,7 @@ siop_reset(sc)
 
 	/* start script */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, PAGE_SIZE,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
@@ -372,7 +375,7 @@ siop_intr(v)
 	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
 	    cbdp = TAILQ_NEXT(cbdp, next)) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
-	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + NBPG) {
+	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
 			siop_cmd = &cbdp->cmds[dsa / sizeof(struct siop_xfer)];
 			siop_table_sync(siop_cmd,
@@ -1565,7 +1568,7 @@ siop_dump_script(sc)
 	struct siop_softc *sc;
 {
 	int i;
-	for (i = 0; i < NBPG / 4; i += 2) {
+	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
 		    le32toh(sc->sc_script[i]), le32toh(sc->sc_script[i+1]));
 		if ((le32toh(sc->sc_script[i]) & 0xe0000000) == 0xc0000000) {
@@ -1606,21 +1609,21 @@ siop_morecbd(sc)
 		goto bad3;
 	}
 	memset(newcbd->cmds, 0, sizeof(struct siop_cmd) * SIOP_NCMDPB);
-	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
+	error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg,
+	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate cbd DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad2;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
 	    (caddr_t *)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map cbd DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad2;
 	}
-	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1, NBPG, 0,
+	error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT, &newcbd->xferdma);
 	if (error) {
 		printf("%s: unable to create cbd DMA map, error = %d\n",
@@ -1628,7 +1631,7 @@ siop_morecbd(sc)
 		goto bad1;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, newcbd->xferdma, newcbd->xfers,
-	    NBPG, NULL, BUS_DMA_NOWAIT);
+	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load cbd DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

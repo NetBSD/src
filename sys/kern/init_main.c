@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157.2.1 2000/11/20 18:08:55 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.2 2000/11/22 16:05:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,6 @@
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-#include <sys/exec.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -144,29 +143,7 @@ static void check_console(struct proc *p);
 static void start_init(void *);
 void main(void);
 
-extern char sigcode[], esigcode[];
-#ifdef SYSCALL_DEBUG
-extern char *syscallnames[];
-#endif
-
-struct emul emul_netbsd = {
-	"netbsd",
-	NULL,
-	sendsig,
-	SYS_syscall,
-	SYS_MAXSYSCALL,
-	sysent,
-#ifdef SYSCALL_DEBUG
-	syscallnames,
-#else
-	NULL,
-#endif
-	0,
-	copyargs,
-	setregs,
-	sigcode,
-	esigcode,
-};
+extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -180,6 +157,7 @@ main(void)
 	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
+	rlim_t lim;
 	extern struct pdevinit pdevinit[];
 	extern void schedcpu(void *);
 	extern void disk_init(void);
@@ -302,10 +280,10 @@ main(void)
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
 	    maxproc < MAXUPRC ? maxproc : MAXUPRC;
 
-	i = ptoa(uvmexp.free);
-	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = i;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
+	lim = ptoa(uvmexp.free);
+	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	limit0.pl_corename = defcorename;
 	limit0.p_refcnt = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.4.2.2 2000/11/20 11:43:11 bouyer Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.4.2.3 2000/11/22 16:04:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,10 @@ struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), sunkbd_match, sunkbd_attach
 };
 
+struct  linesw sunkbd_disc =
+	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	  sunkbdinput, sunkbdstart, nullmodem };	/* 7- SUNKBDDISC */
+
 /*
  * sunkbd_match: how is this tty channel configured?
  */
@@ -128,14 +132,11 @@ sunkbd_attach(parent, self, aux)
 	struct cons_channel *cc;
 	int kbd_unit;
 
-	/* Remove tty from system */
-#if 0
-	tty_detach(tp);
-	callout_stop(&tp->t_outq_ch);
-	callout_stop(&tp->t_rstrt_ch);
-#endif
 	/* Set up the proper line discipline. */
-	tp->t_line = 7;
+	ttyldisc_init();
+	if (ttyldisc_add(&sunkbd_disc, -1) == -1)
+		panic("sunkbd_attach: sunkbd_disc");
+	tp->t_linesw = &sunkbd_disc;
 	tp->t_oflag &= ~OPOST;
 	tp->t_dev = args->kmta_dev;
 
@@ -158,6 +159,7 @@ sunkbd_attach(parent, self, aux)
 	cc->cc_iclose = kbd_cc_close;
 	cc->cc_upstream = NULL;
 	if (args->kmta_consdev) {
+		char magic[4];
 
 		/*
 		 * Hookup ourselves as the console input channel
@@ -170,6 +172,12 @@ sunkbd_attach(parent, self, aux)
 		args->kmta_consdev = cn_tab;
 		k->k_isconsole = 1;
 		printf(" (console input)");
+
+		/* Set magic to "L1-A" */
+		magic[0] = KBD_L1;
+		magic[1] = KBD_A;
+		magic[2] = 0;
+		cn_set_magic(magic);
 	} else {
 		extern void kd_attach_input(struct cons_channel *);
 

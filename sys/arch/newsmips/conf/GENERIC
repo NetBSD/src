@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.10.2.1 2000/11/20 20:17:17 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.10.2.2 2000/11/22 16:01:07 bouyer Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.10.2.1 $"
+#ident 		"GENERIC-$Revision: 1.10.2.2 $"
 
 maxusers	16
 
@@ -86,7 +86,11 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 options 	NFS_BOOT_BOOTPARAM
 
-config		netbsd	root on ? type ?
+# wscons options
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
+
+config	netbsd	root on ? type ?
 
 mainbus0 at root
 
@@ -123,10 +127,23 @@ fb0	at hb0 addr 0x88000000		# frame buffer
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
 
+#dmac*	at ap?				# dmac3
+#spifi*	at ap?				# SPIFI SCSI
+#scsibus* at spifi?
+
+xafb*	at ap?
+kb0	at ap?
+ms0	at ap?
+
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
+
+wsdisplay0 at fb? console ?
+wsdisplay0 at xafb? console ?
+wskbd0	at kb? console ?
+wsmouse0 at ms?
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals

@@ -1,5 +1,5 @@
-/*	$NetBSD: des_locl.h,v 1.3.2.2 2000/11/20 22:21:44 bouyer Exp $	*/
-/*	$KAME: des_locl.h,v 1.5 2000/08/31 07:27:27 itojun Exp $	*/
+/*	$NetBSD: des_locl.h,v 1.3.2.3 2000/11/22 16:03:06 bouyer Exp $	*/
+/*	$KAME: des_locl.h,v 1.6 2000/11/06 13:58:09 itojun Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995-1996 Eric Young (eay@mincom.oz.au)
@@ -61,8 +61,6 @@
 #include <crypto/des/des.h>
 
 #undef DES_PTR
-
-#include <sys/systm.h>
 
 #ifdef __STDC__
 #undef NOPROTO

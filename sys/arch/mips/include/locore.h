@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.21.2.1 2000/11/20 20:13:31 bouyer Exp $ */
+/* $NetBSD: locore.h,v 1.21.2.2 2000/11/22 16:00:43 bouyer Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -230,10 +230,15 @@ extern u_int	mips_L2CacheLSize;
 extern u_int	mips_CacheAliasMask;
 extern u_int	mips_CachePreferMask;
 
+#define mips_indexof(addr)	(((int)(addr)) & mips_CacheAliasMask)
+
 #ifdef MIPS3
 extern int	mips3_L1TwoWayCache;
 extern int	mips3_cacheflush_bug;
 #endif /* MIPS3 */
+
+void mips_pagecopy(caddr_t dst, caddr_t src);
+void mips_pagezero(caddr_t dst);
 
 /*
  * trapframe argument passed to trap()

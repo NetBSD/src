@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.2.8.1 2000/11/20 20:17:28 bouyer Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.2.8.2 2000/11/22 16:01:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,21 +62,22 @@
 #define	SW_AUTOSEL	0x07
 
 struct consdev *cn_tab = NULL;
-extern struct consdev consdev_bm, consdev_zs, consdev_zs_ap;
-extern struct fbdev *consfb;
+extern struct consdev consdev_zs, consdev_zs_ap;
 
-int tty00_is_console = 0;
+void fb_cnattach(void);
+void kb_hb_cnattach(void);
 
-void bmcons_putc(int);
-
-extern void fbbm_probe(), vt100_open(), setup_fnt(), setup_fnt24();
-extern int vt100_write();
+void xafb_cnattach(void);
+void kb_ap_cnattach(void);
 
 #include "fb.h"
+#include "xafb.h"
+#include "zsc.h"
 
 void
 consinit()
 {
+	volatile int *dipsw;
 	static int initted = 0;
 
 	if (initted)
@@ -84,52 +85,45 @@ consinit()
 
 	initted = 1;
 
+	switch (systype) {
+
+#ifdef news3400
+	case NEWS3400:
+		dipsw = (void *)DIP_SWITCH;
+
+#if NFB > 0
+		if (*dipsw & SW_CONSOLE) {
+			fb_cnattach();
+			kb_hb_cnattach();
+			return;
+		}
+#endif
+
+#if NZSC > 0
+		cn_tab = &consdev_zs;
+		(*cn_tab->cn_init)(cn_tab);
+#endif
+
+#endif /* news3400 */
+
 #ifdef news5000
-	/* currently only serial console is available on news5000 */
-	if (systype == NEWS5000) {
-		tty00_is_console = 1;
+	case NEWS5000:
+		dipsw = (void *)NEWS5000_DIP_SWITCH;
+
+#if NXAFB > 0
+		if (*dipsw & SW_CONSOLE) {
+			xafb_cnattach();
+			kb_ap_cnattach();
+			return;
+		}
+#endif
+
+#if NZSC > 0
 		cn_tab = &consdev_zs_ap;
 		(*cn_tab->cn_init)(cn_tab);
 		return;
+#endif
+
+#endif /* news5000 */
 	}
-#endif
-
-#ifdef news3400
-	if (systype == NEWS3400) {
-		int dipsw = (int)*(volatile u_char *)DIP_SWITCH;
-#if NFB > 0
-		if ((dipsw & SW_CONSOLE) != 0) {
-#if defined(news3200) || defined(news3400)	/* KU:XXX */
-			fbbm_probe(dipsw|2);
-#else
-			fbbm_probe(dipsw);
-#endif
-			if (consfb != NULL) {
-				vt100_open();
-				setup_fnt();
-				setup_fnt24();
-				cn_tab = &consdev_bm;
-				(*cn_tab->cn_init)(cn_tab);
-				return;
-			}
-		}
-#endif /* NFB */
-		dipsw &= ~SW_CONSOLE;
-		tty00_is_console = 1;
-		cn_tab = &consdev_zs;
-		(*cn_tab->cn_init)(cn_tab);
-	}
-#endif
 }
-
-#if NFB > 0
-void
-bmcons_putc(c)
-	int c;
-{
-	char cnbuf[1];
-
-	cnbuf[0] = (char)c;
-	vt100_write(0, cnbuf, 1);
-}
-#endif

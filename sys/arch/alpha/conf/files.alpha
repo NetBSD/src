@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104.2.1 2000/11/20 19:56:45 bouyer Exp $
+# $NetBSD: files.alpha,v 1.104.2.2 2000/11/22 15:59:44 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -64,6 +64,12 @@ file	arch/alpha/alpha/cpu.c		cpu
 #
 
 include "dev/mii/files.mii"
+
+#
+# Machine-independent I2O drivers.
+#
+
+include "dev/i2o/files.i2o"
 
 #
 # Machine-independent SCSI drivers
@@ -566,3 +572,7 @@ include "dev/pcmcia/files.pcmcia"
 # Machine-independent USB device support
 #
 include "dev/usb/files.usb"
+#
+# Machine-independent IEEE 1394 device support
+#
+include "dev/ieee1394/files.ieee1394"

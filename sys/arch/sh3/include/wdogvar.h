@@ -1,4 +1,4 @@
-/* $NetBSD: wdogvar.h,v 1.3.2.2 2000/11/20 20:24:31 bouyer Exp $ */
+/* $NetBSD: wdogvar.h,v 1.3.2.3 2000/11/22 16:01:34 bouyer Exp $ */
 
 #ifndef _SH3_WDOGVAR_H_
 #define _SH3_WDOGVAR_H_
@@ -9,8 +9,13 @@
 #define SIOSTARTWDOG	_IO('S', 0x1)
 #define SIOSTOPWDOG	_IO('S', 0x2)
 #define	SIOSETWDOG	_IOW('S', 0x3, int)
+#define SIOWDOGSETMODE	_IOW('S', 0x4, int)
+
+#define WDOGM_RESET	1
+#define WDOGM_INTR	2
 
 #ifdef _KERNEL
+extern unsigned int maxwdog;
 extern void wdog_wr_cnt __P((unsigned char));
 extern void wdog_wr_csr __P((unsigned char));
 #endif

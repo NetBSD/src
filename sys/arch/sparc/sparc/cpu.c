@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94.2.1 2000/11/20 20:25:43 bouyer Exp $ */
+/*	$NetBSD: cpu.c,v 1.94.2.2 2000/11/22 16:01:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -739,7 +739,7 @@ getcacheinfo_sun4(sc, node)
 	}
 }
 
-struct	idprom idprom;
+struct	idprom sun4_idprom_store;
 void	getidprom __P((struct idprom *, int size));
 
 void
@@ -749,8 +749,8 @@ cpumatch_sun4(sc, mp, node)
 	int	node;
 {
 
-	getidprom(&idprom, sizeof(idprom));
-	switch (idprom.id_machine) {
+	getidprom(&sun4_idprom_store, sizeof(struct idprom));
+	switch (sun4_idprom_store.id_machine) {
 	/* XXX: don't know about Sun4 types */
 	case ID_SUN4_100:
 		sc->cpu_type = CPUTYP_4_100;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.60.2.1 2000/11/20 18:10:22 bouyer Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.60.2.2 2000/11/22 16:06:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -166,10 +166,10 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	}
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_bindhashtbl =
-	    hashinit(bindhashsize, M_PCB, M_WAITOK, &table->inpt_bindhash);
-	table->inpt_connecthashtbl =
-	    hashinit(connecthashsize, M_PCB, M_WAITOK, &table->inpt_connecthash);
+	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
+	    M_WAITOK, &table->inpt_bindhash);
+	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST,
+	    M_PCB, M_WAITOK, &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
 }

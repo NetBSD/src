@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.1.22.1 2000/11/20 11:40:37 bouyer Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.1.22.2 2000/11/22 16:03:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,13 @@
  *
  * Derived from: datasheet "ICM7170 a uP-Compatible Real-Time Clock"
  *                          document #301680-005, Dec 85
+ *
+ * Note that this device provides both time-of-day and interval timer
+ * functionality. Both functions use the same control registers. On top
+ * of that, the command control register is write-only. Currently, this
+ * driver assumes that the interval timer is to be enabled, and hence
+ * always sets/restores the INTERSIL_CMD_IENABLE control bit when
+ * manipulating the TOD.
  */
 
 struct intersil_dt {		       /* from p. 7 of 10 */
@@ -96,7 +103,7 @@ struct intersil7170 {
 #define INTERSIL_CMD_TEST_MODE      0x20
 #define INTERSIL_CMD_NORMAL_MODE    0x0
 
-/* bit assignments for interrupt register r/w, p 7 of 10*/
+/* bit assignments for interrupt register r/w, p 7 of 10 */
 
 #define INTERSIL_INTER_ALARM       0x1 /* r/w */
 #define INTERSIL_INTER_CSECONDS    0x2 /* r/w */
@@ -109,5 +116,7 @@ struct intersil7170 {
 
 #define INTERSIL_INTER_BITS "\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
 
+#ifndef sun3 /* XXX sun3 does not use MI driver, which needs bus_space(9) */
 todr_chip_handle_t intersil7170_attach(bus_space_tag_t, bus_space_handle_t, int);
+#endif
 #endif	/* _INTERSIL7170_H */

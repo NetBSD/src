@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.7.2.1 2000/11/20 11:43:07 bouyer Exp $	*/
+/*	$NetBSD: qe.c,v 1.7.2.2 2000/11/22 16:04:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -329,11 +329,6 @@ qeattach(parent, self, aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 }
 
 /*

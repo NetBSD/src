@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.2.8.1 2000/11/20 11:43:04 bouyer Exp $ */
+/*	$NetBSD: bpp.c,v 1.2.8.2 2000/11/22 16:04:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,13 @@
 #include <dev/sbus/bppreg.h>
 
 #define splbpp()	spltty()	/* XXX */
+
+#ifdef DEBUG
+#define DPRINTF(x) do { if (bppdebug) printf x ; } while (0)
+int bppdebug = 1;
+#else
+#define DPRINTF(x)
+#endif
 
 #if 0
 struct bpp_param {
@@ -187,7 +194,7 @@ bppattach(parent, self, aux)
 		sc->sc_intrchain = bppintr;
 		sc->sc_intrchainarg = dsc;
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
-					 lsi64854_pp_intr, sc);
+					 bppintr, sc);
 	}
 
 	/* Allocate buffer XXX - should actually use dmamap_uio() */
@@ -198,10 +205,19 @@ bppattach(parent, self, aux)
 	{
 	bus_space_handle_t h = sc->sc_regs;
 	struct hwstate *hw = &dsc->sc_hwdefault;
+	int ack_rate = sa->sa_frequency/1000000;
+
 	hw->hw_hcr = bus_space_read_2(sc->sc_bustag, h, L64854_REG_HCR);
 	hw->hw_ocr = bus_space_read_2(sc->sc_bustag, h, L64854_REG_OCR);
 	hw->hw_tcr = bus_space_read_1(sc->sc_bustag, h, L64854_REG_TCR);
 	hw->hw_or = bus_space_read_1(sc->sc_bustag, h, L64854_REG_OR);
+
+	DPRINTF(("bpp: hcr %x ocr %x tcr %x or %x\n",
+		 hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or));
+	/* Set these to sane values */
+	hw->hw_hcr = ((ack_rate<<BPP_HCR_DSS_SHFT)&BPP_HCR_DSS_MASK)
+		| ((ack_rate<<BPP_HCR_DSW_SHFT)&BPP_HCR_DSW_MASK);
+	hw->hw_ocr |= BPP_OCR_ACK_OP;
 	}
 }
 
@@ -224,6 +240,8 @@ bpp_setparams(sc, hw)
 	irq &= ~BPP_ALLIRP;
 	irq |= (hw->hw_irq & BPP_ALLIRP);
 	bus_space_write_2(t, h, L64854_REG_ICR, irq);
+	DPRINTF(("bpp_setparams: hcr %x ocr %x tcr %x or %x, irq %x\n",
+		 hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or, irq));
 }
 
 int
@@ -254,7 +272,7 @@ bppopen(dev, flags, mode, p)
 	splx(s);
 
 	/* Enable interrupts */
-	irq = BPP_ALLEN;
+	irq = BPP_ERR_IRQ_EN;
 	irq |= sc->sc_hwdefault.hw_irq;
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR, irq);
 	return (0);
@@ -336,6 +354,15 @@ bppwrite(dev, uio, flags)
 			u_int8_t tcr;
 			size_t size = len;
 			DMA_SETUP(lsi, &bp, &len, 0, &size);
+	
+#ifdef DEBUG
+			if (bppdebug) { 
+				int i;
+				printf("bpp: writing %ld : ", len);
+				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
+				printf("\n");
+			}
+#endif
 
 			/* Clear direction control bit */
 			tcr = bus_space_read_1(lsi->sc_bustag, lsi->sc_regs,
@@ -356,11 +383,16 @@ bppwrite(dev, uio, flags)
 			if ((error = sc->sc_error) != 0)
 				goto out;
 
-			len -= size;
+			/* 
+			 * lsi64854_pp_intr() does this part.
+			 *
+			 * len -= size;
+			 */
 		}
 	}
 
 out:
+	DPRINTF(("bpp done %x\n", error));
 	s = splbpp();
 	sc->sc_flags &= ~BPP_LOCKED;
 	if ((sc->sc_flags & BPP_WANT) != 0) {
@@ -479,11 +511,16 @@ bppintr(arg)
 	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
 	u_int16_t irq;
 
+	/* First handle any possible DMA interrupts */
+	if (lsi64854_pp_intr((void *)lsi) == -1)
+		sc->sc_error = 1;
+
 	irq = bus_space_read_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR);
 	/* Ack all interrupts */
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR,
 			  irq | BPP_ALLIRQ);
 
+	DPRINTF(("bpp_intr: %x\n", irq));
 	/* Did our device interrupt? */
 	if ((irq & BPP_ALLIRQ) == 0)
 		return (0);

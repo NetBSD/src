@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.35 1998/12/15 19:31:30 itohy Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.35.8.1 2000/11/22 16:02:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,5 +45,5 @@
 #elif defined(__alpha__)
 #include "../../sys/compat/linux/arch/alpha/linux_syscalls.c"
 #else
-char *linux_syscallnames[] = { 0 };
+const char * const linux_syscallnames[] = { 0 };
 #endif

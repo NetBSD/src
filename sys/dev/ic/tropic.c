@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.5.2.1 2000/11/20 11:40:57 bouyer Exp $	*/
+/*	$NetBSD: tropic.c,v 1.5.2.2 2000/11/22 16:03:32 bouyer Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -755,7 +755,6 @@ next:
 	framedata = txbuf + XMIT_FP_DATA;
 	size = 0;
 	bufspace = FP_BUF_LEN - XMIT_FP_DATA;
-	--sc->sc_xmit_buffers;
 	for (m = m0; m; m = m->m_next) {
 		int len = m->m_len;
 		char *ptr = mtod(m, char *);
@@ -781,7 +780,12 @@ next:
 			framedata += len;
 		}
 	}
-	TXB_OUTW(sc, txbuf, XMIT_BUFLEN, (FP_BUF_LEN - XMIT_FP_DATA - bufspace));
+	if (size % (FP_BUF_LEN - XMIT_FP_DATA)) {
+		--sc->sc_xmit_buffers;
+		TXB_OUTW(sc, txbuf, XMIT_BUFLEN,
+				   (FP_BUF_LEN - XMIT_FP_DATA - bufspace));
+	}
+
 	m_freem(m0);		/* free mbuf chain */
 
 	TXB_OUTB(sc, first_txbuf, XMIT_RETCODE, 0xfe);

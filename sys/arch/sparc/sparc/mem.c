@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21.8.1 2000/11/20 20:25:46 bouyer Exp $ */
+/*	$NetBSD: mem.c,v 1.21.8.2 2000/11/22 16:01:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,6 +112,7 @@ mmrw(dev, uio, flags)
 		physlock = 1;
 	}
 	while (uio->uio_resid > 0 && error == 0) {
+		int n;
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -120,6 +121,10 @@ mmrw(dev, uio, flags)
 				panic("mmrw");
 			continue;
 		}
+
+		/* Note how much is still to go */
+		n = uio->uio_resid;
+
 		switch (minor(dev)) {
 
 		/* minor device 0 is physical memory */
@@ -201,6 +206,10 @@ mmrw(dev, uio, flags)
 		default:
 			return (ENXIO);
 		}
+
+		/* If we didn't make any progress (i.e. EOF), we're done here */
+		if (n == uio->uio_resid)
+			break;
 	}
 	if (minor(dev) == 0) {
 unlock:

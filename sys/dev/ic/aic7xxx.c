@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.7 2000/11/20 11:40:19 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.8 2000/11/22 16:03:11 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -666,7 +666,7 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 {
 	int error, level = 0;
 
-	if ((error = bus_dmamem_alloc(tag, size, NBPG, 0,
+	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
 			seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
 			myname, what, error);

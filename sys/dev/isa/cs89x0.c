@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.10.2.1 2000/11/20 11:41:12 bouyer Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.10.2.2 2000/11/22 16:03:44 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -490,10 +490,6 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.37.8.1 2000/11/20 18:08:22 bouyer Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.37.8.2 2000/11/22 16:02:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -62,42 +62,23 @@
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
-#include <compat/linux/common/linux_errno.h>
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-
-static void *linux_aout_copyargs __P((struct exec_package *,
+void *linux_aout_copyargs __P((struct exec_package *,
     struct ps_strings *, void *, void *));
 
-#define	LINUX_AOUT_AUX_ARGSIZ	2
+static int exec_linux_aout_prep_zmagic __P((struct proc *,
+	struct exec_package *));
+static int exec_linux_aout_prep_nmagic __P((struct proc *,
+	struct exec_package *));
+static int exec_linux_aout_prep_omagic __P((struct proc *,
+	struct exec_package *));
+static int exec_linux_aout_prep_qmagic __P((struct proc *,
+	struct exec_package *));
 
-extern char linux_sigcode[], linux_esigcode[];
-extern struct sysent linux_sysent[];
-extern char *linux_syscallnames[];
-
-int exec_linux_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_qmagic __P((struct proc *, struct exec_package *));
-
-struct emul emul_linux_aout = {
-	"linux",
-	native_to_linux_errno,
-	linux_sendsig,
-	LINUX_SYS_syscall,
-	LINUX_SYS_MAXSYSCALL,
-	linux_sysent,
-	linux_syscallnames,
-	LINUX_AOUT_AUX_ARGSIZ,
-	linux_aout_copyargs,
-	linux_setregs,
-	linux_sigcode,
-	linux_esigcode,
-};
-
-static void *
+void *
 linux_aout_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
@@ -180,8 +161,6 @@ exec_linux_aout_makecmds(p, epp)
 		error = exec_linux_aout_prep_omagic(p, epp);
 		break;
 	}
-	if (error == 0)
-		epp->ep_emul = &emul_linux_aout;
 	return error;
 }
 
@@ -191,7 +170,7 @@ exec_linux_aout_makecmds(p, epp)
  * as an NMAGIC here. XXX
  */
 
-int
+static int
 exec_linux_aout_prep_zmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -227,7 +206,7 @@ exec_linux_aout_prep_zmagic(p, epp)
  * Not different from the normal stuff.
  */
 
-int
+static int
 exec_linux_aout_prep_nmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -266,7 +245,7 @@ exec_linux_aout_prep_nmagic(p, epp)
  * Business as usual.
  */
 
-int
+static int
 exec_linux_aout_prep_omagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -305,7 +284,7 @@ exec_linux_aout_prep_omagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 
-int
+static int
 exec_linux_aout_prep_qmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

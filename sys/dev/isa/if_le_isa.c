@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.23.12.1 2000/11/20 11:41:17 bouyer Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.23.12.2 2000/11/22 16:03:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,8 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -323,7 +325,7 @@ le_isa_attach(parent, lesc, ia, p)
 	/*
 	 * Allocate a DMA area for the card.
 	 */
-	if (bus_dmamem_alloc(dmat, LE_ISA_MEMSIZE, NBPG, 0, &seg, 1,
+	if (bus_dmamem_alloc(dmat, LE_ISA_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 			     &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: couldn't allocate memory for card\n",
 		       sc->sc_dev.dv_xname);

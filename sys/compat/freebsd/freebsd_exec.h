@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.5 1999/04/30 23:07:01 cgd Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.5.2.1 2000/11/22 16:02:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,17 +100,18 @@ int exec_freebsd_aout_makecmds __P((struct proc *, struct exec_package *));
 #endif /* EXEC_AOUT */
 
 #ifdef EXEC_ELF32
-#define FREEBSD_ELF_AUX_ARGSIZ	howmany(sizeof(AuxInfo) * 8, sizeof(char *))
+#define FREEBSD_ELF_AUX_ARGSIZ	howmany(sizeof(Aux32Info) * 8, sizeof(char *))
 
 #define FREEBSD_ELF_BRAND_STRING "FreeBSD"
 #define FREEBSD_ELF_INTERP_PREFIX_STRING "/usr/libexec/ld-elf.so"
 
-int freebsd_elf32_probe __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
-    char *, Elf32_Addr *));
+int freebsd_elf32_probe __P((struct proc *, struct exec_package *, void *,
+    char *, vaddr_t *));
 #endif /* EXEC_ELF32 */
 
 void freebsd_setregs __P((struct proc *, struct exec_package *, u_long));
 
 extern char freebsd_sigcode[], freebsd_esigcode[];
+extern const struct emul emul_freebsd;
 
 #endif /* !_FREEBSD_EXEC_H */

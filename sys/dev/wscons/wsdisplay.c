@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.30.2.2 2000/11/20 11:43:36 bouyer Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.30.2.3 2000/11/22 16:05:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.30.2.2 2000/11/20 11:43:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.30.2.3 2000/11/22 16:05:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -397,7 +397,7 @@ wsdisplay_closescreen(sc, scr)
 	/* hangup */
 	if (WSSCREEN_HAS_TTY(scr)) {
 		struct tty *tp = scr->scr_tty;
-		(*linesw[tp->t_line].l_modem)(tp, 0);
+		(*tp->t_linesw->l_modem)(tp, 0);
 	}
 
 	/* locate the major number */
@@ -727,7 +727,7 @@ wsdisplayopen(dev, flag, mode, p)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 
-		error = ((*linesw[tp->t_line].l_open)(dev, tp));
+		error = ((*tp->t_linesw->l_open)(dev, tp));
 		if (error)
 			return (error);
 
@@ -774,7 +774,7 @@ wsdisplayclose(dev, flag, mode, p)
 			splx(s);
 		}
 		tp = scr->scr_tty;
-		(*linesw[tp->t_line].l_close)(tp, flag);
+		(*tp->t_linesw->l_close)(tp, flag);
 		ttyclose(tp);
 	}
 
@@ -827,7 +827,7 @@ wsdisplayread(dev, uio, flag)
 		return (ENODEV);
 
 	tp = scr->scr_tty;
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -853,7 +853,7 @@ wsdisplaywrite(dev, uio, flag)
 		return (ENODEV);
 
 	tp = scr->scr_tty;
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -907,7 +907,7 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 
 /* printf("disc\n"); */
 		/* do the line discipline ioctls first */
-		error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 		if (error >= 0)
 			return (error);
 
@@ -1307,7 +1307,7 @@ wsdisplay_emulinput(v, data, count)
 
 	tp = scr->scr_tty;
 	while (count-- > 0)
-		(*linesw[tp->t_line].l_rint)(*data++, tp);
+		(*tp->t_linesw->l_rint)(*data++, tp);
 };
 
 /*
@@ -1334,12 +1334,12 @@ wsdisplay_kbdinput(dev, ks)
 	tp = scr->scr_tty;
 
 	if (KS_GROUP(ks) == KS_GROUP_Ascii)
-		(*linesw[tp->t_line].l_rint)(KS_VALUE(ks), tp);
+		(*tp->t_linesw->l_rint)(KS_VALUE(ks), tp);
 	else if (WSSCREEN_HAS_EMULATOR(scr)) {
 		count = (*scr->scr_dconf->wsemul->translate)
 		    (scr->scr_dconf->wsemulcookie, ks, &dp);
 		while (count-- > 0)
-			(*linesw[tp->t_line].l_rint)(*dp++, tp);
+			(*tp->t_linesw->l_rint)(*dp++, tp);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.7.12.1 2000/11/20 18:11:34 bouyer Exp $	*/
+/*     $NetBSD: scsiio.h,v 1.7.12.2 2000/11/22 16:06:41 bouyer Exp $        */
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -100,5 +100,7 @@ struct scbusaccel_args {
 #define	SC_ACCEL_WIDE	0x02	/* enable wide transfers */
 #define	SC_ACCEL_TAGS	0x04	/* enable tagged queuing */
 #define	SCBUSACCEL	_IOW('U', 2, struct scbusaccel_args)
+
+#define	SCBUSIOLLSCAN	_IO('U', 3)	/* perform low-level scan */
 
 #endif /* _SYS_SCSIIO_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.16.2.1 2000/11/20 20:03:54 bouyer Exp $
+#	$NetBSD: CATS,v 1.16.2.2 2000/11/22 15:59:57 bouyer Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -32,6 +32,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 #options 	IOMD		# We have an IOMD
@@ -68,7 +69,7 @@ file-system	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-#options 	SOFTDEP         # FFS soft updates support
+options 	SOFTDEP         # FFS soft updates support
 
 # Networking options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.3.2.1 2000/11/20 19:56:18 bouyer Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.3.2.2 2000/11/22 15:59:39 bouyer Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -4498,10 +4498,6 @@ tulip_attach(
     TULIP_ETHER_IFATTACH(sc);
 #endif
 #endif /* __bsdi__ */
-
-#if NBPFILTER > 0
-    TULIP_BPF_ATTACH(sc);
-#endif
 }
 
 static void

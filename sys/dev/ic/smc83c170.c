@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.21.2.1 2000/11/20 11:40:55 bouyer Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.21.2.2 2000/11/22 16:03:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
- 
+
+#include <uvm/uvm_extern.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -134,7 +136,7 @@ epic_attach(sc)
 	 * DMA map for it.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct epic_control_data), NBPG, 0, &seg, 1, &rseg,
+	    sizeof(struct epic_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -266,10 +268,6 @@ epic_attach(sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -1280,7 +1278,8 @@ epic_set_mchash(sc)
 			goto allmulti;
 		}
 
-		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
+		hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		hash >>= 26;
 
 		/* Set the corresponding bit in the hash table. */
 		mchash[hash >> 4] |= 1 << (hash & 0xf);

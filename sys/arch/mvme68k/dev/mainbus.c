@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.2.2 2000/11/20 20:15:17 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.3 2000/11/22 16:00:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ static struct mainbus_devices mainbusdevs_147[] = {
 };
 #endif
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 static struct mainbus_devices mainbusdevs_1x7[] = {
 	{"pcctwo", MAINBUS_PCCTWO_OFFSET},
 	{"vmetwo", MAINBUS_VMETWO_OFFSET},
@@ -146,10 +146,10 @@ mainbus_attach(parent, self, args)
 		break;
 #endif
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 	case MVME_162:
-	case MVME_166:
 	case MVME_167:
+	case MVME_172:
 	case MVME_177:
 		devices = mainbusdevs_1x7;
 		break;

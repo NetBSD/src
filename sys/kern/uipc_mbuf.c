@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.43.2.1 2000/11/20 18:09:13 bouyer Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.43.2.2 2000/11/22 16:05:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -347,10 +347,6 @@ m_freem(m)
 
 	if (m == NULL)
 		return;
-	if ((m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.aux) {
-		m_freem(m->m_pkthdr.aux);
-		m->m_pkthdr.aux = NULL;
-	}
 	do {
 		MFREE(m, n);
 		m = n;

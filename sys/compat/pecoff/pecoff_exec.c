@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.3.2.2 2000/11/20 18:08:36 bouyer Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.3.2.3 2000/11/22 16:02:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -56,9 +56,6 @@
 #include <compat/pecoff/pecoff_exec.h>
 #include <compat/pecoff/pecoff_util.h>
 
-void * pecoff_copyargs __P((struct exec_package *pack,
-			   struct ps_strings *arginfo,
-			   void *stack, void *argp));
 int pecoff_signature __P((struct proc *p, struct vnode *vp,
 			    struct pecoff_dos_filehdr *dp));
 int pecoff_load_file __P((struct proc *p, struct exec_package *epp,
@@ -87,7 +84,12 @@ int pecoff_read_from __P((struct proc *p, struct vnode *vp, int pos,
 const char pecoff_emul_path[] = "/emul/pecoff";
 extern char sigcode[], esigcode[];
 
-struct emul emul_pecoff = {
+#if 0
+/*
+ * For now, we use just emul_netbsd for pecoff binaries. This may change
+ * later.
+ */
+const struct emul emul_pecoff = {
 	"pecoff",
 	0,
 	sendsig,
@@ -99,12 +101,10 @@ struct emul emul_pecoff = {
 #else
 	0,
 #endif
-	howmany(sizeof(struct pecoff_args), sizeof(char *)),
-	pecoff_copyargs,
-	setregs,
 	sigcode,
 	esigcode,
 };
+#endif /* 0 */
 
 
 void *
@@ -358,9 +358,7 @@ exec_pecoff_makecmds(p, epp)
 	}
 	error = exec_pecoff_coff_makecmds(p, epp, fp, peofs);
 
-	if (error == 0)
-		epp->ep_emul = &emul_pecoff;
-	else
+	if (error != 0)
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	free(fp, M_TEMP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.3.2.2 2000/11/20 20:45:57 bouyer Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.3.2.3 2000/11/22 16:00:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -87,7 +87,7 @@ int ite8181_lcd_control_disable = 0;
  * Currently delay is not enough ??? FIXME 
  */
 #ifndef ITE8181_LCD_ON_SELF_DELAY
-#define ITE8181_LCD_ON_SELF_DELAY 10
+#define ITE8181_LCD_ON_SELF_DELAY 1000
 #endif /* ITE8181_LCD_ON__SELF_DELAY */
 #ifndef ITE8181_LCD_ON_DELAY
 #define ITE8181_LCD_ON_DELAY 2000

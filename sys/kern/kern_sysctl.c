@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.52.2.1 2000/11/20 18:09:05 bouyer Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.52.2.2 2000/11/22 16:05:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -100,6 +100,10 @@ static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
 #endif
 static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
+#ifdef MULTIPROCESSOR
+static int sysctl_docptime __P((void *, size_t *, void *));
+static int sysctl_ncpus __P((void));
+#endif
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
 #if NPTY > 0
@@ -255,6 +259,53 @@ int defcorenamelen = sizeof(DEFCORENAME);
 
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
+
+#ifndef MULTIPROCESSOR
+#define sysctl_ncpus() 1
+#endif
+
+#ifdef MULTIPROCESSOR
+
+#ifndef CPU_INFO_FOREACH
+#define CPU_INFO_ITERATOR int
+#define CPU_INFO_FOREACH(cii, ci) cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+static int
+sysctl_docptime(oldp, oldlenp, newp)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+{
+	u_int64_t cp_time[CPUSTATES];
+	int i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	for (i=0; i<CPUSTATES; i++)
+		cp_time[i] = 0;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (i=0; i<CPUSTATES; i++)
+			cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
+	}
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    cp_time, sizeof(cp_time)));
+}
+
+static int
+sysctl_ncpus(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	int ncpus = 0;
+	for (CPU_INFO_FOREACH(cii, ci))
+		ncpus++;
+	return ncpus;
+}
+
+#endif
 
 /*
  * kernel related system variables.
@@ -459,10 +510,13 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_CP_TIME:
-		/* XXXSMP: WRONG! */
+#ifndef MULTIPROCESSOR
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    curcpu()->ci_schedstate.spc_cp_time,
 		    sizeof(curcpu()->ci_schedstate.spc_cp_time)));
+#else
+		return (sysctl_docptime(oldp, oldlenp, newp));
+#endif
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
@@ -512,7 +566,7 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_MODEL:
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_model));
 	case HW_NCPU:
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));	/* XXX */
+		return (sysctl_rdint(oldp, oldlenp, newp, sysctl_ncpus()));
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
@@ -524,6 +578,19 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
 		return (sysctl_rdint(oldp, oldlenp, newp, ALIGNBYTES));
+	case HW_CNMAGIC: {
+		char magic[CNS_LEN];
+		int error;
+
+		if (oldp)
+			cn_get_magic(magic, CNS_LEN);
+		error = sysctl_string(oldp, oldlenp, newp, newlen,
+		    magic, sizeof(magic));
+		if (newp && !error) {
+			error = cn_set_magic(magic);
+		}
+		return (error);
+	}
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -942,6 +1009,28 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 	if (newp)
 		return (EPERM);
 
+	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
+
+	return (error);
+}
+
+/*
+ * As above, but can return a truncated result.
+ */
+int
+sysctl_rdminstruct(oldp, oldlenp, newp, sp, len)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	const void *sp;
+	int len;
+{
+	int error = 0;
+
+	if (newp)
+		return (EPERM);
+
+	len = min(*oldlenp, len);
 	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
 
 	return (error);
@@ -1606,6 +1695,12 @@ fill_kproc2(p, ki)
 		ki->p_uctime_usec = p->p_stats->p_cru.ru_utime.tv_usec +
 		    p->p_stats->p_cru.ru_stime.tv_usec;
 	}
+#ifdef MULTIPROCESSOR
+	if (p->p_cpu != NULL)
+		ki->p_cpuid = p->p_cpu->ci_cpuid;
+	else
+#endif
+		ki->p_cpuid = KI_NOCPU;
 }
 
 int

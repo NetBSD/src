@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.6 2000/11/20 11:41:01 bouyer Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.7 2000/11/22 16:03:33 bouyer Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -78,6 +78,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -150,7 +152,7 @@ uha_attach(sc, upd)
 	 * Allocate the MSCPs.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, MSCPSIZE,
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate mscps, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;

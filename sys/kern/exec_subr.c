@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.17.2.1 2000/11/20 18:08:55 bouyer Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.17.2.2 2000/11/22 16:05:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -74,7 +74,7 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 		vref(vp);
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
-        vcp->ev_flags = flags;
+	vcp->ev_flags = flags;
 }
 #endif /* DEBUG */
 

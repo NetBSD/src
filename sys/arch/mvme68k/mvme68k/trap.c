@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32.2.1 2000/11/20 20:15:26 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.32.2.2 2000/11/22 16:01:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,21 +89,18 @@ extern struct emul emul_sunos;
 #endif
 
 #ifdef COMPAT_LINUX
-#ifdef EXEC_AOUT
-extern struct emul emul_linux_aout;
-#endif
-#ifdef EXEC_ELF32
-extern struct emul emul_linux_elf32;
-#endif
+extern struct emul emul_linux;
 #endif
 
 int	writeback __P((struct frame *fp, int docachepush));
 void	trap __P((int type, u_int code, u_int v, struct frame frame));
 void	syscall __P((register_t code, struct frame frame));
 
+#if defined(M68040) || defined(M68060)
 #ifdef DEBUG
 void	dumpssw __P((u_short));
 void	dumpwb __P((int, u_short, u_int, u_int));
+#endif
 #endif
 
 static inline void userret __P((struct proc *p, struct frame *fp,
@@ -392,9 +389,27 @@ trap(type, code, v, frame)
 		i = SIGFPE;
 		break;
 
-#ifdef M68040
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_ILLINST:	/* fnop generates this, apparently. */
+	case T_FPEMULI:
+	case T_FPEMULD:
+	{
+		extern label_t *nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp(nofault);
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
+		goto dopanic;
+	}
+
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+#if defined(M68040) || defined(M68060)
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
 		       p->p_pid, p->p_comm,
@@ -978,7 +993,7 @@ syscall(code, frame)
 	struct frame frame;
 {
 	caddr_t params;
-	struct sysent *callp;
+	struct const sysent *callp;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
@@ -1068,14 +1083,7 @@ syscall(code, frame)
 		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
-	if (0
-# ifdef EXEC_AOUT
-	    || p->p_emul == &emul_linux_aout
-# endif
-# ifdef EXEC_ELF32
-	    || p->p_emul == &emul_linux_elf32
-# endif
-	     ) {
+	if (p->p_emul == &emul_linux) {
 		/*
 		 * Linux passes the args in d1-d5
 		 */
