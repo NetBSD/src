@@ -1,6 +1,10 @@
 #! /bin/sh
+#
+#	$NetBSD: makesrctars,v 1.3 1997/02/18 07:06:00 mikel Exp $
+#
+# Make source code tarballs.
 
-RELEASE=12
+RELEASE=12		# XXX
 SPLITSIZE=240640
 
 GZIP=--best
