@@ -1,4 +1,4 @@
-/* $NetBSD: events.c,v 1.1 2002/06/26 23:13:07 christos Exp $ */
+/* $NetBSD: events.c,v 1.2 2002/07/02 12:41:26 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: events.c,v 1.1 2002/06/26 23:13:07 christos Exp $");
+__RCSID("$NetBSD: events.c,v 1.2 2002/07/02 12:41:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -66,8 +66,7 @@ mouse_motion_event(struct mouse *m, struct wscons_event *evt)
 		if (m->count_col >= m->slowdown_x) {
 			m->count_col = 0;
 			if (evt->value > 0) m->col++;
-			else m->col--;
-			if (m->col < 0) m->col = 0;
+			else if (m->col != 0) m->col--;
 			if (m->col > m->max_col) m->col = m->max_col;
 		} else
 			m->count_col++;
@@ -76,9 +75,8 @@ mouse_motion_event(struct mouse *m, struct wscons_event *evt)
 	case WSCONS_EVENT_MOUSE_DELTA_Y:
 		if (m->count_row >= m->slowdown_y) {
 			m->count_row = 0;
-			if (evt->value > 0) m->row--;
-			else m->row++;
-			if (m->row < 0) m->row = 0;
+			if (evt->value < 0) m->row++;
+			else if (m->row != 0) m->row--;
 			if (m->row > m->max_row) m->row = m->max_row;
 		} else
 			m->count_row++;
