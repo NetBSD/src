@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.153 2003/09/08 02:06:34 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.154 2003/09/25 00:59:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.153 2003/09/08 02:06:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.154 2003/09/25 00:59:31 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1221,14 +1221,11 @@ void
 tcp_drain()
 {
 	struct inpcb_hdr *inph;
-	struct inpcb *inp;
 	struct tcpcb *tp;
 
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	inph = CIRCLEQ_FIRST(&tcbtable.inpt_queue);
-	if (inp)						/* XXX */
 	CIRCLEQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
 		switch (inph->inph_af) {
 		case AF_INET:
