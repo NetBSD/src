@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.97 2000/07/27 08:28:36 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.98 2000/07/27 17:29:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.97 2000/07/27 08:28:36 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.98 2000/07/27 17:29:06 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -341,7 +341,7 @@ mips_vector_init()
 	 * Clear out the I and D caches.
 	 */
 
-	switch (cpu_id.cpu.cp_imp) {
+	switch (MIPS_PRID_IMPL(cpu_id)) {
 #ifdef MIPS1
 	case MIPS_R2000:
 	case MIPS_R3000:
@@ -351,7 +351,7 @@ mips_vector_init()
 #ifdef ENABLE_MIPS_TX3900
 	case MIPS_TX3900:
 		cpu_arch = 1;
-		switch (cpu_id.cpu.cp_majrev) {
+		switch (MIPS_PRID_REV_MAJ(cpu_id)) {
 		default:
 			panic("not supported revision");
 		case 1: /* TX3912 */
@@ -418,7 +418,7 @@ mips_vector_init()
 #endif /* MIPS3 */
 
 	default:
-		printf("CPU type (0x%x) not supported\n", cpu_id.cpuprid);
+		printf("CPU type (0x%x) not supported\n", cpu_id);
 		cpu_reboot(RB_HALT, NULL);
 	}
 
@@ -523,40 +523,47 @@ cpu_identify()
 
 	cpuname = NULL;
 	for (i = 0; i < sizeof(cputab)/sizeof(cputab[0]); i++) {
-		if (cpu_id.cpu.cp_imp == cputab[i].cpu_imp) {
+		if (MIPS_PRID_IMPL(cpu_id) == cputab[i].cpu_imp) {
 			cpuname = cputab[i].cpu_name;
 			break;
 		}
 	}
-	if (cpu_id.cpu.cp_imp == MIPS_R4000 && mips_L1ICacheSize == 16384)
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4000 && mips_L1ICacheSize == 16384)
 		cpuname = "MIPS R4400 CPU";
 
 	fpuname = NULL;
 	for (i = 0; i < sizeof(fputab)/sizeof(fputab[0]); i++) {
-		if (fpu_id.cpu.cp_imp == fputab[i].cpu_imp) {
+		if (MIPS_PRID_IMPL(fpu_id) == fputab[i].cpu_imp) {
 			fpuname = fputab[i].cpu_name;
 			break;
 		}
 	}
-	if (fpuname == NULL && fpu_id.cpu.cp_imp == cpu_id.cpu.cp_imp)
+	if (fpuname == NULL && MIPS_PRID_IMPL(fpu_id) == MIPS_PRID_IMPL(cpu_id))
 		fpuname = "built-in FPU";
-	if (cpu_id.cpu.cp_imp == MIPS_R4700)	/* FPU PRid is 0x20 */
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4700)	/* FPU PRid is 0x20 */
 		fpuname = "built-in FPU";
-	if (cpu_id.cpu.cp_imp == MIPS_RC64470)	/* FPU PRid is 0x21 */
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_RC64470)	/* FPU PRid is 0x21 */
 		fpuname = "built-in FPU";
 
 	if (cpuname != NULL)
-		printf("%s (0x%x)", cpuname, cpu_id.cpuprid);
+		printf("%s (0x%x)", cpuname, cpu_id);
 	else
-		printf("unknown CPU type (0x%x)", cpu_id.cpuprid);
-	printf(" Rev. %d.%d", cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
+		printf("unknown CPU type (0x%x)", cpu_id);
+	printf(" Rev. %d.%d", MIPS_PRID_REV_MAJ(cpu_id),
+	    MIPS_PRID_REV_MIN(cpu_id));
 
 	if (fpuname != NULL)
 		printf(" with %s", fpuname);
 	else
-		printf(" with unknown FPC type (0x%x)", fpu_id.cpu.cp_imp);
-	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
+		printf(" with unknown FPC type (0x%x)", fpu_id);
+	printf(" Rev. %d.%d", MIPS_PRID_REV_MAJ(fpu_id),
+	    MIPS_PRID_REV_MIN(fpu_id));
 	printf("\n");
+
+	if (MIPS_PRID_RSVD(cpu_id) != 0) {
+		printf("cpu0: NOTE: top 16 bits of PRID not 0!\n");
+		printf("cpu0: Please mail port-mips@netbsd.org with cpu0 dmesg lines.\n");
+	}
 
 	printf("cpu0: ");
 #ifdef MIPS1
