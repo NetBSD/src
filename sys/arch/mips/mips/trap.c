@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.94 1998/10/24 01:36:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 1998/10/01 00:42:38 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 1998/10/24 01:36:09 jonathan Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -427,7 +427,6 @@ extern void ast __P((unsigned pc));
   *  stack trace code, also useful to DDB one day
   */
 #if defined(DEBUG) || defined(DDB)
-int	kdbpeek __P((vm_offset_t addr));
 extern void stacktrace __P((void)); /*XXX*/
 extern void logstacktrace __P((void)); /*XXX*/
 
