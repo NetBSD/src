@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.3 1999/09/01 20:56:15 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.4 1999/09/02 23:25:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -210,6 +210,9 @@ struct tulip_softc {
 	/* Filter setup function. */
 	void		(*sc_filter_setup) __P((struct tulip_softc *));
 
+	/* Media status update function */
+	void		(*sc_statchg) __P((struct device *));
+
 	/*
 	 * The Winbond 89C840F places registers 4 bytes apart, instead
 	 * of 8.
@@ -219,6 +222,9 @@ struct tulip_softc {
 	u_int32_t	sc_busmode;	/* copy of CSR_BUSMODE */
 	u_int32_t	sc_opmode;	/* copy of CSR_OPMODE */
 	u_int32_t	sc_inten;	/* copy of CSR_INTEN */
+
+	u_int32_t	sc_rxint_mask;	/* mask of Rx interrupts we want */
+	u_int32_t	sc_txint_mask;	/* mask of Tx interrupts we want */
 
 	u_int32_t	sc_filtmode;	/* filter mode we're using */
 

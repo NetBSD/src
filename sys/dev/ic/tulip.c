@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.4 1999/09/01 20:56:15 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.5 1999/09/02 23:25:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -117,6 +117,23 @@ const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] = {
 #define	TXTH_160	3
 #define	TXTH_SF		4
 
+/*
+ * The Winbond 89C840F does transmit threshold control totally
+ * differently.  It simply has a 7-bit field which indicates
+ * the threshold:
+ *
+ *	txth = ((OPMODE & OPMODE_WINB_TTH) >> OPMODE_WINB_TTH_SHIFT) * 16;
+ *
+ * However, we just do Store-and-Forward mode on these chips, since
+ * the DMA engines seem to be flaky.
+ */
+const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] = {
+	{ 0,			"store and forward mode" },
+	{ 0,			NULL },
+};
+
+#define	TXTH_WINB_SF	0
+
 void	tlp_start __P((struct ifnet *));
 void	tlp_watchdog __P((struct ifnet *));
 int	tlp_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -139,6 +156,7 @@ void	tlp_txintr __P((struct tulip_softc *));
 
 void	tlp_mii_tick __P((void *));
 void	tlp_mii_statchg __P((struct device *));
+void	tlp_winb_mii_statchg __P((struct device *));
 
 void	tlp_mii_getmedia __P((struct tulip_softc *, struct ifmediareq *));
 int	tlp_mii_setmedia __P((struct tulip_softc *));
@@ -156,9 +174,10 @@ u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 				 (TULIP_MCHASHSIZE - 1))
 
 #ifdef TLP_DEBUG
-#define	DPRINTF(x)	printf x
+#define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
+				printf x
 #else
-#define	DPRINTF(x)	/* nothing */
+#define	DPRINTF(sc, x)	/* nothing */
 #endif
 
 /*
@@ -205,6 +224,19 @@ tlp_attach(sc, name, enaddr)
 
 	default:
 		sc->sc_filter_setup = tlp_filter_setup;
+		break;
+	}
+
+	/*
+	 * Set up the media status change function.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_WB89C840F:
+		sc->sc_statchg = tlp_winb_mii_statchg;
+		break;
+
+	default:
+		sc->sc_statchg = tlp_mii_statchg;
 		break;
 	}
 
@@ -394,7 +426,7 @@ tlp_start(ifp)
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
 
-	DPRINTF(("%s: tlp_start: sc_flags 0x%08x, if_flags 0x%08x\n",
+	DPRINTF(sc, ("%s: tlp_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
 
 	/*
@@ -415,7 +447,7 @@ tlp_start(ifp)
 	ofree = sc->sc_txfree;
 	firsttx = sc->sc_txnext;
 
-	DPRINTF(("%s: tlp_start: txfree %d, txnext %d\n",
+	DPRINTF(sc, ("%s: tlp_start: txfree %d, txnext %d\n",
 	    sc->sc_dev.dv_xname, ofree, firsttx));
 
 	/*
@@ -529,19 +561,21 @@ tlp_start(ifp)
 		sc->sc_txdescs[lasttx].td_ctl |= TDCTL_Tx_LS;
 
 #ifdef TLP_DEBUG
-		printf("     txsoft %p trainsmit chain:\n", txs);
-		for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
-			printf("     descriptor %d:\n", seg);
-			printf("       td_status:   0x%08x\n",
-			    sc->sc_txdescs[seg].td_status);
-			printf("       td_ctl:      0x%08x\n",
-			    sc->sc_txdescs[seg].td_ctl);
-			printf("       td_bufaddr1: 0x%08x\n",
-			    sc->sc_txdescs[seg].td_bufaddr1);
-			printf("       td_bufaddr2: 0x%08x\n",
-			    sc->sc_txdescs[seg].td_bufaddr2);
-			if (seg == lasttx)
-				break;
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("     txsoft %p trainsmit chain:\n", txs);
+			for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
+				printf("     descriptor %d:\n", seg);
+				printf("       td_status:   0x%08x\n",
+				    sc->sc_txdescs[seg].td_status);
+				printf("       td_ctl:      0x%08x\n",
+				    sc->sc_txdescs[seg].td_ctl);
+				printf("       td_bufaddr1: 0x%08x\n",
+				    sc->sc_txdescs[seg].td_bufaddr1);
+				printf("       td_bufaddr2: 0x%08x\n",
+				    sc->sc_txdescs[seg].td_bufaddr2);
+				if (seg == lasttx)
+					break;
+			}
 		}
 #endif
 
@@ -582,7 +616,7 @@ tlp_start(ifp)
 	}
 
 	if (sc->sc_txfree != ofree) {
-		DPRINTF(("%s: packets enqueued, IC on %d, OWN on %d\n",
+		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
 		    sc->sc_dev.dv_xname, lasttx, firsttx));
 		/*
 		 * Cause a transmit interrupt to happen on the
@@ -781,10 +815,10 @@ tlp_intr(arg)
 {
 	struct tulip_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int32_t status;
+	u_int32_t status, rxstatus, txstatus;
 	int handled = 0, txthresh;
 
-	DPRINTF(("%s: tlp_intr\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: tlp_intr\n", sc->sc_dev.dv_xname));
 
 	for (;;) {
 		status = TULIP_READ(sc, CSR_STATUS);
@@ -796,15 +830,18 @@ tlp_intr(arg)
 
 		handled = 1;
 
-		if (status & (STATUS_RI|STATUS_RU|STATUS_RWT)) {
+		rxstatus = status & sc->sc_rxint_mask;
+		txstatus = status & sc->sc_txint_mask;
+
+		if (rxstatus) {
 			/* Grab new any new packets. */
 			tlp_rxintr(sc);
 
-			if (status & STATUS_RWT)
+			if (rxstatus & STATUS_RWT)
 				printf("%s: receive watchdog timeout\n",
 				    sc->sc_dev.dv_xname);
 
-			if (status & STATUS_RU) {
+			if (rxstatus & STATUS_RU) {
 				printf("%s: receive ring overrun\n",
 				    sc->sc_dev.dv_xname);
 				/* Get the receive process going again. */
@@ -817,15 +854,15 @@ tlp_intr(arg)
 			}
 		}
 
-		if (status & (STATUS_TI|STATUS_UNF|STATUS_TJT)) {
+		if (txstatus) {
 			/* Sweep up transmit descriptors. */
 			tlp_txintr(sc);
 
-			if (status & STATUS_TJT)
+			if (txstatus & STATUS_TJT)
 				printf("%s: transmit jabber timeout\n",
 				    sc->sc_dev.dv_xname);
 
-			if (status & STATUS_UNF) {
+			if (txstatus & STATUS_UNF) {
 				/*
 				 * Increase our transmit threshold if
 				 * another is available.
@@ -1099,7 +1136,7 @@ tlp_txintr(sc)
 	struct tulip_txsoft *txs;
 	u_int32_t txstat;
 
-	DPRINTF(("%s: tlp_txintr: sc_flags 0x%08x\n",
+	DPRINTF(sc, ("%s: tlp_txintr: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1123,21 +1160,23 @@ tlp_txintr(sc)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef TLP_DEBUG
-		{ int i;
-		printf("    txsoft %p trainsmit chain:\n", txs);
-		for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
-			printf("     descriptor %d:\n", i);
-			printf("       td_status:   0x%08x\n",
-			    sc->sc_txdescs[i].td_status);
-			printf("       td_ctl:      0x%08x\n",
-			    sc->sc_txdescs[i].td_ctl);
-			printf("       td_bufaddr1: 0x%08x\n",
-			    sc->sc_txdescs[i].td_bufaddr1);
-			printf("       td_bufaddr2: 0x%08x\n",
-			    sc->sc_txdescs[i].td_bufaddr2);
-			if (i == txs->txs_lastdesc)
-				break;
-		}}
+		if (ifp->if_flags & IFF_DEBUG) {
+			int i;
+			printf("    txsoft %p trainsmit chain:\n", txs);
+			for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
+				printf("     descriptor %d:\n", i);
+				printf("       td_status:   0x%08x\n",
+				    sc->sc_txdescs[i].td_status);
+				printf("       td_ctl:      0x%08x\n",
+				    sc->sc_txdescs[i].td_ctl);
+				printf("       td_bufaddr1: 0x%08x\n",
+				    sc->sc_txdescs[i].td_bufaddr1);
+				printf("       td_bufaddr2: 0x%08x\n",
+				    sc->sc_txdescs[i].td_bufaddr2);
+				if (i == txs->txs_lastdesc)
+					break;
+			}
+		}
 #endif
 
 		txstat = sc->sc_txdescs[txs->txs_firstdesc].td_status;
@@ -1301,17 +1340,23 @@ tlp_init(sc)
 	}
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
-		/* Enable the MII port. */
-		sc->sc_opmode |= OPMODE_PS;
-		
 		switch (sc->sc_chip) {
 		case TULIP_CHIP_82C168:
 		case TULIP_CHIP_82C169:
+			/* Enable the MII port. */
+			sc->sc_opmode |= OPMODE_PS;
+
 			TULIP_WRITE(sc, CSR_PNIC_ENDEC, PNIC_ENDEC_JABBERDIS);
 			break;
 
-		default:
+		case TULIP_CHIP_WB89C840F:
 			/* Nothing. */
+			break;
+
+		default:
+			/* Enable the MII port. */
+			sc->sc_opmode |= OPMODE_PS;
+			break;
 		}
 	}
 
@@ -1387,9 +1432,29 @@ tlp_init(sc)
 	 */
 	/* normal interrupts */
 	sc->sc_inten =  STATUS_TI | STATUS_TU | STATUS_RI | STATUS_NIS;
+
 	/* abnormal interrupts */
 	sc->sc_inten |= STATUS_TPS | STATUS_TJT | STATUS_UNF |
 	    STATUS_RU | STATUS_RPS | STATUS_RWT | STATUS_SE | STATUS_AIS;
+
+	sc->sc_rxint_mask = STATUS_RI|STATUS_RU|STATUS_RWT;
+	sc->sc_txint_mask = STATUS_TI|STATUS_UNF|STATUS_TJT;
+
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_WB89C840F:
+		/*
+		 * Clear bits that we don't want that happen to
+		 * overlap or don't exist.
+		 */
+		sc->sc_inten &= ~(STATUS_WINB_REI|STATUS_RWT);
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	sc->sc_rxint_mask &= sc->sc_inten;
+	sc->sc_txint_mask &= sc->sc_inten;
 
 	TULIP_WRITE(sc, CSR_INTEN, sc->sc_inten);
 	TULIP_WRITE(sc, CSR_STATUS, 0xffffffff);
@@ -1408,7 +1473,7 @@ tlp_init(sc)
 		/* XXX Do this with stream writes? */
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			bus_space_write_1(sc->sc_st, sc->sc_sh,
-			    (CSR_WINB_NODE0 >> sc->sc_regshift) + i,
+			    (CSR_WINB_CPA0 >> sc->sc_regshift) + i,
 			    LLADDR(ifp->if_sadl)[i]);
 		}
 		break;
@@ -1754,7 +1819,7 @@ tlp_filter_setup(sc)
 	u_int32_t hash;
 	int cnt;
 
-	DPRINTF(("%s: tlp_filter_setup: sc_flags 0x%08x\n",
+	DPRINTF(sc, ("%s: tlp_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
 	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
@@ -1766,7 +1831,7 @@ tlp_filter_setup(sc)
 	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL ||
 	    (sc->sc_flags & TULIPF_DOING_SETUP) != 0) {
 		sc->sc_flags |= TULIPF_WANT_SETUP;
-		DPRINTF(("%s: tlp_filter_setup: deferring\n",
+		DPRINTF(sc, ("%s: tlp_filter_setup: deferring\n",
 		    sc->sc_dev.dv_xname));
 		return;
 	}
@@ -1964,7 +2029,7 @@ tlp_filter_setup(sc)
 	/* Set up a watchdog timer in case the chip flakes out. */
 	ifp->if_timer = 5;
 
-	DPRINTF(("%s: tlp_filter_setup: returning\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: tlp_filter_setup: returning\n", sc->sc_dev.dv_xname));
 }
 
 /*
@@ -1982,13 +2047,19 @@ tlp_winb_filter_setup(sc)
 	struct ether_multistep step;
 	u_int32_t hash, mchash[2];
 
-	DPRINTF(("%s: tlp_winb_filter_setup: sc_flags 0x%08x\n",
+	DPRINTF(sc, ("%s: tlp_winb_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
-	sc->sc_opmode &= ~(OPMODE_PR|OPMODE_PM);
+	sc->sc_opmode &= ~(OPMODE_WINB_APP|OPMODE_WINB_AMP|OPMODE_WINB_ABP);
+
+	if (ifp->if_flags & IFF_MULTICAST)
+		sc->sc_opmode |= OPMODE_WINB_AMP;
+
+	if (ifp->if_flags & IFF_BROADCAST)
+		sc->sc_opmode |= OPMODE_WINB_ABP;
 
 	if (ifp->if_flags & IFF_PROMISC) {
-		sc->sc_opmode |= OPMODE_PR;
+		sc->sc_opmode |= OPMODE_WINB_APP;
 		goto allmulti;
 	}
 
@@ -2025,13 +2096,10 @@ tlp_winb_filter_setup(sc)
 	mchash[0] = mchash[1] = 0xffffffff;
 
  setit:
-	if (ifp->if_flags & IFF_ALLMULTI)
-		sc->sc_opmode |= OPMODE_PM;
-
-	TULIP_WRITE(sc, CSR_WINB_MAR0, mchash[0]);
-	TULIP_WRITE(sc, CSR_WINB_MAR1, mchash[1]);
+	TULIP_WRITE(sc, CSR_WINB_CMA0, mchash[0]);
+	TULIP_WRITE(sc, CSR_WINB_CMA1, mchash[1]);
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
-	DPRINTF(("%s: tlp_winb_filter_setup: returning\n",
+	DPRINTF(sc, ("%s: tlp_winb_filter_setup: returning\n",
 	    sc->sc_dev.dv_xname));
 }
 
@@ -2177,6 +2245,45 @@ tlp_mii_statchg(self)
 		sc->sc_opmode |= OPMODE_TTM;
 	else
 		sc->sc_opmode &= ~OPMODE_TTM;
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		sc->sc_opmode |= OPMODE_FD;
+	else
+		sc->sc_opmode &= ~OPMODE_FD;
+
+	/*
+	 * Write new OPMODE bits.  This also restarts the transmit
+	 * and receive processes.
+	 */
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	/* XXX Update ifp->if_baudrate */
+}
+
+/*
+ * tlp_winb_mii_statchg: [mii interface function]
+ *
+ *	Callback from PHY when media changes.  This version is
+ *	for the Winbond 89C840F, which has different OPMODE bits.
+ */
+void
+tlp_winb_mii_statchg(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/* Idle the transmit and receive processes. */
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	/*
+	 * XXX What about Heartbeat Disable?  Is it magically frobbed
+	 * XXX by the PHY?  I hope so...
+	 */
+
+	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_100_TX)
+		sc->sc_opmode |= OPMODE_WINB_FES;
+	else
+		sc->sc_opmode &= ~OPMODE_WINB_FES;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_opmode |= OPMODE_FD;
@@ -2428,7 +2535,7 @@ tlp_sio_mii_tmsw_init(sc)
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
-	sc->sc_mii.mii_statchg = tlp_mii_statchg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
@@ -2461,7 +2568,7 @@ tlp_pnic_tmsw_init(sc)
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;
 	sc->sc_mii.mii_writereg = tlp_pnic_mii_writereg;
-	sc->sc_mii.mii_statchg = tlp_mii_statchg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
 	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
