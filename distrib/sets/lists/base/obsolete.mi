@@ -1,9 +1,10 @@
-# $NetBSD: obsolete.mi,v 1.35 2002/03/05 23:57:49 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.36 2002/03/17 10:55:03 wiz Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
 /sbin/dumpfs
 /sbin/dumplfs
+/sbin/ispppcontrol
 /sbin/mountd
 /sbin/newlfs
 /sbin/nfsd
