@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 1999/12/09 14:53:22 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2000/02/08 16:17:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -47,5 +47,4 @@ ASENTRY_NOPROFILE(start)
 ENTRY_NOPROFILE(ICIA)
 	movl	#0x9, %d0	| IC_CLEAR
 	movc	%d0, %cacr
-	st	0xe1900000	| clear L2 cache; XXX news1700 only...
 	rts

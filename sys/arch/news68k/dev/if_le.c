@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1999/12/09 14:53:05 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 2000/02/08 16:17:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,6 +93,8 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), le_match, le_attach
 };
 
+extern volatile u_char *lance_mem, *idrom_addr;
+
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
 #endif
@@ -145,21 +147,7 @@ le_match(parent, cf, aux)
 	if (strcmp(ha->ha_name, "le"))
 		return 0;
 
-	switch(cf->cf_unit) {
-
-	case 0:
-		addr = IIOV(LANCE_PORT);	/* XXX hard coded now... */
-		break;
-	case 1:
-		addr = LANCE_PORT1;	/* XXX */
-		break;
-	case 2:
-		addr = LANCE_PORT2;	/* XXX */
-		break;
-
-	default:
-		return 0;
-	}
+	addr = IIOV(ha->ha_address);
 
 	if (badaddr((void *)addr, 1))
 		return 0;
@@ -174,29 +162,17 @@ le_attach(parent, self, aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	/*struct hb_attach_args *ha = aux;*/
+	struct hb_attach_args *ha = aux;
 	u_char *p;
 
-	switch (sc->sc_dev.dv_unit) {
+	lesc->sc_r1 = (void *)IIOV(ha->ha_address);
 
-	case 0:
-		lesc->sc_r1 = (void *)IIOV(LANCE_PORT);	/* XXX */
-		sc->sc_mem = (void *)IIOV(LANCE_MEMORY);
-		p = (u_char *)IIOV(LANCE_ID+16);
-		break;
-	case 1:
-		lesc->sc_r1 = (void *)LANCE_PORT1;/* XXX */
-		sc->sc_mem = (void *)LANCE_MEMORY1;
-		p = (u_char *)(LANCE_ID1+16);
-		break;
-	case 2:
-		lesc->sc_r1 = (void *)LANCE_PORT2;	/* XXX */
-		sc->sc_mem = (void *)LANCE_MEMORY2;
-		p = (u_char *)(LANCE_ID2+16);
-		break;
-
-	default:
-		panic("le_attach");
+	if (ISIIOPA(ha->ha_address)) {
+		sc->sc_mem = (u_char *)lance_mem;
+		p = (u_char *)(idrom_addr + 0x10);
+	} else {
+		sc->sc_mem = lesc->sc_r1 - 0x10000;
+		p = (u_char *)(lesc->sc_r1 + 0x8010);
 	}
 
 	sc->sc_memsize = 0x4000;	/* 16K */

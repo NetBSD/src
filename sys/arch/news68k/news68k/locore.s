@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2000/02/08 16:17:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,8 +147,61 @@ ASENTRY_NOPROFILE(start)
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
-#ifdef news1700 /* XXX should determine machine type? */
+	movl	#0x200,%d0		| data freeze bit
+	movc	%d0,%cacr		|  only exists on 68030
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lnot68030		| yes, we have 68020/68040
 
+	RELOC(mmutype,%a0)
+	movl	#MMU_68030,%a0@
+	RELOC(cputype,%a0)
+	movl	#CPU_68030,%a0@
+	RELOC(fputype,%a0)
+	movl	#FPU_68882,%a0@
+
+	movl	%d6,%d0			| check bootdev
+	andl	#0x00007000,%d0		| BOOTDEV_HOST
+	cmpl	#0x00007000,%d0		| news1200?
+	jne	Lnot1200		| no, then skip
+
+	/* news1200 */
+	/* XXX Are these needed?*/
+	sf	0xe1100000		| AST disable (???)
+	sf	0xe10c0000		| level2 interrupt disable (???)
+	moveb	#0x03,0xe1140002	| timer set (???)
+	moveb	#0xd0,0xe1140003	| timer set (???)
+	sf	0xe1140000		| timer interrupt disable (???)
+	/* XXX */
+
+	RELOC(systype,%a0)
+	movl	#NEWS1200,%a0@
+	RELOC(ectype, %a0)		|
+	movl	#EC_NONE,%a0@		| news1200 have no L2 cache
+
+	/*
+	 * Fix up the physical addresses of the news1200's onboard
+	 * I/O registers.
+	 */
+	RELOC(intiobase_phys, %a0);
+	movl	#INTIOBASE1200,%a0@
+	RELOC(intiotop_phys, %a0);
+	movl	#INTIOTOP1200,%a0@
+
+	RELOC(extiobase_phys, %a0);
+	movl	#EXTIOBASE1200,%a0@
+	RELOC(extiotop_phys, %a0);
+	movl	#EXTIOTOP1200,%a0@
+
+	RELOC(ctrl_power, %a0);
+	movl	#0xe1000000,%a0@	| CTRL_POWER port for news1200
+	jra	Lcom030
+
+Lnot1200:
+	tstl	%d0			| news1700?
+	jne	Lnotyet			| no, then skip
+
+	/* news1700 */
 	/* XXX Are these needed?*/
 	sf	0xe1280000		| AST disable (???)
 	sf	0xe1180000		| level2 interrupt disable (???)
@@ -159,25 +212,14 @@ ASENTRY_NOPROFILE(start)
 	/* XXX */
 
 	/* news1700 - 68030 CPU/MMU, 68882 FPU */
-	RELOC(machineid,%a0)
-	movl	#1700,%a0@		| XXX machineid not yet
-	RELOC(mmutype,%a0)
-	movl	#MMU_68030,%a0@
-	RELOC(cputype,%a0)
-	movl	#CPU_68030,%a0@
-	RELOC(fputype,%a0)
-	movl	#FPU_68882,%a0@
-	RELOC(ectype, %a0)		| XXX How can we handle L2 cache?
+	RELOC(systype,%a0)
+	movl	#NEWS1700,%a0@
+	RELOC(ectype, %a0)
 	movl	#EC_PHYS,%a0@		| news1700 have a phisical address cache
 	RELOC(cache_ctl, %a0)
 	movl	#0xe1300000,%a0@
 	RELOC(cache_clr, %a0)
 	movl	#0xe1900000,%a0@
-
-	RELOC(vectab,%a0)
-	RELOC(busaddrerr2030,%a1)
-	movl	%a1,%a0@(8)
-	movl	%a1,%a0@(12)
 
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
@@ -193,6 +235,15 @@ ASENTRY_NOPROFILE(start)
 	RELOC(extiotop_phys, %a0);
 	movl	#EXTIOTOP1700,%a0@
 
+	RELOC(ctrl_power, %a0);
+	movl	#0xe1380000,%a0@	| CTRL_POWER port for news1700
+Lcom030:
+
+	RELOC(vectab,%a0)
+	RELOC(busaddrerr2030,%a1)
+	movl	%a1,%a0@(8)
+	movl	%a1,%a0@(12)
+
 	movl	%d4,%d1
 	addl	%a5,%d1
 	moveq	#PGSHIFT,%d2
@@ -207,8 +258,7 @@ ASENTRY_NOPROFILE(start)
 	movl	%d1,%a0@		| save as physmem
 
 	jra	Lstart1
-Lnot1700:
-#endif
+Lnot68030:
 
 #ifdef news700 /* XXX eventually... */
 	RELOC(mmutype,%a0)
@@ -1315,6 +1365,7 @@ Lnocache5:
 	movl	_C_LABEL(boothowto),%d7	| load howto
 	movl	_C_LABEL(bootdev),%d6	| load bootdev
 	movl	%sp@(4),%d2		| arg
+	movl	_C_LABEL(ctrl_power),%a0| CTRL_POWER port
 	movl	_ASM_LABEL(monitor_vbr),%d3	| Fetch original VBR value
 	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
 	movl	#0,%a7@-		| value for pmove to TC (turn off MMU)
@@ -1324,8 +1375,7 @@ Lnocache5:
 	andl	#0x800,%d0		| mask off
 	tstl	%d0			| power down?
 	beq	1f			|
-	clrb	0xe1380000		| clear CTRL_POWER port
-					| XXX news1700 only
+	clrb	%a0@			| clear CTRL_POWER port
 1:
 	tstl	%d2			| autoboot?
 	beq	2f			| yes!
@@ -1358,8 +1408,8 @@ ASENTRY_NOPROFILE(debug_led2)
  */
 	.data
 
-GLOBAL(machineid)
-	.long	1700		| default to NWS1700; XXX not used
+GLOBAL(systype)
+	.long	NEWS1700	| default to NEWS1700
 
 GLOBAL(mmutype)
 	.long	MMU_68030	| default to MMU_68030
@@ -1425,6 +1475,9 @@ GLOBAL(extiobase_phys)
 
 GLOBAL(extiotop_phys)
 	.long	0		| PA of top of external I/O registers
+
+GLOBAL(ctrl_power)
+	.long	0		| PA of power control port 
 
 GLOBAL(cache_ctl)
 	.long	0		| KVA of external cache control port 

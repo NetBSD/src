@@ -1,4 +1,4 @@
-/*	$NetBSD: hbvar.h,v 1.1 1999/12/09 14:53:04 tsutsui Exp $	*/
+/*	$NetBSD: hbvar.h,v 1.2 2000/02/08 16:17:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -44,29 +44,3 @@ struct hb_attach_args {
 
 void	hb_intr_establish __P((int, int (*)(void *), int, void *));
 void	hb_intr_disestablish __P((int));
-
-#ifdef news1700 /* XXX these should be defined dinamically? */
-#define	CTRL_LED	0xe0dc0000
-#define	 LED0		0x01
-#define	 LED1		0x02
-
-#define	CTRL_TIMER	0xe1000000
-
-#define LANCE_PORT	0xe0f00000
-#define	LANCE_MEMORY	0xe0e00000
-#define	LANCE_ID	0xe1c00000
-
-#define LANCE_PORT1	0xf0c30000
-#define	LANCE_MEMORY1	0xf0c20000
-#define	LANCE_ID1	0xf0c38000
-
-#define	LANCE_PORT2	0xf0c70000
-#define	LANCE_MEMORY2	0xf0c60000
-#define	LANCE_ID2	0xf0c78000
-
-#define	SCCPORT0A	0xe0d40002
-#define	SCCPORT0B	0xe0d40000
-
-#define	SCSI_BASE	0xe0cc0000
-#define	DMAC_BASE	0xe0e80000
-#endif
