@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.32 2002/02/25 02:22:59 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.80 2002/02/24 07:10:10 suz Exp $	*/
+/*	$NetBSD: route6d.c,v 1.33 2002/05/29 23:11:13 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.83 2002/05/29 23:07:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.32 2002/02/25 02:22:59 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.33 2002/05/29 23:11:13 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: route6d.c,v 1.32 2002/02/25 02:22:59 itojun Exp $");
 #include <stddef.h>
 #include <errno.h>
 #include <err.h>
+#include <util.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,9 +200,8 @@ FILE	*rtlog = NULL;
 
 int logopened = 0;
 
-static	u_long	seq = 0;
+static	int	seq = 0;
 
-volatile int signo;
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenquit;
 volatile sig_atomic_t seenusr1;
@@ -284,7 +284,6 @@ main(argc, argv)
 	int	error = 0;
 	struct	ifc *ifcp;
 	sigset_t mask, omask;
-	FILE	*pidfile;
 	char *progname;
 	char *ep;
 
@@ -392,11 +391,7 @@ main(argc, argv)
 	if (dflag)
 		ifrtdump(0);
 
-	pid = getpid();
-	if ((pidfile = fopen(ROUTE6D_PID, "w")) != NULL) {
-		fprintf(pidfile, "%d\n", pid);
-		fclose(pidfile);
-	}
+	pidfile(NULL);
 
 	if ((ripbuf = (struct rip6 *)malloc(RIP6_MAXMTU)) == NULL) {
 		fatal("malloc");
@@ -454,7 +449,6 @@ main(argc, argv)
 		}
 
 		FD_COPY(&sockvec, &recvec);
-		signo = 0;
 		switch (select(maxfd + 1, &recvec, 0, 0, 0)) {
 		case -1:
 			if (errno != EINTR) {
@@ -480,11 +474,10 @@ main(argc, argv)
 }
 
 void
-sighandler(sig)
-	int sig;
+sighandler(signo)
+	int signo;
 {
 
-	signo = sig;
 	switch (signo) {
 	case SIGALRM:
 		seenalrm++;
@@ -2796,7 +2789,7 @@ getroute(np, gw)
 	struct in6_addr *gw;
 {
 	u_char buf[BUFSIZ];
-	u_long myseq;
+	int myseq;
 	int len;
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin6;
@@ -3269,14 +3262,15 @@ char *
 allocopy(p)
 	char *p;
 {
-	char *q = (char *)malloc(strlen(p) + 1);
+	int len = strlen(p) + 1;
+	char *q = (char *)malloc(len);
 
 	if (!q) {
 		fatal("malloc");
 		/*NOTREACHED*/
 	}
 
-	strcpy(q, p);
+	strlcpy(q, p, len);
 	return q;
 }
 
