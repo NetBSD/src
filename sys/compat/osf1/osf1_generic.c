@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.4 2002/03/16 20:43:55 christos Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.4 2002/03/16 20:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.4 2002/03/16 20:43:55 christos Ex
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 
@@ -81,12 +82,13 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.4 2002/03/16 20:43:55 christos Ex
  * the other word of our iov_len is zero!
  */
 int
-osf1_sys_readv(p, v, retval)
-	struct proc *p;
+osf1_sys_readv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_readv_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_readv_args a;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
@@ -116,7 +118,7 @@ osf1_sys_readv(p, v, retval)
 
 	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
-	error = sys_readv(p, &a, retval);
+	error = sys_readv(l, &a, retval);
 
 punt:
 	free(oio, M_TEMP);
@@ -125,12 +127,13 @@ punt:
 }
 
 int
-osf1_sys_select(p, v, retval)
-	struct proc *p;
+osf1_sys_select(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_select_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_select_args a;
 	struct osf1_timeval otv;
 	struct timeval tv;
@@ -165,18 +168,19 @@ osf1_sys_select(p, v, retval)
 	}
 
 	if (error == 0)
-		error = sys_select(p, &a, retval);
+		error = sys_select(l, &a, retval);
 
 	return (error);
 }
 
 int
-osf1_sys_writev(p, v, retval)
-	struct proc *p;
+osf1_sys_writev(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_writev_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_writev_args a;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
@@ -206,7 +210,7 @@ osf1_sys_writev(p, v, retval)
 
 	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
-	error = sys_writev(p, &a, retval);
+	error = sys_writev(l, &a, retval);
 
 punt:
 	free(oio, M_TEMP);

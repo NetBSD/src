@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.8 2002/03/16 20:43:55 christos Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.9 2003/01/18 08:32:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.8 2002/03/16 20:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.9 2003/01/18 08:32:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.8 2002/03/16 20:43:55 christos Exp
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/socketvar.h>
 #include <sys/exec.h>
@@ -76,8 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.8 2002/03/16 20:43:55 christos Exp
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_recvmsg_xopen(p, v, retval)
-	struct proc *p;
+osf1_sys_recvmsg_xopen(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -87,12 +88,13 @@ osf1_sys_recvmsg_xopen(p, v, retval)
 }
 
 int
-osf1_sys_sendmsg_xopen(p, v, retval)
-	struct proc *p;
+osf1_sys_sendmsg_xopen(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_sendmsg_xopen_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_sendmsg_args a;
 	struct osf1_msghdr_xopen osf_msghdr;
 	struct osf1_iovec_xopen osf_iovec, *osf_iovec_ptr;
@@ -159,12 +161,12 @@ printf("sendmsg flags leftover: 0x%lx\n", leftovers);
 		return (EINVAL);
 }
 
-	return sys_sendmsg(p, &a, retval);
+	return sys_sendmsg(l, &a, retval);
 }
 
 int
-osf1_sys_sendto(p, v, retval)
-	struct proc *p;
+osf1_sys_sendto(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -184,12 +186,12 @@ osf1_sys_sendto(p, v, retval)
 	if (leftovers != 0)
 		return (EINVAL);
 
-	return sys_sendto(p, &a, retval);
+	return sys_sendto(l, &a, retval);
 }
 
 int
-osf1_sys_socket(p, v, retval)
-	struct proc *p;
+osf1_sys_socket(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -205,12 +207,12 @@ osf1_sys_socket(p, v, retval)
 	SCARG(&a, type) = SCARG(uap, type);
 	SCARG(&a, protocol) = SCARG(uap, protocol);
 
-	return sys_socket(p, &a, retval);
+	return sys_socket(l, &a, retval);
 }
 
 int
-osf1_sys_socketpair(p, v, retval)
-	struct proc *p;
+osf1_sys_socketpair(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -227,5 +229,5 @@ osf1_sys_socketpair(p, v, retval)
 	SCARG(&a, protocol) = SCARG(uap, protocol);
 	SCARG(&a, rsv) = SCARG(uap, rsv);
 
-	return sys_socketpair(p, &a, retval);
+	return sys_socketpair(l, &a, retval);
 }

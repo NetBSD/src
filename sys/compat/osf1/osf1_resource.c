@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.4 2002/03/16 20:43:55 christos Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.4 2002/03/16 20:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -46,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.4 2002/03/16 20:43:55 christos E
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_getrlimit(p, v, retval)
-	struct proc *p;
+osf1_sys_getrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -84,16 +85,17 @@ osf1_sys_getrlimit(p, v, retval)
 	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return sys_getrlimit(p, &a, retval);
+	return sys_getrlimit(l, &a, retval);
 }
 
 int
-osf1_sys_getrusage(p, v, retval)
-	struct proc *p;
+osf1_sys_getrusage(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_getrusage_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_getrusage_args a;
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
@@ -117,7 +119,7 @@ osf1_sys_getrusage(p, v, retval)
 	sg = stackgap_init(p, 0);
 	SCARG(&a, rusage) = stackgap_alloc(p, &sg, sizeof netbsd_rusage);
 
-	error = sys_getrusage(p, &a, retval);
+	error = sys_getrusage(l, &a, retval);
 	if (error == 0)
                 error = copyin((caddr_t)SCARG(&a, rusage),
 		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
@@ -131,8 +133,8 @@ osf1_sys_getrusage(p, v, retval)
 }
 
 int
-osf1_sys_setrlimit(p, v, retval)
-	struct proc *p;
+osf1_sys_setrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -169,5 +171,5 @@ osf1_sys_setrlimit(p, v, retval)
 	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return sys_setrlimit(p, &a, retval);
+	return sys_setrlimit(l, &a, retval);
 }

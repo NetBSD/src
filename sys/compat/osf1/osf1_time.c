@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $ */
+/* $NetBSD: osf1_time.c,v 1.6 2003/01/18 08:32:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6 2003/01/18 08:32:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/osf1/osf1.h>
@@ -46,12 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.5 2002/03/16 20:43:55 christos Exp $
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_gettimeofday(p, v, retval)
-	struct proc *p;
+osf1_sys_gettimeofday(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_gettimeofday_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_gettimeofday_args a;
 	struct osf1_timeval otv;
 	struct osf1_timezone otz;
@@ -70,7 +72,7 @@ osf1_sys_gettimeofday(p, v, retval)
 	else
 		SCARG(&a, tzp) = stackgap_alloc(p, &sg, sizeof tz);
 
-	error = sys_gettimeofday(p, &a, retval);
+	error = sys_gettimeofday(l, &a, retval);
 
 	if (error == 0 && SCARG(uap, tp) != NULL) {
 		error = copyin((caddr_t)SCARG(&a, tp),
@@ -100,12 +102,13 @@ osf1_sys_gettimeofday(p, v, retval)
 }
 
 int
-osf1_sys_setitimer(p, v, retval)
-	struct proc *p;
+osf1_sys_setitimer(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_setitimer_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_setitimer_args a;
 	struct osf1_itimerval o_itv, o_oitv;
 	struct itimerval b_itv, b_oitv;
@@ -155,7 +158,7 @@ osf1_sys_setitimer(p, v, retval)
 		SCARG(&a, oitv) = stackgap_alloc(p, &sg, sizeof b_oitv);
 
 	if (error == 0)
-		error = sys_setitimer(p, &a, retval);
+		error = sys_setitimer(l, &a, retval);
 
 	if (error == 0 && SCARG(uap, oitv) != NULL) {
 		/* get the NetBSD itimerval return value */
@@ -179,12 +182,13 @@ osf1_sys_setitimer(p, v, retval)
 }
 
 int
-osf1_sys_getitimer(p, v, retval)
-	struct proc *p;
+osf1_sys_getitimer(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_getitimer_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_getitimer_args a;
 	struct osf1_itimerval o_oitv;
 	struct itimerval b_oitv;
@@ -206,7 +210,7 @@ osf1_sys_getitimer(p, v, retval)
 	sg = stackgap_init(p, 0);
 	SCARG(&a, itv) = stackgap_alloc(p, &sg, sizeof b_oitv);
 	if (error == 0)
-		error = sys_getitimer(p, &a, retval);
+		error = sys_getitimer(l, &a, retval);
 	if (error == 0 && SCARG(uap, itv) != NULL) {
 		/* get the NetBSD itimerval return value */
 		error = copyin((caddr_t)SCARG(&a, itv), (caddr_t)&b_oitv,
@@ -226,12 +230,13 @@ osf1_sys_getitimer(p, v, retval)
 }
 
 int
-osf1_sys_settimeofday(p, v, retval)
-	struct proc *p;
+osf1_sys_settimeofday(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_settimeofday_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_settimeofday_args a;
 	struct osf1_timeval otv;
 	struct osf1_timezone otz;
@@ -282,7 +287,7 @@ osf1_sys_settimeofday(p, v, retval)
 	}
 
 	if (error == 0)
-		error = sys_settimeofday(p, &a, retval);
+		error = sys_settimeofday(l, &a, retval);
 
 	return (error);
 }
