@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.134 1998/07/08 00:41:32 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.135 1998/07/08 04:35:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 1998/07/08 00:41:32 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 1998/07/08 04:35:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ nobootinfo:
 #endif
 #if defined(UVM)
 				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn);
+				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
 #else
 				vm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn);
@@ -615,7 +615,7 @@ nobootinfo:
 #endif
 #if defined(UVM)
 				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1);
+				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
 #else
 				vm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1);
@@ -630,7 +630,8 @@ nobootinfo:
 			    pfn0, pfn1);
 #endif
 #if defined(UVM)
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1);
+			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
+			    VM_FREELIST_DEFAULT);
 #else
 			vm_page_physload(pfn0, pfn1, pfn0, pfn1);
 #endif
