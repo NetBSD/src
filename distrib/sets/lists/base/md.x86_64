@@ -1,5 +1,0 @@
-# $NetBSD: md.x86_64,v 1.1 2003/02/13 23:57:52 jmc Exp $
-./usr/lib/libpthread.so.0	base-sys-shlib
-./usr/lib/libpthread_dbg.so.0	base-sys-shlib
-./usr/lib/libpthread.so.0.1		base-sys-shlib
-./usr/lib/libpthread_dbg.so.0.0		base-sys-shlib
