@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.22 2000/09/23 04:32:23 augustss Exp $
+#	$NetBSD: files.usb,v 1.23 2001/01/02 18:49:56 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -26,6 +26,10 @@ attach	uhub at uhub with uhub_uhub
 
 # Modem and com serial port "bus"
 define	ucombus {[ portno = -1 ]}
+
+# EZ-USB firmware loader
+define	ezload
+file	dev/usb/ezload.c		ezload
 
 # Audio devices
 device	uaudio: audio, auconv, mulaw
