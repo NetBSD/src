@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.72 2001/02/11 16:16:58 pk Exp $
+# 	$NetBSD: Makefile.sparc,v 1.73 2001/05/29 02:20:26 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ SPARC=	$S/arch/sparc
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
