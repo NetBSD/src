@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.1 2002/04/17 23:42:27 dillo Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.2 2002/04/18 13:33:01 dillo Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@netbsd.org>.  All rights reserved.
@@ -180,6 +180,6 @@ function read1line() {
 #	# date
 #}
 /\$NetBSD/ {
-	sub(/\$NetBSD.*\$/, "$NetBSD: MAKEDEV2manpage.awk,v 1.1 2002/04/17 23:42:27 dillo Exp $");
+	sub(/\$NetBSD.*\$/, "$""NetBSD$");
 }
 { print }
