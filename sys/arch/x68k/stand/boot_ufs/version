@@ -8,3 +8,4 @@ is taken as the current.
 1.0:	Remove the deflate routine, which is not required to load
 	/boot.
 	Add LFS support (not tested yet).
+1.1:	Add LFSv2 support
