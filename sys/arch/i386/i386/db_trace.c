@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.38 2003/05/12 13:38:49 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2003/05/12 13:38:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 	 * trapno T_ASTFLT.
 	 */
 	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
-	    NULL) != NULL
+	    NULL) != (db_sym_t)0
 	    && traptype == INTERRUPT) {
 		for (i = 0; i < 4; i++) {
 			ifp = (struct intrframe *)(argp + i);
@@ -274,8 +274,8 @@ db_frame_info(int *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
 
 	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 	db_symbol_values(sym, &name, NULL);
-	if (sym == NULL)
-		return NULL;
+	if (sym == (db_sym_t)0)
+		return (db_sym_t)0;
 
 	*is_trap = NONE;
 	narg = MAXNARG;
@@ -423,7 +423,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
 				    &narg);
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == 0 && sym == (db_sym_t)0) {
 			/* Symbol not found, peek at code */
 			int	instr = db_get_value(callpc, 4, FALSE);
 
