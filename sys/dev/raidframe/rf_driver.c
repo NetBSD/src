@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.64 2002/10/04 20:05:14 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.65 2002/10/18 02:46:36 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.64 2002/10/04 20:05:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.65 2002/10/18 02:46:36 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -711,20 +711,23 @@ rf_FailDisk(
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
 	raidPtr->status[frow] = rf_rs_degraded;
-	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 
 	/* Close the component, so that it's not "locked" if someone 
 	   else want's to use it! */
 
 	rf_close_component(raidPtr, raidPtr->raid_cinfo[frow][fcol].ci_vp,
 			   raidPtr->Disks[frow][fcol].auto_configured);
+
+	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
 
 	/* Need to mark the component as not being auto_configured 
 	   (in case it was previously). */
 
 	raidPtr->Disks[frow][fcol].auto_configured = 0;
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	if (initRecon)
 		rf_ReconstructFailedDisk(raidPtr, frow, fcol);
