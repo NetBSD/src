@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.34 2004/03/27 00:53:59 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.35 2005/02/16 03:45:41 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,6 +72,7 @@ int	 checkhost6(struct in6pcb *);
 int	 checkport6(struct in6pcb *);
 #endif
 void	 closebufcache(WINDOW *);
+void	 closedf(WINDOW *);
 void	 closeicmp(WINDOW *);
 void	 closeiostat(WINDOW *);
 void	 closeip(WINDOW *);
@@ -82,6 +83,8 @@ void	 closepigs(WINDOW *);
 void	 closeswap(WINDOW *);
 void	 closetcp(WINDOW *);
 void	 command(char *);
+void	 df_all(char *);
+void	 df_some(char *);
 void	 die(int);
 void	 disks_add(char *);
 void	 disks_remove(char *);
@@ -90,6 +93,7 @@ void	 display(int);
 void	 error(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
 void	 fetchbufcache(void);
+void	 fetchdf(void);
 void	 fetchicmp(void);
 void	 fetchiostat(void);
 void	 fetchip(void);
@@ -110,6 +114,7 @@ void	 icmp_run(char *);
 void	 icmp_time(char *);
 void	 icmp_zero(char *);
 int	 initbufcache(void);
+int	 initdf(void);
 int	 initicmp(void);
 int	 initiostat(void);
 int	 initip(void);
@@ -131,6 +136,7 @@ void	 ip_zero(char *);
 void	 keyboard(void) __attribute__((__noreturn__));
 ssize_t	 kvm_ckread(const void *, void *, size_t, const char *);
 void	 labelbufcache(void);
+void	 labeldf(void);
 void	 labelicmp(void);
 void	 labeliostat(void);
 void	 labelip(void);
@@ -154,6 +160,7 @@ void	 netstat_tcp(char *);
 void	 netstat_udp(char *);
 void	 nlisterr(struct nlist []) __attribute__((__noreturn__));
 WINDOW	*openbufcache(void);
+WINDOW	*opendf(void);
 WINDOW	*openicmp(void);
 WINDOW	*openiostat(void);
 WINDOW	*openip(void);
@@ -166,6 +173,7 @@ WINDOW	*opentcp(void);
 void	 ps_user(char *);
 void	 redraw(int);
 void	 showbufcache(void);
+void	 showdf(void);
 void	 showicmp(void);
 void	 showiostat(void);
 void	 showip(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.19 2003/09/12 17:32:29 mycroft Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.20 2005/02/16 03:45:41 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.19 2003/09/12 17:32:29 mycroft Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.20 2005/02/16 03:45:41 hubertf Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -55,6 +55,12 @@ struct	command global_commands[] = {
 	{ 0 }
 };
 
+struct command	df_commands[] = {
+	{ "all",	df_all,         "show all filesystems"},
+	{ "some",	df_some,        "show only some filesystems"},
+	{ 0 }
+};
+	
 struct command	icmp_commands[] = {
 	{ "boot",	icmp_boot,	"show total stats since boot"},
 	{ "run",	icmp_run,	"show running total stats"},
@@ -149,6 +155,9 @@ struct mode modes[] = {
 	  CF_LOADAV },
 	{ "bufcache",	showbufcache,	fetchbufcache,	labelbufcache,
 	  initbufcache,	openbufcache,	closebufcache,	0,
+	  CF_LOADAV },
+	{ "df",         showdf,  	fetchdf,	labeldf,
+	  initdf,	opendf,		closedf,	df_commands,
 	  CF_LOADAV },
 	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
 	  initicmp,	openicmp,	closeicmp,	icmp_commands,
