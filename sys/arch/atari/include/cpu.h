@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2003/01/17 22:34:22 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2003/05/10 16:12:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,13 +196,6 @@ void	config_console __P((void));
  * Prototypes from clock.c
  */
 long	clkread __P((void));
-
-/*
- * Prototypes from disksubr.c
- */
-struct buf;
-struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 
 /*
  * Prototypes from fpu.c
