@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.5 1997/10/19 16:58:05 christos Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.6 1997/10/23 07:05:55 fair Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.5 1997/10/19 16:58:05 christos Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.6 1997/10/23 07:05:55 fair Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -797,8 +797,8 @@ dotypeinv()
 int
 dolook()
 {
-	struct obj     *otmp, *otmp0;
-	struct gold    *gold;
+	struct obj     *otmp = NULL, *otmp0 = NULL;
+	struct gold    *gold = NULL;
 	char           *verb = Blind ? "feel" : "see";
 	int             ct = 0;
 
