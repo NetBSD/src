@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.1 1998/05/15 10:15:49 tsubai Exp $	*/
+/*	$NetBSD: viareg.h,v 1.2 1998/10/20 14:56:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -146,7 +146,7 @@ extern volatile unsigned char *Via1Base;
 #define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
 
 #define VIA1		0
-extern int VIA2;
+#define VIA2		0
 
 	/* VIA interface registers */
 #define vBufA		0x1e00	/* register A */

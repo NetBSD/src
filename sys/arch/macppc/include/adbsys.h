@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.1 1998/05/15 10:15:50 tsubai Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.2 1998/10/20 14:56:31 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -115,16 +115,18 @@ typedef struct adb_dev_s{
 #define ADB_ADJJAPKBD	18
 #define ADB_PBEXTISOKBD	20
 #define ADB_PBEXTJAPKBD	21
-#define ADB_JISKBDII	22
+#define ADB_JPKBDII	22
 #define ADB_PBEXTKBD	24
 #define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
+#define ADB_PBJPKBD	30
 
 	/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
 #define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
 #define ADBMS_EXTENDED	4	/* Extended mouse protocol */
-#define ADBMS_USPEED	47	/* MicroSpeed mouse */
+#define ADBMS_USPEED	0x2f	/* MicroSpeed mouse */
+#define ADBMS_UCONTOUR  0x66	/* Contour mouse */
 
 	/* Interesting tablet handler ID */
 #define ADB_ARTPAD	58	/* WACOM ArtPad II tablet */
