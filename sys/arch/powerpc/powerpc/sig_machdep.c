@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.8 2003/01/18 06:23:34 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.9 2003/01/18 23:58:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,7 +76,7 @@ sendsig(sig, mask, code)
 						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
-	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
+	fp = (struct sigframe *)((uintptr_t)(fp - 1) & ~0xf);
 
 	/* Save register context. */
 	frame.sf_sc.sc_frame = *tf;
@@ -113,22 +113,22 @@ sendsig(sig, mask, code)
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
-		tf->fixreg[1] = (int)fp;
-		tf->lr = (int)catcher;
-		tf->fixreg[3] = (int)sig;
-		tf->fixreg[4] = (int)code;
-		tf->fixreg[5] = (int)&fp->sf_sc;
-		tf->srr0 = (int)p->p_sigctx.ps_sigcode;
+		tf->fixreg[1] = (register_t)fp;
+		tf->lr = (register_t)catcher;
+		tf->fixreg[3] = (register_t)sig;
+		tf->fixreg[4] = (register_t)code;
+		tf->fixreg[5] = (register_t)&fp->sf_sc;
+		tf->srr0 = (register_t)p->p_sigctx.ps_sigcode;
 		break;
 #endif /* COMPAT_16 */
 
 	case 1:
-		tf->fixreg[1] = (int)fp;
-		tf->lr = (int)catcher;
-		tf->fixreg[3] = (int)sig;
-		tf->fixreg[4] = (int)code;
-		tf->fixreg[5] = (int)&fp->sf_sc;
-		tf->srr0 = (int)ps->sa_sigdesc[sig].sd_tramp;
+		tf->fixreg[1] = (register_t)fp;
+		tf->lr = (register_t)catcher;
+		tf->fixreg[3] = (register_t)sig;
+		tf->fixreg[4] = (register_t)code;
+		tf->fixreg[5] = (register_t)&fp->sf_sc;
+		tf->srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
