@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.23 2002/03/17 23:58:10 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.24 2002/03/25 02:23:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.23 2002/03/17 23:58:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.24 2002/03/25 02:23:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,8 @@ ext2fs_write(v)
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
+	if (uio->uio_resid == 0)
+		return (0);
 
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
