@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.20 2000/04/08 04:46:15 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.21 2000/04/13 09:23:38 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -160,11 +160,17 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
-clean: cleankernel
-cleankernel:
+__CLEANKERNEL: .USE
+	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs lderr linterrs makelinks assym.h.tmp assym.h
+
+__CLEANDEPEND: .USE
+	rm -f .depend
+
+clean: __CLEANKERNEL
+
+cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
