@@ -1,11 +1,11 @@
-/*	$NetBSD: if.h,v 1.105 2005/03/20 02:51:33 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.106 2005/03/20 07:47:29 agc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by William Studnemund and Jason R. Thorpe.
+ * by William Studenmund and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
