@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.7 1997/07/21 14:07:20 jtc Exp $	*/
+/*	$NetBSD: nice.c,v 1.8 1998/06/09 06:58:41 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nice.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nice.c,v 1.7 1997/07/21 14:07:20 jtc Exp $");
+__RCSID("$NetBSD: nice.c,v 1.8 1998/06/09 06:58:41 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: nice.c,v 1.7 1997/07/21 14:07:20 jtc Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <errno.h>
 #include <unistd.h>
 
 #ifdef __weak_alias
@@ -60,7 +61,6 @@ nice(incr)
 	int incr;
 {
 	int prio;
-	extern int errno;
 
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 0);
