@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1997/02/12 17:53:01 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.32 1997/02/19 10:04:25 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -240,7 +240,7 @@ pmap_bootstrap()
 	bcopy(0, (void *)avail_start, NBPG >> 1);
 	mtpr(avail_start, PR_SCBB);
 	bzero(0, NBPG >> 1);
-	(cpu_calls[vax_cputype].cpu_steal_pages)();
+	(*dep_call->cpu_steal_pages)();
 	avail_start = ROUND_PAGE(avail_start);
 	virtual_avail = ROUND_PAGE(virtual_avail);
 

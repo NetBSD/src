@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.8 1997/02/12 17:50:40 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.9 1997/02/19 10:04:16 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/ka650.h>
+#include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/mtpr.h>
@@ -67,6 +68,21 @@ static	int subtyp;
 #define	CACHEON		1
 
 void	ka650setcache __P((int));
+
+struct	cpu_dep	ka650_calls = {
+	uvaxIII_steal_pages,
+	no_nicr_clock,
+	uvaxIII_mchk,
+	uvaxIII_memerr,
+	uvaxIII_conf,
+	generic_clkread,
+	generic_clkwrite,
+	4,      /* ~VUPS */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+	0,      /* Used by vaxstation */
+
+};
 
 /*
  * uvaxIII_conf() is called by cpu_attach to do the cpu_specific setup.
