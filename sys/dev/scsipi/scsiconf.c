@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.197 2003/01/09 12:25:00 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.198 2003/01/27 18:55:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.197 2003/01/09 12:25:00 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.198 2003/01/27 18:55:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "TOSHIBA ", "XM-4101TASUNSLCD", "1755"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
+	 "TOSHIBA ", "XM-4101TASUNSLCD", ""}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	/* "IBM CDRM00201     !F" 0724 is an IBM OEM Toshiba XM-4101BME */
 	{{T_CDROM, T_REMOV,
 	 "IBM     ", "CDRM00201     !F", "0724"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
