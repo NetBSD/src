@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.6 2001/05/26 16:16:38 he Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.7 2001/06/16 19:19:37 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.5 2001/04/04 15:45:40 he Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.6 2001/05/26 16:16:05 he Exp 
  */
 
 /*-
@@ -70,6 +70,7 @@
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
+#define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
@@ -167,6 +168,11 @@
 #define	PCMCIA_CIS_MOTOROLA_PM100C	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MOTOROLA_PM100C	0x0302
 #define	PCMCIA_STR_MOTOROLA_PM100C	"Motorola Personal Messenger 100C CDPD Modem"
+
+/* Kingston Products */         
+#define	PCMCIA_CIS_KINGSTON_KNE2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_KINGSTON_KNE2	0x0100
+#define	PCMCIA_STR_KINGSTON_KNE2	"Kingston KNE-PC2 Ethernet"
 
 /* Fujitsu Products */
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }

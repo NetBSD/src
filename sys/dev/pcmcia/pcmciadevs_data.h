@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.6 2001/05/26 16:16:38 he Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.7 2001/06/16 19:19:37 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.5 2001/04/04 15:45:40 he Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.6 2001/05/26 16:16:05 he Exp 
  */
 
 /*-
@@ -183,6 +183,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Personal Messenger 100C CDPD Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
+	    PCMCIA_CIS_KINGSTON_KNE2,
+	    0,
+	    "Kingston",
+	    "Kingston KNE-PC2 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
@@ -1015,6 +1022,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Compaq",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Kingston",
 	    NULL,
 	},
 	{
