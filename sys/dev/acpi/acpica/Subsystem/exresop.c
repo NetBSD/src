@@ -145,7 +145,7 @@
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiExCheckObjectType (
     ACPI_OBJECT_TYPE        TypeNeeded,
     ACPI_OBJECT_TYPE        ThisType,

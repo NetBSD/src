@@ -148,7 +148,7 @@ DB_METHOD_INFO              AcpiGbl_DbMethodInfo;
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiDbExecuteMethod (
     DB_METHOD_INFO          *Info,
     ACPI_BUFFER             *ReturnObj)
@@ -222,7 +222,7 @@ AcpiDbExecuteMethod (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbExecuteSetup (
     DB_METHOD_INFO          *Info)
 {
@@ -271,10 +271,9 @@ AcpiDbExecuteSetup (
  *
  ******************************************************************************/
 
-UINT32
+static UINT32
 AcpiDbGetOutstandingAllocations (void)
 {
-    UINT32                  i;
     UINT32                  Outstanding = 0;
 
 
@@ -391,7 +390,7 @@ AcpiDbExecute (
  *
  ******************************************************************************/
 
-void
+static void
 AcpiDbMethodThread (
     void                    *Context)
 {
