@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1996/05/17 21:08:34 chuck Exp $ */
+/*	$NetBSD: boot.c,v 1.4 1996/05/19 21:07:21 chuck Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,9 +48,12 @@ char	line[80];
 main()
 {
 	char *cp, *file;
-	int ask = 0, howto;
+	int ask = 0, howto, sboot = 0;
 
-	printf(">> BSD MVME%x netboot [%s]\n", bugargs.cputyp, version);
+	printf(">> BSD MVME%x netboot (via %s) [%s]\n", bugargs.cputyp, 
+		bugargs.arg_start, version);
+	if (bcmp("sboot", bugargs.arg_start, 5) == 0)
+		sboot = 1;
 	/* cycle in the correct args */
 	bugargs.arg_start = bugargs.nbarg_start;
 	bugargs.arg_end   = bugargs.nbarg_end;
@@ -71,6 +74,8 @@ main()
 				parse_args(&file, &howto);
 			}
 		}
+		if (sboot)
+			howto |= RB_SBOOT;
 		exec_mvme(file, howto);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
