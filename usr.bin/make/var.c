@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.62 2001/06/09 05:22:47 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -470,21 +470,38 @@ Var_Set (name, val, ctxt)
     if (ctxt == VAR_CMD) {
 	char tmp[256];
 	char *exp;
+	char *s;
 	int nbytes;
 	
 	setenv(name, val, 1);
 
+	/*
+	 * Add name='val' to .MAKEOVERRIDES
+	 * We actually want the equivalent of:
+	 * .MAKEOVERRIDES:= ${.MAKEOVERRIDES:Nname=*} name='val'
+	 * clearing the previous value for name is important, since
+	 * doing simple duplicate suppression does not handle:
+	 * $ make FOO=goo
+	 * which might run a sub-make with FOO=boo
+	 * the commands from that sub-make should see just FOO=boo.
+	 */
 	exp = 0;
-	if ((nbytes = snprintf(tmp, sizeof(tmp), "%s='%s'", name, val))
+	if ((nbytes = snprintf(tmp, sizeof(tmp), "${%s:N%s=*} %s='%s'",
+			       MAKEOVERRIDES, name, name, val))
 	    < sizeof(tmp)) {
 	    exp = tmp;
 	} else {
 	    /* alloca is handy, but not everyone has it. */
 	    if ((exp = malloc(nbytes + 1)))
-		snprintf(exp, nbytes + 1, "%s='%s'", name, val);
+		snprintf(exp, nbytes + 1, "${%s:N%s=*} %s='%s'",
+			       MAKEOVERRIDES, name, name, val);
 	}
 	if (exp) {
-	    Var_Append(MAKEOVERRIDES, exp, VAR_GLOBAL);
+	    s = Var_Subst(NULL, exp, VAR_GLOBAL, 0);
+	    if (s) {
+		    Var_Set(MAKEOVERRIDES, s, VAR_GLOBAL);
+		    free(s);
+	    }
 	    if (exp != tmp)
 		free(exp);
 	}
