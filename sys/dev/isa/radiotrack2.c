@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.2 2002/01/02 12:42:23 augustss Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.3 2002/01/03 18:13:19 augustss Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -169,7 +169,7 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.write_bit = rtii_write_bit;
 	sc->tea.read = rtii_hw_read;
 
-	printf(": AIMS Lab Radiotrack II");
+	printf(": AIMS Lab Radiotrack II\n");
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	rtii_set_mute(sc);
 

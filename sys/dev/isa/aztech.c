@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.2 2002/01/02 12:42:23 augustss Exp $ */
+/* $NetBSD: aztech.c,v 1.3 2002/01/03 18:13:19 augustss Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -159,7 +159,7 @@ az_attach(struct device *parent, struct device *self, void *aux)
 			  0, &sc->lm.ioh))
 		panic(": bus_space_map() of %s failed", sc->sc_dev.dv_xname);
 
-	printf(": Aztech/PackardBell");
+	printf(": Aztech/PackardBell\n");
 
 	/* Configure struct lm700x_t lm */
 	sc->lm.offset = 0;
