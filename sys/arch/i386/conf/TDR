@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.50 1995/01/16 12:23:56 mycroft Exp $
+#	$NetBSD: TDR,v 1.51 1995/01/25 04:58:22 cgd Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -162,4 +162,4 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vn	4		# paging to files
+#pseudo-device	vnd	4		# paging to files

@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.52 1995/01/16 12:23:57 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.53 1995/01/25 04:58:24 cgd Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -157,4 +157,4 @@ pseudo-device	bpfilter 8		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vn	4		# paging to files
+#pseudo-device	vnd	4		# paging to files

@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.47 1995/01/16 12:23:47 mycroft Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.48 1995/01/25 04:58:15 cgd Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -159,4 +159,4 @@ pseudo-device	sl	2		# CSLIP
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vn	4		# paging to files
+#pseudo-device	vnd	4		# paging to files
