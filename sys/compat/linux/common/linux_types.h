@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.8 1998/10/04 00:02:45 fvdl Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.9 1998/10/07 23:11:13 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,34 +41,19 @@
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_types.h>
-#include <compat/linux/common/linux_olduname.h>	/* XXX maybe */
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_types.h>
-#include <compat/linux/common/linux_oldmmap.h>
-#include <compat/linux/common/linux_oldselect.h>
-#include <compat/linux/common/linux_olduname.h>
-#include <compat/linux/common/linux_oldolduname.h>
 /*
  * The rest are not written yet:
  */
 #elif defined(__arm32__)
 #include <compat/linux/arch/arm32/linux_types.h>
-#include <compat/linux/common/linux_oldmmap.h>
-#include <compat/linux/common/linux_oldselect.h>
-#include <compat/linux/common/linux_olduname.h>
-#include <compat/linux/common/linux_oldolduname.h>
 #elif defined(__m68k__)
 #include <compat/linux/arch/m68k/linux_types.h>
-#include <compat/linux/common/linux_oldmmap.h>
-#include <compat/linux/common/linux_oldselect.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_types.h>
-#include <compat/linux/common/linux_olduname.h>
-#include <compat/linux/common/linux_oldolduname.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/power/linux_types.h>
-#include <compat/linux/common/linux_olduname.h>
-#include <compat/linux/common/linux_oldolduname.h>
 #endif
 
 /*
@@ -104,5 +89,7 @@ struct linux___sysctl {
 	size_t        newlen;
 	unsigned long __unused[4];
 };
+
+#include <compat/linux/common/linux_siginfo.h>
 
 #endif /* !_LINUX_TYPES_H */
