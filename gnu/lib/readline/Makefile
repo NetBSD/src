@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1997/10/25 09:27:39 lukem Exp $
+# $NetBSD: Makefile,v 1.5 1998/02/14 20:57:21 mycroft Exp $
 
 LIB=	readline
 
@@ -28,8 +28,3 @@ SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
 libinstall:
 
 .include <bsd.lib.mk>
-
-# This is for ../gdb/Makefile
-echo_objdir:
-	@echo ${.OBJDIR}
-
