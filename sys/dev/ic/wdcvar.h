@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.3 1998/06/05 10:09:14 bouyer Exp $    */
+/*	$NetBSD: wdcvar.h,v 1.2.2.4 1998/06/19 22:07:23 leo Exp $    */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -77,7 +77,7 @@ struct channel_softc { /* Per channel data */
 
 struct wdc_softc { /* Per controller state */
 	struct device sc_dev;
-	/* manadatory fields */
+	/* mandatory fields */
 	int           cap;
 /* Capabilities supported by the controller */
 #define	WDC_CAPABILITY_DATA32 0x01     /* 32-bit data access */
@@ -85,8 +85,8 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_DMA    0x04	/* DMA */
 #define	WDC_CAPABILITY_UDMA   0x08	/* Ultra-DMA/33 */
 #define	WDC_CAPABILITY_HWLOCK 0x10	/* Needs to lock HW */
-	u_int8_t      pio_mode; /* hightest PIO mode supported */
-	u_int8_t      dma_mode; /* hightest DMA mode supported */
+	u_int8_t      pio_mode; /* highest PIO mode supported */
+	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
 	struct channel_softc *channels;  /* channels-specific datas (array) */
 
