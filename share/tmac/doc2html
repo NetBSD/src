@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.43 2003/07/01 08:42:19 wiz Exp $
+.\" $NetBSD: doc2html,v 1.44 2003/07/04 12:20:11 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -579,6 +579,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libcrypt" \&Crypt Library (libcrypt, -lcrypt)
 .if "\\$1"libcurses" \&Curses Library (libcurses, -lcurses)
 .if "\\$1"libedit" \&Command Line Editor Library (libedit, -ledit)
+.if "\\$1"libevent" \&Event Notification Library (libevent, -levent)
 .if "\\$1"libform" \&Curses Form Library (libform, -lform)
 .if "\\$1"libintl" \&Internationalized Message Handling Library (libintl, -lintl)
 .if "\\$1"libipsec" \&IPsec Policy Control Library (libipsec, -lipsec)
