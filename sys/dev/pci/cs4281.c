@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.17 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.18 2004/07/09 02:49:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.17 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.18 2004/07/09 02:49:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,7 @@ cs4281_intr(p)
 		handled = 1;
 		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
 			 (int)BA0READ4(sc, CS4281_DCC0)));
-		if (sc->sc_pintr) {
+		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
 		} else {
@@ -366,7 +366,7 @@ cs4281_intr(p)
 		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
-		if (sc->sc_rintr) {
+		if (sc->sc_rrun) {
 			if ((sc->sc_ri % sc->sc_rcount) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
