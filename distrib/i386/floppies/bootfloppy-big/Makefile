@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/08 15:59:34 he Exp $
+#	$NetBSD: Makefile,v 1.4 1999/03/23 18:10:58 drochner Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot-big.fs
-KERN=	${.CURDIR}/../../../../sys/arch/i386/compile/INSTALL/netbsd
+KERN?=	${.CURDIR}/../../../../sys/arch/i386/compile/INSTALL/netbsd
 
 # This Makefile builds a boot image on a 2.88M-sized image.
 #
