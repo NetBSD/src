@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.4 1995/08/14 05:43:24 cgd Exp $	*/
+/*	$NetBSD: libkern.h,v 1.5 1995/09/23 20:35:47 leo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@ static __inline long lmax __P((long, long));
 static __inline long lmin __P((long, long));
 static __inline u_long ulmax __P((u_long, u_long));
 static __inline u_long ulmin __P((u_long, u_long));
+static __inline int abs __P((int));
 
 static __inline int
 imax(a, b)
@@ -93,6 +94,13 @@ ulmin(a, b)
 	u_long a, b;
 {
 	return (a < b ? a : b);
+}
+
+static __inline int
+abs(j)
+	int j;
+{
+	return(j < 0 ? -j : j);
 }
 
 /* Prototypes for non-quad routines. */
