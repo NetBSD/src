@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.16 2002/01/27 13:23:12 jdolecek Exp $
+#	$NetBSD: OFWGENCFG,v 1.17 2002/02/06 21:30:27 thorpej Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -7,6 +7,7 @@
 #
 
 include	"arch/arm32/conf/std.arm32"
+include "arch/arm32/conf/std.ofwgencfg"
 
 # estimated number of users
 
@@ -24,7 +25,6 @@ makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 
-options 	OFW		# Enable common Open Firmware bits
 options 	OFWGENCFG	# Enable Open Firmware bits specific to GENERIC configuration
 
 # FPA options

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.11 2001/11/27 01:06:29 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.1 2002/02/06 21:30:26 thorpej Exp $	*/
 
 /*
  * Copyright 1997
