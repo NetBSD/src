@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.7 2003/03/05 23:56:01 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.8 2003/03/16 20:35:28 fvdl Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -11,19 +11,19 @@
  */
 
 struct fxsave64 {
-/*BITFIELDTYPE*/ u_int64_t	fx_fcw:16;
-/*BITFIELDTYPE*/ u_int64_t	fx_fsw:16;
-/*BITFIELDTYPE*/ u_int64_t	fx_ftw:8;
-/*BITFIELDTYPE*/ u_int64_t	fx_unused1:8;
-/*BITFIELDTYPE*/ u_int64_t	fx_fop:16;
-/*BITFIELDTYPE*/ u_int64_t	fx_rip;
-/*BITFIELDTYPE*/ u_int64_t	fx_rdp;
-/*BITFIELDTYPE*/ u_int64_t	fx_mxcsr:32;
-/*BITFIELDTYPE*/ u_int64_t	fx_mxcsr_mask:32;
-/*BITFIELDTYPE*/ u_int64_t	fx_st[8 * 2];	/* 8 normal FP regs */
-/*BITFIELDTYPE*/ u_int64_t	fx_xmm[16 * 2];	/* 16 SSE2 registers */
-/*BITFIELDTYPE*/ u_int8_t	fx_unused3[96];
-};
+	u_int16_t  fx_fcw;
+	u_int16_t  fx_fsw;
+	u_int8_t   fx_ftw;
+	u_int8_t   fx_unused1;
+	u_int16_t  fx_fop;
+	u_int64_t  fx_rip;
+	u_int64_t  fx_rdp;
+	u_int32_t  fx_mxcsr;
+	u_int32_t  fx_mxcsr_mask;
+	u_int64_t  fx_st[8][2];   /* 8 normal FP regs */
+	u_int64_t  fx_xmm[16][2]; /* 16 SSE2 registers */
+	u_int8_t   fx_unused3[96];
+} __attribute__((packed));
 
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
