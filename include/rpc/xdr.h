@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.20 2003/03/19 23:51:55 christos Exp $	*/
+/*	$NetBSD: xdr.h,v 1.21 2003/04/19 01:40:36 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -160,9 +160,9 @@ xdr_getint32(XDR *xdrs, int32_t *ip)
 	long l;
 
 	if (!xdr_getlong(xdrs, &l))
-		return (FALSE);
+		return 0;
 	*ip = (int32_t)l;
-	return (TRUE);
+	return 1;
 }
 
 static __inline int
@@ -247,7 +247,7 @@ struct xdr_discrim {
  * properly if the data is not aligned.  The standard way to use these
  * is to say:
  *	if ((buf = XDR_INLINE(xdrs, count)) == NULL)
- *		return (FALSE);
+ *		return (0);
  *	<<< macro calls >>>
  * where ``count'' is the number of bytes of data occupied
  * by the primitive data types.
