@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.1 2001/12/10 17:22:09 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.2 2002/01/04 12:23:00 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -47,13 +47,11 @@
 #include <unistd.h>
 
 static void usage(void);
-void	print_vals(const char *ifname, struct spppreq *sp);
-const char *phase_name(enum ppp_phase phase);
-const char *proto_name(u_short proto);
-const char *authflags(u_short flags);
-
-#define PPP_PAP		0xc023
-#define PPP_CHAP	0xc223
+static void print_error(const char *ifname, int error, const char * str);
+static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout);
+const char *phase_name(int phase);
+const char *proto_name(int proto);
+const char *authflags(int flags);
 
 int hz = 0;
 
@@ -61,13 +59,15 @@ int
 main(int argc, char **argv)
 {
 	int s, c;
-	int errs = 0, verbose = 0;
+	int errs = 0, verbose = 0, dump = 0;
 	size_t off, len;
 	const char *ifname, *cp;
 	const char *eth_if_name, *access_concentrator, *service;
-	struct ifreq ifr;
-	struct spppreq spr;
+	struct spppauthcfg spr;
+	struct sppplcpcfg lcp;
+	struct spppstatus status;
 	int mib[2];
+	int set_lcp = 0;
 	struct clockinfo clockinfo;
 
 	eth_if_name = NULL;
@@ -77,6 +77,10 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'v':
 			verbose++;
+			break;
+
+		case 'd':
+			dump++;
 			break;
 
 		case 'e':
@@ -102,8 +106,6 @@ main(int argc, char **argv)
 		usage();
 
 	ifname = argv[0];
-	
-	strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -129,18 +131,49 @@ main(int argc, char **argv)
 		}
 
 		e = ioctl(s, PPPOESETPARMS, &parms);
-		if (e) {
-			fprintf(stderr, "%s: ioctl(PPPOESETPARMS): %s\n",
-			ifname, strerror(e));
-		}
+		if (e) 
+			print_error(ifname, e, "PPPOESETPARMS");
 		return 0;
 	}
 
-	spr.cmd = (int)SPPPIOGDEFS;
-	ifr.ifr_data = (caddr_t)&spr;
+	if (dump) {
+		/* dump PPPoE session state */
+		struct pppoeconnectionstate state;
+		int e;
+		
+		memset(&state, 0, sizeof state);
+		strncpy(state.ifname, ifname, sizeof state.ifname);
+		e = ioctl(s, PPPOEGETSESSION, &state);
+		if (e) 
+			print_error(ifname, e, "PPPOEGETSESSION,");
 
-	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
-		err(EX_OSERR, "SIOCGIFGENERIC(SPPPIOGDEFS)");
+		printf("%s:\tstate = ", ifname);
+		switch(state.state) {
+		case PPPOE_STATE_INITIAL:
+			printf("initial\n"); break;
+		case PPPOE_STATE_PADI_SENT:
+			printf("PADI sent\n"); break;
+		case PPPOE_STATE_PADR_SENT:
+			printf("PADR sent\n"); break;
+		case PPPOE_STATE_SESSION:
+			printf("session\n"); break;
+		case PPPOE_STATE_CLOSING:
+			printf("closing\n"); break;
+		}
+		printf("\tSession ID: 0x%x\n", state.session_id);
+		printf("\tPADI retries: %d\n", state.padi_retry_no);
+		printf("\tPADR retries: %d\n", state.padr_retry_no);
+		
+		return 0;
+	}
+
+
+	memset(&spr, 0, sizeof spr);
+	strncpy(spr.ifname, ifname, sizeof spr.ifname);
+	memset(&lcp, 0, sizeof lcp);
+	strncpy(lcp.ifname, ifname, sizeof lcp.ifname);
+	memset(&status, 0, sizeof status);
+	strncpy(status.ifname, ifname, sizeof status.ifname);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -155,7 +188,28 @@ main(int argc, char **argv)
 		
 	if (argc == 0) {
 		/* list only mode */
-		print_vals(ifname, &spr);
+
+		/* first pass, get name lenghts */
+		if (ioctl(s, SPPPGETAUTHCFG, &spr) == -1)
+			err(EX_OSERR, "SPPPGETAUTHCFG");
+		/* now allocate buffers for strings */
+		if (spr.myname_length)
+			spr.myname = malloc(spr.myname_length);
+		if (spr.hisname_length)
+			spr.hisname = malloc(spr.hisname_length);
+		/* second pass: get names too */
+		if (ioctl(s, SPPPGETAUTHCFG, &spr) == -1)
+			err(EX_OSERR, "SPPPGETAUTHCFG");
+
+		if (ioctl(s, SPPPGETLCPCFG, &lcp) == -1)
+			err(EX_OSERR, "SPPPGETLCPCFG");
+		if (ioctl(s, SPPPGETSTATUS, &status) == -1)
+			err(EX_OSERR, "SPPPGETSTATUS");
+
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout);
+
+		if (spr.hisname) free(spr.hisname);
+		if (spr.myname) free(spr.myname);
 		return 0;
 	}
                                 
@@ -165,58 +219,54 @@ main(int argc, char **argv)
 		if (startswith("authproto=")) {
 			cp = argv[0] + off;
 			if (strcmp(cp, "pap") == 0)
-				spr.defs.myauth.proto =
-					spr.defs.hisauth.proto = PPP_PAP;
+				spr.myauth =
+					spr.hisauth = SPPP_AUTHPROTO_PAP;
 			else if (strcmp(cp, "chap") == 0)
-				spr.defs.myauth.proto =
-					spr.defs.hisauth.proto = PPP_CHAP;
+				spr.myauth = spr.hisauth = SPPP_AUTHPROTO_CHAP;
 			else if (strcmp(cp, "none") == 0)
-				spr.defs.myauth.proto =
-					spr.defs.hisauth.proto = 0;
+				spr.myauth = spr.hisauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
 		} else if (startswith("myauthproto=")) {
 			cp = argv[0] + off;
 			if (strcmp(cp, "pap") == 0)
-				spr.defs.myauth.proto = PPP_PAP;
+				spr.myauth = SPPP_AUTHPROTO_PAP;
 			else if (strcmp(cp, "chap") == 0)
-				spr.defs.myauth.proto = PPP_CHAP;
+				spr.myauth = SPPP_AUTHPROTO_CHAP;
 			else if (strcmp(cp, "none") == 0)
-				spr.defs.myauth.proto = 0;
+				spr.myauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
-		} else if (startswith("myauthname="))
-			strncpy(spr.defs.myauth.name, argv[0] + off,
-				AUTHNAMELEN);
-		else if (startswith("myauthsecret=") ||
-			 startswith("myauthkey="))
-			strncpy(spr.defs.myauth.secret, argv[0] + off,
-				AUTHKEYLEN);
-		else if (startswith("hisauthproto=")) {
+		} else if (startswith("myauthname=")) {
+			spr.myname = argv[0] + off;
+			spr.myname_length = strlen(spr.myname)+1;
+		} else if (startswith("myauthsecret=") || startswith("myauthkey=")) {
+			spr.mysecret = argv[0] + off;
+			spr.mysecret_length = strlen(spr.mysecret)+1;
+		} else if (startswith("hisauthproto=")) {
 			cp = argv[0] + off;
 			if (strcmp(cp, "pap") == 0)
-				spr.defs.hisauth.proto = PPP_PAP;
+				spr.hisauth = SPPP_AUTHPROTO_PAP;
 			else if (strcmp(cp, "chap") == 0)
-				spr.defs.hisauth.proto = PPP_CHAP;
+				spr.hisauth = SPPP_AUTHPROTO_CHAP;
 			else if (strcmp(cp, "none") == 0)
-				spr.defs.hisauth.proto = 0;
+				spr.hisauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
-		} else if (startswith("hisauthname="))
-			strncpy(spr.defs.hisauth.name, argv[0] + off,
-				AUTHNAMELEN);
-		else if (startswith("hisauthsecret=") ||
-			 startswith("hisauthkey="))
-			strncpy(spr.defs.hisauth.secret, argv[0] + off,
-				AUTHKEYLEN);
-		else if (strcmp(argv[0], "callin") == 0)
-			spr.defs.hisauth.flags |= AUTHFLAG_NOCALLOUT;
+		} else if (startswith("hisauthname=")) {
+			spr.hisname = argv[0] + off;
+			spr.hisname_length = strlen(spr.hisname)+1;
+		} else if (startswith("hisauthsecret=") || startswith("hisauthkey=")) {
+			spr.hissecret = argv[0] + off;
+			spr.hissecret_length = strlen(spr.hissecret)+1;
+		} else if (strcmp(argv[0], "callin") == 0)
+			spr.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
 		else if (strcmp(argv[0], "always") == 0)
-			spr.defs.hisauth.flags &= ~AUTHFLAG_NOCALLOUT;
+			spr.hisauthflags &= ~SPPP_AUTHFLAG_NOCALLOUT;
 		else if (strcmp(argv[0], "norechallenge") == 0)
-			spr.defs.hisauth.flags |= AUTHFLAG_NORECHALLENGE;
+			spr.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
 		else if (strcmp(argv[0], "rechallenge") == 0)
-			spr.defs.hisauth.flags &= ~AUTHFLAG_NORECHALLENGE;
+			spr.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
 #ifndef __NetBSD__
 		else if (strcmp(argv[0], "enable-vj") == 0)
 			spr.defs.enable_vj = 1;
@@ -228,7 +278,8 @@ main(int argc, char **argv)
 			if ((timeout_arg > 20000) || (timeout_arg <= 0))
 				errx(EX_DATAERR, "bad lcp timeout value: %s",
 				     argv[0]+off);
-			spr.defs.lcp.timeout = timeout_arg * hz / 1000;
+			lcp.lcp_timeout = timeout_arg * hz / 1000;
+			set_lcp = 1;
 		} else
 			errx(EX_DATAERR, "bad parameter: \"%s\"", argv[0]);
 
@@ -236,13 +287,15 @@ main(int argc, char **argv)
 		argc--;
 	}
 
-	spr.cmd = (int)SPPPIOSDEFS;
-
-	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
-		err(EX_OSERR, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+	if (ioctl(s, SPPPSETAUTHCFG, &spr) == -1)
+		err(EX_OSERR, "SPPPSETAUTHCFG");
+	if (set_lcp) {
+		if (ioctl(s, SPPPSETLCPCFG, &lcp) == -1)
+			err(EX_OSERR, "SPPPSETLCPCFG");
+	}
 
 	if (verbose)
-		print_vals(ifname, &spr);
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout);
 
 	return 0;
 }
@@ -256,24 +309,24 @@ usage(void)
 	exit(EX_USAGE);
 }
 
-void
-print_vals(const char *ifname, struct spppreq *sp)
+static void
+print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
 #endif
 
-	printf("%s:\tphase=%s\n", ifname, phase_name(sp->defs.pp_phase));
-	if (sp->defs.myauth.proto) {
-		printf("\tmyauthproto=%s myauthname=\"%.*s\"\n",
-		       proto_name(sp->defs.myauth.proto),
-		       AUTHNAMELEN, sp->defs.myauth.name);
+	printf("%s:\tphase=%s\n", ifname, phase_name(phase));
+	if (sp->myauth) {
+		printf("\tmyauthproto=%s myauthname=\"%s\"\n",
+		       proto_name(sp->myauth),
+		       sp->myname);
 	}
-	if (sp->defs.hisauth.proto) {
-		printf("\thisauthproto=%s hisauthname=\"%.*s\"%s\n",
-		       proto_name(sp->defs.hisauth.proto),
-		       AUTHNAMELEN, sp->defs.hisauth.name,
-		       authflags(sp->defs.hisauth.flags));
+	if (sp->hisauth) {
+		printf("\thisauthproto=%s hisauthname=\"%s\"%s\n",
+		       proto_name(sp->hisauth),
+		       sp->hisname,
+		       authflags(sp->hisauthflags));
 	}
 #ifndef __NetBSD__
 	if (sp->defs.pp_phase > PHASE_DEAD) {
@@ -282,8 +335,10 @@ print_vals(const char *ifname, struct spppreq *sp)
 		printf("\tidle_time=%ld\n", (send<recv)? send : recv);
 	}
 #endif
+
 	printf("\tlcp timeout: %.3f s\n",
-	       (double)sp->defs.lcp.timeout / hz);
+	       (double)lcp_timeout / hz);
+
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
 	       sp->defs.enable_vj ? "on" : "off");
@@ -291,38 +346,51 @@ print_vals(const char *ifname, struct spppreq *sp)
 }
 
 const char *
-phase_name(enum ppp_phase phase)
+phase_name(int phase)
 {
 	switch (phase) {
-	case PHASE_DEAD:	return "dead";
-	case PHASE_ESTABLISH:	return "establish";
-	case PHASE_TERMINATE:	return "terminate";
-	case PHASE_AUTHENTICATE: return "authenticate";
-	case PHASE_NETWORK:	return "network";
+	case SPPP_PHASE_DEAD:		return "dead";
+	case SPPP_PHASE_ESTABLISH:	return "establish";
+	case SPPP_PHASE_TERMINATE:	return "terminate";
+	case SPPP_PHASE_AUTHENTICATE:	return "authenticate";
+	case SPPP_PHASE_NETWORK:	return "network";
 	}
 	return "illegal";
 }
 
 const char *
-proto_name(u_short proto)
+proto_name(int proto)
 {
 	static char buf[12];
 	switch (proto) {
-	case PPP_PAP:	return "pap";
-	case PPP_CHAP:	return "chap";
+	case SPPP_AUTHPROTO_PAP:	return "pap";
+	case SPPP_AUTHPROTO_CHAP:	return "chap";
+	case SPPP_AUTHPROTO_NONE:	return "none";
 	}
 	sprintf(buf, "0x%x", (unsigned)proto);
 	return buf;
 }
 
 const char *
-authflags(u_short flags)
+authflags(int flags)
 {
 	static char buf[32];
 	buf[0] = '\0';
-	if (flags & AUTHFLAG_NOCALLOUT)
+	if (flags & SPPP_AUTHFLAG_NOCALLOUT)
 		strcat(buf, " callin");
-	if (flags & AUTHFLAG_NORECHALLENGE)
+	if (flags & SPPP_AUTHFLAG_NORECHALLENGE)
 		strcat(buf, " norechallenge");
 	return buf;
 }
+
+static void
+print_error(const char *ifname, int error, const char * str)
+{
+	if (error == -1)
+		fprintf(stderr, "%s: interface not found\n", ifname);
+	else
+		fprintf(stderr, "%s: %s: %s\n", ifname, str, strerror(error));
+	exit(EX_DATAERR);
+}
+
+
