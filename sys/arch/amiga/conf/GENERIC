@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.58 1996/08/11 09:48:21 veego Exp $
+#	$NetBSD: GENERIC,v 1.59 1996/08/11 12:27:52 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -12,13 +12,24 @@ maxusers	8
 options		TIMEZONE=300, DST=1
 
 #
+# mainboards to support (in addition to Amiga)
+#
+options		DRACO
+
+#
 # processors this kernel should support
 #
+options		"M68060"	# support for 060
+options		"M060SP"	# ...and MC68060 support package
 options		"M68040"	# support for 040
 options		FPSP		# MC68040 floating point support
 options		"M68030"	# support for 030
 options		"M68020"	# support for 020/851
 options		FPCOPROC	# Support for MC6888[12] (Required)
+
+#
+# pagers:
+#
 
 options		SWAPPAGER	# Pager for processes (Required)
 options		VNODEPAGER	# Pager for vnodes (Required)
@@ -100,6 +111,7 @@ options		KTRACE		# Add kernel tracing system call
 #options	DEBUG		# Add debugging statements
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
+#options	KGDB		# Kernel debugger (KGDB) support
 #options	PANICBUTTON	# Forced crash via keypress (???)
 
 #
@@ -205,6 +217,7 @@ aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 scsi
 empsc0		at zbus0		# Emplant
+drsc0		at mainbus0		# DraCo scsi
 
 scsibus*	at gtsc0
 scsibus*	at ahsc0
@@ -222,6 +235,7 @@ scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 scsibus*	at empsc0
+scsibus*	at drsc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
