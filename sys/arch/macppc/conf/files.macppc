@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.29 2000/02/27 18:06:43 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.30 2000/03/14 15:56:55 oster Exp $
 #
 # macppc-specific configuration info
 
@@ -25,6 +25,10 @@ file dev/cons.c
 file arch/macppc/macppc/md_root.c		memory_disk_hooks
 major {md = 9}
 
+#
+# RAIDframe
+#
+major {raid = 12}
 #
 # Machine-independent SCSI drivers
 #

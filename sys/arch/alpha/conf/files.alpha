@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.108 2000/03/14 05:34:04 nisimura Exp $
+# $NetBSD: files.alpha,v 1.109 2000/03/14 15:56:51 oster Exp $
 #
 # alpha-specific configuration info
 
@@ -81,6 +81,9 @@ major { wd = 4 }
 # Memory Disk
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
+
+# RAIDframe 
+major { raid = 16 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
