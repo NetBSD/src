@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_ns32k.c,v 1.15 2001/09/17 12:48:20 simonb Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.16 2003/05/16 10:24:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_ns32k.c,v 1.15 2001/09/17 12:48:20 simonb Exp $");
+__RCSID("$NetBSD: kvm_ns32k.c,v 1.16 2003/05/16 10:24:55 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -156,7 +156,7 @@ invalid:
 }
 
 /*
- * Translate a physical address to a file-offset in the crash-dump.
+ * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
 _kvm_pa2off(kd, pa)

@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.16 2001/08/05 03:33:15 matt Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.17 2003/05/16 10:24:55 wiz Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.16 2001/08/05 03:33:15 matt Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.17 2003/05/16 10:24:55 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -169,7 +169,7 @@ _kvm_kvatop(kd, va, pa)
 }
 
 /*
- * Translate a physical address to a file-offset in the crash-dump.
+ * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
 _kvm_pa2off(kd, pa)
