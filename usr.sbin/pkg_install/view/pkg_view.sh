@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.4 2003/07/14 11:58:13 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.5 2003/07/14 12:08:02 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -38,6 +38,7 @@
 cpprog=/bin/cp
 findprog=/usr/bin/find
 grepprog=/usr/bin/grep
+linkfarmprog=/usr/sbin/linkfarm
 lnprog=/bin/ln
 mkdirprog=/bin/mkdir
 paxprog=/bin/pax
@@ -102,7 +103,7 @@ while [ $# -gt 0 ]; do
 			echo "Package $1 already exists in view \"${view}\""
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			env PLIST_IGNORE_FILES="${PLIST_IGNORE_FILES} $dbs" linkfarm --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
+			env PLIST_IGNORE_FILES="${PLIST_IGNORE_FILES} $dbs" $linkfarmprog --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
 			$mkdirprog -p ${depot_pkg_dbdir}/$1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 			$touchprog ${depot_pkg_dbdir}/$1/+VIEWS
@@ -115,14 +116,14 @@ while [ $# -gt 0 ]; do
 		fi
 		;;
 	check)
-		linkfarm -c --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
+		$linkfarmprog -c --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
 		exit $?
 		;;
 	delete)
 		if [ ! -f ${pkg_dbdir}/$1/+CONTENTS ]; then
 			echo "Package $1 does not exist in view \"${view}\""
 		else
-			linkfarm -D --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
+			$linkfarmprog -D --target=${prefix}/${view} --dir=${depot_pkg_dbdir} $1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 			$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
 			($grepprog -v "'"'^'${pkg_dbdir}'$'"'" ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
