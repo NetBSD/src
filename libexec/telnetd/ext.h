@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.13 2001/07/19 04:57:49 itojun Exp $	*/
+/*	$NetBSD: ext.h,v 1.14 2001/08/20 11:12:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -238,6 +238,7 @@ extern int	needtermstat;
 #   endif
 #  endif
 # endif
+#endif
 
 #if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
@@ -245,5 +246,4 @@ extern int	needtermstat;
 
 #if defined(ENCRYPTION)
 #include <libtelnet/encrypt.h>
-#endif
 #endif
