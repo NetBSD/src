@@ -1,6 +1,8 @@
+/*	$NetBSD: locate.bigram.c,v 1.3 1994/12/22 06:17:40 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * James A. Woods.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)locate.bigram.c	4.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: locate.bigram.c,v 1.2 1993/08/01 18:13:55 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: locate.bigram.c,v 1.3 1994/12/22 06:17:40 jtc Exp $";
 #endif /* not lint */
 
 /*
