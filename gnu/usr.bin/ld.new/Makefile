@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/08/21 06:30:12 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 1999/12/26 19:59:23 msaitoh Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
@@ -13,6 +13,7 @@ ELF_PLEASE=
     (${MACHINE_ARCH} == "mipseb") || \
     (${MACHINE_ARCH} == "mipsel") || \
     (${MACHINE_ARCH} == "powerpc") || \
+    (${MACHINE_ARCH} == "sh3") || \
     (${MACHINE_ARCH} == "sparc" && defined(ELF_PLEASE)) || \
     (${MACHINE_ARCH} == "sparc64")
 PROG=		ld
@@ -72,6 +73,14 @@ DEFAULT_EMUL.mipsel=	elf32lmip
 EMULS.powerpc=		elf32ppc
 DEFAULT_EMUL.powerpc=	elf32ppc
 
+##### sh3 #####
+EMULS.sh3=		shunx shlunx elf32shunx elf32shlunx
+.if defined(ELF_PLEASE)
+DEFAULT_EMUL.sh3=	elf32shunx
+.else
+DEFAULT_EMUL.sh3=	shunx
+.endif
+
 ##### sparc #####
 EMULS.sparc=		sparcnbsd elf32_sparc sun4
 .if defined(ELF_PLEASE)
@@ -86,7 +95,8 @@ DEFAULT_EMUL.sparc64=	elf64_sparc
 
 ALL_EMULS!=		(for i in ${EMULS.alpha} ${EMULS.i386} ${EMULS.m68k} \
 			${EMULS.mipseb} ${EMULS.mipsel} ${EMULS.powerpc} \
-			${EMULS.sparc} ${EMULS.sparc64}; do echo $$i; done) | \
+			${EMULS.sh3} ${EMULS.sparc} ${EMULS.sparc64}; \
+			do echo $$i; done) | \
 			sort | uniq
 
 LIB_PATH=		${LIBDIR} # passed to genscripts
