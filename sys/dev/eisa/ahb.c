@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.20 1998/07/04 22:18:48 jonathan Exp $	*/
+/*	$NetBSD: ahb.c,v 1.21 1998/08/15 01:59:25 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -223,13 +223,13 @@ ahbmatch(parent, match, aux)
 	    strcmp(ea->ea_idstring, "ADP0400"))
 		return (0);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
-	    EISA_SLOT_SIZE, 0, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + AHB_PORT_OFFSET,
+	    AHB_PORT_SIZE, 0, &ioh))
 		return (0);
 
 	rv = !ahb_find(iot, ioh, NULL);
 
-	bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
+	bus_space_unmap(iot, ioh, AHB_PORT_SIZE);
 
 	return (rv);
 }
@@ -263,8 +263,8 @@ ahbattach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
-	   EISA_SLOT_SIZE, 0, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + AHB_PORT_OFFSET,
+	   AHB_PORT_SIZE, 0, &ioh))
 		panic("ahbattach: could not map I/O addresses");
 
 	sc->sc_iot = iot;
