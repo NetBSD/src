@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.11 2000/02/26 17:12:37 itojun Exp $
+#	$NetBSD: CARDBUS,v 1.12 2000/03/22 00:58:20 cgd Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #
@@ -132,6 +132,7 @@ options 	NETATALK	# AppleTalk networking protocols
 # Warning, these may compile large string tables into the kernel!
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages

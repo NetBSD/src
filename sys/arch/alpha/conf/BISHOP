@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.12 1999/12/03 07:03:43 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.13 2000/03/22 00:58:16 cgd Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -84,6 +84,7 @@ options 	INSECURE
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
