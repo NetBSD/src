@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.155 2002/03/23 17:17:10 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.156 2002/05/27 17:13:14 gson Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.155 2002/03/23 17:17:10 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.156 2002/05/27 17:13:14 gson Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2276,11 +2276,15 @@ audio_rint(void *v)
 		DPRINTFN(1, ("audio_rint: pdrops %lu\n", cb->pdrops));
 		cb->pdrops += blksize;
 		cb->outp += blksize;
+		if (cb->outp >= cb->end)
+			cb->outp = cb->start;
 		cb->used -= blksize;
 	} else if (cb->used + blksize >= cb->usedhigh && !cb->copying) {
 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
 		cb->drops += blksize;
 		cb->outp += blksize;
+		if (cb->outp >= cb->end)
+			cb->outp = cb->start;
 		cb->used -= blksize;
 	}
 
