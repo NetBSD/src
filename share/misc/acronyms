@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.62 2000/06/19 11:27:52 kleink Exp $
+$NetBSD: acronyms,v 1.62.2.1 2000/07/03 22:33:26 thorpej Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -84,6 +84,7 @@ PNG	persona non grata
 POLA	principle of least astonishment
 PPL	pretty please
 QED	quod erat demonstrandum
+RFC	request for comments
 RL	real life
 ROTFL	rolling on the floor laughing
 RSN	real soon now
