@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/26 20:04:51 kim Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 1999/12/04 17:10:49 he Exp $
 
-.PATH:	${.CURDIR}/../man
+.include "../Makefile.inc"
+.PATH:	${BIND_DIST_DIR}/bin/dnsquery \
+	${BIND_DIST_DIR}/man
 
-WARNS=	0
 BINDIR=	/usr/bin
 PROG=	dnsquery
 SRCS=	${PROG}.c
