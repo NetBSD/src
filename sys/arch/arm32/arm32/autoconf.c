@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.12.2.1 1997/01/14 21:24:54 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.12.2.2 1997/01/22 09:00:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -62,10 +62,10 @@
 
 dev_t   argdev = NODEV;
 
-extern dev_t rootdev;
-extern dev_t dumpdev;
+static	struct device *booted_device;
+static	int booted_partition;
 
-extern struct swdevt swdevt[];
+extern dev_t dumpdev;
 
 extern int pmap_debug_level;
 
@@ -75,74 +75,62 @@ void	dumpconf __P(());
 
 /* Table major numbers for the device names, NULL terminated */
 
-struct {
-    char *name;
-    dev_t dev;
-} rootdevices[] = {
-#if NWDC > 0
-	{ "wd", 0x10 },
-#endif
-#if NFDC > 0
-	{ "fd", 0x11 },
-#endif
-#if NMD > 0
-	{ "md", 0x12 },
-#endif
-#if NSD > 0
-	{ "sd", 0x18 },
-#endif
-#if NCD > 0
-	{ "cd", 0x1a },
-#endif
-#ifdef NFS
-	{ "nfs", 0x01 },	/* This is the fake swap device so never valid */
-#endif
-	{ NULL, 0x00 },
+struct devnametobdevmaj arm32_nam2blk[] = {
+	{ "wd",		16 },
+	{ "fd",		17 },
+	{ "md",		18 },
+	{ "sd",		24 },
+	{ "cd",		26 },
+	{ NULL,		0 },
 };
 
 /* Decode a device name to a major and minor number */
 
-dev_t
-get_device(name)
+void
+get_device(name, devpp, partp)
 	char *name;
+	struct device **devpp;
+	int *partp;
 {
-	int loop;
-	int unit;
-	int part;
+	int loop, unit, part;
+	char buf[32], *cp;
+	struct device *dv;
+
+	*devpp = NULL;
+	*partp = 0;
     
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
-	for (loop = 0; rootdevices[loop].name; ++loop) {
-		if (strncmp(name, rootdevices[loop].name,
-		    strlen(rootdevices[loop].name)) == 0) {
-			name += strlen(rootdevices[loop].name);
+	for (loop = 0; arm32_nam2blk[loop].d_name != NULL; ++loop) {
+		if (strncmp(name, arm32_nam2blk[loop].d_name,
+		    strlen(arm32_nam2blk[loop].d_name)) == 0) {
+			name += strlen(arm32_nam2blk[loop].d_name);
 
-			part = 0;
+			unit = part = 0;
 
-			if (name[0] >= '0' && name[0] <= '9') {
-				unit = name[0] - '0';
-				if (name[1] >= 'a' && name[1] <= 'z')
-					part = name[1] - 'a';
-				else if (name[1] == 0 || name[1] == ' ')
-					part = 0;
-				else
-					part = -1;
+			cp = name;
+			while (*cp >= '0' && *cp <= '9')
+				unit = (unit * 10) + (*cp++ - '0');
+			if (cp == name)
+				return;
+
+			if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
+				part = *cp - 'a';
+			else if (*cp != '\0' && *cp != ' ')
+				return;
+
+			sprintf(buf, "%s%d", arm32_nam2blk[loop].d_name, unit);
+			for (dv = alldevs.tqh_first; dv != NULL;
+			    dv = dv->dv_list.tqe_next) {
+				if (strcmp(buf, dv->dv_xname) == 0) {
+					*devpp = dv;
+					*partp = part;
+					return;
+				}
 			}
-			else if (name[0] == 0 || name[0] == ' ')
-				unit = 0;
-			else
-				unit = -1;
-
-			if (unit < 0 || unit > 9)
-				return(NODEV);
-			if (part < 0 || part > MAXPARTITIONS)
-				return(NODEV);
-			return(makedev(rootdevices[loop].dev,
-			    unit * MAXPARTITIONS + part));
 		}
 	} 
-	return(NODEV);  
 }
 
 
@@ -157,23 +145,15 @@ set_root_device()
 		ptr = strstr(boot_args, "root=");
 		if (ptr) {
 			ptr += 5;
-			rootdev = get_device(ptr);
+			get_device(ptr, &booted_device, &booted_partition);
 
-#ifdef DEBUG              
-			if (pmap_debug_level >= 0)
-				printf("rootdev = %08x\n", rootdev);
-#endif	/* DEBUG */
 		}
 	}
-
-#ifdef GENERIC
-	if (rootdev == NODEV)
-		panic("No root device specified in boot config\n");
-#endif	/* GENERIC */
 }
 
 
 /* Set the swap devices from the swap specifiers in the boot ars */
+/* XXX no longer supported; will change with new vm_swap.c --thorpej */
 
 void
 set_swap_device()
@@ -186,62 +166,12 @@ set_swap_device()
 		ptr = boot_args;
 		do {
 			ptr = strstr(ptr, "swap=");
-			if (ptr) {
-				ptr += 5;
-				dev = get_device(ptr);
-				if ((dev != NODEV) && (major(dev) != 1)) {
-					swdevt[nswap].sw_dev = dev;
-					++nswap;
-				}
-			}
+			if (ptr)
+				printf("WARNING: `%s' is obsolete; ignoring\n",
+				    ptr);
 		} while (ptr);
 	}
 }
-
-
-/*
- * Configure swap space and related parameters.
- */
-
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-	int swapsize = -1;
-	int maj;
-	int s;		/* The spl stuff was here for debugging reaons */
-
-	/*
-	 * Loop round all the defined swap device configuring them.
-	 */
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			s = spltty();
-			printf("swap dev %04x ", swp->sw_dev);
-			(void)splx(s);
-			if (swapsize == -1)
-				nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-  		  	else
-				nblks = swapsize;
-			s = spltty();
-			if (nblks == -1)
-				printf("-> device not configured for swap\n");
-			else
-				printf("-> %d bytes\n", nblks*DEV_BSIZE);
-			(void)splx(s);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
-}
-
 
 /*
  * Set up the root and swap device numbers, configure the swap space and
@@ -252,19 +182,12 @@ void
 set_boot_devs()
 {
 	set_root_device();
-#ifdef GENERIC
-	set_swap_device();
-#ifdef NFS
-	if (major(rootdev) != 1)
-#endif	/* NFS */
-	{
-		if (swdevt[0].sw_dev == NODEV && minor(rootdev) < (MAXPARTITIONS - 2))
-			swdevt[0].sw_dev = makedev(major(rootdev), minor(rootdev) + 1);
 
-		dumpdev = swdevt[0].sw_dev;
-		argdev = swdevt[0].sw_dev;
-	}		
-#endif	/* GENERIC */
+	printf("boot device: %s\n",
+	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, arm32_nam2blk);
+
 	swapconf();
 	dumpconf();
 }
