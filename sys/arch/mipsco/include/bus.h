@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2000/08/15 04:56:45 wdk Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2000/09/04 22:18:58 wdk Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -457,8 +457,10 @@ __CONCAT(bus_space_write_multi_,BYTES)(bus_space_tag_t bst,		\
 	    (volatile __CONCAT3(u_int,BITS,_t) *)			\
 	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
 									\
-	for (; count > 0; --count)					\
+	while (count--) {						\
 		*p = *datap++;						\
+		wbflush();						\
+	}								\
 }
 
 bus_space_write_multi(1,8)
@@ -486,10 +488,11 @@ __CONCAT(bus_space_write_region_,BYTES)(bus_space_tag_t bst,		\
 	    (volatile __CONCAT3(u_int,BITS,_t) *)			\
 	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
 									\
-	for (; count > 0; --count) {					\
+	while (count--) {						\
 		*p = *datap++;						\
 		p += stride;						\
 	}								\
+	wbflush();							\
 }
 
 bus_space_write_region(1,8)
@@ -516,7 +519,7 @@ __CONCAT(bus_space_set_multi_,BYTES)(bus_space_tag_t bst,		\
 	    (volatile __CONCAT3(u_int,BITS,_t) *)			\
 	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
 									\
-	for (; count > 0; --count)					\
+	while (count--)							\
 		*p = data;						\
 }
 
@@ -545,10 +548,11 @@ __CONCAT(bus_space_set_region_,BYTES)(bus_space_tag_t bst,		\
 	    (volatile __CONCAT3(u_int,BITS,_t) *)			\
 	    (bsh + (offset << __CONCAT(bst->bs_stride_,BYTES)));	\
 									\
-	for (; count > 0; --count) {					\
+	while (count--) {						\
 		*p = data;						\
 		p += stride;						\
 	}								\
+	wbflush();							\
 }
 
 bus_space_set_region(1,8)
@@ -592,6 +596,7 @@ __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t bst,		\
 		for (; count > 0; --count, offset -= stride)		\
 			dstp[offset] = srcp[offset];			\
 	}								\
+	wbflush();							\
 }
 
 bus_space_copy_region(1,8)
