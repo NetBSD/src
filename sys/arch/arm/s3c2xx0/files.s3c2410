@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2410,v 1.3 2003/08/29 12:57:50 bsh Exp $
+#	$NetBSD: files.s3c2410,v 1.4 2004/02/14 07:20:20 bsh Exp $
 #
 # Configuration info for Samsung S3C2410
 #
@@ -25,3 +25,12 @@ file	arch/arm/s3c2xx0/sscom_s3c2410.c	sscom
 attach	ohci at ssio with ohci_ssio
 file	arch/arm/s3c2xx0/ohci_s3c24x0.c		ohci_ssio
 
+# LCD controller
+device lcd: wsemuldisplaydev, rasops16, rasops8
+file arch/arm/s3c2xx0/s3c24x0_lcd.c		lcd needs-flag
+
+# SPI port
+#  intr locator is for an additional interrupt other than SPI[01] interrupts.
+device	ssspi {[intr=-1]}
+attach	ssspi at ssio
+file	arch/arm/s3c2xx0/s3c2410_spi.c		ssspi
