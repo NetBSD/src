@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.24 2000/01/05 16:14:35 ad Exp $ */
+/* $NetBSD: vga.c,v 1.25 2000/01/25 02:44:03 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -415,8 +415,6 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
-			
-		pcdisplay_cursor_init(&scr->pcs);
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -424,11 +422,7 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	scr->pcs.vc_crow = cpos / type->ncols;
 	scr->pcs.vc_ccol = cpos % type->ncols;
-#ifdef PCDISPLAY_SOFTCURSOR
-	scr->pcs.cursoron = 0;
-#else
-	scr->pcs.cursoron = 1;
-#endif
+	pcdisplay_cursor_init(&scr->pcs, existing);
 
 #ifdef __alpha__
 	if (!vc->hdl.vh_mono)
