@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.9 2002/09/21 07:12:46 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.10 2002/09/23 03:44:18 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.9 2002/09/21 07:12:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.10 2002/09/23 03:44:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -220,13 +220,14 @@ decl_lock_data(, *m)
 	return(0);
 }
 
+#if 0
 int
 rf_lkmgr_mutex_destroy(m)
 decl_lock_data(, *m)
 {
 	return(0);
 }
-
+#endif
 
 int 
 rf_cond_init(c)
