@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.14 2003/08/07 11:14:03 agc Exp $	*/
+/*	$NetBSD: display.c,v 1.15 2003/09/09 09:45:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.14 2003/08/07 11:14:03 agc Exp $");
+__RCSID("$NetBSD: display.c,v 1.15 2003/09/09 09:45:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ display()
 		for (pr = endfu->nextpr; pr; pr = pr->nextpr)
 			switch(pr->flags) {
 			case F_ADDRESS:
-				(void)printf(pr->fmt, (quad_t)eaddress);
+				(void)printf(pr->fmt, (int64_t)eaddress);
 				break;
 			case F_TEXT:
 				(void)printf("%s", pr->fmt);
@@ -129,7 +129,7 @@ print(pr, bp)
 
 	switch(pr->flags) {
 	case F_ADDRESS:
-		(void)printf(pr->fmt, (quad_t)address);
+		(void)printf(pr->fmt, (int64_t)address);
 		break;
 	case F_BPAD:
 		(void)printf(pr->fmt, "");
@@ -155,15 +155,15 @@ print(pr, bp)
 	case F_INT:
 		switch(pr->bcnt) {
 		case 1:
-			(void)printf(pr->fmt, (quad_t)*bp);
+			(void)printf(pr->fmt, (int64_t)*bp);
 			break;
 		case 2:
 			memmove(&s2, bp, sizeof(s2));
-			(void)printf(pr->fmt, (quad_t)s2);
+			(void)printf(pr->fmt, (int64_t)s2);
 			break;
 		case 4:
 			memmove(&s4, bp, sizeof(s4));
-			(void)printf(pr->fmt, (quad_t)s4);
+			(void)printf(pr->fmt, (int64_t)s4);
 			break;
 		case 8:
 			memmove(&s8, bp, sizeof(s8));
@@ -186,15 +186,15 @@ print(pr, bp)
 	case F_UINT:
 		switch(pr->bcnt) {
 		case 1:
-			(void)printf(pr->fmt, (u_quad_t)*bp);
+			(void)printf(pr->fmt, (uint64_t)*bp);
 			break;
 		case 2:
 			memmove(&u2, bp, sizeof(u2));
-			(void)printf(pr->fmt, (u_quad_t)u2);
+			(void)printf(pr->fmt, (uint64_t)u2);
 			break;
 		case 4:
 			memmove(&u4, bp, sizeof(u4));
-			(void)printf(pr->fmt, (u_quad_t)u4);
+			(void)printf(pr->fmt, (uint64_t)u4);
 			break;
 		case 8:
 			memmove(&u8, bp, sizeof(u8));
