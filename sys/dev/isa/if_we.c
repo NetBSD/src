@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.4 1998/01/13 06:13:29 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.5 1998/01/26 19:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -715,6 +715,9 @@ we_read_hdr(sc, packet_ptr, packet_hdrp)
 
 	we_readmem(wsc, packet_ptr, (u_int8_t *)packet_hdrp,
 	    sizeof(struct dp8390_ring));
+#if BYTE_ORDER == BIG_ENDIAN
+	packet_hdrp->count = bswap16(packet_hdrp->count);
+#endif
 }
 
 void

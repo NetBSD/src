@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.6 1998/01/12 09:23:33 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.7 1998/01/26 19:21:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -558,6 +558,9 @@ ne2000_read_hdr(sc, buf, hdr)
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
 	    (nsc->sc_type == NE2000_TYPE_NE2000));
+#if BYTE_ORDER == BIG_ENDIAN
+	hdr->count = bswap16(hdr->count);
+#endif
 }
 
 int
