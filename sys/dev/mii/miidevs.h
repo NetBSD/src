@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.46 2003/01/26 06:21:03 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.47 2003/05/02 19:39:47 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.46 2003/01/26 06:20:30 matt Exp 
+ *	NetBSD: miidevs,v 1.47 2003/05/02 19:39:29 scw Exp 
  */
 
 /*-
@@ -136,6 +136,8 @@
 #define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3c905C internal PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5214	0x0028
+#define	MII_STR_xxBROADCOM_BCM5214	"BCM5214 Quad 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
 #define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
