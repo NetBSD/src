@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.77 2001/04/24 15:04:27 fvdl Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.78 2001/10/16 01:51:26 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.77 2001/04/24 15:04:27 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.78 2001/10/16 01:51:26 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -349,12 +349,12 @@ main(argc, argv)
 	 * by default on NFS sockets too.
 	 */
 	if (udp6sock != -1 && setsockopt(udp6sock, IPPROTO_IPV6,
-	    IPV6_BINDV6ONLY, &one, sizeof one) < 0){
+	    IPV6_V6ONLY, &one, sizeof one) < 0){
 		syslog(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
 		exit(1);
 	}
 	if (tcp6sock != -1 && setsockopt(tcp6sock, IPPROTO_IPV6,
-	    IPV6_BINDV6ONLY, &one, sizeof one) < 0){
+	    IPV6_V6ONLY, &one, sizeof one) < 0){
 		syslog(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
 		exit(1);
 	}

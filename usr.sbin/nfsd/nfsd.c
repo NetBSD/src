@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.35 2001/01/16 02:50:32 cgd Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.36 2001/10/16 01:51:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.35 2001/01/16 02:50:32 cgd Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.36 2001/10/16 01:51:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ main(argc, argv)
 			syslog(LOG_ERR, "can't create udp socket");
 			exit(1);
 		}
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_BINDV6ONLY,
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
 		    &on, sizeof on) < 0) {
 			syslog(LOG_ERR, "can't set v6-only binding for udp6 "
 					"socket: %m");
@@ -609,7 +609,7 @@ main(argc, argv)
 		if (setsockopt(tcp6sock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
-		if (setsockopt(tcp6sock, IPPROTO_IPV6, IPV6_BINDV6ONLY,
+		if (setsockopt(tcp6sock, IPPROTO_IPV6, IPV6_V6ONLY,
 		    &on, sizeof on) < 0) {
 			syslog(LOG_ERR, "can't set v6-only binding for tcp6 "
 					"socket: %m");
