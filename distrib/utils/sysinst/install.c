@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.21 2000/09/20 21:21:14 hubertf Exp $	*/
+/*	$NetBSD: install.c,v 1.22 2000/09/27 12:42:04 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,6 +64,16 @@ do_install()
 
 	if (find_disks() < 0)
 		return;
+
+	if (!strcmp(diskdev, swapdev)) {
+		msg_display(MSG_swapactive);
+		process_menu(MENU_ok);
+		if (set_swap(swapdev, NULL, 0) < 0) {
+			msg_display(MSG_swapdelfailed);
+			process_menu(MENU_ok);
+			return;
+		}
+	}
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
