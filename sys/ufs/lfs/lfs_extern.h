@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.54 2003/09/23 05:26:49 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.55 2003/09/29 15:12:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -160,7 +160,6 @@ struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
 int lfs_vflush(struct vnode *);
-int lfs_writevnodes(struct lfs *, struct mount *, struct segment *, int);
 int lfs_segwrite(struct mount *, int);
 void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
@@ -169,7 +168,6 @@ int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(str
 void lfs_update_single(struct lfs *, struct segment *, daddr_t, int32_t, int);
 void lfs_updatemeta(struct segment *);
 int lfs_initseg(struct lfs *);
-void lfs_newseg(struct lfs *);
 int lfs_writeseg(struct lfs *, struct segment *);
 void lfs_writesuper(struct lfs *, daddr_t);
 int lfs_match_data(struct lfs *, struct buf *);
@@ -177,9 +175,6 @@ int lfs_match_indir(struct lfs *, struct buf *);
 int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
 void lfs_callback(struct buf *);
-void lfs_supercallback(struct buf *);
-/* XXX ondisk32 */
-void lfs_shellsort(struct buf **, int32_t *, int, int);
 int lfs_vref(struct vnode *);
 void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
