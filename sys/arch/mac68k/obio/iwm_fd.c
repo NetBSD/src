@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.4 2000/01/21 23:29:05 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.5 2000/01/27 02:26:17 ender Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -323,8 +323,6 @@ iwm_attach(parent, self, auxp)
 	printf(": Apple GCR floppy disk controller\n");
 	iwm = (iwm_softc_t *)self;
 
-	BUFQ_INIT(&iwm->bufQueue);
-
 	iwmErr = iwmInit();
 	if (TRACE_CONFIG)
 		printf("initIWM() says %d.\n", iwmErr);
@@ -467,6 +465,9 @@ fd_attach(parent, self, auxp)
 
 	iwm->fd[ia->unit] = fd;		/* iwm has ptr to this drive */
 	iwm->drives++;
+
+	BUFQ_INIT(&fd->bufQueue);
+
 	printf(" drive %d: ", fd->unit);
 
 	if (IWM_NO_DISK & driveInfo) {
