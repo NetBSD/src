@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.623 2004/05/12 07:07:54 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.624 2004/05/27 11:10:45 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.625 2004/05/12 07:07:34 tron Exp 
+ *	NetBSD: pcidevs,v 1.626 2004/05/27 11:09:45 abs Exp 
  */
 
 /*
@@ -518,6 +518,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M4803",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5257,
+	    0,
+	    "Acer Labs",
+	    "M5257 PCI Software Modem",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,
