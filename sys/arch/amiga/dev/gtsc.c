@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gtsc.c,v 1.2 1994/05/11 19:06:44 chopps Exp $
+ *	$Id: gtsc.c,v 1.3 1994/05/16 05:09:02 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,12 +59,6 @@ void gtsc_dmastop __P((struct sbic_softc *));
 int gtsc_dmanext __P((struct sbic_softc *));
 int gtsc_dmaintr __P((void));
 int gtsc_dmago __P((struct sbic_softc *, char *, int, int));
-
-int
-dk_establish()
-{
-	return(-1);
-}
 
 struct scsi_adapter gtsc_scsiswitch = {
 	sbic_scsicmd,
