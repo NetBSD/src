@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.147 2000/06/09 08:54:23 enami Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.148 2000/08/03 12:36:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -451,6 +451,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "DEC     ", "RRD42   (C) DEC ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "GENERIC ", "CRD-BP2         ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "HP      ", "C4324/C4325     ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
