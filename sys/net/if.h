@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.40 1999/09/29 22:42:02 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.41 1999/10/26 22:32:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -258,8 +258,8 @@ struct ifaddr {
 	struct	ifaddr_data	ifa_data;	/* statistics on the address */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
-	u_short	ifa_flags;		/* mostly rt_flags for cloning */
-	short	ifa_refcnt;		/* count of references */
+	u_int	ifa_flags;		/* mostly rt_flags for cloning */
+	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
