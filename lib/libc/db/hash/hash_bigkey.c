@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.9 1998/12/09 12:42:49 christos Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.10 1999/07/10 17:48:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.9 1998/12/09 12:42:49 christos Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.10 1999/07/10 17:48:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -600,7 +600,7 @@ __big_split(hashp, op, np, big_keyp, addr, obucket, ret)
 		return (-1);
 	change = (__call_hash(hashp, key.data, (int)key.size) != obucket);
 
-	if ((ret->next_addr = __find_last_page(hashp, &big_keyp)) != NULL) {
+	if ((ret->next_addr = __find_last_page(hashp, &big_keyp)) != 0) {
 		if (!(ret->nextp =
 		    __get_buf(hashp, (u_int32_t)ret->next_addr, big_keyp, 0)))
 			return (-1);;
