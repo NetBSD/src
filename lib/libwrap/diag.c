@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.5 1999/07/03 12:30:40 simonb Exp $	*/
+/*	$NetBSD: diag.c,v 1.6 2000/10/04 16:24:49 sommerfeld Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.5 1999/07/03 12:30:40 simonb Exp $");
+__RCSID("$NetBSD: diag.c,v 1.6 2000/10/04 16:24:49 sommerfeld Exp $");
 #endif
 #endif
 
@@ -34,7 +34,8 @@ __RCSID("$NetBSD: diag.c,v 1.5 1999/07/03 12:30:40 simonb Exp $");
 struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
 
-static void tcpd_diag __P((int, char *, char *, va_list));
+static void tcpd_diag __P((int, char *, char *, va_list))
+	__attribute__((__format__(__printf__, 3, 0)));
 
 /* tcpd_diag - centralize error reporter */
 
@@ -45,13 +46,16 @@ char   *format;
 va_list ap;
 {
     char    fmt[BUFSIZ];
+    char    buf[BUFSIZ];
 
+    vsnprintf(buf, sizeof(buf), format, ap);
+    
     if (tcpd_context.file)
-	(void)snprintf(fmt, sizeof fmt, "%s: %s, line %d: %s",
-		tag, tcpd_context.file, tcpd_context.line, format);
+	(void)snprintf(fmt, sizeof fmt, "%s: %s, line %d",
+		tag, tcpd_context.file, tcpd_context.line);
     else
-	(void)snprintf(fmt, sizeof fmt, "%s: %s", tag, format);
-    vsyslog(severity, fmt, ap);
+	(void)snprintf(fmt, sizeof fmt, "%s", tag);
+    syslog(severity, "%s: %s", fmt, buf);
 }
 
 /* tcpd_warn - report problem of some sort and proceed */
