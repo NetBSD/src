@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 2003/10/22 22:51:36 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 2004/04/16 14:21:56 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.2 2003/10/22 22:51:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2004/04/16 14:21:56 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,12 @@ db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_kdintr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
 
-void db_find_trace_symbols __P((void));
-int db_numargs __P((struct x86_64_frame *));
-void db_nextframe __P((struct x86_64_frame **, db_addr_t *, long *, int,
-    void (*) (const char *, ...)));
+void db_find_trace_symbols(void);
+int db_numargs(long *);
+int db_nextframe(long **, long **, long **, db_addr_t *, long *, int,
+    void (*) (const char *, ...));
+db_sym_t db_frame_info(long *, db_addr_t, char **, db_expr_t *, int *, int *);
+
 
 void
 db_find_trace_symbols()
@@ -146,8 +148,7 @@ db_find_trace_symbols()
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(fp)
-	struct x86_64_frame *fp;
+db_numargs(long *retaddrp)
 {
 	return 0;
 }
@@ -162,28 +163,35 @@ db_numargs(fp)
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
-void
-db_nextframe(fp, ip, argp, is_trap, pr)
-	struct x86_64_frame **fp;		/* in/out */
-	db_addr_t	*ip;		/* out */
-	long *argp;			/* in */
-	int is_trap;			/* in */
-	void (*pr) __P((const char *, ...)); /* in */
+int
+db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
+	     long *argp, int is_trap, void (*pr)(const char *, ...))
 {
+	struct trapframe *tf;
+	struct x86_64_frame *fp;
+	struct intrframe *ifp;
+	int traptype, trapno, err, i;
 
 	switch (is_trap) {
 	    case NONE:
 		*ip = (db_addr_t)
-			db_get_value((db_addr_t)&(*fp)->f_retaddr, 8, FALSE);
-		*fp = (struct x86_64_frame *)
-			db_get_value((db_addr_t)&(*fp)->f_frame, 8, FALSE);
+			db_get_value((long)*retaddr, 8, FALSE);
+		fp = (struct x86_64_frame *)
+			db_get_value((long)*nextframe, 8, FALSE);
+		if (fp == NULL)
+			return 0;
+		*nextframe = (long *)&fp->f_frame;
+		*retaddr = (long *)&fp->f_retaddr;
+		*arg0 = (long *)&fp->f_arg0;
 		break;
 
-	    default: {
-		struct trapframe *tf;
+	    case TRAP:
+	    case SYSCALL:
+	    case INTERRUPT:
+	    default:
 
 		/* The only argument to trap() or syscall() is the trapframe. */
-		tf = (struct trapframe *)argp;
+		tf = *(struct trapframe **)argp;
 		switch (is_trap) {
 		case TRAP:
 			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
@@ -193,27 +201,111 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
+			tf = (struct trapframe *)argp;
 			break;
 		}
-		*fp = (struct x86_64_frame *)tf->tf_rbp;
 		*ip = (db_addr_t)tf->tf_rip;
+		fp = (struct x86_64_frame *)tf->tf_rbp;
+		if (fp == NULL)
+			return 0;
+		*nextframe = (long *)&fp->f_frame;
+		*retaddr = (long *)&fp->f_retaddr;
+		*arg0 = (long *)&fp->f_arg0;
 		break;
-	    }
 	}
+
+	/*
+	 * A bit of a hack. Since %rbp may be used in the stub code,
+	 * walk the stack looking for a valid interrupt frame. Such
+	 * a frame can be recognized by always having
+	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
+	 */
+	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
+	    NULL) != (db_sym_t)0
+	    && traptype == INTERRUPT) {
+		for (i = 0; i < 4; i++) {
+			ifp = (struct intrframe *)(argp + i);
+			err = db_get_value((long)&ifp->__if_err, 8, FALSE);
+			trapno = db_get_value((long)&ifp->__if_trapno,
+			    8, FALSE);
+			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
+				*nextframe = (long *)ifp - 1;
+				break;
+			}
+		}
+		if (i == 4) {
+			(*pr)("DDB lost frame for ");
+			db_printsym(*ip, DB_STGY_ANY, pr);
+			(*pr)(", trying %p\n",argp);
+			*nextframe = argp;
+		}
+	}
+	return 1;
 }
 
-void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	void		(*pr) __P((const char *, ...));
+db_sym_t
+db_frame_info(long *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
+	      int *is_trap, int *nargp)
 {
-	struct x86_64_frame *frame, *lastframe;
+	db_expr_t	offset;
+	db_sym_t	sym;
+	int narg;
+	char *name;
+
+	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+	db_symbol_values(sym, &name, NULL);
+	if (sym == (db_sym_t)0)
+		return (db_sym_t)0;
+
+	*is_trap = NONE;
+	narg = 0;
+
+	if (INKERNEL((long)frame) && name) {
+		/*
+		 * XXX traps should be based off of the Xtrap*
+		 * locations rather than on trap, since some traps
+		 * (e.g., npxdna) don't go through trap()
+		 */
+		if (!strcmp(name, "trap")) {
+			*is_trap = TRAP;
+			narg = 0;
+		} else if (!strcmp(name, "syscall_plain") ||
+		           !strcmp(name, "syscall_fancy")) {
+			*is_trap = SYSCALL;
+			narg = 0;
+		} else if (name[0] == 'X') {
+			if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xresume", 7) ||
+			    !strncmp(name, "Xstray", 6) ||
+			    !strncmp(name, "Xhold", 5) ||
+			    !strncmp(name, "Xrecurse", 8) ||
+			    !strcmp(name, "Xdoreti") ||
+			    !strncmp(name, "Xsoft", 5)) {
+				*is_trap = INTERRUPT;
+				narg = 0;
+			}
+		}
+	}
+
+	if (offp != NULL)
+		*offp = offset;
+	if (nargp != NULL)
+		*nargp = narg;
+	if (namep != NULL)
+		*namep = name;
+	return sym;
+}
+
+
+void
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+		     char *modif, void (*pr)(const char *, ...))
+{
+	long *frame, *lastframe;
+	long *retaddr, *arg0;
 	long		*argp;
 	db_addr_t	callpc;
-	int		is_trap = 0;
+	int		is_trap;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 
@@ -235,7 +327,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	if (!have_addr) {
-		frame = (struct x86_64_frame *)ddb_regs.tf_rbp;
+		frame = (long *)ddb_regs.tf_rbp;
 		callpc = (db_addr_t)ddb_regs.tf_rip;
 	} else {
 		if (trace_thread) {
@@ -247,21 +339,33 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
-			}
-			l = proc_representative_lwp(p);
-			if (!(l->l_flag&L_INMEM)) {
+			}	
+			l = proc_representative_lwp(p); /* XXX NJWLWP */
+			if (!(l->l_flag & L_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
 			u = l->l_addr;
-			frame = (struct x86_64_frame *) u->u_pcb.pcb_rbp;
-			(*pr)("at %p\n", frame);
-		} else
-			frame = (struct x86_64_frame *)addr;
-		callpc = (db_addr_t)
-			 db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
-		frame = (struct x86_64_frame *)frame->f_frame;
+			if (p == curproc && l == curlwp) {
+				frame = (long *)ddb_regs.tf_rbp;
+				callpc = (db_addr_t)ddb_regs.tf_rip;
+				(*pr)(" at %p\n", frame);
+			} else {
+				frame = (long *)u->u_pcb.pcb_rbp;
+				callpc = (db_addr_t)
+				    db_get_value((long)(frame + 1), 8, FALSE);
+				(*pr)(" at %p\n", frame);
+				frame = (long *)*frame; /* XXXfvdl db_get_value? */
+			}
+		} else {
+			frame = (long *)addr;
+			callpc = (db_addr_t)
+			    db_get_value((long)(frame + 1), 8, FALSE);
+			frame = (long *)*frame; /* XXXfvdl db_get_value? */
+		}
 	}
+	retaddr = frame + 1;
+	arg0 = frame + 2;
 
 	lastframe = 0;
 	while (count && frame != 0) {
@@ -269,68 +373,29 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		char *	name;
 		db_expr_t	offset;
 		db_sym_t	sym;
-#define MAXNARG	16
-		char	*argnames[MAXNARG], **argnp = NULL;
+		char	*argnames[16], **argnp = NULL;
+		db_addr_t	lastcallpc;
 
-		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-		db_symbol_values(sym, &name, NULL);
+		name = "?";
+		is_trap = NONE;
+		offset = 0;
+		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
+				    &narg);
 
-		if (lastframe == 0 && sym == 0) {
+		if (lastframe == 0 && sym == (db_sym_t)0) {
 			/* Symbol not found, peek at code */
-			long	instr = db_get_value(callpc, 8, FALSE);
+			u_long	instr = db_get_value(callpc, 4, FALSE);
 
 			offset = 1;
-			if ((instr & 0x00ffffff) == 0x00e58955 ||
-					/* enter: pushl %ebp, movl %esp, %ebp */
-			    (instr & 0x0000ffff) == 0x0000e589
-					/* enter+1: movl %esp, %ebp */) {
+			if (instr  == 0xe5894855 ||
+					/* enter: pushq %rbp, movq %rsp, %rbp */
+			    (instr & 0x00ffffff) == 0x0048e589
+					/* enter+1: movq %rsp, %rbp */) {
 				offset = 0;
 			}
 		}
-		if (INKERNEL((long)frame) && name) {
-#ifdef __ELF__
-			if (!strcmp(name, "trap")) {
-				is_trap = TRAP;
-			} else if (!strcmp(name, "syscall")) {
-				is_trap = SYSCALL;
-			} else if (name[0] == 'X') {
-				if (!strncmp(name, "Xintr", 5) ||
-				    !strncmp(name, "Xresume", 7) ||
-				    !strncmp(name, "Xstray", 6) ||
-				    !strncmp(name, "Xhold", 5) ||
-				    !strncmp(name, "Xrecurse", 8) ||
-				    !strcmp(name, "Xdoreti") ||
-				    !strncmp(name, "Xsoft", 5)) {
-					is_trap = INTERRUPT;
-				} else
-					goto normal;
-			} else
-				goto normal;
-			narg = 0;
-#else
-			if (!strcmp(name, "_trap")) {
-				is_trap = TRAP;
-			} else if (!strcmp(name, "_syscall")) {
-				is_trap = SYSCALL;
-			} else if (name[0] == '_' && name[1] == 'X') {
-				if (!strncmp(name, "_Xintr", 6) ||
-				    !strncmp(name, "_Xresume", 8) ||
-				    !strncmp(name, "_Xstray", 7) ||
-				    !strncmp(name, "_Xhold", 6) ||
-				    !strncmp(name, "_Xrecurse", 9) ||
-				    !strcmp(name, "_Xdoreti") ||
-				    !strncmp(name, "_Xsoft", 6)) {
-					is_trap = INTERRUPT;
-				} else
-					goto normal;
-			} else
-				goto normal;
-			narg = 0;
-#endif /* __ELF__ */
-		} else {
-		normal:
-			is_trap = NONE;
-			narg = MAXNARG;
+
+		if (is_trap == NONE) {
 			if (db_sym_numargs(sym, &narg, argnames))
 				argnp = argnames;
 			else
@@ -342,17 +407,17 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/*
 			 * We have a breakpoint before the frame is set up
-			 * Use %esp instead
+			 * Use %rsp instead
 			 */
 			argp = &((struct x86_64_frame *)(ddb_regs.tf_rsp-8))->f_arg0;
 		} else {
-			argp = &frame->f_arg0;
+			argp = frame + 2;
 		}
 
 		while (narg) {
 			if (argnp)
 				(*pr)("%s=", *argnp++);
-			(*pr)("%lx", db_get_value((db_addr_t)argp, 8, FALSE));
+			(*pr)("%lx", db_get_value((long)argp, 8, FALSE));
 			argp++;
 			if (--narg != 0)
 				(*pr)(",");
@@ -363,23 +428,24 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
-			lastframe = (struct x86_64_frame *)(ddb_regs.tf_rsp-8);
+			struct x86_64_frame *fp = (void *)(ddb_regs.tf_rsp-8);
+
+			lastframe = (long *)fp;
 			callpc = (db_addr_t)
-				 db_get_value((db_addr_t)&lastframe->f_retaddr,
-				    8, FALSE);
+			    db_get_value((db_addr_t)&fp->f_retaddr, 8, FALSE);
 			continue;
 		}
 
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
-
-		if (frame == 0) {
-			/* end of chain */
+		lastcallpc = callpc;
+		if (!db_nextframe(&frame, &retaddr, &arg0,
+		   &callpc, frame + 2, is_trap, pr))
 			break;
-		}
+
 		if (INKERNEL((long)frame)) {
 			/* staying in kernel */
-			if (frame <= lastframe) {
+			if (frame < lastframe ||
+			    (frame == lastframe && callpc == lastcallpc)) {
 				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}
