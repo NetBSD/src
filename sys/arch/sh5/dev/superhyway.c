@@ -1,4 +1,4 @@
-/*	$NetBSD: superhyway.c,v 1.3 2002/09/28 10:44:40 scw Exp $	*/
+/*	$NetBSD: superhyway.c,v 1.4 2002/09/28 13:08:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@ const struct cfattach superhyway_ca = {
 extern struct cfdriver superhyway_cd;
 
 static const char *superhyway_devices[] = {
-	"cpu", "pbridge", "emi", "dmac", "femi", "pcibus", NULL
+	"cpu", "pbridge", "emi", "dmac", "femi", "sh5pci", NULL
 };
 
 /*ARGSUSED*/
