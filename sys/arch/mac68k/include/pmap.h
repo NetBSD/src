@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1997/05/20 03:25:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -77,7 +77,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
-#include <machine/pcb.h>
+#include <machine/cpu.h>
 #include <machine/pte.h>
 
 #if defined(M68040)
