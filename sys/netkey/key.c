@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.23.2.8 2000/10/05 14:51:58 itojun Exp $	*/
-/*	$KAME: key.c,v 1.167 2000/10/05 04:02:57 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.23.2.9 2000/10/08 13:27:40 itojun Exp $	*/
+/*	$KAME: key.c,v 1.170 2000/10/07 12:03:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2785,16 +2785,9 @@ key_setsaval(sav, m, mhp)
 		}
 
 		/* initialize */
-	    {
-		int i;
-		u_int8_t *p = (u_int8_t *)sav->iv;
-		for (i = 0; i < sav->ivlen; i++)
-			p[i] = key_random() & 0xff;
-	    }
-		break;
-#else
-		break;
+		key_randomfill(sav->iv, sav->ivlen);
 #endif
+		break;
 	case SADB_SATYPE_AH:
 	case SADB_X_SATYPE_IPCOMP:
 		break;
