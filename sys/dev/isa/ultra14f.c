@@ -66,11 +66,11 @@
 
 /**/
 
-#ifdef  NDDB 
+#ifdef  DDB 
 int     Debugger();
-#else   NDDB
+#else   DDB
 #define Debugger() panic("should call debugger here")
-#endif  NDDB
+#endif  /* DDB */
 
 #ifdef  MACH
 int     Debugger();
