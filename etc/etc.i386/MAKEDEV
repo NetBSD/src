@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.175.2.3 2002/12/16 04:29:43 jmc Exp $
+#	$NetBSD: MAKEDEV,v 1.175.2.4 2004/04/12 04:49:40 jmc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -324,7 +324,7 @@ ugen*)
 	do
 		ugenj=$ugen.$j
 		rm -f $ugenj
-		mknod $ugenj c $major $(($unit * 16 + $j))
+		mknod $ugenj c $major $(($unit * 16 + ${j#0}))
 		chmod 600 $ugenj
 	done
 	;;
