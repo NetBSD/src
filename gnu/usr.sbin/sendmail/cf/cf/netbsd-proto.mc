@@ -38,12 +38,9 @@ divert(-1)
 #  This is the prototype file for a configuration that supports nothing
 #  but basic SMTP connections via TCP.
 #
-#  You may want to add an OSTYPE macro to get the location of various
-#  support files for your operating system environment.
-#
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.1.1.1 $')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.2 $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
