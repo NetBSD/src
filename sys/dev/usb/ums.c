@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.2 1998/07/24 20:59:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,9 @@ struct ums_softc {
 #define	UMS_CHUNK	128	/* chunk size for read */
 #define	UMS_BSIZE	1020	/* buffer size */
 
+#define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
+#define MOUSE_FLAGS (HIO_RELATIVE)
+
 int ums_match __P((struct device *, struct cfdata *, void *));
 void ums_attach __P((struct device *, struct device *, void *));
 
@@ -167,6 +170,7 @@ ums_attach(parent, self, aux)
 	void *desc;
 	usbd_status r;
 	char devinfo[1024];
+	u_int32_t flags;
 	
 	sc->sc_disconnected = 1;
 	sc->sc_iface = iface;
@@ -198,22 +202,28 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (r != USBD_NORMAL_COMPLETION)
 		return;
-	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
-		       hid_input, &sc->sc_loc_x) == 0) {
+	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
+		       hid_input, &sc->sc_loc_x, &flags)) {
 		printf("%s: mouse has no X report\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
-		       hid_input, &sc->sc_loc_y) == 0) {
+	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
+		printf("%s: sorry, X report 0x%04x not supported yet\n",
+		       sc->sc_dev.dv_xname, flags);
+	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
+		       hid_input, &sc->sc_loc_y, &flags)) {
 		printf("%s: mouse has no Y report\n", sc->sc_dev.dv_xname);
 		return;
 	}
+	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
+		printf("%s: sorry, Y report 0x%04x not supported yet\n",
+		       sc->sc_dev.dv_xname, flags);
 	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 1), 
-		   hid_input, &sc->sc_loc_btn1);
+		   hid_input, &sc->sc_loc_btn1, 0);
 	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 2), 
-		   hid_input, &sc->sc_loc_btn2);
-	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 3), 
-		   hid_input, &sc->sc_loc_btn3);
+		   hid_input, &sc->sc_loc_btn2, 0);
+	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 3),
+		   hid_input, &sc->sc_loc_btn3, 0);
 	DPRINTF(("ums_attach: sc=%p\n", sc));
 	DPRINTF(("ums_attach: X  %d/%d\n", 
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
