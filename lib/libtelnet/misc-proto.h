@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)misc-proto.h	5.1 (Berkeley) 2/28/91
- *	$Id: misc-proto.h,v 1.2 1993/08/01 18:32:48 mycroft Exp $
+ *	from: @(#)misc-proto.h	8.1 (Berkeley) 6/4/93
+ *	$Id: misc-proto.h,v 1.3 1994/02/25 02:53:02 cgd Exp $
  */
 
 /*
