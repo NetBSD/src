@@ -2093,6 +2093,23 @@ vt200-ws|vt220-ws|dec-vt220-ws|dec vt200 series; 132 col.; smooth scroll:\
 	:is=\E>\E[?3h\E[?4h\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
 	:rs=\E>\E[?3h\E[?4h\E[?5l\E[?7h\E[?8h:\
 	:co#132:tc=vt200:
+## VT300 entry for VMS.  Also for VT300.
+# Make sure not to use \n for nl or anything else.
+# It is bad form to use ^J,^L,^K to scroll the screen.
+# If the VT2xx doesn't have newline mode set those characters
+# donot move the cursor down a line.  Use \ED instead.
+vt300|vt320|vt300-80|VT 300 with 80 columns, on VMS:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+	:LE=\E[%dD:RI=\E[%dC:SR=1*\E[%dM:UP=\E[%dA:al=\E[L:\
+	:am:bl=^G:bs:cd=2*\E[J:ce=2*\E[K:cl=45\E[H\E[2J:\
+	:cm=%i\E[%d;%dH:co#80:cr=\r:cs=\E[%i%d;%dr:ct=\E[3g:\
+	:dc=\E[P:dl=\E[M:dm=:do=\ED:ec=\E[%dX:ed=:ei=\E[4l:\
+	:ho=\E[H:ic:im=\E[4h:it#8:k1=\EOP:k2=\EOQ:k3=\EOR:\
+	:k4=\EOS:kd=\E[B:ke=\E[?1l\E>:kl=\E[D:kn#4:kr=\E[C:ks=\E[?1h\E=:\
+	:ku=\E[A:le=^H:li#24:mb=\E[5m:md=\E[1m:me=\E[0m:mi:\
+	:mr=\E[7m:ms:nd=\E[C:nl=\ED:nw=\EE:pf=\E[?4i:po=\E[?5i:\
+	:ps=\E[i:rc=\E8:sc=\E7:se=\E[27m:sf=1*\ED:so=\E[7m:\
+	:sr=1*\EM:st=\EH:ue=\E[24m:up=\EM:us=\E[4m:xn:
 # @(#)termcap	X10/6.6	11/7/86, minus alternate screen, plus :cs
 xterm|vs100|xterm terminal emulator (X window system):\
 	:do=^J:le=^H:ho=\E[H:\
