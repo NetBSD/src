@@ -43,7 +43,7 @@ fi
 cd /tmp
 TMP=daily.$$
 find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
-		-o -fstype kernfs \) -a -prune -o \
+		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
 	-name 'lost+found' -a -prune -o \
 	-name '*.core' -a -print -o \
 	\( -name '[#,]*' -o -name '.#*' -o -name a.out \

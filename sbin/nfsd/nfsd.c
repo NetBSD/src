@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	8.7 (Berkeley) 2/22/94";*/
-static char *rcsid = "$Id: nfsd.c,v 1.11 1994/06/08 19:31:49 mycroft Exp $";
+static char *rcsid = "$Id: nfsd.c,v 1.11.2.1 1994/10/18 18:47:36 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -239,7 +239,7 @@ main(argc, argv, envp)
 			continue;
 		}
 
-		setproctitle("nfsd-srv");
+		setproctitle("server");
 		nfssvc_flag = NFSSVC_NFSD;
 		nsd.nsd_nfsd = NULL;
 #ifdef KERBEROS
@@ -408,7 +408,7 @@ main(argc, argv, envp)
 		*cp = (NFS_PORT & 0xff);
 		isoaddr.siso_len = sizeof(isoaddr);
 		if (bind(tp4sock,
-		    (struct sockaddr *)&isoaddr, sizeof (isoaddr)) < 0) {
+		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tp4 addr");
 			exit(1);
 		}
@@ -470,7 +470,7 @@ main(argc, argv, envp)
 	if (connect_type_cnt == 0)
 		exit(0);
 
-	setproctitle("nfsd-master");
+	setproctitle("master");
 
 	/*
 	 * Loop forever accepting connections and passing the sockets
@@ -544,7 +544,8 @@ main(argc, argv, envp)
 void
 usage()
 {
-	(void)fprintf(stderr, "nfsd %s\n", USAGE);
+
+	(void)fprintf(stderr, "usage: nfsd %s\n", USAGE);
 	exit(1);
 }
 
@@ -552,6 +553,7 @@ void
 nonfs(signo)
 	int signo;
 {
+
 	syslog(LOG_ERR, "missing system call: NFS not available.");
 }
 
@@ -560,5 +562,5 @@ reapchild(signo)
 	int signo;
 {
 
-	while (wait3(NULL, WNOHANG, NULL));
+	while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0);
 }
