@@ -18,11 +18,12 @@ Supported devices include:
 		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
 		Adaptec AIC-6260 and AIC-6360 based boards, including
-			the Adaptec AHA-152x and the SoundBlaster SCSI
-			host adapter.  (Note that you cannot boot from
-			these boards if they do not have a boot ROM;
-			only the AHA-152x and motherboards using this chip
-			are likely to be bootable, consequently.)
+			the Adaptec AHA-152x, Adaptec AHA-1460 (PCMCIA),
+			and the SoundBlaster SCSI host adapter.  (Note
+			that you cannot boot from these boards if they
+			do not have a boot ROM; only the AHA-152x and
+			motherboards using this chip are likely to be
+			bootable, consequently.)
 		Adaptec AHA-2x4x[U][W] cards and some onboard PCI designs
 			using the AIC78X0 chip.  There is a known problem
 			using this driver with AHA-2742 cards or AIC7770 or
@@ -84,6 +85,7 @@ Supported devices include:
 		3COM 3c505 [*]
 		3COM 3c507
 		3COM 3c509, 3c579, and 3c59X
+		3COM 3c589
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
 			Cogent EM964 [b]
@@ -100,6 +102,7 @@ Supported devices include:
 			SVEC FD1000-TP
 			Znyx ZX34X
 		Digital EtherWORKS III ISA adapters (DE203/DE204/DE205)
+		Digital DEPCM-BA (PCMCIA) and DE305 (ISA) NE2000-compat. cards
 		BICC Isolan [* and not recently tested]
 		Intel EtherExpress 16
 		Intel EtherExpress PRO/10 [*]
@@ -172,9 +175,7 @@ about:
 		run fine using one processor only.)
 	NCR 5380-based SCSI host adapters.
 	PCI WD-7000 SCSI host adapters.
-	PCMCIA ("PC Card") devices, including some miniature "IDE" hard disks.
-	 [Note: some higly experimental PCMCIA support is available on our
-	  FTP sites]
+	PCMCIA ("PC Card") miniature IDE devices
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
 
