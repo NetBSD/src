@@ -712,9 +712,9 @@ output_branchy_insn (code, template, insn, operands)
 
 char *
 output_ieee_ccmpeq (insn, operands)
-     rtx insn, operands;
+     rtx insn, *operands;
 {
-  output_branchy_insn (NE, "bt\t%l9\\;fcmp/eq\t%1,%0", insn, operands);
+  return output_branchy_insn (NE, "bt\t%l9\\;fcmp/eq\t%1,%0", insn, operands);
 }
 
 /* Output to FILE the start of the assembler file.  */
