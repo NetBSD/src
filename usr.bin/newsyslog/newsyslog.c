@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.13 1997/10/19 06:23:50 lukem Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.14 1998/04/02 10:35:26 kleink Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.13 1997/10/19 06:23:50 lukem Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.14 1998/04/02 10:35:26 kleink Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: newsyslog.c,v 1.13 1997/10/19 06:23:50 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define kbytes(size)  (((size) + 1023) >> 10)
