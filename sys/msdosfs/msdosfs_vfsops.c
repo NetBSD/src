@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61 1999/03/07 13:57:20 tron Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.61.4.1 1999/08/01 05:17:46 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -694,6 +694,11 @@ msdosfs_mountfs(devvp, mp, p, argp)
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
 	mp->mnt_flag |= MNT_LOCAL;
+
+/* XXX pm_BytesPerSec is stored in the filesystem?? */
+	mp->mnt_dev_bshift = pmp->pm_bnshift;
+	mp->mnt_fs_bshift = pmp->pm_cnshift;
+
 #ifdef QUOTA
 	/*
 	 * If we ever do quotas for DOS filesystems this would be a place
