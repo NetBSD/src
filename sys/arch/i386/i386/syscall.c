@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.7 2000/12/11 05:28:59 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1 2000/12/11 05:29:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,11 +78,9 @@
  * 386 Trap and System call handling
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,20 +103,15 @@
 #include <machine/trap.h>
 #include <machine/userret.h>
 
-#include <compat/linux/arch/i386/linux_errno.h>
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/arch/i386/linux_signal.h>
-#include <compat/linux/arch/i386/linux_machdep.h>
-
-void linux_syscall __P((struct trapframe));
-extern struct sysent linux_sysent[];
+void syscall_intern __P((struct proc *));
+void syscall __P((struct trapframe));
 
 void
-linux_syscall_intern(p)
+syscall_intern(p)
 	struct proc *p;
 {
 
-	p->p_md.md_syscall = linux_syscall;
+	p->p_md.md_syscall = syscall;
 }
 
 /*
@@ -126,11 +119,13 @@ linux_syscall_intern(p)
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
+#if 0
 /*ARGSUSED*/
 void
-linux_syscall(frame)
+syscall(frame)
 	struct trapframe frame;
 {
+	register caddr_t params;
 	register const struct sysent *callp;
 	register struct proc *p;
 	int error;
@@ -140,63 +135,29 @@ linux_syscall(frame)
 	uvmexp.syscalls++;
 #ifdef DEBUG
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
-		panic("linux_syscall");
+		panic("syscall");
 #endif
-	
+
 	p = curproc;
 
 	code = frame.tf_eax;
-	callp = linux_sysent;
+	callp = p->p_emul->e_sysent;
+	params = (caddr_t)frame.tf_esp + sizeof(int);
 
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
-
-	callp += (code & (LINUX_SYS_NSYSENT - 1));
+	callp += (code & (SYS_NSYSENT - 1));
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
-		 * increasing order.
-		 */
-		switch (argsize >> 2) {
-		case 5:
-			args[4] = frame.tf_edi;
-		case 4:
-			args[3] = frame.tf_esi;
-		case 3:
-			args[2] = frame.tf_edx;
-		case 2:
-			args[1] = frame.tf_ecx;
-		case 1:
-			args[0] = frame.tf_ebx;
-			break;
-		default:
-			panic("linux syscall bogus argument size %d",
-		    		argsize);
-			break;
-		}
+		error = copyin(params, (caddr_t)args, argsize);
+		if (error)
+			goto bad;
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
+		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -211,7 +172,108 @@ linux_syscall(frame)
 		/* nothing to do */
 		break;
 	default:
-		error = native_to_linux_errno[error];
+	bad:
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
+		break;
+	}
+
+	userret(p);
+}
+#endif
+
+#if 1
+/*ARGSUSED*/
+void
+syscall(frame)
+	struct trapframe frame;
+{
+	register caddr_t params;
+	register const struct sysent *callp;
+	register struct proc *p;
+	int error;
+	size_t argsize;
+	register_t code, args[8], rval[2];
+
+	uvmexp.syscalls++;
+#ifdef DEBUG
+	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
+		panic("syscall");
+#endif
+
+	p = curproc;
+
+	code = frame.tf_eax;
+	callp = p->p_emul->e_sysent;
+	params = (caddr_t)frame.tf_esp + sizeof(int);
+
+#ifdef VM86
+	/*
+	 * VM86 mode application found our syscall trap gate by accident; let
+	 * it get a SIGSYS and have the VM86 handler in the process take care
+	 * of it.
+	 */
+	if (frame.tf_eflags & PSL_VM)
+		code = -1;
+	else
+#endif /* VM86 */
+
+	switch (code) {
+	case SYS_syscall:
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
+		code = fuword(params);
+		params += sizeof(int);
+		break;
+	case SYS___syscall:
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		params += sizeof(quad_t);
+		break;
+	default:
+		break;
+	}
+
+	callp += (code & (SYS_NSYSENT - 1));
+	argsize = callp->sy_argsize;
+	if (argsize) {
+		error = copyin(params, (caddr_t)args, argsize);
+		if (error)
+			goto bad;
+	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif /* SYSCALL_DEBUG */
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p, code, argsize, args);
+#endif /* KTRACE */
+	rval[0] = 0;
+	rval[1] = 0;
+	error = (*callp->sy_call)(p, args, rval);
+	switch (error) {
+	case 0:
+		frame.tf_eax = rval[0];
+		frame.tf_edx = rval[1];
+		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		break;
+	case ERESTART:
+		/*
+		 * The offset to adjust the PC by depends on whether we entered
+		 * the kernel through the trap or call gate.  We pushed the
+		 * size of the instruction into tf_err on entry.
+		 */
+		frame.tf_eip -= frame.tf_err;
+		break;
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+	default:
+	bad:
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
@@ -225,4 +287,22 @@ linux_syscall(frame)
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
 #endif /* KTRACE */
+}
+#endif
+
+void
+child_return(arg)
+	void *arg;
+{
+	struct proc *p = arg;
+	struct trapframe *tf = p->p_md.md_regs;
+
+	tf->tf_eax = 0;
+	tf->tf_eflags &= ~PSL_C;
+
+	userret(p);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
+#endif
 }
