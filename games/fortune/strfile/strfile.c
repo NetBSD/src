@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.13 1999/09/10 00:18:21 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.14 1999/09/18 19:38:50 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.13 1999/09/10 00:18:21 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.14 1999/09/18 19:38:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,9 +198,9 @@ main(ac, av)
 			if (!length)
 				continue;
 			add_offset(outf, pos);
-			if (Tbl.str_longlen < length)
+			if ((off_t)Tbl.str_longlen < length)
 				Tbl.str_longlen = length;
-			if (Tbl.str_shortlen > length)
+			if ((off_t)Tbl.str_shortlen > length)
 				Tbl.str_shortlen = length;
 			first = Oflag;
 		}

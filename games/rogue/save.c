@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.6 1999/09/13 17:19:55 jsm Exp $	*/
+/*	$NetBSD: save.c,v 1.7 1999/09/18 19:38:54 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.6 1999/09/13 17:19:55 jsm Exp $");
+__RCSID("$NetBSD: save.c,v 1.7 1999/09/18 19:38:54 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -375,7 +375,7 @@ r_read(fp, buf, n)
 	char *buf;
 	int n;
 {
-	if (fread(buf, sizeof(char), n, fp) != n) {
+	if (fread(buf, sizeof(char), n, fp) != (size_t)n) {
 		clean_up("read() failed, don't know why");
 	}
 }
@@ -387,7 +387,7 @@ r_write(fp, buf, n)
 	int n;
 {
 	if (!write_failed) {
-		if (fwrite(buf, sizeof(char), n, fp) != n) {
+		if (fwrite(buf, sizeof(char), n, fp) != (size_t)n) {
 			message("write() failed, don't know why", 0);
 			sound_bell();
 			write_failed = 1;

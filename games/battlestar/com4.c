@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: com4.c,v 1.8 1999/09/18 19:38:46 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: com4.c,v 1.8 1999/09/18 19:38:46 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -194,7 +194,7 @@ int
 throw(name)
 	const char   *name;
 {
-	int     n;
+	unsigned int     n;
 	int     deposit = 0;
 	int     first, value;
 
