@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "libcoff.h"
 #include "opintl.h"
 
-/* FIXME: This shouldn't be done here */
+/* FIXME: This shouldn't be done here.  */
 #include "elf-bfd.h"
 #include "elf/internal.h"
 #include "elf/arm.h"
@@ -99,15 +99,16 @@ int get_arm_regnames (int option, const char **setname,
 		      const char **setdescription,
 		      const char ***register_names);
 
-/* Functions. */
+/* Functions.  */
 int
-get_arm_regname_num_options (void)
+get_arm_regname_num_options ()
 {
   return NUM_ARM_REGNAMES;
 }
 
 int
-set_arm_regname_option (int option)
+set_arm_regname_option (option)
+     int option;
 {
   int old = regname_selected;
   regname_selected = option;
@@ -115,9 +116,11 @@ set_arm_regname_option (int option)
 }
 
 int
-get_arm_regnames (int option, const char **setname,
-		  const char **setdescription,
-                  const char ***register_names)
+get_arm_regnames (option, setname, setdescription, register_names)
+     int option;
+     const char **setname;
+     const char **setdescription;
+     const char ***register_names;
 {
   *setname = regnames[option].name;
   *setdescription = regnames[option].description;
@@ -161,6 +164,7 @@ arm_decode_shift (given, func, stream)
 
 /* Print one instruction from PC on INFO->STREAM.
    Return the size of the instruction (always 4 on ARM). */
+
 static int
 print_insn_arm (pc, info, given)
      bfd_vma                   pc;
@@ -200,8 +204,8 @@ print_insn_arm (pc, info, given)
 			      if ((given & 0x00800000) == 0)
 				offset = - offset;
 			  
-			      /* pre-indexed */
-			      func (stream, ", #%x]", offset);
+			      /* Pre-indexed.  */
+			      func (stream, ", #%d]", offset);
 
 			      offset += pc + 8;
 
@@ -215,9 +219,10 @@ print_insn_arm (pc, info, given)
 			  else
 			    {
 			      /* Post indexed.  */
-			      func (stream, "], #%x", offset);
+			      func (stream, "], #%d", offset);
 
-			      offset = pc + 8;  /* ie ignore the offset.  */
+			      /* ie ignore the offset.  */
+			      offset = pc + 8;
 			    }
 			  
 			  func (stream, "\t; ");
@@ -280,7 +285,7 @@ print_insn_arm (pc, info, given)
 			  if ((given & 0x00800000) == 0)
 			    offset = -offset;
 			  
-			  func (stream, "[pc, #%x]\t; ", offset);
+			  func (stream, "[pc, #%d]\t; ", offset);
 			  
 			  (*info->print_address_func)
 			    (offset + pc + 8, info);
@@ -390,13 +395,6 @@ print_insn_arm (pc, info, given)
 			func (stream, "t");
 		      break;
 
-		    case 'h':
-		      if ((given & 0x00000020) == 0x00000020)
-			func (stream, "h");
-                      else
-                        func (stream, "b");
-		      break;
-
 		    case 'A':
 		      func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
 		      if ((given & 0x01000000) != 0)
@@ -443,6 +441,25 @@ print_insn_arm (pc, info, given)
 
 		        info->print_address_func (address, info);
 		      }
+		      break;
+
+		    case 'I':
+		      /* Print a Cirrus/DSP shift immediate.  */
+		      /* Immediates are 7bit signed ints with bits 0..3 in
+			 bits 0..3 of opcode and bits 4..6 in bits 5..7
+			 of opcode.  */
+		      {
+			int imm;
+
+			imm = (given & 0xf) | ((given & 0xe0) >> 1);
+
+			/* Is ``imm'' a negative number?  */
+			if (imm & 0x40)
+			  imm |= (-1 << 7);
+
+			func (stream, "%d", imm);
+		      }
+
 		      break;
 
 		    case 'C':
@@ -611,7 +628,85 @@ print_insn_arm (pc, info, given)
 				abort ();
 			      }
 			    break;
-			    
+
+			  case 'y':
+			  case 'z':
+			    {
+			      int single = *c == 'y';
+			      int regno;
+
+			      switch (bitstart)
+				{
+				case 4: /* Sm pair */
+				  func (stream, "{");
+				  /* Fall through.  */
+				case 0: /* Sm, Dm */
+				  regno = given & 0x0000000f;
+				  if (single)
+				    {
+				      regno <<= 1;
+				      regno += (given >> 5) & 1;
+				    }
+				  break;
+
+				case 1: /* Sd, Dd */
+				  regno = (given >> 12) & 0x0000000f;
+				  if (single)
+				    {
+				      regno <<= 1;
+				      regno += (given >> 22) & 1;
+				    }
+				  break;
+
+				case 2: /* Sn, Dn */
+				  regno = (given >> 16) & 0x0000000f;
+				  if (single)
+				    {
+				      regno <<= 1;
+				      regno += (given >> 7) & 1;
+				    }
+				  break;
+
+				case 3: /* List */
+				  func (stream, "{");
+				  regno = (given >> 12) & 0x0000000f;
+				  if (single)
+				    {
+				      regno <<= 1;
+				      regno += (given >> 22) & 1;
+				    }
+				  break;
+
+				  
+				default:
+				  abort ();
+				}
+
+			      func (stream, "%c%d", single ? 's' : 'd', regno);
+
+			      if (bitstart == 3)
+				{
+				  int count = given & 0xff;
+
+				  if (single == 0)
+				    count >>= 1;
+
+				  if (--count)
+				    {
+				      func (stream, "-%c%d",
+					    single ? 's' : 'd',
+					    regno + count);
+				    }
+
+				  func (stream, "}");
+				}
+			      else if (bitstart == 4)
+				func (stream, ", %c%d}", single ? 's' : 'd',
+				      regno + 1);
+
+			      break;
+			    }
+
 			  case '`':
 			    c++;
 			    if ((given & (1 << bitstart)) == 0)
@@ -650,6 +745,7 @@ print_insn_arm (pc, info, given)
 
 /* Print one instruction from PC on INFO->STREAM.
    Return the size of the instruction. */
+
 static int
 print_insn_thumb (pc, info, given)
      bfd_vma                   pc;
@@ -669,15 +765,23 @@ print_insn_thumb (pc, info, given)
           /* Special processing for Thumb 2 instruction BL sequence:  */
           if (!*c) /* Check for empty (not NULL) assembler string.  */
             {
+	      long offset;
+	      
 	      info->bytes_per_chunk = 4;
 	      info->bytes_per_line  = 4;
-	      
+
+	      offset = BDISP23 (given);
+	      offset = offset * 2 + pc + 4;
+
 	      if ((given & 0x10000000) == 0)
-                 func (stream, "blx\t");
+		{
+		  func (stream, "blx\t");
+		  offset &= 0xfffffffc;
+		}
 	      else
-                func (stream, "bl\t");
-		
-              info->print_address_func (BDISP23 (given) * 2 + pc + 4, info);
+		func (stream, "bl\t");
+
+	      info->print_address_func (offset, info);
               return 4;
             }
           else
@@ -881,6 +985,7 @@ print_insn_thumb (pc, info, given)
 }
 
 /* Parse an individual disassembler option.  */
+
 void
 parse_arm_disassembler_option (option)
      char * option;
@@ -915,6 +1020,7 @@ parse_arm_disassembler_option (option)
 }
 
 /* Parse the string of disassembler options, spliting it at whitespaces.  */
+
 static void
 parse_disassembler_options (options)
      char * options;
@@ -943,6 +1049,7 @@ parse_disassembler_options (options)
 
 /* NOTE: There are no checks in these routines that
    the relevant number of data bytes exist.  */
+
 static int
 print_insn (pc, info, little)
      bfd_vma pc;
@@ -1088,7 +1195,7 @@ the -M switch:\n"));
   for (i = NUM_ARM_REGNAMES; i--;)
     fprintf (stream, "  reg-names-%s %*c%s\n",
 	     regnames[i].name,
-	     14 - strlen (regnames[i].name), ' ',
+	     (int)(14 - strlen (regnames[i].name)), ' ',
 	     regnames[i].description);
 
   fprintf (stream, "  force-thumb              Assume all insns are Thumb insns\n");

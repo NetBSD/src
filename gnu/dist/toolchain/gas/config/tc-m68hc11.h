@@ -1,5 +1,5 @@
 /* tc-m68hc11.h -- Header file for tc-m68hc11.c.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -60,6 +60,8 @@ extern const char *m68hc11_arch_format PARAMS ((void));
    - The .vectors is the data section that represents the interrupt
      vectors.  */
 #define ELF_TC_SPECIAL_SECTIONS \
+  { ".eeprom",	SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE	}, \
+  { ".softregs",SHT_NOBITS,	SHF_ALLOC + SHF_WRITE	}, \
   { ".page0",	SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE	}, \
   { ".vectors",	SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE	},
 
@@ -68,7 +70,7 @@ extern const char *m68hc11_arch_format PARAMS ((void));
 #define LISTING_LHS_WIDTH_SECOND 4	/* One word on the second line */
 #define LISTING_LHS_CONT_LINES 4	/* And 4 lines max */
 #define LISTING_HEADER m68hc11_listing_header ()
-extern const char *m68hc11_listing_header PARAMS (());
+extern const char *m68hc11_listing_header PARAMS ((void));
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)

@@ -53,8 +53,10 @@ l5:
 2:				# at address 0xCC.
 	b	2b		# R_MIPS_GNU_REL16_S2	.text 32
 	b	2b+4		# R_MIPS_GNU_REL16_S2	.text 33
-	la      $3,2b-l5        # 34
-	la      $3,2b+8-l5      # 3C
+	la	$3,2b-l5	# R_MIPS_GNU_REL_HI16	.text 0
+				# R_MIPS_GNU_REL_LO16	.text 10C
+	la	$3,2b+8-l5	# R_MIPS_GNU_REL_HI16	.text 0
+				# R_MIPS_GNU_REL_LO16	.text 11C
 	.word	2b		# R_MIPS_32	.text CC
 	.word	2b-l5		# R_MIPS_PC32	.text 11C  or 34
 	nop

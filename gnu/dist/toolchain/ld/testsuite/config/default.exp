@@ -158,8 +158,8 @@ proc ld_assemble { as source object } {
 # ld_nm
 #	run nm on a file
 #
-proc ld_nm { nm object } {
-	default_ld_nm $nm $object
+proc ld_nm { nm nmflags object } {
+	default_ld_nm $nm $nmflags $object
 }
 
 #
@@ -170,3 +170,55 @@ proc ld_exec { target output } {
 	default_ld_exec $target $output
 }
 
+# From gas-defs.exp, to support run_dump_test.
+if ![info exists AS] then {
+    set AS $as
+}
+
+if ![info exists GASP] then {
+    set GASP [findfile $base_dir/../gas/gasp-new $base_dir/../gas/gasp-new [transform gasp]]
+}
+
+if ![info exists ASFLAGS] then {
+    set ASFLAGS ""
+}
+
+if ![info exists OBJDUMP] then {
+    set OBJDUMP $objdump
+}
+
+if ![info exists OBJDUMPFLAGS] then {
+    set OBJDUMPFLAGS {}
+}
+
+if ![info exists NM] then {
+    set NM $nm
+}
+
+if ![info exists NMFLAGS] then {
+    set NMFLAGS {}
+}
+
+if ![info exists OBJCOPY] then {
+    set OBJCOPY $objcopy
+}
+
+if ![info exists OBJCOPYFLAGS] then {
+    set OBJCOPYFLAGS {}
+}
+
+if ![info exists READELF] then {
+    set READELF [findfile $base_dir/../binutils/readelf]
+}
+
+if ![info exists READELFFLAGS] then {
+    set READELFFLAGS {}
+}
+
+if ![info exists LD] then {
+    set LD [findfile $base_dir/ld-new ./ld-new [transform ld]]
+}
+
+if ![info exists LDFLAGS] then {
+    set LDFLAGS {}
+}

@@ -1,26 +1,38 @@
 /*
- * Copyright (c) 1983, 2001 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993, 2001
+ *      The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that: (1) source distributions retain this entire copyright
- * notice and comment, and (2) distributions including binaries display
- * the following acknowledgement:  ``This product includes software
- * developed by the University of California, Berkeley and its contributors''
- * in the documentation or other materials provided with the distribution
- * and in all advertising materials mentioning features or use of this
- * software. Neither the name of the University nor the names of its
- * contributors may be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "corefile.h"
 #include "hist.h"
-#include "symtab.h"
 
     /*
      *        opcode of the `callf' instruction
@@ -44,16 +56,21 @@ typedef enum tahoe_opermodes tahoe_operandenum;
 /*
  * A symbol to be the child of indirect callf:
  */
-Sym indirectchild;
+static Sym indirectchild;
 
+static tahoe_operandenum tahoe_operandmode PARAMS ((unsigned char *));
+static char *tahoe_operandname PARAMS ((tahoe_operandenum));
+static long tahoe_operandlength PARAMS ((unsigned char *));
+static bfd_signed_vma tahoe_offset PARAMS ((unsigned char *));
+void tahoe_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
-tahoe_operandenum
+static tahoe_operandenum
 tahoe_operandmode (modep)
      unsigned char *modep;
 {
-  long usesreg = ((long) *modep) & 0xf;
+  long usesreg = *modep & 0xf;
 
-  switch (((long) *modep) >> 4)
+  switch ((*modep >> 4) & 0xf)
     {
     case 0:
     case 1:
@@ -89,7 +106,7 @@ tahoe_operandmode (modep)
   abort ();
 }
 
-char *
+static char *
 tahoe_operandname (mode)
      tahoe_operandenum mode;
 {
@@ -143,7 +160,7 @@ tahoe_operandname (mode)
   abort ();
 }
 
-long
+static long
 tahoe_operandlength (modep)
      unsigned char *modep;
 {
@@ -181,34 +198,24 @@ tahoe_operandlength (modep)
   abort ();
 }
 
-bfd_vma
-tahoe_reladdr (modep)
-     char *modep;
+static bfd_signed_vma
+tahoe_offset (modep)
+     unsigned char *modep;
 {
   tahoe_operandenum mode = tahoe_operandmode (modep);
-  char *cp;
-  short *sp;
-  long *lp;
-  int i;
-  long value = 0;
 
-  cp = modep;
-  ++cp;				/* skip over the mode */
+  ++modep;				/* skip over the mode */
   switch (mode)
     {
     default:
       fprintf (stderr, "[reladdr] not relative address\n");
-      return (bfd_vma) modep;
+      return 0;
     case byterel:
-      return (bfd_vma) (cp + sizeof *cp + *cp);
+      return 1 + bfd_get_signed_8 (core_bfd, modep);
     case wordrel:
-      for (i = 0; (size_t) i < sizeof *sp; i++)
-	value = (value << 8) + (cp[i] & 0xff);
-      return (bfd_vma) (cp + sizeof *sp + value);
+      return 2 + bfd_get_signed_16 (core_bfd, modep);
     case longrel:
-      for (i = 0; (size_t) i < sizeof *lp; i++)
-	value = (value << 8) + (cp[i] & 0xff);
-      return (bfd_vma) (cp + sizeof *lp + value);
+      return 4 + bfd_get_signed_32 (core_bfd, modep);
     }
 }
 
@@ -223,12 +230,12 @@ tahoe_find_call (parent, p_lowpc, p_highpc)
   Sym *child;
   tahoe_operandenum mode;
   tahoe_operandenum firstmode;
-  bfd_vma destpc;
-  static bool inited = FALSE;
+  bfd_vma pc, destpc;
+  static boolean inited = false;
 
   if (!inited)
     {
-      inited = TRUE;
+      inited = true;
       sym_init (&indirectchild);
       indirectchild.cg.prop.fract = 1.0;
       indirectchild.cg.cyc.head = &indirectchild;
@@ -249,21 +256,19 @@ tahoe_find_call (parent, p_lowpc, p_highpc)
   DBG (CALLDEBUG, printf ("[findcall] %s: 0x%lx to 0x%lx\n",
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
-  for (instructp = (unsigned char *) core_text_space + p_lowpc;
-       instructp < (unsigned char *) core_text_space + p_highpc;
-       instructp += length)
+  for (pc = p_lowpc; pc < p_highpc; pc += length)
     {
       length = 1;
-      if (*instructp == CALLF)
+      instructp = ((unsigned char *) core_text_space
+		   + pc - core_text_sect->vma);
+      if ((*instructp & 0xff) == CALLF)
 	{
 	  /*
 	   *    maybe a callf, better check it out.
 	   *      skip the count of the number of arguments.
 	   */
 	  DBG (CALLDEBUG, printf ("[findcall]\t0x%lx:callf",
-				  ((unsigned long)
-				   (instructp
-				    - (unsigned char *) core_text_space))));
+				  (unsigned long) pc));
 	  firstmode = tahoe_operandmode (instructp + length);
 	  switch (firstmode)
 	    {
@@ -307,8 +312,7 @@ tahoe_find_call (parent, p_lowpc, p_highpc)
 	       *      check that this is the address of
 	       *      a function.
 	       */
-	      destpc = tahoe_reladdr (instructp + length)
-		- (bfd_vma) core_text_space;
+	      destpc = pc + tahoe_offset (instructp + length);
 	      if (destpc >= s_lowpc && destpc <= s_highpc)
 		{
 		  child = sym_lookup (&symtab, destpc);

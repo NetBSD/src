@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -29,7 +29,7 @@ static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
 static void avr_info_to_howto_rela
   PARAMS ((bfd *, arelent *, Elf32_Internal_Rela *));
 static asection *elf32_avr_gc_mark_hook
-  PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Rela *,
+  PARAMS ((asection *, struct bfd_link_info *, Elf_Internal_Rela *,
 	   struct elf_link_hash_entry *, Elf_Internal_Sym *));
 static boolean elf32_avr_gc_sweep_hook
   PARAMS ((bfd *, struct bfd_link_info *, asection *,
@@ -399,8 +399,8 @@ avr_info_to_howto_rela (abfd, cache_ptr, dst)
 }
 
 static asection *
-elf32_avr_gc_mark_hook (abfd, info, rel, h, sym)
-     bfd *abfd;
+elf32_avr_gc_mark_hook (sec, info, rel, h, sym)
+     asection *sec;
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
      Elf_Internal_Rela *rel;
      struct elf_link_hash_entry *h;
@@ -426,15 +426,8 @@ elf32_avr_gc_mark_hook (abfd, info, rel, h, sym)
 	}
     }
   else
-    {
-      if (!(elf_bad_symtab (abfd)
-	    && ELF_ST_BIND (sym->st_info) != STB_LOCAL)
-	  && !((sym->st_shndx <= 0 || sym->st_shndx >= SHN_LORESERVE)
-	       && sym->st_shndx != SHN_COMMON))
-	{
-	  return bfd_section_from_elf_index (abfd, sym->st_shndx);
-	}
-    }
+    return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
+
   return NULL;
 }
 
@@ -699,7 +692,7 @@ avr_final_link_relocate (howto, input_bfd, input_section,
       x = bfd_get_16 (input_bfd, contents);
       x |= ((srel & 0x10000) | ((srel << 3) & 0x1f00000)) >> 16;
       bfd_put_16 (input_bfd, x, contents);
-      bfd_put_16 (input_bfd, srel & 0xffff, contents+2);
+      bfd_put_16 (input_bfd, (bfd_vma) srel & 0xffff, contents+2);
       break;
 
     default:
@@ -778,9 +771,7 @@ elf32_avr_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = (sec->output_section->vma
-			+ sec->output_offset
-			+ sym->st_value);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
@@ -913,8 +904,9 @@ static boolean
 elf32_avr_object_p (abfd)
      bfd *abfd;
 {
-  int e_set = bfd_mach_avr2;
-  if (elf_elfheader (abfd)->e_machine == EM_AVR)
+  unsigned int e_set = bfd_mach_avr2;
+  if (elf_elfheader (abfd)->e_machine == EM_AVR
+      || elf_elfheader (abfd)->e_machine == EM_AVR_OLD)
     {
       int e_mach = elf_elfheader (abfd)->e_flags & EF_AVR_MACH;
       switch (e_mach)
@@ -947,6 +939,7 @@ elf32_avr_object_p (abfd)
 
 #define ELF_ARCH		bfd_arch_avr
 #define ELF_MACHINE_CODE	EM_AVR
+#define ELF_MACHINE_ALT1	EM_AVR_OLD
 #define ELF_MAXPAGESIZE		1
 
 #define TARGET_LITTLE_SYM       bfd_elf32_avr_vec

@@ -1,5 +1,5 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2000, 2001 Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 
@@ -35,8 +35,8 @@ Boston, MA 02111-1307, USA.  */
 #define COFF_ALIGN_IN_SECTION_HEADER 1
 #define COFF_ALIGN_IN_SFLAGS 1
 
-#define GET_SCNHDR_FLAGS bfd_h_get_16
-#define PUT_SCNHDR_FLAGS bfd_h_put_16
+#define GET_SCNHDR_FLAGS H_GET_16
+#define PUT_SCNHDR_FLAGS H_PUT_16
 
 static void rtype2howto
   PARAMS ((arelent *cache_ptr, struct internal_reloc *dst));
@@ -51,6 +51,10 @@ static bfd_reloc_status_type local16_reloc
 static boolean coff_tic80_relocate_section
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
 	   struct internal_reloc *, struct internal_syment *, asection **));
+static reloc_howto_type * coff_tic80_rtype_to_howto
+  PARAMS ((bfd *, asection *, struct internal_reloc *,
+	   struct coff_link_hash_entry *, struct internal_syment *,
+	   bfd_vma *));
 
 static reloc_howto_type tic80_howto_table[] =
 {
@@ -680,7 +684,7 @@ coff_tic80_relocate_section (output_bfd, info, input_bfd,
 	case bfd_reloc_outofrange:
 	  (*_bfd_error_handler)
 	    (_("%s: bad reloc address 0x%lx in section `%s'"),
-	     bfd_get_filename (input_bfd),
+	     bfd_archive_filename (input_bfd),
 	     (unsigned long) rel->r_vaddr,
 	     bfd_get_section_name (input_bfd, input_section));
 	  return false;

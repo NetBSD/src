@@ -1,5 +1,6 @@
 /* BFD back-end for Motorola 88000 COFF "Binary Compatability Standard" files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000,
+   2001
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -36,8 +37,8 @@ static void reloc_processing
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (3)
 
-#define GET_SCNHDR_NRELOC bfd_h_get_32
-#define GET_SCNHDR_NLNNO bfd_h_get_32
+#define GET_SCNHDR_NRELOC H_GET_32
+#define GET_SCNHDR_NLNNO  H_GET_32
 
 /* On coff-m88k, local labels start with '@'.  */
 
@@ -115,7 +116,8 @@ m88k_special_reloc (abfd, reloc_entry, symbol, data,
 	  relocation <<= (bfd_vma) howto->bitpos;
 
 	  if (relocation)
-	      bfd_put_16 (abfd, relocation, (unsigned char *) data + addr);
+	    bfd_put_16 (abfd, (bfd_vma) relocation,
+			(unsigned char *) data + addr);
 	}
 
       /* If we are not producing relocateable output, return an error if
@@ -251,8 +253,8 @@ rtype2howto (cache_ptr, dst)
 #define RTYPE2HOWTO(cache_ptr, dst) rtype2howto (cache_ptr, dst)
 
 /* Code to swap in the reloc offset */
-#define SWAP_IN_RELOC_OFFSET  bfd_h_get_16
-#define SWAP_OUT_RELOC_OFFSET bfd_h_put_16
+#define SWAP_IN_RELOC_OFFSET  H_GET_16
+#define SWAP_OUT_RELOC_OFFSET H_PUT_16
 
 #define RELOC_PROCESSING(relent,reloc,symbols,abfd,section)	\
   reloc_processing(relent, reloc, symbols, abfd, section)

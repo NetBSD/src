@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS ld-svr4pic
-#as: -mips1 -mcpu=r3000 -KPIC
+#as: -mips1 -mtune=r3000 -KPIC
 #source: ld-pic.s
 
 # Test the ld macro with -KPIC.

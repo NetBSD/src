@@ -6,11 +6,11 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <notstart>:
+0+ <notstart>:
 [ 	]+0:	0000[ ]+	bcc ( 0x2|\.\+2)
 	\.\.\.
 
-00000004 <start>:
+0+4 <start>:
 [	 ]+4:[	 ]+7306[ 	]+clear\.b r3
 [	 ]+6:[	 ]+7546[ 	]+clear\.w r5
 [	 ]+8:[	 ]+7a86[ 	]+clear\.d r10
@@ -99,10 +99,10 @@ Disassembly of section \.text:
 [	 ]+166:[	 ]+6f2d 0180 0000 704a[ 	]+clear\.w \[r2\+(32769|8001 <three2767\+0x2>)\]
 [	 ]+16e:[	 ]+5f2d 0180 704a[ 	]+clear\.w \[r2-32767\]
 [	 ]+174:[	 ]+5f2d 0080 704a[ 	]+clear\.w \[r2-32768\]
-[	 ]+17a:[	 ]+6f2d ff7f ffff 704a[ 	]+clear\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+17a:[	 ]+6f2d ff7f ffff 704a[ 	]+clear\.w \[r2\+[^]]+\]
 [	 ]+182:[	 ]+5f2d 0180 704a[ 	]+clear\.w \[r2-32767\]
 [	 ]+188:[	 ]+5f2d 0080 704a[ 	]+clear\.w \[r2-32768\]
-[	 ]+18e:[	 ]+6f2d ff7f ffff 704a[ 	]+clear\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+18e:[	 ]+6f2d ff7f ffff 704a[ 	]+clear\.w \[r2\+[^]]+\]
 [	 ]+196:[	 ]+6f2d ffff 0000 704a[ 	]+clear\.w \[r2\+(65535|ffff <six5535>)\]
 [	 ]+19e:[	 ]+6f2d 0000 0000 704a[ 	]+clear\.w \[r2\+0( <notstart>)?\]
 [ 	]+1a0:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -126,10 +126,10 @@ Disassembly of section \.text:
 [	 ]+1fa:[	 ]+5f2d 68dd 708a[ 	]+clear\.d \[r2-8856\]
 [	 ]+200:[	 ]+5f2d 9822 708a[ 	]+clear\.d \[r2\+8856\]
 [	 ]+206:[	 ]+6f2d ac72 2a00 708a[ 	]+clear\.d \[r2\+(2781868|2a72ac <two701867\+0x13881>)\]
-[	 ]+20e:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
-[	 ]+216:[	 ]+6f2d acce c09e 708a[ 	]+clear\.d \[r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\]
-[	 ]+21e:[	 ]+6f2d 5331 3f81 708a[ 	]+clear\.d \[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\]
-[	 ]+226:[	 ]+6f2d 5331 3f81 708a[ 	]+clear\.d \[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\]
+[	 ]+20e:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+[^]]+\]
+[	 ]+216:[	 ]+6f2d acce c09e 708a[ 	]+clear\.d \[r2\+[^]]+\]
+[	 ]+21e:[	 ]+6f2d 5331 3f81 708a[ 	]+clear\.d \[r2\+[^]]+\]
+[	 ]+226:[	 ]+6f2d 5331 3f81 708a[ 	]+clear\.d \[r2\+[^]]+\]
 [	 ]+22e:[	 ]+6f2d b5af 982e 708a[ 	]+clear\.d \[r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\]
 [	 ]+236:[	 ]+6f2d 2b45 941b 708a[ 	]+clear\.d \[r2\+(0x1b94452b|1b94452b <const_int_32>)\]
 [	 ]+23e:[	 ]+2a21 708a[ 	]+clear\.d \[r2\+42\]
@@ -146,15 +146,15 @@ Disassembly of section \.text:
 [	 ]+270:[	 ]+6f2d 0180 0000 708a[ 	]+clear\.d \[r2\+(32769|8001 <three2767\+0x2>)\]
 [	 ]+278:[	 ]+5f2d 0180 708a[ 	]+clear\.d \[r2-32767\]
 [	 ]+27e:[	 ]+5f2d 0080 708a[ 	]+clear\.d \[r2-32768\]
-[	 ]+284:[	 ]+6f2d ff7f ffff 708a[ 	]+clear\.d \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+284:[	 ]+6f2d ff7f ffff 708a[ 	]+clear\.d \[r2\+[^]]+\]
 [	 ]+28c:[	 ]+5f2d 0180 708a[ 	]+clear\.d \[r2-32767\]
 [	 ]+292:[	 ]+5f2d 0080 708a[ 	]+clear\.d \[r2-32768\]
-[	 ]+298:[	 ]+6f2d ff7f ffff 708a[ 	]+clear\.d \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+298:[	 ]+6f2d ff7f ffff 708a[ 	]+clear\.d \[r2\+[^]]+\]
 [	 ]+2a0:[	 ]+6f2d ffff 0000 708a[ 	]+clear\.d \[r2\+(65535|ffff <six5535>)\]
 [	 ]+2a8:[	 ]+6f2d 0000 0100 708a[ 	]+clear\.d \[r2\+(65536|10000 <six5535\+0x1>)\]
 [	 ]+2b0:[	 ]+6f2d 2b3a 2900 708a[ 	]+clear\.d \[r2\+(2701867|293a2b <two701867>)\]
-[	 ]+2b8:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
-[	 ]+2c0:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
+[	 ]+2b8:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+[^]]+\]
+[	 ]+2c0:[	 ]+6f2d d5c5 d6ff 708a[ 	]+clear\.d \[r2\+[^]]+\]
 [	 ]+2c8:[	 ]+6f2d 0000 0000 708a[ 	]+clear\.d \[r2\+0( <notstart>)?\]
 [ 	]+2ca:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+2d0:[	 ]+4205 7c0e[ 	]+clear\.b \[r12=r2\+r0\.b\]
@@ -242,10 +242,10 @@ Disassembly of section \.text:
 [	 ]+438:[	 ]+6f2d 0180 0000 7c4e[ 	]+clear\.w \[r12=r2\+(32769|8001 <three2767\+0x2>)\]
 [	 ]+440:[	 ]+5f2d 0180 7c4e[ 	]+clear\.w \[r12=r2-32767\]
 [	 ]+446:[	 ]+5f2d 0080 7c4e[ 	]+clear\.w \[r12=r2-32768\]
-[	 ]+44c:[	 ]+6f2d ff7f ffff 7c4e[ 	]+clear\.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+44c:[	 ]+6f2d ff7f ffff 7c4e[ 	]+clear\.w \[r12=r2\+[^]]+\]
 [	 ]+454:[	 ]+5f2d 0180 7c4e[ 	]+clear\.w \[r12=r2-32767\]
 [	 ]+45a:[	 ]+5f2d 0080 7c4e[ 	]+clear\.w \[r12=r2-32768\]
-[	 ]+460:[	 ]+6f2d ff7f ffff 7c4e[ 	]+clear\.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+460:[	 ]+6f2d ff7f ffff 7c4e[ 	]+clear\.w \[r12=r2\+[^]]+\]
 [	 ]+468:[	 ]+6f2d ffff 0000 7c4e[ 	]+clear\.w \[r12=r2\+(65535|ffff <six5535>)\]
 [	 ]+470:[	 ]+6f2d 0000 0000 7c4e[ 	]+clear\.w \[r12=r2\+0( <notstart>)?\]
 [ 	]+472:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -269,10 +269,10 @@ Disassembly of section \.text:
 [	 ]+4cc:[	 ]+5f2d 68dd 7c8e[ 	]+clear\.d \[r12=r2-8856\]
 [	 ]+4d2:[	 ]+5f2d 9822 7c8e[ 	]+clear\.d \[r12=r2\+8856\]
 [	 ]+4d8:[	 ]+6f2d ac72 2a00 7c8e[ 	]+clear\.d \[r12=r2\+(2781868|2a72ac <two701867\+0x13881>)\]
-[	 ]+4e0:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
-[	 ]+4e8:[	 ]+6f2d acce c09e 7c8e[ 	]+clear\.d \[r12=r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\]
-[	 ]+4f0:[	 ]+6f2d 5331 3f81 7c8e[ 	]+clear\.d \[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\]
-[	 ]+4f8:[	 ]+6f2d 5331 3f81 7c8e[ 	]+clear\.d \[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\]
+[	 ]+4e0:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
+[	 ]+4e8:[	 ]+6f2d acce c09e 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
+[	 ]+4f0:[	 ]+6f2d 5331 3f81 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
+[	 ]+4f8:[	 ]+6f2d 5331 3f81 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
 [	 ]+500:[	 ]+6f2d b5af 982e 7c8e[ 	]+clear\.d \[r12=r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\]
 [	 ]+508:[	 ]+6f2d 2b45 941b 7c8e[ 	]+clear\.d \[r12=r2\+(0x1b94452b|1b94452b <const_int_32>)\]
 [	 ]+510:[	 ]+2a21 7c8e[ 	]+clear\.d \[r12=r2\+42\]
@@ -289,15 +289,15 @@ Disassembly of section \.text:
 [	 ]+542:[	 ]+6f2d 0180 0000 7c8e[ 	]+clear\.d \[r12=r2\+(32769|8001 <three2767\+0x2>)\]
 [	 ]+54a:[	 ]+5f2d 0180 7c8e[ 	]+clear\.d \[r12=r2-32767\]
 [	 ]+550:[	 ]+5f2d 0080 7c8e[ 	]+clear\.d \[r12=r2-32768\]
-[	 ]+556:[	 ]+6f2d ff7f ffff 7c8e[ 	]+clear\.d \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+556:[	 ]+6f2d ff7f ffff 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
 [	 ]+55e:[	 ]+5f2d 0180 7c8e[ 	]+clear\.d \[r12=r2-32767\]
 [	 ]+564:[	 ]+5f2d 0080 7c8e[ 	]+clear\.d \[r12=r2-32768\]
-[	 ]+56a:[	 ]+6f2d ff7f ffff 7c8e[ 	]+clear\.d \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\]
+[	 ]+56a:[	 ]+6f2d ff7f ffff 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
 [	 ]+572:[	 ]+6f2d ffff 0000 7c8e[ 	]+clear\.d \[r12=r2\+(65535|ffff <six5535>)\]
 [	 ]+57a:[	 ]+6f2d 0000 0100 7c8e[ 	]+clear\.d \[r12=r2\+(65536|10000 <six5535\+0x1>)\]
 [	 ]+582:[	 ]+6f2d 2b3a 2900 7c8e[ 	]+clear\.d \[r12=r2\+(2701867|293a2b <two701867>)\]
-[	 ]+58a:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
-[	 ]+592:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\]
+[	 ]+58a:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
+[	 ]+592:[	 ]+6f2d d5c5 d6ff 7c8e[ 	]+clear\.d \[r12=r2\+[^]]+\]
 [	 ]+59a:[	 ]+6f2d 0000 0000 7c8e[ 	]+clear\.d \[r12=r2\+0( <notstart>)?\]
 [ 	]+59c:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+5a2:[	 ]+7309 700a[ 	]+clear\.b \[\[r3\]\]
@@ -319,7 +319,5 @@ Disassembly of section \.text:
 [	 ]+5e2:[	 ]+7f0d 0000 0000 708a[ 	]+clear\.d \[(0x0|0 <notstart>)\]
 [ 	]+5e4:[ 	]+(R_CRIS_)?32[ 	]+\.text
 
-000005ea <end>:
+0+5ea <end>:
 	\.\.\.
-
-

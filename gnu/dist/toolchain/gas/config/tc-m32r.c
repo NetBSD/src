@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/m32r-desc.h"
@@ -554,6 +554,8 @@ md_begin ()
   scom_symbol.section         = &scom_section;
 
   allow_m32rx (enable_m32rx);
+
+  gas_cgen_initialize_saved_fixups_array ();
 }
 
 #define OPERAND_IS_COND_BIT(operand, indices, index) \
@@ -817,22 +819,21 @@ assemble_two_insns (str, str2, parallel_p)
   {
     char *s2 = str;
 
-    while (isspace (*s2++))
+    while (ISSPACE (*s2++))
       continue;
 
     --s2;
 
-    while (isalnum (*s2))
+    while (ISALNUM (*s2))
       {
-	if (isupper ((unsigned char) *s2))
-	  *s2 = tolower (*s2);
+	*s2 = TOLOWER (*s2);
 	s2++;
       }
   }
 
   /* Preserve any fixups that have been generated and reset the list
      to empty.  */
-  gas_cgen_save_fixups ();
+  gas_cgen_save_fixups (0);
 
   /* Get the indices of the operands of the instruction.  */
   /* FIXME: CGEN_FIELDS is already recorded, but relying on that fact
@@ -941,7 +942,7 @@ assemble_two_insns (str, str2, parallel_p)
       || (errmsg = (char *) can_make_parallel (&first, &second)) == NULL)
     {
       /* Get the fixups for the first instruction.  */
-      gas_cgen_swap_fixups ();
+      gas_cgen_swap_fixups (0);
 
       /* Write it out.  */
       expand_debug_syms (first.debug_sym_link, 1);
@@ -953,7 +954,7 @@ assemble_two_insns (str, str2, parallel_p)
 	make_parallel (second.buffer);
 
       /* Get its fixups.  */
-      gas_cgen_restore_fixups ();
+      gas_cgen_restore_fixups (0);
 
       /* Write it out.  */
       expand_debug_syms (second.debug_sym_link, 1);
@@ -972,7 +973,7 @@ assemble_two_insns (str, str2, parallel_p)
       make_parallel (first.buffer);
 
       /* Get the fixups for the first instruction.  */
-      gas_cgen_restore_fixups ();
+      gas_cgen_restore_fixups (0);
 
       /* Write out the first instruction.  */
       expand_debug_syms (first.debug_sym_link, 1);
@@ -1562,7 +1563,6 @@ md_convert_frag (abfd, sec, fragP)
     {
       /* Address we want to reach in file space.  */
       target_address = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
-      target_address += symbol_get_frag (fragP->fr_symbol)->fr_address;
       addend = (target_address - (opcode_address & -4)) >> 2;
     }
 
@@ -1710,7 +1710,7 @@ m32r_cgen_record_fixup_exp (frag, where, insn, length, operand, opinfo, exp)
 #define FX_OPINFO_R_TYPE(f) ((f)->fx_cgen.opinfo)
 
 /* Sort any unmatched HI16 relocs so that they immediately precede
-   the corresponding LO16 reloc.  This is called before md_apply_fix and
+   the corresponding LO16 reloc.  This is called before md_apply_fix3 and
    tc_gen_reloc.  */
 
 void

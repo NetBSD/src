@@ -1,5 +1,5 @@
 /* windres.h -- header file for windres program.
-   Copyright 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 2000, 2002 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GNU Binutils.
@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <ansidecl.h>
+#include "ansidecl.h"
 
 /* This is the header file for the windres program.  It defines
    structures and declares functions used within the program.  */
@@ -184,6 +184,8 @@ struct res_resource
   struct res_coff_info coff_info;
 };
 
+#define SUBLANG_SHIFT 10
+
 /* Memory flags in the memflags field of a struct res_resource.  */
 
 #define MEMFLAG_MOVEABLE	0x10
@@ -313,7 +315,9 @@ struct dialog_ex
   /* Font weight.  */
   unsigned short weight;
   /* Whether the font is italic.  */
-  unsigned short italic;
+  unsigned char italic;
+  /* Character set.  */
+  unsigned char charset;
 };
 
 /* Window style flags, from the winsup Defines.h header file.  These
@@ -517,7 +521,7 @@ struct fontdir
   short index;
   /* Length of font information.  */
   unsigned long length;
-  /* Font information. */
+  /* Font information.  */
   const unsigned char *data;
 };
 

@@ -1,5 +1,4 @@
-
-	#objdump: -dr --prefix-addresses -mmips:3000
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS ld-empic
 #as: -mips1 -membedded-pic --defsym EMPIC=1
 #source: ld-pic.s

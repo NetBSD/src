@@ -3,7 +3,11 @@ proc do_quad {} {
     set x1 0
     set x2 0
     set x3 0
-    gas_start "quad.s" "-al"
+    set file "quad.s"
+    if [istarget vax-*-*elf*] {
+      set file "quad_elf.s"
+    }
+    gas_start $file "-al"
     while 1 {
 	expect {
 	    -re "^ +2\[ \t\]+0000+ 7D8F7856\[ \t\]+movq\[^\n\]*\n" { set x1 1 }

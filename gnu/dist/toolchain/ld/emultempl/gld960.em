@@ -1,7 +1,8 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright 1991, 1992, 1994, 1999, 2000 Free Software Foundation, Inc.
+/* Copyright 1991, 1992, 1994, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -37,6 +38,11 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #include "ldlang.h"
 #include "ldfile.h"
 #include "ldemul.h"
+
+static void gld960_before_parse PARAMS ((void));
+static char *gld960_choose_target PARAMS ((int, char **));
+static void gld960_set_output_arch PARAMS ((void));
+static char *gld960_get_script PARAMS ((int *));
 
 #ifdef GNU960
 
@@ -84,7 +90,9 @@ gld960_set_output_arch()
 }
 
 static char *
-gld960_choose_target()
+gld960_choose_target (argc, argv)
+     int argc ATTRIBUTE_UNUSED;
+     char **argv ATTRIBUTE_UNUSED;
 {
 #ifdef GNU960
 
@@ -181,6 +189,7 @@ struct ld_emulation_xfer_struct ld_gld960_emulation =
   NULL,	/* unrecognized file */
   NULL,	/* list options */
   NULL,	/* recognized file */
-  NULL 	/* find_potential_libraries */
+  NULL,	/* find_potential_libraries */
+  NULL	/* new_vers_pattern */
 };
 EOF

@@ -1,20 +1,194 @@
-This is as.info, produced by makeinfo version 4.0 from as.texinfo.
+This is as.info, produced by makeinfo version 4.3 from as.texinfo.
 
 START-INFO-DIR-ENTRY
 * As: (as).                     The GNU assembler.
+* Gas: (as).                    The GNU assembler.
 END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: as.info,  Node: Statements,  Next: Constants,  Prev: Symbol Intro,  Up: Syntax
+
+Statements
+==========
+
+   A "statement" ends at a newline character (`\n') or line separator
+character.  (The line separator is usually `;', unless this conflicts
+with the comment character; *note Machine Dependencies::.)  The newline
+or separator character is considered part of the preceding statement.
+Newlines and separators within character constants are an exception:
+they do not end statements.
+
+   It is an error to end any statement with end-of-file:  the last
+character of any input file should be a newline.
+
+   An empty statement is allowed, and may include whitespace.  It is
+ignored.
+
+   A statement begins with zero or more labels, optionally followed by a
+key symbol which determines what kind of statement it is.  The key
+symbol determines the syntax of the rest of the statement.  If the
+symbol begins with a dot `.' then the statement is an assembler
+directive: typically valid for any computer.  If the symbol begins with
+a letter the statement is an assembly language "instruction": it
+assembles into a machine language instruction.  Different versions of
+`as' for different computers recognize different instructions.  In
+fact, the same symbol may represent a different instruction in a
+different computer's assembly language.
+
+   A label is a symbol immediately followed by a colon (`:').
+Whitespace before a label or after a colon is permitted, but you may not
+have whitespace between a label's symbol and its colon. *Note Labels::.
+
+   For HPPA targets, labels need not be immediately followed by a
+colon, but the definition of a label must begin in column zero.  This
+also implies that only one label may be defined on each line.
+
+     label:     .directive    followed by something
+     another_label:           # This is an empty statement.
+                instruction   operand_1, operand_2, ...
+
+
+File: as.info,  Node: Constants,  Prev: Statements,  Up: Syntax
+
+Constants
+=========
+
+   A constant is a number, written so that its value is known by
+inspection, without knowing any context.  Like this:
+     .byte  74, 0112, 092, 0x4A, 0X4a, 'J, '\J # All the same value.
+     .ascii "Ring the bell\7"                  # A string constant.
+     .octa  0x123456789abcdef0123456789ABCDEF0 # A bignum.
+     .float 0f-314159265358979323846264338327\
+     95028841971.693993751E-40                 # - pi, a flonum.
+
+* Menu:
+
+* Characters::                  Character Constants
+* Numbers::                     Number Constants
+
+
+File: as.info,  Node: Characters,  Next: Numbers,  Up: Constants
+
+Character Constants
+-------------------
+
+   There are two kinds of character constants.  A "character" stands
+for one character in one byte and its value may be used in numeric
+expressions.  String constants (properly called string _literals_) are
+potentially many bytes and their values may not be used in arithmetic
+expressions.
+
+* Menu:
+
+* Strings::                     Strings
+* Chars::                       Characters
+
+
+File: as.info,  Node: Strings,  Next: Chars,  Up: Characters
+
+Strings
+.......
+
+   A "string" is written between double-quotes.  It may contain
+double-quotes or null characters.  The way to get special characters
+into a string is to "escape" these characters: precede them with a
+backslash `\' character.  For example `\\' represents one backslash:
+the first `\' is an escape which tells `as' to interpret the second
+character literally as a backslash (which prevents `as' from
+recognizing the second `\' as an escape character).  The complete list
+of escapes follows.
+
+`\b'
+     Mnemonic for backspace; for ASCII this is octal code 010.
+
+`\f'
+     Mnemonic for FormFeed; for ASCII this is octal code 014.
+
+`\n'
+     Mnemonic for newline; for ASCII this is octal code 012.
+
+`\r'
+     Mnemonic for carriage-Return; for ASCII this is octal code 015.
+
+`\t'
+     Mnemonic for horizontal Tab; for ASCII this is octal code 011.
+
+`\ DIGIT DIGIT DIGIT'
+     An octal character code.  The numeric code is 3 octal digits.  For
+     compatibility with other Unix systems, 8 and 9 are accepted as
+     digits: for example, `\008' has the value 010, and `\009' the
+     value 011.
+
+`\`x' HEX-DIGITS...'
+     A hex character code.  All trailing hex digits are combined.
+     Either upper or lower case `x' works.
+
+`\\'
+     Represents one `\' character.
+
+`\"'
+     Represents one `"' character.  Needed in strings to represent this
+     character, because an unescaped `"' would end the string.
+
+`\ ANYTHING-ELSE'
+     Any other character when escaped by `\' gives a warning, but
+     assembles as if the `\' was not present.  The idea is that if you
+     used an escape sequence you clearly didn't want the literal
+     interpretation of the following character.  However `as' has no
+     other interpretation, so `as' knows it is giving you the wrong
+     code and warns you of the fact.
+
+   Which characters are escapable, and what those escapes represent,
+varies widely among assemblers.  The current set is what we think the
+BSD 4.2 assembler recognizes, and is a subset of what most C compilers
+recognize.  If you are in doubt, do not use an escape sequence.
+
+
+File: as.info,  Node: Chars,  Prev: Strings,  Up: Characters
+
+Characters
+..........
+
+   A single character may be written as a single quote immediately
+followed by that character.  The same escapes apply to characters as to
+strings.  So if you want to write the character backslash, you must
+write `'\\' where the first `\' escapes the second `\'.  As you can
+see, the quote is an acute accent, not a grave accent.  A newline
+immediately following an acute accent is taken as a literal character
+and does not count as the end of a statement.  The value of a character
+constant in a numeric expression is the machine's byte-wide code for
+that character.  `as' assumes your character code is ASCII: `'A' means
+65, `'B' means 66, and so on.
+
+
+File: as.info,  Node: Numbers,  Prev: Characters,  Up: Constants
+
+Number Constants
+----------------
+
+   `as' distinguishes three kinds of numbers according to how they are
+stored in the target machine.  _Integers_ are numbers that would fit
+into an `int' in the C language.  _Bignums_ are integers, but they are
+stored in more than 32 bits.  _Flonums_ are floating point numbers,
+described below.
+
+* Menu:
+
+* Integers::                    Integers
+* Bignums::                     Bignums
+* Flonums::                     Flonums
 
 
 File: as.info,  Node: Integers,  Next: Bignums,  Up: Numbers
@@ -465,26 +639,43 @@ Local Symbol Names
 ------------------
 
    Local symbols help compilers and programmers use names temporarily.
-There are ten local symbol names, which are re-used throughout the
-program.  You may refer to them using the names `0' `1' ... `9'.  To
-define a local symbol, write a label of the form `N:' (where N
-represents any digit).  To refer to the most recent previous definition
-of that symbol write `Nb', using the same digit as when you defined the
-label.  To refer to the next definition of a local label, write
-`Nf'--where N gives you a choice of 10 forward references.  The `b'
-stands for "backwards" and the `f' stands for "forwards".
+They create symbols which are guaranteed to be unique over the entire
+scope of the input source code and which can be referred to by a simple
+notation.  To define a local symbol, write a label of the form `N:'
+(where N represents any positive integer).  To refer to the most recent
+previous definition of that symbol write `Nb', using the same number as
+when you defined the label.  To refer to the next definition of a local
+label, write `Nf'-- The `b' stands for"backwards" and the `f' stands
+for "forwards".
 
-   Local symbols are not emitted by the current GNU C compiler.
+   There is no restriction on how you can use these labels, and you can
+reuse them too.  So that it is possible to repeatedly define the same
+local label (using the same number `N'), although you can only refer to
+the most recently defined local label of that number (for a backwards
+reference) or the next definition of a specific local label for a
+forward reference.  It is also worth noting that the first 10 local
+labels (`0:'...`9:') are implemented in a slightly more efficient
+manner than the others.
 
-   There is no restriction on how you can use these labels, but
-remember that at any point in the assembly you can refer to at most 10
-prior local labels and to at most 10 forward local labels.
+   Here is an example:
 
-   Local symbol names are only a notation device.  They are immediately
-transformed into more conventional symbol names before the assembler
-uses them.  The symbol names stored in the symbol table, appearing in
-error messages and optionally emitted to the object file have these
-parts:
+     1:        branch 1f
+     2:        branch 1b
+     1:        branch 2f
+     2:        branch 1b
+
+   Which is the equivalent of:
+
+     label_1:  branch label_3
+     label_2:  branch label_1
+     label_3:  branch label_4
+     label_4:  branch label_3
+
+   Local symbol names are only a notational device.  They are
+immediately transformed into more conventional symbol names before the
+assembler uses them.  The symbol names stored in the symbol table,
+appearing in error messages and optionally emitted to the object file.
+The names are constructed using these parts:
 
 `L'
      All local labels begin with `L'. Normally both `as' and `ld'
@@ -494,22 +685,43 @@ parts:
      instruct `ld' to retain these symbols, you may use them in
      debugging.
 
-`DIGIT'
-     If the label is written `0:' then the digit is `0'.  If the label
-     is written `1:' then the digit is `1'.  And so on up through `9:'.
+`NUMBER'
+     This is the number that was used in the local label definition.
+     So if the label is written `55:' then the number is `55'.
 
-`C-A'
+`C-B'
      This unusual character is included so you do not accidentally
      invent a symbol of the same name.  The character has ASCII value
-     `\001'.
+     of `\002' (control-B).
 
 `_ordinal number_'
      This is a serial number to keep the labels distinct.  The first
-     `0:' gets the number `1'; The 15th `0:' gets the number `15';
-     _etc._.  Likewise for the other labels `1:' through `9:'.
+     definition of `0:' gets the number `1'.  The 15th definition of
+     `0:' gets the number `15', and so on.  Likewise the first
+     definition of `1:' gets the number `1' and its 15th defintion gets
+     `15' as well.
 
-   For instance, the first `1:' is named `L1C-A1', the 44th `3:' is
-named `L3C-A44'.
+   So for example, the first `1:' is named `L1C-B1', the 44th `3:' is
+named `L3C-B44'.
+
+Dollar Local Labels
+-------------------
+
+   `as' also supports an even more local form of local labels called
+dollar labels.  These labels go out of scope (ie they become undefined)
+as soon as a non-local label is defined.  Thus they remain valid for
+only a small region of the input source code.  Normal local labels, by
+contrast, remain in scope for the entire file, or until they are
+redefined by another occurrence of the same local label.
+
+   Dollar labels are defined in exactly the same way as ordinary local
+labels, except that instead of being terminated by a colon, they are
+terminated by a dollar sign.  eg `55$'.
+
+   They can also be distinguished from ordinary local labels by their
+transformed name which uses ASCII character `\001' (control-A) as the
+magic character to distinguish them from ordinary labels.  Thus the 5th
+defintion of `6$' is named `L6C-A5'.
 
 
 File: as.info,  Node: Dot,  Next: Symbol Attributes,  Prev: Symbol Names,  Up: Symbols
@@ -911,6 +1123,7 @@ Dependencies::.
 * hword::                       `.hword EXPRESSIONS'
 * Ident::                       `.ident'
 * If::                          `.if ABSOLUTE EXPRESSION'
+* Incbin::                      `.incbin "FILE"[,SKIP[,COUNT]]'
 * Include::                     `.include "FILE"'
 * Int::                         `.int EXPRESSIONS'
 
@@ -1158,251 +1371,4 @@ File: as.info,  Node: Data,  Next: Def,  Prev: Comm,  Up: Pseudo Ops
    `.data' tells `as' to assemble the following statements onto the end
 of the data subsection numbered SUBSECTION (which is an absolute
 expression).  If SUBSECTION is omitted, it defaults to zero.
-
-
-File: as.info,  Node: Def,  Next: Desc,  Prev: Data,  Up: Pseudo Ops
-
-`.def NAME'
-===========
-
-   Begin defining debugging information for a symbol NAME; the
-definition extends until the `.endef' directive is encountered.
-
-   This directive is only observed when `as' is configured for COFF
-format output; when producing `b.out', `.def' is recognized, but
-ignored.
-
-
-File: as.info,  Node: Desc,  Next: Dim,  Prev: Def,  Up: Pseudo Ops
-
-`.desc SYMBOL, ABS-EXPRESSION'
-==============================
-
-   This directive sets the descriptor of the symbol (*note Symbol
-Attributes::) to the low 16 bits of an absolute expression.
-
-   The `.desc' directive is not available when `as' is configured for
-COFF output; it is only for `a.out' or `b.out' object format.  For the
-sake of compatibility, `as' accepts it, but produces no output, when
-configured for COFF.
-
-
-File: as.info,  Node: Dim,  Next: Double,  Prev: Desc,  Up: Pseudo Ops
-
-`.dim'
-======
-
-   This directive is generated by compilers to include auxiliary
-debugging information in the symbol table.  It is only permitted inside
-`.def'/`.endef' pairs.
-
-   `.dim' is only meaningful when generating COFF format output; when
-`as' is generating `b.out', it accepts this directive but ignores it.
-
-
-File: as.info,  Node: Double,  Next: Eject,  Prev: Dim,  Up: Pseudo Ops
-
-`.double FLONUMS'
-=================
-
-   `.double' expects zero or more flonums, separated by commas.  It
-assembles floating point numbers.  The exact kind of floating point
-numbers emitted depends on how `as' is configured.  *Note Machine
-Dependencies::.
-
-
-File: as.info,  Node: Eject,  Next: Else,  Prev: Double,  Up: Pseudo Ops
-
-`.eject'
-========
-
-   Force a page break at this point, when generating assembly listings.
-
-
-File: as.info,  Node: Else,  Next: Elseif,  Prev: Eject,  Up: Pseudo Ops
-
-`.else'
-=======
-
-   `.else' is part of the `as' support for conditional assembly; *note
-`.if': If..  It marks the beginning of a section of code to be
-assembled if the condition for the preceding `.if' was false.
-
-
-File: as.info,  Node: Elseif,  Next: End,  Prev: Else,  Up: Pseudo Ops
-
-`.elseif'
-=========
-
-   `.elseif' is part of the `as' support for conditional assembly;
-*note `.if': If..  It is shorthand for beginning a new `.if' block that
-would otherwise fill the entire `.else' section.
-
-
-File: as.info,  Node: End,  Next: Endef,  Prev: Elseif,  Up: Pseudo Ops
-
-`.end'
-======
-
-   `.end' marks the end of the assembly file.  `as' does not process
-anything in the file past the `.end' directive.
-
-
-File: as.info,  Node: Endef,  Next: Endfunc,  Prev: End,  Up: Pseudo Ops
-
-`.endef'
-========
-
-   This directive flags the end of a symbol definition begun with
-`.def'.
-
-   `.endef' is only meaningful when generating COFF format output; if
-`as' is configured to generate `b.out', it accepts this directive but
-ignores it.
-
-
-File: as.info,  Node: Endfunc,  Next: Endif,  Prev: Endef,  Up: Pseudo Ops
-
-`.endfunc'
-==========
-
-   `.endfunc' marks the end of a function specified with `.func'.
-
-
-File: as.info,  Node: Endif,  Next: Equ,  Prev: Endfunc,  Up: Pseudo Ops
-
-`.endif'
-========
-
-   `.endif' is part of the `as' support for conditional assembly; it
-marks the end of a block of code that is only assembled conditionally.
-*Note `.if': If.
-
-
-File: as.info,  Node: Equ,  Next: Equiv,  Prev: Endif,  Up: Pseudo Ops
-
-`.equ SYMBOL, EXPRESSION'
-=========================
-
-   This directive sets the value of SYMBOL to EXPRESSION.  It is
-synonymous with `.set'; *note `.set': Set..
-
-   The syntax for `equ' on the HPPA is `SYMBOL .equ EXPRESSION'.
-
-
-File: as.info,  Node: Equiv,  Next: Err,  Prev: Equ,  Up: Pseudo Ops
-
-`.equiv SYMBOL, EXPRESSION'
-===========================
-
-   The `.equiv' directive is like `.equ' and `.set', except that the
-assembler will signal an error if SYMBOL is already defined.
-
-   Except for the contents of the error message, this is roughly
-equivalent to
-     .ifdef SYM
-     .err
-     .endif
-     .equ SYM,VAL
-
-
-File: as.info,  Node: Err,  Next: Exitm,  Prev: Equiv,  Up: Pseudo Ops
-
-`.err'
-======
-
-   If `as' assembles a `.err' directive, it will print an error message
-and, unless the `-Z' option was used, it will not generate an object
-file.  This can be used to signal error an conditionally compiled code.
-
-
-File: as.info,  Node: Exitm,  Next: Extern,  Prev: Err,  Up: Pseudo Ops
-
-`.exitm'
-========
-
-   Exit early from the current macro definition.  *Note Macro::.
-
-
-File: as.info,  Node: Extern,  Next: Fail,  Prev: Exitm,  Up: Pseudo Ops
-
-`.extern'
-=========
-
-   `.extern' is accepted in the source program--for compatibility with
-other assemblers--but it is ignored.  `as' treats all undefined symbols
-as external.
-
-
-File: as.info,  Node: Fail,  Next: File,  Prev: Extern,  Up: Pseudo Ops
-
-`.fail EXPRESSION'
-==================
-
-   Generates an error or a warning.  If the value of the EXPRESSION is
-500 or more, `as' will print a warning message.  If the value is less
-than 500, `as' will print an error message.  The message will include
-the value of EXPRESSION.  This can occasionally be useful inside
-complex nested macros or conditional assembly.
-
-
-File: as.info,  Node: File,  Next: Fill,  Prev: Fail,  Up: Pseudo Ops
-
-`.file STRING'
-==============
-
-   `.file' tells `as' that we are about to start a new logical file.
-STRING is the new file name.  In general, the filename is recognized
-whether or not it is surrounded by quotes `"'; but if you wish to
-specify an empty file name, you must give the quotes-`""'.  This
-statement may go away in future: it is only recognized to be compatible
-with old `as' programs.  In some configurations of `as', `.file' has
-already been removed to avoid conflicts with other assemblers.  *Note
-Machine Dependencies::.
-
-
-File: as.info,  Node: Fill,  Next: Float,  Prev: File,  Up: Pseudo Ops
-
-`.fill REPEAT , SIZE , VALUE'
-=============================
-
-   RESULT, SIZE and VALUE are absolute expressions.  This emits REPEAT
-copies of SIZE bytes.  REPEAT may be zero or more.  SIZE may be zero or
-more, but if it is more than 8, then it is deemed to have the value 8,
-compatible with other people's assemblers.  The contents of each REPEAT
-bytes is taken from an 8-byte number.  The highest order 4 bytes are
-zero.  The lowest order 4 bytes are VALUE rendered in the byte-order of
-an integer on the computer `as' is assembling for.  Each SIZE bytes in
-a repetition is taken from the lowest order SIZE bytes of this number.
-Again, this bizarre behavior is compatible with other people's
-assemblers.
-
-   SIZE and VALUE are optional.  If the second comma and VALUE are
-absent, VALUE is assumed zero.  If the first comma and following tokens
-are absent, SIZE is assumed to be 1.
-
-
-File: as.info,  Node: Float,  Next: Func,  Prev: Fill,  Up: Pseudo Ops
-
-`.float FLONUMS'
-================
-
-   This directive assembles zero or more flonums, separated by commas.
-It has the same effect as `.single'.  The exact kind of floating point
-numbers emitted depends on how `as' is configured.  *Note Machine
-Dependencies::.
-
-
-File: as.info,  Node: Func,  Next: Global,  Prev: Float,  Up: Pseudo Ops
-
-`.func NAME[,LABEL]'
-====================
-
-   `.func' emits debugging information to denote function NAME, and is
-ignored unless the file is assembled with debugging enabled.  Only
-`--gstabs' is currently supported.  LABEL is the entry point of the
-function and if omitted NAME prepended with the `leading char' is used.
-`leading char' is usually `_' or nothing, depending on the target.  All
-functions are currently defined to have `void' return type.  The
-function must be terminated with `.endfunc'.
 

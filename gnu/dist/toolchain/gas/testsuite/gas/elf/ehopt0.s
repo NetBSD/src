@@ -4,7 +4,7 @@ $LFB1:
 $L1:
 	.4byte	0
 $LFE1:
-	.section	.eh_frame,"aw",@progbits
+	.section	.eh_frame,"aw"
 __FRAME_BEGIN__:
 	.4byte	$LECIE1-$LSCIE1
 $LSCIE1:

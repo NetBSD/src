@@ -31,7 +31,7 @@ if [istarget hppa*w-*-*] then {
 }
 
 # elf hppa assembler doesn't support .subspa
-if {[istarget *-*-*elf*] || [istarget *-*-linux*]} then {
+if {[istarget *64*-*-*] || [istarget *-*-*elf*] || [istarget *-*-linux*]} then {
   return
 }
 

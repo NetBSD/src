@@ -1,5 +1,5 @@
 /* BFD back-end for AMD 29000 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Contributed by David Wood at New York University 7/8/91.
 
@@ -37,6 +37,8 @@ static boolean coff_a29k_relocate_section
 static boolean coff_a29k_adjust_symndx
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *,
 	   struct internal_reloc *, boolean *));
+static void reloc_processing
+  PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 
@@ -47,7 +49,8 @@ static boolean coff_a29k_adjust_symndx
 #define SIGN_EXTEND_HWORD(HWORD) \
     (((HWORD) ^ 0x8000) - 0x8000)
 
-/* Provided the symbol, returns the value reffed */
+/* Provided the symbol, returns the value reffed.  */
+
 static long
 get_symbol_value (symbol)
      asymbol *symbol;
@@ -55,20 +58,16 @@ get_symbol_value (symbol)
   long relocation = 0;
 
   if (bfd_is_com_section (symbol->section))
-    {
-      relocation = 0;
-    }
+    relocation = 0;
   else
-    {
-      relocation = symbol->value +
-	symbol->section->output_section->vma +
-	symbol->section->output_offset;
-    }
+    relocation = symbol->value +
+      symbol->section->output_section->vma +
+      symbol->section->output_offset;
 
-  return(relocation);
+  return relocation;
 }
 
-/* this function is in charge of performing all the 29k relocations */
+/* This function is in charge of performing all the 29k relocations.  */
 
 static bfd_reloc_status_type
 a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
@@ -81,17 +80,15 @@ a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
      bfd *output_bfd;
      char **error_message;
 {
-  /* the consth relocation comes in two parts, we have to remember
-     the state between calls, in these variables */
+  /* The consth relocation comes in two parts, we have to remember
+     the state between calls, in these variables.  */
   static boolean part1_consth_active = false;
   static unsigned long part1_consth_value;
-
   unsigned long insn;
   unsigned long sym_value;
   unsigned long unsigned_value;
   unsigned short r_type;
   long signed_value;
-
   unsigned long addr = reloc_entry->address ; /*+ input_section->vma*/
   bfd_byte  *hit_data =addr + (bfd_byte *) (data);
 
@@ -99,29 +96,29 @@ a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 
   if (output_bfd)
     {
-      /* Partial linking - do nothing */
+      /* Partial linking - do nothing.  */
       reloc_entry->address += input_section->output_offset;
       return bfd_reloc_ok;
-
     }
 
   if (symbol_in != NULL
       && bfd_is_und_section (symbol_in->section))
     {
-      /* Keep the state machine happy in case we're called again */
+      /* Keep the state machine happy in case we're called again.  */
       if (r_type == R_IHIHALF)
 	{
 	  part1_consth_active = true;
 	  part1_consth_value  = 0;
 	}
-      return(bfd_reloc_undefined);
+      return bfd_reloc_undefined;
     }
 
   if ((part1_consth_active) && (r_type != R_IHCONST))
     {
       part1_consth_active = false;
       *error_message = (char *) _("Missing IHCONST");
-      return(bfd_reloc_dangerous);
+
+      return bfd_reloc_dangerous;
     }
 
   sym_value = get_symbol_value(symbol_in);
@@ -130,7 +127,7 @@ a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
     {
     case R_IREL:
       insn = bfd_get_32 (abfd, hit_data);
-      /* Take the value in the field and sign extend it */
+      /* Take the value in the field and sign extend it.  */
       signed_value = EXTRACT_HWORD(insn);
       signed_value = SIGN_EXTEND_HWORD(signed_value);
       signed_value <<= 2;
@@ -142,46 +139,46 @@ a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
       signed_value += sym_value + reloc_entry->addend;
       if ((signed_value & ~0x3ffff) == 0)
 	{				/* Absolute jmp/call */
-	  insn |= (1<<24);		/* Make it absolute */
-	  /* FIXME: Should we change r_type to R_IABS */
+	  insn |= (1 << 24);		/* Make it absolute */
+	  /* FIXME: Should we change r_type to R_IABS.  */
 	}
       else
 	{
 	  /* Relative jmp/call, so subtract from the value the
-	     address of the place we're coming from */
+	     address of the place we're coming from.  */
 	  signed_value -= (reloc_entry->address
 			   + input_section->output_section->vma
 			   + input_section->output_offset);
-	  if (signed_value>0x1ffff || signed_value<-0x20000)
-	    return(bfd_reloc_overflow);
+	  if (signed_value > 0x1ffff || signed_value < -0x20000)
+	    return bfd_reloc_overflow;
 	}
       signed_value >>= 2;
-      insn = INSERT_HWORD(insn, signed_value);
-      bfd_put_32 (abfd, insn ,hit_data);
+      insn = INSERT_HWORD (insn, signed_value);
+      bfd_put_32 (abfd, (bfd_vma) insn ,hit_data);
       break;
     case R_ILOHALF:
       insn = bfd_get_32 (abfd, hit_data);
       unsigned_value = EXTRACT_HWORD(insn);
       unsigned_value +=  sym_value + reloc_entry->addend;
       insn = INSERT_HWORD(insn, unsigned_value);
-      bfd_put_32 (abfd, insn, hit_data);
+      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
       break;
     case R_IHIHALF:
       insn = bfd_get_32 (abfd, hit_data);
       /* consth, part 1
-	 Just get the symbol value that is referenced */
+	 Just get the symbol value that is referenced.  */
       part1_consth_active = true;
       part1_consth_value = sym_value + reloc_entry->addend;
-      /* Don't modify insn until R_IHCONST */
+      /* Don't modify insn until R_IHCONST.  */
       break;
     case R_IHCONST:
       insn = bfd_get_32 (abfd, hit_data);
       /* consth, part 2
-	 Now relocate the reference */
-      if (part1_consth_active == false)
+	 Now relocate the reference.  */
+      if (! part1_consth_active)
 	{
 	  *error_message = (char *) _("Missing IHIHALF");
-	  return(bfd_reloc_dangerous);
+	  return bfd_reloc_dangerous;
 	}
       /* sym_ptr_ptr = r_symndx, in coff_slurp_reloc_table() */
       unsigned_value = 0;		/*EXTRACT_HWORD(insn) << 16;*/
@@ -190,84 +187,71 @@ a29k_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
       unsigned_value = unsigned_value >> 16;
       insn = INSERT_HWORD(insn, unsigned_value);
       part1_consth_active = false;
-      bfd_put_32 (abfd, insn, hit_data);
+      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
       break;
     case R_BYTE:
       insn = bfd_get_8 (abfd, hit_data);
       unsigned_value = insn + sym_value + reloc_entry->addend;
       if (unsigned_value & 0xffffff00)
-	return(bfd_reloc_overflow);
+	return bfd_reloc_overflow;
       bfd_put_8 (abfd, unsigned_value, hit_data);
       break;
     case R_HWORD:
       insn = bfd_get_16 (abfd, hit_data);
       unsigned_value = insn + sym_value + reloc_entry->addend;
       if (unsigned_value & 0xffff0000)
-	return(bfd_reloc_overflow);
-      bfd_put_16 (abfd, insn, hit_data);
+	return bfd_reloc_overflow;
+      bfd_put_16 (abfd, (bfd_vma) insn, hit_data);
       break;
     case R_WORD:
       insn = bfd_get_32 (abfd, hit_data);
       insn += sym_value + reloc_entry->addend;
-      bfd_put_32 (abfd, insn, hit_data);
+      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
       break;
     default:
       *error_message = _("Unrecognized reloc");
-      return (bfd_reloc_dangerous);
+      return bfd_reloc_dangerous;
     }
 
   return(bfd_reloc_ok);
 }
 
-/*      type	   rightshift
-		       size
-			  bitsize
-			       pc-relative
-				     bitpos
-					 absolute
-					     complain_on_overflow
-						  special_function
-						    relocation name
-							       partial_inplace
-								      src_mask
-*/
-
-/*FIXME: I'm not real sure about this table */
+/*FIXME: I'm not real sure about this table.  */
 static reloc_howto_type howto_table[] =
-{
-  {R_ABS,     0, 3, 32, false, 0, complain_overflow_bitfield,a29k_reloc,"ABS",     true, 0xffffffff,0xffffffff, false},
-  EMPTY_HOWTO (1),
-  EMPTY_HOWTO (2),
-  EMPTY_HOWTO (3),
-  EMPTY_HOWTO (4),
-  EMPTY_HOWTO (5),
-  EMPTY_HOWTO (6),
-  EMPTY_HOWTO (7),
-  EMPTY_HOWTO (8),
-  EMPTY_HOWTO (9),
-  EMPTY_HOWTO (10),
-  EMPTY_HOWTO (11),
-  EMPTY_HOWTO (12),
-  EMPTY_HOWTO (13),
-  EMPTY_HOWTO (14),
-  EMPTY_HOWTO (15),
-  EMPTY_HOWTO (16),
-  EMPTY_HOWTO (17),
-  EMPTY_HOWTO (18),
-  EMPTY_HOWTO (19),
-  EMPTY_HOWTO (20),
-  EMPTY_HOWTO (21),
-  EMPTY_HOWTO (22),
-  EMPTY_HOWTO (23),
-  {R_IREL,    0, 3, 32, true,  0, complain_overflow_signed,a29k_reloc,"IREL",    true, 0xffffffff,0xffffffff, false},
-  {R_IABS,    0, 3, 32, false, 0, complain_overflow_bitfield, a29k_reloc,"IABS",    true, 0xffffffff,0xffffffff, false},
-  {R_ILOHALF, 0, 3, 16, true,  0, complain_overflow_signed, a29k_reloc,"ILOHALF", true, 0x0000ffff,0x0000ffff, false},
-  {R_IHIHALF, 0, 3, 16, true,  16, complain_overflow_signed, a29k_reloc,"IHIHALF", true, 0xffff0000,0xffff0000, false},
-  {R_IHCONST, 0, 3, 16, true,  0, complain_overflow_signed, a29k_reloc,"IHCONST", true, 0xffff0000,0xffff0000, false},
-  {R_BYTE,    0, 0, 8, false, 0, complain_overflow_bitfield, a29k_reloc,"BYTE",    true, 0x000000ff,0x000000ff, false},
-  {R_HWORD,   0, 1, 16, false, 0, complain_overflow_bitfield, a29k_reloc,"HWORD",   true, 0x0000ffff,0x0000ffff, false},
-  {R_WORD,    0, 2, 32, false, 0, complain_overflow_bitfield, a29k_reloc,"WORD",    true, 0xffffffff,0xffffffff, false},
-};
+  {
+    {R_ABS,     0, 3, 32, false, 0, complain_overflow_bitfield,a29k_reloc,"ABS",     true, 0xffffffff,0xffffffff, false},
+    EMPTY_HOWTO (1),
+    EMPTY_HOWTO (2),
+    EMPTY_HOWTO (3),
+    EMPTY_HOWTO (4),
+    EMPTY_HOWTO (5),
+    EMPTY_HOWTO (6),
+    EMPTY_HOWTO (7),
+    EMPTY_HOWTO (8),
+    EMPTY_HOWTO (9),
+    EMPTY_HOWTO (10),
+    EMPTY_HOWTO (11),
+    EMPTY_HOWTO (12),
+    EMPTY_HOWTO (13),
+    EMPTY_HOWTO (14),
+    EMPTY_HOWTO (15),
+    EMPTY_HOWTO (16),
+    EMPTY_HOWTO (17),
+    EMPTY_HOWTO (18),
+    EMPTY_HOWTO (19),
+    EMPTY_HOWTO (20),
+    EMPTY_HOWTO (21),
+    EMPTY_HOWTO (22),
+    EMPTY_HOWTO (23),
+    {R_IREL,    0, 3, 32, true,  0, complain_overflow_signed,a29k_reloc,"IREL",    true, 0xffffffff,0xffffffff, false},
+    {R_IABS,    0, 3, 32, false, 0, complain_overflow_bitfield, a29k_reloc,"IABS",    true, 0xffffffff,0xffffffff, false},
+    {R_ILOHALF, 0, 3, 16, true,  0, complain_overflow_signed, a29k_reloc,"ILOHALF", true, 0x0000ffff,0x0000ffff, false},
+    {R_IHIHALF, 0, 3, 16, true,  16, complain_overflow_signed, a29k_reloc,"IHIHALF", true, 0xffff0000,0xffff0000, false},
+    {R_IHCONST, 0, 3, 16, true,  0, complain_overflow_signed, a29k_reloc,"IHCONST", true, 0xffff0000,0xffff0000, false},
+    {R_BYTE,    0, 0, 8, false, 0, complain_overflow_bitfield, a29k_reloc,"BYTE",    true, 0x000000ff,0x000000ff, false},
+    {R_HWORD,   0, 1, 16, false, 0, complain_overflow_bitfield, a29k_reloc,"HWORD",   true, 0x0000ffff,0x0000ffff, false},
+    {R_WORD,    0, 2, 32, false, 0, complain_overflow_bitfield, a29k_reloc,"WORD",    true, 0xffffffff,0xffffffff, false},
+  };
 
 #define BADMAG(x) A29KBADMAG(x)
 
@@ -304,21 +288,18 @@ reloc_processing (relent,reloc, symbols, abfd, section)
   else
     {
       asymbol *ptr;
-      relent->sym_ptr_ptr = symbols + obj_convert(abfd)[reloc->r_symndx];
+
+      relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
 
       ptr = *(relent->sym_ptr_ptr);
 
       if (ptr
 	  && bfd_asymbol_bfd(ptr) == abfd
-
-	  && ((ptr->flags & BSF_OLD_COMMON)== 0))
-	{
-	  relent->addend = 0;
-	}
+	  && ((ptr->flags & BSF_OLD_COMMON) == 0))
+	relent->addend = 0;
       else
-	{
-	  relent->addend = 0;
-	}
+	relent->addend = 0;
+
       relent->address-= section->vma;
       if (reloc->r_type == R_IHIHALF)
 	ihihalf_vaddr = relent->address;
@@ -404,7 +385,7 @@ coff_a29k_relocate_section (output_bfd, info, input_bfd, input_section,
 	    }
 	  else
 	    {
-	      if (h->root.type == bfd_link_hash_defined
+	      if (   h->root.type == bfd_link_hash_defined
 		  || h->root.type == bfd_link_hash_defweak)
 		{
 		  sec = h->root.u.def.section;
@@ -494,7 +475,6 @@ coff_a29k_relocate_section (output_bfd, info, input_bfd, input_section,
 	  insn = INSERT_HWORD (insn, signed_value);
 
 	  bfd_put_32 (input_bfd, (bfd_vma) insn, loc);
-
 	  break;
 
 	case R_ILOHALF:
@@ -502,7 +482,7 @@ coff_a29k_relocate_section (output_bfd, info, input_bfd, input_section,
 	  unsigned_value = EXTRACT_HWORD (insn);
 	  unsigned_value += val;
 	  insn = INSERT_HWORD (insn, unsigned_value);
-	  bfd_put_32 (input_bfd, insn, loc);
+	  bfd_put_32 (input_bfd, (bfd_vma) insn, loc);
 	  break;
 
 	case R_IHIHALF:

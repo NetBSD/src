@@ -1,5 +1,5 @@
 /* Support for 32-bit PowerPC NLM (NetWare Loadable Module)
-   Copyright 1994, 1995, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -76,11 +76,11 @@ nlm_powerpc_backend_object_p (abfd)
 {
   struct nlm32_powerpc_external_prefix_header s;
 
-  if (bfd_read ((PTR) &s, sizeof s, 1, abfd) != sizeof s)
+  if (bfd_bread ((PTR) &s, (bfd_size_type) sizeof s, abfd) != sizeof s)
     return false;
 
   if (memcmp (s.signature, NLM32_POWERPC_SIGNATURE, sizeof s.signature) != 0
-      || bfd_h_get_32 (abfd, s.headerVersion) != NLM32_POWERPC_HEADER_VERSION)
+      || H_GET_32 (abfd, s.headerVersion) != NLM32_POWERPC_HEADER_VERSION)
     return false;
 
   return true;
@@ -96,12 +96,12 @@ nlm_powerpc_write_prefix (abfd)
 
   memset (&s, 0, sizeof s);
   memcpy (s.signature, NLM32_POWERPC_SIGNATURE, sizeof s.signature);
-  bfd_h_put_32 (abfd, (bfd_vma) NLM32_POWERPC_HEADER_VERSION, s.headerVersion);
-  bfd_h_put_32 (abfd, (bfd_vma) 0, s.origins);
+  H_PUT_32 (abfd, NLM32_POWERPC_HEADER_VERSION, s.headerVersion);
+  H_PUT_32 (abfd, 0, s.origins);
 
   /* FIXME: What should we do about the date?  */
 
-  if (bfd_write ((PTR) &s, sizeof s, 1, abfd) != sizeof s)
+  if (bfd_bwrite ((PTR) &s, (bfd_size_type) sizeof s, abfd) != sizeof s)
     return false;
 
   return true;
@@ -141,7 +141,7 @@ nlm_powerpc_read_reloc (abfd, sym, secp, rel)
   bfd_vma val;
   const char *name;
 
-  if (bfd_read (temp, sizeof (temp), 1, abfd) != sizeof (temp))
+  if (bfd_bread (temp, (bfd_size_type) sizeof (temp), abfd) != sizeof (temp))
     return false;
 
   val = bfd_get_32 (abfd, temp);
@@ -561,14 +561,14 @@ nlm_powerpc_read_reloc (abfd, sym, secp, rel)
   asection *code_sec, *data_sec, *bss_sec;
 
   /* Read the reloc from the file.  */
-  if (bfd_read (&ext, sizeof ext, 1, abfd) != sizeof ext)
+  if (bfd_bread (&ext, (bfd_size_type) sizeof ext, abfd) != sizeof ext)
     return false;
 
   /* Swap in the fields.  */
-  l_vaddr = bfd_h_get_32 (abfd, ext.l_vaddr);
-  l_symndx = bfd_h_get_32 (abfd, ext.l_symndx);
-  l_rtype = bfd_h_get_16 (abfd, ext.l_rtype);
-  l_rsecnm = bfd_h_get_16 (abfd, ext.l_rsecnm);
+  l_vaddr = H_GET_32 (abfd, ext.l_vaddr);
+  l_symndx = H_GET_32 (abfd, ext.l_symndx);
+  l_rtype = H_GET_16 (abfd, ext.l_rtype);
+  l_rsecnm = H_GET_16 (abfd, ext.l_rsecnm);
 
   /* Get the sections now, for convenience.  */
   code_sec = bfd_get_section_by_name (abfd, NLM_CODE_NAME);
@@ -661,23 +661,24 @@ nlm_powerpc_read_import (abfd, sym)
   unsigned char symlength;		/* length of symbol name */
   char *name;
 
-  if (bfd_read ((PTR) &symlength, sizeof (symlength), 1, abfd)
+  if (bfd_bread ((PTR) &symlength, (bfd_size_type) sizeof (symlength), abfd)
       != sizeof (symlength))
     return (false);
   sym -> symbol.the_bfd = abfd;
-  name = bfd_alloc (abfd, symlength + 1);
+  name = bfd_alloc (abfd, (bfd_size_type) symlength + 1);
   if (name == NULL)
     return false;
-  if (bfd_read (name, symlength, 1, abfd) != symlength)
+  if (bfd_bread (name, (bfd_size_type) symlength, abfd) != symlength)
     return (false);
   name[symlength] = '\0';
   sym -> symbol.name = name;
   sym -> symbol.flags = 0;
   sym -> symbol.value = 0;
   sym -> symbol.section = bfd_und_section_ptr;
-  if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
+  if (bfd_bread ((PTR) temp, (bfd_size_type) sizeof (temp), abfd)
+      != sizeof (temp))
     return (false);
-  rcount = bfd_h_get_32 (abfd, temp);
+  rcount = H_GET_32 (abfd, temp);
   nlm_relocs = ((struct nlm_relent *)
 		bfd_alloc (abfd, rcount * sizeof (struct nlm_relent)));
   if (nlm_relocs == (struct nlm_relent *) NULL)
@@ -688,9 +689,7 @@ nlm_powerpc_read_import (abfd, sym)
     {
       asection *section;
 
-      if (nlm_powerpc_read_reloc (abfd, sym, &section,
-				  &nlm_relocs -> reloc)
-	  == false)
+      if (! nlm_powerpc_read_reloc (abfd, sym, &section, &nlm_relocs -> reloc))
 	return false;
       nlm_relocs -> section = section;
       nlm_relocs++;
@@ -762,7 +761,7 @@ nlm_powerpc_write_import (abfd, sec, rel)
     }
 
   bfd_put_32 (abfd, val, temp);
-  if (bfd_write (temp, sizeof (temp), 1, abfd) != sizeof (temp))
+  if (bfd_bwrite (temp, (bfd_size_type) sizeof (temp), abfd) != sizeof (temp))
     return false;
 
   return true;
@@ -818,7 +817,7 @@ nlm_powerpc_write_reloc (abfd, sec, rel, indx)
 	}
     }
 
-  bfd_h_put_32 (abfd, (bfd_vma) l_symndx, ext.l_symndx);
+  H_PUT_32 (abfd, l_symndx, ext.l_symndx);
 
   for (howto = nlm_powerpc_howto_table;
        howto < nlm_powerpc_howto_table + HOWTO_COUNT;
@@ -849,7 +848,7 @@ nlm_powerpc_write_reloc (abfd, sec, rel, indx)
   if (howto->complain_on_overflow == complain_overflow_signed)
     l_rtype |= 0x8000;
   l_rtype |= (howto->bitsize - 1) << 8;
-  bfd_h_put_16 (abfd, (bfd_vma) l_rtype, ext.l_rtype);
+  H_PUT_16 (abfd, l_rtype, ext.l_rtype);
 
   address = rel->address;
 
@@ -866,10 +865,10 @@ nlm_powerpc_write_reloc (abfd, sec, rel, indx)
       return false;
     }
 
-  bfd_h_put_16 (abfd, (bfd_vma) l_rsecnm, ext.l_rsecnm);
-  bfd_h_put_32 (abfd, (bfd_vma) address, ext.l_vaddr);
+  H_PUT_16 (abfd, l_rsecnm, ext.l_rsecnm);
+  H_PUT_32 (abfd, address, ext.l_vaddr);
 
-  if (bfd_write (&ext, sizeof ext, 1, abfd) != sizeof ext)
+  if (bfd_bwrite (&ext, (bfd_size_type) sizeof ext, abfd) != sizeof ext)
     return false;
 
   return true;
@@ -907,12 +906,13 @@ nlm_powerpc_write_external (abfd, count, sym, relocs)
 #endif
 
   len = strlen (sym->name);
-  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof (bfd_byte))
-      || bfd_write (sym->name, len, 1, abfd) != len)
+  if ((bfd_bwrite (&len, (bfd_size_type) sizeof (bfd_byte), abfd)
+       != sizeof (bfd_byte))
+      || bfd_bwrite (sym->name, (bfd_size_type) len, abfd) != len)
     return false;
 
   bfd_put_32 (abfd, count, temp);
-  if (bfd_write (temp, sizeof (temp), 1, abfd) != sizeof (temp))
+  if (bfd_bwrite (temp, (bfd_size_type) sizeof (temp), abfd) != sizeof (temp))
     return false;
 
   for (i = 0; i < count; i++)

@@ -68,7 +68,6 @@ extern void m32r_handle_align PARAMS ((fragS *));
 
 #define MAX_MEM_FOR_RS_ALIGN_CODE  (1 + 2 + 4)
 
-#define MD_APPLY_FIX3
 #define md_apply_fix3 gas_cgen_md_apply_fix3
 
 #define obj_fix_adjustable(fixP) m32r_fix_adjustable(fixP)
@@ -76,8 +75,6 @@ extern void m32r_handle_align PARAMS ((fragS *));
 /* After creating a fixup for an instruction operand, we need to check for
    HI16 relocs and queue them up for later sorting.  */
 #define md_cgen_record_fixup_exp m32r_cgen_record_fixup_exp
-
-#define TC_HANDLES_FX_DONE
 
 #define tc_gen_reloc gas_cgen_tc_gen_reloc
 

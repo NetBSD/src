@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lifloat-xgot
-#as: -mips1 -mcpu=r3000 -KPIC -xgot -EB --defsym XGOT=1
+#as: -mips1 -mtune=r3000 -KPIC -xgot -EB --defsym XGOT=1
 #source: lifloat.s
 
 # Test the li.d and li.s macros with -KPIC -xgot.

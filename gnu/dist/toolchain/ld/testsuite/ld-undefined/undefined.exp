@@ -61,7 +61,7 @@ proc checkund { string testname } {
     }
 }
 
-set mu "undefined reference to `this_function_is_not_defined'"
+set mu "undefined reference to `*this_function_is_not_defined'"
 checkund $mu $testund
 
 # ARM PE defaults to using stabs debugging, which we can't handle for
@@ -74,6 +74,7 @@ setup_xfail "hppa*-*-*elf*"
 
 # With dwarf-2, we can't get the function in which the reference
 # occurs; see below.
+setup_xfail "alpha*-*-linux*"
 setup_xfail "hppa*64*-*-*"
 setup_xfail "mn10300-*-elf"
 setup_xfail "sh-*-*"
@@ -94,7 +95,7 @@ setup_xfail "sh-*-*"
 # Just doesn't work for PA ELF.  No clue why.
 setup_xfail "hppa*-*-*elf*"
 
-set ml "undefined.c:9: undefined reference to `this_function_is_not_defined'"
+set ml "undefined.c:9: undefined reference to `*this_function_is_not_defined'"
 # With targets that use elf/dwarf2, such as the arm-elf and thumb-elf
 # toolchains, the code in bfd/elf.c:_bfd_elf_find_nearest_line() is called
 # in order to locate the file name/line number where the undefined
@@ -134,5 +135,15 @@ setup_xfail i?86-*-freebsd*
 #setup_xfail thumb-*-elf
 setup_xfail mcore-*-elf
 setup_xfail mips-sgi-irix6*
+setup_xfail "sh64-*-*"
+
+# The undefined test fails on 31 bit s/390 because the address of the 
+# function `this_function_is_not_defined' is stored in the literal pool of
+# the function. Therefore the line number in the error message is 8 instead
+# of 9. On 64 bit s/390 this works because of the new brasl instruction that
+# doesn't need a literal pool entry.
+# With gcc 3.1 s/390 uses dwarf-2 and the test will fail on 64 bit as well.
+setup_xfail s390-*-*
+setup_xfail s390x-*-*
 
 checkund $ml $testline

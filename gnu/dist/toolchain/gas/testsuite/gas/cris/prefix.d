@@ -4,7 +4,7 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <start>:
+0+ <start>:
 [	 ]+0:[	 ]+0001 454a[ 	]+move\.b \[r0\+0\],r4
 [	 ]+4:[	 ]+0031 564e[ 	]+move\.w \[r6=r3\+0\],r4
 [	 ]+8:[	 ]+ff11 454a[ 	]+move\.b \[r1-1\],r4
@@ -29,18 +29,18 @@ Disassembly of section \.text:
 [	 ]+6e:[	 ]+5f6d ff7f 555e[ 	]+move\.w \[r5=r6\+32767\],r5
 [	 ]+74:[	 ]+6f4d 0000 0000 679e[ 	]+move\.d \[r7=r4\+0( <start>)?\],r9
 [	 ]+7c:[	 ]+6f5d 0100 0000 454a[ 	]+move\.b \[r5\+1( <start\+0x1>)?\],r4
-[	 ]+84:[	 ]+6f6d ffff ffff 679e[ 	]+move\.d \[r7=r6\+(0xffffffff|ffffffff <end\+0xfffffe33>)\],r9
-[	 ]+8c:[	 ]+6f6d 80ff ffff 679a[ 	]+move\.d \[r6\+(0xffffff80|ffffff80 <end\+0xfffffdb4>)\],r9
+[	 ]+84:[	 ]+6f6d ffff ffff 679e[ 	]+move\.d \[r7=r6\+[^]]+\],r9
+[	 ]+8c:[	 ]+6f6d 80ff ffff 679a[ 	]+move\.d \[r6\+[^]]+\],r9
 [	 ]+94:[	 ]+6f6d 7f00 0000 564e[ 	]+move\.w \[r6=r6\+(127|7f <start\+0x7f>)\],r4
-[	 ]+9c:[	 ]+6f6d 7fff ffff 679a[ 	]+move\.d \[r6\+(0xffffff7f|ffffff7f <end\+0xfffffdb3>)\],r9
+[	 ]+9c:[	 ]+6f6d 7fff ffff 679a[ 	]+move\.d \[r6\+[^]]+\],r9
 [	 ]+a4:[	 ]+6f6d 8000 0000 679a[ 	]+move\.d \[r6\+(128|80 <start\+0x80>)\],r9
-[	 ]+ac:[	 ]+6f6d 0080 ffff 454a[ 	]+move\.b \[r6\+(0xffff8000|ffff8000 <end\+0xffff7e34>)\],r4
+[	 ]+ac:[	 ]+6f6d 0080 ffff 454a[ 	]+move\.b \[r6\+[^]]+\],r4
 [	 ]+b4:[	 ]+6f6d ff7f 0000 555e[ 	]+move\.w \[r5=r6\+(32767|7fff <end\+0x7e33>)\],r5
-[	 ]+bc:[	 ]+6f6d ff7f ffff 564e[ 	]+move\.w \[r6=r6\+(0xffff7fff|ffff7fff <end\+0xffff7e33>)\],r4
+[	 ]+bc:[	 ]+6f6d ff7f ffff 564e[ 	]+move\.w \[r6=r6\+[^]]+\],r4
 [	 ]+c4:[	 ]+6f6d 0080 0000 564a[ 	]+move\.w \[r6\+(32768|8000 <end\+0x7e34>)\],r4
-[	 ]+cc:[	 ]+6f6d 0000 fbff 454a[ 	]+move\.b \[r6\+(0xfffb0000|fffb0000 <end\+0xfffafe34>)\],r4
+[	 ]+cc:[	 ]+6f6d 0000 fbff 454a[ 	]+move\.b \[r6\+[^]]+\],r4
 [	 ]+d4:[	 ]+6f6d f5ad 4701 555e[ 	]+move\.w \[r5=r6\+(0x[0]?147adf5|147adf5 <end\+0x147ac29>)\],r5
-[	 ]+dc:[	 ]+6f6d 0000 0080 679a[ 	]+move\.d \[r6\+(0x80000000|80000000 <end\+0x7ffffe34>)\],r9
+[	 ]+dc:[	 ]+6f6d 0000 0080 679a[ 	]+move\.d \[r6\+[^]]+\],r9
 [	 ]+e4:[	 ]+6f6d ffff ff7f 454a[ 	]+move\.b \[r6\+(0x7fffffff|7fffffff <end\+0x7ffffe33>)\],r4
 [	 ]+ec:[	 ]+6f6d 0000 0000 555e[ 	]+move\.w \[r5=r6\+0( <start>)?\],r5
 [ 	]+ee:[ 	]+(R_CRIS_)?32[ 	]+external_symbol

@@ -1,5 +1,6 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+   2000, 2001
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -98,15 +99,15 @@ extern reloc_howto_type m68kcoff_howto_table[];
 static
 #endif
 reloc_howto_type m68kcoff_howto_table[] =
-{
-  HOWTO(R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_RELLONG,	       0,  2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_PCRBYTE,	       0,  0, 	8,  true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP8",    true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_PCRWORD,	       0,  1, 	16, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP16",   true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_PCRLONG,	       0,  2, 	32, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP32",   true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_RELLONG_NEG,	       0,  -2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	true, 0xffffffff,0xffffffff, false),
-};
+  {
+    HOWTO (R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	true, 0x000000ff,0x000000ff, false),
+    HOWTO (R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	true, 0x0000ffff,0x0000ffff, false),
+    HOWTO (R_RELLONG,	       0,  2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	true, 0xffffffff,0xffffffff, false),
+    HOWTO (R_PCRBYTE,	       0,  0, 	8,  true,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP8",    true, 0x000000ff,0x000000ff, false),
+    HOWTO (R_PCRWORD,	       0,  1, 	16, true,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP16",   true, 0x0000ffff,0x0000ffff, false),
+    HOWTO (R_PCRLONG,	       0,  2, 	32, true,  0, complain_overflow_signed,   RELOC_SPECIAL_FN, "DISP32",   true, 0xffffffff,0xffffffff, false),
+    HOWTO (R_RELLONG_NEG,      0, -2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	true, 0xffffffff,0xffffffff, false),
+  };
 #endif /* not ONLY_DECLARE_RELOCS */
 
 #ifndef BADMAG
@@ -122,58 +123,61 @@ extern int m68k_howto2rtype PARAMS ((reloc_howto_type *));
 extern reloc_howto_type *m68k_reloc_type_lookup
   PARAMS ((bfd *, bfd_reloc_code_real_type));
 #else
+
 #ifdef STATIC_RELOCS
-static
+#define STAT_REL static
+#else
+#define STAT_REL
 #endif
-void
+
+STAT_REL reloc_howto_type * m68k_reloc_type_lookup PARAMS ((bfd *, bfd_reloc_code_real_type));
+STAT_REL int m68k_howto2rtype PARAMS ((reloc_howto_type *));
+STAT_REL void m68k_rtype2howto PARAMS ((arelent *, int));
+
+
+STAT_REL void
 m68k_rtype2howto(internal, relocentry)
      arelent *internal;
      int relocentry;
 {
   switch (relocentry)
-  {
-   case R_RELBYTE:	internal->howto = m68kcoff_howto_table + 0; break;
-   case R_RELWORD:	internal->howto = m68kcoff_howto_table + 1; break;
-   case R_RELLONG:	internal->howto = m68kcoff_howto_table + 2; break;
-   case R_PCRBYTE:	internal->howto = m68kcoff_howto_table + 3; break;
-   case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
-   case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
-   case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
-  }
+    {
+    case R_RELBYTE:	internal->howto = m68kcoff_howto_table + 0; break;
+    case R_RELWORD:	internal->howto = m68kcoff_howto_table + 1; break;
+    case R_RELLONG:	internal->howto = m68kcoff_howto_table + 2; break;
+    case R_PCRBYTE:	internal->howto = m68kcoff_howto_table + 3; break;
+    case R_PCRWORD:	internal->howto = m68kcoff_howto_table + 4; break;
+    case R_PCRLONG:	internal->howto = m68kcoff_howto_table + 5; break;
+    case R_RELLONG_NEG:	internal->howto = m68kcoff_howto_table + 6; break;
+    }
 }
 
-#ifdef STATIC_RELOCS
-static
-#endif
-int
+STAT_REL int
 m68k_howto2rtype (internal)
      reloc_howto_type *internal;
 {
   if (internal->pc_relative)
-  {
-    switch (internal->bitsize)
     {
-     case 32: return R_PCRLONG;
-     case 16: return R_PCRWORD;
-     case 8: return R_PCRBYTE;
+      switch (internal->bitsize)
+	{
+	case 32: return R_PCRLONG;
+	case 16: return R_PCRWORD;
+	case 8: return R_PCRBYTE;
+	}
     }
-  }
   else
-  {
-    switch (internal->bitsize)
-     {
-      case 32: return R_RELLONG;
-      case 16: return R_RELWORD;
-      case 8: return R_RELBYTE;
-     }
-  }
+    {
+      switch (internal->bitsize)
+	{
+	case 32: return R_RELLONG;
+	case 16: return R_RELWORD;
+	case 8: return R_RELBYTE;
+	}
+    }
   return R_RELLONG;
 }
 
-#ifdef STATIC_RELOCS
-static
-#endif
-reloc_howto_type *
+STAT_REL reloc_howto_type *
 m68k_reloc_type_lookup (abfd, code)
      bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
@@ -312,7 +316,7 @@ m68kcoff_common_addend_special_fn (abfd, reloc_entry, symbol, data,
 	  {
 	    short x = bfd_get_16 (abfd, addr);
 	    DOIT (x);
-	    bfd_put_16 (abfd, x, addr);
+	    bfd_put_16 (abfd, (bfd_vma) x, addr);
 	  }
 	  break;
 
@@ -320,7 +324,7 @@ m68kcoff_common_addend_special_fn (abfd, reloc_entry, symbol, data,
 	  {
 	    long x = bfd_get_32 (abfd, addr);
 	    DOIT (x);
-	    bfd_put_32 (abfd, x, addr);
+	    bfd_put_32 (abfd, (bfd_vma) x, addr);
 	  }
 	  break;
 
@@ -438,6 +442,7 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
   bfd_size_type symesz;
   struct internal_reloc *irel, *irelend;
   bfd_byte *p;
+  bfd_size_type amt;
 
   BFD_ASSERT (! info->relocateable);
 
@@ -453,7 +458,8 @@ bfd_m68k_coff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
 					 NULL);
   irelend = irel + datasec->reloc_count;
 
-  relsec->contents = (bfd_byte *) bfd_alloc (abfd, datasec->reloc_count * 12);
+  amt = (bfd_size_type) datasec->reloc_count * 12;
+  relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
     return false;
 

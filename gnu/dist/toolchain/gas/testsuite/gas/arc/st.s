@@ -13,6 +13,10 @@
 	st.di	r1,[r2,2]
 	st.a.di	r1,[r2,3]
 	stw.a.di r1,[r2,4]
-	
+
+	st .L1,[r12,4]
+	st .L1@h30,[r12,4]
+.L1:
+
 	sr	r1,[r2]
 	sr	r1,[14]

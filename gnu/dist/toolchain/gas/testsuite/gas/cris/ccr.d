@@ -4,7 +4,7 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <start>:
+0+ <start>:
 [	 ]+0:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+2:[	 ]+b015[ 	]+ax[ ]*
 [	 ]+4:[	 ]+bff5[ 	]+setf[ ]+cvznxi[be][dm]

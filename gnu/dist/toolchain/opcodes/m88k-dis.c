@@ -1,5 +1,5 @@
 /* Print instructions for the Motorola 88000, for GDB and GNU Binutils.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1993, 1998, 2000
+   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1993, 1998, 2000, 2001
    Free Software Foundation, Inc.
    Contributed by Data General Corporation, November 1989.
    Partially derived from an earlier printcmd.c.
@@ -31,28 +31,16 @@ static int
 m88kdis PARAMS ((bfd_vma, unsigned long, struct disassemble_info *));
 
 static void
-printop PARAMS ((struct disassemble_info *, OPSPEC *,
-		 unsigned long, bfd_vma, int));
+printop PARAMS ((struct disassemble_info *, OPSPEC *, unsigned long, bfd_vma, int));
 
 static void
 init_disasm PARAMS ((void));
 
 static void
 install PARAMS ((INSTAB *instptr));
+
 
-/*
-*		Disassemble an M88000 Instruction
-*
-*
-*       This module decodes the instruction at memaddr.
-*
-*			Revision History
-*
-*       Revision 1.0    11/08/85        Creation date by Motorola
-*			05/11/89	R. Trawick adapted to GDB interface.
-*			07/12/93	Ian Lance Taylor updated to
-*					binutils interface.
-*/
+/* Disassemble an M88000 instruction at `memaddr'.  */
 
 int
 print_insn_m88k (memaddr, info)
@@ -62,7 +50,7 @@ print_insn_m88k (memaddr, info)
   bfd_byte buffer[4];
   int status;
 
-  /* Instruction addresses may have low two bits set. Clear them.	*/
+  /* Instruction addresses may have low two bits set. Clear them.  */
   memaddr &=~ (bfd_vma) 3;
 
   status = (*info->read_memory_func) (memaddr, buffer, 4, info);
@@ -76,10 +64,11 @@ print_insn_m88k (memaddr, info)
 }
 
 /*
- * disassemble the instruction in 'instruction'.
- * 'pc' should be the address of this instruction, it will
- *   be used to print the target address if this is a relative jump or call
- * the disassembled instruction is written to 'info'.
+ * Disassemble the instruction in `instruction'.
+ * `pc' should be the address of this instruction, it will be used to
+ * print the target address if this is a relative jump or call the
+ * disassembled instruction is written to `info'.
+ *
  * The function returns the length of this instruction in bytes.
  */
 
@@ -98,7 +87,7 @@ m88kdis (pc, instruction, info)
   if (! ihashtab_initialized)
     init_disasm ();
 
-  /* create the appropriate mask to isolate the opcode */
+  /* Create the appropriate mask to isolate the opcode.  */
   opmask = DEFMASK;
   class = instruction & DEFMASK;
   if ((class >= SFU0) && (class <= SFU7))
@@ -113,10 +102,10 @@ m88kdis (pc, instruction, info)
   else if (class == RRI10)
     opmask = RRI10MASK;
 
-  /* isolate the opcode */
+  /* Isolate the opcode.  */
   opcode = instruction & opmask;
 
-  /* search the hash table with the isolated opcode */
+  /* Search the hash table with the isolated opcode.  */
   for (entry_ptr = hashtable[opcode % HASHVAL];
        (entry_ptr != NULL) && (entry_ptr->opcode != opcode);
        entry_ptr = entry_ptr->next)
@@ -136,35 +125,27 @@ m88kdis (pc, instruction, info)
 }
 
 /*
-*                      Decode an Operand of an Instruction
-*
-*			Functional Description
-*
-*       This module formats and writes an operand of an instruction to info
-*       based on the operand specification.  When the first flag is set this
-*       is the first operand of an instruction.  Undefined operand types
-*       cause a <dis error> message.
-*
-*			Parameters
-*	disassemble_info	where the operand may be printed
-*       OPSPEC  *opptr          Pointer to an operand specification
-*       UINT    inst            Instruction from which operand is extracted
-*	UINT    pc		PC of instruction; used for pc-relative disp.
-*       int     first           Flag which if nonzero indicates the first
-*                               operand of an instruction
-*
-*			Output
-*
-*       The operand specified is extracted from the instruction and is
-*       written to buf in the format specified. The operand is preceded
-*       by a comma if it is not the first operand of an instruction and it
-*       is not a register indirect form.  Registers are preceded by 'r' and
-*       hex values by '0x'.
-*
-*			Revision History
-*
-*       Revision 1.0    11/08/85        Creation date
-*/
+ * Decode an Operand of an instruction.
+ *
+ * This function formats and writes an operand of an instruction to
+ * info based on the operand specification.  When the `first' flag is
+ * set this is the first operand of an instruction.  Undefined operand
+ * types cause a <dis error> message.
+ *
+ * Parameters:
+ *  disassemble_info	where the operand may be printed
+ *  OPSPEC  *opptr      pointer to an operand specification
+ *  UINT    inst        instruction from which operand is extracted
+ *  UINT    pc		pc of instruction; used for pc-relative disp.
+ *  int     first       flag which if nonzero indicates the first
+ *                      operand of an instruction
+ *
+ * The operand specified is extracted from the instruction and is
+ * written to buf in the format specified. The operand is preceded by
+ * a comma if it is not the first operand of an instruction and it is
+ * not a register indirect form.  Registers are preceded by 'r' and
+ * hex values by '0x'.
+ */
 
 static void
 printop (info, opptr, inst, pc, first)
@@ -250,7 +231,7 @@ printop (info, opptr, inst, pc, first)
       else
 	(*info->fprintf_func) (info->stream, "%x", extracted_field);
       break;
-			
+                       
     case PCREL:
       (*info->print_address_func)
 	(pc + (4 * (SEXT (inst, opptr->offset, opptr->width))),
@@ -265,8 +246,8 @@ printop (info, opptr, inst, pc, first)
 
     case BF:
       (*info->fprintf_func) (info->stream, "%d<%d>",
-			      UEXT (inst, (opptr->offset) + 5, 5),
-			      UEXT (inst, opptr->offset, 5));
+			     UEXT (inst, (opptr->offset) + 5, 5),
+			     UEXT (inst, opptr->offset, 5));
       break;
 
     default:
@@ -276,48 +257,30 @@ printop (info, opptr, inst, pc, first)
 }
 
 /*
-*                 Initialize the Disassembler Instruction Table
-*
-*       Initialize the hash table and instruction table for the disassembler.
-*       This should be called once before the first call to disasm().
-*
-*			Parameters
-*
-*			Output
-*
-*       If the debug option is selected, certain statistics about the hashing
-*       distribution are written to stdout.
-*
-*			Revision History
-*
-*       Revision 1.0    11/08/85        Creation date
-*/
+ * Initialize the disassembler instruction table.
+ *
+ * Initialize the hash table and instruction table for the
+ * disassembler.  This should be called once before the first call to
+ * disasm().
+ */
 
 static void
 init_disasm ()
 {
-   int i, size;
+  int i, size;
+  
+  for (i = 0; i < HASHVAL; i++)
+    hashtable[i] = NULL;
 
-   for (i = 0; i < HASHVAL; i++)
-     hashtable[i] = NULL;
-
-   size = sizeof (instructions) / sizeof (INSTAB);
-   for (i = 0; i < size; i++)
-     install (&instructions[i]);
+  size = sizeof (instructions) / sizeof (INSTAB);
+  for (i = 0; i < size; i++)
+    install (&instructions[i]);
 }
 
 /*
-*       Insert an instruction into the disassembler table by hashing the
-*       opcode and inserting it into the linked list for that hash value.
-*
-*			Parameters
-*
-*       INSTAB *instptr         Pointer to the entry in the instruction table
-*                               to be installed
-*
-*       Revision 1.0    11/08/85        Creation date
-*			05/11/89	R. TRAWICK ADAPTED FROM MOTOROLA
-*/
+ * Insert an instruction into the disassembler table by hashing the
+ * opcode and inserting it into the linked list for that hash value.
+ */
 
 static void
 install (instptr)

@@ -260,7 +260,7 @@ obj_crawl_symbol_chain (headers)
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
 	}			/* if pusing data into text  */
 
-      resolve_symbol_value (symbolP, 1);
+      resolve_symbol_value (symbolP);
 
       /* Skip symbols which were equated to undefined or common
 	 symbols.  */

@@ -243,6 +243,14 @@ proc run_srec_test { test objs } {
 	set flags "$flags --defsym V_SPILL=0 --defsym V_FILL=0"
     }
 
+    if [istarget sh64*-*-elf] {
+        # This is what gcc passes to ld by default.
+        set flags "-mshelf32"
+        # SH64 targets cannot convert format in the linker 
+        # using the -oformat command line switch.
+	setup_xfail "sh64*-*-*"
+    }
+
     if {[istarget arm*-*-*]       || \
         [istarget strongarm*-*-*] || \
         [istarget xscale*-*-*]    || \
@@ -282,6 +290,9 @@ proc run_srec_test { test objs } {
     
     if { ![ld_simple_link $ld tmpdir/sr1 "$flags $objs"] \
 	 || ![ld_simple_link $ld tmpdir/sr2.sr "$flags --oformat srec $objs"] } {
+	# PowerPc64 srec linker can't handle .toc relocations.
+	setup_xfail "powerpc64*-*-*"
+	setup_xfail "powerpc*-*-*64*"
 	setup_xfail "hppa*-*-*elf*"
 	fail $test
 	return
@@ -387,7 +398,7 @@ if { [which $CXX] == 0 } {
     return
 }
 
-if ![ld_compile "$CXX $CXXFLAGS -fgnu-linker" $srcdir/$subdir/sr3.cc tmpdir/sr3.o] {
+if ![ld_compile "$CXX $CXXFLAGS -fgnu-linker -fno-exceptions" $srcdir/$subdir/sr3.cc tmpdir/sr3.o] {
     unresolved $test2
     return
 }

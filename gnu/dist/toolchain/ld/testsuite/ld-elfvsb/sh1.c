@@ -180,6 +180,9 @@ shlib_check ()
 #endif
 
 #if defined (HIDDEN_UNDEF_TEST) || defined (PROTECTED_UNDEF_TEST)
+#ifdef WEAK_TEST
+#pragma weak visibility
+#endif
 extern int visibility ();
 #else
 int
@@ -243,6 +246,9 @@ visibility_funptr ()
 }
 
 #if defined (HIDDEN_UNDEF_TEST) || defined (PROTECTED_UNDEF_TEST)
+#ifdef WEAK_TEST
+#pragma weak visibility_var
+#endif
 extern int visibility_var;
 #else
 int visibility_var = 2;
@@ -316,9 +322,4 @@ asm (".hidden visibility_var");
 asm (".protected visibility");
 asm (".protected visibility_var");
 #endif
-#endif
-
-#ifdef WEAK_TEST
-asm (".weak visibility");
-asm (".weak visibility_var");
 #endif

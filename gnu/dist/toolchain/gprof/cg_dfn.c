@@ -1,27 +1,38 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *      The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that: (1) source distributions retain this entire copyright
- * notice and comment, and (2) distributions including binaries display
- * the following acknowledgement:  ``This product includes software
- * developed by the University of California, Berkeley and its contributors''
- * in the documentation or other materials provided with the distribution
- * and in all advertising materials mentioning features or use of this
- * software. Neither the name of the University nor the names of its
- * contributors may be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-#include <stdio.h>
 #include "libiberty.h"
 #include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "cg_dfn.h"
-#include "symtab.h"
 #include "utils.h"
 
 #define	DFN_INCR_DEPTH (128)
@@ -33,6 +44,12 @@ typedef struct
   }
 DFN_Stack;
 
+static boolean is_numbered PARAMS ((Sym *));
+static boolean is_busy PARAMS ((Sym *));
+static void find_cycle PARAMS ((Sym *));
+static void pre_visit PARAMS ((Sym *));
+static void post_visit PARAMS ((Sym *));
+
 DFN_Stack *dfn_stack = NULL;
 int dfn_maxdepth = 0;
 int dfn_depth = 0;
@@ -42,8 +59,9 @@ int dfn_counter = DFN_NAN;
 /*
  * Is CHILD already numbered?
  */
-static bool
-DEFUN (is_numbered, (child), Sym * child)
+static boolean
+is_numbered (child)
+     Sym *child;
 {
   return child->cg.top_order != DFN_NAN && child->cg.top_order != DFN_BUSY;
 }
@@ -52,14 +70,15 @@ DEFUN (is_numbered, (child), Sym * child)
 /*
  * Is CHILD already busy?
  */
-static bool
-DEFUN (is_busy, (child), Sym * child)
+static boolean
+is_busy (child)
+     Sym *child;
 {
   if (child->cg.top_order == DFN_NAN)
     {
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 
@@ -70,7 +89,8 @@ DEFUN (is_busy, (child), Sym * child)
  * depth-first number).
  */
 static void
-DEFUN (find_cycle, (child), Sym * child)
+find_cycle (child)
+     Sym *child;
 {
   Sym *head = 0;
   Sym *tail;
@@ -193,7 +213,8 @@ DEFUN (find_cycle, (child), Sym * child)
  * the stack and mark it busy.
  */
 static void
-DEFUN (pre_visit, (parent), Sym * parent)
+pre_visit (parent)
+     Sym *parent;
 {
   ++dfn_depth;
 
@@ -217,7 +238,8 @@ DEFUN (pre_visit, (parent), Sym * parent)
  * and number functions if PARENT is head of a cycle.
  */
 static void
-DEFUN (post_visit, (parent), Sym * parent)
+post_visit (parent)
+     Sym *parent;
 {
   Sym *member;
 
@@ -251,7 +273,8 @@ DEFUN (post_visit, (parent), Sym * parent)
  * Given this PARENT, depth first number its children.
  */
 void
-DEFUN (cg_dfn, (parent), Sym * parent)
+cg_dfn (parent)
+     Sym *parent;
 {
   Arc *arc;
 

@@ -214,3 +214,28 @@ t2:
  10f:	1b fa 00 ff 	leas	255,PC
 	leas	max9b,pc
  113:	1b fa 00 00 	leas	0,PC
+
+;;
+;; Disassembler bug with movb
+;;
+	movb	#23,0x2345
+ 117:	18 0b 17 23 	movb	#23, 2345 <max9b\+0x2246>
+ 11b:	45 
+	movb	#40,12,sp
+ 11c:	18 08 8c 28 	movb	#40, 12,SP
+	movb	#39,3,\+sp
+ 120:	18 08 a2 27 	movb	#39, 3,\+SP
+	movb	#20,14,sp
+ 124:	18 08 8e 14 	movb	#20, 14,SP
+	movw	#0x3210,0x3456
+ 128:	18 03 32 10 	movw	#3210 <bb\+0xa10>, 3456 <bb\+0xc56>
+ 12c:	34 56 
+	movw	#0x4040,12,sp
+ 12e:	18 00 8c 40 	movw	#4040 <bb\+0x1840>, 12,SP
+ 132:	40 
+	movw	#0x3900,3,\+sp
+ 133:	18 00 a2 39 	movw	#3900 <bb\+0x1100>, 3,\+SP
+ 137:	00 
+	movw	#0x2000,14,sp
+ 138:	18 00 8e 20 	movw	#2000 <max9b\+0x1f01>, 14,SP
+ 13c:	00 

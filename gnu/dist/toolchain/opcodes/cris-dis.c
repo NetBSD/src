@@ -1,5 +1,5 @@
 /* Disassembler code for CRIS.
-   Copyright 2000 Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
    Contributed by Axis Communications AB, Lund, Sweden.
    Written by Hans-Peter Nilsson.
 
@@ -7,7 +7,7 @@ This file is part of the GNU binutils and GDB, the GNU debugger.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
+Software Foundation; either version 2, or (at your option)
 any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT
@@ -97,6 +97,8 @@ static int print_insn_cris_with_register_prefix
   PARAMS ((bfd_vma, disassemble_info *));
 static int print_insn_cris_without_register_prefix
   PARAMS ((bfd_vma, disassemble_info *));
+static const struct cris_opcode *get_opcode_entry
+  PARAMS ((unsigned int, unsigned int));
 
 /* Return the descriptor of a special register.
    FIXME: Depend on a CPU-version specific argument when all machinery
@@ -124,7 +126,7 @@ number_of_bits (val)
 {
   int bits;
 
-  for (bits = 0; val != 0; val &= val-1)
+  for (bits = 0; val != 0; val &= val - 1)
     bits++;
 
   return bits;
@@ -372,7 +374,7 @@ cris_constraint (cs, insn, prefix_insn)
   int prefix_ok = 0;
 
   const char *s;
-  for (s  = cs; *s; s++)
+  for (s = cs; *s; s++)
     switch (*s)
       {
       case '!':
@@ -1195,7 +1197,7 @@ print_insn_cris_generic (memaddr, info, with_reg_prefix)
      bytes; stacked prefixes will not be expanded.  */
   unsigned char buffer[MAX_BYTES_PER_CRIS_INSN];
   unsigned char *bufp;
-  int status;
+  int status = 0;
   bfd_vma addr;
 
   /* There will be an "out of range" error after the last instruction.

@@ -46,6 +46,7 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]] 
     run_dump_test "naked"
     run_dump_test "opcode"
     run_dump_test "intel"
+    run_dump_test "intel16"
     run_dump_test "prefix"
     run_dump_test "amd"
     run_dump_test "katmai"
@@ -75,18 +76,24 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]] 
 	 && ![istarget *-*-linux*oldld*])
     } then {
 	run_dump_test "relax"
+	run_dump_test "gotpc"
+	run_dump_test "tlsd"
+	run_dump_test "tlspic"
+	run_dump_test "tlsnopic"
     }
 
     set ASFLAGS "$old_ASFLAGS"
 }
 
-if [gas_64_check] then {
+if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] then {
 
     global ASFLAGS
     set old_ASFLAGS "$ASFLAGS"
     set ASFLAGS "$ASFLAGS --64"
 
     run_dump_test "x86_64"
+    run_dump_test "x86-64-opcode"
+    run_list_test "x86-64-inval" "-al"
 
     set ASFLAGS "$old_ASFLAGS"
 }

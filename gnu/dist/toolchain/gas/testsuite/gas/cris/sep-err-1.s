@@ -3,4 +3,3 @@
  .text
 start:
  nop|moveq 0,r10 ; { dg-error "Unknown opcode" }
-

@@ -29,7 +29,7 @@ proc check_script { } {
     global testname
     global nm_output
 
-    if ![ld_nm $nm tmpdir/script] {
+    if ![ld_nm $nm "" tmpdir/script] {
 	unresolved $testname
     } else {
 	if {![info exists nm_output(text_start)] \

@@ -9,7 +9,7 @@
 .*:     file format elf.*mips
 
 RELOCATION RECORDS FOR \[\.text\]:
-OFFSET           TYPE              VALUE 
+OFFSET [ ]+ TYPE              VALUE 
 0+0000000 R_MIPS_LITERAL    \.lit8\+0x0+0004000
 0+0000004 R_MIPS_LITERAL    \.lit8\+0x0+0004000
 0+0000008 R_MIPS_LITERAL    \.lit8\+0x0+0004000
@@ -24,4 +24,4 @@ OFFSET           TYPE              VALUE
 Contents of section \.text:
  0000 00c082d7 08c082d7 10c082d7 00c082c7  .*
  0010 04c082c7 08c082c7 00c0828f 04c0828f  .*
- 0020 08c0828f 00000000 00000000 00000000  .*
+ 0020 08c0828f .*

@@ -1,19 +1,44 @@
 #
 # Some generic MIPS tests
 #
+
+# "LOSE" marks information about tests which fail at a particular point
+# in time, but which are not XFAILed.  Either they used to pass
+# and indicate either regressions or the need to tweak the tests to keep
+# up the with code, or they are new tests and it is unknown whether or not
+# they should pass as-is for the given object formats.
+
+proc run_list_test { name opts } {
+    global srcdir subdir
+    set testname "MIPS $name"
+    set file $srcdir/$subdir/$name
+    gas_run ${name}.s $opts ">&dump.out"
+    if { [regexp_diff "dump.out" "${file}.l"] } then {
+	fail $testname
+	verbose "output is [file_contents "dump.out"]" 2
+	return
+    }
+    pass $testname
+}
+
 if { [istarget mips*-*-*] } then {
     set no_mips16 0
-    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] || [istarget *-*-linux*] ]
-    set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
-    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
+    set elf [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] || [istarget *-*-linux*] || [istarget *-*-netbsd*] ]
+    set ecoff [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-openbsd*] ]
     set ilocks [istarget mipstx39*-*-*]
     set gpr_ilocks [expr [istarget mipstx39*-*-*]]
     set addr32 [expr [istarget mipstx39*-*-*]]
 
-    if { [istarget mips*el-*-*] || [istarget "mips*-*-*linux*"] } then {
+    if { [istarget "mips*-*-*linux*"] } then {
 	set tmips "t"
     } else {
 	set tmips ""
+    }
+    if [istarget mips*el-*-*] {
+	set el el
+    } {
+	set el ""
     }
 
     run_dump_test "abs"
@@ -21,33 +46,56 @@ if { [istarget mips*-*-*] } then {
     run_dump_test "and"
     run_dump_test "break20"
     run_dump_test "trap20"
+
+    # LOSE: As of 2002-02-08, "beq" through "bltu" fail for target mips-ecoff.
+    # See http://sources.redhat.com/ml/binutils/2001-10/msg00418.html for
+    # more information.  Not sure if the fixes there are correct; should
+    # branches to external labels be allowed for ECOFF?
     run_dump_test "beq"
     run_dump_test "bge"
     run_dump_test "bgeu"
     run_dump_test "blt"
     run_dump_test "bltu"
-    if !$ilocks { run_dump_test "div" } else { run_dump_test "div-ilocks" }
+
+    if $ilocks {
+	run_dump_test "div-ilocks"
+    } else {
+	run_dump_test "div"
+    }
     run_dump_test "dli"
-    run_dump_test "jal"
-    if $svr4pic { run_dump_test "jal-svr4pic" }
-    if $svr4pic { run_dump_test "jal-xgot" }
-    if $empic { run_dump_test "jal-empic" }
+    if $elf {
+	run_dump_test "elf-jal"
+    } else {
+	run_dump_test "jal"
+    }
+    if $elf { run_dump_test "jal-svr4pic" }
+    if $elf { run_dump_test "jal-xgot" }
+    # LOSE: As of 2002-02-08, the jal-empic test fails for target mips-ecoff.
+    # It appears that it broke between 2000-03-11 00:00UTC and
+    # 2000-03-12 00:00 UTC.
+    if $ecoff { run_dump_test "jal-empic" }
+    if $elf { run_dump_test "jal-empic-elf" }
+    if $elf { run_dump_test "jal-empic-elf-2" }
+    if $elf { run_dump_test "jal-empic-elf-3" }
     if !$aout { run_dump_test "la" }
-    if $svr4pic { run_dump_test "la-svr4pic" }
-    if $svr4pic { run_dump_test "la-xgot" }
-    if $empic { run_dump_test "la-empic" }
+    if $elf { run_dump_test "la-svr4pic" }
+    if $elf { run_dump_test "la-xgot" }
+    # LOSE: As of 2002-02-08, the la-empic test fails for target mips-ecoff.
+    # Not sure when it first cropped up, but may be related to addition of
+    # "la" -> "addiu" pattern in MIPS opcode table long ago.
+    if $ecoff { run_dump_test "la-empic" }
     if !$aout { run_dump_test "lb" }
-    if $svr4pic { run_dump_test "lb-svr4pic" }
-    if $svr4pic {
+    if $elf { run_dump_test "lb-svr4pic" }
+    if $elf {
 	# Both versions specify the cpu, so we can run both regardless of
 	# the interlocking in the configured default cpu.
 	run_dump_test "lb-xgot"
 	run_dump_test "lb-xgot-ilocks"
     }
-    if $empic { run_dump_test "lb-empic" }
-    if !$aout { 
-        if !$gpr_ilocks { 
-            run_dump_test "ld" 
+    if $ecoff { run_dump_test "lb-empic" }
+    if !$aout {
+        if !$gpr_ilocks {
+            run_dump_test "ld"
         } else { 
             if !$addr32 {
                 run_dump_test "ld-ilocks"
@@ -56,23 +104,31 @@ if { [istarget mips*-*-*] } then {
             }
         }
     }
-    if $svr4pic { run_dump_test "ld-svr4pic" }
-    if $svr4pic { run_dump_test "ld-xgot" }
-    if $empic { run_dump_test "ld-empic" }
+    if $elf { run_dump_test "ld-svr4pic" }
+    if $elf { run_dump_test "ld-xgot" }
+    if $ecoff { run_dump_test "ld-empic" }
     run_dump_test "li"
     if !$aout { run_dump_test "lifloat" }
-    if $svr4pic { run_dump_test "lif-svr4pic" }
-    if $svr4pic { run_dump_test "lif-xgot" }
-    if $empic { run_dump_test "lif-empic" }
+    if $elf { run_dump_test "lif-svr4pic" }
+    if $elf { run_dump_test "lif-xgot" }
+    # LOSE: As of 2002-02-08, the lif-empic test fails for target mips-ecoff.
+    # It appears that it broke between 2000-03-11 00:00UTC and
+    # 2000-03-12 00:00 UTC.
+    if $ecoff { run_dump_test "lif-empic" }
     run_dump_test "mips4"
-    if !$ilocks { run_dump_test "mul" } else { run_dump_test "mul-ilocks" }
+    if $ilocks {
+	run_dump_test "mul-ilocks"
+    } else {
+	run_dump_test "mul"
+    }
     run_dump_test "rol"
+    run_dump_test "rol64"
     if !$aout { run_dump_test "sb" }
     run_dump_test "trunc"
     if !$aout { run_dump_test "ulh" }
-    if $svr4pic { run_dump_test "ulh-svr4pic" }
-    if $svr4pic { run_dump_test "ulh-xgot" }
-    if $empic { run_dump_test "ulh-empic" }
+    if $elf { run_dump_test "ulh-svr4pic" }
+    if $elf { run_dump_test "ulh-xgot" }
+    if $ecoff { run_dump_test "ulh-empic" }
     if !$aout {
 	run_dump_test "ulw"
 	run_dump_test "uld"
@@ -82,75 +138,85 @@ if { [istarget mips*-*-*] } then {
     }
     # The mips16 test can only be run on ELF, because only ELF
     # supports the necessary mips16 reloc.
-    if { $svr4pic && !$no_mips16 } { run_dump_test "mips16" }
+    if { $elf && !$no_mips16 } { run_dump_test "mips16" }
     run_dump_test "delay"
     run_dump_test "nodelay"
     run_dump_test "mips4010"
     run_dump_test "mips4650"
     run_dump_test "mips4100"
-    # Linux uses ELF stabs, which doesn't support line number.
-    setup_xfail "mips*-*-*linux*"
+    run_dump_test "perfcount"
     run_dump_test "lineno"
     run_dump_test "sync"
     run_dump_test "mips32"
     run_dump_test "mips64"
+    run_dump_test "mips64-mips3d"
+    run_dump_test "mips64-mdmx"
+    run_dump_test "sb1-ext-mdmx"
+    run_dump_test "sb1-ext-ps"
 
-    if $svr4pic {
+    # It will always fail until someone fixes it.
+    setup_xfail "mips*-*-*"
+    run_dump_test "relax"
+
+    run_list_test "illegal" ""
+
+    # LOSE: As of 2002-02-08, the next 4 tests fail for target mips-ecoff.
+    # It's unknown whether they _should_ pass as-is, or whether different
+    # variants are needed for ELF and ECOFF.
+    run_dump_test "mips-gp32-fp32"
+    run_dump_test "mips-gp32-fp64"
+    run_dump_test "mips-gp64-fp32"
+    run_dump_test "mips-gp64-fp64"
+
+    if $elf {
 	# Make sure that -mcpu=FOO and -mFOO are equivalent.  Assemble a file
 	# containing 4650-specific instructions with -m4650 and -mcpu=4650,
 	# and verify that they're the same.  Specifically, we're checking
 	# that the EF_MIPS_MACH field is set, and that the 4650 'mul'
-	# instruction does get used.  In previous versions of GAS, 
+	# instruction does get used.  In previous versions of GAS,
 	# only -mcpu=4650 would set the EF_MIPS_MACH field; -m4650 wouldn't.
 	run_dump_test "elf_e_flags1"
 	run_dump_test "elf_e_flags2"
 	run_dump_test "elf_e_flags3"
 	run_dump_test "elf_e_flags4"
-    
-	if [istarget mips*el-*-*] { 
-	    run_dump_test "elfel-rel"
-	} {
-	    run_dump_test "elf-rel"
-	}
 
-	if [istarget mips64*-*-*] { 
-	    if [istarget mips*el-*-*] { 
-		run_dump_test "elfel-rel2" 
-	    } {
-		run_dump_test "elf-rel2" 
-	    }
-	} {
-	    if [istarget mips*el-*-*] { 
-		run_dump_test "e32el-rel2" 
-	    } {
-		run_dump_test "e32-rel2" 
-	    }
-	}
+	# Verify that ASE markings are handled properly.
+	if { !$no_mips16 } { run_dump_test "elf_ase_mips16" }
 
-	if [istarget mips*el-*-*] { 
-	    run_dump_test "elfel-rel3"
-	} {
-	    run_dump_test "elf-rel3"
-	}
+ 	run_dump_test "mips-gp32-fp32-pic"
+ 	run_dump_test "mips-gp32-fp64-pic"
+ 	run_dump_test "mips-gp64-fp32-pic"
+ 	run_dump_test "mips-gp64-fp64-pic"
 
-	if [istarget mips*el-*-*] { 
-	    run_dump_test "${tmips}elempic"
-	} {
-	    run_dump_test "${tmips}empic"
-	}
+  	run_dump_test "mips-abi32"
+  	run_dump_test "mips-abi32-pic"
+  	run_dump_test "mips-abi32-pic2"
 
-	if { !$no_mips16 } { 
-	    if [istarget mips*el-*-*] { 
-		run_dump_test "${tmips}mipsel16-e" 
-	    } {
-		run_dump_test "${tmips}mips16-e" 
-	    }
-	    setup_xfail "mips*-*-*"
-	    if [istarget mips*el-*-*] { 
-		run_dump_test "mipsel16-f" 
-	    } {
-		run_dump_test "mips16-f" 
-	    }
+	run_dump_test "elf${el}-rel"
+	if {[istarget mips64*-*-*] || [istarget mipsisa32*-*-*]
+	    || [istarget mipsisa64*-*-*]} { 
+	    run_dump_test "elf${el}-rel2"
+	} else {
+	    run_dump_test "e32${el}-rel2"
 	}
+	run_dump_test "elf${el}-rel3"
+	if {[istarget mips64*-*-*]} {
+	    run_dump_test "elf-rel4"
+	} else {
+	    run_dump_test "e32-rel4"
+	}
+	run_dump_test "elf-rel5"
+	run_dump_test "elf-rel6"
+	run_dump_test "elf-rel7"
+	run_dump_test "${tmips}${el}empic"
+	run_dump_test "empic2"
+	run_dump_test "empic3_e"
+	run_dump_test "empic3_g1"
+	run_dump_test "empic3_g2"
+	if { !$no_mips16 } {
+	    run_dump_test "${tmips}mips${el}16-e"
+	    run_dump_test "${tmips}mips${el}16-f"
+	}
+	run_dump_test "elf-consthilo"
     }
 }

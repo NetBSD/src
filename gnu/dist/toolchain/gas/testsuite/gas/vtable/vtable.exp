@@ -25,7 +25,8 @@ if { (   [istarget "*-*-elf*"] || [istarget "*-*-linux*"])
 	|| [istarget "i960-*-*"]
 	|| [istarget "arc*-*-*"]
 	|| [istarget "alpha*-*-*"]
-	|| [istarget "avr-*-*"]
+	|| [istarget "sparc64*-*-*"]
+	|| [istarget "h8300*-*-*"]
 	|| [istarget "d30v-*-*"] } then {
         return
     }

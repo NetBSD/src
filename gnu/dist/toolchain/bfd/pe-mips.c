@@ -54,6 +54,15 @@ static void mips_adjust_reloc_in PARAMS ((bfd *,
 static void mips_adjust_reloc_out PARAMS ((bfd *, const arelent *,
 					   struct internal_reloc *));
 #endif
+
+static boolean in_reloc_p PARAMS ((bfd *, reloc_howto_type *));
+static reloc_howto_type * coff_mips_reloc_type_lookup PARAMS ((bfd *, bfd_reloc_code_real_type));
+static void mips_swap_reloc_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int mips_swap_reloc_out PARAMS ((bfd *, PTR, PTR));
+static boolean coff_pe_mips_relocate_section
+  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
+	   struct internal_reloc *, struct internal_syment *, asection **));
+
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 /* The page size is a guess based on ELF.  */
 
@@ -144,7 +153,7 @@ coff_mips_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 	    {
 	      short x = bfd_get_16 (abfd, addr);
 	      DOIT (x);
-	      bfd_put_16 (abfd, x, addr);
+	      bfd_put_16 (abfd, (bfd_vma) x, addr);
 	    }
 	    break;
 
@@ -152,7 +161,7 @@ coff_mips_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 	    {
 	      long x = bfd_get_32 (abfd, addr);
 	      DOIT (x);
-	      bfd_put_32 (abfd, x, addr);
+	      bfd_put_32 (abfd, (bfd_vma) x, addr);
 	    }
 	    break;
 
@@ -169,7 +178,8 @@ coff_mips_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 /* Return true if this relocation should
    appear in the output .reloc section.  */
 
-static boolean in_reloc_p(abfd, howto)
+static boolean
+in_reloc_p (abfd, howto)
      bfd * abfd ATTRIBUTE_UNUSED;
      reloc_howto_type *howto;
 {
@@ -517,7 +527,7 @@ coff_mips_reloc_type_lookup (abfd, code)
     case BFD_RELOC_LO16:
       mips_type = MIPS_R_REFLO;
       break;
-    case BFD_RELOC_MIPS_GPREL:
+    case BFD_RELOC_GPREL16:
       mips_type = MIPS_R_GPREL;
       break;
     case BFD_RELOC_MIPS_LITERAL:
@@ -557,10 +567,9 @@ mips_swap_reloc_in (abfd, src, dst)
   RELOC *reloc_src = (RELOC *) src;
   struct internal_reloc *reloc_dst = (struct internal_reloc *) dst;
 
-  reloc_dst->r_vaddr = bfd_h_get_32(abfd, (bfd_byte *)reloc_src->r_vaddr);
-  reloc_dst->r_symndx =
-    bfd_h_get_signed_32(abfd, (bfd_byte *) reloc_src->r_symndx);
-  reloc_dst->r_type = bfd_h_get_16(abfd, (bfd_byte *) reloc_src->r_type);
+  reloc_dst->r_vaddr = H_GET_32 (abfd, reloc_src->r_vaddr);
+  reloc_dst->r_symndx = H_GET_S32 (abfd, reloc_src->r_symndx);
+  reloc_dst->r_type = H_GET_16 (abfd, reloc_src->r_type);
   reloc_dst->r_size = 0;
   reloc_dst->r_extern = 0;
   reloc_dst->r_offset = 0;
@@ -604,23 +613,18 @@ mips_swap_reloc_out (abfd, src, dst)
 	     the same address as a REFHI, we assume this is the matching
 	     PAIR reloc and output it accordingly.  The symndx is really
 	     the low 16 bits of the addend */
-	  bfd_h_put_32 (abfd, reloc_src->r_vaddr,
-			(bfd_byte *) reloc_dst->r_vaddr);
-	  bfd_h_put_32 (abfd, reloc_src->r_symndx,
-			(bfd_byte *) reloc_dst->r_symndx);
-
-	  bfd_h_put_16(abfd, MIPS_R_PAIR, (bfd_byte *)
-		       reloc_dst->r_type);
+	  H_PUT_32 (abfd, reloc_src->r_vaddr, reloc_dst->r_vaddr);
+	  H_PUT_32 (abfd, reloc_src->r_symndx, reloc_dst->r_symndx);
+	  H_PUT_16 (abfd, MIPS_R_PAIR, reloc_dst->r_type);
 	  return RELSZ;
 	}
       break;
     }
 
-  bfd_h_put_32(abfd, reloc_src->r_vaddr, (bfd_byte *) reloc_dst->r_vaddr);
-  bfd_h_put_32(abfd, reloc_src->r_symndx, (bfd_byte *) reloc_dst->r_symndx);
+  H_PUT_32 (abfd, reloc_src->r_vaddr, reloc_dst->r_vaddr);
+  H_PUT_32 (abfd, reloc_src->r_symndx, reloc_dst->r_symndx);
 
-  bfd_h_put_16(abfd, reloc_src->r_type, (bfd_byte *)
-	       reloc_dst->r_type);
+  H_PUT_16 (abfd, reloc_src->r_type, reloc_dst->r_type);
   return RELSZ;
 }
 
@@ -653,7 +657,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
   {
     (*_bfd_error_handler) (_("\
 %s: `ld -r' not supported with PE MIPS objects\n"),
-			  bfd_get_filename (input_bfd));
+			   bfd_archive_filename (input_bfd));
     bfd_set_error (bfd_error_bad_value);
     return false;
   }
@@ -788,7 +792,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
       */
 
 #define UI(x) (*_bfd_error_handler) (_("%s: unimplemented %s\n"), \
-				    bfd_get_filename (input_bfd), x); \
+				     bfd_archive_filename (input_bfd), x); \
 	      bfd_set_error (bfd_error_bad_value);
 
       switch (rel->r_type)
@@ -814,7 +818,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
 	  if ((src & 0xf0000000) != (targ & 0xf0000000))
 	    {
 	      (*_bfd_error_handler) (_("%s: jump too far away\n"),
-				    bfd_get_filename (input_bfd));
+				     bfd_archive_filename (input_bfd));
 	      bfd_set_error (bfd_error_bad_value);
 	      return false;
 	    }
@@ -841,7 +845,7 @@ coff_pe_mips_relocate_section (output_bfd, info, input_bfd,
 	      break;
 	    default:
 	      (*_bfd_error_handler) (_("%s: bad pair/reflo after refhi\n"),
-				    bfd_get_filename (input_bfd));
+				     bfd_archive_filename (input_bfd));
 	      bfd_set_error (bfd_error_bad_value);
 	      return false;
 	    }

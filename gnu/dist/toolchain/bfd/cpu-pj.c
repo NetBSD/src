@@ -1,5 +1,5 @@
 /* BFD library support routines for the Pico Java architecture.
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Transmeta. sac@pobox.com
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
+
+static boolean scan_mach
+  PARAMS ((const struct bfd_arch_info *, const char *));
 
 static boolean
 scan_mach (info, string)

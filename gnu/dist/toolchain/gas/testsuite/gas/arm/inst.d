@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: ARM basic instructions
-#as: -marm2 -EL
+#as: -mcpu=arm7m -EL
 
 # Test the standard ARM instructions:
 
@@ -126,7 +126,7 @@ Disassembly of section .text:
 0+1d0 <[^>]*> 14954006 ?	ldrne	r4, \[r5\], #6
 0+1d4 <[^>]*> e6b21003 ?	ldrt	r1, \[r2\], r3
 0+1d8 <[^>]*> e6942425 ?	ldr	r2, \[r4\], r5, lsr #8
-0+1dc <[^>]*> e51f0008 ?	ldr	r0, \[pc, #fffffff8\]	; 0+1dc <[^>]*>
+0+1dc <[^>]*> e51f0008 ?	ldr	r0, \[pc, #-8\]	; 0+1dc <[^>]*>
 0+1e0 <[^>]*> e5d43000 ?	ldrb	r3, \[r4\]
 0+1e4 <[^>]*> 14f85000 ?	ldrnebt	r5, \[r8\]
 0+1e8 <[^>]*> e5810000 ?	str	r0, \[r1\]
@@ -138,7 +138,7 @@ Disassembly of section .text:
 0+200 <[^>]*> 14854006 ?	strne	r4, \[r5\], #6
 0+204 <[^>]*> e6821003 ?	str	r1, \[r2\], r3
 0+208 <[^>]*> e6a42425 ?	strt	r2, \[r4\], r5, lsr #8
-0+20c <[^>]*> e50f1004 ?	str	r1, \[pc, #fffffffc\]	; 0+210 <[^>]*>
+0+20c <[^>]*> e50f1004 ?	str	r1, \[pc, #-4\]	; 0+210 <[^>]*>
 0+210 <[^>]*> e5c71000 ?	strb	r1, \[r7\]
 0+214 <[^>]*> e4e02000 ?	strbt	r2, \[r0\]
 0+218 <[^>]*> e8900002 ?	ldmia	r0, {r1}

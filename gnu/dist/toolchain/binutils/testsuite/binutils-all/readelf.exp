@@ -192,7 +192,7 @@ proc readelf_test { options binary_file regexp_file xfails } {
 
     set target_machine ""
     if [istarget "mips*-*-*"] then {
-	if { [istarget mips*el-*-*] || [istarget "mips*-*-*linux*"] } then {
+	if { [istarget "mips*-*-*linux*"] } then {
 	    set target_machine tmips
 	} else {
 	    set target_machine mips
@@ -229,6 +229,7 @@ if { ![istarget *-*-elf*] \
      && ![istarget mips*-*-irix5*] \
      && ![istarget mips*-*-irix6*] \
      && ![istarget powerpc-*-sysv4*] \
+     && ![istarget powerpc-*-eabi*] \
      && ![istarget sparc*-*-solaris2*] } {
     verbose "$READELF is only intended for ELF targets" 2
     return
@@ -249,7 +250,7 @@ if ![is_remote host] {
 
 send_user "Version [binutil_version $READELF]"
 
-# Assemle the test file.
+# Assemble the test file.
 if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
     perror "unresolved 1"
     unresolved "readelf - failed to assemble"
@@ -287,4 +288,4 @@ if [is_remote host] {
 # The xfail targets here do not default to DWARF2 format debug information
 # The symptom is that the output of 'readelf -wi' is empty.
 
-readelf_test -wi $tempfile readelf.wi {v850*-*-* cris-*-* *-*-linux*}
+readelf_test -wi $tempfile readelf.wi {v850*-*-* cris-*-* mips*-*-elf* *-*-linux* h8300*-*-*}

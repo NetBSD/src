@@ -1,30 +1,37 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *      The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that: (1) source distributions retain this entire copyright
- * notice and comment, and (2) distributions including binaries display
- * the following acknowledgement:  ``This product includes software
- * developed by the University of California, Berkeley and its contributors''
- * in the documentation or other materials provided with the distribution
- * and in all advertising materials mentioning features or use of this
- * software. Neither the name of the University nor the names of its
- * contributors may be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- *      @(#)gprof.h     5.9 (Berkeley) 6/1/90
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 #ifndef gprof_h
 #define gprof_h
 
-#include "ansidecl.h"
-
 /* Include the BFD sysdep.h file.  */
 #include "sysdep.h"
+#include "bfd.h"
 
 /* Undefine the BFD PACKAGE and VERSION macros before including the
    gprof config.h file.  */
@@ -63,16 +70,6 @@
 
 #include "bin-bugs.h"
 
-/*
- * These may already be defined on some systems.  We could probably
- * just use the BFD versions of these, since BFD has already dealt
- * with this problem.
- */
-#undef FALSE
-#define	FALSE	0
-#undef TRUE
-#define	TRUE	1
-
 #define STYLE_FLAT_PROFILE	(1<<0)
 #define STYLE_CALL_GRAPH	(1<<1)
 #define STYLE_SUMMARY_FILE	(1<<2)
@@ -109,7 +106,6 @@ typedef enum
   }
 File_Format;
 
-typedef int bool;
 typedef unsigned char UNIT[2];	/* unit of profiling */
 
 extern const char *whoami;	/* command-name, for error messages */
@@ -120,24 +116,24 @@ extern long hz;			/* ticks per second */
 /*
  * Command-line options:
  */
-extern int debug_level;		/* debug level */
+extern int debug_level;			/* debug level */
 extern int output_style;
-extern int output_width;	/* controls column width in index */
-extern bool bsd_style_output;	/* as opposed to FSF style output */
-extern bool demangle;		/* demangle symbol names? */
-extern bool discard_underscores;	/* discard leading underscores? */
-extern bool ignore_direct_calls;	/* don't count direct calls */
-extern bool ignore_static_funcs;	/* suppress static functions */
-extern bool ignore_zeros;	/* ignore unused symbols/files */
-extern bool line_granularity;	/* function or line granularity? */
-extern bool print_descriptions;	/* output profile description */
-extern bool print_path;		/* print path or just filename? */
-extern bool ignore_non_functions;/* Ignore non-function symbols.  */
+extern int output_width;		/* controls column width in index */
+extern boolean bsd_style_output;	/* as opposed to FSF style output */
+extern boolean demangle;		/* demangle symbol names? */
+extern boolean discard_underscores;	/* discard leading underscores? */
+extern boolean ignore_direct_calls;	/* don't count direct calls */
+extern boolean ignore_static_funcs;	/* suppress static functions */
+extern boolean ignore_zeros;		/* ignore unused symbols/files */
+extern boolean line_granularity;	/* function or line granularity? */
+extern boolean print_descriptions;	/* output profile description */
+extern boolean print_path;		/* print path or just filename? */
+extern boolean ignore_non_functions;	/* Ignore non-function symbols.  */
 
-extern File_Format file_format;	/* requested file format */
+extern File_Format file_format;		/* requested file format */
 
-extern bool first_output;	/* no output so far? */
+extern boolean first_output;		/* no output so far? */
 
-extern void done PARAMS ((int status));
+extern void done PARAMS ((int status)) ATTRIBUTE_NORETURN;
 
 #endif /* gprof_h */

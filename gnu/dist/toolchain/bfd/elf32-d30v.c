@@ -1,5 +1,6 @@
 /* D30V-specific support for 32-bit ELF
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -313,7 +314,7 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
   /* Here the variable relocation holds the final address of the
      symbol we are relocating against, plus any addend.  */
 
-  if (howto->pc_relative == true)
+  if (howto->pc_relative)
     {
       tmp_addr = input_section->output_section->vma + input_section->output_offset
 	+ reloc_entry->address;
@@ -332,7 +333,7 @@ bfd_elf_d30v_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd, 
 
   relocation += num;
 
-  if (howto->pc_relative == true && howto->bitsize == 32)
+  if (howto->pc_relative && howto->bitsize == 32)
     {
       /* The D30V has a PC that doesn't wrap and PC-relative jumps are
 	 signed, so a PC-relative jump can't be more than +/- 2^31 bytes.
@@ -422,11 +423,11 @@ bfd_elf_d30v_reloc_21 (abfd, reloc_entry, symbol, data, input_section, output_bf
   /* Here the variable relocation holds the final address of the
      symbol we are relocating against, plus any addend.  */
 
-  if (howto->pc_relative == true)
+  if (howto->pc_relative)
     {
       relocation -= (input_section->output_section->vma
 		     + input_section->output_offset);
-      if (howto->pcrel_offset == true)
+      if (howto->pcrel_offset)
 	relocation -= reloc_entry->address;
     }
 
@@ -546,7 +547,8 @@ d30v_info_to_howto_rela (abfd, cache_ptr, dst)
 }
 
 #define ELF_ARCH		bfd_arch_d30v
-#define ELF_MACHINE_CODE	EM_CYGNUS_D30V
+#define ELF_MACHINE_CODE	EM_D30V
+#define ELF_MACHINE_ALT1	EM_CYGNUS_D30V
 #define ELF_MAXPAGESIZE		0x1000
 
 #define TARGET_BIG_SYM          bfd_elf32_d30v_vec

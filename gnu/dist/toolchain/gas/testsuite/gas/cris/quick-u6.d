@@ -6,7 +6,7 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <start>:
+0+ <start>:
 [	 ]+0:[	 ]+@IR+1632@[ 	]+@OC@[ ]+22,r3
 [	 ]+2:[	 ]+@IR+0b52@[ 	]+@OC@[ ]+11,r5
 [	 ]+4:[	 ]+@IR+00a2@[ 	]+@OC@[ ]+0,r10
@@ -15,7 +15,7 @@ Disassembly of section \.text:
 [	 ]+a:[	 ]+@IR+00b2@[ 	]+@OC@[ ]+0,r11
 [	 ]+c:[	 ]+@IR+0ab2@[ 	]+@OC@[ ]+10,r11
 [	 ]+e:[	 ]+@IR+00c2@[ 	]+@OC@[ ]+0,r12
-00000010 <unsigned6>:
+0+10 <unsigned6>:
 [	 ]+10:[	 ]+@IR+2c32@[ 	]+@OC@[ ]+44,r3
 [	 ]+12:[	 ]+@IR+3952@[ 	]+@OC@[ ]+57,r5
 [	 ]+14:[	 ]+@IR+00a2@[ 	]+@OC@[ ]+0,r10

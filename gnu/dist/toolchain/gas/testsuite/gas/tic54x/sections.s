@@ -56,16 +56,17 @@ pk2:	.bes	20
 endpk2	.bes	12		
 pk3:	.space	20
 endpk3:	.bes	12		
-        ; named initialized section (TI assembler marks this as DATA, not CODE)
+        ; named initialized section (CODE)
 	.sect	"vectors"
-	.word	011h, 033h
+        nop
+	nop
 	
-        ; named, initialized section, no quotes  (TI assembler marks as DATA)
+        ; named, initialized section, no quotes  (DATA)
 	.sect clink
 	.clink			; mark section clink as STYP_CLINK
 	.word	022h, 044h
 	
-	.sect	"blksect"  ; (TI assembler marks this as DATA)
+	.sect	"blksect"  ; (DATA)
 	.word	0x1234,0x4321
 	.sblock	"blksect", vectors ; set block flag on blksect and vectors
 

@@ -4,10 +4,10 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <notstart>:
+0+ <notstart>:
 [	 ]+0:[	 ]+0000[ 	]+bcc ( 0x2|\.\+2)
 ^[ 	]+\.\.\.
-00000004 <start>:
+0+4 <start>:
 [	 ]+4:[	 ]+@IR+3306@[ 	]+move[ ]+r3,.*
 [	 ]+6:[	 ]+@IM+300a@[ 	]+move[ ]+\[r0\],.*
 [	 ]+8:[	 ]+@IM+300e@[ 	]+move[ ]+\[r0\+\],.*
@@ -89,6 +89,5 @@ Disassembly of section \.text:
 [ 	]+138:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+13e:[	 ]+7f0d 0000 0000 @IM+300a@[ 	]+move[ ]+\[(0x0|0 <notstart>)\],.*
 [ 	]+140:[ 	]+(R_CRIS_)?32[ 	]+\.text
-00000146 <end>:
+0+146 <end>:
 ^[ 	]+\.\.\.
-

@@ -1,5 +1,5 @@
 /* ldctor.c -- constructor support routines
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
    Free Software Foundation, Inc.
    By Steve Chamberlain <sac@cygnus.com>
 
@@ -23,14 +23,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "bfd.h"
 #include "sysdep.h"
 #include "bfdlink.h"
-
-#include <ctype.h>
+#include "safe-ctype.h"
 
 #include "ld.h"
 #include "ldexp.h"
 #include "ldlang.h"
 #include "ldmisc.h"
-#include "ldgram.h"
+#include <ldgram.h>
 #include "ldmain.h"
 #include "ldctor.h"
 
@@ -146,7 +145,7 @@ ctor_prio (name)
     return -1;
   if (name[1] != 'I' && name[1] != 'D')
     return -1;
-  if (! isdigit ((unsigned char) name[3]))
+  if (! ISDIGIT (name[3]))
     return -1;
 
   return atoi (name + 3);

@@ -1,4 +1,4 @@
-# Copyright (C) 1993, 1996, 1997 Free Software Foundation, Inc.
+# Copyright 1993, 1996, 1997, 2002 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -296,18 +296,37 @@ proc do_local_label_as_operand_test {} {
     if [gas_test_old "labelopbug.s" "" "Local label as operand (part 1)"] {
 	objdump_start_no_subdir "a.out" "-r"
 
-	# Check to make sure we handle difference of local lables as an operand
-	# to a non-branching instruction correctly.
-	while 1 {
-	    expect {
-	        -re "^0+2c\[^\n\]*0x0+24\[^\n\]*\n" 
-		    { set x [expr $x+1] }
-	        -re "^0+30\[^\n\]*0x0+24\[^\n\]*\n" 
-		    { set x [expr $x+1] }
-	        -re "\[^\n\]*\n"		{ }
-	        timeout				{ perror "timeout\n"; break }
-	        eof				{ break }
-            }
+	# Check to make sure we handle difference of local labels as an operand
+	# to a non-branching instruction correctly.  On hppa elf targets, the
+	# R_PARISC_DIR21 and R_PARISC_DIR14R relocations are done with LR and
+	# RR selectors, respectively.  As a result, we can't reduce these to
+	# section offsets without risking incorrect rounding.  So, we just
+	# check to see if the label hasn't been reduced.
+	if {[istarget hppa*64*-*-*]
+	    || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
+	    while 1 {
+		expect {
+	            -re "^0+2c\[^\n\]*L.0002\[^\n\]*\n" 
+			{ set x [expr $x+1] }
+	            -re "^0+30\[^\n\]*L.0002\[^\n\]*\n" 
+			{ set x [expr $x+1] }
+	            -re "\[^\n\]*\n"		{ }
+	            timeout			{ perror "timeout\n"; break }
+	            eof				{ break }
+		}
+	    }
+	} else {
+	    while 1 {
+		expect {
+	            -re "^0+2c\[^\n\]*0x0+24\[^\n\]*\n" 
+			{ set x [expr $x+1] }
+	            -re "^0+30\[^\n\]*0x0+24\[^\n\]*\n" 
+			{ set x [expr $x+1] }
+	            -re "\[^\n\]*\n"		{ }
+	            timeout			{ perror "timeout\n"; break }
+	            eof				{ break }
+		}
+	    }
 	}
 
 	# This was intended to do any cleanup necessary.  It kinda looks like it

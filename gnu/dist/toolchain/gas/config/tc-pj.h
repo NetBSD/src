@@ -46,7 +46,7 @@ arelent *tc_gen_reloc PARAMS((asection *section, struct fix *fixp));
 	((FIXP)->fx_where + (FIXP)->fx_frag->fr_address - 1)
 
 #define TC_CONS_FIX_NEW(FRAG, WHERE, NBYTES, EXP) \
-	pj_cons_fix_new_pj(FRAG, WHERE, NBYTES, EXP)
+	pj_cons_fix_new_pj (FRAG, WHERE, NBYTES, EXP)
 
 /* Always leave vtable relocs untouched in the output.  */
 #define TC_FORCE_RELOCATION(FIX)                                  	\

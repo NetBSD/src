@@ -4,15 +4,15 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <start_original>:
+0+ <start_original>:
 [	 ]+0:[	 ]+0f05[ 	]+nop[ ]*
-00000002 <startm32>:
+0+2 <startm32>:
 [	 ]+2:[	 ]+0f05[ 	]+nop[ ]*
 ^[ 	]+\.\.\.
-00007e6a <startm16>:
+0+7e6a <startm16>:
 [	 ]+7e6a:[	 ]+0f05[ 	]+nop[ ]*
 ^[ 	]+\.\.\.
-00007f2e <start>:
+0+7f2e <start>:
 [	 ]+7f2e:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+7f30:[	 ]+fde0[ 	]+ba[ ]+(0x7f2e|7f2e <start>)
 [	 ]+7f32:[	 ]+fb00[ 	]+bcc[ ]+(0x7f2e|7f2e <start>)
@@ -34,7 +34,7 @@ Disassembly of section \.text:
 [	 ]+7f52:[	 ]+db60[ 	]+bpl[ ]+(0x7f2e|7f2e <start>)
 [	 ]+7f54:[	 ]+d940[ 	]+bvc[ ]+(0x7f2e|7f2e <start>)
 [	 ]+7f56:[	 ]+d750[ 	]+bvs[ ]+(0x7f2e|7f2e <start>)
-00007f58 <start2>:
+0+7f58 <start2>:
 [	 ]+7f58:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+7f5a:[	 ]+0fe0[ 	]+ba[ ]+(0x7e6a|7e6a <startm16>)
 [	 ]+7f5c:[	 ]+0d00[ 	]+bcc[ ]+(0x7e6a|7e6a <startm16>)
@@ -56,7 +56,7 @@ Disassembly of section \.text:
 [	 ]+7f8e:[	 ]+ff6d d8fe[ 	]+bpl (0x7e6a|7e6a <startm16>)
 [	 ]+7f92:[	 ]+ff4d d4fe[ 	]+bvc (0x7e6a|7e6a <startm16>)
 [	 ]+7f96:[	 ]+ff5d d0fe[ 	]+bvs (0x7e6a|7e6a <startm16>)
-00007f9a <start3>:
+0+7f9a <start3>:
 [	 ]+7f9a:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+7f9c:[	 ]+ffed cafe[ 	]+ba (0x7e6a|7e6a <startm16>)
 [	 ]+7fa0:[	 ]+ff0d c6fe[ 	]+bhs (0x7e6a|7e6a <startm16>)
@@ -78,7 +78,7 @@ Disassembly of section \.text:
 [	 ]+7fe0:[	 ]+ff6d 86fe[ 	]+bpl (0x7e6a|7e6a <startm16>)
 [	 ]+7fe4:[	 ]+ff4d 82fe[ 	]+bvc (0x7e6a|7e6a <startm16>)
 [	 ]+7fe8:[	 ]+ff5d 7efe[ 	]+bvs (0x7e6a|7e6a <startm16>)
-00007fec <start4>:
+0+7fec <start4>:
 [	 ]+7fec:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+7fee:[	 ]+ffed 1080[ 	]+ba (0x2|2 <startm32>)
 [	 ]+7ff2:[	 ]+ff0d 0c80[ 	]+bhs (0x2|2 <startm32>)
@@ -160,7 +160,7 @@ Disassembly of section \.text:
 [	 ]+80ae:[	 ]+3f0d 0200 0000[ 	]+jump[ ]+(0x2|2 <startm32>)
 [ 	]+80b0:[ 	]+(R_CRIS_)?32[ 	]+\.text\+0x[0]*2
 [	 ]+80b4:[	 ]+f950[ 	]+bvs[ ]+(0x80ae|80ae <start4\+0x..>)
-000080b6 <start5>:
+0+80b6 <start5>:
 [	 ]+80b6:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+80b8:[	 ]+08e0[ 	]+ba[ ]+(0x80c2|80c2 <start5\+0xc>)
 [	 ]+80ba:[	 ]+0f05[ 	]+nop[ ]*
@@ -262,7 +262,7 @@ Disassembly of section \.text:
 [	 ]+81a0:[	 ]+3f0d 0200 0000[ 	]+jump[ ]+(0x2|2 <startm32>)
 [ 	]+81a2:[ 	]+(R_CRIS_)?32[ 	]+\.text\+0x[0]*2
 [	 ]+81a6:[	 ]+f950[ 	]+bvs[ ]+(0x81a0|81a0 <start5\+0x..>)
-000081a8 <start6>:
+0+81a8 <start6>:
 [	 ]+81a8:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+81aa:[	 ]+08e0[ 	]+ba[ ]+(0x81b4|81b4 <start6\+0xc>)
 [	 ]+81ac:[	 ]+0f05[ 	]+nop[ ]*
@@ -364,7 +364,7 @@ Disassembly of section \.text:
 [	 ]+8292:[	 ]+3f0d 4403 0100[ 	]+jump[ ]+(0x[0]*10344|10344 <endp32>)
 [ 	]+8294:[ 	]+(R_CRIS_)?32[ 	]+\.text\+0x[0]*10344
 [	 ]+8298:[	 ]+f950[ 	]+bvs[ ]+(0x8292|8292 <start6\+0x..>)
-0000829a <start7>:
+0+829a <start7>:
 [	 ]+829a:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+829c:[	 ]+08e0[ 	]+ba[ ]+(0x82a6|82a6 <start7\+0xc>)
 [	 ]+829e:[	 ]+0f05[ 	]+nop[ ]*
@@ -442,7 +442,7 @@ Disassembly of section \.text:
 [	 ]+8350:[	 ]+ff6d f07f[ 	]+bpl (0x[0]*10344|10344 <endp32>)
 [	 ]+8354:[	 ]+ff4d ec7f[ 	]+bvc (0x[0]*10344|10344 <endp32>)
 [	 ]+8358:[	 ]+ff5d e87f[ 	]+bvs (0x[0]*10344|10344 <endp32>)
-0000835c <start8>:
+0+835c <start8>:
 [	 ]+835c:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+835e:[	 ]+ffed 7a01[ 	]+ba (0x84dc|84dc <endp16>)
 [	 ]+8362:[	 ]+ff0d 7601[ 	]+bhs (0x84dc|84dc <endp16>)
@@ -464,7 +464,7 @@ Disassembly of section \.text:
 [	 ]+83a2:[	 ]+ff6d 3601[ 	]+bpl (0x84dc|84dc <endp16>)
 [	 ]+83a6:[	 ]+ff4d 3201[ 	]+bvc (0x84dc|84dc <endp16>)
 [	 ]+83aa:[	 ]+ff5d 2e01[ 	]+bvs (0x84dc|84dc <endp16>)
-000083ae <start9>:
+0+83ae <start9>:
 [	 ]+83ae:[	 ]+0f05[ 	]+nop[ ]*
 [	 ]+83b0:[	 ]+ffed 2801[ 	]+ba (0x84dc|84dc <endp16>)
 [	 ]+83b4:[	 ]+ff0d 2401[ 	]+bhs (0x84dc|84dc <endp16>)
@@ -486,7 +486,7 @@ Disassembly of section \.text:
 [	 ]+83e8:[	 ]+f260[ 	]+bpl[ ]+(0x84dc|84dc <endp16>)
 [	 ]+83ea:[	 ]+f040[ 	]+bvc[ ]+(0x84dc|84dc <endp16>)
 [	 ]+83ec:[	 ]+ee50[ 	]+bvs[ ]+(0x84dc|84dc <endp16>)
-000083ee <start10>:
+0+83ee <start10>:
 [	 ]+83ee:[	 ]+28e0[ 	]+ba[ ]+(0x8418|8418 <end>)
 [	 ]+83f0:[	 ]+2600[ 	]+bcc[ ]+(0x8418|8418 <end>)
 [	 ]+83f2:[	 ]+2410[ 	]+bcs[ ]+(0x8418|8418 <end>)
@@ -508,12 +508,12 @@ Disassembly of section \.text:
 [	 ]+8412:[	 ]+0440[ 	]+bvc[ ]+(0x8418|8418 <end>)
 [	 ]+8414:[	 ]+0250[ 	]+bvs[ ]+(0x8418|8418 <end>)
 [	 ]+8416:[	 ]+0f05[ 	]+nop[ ]*
-00008418 <end>:
+0+8418 <end>:
 [	 ]+8418:[	 ]+0f05[ 	]+nop[ ]*
 ^[ 	]+\.\.\.
-000084dc <endp16>:
+0+84dc <endp16>:
 [	 ]+84dc:[	 ]+0f05[ 	]+nop[ ]*
 ^[ 	]+\.\.\.
-00010344 <endp32>:
+0+10344 <endp32>:
 [	 ]+10344:[	 ]+0f05[ 	]+nop[ ]*
 ^[ 	]+\.\.\.

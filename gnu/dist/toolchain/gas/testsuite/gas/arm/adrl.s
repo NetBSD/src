@@ -9,6 +9,7 @@ foo:
 	adrl	r0, 1f
         adrl    r0, 2b
 	adrl	r0, 2f
+	adrEQl	r0, 2f
 2:
 	.space 8200
 1:

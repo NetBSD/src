@@ -1,5 +1,5 @@
 /* wrstabs.c -- Output stabs debugging information
-   Copyright 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000, 2001 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -23,12 +23,12 @@
    information.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include <assert.h>
 
 #include "bfd.h"
 #include "bucomm.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "debug.h"
 #include "budbg.h"
 
@@ -795,7 +795,7 @@ stab_bool_type (p, size)
     case 2:
       index = -22;
       break;
-      
+
     default:
     case 4:
       index = -16;
@@ -963,7 +963,7 @@ stab_modify_type (info, mod, size, cache, cache_alloc)
     }
 
   return true;
-}  
+}
 
 /* Push a pointer type.  */
 
@@ -1368,7 +1368,6 @@ stab_get_struct_index (info, tag, id, kind, psize)
 /* Start outputting a struct.  We ignore the tag, and handle it in
    stab_tag.  */
 
-/*ARGSUSED*/
 static boolean
 stab_start_struct_type (p, tag, id, structp, size)
      PTR p;
@@ -2172,7 +2171,7 @@ stab_variable (p, name, kind, val)
       kindstr = "";
 
       /* Make sure that this is a type reference or definition.  */
-      if (! isdigit ((unsigned char) *s))
+      if (! ISDIGIT (*s))
 	{
 	  char *n;
 	  long index;
@@ -2379,7 +2378,6 @@ stab_end_block (p, addr)
 
 /* End a function.  */
 
-/*ARGSUSED*/
 static boolean
 stab_end_function (p)
      PTR p ATTRIBUTE_UNUSED;

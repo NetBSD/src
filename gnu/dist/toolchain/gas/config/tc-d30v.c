@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,8 +19,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/d30v.h"
 
@@ -246,7 +246,7 @@ check_range (num, bits, flags)
   if (bits == 32)
     {
       if (sizeof (unsigned long) * CHAR_BIT == 32)
-        return 0;
+	return 0;
 
       /* We don't record signed or unsigned for 32-bit quantities.
 	 Allow either.  */
@@ -1211,7 +1211,7 @@ parallel_ok (op1, insn1, op2, insn2, exec_type)
 	    return 0;
 	}
       else
-        if ((mod_reg[0][j] & (mod_reg[1][j] | used_reg[1][j])) != 0)
+	if ((mod_reg[0][j] & (mod_reg[1][j] | used_reg[1][j])) != 0)
 	  return 0;
     }
 
@@ -1454,7 +1454,7 @@ do_assemble (str, opcode, shortp, is_parallel)
        && !is_end_of_line[*op_end] && *op_end != ' ';
        op_end++)
     {
-      name[nlen] = tolower (op_start[nlen]);
+      name[nlen] = TOLOWER (op_start[nlen]);
       nlen++;
     }
 
@@ -1833,73 +1833,70 @@ md_pcrel_from_section (fixp, sec)
   return fixp->fx_frag->fr_address + fixp->fx_where;
 }
 
-int
-md_apply_fix3 (fixp, valuep, seg)
-     fixS *fixp;
-     valueT *valuep;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP;
+     valueT * valP;
      segT seg;
 {
   char *where;
   unsigned long insn, insn2;
-  long value;
+  long value = * (long *) valP;
 
-  if (fixp->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valuep;
-      fixp->fx_done = 1;
-    }
-  else if (fixp->fx_pcrel)
-    value = *valuep;
+  if (fixP->fx_addsy == (symbolS *) NULL)
+    fixP->fx_done = 1;
+
+  else if (fixP->fx_pcrel)
+    ;
+
   else
     {
-      value = fixp->fx_offset;
+      value = fixP->fx_offset;
 
-      if (fixp->fx_subsy != (symbolS *) NULL)
+      if (fixP->fx_subsy != (symbolS *) NULL)
 	{
-	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
-	    value -= S_GET_VALUE (fixp->fx_subsy);
+	  if (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)
+	    value -= S_GET_VALUE (fixP->fx_subsy);
 	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    _("expression too complex"));
-	    }
+	    /* We don't actually support subtracting a symbol.  */
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("expression too complex"));
 	}
     }
 
   /* Fetch the instruction, insert the fully resolved operand
      value, and stuff the instruction back again.  */
-  where = fixp->fx_frag->fr_literal + fixp->fx_where;
+  where = fixP->fx_frag->fr_literal + fixP->fx_where;
   insn = bfd_getb32 ((unsigned char *) where);
 
-  switch (fixp->fx_r_type)
+  switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8:  /* Check for a bad .byte directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a byte"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else if (((unsigned)value) > 0xff)
 	as_bad (_("line %d: unable to place value %x into a byte"),
-		fixp->fx_line, value);
+		fixP->fx_line, value);
       else
 	*(unsigned char *) where = value;
       break;
 
     case BFD_RELOC_16:  /* Check for a bad .short directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a short"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else if (((unsigned)value) > 0xffff)
 	as_bad (_("line %d: unable to place value %x into a short"),
-		fixp->fx_line, value);
+		fixP->fx_line, value);
       else
 	bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
       break;
 
     case BFD_RELOC_64:  /* Check for a bad .quad directive.  */
-      if (fixp->fx_addsy != NULL)
+      if (fixP->fx_addsy != NULL)
 	as_bad (_("line %d: unable to place address of symbol '%s' into a quad"),
-		fixp->fx_line, S_GET_NAME (fixp->fx_addsy));
+		fixP->fx_line, S_GET_NAME (fixP->fx_addsy));
       else
 	{
 	  bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
@@ -1908,58 +1905,58 @@ md_apply_fix3 (fixp, valuep, seg)
       break;
 
     case BFD_RELOC_D30V_6:
-      check_size (value, 6, fixp->fx_file, fixp->fx_line);
+      check_size (value, 6, fixP->fx_file, fixP->fx_line);
       insn |= value & 0x3F;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_9_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_9_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_9_PCREL_R;
 	}
-      check_size (value, 9, fixp->fx_file, fixp->fx_line);
+      check_size (value, 9, fixP->fx_file, fixP->fx_line);
       insn |= ((value >> 3) & 0x3F) << 12;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_15:
-      check_size (value, 15, fixp->fx_file, fixp->fx_line);
+      check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_15_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_15_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_15_PCREL_R;
 	}
-      check_size (value, 15, fixp->fx_file, fixp->fx_line);
+      check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_21:
-      check_size (value, 21, fixp->fx_file, fixp->fx_line);
+      check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
 
     case BFD_RELOC_D30V_21_PCREL:
-      if (fixp->fx_where & 0x7)
+      if (fixP->fx_where & 0x7)
 	{
-	  if (fixp->fx_done)
+	  if (fixP->fx_done)
 	    value += 4;
 	  else
-	    fixp->fx_r_type = BFD_RELOC_D30V_21_PCREL_R;
+	    fixP->fx_r_type = BFD_RELOC_D30V_21_PCREL_R;
 	}
-      check_size (value, 21, fixp->fx_file, fixp->fx_line);
+      check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
       bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
       break;
@@ -1988,10 +1985,8 @@ md_apply_fix3 (fixp, valuep, seg)
 
     default:
       as_bad (_("line %d: unknown relocation type: 0x%x"),
-	      fixp->fx_line, fixp->fx_r_type);
+	      fixP->fx_line, fixP->fx_r_type);
     }
-
-  return 0;
 }
 
 /* Called after the assembler has finished parsing the input file or
@@ -2045,7 +2040,7 @@ d30v_start_line ()
 {
   char *c = input_line_pointer;
 
-  while (isspace (*c))
+  while (ISSPACE (*c))
     c++;
 
   if (*c == '.')

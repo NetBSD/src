@@ -35,4 +35,5 @@ if [istarget "ia64-*"] then {
     run_dump_test "dv-mutex"
     run_dump_test "dv-safe"
     run_dump_test "dv-srlz"
+    run_dump_test "tls"
 }

@@ -1,5 +1,5 @@
 /* tc-fr30.h -- Header file for tc-fr30.c.
-   Copyright 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -46,7 +46,6 @@ long md_pcrel_from_section PARAMS ((struct fix *, segT));
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
 
-#define MD_APPLY_FIX3
 #define md_apply_fix3 gas_cgen_md_apply_fix3
 
 #define obj_fix_adjustable(fixP) fr30_fix_adjustable (fixP)
@@ -55,8 +54,6 @@ extern boolean fr30_fix_adjustable PARAMS ((struct fix *));
 /* When relaxing, we need to emit various relocs we otherwise wouldn't.  */
 #define TC_FORCE_RELOCATION(fix) fr30_force_relocation (fix)
 extern int fr30_force_relocation PARAMS ((struct fix *));
-
-#define TC_HANDLES_FX_DONE
 
 #define tc_gen_reloc gas_cgen_tc_gen_reloc
 

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: XScale instructions
-#as: -mxscale -EL
+#as: -mcpu=xscale -EL
 
 # Test the XScale instructions:
 
@@ -23,16 +23,13 @@ Disassembly of section .text:
 0+34 <[^>]*> f5d1f789 	pld	\[r1, #1929\]
 0+38 <[^>]*> f7d2f003 	pld	\[r2, r3\]
 0+3c <[^>]*> f754f285 	pld	\[r4, -r5, lsl #5\]
-0+40 <[^>]*> f456f456 	pld	\[r6\], -#1110
-0+44 <[^>]*> f6d7f008 	pld	\[r7\], r8
-0+48 <[^>]*> f659f06a 	pld	\[r9\], -sl, rrx
-0+4c <[^>]*> e1c100d0 	ldrd	r0, \[r1\]
-0+50 <[^>]*> 01c327d8 	ldreqd	r2, \[r3, #120\]
-0+54 <[^>]*> b10540d6 	ldrltd	r4, \[r5, -r6\]
-0+58 <[^>]*> e16a88f9 	strd	r8, \[sl, -#137\]!
-0+5c <[^>]*> e1ac00fd 	strd	r0, \[ip, sp\]!
-0+60 <[^>]*> 30ce21f0 	strccd	r2, \[lr\], #16
-0+64 <[^>]*> 708640f8 	strvcd	r4, \[r6\], r8
-0+68 <[^>]*> e5910000 	ldr	r0, \[r1\]
-0+6c <[^>]*> e5832000 	str	r2, \[r3\]
-0+70 <[^>]*> e321f011 	msr	CPSR_c, #17	; 0x11
+0+40 <[^>]*> e1c100d0 	ldrd	r0, \[r1\]
+0+44 <[^>]*> 01c327d8 	ldreqd	r2, \[r3, #120\]
+0+48 <[^>]*> b10540d6 	ldrltd	r4, \[r5, -r6\]
+0+4c <[^>]*> e16a88f9 	strd	r8, \[sl, -#137\]!
+0+50 <[^>]*> e1ac00fd 	strd	r0, \[ip, sp\]!
+0+54 <[^>]*> 30ce21f0 	strccd	r2, \[lr\], #16
+0+58 <[^>]*> 708640f8 	strvcd	r4, \[r6\], r8
+0+5c <[^>]*> e5910000 	ldr	r0, \[r1\]
+0+60 <[^>]*> e5832000 	str	r2, \[r3\]
+0+64 <[^>]*> e321f011 	msr	CPSR_c, #17	; 0x11

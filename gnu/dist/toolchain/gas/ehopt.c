@@ -370,7 +370,7 @@ check_eh_frame (exp, pnbytes)
 	d->state = state_error;
       else
 	{
-          int left = (d->aug_size -= *pnbytes);
+	  int left = (d->aug_size -= *pnbytes);
 	  if (left == 0)
 	    d->state = state_wait_loc4;
 	  else if (left < 0)
@@ -462,7 +462,7 @@ eh_frame_estimate_size_before_relax (frag)
   int ca = frag->fr_subtype >> 3;
   int ret;
 
-  diff = resolve_symbol_value (frag->fr_symbol, 0);
+  diff = resolve_symbol_value (frag->fr_symbol);
 
   if (ca > 0 && diff % ca == 0 && diff / ca < 0x40)
     ret = 0;
@@ -508,7 +508,7 @@ eh_frame_convert_frag (frag)
   loc4_frag = (fragS *) frag->fr_opcode;
   loc4_fix = (int) frag->fr_offset;
 
-  diff = resolve_symbol_value (frag->fr_symbol, 1);
+  diff = resolve_symbol_value (frag->fr_symbol);
 
   switch (frag->fr_subtype & 7)
     {

@@ -1,5 +1,5 @@
 /* tc-tic80.c -- Assemble for the TI TMS320C80 (MV)
-   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,13 +19,14 @@
    02111-1307, USA.  */
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "opcode/tic80.h"
 
 #define internal_error(what) \
-  as_fatal(_("internal error:%s:%d: %s\n"), __FILE__, __LINE__, what)
+  as_fatal (_("internal error:%s:%d: %s\n"), __FILE__, __LINE__, what)
 
 #define internal_error_a(what,arg) \
-  as_fatal(_("internal error:%s:%d: %s %d\n"), __FILE__, __LINE__, what, arg)
+  as_fatal (_("internal error:%s:%d: %s %d\n"), __FILE__, __LINE__, what, arg)
 
 /* Generic assembler global variables which must be defined by all
    targets.  */
@@ -784,12 +785,12 @@ md_assemble (str)
   assert (str);
 
   /* Drop any leading whitespace.  */
-  while (isspace (*str))
+  while (ISSPACE (*str))
     str++;
 
   /* Isolate the mnemonic from the rest of the string by finding the first
      whitespace character and zapping it to a null byte.  */
-  for (scan = str; *scan != '\000' && !isspace (*scan); scan++)
+  for (scan = str; *scan != '\000' && !ISSPACE (*scan); scan++)
     ;
 
   if (*scan != '\000')
@@ -803,7 +804,7 @@ md_assemble (str)
     }
 
   str = scan;
-  while (isspace (*scan))
+  while (ISSPACE (*scan))
     scan++;
 
   input_line_save = input_line_pointer;
@@ -899,7 +900,7 @@ md_begin ()
 
 /* The assembler adds md_shortopts to the string passed to getopt.  */
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 
 /* The assembler adds md_longopts to the machine independent long options
    that are passed to getopt.  */
@@ -959,10 +960,12 @@ TIc80 options:\n\
    To indicate that a fixup has been eliminated, set fixP->fx_done.  */
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *dest = fixP->fx_frag->fr_literal + fixP->fx_where;
   int overflow;
 
@@ -1000,6 +1003,9 @@ md_apply_fix (fixP, val)
 			fixP->fx_r_type);
       break;
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Functions concerning relocs.  */

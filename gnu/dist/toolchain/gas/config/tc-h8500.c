@@ -1,5 +1,5 @@
 /* tc-h8500.c -- Assemble code for the Hitachi H8/500
-   Copyright 1993, 1994, 1995, 1998, 2000, 2001
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -28,7 +28,7 @@
 #define DEFINE_TABLE
 #define ASSEMBLER_TABLE
 #include "opcodes/h8500-opc.h"
-#include <ctype.h>
+#include "safe-ctype.h"
 
 const char comment_chars[] = "!";
 const char line_separator_chars[] = ";";
@@ -1199,7 +1199,7 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -1372,20 +1372,19 @@ md_section_align (seg, size)
 }
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (fixP->fx_r_type == 0)
-    {
-      fixP->fx_r_type = fixP->fx_size == 4 ? R_H8500_IMM32 : R_H8500_IMM16;
-    }
+    fixP->fx_r_type = fixP->fx_size == 4 ? R_H8500_IMM32 : R_H8500_IMM16;
 
   switch (fixP->fx_r_type)
     {
-
     case R_H8500_IMM8:
     case R_H8500_PCREL8:
       *buf++ = val;
@@ -1416,14 +1415,15 @@ md_apply_fix (fixP, val)
       break;
     default:
       abort ();
-
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
-/*
-called just before address relaxation, return the length
-by which a fragment must grow to reach it's destination
-*/
+/* Called just before address relaxation, return the length
+   by which a fragment must grow to reach it's destination.  */
+
 int
 md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
@@ -1589,10 +1589,10 @@ start_label (ptr)
      char *ptr;
 {
   /* Check for :s.w */
-  if (isalpha (ptr[1]) && ptr[2] == '.')
+  if (ISALPHA (ptr[1]) && ptr[2] == '.')
     return 0;
   /* Check for :s */
-  if (isalpha (ptr[1]) && !isalpha (ptr[2]))
+  if (ISALPHA (ptr[1]) && !ISALPHA (ptr[2]))
     return 0;
   return 1;
 }

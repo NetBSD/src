@@ -25,7 +25,9 @@ if ![isnative] then {return}
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
 # This is similar to the test that is used in ld-shared, BTW.
-if { ![istarget i?86-*-sysv4*] \
+if { ![istarget hppa*64*-*-hpux*] \
+     && ![istarget hppa*-*-linux*] \
+     && ![istarget i?86-*-sysv4*] \
      && ![istarget i?86-*-unixware] \
      && ![istarget i?86-*-elf*] \
      && ![istarget i?86-*-linux*] \
@@ -60,7 +62,7 @@ set tmpdir tmpdir
 set VOBJDUMP_FLAGS --private-headers
 set DOBJDUMP_FLAGS --dynamic-syms
 set SOBJDUMP_FLAGS --syms
-set shared --shared
+set shared "--shared --no-undefined-version"
 set script --version-script
 
 proc test_ar { test lib object expect } {
@@ -84,7 +86,7 @@ proc test_ar { test lib object expect } {
 
     catch "exec $nm --print-armap $tmpdir/$lib | grep \\\ in\\\  | egrep VERS\\\|bar\\\|foo | sort > $tmpdir/nm.out" exec_output
     if [string match "" $exec_output] then {
-	catch "exec $diff -q $tmpdir/nm.out $srcdir/$subdir/$expect" exec_output
+	catch "exec $diff $tmpdir/nm.out $srcdir/$subdir/$expect" exec_output
 	set exec_output [prune_warnings $exec_output]
 	if [string match "" $exec_output] then {
 	    pass $test
@@ -480,10 +482,11 @@ proc build_vers_lib { test source libname other mapfile verexp versymexp symexp 
 	return
     }
 
-    if [string match "" $other] then {
-	set other_lib ""
-    } else {
-	set other_lib $tmpdir/$other
+    set other_lib ""
+    if ![string match "" $other] then {
+	foreach o $other {
+	    set other_lib "$other_lib $tmpdir/$o"
+	}
     }
 
     if [string match "" $mapfile] then {
@@ -640,7 +643,7 @@ proc build_exec { test source execname flags solibname verexp versymexp symexp }
     global CC
     global CFLAGS
 
-    set shared --shared
+    set shared "--shared --no-undefined-version"
     set script --version-script
     if ![ld_compile "$CC -S $CFLAGS" $srcdir/$subdir/$source $tmpdir/$execname.s]     {
 	unresolved "$test"
@@ -816,3 +819,22 @@ build_exec "vers16" vers16.c vers16 "" vers16a.so "" vers16.dsym ""
 build_vers_lib "vers17" vers17.c vers17 "" vers17.map vers17.ver vers17.dsym ""
 build_vers_lib "vers18" vers18.c vers18 vers17.so vers18.map vers18.ver vers18.dsym vers18.sym
 build_exec "vers19" vers19.c vers19 "-rpath ." vers18.so vers19.ver vers19.dsym ""
+
+build_vers_lib "vers20a" vers20.c vers20a "" vers20.map vers20a.ver vers20.dsym ""
+exec cp $tmpdir/vers20a.so $tmpdir/vers20b.so
+build_vers_lib "vers20" vers20.c vers20 "vers20a.so vers20b.so" vers20.map vers20.ver vers20.dsym ""
+
+# Test .symver override.
+build_vers_lib "vers21" vers21.c vers21 "" vers21.map vers21.ver vers21.dsym vers21.sym
+
+# Test moving default definition from one DSO to another.
+build_vers_lib "vers22a" vers22a.c vers22a "" vers22.map vers22a.ver vers22a.dsym vers22a.sym
+build_vers_lib "vers22b" vers22b.c vers22b "" vers22.map vers22b.ver vers22b.dsym ""
+build_vers_lib "vers22" vers22.c vers22 "vers22a.so vers22b.so" "" vers22.ver vers22.dsym ""
+
+# Test versioned definitions in different files.
+build_vers_lib "vers23a" vers23a.c vers23a "" vers23a.map vers23a.ver vers23a.dsym vers23a.sym
+build_vers_lib "vers23b" vers23b.c vers23b "" vers23b.map vers23b.ver vers23b.dsym ""
+build_vers_lib "vers23c" vers23b.c vers23c "vers23a.so" vers23b.map vers23c.ver vers23b.dsym ""
+build_exec "vers23d" vers23.c vers23d "tmpdir/vers23a.so tmpdir/vers23c.so" "" vers23.ver vers23d.dsym ""
+build_exec "vers23" vers23.c vers23 "tmpdir/vers23a.so tmpdir/vers23b.o tmpdir/vers23b.so" "" vers23.ver vers23.dsym ""

@@ -1,5 +1,5 @@
 /* BFD back-end data structures for NLM (NetWare Loadable Modules) files.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2001 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -161,7 +161,7 @@ struct nlm_backend_data
   /* Architecture.  */
   enum bfd_architecture arch;
   /* Machine.  */
-  long mach;
+  unsigned int mach;
   /* Some NLM formats do not use the uninitialized data section, so
      all uninitialized data must be put into the regular data section
      instead.  */
@@ -169,7 +169,7 @@ struct nlm_backend_data
   /* Some NLM formats have a prefix on the file.  If this function is
      not NULL, it will be called by nlm_object_p.  It should return
      true if this file could match this format, and it should leave
-     the BFD such that a bfd_read will pick up the fixed header.  */
+     the BFD such that a bfd_bread will pick up the fixed header.  */
   boolean (*nlm_backend_object_p) PARAMS ((bfd *));
   /* Write out the prefix.  This function may be NULL.  This must
      write out the same number of bytes as is in the field

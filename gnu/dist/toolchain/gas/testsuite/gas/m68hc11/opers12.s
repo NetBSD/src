@@ -100,6 +100,19 @@ t2:
 	leas	min9b,pc
 	leas	max9b,pc
 
+;;
+;; Disassembler bug with movb
+;;
+	movb	#23,0x2345
+	movb	#40,12,sp
+	movb	#39,3,+sp
+	movb	#20,14,sp
+	movw	#0x3210,0x3456
+	movw	#0x4040,12,sp
+	movw	#0x3900,3,+sp
+	movw	#0x2000,14,sp
+#	movb	#111,start
+
 titi = 10
 toto = 100
 min5b= -15

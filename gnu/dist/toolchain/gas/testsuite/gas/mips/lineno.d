@@ -1,6 +1,6 @@
 #objdump: -d -l -mmips:4000
 #name: assembly line numbers
-#as: -g -mcpu=r4000
+#as: --gstabs -march=r4000
 
 
 .*: +file format .*mips.*

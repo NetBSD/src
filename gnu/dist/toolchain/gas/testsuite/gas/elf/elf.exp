@@ -39,8 +39,11 @@ if { ([istarget "*-*-elf*"]
      && ![istarget *-*-linux*oldld*]
 } then {
     set target_machine ""
-    if [istarget "mips*-*-*"] then {
+    if {[istarget "mips*-*-*"]} then {
 	set target_machine -mips
+    }
+    if {[istarget m32r*-*-*]} then {
+	set target_machine -m32r
     }
     run_dump_test "ehopt0"
     run_dump_test "section0" 

@@ -42,6 +42,11 @@ if [istarget a29k*-*-*] {
     set flags "$flags --defsym V_SPILL=0 --defsym V_FILL=0"
 }
 
+if [istarget sh64*-*-elf] {
+    # This is what gcc passes to ld by default.
+    set flags "-mshelf32"
+}
+
 verbose -log "$ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o"
 
 catch "exec $ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o" exec_output
@@ -54,7 +59,7 @@ if [string match "" $exec_output] then {
     fail $test1
 } else {
     verbose -log "$exec_output"
-    if [regexp "prohibited cross reference from .* to `foo' in" $exec_output] {
+    if [regexp "prohibited cross reference from .* to `.*foo' in" $exec_output] {
 	pass $test1
     } else {
 	fail $test1

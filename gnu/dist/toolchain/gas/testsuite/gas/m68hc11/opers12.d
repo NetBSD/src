@@ -88,3 +88,11 @@ Disassembly of section .text:
 0+10b <t2\+0x16> leas	0,PC
 0+10f <t2\+0x1a> leas	255,PC
 0+113 <t2\+0x1e> leas	0,PC
+0+117 <t2\+0x22> movb	#23, 0+2345 <max9b\+0x2246>
+0+11c <t2\+0x27> movb	#40, 12,SP
+0+120 <t2\+0x2b> movb	#39, 3,\+SP
+0+124 <t2\+0x2f> movb	#20, 14,SP
+0+128 <t2\+0x33> movw	#0+3210 <bb\+0xa10>, 0+3456 <bb\+0xc56>
+0+12e <t2\+0x39> movw	#0+4040 <bb\+0x1840>, 12,SP
+0+133 <t2\+0x3e> movw	#0+3900 <bb\+0x1100>, 3,\+SP
+0+138 <t2\+0x43> movw	#0+2000 <max9b\+0x1f01>, 14,SP

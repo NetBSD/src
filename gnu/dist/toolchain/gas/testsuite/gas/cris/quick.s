@@ -48,4 +48,3 @@ signed6:		; s6
  @OC@	-1,r13			; s6
  @OC@	-twenty2+21,r12		; s6
 end:
-

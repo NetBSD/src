@@ -1,5 +1,5 @@
 /* FR30-specific support for 32-bit ELF.
-   Copyright 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -33,13 +33,20 @@ static reloc_howto_type * fr30_reloc_type_lookup
 static void fr30_info_to_howto_rela
   PARAMS ((bfd *, arelent *, Elf32_Internal_Rela *));
 static boolean fr30_elf_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *, Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
+  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
+	   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
 static bfd_reloc_status_type fr30_final_link_relocate
-  PARAMS ((reloc_howto_type *, bfd *, asection *, bfd_byte *, Elf_Internal_Rela *, bfd_vma));
+  PARAMS ((reloc_howto_type *, bfd *, asection *, bfd_byte *,
+	   Elf_Internal_Rela *, bfd_vma));
 static boolean fr30_elf_gc_sweep_hook
-  PARAMS ((bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *));
+  PARAMS ((bfd *, struct bfd_link_info *, asection *,
+	   const Elf_Internal_Rela *));
 static asection * fr30_elf_gc_mark_hook
-  PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Rela *, struct elf_link_hash_entry *, Elf_Internal_Sym *));
+  PARAMS ((asection *, struct bfd_link_info *, Elf_Internal_Rela *,
+	   struct elf_link_hash_entry *, Elf_Internal_Sym *));
+static boolean fr30_elf_check_relocs
+  PARAMS ((bfd *, struct bfd_link_info *, asection *,
+	   const Elf_Internal_Rela *));
 
 static reloc_howto_type fr30_elf_howto_table [] =
 {
@@ -279,7 +286,7 @@ fr30_elf_i20_reloc (abfd, reloc_entry, symbol, data,
 
   x = bfd_get_32 (abfd, (char *) data + reloc_entry->address);
   x = (x & 0xff0f0000) | (relocation & 0x0000ffff) | ((relocation & 0x000f0000) << 4);
-  bfd_put_32 (abfd, x, (char *) data + reloc_entry->address);
+  bfd_put_32 (abfd, (bfd_vma) x, (char *) data + reloc_entry->address);
 
   return bfd_reloc_ok;
 }
@@ -496,7 +503,7 @@ fr30_final_link_relocate (howto, input_bfd, input_section, contents, rel, reloca
 static boolean
 fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 			   contents, relocs, local_syms, local_sections)
-     bfd *                   output_bfd ATTRIBUTE_UNUSED;
+     bfd *                   output_bfd;
      struct bfd_link_info *  info;
      bfd *                   input_bfd;
      asection *              input_section;
@@ -509,6 +516,9 @@ fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   struct elf_link_hash_entry ** sym_hashes;
   Elf_Internal_Rela *           rel;
   Elf_Internal_Rela *           relend;
+
+  if (info->relocateable)
+    return true;
 
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
@@ -534,27 +544,6 @@ fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
 
-      if (info->relocateable)
-	{
-	  /* This is a relocateable link.  We don't have to change
-             anything, unless the reloc is against a section symbol,
-             in which case we have to adjust according to where the
-             section symbol winds up in the output section.  */
-	  if (r_symndx < symtab_hdr->sh_info)
-	    {
-	      sym = local_syms + r_symndx;
-
-	      if (ELF_ST_TYPE (sym->st_info) == STT_SECTION)
-		{
-		  sec = local_sections [r_symndx];
-		  rel->r_addend += sec->output_offset + sym->st_value;
-		}
-	    }
-
-	  continue;
-	}
-
-      /* This is a final link.  */
       howto  = fr30_elf_howto_table + ELF32_R_TYPE (rel->r_info);
       h      = NULL;
       sym    = NULL;
@@ -564,9 +553,7 @@ fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = (sec->output_section->vma
-			+ sec->output_offset
-			+ sym->st_value);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
@@ -677,8 +664,8 @@ fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
    relocation.  */
 
 static asection *
-fr30_elf_gc_mark_hook (abfd, info, rel, h, sym)
-     bfd *                        abfd;
+fr30_elf_gc_mark_hook (sec, info, rel, h, sym)
+     asection *                   sec;
      struct bfd_link_info *       info ATTRIBUTE_UNUSED;
      Elf_Internal_Rela *          rel;
      struct elf_link_hash_entry * h;
@@ -708,15 +695,7 @@ fr30_elf_gc_mark_hook (abfd, info, rel, h, sym)
 	}
     }
   else
-    {
-      if (!(elf_bad_symtab (abfd)
-	    && ELF_ST_BIND (sym->st_info) != STB_LOCAL)
-	  && ! ((sym->st_shndx <= 0 || sym->st_shndx >= SHN_LORESERVE)
-		&& sym->st_shndx != SHN_COMMON))
-	{
-	  return bfd_section_from_elf_index (abfd, sym->st_shndx);
-	}
-    }
+    return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
 
   return NULL;
 }
@@ -792,7 +771,8 @@ fr30_elf_check_relocs (abfd, info, sec, relocs)
 }
 
 #define ELF_ARCH		bfd_arch_fr30
-#define ELF_MACHINE_CODE	EM_CYGNUS_FR30
+#define ELF_MACHINE_CODE	EM_FR30
+#define ELF_MACHINE_ALT1	EM_CYGNUS_FR30
 #define ELF_MAXPAGESIZE		0x1000
 
 #define TARGET_BIG_SYM          bfd_elf32_fr30_vec
@@ -806,6 +786,7 @@ fr30_elf_check_relocs (abfd, info, sec, relocs)
 #define elf_backend_check_relocs                fr30_elf_check_relocs
 
 #define elf_backend_can_gc_sections		1
+#define elf_backend_rela_normal			1
 
 #define bfd_elf32_bfd_reloc_type_lookup		fr30_reloc_type_lookup
 

@@ -1,6 +1,6 @@
 /* vms-hdr.c -- BFD back-end for VMS/VAX (openVMS/VAX) and
    EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
    HDR record handling functions
    EMH record handling functions
@@ -24,11 +24,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include <ctype.h>
-
 #include "bfd.h"
 #include "sysdep.h"
 #include "bfdlink.h"
+#include "safe-ctype.h"
 #include "libbfd.h"
 
 #include "vms.h"
@@ -36,6 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+
+static unsigned char *get_vms_time_string PARAMS ((void));
+
+
 /*---------------------------------------------------------------------------*/
 
 /* Read & process emh record
@@ -299,8 +302,7 @@ _bfd_vms_write_hdr (abfd, objtype)
       fptr = fout;
       while (*fptr != 0)
 	{
-	  if (islower (*fptr))
-	    *fptr = toupper (*fptr);
+	  *fptr = TOUPPER (*fptr);
 	  fptr++;
 	  if ((*fptr == ';')
 	     || ((fptr - fout) > 31))
@@ -311,7 +313,7 @@ _bfd_vms_write_hdr (abfd, objtype)
   else
     _bfd_vms_output_counted (abfd, "NONAME");
 
-  _bfd_vms_output_counted (abfd, BFD_VERSION);
+  _bfd_vms_output_counted (abfd, BFD_VERSION_STRING);
   _bfd_vms_output_dump (abfd, get_vms_time_string (), 17);
   _bfd_vms_output_fill (abfd, 0, 17);
   _bfd_vms_output_flush (abfd);
@@ -343,7 +345,8 @@ _bfd_vms_write_hdr (abfd, objtype)
 	      continue;
 	    }
 
-	  _bfd_vms_output_dump (abfd, (unsigned char *)symbol->name, strlen (symbol->name));
+	  _bfd_vms_output_dump (abfd, (unsigned char *) symbol->name,
+				(int) strlen (symbol->name));
 	  if (had_case)
 	    break;
 	  had_file = 1;

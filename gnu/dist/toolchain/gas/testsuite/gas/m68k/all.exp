@@ -25,6 +25,9 @@ if [istarget m68*-*-*] then {
 
     gas_test_error "p2410.s" "" "out-of-range 'bras'"
 
+    # Reloc types etc. need changing for aout and coff to pass.
+    setup_xfail "*-*"
+    clear_xfail "*-*-*elf*" "*-*-sysv4*" "*-*-rtems" "*-*-*gnu*" "*-*-psos*"
     run_dump_test pcrel
     run_dump_test operands
     run_dump_test cas

@@ -1,5 +1,5 @@
 /* Header file for ns32k routines.
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 2001 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -23,17 +23,17 @@ extern bfd_reloc_status_type _bfd_ns32k_relocate_contents
 
 extern bfd_reloc_status_type _bfd_do_ns32k_reloc_contents
   PARAMS ((reloc_howto_type *, bfd *, bfd_vma, bfd_byte *,
-	   long (*) PARAMS ((bfd_byte *, long, long)),
-	   int (*) PARAMS ((long, bfd_byte *, long, long))));
+	   bfd_vma (*) (bfd_byte *, int),
+	   int (*) (bfd_vma, bfd_byte *, int)));
 
 extern bfd_reloc_status_type _bfd_ns32k_final_link_relocate
   PARAMS ((reloc_howto_type *, bfd *, asection *, bfd_byte *, bfd_vma,
 	   bfd_vma, bfd_vma));
 
-extern long _bfd_ns32k_get_displacement PARAMS ((bfd_byte *, long, long));
-extern long _bfd_ns32k_get_immediate PARAMS ((bfd_byte *, long, long));
-extern int _bfd_ns32k_put_displacement PARAMS ((long, bfd_byte *, long, long));
-extern int _bfd_ns32k_put_immediate PARAMS ((long, bfd_byte *, long, long));
+extern bfd_vma _bfd_ns32k_get_displacement PARAMS ((bfd_byte *, int));
+extern bfd_vma _bfd_ns32k_get_immediate PARAMS ((bfd_byte *, int));
+extern int _bfd_ns32k_put_displacement PARAMS ((bfd_vma, bfd_byte *, int));
+extern int _bfd_ns32k_put_immediate PARAMS ((bfd_vma, bfd_byte *, int));
 
 extern bfd_reloc_status_type _bfd_ns32k_reloc_disp
   PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));

@@ -1,4 +1,4 @@
-This is gprof.info, produced by makeinfo version 4.0 from gprof.texi.
+This is gprof.info, produced by makeinfo version 4.2 from gprof.texi.
 
 START-INFO-DIR-ENTRY
 * gprof: (gprof).                Profiling your program's execution
@@ -6,15 +6,15 @@ END-INFO-DIR-ENTRY
 
    This file documents the gprof profiler of the GNU system.
 
-   Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
-Inc.
+   Copyright (C) 1988, 92, 97, 98, 99, 2000, 2001 Free Software
+Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 
 File: gprof.info,  Node: GNU Free Documentation License,  Prev: Details,  Up: Top

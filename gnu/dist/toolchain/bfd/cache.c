@@ -1,5 +1,5 @@
 /* BFD library -- caching of file descriptors.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001
+   Copyright 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -277,7 +277,7 @@ bfd_open_file (abfd)
       break;
     case both_direction:
     case write_direction:
-      if (abfd->opened_once == true)
+      if (abfd->opened_once)
 	{
 	  abfd->iostream = (PTR) fopen (abfd->filename, FOPEN_RUB);
 	  if (abfd->iostream == NULL)
@@ -364,7 +364,9 @@ bfd_cache_lookup_worker (abfd)
     {
       if (bfd_open_file (abfd) == NULL)
 	return NULL;
-      if (fseek ((FILE *) abfd->iostream, abfd->where, SEEK_SET) != 0)
+      if (abfd->where != (unsigned long) abfd->where)
+	return NULL;
+      if (fseek ((FILE *) abfd->iostream, (long) abfd->where, SEEK_SET) != 0)
 	return NULL;
     }
 

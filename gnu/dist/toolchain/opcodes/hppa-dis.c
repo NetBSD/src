@@ -554,15 +554,27 @@ print_insn_hppa (memaddr, info)
 		  switch (*++s)
 		    {
 		    case 'x':
+		      (*info->fprintf_func) (info->stream, "%s",
+					     index_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'X':
 		      (*info->fprintf_func) (info->stream, "%s ",
 					     index_compl_names[GET_COMPL (insn)]);
 		      break;
 		    case 'm':
+		      (*info->fprintf_func) (info->stream, "%s",
+					     short_ldst_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'M':
 		      (*info->fprintf_func) (info->stream, "%s ",
 					     short_ldst_compl_names[GET_COMPL (insn)]);
 		      break;
-		    case 's':
+		    case 'A':
 		      (*info->fprintf_func) (info->stream, "%s ",
+					     short_bytes_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 's':
+		      (*info->fprintf_func) (info->stream, "%s",
 					     short_bytes_compl_names[GET_COMPL (insn)]);
 		      break;
 		    case 'c':
@@ -686,7 +698,7 @@ print_insn_hppa (memaddr, info)
 		      break;
 		    case 'H':
 		      (*info->fprintf_func)
-			  (info->stream, "%s", saturation_names[GET_FIELD
+			  (info->stream, "%s ", saturation_names[GET_FIELD
 							       (insn, 24, 25)]);
 		      break;
 		    case '*':

@@ -1,5 +1,6 @@
 /* BFD library support routines for the Hitachi-SH architecture.
-   Copyright 1993, 1994, 1997, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1997, 1998, 2000, 2001
+   Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,16 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-
-static boolean
-scan_mach (info, string)
-     const struct bfd_arch_info *info;
-     const char *string;
-{
-  if (strcasecmp (info->printable_name, string) == 0)
-    return true;
-  return false;
-}
 
 #if 0
 /* This routine is provided two arch_infos and returns whether
@@ -54,6 +45,9 @@ compatible (a,b)
 #define SH3_DSP_NEXT &arch_info_struct[4]
 #define SH3E_NEXT    &arch_info_struct[5]
 #define SH4_NEXT     NULL
+#undef  SH4_NEXT
+#define SH4_NEXT     &arch_info_struct[6]
+#define SH64_NEXT    NULL
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
@@ -68,7 +62,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH2_NEXT
   },
   {
@@ -82,7 +76,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH_DSP_NEXT
   },
   {
@@ -96,7 +90,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH3_NEXT
   },
   {
@@ -110,7 +104,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH3_DSP_NEXT
   },
   {
@@ -124,7 +118,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH3E_NEXT
   },
   {
@@ -138,8 +132,22 @@ static const bfd_arch_info_type arch_info_struct[] =
     1,
     false,			/* not the default */
     bfd_default_compatible,
-    scan_mach,
+    bfd_default_scan,
     SH4_NEXT
+  },
+  {
+    64,				/* 64 bits in a word */
+    64,				/* 64 bits in an address */
+    8,				/* 8 bits in a byte */
+    bfd_arch_sh,
+    bfd_mach_sh5,
+    "sh",			/* arch_name  */
+    "sh5",			/* printable name */
+    1,
+    false,			/* not the default */
+    bfd_default_compatible,
+    bfd_default_scan,
+    SH64_NEXT
   },
 };
 
@@ -155,6 +163,6 @@ const bfd_arch_info_type bfd_sh_arch =
   1,
   true,				/* the default machine */
   bfd_default_compatible,
-  scan_mach,
+  bfd_default_scan,
   SH_NEXT
 };

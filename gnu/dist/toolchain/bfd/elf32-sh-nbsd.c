@@ -1,5 +1,5 @@
 /* Hitachi SH specific support for 32-bit NetBSD
-   Copyright 2000 Free Software Foundation, Inc.
+   Copyright 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 

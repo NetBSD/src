@@ -1,5 +1,5 @@
 /* tc-mn10300.h -- Header file for tc-mn10300.c.
-   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -35,12 +35,8 @@
 #define TC_FORCE_RELOCATION(fixp) mn10300_force_relocation (fixp)
 extern int mn10300_force_relocation PARAMS ((struct fix *));
 
-#define TC_HANDLES_FX_DONE
-
 #define obj_fix_adjustable(fixP) mn10300_fix_adjustable (fixP)
 extern boolean mn10300_fix_adjustable PARAMS ((struct fix *));
-
-#define MD_APPLY_FIX3 md_apply_fix3
 
 /* Fixup debug sections since we will never relax them.  */
 #define TC_LINKRELAX_FIXUP(seg) (seg->flags & SEC_ALLOC)

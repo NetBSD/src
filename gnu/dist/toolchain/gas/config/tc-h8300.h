@@ -24,6 +24,12 @@
 
 #define TARGET_BYTES_BIG_ENDIAN 1
 
+#define TARGET_ARCH bfd_arch_h8300
+
+#ifdef OBJ_ELF
+#define TARGET_FORMAT "elf32-h8300"
+#endif
+
 #if ANSI_PROTOTYPES
 struct internal_reloc;
 #endif
@@ -43,12 +49,37 @@ struct internal_reloc;
 extern void tc_reloc_mangle
   PARAMS ((struct fix *, struct internal_reloc *, bfd_vma));
 
+#ifdef OBJ_ELF
+/* Provide mappings from the original H8 COFF relocation names to
+   their corresponding BFD relocation names.  This allows us to use
+   most of tc-h8300.c without modifications for both ELF and COFF
+   ports.  */
+#define R_MOV24B1 BFD_RELOC_H8_DIR24A8
+#define R_MOVL1 BFD_RELOC_H8_DIR32A16
+#define R_MOV24B1 BFD_RELOC_H8_DIR24A8
+#define R_MOVL1 BFD_RELOC_H8_DIR32A16
+#define R_RELLONG BFD_RELOC_32
+#define R_MOV16B1 BFD_RELOC_H8_DIR16A8
+#define R_RELWORD BFD_RELOC_16
+#define R_RELBYTE BFD_RELOC_8
+#define R_PCRWORD BFD_RELOC_16_PCREL
+#define R_PCRBYTE BFD_RELOC_8_PCREL
+#define R_JMPL1 BFD_RELOC_H8_DIR24R8
+#define R_MEM_INDIRECT BFD_RELOC_8
+
+/* We do not want to adjust any relocations to make implementation of
+   linker relaxations easier.  */
+#define tc_fix_adjustable(FIX) 0
+#endif
+
 #define TC_CONS_RELOC          (Hmode ? R_RELLONG: R_RELWORD)
 
 #define DO_NOT_STRIP 0
 #define LISTING_HEADER "Hitachi H8/300 GAS "
 #define NEED_FX_R_TYPE 1
+#ifndef OBJ_ELF
 #define RELOC_32 1234
+#endif
 
 extern int Hmode;
 extern int Smode;

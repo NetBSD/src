@@ -1,5 +1,6 @@
 /* Intel i860 specific support for 32-bit ELF.
-   Copyright 1993, 1995, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
    Full i860 support contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -695,7 +696,8 @@ elf32_i860_info_to_howto_rela (abfd, bfd_reloc, elf_reloc)
      arelent *bfd_reloc;
      Elf64_Internal_Rela *elf_reloc;
 {
-  bfd_reloc->howto = lookup_howto (ELF32_R_TYPE (elf_reloc->r_info));
+  bfd_reloc->howto
+    = lookup_howto ((unsigned) ELF32_R_TYPE (elf_reloc->r_info));
 }
 
 /* Specialized relocation handler for R_860_SPLITn.  These relocations
@@ -709,7 +711,7 @@ elf32_i860_relocate_splitn (input_bfd, rello, contents, value)
 {
   bfd_vma insn;
   reloc_howto_type *howto;
-  howto  = lookup_howto (ELF32_R_TYPE (rello->r_info));
+  howto = lookup_howto ((unsigned) ELF32_R_TYPE (rello->r_info));
   insn = bfd_get_32 (input_bfd, contents + rello->r_offset);
 
   /* Relocate.  */
@@ -736,7 +738,7 @@ elf32_i860_relocate_pc16 (input_bfd, input_section, rello, contents, value)
 {
   bfd_vma insn;
   reloc_howto_type *howto;
-  howto  = lookup_howto (ELF32_R_TYPE (rello->r_info));
+  howto = lookup_howto ((unsigned) ELF32_R_TYPE (rello->r_info));
   insn = bfd_get_32 (input_bfd, contents + rello->r_offset);
 
   /* Adjust for PC-relative relocation.  */
@@ -768,7 +770,7 @@ elf32_i860_relocate_pc26 (input_bfd, input_section, rello, contents, value)
 {
   bfd_vma insn;
   reloc_howto_type *howto;
-  howto  = lookup_howto (ELF32_R_TYPE (rello->r_info));
+  howto = lookup_howto ((unsigned) ELF32_R_TYPE (rello->r_info));
   insn = bfd_get_32 (input_bfd, contents + rello->r_offset);
 
   /* Adjust for PC-relative relocation.  */
@@ -877,6 +879,9 @@ elf32_i860_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Rela *           rel;
   Elf_Internal_Rela *           relend;
 
+  if (info->relocateable)
+    return true;
+
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
@@ -903,39 +908,16 @@ elf32_i860_relocate_section (output_bfd, info, input_bfd, input_section,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
 
-      if (info->relocateable)
-	{
-	  /* This is a relocateable link.  We don't have to change
-             anything, unless the reloc is against a section symbol,
-             in which case we have to adjust according to where the
-             section symbol winds up in the output section.  */
-	  if (r_symndx < symtab_hdr->sh_info)
-	    {
-	      sym = local_syms + r_symndx;
-
-	      if (ELF_ST_TYPE (sym->st_info) == STT_SECTION)
-		{
-		  sec = local_sections [r_symndx];
-		  rel->r_addend += sec->output_offset + sym->st_value;
-		}
-	    }
-
-	  continue;
-	}
-
-      /* This is a final link.  */
-      howto  = lookup_howto (ELF32_R_TYPE (rel->r_info));
-      h      = NULL;
-      sym    = NULL;
-      sec    = NULL;
+      howto = lookup_howto ((unsigned) ELF32_R_TYPE (rel->r_info));
+      h     = NULL;
+      sym   = NULL;
+      sec   = NULL;
 
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = (sec->output_section->vma
-			+ sec->output_offset
-			+ sym->st_value);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
@@ -1098,6 +1080,7 @@ elf32_i860_is_local_label_name (abfd, name)
 #define ELF_MACHINE_CODE	EM_860
 #define ELF_MAXPAGESIZE		4096
 
+#define elf_backend_rela_normal			1
 #define elf_info_to_howto_rel                   NULL
 #define elf_info_to_howto			elf32_i860_info_to_howto_rela
 #define elf_backend_relocate_section		elf32_i860_relocate_section

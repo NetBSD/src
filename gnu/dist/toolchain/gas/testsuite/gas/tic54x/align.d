@@ -1,12 +1,12 @@
 #objdump: -d --headers
-#name: c54x align (NOTE: .even is broken on TI tools)
+#name: c54x align 
 
 .*: +file format .*c54x.*
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
   0 .text         00000089  00000000  00000000  0000....  2..7
-                  CONTENTS, ALLOC, LOAD, CODE
+                  CONTENTS, ALLOC, LOAD, ....
   1 .data         00000005  00000000  00000000  0000....  2..1
                   CONTENTS, ALLOC, LOAD, DATA
   2 .bss          00000000  00000000  00000000  0000....  2..0
@@ -53,4 +53,3 @@ Disassembly of section .text:
   86:	0005.*
   87:	0006.*
   88:	0007.*
-

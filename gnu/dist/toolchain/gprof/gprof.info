@@ -1,4 +1,4 @@
-This is gprof.info, produced by makeinfo version 4.0 from gprof.texi.
+This is gprof.info, produced by makeinfo version 4.2 from gprof.texi.
 
 START-INFO-DIR-ENTRY
 * gprof: (gprof).                Profiling your program's execution
@@ -6,53 +6,53 @@ END-INFO-DIR-ENTRY
 
    This file documents the gprof profiler of the GNU system.
 
-   Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
-Inc.
+   Copyright (C) 1988, 92, 97, 98, 99, 2000, 2001 Free Software
+Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 
 Indirect:
-gprof.info-1: 718
-gprof.info-2: 48160
-gprof.info-3: 82294
+gprof.info-1: 707
+gprof.info-2: 48149
+gprof.info-3: 82286
 
 Tag Table:
 (Indirect)
-Node: Top718
-Node: Introduction1960
-Node: Compiling4289
-Node: Executing6950
-Node: Invoking9314
-Node: Output Options10728
-Node: Analysis Options17540
-Node: Miscellaneous Options20733
-Node: Deprecated Options21894
-Node: Symspecs23964
-Node: Output25785
-Node: Flat Profile26810
-Node: Call Graph31740
-Node: Primary34955
-Node: Callers37487
-Node: Subroutines39595
-Node: Cycles41395
-Node: Line-by-line48160
-Node: Annotated Source51959
-Node: Inaccuracy54820
-Node: Sampling Error55074
-Node: Assumptions57639
-Node: How do I?59107
-Node: Incompatibilities60325
-Node: Details61792
-Node: Implementation62181
-Node: File Format68073
-Node: Internals72328
-Node: Debugging80698
-Node: GNU Free Documentation License82294
+Node: Top707
+Node: Introduction1949
+Node: Compiling4278
+Node: Executing6939
+Node: Invoking9303
+Node: Output Options10717
+Node: Analysis Options17529
+Node: Miscellaneous Options20722
+Node: Deprecated Options21883
+Node: Symspecs23953
+Node: Output25774
+Node: Flat Profile26799
+Node: Call Graph31729
+Node: Primary34944
+Node: Callers37476
+Node: Subroutines39584
+Node: Cycles41384
+Node: Line-by-line48149
+Node: Annotated Source51948
+Node: Inaccuracy54809
+Node: Sampling Error55063
+Node: Assumptions57628
+Node: How do I?59096
+Node: Incompatibilities60314
+Node: Details61781
+Node: Implementation62170
+Node: File Format68062
+Node: Internals72320
+Node: Debugging80690
+Node: GNU Free Documentation License82286
 
 End Tag Table

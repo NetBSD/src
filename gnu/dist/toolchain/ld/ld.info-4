@@ -1,13 +1,13 @@
-This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+This is ld.info, produced by makeinfo version 4.3 from ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.2.
+   This file documents the GNU linker LD version 2.13.2.1.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
 
 File: ld.info,  Node: Overlay Description,  Prev: Output Section Attributes,  Up: SECTIONS
@@ -396,7 +396,10 @@ few examples.
 version node defined is `VERS_1.1'; it has no other dependencies.  The
 script binds the symbol `foo1' to `VERS_1.1'.  It reduces a number of
 symbols to local scope so that they are not visible outside of the
-shared library.
+shared library; this is done using wildcard patterns, so that any
+symbol whose name begins with `old', `original', or `new' is matched.
+The wildcard patterns available are the same as those used in the shell
+when matching filenames (also known as "globbing").
 
    Next, the version script defines node `VERS_1.2'.  This node depends
 upon `VERS_1.1'.  The script binds the symbol `foo2' to the version
@@ -409,13 +412,20 @@ depends upon `VERS_1.2'.  The scripts binds the symbols `bar1' and
    When the linker finds a symbol defined in a library which is not
 specifically bound to a version node, it will effectively bind it to an
 unspecified base version of the library.  You can bind all otherwise
-unspecified symbols to a given version node by using `global: *'
+unspecified symbols to a given version node by using `global: *;'
 somewhere in the version script.
 
    The names of the version nodes have no specific meaning other than
 what they might suggest to the person reading them.  The `2.0' version
 could just as well have appeared in between `1.1' and `1.2'.  However,
 this would be a confusing way to write a version script.
+
+   Node name can be omited, provided it is the only version node in the
+version script.  Such version script doesn't assign any versions to
+symbols, only selects which symbols will be globally visible out and
+which won't.
+
+     { global: foo; bar; local: *; };
 
    When you link an application against a shared library that has
 versioned symbols, the application itself knows which version of each
@@ -448,7 +458,7 @@ maintainer.  You can do this by putting something like:
 in the C source file.  This renames the function `original_foo' to be
 an alias for `foo' bound to the version node `VERS_1.1'.  The `local:'
 directive can be used to prevent the symbol `original_foo' from being
-exported.
+exported. A `.symver' directive takes precedence over a version script.
 
    The second GNU extension is to allow multiple versions of the same
 function to appear in a given shared library.  In this way you can make
@@ -480,6 +490,15 @@ have multiple definitions of the same symbol.
 within the shared library, you can use the aliases of convenience (i.e.
 `old_foo'), or you can use the `.symver' directive to specifically bind
 to an external version of the function in question.
+
+   You can also specify the language in the version script:
+
+     VERSION extern "lang" { version-script-commands }
+
+   The supported `lang's are `C', `C++', and `Java'.  The linker will
+iterate over the list of symbols at the link time and demangle them
+according to `lang' before matching them to the patterns specified in
+`version-script-commands'.
 
 
 File: ld.info,  Node: Expressions,  Next: Implicit Linker Scripts,  Prev: VERSION,  Up: Scripts
@@ -569,14 +588,14 @@ location counter may never be moved backwards.
            file2(.text)
            . += 1000;
            file3(.text)
-         } = 0x1234;
+         } = 0x12345678;
      }
 
 In the previous example, the `.text' section from `file1' is located at
 the beginning of the output section `output'.  It is followed by a 1000
 byte gap.  Then the `.text' section from `file2' appears, also with a
 1000 byte gap following before the `.text' section from `file3'.  The
-notation `= 0x1234' specifies what data to write in the gaps (*note
+notation `= 0x12345678' specifies what data to write in the gaps (*note
 Output Section Fill::).
 
    Note: `.' actually refers to the byte offset from the start of the
@@ -742,11 +761,7 @@ use in linker script expressions.
           ... }
 
 `ALIGN(EXP)'
-     Return the location counter (`.') aligned to the next EXP
-     boundary.  EXP must be an expression whose value is a power of
-     two.  This is equivalent to
-          (. + EXP - 1) & ~(EXP - 1)
-
+     Return the location counter (`.') aligned to the next EXP boundary.
      `ALIGN' doesn't change the value of the location counter--it just
      does arithmetic on it.  Here is an example which aligns the output
      `.data' section to the next `0x2000' byte boundary after the
@@ -770,6 +785,34 @@ use in linker script expressions.
      This is a synonym for `ALIGN', for compatibility with older linker
      scripts.  It is most often seen when setting the address of an
      output section.
+
+`DATA_SEGMENT_ALIGN(MAXPAGESIZE, COMMONPAGESIZE)'
+     This is equivalent to either
+          (ALIGN(MAXPAGESIZE) + (. & (MAXPAGESIZE - 1)))
+     or
+          (ALIGN(MAXPAGESIZE) + (. & (MAXPAGESIZE - COMMONPAGESIZE)))
+
+     depending on whether the latter uses fewer COMMONPAGESIZE sized
+     pages for the data segment (area between the result of this
+     expression and `DATA_SEGMENT_END') than the former or not.  If the
+     latter form is used, it means COMMONPAGESIZE bytes of runtime
+     memory will be saved at the expense of up to COMMONPAGESIZE wasted
+     bytes in the on-disk file.
+
+     This expression can only be used directly in `SECTIONS' commands,
+     not in any output section descriptions and only once in the linker
+     script.  COMMONPAGESIZE should be less or equal to MAXPAGESIZE and
+     should be the system page size the object wants to be optimized
+     for (while still working on system page sizes up to MAXPAGESIZE).
+
+     Example:
+            . = DATA_SEGMENT_ALIGN(0x10000, 0x2000);
+
+`DATA_SEGMENT_END(EXP)'
+     This defines the end of data segment for `DATA_SEGMENT_ALIGN'
+     evaluation purposes.
+
+            . = DATA_SEGMENT_END(.);
 
 `DEFINED(SYMBOL)'
      Return 1 if SYMBOL is in the linker global symbol table and is
@@ -875,6 +918,8 @@ functionality are not listed.
 * ARM::				`ld' and the ARM family
 * HPPA ELF32::                  `ld' and HPPA 32-bit ELF
 
+* MMIX::			`ld' and MMIX
+
 * TI COFF::                     `ld' and TI COFF
 
 
@@ -961,7 +1006,7 @@ a BX instruction, and the program will start executing in Thumb mode
 straight away.
 
 
-File: ld.info,  Node: HPPA ELF32,  Next: TI COFF,  Prev: ARM,  Up: Machine Dependent
+File: ld.info,  Node: HPPA ELF32,  Next: MMIX,  Prev: ARM,  Up: Machine Dependent
 
 `ld' and HPPA 32-bit ELF support
 ================================
@@ -992,7 +1037,35 @@ create a larger group (of one section).  If input sections are too
 large, it may not be possible for a branch to reach its stub.
 
 
-File: ld.info,  Node: TI COFF,  Prev: HPPA ELF32,  Up: Machine Dependent
+File: ld.info,  Node: MMIX,  Next: TI COFF,  Prev: HPPA ELF32,  Up: Machine Dependent
+
+`ld' and MMIX
+=============
+
+   For MMIX, there is choice of generating `ELF' object files or `mmo'
+object files when linking.  The simulator `mmix' understands the `mmo'
+format.  The binutils `objcopy' utility can translate between the two
+formats.
+
+   There is one special section, the `.MMIX.reg_contents' section.
+Contents in this section is assumed to correspond to that of global
+registers, and symbols referring to it are translated to special
+symbols, equal to registers.  In a final link, the start address of the
+`.MMIX.reg_contents' section corresponds to the first allocated global
+register multiplied by 8.  Register `$255' is not included in this
+section; it is always set to the program entry, which is at the symbol
+`Main' for `mmo' files.
+
+   Symbols with the prefix `__.MMIX.start.', for example
+`__.MMIX.start..text' and `__.MMIX.start..data' are special; there must
+be only one each, even if they are local.  The default linker script
+uses these to set the default start address of a section.
+
+   Initial and trailing multiples of zero-valued 32-bit words in a
+section, are left out from an mmo file.
+
+
+File: ld.info,  Node: TI COFF,  Prev: MMIX,  Up: Machine Dependent
 
 `ld''s support for various TI COFF versions
 ===========================================
@@ -1047,7 +1120,7 @@ determine the format of the input object file.  They then build a
 descriptor in memory with pointers to routines that will be used to
 access elements of the object file's data structures.
 
-   As different information from the the object files is required, BFD
+   As different information from the object files is required, BFD
 reads from different sections of the file and processes them.  For
 example, a very common operation for the linker is processing symbol
 tables.  Each BFD back end provides a routine for converting between
@@ -1110,107 +1183,4 @@ commonality between back ends, there is no information lost when
 linking or copying big endian COFF to little endian COFF, or `a.out' to
 `b.out'.  When a mixture of formats is linked, the information is only
 lost from the files whose format differs from the destination.
-
-
-File: ld.info,  Node: Canonical format,  Prev: BFD information loss,  Up: BFD outline
-
-The BFD canonical object-file format
-------------------------------------
-
-   The greatest potential for loss of information occurs when there is
-the least overlap between the information provided by the source
-format, that stored by the canonical format, and that needed by the
-destination format. A brief description of the canonical form may help
-you understand which kinds of data you can count on preserving across
-conversions.
-
-_files_
-     Information stored on a per-file basis includes target machine
-     architecture, particular implementation format type, a demand
-     pageable bit, and a write protected bit.  Information like Unix
-     magic numbers is not stored here--only the magic numbers' meaning,
-     so a `ZMAGIC' file would have both the demand pageable bit and the
-     write protected text bit set.  The byte order of the target is
-     stored on a per-file basis, so that big- and little-endian object
-     files may be used with one another.
-
-_sections_
-     Each section in the input file contains the name of the section,
-     the section's original address in the object file, size and
-     alignment information, various flags, and pointers into other BFD
-     data structures.
-
-_symbols_
-     Each symbol contains a pointer to the information for the object
-     file which originally defined it, its name, its value, and various
-     flag bits.  When a BFD back end reads in a symbol table, it
-     relocates all symbols to make them relative to the base of the
-     section where they were defined.  Doing this ensures that each
-     symbol points to its containing section.  Each symbol also has a
-     varying amount of hidden private data for the BFD back end.  Since
-     the symbol points to the original file, the private data format
-     for that symbol is accessible.  `ld' can operate on a collection
-     of symbols of wildly different formats without problems.
-
-     Normal global and simple local symbols are maintained on output,
-     so an output file (no matter its format) will retain symbols
-     pointing to functions and to global, static, and common variables.
-     Some symbol information is not worth retaining; in `a.out', type
-     information is stored in the symbol table as long symbol names.
-     This information would be useless to most COFF debuggers; the
-     linker has command line switches to allow users to throw it away.
-
-     There is one word of type information within the symbol, so if the
-     format supports symbol type information within symbols (for
-     example, COFF, IEEE, Oasys) and the type is simple enough to fit
-     within one word (nearly everything but aggregates), the
-     information will be preserved.
-
-_relocation level_
-     Each canonical BFD relocation record contains a pointer to the
-     symbol to relocate to, the offset of the data to relocate, the
-     section the data is in, and a pointer to a relocation type
-     descriptor. Relocation is performed by passing messages through
-     the relocation type descriptor and the symbol pointer. Therefore,
-     relocations can be performed on output data using a relocation
-     method that is only available in one of the input formats. For
-     instance, Oasys provides a byte relocation format.  A relocation
-     record requesting this relocation type would point indirectly to a
-     routine to perform this, so the relocation may be performed on a
-     byte being written to a 68k COFF file, even though 68k COFF has no
-     such relocation type.
-
-_line numbers_
-     Object formats can contain, for debugging purposes, some form of
-     mapping between symbols, source line numbers, and addresses in the
-     output file.  These addresses have to be relocated along with the
-     symbol information.  Each symbol with an associated list of line
-     number records points to the first record of the list.  The head
-     of a line number list consists of a pointer to the symbol, which
-     allows finding out the address of the function whose line number
-     is being described. The rest of the list is made up of pairs:
-     offsets into the section and line numbers. Any format which can
-     simply derive this information can pass it successfully between
-     formats (COFF, IEEE and Oasys).
-
-
-File: ld.info,  Node: Reporting Bugs,  Next: MRI,  Prev: BFD,  Up: Top
-
-Reporting Bugs
-**************
-
-   Your bug reports play an essential role in making `ld' reliable.
-
-   Reporting a bug may help you by bringing a solution to your problem,
-or it may not.  But in any case the principal function of a bug report
-is to help the entire community by making the next version of `ld' work
-better.  Bug reports are your contribution to the maintenance of `ld'.
-
-   In order for a bug report to serve its purpose, you must include the
-information that enables us to fix the bug.
-
-* Menu:
-
-* Bug Criteria::                Have you found a bug?
-* Bug Reporting::               How to report bugs
 

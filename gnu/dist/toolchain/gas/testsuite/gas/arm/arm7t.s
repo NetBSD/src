@@ -72,3 +72,11 @@ misc:
 	.align
 .L2:
 	.word	fred
+	
+	.ltorg
+	.thumb
+	.global thumb_tests
+	.thumb_func
+thumb_tests:	
+	sub	r0, #0
+	add	r0, #0

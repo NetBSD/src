@@ -257,5 +257,8 @@ if [istarget hppa*-*-*] then {
     do_common_test
 
     # Test for an off-by-2 bug in range check for conditional branches
-    gas_test_error "brlenbug.s" "" "Check for error(s) in branch length"
+    # The labels in brlenbug.s lack colons and are not linux compatible.
+    if {! [istarget *-*-linux*]} then {
+	gas_test_error "brlenbug.s" "" "Check for error(s) in branch length"
+    }
 }

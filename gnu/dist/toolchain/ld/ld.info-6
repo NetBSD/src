@@ -1,13 +1,13 @@
-This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+This is ld.info, produced by makeinfo version 4.3 from ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.2.
+   This file documents the GNU linker LD version 2.13.2.1.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
 
 File: ld.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
@@ -20,6 +20,7 @@ Index
 * ":                                     Symbols.
 * -(:                                    Options.
 * --add-stdcall-alias:                   Options.
+* --allow-multiple-definition:           Options.
 * --allow-shlib-undefined:               Options.
 * --architecture=ARCH:                   Options.
 * --auxiliary:                           Options.
@@ -28,20 +29,28 @@ Index
 * --cref:                                Options.
 * --defsym SYMBOL=EXP:                   Options.
 * --demangle[=STYLE]:                    Options.
+* --disable-auto-image-base:             Options.
+* --disable-auto-import:                 Options.
 * --disable-new-dtags:                   Options.
 * --disable-stdcall-fixup:               Options.
 * --discard-all:                         Options.
 * --discard-locals:                      Options.
 * --dll:                                 Options.
+* --dll-search-prefix:                   Options.
 * --dynamic-linker FILE:                 Options.
 * --embedded-relocs:                     Options.
 * --emit-relocs:                         Options.
+* --enable-auto-image-base:              Options.
+* --enable-auto-import:                  Options.
+* --enable-extra-pe-debug:               Options.
 * --enable-new-dtags:                    Options.
 * --enable-stdcall-fixup:                Options.
 * --entry=ENTRY:                         Options.
+* --exclude-libs:                        Options.
 * --exclude-symbols:                     Options.
 * --export-all-symbols:                  Options.
 * --export-dynamic:                      Options.
+* --fatal-warnings:                      Options.
 * --file-alignment:                      Options.
 * --filter:                              Options.
 * --force-exe-suffix:                    Options.
@@ -66,15 +75,18 @@ Index
 * --multi-subspace:                      HPPA ELF32.
 * --nmagic:                              Options.
 * --no-check-sections:                   Options.
+* --no-define-common:                    Options.
 * --no-demangle:                         Options.
 * --no-gc-sections:                      Options.
 * --no-keep-memory:                      Options.
 * --no-undefined:                        Options.
+* --no-undefined-version:                Options.
 * --no-warn-mismatch:                    Options.
 * --no-whole-archive:                    Options.
 * --noinhibit-exec:                      Options.
 * --oformat:                             Options.
 * --omagic:                              Options.
+* --out-implib:                          Options.
 * --output-def:                          Options.
 * --output=OUTPUT:                       Options.
 * --print-map:                           Options.
@@ -104,7 +116,7 @@ Index
 * --verbose:                             Options.
 * --version:                             Options.
 * --version-script=VERSION-SCRIPTFILE:   Options.
-* --warn-comon:                          Options.
+* --warn-common:                         Options.
 * --warn-constructors:                   Options.
 * --warn-multiple-gp:                    Options.
 * --warn-once:                           Options.
@@ -138,6 +150,7 @@ Index
 * -g:                                    Options.
 * -hNAME:                                Options.
 * -i:                                    Options.
+* -IFILE:                                Options.
 * -init:                                 Options.
 * -lARCHIVE:                             Options.
 * -LDIR:                                 Options.
@@ -147,6 +160,7 @@ Index
 * -N:                                    Options.
 * -n:                                    Options.
 * -non_shared:                           Options.
+* -nostdlib:                             Options.
 * -O LEVEL:                              Options.
 * -o OUTPUT:                             Options.
 * -q:                                    Options.
@@ -176,6 +190,7 @@ Index
 * -y SYMBOL:                             Options.
 * -z defs:                               Options.
 * -z KEYWORD:                            Options.
+* -z muldefs:                            Options.
 * .:                                     Location Counter.
 * /DISCARD/:                             Output Section Discarding.
 * :PHDR:                                 Output Section Phdr.
@@ -236,6 +251,8 @@ Index
 * cross references:                      Miscellaneous Commands.
 * current output location:               Location Counter.
 * data:                                  Output Section Data.
+* DATA_SEGMENT_ALIGN(MAXPAGESIZE, COMMONPAGESIZE): Builtin Functions.
+* DATA_SEGMENT_END(EXP):                 Builtin Functions.
 * dbx:                                   Options.
 * DEF files, creating:                   Options.
 * default emulation:                     Environment.
@@ -247,6 +264,7 @@ Index
 * discarding sections:                   Output Section Discarding.
 * discontinuous memory:                  MEMORY.
 * DLLs, creating:                        Options.
+* DLLs, linking to:                      Options.
 * dot:                                   Location Counter.
 * dot inside sections:                   Location Counter.
 * dynamic linker, from command line:     Options.
@@ -303,6 +321,7 @@ Index
 * including a linker script:             File Commands.
 * including an entire archive:           Options.
 * incremental link:                      Options.
+* INHIBIT_COMMON_ALLOCATION:             Miscellaneous Commands.
 * initialization function:               Options.
 * initialized data in ROM:               Output Section LMA.
 * input file format in linker script:    Format Commands.

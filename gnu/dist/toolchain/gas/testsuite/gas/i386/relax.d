@@ -4,6 +4,8 @@
 .*: +file format .*i386.*
 
 Contents of section .text:
+ 0+00 90 ?90 ?eb ?14 eb ?12 ?41 ?42 43 ?44 ?45 ?46 47 ?48 ?49 ?00  .*
+ 0+10 00 ?00 ?00 ?00 00 ?00 ?00 ?00  .*
 Contents of section .data:
 Contents of section .gcc_except_table:
  0+000 02[ 	]*.[ 	]*

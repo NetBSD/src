@@ -1,5 +1,5 @@
 /* tc-m68hc11.c -- Assembler code for the Motorola 68HC11 & 68HC12.
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
    This file is part of GAS, the GNU Assembler.
@@ -20,8 +20,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/m68hc11.h"
 #include "dwarf2dbg.h"
@@ -152,6 +152,10 @@ static alias alias_opcodes[] = {
 /* Local functions.  */
 static register_id reg_name_search PARAMS ((char *));
 static register_id register_name PARAMS ((void));
+static int cmp_opcode PARAMS ((struct m68hc11_opcode *,
+                               struct m68hc11_opcode *));
+static char *print_opcode_format PARAMS ((struct m68hc11_opcode *, int));
+static char *skip_whites PARAMS ((char *));
 static int check_range PARAMS ((long, int));
 static void print_opcode_list PARAMS ((void));
 static void get_default_target PARAMS ((void));
@@ -159,12 +163,22 @@ static void print_insn_format PARAMS ((char *));
 static int get_operand PARAMS ((operand *, int, long));
 static void fixup8 PARAMS ((expressionS *, int, int));
 static void fixup16 PARAMS ((expressionS *, int, int));
+static unsigned char convert_branch PARAMS ((unsigned char));
+static char *m68hc11_new_insn PARAMS ((int));
+static void build_dbranch_insn PARAMS ((struct m68hc11_opcode *,
+                                        operand *, int, int));
+static int build_indexed_byte PARAMS ((operand *, int, int));
+static int build_reg_mode PARAMS ((operand *, int));
+
+static struct m68hc11_opcode *find
+  PARAMS ((struct m68hc11_opcode_def *, operand *, int));
 static struct m68hc11_opcode *find_opcode
   PARAMS ((struct m68hc11_opcode_def *, operand *, int *));
 static void build_jump_insn
   PARAMS ((struct m68hc11_opcode *, operand *, int, int));
 static void build_insn
   PARAMS ((struct m68hc11_opcode *, operand *, int));
+static int relaxable_symbol PARAMS ((symbolS *));
 
 /* Controls whether relative branches can be turned into long branches.
    When the relative offset is too large, the insn are changed:
@@ -241,7 +255,7 @@ const pseudo_typeS md_pseudo_table[] = {
 
 /* Options and initialization.  */
 
-CONST char *md_shortopts = "Sm:";
+const char *md_shortopts = "Sm:";
 
 struct option md_longopts[] = {
 #define OPTION_FORCE_LONG_BRANCH (OPTION_MD_BASE)
@@ -803,7 +817,7 @@ print_insn_format (name)
     {
       char *fmt;
 
-      fmt = print_opcode_format (opcode, 0, 0);
+      fmt = print_opcode_format (opcode, 0);
       sprintf (buf, "\t%-5.5s %s", opcode->name, fmt);
 
       as_bad ("%s", buf);
@@ -1505,12 +1519,14 @@ build_jump_insn (opcode, operands, nb_operands, jmp_mode)
       /* bra/bsr made be changed into jmp/jsr.  */
       else if (code == M6811_BSR || code == M6811_BRA || code == M6812_BSR)
 	{
-	  opcode = m68hc11_new_insn (2);
+          /* Allocate worst case storage.  */
+	  opcode = m68hc11_new_insn (3);
 	  number_to_chars_bigendian (opcode, code, 1);
 	  number_to_chars_bigendian (opcode + 1, 0, 1);
-	  frag_var (rs_machine_dependent, 2, 1,
-		    ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
-		    operands[0].exp.X_add_symbol, (offsetT) n, opcode);
+	  frag_variant (rs_machine_dependent, 1, 1,
+                        ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
+                        operands[0].exp.X_add_symbol, (offsetT) n,
+                        opcode);
 	}
       else if (current_architecture & cpu6812)
 	{
@@ -2234,7 +2250,7 @@ md_assemble (str)
        *op_end && nlen < 20 && !is_end_of_line[*op_end] && *op_end != ' ';
        op_end++)
     {
-      name[nlen] = tolower (op_start[nlen]);
+      name[nlen] = TOLOWER (op_start[nlen]);
       nlen++;
     }
   name[nlen] = 0;
@@ -2276,14 +2292,14 @@ md_assemble (str)
 	      && (*op_end &&
 		  (is_end_of_line[op_end[1]]
 		   || op_end[1] == ' ' || op_end[1] == '\t'
-		   || !isalnum (op_end[1])))
+		   || !ISALNUM (op_end[1])))
 	      && (*op_end == 'a' || *op_end == 'b'
 		  || *op_end == 'A' || *op_end == 'B'
 		  || *op_end == 'd' || *op_end == 'D'
 		  || *op_end == 'x' || *op_end == 'X'
 		  || *op_end == 'y' || *op_end == 'Y'))
 	    {
-	      name[nlen++] = tolower (*op_end++);
+	      name[nlen++] = TOLOWER (*op_end++);
 	      name[nlen] = 0;
 	      opc = (struct m68hc11_opcode_def *) hash_find (m68hc11_hash,
 							     name);
@@ -2359,7 +2375,7 @@ md_assemble (str)
      relative and must be in the range -256..255 (9-bits).  */
   if ((opcode->format & M6812_XBCC_MARKER)
       && (opcode->format & M6811_OP_JUMP_REL))
-    build_dbranch_insn (opcode, operands, nb_operands);
+    build_dbranch_insn (opcode, operands, nb_operands, branch_optimize);
 
   /* Relative jumps instructions are taken care of separately.  We have to make
      sure that the relative branch is within the range -128..127.  If it's out
@@ -2441,9 +2457,8 @@ md_convert_frag (abfd, sec, fragP)
   buffer_address += fragP->fr_fix;
 
   /* The displacement of the address, from current location.  */
-  value = fragP->fr_symbol ? S_GET_VALUE (fragP->fr_symbol) : 0;
+  value = S_GET_VALUE (fragP->fr_symbol);
   disp = (value + fragP->fr_offset) - object_address;
-  disp += symbol_get_frag (fragP->fr_symbol)->fr_address;
 
   switch (fragP->fr_subtype)
     {
@@ -2596,9 +2611,9 @@ md_estimate_size_before_relax (fragP, segment)
 		 necessary for the unresolved symbol address.  */
 	      fragP->fr_opcode[0] = convert_branch (fragP->fr_opcode[0]);
 
-	      fragP->fr_fix++;
-	      fix_new (fragP, old_fr_fix - 1, 2, fragP->fr_symbol,
+	      fix_new (fragP, fragP->fr_fix - 1, 2, fragP->fr_symbol,
 		       fragP->fr_offset, 0, BFD_RELOC_16);
+	      fragP->fr_fix++;
 	      break;
 
 	    case STATE_CONDITIONAL_BRANCH:
@@ -2714,43 +2729,38 @@ md_estimate_size_before_relax (fragP, segment)
   return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
-int
-md_apply_fix (fixp, valuep)
-     fixS *fixp;
-     valueT *valuep;
+void
+md_apply_fix3 (fixP, valP, seg)
+     fixS *fixP;
+     valueT *valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *where;
-  long value;
+  long value = * valP;
   int op_type;
 
-  if (fixp->fx_addsy == (symbolS *) NULL)
-    {
-      value = *valuep;
-      fixp->fx_done = 1;
-    }
-  else if (fixp->fx_pcrel)
-    {
-      value = *valuep;
-    }
+  if (fixP->fx_addsy == (symbolS *) NULL)
+    fixP->fx_done = 1;
+
+  else if (fixP->fx_pcrel)
+    ;
+
   else
     {
-      value = fixp->fx_offset;
-      if (fixp->fx_subsy != (symbolS *) NULL)
+      value = fixP->fx_offset;
+
+      if (fixP->fx_subsy != (symbolS *) NULL)
 	{
-	  if (S_GET_SEGMENT (fixp->fx_subsy) == absolute_section)
-	    {
-	      value -= S_GET_VALUE (fixp->fx_subsy);
-	    }
+	  if (S_GET_SEGMENT (fixP->fx_subsy) == absolute_section)
+	    value -= S_GET_VALUE (fixP->fx_subsy);
 	  else
-	    {
-	      /* We don't actually support subtracting a symbol.  */
-	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    _("Expression too complex."));
-	    }
+	    /* We don't actually support subtracting a symbol.  */
+	    as_bad_where (fixP->fx_file, fixP->fx_line,
+			  _("Expression too complex."));
 	}
     }
 
-  op_type = fixp->fx_r_type;
+  op_type = fixP->fx_r_type;
 
   /* Patch the instruction with the resolved operand.  Elf relocation
      info will also be generated to take care of linker/loader fixups.
@@ -2761,9 +2771,9 @@ md_apply_fix (fixp, valuep)
      relax table, bcc, bra, bsr transformations)
 
      The BFD_RELOC_32 is necessary for the support of --gstabs.  */
-  where = fixp->fx_frag->fr_literal + fixp->fx_where;
+  where = fixP->fx_frag->fr_literal + fixP->fx_where;
 
-  switch (fixp->fx_r_type)
+  switch (fixP->fx_r_type)
     {
     case BFD_RELOC_32:
       bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
@@ -2773,7 +2783,7 @@ md_apply_fix (fixp, valuep)
     case BFD_RELOC_16_PCREL:
       bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
       if (value < -65537 || value > 65535)
-	as_bad_where (fixp->fx_file, fixp->fx_line,
+	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Value out of 16-bit range."));
       break;
 
@@ -2796,14 +2806,14 @@ md_apply_fix (fixp, valuep)
       ((bfd_byte *) where)[0] = (bfd_byte) value;
 
       if (value < -128 || value > 127)
-	as_bad_where (fixp->fx_file, fixp->fx_line,
+	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Value %ld too large for 8-bit PC-relative branch."),
 		      value);
       break;
 
     case BFD_RELOC_M68HC11_3B:
       if (value <= 0 || value > 8)
-	as_bad_where (fixp->fx_file, fixp->fx_line,
+	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Auto increment/decrement offset '%ld' is out of range."),
 		      value);
       if (where[0] & 0x8)
@@ -2816,8 +2826,6 @@ md_apply_fix (fixp, valuep)
 
     default:
       as_fatal (_("Line %d: unknown relocation type: 0x%x."),
-		fixp->fx_line, fixp->fx_r_type);
+		fixP->fx_line, fixP->fx_r_type);
     }
-
-  return 0;
 }

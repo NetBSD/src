@@ -2,6 +2,7 @@
 #name: MIPS empic
 #as: -membedded-pic -mips3
 #source: empic.s
+#stderr: empic.l
 
 # Check GNU-specific embedded relocs, for ELF.
 
@@ -24,7 +25,7 @@ SYMBOL TABLE:
 
 
 RELOCATION RECORDS FOR \[\.text\]:
-OFFSET           TYPE              VALUE 
+OFFSET [ ]+ TYPE              VALUE 
 0+0000004 R_MIPS_GNU_REL16_S2  g1
 0+000000c R_MIPS_GNU_REL16_S2  g2
 0+0000014 R_MIPS_GNU_REL16_S2  g2
@@ -56,12 +57,16 @@ OFFSET           TYPE              VALUE
 0+00000b8 R_MIPS_64         \.text
 0+00000cc R_MIPS_GNU_REL16_S2  \.text
 0+00000d0 R_MIPS_GNU_REL16_S2  \.text
-0+00000dc R_MIPS_32         \.text
-0+00000e8 R_MIPS_64         \.text
+0+00000d4 R_MIPS_GNU_REL_HI16  \.text
+0+00000d8 R_MIPS_GNU_REL_LO16  \.text
+0+00000dc R_MIPS_GNU_REL_HI16  \.text
+0+00000e0 R_MIPS_GNU_REL_LO16  \.text
+0+00000e4 R_MIPS_32         \.text
+0+00000f0 R_MIPS_64         \.text
 
 
 RELOCATION RECORDS FOR \[\.foo\]:
-OFFSET           TYPE              VALUE 
+OFFSET [ ]+ TYPE              VALUE 
 0+0000004 R_MIPS_GNU_REL_HI16  g1
 0+0000008 R_MIPS_GNU_REL_LO16  g1
 0+000000c R_MIPS_GNU_REL_HI16  \.foo
@@ -123,9 +128,9 @@ Contents of section \.text:
  00a0 0000033c d80063[26]4 0000033c e80063[26]4  .*
  00b0 cc000000 34000000 cc000000 00000000  .*
  00c0 34000000 00000000 00000000 32000010  .*
- 00d0 33000010 34000324 3c000324 cc000000  .*
- 00e0 34000000 00000000 cc000000 00000000  .*
- 00f0 34000000 00000000 00000000 00000000  .*
+ 00d0 33000010 0000033c 0c0163[26]4 0000033c  .*
+ 00e0 1c0163[26]4 cc000000 34000000 00000000  .*
+ 00f0 cc000000 00000000 34000000 00000000  .*
 Contents of section \.data:
 Contents of section \.reginfo:
  0000 08000080 00000000 00000000 00000000  .*

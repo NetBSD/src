@@ -6,11 +6,11 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <notstart>:
+0+ <notstart>:
 [ 	]+0:	0000[ ]+	bcc ( 0x2|\.\+2)
 	\.\.\.
 
-00000004 <start>:
+0+4 <start>:
 [	 ]+4:[	 ]+b5db[ 	]+movem[ ]+\[r5\],r13
 [	 ]+6:[	 ]+ba1b[ 	]+movem[ ]+\[r10\],r1
 [	 ]+8:[	 ]+b5df[ 	]+movem[ ]+\[r5\+\],r13
@@ -51,10 +51,10 @@ Disassembly of section \.text:
 [	 ]+a0:[	 ]+5f2d 68dd b11b[ 	]+movem[ ]+\[r2-8856\],r1
 [	 ]+a6:[	 ]+5f2d 9822 b11b[ 	]+movem[ ]+\[r2\+8856\],r1
 [	 ]+ac:[	 ]+6f2d ac72 2a00 b11b[ 	]+movem[ ]+\[r2\+(2781868|2a72ac <two701867\+0x13881>)\],r1
-[	 ]+b4:[	 ]+6f2d d5c5 d6ff b11b[ 	]+movem[ ]+\[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r1
-[	 ]+bc:[	 ]+6f2d acce c09e b11b[ 	]+movem[ ]+\[r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\],r1
-[	 ]+c4:[	 ]+6f2d 5331 3f81 b11b[ 	]+movem[ ]+\[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
-[	 ]+cc:[	 ]+6f2d 5331 3f81 b11b[ 	]+movem[ ]+\[r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
+[	 ]+b4:[	 ]+6f2d d5c5 d6ff b11b[ 	]+movem[ ]+\[r2\+[^]]+\],r1
+[	 ]+bc:[	 ]+6f2d acce c09e b11b[ 	]+movem[ ]+\[r2\+[^]]+\],r1
+[	 ]+c4:[	 ]+6f2d 5331 3f81 b11b[ 	]+movem[ ]+\[r2\+[^]]+\],r1
+[	 ]+cc:[	 ]+6f2d 5331 3f81 b11b[ 	]+movem[ ]+\[r2\+[^]]+\],r1
 [	 ]+d4:[	 ]+6f2d b5af 982e b11b[ 	]+movem[ ]+\[r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\],r1
 [	 ]+dc:[	 ]+6f2d 2b45 941b b11b[ 	]+movem[ ]+\[r2\+(0x1b94452b|1b94452b <const_int_32>)\],r1
 [	 ]+e4:[	 ]+2a21 bddb[ 	]+movem[ ]+\[r2\+42\],r13
@@ -71,15 +71,15 @@ Disassembly of section \.text:
 [	 ]+116:[	 ]+6f2d 0180 0000 b55b[ 	]+movem[ ]+\[r2\+(32769|8001 <three2767\+0x2>)\],r5
 [	 ]+11e:[	 ]+5f2d 0180 b55b[ 	]+movem[ ]+\[r2-32767\],r5
 [	 ]+124:[	 ]+5f2d 0080 bddb[ 	]+movem[ ]+\[r2-32768\],r13
-[	 ]+12a:[	 ]+6f2d ff7f ffff bddb[ 	]+movem[ ]+\[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+12a:[	 ]+6f2d ff7f ffff bddb[ 	]+movem[ ]+\[r2\+[^]]+\],r13
 [	 ]+132:[	 ]+5f2d 0180 b55b[ 	]+movem[ ]+\[r2-32767\],r5
 [	 ]+138:[	 ]+5f2d 0080 bddb[ 	]+movem[ ]+\[r2-32768\],r13
-[	 ]+13e:[	 ]+6f2d ff7f ffff bddb[ 	]+movem[ ]+\[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+13e:[	 ]+6f2d ff7f ffff bddb[ 	]+movem[ ]+\[r2\+[^]]+\],r13
 [	 ]+146:[	 ]+6f2d ffff 0000 b55b[ 	]+movem[ ]+\[r2\+(65535|ffff <six5535>)\],r5
 [	 ]+14e:[	 ]+6f2d 0000 0100 bddb[ 	]+movem[ ]+\[r2\+(65536|10000 <six5535\+0x1>)\],r13
 [	 ]+156:[	 ]+6f2d 2b3a 2900 b55b[ 	]+movem[ ]+\[r2\+(2701867|293a2b <two701867>)\],r5
-[	 ]+15e:[	 ]+6f2d d5c5 d6ff b55b[ 	]+movem[ ]+\[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
-[	 ]+166:[	 ]+6f2d d5c5 d6ff b55b[ 	]+movem[ ]+\[r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
+[	 ]+15e:[	 ]+6f2d d5c5 d6ff b55b[ 	]+movem[ ]+\[r2\+[^]]+\],r5
+[	 ]+166:[	 ]+6f2d d5c5 d6ff b55b[ 	]+movem[ ]+\[r2\+[^]]+\],r5
 [	 ]+16e:[	 ]+6f2d 0000 0000 b55b[ 	]+movem[ ]+\[r2\+0( <notstart>)?\],r5
 [ 	]+170:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+176:[	 ]+4255 bcdf[ 	]+movem[ ]+\[r12=r2\+r5\.b\],r13
@@ -120,10 +120,10 @@ Disassembly of section \.text:
 [	 ]+212:[	 ]+5f2d 68dd bc1f[ 	]+movem[ ]+\[r12=r2-8856\],r1
 [	 ]+218:[	 ]+5f2d 9822 bc1f[ 	]+movem[ ]+\[r12=r2\+8856\],r1
 [	 ]+21e:[	 ]+6f2d ac72 2a00 bc1f[ 	]+movem[ ]+\[r12=r2\+(2781868|2a72ac <two701867\+0x13881>)\],r1
-[	 ]+226:[	 ]+6f2d d5c5 d6ff bc1f[ 	]+movem[ ]+\[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r1
-[	 ]+22e:[	 ]+6f2d acce c09e bc1f[ 	]+movem[ ]+\[r12=r2\+(0x9ec0ceac|9ec0ceac <const_int_m32\+0x70281ef7>)\],r1
-[	 ]+236:[	 ]+6f2d 5331 3f81 bc1f[ 	]+movem[ ]+\[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
-[	 ]+23e:[	 ]+6f2d 5331 3f81 bc1f[ 	]+movem[ ]+\[r12=r2\+(0x813f3153|813f3153 <const_int_m32\+0x52a6819e>)\],r1
+[	 ]+226:[	 ]+6f2d d5c5 d6ff bc1f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r1
+[	 ]+22e:[	 ]+6f2d acce c09e bc1f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r1
+[	 ]+236:[	 ]+6f2d 5331 3f81 bc1f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r1
+[	 ]+23e:[	 ]+6f2d 5331 3f81 bc1f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r1
 [	 ]+246:[	 ]+6f2d b5af 982e bc1f[ 	]+movem[ ]+\[r12=r2\+(0x2e98afb5|2e98afb5 <const_int_m32>)\],r1
 [	 ]+24e:[	 ]+6f2d 2b45 941b bc1f[ 	]+movem[ ]+\[r12=r2\+(0x1b94452b|1b94452b <const_int_32>)\],r1
 [	 ]+256:[	 ]+2a21 bcdf[ 	]+movem[ ]+\[r12=r2\+42\],r13
@@ -140,15 +140,15 @@ Disassembly of section \.text:
 [	 ]+288:[	 ]+6f2d 0180 0000 bc5f[ 	]+movem[ ]+\[r12=r2\+(32769|8001 <three2767\+0x2>)\],r5
 [	 ]+290:[	 ]+5f2d 0180 bc5f[ 	]+movem[ ]+\[r12=r2-32767\],r5
 [	 ]+296:[	 ]+5f2d 0080 bcdf[ 	]+movem[ ]+\[r12=r2-32768\],r13
-[	 ]+29c:[	 ]+6f2d ff7f ffff bcdf[ 	]+movem[ ]+\[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+29c:[	 ]+6f2d ff7f ffff bcdf[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r13
 [	 ]+2a4:[	 ]+5f2d 0180 bc5f[ 	]+movem[ ]+\[r12=r2-32767\],r5
 [	 ]+2aa:[	 ]+5f2d 0080 bcdf[ 	]+movem[ ]+\[r12=r2-32768\],r13
-[	 ]+2b0:[	 ]+6f2d ff7f ffff bcdf[ 	]+movem[ ]+\[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r13
+[	 ]+2b0:[	 ]+6f2d ff7f ffff bcdf[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r13
 [	 ]+2b8:[	 ]+6f2d ffff 0000 bc5f[ 	]+movem[ ]+\[r12=r2\+(65535|ffff <six5535>)\],r5
 [	 ]+2c0:[	 ]+6f2d 0000 0100 bcdf[ 	]+movem[ ]+\[r12=r2\+(65536|10000 <six5535\+0x1>)\],r13
 [	 ]+2c8:[	 ]+6f2d 2b3a 2900 bc5f[ 	]+movem[ ]+\[r12=r2\+(2701867|293a2b <two701867>)\],r5
-[	 ]+2d0:[	 ]+6f2d d5c5 d6ff bc5f[ 	]+movem[ ]+\[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
-[	 ]+2d8:[	 ]+6f2d d5c5 d6ff bc5f[ 	]+movem[ ]+\[r12=r2\+(0xffd6c5d5|ffd6c5d5 <const_int_m32\+0xd13e1620>)\],r5
+[	 ]+2d0:[	 ]+6f2d d5c5 d6ff bc5f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r5
+[	 ]+2d8:[	 ]+6f2d d5c5 d6ff bc5f[ 	]+movem[ ]+\[r12=r2\+[^]]+\],r5
 [	 ]+2e0:[	 ]+6f2d 0000 0000 bc5f[ 	]+movem[ ]+\[r12=r2\+0( <notstart>)?\],r5
 [ 	]+2e2:[ 	]+(R_CRIS_)?32[ 	]+externalsym
 [	 ]+2e8:[	 ]+7209 b44b[ 	]+movem[ ]+\[\[r2\]\],r4

@@ -7,5 +7,6 @@ x:
 	.type	 b,@object
 	.size	 b,8
 b:
-	.word	b-4
+	.word	b+4
 	.word	x
+	.word	0

@@ -26,7 +26,9 @@ if ![isnative] then {return}
 
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
-if { ![istarget i?86-*-linux*] \
+if { ![istarget hppa*64*-*-hpux*] \
+     && ![istarget hppa*-*-linux*] \
+     && ![istarget i?86-*-linux*] \
      && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-linux*] \
@@ -40,6 +42,13 @@ if { ![istarget i?86-*-linux*] \
 if { [istarget *-*-linux*aout*] \
      || [istarget *-*-linux*oldld*] } {
     return
+}
+
+set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
+foreach t $test_list {
+    # We need to strip the ".d", but can leave the dirname.
+    verbose [file rootname $t]
+    run_dump_test [file rootname $t]
 }
 
 set tmpdir tmpdir
@@ -237,10 +246,16 @@ proc visibility_run {visibility} {
 		 || [ string match $visibility "protected_weak" ] } {
 		setup_xfail "powerpc-*-linux*"
 	    }
+
+	    # Non-pic code uses name binding rules for applications to
+	    # reference variables by gp-relative relocs, which can't be
+	    # used with overridable symbols.
 	    if { ![ string match $visibility "hidden_undef" ]
 		 && ![ string match $visibility "protected_undef" ] } {
 		setup_xfail "ia64-*-linux*"
+		setup_xfail "alpha*-*-linux*"
 	    }
+
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC)" mainnp.o sh1np.o sh2np.o elfvsb
 
 	    # Test ELF shared library relocations with a non-zero load
@@ -267,6 +282,7 @@ proc visibility_run {visibility} {
 	    if { ![ string match $visibility "hidden_undef" ]
 		 && ![ string match $visibility "protected_undef" ] } {
 		setup_xfail "ia64-*-linux*"
+		setup_xfail "alpha*-*-linux*"
 		setup_xfail "mips*-*-linux*"
 	    }
 	    visibility_test $visibility vnp "visibility ($visibility) (non PIC, load offset)" \
@@ -323,6 +339,7 @@ proc visibility_run {visibility} {
 		if { ![ string match $visibility "hidden_undef" ]
 		     && ![ string match $visibility "protected_undef" ] } {
 		    setup_xfail "ia64-*-linux*"
+		    setup_xfail "alpha*-*-linux*"
 		}
 		visibility_test $visibility vmpnp "visibility ($visibility) (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o elfvsb
 	    }

@@ -107,4 +107,4 @@
 	clrlslwi	%r4,%r3,31,31
 
 # Force alignment so that we pass the test on AIX
-	.p2align	3
+	.p2align	3,0

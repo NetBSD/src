@@ -1,6 +1,6 @@
 /* sym_ids.c
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -19,9 +19,12 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-#include <ctype.h>
-
 #include "libiberty.h"
+#include "safe-ctype.h"
+#include "gprof.h"
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
 #include "cg_arcs.h"
 #include "sym_ids.h"
 
@@ -30,7 +33,7 @@ struct sym_id
     struct sym_id *next;
     char *spec;			/* Parsing modifies this.  */
     Table_Id which_table;
-    bool has_right;
+    boolean has_right;
 
     struct match
       {
@@ -42,6 +45,12 @@ struct sym_id
     left, right;
   }
  *id_list;
+
+static void parse_spec PARAMS ((char *, Sym *));
+static void parse_id PARAMS ((struct sym_id *));
+static boolean match PARAMS ((Sym *, Sym *));
+static void extend_match PARAMS ((struct match *, Sym *, Sym_Table *, boolean));
+
 
 Sym_Table syms[NUM_TABLES];
 
@@ -71,8 +80,9 @@ static Source_File non_existent_file =
 
 
 void
-DEFUN (sym_id_add, (spec, which_table),
-       const char *spec AND Table_Id which_table)
+sym_id_add (spec, which_table)
+     const char *spec;
+     Table_Id which_table;
 {
   struct sym_id *id;
   int len = strlen (spec);
@@ -100,7 +110,9 @@ DEFUN (sym_id_add, (spec, which_table),
    FILENAME not containing a dot can be specified by FILENAME.  */
 
 static void
-DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
+parse_spec (spec, sym)
+     char *spec;
+     Sym *sym;
 {
   char *colon;
 
@@ -123,7 +135,7 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 
       if (strlen (spec))
 	{
-	  if (isdigit ((unsigned char) spec[0]))
+	  if (ISDIGIT (spec[0]))
 	    sym->line_num = atoi (spec);
 	  else
 	    sym->name = spec;
@@ -139,7 +151,7 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 	  if (!sym->file)
 	    sym->file = &non_existent_file;
 	}
-      else if (isdigit ((unsigned char) *spec))
+      else if (ISDIGIT (*spec))
 	{
 	  sym->line_num = atoi (spec);
 	}
@@ -155,7 +167,8 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
    by parse_spec().  */
 
 static void
-DEFUN (parse_id, (id), struct sym_id *id)
+parse_id (id)
+     struct sym_id *id;
 {
   char *slash;
 
@@ -166,7 +179,7 @@ DEFUN (parse_id, (id), struct sym_id *id)
     {
       parse_spec (slash + 1, &id->right.sym);
       *slash = '\0';
-      id->has_right = TRUE;
+      id->has_right = true;
     }
   parse_spec (id->spec, &id->left.sym);
 
@@ -203,21 +216,26 @@ DEFUN (parse_id, (id), struct sym_id *id)
 
 /* Return TRUE iff PATTERN matches SYM.  */
 
-static bool
-DEFUN (match, (pattern, sym), Sym * pattern AND Sym * sym)
+static boolean
+match (pattern, sym)
+     Sym *pattern;
+     Sym *sym;
 {
-  return (pattern->file ? pattern->file == sym->file : TRUE)
-    && (pattern->line_num ? pattern->line_num == sym->line_num : TRUE)
+  return (pattern->file ? pattern->file == sym->file : true)
+    && (pattern->line_num ? pattern->line_num == sym->line_num : true)
     && (pattern->name
 	? strcmp (pattern->name,
 		  sym->name+(discard_underscores && sym->name[0] == '_')) == 0
-	: TRUE);
+	: true);
 }
 
 
 static void
-DEFUN (extend_match, (m, sym, tab, second_pass),
-     struct match *m AND Sym * sym AND Sym_Table * tab AND bool second_pass)
+extend_match (m, sym, tab, second_pass)
+     struct match *m;
+     Sym *sym;
+     Sym_Table *tab;
+     boolean second_pass;
 {
   if (m->prev_match != sym - 1)
     {
@@ -252,7 +270,7 @@ DEFUN (extend_match, (m, sym, tab, second_pass),
    requests---you get what you ask for!  */
 
 void
-DEFUN_VOID (sym_id_parse)
+sym_id_parse ()
 {
   Sym *sym, *left, *right;
   struct sym_id *id;
@@ -268,10 +286,10 @@ DEFUN_VOID (sym_id_parse)
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    extend_match (&id->left, sym, &syms[id->which_table], FALSE);
+	    extend_match (&id->left, sym, &syms[id->which_table], false);
 
 	  if (id->has_right && match (&id->right.sym, sym))
-	    extend_match (&id->right, sym, &right_ids, FALSE);
+	    extend_match (&id->right, sym, &right_ids, false);
 	}
     }
 
@@ -299,10 +317,10 @@ DEFUN_VOID (sym_id_parse)
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    extend_match (&id->left, sym, &syms[id->which_table], TRUE);
+	    extend_match (&id->left, sym, &syms[id->which_table], true);
 
 	  if (id->has_right && match (&id->right.sym, sym))
-	    extend_match (&id->right, sym, &right_ids, TRUE);
+	    extend_match (&id->right, sym, &right_ids, true);
 	}
     }
 
@@ -350,18 +368,20 @@ DEFUN_VOID (sym_id_parse)
    time requesting -k a/b.  Fortunately, those symbol tables don't get
    very big (the user has to type them!), so a linear search is probably
    tolerable.  */
-bool
-DEFUN (sym_id_arc_is_present, (symtab, from, to),
-       Sym_Table * symtab AND Sym * from AND Sym * to)
+boolean
+sym_id_arc_is_present (sym_tab, from, to)
+     Sym_Table *sym_tab;
+     Sym *from;
+     Sym *to;
 {
   Sym *sym;
 
-  for (sym = symtab->base; sym < symtab->limit; ++sym)
+  for (sym = sym_tab->base; sym < sym_tab->limit; ++sym)
     {
       if (from->addr >= sym->addr && from->addr <= sym->end_addr
 	  && arc_lookup (sym, to))
-	return TRUE;
+	return true;
     }
 
-  return FALSE;
+  return false;
 }

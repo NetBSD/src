@@ -38,7 +38,7 @@ lab?	add	#4,a			; line 31?
 * This reference should resolve to definition #3
 after_macro:	
 	b	lab?
-* Section change clears all definitions
+* Section change clears all definitions; it's a CODE section if we see insns
 	.sect	new_section
 	nop
 lab?	add	#5,a

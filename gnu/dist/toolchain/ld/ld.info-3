@@ -1,13 +1,13 @@
-This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+This is ld.info, produced by makeinfo version 4.3 from ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.2.
+   This file documents the GNU linker LD version 2.13.2.1.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
 
 File: ld.info,  Node: Environment,  Prev: Options,  Up: Invocation
@@ -358,7 +358,7 @@ Commands dealing with object file formats
 `OUTPUT_FORMAT(DEFAULT, BIG, LITTLE)'
      The `OUTPUT_FORMAT' command names the BFD format to use for the
      output file (*note BFD::).  Using `OUTPUT_FORMAT(BFDNAME)' is
-     exactly like using `-oformat BFDNAME' on the command line (*note
+     exactly like using `--oformat BFDNAME' on the command line (*note
      Command Line Options: Options.).  If both are used, the command
      line option takes precedence.
 
@@ -411,6 +411,11 @@ Other linker script commands
      This command has the same effect as the `-d' command-line option:
      to make `ld' assign space to common symbols even if a relocatable
      output file is specified (`-r').
+
+`INHIBIT_COMMON_ALLOCATION'
+     This command has the same effect as the `--no-define-common'
+     command-line option: to make `ld' omit the assignment of addresses
+     to common symbols even for a non-relocatable output file.
 
 `NOCROSSREFS(SECTION SECTION ...)'
      This command may be used to tell `ld' to issue an error about any
@@ -494,7 +499,7 @@ assignments may be used:
            *(.text)
            _etext = .;
          }
-       _bdata = (. + 3) & ~ 4;
+       _bdata = (. + 3) & ~ 3;
        .data : { *(.data) }
      }
 
@@ -736,9 +741,10 @@ list.  For example:
 
 The difference between these is the order in which the `.text' and
 `.rdata' input sections will appear in the output section.  In the
-first example, they will be intermingled.  In the second example, all
-`.text' input sections will appear first, followed by all `.rdata'
-input sections.
+first example, they will be intermingled, appearing in the same order as
+they are found in the linker input.  In the second example, all `.text'
+input sections will appear first, followed by all `.rdata' input
+sections.
 
    You can specify a file name to include sections from a particular
 file.  You would do this if one or more of your files contain special
@@ -947,20 +953,21 @@ between them, so the following will produce an error from the linker:
 current section.  It is followed by an expression in parentheses.  Any
 otherwise unspecified regions of memory within the section (for example,
 gaps left due to the required alignment of input sections) are filled
-with the two least significant bytes of the expression, repeated as
-necessary.  A `FILL' statement covers memory locations after the point
-at which it occurs in the section definition; by including more than
-one `FILL' statement, you can have different fill patterns in different
-parts of an output section.
+with the value of the expression, repeated as necessary.  A `FILL'
+statement covers memory locations after the point at which it occurs in
+the section definition; by including more than one `FILL' statement,
+you can have different fill patterns in different parts of an output
+section.
 
    This example shows how to fill unspecified regions of memory with the
-value `0x9090':
-     FILL(0x9090)
+value `0x90':
+     FILL(0x90909090)
 
    The `FILL' command is similar to the `=FILLEXP' output section
-attribute (*note Output Section Fill::), but it only affects the part
-of the section following the `FILL' command, rather than the entire
-section.  If both are used, the `FILL' command takes precedence.
+attribute, but it only affects the part of the section following the
+`FILL' command, rather than the entire section.  If both are used, the
+`FILL' command takes precedence.  *Note Output Section Fill::, for
+details on the fill expression.
 
 
 File: ld.info,  Node: Output Section Keywords,  Next: Output Section Discarding,  Prev: Output Section Data,  Up: SECTIONS
@@ -1211,12 +1218,18 @@ Output section fill
 `=FILLEXP'.  FILLEXP is an expression (*note Expressions::).  Any
 otherwise unspecified regions of memory within the output section (for
 example, gaps left due to the required alignment of input sections)
-will be filled with the two least significant bytes of the value,
-repeated as necessary.
+will be filled with the value, repeated as necessary.  If the fill
+expression is a simple hex number, ie. a string of hex digit starting
+with `0x' and without a trailing `k' or `M', then an arbitrarily long
+sequence of hex digits can be used to specify the fill pattern;
+Leading zeros become part of the pattern too.  For all other cases,
+including extra parentheses or a unary `+', the fill pattern is the
+four least significant bytes of the value of the expression.  In all
+cases, the number is big-endian.
 
    You can also change the fill value with a `FILL' command in the
-output section commands; see *Note Output Section Data::.
+output section commands; (*note Output Section Data::).
 
    Here is a simple example:
-     SECTIONS { .text : { *(.text) } =0x9090 }
+     SECTIONS { .text : { *(.text) } =0x90909090 }
 
