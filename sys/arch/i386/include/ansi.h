@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.14 2000/12/26 10:35:29 itojun Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15 2001/01/03 10:08:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,8 @@
 #define	_ANSI_H_
 
 #include <sys/cdefs.h>
+
+#include <machine/int_types.h>
 
 /*
  * Types which are fundamental to the implementation and may appear in
@@ -91,7 +93,7 @@
  */
 typedef union {
 	char __mbstate8[128];
-	long long __mbstateL;	/* for alignment */
+	__int64_t __mbstateL;	/* for alignment */
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
