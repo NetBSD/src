@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.2 2002/11/12 12:54:36 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.3 2003/04/01 01:41:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@
 #include <sys/sha1.h>
 #include <sys/verified_exec.h>
 
-#define BUF_SIZE NBPG /* Set the buffer to a single page for md5 and sha1 */
+/* Set the buffer to a single page for md5 and sha1 */
+#define BUF_SIZE PAGE_SIZE
 
 extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
 
@@ -73,7 +74,7 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 	size_t          resid;
 	int             count, error;
 	
-	MALLOC(filebuf, char *, BUF_SIZE, M_TEMP, M_WAITOK);
+	filebuf = malloc(BUF_SIZE, M_TEMP, M_WAITOK);
 	MD5Init(&md5context);
 	
 	for (j = 0; j < file_size; j+= BUF_SIZE) {
@@ -86,7 +87,7 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
                                 UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 
 		if (error) {
-			FREE(filebuf, M_TEMP);
+			free(filebuf, M_TEMP);
 			return error;
 		}
 		
@@ -95,7 +96,7 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 	}
 
 	MD5Final(fingerprint, &md5context);
-	FREE(filebuf, M_TEMP);
+	free(filebuf, M_TEMP);
 	return 0;
 }
 
@@ -109,7 +110,7 @@ sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 	size_t          resid;
 	int             count, error;
 
-	MALLOC(filebuf, char *, BUF_SIZE, M_TEMP, M_WAITOK);
+	filebuf = malloc(BUF_SIZE, M_TEMP, M_WAITOK);
 	SHA1Init(&sha1context);
 
 	for (j = 0; j < file_size; j+= BUF_SIZE) {
@@ -122,7 +123,7 @@ sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 				UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 
 		if (error) {
-			FREE(filebuf, M_TEMP);
+			free(filebuf, M_TEMP);
 			return error;
 		}
 
@@ -131,7 +132,7 @@ sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 	}
 
 	SHA1Final(fingerprint, &sha1context);
-	FREE(filebuf, M_TEMP);
+	free(filebuf, M_TEMP);
 	return 0;
 }
 
@@ -360,4 +361,3 @@ ectly by pid %u (ppid %u, gppid %u)\n",
 	return error; 
 
 }
-
