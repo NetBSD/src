@@ -1,4 +1,4 @@
-.\"  $NetBSD: od.1,v 1.15 2001/12/05 18:07:50 bjh21 Exp $
+.\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -234,22 +234,30 @@ or
 select decimal, octal, unsigned decimal, or hex output respectively.
 These types can optionally be followed by
 .Cm C
-or
-.Cm 1
-to specify one byte output,
+to specify
+.Em char Ns -sized
+output,
 .Cm S
-or
-.Cm 2
-to specify two byte output,
+to specify
+.Em short Ns -sized
+output,
 .Cm I
-or
-.Cm 4
-to specify four byte output, or
+to specify
+.Em int Ns -sized
+output,
 .Cm L
-or
+to specify
+.Em long Ns -sized
+output,
+.Cm 1
+to specify one-byte output,
+.Cm 2
+to specify two-byte output,
+.Cm 4
+to specify four-byte output, or
 .Cm 8
-to specify eight byte output.  The default output format is in four
-byte quantities.  See also the
+to specify eight-byte output.  The default output format is in
+four-byte quantities.  See also the
 .Cm d ,
 .Cm o ,
 .Cm u ,
