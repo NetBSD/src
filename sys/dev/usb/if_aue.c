@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.8 2000/01/16 16:07:42 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.9 2000/01/16 18:34:42 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1634,7 +1634,7 @@ aue_ioctl(ifp, command, data)
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_hsot = *(union ns_host *)
+				ina->x_host = *(union ns_host *)
 					LLADDR(ifp->if_sadl);
 			else
 				memcpy(LLADDR(ifp->if_sadl),
