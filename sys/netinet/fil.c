@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.65 2004/05/20 13:55:31 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.66 2004/06/16 14:06:23 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.65 2004/05/20 13:55:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.66 2004/06/16 14:06:23 tron Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
@@ -2067,7 +2067,7 @@ int out;
 	int v = IP_V(ip), len, p;
 	frentry_t *fr = NULL;
 	mb_t *mc = NULL;
-	u_32_t pass;
+	u_32_t pass = fr_pass;
 	mb_t *m;
 
 	/*
@@ -2308,8 +2308,6 @@ int out;
 		ATOMIC_INCL(frstats[out].fr_short);
 	}
 
-	pass = fr_pass;
-
 	READ_ENTER(&ipf_mutex);
 
 	/*
@@ -2374,7 +2372,7 @@ int out;
 	 * to send the packet.
 	 */
 	if ((fr != NULL) && (pass & FR_DUP)) {
-		mc = M_DUPLICATE(m);
+		mc = M_DUPLICATE(fin->fin_m);
 	}
 
 	if (pass & (FR_RETRST|FR_RETICMP)) {
@@ -2418,6 +2416,8 @@ int out;
 #if defined(USE_INET6) || (defined(__sgi) && defined(_KERNEL))
 filtered:
 #endif
+	m = fin->fin_m;
+
 	if (FR_ISPASS(pass)) {
 		ATOMIC_INCL(frstats[out].fr_pass);
 	} else if (FR_ISBLOCK(pass)) {
