@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.2 1993/05/22 08:00:46 cgd Exp $
+ *	$Id: vmparam.h,v 1.3 1993/06/18 06:51:05 cgd Exp $
  */
 
 
@@ -53,7 +53,7 @@
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		0
+#define	USRTEXT		4096
 #define	USRSTACK	0xFDBFE000
 #define	BTOPUSRSTACK	(0xFDC00-(UPAGES))	/* btop(USRSTACK) */
 #define	LOWPAGES	0

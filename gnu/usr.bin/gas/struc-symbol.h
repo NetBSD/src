@@ -17,11 +17,16 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#if 0
 #ifndef		VMS
 #include "a.out.gnu.h"		/* Needed to define struct nlist. Sigh. */
 #else
 #include "a_out.h"
 #endif
+#endif
+
+#include "a.out.h"
+
 
 struct symbol			/* our version of an nlist node */
 {
