@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.155 1996/11/06 20:19:33 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.156 1996/11/12 01:49:29 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -731,8 +731,10 @@ ALTENTRY(ovbcopy)
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping? */
-	jnb	1f
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
 	cld				# nope, copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
