@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.18 1995/06/12 00:47:33 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.19 1995/06/12 06:46:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -354,19 +354,17 @@ in_setpeeraddr(inp, nam)
  * Must be called at splnet.
  */
 int
-in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, cmd, notify)
+in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
 	u_int fport_arg, lport_arg;
 	struct in_addr laddr;
-	int cmd;
+	int errno;
 	void (*notify) __P((struct inpcb *, int));
 {
-	extern u_char inetctlerrmap[];
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
 	u_int16_t fport = fport_arg, lport = lport_arg;
-	int errno;
 
 	if (dst->sa_family != AF_INET)
 		return;
@@ -374,7 +372,6 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, cmd, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	errno = inetctlerrmap[cmd];
 	for (inp = table->inpt_list.lh_first; inp != 0;) {
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    inp->inp_socket == 0 ||
@@ -392,16 +389,14 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, cmd, notify)
 }
 
 int
-in_pcbnotifyall(table, dst, cmd, notify)
+in_pcbnotifyall(table, dst, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
-	int cmd;
+	int errno;
 	void (*notify) __P((struct inpcb *, int));
 {
-	extern u_char inetctlerrmap[];
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
-	int errno;
 
 	if (dst->sa_family != AF_INET)
 		return;
@@ -409,7 +404,6 @@ in_pcbnotifyall(table, dst, cmd, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	errno = inetctlerrmap[cmd];
 	for (inp = table->inpt_list.lh_first; inp != 0;) {
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
 		    inp->inp_socket == 0) {
