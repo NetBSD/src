@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586reg.h,v 1.4 1995/04/03 21:17:20 mycroft Exp $	*/
+/*	$NetBSD: i82586reg.h,v 1.5 1995/04/04 01:59:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -105,9 +105,9 @@ struct ie_sys_ctl_block {
 #define IE_CU_ABORT	0x0400	/* abort current command */
 
 #define IE_ACK_COMMAND	0xf000	/* mask for ACK command */
-#define IE_ACK_CX	0x8000	/* ack IE_ST_DONE */
-#define IE_ACK_FR	0x4000	/* ack IE_ST_RECV */
-#define IE_ACK_CNA	0x2000	/* ack IE_ST_ALLDONE */
+#define IE_ACK_CX	0x8000	/* ack IE_ST_CX */
+#define IE_ACK_FR	0x4000	/* ack IE_ST_FR */
+#define IE_ACK_CNA	0x2000	/* ack IE_ST_CNA */
 #define IE_ACK_RNR	0x1000	/* ack IE_ST_RNR */
 
 #define IE_ACTION_COMMAND(x) (((x) & IE_CU_COMMAND) == IE_CU_START)
@@ -115,9 +115,9 @@ struct ie_sys_ctl_block {
 
 /* Status values */
 #define IE_ST_WHENCE	0xf000	/* mask for cause of interrupt */
-#define IE_ST_DONE	0x8000	/* command with I bit completed */
-#define IE_ST_RECV	0x4000	/* frame received */
-#define IE_ST_ALLDONE	0x2000	/* all commands completed */
+#define IE_ST_CX	0x8000	/* command with I bit completed */
+#define IE_ST_FR	0x4000	/* frame received */
+#define IE_ST_CNA	0x2000	/* all commands completed */
 #define IE_ST_RNR	0x1000	/* receive not ready */
 
 #define IE_CU_STATUS	0x700	/* mask for command unit status */
