@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.36 1998/02/04 12:19:03 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.37 1998/03/12 12:08:09 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -42,7 +42,7 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
-	inet.3 ntoa.3
+	inet.3 ntoa.3 inet.3 inet_ntop.3 inet.3 inet_pton.3
 MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
 MLINKS+=linkaddr.3 link_addr.3 linkaddr.3 link_ntoa.3 linkaddr.3 linkntoa.3
 MLINKS+=ns.3 ns_addr.3 ns.3 ns_ntoa.3
