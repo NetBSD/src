@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.151 2004/07/21 00:09:14 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.152 2004/08/08 13:52:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.151 2004/07/21 00:09:14 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.152 2004/08/08 13:52:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -187,7 +187,8 @@ auth_url(const char *challenge, char **response, const char *guser,
 	*response = (char *)xmalloc(rlen);
 	(void)strlcpy(*response, scheme, rlen);
 	len = strlcat(*response, " ", rlen);
-	base64_encode(clear, clen, (u_char *)*response + len);
+			/* use  `clen - 1'  to not encode the trailing NUL */
+	base64_encode(clear, clen - 1, (u_char *)*response + len);
 	memset(clear, 0, clen);
 	rval = 0;
 
