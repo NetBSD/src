@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.181 2002/01/09 04:12:11 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.182 2002/05/05 15:16:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.181 2002/01/09 04:12:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.182 2002/05/05 15:16:30 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1259,7 +1259,8 @@ sd_interpret_sense(xs)
 			 */
 			printf("%s: waiting for pack to spin up...\n",
 			    sd->sc_dev.dv_xname);
-			scsipi_periph_freeze(periph, 1);
+			if (!callout_active(&periph->periph_callout))
+				scsipi_periph_freeze(periph, 1);
 			callout_reset(&periph->periph_callout,
 			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;
