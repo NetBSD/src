@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.12 2000/01/22 22:19:22 mycroft Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.13 2000/07/06 03:14:05 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.12 2000/01/22 22:19:22 mycroft Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.13 2000/07/06 03:14:05 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -85,7 +85,8 @@ again:
 	yprnk.map = inmap;
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
-	r = clnt_call(ysd->dom_client, YPPROC_FIRST, (xdrproc_t)xdr_ypreq_nokey,
+	r = clnt_call(ysd->dom_client, (rpcproc_t)YPPROC_FIRST,
+	    (xdrproc_t)xdr_ypreq_nokey,
 	    &yprnk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
@@ -167,7 +168,8 @@ again:
 	yprk.keydat.dsize = inkeylen;
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
-	r = clnt_call(ysd->dom_client, YPPROC_NEXT, (xdrproc_t)xdr_ypreq_key,
+	r = clnt_call(ysd->dom_client, (rpcproc_t)YPPROC_NEXT,
+	    (xdrproc_t)xdr_ypreq_key,
 	    &yprk, (xdrproc_t)xdr_ypresp_key_val, &yprkv, _yplib_timeout);
 	if (r != RPC_SUCCESS) {
 		if (++nerrs == _yplib_nerrs) {
