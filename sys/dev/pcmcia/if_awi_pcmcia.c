@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.11 2000/02/12 19:58:35 chopps Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.12 2000/02/17 15:58:32 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,9 @@ struct awi_pcmcia_softc {
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
+	struct pcmcia_mem_handle sc_memh;	/* PCMCIA mem space info */
 	int sc_io_window;			/* our i/o window */
+	int sc_mem_window;			/* our memory window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
@@ -115,8 +117,9 @@ int	awi_pcmcia_find __P((struct awi_pcmcia_softc *,
     struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
 struct cfattach awi_pcmcia_ca = {
-	sizeof(struct awi_pcmcia_softc), awi_pcmcia_match, awi_pcmcia_attach,
-	awi_pcmcia_detach, /* awi_activate */ 0
+	sizeof(struct awi_pcmcia_softc),
+	awi_pcmcia_match, awi_pcmcia_attach,
+	awi_pcmcia_detach, awi_activate
 };
 
 #if __NetBSD_Version__ <= 104120000
@@ -273,6 +276,7 @@ awi_pcmcia_find(psc, pa, cfe)
  fail_io_unmap:
 	fail++;
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	psc->sc_io_window = -1;
 
  fail_io_free:
 	fail++;
@@ -294,11 +298,12 @@ awi_pcmcia_attach(parent, self, aux)
 	struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct pcmcia_mem_handle memh;
 	struct awi_pcmcia_get_enaddr_args pgea;
 	bus_addr_t memoff;
-	int memwin, rv;
+	int rv;
 
+	psc->sc_mem_window = -1;
+	psc->sc_io_window = -1;
 #if 0
 	int i, j;
 
@@ -354,18 +359,18 @@ awi_pcmcia_attach(parent, self, aux)
 	sc->sc_state = AWI_ST_SELFTEST;
 	printf(": %s\n", app->app_name);
 
-	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
+	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &psc->sc_memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
 	} else if (pcmcia_mem_map(psc->sc_pf,
 	    PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON, AM79C930_MEM_BASE,
-	    AM79C930_MEM_SIZE, &memh, &memoff, &memwin)) {
+	    AM79C930_MEM_SIZE, &psc->sc_memh, &memoff, &psc->sc_mem_window)) {
 		printf("%s: unable to map memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
-		pcmcia_mem_free(psc->sc_pf, &memh);
+		pcmcia_mem_free(psc->sc_pf, &psc->sc_memh);
 	} else {
-		sc->sc_chip.sc_memt = memh.memt;
-		sc->sc_chip.sc_memh = memh.memh;
+		sc->sc_chip.sc_memt = psc->sc_memh.memt;
+		sc->sc_chip.sc_memh = psc->sc_memh.memh;
 		am79c930_chip_init(&sc->sc_chip, 1);
 	}
 
@@ -418,16 +423,12 @@ awi_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_awi.sc_ethercom.ec_if);
-	return (0);
-#else
-	return (EBUSY);
-#endif
+	if (psc->sc_mem_window != -1) {
+		pcmcia_mem_unmap (psc->sc_pf, psc->sc_mem_window);
+		pcmcia_mem_free (psc->sc_pf, &psc->sc_memh);
+	}
+	
+	return awi_detach(&psc->sc_awi);
 }
 
 /*
