@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.369 2004/08/03 22:34:55 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.370 2004/08/03 22:37:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6305,3 +6305,11 @@ gnu/dist/gcc/libstdc++-v3/include/c_std/std_cmath.h	1.2
 	is defined - this causes that nothing usable is left unless we implement
 	enough of C99. PR#25930
 	[dmcmahill, ticket #731]
+
+sys/netinet/ip_icmp.c				1.85-1.87
+
+	icmp_reflect: check if m_pkthdr.rcvif is non-NULL before touching it. 
+	icmp_reflect could be called from the output path, so m_pkthdr.rcvif 
+	may not be set.  (found by panic when PF is configured 
+	"block return all")
+	[christos, ticket #732]
