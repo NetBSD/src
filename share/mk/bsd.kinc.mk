@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.28 2003/07/28 00:57:25 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.29 2003/08/03 09:23:16 lukem Exp $
 
 # Variables:
 #
@@ -11,7 +11,7 @@
 #
 # SUBDIR	Subdirectories to enter
 #
-# SYMLINKS	Symlinks to make (unconditionally), a la bsd.links.mk.
+# INCSYMLINKS	Symlinks to make (unconditionally), a la bsd.links.mk.
 #		Note that the original bits will be 'rm -rf'd rather than
 #		just 'rm -f'd, to make the right thing happen with include
 #		directories.
@@ -62,9 +62,9 @@ incinstall::	${_F}
 
 .undef _F
 
-.if defined(SYMLINKS) && !empty(SYMLINKS)
+.if defined(INCSYMLINKS) && !empty(INCSYMLINKS)
 incinstall::
-	@(set ${SYMLINKS}; \
+	@(set ${INCSYMLINKS}; \
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
