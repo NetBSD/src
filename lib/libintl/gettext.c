@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.18 2004/01/18 08:40:40 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.19 2004/09/23 16:44:26 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.18 2004/01/18 08:40:40 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.19 2004/09/23 16:44:26 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
 
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -189,25 +190,25 @@ fail:
 		if (t) {
 			if (c) {
 				snprintf(tmp, sizeof(tmp), "%s_%s.%s@%s",
-				    l, t, c, m); 
+				    l, t, c, m);
 				strlcat(result, tmp, sizeof(result));
 				strlcat(result, ":", sizeof(result));
 			}
-			snprintf(tmp, sizeof(tmp), "%s_%s@%s", l, t, m); 
+			snprintf(tmp, sizeof(tmp), "%s_%s@%s", l, t, m);
 			strlcat(result, tmp, sizeof(result));
 			strlcat(result, ":", sizeof(result));
 		}
-		snprintf(tmp, sizeof(tmp), "%s@%s", l, m); 
+		snprintf(tmp, sizeof(tmp), "%s@%s", l, m);
 		strlcat(result, tmp, sizeof(result));
 		strlcat(result, ":", sizeof(result));
 	}
 	if (t) {
 		if (c) {
-			snprintf(tmp, sizeof(tmp), "%s_%s.%s", l, t, c); 
+			snprintf(tmp, sizeof(tmp), "%s_%s.%s", l, t, c);
 			strlcat(result, tmp, sizeof(result));
 			strlcat(result, ":", sizeof(result));
 		}
-		snprintf(tmp, sizeof(tmp), "%s_%s", l, t); 
+		snprintf(tmp, sizeof(tmp), "%s_%s", l, t);
 		strlcat(result, tmp, sizeof(result));
 		strlcat(result, ":", sizeof(result));
 	}
@@ -309,6 +310,7 @@ mapit(path, db)
 	char *base;
 	u_int32_t magic, revision;
 	struct moentry *otable, *ttable;
+	const u_int32_t *htable;
 	struct moentry_h *p;
 	struct mo *mo;
 	size_t l;
@@ -338,8 +340,18 @@ mapit(path, db)
 		close(fd);
 		goto fail;
 	}
-	if (read(fd, &revision, sizeof(revision)) != sizeof(revision) ||
-	    flip(revision, magic) != MO_REVISION) {
+	if (read(fd, &revision, sizeof(revision)) != sizeof(revision)) {
+		close(fd);
+		goto fail;
+	}
+	switch (flip(revision, magic)) {
+	case MO_MAKE_REV(0, 0):
+#if 0
+	case MO_MAKE_REV(0, 1):
+	case MO_MAKE_REV(1, 1):
+#endif
+		break;
+	default:
 		close(fd);
 		goto fail;
 	}
@@ -359,9 +371,12 @@ mapit(path, db)
 	mohandle->mo.mo_magic = mo->mo_magic;
 	mohandle->mo.mo_revision = flip(mo->mo_revision, magic);
 	mohandle->mo.mo_nstring = flip(mo->mo_nstring, magic);
+	mohandle->mo.mo_hsize = flip(mo->mo_hsize, magic);
 
 	/* validate otable/ttable */
+	/* LINTED: ignore the alignment problem. */
 	otable = (struct moentry *)(base + flip(mo->mo_otable, magic));
+	/* LINTED: ignore the alignment problem. */
 	ttable = (struct moentry *)(base + flip(mo->mo_ttable, magic));
 	if (!validate(otable, mohandle) ||
 	    !validate(&otable[mohandle->mo.mo_nstring], mohandle)) {
@@ -408,7 +423,26 @@ mapit(path, db)
 			goto fail;
 		}
 	}
-
+	/* allocate htable, and convert it to the host order. */
+	if (mohandle->mo.mo_hsize > 2) {
+		l = sizeof(u_int32_t) * mohandle->mo.mo_hsize;
+		mohandle->mo.mo_htable = (u_int32_t *)malloc(l);
+		if (!mohandle->mo.mo_htable) {
+			unmapit(db);
+			goto fail;
+		}
+		/* LINTED: ignore the alignment problem. */
+		htable = (const u_int32_t *)(base+flip(mo->mo_hoffset, magic));
+		for (i=0; i < mohandle->mo.mo_hsize; i++) {
+			mohandle->mo.mo_htable[i] = flip(htable[i], magic);
+			if (mohandle->mo.mo_htable[i] >=
+			    mohandle->mo.mo_nstring+1) {
+				/* illegal string number. */
+				unmapit(db);
+				goto fail;
+			}
+		}
+	}
 	/* grab MIME-header and charset field */
 	mohandle->mo.mo_header = lookup("", db);
 	if (mohandle->mo.mo_header)
@@ -454,8 +488,29 @@ unmapit(db)
 		free(mohandle->mo.mo_ttable);
 	if (mohandle->mo.mo_charset)
 		free(mohandle->mo.mo_charset);
+	if (mohandle->mo.mo_htable)
+		free(mohandle->mo.mo_htable);
 	memset(&mohandle->mo, 0, sizeof(mohandle->mo));
 	return 0;
+}
+
+/*
+ * calculate the step value if the hash value is conflicted.
+ */
+static __inline u_int32_t
+calc_collision_step(u_int32_t hashval, u_int32_t hashsize)
+{
+	_DIAGASSERT(hashsize>2);
+	return (hashval % (hashsize - 2)) + 1;
+}
+
+/*
+ * calculate the next index while conflicting.
+ */
+static __inline u_int32_t
+calc_next_index(u_int32_t curidx, u_int32_t hashsize, u_int32_t step)
+{
+	return curidx+step - (curidx >= hashsize-step ? hashsize : 0);
 }
 
 /* ARGSUSED */
@@ -464,12 +519,32 @@ lookup_hash(msgid, db)
 	const char *msgid;
 	struct domainbinding *db;
 {
+	struct mohandle *mohandle = &db->mohandle;
+	u_int32_t idx, hashval, step, strno;
+	size_t len;
 
-	/*
-	 * XXX should try a hashed lookup here, but to do so, we need to
-	 * look inside the GPL'ed *.c and re-implement...
-	 */
-	return NULL;
+	if (mohandle->mo.mo_hsize <= 2 || mohandle->mo.mo_htable == NULL)
+		return NULL;
+
+	hashval = __intl_string_hash(msgid);
+	step = calc_collision_step(hashval, mohandle->mo.mo_hsize);
+	idx = hashval % mohandle->mo.mo_hsize;
+	len = strlen(msgid);
+	while (/*CONSTCOND*/1) {
+		strno = mohandle->mo.mo_htable[idx];
+		if (strno == 0) {
+			/* unexpected miss */
+			return NULL;
+		}
+		strno--;
+		if (len <= mohandle->mo.mo_otable[strno].len &&
+		    !strcmp(msgid, mohandle->mo.mo_otable[strno].off)) {
+			/* hit */
+			return mohandle->mo.mo_ttable[strno].off;
+		}
+		idx = calc_next_index(idx, mohandle->mo.mo_hsize, step);
+	}
+	/*NOTREACHED*/
 }
 
 static const char *
@@ -576,7 +651,7 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	lpath = get_lang_env(cname);
 	if (!lpath)
 		goto fail;
-	
+
 	for (db = __bindings; db; db = db->next)
 		if (strcmp(db->domainname, domainname) == 0)
 			break;
@@ -650,6 +725,5 @@ found:
 	}
 
 fail:
-	/* LINTED const cast */
-	return (char *)msgid;
+	return (char *)__UNCONST(msgid);
 }
