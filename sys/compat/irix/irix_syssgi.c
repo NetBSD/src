@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.24 2002/03/28 12:59:35 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.25 2002/04/16 20:15:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.24 2002/03/28 12:59:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.25 2002/04/16 20:15:03 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -448,6 +448,7 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SAVED_IDS;
 		break;
+	case IRIX_SC_IP_SECOPTS:/* IP security options */
 	/* Trusted IRIX capabilities are unsupported */
 	case IRIX_SC_ACL:	/* ACcess Lists */
 	case IRIX_SC_AUDIT:	/* Audit */
