@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.7 2001/03/31 11:37:53 aymeric Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.8 2001/10/21 16:04:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -597,7 +597,7 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 		 * for the number option offset.
 		 */
 		cnt = vs_columns(sp, NULL, LNO, &CNO, NULL);
-		if (O_ISSET(sp, O_NUMBER))
+		if (O_ISSET(sp, O_NUMBER) && cnt)
 			cnt -= O_NUMBER_LENGTH;
 
 		/* Adjust the window towards the beginning of the line. */
