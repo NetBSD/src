@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.12 2002/10/02 16:51:09 thorpej Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.13 2002/12/07 19:48:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.12 2002/10/02 16:51:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.13 2002/12/07 19:48:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.12 2002/10/02 16:51:09 thorpej Exp $")
 
 #include <dev/ic/dptreg.h>
 #include <dev/ic/dptvar.h>
+
+#include <dev/i2o/dptivar.h>
 
 #define	PCI_CBMA	0x14	/* Configuration base memory address */
 #define	PCI_CBIO	0x10	/* Configuration base I/O address */
@@ -130,6 +132,8 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dv.dv_xname);
 		return;	
 	}
+
+	sc->sc_bustype = SI_PCI_BUS;
 
 	/* Now attach to the bus-independent code. */
 	dpt_init(sc, intrstr);
