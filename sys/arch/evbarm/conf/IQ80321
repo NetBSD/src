@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.12 2002/08/29 02:25:22 thorpej Exp $
+#	$NetBSD: IQ80321,v 1.13 2002/09/18 02:43:57 lukem Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -117,7 +117,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

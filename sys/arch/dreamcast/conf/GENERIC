@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2002/06/17 05:14:08 lukem Exp $
+# $NetBSD: GENERIC,v 1.26 2002/09/18 02:43:57 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -41,7 +41,7 @@ options 	HZ=100		# clock interrupt generates every 1/HZ sec
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	SYSVMSG		# System V-like message queues

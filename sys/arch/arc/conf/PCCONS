@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.22 2002/06/17 05:14:06 lukem Exp $
+#	$NetBSD: PCCONS,v 1.23 2002/09/18 02:43:55 lukem Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -36,7 +36,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
