@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.1.1.1 1996/08/09 10:14:59 thorpej Exp $
+#	$NetBSD: Makefile.yp,v 1.2 1996/08/09 20:58:36 thorpej Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -19,6 +19,9 @@ MKNETID=/usr/sbin/mknetid
 TOUCH=/usr/bin/touch
 DOMAIN="`/usr/bin/basename ${.CURDIR}`"
 YPPUSH=/usr/sbin/yppush
+
+# We have a rule for ypservers, but we don't build it by default, since
+# it seldom changes (only when slaves are added/deleted).
 
 all: passwd group hosts ethers networks rpc services protocols netid
 
@@ -195,6 +198,16 @@ netid.time: $(DIR)/passwd $(DIR)/group $(DIR)/hosts $(DIR)/netid
 		: ; \
 	  fi
 
+ypservers.time: $(YPDBDIR)/$(DOMAIN)/ypservers
+	-@$(MAKEDBM) ypservers ypservers; \
+	$(TOUCH) $(@); \
+	$(ECHO) "updated ypservers"; \
+	if [ ! $(NOPUSH) ]; then \
+		$(YPPUSH) -d $(DOMAIN) ypservers; \
+		$(ECHO) "pushed ypservers"; \
+	else \
+		: ; \
+	fi
 
 passwd: passwd.time
 group: group.time
@@ -205,6 +218,7 @@ rpc: rpc.time
 services: services.time
 protocols: protocols.time
 netid: netid.time
+ypservers: ypservers.time
 $(DIR)/passwd:
 $(DIR)/group:
 $(DIR)/hosts:
@@ -214,3 +228,4 @@ $(DIR)/rpc:
 $(DIR)/services:
 $(DIR)/protocols:
 $(DIR)/netid:
+$(YPDBDIR)/$(DOMAIN)/ypservers:
