@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.31 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.32 1999/06/05 14:26:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -152,7 +152,7 @@ int	audioprint __P((void *, const char *));
 #define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
 #define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
 
-#if !defined(__i386__) && !defined(__arm32__)
+#if !defined(__i386__) && !defined(__arm32__) && !defined(__sparc__)
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
