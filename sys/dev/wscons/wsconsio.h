@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.14 1999/01/26 13:43:00 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.15 1999/01/28 11:46:22 dbj Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -174,6 +174,7 @@ struct wskbd_map_data {
 #define		WSDISPLAY_TYPE_TGA	9	/* DEC PCI TGA */
 #define		WSDISPLAY_TYPE_SFBP	10	/* DEC TC SFB+ */
 #define		WSDISPLAY_TYPE_PCIMISC	11	/* (generic) PCI misc. disp. */
+#define		WSDISPLAY_TYPE_NEXTMONO	12	/* NeXT mono display */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

@@ -1,11 +1,11 @@
-/*	$NetBSD: intio.c,v 1.2 1999/01/28 11:46:23 dbj Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.1 1999/01/28 11:46:23 dbj Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Juergen Hannken-Illjes.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,82 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Autoconfiguration support for next68k internal i/o space.
- */
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h> 
- 
-#include <next68k/dev/intiovar.h>
-
-int	intiomatch __P((struct device *, struct cfdata *, void *));
-void	intioattach __P((struct device *, struct device *, void *));
-int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, struct cfdata *, void *));
-
-struct cfattach intio_ca = {
-	sizeof(struct device), intiomatch, intioattach
-};
-
-#if 0
-struct cfdriver intio_cd = {
-	NULL, "intio", DV_DULL
-};
-#endif
-
-int
-intiomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	static int intio_matched = 0;
-
-	/* Allow only one instance. */
-	if (intio_matched)
-		return (0);
-
-	intio_matched = 1;
-	return (1);
-}
-
-void
-intioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-
-	printf("\n");
-
-	/* Search for and attach children. */
-	config_search(intiosearch, self, NULL);
-}
-
-int
-intioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct intio_attach_args *ia = aux;
-
-	if (ia->ia_addr != 0)
-		printf(" addr %p", ia->ia_addr);
-	return (UNCONF);
-}
-
-int
-intiosearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct intio_attach_args ia;
-
-	bzero(&ia, sizeof(ia));
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
-		config_attach(parent, cf, &ia, intioprint);
-	}
-	return (0);
-}
+extern const struct wscons_keydesc nextkbd_keydesctab[];

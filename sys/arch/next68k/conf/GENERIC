@@ -107,6 +107,17 @@ options         ZS_CONSOLE_ABORT
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
+# wscons options
+options         RCONS_2BPP              # necessary for nextdisplay
+options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
+# see dev/wscons/wskbdmap_mfii.h for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
+
 config		netbsd root on ? type ?
 
 #
@@ -120,6 +131,12 @@ mainbus0 at root
 
 # device space
 intio0  at mainbus?
+
+nextkbd0    at intio? ipl 3
+nextdisplay0    at mainbus?
+
+wsdisplay*      at nextdisplay? console ?
+wskbd*          at nextkbd? console ?
 
 # INTIO
 zsc0    at intio? ipl 5
