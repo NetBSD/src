@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2001/11/09 07:21:37 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 2001/11/16 14:39:30 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -46,6 +46,7 @@
 
 #include <machine/db_machdep.h>
 #include <machine/undefined.h>
+#include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
@@ -58,6 +59,8 @@ int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
+int db_trapper __P((u_int addr, u_int inst, struct trapframe *frame,
+    int fault_code));
 
 static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
@@ -166,20 +169,6 @@ kdb_trap(type, regs)
 }
 
 
-/*
- * Received keyboard interrupt sequence.
- */
-void
-kdb_kbd_trap(regs)
-	db_regs_t *regs;
-{
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, regs);
-	}
-}
-
-
 static int
 db_validate_address(addr)
 	vm_offset_t addr;
@@ -258,11 +247,6 @@ db_write_bytes(addr, size, data)
 		dst++, data++;
 	}
 }
-
-void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_irqstat_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 const struct db_command db_machine_command_table[] = {
 	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
