@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 1995/04/16 01:52:07 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 1995/04/26 23:19:16 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -50,6 +50,9 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+
+/* XXX - Yes, we DO have to deal with this bug. */
+#define	LANCE_REVC_BUG 1
 
 /* #define	LEDEBUG	1 */
 
@@ -661,6 +664,29 @@ leread(sc, buf, len)
 	len -= 4;
 	if (len <= 0)
 		return;
+
+#ifdef	LANCE_REVC_BUG
+	/*
+	 * Check for unreported packet errors.  Rev C of the LANCE chip
+	 * has a bug which can cause "random" bytes to be prepended to
+	 * the start of the packet.  The work-around is to make sure that
+	 * the Ethernet destination address in the packet matches our
+	 * address (or the broadcast address).  XXX - Multicasts?
+	 */
+	{
+		register short *pp, *ea;
+		pp = (short *) buf;
+		ea = (short *) &sc->sc_enaddr;
+		if (((pp[0] != ea[0]) || (pp[1] != ea[1]) || (pp[2] != ea[2])) &&
+			((pp[0] != -1)    || (pp[1] != -1)    || (pp[2] != -1)   ))
+		{
+			sc->sc_if.if_ierrors++;
+			printf("%s: LANCE Rev C Extra Byte(s) bug; Packet punted\n",
+				   sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+#endif	/* LANCE_REVC_BUG */
 
 	/* Pull packet off interface. */
 	ifp = &sc->sc_if;
