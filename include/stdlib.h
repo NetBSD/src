@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.31 1998/02/04 21:06:14 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.32 1998/05/11 12:00:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,8 +38,11 @@
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 
-#if !defined(_ANSI_SOURCE)	/* for quad_t, etc. */
-#include <sys/types.h>
+#include <sys/featuretest.h>
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+#include <sys/types.h>		/* for quad_t, etc. */
 #endif
 
 #include <machine/ansi.h>
@@ -64,7 +67,8 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 typedef struct {
 	quad_t quot;		/* quotient */
 	quad_t rem;		/* remainder */
@@ -130,7 +134,34 @@ int	 wctomb __P((char *, wchar_t));
 int	 mbtowc __P((wchar_t *, const char *, size_t));
 size_t	 wcstombs __P((char *, const wchar_t *, size_t));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) || \
+    defined(_XOPEN_SOURCE)
+long	 a64l __P((const char *));
+char	*l64a __P((long));
+
+char	*initstate __P((unsigned long, char *, size_t));
+long	 random __P((void));
+char	*setstate __P((char *));
+void	 srandom __P((unsigned long));
+
+char	*realpath __P((const char *, char *));
+
+int	 putenv __P((const char *));
+
+double	 drand48 __P((void));
+double	 erand48 __P((unsigned short[3]));
+long	 jrand48 __P((unsigned short[3]));
+void	 lcong48 __P((unsigned short[7]));
+long	 lrand48 __P((void));
+long	 mrand48 __P((void));
+long	 nrand48 __P((unsigned short[3]));
+unsigned short *
+	 seed48 __P((unsigned short[3]));
+void	 srand48 __P((long));
+#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void	*alloca __P((int));     /* built-in for gcc */ 
 #else 
@@ -153,9 +184,6 @@ int	 daemon __P((int, int));
 char	*devname __P((dev_t, mode_t));
 int	 getloadavg __P((double [], int));
 
-long	 a64l __P((const char *));
-char	*l64a __P((long));
-
 void	 cfree __P((void *));
 
 int	 heapsort __P((void *, size_t, size_t,
@@ -167,13 +195,6 @@ int	 radixsort __P((const unsigned char **, int, const unsigned char *,
 int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-char	*initstate __P((unsigned long, char *, size_t));
-long	 random __P((void));
-char	*realpath __P((const char *, char *));
-char	*setstate __P((char *));
-void	 srandom __P((unsigned long));
-
-int	 putenv __P((const char *));
 int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...));
@@ -182,19 +203,7 @@ quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
 quad_t	 strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
-
-double	 drand48 __P((void));
-double	 erand48 __P((unsigned short[3]));
-long	 jrand48 __P((unsigned short[3]));
-void	 lcong48 __P((unsigned short[7]));
-long	 lrand48 __P((void));
-long	 mrand48 __P((void));
-long	 nrand48 __P((unsigned short[3]));
-unsigned short *
-	 seed48 __P((unsigned short[3]));
-void	 srand48 __P((long));
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
-
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE && !_XOPEN_SOURCE */
 __END_DECLS
 
 #endif /* !_STDLIB_H_ */

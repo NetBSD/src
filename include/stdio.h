@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.21 1998/02/14 20:33:21 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.22 1998/05/11 12:00:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -196,6 +196,7 @@ __END_DECLS
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
 #define	TMP_MAX		308915776
 
+/* Always ensure that these are consistent with <fcntl.h> and <unistd.h>! */
 #ifndef SEEK_SET
 #define	SEEK_SET	0	/* set file offset to offset */
 #endif
@@ -288,23 +289,42 @@ extern int	putchar_unlocked __P((int));
 #endif
 
 /*
- * Routines that are purely local.
+ * Functions defined in POSIX 1003.2 and XPGn or later.
  */
-#if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    (_POSIX_C_SOURCE - 0) >= 2 || defined(_XOPEN_SOURCE)
 __BEGIN_DECLS
-char	*fgetln __P((FILE *, size_t *));
-int	 fpurge __P((FILE *));
-int	 getw __P((FILE *));
 int	 pclose __P((FILE *));
 FILE	*popen __P((const char *, const char *));
+__END_DECLS
+#endif
+
+/*
+ * Functions defined in XPG4.2.
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) ||
+    defined(_XOPEN_SOURCE)
+__BEGIN_DECLS
+int	 getw __P((FILE *));
 int	 putw __P((int, FILE *));
-void	 setbuffer __P((FILE *, char *, int));
-int	 setlinebuf __P((FILE *));
 char	*tempnam __P((const char *, const char *));
 int	 snprintf __P((char *, size_t, const char *, ...))
 		__attribute__((format (printf, 3, 4)));
 int	 vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_))
 		__attribute__((format (printf, 3, 0)));
+__END_DECLS
+#endif
+
+/*
+ * Routines that are purely local.
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
+__BEGIN_DECLS
+char	*fgetln __P((FILE *, size_t *));
+int	 fpurge __P((FILE *));
+void	 setbuffer __P((FILE *, char *, int));
+int	 setlinebuf __P((FILE *));
 int	 vscanf __P((const char *, _BSD_VA_LIST_))
 		__attribute__((format (scanf, 1, 0)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
