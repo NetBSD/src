@@ -38,8 +38,8 @@
 #include "ftp_locl.h"
 #include <getarg.h>
 
-__RCSID("$Heimdal: main.c,v 1.32 2002/08/23 19:11:03 assar Exp $"
-        "$NetBSD: main.c,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $");
+__RCSID("$Heimdal: main.c,v 1.33 2002/10/29 09:47:51 joda Exp $"
+        "$NetBSD: main.c,v 1.1.1.6 2003/05/15 20:28:43 lha Exp $");
 
 static int help_flag;
 static int version_flag;
@@ -54,6 +54,8 @@ struct getargs getargs[] = {
       "Turn off interactive prompting", NULL},
     { NULL,	'l', arg_negative_flag, &lineedit,
       "Turn off line editing", NULL},
+    { NULL,   'n', arg_negative_flag, &autologin,
+      "Turn off auto-login", NULL},
     { NULL,	'p', arg_flag, &passivemode,
       "passive mode", NULL},
     { NULL,	't', arg_counter, &trace,

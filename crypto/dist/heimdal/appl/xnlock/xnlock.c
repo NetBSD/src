@@ -8,8 +8,8 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: xnlock.c,v 1.90 2002/08/23 19:29:38 assar Exp $"
-        "$NetBSD: xnlock.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: xnlock.c,v 1.93.2.1 2003/04/29 09:18:36 lha Exp $"
+        "$NetBSD: xnlock.c,v 1.1.1.7 2003/05/15 20:28:43 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -37,6 +37,8 @@ __RCSID("$Heimdal: xnlock.c,v 1.90 2002/08/23 19:29:38 assar Exp $"
 #endif
 #ifdef KRB4
 #include <krb.h>
+#endif
+#if defined(KRB4) || defined(KRB5)
 #include <kafs.h>
 #endif
 
@@ -604,9 +606,9 @@ verify_krb5(const char *password)
 	    }
 	    krb5_free_principal(context, mcred.server);
 	}
+#endif
 	if (k_hasafs())
 	    krb5_afslog(context, id, NULL, NULL);
-#endif
 	return 0;
     }
     if (ret != KRB5KRB_AP_ERR_MODIFIED)
@@ -619,8 +621,6 @@ verify_krb5(const char *password)
 static int
 verify(char *password)
 {
-    int ret;
-
     /*
      * First try with root password, if allowed.
      */
@@ -665,19 +665,22 @@ verify(char *password)
 #endif
 
 #ifdef KRB4
-    /*
-     * Try to verify as user with kerberos 4.
-     */
-    ret = krb_verify_user(name, inst, realm, password,
-			  KRB_VERIFY_NOT_SECURE, NULL);
-    if (ret == KSUCCESS){
-	if (k_hasafs())
-	    krb_afslog(NULL, NULL);
-	return 0;
+    {
+	int ret;
+	/*
+	 * Try to verify as user with kerberos 4.
+	 */
+	ret = krb_verify_user(name, inst, realm, password,
+			      KRB_VERIFY_NOT_SECURE, NULL);
+	if (ret == KSUCCESS){
+	    if (k_hasafs())
+		krb_afslog(NULL, NULL);
+	    return 0;
+	}
+	if (ret != INTK_BADPW)
+	    warnx ("warning: %s",
+		   (ret < 0) ? strerror(ret) : krb_get_err_text(ret));
     }
-    if (ret != INTK_BADPW)
-	warnx ("warning: %s",
-	       (ret < 0) ? strerror(ret) : krb_get_err_text(ret));
 #endif
     
     return -1;
@@ -759,7 +762,7 @@ GetPasswd(Widget w, XEvent *_event, String *_s, Cardinal *_n)
 			 prompt_x + XTextWidth(font, STRING, echolen),
 			 prompt_y, SPACE_STRING, STRING_LENGTH - echolen + 1);
       }
-    } else if (isprint(c)) {
+    } else if (isprint((unsigned char)c)) {
 	if ((cnt + 1) >= MAX_PASSWD_LENGTH)
 	    XBell(dpy, 50);
 	else

@@ -33,8 +33,8 @@
 
 #include "kadmin_locl.h"
 
-__RCSID("$Heimdal: mod.c,v 1.10 2000/07/11 14:34:56 joda Exp $"
-        "$NetBSD: mod.c,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $");
+__RCSID("$Heimdal: mod.c,v 1.11 2002/12/03 14:12:30 joda Exp $"
+        "$NetBSD: mod.c,v 1.1.1.4 2003/05/15 20:28:45 lha Exp $");
 
 static int parse_args (krb5_context context, kadm5_principal_ent_t ent,
 		       int argc, char **argv, int *optind, char *name,
@@ -137,7 +137,8 @@ mod_entry(int argc, char **argv)
 	    printf ("no such principal: %s\n", argv[0]);
 	    return 0;
 	}
-	edit_entry(&princ, &mask, NULL, 0);
+	if(edit_entry(&princ, &mask, NULL, 0))
+	    goto out;
     } else {
 	princ.principal = princ_ent;
     }
@@ -145,6 +146,7 @@ mod_entry(int argc, char **argv)
     ret = kadm5_modify_principal(kadm_handle, &princ, mask);
     if(ret)
 	krb5_warn(context, ret, "kadm5_modify_principal");
+  out:
     kadm5_free_principal_ent(kadm_handle, &princ);
     return 0;
 }

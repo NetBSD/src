@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,10 @@
 
 #include "kafs_locl.h"
 
-__RCSID("$Heimdal: afskrb.c,v 1.15 2001/10/24 19:36:27 assar Exp $"
-        "$NetBSD: afskrb.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: afskrb.c,v 1.17 2003/04/14 08:32:11 lha Exp $"
+        "$NetBSD: afskrb.c,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $");
+
+#ifdef KRB4
 
 struct krb_kafs_data {
     const char *realm;
@@ -42,16 +44,19 @@ struct krb_kafs_data {
 
 static int
 get_cred(kafs_data *data, const char *name, const char *inst, 
-	 const char *realm, CREDENTIALS *c)
+	 const char *realm, uid_t uid, struct kafs_token *kt)
 {
+    CREDENTIALS c;
     KTEXT_ST tkt;
-    int ret = krb_get_cred((char*)name, (char*)inst, (char*)realm, c);
+    int ret = krb_get_cred((char*)name, (char*)inst, (char*)realm, &c);
     
     if (ret) {
 	ret = krb_mk_req(&tkt, (char*)name, (char*)inst, (char*)realm, 0);
 	if (ret == KSUCCESS)
-	    ret = krb_get_cred((char*)name, (char*)inst, (char*)realm, c);
+	    ret = krb_get_cred((char*)name, (char*)inst, (char*)realm, &c);
     }
+    if (ret == 0)
+	ret = _kafs_v4_to_kt(&c, uid, kt);
     return ret;
 }
 
@@ -63,11 +68,13 @@ afslog_uid_int(kafs_data *data,
 	       const char *homedir)
 {
     int ret;
-    CREDENTIALS c;
+    struct kafs_token kt;
     char name[ANAME_SZ];
     char inst[INST_SZ];
     char realm[REALM_SZ];
     
+    kt.ticket = NULL;
+
     if (cell == 0 || cell[0] == 0)
 	return _kafs_afslog_all_local_cells (data, uid, homedir);
 
@@ -76,10 +83,13 @@ afslog_uid_int(kafs_data *data,
     if (ret != KSUCCESS)
 	return ret;
 
-    ret = _kafs_get_cred(data, cell, realm_hint, realm, &c);
+    kt.ticket = NULL;
+    ret = _kafs_get_cred(data, cell, realm_hint, realm, uid, &kt);
     
-    if (ret == 0)
-	ret = kafs_settoken(cell, uid, &c);
+    if (ret == 0) {
+	ret = kafs_settoken_rxkad(cell, &kt.ct, kt.ticket, kt.ticket_len);
+	free(kt.ticket);
+    }
     return ret;
 }
 
@@ -99,6 +109,7 @@ krb_afslog_uid_home(const char *cell, const char *realm_hint, uid_t uid,
 {
     kafs_data kd;
 
+    kd.name = "krb4";
     kd.afslog_uid = afslog_uid_int;
     kd.get_cred = get_cred;
     kd.get_realm = get_realm;
@@ -133,6 +144,31 @@ krb_realm_of_cell(const char *cell, char **realm)
 {
     kafs_data kd;
 
+    kd.name = "krb4";
     kd.get_realm = get_realm;
     return _kafs_realm_of_cell(&kd, cell, realm);
 }
+
+int
+kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
+{
+    struct kafs_token kt;
+    int ret;
+
+    kt.ticket = NULL;
+
+    ret = _kafs_v4_to_kt(c, uid, &kt);
+    if (ret)
+	return ret;
+
+    if (kt.ct.EndTimestamp < time(NULL)) {
+	free(kt.ticket);
+	return 0;
+    }
+
+    ret = kafs_settoken_rxkad(cell, &kt.ct, kt.ticket, kt.ticket_len);
+    free(kt.ticket);
+    return ret;
+}
+
+#endif /* KRB4 */

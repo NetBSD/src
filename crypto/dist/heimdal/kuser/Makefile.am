@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.30 2001/09/02 17:12:23 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $
+# $Heimdal: Makefile.am,v 1.31 2003/03/18 13:15:27 lha Exp $
+# $NetBSD: Makefile.am,v 1.1.1.6 2003/05/15 20:28:45 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4)
+INCLUDES += $(INCLUDE_krb4) $(INCLUDE_des) -I$(srcdir)/../lib/krb5
 
 man_MANS = kinit.1 klist.1 kdestroy.1 kgetcred.1
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: send_recv.c,v 1.9 2002/05/24 15:19:23 joda Exp $"
-        "$NetBSD: send_recv.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: send_recv.c,v 1.10 2003/04/16 17:58:59 lha Exp $"
+        "$NetBSD: send_recv.c,v 1.1.1.4 2003/05/15 20:28:47 lha Exp $");
 
 kadm5_ret_t 
 _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
@@ -48,6 +48,8 @@ _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
 
     len = krb5_storage_seek(sp, 0, SEEK_CUR);
     ret = krb5_data_alloc(&msg, len);
+    if (ret)
+	return ret;
     krb5_storage_seek(sp, 0, SEEK_SET);
     krb5_storage_read(sp, msg.data, msg.length);
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,8 +34,8 @@
 #include "iprop.h"
 #include "parse_time.h"
 
-__RCSID("$Heimdal: dump_log.c,v 1.12 2002/05/24 15:19:18 joda Exp $"
-        "$NetBSD: dump_log.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: dump_log.c,v 1.13 2003/04/16 17:56:02 lha Exp $"
+        "$NetBSD: dump_log.c,v 1.1.1.4 2003/05/15 20:28:47 lha Exp $");
 
 static char *op_names[] = {
     "get",
@@ -90,7 +90,9 @@ print_entry(kadm5_server_context *server_context,
 	krb5_free_principal(context, source);
 	break;
     case kadm_rename:
-	krb5_data_alloc(&data, len);
+	ret = krb5_data_alloc(&data, len);
+	if (ret)
+	    krb5_err (context, 1, ret, "kadm_rename: data alloc: %d", len);
 	krb5_ret_principal(sp, &source);
 	krb5_storage_read(sp, data.data, data.length);
 	hdb_value2entry(context, &data, &ent);
@@ -103,7 +105,9 @@ print_entry(kadm5_server_context *server_context,
 	hdb_free_entry(context, &ent);
 	break;
     case kadm_create:
-	krb5_data_alloc(&data, len);
+	ret = krb5_data_alloc(&data, len);
+	if (ret)
+	    krb5_err (context, 1, ret, "kadm_create: data alloc: %d", len);
 	krb5_storage_read(sp, data.data, data.length);
 	ret = hdb_value2entry(context, &data, &ent);
 	if(ret)
@@ -111,7 +115,9 @@ print_entry(kadm5_server_context *server_context,
 	mask = ~0;
 	goto foo;
     case kadm_modify:
-	krb5_data_alloc(&data, len);
+	ret = krb5_data_alloc(&data, len);
+	if (ret)
+	    krb5_err (context, 1, ret, "kadm_modify: data alloc: %d", len);
 	krb5_ret_int32(sp, &mask);
 	krb5_storage_read(sp, data.data, data.length);
 	ret = hdb_value2entry(context, &data, &ent);

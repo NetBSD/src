@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-__RCSID("$Heimdal: otp_challenge.c,v 1.10 1999/12/02 16:58:44 joda Exp $"
-        "$NetBSD: otp_challenge.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: otp_challenge.c,v 1.11 2003/04/16 16:17:49 lha Exp $"
+        "$NetBSD: otp_challenge.c,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $");
 #endif
 
 #include "otp_locl.h"
@@ -47,12 +47,11 @@ otp_challenge (OtpContext *ctx, char *user, char *str, size_t len)
 
   ctx->challengep = 0;
   ctx->err = NULL;
-  ctx->user = malloc(strlen(user) + 1);
+  ctx->user = strdup(user);
   if (ctx->user == NULL) {
     ctx->err = "Out of memory";
     return -1;
   }
-  strcpy(ctx->user, user);
   dbm = otp_db_open ();
   if (dbm == NULL) {
     ctx->err = "Cannot open database";

@@ -34,8 +34,8 @@
 #include "krb5_locl.h"
 #include "store-int.h"
 
-__RCSID("$Heimdal: store_emem.c,v 1.12 2002/04/18 14:00:34 joda Exp $"
-        "$NetBSD: store_emem.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: store_emem.c,v 1.13 2002/10/21 15:36:23 joda Exp $"
+        "$NetBSD: store_emem.c,v 1.1.1.4 2003/05/15 20:28:48 lha Exp $");
 
 typedef struct emem_storage{
     unsigned char *base;
@@ -62,8 +62,10 @@ emem_store(krb5_storage *sp, const void *data, size_t size)
     if(size > s->base + s->size - s->ptr){
 	void *base;
 	size_t sz, off;
-	sz = 2 * (size + (s->ptr - s->base)); /* XXX */
 	off = s->ptr - s->base;
+	sz = off + size;
+	if (sz < 4096)
+	    sz *= 2;
 	base = realloc(s->base, sz);
 	if(base == NULL)
 	    return 0;

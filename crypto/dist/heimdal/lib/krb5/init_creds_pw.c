@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: init_creds_pw.c,v 1.53 2002/04/18 09:14:51 joda Exp $"
-        "$NetBSD: init_creds_pw.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: init_creds_pw.c,v 1.55 2003/03/20 18:07:31 lha Exp $"
+        "$NetBSD: init_creds_pw.c,v 1.1.1.6 2003/05/15 20:28:47 lha Exp $");
 
 static int
 get_config_time (krb5_context context,
@@ -452,6 +452,9 @@ krb5_get_init_creds_password(krb5_context context,
 	    break;
 	case KRB5KDC_ERR_KEY_EXPIRED :
 	    /* try to avoid recursion */
+
+	    if (prompter == NULL)
+		goto out;
 
 	    krb5_clear_error_string (context);
 

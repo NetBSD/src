@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.15 2000/11/15 22:51:12 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $
+# $Heimdal: Makefile.am,v 1.15.12.1 2003/05/06 16:50:33 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.5 2003/05/15 20:28:43 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -16,6 +16,8 @@ else
 bin_PROGRAMS =
 
 endif
+
+CHECK_LOCAL = 
 
 man_MANS = xnlock.1
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: rsh_locl.h,v 1.28 2002/09/03 20:03:46 joda Exp $
-   $NetBSD: rsh_locl.h,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $ */
+/* $Heimdal: rsh_locl.h,v 1.33 2003/04/16 20:05:39 lha Exp $
+   $NetBSD: rsh_locl.h,v 1.1.1.4 2003/05/15 20:28:41 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -79,6 +79,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 #include <errno.h>
 
 #ifdef HAVE_SYS_PARAM_H
@@ -102,9 +105,7 @@
 #include <krb5.h>
 #include <krb5-private.h> /* for _krb5_{get,put}_int */
 #endif
-#ifdef KRB4
 #include <kafs.h>
-#endif
 
 #ifndef _PATH_NOLOGIN
 #define _PATH_NOLOGIN   "/etc/nologin"
@@ -148,7 +149,9 @@ extern des_cblock iv;
 #define KCMD_NEW_VERSION "KCMDV0.2"
 
 #define USERNAME_SZ 16
-#define COMMAND_SZ 1024
+#ifndef ARG_MAX
+#define ARG_MAX 8192
+#endif
 
 #define RSH_BUFSIZ (5 * 1024) /* MIT kcmd can't handle larger buffers */
 

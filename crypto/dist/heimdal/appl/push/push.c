@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,8 @@
  */
 
 #include "push_locl.h"
-__RCSID("$Heimdal: push.c,v 1.45 2001/09/04 09:45:52 assar Exp $"
-        "$NetBSD: push.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: push.c,v 1.47 2003/04/04 02:10:17 assar Exp $"
+        "$NetBSD: push.c,v 1.1.1.6 2003/05/15 20:28:43 lha Exp $");
 
 #ifdef KRB4
 static int use_v4 = -1;
@@ -137,6 +137,11 @@ do_connect (const char *hostname, int port, int nodelay)
 
 typedef enum { INIT = 0, GREET, USER, PASS, STAT, RETR, TOP, 
 	       DELE, XDELE, QUIT} pop_state;
+
+static char *pop_state_string[] = {
+    "INIT", "GREET", "USER", "PASS", "STAT", "RETR", "TOP",
+    "DELE", "XDELE", "QUIT" 
+};
 
 #define PUSH_BUFSIZ 65536
 
@@ -268,7 +273,7 @@ doit(int s,
     if (net_write (s, out_buf, out_len) != out_len)
 	err (1, "write");
     if (verbose > 1)
-	write (STDERR_FILENO, out_buf, out_len);
+	fprintf (stderr, "%s", out_buf);
 
     if (!do_from)
 	write_state_init (&write_state, out_fd);
@@ -281,6 +286,13 @@ doit(int s,
 	if (s >= FD_SETSIZE)
 	    errx (1, "fd too large");
 	FD_SET(s,&readset);
+
+	if (verbose > 1)
+	    fprintf (stderr, "state: %s count: %d asked_for: %d "
+		     "retrieved: %d asked_deleted: %d\n",
+		     pop_state_string[state], 
+		     count, asked_for, retrieved, asked_deleted);
+
 	if (((state == STAT || state == RETR || state == TOP)
 	     && asked_for < count)
 	    || (state == XDELE && !sent_xdele)
@@ -332,7 +344,7 @@ doit(int s,
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			}
 		    }
 		    rem -= p - beg + 2;
@@ -355,7 +367,7 @@ doit(int s,
 				    state = QUIT;
 				    net_write (s, "QUIT\r\n", 6);
 				    if (verbose > 1)
-					net_write (STDERR_FILENO, "QUIT\r\n", 6);
+					fprintf (stderr, "QUIT\r\n");
 				} else {
 				    if (forkp) {
 					pid_t pid;
@@ -402,14 +414,14 @@ doit(int s,
 			state = QUIT;
 			net_write (s, "QUIT\r\n", 6);
 			if (verbose > 1)
-			    net_write (STDERR_FILENO, "QUIT\r\n", 6);
+			    fprintf (stderr, "QUIT\r\n");
 			break;
 		    } else if (state == DELE) {
 			if (++deleted == count) {
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			    break;
 			}
 		    } else if (++state == STAT) {
@@ -429,7 +441,7 @@ doit(int s,
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			    break;
 			}
 		    }
@@ -472,7 +484,7 @@ doit(int s,
 	    if (net_write (s, out_buf, out_len) != out_len)
 		err (1, "write");
 	    if (verbose > 1)
-		write (STDERR_FILENO, out_buf, out_len);
+		fprintf (stderr, "%s", out_buf);
 	}
     }
     if (verbose)

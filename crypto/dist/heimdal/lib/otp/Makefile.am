@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.22 2002/08/13 14:02:54 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2002/09/12 12:41:43 joda Exp $
+# $Heimdal: Makefile.am,v 1.23.2.1 2003/05/12 15:20:47 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.6 2003/05/15 20:28:50 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,7 +14,7 @@ otptest_LDADD = libotp.la
 include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
-libotp_la_LDFLAGS = -version-info 1:3:1
+libotp_la_LDFLAGS = -version-info 1:4:1
 libotp_la_LIBADD  = $(LIB_des) $(LIB_roken) $(LIB_NDBM)
 
 if HAVE_DB3
@@ -38,7 +38,7 @@ libotp_la_SOURCES = \
 	$(ROKEN_SRCS)
 
 if do_roken_rename
-ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c
+ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
 endif
 
 $(libotp_la_OBJECTS): $(ndbm_wrap)
@@ -57,3 +57,7 @@ strncasecmp.c:
 	$(LN_S) $(srcdir)/../roken/strncasecmp.c .
 strlwr.c:
 	$(LN_S) $(srcdir)/../roken/strlwr.c .
+strlcpy.c:
+	$(LN_S) $(srcdir)/../roken/strlcpy.c .
+strlcat.c:
+	$(LN_S) $(srcdir)/../roken/strlcat.c .

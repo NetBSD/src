@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,26 +33,24 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: indicate_mechs.c,v 1.4 2001/02/18 03:39:09 assar Exp $"
-        "$NetBSD: indicate_mechs.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: indicate_mechs.c,v 1.5 2003/03/16 17:38:20 lha Exp $"
+        "$NetBSD: indicate_mechs.c,v 1.1.1.5 2003/05/15 20:28:46 lha Exp $");
 
 OM_uint32 gss_indicate_mechs
            (OM_uint32 * minor_status,
             gss_OID_set * mech_set
            )
 {
-  *mech_set = malloc(sizeof(**mech_set));
-  if (*mech_set == NULL) {
-    *minor_status = ENOMEM;
-    return GSS_S_FAILURE;
-  }
-  (*mech_set)->count = 1;
-  (*mech_set)->elements = malloc((*mech_set)->count * sizeof(gss_OID_desc));
-  if ((*mech_set)->elements == NULL) {
-    free (*mech_set);
-    *minor_status = ENOMEM;
-    return GSS_S_FAILURE;
-  }
-  (*mech_set)->elements[0] = *GSS_KRB5_MECHANISM;
+  OM_uint32 ret;
+
+  ret = gss_create_empty_oid_set(minor_status, mech_set);
+  if (ret)
+      return ret;
+
+  ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM, mech_set);
+  if (ret)
+      return ret;
+
+  *minor_status = 0;
   return GSS_S_COMPLETE;
 }

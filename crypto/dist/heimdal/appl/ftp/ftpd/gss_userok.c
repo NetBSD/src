@@ -35,8 +35,8 @@
 #include <gssapi.h>
 #include <krb5.h>
 
-__RCSID("$Heimdal: gss_userok.c,v 1.8 2001/08/05 06:38:57 assar Exp $"
-        "$NetBSD: gss_userok.c,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $");
+__RCSID("$Heimdal: gss_userok.c,v 1.10 2003/03/18 13:56:35 lha Exp $"
+        "$NetBSD: gss_userok.c,v 1.1.1.6 2003/05/15 20:28:44 lha Exp $");
 
 /* XXX a bit too much of krb5 dependency here... 
    What is the correct way to do this? 
@@ -104,11 +104,9 @@ gss_userok(void *app_data, char *username)
            
            chown (ticketfile+5, pw->pw_uid, pw->pw_gid);
            
-#ifdef KRB4
            if (k_hasafs()) {
-              krb5_afslog(gssapi_krb5_context, ccache, 0, 0);
+	       krb5_afslog(gssapi_krb5_context, ccache, 0, 0);
            }
-#endif
            esetenv ("KRB5CCNAME", ticketfile, 1);
            
 fail:

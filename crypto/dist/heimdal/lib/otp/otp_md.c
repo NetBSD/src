@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-__RCSID("$Heimdal: otp_md.c,v 1.17 2002/09/10 21:02:30 joda Exp $"
-        "$NetBSD: otp_md.c,v 1.1.1.5 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: otp_md.c,v 1.18 2003/04/16 16:19:33 lha Exp $"
+        "$NetBSD: otp_md.c,v 1.1.1.6 2003/05/15 20:28:50 lha Exp $");
 #endif
 #include "otp_locl.h"
 
@@ -98,9 +98,9 @@ otp_md_init (OtpKey key,
   p = malloc (len + 1);
   if (p == NULL)
     return -1;
-  strcpy (p, seed);
+  strlcpy (p, seed, len + 1);
   strlwr (p);
-  strcat (p, pwd);
+  strlcat (p, pwd, len + 1);
   (*init)(arg);
   (*update)(arg, p, len);
   (*final)(res, arg);

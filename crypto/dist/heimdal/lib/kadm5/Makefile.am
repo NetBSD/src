@@ -1,11 +1,11 @@
-# $Heimdal: Makefile.am,v 1.51 2002/08/16 20:57:09 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $
+# $Heimdal: Makefile.am,v 1.51.6.1 2003/05/12 15:20:46 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.6 2003/05/15 20:28:46 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
-libkadm5srv_la_LDFLAGS = -version-info 7:5:0
-libkadm5clnt_la_LDFLAGS = -version-info 6:3:2
+libkadm5srv_la_LDFLAGS = -version-info 7:6:0
+libkadm5clnt_la_LDFLAGS = -version-info 6:4:2
 sbin_PROGRAMS = dump_log replay_log truncate_log
 
 libkadm5srv_la_LIBADD = ../krb5/libkrb5.la ../hdb/libhdb.la ../roken/libroken.la

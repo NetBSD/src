@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $	*/
+/*	$NetBSD: getcap.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,8 @@
 #include <config.h>
 #endif
 #include "roken.h"
-__RCSID("$Heimdal: getcap.c,v 1.7 1999/11/17 21:11:58 assar Exp $"
-        "$NetBSD: getcap.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: getcap.c,v 1.8 2003/04/16 16:23:36 lha Exp $"
+        "$NetBSD: getcap.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -252,11 +252,12 @@ getent(char **cap, size_t *len, char **db_array, int fd,
      * Check if we have a top record from cgetset().
      */
     if (depth == 0 && toprec != NULL && cgetmatch(toprec, name) == 0) {
-	if ((record = malloc (topreclen + BFRAG)) == NULL) {
+	size_t len = topreclen + BFRAG;
+	if ((record = malloc (len)) == NULL) {
 	    errno = ENOMEM;
 	    return (-2);
 	}
-	(void)strcpy(record, toprec);	/* XXX: strcpy is safe */
+	(void)strlcpy(record, toprec, len);
 	db_p = db_array;
 	rp = record + topreclen + 1;
 	r_end = rp + BFRAG;

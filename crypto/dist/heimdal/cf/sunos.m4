@@ -1,6 +1,6 @@
 dnl
-dnl $Heimdal: sunos.m4,v 1.1 2002/08/28 19:53:51 joda Exp $
-dnl $NetBSD: sunos.m4,v 1.1.1.1 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: sunos.m4,v 1.2 2002/10/16 14:42:13 joda Exp $
+dnl $NetBSD: sunos.m4,v 1.1.1.2 2003/05/15 20:28:51 lha Exp $
 dnl
 
 AC_DEFUN([rk_SUNOS],[
@@ -12,7 +12,7 @@ case "$host" in
 *-*-solaris2.7)
 	sunos=57
 	;;
-*-*-solaris2.[89])
+*-*-solaris2.[[89]])
 	sunos=58
 	;;
 *-*-solaris2*)

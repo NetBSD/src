@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: context.c,v 1.4 1999/12/02 16:58:32 joda Exp $"
-        "$NetBSD: context.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: context.c,v 1.5 2003/04/16 16:45:41 joda Exp $"
+        "$NetBSD: context.c,v 1.1.1.4 2003/05/15 20:28:43 lha Exp $");
 
 /*
  * Set the common part of the context `kc'
@@ -44,6 +44,8 @@ void
 context_set (kx_context *kc, const char *host, const char *user, int port,
 	     int debug_flag, int keepalive_flag, int tcp_flag)
 {
+    kc->thisaddr        = (struct sockaddr*)&kc->__ss_this;
+    kc->thataddr        = (struct sockaddr*)&kc->__ss_that;
     kc->host		= host;
     kc->user		= user;
     kc->port		= port;
