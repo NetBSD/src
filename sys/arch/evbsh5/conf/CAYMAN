@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.7 2002/09/28 13:08:24 scw Exp $
+#	$NetBSD: CAYMAN,v 1.8 2002/10/05 11:43:23 scw Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -10,7 +10,7 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"CAYMAN-$Revision: 1.7 $"
+#ident		"CAYMAN-$Revision: 1.8 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -113,6 +113,12 @@ eap*		at pci? dev ? function ?	# Ensoniq AudioPCI
 # Audio support
 audio*		at audiobus?
 
+# PCI Network Interfaces
+ex*		at pci? dev ? function ?	# 3Com 90x[BC]
+
+# PCI SCSI Interfaces
+ahc*		at pci? dev ? function ?	# Adaptec 7850 SCSI Controller
+
 #
 # The Super I/O chip is straight out of the x86 PeeCee world in that
 # it implements a bunch if "standard" PeeCee type devices (although
@@ -150,3 +156,9 @@ sqphy*	at mii? phy ?
 # The DTF debug interface.
 #
 #dtfcons0	at mainbus0
+
+#
+# Generic SCSI bus
+#
+scsibus*	at ahc?
+sd*		at scsibus? target ? lun ?
