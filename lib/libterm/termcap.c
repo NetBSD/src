@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.39 2001/10/31 21:52:17 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.40 2001/11/02 18:24:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.39 2001/10/31 21:52:17 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.40 2001/11/02 18:24:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ t_setinfo(struct tinfo **bp, const char *entry)
 	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
 	if ((*bp)->bc)
 		(*bp)->bc = strdup((*bp)->bc);
+	(*bp)->tbuf = NULL;
 	
 	return 0;
 }
@@ -251,6 +252,7 @@ t_getent(bp, name)
 		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
 		if ((*bp)->bc)
 			(*bp)->bc = strdup((*bp)->bc);
+		(*bp)->tbuf = NULL;
 	}
 		
 	return (i + 1);
@@ -460,39 +462,44 @@ tgetstr(id, area)
  * fix it for now is to allocate a lot -- 8K, and leak if we need to
  * realloc. This API needs to be destroyed!.
  */
-#define BSIZE 8192
+#define BSIZE 256
 char *
-t_agetstr(struct tinfo *info, const char *id, char **bufptr, char **area)
+t_agetstr(struct tinfo *info, const char *id)
 {
 	size_t new_size;
-	char *new_buf;
+	struct tbuf *tb;
 	
 	_DIAGASSERT(info != NULL);
 	_DIAGASSERT(id != NULL);
-	_DIAGASSERT(bufptr != NULL);
-	_DIAGASSERT(area != NULL);
 
 	t_getstr(info, id, NULL, &new_size);
 
-	  /* either the string is empty or the capability does not exist. */
-	if (new_size == 0 || new_size > BSIZE)
+	/* either the string is empty or the capability does not exist. */
+	if (new_size == 0)
 		return NULL;
 
-	  /* check if we have a buffer, if not malloc one and fill it in. */
-	if (*bufptr == NULL) {
-		if ((new_buf = (char *) malloc(BSIZE)) == NULL)
+	if ((tb = info->tbuf) == NULL || (tb->eptr - tb->ptr) < new_size) {
+		if (new_size < BSIZE)
+			new_size = BSIZE;
+		else
+			new_size++;
+
+		if ((tb = malloc(sizeof(*info->tbuf))) == NULL)
 			return NULL;
-		*bufptr = new_buf;
-		*area = new_buf;
-	} else if (*area - *bufptr >= BSIZE - new_size) {
-		char buf[BSIZE];
-		char *b = buf;
-		size_t len = BSIZE;
-		/* Leak! */
-		return strdup(t_getstr(info, id, &b, &len));
+
+		if ((tb->data = tb->ptr = tb->eptr = malloc(new_size)) == NULL)
+			return NULL;
+
+		tb->eptr += new_size;
+
+		if (info->tbuf != NULL)
+			tb->next = info->tbuf;
+		else
+			tb->next = NULL;
+
+		info->tbuf = tb;
 	}
-	return t_getstr(info, id, area, NULL);
-	
+	return t_getstr(info, id, &tb->ptr, NULL);
 }
  
 /*
@@ -503,12 +510,18 @@ void
 t_freent(info)
 	struct tinfo *info;
 {
+	struct tbuf *tb;
 	_DIAGASSERT(info != NULL);
 	free(info->info);
 	if (info->up != NULL)
 		free(info->up);
 	if (info->bc != NULL)
 		free(info->bc);
+	for (tb = info->tbuf; tb;) {
+		tb = info->tbuf->next;
+		free(info->tbuf->data);
+		free(info->tbuf);
+	}
 	free(info);
 }
 
