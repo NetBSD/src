@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20.2.6 2000/10/18 03:17:26 tv Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.7 2000/12/15 04:08:08 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20.2.6 2000/10/18 03:17:26 tv Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.7 2000/12/15 04:08:08 he Exp $");
 #endif
 
 /*
@@ -521,7 +521,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		(void) snprintf(buf,  sizeof(buf), "nlist %*.*s*.tgz %s\n",
+		(void) snprintf(buf,  sizeof(buf), "nlist %*.*s*.t[bg]z %s\n",
                          (int)(s-pkg), (int)(s-pkg), pkg, tmpname);
 	}
 	
