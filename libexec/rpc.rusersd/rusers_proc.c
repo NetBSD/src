@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.14 1997/09/17 16:35:55 christos Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.15 1997/09/19 00:50:04 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.14 1997/09/17 16:35:55 christos Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.15 1997/09/19 00:50:04 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -107,7 +107,6 @@ struct utmpidlearr *rusersproc_allnames_2_svc __P((void *, struct svc_req *));
 
 
 #ifdef XIDLE
-static FILE *ufp;
 static Display *dpy;
 static sigjmp_buf openAbort;
 
@@ -137,16 +136,19 @@ XqueryIdle(display)
 		}
 		if (XidleQueryExtension(dpy, &first_event, &first_error)) {
 			if (!XGetIdleTime(dpy, &IdleTime)) {
-				syslog(LOG_ERR, "%s: unable to get idle time", display);
+				syslog(LOG_ERR, "%s: unable to get idle time",
+				    display);
 				return (-1);
 			}
 		} else {
-			syslog(LOG_ERR, "%s: Xidle extension not loaded", display);
+			syslog(LOG_ERR, "%s: Xidle extension not loaded",
+			    display);
 			return (-1);
 		}
 		XCloseDisplay(dpy);
 	} else {
-		syslog(LOG_ERR, "%s: server grabbed for over 10 seconds", display);
+		syslog(LOG_ERR, "%s: server grabbed for over 10 seconds",
+		    display);
 		return (-1);
 	}
 	(void) alarm(0);
@@ -155,7 +157,7 @@ XqueryIdle(display)
 	IdleTime /= 1000;
 	return ((IdleTime + 30) / 60);
 }
-#endif
+#endif /* XIDLE */
 
 static u_int
 getidle(tty, display)
@@ -215,6 +217,7 @@ rusers_num_svc(arg, rqstp)
 {
 	static int num_users = 0;
 	struct utmp usr;
+	FILE *ufp;
 
 	ufp = fopen(_PATH_UTMP, "r");
 	if (!ufp) {
@@ -244,7 +247,8 @@ do_names_3(int all)
 	static utmp_array ut;
 	struct utmp usr;
 	int nusers = 0;
-	
+	FILE *ufp;
+
 	memset(&ut, 0, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
 	
@@ -270,11 +274,14 @@ do_names_3(int all)
 			utmps[nusers].ut_idle =
 				getidle(usr.ut_line, usr.ut_host);
 			utmps[nusers].ut_line = line[nusers];
-			strncpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
+			strncpy(line[nusers], usr.ut_line,
+			    sizeof(line[nusers]));
 			utmps[nusers].ut_user = name[nusers];
-			strncpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
+			strncpy(name[nusers], usr.ut_name,
+			    sizeof(name[nusers]));
 			utmps[nusers].ut_host = host[nusers];
-			strncpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
+			strncpy(host[nusers], usr.ut_host,
+			    sizeof(host[nusers]));
 			nusers++;
 		}
 	ut.utmp_array_len = nusers;
@@ -305,7 +312,8 @@ do_names_2(int all)
 	static struct utmpidlearr ut;
 	struct utmp usr;
 	int nusers = 0;
-	
+	FILE *ufp;
+
 	bzero((char *)&ut, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
@@ -331,9 +339,12 @@ do_names_2(int all)
 				usr.ut_time;
 			utmp_idle[nusers].ui_idle =
 				getidle(usr.ut_line, usr.ut_host);
-			strncpy(utmp_idle[nusers].ui_utmp.ut_line, usr.ut_line, sizeof(utmp_idle[nusers].ui_utmp.ut_line));
-			strncpy(utmp_idle[nusers].ui_utmp.ut_name, usr.ut_name, sizeof(utmp_idle[nusers].ui_utmp.ut_name));
-			strncpy(utmp_idle[nusers].ui_utmp.ut_host, usr.ut_host, sizeof(utmp_idle[nusers].ui_utmp.ut_host));
+			strncpy(utmp_idle[nusers].ui_utmp.ut_line, usr.ut_line,
+			    sizeof(utmp_idle[nusers].ui_utmp.ut_line));
+			strncpy(utmp_idle[nusers].ui_utmp.ut_name, usr.ut_name,
+			    sizeof(utmp_idle[nusers].ui_utmp.ut_name));
+			strncpy(utmp_idle[nusers].ui_utmp.ut_host, usr.ut_host,
+			    sizeof(utmp_idle[nusers].ui_utmp.ut_host));
 			nusers++;
 		}
 
