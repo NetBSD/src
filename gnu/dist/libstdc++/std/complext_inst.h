@@ -1,0 +1,46 @@
+// GNU C++ "extern" instantiation declarations for complex.
+
+extern template class complex<__INST>;
+
+extern template complex <__INST>& __doapl (complex <__INST>*, const complex <__INST>&);
+extern template complex <__INST>& __doaml (complex <__INST>*, const complex <__INST>&);
+extern template complex <__INST>& __doami (complex <__INST>*, const complex <__INST>&);
+extern template complex <__INST>& __doadv (complex <__INST>*, const complex <__INST>&);
+extern template complex <__INST> operator+ (const complex <__INST>&, const complex <__INST>&);
+extern template complex <__INST> operator+ (const complex <__INST>&, __INST);
+extern template complex <__INST> operator+ (__INST, const complex <__INST>&);
+extern template complex <__INST> operator- (const complex <__INST>&, const complex <__INST>&);
+extern template complex <__INST> operator- (const complex <__INST>&, __INST);
+extern template complex <__INST> operator- (__INST, const complex <__INST>&);
+extern template complex <__INST> operator* (const complex <__INST>&, const complex <__INST>&);
+extern template complex <__INST> operator* (const complex <__INST>&, __INST);
+extern template complex <__INST> operator* (__INST, const complex <__INST>&);
+extern template complex <__INST> operator/ (const complex <__INST>&, const complex <__INST>&);
+extern template complex <__INST> operator/ (const complex <__INST>&, __INST);
+extern template complex <__INST> operator/ (__INST, const complex <__INST>&);
+extern template complex <__INST> operator+ (const complex <__INST>&);
+extern template complex <__INST> operator- (const complex <__INST>&);
+extern template bool operator== (const complex <__INST>&, const complex <__INST>&);
+extern template bool operator== (const complex <__INST>&, __INST);
+extern template bool operator== (__INST, const complex <__INST>&);
+extern template bool operator!= (const complex <__INST>&, const complex <__INST>&);
+extern template bool operator!= (const complex <__INST>&, __INST);
+extern template bool operator!= (__INST, const complex <__INST>&);
+extern template __INST abs (const complex <__INST>&);
+extern template __INST arg (const complex <__INST>&);
+extern template complex <__INST> polar (__INST, __INST);
+extern template complex <__INST> conj (const complex <__INST>&);
+extern template __INST norm (const complex <__INST>&);
+extern template complex <__INST> cos (const complex <__INST>&);
+extern template complex <__INST> cosh (const complex <__INST>&);
+extern template complex <__INST> exp (const complex <__INST>&);
+extern template complex <__INST> log (const complex <__INST>&);
+extern template complex <__INST> pow (const complex <__INST>&, const complex <__INST>&);
+extern template complex <__INST> pow (const complex <__INST>&, __INST);
+extern template complex <__INST> pow (const complex <__INST>&, int);
+extern template complex <__INST> pow (__INST, const complex <__INST>&);
+extern template complex <__INST> sin (const complex <__INST>&);
+extern template complex <__INST> sinh (const complex <__INST>&);
+extern template complex <__INST> sqrt (const complex <__INST>&);
+extern template istream& operator>> (istream&, complex<__INST>&);
+extern template ostream& operator<< (ostream&, const complex<__INST>&);
