@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.32 2002/09/13 20:32:24 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.33 2002/09/14 23:53:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -28,10 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -145,6 +144,30 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 	}
 }
 
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static __inline Elf_Addr
+load_ptr(void *where)
+{
+	Elf_Addr res;
+
+	memcpy(&res, where, sizeof(res));
+
+	return (res);
+}
+
+static __inline void
+store_ptr(void *where, Elf_Addr val)
+{
+
+	memcpy(where, &val, sizeof(val));
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
@@ -160,7 +183,7 @@ _rtld_relocate_nonplt_objects(obj, self)
 		return 0;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
-		Elf_Addr        *where;
+		Elf_Addr        *where, tmp;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
@@ -197,25 +220,48 @@ _rtld_relocate_nonplt_objects(obj, self)
 				 *
 				 * --rkb, Oct 6, 2001
 				 */
-				if (def->st_info == STT_SECTION &&
-				    *where < def->st_value)
-					*where += (Elf_Addr)def->st_value;
+				if (__predict_true(RELOC_ALIGNED_P(where))) {
+					tmp = *where;
 
-				*where += (Elf_Addr)obj->relocbase;
+					if (def->st_info == STT_SECTION &&
+					    tmp < def->st_value)
+						tmp += (Elf_Addr)def->st_value;
+
+					tmp += (Elf_Addr)obj->relocbase;
+					*where = tmp;
+				} else {
+					tmp = load_ptr(where);
+
+					if (def->st_info == STT_SECTION &&
+					    tmp < def->st_value)
+						tmp += (Elf_Addr)def->st_value;
+					
+					tmp += (Elf_Addr)obj->relocbase;
+					store_ptr(where, tmp);
+				}
 
 				rdbg(("REL32 %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
-				    (void *)*where, obj->path));
+				    (void *)tmp, obj->path));
 			} else {
 				def = _rtld_find_symdef(symnum, obj, &defobj,
 				    false);
 				if (def == NULL)
 					return -1;
-				*where += (Elf_Addr)(defobj->relocbase +
-				    def->st_value);
+				if (__predict_true(RELOC_ALIGNED_P(where))) {
+					tmp = *where +
+					    (Elf_Addr)(defobj->relocbase +
+						       def->st_value);
+					*where = tmp;
+				} else {
+					tmp = load_ptr(where) +
+					    (Elf_Addr)(defobj->relocbase +
+						       def->st_value);
+					store_ptr(where, tmp);
+				}
 				rdbg(("REL32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)*where, defobj->path));
+				    obj->path, (void *)tmp, defobj->path));
 			}
 			break;
 
@@ -223,7 +269,7 @@ _rtld_relocate_nonplt_objects(obj, self)
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rel->r_info),
-			    (void *)rel->r_offset, (void *)*where,
+			    (void *)rel->r_offset, (void *)load_ptr(where),
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
