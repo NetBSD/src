@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.42 1998/09/07 19:54:15 mhitch Exp $	*/
+/*	$NetBSD: scc.c,v 1.43 1998/10/29 21:25:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.42 1998/09/07 19:54:15 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.43 1998/10/29 21:25:17 jonathan Exp $");
 
 #include "opt_ddb.h"
 
@@ -1190,7 +1190,7 @@ scc_rxintr(sc, chan, regs, unit)
 #if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
-				Debugger();
+				console_debugger();
 				return;
 			}
 #endif
@@ -1497,7 +1497,7 @@ scc_modem_intr(dev)
 	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
 #ifdef DDB
 		splx(s);		/* spl0()? */
-		Debugger();
+		console_debugger();
 		return;
 #else
 		/* XXX maybe fall back to PROM? */
