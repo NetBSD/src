@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.5 1997/01/07 12:20:39 tls Exp $	*/
+/*	$NetBSD: setup.c,v 1.6 1997/10/12 14:19:17 lukem Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -66,7 +66,7 @@ main(argc, argv)
 	int ch;
 	char path[MAXPATHLEN], *prefix;
 
-	while ((ch = getopt(argc, argv, "m:")) != EOF)
+	while ((ch = getopt(argc, argv, "m:")) != -1)
 		switch(ch) {
 		case 'm':
 			monsterfile = optarg;
