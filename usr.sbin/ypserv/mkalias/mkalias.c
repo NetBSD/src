@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.3 1997/10/07 14:45:18 lukem Exp $ */
+/*	$NetBSD: mkalias.c,v 1.4 1997/10/13 03:48:49 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,8 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef LINT
-__RCSID("$NetBSD: mkalias.c,v 1.3 1997/10/07 14:45:18 lukem Exp $");
+#ifndef lint
+__RCSID("$NetBSD: mkalias.c,v 1.4 1997/10/13 03:48:49 lukem Exp $");
 #endif
 
 #include <sys/types.h>
