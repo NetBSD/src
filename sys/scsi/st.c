@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.62 1996/03/05 00:15:23 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.63 1996/03/17 00:59:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -273,8 +273,12 @@ int	st_interpret_sense __P((struct scsi_xfer *));
 int	st_touch_tape __P((struct st_softc *));
 int	st_erase __P((struct st_softc *, int full, int flags));
 
-struct cfdriver stcd = {
-	NULL, "st", stmatch, stattach, DV_TAPE, sizeof(struct st_softc)
+struct cfattach st_ca = {
+	sizeof(struct st_softc), stmatch, stattach
+};
+
+struct cfdriver st_cd = {
+	NULL, "st", DV_TAPE
 };
 
 struct scsi_device st_switch = {
@@ -460,9 +464,9 @@ stopen(dev, flags, mode, p)
 	struct scsi_link *sc_link;
 
 	unit = STUNIT(dev);
-	if (unit >= stcd.cd_ndevs)
+	if (unit >= st_cd.cd_ndevs)
 		return ENXIO;
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	if (!st)
 		return ENXIO;
 
@@ -471,7 +475,7 @@ stopen(dev, flags, mode, p)
 	sc_link = st->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
-	    unit, stcd.cd_ndevs));
+	    unit, st_cd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
@@ -546,7 +550,7 @@ stclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
@@ -589,7 +593,7 @@ st_mount_tape(dev, flags)
 	unit = STUNIT(dev);
 	mode = STMODE(dev);
 	dsty = STDSTY(dev);
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	sc_link = st->sc_link;
 
 	if (st->flags & ST_MOUNTED)
@@ -812,7 +816,7 @@ void
 ststrategy(bp)
 	struct buf *bp;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
 	struct buf *dp;
 	int s;
 
@@ -1021,7 +1025,7 @@ stread(dev, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 		       st->sc_link->adapter->scsi_minphys, uio));
@@ -1033,7 +1037,7 @@ stwrite(dev, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = stcd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 		       st->sc_link->adapter->scsi_minphys, uio));
@@ -1066,7 +1070,7 @@ stioctl(dev, cmd, arg, flag, p)
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = stcd.cd_devs[unit];
+	st = st_cd.cd_devs[unit];
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 

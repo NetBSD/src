@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.88 1996/03/05 00:15:15 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.89 1996/03/17 00:59:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -110,8 +110,12 @@ u_long	sd_size __P((struct sd_softc *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_get_parms __P((struct sd_softc *, int));
 
-struct cfdriver sdcd = {
-	NULL, "sd", sdmatch, sdattach, DV_DISK, sizeof(struct sd_softc)
+struct cfattach sd_ca = {
+	sizeof(struct sd_softc), sdmatch, sdattach
+};
+
+struct cfdriver sd_cd = {
+	NULL, "sd", DV_DISK
 };
 
 struct dkdriver sddkdriver = { sdstrategy };
@@ -259,9 +263,9 @@ sdopen(dev, flag, fmt, p)
 	int error;
 
 	unit = SDUNIT(dev);
-	if (unit >= sdcd.cd_ndevs)
+	if (unit >= sd_cd.cd_ndevs)
 		return ENXIO;
-	sd = sdcd.cd_devs[unit];
+	sd = sd_cd.cd_devs[unit];
 	if (!sd)
 		return ENXIO;
 
@@ -269,7 +273,7 @@ sdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sdcd.cd_ndevs, part));
+	    sd_cd.cd_ndevs, part));
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
@@ -374,7 +378,7 @@ sdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	int part = SDPART(dev);
 	int error;
 
@@ -412,7 +416,7 @@ void
 sdstrategy(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	int s;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
@@ -620,7 +624,7 @@ void
 sdminphys(bp)
 	struct buf *bp;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	long max;
 
 	/*
@@ -676,7 +680,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	int error;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
@@ -958,7 +962,7 @@ sdsize(dev)
 
 	if (sdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
-	sd = sdcd.cd_devs[SDUNIT(dev)];
+	sd = sd_cd.cd_devs[SDUNIT(dev)];
 	part = SDPART(dev);
 	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1008,7 +1012,7 @@ sddump(dev, blkno, va, size)
 	part = SDPART(dev);
 
 	/* Check for acceptable drive number. */
-	if (unit >= sdcd.cd_ndevs || (sd = sdcd.cd_devs[unit]) == NULL)
+	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
 
 	/* Make sure it was initialized. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.4 1996/02/29 19:32:14 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5 1996/03/17 00:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,9 +190,12 @@ struct zsops zsops_kbd;
 static int	kbd_match(struct device *, void *, void *);
 static void	kbd_attach(struct device *, struct device *, void *);
 
-struct cfdriver kbdcd = {
-	NULL, "kbd", kbd_match, kbd_attach,
-	DV_DULL, sizeof(struct kbd_softc), NULL,
+struct cfattach kdb_ca = {
+	sizeof(struct kbd_softc), kbd_match, kbd_attach
+};
+
+struct cfdriver kbd_cd = {
+	NULL, "kbd", DV_DULL
 };
 
 
@@ -294,9 +297,9 @@ kbdopen(dev, flags, mode, p)
 	int error, s, unit;
 
 	unit = minor(dev);
-	if (unit >= kbdcd.cd_ndevs)
+	if (unit >= kbd_cd.cd_ndevs)
 		return (ENXIO);
-	k = kbdcd.cd_devs[unit];
+	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
 
@@ -333,7 +336,7 @@ kbdclose(dev, flags, mode, p)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	k->k_evmode = 0;
 	ev_fini(&k->k_events);
 	k->k_events.ev_io = NULL;
@@ -348,7 +351,7 @@ kbdread(dev, uio, flags)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	return (ev_read(&k->k_events, uio, flags));
 }
 
@@ -371,7 +374,7 @@ kbdselect(dev, rw, p)
 {
 	struct kbd_softc *k;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	return (ev_select(&k->k_events, rw, p));
 }
 
@@ -394,7 +397,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	int *ip;
 	int error = 0;
 
-	k = kbdcd.cd_devs[minor(dev)];
+	k = kbd_cd.cd_devs[minor(dev)];
 	ks = &k->k_state;
 
 	switch (cmd) {
@@ -1084,9 +1087,9 @@ kbd_iopen(unit)
 	struct kbd_state *ks;
 	int error, s;
 
-	if (unit >= kbdcd.cd_ndevs)
+	if (unit >= kbd_cd.cd_ndevs)
 		return (ENXIO);
-	k = kbdcd.cd_devs[unit];
+	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
 	ks = &k->k_state;

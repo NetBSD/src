@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.18 1996/02/27 21:45:46 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.19 1996/03/17 01:00:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,11 +97,11 @@ mapply(m, cf)
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
-	        if (cf->cf_driver->cd_match == NULL) {
+	        if (cf->cf_attach->ca_match == NULL) {
 			panic("mapply: no match function for '%s' device\n",
 			    cf->cf_driver->cd_name);
 		}
-		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
+		pri = (*cf->cf_attach->ca_match)(m->parent, match, m->aux);
 	}
 
 	if (pri > m->pri) {
@@ -302,6 +302,7 @@ config_attach(parent, match, aux, print)
 	register struct cfdata *cf;
 	register struct device *dev;
 	register struct cfdriver *cd;
+	register struct cfattach *ca;
 	static struct device **nextp = &alldevs;
 
 	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -313,6 +314,7 @@ config_attach(parent, match, aux, print)
 	}
 
 	cd = cf->cf_driver;
+	ca = cf->cf_attach;
 	cd->cd_devs[cf->cf_unit] = dev;
 
 	if (cf->cf_fstate == FSTATE_STAR)
@@ -333,13 +335,17 @@ config_attach(parent, match, aux, print)
 
 	/*
 	 * Before attaching, clobber any unfound devices that are
-	 * otherwise identical.
+	 * otherwise identical, or bump the unit number on all starred
+	 * cfdata for this device.
 	 */
 	for (cf = cfdata; cf->cf_driver; cf++)
-		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit &&
-		    cf->cf_fstate == FSTATE_NOTFOUND)
-			cf->cf_fstate = FSTATE_FOUND;
-	(*cd->cd_attach)(parent, dev, aux);
+		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
+			if (cf->cf_fstate == FSTATE_NOTFOUND)
+				cf->cf_fstate = FSTATE_FOUND;
+			if (cf->cf_fstate == FSTATE_STAR)
+				cf->cf_unit++;
+		}
+	(*ca->ca_attach)(parent, dev, aux);
 }
 
 struct device *
@@ -349,12 +355,14 @@ config_make_softc(parent, cf)
 {
 	register struct device *dev;
 	register struct cfdriver *cd;
+	register struct cfattach *ca;
 	register size_t lname, lunit;
 	register char *xunit;
 	char num[10];
 
 	cd = cf->cf_driver;
-	if (cd->cd_devsize < sizeof(struct device))
+	ca = cf->cf_attach;
+	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_make_softc");
 
 	/* compute length of name and decimal expansion of unit number */
@@ -365,10 +373,10 @@ config_make_softc(parent, cf)
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(cd->cd_devsize, M_DEVBUF, M_NOWAIT);
+	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
-	bzero(dev, cd->cd_devsize);
+	bzero(dev, ca->ca_devsize);
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_unit = cf->cf_unit;

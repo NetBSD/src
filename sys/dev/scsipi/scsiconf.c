@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.52 1996/03/05 01:45:42 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.53 1996/03/17 00:59:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -88,9 +88,12 @@ int scsibusmatch __P((struct device *, void *, void *));
 void scsibusattach __P((struct device *, struct device *, void *));
 int scsibussubmatch __P((struct device *, void *, void *));
 
-struct cfdriver scsibuscd = {
-	NULL, "scsibus", scsibusmatch, scsibusattach, DV_DULL,
-	sizeof(struct scsibus_softc)
+struct cfattach scsibus_ca = {
+	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach
+};
+
+struct cfdriver scsibus_cd = {
+	NULL, "scsibus", DV_DULL
 };
 
 int scsibusprint __P((void *, char *));
@@ -145,7 +148,7 @@ scsibussubmatch(parent, match, aux)
 		return 0;
 	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != sc_link->lun)
 		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 /*
@@ -159,8 +162,8 @@ scsi_probe_busses(bus, target, lun)
 {
 
 	if (bus == -1) {
-		for (bus = 0; bus < scsibuscd.cd_ndevs; bus++)
-			if (scsibuscd.cd_devs[bus])
+		for (bus = 0; bus < scsibus_cd.cd_ndevs; bus++)
+			if (scsibus_cd.cd_devs[bus])
 				scsi_probe_bus(bus, target, lun);
 		return 0;
 	} else {
@@ -180,9 +183,9 @@ scsi_probe_bus(bus, target, lun)
 	int maxtarget, mintarget, maxlun, minlun;
 	u_int8_t scsi_addr;
 
-	if (bus < 0 || bus >= scsibuscd.cd_ndevs)
+	if (bus < 0 || bus >= scsibus_cd.cd_ndevs)
 		return ENXIO;
-	scsi = scsibuscd.cd_devs[bus];
+	scsi = scsibus_cd.cd_devs[bus];
 	if (!scsi)
 		return ENXIO;
 

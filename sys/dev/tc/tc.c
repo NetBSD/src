@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.10 1996/03/05 23:15:07 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.11 1996/03/17 00:58:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,8 +49,14 @@ struct tc_softc {
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, void *, void *));
 void	tcattach __P((struct device *, struct device *, void *));
-struct cfdriver tccd =
-    { NULL, "tc", tcmatch, tcattach, DV_DULL, sizeof (struct tc_softc) };
+
+struct cfattach tc_ca = {
+	sizeof(struct tc_softc), tcmatch, tcattach
+};
+
+struct cfdriver tc_cd = {
+	NULL, "tc", DV_DULL
+};
 
 int	tcprint __P((void *, char *));
 int	tcsubmatch __P((struct device *, void *, void *));
