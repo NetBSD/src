@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.2 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: yacc.y,v 1.3 2004/01/02 12:09:48 itojun Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.2 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.3 2004/01/02 12:09:48 itojun Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -184,10 +184,12 @@ dump_file(void)
 					     num_csids));
 	i=0;
 	SIMPLEQ_FOREACH(csid, &named_csids, ci_entry) {
-		sprintf(buf, _CITRUS_ESDB_SYM_CSNAME_PREFIX "%d", i);
+		snprintf(buf, sizeof(buf), _CITRUS_ESDB_SYM_CSNAME_PREFIX "%d",
+		    i);
 		CHKERR(ret, _db_factory_addstr_by_s,
 		       (df, buf, csid->ci_symbol));
-		sprintf(buf, _CITRUS_ESDB_SYM_CSID_PREFIX "%d", i);
+		snprintf(buf, sizeof(buf), _CITRUS_ESDB_SYM_CSID_PREFIX "%d",
+		    i);
 		CHKERR(ret, _db_factory_add32_by_s, (df, buf, csid->ci_csid));
 		i++;
 	}
