@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/20 19:47:13 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2004/05/18 00:10:39 christos Exp $
 
-.include "../Makefile.inc"
-.PATH:	${BIND_DIST_DIR}/bin/host \
-	${BIND_DIST_DIR}/man
+.include <bsd.own.mk>
 
-BINDIR=	/usr/bin
 PROG=	host
-SRCS=	${PROG}.c
+SRCS=	host.c dighost.c
+BINDIR=	/usr/bin
 
-CPPFLAGS+= ${INCLUDE}
-LDADD=	${LIBRARY}
-MAN=	${PROG}.1
+.include "${.CURDIR}/../Makefile.inc"
 
-.include "../../Makefile.inc"
+DIST=${IDIST}/bin/dig
+CPPFLAGS+= -I${DIST}/include
+
+.PATH: ${DIST}
+
 .include <bsd.prog.mk>

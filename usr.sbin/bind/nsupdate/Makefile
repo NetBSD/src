@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/20 19:48:06 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2004/05/18 00:10:39 christos Exp $
 
-.include "../Makefile.inc"
-.PATH:	${BIND_DIST_DIR}/bin/nsupdate \
-	${BIND_DIST_DIR}/man
+.include <bsd.own.mk>
 
-BINDIR=	/usr/bin
 PROG=	nsupdate
-SRCS=	${PROG}.c
-CPPFLAGS+= ${INCLUDE}
-LDADD=	${LIBRARY}
-MAN=	${PROG}.8
+MAN=	nsupdate.8
+BINDIR=	/usr/bin
 
-.include "../../Makefile.inc"
+.include "${.CURDIR}/../Makefile.inc"
+
+DIST=${IDIST}/bin/nsupdate
+
+.PATH: ${DIST}
+
 .include <bsd.prog.mk>

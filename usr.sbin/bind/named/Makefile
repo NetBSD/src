@@ -1,55 +1,26 @@
-#	$NetBSD: Makefile,v 1.15 2003/12/07 19:57:39 scw Exp $
-
-.include "../Makefile.inc"
-.PATH:		${BIND_DIST_DIR}/bin/named \
-		${BIND_DIST_DIR}/bin/named-bootconf \
-		${BIND_DIST_DIR}/man
-
-PROG=		named
-HDRS=		db_defs.h db_glob.h ns_defs.h ns_glob.h named.h pathnames.h
-SRCS=		db_dump.c db_load.c db_lookup.c db_save.c db_update.c \
-		db_glue.c db_ixfr.c db_sec.c db_tsig.c \
-		ns_parser.y ns_lexer.c ns_parseutil.c ns_ctl.c \
-		ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \
-		ns_resp.c ns_stats.c ns_ncache.c ns_xfr.c ns_glue.c \
-		ns_udp.c ns_config.c ns_update.c ns_ixfr.c ns_signal.c \
-		ns_sort.c ns_notify.c tmp_version.c
-CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/bin/named
-LDADD=		${LIBRARY}
-CLEANFILES+=	y.tab.h named-bootconf tmp_version.c pathnames.h
-MAN=		${PROG}.8 named.conf.5
-YHEADER=	yes
+#	$NetBSD: Makefile,v 1.16 2004/05/18 00:10:39 christos Exp $
 
 .include <bsd.own.mk>
 
-# XXX
-.if ${MACHINE_CPU} == "sh5"
-COPTS.ns_main.c=	-O1
-.endif
+PROG=	named
+MAN=	named.8 lwresd.8 named.conf.5
+BINDIR=	/usr/sbin
+LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
-.if ${MKSHARE} != "no"
-FILES=		named.conf
-FILESDIR=	/usr/share/examples/named
-.endif
+.include "${.CURDIR}/../Makefile.inc"
 
-HOSTNAMECMD=	hostname
 
-tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile \
-		${BIND_DIST_DIR}/Version
-	${_MKTARGET_CREATE}
-	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
-	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
-	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < ${BIND_DIST_DIR}/bin/named/version.c > tmp_version.c)
+DIST=${IDIST}/bin/named
+CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include
 
-pathnames.h: ${BIND_DIST_DIR}/bin/named/pathtemplate.h
-	${_MKTARGET_CREATE}
-	sed -e "s|%DESTETC%|/etc|" -e "s|%DESTSBIN%|/usr/sbin|" \
-	    -e "s|%DESTRUN%|/var/run|" -e "s|%DESTEXEC%|/usr/libexec|" \
-	    < ${BIND_DIST_DIR}/bin/named/pathtemplate.h > pathnames.h
+.PATH: ${DIST}/unix ${DIST}
 
-DPSRCS+=	pathnames.h
-CLEANFILES+=	pathnames.h
+SRCS_UNIX=	os.c
+SRCS=	aclconf.c builtin.c client.c config.c control.c controlconf.c \
+	interfacemgr.c listenlist.c log.c logconf.c \
+	lwaddr.c lwdclient.c lwderror.c \
+	lwdgabn.c lwdgnba.c lwdgrbn.c lwdnoop.c lwresd.c lwsearch.c \
+	main.c notify.c query.c server.c sortlist.c tkeyconf.c tsigconf.c \
+	update.c xfrout.c zoneconf.c ${SRCS_UNIX}
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
