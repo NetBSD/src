@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 1997/11/22 03:13:59 tv Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 1998/01/13 20:51:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4910,6 +4910,22 @@ ENTRY(xldcontrolb)
 	lduba	[%o0] ASI_CONTROL, %o0	! read
 0:	retl
 	 st	%g0, [%o2 + PCB_ONFAULT]
+
+/*
+ * int fkbyte(caddr_t, pcb)
+ *	      %o0      %o1
+ *
+ * Just like fubyte(), but for kernel space.
+ * (currently used to work around unexplained transient bus errors
+ *  when reading the VME interrupt vector)
+ */
+ENTRY(fkbyte)
+	or	%o1, %g0, %o2		! %o2 = %o1
+	set	_Lfsbail, %o5
+	st	%o5, [%o2 + PCB_ONFAULT]
+	ldub	[%o0], %o0		! fetch the byte
+	retl				! made it
+	 st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 /*
  * Insert entry into doubly-linked queue.
