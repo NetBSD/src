@@ -1,4 +1,4 @@
-/*      $NetBSD: if_snvar.h,v 1.1 1997/03/15 20:26:40 briggs Exp $	*/
+/*      $NetBSD: if_snvar.h,v 1.2 1997/03/16 13:41:17 is Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -92,9 +92,8 @@ typedef struct mtd {
  */
 typedef struct sn_softc {
 	struct	device sc_dev;
-	struct	arpcom sc_arpcom;
-#define	sc_if		sc_arpcom.ac_if		/* network visible interface */
-#define	sc_enaddr	sc_arpcom.ac_enaddr	/* hardware ethernet address */
+	struct	ethercom sc_ethercom;
+#define	sc_if		sc_ethercom.ec_if	/* network visible interface */
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
@@ -217,4 +216,4 @@ typedef struct sn_softc {
 #define	CDA_ENABLE	64	/* mask enabling CAM entries */
 #define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
 
-void	snsetup __P((struct sn_softc *sc));
+void	snsetup __P((struct sn_softc *sc, u_int8_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.1 1997/03/15 20:26:35 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.2 1997/03/16 13:41:14 is Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -22,15 +22,14 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#include <net/netisr.h>
-#include <net/route.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <vm/vm.h>
@@ -112,8 +111,9 @@ int ethdebug = 0;
  * to accept packets.
  */
 void
-snsetup(sc)
+snsetup(sc, lladdr)
 	struct sn_softc	*sc;
+	u_int8_t *lladdr;
 {
 	struct ifnet	*ifp = &sc->sc_if;
 	unsigned char	*p;
@@ -211,7 +211,7 @@ snsetup(sc)
 #if 0
 	camdump(sc);
 #endif
-	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(" address %s\n", ether_sprintf(lladdr));
 
 #if 0
 printf("sonic buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
@@ -228,7 +228,7 @@ printf("sonic buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, lladdr);
 
 	add_nubus_intr(sc->slotno, snintr, (void *) sc);
 }
@@ -253,7 +253,7 @@ snioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			(void)sninit(ifp->if_softc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
@@ -289,10 +289,10 @@ snioctl(ifp, cmd, data)
 	case SIOCDELMULTI:
 		if(cmd == SIOCADDMULTI)
 			err = ether_addmulti((struct ifreq *)data,
-						&sc->sc_arpcom);
+						&sc->sc_ethercom);
 		else
 			err = ether_delmulti((struct ifreq *)data,
-						&sc->sc_arpcom);
+						&sc->sc_ethercom);
 
 		if (err == ENETRESET) {
 			/*
@@ -325,7 +325,7 @@ snstart(ifp)
 	struct mbuf *m;
 	int	len;
 
-	if ((sc->sc_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 outloop:
@@ -339,7 +339,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0)
 		return;
 
@@ -352,8 +352,8 @@ outloop:
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
-	if (sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	/*
@@ -378,7 +378,7 @@ outloop:
 
 	sc->txb_inuse++;
 
-	sc->sc_if.if_opackets++;	/* # of pkts */
+	ifp->if_opackets++;		/* # of pkts */
 	sc->sc_sum.ls_opacks++;		/* # of pkts */
 
 	/* Jump back for possibly more punishment. */
@@ -524,9 +524,9 @@ snwatchdog(ifp)
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
 			   	 sc->sc_dev.dv_xname);
-		temp = sc->sc_if.if_flags & IFF_UP;
+		temp = ifp->if_flags & IFF_UP;
 		snreset(sc);
-		sc->sc_if.if_flags |= temp;
+		ifp->if_flags |= temp;
 	}
 }
 
