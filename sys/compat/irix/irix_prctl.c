@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.24 2004/10/27 19:29:57 david Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.25 2005/02/26 12:03:15 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.24 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.25 2005/02/26 12:03:15 simonb Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -125,7 +125,7 @@ irix_sys_prctl(l, v, retval)
 			shmask |= IRIX_PR_SADDR;
 		if (p->p_fd == p2->p_fd)
 			shmask |= IRIX_PR_SFDS;
-		if (p->p_cwdi == p2->p_cwdi);
+		if (p->p_cwdi == p2->p_cwdi)
 			shmask |= (IRIX_PR_SDIR|IRIX_PR_SUMASK);
 
 		*retval = (register_t)shmask;
