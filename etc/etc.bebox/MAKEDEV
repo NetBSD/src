@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 2000/09/27 10:33:27 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2000/12/05 18:18:05 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,6 +67,7 @@
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
+#	ttyCY*	Cyclom-Y multiport serial boards. Each "unit" makes 32 ports.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -110,7 +111,7 @@ all)
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 lpa0 lpa1 lpa2
 	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 ipl
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random ttyCY0
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
 	sh $0 audio0 audio1 audio2 audio3
 	sh $0 ttyv0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8
@@ -281,6 +282,28 @@ ccd*|fd*|sd*|vnd*|wd*|raid*)
 	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+ttyCY*)
+	unit=${i#ttyCY}
+	major=38
+	minor=$(($unit * 32))
+	eminor=$(($minor + 32))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCY$nminor dtyCY$nminor
+		mknod ttyCY$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCY$nminor c $major $(($minor + $dialout ))
+		chown uucp.wheel ttyCY$nminor dtyCY$nminor
+		chmod 600 ttyCY$nminor dtyCY$nminor
+		minor=$(($minor + 1))
+	done
 	;;
 
 com*|tty*)					# (XXX -- com should die)
