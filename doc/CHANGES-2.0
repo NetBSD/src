@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.103 2004/04/19 03:48:09 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.104 2004/04/19 03:50:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1035,3 +1035,8 @@ distrib/sets/lists/xcomp/md.atari		1.5
 
 	Add the XF86VidMode* manual pages. PR#25181
 	[jdc, ticket #158]
+
+distrib/utils/sysinst/msg.mi.pl			1.37
+
+	Polish translations. PR#25224
+	[dsl, ticket #159]
