@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 1996/10/13 03:19:47 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 1996/10/21 22:24:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -106,7 +106,8 @@ mainbus_attach(parent, self, aux)
 #if NPCI > 0
 	if (pci_mode_detect() != 0) {
 		mba.mba_pba.pba_busname = "pci";
-		mba.mba_pba.pba_bc = NULL;
+		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
+		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
@@ -114,13 +115,15 @@ mainbus_attach(parent, self, aux)
 
 	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
 		mba.mba_eba.eba_busname = "eisa";
-		mba.mba_eba.eba_bc = NULL;
+		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;
+		mba.mba_eba.eba_memt = I386_BUS_SPACE_MEM;
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
 	if (1 /* XXX ISA NOT YET SEEN */) {
 		mba.mba_iba.iba_busname = "isa";
-		mba.mba_iba.iba_bc = NULL;
+		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
+		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 #if NAPM > 0
