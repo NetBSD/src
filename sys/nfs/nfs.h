@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.15 1997/06/24 23:28:15 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.16 1997/10/10 01:53:17 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -72,12 +72,26 @@
 #ifndef NFS_GATHERDELAY
 #define NFS_GATHERDELAY		10	/* Default write gather delay (msec) */
 #endif
+
 /*
- * Ideally, NFS_DIRBLKSIZ should be bigger, but I've seen servers with
- * broken NFS/ethernet drivers that won't work with anything bigger (Linux..)
+ * NFS_DIRBLKSIZ is the size of buffers in the buffer cache used for
+ * NFS directory vnodes. NFS_DIRFRAGSIZ is the minimum aligned amount
+ * of data in those buffers, and thus the minimum amount of data
+ * that you can request. NFS_DIRFRAGSIZ should be no smaller than
+ * DIRBLKSIZ.
  */
-#define	NFS_DIRBLKSIZ	1024		/* Must be a multiple of DIRBLKSIZ */
-#define NFS_READDIRBLKSIZ	512	/* Size of read dir blocks. XXX */
+
+#define	NFS_DIRBLKSIZ	8192		/* Must be a multiple of DIRBLKSIZ */
+#define NFS_DIRFRAGSIZ	 512		/* Same as DIRBLKSIZ, generally */
+
+/*
+ * Maximum number of directory entries cached per NFS node, to avoid
+ * having this grow without bounds on very large directories. The
+ * minimum size to get reasonable performance for emulated binaries
+ * is the maximum number of entries that fits in NFS_DIRBLKSIZ.
+ * For NFS_DIRBLKSIZ = 512, this would be 512 / 14 = 36.
+ */
+#define NFS_MAXDIRCACHE	(NFS_DIRBLKSIZ / 14)
 
 /*
  * Oddballs
@@ -312,6 +326,31 @@ TAILQ_HEAD(, nfsreq) nfs_reqq;
 	(&(nmp)->nm_uidhashtbl[(uid) % NFS_MUIDHASHSIZ])
 #define	NFSNOHASH(fhsum) \
 	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
+
+#ifndef NFS_DIRHASHSIZ
+#define NFS_DIRHASHSIZ 32
+#endif
+#define NFSDIRHASH(np, off) \
+	(&np->n_dircache[(nfs_dirhash((off)) & nfsdirhashmask)])
+
+/*
+ * Macros for storing/retrieving cookies into directory buffers.
+ */
+#define NFS_STASHCOOKIE(dp,off) \
+	*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))) = off
+#define NFS_GETCOOKIE(dp) \
+	(*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))))
+#define NFS_MARKCACHED(dp, val) \
+	*((int *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+	    sizeof (int))) = val
+#define NFS_ISCACHED(dp) \
+	(*((int *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+	    sizeof (int))))
+
+/*
+ * Flags passed to nfs_bioread().
+ */
+#define NFSBIO_CACHECOOKIES	0x0001	/* Cache dir offset cookies */
 
 /*
  * Network address hash list element
