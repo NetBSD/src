@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.73 2002/09/15 16:54:26 chs Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.74 2002/09/25 22:21:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.73 2002/09/15 16:54:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.74 2002/09/25 22:21:43 thorpej Exp $");
 
 #include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>

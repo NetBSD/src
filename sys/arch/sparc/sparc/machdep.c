@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2002/09/19 10:38:03 ragge Exp $ */
+/*	$NetBSD: machdep.c,v 1.203 2002/09/25 22:21:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/extent.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
