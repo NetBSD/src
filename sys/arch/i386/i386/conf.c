@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.83 1996/12/28 23:19:27 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.84 1997/01/07 07:57:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -177,6 +177,7 @@ cdev_decl(ccd);
 cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
+#include "ipl.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -228,6 +229,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 43 */
 #endif
+	cdev_ipl_init(NIPL,ipl),	/* 44: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
