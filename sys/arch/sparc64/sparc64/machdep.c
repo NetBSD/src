@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2000/06/12 05:31:30 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.66 2000/06/12 23:32:48 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,8 +129,6 @@
 
 /* #include "fb.h" */
 
-/* Our exported CPU info; we have only one for now. */  
-struct cpu_info cpu_info_store;
 int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 #ifdef DEBUG
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
