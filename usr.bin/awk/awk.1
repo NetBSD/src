@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.4 2001/02/05 13:23:57 jdolecek Exp $
+.\"	$NetBSD: awk.1,v 1.5 2001/02/05 19:33:36 jdolecek Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -146,12 +146,7 @@ stands for
 String constants are quoted \&\f(CW"\ "\fR,
 with the usual C escapes recognized within.
 Expressions take on string or numeric values as appropriate,
-and are built using the operators
-.Ic + \- * / % ^
-(exponentiation), and concatenation (indicated by white space).
-The operators
-.Ic ! ++ \-\- += \-= *= /= %= ^= > >= < <= == != ?:
-are also available in expressions.
+and are built using the Operators (see next subsection).
 Variables may be scalars, array elements
 (denoted
 .Va x[i] )
@@ -165,7 +160,61 @@ Multiple subscripts such as
 are permitted; the constituents are concatenated,
 separated by the value of
 .Va SUBSEP .
+.Ss Operators
+.Nm
+operators, in order of decreasing precedence, are:
 .Pp
+.Bl -tag -width ident -compact
+.It Ic (...)
+Grouping
+.It Ic $
+Field reference
+.It Ic ++ --
+Inrement and decrement, can be used either as postfix or prefix.
+.It Ic ^
+Exponentiation (the
+.Ic **
+form is also supported, and
+.Ic **=
+for the assignment operator).
+.It + - !
+Unary plus, unary minus and logical negation.
+.It * / %
+Multiplication, division and modulus.
+.It + -
+Addition and subsctraction.
+.It Ar space
+String concatenation.
+.It Ic < >
+.It Ic <= >=
+.It Ic != ==
+Regular relational operators
+.It Ic ~ !~
+Regular expression match and not match
+.It Ic in
+Array membership
+.It Ic "&&"
+Logical AND
+.It Ic "||"
+Logical OR
+.It Ic ?:
+C conditional expression. This is used as
+.Ar expr1 Ic ? Ar expr2 Ic : Ar expr3 No .
+If
+.Ar expr1
+is true, the result value is
+.Ar expr2 ,
+otherwise it is
+.Ar expr3 .
+Only one of
+.Ar expr2
+and
+.Ar expr3
+is evaluated.
+.It Ic = += -=
+.It Ic *= /= %= ^=
+Assignment and Operator-Assignment
+.El
 .Ss Control Statements
 The control statements are as follows:
 .Pp
@@ -198,7 +247,6 @@ The control statements are as follows:
 .It Ic return Bq Ar expression
 .It Ic { Ar [ statement ... ] Ic }
 .El
-.Pp
 .Ss I/O Statements
 The input/ouput statements are as follows:
 .Pp
@@ -328,7 +376,6 @@ Sets seed for random number generator (
 .Fn rand )
 and returns the previous seed.
 .El
-.Pp
 .Ss String Functions
 AWK has the following string functions built-in:
 .Pp
@@ -426,7 +473,6 @@ returns a copy of
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
 .El
-.Pp
 .Ss Other built-in functions
 .Pp
 .Bl -tag -width indent
