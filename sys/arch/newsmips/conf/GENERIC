@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2002/04/12 08:11:12 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.46 2002/04/14 07:37:58 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	16
 
@@ -149,9 +149,9 @@ fb0	at hb0 addr 0x88000000		# frame buffer
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
 
-#dmac*	at ap?				# dmac3
-#spifi*	at ap?				# SPIFI SCSI
-#scsibus* at spifi?
+dmac*	at ap?				# dmac3
+spifi*	at ap?				# SPIFI SCSI
+scsibus* at spifi?
 
 xafb*	at ap?
 kb0	at ap?
