@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.15 1998/09/14 05:49:21 scottr Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.16 1998/09/18 05:45:03 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -289,7 +289,6 @@ struct scsipi_xfer {
 #define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
 #define	SCSI_URGENT	0x8000	/* Urgent operation (e.g., HTAG)	*/
 		/* 0x00ff0000 reserved for ATAPI. */
-#define	SCSI_ASYNCREQ	0x01000000 /* request completes asynchronously	*/
 
 /*
  * Error values an adapter driver may return
@@ -351,6 +350,13 @@ struct scsi_quirk_inquiry_pattern {
  */
 #define	scsipi_command_direct(xs)					\
 	(*(xs)->sc_link->adapter->scsipi_cmd)((xs))
+
+
+/*
+ * Macro to test whether a request will complete asynchronously.
+ */
+#define	SCSIPI_XFER_ASYNC(xs) \
+	((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 
 void	scsipi_init __P((void));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
