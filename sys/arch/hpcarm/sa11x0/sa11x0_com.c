@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.8 2001/05/02 10:32:23 scw Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.9 2001/05/21 16:50:35 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1556,8 +1556,25 @@ sacomcngetc(dev)
 	s = spltty();	/* XXX do we need this? */
 
 	while(! (bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR1)
-		 & SR1_RNE))
-		;
+		 & SR1_RNE)) {
+#if defined(DDB) || defined(KGDB)
+#ifndef DDB_BREAK_CHAR
+		u_int sr0;
+		extern int db_active;
+
+		sr0 = bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR0);
+		if (ISSET(sr0, SR0_RBB))
+			bus_space_write_4(sacomconstag, sacomconsioh,
+					  SACOM_SR0, SR0_RBB);
+		if (ISSET(sr0, SR0_REB)) {
+			bus_space_write_4(sacomconstag, sacomconsioh,
+					  SACOM_SR0, SR0_REB);
+			if (db_active == 0)
+				console_debugger();
+		}
+#endif
+#endif /* DDB || KGDB */
+	}
 
 	c = bus_space_read_4(sacomconstag, sacomconsioh, SACOM_DR);
 	c &= 0xff;
