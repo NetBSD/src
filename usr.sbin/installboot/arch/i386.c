@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.2 2003/04/15 14:22:14 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.3 2003/04/15 14:35:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i386.c,v 1.2 2003/04/15 14:22:14 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.3 2003/04/15 14:35:57 dsl Exp $");
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -118,16 +118,16 @@ i386_setboot(ib_params *params)
 
 	/* Fill in any user-specified options */
 	bp = (void *)(bootstrapbuf + 512 * 2 + 8);
-	if (bp->bp_length < sizeof *bp) {
+	if (le32toh(bp->bp_length) < sizeof *bp) {
 		warnx("Patch area in stage1 bootstrap is too small");
 		goto done;
 	}
 	if (params->flags & IB_TIMEOUT)
-		bp->bp_timeout = params->timeout;
+		bp->bp_timeout = htole32(params->timeout);
 	if (params->flags & IB_RESETVIDEO)
-		bp->bp_flags |= BP_RESET_VIDEO;
+		bp->bp_flags |= htole32(BP_RESET_VIDEO);
 	if (params->flags & IB_CONSPEED)
-		bp->bp_conspeed = params->conspeed;
+		bp->bp_conspeed = htole32(params->conspeed);
 	if (params->flags & IB_CONSOLE) {
 		static const char *names[] = {
 			"pc", "com0", "com1", "com2", "com3",
@@ -145,14 +145,14 @@ i386_setboot(ib_params *params)
 			if (strcmp(names[i], params->console) == 0)
 				break;
 		}
-		bp->bp_consdev = i;
+		bp->bp_consdev = htole32(i);
 	}
 	if (params->flags & IB_PASSWORD) {
 		MD5_CTX md5ctx;
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, params->password, strlen(params->password));
 		MD5Final(bp->bp_password, &md5ctx);
-		bp->bp_flags |= BP_PASSWORD;
+		bp->bp_flags |= htole32(BP_PASSWORD);
 	}
 
 	if (params->flags & IB_NOWRITE) {
