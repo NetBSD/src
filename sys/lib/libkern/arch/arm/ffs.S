@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2002/08/17 01:22:33 chris Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2002/08/17 19:00:26 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.1 2002/08/17 01:22:33 chris Exp $")
+RCSID("$NetBSD: ffs.S,v 1.2 2002/08/17 19:00:26 thorpej Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -53,7 +53,7 @@ ENTRY(ffs)
 	 * now r0 has at most one set bit, call this X
 	 * if X = 0, all further instructions are skipped
 	 */
-	adrne   r2, L_ffs_table
+	adrne   r2, .L_ffs_table
 	orrne   r0, r0, r0, lsl #4  /* r0 = X * 0x11 */ 
 	orrne   r0, r0, r0, lsl #6  /* r0 = X * 0x451 */
 	rsbne   r0, r0, r0, lsl #16 /* r0 = X * 0x0450fbaf */
@@ -67,8 +67,8 @@ ENTRY(ffs)
         mov   pc, lr
 #endif
 .text;
-.type L_ffs_table, _ASM_TYPE_OBJECT;
-L_ffs_table:
+.type .L_ffs_table, _ASM_TYPE_OBJECT;
+.L_ffs_table:
 /*               0   1   2   3   4   5   6   7           */
 	.byte	 0,  1,  2, 13,  3,  7,  0, 14  /*  0- 7 */
 	.byte	 4,  0,  8,  0,  0,  0,  0, 15  /*  8-15 */
