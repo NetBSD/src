@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.25 2000/03/13 23:52:41 soren Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.26 2000/03/16 19:00:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -289,6 +289,7 @@ struct vfsops nullfs_vfsops = {
 	layerfs_fhtovp,
 	layerfs_vptofh,
 	layerfs_init,
+	layerfs_done,
 	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
