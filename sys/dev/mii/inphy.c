@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.32 2003/03/06 22:38:09 matt Exp $	*/
+/*	$NetBSD: inphy.c,v 1.33 2003/03/07 00:14:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.32 2003/03/06 22:38:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.33 2003/03/07 00:14:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,13 @@ const struct mii_phydesc inphys[] = {
 
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562EH,
 	  MII_STR_yyINTEL_I82562EH },
-	{ 0,				0,
+
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562EM,
 	  MII_STR_yyINTEL_I82562EM },
-	{ 0,				0,
+
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82562ET,
 	  MII_STR_yyINTEL_I82562ET },
+
 	{ 0,				0,
 	  NULL },
 };
