@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2002/11/25 02:10:28 enami Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2002/11/27 00:43:12 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -626,15 +626,17 @@ cpu_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 void
-i386_intlock(void)
+i386_intlock(struct intrframe iframe)
 {
-	spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
+	if (iframe.if_ppl < IPL_SCHED)
+		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
 }
 
 void
-i386_intunlock(void)
+i386_intunlock(struct intrframe iframe)
 {
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	if (iframe.if_ppl < IPL_SCHED)
+		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 }
 #endif
 
