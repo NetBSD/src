@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.11 1997/05/09 10:45:40 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.12 1997/05/10 20:46:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -191,8 +191,6 @@ sys_swapon(p, v, retval)
 			for (sdp = spp->spi_swapdev.cqh_first;
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = sdp->swd_next.cqe_next) {
-				if (sdp->swd_dev == NODEV)
-					continue;
 				error = copyout((caddr_t)&sdp->swd_se,
 				    (caddr_t)sep, sizeof(struct swapent));
 				if (error)
