@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.68 1999/06/21 19:05:10 ad Exp $
+#	$NetBSD: files.pmax,v 1.69 1999/07/07 00:05:30 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -246,7 +246,7 @@ file	arch/pmax/dev/findcons.c	# find and set up console.
 include "dev/rcons/files.rcons"
 include "dev/wsfont/files.wsfont"
 
-pseudo-device	rasterconsole
+defpseudo	rasterconsole
 file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
@@ -265,7 +265,7 @@ file	arch/pmax/dev/bt459.c			cfb | sfb
 # have framebuffers.  Provides qvss-style interface compatible with
 # X11R5 servers.
 #
-pseudo-device	fb
+defpseudo	fb
 file	arch/pmax/dev/fb.c		fb needs-count
 
 # Glue for old-style config
