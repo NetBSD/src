@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2003/01/26 23:15:30 wiz Exp $	*/
+/*	$NetBSD: search.c,v 1.2 2003/01/26 23:55:53 wiz Exp $	*/
 
 /* search.c - searching subroutines using dfa, kwset and regex for grep.
    Copyright 1992, 1998, 2000 Free Software Foundation, Inc.
@@ -24,7 +24,7 @@
 # include <config.h>
 #endif
 #include <sys/types.h>
-#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC
+#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC && defined HAVE_WCTYPE
 /* We can handle multibyte string.  */
 # define MBS_SUPPORT
 # include <wchar.h>

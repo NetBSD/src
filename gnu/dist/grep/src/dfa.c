@@ -1,4 +1,4 @@
-/*	$NetBSD: dfa.c,v 1.1.1.3 2003/01/26 23:15:29 wiz Exp $	*/
+/*	$NetBSD: dfa.c,v 1.2 2003/01/26 23:55:52 wiz Exp $	*/
 
 /* dfa.c - deterministic extended regexp routines for GNU
    Copyright 1988, 1998, 2000 Free Software Foundation, Inc.
@@ -46,7 +46,7 @@ extern void free();
 # include <locale.h>
 #endif
 
-#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC
+#if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC && defined HAVE_WCTYPE
 /* We can handle multibyte string.  */
 # define MBS_SUPPORT
 #endif
