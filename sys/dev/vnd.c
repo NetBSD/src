@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.48 1997/10/09 08:11:12 jtc Exp $	*/
+/*	$NetBSD: vnd.c,v 1.49 1997/10/10 02:05:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -411,6 +411,7 @@ vndstrategy(bp)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				putvndxfer(vnx);
+				splx(s);
 				goto done;
 			}
 			splx(s);
