@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1998/03/25 03:57:53 jonathan Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1998/03/30 09:07:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,6 +32,20 @@
 
 #ifndef _PMAX_INTR_H_
 #define _PMAX_INTR_H_
+
+#include <mips/intr.h>
+
+
+#define	IPL_NONE	0	/* disable only this interrupt */
+#define	IPL_BIO		1	/* disable block I/O interrupts */
+#define	IPL_NET		2	/* disable network interrupts */
+#define	IPL_TTY		3	/* disable terminal interrupts */
+#define	IPL_CLOCK	4	/* disable clock interrupts */
+#define	IPL_STATCLOCK	5	/* disable profiling interrupts */
+#define	IPL_SERIAL	6	/* disable serial hardware interrupts */
+#define	IPL_DMA		7	/* disable DMA reload interrupts */
+#define	IPL_HIGH	8	/* disable all interrupts */
+
 
 /*
  * Index into intrcnt[], which is defined in locore
