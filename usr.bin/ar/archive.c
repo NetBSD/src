@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.12 1997/10/18 11:52:55 lukem Exp $	*/
+/*	$NetBSD: archive.c,v 1.13 1997/10/18 11:56:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)archive.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: archive.c,v 1.12 1997/10/18 11:52:55 lukem Exp $");
+__RCSID("$NetBSD: archive.c,v 1.13 1997/10/18 11:56:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ opened:	if (flock(fd, LOCK_EX|LOCK_NB) && errno != EOPNOTSUPP)
 			if (nr >= 0)
 				badfmt();
 			error(archive);
-		} else if (bcmp(buf, ARMAG, SARMAG))
+		} else if (memcmp(buf, ARMAG, SARMAG))
 			badfmt();
 	} else if (write(fd, ARMAG, SARMAG) != SARMAG)
 		error(archive);
@@ -171,7 +171,7 @@ get_arobj(fd)
 	 * Long name support.  Set the "real" size of the file, and the
 	 * long name flag/size.
 	 */
-	if (!bcmp(hdr->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
+	if (!memcmp(hdr->ar_name, AR_EFMT1, sizeof(AR_EFMT1) - 1)) {
 		chdr.lname = len = atoi(hdr->ar_name + sizeof(AR_EFMT1) - 1);
 		if (len <= 0 || len > MAXNAMLEN)
 			badfmt();
