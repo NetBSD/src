@@ -1,22 +1,21 @@
-#	$NetBSD: Makefile,v 1.4 1994/10/26 07:22:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/08/04 07:40:31 thorpej Exp $
 
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
-COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
-	../netiso/*.[ch] ../netccitt/*.[ch] \
-	../kern/*.c ../ufs/*.[ch] ../nfs/*.[ch] ../vm/*.[ch] ../sys/*.h
+# Makefile for hp300 tags file and boot blocks
 
-# Makefile for hp300 tags file
+NOPROG=	noprog
+NOMAN=	noman
 
 SUBDIR= stand
 
 THP300=	../hp300/tags
 SHP300=	../hp300/hp300/*.[ch] ../hp300/include/*.h \
-	../hp300/hpux/*.[ch] ../hp300/dev/*.[ch]
+	../hp300/dev/*.[ch]
 AHP300=	../hp300/hp300/*.s
 
 # Directories in which to place hp300 tags links
-DHP300=	dev hpux include
+DHP300=	dev hp300 include
 
 tags:
 	-ctags -dtf ${THP300} ${COMM} ${SHP300}
@@ -27,6 +26,8 @@ tags:
 
 links:
 	-for i in ${DHP300}; do \
-	    cd ../$$i && rm -f tags; ln -s ../tags tags; done
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
