@@ -1,10 +1,11 @@
-/*	$NetBSD: bioscall.h,v 1.5 1998/10/03 02:14:52 jtk Exp $ */
+/*	$NetBSD: bioscall.h,v 1.6 2000/07/12 22:58:12 thorpej Exp $ */
+
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John Kohl.
+ * by John Kohl and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef __I386_BIOSCALL_H__
 #define __I386_BIOSCALL_H__
 
@@ -44,12 +46,13 @@
 #define BIOSTRAMP_BASE	NBPG
 
 #ifndef _LOCORE
-typedef union bios_register {
-	struct {
-		u_short hw_lo;
-		u_short hw_hi;
-	} halfword;
-	u_int longword;
+#define	BIOSREG_LO	0
+#define	BIOSREG_HI	1
+
+typedef	union {
+	u_char biosreg_quarter[4];
+	u_short biosreg_half[2];
+	u_int biosreg_long;
 } bios_reg;
 
 struct bioscallregs {
@@ -61,27 +64,42 @@ struct bioscallregs {
     bios_reg r_di;
     bios_reg r_flags;
 };
-#define AX r_ax.halfword.hw_lo
-#define AX_HI r_ax.halfword.hw_hi
-#define EAX r_ax.longword
-#define BX r_bx.halfword.hw_lo
-#define BX_HI r_bx.halfword.hw_hi
-#define EBX r_bx.longword
-#define CX r_cx.halfword.hw_lo
-#define CX_HI r_cx.halfword.hw_hi
-#define ECX r_cx.longword
-#define DX r_dx.halfword.hw_lo
-#define DX_HI r_dx.halfword.hw_hi
-#define EDX r_dx.longword
-#define SI r_si.halfword.hw_lo
-#define SI_HI r_si.halfword.hw_hi
-#define ESI r_si.longword
-#define DI r_di.halfword.hw_lo
-#define DI_HI r_di.halfword.hw_hi
-#define EDI r_di.longword
-#define FLAGS r_flags.halfword.hw_lo
-#define FLAGS_HI r_flags.halfword.hw_hi
-#define EFLAGS r_flags.longword
+
+#define	AL	r_ax.biosreg_quarter[BIOSREG_LO]
+#define	AH	r_ax.biosreg_quarter[BIOSREG_HI]
+#define	AX	r_ax.biosreg_half[BIOSREG_LO]
+#define	AX_HI	r_ax.biosreg_half[BIOSREG_HI]
+#define	EAX	r_ax.biosreg_long
+
+#define	BL	r_bx.biosreg_quarter[BIOSREG_LO]
+#define	BH	r_bx.biosreg_quarter[BIOSREG_HI]
+#define	BX	r_bx.biosreg_half[BIOSREG_LO]
+#define	BX_HI	r_bx.biosreg_half[BIOSREG_HI]
+#define	EBX	r_bx.biosreg_long
+
+#define	CL	r_cx.biosreg_quarter[BIOSREG_LO]
+#define	CH	r_cx.biosreg_quarter[BIOSREG_HI]
+#define	CX	r_cx.biosreg_half[BIOSREG_LO]
+#define	CX_HI	r_cx.biosreg_half[BIOSREG_HI]
+#define	ECX	r_cx.biosreg_long
+
+#define	DL	r_dx.biosreg_quarter[BIOSREG_LO]
+#define	DH	r_dx.biosreg_quarter[BIOSREG_HI]
+#define	DX	r_dx.biosreg_half[BIOSREG_LO]
+#define	DX_HI	r_dx.biosreg_half[BIOSREG_HI]
+#define	EDX	r_dx.biosreg_long
+
+#define	SI	r_si.biosreg_half[BIOSREG_LO]
+#define	SI_HI	r_si.biosreg_half[BIOSREG_HI]
+#define	ESI	r_si.biosreg_long
+
+#define	DI	r_di.biosreg_half[BIOSREG_LO]
+#define	DI_HI	r_di.biosreg_half[BIOSREG_HI]
+#define	EDI	r_di.biosreg_long
+
+#define	FLAGS	 r_flags.biosreg_half[BIOSREG_LO]
+#define	FLAGS_HI r_flags.biosreg_half[BIOSREG_HI]
+#define	EFLAGS	 r_flags.biosreg_long
 
 void bioscall __P((int /* function*/ , struct bioscallregs * /* regs */));
 #endif
