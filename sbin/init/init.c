@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Donn Seeley at Berkeley Software Design, Inc.
@@ -35,20 +35,18 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)init.c	6.22 (Berkeley) 6/2/93";*/
-static char rcsid[] = "$Id: init.c,v 1.14 1994/04/26 19:56:22 pk Exp $";
+/*static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";*/
+static char rcsid[] = "$Id: init.c,v 1.15 1994/06/10 18:06:13 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#ifndef NOSYSCTL
 #include <sys/sysctl.h>
-#endif
 #include <sys/wait.h>
 
 #include <db.h>
