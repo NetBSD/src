@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.6 2004/03/05 16:37:57 drochner Exp $	*/
+/*	$NetBSD: except.c,v 1.7 2004/03/25 14:51:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -48,6 +48,50 @@ static volatile const double one  = 1.0;
 static volatile const double zero = 0.0;
 static volatile const double huge = DBL_MAX;
 static volatile const double tiny = DBL_MIN;
+static volatile double x;
+
+/* trip divide by zero */
+static void
+dz()
+{
+
+	x = one / zero;
+}
+
+/* trip invalid operation */
+static void
+inv()
+{
+
+	x = zero / zero;
+}
+
+/* trip overflow */
+static void
+ofl()
+{
+
+	x = huge * huge;
+}
+
+/* trip underflow */
+static void
+ufl()
+{
+
+	x = tiny * tiny;
+}
+
+static struct {
+	void (*op)(void);
+	fp_except mask;
+	int sicode;
+} ops[] = {
+	{ dz, FP_X_DZ, FPE_FLTDIV },
+	{ inv, FP_X_INV, FPE_FLTINV },
+	{ ofl, FP_X_OFL, FPE_FLTOVF },
+	{ ufl, FP_X_UFL, FPE_FLTUND }
+};
 
 static sigjmp_buf b;
 
@@ -55,8 +99,7 @@ main()
 {
 	struct sigaction sa;
 	fp_except ex1, ex2;
-	int r;
-	volatile double x;
+	int i, r;
 
 	/*
 	 * check to make sure that all exceptions are masked and 
@@ -72,83 +115,32 @@ main()
 	sigaction(SIGFPE, &sa, 0);
 	signal_caught = 0;
 
-	/* trip divide by zero */
-	x = one / zero;
-	ex1 = fpgetsticky();
-	assert (ex1 & FP_X_DZ);
-	assert (signal_caught == 0);
-	ex2 = fpsetsticky(0);
-	assert(fpgetsticky() == 0);
-	assert(ex1 == ex2);
+	/*
+	 * exceptions masked, check whether "sticky" bits are set correctly
+	 */
+	for (i = 0; i < sizeof(ops)/sizeof(ops[0]); i++) {
+		(*ops[i].op)();
+		ex1 = fpgetsticky();
+		assert(ex1 & ops[i].mask);
+		assert(signal_caught == 0);
+		/* check correct fpsetsticky() behaviour */
+		ex2 = fpsetsticky(0);
+		assert(fpgetsticky() == 0);
+		assert(ex1 == ex2);
+	}
 
-	/* trip invalid operation */
-	x = zero / zero;
-	ex1 = fpgetsticky();
-	assert (ex1 & FP_X_INV);
-	assert (signal_caught == 0);
-	ex2 = fpsetsticky(0);
-	assert(fpgetsticky() == 0);
-	assert(ex1 == ex2);
-
-	/* trip overflow */
-	x = huge * huge;
-	ex1 = fpgetsticky();
-	assert (ex1 & FP_X_OFL);
-	assert (signal_caught == 0);
-	ex2 = fpsetsticky(0);
-	assert(fpgetsticky() == 0);
-	assert(ex1 == ex2);
-
-	/* trip underflow */
-	x = tiny * tiny;
-	ex1 = fpgetsticky();
-	assert (ex1 & FP_X_UFL);
-	assert (signal_caught == 0);
-	ex2 = fpsetsticky(0);
-	assert(fpgetsticky() == 0);
-	assert(ex1 == ex2);
-
-#if 1
-	/* unmask and then trip divide by zero */
-	fpsetmask(FP_X_DZ);
-	r = sigsetjmp(b, 1);
-	if (!r)
-		x = one / zero;
-	assert (signal_caught == 1);
-	if (sicode != FPE_FLTDIV)
-		printf("si_code=%d, should be FPE_FLTDIV\n", sicode);
-	signal_caught = 0;
-
-	/* unmask and then trip invalid operation */
-	fpsetmask(FP_X_INV);
-	r = sigsetjmp(b, 1);
-	if (!r)
-		x = zero / zero;
-	assert (signal_caught == 1);
-	if (sicode != FPE_FLTINV)
-		printf("si_code=%d, should be FPE_FLTINV\n", sicode);
-	signal_caught = 0;
-
-	/* unmask and then trip overflow */
-	fpsetmask(FP_X_OFL);
-	r = sigsetjmp(b, 1);
-	if (!r)
-		x = huge * huge;
-	assert (signal_caught == 1);
-	if (sicode != FPE_FLTOVF)
-		printf("si_code=%d, should be FPE_FLTOVF\n", sicode);
-	signal_caught = 0;
-
-	/* unmask and then trip underflow */
-	fpsetmask(FP_X_UFL);
-	r = sigsetjmp(b, 1);
-	if (!r)
-		x = tiny * tiny;
-	assert (signal_caught == 1);
-	if (sicode != FPE_FLTUND)
-		printf("si_code=%d, should be FPE_FLTUND\n", sicode);
-	signal_caught = 0;
-#endif
+	/*
+	 * exception unmasked, check SIGFPE delivery and correct siginfo
+	 */
+	for (i = 0; i < sizeof(ops)/sizeof(ops[0]); i++) {
+		fpsetmask(ops[i].mask);
+		r = sigsetjmp(b, 1);
+		if (!r)
+			(*ops[i].op)();
+		assert(signal_caught == 1);
+		assert(sicode == ops[i].sicode);
+		signal_caught = 0;
+	}
 
 	exit(0);
 }
