@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.29 2000/03/28 00:29:55 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.30 2000/05/11 02:26:24 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,7 +239,7 @@ menu biosmultmatch;
 		biosdisk = NULL;
 	};
 
-menu configbootsel, title  "Change a bootmenu item", exit;
+menu configbootsel, y=16, title  "Change a bootmenu item", exit;
         display action  { msg_display(MSG_configbootsel);
                           disp_bootsel((struct mbr_partition *)&mbr[MBR_PARTOFF], mbs);
 			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->timeo) / 18200);
