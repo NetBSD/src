@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.16 1993/12/05 02:21:38 cgd Exp $
+#	$Id: Makefile.inc,v 1.17 1993/12/05 15:46:29 briggs Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -7,7 +7,7 @@
 SRCS+=	memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strftime.c strmode.c strtok.c strxfrm.c 
 
-.if   (${MACHINE_ARCH} == "hp300")
+.if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.c memset.c \
 	rindex.S strcat.c strcmp.S strcpy.S strcspn.c strlen.S \
 	strncat.c strncmp.S strncpy.S strpbrk.c strsep.c \

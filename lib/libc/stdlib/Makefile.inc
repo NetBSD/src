@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.15 1993/12/05 02:21:20 cgd Exp $
+#	$Id: Makefile.inc,v 1.16 1993/12/05 15:46:05 briggs Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
@@ -11,7 +11,7 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atol.c bsearch.c calloc.c cfree.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c
 
-.if   (${MACHINE_ARCH} == "hp300")
+.if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	abs.S div.c labs.c ldiv.c atof.c
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S atof.c
