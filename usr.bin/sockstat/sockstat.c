@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.4 2005/03/10 05:39:54 atatat Exp $ */
+/*	$NetBSD: sockstat.c,v 1.5 2005/03/22 15:51:35 peter Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.4 2005/03/10 05:39:54 atatat Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.5 2005/03/22 15:51:35 peter Exp $");
 #endif
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 	if (pf_list == 0)
 		pf_list = PF_LIST_INET | PF_LIST_INET6 | PF_LIST_LOCAL;
 	if ((portmap != NULL) && (pf_list & PF_LIST_LOCAL))
-		errx(1, "local domain sockets not not have ports");
+		errx(1, "local domain sockets do not have ports");
 
 	if (pf_list & PF_LIST_INET) {
 		get_sockets("net.inet.tcp.pcblist");
