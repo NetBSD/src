@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.6 1998/11/13 15:46:53 christos Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.7 1998/12/05 13:17:55 pk Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.6 1998/11/13 15:46:53 christos Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.7 1998/12/05 13:17:55 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -248,6 +248,8 @@ getnetbyaddr(net, net_type)
 			for (nn = 4, net2 = net; net2; net2 >>= 8)
 				netbr[--nn] = (unsigned int)(net2 & 0xff);
 			switch (nn) {
+			default:
+				return (NULL);
 			case 3: 	/* Class A */
 				sprintf(qbuf, "0.0.0.%u.in-addr.arpa",
 				    netbr[3]);
