@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.4 2001/01/05 17:34:41 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.5 2001/02/15 13:36:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -654,39 +654,6 @@ _C_LABEL(fork_trampoline):
  */
 #include <powerpc/powerpc/trap_subr.S>
 
-/*
- * int ipkdbsbyte(unsigned char *p, int c)
- */
-	.globl	_C_LABEL(ipkdbsbyte)
-_C_LABEL(ipkdbsbyte):
-	li	9,EXC_DSI		/* establish new fault routine */
-	lwz	5,0(9)
-	lis	6,ipkdbfault@ha
-	lwz	6,ipkdbfault@l(6)
-	stw	6,0(9)
-#ifdef	IPKDBUSERHACK
-	lis	8,_C_LABEL(ipkdbsr)@ha
-	lwz	8,_C_LABEL(ipkdbsr)@l(8)
-	mtsr	USER_SR,8
-	isync
-#endif
-	dcbst	0,9			/* flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */
-	mr	6,3
-	xor	3,3,3
-	stb	4,0(6)
-	dcbst	0,6			/* Now do appropriate flushes
-					   to data... */
-	sync
-	icbi	0,6			/* and instruction caches */
-	stw	5,0(9)			/* restore previous fault handler */
-	dcbst	0,9			/* and flush data... */
-	sync
-	icbi	0,9			/* and instruction caches */	
-	blr
-#endif	/* IPKDB */
-	
 /*
  * int setfault()
  *

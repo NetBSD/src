@@ -28,4 +28,8 @@ clean:
 
 cleandir:	clean
 
+all:	includes
+
 includes:	dnload.h
+
+.include <bsd.kinc.mk>

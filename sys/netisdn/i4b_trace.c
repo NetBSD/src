@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.2.2.3 2001/02/11 19:17:33 bouyer Exp $
+ *	$Id: i4b_trace.c,v 1.2.2.4 2001/02/15 13:36:12 bouyer Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -515,7 +515,7 @@ i4btrcioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_TRC_SET:
 			if(cno < 0)
 				return ENOTTY;
-			(*ctrl_desc[cno].N_MGMT_COMMAND)(ctrl_desc[cno].unit, CMR_SETTRACE, (void *)*(unsigned int *)data);
+			(*ctrl_desc[cno].N_MGMT_COMMAND)(ctrl_desc[cno].unit, CMR_SETTRACE, (void *)*(unsigned long *)data);
 			break;
 
 		case I4B_TRC_SETA:
@@ -544,8 +544,8 @@ i4btrcioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 					
 				outunit = unit;
 				analyzemode = 1;
-				(*ctrl_desc[cno].N_MGMT_COMMAND)(rxunit, CMR_SETTRACE, (int *)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
-				(*ctrl_desc[cno].N_MGMT_COMMAND)(txunit, CMR_SETTRACE, (int *)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				(*ctrl_desc[cno].N_MGMT_COMMAND)(rxunit, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
+				(*ctrl_desc[cno].N_MGMT_COMMAND)(txunit, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
 			}
 			break;
 
