@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.5 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.6 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -434,8 +434,7 @@ cmd0643_9_setup_channel(struct channel_softc *chp)
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
 }
@@ -613,8 +612,7 @@ cmd680_setup_channel(struct channel_softc *chp)
 	pciide_pci_write(pc, pa, 0x80 + chp->channel * 4, mode);
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
 }
@@ -721,8 +719,7 @@ cmd3112_setup_channel(struct channel_softc *chp)
 	 */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag,

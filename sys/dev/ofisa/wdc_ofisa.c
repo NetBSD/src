@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.15 2003/10/08 10:58:12 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.16 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.15 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.16 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,6 +100,7 @@ wdc_ofisa_attach(parent, self, aux)
 	struct ofisa_reg_desc reg[2];
 	struct ofisa_intr_desc intr;
 	int n;
+	bus_space_handle_t ioh;
 
 	/*
 	 * We're living on an ofw.  We have to ask the OFW what our
@@ -135,13 +136,22 @@ wdc_ofisa_attach(parent, self, aux)
 	    (reg[0].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
 	sc->wdc_channel.ctl_iot =
 	    (reg[1].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-        if (bus_space_map(sc->wdc_channel.cmd_iot, reg[0].addr, 8, 0,
-              &sc->wdc_channel.cmd_ioh) ||
+        if (bus_space_map(sc->wdc_channel.cmd_iot, reg[0].addr, 8, 0, &ioh) ||
             bus_space_map(sc->wdc_channel.ctl_iot, reg[1].addr, 1, 0,
 	      &sc->wdc_channel.ctl_ioh)) {
                 printf(": can't map register spaces\n");
 		return;
         }
+	sc->wdc_channel.cmd_baseioh = ioh;
+
+	for (n = 0; n < WDC_NREG; n++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot, ioh, n,
+		    n == 0 ? 4 : 1, &sc->wdc_channel.cmd_iohs[n]) != 0) {
+                	printf(": can't subregion register space\n");
+			return;
+		}
+	}
+			
 
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_BIO, wdcintr, &sc->wdc_channel);
