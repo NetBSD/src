@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.5 1996/06/05 00:30:52 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.6 1996/07/09 00:55:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -287,10 +287,10 @@ ioasic_intr(val)
 	void *val;
 {
 	register struct ioasic_softc *sc = val;
-	register int i, ifound;
+	register int ifound;
 	int gifound;
-	u_int32_t sir, junk;
-	volatile u_int32_t *sirp, *junkp;
+	u_int32_t sir;
+	volatile u_int32_t *sirp;
 
 	sirp = (volatile u_int32_t *)IOASIC_REG_INTR(sc->sc_base);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_io.c,v 1.2 1996/06/11 21:16:27 cgd Exp $	*/
+/*	$NetBSD: tc_bus_io.c,v 1.3 1996/07/09 00:55:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,12 +33,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <vm/vm.h>
 
 #include <machine/bus.h>
+#include <dev/tc/tcvar.h>
 
 int		tc_io_map __P((void *, bus_io_addr_t, bus_io_size_t,
 		    bus_io_handle_t *));

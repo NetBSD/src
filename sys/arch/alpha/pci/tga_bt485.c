@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_bt485.c,v 1.2 1996/04/12 06:09:16 cgd Exp $	*/
+/*	$NetBSD: tga_bt485.c,v 1.3 1996/07/09 00:55:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -433,7 +433,7 @@ tga_bt485_wr_d(tgaregs, btreg, val)
 		panic("tga_bt485_wr_d: reg %d out of range\n", btreg);
 
 	tgaregs[TGA_REG_EPDR] = (btreg << 9) | (0 << 8 ) | val; /* XXX */
-	wbflush();
+	alpha_mb();
 }
 
 inline u_int8_t
@@ -447,7 +447,7 @@ tga_bt485_rd_d(tgaregs, btreg)
 		panic("tga_bt485_rd_d: reg %d out of range\n", btreg);
 
 	tgaregs[TGA_REG_EPSR] = (btreg << 1) | 0x1;		/* XXX */
-	wbflush();
+	alpha_mb();
 
 	rdval = tgaregs[TGA_REG_EPDR];
 	return (rdval >> 16) & 0xff;				/* XXX */

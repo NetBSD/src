@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.5 1996/05/17 23:58:43 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.6 1996/07/09 00:55:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>

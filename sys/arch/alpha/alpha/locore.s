@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.14 1996/06/12 22:11:28 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.15 1996/07/09 00:53:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -64,12 +64,12 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	br	pv,1f
 1:	SETGP(pv)
 
-	/* Save a0, used by pal_wrkgp. */
+	/* Save a0, used by alpha_pal_wrkgp. */
 	or	a0,zero,s0
 
 	/* Load KGP with current GP. */
 	or	gp,zero,a0
-	CALL(pal_wrkgp)
+	CALL(alpha_pal_wrkgp)
 
 	/* Switch to the boot stack. */
 	lda	sp,bootstack
@@ -83,7 +83,7 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 
 	/* Set up the virtual page table pointer. */
 	CONST(VPTBASE, a0)
-	CALL(pal_wrvptptr)
+	CALL(alpha_pal_wrvptptr)
 
 	/*
 	 * Switch to proc0's PCB, which is at U_PCB off of proc0paddr.
@@ -187,7 +187,7 @@ LEAF(rei, 1)					/* XXX should be NESTED */
 1:	SETGP(pv)
 
 	ldq	s1, TF_PS(sp)			/* get the saved PS */
-	and	s1, PSL_IPL, t0			/* look at the saved IPL */
+	and	s1, ALPHA_PSL_IPL, t0		/* look at the saved IPL */
 	bne	t0, Lrestoreregs		/* != 0: can't do AST or SIR */
 
 	/* see if we can do an SIR */
@@ -195,15 +195,15 @@ LEAF(rei, 1)					/* XXX should be NESTED */
 	beq	t1, Lchkast			/* no, try an AST*/
 
 	/* We've got a SIR. */
-	CONST(PSL_IPL_SOFT, a0)			/* yes, lower IPL to soft */
+	CONST(ALPHA_PSL_IPL_SOFT, a0)		/* yes, lower IPL to soft */
 	call_pal PAL_OSF1_swpipl
 	CALL(do_sir)				/* do the SIR */
 
 Lchkast:
-	CONST(PSL_IPL_0, a0)			/* drop IPL to zero*/
+	CONST(ALPHA_PSL_IPL_0, a0)		/* drop IPL to zero*/
 	call_pal PAL_OSF1_swpipl
 
-	and	s1, PSL_U, t0			/* are we returning to user? */
+	and	s1, ALPHA_PSL_U, t0		/* are we returning to user? */
 	beq	t0, Lrestoreregs		/* no: just return */
 
 	ldq	t2, astpending			/* AST pending? */
@@ -759,7 +759,7 @@ LEAF(idle, 0)
 2:
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, 2b
-	CONST(PSL_IPL_HIGH, a0)			/* disable all interrupts */
+	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 	JMP(sw1)				/* jump back into the fray */
 	END(idle)
@@ -789,7 +789,7 @@ LEAF(cpu_switch, 0)
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 
-	CONST(PSL_IPL_HIGH, a0)			/* disable all interrupts */
+	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 sw1:
 	br	pv, 1f
@@ -870,7 +870,7 @@ sw1:
 	ldq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
 	ldq	ra, U_PCB_CONTEXT+(7 * 8)(t0)		/* restore ra */
 	ldq	a0, U_PCB_CONTEXT+(8 * 8)(t0)		/* restore ipl */
-	and	a0, PSL_IPL, a0
+	and	a0, ALPHA_PSL_IPL, a0
 	call_pal PAL_OSF1_swpipl
 
 	CONST(1, v0)				/* possible ret to savectx() */
@@ -1621,13 +1621,5 @@ EXPORT(intrcnt)
 #endif
 EXPORT(eintrcnt)
 	.text
-
-/**************************************************************************/
-
-	.text
-LEAF(rpcc,1)
-	rpcc	v0
-	RET
-	END(pal_mtpr_mces)
 
 /**************************************************************************/
