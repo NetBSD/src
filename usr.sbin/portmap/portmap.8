@@ -1,4 +1,4 @@
-.\"	$NetBSD: portmap.8,v 1.7.2.1 2000/01/23 11:17:24 he Exp $
+.\"	$NetBSD: portmap.8,v 1.7.2.2 2000/06/26 01:28:05 cgd Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991, 1993
@@ -119,6 +119,8 @@ versions of the rpc library and do not make those requests using the
 loopback interface. 
 .It Fl l
 Turns on libwrap connection logging.
+.It Fl p
+prevents indirect calls to a short list of sensitive services, including NFS and NIS.
 .It Fl s
 causes
 .Nm
