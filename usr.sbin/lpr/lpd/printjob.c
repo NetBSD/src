@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.37 2002/10/26 01:47:52 thorpej Exp $	*/
+/*	$NetBSD: printjob.c,v 1.38 2003/05/17 20:46:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.37 2002/10/26 01:47:52 thorpej Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.38 2003/05/17 20:46:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ printit(char *file)
 	 * Reset troff fonts.
 	 */
 	for (i = 0; i < 4; i++)
-		strncpy(fonts[i], ifonts[i], FONTLEN);
+		strlcpy(fonts[i], ifonts[i], sizeof(fonts[i]));
 	(void)snprintf(&width[2], sizeof(width) - 2, "%ld", PW);
 	indent[2] = '0';
 	indent[3] = '\0';
@@ -389,15 +389,13 @@ printit(char *file)
 	while (getline(cfp))
 		switch (line[0]) {
 		case 'H':
-			strncpy(fromhost, line+1, sizeof(fromhost) - 1);
+			strlcpy(fromhost, line+1, sizeof(fromhost));
 			if (class[0] == '\0')
-				strncpy(class, line+1, sizeof(class) - 1);
-			class[sizeof(class)-1] = '\0';
+				strlcpy(class, line+1, sizeof(class));
 			continue;
 
 		case 'P':
-			strncpy(logname, line+1, sizeof(logname) - 1);
-			logname[sizeof(logname)-1] = '\0';
+			strlcpy(logname, line+1, sizeof(logname));
 			if (RS) {			/* restricted */
 				if (getpwnam(logname) == NULL) {
 					bombed = NOACCT;
@@ -421,28 +419,25 @@ printit(char *file)
 			continue;
 
 		case 'J':
-			if (line[1] != '\0') {
-				strncpy(jobname, line+1, sizeof(jobname) - 1);
-				jobname[sizeof(jobname)-1] = '\0';
-			} else {
+			if (line[1] != '\0')
+				strlcpy(jobname, line+1, sizeof(jobname));
+			else {
 				jobname[0] = ' ';
 				jobname[1] = '\0';
 			}
 			continue;
 
 		case 'C':
-			if (line[1] != '\0') {
-				strncpy(class, line+1, sizeof(class) - 1);
-				class[sizeof(class)-1] = '\0';
-			} else if (class[0] == '\0') {
+			if (line[1] != '\0')
+				strlcpy(class, line+1, sizeof(class));
+			else if (class[0] == '\0') {
 				gethostname(class, sizeof(class));
 				class[sizeof(class) - 1] = '\0';
 			}
 			continue;
 
 		case 'T':	/* header title for pr */
-			strncpy(title, line+1, sizeof(title) - 1);
-			title[sizeof(title)-1] = '\0';
+			strlcpy(title, line+1, sizeof(title));
 			continue;
 
 		case 'L':	/* identification line */
@@ -455,19 +450,17 @@ printit(char *file)
 		case '3':
 		case '4':
 			if (line[1] != '\0') {
-				strncpy(fonts[line[0]-'1'], line+1, FONTLEN - 1);
-				fonts[line[0]-'1'][50-1] = '\0';
+				strlcpy(fonts[line[0]-'1'], line+1,
+				    sizeof(fonts[line[0]-'1']));
 			}
 			continue;
 
 		case 'W':	/* page width */
-			strncpy(width+2, line+1, sizeof(width) - 3);
-			width[sizeof(width)-1] = '\0';
+			strlcpy(width+2, line+1, sizeof(width) - 2);
 			continue;
 
 		case 'I':	/* indent amount */
-			strncpy(indent+2, line+1, sizeof(indent) - 3);
-			indent[sizeof(indent)-1] = '\0';
+			strlcpy(indent+2, line+1, sizeof(indent) - 2);
 			continue;
 
 		default:	/* some file to print */
@@ -810,8 +803,7 @@ sendit(char *file)
 			continue;
 		}
 		if (line[0] >= 'a' && line[0] <= 'z') {
-			strncpy(last, line, sizeof(last) - 1);
-			last[sizeof(last) - 1] = '\0';
+			strlcpy(last, line, sizeof(last));
 			while ((i = getline(cfp)) != 0)
 				if (strcmp(last, line))
 					break;
