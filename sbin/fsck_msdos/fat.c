@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.6 1997/09/08 14:05:31 ws Exp $	*/
+/*	$NetBSD: fat.c,v 1.7 1997/09/14 14:40:13 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -33,8 +33,9 @@
  */
 
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: fat.c,v 1.6 1997/09/08 14:05:31 ws Exp $";
+__RCSID("$NetBSD: fat.c,v 1.7 1997/09/14 14:40:13 lukem Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>

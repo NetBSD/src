@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1997/09/14 14:40:14 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -33,8 +33,9 @@
  */
 
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.9 1997/09/14 14:40:14 lukem Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -75,7 +76,7 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "pynf")) != EOF) {
+	while ((ch = getopt(argc, argv, "pynf")) != -1) {
 		switch (ch) {
 		case 'f':
 			/*
