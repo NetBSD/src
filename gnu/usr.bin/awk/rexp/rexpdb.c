@@ -12,12 +12,12 @@ the GNU General Public License, version 2, 1991.
 
 
 /*$Log: rexpdb.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:40  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 3.2  91/08/13  09:10:09  brennan
+ * Revision 3.2  1991/08/13  09:10:09  brennan
  * VERSION .9994
- * 
+ *
  * Revision 3.1  91/06/07  10:33:30  brennan
  * VERSION 0.995
  * 

@@ -11,12 +11,12 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: rexp.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:28  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 3.4  91/08/13  09:09:59  brennan
+ * Revision 3.4  1991/08/13  09:09:59  brennan
  * VERSION .9994
- * 
+ *
  * Revision 3.3  91/08/04  15:45:03  brennan
  * no longer attempt to recover mem on failed REcompile
  * Its not worth the effort

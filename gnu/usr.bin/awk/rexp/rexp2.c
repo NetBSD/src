@@ -11,9 +11,14 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: rexp2.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:38  jtc
+/*Updated to mawk 1.1.4
 /*
+ * Revision 3.8  1992/12/24  00:36:44  mike
+ * fixed major bozo for LMDOS when growing stack
+ * fixed potential LMDOS bozo with M_STR+U_ON+END_ON
+ * fixed minor bug in M_CLASS+U_ON+END_ON
+ *
  * Revision 3.7  92/01/21  17:33:15  brennan
  * added some casts so that character classes work with signed chars
  * 
@@ -54,9 +59,9 @@ the GNU General Public License, version 2, 1991.
 
 #define  STACKGROWTH    16
 
-/* statics */
+#ifdef  DEBUG
 static RT_STATE *PROTO(slow_push,(RT_STATE *,STATE*,char*,int)); 
-
+#endif
 
 
 RT_STATE *RE_run_stack_base; 
@@ -66,16 +71,14 @@ RT_STATE *RE_run_stack_limit ;
    This hack fixes it without rewriting the whole thing, 5/31/91 */
 RT_STATE *RE_run_stack_empty ;
 
-/* for statistics and debug */
-static RT_STATE *stack_max ; 
-
 void RE_run_stack_init()
-{ if ( !RE_run_stack_base )
+{ 
+  if ( !RE_run_stack_base )
   {
     RE_run_stack_base = (RT_STATE *)
                  RE_malloc(sizeof(RT_STATE) * STACKGROWTH ) ;
     RE_run_stack_limit = RE_run_stack_base + STACKGROWTH ;
-    RE_run_stack_empty = stack_max = RE_run_stack_base-1 ;
+    RE_run_stack_empty = RE_run_stack_base-1 ;
   }
 }
 
@@ -86,7 +89,9 @@ void RE_run_stack_init()
 */
 
 RT_STATE  *RE_new_run_stack()
-{ int newsize = (RE_run_stack_limit - RE_run_stack_base) + STACKGROWTH ;
+{ 
+  int oldsize = RE_run_stack_limit - RE_run_stack_base ;
+  int newsize = oldsize + STACKGROWTH ;
 
 #ifdef  LMDOS   /* large model DOS */
   /* have to worry about overflow on multiplication (ugh) */
@@ -94,18 +99,8 @@ RT_STATE  *RE_new_run_stack()
   else
 #endif
 
-#ifdef  __TURBOC__  
-/* turbo C's realloc() screws up when running out of mem  */
-  { RT_STATE *temp = (RT_STATE*)malloc(SIZE_T(newsize*sizeof(RT_STATE))) ;
-    if ( temp ) (void)memcpy(temp,RE_run_stack_base,
-	    SIZE_T((newsize-STACKGROWTH)*sizeof(RT_STATE))) ;
-    free(RE_run_stack_base) ;
-    RE_run_stack_base = temp ;
-  }
-#else  /* normal case */
   RE_run_stack_base = (RT_STATE *) realloc( RE_run_stack_base ,
           SIZE_T(newsize * sizeof(RT_STATE)) ) ;
-#endif
 
   if ( ! RE_run_stack_base )
   { fprintf(stderr, "out of memory for RE run time stack\n") ;
@@ -117,36 +112,30 @@ RT_STATE  *RE_new_run_stack()
 
   RE_run_stack_limit = RE_run_stack_base + newsize ;
   RE_run_stack_empty = RE_run_stack_base - 1 ;
-  return  stack_max = RE_run_stack_base + newsize - STACKGROWTH ;
+
+  /* return the new stackp */
+  return  RE_run_stack_base + oldsize ;
 }
 
+#ifdef  DEBUG
 static RT_STATE *slow_push(sp, m, s, u)
   RT_STATE *sp ;
   STATE *m ;
   char *s ;
   int   u ;
 { 
-  if ( sp > stack_max )
-     if ( (stack_max = sp) == RE_run_stack_limit )
-             sp = RE_new_run_stack() ;
-
+  if ( sp == RE_run_stack_limit ) sp = RE_new_run_stack() ;
   sp->m = m ; sp->s = s ; sp->u = u ;
   return sp ;
 }
-
-#ifdef   DEBUG
-void  print_max_stack(f)
-  FILE *f ;
-{ fprintf(f, "stack_max = %d\n", stack_max-RE_run_stack_base+1) ; }
 #endif
 
 #ifdef   DEBUG
 #define  push(mx,sx,ux)   stackp = slow_push(++stackp, mx, sx, ux)
 #else
 #define  push(mx,sx,ux)   if (++stackp == RE_run_stack_limit)\
-                                stackp = slow_push(stackp,mx,sx,ux) ;\
-                          else\
-                          { stackp->m=mx;stackp->s=sx;stackp->u=ux;}
+                                stackp = RE_new_run_stack() ;\
+                          stackp->m=(mx);stackp->s=(sx);stackp->u=(ux)
 #endif
 
 
@@ -163,12 +152,12 @@ int  REtest( str, machine)
   register RT_STATE *stackp ;
   int u_flag ;
   char *str_end ;
-  char *ts ; /*convenient temps */
+  int t ; /*convenient temps */
   STATE *tm ;
 
   /* handle the easy case quickly */
   if ( (m+1)->type == M_ACCEPT && m->type == M_STR )
-        return  (int ) str_str(s, m->data.str, m->len) ;
+        return  str_str(s, m->data.str, m->len) != (char *) 0 ;
   else
   { u_flag = U_ON ; str_end = (char *) 0 ;
     stackp = RE_run_stack_empty ;
@@ -204,8 +193,9 @@ reswitch  :
 
     case M_STR + U_ON + END_ON :
             if ( !str_end )  str_end = s + strlen(s) ;
-            ts = str_end - m->len ;
-            if (ts < s || memcmp(ts,m->data.str,SIZE_T(m->len+1))) goto refill ;
+	    t = (str_end - s) - m->len ;
+            if (t < 0 || memcmp(s+t,m->data.str,SIZE_T(m->len)))
+			goto refill ;
             s = str_end ; m++ ; u_flag = U_OFF ;
             goto reswitch ;
 
@@ -218,7 +208,6 @@ reswitch  :
             if ( s[1] || !ison(*m->data.bvp,s[0]) )  goto refill ;
             s++ ; m++ ;
             goto reswitch ;
-
     case M_CLASS + U_ON + END_OFF :
             while ( !ison(*m->data.bvp,s[0]) )
                 if ( s[0] == 0 )  goto refill ;
@@ -230,7 +219,8 @@ reswitch  :
 
     case M_CLASS + U_ON + END_ON :
             if ( ! str_end )  str_end = s + strlen(s) ;
-            if ( ! ison(*m->data.bvp, str_end[-1]) ) goto refill ;
+            if ( s[0] == 0 || ! ison(*m->data.bvp, str_end[-1]) )
+				goto refill ;
             s = str_end ; m++ ; u_flag = U_OFF ;
             goto reswitch ;
 
