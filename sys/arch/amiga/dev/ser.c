@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.24 1994/12/01 17:25:35 chopps Exp $	*/
+/*	$NetBSD: ser.c,v 1.25 1994/12/28 09:25:52 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ int	serswflags;
 
 struct	vbl_node ser_vbl_node[NSER];
 struct	tty ser_cons;
-struct	tty *ser_tty[NSER];
+struct	tty *ser_tty[NSER + 0x80];
 
 struct speedtab serspeedtab[] = {
 	0,	0,
@@ -242,7 +242,7 @@ seropen(dev, flag, mode, p)
 	if (ser_tty[unit]) 
 		tp = ser_tty[unit];
 	else
-		tp = ser_tty[unit] = ttymalloc();
+		tp = ser_tty[unit] = ser_tty[unit + 0x80] = ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) serstart;
 	tp->t_param = serparam;
@@ -1074,5 +1074,12 @@ sercnputc(dev, c)
 	 */
 	custom.intreq = INTF_TBE;
 	splx(s);
+}
+
+void
+sercnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.5 1994/10/26 02:04:58 cgd Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.6 1994/12/28 09:26:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 /*
  * NCR 53C710 SCSI interface hardware description.
  *
- * Using parts of the Mach scsi driver for the 53C700
+ * From the Mach scsi driver for the 53C700
  */
 
 typedef struct {
@@ -87,7 +87,7 @@ typedef struct {
 	volatile unsigned char	siop_dwt;	/* rw: DMA Watchdog Timer */
 	volatile unsigned char	siop_dien;	/* rw: DMA Interrupt Enable */
 	volatile unsigned char	siop_dmode;	/* rw: DMA Mode reg */
-	volatile unsigned long	siop_addr;
+	volatile unsigned long	siop_adder;
 
 } siop_regmap_t;
 typedef volatile siop_regmap_t *siop_regmap_p;
@@ -115,14 +115,14 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 #define	SIOP_SCNTL1_ESR		0x20	/* Enable Selection/Reselection */
 #define	SIOP_SCNTL1_CON		0x10	/* Connected */
 #define	SIOP_SCNTL1_RST		0x08	/* Assert RST */
-#define	SIOP_SCNTL1_PAR		0x04	/* Force bad Parity */
-#define	SIOP_SCNTL1_SND		0x02	/* Start Send operation */
-#define	SIOP_SCNTL1_RCV		0x01	/* Start Receive operation */
+#define	SIOP_SCNTL1_AESP	0x04	/* Assert even SCSI parity */
+#define	SIOP_SCNTL1_RES0	0x02	/* Reserved */
+#define	SIOP_SCNTL1_RES1	0x01	/* Reserved */
 
 /* Scsi interrupt enable register (sien) */
 
 #define	SIOP_SIEN_M_A		0x80	/* Phase Mismatch or ATN active */
-#define	SIOP_SIEN_FC		0x40	/* Function Complete */
+#define	SIOP_SIEN_FCMP		0x40	/* Function Complete */
 #define	SIOP_SIEN_STO		0x20	/* (Re)Selection timeout */
 #define	SIOP_SIEN_SEL		0x10	/* (Re)Selected */
 #define	SIOP_SIEN_SGE		0x08	/* SCSI Gross Error */
@@ -171,17 +171,18 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 /* DMA status register (dstat) */
 
 #define	SIOP_DSTAT_DFE		0x80	/* DMA FIFO empty */
-#define	SIOP_DSTAT_RES		0x60
+#define	SIOP_DSTAT_RES		0x40
+#define	SIOP_DSTAT_BF		0x20	/* Bus fault */
 #define	SIOP_DSTAT_ABRT		0x10	/* Aborted */
 #define	SIOP_DSTAT_SSI		0x08	/* SCRIPT Single Step */
 #define	SIOP_DSTAT_SIR		0x04	/* SCRIPT Interrupt Instruction */
 #define	SIOP_DSTAT_WTD		0x02	/* Watchdog Timeout Detected */
-#define	SIOP_DSTAT_OPC		0x01	/* Invalid SCRIPTS Opcode */
+#define	SIOP_DSTAT_IID		0x01	/* Invalid Instruction Detected */
 
 /* Scsi status register 0 (sstat0) */
 
 #define	SIOP_SSTAT0_M_A		0x80	/* Phase Mismatch or ATN active */
-#define	SIOP_SSTAT0_FC		0x40	/* Function Complete */
+#define	SIOP_SSTAT0_FCMP	0x40	/* Function Complete */
 #define	SIOP_SSTAT0_STO		0x20	/* (Re)Selection timeout */
 #define	SIOP_SSTAT0_SEL		0x10	/* (Re)Selected */
 #define	SIOP_SSTAT0_SGE		0x08	/* SCSI Gross Error */
@@ -211,8 +212,13 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 
 /* Chip test register 0 (ctest0) */
 
-#define	SIOP_CTEST0_RES		0xfc
-#define	SIOP_CTEST0_RTRG	0x02	/* Real Target mode */
+#define	SIOP_CTEST0_RES0	0x80
+#define	SIOP_CTEST0_BTD		0x40	/* Byte-to-byte Timer Disable */
+#define	SIOP_CTEST0_GRP		0x20	/* Generate Receive Parity for Passthrough */
+#define	SIOP_CTEST0_EAN		0x10	/* Enable Active Negation */
+#define	SIOP_CTEST0_HSC		0x08	/* Halt SCSI clock */
+#define	SIOP_CTEST0_ERF		0x04	/* Extend REQ/ACK Filtering */
+#define	SIOP_CTEST0_RES1	0x02
 #define	SIOP_CTEST0_DDIR	0x01	/* Xfer direction (1-> from SCSI bus) */
 
 /* Chip test register 1 (ctest1) */
@@ -222,7 +228,8 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 
 /* Chip test register 2 (ctest2) */
 
-#define	SIOP_CTEST2_RES		0xc0
+#define	SIOP_CTEST2_RES		0x80
+#define	SIOP_CTEST2_SIGP	0x40	/* Signal process */
 #define	SIOP_CTEST2_SOFF	0x20	/* Synch Offset compare (1-> zero Init, max Tgt */
 #define	SIOP_CTEST2_SFP		0x10	/* SCSI FIFO Parity */
 #define	SIOP_CTEST2_DFP		0x08	/* DMA FIFO Parity */
@@ -234,7 +241,7 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 
 /* Chip test register 4 (ctest4) */
 
-#define	SIOP_CTEST4_RES		0x80
+#define	SIOP_CTEST4_MUX		0x80	/* Host bus multiplex mode */
 #define	SIOP_CTEST4_ZMOD	0x40	/* High-impedance outputs */
 #define	SIOP_CTEST4_SZM		0x20	/* ditto, SCSI "outputs" */
 #define	SIOP_CTEST4_SLBE	0x10	/* SCSI loobpack enable */
@@ -257,47 +264,57 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 
 /* Chip test register 7 (ctest7) */
 
-#define	SIOP_CTEST7_RES		0xe0
-#define	SIOP_CTEST7_STD		0x10	/* Disable selection timeout */
+#define	SIOP_CTEST7_CDIS	0x80	/* Cache burst disable */
+#define	SIOP_CTEST7_SC1		0x40	/* Snoop control 1 */
+#define	SIOP_CTEST7_SC0		0x20	/* Snoop contorl 0 */
+#define	SIOP_CTEST7_STD		0x10	/* Selection timeout disable */
 #define	SIOP_CTEST7_DFP		0x08	/* DMA FIFO parity bit */
 #define	SIOP_CTEST7_EVP		0x04	/* Even parity (to host bus) */
-#define	SIOP_CTEST7_DC		0x02	/* Drive DC pin low on SCRIPT fetches */
+#define	SIOP_CTEST7_TT1		0x02	/* Transfer type bit */
 #define	SIOP_CTEST7_DIFF	0x01	/* Differential mode */
 
 /* DMA FIFO register (dfifo) */
 
-#define	SIOP_DFIFO_FLF		0x80	/* Flush (spill) DMA FIFO */
-#define	SIOP_DFIFO_CLF		0x40	/* Clear DMA and SCSI FIFOs */
-#define	SIOP_DFIFO_BO		0x3f	/* FIFO byte offset counter */
+#define	SIOP_DFIFO_RES		0x80
+#define	SIOP_DFIFO_BO		0x7f	/* FIFO byte offset counter */
 
 /* Interrupt status register (istat) */
 
 #define	SIOP_ISTAT_ABRT		0x80	/* Abort operation */
-#define	SIOP_ISTAT_RES		0x70
+#define	SIOP_ISTAT_RST		0x40	/* Software reset */
+#define	SIOP_ISTAT_SIGP		0x20	/* Signal process */
+#define	SIOP_ISTAT_RES		0x10
 #define	SIOP_ISTAT_CON		0x08	/* Connected */
-#define	SIOP_ISTAT_PRE		0x04	/* Pointer register empty */
+#define	SIOP_ISTAT_RES1		0x04
 #define	SIOP_ISTAT_SIP		0x02	/* SCSI Interrupt pending */
 #define	SIOP_ISTAT_DIP		0x01	/* DMA Interrupt pending */
 
+/* Chip test register 8 (ctest8)
+
+#define	SIOP_CTEST8_V		0xf0	/* Chip revision level */
+#define	SIOP_CTEST8_FLF		0x08	/* Flush DMA FIFO */
+#define	SIOP_CTEST8_CLF		0x04	/* Clear DMA and SCSI FIFOs */
+#define	SIOP_CTEST8_FM		0x02	/* Fetch pin mode */
+#define	SIOP_CTEST8_SM		0x01	/* Snoop pins mode */
 
 /* DMA Mode register (dmode) */
 
 #define	SIOP_DMODE_BL_MASK	0xc0	/* 0->1 1->2 2->4 3->8 */
-#define	SIOP_DMODE_BW16		0x20	/* Bus Width is 16 bits */
-#define	SIOP_DMODE_286		0x10	/* 286 mode */
-#define	SIOP_DMODE_IO_M		0x08	/* xfer data to memory or I/O space */
-#define	SIOP_DMODE_FAM		0x04	/* fixed address mode */
-#define	SIOP_DMODE_PIPE		0x02	/* SCRIPTS in Pipeline mode */
-#define	SIOP_DMODE_MAN		0x01	/* SCRIPTS in Manual start mode */
+#define	SIOP_DMODE_FC		0x30	/* Function code */
+#define	SIOP_DMODE_PD		0x08	/* Program/data */
+#define	SIOP_DMODE_FAM		0x04	/* Fixed address mode */
+#define	SIOP_DMODE_U0		0x02	/* User programmable transfer type */
+#define	SIOP_DMODE_MAN		0x01	/* Manual start mode */
 
 /* DMA interrupt enable register (dien) */
 
-#define	SIOP_DIEN_RES		0xe0
+#define	SIOP_DIEN_RES		0xc0
+#define	SIOP_DIEN_BF		0x20	/* On Bus Fault */
 #define	SIOP_DIEN_ABRT		0x10	/* On Abort */
 #define	SIOP_DIEN_SSI		0x08	/* On SCRIPTS sstep */
 #define	SIOP_DIEN_SIR		0x04	/* On SCRIPTS intr instruction */
 #define	SIOP_DIEN_WTD		0x02	/* On watchdog timeout */
-#define	SIOP_DIEN_OPC		0x01	/* On SCRIPTS illegal opcode */
+#define	SIOP_DIEN_IID		0x01	/* On illegal instruction detected */
 
 /* DMA control register (dcntl) */
 
@@ -305,11 +322,11 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 						0 --> 37.51..50.00 Mhz, div=2
 						1 --> 25.01..37.50 Mhz, div=1.5
 						2 --> 16.67..25.00 Mhz, div=1
-						3 --> 50.01..66.00 Mhz, div=3
+						3 --> 50.01..66.67 Mhz, div=3
 					 */
-#define	SIOP_DCNTL_S16		0x20	/* SCRIPTS fetches 16bits at a time */
+#define	SIOP_DCNTL_EA		0x20	/* Enable ack */
 #define	SIOP_DCNTL_SSM		0x10	/* Single step mode */
-#define	SIOP_DCNTL_LLM		0x08	/* Enable Low-level mode */
-#define	SIOP_DCNTL_STD		0x04	/* Start SCRIPTS operation */
-#define	SIOP_DCNTL_RES		0x02
-#define	SIOP_DCNTL_RST		0x01	/* Software reset */
+#define	SIOP_DCNTL_LLM		0x08	/* Enable SCSI Low-level mode */
+#define	SIOP_DCNTL_STD		0x04	/* Start DMA operation */
+#define	SIOP_DCNTL_FA		0x02	/* Fast arbitration */
+#define	SIOP_DCNTL_COM		0x01	/* 53C700 compatibility */

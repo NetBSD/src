@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.5 1994/12/01 17:25:30 chopps Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.6 1994/12/28 09:25:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int otgscprint __P((void *auxp, char *));
 void otgscattach __P((struct device *, struct device *, void *));
@@ -94,7 +94,7 @@ otgscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -114,7 +114,7 @@ otgscattach(pdp, dp, auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	printf("\n");
 

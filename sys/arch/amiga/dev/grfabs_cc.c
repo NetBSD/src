@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.6 1994/10/26 02:03:23 cgd Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.7 1994/12/28 09:25:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -68,6 +68,14 @@ cop_t  *pal_hires_dlace_frames[F_LACE_TOTAL];
 dmode_t *phdl_this;
 dmdata_t *phdl_this_data;
 #  endif /* GRF_A2024 */
+
+#  if defined (GRF_AGA)
+dmode_t paga_mode;
+dmdata_t paga_mode_data;
+cop_t *paga_frames[F_TOTAL];
+dmode_t *paga_this;
+dmdata_t *paga_this_data;
+#  endif /* GRF_AGA */
 
 dmode_t pal_hires_lace_mode;
 dmdata_t pal_hires_lace_mode_data;
@@ -363,6 +371,9 @@ dmode_t *(*mode_init_funcs[]) (void) = {
 #endif /* GRF_A2024 */
 	cc_init_pal_hires_lace,
 	cc_init_pal_hires,
+#if defined (GRF_AGA)
+	cc_init_pal_aga,
+#endif /* GRF_AGA */
 #endif /* GRF_PAL */
 	NULL
 };
@@ -1977,7 +1988,7 @@ cc_init_pal_hires()
 		bzero(ph_this, sizeof(dmode_t));
 		bzero(ph_this_data, sizeof(dmdata_t));
 
-		ph_this->name = "pal: pal_hires interlace";
+		ph_this->name = "pal: hires";
 		ph_this->nominal_size.width = 640;
 		ph_this->nominal_size.height = 256;
 		ph_this_data->max_size.width = 724;
@@ -2796,5 +2807,305 @@ pal_a2024_mode_vbl_handler(d)
 	p24_this_data->hedley_current++;
 	p24_this_data->hedley_current &= 0x3;	/* if 4 then 0. */
 }
-#endif /* GRF_PAL */
 #endif /* GRF_A2024 */
+
+#if defined (GRF_AGA)
+
+dmode_t *
+cc_init_pal_aga()
+{
+	/* this function should only be called once. */
+	if (!paga_this && (custom.deniseid & 0xff) == 0xf8 &&
+	    aga_enable & AGA_ENABLE) {
+		u_short len = aga_copper_list_len;
+		cop_t  *cp;
+
+		paga_this = &paga_mode;
+		paga_this_data = &paga_mode_data;
+		bzero(paga_this, sizeof(dmode_t));
+		bzero(paga_this_data, sizeof(dmdata_t));
+
+		paga_this->name = "pal: AGA dbl";
+		paga_this->nominal_size.width = 640;
+		paga_this->nominal_size.height = 512;
+		paga_this_data->max_size.width = 720;
+		paga_this_data->max_size.height = 564;
+		paga_this_data->min_size.width = 320;
+		paga_this_data->min_size.height = 200;
+		paga_this_data->min_depth = 1;
+		paga_this_data->max_depth = 8;
+		paga_this->data = paga_this_data;
+
+		paga_this->get_monitor = cc_get_monitor;
+		paga_this->alloc_view = cc_alloc_view;
+		paga_this->get_current_view = cc_get_current_view;
+
+		paga_this_data->use_colormap = cc_use_aga_colormap;
+		paga_this_data->get_colormap = cc_get_colormap;
+		paga_this_data->alloc_colormap = cc_alloc_aga_colormap;
+		paga_this_data->display_view = display_pal_aga_view;
+		paga_this_data->monitor = cc_monitor;
+
+		paga_this_data->frames = paga_frames;
+		paga_this_data->frames[F_LONG] = alloc_chipmem(aga_copper_list_size * F_TOTAL);
+		if (!paga_this_data->frames[F_LONG]) {
+			panic("couldn't get chipmem for copper list");
+		}
+		paga_this_data->frames[F_STORE_LONG] = &paga_this_data->frames[F_LONG][len];
+
+		bcopy(aga_copper_list, paga_this_data->frames[F_STORE_LONG], aga_copper_list_size);
+		bcopy(aga_copper_list, paga_this_data->frames[F_LONG], aga_copper_list_size);
+
+		paga_this_data->bplcon0 = 0x0240 | USE_CON3;	/* color composite
+								 * enable,
+								 * shres. */
+		paga_this_data->std_start_x = 0x4f /*STANDARD_VIEW_X*/;
+		paga_this_data->std_start_y = 0x2b /*STANDARD_VIEW_Y*/;
+		paga_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
+		paga_this_data->beamcon0 = STANDARD_PAL_BEAMCON | (SPECIAL_BEAMCON ^ VSYNCTRUE);
+
+		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes,
+		    paga_this, link);
+	}
+	return (paga_this);
+}
+
+/* static, so I can patch and play (VGAOnly is commented-out) */
+
+int	pAGA_htotal  = 0x081;	/* 0x079 */
+int	pAGA_hsstrt  = 0x00f;	/* 0x00f */
+int	pAGA_hsstop  = 0x019;	/* 0x019 */
+int	pAGA_hbstrt  = 0x001;	/* 0x001 */
+int	pAGA_hbstop  = 0x021;	/* 0x021 */
+int	pAGA_vtotal  = 0x23d;	/* 0x24d */
+int	pAGA_vsstrt  = 0x001;	/* 0x001 */
+int	pAGA_vsstop  = 0x008;	/* 0x008 */
+int	pAGA_vbstrt  = 0x000;	/* 0x000 */
+int	pAGA_vbstop  = 0x017;	/* 0x019 */
+int	pAGA_hcenter = 0x04f;	/* 0x04b */
+
+void
+display_pal_aga_view(v)
+	view_t *v;
+{
+	if (paga_this_data->current_view != v) {
+		vdata_t *vd = VDATA(v);
+		monitor_t *monitor = paga_this_data->monitor;
+		cop_t  *cp = paga_this_data->frames[F_STORE_LONG], *tmp;
+		int     depth = v->bitmap->depth, i;
+		int     hstart, hstop, vstart, vstop, j;
+		int     x, y, w = v->display.width, h = v->display.height;
+		u_short ddfstart, ddfwidth, con1;
+
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE)
+			printf("display_aga_view(%dx%dx%d) %x\n", w, h,
+			    depth, v);
+#endif
+		/* round down to nearest even width */
+		/* w &= 0xfffe; */
+		/* calculate datafetch width. */
+
+		ddfwidth = ((v->bitmap->bytes_per_row >> 1) - 4) << 1;
+
+		/* this will center the any overscanned display */
+		/* and allow user to modify. */
+		x = v->display.x + paga_this_data->std_start_x - ((w - 640) >> 3);
+		y = v->display.y + paga_this_data->std_start_y - ((h - 512) >> 1);
+
+		if (y & 1)
+			y--;
+
+		if (!(x & 1))
+			x--;
+
+		hstart = x;
+		hstop = x + (w >> 2);
+		vstart = y;
+		vstop = y + (h >> 0);
+		ddfstart = (hstart >> 1) - 8;
+
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2) {
+			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			    x, y);
+			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			    hstart, hstop, vstart, vstop, ddfstart);
+		}
+#endif
+		/* check for hardware limits, AGA may allow more..? */
+		/* anyone got a 4000 I can borrow :^) -ch */
+		if ((ddfstart & 0xfffc) + ddfwidth > 0xd8) {
+			int     d = 0;
+
+			/* XXX anyone know the equality properties of
+			 * intermixed logial AND's */
+			/* XXX and arithmetic operators? */
+			while (((ddfstart & 0xfffc) + ddfwidth - d) > 0xd8) {
+				d++;
+			}
+
+			ddfstart -= d;
+			hstart -= d << 1;
+			hstop -= d << 1;
+		}
+		/* correct the datafetch to proper limits. */
+		/* delay the actual display of the data until we need it. */
+		ddfstart &= 0xfffc;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2) {
+			printf ("  ddfwidth %04x x %04x y %04x", ddfwidth,
+			    x, y);
+			printf (" hstart %04x hstop %04x vstart %04x vstop %04x ddfstart %04x\n",
+			    hstart, hstop, vstart, vstop, ddfstart);
+		}
+#endif
+		con1 = ((hstart - 9) - (ddfstart << 1)) | (((hstart - 9) - (ddfstart << 1)) << 4);
+
+		if (paga_this_data->current_view) {
+			VDATA(paga_this_data->current_view)->flags &= ~VF_DISPLAY;	/* mark as no longer */
+			/* displayed. */
+		}
+		paga_this_data->current_view = v;
+
+		cp = paga_this_data->frames[F_STORE_LONG];
+		tmp = cp;
+		for (i = 0; i < 8; ++i) {
+			if (tmp == NULL)
+				break;
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+			if (tmp == NULL)
+				break;
+			tmp->cp.inst.operand = 0x0ca1 | (i << 13);
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+			if (tmp == NULL)
+				break;
+			tmp->cp.inst.operand = 0x0ea1 | (i << 13);
+		}
+		if (tmp)
+			tmp = find_copper_inst(tmp + 1, CI_MOVE(R_BPLCON3));
+		if (tmp)
+			tmp->cp.inst.operand = 0x0ca1;
+		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
+		tmp->cp.inst.operand = 0x8003;
+		tmp = find_copper_inst(cp, CI_MOVE(R_HTOTAL));
+		tmp->cp.inst.operand = pAGA_htotal; /* 81/71/73/79? */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTRT));
+		tmp->cp.inst.operand = pAGA_hbstrt; /* 0x0008 */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTRT));
+		tmp->cp.inst.operand = pAGA_hsstrt; /* 0x000e */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HSSTOP));
+		tmp->cp.inst.operand = pAGA_hsstop; /* 0x001c */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HBSTOP));
+		tmp->cp.inst.operand = pAGA_hsstop; /* 0x001e */
+		tmp = find_copper_inst(cp, CI_MOVE(R_HCENTER));
+		tmp->cp.inst.operand = pAGA_hcenter; /*AGA_htotal / 2 + AGA_hsstrt */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTRT));
+		tmp->cp.inst.operand = pAGA_vbstrt; /* 0x0000 */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTRT));
+		tmp->cp.inst.operand = pAGA_vsstrt; /* 0x016b / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VSSTOP));
+		tmp->cp.inst.operand = pAGA_vsstop; /* 0x02d6 / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VBSTOP));
+		tmp->cp.inst.operand = pAGA_vbstop; /* 0x0bd1 / AGA_htotal */
+		tmp = find_copper_inst(cp, CI_MOVE(R_VTOTAL));
+		tmp->cp.inst.operand = pAGA_vtotal;
+		tmp = find_copper_inst(cp, CI_MOVE(R_BEAMCON0));
+		tmp->cp.inst.operand = paga_this_data->beamcon0;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("  beamcon0 %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWHIGH));
+		tmp->cp.inst.operand = CALC_DIWHIGH(hstart, vstart, hstop, vstop);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" diwhigh %04x>", tmp->cp.inst.operand);
+#endif
+#if 0
+		tmp->cp.inst.operand = (vstop & 0x0700) | ((hstop & 0x0100) << 5);
+#endif
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("%04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON0));
+		tmp->cp.inst.operand = paga_this_data->bplcon0 |
+		    ((depth & 0x7) << 12) | ((depth & 0x8) << 1);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplcon0 %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON1));
+		tmp->cp.inst.operand = con1;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplcon1 %04x>0000\n", con1);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTART));
+		tmp->cp.inst.operand = ((vstart & 0xff) << 8) | (hstart & 0xff);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf("  diwstart %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DIWSTOP));
+		tmp->cp.inst.operand = ((vstop & 0xff) << 8) | (hstop & 0xff);
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" diwstop %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTART));
+		tmp->cp.inst.operand = ddfstart;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" ddfstart %04x", tmp->cp.inst.operand);
+#endif
+		tmp = find_copper_inst(cp, CI_MOVE(R_DDFSTOP));
+		tmp->cp.inst.operand = ddfstart + ddfwidth;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" ddfstop %04x", tmp->cp.inst.operand);
+#endif
+
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL0PTH));
+		for (i = 0, j = 0; i < depth; j += 2, i++) {
+			/* update the plane pointers */
+			tmp[j].cp.inst.operand = HIADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+			tmp[j + 1].cp.inst.operand = LOADDR(PREP_DMA_MEM(v->bitmap->plane[i]));
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf (" bpl%dpth %08x", i, v->bitmap->plane[i]);
+#endif
+		}
+
+		/* set mods correctly. */
+		tmp = find_copper_inst(cp, CI_MOVE(R_BPL1MOD));
+		tmp[0].cp.inst.operand = v->bitmap->row_mod;
+		tmp[1].cp.inst.operand = v->bitmap->row_mod;
+#ifdef DEBUG
+		if (aga_enable & AGA_TRACE2)
+			printf(" bplxmod %04x\n", v->bitmap->row_mod);
+#endif
+
+		/* set next pointers correctly */
+		tmp = find_copper_inst(cp, CI_MOVE(R_COP1LCH));
+		tmp[0].cp.inst.operand = HIADDR(PREP_DMA_MEM(paga_this_data->frames[F_STORE_LONG]));
+		tmp[1].cp.inst.operand = LOADDR(PREP_DMA_MEM(paga_this_data->frames[F_STORE_LONG]));
+
+		cp = paga_this_data->frames[F_LONG];
+		paga_this_data->frames[F_LONG] = paga_this_data->frames[F_STORE_LONG];
+		paga_this_data->frames[F_STORE_LONG] = cp;
+
+		vd->flags |= VF_DISPLAY;
+
+		cc_use_aga_colormap(v, vd->colormap);
+	}
+	cc_load_mode(paga_this);
+#ifdef DEBUG
+	if (aga_enable & AGA_TRACE)
+		aga_enable |= AGA_TRACE2;	/* XXXX */
+#endif
+}
+
+#endif /* GRF_AGA */
+#endif /* GRF_PAL */

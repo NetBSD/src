@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.7 1994/12/01 17:25:40 chopps Exp $	*/
+/*	$NetBSD: zssc.c,v 1.8 1994/12/28 09:26:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int zsscprint __P((void *auxp, char *));
 void zsscattach __P((struct device *, struct device *, void *));
@@ -89,7 +89,7 @@ zsscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 	if (zap->manid == 2026 && zap->prodid == 150)
@@ -103,7 +103,7 @@ zsscattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct siop_softc *sc;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 	siop_regmap_p rp;
 
 	printf("\n");
@@ -119,7 +119,7 @@ zsscattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 0xc0;
 
-	
+	alloc_sicallback();
 	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;

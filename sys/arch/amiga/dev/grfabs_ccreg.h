@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccreg.h,v 1.4 1994/10/26 02:03:27 cgd Exp $	*/
+/*	$NetBSD: grfabs_ccreg.h,v 1.5 1994/12/28 09:25:17 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -343,6 +343,11 @@ dmode_t *cc_init_pal_a2024(void);
 void display_pal_a2024_view(view_t * v);
 void pal_a2024_mode_vbl_handler(dmode_t * d);
 #    endif /* GRF_A2024 */
+
+#    if defined (GRF_AGA)
+dmode_t *cc_init_pal_aga(void);
+void display_pal_aga_view(view_t * v);
+#    endif /* GRF_AGA */
 #  endif /* GRF_PAL */
 #endif /* __STDC__ */
 
