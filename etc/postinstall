@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.81 2004/08/29 13:26:17 chs Exp $
+# $NetBSD: postinstall,v 1.82 2004/08/30 02:46:07 augustss Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1005,7 +1005,7 @@ do_hosts()
 	op=$1
 
 	failed=0
-	h=${DEST_DIR}/hosts
+	h=${DEST_DIR}/etc/hosts
 	if ! grep ^127 $h | sed 's/^[^ 	]*//' | grep '\.' > /dev/null; then
 		msg "/etc/hosts entry for localhost (ipv4) missing dotted alias"
 
