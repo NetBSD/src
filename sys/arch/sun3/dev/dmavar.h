@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.4 1999/04/08 04:46:41 gwr Exp $ */
+/*	$NetBSD: dmavar.h,v 1.5 2005/01/22 15:36:09 chs Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -52,9 +52,9 @@ struct dma_softc {
 #define DMADDR(sc)	((sc)->sc_regs->addr)
 #define DMACNT(sc)	((sc)->sc_regs->bcnt)
 
-struct dma_softc * espdmafind __P((int));
+struct dma_softc * espdmafind(int);
 
-void dma_reset __P((struct dma_softc *));
-int  dma_setup __P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
+void dma_reset(struct dma_softc *);
+int  dma_setup(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
 
-int espdmaintr __P((struct dma_softc *));
+int espdmaintr(struct dma_softc *);

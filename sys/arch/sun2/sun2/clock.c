@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/01/22 15:36:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,27 +124,24 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2004/12/13 02:14:13 chs Exp $");
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
-void _isr_clock __P((void));	/* in locore.s */
-void clock_intr __P((struct clockframe));
+void _isr_clock(void);	/* in locore.s */
+void clock_intr(struct clockframe);
 
 static bus_space_tag_t am9513_bt;
 static bus_space_handle_t am9513_bh;
 #define am9513_write_clk_cmd(val) bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_CMD, val)
 #define am9513_write_clk_data(val) bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_DATA, val)
 
-static int  clock_match __P((struct device *, struct cfdata *, void *args));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int  clock_match(struct device *, struct cfdata *, void *args);
+static void clock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct device),
     clock_match, clock_attach, NULL, NULL);
 
 static int clock_attached;
 
-static int
-clock_match(parent, cf, args)
-    struct device *parent;
-	struct cfdata *cf;
-    void *args;
+static int 
+clock_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
@@ -170,11 +167,8 @@ clock_match(parent, cf, args)
 	return (1);
 }
 
-static void
-clock_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+static void 
+clock_attach(struct device *parent, struct device *self, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
@@ -221,10 +215,8 @@ clock_attach(parent, self, args)
  * in such a manner that we don't get ourselves lost.
  * XXX:  Watch out!  It's really easy to break this!
  */
-void
-set_clk_mode(prom_clock, on)
-	int prom_clock;
-	int on;
+void 
+set_clk_mode(int prom_clock, int on)
 {
 	int timer;
 
@@ -284,9 +276,8 @@ cpu_initclocks(void)
  * This doesn't need to do anything, as we have only one timer and
  * profhz==stathz==hz.
  */
-void
-setstatclockrate(newhz)
-	int newhz;
+void 
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -299,8 +290,7 @@ setstatclockrate(newhz)
  * the interrupt register atomically.
  */
 void
-clock_intr(cf)
-	struct clockframe cf;
+clock_intr(struct clockframe cf)
 {
 
 	/* Read the clock interrupt register. */
@@ -331,12 +321,12 @@ clock_intr(cf)
  * obtained by a previous call.
  */
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
-	int s = splhigh();
+	int s;
 	static struct timeval lasttime;
 
+	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec++; 	/* XXX */
 	while (tvp->tv_usec >= 1000000) {
@@ -344,9 +334,8 @@ microtime(tvp)
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
-		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000)
-	{
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}

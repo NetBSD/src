@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.55 2003/08/07 16:29:56 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.56 2005/01/22 15:36:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -117,7 +117,7 @@
 
 #include <machine/intr.h>
 
-extern void _delay __P((unsigned));
+extern void _delay(unsigned);
 #define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
 

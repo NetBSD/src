@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2003/10/30 06:22:53 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2005/01/22 15:36:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -139,7 +139,7 @@
 /* XXX - Does this really belong here? -gwr */
 #include <machine/psl.h>
 
-extern void _delay __P((unsigned));
+extern void _delay(unsigned);
 #define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
 

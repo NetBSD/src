@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.40 2004/10/30 18:08:35 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.41 2005/01/22 15:36:10 chs Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40 2004/10/30 18:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.41 2005/01/22 15:36:10 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -172,7 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40 2004/10/30 18:08:35 thorpej Exp $");
 
 #ifdef	IEDEBUG
 #define	inline	/* not */
-void print_rbd __P((volatile struct ie_recv_buf_desc *));
+void print_rbd(volatile struct ie_recv_buf_desc *);
 int     in_ierint = 0;
 int     in_ietint = 0;
 int     ie_debug_flags = 0;
@@ -181,41 +181,40 @@ int     ie_debug_flags = 0;
 /* XXX - Skip TDR for now - it always complains... */
 int 	ie_run_tdr = 0;
 
-static void iewatchdog __P((struct ifnet *));
-static int ieinit __P((struct ie_softc *));
-static int ieioctl __P((struct ifnet *, u_long, caddr_t));
-static void iestart __P((struct ifnet *));
-static void iereset __P((struct ie_softc *));
-static int ie_setupram __P((struct ie_softc *sc));
+static void iewatchdog(struct ifnet *);
+static int ieinit(struct ie_softc *);
+static int ieioctl(struct ifnet *, u_long, caddr_t);
+static void iestart(struct ifnet *);
+static void iereset(struct ie_softc *);
+static int ie_setupram(struct ie_softc *);
 
-static int cmd_and_wait __P((struct ie_softc *, int, void *, int));
+static int cmd_and_wait(struct ie_softc *, int, void *, int);
 
-static void ie_drop_packet_buffer __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc *, int));
-static inline void ie_setup_config __P((struct ie_config_cmd *, int, int));
+static void ie_drop_packet_buffer(struct ie_softc *);
+static void ie_readframe(struct ie_softc *, int);
+static inline void ie_setup_config(struct ie_config_cmd *, int, int);
 
-static void ierint __P((struct ie_softc *));
-static void iestop __P((struct ie_softc *));
-static void ietint __P((struct ie_softc *));
-static void iexmit __P((struct ie_softc *));
+static void ierint(struct ie_softc *);
+static void iestop(struct ie_softc *);
+static void ietint(struct ie_softc *);
+static void iexmit(struct ie_softc *);
 
-static int mc_setup __P((struct ie_softc *, void *));
-static void mc_reset __P((struct ie_softc *));
-static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
-static void iememinit __P((struct ie_softc *));
+static int mc_setup(struct ie_softc *, void *);
+static void mc_reset(struct ie_softc *);
+static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
+static void iememinit(struct ie_softc *);
 
-static inline char * Align __P((char *));
-static inline u_int Swap32 __P((u_int x));
-static inline u_int vtop24 __P((struct ie_softc *, void *));
-static inline u_short vtop16sw __P((struct ie_softc *, void *));
+static inline char * Align(char *);
+static inline u_int Swap32(u_int);
+static inline u_int vtop24(struct ie_softc *, void *);
+static inline u_short vtop16sw(struct ie_softc *, void *);
 
-static inline void ie_ack __P((struct ie_softc *, u_int));
-static inline u_short ether_cmp __P((u_char *, u_char *));
-static inline int check_eh __P((struct ie_softc *,
-		struct ether_header *eh, int *));
-static inline int ie_buflen __P((struct ie_softc *, int));
-static inline int ie_packet_len __P((struct ie_softc *));
-static inline struct mbuf * ieget __P((struct ie_softc *sc, int *to_bpf));
+static inline void ie_ack(struct ie_softc *, u_int);
+static inline u_short ether_cmp(u_char *, u_char *);
+static inline int check_eh(struct ie_softc *, struct ether_header *, int *);
+static inline int ie_buflen(struct ie_softc *, int);
+static inline int ie_packet_len(struct ie_softc *);
+static inline struct mbuf * ieget(struct ie_softc *, int *);
 
 
 /*
@@ -225,10 +224,8 @@ static inline struct mbuf * ieget __P((struct ie_softc *sc, int *to_bpf));
  */
 
 /* KVA to 24 bit device address */
-static inline u_int
-vtop24(sc, ptr)
-	struct ie_softc *sc;
-	void *ptr;
+static inline u_int 
+vtop24(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
@@ -241,10 +238,8 @@ vtop24(sc, ptr)
 }
 
 /* KVA to 16 bit offset, swapped */
-static inline u_short
-vtop16sw(sc, ptr)
-	struct ie_softc *sc;
-	void *ptr;
+static inline u_short 
+vtop16sw(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
@@ -257,9 +252,8 @@ vtop16sw(sc, ptr)
 	return (SWAP(pa));
 }
 
-static inline u_int
-Swap32(x)
-	u_int x;
+static inline u_int 
+Swap32(u_int x)
 {
 	u_int y;
 
@@ -275,8 +269,7 @@ Swap32(x)
 }
 
 static inline char *
-Align(ptr)
-	caddr_t ptr;
+Align(caddr_t ptr)
 {
 	u_long  l = (u_long)ptr;
 
@@ -285,10 +278,8 @@ Align(ptr)
 }
 
 
-static inline void
-ie_ack(sc, mask)
-	struct ie_softc *sc;
-	u_int mask;
+static inline void 
+ie_ack(struct ie_softc *sc, u_int mask)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
@@ -300,9 +291,8 @@ ie_ack(sc, mask)
  * Taken almost exactly from Bill's if_is.c,
  * then modified beyond recognition...
  */
-void
-ie_attach(sc)
-	struct ie_softc *sc;
+void 
+ie_attach(struct ie_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
@@ -376,8 +366,7 @@ ie_attach(sc)
  * Setup IE's ram space.
  */
 static int 
-ie_setupram(sc)
-	struct ie_softc *sc;
+ie_setupram(struct ie_softc *sc)
 {
 	volatile struct ie_sys_conf_ptr *scp;
 	volatile struct ie_int_sys_conf_ptr *iscp;
@@ -448,9 +437,8 @@ ie_setupram(sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to
  * generate an interrupt after a transmit has been started on it.
  */
-static void
-iewatchdog(ifp)
-	struct ifnet *ifp;
+static void 
+iewatchdog(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 
@@ -462,9 +450,8 @@ iewatchdog(ifp)
 /*
  * What to do upon receipt of an interrupt.
  */
-int
-ie_intr(arg)
-	void *arg;
+int 
+ie_intr(void *arg)
 {
 	struct ie_softc *sc = arg;
 	u_short status;
@@ -551,9 +538,8 @@ loop:
 /*
  * Process a received-frame interrupt.
  */
-void
-ierint(sc)
-	struct ie_softc *sc;
+void 
+ierint(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	int i, status;
@@ -597,9 +583,8 @@ ierint(sc)
  * transmission of frames.  This routine is deceptively simple, since most
  * of the real work is done by iestart().
  */
-void
-ietint(sc)
-	struct ie_softc *sc;
+void 
+ietint(struct ie_softc *sc)
 {
 	struct ifnet *ifp;
 	int status;
@@ -671,8 +656,7 @@ ietint(sc)
  * Note: use this like bcmp()
  */
 static inline u_short
-ether_cmp(one, two)
-	u_char *one, *two;
+ether_cmp(u_char *one, u_char *two)
 {
 	u_short *a = (u_short *) one;
 	u_short *b = (u_short *) two;
@@ -698,11 +682,8 @@ ether_cmp(one, two)
  * only client which will fiddle with IFF_PROMISC is BPF.  This is
  * probably a good assumption, but we do not make it here.  (Yet.)
  */
-static inline int
-check_eh(sc, eh, to_bpf)
-	struct ie_softc *sc;
-	struct ether_header *eh;
-	int *to_bpf;
+static inline int 
+check_eh(struct ie_softc *sc, struct ether_header *eh, int *to_bpf)
 {
 	struct ifnet *ifp;
 
@@ -725,10 +706,8 @@ check_eh(sc, eh, to_bpf)
  * IE_RBUF_SIZE is an even power of two.  If somehow the act_len exceeds
  * the size of the buffer, then we are screwed anyway.
  */
-static inline int
-ie_buflen(sc, head)
-	struct ie_softc *sc;
-	int head;
+static inline int 
+ie_buflen(struct ie_softc *sc, int head)
 {
 	int len;
 
@@ -737,9 +716,8 @@ ie_buflen(sc, head)
 	return (len);
 }
 
-static inline int
-ie_packet_len(sc)
-	struct ie_softc *sc;
+static inline int 
+ie_packet_len(struct ie_softc *sc)
 {
 	int i;
 	int head = sc->rbhead;
@@ -770,9 +748,8 @@ ie_packet_len(sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-static void
-iexmit(sc)
-	struct ie_softc *sc;
+static void 
+iexmit(struct ie_softc *sc)
 {
 	struct ifnet *ifp;
 
@@ -826,9 +803,7 @@ iexmit(sc)
  * operation considerably.  (Provided that it works, of course.)
  */
 static inline struct mbuf *
-ieget(sc, to_bpf)
-	struct ie_softc *sc;
-	int *to_bpf;
+ieget(struct ie_softc *sc, int *to_bpf)
 {
 	struct mbuf *top, **mp, *m;
 	int len, totlen, resid;
@@ -963,10 +938,8 @@ ieget(sc, to_bpf)
  * in wasting time on confusing code to deal with them.  Hopefully,
  * this machine will never ARP for trailers anyway.
  */
-static void
-ie_readframe(sc, num)
-	struct ie_softc *sc;
-	int num;			/* frame number to read */
+static void 
+ie_readframe(struct ie_softc *sc, int num)
 {
 	int status;
 	struct mbuf *m = 0;
@@ -1047,9 +1020,8 @@ ie_readframe(sc, num)
 	sc->sc_if.if_ipackets++;
 }
 
-static void
-ie_drop_packet_buffer(sc)
-	struct ie_softc *sc;
+static void 
+ie_drop_packet_buffer(struct ie_softc *sc)
 {
 	int i;
 
@@ -1081,9 +1053,8 @@ ie_drop_packet_buffer(sc)
 /*
  * Start transmission on an interface.
  */
-static void
-iestart(ifp)
-	struct ifnet *ifp;
+static void 
+iestart(struct ifnet *ifp)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1143,11 +1114,12 @@ iestart(ifp)
 	}
 }
 
-static void
-iereset(sc)
-	struct ie_softc *sc;
+static void 
+iereset(struct ie_softc *sc)
 {
-	int s = splnet();
+	int s;
+
+	s = splnet();
 
 	/* No message here.  The caller does that. */
 	iestop(sc);
@@ -1175,12 +1147,8 @@ iereset(sc)
  * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK
  * to become true.
  */
-static int
-cmd_and_wait(sc, cmd, pcmd, mask)
-	struct ie_softc *sc;
-	int cmd;
-	void *pcmd;	/* XXX - Was volatile */
-	int mask;
+static int 
+cmd_and_wait(struct ie_softc *sc, int cmd, void *pcmd, int mask)
 {
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -1236,10 +1204,8 @@ cmd_and_wait(sc, cmd, pcmd, mask)
 /*
  * Run the time-domain reflectometer.
  */
-static void
-run_tdr(sc, cmd)
-	struct ie_softc *sc;
-	struct ie_tdr_cmd *cmd;
+static void 
+run_tdr(struct ie_softc *sc, struct ie_tdr_cmd *cmd)
 {
 	int result;
 
@@ -1295,8 +1261,7 @@ run_tdr(sc, cmd)
  * XXX - This needs review...
  */
 static void 
-iememinit(sc)
-	struct ie_softc *sc;
+iememinit(struct ie_softc *sc)
 {
 	char *ptr;
 	int i;
@@ -1402,10 +1367,8 @@ iememinit(sc)
  * Run the multicast setup command.
  * Called at splnet().
  */
-static int
-mc_setup(sc, ptr)
-	struct ie_softc *sc;
-	void *ptr;
+static int 
+mc_setup(struct ie_softc *sc, void *ptr)
 {
 	struct ie_mcast_cmd *cmd = ptr;	/* XXX - Was volatile */
 
@@ -1430,10 +1393,8 @@ mc_setup(sc, ptr)
 	return 1;
 }
 
-static inline void
-ie_setup_config(cmd, promiscuous, manchester)
-	struct ie_config_cmd *cmd;	/* XXX - was volatile */
-	int promiscuous, manchester;
+static inline void 
+ie_setup_config(struct ie_config_cmd *cmd, int promiscuous, int manchester)
 {
 
 	/*
@@ -1460,9 +1421,8 @@ ie_setup_config(cmd, promiscuous, manchester)
  *
  * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
-static int
-ieinit(sc)
-	struct ie_softc *sc;
+static int 
+ieinit(struct ie_softc *sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
@@ -1546,19 +1506,15 @@ ieinit(sc)
 	return 0;
 }
 
-static void
-iestop(sc)
-	struct ie_softc *sc;
+static void 
+iestop(struct ie_softc *sc)
 {
 
 	cmd_and_wait(sc, IE_RU_DISABLE, 0, 0);
 }
 
-static int
-ieioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+static int 
+ieioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1660,9 +1616,8 @@ ieioctl(ifp, cmd, data)
 	return error;
 }
 
-static void
-mc_reset(sc)
-	struct ie_softc *sc;
+static void 
+mc_reset(struct ie_softc *sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1692,9 +1647,8 @@ setflag:
 }
 
 #ifdef IEDEBUG
-void
-print_rbd(rbd)
-	volatile struct ie_recv_buf_desc *rbd;
+void 
+print_rbd(volatile struct ie_recv_buf_desc *rbd)
 {
 
 	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"
