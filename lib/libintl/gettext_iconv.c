@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_iconv.c,v 1.5 2004/03/13 04:58:04 uebayasi Exp $	*/
+/*	$NetBSD: gettext_iconv.c,v 1.6 2004/08/02 03:15:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Citrus Project,
@@ -178,7 +178,7 @@ again:
 	srclen = origlen;
 	dst = buffer;
 	dstlen = bufferlen;
-	nvalid = iconv(cd, &src, &srclen, &dst, &dstlen);
+	nvalid = iconv(cd, (char **)&src, &srclen, &dst, &dstlen);
 	iconv_close(cd);
 
 	if (nvalid == (size_t)-1) {
