@@ -1,4 +1,4 @@
-/*	$NetBSD: astosc.c,v 1.3 1997/01/09 20:21:50 tls Exp $	*/
+/*	$NetBSD: astosc.c,v 1.4 1998/03/04 13:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)astosc.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: astosc.c,v 1.3 1997/01/09 20:21:50 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)astosc.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: astosc.c,v 1.4 1998/03/04 13:16:05 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,12 +56,14 @@ struct astosc astosc[256] = {
 
 /* compare two strings, ignoring case */
 
-static
+static int ustrcmp __P((char *, char *));
+
+static int
 ustrcmp(string1, string2)
-register char *string1;
-register char *string2;
+char *string1;
+char *string2;
 {
-    register int c1, c2;
+    int c1, c2;
 
     while ((c1 = (unsigned char) *string1++) != 0) {
 	if (isupper(c1)) {
@@ -88,9 +94,9 @@ register char *string2;
 
 int
 ascii_to_index(string)
-register char *string;
+char *string;
 {
-    register struct astosc *this;
+    struct astosc *this;
 
     for (this = astosc; this <= &astosc[highestof(astosc)]; this++) {
 	if ((this->name != 0) && (ustrcmp(this->name, string) == 0)) {

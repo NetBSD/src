@@ -1,4 +1,4 @@
-/*	$NetBSD: oia.h,v 1.3 1997/01/09 20:22:13 tls Exp $	*/
+/*	$NetBSD: oia.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)oia.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: oia.h,v 1.3 1997/01/09 20:22:13 tls Exp $
  */
 
 /*
@@ -191,3 +190,6 @@ typedef struct {
 /* A macro to let the world know that someone has modified the OIA. */
 #define	SetOiaModified()	oia_modified = 1
 #define	SetPsModified()		ps_modified = 1
+
+/* oia.c */
+void init_oia __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.4 1997/01/09 20:21:43 tls Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.5 1998/03/04 13:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,13 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)api_bsd.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: api_bsd.c,v 1.4 1997/01/09 20:21:43 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: api_bsd.c,v 1.5 1998/03/04 13:16:04 christos Exp $");
+#endif
 #endif /* not lint */
 
 #if	defined(unix)
 
+#ifdef __STDC__
+#include <stdlib.h>
+#include <unistd.h>
+#else
+extern char *getenv();
+extern char *gepass();
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -71,7 +82,6 @@ char	*string;		/* if non-zero, where to connect to */
     struct sockaddr_in server;
     struct hostent *hp;
     struct storage_descriptor sd;
-    extern char *getenv();
 #if	!defined(htons)
     extern unsigned short htons();
 #endif	/* !defined(htons) */
@@ -141,7 +151,7 @@ char	*string;		/* if non-zero, where to connect to */
     }
     while ((i = api_exch_nextcommand()) != EXCH_CMD_ASSOCIATED) {
 	int passwd_length;
-	char *passwd, *getpass();
+	char *passwd;
 	char buffer[200];
 
 	switch (i) {
@@ -212,6 +222,7 @@ char	*string;		/* if non-zero, where to connect to */
 }
 
 
+int
 api_exch_api(regs, sregs, parms, length)
 union REGS *regs;
 struct SREGS *sregs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apilib.c,v 1.3 1997/01/09 20:21:46 tls Exp $	*/
+/*	$NetBSD: apilib.c,v 1.4 1998/03/04 13:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)apilib.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: apilib.c,v 1.3 1997/01/09 20:21:46 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)apilib.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: apilib.c,v 1.4 1998/03/04 13:16:04 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include "../ctlr/api.h"
@@ -53,6 +57,12 @@ static int
     gate_keyboard = 0,
     gate_copy = 0,
     gate_oiam = 0;
+
+
+/* apilib.c */
+static int api_issue_regs __P((int, int , int , int , int , int , char *, int,
+    union REGS *, struct SREGS *));
+static int api_issue __P((int, int , int , int , int , int , char *, int));
 
 /*
  * Issue an API request, with reg structures supplied by the caller.
@@ -171,6 +181,7 @@ api_ps_or_oia_modified()
  * Session Information Services
  */
 
+int
 api_query_session_id(parms)
 QuerySessionIdParms *parms;
 {
@@ -189,6 +200,7 @@ QuerySessionIdParms *parms;
 }
 
 
+int
 api_query_session_parameters(parms)
 QuerySessionParametersParms *parms;
 {
@@ -206,6 +218,7 @@ QuerySessionParametersParms *parms;
     }
 }
 
+int
 api_query_session_cursor(parms)
 QuerySessionCursorParms *parms;
 {
@@ -227,6 +240,7 @@ QuerySessionCursorParms *parms;
  * Keyboard Services
  */
 
+int
 api_connect_to_keyboard(parms)
 ConnectToKeyboardParms *parms;
 {
@@ -245,6 +259,7 @@ ConnectToKeyboardParms *parms;
 }
 
 
+int
 api_disconnect_from_keyboard(parms)
 DisconnectFromKeyboardParms *parms;
 {
@@ -263,6 +278,7 @@ DisconnectFromKeyboardParms *parms;
 }
 
 
+int
 api_write_keystroke(parms)
 WriteKeystrokeParms *parms;
 {
@@ -281,6 +297,7 @@ WriteKeystrokeParms *parms;
 }
 
 
+int
 api_disable_input(parms)
 DisableInputParms *parms;
 {
@@ -298,6 +315,7 @@ DisableInputParms *parms;
     }
 }
 
+int
 api_enable_input(parms)
 EnableInputParms *parms;
 {
@@ -319,6 +337,7 @@ EnableInputParms *parms;
  * Copy Services
  */
 
+int
 api_copy_string(parms)
 CopyStringParms *parms;
 {
@@ -340,6 +359,7 @@ CopyStringParms *parms;
  * Operator Information Area Services
  */
 
+int
 api_read_oia_group(parms)
 ReadOiaGroupParms *parms;
 {
@@ -361,6 +381,7 @@ ReadOiaGroupParms *parms;
  * The "we are done" routine.  This gets called last.
  */
 
+int
 api_finish()
 {
 #if	defined(unix)
@@ -369,6 +390,8 @@ api_finish()
     } else {
 	return 0;
     }
+#else
+    return 0;
 #endif	/* defined(unix) */
 }
 
@@ -377,6 +400,7 @@ api_finish()
  * The initialization routine.  Be sure to call this first.
  */
 
+int
 api_init()
 {
 #if	defined(MSDOS)

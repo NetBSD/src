@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.3 1997/01/09 20:22:50 tls Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.4 1998/03/04 13:16:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkastosc.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mkastosc.c,v 1.3 1997/01/09 20:22:50 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)mkastosc.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBS$");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,6 +54,7 @@ static char rcsid[] = "$NetBSD: mkastosc.c,v 1.3 1997/01/09 20:22:50 tls Exp $";
 #else	/* defined(unix) */
 #include <string.h>
 #endif	/* defined(unix) */
+#include <err.h>
 #include <ctype.h>
 
 #include "../general/general.h"
@@ -65,6 +70,9 @@ static struct tbl {
 	*shiftstate;
 } tbl[128];
 
+
+int main __P((int, char *[]));
+
 int
 main(argc, argv)
 int	argc;
@@ -72,10 +80,8 @@ char	*argv[];
 {
     int scancode;
     int asciicode;
-    int empty;
     int i;
     int c;
-    int found;
     struct hits *ph;
     struct Hits *Ph;
     struct thing *this;
@@ -122,8 +128,8 @@ char	*argv[];
     for (Pt = tbl, asciicode = 0; Pt <= tbl+highestof(tbl); Pt++, asciicode++) {
 	if (Pt->used == 0) {
 	    if (isprint(asciicode) && (asciicode != ' ')) {
-		fprintf(stderr, "Unable to produce scancode sequence for");
-		fprintf(stderr, " ASCII character [%c]!\n", asciicode);
+		warnx("Unable to produce scancode sequence for"
+		    " ASCII character [%c]!", asciicode);
 	    }
 	    printf("\t{ 0, 0, undefined, 0 },\t");
 	} else {

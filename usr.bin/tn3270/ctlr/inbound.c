@@ -1,4 +1,4 @@
-/*	$NetBSD: inbound.c,v 1.4 1997/01/09 20:22:11 tls Exp $	*/
+/*	$NetBSD: inbound.c,v 1.5 1998/03/04 13:16:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)inbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: inbound.c,v 1.4 1997/01/09 20:22:11 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)inbound.c	4.3 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: inbound.c,v 1.5 1998/03/04 13:16:07 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,6 +55,7 @@ static char rcsid[] = "$NetBSD: inbound.c,v 1.4 1997/01/09 20:22:11 tls Exp $";
 #include "../api/ebc_disp.h"
 
 #include "../general/globals.h"
+#include "../sys_curses/telextrn.h"
 #include "externs.h"
 #include "declare.h"
 
@@ -68,10 +73,10 @@ static char rcsid[] = "$NetBSD: inbound.c,v 1.4 1997/01/09 20:22:11 tls Exp $";
  */
 
 #define	SetXIsProtected()	(XWasSF = 1)
-#define	XIsProtected(p)	(IsStartField(p)? \
-			    XWasSF = 1 : \
-			    (XWasSF? \
-				(XWasSF = 0, XProtected = IsProtected(p))  : \
+#define	XIsProtected(p)	(IsStartField(p) ? \
+			    (XWasSF = 1) : \
+			    (XWasSF ? \
+				(XWasSF = 0, XProtected = IsProtected(p)) : \
 				XProtected))
 
 static char	ourBuffer[400];
@@ -101,6 +106,20 @@ extern int TransparentClock, OutputClock;
 extern int UnLocked;		/* keyboard is UnLocked? */
 
 
+static void Tab __P((void));
+static void BackTab __P((void));
+static void EraseEndOfField __P((void));
+static void Delete __P((int, int ));
+static void ColBak __P((void));
+static void ColTab __P((void));
+static void Home __P((void));
+static int LastOfField __P((int));
+static void FlushChar __P((void));
+static void AddChar __P((int));
+static void SendUnformatted __P((void));
+static int SendField __P((int, int));
+static void OneCharacter __P((int, int));
+
 /*
  * init_inbound :
  *
@@ -121,7 +140,7 @@ init_inbound()
 static void
 Tab()
 {
-    register int i, j;
+    int i, j;
 
     i = CursorAddress;
     j = WhereAttrByte(CursorAddress);
@@ -144,7 +163,7 @@ Tab()
 static void
 BackTab()
 {
-    register int i;
+    int i;
 
     i = ScreenDec(CursorAddress);
     for (;;) {
@@ -165,6 +184,7 @@ BackTab()
  * out for unformatted screens).
  */
 
+void
 ModifyMdt(x,on)
 int x;
 int on;
@@ -195,7 +215,7 @@ int on;
 static void
 EraseEndOfField()
 {
-    register int i;
+    int i;
 
     if (IsProtected(CursorAddress)) {
 	RingBell("Protected Field");
@@ -238,10 +258,10 @@ EraseEndOfField()
 
 static void
 Delete(where, from)
-register int	where,		/* Where to start deleting from */
+int	where,		/* Where to start deleting from */
 		from;		/* Where to pull back from */
 {
-    register int i;
+    int i;
 
     TurnOnMdt(where);			/* Only do this once in this field */
     i = where;
@@ -259,7 +279,7 @@ register int	where,		/* Where to start deleting from */
 static void
 ColBak()
 {
-    register int i;
+    int i;
 
     i = ScreenLineOffset(CursorAddress);
     for (i = i-1; i >= 0; i--) {
@@ -276,7 +296,7 @@ ColBak()
 static void
 ColTab()
 {
-    register int i;
+    int i;
 
     i = ScreenLineOffset(CursorAddress);
     for (i = i+1; i < NumberColumns; i++) {
@@ -293,8 +313,8 @@ ColTab()
 static void
 Home()
 {
-    register int i;
-    register int j;
+    int i;
+    int j;
 
     i = SetBufferAddress(OptHome, 0);
     j = WhereLowByte(i);
@@ -322,12 +342,12 @@ Home()
     CursorAddress = LowestScreen();
 }
 
-static
+static int
 LastOfField(i)
-register int	i;	/* position to start from */
+int	i;	/* position to start from */
 {
-    register int j;
-    register int k;
+    int j;
+    int k;
 
     k = j = i;
     SetXIsProtected();
@@ -386,9 +406,9 @@ char	character;
 static void
 SendUnformatted()
 {
-    register int i, j;
-    register int Nulls;
-    register int c;
+    int i, j;
+    int Nulls;
+    int c;
 
 			/* look for start of field */
     Nulls = 0;
@@ -408,15 +428,15 @@ SendUnformatted()
     } while (i != j);
 }
 
-static
+static int
 SendField(i, cmd)
-register int i;			/* where we saw MDT bit */
+int i;			/* where we saw MDT bit */
 int	cmd;			/* The command code (type of read) */
 {
-    register int j;
-    register int k;
-    register int Nulls;
-    register int c;
+    int j;
+    int k;
+    int Nulls;
+    int c;
 
 			/* look for start of field */
     i = j = WhereLowByte(i);
@@ -463,7 +483,7 @@ void
 DoReadModified(cmd)
 int	cmd;			/* The command sent */
 {
-    register int i, j;
+    int i, j;
 
     if (AidByte) {
 	if (AidByte != AID_TREQ) {
@@ -513,7 +533,7 @@ int	cmd;			/* The command sent */
 void
 DoReadBuffer()
 {
-    register int i, j;
+    int i, j;
 
     if (AidByte) {
 	AddChar(AidByte);
@@ -592,7 +612,7 @@ OneCharacter(c, insert)
 int c;			/* character (Ebcdic) to be shoved in */
 int insert;		/* are we in insert mode? */
 {
-    register int i, j;
+    int i, j;
 
     if (IsProtected(CursorAddress)) {
 	RingBell("Protected Field");
@@ -639,9 +659,9 @@ unsigned int
     scancode,			/* 3270 scancode */
     shiftstate;			/* The shift state */
 {
-    register int c;
-    register int i;
-    register int j;
+    int c;
+    int i;
+    int j;
     enum ctlrfcn ctlrfcn;
 
     if (scancode >= numberof(hits)) {
@@ -998,8 +1018,8 @@ unsigned int
 
 	case FCN_DISC:
 	    StopScreen(1);
-	    suspend();
-	    setconnmode();
+	    suspend(0, NULL);
+	    setconnmode(0);
 	    ConnectScreen();
 	    break;
 

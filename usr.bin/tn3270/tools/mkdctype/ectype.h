@@ -1,4 +1,4 @@
-/*	$NetBSD: ectype.h,v 1.3 1997/01/09 20:22:55 tls Exp $	*/
+/*	$NetBSD: ectype.h,v 1.4 1998/03/04 13:16:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ectype.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: ectype.h,v 1.3 1997/01/09 20:22:55 tls Exp $
  */
 
 #define	INCLUDED_ECTYPE
@@ -53,3 +52,6 @@
 #define	Eisspace(c)	(ectype[(c)&0xff]&E_SPACE)	/* blank or null */
 #define	Eispunct(c)	(ectype[(c)&0xff]&E_PUNCT)
 #define	Eisprint(c)	(ectype[(c)&0xff]&E_PRINT)
+
+#define ECMAXCHAR 256
+extern unsigned char ectype[ECMAXCHAR];
