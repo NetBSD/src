@@ -1,4 +1,4 @@
-.\"	$NetBSD: brconfig.8,v 1.5 2002/11/06 05:23:57 enami Exp $
+.\"	$NetBSD: brconfig.8,v 1.6 2003/02/15 00:46:30 perseant Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -142,6 +142,12 @@ For packets without the
 attribute, the only packets forwarded on the interface are broadcast
 or multicast packets and packets for which the destination address
 is known to be on the interface's segment.
+.It Cm ipf
+Enable IPF packet filtering on the bridge.  The current implementation passes
+all ARP and RARP packets through the bridge while filtering IP and ICMP
+packets through IPF.
+.It Cm -ipf
+Disable IPF packet filtering on the bridge (the default).
 .It Cm learn Ar interface
 Mark an interface as a
 .Dq learning
@@ -230,7 +236,8 @@ create
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr ifconfig.if 5 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr ipf 8
 .Sh HISTORY
 The
 .Nm
