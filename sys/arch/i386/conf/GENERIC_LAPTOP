@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.92 2004/04/30 02:08:17 lukem Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.93 2004/04/30 17:41:19 gendalia Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 maxusers	32		# estimated number of users
 
@@ -609,6 +609,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
