@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/02/07 16:27:00 tsubai Exp $
+#	$NetBSD: Makefile,v 1.10 2000/04/29 22:18:31 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
