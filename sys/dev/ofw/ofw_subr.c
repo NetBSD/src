@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.4 1998/02/03 16:58:26 cgd Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.5 1998/02/24 07:14:17 mycroft Exp $	*/
 
 /*
  * Copyright 1998
@@ -197,6 +197,7 @@ of_packagename(phandle, buf, bufsize)
 			    bufsize);
 		rv = -1;
 	} else {
+		pbuf[l] = '\0';
 		lastslash = strrchr(pbuf, '/');
 		strncpy(buf, (lastslash == NULL) ? pbuf : (lastslash + 1),
 		    bufsize);
