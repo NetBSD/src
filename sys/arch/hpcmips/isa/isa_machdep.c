@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7 2000/09/12 02:12:20 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8 2000/09/24 12:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -53,11 +53,11 @@
 int vrisa_debug = VRISADEBUG_CONF;
 #define DPRINTF(arg) if (vrisa_debug) printf arg;
 #define DBITDISP32(mask) if (vrisa_debug) bitdisp32(mask);
-#define VPRINTF(arg) if (hpcmips_verbose || vrisa_debug) printf arg;
+#define VPRINTF(arg) if (bootverbose || vrisa_debug) printf arg;
 #else /* VRISADEBUG */
 #define DPRINTF(arg)
 #define DBITDISP32(mask)
-#define VPRINTF(arg) if (hpcmips_verbose) printf arg;
+#define VPRINTF(arg) if (bootverbose) printf arg;
 #endif /* VRISADEBUG */
 
 int	vrisabprint __P((void*, const char*));

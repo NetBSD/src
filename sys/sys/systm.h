@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.116 2000/08/22 17:28:30 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.117 2000/09/24 12:32:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -144,6 +144,8 @@ extern int nsysent;
 #endif
 
 extern int boothowto;		/* reboot flags, from console subsystem */
+#define	bootverbose	(boothowto & AB_VERBOSE)
+#define	bootquiet	(boothowto & AB_QUIET)
 
 extern void (*v_putc) __P((int)); /* Virtual console putc routine */
 

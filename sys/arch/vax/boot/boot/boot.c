@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2000/08/30 18:16:09 jdolecek Exp $ */
+/*	$NetBSD: boot.c,v 1.14 2000/09/24 12:32:39 jdolecek Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/boot_flag.h>
 #include "lib/libsa/stand.h"
 #include "lib/libsa/loadfile.h"
 #include "lib/libkern/libkern.h"
@@ -198,6 +199,7 @@ void
 boot(char *arg)
 {
 	char *fn = "netbsd";
+	int howto, fl;
 
 	if (arg) {
 		while (*arg == ' ')
@@ -213,20 +215,19 @@ boot(char *arg)
 				goto load;
 		}
 		if (*arg != '-') {
-fail:			printf("usage: boot [filename] [-asd]\n");
+fail:			printf("usage: boot [filename] [-asdqv]\n");
 			return;
 		}
 
+		howto = 0;
 		while (*++arg) {
-			if (*arg == 'a')
-				bootrpb.rpb_bootr5 |= RB_ASKNAME;
-			else if (*arg == 'd')
-				bootrpb.rpb_bootr5 |= RB_KDB;
-			else if (*arg == 's')
-				bootrpb.rpb_bootr5 |= RB_SINGLE;
-			else
+			fl = 0;
+			BOOT_FLAG(*arg, fl);
+			if (!fl)
 				goto fail;
+			howto |= fl;
 		}
+		bootrpb.rpb_bootr5 = howto;
 	}
 load:	exec(fn, 0, 0);
 	printf("Boot failed: %s\n", strerror(errno));

@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.17 2000/07/29 20:06:30 jdolecek Exp $	*/
+/*	$NetBSD: reboot.h,v 1.18 2000/09/24 12:32:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -56,6 +56,14 @@
 #define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
 #define	RB_STRING	0x400	/* use provided bootstr */
 #define	RB_POWERDOWN	(RB_HALT|0x800) /* turn power off (or at least halt) */
+
+/*
+ * Extra autoboot flags (passed by boot prog to kernel). See also
+ * macros bootverbose, bootquiet in <sys/systm.h>.
+ */
+#define	AB_NORMAL	0x00000	/* boot normally (default) */
+#define	AB_QUIET	0x10000 /* boot quietly */
+#define	AB_VERBOSE	0x20000	/* boot verbosely */
 
 /*
  * Constants for converting boot-style device number to type,

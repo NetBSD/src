@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2000/09/13 15:00:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2000/09/24 12:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -48,6 +48,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/boot_flag.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -170,17 +171,7 @@ mach_init(memsize)
 			continue;
 		case '-':
 			while (bootstring[i] != ' ' && bootstring[i] != '\0') {
-				switch (bootstring[i]) {
-				case 'a':
-					boothowto |= RB_ASKNAME;
-					break;
-				case 'd':
-					boothowto |= RB_KDB;
-					break;
-				case 's':
-					boothowto |= RB_SINGLE;
-					break;
-				}
+				BOOT_FLAG(bootstring[i], boothowto);
 				i++;
 			}
 		}
