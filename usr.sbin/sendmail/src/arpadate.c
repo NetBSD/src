@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1995 Eric P. Allman
+ * Copyright (c) 1983, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)arpadate.c	8.4 (Berkeley) 4/21/95";
+static char sccsid[] = "@(#)arpadate.c	8.6 (Berkeley) 9/16/96";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -208,7 +208,7 @@ arpadate(ud)
 		{
 			*q++ = ' ';
 			*q++ = '(';
-			while (*tz != '\0')
+			while (*tz != '\0' && q < &b[sizeof b - 3])
 				*q++ = *tz++;
 			*q++ = ')';
 		}

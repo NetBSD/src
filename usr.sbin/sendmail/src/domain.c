@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1986, 1995 Eric P. Allman
+ * Copyright (c) 1986, 1995, 1996 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if NAMED_BIND
-static char sccsid[] = "@(#)domain.c	8.54 (Berkeley) 9/28/95 (with name server)";
+static char sccsid[] = "@(#)domain.c	8.64 (Berkeley) 10/30/96 (with name server)";
 #else
-static char sccsid[] = "@(#)domain.c	8.54 (Berkeley) 9/28/95 (without name server)";
+static char sccsid[] = "@(#)domain.c	8.64 (Berkeley) 10/30/96 (without name server)";
 #endif
 #endif /* not lint */
 
@@ -46,21 +46,39 @@ static char sccsid[] = "@(#)domain.c	8.54 (Berkeley) 9/28/95 (without name serve
 
 #include <errno.h>
 #include <resolv.h>
+#include <arpa/inet.h>
+
+/*
+**  The standard udp packet size PACKETSZ (512) is not sufficient for some
+**  nameserver answers containing very many resource records. The resolver
+**  may switch to tcp and retry if it detects udp packet overflow.
+**  Also note that the resolver routines res_query and res_search return
+**  the size of the *un*truncated answer in case the supplied answer buffer
+**  it not big enough to accommodate the entire answer.
+*/
+
+#ifndef MAXPACKET
+# define MAXPACKET 8192		/* max packet size used internally by BIND */
+#endif
 
 typedef union
 {
 	HEADER	qb1;
-	u_char	qb2[PACKETSZ];
+	u_char	qb2[MAXPACKET];
 } querybuf;
 
-static char	MXHostBuf[MAXMXHOSTS*PACKETSZ];
+#ifndef MXHOSTBUFSIZE
+# define MXHOSTBUFSIZE	(128 * MAXMXHOSTS)
+#endif
+
+static char	MXHostBuf[MXHOSTBUFSIZE];
 
 #ifndef MAXDNSRCH
-#define MAXDNSRCH	6	/* number of possible domains to search */
+# define MAXDNSRCH	6	/* number of possible domains to search */
 #endif
 
 #ifndef MAX
-#define MAX(a, b)	((a) > (b) ? (a) : (b))
+# define MAX(a, b)	((a) > (b) ? (a) : (b))
 #endif
 
 #ifndef NO_DATA
@@ -114,32 +132,21 @@ getmxrr(host, mxhosts, droplocalhost, rcode)
 	u_short pref, type;
 	u_short localpref = 256;
 	char *fallbackMX = FallBackMX;
-	static bool firsttime = TRUE;
 	bool trycanon = FALSE;
 	int (*resfunc)();
 	extern int res_query(), res_search();
 	u_short prefer[MAXMXHOSTS];
 	int weight[MAXMXHOSTS];
-	extern bool getcanonname();
+	extern int mxrand __P((char *));
 
 	if (tTd(8, 2))
 		printf("getmxrr(%s, droplocalhost=%d)\n", host, droplocalhost);
 
-	if (fallbackMX != NULL)
+	if (fallbackMX != NULL && droplocalhost &&
+	    wordinclass(fallbackMX, 'w'))
 	{
-		if (firsttime &&
-		    res_query(FallBackMX, C_IN, T_A,
-			      (u_char *) &answer, sizeof answer) < 0)
-		{
-			/* this entry is bogus */
-			fallbackMX = FallBackMX = NULL;
-		}
-		else if (droplocalhost && wordinclass(fallbackMX, 'w'))
-		{
-			/* don't use fallback for this pass */
-			fallbackMX = NULL;
-		}
-		firsttime = FALSE;
+		/* don't use fallback for this pass */
+		fallbackMX = NULL;
 	}
 
 	*rcode = EX_OK;
@@ -211,6 +218,10 @@ getmxrr(host, mxhosts, droplocalhost, rcode)
 		/* irreconcilable differences */
 		return (-1);
 	}
+
+	/* avoid problems after truncation in tcp packets */
+	if (n > sizeof(answer))
+		n = sizeof(answer);
 
 	/* find first satisfactory answer */
 	hp = (HEADER *)&answer;
@@ -339,7 +350,13 @@ punt:
 				host, MyHostName);
 			return -1;
 		}
-		strcpy(MXHostBuf, host);
+		if (strlen(host) >= (SIZE_T) sizeof MXHostBuf)
+		{
+			*rcode = EX_CONFIG;
+			syserr("Host name %s too long", shortenstring(host, 203));
+			return -1;
+		}
+		snprintf(MXHostBuf, sizeof MXHostBuf, "%s", host);
 		mxhosts[0] = MXHostBuf;
 		if (host[0] == '[')
 		{
@@ -352,7 +369,10 @@ punt:
 			{
 				*p = '\0';
 				if (inet_aton(&MXHostBuf[1], &junk) != 0)
+				{
+					nmx++;
 					*p = ']';
+				}
 				else
 				{
 					trycanon = TRUE;
@@ -513,7 +533,7 @@ dns_getcanonname(host, hbsize, trymx, statp)
 	int qtype;
 	int loopcnt;
 	char *xp;
-	char nbuf[MAX(PACKETSZ, MAXDNAME*2+2)];
+	char nbuf[MAX(MAXPACKET, MAXDNAME*2+2)];
 	char *searchlist[MAXDNSRCH+2];
 	extern char *gethostalias();
 
@@ -646,6 +666,10 @@ cnameloop:
 		else if (tTd(8, 7))
 			printf("\tYES\n");
 
+		/* avoid problems after truncation in tcp packets */
+		if (ret > sizeof(answer))
+			ret = sizeof(answer);
+
 		/*
 		**  Appear to have a match.  Confirm it by searching for A or
 		**  CNAME records.  If we don't have a local domain
@@ -733,7 +757,8 @@ cnameloop:
 					{
 						char ebuf[MAXLINE];
 
-						sprintf(ebuf, "Deferred: DNS failure: CNAME loop for %.100s",
+						snprintf(ebuf, sizeof ebuf,
+							"Deferred: DNS failure: CNAME loop for %.100s",
 							host);
 						CurEnv->e_message = newstr(ebuf);
 					}
@@ -809,7 +834,7 @@ cnameloop:
 	**  Otherwise append the saved domain name.
 	*/
 
-	(void) sprintf(nbuf, "%.*s%s%.*s", MAXDNAME, host,
+	(void) snprintf(nbuf, sizeof nbuf, "%.*s%s%.*s", MAXDNAME, host,
 			*mxmatch == '\0' ? "" : ".",
 			MAXDNAME, mxmatch);
 	strncpy(host, nbuf, hbsize);
