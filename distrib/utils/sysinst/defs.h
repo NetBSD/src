@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.122 2005/02/20 20:54:52 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.123 2005/02/26 17:40:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,6 @@ deconst(const void *p)
 #define RUN_CHROOT	0x0004		/* chroot to target disk */
 #define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
 #define RUN_SILENT	0x0010		/* Do not show output */
-#define RUN_SILENT_ERR	0x0020		/* Remain silent even if cmd fails */
 #define RUN_ERROR_OK	0x0040		/* Don't wait for error confirmation */
 #define RUN_PROGRESS	0x0080		/* Output is just progess test */
 #define RUN_NO_CLEAR	0x0100		/* Leave program output after error */

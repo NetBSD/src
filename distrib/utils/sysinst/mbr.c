@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.67 2004/11/10 02:41:00 christos Exp $ */
+/*	$NetBSD: mbr.c,v 1.68 2005/02/26 17:40:49 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,7 +106,9 @@ struct part_id {
 	{MBR_PTYPE_FAT32L,	"Windows FAT32, LBA"},
 	{MBR_PTYPE_NTFSVOL,	"NTFS volume set"},
 	{MBR_PTYPE_NTFS,	"NTFS"},
+#ifdef MBR_PTYPE_SOLARIS
 	{MBR_PTYPE_SOLARIS,	"Solaris"},
+#endif
 	{-1,			"Unknown"},
 };
 
