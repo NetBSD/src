@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.24 2003/12/21 10:02:46 jdolecek Exp $
+.\"	$NetBSD: expr.1,v 1.25 2003/12/21 11:18:25 wiz Exp $
 .\"
 .\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,16 +173,16 @@ by
 .An Jaromir Dolecek
 .Aq jdolecek@NetBSD.org .
 .Sh NOTES
-Empty string
+The empty string
 .Dq
-cannot be matched with intuitive:
+cannot be matched with the intuitive:
 .Bd -literal -offset indent
 expr '' : '$'
 .Ed
 .Pp
-The reason is the returned number of matched characters (zero)
-is indistinguishable from failed match, so this returns failure.
-To match empty string, use something like:
+The reason is that the returned number of matched characters (zero)
+is indistinguishable from a failed match, so this returns failure.
+To match the empty string, use something like:
 .Bd -literal -offset indent
 expr x'' : 'x$'
 .Ed
