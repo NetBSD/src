@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 1999/02/12 14:35:49 kleink Exp $	*/
+/*	$NetBSD: util.c,v 1.17 1999/02/17 15:28:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.16 1999/02/12 14:35:49 kleink Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 1999/02/17 15:28:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ void
 usage()
 {
 	(void)fprintf(stderr, 
-	    "usage: ls [-1ACFLRSTWacdfgiklmnoqrstux] [file ...]\n");
+	    "usage: ls [-1ACFLRSTWacdfgiklmnopqrstux] [file ...]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

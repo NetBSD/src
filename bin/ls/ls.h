@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.9 1998/05/16 15:12:26 lukem Exp $	*/
+/*	$NetBSD: ls.h,v 1.10 1999/02/17 15:28:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@ extern int f_sectime;		/* print the real time for all files */
 extern int f_size;		/* list size in short listing */
 extern int f_statustime;	/* use time of last mode change */
 extern int f_type;		/* add type character for non-regular files */
+extern int f_typedir;		/* add type character for directories */
 
 typedef struct {
 	FTSENT *list;

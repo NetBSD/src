@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.25 1999/02/12 14:35:49 kleink Exp $	*/
+/*	$NetBSD: print.c,v 1.26 1999/02/17 15:28:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.25 1999/02/12 14:35:49 kleink Exp $");
+__RCSID("$NetBSD: print.c,v 1.26 1999/02/17 15:28:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ printlong(dp)
 		else
 			printtime(sp->st_mtime);
 		(void)printf("%s", p->fts_name);
-		if (f_type)
+		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
 		if (S_ISLNK(sp->st_mode))
 			printlink(p);
@@ -157,7 +157,7 @@ printcol(dp)
 		colwidth += dp->s_inode + 1;
 	if (f_size)
 		colwidth += dp->s_block + 1;
-	if (f_type)
+	if (f_type || f_typedir)
 		colwidth += 1;
 
 	colwidth += 1;
@@ -219,7 +219,7 @@ printacol(dp)
 		colwidth += dp->s_inode + 1;
 	if (f_size)
 		colwidth += dp->s_block + 1;
-	if (f_type)
+	if (f_type || f_typedir)
 		colwidth += 1;
 
 	colwidth += 1;
@@ -303,7 +303,7 @@ printaname(p, inodefield, sizefield)
 		chcnt += printf("%*llu ", sizefield,
 		    (long long)howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
-	if (f_type)
+	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
 }
