@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.8 1995/07/01 23:40:40 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.9 1995/07/30 21:35:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -212,6 +212,7 @@ typedef struct _NUBUS_EXEC_BLOCK {
 
 #define NUBUS_MIN_SLOT		0x9
 #define NUBUS_MAX_SLOT		0xE
+#define	NUBUS_INT_VIDEO_PSUEDO_SLOT 0xF
 #define NUBUS_ROM_TEST_PATTERN	0x5A932BC7
 
 #define NUBUS_BASE_TO_SLOT(x)	(((((x)-NuBusBase) >> 24) & 0x0F) + \
