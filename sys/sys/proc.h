@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.181 2003/12/05 21:12:44 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.182 2003/12/06 04:16:33 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -301,6 +301,7 @@ struct proc {
 #define	P_CHTRACED	0x00400000 /* Child has been traced & reparented */
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
+#define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 
 /*
  * Macro to compute the exit signal to be delivered.
