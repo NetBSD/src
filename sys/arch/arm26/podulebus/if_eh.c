@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.6 2000/12/20 10:59:32 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.7 2000/12/20 22:48:15 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.6 2000/12/20 10:59:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.7 2000/12/20 22:48:15 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -306,7 +306,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	dp8390_config(dsc, media, nmedia, media[0]);
+	dp8390_config(dsc, media, nmedia, defmedia);
 	dp8390_stop(dsc);
 
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
