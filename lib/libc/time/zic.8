@@ -1,6 +1,6 @@
-.\"	$NetBSD: zic.8,v 1.13 2003/10/29 20:43:27 kleink Exp $
-.\" @(#)zic.8	7.20
-.Dd October 29, 2003
+.\"	$NetBSD: zic.8,v 1.14 2003/12/20 00:12:05 kleink Exp $
+.\" @(#)zic.8	7.22
+.Dd December 20, 2003
 .Os
 .Dt ZIC 8
 .Sh NAME
@@ -58,6 +58,9 @@ Complain if a year that appears in a data file is outside the range
 of years representable by
 .Xr time 3
 values.
+Also complain if a time of 24:00
+.Pq which cannot be handled by pre-1998 versions of Nm
+appears in the input.
 .It Fl y Ar command
 Use the given
 .Ar command
