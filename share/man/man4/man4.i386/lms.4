@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lms.4,v 1.4 1994/10/17 14:23:25 glass Exp $
+.\"	$Id: lms.4,v 1.5 1995/02/17 09:43:43 jtc Exp $
 .\"
 .Dd August 6, 1993
 .Dt LMS 4 i386
@@ -38,8 +38,8 @@
 Logitech-style bus mouse driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "device lms0 at isa? port" \&"IO_BMS1\&" irq 5
-.Cd "device lms0 at isa? port" \&"IO_BMS2\&" irq 5
+.Cd "lms0 at isa? port" \&"IO_BMS1\&" irq 5
+.Cd "lms0 at isa? port" \&"IO_BMS2\&" irq 5
 .Sh DESCRIPTION
 This driver provides an interface to a Logitech-style bus mouse.
 .Sh FILES

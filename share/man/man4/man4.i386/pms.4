@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: pms.4,v 1.4 1994/10/17 14:33:28 glass Exp $
+.\"	$Id: pms.4,v 1.5 1995/02/17 09:43:47 jtc Exp $
 .\"
 .Dd August 6, 1993
 .Dt PMS 4 i386
@@ -38,7 +38,7 @@
 PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "device pms0 at isa? port" \&"IO_KBD\&" irq 12
+.Cd "pms0 at isa? port" \&"IO_KBD\&" irq 12
 .Sh DESCRIPTION
 This driver provides an interface to a PS/2 auxiliary port mice.
 .Sh FILES

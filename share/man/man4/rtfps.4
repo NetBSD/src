@@ -35,7 +35,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
-.\"	$Id: rtfps.4,v 1.3 1995/01/03 05:50:40 mycroft Exp $
+.\"	$Id: rtfps.4,v 1.4 1995/02/17 09:43:49 jtc Exp $
 .\"
 .Dd August 7, 1994
 .Dt RTFPS 4 i386
@@ -45,11 +45,11 @@
 .Nd
 multiplexing serial communications interface
 .Sh SYNOPSIS
-.Cd "master rtfps0 at isa? port 0x1230 irq 10"
-.Cd "device com2 at rtfps0 slave 0"
-.Cd "device com3 at rtfps0 slave 1"
-.Cd "device com4 at rtfps0 slave 2"
-.Cd "device com5 at rtfps0 slave 3"
+.Cd "rtfps0 at isa? port 0x1230 irq 10"
+.Cd "com2 at rtfps0 slave 0"
+.Cd "com3 at rtfps0 slave 1"
+.Cd "com4 at rtfps0 slave 2"
+.Cd "com5 at rtfps0 slave 3"
 .Sh DESCRIPTION
 The
 .Nm rtfps

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: mms.4,v 1.4 1994/10/17 14:33:27 glass Exp $
+.\"	$Id: mms.4,v 1.5 1995/02/17 09:43:45 jtc Exp $
 .\"
 .Dd August 6, 1993
 .Dt MMS 4 i386
@@ -38,7 +38,7 @@
 Microsoft-style bus mouse driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "device mms0 at isa? port" \&"IO_BMS1\&" irq 5
+.Cd "mms0 at isa? port" \&"IO_BMS1\&" irq 5
 .Sh DESCRIPTION
 This driver provides an interface to a Microsoft-style bus mouse.
 .Sh FILES
