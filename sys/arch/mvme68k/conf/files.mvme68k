@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.32 2000/04/21 16:53:20 bouyer Exp $
+#	$NetBSD: files.mvme68k,v 1.33 2000/07/20 20:40:36 scw Exp $
 
 # config file for mvme68k
 
@@ -111,6 +111,7 @@ file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c
 file arch/mvme68k/mvme68k/pmap.c
 file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file arch/mvme68k/mvme68k/softintr.c
 file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/mvme68k/mvme68k/vm_machdep.c
