@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.21 2001/04/29 22:44:33 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.22 2001/05/01 02:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,15 +136,17 @@
  */
 #include <sys/queue.h>
 
-#define	VM_MDPAGE_MEMBERS						\
-	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */	\
-	struct simplelock pvh_slock;		/* lock on this head */	\
+#define	__HAVE_VM_PAGE_MD
+struct vm_page_md {
+	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
+	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
+};
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	LIST_INIT(&(pg)->pvh_list);					\
-	simple_lock_init(&(pg)->pvh_slock);				\
+	LIST_INIT(&(pg)->mdpage.pvh_list);				\
+	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 } while (/*CONSTCOND*/0)
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.21 2001/04/29 22:44:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.22 2001/05/01 02:19:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -136,7 +136,9 @@ struct vm_page {
 						 * to modify: [O _and_ P] */
 	paddr_t			phys_addr;	/* physical address of page */
 
-	VM_MDPAGE_MEMBERS			/* pmap-specific data */
+#ifdef __HAVE_VM_PAGE_MD
+	struct vm_page_md	mdpage;		/* pmap-specific data */
+#endif
 
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
@@ -211,7 +213,7 @@ struct vm_physseg {
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
-#ifdef PMAP_PHYSSEG /* XXX For transitional period */
+#ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.174 2001/04/30 19:00:41 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.175 2001/05/01 02:19:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2001/04/30 19:00:41 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2001/05/01 02:19:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	  memory allocation *must* be blocked while this lock is
  *	  asserted.
  *
- *	* pvh_slock (per-pv_head) - This lock protects the PV list
+ *	* pvh_slock (per-vm_page) - This lock protects the PV list
  *	  for a specified managed page.
  *
  *	* pmap_all_pmaps_slock - This lock protects the global list of
@@ -1469,9 +1469,9 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 	case VM_PROT_READ:
 		PMAP_HEAD_TO_MAP_LOCK();
-		simple_lock(&pg->pvh_slock);
+		simple_lock(&pg->mdpage.pvh_slock);
 /* XXX */	pmap_changebit(pg, 0, ~(PG_KWE | PG_UWE), cpu_id);
-		simple_unlock(&pg->pvh_slock);
+		simple_unlock(&pg->mdpage.pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		return;
 	/* remove_all */
@@ -1480,8 +1480,8 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 	}
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->pvh_slock);
-	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL; pv = nextpv) {
+	simple_lock(&pg->mdpage.pvh_slock);
+	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL; pv = nextpv) {
 		nextpv = LIST_NEXT(pv, pv_list);
 		pmap = pv->pv_pmap;
 
@@ -1516,7 +1516,7 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 	if (needkisync)
 		PMAP_SYNC_ISTREAM_KERNEL();
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
@@ -1854,13 +1854,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access type exceeds prot");
 #endif
-		simple_lock(&pg->pvh_slock);
+		simple_lock(&pg->mdpage.pvh_slock);
 		if (flags & VM_PROT_WRITE)
-			pg->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+			pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
 		else if (flags & VM_PROT_ALL)
-			pg->pvh_attrs |= PGA_REFERENCED;
-		attrs = pg->pvh_attrs;
-		simple_unlock(&pg->pvh_slock);
+			pg->mdpage.pvh_attrs |= PGA_REFERENCED;
+		attrs = pg->mdpage.pvh_attrs;
+		simple_unlock(&pg->mdpage.pvh_slock);
 
 		/*
 		 * Set up referenced/modified emulation for new mapping.
@@ -2415,15 +2415,15 @@ pmap_clear_modify(vm_page_t pg)
 #endif
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 
-	if (pg->pvh_attrs & PGA_MODIFIED) {
+	if (pg->mdpage.pvh_attrs & PGA_MODIFIED) {
 		rv = TRUE;
 		pmap_changebit(pg, PG_FOW, ~0, cpu_id);
-		pg->pvh_attrs &= ~PGA_MODIFIED;
+		pg->mdpage.pvh_attrs &= ~PGA_MODIFIED;
 	}
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	return (rv);
@@ -2446,15 +2446,15 @@ pmap_clear_reference(vm_page_t pg)
 #endif
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 
-	if (pg->pvh_attrs & PGA_REFERENCED) {
+	if (pg->mdpage.pvh_attrs & PGA_REFERENCED) {
 		rv = TRUE;
 		pmap_changebit(pg, PG_FOR | PG_FOW | PG_FOE, ~0, cpu_id);
-		pg->pvh_attrs &= ~PGA_REFERENCED;
+		pg->mdpage.pvh_attrs &= ~PGA_REFERENCED;
 	}
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	return (rv);
@@ -2691,7 +2691,7 @@ pmap_changebit(vm_page_t pg, u_long set, u_long mask, long cpu_id)
 	/*
 	 * Loop over all current mappings setting/clearing as appropos.
 	 */
-	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL;
+	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list)) {
 		va = pv->pv_va;
 
@@ -2844,18 +2844,18 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 
 	if (write) {
-		pg->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+		pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
 		faultoff = PG_FOR | PG_FOW | PG_FOE;
 	} else {
-		pg->pvh_attrs |= PGA_REFERENCED;
+		pg->mdpage.pvh_attrs |= PGA_REFERENCED;
 		faultoff = PG_FOR | PG_FOE;
 	}
 	pmap_changebit(pg, 0, ~faultoff, cpu_id);
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
@@ -2873,16 +2873,16 @@ pmap_pv_dump(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 
-	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->pvh_attrs);
-	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL;
+	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->mdpage.pvh_attrs);
+	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
 		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
 	printf("\n");
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 }
 #endif
  
@@ -2941,7 +2941,7 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
 	newpv->pv_pte = pte;
 
 	if (dolock)
-		simple_lock(&pg->pvh_slock);
+		simple_lock(&pg->mdpage.pvh_slock);
 
 #ifdef DEBUG
 	{
@@ -2949,7 +2949,7 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * Make sure the entry doesn't already exist.
 	 */
-	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL;
+	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
 		if (pmap == pv->pv_pmap && va == pv->pv_va) {
 			printf("pmap = %p, va = 0x%lx\n", pmap, va);
@@ -2961,10 +2961,10 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * ...and put it in the list.
 	 */
-	LIST_INSERT_HEAD(&pg->pvh_list, newpv, pv_list);
+	LIST_INSERT_HEAD(&pg->mdpage.pvh_list, newpv, pv_list);
 
 	if (dolock)
-		simple_unlock(&pg->pvh_slock);
+		simple_unlock(&pg->mdpage.pvh_slock);
 
 	return 0;
 }
@@ -2980,12 +2980,12 @@ pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
 	pv_entry_t pv;
 
 	if (dolock)
-		simple_lock(&pg->pvh_slock);
+		simple_lock(&pg->mdpage.pvh_slock);
 
 	/*
 	 * Find the entry to remove.
 	 */
-	for (pv = LIST_FIRST(&pg->pvh_list); pv != NULL;
+	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
 		if (pmap == pv->pv_pmap && va == pv->pv_va)
 			break;
@@ -2998,7 +2998,7 @@ pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
 	LIST_REMOVE(pv, pv_list);
 
 	if (dolock)
-		simple_unlock(&pg->pvh_slock);
+		simple_unlock(&pg->mdpage.pvh_slock);
 
 	pmap_pv_free(pv);
 }
@@ -3054,7 +3054,7 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	if (pg != NULL) {
 		pa = VM_PAGE_TO_PHYS(pg);
 
-		simple_lock(&pg->pvh_slock);
+		simple_lock(&pg->mdpage.pvh_slock);
 #ifdef DIAGNOSTIC
 		if (pg->wire_count != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
@@ -3062,7 +3062,7 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 			panic("pmap_physpage_alloc");
 		}
 #endif
-		simple_unlock(&pg->pvh_slock);
+		simple_unlock(&pg->mdpage.pvh_slock);
 		*pap = pa;
 		return (TRUE);
 	}
@@ -3082,12 +3082,12 @@ pmap_physpage_free(paddr_t pa)
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
 		panic("pmap_physpage_free: bogus physical page address");
 
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 #ifdef DIAGNOSTIC
 	if (pg->wire_count != 0)
 		panic("pmap_physpage_free: page still has references");
 #endif
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 
 	uvm_pagefree(pg);
 }
@@ -3107,9 +3107,9 @@ pmap_physpage_addref(void *kva)
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 	rval = ++pg->wire_count;
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 
 	return (rval);
 }
@@ -3129,7 +3129,7 @@ pmap_physpage_delref(void *kva)
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	simple_lock(&pg->pvh_slock);
+	simple_lock(&pg->mdpage.pvh_slock);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -3141,7 +3141,7 @@ pmap_physpage_delref(void *kva)
 
 	rval = --pg->wire_count;
 
-	simple_unlock(&pg->pvh_slock);
+	simple_unlock(&pg->mdpage.pvh_slock);
 
 	return (rval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2001/04/29 22:44:37 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2001/05/01 02:19:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,9 +126,7 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* no more after vm_mem_init */
 
-#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
-#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
-#define	PMAP_PHYSSEG		/* XXX for now */
+#define	__HAVE_PMAP_PHYSSEG
 
 /*
  * pmap specific data stored in the vm_physmem[] array

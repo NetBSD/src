@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2001/04/29 22:44:33 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2001/05/01 02:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -118,9 +118,6 @@
 #define VM_NFREELIST		2
 #define VM_FREELIST_LOW		1 /* DMA-able memory (bottom 512k phys) */
 #define VM_FREELIST_DEFAULT	0 /* The rest */
-
-#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
-#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
 
 #endif /* _ARM26_VMPARAM_H_ */
 

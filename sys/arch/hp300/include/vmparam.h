@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2001/04/29 22:44:34 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 2001/05/01 02:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,9 +167,7 @@
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
 
-#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
-#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
-#define	PMAP_PHYSSEG		/* XXX for now */
+#define	__HAVE_PMAP_PHYSSEG
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.

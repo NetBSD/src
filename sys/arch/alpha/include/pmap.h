@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.46 2001/04/29 22:44:33 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.47 2001/05/01 02:19:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -198,9 +198,9 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	pmap_update()			/* nothing (yet) */
 
 #define	pmap_is_referenced(pg)						\
-	(((pg)->pvh_attrs & PGA_REFERENCED) != 0)
+	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)
 #define	pmap_is_modified(pg)						\
-	(((pg)->pvh_attrs & PGA_MODIFIED) != 0)
+	(((pg)->mdpage.pvh_attrs & PGA_MODIFIED) != 0)
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
