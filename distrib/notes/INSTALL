@@ -20,13 +20,25 @@ about.
 NetBSD 1.1 is a evolutionary release which contains a over a year of
 changes to the kernel, user-level utilities, and documentation.
 
-Continuing the multi-platform tradition, NetBSD 1.1 has added ports to
+Continuing the multi-platform tradition, NetBSD has added ports to
 atari and mvme68k based machines.  Kernel interfaces have continued to
-be refined, and now several device drivers are shared among different
-ports.  We can look for this trend to continue.
+be refined, and now several subsystems and device drivers are shared
+among the different ports.  We can look for this trend to continue.
 
-More stuff goes here.
- * NetBSD 1.1 sports a generic audio framework 
+NetBSD 1.1 has significantly enhanced the binary emulation subsystem 
+(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
+compatibility) and several kernel subsystems have been generalized
+to support this more readily.  The binary emulation strategy is 
+aimed at making the emulation as accurate as possible.
+
+NetBSD 1.1 is also the first release to see machine-independent disk
+striping.  The concatenated disk driver (ccd), which was previously
+supported only by the hp300 port, has been vastly improved.  Many
+bugs were fixed, and explicit references to device-dependent routines
+were removed and replaced by calls to the generic "vnode operation"
+routines.  In addition, several features were added, including partition
+support, dynamic configuration and unconfiguration via a user space system
+utility program, and virtually unlimiting the number of component devices.
 
 Many new user programs have been added in NetBSD 1.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
