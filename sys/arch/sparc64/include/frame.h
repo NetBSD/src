@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 1998/08/30 15:32:17 eeh Exp $ */
+/*	$NetBSD: frame.h,v 1.3 1998/09/07 18:23:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,17 +54,17 @@
  */
 #ifndef _LOCORE
 struct frame32 {
-	int	fr_local[8];	/* space to save locals (%l0..%l7) */
-	int	fr_arg[6];	/* space to save arguments (%i0..%i5) */
-	struct	frame *fr_fp;	/* space to save frame pointer (%i6) */
-	int	fr_pc;		/* space to save return pc (%i7) */
+	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
+	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
+	int32_t	fr_fp;		/* space to save frame pointer (%i6) */
+	int32_t	fr_pc;		/* space to save return pc (%i7) */
 	/*
 	 * SunOS reserves another 8 words here; this is pointless
 	 * but we do it for compatibility.
 	 */
-	int	fr_xxx;		/* `structure return pointer' (unused) */
-	int	fr_argd[6];	/* `arg dump area' (lunacy) */
-	int	fr_argx[1];	/* arg extension (args 7..n; variable size) */
+	int32_t	fr_xxx;		/* `structure return pointer' (unused) */
+	int32_t	fr_argd[6];	/* `arg dump area' (lunacy) */
+	int32_t	fr_argx[1];	/* arg extension (args 7..n; variable size) */
 };
 #endif
 /*
