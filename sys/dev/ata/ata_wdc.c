@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.34 2002/01/13 17:24:29 christos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.35 2002/01/14 02:17:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.34 2002/01/13 17:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.35 2002/01/14 02:17:59 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -160,6 +160,10 @@ int to48(int cmd32)
 		return WDCC_READMULTI_EXT;
 	case WDCC_WRITEMULTI:
 		return WDCC_WRITEMULTI_EXT;
+	case WDCC_READDMA:
+		return WDCC_READDMA_EXT;
+	case WDCC_WRITEDMA:
+		return WDCC_WRITEDMA_EXT;
 	default:
 		panic("ata_wdc: illegal 32 bit command %d", cmd32);
 		/*NOTREACHED*/
