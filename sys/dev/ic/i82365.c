@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.27 2000/01/02 02:08:07 sommerfeld Exp $	*/
+/*	$NetBSD: i82365.c,v 1.28 2000/01/13 09:00:30 joda Exp $	*/
 
 #define	PCICDEBUG
 
@@ -932,6 +932,9 @@ pcic_chip_do_mem_map(h, win)
 {
 	int reg;
 
+	int kind = h->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
+	int mem8 = (h->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+
 	pcic_write(h, mem_map_index[win].sysmem_start_lsb,
 	    (h->mem[win].addr >> PCIC_SYSMEM_ADDRX_SHIFT) & 0xff);
 	pcic_write(h, mem_map_index[win].sysmem_start_msb,
@@ -957,11 +960,11 @@ pcic_chip_do_mem_map(h, win)
 	pcic_write(h, mem_map_index[win].cardmem_msb,
 	    ((h->mem[win].offset >> (PCIC_CARDMEM_ADDRX_SHIFT + 8)) &
 	    PCIC_CARDMEM_ADDRX_MSB_ADDR_MASK) |
-	    ((h->mem[win].kind == PCMCIA_MEM_ATTR) ?
+	    ((kind == PCMCIA_MEM_ATTR) ?
 	    PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_ATTR : 0));
 
 	reg = pcic_read(h, PCIC_ADDRWIN_ENABLE);
-	reg |= (mem_map_index[win].memenable | PCIC_ADDRWIN_ENABLE_MEMCS16);
+	reg |= (mem_map_index[win].memenable | (mem8 ? 0 : PCIC_ADDRWIN_ENABLE_MEMCS16));
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
 
 	delay(100);
