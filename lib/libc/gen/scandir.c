@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.16 1999/09/20 04:39:04 lukem Exp $	*/
+/*	$NetBSD: scandir.c,v 1.17 2000/01/22 22:19:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.16 1999/09/20 04:39:04 lukem Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.17 2000/01/22 22:19:12 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +60,8 @@ __RCSID("$NetBSD: scandir.c,v 1.16 1999/09/20 04:39:04 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(scandir,_scandir);
-__weak_alias(alphasort,_alphasort);
+__weak_alias(scandir,_scandir)
+__weak_alias(alphasort,_alphasort)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.10 1998/10/14 19:41:03 kleink Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.11 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp ";
 #else
-__RCSID("$NetBSD: sethostent.c,v 1.10 1998/10/14 19:41:03 kleink Exp $");
+__RCSID("$NetBSD: sethostent.c,v 1.11 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: sethostent.c,v 1.10 1998/10/14 19:41:03 kleink Exp $");
 #include <resolv.h>
 
 #ifdef __weak_alias
-__weak_alias(sethostent,_sethostent);
-__weak_alias(endhostent,_endhostent);
+__weak_alias(sethostent,_sethostent)
+__weak_alias(endhostent,_endhostent)
 #endif
 
 void	_res_close __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.31 1999/09/20 04:38:59 lukem Exp $	*/
+/*	$NetBSD: getcap.c,v 1.32 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.31 1999/09/20 04:38:59 lukem Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.32 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,16 +60,16 @@ __RCSID("$NetBSD: getcap.c,v 1.31 1999/09/20 04:38:59 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(cgetcap,_cgetcap);
-__weak_alias(cgetclose,_cgetclose);
-__weak_alias(cgetent,_cgetent);
-__weak_alias(cgetfirst,_cgetfirst);
-__weak_alias(cgetmatch,_cgetmatch);
-__weak_alias(cgetnext,_cgetnext);
-__weak_alias(cgetnum,_cgetnum);
-__weak_alias(cgetset,_cgetset);
-__weak_alias(cgetstr,_cgetstr);
-__weak_alias(cgetustr,_cgetustr);
+__weak_alias(cgetcap,_cgetcap)
+__weak_alias(cgetclose,_cgetclose)
+__weak_alias(cgetent,_cgetent)
+__weak_alias(cgetfirst,_cgetfirst)
+__weak_alias(cgetmatch,_cgetmatch)
+__weak_alias(cgetnext,_cgetnext)
+__weak_alias(cgetnum,_cgetnum)
+__weak_alias(cgetset,_cgetset)
+__weak_alias(cgetstr,_cgetstr)
+__weak_alias(cgetustr,_cgetustr)
 #endif
 
 #define	BFRAG		1024

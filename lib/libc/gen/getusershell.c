@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.19 1999/11/28 04:00:04 lukem Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.19 1999/11/28 04:00:04 lukem Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,9 +72,9 @@ __RCSID("$NetBSD: getusershell.c,v 1.19 1999/11/28 04:00:04 lukem Exp $");
 #endif
 
 #ifdef __weak_alias
-__weak_alias(endusershell,_endusershell);
-__weak_alias(getusershell,_getusershell);
-__weak_alias(setusershell,_setusershell);
+__weak_alias(endusershell,_endusershell)
+__weak_alias(getusershell,_getusershell)
+__weak_alias(setusershell,_setusershell)
 #endif
 
 /*

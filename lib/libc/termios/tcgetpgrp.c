@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetpgrp.c,v 1.6 1999/09/20 04:39:52 lukem Exp $	*/
+/*	$NetBSD: tcgetpgrp.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetpgrp.c,v 1.6 1999/09/20 04:39:52 lukem Exp $");
+__RCSID("$NetBSD: tcgetpgrp.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: tcgetpgrp.c,v 1.6 1999/09/20 04:39:52 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(tcgetpgrp,_tcgetpgrp);
+__weak_alias(tcgetpgrp,_tcgetpgrp)
 #endif
 
 pid_t

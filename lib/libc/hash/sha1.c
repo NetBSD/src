@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.4 1999/09/20 04:39:07 lukem Exp $	*/
+/*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -64,10 +64,10 @@
 
 
 #if !defined(_KERNEL) && defined(__weak_alias)
-__weak_alias(SHA1Transform,_SHA1Transform);
-__weak_alias(SHA1Init,_SHA1Init);
-__weak_alias(SHA1Update,_SHA1Update);
-__weak_alias(SHA1Final,_SHA1Final);
+__weak_alias(SHA1Transform,_SHA1Transform)
+__weak_alias(SHA1Init,_SHA1Init)
+__weak_alias(SHA1Update,_SHA1Update)
+__weak_alias(SHA1Final,_SHA1Final)
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.14 1999/09/20 04:39:22 lukem Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: pmap_getport.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
-__weak_alias(pmap_getport,_pmap_getport);
+__weak_alias(pmap_getport,_pmap_getport)
 #endif
 
 static const struct timeval timeout = { 5, 0 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.38 1999/09/20 04:39:00 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.39 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.38 1999/09/20 04:39:00 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.39 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,12 +77,12 @@ __RCSID("$NetBSD: getgrent.c,v 1.38 1999/09/20 04:39:00 lukem Exp $");
 #endif
 
 #ifdef __weak_alias
-__weak_alias(endgrent,_endgrent);
-__weak_alias(getgrent,_getgrent);
-__weak_alias(getgrgid,_getgrgid);
-__weak_alias(getgrnam,_getgrnam);
-__weak_alias(setgrent,_setgrent);
-__weak_alias(setgroupent,_setgroupent);
+__weak_alias(endgrent,_endgrent)
+__weak_alias(getgrent,_getgrent)
+__weak_alias(getgrgid,_getgrgid)
+__weak_alias(getgrnam,_getgrnam)
+__weak_alias(setgrent,_setgrent)
+__weak_alias(setgroupent,_setgroupent)
 #endif
 
 static FILE		*_gr_fp;

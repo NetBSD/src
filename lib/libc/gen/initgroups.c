@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.18 1999/09/20 04:39:02 lukem Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: initgroups.c,v 1.18 1999/09/20 04:39:02 lukem Exp $");
+__RCSID("$NetBSD: initgroups.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: initgroups.c,v 1.18 1999/09/20 04:39:02 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(initgroups,_initgroups);
+__weak_alias(initgroups,_initgroups)
 #endif
 
 int

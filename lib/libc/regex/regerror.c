@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.15 1999/09/20 04:39:19 lukem Exp $	*/
+/*	$NetBSD: regerror.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.15 1999/09/20 04:39:19 lukem Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: regerror.c,v 1.15 1999/09/20 04:39:19 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(regerror,_regerror);
+__weak_alias(regerror,_regerror)
 #endif
 
 #include "utils.h"

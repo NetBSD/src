@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.22 1999/11/10 20:32:31 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.23 2000/01/22 22:19:21 mycroft Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.22 1999/11/10 20:32:31 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.23 2000/01/22 22:19:21 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -31,18 +31,18 @@ __RCSID("$NetBSD: localtime.c,v 1.22 1999/11/10 20:32:31 kleink Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(ctime_r,_ctime_r);
-__weak_alias(gmtime_r,_gmtime_r);
-__weak_alias(localtime_r,_localtime_r);
-__weak_alias(offtime,_offtime);
-__weak_alias(posix2time,_posix2time);
-__weak_alias(time2posix,_time2posix);
-__weak_alias(timegm,_timegm);
-__weak_alias(timelocal,_timelocal);
-__weak_alias(timeoff,_timeoff);
-__weak_alias(tzname,_tzname);
-__weak_alias(tzset,_tzset);
-__weak_alias(tzsetwall,_tzsetwall);
+__weak_alias(ctime_r,_ctime_r)
+__weak_alias(gmtime_r,_gmtime_r)
+__weak_alias(localtime_r,_localtime_r)
+__weak_alias(offtime,_offtime)
+__weak_alias(posix2time,_posix2time)
+__weak_alias(time2posix,_time2posix)
+__weak_alias(timegm,_timegm)
+__weak_alias(timelocal,_timelocal)
+__weak_alias(timeoff,_timeoff)
+__weak_alias(tzname,_tzname)
+__weak_alias(tzset,_tzset)
+__weak_alias(tzsetwall,_tzsetwall)
 #endif
 
 /*

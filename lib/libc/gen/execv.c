@@ -1,4 +1,4 @@
-/*	$NetBSD: execv.c,v 1.4 1998/09/11 21:03:18 kleink Exp $	*/
+/*	$NetBSD: execv.c,v 1.5 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execv.c,v 1.4 1998/09/11 21:03:18 kleink Exp $");
+__RCSID("$NetBSD: execv.c,v 1.5 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: execv.c,v 1.4 1998/09/11 21:03:18 kleink Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(execv,_execv);
+__weak_alias(execv,_execv)
 #endif
 
 extern char **environ;
