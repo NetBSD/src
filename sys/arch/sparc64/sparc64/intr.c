@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 1998/09/06 21:53:42 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.11 1998/11/24 12:51:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,9 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
+#if 0
 	extern int swallow_zsintrs;
+#endif
 
 	return;
 
