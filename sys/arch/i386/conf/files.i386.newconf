@@ -85,13 +85,13 @@ define	scsi {}
 device	aha at isa: scsi, dma
 file	arch/i386/isa/aha1542.c		aha needs-count
 device	ahb at isa: scsi, dma
-file	arch/i386/isa/aha1742.c		ahb
+file	arch/i386/isa/aha1742.c		ahb needs-count
 device	bt at isa: scsi, dma
-file	arch/i386/isa/bt742a.c		bt
+file	arch/i386/isa/bt742a.c		bt needs-count
 device	uha at isa: scsi, dma
-file	arch/i386/isa/ultra14f.c	uha
+file	arch/i386/isa/ultra14f.c	uha needs-count
 device	wds at isa: scsi, dma
-file	arch/i386/isa/wd7000.c		wds
+file	arch/i386/isa/wd7000.c		wds needs-count
 
 device	scsibus at scsi {target = -1, lun = -1}
 
