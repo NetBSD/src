@@ -37,8 +37,8 @@
  *
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
- *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
- *	$Id: locore.s,v 1.23 1994/05/27 12:51:00 mycroft Exp $
+ *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
+ *	$Id: locore.s,v 1.24 1994/05/27 17:19:38 mycroft Exp $
  */
 
 /*
