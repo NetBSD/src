@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.18 2001/08/20 12:20:07 wiz Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.19 2001/10/18 20:17:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -808,7 +808,7 @@ tp0_stash(tpcb, e)
 	if (E.e_eot) {
 		struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
-		n->m_act = NULL;	/* set on tp_input */
+		n->m_nextpkt = NULL;	/* set on tp_input */
 	}
 	sbappend(sb, E.e_data);
 #ifdef ARGO_DEBUG

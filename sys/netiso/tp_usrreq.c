@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.15 2000/03/30 13:10:16 augustss Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.16 2001/10/18 20:17:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -117,11 +117,11 @@ dump_mbuf(n, str)
 		return;
 	}
 	while (n) {
-		nextrecord = n->m_act;
+		nextrecord = n->m_nextpkt;
 		printf("RECORD:\n");
 		while (n) {
 			printf("%p : Len %x Data %p A %p Nx %p Tp %x\n",
-			       n, n->m_len, n->m_data, n->m_act, n->m_next, n->m_type);
+			       n, n->m_len, n->m_data, n->m_nextpkt, n->m_next, n->m_type);
 #ifdef notdef
 			{
 				char  *p = mtod(n, char *);
@@ -207,7 +207,7 @@ restart:
 	 */
 
 	sblock(sb, M_WAITOK);
-	for (nn = &sb->sb_mb; (n = *nn) != NULL; nn = &n->m_act)
+	for (nn = &sb->sb_mb; (n = *nn) != NULL; nn = &n->m_nextpkt)
 		if (n->m_type == MT_OOBDATA)
 			break;
 
@@ -247,7 +247,7 @@ restart:
 
 	if ((inflags & MSG_PEEK) == 0) {
 		n = *nn;
-		*nn = n->m_act;
+		*nn = n->m_nextpkt;
 		for (; n; n = m_free(n))
 			sbfree(sb, n);
 	}
