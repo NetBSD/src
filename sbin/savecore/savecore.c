@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.53 2001/09/12 02:58:29 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.54 2001/09/12 03:14:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.53 2001/09/12 02:58:29 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.54 2001/09/12 03:14:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ main(int argc, char *argv[])
 
 	dirname = NULL;
 	kernel = NULL;
+	level = 1;		/* default to fastest gzip compression */
 	gzmode[0] = 'w';
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
@@ -187,7 +188,6 @@ main(int argc, char *argv[])
 				    optarg);
 				usage();
 			}
-			gzmode[1] = level + '0';
 			break;
 		case '?':
 		default:
@@ -199,6 +199,7 @@ main(int argc, char *argv[])
 	if (argc != (clear ? 0 : 1))
 		usage();
 
+	gzmode[1] = level + '0';
 	if (!clear)
 		dirname = argv[0];
 
