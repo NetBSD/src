@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4 2002/12/12 21:39:33 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.5 2003/01/07 09:57:01 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,6 @@
 
 	.data
 	.globl	_C_LABEL(netisr)
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(astpending)
-#endif
 	.text
 
 #if 0
