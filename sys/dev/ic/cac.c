@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.7 2000/07/06 01:47:35 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.8 2000/07/24 12:28:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.7 2000/07/06 01:47:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.8 2000/07/24 12:28:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ cac_ccb_poll(sc, ccb, timo)
 	ccb_done = NULL;
 
 	for (;;) {
-		for (completed = 0; timo != 0; timo--) {
+		for (timo *= 10, completed = 0; timo != 0; timo--) {
 			if ((completed = sc->sc_cl->cl_completed(sc)) != 0)
 				break;
 			DELAY(100);
