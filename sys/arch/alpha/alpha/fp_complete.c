@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.2 2001/04/26 03:10:44 ross Exp $ */
+/* $NetBSD: fp_complete.c,v 1.3 2001/04/26 04:16:17 ross Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.2 2001/04/26 03:10:44 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.3 2001/04/26 04:16:17 ross Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -228,7 +228,7 @@ compare_eq(float64 a, float64 b)
 /*
  * A note regarding the VAX FP ops.
  * 
- * The AARM gives us completely leeway to set or not set status flags on VAX
+ * The AARM gives us complete leeway to set or not set status flags on VAX
  * ops, but we do any subnorm, NaN and dirty zero fixups anyway, and we set
  * flags by IEEE rules.  Many ops are common to d/f/g and s/t source types.
  * For the purely vax ones, it's hard to imagine ever running them.
@@ -512,7 +512,6 @@ alpha_fp_interpret(alpha_instruction *pc, struct proc *p, u_int64_t bits)
 		this_cannot_happen(2, inst.bits);
 		return;
 	case op_any_float:
-		/* HW supplies result, we supply sticky bit and maybe trap */
 		if (inst.float_format.function == op_cvtql_sv ||
 		    inst.float_format.function == op_cvtql_v) {
 			alpha_stt(inst.float_detail.fb, &tfb);
@@ -648,14 +647,9 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
  * 
  * If a SIGFPE is generated from the OSF1 emulation,  back up one more
  * instruction to the trigger pc itself. Native binaries don't because it
- * completely defeats the intended purpose of IEEE traps -- for example,
- * to count the number of exponent wraps for a later correction -- and it's
- * terribly non-portable, you would have to determine for every platform the
- * instruction length in bytes in order to continue. Fortunately, trapping
- * SIGFPE is rare, or there might be a difficult compatibility issue for
- * programs incrementing trap PC's conditionally for alphas. (Now, we could
- * detect that...) The NetBSD native behavior matches all other alpha freenix
- * kernels.
+ * is non-portable and completely defeats the intended purpose of IEEE
+ * traps -- for example, to count the number of exponent wraps for a later
+ * correction.
  */
 	trigger_pc = 0;
 	win_begin = pc;
