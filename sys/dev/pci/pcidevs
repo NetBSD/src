@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.273 2000/11/18 05:29:00 thorpej Exp $
+$NetBSD: pcidevs,v 1.274 2000/11/20 06:22:13 onoe Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1526,7 +1526,7 @@ product SOLIDUM CLASS802	0x8023 SNP8023: Classifier Engine
 
 /* Sony products */
 product	SONY	CXD1947A	0x8009	CXD1947A IEEE 1394 Host Controller
-product SONY	CXD32222	0x8039  CXD3222 OHCI IEEE 1394 Host Controller
+product SONY	CXD3222		0x8039  CXD3222 OHCI IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems products */
