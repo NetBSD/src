@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.10 1998/07/26 11:11:08 mycroft Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.11 1998/11/14 16:43:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.10 1998/07/26 11:11:08 mycroft Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.11 1998/11/14 16:43:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -163,8 +163,8 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	MUSTEAT(c, e)	(void) (REQUIRE(MORE() && GETNEXT() == (c), e))
 #define	MUSTNOTSEE(c, e)	(REQUIRE(!MORE() || PEEK() != (c), e))
 #define	EMIT(op, sopnd)	doemit(p, (sop)(op), (size_t)(sopnd))
-#define	INSERT(op, pos)	doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
-#define	AHEAD(pos)		dofwd(p, pos, HERE()-(pos))
+#define	INSERT(op, pos)	doinsert(p, (sop)(op), (size_t)(HERE()-(pos)+1), pos)
+#define	AHEAD(pos)		dofwd(p, pos, (sop)(HERE()-(pos)))
 #define	ASTERN(sop, pos)	EMIT(sop, HERE()-pos)
 #define	HERE()		(p->slen)
 #define	THERE()		(p->slen - 1)
@@ -215,7 +215,7 @@ int cflags;
 			return(REG_INVARG);
 		len = preg->re_endp - pattern;
 	} else
-		len = strlen((char *)pattern);
+		len = strlen(pattern);
 
 	/* do the mallocs early so failure handling is easy */
 	g = (struct re_guts *)malloc(sizeof(struct re_guts) +
@@ -226,13 +226,14 @@ int cflags;
 	p->strip = (sop *)malloc(p->ssize * sizeof(sop));
 	p->slen = 0;
 	if (p->strip == NULL) {
-		free((char *)g);
+		free(g);
 		return(REG_ESPACE);
 	}
 
 	/* set things up */
 	p->g = g;
-	p->next = (char *)pattern;	/* convenience; we do not modify it */
+	/* LINTED convenience; we do not modify it */
+	p->next = (char *)pattern;
 	p->end = p->next + len;
 	p->error = 0;
 	p->ncsalloc = 0;
@@ -771,10 +772,11 @@ cset *cs;
 	case '[':
 		c = (MORE2()) ? PEEK2() : '\0';
 		break;
+
 	case '-':
 		SETERROR(REG_ERANGE);
 		return;			/* NOTE RETURN */
-		break;
+
 	default:
 		c = '\0';
 		break;
@@ -901,7 +903,7 @@ int endc;			/* name ended by endc,']' */
 {
 	char *sp = p->next;
 	const struct cname *cp;
-	int len;
+	size_t len;
 
 	while (MORE() && !SEETWO(endc, ']'))
 		NEXT();
@@ -1118,15 +1120,13 @@ struct parse *p;
 		assert(nc % CHAR_BIT == 0);
 		nbytes = nc / CHAR_BIT * css;
 		if (p->g->sets == NULL)
-			p->g->sets = (cset *)malloc(nc * sizeof(cset));
+			p->g->sets = malloc(nc * sizeof(cset));
 		else
-			p->g->sets = (cset *)realloc((char *)p->g->sets,
-							nc * sizeof(cset));
+			p->g->sets = realloc(p->g->sets, nc * sizeof(cset));
 		if (p->g->setbits == NULL)
-			p->g->setbits = (uch *)malloc(nbytes);
+			p->g->setbits = malloc(nbytes);
 		else {
-			p->g->setbits = (uch *)realloc((char *)p->g->setbits,
-								nbytes);
+			p->g->setbits = realloc(p->g->setbits, nbytes);
 			/* xxx this isn't right if setbits is now NULL */
 			for (i = 0; i < no; i++)
 				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
@@ -1343,6 +1343,7 @@ char *cp;
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
+/* ARGSUSED */
 static void
 mcinvert(p, cs)
 struct parse *p;
@@ -1358,6 +1359,7 @@ cset *cs;
  * This would have to know the set of possibilities.  Implementation
  * is deferred.
  */
+/* ARGSUSED */
 static void
 mccase(p, cs)
 struct parse *p;
@@ -1454,8 +1456,8 @@ sopno finish;			/* to this less one */
 		return(ret);
 	enlarge(p, p->ssize + len);	/* this many unexpected additions */
 	assert(p->ssize >= p->slen + len);
-	(void) memcpy((char *)(p->strip + p->slen),
-		(char *)(p->strip + start), (size_t)len*sizeof(sop));
+	(void)memcpy((p->strip + p->slen), (p->strip + start),
+	    (size_t)len * sizeof(sop));
 	p->slen += len;
 	return(ret);
 }
@@ -1525,8 +1527,7 @@ sopno pos;
 		}
 	}
 
-	memmove((char *)&p->strip[pos+1], (char *)&p->strip[pos],
-						(HERE()-pos-1)*sizeof(sop));
+	memmove(&p->strip[pos+1], &p->strip[pos], (HERE()-pos-1)*sizeof(sop));
 	p->strip[pos] = s;
 }
 
@@ -1581,7 +1582,7 @@ struct parse *p;
 struct re_guts *g;
 {
 	g->nstates = p->slen;
-	g->strip = (sop *)realloc((char *)p->strip, p->slen * sizeof(sop));
+	g->strip = realloc(p->strip, p->slen * sizeof(sop));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
 		g->strip = p->strip;
@@ -1643,7 +1644,7 @@ struct re_guts *g;
 					return;
 				}
 			} while (OP(s) != O_QUEST && OP(s) != O_CH);
-			/* fallthrough */
+			/* FALLTHROUGH */
 		default:		/* things that break a sequence */
 			if (newlen > g->mlen) {		/* ends one */
 				start = newstart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.8 1998/02/03 18:38:12 perry Exp $	*/
+/*	$NetBSD: engine.c,v 1.9 1998/11/14 16:43:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -159,8 +159,8 @@ int eflags;
 	if (g->cflags&REG_NOSUB)
 		nmatch = 0;
 	if (eflags&REG_STARTEND) {
-		start = string + pmatch[0].rm_so;
-		stop = string + pmatch[0].rm_eo;
+		start = string + (size_t)pmatch[0].rm_so;
+		stop = string + (size_t)pmatch[0].rm_eo;
 	} else {
 		start = string;
 		stop = start + strlen(start);
@@ -291,9 +291,9 @@ int eflags;
 	}
 
 	if (m->pmatch != NULL)
-		free((char *)m->pmatch);
+		free(m->pmatch);
 	if (m->lastpos != NULL)
-		free((char *)m->lastpos);
+		free(m->lastpos);
 	STATETEARDOWN(m);
 	return(0);
 }
@@ -323,7 +323,9 @@ sopno stopst;
 	char *ssp;	/* start of string matched by subsubRE */
 	char *sep;	/* end of string matched by subsubRE */
 	char *oldssp;	/* previous ssp */
+#ifndef NDEBUG
 	char *dp;
+#endif
 
 	AT("diss", start, stop, startst, stopst);
 	sp = start;
@@ -382,7 +384,12 @@ sopno stopst;
 			esub = es - 1;
 			/* did innards match? */
 			if (slow(m, sp, rest, ssub, esub) != NULL) {
-				dp = dissect(m, sp, rest, ssub, esub);
+#ifdef NDEBUG
+				(void)
+#else
+				dp = 
+#endif
+				    dissect(m, sp, rest, ssub, esub);
 				assert(dp == rest);
 			} else		/* no */
 				assert(sp == rest);
@@ -420,7 +427,12 @@ sopno stopst;
 			}
 			assert(sep == rest);	/* must exhaust substring */
 			assert(slow(m, ssp, sep, ssub, esub) == rest);
-			dp = dissect(m, ssp, sep, ssub, esub);
+#ifdef NDEBUG
+			(void)
+#else
+			dp =
+#endif
+			    dissect(m, ssp, sep, ssub, esub);
 			assert(dp == sep);
 			sp = rest;
 			break;
@@ -455,7 +467,12 @@ sopno stopst;
 				else
 					assert(OP(m->g->strip[esub]) == O_CH);
 			}
-			dp = dissect(m, sp, rest, ssub, esub);
+#ifdef NDEBUG
+			(void)
+#else
+			dp =
+#endif
+			    dissect(m, sp, rest, ssub, esub);
 			assert(dp == rest);
 			sp = rest;
 			break;
@@ -603,29 +620,29 @@ sopno lev;			/* PLUS nesting level */
 		if (m->pmatch[i].rm_eo == -1)
 			return(NULL);
 		assert(m->pmatch[i].rm_so != -1);
-		len = m->pmatch[i].rm_eo - m->pmatch[i].rm_so;
+		len = (size_t)(m->pmatch[i].rm_eo - m->pmatch[i].rm_so);
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
-		ssp = m->offp + m->pmatch[i].rm_so;
+		ssp = m->offp + (size_t)m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
 		while (m->g->strip[ss] != SOP(O_BACK, i))
 			ss++;
 		return(backref(m, sp+len, stop, ss+1, stopst, lev));
-		break;
+
 	case OQUEST_:		/* to null or not */
 		dp = backref(m, sp, stop, ss+1, stopst, lev);
 		if (dp != NULL)
 			return(dp);	/* not */
 		return(backref(m, sp, stop, ss+OPND(s)+1, stopst, lev));
-		break;
+
 	case OPLUS_:
 		assert(m->lastpos != NULL);
 		assert(lev+1 <= m->g->nplus);
 		m->lastpos[lev+1] = sp;
 		return(backref(m, sp, stop, ss+1, stopst, lev+1));
-		break;
+
 	case O_PLUS:
 		if (sp == m->lastpos[lev])	/* last pass matched null */
 			return(backref(m, sp, stop, ss+1, stopst, lev-1));
@@ -633,10 +650,9 @@ sopno lev;			/* PLUS nesting level */
 		m->lastpos[lev] = sp;
 		dp = backref(m, sp, stop, ss-OPND(s)+1, stopst, lev);
 		if (dp == NULL)
-			return(backref(m, sp, stop, ss+1, stopst, lev-1));
-		else
-			return(dp);
-		break;
+			dp = backref(m, sp, stop, ss+1, stopst, lev-1);
+		return(dp);
+
 	case OCH_:		/* find the right one, if any */
 		ssub = ss + 1;
 		esub = ss + OPND(s) - 1;
@@ -657,7 +673,7 @@ sopno lev;			/* PLUS nesting level */
 			else
 				assert(OP(m->g->strip[esub]) == O_CH);
 		}
-		break;
+
 	case OLPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
 		assert(0 < i && i <= m->g->nsub);
@@ -668,7 +684,7 @@ sopno lev;			/* PLUS nesting level */
 			return(dp);
 		m->pmatch[i].rm_so = offsave;
 		return(NULL);
-		break;
+
 	case ORPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
 		assert(0 < i && i <= m->g->nsub);
@@ -679,7 +695,7 @@ sopno lev;			/* PLUS nesting level */
 			return(dp);
 		m->pmatch[i].rm_eo = offsave;
 		return(NULL);
-		break;
+
 	default:		/* uh oh */
 		assert(nope);
 		break;
