@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.70 2003/08/07 16:33:50 agc Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.71 2003/12/07 21:15:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.70 2003/08/07 16:33:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.71 2003/12/07 21:15:46 fvdl Exp $");
 
 #include "opt_nfs.h"
 
@@ -203,6 +203,15 @@ loop:
 	np->n_fhsize = fhsize;
 	np->n_accstamp = -1;
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
+
+	/*
+	 * Initalize read/write creds to useful values. VOP_OPEN will
+	 * overwrite these.
+	 */
+	np->n_rcred = curproc->p_ucred;
+	crhold(np->n_rcred);
+	np->n_wcred = curproc->p_ucred;
+	crhold(np->n_wcred);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
