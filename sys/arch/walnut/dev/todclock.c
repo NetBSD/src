@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.5 2002/10/02 16:02:38 thorpej Exp $	*/
+/*	$NetBSD: todclock.c,v 1.6 2002/10/10 13:37:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -89,7 +89,7 @@ static struct todclock_softc *todclock_sc = NULL;
 /* driver and attach structures */
 
 CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
-    todclockmatch, todclockattach);
+    todclockmatch, todclockattach, NULL, NULL);
 
 /*
  * int todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
