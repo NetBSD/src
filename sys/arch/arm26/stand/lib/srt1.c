@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.1 2001/07/26 22:11:10 bjh21 Exp $	*/
+/*	$NetBSD: srt1.c,v 1.2 2001/07/27 00:21:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,11 +55,16 @@ void __start(void);
 int splitargs(char *, int, char**);
 extern int main(int, char**);
 
+extern char edata[], end[];
+
 void
 __start(void)
 {
 	int argc;
 	char *args, **argv;
+
+	/* Clear BSS */
+	memset(edata, 0, end - edata);
 
 	args = os_get_env(NULL, NULL);
 
