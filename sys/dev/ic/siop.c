@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.62.2.4 2005/03/19 01:44:33 tron Exp $	*/
+/*	$NetBSD: siop.c,v 1.62.2.5 2005/03/19 01:48:50 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.4 2005/03/19 01:44:33 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.5 2005/03/19 01:48:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,6 +789,7 @@ scintr:
 				siop_table_sync(siop_cmd,
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 				CALL_SCRIPT(Ent_get_extmsgdata);
+				return 1;
 			}
 			if (xs)
 				scsipi_printaddr(xs->xs_periph);
