@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.3 1993/11/28 20:44:42 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.4 1993/11/28 22:30:08 mycroft Exp $
  */
 
 #include "uha.h"
@@ -216,8 +216,6 @@ struct uha_data {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	int flags;
-#define UHA_INIT	0x01
 	int baseport;
 	struct mscp *mscphash[MSCP_HASH_SIZE];
 	struct mscp *free_mscp;
@@ -226,7 +224,7 @@ struct uha_data {
 	int dma;
 	int nummscps;
 	struct scsi_link sc_link;
-} *uhadata[NUHA];
+}	*uhadata[NUHA];
 
 void uha_send_mbox __P((struct uha_data *, struct mscp *));
 int uha_abort __P((struct uha_data *, struct mscp *));
@@ -828,7 +826,6 @@ uha_init(uha)
 	u_short port = uha->baseport;
 
 	outb(port + UHA_SMASK, 0x81);	/* make sure interrupts are enabled */
-	uha->flags |= UHA_INIT;
 }
 
 void
