@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.287 2004/08/12 04:57:19 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.288 2004/08/12 05:02:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.287 2004/08/12 04:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.288 2004/08/12 05:02:50 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -711,11 +711,11 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
 	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-	case WDC_TRY_AGAIN:
+	case ATACMD_TRY_AGAIN:
 		callout_reset(&wd->sc_restart_ch, hz, wdrestart, wd);
 		break;
-	case WDC_QUEUED:
-	case WDC_COMPLETE:
+	case ATACMD_QUEUED:
+	case ATACMD_COMPLETE:
 		break;
 	default:
 		panic("__wdstart: bad return code from ata_bio()");
@@ -1475,13 +1475,13 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
 		switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
-		case WDC_TRY_AGAIN:
+		case ATACMD_TRY_AGAIN:
 			panic("wddump: try again");
 			break;
-		case WDC_QUEUED:
+		case ATACMD_QUEUED:
 			panic("wddump: polled command has been queued");
 			break;
-		case WDC_COMPLETE:
+		case ATACMD_COMPLETE:
 			break;
 		}
 		switch(wd->sc_wdc_bio.error) {
@@ -1635,7 +1635,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 		ata_c.r_features = WDSF_WRITE_CACHE_EN;
 	else
 		ata_c.r_features = WDSF_WRITE_CACHE_DS;
-	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != WDC_COMPLETE) {
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		printf("%s: wd_setcache command not complete\n",
 		    wd->sc_dev.dv_xname);
 		return EIO;
@@ -1661,7 +1661,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	ata_c.r_st_pmask = WDCS_DRDY;
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
-	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != WDC_COMPLETE) {
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		printf("%s: standby immediate command didn't complete\n",
 		    wd->sc_dev.dv_xname);
 		return EIO;
@@ -1697,7 +1697,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	ata_c.r_st_pmask = WDCS_DRDY;
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
-	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != WDC_COMPLETE) {
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
 		    wd->sc_dev.dv_xname);
 		return EIO;
@@ -1866,7 +1866,7 @@ wdioctlstrategy(struct buf *bp)
 	ata_c.bcount = wi->wi_bp.b_bcount;
 
 	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &ata_c)
-	    != WDC_COMPLETE) {
+	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
 		goto bad;
 	}

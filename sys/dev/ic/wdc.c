@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.192 2004/08/12 04:57:19 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.193 2004/08/12 05:02:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.192 2004/08/12 04:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.193 2004/08/12 05:02:50 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1718,7 +1718,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer = wdc_get_xfer(ata_c->flags & AT_WAIT ? WDC_CANSLEEP :
 	    WDC_NOSLEEP);
 	if (xfer == NULL) {
-		return WDC_TRY_AGAIN;
+		return ATACMD_TRY_AGAIN;
 	 }
 
 	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
@@ -1741,15 +1741,15 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 		panic("wdc_exec_command: polled command not done");
 #endif
 	if (ata_c->flags & AT_DONE) {
-		ret = WDC_COMPLETE;
+		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
 			while ((ata_c->flags & AT_DONE) == 0) {
 				tsleep(ata_c, PRIBIO, "wdccmd", 0);
 			}
-			ret = WDC_COMPLETE;
+			ret = ATACMD_COMPLETE;
 		} else {
-			ret = WDC_QUEUED;
+			ret = ATACMD_QUEUED;
 		}
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.10 2004/08/12 04:57:19 thorpej Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.11 2004/08/12 05:02:50 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.10 2004/08/12 04:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.11 2004/08/12 05:02:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,12 +293,12 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		printf("%s: ATA_NOSLEEP not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
-		return (WDC_COMPLETE);
+		return (ATACMD_COMPLETE);
 	}
 
 	if (scbus->sc_ata_bio != NULL) {
 		printf("%s: multiple uisdata_bio\n", __func__);
-		return (WDC_TRY_AGAIN);
+		return (ATACMD_TRY_AGAIN);
 	} else
 		scbus->sc_ata_bio = ata_bio;
 
@@ -369,11 +369,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		if (tsleep(ata_bio, PZERO, "uisdatabl", 0)) {
 			ata_bio->error = TIMEOUT;
 			ata_bio->flags |= ATA_ITSDONE;
-			return (WDC_COMPLETE);
+			return (ATACMD_COMPLETE);
 		}
 	}
 
-	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
+	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 void
@@ -460,7 +460,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 	}
 
 done:
-	return (WDC_COMPLETE);
+	return (ATACMD_COMPLETE);
 }
 
 int
@@ -519,7 +519,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
 	ata_c.bcount = DEV_BSIZE;
-	if (uisdata_exec_command(drvp, &ata_c) != WDC_COMPLETE) {
+	if (uisdata_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
 		return (CMD_AGAIN);
 	}

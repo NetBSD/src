@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.36 2004/08/12 04:57:19 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.37 2004/08/12 05:02:50 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.36 2004/08/12 04:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.37 2004/08/12 05:02:50 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -407,7 +407,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
 	ata_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &ata_c) != WDC_COMPLETE) {
+	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		WDCDEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
@@ -466,7 +466,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	ata_c.r_count = mode;
 	ata_c.flags = flags;
 	ata_c.timeout = 1000; /* 1s */
-	if (wdc_exec_command(drvp, &ata_c) != WDC_COMPLETE)
+	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE)
 		return CMD_AGAIN;
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;

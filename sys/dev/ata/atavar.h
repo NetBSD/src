@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.49 2004/08/12 04:57:19 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.50 2004/08/12 05:02:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -269,9 +269,9 @@ struct ata_bustype {
 	int	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct ata_command *);
 
-#define	WDC_COMPLETE	0x01
-#define	WDC_QUEUED	0x02
-#define	WDC_TRY_AGAIN	0x03
+#define	ATACMD_COMPLETE		0x01
+#define	ATACMD_QUEUED		0x02
+#define	ATACMD_TRY_AGAIN	0x03
 
 	int	(*ata_get_params)(struct ata_drive_datas *, u_int8_t,
 				  struct ataparams *);
