@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.68 1999/05/13 00:59:04 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.69 1999/05/13 17:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -416,8 +416,8 @@ loop:
 		 * if WALTSIG is set; wait for processes with p_exitsig ==
 		 * SIGCHLD only if WALTSIG is clear.
 		 */
-		if ((SCARG(uap, options) & WALTSIG) ? p->p_exitsig == SIGCHLD :
-						      p->p_exitsig != SIGCHLD)
+		if ((SCARG(uap, options) & WALTSIG) ? P_EXITSIG(p) == SIGCHLD :
+						      P_EXITSIG(p) != SIGCHLD)
 			continue;
 
 		nfound++;
