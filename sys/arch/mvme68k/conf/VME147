@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.7 1996/09/12 07:36:37 thorpej Exp $
+#	$NetBSD: VME147,v 1.8 1996/11/06 03:35:03 chuck Exp $
 
 machine		mvme68k m68k
 
@@ -31,6 +31,8 @@ options		TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        ISO             # OSI networking
 #options        TPIP
 #options        EON
+
+options		EXEC_AOUT,EXEC_SCRIPT
 options		COMPAT_09, COMPAT_10
 options		COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
