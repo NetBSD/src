@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.5 1996/10/30 00:24:40 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.6 1996/10/30 00:31:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -189,7 +189,7 @@ si_vmes_attach(parent, self, args)
 	struct confargs *ca = args;
 
 	/* Get options from config flags... */
-	sc->sc_options = si_vme_options;
+	sc->sc_options = cf->cf_flags | si_vme_options;
 	printf(": options=%d\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
