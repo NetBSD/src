@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.6 2000/07/05 11:46:41 ad Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.7 2000/09/21 10:15:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.6 2000/07/05 11:46:41 ad Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.7 2000/09/21 10:15:32 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: login_cap.c,v 1.6 2000/07/05 11:46:41 ad Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 static char	*classfiles[] = { _PATH_LOGIN_CONF, 0 };
 
@@ -348,24 +349,24 @@ login_close(login_cap_t *lc)
 	}
 }
 
-#define	CTIME	1
-#define	CSIZE	2
-#define	CNUMB	3
+#define	R_CTIME	1
+#define	R_CSIZE	2
+#define	R_CNUMB	3
 
 static struct {
 	int	what;
 	int	type;
 	char *	name;
 } r_list[] = {
-	{ RLIMIT_CPU,		CTIME, "cputime", },
-	{ RLIMIT_FSIZE,		CSIZE, "filesize", },
-	{ RLIMIT_DATA,		CSIZE, "datasize", },
-	{ RLIMIT_STACK,		CSIZE, "stacksize", },
-	{ RLIMIT_RSS,		CSIZE, "memoryuse", },
-	{ RLIMIT_MEMLOCK,	CSIZE, "memorylocked", },
-	{ RLIMIT_NPROC,		CNUMB, "maxproc", },
-	{ RLIMIT_NOFILE,	CNUMB, "openfiles", },
-	{ RLIMIT_CORE,		CSIZE, "coredumpsize", },
+	{ RLIMIT_CPU,		R_CTIME, "cputime", },
+	{ RLIMIT_FSIZE,		R_CSIZE, "filesize", },
+	{ RLIMIT_DATA,		R_CSIZE, "datasize", },
+	{ RLIMIT_STACK,		R_CSIZE, "stacksize", },
+	{ RLIMIT_RSS,		R_CSIZE, "memoryuse", },
+	{ RLIMIT_MEMLOCK,	R_CSIZE, "memorylocked", },
+	{ RLIMIT_NPROC,		R_CNUMB, "maxproc", },
+	{ RLIMIT_NOFILE,	R_CNUMB, "openfiles", },
+	{ RLIMIT_CORE,		R_CSIZE, "coredumpsize", },
 	{ -1, 0, 0 }
 };
 
@@ -389,19 +390,19 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 #define	RMAX	r.rlim_max
 
 	switch (type) {
-	case CTIME:
+	case R_CTIME:
 		RCUR = login_getcaptime(lc, name, RCUR, RCUR);
 		RMAX = login_getcaptime(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcaptime(lc, name_cur, RCUR, RCUR);
 		rl.rlim_max = login_getcaptime(lc, name_max, RMAX, RMAX);
 		break;
-	case CSIZE:
+	case R_CSIZE:
 		RCUR = login_getcapsize(lc, name, RCUR, RCUR);
 		RMAX = login_getcapsize(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcapsize(lc, name_cur, RCUR, RCUR);
 		rl.rlim_max = login_getcapsize(lc, name_max, RMAX, RMAX);
 		break;
-	case CNUMB:
+	case R_CNUMB:
 		RCUR = login_getcapnum(lc, name, RCUR, RCUR);
 		RMAX = login_getcapnum(lc, name, RMAX, RMAX);
 		rl.rlim_cur = login_getcapnum(lc, name_cur, RCUR, RCUR);
