@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.43 1999/04/26 21:55:53 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.44 1999/04/27 00:05:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -515,7 +515,7 @@ extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
-extern int	mbtypes[];		/* XXX */
+extern const int mbtypes[];		/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;
 
@@ -542,15 +542,15 @@ void	m_reclaim __P((int));
 void	mbinit __P((void));
 
 #ifdef MBTYPES
-int mbtypes[] = {				/* XXX */
-	M_FREE,		/* MT_FREE	0	   should be on free list */
-	M_MBUF,		/* MT_DATA	1	   dynamic (data) allocation */
-	M_MBUF,		/* MT_HEADER	2	   packet header */
-	M_MBUF,		/* MT_SONAME	3	   socket name */
-	M_SOOPTS,	/* MT_SOOPTS	4	   socket options */
-	M_FTABLE,	/* MT_FTABLE	5	   fragment reassembly header */
-	M_MBUF,		/* MT_CONTROL	6	   extra-data protocol message */
-	M_MBUF,		/* MT_OOBDATA	7	   expedited data  */
+const int mbtypes[] = {				/* XXX */
+	M_FREE,		/* MT_FREE	0	should be on free list */
+	M_MBUF,		/* MT_DATA	1	dynamic (data) allocation */
+	M_MBUF,		/* MT_HEADER	2	packet header */
+	M_MBUF,		/* MT_SONAME	3	socket name */
+	M_SOOPTS,	/* MT_SOOPTS	4	socket options */
+	M_FTABLE,	/* MT_FTABLE	5	fragment reassembly header */
+	M_MBUF,		/* MT_CONTROL	6	extra-data protocol message */
+	M_MBUF,		/* MT_OOBDATA	7	expedited data  */
 };
 #endif /* MBTYPES */
 #endif /* _KERNEL */
