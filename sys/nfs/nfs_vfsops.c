@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.63 1997/08/29 16:12:51 gwr Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.64 1997/09/09 21:39:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -301,9 +301,6 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	error = nfs_boot_getfh(&nd->nd_root);
-	if (error)
-		goto out;
 	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp);
 	if (error)
 		goto out;
@@ -373,12 +370,6 @@ nfs_mountroot()
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 */
-	error = nfs_boot_getfh(&nd->nd_swap);
-	if (error) {
-		printf("nfs_boot: warning: getfh(swap), error=%d\n", error);
-		error = 0;
-		goto out;
-	}
 	error = nfs_mount_diskless(&nd->nd_swap, "/swap", &mp, &vp);
 	if (error) {
 		printf("nfs_boot: warning: mount(swap), error=%d\n", error);
