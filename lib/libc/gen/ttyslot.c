@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ttyslot.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: ttyslot.c,v 1.3 1993/08/26 00:45:20 jtc Exp $";
+static char *rcsid = "$Id: ttyslot.c,v 1.4 1993/11/24 19:43:59 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -53,7 +53,7 @@ ttyslot()
 	setttyent();
 	for (cnt = 0; cnt < 3; ++cnt) 
 		if (name = ttyname(cnt)) {
-			if (p = rindex(name, '/')) 
+			if (p = strrchr(name, '/')) 
 				++p;
 			else
 				p = name;
