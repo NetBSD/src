@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.11 1994/03/20 00:14:16 briggs Exp $
+ * $Id: if_ae.c,v 1.12 1994/03/20 03:03:26 lkestel Exp $
  */
  
 #include "ae.h"
@@ -139,6 +139,28 @@ struct vendor_S {
 
 static int numvend = sizeof(vend)/sizeof(vend[0]);
 
+/*
+ * XXX These two should be moved to locore, and maybe changed to use shorts
+ * instead of bytes.  The reason for these is that bcopy and bzero use longs,
+ * which the ethernet cards can't handle.
+ */
+
+void
+bbzero (char *addr, int len)
+{
+	while (len--) {
+		*addr++ = 0;
+	}
+}
+
+void
+bbcopy (char *src, char *dest, int len)
+{
+	while (len--) {
+		*dest++ = *src++;
+	}
+}
+
 void
 ae_id_card(nu, sc)
 	struct nubus_hw	*nu;
@@ -248,7 +270,7 @@ ae_probe(parent, cf, aux)
 	/*
 	 * Now zero memory and verify that it is clear
 	 */
-	bzero(sc->smem_start, memsize);
+	bbzero(sc->smem_start, memsize);
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->smem_start[i]) {
@@ -346,7 +368,7 @@ ae_attach(parent, self, aux)
 		sdl->sdl_type = IFT_ETHER;
 		sdl->sdl_alen = ETHER_ADDR_LEN;
 		sdl->sdl_slen = 0;
-		bcopy(sc->arpcom.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
+		bbcopy(sc->arpcom.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
 	}
 
 	/*
@@ -565,7 +587,7 @@ ae_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* XXXXXX */
-	add_nubus_intr(sc->rom_addr - GC_ROM_OFFSET, aeintr, sc - ae_softc);
+	add_nubus_intr((int)sc->rom_addr & 0xFF000000, aeintr, sc - ae_softc);
 
 	/*
 	 * ...and attempt to start output
@@ -688,7 +710,7 @@ outloop:
 	len = 0;
 	for (m0 = m; m != 0; m = m->m_next) {
 		/*printf("ae: copy %d bytes @ %x\n", m->m_len, buffer);*/
-		bcopy(mtod(m, caddr_t), buffer, m->m_len);
+		bbcopy(mtod(m, caddr_t), buffer, m->m_len);
 		buffer += m->m_len;
        		len += m->m_len;
 	}
@@ -1098,7 +1120,7 @@ ae_ioctl(ifp, command, data)
 				/* 
 				 * 
 				 */
-				bcopy((caddr_t)ina->x_host.c_host,
+				bbcopy((caddr_t)ina->x_host.c_host,
 				    (caddr_t)sc->arpcom.ac_enaddr,
 					sizeof(sc->arpcom.ac_enaddr));
 			}
@@ -1209,7 +1231,7 @@ ae_get_packet(sc, buf, len)
 	 * the ether header in the header mbuf
 	 */
 	head->m_data += EOFF;
-	bcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
+	bbcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
 	buf += sizeof(struct ether_header);
 	head->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
@@ -1314,13 +1336,13 @@ ae_ring_copy(sc,src,dst,amount)
 	/* does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->smem_end) {
 		tmp_amount = sc->smem_end - src;
-		bcopy(src, dst, tmp_amount); /* copy amount up to end of smem */
+		bbcopy(src, dst, tmp_amount);/* copy amount up to end of smem */
 		amount -= tmp_amount;
 		src = sc->smem_ring;
 		dst += tmp_amount;
 	}
 
-	bcopy(src, dst, amount);
+	bbcopy(src, dst, amount);
 
 	return(src + amount);
 }
