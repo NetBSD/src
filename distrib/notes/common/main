@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.18 2002/07/24 07:06:46 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.19 2002/07/24 07:09:26 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1146,9 +1146,13 @@ following problems and compatibility issues in mind when upgrading to
 .
 .Ss2 Issues affecting an upgrade from NetBSD 1.5
 These issues can generally be resolved by extracting the
-system sources, and running:
+.Sy etc
+set into a temporary directory
+(such as
+.Pa /tmp/upgrade )
+and running:
 .(disp
-cd location-of-source
+cd /tmp/upgrade
 \&./etc/postinstall -s `pwd` check
 \&./etc/postinstall -s `pwd` fix
 .disp)
