@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.21 2004/07/19 09:45:09 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.22 2004/07/19 09:46:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.21 2004/07/19 09:45:09 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.22 2004/07/19 09:46:10 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -593,7 +593,9 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		GZSTATE_HEAD_CRC1,
 		GZSTATE_HEAD_CRC2,
 		GZSTATE_INIT,
-		GZSTATE_READ 
+		GZSTATE_READ,
+		GZSTATE_CRC,
+		GZSTATE_LEN,
 	} state = GZSTATE_MAGIC0;
 	int flags = 0, skip_count = 0;
 	int error, done_reading = 0;
@@ -634,13 +636,15 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			in_tot += in_size;
 		}
 		if (z.avail_in == 0) {
-			maybe_warnx("%s: unexpected end of file", filename);
+			if (done_reading && state != GZSTATE_MAGIC0)
+				maybe_warnx("%s: unexpected end of file",
+					    filename);
 			goto stop;
 		}
 		switch (state) {
 		case GZSTATE_MAGIC0:
 			if (*z.next_in != GZIP_MAGIC0) {
-				maybe_warnx("input not gziped");
+				maybe_warnx("input not gziped (MAGIC0)");
 				out_tot = -1;
 				goto stop;
 			}
@@ -653,7 +657,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 		case GZSTATE_MAGIC1:
 			if (*z.next_in != GZIP_MAGIC1 &&
 			    *z.next_in != GZIP_OMAGIC1) {
-				maybe_warnx("input not gziped");
+				maybe_warnx("input not gziped (MAGIC1)");
 				out_tot = -1;
 				goto stop;
 			}
@@ -782,40 +786,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				out_sub_tot += wr;
 
 				if (error == Z_STREAM_END) {
-					uLong origcrc, origlen;
-
 					inflateEnd(&z);
-					state = GZSTATE_MAGIC0;
-
-					/*
-					 * check CRC and length
-					 */
-
-					if (z.avail_in < 8) {
-						maybe_warnx("truncated input");
-						goto stop;
-					}
-					origcrc = z.next_in[0] |
-						z.next_in[1] << 8 |
-					    	z.next_in[2] << 16 |
-						z.next_in[3] << 24;
-					origlen = z.next_in[4] |
-						z.next_in[5] << 8 |
-						z.next_in[6] << 16 |
-						z.next_in[7] << 24;
-
-					if (origlen != out_sub_tot)
-						maybe_warnx("invalid compressed"
-						     " data--length error");
-					if (origcrc != crc)
-						maybe_warnx("invalid compressed"
-						     " data--crc error");
-					
-					z.avail_in -= 8;
-					z.next_in += 8;
-
-					if (!z.avail_in)
-						goto stop;
+					state++;
 				}
 
 				z.next_out = outbuf;
@@ -823,11 +795,65 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 				break;
 			}
+		case GZSTATE_CRC:
+			{
+				static int empty_buffer = 0;
+				uLong origcrc;
+
+				if (z.avail_in < 4) {
+					if (!done_reading && empty_buffer++ < 4)
+						continue;
+					maybe_warnx("truncated input");
+					goto stop;
+				}
+				empty_buffer = 0;
+				origcrc = z.next_in[0] |
+					z.next_in[1] << 8 |
+					z.next_in[2] << 16 |
+					z.next_in[3] << 24;
+				if (origcrc != crc)
+					maybe_warnx("invalid compressed"
+					     " data--crc error");
+			}
+
+			z.avail_in -= 4;
+			z.next_in += 4;
+
+			if (!z.avail_in)
+				goto stop;
+			state++;
+			break;
+		case GZSTATE_LEN:
+			{
+				static int empty_buffer = 0;
+				uLong origlen;
+
+				if (z.avail_in < 4) {
+					if (!done_reading && empty_buffer++ < 4)
+						continue;
+					maybe_warnx("truncated input");
+					goto stop;
+				}
+				empty_buffer = 0;
+				origlen = z.next_in[0] |
+					z.next_in[1] << 8 |
+					z.next_in[2] << 16 |
+					z.next_in[3] << 24;
+
+				if (origlen != out_sub_tot)
+					maybe_warnx("invalid compressed"
+					     " data--length error");
+			}
+				
+			z.avail_in -= 4;
+			z.next_in += 4;
+
 			if (error < 0) {
 				maybe_warnx("decompression error");
 				out_tot = -1;
 				goto stop;
 			}
+			state = GZSTATE_MAGIC0;
 			break;
 		}
 		continue;
