@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.5 1999/09/25 21:17:37 tron Exp $
+.\"	$NetBSD: makewhatis.8,v 1.6 2002/01/15 02:24:15 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -64,11 +64,12 @@ Man pages compressed with
 and
 .Xr gzip 1
 are uncompressed before processing.
-.Sh BUGS
-.Nm
-should find its search paths using /etc/man.conf
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr man.conf 5
-.Sh AUTHOR
-Matthias Scheler <tron@netbsd.org>
+.Sh AUTHORS
+.An Matthias Scheler Aq tron@netbsd.org
+.Sh BUGS
+.Nm
+should find its search paths using
+.Pa /etc/man.conf .
