@@ -25,6 +25,8 @@
 #include <net/if.h>
 #include <net/bpf.h>
 
+#include <string.h>
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -34,7 +36,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 #include "pflogd.h"
@@ -98,12 +99,16 @@ priv_init(void)
 		gidset[0] = pw->pw_gid;
 		if (setgroups(1, gidset) == -1)
 			err(1, "setgroups() failed");
+#ifdef __OpenBSD__
 		if (setegid(pw->pw_gid) == -1)
 			err(1, "setegid() failed");
+#endif
 		if (setgid(pw->pw_gid) == -1)
 			err(1, "setgid() failed");
+#ifdef __OpenBSD__
 		if (seteuid(pw->pw_uid) == -1)
 			err(1, "seteuid() failed");
+#endif
 		if (setuid(pw->pw_uid) == -1)
 			err(1, "setuid() failed");
 		close(socks[0]);

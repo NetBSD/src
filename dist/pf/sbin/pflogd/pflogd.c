@@ -205,10 +205,12 @@ init_pcap(void)
 	cur_snaplen = snaplen = pcap_snapshot(hpcap);
 
 	/* lock */
+#ifdef __OpenBSD__
 	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) < 0) {
 		logmsg(LOG_ERR, "BIOCLOCK: %s", strerror(errno));
 		return (-1);
 	}
+#endif
 
 	return (0);
 }
@@ -313,7 +315,11 @@ int
 scan_dump(FILE *fp, off_t size)
 {
 	struct pcap_file_header hdr;
+#ifdef __OpenBSD__
 	struct pcap_pkthdr ph;
+#else
+	struct pcap_sf_pkthdr ph;
+#endif
 	off_t pos;
 
 	/*
@@ -382,6 +388,9 @@ scan_dump(FILE *fp, off_t size)
 void
 dump_packet_nobuf(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 {
+#ifndef __OpenBSD__
+	struct pcap_sf_pkthdr sf_hdr;
+#endif
 	FILE *f = (FILE *)user;
 
 	if (suspended) {
@@ -389,11 +398,27 @@ dump_packet_nobuf(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 		return;
 	}
 
+#ifndef __OpenBSD__
+	sf_hdr.ts.tv_sec  = h->ts.tv_sec;
+	sf_hdr.ts.tv_usec = h->ts.tv_usec;
+	sf_hdr.caplen     = h->caplen;
+	sf_hdr.len        = h->len;
+#endif
+
+#ifdef __OpenBSD__
 	if (fwrite((char *)h, sizeof(*h), 1, f) != 1) {
+#else
+	if (fwrite(&sf_hdr, sizeof(sf_hdr), 1, f) != 1) {
+#endif
 		/* try to undo header to prevent corruption */
 		off_t pos = ftello(f);
+#ifdef __OpenBSD__
 		if (pos < sizeof(*h) ||
 		    ftruncate(fileno(f), pos - sizeof(*h))) {
+#else
+		if (pos < sizeof(sf_hdr) ||
+		    ftruncate(fileno(f), pos - sizeof(sf_hdr))) {
+#endif
 			logmsg(LOG_ERR, "Write failed, corrupted logfile!");
 			set_suspended(1);
 			gotsig_close = 1;
@@ -462,7 +487,12 @@ void
 dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 {
 	FILE *f = (FILE *)user;
+#ifdef __OpenBSD__
 	size_t len = sizeof(*h) + h->caplen;
+#else
+	struct pcap_sf_pkthdr sf_hdr;
+	size_t len = sizeof(sf_hdr) + h->caplen;
+#endif
 
 	if (len < sizeof(*h) || h->caplen > (size_t)cur_snaplen) {
 		logmsg(LOG_NOTICE, "invalid size %u (%u/%u), packet dropped",
@@ -490,8 +520,18 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	}
 
  append:
+#ifdef __OpenBSD__
 	memcpy(bufpos, h, sizeof(*h));
 	memcpy(bufpos + sizeof(*h), sp, h->caplen);
+#else
+	sf_hdr.ts.tv_sec  = h->ts.tv_sec;
+	sf_hdr.ts.tv_usec = h->ts.tv_usec;
+	sf_hdr.caplen     = h->caplen;
+	sf_hdr.len        = h->len;
+
+	memcpy(bufpos, &sf_hdr, sizeof(sf_hdr));
+	memcpy(bufpos + sizeof(sf_hdr), sp, h->caplen);
+#endif
 
 	bufpos += len;
 	bufleft -= len;
