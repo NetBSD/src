@@ -3788,7 +3788,7 @@ elf64_alpha_finish_dynamic_symbol (output_bfd, info, h, sym)
 
 	insn1 = PLT_ENTRY_WORD1 | (hi & 0xffff);
 	insn2 = PLT_ENTRY_WORD2 | (lo & 0xffff);
-	insn3 = PLT_ENTRY_WORD3 | ((-(h->plt_offset + 12) >> 2) & 0x1fffff);
+	insn3 = PLT_ENTRY_WORD3 | ((-(h->plt.offset + 12) >> 2) & 0x1fffff);
 #else
 	insn1 = PLT_ENTRY_WORD1 | ((-(h->plt.offset + 4) >> 2) & 0x1fffff);
 	insn2 = PLT_ENTRY_WORD2;
