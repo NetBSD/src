@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
+.\" $NetBSD: pcibios.4,v 1.8 2000/08/10 21:19:42 soda Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,7 @@
 .Cd "options   PCIBIOS_INTR_FIXUP"
 .Cd "#options  PCIBIOS_IRQS_HINT=0x0a00 #IRQ 9,11"
 .Cd "#options  PCIBIOS_INTR_FIXUP_FORCE"
+.Cd "options   PCIBIOS_INTR_GUESS"
 .Cd "#options  PCIINTR_DEBUG"
 .Pp
 .Sh INTRODUCTION
@@ -210,6 +211,23 @@ in the PCI routing table.
 The necessity of this option is doubtful, and we may
 remove this option in the future. If you find that this
 option is worth preserving, please report it with send-pr.
+
+.It Nm PCIBIOS_INTR_GUESS
+make
+.Em PCIBIOS_INTR_FIXUP
+work with unknown interrupt router.
+.Pp
+If a PCI interrupt router is not known, normally interrupt
+configuraion will not be touched.
+
+But if
+.Em PCIBIOS_INTR_GUESS
+is specified in addition to the
+.Em PCIBIOS_INTR_FIXUP ,
+and if a PCI interrupt routing table entry indicates that only
+one IRQ is available for the entry, the IRQ is assumed to be already
+connected to the device, and corresponding PCI Interrupt
+Configuration Register will be configured accordingly.
 
 .It Nm PCIINTR_DEBUG
 make the
