@@ -101,7 +101,7 @@ hdb_ndbm_create __P((
 krb5_error_code
 hdb_next_enctype2key __P((
 	krb5_context context,
-	hdb_entry *e,
+	const hdb_entry *e,
 	krb5_enctype enctype,
 	Key **key));
 
@@ -126,13 +126,13 @@ hdb_read_master_key __P((
 	const char *filename,
 	hdb_master_key *mkey));
 
-void
+krb5_error_code
 hdb_seal_keys __P((
 	krb5_context context,
 	HDB *db,
 	hdb_entry *ent));
 
-void
+krb5_error_code
 hdb_seal_keys_mkey __P((
 	krb5_context context,
 	hdb_entry *ent,
@@ -150,13 +150,16 @@ hdb_set_master_keyfile __P((
 	HDB *db,
 	const char *keyfile));
 
-void
+krb5_error_code
+hdb_unlock __P((int fd));
+
+krb5_error_code
 hdb_unseal_keys __P((
 	krb5_context context,
 	HDB *db,
 	hdb_entry *ent));
 
-void
+krb5_error_code
 hdb_unseal_keys_mkey __P((
 	krb5_context context,
 	hdb_entry *ent,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: 8003.c,v 1.2 2000/08/03 03:38:25 assar Exp $");
+RCSID("$Id: 8003.c,v 1.3 2001/02/11 14:13:10 assar Exp $");
 
 static krb5_error_code
 encode_om_uint32(OM_uint32 n, u_char *p)

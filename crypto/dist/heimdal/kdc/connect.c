@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.4 2000/10/10 13:14:55 itojun Exp $");
+RCSID("$Id: connect.c,v 1.5 2001/02/11 14:13:09 assar Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -203,7 +203,7 @@ struct descr {
     time_t timeout;
     struct sockaddr_storage __ss;
     struct sockaddr *sa;
-    int sock_len;
+    socklen_t sock_len;
     char addr_string[128];
 };
 
@@ -531,6 +531,12 @@ add_new_tcp (struct descr *d, int parent, int child)
 	return;
     }
 	    
+    if (s >= FD_SETSIZE) {
+	krb5_warnx(context, "socket FD too large");
+	close (s);
+	return;
+    }
+
     d[child].s = s;
     d[child].timeout = time(NULL) + TCP_TIMEOUT;
     d[child].type = SOCK_STREAM;
@@ -739,8 +745,9 @@ loop(void)
 	int min_free = -1;
 	int max_fd = 0;
 	int i;
+
 	FD_ZERO(&fds);
-	for(i = 0; i < ndescr; i++){
+	for(i = 0; i < ndescr; i++) {
 	    if(d[i].s >= 0){
 		if(d[i].type == SOCK_STREAM && 
 		   d[i].timeout && d[i].timeout < time(NULL)) {
@@ -751,8 +758,10 @@ loop(void)
 		}
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
+		if (max_fd >= FD_SETSIZE)
+		    krb5_errx(context, 1, "fd too large");
 		FD_SET(d[i].s, &fds);
-	    }else if(min_free < 0 || i < min_free)
+	    } else if(min_free < 0 || i < min_free)
 		min_free = i;
 	}
 	if(min_free == -1){

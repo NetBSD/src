@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,10 +31,18 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken-common.h,v 1.2 2001/01/06 23:30:57 christos Exp $ */
+/* $Id: roken-common.h,v 1.3 2001/02/11 14:13:12 assar Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
+
+#ifdef __cplusplus
+#define ROKEN_CPP_START	extern "C" {
+#define ROKEN_CPP_END	}
+#else
+#define ROKEN_CPP_START
+#define ROKEN_CPP_END
+#endif
 
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
@@ -118,6 +126,10 @@
 
 #ifndef _PATH_VARRUN
 #define _PATH_VARRUN "/var/run/"
+#endif
+
+#ifndef _PATH_BSHELL
+#define _PATH_BSHELL "/bin/sh"
 #endif
 
 #ifndef MAXPATHLEN
@@ -233,6 +245,12 @@
 #define SHUT_RDWR 2
 #endif
 
+#ifndef HAVE___ATTRIBUTE__
+#define __attribute__(x)
+#endif
+
+ROKEN_CPP_START
+
 #if IRIX != 4 /* fix for compiler bug */
 #ifdef RETSIGTYPE
 typedef RETSIGTYPE (*SigAction)(int);
@@ -246,6 +264,7 @@ int ROKEN_LIB_FUNCTION simple_execve(const char*, char*const[], char*const[]);
 int ROKEN_LIB_FUNCTION simple_execvp(const char*, char *const[]);
 int ROKEN_LIB_FUNCTION simple_execlp(const char*, ...);
 int ROKEN_LIB_FUNCTION simple_execle(const char*, ...);
+int ROKEN_LIB_FUNCTION simple_execl(const char *file, ...);
 
 void ROKEN_LIB_FUNCTION print_version(const char *);
 
@@ -255,6 +274,9 @@ char *ROKEN_LIB_FUNCTION estrdup (const char *);
 
 ssize_t ROKEN_LIB_FUNCTION eread (int fd, void *buf, size_t nbytes);
 ssize_t ROKEN_LIB_FUNCTION ewrite (int fd, const void *buf, size_t nbytes);
+
+void
+esetenv(const char *var, const char *val, int rewrite);
 
 void
 socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port);
@@ -301,5 +323,10 @@ void pid_file_delete (char **);
 
 int
 read_environment(const char *file, char ***env);
+
+void warnerr(int doerrno, const char *fmt, va_list ap)
+    __attribute__ ((format (printf, 2, 0)));
+
+ROKEN_CPP_END
 
 #endif /* __ROKEN_COMMON_H__ */

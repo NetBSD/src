@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gssapi.h,v 1.3 2000/12/24 12:17:21 fvdl Exp $ */
+/* $Id: gssapi.h,v 1.4 2001/02/11 14:13:11 assar Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -206,6 +206,9 @@ typedef OM_uint32 gss_qop_t;
  * default protection level.
  */
 #define GSS_C_QOP_DEFAULT 0
+
+#define GSS_KRB5_CONF_C_QOP_DES		0x0100
+#define GSS_KRB5_CONF_C_QOP_DES3_KD	0x0200
 
 /*
  * Expiration time of 2^32-1 seconds means infinite lifetime for a
@@ -766,5 +769,10 @@ OM_uint32 gss_unseal
 
 OM_uint32 gsskrb5_register_acceptor_identity
         (char *identity);
+
+OM_uint32 gss_krb5_copy_ccache
+	(OM_uint32 *minor,
+	 gss_cred_id_t cred,
+	 struct krb5_ccache_data *out);
 
 #endif /* GSSAPI_H_ */
