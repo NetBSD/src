@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.38 2002/06/21 14:49:41 agc Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.39 2002/07/09 03:30:06 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.38 2002/06/21 14:49:41 agc Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.39 2002/07/09 03:30:06 yamt Exp $");
 #endif
 
 /*
@@ -615,7 +615,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	if (best[0] != '\0') {
 		if (Verbose)
 			printf("best match: '%s%s'\n", base, best);
-		sprintf(expandedurl, "%s%s", base, best);
+		snprintf(expandedurl, FILENAME_MAX, "%s%s", base, best);
 	}
     }
 
