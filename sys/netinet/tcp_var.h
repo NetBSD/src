@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.90.4.1 2003/09/05 13:42:46 tron Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.90.4.2 2003/10/22 06:06:13 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,6 +184,7 @@ struct tcpcb {
 #define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
 #define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
 #define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
+#define	TF_DEAD		0x8000		/* dead and to-be-released */
 
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
@@ -410,6 +411,7 @@ struct syn_cache {
 
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
+#define	SCF_DEAD		0x0004		/* this entry to be released */
 
 	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_peermaxseg;
@@ -540,6 +542,7 @@ struct	tcpstat {
 	u_quad_t tcps_noport;		/* no socket on port */
 	u_quad_t tcps_badsyn;		/* received ack for which we have
 					   no SYN in compressed state */
+	u_quad_t tcps_delayed_free;	/* delayed pool_put() of tcpcb */
 
 	/* These statistics deal with the SYN cache. */
 	u_quad_t tcps_sc_added;		/* # of entries added */
@@ -554,6 +557,7 @@ struct	tcpstat {
 	u_quad_t tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
 	u_quad_t tcps_sc_collisions;	/* # of hash collisions */
 	u_quad_t tcps_sc_retransmitted;	/* # of retransmissions */
+	u_quad_t tcps_sc_delayed_free;	/* # of delayed pool_put()s */
 
 	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
 };
@@ -681,8 +685,10 @@ extern	u_long syn_cache_count;
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
+int	 tcp_timers_invoking __P((struct tcpcb*));
 struct tcpcb *
 	 tcp_close __P((struct tcpcb *));
+int	 tcp_isdead __P((struct tcpcb *));
 #ifdef INET6
 void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
 #endif
