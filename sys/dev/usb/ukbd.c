@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.81 2002/03/17 19:41:04 atatat Exp $        */
+/*      $NetBSD: ukbd.c,v 1.82 2002/07/11 21:14:30 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.81 2002/03/17 19:41:04 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.82 2002/07/11 21:14:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ struct ukbd_data {
 
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
-/* 
+/*
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 0x80 represent EXTENDED keycodes.
  *
@@ -208,7 +208,7 @@ ukbdtracedump(void)
 {
 	int i;
 	for (i = 0; i < UKBDTRACESIZE; i++) {
-		struct ukbdtraceinfo *p = 
+		struct ukbdtraceinfo *p =
 		    &ukbdtracedata[(i+ukbdtraceindex)%UKBDTRACESIZE];
 		printf("%lu.%06lu: mod=0x%02x key0=0x%02x key1=0x%02x "
 		       "key2=0x%02x key3=0x%02x\n",
@@ -276,7 +276,7 @@ ukbd_match(struct device *parent, struct cfdata *match, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size;
 	void *desc;
-	
+
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD)))
@@ -297,7 +297,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 #else
 	int i;
 #endif
-	
+
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -308,7 +308,7 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 		       sc->sc_hdev.sc_dev.dv_xname, parseerr);
 		USB_ATTACH_ERROR_RETURN;
 	}
-		
+
 #ifdef DIAGNOSTIC
 	printf(": %d modifier keys, %d key codes", sc->sc_nmod,
 	       sc->sc_nkeycode);
@@ -368,7 +368,7 @@ ukbd_enable(void *v, int on)
 	/* Should only be called to change state */
 	if (sc->sc_enabled == on) {
 #ifdef DIAGNOSTIC
-		printf("ukbd_enable: %s: bad call on=%d\n", 
+		printf("ukbd_enable: %s: bad call on=%d\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), on);
 #endif
 		return (EBUSY);
@@ -515,7 +515,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 #define ADDKEY(c) ibuf[nkeys++] = (c)
 
 #ifdef UKBD_DEBUG
-	/* 
+	/*
 	 * Keep a trace of the last events.  Using printf changes the
 	 * timing, so this can be useful sometimes.
 	 */
@@ -547,10 +547,10 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	omod = sc->sc_odata.modifiers;
 	if (mod != omod)
 		for (i = 0; i < sc->sc_nmod; i++)
-			if (( mod & sc->sc_mods[i].mask) != 
+			if (( mod & sc->sc_mods[i].mask) !=
 			    (omod & sc->sc_mods[i].mask))
-				ADDKEY(sc->sc_mods[i].key | 
-				       (mod & sc->sc_mods[i].mask 
+				ADDKEY(sc->sc_mods[i].key |
+				       (mod & sc->sc_mods[i].mask
 					  ? PRESS : RELEASE));
 	if (memcmp(ud->keycode, sc->sc_odata.keycode, sc->sc_nkeycode) != 0) {
 		/* Check for released keys. */
@@ -566,7 +566,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		rfound:
 			;
 		}
-		
+
 		/* Check for pressed keys. */
 		for (i = 0; i < sc->sc_nkeycode; i++) {
 			key = ud->keycode[i];
@@ -614,7 +614,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 					sc->sc_rep[npress++] = 0xe0;
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
-			DPRINTFN(1,("ukbd_intr: raw = %s0x%02x\n", 
+			DPRINTFN(1,("ukbd_intr: raw = %s0x%02x\n",
 				    c & 0x80 ? "0xe0 " : "",
 				    cbuf[j]));
 			j++;
@@ -635,7 +635,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	s = spltty();
 	for (i = 0; i < nkeys; i++) {
 		key = ibuf[i];
-		wskbd_input(sc->sc_wskbddev, 
+		wskbd_input(sc->sc_wskbddev,
 		    key&RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
 		    key&CODEMASK);
 	}
@@ -744,7 +744,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	sc->sc_polling = 0;
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
-	memcpy(sc->sc_pollchars, sc->sc_pollchars+1, 
+	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
 	       sc->sc_npollchar * sizeof(u_int16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;

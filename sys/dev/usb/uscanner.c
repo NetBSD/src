@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.30 2002/07/11 21:14:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.30 2002/07/11 21:14:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ uscanneropen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	USB_GET_SC_OPEN(uscanner, unit, sc);
 
- 	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n", 
+ 	DPRINTFN(5, ("uscanneropen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, unit));
 
 	if (sc->sc_dying)
@@ -676,12 +676,12 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 	if (sc->sc_dying)
 		return (EIO);
 
-	/* 
+	/*
 	 * We have no easy way of determining if a read will
 	 * yield any data or a write will happen.
 	 * Pretend they will.
 	 */
-	revents |= events & 
+	revents |= events &
 		   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
 
 	return (revents);
