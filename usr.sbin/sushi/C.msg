@@ -41,6 +41,7 @@ $set 3 run.c stuff
 7 Finished
 8 Press any key to continue
 9 Use HOME,END,PGUP,PDGN,UP/DOWN Arrow keys to scroll ESC, F3 exits, F10 quits.
+10 No help is available for this screen.
 $set 4 menu titles and stuff
 1 Select choice
 2 Generating form data, please wait
