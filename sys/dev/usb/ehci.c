@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.86 2004/10/24 22:13:52 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.87 2004/10/25 10:29:49 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.86 2004/10/24 22:13:52 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.87 2004/10/25 10:29:49 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1471,7 +1471,12 @@ void
 ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 {
 	int i;
+	u_int32_t status;
 
+	/* Save toggle bit and ping status. */
+	status = sqh->qh.qh_qtd.qtd_status &
+	    htole32(EHCI_QTD_TOGGLE_MASK |
+		    EHCI_QTD_SET_STATUS(EHCI_QTD_PINGSTATE));
 	/* Set HALTED to make hw leave it alone. */
 	sqh->qh.qh_qtd.qtd_status =
 	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
@@ -1481,8 +1486,8 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
 		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
-	/* Set !HALTED && !ACTIVE to start execution. */
-	sqh->qh.qh_qtd.qtd_status = 0;
+	/* Set !HALTED && !ACTIVE to start execution, preserve some fields */
+	sqh->qh.qh_qtd.qtd_status = status;
 }
 
 /*
