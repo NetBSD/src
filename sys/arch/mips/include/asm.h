@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 1999/03/30 16:50:04 soda Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 1999/04/01 09:02:53 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 #ifndef _MIPS_ASM_H
 #define _MIPS_ASM_H
 
-#include <machine/regdef.h>
+#include <mips/regdef.h>
 
 /*
  * Define -pg profile entry code.
