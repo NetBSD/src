@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.6 2002/03/28 19:50:21 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.7 2002/04/04 18:47:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -48,6 +48,44 @@
 #include <sparc/sparc/msiiepreg.h>
 #include <sparc/sparc/msiiepvar.h>
 
+
+/*
+ * Autoconfiguration.
+ *
+ * Normally, sparc autoconfiguration is driven by PROM device tree,
+ * however PROMs in ms-IIep machines usually don't have nodes for
+ * various important registers that are part of ms-IIep PCI controller.
+ * We work around by inserting a dummy device that acts as a parent
+ * for device drivers that deal with various functions of PCIC.  The
+ * other option is to hack mainbus_attach() to treat ms-IIep specially,
+ * but I'd rather insulate the rest of the source from ms-IIep quirks.
+ */
+
+/* parent "stub" device that knows how to attach various functions */
+static int	msiiep_match(struct device *, struct cfdata *, void *);
+static void	msiiep_attach(struct device *, struct device *, void *);
+/* static int	msiiep_print(void *, const char *); */
+
+struct cfattach msiiep_ca = {
+	sizeof(struct device), msiiep_match, msiiep_attach
+};
+
+static struct idprom	msiiep_idprom_store;
+static void		msiiep_getidprom(void);
+
+
+/*
+ * The real thing.
+ */
+static int	mspcic_match(struct device *, struct cfdata *, void *);
+static void	mspcic_attach(struct device *, struct device *, void *);
+static int	mspcic_print(void *, const char *);
+
+struct cfattach mspcic_ca = {
+	sizeof(struct mspcic_softc), mspcic_match, mspcic_attach
+};
+
+
 /**
  * ms-IIep PCIC registers are mapped at fixed VA
  */
@@ -69,28 +107,66 @@ static struct sparc_pci_chipset mspcic_pc_tag = { NULL };
  * Bus space tags for memory and i/o.
  */
 
-static void *mspcic_intr_establish(bus_space_tag_t, int, int, int,
-				   int (*)(void *), void *);
+struct mspcic_pci_map {
+	u_int32_t sysbase;
+	u_int32_t pcibase;
+	u_int32_t size;
+};
+
+/* fixed i/o and one set of i/o cycle translation registers */
+static struct mspcic_pci_map mspcic_pci_iomap[2] = {
+	{ 0x30000000, 0x0, 0x00010000 }		/* fixed i/o (decoded bits) */
+};
+
+/* fixed mem and two sets of mem cycle translation registers */
+static struct mspcic_pci_map mspcic_pci_memmap[3] = {
+	{ 0x30100000, 0x30100000, 0x00f00000 }	/* fixed mem (pass through) */
+};
+
+struct mspcic_cookie {
+	struct mspcic_pci_map *map;
+	int nmaps;
+};
+
+static struct mspcic_cookie mspcic_io_cookie = { mspcic_pci_iomap, 0 };
+static struct mspcic_cookie mspcic_mem_cookie = { mspcic_pci_memmap, 0 };
+
+
+static void		mspcic_init_maps(void);
+static void		mspcic_pci_map_from_reg(struct mspcic_pci_map *,
+						u_int8_t, u_int8_t, u_int8_t);
+static bus_addr_t	mspcic_pci_map_find(struct mspcic_pci_map *, int,
+					    bus_addr_t, bus_size_t);
+#ifdef DEBUG
+static void	mspcic_pci_map_print(struct mspcic_pci_map *, const char *);
+#endif
+
+
+static int	mspcic_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t,
+			       int, vaddr_t, bus_space_handle_t *);
+static paddr_t	mspcic_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static void	*mspcic_intr_establish(bus_space_tag_t, int, int, int,
+				       int (*)(void *), void *);
 
 static struct sparc_bus_space_tag mspcic_io_tag = {
-	NULL,			/* cookie */
+	&mspcic_io_cookie,	/* cookie */
 	NULL,			/* parent bus tag */
-	NULL,			/* bus_space_map */ 
+	mspcic_bus_map,		/* bus_space_map */
 	NULL,			/* bus_space_unmap */
 	NULL,			/* bus_space_subregion */
-	NULL,			/* bus_space_barrier */ 
-	NULL,			/* bus_space_mmap */ 
+	NULL,			/* bus_space_barrier */
+	mspcic_bus_mmap,	/* bus_space_mmap */
 	mspcic_intr_establish	/* bus_intr_establish */
 };
 
 static struct sparc_bus_space_tag mspcic_mem_tag = {
-	NULL,			/* cookie */
+	&mspcic_mem_cookie,	/* cookie */
 	NULL,			/* parent bus tag */
-	NULL,			/* bus_space_map */ 
+	mspcic_bus_map,		/* bus_space_map */ 
 	NULL,			/* bus_space_unmap */
 	NULL,			/* bus_space_subregion */
-	NULL,			/* bus_space_barrier */ 
-	NULL,			/* bus_space_mmap */ 
+	NULL,			/* bus_space_barrier */
+	mspcic_bus_mmap,	/* bus_space_mmap */
 	mspcic_intr_establish	/* bus_intr_establish */
 };
 
@@ -124,42 +200,6 @@ static struct sparc_bus_dma_tag mspcic_dma_tag = {
 };
 
 
-/*
- * Autoconfiguration.
- *
- * Normally, sparc autoconfiguration is driven by PROM device tree,
- * however PROMs in ms-IIep machines usually don't have nodes for
- * various important registers that are part of ms-IIep PCI controller.
- * We work around by inserting a dummy device that acts as a parent
- * for device drivers that deal with various functions of PCIC.  The
- * other option is to hack mainbus_attach() to treat ms-IIep specially,
- * but I'd rather insulate the rest of the source from ms-IIep quirks.
- */
-
-/* parent "stub" device that knows how to attach various functions */
-static int	msiiep_match(struct device *, struct cfdata *, void *);
-static void	msiiep_attach(struct device *, struct device *, void *);
-/* static int	msiiep_print(void *, const char *); */
-
-struct cfattach msiiep_ca = {
-	sizeof(struct device), msiiep_match, msiiep_attach
-};
-
-
-/*
- * The real thing.
- */
-static int	mspcic_match(struct device *, struct cfdata *, void *);
-static void	mspcic_attach(struct device *, struct device *, void *);
-static int	mspcic_print(void *, const char *);
-
-struct cfattach mspcic_ca = {
-	sizeof(struct mspcic_softc), mspcic_match, mspcic_attach
-};
-
-
-static struct idprom	msiiep_idprom_store;
-static void		msiiep_getidprom(void);
 
 
 
@@ -316,13 +356,13 @@ mspcic_attach(parent, self, aux)
 	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo);
 	printf(": %s: clock = %s MHz\n", devinfo, clockfreq(sc->sc_clockfreq));
 
+	mspcic_init_maps();
+
 	/* init cookies/parents in our statically allocated tags */
-	mspcic_pc_tag.cookie = sc;
-	mspcic_io_tag.cookie = sc;
 	mspcic_io_tag.parent = sc->sc_bustag;
-	mspcic_mem_tag.cookie = sc;
 	mspcic_mem_tag.parent = sc->sc_bustag;
 	mspcic_dma_tag._cookie = sc;
+	mspcic_pc_tag.cookie = sc;
 
 	/* save bus tags in softc */
 	sc->sc_iot = &mspcic_io_tag;
@@ -381,6 +421,155 @@ mspcic_assigned_interrupt(line)
  *
  *			  BUS space methods
  */
+
+static __inline__ void
+mspcic_pci_map_from_reg(m, sbar, pbar, sizemask)
+	struct mspcic_pci_map *m;
+	u_int8_t sbar, pbar, sizemask;
+{
+	m->sysbase = 0x30000000 | ((sbar & 0x0f) << 24);
+	m->pcibase = pbar << 24;
+	m->size = ~((0xf0 | sizemask) << 24) + 1;
+}
+
+
+/* does [al, ar) and [bl, br) overlap? */
+#define OVERLAP(al, ar, bl, br) (((al) < (br)) && ((bl) < (ar)))
+
+/* does map "m" overlap with fixed mapping region? */
+#define OVERLAP_FIXED(m) OVERLAP((m)->sysbase, (m)->sysbase + (m)->size, \
+				0x30000000, 0x31000000)
+
+/* does map "ma" overlap map "mb" (possibly NULL)? */
+#define OVERLAP_MAP(ma, mb) \
+	((mb != NULL) && OVERLAP((ma)->sysbase, (ma)->sysbase + (ma)->size, \
+				 (mb)->sysbase, (mb)->sysbase + (mb)->size))
+
+/*
+ * Init auxiliary paddr->pci maps.
+ */
+static void
+mspcic_init_maps()
+{
+	struct mspcic_pci_map *m0, *m1, *io;
+	int nmem, nio;
+
+#ifdef DEBUG
+	printf("mspcic0: SMBAR0 %02x  PMBAR0 %02x  MSIZE0 %02x\n",
+	       mspcic->pcic_smbar0, mspcic->pcic_pmbar0, mspcic->pcic_msize0);
+	printf("mspcic0: SMBAR1 %02x  PMBAR1 %02x  MSIZE1 %02x\n",
+	       mspcic->pcic_smbar1, mspcic->pcic_pmbar1, mspcic->pcic_msize1);
+	printf("mspcic0: SIBAR  %02x  PIBAR  %02x  IOSIZE %02x\n",
+	       mspcic->pcic_sibar, mspcic->pcic_pibar, mspcic->pcic_iosize);
+#endif
+	nmem = nio = 1;
+
+	m0 = &mspcic_pci_memmap[nmem];
+	mspcic_pci_map_from_reg(m0, mspcic->pcic_smbar0, mspcic->pcic_pmbar0,
+				mspcic->pcic_msize0);
+	if (OVERLAP_FIXED(m0))
+		m0 = NULL;
+	else
+		++nmem;
+
+	m1 = &mspcic_pci_memmap[nmem];
+	mspcic_pci_map_from_reg(m1, mspcic->pcic_smbar1, mspcic->pcic_pmbar1,
+				mspcic->pcic_msize1);
+	if (OVERLAP_FIXED(m1) || OVERLAP_MAP(m1, m0))
+		m1 = NULL;
+	else
+		++nmem;
+
+	io = &mspcic_pci_iomap[nio];
+	mspcic_pci_map_from_reg(io, mspcic->pcic_sibar, mspcic->pcic_pibar,
+				mspcic->pcic_iosize);
+	if (OVERLAP_FIXED(io) || OVERLAP_MAP(io, m0) || OVERLAP_MAP(io, m1))
+		io = NULL;
+	else
+		++nio;
+
+	mspcic_io_cookie.nmaps = nio;
+	mspcic_mem_cookie.nmaps = nmem;
+
+#ifdef DEBUG
+	mspcic_pci_map_print(&mspcic_pci_iomap[0], "i/o fixed");
+	mspcic_pci_map_print(&mspcic_pci_memmap[0], "mem fixed");
+	if (m0) mspcic_pci_map_print(m0, "mem map0");
+	if (m1) mspcic_pci_map_print(m1, "mem map1");
+	if (io) mspcic_pci_map_print(io, "i/0 map");
+#endif
+}
+
+
+#ifdef DEBUG
+static void
+mspcic_pci_map_print(m, msg)
+	struct mspcic_pci_map *m;
+	const char *msg;
+{
+	printf("mspcic0: paddr [%08x..%08x] -> pci [%08x..%08x] %s\n",
+	       m->sysbase, m->sysbase + m->size - 1,
+	       m->pcibase, m->pcibase + m->size - 1,
+	       msg);
+}
+#endif
+
+
+static bus_addr_t
+mspcic_pci_map_find(m, nmaps, pciaddr, size)
+	struct mspcic_pci_map *m;
+	int nmaps;
+	bus_addr_t pciaddr;
+	bus_size_t size;
+{
+	bus_size_t offset;
+	int i;
+
+	for (i = 0; i < nmaps; ++i, ++m) {
+		offset = pciaddr - m->pcibase;
+		if (offset >= 0 && offset + size <= m->size)
+			return (m->sysbase + offset);
+	}
+	return (0);
+}
+
+
+static int
+mspcic_bus_map(t, ba, size, flags, va, hp)
+	bus_space_tag_t t;
+	bus_addr_t ba;
+	bus_size_t size;
+	int flags;
+	vaddr_t va;
+	bus_space_handle_t *hp;
+{
+	struct mspcic_cookie *c = t->cookie;
+	bus_addr_t paddr;
+
+	paddr = mspcic_pci_map_find(c->map, c->nmaps, ba, size);
+	if (paddr == 0)
+		return (EINVAL);
+	return (bus_space_map2(t->parent, paddr, size, flags, va, hp));
+}
+
+
+static paddr_t
+mspcic_bus_mmap(t, ba, off, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t ba;
+	off_t off;
+	int prot;
+	int flags;
+{
+	struct mspcic_cookie *c = t->cookie;
+	bus_addr_t paddr;
+
+	paddr = mspcic_pci_map_find(c->map, c->nmaps, ba + off, PAGE_SIZE);
+	if (paddr == 0)
+		return (-1);
+	return (bus_space_mmap(t->parent, paddr, off, prot, flags));
+}
+
 
 /*
  * Install an interrupt handler.
