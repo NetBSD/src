@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.12 1994/03/03 14:08:25 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.13 1994/03/03 14:15:25 deraadt Exp $
  */
 
 /*
@@ -953,24 +953,32 @@ sun_sysconf(p, uap, retval)
 	switch(uap->name) {
 	case SUN_SC_ARG_MAX:
 		*retval = ARG_MAX;
+		break;
 	case SUN_SC_CHILD_MAX:
 		*retval = maxproc;
+		break;
 	case SUN_SC_CLK_TCK:
 		*retval = 60;		/* should this be `hz', ie. 100? */
+		break;
 	case SUN_SC_NGROUPS_MAX:
 		*retval = NGROUPS_MAX;
+		break;
 	case SUN_SC_OPEN_MAX:
 		*retval = maxfdescs;
+		break;
 	case SUN_SC_JOB_CONTROL:
 		*retval = 1;
+		break;
 	case SUN_SC_SAVED_IDS:
 #ifdef _POSIX_SAVED_IDS
 		*retval = 1;
 #else
 		*retval = 0;
 #endif
+		break;
 	case SUN_SC_VERSION:
 		*retval = 198808;
+		break;
 	default:
 		return EINVAL;
 	}
