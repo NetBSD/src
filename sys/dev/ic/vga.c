@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.22 1999/12/06 18:54:50 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.23 1999/12/13 14:04:06 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -507,7 +507,7 @@ vga_init(vc, iot, memt)
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
 
 	vc->vc_fonts[0] = &vga_builtinfont;
-	for (i = 1; i < 7; i++)
+	for (i = 1; i < 8; i++)
 		vc->vc_fonts[i] = 0;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
