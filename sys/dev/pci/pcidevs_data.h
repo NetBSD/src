@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.553 2003/07/17 12:41:42 hannken Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.554 2003/07/23 10:18:08 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.553 2003/07/17 11:44:27 hannken Exp 
+ *	NetBSD: pcidevs,v 1.554 2003/07/23 10:16:16 kleink Exp 
  */
 
 /*
@@ -5684,6 +5684,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "National Semiconductor",
 	    "NS87410",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130HL,
+	    0,
+	    "Philips",
+	    "SAA7130HL PCI video broadcast decoder",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7133HL,
+	    0,
+	    "Philips",
+	    "SAA7133HL PCI A/V broadcast decoder",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7134HL,
+	    0,
+	    "Philips",
+	    "SAA7134HL PCI A/V broadcast decoder",
+	},
+	{
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7135HL,
+	    0,
+	    "Philips",
+	    "SAA7135HL PCI A/V broadcast decoder",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
