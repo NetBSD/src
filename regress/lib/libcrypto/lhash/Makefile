@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:52 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:07 tv Exp $
 
-PROG=	lhashtest
-SRCS=	lh_test.c
-NOMAN=	yes
-
-CPPFLAGS+=-DMalloc=malloc
-
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
+PROG=		lhashtest
+SRCS=		lh_test.c
+NOMAN=		# defined
+CPPFLAGS+=	-DMalloc=malloc
+DPADD+=		${LIBCRYPTO}
+LDADD+=		-lcrypto
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/05/05 06:52:57 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:23:59 tv Exp $
 
-MKMAN=  no
+NOMAN=  	# defined
 
-regress: 
+regress:
 	@ksh ${.CURDIR}/expr.sh
 
 .include <bsd.prog.mk>

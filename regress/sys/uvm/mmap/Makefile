@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1999/07/14 21:10:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:18 tv Exp $
 
-PROG=	mmap
-MKMAN=	no
-
-CLEANFILES+= mapped_file
+PROG=		mmap
+NOMAN=		# defined
+CLEANFILES+=	mapped_file
 
 # This is hopefully just some file not mmap'd very often.
-SOME_FILE=/usr/share/misc/zipcodes
+SOME_FILE=	/usr/share/misc/zipcodes
 
 regress:
 	@if ./mmap ${SOME_FILE}; then \
