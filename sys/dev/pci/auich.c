@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.64 2004/10/27 13:26:43 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.65 2004/10/29 12:57:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.64 2004/10/27 13:26:43 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.65 2004/10/29 12:57:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ void	auich_finish_attach(struct device *);
 void	auich_calibrate(struct auich_softc *);
 
 
-struct audio_hw_if auich_hw_if = {
+const struct audio_hw_if auich_hw_if = {
 	auich_open,
 	auich_close,
 	NULL,			/* drain */

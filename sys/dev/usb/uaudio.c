@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.87 2004/10/22 17:00:22 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.88 2004/10/29 12:57:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.87 2004/10/22 17:00:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.88 2004/10/29 12:57:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ Static int	uaudio_mixer_get_port(void *, mixer_ctrl_t *);
 Static int	uaudio_query_devinfo(void *, mixer_devinfo_t *);
 Static int	uaudio_get_props(void *);
 
-Static struct audio_hw_if uaudio_hw_if = {
+Static const struct audio_hw_if uaudio_hw_if = {
 	uaudio_open,
 	uaudio_close,
 	uaudio_drain,

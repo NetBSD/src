@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.11 2004/07/09 02:05:09 mycroft Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.12 2004/10/29 12:57:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ struct iw_softc {
 	u_char	smode;		       	/* Synth Mode */
 	long	size_mem;		/* Total LM in bytes */
 	struct	cfdriver *iw_cd;
-	struct	audio_hw_if *iw_hw_if;
+	const struct audio_hw_if *iw_hw_if;
 };
 
 void	iwattach __P((struct iw_softc *));

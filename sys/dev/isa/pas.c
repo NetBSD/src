@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.59 2004/09/14 20:20:49 drochner Exp $	*/
+/*	$NetBSD: pas.c,v 1.60 2004/10/29 12:57:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.59 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.60 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ void	pasconf __P((int, int, int, int));
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if pas_hw_if = {
+const struct audio_hw_if pas_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
 	0,

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ int	rtii_set_info(void *, struct radio_info *);
 int	rtii_search(void *, int);
 
 /* define our interface to the higher level radio driver */
-struct radio_hw_if rtii_hw_if = {
+const struct radio_hw_if rtii_hw_if = {
 	NULL,	/* open */
 	NULL,	/* close */
 	rtii_get_info,
