@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.13 2002/05/18 07:00:46 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.14 2002/06/05 12:52:57 itojun Exp $	*/
 
 #include "file.h"
 
@@ -20,7 +20,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.20 2002/05/16 18:57:11 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.13 2002/05/18 07:00:46 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.14 2002/06/05 12:52:57 itojun Exp $");
 #endif
 #endif
 
@@ -567,8 +567,8 @@ tryelf(fd, buf, nbytes)
 	int nbytes;
 {
 	union {
-		int32 l;
-		char c[sizeof (int32)];
+		int32_t l;
+		char c[sizeof (int32_t)];
 	} u;
 	int class;
 	int swap;
@@ -601,7 +601,7 @@ tryelf(fd, buf, nbytes)
 
 		u.l = 1;
 		(void) memcpy(&elfhdr, buf, sizeof elfhdr);
-		swap = (u.c[sizeof(int32) - 1] + 1) != elfhdr.e_ident[5];
+		swap = (u.c[sizeof(int32_t) - 1] + 1) != elfhdr.e_ident[5];
 
 		if (getu16(swap, elfhdr.e_type) == ET_CORE) 
 #ifdef ELFCORE
@@ -638,7 +638,7 @@ tryelf(fd, buf, nbytes)
 
 		u.l = 1;
 		(void) memcpy(&elfhdr, buf, sizeof elfhdr);
-		swap = (u.c[sizeof(int32) - 1] + 1) != elfhdr.e_ident[5];
+		swap = (u.c[sizeof(int32_t) - 1] + 1) != elfhdr.e_ident[5];
 
 		if (getu16(swap, elfhdr.e_type) == ET_CORE) 
 #ifdef ELFCORE
