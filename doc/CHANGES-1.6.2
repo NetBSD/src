@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.178 2003/10/05 12:16:57 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.179 2003/10/05 12:56:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2285,4 +2285,43 @@ sys/kern/kern_xxx.c				1.50
 
 	Make this compile with __HAVE_MINIMAL_EMUL.
 	[junyoung, ticket #1510]
+
+distrib/sets/lists/man/mi			1.608-1.609
+share/man/man4/Makefile				1.296-1.297
+share/man/man4/man4.mac68k/Makefile		1.9-1.10
+share/man/man4/man4.mac68k/obio.4		1.6
+share/man/man4/man4.macppc/Makefile		1.5-1.7
+share/man/man4/man4.macppc/bm.4			1.3
+share/man/man4/man4.macppc/gm.4			1.5
+share/man/man4/man4.macppc/intro.4		1.7
+share/man/man4/man4.macppc/mc.4			1.3
+share/man/man4/man4.macppc/mesh.4		1.1
+share/man/man4/man4.macppc/obio.4		1.1
+share/man/man4/adb.4				1.1
+share/man/man4/akbd.4				1.1
+share/man/man4/ams.4				1.1
+share/man/man4/mc.4				1.1
+
+	New man page on the Apple Macintosh Enhanced SCSI Hardware driver
+	contributed by Alex Zepeda <zipzippy@sonic.net>
+	Mention that gm is obsoleted by the gem driver.
+	Update macppc ethernet device references
+	 - delete obsolete de refs
+	 - change gm to gem
+	Nice new mac68k/macppc obio man pages courtesy of Alex Zepeda
+	<zipzippy@sonic.net>
+	Alex Zepeda <zipzippy@sonic.net> created some nice new ADB man pages
+	based loosely on the mac68k adb.4.  These pages are MI (mac68k and
+	macppc).
+	Combine mac68k and macppc mc.4 man page into an MI man page.
+	mac68k and macppc man page addition/obsoletion:
+	 - man4.mac68k/adb.4
+	 + adb.4
+	 + akbd.4
+	 + ams.4
+	 - man4.mac68k/mc.4
+	 - man4.macppc/mc.4
+	 + man4.macppc/obio.4
+	 + mc.4
+	[mbw, ticket #1485]
 
