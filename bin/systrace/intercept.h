@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.10 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.11 2003/08/02 14:24:30 provos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -101,7 +101,6 @@ struct intercept_pid {
 
 	char username[LOGIN_NAME_MAX];
 	char home[MAXPATHLEN];	/* current home dir for uid */
-	char cwd[MAXPATHLEN];	/* current working directory */
 
 	void *data;
 
