@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.152 2001/10/13 00:15:53 pooka Exp $
+.\"	$NetBSD: options.4,v 1.153 2001/11/20 08:49:31 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 4, 2001
+.Dd November 20, 2001
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -322,6 +322,21 @@ See
 for details.
 .Em NOTE :
 not available on all architectures.
+.It Cd options KGDB_DEV
+Device number
+.Po
+as a
+.Dv dev_t
+.Pc
+of kgdb device.
+.It Cd options KGDB_DEVADDR
+Memory address of kgdb device.
+.It Cd options KGDB_DEVMODE
+Permissions of kgdb device.
+.It Cd options KGDB_DEVNAME
+Device name of kgdb device.
+.It Cd options KGDB_DEVRATE
+Baud rate of kgdb device.
 .It Cd makeoptions DEBUG="-g"
 The -g flag causes
 .Pa netbsd.gdb
