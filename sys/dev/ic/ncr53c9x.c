@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.37 1999/11/10 00:42:37 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.38 1999/11/10 04:21:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -514,6 +514,16 @@ ncr53c9x_select(sc, ecb)
 	 */
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
+
+	if (ecb->flags & ECB_SENSE) {
+		/*
+		 * For REQUEST SENSE, we should not send an IDENTIFY or
+		 * otherwise mangle the target.  There should be no MESSAGE IN
+		 * phase.
+		 */
+		NCRCMD(sc, NCRCMD_SELNATN);
+		return;
+	}
 
 	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
 		size_t dmasize;
