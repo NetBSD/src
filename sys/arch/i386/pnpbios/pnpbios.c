@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.20 2000/06/29 08:44:58 mrg Exp $ */
+/* $NetBSD: pnpbios.c,v 1.21 2000/12/17 07:59:14 jmc Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -1360,6 +1360,26 @@ pnpbios_getiobase(pbt, resc, idx, tagp, basep)
 	if (basep)
 		*basep = io->minbase;
 	return (0);
+}
+
+int
+pnpbios_getiosize(pbt, resc, idx, sizep)
+        pnpbios_tag_t pbt;
+        struct pnpresources *resc;
+        int idx;
+        int *sizep;
+{
+        struct pnp_io *io;
+
+        if (idx >= resc->numio)
+            return (EINVAL);
+
+        io = SIMPLEQ_FIRST(&resc->io);
+        while (idx--)
+                io = SIMPLEQ_NEXT(io, next);
+        if (sizep)
+                *sizep = io->len;
+        return (0);
 }
 
 void *
