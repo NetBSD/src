@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.22 1999/04/15 16:21:27 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.23 1999/05/05 21:35:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -620,6 +620,7 @@ again:
 				sc_xfer->error = XS_SHORTSENSE;
 			}
 		} else {
+			sc_xfer->resid = xfer->c_bcount;
 			if (chp->ch_status & WDCS_ERR) {
 				/* save the short sense */
 				sc_xfer->error = XS_SHORTSENSE;
@@ -633,6 +634,7 @@ again:
 					xfer->databuf = &sc_xfer->sense;
 					xfer->c_bcount =
 					    sizeof(sc_xfer->sense.scsi_sense);
+					xfer->c_skip = 0;
 					xfer->c_flags |= C_SENSE;
 					wdc_atapi_start(chp, xfer);
 					return 1;
@@ -795,9 +797,7 @@ wdc_atapi_done(chp, xfer)
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
-	sc_xfer->resid = xfer->c_bcount;
 	/* remove this command from xfer queue */
-	xfer->c_skip = 0;
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
 	if (drvp->n_dmaerrs ||
