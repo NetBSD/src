@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.15 1998/07/26 13:36:34 mycroft Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.16 1998/11/15 17:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.15 1998/07/26 13:36:34 mycroft Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.16 1998/11/15 17:21:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,11 +53,12 @@ __RCSID("$NetBSD: __strsignal.c,v 1.15 1998/07/26 13:36:34 mycroft Exp $");
 #include <string.h>
 #include "extern.h"
 
+/* ARGSUSED */
 const char *
 __strsignal(num, buf, buflen)
 	int num;
 	char *buf;
-	int buflen;
+	size_t buflen;
 {
 #define	UPREFIX	"Unknown signal: %u"
 	unsigned int signum;
@@ -70,8 +71,8 @@ __strsignal(num, buf, buflen)
 	signum = num;				/* convert to unsigned */
 	if (signum < NSIG) {
 #ifdef NLS
-		(void)strncpy(buf, catgets(catd, 2, signum,
-		    (char *)sys_siglist[signum]), NL_TEXTMAX); 
+		(void)strncpy(buf, catgets(catd, 2, (int)signum,
+		    sys_siglist[signum]), NL_TEXTMAX); 
 		buf[NL_TEXTMAX - 1] = '\0';
 #else
 		return((char *)sys_siglist[signum]);

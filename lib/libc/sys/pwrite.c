@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.3 1998/10/14 11:25:19 kleink Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.4 1998/11/15 17:23:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwrite.c,v 1.3 1998/10/14 11:25:19 kleink Exp $");
+__RCSID("$NetBSD: pwrite.c,v 1.4 1998/11/15 17:23:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,10 +62,10 @@ pwrite(fd, buf, nbyte, offset)
 	int rv;
 
 	q = __syscall((quad_t)SYS_pwrite, fd, buf, nbyte, 0, offset);
-	if (sizeof (quad_t) == sizeof (register_t) ||
-	    BYTE_ORDER == LITTLE_ENDIAN)
+	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
+	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 		rv = (int)q;
 	else
-		rv = (int)(q >> 32);
+		rv = (int)((u_quad_t)q >> 32);
 	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.7 1998/02/03 18:49:22 perry Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.8 1998/11/15 17:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strpbrk.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strpbrk.c,v 1.7 1998/02/03 18:49:22 perry Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.8 1998/11/15 17:21:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +57,7 @@ strpbrk(s1, s2)
 	while ((c = *s1++) != 0) {
 		for (scanp = s2; (sc = *scanp++) != 0;)
 			if (sc == c)
+				/* LINTED interface specification */
 				return ((char *)(s1 - 1));
 	}
 	return (NULL);

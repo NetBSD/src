@@ -1,9 +1,10 @@
-/*	$NetBSD: timer_create.c,v 1.2 1998/01/09 03:15:42 perry Exp $	*/
+/*	$NetBSD: timer_create.c,v 1.3 1998/11/15 17:23:00 christos Exp $	*/
 
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
 
+/* ARGSUSED */
 int
 timer_create(clock_id, evp, timerid)
 	clockid_t clock_id;

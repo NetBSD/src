@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.13 1998/07/26 13:36:34 mycroft Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.14 1998/11/15 17:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.13 1998/07/26 13:36:34 mycroft Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.14 1998/11/15 17:21:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ const char *
 __strerror(num, buf, buflen)
 	int num;
 	char *buf;
-	int buflen;
+	size_t buflen;
 {
 #define	UPREFIX	"Unknown error: %u"
 	unsigned int errnum;
@@ -76,8 +76,8 @@ __strerror(num, buf, buflen)
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr) {
 #ifdef NLS
-		strncpy(buf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum]), buflen); 
+		(void)strncpy(buf, catgets(catd, 1, (int)errnum,
+		    sys_errlist[errnum]), buflen); 
 		buf[buflen - 1] = '\0';
 #else
 		return(sys_errlist[errnum]);
