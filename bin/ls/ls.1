@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.19 1998/06/01 21:11:28 hubertf Exp $
+.\"	$NetBSD: ls.1,v 1.20 1999/01/03 01:33:51 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,6 +131,12 @@ output.
 Include the file flags in a long
 .Pq Fl l
 output.
+If no file flags are set,
+.Dq -
+is displayed.
+(See
+.Xr chflags 1
+for a list of possible flags and their meanings.)
 .It Fl q
 Force printing of non-graphic characters in file names as
 the character `?'; this is the default when output is to a terminal.
@@ -197,12 +203,31 @@ If the
 .Fl l
 option is given, the following information
 is displayed for each file:
-file mode,
-number of links, owner name, group name,
-number of bytes in the file, abbreviated
-month, day-of-month file was last modified,
-hour file last modified, minute file last
-modified, and the pathname.
+.Bl -item -offset indent -compact
+.It
+file mode
+.It
+number of links
+.It
+owner name
+.It
+group name
+.It
+file flags (if
+.Fl o
+given)
+.It
+number of bytes in the file
+.It
+abbreviated month file was last modified
+.It
+day-of-month file was last modified
+.It
+hour and minute file was last modified
+.It
+pathname
+.El
+.Pp
 In addition, for each directory whose contents are displayed, the total
 number of 512-byte blocks used by the files in the directory is displayed
 on a line by itself immediately before the information for the files in the
@@ -348,6 +373,7 @@ files in order to be compatible with the
 .St -p1003.2
 specification.
 .Sh SEE ALSO
+.Xr chflags 1 ,
 .Xr chmod 1 ,
 .Xr symlink 7 ,
 .Xr sticky 8
