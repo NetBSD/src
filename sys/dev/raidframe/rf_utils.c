@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.4 1999/08/13 03:41:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "rf_debugMem.h"
 #include "rf_alloclist.h"
 #include "rf_general.h"
-#include "rf_sys.h"
 
 /* creates & zeros 2-d array with b rows and k columns (MCH) */
 RF_RowCol_t **

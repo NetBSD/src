@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.6 1999/08/10 22:19:27 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.7 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "rf_engine.h"
 #include "rf_parityscan.h"
 #include "rf_map.h"
-#include "rf_sys.h"
 
 /*****************************************************************************************
  *
