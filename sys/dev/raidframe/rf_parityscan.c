@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.25 2004/03/02 15:47:35 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.26 2004/03/05 03:58:21 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.25 2004/03/02 15:47:35 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.26 2004/03/05 03:58:21 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -325,6 +325,7 @@ rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, int parity)
 {
 	if (raidPtr->Disks[pda->col].status == rf_ds_reconstructing) {
 		if (rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, pda->startSector)) {
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 #if RF_DEBUG_VERIFYPARITY
 				RF_RowCol_t oc = pda->col;
@@ -346,9 +347,12 @@ rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, int parity)
 #endif
 				}
 			} else {
+#endif
 				RF_RowCol_t spCol = raidPtr->Disks[pda->col].spareCol;
 				pda->col = spCol;
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 			}
+#endif
 		}
 	}
 	if (RF_DEAD_DISK(raidPtr->Disks[pda->col].status))
