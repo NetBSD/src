@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2003/06/13 04:05:27 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2003/09/23 15:14:03 shige Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,6 +60,12 @@
 #if defined(_KERNEL)
 extern char bootpath[];
 
+void ibm4xx_init_board_data(void *, u_int);
+void ibm4xx_init(void (*)(void));
+void ibm4xx_startup(const char *);
+void ibm4xx_setup_propdb(void);
+void ibm4xx_dumpsys(void);
+void ibm4xx_install_extint(void (*)(void));
 void calc_delayconst(void);
 void ppc4xx_reset(void) __attribute__((__noreturn__));
 #endif /* _KERNEL */
