@@ -1,4 +1,4 @@
-/*	$Id: getdents.c,v 1.1 2004/10/03 12:35:15 yamt Exp $	*/
+/*	$Id: getdents.c,v 1.2 2004/10/04 22:33:16 he Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -59,7 +59,8 @@ print_dents(FILE *fp, const void *vp, int sz)
 
 		for (cp = vp, i = 0; cp < ep; cp++, i++) {
 			if ((i % 16) == 0)
-				fprintf(fp, "%08x:", cp - (const char *)vp);
+				fprintf(fp, "%08x:",
+				    (int)(cp - (const char *)vp));
 			fprintf(fp, "%02x ", (int)(unsigned char)*cp);
 			if ((i % 16) == 15)
 				fprintf(fp, "\n");
