@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.6 1997/01/09 20:18:25 tls Exp $	*/
+/*	$NetBSD: apropos.c,v 1.7 1997/10/16 08:44:23 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: apropos.c,v 1.6 1997/01/09 20:18:25 tls Exp $";
+static char rcsid[] = "$NetBSD: apropos.c,v 1.7 1997/10/16 08:44:23 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: apropos.c,v 1.6 1997/01/09 20:18:25 tls Exp $";
 
 #include <ctype.h>
 #include <err.h>
+#include <glob.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,6 +78,7 @@ main(argc, argv)
 	TAG *tp;
 	int ch, rv;
 	char *conffile, **p, *p_augment, *p_path;
+	glob_t pg;
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
@@ -117,8 +119,14 @@ main(argc, argv)
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
 		    NULL : tp->list.tqh_first;
-		for (; ep != NULL; ep = ep->q.tqe_next)
-			apropos(argv, ep->s, 0);
+		for (; ep != NULL; ep = ep->q.tqe_next) {
+			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
+			    NULL, &pg) != 0)
+				err(1, "glob");
+			for (p = pg.gl_pathv; *p; p++)
+				apropos(argv, *p, 0);
+			globfree(&pg);
+		}
 	}
 
 	if (!foundman)
