@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.2 2000/08/21 23:34:45 lukem Exp $
+# $NetBSD: bootconf.sh,v 1.3 2000/10/09 05:30:17 nisimura Exp $
 #
 
 # PROVIDE: bootconf
@@ -16,20 +16,27 @@ bootconf_start()
 	fi
 	if [ -h /etc/etc.default ]; then
 		def=`ls -ld /etc/etc.default 2>&1`
-		default=`expr "$def" : '.*-> etc\.\(.*\)' 2>&1`
+		default="${def##*-> etc.}"
 	else
 		default=current
 	fi
 	spc=""
-	conflist=`cd /etc; ls -1d etc.* 2>&1 | egrep -v "current|default"`
-	for i in $conflist; do
-		name=${i#etc.}
-		if [ "$name" = "$default" ]; then
-			echo -n "${spc}[${name}]"
-		else
-			echo -n "${spc}${name}"
-		fi
-		spc=" "
+	for i in /etc/etc.*
+	do
+		name="${i##/etc/etc.}"
+		case $name in
+		current|default|\*)
+			continue
+			;;	
+		*)
+			if [ "$name" = "$default" ]; then
+				echo -n "${spc}[${name}]"
+			else
+				echo -n "${spc}${name}"
+			fi
+			spc=" "
+			;;
+		esac
 	done
 	echo
 	master=$$
