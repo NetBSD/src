@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.24 1994/06/29 06:46:18 cgd Exp $	*/
+/*	$NetBSD: vnode.h,v 1.25 1994/07/04 22:26:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,8 +135,7 @@ struct vattr {
 	struct timespec	va_ctime;	/* time file changed */
 	u_long		va_gen;		/* generation number of file */
 	u_long		va_flags;	/* flags defined for file */
-	/* XXX should be a dev_t */
-	u_long		va_rdev;	/* device the special file represents */
+	dev_t		va_rdev;	/* device the special file represents */
 	u_quad_t	va_bytes;	/* bytes of disk space held by file */
 	u_quad_t	va_filerev;	/* file modification number */
 	u_int		va_vaflags;	/* operations flags, see below */
