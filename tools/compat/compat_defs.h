@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.32 2004/04/23 14:38:16 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.33 2004/04/23 14:46:31 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -445,10 +445,10 @@ char *alloca ();
 
 char	*cgetcap(char *, const char *, int);
 int	 cgetclose(void);
-int	 cgetent(char **, const char **, const char *);
-int	 cgetfirst(char **, const char **);
+int	 cgetent(char **, const char * const *, const char *);
+int	 cgetfirst(char **, const char * const *);
 int	 cgetmatch(const char *, const char *);
-int	 cgetnext(char **, const char **);
+int	 cgetnext(char **, const char * const *);
 int	 cgetnum(char *, const char *, long *);
 int	 cgetset(const char *);
 int	 cgetstr(char *, const char *, char **);
