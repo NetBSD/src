@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2002/08/02 03:46:45 chs Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2002/10/30 06:37:38 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -71,11 +71,15 @@
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
 
-void syscall_plain(struct trapframe *frame);
-void syscall_fancy(struct trapframe *frame);
+#ifndef EMULNAME
+#define EMULNAME(x)	(x)
+#endif
+
+void EMULNAME(syscall_plain)(struct trapframe *frame);
+void EMULNAME(syscall_fancy)(struct trapframe *frame);
 
 void
-syscall_plain(struct trapframe *frame)
+EMULNAME(syscall_plain)(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
@@ -89,6 +93,7 @@ syscall_plain(struct trapframe *frame)
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
+
 	callp = p->p_emul->e_sysent;
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
@@ -167,7 +172,7 @@ syscall_bad:
 }
 
 void
-syscall_fancy(struct trapframe *frame)
+EMULNAME(syscall_fancy)(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
@@ -254,52 +259,20 @@ syscall_bad:
 }
 
 void
-syscall_intern(struct proc *p)
+EMULNAME(syscall_intern)(struct proc *p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
 
-#ifdef COMPAT_LINUX
-void
-linux_syscall_intern(struct proc *p)
-{
-	p->p_md.md_syscall = syscall_fancy;
-}
-#endif
-
-void
-child_return(void *arg)
-{
-	struct proc * const p = arg;
-	struct trapframe * const tf = trapframe(p);
-
-	KERNEL_PROC_UNLOCK(p);
-
-	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
-	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
-					   be them. */
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
-	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-}
