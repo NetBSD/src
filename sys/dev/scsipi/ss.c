@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.20 1998/04/22 19:44:18 pk Exp $	*/
+/*	$NetBSD: ss.c,v 1.21 1998/08/19 08:40:31 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -253,7 +253,7 @@ ssclose(dev, flag, mode, p)
 	SC_DEBUG(ss->sc_link, SDEV_DB1, ("closing\n"));
 
 	if (SSMODE(dev) == MODE_REWIND) {
-		if (ss->special->rewind_scanner) {
+		if (ss->special && ss->special->rewind_scanner) {
 			/* call special handler to rewind/abort scan */
 			error = (ss->special->rewind_scanner)(ss);
 			if (error)
@@ -289,7 +289,7 @@ ssminphys(bp)
 	 * time, also some cannot disconnect, so the read must be
 	 * short enough to happen quickly
 	 */
-	if (ss->special->minphys)
+	if (ss->special && ss->special->minphys)
 		(ss->special->minphys)(ss, bp);
 }
 
@@ -309,7 +309,7 @@ ssread(dev, uio, flag)
 
 	/* if the scanner has not yet been started, do it now */
 	if (!(ss->flags & SSF_TRIGGERED)) {
-		if (ss->special->trigger_scanner) {
+		if (ss->special && ss->special->trigger_scanner) {
 			error = (ss->special->trigger_scanner)(ss);
 			if (error)
 				return (error);
@@ -423,7 +423,7 @@ ssstart(v)
 			ss->buf_queue.b_actb = bp->b_actb;
 		*bp->b_actb = dp;
 
-		if (ss->special->read) {
+		if (ss->special && ss->special->read) {
 			(ss->special->read)(ss, bp);
 		} else {
 			/* generic scsi2 scanner read */
@@ -450,7 +450,7 @@ ssioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case SCIOCGET:
-		if (ss->special->get_params) {
+		if (ss->special && ss->special->get_params) {
 			/* call special handler */
 			error = (ss->special->get_params)(ss);
 			if (error)
@@ -464,7 +464,7 @@ ssioctl(dev, cmd, addr, flag, p)
 	case SCIOCSET:
 		sio = (struct scan_io *)addr;
 
-		if (ss->special->set_params) {
+		if (ss->special && ss->special->set_params) {
 			/* call special handler */
 			error = (ss->special->set_params)(ss, sio);
 			if (error)
@@ -475,7 +475,7 @@ ssioctl(dev, cmd, addr, flag, p)
 		}
 		break;
 	case SCIOCRESTART:
-		if (ss->special->rewind_scanner ) {
+		if (ss->special && ss->special->rewind_scanner ) {
 			/* call special handler */
 			error = (ss->special->rewind_scanner)(ss);
 			if (error)
