@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.7 2003/07/16 08:22:01 itojun Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.8 2004/10/30 15:28:45 dsl Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -550,7 +550,7 @@ build_pr_list()
 		return (0);
 	}
 	while (fgets(buff, 255, p) != NULL) {
-		if (isspace(buff[0]))
+		if (isspace((unsigned char)buff[0]))
 			continue;
 
 		if ((cp = strtok(buff, delims)) == NULL)
@@ -778,7 +778,7 @@ build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
 		files = &buff[FILECOL - 1];
 		cp = totsize;
 		cp--;
-		while (cp > files && isspace(*cp))
+		while (cp > files && isspace((unsigned char)*cp))
 			*cp-- = '\0';
 
 		buff[FILECOL - 2] = '\0';
@@ -1023,16 +1023,16 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 **     [no entries | N entr[y|ies] in spool area]
 **     <status message, may include the word "attention">
 */
-		while (fgets(buff, 255, p) != NULL && isspace(buff[0])) {
+		while (fgets(buff, 255, p) != NULL && isspace((unsigned char)buff[0])) {
 			cp = buff;
-			while (isspace(*cp))
+			while (isspace((unsigned char)*cp))
 				cp++;
 			if (*cp == '\0')
 				break;
 			cp1 = cp;
 			cp2 = buff2;
 			while (*cp1 && *cp1 != '\n') {
-				*cp2++ = tolower(*cp1);
+				*cp2++ = tolower((unsigned char)*cp1);
 				cp1++;
 			}
 			*cp1 = '\0';
@@ -1049,7 +1049,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 				*printing = (strstr(buff2, "enabled") != NULL);
 				continue;
 			}
-			if (isdigit(buff2[0]) && (strstr(buff2, "entr") != NULL)) {
+			if (isdigit((unsigned char)buff2[0]) && (strstr(buff2, "entr") != NULL)) {
 
 				*qlen = atoi(buff2);
 				continue;
