@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.7 1997/01/13 00:35:48 mark Exp $ */
+/* $NetBSD: mainbus.c,v 1.8 1997/01/26 01:41:01 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,6 +57,8 @@ extern struct bus_space mainbus_bs_tag;
 
 int mainbusmatch __P((struct device *, void *, void *));
 void mainbusattach __P((struct device *, struct device *, void *));
+int mainbusprint __P((void *aux, const char *mainbus));
+void mainbusscan __P((struct device *parent, void *match));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
