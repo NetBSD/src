@@ -33,10 +33,15 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_MEM_FUNCTIONS
 
 #define TARGET_DEFAULT (MASK_GAS|MASK_ABICALLS)
+#undef DWARF2_DEBUGGING_INFO
+#define DBX_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 #include <mips/elf.h>
 #undef OBJECT_FORMAT_COFF
+#undef DWARF_FRAME_REGNUM
+#undef DWARF_FRAME_RETURN_COLUMN
+#undef INCOMING_RETURN_ADDR_RTX
 
 /* Get generic NetBSD definitions. */
 
@@ -122,4 +127,9 @@ Boston, MA 02111-1307, USA.  */
 #define MIPS_CACHEFLUSH_FUNC "_cacheflush"
 
 /* Use sjlj exceptions. */
-#define DWARF2_UNWIND_INFO 0
+#undef DWARF2_UNWIND_INFO
+/* #define DWARF2_UNWIND_INFO 0 */
+
+/* Turn off special section processing by default.  */
+#undef MIPS_DEFAULT_GVALUE
+#define MIPS_DEFAULT_GVALUE 0
