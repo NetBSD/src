@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.51 2002/05/12 23:04:36 matt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.52 2002/09/14 21:45:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.51 2002/05/12 23:04:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.52 2002/09/14 21:45:16 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1095,7 +1095,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	else {
 		*auth_len = nmp->nm_authlen;
 		*verf_len = nmp->nm_verflen;
-		memcpy((caddr_t)key, (caddr_t)nmp->nm_key, sizeof (key));
+		memcpy(key, nmp->nm_key, sizeof (NFSKERBKEY_T));
 	}
 	nmp->nm_iflag &= ~NFSMNT_HASAUTH;
 	nmp->nm_iflag |= NFSMNT_WAITAUTH;
@@ -1233,7 +1233,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
-			memcpy(nuidp->nu_key, key, sizeof (key));
+			memcpy(nuidp->nu_key, key, sizeof (NFSKERBKEY_T));
 			TAILQ_INSERT_TAIL(&nmp->nm_uidlruhead, nuidp,
 				nu_lru);
 			LIST_INSERT_HEAD(NMUIDHASH(nmp, cred->cr_uid),
