@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.17 2001/08/20 12:37:21 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.18 2001/08/20 13:44:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.17 2001/08/20 12:37:21 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.18 2001/08/20 13:44:08 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0 && strcasecmp(*argv, "help") != 0)
+	if (argc > 0 && strcasecmp(*argv, "help") == 0)
 		usage();
 
 	if (cdname == NULL) {
