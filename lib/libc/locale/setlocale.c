@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.37.2.2 2002/08/03 16:18:17 lukem Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.37.2.3 2002/08/03 16:18:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.37.2.2 2002/08/03 16:18:17 lukem Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.37.2.3 2002/08/03 16:18:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,9 +171,7 @@ __setlocale(category, locale)
 			do {
 				if (i == _LC_LAST)
 					return (NULL);	/* too many slashes. */
-				len = r - locale > sizeof(new_categories[i]) - 1
-					? sizeof(new_categories[i]) - 1
-					: r - locale;
+				len = r - locale;
 				if (len + 1 > sizeof(new_categories[i]))
 					return (NULL);	/* too long */
 				(void)memcpy(new_categories[i], locale, len);
