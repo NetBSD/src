@@ -20,7 +20,7 @@ ALL=	cs-hidden.cf cs-exposed.cf \
 	ultrix4.1-cs-exposed.cf ultrix4.1-cs-hidden.cf \
 	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
 	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
-	python.cf sun-lamp.cf \
+	python.cf sun-lamp.cf boat-anchor.cf\
 	tcpproto.cf uucpproto.cf 
 
 all: $(ALL)
