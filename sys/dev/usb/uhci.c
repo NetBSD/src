@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.161 2002/06/01 23:51:04 lukem Exp $	*/
+/*	$NetBSD: uhci.c,v 1.162 2002/07/11 21:14:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.161 2002/06/01 23:51:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.162 2002/07/11 21:14:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1924,7 +1924,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
 	splx(s);
 
-	/* 
+	/*
 	 * Step 2: Wait until we know hardware has finished any possible
 	 * use of the xfer.  Also make sure the soft interrupt routine
 	 * has run.
@@ -1936,7 +1936,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	DPRINTFN(1,("uhci_abort_xfer: tsleep\n"));
 	tsleep(&sc->sc_softwake, PZERO, "uhciab", 0);
 	splx(s);
-		
+
 	/*
 	 * Step 3: Execute callback.
 	 */
