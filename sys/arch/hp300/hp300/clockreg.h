@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.5 1994/10/26 07:25:26 cgd Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.5.42.1 2001/11/12 23:25:01 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,8 @@ struct bbc_tm {
 #define BBC_READ_REG	0xc3
 #define NUM_BBC_REGS	12
 
-#define	leapyear(year)		((year) % 4 == 0)
+#define	leapyear(year)		\
+	((((year) % 4 == 0) && ((year) % 100) != 0) || ((year) % 400) == 0)
 #define	range_test(n, l, h)	if ((n) < (l) || (n) > (h)) return(0)
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])
