@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.4 1995/06/28 04:41:30 cgd Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.5 1995/09/19 22:44:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -75,15 +75,16 @@ struct emul emul_osf1 = {
 };
 
 int
-osf1_open(p, uap, retval)
+osf1_open(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
@@ -105,17 +106,18 @@ osf1_open(p, uap, retval)
 }
 
 int
-osf1_setsysinfo(p, uap, retval)
+osf1_setsysinfo(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_setsysinfo_args /* {
 		syscallarg(u_long) op;
 		syscallarg(caddr_t) buffer;
 		syscallarg(u_long) nbytes;
 		syscallarg(caddr_t) arg;
 		syscallarg(u_long) flag;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	return (0);
 }
@@ -124,14 +126,15 @@ osf1_setsysinfo(p, uap, retval)
 #define OSF1_RLIMIT_NOFILE	6		/* OSF1's RLIMIT_NOFILE */
 #define OSF1_RLIMIT_NLIMITS	8		/* Number of OSF1 rlimits */
 
-osf1_getrlimit(p, uap, retval)
+osf1_getrlimit(p, v, retval)
 	struct proc *p;
-	struct osf1_getrlimit_args /* {
-		syscallarg(u_int) which;
-		syscallarg(struct rlimit *) rlp;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_getrlimit_args /* { 
+		syscallarg(u_int) which;
+		syscallarg(struct rlimit *) rlp;
+	} */ *uap = v;
 	struct getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
@@ -151,14 +154,15 @@ osf1_getrlimit(p, uap, retval)
 	return getrlimit(p, &a, retval);
 }
 
-osf1_setrlimit(p, uap, retval)
+osf1_setrlimit(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
@@ -189,18 +193,19 @@ osf1_setrlimit(p, uap, retval)
 #define	OSF1_MAP_UNALIGNED	0x800
 
 int
-osf1_mmap(p, uap, retval)
+osf1_mmap(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
-		syscallarg(off_t) pos;
-	} */ *uap;
-	register_t *retval;
-{
+		syscallarg(off_t) pos;  
+	} */ *uap = v;
 	struct mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
@@ -246,14 +251,15 @@ osf1_mmap(p, uap, retval)
 }
 
 int
-osf1_usleep_thread(p, uap, retval)
+osf1_usleep_thread(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_usleep_thread_args /* {
 		syscallarg(struct timeval *) sleep;
 		syscallarg(struct timeval *) slept;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct timeval tv, endtv;
 	u_long ticks;
 	int error, s;
@@ -309,15 +315,16 @@ copysigaction(osf, bsd)
 }
 
 int
-osf1_sigaction(p, uap, retval)
+osf1_sigaction(p, v, retval)
 	struct proc *p;
-	struct osf1_sigaction_args /* {
-		syscallarg(int) signum;
-		syscallarg(struct sigaction *) nsa;
-		syscallarg(struct sigaction *) osa;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_sigaction_args /* {
+		syscallarg(int) signum;
+		syscallarg(struct sigaction *) nsa; 
+		syscallarg(struct sigaction *) osa;
+	} */ *uap = v;
 	struct sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigaction *) nsa;
@@ -385,14 +392,15 @@ struct osf1_stat {
  * Get file status; this version follows links.
  */
 /* ARGSUSED */
-osf1_stat(p, uap, retval)
+osf1_stat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct osf1_stat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct osf1_stat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -415,14 +423,15 @@ osf1_stat(p, uap, retval)
  * Get file status; this version does not follow links.
  */
 /* ARGSUSED */
-osf1_lstat(p, uap, retval)
+osf1_lstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct osf1_lstat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct osf1_stat *) ub;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -444,14 +453,15 @@ osf1_lstat(p, uap, retval)
 /*
  * Return status information about a file descriptor.
  */
-osf1_fstat(p, uap, retval)
+osf1_fstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct osf1_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct osf1_stat *) sb;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct stat ub;
@@ -514,15 +524,16 @@ cvtstat2osf1(st, ost)
 }
 
 int
-osf1_mknod(p, uap, retval)
+osf1_mknod(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_mknod_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct mknod_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -544,15 +555,16 @@ osf1_mknod(p, uap, retval)
 #define	OSF1_FSYNC	0x04000		/* XXX OSF1_O_SYNC */
 
 int
-osf1_fcntl(p, uap, retval)
+osf1_fcntl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct fcntl_args a;
 	long tmp;
 	int error;
@@ -613,15 +625,16 @@ osf1_fcntl(p, uap, retval)
 }
 
 int
-osf1_socket(p, uap, retval)
+osf1_socket(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct osf1_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct socket_args a;
 
 	if (SCARG(uap, type) > AF_LINK)
@@ -635,8 +648,11 @@ osf1_socket(p, uap, retval)
 }
 
 int
-osf1_sendto(p, uap, retval)
+osf1_sendto(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
@@ -644,9 +660,7 @@ osf1_sendto(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(caddr_t) to;
 		syscallarg(int) tolen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sendto_args a;
 
 	if (SCARG(uap, flags) & ~0x7f)		/* unsupported flags */
@@ -673,13 +687,14 @@ osf1_sendto(p, uap, retval)
 #define	OSF1_RB_ALLFLAGS	0x0ff		/* all of the above */
 
 int
-osf1_reboot(p, uap, retval)
+osf1_reboot(p, v, retval)
 	struct proc *p;
-	struct osf1_reboot_args /* {
-		syscallarg(int) opt;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_reboot_args /* {
+		syscallarg(int) opt;
+	} */ *uap = v;
 	struct reboot_args a;
 
 	if (SCARG(uap, opt) & ~OSF1_RB_ALLFLAGS &&
@@ -704,15 +719,16 @@ osf1_reboot(p, uap, retval)
 }
 
 int
-osf1_lseek(p, uap, retval)
+osf1_lseek(p, v, retval)
 	struct proc *p;
-	struct osf1_lseek_args /* {
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-		syscallarg(int) whence;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_lseek_args /* {  
+		syscallarg(int) fd;  
+		syscallarg(off_t) offset;
+		syscallarg(int) whence;
+	} */ *uap = v;
 	struct lseek_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
@@ -738,13 +754,14 @@ osf1_lseek(p, uap, retval)
  *	    this function call.
  */
 int
-osf1_setuid(p, uap, retval)
+osf1_setuid(p, v, retval)
 	struct proc *p;
-	struct osf1_setuid_args /* {
-		syscallargs(uid_t) uid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_setuid_args /* { 
+		syscallargs(uid_t) uid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	uid_t uid = SCARG(uap, uid);
 	int error;
@@ -773,13 +790,14 @@ osf1_setuid(p, uap, retval)
  * setuid(), you'll get a correct description of setgid().
  */
 int
-osf1_setgid(p, uap, retval)
+osf1_setgid(p, v, retval)
 	struct proc *p;
-	struct osf1_setgid_args /* {
-		syscallargs(gid_t) gid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_setgid_args /* {
+		syscallargs(gid_t) gid;
+	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
 	gid_t gid = SCARG(uap, gid);
 	int error;
@@ -808,15 +826,16 @@ struct osf1_iovec {
 };
 
 int
-osf1_readv(p, uap, retval)
+osf1_readv(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct osf1_iovec *) iovp;
 		syscallarg(u_int) iovcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
@@ -863,15 +882,16 @@ punt:
 }
 
 int
-osf1_writev(p, uap, retval)
+osf1_writev(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct osf1_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct osf1_iovec *) iovp;
 		syscallarg(u_int) iovcnt;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
@@ -919,14 +939,15 @@ punt:
 
 /* More of the stupid off_t padding! */
 int
-osf1_truncate(p, uap, retval)
+osf1_truncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t retval;
+{
 	struct osf1_truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(off_t) length;
-	} */ *uap;
-	register_t retval;
-{
+	} */ *uap = v;
 	struct truncate_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -937,14 +958,15 @@ osf1_truncate(p, uap, retval)
 }
 
 int
-osf1_ftruncate(p, uap, retval)
+osf1_ftruncate(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t retval;
+{
 	struct osf1_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(off_t) length;
-	} */ *uap;
-	register_t retval;
-{
+	} */ *uap = v;
 	struct ftruncate_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
@@ -955,13 +977,14 @@ osf1_ftruncate(p, uap, retval)
 }
 
 int
-osf1_getsid(p, uap, retval)
+osf1_getsid(p, v, retval)
 	struct proc *p;
-	struct osf1_getsid_args /* {
-		syscallarg(pid_t) pid;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct osf1_getsid_args /* {  
+		syscallarg(pid_t) pid;  
+	} */ *uap = v;
 	struct proc *t;
 
 	if (SCARG(uap, pid) == 0)
