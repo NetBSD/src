@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.39 2005/03/19 18:45:08 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.40 2005/03/20 09:02:33 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -748,6 +748,8 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/hpcsh/conf/HPW650PA
 			src/sys/arch/i386/conf/GENERIC
 			src/sys/arch/i386/conf/GENERIC.MP
+			src/sys/arch/i386/conf/XEN0
+			src/sys/arch/i386/conf/XENU
 			src/sys/arch/ibmnws/conf/GENERIC
 			src/sys/arch/iyonix/conf/GENERIC
 			src/sys/arch/luna68k/conf/GENERIC
@@ -755,6 +757,7 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/macppc/conf/GENERIC
 			src/sys/arch/macppc/conf/GENERIC.MP
 			src/sys/arch/mipsco/conf/GENERIC
+			src/sys/arch/mmeye/conf/GENERIC
 			src/sys/arch/mvme68k/conf/GENERIC
 			src/sys/arch/netwinder/conf/GENERIC
 			src/sys/arch/news68k/conf/GENERIC
@@ -777,10 +780,8 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/vax/conf/GENERIC
 			src/sys/arch/vax/conf/GENERIC.MP
 			src/sys/arch/x68k/conf/GENERIC
-			src/sys/arch/xen/conf/GENERIC
 
 		not tested at all:
-			mmeye
 			pdp10
 			playstation2
 
