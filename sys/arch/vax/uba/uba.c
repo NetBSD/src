@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.16 1996/02/11 13:24:50 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.17 1996/03/02 14:09:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -74,6 +74,9 @@ int	uba_match __P((struct device *, void *, void *));
 void	uba_attach __P((struct device *, struct device *, void *));
 void	ubascan __P((struct device *, void *));
 int	ubaprint __P((void *, char *));
+void	uba_dw780int __P((int));
+void	ubaerror __P((int, struct uba_softc *, int *, int *,
+	    struct uba_regs *));
 
 struct	cfdriver ubacd = {
 	NULL, "uba", uba_match, uba_attach, DV_DULL,
@@ -89,16 +92,21 @@ ubastray(arg)
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	struct	uba_softc *sc = ubacd.cd_devs[arg];
+	struct  uba_regs *ur = sc->uh_uba;
 	int	vektor;
 
-	vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+	rbr = mfpr(PR_IPL);
+	if (sc->uh_type != DW780)
+		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+	else
+		vektor = ur->uba_brrvr[rbr - 0x14] >> 2;
 
 	if (cold) {
-		rbr = mfpr(PR_IPL);
-		rcvec = vektor;
+		if (sc->uh_type != DW780)
+			rcvec = vektor;
 	} else 
-		printf("uba%d: unexpected interrupt, vector %o, level %d",
-		    arg, vektor << 2, mfpr(PR_IPL));
+		printf("uba%d: unexpected interrupt, vector %o, br %d\n",
+		    arg, vektor << 2, rbr - 20);
 }
 
 /*
@@ -121,9 +129,6 @@ unifind(uhp0, pumem)
 	caddr_t ualloc;
 	volatile extern int br, cvec;
 	volatile extern int rbr, rcvec;
-#if DW780 || DWBUA
-	struct uba_regs *vubp = uhp->uh_uba;
-#endif
 
 #define	ubaddr(uhp, off)    (u_short *)((int)(uhp)->uh_iopage + ubdevreg(off))
 	/*
@@ -149,7 +154,7 @@ unifind(uhp0, pumem)
 		if (badaddr((caddr_t)reg, 2))
 			continue;
 
-#ifdef DW780
+#if DW780 && 0 /* XXX */
 		if (uhp->uh_type == DW780 && vubp->uba_sr) {
 			vubp->uba_sr = vubp->uba_sr;
 			continue;
@@ -157,7 +162,7 @@ unifind(uhp0, pumem)
 #endif
 		rcvec = 0x200;
 		i = (*udp->ud_probe)(reg, um->um_ctlr, um);
-#ifdef DW780
+#if DW780 && 0 /* XXX */
 		if (uhp->uh_type == DW780 && vubp->uba_sr) {
 			vubp->uba_sr = vubp->uba_sr;
 			continue;
@@ -487,7 +492,6 @@ ubarelse(uban, amr)
 			break;
 #endif
 #ifdef DW780
-sdjhfgsadjkfhgasj
 		case DW780:
 			uh->uh_uba->uba_dpr[bdp] |= UBADPR_BNE;
 			break;
@@ -649,7 +653,7 @@ ubainit(uhp)
 		DELAY(500000);
 		break;
 #endif
-#ifdef DW780
+#if DW780 && 0	/* XXX - must fix to get dumps to work!!! */
 	case DW780:
 		uba->uba_cr = UBACR_ADINIT;
 		uba->uba_cr = UBACR_IFS|UBACR_BRIE|UBACR_USEFIE|UBACR_SUEFIE;
@@ -727,15 +731,16 @@ int	zvcnt_max = 5000;	/* in 8 sec */
  * It must not be declared register.
  */
 /*ARGSUSED*/
+void
 ubaerror(uban, uh, ipl, uvec, uba)
 	register int uban;
 	register struct uba_softc *uh;
-	int ipl, uvec;
+	int *ipl, *uvec;
 	register struct uba_regs *uba;
 {
 	register sr, s;
 
-	if (uvec == 0) {
+	if (*uvec == 0) {
 		/*
 		 * Declare dt as unsigned so that negative values
 		 * are handled as >8 below, in case time was set back.
@@ -751,7 +756,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 			printf("uba%d: too many zero vectors (%d in <%d sec)\n",
 				uban, uh->uh_zvcnt, dt + 1);
 			printf("\tIPL 0x%x\n\tcnfgr: %b  Adapter Code: 0x%x\n",
-				ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
+				*ipl, uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
 				uba->uba_cnfgr&0xff);
 			printf("\tsr: %b\n\tdcr: %x (MIC %sOK)\n",
 				uba->uba_sr, ubasr_bits, uba->uba_dcr,
@@ -765,7 +770,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 		    uban, uba->uba_sr, ubasr_bits,
 		    uba->uba_cnfgr, NEXFLT_BITS);
 		ubareset(uban);
-		uvec = 0;
+		*uvec = 0;
 		return;
 	}
 	sr = uba->uba_sr;
@@ -774,13 +779,13 @@ ubaerror(uban, uh, ipl, uvec, uba)
 	    uban, uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
 	uba->uba_sr = sr;
-	uvec &= UBABRRVR_DIV;
+	*uvec &= UBABRRVR_DIV;
 	if (++uh->uh_errcnt % ubawedgecnt == 0) {
 		if (uh->uh_errcnt > ubacrazy)
 			panic("uba crazy");
 		printf("ERROR LIMIT ");
 		ubareset(uban);
-		uvec = 0;
+		*uvec = 0;
 		return;
 	}
 	return;
@@ -930,6 +935,32 @@ resuba()
 	panic("resuba");
 }
 
+#ifdef DW780
+void
+uba_dw780int(uba)
+	int	uba;
+{
+	int	br, svec, vec, arg;
+	struct	uba_softc *sc = ubacd.cd_devs[uba];
+	struct	uba_regs *ur = sc->uh_uba;
+	void	(*func)();
+
+	br = mfpr(PR_IPL);
+	svec = ur->uba_brrvr[br - 0x14];
+	if (svec < 0) {
+		ubaerror(uba, sc, &br, &svec, ur);
+		if (svec == 0)
+			return;
+	}
+	vec = svec >> 2;
+	if (cold)
+		rcvec = vec;
+	func = sc->uh_idsp[vec].hoppaddr;
+	arg = sc->uh_idsp[vec].pushlarg;
+	(*func)(arg);
+}
+#endif
+
 /*
  * The match routine checks which UBA adapter number it is, to
  * be sure to use correct interrupt vectors.
@@ -980,9 +1011,7 @@ uba_attach(parent, self, aux)
 	struct uba_regs *ubar = (struct uba_regs *)sa->nexaddr;
 	struct uba_softc *sc = (struct uba_softc *)self;
 	vm_offset_t	min, max, ubaphys, ubaiophys;
-#if DW780 || DWBUA
-	struct uba_regs *vubp = sc->uh_uba;
-#endif
+	extern	struct	ivec_dsp idsptch;
 	void ubascan();
 
 	printf("\n");
@@ -1004,7 +1033,6 @@ uba_attach(parent, self, aux)
 #define	NO_IVEC	128
 	{
 		vm_offset_t	iarea;
-		extern	struct	ivec_dsp idsptch;
 		int	i;
 
 		iarea = kmem_alloc(kernel_map,
@@ -1021,6 +1049,21 @@ uba_attach(parent, self, aux)
 	}
 
 	switch (cpunumber) {
+#if VAX780
+	case VAX_780:
+		sc->uh_mr = (void *)ubar->uba_map;
+		sc->uh_type = DW780;
+		sc->uh_physuba = (struct uba_regs *)kvtophys(sa->nexaddr);
+		ubaphys = UMEM780(sa->nexinfo);
+		ubaiophys = UMEM780(sa->nexinfo) + (UBAPAGES * NBPG);
+		bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
+		sc->uh_dw780.pushlarg = sa->nexinfo;
+		sc->uh_dw780.hoppaddr = uba_dw780int;
+		scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum]
+		    = scb->scb_nexvec[2][sa->nexnum]
+		    = scb->scb_nexvec[3][sa->nexnum] = &sc->uh_dw780;
+		break;
+#endif
 #if VAX750
 	case VAX_750:
 		sc->uh_mr = (void *)ubar->uba_map;
@@ -1054,6 +1097,9 @@ uba_attach(parent, self, aux)
 		ubaiophys = QIOPAGE630; /* XXX */
 		break;
 #endif
+	default:
+		printf("Bad luck, this cputype does not support UBA's\n");
+		return;
 	};
 	/*
 	 * Map uba space in kernel virtual; especially i/o space.
@@ -1084,14 +1130,14 @@ uba_attach(parent, self, aux)
 	sc->uh_lastiv = 0x200;
 
 #ifdef DWBUA
-        if (uhp->uh_type == DWBUA)
-                BUA(vubp)->bua_offset = (int)uhp->uh_vec - (int)&scb[0];
+        if (sc->uh_type == DWBUA)
+                BUA(ubar)->bua_offset = (int)sc->uh_vec - (int)&scb[0];
 #endif
 
 #ifdef DW780
-        if (uhp->uh_type == DW780) {
-                vubp->uba_sr = vubp->uba_sr;
-                vubp->uba_cr = UBACR_IFS|UBACR_BRIE;
+        if (sc->uh_type == DW780) {
+                ubar->uba_sr = ubar->uba_sr;
+                ubar->uba_cr = UBACR_IFS|UBACR_BRIE;
         }
 #endif
 #ifdef notyet
@@ -1115,10 +1161,10 @@ uba_attach(parent, self, aux)
 	config_scan(ubascan,self);
 
 #ifdef DW780
-	if (uhp->uh_type == DW780)
-		uhp->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
+	if (sc->uh_type == DW780)
+		ubar->uba_cr = UBACR_IFS | UBACR_BRIE |
 		    UBACR_USEFIE | UBACR_SUEFIE |
-		    (uhp->uh_uba->uba_cr & 0x7c000000);
+		    (ubar->uba_cr & 0x7c000000);
 #endif
 
 }
@@ -1131,6 +1177,7 @@ ubascan(parent, match)
 	struct	device *dev = match;
 	struct	cfdata *cf = dev->dv_cfdata;
 	struct	uba_softc *sc = (struct uba_softc *)parent;
+	volatile struct	uba_regs *ubar = sc->uh_uba;
 	struct	uba_attach_args ua;
 	int	i;
 
@@ -1140,18 +1187,18 @@ ubascan(parent, match)
 		goto forgetit;
 
 #ifdef DW780
-	if (uhp->uh_type == DW780 && vubp->uba_sr) {
-	        vubp->uba_sr = vubp->uba_sr;
-	        continue;
+	if (sc->uh_type == DW780 && ubar->uba_sr) {
+	        ubar->uba_sr = ubar->uba_sr;
+	        goto forgetit;
 	}
 #endif
 	rcvec = 0x200;
 	i = (*cf->cf_driver->cd_match) (parent, dev, &ua);
 
 #ifdef DW780
-	if (uhp->uh_type == DW780 && vubp->uba_sr) {
-	        vubp->uba_sr = vubp->uba_sr;
-	        continue;
+	if (sc->uh_type == DW780 && ubar->uba_sr) {
+	        ubar->uba_sr = ubar->uba_sr;
+	        goto forgetit;
 	}
 #endif
 	if (i == 0)

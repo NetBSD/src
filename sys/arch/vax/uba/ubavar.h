@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.11 1996/02/11 13:24:52 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.12 1996/03/02 14:09:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -46,6 +46,8 @@
 
 #include <sys/buf.h>
 #include <sys/device.h>
+
+#include <machine/trap.h> /* For struct ivec_dsp */
 /*
  * Per-uba structure.
  *
@@ -95,6 +97,7 @@ struct	uba_softc {
 	int	uh_lastmem;		/* limit of any unibus memory */
 #define	UAMSIZ	100
 	struct	map *uh_map;		/* register free map */
+	struct	ivec_dsp uh_dw780;	/* Interrupt handles for DW780 */
 };
 
 /* given a pointer to uba_regs, find DWBUA registers */
