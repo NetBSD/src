@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.6 1998/06/01 14:09:18 kleink Exp $ */
+/*	$NetBSD: mkalias.c,v 1.7 1998/06/24 10:26:09 kleink Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.6 1998/06/01 14:09:18 kleink Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.7 1998/06/24 10:26:09 kleink Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: mkalias.c,v 1.6 1998/06/01 14:09:18 kleink Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
