@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.1 1997/04/14 19:03:13 thorpej Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.2 1997/04/27 21:12:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,6 +155,18 @@ dnkbd_nmi()
 int
 dnkbd_init()
 {
+
+	/*
+	 * 400, 425, and 433 models can have a Domain keyboard.
+	 */
+	switch (machineid) {
+	case HP_400:
+	case HP_425:
+	case HP_433:
+		break;
+	default:
+		return (0);
+	}
 
 	/*
 	 * Look for a Frodo utility chip.  If we find one, assume there
