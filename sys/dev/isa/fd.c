@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 2000/04/07 16:58:53 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 2000/04/23 16:47:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,9 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
+
 #include <dev/isa/fdreg.h>
+#include <dev/isa/fdcvar.h>
 
 #if defined(__i386__)
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
@@ -149,67 +151,8 @@
 /* XXX misuse a flag to identify format operation */
 #define B_FORMAT B_XXX
 
-enum fdc_state {
-	DEVIDLE = 0,
-	MOTORWAIT,
-	DOSEEK,
-	SEEKWAIT,
-	SEEKTIMEDOUT,
-	SEEKCOMPLETE,
-	DOIO,
-	IOCOMPLETE,
-	IOTIMEDOUT,
-	DORESET,
-	RESETCOMPLETE,
-	RESETTIMEDOUT,
-	DORECAL,
-	RECALWAIT,
-	RECALTIMEDOUT,
-	RECALCOMPLETE,
-};
-
-/* software state, per controller */
-struct fdc_softc {
-	struct device sc_dev;		/* boilerplate */
-	void *sc_ih;
-
-	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
-	bus_space_handle_t sc_ioh;	/* ISA io handle */
-	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
-
-	struct callout sc_timo_ch;	/* timeout callout */
-	struct callout sc_intr_ch;	/* pseudo-intr callout */
-
-	/*
-	 * XXX We have port overlap with the first IDE controller.
-	 * Until we have a reasonable solution for handling overlap
-	 * like this, we kludge access to our control register at
-	 * offset 7.
-	 */
-	bus_space_handle_t sc_fdctlioh;
-#define	sc_fdinioh	sc_fdctlioh
-
-	int sc_drq;
-	bus_size_t sc_maxiosize;
-
-	struct fd_softc *sc_fd[4];	/* pointers to children */
-	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
-	enum fdc_state sc_state;
-	int sc_errors;			/* number of retries so far */
-	u_char sc_status[7];		/* copy of registers */
-};
-
 /* controller driver configuration */
-int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
-#ifdef NEWCONFIG
-void fdcforceintr __P((void *));
-#endif
-void fdcattach __P((struct device *, struct device *, void *));
-
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -282,15 +225,14 @@ struct fd_softc {
 #endif
 };
 
-/* floppy driver configuration */
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
-
 extern struct cfdriver fd_cd;
+
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdprobe, fdattach,
+};
 
 void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
@@ -306,109 +248,16 @@ void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
 void fd_motor_on __P((void *arg));
 int fdcresult __P((struct fdc_softc *fdc));
-int out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
 void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
-int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 
 void	fd_mountroot_hook __P((struct device *));
-
-int
-fdcprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	register struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rv;
-
-	iot = ia->ia_iot;
-	rv = 0;
-
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-
-	/* Map the i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh))
-		return 0;
-
-	/* XXX XXX XXX BEGIN XXX XXX XXX */
-	{
-		bus_space_handle_t fdctlioh;
-		if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
-		    &fdctlioh)) {
-			bus_space_unmap(iot, ioh, 6);
-			return 0;
-		}
-		/* not needed for the rest of the probe */
-		bus_space_unmap(iot, fdctlioh, 1);
-	}
-	/* XXX XXX XXX END XXX XXX XXX */
-
-	/* reset */
-	bus_space_write_1(iot, ioh, fdout, 0);
-	delay(100);
-	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
-
-	/* see if it can handle a command */
-	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0)
-		goto out;
-	out_fdc(iot, ioh, 0xdf);
-	out_fdc(iot, ioh, 2);
-
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
-		return 0;
-
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(fdcforceintr, aux);
-		if (ia->ia_irq == IRQNONE)
-			goto out;
-
-		/* reset it again */
-		bus_space_write_1(iot, ioh, fdout, 0);
-		delay(100);
-		bus_space_write_1(iot, ioh, fdout, FDO_FRST);
-	}
-#endif
-
-	rv = 1;
-	ia->ia_iosize = FDC_NPORT;
-	ia->ia_msize = 0;
-
- out:
-	bus_space_unmap(iot, ioh, 6 /* XXX FDC_NPORT */);
-	return rv;
-}
-
-#ifdef NEWCONFIG
-/*
- * XXX This is broken, and needs fixing.  In general, the interface needs
- * XXX to change.
- */
-void
-fdcforceintr(aux)
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/* the motor is off; this should generate an error with or
-	   without a disk drive present */
-	out_fdc(iot, ioh, NE7CMD_SEEK);
-	out_fdc(iot, ioh, 0);
-	out_fdc(iot, ioh, 0);
-}
-#endif
 
 /*
  * Arguments passed between fdcattach and fdprobe.
@@ -438,45 +287,17 @@ fdprint(aux, fdc)
 }
 
 void
-fdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach(fdc)
+	struct fdc_softc *fdc;
 {
-	struct fdc_softc *fdc = (void *)self;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct isa_attach_args *ia = aux;
 	struct fdc_attach_args fa;
 #if defined(__i386__)
 	int type;
 #endif
 
-	iot = ia->ia_iot;
-
-	printf("\n");
-
 	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
-	/* Re-map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", fdc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* XXX XXX XXX BEGIN XXX XXX XXX */
-	if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
-	    &fdc->sc_fdctlioh)) {
-		printf("%s: can't kludge i/o space\n", fdc->sc_dev.dv_xname);
-		return;
-	}
-	/* XXX XXX XXX END XXX XXX XXX */
-
-	fdc->sc_iot = iot;
-	fdc->sc_ioh = ioh;
-	fdc->sc_ic = ia->ia_ic;
-
-	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
@@ -488,9 +309,6 @@ fdcattach(parent, self, aux)
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
-
-	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, fdcintr, fdc);
 
 #if defined(__i386__)
 	/*
@@ -518,7 +336,7 @@ fdcattach(parent, self, aux)
 		 */
 		fa.fa_deftype = &fd_types[0];
 #endif /* __i386__ */
-		(void)config_found(self, (void *)&fa, fdprint);
+		(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
 	}
 }
 

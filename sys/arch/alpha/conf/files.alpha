@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.112 2000/04/07 18:58:09 nathanw Exp $
+# $NetBSD: files.alpha,v 1.113 2000/04/23 16:47:46 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -227,11 +227,14 @@ device isabeep
 attach isabeep at pcppi
 
 # Floppy disk controller
-device	fdc { drive = -1 }
-attach	fdc at isa
-device	fd: disk, isadma
-attach	fd at fdc
+device	fdc { drive = -1 }: isadma
 file	dev/isa/fd.c			fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c		fdc_isa
+
+device	fd: disk
+attach	fd at fdc
 major	{ fd = 0 }
 
 # ISA Plug 'n Play devices
