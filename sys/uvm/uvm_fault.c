@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.58 2001/03/15 06:10:56 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.59 2001/03/17 04:01:24 chs Exp $	*/
 
 /*
  *
@@ -879,12 +879,9 @@ ReFault:
 
 		/* locked: nothing, pgo_fault has unlocked everything */
 
-		if (error == 0)
-			return (0);
-		else if (error == ERESTART)
+		if (error == ERESTART)
 			goto ReFault;		/* try again! */
-		else
-			return EACCES;
+		return error;
 	}
 
 	/*
