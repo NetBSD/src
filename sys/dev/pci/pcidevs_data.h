@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.13 2002/11/21 18:36:48 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.14 2002/11/26 18:31:51 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.428.2.16 2002/11/26 18:29:31 tron Exp 
  */
 
 /*
@@ -3094,6 +3094,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PPC 405GP PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
+	    0,
+	    "IBM",
+	    "133 PCI-X Bridge",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
 	    0,
 	    "IBM",
@@ -3188,6 +3194,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "80312 I/O Companion Chip",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80321,
+	    0,
+	    "Intel",
+	    "80321 I/O Processor",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
