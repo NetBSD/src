@@ -1,4 +1,7 @@
-#	$NetBSD: bsd.files.mk,v 1.21 2003/07/18 08:26:06 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.22 2003/09/03 05:38:09 lukem Exp $
+
+.if !defined(_BSD_FILES_MK_)
+_BSD_FILES_MK_=1
 
 .include <bsd.init.mk>
 
@@ -49,3 +52,27 @@ filesinstall::	${_F}
 .undef _FDIR
 .undef _FNAME
 .undef _F
+
+
+#
+# LNFILES
+#
+.if defined(LNFILES)						# {
+
+.for _SL _TL in ${LNFILES}
+LNFILES.s+=	${_SL}
+LNFILES.t+=	${_TL}
+${_TL}: ${_SL}
+	rm -f ${.TARGET}
+	ln -s ${.ALLSRC} ${.TARGET}
+.endfor
+
+realall: ${LNFILES.t}
+
+cleandir: cleanlnfiles
+cleanlnfiles:
+	rm -f ${LNFILES.t}
+
+.endif								# }
+
+.endif	# !defined(_BSD_FILES_MK_)
