@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.4 1997/06/17 05:32:46 cgd Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.5 1999/09/09 21:52:11 tron Exp $	*/
 
 /*
  * cy_var.h
@@ -58,6 +58,7 @@
 struct cy_port {
 	int             cy_port_num;
 	int             cy_chip;
+	int             cy_clock;
 	struct tty     *cy_tty;
 	int             cy_openflags;
 	int             cy_fifo_overruns;
