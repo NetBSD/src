@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.8 2002/12/04 17:54:39 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.9 2002/12/04 17:59:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.8 2002/12/04 17:54:39 mycroft Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.9 2002/12/04 17:59:52 mycroft Exp $");
 #endif
 #endif
 
@@ -208,8 +208,11 @@ static int print_int64(const u_int32_t *dp, int how)
 	case SIGNED:
 	case UNSIGNED:
 	case HEX:
-		printf("0x%x%08x", (u_int32_t)ntohl(dp[0]),
-		    (u_int32_t)ntohl(dp[1]));
+		if (dp[0])
+			printf("0x%x%08x", (u_int32_t)ntohl(dp[0]),
+			    (u_int32_t)ntohl(dp[1]));
+		else
+			printf("0x%x", (u_int32_t)ntohl(dp[1]));
 		break;
 	default:
 		return (0);
