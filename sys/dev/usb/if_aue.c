@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.28 2000/03/06 21:02:03 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.29 2000/03/08 15:33:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -214,10 +214,10 @@ static void aue_setmulti	__P((struct aue_softc *));
 static u_int32_t aue_crc	__P((caddr_t));
 static void aue_reset		__P((struct aue_softc *));
 
-static int csr_read_1		__P((struct aue_softc *, int));
-static int csr_write_1		__P((struct aue_softc *, int, int));
-static int csr_read_2		__P((struct aue_softc *, int));
-static int csr_write_2		__P((struct aue_softc *, int, int));
+static int aue_csr_read_1	__P((struct aue_softc *, int));
+static int aue_csr_write_1	__P((struct aue_softc *, int, int));
+static int aue_csr_read_2	__P((struct aue_softc *, int));
+static int aue_csr_write_2	__P((struct aue_softc *, int, int));
 
 #if defined(__FreeBSD__)
 #if !defined(lint)
@@ -261,16 +261,17 @@ DRIVER_MODULE(miibus, aue, miibus_driver, miibus_devclass, 0, 0);
 
 #endif /* __FreeBSD__ */
 
-#define AUE_DO_REQUEST(dev, req, data) usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
+#define AUE_DO_REQUEST(dev, req, data)			\
+	usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
 
 #define AUE_SETBIT(sc, reg, x)				\
-	csr_write_1(sc, reg, csr_read_1(sc, reg) | (x))
+	aue_csr_write_1(sc, reg, aue_csr_read_1(sc, reg) | (x))
 
 #define AUE_CLRBIT(sc, reg, x)				\
-	csr_write_1(sc, reg, csr_read_1(sc, reg) & ~(x))
+	aue_csr_write_1(sc, reg, aue_csr_read_1(sc, reg) & ~(x))
 
 static int
-csr_read_1(sc, reg)
+aue_csr_read_1(sc, reg)
 	struct aue_softc	*sc;
 	int			reg;
 {
@@ -289,14 +290,17 @@ csr_read_1(sc, reg)
 	err = AUE_DO_REQUEST(sc->aue_udev, &req, &val);
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: aue_csr_read_1: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->aue_dev), reg, usbd_errstr(err)));
 		return (0);
+	}
 
 	return (val);
 }
 
 static int
-csr_read_2(sc, reg)
+aue_csr_read_2(sc, reg)
 	struct aue_softc	*sc;
 	int			reg;
 {
@@ -315,14 +319,17 @@ csr_read_2(sc, reg)
 	err = AUE_DO_REQUEST(sc->aue_udev, &req, &val);
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: aue_csr_read_2: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->aue_dev), reg, usbd_errstr(err)));
 		return (0);
+	}
 
 	return (UGETW(val));
 }
 
 static int
-csr_write_1(sc, reg, aval)
+aue_csr_write_1(sc, reg, aval)
 	struct aue_softc	*sc;
 	int			reg, aval;
 {
@@ -342,14 +349,17 @@ csr_write_1(sc, reg, aval)
 	err = AUE_DO_REQUEST(sc->aue_udev, &req, &val);
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: aue_csr_write_1: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->aue_dev), reg, usbd_errstr(err)));
 		return (-1);
+	}
 
 	return (0);
 }
 
 static int
-csr_write_2(sc, reg, aval)
+aue_csr_write_2(sc, reg, aval)
 	struct aue_softc	*sc;
 	int			reg, aval;
 {
@@ -369,8 +379,11 @@ csr_write_2(sc, reg, aval)
 	err = AUE_DO_REQUEST(sc->aue_udev, &req, &val);
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: aue_csr_write_2: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->aue_dev), reg, usbd_errstr(err)));
 		return (-1);
+	}
 
 	return (0);
 }
@@ -385,11 +398,11 @@ aue_eeprom_getword(sc, addr)
 {
 	int		i;
 
-	csr_write_1(sc, AUE_EE_REG, addr);
-	csr_write_1(sc, AUE_EE_CTL, AUE_EECTL_READ);
+	aue_csr_write_1(sc, AUE_EE_REG, addr);
+	aue_csr_write_1(sc, AUE_EE_CTL, AUE_EECTL_READ);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
-		if (csr_read_1(sc, AUE_EE_CTL) & AUE_EECTL_DONE)
+		if (aue_csr_read_1(sc, AUE_EE_CTL) & AUE_EECTL_DONE)
 			break;
 	}
 
@@ -398,7 +411,7 @@ aue_eeprom_getword(sc, addr)
 		    USBDEVNAME(sc->aue_dev));
 	}
 
-	return (csr_read_2(sc, AUE_EE_DATA));
+	return (aue_csr_read_2(sc, AUE_EE_DATA));
 }
 
 /*
@@ -447,11 +460,11 @@ aue_miibus_readreg(dev, phy, reg)
 			return (0);
 	}
 
-	csr_write_1(sc, AUE_PHY_ADDR, phy);
-	csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_READ);
+	aue_csr_write_1(sc, AUE_PHY_ADDR, phy);
+	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_READ);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
-		if (csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
+		if (aue_csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
 			break;
 	}
 
@@ -460,7 +473,7 @@ aue_miibus_readreg(dev, phy, reg)
 		    USBDEVNAME(sc->aue_dev));
 	}
 
-	val = csr_read_2(sc, AUE_PHY_DATA);
+	val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
 	DPRINTFN(11,("%s: %s: phy=%d reg=%d => 0x%04x\n",
 		     USBDEVNAME(sc->aue_dev), __FUNCTION__, phy, reg, val));
@@ -493,12 +506,12 @@ aue_miibus_writereg(dev, phy, reg, data)
 	DPRINTFN(11,("%s: %s: phy=%d reg=%d data=0x%04x\n",
 		     USBDEVNAME(sc->aue_dev), __FUNCTION__, phy, reg, data));
 
-	csr_write_2(sc, AUE_PHY_DATA, data);
-	csr_write_1(sc, AUE_PHY_ADDR, phy);
-	csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_WRITE);
+	aue_csr_write_2(sc, AUE_PHY_DATA, data);
+	aue_csr_write_1(sc, AUE_PHY_ADDR, phy);
+	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_WRITE);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
-		if (csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
+		if (aue_csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
 			break;
 	}
 
@@ -597,7 +610,7 @@ aue_setmulti(sc)
 
 	/* first, zot all the existing hash bits */
 	for (i = 0; i < 8; i++)
-		csr_write_1(sc, AUE_MAR0 + i, 0);
+		aue_csr_write_1(sc, AUE_MAR0 + i, 0);
 
 	/* now program new ones */
 #if defined(__FreeBSD__)
@@ -637,7 +650,7 @@ aue_reset(sc)
 	AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_RESETMAC);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
-		if (!(csr_read_1(sc, AUE_CTL1) & AUE_CTL1_RESETMAC))
+		if (!(aue_csr_read_1(sc, AUE_CTL1) & AUE_CTL1_RESETMAC))
 			break;
 	}
 
@@ -653,21 +666,24 @@ aue_reset(sc)
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
   	 */
-	csr_write_1(sc, AUE_GPIO0, AUE_GPIO_OUT0|AUE_GPIO_SEL0);
-  	csr_write_1(sc, AUE_GPIO0, AUE_GPIO_OUT0|AUE_GPIO_SEL0|AUE_GPIO_SEL1);
+	aue_csr_write_1(sc, AUE_GPIO0, 
+	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
+  	aue_csr_write_1(sc, AUE_GPIO0,
+	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
   
 	/* Grrr. LinkSys has to be different from everyone else. */
 	if ((sc->aue_vendor == USB_VENDOR_LINKSYS &&
 	     sc->aue_product == USB_PRODUCT_LINKSYS_USB100TX) ||
 	    (sc->aue_vendor == USB_VENDOR_DLINK &&
 	     sc->aue_product == USB_PRODUCT_DLINK_DSB650TX)) {
-		csr_write_1(sc, AUE_GPIO0, AUE_GPIO_SEL0|AUE_GPIO_SEL1);
-		csr_write_1(sc, AUE_GPIO0, AUE_GPIO_SEL0|AUE_GPIO_SEL1|
-			AUE_GPIO_OUT0);
+		aue_csr_write_1(sc, AUE_GPIO0, 
+		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
+		aue_csr_write_1(sc, AUE_GPIO0,
+		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1 | AUE_GPIO_OUT0);
 	}
 
 	/* Wait a little while for the chip to get its brains in order. */
-	DELAY(10000);		/* XXX */
+	delay(10000);		/* XXX */
 }
 
 /*
@@ -1479,7 +1495,7 @@ aue_init(xsc)
 	eaddr = LLADDR(ifp->if_sadl);
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
+		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
 
 	 /* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1505,7 +1521,7 @@ aue_init(xsc)
 	aue_setmulti(sc);
 
 	/* Enable RX and TX */
-	csr_write_1(sc, AUE_CTL0, AUE_CTL0_RXSTAT_APPEND|AUE_CTL0_RX_ENB);
+	aue_csr_write_1(sc, AUE_CTL0, AUE_CTL0_RXSTAT_APPEND | AUE_CTL0_RX_ENB);
 	AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_TX_ENB);
 	AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_EP3_CLR);
 
@@ -1765,8 +1781,8 @@ aue_stop(sc)
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
 
-	csr_write_1(sc, AUE_CTL0, 0);
-	csr_write_1(sc, AUE_CTL1, 0);
+	aue_csr_write_1(sc, AUE_CTL0, 0);
+	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
 	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
 
