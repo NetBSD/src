@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.2 2003/02/04 10:14:53 martin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.3 2003/02/10 19:18:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -104,11 +104,11 @@ static struct callout_circq timeout_todo;		/* Worklist */
 #define BUCKET(rel, abs)						\
     (((rel) <= (1 << (2*WHEELBITS)))					\
     	? ((rel) <= (1 << WHEELBITS))					\
-            ? timeout_wheel[MASKWHEEL(0, (abs))]			\
-            : timeout_wheel[MASKWHEEL(1, (abs)) + WHEELSIZE]		\
+            ? &timeout_wheel[MASKWHEEL(0, (abs))]			\
+            : &timeout_wheel[MASKWHEEL(1, (abs)) + WHEELSIZE]		\
         : ((rel) <= (1 << (3*WHEELBITS)))				\
-            ? timeout_wheel[MASKWHEEL(2, (abs)) + 2*WHEELSIZE]		\
-            : timeout_wheel[MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
+            ? &timeout_wheel[MASKWHEEL(2, (abs)) + 2*WHEELSIZE]		\
+            : &timeout_wheel[MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
 
 #define MOVEBUCKET(wheel, time)						\
     CIRCQ_APPEND(&timeout_todo,						\
@@ -372,7 +372,7 @@ softclock(void *v)
 		/* If due run it, otherwise insert it into the right bucket. */
 		if (c->c_time - hardclock_ticks > 0) {
 			CIRCQ_INSERT(&c->c_list,
-			    &BUCKET((c->c_time - hardclock_ticks), c->c_time));
+			    BUCKET((c->c_time - hardclock_ticks), c->c_time));
 		} else {
 #ifdef DEBUG	/* XXX evcnt */
 			if (c->c_time - hardclock_ticks < 0)
