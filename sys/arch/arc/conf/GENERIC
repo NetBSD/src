@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2003/10/21 16:28:20 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.96 2003/12/13 23:13:40 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.95 $"
+#ident		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32		# estimated number of users
 
@@ -291,6 +291,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 #piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 #siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 #viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.7 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: SMDK2800,v 1.8 2003/12/13 23:13:41 thorpej Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -173,6 +173,7 @@ pci0	at sspci0
 #optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 #piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 #pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+#satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 #siside* 	at pci? dev ? function ?	# SiS IDE controllers
 #slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 #viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
@@ -187,6 +188,7 @@ pci0	at sspci0
 #atabus* 	at optiide? channel ?
 #atabus* 	at piixide? channel ?
 #atabus* 	at pdcide? channel ?
+#atabus* 	at satalink? channel ?
 #atabus* 	at siside? channel ?
 #atabus* 	at slide? channel ?
 #atabus* 	at viaide? channel ?
