@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edreg.h,v 1.15.12.2 1997/10/14 01:06:02 thorpej Exp $	*/
+/*	$NetBSD: if_edreg.h,v 1.15.12.3 1997/10/14 18:24:19 thorpej Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -15,7 +15,6 @@
  */
 #define ED_VENDOR_WD_SMC	0x00	/* Western Digital/SMC */
 #define ED_VENDOR_3COM		0x01	/* 3Com */
-#define ED_VENDOR_NOVELL	0x02	/* Novell */
 
 /*
  * Compile-time config flags
