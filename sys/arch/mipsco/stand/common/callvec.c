@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: callvec.c,v 1.2 2003/10/08 01:43:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
 
 #include <machine/cpu.h>
 #include <machine/prom.h>
