@@ -1,4 +1,4 @@
-.\"	$NetBSD: getNAME.8,v 1.7 2002/01/15 02:21:13 wiz Exp $
+.\"	$NetBSD: getNAME.8,v 1.8 2002/03/08 20:40:00 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -47,9 +47,13 @@ returns data for use in an
 .Xr apropos 1
 database.
 .Nm
-is designed to be called from
+is designed to be called from manual grovelling tools, not to be used directly.
+.Pp
+Historically,
 .Xr makewhatis 8
-or other manual grovelling tools, not to be used directly.
+used to use
+.Nm
+to get manpage names, but that's no longer the case.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width Ds
