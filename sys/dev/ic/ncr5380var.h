@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.8 1997/08/27 11:24:58 bouyer Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.9 1998/10/25 17:26:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -37,8 +37,35 @@
  * module and the machine-indepenedent ncr5380sbc.c module.
  */
 
-#define SCI_CLR_INTR(sc)	(*(sc)->sci_iack)
-#define	SCI_BUSY(sc)		(*sc->sci_bus_csr & SCI_BUS_BSY)
+/*
+ * Only the i386 uses real bus space:
+ *	arm32: oak and csa drivers; easy to convert
+ *	mac68k: sbc driver; easy to convert
+ *	pc532: ncr driver; need bus.h first
+ *	sparc: si and sw drivers; easy to convert
+ *	sun3: si driver; need bus.h first
+ *	vax: ncr driver; need bus.h first
+ */
+#ifdef __i386__
+# define NCR5380_USE_BUS_SPACE
+#endif
+
+/*
+ * Handy read/write macros
+ */
+#if NCR5380_USE_BUS_SPACE
+# include <machine/bus.h>
+/* bus_space() variety */
+# define NCR5380_READ(reg)	bus_space_read_1(sc->iot,sc->ioh,sc->reg)
+# define NCR5380_WRITE(reg,val)	bus_space_write_1(sc->iot,sc->ioh,sc->reg,val)
+#else
+/* legacy memory-mapped variety */
+# define NCR5380_READ(reg)	*sc->reg
+# define NCR5380_WRITE(reg,val)	*(sc->reg) = val
+#endif
+
+#define SCI_CLR_INTR(sc)	NCR5380_READ(sci_iack)
+#define	SCI_BUSY(sc)		(NCR5380_READ(sci_bus_csr) & SCI_BUS_BSY)
 
 /* These are NOT artibtrary, but map to bits in sci_tcmd */
 #define PHASE_DATA_OUT	0x0
@@ -76,9 +103,24 @@ struct sci_req {
 
 
 struct ncr5380_softc {
-	struct device	sc_dev;
-	struct		scsipi_link sc_link;
+	struct device		sc_dev;
+	struct scsipi_link	sc_link;
 
+#ifdef NCR5380_USE_BUS_SPACE
+	/* Pointers to bus_space */
+	bus_space_tag_t 	iot;
+	bus_space_handle_t 	ioh;
+
+	/* Pointers to 5380 registers.  */
+	bus_size_t	sci_r0;
+	bus_size_t	sci_r1;
+	bus_size_t	sci_r2;
+	bus_size_t	sci_r3;
+	bus_size_t	sci_r4;
+	bus_size_t	sci_r5;
+	bus_size_t	sci_r6;
+	bus_size_t	sci_r7;
+#else
 	/* Pointers to 5380 registers.  See ncr5380reg.h */
 	volatile u_char *sci_r0;
 	volatile u_char *sci_r1;
@@ -88,6 +130,7 @@ struct ncr5380_softc {
 	volatile u_char *sci_r5;
 	volatile u_char *sci_r6;
 	volatile u_char *sci_r7;
+#endif
 
 	/* Functions set from MD code */
 	int		(*sc_pio_out) __P((struct ncr5380_softc *,
