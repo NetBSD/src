@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.214 2001/11/12 23:16:21 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.215 2001/11/13 17:37:03 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -81,7 +81,7 @@ CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/compile_et
 CONFIG=		${TOOLDIR}/bin/config
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CRUNCHGEN=	MAKE=${.MAKE} ${TOOLDIR}/bin/crunchgen
+CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/crunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 EQN=		${TOOLDIR}/bin/eqn
@@ -90,16 +90,16 @@ GENCAT=		${TOOLDIR}/bin/gencat
 #GRIND=		${TOOLDIR}/bin/vgrind -f
 GROFF=		${TOOLDIR}/bin/groff
 INDXBIB=	${TOOLDIR}/bin/indxbib
-INSTALL=	STRIP=${STRIP} ${TOOLDIR}/bin/binstall
+INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/binstall
 INSTALL_INFO=	${TOOLDIR}/bin/install-info
 LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/lex
-LINT=		CC="${CC}" ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
-LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
+LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
+LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/lorder
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
-MKDEP=		CC="${CC}" ${TOOLDIR}/bin/mkdep
+MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/mkdep
 MKLOCALE=	${TOOLDIR}/bin/mklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/msgc
 MTREE=		${TOOLDIR}/bin/mtree
