@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.60 2003/10/08 10:58:13 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.61 2003/10/22 07:48:25 briggs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.60 2003/10/08 10:58:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.61 2003/10/22 07:48:25 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -432,6 +432,9 @@ wdc_pcmcia_detach(self, flags)
 			pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
 		}
 	}
+
+	/* Disable the function */
+	pcmcia_function_disable(sc->sc_pf);
 
 	return (0);
 }
