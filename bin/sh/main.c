@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1995/05/11 21:29:25 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1995/05/19 15:08:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)main.c	8.5 (Berkeley) 5/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.18 1995/05/11 21:29:25 christos Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/main.c,v 1.19 1995/05/19 15:08:58 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,8 @@ main(argc, argv)
 		 * exception EXSHELLPROC to clean up before executing
 		 * the shell procedure.
 		 */
+		if (exception == EXERROR)
+			exitstatus = 2;
 		if (exception == EXSHELLPROC) {
 			rootpid = getpid();
 			rootshell = 1;
