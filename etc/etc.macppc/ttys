@@ -1,18 +1,19 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.1 1998/06/26 12:06:39 tsubai Exp $
+#	$NetBSD: ttys,v 1.2 1999/01/17 12:32:52 tsubai Exp $
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty std.38400"	vt100	on secure
-tty00	"/usr/libexec/getty std.9600"	unknown off secure
-tty01	"/usr/libexec/getty std.9600"	unknown off secure
-tty02	"/usr/libexec/getty std.9600"	unknown off secure
-tty03	"/usr/libexec/getty std.9600"	unknown off secure
-tty04	"/usr/libexec/getty std.9600"	unknown off secure
-tty05	"/usr/libexec/getty std.9600"	unknown off secure
-tty06	"/usr/libexec/getty std.9600"	unknown off secure
-tty07	"/usr/libexec/getty std.9600"	unknown off secure
+console	"/usr/libexec/getty std.38400"	vt100	off secure
+ttyE0	"/usr/libexec/getty std.9600"	vt100	on secure
+tty00	"/usr/libexec/getty std.38400"	vt100	on secure
+tty01	"/usr/libexec/getty std.9600"	unknown	off secure
+tty02	"/usr/libexec/getty std.9600"	unknown	off secure
+tty03	"/usr/libexec/getty std.9600"	unknown	off secure
+tty04	"/usr/libexec/getty std.9600"	unknown	off secure
+tty05	"/usr/libexec/getty std.9600"	unknown	off secure
+tty06	"/usr/libexec/getty std.9600"	unknown	off secure
+tty07	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyp0	none				network
 ttyp1	none				network
 ttyp2	none				network
