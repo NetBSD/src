@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1999/04/11 04:04:08 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1999/04/16 21:47:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -550,10 +550,10 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use direct-mapped
+	 * pool pages.
 	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts.
