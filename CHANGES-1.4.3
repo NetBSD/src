@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.66 2000/10/06 15:58:35 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.67 2000/10/06 16:00:15 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1387,7 +1387,7 @@ usr.sbin/mopd/mopd/process.c			1.8-1.9
 lib/libc/nls/catopen.c				1.17-1.18
 lib/libc/locale/setlocale.c			1.20-1.21
 
-  Ignore NLSPATH, PATH_LOCALE if issetuid().
+  Ignore NLSPATH, PATH_LOCALE if issetugid().
   Disallow `/' in LC_* and LANG environment variables.
   Close one-byte buffer-overrun in catopen().
 
