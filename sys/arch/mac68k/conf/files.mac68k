@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.42 1996/04/25 22:30:10 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.43 1996/04/28 19:18:42 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -14,10 +14,6 @@ device	nubus { slot = -1, id = -1, claimed = 0 }
 attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
-device	ser: tty
-attach	ser at mainbus
-file	arch/mac68k/dev/ser.c		ser needs-flag
-
 device	adb
 attach	adb at mainbus
 file	arch/mac68k/dev/adb.c		adb
@@ -28,32 +24,45 @@ device	asc
 attach	asc at mainbus
 file	arch/mac68k/dev/asc.c		asc
 
-device	fpu
-attach	fpu at mainbus
-file	arch/mac68k/mac68k/fpu.c	fpu
-
 device	grf
 attach	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
 file	arch/mac68k/dev/grf_mv.c	grf
 file	arch/mac68k/dev/grf_iv.c	grf
-device	ite
-attach	ite at mainbus
-file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	ae: ifnet, ether
 attach	ae at nubus
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
+device	ite
+attach	ite at mainbus
+file	arch/mac68k/dev/ite.c		ite needs-flag
+
 include "../../../scsi/files.scsi"
 
+# Option 1 for ncr5380 support
 device	ncrscsi: scsi
 attach	ncrscsi at mainbus
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
+# Option 2 for ncr5380 support
+device	sbc: scsi, ncr5380sbc
+attach	sbc at mainbus
+file	arch/mac68k/dev/ncr_sbc.c	sbc
+
 device	ncr96scsi: scsi
 attach	ncr96scsi at mainbus
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
+
+<<<<<<< files.mac68k
+device	ser: tty
+attach	ser at mainbus
+file	arch/mac68k/dev/ser.c		ser needs-flag
+
+# This one is out of alphabetical order
+device	fpu
+attach	fpu at mainbus
+file	arch/mac68k/mac68k/fpu.c	fpu
 
 device	sbc: scsi, ncr5380sbc
 attach	sbc at mainbus
@@ -84,9 +93,9 @@ file	dev/cons.c
 file	dev/cninit.c
 
 # RAM Disk for installs
-device	rd
-attach	rd at mainbus
-file	dev/ramdisk.c			rd needs-count
+#     These files are out of order
+pseudo-device	rd
+file	dev/ramdisk.c			rd needs-flag
 file	arch/mac68k/dev/rd_root.c	ramdisk_hooks
 
 major	{sd = 4}
