@@ -474,6 +474,8 @@ dont_bother:
 	p->p_regs[SP] = (unsigned) (argbuf - 1);
 	setregs(p, exdata.ex_hdr.a_entry);
 
+	ndp->ni_vp->v_flag |= VTEXT;            /* mark vnode pure text */
+
 	vput(ndp->ni_vp);
 	FREE(ndp->ni_pnbuf, M_NAMEI);
 
