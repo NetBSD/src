@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1994/10/27 04:15:28 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 1994/10/30 19:18:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -465,7 +465,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
