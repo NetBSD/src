@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.36 1998/08/09 23:37:12 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.37 1998/09/12 15:08:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -207,7 +207,9 @@ hypersparc_cache_enable()
 			sta(i, ASI_DCACHETAG, 0);
 
 	/* Enable write-back cache */
-	pcr |= (HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+	pcr |= HYPERSPARC_PCR_CE;
+	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
+		pcr |= HYPERSPARC_PCR_CM;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 
