@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.45 2003/11/25 10:05:17 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.46 2003/11/28 08:18:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.45 2003/11/25 10:05:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.46 2003/11/28 08:18:03 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 		return 1;
 	}
 
-	sast.sast_stack.ss_sp = (void *)_UC_MACHINE_SP(l_ctx);
+	sast.sast_stack.ss_sp = (void *)(intptr_t)_UC_MACHINE_SP(l_ctx);
 	sast.sast_stack.ss_size = 1;
 
 	if (SPLAY_FIND(sasttree, &sa->sa_stackstree, &sast)) {
