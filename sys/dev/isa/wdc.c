@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.6 1997/10/16 15:16:34 matt Exp $ */
+/*	$NetBSD: wdc.c,v 1.6.2.1 1997/10/27 20:02:03 mellon Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -157,42 +157,40 @@ wdcprobe(parent, match, aux)
 
 	wdc->sc_iobase = iobase = ia->ia_iobase;
 
-	/* Check if we have registers that work. */
-	outb(iobase+wd_error, 0x5a);	/* Error register not writable, */
-	outb(iobase+wd_cyl_lo, 0xa5);	/* but all of cyllo are. */
-	if (inb(iobase+wd_error) == 0x5a || inb(iobase+wd_cyl_lo) != 0xa5) {
+	if (wdcreset(wdc, SILENT) != 0) {
 		/*
-		 * Test for a controller with no IDE master, just one
-		 * ATAPI device. Select drive 1, and try again.
+		 * if the reset failed, there is no master. test for ATAPI signature
+		 * on the slave device. If no ATAPI slave, wait 5s and retry a reset.   
 		 */
-		outb(iobase+wd_sdh, WDSD_IBM | 0x10);
-		outb(iobase+wd_error, 0x5a);
-		outb(iobase+wd_cyl_lo, 0xa5);
-		if (inb(iobase+wd_error) == 0x5a || inb(iobase+wd_cyl_lo)
-		    != 0xa5)
-			return 0;
-		wdc->sc_flags |= WDCF_ONESLAVE;
-	}
-	if (wdcreset(wdc, SILENT) != 0) { 
-		/*
-		 * if the reset failed,, there is no master. test for ATAPI signature
-		 * on the slave device. If no ATAPI slave, wait 5s and retry a reset.
-		 */
-#if 0
 		outb(iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
-		if (inb(iobase+ wd_cyl_lo) != 0x14 ||
-			inb(iobase + wd_cyl_hi) != 0xeb) {
+		if (inb(iobase + wd_cyl_lo) == 0x14 &&
+			inb(iobase + wd_cyl_hi) == 0xeb) {
+			wdc->sc_flags |= WDCF_ONESLAVE;
+			goto drivefound;
+		} else {
 			delay(500000);
 			if (wdcreset(wdc, SILENT) != 0)
 				return 0;
 		}
-		wdc->sc_flags |= WDCF_ONESLAVE;
-#else
-		delay(500000);
-		if (wdcreset(wdc, SILENT) != 0)
-			return 0;
-#endif
 	}
+	/* reset succeeded. Test registers */
+	if (inb(iobase + wd_cyl_lo) == 0x14 &&
+		inb(iobase + wd_cyl_hi) == 0xeb)
+		goto drivefound;
+	/* not ATAPI. Test registers */
+	outb(iobase+wd_error, 0x58);    /* Error register not writable, */
+	outb(iobase+wd_cyl_lo, 0xa5);   /* but all of cyllo are. */
+	if (inb(iobase+wd_error) != 0x58 && inb(iobase+wd_cyl_lo) == 0xa5)
+		goto drivefound;
+	/* No master. Test atapi signature on slave */
+	outb(iobase+wd_sdh, WDSD_IBM | 0x10);
+	if (inb(iobase + wd_cyl_lo) == 0x14 &&
+		inb(iobase + wd_cyl_hi) == 0xeb) {
+		wdc->sc_flags |= WDCF_ONESLAVE;
+		goto drivefound;
+	}
+	return 0;
+drivefound:
 	/* Select drive 0 or ATAPI slave device */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
 		outb(iobase+wd_sdh, WDSD_IBM | 0x10);
@@ -310,6 +308,11 @@ wdcattach(parent, self, aux)
 		}
 	}
 #endif /* NWD > 0 */
+	/* explicitely select an existing drive, to avoid spurious interrupts */
+	if (wdc->sc_flags & WDCF_ONESLAVE)
+		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
+	else
+		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM); /* master */
 }
 
 /*
