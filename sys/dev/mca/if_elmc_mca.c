@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.3 2001/03/19 22:33:35 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.4 2001/03/29 08:56:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,27 +52,16 @@
 #include <sys/device.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/syslog.h>
-#include <sys/reboot.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
-#include <dev/isa/if_efreg.h>
-#include <dev/isa/elink.h>
-
 #include <dev/mca/mcadevs.h>
 #include <dev/mca/mcavar.h>
 
