@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.3 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.4 2001/11/13 07:46:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@
 /*
  * AHA-1640 MCA bus code by Scott Telford
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.4 2001/11/13 07:46:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

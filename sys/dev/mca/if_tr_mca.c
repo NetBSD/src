@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.6 2001/04/23 06:10:09 jdolecek Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.7 2001/11/13 07:46:26 lukem Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.7 2001/11/13 07:46:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

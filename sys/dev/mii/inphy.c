@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.25 2001/08/25 18:04:01 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.26 2001/11/13 07:41:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Intel's i82555 ethernet 10/100 PHY
  * Data Sheet available from www.intel.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.26 2001/11/13 07:41:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

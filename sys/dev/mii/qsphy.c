@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.25 2001/08/25 18:04:02 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.26 2001/11/13 07:41:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Quality Semiconductor's QS6612 ethernet 10/100 PHY
  * datasheet from www.qualitysemi.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.26 2001/11/13 07:41:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
