@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.565 2003/08/17 15:47:11 bouyer Exp $
+$NetBSD: pcidevs,v 1.566 2003/08/17 18:03:29 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -863,6 +863,7 @@ product APPLE UNINORTH4		0x002f	UniNorth Host-PCI Bridge
 product APPLE PANGEA_FW		0x0030	Pangea Firewire
 product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
 product APPLE GMAC3		0x0032	GMAC Ethernet
+product APPLE UNINORTH_ATA	0x0033	UniNorth ATA/100 Controller
 product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
 product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
 product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
@@ -2410,6 +2411,7 @@ product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 /* The 366 and 370 controllers have the same product ID */
 product TRIONES HPT366		0x0004	HPT366/370 IDE Controller
 product TRIONES HPT372		0x0005	HPT372 IDE Controller
+product TRIONES HPT302		0x0006	HPT302 IDE Controller
 product TRIONES HPT374		0x0008	HPT374 IDE Controller
 
 /* TriTech Microelectronics products*/
