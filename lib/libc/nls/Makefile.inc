@@ -1,6 +1,6 @@
-#	$Id: Makefile.inc,v 1.3 1994/05/30 03:40:36 jtc Exp $
+#	$Id: Makefile.inc,v 1.4 1994/05/30 21:34:40 chopps Exp $
 
 .PATH: ${.CURDIR}/nls
 
 SRCS+=	msgcat.c
-MAN3+=	catclose.3 catgets.3 catopen.3
+MAN3+=	catclose.0 catgets.0 catopen.0
