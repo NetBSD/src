@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.82 2002/11/14 14:40:38 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.83 2002/11/14 15:45:49 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1798,3 +1798,7 @@ dist/bind/lib/nameser/ns_samedomain.c		1.2
 
   Correct multiple DoS holes as well as remote code injection.
   Patch from ISC.
+
+sys/netinet6/ip6_forward.c			1.20 via patch
+
+  Need opt_pfil_hooks.h for PFIL_HOOK.

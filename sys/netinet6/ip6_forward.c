@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.8 2002/02/26 20:14:36 he Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.9 2002/11/14 15:45:49 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
  */
 
 #include "opt_ipsec.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
