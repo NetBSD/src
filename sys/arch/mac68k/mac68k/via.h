@@ -47,6 +47,9 @@
 #define DA1O_vHeadSel	0x20
 #define DA1O_vOverlay	0x10
 #define DA1O_vSync	0x08
+#define DA1O_RESERVED2	0x04
+#define DA1O_RESERVED1	0x02
+#define DA1O_RESERVED0	0x01
 
 	/* VIA1 data register B */
 #define DB1I_Par_Err	0x80
@@ -112,7 +115,6 @@
 #define VIA1_addr	0x50000000
 #define VIA2_addr	0x50002000
 
-
 #define VIA1		0
 #define VIA2		1
 #define VIABUFA		0
@@ -136,4 +138,10 @@
 
 #define via_reg(v, r) (*((volatile unsigned char *)VIA1_addr+(v)*0x2000+(r)))
 
-void VIA_initialize();
+#define vDirA_ADBState	0x30
+
+long		VIA_set_handler  (long vianum, long bitnum, long (*handle)());
+long		VIA_unset_handler(long vianum, long bitnum, long (*handle)());
+void		VIA_initialize   (void);
+unsigned char	VIA_get_SR       (long vianum);
+long		VIA_set_SR       (long vianum, unsigned char data);

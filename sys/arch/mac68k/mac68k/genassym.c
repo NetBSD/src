@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.2 1993/11/29 00:40:47 briggs Exp $
+ *	$Id: genassym.c,v 1.3 1993/12/15 03:27:54 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -135,8 +135,8 @@ main()
 #ifdef NOT_USED_SO_SHOOT_YOUR_DOG
 	printf("#define\tFC_PURGE %d\n", FC_PURGE);
 	printf("#define\tMAXADDR %d\n", MAXADDR);
-	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
 #endif // NOT_USED_SO_SHOOT_YOUR_DOG
+	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
 	printf("#define\tNBMAPSIZE %d\n", NBMAPSIZE);
 #ifdef NOT_USED_SO_SHOOT_YOUR_DOG
 	printf("#define\tPAEQUVA %d\n", PAEQUVA);
@@ -198,14 +198,13 @@ main()
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
-	printf("#define\tIOMAPSIZE %d\n", IOMAPSIZE);
 #ifdef NOT_USED_SO_SHOOT_YOUR_DOG
 	for (i = 0; i < 32; i++)
 		if ((1 << i) & PCB_HPUXTRACE)
 			printf("#define\tPCB_TRCB %d\n", i);
 #endif // NOT_USED_SO_SHOOT_YOUR_DOG
 	printf("#define\tPCB_TRCB %d\n", 5);
-	printf("#define\tIOBASE %d\n", IOBASE);
+	printf("#define\tINTIOBASE %d\n", INTIOBASE);
 	printf("#define\tNBBASE %d\n", NBBASE);
 	printf("#define\tMACH_MAC2 %d\n", MACH_MAC2);
 	exit(0);

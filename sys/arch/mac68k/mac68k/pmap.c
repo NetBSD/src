@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.2 1993/11/29 00:41:00 briggs Exp $
+ *	$Id: pmap.c,v 1.3 1993/12/15 03:28:01 briggs Exp $
  */
 
 #define DEBUG
@@ -301,7 +301,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	avail_end = maxmem << PGSHIFT;
 
 	/* XXX: allow for msgbuf */
-	avail_end -= macII_round_page(sizeof(struct msgbuf));
+	avail_end -= mac68k_round_page(sizeof(struct msgbuf));
 
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (firstaddr - loadaddr);
@@ -334,7 +334,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	 * BG -- this allows us (using pte_prot()) to convert between machine
 	 * independent protection codes and a map to VAX protection.  Ugh!!
 	 */
-	macII_protection_init();
+	mac68k_protection_init();
 
 	/*
 	 * The kernel's pmap is statically allocated so we don't
@@ -411,7 +411,7 @@ pmap_init(phys_start, phys_end)
 	 *
 	 *	addr = (vm_offset_t) intiobase;
 	 *	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-	 *			   &addr, macII_ptob(IOMAPSIZE+NBMAPSIZE), FALSE);
+	 *			   &addr, mac68k_ptob(IIOMAPSIZE+NBMAPSIZE), FALSE);
 	 *	if (addr != (vm_offset_t)intiobase)
 	 *		goto bogons;
 	 *
@@ -427,7 +427,7 @@ pmap_init(phys_start, phys_end)
 #if 1
 	addr = (vm_offset_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, macII_ptob(IOMAPSIZE), FALSE);
+			   &addr, mac68k_ptob(IIOMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)intiobase)
 		panic("pmap_init: I/O space not mapped!  Oh, no!\n");
 
@@ -437,7 +437,7 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) extiobase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
-			   &addr, macII_ptob(NBMAPSIZE), FALSE);
+			   &addr, mac68k_ptob(NBMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)extiobase)
 		panic("pmap_init: NuBus space not mapped!  Oh, no!\n");
 #endif
@@ -452,7 +452,7 @@ pmap_init(phys_start, phys_end)
 	/*
 	 * If this fails it is probably because the static portion of
 	 * the kernel page table isn't big enough and we overran the
-	 * page table map.   Need to adjust pmap_size() in macII_init.c.
+	 * page table map.   Need to adjust pmap_size() in mac68k_init.c.
 	 */
 	if (addr != (vm_offset_t)Sysmap)
 		goto bogons;
@@ -460,7 +460,7 @@ pmap_init(phys_start, phys_end)
 	addr = (vm_offset_t) kstack;
 	vm_object_reference(kernel_object);
 	(void) vm_map_find(kernel_map, kernel_object, addr,
-			   &addr, macII_ptob(UPAGES), FALSE);
+			   &addr, mac68k_ptob(UPAGES), FALSE);
 	if (addr != (vm_offset_t)kstack)
 bogons:
 		panic("pmap_init: bogons in the VM system!\n");
@@ -763,9 +763,9 @@ pmap_remove(pmap, sva, eva)
 		 */
 		if (!pmap_ste_v(pmap_ste(pmap, va))) {
 			/* XXX: avoid address wrap around */
-			if (va >= macII_trunc_seg((vm_offset_t)-1))
+			if (va >= mac68k_trunc_seg((vm_offset_t)-1))
 				break;
-			va = macII_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = mac68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 			continue;
 		}
 		pte = pmap_pte(pmap, va);
@@ -1081,9 +1081,9 @@ pmap_protect(pmap, sva, eva, prot)
 		 */
 		if (!pmap_ste_v(pmap_ste(pmap, va))) {
 			/* XXX: avoid address wrap around */
-			if (va >= macII_trunc_seg((vm_offset_t)-1))
+			if (va >= mac68k_trunc_seg((vm_offset_t)-1))
 				break;
-			va = macII_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = mac68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 			pte = pmap_pte(pmap, va);
 			pte += macpagesperpage;
 			continue;
@@ -1894,7 +1894,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(macII_ptob(ppn));
+	return(mac68k_ptob(ppn));
 }
 
 /*
@@ -1902,7 +1902,7 @@ pmap_phys_address(ppn)
  */
 
 /* static */
-macII_protection_init()
+mac68k_protection_init()
 {
 	register int *kp, prot;
 
