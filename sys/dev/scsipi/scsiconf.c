@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.170 2001/11/19 22:50:00 tsutsui Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.171 2001/11/26 20:39:29 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.170 2001/11/19 22:50:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.171 2001/11/26 20:39:29 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,6 +486,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
+	 "ADAPTEC ", "ACB-4000",         ""},     PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE|PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},
@@ -596,6 +598,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    "}, PQUIRK_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "EMULEX  ", "MT-02 QIC       ", ""},     PQUIRK_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "CALIPER ", "CP150           ", ""},     PQUIRK_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
