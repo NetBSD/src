@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.7 1999/07/08 00:45:24 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.8 1999/12/03 03:35:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -195,7 +195,6 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 	rf_ContinueRaidAccess(desc);
 }
 
-
 int 
 rf_State_LastState(RF_RaidAccessDesc_t * desc)
 {
@@ -204,32 +203,31 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 
 	callbackArg.p = desc->callbackArg;
 
-	if (!(desc->flags & RF_DAG_TEST_ACCESS)) {	/* don't biodone if this */
 #if DKUSAGE > 0
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid, (struct buf *) desc->bp);
+	RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid, (struct buf *) desc->bp);
 #else
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid);
+	RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid);
 #endif				/* DKUSAGE > 0 */
+	
+	/*
+	 * If this is not an async request, wake up the caller
+	 */
+	if (desc->async_flag == 0)
+		wakeup(desc->bp);
+	
+	/* 
+	 * Wakeup any requests waiting to go.
+	 */
+	
+	RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	((RF_Raid_t *) desc->raidPtr)->openings++;
+	wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
+	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	
+	
+	/* printf("Calling biodone on 0x%x\n",desc->bp); */
+	biodone(desc->bp);	/* access came through ioctl */
 
-		/*
-	         * If this is not an async request, wake up the caller
-	         */
-		if (desc->async_flag == 0)
-			wakeup(desc->bp);
-
-		/* 
-		 * Wakeup any requests waiting to go.
-		 */
-
-		RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-		((RF_Raid_t *) desc->raidPtr)->openings++;
-		wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
-		RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-
-
-		/* printf("Calling biodone on 0x%x\n",desc->bp); */
-		biodone(desc->bp);	/* access came through ioctl */
-	}
 	if (callbackFunc)
 		callbackFunc(callbackArg);
 	rf_FreeRaidAccDesc(desc);
