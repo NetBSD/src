@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.7 1997/10/14 02:07:57 lukem Exp $	*/
+/*	$NetBSD: map.c,v 1.8 1997/10/20 01:07:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: map.c,v 1.7 1997/10/14 02:07:57 lukem Exp $");
+__RCSID("$NetBSD: map.c,v 1.8 1997/10/20 01:07:51 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,7 +84,7 @@ add_mapping(port, arg)
 	copy = strdup(arg);
 	mapp = malloc((u_int)sizeof(MAP));
 	if (copy == NULL || mapp == NULL)
-		err("%s", strerror(errno));
+		err(1, "malloc");
 	mapp->next = NULL;
 	if (maplist == NULL)
 		cur = maplist = mapp;
@@ -159,7 +160,7 @@ next:	if (*arg == ':') {
 	/* If user specified a port with an option flag, set it. */
 done:	if (port) {
 		if (mapp->porttype)
-badmopt:		err("illegal -m option format: %s", copy);
+badmopt:		errx(1, "illegal -m option format: %s", copy);
 		mapp->porttype = port;
 	}
 

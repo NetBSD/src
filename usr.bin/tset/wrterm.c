@@ -1,4 +1,4 @@
-/*	$NetBSD: wrterm.c,v 1.5 1997/10/14 02:08:05 lukem Exp $	*/
+/*	$NetBSD: wrterm.c,v 1.6 1997/10/20 01:07:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: wrterm.c,v 1.5 1997/10/14 02:08:05 lukem Exp $");
+__RCSID("$NetBSD: wrterm.c,v 1.6 1997/10/20 01:07:55 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include "extern.h"
@@ -55,13 +56,13 @@ void
 wrtermcap(bp)
 	char *bp;
 {
-	register int ch;
-	register char *p;
+	int ch;
+	char *p;
 	char *t, *sep;
 
 	/* Find the end of the terminal names. */
-	if ((t = index(bp, ':')) == NULL)
-		err("termcap names not colon terminated");
+	if ((t = strchr(bp, ':')) == NULL)
+		errx(1, "termcap names not colon terminated");
 	*t++ = '\0';
 
 	/* Output terminal names that don't have whitespace or quotes. */
