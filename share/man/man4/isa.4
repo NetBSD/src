@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.24 2000/07/26 17:30:59 ad Exp $
+.\"	$NetBSD: isa.4,v 1.25 2000/07/26 22:09:45 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -132,6 +132,8 @@ Wangtek and compatible QIC-02 and QIC-36 tape drives.
 Multi-port serial communications card first made by AST.
 .It boca
 Boca BB100[48] and BB2016 multiplexing serial communications cards.
+.It com
+NS8250-, NS16450-, and NS16550-based serial ports.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
 .It ioat
@@ -257,6 +259,8 @@ compatible chips.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
+.It joy
+games adapter driver
 .It lm
 National Semiconductor LM78, LM79 and compatible hardware monitors.
 .It pcdisplay
@@ -301,6 +305,8 @@ devices.
 .Xr ast 4 ,
 .Xr bha 4 ,
 .Xr cms 4 ,
+.Xr com 4 ,
+.Xr cs 4 ,
 .Xr cy 4 ,
 .Xr dpt 4 ,
 .Xr ec 4 ,
@@ -311,6 +317,7 @@ devices.
 .Xr ie 4 ,
 .Xr isapnp 4 ,
 .Xr iy 4 ,
+.Xr joy 4 ,
 .Xr lc 4 ,
 .Xr le 4 ,
 .Xr lpt 4 ,
