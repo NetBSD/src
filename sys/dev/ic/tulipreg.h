@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.15 2000/01/22 21:05:53 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.16 2000/02/02 17:09:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -530,6 +530,10 @@ struct tulip_desc {
 #define	OPMODE_BP		0x00010000	/* backpressure enable */
 #define	OPMODE_CA		0x00020000	/* capture effect enable */
 #define	OPMODE_PNIC_TBEN	0x00020000	/* Tx backoff offset enable */
+	/*
+	 * On Davicom DM9102, OPMODE_PS and OPMODE_HBD must
+	 * always be set.
+	 */
 #define	OPMODE_PS		0x00040000	/* port select:
 						   1 = MII/SYM, 0 = SRL
 						   (21140) */
@@ -548,7 +552,8 @@ struct tulip_desc {
 						   (21140) */
 #define	OPMODE_PCS		0x00800000	/* PCS function (21140) */
 #define	OPMODE_SCR		0x01000000	/* scrambler mode (21140) */
-#define	OPMODE_MBO		0x02000000	/* must be one (21140) */
+#define	OPMODE_MBO		0x02000000	/* must be one (21140,
+						   DM9102) */
 #define	OPMODE_IDAMSB		0x04000000	/* ignore dest addr MSB
 						   (21142) */
 #define	OPMODE_PNIC_DRC		0x20000000	/* don't include CRC in Rx

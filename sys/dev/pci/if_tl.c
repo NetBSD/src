@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.29 2000/02/02 08:05:29 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.30 2000/02/02 17:09:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -429,7 +429,7 @@ tl_pci_attach(parent, self, aux)
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
 	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
