@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.6 1997/03/15 23:20:20 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.7 1997/03/16 03:43:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -86,6 +86,8 @@
 #include <compat/hpux/hpux_syscallargs.h>
 
 #include <machine/hpux_machdep.h>
+
+extern	short exframesize[];
 
 #define NHIL	1	/* XXX */
 #include "grf.h"
@@ -500,4 +502,340 @@ hpux_dumpu(vp, cred)
 	free((caddr_t)faku, M_TEMP);
 
 	return (error);
+}
+
+#define	HSS_RTEFRAME	0x01
+#define	HSS_FPSTATE	0x02
+#define	HSS_USERREGS	0x04
+
+struct hpuxsigstate {
+	int	hss_flags;		/* which of the following are valid */
+	struct	frame hss_frame;	/* original exception frame */
+	struct	fpframe hss_fpstate;	/* 68881/68882 state info */
+};
+
+/*
+ * WARNING: code in locore.s assumes the layout shown here for hsf_signum
+ * thru hsf_handler so... don't screw with them!
+ */
+struct hpuxsigframe {
+	int	hsf_signum;		   /* signo for handler */
+	int	hsf_code;		   /* additional info for handler */
+	struct	hpuxsigcontext *hsf_scp;   /* context ptr for handler */
+	sig_t	hsf_handler;		   /* handler addr for u_sigc */
+	struct	hpuxsigstate hsf_sigstate; /* state of the hardware */
+	struct	hpuxsigcontext hsf_sc;	   /* actual context */
+};
+
+#ifdef DEBUG
+int hpuxsigdebug = 0;
+int hpuxsigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
+
+/*
+ * Send an interrupt to process.
+ */
+void
+hpux_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	u_long code;
+{
+	register struct proc *p = curproc;
+	register struct hpuxsigframe *kfp, *fp;
+	register struct frame *frame;
+	register struct sigacts *psp = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+	extern char sigcode[], esigcode[];
+
+	frame = (struct frame *)p->p_md.md_regs;
+	ft = frame->f_format;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/*
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
+	 */
+	fsize = sizeof(struct hpuxsigframe);
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct hpuxsigframe *)(psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
+		fp = (struct hpuxsigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
+
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("hpux_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+#endif
+
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+			printf("hpux_sendsig(%d): useracc failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	kfp = (struct hpuxsigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp->hsf_signum = bsdtohpuxsig(sig);
+	kfp->hsf_code = code;
+	kfp->hsf_scp = &fp->hsf_sc;
+	kfp->hsf_handler = catcher;
+
+	/*
+	 * Save necessary hardware state.  Currently this includes:
+	 *	- general registers
+	 *	- original exception frame (if not a "normal" frame)
+	 *	- FP coprocessor state
+	 */
+	kfp->hsf_sigstate.hss_flags = HSS_USERREGS;
+	bcopy((caddr_t)frame->f_regs,
+	    (caddr_t)kfp->hsf_sigstate.hss_frame.f_regs, sizeof frame->f_regs);
+	if (ft >= FMT7) {
+#ifdef DEBUG
+		if (ft > 15 || exframesize[ft] < 0)
+			panic("hpux_sendsig: bogus frame type");
+#endif
+		kfp->hsf_sigstate.hss_flags |= HSS_RTEFRAME;
+		kfp->hsf_sigstate.hss_frame.f_format = frame->f_format;
+		kfp->hsf_sigstate.hss_frame.f_vector = frame->f_vector;
+		bcopy((caddr_t)&frame->F_u,
+		    (caddr_t)&kfp->hsf_sigstate.hss_frame.F_u, exframesize[ft]);
+
+		/*
+		 * Leave an indicator that we need to clean up the kernel
+		 * stack.  We do this by setting the "pad word" above the
+		 * hardware stack frame to the amount the stack must be
+		 * adjusted by.
+		 *
+		 * N.B. we increment rather than just set f_stackadj in
+		 * case we are called from syscall when processing a
+		 * sigreturn.  In that case, f_stackadj may be non-zero.
+		 */
+		frame->f_stackadj += exframesize[ft];
+		frame->f_format = frame->f_vector = 0;
+#ifdef DEBUG
+		if (hpuxsigdebug & SDB_FOLLOW)
+			printf("hpux_sendsig(%d): copy out %d of frame %d\n",
+			       p->p_pid, exframesize[ft], ft);
+#endif
+	}
+	if (fputype) {
+		kfp->hsf_sigstate.hss_flags |= HSS_FPSTATE;
+		m68881_save(&kfp->hsf_sigstate.hss_fpstate);
+	}
+
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
+		printf("hpux_sendsig(%d): copy out FP state (%x) to %x\n",
+		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
+		       &kfp->sf_state.ss_fpstate);
+#endif
+
+	/*
+	 * Build the signal context to be used by hpux_sigreturn.
+	 */
+	kfp->hsf_sc.hsc_syscall	= 0;		/* XXX */
+	kfp->hsf_sc.hsc_action	= 0;		/* XXX */
+	kfp->hsf_sc.hsc_pad1	= kfp->hsf_sc.hsc_pad2 = 0;
+	kfp->hsf_sc.hsc_onstack	= oonstack;
+	kfp->hsf_sc.hsc_mask	= mask;
+	kfp->hsf_sc.hsc_sp	= frame->f_regs[SP];
+	kfp->hsf_sc.hsc_ps	= frame->f_sr;
+	kfp->hsf_sc.hsc_pc	= frame->f_pc;
+
+	/* How amazingly convenient! */
+	kfp->hsf_sc._hsc_pad	= 0;
+	kfp->hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
+
+	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW) {
+		printf(
+		  "hpux_sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		   p->p_pid, sig, kfp->sf_scp, fp,
+		   kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+	}
+#endif
+
+	/*
+	 * Signal trampoline code is at base of user stack.
+	 */
+	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("hpux_sendsig(%d): sig %d returns\n",
+		       p->p_pid, sig);
+#endif
+	free((caddr_t)kfp, M_TEMP);
+}
+
+/*
+ * System call to cleanup state after a signal
+ * has been taken.  Reset signal mask and
+ * stack state from context left by sendsig (above).
+ * Return to previous pc and psl as specified by
+ * context left by sendsig. Check carefully to
+ * make sure that the user has not modified the
+ * psl to gain improper priviledges or to cause
+ * a machine fault.
+ */
+/* ARGSUSED */
+int
+hpux_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct hpux_sys_sigreturn_args /* {
+		syscallarg(struct hpuxsigcontext *) sigcntxp;
+	} */ *uap = v;
+	register struct hpuxsigcontext *scp;
+	register struct frame *frame;
+	register int rf;
+	struct hpuxsigcontext tsigc;
+	struct hpuxsigstate tstate;
+	int flags;
+
+	scp = SCARG(uap, sigcntxp);
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW)
+		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+#endif
+	if ((int)scp & 1)
+		return (EINVAL);
+
+	/*
+	 * Fetch and test the HP-UX context structure.
+	 * We grab it all at once for speed.
+	 */
+	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+		return (EINVAL);
+	scp = &tsigc;
+	if ((scp->hsc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return (EINVAL);
+
+	/*
+	 * Restore the user supplied information
+	 */
+	if (scp->hsc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = scp->hsc_mask &~ sigcantmask;
+	frame = (struct frame *) p->p_md.md_regs;
+	frame->f_regs[SP] = scp->hsc_sp;
+	frame->f_pc = scp->hsc_pc;
+	frame->f_sr = scp->hsc_ps;
+
+	/*
+	 * Grab a pointer to the hpuxsigstate.
+	 * If zero, the user is probably doing a longjmp.
+	 * (This will never happen, really, since HP-UX doesn't
+	 * know/care about the state pointer.)
+	 */
+	if ((rf = scp->_hsc_ap) == 0)
+		return (EJUSTRETURN);
+
+	/*
+	 * See if there is anything to do before we go to the
+	 * expense of copying in close to 1/2K of data
+	 */
+	flags = fuword((caddr_t)rf);
+#ifdef DEBUG
+	if (hpuxsigdebug & SDB_FOLLOW)
+		printf("sigreturn(%d): sc_ap %x flags %x\n",
+		       p->p_pid, rf, flags);
+#endif
+	/*
+	 * fuword failed (bogus _hsc_ap value).
+	 */
+	if (flags == -1)
+		return (EINVAL);
+	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+		return (EJUSTRETURN);
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		       (flags & HSS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+#endif
+	/*
+	 * Restore most of the users registers except for A6 and SP
+	 * which were handled above.
+	 */
+	if (flags & HSS_USERREGS)
+		bcopy((caddr_t)tstate.hss_frame.f_regs,
+		    (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+
+	/*
+	 * Restore long stack frames.  Note that we do not copy
+	 * back the saved SR or PC, they were picked up above from
+	 * the sigcontext structure.
+	 */
+	if (flags & HSS_RTEFRAME) {
+		register int sz;
+		
+		/* grab frame type and validate */
+		sz = tstate.hss_frame.f_format;
+		if (sz > 15 || (sz = exframesize[sz]) < 0)
+			return (EINVAL);
+		frame->f_stackadj -= sz;
+		frame->f_format = tstate.hss_frame.f_format;
+		frame->f_vector = tstate.hss_frame.f_vector;
+		bcopy((caddr_t)&tstate.hss_frame.F_u,
+		    (caddr_t)&frame->F_u, sz);
+#ifdef DEBUG
+		if (hpuxsigdebug & SDB_FOLLOW)
+			printf("sigreturn(%d): copy in %d of frame type %d\n",
+			       p->p_pid, sz, tstate.ss_frame.f_format);
+#endif
+	}
+
+	/*
+	 * Finally we restore the original FP context
+	 */
+	if (flags & HSS_FPSTATE)
+		m68881_restore(&tstate.hss_fpstate);
+
+#ifdef DEBUG
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
+		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		       &tstate.ss_fpstate);
+
+	if ((hpuxsigdebug & SDB_FOLLOW) ||
+	    ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid))
+		printf("sigreturn(%d): returns\n", p->p_pid);
+#endif
+	return (EJUSTRETURN);
 }
