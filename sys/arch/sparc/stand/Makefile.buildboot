@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.8 1999/11/25 13:27:30 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.9 2000/01/23 17:04:10 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -45,6 +45,6 @@ LIBSA=		${SALIB}
 .if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.NOPATH: machine
+CLEANFILES+= machine
 .endif
-
-CLEANFILES+=	machine

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/11/25 14:46:08 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/01/23 17:04:11 mycroft Exp $
 
 BINDIR=		/usr/mdec
 
@@ -10,6 +10,6 @@ CFLAGS+=	-msoft-float
 .if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/sparc64/include machine)
+.NOPATH: machine
+CLEANFILES+= machine
 .endif
-
-CLEANFILES+=	machine

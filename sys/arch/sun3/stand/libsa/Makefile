@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1999/12/17 07:28:01 jeremy Exp $
+#	$NetBSD: Makefile,v 1.23 2000/01/23 17:04:12 mycroft Exp $
 
 LIB=sa
 
@@ -38,7 +38,7 @@ SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
 OBJS= ctrlsp.o
 
-all: libsa.a SRT0.o SRT1.o
+realall: libsa.a SRT0.o SRT1.o
 
 # only needed during build
 libinstall::
