@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.29 1998/10/06 20:44:40 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.30 1998/11/17 08:38:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,14 @@ enum devclass {
 	DV_TTY			/* serial line interface (???) */
 };
 
+/*
+ * Actions for ca_activate.
+ */
+enum devact {
+	DVACT_ACTIVATE,		/* activate the device */
+	DVACT_DEACTIVATE,	/* deactivate the device */
+};
+
 struct device {
 	enum	devclass dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -69,7 +77,12 @@ struct device {
 	int	dv_unit;		/* device unit number */
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
+	int	dv_flags;		/* misc. flags; see below */
 };
+
+/* dv_flags */
+#define	DVF_ACTIVE	0x0001		/* device is activated */
+
 TAILQ_HEAD(devicelist, device);
 
 /* `event' counters (use zero or more per device instance, as needed) */
@@ -119,8 +132,13 @@ struct cfattach {
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
 	void	(*ca_attach) __P((struct device *, struct device *, void *));
-	/* XXX should have detach */
+	int	(*ca_detach) __P((struct device *, int));
+	int	(*ca_activate) __P((struct device *, enum devact));
 };
+
+/* Flags given to config_detach(), and the ca_detach function. */
+#define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
+#define	DETACH_QUIET	0x02		/* don't print a notice */
 
 struct cfdriver {
 	void	**cd_devs;		/* devices found */
@@ -162,11 +180,15 @@ struct device *config_found_sm __P((struct device *, void *, cfprint_t,
 struct device *config_rootfound __P((char *, void *));
 struct device *config_attach __P((struct device *, struct cfdata *, void *,
     cfprint_t));
+int config_detach __P((struct device *, int));
+int config_activate __P((struct device *));
+int config_deactivate __P((struct device *));
 void config_defer __P((struct device *, void (*)(struct device *)));
 #if defined(__alpha__) || defined(hp300) || defined(__i386__)
 void device_register __P((struct device *, void *));
 #endif
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+void evcnt_detach __P((struct evcnt *));
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
