@@ -1,4 +1,4 @@
-/*	$NetBSD: proc2.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: proc2.c,v 1.2 2003/10/21 09:32:54 agc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	}
 
 	EV_SET(&ke, pid, EVFILT_PROC, EV_ADD, NOTE_FORK|NOTE_TRACK,
-		NULL, NULL);
+		0, 0);
 
 	if ((kevent(kq, &ke, 1, NULL, 0, &timeout)) == -1)
 		err(1, "kevent1"); 
