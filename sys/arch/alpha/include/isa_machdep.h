@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.3 1999/03/19 05:04:42 cgd Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.4 2000/02/07 22:07:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -64,6 +64,8 @@ struct alpha_isa_chipset {
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
 #define	isa_dmacascade(ic, c)						\
 	_isa_dmacascade(&(ic)->ic_dmastate, (c))
+#define	isa_dmamaxsize(ic, c)						\
+	_isa_dmamaxsize(&(ic)->ic_dmastate, (c))
 #define	isa_dmamap_create(ic, c, s, f)					\
 	_isa_dmamap_create(&(ic)->ic_dmastate, (c), (s), (f))
 #define	isa_dmamap_destroy(ic, c)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.2 1999/06/24 01:22:19 sakamoto Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.3 2000/02/07 22:07:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -63,7 +63,6 @@
 
 #define	FDC_BSIZE	512
 #define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	MAXBSIZE
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden

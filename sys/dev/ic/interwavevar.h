@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.6 1999/02/17 21:44:55 mycroft Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.7 2000/02/07 22:07:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,9 @@ struct iw_softc {
 	void	*sc_recarg;
 	void	*sc_recdma_bp;
 	int	sc_playdrq;
+	bus_size_t sc_play_maxsize;
 	int	sc_recdrq;
+	bus_size_t sc_rec_maxsize;
 	int	sc_recdma_cnt;
 	int	sc_playing;
 	int	sc_maxdma;
