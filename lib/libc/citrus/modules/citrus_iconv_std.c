@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.7 2003/12/29 18:05:01 yamt Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.8 2004/12/21 09:29:04 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.7 2003/12/29 18:05:01 yamt Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.8 2004/12/21 09:29:04 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -190,7 +190,7 @@ close_dsts(struct _citrus_iconv_std_dst_list *dl)
 
 static int
 open_dsts(struct _citrus_iconv_std_dst_list *dl,
-	  struct _esdb_charset *ec, struct _esdb *dbdst)
+	  const struct _esdb_charset *ec, const struct _esdb *dbdst)
 {
 	int i, ret;
 	struct _citrus_iconv_std_dst *sd, *sdtmp;
@@ -247,7 +247,7 @@ close_srcs(struct _citrus_iconv_std_src_list *sl)
 
 static int
 open_srcs(struct _citrus_iconv_std_src_list *sl,
-	  struct _esdb *dbsrc, struct _esdb *dbdst)
+	  const struct _esdb *dbsrc, const struct _esdb *dbdst)
 {
 	int i, ret, count = 0;
 	struct _citrus_iconv_std_src *ss;
