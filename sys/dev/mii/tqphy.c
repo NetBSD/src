@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.4 1999/11/12 18:13:01 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.5 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@ int	tqphymatch __P((struct device *, struct cfdata *, void *));
 void	tqphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tqphy_ca = {
-	sizeof(struct mii_softc), tqphymatch, tqphyattach
+	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_detach,
+	    mii_activate
 };
 
 int	tqphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -158,6 +159,9 @@ tqphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
