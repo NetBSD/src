@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.14.2.7 2002/03/25 17:20:33 he Exp $
+#	$NetBSD: changelist,v 1.14.2.8 2002/03/25 17:23:06 he Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -59,6 +59,7 @@
 /etc/man.conf
 /etc/master.passwd
 /etc/mk.conf
+/etc/moduli
 /etc/monthly
 /etc/monthly.conf
 /etc/monthly.local
@@ -80,7 +81,6 @@
 /etc/postfix/main.cf
 /etc/postfix/master.cf
 /etc/postfix/postfix-script
-/etc/primes
 /etc/printcap
 /etc/profile
 /etc/protocols
