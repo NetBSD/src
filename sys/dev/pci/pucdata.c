@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.25 2001/12/16 22:23:01 thorpej Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.26 2002/04/11 13:53:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.25 2001/12/16 22:23:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.26 2002/04/11 13:53:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,104 @@ __KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.25 2001/12/16 22:23:01 thorpej Exp $")
 #include <dev/ic/comreg.h>
 
 const struct puc_device_description puc_devices[] = {
+	/*
+	 * SUNIX 40XX series of serial/parallel combo cards.
+	 * Tested with 4055A and 4065A.
+	 */
+	{   "SUNIX 400X 1P",
+	    {	0x1409,	0x7168,	0x1409,	0x4000 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 401X 2P",
+	    {	0x1409,	0x7168,	0x1409,	0x4010 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 402X 1S",
+	    {	0x1409,	0x7168,	0x1409,	0x4020 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 403X 2S",
+	    {	0x1409,	0x7168,	0x1409,	0x4030 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 405X 4S",
+	    {	0x1409,	0x7168,	0x1409,	0x4050 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+	    },
+	},
+
+	{   "SUNIX 406X 8S",
+	    {	0x1409,	0x7168,	0x1409,	0x4060 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ},
+	    },
+	},
+
+	{   "SUNIX 407X 2S/1P",
+	    {	0x1409,	0x7168,	0x1409,	0x4070 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 408X 2S/2P",
+	    {	0x1409,	0x7168,	0x1409,	0x4080 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 409X 4S/2P",
+	    {	0x1409,	0x7168,	0x1409,	0x4090 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+	    },
+	},
+
 	/*
 	 * XXX no entry because I have no data:
 	 * XXX Dolphin Peripherals 4006 (single parallel)
