@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.3 1999/01/26 02:33:56 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.4 1999/01/26 03:49:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,8 +55,6 @@ int raidlookup __P((char *, struct proc *p, struct vnode **));
 
 #define DPRINTF6(a,b,c,d,e,f) if (rf_diskDebug) printf(a,b,c,d,e,f)
 #define DPRINTF7(a,b,c,d,e,f,g) if (rf_diskDebug) printf(a,b,c,d,e,f,g)
-
-#include "rf_ccmn.h"
 
 /****************************************************************************************
  *
