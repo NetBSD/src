@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)archive.h	8.3 (Berkeley) 4/2/94
- *	$Id: archive.h,v 1.4 1994/09/19 03:34:11 mycroft Exp $
+ *	$Id: archive.h,v 1.5 1994/12/24 15:55:54 cgd Exp $
  */
 
 /* Ar(1) options. */
@@ -78,10 +78,10 @@ typedef struct {
 /* Header structure internal format. */
 typedef struct {
 	off_t size;			/* size of the object in bytes */
-	long date;			/* date */
+	time_t date;			/* date */
 	int lname;			/* size of the long name in bytes */
-	int gid;			/* group */
-	int uid;			/* owner */
+	gid_t gid;			/* group */
+	uid_t uid;			/* owner */
 	u_short mode;			/* permissions */
 	char name[MAXNAMLEN + 1];	/* name */
 } CHDR;
