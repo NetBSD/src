@@ -27,7 +27,7 @@
  *	i4b_tei.c - tei handling procedures
  *	-----------------------------------
  *
- *	$Id: i4b_tei.c,v 1.1.1.1 2001/01/05 12:50:06 martin Exp $ 
+ *	$Id: i4b_tei.c,v 1.2 2001/03/24 12:40:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -72,7 +72,6 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -83,9 +82,8 @@
  *	handle a received TEI management frame
  *---------------------------------------------------------------------------*/
 void
-i4b_tei_rxframe(int unit, struct mbuf *m)
+i4b_tei_rxframe(l2_softc_t *l2sc, struct mbuf *m)
 {
-	l2_softc_t *l2sc = &l2_softc[unit];
 	u_char *ptr = m->m_data;
 	
 	switch(*(ptr + OFF_MT))
@@ -100,9 +98,9 @@ i4b_tei_rxframe(int unit, struct mbuf *m)
 				if(l2sc->T202 == TIMER_ACTIVE)
 					i4b_T202_stop(l2sc);
 
-				MDL_Status_Ind(l2sc->unit, STI_TEIASG, l2sc->tei);
+				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, l2sc->tei);
 
-				log(LOG_INFO, "i4b: unit %d, assigned TEI = %d = 0x%02x\n", l2sc->unit, l2sc->tei, l2sc->tei);
+				log(LOG_INFO, "i4b: bri %d, assigned TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
 
 				NDBGL2(L2_TEI_MSG, "TEI ID Assign - TEI = %d", l2sc->tei);
 
@@ -119,15 +117,15 @@ i4b_tei_rxframe(int unit, struct mbuf *m)
 
 				if(l2sc->tei == GROUP_TEI)
 				{
-					log(LOG_WARNING, "i4b: unit %d, denied TEI, no TEI values available from exchange!\n", l2sc->unit);
+					log(LOG_WARNING, "i4b: bri %d, denied TEI, no TEI values available from exchange!\n", l2sc->bri);
 					NDBGL2(L2_TEI_ERR, "TEI ID Denied, No TEI values available from exchange!");
 				}
 				else
 				{
-					log(LOG_WARNING, "i4b: unit %d, denied TEI = %d = 0x%02x\n", l2sc->unit, l2sc->tei, l2sc->tei);
+					log(LOG_WARNING, "i4b: bri %d, denied TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
 					NDBGL2(L2_TEI_ERR, "TEI ID Denied - TEI = %d", l2sc->tei);
 				}					
-				MDL_Status_Ind(l2sc->unit, STI_TEIASG, -1);
+				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, -1);
 				i4b_next_l2state(l2sc, EV_MDERRRS);
 			}
 			break;
@@ -159,9 +157,9 @@ i4b_tei_rxframe(int unit, struct mbuf *m)
 				l2sc->tei_valid = TEI_INVALID;
 				l2sc->tei = GET_TEIFROMAI(*(ptr+OFF_AI));
 
-				log(LOG_INFO, "i4b: unit %d, removed TEI = %d = 0x%02x\n", l2sc->unit, l2sc->tei, l2sc->tei);
+				log(LOG_INFO, "i4b: bri %d, removed TEI = %d = 0x%02x\n", l2sc->bri, l2sc->tei, l2sc->tei);
 				NDBGL2(L2_TEI_MSG, "TEI ID Remove - TEI = %d", l2sc->tei);
-				MDL_Status_Ind(l2sc->unit, STI_TEIASG, -1);
+				i4b_mdl_status_ind(l2sc->bri, STI_TEIASG, -1);
 				i4b_next_l2state(l2sc, EV_MDREMRQ);
 			}
 			break;
@@ -239,8 +237,8 @@ i4b_tei_assign(l2_softc_t *l2sc)
 		panic("i4b_tei_assign: no mbuf");		
 
 	i4b_T202_start(l2sc);
-	
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -260,8 +258,8 @@ i4b_tei_verify(l2_softc_t *l2sc)
 		panic("i4b_tei_verify: no mbuf");		
 
 	i4b_T202_start(l2sc);
-	
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -284,7 +282,7 @@ i4b_tei_chkresp(l2_softc_t *l2sc)
 	if(m == NULL)
 		panic("i4b_tei_chkresp: no mbuf");		
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
 
 /*---------------------------------------------------------------------------*
@@ -316,7 +314,7 @@ i4b_make_rand_ri(l2_softc_t *l2sc)
 	
 	for(i=0; i < 50 ; i++, val++)
 	{
-		val |= l2sc->unit+i;
+		val |= l2sc->bri+i;
 		val <<= i;
 		val ^= (time.tv_sec >> 16) ^ time.tv_usec;
 		val <<= i;
