@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.11 1999/03/25 23:18:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,10 +108,6 @@
 #define IED_ENQ		0x20
 #define IED_XMIT	0x40
 #define	IED_ALL		0x7f
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 #define B_PER_F		3		/* recv buffers per frame */
 #define	IE_RBUF_SIZE	256		/* size of each receive buffer;

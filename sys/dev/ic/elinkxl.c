@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.5 1999/02/28 17:10:53 explorer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.6 1999/03/25 23:18:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,10 +92,6 @@
 /* #include <dev/ic/elink3var.h> */
 #include <dev/ic/elinkxlreg.h>
 #include <dev/ic/elinkxlvar.h>
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN   1518
-#define ETHER_ADDR_LEN  6
 
 #ifdef DEBUG
 int exdebug = 0;
