@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fclose.c	5.2 (Berkeley) 2/1/91";*/
-static char *rcsid = "$Id: fclose.c,v 1.3 1993/08/26 00:46:33 jtc Exp $";
+static char *rcsid = "$Id: fclose.c,v 1.4 1993/12/31 19:13:47 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: fclose.c,v 1.3 1993/08/26 00:46:33 jtc Exp $";
 #include <stdlib.h>
 #include "local.h"
 
+int
 fclose(fp)
 	register FILE *fp;
 {

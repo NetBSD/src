@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)printf.c	5.6 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: printf.c,v 1.3 1993/08/26 00:47:11 jtc Exp $";
+static char *rcsid = "$Id: printf.c,v 1.4 1993/12/31 19:14:26 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ static char *rcsid = "$Id: printf.c,v 1.3 1993/08/26 00:47:11 jtc Exp $";
 #include <varargs.h>
 #endif
 
+int
 #if __STDC__
 printf(char const *fmt, ...)
 #else

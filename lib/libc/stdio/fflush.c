@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fflush.c	5.1 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: fflush.c,v 1.5 1993/08/26 00:46:39 jtc Exp $";
+static char *rcsid = "$Id: fflush.c,v 1.6 1993/12/31 19:13:58 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: fflush.c,v 1.5 1993/08/26 00:46:39 jtc Exp $";
 #include "local.h"
 
 /* Flush a single file, or (if fp is NULL) all files.  */
+int
 fflush(fp)
 	register FILE *fp;
 {
@@ -57,6 +58,7 @@ fflush(fp)
 	return (__sflush(fp));
 }
 
+int
 __sflush(fp)
 	register FILE *fp;
 {
