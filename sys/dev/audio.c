@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.7 2004/12/25 13:25:16 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.8 2004/12/25 17:19:42 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.7 2004/12/25 13:25:16 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.8 2004/12/25 17:19:42 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1066,7 +1066,7 @@ audio_drain(struct audio_softc *sc)
 		uint8_t *inp = cb->s.inp;
 
 		cc = cb->blksize - (inp - cb->s.start) % cb->blksize;
-		audio_fill_silence(&sc->sc_pparams, inp, cc);
+		audio_fill_silence(&cb->s.param, inp, cc);
 		inp += cc;
 		if (inp >= cb->s.end)
 			inp = cb->s.start;
@@ -1568,7 +1568,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		splx(s);
 		if (cc != 0) {
 			DPRINTFN(1, ("audio_write: fill %d\n", cc));
-			audio_fill_silence(&sc->sc_pparams, einp, cc);
+			audio_fill_silence(&cb->s.param, einp, cc);
 		}
 	}
 	return error;
@@ -1931,7 +1931,7 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 	if (!cb->mmapped) {
 		cb->mmapped = TRUE;
 		if (cb == &sc->sc_pr) {
-			audio_fill_silence(&sc->sc_pparams, cb->s.start,
+			audio_fill_silence(&cb->s.param, cb->s.start,
 					   cb->s.bufsize);
 			s = splaudio();
 			if (!sc->sc_pbus)
@@ -2037,7 +2037,7 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 				    "count=%d size=%d\n",
 				    cc, inp, sc->sc_sil_count,
 				    (int)(cb->s.end - cb->s.start)));
-			audio_fill_silence(&sc->sc_pparams, inp, cc);
+			audio_fill_silence(&cb->s.param, inp, cc);
 		} else {
 			DPRINTFN(5,("audio_pint_silence: already silent "
 				    "cc=%d inp=%p\n", cc, inp));
@@ -2048,7 +2048,7 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 		sc->sc_sil_count = cc;
 		DPRINTFN(5, ("audio_pint_silence: start fill %p %d\n",
 			     inp, cc));
-		audio_fill_silence(&sc->sc_pparams, inp, cc);
+		audio_fill_silence(&cb->s.param, inp, cc);
 	}
 }
 
