@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2002/08/11 22:29:08 fredette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2002/08/19 18:58:31 fredette Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -96,11 +96,6 @@ struct hppa_cpu_info {
 
 	int (*desidhash) __P((void));
 	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
-	int (*dbtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*ibtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*btlbprg) __P((int i));
 	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
 };
 extern const struct hppa_cpu_info *hppa_cpu_info;

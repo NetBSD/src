@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 2002/08/05 20:58:35 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 2002/08/19 18:58:26 fredette Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,10 @@ int os_toc __P((void));
 extern u_int os_toc_end;
 void hppa_machine_check __P((int));
 
-/* This reloads the BTLB. */
+/* BTLB handling. */
+int hppa_btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
+		     vsize_t *lenp, u_int prot)); 
 int hppa_btlb_reload __P((void)); 
+int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t));
 
 #endif /* _KERNEL */

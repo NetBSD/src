@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2002/08/19 18:58:29 fredette Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -182,8 +182,6 @@ void fdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
 void pdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
 void fcacheall __P((void));
 void ptlball __P((void));
-int btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
-		     vsize_t *lenp, u_int prot));
 hppa_hpa_t cpu_gethpa __P((int n));
 
 /*
