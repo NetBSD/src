@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.21 1999/05/18 23:57:20 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.22 1999/08/26 19:56:08 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -653,7 +653,7 @@ arc_ifattach(ifp, lla)
 	   sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ARCNET;
 		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy((caddr_t)&lla, LLADDR(sdl), ifp->if_addrlen);
+		*(LLADDR(sdl)) = lla;
 	}
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 }
