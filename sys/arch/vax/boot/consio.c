@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.4 1996/08/02 11:22:00 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.5 1997/03/15 13:04:26 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -119,7 +119,12 @@ setup()
 	 * support both serial and graphical consoles, thus we use that
 	 * as fallthrough/default.
 	 */
-	switch (vax_boardtype) {	/* ROM-based is default !!! */
+	switch (vax_boardtype) {
+
+	case VAX_BTYP_630: /* MVII has only mtpr console */
+		put_fp = pr_putchar;
+		get_fp = pr_getchar;
+		break;
 
 	case VAX_BTYP_650:
 	case VAX_BTYP_660:
@@ -136,6 +141,7 @@ setup()
 	case VAX_BTYP_46:
 	case VAX_BTYP_49:
 	case VAX_BTYP_410:	  
+	case VAX_BTYP_420:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		rom_putc = 0x20040058;		/* 537133144 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1996/08/02 11:21:49 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.6 1997/03/15 13:04:23 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 char line[100];
-volatile u_int devtype, bootdev;
+volatile int devtype, bootdev;
 extern	unsigned opendev;
 extern  unsigned *bootregs;
 
