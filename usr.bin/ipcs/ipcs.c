@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.26 2001/02/19 23:03:48 cgd Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.27 2002/05/21 01:10:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ void
 show_msginfo_hdr(void)
 {
 	printf("Message Queues:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T      ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
@@ -322,7 +322,7 @@ show_msginfo(time_t stime, time_t rtime, time_t ctime, int ipcid, u_int64_t key,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("q %6d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	printf("q %7d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
@@ -348,7 +348,7 @@ void
 show_shminfo_hdr(void)
 {
 	printf("Shared Memory:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T      ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
@@ -375,7 +375,7 @@ show_shminfo(time_t atime, time_t dtime, time_t ctime, int ipcid, u_int64_t key,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("m %6d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	printf("m %7d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
@@ -404,7 +404,7 @@ void
 show_seminfo_hdr(void)
 {
 	printf("Semaphores:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T      ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & BIGGEST)
@@ -425,7 +425,7 @@ show_seminfo(time_t otime, time_t ctime, int ipcid, u_int64_t key, mode_t mode,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("s %6d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	printf("s %7d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
