@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.7 1996/10/11 00:09:03 christos Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.8 1996/10/13 04:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -104,7 +104,7 @@ void	**phys_addr;
 	if(bfit != NULL)
 		mn = bfit;
 	if (mn == (void *)&free_list) {
-		kprintf("St-mem pool exhausted, binpatch 'st_pool_size'"
+		printf("St-mem pool exhausted, binpatch 'st_pool_size'"
 			"to get more\n");
 		splx(s);
 		return(NULL);

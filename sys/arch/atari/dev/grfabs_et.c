@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.3 1996/10/11 21:01:26 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.4 1996/10/13 04:10:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -226,8 +226,8 @@ view_t *v;
 		return;
 
 	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
-#if 0 /* XXX: Can't use kprintf here.... */
-		kprintf("et_save_view: Don't know how to save"
+#if 0 /* XXX: Can't use printf here.... */
+		printf("et_save_view: Don't know how to save"
 			" a graphics mode\n");
 #endif
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.12 1996/10/11 00:09:36 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.13 1996/10/13 04:11:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -78,7 +78,7 @@ viewattach(cnt)
 	int cnt;
 {
 	viewprobe();
-	kprintf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
+	printf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
 }
 
 /* this function is called early to set up a display. */
