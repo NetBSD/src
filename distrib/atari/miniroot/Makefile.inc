@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/05/07 14:59:35 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/05/10 21:11:48 leo Exp $
 
-IMAGESIZE=	1080k
+IMAGESIZE=	1440k
 IMAGEENDIAN=	be
+MAKEFS_FLAGS=	-o density=3k
 MAKEDEVTARGETS=	floppy
 IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
 		${ARCHDIR}/install.md ${ARCHDIR}/termcap.vt
