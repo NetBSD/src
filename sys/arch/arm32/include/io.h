@@ -1,4 +1,4 @@
-/* $NetBSD: io.h,v 1.2 1996/03/14 23:11:16 mark Exp $ */
+/* $NetBSD: io.h,v 1.3 1996/03/28 21:28:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -70,7 +70,29 @@
 #define SERIAL1_CONTROLLER_BASE		0xf6210be0
 
 #define PARALLEL_CONTROLLER_BASE	0xf62109e0
+
 #define IO_MOUSE_BUTTONS		0xf6010000
+
+#ifdef RC7500
+
+#define IDE_CONTROLLER_BASE2		0xf622B000
+
+/*
+ * a bit low turns attached LED on
+ */
+#define LEDPORT	(IO_BASE + 0x0002B060)
+#define LED0	0x01
+#define LED1	0x02
+#define LED2	0x04
+#define LED3	0x08
+#define LED4	0x10
+#define LED5	0x20
+#define LED6	0x40
+#define LED7	0x80
+#define LEDOFF	0x00
+#define LEDALL	0xFF
+#endif
+
 
 #define EASI_HW_BASE		0x08000000
 #define EASI_BASE		0xf8000000
