@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.31 1996/05/11 16:12:58 mycroft Exp $
+# 	$NetBSD: Makefile.sparc,v 1.32 1996/05/19 20:58:51 pk Exp $
 
 # Makefile for NetBSD
 #
@@ -107,7 +107,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${SPARC}/sparc/genassym.c
-	${NORMAL_C_C}
+	${NORMAL_C_C:S/^-pg$//:S/^-p$//}
 
 param.c: $S/conf/param.c
 	rm -f param.c
