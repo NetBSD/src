@@ -1,4 +1,4 @@
-/* $NetBSD: disassem.c,v 1.1 1996/01/31 23:15:44 mark Exp $ */
+/* $NetBSD: disassem.c,v 1.2 1996/02/15 22:05:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,8 @@
  * Debug / Monitor disassembler
  *
  * Created      : 09/10/94
- * Last updated : 28/08/95
  *
- *    $Id: disassem.c,v 1.1 1996/01/31 23:15:44 mark Exp $
+ *    $Id: disassem.c,v 1.2 1996/02/15 22:05:20 mark Exp $
  */
 
 /* Include standard header files */
@@ -89,7 +88,8 @@ opcodes_struct opcodes[] = {
     { 0x0e000000, 0x0a000000, 7, instruction_branch },
     { 0x0fe000f0, 0x00000090, 7, instruction_mul },
     { 0x0fe000f0, 0x00200090, 7, instruction_mla },
-    { 0x0c000000, 0x04000000, 7, instruction_ldrstr },
+    { 0x0e000000, 0x04000000, 7, instruction_ldrstr },
+    { 0x0c000010, 0x04000000, 7, instruction_ldrstr },
     { 0x0e000000, 0x08000000, 6, instruction_ldmstm },
     { 0x0FB00FF0, 0x01000090, 7, instruction_swap },
     { 0x0FBF0FFF, 0x010F0000, 1, instruction_mrs },
