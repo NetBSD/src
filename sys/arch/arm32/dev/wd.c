@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.18 1997/10/08 23:39:28 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.19 1997/10/14 19:13:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -53,16 +53,11 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
-
-#include <machine/irqhandler.h>
 #include <machine/bus.h>
-#include <arm32/mainbus/mainbus.h>
-#include <arm32/mainbus/wdreg.h>
-#include <arm32/mainbus/wdvar.h>
+#include <arm32/dev/wdreg.h>
+#include <arm32/dev/wdcvar.h>
 
 #include "locators.h"
-
-extern int wdresethack;
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
 #define	RECOVERYTIME	(hz / 2)	/* time to recover from an error */
@@ -125,19 +120,11 @@ struct wd_softc {
 	struct buf sc_q;
 };
 
-int	wdcprobe 	__P((struct device *, void *, void *));
-void	wdcattach 	__P((struct device *, struct device *, void *));
-int	wdcintr		__P((void *));
-
-struct cfattach wdc_ca = {
-	sizeof(struct wdc_softc), wdcprobe, wdcattach
-};
-
 struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
 };
 
-int wdprobe	__P((struct device *, void *, void *));
+int wdprobe	__P((struct device *, struct cfdata *, void *));
 void wdattach	__P((struct device *, struct device *, void *));
 int wdprint	__P((void *, const char *));
 
@@ -238,41 +225,6 @@ wdcprobe_internal(iot, ioh, aux_ioh, data_ioh, data32_ioh, name)
 	return(1);
 }
 
-int
-wdcprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct mainbus_attach_args *mb = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_space_handle_t aux_ioh;
-	int rv = 0;
-
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
-		return(0);
-
-	/* XXX - need xname */
-
-	iot = mb->mb_iot;
-	
-	if (bus_space_map(iot, mb->mb_iobase, 8, 0, &ioh))
-		return(0);
-
-	if (bus_space_map(iot, mb->mb_iobase + (WD_ALTSTATUS*4), 1, 0, &aux_ioh))
-		goto out;
-
-	rv = wdcprobe_internal(iot, ioh, aux_ioh, ioh, -1, ((struct device *)(match))->dv_xname);
-
-	mb->mb_iosize = 8*4;
-
-out:
-	bus_space_unmap(iot, ioh, 8);
-	bus_space_unmap(iot, aux_ioh, 1);
-	return(rv);
-}
-
 struct wdc_attach_args {
 	int wa_drive;
 };
@@ -316,40 +268,13 @@ wdcattach_internal(wdc, iot, ioh, aux_ioh, data_ioh, data32_ioh, drq)
 		(void)config_found((struct device *)wdc, (void *)&wa, wdprint);
 }
 
-void
-wdcattach(parent, self, aux)
-	struct device *parent, *self;
+int
+wdprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct wdc_softc *wdc = (void *)self;
-	struct mainbus_attach_args *mb = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_space_handle_t aux_ioh;
-
-	TAILQ_INIT(&wdc->sc_drives);
-	iot = mb->mb_iot;
-
-	if (bus_space_map(iot, mb->mb_iobase, 8, 0, &ioh))
-		panic("%s: Cannot map IO\n", wdc->sc_dev.dv_xname);
-
-	if (bus_space_map(iot, mb->mb_iobase + (WD_ALTSTATUS*4), 1, 0,
-	     &aux_ioh))
-		panic("%s: Cannot map IO\n", wdc->sc_dev.dv_xname);
-
-	wdc->sc_ih = intr_claim(mb->mb_irq, IPL_BIO, "wdc",
-	    wdcintr, wdc);
-
-	wdcattach_internal(wdc, iot, ioh, aux_ioh, ioh, -1, mb->mb_drq);
-}
-
-int
-wdprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
 	struct wdc_softc *wdc = (void *)parent;
-	struct cfdata *cf = match;
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
 
@@ -413,7 +338,7 @@ wdattach(parent, self, aux)
 	    DEV_BSIZE);
 
 	if ((wd->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
-	    wdc->sc_drq != DRQUNK) {
+	    wdc->sc_drq != -1) {
 		wd->sc_mode = WDM_DMA;
 	} else if (wd->sc_params.wdp_maxmulti > 1) {
 		wd->sc_mode = WDM_PIOMULTI;
@@ -487,7 +412,7 @@ wdstrategy(bp)
 		}
 	}
 #endif
-	splx(s);
+	(void)splx(s);
 	return;
     
 bad:
@@ -1377,7 +1302,7 @@ wd_get_parms(wd)
 	while ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
 		wdc->sc_flags |= WDCF_WANTED;
 		if ((error = tsleep(wdc, PRIBIO | PCATCH, "wdprm", 0)) != 0) {
-			splx(s);
+			(void)splx(s);
 			return error;
 		}
 	}
@@ -1430,7 +1355,7 @@ wd_get_parms(wd)
 	/* Restart the queue. */
 	wdcstart(wdc);
 
-	splx(s);
+	(void)splx(s);
 	return 0;
 }
 
@@ -1768,7 +1693,7 @@ wdcreset(wdc)
 	bus_space_handle_t aux_ioh = wdc->sc_auxioh;
 
 	/* Reset the device. */
-	if (wdresethack) {
+	if (!(wdc->sc_flags & WDCF_NORESET)) {
 		bus_space_write_1(iot, aux_ioh, wd_ctlr, WDCTL_RST | WDCTL_IDS);
 		delay(1000);
 		bus_space_write_1(iot, aux_ioh, wd_ctlr, WDCTL_IDS);
@@ -1796,7 +1721,7 @@ wdcrestart(arg)
 
 	s = splbio();
 	wdcstart(wdc);
-	splx(s);
+	(void)splx(s);
 }
 
 /*
@@ -1887,7 +1812,7 @@ wdctimeout(arg)
 		wdcunwedge(wdc);
 	} else
 		wderror(wdc, NULL, "missing untimeout");
-	splx(s);
+	(void)splx(s);
 }
 
 void
