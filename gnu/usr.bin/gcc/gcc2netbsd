@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.4 1996/01/08 03:51:38 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.5 1996/02/28 21:01:27 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -44,9 +44,11 @@ $version = "2.7.2";
 
 @cc1f = ("c-parse.c", "c-lang.c");
 
+@cc1of = ("c-parse.y");
+
 @cc1objf = ("objc-parse.c", "objc-act.c");
 
-@cc1objof = ("objc-tree.def", "objc-act.h");
+@cc1objof = ("objc-tree.def", "objc-act.h", "objc-parse.y");
 
 @cc1plusf = ("call.c", "decl.c", "errfn.c", "expr.c", "pt.c", "sig.c",
 	     "typeck2.c", "class.c", "decl2.c", "error.c", "gc.c",
@@ -55,7 +57,7 @@ $version = "2.7.2";
 	     "search.c", "tree.c", "xref.c", "repo.c");
 
 @cc1plusof = ("tree.def", "class.h", "cp-tree.h", "decl.h", "hash.h",
-	      "lex.h", "parse.h", "input.c");
+	      "lex.h", "parse.h", "input.c", "parse.y");
 
 @commonf = ("bc-emit.c", "bc-optab.c", "bi-reverse.c", "c-aux-info.c",
 	    "c-common.c", "c-convert.c", "c-decl.c", "c-iterate.c",
@@ -83,7 +85,7 @@ $version = "2.7.2";
 	     "hard-reg-set.h", "input.h", "integrate.h", "loop.h",
 	     "machmode.h", "obstack.h", "output.h", "real.h",
 	     "recog.h", "regs.h", "reload.h", "rtl.h", "stack.h",
-	     "tree.h", "typeclass.h", "xcoffout.h");
+	     "tree.h", "typeclass.h", "xcoffout.h", "bi-parser.y");
 
 @commonplus = ("lang-specs.h", "lang-options.h"); 
 
@@ -95,7 +97,7 @@ $version = "2.7.2";
 
 @cppf = ("cccp.c", "cexp.c");
 
-@cppof = ("pcp.h");
+@cppof = ("pcp.h", "cexp.y");
 
 @gplusf = ("g++.c");
 
