@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.55 1997/04/27 18:14:34 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -315,7 +315,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		    (cd->rom.flags & ERT_Z3_SSMASK) == 0)
 			cd->size = 0x10000 <<
 			    ((cd->rom.type - 1) & ERT_MEMMASK);
-		RELOC(ZBUSAVAIL, u_int) += amiga_round_page(cd->size);
+		RELOC(ZBUSAVAIL, u_int) += m68k_round_page(cd->size);
 	}
 
 	/*
@@ -333,7 +333,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	vend   = fphysize;
 	avail  = vend;
 	vstart = (u_int) end_loaded;
-	vstart = amiga_round_page (vstart);
+	vstart = m68k_round_page (vstart);
 	pstart = vstart + fphystart;
 	pend   = vend   + fphystart;
 	avail -= vstart;
