@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.16 1999/01/03 14:54:28 lukem Exp $
+.\"	$NetBSD: find.1,v 1.17 1999/01/12 00:18:50 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,11 +94,18 @@ option is a modification to permit
 to be safely used in conjunction with
 .Xr xargs 1 .
 If a file name contains any of the delimiting characters used by
-.Xr xargs ,
+.Nm xargs ,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
 The delimiting characters include single (`` ' '') and double (`` " '')
 quotes, backslash (``\e''), space, tab and newline characters.
+Alternatively, the
+.Ic -print0
+or
+.Ic -printx
+primaries can be used to format the output in a way that
+.Nm xargs
+can accept.
 .It Fl d
 The
 .Fl d
@@ -317,8 +324,9 @@ If none of
 .Ic -exec ,
 .Ic -ls ,
 .Ic -ok ,
+.Ic -print0 ,
 nor
-.Ic -print0
+.Ic -printx
 is specified, the given expression shall be effectively replaced by
 .Cm \&( Ns Ar given\& expression Ns Cm \&) 
 .Ic -print .
@@ -326,6 +334,14 @@ is specified, the given expression shall be effectively replaced by
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
 by a null character.
+.It Ic -printx
+This primary always evaluates to true.
+It prints the pathname of the current file to standard output,
+with each space, tab, newline, backslash, and single or double
+quotation mark prefixed by a backslash, so the output of
+.Nm find
+can safely be used as input to
+.Nm xargs .
 .It Ic -prune
 This primary always evaluates to true.
 It causes
@@ -510,3 +526,9 @@ These problems are handled by the
 option and the
 .Xr getopt 3
 ``--'' construct.
+.Sh HISTORY
+A much simpler
+.Nm find
+command appeared in First Edition AT&T Unix.
+The syntax had become similar to the present version by
+the time of the Fifth Edition.

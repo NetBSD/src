@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.27 1999/01/03 14:54:28 lukem Exp $	*/
+/*	$NetBSD: function.c,v 1.28 1999/01/12 00:18:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.27 1999/01/03 14:54:28 lukem Exp $");
+__RCSID("$NetBSD: function.c,v 1.28 1999/01/12 00:18:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ static	long	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_perm __P((PLAN *, FTSENT *));
 	int	f_print __P((PLAN *, FTSENT *));
 	int	f_print0 __P((PLAN *, FTSENT *));
+	int	f_printx __P((PLAN *, FTSENT *));
 	int	f_prune __P((PLAN *, FTSENT *));
 	int	f_size __P((PLAN *, FTSENT *));
 	int	f_type __P((PLAN *, FTSENT *));
@@ -891,6 +892,25 @@ f_print0(plan, entry)
 	(void)fputc('\0', stdout);
 	return (1);
 }
+
+int
+f_printx(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	char *cp;
+
+	for (cp = entry->fts_path; *cp; cp++) {
+		if (*cp == '\'' || *cp == '\"' || *cp == ' ' ||
+		    *cp == '\t' || *cp == '\n' || *cp == '\\')
+			fputc('\\', stdout);
+
+		fputc(*cp, stdout);
+	}
+
+	fputc('\n', stdout);
+	return 1;
+}
  
 PLAN *
 c_print(argvp, isok)
@@ -910,6 +930,16 @@ c_print0(argvp, isok)
 	isoutput = 1;
 
 	return (palloc(N_PRINT0, f_print0));
+}
+
+PLAN *
+c_printx(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	isoutput = 1;
+
+	return palloc(N_PRINTX, f_printx);
 }
  
 /*
