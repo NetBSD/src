@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.40 2003/09/26 22:25:21 wiz Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.41 2003/10/19 01:49:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.40 2003/09/26 22:25:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.41 2003/10/19 01:49:03 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1320,10 +1320,6 @@ fpwrite_done:
 	printf("esh_fpwrite:  error %d\n", error);
 #endif
 	splx(s);
-	return error;
-
-/* To shut up compiler */
-	error = physio(esh_fpstrategy, NULL, dev, B_WRITE, minphys, uio);
 	return error;
 }
 
