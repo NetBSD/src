@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.33 2002/10/06 13:23:00 simonb Exp $	*/
+/*	$NetBSD: modload.c,v 1.34 2002/10/07 02:33:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.33 2002/10/06 13:23:00 simonb Exp $");
+__RCSID("$NetBSD: modload.c,v 1.34 2002/10/07 02:33:55 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -249,7 +249,7 @@ main(int argc, char **argv)
 	struct stat stb;
 	int strtablen;
 	size_t modsize;	/* XXX */
-	void* modentry;	/* XXX */
+	void *modentry;	/* XXX */
 	int noready = 0, old = 0;
 
 	while ((c = getopt(argc, argv, "dnvsA:Se:p:o:")) != -1) {
@@ -398,9 +398,9 @@ main(int argc, char **argv)
 	/*
 	 * Relink at kernel load address
 	 */
-	if (prelink(kname, entry, out, (void*)resrv.addr, modobj))
+	if (prelink(kname, entry, out, (void *)resrv.addr, modobj))
 		errx(1, "can't link `%s' creating `%s' bound to %p",
-		     modobj, out, (void*)resrv.addr);
+		     modobj, out, (void *)resrv.addr);
 
 	/*
 	 * Open the relinked module to load it...
