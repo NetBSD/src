@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.57 1998/07/23 20:52:01 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.58 1998/08/09 21:58:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -434,7 +434,7 @@ sys_swapctl(p, v, retval)
 
 		sdp = (struct swapdev *)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
-		bzero(sdp, sizeof(*sdp));
+		memset(sdp, 0, sizeof(*sdp));
 
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
