@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.11 1995/09/25 20:20:29 chuck Exp $
+#	$NetBSD: files.sparc,v 1.12 1995/10/05 00:21:35 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -143,6 +143,11 @@ file	kludge_for_in_proto.c		hy needs-flag
 file	arch/sparc/sparc/db_interface.c	ddb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
+
+#
+# Raster Console
+#
+include "../../../dev/rcons/files.rcons"
 
 #
 # Compatibility modules
