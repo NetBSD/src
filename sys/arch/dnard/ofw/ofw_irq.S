@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.1 2001/05/09 16:08:44 matt Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.2 2001/11/02 02:36:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -250,7 +250,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #irqhandlers - . - 8]
+	ldr	r7, [pc, #Lirqhandlers - . - 8]
         mov	r9, #0x00000001
 
 irqloop:
@@ -405,7 +405,7 @@ Lintrcnt:
 	.word	_C_LABEL(intrcnt)
 
 
-irqhandlers:
+Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
 
 Lastpending:
