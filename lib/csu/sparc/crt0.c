@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.1 1993/10/16 22:02:59 pk Exp $
+ *	$Id: crt0.c,v 1.2 1993/12/15 09:46:28 pk Exp $
  */
 
 
@@ -63,7 +63,7 @@ static void	__do_dynamic_link ();
 static char	*_getenv();
 static int	_strncmp();
 
-#ifdef sparc
+#if defined(sun) && defined(sparc)
 static		__call();
 #endif
 
@@ -114,7 +114,6 @@ char			*__progname = empty;
 	_exit(1);
 
 
-#ifdef sparc
 asm ("	.global start");
 asm ("	.text");
 asm ("	start:");
@@ -145,9 +144,11 @@ asm ("	call	___do_mcrt");
 asm ("	nop");
 #endif
 
+#ifdef sun
 /* Stay Sun compatible (currently (SunOS 4.1.2) does nothing on sun4) */
 asm ("	call	start_float");
 asm ("	nop");
+#endif
 
 /* Move `argc', `argv', and `envp' from locals to parameters for `main'.  */
 asm ("	mov	%l0,%o0");
@@ -171,72 +172,6 @@ __do_mcrt ()
 	return;
 }
 #endif
-
-#endif /* sparc */
-
-
-#ifdef i386
-start()
-{
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
-	register struct kframe *kfp;
-	register char **targv;
-	register char **argv;
-	extern void _mcleanup();
-#ifdef DYNAMIC
-	volatile caddr_t x;
-#endif
-
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	/* just above the saved frame pointer */
-	asm ("lea 4(%%ebp), %0" : "=r" (kfp) );
-#endif /* not lint */
-	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
-		/* void */ ;
-	if (targv >= (char **)(*argv))
-		--targv;
-	environ = targv;
-
-#ifdef DYNAMIC
-#ifdef stupid_gcc
-	if (&_DYNAMIC)
-		__do_dynamic_link();
-#else
-	x = (caddr_t)&_DYNAMIC;
-	if (x)
-		__do_dynamic_link();
-#endif
-#endif /* DYNAMIC */
-
-asm("eprol:");
-
-#ifdef MCRT0
-	atexit(_mcleanup);
-	monstartup(&eprol, &etext);
-#endif MCRT0
-#if 0
-	errno = 0;
-#endif
-	if (argv[0])
-		if ((__progname = _strrchr(argv[0], '/')) == NULL)
-			__progname = argv[0];
-		else
-			++__progname;
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-	exit(main(kfp->kargc, argv, environ));
-}
-#endif /* i386 */
 
 #ifdef DYNAMIC
 static void
@@ -327,7 +262,7 @@ __do_dynamic_link ()
 	crt.crt_ep = environ;
 	crt.crt_bp = (caddr_t)_callmain;
 
-#if defined(sparc) && defined(SUN_COMPAT)
+#if defined(sun) && defined(sparc)
 	/* Call Sun's ld.so entry point: version 1, offset crt */
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
@@ -344,7 +279,7 @@ __do_dynamic_link ()
 	return;
 }
 
-#ifdef sparc
+#ifdef sun
 static
 __call()
 {
@@ -416,21 +351,6 @@ _getenv(name)
 	asm("jmp	%o7 + 0x8");
 	asm("nop");
 #endif /* sparc */
-#ifdef i386
-	asm("	___syscall:");
-	asm("		popl %ecx");
-	asm("		popl %eax");
-	asm("		pushl %ecx");
-	asm("		.byte 0x9a");
-	asm("		.long 0");
-	asm("		.word 7");
-	asm("		pushl %ecx");
-	asm("		jc 1f");
-	asm("		ret");
-	asm("	1:");
-	asm("		movl	$-1,%eax");
-	asm("		ret");
-#endif /* i386 */
 
 #endif /* DYNAMIC */
 
