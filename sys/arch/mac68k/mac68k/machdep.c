@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.2 1997/11/06 01:06:57 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.3 1997/11/15 01:01:39 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1059,7 +1059,7 @@ void
 netintr()
 {
 #ifdef INET
-#if NARP
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
