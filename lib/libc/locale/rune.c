@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.24 2004/01/06 08:08:44 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.25 2004/01/06 11:29:30 agc Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.24 2004/01/06 08:08:44 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.25 2004/01/06 11:29:30 agc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,7 +188,7 @@ find_codeset(_RuneLocale *rl)
 		*top = *tail;
 		*tail = '\0';
 		rl->rl_codeset = strdup(codeset);
-		strlcpy(top + 1, tail + 1, ep - (top + 1));
+		strlcpy(top + 1, tail + 1, (unsigned)(ep - (top + 1)));
 	} else {
 		*top = '\0';
 		rl->rl_codeset = strdup(codeset);
