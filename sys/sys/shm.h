@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.16 1994/10/20 04:29:01 cgd Exp $	*/
+/*	$NetBSD: shm.h,v 1.17 1994/12/22 13:29:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,20 +40,24 @@
 
 #include <sys/ipc.h>
 
-#define SHM_RDONLY  010000  /* Attach read-only (else read-write) */
-#define SHM_RND     020000  /* Round attach address to SHMLBA */
-#define SHMLBA      CLBYTES /* Segment low boundry address multiple */
+#define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
+#define	SHM_RND		020000	/* Round attach address to SHMLBA */
+#define	SHMLBA		CLBYTES	/* Segment low boundry address multiple */
+
+/* Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl(). */
+#define	SHM_LOCK	3	/* Lock segment in memory. */
+#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
 
 struct shmid_ds {
-	struct ipc_perm shm_perm;	/* operation permission structure */
-	int             shm_segsz;	/* size of segment in bytes */
-	pid_t           shm_lpid;   /* process ID of last shared memory op */
-	pid_t           shm_cpid;	/* process ID of creator */
+	struct ipc_perm	shm_perm;	/* operation permission structure */
+	int		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm op */
+	pid_t		shm_cpid;	/* process ID of creator */
 	short		shm_nattch;	/* number of current attaches */
-	time_t          shm_atime;	/* time of last shmat() */
-	time_t          shm_dtime;	/* time of last shmdt() */
-	time_t          shm_ctime;	/* time of last change by shmctl() */
-	void           *shm_internal;   /* sysv stupidity */
+	time_t		shm_atime;	/* time of last shmat() */
+	time_t		shm_dtime;	/* time of last shmdt() */
+	time_t		shm_ctime;	/* time of last change by shmctl() */
+	void		*shm_internal;	/* sysv stupidity */
 };
 
 #ifdef KERNEL
@@ -63,23 +67,23 @@ struct shmid_ds {
  * might be of interest to user programs.  Do we really want/need this?
  */
 struct shminfo {
-	int	shmmax,		/* max shared memory segment size (bytes) */
-		shmmin,		/* min shared memory segment size (bytes) */
-		shmmni,		/* max number of shared memory identifiers */
-		shmseg,		/* max shared memory segments per process */
-		shmall;		/* max amount of shared memory (pages) */
+	int	shmmax;		/* max shared memory segment size (bytes) */
+	int	shmmin;		/* min shared memory segment size (bytes) */
+	int	shmmni;		/* max number of shared memory identifiers */
+	int	shmseg;		/* max shared memory segments per process */
+	int	shmall;		/* max amount of shared memory (pages) */
 };
-struct shminfo	shminfo;
-struct shmid_ds	*shmsegs;
+struct shminfo shminfo;
+struct shmid_ds *shmsegs;
 
 #else /* !KERNEL */
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void *shmat  __P((int, void *, int));
+void *shmat __P((int, void *, int));
 int shmctl __P((int, int, struct shmid_ds *));
-int shmdt  __P((void *));
+int shmdt __P((void *));
 int shmget __P((key_t, int, int));
 __END_DECLS
 
