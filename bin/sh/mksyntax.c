@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.15 1997/07/05 21:25:09 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.16 1997/07/18 17:46:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.15 1997/07/05 21:25:09 christos Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.16 1997/07/18 17:46:59 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,7 +401,7 @@ digit_convert()
 		for (p = digit ; *p && *p != i ; p++);
 		if (*p == '\0')
 			p = digit;
-		fprintf(cfile, "      %d,\n", p - digit);
+		fprintf(cfile, "      %ld,\n", (long)(p - digit));
 	}
 	fputs("};\n", cfile);
 }
