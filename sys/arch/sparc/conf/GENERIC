@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.62 1998/03/18 16:34:44 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.63 1998/03/21 11:15:25 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -147,7 +147,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	FIFO		# POSIX fifo support (in all filesystems)
 
 ## Network protocol support.  In most environments, INET is required.
@@ -410,7 +410,7 @@ pseudo-device	ipfilter
 ## /dev/audio support (`audioamd' plus `audio')
 ##
 audioamd0	at mainbus0				# sun4c
-audioamd0	at obio0				# sun4m
+#audioamd0	at obio0				# sun4m
 audioamd0	at sbus0 slot ? offset ?		# sun4m
 audio*		at audioamd0
 
