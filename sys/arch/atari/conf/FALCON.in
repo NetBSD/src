@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
+#	$NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -8,6 +8,10 @@
 # Define 'INSTALL_KERNEL' or 'INSTALLX_KERNEL' to generate a BOOT or
 # BOOTX kernel respectively.
 #
+
+# There is no possibility for physical network interfaces. Use the define
+# below to turn off vlan, pppoe, bridge  and NETATALK.
+#define	NO_PHYS_NETWORK
 
 #include "GENERIC.in"
 
