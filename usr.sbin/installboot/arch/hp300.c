@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.2 2003/11/08 22:39:07 uwe Exp $ */
+/* $NetBSD: hp300.c,v 1.3 2003/11/10 10:48:30 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,10 +42,18 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.2 2003/11/08 22:39:07 uwe Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.3 2003/11/10 10:48:30 dsl Exp $");
 #endif /* !__lint */
 
+/* We need the target disklabel.h, not the hosts one..... */
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#undef __HAVE_OLD_DISKLABEL	/* host's <machine/types.h> may define this */  
+#include "../../sys/arch/hp300/include/disklabel.h"                            
+#include "../../sys/sys/disklabel.h"                                           
+#else                                                                          
 #include <sys/disklabel.h>
+#endif
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -63,23 +71,20 @@ __RCSID("$NetBSD: hp300.c,v 1.2 2003/11/08 22:39:07 uwe Exp $");
 #include "installboot.h"
 #include "hp300_volhdr.h"
 
-#define nelem(x) (sizeof (x)/sizeof *(x))
-
 int
 hp300_setboot(ib_params *params)
 {
 	int		retval;
 	uint8_t		*bootstrap;
 	ssize_t		rv;
-	struct disklabel label;
 	struct partition *boot;
 	struct hp300_lifdir *lifdir;
-	char		ch, *cp;
-	int		bootfd = -1;
 	int		offset;
-	int		max_ptn;
 	int		i;
-	struct stat	sb;
+	uint		secsize;
+	uint64_t	boot_size, boot_offset;
+	char		label_buf[DEV_BSIZE];
+	struct disklabel *label = (void *)label_buf;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -90,36 +95,59 @@ hp300_setboot(ib_params *params)
 	retval = 0;
 	bootstrap = MAP_FAILED;
 
-	/* The bootstrap can be well over 8k, and must go into a BOOT ptn. */
-	if (ioctl(params->fsfd, DIOCGDINFO, &label) != 0) {
-		warn("reading disklabel");
-		goto done;
-	}
-
-	max_ptn = label.d_npartitions;
-	if (max_ptn > nelem(label.d_partitions))
-		max_ptn = nelem(label.d_partitions);
-	for (boot = label.d_partitions; ; boot++) {
-		if (--max_ptn < 0) {
-			warnx("No BOOT partition");
+	if (params->flags & IB_APPEND) {
+		if (!S_ISREG(params->fsstat.st_mode)) {
+			warnx(
+		    "`%s' must be a regular file to append a bootstrap",
+			    params->filesystem);
 			goto done;
 		}
-		if (boot->p_fstype == FS_BOOT)
-			break;
-	}
+		boot_offset = roundup(params->fsstat.st_size, HP300_SECTSIZE);
+	} else {
+		/*
+		 * The bootstrap can be well over 8k, and must go into a BOOT
+		 * partition. Read NetBSD label to locate BOOT partition.
+		 */
+		if (pread(params->fsfd, label, DEV_BSIZE, 2 * DEV_BSIZE)
+								!= DEV_BSIZE) {
+			warn("reading disklabel");
+			goto done;
+		}
+		/* And a quick validation - must be a big-endian label */
+		secsize = be32toh(label->d_secsize);
+		if (label->d_magic != be32toh(DISKMAGIC) ||
+		    label->d_magic2 != be32toh(DISKMAGIC) ||
+		    secsize == 0 || secsize & (secsize - 1) ||
+		    be32toh(label->d_npartitions) > MAXMAXPARTITIONS) {
+			warnx("Invalid disklabel in %s", params->filesystem);
+			goto done;
+		}
 
-	/*
-	 * We put the entire LIF file into the BOOT partition even when
-	 * it doesn't start at the beginning of the disk.
-	 *
-	 * Maybe we ought to be able to take a binary file and add
-	 * it to the LIF filesystem.
-	 */
-	if (boot->p_size * label.d_secsize < params->s1stat.st_size) {
-		warn("BOOT partition too small (%d < %lld)",
-			boot->p_size * label.d_secsize,
-			(long long int)params->s1stat.st_size);
-		goto done;
+		i = be32toh(label->d_npartitions);
+		for (boot = label->d_partitions; ; boot++) {
+			if (--i < 0) {
+				warnx("No BOOT partition");
+				goto done;
+			}
+			if (boot->p_fstype == FS_BOOT)
+				break;
+		}
+		boot_size = be32toh(boot->p_size) * (uint64_t)secsize;
+		boot_offset = be32toh(boot->p_offset) * (uint64_t)secsize;
+
+		/*
+		 * We put the entire LIF file into the BOOT partition even when
+		 * it doesn't start at the beginning of the disk.
+		 *
+		 * Maybe we ought to be able to take a binary file and add
+		 * it to the LIF filesystem.
+		 */
+		if (boot_size < params->s1stat.st_size) {
+			warn("BOOT partition too small (%llu < %llu)",
+				(unsigned long long)boot_size,
+				(unsigned long long)params->s1stat.st_size);
+			goto done;
+		}
 	}
 
 	bootstrap = mmap(NULL, params->s1stat.st_size, PROT_READ | PROT_WRITE,
@@ -139,29 +167,9 @@ hp300_setboot(ib_params *params)
 				i,  addr + be32toh(lifdir->dir_length), limit);
 			goto done;
 		}
-		if (addr != 0 && boot->p_offset != 0)
-			lifdir->dir_addr = htobe32(addr + boot->p_offset
-					* (label.d_secsize / HP300_SECTSIZE));
-	}
-
-	/* Open boot partition itself */
-	cp = strchr(params->filesystem, 0) - 1;
-	ch = *cp;
-	*cp = 'a' + (boot - label.d_partitions);
-	bootfd = open(params->filesystem,
-			params->flags & IB_NOWRITE ? O_RDONLY : O_RDWR, 0);
-	if (bootfd == -1) {
-		warn("Cannot open BOOT partition %s", params->filesystem);
-		*cp = ch;
-		goto done;
-	}
-	*cp = ch;
-
-	/* stat as a slight sanity check */
-	if (fstat(bootfd, &sb) == -1
-	    || sb.st_size != boot->p_size * label.d_secsize) {
-		warnx("Opened BOOT partition size doesn't match disklabel");
-		goto done;
+		if (addr != 0 && boot_offset != 0)
+			lifdir->dir_addr = htobe32(addr + boot_offset
+							    / HP300_SECTSIZE);
 	}
 
 	if (params->flags & IB_NOWRITE) {
@@ -180,15 +188,16 @@ hp300_setboot(ib_params *params)
 	}
 
 	/* Write files to BOOT partition */
-	offset = boot->p_offset <= HP300_SECTSIZE * 16 / label.d_secsize
-		? HP300_SECTSIZE * 16 : 0;
-	rv = pwrite(bootfd, bootstrap + offset, params->s1stat.st_size - offset, offset);
-	if (rv != params->s1stat.st_size - offset) {
+	offset = boot_offset <= HP300_SECTSIZE * 16 ? HP300_SECTSIZE * 16 : 0;
+	i = params->s1stat.st_size - offset;
+	rv = pwrite(params->fsfd, bootstrap + offset, i, boot_offset + offset);
+	if (rv != i) {
 		if (rv == -1)
 			warn("Writing boot filesystem of `%s'",
 				params->filesystem);
 		else
-			warnx("Writing boot filesystem of `%s': short write", params->filesystem);
+			warnx("Writing boot filesystem of `%s': short write",
+				params->filesystem);
 		goto done;
 	}
 
@@ -197,7 +206,5 @@ hp300_setboot(ib_params *params)
  done:
 	if (bootstrap != MAP_FAILED)
 		munmap(bootstrap, params->s1stat.st_size);
-	if (bootfd != -1)
-		close(bootfd);
 	return retval;
 }
