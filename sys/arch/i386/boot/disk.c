@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.13 1995/03/12 12:09:18 mycroft Exp $	*/
+/*	$NetBSD: disk.c,v 1.14 1996/06/18 06:10:33 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -41,7 +41,7 @@
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
 
-char *devs[] = {"wd", "hd", "fd", "wt", "sd", 0};
+char *devs[] = {"wd", "hd", "fd", "", "sd", 0};
 
 #ifdef DO_BAD144
 struct dkbad dkb;

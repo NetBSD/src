@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.c,v 1.13 1995/01/09 22:13:12 ws Exp $	*/
+/*	$NetBSD: sys.c,v 1.14 1996/06/18 06:10:35 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -174,10 +174,10 @@ openrd()
 	if (!*cp) {
 		cp = name;
 	} else {
-		if (cp++ != name) {
+		if (cp != name) {
+			*cp = '\0';
 			for (devp = devs; *devp; devp++)
-				if (name[0] == (*devp)[0] &&
-				    name[1] == (*devp)[1])
+				if (!strcmp(name, *devp))
 					break;
 			if (!*devp) {
 				printf("Unknown device\n");
@@ -188,6 +188,7 @@ openrd()
 		/*******************************************************\
 		* Look inside brackets for unit number, and partition	*
 		\*******************************************************/
+		cp++;
 		if (*cp >= '0' && *cp <= '9')
 			if ((unit = *cp++ - '0') > 1) {
 				printf("Bad unit\n");
@@ -208,10 +209,6 @@ openrd()
 		dosdev = unit | 0x80;
 	else if (maj == 2)
 		dosdev = unit;
-	else if (maj == 3) {
-		printf("Wangtek unsupported\n");
-		return 1;
-	}
 	inode.i_dev = dosdev;
 	/***********************************************\
 	* Now we know the disk unit and part,		*
