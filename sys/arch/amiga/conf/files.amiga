@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.67 1997/10/16 01:02:56 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.68 1997/10/16 23:58:36 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -50,9 +50,13 @@ attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
 # audio
-device aucc: audio
-attach aucc at mainbus
-file   arch/amiga/dev/aucc.c		aucc needs-flag 
+device	aucc: audio
+attach	aucc at mainbus
+file	arch/amiga/dev/aucc.c		aucc needs-flag 
+
+device	melody: audio, tms320av110
+attach	melody at zbus
+file	arch/amiga/dev/melody.c		melody
 
 # mouse
 device	ms: event
@@ -179,13 +183,13 @@ device	drsupio: supio
 attach	drsupio at mainbus
 file	arch/amiga/dev/drsupio.c	drsupio
 
+attach	com at supio with com_supio
+file	arch/amiga/dev/com_supio.c	com_supio
+
 # handle gvp's odd autoconf info..
 device	gvpbus {}
 attach	gvpbus at zbus
 file	arch/amiga/dev/gvpbus.c		gvpbus
-
-attach	com at supio with com_supio
-file	arch/amiga/dev/com_supio.c	com_supio
 
 device	lpt
 file	dev/ic/lpt.c			lpt needs-flag
@@ -341,6 +345,7 @@ file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
+
 major	{vnd = 6}
 
 # Compatibility modules
