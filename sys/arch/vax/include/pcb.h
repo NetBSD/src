@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 1995/02/13 00:43:27 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 1995/02/23 17:51:43 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
 
 struct pcb {
 
-  	/* Hardware registers */
+  	/* Hardware registers, based on VAX special instructions */
 
 	long	KSP;		/*  Kernel Stack Pointer      */
 	long	ESP;		/*  Executive Stack Pointer   */
@@ -54,7 +54,8 @@ struct pcb {
 	void   *P1BR;		/*  Page 1 Base Register      */
 	long	P1LR;		/*  Page 1 Length Register    */
 
-	/* Software registers */
+	/* Software registers, only used by kernel software */
+	void   *framep;		/* Pointer to syscall frame */
 };
 
 #define	AST_MASK 0x07000000

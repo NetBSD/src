@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.5 1995/02/13 00:43:20 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.6 1995/02/23 17:51:41 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -34,10 +34,13 @@
 
 #include "sys/cdefs.h"
 #include "vax/include/mtpr.h"
+#include "vax/include/pcb.h"
 
 #define enablertclock()
 #define	cpu_swapin(p)
-#define	cpu_set_init_frame(p,f) {extern u_int scratch;mtpr(scratch,PR_SSP);}
+/* #define	cpu_set_init_frame(p,f) {extern u_int scratch;mtpr(scratch,PR_SSP);} */
+#define cpu_set_init_frame(p,f)\
+	 {extern u_int scratch;p->p_addr->u_pcb.framep=scratch;}
 #define	cpu_wait(p)
 
 
@@ -57,7 +60,9 @@ struct clockframe {
         int     ps;
 };
 
+#if !defined(VAX630) && !defined(VAX410)
 #define todr()		mfpr(PR_TODR)
+#endif
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
 
