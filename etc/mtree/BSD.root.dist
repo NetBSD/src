@@ -1,5 +1,5 @@
 #	fs: /
-#	$Id: BSD.root.dist,v 1.5 1994/01/10 17:26:28 mycroft Exp $
+#	$Id: BSD.root.dist,v 1.6 1994/02/06 06:49:39 cgd Exp $
 
 # top-level files are owned by root.wheel
 # (else too easy to get root by compromising these)
@@ -65,6 +65,9 @@ etc	type=dir
 	localtime	uname=bin gname=bin
 	man.conf	uname=bin gname=bin
 ..
+
+# reset because of previous /set commands
+/set uname=root gname=wheel mode=0755 type=file
 
 mnt	type=dir
 ..
