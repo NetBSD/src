@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_out.c,v 1.6 1995/05/05 22:28:24 mycroft Exp $	*/
+/*	$NetBSD: pcvt_out.c,v 1.7 1995/06/02 02:48:46 brezak Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1070,11 +1070,23 @@ vt_coldinit(void)
 		svsp->scrr_len = svsp->screen_rows; /* scrolling region
 						     * end */
 		svsp->scrr_end = svsp->scrr_len - 1;
+#ifdef PRESERVE_CURSOR
+		if (nscr == 0) {
+			outb(addr_6845,CRTC_CURSTART);
+			svsp->cursor_start = inb(addr_6845+1);
+			outb(addr_6845,CRTC_CUREND);
+			svsp->cursor_end = inb(addr_6845+1);
+		} else {
+			svsp->cursor_start = vs[0].cursor_start;
+			svsp->cursor_end = vs[0].cursor_end;
+		}
+#else
 		if(vga_family == VGA_F_TRI)
 			svsp->cursor_start = 1; /* cursor upper scanline */
 		else
 			svsp->cursor_start = 0; /* cursor upper scanline */
 		svsp->cursor_end = 15;		/* cursor lower scanline */
+#endif
 		svsp->cursor_on = 1;		/* cursor is on */
 		svsp->ckm = 1;			/* normal cursor key mode */
 		svsp->irm = 0;			/* replace mode */
@@ -1118,9 +1130,41 @@ vt_coldinit(void)
 
 		if(nscr == 0)
 		{
+#ifndef CLEAR_STARTUP
+			/* Preserve data on the startup screen that precedes
+			   the cursor position.  Leave the cursor where
+			   it was found. */
+			unsigned cursorat;
+			int filllen;
+
+			outb(addr_6845, CRTC_CURSORH);
+			cursorat = inb(addr_6845+1) << 8;
+			outb(addr_6845, CRTC_CURSORL);
+			cursorat |= inb(addr_6845+1);
+			svsp->cur_offset = cursorat;
+			svsp->row = cursorat / svsp->maxcol;
+			svsp->col = cursorat % svsp->maxcol;
+			if (svsp->row >= svsp->screen_rows) {
+				/* Scroll up; this should only happen when
+				   PCVT_24LINESDEF is set */
+				int nscroll =
+					svsp->row + 1 - svsp->screen_rows;
+				bcopy (svsp->Crtat + nscroll*svsp->maxcol,
+				       svsp->Crtat,
+				       svsp->screen_rows * svsp->maxcol * CHR);
+				svsp->row -= nscroll;
+				svsp->cur_offset -= nscroll * svsp->maxcol;
+			}
+			filllen = (svsp->maxcol * svsp->screen_rowsize)
+				- svsp->cur_offset;
+			if (filllen > 0)
+				fillw(user_attr | ' ',
+				      svsp->Crtat+svsp->cur_offset, filllen);
+#else
 			fillw(user_attr | ' ',
 				svsp->Crtat,
 				svsp->maxcol * svsp->screen_rowsize);
+#endif
 		}
 
 #if PCVT_USL_VT_COMPAT
@@ -1409,26 +1453,45 @@ set_emulation_mode(struct video_state *svsp, int mode)
 	if(svsp->vt_pure_mode == mode)
 		return;
 	
+#ifdef CLEAR_STARTUP
 	fillw(user_attr | ' ',
 		svsp->Crtat,
 		svsp->maxcol * svsp->screen_rowsize);
+#endif
 
 	clr_parms(svsp);		/* escape parameter init */
+
 	svsp->state = STATE_INIT;	/* initial state */
 
+
+#ifdef CLEAR_STARTUP
 	svsp->col = 0;			/* init row */
 	svsp->row = 0;			/* init col */
 	svsp->cur_offset = 0;		/* cursor offset init */
+#endif
 	svsp->scrr_beg = 0;		/* start of scrolling region */
 	svsp->sc_flag = 0;		/* invalidate saved cursor position */
 	svsp->transparent = 0;		/* disable control code processing */
 
 	if(mode == M_HPVT)		/* vt-pure -> hp/vt-mode */
 	{
+		svsp->screen_rows = svsp->screen_rowsize - 3;
+		if (svsp->force24 && svsp->screen_rows == 25)
+			svsp->screen_rows = 24;
+#ifndef CLEAR_STARTUP
+		if (svsp->row >= svsp->screen_rows) {
+			/* Scroll up */
+			int nscroll = svsp->row + 1 - svsp->screen_rows;
+			bcopy (svsp->Crtat + nscroll * svsp->maxcol,
+			       svsp->Crtat,
+			       svsp->screen_rows * svsp->maxcol * CHR);
+			svsp->row -= nscroll;
+			svsp->cur_offset -= nscroll * svsp->maxcol;
+		}
+#endif
 		svsp->vt_pure_mode = M_HPVT;
 
-		svsp->vs_tty->t_winsize.ws_row
-			= svsp->screen_rows = svsp->screen_rowsize - 3;
+		svsp->vs_tty->t_winsize.ws_row = svsp->screen_rows;
 
 		svsp->scrr_len = svsp->screen_rows;
 		svsp->scrr_end = svsp->scrr_len - 1;
@@ -1437,10 +1500,19 @@ set_emulation_mode(struct video_state *svsp, int mode)
 	}
 	else if(mode == M_PUREVT)	/* hp/vt-mode -> vt-pure */
 	{
+#ifndef CLEAR_STARTUP
+		fillw(user_attr | ' ',
+		      svsp->Crtat + svsp->screen_rows * svsp->maxcol,
+		      (svsp->screen_rowsize - svsp->screen_rows)
+		      * svsp->maxcol);
+#endif
 		svsp->vt_pure_mode = M_PUREVT;
 
-		svsp->vs_tty->t_winsize.ws_row
-			= svsp->screen_rows = svsp->screen_rowsize;
+		svsp->screen_rows = svsp->screen_rowsize;
+		if (svsp->force24 && svsp->screen_rows == 25)
+			svsp->screen_rows = 24;
+
+		svsp->vs_tty->t_winsize.ws_row = svsp->screen_rows;
 
 		svsp->scrr_len = svsp->screen_rows;
 		svsp->scrr_end = svsp->scrr_len - 1;
@@ -1736,7 +1808,14 @@ vt_col(struct video_state *svsp, int cols)
 void
 update_hp(struct video_state *svsp)
 {
-	if(svsp->vt_pure_mode != M_HPVT || (!svsp->labels_on))
+	if(svsp->vt_pure_mode != M_HPVT)
+		return;
+
+	fillw (user_attr | ' ',
+	       svsp->Crtat + svsp->screen_rows * svsp->maxcol,
+	       (svsp->screen_rowsize - svsp->screen_rows) * svsp->maxcol);
+
+	if (!svsp->labels_on)
 		return;
 
 	/* update fkey labels */

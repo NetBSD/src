@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_sup.c,v 1.9 1995/04/19 19:12:24 mycroft Exp $	*/
+/*	$NetBSD: pcvt_sup.c,v 1.10 1995/06/02 02:48:48 brezak Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -734,14 +734,18 @@ set_screen_size(struct video_state *svsp, int size)
 		{
 			set_charset(svsp, i);
 
+#ifdef CLEAR_STARTUP
 			fillw(user_attr | ' ',
 				svsp->Crtat,
 				svsp->maxcol * svsp->screen_rowsize);
+#endif
 			clr_parms(svsp); 	/* escape parameter init */
 			svsp->state = STATE_INIT; /* initial state */
+#ifdef CLEAR_STARTUP
 			svsp->col = 0;		/* init row */
 			svsp->row = 0;		/* init col */
 			svsp->cur_offset = 0;	/* cursor address offset init*/
+#endif
 			svsp->scrr_beg = 0;	/* start of scrolling region */
 			svsp->sc_flag = 0;	/* invalidate saved cursor
 						 * position */
@@ -755,6 +759,16 @@ set_screen_size(struct video_state *svsp, int size)
 				(svsp->maxcol == 80)? 720: 1056;
 			svsp->vs_tty->t_winsize.ws_ypixel = 400;
 
+#ifndef OLD
+			/* screen_rows already calculated in set_charset() */
+			if(svsp->vt_pure_mode == M_HPVT && svsp->labels_on)
+			{
+				if(svsp->which_fkl == SYS_FKL)
+					sw_sfkl(svsp);
+				else if(svsp->which_fkl == USR_FKL)
+					sw_ufkl(svsp);
+			}
+#else
 			if(svsp->vt_pure_mode == M_HPVT)
 			{
 				svsp->screen_rows = svsp->screen_rowsize - 3;
@@ -777,6 +791,7 @@ set_screen_size(struct video_state *svsp, int size)
 				if((size == SIZ_25ROWS) && svsp->force24)
 					svsp->screen_rows--;
 			}		
+#endif
 
 			svsp->vs_tty->t_winsize.ws_row = svsp->screen_rows;
 			
@@ -896,17 +911,20 @@ vgapaletteio(unsigned idx, struct rgb *val, int writeit)
 
 /*---------------------------------------------------------------------------*
  *	update asynchronous: cursor, cursor pos displ, sys load, keyb scan
+ *	arg is:
+ *		0 -- do update; requeue
+ *		(void *)1 -- suspend updates
+ *		(void *)2 -- do update for kernel printfs
  *---------------------------------------------------------------------------*/
 void
 async_update(void *arg)
 {
-	int a = (int)arg;
 	static int lastpos = 0;
 	static int counter = PCVT_UPDATESLOW;
 
 #ifdef XSERVER
 	/* need a method to suspend the updates */
-	if(a)
+	if (arg == (void *)1)
 	{
 		untimeout(async_update, (void *)0);
 		return;
@@ -951,6 +969,10 @@ async_update(void *arg)
 		outb(addr_6845, CRTC_CURSORL);	/* low register */
 		outb(addr_6845+1, (lastpos));
 	}
+
+	/* Magic arg: for kernel printfs */
+	if (arg == (void *)2)
+		return;
 
 	if(--counter)			/* below is possible update */
 		goto async_update_exit;	/*  just now and then ..... */
@@ -1088,7 +1110,7 @@ async_update(void *arg)
 
 async_update_exit:
 
-	if(a == 0)
+	if(arg == (void *)0)
 		timeout(async_update, (void *)0, PCVT_UPDATEFAST);
 }
     
@@ -1099,6 +1121,10 @@ void
 set_charset(struct video_state *svsp, int curvgacs)
 {
 	static int sizetab[] = { 25, 28, 35, 40, 43, 50 };
+
+#ifndef CLEAR_STARTUP
+	int oldsize, oldrows, newsize, newrows;
+#endif
 	
 	if((curvgacs < 0) || (curvgacs > (NVGAFONTS-1)))
 		return;
@@ -1107,12 +1133,47 @@ set_charset(struct video_state *svsp, int curvgacs)
 
 	select_vga_charset(curvgacs);
 
+#ifndef CLEAR_STARTUP
+	oldsize = svsp->screen_rowsize;
+	oldrows = svsp->screen_rows;
+	newsize = sizetab[(vgacs[curvgacs].screen_size)];
+	newrows = newsize;
+	if (svsp->vt_pure_mode == M_HPVT)
+		newrows -= 3;
+	if (newrows == 25 && svsp->force24)
+		newrows = 24;
+	if (newrows < oldrows) {
+		int nscroll = svsp->row + 1 - newrows;
+		
+		if (svsp->row >= oldrows) /* Sanity check */
+			nscroll = oldrows - newrows;
+		if (nscroll > 0) {
+			/* Scroll up */
+			bcopy (svsp->Crtat + nscroll * svsp->maxcol,
+			       svsp->Crtat,
+			       newrows * svsp->maxcol * CHR);
+			svsp->row -= nscroll;
+			svsp->cur_offset -= nscroll * svsp->maxcol;
+		}
+		if (newrows < newsize)
+			fillw(user_attr | ' ',
+			      svsp->Crtat + newrows * svsp->maxcol,
+			      (newsize - newrows) * svsp->maxcol);
+	} else if (oldrows < newsize)
+		fillw(user_attr | ' ',
+		      svsp->Crtat + oldrows * svsp->maxcol,
+		      (newsize - oldrows) * svsp->maxcol);
+
+	svsp->screen_rowsize = newsize;
+	svsp->screen_rows = newrows;
+#else
 	svsp->screen_rowsize = sizetab[(vgacs[curvgacs].screen_size)];
 
 	if( svsp->labels_on && svsp->vt_pure_mode != M_PUREVT)
 		svsp->screen_rows = svsp->screen_rowsize-3;
 	else
 		svsp->screen_rows = svsp->screen_rowsize;
+#endif
 
 	/* Clip scrolling region */
 	if(svsp->scrr_end > svsp->screen_rows - 1)
