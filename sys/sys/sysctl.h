@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.108 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.109 2004/02/19 03:56:30 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -383,6 +383,13 @@ struct kinfo_proc {
 };
 
 /*
+ * Convert pointer to 64 bit unsigned integer for struct
+ * kinfo_proc2, etc.
+ */
+#define PTRTOUINT64(p) ((u_int64_t)(uintptr_t)(p))
+#define UINT64TOPTR(u) ((void *)(uintptr_t)(u))
+
+/*
  * KERN_PROC2 subtype ops return arrays of relatively fixed size
  * structures of process info.   Use 8 byte alignment, and new
  * elements should only be added to the end of this structure so
@@ -573,7 +580,7 @@ struct kinfo_lwp {
 }
 
 /*
- * kern.drivers returns and array of these.
+ * kern.drivers returns an array of these.
  */
 
 struct kinfo_drivers {
@@ -582,6 +589,38 @@ struct kinfo_drivers {
 	char		d_name[24];
 };
 
+/*
+ * KERN_BUF subtypes, like KERN_PROC2, where the four following mib
+ * entries specify "which type of buf", "which particular buf",
+ * "sizeof buf", and "how many".  Currently, only "all buf" is
+ * defined.
+ */
+#define	KERN_BUF_ALL	0		/* all buffers */
+
+/*
+ * kern.buf returns an array of these structures, which are designed
+ * both to be immune to 32/64 bit emulation issues and to provide
+ * backwards compatibility.  Note that the order here differs slightly
+ * from the real struct buf in order to achieve proper 64 bit
+ * alignment.
+ */
+struct buf_sysctl {
+	uint32_t b_flags;	/* LONG: B_* flags */
+	int32_t  b_error;	/* INT: Errno value */
+	int32_t  b_prio;	/* INT: Hint for buffer queue discipline */
+	uint32_t b_dev;		/* DEV_T: Device associated with buffer */
+	uint64_t b_bufsize;	/* LONG: Allocated buffer size */
+	uint64_t b_bcount;	/* LONG: Valid bytes in buffer */
+	uint64_t b_resid;	/* LONG: Remaining I/O */
+	uint64_t b_addr;	/* CADDR_T: Memory, superblocks, indirect... */
+	uint64_t b_blkno;	/* DADDR_T: Underlying physical block number */
+	uint64_t b_rawblkno;	/* DADDR_T: Raw underlying physical block */
+	uint64_t b_iodone;	/* PTR: Function called upon completion */
+	uint64_t b_proc;	/* PTR: Associated proc if B_PHYS set */
+	uint64_t b_vp;		/* PTR: File vnode */
+	uint64_t b_saveaddr;	/* PTR: Original b_addr for physio */
+	uint64_t b_lblkno;	/* DADDR_T: Logical block number */
+};
 
 /*
  * CTL_HW identifiers
