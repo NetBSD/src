@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.3.6.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.3.6.4 2005/01/26 08:20:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.3.6.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.3.6.4 2005/01/26 08:20:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,11 +155,11 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, p)
+lptopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit;
 	u_char flags;
@@ -247,11 +247,11 @@ lpt_wakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, p)
+lptclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct lpt_softc *sc;
 	int unit;
@@ -389,12 +389,12 @@ lpt_intr(sc)
 
 /* ARGSUSED */
 int
-lptioctl(dev, cmd, data, flag, p)
+lptioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (ENODEV);
