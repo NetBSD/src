@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.30 2005/02/18 21:05:54 dsl Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.31 2005/02/25 13:46:51 simonb Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -123,6 +123,8 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility (SUNOS)
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility (SUNOS)
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility
+options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
