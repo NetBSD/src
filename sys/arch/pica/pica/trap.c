@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1997/03/15 18:10:27 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1997/04/03 17:14:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,6 +86,10 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -988,6 +992,12 @@ interrupt(statusReg, causeReg, pc, what, args)
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef NETATALK
+		if (netisr & (1 << NETISR_ATALK)) {
+			netisr &= ~(1 << NETISR_ATALK);
+			atintr();
 		}
 #endif
 #ifdef NS
