@@ -1,6 +1,7 @@
-/*	$NetBSD: pipeline.h,v 1.1.1.1 2001/04/19 12:50:58 wiz Exp $	*/
+/*	$NetBSD: pipeline.h,v 1.1.1.2 2003/06/30 17:52:07 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2002
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,12 +22,12 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #ifdef __cplusplus
 extern "C" {
-  int run_pipeline(int, char ***);
+  int run_pipeline(int, char ***, int);
 }
 #endif
 
 /* run_pipeline can handle at most this many commands */
-#define MAX_COMMANDS 10
+#define MAX_COMMANDS 12
 
 /* Children exit with this status if execvp fails. */
 #define EXEC_FAILED_EXIT_STATUS 0xff

@@ -1,7 +1,8 @@
-/*	$NetBSD: ps.h,v 1.1.1.1 2001/04/19 12:52:06 wiz Exp $	*/
+/*	$NetBSD: ps.h,v 1.1.1.2 2003/06/30 17:52:15 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2002, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -28,6 +29,7 @@ public:
   ps_output &put_fix_number(int);
   ps_output &put_float(double);
   ps_output &put_symbol(const char *);
+  ps_output &put_color(unsigned int);
   ps_output &put_literal_symbol(const char *);
   ps_output &set_fixed_point(int);
   ps_output &simple_comment(const char *);
@@ -120,5 +122,6 @@ enum {
   NO_SETUP_SECTION = 01,
   STRIP_PERCENT_BANG = 02,
   STRIP_STRUCTURE_COMMENTS = 04,
-  USE_PS_ADOBE_2_0 = 010
+  USE_PS_ADOBE_2_0 = 010,
+  NO_PAPERSIZE = 020
 };

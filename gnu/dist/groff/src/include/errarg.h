@@ -1,7 +1,7 @@
-/*	$NetBSD: errarg.h,v 1.1.1.1 2001/04/19 12:50:44 wiz Exp $	*/
+/*	$NetBSD: errarg.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2002 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,10 +21,11 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 class errarg {
-  enum { EMPTY, STRING, CHAR, INTEGER, DOUBLE } type;
+  enum { EMPTY, STRING, CHAR, INTEGER, UNSIGNED_INTEGER, DOUBLE } type;
   union {
     const char *s;
     int n;
+    unsigned int u;
     char c;
     double d;
   };
@@ -34,6 +35,7 @@ class errarg {
   errarg(char);
   errarg(unsigned char);
   errarg(int);
+  errarg(unsigned int);
   errarg(double);
   int empty() const;
   void print() const;
@@ -45,4 +47,3 @@ extern void errprint(const char *,
 		     const errarg &arg1 = empty_errarg,
 		     const errarg &arg2 = empty_errarg,
 		     const errarg &arg3 = empty_errarg);
-

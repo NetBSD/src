@@ -1,7 +1,7 @@
-/*	$NetBSD: font.h,v 1.1.1.1 2001/04/19 12:50:44 wiz Exp $	*/
+/*	$NetBSD: font.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2002 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -56,6 +56,8 @@ public:
   const char *get_name();
   const char *get_internal_name();
 
+  static int scan_papersize(const char *, const char **, double *, double *);
+
   static font *load_font(const char *, int *not_found = 0);
   static void command_line_font_dir(const char *path);
   static FILE *open_file(const char *name, char **pathp);
@@ -71,6 +73,7 @@ public:
   static int unitwidth;
   static int paperwidth;
   static int paperlength;
+  static const char *papersize;
   static int biggestfont;
   static int spare2;
   static int sizescale;
@@ -109,6 +112,7 @@ private:
   void compact();
 
   static int scale(int w, int pointsize);
+  static int unit_scale(double *value, char unit);
   virtual void handle_unknown_font_command(const char *command,
 					   const char *arg,
 					   const char *file, int lineno);

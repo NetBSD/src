@@ -1,7 +1,8 @@
-/*	$NetBSD: token.h,v 1.1.1.1 2001/04/19 12:51:20 wiz Exp $	*/
+/*	$NetBSD: token.h,v 1.1.1.2 2003/06/30 17:52:10 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -35,7 +36,7 @@ class token {
     TOKEN_BACKSPACE,
     TOKEN_BEGIN_TRAP,
     TOKEN_CHAR,			// a normal printing character
-    TOKEN_DUMMY,
+    TOKEN_DUMMY,		// \&
     TOKEN_EMPTY,		// this is the initial value
     TOKEN_END_TRAP,
     TOKEN_ESCAPE,		// \e
@@ -52,12 +53,16 @@ class token {
     TOKEN_REQUEST,
     TOKEN_RIGHT_BRACE,
     TOKEN_SPACE,		// ` ' -- ordinary space
-    TOKEN_SPECIAL,		// a special character -- \' \` \- \(xx
+    TOKEN_SPECIAL,		// a special character -- \' \` \- \(xx \[xxx]
     TOKEN_SPREAD,		// \p -- break and spread output line 
+    TOKEN_STRETCHABLE_SPACE,	// \~
+    TOKEN_UNSTRETCHABLE_SPACE,	// `\ '
     TOKEN_TAB,			// tab
     TOKEN_TRANSPARENT,		// \!
+    TOKEN_TRANSPARENT_DUMMY,	// \)
+    TOKEN_ZERO_WIDTH_BREAK,	// \:
     TOKEN_EOF			// end of file
-    } type;
+  } type;
 public:
   token();
   ~token();
@@ -68,20 +73,24 @@ public:
   void skip();
   int eof();
   int nspaces();		// 1 if space, 2 if double space, 0 otherwise
-  int space();			// is it a space or double space?
+  int space();			// is the current token a space?
+  int stretchable_space();	// is the current token a stretchable space?
+  int unstretchable_space();	// is the current token an unstretchable space?
   int white_space();		// is the current token space or tab?
-  int special();                // is the current token a special character?
+  int special();		// is the current token a special character?
   int newline();		// is the current token a newline?
   int tab();			// is the current token a tab?
   int leader();
   int backspace();
   int delimiter(int warn = 0);	// is it suitable for use as a delimiter?
   int dummy();
+  int transparent_dummy();
   int transparent();
   int left_brace();
   int right_brace();
   int page_ejector();
   int hyphen_indicator();
+  int zero_width_break();
   int operator==(const token &); // need this for delimiters, and for conditions
   int operator!=(const token &); // ditto
   unsigned char ch();
@@ -100,12 +109,24 @@ extern token tok;		// the current token
 extern symbol get_name(int required = 0);
 extern symbol get_long_name(int required = 0);
 extern charinfo *get_optional_char();
+extern char *read_string();
 extern void check_missing_character();
 extern void skip_line();
 extern void handle_initial_title();
 
+enum char_mode {
+  CHAR_NORMAL,
+  CHAR_FALLBACK,
+  CHAR_FONT_SPECIAL,
+  CHAR_SPECIAL
+};
+
+extern void do_define_character(char_mode, const char * = 0);
+
 struct hunits;
 extern void read_title_parts(node **part, hunits *part_width);
+
+extern int get_number_rigidly(units *result, unsigned char si);
 
 extern int get_number(units *result, unsigned char si);
 extern int get_integer(int *result);
@@ -125,6 +146,16 @@ inline int token::newline()
 inline int token::space()
 { 
   return type == TOKEN_SPACE;
+}
+
+inline int token::stretchable_space()
+{
+  return type == TOKEN_STRETCHABLE_SPACE;
+}
+
+inline int token::unstretchable_space()
+{
+  return type == TOKEN_UNSTRETCHABLE_SPACE;
 }
 
 inline int token::special()
@@ -170,6 +201,11 @@ inline int token::dummy()
   return type == TOKEN_DUMMY;
 }
 
+inline int token::transparent_dummy()
+{
+  return type == TOKEN_TRANSPARENT_DUMMY;
+}
+
 inline int token::left_brace()
 {
   return type == TOKEN_LEFT_BRACE;
@@ -198,6 +234,11 @@ inline int token::backspace()
 inline int token::hyphen_indicator()
 {
   return type == TOKEN_HYPHEN_INDICATOR;
+}
+
+inline int token::zero_width_break()
+{
+  return type == TOKEN_ZERO_WIDTH_BREAK;
 }
 
 int has_arg();

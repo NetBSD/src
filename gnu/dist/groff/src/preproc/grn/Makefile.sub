@@ -1,17 +1,17 @@
-PROG=grn
+PROG=grn$(EXEEXT)
 MAN1=grn.n
 MLIB=$(LIBM)
 XLIBS=$(LIBGROFF)
 OBJS=\
-  hdb.o \
-  hpoint.o \
-  hgraph.o \
-  main.o
+  hdb.$(OBJEXT) \
+  hpoint.$(OBJEXT) \
+  hgraph.$(OBJEXT) \
+  main.$(OBJEXT)
 CCSRCS=\
-  $(srcdir)/hdb.cc \
-  $(srcdir)/hpoint.cc \
-  $(srcdir)/hgraph.cc \
-  $(srcdir)/main.cc
+  $(srcdir)/hdb.cpp \
+  $(srcdir)/hpoint.cpp \
+  $(srcdir)/hgraph.cpp \
+  $(srcdir)/main.cpp
 HDRS=\
   $(srcdir)/gprint.h
 NAMEPREFIX=$(g)

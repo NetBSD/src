@@ -15,7 +15,7 @@ goto end
 Rem chdir to src, to avoid overflowing the DOS limits with a long PATH.
 cd src
 set GROFF_FONT_PATH=..;../font
-set GROFF_TMAC_PATH=../tmac;./roff/troff
+set GROFF_TMAC_PATH=../tmac
 set PATH1=%PATH%
 set PATH=roff\troff;preproc\pic;preproc\eqn;preproc\tbl;preproc\grn;preproc\refer;preproc\soelim;devices\grotty;%PATH1%
 Rem

@@ -1,8 +1,7 @@
-/*	$NetBSD: lbp.h,v 1.1.1.1 2001/04/19 12:52:21 wiz Exp $	*/
-
+/*	$NetBSD: lbp.h,v 1.1.1.2 2003/06/30 17:52:16 wiz Exp $	*/
 
 // -*- C -*-
-/* Copyright (C) 1994 Free Software Foundation, Inc.
+/* Copyright (C) 1994, 2000, 2001, 2003 Free Software Foundation, Inc.
      Written by Francisco Andrés Verdú <pandres@dragonet.es>
 
 groff is free software; you can redistribute it and/or modify it under
@@ -39,7 +38,7 @@ lbpinit(FILE *outfile)
 
 
 static inline void 
-lbpprintf(char *format, ... )
+lbpprintf(const char *format, ... )
 { /* Taken from cjet */
   va_list stuff;
 
@@ -49,13 +48,13 @@ lbpprintf(char *format, ... )
 };
 
 static inline void
-lbpputs(char *data)
+lbpputs(const char *data)
 {
 	fputs(data,lbpoutput);
 };
 
 static inline void
-lbpputc(char c)
+lbpputc(unsigned char c)
 {
 	fputc(c,lbpoutput);
 };
@@ -126,7 +125,7 @@ lbpruleabs(int x, int y, int hsize, int vsize)
 	fprintf(lbpoutput,"\033[9r");
 };
 
-static inline void vdmprintf(char *format, ... );
+static inline void vdmprintf(const char *format, ... );
 
 static inline char *
 vdmnum(int num,char *result)
@@ -182,7 +181,7 @@ vdmend()
 };
 
 static inline void 
-vdmprintf(char *format, ... )
+vdmprintf(const char *format, ... )
 { /* Taken from cjet */
   va_list stuff;
   

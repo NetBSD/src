@@ -1,7 +1,7 @@
-/*	$NetBSD: groff-getopt.h,v 1.1.1.1 2001/04/19 12:50:44 wiz Exp $	*/
+/*	$NetBSD: groff-getopt.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 2000 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001 Free Software Foundation, Inc.
      Written by Werner Lemberg (wl@gnu.org)
 
 This file is part of groff.
@@ -49,19 +49,19 @@ struct option
 #define required_argument 1
 #define optional_argument 2
 
-extern int getopt(int __argc,
-		  char *const *__argv,
-		  const char *__shortopts);
-extern int getopt_long(int __argc,
-		       char *const *__argv,
-		       const char *__shortopts,
-		       const struct option *__longopts,
-		       int *__longind);
-extern int getopt_long_only(int __argc,
-			    char *const *__argv,
-			    const char *__shortopts,
-			    const struct option *__longopts,
-			    int *__longind);
+extern int getopt(int, 			// __argc
+		  char *const *,	// __argv
+		  const char *);	// __shortopts
+extern int getopt_long(int,			// __argc
+		       char *const *,		// __argv
+		       const char *,		// __shortopts
+		       const struct option *,	// __longopts
+		       int *);			// __longind
+extern int getopt_long_only(int, 			// __argc
+			    char *const *,		// __argv
+			    const char *,		// __shortopts
+			    const struct option *,	// __longopts
+			    int *);			// __longind
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: macropath.h,v 1.1.1.1 2001/04/19 12:50:45 wiz Exp $	*/
+/*	$NetBSD: macropath.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,3 +21,5 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 extern search_path macro_path;
+extern search_path safer_macro_path;
+extern search_path config_macro_path;

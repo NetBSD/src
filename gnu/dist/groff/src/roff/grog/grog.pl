@@ -6,21 +6,22 @@
 $prog = $0;
 $prog =~ s@.*/@@;
 
+$sp = "[\\s\\n]";
+
 push(@command, "groff");
 
 while ($ARGV[0] =~ /^-./) {
     $arg = shift(@ARGV);
+    $sp = "" if $arg eq "-C";
+    &usage(0) if $arg eq "-v" || $arg eq "--version";
+    &help() if $arg eq "--help";
     last if $arg eq "--";
     push(@command, $arg);
 }
 
-if (@ARGV) {
-    foreach $arg (@ARGV) {
-	&process($arg, 0);
-    }
-}
-else {
-    &process("-", 0);
+@ARGV = ('-') unless @ARGV;
+foreach $arg (@ARGV) {
+    &process($arg, 0);
 }
 
 sub process {
@@ -33,28 +34,28 @@ sub process {
 	return;
     }
     while (<FILE>) {
-	if (/^\.TS/) {
+	if (/^\.TS$sp/) {
 	    $_ = <FILE>;
 	    if (!/^\./) {
 		$tbl++;
 		$soelim++ if $level;
 	    }
 	}
-	elsif (/^\.EQ/) {
+	elsif (/^\.EQ$sp/) {
 	    $_ = <FILE>;
 	    if (!/^\./ || /^\.[0-9]/) {
 		$eqn++;
 		$soelim++ if $level;
 	    }
 	}
-	elsif (/^\.GS/) {
+	elsif (/^\.GS$sp/) {
 	    $_ = <FILE>;
 	    if (!/^\./) {
 		$grn++;
 		$soelim++ if $level;
 	    }
 	}
-	elsif (/^\.G1/) {
+	elsif (/^\.G1$sp/) {
 	    $_ = <FILE>;
 	    if (!/^\./) {
 		$grap++;
@@ -62,57 +63,95 @@ sub process {
 		$soelim++ if $level;
 	    }
 	}
-	elsif (/^\.PS([ 0-9.<].*)?$/) {
+	elsif (/^\.PS$sp([ 0-9.<].*)?$/) {
 	    if (/^\.PS\s*<\s*(\S+)/) {
 		$pic++;
 		$soelim++ if $level;
 		&process($1, $level);
 	    }
 	    else {
-	    	$_ = <FILE>;
-	    	if (!/^\./ || /^\.ps/) {
+		$_ = <FILE>;
+		if (!/^\./ || /^\.ps/) {
 		    $pic++;
 		    $soelim++ if $level;
 		}
 	    }
 	}
-	elsif (/^\.R1/ || /^\.\[/) {
+	elsif (/^\.R1$sp/) {
 	    $refer++;
 	    $soelim++ if $level;
 	}
-	elsif (/^\.[PLI]P/) {
+	elsif (/^\.\[/) {
+	    $refer_open++;
+	    $soelim++ if $level;
+	}
+	elsif (/^\.\]/) {
+	    $refer_close++;
+	    $soelim++ if $level;
+	}
+	elsif (/^\.[PLI]P$sp/) {
 	    $PP++;
 	}
 	elsif (/^\.P$/) {
 	    $P++;
 	}
-        elsif (/^\.(PH|SA)/) {
-            $mm++;
+	elsif (/^\.(PH|SA)$sp/) {
+	    $mm++;
 	}
-	elsif (/^\.TH/) {
+	elsif (/^\.TH$sp/) {
 	    $TH++;
 	}
-	elsif (/^\.SH/) {
+	elsif (/^\.SH$sp/) {
 	    $SH++;
 	}
-	elsif (/^\.([pnil]p|sh)/) {
+	elsif (/^\.([pnil]p|sh)$sp/) {
 	    $me++;
 	}
-	elsif (/^\.Dd/) {
+	elsif (/^\.Dd$sp/) {
 	    $mdoc++;
 	}
-	elsif (/^\.(Tp|Dp|De|Cx|Cl)/) {
+	elsif (/^\.(Tp|Dp|De|Cx|Cl)$sp/) {
 	    $mdoc_old = 1;
 	}
-        # In the old version of -mdoc `Oo' is a toggle, in the new it's
+	# In the old version of -mdoc `Oo' is a toggle, in the new it's
 	# closed by `Oc'.
-	elsif (/^\.Oo/) {
+	elsif (/^\.Oo$sp/) {
 	    $Oo++;
+	    s/^\.Oo/\. /;
+	    redo;
 	}
-	elsif (/^\.Oc/) {
+	# The test for `Oo' and `Oc' not starting a line (as allowed by the
+	# new implementation of -mdoc) is not complete; it assumes that
+	# macro arguments are well behaved, i.e., "" is used within "..." to
+	# indicate a doublequote as a string element, and weird features
+	# like `.foo a"b' are not used.
+	elsif (/^\..* Oo( |$)/) {
+	    s/\\\".*//;
+	    s/\"[^\"]*\"//g;
+	    s/\".*//;
+	    if (s/ Oo( |$)/ /) {
+		$Oo++;
+	    }
+	    redo;
+	}
+	elsif (/^\.Oc$sp/) {
 	    $Oo--;
+	    s/^\.Oc/\. /;
+	    redo;
 	}
-	if (/^\.so/) {
+	elsif (/^\..* Oc( |$)/) {
+	    s/\\\".*//;
+	    s/\"[^\"]*\"//g;
+	    s/\".*//;
+	    if (s/ Oc( |$)/ /) {
+		$Oo--;
+	    }
+	    redo;
+	}
+	elsif (/^\.(PRINTSTYLE|START)$sp/) {
+	    $mom++;
+	}
+	if (/^\.so$sp/) {
 	    chop;
 	    s/^.so *//;
 	    s/\\\".*//;
@@ -122,6 +161,19 @@ sub process {
     }
     close(FILE);
 }
+
+sub usage {
+    local($exit_status) = $_;
+    print "GNU grog (groff) version @VERSION@\n";
+    exit $exit_status;
+}
+
+sub help {
+    print "usage: grog [ option ...] [files...]\n";
+    exit 0;
+}
+
+$refer ||= $refer_open && $refer_close;
 
 if ($pic || $tbl || $eqn || $grn || $grap || $refer) {
     $s = "-";
@@ -142,6 +194,9 @@ if ($me > 0) {
 elsif ($SH > 0 && $TH > 0) {
     push(@command, "-man");
 }
+else ($mom > 0) {
+    push(@command, "-mom");
+}
 elsif ($PP > 0) {
     push(@command, "-ms");
 }
@@ -149,7 +204,7 @@ elsif ($P > 0 || $mm > 0) {
     push(@command, "-mm");
 }
 elsif ($mdoc > 0) {
-    push(@command, ($mdoc_old || $Oo > 0) ? "-mdoc.old" : "-mdoc");
+    push(@command, ($mdoc_old || $Oo > 0) ? "-mdoc-old" : "-mdoc");
 }
 
 push(@command, "--") if @ARGV && $ARGV[0] =~ /^-./;

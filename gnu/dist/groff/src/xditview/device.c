@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.1.1.1 2001/04/19 12:52:32 wiz Exp $	*/
+/*	$NetBSD: device.c,v 1.1.1.2 2003/06/30 17:52:18 wiz Exp $	*/
 
 /* device.c */
 
@@ -486,14 +486,26 @@ int read_charset_section(f, fp)
 }
 
 static
-FILE *find_file(file, path, result)
-    char *file, *path, **result;
+FILE *find_file(file, result)
+    char *file, **result;
 {
   char *buf = NULL;
   int bufsiz = 0;
   int flen;
   FILE *fp;
-  
+  char *path;
+  char *env;
+
+  env = getenv(FONTPATH_ENV_VAR);
+  path = XtMalloc(((env && *env) ? strlen(env) + 1 : 0)
+		  + strlen(FONTPATH) + 1);
+  *path = '\0';
+  if (env && *env) {
+    strcat(path, env);
+    strcat(path, ":");
+  }
+  strcat(path, FONTPATH);
+
   *result = NULL;
   
   if (file == NULL)
@@ -509,9 +521,6 @@ FILE *find_file(file, path, result)
   }
   
   flen = strlen(file);
-  
-  if (!path)
-    return NULL;
   
   while (*path) {
     int len;
@@ -557,10 +566,7 @@ FILE *open_device_file(device_name, file_name, result)
 
   buf = XtMalloc(3 + strlen(device_name) + 1 + strlen(file_name) + 1);
   sprintf(buf, "dev%s/%s", device_name, file_name);
-  path = getenv(FONTPATH_ENV_VAR);
-  if (!path)
-    path = FONTPATH;
-  fp = find_file(buf, path, result);
+  fp = find_file(buf, result);
   if (!fp) {
       fprintf(stderr, "can't find device file `%s'\n", file_name);
       fflush(stderr);

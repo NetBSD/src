@@ -1,6 +1,6 @@
-/*	$NetBSD: putenv.c,v 1.1.1.1 2001/04/19 12:50:53 wiz Exp $	*/
+/*	$NetBSD: putenv.c,v 1.1.1.2 2003/06/30 17:52:06 wiz Exp $	*/
 
-/* Copyright (C) 1991 Free Software Foundation, Inc.
+/* Copyright (C) 1991, 2001 Free Software Foundation, Inc.
 This file is part of the GNU C Library.
 
 The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,10 @@ not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
 /* Hacked slightly by jjc@jclark.com for groff. */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <string.h>
 

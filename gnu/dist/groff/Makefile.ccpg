@@ -9,7 +9,7 @@ MAKEFILEPARTS=\
 all: $(PROG) $(MANPAGES)
 
 $(PROG): $(OBJS) $(XLIBS)
-	$(LINK.cc) -o $@ $(OBJS) $(XLIBS) $(LIBS) $(MLIB)
+	$(LINK.cpp) -o $@ $(OBJS) $(XLIBS) $(LIBS) $(MLIB)
 
 install_bin: install_prog
 install_prog: $(PROG)
@@ -24,10 +24,10 @@ TAGS_src: $(CCSRCS) $(CSRCS) $(GRAM) $(HDRS)
 Makefile: $(MAKEFILEPARTS)
 Makefile.dep:
 	touch Makefile.dep
-$(MANPAGES): $(top_srcdir)/VERSION $(top_srcdir)/REVISION
+$(top_builddir)/stamp-h $(MANPAGES): $(top_srcdir)/VERSION $(top_srcdir)/REVISION
 
 pure: $(PROG).pure
 
 $(PROG).pure: $(OBJS) $(XLIBS)
 	$(PURIFY) $(PURIFYCCFLAGS) \
-	  $(LINK.cc) -o $@ $(OBJS) $(XLIBS) $(LIBS) $(MLIB)
+	  $(LINK.cpp) -o $@ $(OBJS) $(XLIBS) $(LIBS) $(MLIB)

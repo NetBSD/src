@@ -34,13 +34,14 @@ case "`locale charmap 2>/dev/null`" in
      esac ;;
 esac
 opts=
-safer=-S
 
 # `for i; do' doesn't work with some versions of sh
 
 for i
   do
   case $1 in
+    -c)
+      opts="$opts -P-c" ;;
     -h)
       opts="$opts -P-h" ;;
     -[eq] | -s*)
@@ -49,23 +50,23 @@ for i
     -[mrnoT])
       echo "$prog: option $1 requires an argument" >&2
       exit 1 ;;
-    -i | -[mrno]*)
+    -[iptSUC] | -[mrno]*)
       opts="$opts $1" ;;
     -Tascii | -Tlatin1 | -Tutf8 | -Tcp1047)
       T=$1 ;;
     -T*)
       # ignore other devices
       ;;
-    -S)
-      # safer behaviour
-      safer=-S ;;
-    -U)
-      # unsafe behaviour
-      safer=-U ;;
     -u*)
       # Solaris 2.2 `man' uses -u0; ignore it,
       # since `less' and `more' can use the emboldening info.
       ;;
+    -v | --version)
+      echo "GNU nroff (groff) version @VERSION@"
+      exit 0 ;;
+    --help)
+      echo "usage: nroff [-CchipStUv] [-mNAME] [-nNUM] [-oLIST] [-rCN] [-Tname] [FILE...]"
+      exit 0 ;;
     --)
       shift
       break ;;
@@ -82,4 +83,9 @@ done
 
 # This shell script is intended for use with man, so warnings are
 # probably not wanted.  Also load nroff-style character definitions.
-exec groff $safer -Wall -mtty-char $T $opts ${1+"$@"}
+
+: ${GROFF_BIN_PATH=@BINDIR@}
+export GROFF_BIN_PATH
+PATH=$GROFF_BIN_PATH@SEP@$PATH groff -mtty-char $T $opts ${1+"$@"}
+
+# eof

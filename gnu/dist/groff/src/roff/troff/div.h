@@ -1,7 +1,8 @@
-/*	$NetBSD: div.h,v 1.1.1.1 2001/04/19 12:51:01 wiz Exp $	*/
+/*	$NetBSD: div.h,v 1.1.1.2 2003/06/30 17:52:07 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,14 +22,21 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 class diversion {
-  friend void do_divert(int append);
+  friend void do_divert(int append, int boxing);
   friend void end_diversions();
   diversion *prev;
+  node *saved_line;
+  hunits saved_width_total;
+  int saved_space_total;
+  hunits saved_saved_indent;
+  hunits saved_target_text_length;
+  int saved_prev_line_interrupted;
 protected:
   symbol nm;
   vunits vertical_position;
   vunits high_water_mark;
 public:
+  int no_space_mode;
   vunits marked_place;
   diversion(symbol s = NULL_SYMBOL);
   virtual ~diversion();
@@ -97,7 +105,6 @@ class top_level_diversion : public diversion {
   int ejecting_page;		// Is the current page being ejected?
 public:
   int before_first_page;
-  int no_space_mode;
   top_level_diversion();
   void output(node *nd, int retain_size, vunits vs, vunits post_vs,
 	      hunits width);
@@ -119,7 +126,7 @@ public:
   int get_page_number() { return page_number; }
   int get_next_page_number();
   void set_page_number(int n) { page_number = n; }
-  int begin_page();
+  int begin_page(vunits = V0);
   void set_next_page_number(int);
   void set_page_length(vunits);
   void copy_file(const char *filename);
@@ -148,5 +155,7 @@ void push_page_ejector();
 void continue_page_eject();
 void handle_first_page_transition();
 void blank_line();
+void begin_page();
+void end_diversions();
 
 extern void cleanup_and_exit(int);

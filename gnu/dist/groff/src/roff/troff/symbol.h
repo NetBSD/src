@@ -1,7 +1,7 @@
-/*	$NetBSD: symbol.h,v 1.1.1.1 2001/04/19 12:51:19 wiz Exp $	*/
+/*	$NetBSD: symbol.h,v 1.1.1.2 2003/06/30 17:52:10 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2002 Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -38,10 +38,12 @@ public:
   int operator !=(symbol) const;
   const char *contents() const;
   int is_null() const;
+  int is_empty() const;
 };
 
 
 extern const symbol NULL_SYMBOL;
+extern const symbol EMPTY_SYMBOL;
 
 inline symbol::symbol() : s(0)
 {
@@ -70,6 +72,11 @@ inline const char *symbol::contents() const
 inline int symbol::is_null() const
 {
   return s == 0;
+}
+
+inline int symbol::is_empty() const
+{
+  return s != 0 && *s == 0;
 }
 
 symbol concat(symbol, symbol);
