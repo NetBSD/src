@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.41 1997/10/20 18:43:22 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.41.2.1 1998/05/08 10:59:16 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -79,53 +79,41 @@
 
 #define WTPRI			(PZERO+10)	/* sleep priority */
 
-/*
- * Wangtek controller ports
- */
-#define WT_CTLPORT		(ia->ia_iobase + 0 )	/* control, write only */
-#define WT_STATPORT		(ia->ia_iobase + 0 )	/* status, read only */
-#define WT_CMDPORT		(ia->ia_iobase + 1 )	/* command, write only */
-#define WT_DATAPORT		(ia->ia_iobase + 1 )	/* data, read only */
 #define WT_NPORT		2		/* 2 i/o ports */
-
-/* status port bits */
-#define WT_BUSY			0x01		/* not ready bit define */
-#define WT_NOEXCEP		0x02		/* no exception bit define */
-#define WT_RESETMASK		0x07		/* to check after reset */
-#define WT_RESETVAL		0x05		/* state after reset */
-
-/* control port bits */
-#define WT_ONLINE		0x01		/* device selected */
-#define WT_RESET		0x02		/* reset command */
-#define WT_REQUEST		0x04		/* request command */
-#define WT_IEN			0x08		/* enable dma */
-
-/*
- * Archive controller ports
- */
-#define AV_DATAPORT		(ia->ia_iobase + 0)	/* data, read only */
-#define AV_CMDPORT		(ia->ia_iobase + 0)	/* command, write only */
-#define AV_STATPORT		(ia->ia_iobase + 1)	/* status, read only */
-#define AV_CTLPORT		(ia->ia_iobase + 1)	/* control, write only */
-#define AV_SDMAPORT		(ia->ia_iobase + 2)	/* start dma */
-#define AV_RDMAPORT		(ia->ia_iobase + 3)	/* reset dma */
 #define AV_NPORT		4		/* 4 i/o ports */
-
-/* status port bits */
-#define AV_BUSY			0x40		/* not ready bit define */
-#define AV_NOEXCEP		0x20		/* no exception bit define */
-#define AV_RESETMASK		0xf8		/* to check after reset */
-#define AV_RESETVAL		0x50		/* state after reset */
-
-/* control port bits */
-#define AV_RESET		0x80		/* reset command */
-#define AV_REQUEST		0x40		/* request command */
-#define AV_IEN			0x20		/* enable interrupts */
 
 enum wttype {
 	UNKNOWN = 0,	/* unknown type, driver disabled */
 	ARCHIVE,	/* Archive Viper SC499, SC402 etc */
 	WANGTEK,	/* Wangtek */
+};
+
+static struct wtregs {
+	/* controller ports */
+	int DATAPORT,	/* data, read only */
+	CMDPORT,	/* command, write only */
+	STATPORT,	/* status, read only */
+	CTLPORT,	/* control, write only */
+	SDMAPORT,	/* start dma */
+	RDMAPORT;	/* reset dma */
+	/* status port bits */
+	u_char BUSY,	/* not ready bit define */
+	NOEXCEP,	/* no exception bit define */
+	RESETMASK,	/* to check after reset */
+	RESETVAL,	/* state after reset */
+	/* control port bits */
+	ONLINE,		/* device selected */
+	RESET,		/* reset command */
+	REQUEST,	/* request command */
+	IEN;		/* enable interrupts */
+} wtregs = {
+	1, 1, 0, 0, 0, 0,
+	0x01, 0x02, 0x07, 0x05,
+	0x01, 0x02, 0x04, 0x08
+}, avregs = {
+	0, 0, 1, 1, 2, 3,
+	0x40, 0x20, 0xf8, 0x50,
+	0, 0x80, 0x40, 0x20
 };
 
 struct wt_softc {
@@ -151,8 +139,7 @@ struct wt_softc {
 	u_short ercnt;		/* number of error blocks */
 	u_short urcnt;		/* number of underruns */
 
-	int DATAPORT, CMDPORT, STATPORT, CTLPORT, SDMAPORT, RDMAPORT;
-	u_char BUSY, NOEXCEP, RESETMASK, RESETVAL, ONLINE, RESET, REQUEST, IEN;
+	struct wtregs regs;
 };
 
 /* XXX: These don't belong here really */
@@ -165,7 +152,7 @@ int wtstart __P((struct wt_softc *sc, int flag, void *vaddr, size_t len));
 void wtdma __P((struct wt_softc *sc));
 void wttimer __P((void *arg));
 void wtclock __P((struct wt_softc *sc));
-int wtreset __P((struct wt_softc *sc));
+int wtreset __P((bus_space_tag_t, bus_space_handle_t, struct wtregs *));
 int wtsense __P((struct wt_softc *sc, int verbose, int ignore));
 int wtstatus __P((struct wt_softc *sc));
 void wtrewind __P((struct wt_softc *sc));
@@ -173,7 +160,11 @@ int wtreadfm __P((struct wt_softc *sc));
 int wtwritefm __P((struct wt_softc *sc));
 u_char wtsoft __P((struct wt_softc *sc, int mask, int bits));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int wtprobe __P((struct device *, void *, void *));
+#else
+int wtprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
@@ -191,9 +182,13 @@ struct cfdriver wt_cd = {
 int
 wtprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	struct wt_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -204,58 +199,28 @@ wtprobe(parent, match, aux)
 	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return (0);
 
+	if (ia->ia_drq < 1 || ia->ia_drq > 3) {
+		printf("wtprobe: Bad drq=%d, should be 1..3\n", ia->ia_drq);
+		return (0);
+	}
+
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh))
 		return 0;
 
-	/* XXX broken_indirect_config */
-	sc->chan = ia->ia_drq;
-	if (sc->chan < 1 || sc->chan > 3) {
-		printf("%s: Bad drq=%d, should be 1..3\n", sc->sc_dev.dv_xname,
-		    sc->chan);
-		rv = 0;
-		goto done;
-	}
-
-
 	/* Try Wangtek. */
-	sc->type = WANGTEK;
-	sc->CTLPORT = WT_CTLPORT;
-	sc->STATPORT = WT_STATPORT;
-	sc->CMDPORT = WT_CMDPORT;
-	sc->DATAPORT = WT_DATAPORT;
-	sc->SDMAPORT = sc->RDMAPORT = 0;
-	sc->BUSY = WT_BUSY;		sc->NOEXCEP = WT_NOEXCEP;
-	sc->RESETMASK = WT_RESETMASK;	sc->RESETVAL = WT_RESETVAL;
-	sc->ONLINE = WT_ONLINE;		sc->RESET = WT_RESET;
-	sc->REQUEST = WT_REQUEST;	sc->IEN = WT_IEN;
-	if (wtreset(sc)) {
-		ia->ia_iosize = WT_NPORT;
+	if (wtreset(iot, ioh, &wtregs)) {
+		ia->ia_iosize = WT_NPORT; /* XXX misleading */
 		rv = 1;
 		goto done;
 	}
 
 	/* Try Archive. */
-	sc->type = ARCHIVE;
-	sc->CTLPORT = AV_CTLPORT;
-	sc->STATPORT = AV_STATPORT;
-	sc->CMDPORT = AV_CMDPORT;
-	sc->DATAPORT = AV_DATAPORT;
-	sc->SDMAPORT = AV_SDMAPORT;
-	sc->RDMAPORT = AV_RDMAPORT;
-	sc->BUSY = AV_BUSY;		sc->NOEXCEP = AV_NOEXCEP;
-	sc->RESETMASK = AV_RESETMASK;	sc->RESETVAL = AV_RESETVAL;
-	sc->ONLINE = 0;			sc->RESET = AV_RESET;
-	sc->REQUEST = AV_REQUEST;	sc->IEN = AV_IEN;
-	if (wtreset(sc)) {
+	if (wtreset(iot, ioh, &avregs)) {
 		ia->ia_iosize = AV_NPORT;
-		bus_space_unmap(iot, ioh, AV_NPORT);
 		rv = 1;
 		goto done;
 	}
-
-	/* Tape controller not found. */
-	sc->type = UNKNOWN;
 
 done:
 	bus_space_unmap(iot, ioh, AV_NPORT);
@@ -284,15 +249,33 @@ wtattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 
-	/* XXX broken_indirect_config */
-	if (sc->type == ARCHIVE) {
+	/* Try Wangtek. */
+	if (wtreset(iot, ioh, &wtregs)) {
+		sc->type = WANGTEK;
+		bcopy(&wtregs, &sc->regs, sizeof(sc->regs));
+		printf(": type <Wangtek>\n");
+		goto ok;
+	}
+
+	/* Try Archive. */
+	if (wtreset(iot, ioh, &avregs)) {
+		sc->type = ARCHIVE;
+		bcopy(&avregs, &sc->regs, sizeof(sc->regs));
 		printf(": type <Archive>\n");
 		/* Reset DMA. */
-		bus_space_write_1(iot, ioh, sc->RDMAPORT, 0);
-	} else
-		printf(": type <Wangtek>\n");
+		bus_space_write_1(iot, ioh, sc->regs.RDMAPORT, 0);
+		goto ok;
+	}
+
+	/* what happened? */
+	printf("%s: lost controller\n", self->dv_xname);
+	return;
+
+ok:
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
+
+	sc->chan = ia->ia_drq;
 
 	if (isa_dmamap_create(parent, sc->chan, MAXPHYS,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
@@ -359,7 +342,7 @@ wtopen(dev, flag, mode, p)
 		/* Check the controller status */
 		if (!wtsense(sc, 0, (flag & FWRITE) ? 0 : TP_WRP)) {
 			/* Bad status, reset the controller. */
-			if (!wtreset(sc))
+			if (!wtreset(sc->sc_iot, sc->sc_ioh, &sc->regs))
 				return EIO;
 			if (!wtsense(sc, 1, (flag & FWRITE) ? 0 : TP_WRP))
 				return EIO;
@@ -684,9 +667,10 @@ wtintr(arg)
 	u_char x;
 
 	/* get status */
-	x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->STATPORT);
+	x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->regs.STATPORT);
 	WTDBPRINT(("wtintr() status=0x%x -- ", x));
-	if ((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP)) {
+	if ((x & (sc->regs.BUSY | sc->regs.NOEXCEP))
+	    == (sc->regs.BUSY | sc->regs.NOEXCEP)) {
 		WTDBPRINT(("busy\n"));
 		return 0;			/* device is busy */
 	}
@@ -695,8 +679,9 @@ wtintr(arg)
 	 * Check if rewind finished.
 	 */
 	if (sc->flags & TPREW) {
-		WTDBPRINT(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
-		    "rewind busy?\n" : "rewind finished\n"));
+		WTDBPRINT(((x & (sc->regs.BUSY | sc->regs.NOEXCEP))
+			   == (sc->regs.BUSY | sc->regs.NOEXCEP) ?
+			   "rewind busy?\n" : "rewind finished\n"));
 		sc->flags &= ~TPREW;		/* rewind finished */
 		wtsense(sc, 1, TP_WRP);
 		wakeup((caddr_t)sc);
@@ -707,9 +692,10 @@ wtintr(arg)
 	 * Check if writing/reading of file mark finished.
 	 */
 	if (sc->flags & (TPRMARK | TPWMARK)) {
-		WTDBPRINT(((x & (sc->BUSY | sc->NOEXCEP)) == (sc->BUSY | sc->NOEXCEP) ?
-		    "marker r/w busy?\n" : "marker r/w finished\n"));
-		if ((x & sc->NOEXCEP) == 0)	/* operation failed */
+		WTDBPRINT(((x & (sc->regs.BUSY | sc->regs.NOEXCEP))
+			   == (sc->regs.BUSY | sc->regs.NOEXCEP) ?
+			   "marker r/w busy?\n" : "marker r/w finished\n"));
+		if ((x & sc->regs.NOEXCEP) == 0)	/* operation failed */
 			wtsense(sc, 1, (sc->flags & TPRMARK) ? TP_WRP : 0);
 		sc->flags &= ~(TPRMARK | TPWMARK); /* operation finished */
 		wakeup((caddr_t)sc);
@@ -741,7 +727,7 @@ wtintr(arg)
 	/*
 	 * On exception, check for end of file and end of volume.
 	 */
-	if ((x & sc->NOEXCEP) == 0) {
+	if ((x & sc->regs.NOEXCEP) == 0) {
 		WTDBPRINT(("i/o exception\n"));
 		wtsense(sc, 1, (sc->dmaflags & DMAMODE_READ) ? TP_WRP : 0);
 		if (sc->error & (TP_EOM | TP_FIL))
@@ -782,7 +768,7 @@ wtrewind(sc)
 	 * and gives `illegal command' error.
 	 */
 	if (sc->type == WANGTEK && rwmode) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->CTLPORT, 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->regs.CTLPORT, 0);
 	} else if (!wtcmd(sc, QIC_REWIND))
 		return;
 	sc->flags |= TPSTART | TPREW;
@@ -843,19 +829,19 @@ wtsoft(sc, mask, bits)
 
 	/* Poll status port, waiting for specified bits. */
 	for (i = 0; i < 1000; ++i) {	/* up to 1 msec */
-		x = bus_space_read_1(iot, ioh, sc->STATPORT);
+		x = bus_space_read_1(iot, ioh, sc->regs.STATPORT);
 		if ((x & mask) != bits)
 			return x;
 		delay(1);
 	}
 	for (i = 0; i < 100; ++i) {	/* up to 10 msec */
-		x = bus_space_read_1(iot, ioh, sc->STATPORT);
+		x = bus_space_read_1(iot, ioh, sc->regs.STATPORT);
 		if ((x & mask) != bits)
 			return x;
 		delay(100);
 	}
 	for (;;) {			/* forever */
-		x = bus_space_read_1(iot, ioh, sc->STATPORT);
+		x = bus_space_read_1(iot, ioh, sc->regs.STATPORT);
 		if ((x & mask) != bits)
 			return x;
 		tsleep((caddr_t)wtsoft, WTPRI, "wtsoft", 1);
@@ -877,26 +863,29 @@ wtcmd(sc, cmd)
 
 	WTDBPRINT(("wtcmd() cmd=0x%x\n", cmd));
 	s = splbio();
-	x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
-	if ((x & sc->NOEXCEP) == 0) {			/* error */
+	x = wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP,
+		   sc->regs.BUSY | sc->regs.NOEXCEP); /* ready? */
+	if ((x & sc->regs.NOEXCEP) == 0) {		/* error */
 		splx(s);
 		return 0;
 	}
 	
 	/* output the command */
-	bus_space_write_1(iot, ioh, sc->CMDPORT, cmd);
+	bus_space_write_1(iot, ioh, sc->regs.CMDPORT, cmd);
 
 	/* set request */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->REQUEST | sc->ONLINE);
+	bus_space_write_1(iot, ioh, sc->regs.CTLPORT,
+			  sc->regs.REQUEST | sc->regs.ONLINE);
 
 	/* wait for ready */
-	wtsoft(sc, sc->BUSY, sc->BUSY);
+	wtsoft(sc, sc->regs.BUSY, sc->regs.BUSY);
 
 	/* reset request */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->IEN | sc->ONLINE);
+	bus_space_write_1(iot, ioh, sc->regs.CTLPORT,
+			  sc->regs.IEN | sc->regs.ONLINE);
 
 	/* wait for not ready */
-	wtsoft(sc, sc->BUSY, 0);
+	wtsoft(sc, sc->regs.BUSY, 0);
 	splx(s);
 	return 1;
 }
@@ -930,7 +919,7 @@ wtdma(sc)
 
 	if (sc->type == ARCHIVE) {
 		/* Set DMA. */
-		bus_space_write_1(iot, ioh, sc->SDMAPORT, 0);
+		bus_space_write_1(iot, ioh, sc->regs.SDMAPORT, 0);
 	}
 
 	if ((sc->dmaflags & DMAMODE_READ) &&
@@ -954,8 +943,9 @@ wtstart(sc, flag, vaddr, len)
 	u_char x;
 
 	WTDBPRINT(("wtstart()\n"));
-	x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
-	if ((x & sc->NOEXCEP) == 0) {
+	x = wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP,
+		   sc->regs.BUSY | sc->regs.NOEXCEP); /* ready? */
+	if ((x & sc->regs.NOEXCEP) == 0) {
 		sc->flags |= TPEXCEP;	/* error */
 		return 0;
 	}
@@ -1005,8 +995,9 @@ wttimer(arg)
 
 	/* If i/o going, simulate interrupt. */
 	s = splbio();
-	status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->STATPORT);
-	if ((status & (sc->BUSY | sc->NOEXCEP)) != (sc->BUSY | sc->NOEXCEP)) {
+	status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->regs.STATPORT);
+	if ((status & (sc->regs.BUSY | sc->regs.NOEXCEP))
+	    != (sc->regs.BUSY | sc->regs.NOEXCEP)) {
 		WTDBPRINT(("wttimer() -- "));
 		wtintr(sc);
 	}
@@ -1021,34 +1012,34 @@ wttimer(arg)
  * Perform QIC-02 and QIC-36 compatible reset sequence.
  */
 int
-wtreset(sc)
-	struct wt_softc *sc;
+wtreset(iot, ioh, regs)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	struct wtregs *regs;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char x;
 	int i;
 
 	/* send reset */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->RESET | sc->ONLINE);
+	bus_space_write_1(iot, ioh, regs->CTLPORT, regs->RESET | regs->ONLINE);
 	delay(30);
 	/* turn off reset */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->ONLINE);
+	bus_space_write_1(iot, ioh, regs->CTLPORT, regs->ONLINE);
 	delay(30);
 
 	/* Read the controller status. */
-	x = bus_space_read_1(iot, ioh, sc->STATPORT);
+	x = bus_space_read_1(iot, ioh, regs->STATPORT);
 	if (x == 0xff)			/* no port at this address? */
 		return 0;
 
 	/* Wait 3 sec for reset to complete. Needed for QIC-36 boards? */
 	for (i = 0; i < 3000; ++i) {
-		if ((x & sc->BUSY) == 0 || (x & sc->NOEXCEP) == 0)
+		if ((x & regs->BUSY) == 0 || (x & regs->NOEXCEP) == 0)
 			break;
 		delay(1000);
-		x = bus_space_read_1(iot, ioh, sc->STATPORT);
+		x = bus_space_read_1(iot, ioh, regs->STATPORT);
 	}
-	return (x & sc->RESETMASK) == sc->RESETVAL;
+	return (x & regs->RESETMASK) == regs->RESETVAL;
 }
 
 /*
@@ -1117,43 +1108,45 @@ wtstatus(sc)
 	int s;
 
 	s = splbio();
-	wtsoft(sc, sc->BUSY | sc->NOEXCEP, sc->BUSY | sc->NOEXCEP); /* ready? */
+	wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP,
+	       sc->regs.BUSY | sc->regs.NOEXCEP); /* ready? */
 	/* send `read status' command */
-	bus_space_write_1(iot, ioh, sc->CMDPORT, QIC_RDSTAT);
+	bus_space_write_1(iot, ioh, sc->regs.CMDPORT, QIC_RDSTAT);
 
 	/* set request */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->REQUEST | sc->ONLINE);
+	bus_space_write_1(iot, ioh, sc->regs.CTLPORT,
+			  sc->regs.REQUEST | sc->regs.ONLINE);
 
 	/* wait for ready */
-	wtsoft(sc, sc->BUSY, sc->BUSY);
+	wtsoft(sc, sc->regs.BUSY, sc->regs.BUSY);
 	/* reset request */
-	bus_space_write_1(iot, ioh, sc->CTLPORT, sc->ONLINE);
+	bus_space_write_1(iot, ioh, sc->regs.CTLPORT, sc->regs.ONLINE);
 
 	/* wait for not ready */
-	wtsoft(sc, sc->BUSY, 0);
+	wtsoft(sc, sc->regs.BUSY, 0);
 
 	p = (char *)&sc->error;
 	while (p < (char *)&sc->error + 6) {
-		u_char x = wtsoft(sc, sc->BUSY | sc->NOEXCEP, 
-		    sc->BUSY | sc->NOEXCEP);
+		u_char x = wtsoft(sc, sc->regs.BUSY | sc->regs.NOEXCEP, 
+		    sc->regs.BUSY | sc->regs.NOEXCEP);
 
-		if ((x & sc->NOEXCEP) == 0) {	/* error */
+		if ((x & sc->regs.NOEXCEP) == 0) {	/* error */
 			splx(s);
 			return 0;
 		}
 
 		/* read status byte */
-		*p++ = bus_space_read_1(iot, ioh, sc->DATAPORT);
+		*p++ = bus_space_read_1(iot, ioh, sc->regs.DATAPORT);
 
 		/* set request */
-		bus_space_write_1(iot, ioh, sc->CTLPORT,
-		    sc->REQUEST | sc->ONLINE);
+		bus_space_write_1(iot, ioh, sc->regs.CTLPORT,
+		    sc->regs.REQUEST | sc->regs.ONLINE);
 
 		/* wait for not ready */
-		wtsoft(sc, sc->BUSY, 0);
+		wtsoft(sc, sc->regs.BUSY, 0);
 
 		/* unset request */
-		bus_space_write_1(iot, ioh, sc->CTLPORT, sc->ONLINE);
+		bus_space_write_1(iot, ioh, sc->regs.CTLPORT, sc->regs.ONLINE);
 	}
 	splx(s);
 	return 1;
