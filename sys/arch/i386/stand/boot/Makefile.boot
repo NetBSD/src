@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.7 2003/08/30 15:24:41 fvdl Exp $
+# $NetBSD: Makefile.boot,v 1.8 2003/08/30 20:38:58 fvdl Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -45,6 +45,7 @@ AFLAGS+=   -m32
 COPTS+=    -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+CPPFLAGS+= -DBOOT_ELF64
 .else
 COPTS+=    -mcpu=i386
 .endif
