@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2001/07/08 15:58:42 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.197 2001/07/10 15:12:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -582,8 +582,7 @@ smp_tlb_flush_page(va)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_page *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_page;
 		s = splhigh();
@@ -613,8 +612,7 @@ smp_tlb_flush_segment(vr, vs)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_segment *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_segment;
 		s = splhigh();
@@ -645,8 +643,7 @@ smp_tlb_flush_region(vr)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_region *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_region;
 		s = splhigh();
@@ -675,8 +672,7 @@ smp_tlb_flush_context()
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_context *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_context;
 		s = splhigh();
@@ -703,8 +699,7 @@ smp_tlb_flush_all()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		s = splhigh();
 		simple_lock(&cpi->msg.lock);
@@ -716,7 +711,7 @@ smp_tlb_flush_all()
 }
 #endif
 
-#if defined(MULTIPROCESSOR) /* && 0 */
+#if defined(MULTIPROCESSOR) && 0
 #define tlb_flush_page(va)		smp_tlb_flush_page((int)va)
 #define tlb_flush_segment(vr, vs)	smp_tlb_flush_segment(vr, vs)
 #define tlb_flush_region(vr)		smp_tlb_flush_region(vr)
