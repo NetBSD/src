@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 2002/05/03 00:20:57 eeh Exp $
+	$NetBSD: syscalls.master,v 1.4 2002/07/07 18:06:03 oki Exp $
 ; based on NetBSD: syscalls.master,v 1.110 2001/07/01 18:06:11 thorpej Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -553,9 +553,11 @@
 276	STD		{ int pecoff_sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
-278	NOARGS		{ int sys___stat13(const char *path, struct stat *ub); }
+278	STD		{ int pecoff_sys___stat13(const char *path, \
+			    struct stat *ub); }
 279	NOARGS		{ int sys___fstat13(int fd, struct stat *sb); }
-280	NOARGS		{ int sys___lstat13(const char *path, struct stat *ub); }
+280	STD		{ int pecoff_sys___lstat13(const char *path, \
+			    struct stat *ub); }
 281	NOARGS		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
