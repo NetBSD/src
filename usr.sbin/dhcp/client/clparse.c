@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.3 2000/06/10 18:17:18 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.4 2000/06/12 17:43:26 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -634,7 +634,7 @@ void parse_interface_declaration (cfile, outer_config, name)
 	int token;
 	const char *val;
 	struct client_state *client, **cp;
-	struct interface_info *ip;
+	struct interface_info *ip = (struct interface_info *)0;
 
 	token = next_token (&val, cfile);
 	if (token != STRING) {
@@ -643,7 +643,8 @@ void parse_interface_declaration (cfile, outer_config, name)
 		return;
 	}
 
-	interface_or_dummy (&ip, val);
+	if (!interface_or_dummy (&ip, val))
+		log_fatal ("Can't allocate interface %s.");
 
 	/* If we were given a name, this is a pseudo-interface. */
 	if (name) {
@@ -692,6 +693,7 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 {
 	struct interface_info *i;
 	struct interface_info *ip = (struct interface_info *)0;
+	isc_result_t status;
 
 	/* Find the interface (if any) that matches the name. */
 	for (i = interfaces; i; i = i -> next) {
@@ -728,8 +730,10 @@ int interface_or_dummy (struct interface_info **pi, const char *name)
 		interface_reference (&dummy_interfaces, ip, MDL);
 	}
 	if (pi)
-		interface_reference (pi, ip, MDL);
+		status = interface_reference (pi, ip, MDL);
 	interface_dereference (&ip, MDL);
+	if (status != ISC_R_SUCCESS)
+		return 0;
 	return 1;
 }
 
