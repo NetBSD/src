@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.85 2004/10/24 22:12:24 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.86 2004/10/24 22:13:52 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.85 2004/10/24 22:12:24 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.86 2004/10/24 22:13:52 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -797,7 +797,11 @@ ehci_idone(struct ehci_xfer *ex)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
 	}
 
-	/* If there are left over TDs we need to update the toggle. */
+	/* 
+	 * If there are left over TDs we need to update the toggle.
+	 * The default pipe doesn't need it since control transfers
+	 * start the toggle at 0 every time.
+	 */
 	if (sqtd != lsqtd->nextqtd && 
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
