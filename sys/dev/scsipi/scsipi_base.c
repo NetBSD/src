@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.125 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.126 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.125 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.126 2005/02/01 00:19:34 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -321,7 +321,7 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int bit, tag;
-	uint word;
+	u_int word;
 
 	bit = 0;	/* XXX gcc */
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
@@ -761,10 +761,10 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_sense_data *sense;
 	struct scsipi_periph *periph = xs->xs_periph;
-	uint8_t key;
+	u_int8_t key;
 	int error;
 #ifndef	SCSIVERBOSE
-	uint32_t info;
+	u_int32_t info;
 	static char *error_mes[] = {
 		"soft error (corrected)",
 		"not ready", "medium error",
@@ -990,7 +990,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	{
 		static char *uc = "undecodable sense error";
 		int i;
-		uint8_t *cptr = (uint8_t *) sense;
+		u_int8_t *cptr = (u_int8_t *) sense;
 		scsipi_printaddr(periph);
 		if (xs->cmd == &xs->cmdstore) {
 			printf("%s for opcode 0x%x, data=",
@@ -1023,7 +1023,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
  *
  *	Find out from the device what its capacity is.
  */
-uint64_t
+u_int64_t
 scsipi_size(struct scsipi_periph *periph, int flags)
 {
 	union {
@@ -2638,7 +2638,7 @@ show_scsipi_xs(struct scsipi_xfer *xs)
 void
 show_scsipi_cmd(struct scsipi_xfer *xs)
 {
-	uint8_t *b = (uint8_t *) xs->cmd;
+	u_char *b = (u_char *) xs->cmd;
 	int i = 0;
 
 	scsipi_printaddr(xs->xs_periph);
@@ -2658,7 +2658,7 @@ show_scsipi_cmd(struct scsipi_xfer *xs)
 }
 
 void
-show_mem(uint8_t *address, int num)
+show_mem(u_char *address, int num)
 {
 	int x;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.54 2005/01/31 23:46:33 simonb Exp $	*/
+/*	$NetBSD: if_se.c,v 1.55 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.54 2005/01/31 23:46:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.55 2005/02/01 00:19:34 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -213,27 +213,27 @@ static void	se_ifstart __P((struct ifnet *));
 static void	sestart __P((struct scsipi_periph *));
 
 static void	sedone __P((struct scsipi_xfer *, int));
-static int	se_ioctl __P((struct ifnet *, ulong, caddr_t));
+static int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void	sewatchdog __P((struct ifnet *));
 
-static __inline uint16_t ether_cmp __P((void *, void *));
+static __inline u_int16_t ether_cmp __P((void *, void *));
 static void	se_recv __P((void *));
 static struct mbuf *se_get __P((struct se_softc *, char *, int));
 static int	se_read __P((struct se_softc *, char *, int));
 static int	se_reset __P((struct se_softc *));
 static int	se_add_proto __P((struct se_softc *, int));
-static int	se_get_addr __P((struct se_softc *, uint8_t *));
+static int	se_get_addr __P((struct se_softc *, u_int8_t *));
 static int	se_set_media __P((struct se_softc *, int));
 static int	se_init __P((struct se_softc *));
-static int	se_set_multi __P((struct se_softc *, uint8_t *));
-static int	se_remove_multi __P((struct se_softc *, uint8_t *));
+static int	se_set_multi __P((struct se_softc *, u_int8_t *));
+static int	se_remove_multi __P((struct se_softc *, u_int8_t *));
 #if 0
 static int	sc_set_all_multi __P((struct se_softc *, int));
 #endif
 static void	se_stop __P((struct se_softc *));
 static __inline int se_scsipi_cmd __P((struct scsipi_periph *periph,
 			struct scsipi_generic *scsipi_cmd,
-			int cmdlen, uint8_t *data_addr, int datalen,
+			int cmdlen, u_char *data_addr, int datalen,
 			int retries, int timeout, struct buf *bp,
 			int flags));
 static void	se_delayed_ifstart __P((void *));
@@ -275,13 +275,13 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
  * unrolled for speed.
  * Note: use this like memcmp()
  */
-static __inline uint16_t
+static __inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
-	uint16_t *a = (uint16_t *) one;
-	uint16_t *b = (uint16_t *) two;
-	uint16_t diff;
+	u_int16_t *a = (u_int16_t *) one;
+	u_int16_t *b = (u_int16_t *) two;
+	u_int16_t diff;
 
 	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
 
@@ -318,7 +318,7 @@ seattach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint8_t myaddr[ETHER_ADDR_LEN];
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
@@ -377,7 +377,7 @@ se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 	struct scsipi_periph *periph;
 	struct scsipi_generic *cmd;
 	int cmdlen;
-	uint8_t *data_addr;
+	u_char *data_addr;
 	int datalen;
 	int retries;
 	int timeout;
@@ -434,7 +434,7 @@ se_ifstart(ifp)
 	struct scsi_ctron_ether_generic send_cmd;
 	struct mbuf *m, *m0;
 	int len, error;
-	uint8_t *cp;
+	u_char *cp;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -462,7 +462,7 @@ se_ifstart(ifp)
 	/* Chain; copy into linear buffer we allocated at attach time. */
 	cp = sc->sc_tbuf;
 	for (m = m0; m != NULL; ) {
-		memcpy(cp, mtod(m, uint8_t *), m->m_len);
+		memcpy(cp, mtod(m, u_char *), m->m_len);
 		cp += m->m_len;
 		MFREE(m, m0);
 		m = m0;
@@ -471,7 +471,7 @@ se_ifstart(ifp)
 #ifdef SEDEBUG
 		if (sc->sc_debug)
 			printf("se: packet size %d (%d) < %d\n", len,
-			    cp - (uint8_t *)sc->sc_tbuf, SEMINSIZE);
+			    cp - (u_char *)sc->sc_tbuf, SEMINSIZE);
 #endif
 		memset(cp, 0, SEMINSIZE - len);
 		len = SEMINSIZE;
@@ -758,7 +758,7 @@ se_add_proto(sc, proto)
 {
 	int error;
 	struct scsi_ctron_ether_generic add_proto_cmd;
-	uint8_t data[2];
+	u_int8_t data[2];
 	_lto2b(proto, data);
 #ifdef SEDEBUG
 	if (sc->sc_debug)
@@ -777,7 +777,7 @@ se_add_proto(sc, proto)
 static int
 se_get_addr(sc, myaddr)
 	struct se_softc *sc;
-	uint8_t *myaddr;
+	u_int8_t *myaddr;
 {
 	int error;
 	struct scsi_ctron_ether_generic get_addr_cmd;
@@ -887,7 +887,7 @@ se_init(sc)
 static int
 se_set_multi(sc, addr)
 	struct se_softc *sc;
-	uint8_t *addr;
+	u_int8_t *addr;
 {
 	struct scsi_ctron_ether_generic set_multi_cmd;
 	int error;
@@ -907,7 +907,7 @@ se_set_multi(sc, addr)
 static int
 se_remove_multi(sc, addr)
 	struct se_softc *sc;
-	uint8_t *addr;
+	u_int8_t *addr;
 {
 	struct scsi_ctron_ether_generic remove_multi_cmd;
 	int error;
@@ -931,7 +931,7 @@ sc_set_all_multi(sc, set)
 	int set;
 {
 	int error = 0;
-	uint8_t *addr;
+	u_int8_t *addr;
 	struct ethercom *ac = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -984,7 +984,7 @@ se_stop(sc)
 static int
 se_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	ulong cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct se_softc *sc = ifp->if_softc;
@@ -1220,7 +1220,7 @@ seclose(dev, flag, fmt, p)
 int
 seioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	ulong cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_iu.h,v 1.3 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: scsi_iu.h,v 1.4 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -9,14 +9,14 @@
 
 struct scsi_status_iu_header
 {
-	uint8_t reserved[2];
-	uint8_t flags;
+	u_int8_t reserved[2];
+	u_int8_t flags;
 #define	SIU_SNSVALID 0x2
 #define	SIU_RSPVALID 0x1
-	uint8_t status;
-	uint8_t sense_length[4];
-	uint8_t pkt_failures_length[4];
-	uint8_t pkt_failures[1];
+	u_int8_t status;
+	u_int8_t sense_length[4];
+	u_int8_t pkt_failures_length[4];
+	u_int8_t pkt_failures[1];
 };
 
 #define SIU_PKTFAIL_OFFSET(siu) 12
