@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.s,v 1.1 1997/04/09 19:22:49 thorpej Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.2 1997/04/25 02:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,11 +80,11 @@ ENTRY(setrunqueue)
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
-	movl	_whichqs,d1
+	movl	_C_LABEL(whichqs),d1
 	bset	d0,d1
-	movl	d1,_whichqs
+	movl	d1,_C_LABEL(whichqs)
 	lslb	#3,d0
-	addl	#_qs,d0
+	addl	#_C_LABEL(qs),d0
 	movl	d0,a0@(P_FORW)
 	movl	d0,a1
 	movl	a1@(P_BACK),a0@(P_BACK)
@@ -94,11 +94,7 @@ ENTRY(setrunqueue)
 	rts
 #ifdef DIAGNOSTIC
 Lset1:
-	movl	#Lset2,sp@-
-	jbsr	_panic
-Lset2:
-	.asciz	"setrunqueue"
-	.even
+	PANIC("setrunqueue")
 #endif
 
 /*
@@ -111,7 +107,7 @@ ENTRY(remrunqueue)
 	movb	a0@(P_PRIORITY),d0
 #ifdef DIAGNOSTIC
 	lsrb	#2,d0
-	movl	_whichqs,d1
+	movl	_C_LABEL(whichqs),d1
 	btst	d0,d1
 	jeq	Lrem2
 #endif
@@ -124,17 +120,13 @@ ENTRY(remrunqueue)
 	jne	Lrem1
 #ifndef DIAGNOSTIC
 	lsrb	#2,d0
-	movl	_whichqs,d1
+	movl	_C_LABEL(whichqs),d1
 #endif
 	bclr	d0,d1
-	movl	d1,_whichqs
+	movl	d1,_C_LABEL(whichqs)
 Lrem1:
 	rts
 #ifdef DIAGNOSTIC
 Lrem2:
-	movl	#Lrem3,sp@-
-	jbsr	_panic
-Lrem3:
-	.asciz	"remrunqueue"
-	.even
+	PANIC("remrunqueue")
 #endif
