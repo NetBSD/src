@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.35 2000/02/02 10:19:51 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.36 2000/02/02 10:31:45 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1285,12 +1285,12 @@ pcic_wait_ready(h)
 	/* wait an initial 10ms for quick cards */
 	if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
 		return;
-	pcic_delay(h, 10, "wait_ready initial");
+	pcic_delay(h, 10, "pccwr0");
 	for (i = 0; i < 50; i++) {
 		if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
 			return;
 		/* wait .1s (100ms) each iteration now */
-		pcic_delay(h, 100, "wait_ready loop");
+		pcic_delay(h, 100, "pccwr1");
 #ifdef PCICDEBUG
 		if (pcic_debug) {
 			if ((i > 20) && (i % 100 == 99))
@@ -1309,10 +1309,10 @@ pcic_wait_ready(h)
  * Perform long (msec order) delay.
  */  
 static void
-pcic_delay(h, timo, ident)
+pcic_delay(h, timo, wmesg)
 	struct pcic_handle *h;
 	int timo;			/* in ms.  must not be zero */
-	const char *ident;
+	const char *wmesg;
 {
 
 #ifdef DIAGNOSTIC
@@ -1331,7 +1331,7 @@ pcic_delay(h, timo, ident)
 #endif
 	DPRINTF(("pcic_delay: %p, sleep %d ms\n", h->event_thread, timo));
 	if (pcic_delay_sleep)
-		tsleep(pcic_delay, PWAIT, ident,
+		tsleep(pcic_delay, PWAIT, wmesg,
 		    roundup(timo * hz, 1000) / 1000);
 	else
 		delay(timo * 1000);
@@ -1389,8 +1389,7 @@ pcic_chip_socket_enable(pch)
 	 * hold RESET at least 10us.
 	 */
 	delay(10);
-	delay(2*1000);		/* XXX: TI1130 requires it. */
-	delay(20*1000);		/* XXX: TI1130 requires it. */
+	pcic_delay(h, 2 + 20, "pccen3");	/* XXX: TI1130 requires it. */
 
 	/* clear the reset flag */
 	intr |= PCIC_INTR_RESET;
@@ -1449,17 +1448,6 @@ pcic_chip_socket_disable(pch)
 
 	/* power down the socket */
 	pcic_write(h, PCIC_PWRCTL, 0);
-
-#if 1
-	/*
-	 * This constraint is kept in pcic_chip_socket_enable.
-	 * When we enable the same card slot, we first turn off the
-	 * power and wait enough time.  So we don't need to wait here.
-	 *
-	 * wait 300ms until power fails (Tpf).
-	 */
-	pcic_delay(h, 300, "pcicdis");
-#endif
 }
 
 static u_int8_t
