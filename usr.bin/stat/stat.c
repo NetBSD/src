@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.13 2003/07/25 03:21:17 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.14 2003/10/26 20:43:13 chs Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.13 2003/07/25 03:21:17 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.14 2003/10/26 20:43:13 chs Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -543,14 +543,16 @@ format1(const struct stat *st,
 	char smode[12], sid[12], path[PATH_MAX + 4];
 	struct passwd *pw;
 	struct group *gr;
-	const struct timespec *tsp;
-	struct timespec ts;
 	struct tm *tm;
-	int l, small, formats;
+	time_t secs;
+	long nsecs;
+	int l, small, formats, gottime;
 
-	tsp = NULL;
 	formats = 0;
 	small = 0;
+	gottime = 0;
+	secs = 0;
+	nsecs = 0;
 
 	/*
 	 * First, pick out the data and tweak it based on hilo or
@@ -664,26 +666,39 @@ format1(const struct stat *st,
 			ofmt = FMTF_UNSIGNED;
 		break;
 	case SHOW_st_atime:
-		tsp = &st->st_atimespec;
+		gottime = 1;
+		secs = st->st_atime;
+#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+		nsecs = st->st_atimensec;
+#endif
 		/* FALLTHROUGH */
 	case SHOW_st_mtime:
-		if (tsp == NULL)
-			tsp = &st->st_mtimespec;
+		if (!gottime) {
+			secs = st->st_mtime;
+#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+			nsecs = st->st_mtimensec;
+#endif
+		}
 		/* FALLTHROUGH */
 	case SHOW_st_ctime:
-		if (tsp == NULL)
-			tsp = &st->st_ctimespec;
+		if (!gottime) {
+			secs = st->st_ctime;
+#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+			nsecs = st->st_ctimensec;
+#endif
+		}
 		/* FALLTHROUGH */
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
 	case SHOW_st_btime:
-		if (tsp == NULL)
-			tsp = &st->st_birthtimespec;
+		if (!gottime) {
+			secs = st->st_birthtimespec.tv_sec;
+			nsecs = st->st_birthtimespec.tv_nsec;
+		}
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
-		ts = *tsp;		/* copy so we can muck with it */
-		small = (sizeof(ts.tv_sec) == 4);
-		data = ts.tv_sec;
+		small = (sizeof(secs) == 4);
+		data = secs;
 		small = 1;
-		tm = localtime(&ts.tv_sec);
+		tm = localtime(&secs);
 		(void)strftime(path, sizeof(path), timefmt, tm);
 		sdata = path;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
@@ -887,7 +902,7 @@ format1(const struct stat *st,
 				(void)strcat(lfmt, tmp);
 			}
 			(void)strcat(lfmt, "d");
-			return (snprintf(buf, blen, lfmt, ts.tv_sec));
+			return (snprintf(buf, blen, lfmt, secs));
 		}
 
 		/*
@@ -930,13 +945,13 @@ format1(const struct stat *st,
 		 * less significant figures.
 		 */
 		for (; prec < 9; prec++)
-			ts.tv_nsec /= 10;
+			nsecs /= 10;
 
 		/*
 		 * Use the format, and then tack on any zeroes that
 		 * might be required to make up the requested precision.
 		 */
-		l = snprintf(buf, blen, lfmt, ts.tv_sec, ts.tv_nsec);
+		l = snprintf(buf, blen, lfmt, secs, nsecs);
 		for (; prec > 9 && l < blen; prec--, l++)
 			(void)strcat(buf, "0");
 		return (l);
