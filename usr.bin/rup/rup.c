@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.21 2000/06/02 23:20:49 fvdl Exp $	*/
+/*	$NetBSD: rup.c,v 1.22 2000/06/03 19:32:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.21 2000/06/02 23:20:49 fvdl Exp $");
+__RCSID("$NetBSD: rup.c,v 1.22 2000/06/03 19:32:34 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,8 +72,8 @@ struct host_list {
 #define addr6 addr._addr6
 #define addr4 addr._addr4
 
-int search_host __P((struct sockaddr *));
-void remember_host __P((struct sockaddr *));
+int search_host(struct sockaddr *);
+void remember_host(struct sockaddr *);
 
 int
 search_host(struct sockaddr *sa)
@@ -146,14 +146,14 @@ enum sort_type {
 };
 enum sort_type sort_type;
 
-int compare __P((struct rup_data *, struct rup_data *));
-void remember_rup_data __P((const char *, struct statstime *));
-int rstat_reply __P((char *, struct netbuf *, struct netconfig *));
-int print_rup_data __P((const char *, statstime *));
-void onehost __P((char *));
-void allhosts __P((void));
-int main __P((int, char *[]));
-void usage __P((void));
+int compare(struct rup_data *, struct rup_data *);
+void remember_rup_data(const char *, struct statstime *);
+int rstat_reply(char *, struct netbuf *, struct netconfig *);
+int print_rup_data(const char *, statstime *);
+void onehost(char *);
+void allhosts(void);
+int main(int, char *[]);
+void usage(void);
 
 int
 compare(struct rup_data *d1, struct rup_data *d2)
