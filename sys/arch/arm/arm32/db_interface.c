@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2003/07/15 00:24:41 lukem Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33 2003/08/25 04:51:10 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2003/07/15 00:24:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2003/08/25 04:51:10 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2003/07/15 00:24:41 lukem Exp 
 #define db_printf	printf
 #endif
 
-static int nil;
+static long nil;
 
 int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
@@ -93,9 +93,9 @@ const struct db_variable db_regs[] = {
 	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
 	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
 	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-	{ "und_sp", (long *)&nil, db_access_und_sp, },
-	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
-	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
+	{ "und_sp", &nil, db_access_und_sp, },
+	{ "abt_sp", &nil, db_access_abt_sp, },
+	{ "irq_sp", &nil, db_access_irq_sp, },
 };
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
