@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68.4.2 2001/11/18 18:44:19 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68.4.3 2001/12/04 20:58:23 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -884,7 +884,7 @@ pmap_activate(l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
-	    ("pmap_activate(%p)\n", p));
+	    ("pmap_activate(%p)\n", l));
 
 	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
 }
