@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.1 1993/09/07 03:21:32 cassidy Exp $";
+"@(#) $Id: rarpd.c,v 1.2 1993/12/02 15:54:34 pk Exp $";
 #endif
 
 
@@ -35,7 +35,6 @@ static char rcsid[] =
  *
  * Usage:	rarpd -a [ -d -f ]
  *		rarpd [ -d -f ] interface
- *
  */
 
 #include <stdio.h>
@@ -61,7 +60,7 @@ static char rcsid[] =
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#if defined (SUNOS4) || defined (i386) || defined (__i386__)
+#if defined (SUNOS4) || defined (__NetBSD__) || defined(__386BSD__)
 #include <dirent.h>
 #else
 #include <sys/dir.h>
@@ -71,8 +70,11 @@ static char rcsid[] =
  * Map field names in ether_arp struct.  What a pain in the neck.
  * XXX This logic is brain-dead and needs to be cleaned up.
  */
-#if !defined(i386) || !defined(__i386__)
-#ifndef SUNOS4
+#if !defined(SUNOS4) && !defined(__NetBSD__) && !defined(__386BSD__)
+#define MAP_ETHER_ARP
+#endif
+
+#ifdef MAP_ETHER_ARP
 #undef arp_sha
 #undef arp_spa
 #undef arp_tha
@@ -82,7 +84,6 @@ static char rcsid[] =
 #define arp_tha arp_xtha
 #define arp_tpa arp_xtpa
 #endif
-#endif				/* !i386 */
 
 /* define these if missing */
 #ifndef ETHERTYPE_REVARP	/* reverse address resolution protocol */
@@ -507,7 +508,7 @@ int
 rarp_bootable(addr)
 	u_long  addr;
 {
-#if defined (SUNOS4) || defined (i386) || defined (__i386__)
+#if defined (SUNOS4) || defined (__NetBSD__)
 	register struct dirent *dent;
 #else
 	register struct direct *dent;
