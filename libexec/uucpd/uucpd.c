@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.8 1998/02/13 23:15:16 tron Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.9 1998/05/18 12:41:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.8 1998/02/13 23:15:16 tron Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.9 1998/05/18 12:41:30 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,10 +187,7 @@ doit(sinp)
 	user[8] = '\0';
 	pw = getpwnam(user);
 	if (pw == NULL) {
-		fprintf(stderr, "user unknown\n");
-		return;
-	}
-	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
+		(void) crypt("dummy password", "PA");	/* must always crypt */
 		fprintf(stderr, "Login incorrect.");
 		return;
 	}
@@ -205,6 +202,10 @@ doit(sinp)
 			fprintf(stderr, "Login incorrect.");
 			return;
 		}
+	}
+	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
+		fprintf(stderr, "Login incorrect.");
+		return;
 	}
 	alarm(0);
 	sprintf(Username, "USER=%s", user);
@@ -239,6 +240,7 @@ readline(p, n)
 	return(-1);
 }
 
+/* Note that SCPYN is only used on strings that may not be nul terminated */
 #define	SCPYN(a, b)	strncpy(a, b, sizeof (a))
 
 struct	utmp utmp;
@@ -302,8 +304,7 @@ dologin(pw, sin)
 
 		time(&ll.ll_time);
 		lseek(f, pw->pw_uid * sizeof(struct lastlog), 0);
-		strcpy(line, remotehost);
-		SCPYN(ll.ll_line, line);
+		SCPYN(ll.ll_line, remotehost);
 		SCPYN(ll.ll_host, remotehost);
 		(void) write(f, (char *) &ll, sizeof ll);
 		(void) close(f);
