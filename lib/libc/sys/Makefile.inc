@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.134 2003/01/27 20:55:56 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.135 2003/01/28 00:33:23 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -91,19 +91,19 @@ PSEUDONOERR=	_exit.S
 SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
 CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR}
 
-${ASM}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
+		${DESTDIR}/usr/include/sys/syscall.h
+
+${ASM}: ${ASMDEPS}
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
 
-${WEAKASM}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${WEAKASM}: ${ASMDEPS}
 	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_sys_${.PREFIX})\nWEAK_ALIAS(_${.PREFIX},_sys_${.PREFIX})\n' >${.TARGET}
 
-
-
-
-${NOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${NOERR}: ${ASMDEPS}
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
 
-${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${PSEUDONOERR}: ${ASMDEPS}
 	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
