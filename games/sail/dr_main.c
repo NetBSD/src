@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.5 1997/10/13 19:43:54 christos Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.6 2000/02/09 22:27:55 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: dr_main.c,v 1.5 1997/10/13 19:43:54 christos Exp $");
+__RCSID("$NetBSD: dr_main.c,v 1.6 2000/02/09 22:27:55 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,6 @@ dr_main()
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTSTP, SIG_IGN);
-	if (issetuid)
-		(void) setuid(geteuid());
 	if (game < 0 || game >= NSCENE) {
 		fprintf(stderr, "DRIVER: Bad game number %d\n", game);
 		exit(1);
