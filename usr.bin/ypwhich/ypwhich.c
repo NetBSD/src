@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.9 1997/11/04 11:36:28 lukem Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.10 2000/07/03 02:51:47 matt Exp $	*/
 
 /*
  *
@@ -48,6 +48,7 @@
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

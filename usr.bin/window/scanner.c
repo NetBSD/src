@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $	*/
+/*	$NetBSD: scanner.c,v 1.7 2000/07/03 02:51:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)scanner.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: scanner.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $");
+__RCSID("$NetBSD: scanner.c,v 1.7 2000/07/03 02:51:38 matt Exp $");
 #endif
 #endif /* not lint */
+
+#include <stdlib.h>
 
 #include "defs.h"
 #include "token.h"

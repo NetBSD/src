@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.4 2000/05/30 12:03:31 sjg Exp $	*/
+/*	$NetBSD: banner.c,v 1.5 2000/07/03 02:51:12 matt Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,11 +62,12 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.4 2000/05/30 12:03:31 sjg Exp $");
+__RCSID("$NetBSD: banner.c,v 1.5 2000/07/03 02:51:12 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
