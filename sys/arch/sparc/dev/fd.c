@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 1995/08/18 10:30:16 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.11 1995/10/02 21:04:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1386,16 +1386,18 @@ fdioctl(dev, cmd, addr, flag)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
+		bzero(&fd->sc_dk.dk_label, sizeof(struct disklabel));
 		
-		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = FDC_BSIZE;
+		fd->sc_dk.dk_label.d_secpercyl = fd->sc_type->seccyl;
+		fd->sc_dk.dk_label.d_type = DTYPE_FLOPPY;
+		fd->sc_dk.dk_label.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy,
+				  &fd->sc_dk.dk_label,
+				  &fd->sc_dk.dk_cpulabel) != NULL)
 			return EINVAL;
 
-		*(struct disklabel *)addr = buffer;
+		*(struct disklabel *)addr = fd->sc_dk.dk_label;
 		return 0;
 
 	case DIOCWLABEL:
@@ -1408,11 +1410,15 @@ fdioctl(dev, cmd, addr, flag)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
+		error = setdisklabel(&fd->sc_dk.dk_label,
+				    (struct disklabel *)addr, 0,
+				    &fd->sc_dk.dk_cpulabel);
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy,
+				       &fd->sc_dk.dk_label,
+				       &fd->sc_dk.dk_cpulabel);
 		return error;
 
 	case FDIOCEJECT:
