@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: targets.c,v 1.3 1994/04/28 17:10:45 phil Exp $
+	$Id: targets.c,v 1.4 1994/05/25 11:23:56 pk Exp $
 */
 
 #include "bfd.h"
@@ -396,6 +396,7 @@ extern bfd_target aix386_core_vec;
 extern bfd_target hpux_core_vec;
 extern bfd_target osf_core_vec;
 extern bfd_target sco_core_vec;
+extern bfd_target netbsd_core_vec;
 extern bfd_target trad_core_vec;
 
 bfd_target *target_vector[] = {
@@ -528,6 +529,9 @@ bfd_target *target_vector[] = {
 #endif
 #ifdef	SCO_CORE
 	&sco_core_vec,
+#endif
+#ifdef	NETBSD_CORE
+	&netbsd_core_vec,
 #endif
 #ifdef	TRAD_CORE
 	&trad_core_vec,

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
  *	from: @(#)vm_unix.c	8.1 (Berkeley) 6/11/93
- *	$Id: vm_unix.c,v 1.10 1994/05/23 03:12:09 cgd Exp $
+ *	$Id: vm_unix.c,v 1.11 1994/05/25 10:56:56 pk Exp $
  */
 
 /*
@@ -48,6 +48,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/vnode.h>
+#include <sys/core.h>
 
 #include <vm/vm.h>
 
@@ -135,4 +137,94 @@ ovadvise(p, uap, retval)
 {
 
 	return (EINVAL);
+}
+
+int
+vm_coredump(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core *chdr;
+{
+	register struct vmspace *vm = p->p_vmspace;
+	register vm_map_t	map = &vm->vm_map;
+	register vm_map_entry_t	entry;
+	vm_offset_t start, end;
+	struct coreseg cseg;
+	off_t offset;
+	int flag, error = 0;
+
+	if (!map->is_main_map) {
+#ifdef DEBUG
+		uprintf(
+	"vm_coredump: %s map 0x%x: pmap=0x%x,ref=%d,nentries=%d,version=%d\n",
+			(map->is_main_map ? "Task" : "Share"),
+			(int)map, (int)(map->pmap),
+			map->ref_count, map->nentries,
+			map->timestamp);
+#endif
+		return EIO;
+	}
+
+	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+
+	for (entry = map->header.next; entry != &map->header;
+	     entry = entry->next) {
+
+		if (entry->is_a_map || entry->is_sub_map) {
+#ifdef DEBUG
+		 	uprintf("vm_coredump: entry: share=0x%x, offset=0x%x\n",
+                                  (int) entry->object.share_map,
+                                  (int) entry->offset);
+#endif
+			continue;
+		}
+
+		if (!(entry->protection & VM_PROT_WRITE))
+			continue;
+
+		start = entry->start;
+		end = entry->end;
+
+		if (start >= VM_MAXUSER_ADDRESS)
+			continue;
+
+		if (end > VM_MAXUSER_ADDRESS)
+			end = VM_MAXUSER_ADDRESS;
+
+		if (start >= (vm_offset_t)vm->vm_maxsaddr) {
+			flag = CORE_STACK;
+			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+			if (start >= end)
+				continue;
+		} else
+			flag = CORE_DATA;
+
+		/*
+		 * Set up a new core file segment.
+		 */
+		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
+		cseg.c_addr = start;
+		cseg.c_size = end - start;
+
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)&cseg, chdr->c_seghdrsize,
+		    offset, UIO_SYSSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		if (error)
+			break;
+
+		offset += chdr->c_seghdrsize;
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
+		    offset, UIO_USERSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		if (error)
+			break;
+
+		offset += cseg.c_size;
+		chdr->c_nseg++;
+	}
+
+	return error;
 }
