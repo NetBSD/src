@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.7.4.1 1997/01/26 05:25:58 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -98,6 +98,7 @@ static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
 #include "extern.h"
 
 int	lflag;				/* log requests flag */
+int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
 
 static void       reapchild __P((int));
@@ -135,6 +136,9 @@ main(argc, argv)
 			case 'l':
 				lflag++;
 				break;
+			case 's':
+				sflag++;
+				break;
 			}
 	}
 
@@ -147,7 +151,7 @@ main(argc, argv)
 
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
-	(void) umask(0);
+	(void)umask(0);
 	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT, 0644);
 	if (lfd < 0) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -163,7 +167,7 @@ main(argc, argv)
 	/*
 	 * write process id for others to know
 	 */
-	sprintf(line, "%u\n", getpid());
+	(void)snprintf(line, sizeof(line), "%u\n", getpid());
 	f = strlen(line);
 	if (write(lfd, line, f) != f) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -174,7 +178,7 @@ main(argc, argv)
 	 * Restart all the printers.
 	 */
 	startup();
-	(void) unlink(_PATH_SOCKETNAME);
+	(void)unlink(_PATH_SOCKETNAME);
 	funix = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
@@ -188,7 +192,7 @@ main(argc, argv)
 	signal(SIGTERM, mcleanup);
 	memset(&un, 0, sizeof(un));
 	un.sun_family = AF_UNIX;
-	strcpy(un.sun_path, _PATH_SOCKETNAME);
+	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
@@ -200,7 +204,10 @@ main(argc, argv)
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
-	finet = socket(AF_INET, SOCK_STREAM, 0);
+	if (!sflag)
+		finet = socket(AF_INET, SOCK_STREAM, 0);
+	else
+		finet = -1;	/* pretend we couldn't open TCP socket. */
 	if (finet >= 0) {
 		struct servent *sp;
 
@@ -260,10 +267,11 @@ main(argc, argv)
 			signal(SIGINT, SIG_IGN);
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
-			(void) close(funix);
-			(void) close(finet);
+			(void)close(funix);
+			if (!sflag)
+				(void)close(finet);
 			dup2(s, 1);
-			(void) close(s);
+			(void)close(s);
 			if (domain == AF_INET) {
 				from_remote = 1;
 				chkhost(&frominet);
@@ -272,7 +280,7 @@ main(argc, argv)
 			doit();
 			exit(0);
 		}
-		(void) close(s);
+		(void)close(s);
 	}
 }
 
@@ -477,7 +485,7 @@ chkhost(f)
 		fatal("Host name for your address (%s) unknown",
 			inet_ntoa(f->sin_addr));
 
-	(void) strncpy(fromb, hp->h_name, sizeof(fromb));
+	(void)strncpy(fromb, hp->h_name, sizeof(fromb) - 1);
 	from[sizeof(fromb) - 1] = '\0';
 	from = fromb;
 
@@ -486,10 +494,10 @@ again:
 	if (hostf) {
 		if (__ivaliduser(hostf, f->sin_addr.s_addr,
 		    DUMMY, DUMMY) == 0) {
-			(void) fclose(hostf);
+			(void)fclose(hostf);
 			return;
 		}
-		(void) fclose(hostf);
+		(void)fclose(hostf);
 	}
 	if (first == 1) {
 		first = 0;

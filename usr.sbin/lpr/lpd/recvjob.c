@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.6 1995/11/15 22:49:58 pk Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.6.4.1 1997/01/26 05:26:00 rat Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,7 @@ static char sccsid[] = "@(#)recvjob.c	8.1 (Berkeley) 6/6/93";
 #include "extern.h"
 #include "pathnames.h"
 
-#define ack()	(void) write(1, sp, 1);
+#define ack()	(void)write(1, sp, 1);
 
 static char	 dfname[40];	/* data files */
 static int	 minfree;       /* keep at least minfree blocks available */
@@ -103,10 +103,10 @@ recvjob()
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
 
-	(void) close(2);			/* set up log file */
+	(void)close(2);			/* set up log file */
 	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
-		(void) open(_PATH_DEVNULL, O_WRONLY);
+		(void)open(_PATH_DEVNULL, O_WRONLY);
 	}
 
 	if (chdir(SD) < 0)
@@ -170,11 +170,11 @@ readjob()
 			 * something different than what gethostbyaddr()
 			 * returns
 			 */
-			strcpy(cp + 6, from);
-			strcpy(tfname, cp);
+			(void)strncpy(cp + 6, from, sizeof(line) - strlen(line) - 1);
+			(void)strncpy(tfname, cp, sizeof(tfname) - 1);
 			tfname[0] = 't';
 			if (!chksize(size)) {
-				(void) write(1, "\2", 1);
+				(void)write(1, "\2", 1);
 				continue;
 			}
 			if (!readfile(tfname, size)) {
@@ -183,7 +183,7 @@ readjob()
 			}
 			if (link(tfname, cp) < 0)
 				frecverr("%s: %m", tfname);
-			(void) unlink(tfname);
+			(void)unlink(tfname);
 			tfname[0] = '\0';
 			nfiles++;
 			continue;
@@ -195,14 +195,14 @@ readjob()
 			if (*cp++ != ' ')
 				break;
 			if (!chksize(size)) {
-				(void) write(1, "\2", 1);
+				(void)write(1, "\2", 1);
 				continue;
 			}
-			(void) strcpy(dfname, cp);
+			(void)strncpy(dfname, cp, sizeof(dfname) - 1);
 			if (index(dfname, '/'))
 				frecverr("readjob: %s: illegal path name",
 					dfname);
-			(void) readfile(dfname, size);
+			(void)readfile(dfname, size);
 			continue;
 		}
 		frecverr("protocol screwup: %s", line);
@@ -247,11 +247,11 @@ readfile(file, size)
 			break;
 		}
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (err)
 		frecverr("%s: write error", file);
 	if (noresponse()) {		/* file sent had bad data in it */
-		(void) unlink(file);
+		(void)unlink(file);
 		return(0);
 	}
 	ack();
@@ -317,11 +317,11 @@ rcleanup(signo)
 	int signo;
 {
 	if (tfname[0])
-		(void) unlink(tfname);
+		(void)unlink(tfname);
 	if (dfname[0])
 		do {
 			do
-				(void) unlink(dfname);
+				(void)unlink(dfname);
 			while (dfname[2]-- != 'A');
 			dfname[2] = 'z';
 		} while (dfname[0]-- != 'd');

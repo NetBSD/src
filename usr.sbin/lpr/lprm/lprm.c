@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.5 1995/11/15 22:52:21 pk Exp $	*/
+/*	$NetBSD: lprm.c,v 1.5.4.1 1997/01/26 05:27:13 rat Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ main(argc, argv)
 		fatal("Who are you?");
 	if (strlen(p->pw_name) >= sizeof(luser))
 		fatal("Your name is too long");
-	strcpy(luser, p->pw_name);
+	strncpy(luser, p->pw_name, sizeof(luser) - 1);
 	person = luser;
 	while (--argc) {
 		if ((arg = *++argv)[0] == '-')

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.8 1995/11/28 19:43:19 jtc Exp $	*/
+/*	$NetBSD: common.c,v 1.8.4.1 1997/01/26 05:25:40 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -159,7 +159,7 @@ retry:
 		return(-1);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		err = errno;
-		(void) close(s);
+		(void)close(s);
 		errno = err;
 		if (errno == EADDRINUSE) {
 			lport--;
@@ -249,7 +249,7 @@ getq(namelist)
 		if (q == NULL)
 			goto errdone;
 		q->q_time = stbuf.st_mtime;
-		strcpy(q->q_name, d->d_name);
+		strcpy(q->q_name, d->d_name);	/* XXX: strcpy is safe */
 		/*
 		 * Check to make sure the array has space left and
 		 * realloc the maximum size.
@@ -305,16 +305,16 @@ checkremote()
 		name[sizeof(name)-1] = '\0';
 		hp = gethostbyname(name);
 		if (hp == (struct hostent *) NULL) {
-		    (void) snprintf(errbuf, sizeof(errbuf),
+		    (void)snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for local machine %s",
 			name);
 		    return errbuf;
-		} else (void) strcpy(name, hp->h_name);
+		} else (void)strncpy(name, hp->h_name, MAXHOSTNAMELEN - 1);
 
 		/* get the official name of RM */
 		hp = gethostbyname(RM);
 		if (hp == (struct hostent *) NULL) {
-		    (void) snprintf(errbuf, sizeof(errbuf),
+		    (void)snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for remote machine %s",
 			RM);
 		    return errbuf;

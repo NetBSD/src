@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.7 1995/11/28 19:43:21 jtc Exp $	*/
+/*	$NetBSD: displayq.c,v 1.7.4.1 1997/01/26 05:25:41 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -140,10 +140,10 @@ displayq(format)
 			fd = open(ST, O_RDONLY);
 			seteuid(uid);
 			if (fd >= 0) {
-				(void) flock(fd, LOCK_SH);
+				(void)flock(fd, LOCK_SH);
 				while ((i = read(fd, line, sizeof(line))) > 0)
-					(void) fwrite(line, 1, i, stdout);
-				(void) close(fd);	/* unlocks as well */
+					(void)fwrite(line, 1, i, stdout);
+				(void)close(fd);	/* unlocks as well */
 			} else
 				putchar('\n');
 		}
@@ -191,14 +191,14 @@ displayq(format)
 				fd = open(ST, O_RDONLY);
 				seteuid(uid);
 				if (fd >= 0) {
-					(void) flock(fd, LOCK_SH);
+					(void)flock(fd, LOCK_SH);
 					while ((i = read(fd, line, sizeof(line))) > 0)
-						(void) fwrite(line, 1, i, stdout);
-					(void) close(fd);	/* unlocks as well */
+						(void)fwrite(line, 1, i, stdout);
+					(void)close(fd);	/* unlocks as well */
 				} else
 					putchar('\n');
 			}
-			(void) fclose(fp);
+			(void)fclose(fp);
 		}
 		/*
 		 * Now, examine the control files and print out the jobs to
@@ -225,31 +225,33 @@ displayq(format)
 	 */
 	if (nitems)
 		putchar('\n');
-	(void) sprintf(line, "%c%s", format + '\3', RP);
+	(void)snprintf(line, sizeof(line), "%c%s", format + '\3', RP);
 	cp = line;
 	for (i = 0; i < requests; i++) {
 		cp += strlen(cp);
-		(void) sprintf(cp, " %d", requ[i]);
+		(void)snprintf(cp, line - cp, " %d", requ[i]);
 	}
 	for (i = 0; i < users; i++) {
 		cp += strlen(cp);
+		if (cp - line > sizeof(line) - 1)
+			break;
 		*cp++ = ' ';
-		(void) strcpy(cp, user[i]);
+		(void)strncpy(cp, user[i], line - cp - 1);
 	}
-	strcat(line, "\n");
+	(void)strncat(line, "\n", sizeof(line) - strlen(line) - 1);
 	fd = getport(RM);
 	if (fd < 0) {
 		if (from != host)
 			printf("%s: ", host);
-		printf("connection to %s is down\n", RM);
+		(void)printf("connection to %s is down\n", RM);
 	}
 	else {
 		i = strlen(line);
 		if (write(fd, line, i) != i)
 			fatal("Lost connection");
 		while ((i = read(fd, line, sizeof(line))) > 0)
-			(void) fwrite(line, 1, i, stdout);
-		(void) close(fd);
+			(void)fwrite(line, 1, i, stdout);
+		(void)close(fd);
 	}
 }
 
@@ -324,7 +326,7 @@ inform(cf)
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
 			if (j == 0 || strcmp(file, line+1) != 0)
-				(void) strcpy(file, line+1);
+				(void)strncpy(file, line+1, sizeof(file) - 1);
 			j++;
 			continue;
 		case 'N':

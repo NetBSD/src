@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.7 1996/01/14 17:25:21 hpeyerl Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7.4.1 1997/01/26 05:25:50 rat Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -137,7 +137,7 @@ abortpr(dis)
 		SD = _PATH_DEFSPOOL;
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 
 	/*
@@ -156,7 +156,7 @@ abortpr(dis)
 			if ((fd = open(line, O_WRONLY|O_CREAT, 0760)) < 0)
 				printf("\tcannot create lock file\n");
 			else {
-				(void) close(fd);
+				(void)close(fd);
 				upstat("printing disabled\n");
 				printf("\tprinting disabled\n");
 				printf("\tno daemon to abort\n");
@@ -175,11 +175,11 @@ abortpr(dis)
 		goto out;
 	}
 	if (!getline(fp) || flock(fileno(fp), LOCK_SH|LOCK_NB) == 0) {
-		(void) fclose(fp);	/* unlocks as well */
+		(void)fclose(fp);	/* unlocks as well */
 		printf("\tno daemon to abort\n");
 		goto out;
 	}
-	(void) fclose(fp);
+	(void)fclose(fp);
 	if (kill(pid = atoi(line), SIGTERM) < 0)
 		printf("\tWarning: daemon (pid %d) not killed\n", pid);
 	else
@@ -200,19 +200,19 @@ upstat(msg)
 
 	if (cgetstr(bp, "st", &ST) == -1)
 		ST = DEFSTAT;
-	(void) sprintf(statfile, "%s/%s", SD, ST);
+	(void)snprintf(statfile, sizeof(statfile), "%s/%s", SD, ST);
 	umask(0);
 	fd = open(statfile, O_WRONLY|O_CREAT, 0664);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
 		return;
 	}
-	(void) ftruncate(fd, 0);
+	(void)ftruncate(fd, 0);
 	if (msg == (char *)NULL)
-		(void) write(fd, "\n", 1);
+		(void)write(fd, "\n", 1);
 	else
-		(void) write(fd, msg, strlen(msg));
-	(void) close(fd);
+		(void)write(fd, msg, strlen(msg));
+	(void)close(fd);
 }
 
 /*
@@ -310,6 +310,7 @@ cleanpr()
 		SD = _PATH_DEFSPOOL;
 	printf("%s:\n", printer);
 
+	/* XXX depends on SD being non nul */
 	for (lp = line, cp = SD; *lp++ = *cp++; )
 		;
 	lp[-1] = '/';
@@ -336,7 +337,8 @@ cleanpr()
 				n++;
 			}
 			if (n == 0) {
-				strcpy(lp, cp);
+				strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
+				line[sizeof(line) - 1] = '\0';
 				unlinkf(line);
 			}
 		} else {
@@ -345,7 +347,8 @@ cleanpr()
 			 * been skipped above) or a tf file (which can always
 			 * be removed).
 			 */
-			strcpy(lp, cp);
+			strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
+			line[sizeof(line) - 1] = '\0';
 			unlinkf(line);
 		}
      	} while (++i < nitems);
@@ -415,7 +418,7 @@ enablepr()
 		SD = _PATH_DEFSPOOL;
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 
 	/*
@@ -484,7 +487,7 @@ disablepr()
 		SD = _PATH_DEFSPOOL;
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 	/*
 	 * Turn on the group execute bit of the lock file to disable queuing.
@@ -499,7 +502,7 @@ disablepr()
 		if ((fd = open(line, O_WRONLY|O_CREAT, 0670)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
-			(void) close(fd);
+			(void)close(fd);
 			printf("\tqueuing disabled\n");
 		}
 	} else
@@ -570,7 +573,7 @@ putmsg(argc, argv)
 	 * Turn on the group execute bit of the lock file to disable queuing and
 	 * turn on the owner execute bit of the lock file to disable printing.
 	 */
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	seteuid(euid);
 	if (stat(line, &stbuf) >= 0) {
 		if (chmod(line, (stbuf.st_mode & 0777) | 0110) < 0)
@@ -581,7 +584,7 @@ putmsg(argc, argv)
 		if ((fd = open(line, O_WRONLY|O_CREAT, 0770)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
-			(void) close(fd);
+			(void)close(fd);
 			printf("\tprinter and queuing disabled\n");
 		}
 		seteuid(uid);
@@ -591,7 +594,7 @@ putmsg(argc, argv)
 	/*
 	 * Write the message into the status file.
 	 */
-	(void) sprintf(line, "%s/%s", SD, ST);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, ST);
 	fd = open(line, O_WRONLY|O_CREAT, 0664);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
@@ -599,10 +602,10 @@ putmsg(argc, argv)
 		return;
 	}
 	seteuid(uid);
-	(void) ftruncate(fd, 0);
+	(void)ftruncate(fd, 0);
 	if (argc <= 0) {
-		(void) write(fd, "\n", 1);
-		(void) close(fd);
+		(void)write(fd, "\n", 1);
+		(void)close(fd);
 		return;
 	}
 	cp1 = buf;
@@ -614,8 +617,8 @@ putmsg(argc, argv)
 	}
 	cp1[-1] = '\n';
 	*cp1 = '\0';
-	(void) write(fd, buf, strlen(buf));
-	(void) close(fd);
+	(void)write(fd, buf, strlen(buf));
+	(void)close(fd);
 }
 
 /*
@@ -727,7 +730,7 @@ startpr(enable)
 		SD = _PATH_DEFSPOOL;
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 
 	/*
@@ -804,7 +807,7 @@ prstat()
 	if (cgetstr(bp, "st", &ST) == -1)
 		ST = DEFSTAT;
 	printf("%s:\n", printer);
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	if (stat(line, &stbuf) >= 0) {
 		printf("\tqueuing is %s\n",
 			(stbuf.st_mode & 010) ? "disabled" : "enabled");
@@ -832,19 +835,19 @@ prstat()
 		printf("\t%d entries in spool area\n", i);
 	fd = open(line, O_RDONLY);
 	if (fd < 0 || flock(fd, LOCK_SH|LOCK_NB) == 0) {
-		(void) close(fd);	/* unlocks as well */
+		(void)close(fd);	/* unlocks as well */
 		printf("\tprinter idle\n");
 		return;
 	}
-	(void) close(fd);
+	(void)close(fd);
 	putchar('\t');
-	(void) sprintf(line, "%s/%s", SD, ST);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, ST);
 	fd = open(line, O_RDONLY);
 	if (fd >= 0) {
-		(void) flock(fd, LOCK_SH);
+		(void)flock(fd, LOCK_SH);
 		while ((i = read(fd, line, sizeof(line))) > 0)
-			(void) fwrite(line, 1, i, stdout);
-		(void) close(fd);	/* unlocks as well */
+			(void)fwrite(line, 1, i, stdout);
+		(void)close(fd);	/* unlocks as well */
 	}
 }
 
@@ -902,7 +905,7 @@ stoppr()
 		SD = _PATH_DEFSPOOL;
 	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
-	(void) sprintf(line, "%s/%s", SD, LO);
+	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 
 	/*
@@ -920,7 +923,7 @@ stoppr()
 		if ((fd = open(line, O_WRONLY|O_CREAT, 0760)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
-			(void) close(fd);
+			(void)close(fd);
 			upstat("printing disabled\n");
 			printf("\tprinting disabled\n");
 		}
@@ -999,7 +1002,7 @@ topq(argc, argv)
 	 */
 	seteuid(euid);
 	if (changed && stat(LO, &stbuf) >= 0)
-		(void) chmod(LO, (stbuf.st_mode & 0777) | 01);
+		(void)chmod(LO, (stbuf.st_mode & 0777) | 01);
 
 out:
 	seteuid(uid);
@@ -1086,7 +1089,7 @@ doarg(job)
 		while (getline(fp) > 0)
 			if (line[0] == 'P')
 				break;
-		(void) fclose(fp);
+		(void)fclose(fp);
 		if (line[0] != 'P' || strcmp(job, line+1) != 0)
 			continue;
 		if (touch(*qq) == 0) {
