@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.4 1998/06/09 07:25:07 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.5 1998/08/25 22:34:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,12 +41,8 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
+#include <sys/errno.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -94,12 +90,13 @@ wss_isa_probe(parent, match, aux)
     void *aux;
 {
     struct wss_softc probesc, *sc = &probesc;
+    struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
 
     bzero(sc, sizeof *sc);
-    sc->sc_dev.dv_cfdata = match;
+    ac->sc_dev.dv_cfdata = match;
     if (wssfind(parent, sc, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
-        ad1848_unmap(&sc->sc_ad1848);
+        ad1848_isa_unmap(&sc->sc_ad1848);
         madunmap(sc);
         return 1;
     } else
@@ -113,13 +110,14 @@ wssfind(parent, sc, ia)
     struct wss_softc *sc;
     struct isa_attach_args *ia;
 {
+    struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
     sc->sc_iot = ia->ia_iot;
-    if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+    if (ac->sc_dev.dv_cfdata->cf_flags & 1)
 	madprobe(sc, ia->ia_iobase);
     else
 	sc->mad_chip_type = MAD_NONE;
@@ -133,10 +131,10 @@ wssfind(parent, sc, ia)
     if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
 	goto bad1;
 
-    sc->sc_ad1848.sc_iot = sc->sc_iot;
+    ac->sc_iot = sc->sc_iot;
 
     /* Is there an ad1848 chip at (WSS iobase + WSS_CODEC)? */
-    if (ad1848_mapprobe(&sc->sc_ad1848, ia->ia_iobase + WSS_CODEC) == 0)
+    if (ad1848_isa_mapprobe(&sc->sc_ad1848, ia->ia_iobase + WSS_CODEC) == 0)
 	goto bad;
 	
     ia->ia_iosize = WSS_NPORT;
@@ -159,10 +157,10 @@ wssfind(parent, sc, ia)
 
     sc->wss_irq = ia->ia_irq;
 
-    if (sc->sc_ad1848.mode <= 1)
+    if (ac->mode <= 1)
 	ia->ia_drq2 = DRQUNK;
     sc->wss_recdrq = 
-	sc->sc_ad1848.mode > 1 && ia->ia_drq2 != DRQUNK ? 
+	ac->mode > 1 && ia->ia_drq2 != DRQUNK ? 
 	ia->ia_drq2 : ia->ia_drq;
     if (sc->wss_recdrq != sc->wss_drq && !isa_drq_isfree(sc->wss_ic,
       sc->wss_recdrq))
@@ -191,10 +189,11 @@ wss_isa_attach(parent, self, aux)
     void *aux;
 {
     struct wss_softc *sc = (struct wss_softc *)self;
+    struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     
     if (!wssfind(parent, sc, ia)) {
-        printf("%s: wssfind failed\n", sc->sc_dev.dv_xname);
+        printf("%s: wssfind failed\n", ac->sc_dev.dv_xname);
         return;
     }
 

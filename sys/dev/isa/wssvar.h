@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.3 1998/06/30 16:54:52 mycroft Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.4 1998/08/25 22:34:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -56,17 +56,18 @@
 #define WSS_MONITOR_CLASS	12
 
 struct wss_softc {
-	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
-	bus_space_tag_t sc_iot;		/* tag */
-	bus_space_handle_t sc_ioh;	/* handle */
-
-	struct  ad1848_softc sc_ad1848;
+	struct  ad1848_isa_softc sc_ad1848;
 #define	wss_ic	   sc_ad1848.sc_ic
 #define wss_irq    sc_ad1848.sc_irq
 #define wss_drq    sc_ad1848.sc_drq
 #define wss_recdrq sc_ad1848.sc_recdrq
+
+#if 0
+	struct	isadev sc_id;		/* ISA device */
+	void	*sc_ih;			/* interrupt vectoring */
+#endif
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 
 	int 	mic_mute, cd_mute, dac_mute;
 

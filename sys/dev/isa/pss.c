@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.47 1998/08/17 21:16:14 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.48 1998/08/25 22:34:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -52,12 +52,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
+#include <sys/errno.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -168,7 +164,7 @@ static	int pssfind __P((struct device *, struct pss_softc *,
 
 int	spprobe __P((struct device *, struct cfdata *, void *));
 void	spattach __P((struct device *, struct device *, void *));
-static	int spfind __P((struct device *, struct ad1848_softc *, 
+static	int spfind __P((struct device *, struct ad1848_isa_softc *, 
 			struct isa_attach_args *));
 
 #ifdef notyet
@@ -225,30 +221,30 @@ void	wss_dump_regs __P((struct ad1848_softc *));
  */
 
 struct audio_hw_if pss_audio_if = {
-	ad1848_open,
-	ad1848_close,
+	ad1848_isa_open,
+	ad1848_isa_close,
 	NULL,
 	ad1848_query_encoding,
 	ad1848_set_params,
-	ad1848_round_blocksize,
+	ad1848_isa_round_blocksize,
 	ad1848_commit_settings,
-	ad1848_dma_init_output,
-	ad1848_dma_init_input,
-	ad1848_dma_output,
-	ad1848_dma_input,
-	ad1848_halt_out_dma,
-	ad1848_halt_in_dma,
+	ad1848_isa_dma_init_output,
+	ad1848_isa_dma_init_input,
+	ad1848_isa_dma_output,
+	ad1848_isa_dma_input,
+	ad1848_halt_out,
+	ad1848_halt_in,
 	pss_speaker_ctl,
 	pss_getdev,
 	NULL,
 	pss_mixer_set_port,
 	pss_mixer_get_port,
 	pss_query_devinfo,
-	ad1848_malloc,
-	ad1848_free,
-	ad1848_round,
-        ad1848_mappage,
-	ad1848_get_props,
+	ad1848_isa_malloc,
+	ad1848_isa_free,
+	ad1848_isa_round,
+        ad1848_isa_mappage,
+	ad1848_isa_get_props,
 };
 
 /* Interrupt translation for WSS config */
@@ -266,7 +262,7 @@ struct cfattach pss_ca = {
 };
 
 struct cfattach sp_ca = {
-	sizeof(struct ad1848_softc), spprobe, spattach
+	sizeof(struct ad1848_isa_softc), spprobe, spattach
 };
 
 #ifdef notyet
@@ -677,7 +673,7 @@ pss_download_dsp(sc, block, size)
 #ifdef AUDIO_DEBUG
 void
 wss_dump_regs(sc)
-	struct ad1848_softc *sc;
+	struct ad1848_isa_softc *sc;
 {
 
     printf("WSS reg: status=%02x\n",
@@ -821,31 +817,31 @@ spprobe(parent, match, aux)
     struct cfdata *match;
     void *aux;
 {
-    struct ad1848_softc probesc, *sc = &probesc;
+    struct ad1848_isa_softc probesc, *sc = &probesc;
 
     bzero(sc, sizeof *sc);
-    sc->sc_dev.dv_cfdata = match;
+    sc->sc_ad1848.sc_dev.dv_cfdata = match;
     return spfind(parent, sc, aux);
 }
 
 static int
 spfind(parent, sc, ia)
     struct device *parent;
-    struct ad1848_softc *sc;
+    struct ad1848_isa_softc *sc;
     struct isa_attach_args *ia;
 {
     struct pss_softc *pc = (void *) parent;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    struct cfdata *cf = (void *)sc->sc_ad1848.sc_dev.dv_cfdata;
     u_char bits;
     int i;
 
-    sc->sc_iot = ia->ia_iot;
+    sc->sc_ad1848.sc_iot = ia->ia_iot;
     
     /* Set WSS io address */
     pss_setaddr(cf->cf_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
 
     /* Is there an ad1848 chip at the WSS iobase ? */
-    if (ad1848_mapprobe(sc, cf->cf_iobase + WSS_CODEC) == 0) {
+    if (ad1848_isa_mapprobe(sc, cf->cf_iobase + WSS_CODEC) == 0) {
 	DPRINTF(("sp: no ad1848 ? iobase=%x\n", sc->sc_iobase));
 	return 0;
     }
@@ -916,8 +912,8 @@ spfind(parent, sc, ia)
     
     outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_drq]));
 
-    pc->ad1848_sc = sc;
-    sc->parent = pc;
+    pc->ad1848_sc = (struct ad1848_softc *)sc;
+    sc->sc_ad1848.parent = pc;
     
     return 1;
 }
@@ -1081,14 +1077,14 @@ spattach(parent, self, aux)
     struct device *parent, *self;
     void *aux;
 {
-    struct ad1848_softc *sc = (struct ad1848_softc *)self;
-    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    struct ad1848_isa_softc *sc = (struct ad1848_isa_softc *)self;
+    struct cfdata *cf = (void *)sc->sc_ad1848.sc_dev.dv_cfdata;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     isa_chipset_tag_t ic = ia->ia_ic;
     int iobase = cf->cf_iobase;
 
     if (!spfind(parent, sc, ia)) {
-	printf("%s: spfind failed\n", sc->sc_dev.dv_xname);
+	printf("%s: spfind failed\n", sc->sc_ad1848.sc_dev.dv_xname);
 	return;
     }
 
@@ -1100,12 +1096,11 @@ spattach(parent, self, aux)
 #endif
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
-	ad1848_intr, sc);
+	ad1848_isa_intr, sc);
 
     sc->sc_ic = ic;
 
-    ad1848_attach(sc);
-    printf(": %s\n", sc->chip_name);
+    ad1848_attach(&sc->sc_ad1848);
 }
 
 #ifdef notyet

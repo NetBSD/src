@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.59 1998/08/17 21:16:14 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.60 1998/08/25 22:34:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ struct gus_softc {
 	struct gus_voice sc_voc[32];	/* Voice data for each voice */
 	union {
 		struct ics2101_softc sc_mixer_u;
-		struct ad1848_softc sc_codec_u;
+		struct ad1848_isa_softc sc_codec_u;
 	} u;
 #define sc_mixer u.sc_mixer_u
 #define sc_codec u.sc_codec_u
@@ -1057,11 +1057,15 @@ gusopen(addr, flags)
 
 	if (HAS_CODEC(sc)) {
 		ad1848_open(&sc->sc_codec, flags);
-		sc->sc_codec.mute[AD1848_AUX1_CHANNEL] = 0;
-		ad1848_mute_channel(&sc->sc_codec, AD1848_AUX1_CHANNEL, 0); /* turn on DAC output */
+		sc->sc_codec.sc_ad1848.mute[AD1848_AUX1_CHANNEL] = 0;
+
+		/* turn on DAC output */
+		ad1848_mute_channel(&sc->sc_codec.sc_ad1848,
+				    AD1848_AUX1_CHANNEL, 0);
 		if (flags & FREAD) {
-			sc->sc_codec.mute[AD1848_MONO_CHANNEL] = 0;
-			ad1848_mute_channel(&sc->sc_codec, AD1848_MONO_CHANNEL, 0);
+			sc->sc_codec.sc_ad1848.mute[AD1848_MONO_CHANNEL] = 0;
+			ad1848_mute_channel(&sc->sc_codec.sc_ad1848,
+					    AD1848_MONO_CHANNEL, 0);
 		}
 	} else if (flags & FREAD) {
 		/* enable/unmute the microphone */
@@ -1355,7 +1359,7 @@ gusintr(arg)
 	gusintrcnt++;
 #endif
 	if (HAS_CODEC(sc))
-		retval = ad1848_intr(&sc->sc_codec);
+		retval = ad1848_isa_intr(&sc->sc_codec);
 	if ((intr = bus_space_read_1(iot, ioh1, GUS_IRQ_STATUS)) & GUSMASK_IRQ_DMATC) {
 		DMAPRINTF(("gusintr dma flags=%x\n", sc->sc_flags));
 #ifdef DIAGNOSTIC
@@ -2874,16 +2878,16 @@ gus_init_cs4231(sc)
 
 	bus_space_write_1(iot, ioh1, GUS_MAX_CTRL, ctrl);
 
-	sc->sc_codec.sc_iot = sc->sc_iot;
+	sc->sc_codec.sc_ad1848.sc_iot = sc->sc_iot;
 	sc->sc_codec.sc_iobase = port+GUS_MAX_CODEC_BASE;
 
-	if (ad1848_mapprobe(&sc->sc_codec, sc->sc_codec.sc_iobase) == 0) {
+	if (ad1848_isa_mapprobe(&sc->sc_codec, sc->sc_codec.sc_iobase) == 0) {
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
 		return (0);
 	} else {
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
-		sc->sc_codec.parent = sc;
+		sc->sc_codec.sc_ad1848.parent = sc;
 		sc->sc_codec.sc_drq = sc->sc_recdrq;
 		sc->sc_codec.sc_recdrq = sc->sc_drq;
 		gus_hw_if = gusmax_hw_if;
@@ -2893,9 +2897,9 @@ gus_init_cs4231(sc)
 		sc->sc_mixcontrol |= GUSMASK_MIC_IN; /* 1 enables. */
 		bus_space_write_1(iot, ioh1, GUS_MIX_CONTROL, sc->sc_mixcontrol);
 		
-		ad1848_attach(&sc->sc_codec);
+		ad1848_attach(&sc->sc_codec.sc_ad1848);
 		/* turn on pre-MUX microphone gain. */
-		ad1848_set_mic_gain(&sc->sc_codec, &vol);
+		ad1848_set_mic_gain(&sc->sc_codec.sc_ad1848, &vol);
 
 		return (1);
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.73 1998/08/22 22:55:09 augustss Exp $
+#	$NetBSD: files.isa,v 1.74 1998/08/25 22:34:29 pk Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -269,8 +269,7 @@ attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
-define	ad1848
-file	dev/isa/ad1848.c		ad1848
+file	dev/isa/ad1848_isa.c		ad1848
 
 # ICS2101 mixer chip support; used by other drivers
 define	ics2101

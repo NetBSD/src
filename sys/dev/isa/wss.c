@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.51 1998/08/17 21:16:15 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.52 1998/08/25 22:34:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -37,12 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
+#include <sys/errno.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -93,23 +89,23 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_set_params,
 	ad1848_round_blocksize,
 	ad1848_commit_settings,
-	ad1848_dma_init_output,
-	ad1848_dma_init_input,
-	ad1848_dma_output,
-	ad1848_dma_input,
-	ad1848_halt_out_dma,
-	ad1848_halt_in_dma,
+	ad1848_isa_dma_init_output,
+	ad1848_isa_dma_init_input,
+	ad1848_isa_dma_output,
+	ad1848_isa_dma_input,
+	ad1848_halt_out,
+	ad1848_halt_in,
 	NULL,
 	wss_getdev,
 	NULL,
 	wss_mixer_set_port,
 	wss_mixer_get_port,
 	wss_query_devinfo,
-	ad1848_malloc,
-	ad1848_free,
-	ad1848_round,
-	ad1848_mappage,
-	ad1848_get_props,
+	ad1848_isa_malloc,
+	ad1848_isa_free,
+	ad1848_isa_round,
+	ad1848_isa_mappage,
+	ad1848_isa_get_props,
 };
 
 /*
@@ -120,16 +116,20 @@ void
 wssattach(sc)
 	struct wss_softc *sc;
 {
+	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
+
 #if 0 /* loses on CS423X chips */
 	int version;
 #endif
     
 	madattach(sc);
 
-	sc->sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq, IST_EDGE, 
-				       IPL_AUDIO, ad1848_intr, &sc->sc_ad1848);
+	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
+						 IST_EDGE, 
+						 IPL_AUDIO, ad1848_isa_intr,
+						 &sc->sc_ad1848);
 
-	ad1848_attach(&sc->sc_ad1848);
+	ad1848_isa_attach(&sc->sc_ad1848);
     
 #if 0 /* loses on CS423X chips */
 	version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) 
@@ -155,9 +155,9 @@ wssattach(sc)
 	}
 	printf("\n");
 
-	sc->sc_ad1848.parent = sc;
+	ac->parent = sc;
 
-	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, &sc->sc_dev);
+	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, &ac->sc_dev);
 }
 
 int
@@ -439,6 +439,7 @@ void
 madattach(sc)
 	struct wss_softc *sc;
 {
+	struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
 	unsigned char cs4231_mode;
 	int joy;
 	
@@ -446,7 +447,7 @@ madattach(sc)
 		return;
 	
 	/* Do we want the joystick disabled? */
-	joy = sc->sc_dev.dv_cfdata->cf_flags & 2 ? MC1_JOYDISABLE : 0;
+	joy = ac->sc_dev.dv_cfdata->cf_flags & 2 ? MC1_JOYDISABLE : 0;
 	
 	/* enable WSS emulation at the I/O port */
 	mad_write(sc, MC1_PORT, M_WSS_PORT_SELECT(sc->mad_ioindex) | joy);
@@ -454,8 +455,8 @@ madattach(sc)
 	mad_write(sc, MC3_PORT, 0xf0); /* Disable SB */
 	
 	cs4231_mode = 
-		strncmp(sc->sc_ad1848.chip_name, "CS4248", 6) == 0 ||
-		strncmp(sc->sc_ad1848.chip_name, "CS4231", 6) == 0 ? 0x02 : 0;
+		strncmp(ac->chip_name, "CS4248", 6) == 0 ||
+		strncmp(ac->chip_name, "CS4231", 6) == 0 ? 0x02 : 0;
 	
 	if (sc->mad_chip_type == MAD_82C929) {
 		mad_write(sc, MC4_PORT, 0x92);
