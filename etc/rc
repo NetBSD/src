@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.133 1999/10/05 10:32:56 darrenr Exp $
+#	$NetBSD: rc,v 1.134 1999/10/05 10:54:27 darrenr Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -182,12 +182,21 @@ rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
+# build ps databases
+echo 'building databases...'
 # if this kernel supports machdep.booted_kernel, use that to build the KVM
 # db so dmesg will run work when we boot /netbsd.new, etc.
 sysctl machdep 2>/dev/null | grep -q booted_kernel
 if [ $? -eq 0 ] ; then
         kvm_mkdb `sysctl -n machdep.booted_kernel`
+	if [ $? -ne 0 ] ; then
+		kvm_mkdb /netbsd
+	fi
+else
+	kvm_mkdb /netbsd
 fi
+dev_mkdb
+
 # get the system dmesg output, hopefully containing the boot messages
 # $dmesg_flags is imported from /etc/rc.conf
 if checkyesno dmesg; then
@@ -380,11 +389,6 @@ fi
 
 echo -n 'checking quotas:'; quotacheck -a; echo ' done.'
 quotaon -a
-
-# build ps databases
-echo 'building databases...'
-kvm_mkdb /netbsd
-dev_mkdb
 
 chmod 666 /dev/tty[pqrs]*
 
