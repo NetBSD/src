@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.8 1995/09/20 05:36:13 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.9 1995/10/05 01:52:57 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <rcons.h>
+#include <rasterconsole.h>
 
 #include <dc.h>
 #include <scc.h>
@@ -216,15 +216,15 @@ fbconnect (name, info, silent)
 
 		/* Only the first fb gets 4.4bsd/pmax style event ringbuffer */
 		firstfi = info;
-#if NRCONS > 0
+#if NRASTERCONSOLE > 0
 		/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 		rcons_connect (info);
-#else /* !NRCONS */
+#else /*  no raster console */
 		printf("\n"); /* XXX flush out any prom output */
 		fbScreenInit(firstfi);
 		fbScroll(firstfi);
 		cn_tab->cn_putc = fbPutc;
-#endif /* !NRCONS */
+#endif  /*  no raster console */
 		first = 0;
 	}
 
@@ -291,9 +291,6 @@ tb_kbdmouseconfig(fi)
 	return (0);
 }
 
-#if NRCONS > 0
-/* do nothing, raster-console output routines are elsewhere */
-
 void
 fbScreenInit(fi)
 	struct fbinfo *fi;
@@ -301,7 +298,7 @@ fbScreenInit(fi)
 	/* how to do this on rcons ? */
 }
 
-#else
+#if 0
 /* Use 4.4bsd/pmax frambeuffer glass-tty for console output */
 #include "fb-tty.c"
 #endif

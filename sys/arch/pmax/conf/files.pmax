@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.23 1995/09/20 00:25:44 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.24 1995/10/05 01:53:05 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -136,10 +136,17 @@ file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/elf.c
 file	arch/pmax/pmax/mainbus.c
 
-# Use the old 4.4bsd pmax glass-tty console driver, until we move to
-# sun/ansi rcons and/or the Alpha-style console pseudo-device hierarchy.
+# Console autoconfiguration code: selects between a framebuffers
 file	arch/pmax/pmax/cpu_cons.c
 file	dev/cons.c
+
+# pmax configuration glue for rconsole. Requires fb pseudo-device.
+
+include "../../../dev/rcons/files.rcons"
+
+pseudo-device	rasterconsole
+file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
+file	arch/pmax/dev/font.c			rasterconsole	# rcons fontdef
 
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
@@ -162,19 +169,6 @@ file	arch/pmax/dev/bt459.c			cfb or sfb
 #
 pseudo-device	fb
 file	arch/pmax/dev/fb.c		fb needs-count
-
-#
-# Pseudo-driver for vt100-style  glass-tty console on framebuffer.
-# Only one unit (for a single console deviec) is supported
-pseudo-device	rcons
-file	arch/pmax/dev/rcons.c			rcons	needs-flag
-
-file	arch/sparc/rcons/raster_op.c		rcons
-#file	arch/pmax/rcons/rcons_kern.c		rcons
-file	arch/sparc/rcons/rcons_kern.c		rcons
-file	arch/sparc/rcons/rcons_subr.c		rcons
-file	arch/sparc/rcons/raster_text.c		rcons
-file	arch/pmax/dev/font.c			rcons
 
 # Glue for old-style config
 file	arch/pmax/pmax/conf-glue.c
