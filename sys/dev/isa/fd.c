@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 2003/08/07 16:31:06 agc Exp $	*/
+/*	$NetBSD: fd.c,v 1.47 2003/09/23 21:36:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46 2003/08/07 16:31:06 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2003/09/23 21:36:07 mycroft Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -410,8 +410,12 @@ fdprobe(parent, match, aux)
 	delay(250000);
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
-	/* wait for recalibrate */
-	delay(2000000);
+	/* wait for recalibrate, up to 2s */
+	for (n = 20000; n; n--) {
+		delay(100);
+		if ((bus_space_read_1(iot, ioh, fdsts) & FDS_DRVBUSY(drive)) == 0)
+			break;
+	}
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -773,16 +777,19 @@ out_fdc(iot, ioh, x)
 	bus_space_handle_t ioh;
 	u_char x;
 {
-	int i = 100000;
+	u_char i;
+	u_int j = 100000;
 
-	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_DIO) && i-- > 0);
-	if (i <= 0)
-		return -1;
-	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
-	if (i <= 0)
-		return -1;
-	bus_space_write_1(iot, ioh, fddata, x);
-	return 0;
+	for (; j; j--) {
+		i = bus_space_read_1(iot, ioh, fdsts) &
+		    (NE7_DIO | NE7_RQM);
+		if (i == NE7_RQM) {
+			bus_space_write_1(iot, ioh, fddata, x);
+			return 0;
+		}
+		delay(10);
+	}
+	return -1;
 }
 
 int
