@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.493 2002/12/03 06:08:35 explorer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.494 2002/12/11 21:35:20 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.490 2002/12/03 06:08:00 explorer Exp 
+ *	NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp 
  */
 
 /*
@@ -1617,6 +1617,7 @@
 #define	PCI_PRODUCT_MACRONIX_MX987x5	0x0531		/* MX987x5 (PMAC) 10/100 Ethernet */
 
 /* Madge Networks products */
+#define	PCI_PRODUCT_MADGE_SMARTRN2	0x0002		/* Smart 16/4 PCI Ringnode Mk2 */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
 #define	PCI_PRODUCT_MADGE_COLLAGE155	0x1001		/* Collage 155 ATM adapter */
 
