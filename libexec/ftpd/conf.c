@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 2000/01/09 10:08:45 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.26 2000/01/09 10:08:45 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.27 2000/01/10 08:03:50 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -161,9 +161,10 @@ parse_conf(findclass)
 			continue;
 		if (strcasecmp(class, "none") == 0)
 			none = 1;
-		if ((strcasecmp(class, findclass) != 0 &&
-		    (template != NULL && strcasecmp(class, template) != 0)) &&
-		    !none && strcasecmp(class, "all") != 0)
+		if (! (strcasecmp(class, findclass) == 0 ||
+		       (template != NULL && strcasecmp(class, template) == 0) ||
+		       none ||
+		       strcasecmp(class, "all") == 0) )
 			continue;
 
 		if (strcasecmp(word, "checkportcmd") == 0) {
