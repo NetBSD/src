@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.12 2000/10/05 12:31:15 pooka Exp $
+.\"	$NetBSD: wdc.4,v 1.13 2001/06/07 07:11:49 leo Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -63,8 +63,18 @@ but the
 .Xr pciide 4
 driver may provide more functionality.
 .Pp
-For the ISA front-end, the 0x01 flag enables 32-bit I/O negotiation in
-the driver. This is known to cause problems with some motherboards.
+On the ISA front-end, the following flags are supported:
+.Bl -tag -compact -width "0x0000" -offset "xxxx"
+.It 0x0001
+Enables 32-bit I/O negotiation in the driver. This is known to cause
+problems with some motherboards.
+.It 0x0002
+Don't probe for the second drive.
+.It 0x0004
+Set WDC_CAPABILITY_ATA_NOSTREAM flag.
+.It 0x0008
+Set WDC_CAPABILITY_ATAPI_NOSTREAM flag.
+.El
 .Sh SEE ALSO
 .Xr atapi 4 ,
 .Xr intro 4 ,
