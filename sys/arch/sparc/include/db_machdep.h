@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 1995/02/09 10:34:21 pk Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.4 1995/12/10 06:50:58 mycroft Exp $ */
 
 /* 
  * Mach Operating System
@@ -34,10 +34,7 @@
  */
 
 
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <vm/vm_inherit.h>
-#include <vm/lock.h>
+#include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
