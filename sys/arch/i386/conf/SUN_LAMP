@@ -1,52 +1,52 @@
-#	$NetBSD: SUN_LAMP,v 1.87 1997/06/12 18:42:05 mrg Exp $
+#	$NetBSD: SUN_LAMP,v 1.88 1997/06/25 04:41:20 mellon Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
 
 include "arch/i386/conf/std.i386"
 
-#options	I386_CPU	# CPU classes; at least one is REQUIRED
-options		I486_CPU
-#options	I586_CPU
-#options	I686_CPU
-#options	MATH_EMULATE	# floating point emulation
+#options 	I386_CPU	# CPU classes; at least one is REQUIRED
+options 	I486_CPU
+#options 	I586_CPU
+#options 	I686_CPU
+#options 	MATH_EMULATE	# floating point emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	BIOSEXTMEM=... # size of extended memory
+#options 	BIOSEXTMEM=... # size of extended memory
 
-options		DUMMY_NOPS	# speed hack; recommended
-options		XSERVER,UCONSOLE
+options 	DUMMY_NOPS	# speed hack; recommended
+options 	XSERVER,UCONSOLE
 
 maxusers	24		# estimated number of users
-options		RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
 
-#options	DDB		# in-kernel debugger
-options		DIAGNOSTIC	# internal consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
+#options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC	# internal consistency checks
+options 	KTRACE		# system call tracing, a la ktrace(1)
 
-#options	SYSVMSG		# System V-like message queues
-#options	SYSVSEM		# System V-like semaphores
-#options	SYSVSHM		# System V-like memory sharing
-#options	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-options		COMPAT_09	# NetBSD 0.9,
-options		COMPAT_10	# NetBSD 1.0,
-options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12
-options		COMPAT_43	# and 4.3BSD
-options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	COMPAT_43	# and 4.3BSD
+options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-#options	COMPAT_SVR4	# binary compatibility with SVR4
-#options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 
-#options	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
+#options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
-#options	USER_LDT	# user-settable LDT; used by WINE
-options		LKM		# loadable kernel modules
-options		INSECURE
+#options 	USER_LDT	# user-settable LDT; used by WINE
+options 	LKM		# loadable kernel modules
+options 	INSECURE
 
 file-system 	FFS		# UFS
 #file-system	LFS		# log-structured file system
@@ -62,16 +62,16 @@ file-system 	NULLFS		# loopback file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 
-options		NFSSERVER	# Network File System server
+options 	NFSSERVER	# Network File System server
 options 	FIFO		# FIFOs; RECOMMENDED
-#options 	QUOTA		# UFS quotas
+#options  	QUOTA		# UFS quotas
 
-#options	GATEWAY		# packet forwarding
-options		INET		# IP + ICMP + TCP + UDP
-#options	NS		# XNS
-#options	ISO,TPIP	# OSI
-#options	EON		# OSI tunneling over IP
-#options	CCITT,LLC,HDLC	# X.25
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	NS		# XNS
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
 
 config		netbsd	root on sd0 type ffs 
 
