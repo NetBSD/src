@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.1 2002/06/07 18:53:45 thorpej Exp $
+# $NetBSD: mi,v 1.324.2.2 2002/06/26 16:58:10 tv Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -546,6 +546,7 @@
 ./usr/libexec/sftp-server	base-secsh-bin
 ./usr/libexec/sm.bin		base-sendmail-usr
 ./usr/libexec/smrsh		base-sendmail-bin
+./usr/libexec/ssh-keysign	base-secsh-bin
 ./usr/libexec/telnetd		base-netutil-bin
 ./usr/libexec/tftpd		base-netutil-bin
 ./usr/libexec/uucp		base-uucp-bin
