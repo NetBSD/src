@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2002/06/29 17:00:18 scottr Exp $	*/
+/*	$NetBSD: md.h,v 1.12 2002/10/20 22:06:17 rnestor Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,48 @@
 #define LIB_MOVE 1
 
 /*
- * Define partition types
+ * Apple Partition Map Types
+ *    Reserved - Entry hidden by sysinst from user
+ *    NetBSD   - Entry used for NetBSD
+ *    MacOS    - Entry used for MacOS and mapped to NetBSD
+ *    Other    - Entry use unknown, mapped for scratch. This may
+ *               include partitions used by other systems (Linux).
+ */     
+#define MAP_EOL      0
+#define MAP_RESERVED 1
+#define MAP_NETBSD   2
+#define MAP_MACOS    3
+#define MAP_OTHER    4
+
+typedef struct {
+	int type;               /* Entry type from above */
+	char *name;             /* Partition Type string */
+} MAP_TYPE;
+
+/*
+ * Define Apple Partition Map types typically seen on 68k Macs
+ *    This should match the definitions in include/machine/disklabel.h
+ *    and must conform to the matching rules in arch/mac68k/mac68k/disksubr.c
+ */
+EXTERN MAP_TYPE map_types[]
+#ifdef MAIN
+= {
+	{MAP_RESERVED, PART_TYPE_DRIVER},
+	{MAP_RESERVED, PART_TYPE_DRIVER43},
+	{MAP_RESERVED, PART_TYPE_DRIVERATA},
+	{MAP_RESERVED, PART_TYPE_FWB_COMPONENT},
+	{MAP_MACOS,    PART_TYPE_MAC},
+	{MAP_NETBSD,   PART_TYPE_NETBSD},
+	{MAP_RESERVED, PART_TYPE_PARTMAP},
+	{MAP_OTHER,    PART_TYPE_SCRATCH},
+	{MAP_NETBSD,   PART_TYPE_UNIX},
+	{MAP_EOL,      NULL}
+}
+#endif
+;
+
+/*
+ * Define NetBSD partition types
  */
 #define ROOT_PART 1
 #define UFS_PART 2
@@ -77,7 +118,11 @@ typedef struct {
  */
 #define NEW_MAP_SIZE 15
 
-EXTERN MAP map;
+EXTERN MAP map
+#ifdef MAIN
+= {0, 0, 0, 0, 0, 0, 0, 0, {0}}
+#endif
+;
 
 int	edit_diskmap (void);		
 void	disp_selected_part (int sel);
@@ -151,20 +196,24 @@ typedef struct {
     unsigned short 	ddPad[243];	/* ARRAY[0..242] OF INTEGER; not used */
 } Block0;
 
+/*
+ * Default Disk Partition Map used for an uninitilized disk.
+ *  Has minimal entry for an old Apple SCSI driver, a newer 43 SCSI
+ *  driver and an IDE driver (for those Macs with IDE). 
+ */
 EXTERN struct part_map_entry new_map[]
 #ifdef MAIN
 = {
-  {PART_ENTRY_MAGIC, 0xa5a5, 5,   1,   NEW_MAP_SIZE & 0x7e, "Macintosh",
-	"Apple_partition_map", 0,63, 0x37},
-  {PART_ENTRY_MAGIC, 0, 5, 64, 32, "Macintosh", "Apple_Driver", 0, 32, 0x37},
-  {PART_ENTRY_MAGIC, 0, 5, 96, 32, "Macintosh", "Apple_Driver43", 0, 32, 0x37},
-  {PART_ENTRY_MAGIC, 0, 5, 128, 4096, "untitled", "Apple_HFS", 0, 4096, 0x37},
-  {PART_ENTRY_MAGIC, 0, 5,4224, 0, "untitled", "Apple_Free", 0, 0, 0x37}
+  {PART_ENTRY_MAGIC, 0xa5a5, 6,   1,   NEW_MAP_SIZE & 0x7e, "Apple",
+	"Apple_Partition_Map", 0,NEW_MAP_SIZE, 0x37},
+  {PART_ENTRY_MAGIC, 0, 6, 64, 32, "Macintosh", "Apple_Driver", 0,0,0x37},
+  {PART_ENTRY_MAGIC, 0, 6, 96, 64, "Macintosh", "Apple_Driver43", 0,0,0x37},
+  {PART_ENTRY_MAGIC, 0, 6, 160, 64, "Macintosh", "Apple_Driver_ATA", 0,0,0x37},
+  {PART_ENTRY_MAGIC, 0, 6, 224, 4096, "untitled", "Apple_HFS", 0,0,0x37},
+  {PART_ENTRY_MAGIC, 0, 6,4320, 0, "untitled", "Apple_Free", 0,0,0x37}
 }
 #endif
 ;
-
-EXTERN Block0 new_block0;
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
