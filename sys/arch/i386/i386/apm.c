@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.21 1997/06/04 03:34:43 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.22 1997/06/17 06:06:25 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -355,7 +355,7 @@ struct apmregs *regs;
 
 	switch(regs->bx) {
 	case APM_USER_STANDBY_REQ:
-	    DPRINTF(("user standby requested\n"));
+		DPRINTF(("user standby requested\n"));
 #ifdef APM_NO_STANDBY
 		(void) apm_set_powstate(APM_DEV_ALLDEVS,
 					APM_LASTREQ_REJECTED);
@@ -371,7 +371,7 @@ struct apmregs *regs;
 	case APM_STANDBY_REQ:
 		DPRINTF(("standby requested\n"));
 		if (apm_standbys || apm_suspends)
-		    DPRINTF(("damn fool BIOS did not wait for answer\n"));
+			DPRINTF(("damn fool BIOS did not wait for answer\n"));
 #ifdef APM_NO_STANDBY
 		(void) apm_set_powstate(APM_DEV_ALLDEVS,
 					APM_LASTREQ_REJECTED);
@@ -679,7 +679,7 @@ apm_busprobe()
 		return 0;
 	}
 	if ((regs.cx & APM_32BIT_SUPPORT) == 0) {
-		DPRINTF(("apm: no 32bit support\n"));
+		DPRINTF(("apm: no 32bit support (busprobe)\n"));
 		return 0;
 	}
 	return 1;  /* OK to continue probe & complain if something fails */
@@ -728,8 +728,10 @@ apmprobe(parent, match, aux)
 			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
 			 bits, sizeof(bits)), regs.si, regs.di));
 
-		if ((apminfo.apm_detail & APM_32BIT_SUPPORTED) == 0)
-		    return 0;		/* bail out */
+		if ((apminfo.apm_detail & APM_32BIT_SUPPORTED) == 0) {
+			DPRINTF(("apm: no 32bit support (match)\n"));
+			return 0;		/* bail out */
+		}
 
 		/*
 		 * And connect to it.
@@ -819,7 +821,7 @@ apmprobe(parent, match, aux)
 		}
 		if (apminfo.apm_code16_seg_base +
 		    apminfo.apm_code32_seg_len > IOM_END) {
-		    DPRINTF(("apm code16 segment oversized: [%x,%x), giving up\n",
+			DPRINTF(("apm code16 segment oversized: [%x,%x), giving up\n",
 			     apminfo.apm_code16_seg_base,
 			     apminfo.apm_code16_seg_base +
 			     apminfo.apm_code32_seg_len-1));
