@@ -1,4 +1,4 @@
-/*	$NetBSD: command.h,v 1.3 1997/09/15 01:29:30 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.1 1997/09/15 01:29:31 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -31,62 +31,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Command tool - a library for building command languages fast.
- *
- *   Philip A. Nelson,  Oct 1991
- *
- *   Some code is lifted from the PC532 monitor/debugger written
- *   by Bruce Culbertson.   (Thanks Bruce!)
- */
+int	add_image __P((int, char **, char *));
+void	command_loop __P((void));
+int	delete_image __P((int, char **, char *));
+int	display_head __P((int, char **, char *));
+int	display_image __P((int, char **, char *));
+int	display_part __P((int, char **, char *));
+int	initialize __P((int, char **, char *));
+int	one_command  __P((char *));
+void	prompt __P((char *, int, const char *));
+int	set_default_image __P((int, char **, char *));
+int	Str2Int __P((char *, int *));
+int	write_exit __P((int, char **, char *));
 
-/* Defines that depend on ANSI or not ANSI. */
-
-#ifdef __STDC__
-#define CMD_PROC(name) int name (int, char **, char *)
-#else
-#define CMD_PROC(name) name ();
-#endif
-
-
-/*  The commands are stored in a table that includes their name, a pointer
-    to the function that processes the command and a help message.  */
-
-struct command {	/* The commands, their names, help */
-	int	(*fn) __P((int, char **, char *));
-	char	*name;
-	char	*syntax;
-	char	*help;
-};
-
-/*  The command loop will do the following:
-	a) prompt the user for a command.
-	b) read the command line.
-	c) break the input line into arguments.
-	d) search for the command in the command table.
-	e) If the command is found, call the routine to process it.
-        f) IF the return value from the command is NON ZERO, exit the loop.
-
-Each function to process a command must be defined as follows:
-
-   int name ( int num, char ** cmd_args ) where num is the number
-   of arguments (the command name is not counted) and the cmd_args is
-   an array of pointers to the arguments.  cmd_args[0] is the command
-   name.  cmd_args[1] is the first argument.
-
-*/
-
-
-/* Constants defining the limits of the command processor.
- */
-#define TRUE 1
-#define FALSE 0
-#define LINELEN 256
-#define MAXARGS 16
-#define BLANK_LINE 0
-
-/* Stuff for StrCmp()
- */
-#define CMP_NOMATCH	0
-#define CMP_MATCH	1
-#define CMP_SUBSTR	2
+extern char *__progname;
