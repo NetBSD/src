@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_fieldtype.3,v 1.4 2002/02/20 11:30:58 wiz Exp $
+.\"	$NetBSD: form_fieldtype.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -46,7 +46,7 @@
 .Ft int
 .Fn free_fieldtype "FIELDTYPE *fieldtype"
 .Ft FIELDTYPE *
-.Fn link_fieldtype "FIELDTYPE *type1, FIELDTYPE *type2"
+.Fn link_fieldtype "FIELDTYPE *type1" "FIELDTYPE *type2"
 .Ft FIELDTYPE *
 .Fo new_fieldtype
 .Fa "int (*field_check)(FIELD *, char *)"
