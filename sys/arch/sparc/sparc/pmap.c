@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1996/02/12 21:15:37 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.51 1996/02/28 22:44:42 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -3612,50 +3612,24 @@ pmap_count_ptes(pm)
 }
 
 /*
- * Find first virtual address >= va that doesn't cause
- * a cache alias on physical address pa.
+ * Find first virtual address >= *va that is
+ * least likely to cause cache aliases.
+ * (This will just seg-align mappings.)
  */
-vm_offset_t
-pmap_prefer(pa, va)
-	register vm_offset_t pa;
-	register vm_offset_t va;
+void
+pmap_prefer(foff, va)
+	register vm_offset_t foff;
+	register vm_offset_t *va;
 {
-	register struct pvlist	*pv;
-	register long		m, d;
+	register long	d, m;
 
 	m = CACHE_ALIAS_DIST;
 	if (m == 0)		/* m=0 => no cache aliasing */
-		return (va);
+		return;
 
-	if (pa == (vm_offset_t)-1) {
-		/*
-		 * Do not consider physical address. Just return
-		 * a cache aligned address.
-		 */     
-		if (VA_INHOLE(va))
-			va = MMU_HOLE_END;
-
-		/* XXX - knowledge about `exec' formats; can we get by without? */
-		va -= USRTEXT;
-		va = (va + m - 1) & ~(m - 1);
-		return (va + USRTEXT);
-	}
-
-	if ((pa & (PMAP_TNC & ~PMAP_NC)) || !managed(pa))
-		return va;
-
-	pv = pvhead(pa);
-	if (pv->pv_pmap == NULL) {
-		/* Unusable, tell caller to try another one */
-		return (vm_offset_t)-1;
-	}
-
-	d = (long)(pv->pv_va & (m - 1)) - (long)(va & (m - 1));
-	if (d < 0)
-		va += m;
-	va += d;
-
-	return va;
+	d = foff - *va;
+	d &= (m - 1)
+	*va += d;
 }
 
 pmap_redzone()
