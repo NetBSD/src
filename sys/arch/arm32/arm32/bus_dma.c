@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 1998/06/03 04:20:22 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 1998/06/27 02:11:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -497,12 +497,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			ptep = vtopte(va);
 			printf(" pte=v%p *pte=%x\n", ptep, *ptep);
 #endif	/* DEBUG_DMA */
-#if 0
-			if (flags & BUS_DMA_COHERENT)
-				pmap_changebit(addr, PG_N, ~0);
-			else
-				pmap_changebit(addr, 0, ~PG_N);
-#endif
 		}
 	}
 #ifdef DEBUG_DMA
