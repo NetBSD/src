@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 2004/08/28 19:11:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2004/08/28 19:11:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,11 +103,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2003/11/17 14:37:59 tsutsui Exp $");
 #include <sys/gmon.h>
 #endif
 
-void	statintr __P((struct clockframe *));
+void	statintr(struct clockframe *);
 
 static todr_chip_handle_t todr_handle;
 
-int    clkstd[1];
+static int clkstd[1];
 static int clkint;		/* clock interval, as loaded */
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -132,7 +132,6 @@ todr_attach(todr_chip_handle_t handle)
 	todr_handle = handle;
 }
 
-
 /*
  * Machine-dependent clock routines.
  *
@@ -151,7 +150,7 @@ todr_attach(todr_chip_handle_t handle)
  * mvme68k delay calibration algorithm.
  */
 void
-hp300_calibrate_delay()
+hp300_calibrate_delay(void)
 {
 	extern int delay_divisor;
 	volatile struct clkreg *clk;
@@ -231,7 +230,7 @@ hp300_calibrate_delay()
  * no alternative timer is available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
@@ -303,8 +302,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	if (newhz == stathz)
@@ -320,8 +318,7 @@ setstatclockrate(newhz)
  * DO THIS INLINE IN locore.s?
  */
 void
-statintr(fp)
-	struct clockframe *fp;
+statintr(struct clockframe *fp)
 {
 	volatile struct clkreg *clk;
 	int newint, r, var;
@@ -352,8 +349,7 @@ statintr(fp)
  * Return the best possible estimate of the current time.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	volatile struct clkreg *clk;
 	int s, u, t, u2, s2;
@@ -392,8 +388,7 @@ microtime(tvp)
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase = 0, waszero = (base == 0);
 
@@ -440,7 +435,7 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 	if (time.tv_sec == 0)
 		return;
