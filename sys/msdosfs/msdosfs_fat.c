@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_fat.c,v 1.2 1993/12/18 00:51:02 mycroft Exp $
+ *	$Id: msdosfs_fat.c,v 1.3 1994/02/07 23:14:16 cgd Exp $
  */
 
 /*
@@ -460,7 +460,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 		else
 			bdwrite(bp);
 		bp = NULL;
-		pmp->pm_fmod++;
+		pmp->pm_fmod = 1;
 	}
 	if (bp)
 		brelse(bp);

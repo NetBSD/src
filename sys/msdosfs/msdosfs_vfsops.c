@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.7 1994/01/20 09:46:40 pk Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.8 1994/02/07 23:14:23 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -245,6 +245,7 @@ mountmsdosfs(devvp, mp, p)
 
 	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
 	pmp->pm_inusemap = NULL;
+	pmp->pm_fmod = 0;
 	pmp->pm_mountp = mp;
 
 	/*
@@ -551,15 +552,12 @@ msdosfs_sync(mp, waitfor)
 	 * If we ever switch to not updating all of the fats all the time,
 	 * this would be the place to update them from the first one.
 	 */
-	if (pmp->pm_fmod) {
-		if (pmp->pm_ronly) {
-			printf("msdosfs_sync(): writing to readonly filesystem\n");
-			return EINVAL;
-		}
+	if (pmp->pm_fmod)
+		if (pmp->pm_ronly)
+			panic("msdosfs_sync: rofs mod");
 		else {
 			/* update fats here */
 		}
-	}
 
 	/*
 	 * Go thru in memory denodes and write them out along with
