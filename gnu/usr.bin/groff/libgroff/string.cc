@@ -281,7 +281,7 @@ char *string::extract() const
   char *p = ptr;
   int n = len;
   int nnuls = 0;
-  for (int i = 0; i < n; i++)
+  int i; for (i = 0; i < n; i++)
     if (p[i] == '\0')
       nnuls++;
   char *q = new char[n + 1 - nnuls];

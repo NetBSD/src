@@ -246,7 +246,7 @@ int font::get_width(int c, int point_size)
   if (!widths_cache)
     widths_cache = new font_widths_cache(point_size, ch_size);
   else if (widths_cache->point_size != point_size) {
-    for (font_widths_cache **p = &widths_cache; *p; p = &(*p)->next)
+    font_widths_cache **p; for (p = &widths_cache; *p; p = &(*p)->next)
       if ((*p)->point_size == point_size)
 	break;
     if (*p) {
@@ -398,7 +398,7 @@ void font::extend_ch()
 
 void font::compact()
 {
-  for (int i = nindices - 1; i >= 0; i--)
+  int i; for (i = nindices - 1; i >= 0; i--)
     if (ch_index[i] >= 0)
       break;
   i++;
@@ -728,7 +728,7 @@ int font::load_desc()
   while (t.next()) {
     char *p = strtok(t.buf, WS);
     int found = 0;
-    for (int i = 0; !found && i < sizeof(table)/sizeof(table[0]); i++)
+    int i; for (i = 0; !found && i < sizeof(table)/sizeof(table[0]); i++)
       if (strcmp(table[i].command, p) == 0)
 	found = 1;
     if (found) {
@@ -764,7 +764,7 @@ int font::load_desc()
 	return 0;
       }
       font_name_table = (const char **)new char *[nfonts+1]; 
-      for (int i = 0; i < nfonts; i++) {
+      for (i = 0; i < nfonts; i++) {
 	p = strtok(0, WS);
 	while (p == 0) {
 	  if (!t.next()) {
@@ -830,7 +830,7 @@ int font::load_desc()
     else if (strcmp("styles", p) == 0) {
       int style_table_size = 5;
       style_table = (const char **)new char *[style_table_size];
-      for (int j = 0; j < style_table_size; j++)
+      int j; for (j = 0; j < style_table_size; j++)
 	style_table[j] = 0;
       int i = 0;
       for (;;) {

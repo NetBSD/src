@@ -690,7 +690,7 @@ void free_input_entry_format_list(input_entry_format *list)
 
 void input_entry_format::debug_print()
 {
-  for (int i = 0; i < pre_vline; i++)
+  int i; for (i = 0; i < pre_vline; i++)
     putc('|', stderr);
   entry_format::debug_print();
   if (!width.empty()) {
@@ -1174,7 +1174,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	  format_index = f->nrows - 1;
 	// A format row that is all lines doesn't use up a data line.
 	while (format_index < f->nrows - 1) {
-	  for (int c = 0; c < ncolumns; c++) {
+	  for (c = 0; c < ncolumns; c++) {
 	    entry_format *e = f->entry[format_index] + c;
 	    if (e->type != FORMAT_HLINE
 		&& e->type != FORMAT_DOUBLE_HLINE
@@ -1393,7 +1393,7 @@ table *process_data(table_input &in, format *f, options *opt)
   }
   // Do this here rather than at the beginning in case continued formats
   // change it.
-  for (int i = 0; i < ncolumns - 1; i++)
+  int i; for (i = 0; i < ncolumns - 1; i++)
     if (f->separation[i] >= 0)
       tbl->set_column_separation(i, f->separation[i]);
   for (i = 0; i < ncolumns; i++)

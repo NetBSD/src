@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: ptable.h,v 1.2 1993/08/02 17:43:38 mycroft Exp $
+	$Id: ptable.h,v 1.3 1995/12/29 20:34:32 chopps Exp $
 */
 
 #include <assert.h>
@@ -96,7 +96,7 @@ void PTABLE(T)::define(const char *key, T *val)				      \
 {									      \
   assert(key != 0);							      \
   unsigned long h = hash_string(key);					      \
-  for (unsigned n = unsigned(h % size);					      \
+  unsigned n; for (n = unsigned(h % size);				      \
        v[n].key != 0;							      \
        n = (n == 0 ? size - 1 : n - 1))					      \
     if (strcmp(v[n].key, key) == 0) {					      \
@@ -116,7 +116,7 @@ void PTABLE(T)::define(const char *key, T *val)				      \
 	if (oldv[i].val == 0)						      \
 	  a_delete oldv[i].key;						      \
 	else {								      \
-	  for (unsigned j = unsigned(hash_string(oldv[i].key) % size);	      \
+	  unsigned j; for (j = unsigned(hash_string(oldv[i].key) % size);     \
 	       v[j].key != 0;						      \
 	       j = (j == 0 ? size - 1 : j - 1))				      \
 		 ;							      \

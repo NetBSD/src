@@ -446,7 +446,7 @@ trap::trap(symbol s, vunits n, trap *p)
 void top_level_diversion::add_trap(symbol nm, vunits pos)
 {
   trap *first_free_slot = 0;
-  for (trap **p = &page_trap_list; *p; p = &(*p)->next) {
+  trap **p; for (p = &page_trap_list; *p; p = &(*p)->next) {
     if ((*p)->nm.is_null()) {
       if (first_free_slot == 0)
 	first_free_slot = *p;

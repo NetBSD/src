@@ -172,7 +172,7 @@ ps_output &ps_output::put_delimiter(char c)
 ps_output &ps_output::put_string(const char *s, int n)
 {
   int len = 0;
-  for (int i = 0; i < n; i++) {
+  int i; for (i = 0; i < n; i++) {
     char c = s[i];
     if (isascii(c) && isprint(c)) {
       if (c == '(' || c == ')' || c == '\\')
@@ -646,7 +646,7 @@ const char *const WS = " \t\n\r";
 void ps_printer::define_encoding(const char *encoding, int encoding_index)
 {
   char *vec[256];
-  for (int i = 0; i < 256; i++)
+  int i; for (i = 0; i < 256; i++)
     vec[i] = 0;
   char *path;
   FILE *fp = font::open_file(encoding, &path);
@@ -1193,7 +1193,7 @@ void ps_printer::special(char *arg, const environment *env)
     "invis", &ps_printer::do_invis,
     "endinvis", &ps_printer::do_endinvis,
   };
-  for (char *p = arg; *p == ' ' || *p == '\n'; p++)
+  char *p; for (p = arg; *p == ' ' || *p == '\n'; p++)
     ;
   char *tag = p;
   for (; *p != '\0' && *p != ':' && *p != ' ' && *p != '\n'; p++)
@@ -1340,7 +1340,7 @@ void ps_printer::do_import(char *arg, const environment *env)
   flush_sbuf();
   while (*arg == ' ' || *arg == '\n')
     arg++;
-  for (char *p = arg; *p != '\0' && *p != ' ' && *p != '\n'; p++)
+  char *p; for (p = arg; *p != '\0' && *p != ' ' && *p != '\n'; p++)
     ;
   if (*p != '\0')
     *p++ = '\0';

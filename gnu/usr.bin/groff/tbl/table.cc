@@ -663,12 +663,12 @@ void block_entry::do_divert(int alphabetic, int ncols, const string *mw,
   prints(".if \\n[" SAVED_FILL_REG "] .fi\n"
 	 ".in 0\n");
   prints(".ll ");
-  for (int i = start_col; i <= end_col; i++)
+  int i; for (i = start_col; i <= end_col; i++)
     if (mw[i].empty())
       break;
   if (i > end_col) {
     // Every column spanned by this entry has a minimum width.
-    for (int i = start_col; i <= end_col; i++) {
+    for (i = start_col; i <= end_col; i++) {
       if (i > start_col) {
 	if (sep)
 	  printfs("+%1n", as_string(sep[i - 1]));
@@ -1274,7 +1274,7 @@ void table::set_equal_column(int c)
 
 void table::add_stuff(stuff *p)
 {
-  for (stuff **pp = &stuff_list; *pp; pp = &(*pp)->next)
+  stuff **pp; for (pp = &stuff_list; *pp; pp = &(*pp)->next)
     ;
   *pp = p;
 }
@@ -1324,7 +1324,7 @@ void table::allocate(int r)
     assert(allocated_rows > r);
     while (nrows <= r) {
       entry[nrows] = new table_entry*[ncolumns];
-      for (int i = 0; i < ncolumns; i++)
+      int i; for (i = 0; i < ncolumns; i++)
 	entry[nrows][i] = 0;
       vline[nrows] = new char[ncolumns+1];
       for (i = 0; i < ncolumns+1; i++)
@@ -1590,7 +1590,7 @@ void table::add_entry(int r, int c, const string &str, const entry_format *f,
       e->input_filename = fn;
       e->start_row = e->end_row = r;
       e->start_col = e->end_col = c;
-      for (table_entry **p = &entry_list; *p; p = &(*p)->next)
+      table_entry **p; for (p = &entry_list; *p; p = &(*p)->next)
 	;
       *p = e;
       entry[r][c] = e;
@@ -1924,7 +1924,7 @@ void table::divide_span(int start_col, int end_col)
   printfs(".nr " NEEDED_REG " \\n[%1]-(\\n[%2]", 
 	  span_width_reg(start_col, end_col),
 	  span_width_reg(start_col, start_col));
-  for (int i = start_col + 1; i <= end_col; i++) {
+  int i; for (i = start_col + 1; i <= end_col; i++) {
     // The column separation may shrink with the expand option.
     if (!(flags & EXPAND))
       printfs("+%1n", as_string(column_separation[i - 1]));
@@ -1975,7 +1975,7 @@ void table::build_span_list()
   table_entry *p = entry_list;
   while (p) {
     if (p->end_col != p->start_col) {
-      for (horizontal_span *q = span_list; q; q = q->next)
+      horizontal_span *q; for (q = span_list; q; q = q->next)
 	if (q->start_col == p->start_col
 	    && q->end_col == p->end_col)
 	  break;
@@ -1990,7 +1990,7 @@ void table::build_span_list()
   horizontal_span *unsorted = span_list;
   span_list = 0;
   while (unsorted) {
-    for (horizontal_span **pp = &span_list; *pp; pp = &(*pp)->next)
+    horizontal_span **pp; for (pp = &span_list; *pp; pp = &(*pp)->next)
       if (unsorted->end_col < (*pp)->end_col
 	  || (unsorted->end_col == (*pp)->end_col
 	      && (unsorted->start_col > (*pp)->start_col)))
@@ -2017,7 +2017,7 @@ void table::compute_separation_factor()
   }
   if (flags & EXPAND) {
     int total_sep = left_separation + right_separation;
-    for (int i = 0; i < ncolumns - 1; i++)
+    int i; for (i = 0; i < ncolumns - 1; i++)
       total_sep += column_separation[i];
     if (total_sep != 0) {
       // Don't let the separation factor be negative.
@@ -2035,7 +2035,7 @@ void table::compute_column_positions()
   printfs(".nr %1 %2*\\n[" SEPARATION_FACTOR_REG "]\n",
 	  column_start_reg(0),
 	  as_string(left_separation));
-  for (int i = 1;; i++) {
+  int i; for (i = 1;; i++) {
     printfs(".nr %1 \\n[%2]+\\n[%3]\n",
 	    column_end_reg(i-1),
 	    column_start_reg(i-1),
@@ -2066,7 +2066,7 @@ void table::compute_column_positions()
 void table::make_columns_equal()
 {
   int first = -1;		// index of first equal column
-  for (int i = 0; i < ncolumns; i++)
+  int i; for (i = 0; i < ncolumns; i++)
     if (equal[i]) {
       if (first < 0) {
 	printfs(".nr %1 \\n[%1]", span_width_reg(i, i));
@@ -2149,7 +2149,7 @@ void table::print_single_hline(int r)
 	     && entry[r][start_col] != 0
 	     && entry[r][start_col]->start_row != r)
 	start_col++;
-      for (int end_col = start_col;
+      int end_col; for (end_col = start_col;
 	   end_col < ncolumns
 	   && (entry[r][end_col] == 0
 	       || entry[r][end_col]->start_row == r);
@@ -2197,7 +2197,7 @@ void table::print_double_hline(int r)
 	     && entry[r][start_col] != 0
 	     && entry[r][start_col]->start_row != r)
 	start_col++;
-      for (int end_col = start_col;
+      int end_col; for (end_col = start_col;
 	   end_col < ncolumns
 	   && (entry[r][end_col] == 0
 	       || entry[r][end_col]->start_row == r);
@@ -2305,7 +2305,7 @@ void table::compute_vrule_bot_adjust(int end_row, int col, string &result)
     result = "";
   }
   else {
-    for (stuff *p = stuff_list; p && p->row < end_row + 1; p = p->next)
+    stuff *p; for (p = stuff_list; p && p->row < end_row + 1; p = p->next)
       ;
     if (p && p->row == end_row + 1 && p->is_double_line()) {
       result = "-" DOUBLE_LINE_SEP;
@@ -2399,7 +2399,7 @@ void table::build_vrule_list()
 	  && (end_row == nrows - 1 
 	      || vline[end_row+1][col] != vline[end_row][col]
 	      || vline_spanned(end_row+1, col))) {
-	for (int start_row = end_row - 1;
+	int start_row; for (start_row = end_row - 1;
 	     start_row >= 0
 	     && vline[start_row][col] == vline[end_row][col]
 	     && !vline_spanned(start_row, col);
@@ -2498,7 +2498,7 @@ void table::do_row(int r)
   if (!(flags & NOKEEP) && row_begins_section(r))
     prints("." KEEP_MACRO_NAME "\n");
   int had_line = 0;
-  for (stuff *p = stuff_list; p && p->row < r; p = p->next)
+  stuff *p; for (p = stuff_list; p && p->row < r; p = p->next)
     ;
   for (stuff *p1 = p; p1 && p1->row == r; p1 = p1->next)
     if (!p1->printed && (p1->is_single_line() || p1->is_double_line())) {
@@ -2637,13 +2637,13 @@ void table::do_row(int r)
 	     " 0\n");
     }
     int printed_one = 0;
-    for (vertical_rule *p = vrule_list; p; p = p->next)
-      if (p->end_row == r) {
+    for (vertical_rule *vp = vrule_list; vp; vp = vp->next)
+      if (vp->end_row == r) {
 	if (!printed_one) {
 	  prints("." REPEATED_VPT_MACRO " 0\n");
 	  printed_one = 1;
 	}
-	p->print();
+	vp->print();
       }
     if (printed_one)
       prints("." REPEATED_VPT_MACRO " 1\n");
