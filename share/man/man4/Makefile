@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159 2000/06/10 20:00:11 veego Exp $
+#	$NetBSD: Makefile,v 1.160 2000/06/16 06:50:36 msaitoh Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 \
@@ -9,10 +9,10 @@ MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 \
 	icsphy.4 idp.4 ifmedia.4 inet.4 inphy.4 iophy.4 ip.4 \
 	ipip.4 ipkdb.4 iso.4 isp.4 lc.4 lkm.4 lo.4 lxtphy.4 \
 	mainbus.4 mbe.4 mca.4 md.4 mhzc.4 midi.4 mii.4 mpu.4 \
-	mtio.4 ncr.4 ne.4 netconfig.4 netintro.4 ns.4 nsip.4 \
+	mtio.4 ncr.4 ne.4 netintro.4 ns.4 nsip.4 \
 	nsphy.4 ntwoc.4 null.4 opl.4 options.4 pas.4 pcdisplay.4 \
 	pciide.4 pckbc.4 pckbd.4 pcppi.4 pcscp.4 pms.4 ppp.4 \
-	pty.4 puc.4 qsphy.4 raid.4 ray.4 rnd.4 rpc.4 route.4 \
+	pty.4 puc.4 qsphy.4 raid.4 ray.4 rnd.4 route.4 \
 	rtk.4 scsi.4 sd.4 siop.4 sl.4 sm.4 speaker.4 spp.4 \
 	sqphy.4 ss.4 st.4 sv.4 strip.4 tb.4 tcp.4 termios.4 \
 	ti.4 tl.4 tlp.4 tlphy.4 tp.4 tr.4 tty.4 tun.4 tqphy.4 \
