@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2002/12/11 12:02:07 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2002/12/17 19:47:15 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1647,84 +1647,9 @@ ENTRY(longjmp)
 
 /*****************************************************************************/
 
-/*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
- */
 	.globl	_C_LABEL(sched_whichqs),_C_LABEL(sched_qs)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
 
-/*
- * void setrunqueue(struct proc *p);
- * Insert a process on the appropriate queue.  Should be called at splclock().
- * See setrunqueue(9) for more details.
- */
-/* LINTSTUB: Func: void setrunqueue(struct proc *p) */
-NENTRY(setrunqueue)
-	movl	4(%esp),%eax
-#ifdef DIAGNOSTIC
-	cmpl	$0,P_BACK(%eax)	# should not be on q already
-	jne	1f
-	cmpl	$0,P_WCHAN(%eax)
-	jne	1f
-	cmpb	$SRUN,P_STAT(%eax)
-	jne	1f
-#endif /* DIAGNOSTIC */
-	movzbl	P_PRIORITY(%eax),%edx
-	shrl	$2,%edx
-	btsl	%edx,_C_LABEL(sched_whichqs)	# set q full bit
-	leal	_C_LABEL(sched_qs)(,%edx,8),%edx # locate q hdr
-	movl	P_BACK(%edx),%ecx
-	movl	%edx,P_FORW(%eax)	# link process on tail of q
-	movl	%eax,P_BACK(%edx)
-	movl	%eax,P_FORW(%ecx)
-	movl	%ecx,P_BACK(%eax)
-	ret
-#ifdef DIAGNOSTIC
-1:	pushl	$2f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-2:	.asciz	"setrunqueue"
-#endif /* DIAGNOSTIC */
-
-/*
- * void remrunqueue(struct proc *p);
- * Remove a process from its queue.  Should be called at splclock().
- * See remrunqueue(9) for more details.
- */
-/* LINTSTUB: Func: void remrunqueue(struct proc *p) */
-NENTRY(remrunqueue)
-	movl	4(%esp),%ecx
-	movzbl	P_PRIORITY(%ecx),%eax
-#ifdef DIAGNOSTIC
-	shrl	$2,%eax
-	btl	%eax,_C_LABEL(sched_whichqs)
-	jnc	1f
-#endif /* DIAGNOSTIC */
-	movl	P_BACK(%ecx),%edx	# unlink process
-	movl	$0,P_BACK(%ecx)		# zap reverse link to indicate off list
-	movl	P_FORW(%ecx),%ecx
-	movl	%ecx,P_FORW(%edx)
-	movl	%edx,P_BACK(%ecx)
-	cmpl	%ecx,%edx		# q still has something?
-	jne	2f
-#ifndef DIAGNOSTIC
-	shrl	$2,%eax
-#endif
-	btrl	%eax,_C_LABEL(sched_whichqs)	# no; clear bit
-2:	ret
-#ifdef DIAGNOSTIC
-1:	pushl	$3f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-3:	.asciz	"remrunqueue"
-#endif /* DIAGNOSTIC */
-	
 #ifdef DIAGNOSTIC
 NENTRY(switch_error)
 	pushl	$1f
