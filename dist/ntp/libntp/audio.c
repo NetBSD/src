@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: audio.c,v 1.2 2000/04/17 05:46:46 simonb Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -10,6 +10,7 @@
 #include "audio.h"
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_AUDIOIO_H
 #include <sys/audioio.h>
