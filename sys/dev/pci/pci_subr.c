@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.11 1995/06/21 03:56:09 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.12 1995/08/16 04:54:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -299,8 +299,9 @@ pci_devinfo(id_reg, class_reg, cp, supp)
 		    class, subclass);
 	else {
 		cp += sprintf(cp, "class: %s, ", classp->name);
-		if (subclassp->name == NULL)
-			cp += sprintf(cp, "unknown subclass: 0x%02x", subclass);
+		if (subclassp == NULL || subclassp->name == NULL)
+			cp += sprintf(cp, "unknown subclass: 0x%02x",
+			    subclass);
 		else
 			cp += sprintf(cp, "subclass: %s", subclassp->name);
 	}
