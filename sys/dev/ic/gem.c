@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.15 2002/05/11 00:36:02 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.16 2002/05/11 20:53:52 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.15 2002/05/11 00:36:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.16 2002/05/11 20:53:52 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -792,7 +792,8 @@ gem_init(struct ifnet *ifp)
 			GEM_INTR_RX_TAG_ERR|GEM_INTR_PCS|
 			GEM_INTR_MAC_CONTROL|GEM_INTR_MIF|
 			GEM_INTR_BERR));
-	bus_space_write_4(t, h, GEM_MAC_RX_MASK, 0); /* XXXX */
+	bus_space_write_4(t, h, GEM_MAC_RX_MASK,
+			~(GEM_MAC_RX_DONE|GEM_MAC_RX_FRAME_CNT));
 	bus_space_write_4(t, h, GEM_MAC_TX_MASK, 0xffff); /* XXXX */
 	bus_space_write_4(t, h, GEM_MAC_CONTROL_MASK, 0); /* XXXX */
 
