@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.207 2004/05/14 07:45:10 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.208 2004/05/15 13:58:16 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2432,4 +2432,72 @@ x11/Xserver/GL/GLcore/Makefile.GLcore		1.7
 	Drop optmization to -O0 for sh5 for one file to work around an
 	internal compiler error.
 	[he, ticket #332]
+
+sys/miscfs/kernfs/kernfs.h			1.22
+sys/miscfs/kernfs/kernfs_vnops.c		1.102
+
+	Allow additional entries (files, subdirs) in kernfs.  Also allow
+	defining additional kfstypes and provide hooks to run arbitrary code
+	for any vnodeop on the additional types.
+	[cl, ticket #336]
+
+doc/HACKS					1.34
+sys/miscfs/kernfs/kernfs_vnops.c		1.104
+
+	Workaround for gcc 2.95.3 failing to initialize structures
+	and/or unions inside structures using nested designators.
+	Should be reverted when gcc >=3.3.3 is ready for vax.
+	[cl, ticket #326]
+
+sys/arch/sh5/conf/Makefile.sh5			1.13
+sys/arch/sh5/conf/files.sh5			1.14
+
+	Use lower optimization level (-O0) for miscfs/genfs/genfs_vnops.c
+	in order to avoid an internal compiler error with gcc 3.3.3 nb2.
+	[he, ticket #333]
+
+distrib/sets/lists/xserver/md.evbsh5		1.1
+
+	The evbsh5 port also installs Xvfb and it's man pages, so list those
+	here.
+	[he, ticket #334]
+
+sys/net/if_tun.c				1.70
+
+	Fix locking issues noticed by Tom Ivar Helbekkmo on tech-net:
+	* always acquire the device instance lock at splnet()
+	* missing unlocks in various places
+	Also, since this driver allows its device instances manipulated by two
+	independent subsystems (character device & interface clone
+	create/destroy), be careful not to rip away instance data in a clone
+	destroy request if the	instance is still opened as a character device.
+	[pk, ticket #335]
+
+sys/uvm/uvm_swap.c				1.88
+
+	Don't accept a negative number of swap devices; it will attempt to
+	malloc something very large and might crash the kernel.
+	[christos, ticket #338]
+
+lib/libm/arch/vax/n_sqrt.S			1.7
+lib/libm/noieee_src/n_floor.c			1.6
+
+	Add ceilf(), floorf(), and sqrtf() (as wrappers using ceil(), floor(),
+	and sqrt() repectively). This fixes PR#22796.
+	[mhitch, ticket #339]
+
+x11/bin/Makefile				1.7
+
+	Now that the missing libm functions are available on the vax, build
+	glxgears and glxinfo.  This will fix the checkflist failure on the vax
+	build.
+	[mhitch, ticket #340]
+
+sys/arch/i386/stand/mbr/mbr.S			1.7
+
+	Make mbr_bootsel boot active partition if/when no menu items are
+	output. Stops users sitting in front of a system that is waiting for
+	a keypress. Just don't ask how I added more functionality AND got an
+	extra 7 free bytes!
+	[dsl, ticket #342]
 
