@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.27 2000/04/29 00:42:26 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.28 2000/04/29 02:51:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.27 2000/04/29 00:42:26 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.28 2000/04/29 02:51:16 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -218,7 +218,6 @@ doupdate(void)
 {
 	WINDOW	*win;
 	__LINE	*wlp;
-	int	 retval;
 	short	 wy;
 	int	 dnum;
 
@@ -368,11 +367,10 @@ doupdate(void)
 		}
 	}
 
-	win->flags = 0;
-	retval = OK;
-
+	/* Don't leave the screen with attributes set. */
+	__unsetattr(0);
 	(void) fflush(stdout);
-	return (retval);
+	return (OK);
 }
 
 /*
@@ -643,9 +641,8 @@ makech(wy)
 			if (wx >= win->maxx &&
 			    wy == win->maxy - 1 && !curwin)
 				if (win->flags & __SCROLLOK) {
-					if (win->flags & __ENDLINE){
+					if (win->flags & __ENDLINE)
 						__unsetattr(1);
-					}
 					if (!(win->flags & __SCROLLWIN)) {
 						if (!curwin) {
 							csp->attr = nsp->attr;
@@ -702,11 +699,6 @@ makech(wy)
 #endif
 	}
 
-	/*
-	 * Don't leave the screen with attributes set.
-	 * XXX Should this be at the end of doupdate() and not here?
-	 */
-	__unsetattr(0);
 	return (OK);
 }
 
