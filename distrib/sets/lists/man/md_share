@@ -217,7 +217,6 @@
 ./usr/share/man/cat4/x68k/pow.0
 ./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat8/alpha/installboot.0
-./usr/share/man/cat8/alpha/installboot_cd9660.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
@@ -503,7 +502,6 @@
 ./usr/share/man/man4/x68k/pow.4
 ./usr/share/man/man5/i386/keycap.5
 ./usr/share/man/man8/alpha/installboot.8
-./usr/share/man/man8/alpha/installboot_cd9660.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/amiga/MAKEDEV.8
 ./usr/share/man/man8/amiga/binpatch.8
