@@ -1,11 +1,15 @@
-/* $NetBSD: arm-gcc.h,v 1.1 2000/12/29 20:13:54 bjh21 Exp $ */
+/* $NetBSD: arm-gcc.h,v 1.2 2001/02/21 18:09:25 bjh21 Exp $ */
 
 /*
 -------------------------------------------------------------------------------
 One of the macros `BIGENDIAN' or `LITTLEENDIAN' must be defined.
 -------------------------------------------------------------------------------
 */
+#ifdef __ARMEB__
+#define BIGENDIAN
+#else
 #define LITTLEENDIAN
+#endif
 
 /*
 -------------------------------------------------------------------------------
@@ -81,10 +85,16 @@ to be `static'.
 
 /*
 -------------------------------------------------------------------------------
-The ARM is odd in that it stores doubles high-order word first.
+The ARM FPA is odd in that it stores doubles high-order word first, no matter
+what the endianness of the CPU.  VFP is sane.
 -------------------------------------------------------------------------------
 */
-#ifdef SOFTFLOAT_FOR_GCC
+#if defined(SOFTFLOAT_FOR_GCC)
+#if defined(__VFP_FP__) || defined(__ARMEB__)
+#define FLOAT64_DEMANGLE(a)	(a)
+#define FLOAT64_MANGLE(a)	(a)
+#else
 #define FLOAT64_DEMANGLE(a)	(((a) << 32) | ((a) >> 32))
 #define FLOAT64_MANGLE(a)	FLOAT64_DEMANGLE(a)
+#endif
 #endif
