@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 1999/05/27 01:56:34 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 1999/09/25 00:00:38 shin Exp $	*/
 
 /*
  * Mach Operating System
@@ -302,7 +302,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 		struct tlb tlb;
 		int i;
 
-		for (i = 0; i < MIPS3_TLB_NUM_TLB_ENTRIES; i++) {
+		for (i = 0; i < mips_num_tlb_entries; i++) {
 			mips3_TLBRead(i, &tlb);
 			db_printf("TLB%c%2d Hi 0%x08x ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',

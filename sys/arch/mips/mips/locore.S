@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.76 1999/08/16 07:53:18 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.77 1999/09/25 00:00:38 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,8 +99,17 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
+#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+	li	t0, 0				# Disable interrupts and
+	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
+#ifdef HPCMIPS_L1CACHE_DISABLE
+	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
+	mtc0	t0, MIPS_COP_0_CONFIG
+#endif /*  HPCMIPS_L1CACHE_DISABLE */
+#else	
 	li	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
+#endif	
 	nop
 	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
@@ -108,7 +117,11 @@ _C_LABEL(kernel_text):
 	nop					# wait for new SR
 	nop					# to be effective
 	nop
+#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+	add	t1, zero, zero
+#else	
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
+#endif	
 	sw	t0, _C_LABEL(cpu_id)		# save PRID register
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
@@ -243,8 +256,21 @@ LEAF(idle)
 1:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	nop
+#if defined(MIPS3_4100) && defined(VR41_STANDBY_IDLE)
+	bne	t0, zero, 1f
+	nop
+	.word	0x42000021			# standby
+	nop
+	nop
+	nop
+	nop
 	beq	t0, zero, 1b
 	nop
+1:
+#else /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
+	beq	t0, zero, 1b
+	nop
+#endif /* MIPS3_4100 && defined(VR41_STANDBY_IDLE) */ 
 	la	ra, sw1
 	j	ra
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts

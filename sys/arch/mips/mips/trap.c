@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 1999/08/18 04:43:31 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.113 1999/09/25 00:00:39 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 1999/08/18 04:43:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 1999/09/25 00:00:39 shin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -551,6 +551,16 @@ trap(status, cause, vaddr, opc, frame)
 	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, ftype) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
 #endif
+#ifdef HPCMIPS_FLUSHCACHE_XXX
+#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+		/*
+		 * This code is debug use only.
+		 */
+		if (CPUISMIPS3 && !mips_L2CachePresent) {
+			MachFlushCache();
+		}
+#endif
+#endif
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -672,6 +682,10 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGILL;
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
+#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+		sig = SIGILL;
+		break; /* SIGNAL */
+#endif
 		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
@@ -743,8 +757,14 @@ interrupt(status, cause, pc)
 	mask = cause & status;	/* pending interrupts & enable mask */
 
 #if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
-	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3)
+	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3) {
 		mips3_intr_cycle_count = mips3_cycle_count();
+		/*
+		 *  Writing a value to the Compare register,
+		 *  as a side effect, clears the timer interrupt request.
+		 */
+		mips3_write_compare(mips3_intr_cycle_count + mips3_timer_delta);
+	}
 #endif
 
 	uvmexp.intrs++;
