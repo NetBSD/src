@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.1 1996/01/24 01:07:25 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.2 1996/01/30 22:35:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -244,7 +244,7 @@ zstty_attach(parent, self, aux)
 		reset = (channel == 0) ?
 			ZSWR9_A_RESET : ZSWR9_B_RESET;
 		s = splzs();
-		ZS_WRITE(cs, 9, reset);
+		zs_write_reg(cs, 9, reset);
 		splx(s);
 	}
 
@@ -347,8 +347,7 @@ zsopen(dev, flags, mode, p)
 		register int rr0;
 
 		/* Might never get status intr if carrier already on. */
-		rr0 = *(cs->cs_reg_csr);
-		ZS_DELAY();
+		rr0 = zs_read_csr(cs);
 		if (rr0 & ZSRR0_DCD) {
 			tp->t_state |= TS_CARR_ON;
 			break;
@@ -574,9 +573,8 @@ zsstart(tp)
 
 		cs->cs_preg[1] |= ZSWR1_TIE;
 		cs->cs_creg[1] |= ZSWR1_TIE;
-		ZS_WRITE(cs, 1, cs->cs_creg[1]);
-		*(cs->cs_reg_data) = *p;
-		ZS_DELAY();
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
+		zs_write_data(cs, *p);
 		zst->zst_tba = p + 1;
 		zst->zst_tbc = nch - 1;
 	} else {
@@ -587,7 +585,7 @@ zsstart(tp)
 		(void) splzs();
 		cs->cs_preg[1] &= ~ZSWR1_TIE;
 		cs->cs_creg[1] &= ~ZSWR1_TIE;
-		ZS_WRITE(cs, 1, cs->cs_creg[1]);
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 out:
 	splx(s);
@@ -709,9 +707,8 @@ zsparam(tp, t)
 	 */
 	tmp3 |= ZSWR3_RX_ENABLE;
 	if (cflag & CCTS_OFLOW) {
-		if (*(cs->cs_reg_csr) & ZSRR0_DCD)
+		if (zs_read_csr(cs) & ZSRR0_DCD)
 			tmp3 |= ZSWR3_HFC;
-		ZS_DELAY();
 	}
 
 	cs->cs_preg[3] = tmp3;
@@ -773,7 +770,7 @@ zs_modem(zst, onoff)
 			cs->cs_heldchange = 1;
 		} else {
 			cs->cs_creg[5] = (cs->cs_creg[5] | bis) & and;
-			ZS_WRITE(cs, 5, cs->cs_creg[5]);
+			zs_write_reg(cs, 5, cs->cs_creg[5]);
 		}
 	}
 	splx(s);
@@ -797,16 +794,14 @@ zstty_rxint(cs)
 
 nextchar:
 	/* Read the input data ASAP. */
-	c = *(cs->cs_reg_data);
-	ZS_DELAY();
+	c = zs_read_data(cs);
 
 	/* Save the status register too. */
-	rr1 = ZS_READ(cs, 1);
+	rr1 = zs_read_reg(cs, 1);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
-		*(cs->cs_reg_csr) = ZSWR0_RESET_ERRORS;
-		ZS_DELAY();
+		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 	}
 
 	zst->zst_rbuf[put] = (c << 8) | rr1;
@@ -821,8 +816,7 @@ nextchar:
 	}
 
 	/* Keep reading until the FIFO is empty. */
-	rr0 = *(cs->cs_reg_csr);
-	ZS_DELAY();
+	rr0 = zs_read_csr(cs);
 	if (rr0 & ZSRR0_RX_READY)
 		goto nextchar;
 
@@ -846,14 +840,13 @@ zstty_txint(cs)
 
 	if (count > 0) {
 		/* Send the next char. */
-		*(cs->cs_reg_data) = *zst->zst_tba++;
-		ZS_DELAY();
+		zs_write_data(cs, *zst->zst_tba);
+		zst->zst_tba++;
 		zst->zst_tbc = --count;
 		rval = 0;
 	} else {
 		/* Nothing more to send. */
-		*(cs->cs_reg_csr) = ZSWR0_RESET_TXINT;
-		ZS_DELAY();
+		zs_write_csr(cs, ZSWR0_RESET_TXINT);
 		zst->zst_intr_flags |= INTR_TX_EMPTY;
 		rval = 1;	/* want softcall */
 	}
@@ -871,11 +864,8 @@ zstty_stint(cs)
 
 	zst = cs->cs_private;
 
-	rr0 = *(cs->cs_reg_csr);
-	ZS_DELAY();
-
-	*(cs->cs_reg_csr) = ZSWR0_RESET_STATUS;
-	ZS_DELAY();
+	rr0 = zs_read_csr(cs);
+	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 	if ((rr0 & ZSRR0_BREAK) && 
 		(zst->zst_hwflags & ZS_HWFLAG_CONSOLE))
@@ -968,8 +958,7 @@ zstty_softint(cs)
 		 */
 		if (cs->cs_heldchange) {
 			s = splzs();
-			rr0 = *(cs->cs_reg_csr);
-			ZS_DELAY();
+			rr0 = zs_read_csr(cs);
 			if ((rr0 & ZSRR0_DCD) == 0)
 				cs->cs_preg[3] &= ~ZSWR3_HFC;
 			zs_loadchannelregs(cs);
@@ -980,8 +969,8 @@ zstty_softint(cs)
 				(tp->t_state & TS_TTSTOP) == 0)
 			{
 				zst->zst_tbc = zst->zst_heldtbc - 1;
-				*(cs->cs_reg_data) = *zst->zst_tba++;
-				ZS_DELAY();
+				zs_write_data(cs, *zst->zst_tba);
+				zst->zst_tba++;
 				goto tx_resumed;
 			}
 		}
@@ -1006,17 +995,17 @@ zstty_softint(cs)
 		 * HFC now but carrier has gone low, turn it off.
 		 */
 		s = splzs();
-		rr0 = *(cs->cs_reg_csr);
+		rr0 = zs_read_csr(cs);
 		if (rr0 & ZSRR0_DCD) {
 			if (tp->t_cflag & CCTS_OFLOW &&
 				(cs->cs_creg[3] & ZSWR3_HFC) == 0) {
 				cs->cs_creg[3] |= ZSWR3_HFC;
-				ZS_WRITE(cs, 3, cs->cs_creg[3]);
+				zs_write_reg(cs, 3, cs->cs_creg[3]);
 			}
 		} else {
 			if (cs->cs_creg[3] & ZSWR3_HFC) {
 				cs->cs_creg[3] &= ~ZSWR3_HFC;
-				ZS_WRITE(cs, 3, cs->cs_creg[3]);
+				zs_write_reg(cs, 3, cs->cs_creg[3]);
 			}
 		}
 		splx(s);
