@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2003/04/06 17:23:25 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2003/07/13 08:16:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -58,7 +58,7 @@ void		getblk __P((struct bufarea *, daddr_t, long));
 struct bufarea *getdatablk __P((daddr_t, long));
 struct inoinfo *getinoinfo __P((ino_t));
 union dinode  *ginode __P((ino_t));
-void		getpathname __P((char *, ino_t, ino_t));
+void		getpathname __P((char *, size_t, ino_t, ino_t));
 void		infohandler __P((int sig));
 void		inocleanup __P((void));
 void		inodirty __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.25 2003/04/26 08:42:49 bouyer Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.26 2003/07/13 08:17:05 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.25 2003/04/26 08:42:49 bouyer Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.26 2003/07/13 08:17:05 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1022,7 +1022,8 @@ chnamefunc(idesc)
 		testdir.d_namlen = strlen(idesc->id_name);
 		if (DIRSIZ(NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
 			dirp->d_namlen = testdir.d_namlen;
-			strcpy(dirp->d_name, idesc->id_name);
+			strlcpy(dirp->d_name, idesc->id_name,
+			    sizeof(dirp->d_name));
 			return STOP | ALTERED | FOUND;
 		} else
 			return STOP | FOUND;	/* won't fit, so give up */
