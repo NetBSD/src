@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.88.4.1 2002/03/10 19:08:23 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.88.4.2 2002/03/10 21:33:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.88.4.1 2002/03/10 19:08:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.88.4.2 2002/03/10 21:33:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -348,8 +348,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
 
-	p2->p_ts = pool_get(&turnstile_pool, PR_WAITOK);
-	memset(p2->p_ts, 0, sizeof(*p2->p_ts));
+	p2->p_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
 
 	scheduler_fork_hook(p1, p2);
 
