@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.18 2000/03/19 19:16:13 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.19 2000/04/10 04:59:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2335,97 +2335,86 @@ LEAF(mips3_proc_trampoline)
 END(mips3_proc_trampoline)
 
 /*
- * Resume process indicated by the pte's for its u struct
- * NOTE: This is hard coded to UPAGES == 2.
- * Also, there should be no TLB faults at this point.
+ * void mips3_cpu_switch_resume(struct proc *newproc)
  *
- * Entered from CPU-common cpu_switch()
- * a0 = new proc's p_addr
- * a1 = 1st u.pte
- * a2 = 2nd u.pte
- * a3 = Address Space Identifier (TLB PID) for this process
- *
- * NB: cannot be profiled due to weird argument-passing convention.
- *     mcount would trash v0, t0, t1.
+ * Wiredown the USPACE of newproc with TLB entry#0.  Check
+ * whether target USPACE is already refered by some TLB entry(s)
+ * before that, and make sure TBIS(them) in the case.
  */
 LEAF_NOPROFILE(mips3_cpu_switch_resume)
+	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
+	lw	a2, P_MD_UPTE_1(a0)		# a2 = upte[1]
+	lw	v0, P_ADDR(a0)			# va = p->p_addr
 	li	s0, MIPS_KSEG2_START
-	blt	a0, s0, resume			# don't bother proc0
+	blt	v0, s0, resume
 	nop
 
-	lw	s0, U_PCB_SEGTAB(a0)
-	ori	a1, MIPS3_PG_G			# set PG_G
-	dsll	s0, 32
-	dmtc0	s0, MIPS_COP_0_TLB_XCONTEXT	# Store segment map for access
-	ori	a2, MIPS3_PG_G			# set PG_G
-
-# now map the p_addr pages
-	andi	s0, a0, MIPS3_PG_ODDPG		# does p_addr start on odd page
-	beq	s0, zero, 1f			# no, only one TLB entry needed
+	andi	s0, v0, MIPS3_PG_ODDPG
+	beq	s0, zero, entry0
 	nop
 
-# p_addr starts on an odd page, need to set up 2 TLB entries
-	addu	v0, a0, MIPS3_PG_ODDPG		# map second page
-	# see if this address currently exists in TLB
-	mtc0	v0, MIPS_COP_0_TLB_HI
+	# p_addr starts on an odd page, need to set up 2 TLB entries
+	addu	v0, v0, MIPS3_PG_ODDPG
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# VPN = va
 	nop
-	nop					# Required for QED 5230
-	tlbp					# probe for existing entry
+	nop
+	tlbp					# probe VPN
 	nop
 	nop
 	mfc0	s0, MIPS_COP_0_TLB_INDEX
 	nop
-	slti	s0, s0, MIPS3_TLB_WIRED_ENTRIES	# if found in random entry XXX
-	bnez	s0, 2f
-	mtc0	zero, MIPS_COP_0_TLB_LO0	# flush it
-	mtc0	zero, MIPS_COP_0_TLB_LO1
+	bltz	s0, entry1set
 	li	s0, MIPS_KSEG0_START
-	mtc0	s0, MIPS_COP_0_TLB_HI
-	nop
-	nop
-	tlbwi
-	nop
-	mtc0	v0, MIPS_COP_0_TLB_HI		# restore high entry
-2:
-	mtc0	a2, MIPS_COP_0_TLB_LO0		# even page to LO0
-	li	s0, MIPS3_PG_G			# invalid page set PG_G
-	mtc0	s0, MIPS_COP_0_TLB_LO1		# invalid page to LO1
-	li	s0, 1				# use TLB entry #1 for even page
-	mtc0	s0, MIPS_COP_0_TLB_INDEX
-	nop
-	nop
-	tlbwi					# write odd page TLB entry
-
-	move	a2, a1				# odd page to LO1
-	li	a1, MIPS3_PG_G			# LO0
-
-# set up TLB entry #0
-1:
-	# see if this address currently exists in TLB
-	mtc0	a0, MIPS_COP_0_TLB_HI
-	nop
-	nop
-	tlbp					# probe for existing entry
-	nop
-	nop
-	mfc0	s0, MIPS_COP_0_TLB_INDEX
-	nop
-	slti	s0, s0, MIPS3_TLB_WIRED_ENTRIES	# if found in random entry XXX
-	bnez	s0, 2f				# flush it
-	mtc0	zero, MIPS_COP_0_TLB_LO0
-	mtc0	zero, MIPS_COP_0_TLB_LO1
-	li	s0, MIPS_KSEG0_START
-	mtc0	s0, MIPS_COP_0_TLB_HI
+	dmtc0	s0, MIPS_COP_0_TLB_HI
+	dmtc0	zero, MIPS_COP_0_TLB_LO0
+	dmtc0	zero, MIPS_COP_0_TLB_LO1
 	nop
 	nop
 	tlbwi
 	nop
 	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# restore high entry
-2:
-	mtc0	a1, MIPS_COP_0_TLB_LO0		# 1st u.pte
-	mtc0	a2, MIPS_COP_0_TLB_LO1		# 2nd u.pte
-	mtc0	zero, MIPS_COP_0_TLB_INDEX
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# set VPN again
+entry1set:
+	li	s0, 1
+	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB entry #1
+	ori	a2, MIPS3_PG_G
+	dmtc0	a2, MIPS_COP_0_TLB_LO0		# lo0: upte[1] | PG_G
+	dmtc0	zero, MIPS_COP_0_TLB_LO1	# lo1: none
+	nop
+	nop
+	tlbwi					# set TLB entry #1
+	#nop
+	#nop
+	move	a2, a1				# lo0: none
+	move	a1, zero			# lo1: u_pte[0]
+	addu	v0, v0, -NBPG * 2		# backup to odd page mapping
+
+entry0:
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# VPN = va
+	nop
+	nop
+	tlbp					# probe VPN
+	nop
+	nop
+	mfc0	s0, MIPS_COP_0_TLB_INDEX
+	nop
+	bltz	s0, entry0set
+	li	s0, MIPS_KSEG0_START
+	dmtc0	s0, MIPS_COP_0_TLB_HI
+	dmtc0	zero, MIPS_COP_0_TLB_LO0
+	dmtc0	zero, MIPS_COP_0_TLB_LO1
+	nop
+	nop
+	tlbwi
+	nop
+	nop
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# set VPN again
+entry0set:
+	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB entry #0
+	ori	a1, MIPS3_PG_G
+	dmtc0	a1, MIPS_COP_0_TLB_LO0		# upte[0] | PG_G
+	ori	a2, MIPS3_PG_G
+	dmtc0	a2, MIPS_COP_0_TLB_LO1		# upte[1] | PG_G
 	nop
 	nop
 	tlbwi					# set TLB entry #0
@@ -2433,12 +2422,10 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	nop
 
 resume:
-	mtc0	a3, MIPS_COP_0_TLB_HI		# set current ASID
-	nop					# Required for QED 5230
-	nop					# Required for QED 5230
 	j	ra
 	nop
-END(mips3_cpu_switch_resume)
+	END(mips3_cpu_switch_resume)
+
 
 LEAF(mips3_Set64bit)
 	mfc0	v0, MIPS_COP_0_STATUS

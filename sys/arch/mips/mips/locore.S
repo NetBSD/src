@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.92 2000/03/28 02:58:48 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.93 2000/04/10 04:59:46 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,17 +357,26 @@ cpu_switch_queuescan:
 /*
  * Switch to new context.
  */
-	sw	zero, _C_LABEL(want_resched)
-	jal	_C_LABEL(pmap_alloc_asid)	# v0 = new proc's ASID
-	move	s0, a0				# BDSLOT: save p
-	lw	a0, P_ADDR(s0)			# a0 = p_addr
-	lw	a1, P_MD_UPTE_0(s0)		# a1 = first u. pte
-	lw	a2, P_MD_UPTE_1(s0)		# a2 = 2nd u. pte
-	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
-	sw	s0, _C_LABEL(curproc)		# set curproc
-	sw	a0, _C_LABEL(curpcb)		# set curpcb
-	jal	ra, s1				# CPU-specific: resume process
-	move	a3, v0				# BDSLOT: a3 = ASID
+	lw      t2, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
+	sw	a0, _C_LABEL(curproc)
+	jal	ra, t2
+	move	s7, a0				# -BDSLOT-
+
+#if 1	/* XXX XXX XXX */
+	REG_PROLOGUE
+	lw	a0, P_ADDR(s7)
+	nop
+	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
+	nop
+	REG_EPILOGUE
+#endif	/* XXX XXX XXX */
+	
+	jal	_C_LABEL(pmap_activate)
+	move	a0, s7				# -BDSLOT-
+
+	lw	a0, P_ADDR(s7)
+	sw	zero, _C_LABEL(want_resched)	# we've context switched
+	sw	a0, _C_LABEL(curpcb)
 
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
