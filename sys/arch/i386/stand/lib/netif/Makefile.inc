@@ -1,4 +1,4 @@
-##	$NetBSD: Makefile.inc,v 1.2 1998/02/16 11:21:59 drochner Exp $
+##	$NetBSD: Makefile.inc,v 1.3 1998/12/12 15:47:05 drochner Exp $
 
 SRCS += netif_small.c
 .if (${USE_NETIF} == "3c509")
@@ -15,4 +15,7 @@ SRCS += pcnet_pci.c am7990.c
 .endif
 .if (${USE_NETIF} == "pcnet_isapnp")
 SRCS += pcnet_isapnp.c am7990.c
+.endif
+.if (${USE_NETIF} == "i82557")
+SRCS += i82557.c
 .endif
