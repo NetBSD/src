@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.47 1996/05/18 18:53:50 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.48 1996/05/19 22:29:10 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -28,12 +28,20 @@ device	asc
 attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc
 
-device	grf
-attach	grf at nubus with grf_mv
-attach	grf at obio with grf_iv
+define grfbus {}
+file	arch/mac68k/dev/grf_subr.c	grfbus
+
+device	intvid: grfbus
+attach	intvid at obio
+file	arch/mac68k/dev/grf_iv.c	intvid
+
+device	macvid: grfbus
+attach	macvid at nubus
+file	arch/mac68k/dev/grf_mv.c	macvid
+
+device	grf {}				# eventually, we'll attach ITEs here
+attach	grf at grfbus
 file	arch/mac68k/dev/grf.c		grf needs-flag
-file	arch/mac68k/dev/grf_mv.c	grf_mv
-file	arch/mac68k/dev/grf_iv.c	grf_iv
 
 device	ae: ifnet, ether
 attach	ae at nubus

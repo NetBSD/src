@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.4 1996/05/06 03:33:08 briggs Exp $
+#	$NetBSD: RAMDISK,v 1.5 1996/05/19 22:29:08 scottr Exp $
 
 # RAMDISK
 # Support Root/swap on ramdisk
@@ -41,12 +41,16 @@ options		MACHINE_NONCONTIG
 
 config		netbsd	root on rd0a swap on rd0b
 
-grf0		at obio?	# Graphics devices might be internal or NuBUS
+intvid0		at obio?	# Internal video hardware
 
 nubus0		at mainbus?
 
-ae*	at nubus?
-grf*	at nubus?
+ae*		at nubus?
+macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
+grf*		at macvid?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96
