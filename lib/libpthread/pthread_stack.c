@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.15 2004/07/25 23:22:43 chs Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.16 2004/08/17 14:16:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.15 2004/07/25 23:22:43 chs Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.16 2004/08/17 14:16:00 chs Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -106,6 +106,7 @@ pthread__stackalloc(pthread_t *newt)
 void
 pthread__initmain(pthread_t *newt)
 {
+	pthread_t t;
 	void *base;
 	size_t size;
 
@@ -142,24 +143,28 @@ pthread__initmain(pthread_t *newt)
 	pthread_stackmask = pthread_stacksize - 1;
 #endif /* PT_FIXEDSTACKSIZE_LG */
 
+	base = (void *)(pthread__sp() & ~PT_STACKMASK);
+	size = PT_STACKSIZE;
+
+	t = pthread__stackid_setup(base, size);
+
 	/*
-	 * The "initial" thread stack can be smaller than requested
+	 * The "safe" area chosen below isn't safe for the initial thread stack
 	 * because we don't control the end of the stack.
 	 * For example, on i386 the stack usually ends at 0xbfc00000,
-	 * so for requested sizes >=8MB, we get a 4MB smaller stack.
+	 * so for requested sizes >=8MB, the last 4MB of stack isn't available.
 	 * Also, we don't want to clobber the argv, environment, etc.
-	 * Just trim off the part of the stack that we can't use.
+	 * Reset the initial pt_uc pointer to be safe for the initial thread.
 	 */
-#ifdef __MACHINE_STACK_GROWS_UP
-	/* XXX this case isn't right */
-	base = (void *) (pthread__sp() & ~PT_STACKMASK);
-	size = PT_STACKSIZE;
-#else
-	base = (void *) (pthread__sp() & ~PT_STACKMASK);
-	size = ((char *)pthread__sp() - (char *)base) & ~(pagesize - 1);
-#endif
 
-	*newt = pthread__stackid_setup(base, size);
+#ifdef __MACHINE_STACK_GROWS_UP
+	t->pt_uc = (ucontext_t *)
+		((char *)t->pt_stack.ss_sp + t->pt_stack.ss_size -
+		 sizeof (ucontext_t));
+#else
+	t->pt_uc = (ucontext_t *)t->pt_stack.ss_sp;
+#endif
+	*newt = t;
 }
 
 static pthread_t
