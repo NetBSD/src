@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.22 1999/11/12 09:55:38 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.23 1999/11/15 03:54:53 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.22 1999/11/12 09:55:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.23 1999/11/15 03:54:53 mhitch Exp $");
 
 
 #include <sys/types.h>
@@ -272,7 +272,7 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	printf("3MIN: imask %lx, %sabling slot %d, sc %p handler %p\n",
+	printf("3MIN: imask %x, %sabling slot %d, sc %p handler %p\n",
 	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
@@ -317,6 +317,8 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].intr = 0;
 		tc_slot_info[slotno].sc = 0;
 	}
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
+	kn02ba_wbflush();
 }
 
 
