@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.3 2003/05/11 21:41:00 fvdl Exp $
+# $NetBSD: GENERIC,v 1.4 2003/05/21 17:23:35 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -147,6 +147,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
+options		ACPIVERBOSE	# verboase ACPI configuration messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
@@ -200,6 +201,26 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 #acpi0 at mainbus0
+
+#acpi0 		at mainbus0
+#options		MPACPI
+#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+#options 	ACPI_ACTIVATE_DEV=0	# If set, activate inactive devices
+
+# ACPI devices
+#acpiacad* 	at acpi?		# ACPI AC Adapter
+#acpibat* 	at acpi?		# ACPI Battery
+#acpibut* 	at acpi?		# ACPI Button
+#acpiec* 	at acpi?		# ACPI Embedded Controller
+#acpilid* 	at acpi?		# ACPI Lid Switch
+#acpitz* 	at acpi?		# ACPI Thermal Zone
+
+# Mainboard devices
+#com* 		at acpi?		# Serial communications interface
+#fdc* 		at acpi?		# Floppy disk controller
+#lpt* 		at acpi?		# Parallel port
+#pckbc*  	at acpi?		# PC keyboard controller
+#wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 options 	MPBIOS
 cpu* 		at mainbus?
