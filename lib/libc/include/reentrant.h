@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.8 2003/01/08 20:41:35 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.9 2003/01/14 15:48:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 #ifdef _REENTRANT
 
 #include <pthread.h>
+#include <signal.h>
 
 #define	mutex_t			pthread_mutex_t
 #define	MUTEX_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
