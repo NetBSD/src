@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/25 06:15:11 jun Exp $
+#	$NetBSD: Makefile,v 1.4 2003/05/07 13:14:51 takemura Exp $
 
-MAN=	MAKEDEV.8 pbsdboot.8
+MAN=	MAKEDEV.8 boot.8 pbsdboot.8
 MLINKS= MAKEDEV.8 makedev.8
 MANSUBDIR=/hpcmips
 
