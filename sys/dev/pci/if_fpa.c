@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.24 1998/01/12 09:40:01 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.25 1998/05/21 20:44:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -466,6 +466,7 @@ pdq_pci_attach(
         return;
     }
 
+    sc->sc_dmatag = pa->pa_dmat;
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);

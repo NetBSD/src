@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.16 1998/04/07 13:32:07 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.17 1998/05/21 20:44:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -90,10 +90,15 @@ enum _pdq_type_t {
 #endif
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
-#if defined(__NetBSD__) && defined(__alpha__)
+#if defined(__NetBSD__) && !defined(PDQ_NO_BUS_DMA)
+#define PDQ_BUS_DMA
+#endif
+#if !defined(PDQ_BUS_DMA)
+#if defined(__NetBSD__) && defined(__alpha__) 
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		(alpha_XXX_dmamap((vm_offset_t)p))
 #else
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtophys(p)
+#endif
 #endif
 #define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_NOWAIT)
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
@@ -101,12 +106,14 @@ enum _pdq_type_t {
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	vm_page_alloc_contig(n, 0, 0xffffffff, PAGE_SIZE)
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
 #else
+#if !defined(PDQ_BUS_DMA)
 #if defined(UVM)
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	uvm_km_alloc(kernel_map, round_page(n))
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	uvm_km_free(kernel_map, (vm_offset_t) p, n)
 #else
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_alloc(kernel_map, round_page(n))
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
+#endif
 #endif
 #endif /* __FreeBSD__ */
 
@@ -162,9 +169,67 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 #define PDQ_OS_IOWR_8(t, base, offset, data)	bus_space_write_1 (t, base, offset, data)
 #define	PDQ_CSR_OFFSET(base, offset)		(0 + (offset)*sizeof(pdq_uint32_t))
 
-#define	PDQ_OS_BUS_DMA_TOHOST			BUS_BARRIER_READ
-#define	PDQ_OS_BUS_DMA_FROMHOST			BUS_BARRIER_WRITE
-#define	PDQ_OS_BUS_DMA_SYNC(pdq, base, offset, length, why)	bus_space_barrier((pdq)->pdq_csrs.csr_bus, base, offset, length, why)
+#ifdef PDQ_BUS_DMA
+#define	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event) \
+	pdq_os_unsolicited_event_sync((pdq)->pdq_os_ctx, \
+			(u_int8_t *) (event) - \
+				(u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
+			sizeof(*event), BUS_DMASYNC_PREREAD)
+#define	PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, event) \
+	pdq_os_unsolicited_event_sync((pdq)->pdq_os_ctx, \
+			(u_int8_t *) (event) - \
+				(u_int8_t *) (pdq)->pdq_unsolicited_info.ui_events, \
+			sizeof(*event), BUS_DMASYNC_POSTREAD)
+#define	PDQ_OS_DESCBLOCK_SYNC(pdq, what, length, why) \
+	pdq_os_descriptor_block_sync((pdq)->pdq_os_ctx, \
+			(u_int8_t *) (what) - (u_int8_t *) (pdq)->pdq_dbp, \
+			(length), (why))
+#define	PDQ_OS_CONSUMER_PRESYNC(pdq) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), (pdq)->pdq_cbp, sizeof((pdq)->pdq_cbp), \
+			      BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	PDQ_OS_CONSUMER_POSTSYNC(pdq) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), (pdq)->pdq_cbp, sizeof((pdq)->pdq_cbp), \
+			      BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	PDQ_OS_DESC_PRESYNC(pdq, d, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), (d), (s), BUS_DMASYNC_PREWRITE)
+#define	PDQ_OS_DESC_POSTSYNC(pdq, d, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), (d), (s), BUS_DMASYNC_POSTWRITE)
+#define	PDQ_OS_CMDRQST_PRESYNC(pdq, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), \
+			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (s), BUS_DMASYNC_PREWRITE)
+#define	PDQ_OS_CMDRSP_PRESYNC(pdq, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), \
+			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (s), BUS_DMASYNC_PREREAD)
+#define	PDQ_OS_CMDRQST_POSTSYNC(pdq, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), \
+			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (s), BUS_DMASYNC_POSTWRITE)
+#define	PDQ_OS_CMDRSP_POSTSYNC(pdq, s) \
+	PDQ_OS_DESCBLOCK_SYNC((pdq), \
+			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (s), BUS_DMASYNC_POSTREAD)
+#define	PDQ_OS_RXPDU_PRESYNC(pdq, b, o, l) \
+	pdq_os_databuf_sync((pdq)->pdq_os_ctx, (b), (o), (l), \
+			    BUS_DMASYNC_PREREAD)
+#define	PDQ_OS_RXPDU_POSTSYNC(pdq, b, o, l) \
+	pdq_os_databuf_sync((pdq)->pdq_os_ctx, (b), (o), (l), \
+			    BUS_DMASYNC_POSTREAD)
+#define	PDQ_OS_DATABUF_ALLOC(pdq, b)	((void)((b) = pdq_os_databuf_alloc((pdq)->pdq_os_ctx)))
+#define	PDQ_OS_DATABUF_FREE(pdq, b)	pdq_os_databuf_free((pdq)->pdq_os_ctx, b)
+#define PDQ_OS_DATABUF_BUSPA(pdq, b)	(M_GETCTX((b), bus_dmamap_t)->dm_segs[0].ds_addr + 0)
+struct _pdq_os_ctx_t;
+extern void pdq_os_descriptor_block_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
+					 size_t length, int ops);
+extern void pdq_os_unsolicited_event_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
+				 	  size_t length, int ops);
+extern struct mbuf *pdq_os_databuf_alloc(struct _pdq_os_ctx_t *osctx);
+extern void pdq_os_databuf_sync(struct _pdq_os_ctx_t *osctx, struct mbuf *b,
+				size_t offset, size_t length, int ops);
+extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
+#define M_HASDMAMAP		M_LINK2
+#endif
 
 #define	PDQ_CSR_WRITE(csr, name, data)		PDQ_OS_IOWR_32((csr)->csr_bus, (csr)->csr_base, (csr)->name, data)
 #define	PDQ_CSR_READ(csr, name)			PDQ_OS_IORD_32((csr)->csr_bus, (csr)->csr_base, (csr)->name)
@@ -229,7 +294,7 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 
 #if !defined(PDQ_HWSUPPORT)
 
-typedef struct {
+typedef struct _pdq_os_ctx_t {
 #if defined(__bsdi__)
     struct device sc_dev;		/* base device */
     struct isadev sc_id;		/* ISA device */
@@ -242,6 +307,7 @@ typedef struct {
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
     struct ethercom sc_ec;
+    bus_dma_tag_t sc_dmatag;
 #define	sc_if		sc_ec.ec_if
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */
@@ -266,6 +332,13 @@ typedef struct {
 #define	sc_bpf		sc_if.if_bpf
 #else
     caddr_t sc_bpf;
+#endif
+#if defined(PDQ_BUS_DMA)
+#if !defined(__NetBSD__)
+     bus_dma_tag_t sc_dmatag;
+#endif
+     bus_dmamap_t sc_dbmap;		/* DMA map for descriptor block */
+     bus_dmamap_t sc_uimap;		/* DMA map for unsolicited events */
 #endif
 } pdq_softc_t;
 
@@ -301,7 +374,7 @@ extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifwatchdog)(int unit));
 extern physreq_t *decfddiphysreq_db;
 extern physreq_t *decfddiphysreq_mblk;
 
-#define	PDQ_OS_DATABUF_ALLOC(b)		((void) (((b) = allocb_physreq(PDQ_OS_DATABUF_SIZE, BPRI_MED, decfddiphysreq_mblk)) && ((b)->b_wptr = (b)->b_rptr + PDQ_OS_DATABUF_SIZE)))
+#define	PDQ_OS_DATABUF_ALLOC(pdq, b)		((void) (((b) = allocb_physreq(PDQ_OS_DATABUF_SIZE, BPRI_MED, decfddiphysreq_mblk)) && ((b)->b_wptr = (b)->b_rptr + PDQ_OS_DATABUF_SIZE)))
 
 #define PDQ_OS_IORD_8(port)		inb(port)
 #define PDQ_OS_IOWR_8(port, data)	outb(port, data)
@@ -310,7 +383,9 @@ extern physreq_t *decfddiphysreq_mblk;
 
 #ifdef PDQ_USE_MBUFS
 #define	PDQ_OS_DATABUF_SIZE			(MCLBYTES)
-#define	PDQ_OS_DATABUF_FREE(b)			(m_freem(b))
+#ifndef PDQ_OS_DATABUF_FREE
+#define	PDQ_OS_DATABUF_FREE(pdq, b)		(m_freem(b))
+#endif
 #define	PDQ_OS_DATABUF_NEXT(b)			((b)->m_next)
 #define	PDQ_OS_DATABUF_NEXT_SET(b, b1)		((b)->m_next = (b1))
 #define	PDQ_OS_DATABUF_NEXTPKT(b)		((b)->m_nextpkt)
@@ -322,7 +397,8 @@ extern physreq_t *decfddiphysreq_mblk;
 #define	PDQ_OS_DATABUF_ADJ(b, n)		((b)->m_data += (n), (b)->m_len -= (n))
 typedef struct mbuf PDQ_OS_DATABUF_T;
 
-#define	PDQ_OS_DATABUF_ALLOC(b) do { \
+#ifndef PDQ_OS_DATABUF_ALLOC
+#define	PDQ_OS_DATABUF_ALLOC(pdq, b) do { \
     PDQ_OS_DATABUF_T *x_m0; \
     MGETHDR(x_m0, M_DONTWAIT, MT_DATA); \
     if (x_m0 != NULL) { \
@@ -338,12 +414,13 @@ typedef struct mbuf PDQ_OS_DATABUF_T;
 	(b) = NULL; \
     } \
 } while (0)
+#endif
 #define	PDQ_OS_DATABUF_RESET(b)	((b)->m_data = (b)->m_ext.ext_buf, (b)->m_len = MCLBYTES)
 #endif /* PDQ_USE_MBUFS */
 
 #ifdef PDQ_USE_STREAMS
 #define	PDQ_OS_DATABUF_SIZE			(2048)
-#define	PDQ_OS_DATABUF_FREE(b)			(freemsg(b))
+#define	PDQ_OS_DATABUF_FREE(pdq, b)		(freemsg(b))
 #define	PDQ_OS_DATABUF_NEXT(b)			((b)->b_cont)
 #define	PDQ_OS_DATABUF_NEXT_SET(b, b1)		((b)->b_cont = (b1))
 #define	PDQ_OS_DATABUF_NEXTPKT(b)		((b)->b_next)
@@ -356,7 +433,7 @@ typedef struct mbuf PDQ_OS_DATABUF_T;
 typedef mblk_t PDQ_OS_DATABUF_T;
 
 #ifndef	PDQ_OS_DATABUF_ALLOC
-#define	PDQ_OS_DATABUF_ALLOC(b)			((void) (((b) = allocb(PDQ_OS_DATABUF_SIZE, BPRI_MED)) && ((b)->b_wptr = (b)->b_rptr + PDQ_OS_DATABUF_SIZE)))
+#define	PDQ_OS_DATABUF_ALLOC(pdq, b)			((void) (((b) = allocb(PDQ_OS_DATABUF_SIZE, BPRI_MED)) && ((b)->b_wptr = (b)->b_rptr + PDQ_OS_DATABUF_SIZE)))
 #endif /* PDQ_OS_DATABUF_ALLOC */
 #endif /* PDQ_USE_STREAMS */
 
@@ -379,10 +456,21 @@ typedef mblk_t PDQ_OS_DATABUF_T;
     } \
 } while (0)
 
-#if !defined(PDQ_OS_BUS_DMA_SYNC)
-#define	PDQ_OS_BUS_DMA_TOHOST				0x01
-#define	PDQ_OS_BUS_DMA_FROMHOST				0x02
-#define	PDQ_OS_BUS_DMA_SYNC(t, base, offset, length, why)	do { } while(0)
+#if !defined(PDQ_OS_CONSUMER_PRESYNC)
+#define	PDQ_OS_CONSUMER_PRESYNC(pdq)		do { } while(0)
+#define	PDQ_OS_CONSUMER_POSTSYNC(pdq)		do { } while(0)
+#define	PDQ_OS_DESC_PRESYNC(pdq, d, s)		do { } while(0)
+#define	PDQ_OS_DESC_POSTSYNC(pdq, d, s)		do { } while(0)
+#define	PDQ_OS_CMDRQST_PRESYNC(pdq, s)		do { } while(0)
+#define	PDQ_OS_CMDRSP_PRESYNC(pdq, s)		do { } while(0)
+#define PDQ_OS_RXPDU_PRESYNC(pdq, b, o, l)	do { } while(0)
+#define PDQ_OS_RXPDU_POSTSYNC(pdq, b, o, l)	do { } while(0)
+#define PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, e)	do { } while(0)
+#define PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, e)	do { } while(0)
+#endif
+
+#ifndef PDQ_OS_DATABUF_BUSPA
+#define PDQ_OS_DATABUF_BUSPA(pdq, b)	PDQ_OS_VA_TO_BUSPA(pdq, PDQ_OS_DATABUF_PTR(b))
 #endif
 
 extern void pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addrs, size_t numaddrs);
@@ -391,6 +479,9 @@ extern void pdq_os_restart_transmitter(pdq_t *pdq);
 extern void pdq_os_transmit_done(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
 #if !defined(pdq_os_update_status)
 extern void pdq_os_update_status(pdq_t *pdq, const void *rsp);
+#endif
+#if !defined(PDQ_OS_MEMALLOC_CONTIG)
+extern int pdq_os_memalloc_contig(pdq_t *pdq);
 #endif
 extern pdq_boolean_t pdq_queue_transmit_data(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
 extern void pdq_flush_transmitter(pdq_t *pdq);

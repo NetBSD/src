@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.12 1998/04/07 13:32:07 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.13 1998/05/21 20:44:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -161,7 +161,7 @@ pdq_ifwatchdog(
 	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL)
 	    return;
-	m_freem(m);
+	PDQ_OS_DATABUF_FREE(PDQ_OS_IFP_TO_SOFTC(ifp)->sc_pdq, m);
     }
 }
 
@@ -169,7 +169,7 @@ ifnet_ret_t
 pdq_ifstart(
     struct ifnet *ifp)
 {
-    pdq_softc_t *sc = PDQ_OS_IFP_TO_SOFTC(ifp);
+    pdq_softc_t * const sc = PDQ_OS_IFP_TO_SOFTC(ifp);
     struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
@@ -185,9 +185,31 @@ pdq_ifstart(
 	return;
     }
     for (;; tx = 1) {
+#if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
+	bus_dmamap_t map;
+#endif
 	IF_DEQUEUE(ifq, m);
 	if (m == NULL)
 	    break;
+#if defined(PDQ_BUS_DMA) && !defined(PDQ_BUS_DMA_NOTX)
+	if (m->m_flags & M_HASDMAMAP) {
+	    map = M_GETCTX(m, bus_dmamap_t);
+	} else {
+	    map = NULL;
+	    if (!bus_dmamap_create(sc->sc_dmatag, 0x1FFF, 255, 0x1FFF, 0, BUS_DMA_NOWAIT, &map)) {
+		if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+		    bus_dmamap_sync(sc->sc_dmatag, map, 0, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
+		    M_SETCTX(m, map);
+		    m->m_flags |= M_HASDMAMAP;
+		}
+	    }
+	    if ((m->m_flags & M_HASDMAMAP) == 0) {
+		ifp->if_flags |= IFF_OACTIVE;
+		IF_PREPEND(ifq, m);
+		break;
+	    }
+	}
+#endif
 
 	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE) {
 	    ifp->if_flags |= IFF_OACTIVE;
@@ -206,18 +228,30 @@ pdq_os_receive_pdu(
     size_t pktlen,
     int drop)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    pdq_softc_t *sc = pdq->pdq_os_ctx;
     struct fddi_header *fh = mtod(m, struct fddi_header *);
 
     sc->sc_if.if_ipackets++;
 #if NBPFILTER > 0
+#if defined(PDQ_BUS_MAP)
+    pdq_os_databuf_sync(sc, m, 0, pktlen, BUS_DMASYNC_POSTREAD);
+    bus_dmamap_unload(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
+    bus_dmamap_destroy(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
+    m->m_flags &= ~M_HASDMAMAP;
+#endif
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
 #endif
     if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
-	m_freem(m);
+	PDQ_OS_DATABUF_FREE(pdq, m);
 	return;
     }
+#if NBPFILTER == 0 && defined(PDQ_BUS_MAP)
+    pdq_os_databuf_sync(sc, m, 0, pktlen, BUS_DMASYNC_POSTREAD);
+    bus_dmamap_unload(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
+    bus_dmamap_destroy(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t));
+    m->m_flags &= ~M_HASDMAMAP;
+#endif
 
     m->m_data += sizeof(struct fddi_header);
     m->m_len  -= sizeof(struct fddi_header);
@@ -230,7 +264,7 @@ void
 pdq_os_restart_transmitter(
     pdq_t *pdq)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    pdq_softc_t *sc = pdq->pdq_os_ctx;
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
     if (sc->sc_if.if_snd.ifq_head != NULL) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
@@ -245,12 +279,12 @@ pdq_os_transmit_done(
     pdq_t *pdq,
     struct mbuf *m)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    pdq_softc_t *sc = pdq->pdq_os_ctx;
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
 #endif
-    m_freem(m);
+    PDQ_OS_DATABUF_FREE(pdq, m);
     sc->sc_if.if_opackets++;
 }
 
@@ -260,7 +294,7 @@ pdq_os_addr_fill(
     pdq_lanaddr_t *addr,
     size_t num_addrs)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    pdq_softc_t *sc = pdq->pdq_os_ctx;
     struct ether_multistep step;
     struct ether_multi *enm;
 
@@ -345,7 +379,7 @@ pdq_os_update_status(
     pdq_t *pdq,
     const void *arg)
 {
-    pdq_softc_t * const sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    pdq_softc_t * const sc = pdq->pdq_os_ctx;
     const pdq_response_status_chars_get_t *rsp = arg;
     int media = 0;
 
@@ -528,3 +562,186 @@ pdq_ifattach(
     PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif
 }
+
+#if defined(PDQ_BUS_DMA) 
+int
+pdq_os_memalloc_contig(
+    pdq_t *pdq)
+{
+    pdq_softc_t * const sc = pdq->pdq_os_ctx;
+    bus_dma_segment_t db_segs[1], ui_segs[1];
+    int db_nsegs = 0, ui_nsegs = 0;
+    int steps = 0;
+    int not_ok;
+
+    not_ok = bus_dmamem_alloc(sc->sc_dmatag,
+			 sizeof(*pdq->pdq_dbp), sizeof(*pdq->pdq_dbp),
+			 sizeof(*pdq->pdq_dbp), db_segs, 1, &db_nsegs,
+			 BUS_DMA_NOWAIT);
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamem_map(sc->sc_dmatag, db_segs, db_nsegs,
+				sizeof(*pdq->pdq_dbp), (caddr_t *) &pdq->pdq_dbp,
+				BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamap_create(sc->sc_dmatag, db_segs[0].ds_len, 1,
+				   0x2000, 0, BUS_DMA_NOWAIT, &sc->sc_dbmap);
+    }
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_dbmap,
+				 pdq->pdq_dbp, sizeof(*pdq->pdq_dbp),
+				 NULL, BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	steps++;
+	pdq->pdq_pa_descriptor_block = sc->sc_dbmap->dm_segs[0].ds_addr;
+	not_ok = bus_dmamem_alloc(sc->sc_dmatag,
+			 PDQ_OS_PAGESIZE, PDQ_OS_PAGESIZE, PDQ_OS_PAGESIZE,
+			 ui_segs, 1, &ui_nsegs, BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamem_map(sc->sc_dmatag, ui_segs, ui_nsegs,
+			    PDQ_OS_PAGESIZE,
+			    (caddr_t *) &pdq->pdq_unsolicited_info.ui_events,
+			    BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamap_create(sc->sc_dmatag, ui_segs[0].ds_len, 1,
+				   PDQ_OS_PAGESIZE, 0, BUS_DMA_NOWAIT,
+				   &sc->sc_uimap);
+    }
+    if (!not_ok) {
+	steps++;
+	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_uimap,
+				 pdq->pdq_unsolicited_info.ui_events,
+				 PDQ_OS_PAGESIZE, NULL, BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	pdq->pdq_unsolicited_info.ui_pa_bufstart = sc->sc_uimap->dm_segs[0].ds_addr;
+	return not_ok;
+    }
+
+    switch (steps) {
+	case 8: {
+	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_uimap);
+	    /* FALL THROUGH */
+	}
+	case 7: {
+	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_uimap);
+	    /* FALL THROUGH */
+	}
+	case 6: {
+	    bus_dmamem_unmap(sc->sc_dmatag,
+			     (caddr_t) pdq->pdq_unsolicited_info.ui_events,
+			     PDQ_OS_PAGESIZE);
+	    /* FALL THROUGH */
+	}
+	case 5: {
+	    bus_dmamem_free(sc->sc_dmatag, ui_segs, ui_nsegs);
+	    /* FALL THROUGH */
+	}
+	case 4: {
+	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_dbmap);
+	    /* FALL THROUGH */
+	}
+	case 3: {
+	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_dbmap);
+	    /* FALL THROUGH */
+	}
+	case 2: {
+	    bus_dmamem_unmap(sc->sc_dmatag,
+			     (caddr_t) pdq->pdq_dbp,
+			     sizeof(*pdq->pdq_dbp));
+	    /* FALL THROUGH */
+	}
+	case 1: {
+	    bus_dmamem_free(sc->sc_dmatag, db_segs, db_nsegs);
+	    /* FALL THROUGH */
+	}
+    }
+
+    return not_ok;
+}
+
+extern void
+pdq_os_descriptor_block_sync(
+    pdq_os_ctx_t *sc,
+    size_t offset,
+    size_t length,
+    int ops)
+{
+    bus_dmamap_sync(sc->sc_dmatag, sc->sc_dbmap, offset, length, ops);
+}
+
+extern void
+pdq_os_unsolicited_event_sync(
+    pdq_os_ctx_t *sc,
+    size_t offset,
+    size_t length,
+    int ops)
+{
+    bus_dmamap_sync(sc->sc_dmatag, sc->sc_uimap, offset, length, ops);
+}
+
+extern void
+pdq_os_databuf_sync(
+    pdq_os_ctx_t *sc,
+    struct mbuf *m,
+    size_t offset,
+    size_t length,
+    int ops)
+{
+    bus_dmamap_sync(sc->sc_dmatag, M_GETCTX(m, bus_dmamap_t), offset, length, ops);
+}
+
+extern void
+pdq_os_databuf_free(
+    pdq_os_ctx_t *sc,
+    struct mbuf *m)
+{
+    if (m->m_flags & M_HASDMAMAP) {
+	bus_dmamap_t map = M_GETCTX(m, bus_dmamap_t);
+	bus_dmamap_unload(sc->sc_dmatag, map);
+	bus_dmamap_destroy(sc->sc_dmatag, map);
+	m->m_flags ^= M_HASDMAMAP;
+    }
+    m_freem(m);
+}
+
+extern struct mbuf *
+pdq_os_databuf_alloc(
+    pdq_os_ctx_t *sc)
+{
+    struct mbuf *m;
+    bus_dmamap_t map;
+
+    MGETHDR(m, M_DONTWAIT, MT_DATA);
+    if (m == NULL)
+	return NULL;
+    MCLGET(m, M_DONTWAIT);
+    if ((m->m_flags & M_EXT) == 0) {
+        m_free(m);
+	return NULL;
+    }
+    m->m_len = PDQ_OS_DATABUF_SIZE;
+
+    if (!bus_dmamap_create(sc->sc_dmatag, PDQ_OS_DATABUF_SIZE,
+			   1, PDQ_OS_DATABUF_SIZE, 0, BUS_DMA_NOWAIT, &map)) {
+	m_free(m);
+	return NULL;
+    }
+    if (!bus_dmamap_load_mbuf(sc->sc_dmatag, map, m, BUS_DMA_NOWAIT)) {
+	bus_dmamap_destroy(sc->sc_dmatag, map);
+	m_free(m);
+	return NULL;
+    }
+    m->m_flags |= M_HASDMAMAP;
+    M_SETCTX(m, map);
+    return m;
+}
+#endif

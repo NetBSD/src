@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.13 1998/01/12 09:51:31 thorpej Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.14 1998/05/21 20:44:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -90,6 +90,7 @@ pdq_tc_attach(
      * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
      * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
      */
+    sc->sc_dmatag = ta->ta_dmat;
     sc->sc_csrtag = ta->ta_memt;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;

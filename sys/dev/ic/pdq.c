@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.12 1998/04/07 13:32:07 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.13 1998/05/21 20:44:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -268,6 +268,7 @@ pdq_init_pci_csrs(
 
 static void
 pdq_flush_databuf_queue(
+    pdq_t *pdq,
     pdq_databuf_queue_t *q)
 {
     PDQ_OS_DATABUF_T *pdu;
@@ -275,7 +276,7 @@ pdq_flush_databuf_queue(
 	PDQ_OS_DATABUF_DEQUEUE(q, pdu);
 	if (pdu == NULL)
 	    return;
-	PDQ_OS_DATABUF_FREE(pdu);
+	PDQ_OS_DATABUF_FREE(pdq, pdu);
     }
 }
 
@@ -563,16 +564,15 @@ pdq_queue_commands(
      * Sync the command request buffer and descriptor, then advance
      * the request producer index.
      */
-    PDQ_OS_BUS_DMA_SYNC(pdq, txd->txd_pa_lo, 0, txd->txd_seg_len, PDQ_OS_BUS_DMA_FROMHOST);
-    PDQ_OS_BUS_DMA_SYNC(pdq, ci->ci_pa_request_descriptors, ci->ci_request_producer * sizeof(pdq_txdesc_t), sizeof(pdq_txdesc_t), PDQ_OS_BUS_DMA_FROMHOST);
+    PDQ_OS_CMDRQST_PRESYNC(pdq, txd->txd_seg_len);
+    PDQ_OS_DESC_PRESYNC(pdq, txd, sizeof(pdq_txdesc_t));
     PDQ_ADVANCE(ci->ci_request_producer, 1, PDQ_RING_MASK(dbp->pdqdb_command_requests));
 
     /*
      * Sync the command response buffer and advance the response
      * producer index (descriptor is already pre-initialized)
      */
-    PDQ_OS_BUS_DMA_SYNC(pdq, dbp->pdqdb_command_responses[ci->ci_response_producer].rxd_pa_lo, 0,
-			PDQ_SIZE_COMMAND_RESPONSE, PDQ_OS_BUS_DMA_TOHOST);
+    PDQ_OS_CMDRSP_PRESYNC(pdq, PDQ_SIZE_COMMAND_RESPONSE);
     PDQ_ADVANCE(ci->ci_response_producer, 1, PDQ_RING_MASK(dbp->pdqdb_command_responses));
     /*
      * At this point the command is done.  All that needs to be done is to
@@ -660,6 +660,7 @@ pdq_process_unsolicited_events(
     while (cbp->pdqcb_unsolicited_event != ui->ui_completion) {
 	rxd = &dbp->pdqdb_unsolicited_events[ui->ui_completion];
 	event = &ui->ui_events[ui->ui_completion & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
+	PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, event);
 
 	switch (event->event_type) {
 	    case PDQ_UNSOLICITED_EVENT: {
@@ -676,7 +677,7 @@ pdq_process_unsolicited_events(
 		break;
 	    }
 	}
-	PDQ_OS_BUS_DMA_SYNC(pdq, rxd->rxd_pa_lo, 0, sizeof(pdq_unsolicited_event_t), PDQ_OS_BUS_DMA_TOHOST);
+	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event);
 	PDQ_ADVANCE(ui->ui_completion, 1, PDQ_RING_MASK(dbp->pdqdb_unsolicited_events));
 	ui->ui_free++;
     }
@@ -713,11 +714,13 @@ pdq_process_received_data(
 
 	fpdu = lpdu = buffers[completion];
 	PDQ_ASSERT(fpdu != NULL);
-
+	PDQ_OS_RXPDU_POSTSYNC(pdq, fpdu, 0, sizeof(u_int32_t));
 	dataptr = PDQ_OS_DATABUF_PTR(fpdu);
 	status = *(pdq_rxstatus_t *) dataptr;
 	if (status.rxs_rcc_badpdu == 0) {
 	    datalen = status.rxs_len;
+	    PDQ_OS_RXPDU_POSTSYNC(pdq, fpdu, sizeof(u_int32_t),
+				  PDQ_RX_FC_OFFSET + 1 - sizeof(u_int32_t));
 	    fc = dataptr[PDQ_RX_FC_OFFSET];
 	    switch (fc & (PDQ_FDDIFC_C|PDQ_FDDIFC_L|PDQ_FDDIFC_F)) {
 		case PDQ_FDDI_LLC_ASYNC:
@@ -746,17 +749,17 @@ pdq_process_received_data(
 	     */
 	    pdulen = datalen - 4 /* CRC */;
 	    segcnt = (pdulen + PDQ_RX_FC_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE; 
-	    PDQ_OS_DATABUF_ALLOC(npdu);
+	    PDQ_OS_DATABUF_ALLOC(pdq, npdu);
 	    if (npdu == NULL) {
 		PDQ_PRINTF(("discard: no databuf #0\n"));
 		goto discard_frame;
 	    }
 	    buffers[completion] = npdu;
 	    for (idx = 1; idx < segcnt; idx++) {
-		PDQ_OS_DATABUF_ALLOC(npdu);
+		PDQ_OS_DATABUF_ALLOC(pdq, npdu);
 		if (npdu == NULL) {
 		    PDQ_OS_DATABUF_NEXT_SET(lpdu, NULL);
-		    PDQ_OS_DATABUF_FREE(fpdu);
+		    PDQ_OS_DATABUF_FREE(pdq, fpdu);
 		    goto discard_frame;
 		}
 		PDQ_OS_DATABUF_NEXT_SET(lpdu, buffers[(completion + idx) & ring_mask]);
@@ -824,9 +827,9 @@ pdq_process_received_data(
 	    }
 	    rxd->rxd_pa_hi = 0;
 	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_BUSPA(pdq, PDQ_OS_DATABUF_PTR(buffers[rx->rx_producer]));
-	    PDQ_OS_BUS_DMA_SYNC(pdq, rxd->rxd_pa_lo, 0, PDQ_OS_DATABUF_SIZE, PDQ_OS_BUS_DMA_TOHOST);
-	    PDQ_OS_BUS_DMA_SYNC(pdq, rx->rx_pa_descriptors, rx->rx_producer * sizeof(*rxd), sizeof(*rxd), PDQ_OS_BUS_DMA_FROMHOST);
+	    rxd->rxd_pa_lo = PDQ_OS_DATABUF_BUSPA(pdq, buffers[rx->rx_producer]);
+	    PDQ_OS_RXPDU_PRESYNC(pdq, buffers[rx->rx_producer], 0, PDQ_OS_DATABUF_SIZE);
+	    PDQ_OS_DESC_PRESYNC(pdq, rxd, sizeof(*rxd));
 	    PDQ_ADVANCE(rx->rx_producer, 1, ring_mask);	
 	    PDQ_ADVANCE(producer, 1, ring_mask);	
 	    PDQ_ADVANCE(completion, 1, ring_mask);
@@ -843,7 +846,7 @@ pdq_process_received_data(
 	 */
 	for (idx = 0; idx < PDQ_RX_SEGCNT; idx++) {
 	    if ((pdu = buffers[(rx->rx_producer + idx) & ring_mask]) == NULL) {
-		PDQ_OS_DATABUF_ALLOC(pdu);
+		PDQ_OS_DATABUF_ALLOC(pdq, pdu);
 		if (pdu == NULL)
 		    break;
 		buffers[(rx->rx_producer + idx) & ring_mask] = pdu;
@@ -856,9 +859,9 @@ pdq_process_received_data(
 	    }
 	    rxd->rxd_pa_hi = 0;
 	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_BUSPA(pdq, PDQ_OS_DATABUF_PTR(pdu));
-	    PDQ_OS_BUS_DMA_SYNC(pdq, rxd->rxd_pa_lo, 0, PDQ_OS_DATABUF_SIZE, PDQ_OS_BUS_DMA_TOHOST);
-	    PDQ_OS_BUS_DMA_SYNC(pdq, rx->rx_pa_descriptors, rx->rx_producer * sizeof(*rxd), sizeof(*rxd), PDQ_OS_BUS_DMA_FROMHOST);
+	    rxd->rxd_pa_lo = PDQ_OS_DATABUF_BUSPA(pdq, pdu);
+	    PDQ_OS_RXPDU_PRESYNC(pdq, pdu, 0, PDQ_OS_DATABUF_SIZE);
+	    PDQ_OS_DESC_PRESYNC(pdq, rxd, sizeof(*rxd));
 	}
 	if (idx < PDQ_RX_SEGCNT) {
 	    /*
@@ -884,6 +887,9 @@ pdq_queue_transmit_data(
     pdq_txdesc_t *eop = NULL;
     PDQ_OS_DATABUF_T *pdu0;
     pdq_uint32_t freecnt;
+#if defined(PDQ_BUS_DMA)
+    bus_dmamap_t map;
+#endif
 
     /*
      * Need 2 or more descriptors to be able to send.
@@ -892,9 +898,30 @@ pdq_queue_transmit_data(
 	return PDQ_FALSE;
 
     dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;
-    PDQ_OS_BUS_DMA_SYNC(pdq, tx->tx_pa_descriptors, producer * sizeof(pdq_txdesc_t), sizeof(pdq_txdesc_t), PDQ_OS_BUS_DMA_FROMHOST);
+    PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[producer], sizeof(pdq_txdesc_t));
     PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
 
+#if defined(PDQ_BUS_DMA)
+    map = M_GETCTX(pdu, bus_dmamap_t);
+    if ((freecnt = tx->tx_free - 1) > map->dm_nsegs) {
+	int idx;
+	for (idx = 0; idx < map->dm_nsegs; idx++) {
+	    /*
+	     * Initialize the transmit descriptor
+	     */
+	    eop = &dbp->pdqdb_transmits[producer];
+	    eop->txd_seg_len = map->dm_segs[idx].ds_len;
+	    eop->txd_pa_lo = map->dm_segs[idx].ds_addr;
+	    eop->txd_sop = eop->txd_eop = eop->txd_pa_hi = 0;
+	    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
+	    freecnt--;
+	    PDQ_ADVANCE(producer, 1, PDQ_RING_MASK(dbp->pdqdb_transmits));
+	}
+	pdu0 = NULL;
+    } else {
+	pdu0 = pdu;
+    }
+#else
     for (freecnt = tx->tx_free - 1, pdu0 = pdu; pdu0 != NULL && freecnt > 0;) {
 	pdq_uint32_t fraglen, datalen = PDQ_OS_DATABUF_LEN(pdu0);
 	const pdq_uint8_t *dataptr = PDQ_OS_DATABUF_PTR(pdu0);
@@ -915,10 +942,7 @@ pdq_queue_transmit_data(
 	    eop->txd_seg_len = seglen;
 	    eop->txd_pa_lo = PDQ_OS_VA_TO_BUSPA(pdq, dataptr);
 	    eop->txd_sop = eop->txd_eop = eop->txd_pa_hi = 0;
-	    PDQ_OS_BUS_DMA_SYNC(pdq, eop->txd_pa_lo, 0, seglen, PDQ_OS_BUS_DMA_FROMHOST);
-	    PDQ_OS_BUS_DMA_SYNC(pdq, tx->tx_pa_descriptors,
-				producer * sizeof(pdq_txdesc_t),
-				sizeof(pdq_txdesc_t), PDQ_OS_BUS_DMA_FROMHOST);
+	    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
 	    datalen -= seglen;
 	    dataptr += seglen;
 	    fraglen = PDQ_OS_PAGESIZE;
@@ -927,6 +951,7 @@ pdq_queue_transmit_data(
 	}
 	pdu0 = PDQ_OS_DATABUF_NEXT(pdu0);
     }
+#endif /* defined(PDQ_BUS_DMA) */
     if (pdu0 != NULL) {
 	PDQ_ASSERT(freecnt == 0);
 	/*
@@ -991,7 +1016,7 @@ pdq_flush_transmitter(
 	 * Don't call transmit done since the packet never made it
 	 * out on the wire.
 	 */
-	PDQ_OS_DATABUF_FREE(pdu);
+	PDQ_OS_DATABUF_FREE(pdq, pdu);
     }
 
     tx->tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
@@ -1098,12 +1123,12 @@ pdq_stop(
     /*
      * Flush all the databuf queues.
      */
-    pdq_flush_databuf_queue(&pdq->pdq_tx_info.tx_txq);
+    pdq_flush_databuf_queue(pdq, &pdq->pdq_tx_info.tx_txq);
     pdq->pdq_flags &= ~(PDQ_TXOK|PDQ_IS_ONRING|PDQ_IS_FDX);
     buffers = (PDQ_OS_DATABUF_T **) pdq->pdq_rx_info.rx_buffers;
     for (idx = 0; idx < PDQ_RING_SIZE(pdq->pdq_dbp->pdqdb_receives); idx++) {
 	if (buffers[idx] != NULL) {
-	    PDQ_OS_DATABUF_FREE(buffers[idx]);
+	    PDQ_OS_DATABUF_FREE(pdq, buffers[idx]);
 	    buffers[idx] = NULL;
 	}
     }
@@ -1111,7 +1136,7 @@ pdq_stop(
     buffers = (PDQ_OS_DATABUF_T **) pdq->pdq_host_smt_info.rx_buffers;
     for (idx = 0; idx < PDQ_RING_SIZE(pdq->pdq_dbp->pdqdb_host_smt); idx++) {
 	if (buffers[idx] != NULL) {
-	    PDQ_OS_DATABUF_FREE(buffers[idx]);
+	    PDQ_OS_DATABUF_FREE(pdq, buffers[idx]);
 	    buffers[idx] = NULL;
 	}
     }
@@ -1179,16 +1204,14 @@ pdq_stop(
      * Make sure there isn't stale information in the caches before
      * tell the adapter about the blocks it's going to use.
      */
-    PDQ_OS_BUS_DMA_SYNC(pdq, PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_cbp), 0,
-			sizeof(pdq->pdq_cbp), PDQ_OS_BUS_DMA_FROMHOST);
+    PDQ_OS_CONSUMER_PRESYNC(pdq);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
-    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_cbp));
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_consumer_block);
     pdq_do_port_control(csrs, PDQ_PCTL_CONSUMER_BLOCK);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
-    PDQ_CSR_WRITE(csrs, csr_port_data_a,
-		  PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp) | PDQ_DMA_INIT_LW_BSWAP_DATA);
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_descriptor_block | PDQ_DMA_INIT_LW_BSWAP_DATA);
     pdq_do_port_control(csrs, PDQ_PCTL_DMA_INIT);
 
     for (cnt = 0; cnt < 1000; cnt++) {
@@ -1329,6 +1352,7 @@ pdq_interrupt(
     while ((data = PDQ_CSR_READ(csrs, csr_port_status)) & PDQ_PSTS_INTR_PENDING) {
 	progress = 1;
 	PDQ_PRINTF(("PDQ Interrupt: Status = 0x%08x\n", data));
+	PDQ_OS_CONSUMER_POSTSYNC(pdq);
 	if (data & PDQ_PSTS_RCV_DATA_PENDING) {
 	    pdq_process_received_data(pdq, &pdq->pdq_rx_info,
 				      pdq->pdq_dbp->pdqdb_receives,
@@ -1434,8 +1458,10 @@ pdq_initialize(
 {
     pdq_t *pdq;
     pdq_state_t state;
+#if !defined(PDQ_BUS_DMA)
     const pdq_uint32_t contig_bytes = (sizeof(pdq_descriptor_block_t) * 2) - PDQ_OS_PAGESIZE;
     pdq_uint8_t *p;
+#endif
     int idx;
 
     PDQ_ASSERT(sizeof(pdq_descriptor_block_t) == 8192);
@@ -1471,6 +1497,7 @@ pdq_initialize(
      * buffers (though on machines with 8KB pages we will to allocate
      * them separately since there will be nothing left overs.)
      */
+#if defined(PDQ_OS_MEMALLOC_CONTIG)
     p = (pdq_uint8_t *) PDQ_OS_MEMALLOC_CONTIG(contig_bytes);
     if (p != NULL) {
 	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_BUSPA(pdq, p);
@@ -1483,13 +1510,16 @@ pdq_initialize(
 	    if (PDQ_OS_VA_TO_BUSPA(pdq, p + idx) - physaddr != idx)
 		goto cleanup_and_return;
 	}
-	physaddr &= 0x1FFF;
-	if (physaddr) {
+	if (physaddr & 0x1FFF) {
 	    pdq->pdq_unsolicited_info.ui_events = (pdq_unsolicited_event_t *) p;
-	    pdq->pdq_dbp = (pdq_descriptor_block_t *) &p[0x2000 - physaddr];
+	    pdq->pdq_unsolicited_info.ui_pa_bufstart = physaddr;
+	    pdq->pdq_dbp = (pdq_descriptor_block_t *) &p[0x2000 - (physaddr & 0x1FFF)];
+	    pdq->pdq_pa_descriptor_block = physaddr & ~0x1FFFUL;
 	} else {
 	    pdq->pdq_dbp = (pdq_descriptor_block_t *) p;
+	    pdq->pdq_pa_descriptor_block = physaddr;
 	    pdq->pdq_unsolicited_info.ui_events = (pdq_unsolicited_event_t *) &p[0x2000];
+	    pdq->pdq_unsolicited_info.ui_pa_bufstart = physaddr + 0x2000;
 	}
     }
     if (contig_bytes == sizeof(pdq_descriptor_block_t)) {
@@ -1497,6 +1527,10 @@ pdq_initialize(
 	    (pdq_unsolicited_event_t *) PDQ_OS_MEMALLOC(
 		PDQ_NUM_UNSOLICITED_EVENTS * sizeof(pdq_unsolicited_event_t));
     }
+#else
+    if (pdq_os_memalloc_contig(pdq))
+	goto cleanup_and_return;
+#endif
 
     /*
      * Make sure everything got allocated.  If not, free what did
@@ -1504,23 +1538,26 @@ pdq_initialize(
      */
     if (pdq->pdq_dbp == NULL || pdq->pdq_unsolicited_info.ui_events == NULL) {
       cleanup_and_return:
+#ifdef PDQ_OS_MEMFREE_CONTIG
 	if (p /* pdq->pdq_dbp */ != NULL)
 	    PDQ_OS_MEMFREE_CONTIG(p /* pdq->pdq_dbp */, contig_bytes);
 	if (contig_bytes == sizeof(pdq_descriptor_block_t) && pdq->pdq_unsolicited_info.ui_events != NULL)
 	    PDQ_OS_MEMFREE(pdq->pdq_unsolicited_info.ui_events,
 			   PDQ_NUM_UNSOLICITED_EVENTS * sizeof(pdq_unsolicited_event_t));
+#endif
 	PDQ_OS_MEMFREE(pdq, sizeof(pdq_t));
 	return NULL;
     }
 
     pdq->pdq_cbp = (volatile pdq_consumer_block_t *) &pdq->pdq_dbp->pdqdb_consumer;
+    pdq->pdq_pa_consumer_block = PDQ_DB_BUSPA(pdq, pdq->pdq_cbp);
     pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) pdq->pdq_dbp->pdqdb_command_pool;
     pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) pdq->pdq_dbp->pdqdb_command_pool + sizeof(pdq->pdq_dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
     pdq->pdq_rx_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_receive_buffers;
 
     pdq->pdq_host_smt_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_host_smt_buffers;
 
-    PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", pdq->pdq_dbp, PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp)));
+    PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", pdq->pdq_dbp, pdq->pdq_pa_descriptor_block));
     PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_receives));
     PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_transmits));
     PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_host_smt));
@@ -1575,8 +1612,8 @@ pdq_initialize(
     /*
      * Initialize the command information block
      */
-    pdq->pdq_command_info.ci_pa_request_bufstart = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_command_info.ci_request_bufstart);
-    pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_requests);
+    pdq->pdq_command_info.ci_pa_request_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_request_bufstart);
+    pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_requests);
     PDQ_PRINTF(("PDQ Command Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
 		pdq->pdq_command_info.ci_request_bufstart,
 		pdq->pdq_command_info.ci_pa_request_bufstart));
@@ -1588,8 +1625,8 @@ pdq_initialize(
 	txd->txd_pa_hi = 0;
     }
 
-    pdq->pdq_command_info.ci_pa_response_bufstart = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_command_info.ci_response_bufstart);
-    pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_responses);
+    pdq->pdq_command_info.ci_pa_response_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_response_bufstart);
+    pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_responses);
     for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_responses)/sizeof(pdq->pdq_dbp->pdqdb_command_responses[0]); idx++) {
 	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_command_responses[idx];
 
@@ -1599,16 +1636,14 @@ pdq_initialize(
 	rxd->rxd_seg_len_lo = 0;
 	rxd->rxd_seg_len_hi = PDQ_SIZE_COMMAND_RESPONSE / 16;
     }
-    PDQ_OS_BUS_DMA_SYNC(pdq, pdq->pdq_command_info.ci_pa_response_descriptors,
-			0, sizeof(pdq->pdq_dbp->pdqdb_command_responses),
-			PDQ_OS_BUS_DMA_FROMHOST);
+    PDQ_OS_DESC_PRESYNC(pdq, pdq->pdq_dbp->pdqdb_command_responses,
+			sizeof(pdq->pdq_dbp->pdqdb_command_responses));
 
     /*
      * Initialize the unsolicited event information block
      */
     pdq->pdq_unsolicited_info.ui_free = PDQ_NUM_UNSOLICITED_EVENTS;
-    pdq->pdq_unsolicited_info.ui_pa_bufstart = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_unsolicited_info.ui_events);
-    pdq->pdq_unsolicited_info.ui_pa_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_unsolicited_events);
+    pdq->pdq_unsolicited_info.ui_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_unsolicited_events);
     PDQ_PRINTF(("PDQ Unsolicit Event Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
 		pdq->pdq_unsolicited_info.ui_events,
 		pdq->pdq_unsolicited_info.ui_pa_bufstart));
@@ -1622,36 +1657,33 @@ pdq_initialize(
 	rxd->rxd_pa_lo = pdq->pdq_unsolicited_info.ui_pa_bufstart + (const pdq_uint8_t *) event
 	    - (const pdq_uint8_t *) pdq->pdq_unsolicited_info.ui_events;
 	rxd->rxd_pa_hi = 0;
+	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event);
     }
-    PDQ_OS_BUS_DMA_SYNC(pdq, pdq->pdq_unsolicited_info.ui_pa_descriptors,
-			0, sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events),
-			PDQ_OS_BUS_DMA_FROMHOST);
-    PDQ_OS_BUS_DMA_SYNC(pdq, pdq->pdq_unsolicited_info.ui_pa_bufstart,
-			0, sizeof(pdq->pdq_unsolicited_info.ui_events),
-			PDQ_OS_BUS_DMA_TOHOST);
+    PDQ_OS_DESC_PRESYNC(pdq, pdq->pdq_dbp->pdqdb_unsolicited_events,
+			sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events));
 
     /*
      * Initialize the receive information blocks (normal and SMT).
      */
     pdq->pdq_rx_info.rx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_receives);
     pdq->pdq_rx_info.rx_target = pdq->pdq_rx_info.rx_free - PDQ_RX_SEGCNT * 8;
-    pdq->pdq_rx_info.rx_pa_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_receives);
+    pdq->pdq_rx_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_receives);
 
     pdq->pdq_host_smt_info.rx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt);
     pdq->pdq_host_smt_info.rx_target = pdq->pdq_host_smt_info.rx_free - PDQ_RX_SEGCNT * 3;
-    pdq->pdq_host_smt_info.rx_pa_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_host_smt);
+    pdq->pdq_host_smt_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_host_smt);
 
     /*
      * Initialize the transmit information block.
      */
-    pdq->pdq_tx_hdr[0] = PDQ_FDDI_PH0;
-    pdq->pdq_tx_hdr[1] = PDQ_FDDI_PH1;
-    pdq->pdq_tx_hdr[2] = PDQ_FDDI_PH2;
+    pdq->pdq_dbp->pdqdb_tx_hdr[0] = PDQ_FDDI_PH0;
+    pdq->pdq_dbp->pdqdb_tx_hdr[1] = PDQ_FDDI_PH1;
+    pdq->pdq_dbp->pdqdb_tx_hdr[2] = PDQ_FDDI_PH2;
     pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
-    pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = sizeof(pdq->pdq_tx_hdr);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = sizeof(pdq->pdq_dbp->pdqdb_tx_hdr);
     pdq->pdq_tx_info.tx_hdrdesc.txd_sop = 1;
-    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_tx_hdr);
-    pdq->pdq_tx_info.tx_pa_descriptors = PDQ_OS_VA_TO_BUSPA(pdq, pdq->pdq_dbp->pdqdb_transmits);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_tx_hdr);
+    pdq->pdq_tx_info.tx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_transmits);
 
     state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));
