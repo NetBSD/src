@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.3 1997/03/21 05:39:42 cgd Exp $	*/
+/*	$NetBSD: rtld.c,v 1.4 1997/04/15 07:15:46 cgd Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -84,6 +84,7 @@ Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
 Obj_Entry _rtld_objself;	/* The dynamic linker shared object */
+char _rtld_path[] = _PATH_RTLD;
 
 Search_Path *_rtld_paths;
 /*
@@ -134,7 +135,7 @@ _rtld_init(
 
     /* Conjure up an Obj_Entry structure for the dynamic linker. */
 
-    _rtld_objself.path = _PATH_RTLD;
+    _rtld_objself.path = _rtld_path;
     _rtld_objself.rtld = true;
     _rtld_objself.mapbase = mapbase;
     _rtld_objself.relocbase = mapbase;
