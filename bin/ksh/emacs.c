@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.12 2002/09/25 02:41:11 provos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.13 2002/09/25 02:55:03 provos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -274,6 +274,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_transpose,		0, CTRL('T') },
 #endif
 	{ XFUNC_complete,		1, CTRL('[') },
+	{ XFUNC_comp_list,		0, CTRL('I') },
         { XFUNC_comp_list,		1,	'='  },
 	{ XFUNC_enumerate,		1,	'?'  },
         { XFUNC_expand,			1,	'*'  },

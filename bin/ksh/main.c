@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2002/09/20 20:07:09 jschauma Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2002/09/25 02:55:03 provos Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -206,6 +206,16 @@ main(argc, argv)
 #ifdef POSIXLY_CORRECT
 	change_flag(FPOSIX, OF_SPECIAL, 1);
 #endif /* POSIXLY_CORRECT */
+
+	/* Set edit mode to emacs by default, may be overridden
+	 * by the environment or the user.  Also, we want tab completion
+	 * on in vi by default. */
+#if defined(EDIT) && defined(EMACS)
+	change_flag(FEMACS, OF_SPECIAL, 1);
+#endif /* EDIT && EMACS */
+#if defined(EDIT) && defined(VI)
+	Flag(FVITABCOMPLETE) = 1;
+#endif /* EDIT && VI */
 
 	/* import environment */
 	if (environ != NULL)
