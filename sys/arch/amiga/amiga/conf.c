@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1995/04/10 10:01:46 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1995/04/13 11:52:43 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -95,21 +95,21 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c) { \
+#define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
-#define	cdev_view_init(c) { \
+#define	cdev_view_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
 
 /* open, close, read, write, ioctl -- XXX should be a generic device */
-#define	cdev_par_init(c) { \
+#define	cdev_par_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
@@ -185,7 +185,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	cdev_st_init(NST,st),		/* 20: SCSI tape */
+	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
