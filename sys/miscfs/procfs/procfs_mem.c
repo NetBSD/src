@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.22 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.23 1999/03/25 04:45:57 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -156,6 +156,14 @@ procfs_checkioperm(p, t)
 	if (t == initproc && securelevel > -1)
 		return (EPERM);
 
+	/*
+	 * (3) the tracer is chrooted, and its root directory is
+	 * not at or above the root directory of the tracee
+	 */
+
+	if (!proc_isunder(t, p))
+		return EPERM;
+	
 	return (0);
 }
 
