@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.25 1995/10/12 17:56:44 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.26 1995/10/15 05:48:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -154,7 +154,6 @@ i386_get_ldt(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int nldt, num;
 	union descriptor *lp;
-	int s;
 	struct i386_get_ldt_args ua;
 
 	if (error = copyin(args, &ua, sizeof(ua)))
@@ -168,17 +167,17 @@ i386_get_ldt(p, args, retval)
 	if (ua.start < 0 || ua.num < 0)
 		return (EINVAL);
 
-	if (pcb->pcb_ldt != 0) {
+	if (pcb->pcb_flags & PCB_USER_LDT) {
 		nldt = pcb->pcb_ldt_len;
 		lp = pcb->pcb_ldt;
 	} else {
 		nldt = NLDT;
 		lp = ldt;
 	}
-	if (ua.start > nldt) {
-		splx(s);
+
+	if (ua.start > nldt)
 		return (EINVAL);
-	}
+
 	lp += ua.start;
 	num = min(ua.num, nldt - ua.start);
 
@@ -217,32 +216,35 @@ i386_set_ldt(p, args, retval)
 
 	/* allocate user ldt */
 	if (pcb->pcb_ldt == 0 || (ua.start + ua.num) > pcb->pcb_ldt_len) {
-		size_t oldlen, len;
-		union descriptor *new_ldt;
+		size_t old_len, new_len;
+		union descriptor *old_ldt, *new_ldt;
+
+		if (pcb->pcb_flags & PCB_USER_LDT) {
+			old_len = pcb->pcb_ldt_len * sizeof(union descriptor);
+			old_ldt = pcb->pcb_ldt;
+		} else {
+			old_len = NLDT * sizeof(union descriptor);
+			old_ldt = ldt;
+			pcb->pcb_ldt_len = 512;
+		}
+		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
+			pcb->pcb_ldt_len *= 2;
+		new_len = pcb->pcb_ldt_len * sizeof(union descriptor);
+		new_ldt = (union descriptor *)kmem_alloc(kernel_map, new_len);
+		bcopy(old_ldt, new_ldt, old_len);
+		bzero((caddr_t)new_ldt + old_len, new_len - old_len);
+		pcb->pcb_ldt = new_ldt;
 
 		if (pcb->pcb_flags & PCB_USER_LDT)
 			ldt_free(pcb);
 		else
-			pcb->pcb_ldt_len = 512;
-		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
-			pcb->pcb_ldt_len *= 2;
-		len = pcb->pcb_ldt_len * sizeof(union descriptor);
-		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
-		if (pcb->pcb_ldt == 0) {
-			oldlen = NLDT * sizeof(union descriptor);
-			bcopy(ldt, new_ldt, oldlen);
 			pcb->pcb_flags |= PCB_USER_LDT;
-		} else {
-			oldlen = pcb->pcb_ldt_len * sizeof(union descriptor);
-			bcopy(pcb->pcb_ldt, new_ldt, oldlen);
-			kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-			    oldlen);
-		}
-		bzero((caddr_t)new_ldt + oldlen, len - oldlen);
-		pcb->pcb_ldt = new_ldt;
-		ldt_alloc(pcb, new_ldt, len);
+		ldt_alloc(pcb, new_ldt, new_len);
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
+
+		if (old_ldt != ldt)
+			kmem_free(kernel_map, (vm_offset_t)old_ldt, old_len);
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
 #endif
