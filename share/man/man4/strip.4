@@ -1,4 +1,4 @@
-.\" $NetBSD: strip.4,v 1.12 2002/02/13 08:17:47 ross Exp $
+.\" $NetBSD: strip.4,v 1.13 2004/12/05 13:24:10 peter Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -12,34 +12,15 @@
 .\" Stanford University makes no representations about the suitability
 .\" of this software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
-.Dd March 10, 1996
+.Dd December 5, 2004
 .Dt STRIP 4
 .Os
 .Sh NAME
 .Nm strip
 .Nd Metricom Ricochet packet radio wireless network device
 .Sh SYNOPSIS
-.Cd pseudo-device strip Op Ar count
+.Cd pseudo-device strip
 .Sh DESCRIPTION
-Configures
-.Ar count
-.Nm
-interfaces, named
-.Em strip0 ,
-.Em strip1 ,
-etc, into a
-.Nx
-kernel built from a
-.Xr config 8
-file containing the given entry.
-.Pp
-Each
-.Nm
-interface is a pseudo-device driver for the
-.Tn Metricom
-.Em Ricochet
-packet radio, operating in peer-to-peer packet mode.
-.Pp
 The
 .Nm
 driver takes outbound network packets, encapsulates them using the
@@ -59,6 +40,19 @@ is an acronym for
 .Sy ST Ns armode
 .Sy R Ns adio
 .Sy IP .
+.Pp
+The
+.Nm
+interfaces can be created by using the
+.Xr ifconfig 8
+.Cm create
+command.
+Each
+.Nm
+interface is a pseudo-device driver for the
+.Tn Metricom
+.Em Ricochet
+packet radio, operating in peer-to-peer packet mode.
 .Pp
 In many ways,
 the
@@ -205,7 +199,6 @@ if the baud rate was set correctly by
 .Xr arp 4 ,
 .Xr inet 4 ,
 .Xr sl 4 ,
-.Xr config 8 ,
 .Xr ifconfig 8 ,
 .Xr route 8 ,
 .Xr slattach 8
