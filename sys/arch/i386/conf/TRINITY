@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.47 1994/12/06 05:02:26 mycroft Exp $
+#	$NetBSD: TRINITY,v 1.48 1994/12/11 16:20:59 mycroft Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -86,7 +86,7 @@ com1	at isa? port 0x2f8 irq 3
 #com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
-#com*	at ast? slave ?
+#com*	at ast? slave ? flags 1
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 

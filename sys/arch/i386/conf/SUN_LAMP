@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.54 1994/11/03 22:18:46 mycroft Exp $
+#	$NetBSD: SUN_LAMP,v 1.55 1994/12/11 16:20:57 mycroft Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -85,10 +85,10 @@ pc0	at isa? port 0x60 irq 1		# generic PC console device
 #com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
-com0	at ast? slave ?
-com1	at ast? slave ?
-com2	at ast? slave ?
-com3	at ast? slave ?
+com0	at ast? slave ? flags 1
+com1	at ast? slave ? flags 1
+com2	at ast? slave ? flags 1
+com3	at ast? slave ? flags 1
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 
