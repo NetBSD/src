@@ -221,7 +221,7 @@ struct mfs_args {
 };
 #endif MFS
 
-#ifdef NFS
+#if defined(NFSSERVER) || defined(NFSCLIENT)
 /*
  * File Handle (32 bytes for version 2), variable up to 1024 for version 3
  */
@@ -262,7 +262,7 @@ struct nfs_args {
 #define	NFSMNT_SPONGY	0x0400	/* spongy mount (soft for stat and lookup) */
 #define	NFSMNT_COMPRESS	0x0800	/* Compress nfs rpc xdr */
 #define	NFSMNT_LOCKBITS	(NFSMNT_SCKLOCK | NFSMNT_WANTSCK)
-#endif NFS
+#endif /* defined(NFSSERVER || defined(NFSCLIENT) */
 
 #ifdef PCFS
 /*
