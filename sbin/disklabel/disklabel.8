@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.27 1999/06/03 01:49:58 cgd Exp $
+.\"	$NetBSD: disklabel.8,v 1.28 2000/01/31 16:02:43 soda Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -387,8 +387,8 @@ If the disk partition is not specified in the disk name
 .Nm
 will construct the full pathname of the disk and use
 the ``a'' partition on the tahoe,
-the ``d'' partition on the i386 or its successors, and the ``c''
-partition on all others.
+the ``d'' partition on i386 or hpcmips or arc, and
+the ``c'' partition on all others.
 .Pp
 On the sparc, sparc64 and sun3
 .Nx
