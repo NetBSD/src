@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2003/01/30 02:07:32 fvdl Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1 2003/01/30 02:07:31 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -34,27 +34,71 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Modified from the i386 version for x86_64 by fvdl@wasabisystems.com.
+ *
  */
 
-#define	__LIBC12_SOURCE__
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: makecontext.c,v 1.1 2003/01/30 02:07:31 fvdl Exp $");
+#endif
 
-#include <sys/types.h>
-#include <signal.h>
-
+#include <inttypes.h>
+#include <stddef.h>
+#include <ucontext.h>
 #include "extern.h"
 
- __weak_alias(__sigaction14, __libc_sigaction14)
+#include <stdarg.h>
 
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
+void
+makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
-	extern int __sigtramp_sigcontext_1[];
+	__greg_t *gr = ucp->uc_mcontext.__gregs;
+	uintptr_t *sp;
+	va_list ap;
+	int stackargs, i;
+
+	stackargs = argc - 6;
+
+	/* LINTED __greg_t is safe */
+	gr[_REG_RIP] = (__greg_t)func;
+
+	/* LINTED uintptr_t is safe */
+	sp  = (uintptr_t *)
+	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
+
+	/* LINTED uintptr_t is safe */
+	sp  = (uintptr_t *)(((uintptr_t)sp & ~15) - 8);
+	sp--;
+	if (stackargs > 0)
+		sp -= stackargs;
+	/* LINTED __greg_t is safe */
+	gr[_REG_URSP] = (__greg_t)sp;
+	gr[_REG_RBP] = (__greg_t)0;	/* Wipe out frame pointer. */
+
+	/* Put return address on top of stack. */
+	/* LINTED uintptr_t is safe */
+	*sp++ = (uintptr_t)_resumecontext;
 
 	/*
-	 * Right here we should select the SA_SIGINFO trampoline
-	 * if SA_SIGINFO is set in the sigaction.
+	 * Construct argument list.
+	 * The registers used to pass the first 6 arguments
+	 * (rdi, rsi, rdx, rcx, r8, r9) are the first 6 in gregs,
+	 * in that order, so those arguments can just be copied to
+	 * the gregs array.
 	 */
+	va_start(ap, argc);
+	for (i = 0; i < 6 && argc > 0; i++) {
+		argc--;
+		/* LINTED __greg_t is safe */
+		gr[i] = va_arg(ap, __greg_t);
+	}
 
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_sigcontext_1, 1));
+	while (stackargs-- > 0) {
+		/* LINTED uintptr_t is safe */
+		*sp++ = va_arg(ap, uintptr_t);
+	}
+
+	va_end(ap);
 }
