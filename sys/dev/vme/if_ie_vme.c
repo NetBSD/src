@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.11 2000/07/10 13:54:54 mrg Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.12 2001/01/22 22:28:47 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -525,6 +525,8 @@ ie_vme_attach(parent, self, aux)
 	sc->intrhook = ie_vmeintr;
 	sc->memcopyout = ie_memcopyout;
 	sc->memcopyin = ie_memcopyin;
+
+	sc->ie_bus_barrier = NULL;
 	sc->ie_bus_read16 = ie_vme_read16;
 	sc->ie_bus_write16 = ie_vme_write16;
 	sc->ie_bus_write24 = ie_vme_write24;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixreg.h,v 1.2 1998/02/28 20:43:28 pk Exp $	*/
+/*	$NetBSD: if_ixreg.h,v 1.3 2001/01/22 22:28:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995
@@ -38,9 +38,15 @@
 
 #define IX_IOSIZE	16	/* card has 16 registers in IO space */
 
+#define IX_DATAPORT  		0x00	/* shared memory data port */
+#define IX_WRITEPTR  		0x02	/* shared memory write pointer */
+#define IX_READPTR  		0x04	/* shared memory read pointer */
+
 #define IX_ATTN			0x06	/* channel attention control */
 #define IX_IRQ			0x07	/* IRQ configuration */
 #define IX_IRQ_ENABLE		0x08	/* enable board interrupts */
+
+#define IX_SHADOWPTR  		0x08	/* shadow memory pointer */
 
 #define IX_MEMDEC		0x0a	/* memory decode */
 #define IX_MCTRL		0x0b	/* memory control */

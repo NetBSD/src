@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.8 2000/06/28 16:27:53 mrg Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.9 2001/01/22 22:28:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -347,6 +347,8 @@ ai_attach(parent, self, aux)
 	sc->intrhook = NULL;
 	sc->hwreset = ai_reset;
 	sc->chan_attn = ai_atten;
+
+	sc->ie_bus_barrier = NULL;
 
 	sc->memcopyin = ai_copyin;
 	sc->memcopyout = ai_copyout;
