@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.16 1998/10/08 20:04:32 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.17 1998/10/10 14:12:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,11 @@ pchbmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
+#if 0
 	/*
-	 * Match all known PCI host chipsets.
+	 * PCI host bridges are matched on class/subclass.
+	 * This list contains only the bridges where correct
+	 * (or incorrect) behaviour is not yet confirmed.
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
@@ -94,7 +97,6 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_INTEL_82437MX:
 		case PCI_PRODUCT_INTEL_82437VX:
 		case PCI_PRODUCT_INTEL_82439HX:
-		case PCI_PRODUCT_INTEL_82439TX:
 		case PCI_PRODUCT_INTEL_82441FX:
 		case PCI_PRODUCT_INTEL_82443BX:
 		case PCI_PRODUCT_INTEL_82443LX:
@@ -164,6 +166,12 @@ pchbmatch(parent, match, aux)
 			return (1);
 		}
 		break;
+	}
+#endif
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
+		return (1);
 	}
 
 	return (0);
@@ -237,6 +245,11 @@ pchbattach(parent, self, aux)
 			}
 			break;
 		}
+	/*
+	 * XXX: vendor=PEQUR, device=0x0005 - host bridge with
+	 * auxiliary PCI bus (used in Compaq Proliant) should
+	 * be here, but I don't have enough information.
+	 */
 	}
 }
 
