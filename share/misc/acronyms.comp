@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.23 2003/10/15 08:52:51 wennmach Exp $
+$NetBSD: acronyms.comp,v 1.24 2003/10/17 08:56:39 keihan Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -11,6 +11,7 @@ ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
 ATX	advanced technology extended
 BEDO	burst extended data output
+BGP	border gateway protocol
 BIOS	basic input/output system
 BLOB	binary large object
 BSD	berkeley software distribution
@@ -23,7 +24,7 @@ CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
 CLV	constant linear velocity (as opposed to CAV)
-CPU	central process unit
+CPU	central processing unit
 CRLF	carriage return line feed
 CRT	cathode ray tube
 CSS	cascading style sheets
@@ -57,12 +58,14 @@ FTP	file transfer protocol
 GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
+GPU	graphics processing unit
 GUI	graphics user interface
 HDCP	high-bandwidth digital content protection
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
 I2O	intelligent input/output
 IANA	internet assigned number authority
+IC	integrated circuit
 ICB	internet citizen's band
 ICMP	internet control message protocol
 IDE	integrated drive electronics
@@ -93,6 +96,7 @@ LBA	logical block addressing
 LCD	liquid crystal display
 LDAP	lightweight directory access protocol
 LUN	logical unit number
+MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
 MIPS	million instructions per second
@@ -120,11 +124,13 @@ PPP	point-to-point protocol
 PPPOE	point-to-point protocol over ethernet
 PROM	programmable read only memory
 PTE	page table entry
+PTLA	pseudo top level aggregator
 PTP	page table page
 RAID	redundant array of inexpensive disks
 RAM	random access memory
 RCS	revision control system
 RFC	request for comments
+RGB	red green blue
 RISC	reduced instruction set computing
 ROM	read only memory
 RPM	revolutions per minute
@@ -148,6 +154,7 @@ SVGA	super video graphics array
 TCL	tool command language
 TCP	transmission control protocol
 TFT	thin film transistor
+TLA	top level aggregator
 TLD	top level domain
 TMDS	transition minimized differential signaling
 TTY	teletype
