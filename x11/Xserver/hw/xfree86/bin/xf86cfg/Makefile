@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/28 15:19:30 chris Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2005/03/05 17:39:25 he Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,10 @@ CPPFLAGS+=	-DXF86CONFIG=\"XF86Config\" -DUSE_MODULES \
 		-DPROJECT_ROOT=\"/usr/X11R6\" \
 		-DXF86CONFIGDIR=\"/etc/X11\" -DWSCONS_SUPPORT
 
+.if ${MACHINE} == "cats"
+CPPFLAGS+=	-DPCVT_SUPPORT
+.endif
+		
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
