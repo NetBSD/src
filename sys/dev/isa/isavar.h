@@ -3,7 +3,7 @@
  * The Berkeley Software Design Inc. software License Agreement specifies
  * the terms and conditions for redistribution.
  *
- *	BSDI $Id: isavar.h,v 1.3 1993/10/16 05:25:21 mycroft Exp $
+ *	BSDI $Id: isavar.h,v 1.4 1993/10/17 14:03:54 mycroft Exp $
  */
 
 /*
@@ -66,7 +66,7 @@ void isa_establish __P((struct isadev *, struct device *));
  */
 typedef enum { BUS_ISA, BUS_EISA, BUS_MCA } isa_type;
 
-extern caddr_t atdevbase;	/* kernel virtual address of "hole" */
+extern int atdevbase;		/* kernel virtual address of "hole" */
 extern isa_type isa_bustype;	/* type of bus */
 
 /*
