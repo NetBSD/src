@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.2 1998/11/13 13:47:56 drochner Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -379,7 +379,9 @@ void rf_ContinueDagAccess (RF_DagList_t *dagList)
 int rf_State_LastState(RF_RaidAccessDesc_t *desc)
 {
   void (*callbackFunc)(RF_CBParam_t) = desc->callbackFunc;
-  void *callbackArg = desc->callbackArg;
+  RF_CBParam_t callbackArg;
+
+  callbackArg.p = desc->callbackArg;
 
 #ifdef SIMULATE
   int tid;
