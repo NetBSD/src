@@ -1,5 +1,0 @@
-Simply type the hostname or IP address of the default gateway for this
-machine, and hit enter.  If the default gateway is specified as a hostname,
-rather than by IP, that hostname must exist in /etc/hosts.
-
-$NetBSD: help,v 1.1 2001/04/25 03:43:35 garbled Exp $

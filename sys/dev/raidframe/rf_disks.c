@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.34 2000/12/05 01:35:56 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.34.6.1 2001/09/07 04:45:28 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,7 +140,6 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 
 			if (disks[r][c].status == rf_ds_optimal) {
 				raidread_component_label(
-					 raidPtr->raid_cinfo[r][c].ci_dev,
 					 raidPtr->raid_cinfo[r][c].ci_vp,
 					 &raidPtr->raid_cinfo[r][c].ci_label);
 			}
@@ -495,7 +494,6 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				/* Note: rf_protectedSectors is already 
 				   factored into numBlocks here */
 				raidPtr->raid_cinfo[r][c].ci_vp = ac->vp;
-				raidPtr->raid_cinfo[r][c].ci_dev = ac->dev;
 
 				memcpy(&raidPtr->raid_cinfo[r][c].ci_label,
 				       ac->clabel, sizeof(*ac->clabel));
@@ -506,7 +504,6 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				   autoconfigured.  You'll need this info
 				   later.  Trust me :) */
 				diskPtr->auto_configured = 1;
-				diskPtr->dev = ac->dev;
 			
 				/* 
 				 * we allow the user to specify that
@@ -632,7 +629,6 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	diskPtr->status = rf_ds_optimal;
 
 	raidPtr->raid_cinfo[row][col].ci_vp = NULL;
-	raidPtr->raid_cinfo[row][col].ci_dev = NULL;
 
 	error = raidlookup(diskPtr->devname, proc, &vp);
 	if (error) {
@@ -661,12 +657,10 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 		diskPtr->partitionSize = dpart.part->p_size;
 
 		raidPtr->raid_cinfo[row][col].ci_vp = vp;
-		raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;
-		
+
 		/* This component was not automatically configured */
 		diskPtr->auto_configured = 0;
-		diskPtr->dev = va.va_rdev;
-		
+
 		/* we allow the user to specify that only a fraction of the
 		 * disks should be used this is just for debug:  it speeds up
 		 * the parity scan */
@@ -1091,8 +1085,6 @@ rf_add_hot_spare(raidPtr, sparePtr)
 				 0, raidPtr->numCol + spare_number, 
 				 raidPtr->qType,
 				 raidPtr->sectorsPerDisk,
-				 raidPtr->Disks[0][raidPtr->numCol + 
-						  spare_number].dev,
 				 raidPtr->maxOutstanding,
 				 &raidPtr->shutdownList,
 				 raidPtr->cleanupList);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.34 2001/07/18 06:48:28 thorpej Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.34.2.1 2001/09/07 04:45:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,10 +53,11 @@
 #include <sys/ttycom.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include "tb.h"
 #if NTB > 0
-int	tbopen __P((dev_t dev, struct tty *tp));
+int	tbopen __P((struct vnode *devvp, struct tty *tp));
 int	tbclose __P((struct tty *tp, int flags));
 int	tbread __P((struct tty *tp, struct uio *uio, int flags));
 int	tbtioctl __P((struct tty *tp, u_long cmd, caddr_t data,
@@ -66,7 +67,7 @@ int	tbinput __P((int c, struct tty *tp));
 
 #include "sl.h"
 #if NSL > 0
-int	slopen __P((dev_t dev, struct tty *tp));
+int	slopen __P((struct vnode *devvp, struct tty *tp));
 int	slclose __P((struct tty *tp, int flags));
 int	sltioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
@@ -76,7 +77,7 @@ int	slstart __P((struct tty *tp));
 
 #include "ppp.h"
 #if NPPP > 0
-int	pppopen __P((dev_t dev, struct tty *tp));
+int	pppopen __P((struct vnode *devvp, struct tty *tp));
 int	pppclose __P((struct tty *tp, int flags));
 int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));
@@ -88,7 +89,7 @@ int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 
 #include "strip.h"
 #if NSTRIP > 0
-int	stripopen __P((dev_t dev, struct tty *tp));
+int	stripopen __P((struct vnode *devvp, struct tty *tp));
 int	stripclose __P((struct tty *tp, int flags));
 int	striptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
 			int flag, struct proc *p));

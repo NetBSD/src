@@ -1,5 +1,0 @@
-# $NetBSD: md.sun2,v 1.1 2001/05/18 00:16:37 fredette Exp $
-./etc/fstab.nfs		etc-sys-etc
-./etc/fstab.sd0		etc-sys-etc
-#./etc/ld.so.conf	etc-sys-etc
-./etc/ttyaction		etc-sys-etc

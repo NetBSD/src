@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.13 2001/08/05 11:11:33 jdolecek Exp $	*/
+/*	$NetBSD: mlx.c,v 1.13.2.1 2001/09/07 04:45:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 
 #include <machine/vmparam.h>
 #include <machine/bus.h>
@@ -98,6 +99,8 @@
 #include <dev/ic/mlxreg.h>
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #define	MLX_TIMEOUT	60
 
@@ -686,16 +689,18 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
  * Accept an open operation on the control device.
  */
 int
-mlxopen(dev_t dev, int flag, int mode, struct proc *p)
+mlxopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mlx_softc *mlx;
 
-	if ((mlx = device_lookup(&mlx_cd, minor(dev))) == NULL)
+	if ((mlx = device_lookup(&mlx_cd, minor(devvp->v_rdev))) == NULL)
 		return (ENXIO);
 	if ((mlx->mlx_flags & MLXF_INITOK) == 0)
 		return (ENXIO);
 	if ((mlx->mlx_flags & MLXF_OPEN) != 0)
 		return (EBUSY);
+
+	devvp->v_devcookie = mlx;
 
 	mlx->mlx_flags |= MLXF_OPEN;
 	return (0);
@@ -705,11 +710,10 @@ mlxopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode, struct proc *p)
+mlxclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct mlx_softc *mlx;
+	struct mlx_softc *mlx = devvp->v_devcookie;
 
-	mlx = device_lookup(&mlx_cd, minor(dev));
 	mlx->mlx_flags &= ~MLXF_OPEN;
 	return (0);
 }
@@ -718,9 +722,10 @@ mlxclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlxioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
-	struct mlx_softc *mlx;
+	struct mlx_softc *mlx = devvp->v_devcookie;
 	struct mlx_rebuild_request *rb;
 	struct mlx_rebuild_status *rs;
 	struct mlx_pause *mp;
@@ -729,8 +734,6 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	if (securelevel >= 2)
 		return (EPERM);
-
-	mlx = device_lookup(&mlx_cd, minor(dev));
 
 	rb = (struct mlx_rebuild_request *)data;
 	rs = (struct mlx_rebuild_status *)data;

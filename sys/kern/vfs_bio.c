@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.76 2001/04/01 16:16:56 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.76.4.1 2001/09/07 04:45:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -163,7 +163,7 @@ bufinit()
 	for (i = 0; i < nbuf; i++) {
 		bp = &buf[i];
 		memset((char *)bp, 0, sizeof(*bp));
-		bp->b_dev = NODEV;
+		bp->b_devvp = NULL;
 		bp->b_vnbufs.le_next = NOLIST;
 		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
@@ -417,9 +417,9 @@ bdwrite(bp)
 	/* If this is a tape block, write the block now. */
 	/* XXX NOTE: the memory filesystem usurpes major device */
 	/* XXX       number 255, which is a bad idea.		*/
-	if (bp->b_dev != NODEV &&
-	    major(bp->b_dev) != 255 &&	/* XXX - MFS buffers! */
-	    bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
+	if (bp->b_devvp != NULL &&
+	    major(bp->b_devvp->v_rdev) != 255 && /* XXX - MFS buffers! */
+	    bdevsw[major(bp->b_devvp->v_rdev)].d_type == D_TAPE) {
 		bawrite(bp);
 		return;
 	}
@@ -858,7 +858,7 @@ start:
 
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
-	bp->b_dev = NODEV;
+	bp->b_devvp = NULL;
 	bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = 0;
 	bp->b_iodone = 0;
 	bp->b_error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15 2001/04/19 00:47:50 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.15.4.1 2001/09/07 04:45:34 thorpej Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -60,6 +60,8 @@
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -331,14 +333,14 @@ USB_ATTACH(uscanner)
 }
 
 int
-uscanneropen(dev, flag, mode, p)
-	dev_t dev;
+uscanneropen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct uscanner_softc *sc;
-	int unit = USCANNERUNIT(dev);
+	int unit = USCANNERUNIT(devvp->v_rdev);
 	usbd_status err;
 
 	USB_GET_SC_OPEN(uscanner, unit, sc);
@@ -351,6 +353,8 @@ uscanneropen(dev, flag, mode, p)
 
 	if (sc->sc_state & USCANNER_OPEN)
 		return (EBUSY);
+
+	devvp->v_devcookie = sc;
 
 	sc->sc_state |= USCANNER_OPEN;
 
@@ -394,18 +398,18 @@ uscanneropen(dev, flag, mode, p)
 }
 
 int
-uscannerclose(dev, flag, mode, p)
-	dev_t dev;
+uscannerclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct uscanner_softc *sc;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%d\n",
-		     flag, mode, USCANNERUNIT(dev)));
+		     flag, mode, USCANNERUNIT(devvp->v_rdev)));
 
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_state & USCANNER_OPEN)) {
@@ -497,15 +501,15 @@ uscanner_do_read(sc, uio, flag)
 }
 
 int
-uscannerread(dev, uio, flag)
-	dev_t dev;
+uscannerread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct uscanner_softc *sc;
 	int error;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	sc->sc_refcnt++;
 	error = uscanner_do_read(sc, uio, flag);
@@ -553,15 +557,15 @@ uscanner_do_write(sc, uio, flag)
 }
 
 int
-uscannerwrite(dev, uio, flag)
-	dev_t dev;
+uscannerwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct uscanner_softc *sc;
 	int error;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	sc->sc_refcnt++;
 	error = uscanner_do_write(sc, uio, flag);
@@ -648,15 +652,15 @@ USB_DETACH(uscanner)
 }
 
 int
-uscannerpoll(dev, events, p)
-	dev_t dev;
+uscannerpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct uscanner_softc *sc;
 	int revents = 0;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -673,7 +677,8 @@ uscannerpoll(dev, events, p)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+uscannerioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
 {
 	return (EINVAL);
 }

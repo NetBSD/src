@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5 2000/10/24 14:53:59 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.5.8.1 2001/09/07 04:45:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -291,18 +293,20 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, struct proc *p)
+urioopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
 
-	USB_GET_SC_OPEN(urio, URIOUNIT(dev), sc);
+	USB_GET_SC_OPEN(urio, URIOUNIT(devvp->v_rdev), sc);
 
 	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n", 
 		     flag, mode, URIOUNIT(dev)));
 
 	if (sc->sc_dying)
 		return (EIO);
+
+	devvp->v_devcookie = sc;
 
 	if (sc->sc_in_pipe != NULL)
 		return (EBUSY);
@@ -324,10 +328,11 @@ urioopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct proc *p)
+urioclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+
+	sc = devvp->v_devcookie;
 
 	DPRINTFN(5, ("urioclose: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));
@@ -347,7 +352,7 @@ urioclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-urioread(dev_t dev, struct uio *uio, int flag)
+urioread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;
@@ -356,7 +361,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	u_int32_t n, tn;
 	int error = 0;
 
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	DPRINTFN(5, ("urioread: %d\n", URIOUNIT(dev)));
 
@@ -404,7 +409,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uriowrite(dev_t dev, struct uio *uio, int flag)
+uriowrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;
@@ -413,7 +418,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+	sc = devvp->v_devcookie;
 
 	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev), 
 		     (long)uio->uio_resid));
@@ -466,10 +471,10 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+urioioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
 {
 	struct urio_softc * sc;
-	int unit = URIOUNIT(dev);
 	struct urio_command *rcmd;
 	int requesttype, len;
 	struct iovec iov;
@@ -481,7 +486,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	void *ptr = NULL;
 	int error = 0;
 
-	USB_GET_SC(urio, unit, sc);
+	sc = devvp->v_devcookie;
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -561,7 +566,7 @@ ret:
 }
 
 int
-uriopoll(dev_t dev, int events, struct proc *p)
+uriopoll(struct vnode *devvp, int events, struct proc *p)
 {
 	return (0);
 }

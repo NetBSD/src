@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.68.4.1 2001/09/07 04:45:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68.4.1 2001/09/07 04:45:43 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp";
@@ -70,6 +70,9 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 da
 #endif
 #include <sys/protosw.h>
 #include <sys/socket.h>
+
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <net/if.h>
 #ifdef sun
@@ -507,7 +510,7 @@ int IPL_EXTERN(ioctl)(dev_t dev, int cmd, caddr_t data, int mode
 # endif
 )
 #else
-int IPL_EXTERN(ioctl)(dev, cmd, data, mode
+int IPL_EXTERN(ioctl)(devvp, cmd, data, mode
 # if (defined(_KERNEL) && ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || \
        (NetBSD >= 199511) || (__FreeBSD_version >= 220000) || \
        defined(__OpenBSD__)))
@@ -516,7 +519,7 @@ struct proc *p;
 # else
 )
 # endif
-dev_t dev;
+struct vnode *devvp;
 # if defined(__NetBSD__) || defined(__OpenBSD__) || \
 	(_BSDI_VERSION >= 199701) || (__FreeBSD_version >= 300000)
 u_long cmd;
@@ -537,7 +540,7 @@ int mode;
 		return EPERM;
 #endif
 #ifdef	_KERNEL
-	unit = GET_MINOR(dev);
+	unit = GET_MINOR(devvp->v_rdev);
 	if ((IPL_LOGMAX < unit) || (unit < 0))
 		return ENXIO;
 #else
@@ -967,7 +970,7 @@ int IPL_EXTERN(open)(dev_t *pdev, int flags, int devtype, cred_t *cp)
 int IPL_EXTERN(open)(dev_t dev, int flags)
 #  endif
 # else
-int IPL_EXTERN(open)(dev, flags
+int IPL_EXTERN(open)(devvp, flags
 #  if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000) || defined(__OpenBSD__)) && defined(_KERNEL)
 , devtype, p)
@@ -976,14 +979,14 @@ struct proc *p;
 #  else
 )
 #  endif
-dev_t dev;
+struct vnode *devvp;
 int flags;
 # endif /* __sgi */
 {
 # if defined(__sgi) && defined(_KERNEL)
 	u_int min = geteminor(*pdev);
 # else
-	u_int min = GET_MINOR(dev);
+	u_int min = GET_MINOR(devvp->v_rdev);
 # endif
 
 	if (IPL_LOGMAX < min)
@@ -997,7 +1000,7 @@ int flags;
 # ifdef __sgi
 int IPL_EXTERN(close)(dev_t dev, int flags, int devtype, cred_t *cp)
 #else
-int IPL_EXTERN(close)(dev, flags
+int IPL_EXTERN(close)(devvp, flags
 #  if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000) || defined(__OpenBSD__)) && defined(_KERNEL)
 , devtype, p)
@@ -1006,11 +1009,11 @@ struct proc *p;
 #  else
 )
 #  endif
-dev_t dev;
+struct vnode *devvp;
 int flags;
 # endif /* __sgi */
 {
-	u_int	min = GET_MINOR(dev);
+	u_int	min = GET_MINOR(devvp->v_rdev);
 
 	if (IPL_LOGMAX < min)
 		min = ENXIO;
@@ -1029,17 +1032,17 @@ int flags;
 int IPL_EXTERN(read)(dev_t dev, uio_t *uio, cred_t *crp)
 # else
 #  if BSD >= 199306
-int IPL_EXTERN(read)(dev, uio, ioflag)
+int IPL_EXTERN(read)(devvp, uio, ioflag)
 int ioflag;
 #  else
 int IPL_EXTERN(read)(dev, uio)
 #  endif
-dev_t dev;
+struct vnode *devvp;
 struct uio *uio;
 # endif /* __sgi */
 {
 # ifdef IPFILTER_LOG
-	return ipflog_read(GET_MINOR(dev), uio);
+	return ipflog_read(GET_MINOR(devvp->v_rdev), uio);
 # else
 	return ENXIO;
 # endif

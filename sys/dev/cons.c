@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40 2001/06/04 09:45:03 jdolecek Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.4.1 2001/09/07 04:45:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <dev/cons.h>
 
 struct	tty *constty = NULL;	/* virtual console output device */
@@ -60,15 +62,18 @@ struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp;	/* vnode for underlying device. */
 
 int
-cnopen(dev, flag, mode, p)
-	dev_t dev;
+cnopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	int error;
 	dev_t cndev;
 
 	if (cn_tab == NULL)
 		return (0);
+
+	/* XXXDEVVP */
 
 	/*
 	 * always open the 'real' console device, so we don't get nailed
@@ -84,7 +89,7 @@ cnopen(dev, flag, mode, p)
 		 */
 		panic("cnopen: cn_tab->cn_dev == NODEV\n");
 	}
-	if (dev == cndev) {
+	if (devvp->v_rdev == cndev) {
 		/*
 		 * This causes cnopen() to be called recursively, which
 		 * is generally a bad thing.  It is often caused when
@@ -95,19 +100,21 @@ cnopen(dev, flag, mode, p)
 	}
 
 	if (cn_devvp == NULLVP) {
-		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(cndev, &cn_devvp);
+		error = cdevvp(cndev, &cn_devvp);
+		if (error)
+			return (error);
 	}
-	return ((*cdevsw[major(cndev)].d_open)(cndev, flag, mode, p));
+	return ((*cdevsw[major(cndev)].d_open)(cn_devvp, flag, mode, p));
 }
  
 int
-cnclose(dev, flag, mode, p)
-	dev_t dev;
+cnclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct vnode *vp;
+	dev_t dev;
 
 	if (cn_tab == NULL)
 		return (0);
@@ -125,12 +132,12 @@ cnclose(dev, flag, mode, p)
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
-	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
+	return ((*cdevsw[major(dev)].d_close)(vp, flag, mode, p));
 }
  
 int
-cnread(dev, uio, flag)
-	dev_t dev;
+cnread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -147,13 +154,12 @@ cnread(dev, uio, flag)
 	else if (cn_tab == NULL)
 		return ENXIO;
 
-	dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_read)(dev, uio, flag));
+	return ((*cdevsw[major(cn_tab->cn_dev)].d_read)(cn_devvp, uio, flag));
 }
  
 int
-cnwrite(dev, uio, flag)
-	dev_t dev;
+cnwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -163,12 +169,12 @@ cnwrite(dev, uio, flag)
 	 * If there's no real console, return ENXIO.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
+		devvp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
+		devvp = cn_devvp;
+	return ((*cdevsw[major(devvp->v_rdev)].d_write)(devvp, uio, flag));
 }
 
 void
@@ -180,8 +186,8 @@ cnstop(tp, flag)
 }
  
 int
-cnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+cnioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -208,18 +214,19 @@ cnioctl(dev, cmd, data, flag, p)
 	 * out from under it.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
+		devvp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_ioctl)(dev, cmd, data, flag, p));
+		devvp = cn_devvp;
+	return ((*cdevsw[major(devvp->v_rdev)].d_ioctl)(devvp, cmd, data,
+	    flag, p));
 }
 
 /*ARGSUSED*/
 int
-cnpoll(dev, events, p)
-	dev_t dev;
+cnpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -230,12 +237,12 @@ cnpoll(dev, events, p)
 	 * of console redirection here.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
+		devvp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_poll)(dev, events, p));
+		devvp = cn_devvp;
+	return ((*cdevsw[major(devvp->v_rdev)].d_poll)(devvp, events, p));
 }
 
 int

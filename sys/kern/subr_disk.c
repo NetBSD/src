@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.30 2001/07/09 10:54:12 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.30.4.1 2001/09/07 04:45:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,9 @@
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -335,7 +338,8 @@ void
 diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
     struct disklabel *lp)
 {
-	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
+	int unit = DISKUNIT(bp->b_devvp->v_rdev),
+	    part = DISKPART(bp->b_devvp->v_rdev);
 	void (*pr)(const char *, ...);
 	char partname = 'a' + part;
 	int sn;

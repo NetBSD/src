@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.26 2001/07/18 16:43:10 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.26.2.1 2001/09/07 04:45:42 thorpej Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -96,6 +96,8 @@
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <net/if.h>
 #include <net/if_types.h>
 
@@ -114,7 +116,7 @@
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
 
-int	pppopen __P((dev_t dev, struct tty *tp));
+int	pppopen __P((struct vnode *devvp, struct tty *tp));
 int	pppclose __P((struct tty *tp, int flag));
 int	pppread __P((struct tty *tp, struct uio *uio, int flag));
 int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
@@ -171,8 +173,8 @@ static void	pppdumpframe __P((struct ppp_softc *sc, struct mbuf* m,
  */
 /* ARGSUSED */
 int
-pppopen(dev, tp)
-    dev_t dev;
+pppopen(devvp, tp)
+    struct vnode *devvp;
     struct tty *tp;
 {
     struct proc *p = curproc;		/* XXX */
@@ -647,8 +649,8 @@ pppsyncstart(sc)
 			len += n->m_len;
 			
 		/* call device driver IOCTL to transmit a frame */
-		if ((*cdevsw[major(tp->t_dev)].d_ioctl)
-			(tp->t_dev, TIOCXMTFRAME, (caddr_t)&m, 0, 0)) {
+		if ((*cdevsw[major(tp->t_devvp->v_rdev)].d_ioctl)
+			(tp->t_devvp, TIOCXMTFRAME, (caddr_t)&m, 0, 0)) {
 			/* busy or error, set as current packet */
 			sc->sc_outm = m;
 			break;
@@ -982,7 +984,7 @@ pppinput(c, tp)
 	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
 	    if ((tp->t_state & TS_TTSTOP) == 0) {
 		tp->t_state |= TS_TTSTOP;
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+		(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, 0);
 	    }
 	    return 0;
 	}

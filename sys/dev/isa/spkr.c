@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.5 2001/04/18 15:40:58 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.5.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -19,6 +19,9 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <dev/isa/pcppivar.h>
 
@@ -382,17 +385,17 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, p)
-    dev_t dev;
+spkropen(devvp, flags, mode, p)
+    struct vnode *devvp;
     int	flags;
     int mode;
     struct proc *p;
 {
 #ifdef SPKRDEBUG
-    printf("spkropen: entering with dev = %x\n", dev);
+    printf("spkropen: entering with dev = %x\n", devvp->v_rdev);
 #endif /* SPKRDEBUG */
 
-    if (minor(dev) != 0 || !spkr_attached)
+    if (minor(devvp->v_rdev) != 0 || !spkr_attached)
 	return(ENXIO);
     else if (spkr_active)
 	return(EBUSY);
@@ -406,8 +409,8 @@ spkropen(dev, flags, mode, p)
 }
 
 int
-spkrwrite(dev, uio, flags)
-    dev_t dev;
+spkrwrite(devvp, uio, flags)
+    struct vnode *devvp;
     struct uio *uio;
     int flags;
 {
@@ -415,56 +418,47 @@ spkrwrite(dev, uio, flags)
     int error;
 #ifdef SPKRDEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",
-		dev, uio->uio_resid);
+		devvp->v_rdev, uio->uio_resid);
 #endif /* SPKRDEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else
-    {
-	n = min(DEV_BSIZE, uio->uio_resid);
-	error = uiomove(spkr_inbuf, n, uio);
-	if (!error)
-		playstring((char *)spkr_inbuf, n);
-	return(error);
-    }
+    n = min(DEV_BSIZE, uio->uio_resid);
+    error = uiomove(spkr_inbuf, n, uio);
+    if (!error)
+	playstring((char *)spkr_inbuf, n);
+    return(error);
 }
 
-int spkrclose(dev, flags, mode, p)
-    dev_t	dev;
+int
+spkrclose(devvp, flags, mode, p)
+    struct vnode *devvp;
     int flags;
     int mode;
     struct proc *p;
 {
 #ifdef SPKRDEBUG
-    printf("spkrclose: entering with dev = %x\n", dev);
+    printf("spkrclose: entering with dev = %x\n", devvp->v_rdev);
 #endif /* SPKRDEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else
-    {
-	tone(0, 0);
-	free(spkr_inbuf, M_DEVBUF);
-	spkr_active = 0;
-    }
+    tone(0, 0);
+    free(spkr_inbuf, M_DEVBUF);
+    spkr_active = 0;
     return(0);
 }
 
-int spkrioctl(dev, cmd, data, flag, p)
-    dev_t dev;
+int
+spkrioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     u_long cmd;
     caddr_t data;
     int	flag;
     struct proc *p;
 {
 #ifdef SPKRDEBUG
-    printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
+    printf("spkrioctl: entering with dev = %x, cmd = %lx\n",
+        devvp->v_rdev, cmd);
 #endif /* SPKRDEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else if (cmd == SPKRTONE)
+    if (cmd == SPKRTONE)
     {
 	tone_t	*tp = (tone_t *)data;
 

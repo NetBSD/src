@@ -1,3 +1,0 @@
-# $NetBSD: form,v 1.1 2001/04/25 03:43:28 garbled Exp $
-multiscript:script1	Select which entries to delete:
-list:YES,NO		Restart mountd so changes take effect?

@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18 2001/05/02 10:32:12 scw Exp $ */
+/* $NetBSD: promcons.c,v 1.18.6.1 2001/09/07 04:45:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18 2001/05/02 10:32:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.1 2001/09/07 04:45:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18 2001/05/02 10:32:12 scw Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,9 +67,9 @@ int	promparam(struct tty *, struct termios *);
 struct callout prom_ch = CALLOUT_INITIALIZER;
 
 int
-promopen(dev_t dev, int flag, int mode, struct proc *p)
+promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
+	int unit = minor(devvp->v_rdev);
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
@@ -82,9 +85,11 @@ promopen(dev_t dev, int flag, int mode, struct proc *p)
 	} else
 		tp = prom_tty[unit];
 
+	devvp->v_devcookie = tp;
+
 	tp->t_oproc = promstart;
 	tp->t_param = promparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -103,7 +108,7 @@ promopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	splx(s);
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error == 0 && setuptimeout) {
 		polltime = hz / PROM_POLL_HZ;
 		if (polltime < 1)
@@ -114,10 +119,9 @@ promopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-promclose(dev_t dev, int flag, int mode, struct proc *p)
+promclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(dev);
-	struct tty *tp = prom_tty[unit];
+	struct tty *tp = devvp->v_devcookie;
 
 	callout_stop(&prom_ch);
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -126,37 +130,34 @@ promclose(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-promread(dev_t dev, struct uio *uio, int flag)
+promread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = prom_tty[minor(dev)];
+	struct tty *tp = devvp->v_devcookie;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
-promwrite(dev_t dev, struct uio *uio, int flag)
+promwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = prom_tty[minor(dev)];
+	struct tty *tp = devvp->v_devcookie;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
  
 int
-prompoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+prompoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct tty *tp = prom_tty[minor(dev)];
+	struct tty *tp = devvp->v_devcookie;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+promioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
-	int unit = minor(dev);
-	struct tty *tp = prom_tty[unit];
+	struct tty *tp = devvp->v_devcookie;
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -193,7 +194,7 @@ promstart(struct tty *tp)
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
-		promcnputc(tp->t_dev, getc(&tp->t_outq));
+		promcnputc(tp->t_devvp->v_rdev, getc(&tp->t_outq));
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);
@@ -220,7 +221,7 @@ promtimeout(void *v)
 	struct tty *tp = v;
 	u_char c;
 
-	while (promcnlookc(tp->t_dev, &c)) {
+	while (promcnlookc(tp->t_devvp->v_rdev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
@@ -228,10 +229,10 @@ promtimeout(void *v)
 }
 
 struct tty *
-promtty(dev_t dev)
+promtty(struct vnode *devvp)
 {
 
-	if (minor(dev) != 0)
+	if (minor(devvp->v_rdev) != 0)
 		panic("promtty: bogus");
 
 	return prom_tty[0];

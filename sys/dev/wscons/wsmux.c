@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.8.1 2001/09/07 04:45:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include "opt_wsdisplay_compat.h"
 
@@ -80,12 +83,14 @@ int	wsmuxdebug = 0;
 struct wsplink {
 	LIST_ENTRY(wsplink) next;
 	int type;
+	int pmajor;
 	struct wsmux_softc *mux; /* our mux device */
 	/* The rest of the fields reflect a value in the multiplexee. */
 	struct device *sc;	/* softc */
 	struct wseventvar *sc_mevents; /* event var */
 	struct wsmux_softc **sc_muxp; /* pointer to us */
 	struct wsmuxops *sc_ops;
+	struct vnode *sc_pdevvp;
 };
 
 int wsmuxdoclose __P((struct device *, int, int, struct proc *));
@@ -106,11 +111,22 @@ void wsmux_setmax __P((int n));
 int nwsmux = 0;
 struct wsmux_softc **wsmuxdevs;
 
+int	wsmux_major = -1;
+
 void
 wsmux_setmax(n)
 	int n;
 {
 	int i;
+
+	if (wsmux_major == -1) {
+		int maj;
+
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == wsmuxopen)
+				break;
+		wsmux_major = maj;
+	}
 
 	if (n >= nwsmux) {
 		i = nwsmux;
@@ -146,13 +162,14 @@ wsmuxattach(n)
 
 /* From mouse or keyboard. */
 void
-wsmux_attach(n, type, dsc, ev, psp, ops)
+wsmux_attach(n, type, dsc, ev, psp, ops, pmajor)
 	int n;
 	int type;
         struct device *dsc;
 	struct wseventvar *ev;
 	struct wsmux_softc **psp;
 	struct wsmuxops *ops;
+	int pmajor;
 {
 	struct wsmux_softc *sc;
 	int error;
@@ -168,7 +185,7 @@ wsmux_attach(n, type, dsc, ev, psp, ops)
 		}
 		wsmuxdevs[n] = sc;
 	}
-	error = wsmux_attach_sc(sc, type, dsc, ev, psp, ops);
+	error = wsmux_attach_sc(sc, type, dsc, ev, psp, ops, pmajor);
 	if (error)
 		printf("wsmux_attach: error=%d\n", error);
 }
@@ -194,8 +211,8 @@ wsmux_detach(n, dsc)
 }
 
 int
-wsmuxopen(dev, flags, mode, p)
-	dev_t dev;
+wsmuxopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -203,10 +220,12 @@ wsmuxopen(dev, flags, mode, p)
 	struct wsplink *m;
 	int unit, error, nopen, lasterror;
 
-	unit = minor(dev);
+	unit = minor(devvp->v_rdev);
 	if (unit >= nwsmux ||	/* make sure it was attached */
 	    (sc = wsmuxdevs[unit]) == NULL)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	DPRINTF(("wsmuxopen: %s: sc=%p\n", sc->sc_dv.dv_xname, sc));
 	if (!(flags & FREAD)) {
@@ -227,13 +246,20 @@ wsmuxopen(dev, flags, mode, p)
 	lasterror = 0;
 	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {
 		if (!m->sc_mevents->io && !*m->sc_muxp) {
+			/* XXXDEVVP */
 			DPRINTF(("wsmuxopen: %s: m=%p dev=%s\n", 
 				 sc->sc_dv.dv_xname, m, m->sc->dv_xname));
-			error = m->sc_ops->dopen(makedev(0, m->sc->dv_unit),
-						 flags, mode, p);
+			KASSERT(m->sc_pdevvp == NULL);
+			error = cdevvp(makedev(m->pmajor, m->sc->dv_unit),
+			    &m->sc_pdevvp);
+			if (error == 0)
+				error = m->sc_ops->dopen(m->sc_pdevvp, flags,
+				    mode, p);
 			if (error) {
 				/* Ignore opens that fail */
 				lasterror = error;
+				vrele(m->sc_pdevvp);
+				m->sc_pdevvp = NULL;
 				DPRINTF(("wsmuxopen: open failed %d\n", 
 					 error));
 			} else {
@@ -253,21 +279,21 @@ wsmuxopen(dev, flags, mode, p)
 }
 
 int
-wsmuxclose(dev, flags, mode, p)
-	dev_t dev;
+wsmuxclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	return wsmuxdoclose(&wsmuxdevs[minor(dev)]->sc_dv, flags, mode, p);
+	return wsmuxdoclose(devvp->v_devcookie, flags, mode, p);
 }
 
 int
-wsmuxread(dev, uio, flags)
-	dev_t dev;
+wsmuxread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+	struct wsmux_softc *sc = devvp->v_devcookie;
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -276,23 +302,23 @@ wsmuxread(dev, uio, flags)
 }
 
 int
-wsmuxioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+wsmuxioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	return wsmuxdoioctl(&wsmuxdevs[minor(dev)]->sc_dv, cmd, data, flag, p);
+	return wsmuxdoioctl(devvp->v_devcookie, cmd, data, flag, p);
 }
 
 int
-wsmuxpoll(dev, events, p)
-	dev_t dev;
+wsmuxpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+	struct wsmux_softc *sc = devvp->v_devcookie;
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -322,7 +348,7 @@ wsmux_add_mux(unit, muxsc)
 			return (EINVAL);
 
 	return (wsmux_attach_sc(muxsc, WSMUX_MUX, &sc->sc_dv, &sc->sc_events, 
-				&sc->sc_mux, &wsmux_muxops));
+				&sc->sc_mux, &wsmux_muxops, wsmux_major));
 }
 
 int
@@ -363,13 +389,14 @@ wsmux_create(name, unit)
 }
 
 int
-wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
+wsmux_attach_sc(sc, type, dsc, ev, psp, ops, pmajor)
 	struct wsmux_softc *sc;
 	int type;
         struct device *dsc;
 	struct wseventvar *ev;
 	struct wsmux_softc **psp;
 	struct wsmuxops *ops;
+	int pmajor;
 {
 	struct wsplink *m;
 	int error;
@@ -380,11 +407,13 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
 	if (m == 0)
 		return (ENOMEM);
 	m->type = type;
+	m->pmajor = pmajor;
 	m->mux = sc;
 	m->sc = dsc;
 	m->sc_mevents = ev;
 	m->sc_muxp = psp;
 	m->sc_ops = ops;
+	m->sc_pdevvp = NULL;
 	LIST_INSERT_HEAD(&sc->sc_reals, m, next);
 
 	if (sc->sc_displaydv) {
@@ -410,13 +439,20 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops)
 			}
 		}
 	} else if (sc->sc_events.io) {
+		/* XXXDEVVP */
 		/* Mux is open, so open the new subdevice */
 		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
 			 sc->sc_dv.dv_xname, m->sc->dv_xname));
 		/* mux already open, join in */
-		error = m->sc_ops->dopen(makedev(0, m->sc->dv_unit),
-					 sc->sc_flags, sc->sc_mode, sc->sc_p);
-		if (!error)
+		error = cdevvp(makedev(m->pmajor, m->sc->dv_unit),
+		    &m->sc_pdevvp);
+		if (error == 0)
+			error = m->sc_ops->dopen(m->sc_pdevvp, sc->sc_flags,
+			    sc->sc_mode, sc->sc_p);
+		if (error) {
+			vrele(m->sc_pdevvp);
+			m->sc_pdevvp = NULL;
+		} else
 			*m->sc_muxp = sc;
 	} else {
 		DPRINTF(("wsmux_attach_sc: %s not open\n",
@@ -466,6 +502,8 @@ wsmux_detach_sc(sc, dsc)
 		/* mux device is open, so close multiplexee */
 		m->sc_ops->dclose(m->sc, FREAD, 0, 0);
 		*m->sc_muxp = 0;
+		vrele(m->sc_pdevvp);
+		m->sc_pdevvp = NULL;
 	}
 
 	LIST_REMOVE(m, next);
@@ -495,6 +533,8 @@ int wsmuxdoclose(dv, flags, mode, p)
 				 sc->sc_dv.dv_xname, m, m->sc->dv_xname));
 			m->sc_ops->dclose(m->sc, flags, mode, p);
 			*m->sc_muxp = 0;
+			vrele(m->sc_pdevvp);
+			m->sc_pdevvp = NULL;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7 2001/08/03 14:10:16 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/kthread.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2265,12 +2268,13 @@ mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap,
  * Accept an open operation on the control device.
  */
 int
-mlyopen(dev_t dev, int flag, int mode, struct proc *p)
+mlyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mly_softc *mly;
 
-	if ((mly = device_lookup(&mly_cd, minor(dev))) == NULL)
+	if ((mly = device_lookup(&mly_cd, minor(devvp->v_rdev))) == NULL)
 		return (ENXIO);
+	devvp->v_devcookie = mly;
 	if ((mly->mly_state & MLY_STATE_INITOK) == 0)
 		return (ENXIO);
 	if ((mly->mly_state & MLY_STATE_OPEN) != 0)
@@ -2284,11 +2288,11 @@ mlyopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct proc *p)
+mlyclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mly_softc *mly;
 
-	mly = device_lookup(&mly_cd, minor(dev));
+	mly = devvp->v_devcookie;
 	mly->mly_state &= ~MLY_STATE_OPEN;
 	return (0);
 }
@@ -2297,7 +2301,8 @@ mlyclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2305,7 +2310,7 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (securelevel >= 2)
 		return (EPERM);
 
-	mly = device_lookup(&mly_cd, minor(dev));
+	mly = devvp->v_devcookie;
 
 	switch (cmd) {
 	case MLYIO_COMMAND:

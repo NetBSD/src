@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.70 2001/07/26 20:20:15 jdolecek Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.70.2.1 2001/09/07 04:45:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1327,7 +1327,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
-	dev_t i_dev;
 	char *datap, *dp;
 	int do_again, i, nblocks, s;
 	size_t el_size;
@@ -1360,7 +1359,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	if ((nblocks = sp->cbpp - sp->bpp) == 1)
 		return (0);
 	
-	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
 	/* Update the segment usage information. */
@@ -1567,7 +1565,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		panic("devvp is NULL");
 	for (bpp = sp->bpp,i = nblocks; i;) {
 		cbp = lfs_newbuf(fs, devvp, (*bpp)->b_blkno, CHUNKSIZE);
-		cbp->b_dev = i_dev;
+		cbp->b_devvp = devvp;
 		cbp->b_flags |= B_ASYNC | B_BUSY;
 		cbp->b_bcount = 0;
 
@@ -1698,7 +1696,7 @@ void
 lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
-	dev_t i_dev;
+	struct vnode *i_devvp;
 	int (*strategy)(void *);
 	int s;
 	struct vop_strategy_args vop_strategy_a;
@@ -1714,7 +1712,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	}
 	fs->lfs_sbactive = daddr;
 	splx(s);
-	i_dev = VTOI(fs->lfs_ivnode)->i_dev;
+	i_devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	strategy = VTOI(fs->lfs_ivnode)->i_devvp->v_op[VOFFSET(vop_strategy)];
 
 	/* Set timestamp of this version of the superblock */
@@ -1727,7 +1725,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	bp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp, fsbtodb(fs, daddr), LFS_SBPAD);
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 	
-	bp->b_dev = i_dev;
+	bp->b_devvp = i_devvp;
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
 	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
 	bp->b_iodone = lfs_supercallback;

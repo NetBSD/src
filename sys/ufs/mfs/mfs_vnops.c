@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27 2001/01/22 12:17:44 jdolecek Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.8.1 2001/09/07 04:45:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,7 +146,7 @@ mfs_strategy(v)
 	struct vnode *vp;
 	struct proc *p = curproc;		/* XXX */
 
-	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
+	if (!vfinddev(bp->b_devvp->v_rdev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */

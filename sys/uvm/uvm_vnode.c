@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.51 2001/08/17 05:53:02 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.51.2.1 2001/09/07 04:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -184,7 +184,7 @@ uvn_attach(arg, accessprot)
 		 *
 		 *	(2) All we want is the size, anyhow.
 		 */
-		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (result == 0) {
 			/* XXX should remember blocksize */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.49 2000/05/08 19:06:36 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.49.10.1 2001/09/07 04:45:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,6 +58,8 @@
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/syscallargs.h>
 
@@ -322,7 +324,7 @@ acct_process(p)
 
 	/* (7) The terminal from which the process was started */
 	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
-		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
+		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_devvp->v_rdev;
 	else
 		acct.ac_tty = NODEV;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.77 2001/07/15 21:17:29 martin Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.77.2.1 2001/09/07 04:45:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -84,6 +84,9 @@
 #if __NetBSD__
 #include <sys/systm.h>
 #endif
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/cpu.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -249,8 +252,8 @@ slinit(sc)
  */
 /* ARGSUSED */
 int
-slopen(dev, tp)
-	dev_t dev;
+slopen(devvp, tp)
+	struct vnode *devvp;
 	struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */

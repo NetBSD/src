@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61 2001/04/13 23:30:11 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.4.1 2001/09/07 04:45:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -56,6 +56,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
@@ -104,7 +106,6 @@ static int	bpf_movein __P((struct uio *, int, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
@@ -331,27 +332,29 @@ bpfilterattach(n)
  */
 /* ARGSUSED */
 int
-bpfopen(dev, flag, mode, p)
-	dev_t dev;
+bpfopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct bpf_d *d;
 
-	if (minor(dev) >= NBPFILTER)
+	if (minor(devvp->v_rdev) >= NBPFILTER)
 		return (ENXIO);
 	/*
 	 * Each minor can be opened by only one process.  If the requested
 	 * minor is in use, return EBUSY.
 	 */
-	d = &bpf_dtab[minor(dev)];
+	d = &bpf_dtab[minor(devvp->v_rdev)];
 	if (!D_ISFREE(d))
 		return (EBUSY);
 
 	/* Mark "free" and do most initialization. */
 	memset((char *)d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
+
+	devvp->v_devcookie = d;
 
 	return (0);
 }
@@ -362,13 +365,13 @@ bpfopen(dev, flag, mode, p)
  */
 /* ARGSUSED */
 int
-bpfclose(dev, flag, mode, p)
-	dev_t dev;
+bpfclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = devvp->v_devcookie;
 	int s;
 
 	s = splnet();
@@ -395,12 +398,12 @@ bpfclose(dev, flag, mode, p)
  *  bpfread - read next chunk of packets from buffers
  */
 int
-bpfread(dev, uio, ioflag)
-	dev_t dev;
+bpfread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = devvp->v_devcookie;
 	int error;
 	int s;
 
@@ -514,12 +517,12 @@ bpf_wakeup(d)
 }
 
 int
-bpfwrite(dev, uio, ioflag)
-	dev_t dev;
+bpfwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = devvp->v_devcookie;
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
@@ -596,14 +599,14 @@ extern struct bpf_insn *bpf_udp_filter;
  */
 /* ARGSUSED */
 int
-bpfioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+bpfioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = devvp->v_devcookie;
 	int s, error = 0;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
@@ -985,12 +988,12 @@ bpf_ifname(ifp, ifr)
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
-bpfpoll(dev, events, p)
-	dev_t dev;
+bpfpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = devvp->v_devcookie;
 	int revents = 0;
 	int s = splnet();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.h,v 1.4 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_configure.h,v 1.4.24.1 2001/09/07 04:45:28 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,10 +54,10 @@
 struct RF_Config_s {
 	RF_RowCol_t numRow, numCol, numSpare;	/* number of rows, columns,
 						 * and spare disks */
-	dev_t   devs[RF_MAXROW][RF_MAXCOL];	/* device numbers for disks
+	dev_t   XXXdevs[RF_MAXROW][RF_MAXCOL];	/* device numbers for disks
 						 * comprising array */
 	char    devnames[RF_MAXROW][RF_MAXCOL][50];	/* device names */
-	dev_t   spare_devs[RF_MAXSPARE];	/* device numbers for spare
+	dev_t   XXXspare_devs[RF_MAXSPARE];	/* device numbers for spare
 						 * disks */
 	char    spare_names[RF_MAXSPARE][50];	/* device names */
 	RF_SectorNum_t sectPerSU;	/* sectors per stripe unit */

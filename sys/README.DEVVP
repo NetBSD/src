@@ -1,0 +1,14 @@
+There is an XXXDEVVP at each chunk of code that I think is
+suspect, and needs to be carefully reviewed.  In particular:
+
+	* cons.c -- really need to rethink the way this is done.
+
+	* wsmux.c -- really need to rethink the way this is done.
+
+	* d_size routines in disk drivers -- should consider changing
+	  this interface.  It's just a little disgusting, but is used
+	  because you might already e.g. have the partition open that
+	  you want to dump on (e.g. dump on swap partition).
+
+	* sequencer.c -- what happens here is horrifying.  But I'm
+	  not sure how to deal with it.

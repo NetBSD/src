@@ -1,7 +1,0 @@
-.\"	$NetBSD: xfer,v 1.2 2000/10/10 12:55:17 lukem Exp $
-.
-Currently,
-.Nx*M
-can only sensibly be run diskless.
-This requires an unpacked copy of the binary distribution to be
-available by NFS to the target system.

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.20 2001/08/17 05:52:07 chs Exp $	*/
+/*	$NetBSD: specdev.h,v 1.20.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,6 +46,7 @@ struct specinfo {
 	struct	mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
+	void	*si_devcookie;
 };
 /*
  * Exported shorthand
@@ -55,6 +56,7 @@ struct specinfo {
 #define v_specnext	v_specinfo->si_specnext
 #define v_speclockf	v_specinfo->si_lockf
 #define v_specmountpoint v_specinfo->si_mountpoint
+#define	v_devcookie	v_specinfo->si_devcookie
 
 /*
  * Special device management

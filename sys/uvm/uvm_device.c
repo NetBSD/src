@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.36 2001/05/26 21:27:21 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.36.4.1 2001/09/07 04:45:46 thorpej Exp $	*/
 
 /*
  *
@@ -46,6 +46,8 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
@@ -119,9 +121,9 @@ udv_attach(arg, accessprot, off, size)
 	voff_t off;			/* used only for access check */
 	vsize_t size;			/* used only for access check */
 {
-	dev_t device = *((dev_t *)arg);
+	struct vnode *devvp = arg;
 	struct uvm_device *udv, *lcv;
-	paddr_t (*mapfn) __P((dev_t, off_t, int));
+	paddr_t (*mapfn) __P((struct vnode *, off_t, int));
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
@@ -130,10 +132,10 @@ udv_attach(arg, accessprot, off, size)
 	 * before we do anything, ensure this device supports mmap
 	 */
 
-	mapfn = cdevsw[major(device)].d_mmap;
+	mapfn = cdevsw[major(devvp->v_rdev)].d_mmap;
 	if (mapfn == NULL ||
-	    mapfn == (paddr_t (*) __P((dev_t, off_t, int))) enodev ||
-	    mapfn == (paddr_t (*) __P((dev_t, off_t, int))) nullop)
+	    mapfn == (paddr_t (*) __P((struct vnode *, off_t, int))) enodev ||
+	    mapfn == (paddr_t (*) __P((struct vnode *, off_t, int))) nullop)
 		return(NULL);
 
 	/*
@@ -152,7 +154,7 @@ udv_attach(arg, accessprot, off, size)
 	 */
 
 	while (size != 0) {
-		if ((*mapfn)(device, off, accessprot) == -1)
+		if ((*mapfn)(devvp, off, accessprot) == -1)
 			return (NULL);
 		off += PAGE_SIZE; size -= PAGE_SIZE;
 	}
@@ -169,7 +171,7 @@ udv_attach(arg, accessprot, off, size)
 
 		simple_lock(&udv_lock);
 		LIST_FOREACH(lcv, &udv_list, u_list) {
-			if (device == lcv->u_device)
+			if (devvp == lcv->u_devvp)
 				break;
 		}
 
@@ -227,7 +229,7 @@ udv_attach(arg, accessprot, off, size)
 		 */
 
 		LIST_FOREACH(lcv, &udv_list, u_list) {
-			if (device == lcv->u_device)
+			if (devvp == lcv->u_devvp)
 				break;
 		}
 
@@ -253,7 +255,7 @@ udv_attach(arg, accessprot, off, size)
 		udv->u_obj.uo_npages = 0;
 		udv->u_obj.uo_refs = 1;
 		udv->u_flags = 0;
-		udv->u_device = device;
+		udv->u_devvp = devvp;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
 		simple_unlock(&udv_lock);
 		return(&udv->u_obj);
@@ -334,6 +336,7 @@ again:
 		wakeup(udv);
 	simple_unlock(&udv_lock);
 	simple_unlock(&uobj->vmobjlock);
+	vrele(udv->u_devvp);
 	FREE(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
@@ -387,9 +390,9 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
 	int lcv, retval;
-	dev_t device;
-	paddr_t (*mapfn) __P((dev_t, off_t, int));
+	paddr_t (*mapfn) __P((struct vnode *, off_t, int));
 	vm_prot_t mapprot;
+	struct vnode *devvp;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
 
@@ -409,8 +412,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 * get device map function.
 	 */
 
-	device = udv->u_device;
-	mapfn = cdevsw[major(device)].d_mmap;
+	devvp = udv->u_devvp;
+	mapfn = cdevsw[major(devvp->v_rdev)].d_mmap;
 
 	/*
 	 * now we must determine the offset in udv to use and the VA to
@@ -437,7 +440,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		mdpgno = (*mapfn)(device, curr_offset, access_type);
+		mdpgno = (*mapfn)(devvp, curr_offset, access_type);
 		if (mdpgno == -1) {
 			retval = EIO;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.53 2001/08/26 00:43:53 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.53.2.1 2001/09/07 04:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -116,6 +116,8 @@
  * note the following should be true:
  * swd_inuse <= swd_nblks  [number of blocks in use is <= total blocks]
  * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
+ *
+ * XXX Using `oswapent' is ... really disgusting.
  */
 struct swapdev {
 	struct oswapent swd_ose;
@@ -1029,15 +1031,15 @@ swap_off(p, sdp)
  */
 /*ARGSUSED*/
 int
-swread(dev, uio, ioflag)
-	dev_t dev;
+swread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(swstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 /*
@@ -1045,15 +1047,15 @@ swread(dev, uio, ioflag)
  */
 /*ARGSUSED*/
 int
-swwrite(dev, uio, ioflag)
-	dev_t dev;
+swwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(swstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*
@@ -1117,7 +1119,7 @@ swstrategy(bp)
 		s = splbio();
 		bp->b_blkno = bn;		/* swapdev block number */
 		vp = sdp->swd_vp;		/* swapdev vnode pointer */
-		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
+		bp->b_devvp = vp;		/* swapdev vnode pointer */
 
 		/*
 		 * if we are doing a write, we have to redirect the i/o on
@@ -1254,7 +1256,7 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = vp;
 		if (vp->v_type == VBLK) {
-			nbp->vb_buf.b_dev = vp->v_rdev;
+			nbp->vb_buf.b_devvp = vp;
 		}
 		LIST_INIT(&nbp->vb_buf.b_dep);
 
@@ -1685,7 +1687,8 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	bp->b_vp = swapdev_vp;
-	bp->b_dev = swapdev_vp->v_rdev;
+	/* XXXthorpej -- what is this about? */
+	bp->b_devvp = swapdev_vp;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 	LIST_INIT(&bp->b_dep);
 

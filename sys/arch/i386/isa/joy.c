@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.11 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.11.6.1 2001/09/07 04:45:20 thorpej Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -41,6 +41,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/bus.h>
 
@@ -82,8 +85,8 @@
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
+cdev_decl(joy);
+
 static int	get_tick __P((void));
 
 extern struct cfdriver joy_cd;
@@ -102,13 +105,13 @@ joyattach(sc)
 }
 
 int
-joyopen(dev, flag, mode, p)
-	dev_t dev;
+joyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	int i = JOYPART(dev);
+	int unit = JOYUNIT(devvp->v_rdev);
+	int i = JOYPART(devvp->v_rdev);
 	struct joy_softc *sc;
 
 	if (unit >= joy_cd.cd_ndevs)
@@ -116,6 +119,8 @@ joyopen(dev, flag, mode, p)
 	sc = joy_cd.cd_devs[unit];
 	if (sc == 0)
 		return (ENXIO);
+
+	devvp->v_devcookie = sc;
 
 	if (sc->timeout[i])
 		return (EBUSY);
@@ -126,27 +131,25 @@ joyopen(dev, flag, mode, p)
 }
 
 int
-joyclose(dev, flag, mode, p)
-	dev_t dev;
+joyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	int i = JOYPART(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	int i = JOYPART(devvp->v_rdev);
+	struct joy_softc *sc = devvp->v_devcookie;
 
 	sc->timeout[i] = 0;
 	return (0);
 }
 
 int
-joyread(dev, uio, flag)
-	dev_t dev;
+joyread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc = devvp->v_devcookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct joystick c;
@@ -157,10 +160,10 @@ joyread(dev, uio, flag)
 	bus_space_write_1(iot, ioh, 0, 0xff);
 	t0 = get_tick();
 	t1 = t0;
-	i = USEC2TICKS(sc->timeout[JOYPART(dev)]);
+	i = USEC2TICKS(sc->timeout[JOYPART(devvp->v_rdev)]);
 	while (t0 - t1 < i) {
 		state = bus_space_read_1(iot, ioh, 0);
-		if (JOYPART(dev) == 1)
+		if (JOYPART(devvp->v_rdev) == 1)
 			state >>= 2;
 		t1 = get_tick();
 		if (t1 > t0)
@@ -173,8 +176,10 @@ joyread(dev, uio, flag)
 			break;
 	}
 	enable_intr();
-	c.x = x ? sc->x_off[JOYPART(dev)] + TICKS2USEC(t0 - x) : 0x80000000;
-	c.y = y ? sc->y_off[JOYPART(dev)] + TICKS2USEC(t0 - y) : 0x80000000;
+	c.x = x ? sc->x_off[JOYPART(devvp->v_rdev)] + TICKS2USEC(t0 - x) :
+	    0x80000000;
+	c.y = y ? sc->y_off[JOYPART(devvp->v_rdev)] + TICKS2USEC(t0 - y) :
+	    0x80000000;
 	state >>= 4;
 	c.b1 = ~state & 1;
 	c.b2 = ~(state >> 1) & 1;
@@ -182,16 +187,15 @@ joyread(dev, uio, flag)
 }
 
 int
-joyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+joyioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
-	int i = JOYPART(dev);
+	struct joy_softc *sc = devvp->v_devcookie;
+	int i = JOYPART(devvp->v_rdev);
 	int x;
 
 	switch (cmd) {

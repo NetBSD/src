@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.80 2001/08/24 10:24:47 wiz Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.80.2.1 2001/09/07 04:45:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1657,7 +1657,7 @@ ufs_strategy(void *v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
+	bp->b_devvp = vp;
 	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }

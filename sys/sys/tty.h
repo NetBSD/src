@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.52 2001/06/08 15:43:34 mrg Exp $	*/
+/*	$NetBSD: tty.h,v 1.52.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -84,7 +84,7 @@ struct tty {
 	struct	callout t_rstrt_ch;	/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
-	dev_t	t_dev;			/* Device. */
+	struct	vnode *t_devvp;		/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
 	int	t_wopen;		/* Processes waiting for open. */
 	int	t_flags;		/* Tty flags. */
@@ -229,7 +229,7 @@ void	 ttyflush __P((struct tty *tp, int rw));
 void	 ttyinfo __P((struct tty *tp));
 int	 ttyinput __P((int c, struct tty *tp));
 int	 ttylclose __P((struct tty *tp, int flag));
-int	 ttylopen __P((dev_t device, struct tty *tp));
+int	 ttylopen __P((struct vnode *devvp, struct tty *tp));
 int	 ttymodem __P((struct tty *tp, int flag));
 int	 ttyopen __P((struct tty *tp, int dialout, int nonblock));
 int	 ttyoutput __P((int c, struct tty *tp));

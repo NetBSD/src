@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.45 2001/08/03 21:11:57 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.45.2.1 2001/09/07 04:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -35,6 +35,9 @@
 #include <sys/file.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/cpu.h>
 
@@ -115,8 +118,8 @@ tunattach(unused)
  * configured in
  */
 int
-tunopen(dev, flag, mode, p)
-	dev_t	dev;
+tunopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int	flag, mode;
 	struct proc *p;
 {
@@ -127,9 +130,12 @@ tunopen(dev, flag, mode, p)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(devvp->v_rdev)) >= NTUN)
 		return (ENXIO);
 	tp = &tunctl[unit];
+
+	devvp->v_devcookie = tp;
+
 	if (tp->tun_flags & TUN_OPEN)
 		return ENXIO;
 	ifp = &tp->tun_if;
@@ -143,16 +149,16 @@ tunopen(dev, flag, mode, p)
  * routing info
  */
 int
-tunclose(dev, flag, mode, p)
-	dev_t	dev;
+tunclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int	flag;
 	int	mode;
 	struct proc *p;
 {
-	int	unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
+	struct tun_softc *tp = devvp->v_devcookie;
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m;
+	int s;
 
 	tp->tun_flags &= ~TUN_OPEN;
 
@@ -386,15 +392,15 @@ tun_output(ifp, m0, dst, rt)
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev, cmd, data, flag, p)
-	dev_t		dev;
+tunioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long		cmd;
 	caddr_t		data;
 	int		flag;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
+	struct tun_softc *tp = devvp->v_devcookie;
+	int s;
 
 	switch (cmd) {
 	case TUNSDEBUG:
@@ -474,13 +480,12 @@ tunioctl(dev, cmd, data, flag, p)
  * least as much of a packet as can be read.
  */
 int
-tunread(dev, uio, ioflag)
-	dev_t		dev;
+tunread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor(dev);
-	struct tun_softc *tp = &tunctl[unit];
+	struct tun_softc *tp = devvp->v_devcookie;
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m, *m0;
 	int		error=0, len, s;
@@ -531,13 +536,12 @@ tunread(dev, uio, ioflag)
  * the cdevsw write interface - an atomic write is a packet - or else!
  */
 int
-tunwrite(dev, uio, ioflag)
-	dev_t		dev;
+tunwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio	*uio;
 	int		ioflag;
 {
-	int		unit = minor (dev);
-	struct tun_softc *tp = &tunctl[unit];
+	struct tun_softc *tp = devvp->v_devcookie;
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*top, **mp, *m;
 	struct ifqueue	*ifq;
@@ -656,15 +660,14 @@ tunwrite(dev, uio, ioflag)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunpoll(dev, events, p)
-	dev_t		dev;
+tunpoll(devvp, events, p)
+	struct vnode *devvp;
 	int		events;
 	struct proc	*p;
 {
-	int		unit = minor(dev), s;
-	struct tun_softc *tp = &tunctl[unit];
+	struct tun_softc *tp = devvp->v_devcookie;
 	struct ifnet	*ifp = &tp->tun_if;
-	int		revents = 0;
+	int		s, revents = 0;
 
 	s = splnet();
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
