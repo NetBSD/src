@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.14 1996/02/01 00:24:19 jtc Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.15 1996/02/09 21:31:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -47,6 +47,7 @@
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/namei.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/stat.h>
@@ -70,10 +71,12 @@ u_long idvhash;
 
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
+static u_int cd9660_chars2ui __P((u_char *, int));
+
 /*
  * Initialize hash links for inodes and dnodes.
  */
-int
+void
 cd9660_init()
 {
 
@@ -180,7 +183,7 @@ cd9660_ihashins(ip)
 	struct iso_node **ipp, *iq;
 
 	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	if (iq = *ipp)
+	if ((iq = *ipp) != NULL)
 		iq->i_prev = &ip->i_next;
 	ip->i_next = iq;
 	ip->i_prev = ipp;
@@ -203,7 +206,7 @@ cd9660_ihashrem(ip)
 {
 	register struct iso_node *iq;
 
-	if (iq = ip->i_next)
+	if ((iq = ip->i_next) != NULL)
 		iq->i_prev = ip->i_prev;
 	*ip->i_prev = iq;
 #ifdef DIAGNOSTIC
@@ -217,11 +220,12 @@ cd9660_ihashrem(ip)
  * truncate and deallocate the file.
  */
 int
-cd9660_inactive(ap)
+cd9660_inactive(v)
+	void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
 	int error = 0;
@@ -243,11 +247,12 @@ cd9660_inactive(ap)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-cd9660_reclaim(ap)
+cd9660_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
 	
