@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.23.10.1 2002/06/21 00:36:30 lukem Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.23.10.2 2002/08/05 07:11:28 lukem Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23.10.1 2002/06/21 00:36:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23.10.2 2002/08/05 07:11:28 lukem Exp $");
 
 #include "opt_inet.h"
 
@@ -455,6 +455,7 @@ stf_output(ifp, m, dst, rt)
 		}
 	}
 
+	ifp->if_opackets++;
 	return ip_output(m, NULL, &sc->sc_ro, 0, NULL);
 }
 
