@@ -1041,3 +1041,43 @@ sys/arch/mac68k/mac68k/pmap_bootstrap.c		1.46
   Correctly handle non-page-aligned framebuffer addresses.  Fixes
   display alignment on systems with on-board DAFB controllers and
   some NuBus video cards.  Fixes PR#5702.  (scottr)
+
+src/usr.sbin/Makefile				1.96-1.97 (patch)
+
+  Allow NO_SENDMAIL to be set in bsd.own.mk to prevent sendmail
+  from being built or installed, for use with newer (8.9.x) sendmail
+  or third party mailers, for those (re)building from source.  (tsarna)
+
+sys/msdosfs/msdosfs_fat.c			1.29
+
+  Fix missing variable increment, which caused writing FAT32 filesystems
+  to hang.  (ws)
+
+src/etc/etc.pmax/ttys				1.4
+
+  Comment out lines corresponding to LK-201 keyboard and DEC serial
+  mouse.  Fixes PR#5389.  (jonathan)
+
+sys/arch/pmax/include/clock_machdep.h		patch
+
+  Fixes the offset between the base year which the PROM keeps the
+  clock in (1972 or 1973) and the current year.  (jonathan)
+
+distrib/utils/sysinst/arch/i386/msg.md.eng	1.8
+
+  Clarify a warning message which could be interpreted the wrong
+  way.  (bouyer)
+
+distrib/utils/sysinst/arch/arm32/menus.md.fr	1.3
+distrib/utils/sysinst/arch/i386/menus.md.fr	1.8
+distrib/utils/sysinst/arch/pc532/menus.md.fr	1.3
+distrib/utils/sysinst/arch/pmax/menus.md.fr	1.3
+
+  French translations for dummy partition menu items.  (simonb)
+
+distrib/utils/sysinst/upgrade.c			1.16
+distrib/utils/sysinst/msg.mi.eng		1.33
+distrib/utils/sysinst/msg.mi.fr			1.8-1.10
+
+  Add a missing "doingwhat" reason for a re-install of sets.
+  Fixes PR#6432.  (simonb)
