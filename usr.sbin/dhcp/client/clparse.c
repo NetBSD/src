@@ -43,12 +43,14 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.5.2.1 2000/07/10 19:58:45 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.5.2.2 2000/07/22 05:02:10 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
 static TIME parsed_time;
+
+char client_script_name [] = "/etc/dhclient-script";
 
 struct client_config top_level_config;
 
@@ -94,7 +96,7 @@ isc_result_t read_client_conf ()
 	top_level_config.backoff_cutoff = 15;
 	top_level_config.initial_interval = 3;
 	top_level_config.bootp_policy = P_ACCEPT;
-	top_level_config.script_name = "/etc/dhclient-script";
+	top_level_config.script_name = client_script_name;
 	top_level_config.requested_options = default_requested_options;
 	top_level_config.omapi_port = -1;
 
