@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.8 1996/10/29 23:37:39 mark Exp $ */
+/* $NetBSD: sfas.c,v 1.9 1997/01/18 01:38:07 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -637,8 +637,11 @@ sfas_select_unit(dev, target)
 
 			*rp->sfas_command = cmd;
 			retcode = 1;
-		}
-	}
+			nexus->flags &= ~SFAS_NF_RETRY_SELECT;
+		} else
+			nexus->flags |= SFAS_NF_RETRY_SELECT;
+	} else
+		nexus->flags |= SFAS_NF_RETRY_SELECT;
 
 	splx(s);
 	return(retcode);
@@ -1108,7 +1111,7 @@ sfas_midaction(dev, rp, nexus)
 
 		/* Select the first pre-initialized nexus we find. */
 		for(i=0; i<8; i++)
-			if (dev->sc_nexus[i].flags & SFAS_NF_SELECT_ME)
+			if (dev->sc_nexus[i].flags & (SFAS_NF_SELECT_ME | SFAS_NF_RETRY_SELECT))
 				if (sfas_select_unit(dev, i) == 2)
 					break;
 
@@ -1619,3 +1622,79 @@ sfasicmd(dev, pendp)
 
 	nexus->flags &= ~SFAS_NF_SYNC_TESTED;
 }
+
+
+#ifdef SFAS_DEBUG
+
+void
+dump_nexus(nexus)
+	struct nexus *nexus;
+{
+	int loop;
+
+	printf("nexus=%08x\n", (u_int)nexus);
+	printf("scsi_fer=%08x\n", (u_int)nexus->xs);
+	printf("ID=%02x\n", nexus->ID);
+	printf("clen=%02x\n", nexus->clen);
+	printf("cbuf=");
+	for (loop = 0; loop< 14; ++loop)
+		printf(" %02x\n", nexus->cbuf[loop]);
+	printf("\n");
+	printf("dma:\n");
+	for (loop = 0; loop < MAXCHAIN; ++loop)
+		printf("dma_chain: %08x %04x %04x\n", nexus->dma[loop].ptr,
+		    nexus->dma[loop].len, nexus->dma[loop].flg);
+	printf("\n");
+
+	printf("max_link=%d\n", nexus->max_link);
+	printf("cur_link=%d\n", nexus->cur_link);
+
+	printf("buf=%08x\n", (u_int)nexus->buf);
+	printf("len=%08x\n", nexus->len);
+	printf("dma_buf=%08x\n", (u_int)nexus->dma_buf);
+	printf("dma_len=%08x\n", nexus->dma_len);
+	printf("dma_blk_ptr=%08x\n", (u_int)nexus->dma_blk_ptr);
+	printf("dma_blk_len=%08x\n", nexus->dma_blk_len);
+	printf("dma_blk_flag=%08x\n", nexus->dma_blk_flg);
+	printf("state=%02x\n", nexus->state);
+	printf("flags=%04x\n", nexus->flags);
+	printf("period=%d\n", nexus->period);
+	printf("offset=%d\n", nexus->offset);
+	printf("syncper=%d\n", nexus->syncper);
+	printf("syncoff=%d\n", nexus->syncoff);
+	printf("config3=%02x\n", nexus->config3);
+	printf("lun_unit=%d\n", nexus->lun_unit);
+	printf("status=%02x\n", nexus->status);
+	printf("\n");
+}
+
+void
+dump_nexii(sc)
+	struct sfas_softc *sc;
+{
+	int loop;
+
+	for (loop = 0; loop < 8; ++loop) {
+		dump_nexus(&sc->sc_nexus[loop]);
+	}
+}
+
+void
+dump_sfassoftc(sc)
+	struct sfas_softc *sc;
+{
+	printf("sfassoftc @ 0x%08x\n", (u_int)sc);
+	printf("clock_freq = %d\n", sc->sc_clock_freq);
+	printf("timeout = %d\n", sc->sc_timeout);
+	printf("host_id = %d\n", sc->sc_host_id);
+	printf("config_flags = 0x%08x\n", sc->sc_config_flags);
+	printf("led_status = %d\n", sc->sc_led_status);
+
+	dump_nexii(sc);
+	printf("cur_nexus = 0x%08x\n", (u_int)sc->sc_cur_nexus);
+	printf("sel_nexus = 0x%08x\n", (u_int)sc->sc_sel_nexus);
+	printf("\n");
+}
+
+#endif	/* SFAS_DEBUG */
+
