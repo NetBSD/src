@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.4 2002/03/10 11:32:18 martin Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.5 2002/03/10 11:55:50 martin Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -41,18 +41,19 @@
 #define	RAY_ECFIR	6	/* ECF intr register */
 #define	RAY_AR0		8	/* authorization register 0 (unused) */
 #define	RAY_AR1		9	/* authorization register 1 (unused) */
+#define	RAY_PMR		10	/* program mode register (unused) */
+#define	RAY_TMR		11	/* pc test mode register (unused) */
+#define	RAY_FCWR	16	/* frequency control word register */
+
 /*
- * XXX these registers cannot be accessed with pcmcia.c's 14 byte mapping
+ * XXX these registers cannot be accessed with pcmcia.c's 0x14 byte mapping
  * of the CCR for us
  */
 #if 0
-#define	RAY_PMR		0xf0a	/* program mode register (unused) */
-#define	RAY_TMR		0xf0b	/* pc test mode register (unused) */
-#define	RAY_FCWR	0xf10	/* frequency control word register */
-#define RAY_TMC1	0xf14	/* test mode control 1 (unused) */
-#define RAY_TMC2	0xf15	/* test mode control 1 (unused) */
-#define RAY_TMC3	0xf16	/* test mode control 1 (unused) */
-#define RAY_TMC4	0xf17	/* test mode control 1 (unused) */
+#define RAY_TMC1	0x014	/* test mode control 1 (unused) */
+#define RAY_TMC2	0x015	/* test mode control 1 (unused) */
+#define RAY_TMC3	0x016	/* test mode control 1 (unused) */
+#define RAY_TMC4	0x017	/* test mode control 1 (unused) */
 #endif
 
 /*
