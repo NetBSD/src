@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.82 2004/04/16 22:34:01 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.83 2004/04/16 22:35:54 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -578,3 +578,8 @@ lib/libc/time/strftime.3			patch
 
 	Add documentation for %v
 	[kleink, ticket #1670]
+
+distrib/i386/floppies/ramdisk-rescuesmall/Makefile	patch
+
+	Adjust size to fit current image. PR#25177
+	[grant, ticket #1671]
