@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.4 1999/12/22 14:38:12 kleink Exp $	*/
+/*	$NetBSD: post.c,v 1.5 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -35,8 +35,7 @@
  * draw the menu on the screen.
  */
 int
-post_menu(menu)
-	MENU *menu;
+post_menu(MENU *menu)
 {
 	int maxx, maxy, i;
 	
@@ -52,9 +51,6 @@ post_menu(menu)
 		return E_NOT_CONNECTED;
 	if (menu->menu_win == NULL)
 		return E_BAD_ARGUMENT;
-
-	getmaxyx(menu->menu_subwin, maxy, maxx);
-	if ((maxx == ERR) || (maxy == ERR)) return E_SYSTEM_ERROR;
 
 	menu->in_init = 1;
 	menu->cur_item = 0; /* reset current item in case it was set before */
@@ -74,7 +70,7 @@ post_menu(menu)
 
 	if (menu->menu_subwin == NULL) {
 		menu->we_created = 1;
-		menu->menu_subwin = subwin(menu->menu_win, menu->rows,
+		menu->menu_subwin = derwin(menu->menu_win, menu->rows,
 					   menu->cols * menu->max_item_width,
 					   0, 0);
 		if (menu->menu_subwin == NULL) {
@@ -82,6 +78,9 @@ post_menu(menu)
 			return E_SYSTEM_ERROR;
 		}
 	}
+
+	getmaxyx(menu->menu_subwin, maxy, maxx);
+	if ((maxx == ERR) || (maxy == ERR)) return E_SYSTEM_ERROR;
 
 	if ((menu->cols * menu->max_item_width + menu->cols - 1) > maxx)
 		return E_NO_ROOM;
@@ -100,8 +99,7 @@ post_menu(menu)
  * menu from the screen.
  */
 int
-unpost_menu(menu)
-	MENU *menu;
+unpost_menu(MENU *menu)
 {
 	if (menu == NULL)
 		return E_BAD_ARGUMENT;
