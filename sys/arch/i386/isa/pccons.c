@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.65.2.2 1994/10/09 09:37:07 mycroft Exp $
+ *	$Id: pccons.c,v 1.65.2.3 1994/10/16 19:56:01 cgd Exp $
  */
 
 /*
@@ -153,7 +153,7 @@ extern pcopen(dev_t, int, int, struct proc *);
 	{ delay(6); }
 
 static inline int
-kbd_wait()
+kbd_wait_output()
 {
 	u_int i;
 
@@ -165,6 +165,32 @@ kbd_wait()
 	return 0;
 }
 
+static inline int
+kbd_wait_input()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+			KBD_DELAY;
+			return 1;
+		}
+	return 0;
+}
+
+static inline void
+kbd_flush_input()
+{
+	u_int i;
+
+	for (i = 10; i; i--) {
+		if ((inb(KBSTATP) & KBS_DIB) == 0)
+			return;
+		KBD_DELAY;
+		(void) inb(KBDATAP);
+	}
+}
+
 #if 1
 /*
  * Get the current command byte.
@@ -173,10 +199,10 @@ static u_char
 kbc_get8042cmd()
 {
 
-	if (!kbd_wait())
+	if (!kbd_wait_output())
 		return -1;
 	outb(KBCMDP, K_RDCMDBYTE);
-	if (!kbd_wait())
+	if (!kbd_wait_input())
 		return -1;
 	return inb(KBDATAP);
 }
@@ -190,10 +216,10 @@ kbc_put8042cmd(val)
 	u_char val;
 {
 
-	if (!kbd_wait())
+	if (!kbd_wait_output())
 		return 0;
 	outb(KBCMDP, K_LDCMDBYTE);
-	if (!kbd_wait())
+	if (!kbd_wait_output())
 		return 0;
 	outb(KBOUTP, val);
 	return 1;
@@ -211,7 +237,7 @@ kbd_cmd(val, polling)
 	register u_int i;
 
 	do {
-		if (!kbd_wait())
+		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
 		outb(KBOUTP, val);
@@ -237,7 +263,7 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
-				inb(KBSTATP);
+				(void) inb(KBSTATP);
 				if (ack)
 					return 1;
 				if (nak)
@@ -328,7 +354,7 @@ pcprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_char c;
+	u_int i;
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -338,18 +364,18 @@ pcprobe(parent, self, aux)
 
 #if 1
 	/* Flush any garbage. */
-	while (inb(KBSTATP) & KBS_DIB) {
-		KBD_DELAY;
-		(void) inb(KBDATAP);
-	}
+	kbd_flush_input();
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
 		printf("pcprobe: reset error %d\n", 1);
 		goto lose;
 	}
-	while ((inb(KBSTATP) & KBS_DIB) == 0);
-	KBD_DELAY;
-	if (inb(KBDATAP) != KBR_RSTDONE) {
+	for (i = 600000; i; i--)
+		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+			KBD_DELAY;
+			break;
+		}
+	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -358,10 +384,7 @@ pcprobe(parent, self, aux)
 	 * This is kind of stupid, but we account for them anyway by just
 	 * flushing the buffer.
 	 */
-	while (inb(KBSTATP) & KBS_DIB) {
-		KBD_DELAY;
-		(void) inb(KBDATAP);
-	}
+	kbd_flush_input();
 	/* Just to be sure. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error %d\n", 3);
