@@ -1,6 +1,6 @@
 /* 
  *
- * $NetBSD: README,v 1.1 2002/12/12 12:51:37 masuda Exp $
+ * $NetBSD: README,v 1.2 2002/12/12 13:45:27 masuda Exp $
  * README Copyright (C) Yoshihiro Masuda  2002
  * <masuda@tcp-ip.or.jp>
  *
@@ -17,9 +17,31 @@ based products are similar), I will have taken from or will be linking
 to a lots of code of walnut.
 
 
+Description of OpenBlockS products:
+
+OpenBlockS	is the first available product of series is using MPC860
+	- This product have one compact flash connector and one 2.5" HDD.
+
+OpenBlockSS	is the second product of series of OpenBlockS and the first
+	available product using IBM's 405GP.
+	- This product have only one 2.5" HDD connector that can be used
+	for connect 2.5"HDD or compact flash.(The converter board is included)
+	- This product also have one small size and special shaped PCI 
+	interface.
+	- Plastic chasses.
+
+OpenBlockSR	is the third product and fully compatible with OpenBlockSS.
+	- This product does not support PCI interface officially.
+	- Metal chasses
+
+
+
 
 /*
  * $Log: README,v $
+ * Revision 1.2  2002/12/12 13:45:27  masuda
+ * Added some descriptions of OpenBlockS products just for your information.
+ *
  * Revision 1.1  2002/12/12 12:51:37  masuda
  * Description file for OpenBlockS S and R.
  * Those products are shipped from Plat'Home Inc.
