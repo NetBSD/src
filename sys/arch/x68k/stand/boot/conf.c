@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2001/09/28 15:20:00 minoura Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2002/03/17 15:43:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -63,3 +63,5 @@ struct fs_ops file_system[] = {
 };
  
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+
+struct open_file files[SOPEN_MAX];
