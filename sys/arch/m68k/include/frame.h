@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.14 1997/05/03 10:16:58 mycroft Exp $	*/
+/*	$NetBSD: frame.h,v 1.15 1997/05/03 12:49:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@ struct frame {
 		u_int	tf_pc;
 		u_short	tf_format:4,
 			tf_vector:12;
-	} F_t __attribute__((packed));
+	} __attribute__((packed)) F_t;
 	union F_u {
 		struct fmt2 {
 			u_int	f_iaddr;
