@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.3 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: mra.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.3 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.1 2004/05/28 17:52:06 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
