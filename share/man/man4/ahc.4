@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.24 2003/05/03 18:10:39 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.25 2003/05/06 18:30:42 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -69,12 +69,12 @@ To configure one or more controllers to assume the target role:
 .Pp
 \}
 .ie 0 \{
-For one or more SCSI busses:
+For one or more SCSI buses:
 .Cd device scbus0 at ahc0
 \}
 \{For
 .Tn SCSI
-busses:
+buses:
 .Cd scsibus* at ahc?\}
 .Sh DESCRIPTION
 .ie 0 \{
@@ -146,7 +146,7 @@ host adapter chips found on many motherboards as well as
 .Tn SCSI
 controller cards.\}
 .Pp
-Driver features include support for twin and wide busses,
+Driver features include support for twin and wide buses,
 fast, ultra or ultra2 synchronous transfers depending on controller type,
 .ie 0 \{
 tagged queuing, SCB paging, and target mode.
@@ -246,7 +246,7 @@ aic7899     20    PCI/64     80MHz     16Bit    16      2 3 4 5 6 7 8
 .El
 .Bl -enum -compact
 .It
-Multiplexed Twin Channel Device - One controller servicing two busses.
+Multiplexed Twin Channel Device - One controller servicing two buses.
 .It
 Multi-function Twin Channel Device - Two controllers on one chip.
 .It
