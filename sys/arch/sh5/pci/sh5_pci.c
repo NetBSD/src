@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.1 2002/09/28 11:16:37 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.2 2002/09/28 11:18:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,7 +106,7 @@ static int	sh5pcimatch(struct device *, struct cfdata *, void *);
 static void	sh5pciattach(struct device *, struct device *, void *);
 static int	sh5pciprint(void *, const char *);
 
-struct cfattach sh5pci_ca = {
+const struct cfattach sh5pci_ca = {
 	sizeof(struct sh5pci_softc), sh5pcimatch, sh5pciattach
 };
 extern struct cfdriver pcibus_cd;
