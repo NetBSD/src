@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2002/02/13 05:13:24 gmcgarry Exp $
+#	$NetBSD: dot.profile,v 1.2 2002/02/23 22:00:28 gmcgarry Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,10 @@ TERM=hp300h
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
 
@@ -47,9 +51,6 @@ ROOTDEV=/dev/md0a
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
-
-	# get the terminal type
-	eval `tset -s -m ":?$TERM"`
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
@@ -62,6 +63,17 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
 
-	# run the installation program
-	sysinst
+	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
+
+	if [ -x /sysinst ]; then
+		# run the installation or upgrade script.
+		sysinst
+	else
+		echo "This image contains utilities which may be needed"
+		echo "to get you out of a pinch."
+	fi
 fi
