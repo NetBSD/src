@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.652 2004/09/30 21:59:06 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.653 2004/10/05 11:58:18 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.652 2004/09/30 21:58:26 cube Exp 
+ *	NetBSD: pcidevs,v 1.653 2004/10/05 11:57:22 augustss Exp 
  */
 
 /*
@@ -2689,11 +2689,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
-	    "M5237 USB Host Controller",
+	    "M5237 USB 1.1 Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5239,
+	    "M5239 USB 2.0 Host Controller",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
 	    "M5243 PCI-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249,
+	    "M5249 Hypertransport to PCI bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
@@ -2702,6 +2710,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453,
 	    "M5453 AC-Link Controller Modem Device",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5455,
+	    "M5455 AC-Link Controller Audio Device",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
@@ -9704,4 +9716,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1850;
+const int pci_nproducts = 1853;
