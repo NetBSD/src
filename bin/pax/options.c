@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.40 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.41 2002/10/13 00:32:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.40 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.41 2002/10/13 00:32:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -764,7 +764,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hlmopqrstuvwxzBC:HI:LOPTX:Z014578",
+	    "+b:cef:hlmopqrstuvwxzBC:HI:LOPTX:Z014578",
 	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
