@@ -1,54 +1,74 @@
-/*	$NetBSD: unbzip2.c,v 1.1.2.1 2004/03/31 09:05:36 grant Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.1.2.2 2004/03/31 09:09:20 grant Exp $	*/
 
 /* This file is #included by gzip.c */
+
+#define INBUFSIZE	(64 * 1024)
+#define OUTBUFSIZE	(64 * 1024)
 
 static off_t
 unbzip2(int in, int out)
 {
-	FILE		*f_in;
-	BZFILE		*b_in;
-	int		bzerror, n;
+	int		n, ret, end_of_file;
 	off_t		bytes_out = 0;
-	char            buffer[64 * 1024];
+	bz_stream	bzs;
+	static char	*inbuf, *outbuf;
 
-	if ((in = dup(in)) < 0)
-		maybe_err(1, "dup");
+	if (inbuf == NULL && (inbuf = malloc(INBUFSIZE)) == NULL)
+	        maybe_err(1, "malloc");
+	if (outbuf == NULL && (outbuf = malloc(OUTBUFSIZE)) == NULL)
+	        maybe_err(1, "malloc");
 
-	if ((f_in = fdopen(in, "r")) == NULL)
-		maybe_err(1, "fdopen");
+	bzs.bzalloc = NULL;
+	bzs.bzfree = NULL;
+	bzs.opaque = NULL;
 
-	if ((b_in = BZ2_bzReadOpen(&bzerror, f_in, 0, 0, NULL, 0)) == NULL)
-		maybe_err(1, "BZ2_bzReadOpen");
+	end_of_file = 0;
+	ret = BZ2_bzDecompressInit(&bzs, 0, 0);
+	if (ret != BZ_OK)
+	        maybe_errx(1, "bzip2 init");
 
-	do {
-		n = BZ2_bzRead(&bzerror, b_in, buffer, sizeof (buffer));
+	bzs.avail_in = 0;
 
-		switch (bzerror) {
-		case BZ_IO_ERROR:
-			maybe_errx(1, "bzip2 I/O error");
-		case BZ_UNEXPECTED_EOF:
-			maybe_errx(1, "bzip2 unexpected end of file");
-		case BZ_DATA_ERROR:
-			maybe_errx(1, "bzip2 data integrity error");
-		case BZ_DATA_ERROR_MAGIC:
-			maybe_errx(1, "bzip2 magic number error");
-		case BZ_MEM_ERROR:
-			maybe_errx(1, "bzip2 out of memory");
-		case BZ_OK:
-		case BZ_STREAM_END:
-			break;
-		default:
-			maybe_errx(1, "bzip2 unknown error");
-		}
+	while (ret != BZ_STREAM_END) {
+	        if (bzs.avail_in == 0 && !end_of_file) {
+	                n = read(in, inbuf, INBUFSIZE);
+	                if (n < 0)
+	                        maybe_err(1, "read");
+	                if (n == 0)
+	                        end_of_file = 1;
+	                bzs.next_in = inbuf;
+	                bzs.avail_in = n;
+	        } else
+	                n = 0;
 
-		if ((n = write(out, buffer, n)) < 0)
-			maybe_err(1, "write");
-		bytes_out += n;
-	} while (bzerror != BZ_STREAM_END);
+	        bzs.next_out = outbuf;
+	        bzs.avail_out = OUTBUFSIZE;
+	        ret = BZ2_bzDecompress(&bzs);
 
-	(void)BZ2_bzReadClose(&bzerror, b_in);
-	(void)fclose(f_in);
+	        switch (ret) {
+	        case BZ_STREAM_END:
+	        case BZ_OK:
+	                if (ret == BZ_OK && end_of_file)
+	                        maybe_err(1, "read");
+	                if (!tflag) {
+	                        n = write(out, outbuf, OUTBUFSIZE - bzs.avail_out);
+	                        if (n < 0)
+	                                maybe_err(1, "write");
+	                }
+	                bytes_out += n;
+	                break;
 
+	        case BZ_DATA_ERROR:
+	                maybe_errx(1, "bzip2 data integrity error");
+	        case BZ_DATA_ERROR_MAGIC:
+	                maybe_errx(1, "bzip2 magic number error");
+	        case BZ_MEM_ERROR:
+	                maybe_errx(1, "bzip2 out of memory");
+	        }
+	}
+
+	if (BZ2_bzDecompressEnd(&bzs) != BZ_OK)
+	        return (0);
 
 	return (bytes_out);
 }
