@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.10 2000/03/16 18:26:49 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.11 2000/03/30 12:41:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -171,13 +171,13 @@ ufs_quotactl(mp, cmds, uid, arg, p)
  */
 int
 ufs_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
+	struct netcred *np;
+	struct ufsmount *ump = VFSTOUFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
@@ -197,12 +197,12 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  */
 int
 ufs_fhtovp(mp, ufhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct ufid *ufhp;
 	struct vnode **vpp;
 {
 	struct vnode *nvp;
-	register struct inode *ip;
+	struct inode *ip;
 	int error;
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {

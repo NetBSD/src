@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.8 2000/01/24 02:40:29 matt Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.9 2000/03/30 12:45:37 augustss Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -75,7 +75,7 @@ dz_uba_match(parent, cf, aux)
 	struct uba_attach_args *ua = aux;
 	bus_space_tag_t	iot = ua->ua_iot;
 	bus_space_handle_t ioh = ua->ua_ioh;
-	register int n;
+	int n;
 
 	iot = iot; /* Silly GCC */
 	/* Reset controller to initialize, enable TX interrupts */
@@ -114,7 +114,7 @@ dz_uba_attach(parent, self, aux)
         void *aux;
 {
 	struct	dz_softc *sc = (void *)self;
-	register struct uba_attach_args *ua = aux;
+	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;

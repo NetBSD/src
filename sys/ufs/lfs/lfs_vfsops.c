@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.47 2000/03/16 18:08:33 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.48 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ lfs_mountroot()
  */
 int
 lfs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
@@ -220,7 +220,7 @@ lfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	register struct lfs *fs = NULL;				/* LFS */
+	struct lfs *fs = NULL;				/* LFS */
 	size_t size;
 	int error;
 	mode_t accessmode;
@@ -325,14 +325,14 @@ lfs_mount(mp, path, data, ndp, p)
  */
 int
 lfs_mountfs(devvp, mp, p)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 {
 	extern struct vnode *rootvp;
 	struct dlfs *dfs, *adfs;
-	register struct lfs *fs;
-	register struct ufsmount *ump;
+	struct lfs *fs;
+	struct ufsmount *ump;
 	struct vnode *vp;
 	struct buf *bp, *abp;
 	struct partinfo dpart;
@@ -496,8 +496,8 @@ lfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct lfs *fs;
+	struct ufsmount *ump;
+	struct lfs *fs;
 	int error, flags, ronly;
 	extern int lfs_allclean_wakeup;
 
@@ -559,11 +559,11 @@ lfs_unmount(mp, mntflags, p)
 int
 lfs_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct lfs *fs;
-	register struct ufsmount *ump;
+	struct lfs *fs;
+	struct ufsmount *ump;
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
@@ -648,8 +648,8 @@ lfs_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	register struct lfs *fs;
-	register struct inode *ip;
+	struct lfs *fs;
+	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
 	struct vnode *vp;
@@ -774,11 +774,11 @@ lfs_vget(mp, ino, vpp)
  */
 int
 lfs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	register struct ufid *ufhp;
+	struct ufid *ufhp;
 
 	ufhp = (struct ufid *)fhp;
 	if (ufhp->ufid_ino < ROOTINO)
@@ -795,8 +795,8 @@ lfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct inode *ip;
-	register struct ufid *ufhp;
+	struct inode *ip;
+	struct ufid *ufhp;
 
 	ip = VTOI(vp);
 	ufhp = (struct ufid *)fhp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.20 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$NetBSD: dz.c,v 1.21 2000/03/30 12:45:37 augustss Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ void
 dzattach(sc)
         struct dz_softc *sc;
 {
-	register int n;
+	int n;
 
 	sc->sc_rxint = sc->sc_brk = 0;
 
@@ -165,9 +165,9 @@ dzrint(arg)
 	void *arg;
 {
 	struct dz_softc *sc = arg;
-	register struct tty *tp;
-	register int cc, line;
-	register unsigned c;
+	struct tty *tp;
+	int cc, line;
+	unsigned c;
 	int overrun = 0;
 
 	sc->sc_rxint++;
@@ -219,10 +219,10 @@ void
 dzxint(arg)
 	void *arg;
 {
-	register struct dz_softc *sc = arg;
-	register struct tty *tp;
-	register struct clist *cl;
-	register int line, ch, csr;
+	struct dz_softc *sc = arg;
+	struct tty *tp;
+	struct clist *cl;
+	int line, ch, csr;
 	u_char tcr;
 
 	/*
@@ -284,8 +284,8 @@ dzopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit, line;
+	struct tty *tp;
+	int unit, line;
 	struct	dz_softc *sc;
 	int s, error = 0;
 
@@ -345,8 +345,8 @@ dzclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct	dz_softc *sc;
-	register struct tty *tp;
-	register int unit, line;
+	struct tty *tp;
+	int unit, line;
 
 	
 	unit = DZ_I2C(minor(dev));
@@ -372,7 +372,7 @@ dzread (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	struct	dz_softc *sc;
 
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
@@ -386,7 +386,7 @@ dzwrite (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	struct	dz_softc *sc;
 
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
@@ -405,8 +405,8 @@ dzioctl (dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct	dz_softc *sc;
-	register struct tty *tp;
-	register int unit, line;
+	struct tty *tp;
+	int unit, line;
 	int error;
 
 	unit = DZ_I2C(minor(dev));
@@ -474,7 +474,7 @@ dztty (dev)
 /*ARGSUSED*/
 void
 dzstop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	if (tp->t_state & TS_BUSY)
 		if (!(tp->t_state & TS_TTSTOP))
@@ -483,11 +483,11 @@ dzstop(tp, flag)
 
 void
 dzstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dz_softc *sc;
-	register struct clist *cl;
-	register int unit, line, s;
+	struct dz_softc *sc;
+	struct clist *cl;
+	int unit, line, s;
 	char state;
 
 	unit = DZ_I2C(minor(tp->t_dev));
@@ -520,15 +520,15 @@ dzstart(tp)
 
 static int
 dzparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
 	struct	dz_softc *sc;
-	register int cflag = t->c_cflag;
+	int cflag = t->c_cflag;
 	int unit, line;
 	int ispeed = ttspeedtab(t->c_ispeed, dzspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dzspeedtab);
-	register unsigned lpr;
+	unsigned lpr;
 	int s;
 
 	unit = DZ_I2C(minor(tp->t_dev));
@@ -582,12 +582,12 @@ dzparam(tp, t)
 
 static unsigned
 dzmctl(sc, line, bits, how)
-	register struct dz_softc *sc;
+	struct dz_softc *sc;
 	int line, bits, how;
 {
-	register unsigned status;
-	register unsigned mbits;
-	register unsigned bit;
+	unsigned status;
+	unsigned mbits;
+	unsigned bit;
 	int s;
 
 	s = spltty();
@@ -663,9 +663,9 @@ static void
 dzscan(arg)
 	void *arg;
 {
-	register struct dz_softc *sc;
-	register struct tty *tp;
-	register int n, bit, port;
+	struct dz_softc *sc;
+	struct tty *tp;
+	int n, bit, port;
 	unsigned csr;
 	int s;
 

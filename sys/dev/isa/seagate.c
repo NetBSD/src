@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.35 2000/03/23 07:01:35 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.36 2000/03/30 12:45:33 augustss Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -951,9 +951,9 @@ sea_transfer_pio(sea, phase, count, data)
 	int *count;
 	u_char **data;
 {
-	register u_char p = *phase, tmp;
-	register int c = *count;
-	register u_char *d = *data;
+	u_char p = *phase, tmp;
+	int c = *count;
+	u_char *d = *data;
 	int timeout;
 
 	do {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.23 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.24 2000/03/30 12:41:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -69,10 +69,10 @@ READ(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct inode *ip;
-	register struct uio *uio;
-	register FS *fs;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	FS *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
@@ -178,10 +178,10 @@ WRITE(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct uio *uio;
-	register struct inode *ip;
-	register FS *fs;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	FS *fs;
 	struct buf *bp;
 	struct proc *p;
 	ufs_daddr_t lbn;

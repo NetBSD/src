@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.1 1999/08/08 11:41:29 ragge Exp $ */
+/*      $NetBSD: sgec.c,v 1.2 2000/03/30 12:45:32 augustss Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -481,7 +481,7 @@ sgec_intr(sc)
  */
 int
 zeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

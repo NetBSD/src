@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.10 1999/11/17 03:42:24 simonb Exp $	*/
+/*	$NetBSD: lance.c,v 1.11 2000/03/30 12:45:31 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,9 +172,9 @@ static inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
-	register u_int16_t *a = (u_short *) one;
-	register u_int16_t *b = (u_short *) two;
-	register u_int16_t diff;
+	u_int16_t *a = (u_short *) one;
+	u_int16_t *b = (u_short *) two;
+	u_int16_t diff;
 
 #ifdef	m68k
 	/*
@@ -319,9 +319,9 @@ lance_stop(sc)
  */
 void
 lance_init(sc)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 {
-	register int timo;
+	int timo;
 	u_long a;
 
 	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_STOP);
@@ -374,10 +374,10 @@ int
 lance_put(sc, boff, m)
 	struct lance_softc *sc;
 	int boff;
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct mbuf *n;
-	register int len, tlen = 0;
+	struct mbuf *n;
+	int len, tlen = 0;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -461,7 +461,7 @@ bad:
  */
 void
 lance_read(sc, boff, len)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	struct mbuf *m;
@@ -580,11 +580,11 @@ lance_mediastatus(ifp, ifmr)
  */
 int
 lance_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct lance_softc *sc = ifp->if_softc;
+	struct lance_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -606,7 +606,7 @@ lance_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -717,15 +717,15 @@ lance_setladrf(ac, af)
 {
 	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp;
-	register u_int32_t crc;
+	u_char *cp;
+	u_int32_t crc;
 	static const u_int32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
 		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 	};
-	register int len;
+	int len;
 	struct ether_multistep step;
 
 	/*
@@ -852,11 +852,11 @@ lance_copytobuf_gap2(sc, fromv, boff, len)
 	struct lance_softc *sc;
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;
+	caddr_t from = fromv;
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -883,9 +883,9 @@ lance_copyfrombuf_gap2(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -912,7 +912,7 @@ lance_zerobuf_gap2(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
+	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
@@ -939,12 +939,12 @@ lance_copytobuf_gap16(sc, fromv, boff, len)
 	struct lance_softc *sc;
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t from = fromv;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -966,9 +966,9 @@ lance_copyfrombuf_gap16(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t to = tov;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -989,8 +989,8 @@ lance_zerobuf_gap16(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;

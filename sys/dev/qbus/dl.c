@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
+/*	$NetBSD: dl.c,v 1.12 2000/03/30 12:45:37 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ dl_attach (parent, self, aux)
 	void *aux;
 {
 	struct dl_softc *sc = (void *)self;
-	register struct uba_attach_args *ua = aux;
+	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -233,9 +233,9 @@ dlrint(arg)
 	void *arg;
 {
 	struct	dl_softc *sc = arg;
-	register struct tty *tp;
-	register int cc;
-	register unsigned c;
+	struct tty *tp;
+	int cc;
+	unsigned c;
 
 	if (DL_READ_WORD(DL_UBA_RCSR) & DL_RCSR_RX_DONE) {
 	        c = DL_READ_WORD(DL_UBA_RBUF);
@@ -273,7 +273,7 @@ dlxint(arg)
 	void *arg;
 {
 	struct dl_softc *sc = arg;
-	register struct tty *tp;
+	struct tty *tp;
 	
 	tp = sc->sc_tty;
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
@@ -291,8 +291,8 @@ dlopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit;
+	struct tty *tp;
+	int unit;
 	struct dl_softc *sc;
 
 	unit = minor(dev);
@@ -334,8 +334,8 @@ dlclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct dl_softc *sc;
-	register struct tty *tp;
-	register int unit;
+	struct tty *tp;
+	int unit;
 
 	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
@@ -355,9 +355,9 @@ dlread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	struct dl_softc *sc;
-	register int unit;
+	int unit;
 
 	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
@@ -371,9 +371,9 @@ dlwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp;
+	struct tty *tp;
 	struct dl_softc *sc;
-	register int unit;
+	int unit;
 
 	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
@@ -390,8 +390,8 @@ dlioctl(dev, cmd, data, flag, p)
         struct proc *p;
 {
 	struct dl_softc *sc;
-        register struct tty *tp;
-        register int unit;
+        struct tty *tp;
+        int unit;
         int error;
 
 	unit = minor(dev);
@@ -430,7 +430,7 @@ struct tty *
 dltty(dev)
 	dev_t dev;
 {
-	register struct dl_softc* sc;
+	struct dl_softc* sc;
 	
 	sc = dl_cd.cd_devs[minor(dev)];
 	return sc->sc_tty;
@@ -438,10 +438,10 @@ dltty(dev)
 
 void
 dlstop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
-	register struct dl_softc *sc;
+	struct dl_softc *sc;
 	int unit, s;
 
 	unit = minor(tp->t_dev);
@@ -457,10 +457,10 @@ dlstop(tp, flag)
 
 static void
 dlstart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dl_softc *sc;
-	register int unit;
+	struct dl_softc *sc;
+	int unit;
 	int s;
 
 	unit = minor(tp->t_dev);
@@ -492,8 +492,8 @@ out:
 /*ARGSUSED*/
 static int
 dlparam(tp, t)
-        register struct tty *tp;
-        register struct termios *t;
+        struct tty *tp;
+        struct termios *t;
 {
 	/*
 	 * All this kind of stuff (speed, character format, whatever)
@@ -505,7 +505,7 @@ dlparam(tp, t)
 
 static void
 dlbrk(sc, state)
-	register struct dl_softc *sc;
+	struct dl_softc *sc;
 	int state;
 {
 	int s = spltty();
