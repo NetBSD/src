@@ -1,4 +1,4 @@
-/*	$NetBSD: cckbdvar.h,v 1.1 1999/11/21 06:48:02 uch Exp $ */
+/*	$NetBSD: skbdvar.h,v 1.1 1999/12/08 15:49:19 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,4 +26,38 @@
  *
  */
 
-int	cckbd_cnattach __P((bus_space_tag_t, int));
+typedef struct skbd_controller *skbd_tag_t;
+
+struct skbd_controller {
+	/* controller interface */
+	void	*skif_v;
+	int	(*skif_establish) __P((void*, 
+				       int (*)(void*, int, int), 
+				       void (*)(void*),
+				       void*));
+	int	(*skif_poll) __P((void*));
+
+	/* keyboard interface */
+	void	*sk_v;
+	void	(*sk_input_hook) __P((void*));
+	int	(*sk_input) __P((void*, int, int));
+};
+
+struct skbd_attach_args {
+	skbd_tag_t saa_ic;
+};
+
+#define skbdif_establish(c, i, h, a) \
+	(*(c)->skif_establish)((c)->skif_v, (i), (h), (a))
+#define skbdif_poll(c) \
+	(*(c)->skif_poll)((c)->skif_v)
+
+#define skbd_input_hook(c) \
+	(*(c)->sk_input_hook)((c)->sk_v)
+#define skbd_input(c, f, a) \
+	(*(c)->sk_input)((c)->sk_v, (f), (a))
+
+int	skbd_print __P((void*, const char*));
+int	skbd_cnattach __P((struct skbd_controller*));
+
+
