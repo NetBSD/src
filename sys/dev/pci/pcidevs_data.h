@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.596 2003/12/09 18:58:49 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.597 2003/12/14 04:58:15 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.600 2003/12/09 18:58:16 ad Exp 
+ *	NetBSD: pcidevs,v 1.601 2003/12/14 04:57:16 tsutsui Exp 
  */
 
 /*
@@ -2006,6 +2006,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200SE,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 9200SE",
 	},
 	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
