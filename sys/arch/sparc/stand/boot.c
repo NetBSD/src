@@ -32,7 +32,7 @@
  *
  * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: boot.c,v 1.2 1994/03/20 09:13:37 pk Exp $
+ * $Id: boot.c,v 1.3 1994/07/01 10:46:56 pk Exp $
  */
 
 #include <sys/param.h>
@@ -40,6 +40,9 @@
 #include <a.out.h>
 #include <machine/bsd_openprom.h>
 #include "stand.h"
+
+int debug;
+int netif_debug;
 
 /*
  * Boot device is derived from ROM provided information.
@@ -75,7 +78,7 @@ struct promvec *pp;
 
 	printf("Booting %s @ 0x%x\n", file, LOADADDR);
 	copyunix(io, LOADADDR);
-	promvec->pv_halt();
+	_rtt();
 }
 
 /*ARGSUSED*/
@@ -191,3 +194,7 @@ twiddle()
 	tw_pos %= (sizeof(tw_chars) - 1);
 }
 
+_rtt()
+{
+	promvec->pv_halt();
+}

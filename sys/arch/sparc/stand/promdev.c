@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: promdev.c,v 1.1 1994/02/26 10:57:18 pk Exp $
+ *	$Id: promdev.c,v 1.2 1994/07/01 10:46:59 pk Exp $
  */
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ promstrategy(devdata, func, dblk, size, buf, rsize)
 	u_int *rsize;
 {
 	register struct prom_softc *pp = (struct prom_softc *)devdata;
-	u_int	(*pf)();
+	register u_int	(*pf)();
 	int	v2 = promvec->pv_romvec_vers == 2;
 	daddr_t	blk = dblk + pp->poff;
 	int	error = 0;
