@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.3 1995/04/29 20:23:50 briggs Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.4 1995/07/02 00:29:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,16 +43,18 @@
  */
 
 struct grfmode {
-	u_int8_t	mode_id;	/* Identifier for mode. */
-	caddr_t		fbbase;		/* Base of frame buffer */
-	u_int32_t	fbsize;		/* Size of frame buffer */
-	u_int16_t	rowbytes;	/* Screen rowbytes */
-	u_int16_t	width;		/* Screen width */
-	u_int16_t	height;		/* Screen height */
-	u_int16_t	hres;		/* Horizontal resolution (dpi) */
-	u_int16_t	vres;		/* Vertical resolution (dpi) */
-	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct */
-	u_int16_t	psize;		/* Screen depth */
+	u_int8_t	mode_id;	/* Identifier for mode              */
+	caddr_t		fbbase;		/* Base of page of frame buffer     */
+	u_int32_t	fbsize;		/* Size of frame buffer             */
+	u_int16_t	fboff;		/* Offset of frame buffer from base */
+	u_int16_t	rowbytes;	/* Screen rowbytes                  */
+	u_int16_t	width;		/* Screen width                     */
+	u_int16_t	height;		/* Screen height                    */
+	u_int16_t	hres;		/* Horizontal resolution (dpi)      */
+	u_int16_t	vres;		/* Vertical resolution (dpi)        */
+	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct       */
+	u_int16_t	psize;		/* Screen depth                     */
+	char		pad[32];	/* Space for expansion              */
 };
 
 struct grfmodes {
