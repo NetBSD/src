@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.12 2000/04/19 06:30:54 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.13 2000/04/20 01:59:22 enami Exp $	*/
 /*	$KAME: in_gif.c,v 1.36 2000/04/19 04:51:58 itojun Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ gif_encapcheck4(m, off, proto, arg)
 		return 0;
 
 	/* martian filters on outer source - NOT done in ip_input! */
-	if (IN_MULTICAST(&ip.ip_src.s_addr))
+	if (IN_MULTICAST(ip.ip_src.s_addr))
 		return 0;
 	switch ((ntohl(ip.ip_src.s_addr) & 0xff000000) >> 24) {
 	case 0: case 127: case 255:
