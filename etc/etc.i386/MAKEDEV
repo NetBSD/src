@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.118.2.6 2001/05/02 22:19:12 he Exp $
+#	$NetBSD: MAKEDEV,v 1.118.2.7 2001/10/25 17:59:11 he Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -111,6 +111,8 @@
 #	cfs*	Coda file system device
 #	sysmon	System Monitoring hardware
 #	bktr	Brooktree 848/849/878/879 based TV cards
+#	iop*	I2O IOP control interface
+#	mlx*	Mylex DAC960 control interface
 #
 
 dialin=0
@@ -144,7 +146,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0
+	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0 iop0 mlx0
 	sh $0 audio
 	sh $0 usbs
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
@@ -722,6 +724,20 @@ bktr*)
 	mknod vbi$unit c 71 $(($unit + 32))
 	chown root.wheel bktr$unit tuner$unit vbi$unit
 	chmod 444 bktr$unit tuner$unit vbi$unit
+	;;
+
+iop*)
+	unit=${i#iop};
+	rm -f iop$unit
+	mknod iop$unit c 76 $unit
+	chmod 600 iop$unit
+	;;
+
+mlx*)
+	unit=${i#mlx};
+	rm -f mlx$unit
+	mknod mlx$unit c 78 $unit
+	chmod 600 mlx$unit
 	;;
 
 local)
