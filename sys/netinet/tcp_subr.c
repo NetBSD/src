@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.12 1994/10/14 16:01:51 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.13 1995/04/13 06:36:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -172,8 +172,8 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		m->m_len = sizeof (struct tcpiphdr);
 		tlen = 0;
 #define xchg(a,b,type) { type t; t=a; a=b; b=t; }
-		xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_long);
-		xchg(ti->ti_dport, ti->ti_sport, u_short);
+		xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_int32_t);
+		xchg(ti->ti_dport, ti->ti_sport, u_int16_t);
 #undef xchg
 	}
 	ti->ti_len = htons((u_short)(sizeof (struct tcphdr) + tlen));
@@ -189,9 +189,9 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	ti->ti_off = sizeof (struct tcphdr) >> 2;
 	ti->ti_flags = flags;
 	if (tp)
-		ti->ti_win = htons((u_short) (win >> tp->rcv_scale));
+		ti->ti_win = htons((u_int16_t) (win >> tp->rcv_scale));
 	else
-		ti->ti_win = htons((u_short)win);
+		ti->ti_win = htons((u_int16_t)win);
 	ti->ti_urp = 0;
 	ti->ti_sum = 0;
 	ti->ti_sum = in_cksum(m, tlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.11 1994/10/14 16:01:49 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.12 1995/04/13 06:36:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -232,7 +232,8 @@ tcp_input(m, iphlen)
 	struct in_addr laddr;
 	int dropsocket = 0;
 	int iss = 0;
-	u_long tiwin, ts_val, ts_ecr;
+	u_long tiwin;
+	u_int32_t ts_val, ts_ecr;
 	int ts_present = 0;
 
 	tcpstat.tcps_rcvtotal++;
@@ -258,7 +259,7 @@ tcp_input(m, iphlen)
 	len = sizeof (struct ip) + tlen;
 	ti->ti_next = ti->ti_prev = 0;
 	ti->ti_x1 = 0;
-	ti->ti_len = (u_short)tlen;
+	ti->ti_len = (u_int16_t)tlen;
 	HTONS(ti->ti_len);
 	if (ti->ti_sum = in_cksum(m, len)) {
 		tcpstat.tcps_rcvbadsum++;
@@ -297,11 +298,11 @@ tcp_input(m, iphlen)
 		if ((optlen == TCPOLEN_TSTAMP_APPA ||
 		     (optlen > TCPOLEN_TSTAMP_APPA &&
 			optp[TCPOLEN_TSTAMP_APPA] == TCPOPT_EOL)) &&
-		     *(u_long *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
+		     *(u_int32_t *)optp == htonl(TCPOPT_TSTAMP_HDR) &&
 		     (ti->ti_flags & TH_SYN) == 0) {
 			ts_present = 1;
-			ts_val = ntohl(*(u_long *)(optp + 4));
-			ts_ecr = ntohl(*(u_long *)(optp + 8));
+			ts_val = ntohl(*(u_int32_t *)(optp + 4));
+			ts_ecr = ntohl(*(u_int32_t *)(optp + 8));
 			optp = NULL;	/* we've parsed the options */
 		}
 	}
@@ -1317,9 +1318,9 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 	int cnt;
 	struct tcpiphdr *ti;
 	int *ts_present;
-	u_long *ts_val, *ts_ecr;
+	u_int32_t *ts_val, *ts_ecr;
 {
-	u_short mss;
+	u_int16_t mss;
 	int opt, optlen;
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
