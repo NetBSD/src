@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.2 2001/03/31 12:53:59 toshii Exp $	*/
+/*	$NetBSD: spl.S,v 1.3 2001/04/17 16:07:13 toshii Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -107,8 +107,11 @@ ENTRY(lowerspl)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	msr	cpsr_all, r4
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, lr}
+	ldmfd	sp!, {r4}
+	mov	pc, lr
 lowerspl_exit:
 	msr	cpsr_all, r4
 	ldmfd	sp!, {r4}
@@ -137,8 +140,11 @@ ENTRY(splx)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	msr	cpsr_all, r4
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, lr}
+	ldmfd	sp!, {r4}
+	mov	pc, lr
 splx_exit:
 	msr	cpsr_all, r4
 	ldmfd	sp!, {r4}
