@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3 2000/07/09 21:58:44 eeh Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.4 2000/11/08 23:41:42 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,16 @@
 
 #include <machine/bus.h>
 #include <dev/ic/z8530sc.h>
+
+/*
+ * Need to override cn_console_dev() for zstty and zskbd.
+ */
+#ifdef cn_isconsole
+#undef cn_isconsole
+#endif
+extern struct consdev *cn_hw;
+extern struct consdev *cn_tab;
+#define cn_isconsole(d)	((d) == cn_tab->cn_dev || (d) == cn_hw->cn_dev)
 
 struct zsc_softc {
 	struct device		zsc_dev;	/* base device */
