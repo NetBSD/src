@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.11 1997/07/21 14:08:13 jtc Exp $	*/
+/*	$NetBSD: res_send.c,v 1.12 1997/10/09 11:34:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.11 1997/07/21 14:08:13 jtc Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.12 1997/10/09 11:34:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,6 +118,9 @@ static int vc = 0;	/* is the socket a virtual ciruit? */
 			fprintf args;\
 			__fp_nquery(query, size, stdout);\
 		} else {}
+    static void Aerror __P((FILE *, char *, int, struct sockaddr_in));
+    static void Perror __P((FILE *, char *, int));
+
     static void
     Aerror(file, string, error, address)
 	FILE *file;
@@ -697,7 +700,7 @@ wait:
 		       (stdout, ";; got answer:\n"));
 		DprintQ((_res.options & RES_DEBUG) ||
 			(_res.pfcode & RES_PRF_REPLY),
-			(stdout, ""),
+			(stdout, "%s", ""),
 			ans, (resplen>anssiz)?anssiz:resplen);
 		/*
 		 * If using virtual circuits, we assume that the first server
