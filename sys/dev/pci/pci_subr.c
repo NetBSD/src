@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.24 1998/05/03 19:41:33 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.25 1998/05/03 19:46:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -463,8 +463,10 @@ pci_conf_print(pc, tag)
 		pci_conf_write(pc, tag, reg, rval);
 		splx(s);
 
-		printf("  Mapping register 0x%02x\n", reg);
 		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_MEM_SIZE(mask) == 0)
+				continue;
+			printf("  Mapping register 0x%02x\n", reg);
 			printf("    Base Address: 0x%08x, size 0x%08x, "
 			    "type = mem", PCI_MAPREG_MEM_ADDR(rval),
 			    PCI_MAPREG_MEM_SIZE(mask));
@@ -485,6 +487,9 @@ pci_conf_print(pc, tag)
 				printf(", not cacheable");
 			printf("\n");
 		} else {
+			if (PCI_MAPREG_IO_SIZE(mask) == 0)
+				continue;
+			printf("  Mapping register 0x%02x\n", reg);
 			printf("    Base Address: 0x%08x, size 0x%08x, "
 			    "type = i/o\n", PCI_MAPREG_IO_ADDR(rval),
 			    PCI_MAPREG_IO_SIZE(mask));
