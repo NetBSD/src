@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.1 1996/05/19 00:31:57 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.2 1996/08/13 08:19:50 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -13,8 +13,12 @@
  * express or implied warranty.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+
 #include <mips/cpu.h>		/* declaration of of cpu_id */
-#include <machine/locore.h>
+#include <mips/locore.h>
+#include <machine/cpu.h>		/* declaration of of cpu_id */
 
 mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
@@ -22,7 +26,18 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL
 };
 
+/*
+ * Forward declarations
+ * XXX should be in a header file so each mips port can include it.
+ */
+extern void cpu_identify __P((void));
+extern void mips_vector_init __P((void));
 
+void r2000_vector_init __P((void));
+void r4000_vector_init __P((void));
+
+
+#ifdef CPU_R2000
 /*
  * MIPS-I (r2000) locore-function vector.
  */
@@ -39,41 +54,6 @@ mips_locore_jumpvec_t R2000_locore_vec =
 	mips_r2000_TLBUpdate,
 	mips_r2000_TLBWriteIndexed
 };
-
-#ifdef CPU_R4000
-/*
- * MIPS-III (r4000) locore-function vector.
- */
-mips_locore_jumpvec_t R4000_locore_vec =
-{
-	mips_r4000_ConfigCache,
-	mips_r4000_FlushCache,
-	mips_r4000_FlushDCache,
-	mips_r4000_FlushICache,
-	mips_r4000_ForceCacheUpdate,
-	mips_r4000_SetPID,
-	mips_r4000_TLBFlush,
-	mips_r4000_TLBFlushAddr,
-	mips_r4000_TLBUpdate,
-	mips_r4000_TLBWriteIndexed
-};
-#endif	/* CPU_R4000 */
-
-
-/*
- * Do all the stuff that locore normally does before calling main(),
- * that is common to all mips-CPU NetBSD ports.
- *
- * The principal purpose of this function is to examine the
- * variable cpu_id, into which the kernel locore start code
- * writes the cpu ID register, and to then copy appropriate
- * cod into the CPU exception-vector entries and the jump tables
- * used to  hide the differences in cache and TLB handling in
- * different MIPS  CPUs.
- * 
- * This should be the very first thing called by each port's
- * init_main() function.
- */
 
 void
 r2000_vector_init()
@@ -103,26 +83,54 @@ r2000_vector_init()
 	mips_r2000_ConfigCache();
 	mips_r2000_FlushCache();
 }
+#endif /* CPU_R2000 */
 
 
 #ifdef CPU_R4000
+/*
+ * MIPS-III (r4000) locore-function vector.
+ */
+mips_locore_jumpvec_t R4000_locore_vec =
+{
+	mips_r4000_ConfigCache,
+	mips_r4000_FlushCache,
+	mips_r4000_FlushDCache,
+	mips_r4000_FlushICache,
+#if 0
+	 /*
+	  * No such vector exists, perhaps it was meant to be HitFlushDCache?
+	  */
+	mips_r4000_ForceCacheUpdate,
+#else
+	mips_r4000_FlushCache,
+#endif
+	mips_r4000_SetPID,
+	mips_r4000_TLBFlush,
+	mips_r4000_TLBFlushAddr,
+	mips_r4000_TLBUpdate,
+	mips_r4000_TLBWriteIndexed
+};
+
 void
 r4000_vector_init()
 {
 
-	extern char MachUTLBMiss[], MachUTLBMissEnd[];
+	/* TLB miss handler address and end */
 	extern char mips_R4000_exception[], mips_R4000_exceptionEnd[];
+
+	/* r4000 exception handler address and end */
+	extern char mips_R4000_TLBMiss[], mips_R4000_TLBMissEnd[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
+	if (mips_R4000_TLBMissEnd - mips_R4000_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-	      MachUTLBMissEnd - MachUTLBMiss);
+	bcopy(mips_R4000_TLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+	      mips_R4000_TLBMissEnd - mips_R4000_TLBMiss);
 
-	bcopy(mips_r4000_exception, (char *)MACH_GEN_EXC_VEC,
-	      mips_r4000_exceptionEnd - mips_r4000_exception);
+	bcopy(mips_R4000_exception, (char *)MACH_GEN_EXC_VEC,
+	      mips_R4000_exceptionEnd - mips_R4000_exception);
 
 	/*
 	 * Copy locore-function vector.
@@ -136,15 +144,30 @@ r4000_vector_init()
 	mips_r4000_ConfigCache();
 	mips_r4000_FlushCache();
 }
-#endif
+#endif	/* CPU_R4000 */
+
+
+/*
+ * Do all the stuff that locore normally does before calling main(),
+ * that is common to all mips-CPU NetBSD ports.
+ *
+ * The principal purpose of this function is to examine the
+ * variable cpu_id, into which the kernel locore start code
+ * writes the cpu ID register, and to then copy appropriate
+ * cod into the CPU exception-vector entries and the jump tables
+ * used to  hide the differences in cache and TLB handling in
+ * different MIPS  CPUs.
+ * 
+ * This should be the very first thing called by each port's
+ * init_main() function.
+ */
 
 /*
  * Initialize the hardware exception vectors, and the jump table used to
  * call locore cache and TLB management functions, based on the kind
  * of CPU the kernel is running on.
  */
-void
-mips_vector_init()
+void mips_vector_init()
 {
 	register caddr_t v;
 	extern char edata[], end[];
@@ -156,16 +179,19 @@ mips_vector_init()
 	/* Work out what kind of CPU and FPU are present. */
 	switch(cpu_id.cpu.cp_imp) {
 
+#ifdef CPU_R2000
 	case MIPS_R2000:
 	case MIPS_R3000:
 	  	r2000_vector_init();
 		break;
+#endif /* CPU_R2000 */
+
 
 #ifdef CPU_R4000
 	case MIPS_R4000:
 	  	r4000_vector_init();
 		break;
-#endif CPU_R4000
+#endif /* CPU_R4000 */
 
 	default:
 		panic("Unconfigured or unsupported MIPS cpu\n");
