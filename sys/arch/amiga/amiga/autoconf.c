@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 1997/08/31 16:33:13 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 1997/10/16 21:39:10 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -281,7 +281,6 @@ mbattach(pdp, dp, auxp)
 		config_found(dp, "idesc", simple_devprint);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(dp, "afsc", simple_devprint);
-	config_found(dp, "zbus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
 #ifdef DRACO
@@ -289,6 +288,7 @@ mbattach(pdp, dp, auxp)
 #endif
 		config_found(dp, "aucc", simple_devprint);
 
+	config_found(dp, "zbus", simple_devprint);
 }
 
 int
