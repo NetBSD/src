@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.18 2000/05/05 01:27:47 hubertf Exp $ */
+/* $NetBSD: user.c,v 1.19 2000/05/09 09:25:21 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.18 2000/05/05 01:27:47 hubertf Exp $");
+__RCSID("$NetBSD: user.c,v 1.19 2000/05/09 09:25:21 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -201,6 +201,24 @@ asystem(char *fmt, ...)
 	}
 	return ret;
 }
+
+#define NetBSD_1_4_K	104110000
+
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ < NetBSD_1_4_K)
+/* bounds checking strncpy */
+static int
+strlcpy(char *to, char *from, size_t tosize)
+{
+	size_t	n;
+	int	fromsize;
+
+	fromsize = strlen(from);
+	n = MIN(tosize - 1, fromsize);
+	(void) memcpy(to, from, n);
+	to[n] = '\0';
+	return fromsize;
+}
+#endif
 
 #ifdef EXTENSIONS
 /* return 1 if all of `s' is numeric */
