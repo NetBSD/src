@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.1 1996/07/20 18:29:52 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.2 1996/08/20 14:13:58 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  * 	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@ ka630_setup(uc,flags)
         uc->uc_mchk = ka630_mchk;
 #endif  
         
-        uc->uc_busTypes = VAX_Q22BUS;
+        uc->uc_busTypes = VAX_UNIBUS;
 } 
 
 /*
