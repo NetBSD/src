@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.2 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.3 1996/10/10 23:45:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,7 +102,7 @@ setconf()
 	if (boothowto & RB_ASKNAME) {
 		char name[128];
 retry:
-		printf("root device? ");
+		kprintf("root device? ");
 		gets(name);
 
 		if (strcmp(name, "halt") == 0)
@@ -122,24 +122,24 @@ gotit:
 			unit = name[2] - '0';
 			goto found;
 		}
-		printf("bad/missing unit number\n");
+		kprintf("bad/missing unit number\n");
 bad:
-		printf("use:\n");	
+		kprintf("use:\n");	
 		for (gc = genericconf; gc->gc_driver; gc++)
-			printf("\t%s%%d\n", gc->gc_name);
-		printf("\thalt\n");
+			kprintf("\t%s%%d\n", gc->gc_name);
+		kprintf("\thalt\n");
 		goto retry;
 	}
 	unit = 0;
 	for (gc = genericconf; gc->gc_driver; gc++) {
 		if (gc->gc_driver->cd_ndevs > unit &&
 		    gc->gc_driver->cd_devs[unit]) {
-			printf("root on %s0\n", gc->gc_name);
+			kprintf("root on %s0\n", gc->gc_name);
 			goto found;
 		}
 	}
 verybad:
-	printf("no suitable root\n");
+	kprintf("no suitable root\n");
 	boot(RB_HALT, NULL);
 
 found:
@@ -170,7 +170,7 @@ gets(cp)
 		case '\b':
 		case '\177':
 			if (lp > cp) {
-				printf("\b \b");
+				kprintf("\b \b");
 				lp--;
 			}
 			continue;

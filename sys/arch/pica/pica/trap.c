@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1996/03/31 03:38:27 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 1996/10/10 23:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -405,7 +405,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		va = trunc_page((vm_offset_t)vadr);
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
-		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
+		kprintf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
 		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
 #endif
 		/*
@@ -653,7 +653,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		/* read break instruction */
 		instr = fuiword((caddr_t)va);
 #if 0
-		printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
+		kprintf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
 			p->p_comm, p->p_pid, instr, pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
@@ -678,7 +678,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		MachFlushCache();
 
 		if (i < 0)
-			printf("Warning: can't restore instruction at %x: %x\n",
+			kprintf("Warning: can't restore instruction at %x: %x\n",
 				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
 
 		p->p_md.md_ss_addr = 0;
@@ -705,7 +705,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef DEBUG
 		trapDump("fpintr");
 #else
-		printf("FPU Trap: PC %x CR %x SR %x\n",
+		kprintf("FPU Trap: PC %x CR %x SR %x\n",
 			pc, causeReg, statusReg);
 		goto err;
 #endif
@@ -957,7 +957,7 @@ trapDump(msg)
 	int s;
 
 	s = splhigh();
-	printf("trapDump(%s)\n", msg);
+	kprintf("trapDump(%s)\n", msg);
 	for (i = 0; i < TRAPSIZE; i++) {
 		if (trp == trapdebug)
 			trp = &trapdebug[TRAPSIZE - 1];
@@ -965,11 +965,11 @@ trapDump(msg)
 			trp--;
 		if (trp->cause == 0)
 			break;
-		printf("%s: ADR %x PC %x CR %x SR %x\n",
+		kprintf("%s: ADR %x PC %x CR %x SR %x\n",
 			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
 				MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
-		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
+		kprintf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
 	splx(s);
 }
@@ -1001,7 +1001,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		inst = *(InstFmt *)&allowNonBranch;
 	}
 #if 0
-	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
+	kprintf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
 #endif
 	switch ((int)inst.JType.op) {
@@ -1112,7 +1112,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		retAddr = instPC + 4;
 	}
 #if 0
-	printf("Target addr=%x\n", retAddr); /* XXX */
+	kprintf("Target addr=%x\n", retAddr); /* XXX */
 #endif
 	return (retAddr);
 }
@@ -1156,7 +1156,7 @@ cpu_singlestep(p)
 		va = locr0[PC] + 4;
 	}
 	if (p->p_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
+		kprintf("SS %s (%d): breakpoint already set at %x (va %x)\n",
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
 		return (EFAULT);
 	}
@@ -1194,7 +1194,7 @@ cpu_singlestep(p)
 	if (i < 0)
 		return (EFAULT);
 #if 0
-	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
+	kprintf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
 		p->p_md.md_ss_instr, locr0[PC], curinstr); /* XXX */
 #endif
@@ -1206,7 +1206,7 @@ int
 kdbpeek(addr)
 {
 	if (addr & 3) {
-		printf("kdbpeek: unaligned address %x\n", addr);
+		kprintf("kdbpeek: unaligned address %x\n", addr);
 		return (-1);
 	}
 	return (*(int *)addr);
@@ -1227,7 +1227,7 @@ void
 stacktrace(a0, a1, a2, a3)
 	int a0, a1, a2, a3;
 {
-	stacktrace_subr(a0, a1, a2, a3, printf);
+	stacktrace_subr(a0, a1, a2, a3, kprintf);
 }
 
 void
@@ -1504,7 +1504,7 @@ fn_name(unsigned addr)
 	for (i = 0; names[i].name; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	sprintf(buf, "%x", addr);
+	ksprintf(buf, "%x", addr);
 	return (buf);
 }
 

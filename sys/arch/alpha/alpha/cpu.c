@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 1996/07/09 00:53:48 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 1996/10/10 23:50:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -89,65 +89,65 @@ cpuattach(parent, dev, aux)
 
         p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
 	    (dev->dv_unit * hwrpb->rpb_pcs_size));
-	printf(": ");
+	kprintf(": ");
 
 	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
 	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
 
 	if (major < ncpu_major)
-		printf("%s", cpu_major[major]);
+		kprintf("%s", cpu_major[major]);
 	else
-		printf("UNKNOWN MAJOR TYPE (%d)", major);
+		kprintf("UNKNOWN MAJOR TYPE (%d)", major);
 
-	printf(", ");
+	kprintf(", ");
 
 	switch (major) {
 	case PCS_PROC_EV4:
 		if (minor < ndc21064_cpu_minor)
-			printf("%s", dc21064_cpu_minor[minor]);
+			kprintf("%s", dc21064_cpu_minor[minor]);
 		else
-			printf("UNKNOWN MINOR TYPE (%d)", minor);
+			kprintf("UNKNOWN MINOR TYPE (%d)", minor);
 		break;
 
 	case PCS_PROC_EV45:
 	case PCS_PROC_EV5:
-		printf("Pass %d", minor + 1);
+		kprintf("Pass %d", minor + 1);
 		break;
 
 	default:
-		printf("UNKNOWN MINOR TYPE (%d)", minor);
+		kprintf("UNKNOWN MINOR TYPE (%d)", minor);
 	}
 
 	if (p->pcs_proc_revision[0] != 0) {		/* XXX bad test? */
-		printf(", ");
+		kprintf(", ");
 
-		printf("Revision %c%c%c%c", p->pcs_proc_revision[0],
+		kprintf("Revision %c%c%c%c", p->pcs_proc_revision[0],
 		    p->pcs_proc_revision[1], p->pcs_proc_revision[2],
 		    p->pcs_proc_revision[3]);
 	}
 
-	printf("\n");
+	kprintf("\n");
 
 	if (p->pcs_proc_var != 0) {
-		printf("cpu%d: ", dev->dv_unit);
+		kprintf("cpu%d: ", dev->dv_unit);
 
 		needcomma = 0;
 		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
-			printf("VAX FP support");
+			kprintf("VAX FP support");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_IEEEFP) {
-			printf("%sIEEE FP support", needcomma ? ", " : "");
+			kprintf("%sIEEE FP support", needcomma ? ", " : "");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_PE) {
-			printf("%sPrimary Eligible", needcomma ? ", " : "");
+			kprintf("%sPrimary Eligible", needcomma ? ", " : "");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_RESERVED)
-			printf("%sreserved bits: 0x%lx", needcomma ? ", " : "",
+			kprintf("%sreserved bits: 0x%lx", needcomma ? ", " : "",
 			    p->pcs_proc_var & PCS_VAR_RESERVED);
-		printf("\n");
+		kprintf("\n");
 	}
 
 	/*

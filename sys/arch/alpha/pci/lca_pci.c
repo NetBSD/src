@@ -1,4 +1,4 @@
-/*	$NetBSD: lca_pci.c,v 1.4 1996/07/09 00:54:48 cgd Exp $	*/
+/*	$NetBSD: lca_pci.c,v 1.5 1996/10/10 23:51:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -149,7 +149,7 @@ lca_conf_read(cpv, tag, offset)
 	}
 
 #if 0
-	printf("lca_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
+	kprintf("lca_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
 	    data, datap, ba ? " (badaddr)" : "");
 #endif
 
@@ -199,7 +199,7 @@ lca_conf_write(cpv, tag, offset, data)
 	}
 
 #if 0
-	printf("lca_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
+	kprintf("lca_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
 	    reg, data, datap);
 #endif
 }

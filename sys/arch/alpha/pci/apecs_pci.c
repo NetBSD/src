@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_pci.c,v 1.7 1996/07/09 00:54:31 cgd Exp $	*/
+/*	$NetBSD: apecs_pci.c,v 1.8 1996/10/10 23:51:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -140,7 +140,7 @@ apecs_conf_read(cpv, tag, offset)
 	}
 
 #if 0
-	printf("apecs_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
+	kprintf("apecs_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
 	    data, datap, ba ? " (badaddr)" : "");
 #endif
 
@@ -184,7 +184,7 @@ apecs_conf_write(cpv, tag, offset, data)
 	}
 
 #if 0
-	printf("apecs_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
+	kprintf("apecs_conf_write: tag 0x%lx, reg 0x%lx -> 0x%x @ %p\n", tag,
 	    reg, data, datap);
 #endif
 }
