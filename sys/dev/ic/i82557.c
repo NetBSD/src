@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.3 1999/08/03 23:18:09 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.4 1999/08/03 23:37:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -828,7 +828,7 @@ fxp_intr(arg)
 		/*
 		 * Free any finished transmit mbuf chains.
 		 */
-		if (statack & FXP_SCB_STATACK_CNA) {
+		if (statack & FXP_SCB_STATACK_CXTNO) {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 			     i = FXP_NEXTTX(i), sc->sc_txpending--) {
@@ -1158,7 +1158,7 @@ fxp_init(sc)
 	cbp->dma_bce =		0;	/* (disable) dma max counters */
 	cbp->late_scb =		0;	/* (don't) defer SCB update */
 	cbp->tno_int =		0;	/* (disable) tx not okay interrupt */
-	cbp->ci_int =		0;	/* interrupt on CU not active */
+	cbp->ci_int =		1;	/* interrupt on CU idle */
 	cbp->save_bf =		prm;	/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
 	cbp->underrun_retry =	1;	/* retry mode (1) on DMA underrun */
