@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.78 2004/10/05 20:14:52 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.79 2004/10/05 21:29:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.78 2004/10/05 20:14:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.79 2004/10/05 21:29:56 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -996,7 +996,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
-					       WM_NTXSEGS, MCLBYTES, 0, 0,
+					       WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
 					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
