@@ -1,4 +1,4 @@
-.\"     $NetBSD: fsetown.9,v 1.1 2003/09/21 19:35:47 jdolecek Exp $
+.\"     $NetBSD: fsetown.9,v 1.2 2003/09/21 20:05:23 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,86 +51,91 @@
 .Ft void
 .Fn fownsignal "pid_t pgid" "int code" "int band" "void *fdescdata"
 .Sh DESCRIPTION
-These functions handle file descriptor owner related ioctls, and
-related signal
-delivery. Device drivers and other parts of kernel call these functions from
+These functions handle file descriptor owner related ioctls and
+related signal delivery.
+Device drivers and other parts of the kernel call these functions from
 ioctl entry functions or I/O notification functions.
 .Pp
 .Fn fsetown
 sets the owner of file.
 .Fa cmd
-is a ioctl command, one of
+is an ioctl command, one of
 .Dv SIOCSPGRP ,
 .Dv FIOSETOWN ,
+and
 .Dv TIOCSPGRP .
 .Fa data
-is interpreted as pointer to signed integer, the integer being ID of owner.
+is interpreted as a pointer to a signed integer, the integer being
+the ID of the owner.
 The
 .Fa cmd
-determines how exactly would
+determines how exactly
 .Fa data
-be interpreted. If
+should be interpreted.
+If
 .Fa cmd
 is
 .Dv TIOCSPGRP ,
-the ID needs to be positive and is interpreted as process group ID. For
+the ID needs to be positive and is interpreted as process group ID.
+For
 .Dv SIOCSPGRP
 and
 .Dv FIOSETOWN ,
-passed ID is process ID if positive, or process group ID
+the passed ID is the process ID if positive, or the process group ID
 if negative.
 .Pp
 .Fn fgetown
-returns the current owner of file.
+returns the current owner of the file.
 .Fa cmd
-is ioctl command, one of
+is an ioctl command, one of
 .Dv SIOCGPGRP ,
 .Dv FIOGETOWN ,
+and
 .Dv TIOCGPGRP .
 .Fa data
-is interpreted as pointer to signed integer,
-and the value is set according to passed
+is interpreted as a pointer to a signed integer,
+and the value is set according to the passed
 .Fa cmd .
 For
 .Dv TIOCGPGRP ,
 the returned
 .Fa data
-value is positive process group ID if owner is process group,
+value is positive process group ID if the owner is the process group,
 or negative process ID if the owner is a process.
 For other ioctls,
-returned value is positive process ID if owner is a process,
-or negative process group ID if the owner is a process group.
+the returned value is the positive process ID if the owner is a process,
+or the negative process group ID if the owner is a process group.
 .Pp
 .Fn fownsignal
 schedules the
 .Dv SIGIO
-signal to be sent to current file descriptor owner.
+signal to be sent to the current file descriptor owner.
 .Fa code
 and
 .Fa band
-is sent along the signal as additional signal specific information,
+are sent along with the signal as additional signal specific information
 if
 .Dv SA_SIGINFO
-is activated. If the information is not available from context
-of
+is activated.
+If the information is not available from the context of the
 .Fn fownsignal
 call, these should be passed as zero.
 .Fa fdescdata
-is used to lookup file descriptor for
+is used to lookup the file descriptor for
 .Sa SA_SIGINFO
-signals. If it's specified, the file descriptor number
-is sent along the signal as additional signal
-specific information. If file descriptor data pointer
-is not available in the context of
+signals.
+If it is specified, the file descriptor number is sent along with
+the signal as additional signal specific information.
+If file descriptor data pointer is not available in the context of the
 .Fn fownsignal
 call,
 .Dv NULL
 should be used instead.
 .Pp
-Note that
-.Xr fcntl 3
+Note that a
+.Xr fcntl 2
 .Dv F_SETOWN request
-is translated by kernel to
+is translated by the kernel to a
 .Dv FIOSETOWN
 ioctl, and
 .Dv F_GETOWN
@@ -139,7 +144,7 @@ is translated to
 This is done transparently by generic code, before the device- or
 subsystem-specific ioctl entry function is called.
 .Sh SEE ALSO
-.Xr fcntl 3 ,
+.Xr fcntl 2 ,
 .Xr signal 7 ,
 .Xr ioctl 9 ,
 .Xr signal 9
