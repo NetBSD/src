@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.23 2001/01/14 08:12:47 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.24 2001/12/02 09:14:23 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.23 2001/01/14 08:12:47 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.24 2001/12/02 09:14:23 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -116,13 +116,12 @@ __restore_stophandler(void)
 /* To allow both SIGTSTP and endwin() to come back nicely, we provide
    the following routines. */
 
-static struct termios save_termios;
-
 int
 __stopwin(void)
 {
 	/* Get the current terminal state (which the user may have changed). */
-	(void) tcgetattr(STDIN_FILENO, &save_termios);
+	(void) tcgetattr(fileno(_cursesi_screen->infd),
+			 &_cursesi_screen->save_termios);
 
 	__restore_stophandler();
 
@@ -138,13 +137,14 @@ __stopwin(void)
 		(void) tputs(__tc_ke, 0, __cputchar);
 	(void) tputs(__tc_ve, 0, __cputchar);
 	(void) tputs(__tc_te, 0, __cputchar);
-	(void) fflush(stdout);
-	(void) setvbuf(stdout, NULL, _IOLBF, (size_t) 0);
+	(void) fflush(_cursesi_screen->outfd);
+	(void) setvbuf(_cursesi_screen->outfd, NULL, _IOLBF, (size_t) 0);
 
-	__endwin = 1;
+	_cursesi_screen->endwin = 1;
 
-	return (tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
+	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
+			  TCSASOFT | TCSADRAIN : TCSADRAIN,
+			  &_cursesi_screen->orig_termios) ? ERR : OK);
 }
 
 
@@ -155,11 +155,14 @@ __restartwin(void)
 	__set_stophandler();
 
 	/* save the new "default" terminal state */
-	(void) tcgetattr(STDIN_FILENO, &__orig_termios);
+	(void) tcgetattr(fileno(_cursesi_screen->infd),
+			 &_cursesi_screen->orig_termios);
 
 	/* Reset the terminal state to the mode just before we stopped. */
-	(void) tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios);
+	(void) tcsetattr(fileno(_cursesi_screen->infd),
+			 __tcaction ?
+			 TCSASOFT | TCSADRAIN : TCSADRAIN,
+			 &_cursesi_screen->save_termios);
 
 	/* Restore colours */
 	__restore_colors();
@@ -171,7 +174,7 @@ __restartwin(void)
 	__restore_cursor_vis();
 	
 	/* Restart the screen. */
-	__startwin();
+	__startwin(_cursesi_screen);
 
 	/* Repaint the screen. */
 	wrefresh(curscr);
@@ -180,7 +183,8 @@ __restartwin(void)
 int
 def_prog_mode(void)
 {
-	return (tcgetattr(STDIN_FILENO, &save_termios) ? ERR : OK);
+	return (tcgetattr(fileno(_cursesi_screen->infd),
+			  &_cursesi_screen->save_termios) ? ERR : OK);
 }
 
 int
@@ -193,7 +197,8 @@ reset_prog_mode(void)
 int
 def_shell_mode(void)
 {
-	return (tcgetattr(STDIN_FILENO, &__orig_termios) ? ERR : OK);
+	return (tcgetattr(fileno(_cursesi_screen->infd),
+			  &_cursesi_screen->orig_termios) ? ERR : OK);
 }
 
 int

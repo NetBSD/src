@@ -318,6 +318,10 @@ Every line below the current one will move up,
 and the bottom line will become blank.
 The current \*y will remain unchanged.
 .Ds
+.Fn delscreen "SCREEN *screen"
+.De
+Delete the screen and frees all associated resources.
+.Ds
 .Fn delwin "WINDOW *win"
 .De
 Deletes the window from existence.
@@ -914,6 +918,24 @@ Sleep for
 .Vn ms
 milliseconds.
 .Ds
+.Ft "SCREEN *"
+.Fn newterm "char *type" "FILE *outfd" "FILE *infd"
+.De
+Iinitialise the curses subsystem to use the terminal of type
+.Vn type
+connected via the input and output streams
+.Vn infd,outfd. 
+The 
+.Fn newterm
+is used in multi-terminal applications and returns a pointer to a
+.Ft "SCREEN"
+structure that holds the state for that particular terminal.  The
+application may swap between the terminals by calling the
+.Fn set_term
+function.  If the 
+.Vn type
+parameter is NULL then the $TERM variable is used as the terminal type.
+.Ds
 .Ft "WINDOW *"
 .Fn newwin "int lines" "int cols" "int begin_y" "int begin_x"
 .De
@@ -1174,6 +1196,17 @@ If
 is 0, scrolling is not allowed.
 This is its default setting.
 .Ds
+.Ft "SCREEN *"
+.Fn set_term "SCREEN *new"
+.De
+Sets the current screen for input and output to be the one given.  The 
+.Vn new
+structure must be one that has been previously created by the 
+.Fn newterm
+function.  The 
+.Fn set_term
+function returns the previous screen on successful completion.
+.Ds
 .Fn standend "" \(dg
 .De
 End standout mode initiated by
@@ -1196,7 +1229,7 @@ and
 .Ds
 .Fn start_color ""
 .De
-Initialize the cplor routines. 
+Initialize the color routines. 
 This must be called before any of the color routines are used.
 .Ds
 .Ft "WINDOW *"

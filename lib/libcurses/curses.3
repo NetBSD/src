@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.35 2001/10/14 19:58:16 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.36 2001/12/02 09:14:20 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,6 +121,8 @@ milliseconds using terminal pad character.
 .It def_shell_mode()	define shell (not in curses) terminal modes
 .It delch()	delete a character
 .It deleteln()	delete a line
+.It delscreen(screen)	free all associated storage and destroy
+.Em screen .
 .It delwin(win)	delete
 .Em win
 .It derwin(win,lines,cols,begin_y,begin_x)\ 	create a subwindow
@@ -274,6 +276,10 @@ characters on window
 .It napms(ms)	sleep for
 .Em ms
 milliseconds.
+.It newterm(type, outfd, infd)		Initialises the curses subsystem
+for a multi-terminal application.  Type is the type of terminal, if this is
+NULL then $TERM is used.  The infd and outfd are the input and output
+file streams.
 .It newwin(lines,cols,begin_y,begin_x)\ 	create a new window
 .It nl()	set newline mapping
 .It nocbreak()	unset cbreak mode
@@ -310,6 +316,8 @@ one line
 .Em win
 .It setscrreg(top, bottom)	set scrolling region on
 .Em stdscr
+.It set_term(screen)	sets the curses screen to the given one.
+Returns the previous screen.
 .It setterm(name)	set term variables for name
 .It standend()	end standout mode
 .It standout()	start standout mode

@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.13 2000/04/20 09:36:11 blymn Exp $	*/
+/*	$NetBSD: longname.c,v 1.14 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.13 2000/04/20 09:36:11 blymn Exp $");
+__RCSID("$NetBSD: longname.c,v 1.14 2001/12/02 09:14:21 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -88,5 +88,5 @@ __longname(char *bp, char *def)
 char	*
 longname(void)
 {
-	return (ttytype);
+	return (_cursesi_screen->ttytype);
 }

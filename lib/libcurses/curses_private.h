@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.16 2001/06/13 10:45:57 wiz Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.17 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -28,6 +28,8 @@
  *
  *
  */
+
+#include <termios.h>
 
 /* Private structure definitions for curses. */
 /*
@@ -97,25 +99,140 @@ struct __winlist {
 	struct __winlist	*nextp;	/* Next window. */
 };
 
-/* Private variables. */
+struct __color {
+	short	num;
+	short	red;
+	short	green;
+	short	blue;
+	int	flags;
+};
+
+/* List of colour pairs */
+struct __pair {
+	short	fore;
+	short	back;
+	int	flags;
+};
+
+/* Maximum colours */
+#define	MAX_COLORS	64
+/* Maximum colour pairs - determined by number of colour bits in attr_t */
+#define	MAX_PAIRS	64	/* PAIR_NUMBER(__COLOR) + 1 */
+
+typedef struct keymap keymap_t;
+
+/* this is the encapsulation of the terminal definition, one for
+ * each terminal that curses talks to.
+ */
+struct __screen {
+	FILE    *infd, *outfd;  /* input and output file descriptors */
+	WINDOW	*curscr;	/* Current screen. */
+	WINDOW	*stdscr;	/* Standard screen. */
+	WINDOW	*__virtscr;	/* Virtual screen (for doupdate()). */
+	int      curwin;        /* current window for refresh */
+	short    lx, ly;        /* loop parameters for refresh */
+	int	 COLS;		/* Columns on the screen. */
+	int	 LINES;		/* Lines on the screen. */
+	int	 COLORS;	/* Maximum colors on the screen */
+	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
+	int	 My_term;	/* Use Def_term regardless. */
+	char	 GT;		/* Gtty indicates tabs. */
+	char	 NONL;		/* Term can't hack LF doing a CR. */
+	char	 UPPERCASE;	/* Terminal is uppercase only. */
+
+        /* BEWARE!!! The order of the following terminal capabilities */
+        /* (tc_foo) is important - do not update without fixing the zap */
+        /* function in setterm.c */
+	char	tc_am, tc_bs, tc_cc, tc_da, tc_eo, tc_hc, tc_hl, tc_in, tc_mi,
+		tc_ms, tc_nc, tc_ns, tc_os, tc_ul, tc_ut, tc_xb, tc_xn, tc_xt,
+		tc_xs, tc_xx;
+	int     flag_count;
+	int	tc_pa, tc_Co, tc_NC;
+	int     int_count;
+	char	*tc_AB, *tc_ac, *tc_ae, *tc_AF, *tc_AL,
+		*tc_al, *tc_as, *tc_bc, *tc_bl, *tc_bt,
+		*tc_cd, *tc_ce, *tc_cl, *tc_cm, *tc_cr,
+		*tc_cs, *tc_dc, *tc_DL, *tc_dl, *tc_dm,
+		*tc_DO, *tc_do, *tc_eA, *tc_ed, *tc_ei,
+		*tc_ho, *tc_Ic, *tc_ic, *tc_im, *tc_Ip,
+		*tc_ip, *tc_k0, *tc_k1, *tc_k2, *tc_k3,
+		*tc_k4, *tc_k5, *tc_k6, *tc_k7, *tc_k8,
+		*tc_k9, *tc_kd, *tc_ke, *tc_kh, *tc_kl,
+		*tc_kr, *tc_ks, *tc_ku, *tc_LE, *tc_ll,
+		*tc_ma, *tc_mb, *tc_md, *tc_me, *tc_mh,
+		*tc_mk, *tc_mm, *tc_mo, *tc_mp, *tc_mr,
+		*tc_nd, *tc_nl, *tc_oc, *tc_op, *tc_pc,
+		*tc_rc, *tc_RI, *tc_Sb, *tc_sc, *tc_se,
+		*tc_SF, *tc_Sf, *tc_sf, *tc_so, *tc_sp,
+		*tc_SR, *tc_sr, *tc_ta, *tc_te, *tc_ti,
+		*tc_uc, *tc_ue, *tc_UP, *tc_up, *tc_us,
+		*tc_vb, *tc_ve, *tc_vi, *tc_vs;
+	char CA;
+	int str_count;
+	chtype acs_char[NUM_ACS];
+	struct __color colours[MAX_COLORS];
+	struct __pair  colour_pairs[MAX_PAIRS];
+	attr_t	nca;
+	
+/* Style of colour manipulation */
+#define COLOR_NONE	0
+#define COLOR_ANSI	1	/* ANSI/DEC-style colour manipulation */
+#define COLOR_HP	2	/* HP-style colour manipulation */
+#define COLOR_TEK	3	/* Tektronix-style colour manipulation */
+#define COLOR_OTHER	4	/* None of the others but can set fore/back */
+	int color_type;
+	
+	attr_t mask_op;
+	attr_t mask_me;
+	attr_t mask_ue;
+	attr_t mask_se;
+	struct tinfo *cursesi_genbuf;
+	int old_mode; /* old cursor visibility state for terminal */
+	keymap_t *base_keymap;
+	int echoit;
+	int pfast;
+	int rawmode;
+	int noqch;
+	int clearok;
+	int useraw;
+	struct __winlist *winlistp;
+	struct   termios cbreakt, rawt, *curt, save_termios;
+	struct termios orig_termios, baset, savedtty;
+	int ovmin;
+	int ovtime;
+	char *stdbuf;
+	unsigned int len;
+	int meta_state;
+	char pad_char;
+	char ttytype[1024];
+	int endwin;
+};
+
+
 extern char	 __GT;			/* Gtty indicates tabs. */
 extern char	 __NONL;		/* Term can't hack LF doing a CR. */
 extern char	 __UPPERCASE;		/* Terminal is uppercase only. */
-
 extern int	 My_term;		/* Use Def_term regardless. */
 extern const char	*Def_term;	/* Default terminal type. */
+extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 
 /* Private functions. */
 #ifdef DEBUG
 void	 __CTRACE(const char *fmt, ...);
 #endif
+void     _cursesi_free_keymap(keymap_t *map);
+int      _cursesi_gettmode(SCREEN *screen);
+void     _cursesi_reset_acs(SCREEN *screen);
+void     _cursesi_resetterm(SCREEN *screen);
+int      _cursesi_setterm(char *type, SCREEN *screen);
 int	 __delay(void);
 unsigned int __hash(char *s, int len);
 void	 __id_subwins(WINDOW *orig);
-void	 __init_getch(void);
-void	 __init_acs(void);
+void	 __init_getch(SCREEN *screen);
+void	 __init_acs(SCREEN *screen);
 char	*__longname(char *bp, char *def);	/* Original BSD version */
 int	 __mvcur(int ly, int lx, int y, int x, int in_refresh);
+WINDOW  *__newwin(SCREEN *screen, int lines, int cols, int y, int x);
 int	 __nodelay(void);
 int	 __notimeout(void);
 char	*__parse_cap(const char *, ...);
@@ -129,7 +246,7 @@ void	 __save_termios(void);
 void	 __set_color(attr_t attr);
 void	 __set_stophandler(void);
 void	 __set_subwin(WINDOW *orig, WINDOW *win);
-void	 __startwin(void);
+void	 __startwin(SCREEN *screen);
 void	 __stop_signal_handler(int signo);
 int	 __stopwin(void);
 void	 __swflags(WINDOW *win);
