@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.68 2003/08/30 11:00:38 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.69 2003/09/01 08:19:57 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -456,7 +456,7 @@ opty)
 	chmod 666 ttyp[0-1] ptyp[0-1]
 	;;
 
-ty*)
+pty*)
 	class=${i#pty}
 	set -- p q r s t u v w x y z P Q R S T
 	if [ "$class" -ge $# ]; then
