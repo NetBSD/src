@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.26 2002/09/27 15:38:08 provos Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.27 2003/03/10 15:07:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.26 2002/09/27 15:38:08 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.27 2003/03/10 15:07:17 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -117,14 +117,18 @@ struct uvm_pagerops ubc_pager =
 int ubc_nwins = UBC_NWINS;
 int ubc_winshift = UBC_WINSHIFT;
 int ubc_winsize;
-#ifdef PMAP_PREFER
+#if defined(PMAP_PREFER)
 int ubc_nqueues;
 boolean_t ubc_release_unmap = FALSE;
 #define UBC_NQUEUES ubc_nqueues
-#define UBC_RELEASE_UNMAP ubc_release_unmap
+#define UBC_RELEASE_UNMAP(uobj) \
+	(ubc_release_unmap && (((struct vnode *)uobj)->v_flag & VTEXT))
+#elif defined(PMAP_CACHE_VIVT)
+#define UBC_NQUEUES 1
+#define UBC_RELEASE_UNMAP(uobj) TRUE
 #else
 #define UBC_NQUEUES 1
-#define UBC_RELEASE_UNMAP FALSE
+#define UBC_RELEASE_UNMAP(uobj) FALSE
 #endif
 
 /*
@@ -529,18 +533,22 @@ ubc_release(va, flags)
 	umap->writelen = 0;
 	umap->refcount--;
 	if (umap->refcount == 0) {
-		if (UBC_RELEASE_UNMAP &&
-		    (((struct vnode *)uobj)->v_flag & VTEXT)) {
+		if (UBC_RELEASE_UNMAP(uobj)) {
 
 			/*
+			 * if the cache is virtually indexed and virtually
+			 * tagged, we cannot create a compatible cache alias.
+			 *
 			 * if this file is the executable image of
 			 * some process, that process will likely have
 			 * the file mapped at an alignment other than
 			 * what PMAP_PREFER() would like.  we'd like
 			 * to have process text be able to use the
 			 * cache even if someone is also reading the
-			 * file, so invalidate mappings of such files
-			 * as soon as possible.
+			 * file.
+			 *
+			 * so invalidate mappings of such files as soon as
+			 * possible.
 			 */
 
 			pmap_remove(pmap_kernel(), umapva,
