@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.5 1999/02/17 23:05:29 mycroft Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.6 1999/02/19 16:15:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -62,10 +62,6 @@ struct wss_softc {
 #define wss_playdrq sc_ad1848.sc_playdrq
 #define wss_recdrq  sc_ad1848.sc_recdrq
 
-#if 0
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
-#endif
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 

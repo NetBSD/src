@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.31 1998/12/05 19:43:55 mjacob Exp $	*/
+/*	$NetBSD: seagate.c,v 1.32 1999/02/19 16:15:07 mycroft Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -190,7 +190,6 @@ struct sea_scb {
  */
 struct sea_softc {
 	struct device sc_dev;
-	struct isadev sc_id;
 	void *sc_ih;
 
 	int type;			/* board type */
@@ -462,9 +461,6 @@ seaattach(parent, self, aux)
   
 	printf("\n");
 
-#ifdef NEWCONFIG
-	isa_establish(&sea->sc_id, &sea->sc_deV);
-#endif
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, seaintr, sea);
 
