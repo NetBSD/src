@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.2 2004/12/26 07:27:41 kanaoka Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.3 2005/01/13 14:13:18 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -32,10 +32,11 @@
  *	Cardbus specific routines for Realtek 8169 ethernet adapter.
  *	Tested for :
  *		Netgear GA-511 (8169S)
+ *		Buffalo LPC-CB-CLGT
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.2 2004/12/26 07:27:41 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.3 2005/01/13 14:13:18 kanaoka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -348,9 +349,9 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 	 * value.
 	 */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < 0x20) {
+	if (CARDBUS_LATTIMER(reg) < 0x40) {
 		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
+		reg |= (0x40 << CARDBUS_LATTIMER_SHIFT);
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
 }
