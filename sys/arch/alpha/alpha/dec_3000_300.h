@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.h,v 1.4 1996/06/12 22:06:44 cgd Exp $	*/
+/*	$NetBSD: dec_3000_300.h,v 1.5 1996/06/13 04:53:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,3 +29,4 @@
 
 char	*dec_3000_300_modelname __P((void));
 void	dec_3000_300_consinit __P((void));
+void	dec_3000_300_device_register __P((struct device *, void *));
