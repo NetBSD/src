@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.3 1997/12/07 17:47:47 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -96,10 +96,6 @@ integrate struct mbuf *mace_get __P((struct mc_softc *, caddr_t, int));
 static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
 static inline u_int16_t ether_cmp __P((void *, void *));
 
-
-struct cfdriver mc_cd = {
-	NULL, "mc", DV_IFNET
-};
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.24 1997/10/10 05:54:54 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.25 1998/01/12 19:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -98,9 +98,7 @@ struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
 };
 
-struct cfdriver asc_cd = {
-	NULL, "asc", DV_DULL, NULL, 0
-};
+extern struct cfdriver asc_cd;
 
 static int
 ascmatch(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.28 1997/11/13 03:16:42 mycroft Exp $ */
+/*	$NetBSD: apm.c,v 1.29 1998/01/12 18:59:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -148,9 +148,7 @@ struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 
-struct cfdriver apm_cd = {
-	NULL, "apm", DV_DULL
-};
+extern struct cfdriver apm_cd;
 
 /* configurable variables */
 int	apm_bogus_bios = 0;

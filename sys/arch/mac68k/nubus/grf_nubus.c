@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.38 1997/12/03 03:05:02 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.39 1998/01/12 19:22:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -68,10 +68,6 @@ static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
-
-struct cfdriver macvid_cd = {
-	NULL, "macvid", DV_DULL
-};
 
 struct cfattach macvid_ca = {
 	sizeof(struct grfbus_softc), grfmv_match, grfmv_attach

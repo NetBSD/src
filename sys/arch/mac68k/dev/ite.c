@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.41 1997/11/25 20:56:13 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.42 1998/01/12 19:22:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -922,10 +922,6 @@ ite_pollforchar()
 
 struct cfattach ite_ca = {
 	sizeof(struct device), itematch, iteattach
-};
-
-struct cfdriver ite_cd = {
-	NULL, "ite", DV_TTY
 };
 
 static int

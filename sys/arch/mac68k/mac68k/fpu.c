@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.22 1997/10/09 08:43:45 jtc Exp $	*/
+/*	$NetBSD: fpu.c,v 1.23 1998/01/12 19:22:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,10 +64,6 @@ static int  fpu_probe __P((void));
 
 struct cfattach fpu_ca = {
 	sizeof(struct device), fpu_match, fpu_attach
-};
-
-struct cfdriver fpu_cd = {
-	NULL, "fpu", DV_DULL, 0
 };
 
 static int

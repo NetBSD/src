@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.16 1997/11/04 13:02:45 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.17 1998/01/12 19:22:10 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -77,10 +77,6 @@ static __inline__ u_int	sonicput __P((struct sn_softc *sc, struct mbuf *m0,
 static __inline__ int	sonic_read __P((struct sn_softc *, caddr_t, int));
 static __inline__ struct mbuf *sonic_get __P((struct sn_softc *,
 			    struct ether_header *, int));
-
-struct cfdriver sn_cd = {
-	NULL, "sn", DV_IFNET
-};
 
 #undef assert
 #undef _assert

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.95 1997/11/27 09:59:05 fvdl Exp $
+#	$NetBSD: files.i386,v 1.96 1998/01/12 18:59:04 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -50,7 +50,7 @@ major	{md = 17}
 #
 
 define mainbus { }
-device	mainbus: isabus, eisabus, pcibus, mainbus
+device	mainbus class dull: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -71,12 +71,12 @@ include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
 
 # PCI-Host bridge chipsets
-device	pchb:	pcibus
+device	pchb class dull: pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
 
 # PCI-ISA bridges
-device	pcib: isabus
+device	pcib class dull: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
 
@@ -96,7 +96,7 @@ file	arch/i386/isa/isa_machdep.c	isa
 file	arch/i386/isa/clock.c		isa
 
 # Numeric Processing Extension; Math Co-processor
-device	npx
+device	npx class dull
 attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
 
@@ -105,12 +105,12 @@ file	arch/i386/isa/npx.c		npx needs-flag
 define pckbd { [irq = -1], [port = -1] }
 
 # PC console support a la "pccons"
-device	pc: tty, pckbd
+device	pc class tty: tty, pckbd
 attach	pc at isa
 file	arch/i386/isa/pccons.c		pc needs-flag
 
 # PC console support a la "pcvt"
-device	vt: tty, pckbd
+device	vt class tty: tty, pckbd
 attach	vt at isa
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
@@ -120,31 +120,31 @@ file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
-device	lms
+device	lms class dull
 attach	lms at isa
 file	arch/i386/isa/lms.c		lms needs-flag
-device	mms
+device	mms class dull
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	pms
+device	pms class dull
 attach	pms at pckbd
 file	arch/i386/isa/pms.c		pms needs-flag
 
 # Floppy disk controller
-device	fdc {drive = -1}
+device	fdc class dull {drive = -1}
 attach	fdc at isa
-device	fd: disk, isadma
+device	fd class disk: disk, isadma
 attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
 # PC speaker
-device	spkr: tty
+device	spkr class dull: tty
 attach	spkr at pckbd
 file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # Game adapter (joystick)
-device	joy
+device	joy class dull
 file	arch/i386/isa/joy.c		joy needs-flag
 
 attach	joy at isa with joy_isa
@@ -176,7 +176,7 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 #
 
 # Advanced Power Management support (APM)
-device apm: bioscall
+device apm class dull: bioscall
 attach apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.s	apm
@@ -223,7 +223,7 @@ defopt	PCIC_ISA_ALLOC_IOBASE
 defopt	PCIC_ISA_ALLOC_IOSIZE
 defopt	PCIC_ISA_INTR_ALLOC_MASK
 
-device	pcic {[controller = -1], [socket = -1]}
+device	pcic class dull {[controller = -1], [socket = -1]}
 file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia contoller

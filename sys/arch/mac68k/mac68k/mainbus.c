@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 1997/10/09 08:43:46 jtc Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 1998/01/12 19:22:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,6 @@ static int	mainbus_search __P((struct device *, struct cfdata *, void *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
 };
 
 static int

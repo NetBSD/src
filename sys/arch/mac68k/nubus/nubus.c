@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.41 1997/08/11 22:53:37 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.42 1998/01/12 19:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -81,10 +81,6 @@ static u_int32_t nubus_read_4 __P((bus_space_tag_t, bus_space_handle_t,
 
 struct cfattach nubus_ca = {
 	sizeof(struct nubus_softc), nubus_match, nubus_attach
-};
-
-struct cfdriver nubus_cd = {
-	NULL, "nubus", DV_DULL,
 };
 
 static int

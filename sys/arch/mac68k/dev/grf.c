@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.46 1997/12/01 05:40:39 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.47 1998/01/12 19:22:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,13 +86,11 @@
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
-struct cfdriver grf_cd = {
-	NULL, "grf", DV_DULL
-};
-
 struct cfattach grf_ca = {
 	sizeof(struct grf_softc), grfmatch, grfattach
 };
+
+extern struct cfattach grf_cd;
 
 #ifdef DEBUG
 #define	GRF_DEBUG

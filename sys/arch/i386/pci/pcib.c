@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9 1997/10/09 08:48:33 jtc Exp $	*/
+/*	$NetBSD: pcib.c,v 1.10 1998/01/12 18:59:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,10 +57,6 @@ void	pcibattach __P((struct device *, struct device *, void *));
 
 struct cfattach pcib_ca = {
 	sizeof(struct device), pcibmatch, pcibattach
-};
-
-struct cfdriver pcib_cd = {
-	NULL, "pcib", DV_DULL
 };
 
 void	pcib_callback __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 1997/10/09 08:46:36 jtc Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 1998/01/12 19:22:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,10 +51,6 @@ static int	obio_search __P((struct device *, struct cfdata *, void *));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
-};
-
-struct cfdriver obio_cd = {
-	NULL, "obio", DV_DULL
 };
 
 static int
