@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.27 2000/05/26 03:34:26 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28 2000/05/31 16:24:24 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -233,6 +233,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			frame = (struct i386_frame *)addr;
 		callpc = (db_addr_t)
 			 db_get_value((int)&frame->f_retaddr, 4, FALSE);
+		frame = (struct i386_frame *)frame->f_frame;
 	}
 
 	lastframe = 0;
