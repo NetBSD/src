@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.23 2003/05/15 01:00:07 itojun Exp $  */
+/*      $NetBSD: ps.c,v 1.24 2003/05/17 21:03:21 itojun Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.23 2003/05/15 01:00:07 itojun Exp $");
+__RCSID("$NetBSD: ps.c,v 1.24 2003/05/17 21:03:21 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -273,16 +273,12 @@ comm2str(struct kinfo_proc2 *kp)
 	argv = kvm_getargv2(kd, kp, 40);
 	if ((pt = argv) != NULL) {
 		while (*pt) {
-			strcat(commstr, *pt);
+			strlcat(commstr, *pt, sizeof(commstr));
 			pt++;
-			strcat(commstr, " ");
+			strlcat(commstr, " ", sizeof(commstr));
 		}
-	} else {
-		commstr[0] = '(';
-		commstr[1] = '\0';
-		strncat(commstr, kp->p_comm, sizeof(commstr) - 1);
-		strcat(commstr, ")");
-	}
+	} else
+		snprintf(commstr, sizeof(commstr), "(%s)", kp->p_comm);
 
 	return commstr;
 }
