@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.33 2004/09/20 11:29:19 scw Exp $	*/
+/*	$NetBSD: spr.h,v 1.34 2004/12/06 04:15:03 briggs Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -69,7 +69,8 @@
 #define	  MPC603e		  0x0006
 #define	  MPC603ev		  0x0007
 #define	  MPC750		  0x0008
-#define	  MPC604ev		  0x0009
+#define	  MPC604e		  0x0009
+#define	  MPC604ev		  0x000a
 #define	  MPC7400		  0x000c
 #define	  MPC620		  0x0014
 #define	  IBM403		  0x0020

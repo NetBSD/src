@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.38 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: cpu.c,v 1.39 2004/12/06 04:15:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2004/12/06 04:15:03 briggs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -308,7 +308,7 @@ cpu_spinup(self, ci)
 		out32(HH_INTR_SECONDARY, 0);
 	}
 
-	delay(100000);		/* wait for secondary printf */
+	delay(200000);		/* wait for secondary printf */
 
 	if (h->running == 0) {
 		printf(": secondary CPU didn't start\n");
