@@ -1,3 +1,5 @@
+/*	$NetBSD: newsyslog.c,v 1.12 1996/09/27 01:56:56 thorpej Exp $	*/
+
 /*
  * This file contains changes from the Open Software Foundation.
  */
@@ -23,13 +25,10 @@ provided "as is" without express or implied warranty.
 /*
  *      newsyslog - roll over selected logs at the appropriate time,
  *              keeping the a specified number of backup files around.
- *
- *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: thorpej $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.11 1996/09/27 01:55:26 thorpej Exp $";
+static char rcsid[] = "$NetBSD: newsyslog.c,v 1.12 1996/09/27 01:56:56 thorpej Exp $";
 #endif /* not lint */
 
 #ifndef CONF
