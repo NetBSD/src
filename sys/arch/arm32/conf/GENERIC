@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.55.2.1 2000/06/03 14:45:22 he Exp $
+#	$NetBSD: GENERIC,v 1.55.2.2 2000/07/05 19:13:43 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -68,7 +68,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
