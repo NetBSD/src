@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.10 2002/11/03 21:43:30 chris Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.11 2002/11/04 06:24:38 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,6 +36,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +602,7 @@ fcom_rxintr(arg)
 			break;
 		byte = bus_space_read_4(iot, ioh, UART_DATA);
 		status = bus_space_read_4(iot, ioh, UART_RX_STAT);
-#if DDB_KEYCODE > 0
+#if defined(DDB) && DDB_KEYCODE > 0
 		/*
 		 * Temporary hack so that I can force the kernel into
 		 * the debugger via the serial port
@@ -799,7 +800,7 @@ fcomcngetc(dev)
 	c = bus_space_read_4(iot, ioh, UART_DATA);
 	stat = bus_space_read_4(iot, ioh, UART_RX_STAT);
 	(void)splx(s);
-#if DDB_KEYCODE > 0
+#if defined(DDB) && DDB_KEYCODE > 0
 		/*
 		 * Temporary hack so that I can force the kernel into
 		 * the debugger via the serial port
