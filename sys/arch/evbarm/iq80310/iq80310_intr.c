@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.4 2001/11/07 02:56:18 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.5 2001/11/23 19:36:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #include <evbarm/iq80310/iq80310reg.h>
 #include <evbarm/iq80310/iq80310var.h>
