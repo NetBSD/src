@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.8 1994/02/28 06:05:49 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.9 1994/04/22 02:19:07 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ struct	swdevt swdevt[] = {
 };
 int	dmmin, dmmax, dmtext;
 
-/*extern	struct driver rddriver;*/
+extern	struct driver fddriver;
 extern	struct driver sddriver;
 extern struct amiga_ctlr amiga_cinit[];
 extern struct amiga_device amiga_dinit[];
@@ -68,7 +68,7 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-/*	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},*/
+	{ (caddr_t)&fddriver,	"fd",	makedev(2, 0),	},*/
 	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
 	{ 0 },
 };

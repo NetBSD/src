@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.15 1994/04/10 21:30:44 chopps Exp $
+ *	$Id: autoconf.c,v 1.16 1994/04/22 02:19:05 chopps Exp $
  */
 
 /*
@@ -971,7 +971,7 @@ u_long	bootdev;		/* should be dev_t, but not until 32 bits */
 static	char devname[][2] = {
 	0,0,		/* 0 = ct */
 	0,0,		/* 1 = xx */
-	'r','d',	/* 2 = rd */
+	'f','d',	/* 2 = rd */
 	0,0,		/* 3 = sw */
 	's','d',	/* 4 = sd */
 };
