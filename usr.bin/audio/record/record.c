@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.5 1999/06/19 05:20:17 itohy Exp $	*/
+/*	$NetBSD: record.c,v 1.6 1999/07/13 14:02:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -172,9 +172,10 @@ main(argc, argv)
 	/*
 	 * open the audio device, and control device
 	 */
-	if (device == NULL)
+	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
+	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
 		device = _PATH_AUDIO;
-	if (ctldev == NULL)
+	if (ctldev == NULL && (ctldev = getenv("AUDIOCTLDEVICE")) == NULL)
 		ctldev = _PATH_AUDIOCTL;
 
 	audiofd = open(device, O_RDONLY);
