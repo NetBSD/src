@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.2 2004/04/24 17:41:49 cl Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.3 2004/06/14 13:55:52 cl Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.2 2004/04/24 17:41:49 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3 2004/06/14 13:55:52 cl Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.2 2004/04/24 17:41:49 cl Ex
 #include <machine/hypervisor.h>
 
 /* static */ unsigned long event_mask = 0;
-static unsigned long ev_err_count;
 
 int stipending(void);
 int
@@ -96,7 +95,7 @@ stipending()
 		 */
 		__cli();
 
-		events = xchg(&HYPERVISOR_shared_info->events, 0);
+		events = x86_atomic_xchg(&HYPERVISOR_shared_info->events, 0);
 		events &= event_mask;
 
 		while (events) {
@@ -140,11 +139,11 @@ void do_hypervisor_callback(struct trapframe *regs)
 
 	do {
 		/* Specialised local_irq_save(). */
-		flags = test_and_clear_bit(EVENTS_MASTER_ENABLE_BIT, 
-		    &shared->events_mask);
-		barrier();
+		flags = x86_atomic_test_and_clear_bit(&shared->events_mask,
+		    EVENTS_MASTER_ENABLE_BIT);
+		__insn_barrier();
 
-		events = xchg(&shared->events, 0);
+		events = x86_atomic_xchg(&shared->events, 0);
 		events &= event_mask;
 
 		/* 'events' now contains some pending events to handle. */
@@ -165,8 +164,9 @@ void do_hypervisor_callback(struct trapframe *regs)
 
 		/* Specialised local_irq_restore(). */
 		if (flags)
-			set_bit(EVENTS_MASTER_ENABLE_BIT, &shared->events_mask);
-		barrier();
+			x86_atomic_set_bit(&shared->events_mask,
+			    EVENTS_MASTER_ENABLE_BIT);
+		__insn_barrier();
 	}
 	while ( shared->events );
 
@@ -180,24 +180,25 @@ void do_hypervisor_callback(struct trapframe *regs)
 
 void hypervisor_enable_event(unsigned int ev)
 {
-	set_bit(ev, &event_mask);
-	set_bit(ev, &HYPERVISOR_shared_info->events_mask);
+	x86_atomic_set_bit(&event_mask, ev);
+	x86_atomic_set_bit(&HYPERVISOR_shared_info->events_mask, ev);
 #if 0
-	if ( test_bit(EVENTS_MASTER_ENABLE_BIT, 
-		 &HYPERVISOR_shared_info->events_mask) )
+	if (x86_atomic_test_bit(&HYPERVISOR_shared_info->events_mask,
+		EVENTS_MASTER_ENABLE_BIT))
 		do_hypervisor_callback(NULL);
 #endif
 }
 
 void hypervisor_disable_event(unsigned int ev)
 {
-	clear_bit(ev, &event_mask);
-	clear_bit(ev, &HYPERVISOR_shared_info->events_mask);
+
+	x86_atomic_clear_bit(&event_mask, ev);
+	x86_atomic_clear_bit(&HYPERVISOR_shared_info->events_mask, ev);
 }
 
 void hypervisor_acknowledge_event(unsigned int ev)
 {
-	if ( !(event_mask & (1<<ev)) )
-		atomic_inc((atomic_t *)(void *)&ev_err_count);
-	set_bit(ev, &HYPERVISOR_shared_info->events_mask);
+
+	/* XXX add event counter for stray events: !(event_mask & (1<<ev)) */
+	x86_atomic_set_bit(&HYPERVISOR_shared_info->events_mask, ev);
 }
