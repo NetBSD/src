@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.12 1997/04/24 08:05:23 mycroft Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.13 1997/04/28 18:30:20 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -95,10 +95,6 @@ struct iy_softc {
 
 	struct ethercom sc_ethercom;
 
-#define MAX_MBS 8
-	struct mbuf *mb[MAX_MBS];
-	int next_mb, last_mb;
-
 	int mappedirq;
 
 	int hard_vers;
@@ -133,8 +129,6 @@ void iyrint __P((struct iy_softc *));
 void iytint __P((struct iy_softc *));
 void iyxmit __P((struct iy_softc *));
 void iyget __P((struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int));
-void iymbuffill __P((void *)); 
-void iymbufempty __P((void *));
 void iyprobemem __P((struct iy_softc *));
 static __inline void eepromwritebit __P((bus_space_tag_t, bus_space_handle_t,
     int));
@@ -379,8 +373,6 @@ struct iy_softc *sc;
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
 	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
-
-	iymbufempty((void *)sc);
 }
 
 void
@@ -851,19 +843,9 @@ iyget(sc, iot, ioh, rxlen)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	m = sc->mb[sc->next_mb];
-	sc->mb[sc->next_mb] = 0;
-	if (m == 0) {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == 0)
-			goto dropped;
-	} else {
-		if (sc->last_mb == sc->next_mb)
-			timeout(iymbuffill, sc, 1);
-		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-		m->m_data = m->m_pktdat;
-		m->m_flags = M_PKTHDR;
-	}
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		goto dropped;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = rxlen;
 	len = MHLEN;
@@ -872,22 +854,17 @@ iyget(sc, iot, ioh, rxlen)
 
 	while (rxlen > 0) {
 		if (top) {
-			m = sc->mb[sc->next_mb];
-			sc->mb[sc->next_mb] = 0;
+			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
-					m_freem(top);
-					goto dropped;
-				}
-			} else {
-				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
+				m_freem(top);
+				goto dropped;
 			}
 			len = MLEN;
 		}
 		if (rxlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
 				m_freem(top);
 				goto dropped;
 			}
@@ -1314,49 +1291,6 @@ print_rbd(rbd)
 }
 #endif
 #endif
-
-void
-iymbuffill(arg)
-	void *arg;
-{
-	struct iy_softc *sc = (struct iy_softc *)arg;
-	int s, i;
-
-	s = splimp();
-	i = sc->last_mb;
-	do {
-		if (sc->mb[i] == NULL)
-			MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
-		if (sc->mb[i] == NULL)
-			break;
-		i = (i + 1) % MAX_MBS;
-	} while (i != sc->next_mb);
-	sc->last_mb = i;
-	/* If the queue was not filled, try again. */
-	if (sc->last_mb != sc->next_mb)
-		timeout(iymbuffill, sc, 1);
-	splx(s); 
-}
-
-
-void
-iymbufempty(arg)
-	void *arg;
-{
-	struct iy_softc *sc = (struct iy_softc *)arg;
-	int s, i;
-
-	s = splimp();
-	for (i = 0; i<MAX_MBS; i++) {
-		if (sc->mb[i]) {
-			m_freem(sc->mb[i]);
-			sc->mb[i] = NULL;
-		}
-	}
-	sc->last_mb = sc->next_mb = 0;
-	untimeout(iymbuffill, sc);
-	splx(s);
-}
 
 void
 iyprobemem(sc)
