@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.41 2002/08/24 02:16:30 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.42 2002/09/03 23:00:40 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.41 2002/08/24 02:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.42 2002/09/03 23:00:40 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -566,24 +566,48 @@ initarm(void *cookie)
 	 * Set up the variables that define the availablilty of physcial
 	 * memory
 	 */
-	physical_start = bootconfig.dram[0].address;
-
+	physical_start = 0xffffffff;
 	physical_end = 0; 
 	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
+	    	if (bootconfig.dram[loop].address < physical_start) physical_start = bootconfig.dram[loop].address;
 		memoryblock_end = bootconfig.dram[loop].address + bootconfig.dram[loop].pages * NBPG;
 		if (memoryblock_end > physical_end) physical_end = memoryblock_end;
 		physmem += bootconfig.dram[loop].pages;
 	};
-	physical_freestart = physical_start;
-	free_pages = bootconfig.drampages;
-	physical_freeend = physical_end;
-
 	/* constants for now, but might be changed/configured */
 	dma_range_begin = (paddr_t) physical_start;
 	dma_range_end   = (paddr_t) MIN(physical_end, 512*1024*1024);
 /* XXX HACK HACK XXX */
 /* dma_range_end   = 0x18000000; */
 
+	if (physical_start !=  bootconfig.dram[0].address)
+	{
+	    int oldblocks = 0;
+	    /* 
+	     * must be a kinetic, as it's the only thing to shuffle memory
+	     * around
+	     */
+	    /* hack hack - throw away the slow dram */
+	    for (loop = 0; loop < bootconfig.dramblocks; ++loop) {
+	    	if (bootconfig.dram[loop].address < bootconfig.dram[0].address)
+		{
+		    /* non kinetic ram */
+		    bootconfig.dram[loop].address = 0;
+		    physmem -= bootconfig.dram[loop].pages;
+		    bootconfig.drampages -= bootconfig.dram[loop].pages;
+		    bootconfig.dram[loop].pages = 0;
+		    oldblocks++;
+		} 
+	    }			
+	    physical_start = bootconfig.dram[0].address;
+	    bootconfig.dramblocks -= oldblocks; 
+	};
+      
+	physical_freestart = physical_start;
+	free_pages = bootconfig.drampages;
+	physical_freeend = physical_end;
+ 
+	    
 	/* AHUM !! set this variable ... it was set up in the old 1st stage bootloader */
 	kerneldatasize = bootconfig.kernsize + bootconfig.MDFsize;
 
