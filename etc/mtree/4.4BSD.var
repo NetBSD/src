@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.var,v 1.4 1997/10/17 19:16:43 fair Exp $
+#	$NetBSD: 4.4BSD.var,v 1.5 1998/01/10 00:06:23 perry Exp $
 #
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
@@ -289,12 +289,6 @@ tmp             type=dir
 /set type=file gname=daemon uname=daemon mode=0775
 output          type=dir uname=root gname=wheel mode=0755
 # ./spool/output
-..
-
-
-# ./spool/secretmail
-secretmail      type=dir uname=root gname=wheel mode=0755
-# ./spool/secretmail
 ..
 
 

@@ -1475,7 +1475,6 @@
 ./var/spool/lpd
 ./var/spool/mqueue
 ./var/spool/output
-./var/spool/secretmail
 ./var/spool/sockets
 ./var/spool/uucp
 ./var/spool/uucppublic
