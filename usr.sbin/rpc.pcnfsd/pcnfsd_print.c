@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.5 1997/10/25 13:45:58 lukem Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.6 2002/09/29 23:23:56 wiz Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -59,7 +59,7 @@
 #endif
 
 /*
-** The following defintions give the maximum time allowed for
+** The following definitions give the maximum time allowed for
 ** an external command to run (in seconds)
 */
 #define MAXTIME_FOR_PRINT	10
