@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2004/01/14 22:29:03 jonathan Exp $
+# $NetBSD: GENERIC,v 1.21.2.1 2004/06/14 03:18:47 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.21.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -209,6 +209,8 @@ mainbus0 at root
 #options 	MPACPI_SCANPCI		# MPBIOS configures PCI roots
 #options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
