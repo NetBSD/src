@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.159 2001/06/08 16:45:37 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.160 2001/06/08 21:13:23 kim Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1868,9 +1868,9 @@ mvme68k
 # ./usr/share/man/cat8/mvme68k
 ..
 
-# ./usr/share/man/cat8/new68k
-new68k
-# ./usr/share/man/cat8/new68k
+# ./usr/share/man/cat8/news68k
+news68k
+# ./usr/share/man/cat8/news68k
 ..
 
 # ./usr/share/man/cat8/newsmips
