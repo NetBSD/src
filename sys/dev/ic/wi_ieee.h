@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.17 2002/09/26 16:52:44 onoe Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.18 2002/09/26 16:58:44 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -322,7 +322,6 @@ struct wi_ltv_keys {
 #define WI_RID_CURRENT_BSSID	0xFD42 /* ID of actually connected BSS */
 #define WI_RID_COMMS_QUALITY	0xFD43 /* quality of BSS connection */
 #define WI_RID_CUR_TX_RATE	0xFD44 /* current TX rate */
-#define WI_RID_OWN_BEACON_INT	0xFD45 /* beacon xmit time for BSS creation */
 #define WI_RID_CUR_BEACON_INT	0xFD45 /* current beacon interval */
 #define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scane thresh setting */
 #define WI_RID_PROT_RESP_TIME	0xFD47 /* time to wait for resp to req msg */
