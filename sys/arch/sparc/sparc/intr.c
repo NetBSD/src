@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.65 2002/12/16 16:59:11 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.66 2002/12/18 06:20:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ softnet(fp)
 #undef DONETISR
 }
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 void	nmi_hard __P((void));
 void	nmi_soft __P((struct trapframe *));
 
