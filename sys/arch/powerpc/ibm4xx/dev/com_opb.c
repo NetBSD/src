@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.2 2002/08/14 12:29:50 simonb Exp $ */
+/* $NetBSD: com_opb.c,v 1.3 2002/08/14 12:31:38 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -59,8 +59,6 @@ struct cfattach com_opb_ca = {
 	sizeof(struct com_opb_softc), com_opb_probe, com_opb_attach
 };
 
-int comfound = 0;
-
 int
 com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -70,7 +68,7 @@ com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
-	return (comfound < 2);
+	return (1);
 }
 
 void
@@ -86,8 +84,6 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobase = sc->sc_ioh = addr;
 	/* UART is clocked externally @ 11.0592MHz == COM_FREQ*6 */
 	sc->sc_frequency = COM_FREQ * 6;
-
-	comfound++;
 
 	/* XXX console check */
 	/* XXX map */
