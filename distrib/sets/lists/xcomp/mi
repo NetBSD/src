@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2004/01/11 15:12:46 lukem Exp $
+# $NetBSD: mi,v 1.18 2004/01/13 06:11:20 lukem Exp $
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
@@ -167,7 +167,6 @@
 ./usr/X11R6/include/X11/Xaw/XawImP.h
 ./usr/X11R6/include/X11/Xaw/XawInit.h
 ./usr/X11R6/include/X11/Xcms.h
-./usr/X11R6/include/X11/Xcursor
 ./usr/X11R6/include/X11/Xcursor/Xcursor.h
 ./usr/X11R6/include/X11/Xdefs.h
 ./usr/X11R6/include/X11/Xdmcp.h

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.12 2004/01/12 03:08:06 lukem Exp $
+# $NetBSD: mi,v 1.13 2004/01/13 06:10:45 lukem Exp $
 ./usr/X11R6/lib/X11/XftConfig-OBSOLETE
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz	xfont	share
@@ -3989,7 +3989,6 @@
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-11.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-13.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-16.enc		xfont	share
-./usr/X11R6/lib/X11/fonts/encodings/large			xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/big5.eten-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/encodings.dir		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/fonts.cache-1		xfont	share
