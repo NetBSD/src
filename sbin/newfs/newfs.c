@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.84 2004/09/07 02:18:06 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.85 2004/11/15 12:21:29 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.84 2004/09/07 02:18:06 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.85 2004/11/15 12:21:29 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -747,7 +747,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		 */
 		strlcpy(specname, s, sizeof(specname));
 		cp = specname + strlen(specname) - 1;
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			*cp = 'c';
 		cfd = open(specname, O_WRONLY);
 		if (cfd < 0)
