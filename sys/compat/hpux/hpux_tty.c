@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.12 1995/12/08 07:45:31 thorpej Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.13 1995/12/11 16:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -459,7 +459,7 @@ int
 hpuxtobsdbaud(hpux_speed)
 	int hpux_speed;
 {
-	static char hpuxtobsdbaudtab[32] = {
+	static int hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
 		B600,	B0,	B1200,	B1800,	B2400,	B0,	B4800,	B0,
 		B9600,	B19200,	B38400,	B0,	B0,	B0,	B0,	B0,
