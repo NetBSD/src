@@ -1,5 +1,5 @@
 .\"	@(#)getnetpath.3n 1.26 93/05/07 SMI; from SVr4
-.\"	$NetBSD: getnetpath.3,v 1.1 2000/06/02 23:11:11 fvdl Exp $
+.\"	$NetBSD: getnetpath.3,v 1.2 2001/04/09 12:19:45 wiz Exp $
 .\" Copyright 1989 AT&T
 .Dd April 22, 2000
 .Dt GETNETPATH 3
@@ -23,17 +23,19 @@
 The routines described in this page provide the application access to the system
 network configuration database,
 .Pa /etc/netconfig ,
-as it is ``filtered'' by the NETPATH
+as it is
+.Dq filtered
+by the NETPATH
 environment variable (see
-.Xr environ 5 ).
-See 
+.Xr environ 7 ) .
+See
 .Xr getnetconfig 3
 for other routines that also access the
 network configuration database directly.
 The NETPATH variable is a list of colon-separated network identifiers.
 .Pp
 .Fn getnetpath
-returns a pointer to the 
+returns a pointer to the
 netconfig database entry corresponding to the first valid
 NETPATH component.
 The netconfig entry is formatted as a struct netconfig.
@@ -50,7 +52,10 @@ returns NULL.
 .Pp
 A call to
 .Fn setnetpath
-``binds'' to or ``rewinds'' NETPATH.
+.Dq binds
+to or
+.Dq rewinds
+NETPATH.
 .Fn setnetpath
 must be called before the first call to
 .Fn getnetpath
@@ -64,16 +69,21 @@ A NETPATH component is invalid if there is no corresponding
 entry in the netconfig database.
 .Pp
 If the NETPATH variable is unset,
-.Fn getnetpath(\|)
+.Fn getnetpath
 behaves as if NETPATH
 were set to the sequence of
-``default'' or ``visible'' networks in the netconfig database, in the
+.Dq default
+or
+.Dq visible
+networks in the netconfig database, in the
 order in which they are listed.
 .\"This proviso holds also for this
 .\"whole manpage.
 .Pp
 .Fn endnetpath
-may be called to ``unbind'' from NETPATH
+may be called to
+.Dq unbind
+from NETPATH
 when processing is complete, releasing resources for reuse.
 Programmers should be aware, however, that
 .Fn endnetpath
@@ -108,5 +118,5 @@ valid NETPATH component. When NETPATH has been exhausted,
 returns NULL.
 .Sh SEE ALSO
 .Xr getnetconfig 3 ,
-.Xr netconfig 4 ,
-.Xr environ 5
+.Xr netconfig 5 ,
+.Xr environ 7
