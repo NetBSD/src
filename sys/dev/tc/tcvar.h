@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.13 1998/05/22 21:15:48 thorpej Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.14 1999/03/19 03:13:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,15 +40,7 @@
 /*
  * Machine-dependent definitions.
  */
-#if (alpha + pmax != 1)
-ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
-#endif
-#if alpha
-#include <alpha/tc/tc_machdep.h>
-#endif
-#if pmax
 #include <machine/tc_machdep.h>
-#endif
 
 /*
  * In the long run, the following block will go completely away.
