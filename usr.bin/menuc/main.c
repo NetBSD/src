@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1997/09/26 21:08:05 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,6 +105,6 @@ main (int argc, char **argv)
 void
 usage (char *prog)
 {
-	(void) fprintf (stderr, "%s [-m] [-o name] file\n", prog);
+	(void) fprintf (stderr, "%s [-o name] file\n", prog);
 	exit (1);
 }
