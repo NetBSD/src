@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.h,v 1.1 2003/06/25 09:51:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv.h,v 1.2 2003/07/01 09:42:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -29,8 +29,9 @@
 #ifndef _CITRUS_ICONV_H_
 #define _CITRUS_ICONV_H_
 
-struct _citrus_iconv;
+struct _citrus_iconv_shared;
 struct _citrus_iconv_ops;
+struct _citrus_iconv;
 
 __BEGIN_DECLS
 int	_citrus_iconv_open(struct _citrus_iconv * __restrict * __restrict,
@@ -49,21 +50,19 @@ __END_DECLS
  *	convert a string.
  */
 static __inline int
-_citrus_iconv_convert(struct _citrus_iconv * __restrict ci,
+_citrus_iconv_convert(struct _citrus_iconv * __restrict cv,
 		      const char * __restrict * __restrict in,
 		      size_t * __restrict inbytes,
 		      char * __restrict * __restrict out,
 		      size_t * __restrict outbytes, u_int32_t flags,
 		      size_t * __restrict nresults)
 {
-	int ret;
 
-	_DIAGASSERT(ci & ci->ci_ops && dst);
+	_DIAGASSERT(cv && cv->cv_shared && cv->cv_shared->ci_ops
+		    cv->cv_shared->ci_ops->io_convert && dst);
 
-	ret = (*ci->ci_ops->io_convert)(ci, in, inbytes, out, outbytes, flags,
-					nresults);
-
-	return ret;
+	return (*cv->cv_shared->ci_ops->io_convert)(cv, in, inbytes, out,
+						    outbytes, flags, nresults);
 }
 
 #endif

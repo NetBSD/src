@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std_local.h,v 1.1 2003/06/25 09:51:44 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std_local.h,v 1.2 2003/07/01 09:42:16 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -62,12 +62,20 @@ TAILQ_HEAD(_citrus_iconv_std_src_list, _citrus_iconv_std_src);
 /*
  * iconv_std handle
  */
-struct _citrus_iconv_std {
-	struct _citrus_iconv_std_encoding	is_src_encoding;
-	struct _citrus_iconv_std_encoding	is_dst_encoding;
+struct _citrus_iconv_std_shared {
+	struct _citrus_stdenc			*is_src_encoding;
+	struct _citrus_stdenc			*is_dst_encoding;
 	struct _citrus_iconv_std_src_list	is_srcs;
 	int					is_use_invalid;
 	_citrus_wc_t				is_invalid;
+};
+
+/*
+ * iconv_std context
+ */
+struct _citrus_iconv_std_context {
+	struct _citrus_iconv_std_encoding	sc_src_encoding;
+	struct _citrus_iconv_std_encoding	sc_dst_encoding;
 };
 
 #endif
