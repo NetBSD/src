@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.4 1996/12/26 01:53:59 mikel Exp $
+.\"	$NetBSD: ahc.4,v 1.5 1997/02/23 08:48:16 jonathan Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -135,10 +135,8 @@ utility
 will allow normal function.
 .if 1 \{
 .Pp
-There are four problems known in NetBSD version of this driver as follows.
+There are three known problems in NetBSD version of this driver as follows.
 All of these problems relate to NetBSD MI SCSI system.
-.Pp
-Cannot handle SCSI ID greater than 7 with WIDE SCSI adapter.
 .Pp
 It is dangerous to simultaneously access SCSI devices more than half
 number of SCBs. It may cause fatal disk trouble. In this case,
