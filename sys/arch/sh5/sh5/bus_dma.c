@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2002/07/05 13:32:03 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2002/09/28 10:57:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2002/07/05 13:32:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2002/09/28 10:57:44 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2002/07/05 13:32:03 scw Exp $");
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/bus.h>
-
-#define _pmap_page_is_cacheable(p1, p2)	0
 
 static int _bus_dmamap_create(void *, bus_size_t, int, bus_size_t,
 		bus_size_t, int, bus_dmamap_t *);
@@ -174,6 +172,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
+	paddr_t paddr;
 	int seg, cacheable, coherent = BUS_DMA_COHERENT;
 
 	lastaddr = *lastaddrp;
@@ -185,15 +184,17 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 		 */
 		if (p != NULL) {
 			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr, &curaddr);
+			    vaddr, &paddr);
 			cacheable =
-			    _pmap_page_is_cacheable(p->p_vmspace->vm_map.pmap,
+			    pmap_page_is_cacheable(p->p_vmspace->vm_map.pmap,
 				vaddr);
 		} else {
-			(void) pmap_extract(pmap_kernel(),vaddr, &curaddr);
+			(void) pmap_extract(pmap_kernel(),vaddr, &paddr);
 			cacheable =
-			    _pmap_page_is_cacheable(pmap_kernel(), vaddr);
+			    pmap_page_is_cacheable(pmap_kernel(), vaddr);
 		}
+
+		curaddr = (bus_addr_t) paddr;
 
 		if (cacheable)
 			coherent = 0;
@@ -465,7 +466,10 @@ _bus_dmamap_sync(void *cookie, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 
-	/* Nothing yet; cache currently disabled */
+	if (map->_dm_flags & BUS_DMA_COHERENT)
+		return;
+
+	/* XXX: Flesh this out */
 }
 
 /*
@@ -629,12 +633,9 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-#if 0
-			/* Cache-inhibit the page if necessary */
-			if ((flags & BUS_DMA_COHERENT) != 0)
-				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
-#endif
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+			    ((flags & BUS_DMA_COHERENT) ? PMAP_NC : 0));
+
 			segs[curseg]._ds_flags &= ~BUS_DMA_COHERENT;
 			segs[curseg]._ds_flags |= (flags & BUS_DMA_COHERENT);
 		}
@@ -652,10 +653,6 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 static void
 _bus_dmamem_unmap(void *cookie, caddr_t kva, size_t size)
 {
-#if 0
-	caddr_t va;
-	size_t s;
-#endif
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -663,16 +660,6 @@ _bus_dmamem_unmap(void *cookie, caddr_t kva, size_t size)
 #endif
 
 	size = round_page(size);
-
-#if 0
-	/*
-	 * Re-enable cacheing on the range
-	 * XXXSCW: There should be some way to indicate that the pages
-	 * were mapped DMA_MAP_COHERENT in the first place...
-	 */
-	for (s = 0, va = kva; s < size; s += PAGE_SIZE, va += PAGE_SIZE)
-		_pmap_set_page_cacheable(pmap_kernel(), (vaddr_t)va);
-#endif
 
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
