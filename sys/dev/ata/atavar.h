@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.63 2004/08/20 22:17:06 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.64 2004/08/20 23:26:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -271,7 +271,8 @@ struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
 	void	(*ata_reset_drive)(struct ata_drive_datas *, int);
-/* extra flags for ata_reset_drive(), in addition to AT_* */
+	void	(*ata_reset_channel)(struct ata_channel *, int);
+/* extra flags for ata_reset_*(), in addition to AT_* */
 #define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
 #define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
@@ -425,6 +426,7 @@ void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
+void	ata_reset_channel(struct ata_channel *, int);
 
 int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);

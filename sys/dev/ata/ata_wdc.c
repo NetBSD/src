@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.73 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.74 2004/08/20 23:26:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.73 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.74 2004/08/20 23:26:53 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -133,6 +133,7 @@ const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
 	wdc_ata_bio,
 	wdc_reset_drive,
+	wdc_reset_channel,
 	wdc_exec_command,
 	ata_get_params,
 	wdc_ata_addref,
