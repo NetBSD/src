@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89.2.1 1997/11/06 01:00:24 mellon Exp $	*/
+/*	$NetBSD: locore.s,v 1.89.2.2 1998/11/23 04:44:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,6 +129,18 @@ ASENTRY_NOPROFILE(start)
 	movc	d0,sfc			|   as source
 	movc	d0,dfc			|   and destination of transfers
 
+	/*
+	 * Some parameters provided by MacOS
+	 *
+	 * LAK: This section is the new way to pass information from the booter
+	 * to the kernel.  At A1 there is an environment variable which has
+	 * a bunch of stuff in ascii format, "VAR=value\0VAR=value\0\0".
+	 */
+	movl	a1,sp@-			| Address of buffer
+	movl	d4,sp@-			| Some flags... (mostly not used)
+	jbsr	_C_LABEL(getenvvars)	| Parse the environment buffer
+	addql	#8,sp
+
 	/* Determine MMU/MPU from what we can test empirically */
 	movl	#0x200,d0		| data freeze bit
 	movc	d0,cacr			|   only exists on 68030
@@ -195,20 +207,10 @@ Lstart1:
 1:
 #endif
 	/* Config botch; no hope. */
+	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
 	jra	Ldoboot1
 
 Lstart2:
-	/*
-	 * Some parameters provided by MacOS
-	 *
-	 * LAK: This section is the new way to pass information from the booter
-	 * to the kernel.  At A1 there is an environment variable which has
-	 * a bunch of stuff in ascii format, "VAR=value\0VAR=value\0\0".
-	 */
-	movl	a1,sp@-			| Address of buffer
-	movl	d4,sp@-			| Some flags... (mostly not used)
-	jbsr	_C_LABEL(getenvvars)	| Parse the environment buffer
-	addql	#8,sp
 	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
 
 	jbsr	_C_LABEL(vm_set_page_size) | Set the vm system page size, now.
@@ -1514,33 +1516,56 @@ Lm68881rdone:
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
- * Basically we just jump to the appropriate ROM routine after mapping
- * the ROM into its proper home (back in machdep).
+ * Basically we just turn off the MMU and jump to the appropriate ROM routine.
+ * Note that we must be running in an address range that is mapped one-to-one
+ * logical to physical so that the PC is still valid immediately after the MMU
+ * is turned off.  We have conveniently mapped the last page of physical
+ * memory this way.
  */
 ENTRY_NOPROFILE(doboot)
-	movw	#PSL_HIGHIPL,sr		| no interrupts
-
+#if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Ldobootnot040		| yes, skip
-	movl	#CACHE40_OFF,d0		| 68040 cache disable
-	movc	d0, cacr
-	.word	0xf4f8			| cpusha bc - push and invalidate caches
-	jra	Ldoboot1
-
-Ldobootnot040:
+	jeq	Lnocache5		| yes, skip
+#endif
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
-#ifdef __notyet__
-	tstl	_C_LABEL(ectype)	| external cache?
-	jeq	Ldoboot1		| no, skip
-					| Disable external cache here.
+Lnocache5:
+	movl	_C_LABEL(maxaddr),a0	| last page of physical memory
+	lea	Lbootcode,a1		| start of boot code
+	lea	Lebootcode,a3		| end of boot code
+Lbootcopy:
+	movw	a1@+,a0@+		| copy a word
+	cmpl	a3,a1			| done yet?
+	jcs	Lbootcopy		| no, keep going
+#if defined(M68040)
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+	jne	LmotommuE		| no, skip
+	.word	0xf4f8			| cpusha bc
+LmotommuE:
 #endif
+	movl	_C_LABEL(maxaddr),a0
+	jmp	a0@			| jump to last page
+
+Lbootcode:
+	lea	a0@(0x800),sp		| physical SP in case of NMI
+	movl	_C_LABEL(MacOSROMBase),a1 | Load MacOS ROMBase
+
+#if defined(M68040)
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+	jne	LmotommuF		| no, skip
+	movl	#0,d0
+	movc	d0,cacr			| caches off
+	.long	0x4e7b0003		| movc d0,tc (disable MMU)
+	jra	Ldoboot1
+LmotommuF:
+#endif
+	movl	#0,a3@			| value for pmove to TC (turn off MMU)
+	pmove	a3@,tc			| disable MMU
 
 Ldoboot1:
-	movl	_C_LABEL(MacOSROMBase),_C_LABEL(ROMBase) | Load MacOS ROMBase
-	movl	#0x90,a1		| offset of ROM reset routine
-	addl	_C_LABEL(ROMBase),a1	| add to ROM base
-	jra	a1@			| and jump to ROM to reset machine
+	lea	a1@(0x90),a1		| offset of ROM reset routine
+	jmp	a1@			| and jump to ROM to reset machine
+Lebootcode:
 
 /*
  * u_long ptest040(caddr_t addr, u_int fc);
