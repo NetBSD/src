@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.126 2000/12/29 02:43:43 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.127 2000/12/29 03:16:39 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -947,6 +947,11 @@ openssl
 # ./usr/share/examples/postfix
 postfix
 # ./usr/share/examples/postfix
+..
+
+# ./usr/share/examples/racoon
+racoon
+# ./usr/share/examples/racoon
 ..
 
 # ./usr/share/examples/supfiles
