@@ -1,4 +1,4 @@
-/*	$NetBSD: ramd.c,v 1.2 1995/04/16 14:59:03 leo Exp $	*/
+/*	$NetBSD: ramd.c,v 1.3 1995/07/12 21:41:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -228,24 +228,6 @@ dev_t	dev;
    return(-1);
 }
 
-int
-rdread(dev, uio)
-dev_t		dev;
-struct uio	*uio;
-{
-   return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-       dev, B_READ, rdminphys, uio));
-}
-
-int
-rdwrite(dev, uio)
-dev_t		dev;
-struct uio	*uio;
-{
-   return(physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-       dev, B_WRITE, rdminphys, uio));
-}
-
 /* XXX: Limit to 64k. */
 static void
 rdminphys(bp)
@@ -291,6 +273,22 @@ struct buf *bp;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+}
+
+int
+rdread(dev, uio)
+dev_t		dev;
+struct uio	*uio;
+{
+   return (physio(rdstrategy, (struct buf *)NULL, dev, B_READ, rdminphys, uio));
+}
+
+int
+rdwrite(dev, uio)
+dev_t		dev;
+struct uio	*uio;
+{
+   return(physio(rdstrategy, (struct buf *)NULL, dev, B_WRITE, rdminphys, uio));
 }
 
 static int
