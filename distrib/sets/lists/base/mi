@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.291 2001/12/04 00:12:46 jdolecek Exp $
+# $NetBSD: mi,v 1.292 2001/12/10 17:27:05 martin Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -85,6 +85,8 @@
 ./sbin/fsirand		base-sysutil-root
 ./sbin/halt		base-sysutil-root
 ./sbin/ifconfig		base-netutil-root
+./sbin/ispppcontrol	base-netutil-root
+./sbin/pppoectl		base-netutil-root
 ./sbin/init		base-sysutil-root
 ./sbin/ipf		base-netutil-root
 ./sbin/lmcctl		base-netutil-root
@@ -650,8 +652,6 @@
 ./usr/sbin/isdntel		base-isdn-bin
 ./usr/sbin/isdntelctl		base-isdn-bin
 ./usr/sbin/isdntrace		base-isdn-bin
-./usr/sbin/ispppcontrol		base-isdn-bin
-./usr/sbin/pppoectl		base-isdn-bin
 ./usr/sbin/kadmin		base-krb5-bin
 ./usr/sbin/kdc			base-krb5-bin
 ./usr/sbin/kstash		base-krb5-bin

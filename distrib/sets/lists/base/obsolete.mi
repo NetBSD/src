@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.31 2001/10/12 07:29:36 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.32 2001/12/10 17:27:06 martin Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -22,6 +22,8 @@
 /usr/libexec/hprop
 /usr/libexec/kdc
 /usr/libexec/uucp/uuchk
+/usr/sbin/ispppcontrol
+/usr/sbin/pppoectl
 /usr/sbin/dig
 /usr/sbin/dnsquery
 /usr/sbin/eaytest
