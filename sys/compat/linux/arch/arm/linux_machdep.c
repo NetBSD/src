@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 2002/01/17 22:50:38 bjh21 Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3 2002/02/02 16:52:45 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2002/01/17 22:50:38 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3 2002/02/02 16:52:45 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,9 +182,6 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_r3 = (register_t)catcher;
 	tf->tf_usr_sp = (register_t)fp;
 	tf->tf_pc = (register_t)p->p_sigctx.ps_sigcode;
-#ifndef arm26
-	cpu_cache_syncI();
-#endif
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
