@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2004/01/17 17:38:12 dsl Exp $
+#	$NetBSD: Makefile,v 1.78 2004/06/06 07:03:11 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
 	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c \
-	test.c printf.c kill.c syntax.c
+	test.c kill.c syntax.c
 GENSRCS=arith.c arith_lex.c builtins.c init.c nodes.c
 GENHDRS=arith.h builtins.h nodes.h token.h
 SRCS=	${SHSRCS} ${GENSRCS}
@@ -37,6 +37,8 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL
+.else
+SRCS+=printf.c
 .endif
 
 .PATH:	${.CURDIR}/bltin ${NETBSDSRCDIR}/bin/test \
