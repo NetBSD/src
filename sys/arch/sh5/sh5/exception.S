@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.9 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.10 2002/09/02 08:41:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -174,7 +174,7 @@
 	shlri	r0, SH5_CONREG_SR_MD_SHIFT, r0	/* Get SSR.MD to bit#0 */     ;\
 	andi	r0, 1, r0		/* r0 == 0 if came from user mode */  ;\
 	cmveq	r0, r1, r15		/* Switch stacks if necessary */      ;\
-	movi	(sz + (_PTRSZ*2)), r0					      ;\
+	movi	sz, r0							      ;\
 	sub	r15, r0, r15		/* Make space for trapframe */	      ;\
 	getcon	sr, r1			/* Fetch current status register */   ;\
 	LDC32(SH5_CONREG_SR_BL, r0)	/* Unblock exceptions. This allows */ ;\
@@ -210,16 +210,16 @@
 	getcon	sr, r0							      ;\
 	ori	r0, SH5_CONREG_SR_IMASK_ALL, r0 /* No IRQs please */	      ;\
 	putcon	r0, sr							      ;\
-	getcon	kcr0, r24						      ;\
-	st.q	r24, ES(ES_CRITICAL), r24 /* We're in critical sect */	      ;\
+	getcon	kcr0, r1						      ;\
+	st.q	r1, ES(ES_CRITICAL), r1	/* We're in critical sect */	      ;\
 	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
-	st.q	r24, ES(ES_SSR), r0					      ;\
+	st.q	r1, ES(ES_SSR), r0					      ;\
 	ld.q	r15, SFO(SF_SPC,sz), r0					      ;\
-	st.q	r24, ES(ES_SPC), r0					      ;\
+	st.q	r1, ES(ES_SPC), r0					      ;\
 	ld.q	r15, SFO(SF_USR,sz), r0					      ;\
-	st.q	r24, ES(ES_USR), r0					      ;\
+	st.q	r1, ES(ES_USR), r0					      ;\
 	ld.q	r15, IFO(IF_R0,sz), r0					      ;\
-	st.q	r24, ES(ES_R0), r0					      ;\
+	st.q	r1, ES(ES_R0), r0					      ;\
 	ld.q	r15, IFO(IF_TR0,sz), r0	/* Restore saved TR0 */		      ;\
 	ptabs/u	r0, tr0							      ;\
 	ld.q	r15, IFO(IF_R1,sz), r1					      ;\
@@ -227,18 +227,24 @@
 	ld.q	r15, IFO(IF_R15,sz), r15/* Back on previous context's stack */;\
 	getcon	sr, r0							      ;\
 	LDC32(SH5_CONREG_SR_BL | SH5_CONREG_SR_IMASK_ALL, r24)		      ;\
-	or	r0, r24, r0		/* Block exceptions */		      ;\
-	putcon	r0, sr							      ;\
-	getcon	kcr0, r24						      ;\
+	or	r0, r24, r0		/* We can now block synchronous */    ;\
+	putcon	r0, sr			/* exceptions now that we're done */  ;\
+	getcon	kcr0, r24		/* touching the kernel stack */	      ;\
 	ld.q	r24, ES(ES_SPC), r0					      ;\
 	putcon	r0, spc							      ;\
 	ld.q	r24, ES(ES_SSR), r0					      ;\
 	putcon	r0, ssr							      ;\
 	ld.q	r24, ES(ES_R0), r0					      ;\
+	st.q	r24, ES(ES_CRITICAL), r63 /* Leaving critical section */      ;\
 	ld.q	r24, ES(ES_USR), r24					      ;\
 	putcon	r24, usr						      ;\
 	synco								      ;\
 	rte
+	nop
+	nop
+	nop
+	nop
+	nop
 
 
 /*
