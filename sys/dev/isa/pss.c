@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.54 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.55 2001/04/26 17:57:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -58,6 +58,7 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
