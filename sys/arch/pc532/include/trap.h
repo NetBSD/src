@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.3 1994/10/26 08:24:44 cgd Exp $	*/
+/*	$NetBSD: trap.h,v 1.4 1996/02/01 00:03:38 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -58,7 +58,7 @@
 #define T_WATCHPOINT	17	/* watchpoint */
 
 /* To allow for preemption */
-#define T_INTERRUPT	18	/* trap code from interrupt! */
+#define T_AST		18	/* asynchronous system trap */
 
 /* To include system/user mode in the trap information. */
 #define T_USER		32

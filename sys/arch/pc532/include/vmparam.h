@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1995/02/14 18:52:29 phil Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1996/02/01 00:03:43 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,8 +38,8 @@
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
 
-#ifndef _MACHINE_VMPARAM_H_
-#define _MACHINE_VMPARAM_H_
+#ifndef _NS532_VMPARAM_H_
+#define _NS532_VMPARAM_H_
 
 /*
  * Machine dependent constants for 532.
@@ -56,11 +56,13 @@
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		0x1000			/* For NetBSD... */
-#define	USRSTACK	0xFDBFE000    
-#define	BTOPUSRSTACK	(0xFDC00-(UPAGES))	/* btop(USRSTACK) */
-#define	LOWPAGES	0
-#define HIGHPAGES	UPAGES
+#define	USRTEXT		CLBYTES			/* For NetBSD... */
+#define	USRSTACK	VM_MAXUSER_ADDRESS
+
+/*
+ * INTSTACK is a temporary stack for the idle process and cpu_exit.
+ */
+#define INTSTACK	(0xffc00000 + NBPG - 4)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -89,20 +91,20 @@
 #define	DMTEXT	1024			/* swap allocation for text */
 
 /*
- * Sizes of the system and user portions of the system page table.
+ * PTEs for mapping user space into the kernel for phyio operations.
+ * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
-#define	SYSPTSIZE 	(2*NPTEPG)
-#define	USRPTSIZE 	(2*NPTEPG)
+#ifndef USRIOSIZE
+#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
+#endif
 
 /*
- * Size of User Raw I/O map
+ * PTEs for system V style shared memory.
+ * This is basically slop for kmempt which we actually allocate (malloc) from.
  */
-#define	USRIOSIZE 	64
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
+#ifndef SHMMAXPGS
+#define SHMMAXPGS	(1 * NPTEPG)	/* 4mb */
+#endif
 
 /*
  * The time for a process to be blocked before being very swappable.
@@ -134,97 +136,18 @@
 					   protected against replacement */
 
 /*
- * DISKRPM is used to estimate the number of paging i/o operations
- * which one can expect from a single disk controller.
- */
-#define	DISKRPM		60
-
-/*
- * Klustering constants.  Klustering is the gathering
- * of pages together for pagein/pageout, while clustering
- * is the treatment of hardware page size as though it were
- * larger than it really is.
- *
- * KLMAX gives maximum cluster size in CLSIZE page (cluster-page)
- * units.  Note that KLMAX*CLSIZE must be <= DMMIN in dmap.h.
- */
-
-#define	KLMAX	(4/CLSIZE)
-#define	KLSEQL	(2/CLSIZE)		/* in klust if vadvise(VA_SEQL) */
-#define	KLIN	(4/CLSIZE)		/* default data/stack in klust */
-#define	KLTXT	(4/CLSIZE)		/* default text in klust */
-#define	KLOUT	(4/CLSIZE)
-
-/*
- * KLSDIST is the advance or retard of the fifo reclaim for sequential
- * processes data space.
- */
-#define	KLSDIST	3		/* klusters advance/retard for seq. fifo */
-
-#if 0 
-/*
- * Paging thresholds (see vm_sched.c).
- * Strategy of 1/19/85:
- *	lotsfree is 512k bytes, but at most 1/4 of memory
- *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
- */
-#define	LOTSFREE	(512 * 1024)
-#define	LOTSFREEFRACT	4
-#define	DESFREE		(200 * 1024)
-#define	DESFREEFRACT	8
-#define	MINFREE		(64 * 1024)
-#define	MINFREEFRACT	2
-#endif
-
-/*
- * There are two clock hands, initially separated by HANDSPREAD bytes
- * (but at most all of user memory).  The amount of time to reclaim
- * a page once the pageout process examines it increases with this
- * distance and decreases as the scan rate rises.
- */
-#define	HANDSPREAD	(2 * 1024 * 1024)
-
-/*
- * The number of times per second to recompute the desired paging rate
- * and poke the pagedaemon.
- */
-#define	RATETOSCHEDPAGING	4
-
-/*
- * Believed threshold (in megabytes) for which interleaved
- * swapping area is desirable.
- */
-#define	LOTSOFMEM	2
-
-#define	mapin(pte, v, pfnum, prot) \
-	{(*(int *)(pte) = ((pfnum)<<PGSHIFT) | (prot)) ; }
-
-/*
  * Mach derived constants
  */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFDBFE000)
-#define UPT_MIN_ADDRESS		((vm_offset_t)0xFDC00000)
-#define UPT_MAX_ADDRESS		((vm_offset_t)0xFDFF7000)
-#define VM_MAX_ADDRESS		UPT_MAX_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xFDFF7000)
-#define UPDT			VM_MIN_KERNEL_ADDRESS
-#define KPT_MIN_ADDRESS		((vm_offset_t)0xFDFF8000)
-#define KPT_MAX_ADDRESS		((vm_offset_t)0xFDFFF000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFF7FF000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFDC00000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xFDFF7000)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xFE000000)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFF800000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
-
 #endif

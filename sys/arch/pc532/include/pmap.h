@@ -1,6 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.7 1995/05/11 16:53:07 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 1996/02/01 00:03:34 phil Exp $	*/
 
 /* 
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -49,111 +50,41 @@
  * from hp300:	@(#)pmap.h	7.2 (Berkeley) 12/16/90
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_NS532_PMAP_H_
+#define	_NS532_PMAP_H_
+
+#include <machine/cpufunc.h>
+#include <machine/pte.h>
 
 /*
- * 532 page table entry and page table directory
- *   Phil Nelson, 12/92
- *
- *   modified from the 386 stuff by W.Jolitz, 8/89
+ * 386 page table entry and page table directory
+ * W.Jolitz, 8/89
  */
-
-struct pde  /* First level PTE */
-{
-unsigned long	
-		pd_v:1,			/* valid bit */
-		pd_prot:2,		/* access control */
-		pd_mbz1:4,		/* reserved, must be zero */
-		pd_u:1,			/* hardware maintained 'used' bit */
-		pd_mbz2:1,		/* reserved, must be zero */
-		:3,			/* reserved for software */
-		pd_pfnum:20;		/* physical page frame number of pte's*/
-};
-
-#define	PD_MASK		0xffc00000	/* page directory address bits */
-#define	PT_MASK		0x003ff000	/* page table address bits */
-#define	PD_SHIFT	22		/* page directory address shift */
-#define	PG_SHIFT	12		/* page table address shift */
-
-struct pte
-{
-unsigned int	
-		pg_v:1,			/* valid bit */
-		pg_prot:2,		/* access control */
-		pg_mbz1:3,		/* reserved, must be zero */
-		pg_nc:1,		/* 'uncacheable page' bit */
-		pg_u:1,			/* hardware maintained 'used' bit */
-		pg_m:1,			/* hardware maintained modified bit */
-		pg_w:1,			/* software, wired down page */
-		:2,			/* software (unused) */
-		pg_pfnum:20;		/* physical page frame number */
-};
-
-#define	PG_V		0x00000001
-#define	PG_RO		0x00000000  
-#define	PG_RW		0x00000002  
-#define PG_u		0x00000004  
-#define	PG_PROT		0x00000006 /* all protection bits . */
-#define	PG_W		0x00000200 /* Wired bit (user def) */
-#define PG_N		0x00000040 /* Non-cacheable */
-#define	PG_M		0x00000100
-#define PG_U		0x00000080
-#define	PG_FRAME	0xfffff000
-
-
-#define	PG_NOACC	0
-#define	PG_KR		0x00000000
-#define	PG_KW		0x00000002
-#define	PG_URKR		0x00000004
-#define	PG_URKW		0x00000004
-#define	PG_UW		0x00000006
-
-/* Garbage for current bastardized pager that assumes a hp300 */
-#define	PG_NV	0
-#define	PG_CI	0
-
-/*
- * Page Protection Exception bits
- */
-
-#define PGEX_TEX	0x03    /* Which exception. */
-#define PGEX_DDT	0x04	/* Data direction: 0 => read */
-#define PGEX_UST	0x08    /* user/super  0 => supervisor */
-#define PGEX_STT	0xf0	/* CPU status. */
-
-#define PGEX_P		PGEX_TEX	/* Protection violation vs. not present */
-#define PGEX_W		PGEX_DDT	/* during a Write cycle */
-#define PGEX_U		PGEX_UST	/* access from User mode (UPL) */
-
-typedef struct pde	pd_entry_t;	/* page directory entry */
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
 /*
  * One page directory, shared between
  * kernel and user modes.
  */
-#define NS532_PAGE_SIZE	NBPG
-#define NS532_PDR_SIZE	NBPDR
-
-#define NS532_KPDES	8 /* KPT page directory size */
-#define NS532_UPDES	NBPDR/sizeof(struct pde)-8 /* UPT page directory size */
-
-#define	UPTDI		0x3f6		/* ptd entry for u./kernel&user stack */
 #define	PTDPTDI		0x3f7		/* ptd entry that points to ptd! */
-#define	KPTDI_FIRST	0x3f8		/* start of kernel virtual pde's */
-#define	KPTDI_LAST	0x3ff		/* last of kernel virtual pde's */
+#define	KPTDI		0x3f8		/* start of kernel virtual pde's */
+#define	NKPDE		8
+#define	APTDPTDI	0x3fe		/* start of alternate page directory */
 
 /*
  * Address of current and alternate address space page table maps
  * and directories.
  */
 #ifdef _KERNEL
-extern struct pte	PTmap[], APTmap[], Upte;
-extern struct pde	PTD[], APTD[], PTDpde, APTDpde, Upde;
-extern	pt_entry_t	*Sysmap;
+extern pt_entry_t	PTmap[], APTmap[];
+extern pd_entry_t	PTD[], APTD[], PTDpde, APTDpde;
+extern pt_entry_t	*Sysmap;
 
-extern int	IdlePTD;	/* physical address of "Idle" state directory */
+extern int	PTDpaddr;	/* physical address of kernel PTD */
+
+void pmap_bootstrap __P((vm_offset_t start));
+boolean_t pmap_testbit __P((vm_offset_t, int));
+void pmap_changebit __P((vm_offset_t, int, int));
+__pure u_int pmap_page_index __P((vm_offset_t));
 #endif
 
 /*
@@ -165,25 +96,24 @@ extern int	IdlePTD;	/* physical address of "Idle" state directory */
 #define	vtopte(va)	(PTmap + ns532_btop(va))
 #define	kvtopte(va)	vtopte(va)
 #define	ptetov(pt)	(ns532_ptob(pt - PTmap)) 
-#define	vtophys(va)  (ns532_ptob(vtopte(va)->pg_pfnum) | ((int)(va) & PGOFSET))
-#define ispt(va)	((va) >= UPT_MIN_ADDRESS && (va) <= KPT_MAX_ADDRESS)
+#define	vtophys(va) \
+	((*vtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
 #define	avtopte(va)	(APTmap + ns532_btop(va))
-#define	ptetoav(pt)	(NS532_ptob(pt - APTmap)) 
-#define	avtophys(va)  (ns532_ptob(avtopte(va)->pg_pfnum) | ((int)(va) & PGOFSET))
+#define	ptetoav(pt)	(ns532_ptob(pt - APTmap)) 
+#define	avtophys(va) \
+	((*avtopte(va) & PG_FRAME) | ((unsigned)(va) & ~PG_FRAME))
 
 /*
  * macros to generate page directory/table indicies
  */
-
-#define	pdei(va)	(((va)&PD_MASK)>>PD_SHIFT)
-#define	ptei(va)	(((va)&PT_MASK)>>PG_SHIFT)
+#define	pdei(va)	(((va) & PD_MASK) >> PDSHIFT)
+#define	ptei(va)	(((va) & PT_MASK) >> PGSHIFT)
 
 /*
  * Pmap stuff
  */
-
-struct pmap {
+typedef struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	boolean_t		pm_pdchanged;	/* pdir changed */
 	short			pm_dref;	/* page directory ref count */
@@ -191,51 +121,81 @@ struct pmap {
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_ptpages;	/* more stats: PT pages */
-};
-
-typedef struct pmap	*pmap_t;
-
-/*
- * Macros for speed
- */
-#define PMAP_ACTIVATE(pmapp, pcbp) \
-	if ((pmapp) != NULL /*&& (pmapp)->pm_pdchanged */) {  \
-		(pcbp)->pcb_ptb = \
-		  pmap_extract(pmap_kernel(),(vm_offset_t)(pmapp)->pm_pdir); \
-		if ((pmapp) == &curproc->p_vmspace->vm_pmap) \
-			_load_ptb0((pcbp)->pcb_ptb); \
-		(pmapp)->pm_pdchanged = FALSE; \
-	}
-
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+} *pmap_t;
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * mappings of that page.  An entry is a pv_entry, the list is pv_table.
  */
-typedef struct pv_entry {
+struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	pmap_t		pv_pmap;	/* pmap where mapping lies */
 	vm_offset_t	pv_va;		/* virtual address for mapping */
-	int		pv_flags;	/* flags */
-} *pv_entry_t;
+};
 
-#define	PV_ENTRY_NULL	((pv_entry_t) 0)
+struct pv_page;
 
-#define	PV_CI		0x01	/* all entries must be cache inhibited */
-#define PV_PTPAGE	0x02	/* entry maps a page table page */
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+/*
+ * This is basically:
+ * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ */
+#define	NPVPPG	340
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 #ifdef	_KERNEL
+extern struct pmap	kernel_pmap_store;
+struct pv_entry		*pv_table;	/* array of entries, one per page */
 
-pv_entry_t	pv_table;		/* array of entries, one per page */
-struct pmap	kernel_pmap_store;
-
-#define pa_index(pa)		atop(pa - vm_first_phys)
-#define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
-
-#define	pmap_kernel()		(&kernel_pmap_store)
+#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_update()			tlbflush()
+
+static __inline void
+pmap_clear_modify(vm_offset_t pa)
+{
+	pmap_changebit(pa, 0, ~PG_M);
+}
+
+static __inline void
+pmap_clear_reference(vm_offset_t pa)
+{
+	pmap_changebit(pa, 0, ~PG_U);
+}
+
+static __inline void
+pmap_copy_on_write(vm_offset_t pa)
+{
+	pmap_changebit(pa, PG_RO, ~PG_RW);
+}
+
+static __inline boolean_t
+pmap_is_modified(vm_offset_t pa)
+{
+	return pmap_testbit(pa, PG_M);
+}
+
+static __inline boolean_t
+pmap_is_referenced(vm_offset_t pa)
+{
+	return pmap_testbit(pa, PG_U);
+}
+
+static __inline vm_offset_t
+pmap_phys_address(int ppn)
+{
+	return ns532_ptob(ppn);
+}
 
 #endif	/* _KERNEL */
 
-#endif
+#endif /* _NS532_PMAP_H_ */

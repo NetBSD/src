@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.13 1995/09/26 20:16:21 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.14 1996/02/01 00:03:36 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,8 +38,8 @@
  *	@(#)psl.h	5.2 (Berkeley) 1/18/91
  */
 
-#ifndef _MACHINE_PSL_H_
-#define _MACHINE_PSL_H_
+#ifndef _NS532_PSL_H_
+#define _NS532_PSL_H_
 
 /*
  * 32532 processor status longword.
@@ -59,6 +59,7 @@
 
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
 #define	PSL_USERSTATIC	(PSL_USER | PSL_US | PSL_I)
+#define	USERMODE(psr)	(((psr) & PSL_USER) == PSL_USER)
 
 /* The PSR versions ... */
 #define PSR_USR PSL_USER
@@ -237,4 +238,4 @@ splx_di(register int ncpl)
 #endif /* !LOCORE */
 #endif /* _KERNEL */
 
-#endif /* _MACHINE_PSL_H_ */
+#endif /* _NS532_PSL_H_ */

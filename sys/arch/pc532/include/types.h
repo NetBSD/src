@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 1995/12/09 04:41:41 mycroft Exp $	*/
+/*	$NetBSD: types.h,v 1.13 1996/02/01 00:03:40 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,6 +70,5 @@ typedef	unsigned long long	u_int64_t;
 typedef int32_t			register_t;
 
 #define	__SWAP_BROKEN
-#define	__FORK_BRAINDAMAGE
 
 #endif	/* _MACHTYPES_H_ */

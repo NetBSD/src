@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1995/06/26 06:56:05 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1996/02/01 00:03:30 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,32 +64,27 @@
 #define ALIGNBYTES	(sizeof(int) - 1)
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof (struct pte)))
-
-#define NBPDR		(1024*NBPG)	/* bytes/page dir */
-#define	PDROFSET	(NBPDR-1)	/* byte offset into page dir */
-#define	PDRSHIFT	22		/* LOG2(NBPDR) */
+#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	KERNBASE	0xFE000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
 #define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
-
 #define	UPAGES	2		/* pages of u-area */
-#define USPACE (UPAGES * NBPG)
+#define USPACE (UPAGES * NBPG)	/* total size of u-area */
 
 /*
  * Constants related to network buffer management.
@@ -109,14 +104,18 @@
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 
 #ifndef NMBCLUSTERS
+#ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#else
+#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#endif
 #endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2 * 1024 * 1024/CLBYTES)
 #endif
 
 /*
@@ -135,31 +134,25 @@
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 
-
 /*
  * Map a ``block device block'' to a file system block.
- * This should be device dependent, and will be if we
- * add an entry to cdevsw/bdevsw for that purpose.
+ * This should be device dependent, and should use the bsize
+ * field from the disk label.
  * For now though just use DEV_BSIZE.
  */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
+#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Mach derived conversion macros
  */
-#define ns532_round_pdr(x)	((((unsigned)(x)) + NBPDR - 1) & ~(NBPDR-1))
-#define ns532_trunc_pdr(x)	((unsigned)(x) & ~(NBPDR-1))
-#define ns532_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define ns532_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define ns532_btod(x)		((unsigned)(x) >> PDRSHIFT)
-#define ns532_dtob(x)		((unsigned)(x) << PDRSHIFT)
+#define ns532_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
+#define ns532_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
+#define ns532_btod(x)		((unsigned)(x) >> PDSHIFT)
+#define ns532_dtob(x)		((unsigned)(x) << PDSHIFT)
+#define ns532_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define ns532_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define ns532_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define ns532_ptob(x)		((unsigned)(x) << PGSHIFT)
-
-#ifndef _KERNEL
-#define	DELAY(n)	{ volatile int N = (n); while (--N > 0); }
-#endif
 
 /* Macros to read and write from absolute addresses.  */
 
