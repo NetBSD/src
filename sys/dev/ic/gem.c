@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.18 2002/05/15 02:36:11 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.19 2002/05/15 21:05:23 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.18 2002/05/15 02:36:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.19 2002/05/15 21:05:23 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -354,6 +354,7 @@ gem_attach(sc, enaddr)
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "interrupts");
+#ifdef GEM_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txint, EVCNT_TYPE_INTR,
 	    &sc->sc_ev_intr, sc->sc_dev.dv_xname, "tx interrupts");
 	evcnt_attach_dynamic(&sc->sc_ev_rxint, EVCNT_TYPE_INTR,
@@ -380,6 +381,7 @@ gem_attach(sc, enaddr)
 	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >31desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[8], EVCNT_TYPE_INTR,
 	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >63desc");
+#endif
 
 #if notyet
 	/*
@@ -1418,7 +1420,7 @@ gem_rint(sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (gem_add_rxbuf(sc, i) != 0) {
-			sc->sc_ev_rxnobuf.ev_count++;
+			GEM_COUNTER_INCR(sc, sc_ev_rxnobuf);
 			ifp->if_ierrors++;
 			GEM_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
@@ -1448,26 +1450,32 @@ gem_rint(sc)
 	if (progress) {
 		/* Update the receive pointer. */
 		if (i == sc->sc_rxptr) {
-			sc->sc_ev_rxfull.ev_count++;
-			printf("%s: rint: ring wrap\n", sc->sc_dev.dv_xname);
+			GEM_COUNTER_INCR(sc, sc_ev_rxfull);
+#ifdef GEM_DEBUG
+			if (ifp->if_flags & GEM_DEBUG)
+				printf("%s: rint: ring wrap\n",
+				    sc->sc_dev.dv_xname);
+#endif
 		}
 		sc->sc_rxptr = i;
 		bus_space_write_4(t, h, GEM_RX_KICK, GEM_PREVRX(i));
 	}
+#ifdef GEM_COUNTERS
 	if (progress <= 4) {
-		sc->sc_ev_rxhist[progress].ev_count++;
+		GEM_COUNTER_INCR(sc, sc_ev_rxhist[progress]);
 	} else if (progress > 31) {
 		if (progress < 16)
-			sc->sc_ev_rxhist[5].ev_count++;
+			GEM_COUNTER_INCR(sc, sc_ev_rxhist[5]);
 		else
-			sc->sc_ev_rxhist[6].ev_count++;
+			GEM_COUNTER_INCR(sc, sc_ev_rxhist[6]);
 			
 	} else {
 		if (progress < 64)
-			sc->sc_ev_rxhist[7].ev_count++;
+			GEM_COUNTER_INCR(sc, sc_ev_rxhist[7]);
 		else
-			sc->sc_ev_rxhist[8].ev_count++;
+			GEM_COUNTER_INCR(sc, sc_ev_rxhist[8]);
 	}
+#endif
 
 	DPRINTF(sc, ("gem_rint: done sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
@@ -1557,6 +1565,8 @@ gem_intr(v)
 	char bits[128];
 #endif
 
+	sc->sc_ev_intr.ev_count++;
+
 	status = bus_space_read_4(t, seb, GEM_STATUS);
 	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
 		sc->sc_dev.dv_xname, (status>>19),
@@ -1566,12 +1576,12 @@ gem_intr(v)
 		r |= gem_eint(sc, status);
 
 	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0) {
-		sc->sc_ev_txint.ev_count++;
+		GEM_COUNTER_INCR(sc, sc_ev_txint);
 		r |= gem_tint(sc);
 	}
 
 	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0) {
-		sc->sc_ev_rxint.ev_count++;
+		GEM_COUNTER_INCR(sc, sc_ev_rxint);
 		r |= gem_rint(sc);
 	}
 
