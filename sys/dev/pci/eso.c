@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.7 1999/09/23 11:46:12 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.8 1999/09/28 13:57:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -76,6 +76,7 @@
 #endif
 
 struct eso_dma {
+	bus_dma_tag_t		ed_dmat;
 	bus_dmamap_t		ed_map;
 	caddr_t			ed_addr;
 	bus_dma_segment_t	ed_segs[1];
@@ -174,7 +175,7 @@ static void	eso_write_mixreg __P((struct eso_softc *, uint8_t, uint8_t));
 /* DMA memory allocation */
 static int	eso_allocmem __P((struct eso_softc *, size_t, size_t, size_t,
 		    int, struct eso_dma *));
-static void	eso_freemem __P((struct eso_softc *, struct eso_dma *));
+static void	eso_freemem __P((struct eso_dma *));
 
 
 static int
@@ -233,7 +234,6 @@ eso_attach(parent, self, aux)
 		vcbase = 0;
 		sc->sc_vcsize = 0x10; /* From the data sheet. */
 	}
-
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
 		printf("%s: can't map MPU I/O space\n", sc->sc_dev.dv_xname);
@@ -848,7 +848,6 @@ eso_halt_input(hdl)
 	return (error == EWOULDBLOCK ? 0 : error);
 }
 
-/* ARGSUSED */
 static int
 eso_getdev(hdl, retp)
 	void *hdl;
@@ -1398,23 +1397,23 @@ eso_allocmem(sc, size, align, boundary, flags, ed)
 	wait = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 	ed->ed_size = size;
 	
-	error = bus_dmamem_alloc(sc->sc_dmat, ed->ed_size, align, boundary,
+	error = bus_dmamem_alloc(ed->ed_dmat, ed->ed_size, align, boundary,
 	    ed->ed_segs, sizeof (ed->ed_segs) / sizeof (ed->ed_segs[0]),
 	    &ed->ed_nsegs, wait);
 	if (error)
 		goto out;
 
-	error = bus_dmamem_map(sc->sc_dmat, ed->ed_segs, ed->ed_nsegs,
+	error = bus_dmamem_map(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
 	    ed->ed_size, &ed->ed_addr, wait | BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
-	error = bus_dmamap_create(sc->sc_dmat, ed->ed_size, 1, ed->ed_size, 0,
+	error = bus_dmamap_create(ed->ed_dmat, ed->ed_size, 1, ed->ed_size, 0,
 	    wait, &ed->ed_map);
 	if (error)
 		goto unmap;
 
-	error = bus_dmamap_load(sc->sc_dmat, ed->ed_map, ed->ed_addr,
+	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_addr,
 	    ed->ed_size, NULL, wait);
 	if (error)
 		goto destroy;
@@ -1422,25 +1421,24 @@ eso_allocmem(sc, size, align, boundary, flags, ed)
 	return (0);
 
  destroy:
-	bus_dmamap_destroy(sc->sc_dmat, ed->ed_map);
+	bus_dmamap_destroy(ed->ed_dmat, ed->ed_map);
  unmap:
-	bus_dmamem_unmap(sc->sc_dmat, ed->ed_addr, ed->ed_size);
+	bus_dmamem_unmap(ed->ed_dmat, ed->ed_addr, ed->ed_size);
  free:
-	bus_dmamem_free(sc->sc_dmat, ed->ed_segs, ed->ed_nsegs);
+	bus_dmamem_free(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs);
  out:
 	return (error);
 }
 
 static void
-eso_freemem(sc, ed)
-	struct eso_softc *sc;
+eso_freemem(ed)
 	struct eso_dma *ed;
 {
 
-	bus_dmamap_unload(sc->sc_dmat, ed->ed_map);
-	bus_dmamap_destroy(sc->sc_dmat, ed->ed_map);
-	bus_dmamem_unmap(sc->sc_dmat, ed->ed_addr, ed->ed_size);
-	bus_dmamem_free(sc->sc_dmat, ed->ed_segs, ed->ed_nsegs);
+	bus_dmamap_unload(ed->ed_dmat, ed->ed_map);
+	bus_dmamap_destroy(ed->ed_dmat, ed->ed_map);
+	bus_dmamem_unmap(ed->ed_dmat, ed->ed_addr, ed->ed_size);
+	bus_dmamem_free(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs);
 }
 	
 static void *
@@ -1469,6 +1467,17 @@ eso_allocm(hdl, direction, size, type, flags)
 	else
 		boundary = 0;
 
+#ifdef alpha
+	/*
+	 * XXX For Audio 1, which implements the 24 low address bits only,
+	 * XXX force allocation through the (ISA) SGMAP.
+	 */
+	if (direction == AUMODE_RECORD)
+		ed->ed_dmat = alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_ISA);
+	else
+#endif
+		ed->ed_dmat = sc->sc_dmat;
+
 	error = eso_allocmem(sc, size, 32, boundary, flags, ed);
 	if (error) {
 		free(ed, type);
@@ -1491,7 +1500,7 @@ eso_freem(hdl, addr, type)
 
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->ed_next) {
 		if (KVADDR(p) == addr) {
-			eso_freemem(sc, p);
+			eso_freemem(p);
 			*pp = p->ed_next;
 			free(p, type);
 			return;
@@ -1531,7 +1540,7 @@ eso_mappage(hdl, addr, offs, prot)
 	if (ed == NULL)
 		return (-1);
 	
-	return (bus_dmamem_mmap(sc->sc_dmat, ed->ed_segs, ed->ed_nsegs,
+	return (bus_dmamem_mmap(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
 	    offs, prot, BUS_DMA_WAITOK));
 }
 
