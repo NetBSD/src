@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.14 2003/07/25 10:06:09 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.15 2003/08/26 03:37:25 itojun Exp $	*/
 /*	$KAME: pfkey_dump.c,v 1.44 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey_dump.c,v 1.14 2003/07/25 10:06:09 itojun Exp $");
+__RCSID("$NetBSD: pfkey_dump.c,v 1.15 2003/08/26 03:37:25 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,6 +326,7 @@ pfkey_spdump(m)
 	char pbuf[NI_MAXSERV];
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
+	struct sadb_x_tag *m_tag;
 	struct sadb_x_policy *m_xpl;
 	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
@@ -343,64 +344,63 @@ pfkey_spdump(m)
 
 	m_saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	m_daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+	m_tag = (struct sadb_x_tag *)mhp[SADB_X_EXT_TAG];
 	m_xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
 	m_lftc = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_CURRENT];
 	m_lfth = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
 
-	/* source address */
-	if (m_saddr == NULL) {
-		printf("no ADDRESS_SRC extension.\n");
-		return;
-	}
-	sa = (struct sockaddr *)(m_saddr + 1);
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
-		    NI_NUMERICSERV) != 0)
-			sport = 0;	/*XXX*/
-		else
-			sport = atoi(pbuf);
-		printf("%s%s ", str_ipaddr(sa),
-			str_prefport(sa->sa_family,
-			    m_saddr->sadb_address_prefixlen, sport,
-			    m_saddr->sadb_address_proto));
-		break;
-	default:
-		printf("unknown-af ");
-		break;
+	if (m_saddr && m_daddr) {
+		/* source address */
+		sa = (struct sockaddr *)(m_saddr + 1);
+		switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			if (getnameinfo(sa, sa->sa_len, NULL, 0,
+			    pbuf, sizeof(pbuf), NI_NUMERICSERV) != 0)
+				sport = 0;	/*XXX*/
+			else
+				sport = atoi(pbuf);
+			printf("%s%s ", str_ipaddr(sa),
+				str_prefport(sa->sa_family,
+				    m_saddr->sadb_address_prefixlen, sport,
+				    m_saddr->sadb_address_proto));
+			break;
+		default:
+			printf("unknown-af ");
+			break;
+		}
+
+		/* destination address */
+		sa = (struct sockaddr *)(m_daddr + 1);
+		switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			if (getnameinfo(sa, sa->sa_len, NULL, 0,
+			    pbuf, sizeof(pbuf), NI_NUMERICSERV) != 0)
+				dport = 0;	/*XXX*/
+			else
+				dport = atoi(pbuf);
+			printf("%s%s ", str_ipaddr(sa),
+				str_prefport(sa->sa_family,
+				    m_daddr->sadb_address_prefixlen, dport,
+				    m_saddr->sadb_address_proto));
+			break;
+		default:
+			printf("unknown-af ");
+			break;
+		}
+
+		/* upper layer protocol */
+		if (m_saddr->sadb_address_proto !=
+		    m_daddr->sadb_address_proto) {
+			printf("upper layer protocol mismatched.\n");
+			return;
+		}
+		str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 	}
 
-	/* destination address */
-	if (m_daddr == NULL) {
-		printf("no ADDRESS_DST extension.\n");
-		return;
-	}
-	sa = (struct sockaddr *)(m_daddr + 1);
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
-		    NI_NUMERICSERV) != 0)
-			dport = 0;	/*XXX*/
-		else
-			dport = atoi(pbuf);
-		printf("%s%s ", str_ipaddr(sa),
-			str_prefport(sa->sa_family,
-			    m_daddr->sadb_address_prefixlen, dport,
-			    m_saddr->sadb_address_proto));
-		break;
-	default:
-		printf("unknown-af ");
-		break;
-	}
-
-	/* upper layer protocol */
-	if (m_saddr->sadb_address_proto != m_daddr->sadb_address_proto) {
-		printf("upper layer protocol mismatched.\n");
-		return;
-	}
-	str_upperspec(m_saddr->sadb_address_proto, sport, dport);
+	if (m_tag)
+		printf("tagged \"%s\" ", m_tag->sadb_x_tag_name);
 
 	/* policy */
     {
