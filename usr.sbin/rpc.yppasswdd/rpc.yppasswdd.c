@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.4 2000/08/03 08:22:33 ad Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.5 2000/12/08 21:09:37 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,13 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.4 2000/08/03 08:22:33 ad Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.5 2000/12/08 21:09:37 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,23 +69,34 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	int i;
+	char *arg;
 
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] == '-') {
-			if (strcmp("-noshell", argv[i]) == 0)
-				noshell = 1;
-			else if (strcmp("-nogecos", argv[i]) == 0)
-				nogecos = 1;
-			else if (strcmp("-nopw", argv[i]) == 0)
-				nopw = 1;
-			else if (strcmp("-m", argv[i]) == 0) {
-				domake = 1;
-				for (; i < argc; i++) {
-					strcat(make_arg, " ");
-					strcat(make_arg, argv[i]);
-				}
-			} else
-				usage();
+		arg = argv[i];
+		if (*arg++ != '-')
+			usage();
+		if (strcmp("noshell", arg) == 0)
+			noshell = 1;
+		else if (strcmp("nogecos", arg) == 0)
+			nogecos = 1;
+		else if (strcmp("nopw", arg) == 0)
+			nopw = 1;
+		else if (strcmp("m", arg) == 0) {
+			int len;
+
+			domake = 1;
+			len = strlen(make_arg);
+			i++;
+			for (; i < argc; i++) {
+				int arglen;
+
+				arglen = strlen(argv[i]);
+				if ((len + arglen) > (sizeof(make_arg) - 2))
+					errx(EXIT_FAILURE, strerror(E2BIG));
+				make_arg[len++] = ' ';
+				(void)strcpy(&make_arg[len], argv[i]);
+				len += arglen;
+			}
 		} else
 			usage();
 	}
@@ -93,7 +105,7 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "can't detach");
 	pidfile(NULL);
 
-	(void) pmap_unset(YPPASSWDPROG, YPPASSWDVERS);
+	(void)pmap_unset(YPPASSWDPROG, YPPASSWDVERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL)
@@ -127,7 +139,7 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void) svc_sendreply(transp, xdr_void, (char *) NULL);
+		(void)svc_sendreply(transp, xdr_void, (char *) NULL);
 		return;
 
 	case YPPASSWDPROC_UPDATE:
@@ -138,7 +150,7 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		 * conditions locally and timeouts on the
 		 * client.
 		 */
-		(void) memset(&argument, 0, sizeof(argument));
+		(void)memset(&argument, 0, sizeof(argument));
 		if (!svc_getargs(transp, xdr_yppasswd, (caddr_t) & argument)) {
 			svcerr_decode(transp);
 			return;
