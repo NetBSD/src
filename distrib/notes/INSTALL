@@ -583,9 +583,9 @@ We are:
 (in alphabetical order)
 
 The NetBSD core group:
-J.T. Conklin		<jtc@NetBSD.ORG>
-Charles Hannum		<mycroft@NetBSD.ORG>
 Paul Kranenburg		<pk@NetBSD.ORG>
+Herb Peyerl		<hpeyerl@NetBSD.ORG>
+Scott Reynolds		<scottr@NetBSD.ORG)
 Jason Thorpe		<thorpej@NetBSD.ORG>
 Christos Zoulas 	<christos@NetBSD.ORG>
 
@@ -594,13 +594,19 @@ Mark Brinicombe		<mark@NetBSD.ORG>		(arm32)
 Jeremy Cooper		<jeremy@NetBSD.ORG>		(sun3x)
 Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
 Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
+Ross Harvey		<ross@NetBSD.ORG>		(alpha)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
+Eduardo Horvath		<eeh@NetBSD.ORG>		(sparc64)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
+Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
+Tsubai Masanari		<tsubai@NetBSD.ORG>		(newsmips)
 Phil Nelson		<phil@NetBSD.ORG>		(pc532)
 Masaru Oki		<oki@NetBSD.ORG>		(x68k)
 Scott Reynolds		<scottr@NetBSD.ORG>		(mac68k)
 Gordon Ross		<gwr@NetBSD.ORG>		(sun3, sun3x)
+Kazuki Sakamoto		<sakamoto@NetBSD.ORG>		(bebox)
+Wolfgang Solfrank	<ws@NetBSD.ORG>			(powerpc)
 Jonathan Stone		<jonathan@NetBSD.ORG>		(pmax)
 Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
 Frank van der Linden	<fvdl@NetBSD.ORG>		(i386)
@@ -613,9 +619,11 @@ Perry Metzger		<perry@NetBSD.ORG>
 Jason Thorpe		<thorpej@NetBSD.ORG>
 
 Supporting cast:
-Steve Allen		<wormey@eskimo.com>
+Steve Allen		<wormey@NetBSD.ORG>
 Lennart Augustsson	<augustss@NetBSD.ORG>
 Christoph Badura	<bad@NetBSD.ORG>
+Manuel Bouyer		<bouyer@NetBSD.ORG>
+Robert V. Baron		<rvb@NetBSD.ORG>
 John Birrell		<jb@NetBSD.ORG>
 Manuel Bouyer		<bouyer@NetBSD.ORG>
 John Brezak		<brezak@NetBSD.ORG>
@@ -627,23 +635,32 @@ Dave Burgess		<burgess@cynjut.infonet.net>
 Dave Carrel		<carrel@NetBSD.ORG>
 Bill Coldwell		<billc@NetBSD.ORG>
 Alistair Crooks		<agc@NetBSD.ORG>
+Aidan Cully		<aidan@NetBSD.ORG>
 Rob Deker		<deker@NetBSD.ORG>
 Chris G. Demetriou	<cgd@NetBSD.ORG>
 Matthias Drochner	<drochner@NetBSD.ORG>
+Enami Tsugutomo		<enami@NetBSD.ORG>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Erik Fair		<fair@NetBSD.ORG>
 Hubert Feyrer		<hubertf@NetBSD.ORG>
+Thorsten Frueauf	<frueauf@NetBSD.ORG>
 Brian R. Gaeke		<brg@dgate.org>
+Thomas Gerner		<thomas@NetBSD.ORG>
 Justin Gibbs		<gibbs@NetBSD.ORG>
 Adam Glass		<glass@NetBSD.ORG>
 Michael Graff		<explorer@NetBSD.ORG>
 Brad Grantham		<grantham@tenon.com>
 Matthew Green		<mrg@NetBSD.ORG>
 Juergen Hannken-Illjes	<hannken@NetBSD.ORG>
+Charles M. Hannum	<mycroft@NetBSD.ORG>
+Eric Haszlakiewicz	<erh@NetBSD.ORG>
 Michael L. Hitch	<osymh@NetBSD.ORG>
+Ken Hornstein		<kenh@NetBSD.ORG>
 Marc Horowitz		<marc@NetBSD.ORG>
+ITOH Yasufumi		<itohy@NetBSD.ORG>
 Matthew Jacob		<mjacob@NetBSD.ORG>
 Lonhyn T. Jasinskyj	<lonhyn@NetBSD.ORG>
+Darrin Jewell		<dbj@NetBSD.ORG>
 Lawrence Kesteloot	<kesteloo@cs.unc.edu>
 Klaus Klein		<kleink@NetBSD.ORG>
 John Kohl 		<jtk@NetBSD.ORG>
@@ -651,20 +668,30 @@ Kevin Lahey		<kml@NetBSD.ORG>
 Ted Lemon		<mellon@NetBSD.ORG>
 Mike Long		<mikel@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
-SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Neil J. McRae		<neil@NetBSD.ORG>
 Perry Metzger		<perry@NetBSD.ORG>
 Luke Mewburn		<lukem@NetBSD.ORG>
+Minoura Makoto		<minoura@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
+Tohru Nishimura		<nisimura@NetBSD.ORG>
+Greg Oster		<oster@NetBSD.ORG>
 Herb Peyerl		<hpeyerl@NetBSD.ORG>
 Matthias Pfaller	<matthias@NetBSD.ORG>
+Dante Profeta		<dante@NetBSD.ORG>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
 Darren Reed		<darrenr@NetBSD.ORG>
+Tim Rightnour		<garbled@NetBSD.ORG>
+Heiko W. Rupp		<hwr@NetBSD.ORG>
+SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Kazuki Sakamoto		<sakamoto@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
+Ty Sarna		<tsarna@NetBSD.ORG>
+Matthias Scheler	<tron@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
+Tim Shepard		<shep@NetBSD.ORG>
+Chuck Silvers		<chs@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Noriyuki Soda		<soda@NetBSD.ORG>
 Wolfgang Solfrank	<ws@NetBSD.ORG>
@@ -672,10 +699,13 @@ Bill Sommerfeld		<sommerfeld@NetBSD.ORG>
 Ignatios Souvatzis	<is@NetBSD.ORG>
 Bill Studenmund		<wrstuden@NetBSD.ORG>
 Kevin Sullivan		<sullivan@NetBSD.ORG>
+Kimmo Suominen		<kim@NetBSD.ORG>
 Matt Thomas		<matt@NetBSD.ORG>
-Enami Tsugutomo		<enami@NetBSD.ORG>
+Christoph Toshok	<toshok@NetBSD.ORG>
 Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
+Krister Walfridsson	<kristerw@NetBSD.ORG>
+Nathan Williams		<nathanw@NetBSD.ORG>
 Colin Wood		<ender@NetBSD.ORG>
 Steve Woodford		<scw@NetBSD.ORG>
 
