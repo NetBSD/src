@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)diskpart.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: diskpart.c,v 1.6 1996/05/21 13:00:31 mrg Exp $";
+/* static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94"; */
+static char rcsid[] = "$NetBSD: diskpart.c,v 1.7 1997/03/08 07:24:42 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: diskpart.c,v 1.6 1996/05/21 13:00:31 mrg Exp $";
 #include <sys/disklabel.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #define	for_now			/* show all of `c' partition for disklabel */
@@ -344,9 +345,9 @@ main(argc, argv)
 struct disklabel disk;
 
 struct	field {
-	char	*f_name;
-	char	*f_defaults;
-	u_int32_t *f_location;
+	char		*f_name;
+	char		*f_defaults;
+	u_int32_t	*f_location;
 } fields[] = {
 	{ "sector size",		"512",	&disk.d_secsize },
 	{ "#sectors/track",		0,	&disk.d_nsectors },
@@ -374,16 +375,18 @@ promptfordisk(name)
 	for (;;) {
 		fprintf(stderr, "Disk/controller type (%s)? ", dktypenames[1]);
 		(void) fgets(buf, BUFSIZ, stdin);
-		if (buf[0] == 0)
+		if (buf[0] == 0) {
 			dp->d_type = 1;
-		else
-			dp->d_type = gettype(buf, dktypenames);
-		if ((int16_t)dp->d_type >= 0)
 			break;
+		}
+		if ((i = gettype(buf, dktypenames)) >= 0) {
+			dp->d_type = i;
+			break;
+		}
 		fprintf(stderr, "%s: unrecognized controller type\n", buf);
 		fprintf(stderr, "use one of:\n", buf);
 		for (tp = dktypenames; *tp; tp++)
-			if (index(*tp, ' ') == 0)
+			if (strchr(*tp, ' ') == 0)
 				fprintf(stderr, "\t%s\n", *tp);
 	}
 gettype:
