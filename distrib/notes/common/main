@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.249 2003/11/25 22:29:34 ben Exp $
+.\"	$NetBSD: main,v 1.250 2003/12/27 18:23:51 daniel Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1805,6 +1805,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
 .It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
 .It Ta John Kohl Ta Mt jtk@NetBSD.org
+.It Ta Daniel de Kok Ta Mt daniel@NetBSD.org
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.org
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.org
