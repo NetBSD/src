@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.518 2002/10/01 22:43:03 provos Exp $
+# $NetBSD: mi,v 1.519 2002/10/02 03:20:40 grant Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -2047,6 +2047,7 @@
 ./usr/share/man/man1/ps.1			man-util-man
 ./usr/share/man/man1/pushd.1			man-util-man
 ./usr/share/man/man1/pwd.1			man-util-man
+./usr/share/man/man1/pwhash.1			man-util-man
 ./usr/share/man/man1/quota.1			man-util-man
 ./usr/share/man/man1/radioctl.1			man-audio-man
 ./usr/share/man/man1/rcmd.1			man-netutil-man
