@@ -1085,6 +1085,7 @@
 ./usr/share/man/cat3/network.0
 ./usr/share/man/cat3/nextafter.0
 ./usr/share/man/cat3/nice.0
+./usr/share/man/cat3/nl_langinfo.0
 ./usr/share/man/cat3/nlist.0
 ./usr/share/man/cat3/nrand48.0
 ./usr/share/man/cat3/ns.0
@@ -1238,6 +1239,7 @@
 ./usr/share/man/cat3/strpbrk.0
 ./usr/share/man/cat3/strrchr.0
 ./usr/share/man/cat3/strsep.0
+./usr/share/man/cat3/strsignal.0
 ./usr/share/man/cat3/strspn.0
 ./usr/share/man/cat3/strstr.0
 ./usr/share/man/cat3/strtod.0
