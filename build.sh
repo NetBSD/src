@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.100 2003/05/10 07:12:37 lukem Exp $
+#	$NetBSD: build.sh,v 1.101 2003/05/12 02:33:17 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,14 +160,21 @@ getarch()
 		MACHINE_ARCH=m68k
 		;;
 
-	mipsco|newsmips|sbmips|sgimips)
+	evbmips-e[bl]|sbmips-e[bl])
+		MACHINE_ARCH=mips${MACHINE##*-}
+		MACHINE=${MACHINE%-e[bl]}
+		;;
+
+	evbmips|sbmips)		# no default MACHINE_ARCH
+		;;
+
+	mipsco|newsmips|sgimips)
 		MACHINE_ARCH=mipseb
 		;;
 
-	algor|arc|cobalt|evbmips|hpcmips|playstation2|pmax)
+	algor|arc|cobalt|hpcmips|playstation2|pmax)
 		MACHINE_ARCH=mipsel
 		;;
-
 
 	pc532)
 		MACHINE_ARCH=ns32k
@@ -210,6 +217,10 @@ validatearch()
 	case "${MACHINE_ARCH}" in
 
 	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|ns32k|powerpc|sh[35]e[bl]|sparc|sparc64|vax|x86_64)
+		;;
+
+	"")
+		bomb "No MACHINE_ARCH provided"
 		;;
 
 	*)
@@ -761,7 +772,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.100 2003/05/10 07:12:37 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.101 2003/05/12 02:33:17 lukem Exp $
 #
 
 EOF
