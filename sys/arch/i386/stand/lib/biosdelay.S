@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdelay.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosdelay.S,v 1.2 2003/02/01 14:48:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -59,6 +59,7 @@ ENTRY(delay)
 	movw	22(%esp), %cx
 
 	call	_C_LABEL(prot_to_real)
+	.code16
 
 	movb	$0x86, %ah
 	int	$0x15
@@ -66,8 +67,8 @@ ENTRY(delay)
 
 	movb	%ah, %bl	# real_to_prot uses %eax
 
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code32
 
 	xorl	%eax, %eax
 	movb	%bl, %al

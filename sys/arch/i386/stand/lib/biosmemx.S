@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.2 1999/03/08 21:38:28 drochner Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -53,24 +53,22 @@ ENTRY(getextmem2)
 	push	%edi
 
 	call	_C_LABEL(prot_to_real)
+	.code16
 
-	data32
+	xorl	%ebx, %ebx
 	movl	$0xe801, %eax
 	int	$0x15
 	jc	err2
 
-	data32
 	movl	$0, %ecx
 	jmp ok2
 err2:
-	data32
 	movl	$-1, %ecx
 ok2:
-	data32
 	movl	%eax, %edx
 
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code32
 
 	movl	8(%ebp), %eax
 	movl	%edx, (%eax)
@@ -108,15 +106,15 @@ ENTRY(getmementry)
 	movl	12(%ebp), %edi
 
 	call	_C_LABEL(prot_to_real)
+	.code16
 
-	data32
-	movl	$0xe820, %eax
+	movw	$0xe820, %ax
 	int	$0x15
 
 	setc	%cl
 
-	data32
-	call	_C_LABEL(real_to_prot)
+	calll	_C_LABEL(real_to_prot)
+	.code32
 
 	movl	8(%ebp), %eax
 	movl	%ebx, 0(%eax)

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.13 2002/12/04 18:26:57 jdolecek Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.14 2003/02/01 14:48:17 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -45,15 +45,14 @@
 #include "biosdisk_ll.h"
 #include "diskbuf.h"
 
-extern long ourseg;
-
-extern int get_diskinfo __P((int));
-extern void int13_getextinfo __P((int, struct biosdisk_ext13info *));
-extern int int13_extension __P((int));
-extern int biosdiskreset __P((int));
-extern int biosread __P((int, int, int, int, int, char *));
-extern int biosextread __P((int, void *));
-static int do_read __P((struct biosdisk_ll *, int, int, char *));
+extern int get_diskinfo(int);
+extern void int13_getextinfo(int, struct biosdisk_ext13info *);
+extern int int13_extension(int);
+extern int biosread(int, int, int, int, int, void *);
+extern int biosdiskreset(int);
+extern int biosextread(int, void *);
+static int do_read(struct biosdisk_ll *, int, int, char *);
+extern u_int vtophys(void *);
 
 /*
  * we get from get_diskinfo():
@@ -69,9 +68,7 @@ static int do_read __P((struct biosdisk_ll *, int, int, char *));
 #endif
 
 int 
-set_geometry(d, ed)
-	struct biosdisk_ll *d;
-	struct biosdisk_ext13info *ed;
+set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 {
 	int diskinfo;
 
@@ -93,7 +90,7 @@ set_geometry(d, ed)
 	 * read sector >= 18. If not, assume 1.44 floppy disk.
 	 */
 	if (d->dev == 0 && SPT(diskinfo) == 36) {
-		if (biosread(d->dev, 0, 0, 18, 1, diskbuf)) {
+		if (biosread(d->dev, 0, 0, 18, 1, alloc_diskbuf(0))) {
 			d->sec = 18;
 			d->chs_sectors /= 2;
 		}			
@@ -117,10 +114,7 @@ static int      ra_end;
 static int      ra_first;
 
 static int
-do_read(d, dblk, num, buf)
-	struct		biosdisk_ll *d;
-	int		dblk, num;
-	char	       *buf;
+do_read(struct biosdisk_ll *d, int dblk, int num, char *buf)
 {
 	int		cyl, head, sec, nsec, spc;
 	struct {
@@ -138,8 +132,9 @@ do_read(d, dblk, num, buf)
 		ext.size = sizeof(ext);
 		ext.resvd = 0;
 		ext.cnt = num;
-		ext.off = (int32_t)buf;
-		ext.seg = ourseg;
+		/* seg:off of physical address */
+		ext.off = (int)buf & 0xf;
+		ext.seg = vtophys(buf) >> 4;
 		ext.sec = dblk;
 
 		if (biosextread(d->dev, &ext)) {
@@ -167,13 +162,13 @@ do_read(d, dblk, num, buf)
 	}
 }
 
+/* NB if 'cold' is set below not all of the program is loaded, so
+ * musn't use data segment, bss, call library functions or do
+ * read-ahead.
+ */
+
 int 
-readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
-	struct biosdisk_ll *d;
-	int             dblk, num;
-	char           *buf;
-	int             cold;	/* don't use data segment or bss, don't call
-				 * library functions */
+readsects(struct biosdisk_ll *d, int dblk, int num, char *buf, int cold)
 {
 	while (num) {
 		int             nsec;
@@ -193,9 +188,8 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 				maxsecs = num;
 			} else {
 				/* fill read-ahead buffer */
-				trbuf = diskbuf;
+				trbuf = alloc_diskbuf(0); /* no data yet */
 				maxsecs = RA_SECTORS;
-				diskbuf_user = 0; /* not yet valid */
 			}
 
 			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
@@ -224,7 +218,7 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 			if (nsec > num)
 				nsec = num;
 			memcpy(buf,
-			       diskbuf + (dblk - ra_first) * BIOSDISK_SECSIZE,
+			       diskbufp + (dblk - ra_first) * BIOSDISK_SECSIZE,
 			       nsec * BIOSDISK_SECSIZE);
 		}
 		buf += nsec * BIOSDISK_SECSIZE;
