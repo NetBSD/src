@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.8 1994/02/17 09:10:35 chopps Exp $
+ *	$Id: grf_rt.c,v 1.9 1994/04/22 01:35:16 chopps Exp $
  */
 
 #include "grf.h"
@@ -52,9 +52,9 @@ int	retina_inited;
    results from the agreements between MS and me.
 */
 
-extern unsigned char kernel_font_width, kernel_font_height;
-extern unsigned char kernel_font_lo, kernel_font_hi;
-extern unsigned char kernel_font[];
+extern unsigned char kernel_font_8x8_width, kernel_font_8x8_height;
+extern unsigned char kernel_font_8x8_lo, kernel_font_8x8_hi;
+extern unsigned char kernel_font_8x8[];
 
 
 #define MDF_DBL 1      
@@ -111,46 +111,46 @@ unsigned char NCRStdPalette[16*3] = {
 /*                                      FQ     FLG    MW   MH   HBS HSS HSE HBE  HT  VBS  VSS  VSE  VBE   VT  */
    struct MonDef MON_640_512_60  = { 50000000,  28,  640, 512,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
    /* Depth,           PAL, TX,  TY,    XY,FontX, FontY,    FontData,  FLo,  Fhi */
-          4, NCRStdPalette, 80,  64,  5120,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette, 80,  64,  5120,    8,     8, kernel_font_8x8,   32,  255};      
 
  struct MonDef MON_640_480_62_G  = { 50000000,   4,  640, 480,  161,171,184,196,195, 481, 484, 492, 502, 502,
-          8, NCRStdPalette,640,480,  5120,    8,     8, kernel_font,   32,  255};      
+          8, NCRStdPalette,640,480,  5120,    8,     8, kernel_font_8x8,   32,  255};      
 /* Enter higher values here ^   ^ for panning! */
 
 /* horizontal 38kHz */
 
    struct MonDef MON_768_600_60  = { 75000000,  28,  768, 600,   97, 99,107,120,117, 601, 615, 625, 638, 638,
-          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255};      
 
 /* horizontal 64kHz */
 
    struct MonDef MON_768_600_80  = { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
-          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255};      
 
    struct MonDef MON_1024_768_80 = { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font_8x8,   32,  255};      
 
 /*                                     FQ     FLG    MW   MH   HBS HSS HSE HBE  HT  VBS  VSS  VSE  VBE   VT  */
  struct MonDef MON_1024_768_80_G = { 90000000, 0,  1024, 768,  257,258,280,344,343, 769, 770, 783, 804, 804,
-          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font,   32,  255};      
+          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font_8x8,   32,  255};      
 
    struct MonDef MON_1024_1024_59= { 90000000, 24, 1024,1024,  129,130,141,173,170,1025,1059,1076,1087,1087,
-          4, NCRStdPalette,128, 128, 16384,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette,128, 128, 16384,    8,     8, kernel_font_8x8,   32,  255};      
 
 /* WARNING: THE FOLLOWING MONITOR MODES EXCEED THE 90-MHz LIMIT THE PROCESSOR
             HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
             MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
 
    struct MonDef MON_1280_1024_60= {110000000,  24, 1280,1024,  161,162,176,211,208,1025,1026,1043,1073,1073,
-          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font_8x8,   32,  255};      
 
  struct MonDef MON_1280_1024_60_G= {110000000,   0, 1280,1024,  321,322,349,422,421,1025,1026,1043,1073,1073,
-          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font,   32,  255};      
+          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font_8x8,   32,  255};      
 
 /* horizontal 75kHz */
 
    struct MonDef MON_1280_1024_69= {120000000,  24, 1280,1024,  161,162,175,200,197,1025,1026,1043,1073,1073, 
-          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font,   32,  255};      
+          4, NCRStdPalette,160, 128, 20480,    8,     8, kernel_font_8x8,   32,  255};      
 
 #else
 
@@ -158,39 +158,39 @@ struct MonDef monitor_defs[] = {
 /* horizontal 31.5 kHz */
 
    { 50000000,  28,  640, 512,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
-          4, NCRStdPalette, 80,  64,  5120,    8,     8, kernel_font,   32,  255},
+          4, NCRStdPalette, 80,  64,  5120,    8,     8, kernel_font_8x8,   32,  255},
 
 /* horizontal 38kHz */
 
    { 75000000,  28,  768, 600,   97, 99,107,120,117, 601, 615, 625, 638, 638,
-          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255},
+          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
 
 /* horizontal 64kHz */
 
    { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
-          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font,   32,  255},
+          4, NCRStdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
    
    { 90000000, 24, 1024, 768,  129,130,141,172,169, 769, 770, 783, 804, 804,
-          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font,   32,  255},
+          4, NCRStdPalette,128,  96, 12288,    8,     8, kernel_font_8x8,   32,  255},
 
    /* GFX modes */
 
 /* horizontal 31.5 kHz */
 
    { 50000000,   4,  640, 480,  161,171,184,196,195, 481, 484, 492, 502, 502,
-          8, NCRStdPalette,640, 480,  5120,    8,     8, kernel_font,   32,  255},
+          8, NCRStdPalette,640, 480,  5120,    8,     8, kernel_font_8x8,   32,  255},
 
 /* horizontal 64kHz */
 
    { 90000000, 0,  1024, 768,  257,258,280,344,343, 769, 770, 783, 804, 804,
-          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font,   32,  255},
+          8, NCRStdPalette, 1024, 768, 12288,    8,     8, kernel_font_8x8,   32,  255},
 
 /* WARNING: THE FOLLOWING MONITOR MODES EXCEED THE 90-MHz LIMIT THE PROCESSOR
             HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
             MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
 
    {110000000,   0, 1280,1024,  321,322,349,422,421,1025,1026,1043,1073,1073,
-          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font,   32,  255},
+          8, NCRStdPalette,1280,1024, 20480,    8,     8, kernel_font_8x8,   32,  255},
 };
 
 static const char *monitor_descr[] = {

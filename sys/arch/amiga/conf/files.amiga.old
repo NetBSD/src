@@ -1,4 +1,4 @@
-#	$Id: files.amiga.old,v 1.16 1994/04/05 23:04:31 chopps Exp $
+#	$Id: files.amiga.old,v 1.17 1994/04/22 01:34:53 chopps Exp $
 
 arch/amiga/amiga/amiga_init.c	standard
 arch/amiga/amiga/autoconf.c	standard
@@ -36,7 +36,9 @@ arch/amiga/dev/ite.c		optional ite device-driver
 arch/amiga/dev/ite_cc.c		optional ite view
 arch/amiga/dev/ite_tg.c		optional ite
 arch/amiga/dev/ite_rt.c		optional ite
-arch/amiga/dev/kernel_font.c	optional ite
+arch/amiga/dev/kf_8x8.c		optional ite
+arch/amiga/dev/kf_8x11.c	optional ite KFONT_8X11
+arch/amiga/dev/kf_custom.c	optional ite KFONT_CUSTOM
 arch/amiga/dev/kbdmap.c		optional ite
 arch/amiga/dev/grf.c		optional grf device-driver
 arch/amiga/dev/grf_cc.c		optional grf view
