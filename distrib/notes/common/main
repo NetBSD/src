@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.35 1999/12/07 17:55:38 soren Exp $
+.\" $NetBSD: main,v 1.36 1999/12/07 23:08:00 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .
 .nr FOR_RELEASE 1
 .ds MACHINE_LIST alpha amiga arm32 atari hp300 i386 mac68k macppc mvme68k
-.as MACHINE_LIST " pc532 pmax sparc sun3 sun3x vax x68k
+.as MACHINE_LIST " next68k pc532 pmax sparc sun3 sun3x vax x68k
 .so \*[.CURDIR]/../common/macros
 .Dd 23 March 1999
 .Dt INSTALL 8
