@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.2 1997/10/10 16:32:34 lukem Exp $	*/
+/*	$NetBSD: hunt.c,v 1.3 1997/10/11 08:13:41 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,12 +7,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.2 1997/10/10 16:32:34 lukem Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.3 1997/10/11 08:13:41 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
 # include	<sys/time.h>
 # include	<ctype.h>
+# include	<err.h>
 # include	<errno.h>
 # include	<curses.h>
 # include	<signal.h>
@@ -119,14 +120,13 @@ main(ac, av)
 		case 't':
 			team = *optarg;
 			if (!isdigit(team)) {
-				fprintf(stderr, "Team names must be numeric\n");
+				warnx("Team names must be numeric");
 				team = ' ';
 			}
 			break;
 		case 'o':
 # ifndef OTTO
-			fputs("The -o flag is reserved for future use.\n",
-				stderr);
+			warnx("The -o flag is reserved for future use.");
 			goto usage;
 # else
 			Otto_mode = TRUE;
@@ -136,7 +136,7 @@ main(ac, av)
 # ifdef MONITOR
 			Am_monitor = TRUE;
 # else
-			fputs("The monitor was not compiled in.\n", stderr);
+			warnx("The monitor was not compiled in.");
 # endif
 			break;
 # ifdef INTERNET
@@ -162,8 +162,7 @@ main(ac, av)
 		case 'w':
 		case 'h':
 		case 'p':
-			fputs("Need TCP/IP for S, q, w, h, and p options.\n",
-				stderr);
+			wanrx("Need TCP/IP for S, q, w, h, and p options.");
 			break;
 # endif
 		case 'c':
@@ -173,7 +172,7 @@ main(ac, av)
 # ifdef FLY
 			enter_status = Q_FLY;
 # else
-			fputs("The flying code was not compiled in.\n", stderr);
+			warnx("The flying code was not compiled in.");
 # endif
 			break;
 		case 's':
@@ -234,10 +233,8 @@ main(ac, av)
 	fill_in_blanks();
 
 	(void) fflush(stdout);
-	if (!isatty(0) || (term = getenv("TERM")) == NULL) {
-		fprintf(stderr, "no terminal type\n");
-		exit(1);
-	}
+	if (!isatty(0) || (term = getenv("TERM")) == NULL)
+		errx(1, "no terminal type");
 # ifdef USE_CURSES
 	initscr();
 	(void) noecho();
@@ -280,19 +277,17 @@ main(ac, av)
 			int	option;
 
 			Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-			if (Socket < 0) {
-				perror("socket");
-				exit(1);
-			}
+			if (Socket < 0)
+				err(1, "socket");
 			option = 1;
 			if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK,
 			    &option, sizeof option) < 0)
-				perror("setsockopt loopback");
+				warn("setsockopt loopback");
 			errno = 0;
 			if (connect(Socket, (struct sockaddr *) &Daemon,
 			    DAEMON_SIZE) < 0) {
 				if (errno != ECONNREFUSED) {
-					perror("connect");
+					warn("connect");
 					leave(1, "connect");
 				}
 			}
@@ -305,10 +300,8 @@ main(ac, av)
 		 * set up a socket
 		 */
 
-		if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0)) < 0) {
-			perror("socket");
-			exit(1);
-		}
+		if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0)) < 0)
+			err(1, "socket");
 
 		/*
 		 * attempt to connect the socket to a name; if it fails that
@@ -320,17 +313,16 @@ main(ac, av)
 		(void) strcpy(Daemon.sun_path, Sock_name);
 		if (connect(Socket, &Daemon, DAEMON_SIZE) < 0) {
 			if (errno != ENOENT) {
-				perror("connect");
+				warn("connect");
 				leave(1, "connect2");
 			}
 			start_driver();
 
 			do {
 				(void) close(Socket);
-				if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0)) < 0) {
-					perror("socket");
-					exit(1);
-				}
+				if ((Socket = socket(SOCK_FAMILY, SOCK_STREAM,
+				    0)) < 0)
+					err(1, "socket");
 				sleep(2);
 			} while (connect(Socket, &Daemon, DAEMON_SIZE) < 0);
 		}
@@ -433,7 +425,7 @@ list_drivers()
 
 	test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
 	if (test_socket < 0) {
-		perror("socket");
+		warn("socket");
 		leave(1, "socket system call failed");
 		/* NOTREACHED */
 	}
@@ -473,7 +465,7 @@ list_drivers()
 	option = 1;
 	if (setsockopt(test_socket, SOL_SOCKET, SO_BROADCAST,
 	    &option, sizeof option) < 0) {
-		perror("setsockopt broadcast");
+		warn("setsockopt broadcast");
 		leave(1, "setsockopt broadcast");
 		/* NOTREACHED */
 	}
@@ -485,7 +477,7 @@ list_drivers()
 		test.sin_addr = brdv[i].sin_addr;
 		if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
 		    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
-			perror("sendto");
+			warn("sendto");
 			leave(1, "sendto");
 			/* NOTREACHED */
 		}
@@ -535,7 +527,7 @@ get_response:
 		}
 
 		if (errno != 0 && errno != EINTR) {
-			perror("select/recvfrom");
+			warn("select/recvfrom");
 			leave(1, "select/recvfrom");
 			/* NOTREACHED */
 		}
@@ -640,14 +632,10 @@ dump_scores(host)
 	fflush(stdout);
 
 	s = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-	if (s < 0) {
-		perror("socket");
-		exit(1);
-	}
-	if (connect(s, (struct sockaddr *) &host, sizeof host) < 0) {
-		perror("connect");
-		exit(1);
-	}
+	if (s < 0)
+		err(1, "socket");
+	if (connect(s, (struct sockaddr *) &host, sizeof host) < 0)
+		err(1, "connect");
 	while ((cnt = read(s, buf, BUFSIZ)) > 0)
 		write(fileno(stdout), buf, cnt);
 	(void) close(s);
@@ -685,7 +673,7 @@ start_driver()
 	refresh();
 	procid = fork();
 	if (procid == -1) {
-		perror("fork");
+		warn("fork");
 		leave(1, "fork failed.");
 	}
 	if (procid == 0) {

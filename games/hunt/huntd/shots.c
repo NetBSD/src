@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.2 1997/10/10 16:33:54 lukem Exp $	*/
+/*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,9 +7,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.2 1997/10/10 16:33:54 lukem Exp $");
+__RCSID("$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $");
 #endif /* not lint */
 
+# include	<err.h>
 # include	<signal.h>
 # include	<stdlib.h>
 # include	"hunt.h"
@@ -1018,8 +1019,7 @@ play_at(y, x)
 	for (pp = Player; pp < End_player; pp++)
 		if (pp->p_x == x && pp->p_y == y)
 			return pp;
-	fprintf(stderr, "driver: couldn't find player at (%d,%d)\n", x, y);
-	abort();
+	errx(1, "driver: couldn't find player at (%d,%d)", x, y);
 	/* NOTREACHED */
 }
 
