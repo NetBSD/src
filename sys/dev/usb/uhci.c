@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.33 1999/08/02 19:30:34 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.34 1999/08/02 23:35:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -814,8 +814,8 @@ uhci_check_intr(sc, ii)
  done:
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
-	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
 	uhci_ii_done(ii);
+	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
 }
 
 void
