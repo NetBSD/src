@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.11 2002/08/01 02:43:11 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.12 2002/08/01 04:04:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,8 +36,11 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
@@ -127,7 +130,7 @@ trap(struct trapframe *frame)
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= user_sr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
-				/* KERNEL_PROC_LOCK(p); */
+				/* KERNEL_PROC_LOCK(l); */
 			} else {
 				map = kernel_map;
 			}
@@ -138,7 +141,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
-				/* KERNEL_PROC_UNLOCK(p); */
+				/* KERNEL_PROC_UNLOCK(l); */
 			} else {
 			}
 			KERNEL_UNLOCK();
@@ -231,7 +234,7 @@ trap(struct trapframe *frame)
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
 		if (pcb->pcb_fpcpu) {
-			save_fpu_proc(l);
+			save_fpu_lwp(l);
 		}
 		enable_fpu();
 		break;
@@ -273,30 +276,30 @@ trap(struct trapframe *frame)
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
 		if (pcb->pcb_veccpu)
-			save_vec_proc(p);
+			save_vec_lwp(l);
 		enable_vec();
 		break;
 #else
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user VEC trap @ %#x "
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
 		trapsignal(p, SIGILL, EXC_PGM);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 #endif
 	case EXC_MCHK|EXC_USER:
 		ci->ci_ev_umchk.ev_count++;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#x "
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		trapsignal(p, SIGBUS, EXC_PGM);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGBUS, EXC_PGM);
+		KERNEL_PROC_UNLOCK(l);
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
@@ -359,12 +362,12 @@ brain_damage2:
 	 * disable it
 	 */
 	if ((pcb->pcb_flags & PCB_FPU) &&
-	    (l != ci->ci_fpuproc || pcb->pcb_fpcpu != ci)) {
+	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
 		frame->srr1 &= ~PSL_FP;
 	}
 #ifdef ALTIVEC
 	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
-	    (l != ci->ci_vecproc || pcb->pcb_veccpu != ci)) {
+	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
 		frame->srr1 &= ~PSL_VEC;
 	}
 	/*
@@ -372,12 +375,12 @@ brain_damage2:
 	 * cpu, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
-	if (ci->ci_vecproc != NULL && ci->ci_vecproc != p) {
+	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
 		__asm __volatile("dssall;sync");
 	}
 #endif
 
-	ci->ci_schedstate.spc_curpriority = l->p_priority = l->p_usrpri;
+	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 static inline void
@@ -583,7 +586,7 @@ fix_unaligned(l, frame)
 			 * the PCB.
 			 */
 
-			save_fpu_proc(p);
+			save_fpu_lwp(l);
 			enable_fpu();
 			save_fpu_cpu();
 			if (indicator == EXC_ALI_LFD) {
@@ -693,4 +696,49 @@ copyoutstr(kaddr, udaddr, len, done)
 		*done = d;
 	}
 	return rv;
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	upcallret((void *) l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	int sig;
+
+	/* Take pending signals. */
+	while ((sig = CURSIG(l)) != 0)
+		postsig(sig);
+
+	/* Invoke per-process kernel-exit handling, if any */
+	if (l->l_proc->p_userret)
+		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
+
+	/* Invoke any pending upcalls */
+	if (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
