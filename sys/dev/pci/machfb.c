@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.6 2002/10/29 17:54:40 junyoung Exp $	*/
+/*	$NetBSD: machfb.c,v 1.7 2002/10/31 14:10:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -116,12 +116,12 @@ struct mach64_softc {
 	void (*switchcb)(void *, int, int);
 	void *switchcbarg;
 	struct callout switch_callout;
-	int nscreens;
 	LIST_HEAD(, mach64screen) screens;
 	const struct wsscreen_descr *currenttype;
 };
 
 struct mach64screen {
+	struct rasops_info ri;
 	LIST_ENTRY(mach64screen) next;
 	struct mach64_softc *sc;
 	const struct wsscreen_descr *type;
@@ -179,7 +179,6 @@ struct {
 
 static int mach64_chip_id, mach64_chip_rev;
 static struct videomode default_mode;
-struct rasops_info mach64_rasops_info;
 static struct mach64screen mach64_console_screen;
 
 static char *mach64_memtype_names[] = {
@@ -264,6 +263,7 @@ void	mach64_copyrows(void *, int, int, int);
 void	mach64_eraserows(void *, int, int, long);
 int	mach64_allocattr(void *, int, int, int, long *);
 
+#if 0
 const struct wsdisplay_emulops mach64_emulops = {
 	mach64_cursor,
 	mach64_mapchar,
@@ -274,59 +274,60 @@ const struct wsdisplay_emulops mach64_emulops = {
 	mach64_eraserows,
 	mach64_allocattr,
 };
+#endif
 
 struct wsscreen_descr mach64_defaultscreen = {
 	"default",
 	0, 0,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&default_mode
 }, mach64_80x25_screen = {
 	"80x25", 80, 25,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_80x30_screen = {
 	"80x30", 80, 30,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[1]
 }, mach64_80x40_screen = {
 	"80x40", 80, 40,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 10,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_80x50_screen = {
 	"80x50", 80, 50,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 8,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[0]
 }, mach64_100x37_screen = {
 	"100x37", 100, 37,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[2]
 }, mach64_128x48_screen = {
 	"128x48", 128, 48,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[3]
 }, mach64_144x54_screen = {
 	"144x54", 144, 54,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[4]
 }, mach64_160x64_screen = {
 	"160x54", 160, 64,
-	&mach64_rasops_info.ri_ops,
+	&mach64_console_screen.ri.ri_ops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
 	&mach64_modes[5]
@@ -458,9 +459,8 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int bar, reg, id;
 	struct wsemuldisplaydev_attach_args aa;
-	int console;
 	long defattr;
-	int setmode;
+	int setmode, console;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -528,9 +528,16 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	console = mach64_is_console(pa);
+
 #ifdef __sparc__
-	mach64_get_mode(sc, &default_mode);
-	setmode = 0;
+	if (console) {
+		mach64_get_mode(sc, &default_mode);
+		setmode = 0;
+	} else {
+		memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode));
+		setmode = 1;
+	}
 #else
 	memcpy(&default_mode, &mach64_modes[0], sizeof(struct videomode));
 	setmode = 1;
@@ -556,29 +563,32 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	    default_mode.hdisplay, default_mode.vdisplay,
 	    sc->bits_per_pixel);
 
-	mach64_rasops_info.ri_depth = sc->bits_per_pixel;
-	mach64_rasops_info.ri_bits = (void *)sc->sc_aperbase;
-	mach64_rasops_info.ri_width = default_mode.hdisplay;
-	mach64_rasops_info.ri_height = default_mode.vdisplay;
-	mach64_rasops_info.ri_stride = mach64_rasops_info.ri_width;
-	mach64_rasops_info.ri_flg = RI_CLEAR;
-	
-	rasops_init(&mach64_rasops_info, mach64_rasops_info.ri_height / 16,
-	    mach64_rasops_info.ri_width / 8);
+	mach64_console_screen.ri.ri_hw = sc;
+	mach64_console_screen.ri.ri_depth = sc->bits_per_pixel;
+	mach64_console_screen.ri.ri_bits = (void *)sc->sc_aperbase;
+	mach64_console_screen.ri.ri_width = default_mode.hdisplay;
+	mach64_console_screen.ri.ri_height = default_mode.vdisplay;
+	mach64_console_screen.ri.ri_stride = mach64_console_screen.ri.ri_width;
+	mach64_console_screen.ri.ri_flg = RI_CLEAR;
 
-	mach64_defaultscreen.nrows = mach64_rasops_info.ri_rows;
-	mach64_defaultscreen.ncols = mach64_rasops_info.ri_cols;
+	rasops_init(&mach64_console_screen.ri, mach64_console_screen.ri.ri_height / 16,
+	    mach64_console_screen.ri.ri_width / 8);
 
-	mach64_init_screen(sc, &mach64_console_screen,
-	    &mach64_defaultscreen, 1, &defattr, setmode);
+	mach64_defaultscreen.nrows = mach64_console_screen.ri.ri_rows;
+	mach64_defaultscreen.ncols = mach64_console_screen.ri.ri_cols;
 
-	mach64_rasops_info.ri_ops.allocattr(&mach64_rasops_info, 0, 0, 0,
+	mach64_console_screen.ri.ri_ops.allocattr(&mach64_console_screen.ri, 0, 0, 0,
 	    &defattr);
 
-	console = mach64_is_console(pa);
-	if (console)
-		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_rasops_info, 
+	/* Initialize fonts */
+	wsfont_init();
+
+	if (console) {
+		mach64_init_screen(sc, &mach64_console_screen,
+		    &mach64_defaultscreen, 1, &defattr, setmode);
+		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_console_screen.ri, 
 		    0, 0, defattr);
+	}
 
 	aa.console = console;
 	aa.scrdata = &mach64_screenlist;
@@ -601,9 +611,9 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 	scr->cursorcol = 0;
 	scr->cursorrow = 0;
 
+	scr->mem = (u_int16_t *)malloc(type->nrows * type->ncols * 2,
+	    M_DEVBUF, M_WAITOK);
 	if (existing) {
-		scr->mem = (u_int16_t *)malloc(type->nrows * type->ncols * 2,
-		    M_DEVBUF, M_WAITOK);
 		scr->active = 1;
 
 		if (setmode && mach64_set_screentype(sc, type)) {
@@ -612,12 +622,8 @@ mach64_init_screen(struct mach64_softc *sc, struct mach64screen *scr,
 		}
 	} else {
 		scr->active = 0;
-		scr->mem = NULL;
 	}
 
-	wsfont_init();
-
-	sc->nscreens++;
 	LIST_INSERT_HEAD(&sc->screens, scr, next);
 }
 
@@ -641,7 +647,6 @@ mach64_init(struct mach64_softc *sc)
 	sc->sc_apersize -= 0x800000;
 #endif
 
-	sc->nscreens = 0;
 	LIST_INIT(&sc->screens);
 	sc->active = NULL;
 	sc->currenttype = &mach64_defaultscreen;
@@ -1154,6 +1159,7 @@ mach64_cursor(void *cookie, int on, int row, int col)
 
 }
 
+#if 0
 int
 mach64_mapchar(void *cookie, int uni, u_int *index)
 {
@@ -1185,17 +1191,18 @@ mach64_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 
 }
 
-void
-mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
-{
-
-}
-
 int
 mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
 
 	return 0;
+}
+#endif
+
+void
+mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+
 }
 
 /*
@@ -1223,20 +1230,18 @@ mach64_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct mach64_softc *sc = v;
 	struct mach64screen *scr;
 
-	if (sc->nscreens == 1)
-		sc->screens.lh_first->mem = scr->mem;
+	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK|M_ZERO);
+	mach64_init_screen(sc, scr, type, 0, defattrp, sc->active == NULL);
+	rasops_init(&scr->ri, mach64_console_screen.ri.ri_height / 16,
+	    mach64_console_screen.ri.ri_width / 8);
 
-	scr = malloc(sizeof(struct mach64screen), M_DEVBUF, M_WAITOK);
-	mach64_init_screen(sc, scr, type, 0, defattrp, 0);
-
-	if (sc->nscreens == 1) {
+	scr->mem = malloc(type->ncols * type->nrows * 2, M_DEVBUF,
+	     M_WAITOK);
+	mach64_eraserows(sc, 0, type->nrows, *defattrp);
+	if (sc->active == NULL) {
 		scr->active = 1;
 		sc->active = scr;
 		sc->currenttype = type;
-	} else {
-		scr->mem = malloc(type->ncols * type->nrows * 2, M_DEVBUF,
-		     M_WAITOK);
-		mach64_eraserows(sc, 0, type->nrows, *defattrp);
 	}
 
 	*cookiep = scr;
@@ -1288,9 +1293,11 @@ mach64_show_screen(void *v, void *cookie, int waitok,
 	return 0;
 }
 
+#if 0
 int
 mach64_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 {
 
 	return 0;
 }
+#endif
