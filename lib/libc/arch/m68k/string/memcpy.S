@@ -1,2 +1,2 @@
-#defined MEMCOPY
+#define MEMCOPY
 #include "bcopy.S"
