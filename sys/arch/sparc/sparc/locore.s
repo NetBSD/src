@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.2 2001/11/20 16:31:55 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.3 2001/11/28 13:38:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4348,8 +4348,12 @@ ENTRY(write_user_windows)
  * and note that the `last loaded process' is nonexistent.
  */
 ENTRY(switchlwpexit)
-	! not yet implemented
+!!Hmm, switchexit() might as well have passed us the `exit2' function to call.
+	set	_C_LABEL(lwp_exit2), %g1
+	b,a	switchexit0
 ENTRY(switchexit)
+	set	_C_LABEL(exit2), %g1
+switchexit0:
 	mov	%o0, %g2		! save proc for exit2() call
 
 	/*
@@ -4384,7 +4388,7 @@ ENTRY(switchexit)
 #endif
 
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call	_C_LABEL(exit2)		! exit2(p)
+	call	%g1			! {lwp}exit2(p)
 	 mov	%g2, %o0
 
 	/*
@@ -4586,6 +4590,13 @@ Lsw_scan:
 	sll	%o4, 3, %o0
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
+
+cpu_switch0:
+	/*
+	 * Here code in common with cpu_preempt() starts.
+	 * cpu_preempt() sets %g3 to p, and %o5 to p->p_back,
+	 * so the following will unlink p from the switch_qs list.
+	 */
 	cmp	%g3, %o5		! if (p == q)
 	be	Lsw_panic_rq		!	panic("switch rq");
 	 EMPTY
@@ -4616,11 +4627,11 @@ Lsw_scan:
 	 */
 
 	/* firewalls */
-	ld	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
+	ld	[%g3 + L_WCHAN], %o0	! if (p->p_wchan)
 	tst	%o0
 	bne	Lsw_panic_wchan		!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
+	ldsb	[%g3 + L_STAT], %o0	! if (p->p_stat != SRUN)
 	cmp	%o0, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
@@ -4630,13 +4641,13 @@ Lsw_scan:
 	 * It may be the same as the one we were running before.
 	 */
 	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
-	stb	%o0, [%g3 + P_STAT]
+	stb	%o0, [%g3 + L_STAT]
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
 	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
 	ld	[%o0 + %lo(_CISELFP)], %o0
-	st	%o0, [%g3 + P_CPU]
+	st	%o0, [%g3 + L_CPU]
 #endif
 
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
@@ -4645,7 +4656,7 @@ Lsw_scan:
 	/* Done with the run queues; release the scheduler lock */
 	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
 #endif
-	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
+	ld	[%g3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
 	st	%g3, [%g7 + %lo(curproc)]	! curproc = p;
@@ -4720,12 +4731,14 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
-	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	mov	1, %o0			! return value
+	ld	[%g3 + L_PROC], %o3	! p = l->l_proc;
+	ld	[%o3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
-	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
-	tst	%o0
+	ld	[%o3 + PMAP_CTX], %o1	! if (pm->pm_ctx != NULL)
+	tst	%o1
 	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + PMAP_CTXNUM], %o0	! load context number
+	 ld	[%o3 + PMAP_CTXNUM], %o1	! load context number
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
@@ -4733,23 +4746,23 @@ Lsw_load:
 	 mov	%i3, %o0
 
 	ret
-	 restore
+	 restore	%g0, 1, %o0	! set return value to 1
 
 	/* p does have a context: just switch to it */
 Lsw_havectx:
-	! context is in %o0
+	! context is in %o1
 	! pmap is in %o3
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	sethi	%hi(_C_LABEL(cputyp)), %o1	! what cpu are we running on?
-	ld	[%o1 + %lo(_C_LABEL(cputyp))], %o1
-	cmp	%o1, CPU_SUN4M
+	sethi	%hi(_C_LABEL(cputyp)), %o2	! what cpu are we running on?
+	ld	[%o2 + %lo(_C_LABEL(cputyp))], %o2
+	cmp	%o2, CPU_SUN4M
 	be	1f
 	 nop
 #endif
 #if defined(SUN4) || defined(SUN4C)
-	set	AC_CONTEXT, %o1
+	set	AC_CONTEXT, %o2
 	retl
-	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 stba	%o1, [%o2] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 1:
 #if defined(SUN4M)
@@ -4760,12 +4773,12 @@ Lsw_havectx:
 	set	CPUINFO_VA+CPUINFO_PURE_VCACHE_FLS, %o2
 	ld	[%o2], %o2
 	mov	%o7, %g7	! save return address
-	jmpl	%o2, %o7	! this function must not clobber %o0 and %g7
+	jmpl	%o2, %o7	! this function must not clobber %o0,%o1 and %g7
 	 nop
 
-	set	SRMMU_CXR, %o1
+	set	SRMMU_CXR, %o2
 	jmp	%g7 + 8
-	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
+	 sta	%o1, [%o2] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 
 Lsw_sameproc:
@@ -4776,12 +4789,34 @@ Lsw_sameproc:
 !	wr	%g2, 0 %psr		! %psr = newpsr; (done earlier)
 	nop
 	retl
-	 nop
+	 mov	%g0, %o0	! return value = 0
 
 ENTRY(cpu_preempt)
-	! not yet implemented
-	retl
-	 nop
+	/*
+	 * Like cpu_switch, but we're passed the process to switch to.
+	 *
+	 * Use the same register usage convention as in cpu_switch().
+	 */
+	mov	%o0, %g4			! lastproc = arg1;
+	mov	%o1, %g3			! newproc = arg2;
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
+	sethi	%hi(cpcb), %g6
+	ld	[%g6 + %lo(cpcb)], %o0
+	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
+	rd	%psr, %g1			! oldpsr = %psr;
+	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
+	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
+	sethi	%hi(curproc), %g7
+	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+
+	/*
+	 * now set up %o4 (which) and %o5 (p->p_back), and continue with
+	 * common code in cpu_switch().
+	 */
+	ld	[%g3 + L_PRIORITY], %o4
+	srl	%o4, 2, %o4
+	ld	[%g3 + 4], %o5		! %o5 = p->p_back
+	b,a	cpu_switch0
 
 /*
  * Snapshot the current process so that stack frames are up to date.
