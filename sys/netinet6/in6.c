@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.74 2003/02/27 22:06:38 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.75 2003/05/14 12:45:07 wiz Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.74 2003/02/27 22:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.75 2003/05/14 12:45:07 wiz Exp $");
 
 #include "opt_inet.h"
 
@@ -107,7 +107,7 @@ MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
 #define COMPAT_IN6IFIOCTL
 
 /*
- * Definitions of some costant IP6 addresses.
+ * Definitions of some constant IP6 addresses.
  */
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
