@@ -8,7 +8,8 @@ MACHINE_CPU=sh3
 # just in case you forgot to specify this when you built gcc...
 CFLAGS="-D__NetBSD__"
 export MACHINE MACHINE_ARCH CFLAGS
-TARGET=/usr/pkg/cross/bin/shel-netbsdcoff
+# modify following TARGET name to meet your environment
+TARGET=shel-unknown-netbsdcoff
 
 # XXX following definition is absolutely incorrect.
 # Our cpp is not /usr/libexec/cpp but /usr/bin/cpp.
