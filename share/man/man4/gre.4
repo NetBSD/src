@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.22 2002/03/04 15:27:57 wiz Exp $
+.\" $NetBSD: gre.4,v 1.23 2002/06/09 10:44:57 martin Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,23 +80,30 @@ only for IP in IP
 encapsulation.
 .El
 .Pp
-The network interfaces are named
-.Sy gre Ns Ar 0 ,
-.Sy gre Ns Ar 1
-and so on, as many as have given on the
-.Sy pseudo-device
-line in the system config file. Each interface supports a number of
+The
+.Sy gre Ns Ar X
+interfaces support a number of
 .Xr ioctl 2 Ns s ,
 such as:
 .Bl -tag -width aaa
 .It GRESADDRS :
-Set the IP address of the local tunnel end.
+Set the IP address of the local tunnel end. This is the source address
+set by or displayed by ifconfig for the
+.Sy gre Ns Ar X
+interface.
 .It GRESADDRD :
-Set the IP address of the remote tunnel end.
+Set the IP address of the remote tunnel end. This is the destination address
+set by or displayed by ifconfig for the
+.Sy gre Ns Ar X
+interface.
 .It GREGADDRS :
-Query the IP address that is set for the local tunnel end.
+Query the IP address that is set for the local tunnel end. This is the
+address the encapsulation header carries as local address (i.e. the real
+address of the tunnel start point.)
 .It GREGADDRD :
-Query the IP address that is set for the remote tunnel end.
+Query the IP address that is set for the remote tunnel end. This is the
+address the encapsulated packets are send to (i.e. the real address of
+the remote tunnel endpoint.)
 .It GRESPROTO :
 Set the operation mode to the specified IP protocol value. The
 protocol is passed to the interface in (struct ifreq)-\*[Gt]ifr_flags.
@@ -136,8 +143,8 @@ On host A
 .Bd -literal
    # route add default B
    # ifconfig greN create
-   # ifconfig greN A D netmask 0xffffffff linkX up
    # greconfig -i greN -s A -d D
+   # ifconfig greN A D netmask 0xffffffff linkX up
    # route add E D
 .Ed
 On Host D (Cisco):
@@ -156,6 +163,7 @@ On Host D
 .Bd -literal
    # route add default C
    # ifconfig greN create
+   # greconfig -i greN -s d -d A
    # ifconfig greN D A
 .Ed
 .Pp
@@ -170,13 +178,55 @@ and on the cisco
 .Bd -literal
      ip route Y mask tunnelX
 .Ed
+.Pp
+A similar setup can be used to create a link between two private networks
+(for example in the 192.168 subnet) over the internet:
+.Bd -literal
+192.168.1.* --- Router A  -------tunnel-------- Router B --- 192.168.2.*
+                   \\                              /
+                    \\                            /
+                      +----- the internet ------+
+.Ed
+Assuming router A has the (external) IP address A and the internal address
+192.168.1.1, while router B has external address B and internal address
+192.168.2.1, the following commands will configure the tunnel:
+.Pp
+On router A:
+.Bd -literal
+   # ifconfig greN create
+   # grecofnig -i greN -s A -d B
+   # ifconfig greN 192.168.1.1 192.168.2.1
+   # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
+.Ed
+.Pp
+On router B:
+.Bd -literal
+   # ifconfig greN create
+   # grecofnig -i greN -s B -d A
+   # ifconfig greN 192.168.2.1 192.168.1.1
+   # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
+.Ed
 .Sh NOTES
+The MTU of 
+.Sy gre Ns Ar X
+interfaces is set to 1476 by default to match the value used by Cisco routers.
+This may not be an optimal value, depending on the link between the two tunnel
+endpoints. It can be adjusted via
+.Xr ifconfig 8 .
+.Pp
 For correct operation, the
 .Nm
 device needs a route to the destination, that is less specific than the
 one over the tunnel.
 (Basically, there needs to be a route to the decapsulating host that
 does not run over the tunnel, as this would be a loop ..)
+If the addresses are ambigous, doing the
+.Xr greconfig 8
+step before the
+.Xr ifconfig 8
+call to set the
+.Sy gre Ns Ar X
+IP addresses will help to find a route outside the tunnel.
 .Pp
 In order to
 .Ic ifconfig
@@ -219,6 +269,3 @@ over the greX interface itself.
 .Pp
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
-.Pp
-BPF does probably not yet work (it might, but last time I looked,
-it bombed, so I #if 0'd it out).
