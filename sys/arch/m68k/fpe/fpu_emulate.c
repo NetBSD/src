@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.16 1997/07/19 22:28:48 is Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.17 1997/07/20 12:39:17 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -247,7 +247,12 @@ fpu_emulate(frame, fpf)
 
     DUMP_INSN(&insn);
 
-    if (sig == 0)
+     /*
+      * XXX it is not clear to me, if we should progress the PC always,
+      * for SIGFPE || 0, or only for 0; however, without SIGFPE, we
+      * don't pass the signalling regression  tests.	-is
+      */
+    if ((sig == 0) || (sig == SIGFPE))
 	frame->f_pc += insn.is_advance;
 #if defined(DDB) && defined(DEBUG)
     else {
