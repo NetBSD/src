@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.37 2001/12/28 01:32:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 2002/08/19 14:55:16 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-LIB=	kvm
 USE_SHLIBDIR=	yes
+
+LIB=	kvm
 CPPFLAGS+=-DLIBC_SCCS
 
 SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c

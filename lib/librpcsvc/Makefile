@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.35 2002/01/29 11:22:25 tv Exp $
+#	$NetBSD: Makefile,v 1.36 2002/08/19 14:55:16 lukem Exp $
+
+NOMAN=		# defined
+NOPIC=		# defined
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
@@ -11,8 +14,6 @@ INCS=		${HDRS} ${RPCSRCS}
 INCSDIR=	/usr/include/rpcsvc
 
 LIB=		rpcsvc
-NOMAN=		# defined
-NOPIC=		# defined
 
 .include <bsd.lib.mk>
 

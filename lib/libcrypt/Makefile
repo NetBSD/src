@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2002/05/24 04:02:48 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2002/08/19 14:55:15 lukem Exp $
+
+USE_SHLIBDIR=	yes
 
 LIB=	crypt
-USE_SHLIBDIR=	yes
 
 SRCS=	crypt.c md5crypt.c bcrypt.c blowfish.c
 

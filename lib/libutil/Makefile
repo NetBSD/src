@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.34 2002/08/19 09:41:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2002/08/19 14:55:18 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
+
+USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
 
 LIB=	util
-USE_SHLIBDIR=	yes
 CPPFLAGS+=-DLIBC_SCCS
 SRCS=	fparseln.c getbootfile.c getmaxpartitions.c getrawpartition.c \
 	humanize_number.c login.c login_cap.c login_tty.c \

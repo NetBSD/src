@@ -1,9 +1,10 @@
-#  $NetBSD: Makefile,v 1.3 2001/12/28 01:32:39 lukem Exp $
+#  $NetBSD: Makefile,v 1.4 2002/08/19 14:55:16 lukem Exp $
 #
 
 NOLINT=		# defined
-LIB=		m387
 USE_SHLIBDIR=	yes
+
+LIB=		m387
 
 SRCS=e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
      e_logf.S e_log10.S e_log10f.S e_remainder.S e_remainderf.S \
