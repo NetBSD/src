@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.58 2003/09/07 00:52:01 uwe Exp $ */
+/*	$NetBSD: db_interface.c,v 1.59 2004/01/11 19:18:41 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2003/09/07 00:52:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2004/01/11 19:18:41 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -379,7 +379,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	db_printf("LWP %p: ", l);
 	db_printf("pid:%d.%d cpu:%d stat:%d vmspace:%p", p->p_pid,
 	    l->l_lid, l->l_cpu->ci_cpuid, l->l_stat, p->p_vmspace);
-	if (p->p_stat != SZOMB && p->p_stat != SDEAD)
+	if (!P_ZOMBIE(p))
 		db_printf(" ctx: %p cpuset %x",
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
