@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.28 1999/12/01 16:08:32 drochner Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.29 1999/12/30 16:09:47 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -577,7 +577,7 @@ uvm_page_physget(paddrp)
 
 void
 uvm_page_physload(start, end, avail_start, avail_end, free_list)
-	vaddr_t start, end, avail_start, avail_end;
+	paddr_t start, end, avail_start, avail_end;
 	int free_list;
 {
 	int preload, lcv;
