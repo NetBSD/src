@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.8 1998/11/09 16:36:16 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.9 1998/12/10 02:22:52 rvb Exp $	*/
 
 /*
  * 
@@ -56,6 +56,9 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.9  1998/12/10 02:22:52  rvb
+ * Commit a couple of old fixes
+ *
  * Revision 1.8  1998/11/09 16:36:16  rvb
  * Change the way unmounting happens to guarantee that the
  * client programs are allowed to finish up (coda_call is
@@ -374,10 +377,13 @@ int
 coda_vop_error(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;
 
-    myprintf(("Vnode operation %s called, but not defined\n",
+    myprintf(("coda_vop_error: Vnode operation %s called, but not defined.\n",
 	      (*desc)->vdesc_name));
+    /*
     panic("coda_nbsd_vop_error");
     return 0;
+    */
+    return EIO;
 }
 
 /* A generic do-nothing.  For lease_check, advlock */
