@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2000/08/30 09:55:28 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2000/12/15 01:16:48 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -234,10 +234,11 @@
  * locking data structures
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-struct lock pmap_main_lock;
 simple_lock_data_t pvalloc_lock;
 simple_lock_data_t pmaps_lock;
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
