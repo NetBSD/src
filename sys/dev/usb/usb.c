@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.44 2000/04/27 15:26:49 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.45 2000/06/01 14:29:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ d_open_t  usbopen;
 d_close_t usbclose;
 d_read_t usbread;
 d_ioctl_t usbioctl;
-int usbpoll __P((dev_t, int, struct proc *));
+int usbpoll(dev_t, int, struct proc *);
 
 struct cdevsw usb_cdevsw = {
 	/* open */      usbopen,
@@ -146,9 +146,9 @@ struct cdevsw usb_cdevsw = {
 };
 #endif
 
-Static usbd_status usb_discover __P((struct usb_softc *));
-Static void	usb_create_event_thread __P((void *));
-Static void	usb_event_thread __P((void *));
+Static usbd_status usb_discover(struct usb_softc *);
+Static void	usb_create_event_thread(void *);
+Static void	usb_event_thread(void *);
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -161,9 +161,9 @@ Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
 Static struct proc *usb_async_proc;  /* process who wants USB SIGIO */
 Static int usb_dev_open = 0;
-Static void usb_add_event __P((int, struct usb_event *));
+Static void usb_add_event(int, struct usb_event *);
 
-Static int usb_get_next_event __P((struct usb_event *));
+Static int usb_get_next_event(struct usb_event *);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Flag to see if we are in the cold boot process. */
@@ -261,8 +261,7 @@ USB_ATTACH(usb)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 void
-usb_create_event_thread(arg)
-	void *arg;
+usb_create_event_thread(void *arg)
 {
 	struct usb_softc *sc = arg;
 
@@ -275,8 +274,7 @@ usb_create_event_thread(arg)
 }
 
 void
-usb_event_thread(arg)
-	void *arg;
+usb_event_thread(void *arg)
 {
 	struct usb_softc *sc = arg;
 	int first = 1;
@@ -313,9 +311,7 @@ usb_event_thread(arg)
 }
 
 int
-usbctlprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+usbctlprint(void *aux, const char *pnp)
 {
 	/* only "usb"es can attach to host controllers */
 	if (pnp)
@@ -326,10 +322,7 @@ usbctlprint(aux, pnp)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
-usbopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+usbopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct usb_softc *sc;
@@ -351,10 +344,7 @@ usbopen(dev, flag, mode, p)
 }
 
 int
-usbread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+usbread(dev_t dev, struct uio *uio, int flag)
 {
 	struct usb_event ue;
 	int s, error, n;
@@ -387,10 +377,7 @@ usbread(dev, uio, flag)
 }
 
 int
-usbclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+usbclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -403,12 +390,7 @@ usbclose(dev, flag, mode, p)
 }
 
 int
-usbioctl(devt, cmd, data, flag, p)
-	dev_t devt;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
@@ -535,10 +517,7 @@ usbioctl(devt, cmd, data, flag, p)
 }
 
 int
-usbpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+usbpoll(dev_t dev, int events, struct proc *p)
 {
 	int revents, mask, s;
 
@@ -581,8 +560,7 @@ usbpoll(dev, events, p)
 
 /* Explore device tree from the root. */
 usbd_status
-usb_discover(sc)
-	struct usb_softc *sc;
+usb_discover(struct usb_softc *sc)
 {
 #if defined(__FreeBSD__)
 	/* The splxxx parts should be deleted when kthreads is available */
@@ -615,8 +593,7 @@ usb_discover(sc)
 }
 
 void
-usb_needs_explore(bus)
-	usbd_bus_handle bus;
+usb_needs_explore(usbd_bus_handle bus)
 {
 	bus->needs_explore = 1;
 #if defined(__FreeBSD__)
@@ -628,8 +605,7 @@ usb_needs_explore(bus)
 
 /* Called at splusb() */
 int
-usb_get_next_event(ue)
-	struct usb_event *ue;
+usb_get_next_event(struct usb_event *ue)
 {
 	struct usb_event_q *ueq;
 
@@ -644,9 +620,7 @@ usb_get_next_event(ue)
 }
 
 void
-usbd_add_dev_event(type, udev)
-	int type;
-	usbd_device_handle udev;
+usbd_add_dev_event(int type, usbd_device_handle udev)
 {
 	struct usb_event ue;
 
@@ -655,10 +629,7 @@ usbd_add_dev_event(type, udev)
 }
 
 void
-usbd_add_drv_event(type, udev, dev)
-	int type;
-	usbd_device_handle udev;
-	device_ptr_t dev;
+usbd_add_drv_event(int type, usbd_device_handle udev, device_ptr_t dev)
 {
 	struct usb_event ue;
 
@@ -669,9 +640,7 @@ usbd_add_drv_event(type, udev, dev)
 }
 
 Static void
-usb_add_event(type, uep)
-	int type;
-	struct usb_event *uep;
+usb_add_event(int type, struct usb_event *uep)
 {
 	struct usb_event_q *ueq;
 	struct usb_event ue;
@@ -699,17 +668,14 @@ usb_add_event(type, uep)
 	splx(s);
 }
 void
-usb_schedsoftintr(bus)
-	struct usbd_bus *bus;
+usb_schedsoftintr(struct usbd_bus *bus)
 {
 	bus->methods->soft_intr(bus);
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-usb_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+usb_activate(device_ptr_t self, enum devact act)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	usbd_device_handle dev = sc->sc_port.device;
@@ -732,9 +698,7 @@ usb_activate(self, act)
 }
 
 int
-usb_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+usb_detach(device_ptr_t self, int flags)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	struct usb_event ue;

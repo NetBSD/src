@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.59 2000/04/27 15:26:48 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.60 2000/06/01 14:29:00 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,8 +206,8 @@ struct ukbd_softc {
 
 Static int	ukbd_is_console;
 
-Static void	ukbd_cngetc __P((void *, u_int *, int *));
-Static void	ukbd_cnpollc __P((void *, int));
+Static void	ukbd_cngetc(void *, u_int *, int *);
+Static void	ukbd_cnpollc(void *, int);
 
 #if defined(__NetBSD__)
 const struct wskbd_consops ukbd_consops = {
@@ -216,16 +216,15 @@ const struct wskbd_consops ukbd_consops = {
 };
 #endif
 
-Static void	ukbd_intr __P((usbd_xfer_handle, usbd_private_handle,
-			       usbd_status));
+Static void	ukbd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int	ukbd_enable __P((void *, int));
-Static void	ukbd_set_leds __P((void *, int));
+Static int	ukbd_enable(void *, int);
+Static void	ukbd_set_leds(void *, int);
 
 #if defined(__NetBSD__)
-Static int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+Static int	ukbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-Static void	ukbd_rawrepeat __P((void *v));
+Static void	ukbd_rawrepeat(void *v);
 #endif
 
 const struct wskbd_accessops ukbd_accessops = {
@@ -361,9 +360,7 @@ USB_ATTACH(ukbd)
 }
 
 int
-ukbd_enable(v, on)
-	void *v;
-	int on;
+ukbd_enable(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
 	usbd_status err;
@@ -400,9 +397,7 @@ ukbd_enable(v, on)
 }
 
 int
-ukbd_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+ukbd_activate(device_ptr_t self, enum devact act)
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
 	int rv = 0;
@@ -594,9 +589,7 @@ ukbd_intr(xfer, addr, status)
 }
 
 void
-ukbd_set_leds(v, leds)
-	void *v;
-	int leds;
+ukbd_set_leds(void *v, int leds)
 {
 	struct ukbd_softc *sc = v;
 	u_int8_t res;
@@ -620,8 +613,7 @@ ukbd_set_leds(v, leds)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void
-ukbd_rawrepeat(v)
-	void *v;
+ukbd_rawrepeat(void *v)
 {
 	struct ukbd_softc *sc = v;
 	int s;
@@ -635,12 +627,7 @@ ukbd_rawrepeat(v)
 #endif
 
 int
-ukbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ukbd_softc *sc = v;
 
@@ -667,10 +654,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 
 /* Console interface. */
 void
-ukbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+ukbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct ukbd_softc *sc = v;
 	int s;
@@ -693,9 +677,7 @@ ukbd_cngetc(v, type, data)
 }
 
 void
-ukbd_cnpollc(v, on)
-	void *v;
-        int on;
+ukbd_cnpollc(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
 	usbd_device_handle dev;
@@ -707,7 +689,7 @@ ukbd_cnpollc(v, on)
 }
 
 int
-ukbd_cnattach()
+ukbd_cnattach(void)
 {
 
 	/*
