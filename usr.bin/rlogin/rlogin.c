@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.13 1996/07/03 23:17:51 thorpej Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.14 1996/08/10 19:47:32 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.13 1996/07/03 23:17:51 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.14 1996/08/10 19:47:32 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -272,8 +272,8 @@ main(argc, argv)
 		for (ospeed = i = cfgetospeed(&tty), len2 = 2; i > 9; len2++)
 			i /= 10;
 
-		if (len + len2 < sizeof(term) - 1)
-			(void)snprintf(term + len, len2, "/%d", ospeed);
+		if (len + len2 < sizeof(term))
+			(void)snprintf(term + len, len2 + 1, "/%d", ospeed);
 	}
 
 	(void)get_window_size(0, &winsize);
