@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.4 2005/03/05 18:05:15 tnozaki Exp $
 
 .PATH: ${.CURDIR}/UTF
 
@@ -19,6 +19,8 @@ UTF-32LE-mod=	UTF1632
 UTF-32LE-var=	utf32,little,force
 UTF-8-mod=	UTF8
 UTF-8-var=	utf8
+UTF-7-mod=	UTF7
+UTF-7-var=	utf7
 
 .for i in ${UTF_PART}
 UTF-$i.src: UTF.src
