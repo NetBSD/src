@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.60 1999/11/23 23:52:40 fvdl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.61 1999/11/26 17:18:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -461,6 +461,8 @@ bdirty(bp)
 	int s;
 
 	s = splbio();
+
+	CLR(bp->b_flags, B_AGE);
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
