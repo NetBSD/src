@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.40 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.41 2001/10/29 07:02:35 simonb Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -49,9 +49,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>

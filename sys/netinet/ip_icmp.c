@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.61 2001/10/20 03:18:17 matt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.62 2001/10/29 07:02:33 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -114,10 +114,6 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 
 #include <net/if.h>

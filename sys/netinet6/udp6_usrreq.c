@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.49 2001/10/24 06:36:39 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.50 2001/10/29 07:02:36 simonb Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -432,9 +433,6 @@ udp6_detach(in6p)
 	in6_pcbdetach(in6p);
 	splx(s);
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 udp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

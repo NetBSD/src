@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.52 2001/10/19 01:57:20 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.53 2001/10/29 07:02:36 simonb Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -7395,9 +7396,6 @@ key_alloc_mbuf(l)
 
 	return m;
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
