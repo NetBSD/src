@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.34 2001/12/23 12:54:54 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.35 2002/09/30 10:48:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.34 2001/12/23 12:54:54 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.35 2002/09/30 10:48:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -419,12 +419,15 @@ searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
 			ip = getino(ino);
 			if (TSTINO(ino, dumpinomap)) {
 				CLRINO(ino, dumpinomap);
-				CLRINO(ino, usedinomap);
 				*tape_size -= blockest(ip);
 			}
-			/* Add dir back to the dir map, to propagate nodump */
+			/*
+			 * Add back to dumpdirmap and remove from usedinomap
+			 * to propagate nodump.
+			 */
 			if ((ip->di_mode & IFMT) == IFDIR) {
 				SETINO(ino, dumpdirmap);
+				CLRINO(ino, usedinomap);
 				ret |= HASSUBDIRS;
 			}
 		} else {
