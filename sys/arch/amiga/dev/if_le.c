@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1997/03/17 03:17:34 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.25 1997/03/17 17:51:41 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -134,7 +134,6 @@ le_zbus_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct zbus_args *zap = aux;
 	u_long ser;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
 	sc->sc_mem = (void *)(lestd[2] + (int)zap->va);
