@@ -42,7 +42,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: zsvar.h,v 1.7 92/11/26 01:28:04 torek Exp  (LBL)
- * $Id: zsvar.h,v 1.2 1994/03/15 07:40:36 glass Exp $
+ * $Id: zsvar.h,v 1.3 1994/05/04 05:30:35 gwr Exp $
  */
 
 /*
@@ -138,9 +138,8 @@ struct zs_chanstate {
 
 /*
  * Macros to read and write individual registers (except 0) in a channel.
- *
- * On the SparcStation the 1.6 microsecond recovery time is
- * handled in hardware.
+ * The ZS chip requires a 2.2 uSec. recovery time between accesses.
  */
 #define	ZS_READ(c, r)		zs_read(c, r)
 #define	ZS_WRITE(c, r, v)	zs_write(c, r, v)
+#define ZS_DELAY()			delay2us()
