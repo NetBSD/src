@@ -1,4 +1,4 @@
-.\"	$NetBSD: README,v 1.4 1998/02/15 00:40:07 thorpej Exp $
+.\"	$NetBSD: README,v 1.5 2000/11/08 11:28:01 wiz Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ Site specific string and register names (for doc-{common,nroff,ditroff})
 .\"	STRING CONSTANTS
 .\" NS aD string (site) Address Style
 .\" NS aR string (site) Argument Reference Style
-.\" NS cM string (site) Interactive Comand Modifier (flag)
+.\" NS cM string (site) Interactive Command Modifier (flag)
 .\" NS eM string (site) Emphasis (in the English sense - usually italics)
 .\" NS eR string (site) Errno Style
 .\" NS eV string (site) Environment Variable Style
@@ -86,7 +86,7 @@ Site specific string and register names (for doc-{common,nroff,ditroff})
 .\" NS tN string (site) Trade Name Style
 .\" NS vA string (site) Generic Variable Style
 .\" NS Vs string (site) Volume Title Style
-.\" NS xR string (site) Cross Reference STyle (man page only)
+.\" NS xR string (site) Cross Reference Style (man page only)
 .\"	MISCELLANEOUS
 .\" NS lS string (site) list-label-sep (list-types hang, number, bullet, diag)
 .\" NS iV string soft space (can be split on a newline or padded in adjust mode)
@@ -108,7 +108,7 @@ Site specific string and register names (for doc-{common,nroff,ditroff})
 .\" NS Bo register (site) Bracket Quote Open Width
 .\" NS Bq register (site) Bracket Quote Width
 .\" NS Ar register (site) Width Needed for Argument
-.\" NS Cm register (site) Width neeeded for Interactive Command Modifier
+.\" NS Cm register (site) Width needed for Interactive Command Modifier
 .\" NS Co register (site) Width Needed for Column offset
 .\" NS Cx register (site) Width Needed for Complex Expressions
 .\" NS Ds register (site) Width Needed for Display (right and left margins)
@@ -127,12 +127,12 @@ Site specific string and register names (for doc-{common,nroff,ditroff})
 .\" NS Ex register (site) Width Needed for Example Indent
 .\" NS Fa register (site) Width Needed for Function Argument
 .\" NS Fl register (site) Width Needed for Flag
-.\" NS Fc register (site) Funtion Quote Close Value
+.\" NS Fc register (site) Function Quote Close Value
 .\" NS Fn register (site) Width Needed for Function
-.\" NS Fo register (site) Funtion Quote Open Width
-.\" NS Hl register (site) Hypehnated List Macro Value (sub bullet list)
+.\" NS Fo register (site) Function Quote Open Width
+.\" NS Hl register (site) Hyphenated List Macro Value (sub bullet list)
 .\" NS I1, I2, I3 register (site) Indent values
-.\" NS Ic register (site) Width neeeded for Interactive Command Name
+.\" NS Ic register (site) Width needed for Interactive Command Name
 .\" NS Li register (site) Width Needed for Literal Constant
 .\" NS Ms register (site) Width Needed for Math Symbol ? not sure if needed
 .\" NS Nm register (site) Width Needed for Name
