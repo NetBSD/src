@@ -1,6 +1,6 @@
-/*	$NetBSD: disksubr.c,v 1.33 2003/08/07 16:29:57 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1 2003/11/15 17:52:31 bouyer Exp $ */
 
-/*
+/* 
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
  *
@@ -15,7 +15,6 @@
  * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,19 +26,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * Credits:
- * This file was based mostly on the i386/disksubr.c file:
- *  	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
- * were originally taken from arch/sparc/scsi/sun_disklabel.c
- * (which was written by Theo de Raadt) and then substantially
- * rewritten by Gordon W. Ross.
  */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1994 Theo de Raadt
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,39 +43,29 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Theo de Raadt.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * Credits:
- * This file was based mostly on the i386/disksubr.c file:
- *  	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
- * were originally taken from arch/sparc/scsi/sun_disklabel.c
- * (which was written by Theo de Raadt) and then substantially
- * rewritten by Gordon W. Ross.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2003/08/07 16:29:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1 2003/11/15 17:52:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/ioccom.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -92,11 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2003/08/07 16:29:57 agc Exp $");
 #include <dev/sun/disklabel.h>
 
 #if LABELSECTOR != 0
-#error	"Default value of LABELSECTOR no longer zero?"
+#error  "Default value of LABELSECTOR no longer zero?"
 #endif
 
-static char * disklabel_sun_to_bsd(char *, struct disklabel *);
-static int disklabel_bsd_to_sun(struct disklabel *, char *);
+static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
+static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 /*
  * Attempt to read a disk label from a device
@@ -125,10 +107,12 @@ readdisklabel(dev, strat, lp, clp)
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = RAW_PART + 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	if (lp->d_npartitions == 0) {
+		lp->d_npartitions = RAW_PART + 1;
+		if (lp->d_partitions[RAW_PART].p_size == 0)
+			lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+	}
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -143,21 +127,32 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* if successful, locate disk label within block and validate */
 	error = biowait(bp);
-	if (!error) {
+	if (error == 0) {
 		/* Save the whole block in case it has info we need. */
 		memcpy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 	}
 	brelse(bp);
 	if (error)
-		return("disk label read error");
+		return ("disk label read error");
+
+	/* Check for a NetBSD disk label at LABELOFFSET */
+	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC) {
+		if (dkcksum(dlp))
+			return ("NetBSD disk label corrupted");
+		*lp = *dlp;
+		return (NULL);
+	}
 
 	/* Check for a Sun disk label (for PROM compatibility). */
 	slp = (struct sun_disklabel *) clp->cd_block;
-	if (slp->sl_magic == SUN_DKMAGIC) {
-		return(disklabel_sun_to_bsd(clp->cd_block, lp));
-	}
+	if (slp->sl_magic == SUN_DKMAGIC)
+		return (disklabel_sun_to_bsd(clp->cd_block, lp));
 
-	/* Check for a NetBSD disk label (PROM can not boot it). */
+	/*
+	 * Check for a NetBSD disk label somewhere in LABELSECTOR
+	 * (compat with others big-endian boxes)
+	 */
 	for (dlp = (struct disklabel *)clp->cd_block;
 	    dlp <= (struct disklabel *)((char *)clp->cd_block +
 	    DEV_BSIZE - sizeof(*dlp));
@@ -166,25 +161,15 @@ readdisklabel(dev, strat, lp, clp)
 			continue;
 		}
 		if (dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp) != 0)
-			return("BSD disk label corrupted");
+			return("NetBSD disk label corrupted");
 		else {
 			*lp = *dlp;
-			return(NULL); 
+			return(NULL);
 		}
 	}
 
-#if 0
-	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
-	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp))
-			return("NetBSD disk label corrupted");
-		*lp = *dlp; 	/* struct assignment */
-		return(NULL);
-	}
-#endif
-
 	memset(clp->cd_block, 0, sizeof(clp->cd_block));
-	return("no disk label");
+	return ("no disk label");
 }
 
 /*
@@ -197,11 +182,11 @@ setdisklabel(olp, nlp, openmask, clp)
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	struct partition *opp, *npp;
 	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
-	if ((nlp->d_secpercyl == 0) || (nlp->d_secsize == 0) ||
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
 
@@ -211,28 +196,24 @@ setdisklabel(olp, nlp, openmask, clp)
 		return (0);
 	}
 
-	if (nlp->d_magic != DISKMAGIC ||
-	    nlp->d_magic2 != DISKMAGIC ||
+	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
+	while ((i = ffs(openmask)) != 0) {
+		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset ||
-		    npp->p_size   <  opp->p_size)
+		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
 			return (EBUSY);
 	}
 
-	/* We did not modify the new label, so the checksum is OK. */
 	*olp = *nlp;
 	return (0);
 }
-
 
 /*
  * Write disk label back to device after modification.
@@ -247,18 +228,24 @@ writedisklabel(dev, strat, lp, clp)
 {
 	struct buf *bp;
 	int error;
+	struct disklabel *dlp;
+	struct sun_disklabel *slp;
 
+	/*
+	 * Embed native label in a piece of wasteland.
+	 */
+	if (sizeof(struct disklabel) > sizeof slp->sl_bsdlabel)
+		return EFBIG;
+
+	slp = (struct sun_disklabel *)clp->cd_block;
+	memset(slp->sl_bsdlabel, 0, sizeof(slp->sl_bsdlabel));
+	dlp = (struct disklabel *)slp->sl_bsdlabel;
+	*dlp = *lp;
+
+	/* Build a SunOS compatible label around the native label */
 	error = disklabel_bsd_to_sun(lp, clp->cd_block);
 	if (error)
-		return(error);
-
-#if 0	/* XXX - Allow writing NetBSD disk labels? */
-	{
-		struct disklabel *dlp;
-		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-		*dlp = *lp; 	/* struct assignment */
-	}
-#endif
+		return (error);
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
@@ -289,19 +276,17 @@ bounds_check_with_label(dk, bp, wlabel)
 	int wlabel;
 {
 	struct disklabel *lp = dk->dk_label;
-	struct partition *p;
-	int sz, maxsz;
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int maxsz = p->p_size;
+	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
-	p = lp->d_partitions + DISKPART(bp->b_dev);
-	maxsz = p->p_size;
-	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-	/* XXX PR#2598: labelsect is always sector zero. */
-	if (((bp->b_blkno + p->p_offset) <= LABELSECTOR) &&
-	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0))
-	{
+	/*
+	 * overwriting disk label ?
+	 * The label is always in sector LABELSECTOR.
+	 * XXX should also protect bootstrap in first 8K
+	 */
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
@@ -323,9 +308,8 @@ bounds_check_with_label(dk, bp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
-
 bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
@@ -408,19 +392,15 @@ disklabel_sun_to_bsd(cp, lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
-		if (npp->p_size == 0)
+		if (npp->p_size == 0) {
 			npp->p_fstype = FS_UNUSED;
-		else {
-			/* Partition has non-zero size.  Set type, etc. */
+		} else {
 			npp->p_fstype = sun_fstypes[i];
-			/*
-			 * The sun label does not store the FFS fields,
-			 * so just set them with default values here.
-			 * XXX: This keeps newfs from trying to rewrite
-			 * XXX: the disk label in the most common case.
-			 * XXX: (Should remove that code from newfs...)
-			 */
 			if (npp->p_fstype == FS_BSDFFS) {
+				/*
+				 * The sun label does not store the FFS fields,
+				 * so just set them with default values here.
+				 */
 				npp->p_fsize = 1024;
 				npp->p_frag = 8;
 				npp->p_cpg = 16;
@@ -430,8 +410,7 @@ disklabel_sun_to_bsd(cp, lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-
-	return(NULL);
+	return (NULL);
 }
 
 /*
@@ -452,14 +431,16 @@ disklabel_bsd_to_sun(lp, cp)
 	u_short cksum, *sp1, *sp2;
 
 	if (lp->d_secsize != 512)
-	    return (EINVAL);
+		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
 
-	/* Format conversion. */
+	/*
+	 * Format conversion.
+	 */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = lp->d_rpm;
-	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
+	sl->sl_pcylinders   = lp->d_ncylinders + lp->d_acylinders; /* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
 	sl->sl_interleave   = lp->d_interleave;
 	sl->sl_ncylinders   = lp->d_ncylinders;
@@ -472,6 +453,12 @@ disklabel_bsd_to_sun(lp, cp)
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 
+		/*
+		 * SunOS partitions must start on a cylinder boundary.
+		 * Note this restriction is forced upon NetBSD/sparc
+		 * labels too, since we want to keep both labels
+		 * synchronised.
+		 */
 		if (npp->p_offset % secpercyl)
 			return (EINVAL);
 		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
@@ -479,7 +466,7 @@ disklabel_bsd_to_sun(lp, cp)
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 
-	/* Correct the XOR check. */
+	/* Compute the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
 	sl->sl_cksum = cksum = 0;
@@ -487,7 +474,7 @@ disklabel_bsd_to_sun(lp, cp)
 		cksum ^= *sp1++;
 	sl->sl_cksum = cksum;
 
-	return(0);
+	return (0);
 }
 
 /*
