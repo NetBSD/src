@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.3 1994/12/08 09:31:17 jtc Exp $	*/
+/*	$NetBSD: value.c,v 1.4 1996/12/29 10:34:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: value.c,v 1.3 1994/12/08 09:31:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: value.c,v 1.4 1996/12/29 10:34:14 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -62,7 +62,7 @@ vinit()
 			if (cp = getenv(p->v_name))
 				p->v_value = cp;
 		if (p->v_type&IREMOTE)
-			number(p->v_value) = *address(p->v_value);
+			setnumber(p->v_value, *address(p->v_value));
 	}
 	/*
 	 * Read the .tiprc file in the HOME directory
@@ -118,19 +118,19 @@ vassign(p, v)
 	case NUMBER:
 		if (number(p->v_value) == number(v))
 			return;
-		number(p->v_value) = number(v);
+		setnumber(p->v_value, number(v));
 		break;
 
 	case BOOL:
 		if (boolean(p->v_value) == (*v != '!'))
 			return;
-		boolean(p->v_value) = (*v != '!');
+		setboolean(p->v_value, (*v != '!'));
 		break;
 
 	case CHAR:
 		if (character(p->v_value) == *v)
 			return;
-		character(p->v_value) = *v;
+		setcharacter(p->v_value, *v);
 	}
 	p->v_access |= CHANGED;
 }

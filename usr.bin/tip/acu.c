@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.3 1994/12/08 09:30:39 jtc Exp $	*/
+/*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: acu.c,v 1.3 1994/12/08 09:30:39 jtc Exp $";
+static char rcsid[] = "$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -89,7 +89,7 @@ connect()
 		printf("\ncall aborted\n");
 		logent(value(HOST), "", "", "call aborted");
 		if (acu != NOACU) {
-			boolean(value(VERBOSE)) = FALSE;
+			setboolean(value(VERBOSE), FALSE);
 			if (conflag)
 				disconnect(NOSTR);
 			else

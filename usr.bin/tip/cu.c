@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.3 1994/12/08 09:30:48 jtc Exp $	*/
+/*	$NetBSD: cu.c,v 1.4 1996/12/29 10:34:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cu.c,v 1.3 1994/12/08 09:30:48 jtc Exp $";
+static char rcsid[] = "$NetBSD: cu.c,v 1.4 1996/12/29 10:34:07 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -123,7 +123,7 @@ cumain(argc, argv)
 	user_uid();
 	vinit();
 	setparity("none");
-	boolean(value(VERBOSE)) = 0;
+	setboolean(value(VERBOSE), 0);
 	if (HW)
 		ttysetup(speed(BR));
 	if (connect()) {
