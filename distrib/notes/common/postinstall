@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.33 2002/05/03 04:12:02 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.1 2002/06/18 23:43:53 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,6 +198,18 @@ and
 For Digital DNARD machines you will need to edit
 .Pa /etc/ttys
 and change the console terminal type from vt100 to pc3.
+.\}
+.if r_atari \{\
+.It
+Select the proper terminal devices
+.Pp
+You will have to edit the
+.Pa /etc/ttys
+file. If you don't have a Milan, you must disable the
+.Pa ttyEx
+devices. For the Milan, you will have to disable the
+.Pa ttyex
+devices. This is easy, just change 'on' to 'off' on the corresponding lines.
 .\}
 .It
 Logging in
