@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/10 17:04:21 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2002/12/08 20:20:03 thorpej Exp $
 
-HOSTPROGNAME=	nbmkdep
+HOSTPROGNAME=	${_TOOL_PREFIX}mkdep
 HOST_SRCDIR=	usr.bin/mkdep
 
 SRCS=		mkdep.c

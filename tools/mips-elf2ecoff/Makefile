@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/23 21:32:27 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:20:02 thorpej Exp $
 
-HOSTPROGNAME=	nbmips-elf2ecoff
+HOSTPROGNAME=	${_TOOL_PREFIX}mips-elf2ecoff
 HOST_SRCDIR=	usr.bin/elf2ecoff
 HOST_CPPFLAGS=	-I${.CURDIR}
 
