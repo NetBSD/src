@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.4 1997/06/13 13:36:04 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.5 1997/09/17 18:08:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -72,10 +72,12 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
+#include <machine/stdarg.h>
 
 #include "libi386.h"
 #include "biosdisk_ll.h"
-/* XXX don't include biosdisk.h for now - vararg prototype */
+#include "biosdisk.h"
+#include "bootinfo.h"
 
 #define BUFSIZE (1 * BIOSDISK_SECSIZE)
 
@@ -87,6 +89,8 @@ struct biosdisk {
 	int             boff;
 	char            buf[BUFSIZE];
 };
+
+static struct btinfo_bootdisk bi_disk;
 
 int 
 biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
@@ -139,17 +143,17 @@ biosdisk_gettype(f)
 #endif
 
 int 
-biosdiskopen(f, biosdev, partition)
-	struct open_file *f;
-	int             biosdev;
-	unsigned int    partition;
+biosdiskopen(struct open_file *f, ...)
+/* file, biosdev, partition */
 {
+	va_list ap;
 	struct biosdisk *d;
 	struct dos_partition *dptr;
 	int             sector;
 	int             error = 0, i;
 #ifndef NO_DISKLABEL
 	struct disklabel *lp;
+	int partition;
 #endif
 
 	d = (struct biosdisk *) alloc(sizeof(struct biosdisk));
@@ -159,7 +163,8 @@ biosdiskopen(f, biosdev, partition)
 #endif
 		return (ENOMEM);
 	}
-	d->ll.dev = biosdev;
+	va_start(ap, f);
+	bi_disk.biosdev = d->ll.dev = va_arg(ap, int);
 	if (set_geometry(&d->ll)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
@@ -167,6 +172,7 @@ biosdiskopen(f, biosdev, partition)
 		error = ENXIO;
 		goto out;
 	}
+
 	/*
 	 * find NetBSD Partition in DOS partition table XXX check magic???
 	 */
@@ -195,8 +201,10 @@ biosdiskopen(f, biosdev, partition)
 		 */
 		sector = 0;
 	}
+	bi_disk.labelsector = -1;
 #ifdef NO_DISKLABEL
 	d->boff = sector;
+	(void)va_arg(ap, int); /* throw away partition */
 #else
 	/* find partition in NetBSD disklabel */
 	if (readsects(&d->ll, sector + LABELSECTOR, 1, d->buf, 0)) {
@@ -206,7 +214,9 @@ biosdiskopen(f, biosdev, partition)
 		error = EIO;
 		goto out;
 	}
+
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
+	partition = va_arg(ap, int);
 	if (lp->d_magic != DISKMAGIC) {
 #ifdef DISK_DEBUG
 		printf("warning: no disklabel\n");
@@ -221,9 +231,13 @@ biosdiskopen(f, biosdev, partition)
 		goto out;
 	} else {
 		d->boff = lp->d_partitions[partition].p_offset;
+		bi_disk.labelsector = sector + LABELSECTOR;
 #ifdef COMPAT_OLDBOOT
-		d->disktype = lp->d_type;
+		d->disktype =
 #endif
+		  bi_disk.label.type = lp->d_type;
+		bcopy(lp->d_packname, bi_disk.label.packname, 16);
+		bi_disk.label.checksum = lp->d_checksum;
 	}
 #endif				/* NO_DISKLABEL */
 
@@ -231,8 +245,11 @@ biosdiskopen(f, biosdev, partition)
 	printf("partition @%d\n", d->boff);
 #endif
 
+	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
+
 	f->f_devdata = d;
 out:
+        va_end(ap);
 	if (error)
 		free(d, sizeof(struct biosdisk));
 	return (error);
