@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.107 2000/09/10 11:32:04 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.108 2000/09/19 13:44:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -362,12 +362,20 @@ static	int cpu_instance;
 	cache_print(sc);
 
 	if (cpu_instance == ncpu) {
-		/* Install MP cache flush functions on boot cpu */
-		cpuinfo.cache_flush = smp_cache_flush;
-		cpuinfo.vcache_flush_page = smp_vcache_flush_page;
-		cpuinfo.vcache_flush_segment = smp_vcache_flush_segment;
-		cpuinfo.vcache_flush_region = smp_vcache_flush_region;
-		cpuinfo.vcache_flush_context = smp_vcache_flush_context;
+		/*
+		 * Install MP cache flush functions on boot cpu, unless
+		 * the single-processor versions are no-ops.
+		 */
+		if (cpuinfo.cache_flush != noop_cache_flush)
+			cpuinfo.cache_flush = smp_cache_flush;
+		if (cpuinfo.vcache_flush_page != noop_vcache_flush_page)
+			cpuinfo.vcache_flush_page = smp_vcache_flush_page;
+		if (cpuinfo.vcache_flush_segment != noop_vcache_flush_segment)
+			cpuinfo.vcache_flush_segment = smp_vcache_flush_segment;
+		if (cpuinfo.vcache_flush_region != noop_vcache_flush_region)
+			cpuinfo.vcache_flush_region = smp_vcache_flush_region;
+		if (cpuinfo.vcache_flush_context != noop_vcache_flush_context)
+			cpuinfo.vcache_flush_context = smp_vcache_flush_context;
 	}
 #endif /* MULTIPROCESSOR */
 }
