@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19 1999/08/04 06:49:50 dbj Exp $
+# $NetBSD: GENERIC,v 1.20 1999/11/15 19:10:52 fvdl Exp $
 #
 # GENERIC next68k
 #
@@ -77,6 +77,7 @@ file-system 	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
+#options 	SOFTDEP         # FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

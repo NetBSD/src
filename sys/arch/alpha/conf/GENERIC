@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 1999/11/08 06:19:54 mycroft Exp $
+# $NetBSD: GENERIC,v 1.134 1999/11/15 19:10:44 fvdl Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -45,6 +45,7 @@ file-system	NTFS		# Windows/NT file system (experimental)
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocol suite

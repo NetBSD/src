@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1999/07/29 10:37:21 augustss Exp $
+#	$NetBSD: GENERIC,v 1.5 1999/11/15 19:10:56 fvdl Exp $
 #
 # GENERIC: generic kernel for most machines
 #
@@ -37,6 +37,7 @@ file-system	NFS			# Network File System client
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 
 # networking options
 #options 	GATEWAY			# packet forwarding
