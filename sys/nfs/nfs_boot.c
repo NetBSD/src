@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.59 2003/06/29 22:32:14 fvdl Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.60 2004/03/11 21:48:43 cl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59 2003/06/29 22:32:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.60 2004/03/11 21:48:43 cl Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -89,6 +89,9 @@ int nfs_boot_rfc951 = 1; /* BOOTP enabled (default) */
 #ifdef NFS_BOOT_BOOTPARAM
 int nfs_boot_bootparam = 1; /* BOOTPARAM enabled (default) */
 #endif
+#ifdef NFS_BOOT_BOOTSTATIC
+int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
+#endif
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
@@ -123,6 +126,12 @@ nfs_boot_init(nd, procp)
 	nd->nd_ifp = ifp;
 
 	error = EADDRNOTAVAIL; /* ??? */
+#if defined(NFS_BOOT_BOOTSTATIC)
+	if (error && nfs_boot_bootstatic) {
+		printf("nfs_boot: trying static\n");
+		error = nfs_bootstatic(nd, procp);
+	}
+#endif
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
 	if (error && nfs_boot_rfc951) {
 #if defined(NFS_BOOT_DHCP)
