@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 2001/12/06 23:51:04 bjh21 Exp $	*/
+/*	$NetBSD: conf.c,v 1.54 2001/12/08 01:16:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -217,7 +217,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NPTY,pts),        /*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),        /*  8: parallel printer */
 	cdev_lkm_dummy(),		/*  9: was qms */
-	cdev_beep_init(NBEEP,beep),	/* 10: simple beep device */
+	cdev_lkm_dummy(),		/* 10: was beep */
 	cdev_lkm_dummy(),		/* 11: was kbd */
 	cdev_tty_init(NCOM,com),        /* 12: serial port */
 	cdev_lkm_dummy(),		/* 13: */
@@ -244,7 +244,7 @@ struct cdevsw cdevsw[] = {
 	cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
-	cdev_vidcvid_init(NVIDCCONSOLE,vidcconsole),	/* 37: vidcconsole device */
+	cdev_lkm_dummy(),		/* 37: was vidcconsole */
 	cdev_lkm_dummy(),		/* 38: removed cpu device */
 	cdev_lkm_dummy(),		/* 39: reserved */
 	cdev_mouse_init(NOPMS,pms),     /* 40: PS2 mouse driver */
