@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.15 1997/02/11 08:39:23 mrg Exp $	*/
+/*	$NetBSD: su.c,v 1.16 1997/03/04 00:21:13 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.15 1997/02/11 08:39:23 mrg Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.16 1997/03/04 00:21:13 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -435,9 +435,9 @@ koktologin(name, realm, toname)
 	kdata = &kdata_st;
 	memset((char *)kdata, 0, sizeof(*kdata));
 	(void)strncpy(kdata->pname, name, sizeof(kdata->pname) - 1);
-	(void)strcnpy(kdata->pinst,
+	(void)strncpy(kdata->pinst,
 	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst) - 1);
-	(void)strcnpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
+	(void)strncpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
 	return (kuserok(kdata, toname));
 }
 #endif
