@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.2 2003/05/04 12:03:41 fvdl Exp $
+#	$NetBSD: Makefile.amd64,v 1.3 2003/05/17 05:39:35 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -82,6 +82,7 @@ LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 locore.o machdep.o: Makefile
 
 netbsd32_sigcode.o: assym.h
+clock.o: config_time.h
 
 ##
 ## (7) misc settings
