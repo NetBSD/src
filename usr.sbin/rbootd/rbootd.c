@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.11 2000/12/20 01:30:26 cgd Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.12 2001/01/11 01:43:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.11 2000/12/20 01:30:26 cgd Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.12 2001/01/11 01:43:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(argc, argv)
 		(void) signal(SIGUSR2, DebugOff);
 	}
 
-	openlog(__progname, LOG_PID, LOG_DAEMON);
+	openlog("rbootd", LOG_PID, LOG_DAEMON);
 
 	/*
 	 *  If no interface was specified, get one now.
