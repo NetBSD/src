@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.8 1999/03/24 06:18:30 mycroft Exp $
+.\"     $NetBSD: raidctl.8,v 1.9 1999/08/10 18:21:39 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,6 +86,10 @@
 .Nm ""
 .Fl I Ar serial_number Ar dev
 .Nm ""
+.Fl p Ar dev
+.Nm "" 
+.Fl P Ar dev
+.Nm ""
 .Fl r Ar component Ar dev
 .Nm ""
 .Fl R Ar component Ar dev
@@ -162,6 +166,12 @@ is used as one of the keys in determining whether a
 particular set of components belong to the same RAID set.  While not
 strictly enforced, different serial numbers should be used for
 different RAID sets.
+.It Fl p Ar dev
+Check the status of the parity on the RAID set.  Displays a status
+message, and returns successfully if the parity is up-to-date.
+.It Fl P Ar dev
+Check the status of the parity on the RAID set, and initialize
+(re-write) the parity if the parity is not known to be up-to-date.
 .It Fl r Ar component Ar dev
 Remove the spare disk specified by 
 .Ar component 
@@ -451,6 +461,24 @@ or
 .Xr fsck 8
 on the device or its filesystems, and then to mount the filesystems
 for use.
+.Pp
+After the parity has been initialized for the first time, the command:
+.Bd -unfilled -offset indent
+raidctl -p raid0
+.Ed
+.Pp
+can be used to check the current status of the parity.  To check the
+parity and rebuild it necessary the command:
+.Bd -unfilled -offset indent
+raidctl -P raid0
+.Ed
+.Pp
+is used.  Note that re-writing the parity can be done while
+other operations on the RAID set are taking place (e.g. while doing a
+.Xr fsck 8
+on a filesystem on the RAID set).  However: for maximum effectiveness
+of the RAID set, the parity should be known to be correct before any
+data on the set is modified.
 .Pp
 To see how the RAID set is doing, the following command can be used to
 show the RAID set's status:
