@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.110.2.10 2001/05/09 22:29:46 he Exp $
+#	$NetBSD: NetBSD.dist,v 1.110.2.11 2003/04/01 03:47:35 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2002,7 +2002,7 @@ siteconfig
 
 # ./usr/share/tabset
 tabset
-# ./Usr/share/tabset
+# ./usr/share/tabset
 ..
 
 # ./usr/share/tmac
