@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.19 2003/09/10 16:44:56 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.20 2003/09/30 19:49:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.19 2003/09/10 16:44:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.20 2003/09/30 19:49:00 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.19 2003/09/10 16:44:56 christos Ex
 #include <uvm/uvm_param.h>
 
 #include <dev/wscons/wsconsio.h>
+
+#include <compat/common/compat_util.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -224,10 +226,10 @@ darwin_e_proc_exec(p, epp)
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 	if (p->p_pid == darwin_init_pid)
 		ded->ded_fakepid = 1;
-
 #ifdef DEBUG_DARWIN
 	printf("pid %d exec'd: fakepid = %d\n", p->p_pid, ded->ded_fakepid);
 #endif
+
 	return;
 }
 
@@ -294,6 +296,14 @@ darwin_e_proc_exit(p)
 {
 	struct darwin_emuldata *ded;
 	int error, mode;
+	struct wsdisplay_cmap cmap;
+	u_char *red;
+	u_char *green;
+	u_char *blue;
+	u_char kred[256];
+	u_char kgreen[256];
+	u_char kblue[256];
+	caddr_t sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
 
@@ -305,6 +315,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
+	/* Restore text mode and black and white colormap */
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
@@ -313,6 +324,34 @@ darwin_e_proc_exit(p)
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");
 #endif
+		red = stackgap_alloc(p, &sg, 256);
+		green = stackgap_alloc(p, &sg, 256);
+		blue = stackgap_alloc(p, &sg, 256);
+
+		(void)memset(kred, 255, 256);
+		(void)memset(kgreen, 255, 256);
+		(void)memset(kblue, 255, 256);
+
+		kred[0] = 0;
+		kgreen[0] = 0;
+		kblue[0] = 0;
+
+		cmap.index = 0;
+		cmap.count = 256;
+		cmap.red = red;
+		cmap.green = green;
+		cmap.blue = blue;
+
+		if (((error = copyout(kred, red, 256)) != 0) ||
+		    ((error = copyout(kgreen, green, 256)) != 0) ||
+		    ((error = copyout(kblue, blue, 256)) != 0))
+			error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p);
+#ifdef DEBUG_DARWIN
+		if (error != 0)
+			printf("Cannot revert colormap (error %d)\n", error);
+#endif
+
 	}
 		
 	mach_e_proc_exit(p);
