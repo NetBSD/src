@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.97.2.4 2004/09/11 10:51:46 he Exp $
+.\"	$NetBSD: contents,v 1.97.2.5 2004/11/12 05:53:21 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1196,6 +1196,11 @@ Fonts needed by X.
 .if \n[vax] .setsize 31 39
 .if \n[x68k] .setsize 31 39
 .if \n[xen-i386] .setsize -unknown- -unknown-
+.showsize
+.
+.It Sy xetc
+Configuration files for X which could be locally modified.
+.setsize 0.03 0.17
 .showsize
 .
 .It Sy xserver
