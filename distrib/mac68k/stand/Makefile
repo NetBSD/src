@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.1 2004/03/26 06:03:29 jmc Exp $
+#       $NetBSD: Makefile,v 1.2 2004/03/27 18:05:38 fredb Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ UUDECODE_FILES+=README Installer_1.1g.src.sea.hqx mode32-7.5.bin
 UUDECODE_FILES+=Installer_1.1h.sea.bin mode32-7.5.hqx Installer_1.1h.sea.hqx 
 UUDECODE_FILES+=pdisk.sea.hqx Installer_1.1h.src.sea.hqx res-edit-and-others.hqx
 
-all: ${UUDECODE_FILES}
+release: ${UUDECODE_FILES}
 	${INSTALL} -d ${RELEASEDIR}/${MACHINE}/installation/misc
 	rm -f \
 	  ${RELEASEDIR}/${MACHINE}/installation/misc/{BSDSUM,CKSUM,MD5,SYSVSUM}
