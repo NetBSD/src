@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.639 2004/08/02 19:10:48 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.640 2004/08/02 19:25:46 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.639 2004/08/02 19:10:35 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.640 2004/08/02 19:25:35 mycroft Exp 
  */
 
 /*
@@ -9572,6 +9572,10 @@ const struct pci_product pci_products[] = {
 	    "WinGlobal Modem",
 	},
 	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
+	    "56k Modem",
+	},
+	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    "724 Audio",
 	},
@@ -9608,4 +9612,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1827;
+const int pci_nproducts = 1828;
