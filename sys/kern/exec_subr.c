@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_subr.c,v 1.5 1994/01/28 23:47:10 jtc Exp $
+ *	$Id: exec_subr.c,v 1.6 1994/03/27 09:08:21 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -142,8 +142,8 @@ vmcmd_map_pagedvn(p, cmd)
 	 * call this routine.
 	 */
 	return vm_mmap(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
-	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_FILE|MAP_COPY,
-	    cmd->ev_vp, cmd->ev_offset);
+	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_COPY, cmd->ev_vp,
+	    cmd->ev_offset);
 }
 
 /*

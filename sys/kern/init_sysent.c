@@ -5,8 +5,8 @@
  * created from: syscalls.master,v 1.11 1994/03/08 23:57:00
  */
 
-#include "param.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/systm.h>
 
 int	nosys();
 
@@ -27,7 +27,6 @@ int	chmod();
 int	chown();
 int	obreak();
 int	getfsstat();
-int	lseek();
 int	getpid();
 int	mount();
 int	unmount();
@@ -46,9 +45,7 @@ int	chflags();
 int	fchflags();
 int	sync();
 int	kill();
-int	stat();
 int	getppid();
-int	lstat();
 int	dup();
 int	pipe();
 int	getegid();
@@ -76,14 +73,12 @@ int	readlink();
 int	execve();
 int	umask();
 int	chroot();
-int	fstat();
 int	getkerninfo();
 int	getpagesize();
 int	msync();
 int	vfork();
 int	sbrk();
 int	sstk();
-int	smmap();
 int	ovadvise();
 int	munmap();
 int	mprotect();
@@ -126,8 +121,6 @@ int	settimeofday();
 int	fchown();
 int	fchmod();
 int	rename();
-int	truncate();
-int	ftruncate();
 int	flock();
 int	mkfifo();
 int	sendto();
@@ -174,6 +167,13 @@ int	shmsys();
 int	setgid();
 int	setegid();
 int	seteuid();
+int	stat();
+int	fstat();
+int	lstat();
+int	smmap();
+int	lseek();
+int	truncate();
+int	ftruncate();
 #ifdef LKM
 int	lkmnosys();
 int	lkmnosys();
@@ -192,12 +192,17 @@ int	lkmnosys();
 #define compat(n, name) n, __CONCAT(o,name)
 
 int	ocreat();
+int	olseek();
+int	ostat();
+int	olstat();
 #ifdef KTRACE
 #else
 #endif
 #ifdef notyet
 #else
 #endif
+int	ofstat();
+int	ommap();
 int	owait();
 int	oaccept();
 int	osend();
@@ -213,6 +218,8 @@ int	osendmsg();
 int	orecvfrom();
 int	osetreuid();
 int	osetregid();
+int	otruncate();
+int	oftruncate();
 int	ogetpeername();
 int	okillpg();
 int	oquota();
@@ -260,7 +267,7 @@ struct sysent sysent[] = {
 	3, chown,			/* 16 = chown */
 	1, obreak,			/* 17 = break */
 	3, getfsstat,			/* 18 = getfsstat */
-	3, lseek,			/* 19 = lseek */
+	compat(3,lseek),		/* 19 = old lseek */
 	0, getpid,			/* 20 = getpid */
 	4, mount,			/* 21 = mount */
 	2, unmount,			/* 22 = unmount */
@@ -279,9 +286,9 @@ struct sysent sysent[] = {
 	2, fchflags,			/* 35 = fchflags */
 	0, sync,			/* 36 = sync */
 	2, kill,			/* 37 = kill */
-	2, stat,			/* 38 = stat */
+	compat(2,stat),		/* 38 = old stat */
 	0, getppid,			/* 39 = getppid */
-	2, lstat,			/* 40 = lstat */
+	compat(2,lstat),		/* 40 = old lstat */
 	2, dup,			/* 41 = dup */
 	0, pipe,			/* 42 = pipe */
 	0, getegid,			/* 43 = getegid */
@@ -311,7 +318,7 @@ struct sysent sysent[] = {
 	3, execve,			/* 59 = execve */
 	1, umask,			/* 60 = umask */
 	1, chroot,			/* 61 = chroot */
-	2, fstat,			/* 62 = fstat */
+	compat(2,fstat),		/* 62 = old fstat */
 	4, getkerninfo,			/* 63 = getkerninfo */
 	0, getpagesize,			/* 64 = getpagesize */
 	2, msync,			/* 65 = msync */
@@ -320,7 +327,7 @@ struct sysent sysent[] = {
 	0, nosys,			/* 68 = obsolete vwrite */
 	1, sbrk,			/* 69 = sbrk */
 	1, sstk,			/* 70 = sstk */
-	6, smmap,			/* 71 = mmap */
+	compat(7,mmap),		/* 71 = old mmap */
 	1, ovadvise,			/* 72 = vadvise */
 	2, munmap,			/* 73 = munmap */
 	3, mprotect,			/* 74 = mprotect */
@@ -382,8 +389,8 @@ struct sysent sysent[] = {
 	compat(2,setreuid),		/* 126 = old setreuid */
 	compat(2,setregid),		/* 127 = old setregid */
 	2, rename,			/* 128 = rename */
-	2, truncate,			/* 129 = truncate */
-	2, ftruncate,			/* 130 = ftruncate */
+	compat(2,truncate),		/* 129 = old truncate */
+	compat(2,ftruncate),		/* 130 = old ftruncate */
 	2, flock,			/* 131 = flock */
 	2, mkfifo,			/* 132 = mkfifo */
 	6, sendto,			/* 133 = sendto */
@@ -462,20 +469,20 @@ struct sysent sysent[] = {
 	0, nosys,			/* 185 = nosys */
 	0, nosys,			/* 186 = nosys */
 	0, nosys,			/* 187 = nosys */
-	0, nosys,			/* 188 = nosys */
-	0, nosys,			/* 189 = nosys */
-	0, nosys,			/* 190 = nosys */
+	2, stat,			/* 188 = stat */
+	2, fstat,			/* 189 = fstat */
+	2, lstat,			/* 190 = lstat */
 	0, nosys,			/* 191 = nosys */
 	0, nosys,			/* 192 = nosys */
 	0, nosys,			/* 193 = nosys */
 	0, nosys,			/* 194 = nosys */
 	0, nosys,			/* 195 = nosys */
 	0, nosys,			/* 196 = nosys */
-	0, nosys,			/* 197 = nosys */
+	8, smmap,			/* 197 = mmap */
 	0, nosys,			/* 198 = nosys */
-	0, nosys,			/* 199 = nosys */
-	0, nosys,			/* 200 = nosys */
-	0, nosys,			/* 201 = nosys */
+	5, lseek,			/* 199 = lseek */
+	4, truncate,			/* 200 = truncate */
+	4, ftruncate,			/* 201 = ftruncate */
 	0, nosys,			/* 202 = nosys */
 	0, nosys,			/* 203 = nosys */
 	0, nosys,			/* 204 = nosys */

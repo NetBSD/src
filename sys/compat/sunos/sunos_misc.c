@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.13 1994/03/03 14:15:25 deraadt Exp $
+ * $Id: sunos_misc.c,v 1.14 1994/03/27 09:08:02 cgd Exp $
  */
 
 /*
@@ -414,28 +414,13 @@ out:
 	return (error);
 }
 
-/*
- * The Sun bit-style arguments are not in the same order as the
- * NetBSD ones. We must remap the bits.
- */
-
 #if defined(sparc)
 #define	DEVZERO	makedev(3, 12)		/* major,minor of /dev/zero */
 #else /* all m68k architectures */
 #define	DEVZERO	makedev(2, 12)		/* major,minor of /dev/zero */
 #endif
 
-#define SUN_PROT_READ	1
-#define SUN_PROT_WRITE	2
-#define SUN_PROT_EXEC	4
-#define SUN_PROT_UALL	(SUN_PROT_READ | SUN_PROT_WRITE | SUN_PROT_EXEC)
-
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
-
-#define SUN_MAP_SHARED	1
-#define SUN_MAP_PRIVATE	2
-#define	SUN_MAP_TYPE	0xf
-#define SUN_MAP_FIXED	0x10
 
 struct sun_mmap_args {
 	caddr_t	addr;
@@ -443,55 +428,31 @@ struct sun_mmap_args {
 	int	prot;
 	int	flags;
 	int	fd;
-	off_t	off;
+	long	off;
 };
 sun_mmap(p, uap, retval)
 	register struct proc *p;
 	register struct sun_mmap_args *uap;
 	int *retval;
 {
-	register int flags, prot, newflags, newprot;
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
 
 	/*
-	 * Verify and re-map the arguments.
+	 * Verify the arguments.
 	 */
-	prot = uap->prot;
-	newprot = 0;
-	if (uap->prot & ~SUN_PROT_UALL)
+	if (uap->prot & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
+		return (EINVAL);			/* XXX still needed? */
+
+	if ((uap->flags & SUN__MAP_NEW) == 0)
 		return (EINVAL);
-	if (uap->prot & SUN_PROT_READ)
-		newprot |= PROT_READ;
-	if (uap->prot & SUN_PROT_WRITE)
-		newprot |= PROT_WRITE;
-	if (uap->prot & SUN_PROT_EXEC)
-		newprot |= PROT_EXEC;
+	uap->flags &= ~SUN__MAP_NEW;
 
-	flags = uap->flags;
-	newflags = 0;
-	if ((flags & SUN__MAP_NEW) == 0)
-		return (EINVAL);
-
-	switch (flags & SUN_MAP_TYPE) {
-	case SUN_MAP_SHARED:
-		newflags |= MAP_SHARED;
-		break;
-	case SUN_MAP_PRIVATE:
-		newflags |= MAP_PRIVATE;
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	if (flags & SUN_MAP_FIXED)
-		newflags |= MAP_FIXED;
-
-	if ((newflags & MAP_FIXED) == 0 &&
+	if ((uap->flags & MAP_FIXED) == 0 &&
 		uap->addr != 0 &&
-		uap->addr < (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ))
-		uap->addr = (caddr_t)round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+		uap->addr < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		uap->addr = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
@@ -502,14 +463,10 @@ sun_mmap(p, uap, retval)
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    vp->v_rdev == DEVZERO) {					/*XXX*/
-		newflags |= MAP_ANON;
+		uap->flags |= MAP_ANON;
 		uap->fd = -1;
-	} else
-		newflags |= MAP_FILE;
+	}
 
-	/* All done, fix up fields and go. */
-	uap->flags = newflags;
-	uap->prot = newprot;
 	return (smmap(p, uap, retval));
 }
 
