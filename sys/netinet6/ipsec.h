@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.7 1999/12/02 05:08:16 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.8 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,10 +36,8 @@
 #ifndef _NETINET6_IPSEC_H_
 #define _NETINET6_IPSEC_H_
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif
 #endif
 
 #include <netkey/keyv2.h>
@@ -261,11 +259,7 @@ extern int ipsec_set_policy __P((struct secpolicy **, int, caddr_t, int, int));
 extern int ipsec_get_policy __P((struct secpolicy *, struct mbuf **));
 extern int ipsec4_delete_pcbpolicy __P((struct inpcb *));
 #ifdef INET6
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern int ipsec6_delete_pcbpolicy __P((struct inpcb *));
-#else
 extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));
-#endif
 #endif
 extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *));
 
@@ -274,11 +268,7 @@ extern int ipsec4_in_reject __P((struct mbuf *, struct inpcb *));
 
 #ifdef INET6
 extern int ipsec6_in_reject_so __P((struct mbuf *, struct socket *));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern int ipsec6_in_reject __P((struct mbuf *, struct inpcb *));
-#else
 extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
-#endif
 #endif /*INET6*/
 
 struct secas;
@@ -288,21 +278,13 @@ extern int ipsec_chkreplay __P((u_int32_t, struct secas *));
 extern int ipsec_updatereplay __P((u_int32_t, struct secas *));
 
 extern size_t ipsec4_hdrsiz __P((struct mbuf *, struct inpcb *));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern size_t ipsec_hdrsiz_tcp __P((struct tcpcb *, int));
-#else
 extern size_t ipsec4_hdrsiz_tcp __P((struct tcpcb *));
-#endif
 #ifdef INET6
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern size_t ipsec6_hdrsiz __P((struct mbuf *, struct inpcb *));
-#else
 extern size_t ipsec6_hdrsiz __P((struct mbuf *, struct in6pcb *));
-#if !defined(__NetBSD__) || defined(TCP6)
+#ifdef TCP6
 extern size_t ipsec6_hdrsiz_tcp __P((struct tcp6cb *));
 #else
 extern size_t ipsec6_hdrsiz_tcp __P((struct tcpcb *));
-#endif
 #endif
 #endif
 
@@ -333,10 +315,8 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
 
-#if defined(__bsdi__) || defined(__NetBSD__)
 extern int ipsec_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 extern int ipsec6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif /* __bsdi__ || __NetBSD__ */
 
 #endif /*_KERNEL*/
 

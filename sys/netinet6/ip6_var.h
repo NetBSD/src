@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.7 2000/01/06 06:41:20 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.8 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,9 +191,6 @@ extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
-#ifdef MAPPED_ADDR_ENABLED
-extern int	ip6_mapped_addr_on;
-#endif /* MAPPED_ADDR_ENABLED */
 #ifndef INET6_BINDV6ONLY
 extern int	ip6_bindv6only;
 #endif
@@ -213,23 +210,9 @@ extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
 
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 struct in6pcb;
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-extern struct	pr_usrreqs rip6_usrreqs;
-struct sockopt;
-#endif
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-struct inpcb;
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	icmp6_ctloutput __P((struct socket *, struct sockopt *sopt));
-#else
 int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
 
 void	ip6_init __P((void));
 void	ip6intr __P((void));
@@ -240,13 +223,8 @@ char *	ip6_get_prevhdr __P((struct mbuf *, int));
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
 int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-void	ip6_savecontrol __P((struct inpcb *, struct mbuf **, struct ip6_hdr *,
-		struct mbuf *));
-#else
 void	ip6_savecontrol __P((struct in6pcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *));
-#endif
 int	ip6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 void	ip6_forward __P((struct mbuf *, int));
@@ -255,17 +233,9 @@ void	ip6_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *));
 int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 			struct route_in6 *, int,
 			struct ip6_moptions *, struct ifnet **));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	ip6_ctloutput __P((struct socket *, struct sockopt *sopt));
-#else
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
 int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-int	ip6_optlen __P((struct inpcb *));
-#else
 int	ip6_optlen __P((struct in6pcb *));
-#endif
 
 int	route6_input __P((struct mbuf **, int *, int));
 
@@ -276,11 +246,7 @@ void	frag6_drain __P((void));
 
 void	rip6_init __P((void));
 int	rip6_input __P((struct mbuf **mp, int *offp, int proto));
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-int	rip6_ctloutput __P((struct socket *so, struct sockopt *sopt));
-#else
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-#endif
 int	rip6_output __P((struct mbuf *, ...));
 int	rip6_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.6 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.7 2000/01/06 15:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -246,7 +246,6 @@ do {									\
     }									\
 } while (0)
 
-#ifdef __NetBSD__
 /*
  * IP6_EXTHDR_GET ensures that intermediate protocol header (from "off" to
  * "len") is located in single mbuf, on contiguous memory region.
@@ -281,7 +280,5 @@ do {									\
 	} else								\
 		(val) = (typ)NULL;					\
 } while (0)
-
-#endif /*NetBSD*/
 
 #endif /* not _NETINET_IPV6_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.5 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.6 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,9 +33,7 @@
  * RFC2393 IP payload compression protocol (IPComp).
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

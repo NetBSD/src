@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.8 1999/12/22 03:58:12 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.9 2000/01/06 15:46:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -41,9 +41,7 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include "faith.h"
 #if NFAITH > 0
@@ -54,15 +52,9 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/sockio.h>
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/time.h>
-#if defined(__bsdi__) || defined(__NetBSD__)
 #include <machine/cpu.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -89,21 +81,12 @@
 
 #include <net/net_osdep.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-static int faithioctl __P((struct ifnet *, int, caddr_t));
-#else
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
-#endif
 int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
 	register struct rtentry *));
 static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
-#ifdef __FreeBSD__
-void faithattach __P((void *));
-PSEUDO_SET(faithattach, if_faith);
-#else
 void faithattach __P((int));
-#endif
 
 static struct ifnet faithif[NFAITH];
 
@@ -112,11 +95,7 @@ static struct ifnet faithif[NFAITH];
 /* ARGSUSED */
 void
 faithattach(faith)
-#ifdef __FreeBSD__
-	void *faith;
-#else
 	int faith;
-#endif
 {
 	register struct ifnet *ifp;
 	register int i;
@@ -124,12 +103,7 @@ faithattach(faith)
 	for (i = 0; i < NFAITH; i++) {
 		ifp = &faithif[i];
 		bzero(ifp, sizeof(faithif[i]));
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(ifp->if_xname, "faith%d", i);
-#else
-		ifp->if_name = "faith";
-		ifp->if_unit = i;
-#endif
 		ifp->if_mtu = FAITHMTU;
 		/* Change to BROADCAST experimentaly to announce its prefix. */
 		ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
@@ -262,11 +236,7 @@ faithrtrequest(cmd, rt, sa)
 static int
 faithioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-	int cmd;
-#else
 	u_long cmd;
-#endif
 	caddr_t data;
 {
 	register struct ifaddr *ifa;
@@ -307,11 +277,9 @@ faithioctl(ifp, cmd, data)
 		break;
 
 #ifdef SIOCSIFMTU
-#ifndef __OpenBSD__
 	case SIOCSIFMTU:
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
-#endif
 #endif
 
 	case SIOCSIFFLAGS:
