@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 1999/02/06 15:04:05 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.40 1999/02/22 10:33:15 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -10,7 +10,8 @@ SRCS+=	_rand48.c _strtoq.c _strtouq.c a64l.c abort.c atexit.c atof.c \
 	lcong48.c lrand48.c malloc.c merge.c mrand48.c multibyte.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c radixsort.c rand.c \
 	rand_r.c random.c seed48.c setenv.c srand48.c strtod.c \
-	strtol.c strtoq.c strtoq.c strtoul.c strtouq.c system.c
+	strtol.c strtoq.c strtoq.c strtoul.c strtouq.c system.c \
+	tdelete.c tfind.c tsearch.c twalk.c
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
@@ -22,7 +23,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 	calloc.3 div.3 exit.3 free.3 getenv.3 getopt.3 getsubopt.3 \
 	labs.3 ldiv.3 malloc.3 memory.3 qabs.3 qdiv.3 qsort.3 \
 	radixsort.3 rand48.3 rand.3 random.3 realloc.3 strtod.3 \
-	strtol.3 strtoul.3 system.3
+	strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
@@ -36,3 +37,4 @@ MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
 MLINKS+=strtol.3 strtoq.3
 MLINKS+=strtoul.3 strtouq.3
+MLINKS+=tsearch.3 tfind.3 tsearch.3 twalk.3 tsearch.3 tdelete.3
