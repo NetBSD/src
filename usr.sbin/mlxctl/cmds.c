@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.3 2001/02/15 02:32:26 simonb Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4 2001/04/17 13:32:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.3 2001/02/15 02:32:26 simonb Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4 2001/04/17 13:32:39 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -363,11 +363,11 @@ cmd_rebuild(char **argv)
 	if (argv[0] == NULL || argv[1] != NULL)
 		usage();
 
-	rb.rr_channel = strtol(*argv, &p, 0);
+	rb.rr_channel = (int)strtol(*argv, &p, 0);
 	if (p[0] != ':' || p[1] == '\0')
 		usage();
 
-	rb.rr_target = strtol(*argv, &p, 0);
+	rb.rr_target = (int)strtol(*argv, &p, 0);
 	if (p[0] != '\0')
 		usage();
 

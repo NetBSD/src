@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2001/02/09 01:31:52 enami Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2001/04/17 13:32:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.2 2001/02/09 01:31:52 enami Exp $");
+__RCSID("$NetBSD: util.c,v 1.3 2001/04/17 13:32:40 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -214,7 +214,7 @@ mlx_print_phys_drv(struct mlx_phys_drv *pd, int chn, int targ,
 {
 	char *type, *device, *vendor, *revision;
 
-	switch(pd->pd_flags2 & 0x03) {
+	switch (pd->pd_flags2 & 0x03) {
 		case MLX_PHYS_DRV_DISK:
 		type = "disk";
 		break;
@@ -235,7 +235,7 @@ mlx_print_phys_drv(struct mlx_phys_drv *pd, int chn, int targ,
 
 	printf("%s%s%02d%02d ", prefix, type, chn, targ);
 
-	switch(pd->pd_status) {
+	switch (pd->pd_status) {
 	case MLX_PHYS_DRV_DEAD:
 		printf(" (dead)	   ");
 		break;
@@ -285,4 +285,3 @@ mlx_print_phys_drv(struct mlx_phys_drv *pd, int chn, int targ,
 
 	printf("\n");
 }
-
