@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.501 2004/11/12 04:45:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.502 2004/11/12 04:47:24 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7838,3 +7838,8 @@ distrib/notes/common/main			patch
 
 	Be more explicit about non-exec mapping
 	[daniel, ticket #916]
+
+sys/compat/ibcs2/ibcs2_signal.c			1.20
+
+	Bounds check signal number.
+	[christos, ticket #918]
