@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.19 1997/10/17 12:48:17 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.19 1997/10/17 12:48:17 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $");
 #endif
 
 
@@ -128,7 +128,7 @@ main(argc, argv)
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "adf")) != EOF) {
+	while ((op = getopt(argc, argv, "adf")) != -1) {
 		switch (op) {
 		case 'a':
 			++aflag;
