@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.423 2004/08/04 05:32:47 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.424 2004/08/07 21:42:52 chs Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -414,8 +414,6 @@ NOPIC=		# defined
 # The hppa port is incomplete.
 #
 .if ${MACHINE_ARCH} == "hppa"
-NOLINT=		# defined
-NOPROFILE=	# defined
 MKGDB=		no
 .endif
 
