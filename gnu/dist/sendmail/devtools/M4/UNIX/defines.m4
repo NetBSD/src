@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31 2000/04/06 17:14:51 peterh Exp
+#	Id: defines.m4,v 8.31.4.1 2000/06/05 17:29:45 gshapiro Exp
 #
 divert(0)dnl
 
@@ -32,6 +32,10 @@ O=	ifdef(`confOPTIMIZE', `confOPTIMIZE', `-O')
 # Object archiver
 AR=     ifdef(`confAR', `confAR', `ar')
 AROPTS=	ifdef(`confAROPTS', `confAROPTS', `crv')
+
+# Link command
+LN=     ifdef(`confLN', `confLN', `ln')
+LNOPTS=	ifdef(`confLNOPTS', `confLNOPTS', `-f -s')
 
 # Ranlib (or echo)
 RANLIB= ifdef(`confRANLIB', `confRANLIB', `ranlib')

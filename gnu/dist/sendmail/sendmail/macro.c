@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: macro.c,v 8.40 1999/11/22 19:10:16 gshapiro Exp";
+static char id[] = "@(#)Id: macro.c,v 8.40.16.1 2000/05/25 18:56:15 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -169,7 +169,7 @@ expand(s, buf, bufsize, e)
 
 	/* copy results out */
 	i = xp - xbuf;
-	if (i >= bufsize)
+	if ((size_t)i >= bufsize)
 		i = bufsize - 1;
 	memmove(buf, xbuf, i);
 	buf[i] = '\0';
