@@ -1,4 +1,4 @@
-/*	$NetBSD: viceioctl.h,v 1.3 2002/05/16 19:49:06 wiz Exp $	*/
+/*	$NetBSD: viceioctl.h,v 1.4 2002/07/10 18:54:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -61,11 +61,7 @@ struct ViceIoctl {
    are no input or output parameters
  */
 
-#ifdef	__STDC__
 #define _VICEIOCTL(id)  ((unsigned int ) _IOW('V', id, struct ViceIoctl))
-#else
-#define _VICEIOCTL(id)  ((unsigned int ) _IOW(V, id, struct ViceIoctl))
-#endif
 /* Use this macro to define up to 256 vice ioctl's.  These ioctl's
    all potentially have in/out parameters--this depends upon the
    values in the ViceIoctl structure.  This structure is itself passed

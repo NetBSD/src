@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.10 2000/07/19 07:52:45 enami Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.11 2002/07/10 18:53:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -56,7 +56,7 @@
  */
 
 #include <errno.h>
-#include <libc.h>
+#include "libc.h"
 #include <netdb.h>
 #include <signal.h>
 #include <setjmp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.12 2001/09/18 04:36:28 itojun Exp $	*/
+/*	$NetBSD: scm.c,v 1.13 2002/07/10 18:53:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -162,7 +162,7 @@
  **********************************************************************
  */
 
-#include <libc.h>
+#include "libc.h"
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -176,11 +176,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <ifaddrs.h>
 #include "supcdefs.h"
 #include "supextern.h"
@@ -217,7 +213,7 @@ static char *remotename = NULL;		/* remote host name */
 static int swapmode;			/* byte-swapping needed on server? */
 
 
-static char *myhost __P((void));
+static char *myhost(void);
 
 /***************************************************
  ***    C O N N E C T I O N   R O U T I N E S    ***
@@ -578,25 +574,11 @@ char *name;
 	return (0);
 }
 
-#ifdef __STDC__
 int scmerr (int error,char *fmt,...)
-#else
-/*VARARGS*//*ARGSUSED*/
-int scmerr (va_alist)
-va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap,fmt);
-#else
-	int error;
-	char *fmt;
 
-	va_start(ap);
-	error = va_arg(ap,int);
-	fmt = va_arg(ap,char *);
-#endif
+	va_start(ap,fmt);
 
 	(void) fflush (stdout);
 	if (progpid > 0)
