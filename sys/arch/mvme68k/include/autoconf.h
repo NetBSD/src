@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.4 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5 2003/10/23 09:01:44 jdolecek Exp $	*/
 
 /*
  *
@@ -44,8 +44,5 @@ extern int	bootdevlun;	/* dev_lun of boot device */
 extern int	bootpart;	/* boot partition (disk) */
 
 extern struct device *booted_device;	/* boot device */
-
-/* PARTITIONSHIFT from disklabel.h */
-#define	PARTITIONMASK	((1 << PARTITIONSHIFT) - 1) 
 
 #endif /* _MVME68K_AUTOCONF_H */
