@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67.8.1 2002/05/16 13:04:39 gehenna Exp $	*/
+/*	$NetBSD: main.c,v 1.67.8.2 2002/05/16 13:05:55 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -261,6 +261,12 @@ usage:
 	 * Fix objects and libraries.
 	 */
 	if (fixobjects())
+		stop();
+
+	/*
+	 * Fix device-majors.
+	 */
+	if (fixdevm())
 		stop();
 
 	/*
