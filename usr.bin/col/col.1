@@ -1,4 +1,4 @@
-.\"	$NetBSD: col.1,v 1.6 1997/10/18 12:53:39 lukem Exp $
+.\"	$NetBSD: col.1,v 1.7 1999/02/22 22:16:01 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)col.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd June 29, 1993
+.Dd February 22, 1999
 .Dt COL 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd filter reverse line feeds from input
 .Sh SYNOPSIS
 .Nm
-.Op Fl bfx
+.Op Fl bfpx
 .Op Fl l Ar num
 .Sh DESCRIPTION
 .Nm
@@ -68,6 +68,12 @@ written to each column position.
 Forward half line feeds are permitted (``fine'' mode).
 Normally characters printed on a half line boundary are printed
 on the following line.
+.It Fl p
+Force unknown control sequences to be passed through unchanged.
+Normally,
+.Nm
+will filter out any control sequences from the input other than those
+recognized and interpreted by itself, which are listed below.
 .It Fl x
 Output multiple spaces instead of tabs.
 .It Fl l Ar num
@@ -121,6 +127,14 @@ will display a warning message.
 .Xr expand 1 ,
 .Xr nroff 1 ,
 .Xr tbl 1
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -xpg4.2 .
+The
+.Fl l
+option is an extension to the standard.
 .Sh HISTORY
 A
 .Nm
