@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.54 2003/12/26 10:47:32 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.55 2003/12/26 10:51:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.54 2003/12/26 10:47:32 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.55 2003/12/26 10:51:25 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -584,7 +584,9 @@ display(FTSENT *p, FTSENT *list)
 	if (needstats) {
 		d.btotal = btotal;
 		d.stotal = stotal;
-		if (!f_humanize) {
+		if (f_humanize) {
+			d.s_block = 4; /* min buf length for humanize_number */
+		} else {
 			(void)snprintf(buf, sizeof(buf), "%llu",
 			    (long long)howmany(maxblock, blocksize));
 			d.s_block = strlen(buf);
