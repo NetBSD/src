@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.7 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.8 1999/12/15 06:28:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -432,7 +432,8 @@ mld6_sendpkt(in6m, type, dst)
 	/* fill in the ip6 header */
 	ip6 = mtod(mh, struct ip6_hdr *);
 	ip6->ip6_flow = 0;
-	ip6->ip6_vfc = IPV6_VERSION;
+	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc |= IPV6_VERSION;
 	/* ip6_plen will be set later */
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	/* ip6_hlim will be set by im6o.im6o_multicast_hlim */
