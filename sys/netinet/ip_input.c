@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.104 2000/03/02 06:07:36 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.105 2000/03/03 13:07:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -843,8 +843,6 @@ insert:
 	 * Make header visible.
 	 */
 	ip->ip_len = next;
-	ip->ip_ttl = 0;	/* xxx */
-	ip->ip_sum = 0;
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
