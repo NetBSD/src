@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: defs.h,v 1.1 1994/01/28 12:39:24 pk Exp $
+	$Id: defs.h,v 1.2 1994/05/17 14:01:45 pk Exp $
 */
 
 #if !defined (DEFS_H)
@@ -376,6 +376,9 @@ enum val_prettyprint
   Val_pretty_default
 };
 
+#ifdef KERNEL_DEBUG
+extern int kernel_debugging;
+#endif
 
 /* Host machine definition.  This will be a symlink to one of the
    xm-*.h files, built by the `configure' script.  */
