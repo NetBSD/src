@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2003/10/11 03:01:53 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.12 2003/11/02 12:39:30 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2003/10/11 03:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2003/11/02 12:39:30 he Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -152,9 +152,9 @@ cpu_identify()
 	volatile register_t id;
 	void *cp0, *cp15;
 
+	cp0 = install_coproc_handler(0, cpu_undef_handler);
+	cp15 = install_coproc_handler(15, cpu_undef_handler);
 	if (setjmp(&undef_jmp) == 0) {
-		cp0 = install_coproc_handler(0, cpu_undef_handler);
-		cp15 = install_coproc_handler(15, cpu_undef_handler);
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
 		__asm __volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
