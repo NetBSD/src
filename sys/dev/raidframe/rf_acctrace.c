@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.12 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.13 2003/12/30 17:29:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.12 2003/12/29 05:01:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.13 2003/12/30 17:29:41 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -50,45 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.12 2003/12/29 05:01:14 oster Exp $
 #include "rf_shutdown.h"
 
 static long numTracesSoFar;
-static int accessTraceBufCount = 0;
-static RF_AccTraceEntry_t *access_tracebuf;
 
-int     rf_stopCollectingTraces;
 RF_DECLARE_MUTEX(rf_tracing_mutex)
-
-static void rf_ShutdownAccessTrace(void *);
-
-static void rf_ShutdownAccessTrace(ignored)
-	void   *ignored;
-{
-	if (rf_accessTraceBufSize) {
-		if (accessTraceBufCount)
-				accessTraceBufCount = 0;
-		RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-	}
-}
 
 int 
 rf_ConfigureAccessTrace(listp)
 	RF_ShutdownList_t **listp;
 {
-	int     rc;
 
-	accessTraceBufCount = rf_stopCollectingTraces = 0;
-	if (rf_accessTraceBufSize) {
-		RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
-		accessTraceBufCount = 0;
-	}
 	numTracesSoFar = 0;
 	rf_mutex_init(&rf_tracing_mutex);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		if (rf_accessTraceBufSize) {
-			RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-		}
-	}
-	return (rc);
+
+	return (0);
 }
 /* install a trace record.  cause a flush to disk or to the trace collector daemon
  * if the trace buffer is at least 1/2 full.
@@ -100,7 +73,7 @@ rf_LogTraceRec(raid, rec)
 {
 	RF_AccTotals_t *acc = &raid->acc_totals;
 
-	if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
+	if (((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
 		return;
 
 	/* update AccTotals for this device */
