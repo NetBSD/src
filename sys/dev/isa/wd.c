@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.156 1997/01/17 20:45:29 perry Exp $	*/
+/*	$NetBSD: wd.c,v 1.157 1997/06/06 23:44:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -52,6 +52,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
@@ -266,6 +267,15 @@ wdcattach(parent, self, aux)
 	wdc->sc_drq = ia->ia_drq;
 
 	printf("\n");
+
+	if (wdc->sc_drq != -1) {
+		if (isa_dmamap_create(parent, wdc->sc_drq, MAXPHYS,
+		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			    wdc->sc_dev.dv_xname, wdc->sc_drq);
+			wdc->sc_drq = -1;
+		}
+	}
 
 	wdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wdcintr, wdc);
@@ -681,12 +691,12 @@ loop:
 		case WDM_DMA:
 			command = (bp->b_flags & B_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
-			/* Start the DMA channel and bounce the buffer if
-			   necessary. */
-			isa_dmastart(
+			/* Start the DMA channel. */
+			isa_dmastart(wdc->sc_dev.dv_parent, wdc->sc_drq,
+			    bp->b_data + wd->sc_skip, wd->sc_nbytes,
+			    NULL,
 			    bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
-			    bp->b_data + wd->sc_skip,
-			    wd->sc_nbytes, wdc->sc_drq);
+			    BUS_DMA_NOWAIT);
 			break;
 		case WDM_PIOMULTI:
 			command = (bp->b_flags & B_READ) ?
@@ -792,10 +802,9 @@ wdcintr(arg)
 		return 1;
 	}
 
-	/* Turn off the DMA channel and unbounce the buffer. */
+	/* Turn off the DMA channel. */
 	if (wd->sc_mode == WDM_DMA)
-		isa_dmadone(bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
-		    bp->b_data + wd->sc_skip, wd->sc_nbytes, wdc->sc_drq);
+		isa_dmadone(wdc->sc_dev.dv_parent, wdc->sc_drq);
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {

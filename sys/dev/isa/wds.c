@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.16 1997/05/01 20:10:57 marc Exp $	*/
+/*	$NetBSD: wds.c,v 1.17 1997/06/06 23:44:08 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -308,13 +308,13 @@ wdsattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_DRQEN);
 #ifdef notyet
 	if (wpd.sc_drq != -1)
-		isa_dmacascade(wpd.sc_drq);
+		isa_dmacascade(parent, wpd.sc_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, wpd.sc_irq, IST_EDGE, IPL_BIO,
 	    wdsintr, sc);
 #else
 	if (ia->ia_drq != -1)
-		isa_dmacascade(ia->ia_drq);
+		isa_dmacascade(parent, ia->ia_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    wdsintr, sc);

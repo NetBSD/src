@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.22 1997/05/23 21:20:15 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.23 1997/06/06 23:44:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,6 +82,8 @@ struct sbdsp_softc {
 	int	sc_irq;			/* interrupt */
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
+
+	struct	device *sc_isa;		/* pointer to ISA parent */
 
 	u_short	sc_open;		/* reference count of open calls */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.6 1997/04/10 06:33:16 mikel Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.7 1997/06/06 23:46:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -114,6 +114,12 @@ sb_isapnp_attach(parent, self, aux)
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
 	sc->sc_drq16 = ipa->ipa_drq[1].num;
+
+	/*
+	 * isapnp is a child if isa, and we needs isa for the dma
+	 * routines
+	 */
+	sc->sc_isa = parent->dv_parent;
 
 	printf("\n");
 

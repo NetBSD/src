@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.3 1997/03/28 23:47:12 mycroft Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.4 1997/06/06 23:43:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,11 @@
 
 #define	AHA_ISA_IOSIZE	4
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	aha_isa_probe __P((struct device *, void *, void *));
+#else
+int	aha_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void	aha_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach aha_isa_ca = {
@@ -63,7 +67,12 @@ struct cfattach aha_isa_ca = {
 int
 aha_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -113,11 +122,12 @@ aha_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ia->ia_dmat;
 	if (!aha_find(iot, ioh, &apd))
 		panic("aha_isa_attach: aha_find failed");
 
 	if (apd.sc_drq != -1)
-		isa_dmacascade(apd.sc_drq);
+		isa_dmacascade(parent, apd.sc_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.27 1997/05/09 22:16:39 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.28 1997/06/06 23:43:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -61,6 +61,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -1082,6 +1083,8 @@ spattach(parent, self, aux)
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
 	ad1848_intr, sc);
+
+    sc->sc_isa = parent->dv_parent;
 
     ad1848_attach(sc);
 

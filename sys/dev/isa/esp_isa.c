@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.2 1997/05/18 06:08:02 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.3 1997/06/06 23:43:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -430,7 +430,7 @@ esp_isa_attach(parent, self, aux)
 		panic("espattach: esp_find failed");
 
 	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_drq);
+		isa_dmacascade(parent, ia->ia_drq);
 
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    (int (*)(void *))ncr53c9x_intr, esc);

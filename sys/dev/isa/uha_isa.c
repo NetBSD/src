@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.7 1997/03/29 02:32:33 mycroft Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.8 1997/06/06 23:44:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,11 @@
 
 #define	UHA_ISA_IOSIZE	16
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	uha_isa_probe __P((struct device *, void *, void *));
+#else
+int	uha_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void	uha_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uha_isa_ca = {
@@ -61,7 +65,6 @@ struct cfattach uha_isa_ca = {
 #ifndef	DDB
 #define Debugger() panic("should call debugger here (uha_isa.c)")
 #endif /* ! DDB */
-#define KVTOPHYS(x)	vtophys(x)
 
 int	u14_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct uha_probe_data *));
@@ -78,7 +81,12 @@ void	u14_init __P((struct uha_softc *));
 int
 uha_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -117,6 +125,7 @@ uha_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ia->ia_iot;
+	bus_dma_tag_t dmat = ia->ia_dmat;
 	bus_space_handle_t ioh;
 	struct uha_probe_data upd;
 	isa_chipset_tag_t ic = ia->ia_ic;
@@ -128,11 +137,19 @@ uha_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = dmat;
 	if (!u14_find(iot, ioh, &upd))
 		panic("uha_isa_attach: u14_find failed!");
 
-	if (upd.sc_drq != -1)
-		isa_dmacascade(upd.sc_drq);
+	if (upd.sc_drq != -1) {
+		sc->sc_dmaflags = 0;
+		isa_dmacascade(parent, upd.sc_drq);
+	} else {
+		/*
+		 * We have a VLB controller, and can do 32-bit DMA.
+		 */
+		sc->sc_dmaflags = ISABUS_DMA_32BIT;
+	}
 
 	sc->sc_ih = isa_intr_establish(ic, upd.sc_irq, IST_EDGE, IPL_BIO,
 	    u14_intr, sc);
@@ -262,7 +279,8 @@ u14_start_mbox(sc, mscp)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, U14_OGMPTR, KVTOPHYS(mscp));
+	bus_space_write_4(iot, ioh, U14_OGMPTR,
+	    mscp->dmamap_self->dm_segs[0].ds_addr);
 	if (mscp->flags & MSCP_ABORT)
 		bus_space_write_1(iot, ioh, U14_LINT, U14_ABORT);
 	else

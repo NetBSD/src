@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.56 1997/05/29 04:57:02 jtk Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.57 1997/06/06 23:44:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -56,7 +56,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -316,6 +316,26 @@ sbdsp_attach(sc)
 	struct audio_params xparams;
         int i;
         u_int v;
+
+	/*
+	 * Create our DMA maps.
+	 */
+	if (sc->sc_drq8 != -1) {
+		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq8,
+		    MAXPHYS /* XXX */, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			return;
+		}
+	}
+	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
+		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq16,
+		    MAXPHYS /* XXX */, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			return;
+		}
+	}
 
         sbdsp_set_params(sc, AUMODE_RECORD, &audio_default, &xparams);
         sbdsp_set_params(sc, AUMODE_PLAY,   &audio_default, &xparams);
@@ -860,7 +880,7 @@ sbdsp_reset(sc)
 
 	sc->sc_intr = 0;
 	if (sc->sc_dmadir != SB_DMA_NONE) {
-		isa_dmaabort(sc->dmachan);
+		isa_dmaabort(sc->sc_isa, sc->dmachan);
 		sc->sc_dmadir = SB_DMA_NONE;
 	}
 
@@ -1170,7 +1190,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		Dprintf("sbdsp_dma_input: dmastart %x %p %d %d\n", 
 			sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
 #endif
-	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+	isa_dmastart(sc->sc_isa, sc->dmachan, sc->dmaaddr,
+	    sc->dmacnt, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
@@ -1283,7 +1304,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		Dprintf("sbdsp_dma_output: dmastart %x %p %d %d\n", 
 			sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
 #endif
-	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+	isa_dmastart(sc->sc_isa, sc->dmachan, sc->dmaaddr,
+	    sc->dmacnt, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
@@ -1357,7 +1379,7 @@ sbdsp_intr(arg)
 		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16)) == 0)
 			return 0;
 	} else {
-		if (!loop && !isa_dmafinished(sc->dmachan))
+		if (!loop && !isa_dmafinished(sc->sc_isa, sc->dmachan))
 			return 0;
 		irq = SBP_IRQ_DMA8;
 	}
@@ -1376,8 +1398,7 @@ sbdsp_intr(arg)
 		if (irq & SBP_IRQ_DMA16)
 			bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK16);
 		if (!loop)
-			isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt,
-			    sc->dmachan);
+			isa_dmadone(sc->sc_isa, sc->dmachan);
 		(*sc->sc_intr)(sc->sc_arg);
 	} else {
 		return 0;

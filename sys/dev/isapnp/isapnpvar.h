@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.2 1997/01/24 21:58:38 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.3 1997/06/06 23:46:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -124,6 +124,7 @@ struct isapnp_pin {
 struct isapnp_attach_args {
 	bus_space_tag_t ipa_iot;	/* isa i/o space tag */
 	bus_space_tag_t ipa_memt;	/* isa mem space tag */
+	bus_dma_tag_t	ipa_dmat;	/* isa dma tag */
 
 	isa_chipset_tag_t ipa_ic;
 

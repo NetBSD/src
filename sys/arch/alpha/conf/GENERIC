@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 1997/06/05 02:29:58 thorpej Exp $
+# $NetBSD: GENERIC,v 1.56 1997/06/06 23:49:37 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -147,24 +147,36 @@ pms*	at	pcppi?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+#le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 awdc1	at	isa? port 0x170 irq 15
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
+aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
+bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 
 # EISA devices
+ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
 ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
+uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
+scsibus* at	aha?
+scsibus* at	ahb?
 scsibus* at	ahc?
 scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
+scsibus* at	uha?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
