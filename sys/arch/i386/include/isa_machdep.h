@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.17 2000/11/15 02:00:31 enami Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.18 2000/11/15 19:30:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -197,8 +197,6 @@ extern struct i386_bus_dma_tag isa_bus_dma_tag;
 #define	MONO_BUF	0xB0000
 #define	CGA_BASE	0x3D4
 #define	CGA_BUF		0xB8000
-#define	IOPHYSMEM	0xA0000
-
 
 /*
  * Interrupt handler chains.  isa_intr_establish() inserts a handler into
@@ -213,25 +211,6 @@ struct intrhand {
 	int	ih_level;
 	int	ih_irq;
 };
-
- 
-/*
- * ISA DMA bounce buffers.
- * XXX should be made partially machine- and bus-mapping-independent.
- *
- * DMA_BOUNCE is the number of pages of low-addressed physical memory
- * to acquire for ISA bounce buffers.
- *
- * isaphysmem is the location of those bounce buffers.  (They are currently
- * assumed to be contiguous.
- */
-
-#ifndef DMA_BOUNCE
-#define	DMA_BOUNCE      8		/* one buffer per channel */
-#endif
-
-extern vaddr_t isaphysmem;
-
 
 /*
  * Variables and macros to deal with the ISA I/O hole.
