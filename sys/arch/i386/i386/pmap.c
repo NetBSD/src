@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 1999/07/18 21:33:20 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 1999/07/28 01:07:58 thorpej Exp $	*/
 
 /*
  *
@@ -3540,6 +3540,38 @@ enter_now:
 
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+}
+
+/*
+ * pmap_kenter_pa: enter a kernel mapping without R/M (pv_entry) tracking
+ *
+ * => no need to lock anything, assume va is already allocated
+ * => should be faster than normal pmap enter function
+ */
+
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	struct pmap *pm = pmap_kernel();
+	pt_entry_t *pte, opte;
+	int s;
+
+	s = splimp();
+	simple_lock(&pm->pm_obj.vmobjlock);
+	pm->pm_stats.resident_count++;
+	pm->pm_stats.wired_count++;
+	simple_unlock(&pm->pm_obj.vmobjlock);
+	splx(s);
+
+	pte = vtopte(va);
+	opte = *pte;
+	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+		PG_V | pmap_pg_g;	/* zap! */
+	if (pmap_valid_entry(opte))
+		pmap_update_pg(va);
 }
 
 /*
