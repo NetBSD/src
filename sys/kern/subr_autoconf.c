@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.79 2002/11/24 17:33:44 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.80 2002/12/31 23:59:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.79 2002/11/24 17:33:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.80 2002/12/31 23:59:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,6 +179,8 @@ __volatile int config_pending;		/* semaphore for mountroot */
 
 static int config_initialized;		/* config_init() has been called. */
 
+static int config_do_twiddle;
+
 /*
  * Initialize the autoconfiguration data structures.  Normally this
  * is done by configure(), but some platforms need to do this very
@@ -229,6 +231,7 @@ config_init(void)
 void
 configure(void)
 {
+	int errcnt;
 
 	/* Initialize data structures. */
 	config_init();
@@ -237,6 +240,11 @@ configure(void)
 	if (boothowto & RB_USERCONF)
 		user_config();
 #endif
+
+	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
+		config_do_twiddle = 1;
+		printf_nolog("Detecting hardware...");
+	}
 
 	/*
 	 * Do the machine-dependent portion of autoconfiguration.  This
@@ -259,6 +267,20 @@ configure(void)
 	 * to do this once interrupts are enabled.
 	 */
 	config_process_deferred(&interrupt_config_queue, NULL);
+
+	errcnt = aprint_get_error_count();
+	if ((boothowto & (AB_QUIET|AB_SILENT)) != 0 &&
+	    (boothowto & AB_VERBOSE) == 0) {
+		if (config_do_twiddle) {
+			config_do_twiddle = 0;
+			printf_nolog("done.\n");
+		}
+		if (errcnt != 0) {
+			printf("WARNING: %d error%s while detecting hardware; "
+			    "check system log.\n", errcnt,
+			    errcnt == 1 ? "" : "s");
+		}
+	}
 }
 
 /*
@@ -604,8 +626,11 @@ config_found_sm(struct device *parent, void *aux, cfprint_t print,
 
 	if ((cf = config_search(submatch, parent, aux)) != NULL)
 		return (config_attach(parent, cf, aux, print));
-	if (print)
-		printf("%s", msgs[(*print)(aux, parent->dv_xname)]);
+	if (print) {
+		if (config_do_twiddle)
+			twiddle();
+		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
+	}
 	return (NULL);
 }
 
@@ -619,7 +644,7 @@ config_rootfound(const char *rootname, void *aux)
 
 	if ((cf = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
 		return (config_attach(ROOT, cf, aux, (cfprint_t)NULL));
-	printf("root device %s not configured\n", rootname);
+	aprint_error("root device %s not configured\n", rootname);
 	return (NULL);
 }
 
@@ -746,10 +771,25 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	dev->dv_parent = parent;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
 
-	if (parent == ROOT)
-		printf("%s (root)", dev->dv_xname);
-	else {
-		printf("%s at %s", dev->dv_xname, parent->dv_xname);
+	if (config_do_twiddle)
+		twiddle();
+	else
+		aprint_naive("Found ");
+	/*
+	 * We want the next two printfs for normal, verbose, and quiet,
+	 * but not silent (in which case, we're twiddling, instead).
+	 */
+	if (parent == ROOT) {
+		if (config_do_twiddle)
+			aprint_normal("%s (root)", dev->dv_xname);
+		else
+			printf("%s (root)", dev->dv_xname);
+	} else {
+		if (config_do_twiddle)
+			aprint_normal("%s at %s", dev->dv_xname,
+			    parent->dv_xname);
+		else
+			printf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
 			(void) (*print)(aux, NULL);
 	}
@@ -990,7 +1030,7 @@ config_detach(struct device *dev, int flags)
 	 */
 	cd->cd_devs[dev->dv_unit] = NULL;
 	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
-		printf("%s detached\n", dev->dv_xname);
+		aprint_normal("%s detached\n", dev->dv_xname);
 	free(dev, M_DEVBUF);
 
 	/*
