@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.3 1997/06/06 23:30:59 thorpej Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.4 1997/06/25 13:30:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ struct aha_devices {
 		u_char	opcode;
 	} cmd;
 	struct {
-		u_char	junk[8];
+		u_char	lun_map[8];
 	} reply;
 };
 

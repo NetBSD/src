@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.5 1997/06/06 23:30:58 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.6 1997/06/25 13:31:01 hannken Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -137,7 +137,7 @@ void ahaminphys __P((struct buf *));
 int aha_scsi_cmd __P((struct scsi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsi_xfer *, int));
 void aha_timeout __P((void *arg));
-int aha_create_ccbs __P((struct aha_softc *, void *, size_t));
+int aha_create_ccbs __P((struct aha_softc *, void *, size_t, int));
 
 struct scsi_adapter aha_switch = {
 	aha_scsi_cmd,
@@ -305,9 +305,6 @@ aha_attach(sc, apd)
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
 
-	aha_inquire_setup_information(sc);
-	aha_init(sc);
-
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -318,6 +315,9 @@ aha_attach(sc, apd)
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.max_target = 7;
+
+	aha_inquire_setup_information(sc);
+	aha_init(sc);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -543,10 +543,11 @@ aha_init_ccb(sc, ccb)
  * Create a set of ccbs and add them to the free list.
  */
 int
-aha_create_ccbs(sc, mem, size)
+aha_create_ccbs(sc, mem, size, max_ccbs)
 	struct aha_softc *sc;
 	void *mem;
 	size_t size;
+	int max_ccbs;
 {
 	bus_dma_segment_t seg;
 	struct aha_ccb *ccb;
@@ -576,7 +577,7 @@ aha_create_ccbs(sc, mem, size)
 	while (size > sizeof(struct aha_ccb)) {
 		aha_init_ccb(sc, ccb);
 		sc->sc_numccbs++;
-		if (sc->sc_numccbs >= AHA_CCB_MAX)
+		if (sc->sc_numccbs >= max_ccbs)
 			break;
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
 		(caddr_t)ccb += ALIGN(sizeof(struct aha_ccb));
@@ -613,7 +614,7 @@ aha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			if (aha_create_ccbs(sc, NULL, 0)) {
+			if (aha_create_ccbs(sc, NULL, 0, AHA_CCB_MAX)) {
 				printf("%s: can't allocate ccbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
@@ -941,7 +942,7 @@ aha_init(sc)
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
-	int i, rseg;
+	int i, j, initial_ccbs, rseg;
 
 	/*
 	 * XXX
@@ -988,6 +989,16 @@ aha_init(sc)
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
+	/* Count installed units */
+	initial_ccbs = 0;
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (((devices.reply.lun_map[i] >> j) & 1) == 1)
+				initial_ccbs += 1;
+		}
+	}
+	initial_ccbs *= sc->sc_link.openings;
+
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
 	setup.cmd.len = sizeof(setup.reply);
@@ -1024,7 +1035,7 @@ aha_init(sc)
 	 */
 	if (aha_create_ccbs(sc, ((caddr_t)wmbx) +
 	    ALIGN(sizeof(struct aha_mbx)),
-	    NBPG - ALIGN(sizeof(struct aha_mbx))))
+	    NBPG - ALIGN(sizeof(struct aha_mbx)), initial_ccbs))
 		panic("aha_init: can't create ccbs");
 
 	/*
