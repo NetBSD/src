@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.11 1998/02/04 15:21:53 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.12 1998/07/26 21:25:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.11 1998/02/04 15:21:53 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.12 1998/07/26 21:25:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ display(tempname, fd, pw)
 		    *pw->pw_shell ? pw->pw_shell : _PATH_BSHELL);
 	else
 		list[E_SHELL].restricted = 1;
-	bp = pw->pw_gecos;
+	bp = strdup(pw->pw_gecos);
 	p = strsep(&bp, ",");
 	(void)fprintf(fp, "Full Name: %s\n", p ? p : "");
 	p = strsep(&bp, ",");
@@ -212,8 +212,9 @@ bad:					(void)fclose(fp);
 	    strlen(list[E_HPHONE].save) + strlen(list[E_LOCATE].save) + 4;
 	if (!(p = malloc(len)))
 		err(1, "malloc");
-	(void)snprintf(pw->pw_gecos = p, len, "%s,%s,%s,%s", list[E_NAME].save,
+	(void)snprintf(p, len, "%s,%s,%s,%s", list[E_NAME].save,
 	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save);
+	pw->pw_gecos = p;
 
 	if (snprintf(buf, sizeof(buf),
 	    "%s:%s:%d:%d:%s:%lu:%lu:%s:%s:%s",
