@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.25 2002/04/09 00:52:05 thorpej Exp $	*/
+/*	$NetBSD: output.c,v 1.26 2002/05/25 23:09:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.25 2002/04/09 00:52:05 thorpej Exp $");
+__RCSID("$NetBSD: output.c,v 1.26 2002/05/25 23:09:06 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,95 +219,44 @@ freestdout() {
 
 
 void
-#ifdef __STDC__
 outfmt(struct output *file, const char *fmt, ...)
-#else
-void
-outfmt(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	struct output *file;
-	const char *fmt;
 
-	va_start(ap);
-	file = va_arg(ap, struct output *);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	doformat(file, fmt, ap);
 	va_end(ap);
 }
 
 
 void
-#ifdef __STDC__
 out1fmt(const char *fmt, ...)
-#else
-out1fmt(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	doformat(out1, fmt, ap);
 	va_end(ap);
 }
 
 void
-#ifdef __STDC__
 dprintf(const char *fmt, ...)
-#else
-dprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	doformat(out2, fmt, ap);
 	va_end(ap);
 	flushout(out2);
 }
 
 void
-#ifdef __STDC__
 fmtstr(char *outbuf, size_t length, const char *fmt, ...)
-#else
-fmtstr(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct output strout;
-#ifndef __STDC__
-	char *outbuf;
-	size_t length;
-	const char *fmt;
 
-	va_start(ap);
-	outbuf = va_arg(ap, char *);
-	length = va_arg(ap, size_t);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	strout.nextc = outbuf;
 	strout.nleft = length;
 	strout.fd = BLOCK_OUT;
