@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.12 2002/10/23 09:14:46 jdolecek Exp $
+ *	$Id: i4b_trace.c,v 1.13 2003/10/03 16:38:44 pooka Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.12 2002/10/23 09:14:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.13 2003/10/03 16:38:44 pooka Exp $");
 
 #include "isdntrc.h"
 
@@ -75,10 +75,10 @@ static int device_state[NISDNTRC];
 #define ST_ISOPEN	0x01
 #define ST_WAITDATA	0x02
 
-static int analyzemode = 0;			/* we are in anlyzer mode */
-static int rxunit = -1;				/* l2 bri of receiving driver */
-static int txunit = -1;				/* l2 bri of transmitting driver */
-static int outunit = -1;			/* output device for trace data */
+static int analyzemode = 0;		/* we are in anlyzer mode */
+static int rxunit = -1;			/* l2 isdnif of receiving driver */
+static int txunit = -1;			/* l2 isdnif of transmitting driver */
+static int outunit = -1;		/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
 void isdntrcattach __P((void));
@@ -141,12 +141,12 @@ int
 isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
 	struct mbuf *m;
-	int bri, x;
+	int isdnif, x;
 	int trunc = 0;
 	int totlen = len + sizeof(i4b_trace_hdr);
 
 	MICROTIME(hdr->time);
-	hdr->bri = sc->drv->bri;
+	hdr->isdnif = sc->drv->isdnif;
 
 	/*
 	 * for telephony (or better non-HDLC HSCX mode) we get 
@@ -174,9 +174,9 @@ isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace
 	
 	/* check valid interface */
 	
-	if((bri = hdr->bri) > NISDNTRC)
+	if((isdnif = hdr->isdnif) > NISDNTRC)
 	{
-		printf("i4b_trace: get_trace_data_from_l1 - bri > NISDNTRC!\n"); 
+		printf("i4b_trace: get_trace_data_from_l1 - isdnif > NISDNTRC!\n"); 
 		return(0);
 	}
 
@@ -190,21 +190,21 @@ isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace
 
 	/* check if we are in analyzemode */
 	
-	if(analyzemode && (bri == rxunit || bri == txunit))
+	if(analyzemode && (isdnif == rxunit || isdnif == txunit))
 	{
-		if(bri == rxunit)
+		if(isdnif == rxunit)
 			hdr->dir = FROM_NT;
 		else
 			hdr->dir = FROM_TE;
-		bri = outunit;			
+		isdnif = outunit;			
 	}
 
-	if(IF_QFULL(&trace_queue[bri]))
+	if(IF_QFULL(&trace_queue[isdnif]))
 	{
 		struct mbuf *m1;
 
 		x = splnet();
-		IF_DEQUEUE(&trace_queue[bri], m1);
+		IF_DEQUEUE(&trace_queue[isdnif], m1);
 		splx(x);		
 
 		i4b_Bfreembuf(m1);
@@ -221,12 +221,12 @@ isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace
 
 	x = splnet();
 	
-	IF_ENQUEUE(&trace_queue[bri], m);
+	IF_ENQUEUE(&trace_queue[isdnif], m);
 	
-	if(device_state[bri] & ST_WAITDATA)
+	if(device_state[isdnif] & ST_WAITDATA)
 	{
-		device_state[bri] &= ~ST_WAITDATA;
-		wakeup((caddr_t) &trace_queue[bri]);
+		device_state[isdnif] &= ~ST_WAITDATA;
+		wakeup((caddr_t) &trace_queue[isdnif]);
 	}
 
 	splx(x);
@@ -268,16 +268,16 @@ isdntrcopen(dev_t dev, int flag, int fmt, struct proc *p)
 PDEVSTATIC int
 isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int bri = minor(dev);
+	int isdnif = minor(dev);
 	int x;
 
-	if (analyzemode && (bri == outunit)) {
+	if (analyzemode && (isdnif == outunit)) {
 		l2_softc_t * rx_l2sc, * tx_l2sc;
 		analyzemode = 0;		
 		outunit = -1;
 		
-		rx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(rxunit);
-		tx_l2sc = (l2_softc_t*)isdn_find_softc_by_bri(txunit);
+		rx_l2sc = (l2_softc_t*)isdn_find_softc_by_isdnif(rxunit);
+		tx_l2sc = (l2_softc_t*)isdn_find_softc_by_isdnif(txunit);
 
 		if (rx_l2sc != NULL)
 			rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
@@ -291,11 +291,11 @@ isdntrcclose(dev_t dev, int flag, int fmt, struct proc *p)
 		rxunit = -1;
 		txunit = -1;
 	} else {
-		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
+		l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_isdnif(isdnif);
 		if (l2sc != NULL) {
 			l2sc->driver->mph_command_req(l2sc->l1_token, CMR_SETTRACE, TRACE_OFF);
 			x = splnet();
-			device_state[bri] = ST_IDLE;
+			device_state[isdnif] = ST_IDLE;
 			splx(x);
 		}
 	}
@@ -365,9 +365,9 @@ PDEVSTATIC int
 isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
-	int bri = minor(dev);
+	int isdnif = minor(dev);
 	i4b_trace_setupa_t *tsa;
-	l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
+	l2_softc_t * l2sc = (l2_softc_t*)isdn_find_softc_by_isdnif(isdnif);
 
 	switch(cmd)
 	{
@@ -399,13 +399,13 @@ isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			else
 			{
 				l2_softc_t * rx_l2sc, * tx_l2sc;
-				rx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(rxunit);
-				tx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_bri(txunit);
+				rx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_isdnif(rxunit);
+				tx_l2sc = (l2_softc_t*)(l2_softc_t*)isdn_find_softc_by_isdnif(txunit);
 
 				if (l2sc == NULL || rx_l2sc == NULL || tx_l2sc == NULL)
 					return ENOTTY;
 					
-				outunit = bri;
+				outunit = isdnif;
 				analyzemode = 1;
 				rx_l2sc->driver->mph_command_req(rx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->rxflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));
 				tx_l2sc->driver->mph_command_req(tx_l2sc->l1_token, CMR_SETTRACE, (void *)(unsigned long)(tsa->txflags & (TRACE_I | TRACE_D_RX | TRACE_B_RX)));

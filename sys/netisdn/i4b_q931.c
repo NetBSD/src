@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.14 2002/09/27 15:37:56 provos Exp $ 
+ *	$Id: i4b_q931.c,v 1.15 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.14 2002/09/27 15:37:56 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.15 2003/10/03 16:38:44 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -113,7 +113,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
  *	decode and process a Q.931 message
  *---------------------------------------------------------------------------*/
 void
-i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
+i4b_decode_q931(int isdnif, int msg_len, u_char *msg_ptr)
 {
 	call_desc_t *cd = NULL;
 	int codeset = CODESET_0;
@@ -175,17 +175,18 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* find or allocate calldescriptor */
 
-	if((cd = cd_by_bricr(bri, crval,
+	if((cd = cd_by_isdnifcr(isdnif, crval,
 			crflag == CRF_DEST ? CRF_ORIG : CRF_DEST)) == NULL)
 	{
 		if(*msg_ptr == SETUP)
 		{
-			struct isdn_l3_driver *drv = isdn_find_l3_by_bri(bri);
+			struct isdn_l3_driver *drv;
 
+			drv = isdn_find_l3_by_isdnif(isdnif);
 			/* get and init new calldescriptor */
 
 			cd = reserve_cd();	/* cdid filled in */
-			cd->bri = bri;
+			cd->isdnif = isdnif;
 			cd->l3drv = drv;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
@@ -708,12 +709,12 @@ i4b_decode_q931_message(call_desc_t *cd, u_char message_type)
 			break;
 			
 		default:
-			NDBGL3(L3_P_ERR, "bri %d, cr = 0x%02x, msg = 0x%02x", cd->bri, cd->cr, message_type);
+			NDBGL3(L3_P_ERR, "isdnif %d, cr = 0x%02x, msg = 0x%02x", cd->isdnif, cd->cr, message_type);
 			break;
 	}
 	if(m)
 	{
-		NDBGL3(L3_PRIM, "%s: bri %d, cr = 0x%02x\n", m, cd->bri, cd->cr);
+		NDBGL3(L3_PRIM, "%s: isdnif %d, cr = 0x%02x\n", m, cd->isdnif, cd->cr);
 	}
 }
 

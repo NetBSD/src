@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.15 2003/07/11 10:15:56 drochner Exp $ */
+/* $NetBSD: isic_l1.h,v 1.16 2003/10/03 16:38:44 pooka Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -359,7 +359,7 @@ extern int isic_probe_s0163 __P((struct isic_attach_args *));
 extern int isic_probe_s08 __P((struct isic_attach_args *ia));
 extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
 extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
-extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver);
+extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_isdnif_driver *dchan_driver);
 extern int isic_detach_bri(struct isic_softc *sc);
 
 extern void isic_isacsx_disable_intr __P((struct isic_softc *sc));
