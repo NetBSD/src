@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.10 2001/11/22 17:59:59 thorpej Exp $	*/
+/*	$NetBSD: undefined.c,v 1.11 2001/11/23 21:18:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.10 2001/11/22 17:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.11 2001/11/23 21:18:30 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.10 2001/11/22 17:59:59 thorpej Exp $
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 #include <machine/trap.h>
 
 #include <arch/arm/arm/disassem.h>

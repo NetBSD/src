@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.25 2001/11/23 17:23:43 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.26 2001/11/23 21:18:32 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -61,7 +61,7 @@
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/pio.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.18 2001/11/23 17:23:42 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.19 2001/11/23 21:18:32 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.1 2001/04/20 18:08:49 matt Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.2 2001/11/23 21:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -53,8 +53,8 @@
 #endif
 #include <machine/cpu.h>
 #if 0
-#include <machine/cpus.h>
-#include <machine/undefined.h>
+#include <arm/cpus.h>
+#include <arm/undefined.h>
 #endif
 
 /*
