@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.16 1999/02/23 16:59:38 kleink Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.17 1999/02/23 20:11:06 is Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -73,17 +73,11 @@ struct	arphdr {
 	u_int8_t  ar_tha[];	/* target hardware address */
 	u_int8_t  ar_tpa[];	/* target protocol address */
 #endif
-	/* LINTED 0 sized arrays are not legal, but we like one here */
-#if defined(__GNUC__) && (((__GNUC__ == 2) && (__GNUC_MINOR >= 8)) || \
-    (__GNUC__ > 2))
-	__extension__
-#endif
-	u_int8_t  ar_remain[0];	/* minimum size, normally bigger */
-#define ar_sha(ap) (((ap)->ar_remain)+0)
-#define ar_spa(ap) (((ap)->ar_remain)+(ap)->ar_hln)
-#define ar_tha(ap) (((ap)->ar_remain)+(ap)->ar_hln+(ap)->ar_pln)
-#define ar_tpa(ap) (((ap)->ar_remain)+2*(ap)->ar_hln+(ap)->ar_pln)
-};
+#define ar_sha(ap) (((caddr_t)((ap)+1))+0)
+#define ar_spa(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln)
+#define ar_tha(ap) (((caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
+#define ar_tpa(ap) (((caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
+} __attribute__((packed));
 
 
 /*
