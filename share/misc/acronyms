@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.64 2000/07/14 15:15:52 ad Exp $
+$NetBSD: acronyms,v 1.65 2000/08/10 02:23:40 hubertf Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -63,6 +63,7 @@ L8R	later
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
+MCC	Memory Credential Cache
 MOTAS	member of the appropriate sex
 MOTOS	member of the opposite sex
 MOTSS	member of the same sex
