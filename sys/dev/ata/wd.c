@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.115 1994/11/22 10:20:16 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.116 1994/11/23 01:35:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -349,11 +349,16 @@ wdattach(parent, self, aux)
 		wd->sc_multiple = 1;
 	}
 
+	printf("%s: using", wd->sc_dev.dv_xname);
 	if (wd->sc_mode == WDM_DMA)
-		printf("%s: using dma\n", wd->sc_dev.dv_xname);
+		printf(" dma transfers,");
 	else
-		printf("%s: using %d-sector %d-bit pio\n", wd->sc_dev.dv_xname,
+		printf(" %d-sector %d-bit pio transfers,",
 		    wd->sc_multiple, (wd->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
+	if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
+		printf(" lba addressing\n");
+	else
+		printf(" chs addressing\n");
 
 	wd->sc_dk.dk_driver = &wddkdriver;
 }
@@ -525,13 +530,6 @@ loop:
 		goto loop;
 	}
 
-	/* Mark the controller active and set a timeout. */
-	if (wdc->sc_flags & WDCF_ACTIVE)
-		untimeout(wdctimeout, wdc);
-	else
-		wdc->sc_flags |= WDCF_ACTIVE;
-	timeout(wdctimeout, wdc, WAITTIME);
-    
 	/* Do control operations specially. */
 	if (wd->sc_state < OPEN) {
 		/*
@@ -539,8 +537,10 @@ loop:
 		 * state if the device is currently busy, but we can assume
 		 * that we never get to this point if that's the case.
 		 */
-		(void) wdcontrol(wd);
-		return;
+		if (wdcontrol(wd) == 0) {
+			/* The drive is busy.  Wait. */
+			return;
+		}
 	}
 
 	/*
@@ -596,7 +596,7 @@ loop:
 		 * this in single-sector mode, or when starting a multiple-sector
 		 * transfer.
 		 */
-		if ((wd->sc_dk.dk_label.d_flags & D_BADSECT) != 0
+		if ((lp->d_flags & D_BADSECT) != 0
 #ifdef B_FORMAT
 		    && (bp->b_flags & B_FORMAT) == 0
 #endif
@@ -623,10 +623,20 @@ loop:
 			/* Tranfer is okay now. */
 		}
 
-		cylin = blkno / lp->d_secpercyl;
-		head = (blkno % lp->d_secpercyl) / lp->d_nsectors;
-		sector = blkno % lp->d_nsectors;
-		sector++;	/* Sectors begin with 1, not 0. */
+		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+			sector = (blkno >> 0) & 0xff;
+			cylin = (blkno >> 8) & 0xffff;
+			head = (blkno >> 24) & 0xff;
+			head |= WDSD_LBA;
+		} else {
+			sector = blkno % lp->d_nsectors;
+			sector++;	/* Sectors begin with 1, not 0. */
+			blkno /= lp->d_nsectors;
+			head = blkno % lp->d_ntracks;
+			blkno /= lp->d_ntracks;
+			cylin = blkno;
+			head |= WDSD_CHS;
+		}
 
 #ifdef INSTRUMENT
 		++dk_seek[wd->sc_dev.dv_unit];
@@ -698,6 +708,9 @@ loop:
 			    bp->b_data + wd->sc_skip * DEV_BSIZE,
 			    nblks * DEV_BSIZE / sizeof(long));
 	}
+
+	wdc->sc_flags |= WDCF_ACTIVE;
+	timeout(wdctimeout, wdc, WAITTIME);
 }
 
 /*
@@ -720,6 +733,9 @@ wdcintr(wdc)
 		return 0;
 	}
 
+	wdc->sc_flags &= ~WDCF_ACTIVE;
+	untimeout(wdctimeout, wdc);
+
 	wd = wdc->sc_drives.tqh_first;
 	bp = wd->sc_q.b_actf;
 
@@ -734,13 +750,14 @@ wdcintr(wdc)
     
 	/* Is it not a transfer, but a control operation? */
 	if (wd->sc_state < OPEN) {
-		if (wdcontrol(wd))
-			wdcstart(wdc);
+		if (wdcontrol(wd) == 0) {
+			/* The drive is busy.  Wait. */
+			return 1;
+		}
+		wdcstart(wdc);
 		return 1;
 	}
 
-	wdc->sc_flags &= ~WDCF_ACTIVE;
-	untimeout(wdctimeout, wdc);
 	nblks = wdc->sc_nblks;
     
 	if (wd->sc_mode == WDM_DMA)
@@ -1005,7 +1022,7 @@ wdcontrol(wd)
 			goto bad;
 		}
 		wd->sc_state = RECAL_WAIT;
-		return 0;
+		break;
 
 	case RECAL_WAIT:
 		if (wdc->sc_status & WDCS_ERR) {
@@ -1014,12 +1031,14 @@ wdcontrol(wd)
 		}
 		/* fall through */
 	case GEOMETRY:
+		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
+			goto multimode;
 		if (wdsetctlr(wd) != 0) {
 			/* Already printed a message. */
 			goto bad;
 		}
 		wd->sc_state = GEOMETRY_WAIT;
-		return 0;
+		break;
 
 	case GEOMETRY_WAIT:
 		if (wdc->sc_status & WDCS_ERR) {
@@ -1028,6 +1047,7 @@ wdcontrol(wd)
 		}
 		/* fall through */
 	case MULTIMODE:
+	multimode:
 		if (wd->sc_mode != WDM_PIOMULTI)
 			goto open;
 		outb(wdc->sc_iobase+wd_seccnt, wd->sc_multiple);
@@ -1036,7 +1056,7 @@ wdcontrol(wd)
 			goto bad;
 		}
 		wd->sc_state = MULTIMODE_WAIT;
-		return 0;
+		break;
 
 	case MULTIMODE_WAIT:
 		if (wdc->sc_status & WDCS_ERR) {
@@ -1044,6 +1064,7 @@ wdcontrol(wd)
 			goto bad;
 		}
 		/* fall through */
+	case OPEN:
 	open:
 		wdc->sc_errors = 0;
 		wd->sc_state = OPEN;
@@ -1057,9 +1078,9 @@ wdcontrol(wd)
 		return 0;
 	}
 
-#ifdef DIAGNOSTIC
-	panic("wdcontrol: impossible");
-#endif
+	wdc->sc_flags |= WDCF_ACTIVE;
+	timeout(wdctimeout, wdc, WAITTIME);
+	return 0;
 }
 
 /*
@@ -1078,7 +1099,7 @@ wdcommand(wd, command, cylin, head, sector, count)
 	int iobase = wdc->sc_iobase;
 	int stat;
     
-	/* Select drive. */
+	/* Select drive, head, and addressing mode. */
 	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
 
 	/* Wait for it to become ready to accept a command. */
@@ -1408,23 +1429,17 @@ wddump(dev)
 {
 	struct wd_softc *wd;	/* disk unit to do the IO */
 	struct wdc_softc *wdc;
-	long num;		/* number of sectors to write */
+	struct disklabel *lp;
 	int unit, part;
-	long blkoff, blkno;
-	long cylin, head, sector;
-	long secpertrk, secpercyl, nblocks;
+	long rblkno, nblks;
 	char *addr;
 	static wddoingadump = 0;
 	extern caddr_t CADDR1;
 	extern pt_entry_t *CMAP1;
 	
-	addr = (char *)0;	/* starting address */
-    
-#if DO_NOT_KNOW_HOW
-	/* Toss any characters present prior to dump, ie. non-blocking getc. */
-	while (cngetc())
-		;
-#endif
+	if (wddoingadump)
+		return EFAULT;
+	wddoingadump = 1;
 
 	unit = WDUNIT(dev);
 	/* Check for acceptable drive number. */
@@ -1436,26 +1451,18 @@ wddump(dev)
 		return ENXIO;
 
 	wdc = (void *)wd->sc_dev.dv_parent;
+	addr = (char *)0;	/* starting address */
+	lp = &wd->sc_dk.dk_label;
+	part = WDPART(dev);
 
 	/* Convert to disk sectors. */
-	num = ctob(physmem) / wd->sc_dk.dk_label.d_secsize;
-    
-	secpertrk = wd->sc_dk.dk_label.d_nsectors;
-	secpercyl = wd->sc_dk.dk_label.d_secpercyl;
-	part = WDPART(dev);
-	nblocks = wd->sc_dk.dk_label.d_partitions[part].p_size;
-	blkoff = wd->sc_dk.dk_label.d_partitions[part].p_offset;
-    
-	/*printf("part %x, nblocks %d, dumplo %d, num %d\n", part, nblocks,
-	    dumplo, num);*/
-    
-	/* Check transfer bounds against partition size. */
-	if (dumplo < 0 || dumplo + num > nblocks)
-		return EINVAL;
+	rblkno = lp->d_partitions[part].p_offset + dumplo;
+	nblks = min(ctob(physmem) / lp->d_secsize,
+		    lp->d_partitions[part].p_size - dumplo);
 
-	if (wddoingadump)
-		return EFAULT;
-	wddoingadump = 1;
+	/* Check transfer bounds against partition size. */
+	if (dumplo < 0 || nblks <= 0)
+		return EINVAL;
 
 	/* Recalibrate. */
 	if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0 ||
@@ -1465,36 +1472,45 @@ wddump(dev)
 		return EIO;
 	}
     
-	blkno = dumplo + blkoff;
-	while (num > 0) {
-		/* Compute disk address. */
-		cylin = blkno / secpercyl;
-		head = (blkno % secpercyl) / secpertrk;
-		sector = blkno % secpertrk;
-	
-		if ((wd->sc_dk.dk_label.d_flags & D_BADSECT) != 0) {
-			long newblk;
+	while (nblks > 0) {
+		long blkno;
+		long cylin, head, sector;
+
+		blkno = rblkno;
+
+		if ((lp->d_flags & D_BADSECT) != 0) {
+			long blkdiff;
 			int i;
 
-			for (i = 0; wd->sc_badsect[i] != -1; i++) {
-				if (blkno < wd->sc_badsect[i]) {
-					/* Sorted list, passed our block by. */
-					break;
-				} else if (blkno == wd->sc_badsect[i]) {
-					newblk =
-					    wd->sc_dk.dk_label.d_secperunit -
-					    wd->sc_dk.dk_label.d_nsectors -
-					    i - 1;
-					cylin = newblk / secpercyl;
-					head = (newblk % secpercyl) / secpertrk;
-					sector = newblk % secpertrk;
-					/* Found and replaced; done. */
-					break;
+			for (i = 0; (blkdiff = wd->sc_badsect[i]) != -1; i++) {
+				blkdiff -= blkno;
+				if (blkdiff < 0)
+					continue;
+				if (blkdiff == 0) {
+					/* Replace current block of transfer. */
+					blkno =
+					    lp->d_secperunit - lp->d_nsectors - i - 1;
 				}
+				break;
 			}
+			/* Tranfer is okay now. */
 		}
-		sector++;		/* origin 1 */
-	    
+
+		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+			sector = (blkno >> 0) & 0xff;
+			cylin = (blkno >> 8) & 0xffff;
+			head = (blkno >> 24) & 0xff;
+			head |= WDSD_LBA;
+		} else {
+			sector = blkno % lp->d_nsectors;
+			sector++;	/* Sectors begin with 1, not 0. */
+			blkno /= lp->d_nsectors;
+			head = blkno % lp->d_ntracks;
+			blkno /= lp->d_ntracks;
+			cylin = blkno;
+			head |= WDSD_CHS;
+		}
+	
 #ifdef notdef
 		/* Let's just talk about this first. */
 		printf("cylin %d, head %d, sector %d, addr 0x%x", cylin, head,
@@ -1527,19 +1543,14 @@ wddump(dev)
 		}
 	
 		if ((unsigned)addr % 1048576 == 0)
-			printf("%d ", num / (1048576 / DEV_BSIZE));
+			printf("%d ", nblks / (1048576 / DEV_BSIZE));
 
 		/* Update block count. */
-		num--;
-		blkno++;
+		nblks--;
+		rblkno++;
 		(int)addr += DEV_BSIZE;
-	
-#if DO_NOT_KNOW_HOW
-		/* Operator aborting dump? non-blocking getc() */
-		if (cngetc())
-			return EINTR;
-#endif
 	}
+
 	return 0;
 }
 
