@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.24 1995/07/24 21:19:27 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.25 1995/11/08 22:26:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -792,6 +792,7 @@ start:
 			ip->i_lockwaiter = -1;
 #endif
 		(void) sleep((caddr_t)ip, PINOD);
+		goto start;
 	}
 #ifdef DIAGNOSTIC
 	ip->i_lockwaiter = 0;
