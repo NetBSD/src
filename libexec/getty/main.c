@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.16 1996/02/08 06:19:14 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.17 1996/05/15 23:46:52 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@ static char rcsid[] = "$Id: main.c,v 1.16 1996/02/08 06:19:14 mycroft Exp $";
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "gettytab.h"
 #include "pathnames.h"
