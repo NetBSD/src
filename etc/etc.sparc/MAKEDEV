@@ -79,6 +79,7 @@ std)
 	mknod null		c 3 2	; chmod 666 null
 	mknod zero		c 3 12	; chmod 666 zero
 	mknod eeprom		c 3 11  ; chmod 640 eeprom ; chgrp kmem eeprom
+	mknod openprom		c 70 0  ; chmod 644 openprom
 	mknod drum		c 7 0	; chmod 640 drum ; chgrp kmem drum
 	mknod klog		c 16 0	; chmod 600 klog
 	mknod stdin		c 24 0	; chmod 666 stdin
