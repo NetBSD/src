@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 1996/02/24 00:55:31 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.10 1996/10/05 05:22:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,7 +192,6 @@ extern	struct ite_data ite_cn;		/* ite_data for console device */
 extern	struct ite_data *kbd_ite;	/* XXX */
 extern	struct ite_softc ite_softc[];
 extern	struct itesw itesw[];
-extern	u_char console_attributes[];
 extern	int nitesw;
 
 /* ite.c prototypes */
@@ -200,6 +199,7 @@ void	ite_attach_grf __P((int, int));
 int	iteon __P((struct ite_data *, int));
 void	iteoff __P((struct ite_data *, int));
 void	itefilter __P((char, char));
+void	itecninit __P((struct grf_data *, struct itesw *));
 int	ite_major __P((void));
 
 /* ite_subr.c prototypes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.7 1996/03/03 16:49:02 thorpej Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.8 1996/10/05 05:22:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -565,7 +565,6 @@ void
 rboxcninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 
 	/*
@@ -581,15 +580,9 @@ rboxcninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &rbox_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &rbox_itesw);
 }
 
 #endif /* NITE > 0 */

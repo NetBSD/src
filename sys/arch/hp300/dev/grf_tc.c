@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.7 1996/03/03 16:49:04 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.8 1996/10/05 05:22:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -626,7 +626,6 @@ void
 topcatcninit(cp)
 	struct consdev *cp;
 {
-	struct ite_data *ip = &ite_cn;
 	struct grf_data *gp = &grf_cn;
 	struct grfreg *grf = (struct grfreg *)conaddr;
 
@@ -663,15 +662,9 @@ topcatcninit(cp)
 	gp->g_flags = GF_ALIVE;
 
 	/*
-	 * Set up required ite data and initialize ite.
+	 * Initialize the terminal emulator.
 	 */
-	ip->isw = &topcat_itesw;
-	ip->grf = gp;
-	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
-	ip->attrbuf = console_attributes;
-	iteinit(ip);
-
-	kbd_ite = ip;		/* XXX */
+	itecninit(gp, &topcat_itesw);
 }
 
 #endif /* NITE > 0 */
