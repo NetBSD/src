@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.12 2003/07/23 17:06:12 kleink Exp $
+# $NetBSD: country,v 1.13 2004/10/20 12:59:43 tsarna Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -8,9 +8,10 @@
 # Further information can be found at the ISO 3166 Maintenance Agency
 # (ISO 3166/MA) web site,
 # <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
-# This list is up-to-date as of 2003-07-23.
+# This list is up-to-date as of 2004-10-20.
 #
 Afghanistan	AF	AFG	004
+Aaland Islands	AX	ALA	248
 Albania	AL	ALB	008
 Algeria	DZ	DZA	012
 American Samoa	AS	ASM	016
@@ -36,7 +37,7 @@ Benin	BJ	BEN	204
 Bermuda	BM	BMU	060
 Bhutan	BT	BTN	064
 Bolivia	BO	BOL	068
-Bosnia and Herzegowina	BA	BIH	070
+Bosnia and Herzegovina	BA	BIH	070
 Botswana	BW	BWA	072
 Bouvet Island	BV	BVT	074
 Brazil	BR	BRA	076
@@ -48,7 +49,7 @@ Burundi	BI	BDI	108
 Cambodia	KH	KHM	116
 Cameroon	CM	CMR	120
 Canada	CA	CAN	124
-Cape verde	CV	CPV	132
+Cape Verde	CV	CPV	132
 Cayman Islands	KY	CYM	136
 Central African Republic	CF	CAF	140
 Chad	TD	TCD	148
@@ -63,7 +64,7 @@ Congo, The Democratic Republic of the	CD	COD	180
 Cook Islands	CK	COK	184
 Costa Rica	CR	CRI	188
 Cote d'Ivoire	CI	CIV	384
-Croatia (local name: Hrvatska)	HR	HRV	191
+Croatia	HR	HRV	191
 Cuba	CU	CUB	192
 Cyprus	CY	CYP	196
 Czech Republic	CZ	CZE	203
@@ -83,7 +84,6 @@ Faroe Islands	FO	FRO	234
 Fiji	FJ	FJI	242
 Finland	FI	FIN	246
 France	FR	FRA	250
-France, Metropolitan	FX	FXX	249
 French Guiana	GF	GUF	254
 French Polynesia	PF	PYF	258
 French Southern Territories	TF	ATF	260
@@ -103,7 +103,7 @@ Guinea	GN	GIN	324
 Guinea-Bissau	GW	GNB	624
 Guyana	GY	GUY	328
 Haiti	HT	HTI	332
-Heard and Mc Donald Islands	HM	HMD	334
+Heard Island and McDonald Islands	HM	HMD	334
 Holy See (Vatican City State)	VA	VAT	336
 Honduras	HN	HND	340
 Hong Kong	HK	HKG	344
@@ -111,7 +111,7 @@ Hungary	HU	HUN	348
 Iceland	IS	ISL	352
 India	IN	IND	356
 Indonesia	ID	IDN	360
-Iran (islamic republic of)	IR	IRN	364
+Iran, Islamic Republic of	IR	IRN	364
 Iraq	IQ	IRQ	368
 Ireland	IE	IRL	372
 Israel	IL	ISR	376
@@ -203,7 +203,7 @@ Serbia and Montenegro	CS	SCG	891
 Seychelles	SC	SYC	690
 Sierra Leone	SL	SLE	694
 Singapore	SG	SGP	702
-Slovakia (Slovak Republic)	SK	SVK	703
+Slovakia	SK	SVK	703
 Slovenia	SI	SVN	705
 Solomon Islands	SB	SLB	090
 Somalia	SO	SOM	706
@@ -213,7 +213,7 @@ Spain	ES	ESP	724
 Sri Lanka	LK	LKA	144
 Sudan	SD	SDN	736
 Suriname	SR	SUR	740
-Svalbard and Jan Mayen Islands	SJ	SJM	744
+Svalbard and Jan Mayen	SJ	SJM	744
 Swaziland	SZ	SWZ	748
 Sweden	SE	SWE	752
 Switzerland	CH	CHE	756
@@ -243,9 +243,9 @@ Uzbekistan	UZ	UZB	860
 Vanuatu	VU	VUT	548
 Venezuela	VE	VEN	862
 Viet Nam	VN	VNM	704
-Virgin Islands (British)	VG	VGB	092
-Virgin Islands (U.S.)	VI	VIR	850
-Wallis and Futuna Islands	WF	WLF	876
+Virgin Islands, British	VG	VGB	092
+Virgin Islands, U.S.	VI	VIR	850
+Wallis and Futuna	WF	WLF	876
 Western Sahara	EH	ESH	732
 Yemen	YE	YEM	887
 Zambia	ZM	ZMB	894
