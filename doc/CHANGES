@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.169 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.170 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -412,3 +412,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	arc: Fix support for DeskStation Tyne and it boots into single user.
 		[tsutsui 20030614]
 	cvs(1): $CVS_RSH defaults to ssh (instead of rsh). [itojun 20030620]
+	cobalt: Implement first stage bootloader for the cobalt port.
+		[cdi 20030625]
