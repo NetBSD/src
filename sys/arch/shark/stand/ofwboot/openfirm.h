@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1 2002/02/10 01:58:19 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2 2004/06/30 15:43:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,21 +37,22 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-__dead void OF_exit __P((void)) __attribute__((noreturn));
-int OF_finddevice __P((char *name));
-int OF_instance_to_package __P((int ihandle));
-int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+void OF_exit(void) __attribute__((__noreturn__));
+int OF_finddevice(const char *);
+int OF_instance_to_package(int);
+int OF_getprop(int, const char *, void *, int);
 #ifdef	__notyet__
-int OF_setprop __P((int handle, char *prop, void *buf, int len));
+int OF_setprop(int, const char *, void *, int);
 #endif
-int OF_open __P((char *dname));
-void OF_close __P((int handle));
-int OF_write __P((int handle, void *addr, int len));
-int OF_read __P((int handle, void *addr, int len));
-int OF_seek __P((int handle, u_quad_t pos));
-void *OF_claim __P((void *virt, u_int size, u_int align));
-void OF_release __P((void *virt, u_int size));
-int OF_milliseconds __P((void));
-void OF_chain __P((void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen));
+int OF_open(char *);
+void OF_close(int);
+int OF_write(int, void *, int);
+int OF_read(int, void *, int);
+int OF_seek(int, u_quad_t);
+void *OF_claim(void *, u_int, u_int);
+void OF_release(void *, u_int);
+int OF_milliseconds(void);
+void OF_chain(void *, u_int, void (*)(int (*)(void *), void *, u_int),
+    void *, u_int);
 
-int	of_decode_int(const u_char *p);
+int of_decode_int(const u_char *);
