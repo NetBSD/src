@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.12 1999/05/07 15:10:03 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.13 2000/01/20 08:34:52 enami Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -637,6 +637,7 @@ bootp_extract(bootp, replylen, nd)
 	int mynamelen;
 	int mydomainlen;
 	int rootpathlen;
+	int overloaded;
 	u_int tag, len;
 	u_char *p, *limit;
 
@@ -647,6 +648,8 @@ bootp_extract(bootp, replylen, nd)
 	mydomainlen = mynamelen = rootpathlen = 0;
 	/* default root server to bootp next-server */
 	rootserver = bootp->bp_siaddr;
+	/* assume that server name field is not overloaded by default */
+	overloaded = 0;
 
 	p = &bootp->bp_vend[4];
 	limit = ((char*)bootp) + replylen;
@@ -703,6 +706,17 @@ bootp_extract(bootp, replylen, nd)
 			/* override NFS server address */
 			memcpy(&rootserver, p, 4);
 			break;
+#ifdef NFS_BOOT_DHCP
+		    case TAG_OVERLOAD:
+			if (len > 0 && ((*p & 0x02) != 0))
+				/*
+				 * The server name field in the dhcp packet
+				 * is overloaded and we can't find server
+				 * name there.
+				 */
+				overloaded = 1;
+			break;
+#endif
 		    default:
 			break;
 		}
@@ -748,7 +762,8 @@ bootp_extract(bootp, replylen, nd)
 		sin->sin_family = AF_INET;
 		sin->sin_addr = rootserver;
 		/* Server name. */
-		if (!memcmp(&rootserver, &bootp->bp_siaddr,
+		if (!overloaded && bootp->bp_sname[0] != 0 &&
+		    !memcmp(&rootserver, &bootp->bp_siaddr,
 			  sizeof(struct in_addr))) {
 			/* standard root server, we have the name */
 			strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);
