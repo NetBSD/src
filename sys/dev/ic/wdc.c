@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.152 2003/11/02 11:07:46 wiz Exp $ */
+/*	$NetBSD: wdc.c,v 1.153 2003/11/07 08:58:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.152 2003/11/02 11:07:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.153 2003/11/07 08:58:33 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1082,6 +1082,10 @@ wdc_reset_channel(drvp, flags)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
 	    DEBUG_FUNCS);
 	if ((flags & AT_POLL) == 0) {
+		if (chp->ch_flags & WDCF_TH_RESET) {
+			/* no need to schedule a reset more than one time */
+			return;
+		}
 		chp->ch_flags |= WDCF_TH_RESET;
 		chp->ch_queue->queue_freeze++;
 		wakeup(&chp->thread);
