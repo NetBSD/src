@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $	*/
+/*	$NetBSD: setemul.c,v 1.6 2001/02/02 07:41:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.6 2001/02/02 07:41:54 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ __RCSID("$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
+#include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
 #include "../../sys/compat/svr4/svr4_syscall.h"
 #include "../../sys/compat/ultrix/ultrix_syscall.h"
@@ -111,6 +112,7 @@ __RCSID("$NetBSD: setemul.c,v 1.5 2000/11/13 21:38:48 jdolecek Exp $");
 #include "../../sys/compat/linux/linux_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
 #include "../../sys/compat/sunos/sunos_syscalls.c"
+#include "../../sys/compat/sunos32/sunos32_syscalls.c"
 #include "../../sys/compat/svr4/svr4_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
 
@@ -136,6 +138,8 @@ static const struct emulation emulations[] = {
 	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
 	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
 	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{    "sunos32",sunos32_syscallnames, SUNOS32_SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
 	        NULL,		        0 },
