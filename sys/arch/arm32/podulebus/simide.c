@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.9 1998/11/22 14:36:38 drochner Exp $	*/
+/*	$NetBSD: simide.c,v 1.10 1998/12/03 18:24:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -242,7 +242,7 @@ simide_attach(parent, self, aux)
 
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {

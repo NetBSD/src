@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.11 1998/11/22 14:36:38 drochner Exp $	*/
+/*	$NetBSD: rapide.c,v 1.12 1998/12/03 18:24:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -244,7 +244,7 @@ rapide_attach(parent, self, aux)
 
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {

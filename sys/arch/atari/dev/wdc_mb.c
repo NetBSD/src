@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.4 1998/11/22 14:36:38 drochner Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.5 1998/12/03 18:24:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ wdc_mb_attach(parent, self, aux)
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_HWLOCK |
 	    WDC_CAPABILITY_ATA_NOSTREAM;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;
 	sc->wdc_chanptr = &sc->wdc_channel;
