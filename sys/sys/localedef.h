@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.3 1994/11/30 22:15:58 jtc Exp $	*/
+/*	$NetBSD: localedef.h,v 1.4 1996/04/09 20:55:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -70,7 +70,7 @@ typedef struct
 extern const _MonetaryLocale *_CurrentMonetaryLocale;
 extern const _MonetaryLocale  _DefaultMonetaryLocale;
 
-	
+
 typedef struct
 {
 	const char *decimal_point;

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25 1996/03/15 19:54:53 jtc Exp $	*/
+/*	$NetBSD: types.h,v 1.26 1996/04/09 20:55:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -83,7 +83,7 @@ typedef	u_int32_t	uid_t;		/* user id */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
- * long arguments will be promoted to off_t if the program fails to 
+ * long arguments will be promoted to off_t if the program fails to
  * include that header or explicitly cast them to off_t.
  */
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)

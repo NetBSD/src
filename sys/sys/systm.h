@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.47 1996/04/03 20:46:47 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.48 1996/04/09 20:55:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -52,7 +52,7 @@
  *	raw disks of mounted filesystems, /dev/mem, and /dev/kmem are
  *	read-only.
  *    2	highly secure mode - same as (1) plus raw disks are always
- *	read-only whether mounted or not. This level precludes tampering 
+ *	read-only whether mounted or not. This level precludes tampering
  *	with filesystems by unmounting them, but also inhibits running
  *	newfs while the system is secured.
  *
@@ -129,16 +129,16 @@ int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
-void	panic __P((const char *, ...)) 
+void	panic __P((const char *, ...))
 #ifdef __KPRINTF_ATTRIBUTE__
     __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
 #else
     __attribute__((__noreturn__));
 #endif
 void	printf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2))); 
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2))); 
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 int	sprintf __P((char *buf, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))

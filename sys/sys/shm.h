@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.19 1996/02/09 18:25:30 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -76,7 +76,7 @@ struct shminfo {
 struct shminfo shminfo;
 struct shmid_ds *shmsegs;
 
-void shminit __P((void));  
+void shminit __P((void));
 void shmfork __P((struct proc *, struct proc *));
 void shmexit __P((struct proc *));
 

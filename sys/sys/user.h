@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.9 1995/03/26 20:25:03 jtc Exp $	*/
+/*	$NetBSD: user.h,v 1.10 1996/04/09 20:55:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -56,7 +56,7 @@
  * This structure may or may not be at the same kernel address
  * in all processes.
  */
- 
+
 struct	user {
 	struct	pcb u_pcb;
 

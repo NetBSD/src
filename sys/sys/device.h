@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.14 1996/04/04 06:06:20 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@ struct cfattach {
 	void	(*ca_attach) __P((struct device *, struct device *, void *));
 	/* XXX should have detach */
 };
-	
+
 struct cfdriver {
 	void	**cd_devs;		/* devices found */
 	char	*cd_name;		/* device name */
