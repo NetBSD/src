@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.153 2002/12/21 16:23:56 manu Exp $	*/
+/*	$NetBSD: systm.h,v 1.154 2002/12/31 17:48:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -180,6 +180,14 @@ int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
 #ifdef _KERNEL
+void	aprint_normal __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_naive __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_verbose __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
+void	aprint_debug __P((const char *, ...))
+    __attribute__((__format__(__printf__,1,2)));
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *, const char *, ...))

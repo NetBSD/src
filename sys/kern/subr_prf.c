@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.87 2002/12/31 16:53:27 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.88 2002/12/31 17:48:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.87 2002/12/31 16:53:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.88 2002/12/31 17:48:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -579,6 +579,128 @@ db_vprintf(fmt, ap)
 
 #endif /* DDB */
 
+/*
+ * Device autoconfiguration printf routines.  These change their
+ * behavior based on the AB_* flags in boothowto.  If AB_SILENT
+ * is set, messages never go to the console (but they still always
+ * go to the log).  AB_VERBOSE overrides AB_SILENT.
+ */
+
+/*
+ * aprint_normal: Send to console unless AB_QUIET.  Always goes
+ * to the log.
+ */
+void
+#ifdef __STDC__
+aprint_normal(const char *fmt, ...)
+#else
+aprint_normal(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int s, flags = TOLOG;
+
+	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
+	    (boothowto & AB_VERBOSE) != 0)
+		flags |= TOCONS;
+ 
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	kprintf(fmt, flags, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+        
+	if (!panicstr)
+		logwakeup();
+}
+
+/*
+ * aprint_naive: Send to console only if AB_QUIET.  Never goes
+ * to the log.
+ */
+void
+#ifdef __STDC__
+aprint_naive(const char *fmt, ...)
+#else
+aprint_naive(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int s;
+
+	if ((boothowto & (AB_QUIET|AB_SILENT|AB_VERBOSE)) == AB_QUIET) {
+		KPRINTF_MUTEX_ENTER(s);
+
+		va_start(ap, fmt);
+		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		va_end(ap);
+
+		KPRINTF_MUTEX_EXIT(s);
+	}
+}
+
+/*
+ * aprint_verbose: Send to console only if AB_VERBOSE.  Always
+ * goes to the log.
+ */
+void
+#ifdef __STDC__
+aprint_verbose(const char *fmt, ...)
+#else
+aprint_verbose(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int s, flags = TOLOG;
+
+	if (boothowto & AB_VERBOSE)
+		flags |= TOCONS;
+ 
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	kprintf(fmt, flags, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+        
+	if (!panicstr)
+		logwakeup();
+}
+
+/*
+ * aprint_debug: Send to console and log only if AB_DEBUG.
+ */
+void
+#ifdef __STDC__
+aprint_debug(const char *fmt, ...)
+#else
+aprint_debug(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int s;
+
+	if (boothowto & AB_DEBUG) {
+		KPRINTF_MUTEX_ENTER(s);
+
+		va_start(ap, fmt);
+		kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+		va_end(ap);
+
+		KPRINTF_MUTEX_EXIT(s);
+	}
+}
 
 /*
  * normal kernel printf functions: printf, vprintf, snprintf, vsnprintf
