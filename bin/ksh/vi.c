@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.3 1998/11/04 18:27:21 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.4 1999/10/20 15:10:00 hubertf Exp $	*/
 
 /*
  *	vi command editing
@@ -208,8 +208,9 @@ x_vi(buf, len)
 				vi_macro_reset();
 				c = x_getc();
 			}
-		} else
+		} else {
 			c = x_getc();
+		}
 		if (c == -1)
 			break;
 		if (state != VLIT) {
@@ -503,7 +504,7 @@ vi_hook(ch)
 		state = VNORMAL;
 		if (argc1 != 0)
 			lastac = argc1;
-		switch (vi_cmd(lastac, lastcmd) != 0) {
+		switch (vi_cmd(lastac, lastcmd)) {
 		case -1:
 			vi_error();
 			refresh(0);
@@ -525,8 +526,8 @@ vi_hook(ch)
 			refresh(0);
 			return 1;
 		case 2:
-			/* back from a 'v' command - don't redraw the screen */
-			return 1;
+			/* back from a 'v' command - can't happen */
+			break;
 		}
 		break;
 

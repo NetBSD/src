@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.4 1998/07/28 05:31:25 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.5 1999/10/20 15:09:59 hubertf Exp $	*/
 
 /*
  * execute command tree
@@ -21,7 +21,7 @@ static int	comexec	 ARGS((struct op *t, struct tbl *volatile tp, char **ap,
 static void	scriptexec ARGS((struct op *tp, char **ap));
 static int	call_builtin ARGS((struct tbl *tp, char **wp));
 static int	iosetup ARGS((struct ioword *iop, struct tbl *tp));
-static int	herein ARGS((char *hname, int sub));
+static int	herein ARGS((const char *content, int sub));
 #ifdef KSH
 static char 	*do_selectargs ARGS((char **ap, bool_t print_menu));
 #endif /* KSH */
@@ -96,7 +96,7 @@ execute(t, flags)
 	}
 	 */
 	if ((flags&XFORK) && !(flags&XEXEC) && t->type != TPIPE)
-		return exchild(t, flags, -1); /* run in sub-process */
+		return exchild(t, flags & ~XTIME, -1); /* run in sub-process */
 
 	newenv(E_EXEC);
 	if (trap)
@@ -104,14 +104,19 @@ execute(t, flags)
  
 	if (t->type == TCOM) {
 		/* Clear subst_exstat before argument expansion.  Used by
-		 * null commands (see comexec()) and by c_set().
+		 * null commands (see comexec() and c_eval()) and by c_set().
 		 */
 		subst_exstat = 0;
+
+		current_lineno = t->lineno;	/* for $LINENO */
 
 		/* POSIX says expand command words first, then redirections,
 		 * and assignments last..
 		 */
 		ap = eval(t->args, t->u.evalflags | DOBLANK | DOGLOB | DOTILDE);
+		if (flags & XTIME)
+			/* Allow option parsing (bizarre, but POSIX) */
+			timex_hook(t, &ap);
 		if (Flag(FXTRACE) && ap[0]) {
 			shf_fprintf(shl_out, "%s",
 				PS4_SUBSTITUTE(str_val(global("PS4"))));
@@ -123,6 +128,7 @@ execute(t, flags)
 		if (ap[0])
 			tp = findcom(ap[0], FC_BI|FC_FUNC);
 	}
+	flags &= ~XTIME;
 
 	if (t->ioact != NULL || t->type == TPIPE || t->type == TCOPROC) {
 		e->savefd = (short *) alloc(sizeofN(short, NUFILE), ATEMP);
@@ -320,30 +326,20 @@ execute(t, flags)
 		}
 		rv = 0; /* in case of a continue */
 		if (t->type == TFOR) {
-			struct tbl *vq;
-
 			while (*ap != NULL) {
-				vq = global(t->str);
-				if (vq->flag & RDONLY)
-					errorf("%s is read only", t->str);
-				setstr(vq, *ap++);
+				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
 		}
 #ifdef KSH
 		else { /* TSELECT */
-			struct tbl *vq;
-
 			for (;;) {
 				if (!(cp = do_selectargs(ap, is_first))) {
 					rv = 1;
 					break;
 				}
 				is_first = FALSE;
-				vq = global(t->str);
-				if (vq->flag & RDONLY)
-					errorf("%s is read only", t->str);
-				setstr(vq, cp);
+				setstr(global(t->str), cp, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
 		}
@@ -403,7 +399,10 @@ execute(t, flags)
 		break;
 
 	  case TTIME:
-		rv = timex(t, flags);
+		/* Clear XEXEC so nested execute() call doesn't exit
+		 * (allows "ls -l | time grep foo").
+		 */
+		rv = timex(t, flags & ~XEXEC);
 		break;
 
 	  case TEXEC:		/* an eval'd TCOM */
@@ -418,7 +417,8 @@ execute(t, flags)
 #endif
 		restoresigs();
 		cleanup_proc_env();
-		ksh_execve(t->str, t->args, ap);
+		/* XINTACT bit is for OS2 */
+		ksh_execve(t->str, t->args, ap, (flags & XINTACT) ? 1 : 0);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);
 		else
@@ -429,7 +429,7 @@ execute(t, flags)
 
 	quitenv();		/* restores IO */
 	if ((flags&XEXEC)) {
-		exit(rv);	/* exit child */
+		unwind(LEXIT);	/* exit child */
 		/* NOTREACHED */
 	}
 	if (rv != 0 && !(flags & XERROK)) {
@@ -463,16 +463,20 @@ comexec(t, tp, ap, flags)
 	(void) &rv;
 #endif
 
+#ifdef KSH
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in
 	 * functions/dot scripts, but in interactive and scipt) -
 	 * perhaps save last arg here and set it in shell()?.
 	 */
-	if (*(lastp = ap)) {
+	if (Flag(FTALKING) && *(lastp = ap)) {
 		while (*++lastp)
 			;
-		setstr(typeset("_", LOCAL, 0, 0, 0), *--lastp);
+		/* setstr() can't fail here */
+		setstr(typeset("_", LOCAL, 0, INTEGER, 0), *--lastp,
+		       KSH_RETURN_ERROR);
 	}
+#endif /* KSH */
 
 	/* Deal with the shell builtins builtin, exec and command since
 	 * they can be followed by other commands.  This must be done before
@@ -632,11 +636,20 @@ comexec(t, tp, ap, flags)
 		old_kshname = kshname;
 		if (tp->flag & FKSH)
 			kshname = ap[0];
+		else
+			ap[0] = (char *) kshname;
 		e->loc->argv = ap;
 		for (i = 0; *ap++ != NULL; i++)
 			;
 		e->loc->argc = i - 1;
-		getopts_reset(1);
+		/* ksh-style functions handle getopts sanely,
+		 * bourne/posix functions are insane...
+		 */
+		if (tp->flag & FKSH) {
+			e->loc->flags |= BF_DOGETOPTS;
+			e->loc->getopts_state = user_opt;
+			getopts_reset(1);
+		}
 
 		old_xflag = Flag(FXTRACE);
 		Flag(FXTRACE) = tp->flag & TRACE ? TRUE : FALSE;
@@ -703,8 +716,12 @@ comexec(t, tp, ap, flags)
 			break;
 		}
 
+#ifdef KSH
 		/* set $_ to program's full path */
-		setstr(typeset("_", LOCAL|EXPORT, 0, 0, 0), tp->val.s);
+		/* setstr() can't fail here */
+		setstr(typeset("_", LOCAL|EXPORT, 0, INTEGER, 0), tp->val.s,
+		       KSH_RETURN_ERROR);
+#endif /* KSH */
 
 		if (flags&XEXEC) {
 			j_exit();
@@ -802,8 +819,14 @@ scriptexec(tp, ap)
 					if (a1)
 						*tp->args-- = a1;
 # ifdef OS2
-					if (a0 != a2 && search_access(a0, X_OK, (int *) 0))
-						a0 = a2;
+					if (a0 != a2) {
+						char *tmp_a0 = str_nsave(a0,
+							strlen(a0) + 5, ATEMP);
+						if (search_access(tmp_a0, X_OK,
+								(int *) 0))
+							a0 = a2;
+						afree(tmp_a0, ATEMP);
+					}
 # endif /* OS2 */
 					shell = a0;
 				}
@@ -832,7 +855,7 @@ scriptexec(tp, ap)
 #endif	/* SHARPBANG */
 	*tp->args = shell;
 
-	ksh_execve(tp->args[0], tp->args, ap);
+	ksh_execve(tp->args[0], tp->args, ap, 0);
 
 	/* report both the program that was run and the bogus shell */
 	errorf("%s: %s: %s", tp->str, shell, strerror(errno));
@@ -857,8 +880,8 @@ shcomexec(wp)
 struct tbl *
 findfunc(name, h, create)
 	const char *name;
-	unsigned int	h;
-	int	create;
+	unsigned int h;
+	int create;
 {
 	struct block *l;
 	struct tbl *tp = (struct tbl *) 0;
@@ -919,7 +942,7 @@ define(name, t)
 	tp->val.t = tcopy(t->left, tp->areap);
 	tp->flag |= (ISSET|ALLOC);
 	if (t->u.ksh_func)
-	    tp->flag |= FKSH;
+		tp->flag |= FKSH;
 
 	return 0;
 }
@@ -1069,7 +1092,7 @@ flushcom(all)
 				tp->flag &= ~(ALLOC|ISSET);
 				afree(tp->val.s, APERM);
 			}
-			tp->flag = ~ISSET;
+			tp->flag &= ~ISSET;
 		}
 }
 
@@ -1089,14 +1112,15 @@ search_access(path, mode, errnop)
 	ret = eaccess(path, mode);
 	if (ret < 0)
 		err = errno; /* File exists, but we can't access it */
-	else if (mode == X_OK && (!S_ISREG(statb.st_mode)
-		   /* This 'cause access() says root can execute everything */
-		   || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
+	else if (mode == X_OK
+		 && (!S_ISREG(statb.st_mode)
+		     /* This 'cause access() says root can execute everything */
+		     || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
 	{
 		ret = -1;
 		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;
 	}
-	if (err && errnop)
+	if (err && errnop && !*errnop)
 		*errnop = err;
 	return ret;
 #else /* !OS2 */
@@ -1161,7 +1185,7 @@ search_access1(path, mode, errnop)
 		ret = -1;
 		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;
 	}
-	if (err && errnop)
+	if (err && errnop && !*errnop)
 		*errnop = err;
 	return ret;
 }
@@ -1276,7 +1300,7 @@ iosetup(iop, tp)
 	struct stat statb;
 
 	if (iotype != IOHERE)
-		cp = evalonestr(cp, DOTILDE|(Flag(FTALKING) ? DOGLOB : 0));
+		cp = evalonestr(cp, DOTILDE|(Flag(FTALKING_I) ? DOGLOB : 0));
 
 	/* Used for tracing and error messages to print expanded cp */
 	iotmp = *iop;
@@ -1299,6 +1323,9 @@ iosetup(iop, tp)
 
 	  case IOWRITE:
 		flags = O_WRONLY | O_CREAT | O_TRUNC;
+		/* The stat() is here to allow redirections to
+		 * things like /dev/null without error.
+		 */
 		if (Flag(FNOCLOBBER) && !(iop->flag & IOCLOB)
 		    && (stat(cp, &statb) < 0 || S_ISREG(statb.st_mode)))
 			flags |= O_EXCL;
@@ -1311,7 +1338,7 @@ iosetup(iop, tp)
 	  case IOHERE:
 		do_open = 0;
 		/* herein() returns -2 if error has been printed */
-		u = herein(cp, iop->flag & IOEVAL);
+		u = herein(iop->heredoc, iop->flag & IOEVAL);
 		/* cp may have wrong name */
 		break;
 
@@ -1399,67 +1426,64 @@ iosetup(iop, tp)
  * if unquoted here, expand here temp file into second temp file.
  */
 static int
-herein(hname, sub)
-	char *hname;
+herein(content, sub)
+	const char *content;
 	int sub;
 {
-	int fd;
+	volatile int fd = -1;
+	struct source *s, *volatile osource;
+	struct shf *volatile shf;
+	struct temp *h;
+	int i;
 
 	/* ksh -c 'cat << EOF' can cause this... */
-	if (hname == (char *) 0) {
+	if (content == (char *) 0) {
 		warningf(TRUE, "here document missing");
 		return -2; /* special to iosetup(): don't print error */
 	}
-	if (sub) {
-		char *cp;
-		struct source *s, *volatile osource = source;
-		struct temp *h;
-		struct shf *volatile shf;
-		int i;
 
-		/* must be before newenv() 'cause shf uses ATEMP */
-		shf = shf_open(hname, O_RDONLY, 0, SHF_MAPHI|SHF_CLEXEC);
-		if (shf == NULL)
-			return -1;
-		newenv(E_ERRH);
-		i = ksh_sigsetjmp(e->jbuf, 0);
-		if (i) {
-			if (shf)
-				shf_close(shf);
-			source = osource;
-			quitenv(); /* after shf_close() due to alloc */
-			return -2; /* special to iosetup(): don't print error */
-		}
-		/* set up yylex input from here file */
-		s = pushs(SFILE, ATEMP);
-		s->u.shf = shf;
+	/* Create temp file to hold content (done before newenv so temp
+	 * doesn't get removed too soon).
+	 */
+	h = maketemp(ATEMP, TT_HEREDOC_EXP, &e->temps);
+	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) < 0) {
+		warningf(TRUE, "can't %s temporary file %s: %s",
+			!shf ? "create" : "open",
+			h->name, strerror(errno));
+		if (shf)
+			shf_close(shf);
+		return -2 /* special to iosetup(): don't print error */;
+	}
+
+	osource = source;
+	newenv(E_ERRH);
+	i = ksh_sigsetjmp(e->jbuf, 0);
+	if (i) {
+		source = osource;
+		quitenv();
+		shf_close(shf);	/* after quitenv */
+		close(fd);
+		return -2; /* special to iosetup(): don't print error */
+	}
+	if (sub) {
+		/* Do substitutions on the content of heredoc */
+		s = pushs(SSTRING, ATEMP);
+		s->start = s->str = content;
 		source = s;
 		if (yylex(ONEWORD) != LWORD)
 			internal_errorf(1, "herein: yylex");
-		shf_close(shf);
-		shf = (struct shf *) 0;
-		cp = evalstr(yylval.cp, 0);
+		source = osource;
+		shf_puts(evalstr(yylval.cp, 0), shf);
+	} else
+		shf_puts(content, shf);
 
-		/* write expanded input to another temp file */
-		h = maketemp(ATEMP);
-		h->next = e->temps; e->temps = h;
-		if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) < 0)
-			/* shf closeed by error handler */
-			errorf("%s: %s", h->name, strerror(errno));
-		shf_puts(cp, shf);
-		if (shf_close(shf) == EOF) {
-			close(fd);
-			shf = (struct shf *) 0;
-			errorf("error writing %s: %s", h->name,
-				strerror(errno));
-		}
-		shf = (struct shf *) 0;
+	quitenv();
 
-		quitenv();
-	} else {
-		fd = open(hname, O_RDONLY, 0);
-		if (fd < 0)
-			return -1;
+	if (shf_close(shf) == EOF) {
+		close(fd);
+		warningf(TRUE, "error writing %s: %s", h->name,
+			strerror(errno));
+		return -2; /* special to iosetup(): don't print error */
 	}
 
 	return fd;
