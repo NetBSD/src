@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpux,v 1.7 2000/12/01 19:15:12 jdolecek Exp $
+#	$NetBSD: files.hpux,v 1.8 2002/03/31 22:22:43 christos Exp $
 #
 # Config file description for machine-independent HPUX compat code.
 # Included by ports that need it.
@@ -14,6 +14,7 @@ file	compat/hpux/hpux_exec_aout.c	compat_hpux & exec_aout
 file	compat/hpux/hpux_ipc.c		compat_hpux
 file	compat/hpux/hpux_net.c		compat_hpux
 file	compat/hpux/hpux_sig.c		compat_hpux
+file	compat/hpux/hpux_signo.c	compat_hpux
 file	compat/hpux/hpux_syscalls.c	compat_hpux
 file	compat/hpux/hpux_sysent.c	compat_hpux
 file	compat/hpux/hpux_tty.c		compat_hpux

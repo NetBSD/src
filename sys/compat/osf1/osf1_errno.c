@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt_errno.c,v 1.6 2001/11/13 02:09:11 lukem Exp $ */
+/* $NetBSD: osf1_errno.c,v 1.5 2002/03/31 22:22:48 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt_errno.c,v 1.6 2001/11/13 02:09:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_errno.c,v 1.5 2002/03/31 22:22:48 christos Exp $");
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_cvt_errno.c,v 1.6 2001/11/13 02:09:11 lukem Exp
  * It is up to date as of Digital UNIX V4.0 and NetBSD 1.4.
  */
 
-const int osf1_errno_rxlist[] = {
+const int native_to_osf1_errno[] = {
     0,
     OSF1_EPERM,			/* EPERM (1) -> 1 */
     OSF1_ENOENT,		/* ENOENT (2) -> 2 */
