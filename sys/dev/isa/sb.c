@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.19 1995/03/08 18:27:35 brezak Exp $	*/
+/*	$NetBSD: sb.c,v 1.20 1995/03/14 18:43:19 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.19 1995/03/08 18:27:35 brezak Exp $
+ *	$Id: sb.c,v 1.20 1995/03/14 18:43:19 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -283,6 +283,9 @@ sbattach(parent, self, aux)
 	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 
 	sbdsp_attach(&sc->sc_sbdsp);
+
+	sprintf(sb_device.version, "%d.%d", 
+		SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
 
 	if (audio_hardware_attach(&sb_hw_if, (caddr_t)&sc->sc_sbdsp) != 0)
 		printf("sb: could not attach to audio pseudo-device driver\n");
