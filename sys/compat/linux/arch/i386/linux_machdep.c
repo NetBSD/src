@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.7 1995/05/07 02:59:32 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8 1995/05/07 03:27:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -332,8 +332,10 @@ linux_write_ldt(p, uap, retval)
 	sl.desc = stackgap_alloc(&sg, sizeof(sd));
 	sl.num = 1;
 
+#if 0
 	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
 	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
+#endif
 
 	parms = stackgap_alloc(&sg, sizeof(sl));
 
