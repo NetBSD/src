@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2003/07/05 04:32:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.209 2003/07/06 13:04:01 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -348,8 +348,26 @@ dependall-distrib depend-distrib all-distrib:
 	@true
 
 .include <bsd.obj.mk>
+.include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
 
 build-docs: ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
 	groff -mdoc -Tascii -P-b -P-u -P-o $> >$@
+
+
+#
+# Display current make(1) parameters
+#
+params:
+.for var in	BSDSRCDIR BSDOBJDIR BUILDID DESTDIR EXTERNAL_TOOLCHAIN \
+		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
+		MACHINE MACHINE_ARCH MAKEFLAGS MAKEOBJDIR MAKEOBJDIRPREFIX \
+		MKOBJDIRS RELEASEDIR TOOLCHAIN_MISSING TOOLDIR \
+		UNPRIVED UPDATE USETOOLS
+.if defined(${var})
+	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
+.else
+	@printf "%20s = (undefined)\n" ${var}
+.endif
+.endfor
