@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/12/30 14:54:41 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.9 2003/08/01 17:04:05 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ kbd.out: ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/${KBD} ${MKHITS}
 	    < ${.CURDIR}/../../ctlr/${KBD} > kbd.tmp
 	rm -f TMPfunc.out
 	mv -f kbd.tmp ${.TARGET}
+CLEANFILES+=	TMPfunc.out kbd.tmp kbd.out
 
 MKASTOSCDIR!=cd ${.CURDIR}/../mkastosc && ${PRINTOBJDIR}
 MKASTOSC= ${MKASTOSCDIR}/mkastosc
@@ -31,8 +32,9 @@ astosc.out: ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/function.h \
 	    ${.CURDIR}/../../ctlr/${KBD} ${MKASTOSC}
 	${MKASTOSC} \
 	    ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/function.h \
-	    < ${.CURDIR}/../../ctlr/${KBD} > tmp
-	mv -f tmp ${.TARGET}
+	    < ${.CURDIR}/../../ctlr/${KBD} > astosc.tmp
+	mv -f astosc.tmp ${.TARGET}
+CLEANFILES+=	astosc.tmp astosc.out
 
 .include <bsd.hostprog.mk>
 

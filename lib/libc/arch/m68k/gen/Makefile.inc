@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2003/05/17 15:05:53 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2003/08/01 17:03:48 lukem Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -45,8 +45,9 @@ SRCS+=	ldexp_ieee754.c			# generic ieee754 version
 .else
 SRCS+=	ldexp_881.c
 .endif
-LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
-DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
 
-LSRCS+=	Lint_resumecontext.c Lint_swapcontext.c
-DPSRCS+= Lint_resumecontext.c Lint_swapcontext.c
+SRCS.m68k.gen=	Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c \
+		Lint_resumecontext.c Lint_swapcontext.c
+LSRCS+=		${SRCS.m68k.gen}
+DPSRCS+=	${SRCS.m68k.gen}
+CLEANFILES+=	${SRCS.m68k.gen}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/09/14 14:59:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 2003/08/01 17:03:59 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,5 @@ SRCS+=	bpf_filter.c version.c
 
 INCS=	pcap-namedb.h pcap.h
 INCSDIR=/usr/include
-
-scanner.c: grammar.h
 
 .include <bsd.lib.mk>
