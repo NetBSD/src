@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.52 2000/08/18 14:23:49 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.53 2000/08/18 16:19:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -549,9 +549,7 @@ struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_copypacket __P((struct mbuf *, int));
 struct	mbuf *m_devget __P((char *, int, int, struct ifnet *,
 			    void (*copy)(const void *, void *, size_t)));
-#if 0	/*not ready yet - makes false assumption on cluster mbuf*/
 struct	mbuf *m_dup __P((struct mbuf *, int, int, int));
-#endif
 struct	mbuf *m_free __P((struct mbuf *));
 struct	mbuf *m_get __P((int, int));
 struct	mbuf *m_getclr __P((int, int));
