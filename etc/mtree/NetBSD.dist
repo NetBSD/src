@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.143 2001/03/07 07:14:16 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.144 2001/03/12 12:48:47 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1635,11 +1635,6 @@ atari
 # ./usr/share/man/cat1/atari
 ..
 
-# ./usr/share/man/cat1/i386
-i386
-# ./usr/share/man/cat1/i386
-..
-
 # ./usr/share/man/cat1/x68k
 x68k
 # ./usr/share/man/cat1/x68k
@@ -1659,11 +1654,6 @@ cat3
 # ./usr/share/man/cat3/atari
 atari
 # ./usr/share/man/cat3/atari
-..
-
-# ./usr/share/man/cat3/i386
-i386
-# ./usr/share/man/cat3/i386
 ..
 
 # ./usr/share/man/cat3
@@ -1757,12 +1747,6 @@ x68k
 
 # ./usr/share/man/cat5
 cat5
-
-# ./usr/share/man/cat5/i386
-i386
-# ./usr/share/man/cat5/i386
-..
-
 # ./usr/share/man/cat5
 ..
 
@@ -1971,11 +1955,6 @@ atari
 # ./usr/share/man/man1/atari
 ..
 
-# ./usr/share/man/man1/i386
-i386
-# ./usr/share/man/man1/i386
-..
-
 # ./usr/share/man/man1/x68k
 x68k
 # ./usr/share/man/man1/x68k
@@ -1995,11 +1974,6 @@ man3
 # ./usr/share/man/man3/atari
 atari
 # ./usr/share/man/man3/atari
-..
-
-# ./usr/share/man/man3/i386
-i386
-# ./usr/share/man/man3/i386
 ..
 
 # ./usr/share/man/man3
@@ -2093,12 +2067,6 @@ x68k
 
 # ./usr/share/man/man5
 man5
-
-# ./usr/share/man/man5/i386
-i386
-# ./usr/share/man/man5/i386
-..
-
 # ./usr/share/man/man5
 ..
 
