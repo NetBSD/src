@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.97.2.1 2002/11/11 23:42:29 he Exp $
+# $NetBSD: mi,v 1.97.2.2 2002/11/24 19:42:04 tron Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -32,6 +32,7 @@
 ./etc/mail.rc				etc-mail-etc
 ./etc/mail/aliases			etc-sendmail-etc
 ./etc/mail/helpfile			etc-sendmail-etc
+./etc/mail/local-host-names 		etc-sendmail-etc
 ./etc/mail/sendmail.cf			etc-sendmail-etc
 ./etc/mailer.conf			etc-mailwrapper-etc
 ./etc/man.conf				etc-man-etc
