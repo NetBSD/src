@@ -1,0 +1,10 @@
+--- 001 --- simple
+Tue Jan 20 23:27:46 1998
+%a %b %d %T %Y
+--- 002 --- simple
+Tue Jan 20 23:27:46 1998
+%a %b %d %H:%M:%S %Y
+--- 003 --- simple
+Tue Jan 20 23:27:46 1998
+%c
+EOF
