@@ -1323,7 +1323,7 @@ public:
   node *copy();
   node *merge_glyph_node(glyph_node *);
   node *merge_self(node *);
-  hunits width();
+  inline hunits width();
   node *last_char_node();
   units size();
   void vertical_extent(vunits *, vunits *);
