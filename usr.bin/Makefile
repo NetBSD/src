@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 1998/12/15 22:08:53 pk Exp $
+#	$NetBSD: Makefile,v 1.93 1998/12/17 15:33:57 pk Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -28,7 +28,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	ypmatch ypwhich
 
 .if	make(clean) || make(cleandir) || make(distclean)
-SUBDIR+=elf2aout elf2ecoff ldd strip telnet
+SUBDIR+=elf2aout elf2ecoff strip telnet
 .else
 
 # Don't use the standard a.out tool chain on non-aout (ELF) platforms.
