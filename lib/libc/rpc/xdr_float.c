@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.23 2000/07/17 04:59:51 matt Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.24 2000/12/20 20:52:50 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.23 2000/07/17 04:59:51 matt Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.24 2000/12/20 20:52:50 christos Exp $");
 #endif
 #endif
 
@@ -123,7 +123,7 @@ xdr_float(xdrs, fp)
 
 	case XDR_ENCODE:
 #ifdef IEEEFP
-		return (XDR_PUTINT32(xdrs, (int32_t *)fp));
+		return (XDR_PUTINT32(xdrs, (int32_t *)(void *)fp));
 #else
 		vs = *((struct vax_single *)fp);
 		for (i = 0, lim = sgl_limits;
@@ -145,7 +145,7 @@ xdr_float(xdrs, fp)
 
 	case XDR_DECODE:
 #ifdef IEEEFP
-		return (XDR_GETINT32(xdrs, (int32_t *)fp));
+		return (XDR_GETINT32(xdrs, (int32_t *)(void *)fp));
 #else
 		vsp = (struct vax_single *)fp;
 		if (!XDR_GETINT32(xdrs, (int32_t *)&is))
