@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.12 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.13 2003/09/10 11:53:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.12 2003/05/03 18:11:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.13 2003/09/10 11:53:53 uwe Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -391,25 +391,6 @@ cs4231_close(addr)
 	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
-}
-
-size_t
-cs4231_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
-{
-
-	return (size);
-}
-
-int
-cs4231_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
-{
-
-	return (blk & ~3);
 }
 
 int

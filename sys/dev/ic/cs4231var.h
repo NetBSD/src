@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.3 2003/02/01 13:23:28 martin Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.4 2003/09/10 11:53:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -109,8 +109,6 @@ void	cs4231_transfer_advance(struct cs_transfer *,
  */
 int	cs4231_open(void *, int);
 void	cs4231_close(void *);
-size_t	cs4231_round_buffersize(void *, int, size_t);
-int	cs4231_round_blocksize(void *, int);
 int	cs4231_getdev(void *, struct audio_device *);
 int	cs4231_set_port(void *, mixer_ctrl_t *);
 int	cs4231_get_port(void *, mixer_ctrl_t *);
