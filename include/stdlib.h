@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.52.2.2 2002/06/21 18:17:09 nathanw Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.52.2.3 2002/12/10 06:42:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -269,6 +269,12 @@ void	setprogname __P((const char *));
 quad_t	 qabs __P((quad_t));
 quad_t	 strtoq __P((const char * __restrict, char ** __restrict, int));
 u_quad_t strtouq __P((const char * __restrict, char ** __restrict, int));
+
+	/* LONGLONG */
+long long strsuftoll(const char *, const char *, long long, long long);
+	/* LONGLONG */
+long long strsuftollx(const char *, const char *, long long, long long,
+	    		char *, size_t);
 
 int	 l64a_r __P((long, char *, int));
 

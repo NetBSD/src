@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.41.2.5 2002/06/21 18:17:09 nathanw Exp $	*/
+/*	$NetBSD: stdio.h,v 1.41.2.6 2002/12/10 06:42:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -359,10 +359,18 @@ __END_DECLS
  */
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
+
+#define	FPARSELN_UNESCESC	0x01
+#define	FPARSELN_UNESCCONT	0x02
+#define	FPARSELN_UNESCCOMM	0x04
+#define	FPARSELN_UNESCREST	0x08
+#define	FPARSELN_UNESCALL	0x0f
+
 __BEGIN_DECLS
 int	 asprintf __P((char ** __restrict, const char * __restrict, ...))
 	    __attribute__((__format__(__printf__, 2, 3)));
 char	*fgetln __P((FILE * __restrict, size_t * __restrict));
+char	*fparseln(FILE *, size_t *, size_t *, const char[3], int);
 int	 fpurge __P((FILE *));
 void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
