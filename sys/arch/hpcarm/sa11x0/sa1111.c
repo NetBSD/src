@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.4 2001/05/01 12:36:54 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.5 2001/05/19 05:07:02 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 #include <sys/uio.h>
 
 #include <machine/bus.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
@@ -68,6 +71,12 @@ static int	sacc_intr_dispatch(void *);
 static void	sacc_stray_interrupt(struct sacc_softc *, int);
 static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
+
+struct platid_data sacc_platid_table[] = {
+	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
+	{ &platid_mask_MACH_HP_JORNADA_720JP, (void *)1 },
+	{ NULL, NULL }
+};
 
 struct cfattach sacc_ca = {
 	sizeof(struct sacc_softc), sacc_match, sacc_attach
@@ -94,15 +103,20 @@ sacc_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	int i;
+	int i, gpiopin;
 	struct sacc_softc *sc = (struct sacc_softc *)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
+	struct platid_data *p;
 
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_piot = psc->sc_iot;
 	sc->sc_gpioh = psc->sc_gpioh;
-	sc->sc_gpiomask = 2;	/* XXX jornada 720 */
+	if ((p = platid_search(&platid, sacc_platid_table)) == NULL)
+		return;
+
+	gpiopin = (int)p->data;
+	sc->sc_gpiomask = 1 << gpiopin;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh)) {
@@ -124,9 +138,10 @@ sacc_attach(parent, self, aux)
 
 	/* connect to SA1110's GPIO intr */
 #ifdef notyet
-	sa11x0_cascade_intr_establish(0, xx, 1, sacc_intr_probe, sc);
+	sa11x0_cascadeintr_establish(0, gpiopin, sacc_intr_probe,
+				     sacc_intr_mask, sc);
 #endif
-	sa11x0_intr_establish(0, 1 /* XXX pdattach->sacc->irq */,
+	sa11x0_intr_establish(0, gpiopin,
 	    1, IPL_BIO, sacc_intr_dispatch, sc);
 
 	/*
