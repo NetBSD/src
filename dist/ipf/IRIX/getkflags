@@ -1,0 +1,12 @@
+#!/bin/sh
+CPUNUM=`uname -m | sed -e 's/IP//'`
+sed \
+-e 's/\!empty//' \
+-e 's/"//g' \
+-e 's/\$(\([_A-Z]*\)) == /\1 == /' \
+-e 's/== IP/== /' -e 's/#[^ie].*//' \
+-e 's/^#$//' /var/sysgen/Makefile.kernio | \
+egrep -v '^$|^ROOT|^include' | \
+/usr/lib/cpp -DCPUBOARD=${CPUNUM} | \
+egrep -v '^$|^#.*'
+exit 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: resend.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: resend.c,v 1.1.1.2 2001/03/26 03:54:55 mike Exp $	*/
 
 /*
  * resend.c (C) 1995-1998 Darren Reed
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: resend.c,v 2.1 1999/08/04 17:31:12 darrenr Exp";
+static const char rcsid[] = "@(#)Id: resend.c,v 2.1.4.1 2001/01/10 06:21:20 darrenr Exp";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -99,6 +99,11 @@ char	*datain;
 
 	ip = (struct ip *)pbuf;
 	eh = (ether_header_t *)malloc(sizeof(*eh));
+	if(!eh)
+	    {
+		perror("malloc failed");
+		return -2;
+	    }
 
 	bzero((char *)A_A eh->ether_shost, sizeof(eh->ether_shost));
 	if (gwip.s_addr && (arp((char *)&gwip, dhost) == -1))

@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.1.1.2 2001/03/26 03:54:43 mike Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
@@ -69,7 +69,7 @@ char	*addr, *eaddr;
 	struct	sockaddr_dl	*sdl;
 
 #ifdef	IPSEND
-	if (arp_getipv4(ip, ether) == 0)
+	if (arp_getipv4(addr, ether) == 0)
 		return 0;
 #endif
 
