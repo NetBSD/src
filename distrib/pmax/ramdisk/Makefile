@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/11/01 07:58:00 garbled Exp $
+#	$NetBSD: Makefile,v 1.15 2001/03/24 15:30:44 simonb Exp $
 
 BINDIR=		/installation/netboot
 
@@ -71,6 +71,7 @@ clean cleandir distclean:
 
 # XXX!
 depend:
+dependall: depend all
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
