@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 1994/11/14 20:53:54 gwr Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 1994/11/17 05:04:35 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -149,8 +149,11 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
+#ifndef	sun3
 /*
  * Write bytes to kernel address space for debugger.
+ * XXX - Should each port provide one of these?
+ * See arch/sun3/sun3/db_write.c for example. -gwr
  */
 void
 db_write_bytes(addr, size, data)
@@ -165,36 +168,12 @@ db_write_bytes(addr, size, data)
 	vm_offset_t	addr1;
 	extern char	etext;
 
-	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr <= (vm_offset_t)&etext)
-	{
-#ifdef 0	/* XXX - needs to be cpu_dependent, probably */
-		oldmap0 = getpgmap(addr);
-		setpgmap(addr, (oldmap0 & ~PG_PROT) | PG_KW);
-
-		addr1 = sun_trunc_page(addr + size - 1);
-		if (sun_trunc_page(addr) != addr1) {
-			/* data crosses a page boundary */
-
-			oldmap1 = getpgmap(addr1);
-			setpgmap(addr1, (oldmap1 & ~PG_PROT) | PG_KW);
-		}
-#endif
-	}
-
 	dst = (char *)addr;
-
 	while (--size >= 0)
 		*dst++ = *data++;
 
-#if 0
-	if (oldmap0) {
-		setpgmap(addr, oldmap0);
-		if (oldmap1)
-			setpgmap(addr1, oldmap1);
-	}
-#endif
 }
+#endif	/* !sun3 */
 
 int
 Debugger()
