@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.11 2001/11/19 04:47:42 perry Exp $
+#	$NetBSD: Makefile.host,v 1.12 2001/12/11 21:17:56 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -32,12 +32,20 @@ ${var}:=	${${var}}
 
 HOSTPROGNAME?=	${HOSTPROG}
 HOST_BINDIR?=	${TOOLDIR}/bin
-HOST_CPPFLAGS:=	-include ${.CURDIR}/../compat/compat_netbsd.h -Wall \
-		${HOST_CPPFLAGS} ${CPPFLAGS}
+HOST_CPPFLAGS:=	-Wall ${HOST_CPPFLAGS} ${CPPFLAGS}
 MKMAN=		no
-SRCS?=		${PROG}.c
-SRCS+=		${HOST_SRCS} nb_progname.c
 .undef LINKS
+
+SRCS?=		${HOSTPROG}.c
+SRCS+=		${HOST_SRCS}
+
+.ifndef NOCOMPATLIB
+COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
+DPADD+=		${COMPATOBJ}/libnbcompat.a
+LDADD+=		-L${COMPATOBJ} -lnbcompat
+HOST_CPPFLAGS+=	-include ${COMPATOBJ}/config.h
+.-include	"${COMPATOBJ}/defs.mk"
+.endif
 
 .PATH:		${.PROGDIR} ${.CURDIR}/../compat
 
