@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.4 1996/10/13 01:37:29 christos Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.5 1996/10/21 22:34:38 thorpej Exp $	*/
 
 /*
  * Interface for the 93C46/26/06 serial eeprom parts.
@@ -94,8 +94,8 @@ read_seeprom(sd, buf, start_addr, count)
 	u_int start_addr;
 	int count;
 #elif defined(__NetBSD__)
-	bus_io_size_t start_addr;
-	bus_io_size_t count;
+	bus_size_t start_addr;
+	bus_size_t count;
 #endif
 {
 	int i = 0, k = 0;
