@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.71 2004/04/12 06:28:05 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.72 2004/04/14 17:35:19 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.71 2004/04/12 06:28:05 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.72 2004/04/14 17:35:19 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ setup(dev)
 		sblock->fs_old_flags |= FS_FLAGS_UPDATED;
 		/* Disable the postbl tables */
 		sblock->fs_old_cpc = 0;
-		sblock->fs_old_nrpos = 0;
+		sblock->fs_old_nrpos = 1;
 		sblock->fs_old_trackskew = 0;
 		/* The other fields have already been updated by
 		 * sb_oldfscompat_read
