@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.10 1998/12/08 14:00:24 drochner Exp $	*/
+/*	$NetBSD: engine.c,v 1.11 1999/01/20 12:58:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -159,8 +159,8 @@ int eflags;
 	if (g->cflags&REG_NOSUB)
 		nmatch = 0;
 	if (eflags&REG_STARTEND) {
-		start = string + pmatch[0].rm_so;
-		stop = string + pmatch[0].rm_eo;
+		start = string + (size_t)pmatch[0].rm_so;
+		stop = string + (size_t)pmatch[0].rm_eo;
 	} else {
 		start = string;
 		stop = start + strlen(start);
@@ -620,11 +620,11 @@ sopno lev;			/* PLUS nesting level */
 		if (m->pmatch[i].rm_eo == (regoff_t)-1)
 			return(NULL);
 		assert(m->pmatch[i].rm_so != (regoff_t)-1);
-		len = m->pmatch[i].rm_eo - m->pmatch[i].rm_so;
+		len = (size_t)(m->pmatch[i].rm_eo - m->pmatch[i].rm_so);
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
-		ssp = m->offp + m->pmatch[i].rm_so;
+		ssp = m->offp + (size_t)m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
 		while (m->g->strip[ss] != SOP(O_BACK, i))
