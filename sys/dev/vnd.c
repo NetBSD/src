@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.24 1996/02/10 00:11:44 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.25 1996/03/16 23:19:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -393,7 +393,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %x\n",
+		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
@@ -418,7 +418,7 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %x\n",
+		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif
