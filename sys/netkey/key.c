@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.91 2003/09/07 20:41:27 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.92 2003/09/08 01:55:09 itojun Exp $	*/
 /*	$KAME: key.c,v 1.308 2003/09/07 20:35:59 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91 2003/09/07 20:41:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.92 2003/09/08 01:55:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2672,11 +2672,14 @@ key_setspi(sav, spi)
 	struct secasvar *sav;
 	u_int32_t spi;
 {
+	int s;
 
+	s = splsoftnet();
 	sav->spi = spi;
 	if (sav->spihash.le_prev || sav->spihash.le_next)
 		LIST_REMOVE(sav, spihash);
 	LIST_INSERT_HEAD(&spihash[spi % SPIHASHSIZE], sav, spihash);
+	splx(s);
 }
 
 /*
