@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.10 1999/11/29 20:09:54 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/02/22 01:24:26 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 1999/11/29 20:09:54 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/02/22 01:24:26 hubertf Exp $");
 #endif
 
 /*
@@ -18,7 +18,8 @@ __RCSID("$NetBSD: main.c,v 1.10 1999/11/29 20:09:54 hubertf Exp $");
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Hubert Feyrer.
+ *      This product includes software developed by Hubert Feyrer for
+ *	the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
