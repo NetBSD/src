@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.2 1995/07/04 23:00:11 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.3 1995/07/05 13:07:12 pk Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -63,7 +63,15 @@ bsd_to_svr4_flags(bf)
 	int sf = 0;
 	bsd_to_svr4_flag(UP);
 	bsd_to_svr4_flag(BROADCAST);
+#ifdef DEBUG
+#define XXXDEBUG
+#undef DEBUG
+#endif
 	bsd_to_svr4_flag(DEBUG);
+#ifdef XXXDEBUG
+#define DEBUG
+#undef XXXDEBUG
+#endif
 	bsd_to_svr4_flag(LOOPBACK);
 	bsd_to_svr4_flag(POINTOPOINT);
 	bsd_to_svr4_flag(NOTRAILERS);
