@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.h	5.3 (Berkeley) 1/18/91
- *	$Id: npx.h,v 1.6 1993/12/20 05:25:28 mycroft Exp $
+ *	$Id: npx.h,v 1.7 1994/01/08 01:19:06 jtc Exp $
  */
 
 /*
@@ -90,7 +90,9 @@ struct	emcsts {
 /* Intel prefers long real (53 bit) precision */
 #define	__iBCS_NPXCW__		0x262
 /* wfj prefers temporary real (64 bit) precision */
-#define	__NetBSD_NPXCW__	0x362
+#define	__386BSD_NPXCW__	0x362
+/* */
+#define	__NetBSD_NPXCW__	0x137f
 /*
  * bde prefers 53 bit precision and all exceptions masked.
  *
