@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.14 1996/10/23 07:50:00 matthias Exp $
+#	$NetBSD: STEELHEAD,v 1.15 1996/11/07 07:32:25 matthias Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -26,8 +26,8 @@ options		"COMPAT_10"		# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+options 	EXEC_SCRIPT		# #! scripts
+options 	EXEC_AOUT		# a.out executables
 
 # file system options
 #options	QUOTA			# file system quotas
