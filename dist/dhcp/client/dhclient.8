@@ -16,7 +16,7 @@
 .\" Support and other services are available for ISC products - see
 .\" http://www.isc.org for more information.
 .\"
-.\" $Id: dhclient.8,v 1.6 2003/03/17 07:30:38 wiz Exp $
+.\" $Id: dhclient.8,v 1.7 2004/12/01 23:22:42 christos Exp $
 .\"
 .TH dhclient 8
 .SH NAME
@@ -84,10 +84,7 @@ means for configuring one or more network interfaces using the Dynamic
 Host Configuration Protocol, BOOTP protocol, or if these protocols
 fail, by statically assigning an address.
 .SH SYSTEM REQUIREMENTS
-You must have the Berkeley
-Packet Filter (bpf) configured in your NetBSD kernel.   You must have
-at least one /dev/bpf* file for each broadcast network interface that
-is attached to your system.
+You must have the Berkeley Packet Filter (bpf) configured in your NetBSD kernel.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host to contact a central server which
