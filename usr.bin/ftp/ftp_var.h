@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.29 1999/01/23 15:46:24 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.30 1999/03/08 04:36:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -120,7 +120,7 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
-int	flushcache;		/* set http cache flush headers with request */
+int	flushcache;		/* set HTTP cache flush headers with request */
 int	retry_connect;		/* seconds between retrying connection */
 int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
@@ -144,8 +144,8 @@ char   *hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 
-in_port_t	ftpport;	/* port number to use for ftp connections */
-in_port_t	httpport;	/* port number to use for http connections */
+in_port_t	ftpport;	/* port number to use for FTP connections */
+in_port_t	httpport;	/* port number to use for HTTP connections */
 in_port_t	gateport;	/* port number to use for gateftp connections */
 
 const char	*ftpproxy;	/* ftp:// proxy server */
