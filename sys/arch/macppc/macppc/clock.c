@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2003/02/02 20:43:20 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 2003/02/12 17:49:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -223,6 +223,7 @@ found:
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
+	cpu_timebase = ticks_per_sec;
 	curcpu()->ci_lasttb = mftbl();
 	mtspr(SPR_DEC, ticks_per_intr);
 	mtmsr(msr);
