@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.16 1995/06/18 11:00:17 cgd Exp $";
+static char rcsid[] = "$Id: function.c,v 1.17 1996/05/21 13:43:52 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -875,6 +875,11 @@ c_type(typestring)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	switch (typestring[0]) {
+#ifdef S_IFWHT
+      case 'W':
+              mask = S_IFWHT;
+              break;
+#endif
 	case 'b':
 		mask = S_IFBLK;
 		break;
