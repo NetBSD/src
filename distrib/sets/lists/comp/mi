@@ -129,6 +129,7 @@
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mb86960var.h
 ./usr/include/dev/ic/mc146818reg.h
+./usr/include/dev/ic/mc68450reg.h
 ./usr/include/dev/ic/mc6845reg.h
 ./usr/include/dev/ic/midwayreg.h
 ./usr/include/dev/ic/midwayvar.h
