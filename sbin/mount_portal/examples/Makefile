@@ -1,13 +1,19 @@
-# $NetBSD: Makefile,v 1.3 2001/10/12 16:19:30 atatat Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/11 15:39:10 bgrayson Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILESDIR= /usr/share/examples/mount_portal
+FILESDIR=	/usr/share/examples/mount_portal
 
-FILES= overview advanced.1 advanced.1.conf fing.c rfilter.1 \
+FILES=	overview advanced.1 advanced.1.conf fing.c rfilter.1 \
 	rfilter.2 rfilter.2.conf tcp.1 tcp.1.conf fs.1 fs.1.conf \
-	cvs.1 cvs.conf cvs.sh
+	cvs.1 cvs.conf
+
+SCRIPTSDIR=	${FILESDIR}
+
+# The scripts have been renamed to have a suffix of .sh.sh, since the
+# SCRIPTS rule strips off one suffix.
+SCRIPTS=	sysctlfs.sh.sh cvs.sh.sh
 .endif
 
 .include <bsd.prog.mk>
