@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.1.1.1 2001/01/06 13:00:34 martin Exp $ 
+ *      $Id: main.c,v 1.2 2002/02/04 16:48:44 drochner Exp $ 
  *
  * $FreeBSD$
  *
@@ -57,8 +57,6 @@ main(int argc, char **argv)
         int i;
 	int kchar;
 	
-	char *spooldir = SPOOLDIR;
-	char *playstring = PLAYCMD;
 	char *aliasfile = ALIASFILE;
 	int rrtimeout = REREADTIMEOUT;
 	
