@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.93 1999/11/09 07:46:22 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.94 1999/11/09 22:03:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.93 1999/11/09 07:46:22 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.94 1999/11/09 22:03:49 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: fetch.c,v 1.93 1999/11/09 07:46:22 lukem Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/utsname.h>
 
 #include <netinet/in.h>
 
@@ -765,19 +764,14 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			if (flushcache)
 				fprintf(fin, "Pragma: no-cache\r\n");
 		} else {
-			struct utsname unam;
-
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s:%d\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
-			if (uname(&unam) != -1) {
-				fprintf(fin, "User-Agent: %s-%s/ftp\r\n",
-				    unam.sysname, unam.release);
-			}
 			fprintf(fin, "Connection: close\r\n");
 			if (flushcache)
 				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
+		fprintf(fin, "User-Agent: %s/%s\r\n", FTP_PRODUCT, FTP_VERSION);
 		if (wwwauth) {
 			if (verbose) {
 				fprintf(ttyout, "%swith authorization",
@@ -1583,7 +1577,8 @@ go_fetch(url)
 "NetBSD is a freely available and redistributable UNIX-like operating system.\n"
 "For more information, see http://www.netbsd.org/index.html\n", ttyout);
 		} else if (strcasecmp(url, "version") == 0) {
-			fprintf(ttyout, "Version: %s\n", FTP_VERSION);
+			fprintf(ttyout, "Version: %s %s\n",
+			    FTP_PRODUCT, FTP_VERSION);
 		} else {
 			fprintf(ttyout, "`%s' is an interesting topic.\n", url);
 		}
