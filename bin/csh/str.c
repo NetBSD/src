@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.8 1997/07/04 21:24:10 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.9 1998/07/26 19:37:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.8 1997/07/04 21:24:10 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.9 1998/07/26 19:37:11 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ short2blk(src)
 
 Char   *
 str2short(src)
-    char *src;
+    const char *src;
 {
     static Char *sdst;
     static size_t dstsize = 0;
