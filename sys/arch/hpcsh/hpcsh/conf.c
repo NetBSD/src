@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2001/04/11 20:13:52 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2001/07/08 10:42:37 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,24 +125,14 @@ cdev_decl(wsmux);
 /* misc */
 #include "rnd.h"
 
-/* SH specific */
-#define scicnpollc	nullcnpollc
-cons_decl(sci);
-#define scifcnpollc	nullcnpollc
-cons_decl(scif);
-cons_decl(com);
-
 #include "sci.h"
 cdev_decl(sci);
 #include "scif.h"
 cdev_decl(scif);
 #include "com.h"
 cdev_decl(com);
-
 #include "biconsdev.h"
 cdev_decl(biconsdev);
-#define biconscnpollc	nullcnpollc
-cons_decl(bicons);
 
 struct bdevsw bdevsw[] =
 {
