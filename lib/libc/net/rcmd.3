@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: rcmd.3,v 1.5 1994/10/28 17:30:25 cgd Exp $
+.\"	$Id: rcmd.3,v 1.6 1994/10/28 17:56:40 mycroft Exp $
 .\"
 .Dd June 4, 1993
 .Dt RCMD 3
@@ -64,12 +64,13 @@ function
 returns a descriptor to a socket
 with an address in the privileged port space.
 The
+.Fn iruserok
+and
 .Fn ruserok
-function
-is used by servers
+functions are used by servers
 to authenticate clients requesting service with
 .Fn rcmd .
-All three functions are present in the same file and are used
+All four functions are present in the same file and are used
 by the
 .Xr rshd 8
 server (among others).
@@ -137,9 +138,8 @@ The
 .Fn iruserok
 and
 .Fn ruserok
-functions take a remote host's IP address or name, as returned by the
-.Xr gethostbyname 3
-routines, two user names and a flag indicating whether the local user's
+functions take a remote host's IP address or name, respectively,
+two user names and a flag indicating whether the local user's
 name is that of the super-user.
 Then, if the user is
 .Em NOT
@@ -167,12 +167,11 @@ If the local domain (as obtained from
 .Xr gethostname 2 )
 is the same as the remote domain, only the machine name need be specified.
 .Pp
-The
+If the IP address of the remote host is known, the
 .Fn iruserok
-function is strongly preferred for security reasons.
-It requires trusting the local DNS at most, while the
-.Fn ruserok
-function requires trusting the entire DNS, which can be spoofed.
+should be used in preference to
+.Fn ruserok ,
+as it does not require trusting the DNS server for the remote host.
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
