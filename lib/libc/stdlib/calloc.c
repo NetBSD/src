@@ -1,4 +1,4 @@
-/*	$NetBSD: calloc.c,v 1.10 2002/07/30 09:45:02 itojun Exp $	*/
+/*	$NetBSD: calloc.c,v 1.11 2002/07/31 09:26:49 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)calloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: calloc.c,v 1.10 2002/07/30 09:45:02 itojun Exp $");
+__RCSID("$NetBSD: calloc.c,v 1.11 2002/07/31 09:26:49 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,12 +54,13 @@ calloc(num, size)
 {
 	void *p;
 
-	if (SIZE_T_MAX / num < size) {
+	if (num && size && SIZE_T_MAX / num < size) {
 		errno = ENOMEM;
 		return NULL;
 	}
 	size *= num;
-	if ((p = malloc(size)) != NULL)
-		memset(p, '\0', size);
+	p = malloc(size);
+	if (p)
+		memset(p, 0, size);
 	return(p);
 }
