@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.46 2003/01/27 00:56:12 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.47 2003/01/27 14:54:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -310,8 +310,8 @@ Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
 Note that a non-gnu grep has been floated on the mailing lists
 (tech-userlevel, fall 1999), and may bear examination.
-The grep will be found in
-	http://www.wam.umd.edu/~howardjp/software/grep/
+The grep will be found in:
+	http://www.vocito.com/downloads/software/grep/
 
 Package:	groff
 Version:	1.16.1
