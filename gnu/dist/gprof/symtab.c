@@ -85,8 +85,9 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
       if (src->addr == prev_addr)
 	{
 	  /*
-	   * If same address, favor global symbol over static one.
-	   * If both symbols are either static or global, check
+	   * If same address, favor global symbol over static one,
+	   * then function over line number.  If both symbols are
+	   * either static or global and either function or line, check
 	   * whether one has name beginning with underscore while
 	   * the other doesn't.  In such cases, keep sym without
 	   * underscore.  This takes cares of compiler generated
@@ -94,9 +95,12 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
 	   */
 	  if ((!src->is_static && dst[-1].is_static)
 	      || ((src->is_static == dst[-1].is_static)
-		  && ((src->name[0] != '_' && dst[-1].name[0] == '_')
-		      || (src->name[0]
-			  && src->name[1] != '_' && dst[-1].name[1] == '_'))))
+		  && ((src->is_func && !dst[-1].is_func)
+		      || ((src->is_func == dst[-1].is_func)
+			  && ((src->name[0] != '_' && dst[-1].name[0] == '_')
+			      || (src->name[0]
+				  && src->name[1] != '_'
+				  && dst[-1].name[1] == '_'))))))
 	    {
 	      DBG (AOUTDEBUG | IDDEBUG,
 		   printf ("[symtab_finalize] favor %s@%c%c over %s@%c%c",
@@ -146,7 +150,7 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
   tab->len = tab->limit - tab->base;
 
   DBG (AOUTDEBUG | IDDEBUG,
-       int j;
+       unsigned int j;
 
        for (j = 0; j < tab->len; ++j)
        {
@@ -166,7 +170,7 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
   long low, mid, high;
   Sym *sym;
 
-  fprintf (stderr, "[sym_lookup] address 0x%lx\n", address);
+  fprintf (stderr, "[dbg_sym_lookup] address 0x%lx\n", address);
 
   sym = symtab->base;
   for (low = 0, high = symtab->len - 1; low != high;)
@@ -189,7 +193,7 @@ DEFUN (dbg_sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address
 	  low = mid + 1;
 	}
     }
-  fprintf (stderr, "[sym_lookup] binary search fails???\n");
+  fprintf (stderr, "[dbg_sym_lookup] binary search fails???\n");
   return 0;
 }
 
@@ -233,7 +237,7 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
 	  else
 	    {
 	      DBG (LOOKUPDEBUG,
-		   printf ("[sym_lookup] %d probes (symtab->len=%d)\n",
+		   printf ("[sym_lookup] %d probes (symtab->len=%u)\n",
 			   probes, symtab->len - 1));
 	      return &sym[mid];
 	    }
@@ -256,7 +260,7 @@ DEFUN (sym_lookup, (symtab, address), Sym_Table * symtab AND bfd_vma address)
 	}
       else
 	{
-	  DBG (LOOKUPDEBUG, printf ("[sym_lookup] %d (%d) probes, fall off\n",
+	  DBG (LOOKUPDEBUG, printf ("[sym_lookup] %d (%u) probes, fall off\n",
 				    probes, symtab->len - 1));
 	  return &sym[mid + 1];
 	}

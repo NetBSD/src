@@ -851,7 +851,7 @@ xcoff_read_ar_hdr (abfd)
     return NULL;
 
   namlen = strtol (hdr.namlen, (char **) NULL, 10);
-  hdrp = bfd_alloc (abfd, SIZEOF_AR_HDR + namlen + 1);
+  hdrp = (struct xcoff_ar_hdr *) bfd_alloc (abfd, SIZEOF_AR_HDR + namlen + 1);
   if (hdrp == NULL)
     return NULL;
   memcpy (hdrp, &hdr, SIZEOF_AR_HDR);
@@ -1123,8 +1123,7 @@ xcoff_write_archive_contents (abfd)
 
 	  if (sub->arelt_data == NULL)
 	    {
-	      sub->arelt_data = ((struct areltdata *)
-				 bfd_alloc (sub, sizeof (struct areltdata)));
+	      sub->arelt_data = bfd_alloc (sub, sizeof (struct areltdata));
 	      if (sub->arelt_data == NULL)
 		return false;
 	    }

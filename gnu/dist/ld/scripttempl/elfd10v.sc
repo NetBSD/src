@@ -178,7 +178,7 @@ SECTIONS
 
   /* Hmmm, there's got to be a better way.  This sets the stack to the
      top of the simulator memory (i.e. top of 64K data space). */
-  .stack 0x2007FFE : { _stack = .; *(.stack) }
+  .stack 0x00007FFE : { _stack = .; *(.stack) }
 
   .text    ${RELOCATING+${TEXT_START_ADDR}} :
   {

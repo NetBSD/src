@@ -613,7 +613,10 @@ ireglist:
 reglistpair:
 	  reglistreg '-' reglistreg
 		{
-		  $$ = (1 << ($3 + 1)) - 1 - ((1 << $1) - 1);
+		  if ($1 <= $3)
+		    $$ = (1 << ($3 + 1)) - 1 - ((1 << $1) - 1);
+		  else
+		    $$ = (1 << ($1 + 1)) - 1 - ((1 << $3) - 1);
 		}
 	;
 
@@ -874,24 +877,36 @@ yylex ()
 	    }
 	}
 
-      if (*s != '*' && *s != ':')
-	yylval.indexreg.scale = 1;
-      else
+      yylval.indexreg.scale = 1;
+
+      if (*s == '*' || *s == ':')
 	{
+	  expressionS scale;
+
 	  ++s;
-	  switch (*s)
+
+	  hold = input_line_pointer;
+	  input_line_pointer = s;
+	  expression (&scale);
+	  s = input_line_pointer;
+	  input_line_pointer = hold;
+
+	  if (scale.X_op != O_constant)
+	    yyerror ("scale specification must resolve to a number");
+	  else
 	    {
-	    case '1':
-	    case '2':
-	    case '4':
-	    case '8':
-	      yylval.indexreg.scale = *s - '0';
-	      ++s;
-	      break;
-	    default:
-	      yyerror ("illegal scale specification");
-	      yylval.indexreg.scale = 1;
-	      break;
+	      switch (scale.X_add_number)
+		{
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		  yylval.indexreg.scale = scale.X_add_number;
+		  break;
+		default:
+		  yyerror ("invalid scale value");
+		  break;
+		}
 	    }
 	}
 

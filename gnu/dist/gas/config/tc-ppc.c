@@ -1,5 +1,5 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
-   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -80,6 +80,7 @@ static void ppc_function PARAMS ((int));
 static void ppc_extern PARAMS ((int));
 static void ppc_lglobl PARAMS ((int));
 static void ppc_section PARAMS ((int));
+static void ppc_named_section PARAMS ((int));
 static void ppc_stabx PARAMS ((int));
 static void ppc_rename PARAMS ((int));
 static void ppc_toc PARAMS ((int));
@@ -174,6 +175,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "function",	ppc_function,	0 },
   { "lglobl",	ppc_lglobl,	0 },
   { "rename",	ppc_rename,	0 },
+  { "section",	ppc_named_section, 0 },
   { "stabx",	ppc_stabx,	0 },
   { "text",	ppc_section,	't' },
   { "toc",	ppc_toc,	0 },
@@ -1063,6 +1065,21 @@ ppc_insert_operand (insn, operand, val, file, line)
 	  else
 	    max = (1 << (operand->bits - 1)) - 1;
 	  min = - (1 << (operand->bits - 1));
+
+	  if (ppc_size == PPC_OPCODE_32)
+	    {
+	      /* Some people write 32 bit hex constants with the sign
+		 extension done by hand.  This shouldn't really be
+		 valid, but, to permit this code to assemble on a 64
+		 bit host, we sign extend the 32 bit value.  */
+	      if (val > 0
+		  && (val & 0x80000000) != 0
+		  && (val & 0xffffffff) == val)
+		{
+		  val -= 0x80000000;
+		  val -= 0x80000000;
+		}
+	    }
 	}
       else
 	{
@@ -1191,8 +1208,17 @@ ppc_elf_suffix (str_p, exp_p)
 
   ch = ident[0];
   for (ptr = &mapping[0]; ptr->length > 0; ptr++)
-    if (ch == ptr->string[0] && len == ptr->length && memcmp (ident, ptr->string, ptr->length) == 0)
+    if (ch == ptr->string[0]
+	&& len == ptr->length
+	&& memcmp (ident, ptr->string, ptr->length) == 0)
       {
+	if (exp_p->X_add_number != 0
+	    && (ptr->reloc == BFD_RELOC_16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_LO16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_HI16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_HI16_S_GOTOFF))
+	  as_warn ("identifier+constant@got means identifier@got+constant");
+
 	/* Now check for identifier@suffix+constant */
 	if (*str == '-' || *str == '+')
 	  {
@@ -1837,7 +1863,11 @@ md_assemble (str)
 		break;
 
 	      case BFD_RELOC_LO16:
-		if (ex.X_unsigned)
+		/* X_unsigned is the default, so if the user has done
+                   something which cleared it, we always produce a
+                   signed value.  */
+		if (ex.X_unsigned
+		    && (operand->flags & PPC_OPERAND_SIGNED) == 0)
 		  ex.X_add_number &= 0xffff;
 		else
 		  ex.X_add_number = (((ex.X_add_number & 0xffff)
@@ -2409,6 +2439,7 @@ ppc_change_csect (sym)
     {
       symbolS **list_ptr;
       int after_toc;
+      int hold_chunksize;
       symbolS *list;
 
       /* This is a new csect.  We need to look at the symbol class to
@@ -2449,7 +2480,16 @@ ppc_change_csect (sym)
 	  abort ();
 	}
 
+      /* We set the obstack chunk size to a small value before
+         changing subsegments, so that we don't use a lot of memory
+         space for what may be a small section.  */
+      hold_chunksize = chunksize;
+      chunksize = 64;
+
       subseg_new (segment_name (S_GET_SEGMENT (sym)), sym->sy_tc.subseg);
+
+      chunksize = hold_chunksize;
+
       if (after_toc)
 	ppc_after_toc_frag = frag_now;
 
@@ -2492,6 +2532,43 @@ ppc_section (type)
     abort ();
 
   sym = symbol_find_or_make (name);
+
+  ppc_change_csect (sym);
+
+  demand_empty_rest_of_line ();
+}
+
+/* This function handles the .section pseudo-op.  This is mostly to
+   give an error, since XCOFF only supports .text, .data and .bss, but
+   we do permit the user to name the text or data section.  */
+
+static void
+ppc_named_section (ignore)
+     int ignore;
+{
+  char *user_name;
+  const char *real_name;
+  char c;
+  symbolS *sym;
+
+  user_name = input_line_pointer;
+  c = get_symbol_end ();
+
+  if (strcmp (user_name, ".text") == 0)
+    real_name = ".text[PR]";
+  else if (strcmp (user_name, ".data") == 0)
+    real_name = ".data[RW]";
+  else
+    {
+      as_bad ("The XCOFF file format does not support arbitrary sections");
+      *input_line_pointer = c;
+      ignore_rest_of_line ();
+      return;
+    }
+
+  *input_line_pointer = c;
+
+  sym = symbol_find_or_make (real_name);
 
   ppc_change_csect (sym);
 
@@ -2828,6 +2905,8 @@ static void
 ppc_biei (ei)
      int ei;
 {
+  static symbolS *last_biei;
+
   char *name;
   int len;
   symbolS *sym;
@@ -2850,7 +2929,7 @@ ppc_biei (ei)
   S_SET_STORAGE_CLASS (sym, ei ? C_EINCL : C_BINCL);
   sym->sy_tc.output = 1;
   
-  for (look = symbol_rootP;
+  for (look = last_biei ? last_biei : symbol_rootP;
        (look != (symbolS *) NULL
 	&& (S_GET_STORAGE_CLASS (look) == C_FILE
 	    || S_GET_STORAGE_CLASS (look) == C_BINCL
@@ -2861,6 +2940,7 @@ ppc_biei (ei)
     {
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
       symbol_insert (sym, look, &symbol_rootP, &symbol_lastP);
+      last_biei = sym;
     }
 
   demand_empty_rest_of_line ();
@@ -3990,7 +4070,7 @@ ppc_frob_symbol (sym)
       ppc_last_function = sym;
       if (sym->sy_tc.size != (symbolS *) NULL)
 	{
-	  resolve_symbol_value (sym->sy_tc.size);
+	  resolve_symbol_value (sym->sy_tc.size, 1);
 	  SA_SET_SYM_FSIZE (sym, (long) S_GET_VALUE (sym->sy_tc.size));
 	}
     }
@@ -4049,7 +4129,7 @@ ppc_frob_symbol (sym)
 				     - S_GET_VALUE (sym));
 	  else
 	    {
-	      resolve_symbol_value (sym->sy_tc.next);
+	      resolve_symbol_value (sym->sy_tc.next, 1);
 	      a->x_csect.x_scnlen.l = (S_GET_VALUE (sym->sy_tc.next)
 				       - S_GET_VALUE (sym));
 	    }
@@ -4102,7 +4182,7 @@ ppc_frob_symbol (sym)
 	    }
 	  else
 	    {
-	      resolve_symbol_value (next);
+	      resolve_symbol_value (next, 1);
 	      a->x_csect.x_scnlen.l = (S_GET_VALUE (next)
 				       - S_GET_VALUE (sym));
 	    }
@@ -4133,7 +4213,7 @@ ppc_frob_symbol (sym)
 	    {
 	      while (csect->sy_tc.next != (symbolS *) NULL)
 		{
-		  resolve_symbol_value (csect->sy_tc.next);
+		  resolve_symbol_value (csect->sy_tc.next, 1);
 		  if (S_GET_VALUE (csect->sy_tc.next) > S_GET_VALUE (sym))
 		    break;
 		  csect = csect->sy_tc.next;
@@ -4174,7 +4254,7 @@ ppc_frob_symbol (sym)
       /* The value is the offset from the enclosing csect.  */
       block = sym->sy_tc.within;
       csect = block->sy_tc.within;
-      resolve_symbol_value (csect);
+      resolve_symbol_value (csect, 1);
       S_SET_VALUE (sym, S_GET_VALUE (sym) - S_GET_VALUE (csect));
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_BINCL
@@ -4376,13 +4456,6 @@ md_pcrel_from_section (fixp, sec)
      fixS *fixp;
      segT sec;
 {
-#ifdef OBJ_ELF
-  if (fixp->fx_addsy != (symbolS *) NULL
-      && (! S_IS_DEFINED (fixp->fx_addsy)
-	  || TC_FORCE_RELOCATION_SECTION (fixp, sec)))
-    return 0;
-#endif
-
   return fixp->fx_frag->fr_address + fixp->fx_where;
 }
 
@@ -4399,7 +4472,7 @@ ppc_fix_adjustable (fix)
 {
   valueT val;
 
-  resolve_symbol_value (fix->fx_addsy);
+  resolve_symbol_value (fix->fx_addsy, 1);
   val = S_GET_VALUE (fix->fx_addsy);
   if (ppc_toc_csect != (symbolS *) NULL
       && fix->fx_addsy != (symbolS *) NULL
@@ -4419,7 +4492,7 @@ ppc_fix_adjustable (fix)
 	    continue;
 	  if (sy->sy_tc.class != XMC_TC)
 	    break;
-	  resolve_symbol_value (sy);
+	  resolve_symbol_value (sy, 1);
 	  if (val == S_GET_VALUE (sy))
 	    {
 	      fix->fx_addsy = sy;
@@ -4437,7 +4510,13 @@ ppc_fix_adjustable (fix)
       && fix->fx_addsy->sy_tc.subseg == 0
       && fix->fx_addsy->sy_tc.class != XMC_TC0
       && fix->fx_addsy->sy_tc.class != XMC_TC
-      && S_GET_SEGMENT (fix->fx_addsy) != bss_section)
+      && S_GET_SEGMENT (fix->fx_addsy) != bss_section
+      /* Don't adjust if this is a reloc in the toc section.  */
+      && (S_GET_SEGMENT (fix->fx_addsy) != data_section
+	  || ppc_toc_csect == NULL
+	  || val < ppc_toc_frag->fr_address
+	  || (ppc_after_toc_frag != NULL
+	      && val >= ppc_after_toc_frag->fr_address)))
     {
       symbolS *csect;
 
@@ -4456,7 +4535,35 @@ ppc_fix_adjustable (fix)
 	  while (csect->sy_tc.next != (symbolS *) NULL
 		 && (csect->sy_tc.next->sy_frag->fr_address
 		     <= fix->fx_addsy->sy_frag->fr_address))
-	    csect = csect->sy_tc.next;
+	    {
+	      /* If the csect address equals the symbol value, then we
+                 have to look through the full symbol table to see
+                 whether this is the csect we want.  Note that we will
+                 only get here if the csect has zero length.  */
+	      if ((csect->sy_frag->fr_address
+		   == fix->fx_addsy->sy_frag->fr_address)
+		  && S_GET_VALUE (csect) == S_GET_VALUE (fix->fx_addsy))
+		{
+		  symbolS *scan;
+
+		  for (scan = csect->sy_next;
+		       scan != NULL;
+		       scan = scan->sy_next)
+		    {
+		      if (scan->sy_tc.subseg != 0)
+			break;
+		      if (scan == fix->fx_addsy)
+			break;
+		    }
+
+		  /* If we found the symbol before the next csect
+                     symbol, then this is the csect we want.  */
+		  if (scan == fix->fx_addsy)
+		    break;
+		}
+
+	      csect = csect->sy_tc.next;
+	    }
 
 	  fix->fx_offset += (S_GET_VALUE (fix->fx_addsy)
 			     - csect->sy_frag->fr_address);
@@ -4470,7 +4577,7 @@ ppc_fix_adjustable (fix)
       && S_GET_SEGMENT (fix->fx_addsy) == bss_section
       && ! S_IS_EXTERNAL (fix->fx_addsy))
     {
-      resolve_symbol_value (fix->fx_addsy->sy_frag->fr_symbol);
+      resolve_symbol_value (fix->fx_addsy->sy_frag->fr_symbol, 1);
       fix->fx_offset += (S_GET_VALUE (fix->fx_addsy)
 			 - S_GET_VALUE (fix->fx_addsy->sy_frag->fr_symbol));
       fix->fx_addsy = fix->fx_addsy->sy_frag->fr_symbol;
@@ -4535,6 +4642,29 @@ md_apply_fix3 (fixp, valuep, seg)
 {
   valueT value;
 
+#ifdef OBJ_ELF
+  value = *valuep;
+  if (fixp->fx_addsy != NULL)
+    {
+      /* `*valuep' may contain the value of the symbol on which the reloc
+	 will be based; we have to remove it.  */
+      if (fixp->fx_addsy->sy_used_in_reloc
+	  && S_GET_SEGMENT (fixp->fx_addsy) != absolute_section
+	  && S_GET_SEGMENT (fixp->fx_addsy) != undefined_section
+	  && ! bfd_is_com_section (S_GET_SEGMENT (fixp->fx_addsy)))
+	value -= S_GET_VALUE (fixp->fx_addsy);
+
+      /* FIXME: Why '+'?  Better yet, what exactly is '*valuep'
+	 supposed to be?  I think this is related to various similar
+	 FIXMEs in tc-i386.c and tc-sparc.c.  */
+      if (fixp->fx_pcrel)
+	value += fixp->fx_frag->fr_address + fixp->fx_where;
+    }
+  else
+    {
+      fixp->fx_done = 1;
+    }
+#else
   /* FIXME FIXME FIXME: The value we are passed in *valuep includes
      the symbol values.  Since we are using BFD_ASSEMBLER, if we are
      doing this relocation the code in write.c is going to call
@@ -4545,7 +4675,6 @@ md_apply_fix3 (fixp, valuep, seg)
      *valuep, and must use fx_offset instead.  However, if the reloc
      is PC relative, we do want to use *valuep since it includes the
      result of md_pcrel_from.  This is confusing.  */
-
   if (fixp->fx_addsy == (symbolS *) NULL)
     {
       value = *valuep;
@@ -4568,6 +4697,7 @@ md_apply_fix3 (fixp, valuep, seg)
 	    }
 	}
     }
+#endif
 
   if ((int) fixp->fx_r_type >= (int) BFD_RELOC_UNUSED)
     {
@@ -4696,8 +4826,6 @@ md_apply_fix3 (fixp, valuep, seg)
 	  break;
 
 	case BFD_RELOC_LO16:
-	case BFD_RELOC_HI16:
-	case BFD_RELOC_HI16_S:
 	case BFD_RELOC_16:
 	case BFD_RELOC_GPREL16:
 	case BFD_RELOC_16_GOT_PCREL:
@@ -4734,6 +4862,22 @@ md_apply_fix3 (fixp, valuep, seg)
 			      value, 2);
 	  break;
 
+	  /* This case happens when you write, for example,
+	     lis %r3,(L1-L2)@ha
+	     where L1 and L2 are defined later.  */
+	case BFD_RELOC_HI16:
+	  if (fixp->fx_pcrel)
+	    abort ();
+	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
+			      value >> 16, 2);
+	  break;
+	case BFD_RELOC_HI16_S:
+	  if (fixp->fx_pcrel)
+	    abort ();
+	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
+			      value + 0x8000 >> 16, 2);
+	  break;
+
 	  /* Because SDA21 modifies the register field, the size is set to 4
 	     bytes, rather than 2, so offset it here appropriately */
 	case BFD_RELOC_PPC_EMB_SDA21:
@@ -4755,9 +4899,36 @@ md_apply_fix3 (fixp, valuep, seg)
 
 	case BFD_RELOC_24_PLT_PCREL:
 	case BFD_RELOC_PPC_LOCAL24PC:
-	  if (!fixp->fx_pcrel)
+	  if (!fixp->fx_pcrel && !fixp->fx_done)
 	    abort ();
 
+	  if (fixp->fx_done)
+	  {
+	    char *where;
+	    unsigned long insn;
+	    
+	    /* Fetch the instruction, insert the fully resolved operand
+	       value, and stuff the instruction back again.  */
+	    where = fixp->fx_frag->fr_literal + fixp->fx_where;
+	    if (target_big_endian)
+	      insn = bfd_getb32 ((unsigned char *) where);
+	    else
+	      insn = bfd_getl32 ((unsigned char *) where);
+	    if ((value & 3) != 0)
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    "must branch to an address a multiple of 4");
+	    if ((offsetT) value < -0x40000000
+		|| (offsetT) value >= 0x40000000)
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    "@local or @plt branch destination is too far "
+			    "away, %ld bytes",
+			    value);
+	    insn = insn | (value & 0x03fffffc);
+	    if (target_big_endian)
+	      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+	    else
+	      bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
+	  }
 	  break;
 
 	default:

@@ -972,12 +972,13 @@ hash_string (ptr)
   return hash;
 }
 
-/* Generate a length-hashed VMS symbol name (limited to 64 chars).  */
+/* Generate a length-hashed VMS symbol name (limited to maxlen chars).  */
 
 char *
-_bfd_evax_length_hash_symbol (abfd, in)
+_bfd_evax_length_hash_symbol (abfd, in, maxlen)
      bfd *abfd;
      const char *in;
+     int maxlen;
 {
   long int init;
   long int result;
@@ -986,12 +987,15 @@ _bfd_evax_length_hash_symbol (abfd, in)
   char *new_name;
   const char *old_name;
   int i;
-  static char outbuf[65];
+  static char outbuf[EOBJ_S_C_SYMSIZ+1];
   char *out = outbuf;
 
 #if EVAX_DEBUG
   evax_debug(4, "_bfd_evax_length_hash_symbol \"%s\"\n", in);
 #endif
+
+  if (maxlen > EOBJ_S_C_SYMSIZ)
+    maxlen = EOBJ_S_C_SYMSIZ;
 
   new_name = out;		/* save this for later.  */
 
@@ -999,32 +1003,39 @@ _bfd_evax_length_hash_symbol (abfd, in)
 
   in_len = strlen (in);
 
-  result = (in_len > 64) ? hash_string (in) : 0;
+  result = (in_len > maxlen) ? hash_string (in) : 0;
 
   old_name = in;
 
   /* Do the length checking.  */
 
-  if (in_len <= 64)
-    i = in_len;
+  if (in_len <= maxlen)
+    {
+      i = in_len;
+    }
+  else
+    {
+      if (PRIV(flag_hash_long_names))
+	i = maxlen-9;
       else
-    i = 55;
+	i = maxlen;
+    }
 
   strncpy (out, in, i);
   in += i;
   out += i;
 
-  if ((in_len > 64)
+  if ((in_len > maxlen)
       && PRIV(flag_hash_long_names))
     sprintf (out, "_%08x", result);
   else
-  *out = 0;
+    *out = 0;
 
 #if EVAX_DEBUG
   evax_debug(4, "--> [%d]\"%s\"\n", strlen (outbuf), outbuf);
 #endif
 
-  if (in_len > 64
+  if (in_len > maxlen
 	&& PRIV(flag_hash_long_names)
 	&& PRIV(flag_show_after_trunc))
     printf ("Symbol %s replaced by %s\n", old_name, new_name);

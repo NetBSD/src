@@ -16,6 +16,25 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
   parent = sym_lookup (&symtab, from_pc);
   child = sym_lookup (&symtab, self_pc);
 
+  if (child == NULL || parent == NULL)
+    return;
+
+  /* If we're doing line-by-line profiling, both the parent and the
+     child will probably point to line symbols instead of function
+     symbols.  For the parent this is fine, since this identifies the
+     line number in the calling routing, but the child should always
+     point to a function entry point, so we back up in the symbol
+     table until we find it.
+   
+     For normal profiling, is_func will be set on all symbols, so this
+     code will do nothing.  */
+
+  while (child >= symtab.base && ! child->is_func)
+    --child;
+
+  if (child < symtab.base)
+    return;
+
   /*
    * Keep arc if it is on INCL_ARCS table or if the INCL_ARCS table
    * is empty and it is not in the EXCL_ARCS table.

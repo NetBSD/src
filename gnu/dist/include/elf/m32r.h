@@ -51,4 +51,12 @@ enum reloc_type
    move.  */
 #define SHF_M32R_CAN_RELAX	0x10000000
 
+/* Processor specific flags for the ELF header e_flags field.  */
+
+/* Two bit m32r architecture field.  */
+#define EF_M32R_ARCH		0x30000000
+
+/* m32r code.  */
+#define E_M32R_ARCH		0x00000000
+
 #endif

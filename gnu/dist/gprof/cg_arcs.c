@@ -26,9 +26,9 @@
 #include "sym_ids.h"
 
 Sym *cycle_header;
-int num_cycles;
+unsigned int num_cycles;
 Arc **arcs;
-int numarcs;
+unsigned int numarcs;
 
 /*
  * Return TRUE iff PARENT has an arc to covers the address
@@ -67,7 +67,7 @@ void
 DEFUN (arc_add, (parent, child, count),
        Sym * parent AND Sym * child AND int count)
 {
-  static int maxarcs = 0;
+  static unsigned int maxarcs = 0;
   Arc *arc, **newarcs;
 
   DBG (TALLYDEBUG, printf ("[arc_add] %d arcs from %s to %s\n",
@@ -575,7 +575,7 @@ Sym **
 DEFUN_VOID (cg_assemble)
 {
   Sym *parent, **time_sorted_syms, **top_sorted_syms;
-  long index;
+  unsigned int index;
   Arc *arc;
 
   /*

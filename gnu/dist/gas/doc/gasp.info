@@ -1,5 +1,5 @@
-This is Info file gasp.info, produced by Makeinfo-1.64 from the input
-file ./gasp.texi.
+This is Info file gasp.info, produced by Makeinfo version 1.68 from the
+input file gasp.texi.
 
 START-INFO-DIR-ENTRY
 * gasp: (gasp).                     The GNU Assembler Preprocessor
@@ -933,154 +933,154 @@ Index
 
 * Menu:
 
-* +:                                    Markers.
-* -alternate:                           Invoking GASP.
-* -commentchar 'CHAR':                  Invoking GASP.
-* -copysource:                          Invoking GASP.
-* -debug:                               Invoking GASP.
-* -help:                                Invoking GASP.
-* -mri:                                 Invoking GASP.
-* -output OUTFILE:                      Invoking GASP.
-* -print:                               Invoking GASP.
-* -unreasonable:                        Invoking GASP.
-* -version:                             Invoking GASP.
-* -a:                                   Invoking GASP.
-* -c 'CHAR':                            Invoking GASP.
-* -d:                                   Invoking GASP.
-* -h:                                   Invoking GASP.
-* -M:                                   Invoking GASP.
-* -o OUTFILE:                           Invoking GASP.
-* -p:                                   Invoking GASP.
-* -s:                                   Invoking GASP.
-* -u:                                   Invoking GASP.
-* -v:                                   Invoking GASP.
-* .AELSE:                               Conditionals.
-* .AENDI:                               Conditionals.
-* .AENDR:                               Loops.
-* .AENDW:                               Loops.
-* .AIF "STRA" CMP "STRB":               Conditionals.
-* .AIF EXPRA CMP EXPRB:                 Conditionals.
-* .ALIGN SIZE:                          Other Commands.
-* .ALTERNATE:                           Other Commands.
-* .AREPEAT AEXP:                        Loops.
-* .AWHILE EXPRA CMP EXPRB:              Loops.
-* .AWHILE STRA CMP STRB:                Loops.
-* .DATA EXPR, EXPR, ...:                Initialized.
-* .DATA.B EXPR, EXPR, ...:              Initialized.
-* .DATA.L EXPR, EXPR, ...:              Initialized.
-* .DATA.W EXPR, EXPR, ...:              Initialized.
-* .DATAB REPEAT, EXPR:                  Initialized.
-* .DATAB.B REPEAT, EXPR:                Initialized.
-* .DATAB.L REPEAT, EXPR:                Initialized.
-* .DATAB.W REPEAT, EXPR:                Initialized.
-* .END:                                 Other Commands.
-* .ENDM:                                Macros.
-* .EXITM:                               Macros.
-* .EXPORT NAME:                         Other Commands.
-* .FORM COL=COLS:                       Listings.
-* .FORM LIN=LN:                         Listings.
-* .FORM LIN=LN COL=COLS:                Listings.
-* .GLOBAL NAME:                         Other Commands.
-* .HEADING STRING:                      Listings.
-* .INCLUDE "STR":                       Other Commands.
-* .INSTR("STRING", "SEG", IX):          String Builtins.
-* .LEN("STR"):                          String Builtins.
-* .MACRO MACNAME:                       Macros.
-* .MACRO MACNAME MACARGS ...:           Macros.
-* .ORG:                                 Other Commands.
-* .PAGE:                                Listings.
-* .PRINT LIST:                          Listings.
-* .PRINT NOLIST:                        Listings.
-* .PROGRAM:                             Other Commands.
-* .RADIX S:                             Other Commands.
-* .RES COUNT:                           Uninitialized.
-* .RES.B COUNT:                         Uninitialized.
-* .RES.L COUNT:                         Uninitialized.
-* .RES.W COUNT:                         Uninitialized.
-* .SDATA "STR" ...:                     Initialized.
-* .SDATAB REPEAT, "STR" ...:            Initialized.
-* .SDATAC "STR" ...:                    Initialized.
-* .SDATAZ "STR" ...:                    Initialized.
-* .SRES COUNT:                          Uninitialized.
-* .SRES.B COUNT:                        Uninitialized.
-* .SRES.L COUNT:                        Uninitialized.
-* .SRES.W COUNT:                        Uninitialized.
-* .SRESC COUNT:                         Uninitialized.
-* .SRESC.B COUNT:                       Uninitialized.
-* .SRESC.L COUNT:                       Uninitialized.
-* .SRESC.W COUNT:                       Uninitialized.
-* .SRESZ COUNT:                         Uninitialized.
-* .SRESZ.B COUNT:                       Uninitialized.
-* .SRESZ.L COUNT:                       Uninitialized.
-* .SRESZ.W COUNT:                       Uninitialized.
-* .SUBSTR("STRING",START,LEN):          String Builtins.
-* ! default comment char:               Invoking GASP.
-* ; as comment char:                    Invoking GASP.
-* INFILE ...:                           Invoking GASP.
-* NAME .MACRO:                          Macros.
-* NAME .MACRO ( MACARGS ... ):          Macros.
-* PVAR .ASSIGN EXPR:                    Variables.
-* PVAR .ASSIGNA AEXPR:                  Variables.
-* PVAR .ASSIGNC "STR":                  Variables.
-* PVAR .EQU EXPR:                       Variables.
-* PVAR .REG (REGISTER):                 Variables.
-* \@:                                   Macros.
-* absolute expressions:                 Expressions.
-* argument fields:                      Syntax Details.
-* avoiding preprocessing:               Markers.
-* bang, as comment:                     Invoking GASP.
-* breaking out of loops:                Loops.
-* comment character, changing:          Invoking GASP.
-* comments:                             Markers.
-* continuation character:               Markers.
-* copying literally to output:          Markers.
-* directive field:                      Syntax Details.
-* EQ:                                   Conditionals.
-* exclamation mark, as comment:         Invoking GASP.
-* fields of GASP source line:           Syntax Details.
-* GE:                                   Conditionals.
-* GT:                                   Conditionals.
-* label field:                          Syntax Details.
-* LE:                                   Conditionals.
-* literal copy to output:               Markers.
-* LOCAL NAME [ , ... ]:                 Macros.
-* loops, breaking out of:               Loops.
-* LT:                                   Conditionals.
-* macros, count executed:               Macros.
-* NE:                                   Conditionals.
-* number of macros executed:            Macros.
-* preprocessing, avoiding:              Markers.
-* relocatable expressions:              Expressions.
-* semicolon, as comment:                Invoking GASP.
-* shriek, as comment:                   Invoking GASP.
-* symbol separator:                     Markers.
-* symbols, separating from text:        Markers.
-* text, separating from symbols:        Markers.
-* whitespace:                           Syntax Details.
+* ! default comment char:                Invoking GASP.
+* +:                                     Markers.
+* --alternate:                           Invoking GASP.
+* --commentchar 'CHAR':                  Invoking GASP.
+* --copysource:                          Invoking GASP.
+* --debug:                               Invoking GASP.
+* --help:                                Invoking GASP.
+* --mri:                                 Invoking GASP.
+* --output OUTFILE:                      Invoking GASP.
+* --print:                               Invoking GASP.
+* --unreasonable:                        Invoking GASP.
+* --version:                             Invoking GASP.
+* -a:                                    Invoking GASP.
+* -c 'CHAR':                             Invoking GASP.
+* -d:                                    Invoking GASP.
+* -h:                                    Invoking GASP.
+* -M:                                    Invoking GASP.
+* -o OUTFILE:                            Invoking GASP.
+* -p:                                    Invoking GASP.
+* -s:                                    Invoking GASP.
+* -u:                                    Invoking GASP.
+* -v:                                    Invoking GASP.
+* .AELSE:                                Conditionals.
+* .AENDI:                                Conditionals.
+* .AENDR:                                Loops.
+* .AENDW:                                Loops.
+* .AIF "STRA" CMP "STRB":                Conditionals.
+* .AIF EXPRA CMP EXPRB:                  Conditionals.
+* .ALIGN SIZE:                           Other Commands.
+* .ALTERNATE:                            Other Commands.
+* .AREPEAT AEXP:                         Loops.
+* .AWHILE EXPRA CMP EXPRB:               Loops.
+* .AWHILE STRA CMP STRB:                 Loops.
+* .DATA EXPR, EXPR, ...:                 Initialized.
+* .DATA.B EXPR, EXPR, ...:               Initialized.
+* .DATA.L EXPR, EXPR, ...:               Initialized.
+* .DATA.W EXPR, EXPR, ...:               Initialized.
+* .DATAB REPEAT, EXPR:                   Initialized.
+* .DATAB.B REPEAT, EXPR:                 Initialized.
+* .DATAB.L REPEAT, EXPR:                 Initialized.
+* .DATAB.W REPEAT, EXPR:                 Initialized.
+* .END:                                  Other Commands.
+* .ENDM:                                 Macros.
+* .EXITM:                                Macros.
+* .EXPORT NAME:                          Other Commands.
+* .FORM COL=COLS:                        Listings.
+* .FORM LIN=LN:                          Listings.
+* .FORM LIN=LN COL=COLS:                 Listings.
+* .GLOBAL NAME:                          Other Commands.
+* .HEADING STRING:                       Listings.
+* .INCLUDE "STR":                        Other Commands.
+* .INSTR("STRING", "SEG", IX):           String Builtins.
+* .LEN("STR"):                           String Builtins.
+* .MACRO MACNAME:                        Macros.
+* .MACRO MACNAME MACARGS ...:            Macros.
+* .ORG:                                  Other Commands.
+* .PAGE:                                 Listings.
+* .PRINT LIST:                           Listings.
+* .PRINT NOLIST:                         Listings.
+* .PROGRAM:                              Other Commands.
+* .RADIX S:                              Other Commands.
+* .RES COUNT:                            Uninitialized.
+* .RES.B COUNT:                          Uninitialized.
+* .RES.L COUNT:                          Uninitialized.
+* .RES.W COUNT:                          Uninitialized.
+* .SDATA "STR" ...:                      Initialized.
+* .SDATAB REPEAT, "STR" ...:             Initialized.
+* .SDATAC "STR" ...:                     Initialized.
+* .SDATAZ "STR" ...:                     Initialized.
+* .SRES COUNT:                           Uninitialized.
+* .SRES.B COUNT:                         Uninitialized.
+* .SRES.L COUNT:                         Uninitialized.
+* .SRES.W COUNT:                         Uninitialized.
+* .SRESC COUNT:                          Uninitialized.
+* .SRESC.B COUNT:                        Uninitialized.
+* .SRESC.L COUNT:                        Uninitialized.
+* .SRESC.W COUNT:                        Uninitialized.
+* .SRESZ COUNT:                          Uninitialized.
+* .SRESZ.B COUNT:                        Uninitialized.
+* .SRESZ.L COUNT:                        Uninitialized.
+* .SRESZ.W COUNT:                        Uninitialized.
+* .SUBSTR("STRING",START,LEN):           String Builtins.
+* ; as comment char:                     Invoking GASP.
+* \@:                                    Macros.
+* absolute expressions:                  Expressions.
+* argument fields:                       Syntax Details.
+* avoiding preprocessing:                Markers.
+* bang, as comment:                      Invoking GASP.
+* breaking out of loops:                 Loops.
+* comment character, changing:           Invoking GASP.
+* comments:                              Markers.
+* continuation character:                Markers.
+* copying literally to output:           Markers.
+* directive field:                       Syntax Details.
+* EQ:                                    Conditionals.
+* exclamation mark, as comment:          Invoking GASP.
+* fields of GASP source line:            Syntax Details.
+* GE:                                    Conditionals.
+* GT:                                    Conditionals.
+* INFILE ...:                            Invoking GASP.
+* label field:                           Syntax Details.
+* LE:                                    Conditionals.
+* literal copy to output:                Markers.
+* LOCAL NAME [ , ... ]:                  Macros.
+* loops, breaking out of:                Loops.
+* LT:                                    Conditionals.
+* macros, count executed:                Macros.
+* NAME .MACRO:                           Macros.
+* NAME .MACRO ( MACARGS ... ):           Macros.
+* NE:                                    Conditionals.
+* number of macros executed:             Macros.
+* preprocessing, avoiding:               Markers.
+* PVAR .ASSIGN EXPR:                     Variables.
+* PVAR .ASSIGNA AEXPR:                   Variables.
+* PVAR .ASSIGNC "STR":                   Variables.
+* PVAR .EQU EXPR:                        Variables.
+* PVAR .REG (REGISTER):                  Variables.
+* relocatable expressions:               Expressions.
+* semicolon, as comment:                 Invoking GASP.
+* shriek, as comment:                    Invoking GASP.
+* symbol separator:                      Markers.
+* symbols, separating from text:         Markers.
+* text, separating from symbols:         Markers.
+* whitespace:                            Syntax Details.
 
 
 
 Tag Table:
-Node: Top828
-Node: Overview1262
-Node: Invoking GASP2928
-Node: Commands6664
-Node: Conditionals7340
-Node: Loops9632
-Node: Variables11157
-Node: Macros13552
-Node: Data17514
-Node: Initialized17962
-Node: Uninitialized20241
-Node: Listings21252
-Node: Other Commands22448
-Node: Syntax Details24200
-Node: Markers25336
-Node: Constants27584
-Node: Symbols28786
-Node: Expressions29082
-Node: String Builtins30314
-Node: Alternate31095
-Node: Index32713
+Node: Top834
+Node: Overview1268
+Node: Invoking GASP2934
+Node: Commands6670
+Node: Conditionals7346
+Node: Loops9638
+Node: Variables11163
+Node: Macros13558
+Node: Data17520
+Node: Initialized17968
+Node: Uninitialized20247
+Node: Listings21258
+Node: Other Commands22454
+Node: Syntax Details24206
+Node: Markers25342
+Node: Constants27590
+Node: Symbols28792
+Node: Expressions29088
+Node: String Builtins30320
+Node: Alternate31101
+Node: Index32719
 
 End Tag Table

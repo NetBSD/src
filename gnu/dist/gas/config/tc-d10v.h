@@ -51,6 +51,7 @@ int d10v_cleanup PARAMS ((void));
 #define md_after_pass_hook()	     d10v_cleanup()
 #define md_cleanup()		     d10v_cleanup()
 #define md_do_align(a,b,c,d,e)	     d10v_cleanup()
-#define TC_START_LABEL(ch, ptr)  (ch == ':' && d10v_cleanup())
-
-
+#define tc_frob_label(sym) do {\
+  d10v_cleanup(); \
+  S_SET_VALUE (sym, (valueT) frag_now_fix ()); \
+} while (0)

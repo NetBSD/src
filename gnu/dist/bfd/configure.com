@@ -22,9 +22,16 @@ $DECK
 !  Copy file, changing lines with macros (@@)
 !
 !
-   vfile := CREATE_BUFFER("vfile", "VERSION.");
-   POSITION(BEGINNING_OF(vfile));
-   vers := CURRENT_LINE;
+   vfile := CREATE_BUFFER("vfile", "CONFIGURE.IN");
+   rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
+   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+     POSITION(BEGINNING_OF(match_pos));
+     ERASE(match_pos);
+     vers := CURRENT_LINE-")";
+   ELSE;
+     vers := "2.8.1";
+   ENDIF;
 
    file := CREATE_BUFFER("file", GET_INFO(COMMAND_LINE, "file_name"));
    rang := CREATE_RANGE(BEGINNING_OF(file), END_OF(file));
@@ -51,19 +58,21 @@ $DECK
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('0');
+      COPY_TEXT('__DECC');
+      SPLIT_LINE;
+      COPY_TEXT('#include <ints.h>');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('');
+      COPY_TEXT('int64');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('');
+      COPY_TEXT('uint64');
    ENDIF;
    WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
    QUIT
@@ -75,8 +84,8 @@ $! create targmatch.h
 $!
 $ open/write tfile []targmatch.h
 $ write tfile "{ " + """alpha-*-*vms*""" + ","
-$ write tfile "#if !defined (SELECT_VECS) || defined (HAVE_evax_alpha_vec)"
-$ write tfile "&evax_alpha_vec"
+$ write tfile "#if defined (SELECT_VECS)"
+$ write tfile "SELECT_VECS"
 $ write tfile "#else"
 $ write tfile "UNSUPPORTED_TARGET"
 $ write tfile "#endif"
