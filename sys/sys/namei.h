@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.16 1999/07/07 22:58:45 wrstuden Exp $	*/
+/*	$NetBSD: namei.h,v 1.17 1999/08/30 14:55:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -129,7 +129,7 @@ struct nameidata {
 #define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
 #define	RDONLY		0x0000200	/* lookup with read-only semantics */
 #define	HASBUF		0x0000400	/* has allocated pathname buffer */
-#define	SAVENAME	0x0000800	/* save pathanme buffer */
+#define	SAVENAME	0x0000800	/* save pathname buffer */
 #define	SAVESTART	0x0001000	/* save starting directory */
 #define ISDOTDOT	0x0002000	/* current component name is .. */
 #define MAKEENTRY	0x0004000	/* entry is to be added to name cache */
