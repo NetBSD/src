@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strnames.c,v 1.3 2003/08/26 03:31:51 itojun Exp $");
+__RCSID("$NetBSD: strnames.c,v 1.4 2003/11/13 10:35:40 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -495,7 +495,7 @@ s_ipsecdoi_attr_v(type, val)
 	int type, val;
 {
 	int i;
-	for (i = 0; i < ARRAYLEN(name_ipsecdoi_proto); i++)
+	for (i = 0; i < ARRAYLEN(name_attr_ipsec); i++)
 		if (name_attr_ipsec[i].key == type
 		 && name_attr_ipsec[i].f)
 			return (name_attr_ipsec[i].f)(val);
