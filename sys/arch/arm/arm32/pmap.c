@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2003/10/28 08:22:55 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.144 2003/10/29 05:47:04 mycroft Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2003/10/28 08:22:55 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2003/10/29 05:47:04 mycroft Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4891,7 +4891,7 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 	 */
 
 	/* Invalidate data and mini-data. */
-	__asm __volatile("mcr p15, 0, %0, c7, c6, 0" : "=r" (auxctl));
+	__asm __volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
 	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
 	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
