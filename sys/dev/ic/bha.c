@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.28 1998/12/05 19:43:51 mjacob Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -327,6 +327,7 @@ bha_attach(sc, bpd)
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = bpd->sc_iswide ? 15 : 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	TAILQ_INIT(&sc->sc_free_ccb);

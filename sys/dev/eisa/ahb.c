@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.25 1998/11/19 21:50:47 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.26 1998/12/05 19:43:48 mjacob Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -264,6 +264,7 @@ ahbattach(parent, self, aux)
 	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	if (eisa_intr_map(ec, apd.sc_irq, &ih)) {

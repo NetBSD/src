@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.3 1998/11/19 21:44:59 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.4 1998/12/05 19:43:41 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.device	    = &csc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_softc.sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_softc.sc_link.type = BUS_SCSI;
 
 	/* Provide an override for the host id */

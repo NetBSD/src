@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.17 1998/11/19 21:44:35 thorpej Exp $	*/
+/*	$NetBSD: empsc.c,v 1.18 1998/12/05 19:43:35 mjacob Exp $	*/
 
 /*
 
@@ -139,6 +139,7 @@ empscattach(pdp, dp, auxp)
 	sc->sc_link.device = &empsc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 	TAILQ_INIT(&sc->sc_xslist);
 
