@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.40.10.1 2003/01/26 16:36:07 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.40.10.1 2003/01/26 16:36:07 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -170,6 +170,8 @@ STATIC int rtk_list_tx_init	__P((struct rtk_softc *));
 #define EE_CLR(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\
 		CSR_READ_1(sc, RTK_EECMD) & ~(x))
+
+#define ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 /*
  * Send a read command and address to the EEPROM, check for ACK.
@@ -1292,8 +1294,11 @@ STATIC void rtk_start(ifp)
 		 * Load the DMA map.  If this fails, the packet didn't
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
+		 * if the packet is too small, copy it too, so we're sure
+		 * so have enouth room for the pad buffer.
 		 */
 		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
+		    m_head->m_pkthdr.len < ETHER_PAD_LEN ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
 			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -1315,6 +1320,13 @@ STATIC void rtk_start(ifp)
 			    mtod(m_new, caddr_t));
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
+			if (m_head->m_pkthdr.len < ETHER_PAD_LEN) {
+				memset(
+				    mtod(m_new, caddr_t) + m_head->m_pkthdr.len,
+				    0, ETHER_PAD_LEN - m_head->m_pkthdr.len);
+				m_new->m_pkthdr.len = m_new->m_len =
+				    ETHER_PAD_LEN;
+			}
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
 			    txd->txd_dmamap, m_new,
 			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1325,6 +1337,14 @@ STATIC void rtk_start(ifp)
 			}
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+#if NBPFILTER > 0
+		/*
+		 * If there's a BPF listener, bounce a copy of this frame
+		 * to him.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m_head);
+#endif
 		if (m_new != NULL) {
 			m_freem(m_head);
 			m_head = m_new;
@@ -1334,14 +1354,6 @@ STATIC void rtk_start(ifp)
 		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd, txd_q);
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_dirty, txd, txd_q);
 
-#if NBPFILTER > 0
-		/*
-		 * If there's a BPF listener, bounce a copy of this frame
-		 * to him.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
 		/*
 		 * Transmit the frame.
 	 	 */
@@ -1350,8 +1362,6 @@ STATIC void rtk_start(ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		len = txd->txd_dmamap->dm_segs[0].ds_len;
-		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
-			len = (ETHER_MIN_LEN - ETHER_CRC_LEN);
 
 		CSR_WRITE_4(sc, txd->txd_txaddr,
 		    txd->txd_dmamap->dm_segs[0].ds_addr);
