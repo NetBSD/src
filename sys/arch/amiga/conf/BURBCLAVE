@@ -1,0 +1,60 @@
+#	$Id: BURBCLAVE,v 1.1 1994/06/27 04:56:00 chopps Exp $
+
+include "std.amiga"
+
+maxusers	8
+options		TIMEZONE=300, DST=1
+options		"M68040", "M68030", "M68020", FPSP, FPCOPROC
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
+options		INET
+options		FFS, MFS, FDESC, ADOSFS
+options		"COMPAT_09", "COMPAT_43"
+options		COMPAT_SUNOS, "TCP_COMPAT_42", "COMPAT_NOMID"
+options		GENERIC, KTRACE, DIAGNOSTIC, "NKMEMCLUSTERS=256"
+options		PANICWAIT, DEBUG, DDB
+options		GRF_ECS, GRF_NTSC, GRF_PAL, "GRF_A2024"
+
+#options	"CD9660", PORTAL, MSDOSFS, PROCFS, NULLFS, FIFO, KERNFS
+#options	NFSSERVER, NFSCLIENT
+#options	SYSVSHM, SYSVMSG, SYSVSEM	
+#options	SYSCALL_DEBUG, SCSIDEBUG, KGDB
+
+grfcc0		at mainbus0		# custom chips
+grf0		at grfcc0
+grfrt0		at ztwobus0		# retina II
+grf1		at grfrt0
+ite*		at grf?
+
+# scsi stuff, all possible
+gvpbus0		at ztwobus0
+gtsc0		at gvpbus0
+scsibus0	at gtsc0
+
+#
+# compat.
+#
+sd0	at scsibus? target 0 lun 0
+sd1	at scsibus? target 1 lun 0
+sd2	at scsibus? target 2 lun 0
+sd3	at scsibus? target 3 lun 0
+sd4	at scsibus? target 4 lun 0
+sd5	at scsibus? target 5 lun 0
+sd6	at scsibus? target 6 lun 0
+
+#
+# This is nicer however many amiga setups expect sd units to refer to
+# scsi target numbers.  If this is not the case, you can remove the 
+# specific sdx lines above and each hard drive from low target to high
+# will configure to the next available sd unit number
+
+sd*	at scsibus? target ? lun ?	# scsi disks
+st*	at scsibus? target ? lun ?	# scsi tapes
+cd*	at scsibus? target ? lun ?	# scsi cd's
+
+pseudo-device	sl			# slip
+pseudo-device	ppp			# ppp
+pseudo-device	view 2			# views
+pseudo-device	pty 16			# pseudo terminals
+pseudo-device	loop			# network loopback
+
+config	netbsd swap on generic

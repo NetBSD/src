@@ -1,7 +1,7 @@
 #
 # Minimal AMIGA 3000
 #
-# $Id: A3000,v 1.5 1994/06/21 03:58:50 chopps Exp $
+# $Id: A3000,v 1.6 1994/06/27 04:55:58 chopps Exp $
 #
 # Author: Stephen Roznowski (sjr@zombie.ncsc.mil)
 #
@@ -35,7 +35,7 @@ options		FFS		# Berkeley fast file system
 options		MFS		# Memory based filesystem
 options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
-options		LOFS		# Loopback filesystem
+options		NULLFS		# Loopback filesystem
 
 options		FIFO		# FIFO operations on vnodes
 
