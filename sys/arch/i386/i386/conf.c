@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 1994/11/14 05:53:48 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.52 1994/12/03 15:17:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -106,8 +106,10 @@ int	lkmenodev();
 
 bdev_decl(wd);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
+#define	fdclose	Fdclose	/* conflicts with fdclose() in kern_descrip.c */
 bdev_decl(fd);
 #undef	fdopen
+#undef	fdclose
 bdev_decl(wt);
 bdev_decl(sd);
 bdev_decl(st);
@@ -120,8 +122,10 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(),		/* 1: swap pseudo-device */
 #define	fdopen	Fdopen
+#define	fdclose	Fdclose
 	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 #undef	fdopen
+#undef	fdclose
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -380,8 +384,10 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #define	fdopen	Fdopen
+#define	fdclose	Fdclose
 	cdev_disk_init(NFDC,fd),	/* 9: floppy diskette */
 #undef	fdopen
+#undef	fdclose
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_notdef(),			/* 11: unused */
 	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
