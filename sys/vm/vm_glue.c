@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.5 1993/06/27 06:34:39 andrew Exp $
+ *	$Id: vm_glue.c,v 1.6 1993/06/29 07:16:31 andrew Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -120,8 +120,8 @@ useracc(addr, len, rw)
 	 * only used (as an end address) in trap.c.  Use it as an end
 	 * address here too.
 	 */
-	if ((vm_offset_t) addr > VM_MAXUSER_ADDRESS + (UPAGES * NBPG - 1)
-	    || (vm_offset_t) addr + (len-1) > VM_MAXUSER_ADDRESS + (UPAGES * NBPG - 1)
+	if ((vm_offset_t) addr > VM_MAXUSER_ADDRESS
+	    || (vm_offset_t) addr + (len-1) > VM_MAXUSER_ADDRESS
 	    || (vm_offset_t) addr + (len-1) < (vm_offset_t) addr)
 		return (FALSE);
 
@@ -236,6 +236,12 @@ vm_fork(p1, p2, isvfork)
 	/* ream out old pagetables and kernel stack */
 	(void)vm_deallocate(vp, addr, UPT_MAX_ADDRESS - addr);
 	(void)vm_allocate(vp, &addr, UPT_MAX_ADDRESS - addr, FALSE);
+
+	/* protect from the user area from user accesses. :-)
+	   addr -> addr + UPAGES*NBPG don't seem to be protected without
+	   this; the rest seems to be OK, and doesn't like being protected
+	   - andrew@werple.apana.org.au */
+	vm_protect(vp, addr, UPAGES*NBPG, FALSE, VM_PROT_NONE);
 	}
 #endif
 	/*
