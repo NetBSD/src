@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.19 1993/05/27 16:44:20 cgd Exp $
+ *	$Id: machdep.c,v 1.20 1993/05/28 09:10:33 deraadt Exp $
  */
 
 #include "param.h"
@@ -548,7 +548,7 @@ boot(arghowto)
 	splhigh();
 	devtype = major(rootdev);
 	if (howto&RB_HALT) {
-		printf("\nThe operating system has halted. Please press any key to reboot.\n\n> ");
+		printf("\nThe operating system has halted. Please press any key to reboot.\n\n");
 		cngetc();
 	} else {
 		if (howto & RB_DUMP) {
@@ -1001,7 +1001,7 @@ init386(first)
 		 * If they get working well enough to recompile, they can unset
 		 * the flag; otherwise, it's a toy and they have to lump it.
 		 */
-		getchar();	/* kernel getchar in /sys/i386/isa/pccons.c*/
+		cngetc();
 #endif	/* !INFORM_WAIT*/
 	}
 	/*

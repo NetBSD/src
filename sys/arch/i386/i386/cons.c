@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.5 1993/05/22 11:41:13 cgd Exp $
+ *	$Id: cons.c,v 1.6 1993/05/28 09:10:31 deraadt Exp $
  */
 
 
@@ -53,14 +53,19 @@
 #include "cons.h"
 
 /* XXX - all this could be autoconfig()ed */
+#include "pc.h"
+#if NPC > 0
 int pccnprobe(), pccninit(), pccngetc(), pccnputc();
+#endif
 #include "com.h"
 #if NCOM > 0
 int comcnprobe(), comcninit(), comcngetc(), comcnputc();
 #endif
 
 struct	consdev constab[] = {
+#if NPC > 0
 	{ pccnprobe,	pccninit,	pccngetc,	pccnputc },
+#endif
 #if NCOM > 0
 	{ comcnprobe,	comcninit,	comcngetc,	comcnputc },
 #endif
@@ -71,6 +76,10 @@ struct	consdev constab[] = {
 struct	tty *constty = 0;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
+
+consinit()
+{
+}
 
 cninit()
 {
