@@ -31,7 +31,11 @@
 #define HAS_DB
 #define HAS_SA_LEN
 #define DEF_DB_TYPE	"hash"
+#if 0	/*before sendmail 8.10*/
 #define ALIAS_DB_MAP	"hash:/etc/aliases"
+#else	/*sendmail 8.10*/
+#define ALIAS_DB_MAP	"hash:/etc/mail/aliases"
+#endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #define USE_STATFS
