@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ctime.c	5.26 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: ctime.c,v 1.3 1993/08/26 00:44:21 jtc Exp $";
+static char *rcsid = "$Id: ctime.c,v 1.4 1994/01/28 20:40:07 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1153,7 +1153,7 @@ register const struct tm *	timeptr;
 	};
 	static char	result[26];
 
-	(void) sprintf(result, "%.3s %.3s%3d %02.2d:%02.2d:%02.2d %d\n",
+	(void) sprintf(result, "%.3s %.3s%3d %02d:%02d:%02d %d\n",
 		wday_name[timeptr->tm_wday],
 		mon_name[timeptr->tm_mon],
 		timeptr->tm_mday, timeptr->tm_hour,
