@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.16 2000/11/13 01:22:40 hubertf Exp $
+.\"	$NetBSD: sysinst,v 1.17 2000/11/13 22:05:52 fvdl Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,19 +61,28 @@ to use.
 .It
 .Em Possible Tn PCMCIA Em issues
 .Pp
-There is a serious problem that may make installation of
-.Nx
-on
+Machines with
 .Tn PCMCIA
-machines difficult. This problem does not make
-.Em using
+slots may have problems during installation. With the improvements of
+the
 .Tn PCMCIA
-difficult once a machine is installed. If you do not have
+code in this release, this will not happen very frequently.
+If you do not have
 .Tn PCMCIA
 on your machine
 .Tn ( PCMCIA
 is only really used on laptop machines),
 you can skip this section, and ignore the
+.Dq Bq Tn PCMCIA
+notes. If you do have
+.Tn PCMCIA
+in your machine, you can safely ignore this section and the
+.Dq Bq Tn PCMCIA
+the first time, as you are likely to not have problems. Should troubles
+occur during floppy boot, they may be
+.Tn PCMCIA
+specific. You should then re-read this section and try again,
+following the instructions in the
 .Dq Bq Tn PCMCIA
 notes.
 .Pp
@@ -192,6 +201,20 @@ command to alter the variable values:
 .Dl pcic_isa_alloc_iosize		0xbff = 0xbf
 .Dl db> Ic "continue"
 .Pp
+Note that, since some floppy images may not have symbol information in
+the kernel, you may have to consult the matching
+.Pa .symbols
+file in the
+.Pa binary/kernel
+directory in the installation tree. Find the pcic_ symbols used above,
+look at the hexadecimal value in the first column, and write, for
+example (if
+.Va pcic_isa_intr_alloc_mask
+is equal to c0513e3c):
+.Pp
+.Dl db> Ic "write 0xc0513e3c 0x0a00"
+.Pp
+
 After installation, this value can be permanently written to the kernel image
 directly with:
 .Pp
