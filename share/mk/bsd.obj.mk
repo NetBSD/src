@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.24 2000/02/18 06:09:11 itohy Exp $
+#	$NetBSD: bsd.obj.mk,v 1.25 2000/07/07 04:35:36 cgd Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -52,7 +52,7 @@ obj:
 	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
-		if [ -L $$here/${__objdir} ]; then \
+		if [ -h $$here/${__objdir} ]; then \
 			curtarg=`ls -ld $$here/${__objdir} | awk '{print $$NF}'` ; \
 			if [ "$$curtarg" = "$$dest" ]; then \
 				: ; \
@@ -74,7 +74,7 @@ obj:
 	else \
 		true ; \
 		dest=$$here/${__objdir} ; \
-		if test ! -d ${__objdir} || test -L ${__objdir}; then \
+		if test ! -d ${__objdir} || test -h ${__objdir}; then \
 			echo "making $$dest" ; \
 			rm -f ${__objdir}; \
 			mkdir $$dest; \
