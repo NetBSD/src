@@ -1,0 +1,26 @@
+$NetBSD: Files,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+
+FBInstall               - describes how to install
+Settype                 - types all file for RiscOS
+
+List of files of !BtNetBSD :
+
+!Run                    }
+!Boot                   }
+!Help                   }	
+!Sprites                } Standard Application Files
+!Sprites22              }
+!Edit                   - Edits the `fastboot' file
+Banner                  - RiscBSD banner module
+BtNetBSD                - RiscBSD bootloader
+checkro403              - Tests if we're running RO4.03 for MemFix
+MemFix                  - Module repairing memory layout reporting for Kinetic
+TestBoot                - Fastboot tester
+PreBoot                 - Preboot obey file
+native                  - Native filesystem support directory
+native.mountufs         - Frontend for mounting ffs partition
+native.unixfs_res       - Restricted write Unixfs module
+fastboot                - Fastboot (obey) file in text format
+FBInstall               - Doc on installing fastboot support
+src                     - Source code
+Legal                   - Contains copyright information

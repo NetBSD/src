@@ -1,0 +1,73 @@
+| $NetBSD: SettScr,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+
+*BASIC
+
+*DIR <rel$dir>
+*Settype FBInstall Text
+*Settype README Text
+
+*DIR <rel$dir>.!BtNetBSD
+TEXTLOAD "BtNetBSD"
+SAVE "BtNetBSD"
+TEXTLOAD "checkro403"
+SAVE "checkro403"
+TEXTLOAD "TestBoot"
+SAVE "TestBoot"
+*Settype !Boot Obey
+*Settype !Edit Obey
+*Settype !Run Obey
+*Settype !Sprites Sprite
+*Settype !Sprites22 Sprite
+*Settype Banner Module
+*Settype MemFix Module
+*Settype PreBoot obey
+*Settype fastboot Text
+*Settype Files Text
+*Settype Legal Text
+
+*DIR <rel$dir>.!BtNetBSD.native
+TEXTLOAD "MountUFS"
+SAVE "MountUFS"
+*Settype Howto Text
+*Settype KillUnixFS Obey
+*Settype OpenRoot Obey
+*Settype unixfs_res Module
+*Settype wd0a obey
+*Settype wd0e obey
+*Settype wd0f obey
+*Settype wd0g obey
+*Settype wd1a obey
+*Settype wd1e obey
+
+*DIR <rel$dir>.!BtNetBSD.src.Banner
+TEXTLOAD "Banner"
+SAVE "Banner"
+TEXTLOAD "resutil"
+SAVE "resutil"
+*Settype !Path Obey
+*Settype Sprite sprite
+
+*DIR <rel$dir>.misc
+TEXTLOAD "bb_netbsd"
+SAVE "bb_netbsd"
+*Settype SettScr Text
+
+*DIR <rel$dir>.unixfs
+TEXTLOAD "mountufs"
+SAVE "mountufs"
+*Settype Howto Text
+*Settype KillUnixFS Obey
+*Settype OpenRoot Obey
+*Settype unixfs_res module
+*Settype wd0a obey
+*Settype wd0e obey
+*Settype wd0f obey
+*Settype wd0g obey
+*Settype wd1a obey
+*Settype wd1e obey
+
+*DIR <rel$dir>.misc.MkRel
+*Settype MkRelease Obey
+*Settype MkRelScr Obey
+
+QUIT
