@@ -3,7 +3,7 @@
    Server-specific in-memory database support. */
 
 /*
- * Copyright (c) 1996-2001 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,19 +43,20 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.3 2002/06/11 14:00:05 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
+#include "omapip/hash.h"
 
 struct subnet *subnets;
 struct shared_network *shared_networks;
-struct hash_table *host_hw_addr_hash;
-struct hash_table *host_uid_hash;
-struct hash_table *lease_uid_hash;
-struct hash_table *lease_ip_addr_hash;
-struct hash_table *lease_hw_addr_hash;
-struct hash_table *host_name_hash;
+host_hash_t *host_hw_addr_hash;
+host_hash_t *host_uid_hash;
+host_hash_t *host_name_hash;
+lease_hash_t *lease_uid_hash;
+lease_hash_t *lease_ip_addr_hash;
+lease_hash_t *lease_hw_addr_hash;
 
 omapi_object_type_t *dhcp_type_host;
 
@@ -94,10 +95,7 @@ isc_result_t enter_host (hd, dynamicp, commit)
 	struct executable_statement *esp;
 
 	if (!host_name_hash) {
-		host_name_hash =
-			new_hash ((hash_reference)host_reference,
-				  (hash_dereference)host_dereference, 0, MDL);
-		if (!host_name_hash)
+		if (!host_new_hash (&host_name_hash, 0, MDL))
 			log_fatal ("Can't allocate host name hash");
 		host_hash_add (host_name_hash,
 			       (unsigned char *)hd -> name,
@@ -114,8 +112,10 @@ isc_result_t enter_host (hd, dynamicp, commit)
 					  strlen (hd -> name), MDL);
 			/* If the old entry wasn't dynamic, then we
 			   always have to keep the deletion. */
-			if (!hp -> flags & HOST_DECL_DYNAMIC)
+			if (hp -> flags & HOST_DECL_STATIC) {
 				hd -> flags |= HOST_DECL_STATIC;
+			}
+			host_dereference (&hp, MDL);
 		}
 
 		/* If we are updating an existing host declaration, we
@@ -150,11 +150,7 @@ isc_result_t enter_host (hd, dynamicp, commit)
 
 	if (hd -> interface.hlen) {
 		if (!host_hw_addr_hash) {
-			host_hw_addr_hash =
-				new_hash ((hash_reference)host_reference,
-					  (hash_dereference)host_dereference,
-					  0, MDL);
-			if (!host_hw_addr_hash)
+			if (!host_new_hash (&host_hw_addr_hash, 0, MDL))
 				log_fatal ("Can't allocate host/hw hash");
 		} else {
 			/* If there isn't already a host decl matching this
@@ -198,11 +194,7 @@ isc_result_t enter_host (hd, dynamicp, commit)
 		/* If there's no uid hash, make one; otherwise, see if
 		   there's already an entry in the hash for this host. */
 		if (!host_uid_hash) {
-			host_uid_hash =
-				new_hash ((hash_reference)host_reference,
-					  (hash_dereference)host_dereference,
-					  0, MDL);
-			if (!host_uid_hash)
+			if (!host_new_hash (&host_uid_hash, 0, MDL))
 				log_fatal ("Can't allocate host/uid hash");
 
 			host_hash_add (host_uid_hash,
@@ -281,6 +273,8 @@ isc_result_t delete_host (hd, commit)
 			while (foo) {
 			    if (foo == hd)
 				    break;
+			    if (np)
+				    host_dereference (&np, MDL);
 			    host_reference (&np, foo, MDL);
 			    host_dereference (&foo, MDL);
 			    if (np -> n_ipaddr)
@@ -321,6 +315,8 @@ isc_result_t delete_host (hd, commit)
 			while (foo) {
 			    if (foo == hd)
 				    break;
+			    if (np)
+				host_dereference (&np, MDL);
 			    host_reference (&np, foo, MDL);
 			    host_dereference (&foo, MDL);
 			    if (np -> n_ipaddr)
@@ -456,10 +452,12 @@ int find_host_for_network (struct subnet **sp, struct host_decl **host,
 	return 0;
 }
 
-void new_address_range (low, high, subnet, pool)
+void new_address_range (cfile, low, high, subnet, pool, lpchain)
+	struct parse *cfile;
 	struct iaddr low, high;
 	struct subnet *subnet;
 	struct pool *pool;
+	struct lease **lpchain;
 {
 	struct lease *address_range;
 	struct iaddr net;
@@ -480,24 +478,15 @@ void new_address_range (low, high, subnet, pool)
 
 	/* Initialize the hash table if it hasn't been done yet. */
 	if (!lease_uid_hash) {
-		lease_uid_hash =
-			new_hash ((hash_reference)lease_reference,
-				  (hash_dereference)lease_dereference, 0, MDL);
-		if (!lease_uid_hash)
+		if (!lease_new_hash (&lease_uid_hash, 0, MDL))
 			log_fatal ("Can't allocate lease/uid hash");
 	}
 	if (!lease_ip_addr_hash) {
-		lease_ip_addr_hash =
-			new_hash ((hash_reference)lease_reference,
-				  (hash_dereference)lease_dereference, 0, MDL);
-		if (!lease_uid_hash)
+		if (!lease_new_hash (&lease_ip_addr_hash, 0, MDL))
 			log_fatal ("Can't allocate lease/ip hash");
 	}
 	if (!lease_hw_addr_hash) {
-		lease_hw_addr_hash =
-			new_hash ((hash_reference)lease_reference,
-				  (hash_dereference)lease_dereference, 0, MDL);
-		if (!lease_uid_hash)
+		if (!lease_new_hash (&lease_hw_addr_hash, 0, MDL))
 			log_fatal ("Can't allocate lease/hw hash");
 	}
 
@@ -571,8 +560,9 @@ void new_address_range (low, high, subnet, pool)
 		/* Remember the lease in the IP address hash. */
 		if (find_lease_by_ip_addr (&lt, lp -> ip_addr, MDL)) {
 			if (lt -> pool) {
-				log_error ("duplicate entries for lease %s",
-					   piaddr (lp -> ip_addr));
+				parse_warn (cfile,
+					    "lease %s is declared twice!",
+					    piaddr (lp -> ip_addr));
 			} else
 				pool_reference (&lt -> pool, pool, MDL);
 			lease_dereference (&lt, MDL);
@@ -580,6 +570,14 @@ void new_address_range (low, high, subnet, pool)
 			lease_hash_add (lease_ip_addr_hash,
 					lp -> ip_addr.iabuf,
 					lp -> ip_addr.len, lp, MDL);
+		/* Put the lease on the chain for the caller. */
+		if (lpchain) {
+			if (*lpchain) {
+				lease_reference (&lp -> next, *lpchain, MDL);
+				lease_dereference (lpchain, MDL);
+			}
+			lease_reference (lpchain, lp, MDL);
+		}
 		lease_dereference (&lp, MDL);
 	}
 }
@@ -832,9 +830,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 
 	if (lease -> binding_state != FTS_ABANDONED &&
 	    lease -> next_binding_state != FTS_ABANDONED &&
-	    (comp -> binding_state == FTS_ACTIVE ||
-	     comp -> binding_state == FTS_RESERVED ||
-	     comp -> binding_state == FTS_BOOTP) &&
+	    comp -> binding_state == FTS_ACTIVE &&
 	    (((comp -> uid && lease -> uid) &&
 	      (comp -> uid_len != lease -> uid_len ||
 	       memcmp (comp -> uid, lease -> uid, comp -> uid_len))) ||
@@ -846,7 +842,6 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 		       comp -> hardware_addr.hlen))))) {
 		log_error ("Lease conflict at %s",
 		      piaddr (comp -> ip_addr));
-		return 0;
 	}
 
 	/* If there's a Unique ID, dissociate it from the hash
@@ -924,9 +919,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 		/* Only retain the agent options if the lease is still
 		   affirmatively associated with a client. */
 		if (lease -> next_binding_state == FTS_ACTIVE ||
-		    lease -> next_binding_state == FTS_EXPIRED ||
-		    lease -> next_binding_state == FTS_RESERVED ||
-		    lease -> next_binding_state == FTS_BOOTP)
+		    lease -> next_binding_state == FTS_EXPIRED)
 			option_chain_head_reference (&comp -> agent_options,
 						     lease -> agent_options,
 						     MDL);
@@ -996,8 +989,6 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 		break;
 
 	      case FTS_ACTIVE:
-	      case FTS_RESERVED:
-	      case FTS_BOOTP:
 		lq = &comp -> pool -> active;
 		break;
 
@@ -1036,8 +1027,8 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 
 	if (!lp) {
 		log_error ("Lease with binding state %s not on its queue.",
-			   (comp -> binding_state < 1 &&
-			    comp -> binding_state < FTS_BOOTP)
+			   (comp -> binding_state < 1 ||
+			    comp -> binding_state > FTS_LAST)
 			   ? "unknown"
 			   : binding_state_names [comp -> binding_state - 1]);
 		return 0;
@@ -1098,10 +1089,21 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 
 #if defined (FAILOVER_PROTOCOL)
 	if (propogate) {
+		comp -> desired_binding_state = comp -> binding_state;
 		if (!dhcp_failover_queue_update (comp, pimmediate))
 			return 0;
 	}
 #endif
+
+	/* If the current binding state has already expired, do an
+	   expiry event right now. */
+	/* XXX At some point we should optimize this so that we don't
+	   XXX write the lease twice, but this is a safe way to fix the
+	   XXX problem for 3.0 (I hope!). */
+	if ((commit || !pimmediate) &&
+	    comp -> sort_time < cur_time &&
+	    comp -> next_binding_state != comp -> binding_state)
+		pool_timer (comp -> pool);
 
 	return 1;
 }
@@ -1128,9 +1130,7 @@ void make_binding_state_transition (struct lease *lease)
 		     lease -> next_binding_state == FTS_BACKUP)) ||
 	     (!peer &&
 #endif
-	      (lease -> binding_state == FTS_ACTIVE ||
-	       lease -> binding_state == FTS_BOOTP ||
-	       lease -> binding_state == FTS_RESERVED) &&
+	      lease -> binding_state == FTS_ACTIVE &&
 	      lease -> next_binding_state != FTS_RELEASED))) {
 #if defined (NSUPDATE)
 		ddns_removals (lease);
@@ -1152,8 +1152,19 @@ void make_binding_state_transition (struct lease *lease)
 		if (lease -> on_release)
 			executable_statement_dereference (&lease -> on_release,
 							  MDL);
+		/* Get rid of client-specific bindings that are only
+		   correct when the lease is active. */
 		if (lease -> billing_class)
 			unbill_class (lease, lease -> billing_class);
+		if (lease -> agent_options)
+			option_chain_head_dereference (&lease -> agent_options,
+						       MDL);
+		if (lease -> client_hostname) {
+			dfree (lease -> client_hostname, MDL);
+			lease -> client_hostname = (char *)0;
+		}
+		if (lease -> host)
+			host_dereference (&lease -> host, MDL);
 
 		/* Send the expiry time to the peer. */
 		lease -> tstp = lease -> ends;
@@ -1170,9 +1181,7 @@ void make_binding_state_transition (struct lease *lease)
 		     lease -> next_binding_state == FTS_BACKUP)) ||
 	     (!peer &&
 #endif
-	      (lease -> binding_state == FTS_ACTIVE ||
-	       lease -> binding_state == FTS_BOOTP ||
-	       lease -> binding_state == FTS_RESERVED) &&
+	      lease -> binding_state == FTS_ACTIVE &&
 	      lease -> next_binding_state == FTS_RELEASED))) {
 #if defined (NSUPDATE)
 		ddns_removals (lease);
@@ -1194,8 +1203,19 @@ void make_binding_state_transition (struct lease *lease)
 			executable_statement_dereference (&lease -> on_expiry,
 							  MDL);
 
+		/* Get rid of client-specific bindings that are only
+		   correct when the lease is active. */
 		if (lease -> billing_class)
 			unbill_class (lease, lease -> billing_class);
+		if (lease -> agent_options)
+			option_chain_head_dereference (&lease -> agent_options,
+						       MDL);
+		if (lease -> client_hostname) {
+			dfree (lease -> client_hostname, MDL);
+			lease -> client_hostname = (char *)0;
+		}
+		if (lease -> host)
+			host_dereference (&lease -> host, MDL);
 
 		/* Send the release time (should be == cur_time) to the
 		   peer. */
@@ -1212,7 +1232,6 @@ void make_binding_state_transition (struct lease *lease)
 	lease -> binding_state = lease -> next_binding_state;
 	switch (lease -> binding_state) {
 	      case FTS_ACTIVE:
-	      case FTS_BOOTP:
 #if defined (FAILOVER_PROTOCOL)
 		if (lease -> pool && lease -> pool -> failover_peer)
 			lease -> next_binding_state = FTS_EXPIRED;
@@ -1239,7 +1258,6 @@ void make_binding_state_transition (struct lease *lease)
 
 	      case FTS_FREE:
 	      case FTS_BACKUP:
-	      case FTS_RESERVED:
 		lease -> next_binding_state = lease -> binding_state;
 		break;
 	}
@@ -1798,9 +1816,12 @@ int write_leases ()
 
 		for (i = FREE_LEASES; i <= BACKUP_LEASES; i++) {
 		    for (l = *(lptr [i]); l; l = l -> next) {
+#if !defined (DEBUG_DUMP_ALL_LEASES)
 			if (l -> hardware_addr.hlen ||
 			    l -> uid_len ||
-			    (l -> binding_state != FTS_FREE)) {
+			    (l -> binding_state != FTS_FREE))
+#endif
+			{
 			    if (!write_lease (l))
 				    return 0;
 			    num_written++;
@@ -1832,8 +1853,6 @@ int lease_enqueue (struct lease *comp)
 		break;
 
 	      case FTS_ACTIVE:
-	      case FTS_RESERVED:
-	      case FTS_BOOTP:
 		lq = &comp -> pool -> active;
 		comp -> sort_time = comp -> ends;
 		break;
@@ -1930,9 +1949,7 @@ void lease_instantiate (const unsigned char *val, unsigned len,
 		if (lease -> binding_state == FTS_ACTIVE ||
 		    lease -> binding_state == FTS_EXPIRED ||
 		    lease -> binding_state == FTS_RELEASED ||
-		    lease -> binding_state == FTS_RESET ||
-		    lease -> binding_state == FTS_RESERVED ||
-		    lease -> binding_state == FTS_BOOTP)
+		    lease -> binding_state == FTS_RESET)
 			bill_class (lease, class);
 		class_dereference (&class, MDL);
 	}
@@ -1984,8 +2001,10 @@ void expire_all_pools ()
 #if defined (FAILOVER_PROTOCOL)
 			if (p -> failover_peer &&
 			    l -> tstp > l -> tsfp &&
-			    !(l -> flags & ON_UPDATE_QUEUE))
+			    !(l -> flags & ON_UPDATE_QUEUE)) {
+				l -> desired_binding_state = l -> binding_state;
 				dhcp_failover_queue_update (l, 1);
+			}
 #endif
 		    }
 		}
@@ -2027,11 +2046,14 @@ void dump_subnets ()
 	}
 }
 
-HASH_FUNCTIONS (lease, const unsigned char *, struct lease)
-HASH_FUNCTIONS (host, const unsigned char *, struct host_decl)
-HASH_FUNCTIONS (class, const char *, struct class)
+HASH_FUNCTIONS (lease, const unsigned char *, struct lease, lease_hash_t,
+		lease_reference, lease_dereference)
+HASH_FUNCTIONS (host, const unsigned char *, struct host_decl, host_hash_t,
+		host_reference, host_dereference)
+HASH_FUNCTIONS (class, const char *, struct class, class_hash_t,
+		class_reference, class_dereference)
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 extern struct hash_table *dns_zone_hash;
 extern struct interface_info **interface_vector;
@@ -2041,7 +2063,9 @@ extern struct hash_table *auth_key_hash;
 struct hash_table *universe_hash;
 struct universe **universes;
 int universe_count, universe_max;
+#if 0
 extern int end;
+#endif
 
 #if defined (COMPACT_LEASES)
 extern struct lease *lease_hunks;
@@ -2066,28 +2090,30 @@ void free_everything ()
 
 	/* Get rid of all the hash tables. */
 	if (host_hw_addr_hash)
-		free_hash_table (host_hw_addr_hash, MDL);
+		host_free_hash_table (&host_hw_addr_hash, MDL);
 	host_hw_addr_hash = 0;
 	if (host_uid_hash)
-		free_hash_table (host_uid_hash, MDL);
+		host_free_hash_table (&host_uid_hash, MDL);
 	host_uid_hash = 0;
 	if (lease_uid_hash)
-		free_hash_table (lease_uid_hash, MDL);
+		lease_free_hash_table (&lease_uid_hash, MDL);
 	lease_uid_hash = 0;
 	if (lease_ip_addr_hash)
-		free_hash_table (lease_ip_addr_hash, MDL);
+		lease_free_hash_table (&lease_ip_addr_hash, MDL);
 	lease_ip_addr_hash = 0;
 	if (lease_hw_addr_hash)
-		free_hash_table (lease_hw_addr_hash, MDL);
+		lease_free_hash_table (&lease_hw_addr_hash, MDL);
 	lease_hw_addr_hash = 0;
 	if (host_name_hash)
-		free_hash_table (host_name_hash, MDL);
+		host_free_hash_table (&host_name_hash, MDL);
 	host_name_hash = 0;
 	if (dns_zone_hash)
-		free_hash_table (dns_zone_hash, MDL);
+		dns_zone_free_hash_table (&dns_zone_hash, MDL);
 	dns_zone_hash = 0;
+#if 0
 	if (auth_key_hash)
-		free_hash_table (auth_key_hash, MDL);
+		auth_key_free_hash_table (&auth_key_hash, MDL);
+#endif
 	auth_key_hash = 0;
 
 	omapi_object_dereference ((omapi_object_t **)&dhcp_control_object,
@@ -2107,7 +2133,7 @@ void free_everything ()
 		    }
 		    group_dereference (&cc -> group, MDL);
 		    if (cc -> hash) {
-			    free_hash_table (cc -> hash, MDL);
+			    class_free_hash_table (&cc -> hash, MDL);
 			    cc -> hash = (struct hash_table *)0;
 		    }
 		    class_dereference (&cc, MDL);
@@ -2266,7 +2292,7 @@ void free_everything ()
 
 	omapi_object_dereference ((omapi_object_t **)&icmp_state, MDL);
 
-	free_hash_table (universe_hash, MDL);
+	universe_free_hash_table (&universe_hash, MDL);
 	for (i = 0; i < universe_count; i++) {
 		union {
 			const char *c;
@@ -2274,13 +2300,16 @@ void free_everything ()
 		} foo;
 		if (universes [i]) {
 			if (universes [i] -> hash)
-				free_hash_table (universes [i] -> hash, MDL);
+			    option_free_hash_table (&universes [i] -> hash,
+						    MDL);
+#if 0
 			if (universes [i] -> name > (char *)&end) {
 				foo.c = universes [i] -> name;
 				dfree (foo.s, MDL);
 			}
 			if (universes [i] > (struct universe *)&end)
 				dfree (universes [i], MDL);
+#endif
 		}
 	}
 	dfree (universes, MDL);
@@ -2295,4 +2324,4 @@ void free_everything ()
 	relinquish_hash_bucket_hunks ();
 	omapi_type_relinquish ();
 }
-#endif /* DEBUG_MEMORY_LEAKAGE */
+#endif /* DEBUG_MEMORY_LEAKAGE_ON_EXIT */

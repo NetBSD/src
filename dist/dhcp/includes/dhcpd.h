@@ -70,6 +70,15 @@
 # include "minires/minires.h"
 #endif
 
+struct hash_table;
+typedef struct hash_table group_hash_t;
+typedef struct hash_table universe_hash_t;
+typedef struct hash_table option_hash_t;
+typedef struct hash_table dns_zone_hash_t;
+typedef struct hash_table lease_hash_t;
+typedef struct hash_table host_hash_t;
+typedef struct hash_table class_hash_t;
+
 #include "dhcp.h"
 #include "statement.h"
 #include "tree.h"
@@ -263,9 +272,10 @@ typedef enum {
 	FTS_ABANDONED = 5,
 	FTS_RESET = 6,
 	FTS_BACKUP = 7,
-	FTS_RESERVED = 8,
-	FTS_BOOTP = 9
 } binding_state_t;
+
+/* FTS_LAST is the highest value that is valid for a lease binding state. */
+#define FTS_LAST FTS_BACKUP
 
 /* A dhcp lease declaration structure. */
 struct lease {
@@ -295,16 +305,19 @@ struct lease {
 
 	u_int8_t flags;
 #       define STATIC_LEASE		1
+#	define BOOTP_LEASE		2
 #	define PERSISTENT_FLAGS		(ON_ACK_QUEUE | ON_UPDATE_QUEUE)
 #	define MS_NULL_TERMINATION	8
 #	define ON_UPDATE_QUEUE		16
 #	define ON_ACK_QUEUE		32
 #	define UNICAST_BROADCAST_HACK	64
+#	define ON_DEFERRED_QUEUE	128
 #	define EPHEMERAL_FLAGS		(MS_NULL_TERMINATION | \
 					 UNICAST_BROADCAST_HACK)
 
 	binding_state_t __attribute__ ((mode (__byte__))) binding_state;
 	binding_state_t __attribute__ ((mode (__byte__))) next_binding_state;
+	binding_state_t __attribute__ ((mode (__byte__))) desired_binding_state;
 	
 	struct lease_state *state;
 
@@ -406,6 +419,7 @@ struct lease_state {
 #define SV_PING_CHECKS			42
 #define SV_UPDATE_STATIC_LEASES		43
 #define SV_LOG_FACILITY			44
+#define SV_DO_FORWARD_UPDATES		45
 
 #if !defined (DEFAULT_DEFAULT_LEASE_TIME)
 # define DEFAULT_DEFAULT_LEASE_TIME 43200
@@ -606,7 +620,7 @@ struct class {
 	int dirty;
 
 	/* Hash table containing subclasses. */
-	struct hash_table *hash;
+	class_hash_t *hash;
 	struct data_string hash_string;
 
 	/* Expression used to match class. */
@@ -708,6 +722,9 @@ struct client_config {
 	int omapi_port;			/* port on which to accept OMAPI
 					   connections, or -1 for no
 					   listener. */
+	int do_forward_update;		/* If nonzero, and if we have the
+					   information we need, update the
+					   A record for the address we get. */
 };
 
 /* Per-interface state used in the dhcp client... */
@@ -728,6 +745,7 @@ struct client_state {
 	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
 	TIME first_sending;			/* When was first copy sent? */
 	TIME interval;		      /* What's the current resend interval? */
+	int dns_update_timeout;		 /* Last timeout set for DNS update. */
 	struct string_list *medium;		   /* Last media type tried. */
 	struct dhcp_packet packet;		    /* Outgoing DHCP packet. */
 	unsigned packet_length;	       /* Actual length of generated packet. */
@@ -765,7 +783,7 @@ struct interface_info {
 	int wfdesc;			/* Its write file descriptor, if
 					   different. */
 	unsigned char *rbuf;		/* Read buffer, if required. */
-	size_t rbuf_max;		/* Size of read buffer. */
+	unsigned int rbuf_max;		/* Size of read buffer. */
 	size_t rbuf_offset;		/* Current offset into buffer. */
 	size_t rbuf_len;		/* Length of data in buffer. */
 
@@ -931,6 +949,14 @@ typedef unsigned char option_mask [16];
 #define MIN_TIME 0
 
 /* External definitions... */
+
+HASH_FUNCTIONS_DECL (group, const char *, struct group_object, group_hash_t)
+HASH_FUNCTIONS_DECL (universe, const char *, struct universe, universe_hash_t)
+HASH_FUNCTIONS_DECL (option, const char *, struct option, option_hash_t)
+HASH_FUNCTIONS_DECL (dns_zone, const char *, struct dns_zone, dns_zone_hash_t)
+HASH_FUNCTIONS_DECL (lease, const unsigned char *, struct lease, lease_hash_t)
+HASH_FUNCTIONS_DECL (host, const unsigned char *, struct host_decl, host_hash_t)
+HASH_FUNCTIONS_DECL (class, const char *, struct class, class_hash_t)
 
 /* options.c */
 
@@ -1140,6 +1166,7 @@ void parse_failover_state_declaration (struct parse *,
 void parse_failover_state PROTO ((struct parse *,
 				  enum failover_state *, TIME *));
 #endif
+int permit_list_match (struct permit *, struct permit *);
 void parse_pool_statement PROTO ((struct parse *, struct group *, int));
 int parse_boolean PROTO ((struct parse *));
 int parse_lbrace PROTO ((struct parse *));
@@ -1153,8 +1180,8 @@ void parse_group_declaration PROTO ((struct parse *, struct group *));
 int parse_fixed_addr_param PROTO ((struct option_cache **, struct parse *));
 TIME parse_timestamp PROTO ((struct parse *));
 int parse_lease_declaration PROTO ((struct lease **, struct parse *));
-void parse_address_range PROTO ((struct parse *,
-				 struct group *, int, struct pool *));
+void parse_address_range PROTO ((struct parse *, struct group *, int,
+				 struct pool *, struct lease **));
 
 /* ddns.c */
 int ddns_updates PROTO ((struct packet *, struct lease *, struct lease *,
@@ -1368,7 +1395,7 @@ void bootp PROTO ((struct packet *));
 /* memory.c */
 int (*group_write_hook) (struct group_object *);
 extern struct group *root_group;
-extern struct hash_table *group_name_hash;
+extern group_hash_t *group_name_hash;
 isc_result_t delete_group (struct group_object *, int);
 isc_result_t supersede_group (struct group_object *, int);
 int clone_group (struct group **, struct group *, const char *, int);
@@ -1771,12 +1798,9 @@ extern int dhcp_option_default_priority_list_count;
 extern const char *hardware_types [256];
 int universe_count, universe_max;
 struct universe **universes;
-extern struct hash_table *universe_hash;
+extern universe_hash_t *universe_hash;
 void initialize_common_option_spaces PROTO ((void));
 struct universe *config_universe;
-HASH_FUNCTIONS_DECL (group, const char *, struct group_object)
-HASH_FUNCTIONS_DECL (universe, const char *, struct universe)
-HASH_FUNCTIONS_DECL (option, const char *, struct option)
 
 /* stables.c */
 #if defined (FAILOVER_PROTOCOL)
@@ -1876,7 +1900,8 @@ void do_release PROTO ((struct client_state *));
 int dhclient_interface_shutdown_hook (struct interface_info *);
 int dhclient_interface_discovery_hook (struct interface_info *);
 isc_result_t dhclient_interface_startup_hook (struct interface_info *);
-void client_dns_update (struct client_state *client, int);
+void client_dns_update_timeout (void *cp);
+isc_result_t client_dns_update (struct client_state *client, int, int);
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
@@ -1889,6 +1914,7 @@ int db_printable_len PROTO ((const unsigned char *, unsigned));
 void write_named_billing_class (const char *, unsigned, struct class *);
 void write_billing_classes (void);
 int write_billing_class PROTO ((struct class *));
+void commit_leases_timeout PROTO ((void *));
 int commit_leases PROTO ((void));
 void db_startup PROTO ((int));
 int new_lease_file PROTO ((void));
@@ -2036,7 +2062,6 @@ isc_result_t ddns_update_a (struct data_string *, struct iaddr,
 isc_result_t ddns_remove_a (struct data_string *,
 			    struct iaddr, struct data_string *);
 #endif /* NSUPDATE */
-HASH_FUNCTIONS_DECL (dns_zone, const char *, struct dns_zone)
 
 /* resolv.c */
 extern char path_resolv_conf [];
@@ -2378,12 +2403,12 @@ isc_result_t binding_scope_stuff_values (omapi_object_t *,
 
 extern struct subnet *subnets;
 extern struct shared_network *shared_networks;
-extern struct hash_table *host_hw_addr_hash;
-extern struct hash_table *host_uid_hash;
-extern struct hash_table *host_name_hash;
-extern struct hash_table *lease_uid_hash;
-extern struct hash_table *lease_ip_addr_hash;
-extern struct hash_table *lease_hw_addr_hash;
+extern host_hash_t *host_hw_addr_hash;
+extern host_hash_t *host_uid_hash;
+extern host_hash_t *host_name_hash;
+extern lease_hash_t *lease_uid_hash;
+extern lease_hash_t *lease_ip_addr_hash;
+extern lease_hash_t *lease_hw_addr_hash;
 
 extern omapi_object_type_t *dhcp_type_host;
 
@@ -2396,8 +2421,9 @@ int find_hosts_by_uid PROTO ((struct host_decl **, const unsigned char *,
 			      unsigned, const char *, int));
 int find_host_for_network PROTO ((struct subnet **, struct host_decl **,
 				  struct iaddr *, struct shared_network *));
-void new_address_range PROTO ((struct iaddr, struct iaddr,
-			       struct subnet *, struct pool *));
+void new_address_range PROTO ((struct parse *, struct iaddr, struct iaddr,
+			       struct subnet *, struct pool *,
+			       struct lease **));
 isc_result_t dhcp_lease_free (omapi_object_t *, const char *, int);
 isc_result_t dhcp_lease_get (omapi_object_t **, const char *, int);
 int find_grouped_subnet PROTO ((struct subnet **, struct shared_network *,
@@ -2436,9 +2462,6 @@ void dump_subnets PROTO ((void));
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 void free_everything (void);
 #endif
-HASH_FUNCTIONS_DECL (lease, const unsigned char *, struct lease)
-HASH_FUNCTIONS_DECL (host, const unsigned char *, struct host_decl)
-HASH_FUNCTIONS_DECL (class, const char *, struct class)
 
 /* nsupdate.c */
 char *ddns_rev_name (struct lease *, struct lease_state *, struct packet *);

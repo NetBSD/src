@@ -207,6 +207,10 @@ int main (int argc, char **argv, char **envp)
 		    printf ("  set <name> = <value>\n");
 		    printf ("  create\n");
 		    printf ("  open\n");
+		    printf ("  update\n");
+		    printf ("  unset <name>\n");
+		    printf ("  refresh\n");
+		    printf ("  remove\n");
 		    skip_to_semi (cfile);
 		    break;
 		    
@@ -423,6 +427,11 @@ int main (int argc, char **argv, char **envp)
 			    break;
 		    }
 
+		    if (!oh) {
+			    printf ("not open.\n");
+			    skip_to_semi (cfile);
+			    break;
+		    }
 		    omapi_object_dereference (&oh, MDL);
 		    
 		    break;

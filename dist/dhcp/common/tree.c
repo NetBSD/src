@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.2 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.3 2002/06/11 14:00:02 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -101,6 +101,7 @@ int make_const_option_cache (oc, buffer, data, len, option, file, line)
 	}
 
 	(*oc) -> data.len = len;
+	(*oc) -> data.buffer = bp;
 	(*oc) -> data.data = &bp -> data [0];
 	(*oc) -> data.terminated = 0;
 	if (data)
@@ -594,7 +595,7 @@ int binding_value_dereference (struct binding_value **v,
 	/* Decrement the reference count.   If it's nonzero, we're
 	   done. */
 	--(bv -> refcnt);
-	rc_register (file, line, v, bv, bv -> refcnt, 1);
+	rc_register (file, line, v, bv, bv -> refcnt, 1, RC_MISC);
 	if (bv -> refcnt > 0)
 		return 1;
 	if (bv -> refcnt < 0) {
@@ -2733,7 +2734,7 @@ void expression_dereference (eptr, file, line)
 	/* Decrement the reference count.   If it's nonzero, we're
 	   done. */
 	--(expr -> refcnt);
-	rc_register (file, line, eptr, expr, expr -> refcnt, 1);
+	rc_register (file, line, eptr, expr, expr -> refcnt, 1, RC_MISC);
 	if (expr -> refcnt > 0)
 		return;
 	if (expr -> refcnt < 0) {
@@ -3747,7 +3748,7 @@ int binding_scope_dereference (ptr, file, line)
 	*ptr = (struct binding_scope *)0;
 	--binding_scope -> refcnt;
 	rc_register (file, line, ptr,
-		     binding_scope, binding_scope -> refcnt, 1);
+		     binding_scope, binding_scope -> refcnt, 1, RC_MISC);
 	if (binding_scope -> refcnt > 0)
 		return 1;
 
@@ -3797,7 +3798,7 @@ int fundef_dereference (ptr, file, line)
 	}
 
 	bp -> refcnt--;
-	rc_register (file, line, ptr, bp, bp -> refcnt, 1);
+	rc_register (file, line, ptr, bp, bp -> refcnt, 1, RC_MISC);
 	if (bp -> refcnt < 0) {
 		log_error ("%s(%d): negative refcnt!", file, line);
 #if defined (DEBUG_RC_HISTORY)
