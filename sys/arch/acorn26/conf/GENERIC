@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9 2002/10/18 15:11:08 junyoung Exp $
+# $NetBSD: GENERIC,v 1.10 2002/10/19 05:55:09 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,10 +28,6 @@ maxusers 8
 options 	CPU_ARM2
 options 	CPU_ARM250
 options 	CPU_ARM3
-
-# Enable experimental buffer queue strategy for better responsiness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
@@ -121,6 +117,10 @@ options 	SYSTRACE	# system call vetting via systrace(1)
 options 	NTP		# Kernel PLL for ntpd(8).
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Disable kernel security.
 #options 	INSECURE
