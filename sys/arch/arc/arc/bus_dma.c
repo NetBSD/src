@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.21 2005/01/22 07:44:08 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22 2005/01/22 11:08:18 tsutsui Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2005/01/22 07:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2005/01/22 11:08:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,14 +592,14 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = segs[curseg]._ds_paddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = segs[curseg]._ds_paddr + t->dma_offset;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = TAILQ_NEXT(m, pageq);
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < avail_start || curaddr >= high) {
