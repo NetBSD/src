@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.5 1996/03/01 01:42:07 gwr Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.6 1996/05/10 18:04:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -109,6 +109,9 @@ struct ncr5380_softc {
 	int		sc_flags;	/* Misc. flags and capabilities */
 #define	NCR5380_PERMIT_RESELECT		1  /* Allow disconnect/reselect */
 #define	NCR5380_FORCE_POLLING		2  /* Do not use interrupts. */
+
+	/* Set bits in this to disable parity for some target. */
+	int		sc_parity_disable;
 
 	int 	sc_min_dma_len;	/* Smaller than this is done with PIO */
 
