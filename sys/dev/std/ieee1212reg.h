@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.3 2001/04/16 01:09:31 jmc Exp $ */
+/*        $NetBSD: ieee1212reg.h,v 1.4 2001/04/23 00:57:05 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@
 #define	P1212_KEYVALUE_Unit_Dependent_Info	0x14	/* leaf | directory */
 #define	P1212_KEYVALUE_Unit_Location		0x15	/* leaf */
 #define	P1212_KEYVALUE_Unit_Poll_Mask		0x16	/* immediate */
+#define	P1212_KEYVALUE_Model_Id 		0x17	/* immediate */
 
 #define	P1212_KEYTYPE_STRINGS { "Immediate", "Offset", "Leaf", "Directory" }
 
@@ -190,7 +191,7 @@
 	"Node-Unique-Id", "Node-Units-Extent", "Node-Memory-Extent", \
 	"Node-Dependent-Info", "Unit-Directory", "Unit-Spec-Id", \
 	"Unit-Sw-Version", "Unit-Dependent-Info", "Unit-Location", \
-	"Unit-Poll-Mask", }
+	"Unit-Poll-Mask", "Model-Id" }
 
 /* Leaf nodes look like:
  *
