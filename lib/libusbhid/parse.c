@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 2003/07/26 19:25:09 salo Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 2004/01/05 17:55:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.4 2003/07/26 19:25:09 salo Exp $");
+__RCSID("$NetBSD: parse.c,v 1.5 2004/01/05 17:55:48 augustss Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -89,7 +89,6 @@ hid_clear_local(hid_item_t *c)
 	c->string_minimum = 0;
 	c->string_maximum = 0;
 	c->set_delimiter = 0;
-	c->report_size = 0;
 }
 
 hid_data_t
