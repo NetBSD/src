@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 1999/04/22 00:37:42 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.43 1999/07/01 18:23:53 itojun Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -15,6 +15,13 @@ SRCS+=	base64.c ethers.c gethnamaddr.c getnetnamadr.c getnetent.c getproto.c \
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c
 CPPFLAGS+=-DRESOLVSORT -I.
+
+# IPv6
+SRCS+=	getaddrinfo.c getnameinfo.c ifname.c ip6opt.c rthdr.c vars6.c
+CPPFLAGS+=	-DINET6
+# need to revisit
+#SRCS+=	name6.c rresvport_af.c freehostent.c
+#CPPFLAGS+=	-DUSE_GETIPNODEBY
 
 LPREFIX=_nsyy
 YPREFIX=_nsyy
@@ -62,3 +69,12 @@ MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 rcmd.3 orcmd.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3
+
+# IPv6
+MAN+=	getaddrinfo.3 getnameinfo.3 if_indextoname.3
+MLINKS+=if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
+	if_indextoname.3 if_freenameindex.3
+# need to revisit
+#MAN+=	getipnodebyname.3 rresvport_af.3
+#MLINKS+=getipnodebyname.3 getipnodebyaddr.3 getipnodebyname.3 freehostent.3 \
+#	getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3 \
