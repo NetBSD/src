@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountd,v 1.7 2000/07/26 00:11:49 lukem Exp $
+# $NetBSD: mountd,v 1.8 2001/04/25 23:23:37 lukem Exp $
 #
 
 # PROVIDE: mountd
@@ -18,7 +18,7 @@ extra_commands="reload"
 mountd_precmd()
 {
 	rm -f /var/db/mountdtab
-	echo -n > /var/db/mountdtab
+	( umask 022 ; echo -n > /var/db/mountdtab )
 	return 0
 }
 

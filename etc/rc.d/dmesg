@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dmesg,v 1.5 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: dmesg,v 1.6 2001/04/25 23:23:37 lukem Exp $
 #
 
 # PROVIDE: dmesg
@@ -10,13 +10,14 @@
 
 name="dmesg"
 rcvar=$name
+dmesg_file="/var/run/dmesg.boot"
 start_cmd="do_dmesg"
 stop_cmd=":"
 
 do_dmesg()
 {
-	rm -f /var/run/dmesg.boot
-	dmesg $dmesg_flags > /var/run/dmesg.boot
+	rm -f ${dmesg_file}
+	( umask 022 ; /sbin/dmesg $dmesg_flags > ${dmesg_file} )
 }
 
 load_rc_config $name
