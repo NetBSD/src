@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.13 2003/04/02 10:39:29 fvdl Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.14 2004/01/03 19:57:42 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.13 2003/04/02 10:39:29 fvdl Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.14 2004/01/03 19:57:42 dbj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,6 +113,7 @@ printstat(cp, inum, dp)
 	uint64_t size, blocks;
 	uint16_t mode;
 	uint32_t rdev;
+	uint32_t uid, gid;
 
 	size = iswap64(DIP(dp, size));
 	blocks = is_ufs2 ? iswap64(DIP(dp, blocks)) : iswap32(DIP(dp, blocks));
@@ -165,14 +166,22 @@ printstat(cp, inum, dp)
 	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	    iswap32(DIP(dp,atimensec)));
 
-	if ((pw = getpwuid(iswap32(DIP(dp, uid)))) != NULL)
+	if (!is_ufs2 && sblock->fs_old_inodefmt < FS_44INODEFMT)
+		uid = iswap16(dp->dp1.di_ouid);
+	else
+		uid = iswap32(DIP(dp, uid));
+	if ((pw = getpwuid(uid)) != NULL)
 		printf("OWNER=%s ", pw->pw_name);
 	else
-		printf("OWNUID=%u ", iswap32(DIP(dp, uid)));
-	if ((grp = getgrgid(iswap32(DIP(dp, gid)))) != NULL)
+		printf("OWNUID=%u ", uid);
+	if (!is_ufs2 && sblock->fs_old_inodefmt < FS_44INODEFMT)
+		gid = iswap16(dp->dp1.di_ogid);
+	else
+		gid = iswap32(DIP(dp, gid));
+	if ((grp = getgrgid(gid)) != NULL)
 		printf("GRP=%s ", grp->gr_name);
 	else
-		printf("GID=%u ", iswap32(DIP(dp, gid)));
+		printf("GID=%u ", gid);
 
 	printf("LINKCNT=%hd FLAGS=0x%#x BLKCNT=0x%llx GEN=0x%x\n",
 		iswap16(DIP(dp, nlink)),

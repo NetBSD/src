@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.26 2003/07/13 08:17:05 itojun Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.27 2004/01/03 19:57:42 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.26 2003/07/13 08:17:05 itojun Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.27 2004/01/03 19:57:42 dbj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ ino_t   curinum;
 static void
 usage()
 {
-	errx(1, "usage: %s [-d] [-n] -f <fsname>", getprogname());
+	errx(1, "usage: %s [-d] [-n] [-F] -f <fsname>", getprogname());
 }
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
@@ -114,13 +114,19 @@ main(argc, argv)
 	int     ch, rval;
 	char   *fsys = NULL;
 
-	while ((ch = getopt(argc, argv, "f:dn")) != -1) {
+	forceimage = 0;
+	debug = 0;
+	isappleufs = 0;
+	while ((ch = getopt(argc, argv, "dFf:n")) != -1) {
 		switch (ch) {
-		case 'f':
-			fsys = optarg;
-			break;
 		case 'd':
 			debug++;
+			break;
+		case 'F':
+			forceimage = 1;
+			break;
+		case 'f':
+			fsys = optarg;
 			break;
 		case 'n':
 			nflag++;
@@ -132,7 +138,7 @@ main(argc, argv)
 	if (fsys == NULL)
 		usage();
 	endian = 0;
-	if (!setup(fsys))
+	if (setup(fsys) <= 0)
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
 	    sblock->fs_fsmnt);
@@ -1235,7 +1241,10 @@ CMDFUNCSTART(chowner)
 			return 1;
 		}
 	}
-	DIP(curinode, uid) = iswap32(uid);
+	if (!is_ufs2 && sblock->fs_old_inodefmt < FS_44INODEFMT)
+		curinode->dp1.di_ouid = iswap32(uid);
+	else
+		DIP(curinode, uid) = iswap32(uid);
 	inodirty();
 	printactive();
 	return 0;
@@ -1259,7 +1268,10 @@ CMDFUNCSTART(chgroup)
 			return 1;
 		}
 	}
-	DIP(curinode, gid) = iswap32(gid);
+	if (sblock->fs_old_inodefmt < FS_44INODEFMT)
+		curinode->dp1.di_ogid = iswap32(gid);
+	else
+		DIP(curinode, gid) = iswap32(gid);
 	inodirty();
 	printactive();
 	return 0;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.17 2003/06/27 23:06:50 wiz Exp $
+.\"	$NetBSD: fsdb.8,v 1.18 2004/01/03 19:57:42 dbj Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Nm
 .Op Fl d
 .Op Fl n
+.Op Fl F
 .Fl f Ar fsname
 .Sh DESCRIPTION
 .Nm
@@ -68,6 +69,15 @@ The
 option enables additional debugging output (which comes primarily from
 .Xr fsck 8 Ns -derived
 code).
+.Pp
+The
+.Fl F
+option indicates that
+.Ar filesystem
+is a file system image, rather than a raw character device.
+It will be accessed
+.Sq as-is ,
+and no attempts will be made to read a disklabel.
 .Pp
 The
 .Fl n

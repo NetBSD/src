@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/28 20:11:07 dbj Exp $
+#	$NetBSD: Makefile,v 1.15 2004/01/03 19:57:42 dbj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -17,6 +17,8 @@ CPPFLAGS+= -I${FSCK} -I${FSCK_FFS}
 .PATH:	${FSCK} ${FSCK_FFS} ${NETBSDSRCDIR}/sys/ufs/ffs
 
 LDADD+= -ledit -ltermcap
+.ifndef HOSTPROG
 DPADD+= ${LIBEDIT} ${LIBTERMCAP}
+.endif
 
 .include <bsd.prog.mk>
