@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.110 1994/11/22 05:34:49 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.111 1994/11/22 05:39:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -1137,6 +1137,8 @@ wd_get_parms(wd)
 		wd->sc_params.wdp_heads = 8;
 		wd->sc_params.wdp_sectors = 17;
 		wd->sc_params.wdp_buftype = WD_BUF_SINGLEPORTSECTOR;
+		wd->sc_params.wdp_maxmulti = 0;
+		wd->sc_params.wdp_usedmovsd = 0;
 		wd->sc_params.wdp_capabilities = 0;
 	} else {
 		/* Obtain parameters. */
