@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.5 1998/06/27 21:15:42 christos Exp $	*/
+/*	$NetBSD: atrun.c,v 1.6 1999/02/12 15:04:00 kleink Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -27,7 +27,6 @@
 
 /* System Headers */
 
-#include <sys/fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -35,6 +34,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
 #include <signal.h>
@@ -70,7 +70,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.5 1998/06/27 21:15:42 christos Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.6 1999/02/12 15:04:00 kleink Exp $");
 #endif
 
 static int debug = 0;

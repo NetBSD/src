@@ -1,4 +1,4 @@
-/*	$NetBSD: mksunbootcd.c,v 1.1.1.1 1999/01/18 07:37:23 mrg Exp $	*/
+/*	$NetBSD: mksunbootcd.c,v 1.2 1999/02/12 15:04:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Ignatios Souvatzis
@@ -36,15 +36,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 
-#include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
 #include <dev/sun/disklabel.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcflush.c,v 1.4 1997/07/21 14:09:15 jtc Exp $	*/
+/*	$NetBSD: tcflush.c,v 1.5 1999/02/12 15:04:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcflush.c,v 1.4 1997/07/21 14:09:15 jtc Exp $");
+__RCSID("$NetBSD: tcflush.c,v 1.5 1999/02/12 15:04:01 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <errno.h>
 
