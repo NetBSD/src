@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.70.2.2 2000/06/27 21:34:28 thorpej Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.70.2.3 2000/06/27 21:35:32 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,11 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-<<<<<<< mountd.c
-__RCSID("$NetBSD: mountd.c,v 1.70.2.2 2000/06/27 21:34:28 thorpej Exp $");
-=======
-__RCSID("$NetBSD: mountd.c,v 1.70.2.2 2000/06/27 21:34:28 thorpej Exp $");
->>>>>>> 1.72
+__RCSID("$NetBSD: mountd.c,v 1.70.2.3 2000/06/27 21:35:32 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
