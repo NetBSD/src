@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.41 2000/05/22 14:49:10 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.42 2000/05/23 06:06:10 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -542,7 +542,7 @@ db_command_loop()
 		db_output_line = 0;
 
 #ifdef MULTIPROCESSOR
-		db_printf("(cpu %d)", cpu_number());
+		db_printf("(cpu %ld)", (long)cpu_number());
 #endif
 		db_printf("db> ");
 		(void) db_read_line();
