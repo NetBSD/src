@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.21 1999/01/21 08:13:02 garbled Exp $ */
+/*	$NetBSD: disks.c,v 1.22 1999/03/14 14:19:05 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,17 +86,17 @@ static void get_disks(void)
 		for (i=0; i< MAX_DISKS; i++) {
 			snprintf (d_name, SSTRSIZE, "%s%d", *xd, i);
 			if (get_geom (d_name, &l) && numdisks < MAX_DISKS) {
-				strncpy (disks[numdisks].name,
+				strncpy (disks[numdisks].dd_name,
 					 d_name, SSTRSIZE);
 				strncat (disknames, d_name,
 					 SSTRSIZE-1-strlen(disknames));
 				strncat (disknames, " ",
 					 SSTRSIZE-1-strlen(disknames));
-				disks[numdisks].geom[0] = l.d_ncylinders;
-				disks[numdisks].geom[1] = l.d_ntracks;
-				disks[numdisks].geom[2] = l.d_nsectors;
-				disks[numdisks].geom[3] = l.d_secsize;
-				disks[numdisks].geom[4] = l.d_secperunit;
+				disks[numdisks].dd_cyl = l.d_ncylinders;
+				disks[numdisks].dd_head = l.d_ntracks;
+				disks[numdisks].dd_sec = l.d_nsectors;
+				disks[numdisks].dd_secsize = l.d_secsize;
+				disks[numdisks].dd_totsec = l.d_secperunit;
 				numdisks++;
 			}
 		}
@@ -161,12 +161,12 @@ int find_disks (void)
 	
 	/* Set disk. */
 	for (i=0; i<numdisks; i++)
-		if (strcmp(diskdev, disks[i].name) == 0)
+		if (strcmp(diskdev, disks[i].dd_name) == 0)
 			disk = &disks[i];
 
-	sectorsize = disk->geom[3];
-	if (disk->geom[4] == 0)
-		disk->geom[4] = disk->geom[0] * disk->geom[1] * disk->geom[2];
+	sectorsize = disk->dd_secsize;
+	if (disk->dd_totsec == 0)
+		disk->dd_totsec = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 
 	return numdisks;
 }
@@ -219,12 +219,12 @@ void scsi_fake (void)
 	long fact[20];
 	int  numf;
 
-	int geom[5][4] = {{0}};
+	struct disk_geom geom[5] = {{0}};
 	int i, j;
-	int sects = disk->geom[4];
+	int sects = disk->dd_totsec;
 	int head, sec;
 
-	int stop = disk->geom[0]*disk->geom[1]*disk->geom[2];
+	int stop = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 
 	i=0;
 	while (i < 4 && sects > stop) {
@@ -239,36 +239,36 @@ void scsi_fake (void)
 			      sec *= fact[j++];
 		      if (head >= 5  &&
 			  sec >= 50) {
-			      geom[i][0] = sects / (head*sec);
-			      geom[i][1] = head;
-			      geom[i][2] = sec;
-			      geom[i][3] = head * sec * geom[i][0];
+			      geom[i].dg_cyl = sects / (head*sec);
+			      geom[i].dg_head = head;
+			      geom[i].dg_sec = sec;
+			      geom[i].dg_totsec = head * sec * geom[i].dg_cyl;
 			      i++;
 		      }
 	       }
 	       sects--;
 	}
 	while (i < 5) {
-		geom[i][0] = disk->geom[0];
-		geom[i][1] = disk->geom[1];
-		geom[i][2] = disk->geom[2];
-		geom[i][3] = stop;
+		geom[i] = disk->dg;
+		geom[i].dg_totsec = stop;
 		i++;
 	}
 	
-	msg_display (MSG_scsi_fake, disk->geom[4],
-		     geom[0][0], geom[0][1], geom[0][2], geom[0][3],
-		     geom[1][0], geom[1][1], geom[1][2], geom[1][3],
-		     geom[2][0], geom[2][1], geom[2][2], geom[2][3],
-		     geom[3][0], geom[3][1], geom[3][2], geom[3][3],
-		     geom[4][0], geom[4][1], geom[4][2], geom[4][3]);
+	msg_display (MSG_scsi_fake, disk->dd_totsec,
+		     geom[0].dg_cyl, geom[0].dg_head, geom[0].dg_sec,
+			geom[0].dg_totsec,
+		     geom[1].dg_cyl, geom[1].dg_head, geom[1].dg_sec,
+			geom[1].dg_totsec,
+		     geom[2].dg_cyl, geom[2].dg_head, geom[2].dg_sec,
+			geom[2].dg_totsec,
+		     geom[3].dg_cyl, geom[3].dg_head, geom[3].dg_sec,
+			geom[3].dg_totsec,
+		     geom[4].dg_cyl, geom[4].dg_head, geom[4].dg_sec,
+			geom[4].dg_totsec);
+
 	process_menu (MENU_scsi_fake);
-	if (fake_sel >= 0) {
-		dlcyl  = disk->geom[0] = geom[fake_sel][0];
-		dlhead = disk->geom[1] = geom[fake_sel][1];
-		dlsec  = disk->geom[2] = geom[fake_sel][2];
-		dlsize = disk->geom[4] = geom[fake_sel][3];
-	}
+	if (fake_sel >= 0)
+		disk->dg = geom[fake_sel];
 }
 
 
