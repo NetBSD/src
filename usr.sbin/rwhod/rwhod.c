@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.18 2000/10/11 20:23:56 is Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.19 2002/08/02 02:38:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ __RCSID("$NetBSD: rwhod.c,v 1.18 2000/10/11 20:23:56 is Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
-#include <utmp.h>
 
+#include "utmpentry.h"
 /*
  * Alarm interval. Don't forget to change the down time check in ruptime
  * if this is changed.
@@ -97,7 +97,7 @@ struct	neighbor {
 struct	neighbor *neighbors;
 struct	whod mywd;
 struct	servent *sp;
-int	s, utmpf;
+int	s;
 
 #define	WHDRSIZE	(sizeof(mywd) - sizeof(mywd.wd_we))
 
@@ -150,11 +150,6 @@ main(argc, argv)
 	if ((cp = strchr(myname, '.')) != NULL)
 		*cp = '\0';
 	strncpy(mywd.wd_hostname, myname, sizeof(mywd.wd_hostname) - 1);
-	utmpf = open(_PATH_UTMP, O_RDONLY|O_CREAT, 0644);
-	if (utmpf < 0) {
-		syslog(LOG_ERR, "%s: %m", _PATH_UTMP);
-		exit(1);
-	}
 	getboottime(0);
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		syslog(LOG_ERR, "socket: %m");
@@ -267,10 +262,6 @@ verify(name)
 	return (size > 0);
 }
 
-int	utmptime;
-int	utmpent;
-int	utmpsize = 0;
-struct	utmp *utmp;
 int	alarmcount;
 
 void
@@ -283,50 +274,30 @@ onalrm(signo)
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
-	struct utmp *nutmp;
 	int cc;
+	static struct utmpentry *ohead = NULL;
+	struct utmpentry *ep;
+	int utmpent = 0;
 
 	now = time(NULL);
 	if (alarmcount % 10 == 0)
 		getboottime(0);
 	alarmcount++;
-	(void)fstat(utmpf, &stb);
-	if ((stb.st_mtime != utmptime) || (stb.st_size > utmpsize)) {
-		utmptime = stb.st_mtime;
-		if (stb.st_size > utmpsize) {
-			utmpsize = stb.st_size + 10 * sizeof(struct utmp);
-			if (utmp)
-				nutmp = (struct utmp *)realloc(utmp, utmpsize);
-			else
-				nutmp = (struct utmp *)malloc(utmpsize);
-			if (! nutmp) {
-				warn("malloc failed");
-				if (utmp)
-					free(utmp);
-				utmpsize = 0;
-				goto done;
-			}
-			utmp = nutmp;
-		}
-		(void)lseek(utmpf, (off_t)0, SEEK_SET);
-		cc = read(utmpf, (char *)utmp, stb.st_size);
-		if (cc < 0) {
-			warn("%s", _PATH_UTMP);
-			goto done;
-		}
+
+	(void)getutentries(NULL, &ep);
+	if (ep != ohead) {
+		freeutentries(ep);
 		wlast = &mywd.wd_we[1024 / sizeof(struct whoent) - 1];
-		utmpent = cc / sizeof(struct utmp);
-		for (i = 0; i < utmpent; i++)
-			if (utmp[i].ut_name[0]) {
-				memcpy(we->we_utmp.out_line, utmp[i].ut_line,
-				   sizeof(utmp[i].ut_line));
-				memcpy(we->we_utmp.out_name, utmp[i].ut_name,
-				   sizeof(utmp[i].ut_name));
-				we->we_utmp.out_time = htonl(utmp[i].ut_time);
-				if (we >= wlast)
-					break;
-				we++;
-			}
+		for (; ep; ep = ep->next) {
+			(void)strncpy(we->we_utmp.out_line, ep->line,
+			    sizeof(we->we_utmp.out_line) - 1);
+			(void)strncpy(we->we_utmp.out_name, ep->name,
+			    sizeof(we->we_utmp.out_name) - 1);
+			we->we_utmp.out_time = htonl(ep->tv.tv_sec);
+			if (we >= wlast)
+				break;
+			we++;
+		}
 		utmpent = we - mywd.wd_we;
 	}
 
@@ -359,7 +330,6 @@ onalrm(signo)
 		syslog(LOG_ERR, "chdir(%s): %m", _PATH_RWHODIR);
 		exit(1);
 	}
-done:
 	(void)alarm(AL_INTERVAL);
 }
 
