@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
- *	$Id: uipc_syscalls.c,v 1.3 1993/05/22 11:41:54 cgd Exp $
+ *	$Id: uipc_syscalls.c,v 1.4 1993/06/27 06:08:40 andrew Exp $
  */
 
 #include "param.h"
@@ -785,7 +785,8 @@ recvit(p, s, mp, namelenp, retsize)
 #endif
 	len = auio.uio_resid;
 	if (error = soreceive((struct socket *)fp->f_data, &from, &auio,
-	    (struct mbuf **)0, &control, &mp->msg_flags)) {
+	    (struct mbuf **)0, mp->msg_control ? &control : (struct mbuf **)0,
+	    &mp->msg_flags)) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
