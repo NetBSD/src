@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1996/08/27 21:55:36 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1996/09/25 15:07:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -271,7 +271,7 @@ mbattach(pdp, dp, auxp)
 int
 mbprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("%s at %s", (char *)auxp, pnp);
