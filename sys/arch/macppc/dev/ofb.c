@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.29 2002/07/07 18:35:10 matt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.30 2002/08/07 05:46:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -259,7 +259,8 @@ ofb_common_init(node, dc)
 		     va += SEGMENT_LENGTH) {
 			if (battable[va >> ADDR_SR_SHFT].batu == 0) {
 				battable[va >> ADDR_SR_SHFT].batl =
-				    BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
+				    BATL(addr & 0xf0000000, BAT_W | BAT_M,
+					 BAT_PP_RW);
 				battable[va >> ADDR_SR_SHFT].batu =
 				    BATL(va, BAT_BL_256M, BAT_Vs);
 				addr &= 0x0fffffff;
