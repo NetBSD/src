@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.495 2002/10/25 12:01:56 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.496 2002/11/02 01:58:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.495 2002/10/25 12:01:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.496 2002/11/02 01:58:51 perry Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1040,7 +1040,7 @@ winchip_cpu_setup(ci)
 }
 
 #define CPUID(code, eax, ebx, ecx, edx) 			\
-	asm ("cpuid"						\
+	__asm("cpuid"						\
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
 	    : "a" (code));
 
