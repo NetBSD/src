@@ -1,4 +1,4 @@
-.\"	$NetBSD: dpt.4,v 1.20 2002/12/11 13:20:47 ad Exp $
+.\"	$NetBSD: dpt.4,v 1.21 2002/12/18 19:39:12 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2002 Andrew Doran <ad@netbsd.org>
 .\" All rights reserved.
@@ -63,6 +63,12 @@ driver.
 .It Tn DPT SmartRAID III
 .It Tn DPT SmartRAID IV
 .El
+.Sh FILES
+.Bl -tag -width /dev/dptn -compact
+.It Pa /dev/dpt Ns Ar u
+control device for unit
+.Ar u
+.El
 .Sh DIAGNOSTICS
 None of these messages should be encountered under normal circumstances.  It
 should be noted that the list below is not complete.
@@ -81,12 +87,6 @@ A spurious interrupt was received from the HBA.
 .It dpt%d: bogus status (returned CCB id NNNN)
 .br
 A corrupt or incomplete status packet was received from the HBA.
-.El
-.Sh FILES
-.Bl -tag -width /dev/dptn -compact
-.It Pa /dev/dpt Ns Ar u
-control device for unit
-.Ar u
 .El
 .Sh SEE ALSO
 .Xr cd 4 ,
