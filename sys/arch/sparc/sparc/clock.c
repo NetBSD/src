@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.7 1994/05/05 10:02:12 deraadt Exp $
+ * $Id: clock.c,v 1.8 1994/07/01 19:59:13 deraadt Exp $
  */
 
 /*
@@ -113,8 +113,10 @@ clockattach(parent, self, aux)
 	register int h;
 	register struct clockreg *cl;
 	struct romaux *ra = aux;
+	char *prop;
 
-	printf(": %s (eeprom)\n", getpropstring(ra->ra_node, "model"));
+	prop = getpropstring(ra->ra_node, "model");
+	printf(": %s (eeprom)\n", prop);
 	/*
 	 * We ignore any existing virtual address as we need to map
 	 * this read-only and make it read-write only temporarily,
@@ -123,8 +125,22 @@ clockattach(parent, self, aux)
 	 * of reloading the cpu type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
-	cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg);
-	pmap_changeprot(kernel_pmap, (vm_offset_t)clockreg, VM_PROT_READ, 1);
+	if (strcmp(prop, "mk48t08") == 0) {
+		/*
+		 * the MK48T08 is 8K
+		 */
+		cl = (struct clockreg *)mapiodev(ra->ra_paddr, 2 * NBPG);
+		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
+		pmap_changeprot(kernel_pmap, (vm_offset_t)cl + NBPG, VM_PROT_READ, 1);
+		cl = (struct clockreg *)((int)cl + CLK_MK48T08_OFF);
+	} else {
+		/*
+		 * the MK48T02 is 2K
+		 */
+		cl = (struct clockreg *)mapiodev(ra->ra_paddr, sizeof *clockreg);
+		pmap_changeprot(kernel_pmap, (vm_offset_t)cl, VM_PROT_READ, 1);
+	}
+
 	h = cl->cl_idprom.id_machine << 24;
 	h |= cl->cl_idprom.id_hostid[0] << 16;
 	h |= cl->cl_idprom.id_hostid[1] << 8;

@@ -42,7 +42,7 @@
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clockreg.h,v 1.6 92/11/26 03:04:48 torek Exp  (LBL)
- * $Id: clockreg.h,v 1.2 1994/07/01 09:23:58 deraadt Exp $
+ * $Id: clockreg.h,v 1.3 1994/07/01 19:59:18 deraadt Exp $
  */
 
 /*
@@ -71,6 +71,12 @@ struct sun4c_idprom {
  *
  * The clock includes 2040 bytes of RAM, the last 32 of which serve to
  * identify the kind of Sun 4c this is.
+ *
+ * or, the Mostek MK48T08 clock.
+ *
+ * This is used in the Sun 4m machines. It is identical to the MK48T02,
+ * except for being 8K in size. The following structure, then, describes
+ * the last 2K of it's 8K address space. We simply ignore the first 6K..
  */
 struct clockreg {
 	char	cl_nvram[2008];		/* `free' nonvolatile memory */
@@ -88,6 +94,8 @@ struct clockreg {
 /* bits in cl_csr */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
+
+#define CLK_MK48T08_OFF	6*1024		/* struct clockreg is 6K forward */
 
 struct clockreg *clockreg;
 
