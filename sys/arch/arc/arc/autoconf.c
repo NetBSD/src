@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2000/06/01 15:38:22 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2001/06/13 14:36:34 soda Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -63,17 +63,26 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-static void findroot __P((void));
-int getpno __P((char **cp));
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
+struct bootdev_data {
+	char	*dev_type;
+	int	bus;
+	int	unit;
+	int	partition;
+};
+
+int getpno __P((char **, int *));
 
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cpuspeed = 150;	/* approx # instr per usec. */
 struct device *booted_device;
-int booted_partition;
+struct bootdev_data *bootdev_data;
 
 /*
  *  Configure all devices found that we know about.
@@ -97,54 +106,10 @@ int nfs_boot_rfc951 = 1;
 void
 cpu_rootconf()
 {
-	findroot();
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition);
-}
-
-u_long	bootdev;		/* should be dev_t, but not until 32 bits */
-
-/*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
- */
-void
-findroot(void)
-{
-	int i, majdev, unit, part;
-	struct device *dv;
-	char buf[32];
-
-#if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
-#endif
-
-	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-
-	majdev = B_TYPE(bootdev);
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (majdev == dev_name2blk[i].d_maj)
-			break;
-	if (dev_name2blk[i].d_name == NULL)
-		return;
-
-	part = B_PARTITION(bootdev);
-	unit = B_UNIT(bootdev);
-
-	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			booted_partition = part;
-			return;
-		}
-	}
+	setroot(booted_device, booted_device ? bootdev_data->partition : 0);
 }
 
 struct devmap {
@@ -161,7 +126,7 @@ void
 makebootdev(cp)
 	char *cp;
 {
-	int ctrl, unit, part, i;
+	int ok, junk;
 	static struct devmap devmap[] = {
 		{ "multi", "fd" },
 		{ "eisa", "wd" },
@@ -169,9 +134,9 @@ makebootdev(cp)
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
+	static struct bootdev_data bd;
 
-	bootdev = B_DEVMAGIC;
-
+	/* "scsi()" */
 	while (dp->attachment) {
 		if (strncmp (cp, dp->attachment, strlen(dp->attachment)) == 0)
 			break;
@@ -181,42 +146,123 @@ makebootdev(cp)
 		printf("Warning: boot device unrecognized: %s\n", cp);
 		return;
 	}
-	ctrl = getpno(&cp);
-	if (*cp++ == ')')
-		unit = getpno(&cp);
+	bd.dev_type = dp->dev;
+	ok = getpno(&cp, &bd.bus);
+
+	/* "multi(2)scsi(0)disk(0)rdisk(0)partition(1)" case */
+	if (ok && strcmp(dp->attachment, "multi") == 0 &&
+	    memcmp(cp, "scsi", 4) == 0) {
+		bd.dev_type = "sd";
+		ok = getpno(&cp, &bd.bus);
+	}
+
+	/* "disk(N)" */
+	if (ok)
+		ok = getpno(&cp, &bd.unit);
 	else
-		unit = 0;
+		bd.unit = 0;
+
+	/* "rdisk()" */
 	if (*cp++ == ')')
-		getpno(&cp);
+		ok = getpno(&cp, &junk);
+
+	/* "partition(1)" */
 #if 0 /* ignore partition number */
-	if (*cp++ == ')')
-		part = getpno(&cp) - 1;
+	if (ok && getpno(&cp, &bd.partition))
+		--bd.partition;
 	else
 #endif
-		part = 0;
+		bd.partition = 0;
 
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (strcmp(dp->dev, dev_name2blk[i].d_name) == 0)
-			bootdev = MAKEBOOTDEV(dev_name2blk[i].d_maj, 0,
-			    ctrl, unit, part);
+	bootdev_data = &bd;
 }
 
 int
-getpno(cp)
+getpno(cp, np)
 	char **cp;
+	int *np;
 {
 	int val = 0;
-	char *cx = *cp;
+	char *s = *cp;
+	int got = 0;
 
-	while(*cx && *cx != '(')
-		cx++;
-	if(*cx == '(') {
-		cx++;
-		while(*cx && *cx != ')') {
-			val = val * 10 + *cx - '0';
-			cx++;
+	*np = 0;
+
+	while (*s && *s != '(')
+		s++;
+	if (*s == '(') {
+		for (s++; *s; s++) {
+			if (*s == ')') {
+				s++;
+				got = 1;
+				*np = val;
+				break;
+			}
+			val = val * 10 + *s - '0';
 		}
 	}
-	*cp = cx;
-	return val;
+	*cp = s;
+	return (got);
+}
+
+/*
+ * Attempt to find the device from which we were booted.
+ */
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	struct bootdev_data *b = bootdev_data;
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
+
+	static int found = 0, initted = 0, scsiboot = 0;
+	static struct device *scsibusdev = NULL;
+
+	if (b == NULL)
+		return;	/* There is no hope. */
+	if (found)
+		return;
+
+	if (!initted) {
+		if (strcmp(b->dev_type, "sd") == 0)
+			scsiboot = 1;
+		initted = 1;
+	}
+
+	if (scsiboot && strcmp(cd->cd_name, "scsibus") == 0) {
+		if (dev->dv_unit == b->bus) {
+			scsibusdev = dev;
+#if 0
+			printf("\nscsibus = %s\n", dev->dv_xname);
+#endif
+		}
+		return;
+	}
+
+	if (strcmp(b->dev_type, cd->cd_name) != 0)
+		return;
+
+	if (strcmp(cd->cd_name, "sd") == 0) {
+		struct scsipibus_attach_args *sa = aux;
+
+		if (scsiboot && scsibusdev && parent == scsibusdev &&
+		    sa->sa_periph->periph_target == b->unit) {
+			booted_device = dev;
+#if 0
+			printf("\nbooted_device = %s\n", dev->dv_xname);
+#endif
+			found = 1;
+		}
+		return;
+	}
+	if (dev->dv_unit == b->unit) {
+		booted_device = dev;
+#if 0
+		printf("\nbooted_device = %s\n", dev->dv_xname);
+#endif
+		found = 1;
+	}
 }
