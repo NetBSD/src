@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.9 2002/03/17 05:44:49 gmcgarry Exp $	*/
+/*	$NetBSD: intio.c,v 1.10 2002/04/05 05:31:42 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.9 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.10 2002/04/05 05:31:42 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ intioprint(aux, pnp)
 	if (pnp != NULL)
 		printf("%s at %s", ia->ia_modname, pnp);
 	if (ia->ia_iobase != 0) {
-		printf(" addr 0x%lx", (u_long)intiobase+ia->ia_iobase);
+                printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
 		if (ia->ia_ipl != -1 && pnp != NULL)
 			printf(" ipl %d", ia->ia_ipl);
 	}
