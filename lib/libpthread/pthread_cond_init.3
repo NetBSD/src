@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_init.3,v 1.4 2003/07/04 10:18:46 wiz Exp $
+.\" $NetBSD: pthread_cond_init.3,v 1.5 2005/03/21 17:55:07 kleink Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
-.Fn pthread_cond_init "pthread_cond_t *cond" "const pthread_condattr_t *attr"
+.Fn pthread_cond_init "pthread_cond_t * restrict cond" "const pthread_condattr_t * restrict attr"
 .Sh DESCRIPTION
 The
 .Fn pthread_cond_init

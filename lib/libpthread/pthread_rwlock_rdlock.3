@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.7 2003/07/04 11:57:58 wiz Exp $
+.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.8 2005/03/21 17:55:07 kleink Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn pthread_rwlock_rdlock "pthread_rwlock_t *lock"
 .Ft int
-.Fn pthread_rwlock_timedrdlock "pthread_rwlock_t *lock" "const struct timespec *abstime"
+.Fn pthread_rwlock_timedrdlock "pthread_rwlock_t * restrict lock" "const struct timespec * restrict abstime"
 .Ft int
 .Fn pthread_rwlock_tryrdlock "pthread_rwlock_t *lock"
 .Sh DESCRIPTION
