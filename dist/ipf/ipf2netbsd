@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.8 2002/04/03 09:32:06 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.9 2002/05/13 06:23:30 martti Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,6 +52,7 @@ esac
 dbase=$dest/basesrc/dist/ipf
 dsys=$dest/syssrc/sys/netinet
 dlkm=$dest/syssrc/sys/lkm/netinet/if_ipl
+dregress=$dest/basesrc/regress/sys/kern/ipf
 
 case "$r" in
 	/*)
@@ -61,15 +62,17 @@ case "$r" in
 		;;
 esac
 
-echo preparing directory $dbase, $dsys and $dlkm
-rm -rf $dbase $dsys $dlkm
+echo preparing directory $dbase, $dsys, $dlkm and $dregress
+rm -rf $dbase $dsys $dlkm $dregress
 
 ### Copy the files and directories
-mkdir -p $dbase $dsys $dlkm
+mkdir -p $dbase $dsys $dlkm $dregress
 cd $r
 pax -rvw . $dbase
 pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_ipsec_pxy.c ip_log.c ip_nat.c ip_nat.h ip_netbios_pxy.c ip_proxy.c ip_proxy.h ip_h323_pxy.c ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
 pax -rvw mln_ipl.c $dlkm
+cd $r/test
+pax -rvw * $dregress
 
 ### Remove the $'s around the Id:
 find $dest -type f -print | while read f; do
