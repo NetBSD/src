@@ -1,4 +1,4 @@
-.\"	$NetBSD: secure_path.3,v 1.2 2000/09/18 16:36:33 ad Exp $
+.\"	$NetBSD: secure_path.3,v 1.3 2000/09/19 15:03:20 ad Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -30,14 +30,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" BSDI login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp
+.\" from BSDI: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp
 .\"
 .Dd "July 16, 1996"
 .Dt SECURE_PATH 3 
 .Os
 .Sh NAME
 .Nm secure_path
-.Nd determine if a file appears to be secure
+.Nd determine if a file appears to be ``secure''
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
@@ -47,13 +47,14 @@
 .Sh DESCRIPTION
 The
 .Fn secure_path
-function takes a path name and returns 0 if the path name is secure, -1
-if not.
-To be secure a path must
-exist,
-be a regular file (and not a directory),
-owned by root,
-and only writable by the owner (root).
+function takes a path name and returns zero if the referenced file is
+``secure'', non-zero if not.  Any ``insecurity'', other than failure to access
+the referenced file, will be logged to the system log.
+.Pp
+To be ``secure'', the referenced file must exist, be a regular file (and not a
+directory), owned by the super-user, and writable only by the super-user.
+.Sh SEE ALSO
+.Xr openlog 3
 .Sh HISTORY
 The 
 .Nm 
