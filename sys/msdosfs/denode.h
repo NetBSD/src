@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.25 1997/11/17 15:36:28 ws Exp $	*/
+/*	$NetBSD: denode.h,v 1.26 1998/03/01 02:25:11 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -147,8 +147,7 @@ struct denode {
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
-	pid_t de_lockholder;	/* current lock holder */
-	pid_t de_lockwaiter;	/* lock wanter */
+	struct lock de_lock;	/* denode lock */
 	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
 	u_char de_CHun;		/* Hundredth of second of CTime*/
@@ -165,13 +164,11 @@ struct denode {
 /*
  * Values for the de_flag field of the denode.
  */
-#define	DE_LOCKED	0x0001	/* Denode lock. */
-#define	DE_WANTED	0x0002	/* Denode is wanted by a process. */
-#define	DE_UPDATE	0x0004	/* Modification time update request. */
-#define	DE_CREATE	0x0008	/* Creation time update */
-#define	DE_ACCESS	0x0010	/* Access time update */
-#define	DE_MODIFIED	0x0020	/* Denode has been modified. */
-#define	DE_RENAME	0x0040	/* Denode is in the process of being renamed */
+#define	DE_UPDATE	0x0001	/* Modification time update request. */
+#define	DE_CREATE	0x0002	/* Creation time update */
+#define	DE_ACCESS	0x0004	/* Access time update */
+#define	DE_MODIFIED	0x0008	/* Denode has been modified. */
+#define	DE_RENAME	0x0010	/* Denode is in the process of being renamed */
 
 /*
  * Maximum filename length in Win95
@@ -274,6 +271,7 @@ int	lease_check		__P((void *));
 #endif
 int	msdosfs_ioctl		__P((void *));
 #define	msdosfs_poll		genfs_poll
+#define	msdosfs_revoke		genfs_revoke
 int	msdosfs_mmap		__P((void *));
 #define	msdosfs_fsync		genfs_fsync
 #define	msdosfs_seek		genfs_seek

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.2 1998/03/01 02:23:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -56,18 +56,18 @@ struct componentname;
 __BEGIN_DECLS
 
 /* ext2fs_alloc.c */
-int ext2fs_alloc __P((struct inode *, daddr_t, daddr_t , struct ucred *,
-		   daddr_t *));
-int ext2fs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
+int ext2fs_alloc __P((struct inode *, ufs_daddr_t, ufs_daddr_t , struct ucred *,
+		   ufs_daddr_t *));
+int ext2fs_realloccg __P((struct inode *, ufs_daddr_t, ufs_daddr_t, int, int ,
 			  struct ucred *, struct buf **));
 int ext2fs_reallocblks __P((void *));
 int ext2fs_valloc __P((void *));
-daddr_t ext2fs_blkpref __P((struct inode *, daddr_t, int, daddr_t *));
-void ext2fs_blkfree __P((struct inode *, daddr_t));
+ufs_daddr_t ext2fs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
+void ext2fs_blkfree __P((struct inode *, ufs_daddr_t));
 int ext2fs_vfree __P((void *));
 
 /* ext2fs_balloc.c */
-int ext2fs_balloc __P((struct inode *, daddr_t, int, struct ucred *,
+int ext2fs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
 			struct buf **, int));
 
 /* ext2fs_bmap.c */
@@ -111,6 +111,8 @@ int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			struct vnode **, int *, struct ucred **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
+int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		       struct proc *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.13 1997/07/18 19:30:34 thorpej Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)idp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	@(#)idp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
@@ -367,7 +367,7 @@ idp_usrreq(so, req, m, nam, control, p)
 	int error = 0;
 
 	if (req == PRU_CONTROL)
-                return (ns_control(so, (long)m, (caddr_t)nam,
+                return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
 
 	s = splsoftnet();

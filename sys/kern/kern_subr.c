@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.37 1998/02/22 12:53:53 hannken Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.38 1998/03/01 02:22:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_subr.c	8.3 (Berkeley) 1/21/94
+ *	@(#)kern_subr.c	8.4 (Berkeley) 2/14/95
  */
 
 #include "opt_uvm.h"
@@ -576,7 +576,7 @@ setroot(bootdv, bootpartition, nam2blk)
 		     vops = LIST_NEXT(vops, vfs_list)) {
 			if (vops->vfs_mountroot != NULL &&
 			    vops->vfs_mountroot == mountroot)
-				break;
+			break;
 		}
 
 		if (vops == NULL) {

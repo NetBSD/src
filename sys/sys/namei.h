@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.13 1997/05/08 14:55:25 mycroft Exp $	*/
+/*	$NetBSD: namei.h,v 1.14 1998/03/01 02:24:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)namei.h	8.4 (Berkeley) 8/20/94
+ *	@(#)namei.h	8.5 (Berkeley) 8/20/94
  */
 
 #ifndef _SYS_NAMEI_H_

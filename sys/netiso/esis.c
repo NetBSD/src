@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.18 1996/10/13 02:04:21 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.19 1998/03/01 02:24:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)esis.c	8.1 (Berkeley) 6/10/93
+ *	@(#)esis.c	8.3 (Berkeley) 3/20/95
  */
 
 /***********************************************************
@@ -118,6 +118,7 @@ extern char     all_es_snpa[], all_is_snpa[];
 	} else {\
 		(m) = (m)->m_next;\
 		(cp) = mtod((m), caddr_t);\
+		(m)->m_len = 0;\
 	}
 
 /*
@@ -1070,7 +1071,7 @@ isis_input(m0, va_alist)
 		/* can't block at interrupt level */
 		if ((mm = m_copy(m0, 0, M_COPYALL)) != NULL) {
 			if (sbappendaddr(&rp->rcb_socket->so_rcv,
-					 (struct sockaddr *) & esis_dl, mm,
+					 (struct sockaddr *) &esis_dl, mm,
 					 (struct mbuf *) 0) != 0) {
 				sorwakeup(rp->rcb_socket);
 			} else {
@@ -1085,7 +1086,7 @@ isis_input(m0, va_alist)
 		}
 	}
 	if (first_rp && sbappendaddr(&first_rp->rcb_socket->so_rcv,
-	       (struct sockaddr *) & esis_dl, m0, (struct mbuf *) 0) != 0) {
+	       (struct sockaddr *) &esis_dl, m0, (struct mbuf *) 0) != 0) {
 		sorwakeup(first_rp->rcb_socket);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.30 1998/01/07 22:57:09 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.31 1998/03/01 02:22:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_usrreq.c	8.3 (Berkeley) 1/4/94
+ *	@(#)uipc_usrreq.c	8.9 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
@@ -598,7 +598,7 @@ unp_bind(unp, nam, p)
 	unp->unp_vnode = vp;
 	unp->unp_addrlen = addrlen;
 	unp->unp_addr = sun;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (0);
 
  bad:

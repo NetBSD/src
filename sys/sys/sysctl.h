@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.25 1998/02/14 00:37:28 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.26 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,7 +85,7 @@ struct ctlname {
 #define	CTL_UNSPEC	0		/* unused */
 #define	CTL_KERN	1		/* "high kernel": proc, limits */
 #define	CTL_VM		2		/* virtual memory */
-#define	CTL_FS		3		/* file system, mount type is next */
+#define	CTL_VFS		3		/* file system, mount type is next */
 #define	CTL_NET		4		/* network, see socket.h */
 #define	CTL_DEBUG	5		/* debugging parameters */
 #define	CTL_HW		6		/* generic cpu/io */
@@ -98,7 +98,7 @@ struct ctlname {
 	{ 0, 0 }, \
 	{ "kern", CTLTYPE_NODE }, \
 	{ "vm", CTLTYPE_NODE }, \
-	{ "fs", CTLTYPE_NODE }, \
+	{ "vfs", CTLTYPE_NODE }, \
 	{ "net", CTLTYPE_NODE }, \
 	{ "debug", CTLTYPE_NODE }, \
 	{ "hw", CTLTYPE_NODE }, \
@@ -382,7 +382,7 @@ int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
 int sysctl_clockrate __P((char *, size_t *));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
-int sysctl_vnode __P((char *, size_t *));
+int sysctl_vnode __P((char *, size_t *, struct proc *));
 int sysctl_ntptime __P((char *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));

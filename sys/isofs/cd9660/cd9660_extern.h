@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.2 1998/03/01 02:22:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -94,6 +94,8 @@ int cd9660_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 	    struct vnode **, int *, struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
 void cd9660_init __P((void));
+int cd9660_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			struct proc *));
 
 int cd9660_mountroot __P((void)); 
 

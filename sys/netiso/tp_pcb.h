@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.10 1996/05/22 13:56:06 mycroft Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.11 1998/03/01 02:24:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_pcb.h	8.1 (Berkeley) 6/10/93
+ *	@(#)tp_pcb.h	8.2 (Berkeley) 9/22/94
  */
 
 /***********************************************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.6 1996/12/22 10:10:44 cgd Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.7 1998/03/01 02:23:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_extern.h	8.2 (Berkeley) 6/16/94
+ *	@(#)mfs_extern.h	8.4 (Berkeley) 3/30/95
  */
 
 struct buf;
@@ -51,6 +51,8 @@ int	mfs_mount	__P((struct mount *, const char *, void *,
 			     struct nameidata *, struct proc *));
 int	mfs_start	__P((struct mount *, int, struct proc *));
 int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));
+int	mfs_sysctl	__P((int *, u_int, void *, size_t *, void *, size_t,
+			     struct proc *));
 
 void	mfs_init	__P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.5 1998/02/07 02:14:04 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.6 1998/03/01 02:22:29 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -155,15 +155,15 @@ lockstatus(lkp)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
-lockmgr(lkp, flags, interlkp, p)
+lockmgr(lkp, flags, interlkp)
 	__volatile struct lock *lkp;
 	u_int flags;
 	struct simplelock *interlkp;
-	struct proc *p;
 {
 	int error;
 	pid_t pid;
 	int extflags;
+	struct proc *p = curproc;
 
 	error = 0;
 	if (p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.13 1998/02/10 00:25:34 perry Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ktrace.h	8.1 (Berkeley) 6/2/93
+ *	@(#)ktrace.h	8.2 (Berkeley) 2/19/95
  */
 
 #ifndef _SYS_KTRACE_H_

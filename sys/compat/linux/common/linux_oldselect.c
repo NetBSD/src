@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.38 1998/02/20 18:09:04 mycroft Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.39 1998/03/01 02:23:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -799,9 +799,6 @@ linux_sys_getdents(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 
-	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
-		return (EINVAL);
-
 	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 		return error;
 
@@ -817,10 +814,8 @@ linux_sys_getdents(p, v, retval)
 		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	ncookies = buflen / 16;
-	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
 
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
 	aiov.iov_base = buf;
@@ -836,8 +831,8 @@ again:
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
          */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
-	    ncookies);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
 	if (error)
 		goto out;
 
@@ -908,7 +903,7 @@ again:
 eof:
 	*retval = nbytes - resid;
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.68 1998/02/18 07:05:49 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.69 1998/03/01 02:24:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -72,10 +72,8 @@
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
-#ifdef notyet
-static int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *);
-#endif
+int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		      struct proc *));
 
 /*
  * nfs vfs operations.
@@ -109,11 +107,9 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
+	nfs_sysctl,
 	nfs_mountroot,
 	nfs_vnodeopv_descs,
-#ifdef notyet
-	nfs_sysctl
-#endif
 };
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
@@ -325,20 +321,12 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-#ifdef Lite2_integrated
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
 	rootvp = vp;
-	vfs_unbusy(mp, procp);
-#else
-	if (vfs_lock(mp))
-		panic("nfs_mountroot: vfs_lock");
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unlock(mp);
-	rootvp = vp;
-#endif
+	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
@@ -392,9 +380,7 @@ nfs_mountroot()
 		error = 0;
 		goto out;
 	}
-#ifdef Lite2_integrated
-	vfs_unbusy(mp, procp);
-#endif
+	vfs_unbusy(mp);
 	printf("swap on %s\n", nd->nd_swap.ndm_host);
 
 	/*
@@ -440,14 +426,8 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	struct mbuf *m;
 	int error;
 
-#ifdef Lite2_integrated
-	vfs_rootmountalloc("nfs", mntname, &mp);
-#else
-	/* Create the mount point. */
-	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
-	    M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-#endif
+	vfs_rootmountalloc(MOUNT_NFS, (char *)mntname, &mp);
+
 	mp->mnt_op = &nfs_vfsops;
 	/* mp->mnt_flag = 0 */
 
@@ -461,6 +441,8 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, p);
 	if (error) {
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
 		free(mp, M_MOUNT);
@@ -590,7 +572,7 @@ nfs_decode_args(nmp, argp)
 	nmp->nm_soproto = argp->proto;
 
 	if (nmp->nm_so && adjsock) {
-		nfs_safedisconnect(nmp);
+		nfs_disconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0)) {
 				printf("nfs_args: retrying connect\n");
@@ -698,11 +680,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
 	}
-#ifdef Lite2_integrated
-	vfs_getnewfsid(mp, makefstype(MOUNT_NFS));
-#else
-	getnewfsid(mp, makefstype(MOUNT_NFS));
-#endif
+	vfs_getnewfsid(mp, MOUNT_NFS);
 	nmp->nm_mountp = mp;
 
 	if (argp->flags & NFSMNT_NQNFS)
@@ -739,7 +717,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
+	    MFSNAMELEN);
 	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	nmp->nm_nam = nam;
@@ -925,11 +904,7 @@ loop:
 			goto loop;
 		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
-#ifdef Lite2_integrated
-		if (vget(vp, LK_EXCLUSIVE, p))
-#else
-		if (vget(vp, 1))
-#endif
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred, waitfor, p);
 		if (error)
@@ -954,13 +929,18 @@ nfs_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-#ifdef notyet
 /*
  * Do that sysctl thang...
  */
-static int
-nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-	   size_t newlen, struct proc *p)
+int
+nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
 {
 	int rv;
 
@@ -997,7 +977,6 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return EOPNOTSUPP;
 	}
 }
-#endif
 
 
 /*

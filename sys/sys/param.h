@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.45 1998/02/18 07:19:23 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.46 1998/03/01 02:24:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)param.h	8.2 (Berkeley) 1/21/94
+ *	@(#)param.h	8.3 (Berkeley) 4/4/95
  */
 
 #ifndef _SYS_PARAM_H_
@@ -46,7 +46,7 @@
 /*
  * Historic BSD #defines -- probably will remain untouched for all time.
  */
-#define	BSD	199306		/* System version (year & month). */
+#define	BSD	199506		/* System version (year & month). */
 #define BSD4_3	1
 #define BSD4_4	1
 
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  103040000	/* NetBSD 1.3D */
+#define __NetBSD_Version__  103050000	/* NetBSD 1.3E */
 
 /*
  * Historical NetBSD #defines -- new code should use
@@ -73,7 +73,7 @@
  */
 
 #define NetBSD	199804		/* NetBSD version (year & month). */
-#define NetBSD1_3 5		/* NetBSD 1.3D */
+#define NetBSD1_3 6		/* NetBSD 1.3E */
 
 #ifndef NULL
 #define	NULL	0

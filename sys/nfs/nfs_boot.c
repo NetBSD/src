@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.43 1998/02/28 01:45:01 cgd Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.44 1998/03/01 02:24:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 #include <nfs/xdr_subs.h>
 
 #include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 
 /*

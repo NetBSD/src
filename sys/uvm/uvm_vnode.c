@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.6 1998/02/19 00:55:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.7 1998/03/01 02:25:29 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -81,9 +81,7 @@
 
 LIST_HEAD(uvn_list_struct, uvm_vnode);
 static struct uvn_list_struct uvn_wlist;	/* writeable uvns */
-#if NCPU > 1
 static simple_lock_data_t uvn_wl_lock;		/* locks uvn_wlist */
-#endif
 
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
 static struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
@@ -1613,7 +1611,7 @@ int npages, flags, rw;
   UVMHIST_LOG(maphist, "calling VOP",0,0,0,0);
 
   if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-    VOP_LOCK(vn);
+    vn_lock(vn, LK_EXCLUSIVE | LK_RETRY);
   /* NOTE: vnode now locked! */
 
   if (rw == UIO_READ)
@@ -1622,7 +1620,7 @@ int npages, flags, rw;
     result = VOP_WRITE(vn, &uio, 0, curproc->p_ucred);
 
   if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-    VOP_UNLOCK(vn);
+    VOP_UNLOCK(vn, 0);
   /* NOTE: vnode now unlocked (unless vnislocked) */
 
   UVMHIST_LOG(maphist, "done calling VOP",0,0,0,0);
@@ -1787,9 +1785,9 @@ struct vnode *vp;
    * unlocked causing us to return TRUE when we should not.   we ignore
    * this as a false-positive return value doesn't hurt us.
    */
-  VOP_UNLOCK(vp);
+  VOP_UNLOCK(vp, 0);
   uvn_detach(&uvn->u_obj);
-  VOP_LOCK(vp);
+  vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
   
   /*
    * and return...
@@ -1886,7 +1884,7 @@ struct mount *mp;
    * step 1: ensure we are only ones using the uvn_sync_q by locking
    * our lock...
    */
-  lockmgr(&uvn_sync_lock, LK_EXCLUSIVE, (void *)0, curproc);
+  lockmgr(&uvn_sync_lock, LK_EXCLUSIVE, (void *)0);
 
   /*
    * step 2: build up a simpleq of uvns of interest based on the 
@@ -1969,5 +1967,5 @@ struct mount *mp;
   /*
    * done!  release sync lock
    */
-  lockmgr(&uvn_sync_lock, LK_RELEASE, (void *)0, curproc);
+  lockmgr(&uvn_sync_lock, LK_RELEASE, (void *)0);
 }

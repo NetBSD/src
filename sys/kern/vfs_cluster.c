@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.14 1996/10/13 02:32:49 christos Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.15 1998/03/01 02:22:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_cluster.c	8.8 (Berkeley) 7/28/94
+ *	@(#)vfs_cluster.c	8.10 (Berkeley) 3/28/95
  */
 
 #include <sys/param.h>
@@ -47,13 +47,11 @@
 
 #include <vm/vm.h>
 
+int doreallocblks = 0;
+
 #ifdef DEBUG
 #include <sys/sysctl.h>
-int doreallocblks = 0;
 struct ctldebug debug13 = { "doreallocblks", &doreallocblks };
-#else
-/* XXX for cluster_write */
-#define doreallocblks 0
 #endif
 
 /*

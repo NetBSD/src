@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/10/01 02:15:48 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1998/03/01 02:20:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,13 +44,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.3 1997/10/01 02:15:48 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 1998/03/01 02:20:25 fvdl Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <fstab.h>

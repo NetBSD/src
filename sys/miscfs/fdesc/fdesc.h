@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.9 1996/02/09 22:40:03 christos Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.10 1998/03/01 02:21:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdesc.h	8.6 (Berkeley) 8/20/94
+ *	@(#)fdesc.h	8.8 (Berkeley) 4/3/95
  *
  * #Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp #
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.22 1997/10/30 09:14:07 mycroft Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.23 1998/03/01 02:21:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)procfs_subr.c	8.5 (Berkeley) 6/15/94
+ *	@(#)procfs_subr.c	8.6 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>

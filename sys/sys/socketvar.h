@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.27 1998/01/07 23:47:12 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.28 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)socketvar.h	8.1 (Berkeley) 6/2/93
+ *	@(#)socketvar.h	8.3 (Berkeley) 2/19/95
  */
 
 #ifndef _SYS_SOCKETVAR_H_

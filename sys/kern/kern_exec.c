@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.89 1998/02/10 14:09:27 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.90 1998/03/01 02:22:28 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -133,7 +133,7 @@ check_exec(p, epp)
 		goto bad1;
 
 	/* unlock vp, since we don't need it locked from here on out. */
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_msdos.c,v 1.18 1997/09/16 12:24:18 lukem Exp $	*/
+/*	$NetBSD: mount_msdos.c,v 1.19 1998/03/01 02:20:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,13 +32,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.18 1997/09/16 12:24:18 lukem Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.19 1998/03/01 02:20:45 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <msdosfs/msdosfsmount.h>
 #include <ctype.h>
 #include <err.h>
 #include <grp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.13 1997/07/18 19:30:38 thorpej Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns_input.c	8.1 (Berkeley) 6/10/93
+ *	@(#)ns_input.c	8.2 (Berkeley) 9/22/94
  */
 
 #include <sys/param.h>

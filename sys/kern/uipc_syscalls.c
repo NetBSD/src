@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.28 1998/02/06 23:19:26 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.29 1998/03/01 02:22:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
+ *	@(#)uipc_syscalls.c	8.6 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.6 1996/02/13 22:10:21 christos Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.7 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_proto.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_proto.c	8.2 (Berkeley) 2/9/95
  */
 
 /***********************************************************

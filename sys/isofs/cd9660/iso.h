@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.20 1997/07/07 22:45:34 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.21 1998/03/01 02:22:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.h	8.4 (Berkeley) 12/5/94
+ *	@(#)iso.h	8.6 (Berkeley) 5/10/95
  */
 
 /*

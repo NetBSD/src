@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.25 1997/09/20 00:44:59 enami Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.26 1998/03/01 02:24:02 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pager.c	8.6 (Berkeley) 1/12/94
+ *	@(#)vm_pager.c	8.7 (Berkeley) 7/7/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.6 1997/05/02 21:10:15 christos Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.7 1998/03/01 02:24:57 fvdl Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)llc_var.h	8.1 (Berkeley) 6/10/93
+ *	@(#)llc_var.h	8.2 (Berkeley) 2/9/95
  */
 
 struct llc;

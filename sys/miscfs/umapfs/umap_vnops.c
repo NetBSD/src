@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.9 1997/10/06 09:32:39 thorpej Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.10 1998/03/01 02:21:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)umap_vnops.c	8.3 (Berkeley) 1/5/94
+ *	@(#)umap_vnops.c	8.6 (Berkeley) 5/22/95
  */
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <miscfs/umapfs/umap.h>
+#include <miscfs/genfs/genfs.h>
 
 
 int umap_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
@@ -64,6 +65,10 @@ int	umap_print	__P((void *));
 int	umap_rename	__P((void *));
 int	umap_strategy	__P((void *));
 int	umap_bwrite	__P((void *));
+int	umap_lock	__P((void *));
+int	umap_unlock	__P((void *));
+
+extern int  null_bypass __P((void *));
 
 /*
  * Global vfs data structures
@@ -78,6 +83,8 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc, umap_bypass },
 
 	{ &vop_getattr_desc, umap_getattr },
+	{ &vop_lock_desc, umap_lock },
+	{ &vop_unlock_desc, umap_unlock },
 	{ &vop_inactive_desc, umap_inactive },
 	{ &vop_reclaim_desc, umap_reclaim },
 	{ &vop_print_desc, umap_print },
@@ -289,6 +296,47 @@ umap_bypass(v)
 	return (error);
 }
 
+/*
+ * We need to process our own vnode lock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_lock(v)
+	void *v;
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	genfs_nolock(ap);
+	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (0);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (null_bypass(ap));
+}
+
+/*
+ * We need to process our own vnode unlock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_unlock(v)
+	void *v;
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	genfs_nounlock(ap);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (null_bypass(ap));
+}
 
 /*
  *  We handle getattr to change the fsid.
@@ -372,6 +420,10 @@ int
 umap_inactive(v)
 	void *v;
 {
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
 	/*
 	 * Do nothing (and _don't_ bypass).
 	 * Wait to vrele lowervp until reclaim,
@@ -379,6 +431,7 @@ umap_inactive(v)
 	 * cache and reusable.
 	 *
 	 */
+	VOP_UNLOCK(ap->a_vp, 0);
 	return (0);
 }
 
@@ -509,4 +562,3 @@ umap_rename(v)
 
 	return error;
 }
-

@@ -1,7 +1,7 @@
-/*	$NetBSD: umap_subr.c,v 1.12 1998/02/07 02:44:53 chs Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.13 1998/03/01 02:21:51 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: Id: lofs_subr.c, v 1.11 1992/05/30 10:05:43 jsp Exp
- *	@(#)umap_subr.c	8.6 (Berkeley) 1/26/94
+ *	@(#)umap_subr.c	8.9 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -196,6 +197,7 @@ umap_node_alloc(mp, lowervp, vpp)
 	struct umap_node_hashhead *hd;
 	struct umap_node *xp;
 	struct vnode *vp, *nvp;
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	extern int (**dead_vnodeop_p) __P((void *));
 
@@ -246,6 +248,7 @@ umap_node_alloc(mp, lowervp, vpp)
 
 		cvpp = &speclisth[SPECHASH(vp->v_rdev)];
 loop:
+		simple_lock(&spechash_slock);
 		for (cvp = *cvpp; cvp; cvp = cvp->v_specnext) {
 			if (vp->v_rdev != cvp->v_rdev ||
 			    vp->v_type != cvp->v_type)
@@ -254,12 +257,16 @@ loop:
 			/*
 			 * Alias, but not in use, so flush it out.
 			 */
+			simple_lock(&cvp->v_interlock);
 			if (cvp->v_usecount == 0) {
-				vgone(cvp);
+				simple_unlock(&spechash_slock);
+				vgonel(cvp, p);
 				goto loop;
 			}
-			if (vget(cvp, 0))	/* can't lock; will die! */
+			if (vget(cvp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+				simple_unlock(&spechash_slock);
 				goto loop;
+			}
 			break;
 		}
 
@@ -273,6 +280,7 @@ loop:
 #endif
 		vp->v_flag |= VALIASED;
 		cvp->v_flag |= VALIASED;
+		simple_unlock(&spechash_slock);
 		vrele(cvp);
 	}
 	/* XXX end of transmogrified checkalias() */
