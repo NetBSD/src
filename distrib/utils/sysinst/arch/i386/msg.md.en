@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.19 2000/05/11 02:27:25 hubertf Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.20 2000/10/02 09:36:24 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -250,6 +250,13 @@ Record needs to be able to use the extended BIOS interface to boot
 off this partition. Do you want to install the NetBSD bootcode into
 the Master Boot Record so that this is ensured? Note that this will
 overwrite the existing code in the MBR, like some bootselectors.}
+
+message installnormalmbr
+{You have chosen not to install a bootselector. If this was because you
+already have a bootselector installed, no further action is needed.
+However, if no bootselector is installed, the normal bootcode must be
+used, or your system will not boot properly. Do you want to use the normal
+NetBSD bootcode?}
 
 message configbootsel
 {Configure the different bootselection menu items. You can change the

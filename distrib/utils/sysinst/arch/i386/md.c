@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.39 2000/09/27 12:42:06 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.40 2000/10/02 09:36:24 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <util.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
 #include <machine/cpu.h>
 #include <sys/sysctl.h>
 #include "defs.h"
@@ -50,6 +51,7 @@
 
 
 char mbr[512];
+char kernstr[STRSIZE];
 int mbr_present, mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
@@ -64,6 +66,7 @@ static int mbr_part_above_chs __P((struct mbr_partition *));
 static int mbr_partstart_above_chs __P((struct mbr_partition *));
 static void configure_bootsel __P((void));
 static void md_upgrade_mbrtype __P((void));
+static char *get_bootmodel __P((void));
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -105,7 +108,18 @@ edit:
 			    md_read_bootcode(_PATH_BOOTSEL, mbr, sizeof mbr);
 			configure_bootsel();
 			netbsd_mbr_installed = netbsd_bootsel_installed = 1;
+		} else {
+			msg_display(MSG_installnormalmbr);
+			process_menu(MENU_yesno);
+			if (yesno) {
+				mbr_len = md_read_bootcode(_PATH_MBR, mbr,
+				    sizeof mbr);
+				netbsd_mbr_installed = 1;
+			}
 		}
+	} else {
+		mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
+		netbsd_mbr_installed = 1;
 	}
 
 	if (mbr_partstart_above_chs(part) && !netbsd_mbr_installed) {
@@ -481,6 +495,9 @@ md_cleanup_install(void)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 	char cmd[STRSIZE];
+	char *bootmodel;
+
+	bootmodel = get_bootmodel();
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
@@ -504,11 +521,26 @@ md_cleanup_install(void)
 
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
 
-	strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
-	strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
-	sprintf(cmd, "sed "
-			"-e '/^ttyE/s/off/on/'"
-			" < %s > %s", realfrom, realto);
+	/*
+	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
+	 * Otherwise, run getty on 4 VTs.
+	 */
+	if (strcmp(bootmodel, "tiny") == 0) {
+		strncpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
+		strncpy(realto, target_expand("/etc/wscons.conf.install"),
+		    STRSIZE);
+		sprintf(cmd, "sed"
+			    " -e '/^screen/s/^/#/'"
+			    " -e '/^mux/s/^/#/'"
+			    " < %s > %s", realfrom, realto);
+	} else {
+		strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
+		strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
+		sprintf(cmd, "sed "
+				"-e '/^ttyE/s/off/on/'"
+				" < %s > %s", realfrom, realto);
+	}
+		
 	if (logging)
 		(void)fprintf(log, "%s\n", cmd);
 	if (scripting)
@@ -646,4 +678,41 @@ disp_bootsel(part, mbsp)
 		    i, get_partname(i), mbs->nametab[i]);
 	}
 	msg_display_add(MSG_newline);
+}
+
+char *
+get_bootmodel()
+{
+	struct utsname ut;
+	char *envstr;
+
+	envstr = getenv("BOOTMODEL");
+	if (envstr != NULL)
+		return envstr;
+
+	if (uname(&ut) < 0)
+		return "";
+
+	if (strstr(ut.version, "TINY") != NULL)
+		return "tiny";
+	else if (strstr(ut.version, "SMALL") != NULL)
+		return "small";
+	else if (strstr(ut.version, "LAPTOP") != NULL)
+		return "laptop";
+	return "";
+}
+
+void
+md_init()
+{
+	char *bootmodel;
+
+	bootmodel = get_bootmodel();
+	if (strcmp(bootmodel, "") != 0 && strcmp(bootmodel, "small") != 0) {
+		/*
+		 * XXX assumes the kernset is the first in the array.
+		 */
+		snprintf(kernstr, sizeof kernstr, "kern-%s", bootmodel);
+		dist_list[0].name = &kernstr[0];
+	}
 }
