@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.154 2004/01/29 12:07:29 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.155 2004/01/30 11:56:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.154 2004/01/29 12:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.155 2004/01/30 11:56:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -563,8 +563,6 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
 
-	KASSERT((entry->flags & UVM_MAP_KERNEL) == 0);
-
 	uvm_tree_sanity(map, "clip_start entry");
 
 	/*
@@ -618,8 +616,6 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end)
 {
 	struct vm_map_entry *	new_entry;
 	vaddr_t new_adj; /* #bytes we move start forward */
-
-	KASSERT((entry->flags & UVM_MAP_KERNEL) == 0);
 
 	uvm_tree_sanity(map, "clip_end entry");
 	/*
