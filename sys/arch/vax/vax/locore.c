@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.20 1997/03/22 23:02:11 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.21 1997/04/06 20:37:05 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -107,7 +107,7 @@ start()
 	 */
 	boothowto = __boothowto;
 	bootdev = __bootdev;
-	esym = __esym & 0x80000000;
+	esym = __esym | 0x80000000;
 	avail_end = __physmem; /* Better to take from RPB, if available */
 
 	asm("pushl $0x001f0000;pushl $to;rei;to:movw $0xfff, _panic");
@@ -119,7 +119,7 @@ start()
 	PAGE_SIZE = NBPG * 2; /* Set logical page size */
 #ifdef DDB
 	if ((boothowto & RB_KDB) != 0)
-		proc0paddr = ROUND_PAGE(esym) | 0x80000000;
+		proc0paddr = ROUND_PAGE(esym);
 	else
 #endif
 		proc0paddr = ROUND_PAGE(&end);
