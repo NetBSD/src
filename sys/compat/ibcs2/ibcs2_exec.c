@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.18 1998/10/18 16:59:14 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.19 1998/10/23 03:22:59 erh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -97,7 +97,6 @@ static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 				      Elf32_Ehdr *));
 	
 
-extern int ibcs2_error[];
 extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
@@ -106,7 +105,7 @@ const char ibcs2_emul_path[] = "/emul/ibcs2";
 
 struct emul emul_ibcs2_coff = {
 	"ibcs2",
-	ibcs2_error,
+	native_to_ibcs2_errno,
 	ibcs2_sendsig,
 	0,
 	IBCS2_SYS_MAXSYSCALL,
@@ -121,7 +120,7 @@ struct emul emul_ibcs2_coff = {
 
 struct emul emul_ibcs2_xout = {
 	"ibcs2",
-	ibcs2_error,
+	native_to_ibcs2_errno,
 	ibcs2_sendsig,
 	0,
 	IBCS2_SYS_MAXSYSCALL,
@@ -136,7 +135,7 @@ struct emul emul_ibcs2_xout = {
 
 struct emul emul_ibcs2_elf = {
 	"ibcs2",
-	ibcs2_error,
+	native_to_ibcs2_errno,
 	ibcs2_sendsig,
 	0,
 	IBCS2_SYS_MAXSYSCALL,
