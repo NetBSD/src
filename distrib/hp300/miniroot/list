@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2002/03/06 12:04:51 lukem Exp $
+#	$NetBSD: list,v 1.7 2002/03/17 05:39:59 gmcgarry Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -32,7 +32,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${_SRC_TOP_}/share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
+COPY	${KERNOBJDIR}/INSTALL/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
