@@ -1,11 +1,8 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.1 1996/11/15 18:01:39 gwr Exp $
+# $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
-#
-# Note that this implementation mixes the #define's and
-# the C structure initialiers in keywords.h! (Yuck!)
 
 # This program requires "new" awk (or GNU awk).
 awk=${AWK:-awk}
