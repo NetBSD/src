@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.47 1997/05/23 09:45:40 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.48 1997/05/23 21:20:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -312,13 +312,13 @@ sb_getdev(addr, retp)
 {
 	struct sbdsp_softc *sc = addr;
 
-	if (sc->sc_model & MODEL_JAZZ16)
+	if (sc->sc_model == SB_JAZZ)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
 		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
 	sprintf(retp->version, "%d.%02d", 
-		SBVER_MAJOR(sc->sc_model),
-		SBVER_MINOR(sc->sc_model));
+		SBVER_MAJOR(sc->sc_version),
+		SBVER_MINOR(sc->sc_version));
 	strncpy(retp->config, "sb", sizeof(retp->config));
 		
 	return 0;

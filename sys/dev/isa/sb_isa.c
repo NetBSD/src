@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.5 1997/05/17 23:26:35 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.6 1997/05/23 21:20:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -76,8 +76,8 @@ sb_isa_match(parent, match, aux)
 	/*
 	 * Indirect brokedness!
 	 */
-	register struct sbdsp_softc *sc = match;
-	register struct isa_attach_args *ia = aux;
+	struct sbdsp_softc *sc = match;
+	struct isa_attach_args *ia = aux;
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("sb: configured iobase 0x%x invalid\n", ia->ia_iobase);
@@ -86,7 +86,7 @@ sb_isa_match(parent, match, aux)
 
 	sc->sc_iot = ia->ia_iot;
 
-	/* Map i/o space [we map 24 ports which is the max of the sb and pro  */
+	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
 	    &sc->sc_ioh)) {
 		printf("sb: can't map i/o space 0x%x/%d in probe\n",

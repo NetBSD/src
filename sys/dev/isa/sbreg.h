@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.20 1997/05/19 23:14:31 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.21 1997/05/23 21:20:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -106,6 +106,9 @@
 #define SBP_SET_IRQ		0x80	/* Soft-configured irq (SB16-) */
 #define SBP_SET_DRQ		0x81	/* Soft-configured drq (SB16-) */
 #define	SBP_IRQ_STATUS		0x82	/* Pending IRQ status (SB16-) */
+#define		SBP_IRQ_MPU401	0x04
+#define		SBP_IRQ_DMA16	0x02
+#define		SBP_IRQ_DMA8	0x01
 
 #define SB16P_MASTER_L		0x30
 #define SB16P_VOICE_L		0x32

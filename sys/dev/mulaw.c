@@ -187,3 +187,13 @@ swap_bytes_change_sign16(v, p, cc)
 	swap_bytes(v, p, cc);
 	change_sign16(v, p, cc);
 }
+
+void
+change_sign16_swap_bytes(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	change_sign16(v, p, cc);
+	swap_bytes(v, p, cc);
+}
