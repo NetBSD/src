@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.45 1996/10/06 19:03:32 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.46 1996/12/21 21:53:16 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -958,8 +958,9 @@ lookup(name, src_map, strong)
 	int		strong;
 {
 	long			common_size = 0;
-	struct so_map		*smp;
+	struct so_map		*smp, *weak_smp;
 	struct rt_symbol	*rtsp;
+	struct	nzlist		*weak_np = 0;
 
 	if ((rtsp = lookup_rts(name)) != NULL)
 		return rtsp->rt_sp;
@@ -1042,8 +1043,8 @@ restart:
 			continue;
 
 		if (np->nz_type == N_UNDF+N_EXT && np->nz_value != 0) {
-			if (np->nz_other == AUX_FUNC) {
-				/* It's a weak function definition */
+			if (N_AUX(&np->nlist) == AUX_FUNC) {
+				/* It's a `weak' function definition */
 				if (strong)
 					continue;
 			} else {
@@ -1053,9 +1054,19 @@ restart:
 				continue;
 			}
 		}
+		if (N_BIND(&np->nlist) == BIND_WEAK && weak_np == 0) {
+			weak_np = np;
+			weak_smp = smp;
+			continue;
+		}
 
 		*src_map = smp;
 		return np;
+	}
+
+	if (weak_np) {
+		*src_map = weak_smp;
+		return weak_np;
 	}
 
 	if (common_size == 0)
