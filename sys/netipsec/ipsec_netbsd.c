@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.8 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.9 2004/04/06 08:48:55 keihan Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.8 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.9 2004/04/06 08:48:55 keihan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,7 +100,7 @@ ah4_ctlinput(cmd, sa, v)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 #ifndef notyet
-	/* jonathan@netbsd.org: XXX FIXME */ 
+	/* jonathan@NetBSD.org: XXX FIXME */ 
 	(void) ip; (void) ah; (void) icp; (void) sav;
 #else
 	if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
@@ -159,7 +159,7 @@ esp4_ctlinput(cmd, sa, v)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 #ifndef notyet
-	/* jonathan@netbsd.org: XXX FIXME */ 
+	/* jonathan@NetBSD.org: XXX FIXME */ 
 	(void) ip; (void) esp; (void) icp; (void) sav;
 #else
 	if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
@@ -287,7 +287,7 @@ esp6_ctlinput(cmd, sa, d)
 					  (caddr_t)&sa6_dst->sin6_addr,
 					  IPPROTO_ESP, espp->esp_spi);
 #else
-			/* jonathan@netbsd.org: XXX FIXME */ 
+			/* jonathan@NetBSD.org: XXX FIXME */ 
 			(void)sa6_src; (void)sa6_dst;
 			sav = KEY_ALLOCSA((union sockaddr_union*)sa,
 					  IPPROTO_ESP, espp->esp_spi);
