@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.9 2001/04/04 11:13:12 wiz Exp $
+.\"	$NetBSD: login.conf.5,v 1.10 2001/05/14 14:55:29 jdolecek Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -71,10 +71,10 @@ for a description of the file layout.
 An example entry is:
 .Bd -literal -offset indent
 classname|Description entry:\\
-	capability=value:\\
-	booleancapability:\\
+	:capability=value:\\
+	:booleancapability:\\
 		\&.\&.\&.
-	lastcapability=value:
+	:lastcapability=value:
 .Ed
 .Pp
 All entries in the
