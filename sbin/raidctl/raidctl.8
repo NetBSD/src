@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.32 2002/10/01 14:20:26 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.33 2002/11/16 22:49:48 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -272,6 +272,8 @@ for many others, or just simply
 .Pa raid0
 (for
 .Pa /dev/rraid0[cd] ) .
+It is recommended that the partitions used to represent the
+RAID device are not used for file systems.
 .Ss Configuration file
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.
@@ -1060,7 +1062,7 @@ When the second component is marked as failed, however, the RAID device will
 At this point the data on the RAID set
 (not including the first failed component) is still self consistent,
 and will be in no worse state of repair than had the power gone out in
-the middle of a write to a filesystem on a non-RAID device.
+the middle of a write to a file system on a non-RAID device.
 The problem, however, is that the component labels may now have 3 different
 .Sq modification counters
 (one value on the first component that failed, one value on the second
@@ -1133,7 +1135,7 @@ raidctl -I 12345 raid0
 .Ed
 .Pp
 will be required in order to synchronize the component labels.
-At this point the filesystems on the RAID set can then be checked and
+At this point the file systems on the RAID set can then be checked and
 corrected.
 To complete the re-construction of the RAID set,
 .Pa /dev/sd1e
@@ -1284,6 +1286,17 @@ must be in the kernel configuration file.
 See
 .Xr raid 4
 for more details.
+.Ss Swapping on RAID
+A RAID device can be used as a swap device.
+In order to ensure that a RAID device used as a swap device
+is correctly unconfigured when the system is shutdown or rebooted,
+it is recommended that the line
+.Bd -literal -offset indent
+swapoff=YES
+.Ed
+.Pp
+be added to 
+.Pa /etc/rc.conf .
 .Ss Unconfiguration
 The final operation performed by
 .Nm
