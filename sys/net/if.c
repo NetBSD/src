@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.109 2002/06/08 11:54:24 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.110 2002/06/08 11:58:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.109 2002/06/08 11:54:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.110 2002/06/08 11:58:50 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -468,9 +468,12 @@ void
 if_attachdomain()
 {
 	struct ifnet *ifp;
+	int s;
 
+	s = splnet();
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 		if_attachdomain1(ifp);
+	splx(s);
 }
 
 void
