@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29 2000/06/11 10:56:16 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.30 2000/06/11 23:29:29 matt Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -74,9 +74,13 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
-gm*	at pci? dev ? function ?	# gmac ethernet
+#gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
+options	TLP_MATCH_21040
+options	TLP_MATCH_21041
+options	TLP_MATCH_21140
+options	TLP_MATCH_21142
 
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
