@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1998/08/18 18:46:16 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1998/08/20 15:12:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -134,7 +135,7 @@ long		index;
 	sp->opcode = JSB_PCREL;
 	sp->addr[0] = fudge & 0xffff;
 	sp->addr[1] = fudge >> 16;
-	sp->reloc_index[0] = index;
+	sp->reloc_index = index;
 }
 
 /*
