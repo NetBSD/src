@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -249,7 +249,7 @@ static __inline void ahd_lockinit(struct ahd_softc *);
 static __inline void ahd_lock(struct ahd_softc *, int *);
 static __inline void ahd_unlock(struct ahd_softc *, int *);
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void ahd_done_lockinit(struct ahd_softc *);
 static __inline void ahd_done_lock(struct ahd_softc *, unsigned long *);
 static __inline void ahd_done_unlock(struct ahd_softc *, unsigned long *);
@@ -276,7 +276,7 @@ ahd_unlock(struct ahd_softc *ahd, int *flags)
 	splx(*flags);
 }
 
-/* Lock held during command compeletion to the upper layer */
+/* Lock held during command completion to the upper layer */
 static __inline void
 ahd_done_lockinit(struct ahd_softc *ahd)
 {

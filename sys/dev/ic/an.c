@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.27 2003/10/13 06:45:32 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.28 2003/11/02 11:07:45 wiz Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.27 2003/10/13 06:45:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.28 2003/11/02 11:07:45 wiz Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1106,7 +1106,7 @@ an_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 #if NBPFILTER > 0
 		/*
-		 * If there's a BPF listner, bounce a copy of
+		 * If there's a BPF listener, bounce a copy of
 		 * this frame to him.
 		 */
 		if (ifp->if_bpf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48 2002/09/18 19:12:17 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.49 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -327,7 +327,7 @@ struct tulip_srom_to_ifmedia {
 struct tulip_stats {
 	u_long		ts_tx_uf;	/* transmit underflow errors */
 	u_long		ts_tx_to;	/* transmit jabber timeouts */
-	u_long		ts_tx_ec;	/* excessve collision count */
+	u_long		ts_tx_ec;	/* excessive collision count */
 	u_long		ts_tx_lc;	/* late collision count */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.5 2003/08/07 16:30:58 agc Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.6 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ struct leinit {
 #define	LE_T1_MORE	(1<<28)		/* multiple collisions */
 #define	LE_T1_LTINT	(1<<28)		/* transmit interrupt (if LTINTEN) */
 #define	LE_T1_ONE	(1<<27)		/* single collision */
-#define	LE_T1_DEF	(1<<26)		/* defferred transmit */
+#define	LE_T1_DEF	(1<<26)		/* deferred transmit */
 #define	LE_T1_STP	(1<<25)		/* start of packet */
 #define	LE_T1_ENP	(1<<24)		/* end of packet */
 #define	LE_T1_ONES	(0xf<<12)	/* must be ones */

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.4 2003/08/07 16:31:03 agc Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.5 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -112,7 +112,7 @@ struct osiop_ds {
 	u_int8_t stat[8];
 } __attribute__((__packed__));
 
-/* status can hold the SCSI_* status values, and 2 additionnal values: */
+/* status can hold the SCSI_* status values, and 2 additional values: */
 #define SCSI_OSIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_OSIOP_NOSTATUS	0xff	/* device didn't report status */
 
@@ -241,8 +241,8 @@ struct osiop_softc {
 /* negotiation states */
 #define NEG_INIT	0	/* Initial negotiate state */
 #define NEG_SYNC	NEG_INIT /* Negotiate synch transfers */
-#define NEG_WAITS	1	/* Waiting for synch negoation response */
-#define NEG_DONE	2	/* Wide and/or sync negotation done */
+#define NEG_WAITS	1	/* Waiting for synch negotiation response */
+#define NEG_DONE	2	/* Wide and/or sync negotiation done */
 
 void osiop_attach(struct osiop_softc *);
 void osiop_intr(struct osiop_softc *);

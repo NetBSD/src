@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.13 2003/11/02 11:07:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.13 2003/11/02 11:07:46 wiz Exp $");
 
 #undef	TCICDEBUG
 
@@ -319,7 +319,7 @@ tcic_attach(sc)
 {
 	int i, reg;
 
-	/* set more chipset dependend parameters in the softc. */
+	/* set more chipset dependent parameters in the softc. */
 	switch (sc->chipid) {
 	case TCIC_CHIPID_DB86084_1:
 	case TCIC_CHIPID_DB86084A:

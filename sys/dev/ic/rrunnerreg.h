@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.4 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.5 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@
 
 /* HIPPI Transmit State */
 
-#define RR_TS_ENABLE	0x01	/* enable trasmit state machine */
+#define RR_TS_ENABLE	0x01	/* enable transmit state machine */
 #define RR_TS_PERMANENT	0x02	/* this connection permanent while set */
 
 /* External Serial Data */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.23 2003/10/29 01:12:23 mycroft Exp $	*/
+/*	$NetBSD: esiop.c,v 1.24 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.23 2003/10/29 01:12:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.24 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ none:
 		if (istat & ISTAT_DIP)
 			delay(10);
 		/*
-		 * Can't read sist0 & sist1 independantly, or we have to
+		 * Can't read sist0 & sist1 independently, or we have to
 		 * insert delay
 		 */
 		sist = bus_space_read_2(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -755,7 +755,7 @@ none:
 			    SIOP_DSP) - 8);
 			return 1;
 		}
-		/* Else it's an unhandled exeption (for now). */
+		/* Else it's an unhandled exception (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
 		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname, sist,
 		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
@@ -1361,7 +1361,7 @@ esiop_handle_qtag_reject(esiop_cmd)
 
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
- * target struct and report loosage to upper layer.
+ * target struct and report lossage to upper layer.
  * As the upper layer may requeue immediatly we have to first store
  * all active commands in a temporary queue.
  */
@@ -1386,7 +1386,7 @@ esiop_handle_reset(sc)
 		scsipi_channel_thaw(&sc->sc_c.sc_chan, 1);
 	}
 	/*
-	 * Process all commands: first commmands completes, then commands
+	 * Process all commands: first commands completes, then commands
 	 * being executed
 	 */
 	esiop_checkdone(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.13 2003/01/27 23:31:19 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.14 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -157,7 +157,7 @@ struct eata_sp {
 	u_int8_t	sp_hba_status;		/* Host adapter status */
 	u_int8_t	sp_scsi_status;		/* SCSI bus status */
 	u_int8_t	sp_reserved[2];		/* Reserved */
-	u_int32_t	sp_inv_residue;		/* Bytes not transfered */
+	u_int32_t	sp_inv_residue;		/* Bytes not transferred */
 	u_int32_t	sp_ccbid;		/* ID of software CCB */
 	u_int8_t	sp_id_message;
 	u_int8_t	sp_que_message;

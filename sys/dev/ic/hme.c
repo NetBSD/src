@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.37 2003/05/03 18:11:18 wiz Exp $	*/
+/*	$NetBSD: hme.c,v 1.38 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37 2003/05/03 18:11:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.38 2003/11/02 11:07:45 wiz Exp $");
 
 #define HMEDEBUG
 
@@ -180,7 +180,7 @@ hme_config(sc)
 	 * XXX - do all this differently.. and more configurably,
 	 * eg. use things as `dma_load_mbuf()' on transmit,
 	 *     and a pool of `EXTMEM' mbufs (with buffers DMA-mapped
-	 *     all the time) on the reveiver side.
+	 *     all the time) on the receiver side.
 	 *
 	 * Note: receive buffers must be 64-byte aligned.
 	 * Also, apparently, the buffers must extend to a DMA burst

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.47 2003/09/14 13:01:40 junyoung Exp $	*/
+/*	$NetBSD: i82586.c,v 1.48 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.47 2003/09/14 13:01:40 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.48 2003/11/02 11:07:45 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -1455,7 +1455,7 @@ i82586_setup_bufs(sc)
 
 	sc->nrxbuf = sc->nframes * B_PER_F;
 
-	/* The receice frame descriptors */
+	/* The receive frame descriptors */
 	sc->rframes = ptr;
 	ptr += sc->nframes * IE_RFRAME_SZ;
 

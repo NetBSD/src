@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.23 2003/10/19 01:44:48 simonb Exp $ */
+/*	$NetBSD: iha.c,v 1.24 2003/11/02 11:07:45 wiz Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.23 2003/10/19 01:44:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.24 2003/11/02 11:07:45 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,7 +1477,7 @@ iha_data_over_run(scb)
 	case 0x59: /* Read Master CUE                 MMC   */
 	case 0x5a: /* Mode Sense (10 byte version)    SPC-2 */
 	case 0x5c: /* Read Buffer Capacity            MMC   */
-	case 0x5e: /* Persistant Reserve In           SPC-2 */
+	case 0x5e: /* Persistent Reserve In           SPC-2 */
 	case 0x84: /* Receive Copy Results            SPC-2 */
 	case 0xa0: /* Report LUNs                     SPC-2 */
 	case 0xa3: /* Various Report requests         SBC-2/SCC-2*/
@@ -1499,7 +1499,7 @@ iha_data_over_run(scb)
 }
 
 /*
- * iha_next_state - prcess the current SCB as requested in it's
+ * iha_next_state - process the current SCB as requested in its
  *                  nextstat member.
  */
 static int
