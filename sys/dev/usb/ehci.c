@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.45 2003/02/22 05:24:16 tsutsui Exp $	*/
+/*	$NetBSD: ehci.c,v 1.46 2003/03/09 19:51:13 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.45 2003/02/22 05:24:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.46 2003/03/09 19:51:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,9 +499,9 @@ ehci_intr1(ehci_softc_t *sc)
 		eintrs &= ~EHCI_STS_IAA;
 	}
 	if (eintrs & (EHCI_STS_INT | EHCI_STS_ERRINT)) {
-		DPRINTF(("ehci_intr1: %s %s\n",
-			 eintrs & EHCI_STS_INT ? "INT" : "",
-			 eintrs & EHCI_STS_ERRINT ? "ERRINT" : ""));
+		DPRINTFN(5,("ehci_intr1: %s %s\n",
+			    eintrs & EHCI_STS_INT ? "INT" : "",
+			    eintrs & EHCI_STS_ERRINT ? "ERRINT" : ""));
 		usb_schedsoftintr(&sc->sc_bus);
 		eintrs &= ~(EHCI_STS_INT | EHCI_STS_ERRINT);
 	}
