@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1.1.1 1997/07/15 08:17:39 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.1.1.2.1 1997/08/27 22:23:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -134,7 +134,7 @@ int	sr;
 	/*
 	 * Disable the interrupts
 	 */
-	if (slot == 1)
+	if (slot == 0)
 		MFP->mf_imrb  &= ~(IB_ISA1);
 	else MFP->mf_imra &= ~(IA_ISA2);
 
@@ -153,7 +153,7 @@ int	sr;
 		/*
 		 * Re-enable interrupts after handling
 		 */
-		if (slot == 1)
+		if (slot == 0)
 			MFP->mf_imrb  |= IB_ISA1;
 		else MFP->mf_imra |= IA_ISA2;
 	}
@@ -171,14 +171,13 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	struct intrhand	*ihand;
 	int		slot;
 
-printf("isa_intr_est: irq:%d, type:%d, level:%d\n",irq,type,level);
-	slot    = (irq <= 6) ? 1 : 2;
+	slot    = (irq <= 6) ? 0 : 1;
 	iinfo_p = &iinfo[slot];
 
 	if (iinfo_p->slot > 0)
 	    panic("isa_intr_establish: interrupt was already established\n");
 
-	ihand = intr_establish((slot == 1) ? 3 : 15, USER_VEC, 0,
+	ihand = intr_establish((slot == 0) ? 3 : 15, USER_VEC, 0,
 				(hw_ifun_t)iifun, (void *)slot);
 	if (ihand != NULL) {
 		iinfo_p->slot  = slot;
@@ -190,7 +189,7 @@ printf("isa_intr_est: irq:%d, type:%d, level:%d\n",irq,type,level);
 		/*
 		 * Enable (unmask) the interrupt
 		 */
-		if (slot == 1) {
+		if (slot == 0) {
 			MFP->mf_imrb |= IB_ISA1;
 			MFP->mf_ierb |= IB_ISA1;
 		}
