@@ -1,4 +1,5 @@
-/*	$NetBSD: if_qe.c,v 1.5 1995/11/10 19:25:58 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.6 1995/11/30 00:59:26 jtc Exp $ */
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -194,6 +195,8 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #define QESLOWTIMEOUT	40		/* timeout when no xmits in progress */
 
 #define MINDATA 60
+
+void qetimeout(int);
 
 /*
  * Ethernet software status per interface.

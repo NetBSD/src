@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 1995/09/19 23:08:11 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 1995/11/30 00:57:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -271,7 +271,7 @@ dma_cachectl(addr, len)
 }
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1995/08/29 21:55:41 phil Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.4 1995/08/29 21:55:41 phil Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ char *names[] = {
 	"/netbsd", "/onetbsd", "/netbsd.old",
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
+#define LOADADDR	((char *)0x2000)
 
 static int bdev, bctlr, bunit, bpart;
 
@@ -73,7 +74,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.4 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.5 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);
@@ -129,9 +130,10 @@ copyunix(howto, devtype, io)
 		printf("Bad format\n");
 		return;
 	}
-	load = addr = (char *)(x.a_entry & 0x00ffff00);	/* XXX make less magical? */
+	addr = LOADADDR;	/* Always load at LOADADDR */
+	load = (char *)(x.a_entry & 0x00ffff00); /* XXX make less magical? */
 	printf("Booting %s%d%c:%s @ 0x%x\n",
-	    devsw[dev].dv_name, unit + (8*ctlr), 'a' + part, file, addr);
+	    devsw[dev].dv_name, unit + (8*ctlr), 'a' + part, file, load);
 
 	if (testing) {
 		load = addr = alloc(2*1024*1024); /* XXX stat the file? */
@@ -145,7 +147,7 @@ copyunix(howto, devtype, io)
 	printf("%d", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0, SEEK_SET) == -1)
 		goto shread;
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
+	if (read(io, addr, x.a_text) != x.a_text)
 		goto shread;
 	addr += x.a_text;
 	if (N_GETMAGIC(x) == NMAGIC)
@@ -163,7 +165,7 @@ copyunix(howto, devtype, io)
 	addr += x.a_bss;
 
 	/* Symbols */
-	ssym = addr;
+	ssym = load + (addr - LOADADDR);
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
 	printf(" [%d+", x.a_syms);
@@ -187,6 +189,10 @@ copyunix(howto, devtype, io)
 		addr += i;
 	}
 
+	if (load != LOADADDR) {
+		bcopy(LOADADDR, load, addr - LOADADDR);
+		addr = load + (addr - LOADADDR);
+	}
 #define	round_to_size(x,t) \
 	(((int)(x) + sizeof(t) - 1) & ~(sizeof(t) - 1))
 	esym = (char *)round_to_size(addr - load,int);

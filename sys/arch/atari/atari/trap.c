@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1995/09/02 19:44:45 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 1995/11/30 00:57:42 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,11 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
+
+#ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_syscall.h>
+extern struct emul emul_sunos;
+#endif
 
 /*
  * XXX Hack until I can figure out what to do about this code's removal
@@ -554,6 +559,10 @@ trap(type, code, v, frame)
 #ifdef FPU_EMULATE
 		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
 		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+		if (i == 0) {
+			userret(p, frame.f_pc, sticks); 
+			return;
+		}
 #else
 		uprintf("pid %d killed: no floating point support.\n",
 			p->p_pid);
@@ -727,7 +736,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sunos_sigreturn) {
+		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 

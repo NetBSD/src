@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.2 1994/10/26 06:39:49 cgd Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3 1995/11/30 01:00:12 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.6 1995/09/26 20:16:06 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.7 1995/11/30 00:58:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -100,9 +100,11 @@
 #if defined(INET) && defined(PLIP)
 #ifndef PLIPMTU			/* MTU for the plip# interfaces */
 #if defined(COMPAT_PLIP10)
-#define	PLIPMTU		1600
+#define	PLIPMTU		1600				/* Linux 1.0.x */
+#elif defined(COMPAT_PLIP11)
+#define	PLIPMTU		(ETHERMTU - ifp->if_hdrlen)	/* Linux 1.1.x */
 #else
-#define	PLIPMTU		(ETHERMTU - ifp->if_hdrlen)
+#define PLIPMTU		ETHERMTU			/* Linux 1.3.x */
 #endif
 #endif
 

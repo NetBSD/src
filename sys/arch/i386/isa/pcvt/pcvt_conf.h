@@ -84,6 +84,10 @@
 #endif
 #endif
 
+#ifdef NetBSD1_1
+#define PCVT_NETBSD 110
+#endif
+
 /*---------------------------------------------------------------------------
  * Note that each of the options below should rather be overriden by the
  * kernel config file instead of this .h file - this allows for different

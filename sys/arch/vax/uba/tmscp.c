@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.5 1995/11/10 19:25:46 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.6 1995/11/30 00:59:29 jtc Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -213,6 +213,8 @@ struct tmscp {
 	struct mscp	tmscp_rsp[NRSP];  /* response packets */
 	struct mscp	tmscp_cmd[NCMD];  /* command packets */
 } tmscp[NTMSCP];
+
+void tmscpstrategy(struct buf *);
 
 /*
  * Per drive-unit info

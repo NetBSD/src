@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1995/10/07 06:25:56 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1995/11/30 00:59:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -673,6 +673,17 @@ boot(howto)
 		/*NOTREACHED*/
 	} else {
 		if (howto & RB_DUMP) {
+#if STACK_DUMP
+		  	/* dump the stack! */
+		        { int *fp = (int *)_get_fp();
+		            int i=0;
+		            while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
+		              printf ("0x%x (@0x%x), ", fp[1], fp);
+		              fp = (int *)fp[0];
+		              if (++i == 3) { printf ("\n"); i=0; }
+		            }
+		        }
+#endif
 			savectx(&dumppcb, 0);
 			dumppcb.pcb_ptb = _get_ptb0();
 			dumpsys();
@@ -1040,7 +1051,7 @@ void reboot_cpu()
 }
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.36 1995/10/03 20:59:03 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.37 1995/11/30 00:59:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1930,7 +1930,7 @@ phasechange:
 		int amount;
 
 		/* Stop transfers, do some accounting */
-		amount = inb(FIFOSTAT) + inb(SSTAT2) & 15;
+		amount = inb(FIFOSTAT) + (inb(SSTAT2) & 15);
 		if (amount > 0) {
 			out -= amount;
 			outb(SXFRCTL0, CHEN|CLRSTCNT|CLRCH);
