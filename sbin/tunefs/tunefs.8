@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.17 2000/01/28 19:51:34 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.18 2000/03/30 10:43:46 jdolecek Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,6 +141,12 @@ running out of full sized blocks.
 For values of minfree greater than or equal to 10%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
+.Pp
+.Ar optimize_preference
+can be specified as either
+.Li space
+or
+.Li time .
 .It Fl t Ar trackskew
 This specifies the skew in sectors from one track to the next in a cylinder.
 The default value is zero, indicating that each track in a cylinder begins at
