@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.39 1998/09/08 20:02:51 rvb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.40 1999/02/09 20:22:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -204,7 +204,7 @@ ibcs2_sys_execv(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_execv_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
@@ -227,7 +227,7 @@ ibcs2_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argp;
 		syscallarg(char **) envp;
 	} */ *uap = v;
@@ -586,7 +586,7 @@ ibcs2_sys_mknod(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_mknod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
@@ -1001,7 +1001,7 @@ ibcs2_sys_utime(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_utime_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_utimbuf *) buf;
 	} */ *uap = v;
 	int error;
@@ -1287,7 +1287,7 @@ ibcs2_sys_unlink(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_unlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -1302,7 +1302,7 @@ ibcs2_sys_chdir(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_chdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -1317,7 +1317,7 @@ ibcs2_sys_chmod(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_chmod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
@@ -1333,7 +1333,7 @@ ibcs2_sys_chown(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_chown_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
@@ -1350,7 +1350,7 @@ ibcs2_sys_rmdir(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_rmdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -1365,7 +1365,7 @@ ibcs2_sys_mkdir(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_mkdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
@@ -1381,8 +1381,8 @@ ibcs2_sys_symlink(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_symlink_args /* {
-		syscallarg(char *) path;
-		syscallarg(char *) link;
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -1398,8 +1398,8 @@ ibcs2_sys_rename(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_rename_args /* {
-		syscallarg(char *) from;
-		syscallarg(char *) to;
+		syscallarg(const char *) from;
+		syscallarg(const char *) to;
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -1415,7 +1415,7 @@ ibcs2_sys_readlink(p, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_readlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
