@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2001/07/16 05:50:05 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2001/11/13 20:04:52 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -47,12 +47,12 @@
 
 ENTRY(__setjmp14)
 	/* Get the signal mask. */
-	stmfd	r13!, {r0-r2, r14}
+	stmfd	sp!, {r0-r2, r14}
 	add	r2, r0, #(_JB_SIGMASK * 4)
 	mov	r1, #0x00000000
 	mov	r0, #0x00000000
 	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
-	ldmfd	r13!, {r0-r2, r14}
+	ldmfd	sp!, {r0-r2, r14}
 
 	ldr	r1, Lsetjmp_magic
 	str	r1, [r0], #4
@@ -86,12 +86,12 @@ ENTRY(__longjmp14)
 	bne	botch
 
 	/* Restore the signal mask. */
-	stmfd	r13!, {r0-r2, r14}
+	stmfd	sp!, {r0-r2, r14}
 	mov	r2, #0x00000000
 	add	r1, r0, #(_JB_SIGMASK * 4)
 	mov	r0, #3				/* SIG_SETMASK */
 	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
-	ldmfd	r13!, {r0-r2, r14}
+	ldmfd	sp!, {r0-r2, r14}
 
 	add	r0, r0, #4
 #ifdef SOFTFLOAT
@@ -106,10 +106,9 @@ ENTRY(__longjmp14)
 	/* Restore integer registers */
         ldmia	r0, {r4-r14}
 
-	/* Validate r13 and r14 */
-	teq	r13, #0
-	beq	botch
-	teq	r14, #0
+	/* Validate sp and r14 */
+	teq	sp, #0
+	teqne	r14, #0
 	beq	botch
 
 	/* Set return value */
