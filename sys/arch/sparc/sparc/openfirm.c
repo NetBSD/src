@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.2 2000/11/15 16:15:01 pk Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.3 2001/03/22 06:21:15 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -758,6 +758,8 @@ OF_milliseconds()
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+int obp_symbol_debug = 0;
+
 void OF_sym2val(cells)
 	void *cells;
 {
@@ -786,8 +788,11 @@ void OF_sym2val(cells)
 		return;
 	} 
 	symbol = (db_sym_t)args->symbol;
-prom_printf("looking up symbol %s\n", symbol);
+	if (obp_symbol_debug)
+		prom_printf("looking up symbol %s\n", symbol);
 	db_symbol_values(symbol, (char**)NULL, &value);
+	if (obp_symbol_debug)
+		prom_printf("%s is %lx\r\n", symbol, value);
 	args->result = 0;
 	args->value = ADR2CELL(value);
 }
@@ -810,6 +815,9 @@ void OF_val2sym(cells)
 	/* Set data segment pointer */
 	__asm __volatile("clr %%g4" : :);
 
+	if (obp_symbol_debug)
+		prom_printf("OF_val2sym: nargs %lx nreturns %lx\r\n",
+			args->nargs, args->nreturns);
 	/* No args?  Nothing to do. */
 	if (!args->nargs || 
 	    !args->nreturns) return;
@@ -822,9 +830,12 @@ void OF_val2sym(cells)
 	} 
 	
 	value = args->value;
-prom_printf("looking up value %ld\n", value);
+	if (obp_symbol_debug)
+		prom_printf("looking up value %ld\n", value);
 	symbol = db_search_symbol(value, 0, &offset);
 	if (symbol == DB_SYM_NULL) {
+		if (obp_symbol_debug)
+			prom_printf("OF_val2sym: not found\r\n");
 		args->nreturns = 1;
 		args->offset = -1;
 		return;		
