@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.47 1997/01/07 08:04:19 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.48 1997/03/31 21:23:34 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -231,17 +231,41 @@ pty*)
 	4) offset=64 name=t;;
 	*) echo bad unit for pty in: $i;;
 	esac
-	case $class in
-	0|1|2|3|4)
-		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 5 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
-				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
-		umask 77
-		;;
-	esac
+	rm -f tty$name? pty$name?
+	mknod tty${name}0	c 5 $(($offset +  0))
+	mknod tty${name}1	c 5 $(($offset +  1))
+	mknod tty${name}2	c 5 $(($offset +  2))
+	mknod tty${name}3	c 5 $(($offset +  3))
+	mknod tty${name}4	c 5 $(($offset +  4))
+	mknod tty${name}5	c 5 $(($offset +  5))
+	mknod tty${name}6	c 5 $(($offset +  6))
+	mknod tty${name}7	c 5 $(($offset +  7))
+	mknod tty${name}8	c 5 $(($offset +  8))
+	mknod tty${name}9	c 5 $(($offset +  9))
+	mknod tty${name}a	c 5 $(($offset + 10))
+	mknod tty${name}b	c 5 $(($offset + 11))
+	mknod tty${name}c	c 5 $(($offset + 12))
+	mknod tty${name}d	c 5 $(($offset + 13))
+	mknod tty${name}e	c 5 $(($offset + 14))
+	mknod tty${name}f	c 5 $(($offset + 15))
+	mknod pty${name}0	c 6 $(($offset +  0))
+	mknod pty${name}1	c 6 $(($offset +  1))
+	mknod pty${name}2	c 6 $(($offset +  2))
+	mknod pty${name}3	c 6 $(($offset +  3))
+	mknod pty${name}4	c 6 $(($offset +  4))
+	mknod pty${name}5	c 6 $(($offset +  5))
+	mknod pty${name}6	c 6 $(($offset +  6))
+	mknod pty${name}7	c 6 $(($offset +  7))
+	mknod pty${name}8	c 6 $(($offset +  8))
+	mknod pty${name}9	c 6 $(($offset +  9))
+	mknod pty${name}a	c 6 $(($offset + 10))
+	mknod pty${name}b	c 6 $(($offset + 11))
+	mknod pty${name}c	c 6 $(($offset + 12))
+	mknod pty${name}d	c 6 $(($offset + 13))
+	mknod pty${name}e	c 6 $(($offset + 14))
+	mknod pty${name}f	c 6 $(($offset + 15))
+	chgrp wheel tty$name? pty$name?
+	chmod 666 tty$name? pty$name?
 	;;
 
 st*)
