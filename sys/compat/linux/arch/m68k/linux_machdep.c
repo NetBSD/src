@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 2003/01/18 08:02:48 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.16 2003/06/29 16:10:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2003/01/18 08:02:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.16 2003/06/29 16:10:48 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -895,8 +895,8 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call.
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -921,5 +921,5 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(curlwp, &bia, retval);
+	return sys_ioctl(l, &bia, retval);
 }
