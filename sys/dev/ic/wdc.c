@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.114.4.2 2002/11/01 16:26:23 tron Exp $ */
+/*	$NetBSD: wdc.c,v 1.114.4.3 2003/09/24 11:16:43 tron Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.2 2002/11/01 16:26:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.114.4.3 2003/09/24 11:16:43 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -391,7 +391,7 @@ wdcattach(chp)
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
 			    wd_cyl_lo, 0xa5);
 			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			        wd_error == 0x58) ||
+			        wd_error) == 0x58 ||
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 				wd_cyl_lo) != 0xa5) {
 				WDCDEBUG_PRINT(("%s:%d:%d: register "
