@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.4 2000/03/13 01:46:45 sato Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.5 2000/03/14 08:37:31 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -52,7 +52,10 @@
 #include <machine/config_hook.h>
 
 #ifdef BTNMGRDEBUG
-int	btnmgr_debug = 0;
+#ifndef BTNMGRDEBUG_CONF
+#define BTNMGRDEBUG_CONF 0
+#endif
+int	btnmgr_debug = BTNMGRDEBUG_CONF;
 #define	DPRINTF(arg) if (btnmgr_debug) printf arg;
 #define	DPRINTFN(n, arg) if (btnmgr_debug > (n)) printf arg;
 #else
@@ -100,6 +103,31 @@ const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_ioctl,
 };
 
+/* button config: index by buttun event id */
+static const struct {
+	int  kevent;
+	int  keycode;
+	char *name;
+} button_config[] = {
+  /* kevent keycode     name		   id */
+	{ 0,  1,	"Power" },	  /* CONFIG_HOOK_BUTTONEVENT_POWER */
+	{ 1,  2,	"OK" },		  /* CONFIG_HOOK_BUTTONEVENT_OK */
+	{ 1,  3,	"Cancel" },	  /* CONFIG_HOOK_BUTTONEVENT_CANCEL */
+	{ 1,  4,	"Up" },		  /* CONFIG_HOOK_BUTTONEVENT_UP */
+	{ 1,  5,	"Down" },	  /* CONFIG_HOOK_BUTTONEVENT_DOWN */
+	{ 0,  6,	"Rec" },	  /* CONFIG_HOOK_BUTTONEVENT_REC */
+	{ 0,  7,	"Cover" },	  /* CONFIG_HOOK_BUTTONEVENT_COVER */
+	{ 0,  8,	"Light" },	  /* CONFIG_HOOK_BUTTONEVENT_LIGHT */
+	{ 0,  9,	"Contrast" },	  /* CONFIG_HOOK_BUTTONEVENT_CONTRAST */
+	{ 1, 10,	"Application 0" },/* CONFIG_HOOK_BUTTONEVENT_APP0 */
+	{ 1, 11,	"Application 1" },/* CONFIG_HOOK_BUTTONEVENT_APP1 */
+	{ 1, 12,	"Application 2" },/* CONFIG_HOOK_BUTTONEVENT_APP2 */
+	{ 1, 13,	"Application 3" },/* CONFIG_HOOK_BUTTONEVENT_APP3 */
+};
+
+static const int n_button_config = 
+	sizeof(button_config) / sizeof(*button_config);
+
 static const struct {
 	long id;
 	char *name;
@@ -125,25 +153,19 @@ static const int n_button_names =
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t btnmgr_keydesc_default[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(1), 			KS_A,
-    KC(2), 			KS_B,
-    KC(3), 			KS_C,
-    KC(4), 			KS_D,
-    KC(5), 			KS_E,
-    KC(6), 			KS_F,
-    KC(7), 			KS_G,
-    KC(8), 			KS_H,
-    KC(9), 			KS_I,
-    KC(10), 			KS_J,
-    KC(11), 			KS_K,
-    KC(12), 			KS_L,
-    KC(13), 			KS_M,
+    KC(2), 			KS_Escape,
+    KC(3), 			KS_KP_Up,
+    KC(4), 			KS_KP_Down,
+    KC(10), 			KS_f9,
+    KC(11), 			KS_f10,
+    KC(12), 			KS_f11,
+    KC(13), 			KS_f12,
 };
 #undef KC
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 const struct wscons_keydesc btnmgr_keydesctab[] = {
-	KBD_MAP(KB_US,			0,	btnmgr_keydesc_default),
+	KBD_MAP(KB_US,		0,	btnmgr_keydesc_default),
 	{0, 0, 0, 0}
 };
 #undef KBD_MAP
@@ -211,9 +233,10 @@ btnmgr_hook(ctx, type, id, msg)
 
 	DPRINTF(("%s button: %s\n", btnmgr_name(id), msg ? "ON" : "OFF"));
 
-	wskbd_input(sc->sc_wskbddev,
-		    msg ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP,
-		    id + 1);
+	if (button_config[id].kevent)
+		wskbd_input(sc->sc_wskbddev,
+			    msg ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP,
+		    button_config[id].keycode);
 
 	return (0);
 }
@@ -222,11 +245,8 @@ char*
 btnmgr_name(id)
 	long id;
 {
-	int i;
-
-	for (i = 0; i < n_button_names; i++)
-		if (button_names[i].id == id)
-			return (button_names[i].name);
+	if (id < n_button_config)
+		return button_config[id].name;
 	return ("unknown");
 }
 
