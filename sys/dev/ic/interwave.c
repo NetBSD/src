@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.23 2004/07/09 02:46:44 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.23.2.1 2005/01/03 06:37:57 kent Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23 2004/07/09 02:46:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.23.2.1 2005/01/03 06:37:57 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,33 +715,38 @@ iw_set_format(sc, precision, in)
 
 
 int
-iw_set_params(addr, setmode, usemode, p, q)
+iw_set_params(addr, setmode, usemode, p, q, pfil, rfil)
 	void	*addr;
 	int	setmode;
 	int	usemode;
-	struct	audio_params *p;
-	struct	audio_params *q;
+	audio_params_t *p;
+	audio_params_t *q;
+	stream_filter_list_t *pfil;
+	stream_filter_list_t *rfil;
 {
+	audio_params_t phw, rhw;
 	struct	iw_softc *sc = addr;
-	void	(*swcode)__P((void *, u_char * buf, int cnt)) = NULL;
-	int	factor = 1;
+	stream_filter_factory_t *swcode = NULL;
+
 	DPRINTF(("iw_setparams: code %d, prec %d, rate %d, chan %d\n",
 		(int) p->encoding, (int) p->precision, (int) p->sample_rate,
 		(int) p->channels));
-
-
+	phw = *p;
+	rhw = *q;
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (p->precision != 8)
 			return EINVAL;
-		swcode = setmode & AUMODE_PLAY ? mulaw_to_ulinear8 : ulinear8_to_mulaw;
-		factor = 1;
+		phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		swcode = setmode & AUMODE_PLAY ? mulaw_to_linear8 : linear8_to_mulaw;
 		break;
 	case AUDIO_ENCODING_ALAW:
 		if (p->precision != 8)
 			return EINVAL;
-		swcode = setmode & AUMODE_PLAY ? alaw_to_ulinear8 : ulinear8_to_alaw;
-		factor = 1;
+		phw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		rhw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		swcode = setmode & AUMODE_PLAY ? alaw_to_linear8 : linear8_to_alaw;
 		break;
 	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
@@ -763,13 +768,18 @@ iw_set_params(addr, setmode, usemode, p, q)
 
 	if (setmode & AUMODE_PLAY) {
 		sc->play_channels = p->channels;
-	        sc->play_encoding = p->encoding;
+		sc->play_encoding = p->encoding;
 		sc->play_precision = p->precision;
-		p->factor = factor;
-		p->sw_code = swcode;
 		iw_set_format(sc, p->precision, 0);
 		q->sample_rate = p->sample_rate = sc->sc_orate = 
 			iw_set_speed(sc, p->sample_rate, 0);
+		if (swcode != NULL) {
+			phw.sample_rate = p->sample_rate;
+			/* stream_filter_list_append(pfil, swcode, &phw); */
+			pfil->filters[0].factory = swcode;
+			pfil->filters[0].param = phw;
+			pfil->req_size = 1;
+		}
 	} else {
 #if 0
 		q->channels = sc->rec_channels = p->channels;
@@ -779,12 +789,17 @@ iw_set_params(addr, setmode, usemode, p, q)
 		sc->rec_channels = q->channels;
 		sc->rec_encoding = q->encoding;
 		sc->rec_precision = q->precision;
-		q->factor = factor;
-		q->sw_code = swcode;
 
 		iw_set_format(sc, p->precision, 1);
 		q->sample_rate = sc->sc_irate = 
 			iw_set_speed(sc, q->sample_rate, 1);
+		if (swcode != NULL) {
+			rhw.sample_rate = q->sample_rate;
+			/* stream_filter_list_append(rfil, swcode, &rhw); */
+			rfil->filters[0].factory = swcode;
+			rfil->filters[0].param = rhw;
+			rfil->req_size = 1;
+		}
 	}
 	return 0;
 }
