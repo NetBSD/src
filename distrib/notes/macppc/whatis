@@ -1,9 +1,9 @@
-.\"	$NetBSD: whatis,v 1.6 2002/06/30 00:25:05 lukem Exp $
+.\"	$NetBSD: whatis,v 1.7 2003/09/07 00:01:19 mbw Exp $
 .
-This is the third major release of
+This is the fourth major release of
 .Nx
-for the \*M platform, including the Apple iBook, iMac, PowerMacintosh, and
-PowerBook models, as well as clones.
+for the \*M platform, including the Apple eMac, iBook, iMac, 
+PowerMacintosh, PowerBook, and Xserve models, as well as clones.
 .Pp
 As is usual between releases, the \*M port has had many improvements
 made to it \(em too many to detail all of them here.
@@ -15,9 +15,13 @@ Some (but not all!) notable \*M-specific improvements include:
 .(bullet
 Support for the some of the latest models.
 .It
-Support for the built-in AirPort/AirMac interface.
+Support for symmetric multiprocessing (SMP) on systems with more than one CPU.
 .It
-Experimental support for the built-in audio on most models.
+Support for Apple's NeXT-based file system (UFS).  This file system can 
+be shared with 
+.Tn MacOS X 
+and can be used as the root partition for
+.Nx .
 .bullet)
 .Pp
 .Nx \*V
