@@ -1,4 +1,4 @@
-/* $Id: platid_generated.h,v 1.12 2000/01/06 18:08:54 uch Exp $ */
+/* $Id: platid_generated.h,v 1.13 2000/01/22 10:51:29 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -154,6 +154,10 @@
 #define PLATID_MACH_NEC_MCR_530_NUM	6
 #define PLATID_MACH_NEC_MCR_530	\
   ((PLATID_MACH_NEC_MCR_530_NUM << PLATID_SUBMODEL_SHIFT)| \
+    PLATID_MACH_NEC_MCR_5XX)
+#define PLATID_MACH_NEC_MCR_430_NUM	7
+#define PLATID_MACH_NEC_MCR_430	\
+  ((PLATID_MACH_NEC_MCR_430_NUM << PLATID_SUBMODEL_SHIFT)| \
     PLATID_MACH_NEC_MCR_5XX)
 #define PLATID_MACH_NEC_MCR_7XX_NUM	3
 #define PLATID_MACH_NEC_MCR_7XX	\
