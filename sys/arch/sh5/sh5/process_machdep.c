@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 2003/01/19 19:49:56 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11 2003/01/20 20:07:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,75 +133,75 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-	regs->r_intregs[0]  = tf->tf_caller.r0;
-	regs->r_intregs[1]  = tf->tf_caller.r1;
-	regs->r_intregs[2]  = tf->tf_caller.r2;
-	regs->r_intregs[3]  = tf->tf_caller.r3;
-	regs->r_intregs[4]  = tf->tf_caller.r4;
-	regs->r_intregs[5]  = tf->tf_caller.r5;
-	regs->r_intregs[6]  = tf->tf_caller.r6;
-	regs->r_intregs[7]  = tf->tf_caller.r7;
-	regs->r_intregs[8]  = tf->tf_caller.r8;
-	regs->r_intregs[9]  = tf->tf_caller.r9;
+	regs->r_regs[0]  = tf->tf_caller.r0;
+	regs->r_regs[1]  = tf->tf_caller.r1;
+	regs->r_regs[2]  = tf->tf_caller.r2;
+	regs->r_regs[3]  = tf->tf_caller.r3;
+	regs->r_regs[4]  = tf->tf_caller.r4;
+	regs->r_regs[5]  = tf->tf_caller.r5;
+	regs->r_regs[6]  = tf->tf_caller.r6;
+	regs->r_regs[7]  = tf->tf_caller.r7;
+	regs->r_regs[8]  = tf->tf_caller.r8;
+	regs->r_regs[9]  = tf->tf_caller.r9;
 
-	regs->r_intregs[10] = tf->tf_caller.r10;
-	regs->r_intregs[11] = tf->tf_caller.r11;
-	regs->r_intregs[12] = tf->tf_caller.r12;
-	regs->r_intregs[13] = tf->tf_caller.r13;
+	regs->r_regs[10] = tf->tf_caller.r10;
+	regs->r_regs[11] = tf->tf_caller.r11;
+	regs->r_regs[12] = tf->tf_caller.r12;
+	regs->r_regs[13] = tf->tf_caller.r13;
 
-	regs->r_intregs[14] = tf->tf_caller.r14;
-	regs->r_intregs[15] = tf->tf_caller.r15;
-	regs->r_intregs[16] = tf->tf_caller.r16;
-	regs->r_intregs[17] = tf->tf_caller.r17;
-	regs->r_intregs[18] = tf->tf_caller.r18;
-	regs->r_intregs[19] = tf->tf_caller.r19;
-	regs->r_intregs[20] = tf->tf_caller.r20;
-	regs->r_intregs[21] = tf->tf_caller.r21;
-	regs->r_intregs[22] = tf->tf_caller.r22;
-	regs->r_intregs[23] = tf->tf_caller.r23;
-	regs->r_intregs[24] = 0;		/* OS Reserved */
-	regs->r_intregs[25] = tf->tf_caller.r25;
-	regs->r_intregs[26] = tf->tf_caller.r26;
-	regs->r_intregs[27] = tf->tf_caller.r27;
+	regs->r_regs[14] = tf->tf_caller.r14;
+	regs->r_regs[15] = tf->tf_caller.r15;
+	regs->r_regs[16] = tf->tf_caller.r16;
+	regs->r_regs[17] = tf->tf_caller.r17;
+	regs->r_regs[18] = tf->tf_caller.r18;
+	regs->r_regs[19] = tf->tf_caller.r19;
+	regs->r_regs[20] = tf->tf_caller.r20;
+	regs->r_regs[21] = tf->tf_caller.r21;
+	regs->r_regs[22] = tf->tf_caller.r22;
+	regs->r_regs[23] = tf->tf_caller.r23;
+	regs->r_regs[24] = 0;		/* OS Reserved */
+	regs->r_regs[25] = tf->tf_caller.r25;
+	regs->r_regs[26] = tf->tf_caller.r26;
+	regs->r_regs[27] = tf->tf_caller.r27;
 
-	regs->r_intregs[28] = tf->tf_callee.r28;
-	regs->r_intregs[29] = tf->tf_callee.r29;
-	regs->r_intregs[30] = tf->tf_callee.r30;
-	regs->r_intregs[31] = tf->tf_callee.r31;
-	regs->r_intregs[32] = tf->tf_callee.r32;
-	regs->r_intregs[33] = tf->tf_callee.r33;
-	regs->r_intregs[34] = tf->tf_callee.r34;
-	regs->r_intregs[35] = tf->tf_callee.r35;
+	regs->r_regs[28] = tf->tf_callee.r28;
+	regs->r_regs[29] = tf->tf_callee.r29;
+	regs->r_regs[30] = tf->tf_callee.r30;
+	regs->r_regs[31] = tf->tf_callee.r31;
+	regs->r_regs[32] = tf->tf_callee.r32;
+	regs->r_regs[33] = tf->tf_callee.r33;
+	regs->r_regs[34] = tf->tf_callee.r34;
+	regs->r_regs[35] = tf->tf_callee.r35;
 
-	regs->r_intregs[36] = tf->tf_caller.r36;
-	regs->r_intregs[37] = tf->tf_caller.r37;
-	regs->r_intregs[38] = tf->tf_caller.r38;
-	regs->r_intregs[39] = tf->tf_caller.r39;
-	regs->r_intregs[40] = tf->tf_caller.r40;
-	regs->r_intregs[41] = tf->tf_caller.r41;
-	regs->r_intregs[42] = tf->tf_caller.r42;
-	regs->r_intregs[43] = tf->tf_caller.r43;
+	regs->r_regs[36] = tf->tf_caller.r36;
+	regs->r_regs[37] = tf->tf_caller.r37;
+	regs->r_regs[38] = tf->tf_caller.r38;
+	regs->r_regs[39] = tf->tf_caller.r39;
+	regs->r_regs[40] = tf->tf_caller.r40;
+	regs->r_regs[41] = tf->tf_caller.r41;
+	regs->r_regs[42] = tf->tf_caller.r42;
+	regs->r_regs[43] = tf->tf_caller.r43;
 
-	regs->r_intregs[44] = tf->tf_callee.r44;
-	regs->r_intregs[45] = tf->tf_callee.r45;
-	regs->r_intregs[46] = tf->tf_callee.r46;
-	regs->r_intregs[47] = tf->tf_callee.r47;
-	regs->r_intregs[48] = tf->tf_callee.r48;
-	regs->r_intregs[49] = tf->tf_callee.r49;
-	regs->r_intregs[50] = tf->tf_callee.r50;
-	regs->r_intregs[51] = tf->tf_callee.r51;
-	regs->r_intregs[52] = tf->tf_callee.r52;
-	regs->r_intregs[53] = tf->tf_callee.r53;
-	regs->r_intregs[54] = tf->tf_callee.r54;
-	regs->r_intregs[55] = tf->tf_callee.r55;
-	regs->r_intregs[56] = tf->tf_callee.r56;
-	regs->r_intregs[57] = tf->tf_callee.r57;
-	regs->r_intregs[58] = tf->tf_callee.r58;
-	regs->r_intregs[59] = tf->tf_callee.r59;
+	regs->r_regs[44] = tf->tf_callee.r44;
+	regs->r_regs[45] = tf->tf_callee.r45;
+	regs->r_regs[46] = tf->tf_callee.r46;
+	regs->r_regs[47] = tf->tf_callee.r47;
+	regs->r_regs[48] = tf->tf_callee.r48;
+	regs->r_regs[49] = tf->tf_callee.r49;
+	regs->r_regs[50] = tf->tf_callee.r50;
+	regs->r_regs[51] = tf->tf_callee.r51;
+	regs->r_regs[52] = tf->tf_callee.r52;
+	regs->r_regs[53] = tf->tf_callee.r53;
+	regs->r_regs[54] = tf->tf_callee.r54;
+	regs->r_regs[55] = tf->tf_callee.r55;
+	regs->r_regs[56] = tf->tf_callee.r56;
+	regs->r_regs[57] = tf->tf_callee.r57;
+	regs->r_regs[58] = tf->tf_callee.r58;
+	regs->r_regs[59] = tf->tf_callee.r59;
 
-	regs->r_intregs[60] = tf->tf_caller.r60;
-	regs->r_intregs[61] = tf->tf_caller.r61;
-	regs->r_intregs[62] = tf->tf_caller.r62;
+	regs->r_regs[60] = tf->tf_caller.r60;
+	regs->r_regs[61] = tf->tf_caller.r61;
+	regs->r_regs[62] = tf->tf_caller.r62;
 
 	regs->r_tr[0] = tf->tf_caller.tr0;
 	regs->r_tr[1] = tf->tf_caller.tr1;
@@ -219,13 +219,10 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct reg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct fpregs *fpr = &l->l_addr->u_pcb.pcb_ctx.sf_fpregs;
 
-	memcpy(regs->r_fpregs, fpr->fp, sizeof(regs->r_fpregs));
-
-	regs->r_fpscr = fpr->fpscr;
+	memcpy(regs, &l->l_addr->u_pcb.pcb_ctx.sf_fpregs, sizeof(*regs));
 
 	return (0);
 }
@@ -235,79 +232,79 @@ process_write_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-	tf->tf_caller.r0 = regs->r_intregs[0];
-	tf->tf_caller.r1 = regs->r_intregs[1];
-	tf->tf_caller.r2 = regs->r_intregs[2];
-	tf->tf_caller.r3 = regs->r_intregs[3];
-	tf->tf_caller.r4 = regs->r_intregs[4];
-	tf->tf_caller.r5 = regs->r_intregs[5];
-	tf->tf_caller.r6 = regs->r_intregs[6];
-	tf->tf_caller.r7 = regs->r_intregs[7];
-	tf->tf_caller.r8 = regs->r_intregs[8];
-	tf->tf_caller.r9 = regs->r_intregs[9];
+	tf->tf_caller.r0 = regs->r_regs[0];
+	tf->tf_caller.r1 = regs->r_regs[1];
+	tf->tf_caller.r2 = regs->r_regs[2];
+	tf->tf_caller.r3 = regs->r_regs[3];
+	tf->tf_caller.r4 = regs->r_regs[4];
+	tf->tf_caller.r5 = regs->r_regs[5];
+	tf->tf_caller.r6 = regs->r_regs[6];
+	tf->tf_caller.r7 = regs->r_regs[7];
+	tf->tf_caller.r8 = regs->r_regs[8];
+	tf->tf_caller.r9 = regs->r_regs[9];
 
-	tf->tf_caller.r10 = regs->r_intregs[10];
-	tf->tf_caller.r11 = regs->r_intregs[11];
-	tf->tf_caller.r12 = regs->r_intregs[12];
-	tf->tf_caller.r13 = regs->r_intregs[13];
+	tf->tf_caller.r10 = regs->r_regs[10];
+	tf->tf_caller.r11 = regs->r_regs[11];
+	tf->tf_caller.r12 = regs->r_regs[12];
+	tf->tf_caller.r13 = regs->r_regs[13];
 
-	tf->tf_caller.r14 = regs->r_intregs[14];
-	tf->tf_caller.r15 = regs->r_intregs[15];
-	tf->tf_caller.r16 = regs->r_intregs[16];
-	tf->tf_caller.r17 = regs->r_intregs[17];
-	tf->tf_caller.r18 = regs->r_intregs[18];
-	tf->tf_caller.r19 = regs->r_intregs[19];
-	tf->tf_caller.r20 = regs->r_intregs[20];
-	tf->tf_caller.r21 = regs->r_intregs[21];
-	tf->tf_caller.r22 = regs->r_intregs[22];
-	tf->tf_caller.r23 = regs->r_intregs[23];
+	tf->tf_caller.r14 = regs->r_regs[14];
+	tf->tf_caller.r15 = regs->r_regs[15];
+	tf->tf_caller.r16 = regs->r_regs[16];
+	tf->tf_caller.r17 = regs->r_regs[17];
+	tf->tf_caller.r18 = regs->r_regs[18];
+	tf->tf_caller.r19 = regs->r_regs[19];
+	tf->tf_caller.r20 = regs->r_regs[20];
+	tf->tf_caller.r21 = regs->r_regs[21];
+	tf->tf_caller.r22 = regs->r_regs[22];
+	tf->tf_caller.r23 = regs->r_regs[23];
 
 #if 0
-	tf->tf_caller.r24 = regs->r_intregs[24];	/* OS reserved */
+	tf->tf_caller.r24 = regs->r_regs[24];	/* OS reserved */
 #endif
 
-	tf->tf_caller.r25 = regs->r_intregs[25];
-	tf->tf_caller.r26 = regs->r_intregs[26];
-	tf->tf_caller.r27 = regs->r_intregs[27];
+	tf->tf_caller.r25 = regs->r_regs[25];
+	tf->tf_caller.r26 = regs->r_regs[26];
+	tf->tf_caller.r27 = regs->r_regs[27];
 
-	tf->tf_callee.r28 = regs->r_intregs[28];
-	tf->tf_callee.r29 = regs->r_intregs[29];
-	tf->tf_callee.r30 = regs->r_intregs[30];
-	tf->tf_callee.r31 = regs->r_intregs[31];
-	tf->tf_callee.r32 = regs->r_intregs[32];
-	tf->tf_callee.r33 = regs->r_intregs[33];
-	tf->tf_callee.r34 = regs->r_intregs[34];
-	tf->tf_callee.r35 = regs->r_intregs[35];
+	tf->tf_callee.r28 = regs->r_regs[28];
+	tf->tf_callee.r29 = regs->r_regs[29];
+	tf->tf_callee.r30 = regs->r_regs[30];
+	tf->tf_callee.r31 = regs->r_regs[31];
+	tf->tf_callee.r32 = regs->r_regs[32];
+	tf->tf_callee.r33 = regs->r_regs[33];
+	tf->tf_callee.r34 = regs->r_regs[34];
+	tf->tf_callee.r35 = regs->r_regs[35];
 
-	tf->tf_caller.r36 = regs->r_intregs[36];
-	tf->tf_caller.r37 = regs->r_intregs[37];
-	tf->tf_caller.r38 = regs->r_intregs[38];
-	tf->tf_caller.r39 = regs->r_intregs[39];
-	tf->tf_caller.r40 = regs->r_intregs[40];
-	tf->tf_caller.r41 = regs->r_intregs[41];
-	tf->tf_caller.r42 = regs->r_intregs[42];
-	tf->tf_caller.r43 = regs->r_intregs[43];
+	tf->tf_caller.r36 = regs->r_regs[36];
+	tf->tf_caller.r37 = regs->r_regs[37];
+	tf->tf_caller.r38 = regs->r_regs[38];
+	tf->tf_caller.r39 = regs->r_regs[39];
+	tf->tf_caller.r40 = regs->r_regs[40];
+	tf->tf_caller.r41 = regs->r_regs[41];
+	tf->tf_caller.r42 = regs->r_regs[42];
+	tf->tf_caller.r43 = regs->r_regs[43];
 
-	tf->tf_callee.r44 = regs->r_intregs[44];
-	tf->tf_callee.r45 = regs->r_intregs[45];
-	tf->tf_callee.r46 = regs->r_intregs[46];
-	tf->tf_callee.r47 = regs->r_intregs[47];
-	tf->tf_callee.r48 = regs->r_intregs[48];
-	tf->tf_callee.r49 = regs->r_intregs[49];
-	tf->tf_callee.r50 = regs->r_intregs[50];
-	tf->tf_callee.r51 = regs->r_intregs[51];
-	tf->tf_callee.r52 = regs->r_intregs[52];
-	tf->tf_callee.r53 = regs->r_intregs[53];
-	tf->tf_callee.r54 = regs->r_intregs[54];
-	tf->tf_callee.r55 = regs->r_intregs[55];
-	tf->tf_callee.r56 = regs->r_intregs[56];
-	tf->tf_callee.r57 = regs->r_intregs[57];
-	tf->tf_callee.r58 = regs->r_intregs[58];
-	tf->tf_callee.r59 = regs->r_intregs[59];
+	tf->tf_callee.r44 = regs->r_regs[44];
+	tf->tf_callee.r45 = regs->r_regs[45];
+	tf->tf_callee.r46 = regs->r_regs[46];
+	tf->tf_callee.r47 = regs->r_regs[47];
+	tf->tf_callee.r48 = regs->r_regs[48];
+	tf->tf_callee.r49 = regs->r_regs[49];
+	tf->tf_callee.r50 = regs->r_regs[50];
+	tf->tf_callee.r51 = regs->r_regs[51];
+	tf->tf_callee.r52 = regs->r_regs[52];
+	tf->tf_callee.r53 = regs->r_regs[53];
+	tf->tf_callee.r54 = regs->r_regs[54];
+	tf->tf_callee.r55 = regs->r_regs[55];
+	tf->tf_callee.r56 = regs->r_regs[56];
+	tf->tf_callee.r57 = regs->r_regs[57];
+	tf->tf_callee.r58 = regs->r_regs[58];
+	tf->tf_callee.r59 = regs->r_regs[59];
 
-	tf->tf_caller.r60 = regs->r_intregs[60];
-	tf->tf_caller.r61 = regs->r_intregs[61];
-	tf->tf_caller.r62 = regs->r_intregs[62];
+	tf->tf_caller.r60 = regs->r_regs[60];
+	tf->tf_caller.r61 = regs->r_regs[61];
+	tf->tf_caller.r62 = regs->r_regs[62];
 
 	tf->tf_caller.tr0 = regs->r_tr[0];
 	tf->tf_caller.tr1 = regs->r_tr[1];
@@ -325,13 +322,10 @@ process_write_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, struct reg *regs)
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct fpregs *fpr = &l->l_addr->u_pcb.pcb_ctx.sf_fpregs;
 
-	memcpy(fpr->fp, regs->r_fpregs, sizeof(regs->r_fpregs));
-
-	fpr->fpscr = regs->r_fpscr;
+	memcpy(&l->l_addr->u_pcb.pcb_ctx.sf_fpregs, regs, sizeof(*regs));
 
 	return (0);
 }
