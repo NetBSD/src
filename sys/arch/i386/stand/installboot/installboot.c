@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.5 1997/11/01 06:49:50 lukem Exp $	 */
+/* $NetBSD: installboot.c,v 1.6 1998/07/28 20:10:54 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -61,6 +61,13 @@
 
 #define DEFBBLKNAME "boot"
 
+char *loadprotoblocks __P((char *, size_t *));
+static int devread __P((int, void *, daddr_t, size_t, char *));
+static int add_fsblk __P((struct fs *, daddr_t, int));
+int loadblocknums __P((char *, ino_t));
+static void usage __P((void));
+int main __P((int, char **));
+
 struct fraglist *fraglist;
 
 struct nlist nl[] = {
@@ -74,7 +81,7 @@ int verbose = 0;
 char *
 loadprotoblocks(fname, size)
 	char *fname;
-	long *size;
+	size_t *size;
 {
 	int fd;
 	size_t tdsize;	/* text+data size */
@@ -114,7 +121,7 @@ loadprotoblocks(fname, size)
 	/*
 	 * We need only text and data.
 	 */
-	tdsize = eh.a_text + eh.a_data;
+	tdsize = (size_t)(eh.a_text + eh.a_data);
 	bbsize = roundup(tdsize, DEV_BSIZE);
 
 	if ((bp = calloc(bbsize, 1)) == NULL) {
@@ -128,6 +135,7 @@ loadprotoblocks(fname, size)
 	}
 	*size = bbsize;		/* aligned to DEV_BSIZE */
 
+	/* NOSTRICT */
 	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
 
 	if (fraglist->magic != FRAGLISTMAGIC) {
@@ -135,19 +143,22 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	if (verbose) {
-		fprintf(stderr, "%s: entry point %#lx\n", fname, eh.a_entry);
-		fprintf(stderr, "proto bootblock size %ld\n", *size);
-		fprintf(stderr, "room for %d filesystem blocks at %#lx\n",
-			fraglist->maxentries, nl[X_fraglist].n_value);
+		(void) fprintf(stderr, "%s: entry point %#lx\n", fname,
+			       eh.a_entry);
+		(void) fprintf(stderr, "proto bootblock size %ld\n",
+			       (long)*size);
+		(void) fprintf(stderr, "room for %d filesystem blocks"
+			       " at %#lx\n", fraglist->maxentries,
+			       nl[X_fraglist].n_value);
 	}
-	close(fd);
+	(void) close(fd);
 	return bp;
 
 bad:
 	if (bp)
 		free(bp);
 	if (fd >= 0)
-		close(fd);
+		(void) close(fd);
 	return NULL;
 }
 
@@ -159,7 +170,7 @@ devread(fd, buf, blk, size, msg)
 	size_t size;
 	char *msg;
 {
-	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk)) {
+	if (lseek(fd, (off_t)dbtob(blk), SEEK_SET) != dbtob(blk)) {
 		warn("%s: devread: lseek", msg);
 		return (1);
 	}
@@ -186,7 +197,7 @@ add_fsblk(fs, blk, blcnt)
 		nblk = blcnt;
 
 	if (verbose)
-		fprintf(stderr, "dblk: %d, num: %d\n", blk, nblk);
+		(void) fprintf(stderr, "dblk: %d, num: %d\n", blk, nblk);
 
 	/* start new entry or append to previous? */
 	if (!fraglist->numentries ||
@@ -196,7 +207,7 @@ add_fsblk(fs, blk, blcnt)
 		/* need new entry */
 	        if (fraglist->numentries > fraglist->maxentries - 1) {
 			errx(1, "not enough fragment space in bootcode\n");
-			return(-1);
+			return (-1);
 		}
 
 		fraglist->entries[fraglist->numentries].offset = blk;
@@ -207,7 +218,10 @@ add_fsblk(fs, blk, blcnt)
 	return (blcnt - nblk);
 }
 
-static char sblock[SBSIZE];
+static union {
+	char c[SBSIZE];
+	struct fs s;
+} sblock;
 
 int
 loadblocknums(diskdev, inode)
@@ -228,31 +242,31 @@ loadblocknums(diskdev, inode)
 		return (1);
 	}
 	/* Read superblock */
-	if (devread(devfd, sblock, SBLOCK, SBSIZE, "superblock"))
+	if (devread(devfd, &sblock, SBLOCK, SBSIZE, "superblock"))
 		goto out;
-	fs = (struct fs *) sblock;
+	fs = &sblock.s;
 
 	if (fs->fs_magic != FS_MAGIC) {
 		warnx("invalid super block");
 		goto out;
 	}
 	/* Read inode */
-	if ((buf = malloc(fs->fs_bsize)) == NULL) {
+	if ((buf = malloc((size_t)fs->fs_bsize)) == NULL) {
 		warnx("No memory for filesystem block");
 		goto out;
 	}
 	blk = fsbtodb(fs, ino_to_fsba(fs, inode));
-	if (devread(devfd, buf, blk, fs->fs_bsize, "inode"))
+	if (devread(devfd, buf, blk, (size_t)fs->fs_bsize, "inode"))
 		goto out;
-	ip = (struct dinode *) (buf) + ino_to_fsbo(fs, inode);
+	ip = (struct dinode *)buf + ino_to_fsbo(fs, inode);
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.
 	 */
-	ndb = ip->di_size / DEV_BSIZE;	/* size is rounded! */
+	ndb = (int)(ip->di_size / DEV_BSIZE);	/* size is rounded! */
 
 	if (verbose)
-		fprintf(stderr, "Will load %d blocks.\n", ndb);
+		(void) fprintf(stderr, "Will load %d blocks.\n", ndb);
 
 	/*
 	 * Get the block numbers, first direct blocks
@@ -267,7 +281,8 @@ loadblocknums(diskdev, inode)
 	         * for more in the 1st-level bootblocks anyway.
 	         */
 		blk = fsbtodb(fs, ip->di_ib[0]);
-		if (devread(devfd, buf, blk, fs->fs_bsize, "indirect block"))
+		if (devread(devfd, buf, blk, (size_t)fs->fs_bsize,
+			    "indirect block"))
 			goto out;
 		ap = (daddr_t *) buf;
 		for (; i < NINDIR(fs) && *ap && ndb > 0; i++, ap++) {
@@ -288,15 +303,15 @@ out:
 	if (buf)
 		free(buf);
 	if (devfd >= 0)
-		close(devfd);
+		(void) close(devfd);
 	return (!allok);
 }
 
 static void
 usage()
 {
-	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-f] <boot> <device>\n");
+	(void) fprintf(stderr,
+		       "usage: installboot [-n] [-v] [-f] <boot> <device>\n");
 	exit(1);
 }
 
@@ -305,8 +320,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char c, *bp = 0;
-	long size;
+	int c;
+	char *bp = 0;
+	size_t size;
 	ino_t inode = (ino_t) -1;
 	int devfd = -1;
 	struct disklabel dl;
@@ -357,7 +373,7 @@ main(argc, argv)
 
 		/* paranoia */
 		sync();
-		sleep(3);
+		(void) sleep(3);
 
 		if (loadblocknums(argv[optind + 1], inode))
 			goto out;
@@ -384,16 +400,17 @@ main(argc, argv)
 			goto out;
 		}
 	} else {
-		char c = argv[optind + 1][strlen(argv[optind + 1]) - 1];
+		char p = argv[optind + 1][strlen(argv[optind + 1]) - 1];
 #define isvalidpart(c) ((c) >= 'a' && (c) <= 'z')
-		if(!isvalidpart(c) || (c - 'a') >= dl.d_npartitions) {
+		if (!isvalidpart(p) || (p - 'a') >= dl.d_npartitions) {
 			warnx("invalid partition");
 			goto out;
 		}
 		bsdoffs = dl.d_partitions[c - 'a'].p_offset;
 	}
 	if (verbose)
-		fprintf(stderr, "BSD partition starts at sector %d\n", bsdoffs);
+		(void) fprintf(stderr, "BSD partition starts at sector %d\n",
+			       bsdoffs);
 
 	/*
          * add offset of BSD partition to fraglist entries
@@ -406,13 +423,13 @@ main(argc, argv)
 	         * write first blocks (max loadsz) to start of BSD partition,
 	         * skip disklabel (in second disk block)
 	         */
-		lseek(devfd, 0, SEEK_SET);
+		(void) lseek(devfd, (off_t)0, SEEK_SET);
 		res = write(devfd, bp, DEV_BSIZE);
 		if (res < 0) {
 			warn("final write1");
 			goto out;
 		}
-		lseek(devfd, 2 * DEV_BSIZE, SEEK_SET);
+		(void) lseek(devfd, (off_t)(2 * DEV_BSIZE), SEEK_SET);
 		res = write(devfd, bp + 2 * DEV_BSIZE, size - 2 * DEV_BSIZE);
 		if (res < 0) {
 			warn("final write2");
@@ -423,7 +440,7 @@ main(argc, argv)
 
 out:
 	if (devfd >= 0)
-		close(devfd);
+		(void) close(devfd);
 	if (bp)
 		free(bp);
 	if (inode != (ino_t) - 1) {
