@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.36 2001/10/16 01:51:27 itojun Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.37 2002/09/20 06:02:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.36 2001/10/16 01:51:27 itojun Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.37 2002/09/20 06:02:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.36 2001/10/16 01:51:27 itojun Exp $");
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/poll.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
@@ -149,7 +150,7 @@ main(argc, argv)
 #ifdef ISO
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
-	fd_set ready, sockbits;
+	struct pollfd set[4];
 	int ch, cltpflag, connect_type_cnt, i, len, maxsock, msgsock;
 	int nfsdcnt, nfssvc_flag, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
@@ -571,7 +572,6 @@ main(argc, argv)
 
 	/* Now set up the master server socket waiting for tcp connections. */
 	on = 1;
-	FD_ZERO(&sockbits);
 	connect_type_cnt = 0;
 	if (tcpflag) {
 		if ((tcpsock = socket(ai_tcp->ai_family, ai_tcp->ai_socktype,
@@ -595,10 +595,11 @@ main(argc, argv)
 			syslog(LOG_ERR, "can't register tcp with rpcbind");
 			exit(1);
 		}
-		FD_SET(tcpsock, &sockbits);
-		maxsock = tcpsock;
+		set[0].fd = tcpsock;
+		set[0].events = POLLIN;
 		connect_type_cnt++;
-	}
+	} else
+		set[0].events = 0;
 
 	if (tcpflag && ip6flag) {
 		if ((tcp6sock = socket(ai_tcp6->ai_family, ai_tcp6->ai_socktype,
@@ -628,10 +629,11 @@ main(argc, argv)
 			syslog(LOG_ERR, "can't register tcp6 with rpcbind");
 			exit(1);
 		}
-		FD_SET(tcp6sock, &sockbits);
-		maxsock = tcp6sock;
+		set[1].fd = tcp6sock;
+		set[1].events = POLLIN;
 		connect_type_cnt++;
-	}
+	} else
+		set[1].events = 0;
 
 #ifdef notyet
 	/* Now set up the master server socket waiting for tp4 connections. */
@@ -668,10 +670,11 @@ main(argc, argv)
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			exit(1);
 		}
-		FD_SET(tp4sock, &sockbits);
-		maxsock = tp4sock;
+		set[2].fd = tp4sock;
+		set[2].events = POLLIN;
 		connect_type_cnt++;
-	}
+	} else
+		set[2].events = 0;
 
 	/* Now set up the master server socket waiting for tpip connections. */
 	if (tpipflag) {
@@ -705,10 +708,14 @@ main(argc, argv)
 			syslog(LOG_ERR, "can't register tcp with portmap");
 			exit(1);
 		}
-		FD_SET(tpipsock, &sockbits);
-		maxsock = tpipsock;
+		set[3].fd = tpipsock;
+		set[3].events = POLLIN;
 		connect_type_cnt++;
-	}
+	} else
+		set[3].events = 0;
+#else
+	set[2].events = 0;
+	set[3].events = 0;
 #endif /* notyet */
 
 	if (connect_type_cnt == 0)
@@ -721,15 +728,13 @@ main(argc, argv)
 	 * into the kernel for the mounts.
 	 */
 	for (;;) {
-		ready = sockbits;
 		if (connect_type_cnt > 1) {
-			if (select(maxsock + 1,
-			    &ready, NULL, NULL, NULL) < 1) {
+			if (poll(set, 4, INFTIM) < 1) {
 				syslog(LOG_ERR, "select failed: %m");
 				exit(1);
 			}
 		}
-		if (tcpflag && FD_ISSET(tcpsock, &ready)) {
+		if (set[0].revents & POLLIN) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
@@ -748,7 +753,7 @@ main(argc, argv)
 			(void)close(msgsock);
 		}
 
-		if (tcpflag && ip6flag && FD_ISSET(tcp6sock, &ready)) {
+		if (set[1].revents & POLLIN) {
 			len = sizeof(inet6peer);
 			if ((msgsock = accept(tcp6sock,
 			    (struct sockaddr *)&inet6peer, &len)) < 0) {
@@ -767,7 +772,7 @@ main(argc, argv)
 		}
 
 #ifdef notyet
-		if (tp4flag && FD_ISSET(tp4sock, &ready)) {
+		if (set[2].revents & POLLIN) {
 			len = sizeof(isopeer);
 			if ((msgsock = accept(tp4sock,
 			    (struct sockaddr *)&isopeer, &len)) < 0) {
@@ -784,7 +789,7 @@ main(argc, argv)
 			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
 			(void)close(msgsock);
 		}
-		if (tpipflag && FD_ISSET(tpipsock, &ready)) {
+		if (set[3].revents & POLLIN) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
