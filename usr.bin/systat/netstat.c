@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.25 2003/09/04 09:23:35 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.26 2005/01/09 01:27:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.25 2003/09/04 09:23:35 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.26 2005/01/09 01:27:47 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -119,6 +119,8 @@ static struct {
 	struct	netinfo *ni_forw, *ni_prev;
 } netcb;
 
+struct netinfo *nhead;
+
 static	int aflag = 0;
 int nflag = 0;
 static	int lastrow = 1;
@@ -139,8 +141,8 @@ closenetstat(WINDOW *w)
 
 	endhostent();
 	endnetent();
-	p = (struct netinfo *)netcb.ni_forw;
-	while (p != (struct netinfo *)&netcb) {
+	p = netcb.ni_forw;
+	while (p != nhead) {
 		if (p->ni_line != -1)
 			lastrow--;
 		p->ni_line = -1;
@@ -175,7 +177,9 @@ initnetstat(void)
 		return(0);
 	}
 
-	netcb.ni_forw = netcb.ni_prev = (struct netinfo *)&netcb;
+	nhead = (struct netinfo *)(void *)&netcb;
+
+	netcb.ni_forw = netcb.ni_prev = nhead;
 	protos = TCP|UDP;
 	return(1);
 }
@@ -187,7 +191,7 @@ fetchnetstat(void)
 
 	if (namelist[X_TCBTABLE].n_value == 0)
 		return;
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw)
+	for (p = netcb.ni_forw; p != nhead; p = p->ni_forw)
 		p->ni_seen = 0;
 
 	if ((protos & (TCP | UDP)) == 0) {
@@ -222,9 +226,7 @@ fetchnetstat4(void *off, int istcp)
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
 		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
-printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next, inpcb.inp_queue.cqe_prev);
-			p = netcb.ni_forw;
-			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
+			for (p = netcb.ni_forw; p != nhead; p = p->ni_forw)
 				p->ni_seen = 1;
 			error("Kernel state in transition");
 			return;
@@ -266,9 +268,7 @@ fetchnetstat6(void *off, int istcp)
 	while (next6 != head6) {
 		KREAD(next6, &in6pcb, sizeof (in6pcb));
 		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev6) {
-printf("prev = %p, head = %p, next = %p, in6pcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_queue.cqe_prev);
-			p = netcb.ni_forw;
-			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
+			for (p = netcb.ni_forw; p != nhead; p = p->ni_forw)
 				p->ni_seen = 1;
 			error("Kernel state in transition");
 			return;
@@ -306,7 +306,7 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 	 * will appear as ``not seen'' in the kernel
 	 * data structures.
 	 */
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+	for (p = netcb.ni_forw; p != nhead; p = p->ni_forw) {
 		if (p->ni_family != AF_INET)
 			continue;
 		if (!streq(proto, p->ni_proto))
@@ -318,12 +318,12 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 		    p->ni_fport == inp->inp_fport)
 			break;
 	}
-	if (p == (struct netinfo *)&netcb) {
+	if (p == nhead) {
 		if ((p = malloc(sizeof(*p))) == NULL) {
 			error("Out of memory");
 			return;
 		}
-		p->ni_prev = (struct netinfo *)&netcb;
+		p->ni_prev = nhead;
 		p->ni_forw = netcb.ni_forw;
 		netcb.ni_forw->ni_prev = p;
 		netcb.ni_forw = p;
@@ -355,7 +355,7 @@ enter6(struct in6pcb *in6p, struct socket *so, int state, char *proto)
 	 * will appear as ``not seen'' in the kernel
 	 * data structures.
 	 */
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+	for (p = netcb.ni_forw; p != nhead; p = p->ni_forw) {
 		if (p->ni_family != AF_INET6)
 			continue;
 		if (!streq(proto, p->ni_proto))
@@ -367,12 +367,12 @@ enter6(struct in6pcb *in6p, struct socket *so, int state, char *proto)
 		    p->ni_fport == in6p->in6p_fport)
 			break;
 	}
-	if (p == (struct netinfo *)&netcb) {
+	if (p == nhead) {
 		if ((p = malloc(sizeof(*p))) == NULL) {
 			error("Out of memory");
 			return;
 		}
-		p->ni_prev = (struct netinfo *)&netcb;
+		p->ni_prev = nhead;
 		p->ni_forw = netcb.ni_forw;
 		netcb.ni_forw->ni_prev = p;
 		netcb.ni_forw = p;
@@ -415,8 +415,7 @@ labelnetstat(void)
 	mvwaddstr(wnd, 0, SNDCC, "Send-Q");
 	mvwaddstr(wnd, 0, STATE, "(state)"); 
 	
-	p = netcb.ni_forw;
-	for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+	for (p = netcb.ni_forw; p != nhead; p = p->ni_forw) {
 		if (p->ni_line == -1)
 			continue;
 		p->ni_flags |= NIF_LACHG | NIF_FACHG;
@@ -434,14 +433,14 @@ shownetstat(void)
 	 * below to reflect the deleted line.
 	 */
 	p = netcb.ni_forw;
-	while (p != (struct netinfo *)&netcb) {
+	while (p != nhead) {
 		if (p->ni_line == -1 || p->ni_seen) {
 			p = p->ni_forw;
 			continue;
 		}
-		wmove(wnd, p->ni_line, 0); wdeleteln(wnd);
-		q = netcb.ni_forw;
-		for (; q != (struct netinfo *)&netcb; q = q->ni_forw)
+		wmove(wnd, p->ni_line, 0);
+		wdeleteln(wnd);
+		for (q = netcb.ni_forw; q != nhead; q = q->ni_forw)
 			if (q != p && q->ni_line > p->ni_line) {
 				q->ni_line--;
 				/* this shouldn't be necessary */
@@ -457,7 +456,7 @@ shownetstat(void)
 	/*
 	 * Update existing connections and add new ones.
 	 */
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
+	for (p = netcb.ni_forw; p != nhead; p = p->ni_forw) {
 		if (p->ni_line == -1) {
 			/*
 			 * Add a new entry if possible.
