@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.53 1995/08/14 20:32:38 chuck Exp $
+#	$NetBSD: TDR,v 1.54 1995/08/22 19:43:28 jtc Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -10,7 +10,7 @@ options		I486_CPU
 options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 

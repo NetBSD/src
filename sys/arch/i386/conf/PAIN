@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.53 1995/05/16 14:58:44 mycroft Exp $
+#	$NetBSD: PAIN,v 1.54 1995/08/22 19:43:21 jtc Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -10,7 +10,7 @@ options		I486_CPU
 #options	I586_CPU
 #options	MATH_EMULATE	# floating point emulation
 
-options		DUMMY_NOPS	# speed hack; recommanded
+options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		MACHINE_NONCONTIG
 
