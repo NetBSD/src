@@ -1,9 +1,9 @@
-/*	$NetBSD: in_cksum.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.2 1998/08/15 03:02:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
  * Copyright (c) 1995 Matthew R. Green.
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

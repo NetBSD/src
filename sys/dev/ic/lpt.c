@@ -1,7 +1,7 @@
-/*	$NetBSD: lpt.c,v 1.50 1998/07/18 21:27:25 is Exp $	*/
+/*	$NetBSD: lpt.c,v 1.51 1998/08/15 03:02:45 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *

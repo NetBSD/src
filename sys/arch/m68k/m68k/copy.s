@@ -1,8 +1,8 @@
-/*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.31 1998/08/15 03:02:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 Jason R. Thorpe.  All rights reserved.
- * Copyright (c) 1994, 1995 Charles Hannum.
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
