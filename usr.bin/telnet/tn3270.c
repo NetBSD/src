@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tn3270.c	5.2 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: tn3270.c,v 1.2 1993/08/01 18:07:16 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)tn3270.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$Id: tn3270.c,v 1.3 1994/02/25 03:00:48 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static char rcsid[] = "$Id: tn3270.c,v 1.2 1993/08/01 18:07:16 mycroft Exp $";
 #include "../ctlr/screen.h"
 #include "../general/globals.h"
 
-#include "../telextrn.h"
+#include "../sys_curses/telextrn.h"
 #include "../ctlr/externs.h"
 
 #if	defined(unix)
@@ -165,7 +165,8 @@ DataToNetwork(buffer, count, done)
 
 #if	defined(unix)
     void
-inputAvailable()
+inputAvailable(signo)
+	int signo;
 {
     HaveInput = 1;
     sigiocount++;
@@ -385,7 +386,7 @@ tn3270_ttype()
 }
 
 #if	defined(unix)
-	void
+	int
 settranscom(argc, argv)
 	int argc;
 	char *argv[];
@@ -396,7 +397,7 @@ settranscom(argc, argv)
 	   transcom = 0;
 	}
 	if (argc == 1) {
-	   return;
+	   return 1;
 	}
 	transcom = tline;
 	(void) strcpy(transcom, argv[1]);
@@ -404,6 +405,7 @@ settranscom(argc, argv)
 	    (void) strcat(transcom, " ");
 	    (void) strcat(transcom, argv[i]);
 	}
+	return 1;
 }
 #endif	/* defined(unix) */
 
