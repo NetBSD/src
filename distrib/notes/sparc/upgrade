@@ -1,0 +1,4 @@
+Upgrading NetBSD/sparc is not something someone is likely to do,
+since this is the first real distribution.  Since a number of
+critical interfaces have changed quite significantly, your best
+bet is to reinstall completely.
