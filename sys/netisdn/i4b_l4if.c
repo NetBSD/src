@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.13 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.14 2003/05/08 21:15:13 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.13 2002/05/21 10:31:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.14 2003/05/08 21:15:13 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -190,7 +190,7 @@ i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 void
 update_controller_leds(struct isdn_l3_driver *d)
 {
-	int leds = 0;
+	intptr_t leds = 0;
 
 	if (d->tei != -1)
 		leds |= CMRLEDS_TEI;
