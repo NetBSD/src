@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.30 2001/02/28 15:21:08 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.31 2001/03/06 08:09:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -196,10 +196,8 @@ psycho_attach(parent, self, aux)
 		sabre_init(sc, ma, &pba);
 	else if (strcmp(model, ROM_PSYCHO_MODEL) == 0)
 		psycho_init(sc, ma, &pba);
-#ifdef DIAGNOSTIC
 	else
 		panic("psycho_attach: unknown model %s?", model);
-#endif
 
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
@@ -254,13 +252,15 @@ sabre_init(sc, ma, pba)
 	sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
 	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
 
+	csr = sc->sc_regs->psy_csr;
+	/* csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)
+		&sc->sc_regs->psy_pcictl[0].pci_csr, 0); */
+
 	/* who? said a voice, incredulous */
 	sc->sc_mode = PSYCHO_MODE_SABRE;
-	printf("sabre: ");
+	printf("sabre: ign %x ", sc->sc_ign);
 
 	/* setup the PCI control register; there is only one for the sabre */
-	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)
-		&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
 	       PCICTL_ERRINTEN |
@@ -454,12 +454,10 @@ psycho_init(sc, ma, pba)
 	pci_ctl = (struct pci_ctl *)(u_long)ma->ma_address[0];
 
 	csr = sc->sc_regs->psy_csr;
-	printf("psycho: impl %d, version %d: ",
-		PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr) );
-
 	sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
-
 	sc->sc_mode = PSYCHO_MODE_PSYCHO;
+	printf("psycho: impl %d, version %d: ign %x ",
+		PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr), sc->sc_ign);
 
 	/*
 	 * Match other psycho's that are already configured against
@@ -893,42 +891,31 @@ static int pci_ino_to_ipl_table[] = {
 	0, 0, 0, 0,	/* PCI B, Slot 1, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 2, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 3, INTA#/B#/C#/D# */
+
 	PIL_SCSI,	/* SCSI */
 	PIL_NET,	/* Ethernet */
 	3,		/* Parallel */
 	PIL_AUD,	/* Audio Record */
+
 	PIL_AUD,	/* Audio Playback */
 	14,		/* Power Fail */
 	4,		/* Keyboard/Mouse/Serial */
 	PIL_FD,		/* Floppy */
+
 	14,		/* Thermal Warning */
 	PIL_SER,	/* Keyboard */
 	PIL_SER,	/* Mouse */
 	PIL_SER,	/* Serial */
+
 	0,		/* Reserved */
 	0,		/* Reserved */
 	14,		/* Uncorrectable ECC error */
 	14,		/* Correctable ECC error */
+
 	14,		/* PCI A bus error */
 	14,		/* PCI B bus error */
 	14,		/* power management */
 };
-
-int
-psycho_intr_map(tag, pin, line, ihp)
-	pcitag_t tag;
-	int pin;
-	int line;
-	pci_intr_handle_t *ihp;
-{
-
-	if (line < 0 || line > 0x32)
-		panic("psycho_intr_map: line %d line < 0 || line > 0x32", line);
-
-	/* UltraSPARC IIi does not use this register, but we have set it */
-	(*ihp) = line;
-	return (0);
-}
 
 /*
  * install an interrupt handler for a PCI device
@@ -953,7 +940,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	if (ih == NULL)
 		return (NULL);
 
-	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x", ihandle));
+	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
 	ino = INTINO(vec);
 	DPRINTF(PDB_INTR, (" ino %x", ino));
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
@@ -1027,6 +1014,8 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	 */
 	if (level != IPL_NONE)
 		ih->ih_pil = level;
+	else if (ino > (sizeof(pci_ino_to_ipl_table) / sizeof(int)))
+		ih->ih_pil = 0;
 	else
 		ih->ih_pil = pci_ino_to_ipl_table[ino];
 
