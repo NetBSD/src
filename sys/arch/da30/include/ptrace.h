@@ -1,6 +1,4 @@
-/*
- *	$Id: ptrace.h,v 1.1 1994/02/22 23:51:24 paulus Exp $
- */
+/*	$NetBSD: ptrace.h,v 1.2 1994/10/26 02:33:53 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/ptrace.h>

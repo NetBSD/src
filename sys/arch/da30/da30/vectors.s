@@ -1,3 +1,5 @@
+|	$NetBSD: vectors.s,v 1.3 1994/10/26 02:33:11 cgd Exp $
+
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
 |	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	from: @(#)vectors.s	7.2 (Berkeley) 5/7/91
-|	$Id: vectors.s,v 1.2 1994/06/18 12:10:11 paulus Exp $
+|	@(#)vectors.s	7.2 (Berkeley) 5/7/91
 |
 #define	_fpbsun		_fpfault
 #define	_fpinex		_fpfault

@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 1994/10/26 02:33:00 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
- *	$Id: pmap_bootstrap.c,v 1.1 1994/06/18 12:10:02 paulus Exp $
+ *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
