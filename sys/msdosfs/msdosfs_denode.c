@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.38 2000/02/01 13:55:23 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.39 2000/02/26 17:25:17 sommerfeld Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -117,7 +117,7 @@ loop:
 			return (dep);
 		}
 	}
-	simple_lock(&msdosfs_ihash_slock);
+	simple_unlock(&msdosfs_ihash_slock);
 	return (NULL);
 }
 
