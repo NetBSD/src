@@ -770,7 +770,11 @@ each rule's action from the following rule's.
 .SH FILES
 .TP
 .B \-lfl
-library with which scanners must be linked.
+library with which to link scanners to obtain the default versions
+of
+.I yywrap()
+and/or
+.I main().
 .TP
 .I lex.yy.c
 generated scanner (called
@@ -804,16 +808,6 @@ flexdoc(1), lex(1), yacc(1), sed(1), awk(1).
 M. E. Lesk and E. Schmidt,
 .I LEX \- Lexical Analyzer Generator
 .SH DIAGNOSTICS
-If you receive errors when linking a
-.I flex
-scanner complaining about the following missing routines:
-.ds
-    yywrap
-    yy_flex_alloc
-    ...
-.de
-(and various others) then you forgot to link your program with
-.B \-lfl.
 .PP
 .I reject_used_but_not_detected undefined
 or
