@@ -299,8 +299,9 @@ struct scsi_device sea_dev = {
 	NULL,		/* Use default 'done' routine */
 };
 
-int seaprobe __P((struct device *, void *, void *));
-void seaattach __P((struct device *, struct device *, void *));
+int	seaprobe __P((struct device *, void *, void *));
+void	seaattach __P((struct device *, struct device *, void *));
+int	seaprint __P((void *, char *));
 
 struct cfdriver seacd = {
 	NULL, "sea", seaprobe, seaattach, DV_DULL, sizeof(struct sea_softc)
@@ -400,9 +401,14 @@ seaprobe(parent, match, aux)
 	return 1;
 }
 
-seaprint()
+int
+seaprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	if (name != NULL)       
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
