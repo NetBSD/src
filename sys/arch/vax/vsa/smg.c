@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.23 2000/06/26 04:56:14 simonb Exp $ */
+/*	$NetBSD: smg.c,v 1.24 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -57,8 +57,8 @@
 #define SM_CHEIGHT	15	/* lines a char consists of */
 #define SM_NEXTROW	(SM_COLS * SM_CHEIGHT)
 
-static	int smg_match __P((struct device *, struct cfdata *, void *));
-static	void smg_attach __P((struct device *, struct device *, void *));
+static	int smg_match(struct device *, struct cfdata *, void *);
+static	void smg_attach(struct device *, struct device *, void *);
 
 struct	smg_softc {
 	struct	device ss_dev;
@@ -68,14 +68,14 @@ struct cfattach smg_ca = {
 	sizeof(struct smg_softc), smg_match, smg_attach,
 };
 
-static void	smg_cursor __P((void *, int, int, int));
-static int	smg_mapchar __P((void *, int, unsigned int *));
-static void	smg_putchar __P((void *, int, int, u_int, long));
-static void	smg_copycols __P((void *, int, int, int,int));
-static void	smg_erasecols __P((void *, int, int, int, long));
-static void	smg_copyrows __P((void *, int, int, int));
-static void	smg_eraserows __P((void *, int, int, long));
-static int	smg_alloc_attr __P((void *, int, int, int, long *));
+static void	smg_cursor(void *, int, int, int);
+static int	smg_mapchar(void *, int, unsigned int *);
+static void	smg_putchar(void *, int, int, u_int, long);
+static void	smg_copycols(void *, int, int, int,int);
+static void	smg_erasecols(void *, int, int, int, long);
+static void	smg_copyrows(void *, int, int, int);
+static void	smg_eraserows(void *, int, int, long);
+static int	smg_alloc_attr(void *, int, int, int, long *);
 
 const struct wsdisplay_emulops smg_emulops = {
 	smg_cursor,
@@ -113,14 +113,14 @@ extern char q_font[];
 	sm_addr[col + (row * SM_CHEIGHT * SM_COLS) + line * SM_COLS]
 
 
-static int	smg_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	smg_mmap __P((void *, off_t, int));
-static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void	smg_free_screen __P((void *, void *));
-static int	smg_show_screen __P((void *, void *, int,
-				     void (*) (void *, int, int), void *));
-static void	smg_crsr_blink __P((void *));
+static int	smg_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	smg_mmap(void *, off_t, int);
+static int	smg_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void	smg_free_screen(void *, void *);
+static int	smg_show_screen(void *, void *, int,
+				     void (*) (void *, int, int), void *);
+static void	smg_crsr_blink(void *);
 
 const struct wsdisplay_accessops smg_accessops = {
 	smg_ioctl,
@@ -441,7 +441,7 @@ smg_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int));
 	void *cbarg;
 {
 	struct smg_screen *ss = cookie;
@@ -479,8 +479,8 @@ void
 smgcninit(cndev)
 	struct	consdev *cndev;
 {
-	extern void lkccninit __P((struct consdev *));
-	extern int lkccngetc __P((dev_t));
+	extern void lkccninit(struct consdev *);
+	extern int lkccngetc(dev_t);
 	/* Clear screen */
 	memset(sm_addr, 0, 128*864);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.6 2000/06/29 07:14:37 mrg Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.7 2000/07/26 21:50:49 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,27 +52,27 @@
 #include <machine/sgmap.h>
 #include <machine/vsbus.h>
 
-static int vsbus_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+static int vsbus_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-static void vsbus_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+static void vsbus_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-static int vsbus_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+static int vsbus_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-static int vsbus_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+static int vsbus_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-static int vsbus_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+static int vsbus_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-static int vsbus_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+static int vsbus_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-static void vsbus_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+static void vsbus_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-static void vsbus_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+static void vsbus_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 void
 vsbus_dma_init(sc, ptecnt)

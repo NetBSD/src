@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.11 1999/06/06 19:10:49 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.12 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,10 +48,10 @@
 
 #include "ioconf.h"
 
-static  int lkc_match __P((struct device *, struct cfdata *, void *));
-static  void lkc_attach __P((struct device *, struct device *, void *));
-static	int lkc_catch __P((int, int));
-	int lkc_decode __P((int));
+static  int lkc_match(struct device *, struct cfdata *, void *);
+static  void lkc_attach(struct device *, struct device *, void *);
+static	int lkc_catch(int, int);
+	int lkc_decode(int);
 
 struct  lkc_softc {
 	struct  device ls_dev;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.4 2000/06/04 02:19:29 matt Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.5 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -64,8 +64,8 @@
 #define NISA_ROM        0x27800000
 #define	SGECVEC		0x108
 
-static	int	zematch __P((struct device *, struct cfdata *, void *));
-static	void	zeattach __P((struct device *, struct device *, void *));
+static	int	zematch(struct device *, struct cfdata *, void *);
+static	void	zeattach(struct device *, struct device *, void *);
 
 struct	cfattach ze_vsbus_ca = {
 	sizeof(struct ze_softc), zematch, zeattach
