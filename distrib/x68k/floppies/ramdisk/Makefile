@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/10/27 08:00:26 isaki Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2004/04/21 04:12:36 jmc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	ramdisk
