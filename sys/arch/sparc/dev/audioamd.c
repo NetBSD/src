@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.14 2002/12/09 16:11:50 pk Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.15 2002/12/10 12:11:22 pk Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -62,11 +62,12 @@
 
 
 /* interrupt interfaces */
-#ifdef AUDIO_C_HANDLER
 int	am7930hwintr __P((void *));
-#endif /* AUDIO_C_HANDLER */
 struct auio *auiop;
 void	am7930swintr __P((void *));
+
+/* from amd7930intr.s: */
+void	amd7930_trap(void);
 
 /*
  * interrupt-handler status 
@@ -304,14 +305,12 @@ audioamd_attach(sc, pri)
 	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
 
 	auiop = &sc->sc_au;
-#ifndef AUDIO_C_HANDLER
-	(void)bus_intr_establish(sc->sc_bt, pri, IPL_AUDIO,
-				 BUS_INTR_ESTABLISH_FASTTRAP,
-				 (int (*) __P((void *)))amd7930_trap, NULL);
-#else
-	(void)bus_intr_establish(sc->sc_bt, pri, IPL_AUDIO, 0,
-				 am7930hwintr, sc);
-#endif
+
+	/* Copy bus tag & handle for use by am7930_trap */
+	sc->sc_au.au_bt = sc->sc_bt;
+	sc->sc_au.au_bh = sc->sc_bh;
+	(void)bus_intr_establish2(sc->sc_bt, pri, IPL_AUDIO, 0,
+				  am7930hwintr, sc, amd7930_trap);
 
 	sc->sc_sicookie = softintr_establish(IPL_SOFTAUDIO, am7930swintr, sc);
 	if (sc->sc_sicookie == NULL) {
@@ -376,10 +375,6 @@ audioamd_start_output(addr, p, cc, intr, arg)
 	}
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
-#ifndef AUDIO_C_HANDLER
-	sc->sc_au.au_bt = sc->sc_bt;
-	sc->sc_au.au_bh = sc->sc_bh;
-#endif
 	sc->sc_au.au_pdata = p;
 	sc->sc_au.au_pend = (char *)p + cc - 1;
 	return(0);
@@ -405,10 +400,6 @@ audioamd_start_input(addr, p, cc, intr, arg)
 	}
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
-#ifndef AUDIO_C_HANDLER
-	sc->sc_au.au_bt = sc->sc_bt;
-	sc->sc_au.au_bh = sc->sc_bh;
-#endif
 	sc->sc_au.au_rdata = p;
 	sc->sc_au.au_rend = (char *)p + cc -1;
 	return(0);
@@ -419,7 +410,6 @@ audioamd_start_input(addr, p, cc, intr, arg)
  * Pseudo-DMA support: either C or locore assember.
  */
 
-#ifdef AUDIO_C_HANDLER
 int
 am7930hwintr(v)
 	void *v;
@@ -462,7 +452,6 @@ am7930hwintr(v)
 	au->au_intrcnt.ev_count++;
 	return (1);
 }
-#endif /* AUDIO_C_HANDLER */
 
 void
 am7930swintr(sc0)

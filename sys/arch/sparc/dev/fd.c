@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.97 2002/12/09 16:11:50 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.98 2002/12/10 12:11:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -620,21 +620,14 @@ fdcattach(fdc, pri)
 	}
 
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
-			 BUS_INTR_ESTABLISH_FASTTRAP,
-			 (int (*) __P((void *)))fdchwintr, NULL) == NULL) {
-
-		printf("%s: notice: no fast trap handler slot available\n",
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0, 0,
+				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
-		if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO, 0,
-				 fdc_c_hwintr, fdc) == NULL) {
-			printf("%s: cannot register interrupt handler\n",
-				fdc->sc_dev.dv_xname);
-			return (-1);
-		}
+		return (-1);
 	}
 
-	fdc->sc_sicookie = softintr_establish(IPL_SOFTFDC, fdcswintr, fdc);
+	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1305,6 +1298,13 @@ fdc_c_hwintr(arg)
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 		softintr_schedule(fdc->sc_sicookie);
 		return (1);
+	case FDC_ITASK_RESULT:
+		if (fdcresult(fdc) == -1)
+			fdc->sc_istatus = FDC_ISTATUS_ERROR;
+		else
+			fdc->sc_istatus = FDC_ISTATUS_DONE;
+		softintr_schedule(fdc->sc_sicookie);
+		return (1);
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-dma below */
 		break;
@@ -1378,9 +1378,7 @@ fdcswintr(arg)
 		break;
 	}
 
-	s = splbio();
 	fdcstate(fdc);
-	splx(s);
 	return;
 }
 
