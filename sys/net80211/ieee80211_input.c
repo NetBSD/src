@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.33 2004/07/29 22:28:05 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.34 2004/07/30 17:45:21 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.33 2004/07/29 22:28:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.34 2004/07/30 17:45:21 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -964,16 +964,18 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 *    o adhoc mode: to discover neighbors
 		 *    o hostap mode: for passive scanning of neighbor APs
 		 *    o when scanning
-		 * Frames otherwise received are discarded.
+		 * In other words, in all modes other than monitor (which
+		 * does not process incoming packets) and adhoc-demo (which
+		 * does not use management frames at all).
 		 */
+#ifdef DIAGNOSTIC
 		if (ic->ic_opmode != IEEE80211_M_STA &&
 		    ic->ic_opmode != IEEE80211_M_IBSS &&
 		    ic->ic_opmode != IEEE80211_M_HOSTAP &&
 		    ic->ic_state != IEEE80211_S_SCAN) {
-			/* XXX: may be useful for background scan */
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
+			panic("%s: impossible", __func__);
 		}
+#endif
 		/*
 		 * beacon/probe response frame format
 		 *	[8] time stamp
