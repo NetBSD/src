@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/11/24 19:39:08 scw Exp $
+#	$NetBSD: Makefile,v 1.10 2000/11/24 21:58:36 scw Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -75,7 +75,7 @@ HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 release:	netbsd-rd
-	-mkdir -p ${RELEASEDIR}/installaion/tapeimage
+	-mkdir -p ${RELEASEDIR}/installation/tapeimage
 	gzip < netbsd-rd > ${RELEASEDIR}/installation/tapeimage/netbsd-rd.gz
 
 clean cleandir distclean:
