@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.15 2000/12/17 10:23:19 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.16 2001/01/04 00:17:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -448,7 +448,7 @@ rn_addmask(n_arg, search, skip)
 	Bcopy(addmask_key, cp, mlen);
 	x = rn_insert(cp, mask_rnhead, &maskduplicated, x);
 	if (maskduplicated) {
-		log(LOG_ERR, "rn_addmask: mask impossibly already in tree");
+		log(LOG_ERR, "rn_addmask: mask impossibly already in tree\n");
 		Free(saved_x);
 		return (x);
 	}
@@ -643,8 +643,8 @@ on2:
 		if (m->rm_flags & RNF_NORMAL) {
 			mmask = m->rm_leaf->rn_mask;
 			if (tt->rn_flags & RNF_NORMAL) {
-				log(LOG_ERR,
-				   "Non-unique normal route, mask not entered");
+				log(LOG_ERR, "Non-unique normal route,"
+				    " mask not entered\n");
 				return tt;
 			}
 		} else
