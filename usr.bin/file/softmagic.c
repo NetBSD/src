@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.14 1997/09/30 17:00:47 is Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.15 1997/10/18 14:54:00 lukem Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -35,9 +35,9 @@
 
 #include "file.h"
 
+#include <sys/cdefs.h>
 #ifndef	lint
-static char *moduleid = 
-	"@(#)$NetBSD: softmagic.c,v 1.14 1997/09/30 17:00:47 is Exp $";
+__RCSID("$NetBSD: softmagic.c,v 1.15 1997/10/18 14:54:00 lukem Exp $");
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
