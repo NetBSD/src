@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.20 2000/03/28 23:57:30 simonb Exp $	*/
+/*	$NetBSD: ka820.c,v 1.21 2000/04/09 21:05:39 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -59,6 +59,8 @@
 #include <machine/scb.h>
 #include <machine/bus.h>
 
+#include <dev/clock_subr.h>
+
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>
 
@@ -69,12 +71,15 @@
 
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
+static volatile struct ka820clock *ka820_clkpage;
 
 static int ka820_match __P((struct device *, struct cfdata *, void *));
 static void ka820_attach __P((struct device *, struct device *, void*));
 static void ka820_memerr __P((void));
 static void ka820_conf __P((void));
 static int ka820_mchk __P((caddr_t));
+static int ka820_clkread(time_t base);
+static void ka820_clkwrite(void);
 static void rxcdintr __P((void *));
 static void vaxbierr(void *);
 
@@ -83,8 +88,8 @@ struct	cpu_dep ka820_calls = {
 	ka820_mchk,
 	ka820_memerr,
 	ka820_conf,
-	chip_clkread,
-	chip_clkwrite,
+	ka820_clkread,
+	ka820_clkwrite,
 	3,      /* ~VUPS */
 	5,	/* SCB pages */
 };
@@ -157,9 +162,7 @@ ka820_conf()
 	/*
 	 * Setup parameters necessary to read time from clock chip.
 	 */
-	clk_adrshift = 0;       /* Addressed at short's... */
-	clk_tweak = 1;          /* ...and shift one */
-	clk_page = (short *)vax_map_physmem(KA820_CLOCKADDR, 1);
+	ka820_clkpage = (void *)vax_map_physmem(KA820_CLOCKADDR, 1);
 
 	/* Steal the interrupt vectors that are unique for us */
 	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK);
@@ -398,4 +401,54 @@ rxcdintr(arg)
 
 	/* not sure what (if anything) to do with these */
 	printf("rxcd node %x c=0x%x\n", (c >> 8) & 0xf, c & 0xff);
+}
+
+int
+ka820_clkread(time_t base)
+{
+	struct clock_ymdhms c;
+	int s;
+
+	while (ka820_clkpage->csr0 & KA820CLK_0_BUSY)
+		;
+	s = splhigh();
+	c.dt_sec = ka820_clkpage->sec;
+	c.dt_min = ka820_clkpage->min;
+	c.dt_hour = ka820_clkpage->hr;
+	c.dt_wday = ka820_clkpage->dayofwk;
+	c.dt_day = ka820_clkpage->day;
+	c.dt_mon = ka820_clkpage->mon;
+	c.dt_year = ka820_clkpage->yr;
+	splx(s);
+
+	/* strange conversion */
+	c.dt_sec = ((c.dt_sec << 7) | (c.dt_sec >> 1)) & 0377;
+	c.dt_min = ((c.dt_min << 7) | (c.dt_min >> 1)) & 0377;
+	c.dt_hour = ((c.dt_hour << 7) | (c.dt_hour >> 1)) & 0377;
+	c.dt_wday = ((c.dt_wday << 7) | (c.dt_wday >> 1)) & 0377;
+	c.dt_day = ((c.dt_day << 7) | (c.dt_day >> 1)) & 0377;
+	c.dt_mon = ((c.dt_mon << 7) | (c.dt_mon >> 1)) & 0377;
+	c.dt_year = ((c.dt_year << 7) | (c.dt_year >> 1)) & 0377;
+
+	time.tv_sec = clock_ymdhms_to_secs(&c);
+	return CLKREAD_OK;
+}
+
+void
+ka820_clkwrite(void)
+{
+	struct clock_ymdhms c;
+
+	clock_secs_to_ymdhms(time.tv_sec, &c);
+
+	ka820_clkpage->csr1 = KA820CLK_1_SET;
+	ka820_clkpage->sec = ((c.dt_sec << 1) | (c.dt_sec >> 7)) & 0377;
+	ka820_clkpage->min = ((c.dt_min << 1) | (c.dt_min >> 7)) & 0377;
+	ka820_clkpage->hr = ((c.dt_hour << 1) | (c.dt_hour >> 7)) & 0377;
+	ka820_clkpage->dayofwk = ((c.dt_wday << 1) | (c.dt_wday >> 7)) & 0377;
+	ka820_clkpage->day = ((c.dt_day << 1) | (c.dt_day >> 7)) & 0377;
+	ka820_clkpage->mon = ((c.dt_mon << 1) | (c.dt_mon >> 7)) & 0377;
+	ka820_clkpage->yr = ((c.dt_year << 1) | (c.dt_year >> 7)) & 0377;
+
+	ka820_clkpage->csr1 = KA820CLK_1_GO;
 }
