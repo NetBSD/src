@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2004/08/28 13:33:31 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.10.1 2005/03/27 17:48:32 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
  * Machine-specific definitions for PCI autoconfiguration.
  */
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#define	__HAVE_PCI_CONF_HOOK
 
 /*
  * Forward declarations.
@@ -57,6 +58,9 @@ typedef int 		pci_intr_handle_t;
 struct cobalt_pci_chipset {
 	bus_space_tag_t pc_bst;		/* bus space tag for PCICFG regs */
 	bus_space_handle_t pc_bsh;	/* bus space handle for PCICFG regs */
+
+	struct extent *pc_memext;	/* PCI memory extent */
+	struct extent *pc_ioext;	/* PCI I/O extent */
 };
 
 /*
@@ -77,3 +81,6 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 			int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+void		pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int,
+			int *);
+int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
