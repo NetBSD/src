@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.29 2003/01/02 12:46:07 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.30 2003/01/03 13:40:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.29 2003/01/02 12:46:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.30 2003/01/03 13:40:05 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.29 2003/01/02 12:46:07 manu Exp $");
 /* Right and port pools, list of all rights and its lock */
 static struct pool mach_port_pool;
 static struct pool mach_right_pool;
-static LIST_HEAD(mach_right_list, mach_right) mach_right_list;
-struct lock mach_right_list_lock;
 
 struct mach_port *mach_bootstrap_port;
 struct mach_port *mach_clock_port;
@@ -152,10 +150,8 @@ mach_port_deallocate(args)
 	struct mach_right *mr;
 
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, p, MACH_PORT_TYPE_PORT_RIGHTS)) == NULL) 
-		return mach_msg_error(args, EINVAL);
-
-	mach_right_put(mr, MACH_PORT_TYPE_ALL_RIGHTS);
+	if ((mr = mach_right_check(mn, p, MACH_PORT_TYPE_REF_RIGHTS)) != NULL) 
+		mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -354,6 +350,7 @@ mach_port_move_member(args)
 	mach_port_move_member_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->p;
+	struct mach_emuldata *med = p->p_emuldata;
 	mach_port_t member = req->req_member;
 	mach_port_t after = req->req_after;
 	struct mach_right *mrr;
@@ -367,7 +364,7 @@ mach_port_move_member(args)
 	if (mrs == NULL)
 		return mach_msg_error(args, EPERM);
 		
-	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 
 	/* Remove it from an existing port set */
 	if (mrr->mr_sethead != mrr)
@@ -377,7 +374,7 @@ mach_port_move_member(args)
 	LIST_INSERT_HEAD(&mrs->mr_set, mrr, mr_setlist);
 	mrr->mr_sethead = mrs;
 
-	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -397,8 +394,6 @@ mach_port_init(void)
 	    0, 0, 128, "mach_port_pool", NULL);
 	pool_init(&mach_right_pool, sizeof (struct mach_right),
 	    0, 0, 128, "mach_right_pool", NULL);
-	LIST_INIT(&mach_right_list);
-	lockinit(&mach_right_list_lock, PZERO|PCATCH, "mach_right_list", 0, 0);
 
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();
@@ -428,7 +423,7 @@ mach_port_put(mp)
 {
 	struct mach_message *mm;
 
-	if (mp->mp_refcount != 0) {
+	if (mp->mp_refcount > 0) {
 		uprintf("mach_port_put: trying to free a referenced port\n");
 		return;
 	}
@@ -464,16 +459,17 @@ mach_right_get(mp, p, type, hint)
 	/* Send and receive right must return an existing right */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE);
 	if (type & rights) {
-		lockmgr(&mach_right_list_lock, LK_SHARED, NULL);
+		lockmgr(&med->med_rightlock, LK_SHARED, NULL);
 		LIST_FOREACH(mr, &med->med_right, mr_list) {
 			if ((mr->mr_port == mp) && (mr->mr_type & rights))
 				break;
 		}
-		lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 		if (mr != NULL) {
 			mr->mr_type |= type;
-			mr->mr_refcount++;
+			if (type & MACH_PORT_TYPE_SEND)
+				mr->mr_refcount++;
 			goto rcvck;
 		}
 	}
@@ -493,11 +489,14 @@ mach_right_get(mp, p, type, hint)
 
 	/* Insert the right in the right lists */
 	if (type & MACH_PORT_TYPE_ALL_RIGHTS) {
-		lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 		mr->mr_name = mach_right_newname(p, hint);
+#ifdef DEBUG_MACH_RIGHT
+		printf("mach_right_get: insert right %x(%x)\n", 
+		    mr->mr_name, mr->mr_type);
+#endif
 		LIST_INSERT_HEAD(&med->med_right, mr, mr_list);
-		LIST_INSERT_HEAD(&mach_right_list, mr, mr_listall);
-		lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 	}
 		
 rcvck:
@@ -519,9 +518,11 @@ mach_right_put(mr, right)
 	struct mach_right *mr;
 	int right;
 {
-	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+	struct mach_emuldata *med = mr->mr_p->p_emuldata;
+
+	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 	mach_right_put_exclocked(mr, right);
-	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 	return;
 }
@@ -531,9 +532,11 @@ mach_right_put_shlocked(mr, right)
 	struct mach_right *mr;
 	int right;
 {
-	lockmgr(&mach_right_list_lock, LK_UPGRADE, NULL);
+	struct mach_emuldata *med = mr->mr_p->p_emuldata;
+
+	lockmgr(&med->med_rightlock, LK_UPGRADE, NULL);
 	mach_right_put_exclocked(mr, right);
-	lockmgr(&mach_right_list_lock, LK_DOWNGRADE, NULL);
+	lockmgr(&med->med_rightlock, LK_DOWNGRADE, NULL);
 
 	return;
 }
@@ -544,43 +547,78 @@ mach_right_put_exclocked(mr, right)
 	int right;
 {
 	struct mach_right *cmr;
-	
-#ifdef DEBUG_MACH
-	if ((mr->mr_type & right) == 0) 
-		printf("mach_right_put: droping nonexistant right %x on %x\n", 
-		    right, mr->mr_name);
-#endif
+	struct mach_emuldata *med;
+	int lright;
+	int kill_right;
 
-	mr->mr_type &= ~right;
-	mr->mr_refcount--;
-	if (mr->mr_refcount != 0) {
-#ifdef DEBUG_MACH
-		printf("tried to release right %x, but refcount = %d\n",
-		    mr->mr_name, mr->mr_refcount);
-#endif
-		return;
-	}
+	med = mr->mr_p->p_emuldata;
 
 #ifdef DEBUG_MACH_RIGHT
-	printf("mach_right_put: put right %p, port %p\n", mr, mr->mr_port);
+	printf("mach_right_put: mr = %p\n", mr);
+	printf("right %x(%x) refcount %d, deallocate %x\n",
+	    mr->mr_name, mr->mr_type, mr->mr_refcount, right);
+	if ((mr->mr_type & right) == 0) 
+		printf("mach_right_put: dropping nonexistant right %x on %x\n", 
+		    right, mr->mr_name);
+	LIST_FOREACH(cmr, &med->med_right, mr_list) 
+		if (cmr == mr)
+			break;
+	if (cmr == NULL) {
+		printf("mach_right_put: dropping already dropped right %x\n",
+		    mr->mr_name);
+		return;
+	}
 #endif
-	if (mr->mr_type & MACH_PORT_TYPE_PORT_SET) {
-		while((cmr = LIST_FIRST(&mr->mr_set)) != NULL) {
-			LIST_REMOVE(cmr, mr_setlist);
-			cmr->mr_sethead = cmr;
+	kill_right = 0;
+
+	/* When receive right is deallocated, the port should die */
+	lright = (right & MACH_PORT_TYPE_RECEIVE);
+	if (mr->mr_type & lright) {
+		if (mr->mr_refcount <= 0) {
+			mr->mr_type &= ~MACH_PORT_TYPE_RECEIVE;
+			kill_right = 1;
+		} else {
+			mr->mr_type &= ~MACH_PORT_TYPE_RECEIVE;
+			mr->mr_type |= MACH_PORT_TYPE_DEAD_NAME;
+		}
+		if (mr->mr_port != NULL) {
+			mr->mr_port->mp_refcount--;
+			if (mr->mr_port->mp_refcount <= 0)
+				mach_port_put(mr->mr_port);
+			mr->mr_port = NULL;
 		}
 	}
 
-	LIST_REMOVE(mr, mr_list);
-	LIST_REMOVE(mr, mr_listall);
-
-	if (mr->mr_port != NULL) {
-		mr->mr_port->mp_refcount--;
-		if (mr->mr_port->mp_refcount == 0)
-			mach_port_put(mr->mr_port);
+	/* send, send_once and dead_name */
+	lright = (right & MACH_PORT_TYPE_REF_RIGHTS);
+	if (mr->mr_type & lright) {
+		mr->mr_refcount--;
+		if (mr->mr_refcount <= 0) {
+			mr->mr_type &= ~MACH_PORT_TYPE_REF_RIGHTS;
+			if ((mr->mr_type & MACH_PORT_TYPE_RECEIVE) == 0)
+				kill_right = 1;
+		}
 	}
 
-	pool_put(&mach_right_pool, mr);
+	lright = (right & MACH_PORT_TYPE_PORT_SET);
+	if ((mr->mr_type & lright) || (kill_right == 1)) {
+		while ((cmr = LIST_FIRST(&mr->mr_set)) != NULL) {
+			LIST_REMOVE(cmr, mr_setlist);
+			cmr->mr_sethead = cmr;
+		}
+		mr->mr_type &= ~MACH_PORT_TYPE_PORT_SET;
+		if ((mr->mr_type & MACH_PORT_TYPE_RECEIVE) == 0)
+			kill_right = 1;
+	}
+
+	/* Should we kill it? */
+	if (kill_right == 1) {
+#ifdef DEBUG_MACH_RIGHT
+		printf("mach_right_put: kill name %x\n", mr->mr_name);
+#endif
+		LIST_REMOVE(mr, mr_list);
+		pool_put(&mach_right_pool, mr);
+	}
 	return;
 }
 
@@ -601,7 +639,7 @@ mach_right_check(mn, p, type)
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	lockmgr(&mach_right_list_lock, LK_SHARED, NULL);
+	lockmgr(&med->med_rightlock, LK_SHARED, NULL);
 
 #ifdef DEBUG_MACH_RIGHT
 	printf("mach_right_check: type = %x, mn = %x\n", type, mn);
@@ -617,7 +655,7 @@ mach_right_check(mn, p, type)
 			break;
 	}
 
-	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 	return cmr;
 }

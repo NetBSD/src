@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.23 2003/01/02 12:46:06 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.24 2003/01/03 13:40:04 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.23 2003/01/02 12:46:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.24 2003/01/03 13:40:04 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,8 +203,7 @@ mach_e_proc_fork(p, parent)
 
 	med1 = p->p_emuldata;
 	med2 = parent->p_emuldata;
-
-	(void)memcpy(med1, med2, sizeof(struct mach_emuldata));
+	/* Nothing is inherited across forks in struct  mach_emuldata */
 
 	return;
 }
@@ -231,6 +230,7 @@ mach_e_proc_init(p, vmspace)
 	med->med_p = 0;
 
 	LIST_INIT(&med->med_right);
+	lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
 	/* 
 	 * For debugging purpose, it's convenient to have each process 
 	 * using distinct port names, so we prefix the first port name
@@ -265,10 +265,11 @@ mach_e_proc_exit(p)
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+	
+	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 	if (--med->med_bootstrap->mp_refcount == 0)
 		mach_port_put(med->med_bootstrap);
