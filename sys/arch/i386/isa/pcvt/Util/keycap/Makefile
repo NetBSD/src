@@ -2,7 +2,7 @@ LIB	=	keycap
 CAPDIR	=	/usr/share/misc
 CAPPATH	=	$(CAPDIR)/keycap.pcvt
 KEYCAPSRC=	keycap.src
-CFLAGS	+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
+CPPFLAGS+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
 SRCS	=	keycap.c
 
 NOMAN=	yes
