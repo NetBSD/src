@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.11 2003/03/04 13:44:08 yamt Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.12 2003/05/11 00:08:15 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.11 2003/03/04 13:44:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2003/05/11 00:08:15 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -69,6 +70,19 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.11 2003/03/04 13:44:08 yamt Exp $
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
+
+static int acpi_intrcold = 1;
+
+struct acpi_intr_defer {
+	UINT32	number;
+	OSD_HANDLER function;
+	void *context;
+	void *ih;
+	LIST_ENTRY(acpi_intr_defer) list;
+};
+
+LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
+    LIST_HEAD_INITIALIZER(acpi_intr_deferq);
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -99,26 +113,77 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 {
 	void *ih;
 	struct pic *pic;
-	int irq;
-	int pin;
+	int irq, pin, trigger;
+	struct acpi_intr_defer *aip;
+#ifdef MPACPI
+	int i, h;
+	struct mp_intr_map *mip;
+#endif
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
+#endif
 
-	if (ioapics != NULL) {
-		sc = ioapic_find_bybase(InterruptNumber);
-		if (sc == NULL) {
-			pin = (int)InterruptNumber;
-			for (sc = ioapics ; sc != NULL && pin > sc->sc_apic_sz;
-			     sc = sc->sc_next)
-				pin -= sc->sc_apic_sz;
-			if (sc == NULL)
-				return AE_NOT_FOUND;
-			if (nioapics > 1)
-				printf("acpi: WARNING: no matching "
-				       "I/O apic for SCI, assuming %s\n",
-				    sc->sc_pic.pic_dev.dv_xname);
-		} else
-			pin = InterruptNumber - sc->sc_apic_vecbase;
+	if (acpi_intrcold) {
+		aip = malloc(sizeof(struct acpi_intr_defer), M_TEMP, M_WAITOK);
+		aip->number = InterruptNumber;
+		aip->function = ServiceRoutine;
+		aip->context = Context;
+		aip->ih = NULL;
+
+		LIST_INSERT_HEAD(&acpi_intr_deferq, aip, list);
+
+		*cookiep = (void *)aip;
+		return AE_OK;
+	}
+
+	trigger = IST_LEVEL;
+
+#ifdef MPACPI
+	/*
+	 * Can only match on ACPI global interrupt numbers if the ACPI
+	 * interrupt info was extracted, which is in the MPACPI case.
+	 */
+	if (mp_busses == NULL)
+		goto nomap;
+	for (i = 0; i < mp_nbus; i++) {
+		for (mip = mp_busses[i].mb_intrs; mip != NULL;
+		     mip = mip->next) {
+			if (mip->global_int == (int)InterruptNumber) {
+				h = mip->ioapic_ih;
+				if (APIC_IRQ_ISLEGACY(h)) {
+					irq = APIC_IRQ_LEGACY_IRQ(h);
+					pin = irq;
+					pic = &i8259_pic;
+					trigger = IST_EDGE;
+				} else {
+					sc = ioapic_find(APIC_IRQ_APIC(h));
+					if (sc == NULL)
+						goto nomap;
+					pic = (struct pic *)sc;
+					pin = APIC_IRQ_PIN(h);
+					irq = -1;
+					trigger =
+					   ((mip->flags >> 2) & 3) ==
+					      MPS_INTTR_EDGE ?
+					    IST_EDGE : IST_LEVEL;
+				}
+				goto found;
+			}
+		}
+	}
+nomap:
+#endif
+
+#if NIOAPIC > 0
+	pin = (int)InterruptNumber;
+	for (sc = ioapics ; sc != NULL && pin > sc->sc_apic_sz;
+	     sc = sc->sc_next)
+		pin -= sc->sc_apic_sz;
+	if (sc != NULL) {
+		if (nioapics > 1)
+			printf("acpi: WARNING: no matching "
+			       "I/O apic for SCI, assuming %s\n",
+			    sc->sc_pic.pic_dev.dv_xname);
 		pic = (struct pic *)sc;
 		irq = -1;
 	} else
@@ -128,10 +193,14 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 		irq = pin = (int)InterruptNumber;
 	}
 
+#ifdef MPACPI
+found:
+#endif
+
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, pic, pin, IST_LEVEL, IPL_VM,
+	ih = intr_establish(irq, pic, pin, trigger, IPL_VM,
 	    (int (*)(void *)) ServiceRoutine, Context);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
@@ -142,6 +211,15 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 void
 acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
+	struct acpi_intr_defer *aip;
+
+	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
+		if (aip == cookie) {
+			if (aip->ih != NULL)
+				intr_disestablish(aip->ih);
+			return;
+		}
+	}
 
 	intr_disestablish(cookie);
 }
@@ -237,11 +315,19 @@ acpi_md_OsDisableInterrupt(void)
 void
 acpi_md_callback(struct device *acpi)
 {
+	struct acpi_intr_defer *aip;
+
 #ifdef MPACPI
 #ifdef MPBIOS
-	if (mpbios_scanned)
-		return;
+	if (!mpbios_scanned)
 #endif
 	mpacpi_find_interrupts(acpi);
 #endif
+	acpi_intrcold = 0;
+
+	/* Proces deferred interrupt handler establish calls. */
+	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
+		acpi_md_OsInstallInterruptHandler(aip->number, aip->function,
+		    aip->context, &aip->ih);
+	}
 }

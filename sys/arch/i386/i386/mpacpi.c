@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6 2003/05/08 14:06:48 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.7 2003/05/11 00:08:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -183,6 +183,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		    (ioapic->sc_apicid << APIC_INT_APIC_SHIFT) |
 		    (pin << APIC_INT_PIN_SHIFT); 
 		mpi->flags = ioapic_nmi->Polarity | (ioapic_nmi->Trigger << 2);
+		mpi->global_int = ioapic_nmi->GlobalInt;
 		break;
 	case APIC_LAPIC_NMI:
 		lapic_nmi = (INT_LAPIC_SOURCE_NMI *)hdrp;
@@ -195,6 +196,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		mpi->ioapic_pin = lapic_nmi->Lint;
 		mpi->cpu_id = lapic_nmi->ApicId;
 		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->global_int = -1;
 		break;
 	case APIC_INTSRC_OVR:
 		isa_ovr = (INT_SOURCE_OVERRIDE *)hdrp;
@@ -523,6 +525,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		    (pin << APIC_INT_PIN_SHIFT);
 		ioapic->sc_pins[pin].ip_map = mpi;
 		mpi->next = mpb->mb_intrs;
+		mpi->global_int = ptrp->SourceIndex;
 		mpb->mb_intrs = mpi;
 	}
 	AcpiOsFree(buf.Pointer);
@@ -632,6 +635,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		    (i << APIC_INT_PIN_SHIFT);
 		mpi->redir = (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
 		mpi->flags = MPS_INTPO_DEF | (MPS_INTTR_DEF << 2);
+		mpi->global_int = i;
 		ioapic->sc_pins[i].ip_map = mpi;
 		index++;
 	}
