@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.9 2004/09/11 11:23:26 he Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.10 2004/09/11 11:25:43 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -134,10 +134,9 @@ int dir;
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
-	 * ip hdr (60 bytes) + tcp hdr (60 bytes) should be enough.
 	 * XXX inefficient
 	 */
-	error = m_makewritable(mp, 0, 60 + 60, M_DONTWAIT);
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
 	if (error) {
 		m_freem(*mp);
 		*mp = NULL;
