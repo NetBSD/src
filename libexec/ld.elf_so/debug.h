@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.3 1999/02/24 18:31:00 christos Exp $	*/
+/*	$NetBSD: debug.h,v 1.4 1999/03/01 16:40:07 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -35,30 +35,24 @@
  * Support for printing debugging messages.
  */
 
-#ifndef DEBUG_H /* { */
-#define DEBUG_H 1
+#ifndef DEBUG_H 
+#define DEBUG_H
 
-#ifndef __GNUC__ /* { */
-#error "Sorry, this module relies on some GNU extensions"
-#endif /* } */
 
-extern void xprintf(const char *fmt, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-extern void xvprintf(const char *fmt, va_list ap)
-    __attribute__((__format__(__printf__, 1, 0)));
-extern void debug_printf(const char *, ...)
+#ifdef DEBUG
+
+extern void debug_printf __P((const char *, ...))
     __attribute__((__format__(__printf__, 1, 2)));
 extern int debug;
 
-#ifdef DEBUG /* { */
-#define dbg(format, args...)		debug_printf(format, ## args)
-#else /* } { */
-#define dbg(format, args...)		((void) 0)
-#endif /* } */
+# define dbg(a)		debug_printf a
+#else 
+# define dbg(a)		((void) 0)
+#endif
 #ifdef RTLD_DEBUG_RELOC
-#define rdbg(f, format, args...)	if (f) debug_printf(format, ## args)
+# define rdbg(f, a)	if (f) debug_printf a
 #else
-#define rdbg(f, format, args...)	((void) 0)
+# define rdbg(f, a)	((void) 0)
 #endif
 
-#endif /* } */
+#endif

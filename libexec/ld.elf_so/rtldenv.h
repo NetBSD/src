@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.2 1997/10/08 08:55:38 mrg Exp $	*/
+/*	$NetBSD: rtldenv.h,v 1.3 1999/03/01 16:40:07 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -33,40 +33,49 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-extern void *xcalloc(size_t);
-extern void *xmalloc(size_t);
-extern char *xstrdup(const char *);
+void    *xcalloc __P((size_t));
+void    *xmalloc __P((size_t));
+char    *xstrdup __P((const char *));
 
 #ifdef RTLD_LOADER
-extern void xprintf(const char *fmt, ...);
-extern void xvprintf(const char *fmt, va_list ap);
-extern void xsnprintf(char *buf, size_t buflen, const char *fmt, ...);
-extern size_t xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap);
-extern void xwarn(const char *fmt, ...);
-extern void xwarnx(const char *fmt, ...);
-extern void xerr(int eval, const char *fmt, ...);
-extern void xerrx(int eval, const char *fmt, ...);
-extern void xassert(const char *file, int line, const char *failedexpr);
-extern const char *xstrerror(int error);
+void xprintf __P((const char *, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
+void xvprintf __P((const char *, va_list))
+    __attribute__((__format__(__printf__, 1, 0)));
+void xsnprintf __P((char *, size_t, const char *, ...))
+    __attribute__((__format__(__printf__, 3, 4)));
+size_t xvsnprintf __P((char *, size_t, const char *, va_list))
+    __attribute__((__format__(__printf__, 3, 0)));
+void xwarn __P((const char *, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
+void xwarnx __P((const char *, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
+void xerr __P((int, const char *, ...))
+    __attribute__((__format__(__printf__, 2, 3)));
+void xerrx __P((int, const char *, ...))
+    __attribute__((__format__(__printf__, 2, 3)));
 
-#define assert(cond)	((cond) \
+void     xassert __P((const char *, int, const char *));
+const char *xstrerror __P((int));
+
+# define assert(cond)	((cond) \
 			 ? (void) 0 :\
 			 (xassert(__FILE__, __LINE__, #cond "\n"), abort()))
 #else
-#include <assert.h>
-#include <stdio.h>
-#include <err.h>
-
-#define	xprintf		printf
-#define	xvprintf	vprintf
-#define	xsnprintf	snprintf
-#define	xvsnprintf	vsnprintf
-#define	xwarn		warn
-#define	xwarnx		warnx
-#define	xerr		err
-#define	xerrx		errx
-#define	xassert		assert
-#define	xstrerror	strerror
+# include <assert.h>
+# include <stdio.h>
+# include <err.h>
+ 
+# define xprintf	printf
+# define xvprintf	vprintf
+# define xsnprintf	snprintf
+# define xvsnprintf	vsnprintf
+# define xwarn		warn
+# define xwarnx		warnx
+# define xerr		err
+# define xerrx		errx
+# define xassert	assert
+# define xstrerror	strerror
 #endif
 
 #endif /* _RTLDENV_H */
