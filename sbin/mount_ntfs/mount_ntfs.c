@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ntfs.c,v 1.2 1999/05/06 16:08:55 christos Exp $	*/
+/*	$NetBSD: mount_ntfs.c,v 1.3 1999/06/25 19:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.2 1999/05/06 16:08:55 christos Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.3 1999/06/25 19:28:37 perseant Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -187,7 +187,7 @@ main(argc, argv)
 #else
 	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
 #endif
-		err(EX_OSERR, "%s", dev);
+		err(EX_OSERR, "%s on %s", dev, dir);
 
 	exit (0);
 }

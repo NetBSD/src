@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ados.c,v 1.8 1998/03/01 02:20:11 fvdl Exp $	*/
+/*	$NetBSD: mount_ados.c,v 1.9 1999/06/25 19:28:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.8 1998/03/01 02:20:11 fvdl Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.9 1999/06/25 19:28:35 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -134,7 +134,7 @@ main(argc, argv)
 	}
 
 	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) < 0)
-		err(1, "mount");
+		err(1, "%s on %s", dev, dir);
 
 	exit (0);
 }
