@@ -1,4 +1,4 @@
-.\" $NetBSD: uscanner.4,v 1.2 2000/09/23 20:27:05 augustss Exp $
+.\" $NetBSD: uscanner.4,v 1.3 2000/10/08 20:20:42 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,15 +58,19 @@ driver works with the following scanners:
 .Bl -tag -width -offset indent -compact
 .It GT-7000
 .It Perfection 610U
-.It 636U
-.It 1200U
-.It 1200U Photo
+.It Perfection 636U
+.It Perfection 1200U
+.It Perfection 1200U Photo
 .El
 .Ss HP
 .Bl -tag -width -offset indent -compact
-.It 4100C
-.It 5200C
-.It 6300C
+.It ScanJet 4100C
+.It ScanJet 5200C
+.It ScanJet 6300C
+.El
+.Ss Microtek
+.Bl -tag -width -offset indent -compact
+.It ScanMaker X6USB
 .El
 .Pp
 Many other scanners are recognized, but there is no software support
