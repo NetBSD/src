@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.19 2003/08/07 16:26:57 agc Exp $	*/
+/*	$NetBSD: vectors.s,v 1.20 2003/09/22 14:27:04 cl Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -110,7 +110,11 @@ GLOBAL(autovects)
 	VECTOR(illinst)		| 33: TRAP instruction vector
 #endif
 	VECTOR(trap2)		| 34: trace
-	VECTOR(trap3)		| 35: sigreturn special syscall
+#ifdef COMPAT_16
+	VECTOR(trap3)		| 35: compat_16_sigreturn special syscall
+#else
+	VECTOR(illinst)	
+#endif
 	VECTOR(illinst)		| 36: TRAP instruction vector
 	VECTOR(illinst)		| 37: TRAP instruction vector
 	VECTOR(illinst)		| 38: TRAP instruction vector
