@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.12 2000/07/03 02:51:46 matt Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.13 2001/02/19 23:03:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.12 2000/07/03 02:51:46 matt Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.13 2001/02/19 23:03:54 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,8 +67,6 @@ const struct ypalias {
 
 int	main __P((int, char *[]));
 void	usage __P((void));
-
-extern	char *__progname;
 
 int
 main(argc, argv)
@@ -158,7 +156,7 @@ usage()
 {
 
 	fprintf(stderr, "usage: %s [-d domain] [-t] [-k] key [key ...] "
-	    "mapname\n", __progname);
-	fprintf(stderr, "       %s -x\n", __progname);
+	    "mapname\n", getprogname());
+	fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
 }

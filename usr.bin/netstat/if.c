@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.46 2000/11/14 23:00:57 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.47 2001/02/19 23:03:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.46 2000/11/14 23:00:57 matt Exp $");
+__RCSID("$NetBSD: if.c,v 1.47 2001/02/19 23:03:50 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ sidewaysintpr(interval, off)
 	}
 	if (interesting == NULL) {
 		fprintf(stderr, "%s: %s: unknown interface\n",
-		    __progname, interface);
+		    getprogname(), interface);
 		exit(1);
 	}
 	lastif = ip;

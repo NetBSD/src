@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.10 2000/07/03 02:51:47 matt Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.11 2001/02/19 23:03:54 cgd Exp $	*/
 
 /*
  *
@@ -88,8 +88,6 @@ static char *ypnicknames[] = {
 	"services",	"services.byname",
 	0,		0,
 };
-
-extern char   *__progname;
 
 
 /*
@@ -197,10 +195,10 @@ void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-d domain] [[-h] host]\n", __progname);
+	fprintf(stderr, "\t%s [-d domain] [[-h] host]\n", getprogname());
 	fprintf(stderr, "\t%s [-h host] [-d domain] [-f] [-t] -m [mapname]\n",
-	    __progname);
-	fprintf(stderr, "\t%s -x\n", __progname);
+	    getprogname());
+	fprintf(stderr, "\t%s -x\n", getprogname());
 	exit(1);
 }
 

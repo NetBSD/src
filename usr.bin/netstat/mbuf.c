@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.15 1999/04/02 22:45:45 hubertf Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.16 2001/02/19 23:03:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.15 1999/04/02 22:45:45 hubertf Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.16 2001/02/19 23:03:50 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.15 1999/04/02 22:45:45 hubertf Exp $");
 #include <sys/pool.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "netstat.h"
 
 #define	YES	1
@@ -94,12 +95,12 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	if (nmbtypes != 256) {
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
-		        __progname);
+		        getprogname());
 		return;
 	}
 	if (mbaddr == 0) {
 		fprintf(stderr, "%s: mbstat: symbol not in namelist\n",
-		    __progname);
+		    getprogname());
 		return;
 	}
 /*XXX*/

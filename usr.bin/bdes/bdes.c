@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.3 2000/10/04 20:09:05 mjl Exp $	*/
+/*	$NetBSD: bdes.c,v 1.4 2001/02/19 23:03:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: bdes.c,v 1.3 2000/10/04 20:09:05 mjl Exp $");
+__RCSID("$NetBSD: bdes.c,v 1.4 2001/02/19 23:03:44 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -1083,9 +1083,8 @@ compress(char *from, Desbuf to)
 void
 usage(void)
 {
-	extern const char *__progname;
 
-	(void) fprintf(stderr, "usage: %s %s\n", __progname,
+	(void) fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-abdp] [-F bit] [-f bit] [-k key] [-m bit] [-o bit] [-v vector]");
 	exit(1);
 }
