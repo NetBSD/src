@@ -53,8 +53,12 @@
 #include <dev/isa/isavar.h>
 
 #include <arm32/isa/timerreg.h>
+#include <arm32/isa/isadmavar.h>
 #include <arm32/shark/fiq.h>
 #include <arm32/shark/sequoia.h>
+
+extern int fiq_getregs         __P((fiqhandler_t *));
+extern int fiq_setregs         __P((fiqhandler_t *));
 
 static int hatOn = 0;
 

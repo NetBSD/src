@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.2 1998/05/01 21:14:47 cgd Exp $	*/
 #ifndef _KBDREG_H
 #define _KBDREG_H
 

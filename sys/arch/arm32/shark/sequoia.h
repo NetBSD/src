@@ -52,7 +52,7 @@
 **	27-Jan-1997	Maddy		Added additional initial values.	
 **
 **	24-Jan-1997	Maddy		Initial Entry.
-**  $Id: sequoia.h,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $
+**  $Id: sequoia.h,v 1.2 1998/05/01 21:14:48 cgd Exp $
 */
 
 

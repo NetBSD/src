@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $       */
+/*      $NetBSD: pccons.c,v 1.2 1998/05/01 21:14:47 cgd Exp $       */
 
 /*
  * Copyright 1997
@@ -142,16 +142,18 @@
 #include <i386/isa/isa_machdep.h>
 #endif
 
+#ifdef	OFW
+#include <dev/ofw/openfirm.h>
+#endif
+
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
 #include <sys/malloc.h>
+#include <sys/reboot.h>
 #include <machine/devmap.h>
 #include <sys/msgbuf.h>
+#include <machine/ofw.h>
 extern int msgbufmapped;
-#endif
-
-#ifdef	OFW
-#include <dev/ofw/openfirm.h>
 #endif
 
 /*
@@ -350,12 +352,8 @@ struct cfattach pc_ca =
     sizeof(struct pc_softc), pcprobe, pcattach
 };
 
-struct cfdriver pc_cd = 
-{
-    NULL, "pc", DV_TTY
-};
+extern struct cfdriver pc_cd;
 
- 
 static unsigned int   addr_6845   = MONO_BASE;
 
 /* Define globals used when acting as console at boot time. 
@@ -411,8 +409,7 @@ kbd_init(bus_space_tag_t     iot,
          bus_space_handle_t  ioh)
 {
     int status = 1;
-    int i;
-    u_char value;
+    u_char value = 0;	/* XXX */
     
     /* Perfrom a controller reset if this is a cold reset happening 
     */
@@ -1027,7 +1024,11 @@ pcattach(struct device   *parent,
     ** Pass child devices our io handle so they can use
     ** the same io space as the keyboard.
     */
+#if 0
     ia->ia_delaybah = sc->kbd.sc_ioh;
+#else
+    ia->ia_aux = (void *)sc->kbd.sc_ioh;
+#endif
     /*
     ** Search for and configure any child devices.
     */
@@ -1130,7 +1131,6 @@ pcopen(dev_t       dev,
         ** Initial open of the device so set up the tty with
         ** default flag settings
         */
-        tp->t_state |= TS_WOPEN;
         ttychars(tp);
         tp->t_iflag = TTYDEF_IFLAG;
         tp->t_oflag = TTYDEF_OFLAG;
@@ -1393,7 +1393,6 @@ pcintr(void *arg)
     register struct tty *tp = sc->sc_tty;
     u_char              *cp;
     int                 handledInt;
-    u_char              status;
     
     handledInt = 1;
 
@@ -2015,8 +2014,9 @@ pccninit(struct consdev *cp)
      ** otherwise we may hang trying to do console output.
      */
     force_vga_mode();
-#endif
 
+    pccnputc(0, '\n');
+#endif
     
     splx(s);
 
@@ -2373,7 +2373,9 @@ sput(struct pc_softc   *sc,
     if (crtat == 0) 
     {
         u_short volatile *cp;
+#ifdef DOESNT_ALWAYS_DO_THE_RIGHT_THING
         u_short was;
+#endif
         unsigned cursorat;
 	vm_offset_t vam_mem_data = isa_mem_data_vaddr();
         
@@ -3108,7 +3110,7 @@ xinterpret(struct pc_softc  *sc,
 char *
 sget(struct pc_softc *sc)
 {
-    u_char             dt;
+    u_char             dt = 0;	/* XXX */
     u_char             dt_make;
 
     u_char             status;

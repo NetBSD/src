@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.2 1998/05/01 21:14:47 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -305,9 +305,9 @@
 #define NSIO_CONFIG_IOBASE( iot, ioh, ioBase ) \
 { \
    NSIO_WRITE_REG( iot, ioh, NSIO_CFG_IOBASEH, \
-		  (unsigned char)((ioBase >> 8) & 0xff) ); \
+		  (unsigned char)(((ioBase) >> 8) & 0xff) ); \
    NSIO_WRITE_REG( iot, ioh, NSIO_CFG_IOBASEL, \
-		  (unsigned char)(ioBase & 0xff ) ); \
+		  (unsigned char)(((ioBase) & 0xff ) ); \
 }
 
 /*
@@ -323,9 +323,9 @@
 #define NSIO_CONFIG_KBCDATA( iot, ioh, dataBase ) \
 { \
    NSIO_WRITE_REG( iot, ioh, NSIO_KBC_DATAH, \
-		  (unsigned char)((dataBase >> 8) & 0xff) ); \
+		  (unsigned char)(((dataBase) >> 8) & 0xff) ); \
    NSIO_WRITE_REG( iot, ioh, NSIO_KBC_DATAL, \
-		  (unsigned char)(dataBase & 0xff ) ); \
+		  (unsigned char)((dataBase) & 0xff ) ); \
 }
 
 /*
@@ -341,9 +341,9 @@
 #define NSIO_CONFIG_KBCCMD( iot, ioh, cmdBase ) \
 { \
    NSIO_WRITE_REG( iot, ioh, NSIO_KBC_CMDH, \
-		  (unsigned char)((cmdBase >> 8) & 0xff) ); \
+		  (unsigned char)(((cmdBase) >> 8) & 0xff) ); \
    NSIO_WRITE_REG( iot, ioh, NSIO_KBC_CMDL, \
-		  (unsigned char)(cmdBase & 0xff ) ); \
+		  (unsigned char)((cmdBase) & 0xff ) ); \
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $        */
+/*      $NetBSD: pms.c,v 1.2 1998/05/01 21:14:47 cgd Exp $        */
 
 /*
  * Copyright 1997
@@ -197,10 +197,7 @@ struct cfattach pms_ca =
         sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
-struct cfdriver pms_cd = 
-{
-        NULL, "pms", DV_TTY
-};
+extern struct cfdriver pms_cd;
 
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 
@@ -251,7 +248,6 @@ pmsprobe(parent, match, aux)
 {
     struct cfdata             *cf     = match;
     int                       probeOk = 0;    /* assume failure */
-    unsigned char             status;
     struct isa_attach_args    *ia = aux;                   
     
     KERN_DEBUG(pmsdebug, KERN_DEBUG_INFO, ("pmsprobe: entered\n"));
@@ -273,10 +269,10 @@ pmsprobe(parent, match, aux)
         {
             /* Clear out any garbage left in there at this point in time
             */
-            i8042_flush(ia->ia_iot, ia->ia_delaybah);
+            i8042_flush(ia->ia_iot, (bus_space_handle_t)ia->ia_aux);
             /* reset the mouse and check the command is received.
             */
-            if (!i8042_cmd(ia->ia_iot, ia->ia_delaybah, I8042_AUX_CMD, 
+            if (!i8042_cmd(ia->ia_iot, (bus_space_handle_t)ia->ia_aux, I8042_AUX_CMD, 
                                I8042_CHECK_RESPONSE, KBR_ACK, PMS_RESET))
             {
                 KERN_DEBUG(pmsdebug, KERN_DEBUG_ERROR, 
@@ -288,7 +284,7 @@ pmsprobe(parent, match, aux)
                 ** Test the mouse port. A value of 0 in the data
                 ** register indicates success. 
                 */
-                if ( I8042_AUXTEST(ia->ia_iot, ia->ia_delaybah) )
+                if ( I8042_AUXTEST(ia->ia_iot, (bus_space_handle_t)ia->ia_aux) )
                 {
                     probeOk = 1;
                 }
@@ -301,7 +297,7 @@ pmsprobe(parent, match, aux)
                 ** Disable the mouse.  It is enabled when 
                 ** the pms device is opened.
                 */
-                (void) I8042_WRITECCB(ia->ia_iot, ia->ia_delaybah, 
+                (void) I8042_WRITECCB(ia->ia_iot, (bus_space_handle_t)ia->ia_aux, 
                                           NOAUX_CMDBYTE);
             }
         } /* end-if irq set */
@@ -361,7 +357,7 @@ pmsattach(parent, self, aux)
     ** Other initialization was done by pmsprobe. 
     */
     sc->sc_iot    = ia->ia_iot;
-    sc->sc_ioh    = ia->ia_delaybah;
+    sc->sc_ioh    = (bus_space_handle_t)ia->ia_aux;
     sc->sc_state  = PMS_INIT;
 
     
@@ -789,7 +785,7 @@ pmsintr(arg)
     bus_space_handle_t   ioh;        
     static signed char   dx;
     static signed char   dy;
-    u_char               value;
+    u_char               value = 0;	/* XXX */
     
     iot = sc->sc_iot;
     ioh = sc->sc_ioh;

@@ -47,11 +47,11 @@
 
 
 #include <dev/isa/isareg.h>
-#ifdef arm32
-    #include <arm32/isa/isa_machdep.h>
-    #include <arm32/shark/sequoia.h>
-    #include <arm32/shark/fiq.h>
-#endif
+#include <arm32/isa/isa_machdep.h>
+#include <arm32/shark/sequoia.h>
+#include <arm32/shark/fiq.h>
+#include <machine/cpufunc.h>
+
 
 
 
@@ -126,7 +126,6 @@
 */
 static bus_space_handle_t sequoia_ioh;
 
-static int      ledState;           /* state of the biled */  
 static struct timeval ledLastActive;      /* last time we get net activity */
 static int      ledColor;           /* present color of led */
 static int      ledBlockCount;;     /* reference count of block calles */                            
