@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.69 2002/12/23 00:55:18 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.70 2002/12/31 15:10:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,6 +168,7 @@ int	(*moduleerr_handler) __P((void));
 #if defined(MULTIPROCESSOR)
 volatile int nmi_hard_wait = 0;
 struct simplelock nmihard_lock = SIMPLELOCK_INITIALIZER;
+int drop_into_rom_on_fatal = 1;
 #endif
 
 void
@@ -204,11 +205,15 @@ nmi_hard()
 			;
 		return;
 	} else {
-		int n = 0;
+		int n = 100000;
 
-		while (nmi_hard_wait < ncpu)
-			if (n++ > 100000)
-				panic("nmi_hard: SMP botch.");
+		while (nmi_hard_wait < ncpu) {
+			DELAY(1);
+			if (n-- > 0)
+				continue;
+			printf("nmi_hard: SMP botch.");
+			break;
+		}
 	}
 #endif
 
@@ -247,6 +252,10 @@ nmi_hard()
 	simple_lock(&nmihard_lock);
 	nmi_hard_wait = 0;
 	simple_unlock(&nmihard_lock);
+	if (fatal && drop_into_rom_on_fatal) {
+		callrom();
+		return;
+	}
 #endif
 
 	if (fatal)
@@ -262,7 +271,7 @@ nmi_soft(tf)
 {
 
 	/* XXX - Most of this is superseded by xcallintr() below */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_SAVEFPU:
 		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
@@ -286,6 +295,7 @@ nmi_soft(tf)
 		break;
 	    }
 	}
+	cpuinfo.msg.tag = 0;
 	cpuinfo.flags |= CPUFLG_GOTMSG;
 #endif
 }
@@ -316,6 +326,7 @@ static void xcallintr(void *v)
 		break;
 	    }
 	}
+	cpuinfo.msg.tag = 0;
 	cpuinfo.flags |= CPUFLG_GOTMSG;
 }
 #endif /* MULTIPROCESSOR */
