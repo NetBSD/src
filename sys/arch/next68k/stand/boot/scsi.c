@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.4 2002/07/11 16:03:19 christos Exp $        */
+/*      $NetBSD: scsi.c,v 1.5 2002/09/21 19:49:47 mycroft Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -443,7 +443,7 @@ dma_done(void)
 
     if (resid != 0)
     {
-#if 0
+#if 1
       printf("WARNING: unexpected %d characters remain in dma\n",resid);
 	scsierror("dma transfer incomplete");
 	return -1;
@@ -452,8 +452,10 @@ dma_done(void)
 
     if (state & DMACSR_BUSEXC)
     {
+#if 0
 	scsierror("dma failed");
 	return -1;
+#endif
     }
 
     sc->dma_len -= resid;
