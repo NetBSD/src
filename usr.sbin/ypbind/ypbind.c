@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.29 1996/10/02 05:55:06 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.30 1997/07/07 02:27:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,8 +32,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.29 1996/10/02 05:55:06 thorpej Exp $";
+__RCSID("$NetBSD: ypbind.c,v 1.30 1997/07/07 02:27:08 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -84,12 +85,12 @@ struct _dom_binding {
 	unsigned short int dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
-	long int dom_vers;
+	long dom_vers;
 	time_t dom_check_t;
 	time_t dom_ask_t;
 	int dom_lockfd;
 	int dom_alive;
-	int dom_xid;
+	u_int32_t dom_xid;
 };
 
 static char *domainname;
@@ -114,6 +115,7 @@ int been_ypset;
 static int debug;
 #endif
 
+static int insecure;
 static int rpcsock, pingsock;
 static struct rmtcallargs rmtca;
 static struct rmtcallres rmtcr;
@@ -121,6 +123,7 @@ static bool_t rmtcr_outval;
 static u_long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
+int	_yp_invalid_domain __P((const char *));		/* from libc */
 
 static void usage __P((void));
 static struct _dom_binding *makebinding __P((const char *));
@@ -136,10 +139,8 @@ static int nag_servers __P((struct _dom_binding *));
 static enum clnt_stat handle_replies __P((void));
 static enum clnt_stat handle_ping __P((void));
 static void rpc_received __P((char *, struct sockaddr_in *, int));
-static struct _dom_binding *xid2ypdb __P((int));
-static int unique_xid __P((struct _dom_binding *));
-static struct _dom_binding *xid2ypdb __P((int xid));
-static int unique_xid __P((struct _dom_binding *ypdb));
+static struct _dom_binding *xid2ypdb __P((u_int32_t));
+static u_int32_t unique_xid __P((struct _dom_binding *));
 static int broadcast __P((char *, int));
 static int direct __P((char *, int));
 static int direct_set __P((char *, int, struct _dom_binding *));
@@ -152,7 +153,8 @@ usage()
 #ifdef DEBUG
 	opt = " [-d]";
 #endif
-	(void) fprintf(stderr, "Usage: %s [-ypset|-ypsetme]%s\n",
+	(void) fprintf(stderr,
+	    "Usage: %s [-broadcast] [-insecure] [-ypset] [-ypsetme] %s\n",
 	    __progname, opt);
 	exit(1);
 }
@@ -229,17 +231,26 @@ ypbindproc_domain_2(transp, argp)
 	struct _dom_binding *ypdb;
 	char *arg = *(char **) argp;
 	time_t now;
+	int count;
 
 #ifdef DEBUG
 	if (debug)
 		printf("ypbindproc_domain_2 %s\n", arg);
 #endif
+	if (_yp_invalid_domain(arg))
+		return NULL;
+
 	(void) memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
-	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+	for (count = 0, ypdb = ypbindlist;
+	    ypdb != NULL;
+	    ypdb = ypdb->dom_pnext, count++) {
+		if (count > 100)
+			return NULL;		/* prevent denial of service */
 		if (!strcmp(ypdb->dom_domain, arg))
 			break;
+	}
 
 	if (ypdb == NULL) {
 		ypdb = makebinding(arg);
@@ -470,7 +481,9 @@ main(argc, argv)
 
 	while (--argc) {
 		++argv;
-		if (!strcmp("-ypset", *argv))
+		if (!strcmp("-insecure", *argv))
+			insecure = 1;
+		else if (!strcmp("-ypset", *argv))
 			ypbindmode = YPBIND_SETALL;
 		else if (!strcmp("-ypsetme", *argv))
 			ypbindmode = YPBIND_SETLOCAL;
@@ -531,6 +544,9 @@ main(argc, argv)
 	rmtcr.port_ptr = &rmtcr_port;
 	rmtcr.xdr_results = xdr_bool;
 	rmtcr.results_ptr = (caddr_t)&rmtcr_outval;
+
+	if (_yp_invalid_domain(domainname))
+		errx(1, "bad domainname: %s", domainname);
 
 	/* build initial domain binding, make it "unsuccessful" */
 	ypbindlist = makebinding(domainname);
@@ -931,7 +947,7 @@ direct_set(buf, outlen, ypdb)
 	 * "been_set" if this happens, otherwise we'll never
 	 * bind again.
 	 */
-	snprintf(path, sizeof(path), "%s/%s.%d", BINDINGDIR,
+	snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
 	    ypdb->dom_domain, ypdb->dom_vers);
 
 	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
@@ -1093,6 +1109,13 @@ rpc_received(dom, raddrp, force)
 	if (dom == NULL)
 		return;
 
+	if (_yp_invalid_domain(dom))
+		return;	
+
+		/* don't support insecure servers by default */
+	if (!insecure && ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
+		return;
+
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
 		if (!strcmp(ypdb->dom_domain, dom))
 			break;
@@ -1159,7 +1182,7 @@ rpc_received(dom, raddrp, force)
 
 static struct _dom_binding *
 xid2ypdb(xid)
-	int xid;
+	u_int32_t xid;
 {
 	struct _dom_binding *ypdb;
 
@@ -1169,13 +1192,13 @@ xid2ypdb(xid)
 	return (ypdb);
 }
 
-static int
+static u_int32_t
 unique_xid(ypdb)
 	struct _dom_binding *ypdb;
 {
-	int tmp_xid;
+	u_int32_t tmp_xid;
 
-	tmp_xid = (long)ypdb & 0xffffffff;
+	tmp_xid = (u_int32_t)ypdb & 0xffffffff;
 	while (xid2ypdb(tmp_xid) != NULL)
 		tmp_xid++;
 
