@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_eb164.c,v 1.6 1997/01/15 22:13:38 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.7 1997/03/21 01:26:11 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -164,7 +164,7 @@ dec_eb164_device_register(dev, aux)
 		else {
 			struct pcibus_attach_args *pba = aux;
 
-			if (b->bus != pba->pba_bus)
+			if ((b->slot / 1000) != pba->pba_bus)
 				return;
 	
 			pcidev = dev;
@@ -181,7 +181,7 @@ dec_eb164_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */
@@ -236,7 +236,7 @@ dec_eb164_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */
