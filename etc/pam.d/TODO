@@ -1,10 +1,11 @@
-# $NetBSD: TODO,v 1.8 2005/02/24 15:15:27 christos Exp $
+# $NetBSD: TODO,v 1.9 2005/02/27 19:30:20 christos Exp $
 
 Status:
 
 Programs
 -------------------------------------------------------------------------------
 ftpd		- Done, needs testing and review, working
+		  XXX: pam_ftpusers does not parse our format properly.
 gdm		- Pkgsrc, nothing to do
 imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
@@ -36,7 +37,7 @@ login		- Nothing
 other		- Internal
 passwd		- passwd -p usage.
 pop3		- Pkgsrc, nothing to do
-pppd		- XXX: No /etc/pam.d/ppp
+pppd		- Nothing
 racoon		- Check racoon.conf(5). XXX: No /etc/pam.d/racoon
 rexecd		- Nothing
 rsh		- Nothing
