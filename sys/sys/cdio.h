@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.17 1999/01/04 15:32:08 is Exp $	*/
+/*	$NetBSD: cdio.h,v 1.18 2004/05/10 15:14:12 christos Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -182,7 +182,7 @@ struct ioc_read_toc_entry {
 	struct	cd_toc_entry *data;
 };
 #define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
-#define CDIOREADTOCENTRYS _IOWR('c', 5, struct ioc_read_toc_entry)
+#define CDIOREADTOCENTRYS CDIOREADTOCENTRIES
 
 /* read LBA start of a given session; 0=last, others not yet supported */
 #define CDIOREADMSADDR _IOWR('c', 6, int)
