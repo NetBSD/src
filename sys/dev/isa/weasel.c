@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel.c,v 1.2 2001/04/26 17:58:28 thorpej Exp $	*/
+/*	$NetBSD: weasel.c,v 1.3 2001/05/03 17:55:47 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -55,8 +55,9 @@
 
 int	weasel_wdog_setmode(struct sysmon_wdog *);
 int	weasel_wdog_tickle(struct sysmon_wdog *);
+int	weasel_wdog_arm_disarm(struct weasel_handle *, u_int8_t);
+int	weasel_wdog_query_state(struct weasel_handle *);
 
-int	weasel_wdog_toggle(struct weasel_handle *);
 
 void	pcweaselattach(int);
 
@@ -111,7 +112,7 @@ weasel_init(struct weasel_handle *wh)
 	for (i = 0; i < 2000; i++) {
 		delay(1000);
 		bus_space_read_region_1(wh->wh_st, wh->wh_sh,
-		    WEASEL_CONFIG_BLOCK, (u_int8_t *) &cfg, sizeof(cfg));
+		    WEASEL_CONFIG_BLOCK, &cfg, sizeof(cfg));
 		/*
 		 * Compute the checksum of the config block.
 		 */
@@ -183,38 +184,33 @@ weasel_init(struct weasel_handle *wh)
 
 	printf("%s: break passthrough %s", wh->wh_parent->dv_xname,
 	    cfg.break_passthru ? "enabled" : "disabled");
-	if (cfg.wdt_allow) {
-		if (cfg.wdt_msec == 0) {
-			/*
-			 * Old firmware -- these Weasels have
-			 * a 3000ms watchdog period.
-			 */
-			cfg.wdt_msec = 3000;
-		}
-
+	if (cfg.wdt_msec == 0) {
 		/*
-		 * There's no way to determine what mode the watchdog
-		 * is in, but we can safely assume that it starts off
-		 * disarmed.
+		 * Old firmware -- these Weasels have
+		 * a 3000ms watchdog period.
 		 */
+		cfg.wdt_msec = 3000;
+	}
+
+	if ((wh->wh_wdog_armed = weasel_wdog_query_state(wh)) == -1)
 		wh->wh_wdog_armed = 0;
-		wh->wh_wdog_period = cfg.wdt_msec / 1000;
+	wh->wh_wdog_period = cfg.wdt_msec / 1000;
 
-		printf(", watchdog interval %d sec.", wh->wh_wdog_period);
-	}
-	printf("\n");
+	printf(", watchdog interval %d sec.\n", wh->wh_wdog_period);
 
-	if (cfg.wdt_allow) {
-		wh->wh_smw.smw_name = "weasel";
-		wh->wh_smw.smw_cookie = wh;
-		wh->wh_smw.smw_setmode = weasel_wdog_setmode;
-		wh->wh_smw.smw_tickle = weasel_wdog_tickle;
-		wh->wh_smw.smw_period = wh->wh_wdog_period;
+	/*
+	 * Always register the Weasel watchdog timer in case user decides
+	 * to set 'allow watchdog' to 'YES' after the machine has booted.
+	 */
+	wh->wh_smw.smw_name = "weasel";
+	wh->wh_smw.smw_cookie = wh;
+	wh->wh_smw.smw_setmode = weasel_wdog_setmode;
+	wh->wh_smw.smw_tickle = weasel_wdog_tickle;
+	wh->wh_smw.smw_period = wh->wh_wdog_period;
 
-		if (sysmon_wdog_register(&wh->wh_smw) != 0)
-			printf("%s: unable to register PC-Weasel watchdog "
-			    "with sysmon\n", wh->wh_parent->dv_xname);
-	}
+	if (sysmon_wdog_register(&wh->wh_smw) != 0)
+		printf("%s: unable to register PC-Weasel watchdog "
+		    "with sysmon\n", wh->wh_parent->dv_xname);
 }
 
 int
@@ -224,8 +220,7 @@ weasel_wdog_setmode(struct sysmon_wdog *smw)
 	int error = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		if (wh->wh_wdog_armed)
-			error = weasel_wdog_toggle(wh);
+		error = weasel_wdog_arm_disarm(wh, WDT_DISABLE);
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 			smw->smw_period = wh->wh_wdog_period;
@@ -233,10 +228,8 @@ weasel_wdog_setmode(struct sysmon_wdog *smw)
 			/* Can't change the period on the Weasel. */
 			return (EINVAL);
 		}
-		if (wh->wh_wdog_armed == 0)
-			error = weasel_wdog_toggle(wh);
-		else
-			weasel_wdog_tickle(smw);
+		error = weasel_wdog_arm_disarm(wh, WDT_ENABLE);
+		weasel_wdog_tickle(smw);
 	}
 
 	return (error);
@@ -247,57 +240,125 @@ weasel_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct weasel_handle *wh = smw->smw_cookie; 
 	u_int8_t reg;
+	int x;
 	int s;
+	int error = 0;
 
 	s = splhigh();
-	reg = bus_space_read_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_SEMAPHORE);
-	bus_space_write_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_SEMAPHORE, ~reg);
-	splx(s);
+	/*
+	 * first we tickle the watchdog
+	 */
+	reg = bus_space_read_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_TICKLE);
+	bus_space_write_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_TICKLE, ~reg);
 
-	return (0);
-}
-
-int
-weasel_wdog_toggle(struct weasel_handle *wh)
-{
-	u_int8_t reg;
-	int i, s, new_state, error = 0;
-
-	s = splhigh();
-
-	for (i = 0, new_state = wh->wh_wdog_armed;
-	     new_state == wh->wh_wdog_armed && i < 5000; i++) {
-		bus_space_write_1(wh->wh_st, wh->wh_sh,
-		    WEASEL_WDT_SEMAPHORE, 0x22);
-		delay(1500);
-		reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
-		    WEASEL_WDT_SEMAPHORE);
-		if (reg == 0xea) {
-			bus_space_write_1(wh->wh_st, wh->wh_sh,
-			    WEASEL_WDT_SEMAPHORE, 0x2f);
-			delay(1500);
-			reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
-			    WEASEL_WDT_SEMAPHORE);
-			if (reg == 0xae) {
-				bus_space_write_1(wh->wh_st, wh->wh_sh,
-				    WEASEL_WDT_SEMAPHORE, 0x37);
-				delay(1500);
-				new_state = bus_space_read_1(wh->wh_st,
-				    wh->wh_sh, WEASEL_WDT_SEMAPHORE);
-			}
-		}
-	}
-
-	/* Canonicalize. */
-	if (new_state)
-		new_state = 1;
-
-	if (new_state == wh->wh_wdog_armed)
+	/*
+	 * then we check to make sure the weasel is still armed. If someone
+	 * has rebooted the weasel for whatever reason (firmware update),
+	 * then the watchdog timer would no longer be armed and we'd be 
+	 * servicing nothing. Let the user know that the machine is no
+	 * longer being monitored by the weasel.
+	 */
+	if((x = weasel_wdog_query_state(wh)) == -1)
 		error = EIO;
-	else
-		wh->wh_wdog_armed = new_state;
-
+	if (x == 1) { 
+		error = 0;
+	} else {
+		printf("%s: Watchdog timer disabled on PC/Weasel! Disarming wdog.\n", 
+			wh->wh_parent->dv_xname);
+		wh->wh_wdog_armed = 0;
+		error = 1;
+	}
 	splx(s);
 
 	return (error);
+}
+
+int
+weasel_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
+{
+	u_int8_t reg;
+	int timeout;
+	int s, x;
+	int error = 0;
+
+	s = splhigh();
+
+	bus_space_write_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_SEMAPHORE,
+		WDT_ATTENTION);
+	for (timeout = 5000; timeout; timeout--) {
+		delay(1500);
+		reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
+			WEASEL_WDT_SEMAPHORE);
+		if (reg == WDT_OK)
+			break;
+	}
+	if (timeout == 0) {
+		splx(s);
+		return(EIO);
+	}
+	bus_space_write_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_SEMAPHORE, mode);
+	for (timeout = 500 ; timeout; timeout--) {
+		delay(1500);
+		reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
+			WEASEL_WDT_SEMAPHORE);
+		if (reg != mode)
+			break;
+	}
+	if (timeout == 0) {
+		splx(s);
+		return(EIO);
+	}
+	bus_space_write_1(wh->wh_st, wh->wh_sh, WEASEL_WDT_SEMAPHORE, ~reg);
+	for (timeout = 500; timeout; timeout--) {
+		delay(1500);
+		reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
+			WEASEL_WDT_SEMAPHORE);
+		if (reg == WDT_OK)
+			break;
+	}
+
+	/*
+	 * Ensure that the Weasel thinks it's in the same mode we want it to
+	 * be in.   EIO if not.
+	 */
+	x = weasel_wdog_query_state(wh);
+	switch (x) {
+		case -1:
+			error = EIO;
+			break;
+		case 0: 
+			if (mode == WDT_DISABLE) {
+				wh->wh_wdog_armed = 0;
+				error = 0;
+			} else
+				error = EIO;
+			break;
+		case 1:
+			if (mode == WDT_ENABLE) {
+				wh->wh_wdog_armed = 1;
+				error = 0;
+			} else
+				error = EIO;
+			break;
+	}
+				
+	splx(s);
+	return(error);
+}
+
+int
+weasel_wdog_query_state(struct weasel_handle *wh)
+{
+	int timeout, reg;
+
+	bus_space_write_1(wh->wh_st, wh->wh_sh,
+		WEASEL_MISC_COMMAND, OS_WDT_QUERY);
+	for (timeout = 0; timeout < 1500; timeout++) {
+		delay(1000);
+		reg = bus_space_read_1(wh->wh_st, wh->wh_sh,
+			WEASEL_MISC_COMMAND);
+		if (reg == OS_READY)
+			break;
+	}
+	return(bus_space_read_1(wh->wh_st, wh->wh_sh, WEASEL_MISC_RESPONSE));
 }
