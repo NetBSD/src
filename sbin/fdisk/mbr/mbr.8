@@ -1,15 +1,14 @@
-.\"	$NetBSD: mbr.8,v 1.7 2002/07/09 22:11:50 jdolecek Exp $
+.\"	$NetBSD: mbr.8,v 1.8 2002/07/09 22:51:13 wiz Exp $
 .Dd April 13, 1999
 .Dt MBR 8
 .Os
 .Sh NAME
 .Nm mbr ,
 .Nm bootselect
-.Nd
-Master Boot Record bootcode
+.Nd Master Boot Record bootcode
 .Sh DESCRIPTION
-An IBM PC boots from a disk by loading its first sector and executing the code
-in it.
+An IBM PC boots from a disk by loading its first sector and executing
+the code in it.
 For a hard disk, this first sector usually contains a table of
 partitions present on the disk.
 The first sector of a disk containing such
