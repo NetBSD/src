@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1993/10/07 19:40:36 cgd Exp $
+#	$Id: Makefile,v 1.10 1993/10/10 01:53:09 cgd Exp $
 
 LIB=	kern
 LIBDIR=	${.CURDIR}/../arch/${MACHINE}/compile
@@ -17,12 +17,12 @@ NOPIC=
 .endif
 
 LIBC=	${.CURDIR}/../../lib/libc
-.PATH: ${LIBC}/string ${LIBC}/${MACHINE}/string
-.PATH: ${LIBC}/net ${LIBC}/${MACHINE}/net
-.PATH: ${LIBC}/gen ${LIBC}/${MACHINE}/gen
-.PATH: ${LIBC}/stdlib ${LIBC}/${MACHINE}/stdlib
-.PATH: ${LIBC}/sys ${LIBC}/${MACHINE}/sys
-AINC+=	-I${LIBC}/${MACHINE}
+.PATH: ${LIBC}/string ${LIBC}/arch/${MACHINE}/string
+.PATH: ${LIBC}/net ${LIBC}/arch/${MACHINE}/net
+.PATH: ${LIBC}/gen ${LIBC}/arch/${MACHINE}/gen
+.PATH: ${LIBC}/stdlib ${LIBC}/arch/${MACHINE}/stdlib
+.PATH: ${LIBC}/sys ${LIBC}/arch/${MACHINE}/sys
+AINC+=	-I${LIBC}/arch/${MACHINE}
 
 install:
 	install ${COPY} lib${LIB}.a ${LIBDIR}
