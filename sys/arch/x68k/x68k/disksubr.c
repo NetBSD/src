@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2001/11/24 16:08:25 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,6 +44,13 @@
 #include <sys/syslog.h>
 #include <sys/disk.h>
 
+/* get rid of DEV_BSIZE dependency */
+#define DEF_BSIZE	DEV_BSIZE  /* default sector size = 512 */
+
+static void parttbl_consistency_check(struct disklabel *,
+				      struct dos_partition *);
+
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -51,11 +58,6 @@
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
  * must be filled in before calling us.
- *
- * If dos partition table requested, attempt to load it and
- * find disklabel inside a DOS partition. Also, if bad block
- * table needed, attempt to extract it as well. Return buffer
- * for use in signalling errors if requested.
  *
  * Returns null on success and an error string on failure.
  */
@@ -66,18 +68,22 @@ readdisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp = 0;
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int dospartoff, cyl, i;
+	int i, labelsz;
 
+	if (osdep)
+		dp = osdep->dosparts;
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
-		lp->d_secsize = DEV_BSIZE;
+		lp->d_secsize = DEF_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+	if (lp->d_secpercyl == 0)
+		lp->d_secpercyl = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -91,43 +97,73 @@ readdisklabel(dev, strat, lp, osdep)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* do dos partitions in the process of getting disklabel? */
-	dospartoff = 0;
-	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-		bp->b_blkno = DOSBBSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags |= B_READ;
-		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
+	/* read BSD disklabel first */
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = LABELSECTOR/lp->d_secpercyl;
+	labelsz = howmany(LABELOFFSET+sizeof(struct disklabel), lp->d_secsize)
+		* lp->d_secsize;
+	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_flags |= B_READ;
+	(*strat)(bp);
 
-		if (biowait(bp)) {
-			msg = "dos boot record I/O error";
-			goto done;
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp)) {
+		msg = "disk label I/O error";
+		goto dodospart;
+	}
+	for (dlp = (struct disklabel *)bp->b_data;
+	     dlp <= (struct disklabel *)(bp->b_data + labelsz - sizeof(*dlp));
+	     dlp = (struct disklabel *)((uint8_t *)dlp + sizeof(long))) {
+		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+			if (msg == NULL)
+				msg = "no disk label";
+		} else if (dlp->d_npartitions > MAXPARTITIONS ||
+			   dkcksum(dlp) != 0)
+			msg = "disk label corrupted";
+		else {
+			*lp = *dlp;
+			msg = NULL;
+			break;
 		}
-		if (bcmp(bp->b_data, "X68SCSI1", 8) != 0) {
-			msg = "no disk label";
+	}
+
+dodospart:
+	/* next do the Human68k-style partition table */
+	/* Human68k does not support > 2048B/sector devices (?) */
+	if (lp->d_secsize >= 2048) {
+		if (msg)
 			goto done;
-		}
+		goto dobadsect;
+	}
+	bp->b_blkno = DOSPARTOFF * DEF_BSIZE / lp->d_secsize;
+				/* DOSPARTOFF in DEV_BSIZE unit */
+	bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
+	labelsz = howmany(sizeof(struct cpu_disklabel),
+			  lp->d_secsize) * lp->d_secsize;
+	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_flags &= ~(B_DONE);
+	(*strat)(bp);
 
-		/* read partition record */
-		bp->b_blkno = DOSPARTOFF;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
-		bp->b_flags |= B_READ;
-		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
-		(*strat)(bp);
-
-		/* if successful, wander through dos partition table */
-		if (biowait(bp)) {
-			msg = "dos partition I/O error";
+	/* if successful, wander through Human68k partition table */
+	if (biowait(bp))
+		goto done;
+	if (strncmp(bp->b_data, "X68K", 4) != 0) {
+		/* Human68k-style partition table does not exist */
+		if (msg)
 			goto done;
-		}
+		goto dobadsect;
+	}
 
-		/* XXX how do we check veracity/bounds of this? */
+	/* XXX how do we check veracity/bounds of this? */
+	if (dp)
 		bcopy(bp->b_data + sizeof(*dp) /*DOSPARTOFF*/, dp,
 		      NDOSPART * sizeof(*dp));
+	else
+		dp = (void*) (bp->b_data + sizeof(*dp) /*DOSPARTOFF*/);
 
+	/* if BSD disklabel does not exist, fall back to Human68k partition */
+	if (msg != NULL) {
+		msg = NULL;
 		lp->d_bbsize = 8192;
 		lp->d_sbsize = 2048;
 		for (i = 0; i < NDOSPART; i++, dp++)
@@ -137,9 +173,6 @@ readdisklabel(dev, strat, lp, osdep)
 				int part = i + (i < RAW_PART ? 0 : 1);
 				int start = dp->dp_start * 2;
 				int size = dp->dp_size * 2;
-
-				/* need sector address for SCSI */
-				dospartoff = start; /* XXX */
 
 				/* update disklabel with details */
 				lp->d_partitions[part].p_size = size;
@@ -168,41 +201,11 @@ readdisklabel(dev, strat, lp, osdep)
 				if (lp->d_npartitions <= part)
 					lp->d_npartitions = part + 1;
 			}
-		goto done;
+	} else {
+		parttbl_consistency_check(lp, dp);
 	}
 
-	/* next, dig out disk label */
-	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags &= ~(B_DONE);
-	bp->b_flags |= B_READ;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	if (biowait(bp)) {
-		msg = "disk label I/O error";
-		goto done;
-	}
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data+DEV_BSIZE-sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			*lp = *dlp;
-			msg = NULL;
-			break;
-		}
-	}
-
-	if (msg)
-		goto done;
-
+dobadsect:
 	/* obtain bad sector table if requested and present */
 	if (bdp && (lp->d_flags & D_BADSECT)) {
 		struct dkbad *db;
@@ -213,10 +216,10 @@ readdisklabel(dev, strat, lp, osdep)
 			bp->b_flags &= ~(B_DONE);
 			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
+			if (lp->d_secsize > DEF_BSIZE)
+				bp->b_blkno *= lp->d_secsize / DEF_BSIZE;
 			else
-				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
+				bp->b_blkno /= DEF_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
@@ -259,7 +262,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
-		|| (nlp->d_secsize % DEV_BSIZE) != 0)
+		/*|| (nlp->d_secsize % DEV_BSIZE) != 0*/)
 			return(EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
@@ -272,6 +275,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
+	if (osdep)
+		parttbl_consistency_check(nlp, osdep->dosparts);
 	/* XXX missing check if other dos partitions will be overwritten */
 
 	while (openmask != 0) {
@@ -310,39 +315,77 @@ writedisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp = 0;
 	struct buf *bp;
 	struct disklabel *dlp;
-	int error, dospartoff, cyl, i;
+	int error, labelsz, i;
 	char *np;
+
+	if (osdep)
+		dp = osdep->dosparts;
+	/* sanity clause */
+	if (lp->d_secpercyl == 0 || lp->d_secsize == 0
+		/*|| (lp->d_secsize % DEF_BSIZE) != 0*/)
+			return(EINVAL);
+	if (dp)
+		parttbl_consistency_check(lp, dp);
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/* attempt to write BSD disklabel first */
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
+	labelsz = howmany(LABELOFFSET+sizeof(struct disklabel), lp->d_secsize)
+		* lp->d_secsize;
+	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_flags |= B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp))
+		goto dodospart;
+	error = ESRCH;
+	for (dlp = (struct disklabel *)bp->b_data;
+	     dlp <= (struct disklabel *)(bp->b_data + labelsz - sizeof(*dlp));
+	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
+		    dkcksum(dlp) == 0) {
+			*dlp = *lp;
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
+			(*strat)(bp);
+			error = biowait(bp);
+			break;
+		}
+	}
+
+dodospart:
 	/* do dos partitions in the process of getting disklabel? */
-	dospartoff = 0;
-	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
-		/* read master boot record */
+	if (error) {
+		if (lp->d_secsize >= 2048) {
+			error = ESRCH;
+			goto done;
+		}
+#if 0				/* there is no mark on floppies */
+		/* read the x68k disk magic */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
+		bp->b_flags &= ~(B_WRITE|B_DONE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
-		if (biowait(bp))
-			goto done;
-
-#ifdef maybe
-		if (bcmp(bp->b_data, "X68SCSI1", 8) != 0) {
-			goto done;
-		}
+		if ((error = biowait(bp)) || bcmp(bp->b_data, "X68SCSI1", 8))
+			printf("warning: disk not marked for x68k");
 #endif
 
-		/* read partition record */
+		/* read the partition table */
 		bp->b_blkno = DOSPARTOFF;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags &= ~(B_DONE);
+		labelsz = howmany(sizeof(struct cpu_disklabel),
+				  lp->d_secsize) * lp->d_secsize;
+		bp->b_bcount = labelsz;
+		bp->b_flags &= ~(B_WRITE|B_DONE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
@@ -360,28 +403,28 @@ writedisklabel(dev, strat, lp, osdep)
 				switch (lp->d_partitions[part].p_fstype) {
 				case FS_MSDOS:
 					np = "Human68k";
-					dp->dp_flag = 0; /* XXX 自動起動 */
+					dp->dp_flag = 0; /* autoboot */
 					break;
 
 				case FS_SWAP:
 					np = "BSD swap";
-					dp->dp_flag = 2; /* 使用可能 */
+					dp->dp_flag = 2; /* in use */
 					break;
 
 				case FS_BSDFFS:
 					np = "BSD ffs ";
 					if (part == 0)
-						dp->dp_flag = 0; /* 自動起動 */
+						dp->dp_flag = 0; /* autoboot */
 					else
-						dp->dp_flag = 2; /* 使用可能 */
+						dp->dp_flag = 2; /* in use */
 					break;
 
 				case FS_BSDLFS:
 					np = "BSD lfs ";
 					if (part == 0)
-						dp->dp_flag = 0; /* 自動起動 */
+						dp->dp_flag = 0; /* autoboot */
 					else
-						dp->dp_flag = 2; /* 使用可能 */
+						dp->dp_flag = 2; /* in use */
 					break;
 
 				case FS_UNUSED:
@@ -407,7 +450,6 @@ writedisklabel(dev, strat, lp, osdep)
 			(*strat)(bp);
 			error = biowait(bp);
 		}
-		goto done;
 	}
 
 #ifdef maybe
@@ -419,31 +461,6 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 #endif
 
-	/* next, dig out disk label */
-	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	error = biowait(bp);
-	if (error)
-		goto done;
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags &= ~(B_READ|B_DONE);
-			bp->b_flags |= B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
-	error = ESRCH;
 done:
 	brelse(bp);
 	return (error);
@@ -501,4 +518,62 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return (0);
+}
+
+static void
+parttbl_consistency_check(lp, dp)
+	struct disklabel *lp;
+	struct dos_partition *dp;
+{
+	int i, j;
+	int f = (lp->d_secsize >= 1024) ? lp->d_secsize/1024 : 1;
+	int g = (lp->d_secsize >= 1024) ? 1 : 1024/lp->d_secsize;
+
+	/* 1. overlapping check on partition table */
+	for (i = 0; i < NDOSPART; i++) {
+		if (dp[i].dp_size == 0)
+			continue;
+		for (j = i+1; j < NDOSPART; j++) {
+			if (dp[j].dp_size == 0)
+				continue;
+			if (((dp[i].dp_start <= dp[j].dp_start) &&
+			     (dp[i].dp_start + dp[i].dp_size > dp[j].dp_start))||
+			    ((dp[j].dp_start <= dp[i].dp_start) &&
+			     (dp[j].dp_start + dp[j].dp_size > dp[i].dp_start))) {
+				printf("warning: Human68k partition %d and %d"
+				       " are overlapping\n", i+1, j+1);
+				return;
+			}
+		}
+	}
+
+	/* 2. scan disklabel partitions */
+#define bp	lp->d_partitions
+	for (i = 0; i < lp->d_npartitions; i++) {
+		int c = 0;
+
+		if (lp->d_partitions[i].p_fstype == FS_UNUSED ||
+		    lp->d_partitions[i].p_size == 0)
+			continue;
+		for (j = 0; j < NDOSPART; j++) {
+			if (dp[j].dp_size == 0)
+				continue;
+			if ((bp[i].p_offset * f < (dp[j].dp_start + dp[j].dp_size) * g) &&
+			    ((bp[i].p_offset + bp[i].p_size) * f >= (dp[j].dp_start + dp[j].dp_size) * g))
+				c++;
+			if ((bp[i].p_offset * f > dp[j].dp_start * g) &&
+			    ((bp[i].p_offset + bp[i].p_size) * f < (dp[j].dp_start + dp[j].dp_size) * g))
+				c++;
+			if ((bp[i].p_offset * f >= dp[j].dp_start * g) &&
+			    ((bp[i].p_offset + bp[i].p_size) * f < dp[j].dp_start * g))
+				c++;
+		}
+		if (c > 1)
+			printf ("warning: partition %c spans for 2 or more"
+				" partitions in Human68k partition table.\n",
+				i+'a');
+	}
+#undef bp
+
+	/* more checks? */
 }
