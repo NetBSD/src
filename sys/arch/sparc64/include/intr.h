@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/06/02 15:36:54 eeh Exp $ */
+/*	$NetBSD: intr.h,v 1.4 2000/06/24 04:25:08 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,15 +41,15 @@
 #define IPL_SOFTINT	1	/* softint */
 #define IPL_SOFTCLOCK	1	/* timeouts */
 #define IPL_SOFTNET	1	/* protocol stack */
-#define IPL_BIO		2	/* block I/O */
-#define IPL_NET		3	/* network */
+#define IPL_BIO		PIL_BIO	/* block I/O */
+#define IPL_NET		PIL_NET	/* network */
 #define IPL_SOFTSERIAL	4	/* serial */
-#define IPL_TTY		5	/* terminal */
-#define IPL_IMP		6	/* memory allocation */
-#define IPL_AUDIO	7	/* audio */
-#define IPL_CLOCK	8	/* clock */
-#define IPL_SERIAL	9	/* serial */
-#define IPL_HIGH	10	/* everything */
+#define IPL_TTY		PIL_TTY	/* terminal */
+#define IPL_IMP		PIL_IMP	/* memory allocation */
+#define IPL_AUDIO	PIL_AUD	/* audio */
+#define IPL_CLOCK	PIL_CLOCK	/* clock */
+#define IPL_SERIAL	PIL_SER	/* serial */
+#define IPL_HIGH	15	/* everything */
 
 void *
 softintr_establish __P((int level, int (*fun)(void *), void *arg));
