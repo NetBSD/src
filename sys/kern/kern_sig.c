@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.160 2003/09/25 21:59:18 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.161 2003/09/26 22:14:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.160 2003/09/25 21:59:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.161 2003/09/26 22:14:19 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -278,6 +278,9 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 	 * trampoline.
 	 */
 	if ((vers != 0 && tramp == NULL) ||
+#ifdef SIGTRAMP_VALID
+	    !SIGTRAMP_VALID(vers) ||
+#endif
 	    (vers == 0 && tramp != NULL))
 		return (EINVAL);
 
