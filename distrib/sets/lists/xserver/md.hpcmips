@@ -1,3 +1,5 @@
-# $NetBSD: md.hpcmips,v 1.1 2000/05/16 11:27:37 shin Exp $
+# $NetBSD: md.hpcmips,v 1.1.4.1 2000/08/31 08:31:57 jun Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xhpc
+./usr/X11R6/bin/Xwrapper
+./usr/X11R6/man/cat1/Xhpc.0
