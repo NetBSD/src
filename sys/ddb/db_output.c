@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.14 1996/09/25 21:03:06 christos Exp $	*/
+/*	$NetBSD: db_output.c,v 1.15 1996/10/28 08:42:13 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -281,7 +281,7 @@ db_printf_guts(fmt, ap)
 	for (;;) {
 		padc = ' ';
 		width = 0;
-		while ((ch = *(u_char *)fmt++) != '%') {
+		while ((ch = *(const u_char *)fmt++) != '%') {
 			if (ch == '\0')
 				return;
 			db_putchar(ch);
@@ -290,7 +290,7 @@ db_printf_guts(fmt, ap)
 		ladjust = 0;
 		sharpflag = 0;
 		neg = 0;
-reswitch:	switch (ch = *(u_char *)fmt++) {
+reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 		case '.':
 			padc = '0';
