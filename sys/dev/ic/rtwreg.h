@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.4 2004/12/21 09:07:23 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.5 2004/12/27 08:59:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -110,10 +110,10 @@
 				 * 0: use long PLCP header
 				 */
 #define RTW_BRSR_MBR8180_MASK	BITS(1,0)	/* Maximum Basic Service Rate */
-#define RTW_BRSR_MBR8180_1MBPS	LSHIFT(0, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_2MBPS	LSHIFT(1, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_5MBPS	LSHIFT(2, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_11MBPS	LSHIFT(3, RTW_BRSR_MBR_MASK)
+#define RTW_BRSR_MBR8180_1MBPS	LSHIFT(0, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_2MBPS	LSHIFT(1, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_5MBPS	LSHIFT(2, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_11MBPS	LSHIFT(3, RTW_BRSR_MBR8180_MASK)
 
 /* 8181 and 8180 docs conflict! */
 #define RTW_BRSR_MBR8181_1MBPS	BIT(0)
