@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.9 1998/07/21 14:53:36 rvb Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.10 1998/10/25 19:15:04 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,28 +47,28 @@
 #include "menu_defs.h"
 
 struct lookfor fdiskbuf[] = {
-	{"DLCYL", "DLCYL=%d", "a $0", &dlcyl, NULL},
-	{"DLHEAD", "DLHEAD=%d", "a $0", &dlhead, NULL},
-	{"DLSEC", "DLSEC=%d", "a $0", &dlsec, NULL},
-	{"BCYL", "BCYL=%d", "a $0", &bcyl, NULL},
-	{"BHEAD", "BHEAD=%d", "a $0", &bhead, NULL},
-	{"BSEC", "BSEC=%d", "a $0", &bsec, NULL},
-	{"PART0ID", "PART0ID=%d", "a $0", &part[0][ID], NULL},
-	{"PART0SIZE", "PART0SIZE=%d", "a $0", &part[0][SIZE], NULL},
-	{"PART0START", "PART0START=%d", "a $0", &part[0][START], NULL},
-	{"PART0FLAG", "PART0FLAG=0x%d", "a $0", &part[0][FLAG], NULL},
-	{"PART1ID", "PART1ID=%d", "a $0", &part[1][ID], NULL},
-	{"PART1SIZE", "PART1SIZE=%d", "a $0", &part[1][SIZE], NULL},
-	{"PART1START", "PART1START=%d", "a $0", &part[1][START], NULL},
-	{"PART1FLAG", "PART1FLAG=0x%d", "a $0", &part[1][FLAG], NULL},
-	{"PART2ID", "PART2ID=%d", "a $0", &part[2][ID], NULL},
-	{"PART2SIZE", "PART2SIZE=%d", "a $0", &part[2][SIZE], NULL},
-	{"PART2START", "PART2START=%d", "a $0", &part[2][START], NULL},
-	{"PART2FLAG", "PART2FLAG=0x%d", "a $0", &part[2][FLAG], NULL},
-	{"PART3ID", "PART3ID=%d", "a $0", &part[3][ID], NULL},
-	{"PART3SIZE", "PART3SIZE=%d", "a $0", &part[3][SIZE], NULL},
-	{"PART3START", "PART3START=%d", "a $0", &part[3][START], NULL},
-	{"PART3FLAG", "PART3FLAG=0x%d", "a $0", &part[3][FLAG], NULL}
+	{"DLCYL", "DLCYL=%d", "a $0", &dlcyl, 1, 0, NULL},
+	{"DLHEAD", "DLHEAD=%d", "a $0", &dlhead, 1, 0, NULL},
+	{"DLSEC", "DLSEC=%d", "a $0", &dlsec, 1, 0, NULL},
+	{"BCYL", "BCYL=%d", "a $0", &bcyl, 1, 0, NULL},
+	{"BHEAD", "BHEAD=%d", "a $0", &bhead, 1, 0, NULL},
+	{"BSEC", "BSEC=%d", "a $0", &bsec, 1, 0, NULL},
+	{"PART0ID", "PART0ID=%d", "a $0", &part[0][ID], 1, 0, NULL},
+	{"PART0SIZE", "PART0SIZE=%d", "a $0", &part[0][SIZE], 1, 0, NULL},
+	{"PART0START", "PART0START=%d", "a $0", &part[0][START], 1, 0, NULL},
+	{"PART0FLAG", "PART0FLAG=0x%d", "a $0", &part[0][FLAG], 1, 0, NULL},
+	{"PART1ID", "PART1ID=%d", "a $0", &part[1][ID], 1, 0, NULL},
+	{"PART1SIZE", "PART1SIZE=%d", "a $0", &part[1][SIZE], 1, 0, NULL},
+	{"PART1START", "PART1START=%d", "a $0", &part[1][START], 1, 0, NULL},
+	{"PART1FLAG", "PART1FLAG=0x%d", "a $0", &part[1][FLAG], 1, 0, NULL},
+	{"PART2ID", "PART2ID=%d", "a $0", &part[2][ID], 1, 0, NULL},
+	{"PART2SIZE", "PART2SIZE=%d", "a $0", &part[2][SIZE], 1, 0, NULL},
+	{"PART2START", "PART2START=%d", "a $0", &part[2][START], 1, 0, NULL},
+	{"PART2FLAG", "PART2FLAG=0x%d", "a $0", &part[2][FLAG], 1, 0, NULL},
+	{"PART3ID", "PART3ID=%d", "a $0", &part[3][ID], 1, 0, NULL},
+	{"PART3SIZE", "PART3SIZE=%d", "a $0", &part[3][SIZE], 1, 0, NULL},
+	{"PART3START", "PART3START=%d", "a $0", &part[3][START], 1, 0, NULL},
+	{"PART3FLAG", "PART3FLAG=0x%d", "a $0", &part[3][FLAG], 1, 0, NULL}
 };
 
 int numfdiskbuf = sizeof(fdiskbuf) / sizeof(struct lookfor);
