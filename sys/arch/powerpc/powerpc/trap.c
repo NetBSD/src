@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1998/11/26 20:48:45 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 1998/11/26 21:06:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -401,7 +401,7 @@ copyin(udaddr, kaddr, len)
 	faultbuf env;
 
 	if (setfault(env))
-		return EACCES;
+		return EFAULT;
 	while (len > 0) {
 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
 		l = (USER_ADDR + SEGMENT_LENGTH) - p;
@@ -428,7 +428,7 @@ copyout(kaddr, udaddr, len)
 	faultbuf env;
 
 	if (setfault(env))
-		return EACCES;
+		return EFAULT;
 	while (len > 0) {
 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
 		l = (USER_ADDR + SEGMENT_LENGTH) - p;
