@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.5 2001/05/01 04:48:11 jmc Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.6 2001/05/01 06:15:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _DEV_IEEE1394_IEEE1394VAR_H_
-#define _DEV_IEEE1394_IEEE1394VAR_H_
+#define	_DEV_IEEE1394_IEEE1394VAR_H_
 
 struct ieee1394_softc;
 struct ieee1394_node;
@@ -50,29 +50,29 @@ struct ieee1394_abuf {
 	struct ieee1394_softc *ab_node;		/* destination/source */
 	u_int32_t *ab_data;
 	u_int64_t ab_csr;
-        u_int8_t ab_tcode;
-        u_int8_t ab_tlabel;
-        u_int16_t ab_length; 
-        u_int16_t ab_retlen;                    /* length returned from read. */
-        void (*ab_cb)(struct ieee1394_abuf *, int);
-        void *ab_cbarg;
+	u_int8_t ab_tcode;
+	u_int8_t ab_tlabel;
+	u_int16_t ab_length; 
+	u_int16_t ab_retlen;			/* length returned from read. */
+	void (*ab_cb)(struct ieee1394_abuf *, int);
+	void *ab_cbarg;
 };
 
 struct ieee1394_callbacks {
-	void (*cb1394_busreset) (struct ieee1394_softc *);
-	void (*cb1394_at_queue) (struct ieee1394_softc *, int type,
-				 struct ieee1394_abuf *);
-	void (*cb1394_at_done) (struct ieee1394_softc *, 
-				struct ieee1394_abuf *);
+	void (*cb1394_busreset)(struct ieee1394_softc *);
+	void (*cb1394_at_queue)(struct ieee1394_softc *, int type,
+	    struct ieee1394_abuf *);
+	void (*cb1394_at_done)(struct ieee1394_softc *, 
+	    struct ieee1394_abuf *);
 };
 
 struct ieee1394_attach_args {
-        char name[7]; 
-        u_int8_t uid[8];
-        u_int16_t nodeid;
-        void *input;
-        void *output;
-        void *inreg;
+	char name[7]; 
+	u_int8_t uid[8];
+	u_int16_t nodeid;
+	void *input;
+	void *output;
+	void *inreg;
 };    
  
 struct ieee1394_softc {
@@ -81,7 +81,7 @@ struct ieee1394_softc {
 
 	const struct ieee1394_callbacks sc1394_callback;
 	u_int32_t *sc1394_configrom;
-        u_int32_t sc1394_configrom_len;  /* quadlets. */
+	u_int32_t sc1394_configrom_len;  /* quadlets. */
 	u_int32_t sc1394_max_receive;
 	u_int8_t sc1394_guid[8];
 	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
