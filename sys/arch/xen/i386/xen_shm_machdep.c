@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.1.2.1 2005/02/16 13:46:29 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.1.2.2 2005/03/08 22:24:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -54,9 +54,12 @@
  * At boot time, we grap some kernel VM space that we'll use to map the foreing
  * pages. We also maintain a virtual to machine mapping table to give back
  * the appropriate address to bus_dma if requested.
+ * If no more VM space is available, we return an error. The caller can then
+ * register a callback which will be called when the required VM space is
+ * available.
  */
 
-
+/* pointers to our VM space */
 vaddr_t xen_shm_base_address;
 u_long xen_shm_base_address_pg;
 vaddr_t xen_shm_end_address;
@@ -74,9 +77,29 @@ paddr_t _xen_shm_vaddr2ma[BLKIF_RING_SIZE * XENSHM_MAX_PAGES_PER_REQUEST];
 /* vm space management */
 struct extent *xen_shm_ex;
 
+/* callbacks are registered in a FIFO list. */
+
+SIMPLEQ_HEAD(xen_shm_callback_head, xen_shm_callback_entry) xen_shm_callbacks;
+struct xen_shm_callback_entry {
+	SIMPLEQ_ENTRY(xen_shm_callback_entry) xshmc_entries;
+	int (*xshmc_callback)(void *); /* our callback */
+	void *xshmc_arg; /* cookie passed to the callback */
+};
+/* a pool of struct xen_shm_callback_entry */
+struct pool xen_shm_callback_pool;
+
 void
 xen_shm_init()
 {
+	SIMPLEQ_INIT(&xen_shm_callbacks);
+	pool_init(&xen_shm_callback_pool, sizeof(struct xen_shm_callback_entry),
+	    0, 0, 0, "xshmc", NULL);
+	/* ensure we'll always get items */
+	if (pool_prime(&xen_shm_callback_pool,
+	    PAGE_SIZE / sizeof(struct xen_shm_callback_entry)) != 0) {
+		panic("xen_shm_init can't prime pool");
+	}
+
 	xen_shm_base_address = uvm_km_valloc(kernel_map, xen_shm_size);
 	xen_shm_end_address = xen_shm_base_address + xen_shm_size;
 	xen_shm_base_address_pg = xen_shm_base_address >> PAGE_SHIFT;
@@ -93,8 +116,8 @@ xen_shm_init()
 	memset(_xen_shm_vaddr2ma, -1, sizeof(_xen_shm_vaddr2ma));
 }
 
-vaddr_t
-xen_shm_map(paddr_t *ma, int nentries, int domid)
+int
+xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 {
 	int i;
 	vaddr_t new_va;
@@ -102,10 +125,19 @@ xen_shm_map(paddr_t *ma, int nentries, int domid)
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
 	int remap_prot = PG_V | PG_RW | PG_U | PG_M;
 
+	/*
+	 * if a driver is waiting for ressources, don't try to allocate
+	 * yet. This is to avoid a flood of small requests stalling large
+	 * ones.
+	 */
+	if (__predict_false(SIMPLEQ_FIRST(&xen_shm_callbacks) != NULL) &&
+	    (flags & XSHM_CALLBACK) == 0)
+		return ENOMEM;
 	/* allocate the needed virtual space */
 	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
 	    != 0)
-		return 0;
+		return ENOMEM;
+
 	new_va = new_va_pg << PAGE_SHIFT;
 	for (i = 0; i < nentries; i++, new_va_pg++) {
 		mcl[i].op = __HYPERVISOR_update_va_mapping_otherdomain;
@@ -123,10 +155,11 @@ xen_shm_map(paddr_t *ma, int nentries, int domid)
 		if ((mcl[i].args[5] != 0)) {
 			printf("xen_shm_map: mcl[%d] failed\n", i);
 			xen_shm_unmap(new_va, ma, nentries, domid);
-			return 0;
+			return EINVAL;
 		}
 	}
-	return new_va;
+	*vap = new_va;
+	return 0;
 }
 
 void
@@ -134,6 +167,7 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 {
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
 	int i;
+	struct xen_shm_callback_entry *xshmc;
 
 	va = va >> PAGE_SHIFT;
 	for (i = 0; i < nentries; i++) {
@@ -148,7 +182,33 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		panic("xen_shm_unmap");
 	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
 		panic("xen_shm_unmap: extent_free");
+	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
+	    != NULL)) {
+		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
+			/* callback succeeded */
+			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
+			pool_put(&xen_shm_callback_pool, xshmc);
+		} else {
+			/* callback failed, probably out of ressources */
+			return;
+		}
+	}
 }
+
+int
+xen_shm_callback(int (*callback)(void *), void *arg)
+{
+	struct xen_shm_callback_entry *xshmc;
+
+	xshmc = pool_get(&xen_shm_callback_pool, PR_NOWAIT);
+	if (xshmc == NULL)
+		return ENOMEM;
+	xshmc->xshmc_arg = arg;
+	xshmc->xshmc_callback = callback;
+	SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc, xshmc_entries);
+	return 0;
+}
+
 
 /*
  * Shared memory pages are managed by drivers, and are not known from

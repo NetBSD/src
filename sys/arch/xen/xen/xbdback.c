@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.1.2.2 2005/03/08 19:33:01 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.1.2.3 2005/03/08 22:24:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -119,6 +119,7 @@ struct xbdback_request {
 	SLIST_ENTRY(xbdback_request) next;
 	blkif_request_t *rq_req; /* the request itself */
 	vaddr_t rq_vaddr; /* the virtual address to map the request at */
+	paddr_t rq_ma[BLKIF_MAX_PAGES_PER_REQUEST]; /* machine address to map */
 	struct xbdback_instance *rq_xbdi; /* our xbd instance */
 };
 SLIST_HEAD(, xbdback_request) free_xbdback_requests;
@@ -130,6 +131,8 @@ static struct xbdback_instance *xbdif_lookup(domid_t, uint32_t);
 static struct xbd_vbd * vbd_lookup(struct xbdback_instance *, blkif_vdev_t);
 
 static int  xbdback_io(struct xbdback_instance *, blkif_request_t *);
+static int  xbdback_shm_callback(void *);
+static void xbdback_do_io(struct xbdback_request *);
 static void xbdback_iodone(struct buf *);
 static int  xbdback_probe(struct xbdback_instance *, blkif_request_t *);
 static void xbdback_send_reply(struct xbdback_instance *, int , int , int);
@@ -523,7 +526,7 @@ xbdback_evthandler(void *arg)
 		}
 		switch (error) {
 		case 0:
-			/* reply has already been sent */
+			/* reply has already been sent, or will be */
 			break;
 		default:
 			xbdback_send_reply(xbdi, req->id, req->operation,
@@ -563,11 +566,6 @@ xbdback_io(struct xbdback_instance *xbdi, blkif_request_t *req)
 	SLIST_REMOVE_HEAD(&free_xbdback_requests, next);
 
 	xbd_req->rq_xbdi = xbdi;
-	if (xbdback_map_shm(req, xbd_req) < 0) {
-		xbd_req->rq_req = NULL;
-		SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
-		return EINVAL;
-	}
 
 	start_offset =
 	    blkif_first_sect(req->frame_and_sects[0]) * VBD_BSIZE;
@@ -606,18 +604,58 @@ xbdback_io(struct xbdback_instance *xbdi, blkif_request_t *req)
 	xbd_req->rq_buf.b_vp = vbd->vp;
 	xbd_req->rq_buf.b_blkno = req->sector_number;
 	xbd_req->rq_buf.b_bcount = (daddr_t)req_size;
-	xbd_req->rq_buf.b_data = (void *)(xbd_req->rq_vaddr + start_offset);
+	xbd_req->rq_buf.b_data = (void *)start_offset;
 	xbd_req->rq_buf.b_private = xbd_req;
-	if ((xbd_req->rq_buf.b_flags & B_READ) == 0)
-		xbd_req->rq_buf.b_vp->v_numoutput++;
-	XENPRINTF(("xbdback_io domain %d: start reqyest\n", xbdi->domid));
-	VOP_STRATEGY(vbd->vp, &xbd_req->rq_buf);
-	return 0;
+	switch(xbdback_map_shm(req, xbd_req)) {
+	case 0:
+		xbdback_do_io(xbd_req);
+		return 0;
+	case ENOMEM:
+		if (xen_shm_callback(xbdback_shm_callback, xbd_req) == 0)
+			return 0;
+		error = ENOMEM;
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
 end:
-	xbdback_unmap_shm(xbd_req);
 	xbd_req->rq_req = NULL;
 	SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
 	return error;
+}
+
+static int
+xbdback_shm_callback(void *arg)
+{
+	struct xbdback_request *xbd_req = arg;
+
+	switch(xen_shm_map(xbd_req->rq_ma, xbd_req->rq_req->nr_segments,
+	    xbd_req->rq_xbdi->domid, &xbd_req->rq_vaddr, XSHM_CALLBACK)) {
+	case ENOMEM:
+		return -1; /* will try again later */
+	case 0:
+		xbdback_do_io(xbd_req);
+		return 0;
+	default:
+		xbdback_send_reply(xbd_req->rq_xbdi, xbd_req->rq_req->id,
+		    xbd_req->rq_req->operation, BLKIF_RSP_ERROR);
+		xbd_req->rq_req = NULL;
+		SLIST_INSERT_HEAD(&free_xbdback_requests, xbd_req, next);
+		return 0;
+	}
+}
+
+static void
+xbdback_do_io(struct xbdback_request *xbd_req)
+{
+	xbd_req->rq_buf.b_data =
+	    (void *)((vaddr_t)xbd_req->rq_buf.b_data + xbd_req->rq_vaddr);
+	if ((xbd_req->rq_buf.b_flags & B_READ) == 0)
+		xbd_req->rq_buf.b_vp->v_numoutput++;
+	XENPRINTF(("xbdback_io domain %d: start reqyest\n",
+	    xbd_req->rq_xbdi->domid));
+	VOP_STRATEGY(xbd_req->rq_buf.b_vp, &xbd_req->rq_buf);
 }
 
 static void
@@ -717,7 +755,6 @@ xbdback_send_reply(struct xbdback_instance *xbdi, int id, int op, int status)
 static int
 xbdback_map_shm(blkif_request_t *req, struct xbdback_request *xbd_req)
 {
-	paddr_t ma[BLKIF_MAX_PAGES_PER_REQUEST];
 	int i;
 
 	xbd_req->rq_req = req;
@@ -731,13 +768,10 @@ xbdback_map_shm(blkif_request_t *req, struct xbdback_request *xbd_req)
 #endif
 
 	for (i = 0; i < req->nr_segments; i++) {
-		ma[i] = (req->frame_and_sects[i] & ~PAGE_MASK);
+		xbd_req->rq_ma[i] = (req->frame_and_sects[i] & ~PAGE_MASK);
 	}
-	xbd_req->rq_vaddr =
-	    xen_shm_map(ma, req->nr_segments, xbd_req->rq_xbdi->domid);
-	if (xbd_req->rq_vaddr == -1)
-		panic("xbdback_map_shm");
-	return 0;
+	return xen_shm_map(xbd_req->rq_ma, req->nr_segments,
+		xbd_req->rq_xbdi->domid, &xbd_req->rq_vaddr, 0);
 }
 
 /* unmap a request from our virtual address space (request is done) */
