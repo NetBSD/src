@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.11 2001/09/13 11:01:49 enami Exp $ */
+/*	$NetBSD: apm.c,v 1.12 2001/09/13 11:05:58 enami Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 	case NONE:
 		verbose = doac = dopct = domin = dobstate = dostatus = TRUE;
 		action = GETSTATUS;
-		/* fallthrough */
+		/* FALLTHROUGH */
 	case GETSTATUS:
 		if (fd == -1) {
 			/* open the device directly and get status */
@@ -242,10 +242,13 @@ main(int argc, char *argv[])
 				    "cannot open "
 				    _PATH_APM_NORMAL);
 			}
+			memset(&reply, 0, sizeof(reply));
 			if (ioctl(fd, APM_IOC_GETPOWER,
-			    &reply.batterystate) == 0)
-				goto printval;
+			    &reply.batterystate) == -1)
+				err(1, "ioctl(APM_IOC_GETPOWER)");
+			goto printval;
 		}
+		/* FALLTHROUGH */
 	case SUSPEND:
 	case STANDBY:
 		if (nodaemon && fd == -1) {
