@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.42 1996/04/24 11:41:24 is Exp $
+#	$NetBSD: files.amiga,v 1.43 1996/04/26 20:21:59 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -11,7 +11,7 @@ attach	mainbus at root
 device	cpu
 attach	cpu at mainbus
 
-# zorro II expansion bus.
+# zorro expansion bus.
 device	zbus {}
 attach	zbus at mainbus
 file	arch/amiga/dev/zbus.c		zbus
@@ -33,7 +33,7 @@ device	ser: tty
 attach	ser at mainbus
 file	arch/amiga/dev/ser.c		ser needs-count
 
-# parellel port
+# parallel port
 device	par
 attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
@@ -227,11 +227,6 @@ file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 device	mlhsc: scsi, sci
 attach	mlhsc at zbus
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
-
-# EMPLANT
-device	empsc: scsi, sci
-attach	empsc at zbus
-file	arch/amiga/dev/empsc.c		empsc needs-flag
 
 # Emplant
 device	empsc: scsi, sci
