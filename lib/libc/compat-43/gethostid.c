@@ -1,3 +1,5 @@
+/*	$NetBSD: gethostid.c,v 1.2 1997/07/13 18:49:24 christos Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,10 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)gethostid.c	8.1 (Berkeley) 6/2/93";
+#else
+__RCSID("$NetBSD: gethostid.c,v 1.2 1997/07/13 18:49:24 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
