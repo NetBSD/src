@@ -1,4 +1,0 @@
-# $NetBSD: md.arm26,v 1.7 2001/12/03 23:12:31 bjh21 Exp $
-./usr/lib/libarm32.so.0		base-sys-shlib
-./usr/mdec/boot26		base-sysutil-bin
-./usr/mdec/boot26,ffa		base-sysutil-bin

@@ -1,2 +1,0 @@
-# $NetBSD: md.arm26,v 1.1 2001/11/26 01:00:49 thorpej Exp $
-./etc/fstab.nfs		etc-sys-etc

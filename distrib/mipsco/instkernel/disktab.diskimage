@@ -1,8 +1,0 @@
-#	$NetBSD: disktab.diskimage,v 1.1 2001/02/19 07:45:39 wdk Exp $
-#
-miniroot:2MB Install Diskimage\
-	:ty=simulated:se#512:nt#2:ns#16:nc#128:\
-	:ta=4.4BSD:\
-	:pa#4096:oa#0:ba#4096:fa#512:\
-	:pb#0:ob#0:\
-	:pc#4096:oc#0:
