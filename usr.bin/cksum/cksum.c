@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)cksum.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: cksum.c,v 1.3 1993/11/02 07:33:10 cgd Exp $";
+static char *rcsid = "$Id: cksum.c,v 1.4 1994/12/24 16:02:45 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -63,11 +63,11 @@ main(argc, argv)
 	char **argv;
 {
 	extern int optind;
-	u_long len, val;
+	u_int32_t len, val;
 	register int ch, fd, rval;
 	char *fn;
-	int (*cfncn) __P((int, unsigned long *, unsigned long *));
-	void (*pfncn) __P((char *, unsigned long, unsigned long));
+	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
+	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
 
 	cfncn = crc;
 	pfncn = pcrc;
