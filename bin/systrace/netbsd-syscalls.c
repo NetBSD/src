@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.9 2002/10/11 21:54:58 provos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.10 2002/11/02 19:57:02 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.9 2002/10/11 21:54:58 provos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.10 2002/11/02 19:57:02 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,7 +160,7 @@ static int nbsd_assignpolicy(int, pid_t, int);
 static int nbsd_modifypolicy(int, int, int, short);
 static int nbsd_replace(int, pid_t, struct intercept_replace *);
 static int nbsd_io(int, pid_t, int, void *, u_char *, size_t);
-static char *nbsd_getcwd(int, pid_t, char *, size_t);
+static int nbsd_setcwd(int, pid_t);
 static int nbsd_restcwd(int);
 static int nbsd_argument(int, void *, int, void **);
 static int nbsd_read(int);
@@ -510,19 +510,10 @@ nbsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	return (0);
 }
 
-static char *
-nbsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
+static int
+nbsd_setcwd(int fd, pid_t pid)
 {
-	char *path;
-
-	if (ioctl(fd, STRIOCGETCWD, &pid) == -1)
-		return (NULL);
-
-	path = getcwd(buf, size);
-	if (path == NULL)
-		nbsd_restcwd(fd);
-
-	return (path);
+	return (ioctl(fd, STRIOCGETCWD, &pid));
 }
 
 static int
@@ -655,7 +646,7 @@ struct intercept_system intercept = {
 	nbsd_report,
 	nbsd_read,
 	nbsd_syscall_number,
-	nbsd_getcwd,
+	nbsd_setcwd,
 	nbsd_restcwd,
 	nbsd_io,
 	nbsd_argument,

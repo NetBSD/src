@@ -1,4 +1,4 @@
-/*	$NetBSD: openbsd-syscalls.c,v 1.6 2002/10/16 14:56:11 itojun Exp $	*/
+/*	$NetBSD: openbsd-syscalls.c,v 1.7 2002/11/02 19:57:02 provos Exp $	*/
 /*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -135,7 +135,7 @@ static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
 static int obsd_replace(int, pid_t, struct intercept_replace *);
 static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
-static char *obsd_getcwd(int, pid_t, char *, size_t);
+static int obsd_setcwd(int, pid_t);
 static int obsd_restcwd(int);
 static int obsd_argument(int, void *, int, void **);
 static int obsd_read(int);
@@ -492,19 +492,10 @@ obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	return (0);
 }
 
-static char *
-obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
+static int
+obsd_setcwd(int fd, pid_t pid)
 {
-	char *path;
-
-	if (ioctl(fd, STRIOCGETCWD, &pid) == -1)
-		return (NULL);
-
-	path = getcwd(buf, size);
-	if (path == NULL)
-		obsd_restcwd(fd);
-
-	return (path);
+	return (ioctl(fd, STRIOCGETCWD, &pid));
 }
 
 static int
@@ -637,7 +628,7 @@ struct intercept_system intercept = {
 	obsd_report,
 	obsd_read,
 	obsd_syscall_number,
-	obsd_getcwd,
+	obsd_setcwd,
 	obsd_restcwd,
 	obsd_io,
 	obsd_argument,
