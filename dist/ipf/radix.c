@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.1.1.1 2004/03/28 08:55:49 martti Exp $	*/
+/*	$NetBSD: radix.c,v 1.2 2005/03/13 10:44:40 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -1046,7 +1046,7 @@ rn_init()
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)
 		*cp++ = -1;
-	if (rn_inithead((void **)&mask_rnhead, 0) == 0)
+	if (rn_inithead((void *)&mask_rnhead, 0) == 0)
 		panic("rn_init 2");
 }
 
