@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.54 2002/09/23 04:26:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.53 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.54 2002/09/23 04:26:17 simonb Exp $");
 
 #include "tun.h"
 
@@ -753,7 +753,7 @@ tunwrite(dev, uio, ioflag)
 #endif
 	}
 
-	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
+	if (uio->uio_resid > TUNMTU) {
 		TUNDEBUG("%s: len=%lu!\n", ifp->if_xname,
 		    (unsigned long)uio->uio_resid);
 		simple_unlock(&tp->tun_lock);
