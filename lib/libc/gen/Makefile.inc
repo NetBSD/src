@@ -1,12 +1,13 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.51 1994/08/29 04:47:31 mycroft Exp $
+#	$Id: Makefile.inc,v 1.52 1994/10/10 04:46:39 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
+SRCS+=	_errlist.c _siglist.c \
+	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
 	ctype_.c daemon.c devname.c difftime.c \
-	disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
+	disklabel.c err.c errlist.c errno.c exec.c fnmatch.c \
 	fstab.c ftok.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
 	gethostname.c getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
