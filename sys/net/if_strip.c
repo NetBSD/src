@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.54 2004/12/05 05:43:04 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.55 2004/12/05 06:53:33 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.54 2004/12/05 05:43:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.55 2004/12/05 06:53:33 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -346,10 +346,10 @@ strip_clone_create(struct if_clone *ifc, int unit)
 {
 	struct strip_softc *sc;
 
-	MALLOC(sc, struct sl_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	MALLOC(sc, struct strip_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 	sc->sc_unit = unit;
 	(void)snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
-	    "%s%d", ifc->ifc_name, i++);
+	    "%s%d", ifc->ifc_name, unit);
 	callout_init(&sc->sc_timo_ch);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
@@ -372,6 +372,7 @@ strip_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
 	LIST_INSERT_HEAD(&strip_softc_list, sc, sc_iflist);
+	return 0;
 }
 
 static int
@@ -453,7 +454,6 @@ stripopen(dev, tp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct strip_softc *sc;
-	int nstrip;
 	int error;
 #ifdef __NetBSD__
 	int s;
