@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.188 2003/09/19 16:32:10 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.189 2003/09/29 01:06:37 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -61,7 +61,7 @@ __bsd_prog_mk_system_libs?= \
 	CURSES DBM DES EDIT EVENT FORM GCC GNUMALLOC GSSAPI HDB INTL IPSEC \
 	KADM KADM5CLNT KADM5SRV KAFS KDB KRB KRB5 KSTREAM KVM L M MENU \
 	OBJC OSSAUDIO PCAP PCI PMC POSIX PTHREAD PTHREAD_DBG RESOLV RMT \
-	ROKEN RPCSVC RT SKEY SS SSL SL TERMCAP USBHID UTIL WRAP Y Z
+	ROKEN RPCSVC RT SKEY SL SS SSL TERMCAP USBHID UTIL WRAP Y Z
 
 .for _n in ${__bsd_prog_mk_system_libs}
 .ifndef LIB${_n}
@@ -71,6 +71,11 @@ LIB${_n}= ${DESTDIR}/usr/lib/lib${_n:tl}.a
 .endif
 .endfor
 .undef __bsd_prog_mk_system_libs
+
+.ifndef LIBSTDCXX
+LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
+.MADE: ${LIBSTDCXX}
+.endif
 
 ##### Installed X11R6 library definitions
 #     E.g. LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
