@@ -1,4 +1,4 @@
-/*	$NetBSD: kn02.h,v 1.4 1994/10/26 21:10:28 cgd Exp $	*/
+/*	$NetBSD: kn02.h,v 1.5 1998/08/29 16:24:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -250,6 +250,5 @@
 #define KN02_ECC_SNGHI		0x00800000	/* single bit err, "	*/
 #define KN02_ECC_CHKHI		0x7f000000	/* check bits,  "  "	*/
 #define KN02_ECC_VLDHI		0x80000000	/* info valid for  "	*/
-
 
 #endif	/* MIPS_KN02_H */
