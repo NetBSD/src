@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: host.c,v 1.2 1999/03/26 20:12:45 kim Exp $";
+static char rcsid[] = "$Id: host.c,v 1.3 1999/03/30 20:36:58 ross Exp $";
 #endif /* not lint */
 
 /*
@@ -268,11 +268,13 @@ main(int c, char **v) {
 	ncnames = 5;
 	while (hp == NULL && h_errno == TRY_AGAIN) {
 		if (addr.s_addr == INADDR_NONE) {
+			typedef unsigned long uL;
+
 			cname = NULL;
 			if (oldcname == NULL)
-				hp = (struct hostent *)gethostinfo(v[1]);
+				hp = (struct hostent *)(uL)gethostinfo(v[1]);
 			else
-				hp = (struct hostent *)gethostinfo(oldcname);
+				hp = (struct hostent *)(uL)gethostinfo(oldcname);
 			if (cname) {
 				if (ncnames-- == 0) {
 					printf("Too many cnames.  Loop?\n");
