@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.6 1999/11/13 00:30:31 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.7 2000/06/29 08:23:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <arch/hp300/hp300/leds.h>
 

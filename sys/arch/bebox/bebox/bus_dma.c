@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.28 2000/06/26 14:20:41 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.29 2000/06/29 08:22:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,8 +58,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

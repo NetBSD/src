@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 1998/01/11 21:40:52 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2000/06/29 08:23:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <machine/bus.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern struct map extiomap[];
 extern caddr_t extiobase;
