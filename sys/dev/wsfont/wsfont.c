@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.20.2.3 2002/03/16 16:01:45 jdolecek Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.20.2.4 2002/06/16 19:57:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.20.2.3 2002/03/16 16:01:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.20.2.4 2002/06/16 19:57:49 jdolecek Exp $");
 
 #include "opt_wsfont.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.20.2.3 2002/03/16 16:01:45 jdolecek Exp
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -339,7 +340,7 @@ wsfont_add0(struct wsdisplay_font *font, int copy)
 	struct font *ent;
 	size_t size;
 
-	ent = malloc(sizeof(struct font *), M_DEVBUF, M_WAITOK | M_ZERO);
+	ent = malloc(sizeof(struct font), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Is this font statically allocated? */
 	if (!copy) {
@@ -347,7 +348,8 @@ wsfont_add0(struct wsdisplay_font *font, int copy)
 		ent->flags = WSFONT_STATIC;
 	} else {
 		ent->font = malloc(sizeof(struct wsdisplay_font), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		    M_WAITOK);
+		memcpy(ent->font, font, sizeof(*ent->font));
 
 		size = font->fontheight * font->numchars * font->stride;
 		ent->font->data = malloc(size, M_DEVBUF, M_WAITOK);
