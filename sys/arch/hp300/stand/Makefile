@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	7.8 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.2 1993/05/22 07:58:41 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/07/31 15:26:42 mycroft Exp $
 
 DESTDIR=
 STAND=	../../stand

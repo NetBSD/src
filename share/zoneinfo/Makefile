@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.9 (Berkeley) 2/28/91
+#	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
+#	$Id: Makefile,v 1.7 1993/07/31 15:27:06 mycroft Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
