@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.10 2000/06/28 15:39:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.11 2000/09/24 13:09:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -416,22 +416,6 @@ compat_43_netbsd32_ommap(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(pos, long);
 	return (compat_43_sys_mmap(p, &ua, retval));
-}
-
-/* virtual memory syscalls */
-int
-netbsd32_ovadvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_ovadvise_args /* {
-		syscallarg(int) anom;
-	} */ *uap = v;
-	struct sys_ovadvise_args ua;
-
-	NETBSD32TO64_UAP(anom);
-	return (sys_ovadvise(p, &ua, retval));
 }
 
 /* network syscalls */
