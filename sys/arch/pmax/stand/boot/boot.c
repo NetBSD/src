@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1999/04/28 09:18:48 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 1999/11/12 01:37:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <machine/dec_prom.h>
-#include <lib/libkern/libkern.h>
 
 #include "common.h"
 #include "bootinfo.h"
