@@ -122,6 +122,7 @@ isc_result_t omapi_unregister_io_object (omapi_object_t *h)
 	omapi_io_reference (&ph, obj, MDL);
 
 	/* remove from the list of I/O states */
+        last = &omapi_io_states;
 	for (p = omapi_io_states.next; p; p = p -> next) {
 		if (p == obj) {
 			omapi_io_dereference (&last -> next, MDL);
