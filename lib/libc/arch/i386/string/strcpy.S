@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcpy.S,v 1.3 1994/01/28 20:34:51 jtc Exp $
+ *	$Id: strcpy.S,v 1.4 1994/02/14 17:45:19 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcpy.S,v 1.3 1994/01/28 20:34:51 jtc Exp $"
+	.asciz "$Id: strcpy.S,v 1.4 1994/02/14 17:45:19 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -48,7 +48,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strcpy)
