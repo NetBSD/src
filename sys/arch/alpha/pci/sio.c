@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.24 1998/05/23 18:35:56 matt Exp $ */
+/* $NetBSD: sio.c,v 1.25 1998/06/08 23:49:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.24 1998/05/23 18:35:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.25 1998/06/08 23:49:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ struct sio_softc {
 	bus_dma_tag_t	sc_parent_dmat;
 	int		sc_haseisa;
 	int		sc_is82c693;
+
+	/* ISA chipset must persist; it's used after autoconfig. */
+	struct alpha_isa_chipset sc_isa_chipset;
 };
 
 int	siomatch __P((struct device *, struct cfdata *, void *));
@@ -160,7 +163,6 @@ sio_bridge_callback(v)
 {
 	struct sio_softc *sc = v;
 	struct alpha_eisa_chipset ec;
-	struct alpha_isa_chipset ic;
 	union sio_attach_args sa;
 
 	if (sc->sc_haseisa) {
@@ -181,18 +183,18 @@ sio_bridge_callback(v)
 		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
 
-	ic.ic_v = NULL;
-	ic.ic_attach_hook = sio_isa_attach_hook;
-	ic.ic_intr_establish = sio_intr_establish;
-	ic.ic_intr_disestablish = sio_intr_disestablish;
-	ic.ic_intr_alloc = sio_intr_alloc;
+	sc->sc_isa_chipset.ic_v = NULL;
+	sc->sc_isa_chipset.ic_attach_hook = sio_isa_attach_hook;
+	sc->sc_isa_chipset.ic_intr_establish = sio_intr_establish;
+	sc->sc_isa_chipset.ic_intr_disestablish = sio_intr_disestablish;
+	sc->sc_isa_chipset.ic_intr_alloc = sio_intr_alloc;
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
 	sa.sa_iba.iba_memt = sc->sc_memt;
 	sa.sa_iba.iba_dmat =
 	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
-	sa.sa_iba.iba_ic = &ic;
+	sa.sa_iba.iba_ic = &sc->sc_isa_chipset;
 	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }
 
