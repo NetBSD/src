@@ -719,6 +719,25 @@ machines.   Unfortunately, if the opposite happens to be true for you
 site, you are probably better off not trying to use this flag.
 .PP
 .B The
+.I always-reply-rfc1048
+.B statement
+.PP
+ \fBalways-reply-rfc1048\fR \fIflag\fR\fB;\fR
+.PP
+Some BOOTP clients expect RFC1048-style responses, but do not follow
+RFC1048 when sending their requests.   You can tell that a client is
+having this problem if it is not getting the options you have
+configured for it and if you see in the server log the message
+"(non-rfc1048)" printed with each BOOTREQUEST that is logged.
+.PP
+If you want to send rfc1048 options to such a client, you can set the
+.B always-reply-rfc1048
+option in that client's host declaration, and the DHCP server will
+respond with an RFC-1048-style vendor options field.   This flag can
+be set in any scope, and will affect all clients covered by that
+scope.
+.PP
+.B The
 .I server-identifier
 .B statement
 .PP
