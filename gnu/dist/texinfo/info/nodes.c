@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c,v 1.3 2003/01/17 15:25:49 wiz Exp $	*/
+/*	$NetBSD: nodes.c,v 1.4 2003/07/03 12:59:54 wiz Exp $	*/
 
 /* nodes.c -- how to get an Info file and node.
    Id: nodes.c,v 1.1 2002/08/25 23:38:38 karl Exp
@@ -154,7 +154,6 @@ info_get_node_of_file_buffer (nodename, file_buffer)
   if (strcmp (nodename, "*") == 0)
     {
       node = (NODE *)xmalloc (sizeof (NODE));
-      memset (node, 0, sizeof (NODE));
       node->filename = file_buffer->fullpath;
       node->parent   = NULL;
       node->nodename = xstrdup ("*");
