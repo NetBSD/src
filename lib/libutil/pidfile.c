@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.1 1999/06/06 01:50:00 thorpej Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.2 1999/06/06 17:31:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.1 1999/06/06 01:50:00 thorpej Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.2 1999/06/06 17:31:09 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: pidfile.c,v 1.1 1999/06/06 01:50:00 thorpej Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static char pidfile_path_store[MAXPATHLEN];
 static char *pidfile_path;
 
 static void pidfile_cleanup __P((void));
@@ -68,16 +67,15 @@ pidfile(basename)
 		basename = __progname;
 
 	/* _PATH_VARRUN includes trailing / */
-	(void) snprintf(pidfile_path_store, sizeof(pidfile_path_store),
-	    "%s%s.pid", _PATH_VARRUN, basename);
+	(void) asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename);
+	if (pidfile_path == NULL)
+		return;
 
-	if ((f = fopen(pidfile_path_store, "w")) == NULL)
+	if ((f = fopen(pidfile_path, "w")) == NULL)
 		return;
 
 	(void) fprintf(f, "%d\n", getpid());
 	(void) fclose(f);
-
-	pidfile_path = pidfile_path_store;
 
 	(void) atexit(pidfile_cleanup);
 }
