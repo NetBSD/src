@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.66 1996/10/18 17:22:17 explorer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.67 1996/10/23 07:25:39 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -384,7 +384,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
-	  "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
+	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
+	/* Letting the motor running kills floppy drives and disks quit fast. */
+	{{T_DIRECT, T_REMOV,
+	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
