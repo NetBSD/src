@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.40 1998/01/12 19:22:13 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.41 1998/07/02 00:47:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1935,7 +1935,7 @@ ncr_tprint(SC_REQ *reqp, char *fmt, ...)
 
 	va_start(ap, fmt);
 	scsi_print_addr(reqp->xs->sc_link);
-	printf("%:", fmt, ap);
+	vprintf(fmt, ap);
 	va_end(ap);
 }
 
@@ -1948,7 +1948,8 @@ ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
 	va_list	ap;
 
 	va_start(ap, fmt);
-	printf("%s: %:", sc->sc_dev.dv_xname, fmt, ap);
+	printf("%s: ", sc->sc_dev.dv_xname);
+	vprintf(fmt, ap);
 	va_end(ap);
 }
 /****************************************************************************
