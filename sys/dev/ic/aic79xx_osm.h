@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,11 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.4 2003/08/29 01:37:12 thorpej Exp $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.8 2002/12/04 22:51:29 scottl Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -294,7 +294,7 @@ ahd_done_unlock(struct ahd_softc *ahd, unsigned long *flags)
 
 /* Lock held during ahd_list manipulation and ahd softc frees */
 static __inline void
-ahd_list_lockinit()
+ahd_list_lockinit(void)
 {
 }
 
