@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_io.c,v 1.8 1997/09/02 10:43:30 thorpej Exp $ */
+/* $NetBSD: dwlpx_bus_io.c,v 1.9 1997/09/02 11:09:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.8 1997/09/02 10:43:30 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.9 1997/09/02 11:09:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,4 +76,4 @@ __KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.8 1997/09/02 10:43:30 thorpej Exp
 	(((struct dwlpx_config *)(v))->cc_sysbase + DWLPX_PCI_IOSPACE +	\
 	    (0x08000000UL << 5) - 1)
 
-#include "pci_swiz_bus_io_chipdep.c"
+#include <alpha/pci/pci_swiz_bus_io_chipdep.c>
