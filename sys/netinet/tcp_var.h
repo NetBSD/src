@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.20 1997/07/23 21:26:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.21 1997/07/28 22:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -280,13 +280,24 @@ struct	tcpstat {
 /*
  * Names for TCP sysctl objects.
  */
-			/* enable/disable RFC1323 timestamps/scaling */
-#define	TCPCTL_RFC1323		1
-#define	TCPCTL_MAXID		2
+#define	TCPCTL_RFC1323		1	/* RFC1323 timestamps/scaling */
+#define	TCPCTL_SENDSPACE	2	/* default send buffer */
+#define	TCPCTL_RECVSPACE	3	/* default recv buffer */
+#define	TCPCTL_MSSDFLT		4	/* default seg size */
+#define	TCPCTL_SYN_CACHE_LIMIT	5	/* max size of comp. state engine */
+#define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
+#define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
+#define	TCPCTL_MAXID		8
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "rfc1323",	CTLTYPE_INT }, \
+	{ "sendspace",	CTLTYPE_INT }, \
+	{ "recvspace",	CTLTYPE_INT }, \
+	{ "mssdflt",	CTLTYPE_INT }, \
+	{ "syn_cache_limit", CTLTYPE_INT }, \
+	{ "syn_bucket_limit", CTLTYPE_INT }, \
+	{ "syn_cache_interval", CTLTYPE_INT },\
 }
 
 #ifdef _KERNEL
@@ -294,11 +305,15 @@ struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
+extern	int tcp_mssdflt;	/* default seg size */
+extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
+extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
+extern	int tcp_syn_cache_interval; /* compressed state timer */
 
-int	tcp_syn_cache_size;
-int	tcp_syn_cache_timeo;
-struct	syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
-u_long	syn_cache_count;
+extern	int tcp_syn_cache_size;
+extern	int tcp_syn_cache_timeo;
+extern	struct syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
+extern	u_long syn_cache_count;
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
