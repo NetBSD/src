@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38 2002/10/23 09:11:11 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.39 2003/04/01 20:41:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2002/10/23 09:11:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.39 2003/04/01 20:41:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			continue;
 
@@ -146,7 +146,8 @@ mmrw(dev, uio, flags)
 			 */
 			if (ISIIOVA(v) ||
 			    ((caddr_t)v >= extiobase &&
-			    (caddr_t)v < (extiobase + (EIOMAPSIZE * NBPG))))
+			    (caddr_t)v < (extiobase +
+			    		  (EIOMAPSIZE * PAGE_SIZE))))
 				return (EFAULT);
 
 			error = uiomove((caddr_t)v, c, uio);
@@ -167,10 +168,10 @@ mmrw(dev, uio, flags)
 			 * of memory for use with /dev/zero.
 			 */
 			if (devzeropage == NULL) {
-				MALLOC(devzeropage, caddr_t, NBPG, M_TEMP,
+				MALLOC(devzeropage, caddr_t, PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 

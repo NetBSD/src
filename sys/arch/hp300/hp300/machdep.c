@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2003/01/17 22:53:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2003/01/17 22:53:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2003/04/01 20:41:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -209,8 +209,8 @@ hp300_init()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
@@ -227,7 +227,8 @@ hp300_init()
 	if (bt_mag == NULL ||
 	    bt_mag->magic1 != BOOTINFO_MAGIC1 ||
 	    bt_mag->magic2 != BOOTINFO_MAGIC2) {
-		pmap_remove(pmap_kernel(), bootinfo_va, bootinfo_va + NBPG);
+		pmap_remove(pmap_kernel(), bootinfo_va,
+		    bootinfo_va + PAGE_SIZE);
 		pmap_update(pmap_kernel());
 		bootinfo_va = 0;
 	}
@@ -347,7 +348,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -387,7 +388,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -396,7 +397,7 @@ cpu_startup()
 	 * XXX This is bogus; should just fix KERNBASE and
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, NBPG, UVM_PROT_NONE, TRUE) != 0)
+	if (uvm_map_protect(kernel_map, 0, PAGE_SIZE, UVM_PROT_NONE, TRUE) != 0)
 		panic("can't mark page 0 off-limits");
 
 	/*
@@ -404,9 +405,9 @@ cpu_startup()
 	 * If we don't, we might end up COW'ing the text segment!
 	 *
 	 * XXX Should be m68k_trunc_page(&kernel_text) instead
-	 * XXX of NBPG.
+	 * XXX of PAGE_SIZE.
 	 */
-	if (uvm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
+	if (uvm_map_protect(kernel_map, PAGE_SIZE, m68k_round_page(&etext),
 	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
 		panic("can't protect kernel text");
 
@@ -773,7 +774,7 @@ cpu_init_kcore_hdr()
 	 * Initialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -867,7 +868,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -893,7 +894,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check do see if we will fit.  Note we always skip the
-	 * first NBPG in case there is a disk label there.
+	 * first PAGE_SIZE in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -955,7 +956,7 @@ dumpsys()
 		goto bad;
 
 	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/NBPG)
+#define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
@@ -964,12 +965,12 @@ dumpsys()
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 		pmap_update(pmap_kernel());
-		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
  bad:
 		switch (error) {
 		case 0:
-			maddr += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 			break;
 
 		case ENXIO:
@@ -1013,7 +1014,7 @@ initcpu()
 	if (ectype == EC_VIRT)
 		mappedcopysize = -1;	/* in case it was patched */
 	else
-		mappedcopysize = NBPG;
+		mappedcopysize = PAGE_SIZE;
 #endif
 	parityenable();
 #ifdef USELEDS
@@ -1294,7 +1295,7 @@ parityerrorfind()
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 		ip = (int *)vmmap;
-		for (o = 0; o < NBPG; o += sizeof(int))
+		for (o = 0; o < PAGE_SIZE; o += sizeof(int))
 			i = *ip++;
 	}
 	/*
@@ -1304,7 +1305,7 @@ parityerrorfind()
 	found = 0;
 done:
 	looking = 0;
-	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[NBPG]);
+	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[PAGE_SIZE]);
 	pmap_update(pmap_kernel());
 	ecacheon();
 	splx(s);

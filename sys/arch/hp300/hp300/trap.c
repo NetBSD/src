@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2003/01/28 22:35:08 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2003/04/01 20:41:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2003/01/28 22:35:08 wiz Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2003/04/01 20:41:39 thorpej Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -760,7 +760,7 @@ writeback(fp, docachepush)
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-				    (vaddr_t)&vmmap[NBPG]);
+				    (vaddr_t)&vmmap[PAGE_SIZE]);
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",

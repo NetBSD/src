@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.22 2002/10/02 05:15:50 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.22 2002/10/02 05:15:50 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.22 2002/10/02 05:15:50 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -611,13 +613,13 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	u_int8_t *dioiidev;
 	int size;
 
-	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
 		return (1);
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
 	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_GATORBOX)) {
-		bus_space_unmap(bst, bsh, NBPG);
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return (1);
 	}
 
@@ -627,7 +629,7 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	} else
 		size = DIOCSIZE;
 
-	bus_space_unmap(bst, bsh, NBPG);
+	bus_space_unmap(bst, bsh, PAGE_SIZE);
 	if (bus_space_map(bst, addr, size, 0, &bsh))
 		return (1);
 	va = bus_space_vaddr(bst, bsh);
