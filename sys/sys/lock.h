@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.34 2000/08/07 22:10:52 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.35 2000/08/17 04:15:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -293,10 +293,14 @@ void	spinlock_switchcheck(void);
 void	_simple_lock(__volatile struct simplelock *, const char *, int);
 int	_simple_lock_try(__volatile struct simplelock *, const char *, int);
 void	_simple_unlock(__volatile struct simplelock *, const char *, int);
+int	_simple_lock_held(__volatile struct simplelock *);
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
 #define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
+#define	simple_lock_held(alp)	_simple_lock_held((alp))
+
+#define	LOCK_ASSERT(x)		KASSERT(x)
 
 void	simple_lock_init(struct simplelock *);
 void	simple_lock_dump(void);
@@ -307,11 +311,13 @@ void	simple_lock_switchcheck(void);
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
+#define	LOCK_ASSERT(x)		/* nothing */
 #else
 #define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
 #define	simple_lock(alp)		/* nothing */
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)		/* nothing */
+#define	LOCK_ASSERT(x)			/* nothing */
 #endif
 
 #endif /* _KERNEL */
