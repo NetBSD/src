@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.189 2000/02/03 05:28:02 jwise Exp $
+#	$NetBSD: mi,v 1.190 2000/02/03 16:20:53 kleink Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/ar		comp-util-bin
 ./usr/bin/as		comp-util-bin
@@ -2351,6 +2351,7 @@
 ./usr/share/man/cat3/usleep.0	comp-c-catman
 ./usr/share/man/cat3/utime.0	comp-c-catman
 ./usr/share/man/cat3/va_arg.0	comp-c-catman
+./usr/share/man/cat3/va_copy.0	comp-c-catman
 ./usr/share/man/cat3/va_end.0	comp-c-catman
 ./usr/share/man/cat3/va_start.0	comp-c-catman
 ./usr/share/man/cat3/valloc.0	comp-c-catman
@@ -3831,6 +3832,7 @@
 ./usr/share/man/man3/usleep.3		comp-c-man
 ./usr/share/man/man3/utime.3		comp-c-man
 ./usr/share/man/man3/va_arg.3		comp-c-man
+./usr/share/man/man3/va_copy.3		comp-c-man
 ./usr/share/man/man3/va_end.3		comp-c-man
 ./usr/share/man/man3/va_start.3		comp-c-man
 ./usr/share/man/man3/valloc.3		comp-c-man
