@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.290 2001/01/08 09:53:08 rh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.291 2001/01/08 20:08:17 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp 
+ *	NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp 
  */
 
 /*
@@ -990,6 +990,7 @@
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
