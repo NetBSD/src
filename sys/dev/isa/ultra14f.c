@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.52 1995/08/12 20:31:30 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.53 1995/08/12 23:00:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -786,9 +786,9 @@ uha_free_mscp(uha, mscp, flags)
 	struct uha_mscp *mscp;
 	int flags;
 {
-	int opri;
+	int s;
 
-	opri = splbio();
+	s = splbio();
 
 	mscp->flags = MSCP_FREE;
 	TAILQ_INSERT_HEAD(&uha->free_mscp, mscp, chain);
@@ -800,7 +800,7 @@ uha_free_mscp(uha, mscp, flags)
 	if (!mscp->chain.tqe_next)
 		wakeup(&uha->free_mscp);
 
-	splx(opri);
+	splx(s);
 }
 
 /*
@@ -814,11 +814,11 @@ uha_get_mscp(uha, flags)
 	struct uha_softc *uha;
 	int flags;
 {
-	int opri;
+	int s;
 	struct uha_mscp *mscp;
 	int hashnum;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * If we can and have to, sleep waiting for one to come free
@@ -854,7 +854,7 @@ uha_get_mscp(uha, flags)
 		tsleep(&uha->free_mscp, PRIBIO, "uhamsc", 0);
 	}
 
-	splx(opri);
+	splx(s);
 	return mscp;
 }
 

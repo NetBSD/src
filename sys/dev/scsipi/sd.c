@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.76 1995/08/12 21:36:49 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.77 1995/08/12 22:58:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -389,7 +389,7 @@ sdstrategy(bp)
 	struct buf *bp;
 {
 	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
-	int opri;
+	int s;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
@@ -416,7 +416,7 @@ sdstrategy(bp)
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * Place it in the queue of disk activities for this disk
@@ -429,7 +429,7 @@ sdstrategy(bp)
 	 */
 	sdstart(sd);
 
-	splx(opri);
+	splx(s);
 	return;
 
 bad:

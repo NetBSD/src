@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.48 1995/08/12 20:31:18 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.49 1995/08/12 23:01:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -708,9 +708,9 @@ ahb_free_ecb(ahb, ecb, flags)
 	struct ahb_ecb *ecb;
 	int flags;
 {
-	int opri;
+	int s;
 
-	opri = splbio();
+	s = splbio();
 
 	ecb->flags = ECB_FREE;
 	TAILQ_INSERT_HEAD(&ahb->free_ecb, ecb, chain);
@@ -722,7 +722,7 @@ ahb_free_ecb(ahb, ecb, flags)
 	if (!ecb->chain.tqe_next)
 		wakeup(&ahb->free_ecb);
 
-	splx(opri);
+	splx(s);
 }
 
 /*
@@ -736,11 +736,11 @@ ahb_get_ecb(ahb, flags)
 	struct ahb_softc *ahb;
 	int flags;
 {
-	int opri;
+	int s;
 	struct ahb_ecb *ecb;
 	int hashnum;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * If we can and have to, sleep waiting for one to come free
@@ -776,7 +776,7 @@ ahb_get_ecb(ahb, flags)
 		}
 	}
 
-	splx(opri);
+	splx(s);
 	return ecb;
 }
 
