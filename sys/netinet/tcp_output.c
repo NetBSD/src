@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.44 1998/10/04 21:33:53 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.45 1998/10/06 00:20:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -712,7 +712,7 @@ out:
 	if (maxburst < 0)
 		printf("tcp_output: maxburst exceeded by %d\n", -maxburst);
 #endif
-	if (sendalot && --maxburst)
+	if (sendalot && (!tcp_do_newreno || --maxburst))
 		goto again;
 	return (0);
 }
