@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.37 2000/06/05 00:09:19 matt Exp $	*/
+/*	$NetBSD: uda.c,v 1.38 2000/06/10 19:44:55 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -252,8 +252,8 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_uda,
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name,
-	    mtc_cd.cd_name) ? MSCPBUS_DISK : MSCPBUS_TAPE);
+	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name, "mtc") ?
+	    MSCPBUS_DISK : MSCPBUS_TAPE);
 
 	ma.ma_mc = &uda_mscp_ctlr;
 	ma.ma_type |= MSCPBUS_UDA;
