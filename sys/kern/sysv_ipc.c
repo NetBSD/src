@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.8 1995/06/01 22:44:06 jtc Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.9 1995/06/02 19:04:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -47,23 +47,16 @@ ipcperm(cred, perm, mode)
 	int mode;
 {
 
-	if (cred->cr_uid == 0)
-		return (0);
-
-	/* Check for user match. */
-	if (cred->cr_uid != perm->cuid && cred->cr_uid != perm->uid) {
-		if (mode & IPC_M)
-			return (EPERM);
-		/* Check for group match. */
-		mode >>= 3;
-		if (cred->cr_gid != perm->cgid && cred->cr_gid != perm->gid &&
-		    !groupmember(perm->gid, cred) &&
-		    !groupmember(perm->cgid, cred))
-			/* Check for `other' match. */
-			mode >>= 3;
+	if (mode == IPC_M) {
+		if (cred->cr_uid == 0 ||
+		    cred->cr_uid == perm->uid ||
+		    cred->cr_uid == perm->cuid)
+			return (0);
+		return (EPERM);
 	}
 
-	if (mode & IPC_M)
+	if (vaccess(perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
+	    vaccess(perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
 		return (0);
-	return ((mode & perm->mode) == mode ? 0 : EACCES);
+	return (EACCES);
 }
