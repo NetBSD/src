@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 1996/12/17 21:35:30 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 1997/01/16 15:41:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1073,8 +1073,7 @@ straytrap(frame)
 	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
 		frame.tf_vector, frame.tf_pc);
 #ifdef	DDB
-	/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
-	kdb_trap(-1, (struct mc68020_saved_state *) &frame);
+	kdb_trap(-1, (db_regs_t *) &frame);
 #endif
 }
 
