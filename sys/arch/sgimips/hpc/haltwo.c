@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.7 2005/01/15 15:19:51 kent Exp $ */
+/* $NetBSD: haltwo.c,v 1.8 2005/02/28 07:42:53 sekiya Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.7 2005/01/15 15:19:51 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8 2005/02/28 07:42:53 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,10 +262,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct hpc_attach_args *haa;
 
 	haa = aux;
-	if (strcmp(haa->ha_name, cf->cf_name) == 0)
-		return 1;
+	if (strcmp(haa->ha_name, cf->cf_name))
+		return 0;
+	if ( badaddr((void *)(haa->ha_sh + haa->ha_devoff), sizeof(u_int32_t)) )
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 static void
