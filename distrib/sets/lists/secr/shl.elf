@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.5 2000/01/19 06:10:11 mycroft Exp $
+# $NetBSD: shl.elf,v 1.6 2000/05/02 12:46:07 simonb Exp $
 ./usr/lib/libacl.so
 ./usr/lib/libacl.so.2
 ./usr/lib/libcom_err.so
@@ -35,8 +35,6 @@
 ./usr/lib/libkrb5.so.1
 ./usr/lib/libkstream.so
 ./usr/lib/libkstream.so.1
-./usr/lib/libntp.so
-./usr/lib/libntp.so.0
 ./usr/lib/libss.so
 ./usr/lib/libss.so.2
 ./usr/lib/libssl.so

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.234 2000/05/02 11:43:23 augustss Exp $
+# $NetBSD: mi,v 1.235 2000/05/02 12:46:06 simonb Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -843,9 +843,12 @@
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/nsupdate.0
+./usr/share/man/cat8/ntpd.0
 ./usr/share/man/cat8/ntpdate.0
+./usr/share/man/cat8/ntpdc.0
 ./usr/share/man/cat8/ntpq.0
 ./usr/share/man/cat8/ntptime.0
+./usr/share/man/cat8/ntptimeset.0
 ./usr/share/man/cat8/ntptrace.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
@@ -977,8 +980,6 @@
 ./usr/share/man/cat8/wsconscfg.0
 ./usr/share/man/cat8/wsconsctl.0
 ./usr/share/man/cat8/wsfontload.0
-./usr/share/man/cat8/xntpd.0
-./usr/share/man/cat8/xntpdc.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -1813,9 +1814,12 @@
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nslookup.8
 ./usr/share/man/man8/nsupdate.8
+./usr/share/man/man8/ntpd.8
 ./usr/share/man/man8/ntpdate.8
+./usr/share/man/man8/ntpdc.8
 ./usr/share/man/man8/ntpq.8
 ./usr/share/man/man8/ntptime.8
+./usr/share/man/man8/ntptimeset.8
 ./usr/share/man/man8/ntptrace.8
 ./usr/share/man/man8/pac.8
 ./usr/share/man/man8/pcnfsd.8
@@ -1947,8 +1951,6 @@
 ./usr/share/man/man8/wsconscfg.8
 ./usr/share/man/man8/wsconsctl.8
 ./usr/share/man/man8/wsfontload.8
-./usr/share/man/man8/xntpd.8
-./usr/share/man/man8/xntpdc.8
 ./usr/share/man/man8/yp.8
 ./usr/share/man/man8/ypbind.8
 ./usr/share/man/man8/ypinit.8

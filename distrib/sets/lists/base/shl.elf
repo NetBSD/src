@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.20 2000/04/24 15:13:20 sommerfeld Exp $
+# $NetBSD: shl.elf,v 1.21 2000/05/02 12:46:05 simonb Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
@@ -11,7 +11,6 @@
 ./usr/lib/libkvm.so.5
 ./usr/lib/libm.so.0
 ./usr/lib/libmenu.so.1
-./usr/lib/libntp.so.0
 ./usr/lib/libobjc.so.0
 ./usr/lib/libossaudio.so.0
 ./usr/lib/libpcap.so.1

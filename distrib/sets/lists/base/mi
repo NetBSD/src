@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 2000/05/01 05:28:25 thorpej Exp $
+# $NetBSD: mi,v 1.159 2000/05/02 12:46:05 simonb Exp $
 .
 ./altroot
 ./bin
@@ -601,9 +601,12 @@
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nfsd
+./usr/sbin/ntpd
 ./usr/sbin/ntpdate
+./usr/sbin/ntpdc
 ./usr/sbin/ntpq
 ./usr/sbin/ntptime
+./usr/sbin/ntptimeset
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
 ./usr/sbin/pim6dd
@@ -682,8 +685,6 @@
 ./usr/sbin/wire-test
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./usr/sbin/xntpd
-./usr/sbin/xntpdc
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
@@ -708,6 +709,9 @@
 ./usr/share/dict/papers
 ./usr/share/dict/special
 ./usr/share/doc
+./usr/share/doc/html
+./usr/share/doc/html/ntp
+./usr/share/doc/html/ntp/hints
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement
