@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.10 2001/04/07 15:19:59 jhawk Exp $
+.\"	$NetBSD: upgrade,v 1.11 2001/04/08 02:49:17 minoura Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@ section.
 As noted above, you must have the
 .Pa loadbsd.x
 utility and the installation kernel you chose, or, the
-boot floppy available to do the upgrade.
+boot floppies available to do the upgrade.
 .\}
 .el \{\
 To do the upgrade, you must have the boot floppy
