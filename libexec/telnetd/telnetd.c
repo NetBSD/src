@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.21 2000/06/22 06:47:49 thorpej Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.22 2000/08/18 03:25:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.21 2000/06/22 06:47:49 thorpej Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.22 2000/08/18 03:25:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,14 +507,14 @@ main(argc, argv)
 	    error = getaddrinfo(NULL, service, &hints, &res);
 
 	    if (error) {
-		errx(1, "tcp/%s: %s\n", service, gai_strerror(error));
-		usage();
+		fprintf(stderr, "tcp/%s: %s\n", service, gai_strerror(error));
+		exit(1);
 	    }
 
 	    s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	    if (s < 0) {
-		    perror("telnetd: socket");;
-		    exit(1);
+		perror("telnetd: socket");;
+		exit(1);
 	    }
 	    (void) setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 				(char *)&on, sizeof(on));
