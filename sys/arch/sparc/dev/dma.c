@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.50 1998/03/21 20:23:09 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.51 1998/03/29 22:06:58 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -151,8 +151,11 @@ dmamatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 4, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 void
@@ -317,60 +320,6 @@ dma_identify(sc)
 	sc->isintr = dma_isintr;
 	sc->setup = dma_setup;
 	sc->go = dma_go;
-
-#if 000
-	sc->sc_node = ca->ca_ra.ra_node;
-	if (CPU_ISSUN4)
-		goto espsearch;
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
-	/* Propagate bootpath */
-	if (ca->ca_ra.ra_bp != NULL &&
-	    (strcmp(ca->ca_ra.ra_bp->name, "espdma") == 0 ||
-	     strcmp(ca->ca_ra.ra_bp->name, "dma") == 0 ||
-	     strcmp(ca->ca_ra.ra_bp->name, "ledma") == 0))
-		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
-	else
-		oca.ca_ra.ra_bp = NULL;
-
-	/* search through children */
-	node = firstchild(sc->sc_node);
-	if (node != 0) do {
-		name = getpropstring(node, "name");
-		if (!romprop(&oca.ca_ra, name, node))
-			continue;
-
-		sbus_translate(parent, &oca);
-		oca.ca_bustype = BUS_SBUS;
-		(void) config_found(&sc->sc_dev, (void *)&oca, dmaprint);
-	} while ((node = nextsibling(node)) != 0); else
-#endif /* SUN4C || SUN4M */
-
-	if (strcmp(ca->ca_ra.ra_name, "dma") == 0) {
-espsearch:
-		/*
-		 * find the ESP by poking around the esp device structures
-		 *
-		 * What happens here is that if the esp driver has not been
-		 * configured, then this returns a NULL pointer. Then when the
-		 * esp actually gets configured, it does the opposing test, and
-		 * if the sc->sc_dma field in it's softc is NULL, then tries to
-		 * find the matching dma driver.
-		 *
-		 */
-		sc->sc_esp = (struct esp_softc *)
-			     getdevunit("esp", sc->sc_dev.dv_unit);
-
-		/*
-		 * and a back pointer to us, for DMA
-		 */
-		if (sc->sc_esp)
-			sc->sc_esp->sc_dma = sc;
-	}
-#endif
 }
 
 int
@@ -733,26 +682,6 @@ espdmaintr(arg)
 /*
  * Pseudo (chained) interrupt to le driver to handle DMA errors.
  */
-#if 0
-int
-ledmaintr(sc)
-	struct dma_softc *sc;
-{
-	char bits[64];
-	u_long csr;
-
-	csr = DMACSR(sc);
-
-	if (csr & D_ERR_PEND) {
-		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
-		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
-		DMA_RESET(sc);
-	}
-	return 1;
-}
-#endif
 int
 ledmaintr(arg)
 	void	*arg;
@@ -797,6 +726,7 @@ dma_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->sparc_bus_map = dma_bus_map;
+	sbt->sparc_bus_unmap = sc->sc_bustag->sparc_bus_unmap;
 	sbt->sparc_intr_establish = dmabus_intr_establish;
 	return (sbt);
 }
