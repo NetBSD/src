@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.25 1999/06/24 14:54:28 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.26 1999/07/10 19:40:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.25 1999/06/24 14:54:28 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.26 1999/07/10 19:40:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -69,7 +69,7 @@ static int
 comparstr(a, b)
 	const void *a, *b;
 {
-	return (strcmp(*(char **)a, *(char **)b));
+	return (strcmp(*(const char **)a, *(const char **)b));
 }
 
 /*
