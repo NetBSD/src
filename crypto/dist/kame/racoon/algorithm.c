@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.13 2001/01/26 03:26:22 thorpej Exp $	*/
+/*	$KAME: algorithm.c,v 1.14 2001/04/03 15:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #include "var.h"
 #include "misc.h"
@@ -43,6 +44,7 @@
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "ipsec_doi.h"
+#include "gcmalloc.h"
 
 static const int ipsecenc2doi[] = {
 	ALGTYPE_NOTHING,
@@ -295,7 +297,7 @@ initalgstrength()
 	struct algorithm_strength **new;
 	int i;
 
-	new = CALLOC(MAXALGCLASS * sizeof(*new), struct algorithm_strength **);
+	new = racoon_calloc(1, MAXALGCLASS * sizeof(*new));
 	if (new == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get buffer.\n");
@@ -303,7 +305,7 @@ initalgstrength()
 	}
 
 	for (i = 0; i < MAXALGCLASS; i++) {
-		new[i] = CALLOC(sizeof(*new[i]), struct algorithm_strength *);
+		new[i] = racoon_calloc(1, sizeof(*new[i]));
 		if (new[i] == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get buffer.\n");
@@ -322,7 +324,7 @@ flushalgstrength(head)
 
 	for (i = 0; i < MAXALGCLASS; i++)
 		if (head[i])
-			free(head[i]);
+			racoon_free(head[i]);
 
-	free(head);
+	racoon_free(head);
 }

@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.c,v 1.20 2001/01/26 04:02:46 thorpej Exp $	*/
+/*	$KAME: remoteconf.c,v 1.23 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,8 @@
 #include "localconf.h"
 #include "grabmyaddr.h"
 #include "proposal.h"
+#include "vendorid.h"
+#include "gcmalloc.h"
 
 static LIST_HEAD(_rmtree, remoteconf) rmtree;
 
@@ -112,7 +114,7 @@ getrmconf(remote)
 
 	LIST_FOREACH(p, &rmtree, chain) {
 		if ((!withport && cmpsaddrwop(remote, p->remote) == 0)
-		 || (withport && cmpsaddr(remote, p->remote) == 0)) {
+		 || (withport && cmpsaddrwild(remote, p->remote) == 0)) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"configuration found for %s.\n", buf);
 			return p;
@@ -139,7 +141,7 @@ newrmconf()
 {
 	struct remoteconf *new;
 
-	new = CALLOC(sizeof(*new), struct remoteconf *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -176,7 +178,7 @@ delrmconf(rmconf)
 		oakley_dhgrp_free(rmconf->dhgrp);
 	if (rmconf->proposal)
 		delisakmpsa(rmconf->proposal);
-	free(rmconf);
+	racoon_free(rmconf);
 }
 
 void
@@ -191,7 +193,7 @@ delisakmpsa(sa)
 	if (sa->gssid)
 		vfree(sa->gssid);
 #endif
-	free(sa);
+	racoon_free(sa);
 }
 
 void
@@ -200,7 +202,7 @@ deletypes(e)
 {
 	if (e->next)
 		deletypes(e->next);
-	free(e);
+	racoon_free(e);
 }
 
 /*
@@ -260,9 +262,15 @@ newisakmpsa()
 {
 	struct isakmpsa *new;
 
-	new = CALLOC(sizeof(*new), struct isakmpsa *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
+
+	/*
+	 * Just for sanity, make sure this is initialized.  This is
+	 * filled in for real when the ISAKMP proposal is configured.
+	 */
+	new->vendorid = VENDORID_UNKNOWN;
 
 	new->next = NULL;
 	new->rmconf = NULL;

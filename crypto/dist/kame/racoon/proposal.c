@@ -1,4 +1,4 @@
-/*	$KAME: proposal.c,v 1.28 2001/02/22 00:59:03 sakane Exp $	*/
+/*	$KAME: proposal.c,v 1.30 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,6 +62,7 @@
 #include "oakley.h"
 #include "handler.h"
 #include "strnames.h"
+#include "gcmalloc.h"
 
 /* %%%
  * modules for ipsec sa spec
@@ -71,7 +72,7 @@ newsaprop()
 {
 	struct saprop *new;
 
-	new = CALLOC(sizeof(*new), struct saprop *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -83,7 +84,7 @@ newsaproto()
 {
 	struct saproto *new;
 
-	new = CALLOC(sizeof(*new), struct saproto *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -145,7 +146,7 @@ newsatrns()
 {
 	struct satrns *new;
 
-	new = CALLOC(sizeof(*new), struct satrns *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -723,7 +724,7 @@ flushsaprop(head)
 	for (p = head; p != NULL; p = save) {
 		save = p->next;
 		flushsaproto(p->head);
-		free(p);
+		racoon_free(p);
 	}
 
 	return;
@@ -738,7 +739,7 @@ flushsaproto(head)
 	for (p = head; p != NULL; p = save) {
 		save = p->next;
 		flushsatrns(p->head);
-		free(p);
+		racoon_free(p);
 	}
 
 	return;
@@ -752,7 +753,7 @@ flushsatrns(head)
 
 	for (p = head; p != NULL; p = save) {
 		save = p->next;
-		free(p);
+		racoon_free(p);
 	}
 
 	return;
@@ -998,7 +999,7 @@ set_proposal_from_policy(iph2, sp_in, sp_out)
 		if (pr || req) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"There is a difference "
-				"between the in/out bound policies.\n");
+				"between the in/out bound policies in SPD.\n");
 			goto err;
 		}
 	}

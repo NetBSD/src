@@ -1,4 +1,4 @@
-/*	$KAME: localconf.h,v 1.25 2001/02/21 05:20:44 sakane Exp $	*/
+/*	$KAME: localconf.h,v 1.26 2001/03/27 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,8 +70,6 @@ struct localconf {
 	int autograbaddr;
 	struct myaddrs *myaddrs;
 
-	vchar_t *vendorid;		/* XXX Peer's vendorid should be
-					 * holded to be multiple */
 	char *pathinfo[LC_PATHTYPE_MAX];
 	vchar_t *ident[LC_IDENTTYPE_MAX]; /* base of Identifier payload. */
 

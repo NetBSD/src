@@ -1,4 +1,4 @@
-/*	$KAME: plog.c,v 1.14 2001/01/10 02:58:58 sakane Exp $	*/
+/*	$KAME: plog.c,v 1.16 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -59,6 +59,7 @@
 #include "plog.h"
 #include "logger.h"
 #include "debug.h"
+#include "gcmalloc.h"
 
 char *pname = NULL;
 u_int32_t loglevel = LLV_BASE;
@@ -183,7 +184,7 @@ plogdump(pri, data, len)
 	 * + 2 newline + '\0'
 	 */
 	buflen = (len * 2) + (len / 4) + (len / 32) + 3;
-	buf = malloc(buflen);
+	buf = racoon_malloc(buflen);
 
 	i = 0;
 	j = 0;
@@ -198,12 +199,13 @@ plogdump(pri, data, len)
 		i += 2;
 		j++;
 	}
-	if (j % 32 != 0)
+	if (buflen - i >= 2) {
 		buf[i++] = '\n';
-	buf[i] = '\0';
+		buf[i] = '\0';
+	}
 	plog(pri, LOCATION, NULL, "%s", buf);
 
-	free(buf);
+	racoon_free(buf);
 }
 
 void
@@ -226,7 +228,7 @@ plogset(file)
 	char *file;
 {
 	if (logfile != NULL)
-		free(logfile);
+		racoon_free(logfile);
 	logfile = strdup(file);
 }
 

@@ -1,4 +1,4 @@
-/*	$KAME: vendorid.h,v 1.5 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: vendorid.h,v 1.6 2001/03/27 02:39:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,34 @@
  * SUCH DAMAGE.
  */
 
-#define VENDORID	"KAME/racoon"
+/* The unknown vendor ID. */
+#define	VENDORID_UNKNOWN	-1
 
-vchar_t *set_vendorid __P((void));
+/* Our default vendor ID. */
+#define	VENDORID_KAME		0
+
+/*
+ * Refer to draft-ietf-ipsec-isakmp-gss-auth-06.txt.
+ */
+#define	VENDORID_GSSAPI_LONG	1
+#define	VENDORID_GSSAPI		2
+#define	VENDORID_MS_NT5		3
+#define	VENDOR_SUPPORTS_GSSAPI(x)					\
+	((x) == VENDORID_GSSAPI_LONG ||					\
+	 (x) == VENDORID_GSSAPI ||					\
+	 (x) == VENDORID_MS_NT5)
+
+#define	NUMVENDORIDS		4
+
+#define	VENDORID_STRINGS						\
+{									\
+	"KAME/racoon",							\
+	"A GSS-API Authentication Method for IKE",			\
+	"GSSAPI",							\
+	"MS NT5 ISAKMPOAKLEY",						\
+}
+
+extern const char *vendorid_strings[];
+
+vchar_t *set_vendorid __P((int));
 int check_vendorid __P((struct isakmp_gen *));

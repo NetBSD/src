@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.h,v 1.8 2001/01/29 10:37:31 sakane Exp $	*/
+/*	$KAME: sockmisc.h,v 1.10 2001/03/23 01:19:08 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,8 @@
 extern const int niflags;
 
 extern int cmpsaddrwop __P((struct sockaddr *, struct sockaddr *));
-extern int cmpsaddr __P((struct sockaddr *, struct sockaddr *));
+extern int cmpsaddrwild __P((struct sockaddr *, struct sockaddr *));
+extern int cmpsaddrstrict __P((struct sockaddr *, struct sockaddr *));
 
 extern struct sockaddr *getlocaladdr __P((struct sockaddr *));
 

@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_ident.c,v 1.53 2001/01/26 04:02:46 thorpej Exp $	*/
+/*	$KAME: isakmp_ident.c,v 1.55 2001/03/27 02:46:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -792,6 +792,7 @@ ident_r1send(iph1, msg)
 	int tlen;
 	int error = -1;
 	vchar_t *gss_sa = NULL;
+	vchar_t *vid = NULL;
 
 	/* validity check */
 	if (iph1->status != PHASE1ST_MSG1RECEIVED) {
@@ -814,6 +815,9 @@ ident_r1send(iph1, msg)
 	tlen = sizeof(struct isakmp)
 		+ sizeof(*gen) + gss_sa->l;
 
+	if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+		tlen += sizeof(*gen) + vid->l;
+
 	iph1->sendbuf = vmalloc(tlen);
 	if (iph1->sendbuf == NULL) { 
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -827,7 +831,13 @@ ident_r1send(iph1, msg)
 		goto end;
 
 	/* set SA payload to reply */
-	p = set_isakmp_payload(p, gss_sa, ISAKMP_NPTYPE_NONE);
+	p = set_isakmp_payload(p, gss_sa,
+	    vid ? ISAKMP_NPTYPE_VID
+		: ISAKMP_NPTYPE_NONE);
+
+	/* Set Vendor ID, if necessary. */
+	if (vid)
+		p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
 
 #ifdef HAVE_PRINT_ISAKMP_C
 	isakmp_printpacket(iph1->sendbuf, iph1->local, iph1->remote, 0);
@@ -850,6 +860,8 @@ end:
 	if (gss_sa != iph1->sa_ret)
 		vfree(gss_sa);
 #endif
+	if (vid)
+		vfree(vid);
 	return error;
 }
 
@@ -1323,6 +1335,7 @@ ident_ir2sendmx(iph1)
 	int tlen;
 	int need_cr = 0;
 	vchar_t *cr = NULL;
+	vchar_t *vid = NULL;
 	int error = -1;
 	int nptype;
 #ifdef HAVE_GSSAPI
@@ -1354,8 +1367,8 @@ ident_ir2sendmx(iph1)
 	tlen = sizeof(struct isakmp)
 	     + sizeof(*gen) + iph1->dhpub->l
 	     + sizeof(*gen) + iph1->nonce->l;
-	if (lcconf->vendorid)
-		tlen += sizeof(*gen) + lcconf->vendorid->l;
+	if ((vid = set_vendorid(iph1->approval->vendorid)) != NULL)
+		tlen += sizeof(*gen) + vid->l;
 	if (need_cr)
 		tlen += sizeof(*gen) + cr->l;
 #ifdef HAVE_GSSAPI
@@ -1384,22 +1397,22 @@ ident_ir2sendmx(iph1)
 		nptype = ISAKMP_NPTYPE_GSS;
 	else
 #endif
-		nptype = lcconf->vendorid ? ISAKMP_NPTYPE_VID :
+		nptype = vid ? ISAKMP_NPTYPE_VID :
 		    (need_cr ? ISAKMP_NPTYPE_CR : ISAKMP_NPTYPE_NONE);
 	p = set_isakmp_payload(p, iph1->nonce, nptype);
 
 #ifdef HAVE_GSSAPI
 	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
 		p = set_isakmp_payload(p, gsstoken,
-			lcconf->vendorid ? ISAKMP_NPTYPE_VID
-					 : (need_cr ? ISAKMP_NPTYPE_CR
-						    : ISAKMP_NPTYPE_NONE));
+			vid ? ISAKMP_NPTYPE_VID
+			    : (need_cr ? ISAKMP_NPTYPE_CR
+				       : ISAKMP_NPTYPE_NONE));
 	}
 #endif
 
 	/* append vendor id, if needed */
-	if (lcconf->vendorid)
-		p = set_isakmp_payload(p, lcconf->vendorid,
+	if (vid)
+		p = set_isakmp_payload(p, vid,
 				need_cr ? ISAKMP_NPTYPE_CR
 					: ISAKMP_NPTYPE_NONE);
 
@@ -1422,6 +1435,12 @@ end:
 		vfree(buf);
 		buf = NULL;
 	}
+#ifdef HAVE_GSSAPI
+	if (gsstoken)
+		vfree(gsstoken);
+#endif
+	if (vid)
+		vfree(vid);
 
 	return buf;
 }

@@ -1,4 +1,4 @@
-/*	$KAME: admin.c,v 1.21 2000/12/15 13:43:54 sakane Exp $	*/
+/*	$KAME: admin.c,v 1.22 2001/04/03 15:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -67,6 +67,7 @@
 #include "admin.h"
 #include "admin_var.h"
 #include "session.h"
+#include "gcmalloc.h"
 
 static int admin_process __P((int, char *));
 static int admin_reply __P((int, struct admin_com *, vchar_t *));
@@ -108,7 +109,7 @@ admin_handler()
 	}
 
 	/* get buffer to receive */
-	if ((combuf = malloc(com.ac_len)) == 0) {
+	if ((combuf = racoon_malloc(com.ac_len)) == 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to alloc buffer for admin command\n");
 		goto end;
@@ -156,7 +157,7 @@ admin_handler()
     end:
 	(void)close(so2);
 	if (combuf)
-		free(combuf);
+		racoon_free(combuf);
 
 	/* exit if child's process. */
 	if (pid == 0 && !f_foreground)
@@ -392,7 +393,7 @@ admin_reply(so, combuf, buf)
 	else
 		tlen = sizeof(*combuf);
 
-	retbuf = CALLOC(tlen, char *);
+	retbuf = racoon_calloc(1, tlen);
 	if (retbuf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate admin buffer\n");
@@ -406,7 +407,7 @@ admin_reply(so, combuf, buf)
 		memcpy(retbuf + sizeof(*combuf), buf->v, buf->l);
 
 	tlen = send(so, retbuf, tlen, 0);
-	free(retbuf);
+	racoon_free(retbuf);
 	if (tlen < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to send admin command: %s\n",

@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.16 2000/12/12 16:59:42 thorpej Exp $	*/
+/*	$KAME: oakley.h,v 1.17 2001/03/26 17:47:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,6 +41,7 @@
 #define   OAKLEY_ATTR_ENC_ALG_CAST		6
 #define   OAKLEY_ATTR_ENC_ALG_RIJNDAEL		7
 #define   OAKLEY_ATTR_ENC_ALG_AES		7
+					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_HASH_ALG		2 /* B */
 #define   OAKLEY_ATTR_HASH_ALG_MD5		1
 #define   OAKLEY_ATTR_HASH_ALG_SHA		2
@@ -48,6 +49,7 @@
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_256		4
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_384		5
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_512		6
+					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_AUTH_METHOD		3 /* B */
 #define   OAKLEY_ATTR_AUTH_METHOD_PSKEY		1
 #define   OAKLEY_ATTR_AUTH_METHOD_DSSSIG	2
@@ -56,6 +58,15 @@
 #define   OAKLEY_ATTR_AUTH_METHOD_RSAREV	5
 #define   OAKLEY_ATTR_AUTH_METHOD_EGENC		6
 #define   OAKLEY_ATTR_AUTH_METHOD_EGREV		7
+					/*	65001 - 65535 Private Use */
+	/*
+	 * The following are valid when the Vendor ID is one of
+	 * the following:
+	 *
+	 *	MD5("A GSS-API Authentication Method for IKE")
+	 *	MD5("GSSAPI") (recognized by Windows 2000)
+	 *	MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
+	 */
 #define   OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB	65001
 #define OAKLEY_ATTR_GRP_DESC		4 /* B */
 #define   OAKLEY_ATTR_GRP_DESC_MODP768		1
@@ -63,10 +74,12 @@
 #define   OAKLEY_ATTR_GRP_DESC_EC2N155		3
 #define   OAKLEY_ATTR_GRP_DESC_EC2N185		4
 #define   OAKLEY_ATTR_GRP_DESC_MODP1536		5
+					/*	32768 - 65535 Private Use */
 #define OAKLEY_ATTR_GRP_TYPE		5 /* B */
 #define   OAKLEY_ATTR_GRP_TYPE_MODP		1
 #define   OAKLEY_ATTR_GRP_TYPE_ECP		2
 #define   OAKLEY_ATTR_GRP_TYPE_EC2N		3
+					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_GRP_PI		6 /* V */
 #define OAKLEY_ATTR_GRP_GEN_ONE		7 /* V */
 #define OAKLEY_ATTR_GRP_GEN_TWO		8 /* V */
@@ -77,6 +90,7 @@
 #define   OAKLEY_ATTR_SA_LD_TYPE_SEC		1
 #define   OAKLEY_ATTR_SA_LD_TYPE_KB		2
 #define   OAKLEY_ATTR_SA_LD_TYPE_MAX		3
+					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_SA_LD		12 /* V */
 #define   OAKLEY_ATTR_SA_LD_SEC_DEFAULT		28800 /* 8 hours */
 #define OAKLEY_ATTR_PRF			13 /* B */
@@ -84,6 +98,16 @@
 #define OAKLEY_ATTR_FIELD_SIZE		15 /* B */
 #define OAKLEY_ATTR_GRP_ORDER		16 /* V */
 #define OAKLEY_ATTR_BLOCK_SIZE		17 /* B */
+				/*	16384 - 32767 Private Use */
+
+	/*
+	 * The following are valid when the Vendor ID is one of
+	 * the following:
+	 *
+	 *	MD5("A GSS-API Authentication Method for IKE")
+	 *	MD5("GSSAPI") (recognized by Windows 2000)
+	 *	MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
+	 */
 #define OAKLEY_ATTR_GSS_ID		16384
 
 #define OAKLEY_PRIME_MODP768 \

@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.h,v 1.11 2000/12/12 16:59:33 thorpej Exp $	*/
+/*	$KAME: algorithm.h,v 1.12 2001/03/21 22:38:29 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,8 +93,9 @@ enum {
 enum {
 	/* dh_group */
 	/* 0 is defined as algtype_nothing above. */
-	algtype_modp768 = 1, algtype_modp1024, algtype_modp1536,
+	algtype_modp768 = 1, algtype_modp1024,
 	algtype_ec2n155, algtype_ec2n185,
+	algtype_modp1536,
 };
 
 enum {

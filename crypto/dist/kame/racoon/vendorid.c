@@ -1,4 +1,4 @@
-/*	$KAME: vendorid.c,v 1.7 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: vendorid.c,v 1.8 2001/03/27 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -50,51 +50,90 @@
 #include "vendorid.h"
 #include "crypto_openssl.h"
 
+const char *vendorid_strings[] = VENDORID_STRINGS;
+
 /*
  * set hashed vendor id.
  * hash function is always MD5.
  */
 vchar_t *
-set_vendorid()
+set_vendorid(int vendorid)
 {
 	vchar_t vid, *vidhash;
-	char *v = VENDORID;
 
-	vid.v = v;
-	vid.l = strlen(v);
+	if (vendorid == VENDORID_UNKNOWN) {
+		/*
+		 * The default unknown ID gets translated to
+		 * KAME/racoon.
+		 */
+		vendorid = VENDORID_KAME;
+	}
+
+	if (vendorid < 0 || vendorid >= NUMVENDORIDS) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "invalid vendor ID index: %d\n", vendorid);
+		return (NULL);
+	}
+
+	/* XXX Cast away const. */
+	vid.v = (char *) vendorid_strings[vendorid];
+	vid.l = strlen(vendorid_strings[vendorid]);
 
 	vidhash = eay_md5_one(&vid);
 	if (vidhash == NULL)
-		return NULL;
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "unable to hash vendor ID string\n");
 
 	return vidhash;
 }
 
+/*
+ * Check the vendor ID payload -- return the vendor ID index
+ * if we find a recognized one, or UNKNOWN if we don't.
+ */
 int
 check_vendorid(gen)
 	struct isakmp_gen *gen;		/* points to Vendor ID payload */
 {
-	vchar_t *vidhash = lcconf->vendorid;
+	vchar_t vid, *vidhash;
+	int i, vidlen;
 
-	plog(LLV_DEBUG, LOCATION, NULL, "Vender ID received\n");
+	if (gen == NULL)
+		return (VENDORID_UNKNOWN);
 
-	if (!gen)
-		return -1;
-	if (vidhash == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"ignoring Vendor ID as I don't have one.\n");
-		return 0;
+	vidlen = ntohs(gen->len) - sizeof(*gen);
+
+	for (i = 0; i < NUMVENDORIDS; i++) {
+		/* XXX Cast away const. */
+		vid.v = (char *) vendorid_strings[i];
+		vid.l = strlen(vendorid_strings[i]);
+
+		vidhash = eay_md5_one(&vid);
+		if (vidhash == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "unable to hash vendor ID string\n");
+			return (VENDORID_UNKNOWN);
+		}
+
+		/*
+		 * XXX THIS IS NOT QUITE RIGHT!
+		 *
+		 * But we need to be able to recognize
+		 * Windows 2000's ID, which is the MD5
+		 * has of a known string + 4 bytes of
+		 * what appears to be version info.
+		 */
+		if (vidhash->l <= vidlen &&
+		    memcmp(vidhash->v, gen + 1, vidhash->l) == 0) {
+			plog(LLV_INFO, LOCATION, NULL,
+			    "received Vendor ID: %s\n",
+			    vendorid_strings[i]);
+			vfree(vidhash);
+			return (i);
+		}
+		vfree(vidhash);
 	}
 
-	if (vidhash->l == ntohs(gen->len) - sizeof(*gen)
-	 && memcmp(vidhash->v, gen + 1, vidhash->l) == 0) {
-		plog(LLV_INFO, LOCATION, NULL,
-			"Vendor ID matched.\n");
-		return 0;
-	}
-
-	plog(LLV_DEBUG, LOCATION, NULL, "Vendor ID mismatch.\n");
-
-	return -1;
+	plog(LLV_DEBUG, LOCATION, NULL, "received unknown Vendor ID\n");
+	return (VENDORID_UNKNOWN);
 }
-

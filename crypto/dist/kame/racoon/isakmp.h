@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.h,v 1.17 2000/12/12 16:59:38 thorpej Exp $	*/
+/*	$KAME: isakmp.h,v 1.18 2001/03/26 17:27:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,6 +83,18 @@ struct isakmp {
 #define ISAKMP_NPTYPE_D		12	/* Delete */
 #define ISAKMP_NPTYPE_VID	13	/* Vendor ID */
 #define ISAKMP_NPTYPE_MAX	14
+			/*	128 - 255 Private Use */
+
+/*
+ * The following are valid when the Vendor ID is one of the
+ * following:
+ *
+ *	MD5("A GSS-API Authentication Method for IKE")
+ *	MD5("GSSAPI") (recognized by Windows 2000)
+ *	MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
+ *
+ * See draft-ietf-ipsec-isakmp-gss-auth-06.txt.
+ */
 #define ISAKMP_NPTYPE_GSS	129	/* GSS token */
 
 #define ISAKMP_MAJOR_VERSION	1

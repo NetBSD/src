@@ -1,4 +1,4 @@
-/*	$KAME: sainfo.c,v 1.13 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: sainfo.c,v 1.14 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,6 +57,7 @@
 #include "handler.h"
 #include "algorithm.h"
 #include "sainfo.h"
+#include "gcmalloc.h"
 
 static LIST_HEAD(_sitree, sainfo) sitree;
 
@@ -106,7 +107,7 @@ newsainfo()
 {
 	struct sainfo *new;
 
-	new = CALLOC(sizeof(*new), struct sainfo *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -131,7 +132,7 @@ delsainfo(si)
 	if (si->iddst)
 		vfree(si->iddst);
 
-	free(si);
+	racoon_free(si);
 }
 
 void
@@ -171,7 +172,7 @@ newsainfoalg()
 {
 	struct sainfoalg *new;
 
-	new = CALLOC(sizeof(*new), struct sainfoalg *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		return NULL;
 
@@ -186,7 +187,7 @@ delsainfoalg(alg)
 
 	for (a = alg; a; a = next) {
 		next = a->next;
-		free(a);
+		racoon_free(a);
 	}
 }
 

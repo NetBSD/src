@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.23 2001/01/29 10:37:31 sakane Exp $	*/
+/*	$KAME: sockmisc.c,v 1.28 2001/04/03 15:51:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,7 @@
 #include "plog.h"
 #include "sockmisc.h"
 #include "debug.h"
+#include "gcmalloc.h"
 
 #ifdef NI_WITHSCOPEID
 const int niflags = NI_WITHSCOPEID;
@@ -97,6 +98,9 @@ cmpsaddrwop(addr1, addr2)
 		sa2 = (caddr_t)&((struct sockaddr_in6 *)addr2)->sin6_addr;
 		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
 			return 1;
+		if (((struct sockaddr_in6 *)addr1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)addr2)->sin6_scope_id)
+			return 1;
 		break;
 #endif
 	default:
@@ -107,12 +111,12 @@ cmpsaddrwop(addr1, addr2)
 }
 
 /*
- * compare two sockaddr with port.
+ * compare two sockaddr with port, taking care wildcard.
  * OUT:	0: equal.
  *	1: not equal.
  */
 int
-cmpsaddr(addr1, addr2)
+cmpsaddrwild(addr1, addr2)
 	struct sockaddr *addr1;
 	struct sockaddr *addr2;
 {
@@ -149,6 +153,64 @@ cmpsaddr(addr1, addr2)
 			return 1;
 		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
 			return 1;
+		if (((struct sockaddr_in6 *)addr1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)addr2)->sin6_scope_id)
+			return 1;
+		break;
+#endif
+	default:
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * compare two sockaddr with strict match on port.
+ * OUT:	0: equal.
+ *	1: not equal.
+ */
+int
+cmpsaddrstrict(addr1, addr2)
+	struct sockaddr *addr1;
+	struct sockaddr *addr2;
+{
+	caddr_t sa1, sa2;
+	u_short port1, port2;
+
+	if (addr1 == 0 && addr2 == 0)
+		return 0;
+	if (addr1 == 0 || addr2 == 0)
+		return 1;
+
+	if (addr1->sa_len != addr2->sa_len
+	 || addr1->sa_family != addr2->sa_family)
+		return 1;
+
+	switch (addr1->sa_family) {
+	case AF_INET:
+		sa1 = (caddr_t)&((struct sockaddr_in *)addr1)->sin_addr;
+		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
+		port1 = ((struct sockaddr_in *)addr1)->sin_port;
+		port2 = ((struct sockaddr_in *)addr2)->sin_port;
+		if (port1 != port2)
+			return 1;
+		if (memcmp(sa1, sa2, sizeof(struct in_addr)) != 0)
+			return 1;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		sa1 = (caddr_t)&((struct sockaddr_in6 *)addr1)->sin6_addr;
+		sa2 = (caddr_t)&((struct sockaddr_in6 *)addr2)->sin6_addr;
+		port1 = ((struct sockaddr_in6 *)addr1)->sin6_port;
+		port2 = ((struct sockaddr_in6 *)addr2)->sin6_port;
+		if (port1 != port2)
+			return 1;
+		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
+			return 1;
+		if (((struct sockaddr_in6 *)addr1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)addr2)->sin6_scope_id)
+			return 1;
 		break;
 #endif
 	default:
@@ -168,7 +230,7 @@ getlocaladdr(remote)
 	int s;	/* for dummy connection */
 
 	/* allocate buffer */
-	if ((local = CALLOC(local_len, struct sockaddr *)) == NULL) {
+	if ((local = racoon_calloc(1, local_len)) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get address buffer.\n");
 		goto err;
@@ -200,7 +262,7 @@ getlocaladdr(remote)
 
     err:
 	if (local != NULL)
-		free(local);
+		racoon_free(local);
 	return NULL;
 }
 
@@ -535,7 +597,7 @@ setsockopt_bypass(so, family)
 			strerror(errno));
 		return -1;
 	}
-	free(buf);
+	racoon_free(buf);
 
 	policy = "out bypass";
 	buf = ipsec_set_policy(policy, strlen(policy));
@@ -554,7 +616,7 @@ setsockopt_bypass(so, family)
 			strerror(errno));
 		return -1;
 	}
-	free(buf);
+	racoon_free(buf);
 
 	return 0;
 }
@@ -565,7 +627,7 @@ newsaddr(len)
 {
 	struct sockaddr *new;
 
-	new = CALLOC(len, struct sockaddr *);
+	new = racoon_calloc(1, len);
 	if (new == NULL)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"%s\n", strerror(errno)); 
@@ -582,7 +644,7 @@ dupsaddr(src)
 {
 	struct sockaddr *dst;
 
-	dst = CALLOC(src->sa_len, struct sockaddr *);
+	dst = racoon_calloc(1, src->sa_len);
 	if (dst == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"%s\n", strerror(errno)); 
@@ -654,7 +716,7 @@ str2saddr(host, port)
 			"taking the first one",
 			host, port ? "," : "", port ? port : "");
 	}
-	saddr = malloc(res->ai_addrlen);
+	saddr = racoon_malloc(res->ai_addrlen);
 	if (saddr == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer.\n");

@@ -1,7 +1,7 @@
-/*	$KAME: gcmalloc.h,v 1.1 2000/09/22 08:13:05 itojun Exp $	*/
+/*	$KAME: gcmalloc.h,v 1.2 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
- * Copyright (C) 2000 WIDE Project.
+ * Copyright (C) 2000, 2001 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,74 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Debugging malloc glue for Racoon.
+ */
+
 #ifndef _GCMALLOC_H_DEFINED
 #define _GCMALLOC_H_DEFINED
 
-/*#define GC_DEBUG*/
+/* ElectricFence needs no special handling. */
+
+/*
+ * Boehm-GC provides GC_malloc(), GC_realloc(), GC_free() functions,
+ * but not the traditional entry points.  So what we do is provide  
+ * malloc(), calloc(), realloc(), and free() entry points in the main
+ * program and letting the linker do the rest.
+ */
+#ifdef GC
+#define GC_DEBUG
 #include <gc.h>
 
-#define	malloc(x)	GC_MALLOC((x))
-#define	realloc(x, y)	GC_REALLOC((x), (y))
+#ifdef RACOON_MAIN_PROGRAM
+void *
+malloc(size_t size)
+{
 
-/* normally, call to GC_free() is harmful. */
-#ifdef GC_DEBUG
-#define	free(x)		GC_FREE((x))
-#else
-#define	free(x)		(void)0
+	return (GC_MALLOC(size));
+}
+
+void *
+calloc(size_t number, size_t size)
+{
+
+	/* GC_malloc() clears the storage. */
+	return (GC_MALLOC(number * size));
+}
+
+void *
+realloc(void *ptr, size_t size)
+{
+
+	return (GC_REALLOC(ptr, size));
+}
+
+void
+free(void *ptr)
+{
+
+	GC_FREE(ptr);
+}
+#endif /* RACOON_MAIN_PROGRAM */
+
+#define	racoon_malloc(sz)	GC_debug_malloc(sz, GC_EXTRAS)
+#define	racoon_calloc(cnt, sz)	GC_debug_malloc(cnt * sz, GC_EXTRAS)
+#define	racoon_realloc(old, sz)	GC_debug_realloc(old, sz, GC_EXTRAS)
+#define	racoon_free(p)		GC_debug_free(p)
+
+#endif /* GC */
+
+#ifndef racoon_malloc
+#define	racoon_malloc(sz)	malloc((sz))
+#endif
+#ifndef racoon_calloc
+#define	racoon_calloc(cnt, sz)	calloc((cnt), (sz))
+#endif
+#ifndef racoon_realloc
+#define	racoon_realloc(old, sz)	realloc((old), (sz))
+#endif
+#ifndef racoon_free
+#define	racoon_free(p)		free((p))
 #endif
 
-#endif
+#endif /* _GCMALLOC_H_DEFINED */

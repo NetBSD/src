@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.105 2001/03/05 18:37:07 thorpej Exp $	*/
+/*	$KAME: pfkey.c,v 1.108 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,6 +83,7 @@
 #include "admin.h"
 #include "strnames.h"
 #include "backupsa.h"
+#include "gcmalloc.h"
 
 /* prototype */
 static u_int ipsecdoi2pfkey_aalg __P((u_int));
@@ -204,10 +205,20 @@ pfkey_handler()
 
 	/* validity check */
 	if (msg->sadb_msg_errno) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"pfkey %s failed %s\n",
+		int pri;
+
+		/* when SPD is empty, treat the state as no error. */
+		if (msg->sadb_msg_type == SADB_X_SPDDUMP &&
+		    msg->sadb_msg_errno == ENOENT)
+			pri = LLV_DEBUG;
+		else
+			pri = LLV_ERROR;
+
+		plog(pri, LOCATION, NULL,
+			"pfkey %s failed: %s\n",
 			s_pfkey_type(msg->sadb_msg_type),
 			strerror(msg->sadb_msg_errno));
+
 		goto end;
 	}
 
@@ -239,7 +250,7 @@ pfkey_handler()
 	error = 0;
 end:
 	if (msg)
-		free(msg);
+		racoon_free(msg);
 	return(error);
 }
 
@@ -273,7 +284,7 @@ pfkey_dump_sadb(satype)
 
 	while (1) {
 		if (msg)
-			free(msg);
+			racoon_free(msg);
 		msg = pk_recv(s, &len);
 		if (msg == NULL) {
 			if (len < 0)
@@ -306,7 +317,7 @@ fail:
 	buf = NULL;
 done:
 	if (msg)
-		free(msg);
+		racoon_free(msg);
 	if (s >= 0)
 		close(s);
 	return buf;
@@ -389,7 +400,8 @@ pfkey_init()
 
 	if (pfkey_send_spddump(lcconf->sock_pfkey) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"libipsec failed regist ipcomp (%s)", ipsec_strerror());
+			"libipsec sending spddump failed: %s",
+			ipsec_strerror());
 		pfkey_close(lcconf->sock_pfkey);
 		return -1;
 	}
@@ -1479,8 +1491,6 @@ pk_recvacquire(mhp)
 	 *    2. its state is equal to PHASE2ST_ESTABLISHED, then racoon
 	 *       has to prcesss such a acquire message becuase racoon may
 	 *       lost the expire message.
-	 *    3. its state is equal to PHASE2ST_EXPIRED, then it must be
-	 *       something error.
 	 */
 	iph2[0] = getph2byspid(xpl->sadb_x_policy_id);
 	if (iph2[0] != NULL) {
@@ -1489,11 +1499,9 @@ pk_recvacquire(mhp)
 				"ignore the acquire becuase ph2 found\n");
 			return -1;
 		}
-		if (iph2[0]->status == PHASE2ST_EXPIRED) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"why ph2 is expired ?.\n");
-			return -1;
-		}
+		if (iph2[0]->status == PHASE2ST_EXPIRED)
+			iph2[0] = NULL;
+		/*FALLTHROUGH*/
 	}
 
 	/* search for proper policyindex */
@@ -1893,7 +1901,7 @@ pk_sendeacquire(iph2)
 	int len;
 
 	len = sizeof(struct sadb_msg);
-	newmsg = CALLOC(len, struct sadb_msg *);
+	newmsg = racoon_calloc(1, len);
 	if (newmsg == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get buffer to send acquire.\n");
@@ -1913,7 +1921,7 @@ pk_sendeacquire(iph2)
 	/* send message */
 	len = pfkey_send(lcconf->sock_pfkey, newmsg, len);
 
-	free(newmsg);
+	racoon_free(newmsg);
 
 	return 0;
 }
@@ -1990,24 +1998,24 @@ pk_recv(so, lenp)
 		return NULL;
 
 	reallen = PFKEY_UNUNIT64(buf.sadb_msg_len);
-	if ((newmsg = CALLOC(reallen, struct sadb_msg *)) == NULL)
+	if ((newmsg = racoon_calloc(1, reallen)) == NULL)
 		return NULL;
 
 	*lenp = recv(so, (caddr_t)newmsg, reallen, MSG_PEEK);
 	if (*lenp < 0) {
-		free(newmsg);
+		racoon_free(newmsg);
 		return NULL;	/*fatal*/
 	} else if (*lenp != reallen) {
-		free(newmsg);
+		racoon_free(newmsg);
 		return NULL;
 	}
 
 	*lenp = recv(so, (caddr_t)newmsg, reallen, 0);
 	if (*lenp < 0) {
-		free(newmsg);
+		racoon_free(newmsg);
 		return NULL;	/*fatal*/
 	} else if (*lenp != reallen) {
-		free(newmsg);
+		racoon_free(newmsg);
 		return NULL;
 	}
 

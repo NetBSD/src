@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.h,v 1.21 2001/01/26 04:02:46 thorpej Exp $	*/
+/*	$KAME: remoteconf.h,v 1.22 2001/03/27 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,6 +92,7 @@ struct isakmpsa {
 	int encklen;
 	int authmethod;
 	int hashtype;
+	int vendorid;
 #ifdef HAVE_GSSAPI
 	vchar_t *gssid;
 #endif

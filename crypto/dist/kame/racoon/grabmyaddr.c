@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.25 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.26 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@
 #include "grabmyaddr.h"
 #include "sockmisc.h"
 #include "isakmp_var.h"
+#include "gcmalloc.h"
 
 #ifndef HAVE_GETIFADDRS
 static unsigned int if_maxindex __P((void));
@@ -243,7 +244,7 @@ grab_myaddrs()
 	maxif = if_maxindex() + 1;
 	len = maxif * sizeof(struct sockaddr_storage) * 4; /* guess guess */
 
-	iflist = (struct ifreq *)malloc(len);
+	iflist = (struct ifreq *)racoon_malloc(len);
 	if (!iflist) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer\n");
@@ -339,7 +340,7 @@ grab_myaddrs()
 
 	clear_myaddr(&old);
 
-	free(iflist);
+	racoon_free(iflist);
 #endif /*HAVE_GETIFADDRS*/
 }
 
@@ -544,7 +545,7 @@ newmyaddr()
 {
 	struct myaddrs *new;
 
-	new = CALLOC(sizeof(*new), struct myaddrs *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate buffer for myaddrs.\n");
@@ -571,8 +572,8 @@ delmyaddr(myaddr)
 	struct myaddrs *myaddr;
 {
 	if (myaddr->addr)
-		free(myaddr->addr);
-	free(myaddr);
+		racoon_free(myaddr->addr);
+	racoon_free(myaddr);
 }
 
 int
