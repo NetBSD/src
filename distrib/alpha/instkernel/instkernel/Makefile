@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/03/05 21:23:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 2002/03/07 01:58:30 lukem Exp $
 
 .include "../../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -6,14 +6,12 @@
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETIMAGE?=	mdsetimage
 KERNEL?=${KERNOBJDIR}/INSTALL/netbsd
-STRIP?=		strip		# make STRIP=echo can be useful
 
 all:
 	cp ${KERNEL} netbsd
 	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	nm netbsd > netbsd.symbols
+	${NM} netbsd > netbsd.symbols
 	${STRIP} netbsd
 	gzip -9f netbsd
 
