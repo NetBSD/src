@@ -1,10 +1,10 @@
-/*	$NetBSD: ip6.h,v 1.6 2000/03/03 17:42:14 itojun Exp $	*/
-/*	$KAME: ip6.h,v 1.6 2000/02/26 12:53:07 jinmei Exp $	*/
+/*	$NetBSD: ip6.h,v 1.7 2000/07/02 21:05:41 itojun Exp $	*/
+/*	$KAME: ip6.h,v 1.9 2000/07/02 21:01:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -216,31 +216,36 @@ struct ip6_frag {
  * supposed to never be matched but is prepared just in case.
  */
 
+#ifdef INET6
+#define IP6_EXTHDR_STAT(x)	x
+#else
+#define IP6_EXTHDR_STAT(x)
+#endif
+
 #define IP6_EXTHDR_CHECK(m, off, hlen, ret)				\
 do {									\
     if ((m)->m_next != NULL) {						\
 	if (((m)->m_flags & M_LOOP) &&					\
 	    ((m)->m_len < (off) + (hlen)) &&				\
 	    (((m) = m_pullup((m), (off) + (hlen))) == NULL)) {		\
-		ip6stat.ip6s_exthdrtoolong++;				\
+		IP6_EXTHDR_STAT(ip6stat.ip6s_exthdrtoolong++;		\
 		return ret;						\
 	} else if ((m)->m_flags & M_EXT) {				\
 		if ((m)->m_len < (off) + (hlen)) {			\
-			ip6stat.ip6s_exthdrtoolong++;			\
+			IP6_EXTHDR_STAT(ip6stat.ip6s_exthdrtoolong++);	\
 			m_freem(m);					\
 			return ret;					\
 		}							\
 	} else {							\
 		if ((m)->m_len < (off) + (hlen)) {			\
-			ip6stat.ip6s_exthdrtoolong++;			\
+			IP6_EXTHDR_STAT(ip6stat.ip6s_exthdrtoolong++);	\
 			m_freem(m);					\
 			return ret;					\
 		}							\
 	}								\
-    }									\
-    else {								\
+    } else {								\
 	if ((m)->m_len < (off) + (hlen)) {				\
-		ip6stat.ip6s_tooshort++;				\
+		IP6_EXTHDR_STAT(ip6stat.ip6s_tooshort++);		\
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);	\
 		m_freem(m);						\
 		return ret;						\
@@ -262,7 +267,7 @@ do {									\
 do {									\
 	struct mbuf *t;							\
 	int tmp;							\
-	ip6stat.ip6s_exthdrget++;					\
+	IP6_EXTHDR_STAT(ip6stat.ip6s_exthdrget++);			\
 	if ((m)->m_len >= (off) + (len))				\
 		(val) = (typ)(mtod((m), caddr_t) + (off));		\
 	else {								\
@@ -281,7 +286,7 @@ do {									\
 #define IP6_EXTHDR_GET0(val, typ, m, off, len) \
 do {									\
 	struct mbuf *t;							\
-	ip6stat.ip6s_exthdrget0++;					\
+	IP6_EXTHDR_STAT(ip6stat.ip6s_exthdrget0++);			\
 	if ((off) == 0)							\
 		(val) = (typ)mtod(m, caddr_t);				\
 	else {								\
