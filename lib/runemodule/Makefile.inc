@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/12 00:51:06 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/12/27 11:54:02 lukem Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -9,7 +9,6 @@ NOPROFILE=	# defined
 .include "../Makefile.inc"
 
 SHLIB_VERSION_FILE=	${.CURDIR}/../shlib_version
-SHLIBDIR=	/usr/lib/runemodule
 LIBDIR=		/usr/lib/runemodule
 INTERNALLIB=	yes
 CPPFLAGS+=	-I${.CURDIR}/../../libc/locale
