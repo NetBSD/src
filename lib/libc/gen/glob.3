@@ -1,4 +1,6 @@
-.\" Copyright (c) 1989, 1991, 1993
+.\"	$NetBSD: glob.3,v 1.9 1995/02/27 04:13:30 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -31,10 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)glob.3	8.1 (Berkeley) 6/9/93
-.\"	$Id: glob.3,v 1.8 1994/01/06 13:24:09 deraadt Exp $
+.\"     @(#)glob.3	8.3 (Berkeley) 4/16/94
 .\"
-.Dd June 9, 1993
+.Dd April 16, 1994
 .Dt GLOB 3
 .Os
 .Sh NAME
@@ -381,10 +382,24 @@ The arguments
 and
 .Fa pglob\->gl_pathv
 are still set as specified above.
+.Sh EXAMPLE
+A rough equivalent of
+.Ql "ls -l *.c *.h"
+can be obtained with the
+following code:
+.Bd -literal -offset indent
+glob_t g;
+
+g.gl_offs = 2;
+glob("*.c", GLOB_DOOFFS, NULL, &g);
+glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, &g);
+g.gl_pathv[0] = "ls";
+g.gl_pathv[1] = "-l";
+execvp("ls", g.gl_pathv);
+.Ed
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr fnmatch 3 ,
-.Xr wordexp 3 ,
 .Xr regexp 3
 .Sh STANDARDS
 The
@@ -407,21 +422,6 @@ and
 should not be used by applications striving for strict
 .Tn POSIX
 conformance.
-.Sh EXAMPLE
-A rough equivalent of
-.Ql "ls -l *.c *.h"
-can be obtained with the
-following code:
-.Bd -literal -offset indent
-glob_t g;
-
-g.gl_offs = 2;
-glob("*.c", GLOB_DOOFFS, NULL, &g);
-glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, &g);
-g.gl_pathv[0] = "ls";
-g.gl_pathv[1] = "-l";
-execvp("ls", g.gl_pathv);
-.Ed
 .Sh HISTORY
 The
 .Fn glob
