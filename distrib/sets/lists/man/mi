@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.244 2000/05/10 23:29:46 thorpej Exp $
+# $NetBSD: mi,v 1.245 2000/05/15 07:50:44 bouyer Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -519,6 +519,7 @@
 ./usr/share/man/cat4/sea.0
 ./usr/share/man/cat4/sequencer.0
 ./usr/share/man/cat4/si.0
+./usr/share/man/cat4/siop.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sound.0
@@ -1531,6 +1532,7 @@
 ./usr/share/man/man4/sea.4
 ./usr/share/man/man4/sequencer.4
 ./usr/share/man/man4/si.4
+./usr/share/man/man4/siop.4
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/sound.4
