@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1996/03/03 16:49:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1996/04/07 18:21:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1190,3 +1190,11 @@ setroot()
 		dumpdev = swdevt[0].sw_dev;
 #endif
 }
+
+#ifndef NEWCONFIG	/* XXX */
+void
+config_init()
+{
+	/* Stub, so kernel will link. */
+}
+#endif
