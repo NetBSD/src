@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.11 1994/05/27 08:43:30 pk Exp $
+ * $Id: autoconf.c,v 1.12 1994/08/20 01:35:20 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -62,6 +62,10 @@
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
+#ifdef SUN4
+#include <machine/oldmon.h>
+#include <machine/idprom.h>
+#endif
 #include <machine/cpu.h>
 
 /*
@@ -128,6 +132,14 @@ str2hex(str, vp)
 	return (str);
 }
 
+#ifdef SUN4
+struct promvec promvecdat;
+struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
+
+struct idprom idprom;
+void	getidprom __P((struct idprom *, int size));
+#endif
+
 /*
  * locore.s code calls bootstrap() just before calling main(), after double
  * mapping the kernel to high memory and setting up the trap base register.
@@ -144,9 +156,70 @@ bootstrap()
 	extern int kgdb_debug_panic;
 #endif
 
-	node = findroot();
-	nmmu = getpropint(node, "mmu-npmg", 128);
-	ncontext = getpropint(node, "mmu-nctx", 8);
+#ifdef SUN4
+	if (cputyp == CPU_SUN4) {
+		/*
+		 * XXX:
+		 * The promvec is bogus. We need to build a
+		 * fake one from scrath as soon as possible.
+		 */
+		bzero(&promvecdat, sizeof promvecdat);
+		promvec = &promvecdat;
+
+		promvec->pv_stdin = oldpvec->inSource;
+		promvec->pv_stdout = oldpvec->outSink;
+		promvec->pv_putchar = oldpvec->putChar;
+		promvec->pv_putstr = oldpvec->fbWriteStr;
+		promvec->pv_nbgetchar = oldpvec->mayGet;
+		promvec->pv_getchar = oldpvec->getChar;
+		promvec->pv_romvec_vers = -1;		/* eek! */
+		promvec->pv_reboot = oldpvec->reBoot;
+		promvec->pv_abort = oldpvec->abortEntry;
+		promvec->pv_setctxt = oldpvec->setcxsegmap;
+		promvec->pv_v0bootargs = (struct v0bootargs **)oldpvec->bootParam;
+		promvec->pv_halt = oldpvec->exitToMon;
+
+		/*
+		 * Discover parts of the machine memory organization
+		 * that we need this early.
+		 */
+#if 0
+		if (oldpvec->romvecVersion >= 2)
+			*oldpvec->vector_cmd = prom_w_cmd;
+#endif
+		getidprom(&idprom, sizeof(idprom));
+		switch (idprom.id_machine) {
+		case SUN4_100:
+			nmmu = 256;
+			ncontext = 8;
+			break;
+		case SUN4_200:
+			nmmu = 512;
+			ncontext = 16;
+			break;
+		case SUN4_300:
+			nmmu = 256;
+			ncontext = 16;
+			break;
+		case SUN4_400:
+			nmmu = 1024;
+			ncontext = 64;
+			break;
+		default:
+			printf("bootstrap: sun4 machine type %2x unknown!\n",
+			    idprom.id_machine);
+			callrom();
+		}
+	}
+#endif /* SUN4 */
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		node = findroot();
+		nmmu = getpropint(node, "mmu-npmg", 128);
+		ncontext = getpropint(node, "mmu-nctx", 8);
+	}
+#endif /* SUN4C || SUN4M */
+
 	pmap_bootstrap(nmmu, ncontext);
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
@@ -280,13 +353,22 @@ configure()
 	struct romaux ra;
 	void sync_crash();
 
-	node = findroot();
-	cp = getpropstring(node, "device_type");
-	if (strcmp(cp, "cpu") != 0) {
-		printf("PROM root device type = %s\n", cp);
-		panic("need CPU as root");
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		node = findroot();
+		cp = getpropstring(node, "device_type");
+		if (strcmp(cp, "cpu") != 0) {
+			printf("PROM root device type = %s\n", cp);
+			panic("need CPU as root");
+		}
+		*promvec->pv_synchook = sync_crash;
 	}
-	*promvec->pv_synchook = sync_crash;
+#endif
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		node = 0;
+	}
+#endif
 	ra.ra_node = node;
 	ra.ra_name = cp = "mainbus";
 	if (!config_rootfound(cp, (void *)&ra))
@@ -557,6 +639,7 @@ makememarr(ap, max, which)
 	register struct memarr *ap;
 	int max, which;
 {
+#if defined(SUN4C) || defined(SUN4M)
 	struct v2rmi {
 		int	zero;
 		int	addr;
@@ -566,7 +649,27 @@ makememarr(ap, max, which)
 	register struct v0mlist *mp;
 	register int i, node, len;
 	char *prop;
+#endif
 
+#ifdef SUN4
+	if (cputyp == CPU_SUN4) {
+		switch(which) {
+		case MEMARR_AVAILPHYS:
+			ap[0].addr = 0;
+			ap[0].len = *oldpvec->memoryAvail;
+			break;
+		case MEMARR_TOTALPHYS:
+			ap[0].addr = 0;
+			ap[0].len = *oldpvec->memorySize;
+			break;
+		default:
+			printf("pre_panic: makememarr");
+			break;
+		}
+		return (1);
+	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
 	switch (i = promvec->pv_romvec_vers) {
 
 	case 0:
@@ -650,6 +753,7 @@ overflow:
 	 */
 	printf("makememarr: WARNING: lost some memory\n");
 	return (i);
+#endif
 }
 
 /*
@@ -799,8 +903,9 @@ romboot(str)
 callrom()
 {
 
-#ifdef notdef		/* sun4c FORTH PROMs do this for us */
-	fb_unblank();
+#ifdef SUN4		/* sun4c FORTH PROMs do this for us */
+	if (cputyp == CPU_SUN4)
+		fb_unblank();
 #endif
 	promvec->pv_abort();
 }
