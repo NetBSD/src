@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.21 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.22 2003/12/30 21:59:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.21 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.22 2003/12/30 21:59:03 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -93,7 +93,7 @@ StateName(RF_AccessState_t state)
 #endif
 
 void 
-rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
+rf_ContinueRaidAccess(RF_RaidAccessDesc_t *desc)
 {
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
@@ -160,7 +160,7 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 
 
 void 
-rf_ContinueDagAccess(RF_DagList_t * dagList)
+rf_ContinueDagAccess(RF_DagList_t *dagList)
 {
 	RF_AccTraceEntry_t *tracerec = &(dagList->desc->tracerec);
 	RF_RaidAccessDesc_t *desc;
@@ -202,7 +202,7 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 }
 
 int 
-rf_State_LastState(RF_RaidAccessDesc_t * desc)
+rf_State_LastState(RF_RaidAccessDesc_t *desc)
 {
 	void    (*callbackFunc) (RF_CBParam_t) = desc->callbackFunc;
 	RF_CBParam_t callbackArg;
@@ -243,7 +243,7 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc)
+rf_State_IncrAccessCount(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr;
 
@@ -259,7 +259,7 @@ rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
+rf_State_DecrAccessCount(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr;
 
@@ -278,7 +278,7 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
+rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
@@ -318,7 +318,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_Map(RF_RaidAccessDesc_t * desc)
+rf_State_Map(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
@@ -339,7 +339,7 @@ rf_State_Map(RF_RaidAccessDesc_t * desc)
 }
 
 int 
-rf_State_Lock(RF_RaidAccessDesc_t * desc)
+rf_State_Lock(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Raid_t *raidPtr = desc->raidPtr;
@@ -439,7 +439,7 @@ rf_State_Lock(RF_RaidAccessDesc_t * desc)
  *     done (FAIL)
  */
 int 
-rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
+rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_Etimer_t timer;
@@ -494,7 +494,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
  * dags for independents parity groups (stripes) are fired concurrently */
 
 int 
-rf_State_ExecuteDAG(RF_RaidAccessDesc_t * desc)
+rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 {
 	int     i;
 	RF_DagHeader_t *dag_h;
@@ -533,7 +533,7 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t * desc)
  * if not, fire as many dags as possible */
 
 int 
-rf_State_ProcessDAG(RF_RaidAccessDesc_t * desc)
+rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
@@ -591,7 +591,7 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t * desc)
 }
 /* only make it this far if all dags complete successfully */
 int 
-rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
+rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 {
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
