@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.21 2002/01/05 19:09:41 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.22 2002/01/10 17:20:16 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1250,3 +1250,16 @@ distrib/notes/vax/install			1.11
 
   Quote > and < characters with \*> and \*< respectively so the
   correctness of the generated HTML is improved.
+
+sys/arch/x68k/dev/intio.c			1.10
+sys/arch/x68k/include/bus.h			1.9
+
+  Support mapping devices with BUS_SPACE_MAP_SHIFTED_EVEN.
+
+sys/arch/x68k/conf/files.x68k			1.40
+sys/arch/x68k/conf/ALL				1.45 via patch
+sys/arch/x68k/conf/GENERIC			1.63,1.67 via patch
+sys/arch/x68k/conf/INSTALL			1.43
+sys/arch/x68k/dev/if_ne_intio.c			1.1 (new) via patch
+
+  Support the Ethernet part of Nereid (ether/USB/memory board).
