@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.21 1993/06/27 06:27:29 andrew Exp $
+ *	$Id: isa.c,v 1.22 1993/06/30 04:13:34 andrew Exp $
  */
 
 /*
@@ -611,13 +611,7 @@ gettick() {
 	int low;
 
 	/*
-	 * XXX - isa.h defines bogus timers.  There's no such timer as
-	 * IO_TIMER_2 = 0x48.  There's a timer in the CMOS RAM chip but
-	 * its interface is quite different.  Neither timer is an 8252.
-	 */
-	/*
 	 * Protect ourself against interrupts.
-	 * XXX - sysbeep() and sysbeepstop() need protection.
 	 */
 	disable_intr();
 	/*
