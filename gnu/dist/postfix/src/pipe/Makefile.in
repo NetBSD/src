@@ -8,7 +8,7 @@ WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG= quote_821_local pipe_unalias
+TESTPROG=
 PROG	= pipe
 INC_DIR	= ../../include
 LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a
@@ -22,6 +22,8 @@ Makefile: Makefile.in
 	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
+
+tests:	test
 
 update: ../../libexec/$(PROG)
 

@@ -70,7 +70,7 @@ command.
 
 <a name="process"><h2> Process limits</h2>
 
-The <b>default_process_limit</b> parameter (default: 50) gives
+The <b>default_process_limit</b> parameter (default: 100) gives
 direct control over inbound and outbound delivery rates.  This
 parameter controls the number of concurrent processes that implement
 a Postfix service (smtp client, smtp server, local delivery, etc.).
@@ -82,14 +82,14 @@ Use a larger value if your machine is a major mail hub.
 
 You can override this setting for specific Postfix daemons by
 editing the <b>master.cf</b> file.  For example, if you do not
-wish to receive 50 SMTP messages at the same time, you could specify:
+wish to receive 100 SMTP messages at the same time, you could specify:
 
 <dl>
 
 <dd> <pre> 
 # ==========================================================================
 # service type  private unpriv  chroot  wakeup  maxproc command + args
-#               (yes)   (yes)   (yes)   (never) (50)
+#               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
 . . .
 smtp      inet  n       -       -       -       5       smtpd
@@ -126,7 +126,7 @@ limit for the specific mail transport channel.
 <p>
 
 The <b>default_destination_concurrency_limit</b> parameter
-(default: 10) controls how many messages may be sent to the same
+(default: 20) controls how many messages may be sent to the same
 destination simultaneously. You can override this setting for
 specific delivery channels (<b>local, smtp, uucp</b> etc.). The
 <b>main.cf</b> file recommends the following:
@@ -135,7 +135,7 @@ specific delivery channels (<b>local, smtp, uucp</b> etc.). The
 
 <dd> <b>local_destination_concurrency_limit = 2</b>
 
-<dd> <b>default_destination_concurrency_limit = 10</b>
+<dd> <b>default_destination_concurrency_limit = 20</b>
 
 </dl>
 
@@ -150,7 +150,7 @@ manager, you don't want to run too many instances at the same time.
 
 <p>
 
-A destination concurrency limit of 10 for SMTP delivery seems enough
+A destination concurrency limit of 20 for SMTP delivery seems enough
 to noticeably load a system without bringing it to its knees. Be
 careful when changing this to a much larger number.
 
@@ -302,7 +302,8 @@ often the queue manager scans the queue for deferred mail.
 
 <dt> <b>maximal_queue_lifetime</b> (default: 5 days) <dd> How
 long a message stays in the queue before it is sent back as
-undeliverable.
+undeliverable. Specify 0 for mail that should be returned
+immediately after the first unsuccessful delivery attempt.
 
 <p>
 
@@ -318,7 +319,7 @@ failure.
 
 <p>
 
-<dt> <b>qmgr_message_recipient_limit</b> (default: 1000) <dd> The
+<dt> <b>qmgr_message_recipient_limit</b> (default: 20000) <dd> The
 size of many in-memory queue manager data structures.  Among others,
 this parameter limits the size of the short-term, in-memory "dead"
 list.  Destinations that don't fit the list are not added.
@@ -358,9 +359,9 @@ client. The behavior is controlled by the following parameters:
 
 <dl>
 
-<a name="#smtpd_error_sleep_time">
+<a name="smtpd_error_sleep_time">
 
-<dt> <b>smtpd_error_sleep_time</b> (default: 5 seconds) <dd> When
+<dt> <b>smtpd_error_sleep_time</b> (default: 1 second) <dd> When
 the per-session error count is small, the SMTP server pauses only
 when reporting a problem to a client. The purpose is to prevent
 naive clients from going into a fast <i>connect-error-disconnect</i>
@@ -368,7 +369,7 @@ loop.
 
 <p>
 
-<a name="#smtpd_soft_error_limit">
+<a name="smtpd_soft_error_limit">
 
 <dt> <b>smtpd_soft_error_limit</b> (default: 10) <dd> When the
 per-session error count exceeds this value, the SMTP server sleeps
@@ -376,9 +377,9 @@ per-session error count exceeds this value, the SMTP server sleeps
 
 <p>
 
-<a name="#smtpd_hard_error_limit">
+<a name="smtpd_hard_error_limit">
 
-<dt> <b>smtpd_hard_error_limit</b> (default: 100) <dd> When
+<dt> <b>smtpd_hard_error_limit</b> (default: 20) <dd> When
 the per-session error count exceeds this value, the SMTP server
 disconnects.
 

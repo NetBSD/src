@@ -259,26 +259,21 @@ Externalized, newlines inserted:
 named group: foo@bar,
 baz@barf;
 
->>>wietse@foo (wietse
-	venema)<<<
+>>>wietse@foo (wietse	venema)<<<
 
 Parse tree:
  address
    atom "wietse"
    OP "@"
    atom "foo"
- comment "(wietse
-	venema)"
+ comment "(wietse	venema)"
 
 Internalized:
-wietse@foo (wietse
-	venema)
+wietse@foo (wietse	venema)
 
 Externalized, no newlines inserted:
-wietse@foo (wietse
-	venema)
+wietse@foo (wietse	venema)
 
 Externalized, newlines inserted:
-wietse@foo (wietse
-	venema)
+wietse@foo (wietse	venema)
 

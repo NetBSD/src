@@ -252,7 +252,7 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * 
      * Don't come here more than once, whether or not the recipient exists.
      */
-    if (been_here(state.dup_filter, "mailbox %s", state.msg_attr.user))
+    if (been_here(state.dup_filter, "mailbox %s", state.msg_attr.local))
 	return (YES);
 
     /*
@@ -260,7 +260,8 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      */
     if (*var_mailbox_transport) {
 	*statusp = deliver_pass(MAIL_CLASS_PRIVATE, var_mailbox_transport,
-			      state.request, state.msg_attr.recipient, -1L);
+				state.request, state.msg_attr.orig_rcpt,
+				state.msg_attr.recipient, -1L);
 	return (YES);
     }
 

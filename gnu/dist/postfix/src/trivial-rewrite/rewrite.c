@@ -91,6 +91,12 @@ void    rewrite_tree(char *unused_ruleset, TOK822 *tree)
     TOK822 *local;
 
     /*
+     * XXX If you change this module, quote_822_local.c, or tok822_parse.c,
+     * be sure to re-run the tests under "make rewrite_clnt_test" and "make
+     * resolve_clnt_test" in the global directory.
+     */
+
+    /*
      * Sanity check.
      */
     if (tree->head == 0)
@@ -158,10 +164,13 @@ void    rewrite_tree(char *unused_ruleset, TOK822 *tree)
     }
 
     /*
-     * Append missing .domain
+     * Append missing .domain, but leave broken forms ending in @ alone. This
+     * merely makes diagnostics more accurate by leaving bogus addresses
+     * alone.
      */
     if (var_append_dot_mydomain != 0
 	&& (domain = tok822_rfind_type(tree->tail, '@')) != 0
+	&& domain != tree->tail
 	&& tok822_find_type(domain, TOK822_DOMLIT) == 0
 	&& tok822_find_type(domain, '.') == 0) {
 	tok822_sub_append(tree, tok822_alloc('.', (char *) 0));
@@ -169,10 +178,17 @@ void    rewrite_tree(char *unused_ruleset, TOK822 *tree)
     }
 
     /*
-     * Strip trailing dot.
+     * Strip trailing dot at end of domain, but not dot-dot or @-dot. This
+     * merely makes diagnostics more accurate by leaving bogus addresses
+     * alone.
      */
-    if (tree->tail->type == '.')
+#if 0
+    if (tree->tail->type == '.'
+	&& tree->tail->prev
+	&& tree->tail->prev->type != '.'
+	&& tree->tail->prev->type != '@')
 	tok822_free_tree(tok822_sub_keep_before(tree, tree->tail));
+#endif
 }
 
 /* rewrite_addr - rewrite address according to rule set */

@@ -37,6 +37,8 @@
 #define REC_TYPE_WARN	'W'		/* warning message time */
 #define REC_TYPE_ATTR	'A'		/* named attribute for extensions */
 
+#define REC_TYPE_FLGS	'f'		/* cleanup processing flags */
+
 #define REC_TYPE_MESG	'M'		/* start message records */
 
 #define REC_TYPE_CONT	'L'		/* long data record */
@@ -55,11 +57,16 @@
   * The types of records that I expect to see while processing different
   * record groups. The first member in each set is the record type that
   * indicates the end of that record group.
+  * 
+  * XXX A records in the extracted segment are generated only by the cleanup
+  * server, and are not supposed to be present in locally submitted mail, as
+  * this is "postfix internal" information. However, the pickup server has to
+  * allow for the presence of A records in the extracted segment, because it
+  * can be requested to re-process already queued mail with `postsuper -r'.
   */
 #define REC_TYPE_ENVELOPE	"MCTFILSDROWVA"
 #define REC_TYPE_CONTENT	"XLN"
-#define REC_TYPE_EXTRACT	"EDROPreA"
-#define REC_TYPE_NOEXTRACT	"E"
+#define REC_TYPE_EXTRACT	"EDROPreAFI"
 
  /*
   * The record at the beginning of the envelope segment specifies the message

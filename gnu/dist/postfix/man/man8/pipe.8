@@ -50,7 +50,7 @@ entry for the pipe-based delivery transport.
 .fi
 The external command attributes are given in the \fBmaster.cf\fR
 file at the end of a service definition.  The syntax is as follows:
-.IP "\fBflags=BFRhqu.>\fR (optional)"
+.IP "\fBflags=BDFORhqu.>\fR (optional)"
 Optional message processing flags. By default, a message is
 copied unchanged.
 .RS
@@ -58,10 +58,18 @@ copied unchanged.
 Append a blank line at the end of each message. This is required
 by some mail user agents that recognize "\fBFrom \fR" lines only
 when preceded by a blank line.
+.IP \fBD\fR
+Prepend a "\fBDelivered-To: \fIrecipient\fR" message header with the
+envelope recipient address. Note: for this to work, the
+\fItransport\fB_destination_recipient_limit\fR must be 1.
 .IP \fBF\fR
 Prepend a "\fBFrom \fIsender time_stamp\fR" envelope header to
 the message content.
 This is expected by, for example, \fBUUCP\fR software.
+.IP \fBO\fR
+Prepend an "\fBX-Original-To: \fIrecipient\fR" message header
+with the recipient address as given to Postfix. Note: for this to
+work, the \fItransport\fB_destination_recipient_limit\fR must be 1.
 .IP \fBR\fR
 Prepend a \fBReturn-Path:\fR message header with the envelope sender
 address.
@@ -101,7 +109,7 @@ commands with root privileges, or with the privileges of the
 mail system owner. If \fIgroupname\fR is specified, the
 corresponding group ID is used instead of the group ID of
 \fIusername\fR.
-.IP "\fBeol=string\fR (default: \fB\en\fR)"
+.IP "\fBeol=string\fR (optional, default: \fB\en\fR)"
 The output record delimiter. Typically one would use either
 \fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
 sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
@@ -223,7 +231,7 @@ The limit is enforced by the Postfix queue manager.
 Limit the time for delivery to external command, for delivery via
 the named \fBtransport\fR. The default limit is taken from the
 \fBcommand_time_limit\fR parameter.
-The limit is enforced by the Postfix queue manager.
+The limit is enforced by the pipe delivery agent.
 .SH SEE ALSO
 .na
 .nf

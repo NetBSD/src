@@ -42,9 +42,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
               program  processes  the  file(s) specified with the
               <b>alias</b><i>_</i><b>database</b>  configuration  parameter.   If   no
               alias  database type is specified, the program uses
-              the type specified with the <b>database</b><i>_</i><b>type</b>  configu-
-              ration parameter.  This mode of operation is imple-
-              mented by running the <a href="postalias.1.html"><b>postalias</b>(1)</a> command.
+              the type specified with  the  <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b>
+              configuration parameter.  This mode of operation is
+              implemented by running the <a href="postalias.1.html"><b>postalias</b>(1)</a> command.
 
               Note: it may take a minute or so  before  an  alias
               database  update  becomes  visible. Use the <b>postfix</b>
@@ -57,92 +57,98 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        The following options are recognized:
 
-       <b>-B</b> <i>body_type</i> (ignored)
-              The  message  body  MIME  type.  Currently, Postfix
-              implements <b>just-send-eight</b>.
+       <b>-Am</b> (ignored)
+
+       <b>-Ac</b> (ignored)
+              Postfix  sendmail  uses the same configuration file
+              regardless of whether or not a message is  an  ini-
+              tial submission.
+
+       <b>-B</b> <i>body_type</i>
+              The message body MIME type: <b>7BIT</b> or <b>8BITMIME</b>.
 
        <b>-C</b> <i>config_file</i> (ignored :-)
               The path name of the <b>sendmail.cf</b> file. Postfix con-
               figuration files are kept in <b>/etc/postfix</b>.
 
        <b>-F</b> <i>full_name</i>
-              Set  the  sender  full name. This is used only with
+              Set the sender full name. This is  used  only  with
               messages that have no <b>From:</b> message header.
 
        <b>-G</b> (ignored)
-              Gateway (relay) submission, as opposed  to  initial
+              Gateway  (relay)  submission, as opposed to initial
               user submission.
 
-       <b>-I</b>     Initialize  alias database. See the <b>newaliases</b> com-
+       <b>-I</b>     Initialize alias database. See the <b>newaliases</b>  com-
               mand above.
 
        <b>-L</b> <i>label</i> (ignored)
-              The logging label. Use the  <b>syslog</b><i>_</i><b>name</b>  configura-
+              The  logging  label. Use the <b>syslog</b><i>_</i><b>name</b> configura-
               tion parameter instead.
 
        <b>-N</b> <i>dsn</i> (ignored)
-              Delivery  status  notification  control. Currently,
+              Delivery status  notification  control.  Currently,
               Postfix does not implement <b>DSN</b>.
 
        <b>-R</b> <i>return_limit</i> (ignored)
-              Limit  the  size   of   bounced   mail.   Use   the
-              <b>bounce</b><i>_</i><b>size</b><i>_</i><b>limit</b>  configuration parameter instead.
+              Limit   the   size   of   bounced   mail.  Use  the
+              <b>bounce</b><i>_</i><b>size</b><i>_</i><b>limit</b> configuration parameter  instead.
 
        <b>-X</b> <i>log_file</i> (ignored)
-              Log mailer traffic.  Use  the  <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>  and
-              <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b>  configuration parameters instead.
+              Log  mailer  traffic.  Use  the <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b> and
+              <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b> configuration parameters  instead.
 
        <b>-U</b> (ignored)
               Initial user submission.
 
-       <b>-V</b>     Variable Envelope Return Path.  Given  an  envelope
-              sender  address  of the form <i>owner-listname</i>@<i>origin</i>,
-              each recipient <i>user</i>@<i>domain</i>  receives  mail  with  a
+       <b>-V</b>     Variable  Envelope  Return  Path. Given an envelope
+              sender address of the  form  <i>owner-listname</i>@<i>origin</i>,
+              each  recipient  <i>user</i>@<i>domain</i>  receives  mail with a
               personalized envelope sender address.
 
-              By   default,   the  personalized  envelope  sender
-              address is  <i>owner-listname</i><b>+</b><i>user</i><b>=</b><i>domain</i>@<i>origin</i>.  The
-              default  <b>+</b>  and  <b>=</b> characters are configurable with
-              the <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>  configuration  parame-
-              ter.
-
-       <b>-V</b><i>xy</i>   As <b>-V</b>, but uses <i>x</i> and <i>y</i> as the VERP delimiter char-
-              acters, instead of the  characters  specified  with
+              By  default,  the  personalized   envelope   sender
+              address  is  <i>owner-listname</i><b>+</b><i>user</i><b>=</b><i>domain</i>@<i>origin</i>. The
+              default <b>+</b> and <b>=</b> characters  are  configurable  with
               the  <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>  configuration parame-
               ter.
 
-       <b>-bd</b>    Go into daemon mode.  This  mode  of  operation  is
+       <b>-V</b><i>xy</i>   As <b>-V</b>, but uses <i>x</i> and <i>y</i> as the VERP delimiter char-
+              acters,  instead  of  the characters specified with
+              the <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>  configuration  parame-
+              ter.
+
+       <b>-bd</b>    Go  into  daemon  mode.  This  mode of operation is
               implemented by executing the <b>postfix</b> <b>start</b> command.
 
-       <b>-bi</b>    Initialize alias database. See the <b>newaliases</b>  com-
+       <b>-bi</b>    Initialize  alias database. See the <b>newaliases</b> com-
               mand above.
 
-       <b>-bm</b>    Read  mail  from  standard  input  and  arrange for
+       <b>-bm</b>    Read mail  from  standard  input  and  arrange  for
               delivery.  This is the default mode of operation.
 
        <b>-bp</b>    List the mail queue. See the <b>mailq</b> command above.
 
-       <b>-bs</b>    Stand-alone SMTP server mode.  Read  SMTP  commands
-              from  standard  input, and write responses to stan-
-              dard output.  In stand-alone SMTP server mode,  UCE
-              restrictions  and  access  controls are disabled by
-              default. To enable them, run  the  process  as  the
+       <b>-bs</b>    Stand-alone  SMTP  server  mode. Read SMTP commands
+              from standard input, and write responses  to  stan-
+              dard  output.  In stand-alone SMTP server mode, UCE
+              restrictions and access controls  are  disabled  by
+              default.  To  enable  them,  run the process as the
               <b>mail</b><i>_</i><b>owner</b> user.
 
-              This  mode  of  operation is implemented by running
+              This mode of operation is  implemented  by  running
               the <a href="smtpd.8.html"><b>smtpd</b>(8)</a> daemon.
 
        <b>-f</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
               address where delivery problems are sent to, unless
-              the message contains an <b>Errors-To:</b> message  header.
+              the  message contains an <b>Errors-To:</b> message header.
 
        <b>-h</b> <i>hop_count</i> (ignored)
-              Hop  count limit. Use the <b>hopcount</b><i>_</i><b>limit</b> configura-
+              Hop count limit. Use the <b>hopcount</b><i>_</i><b>limit</b>  configura-
               tion parameter instead.
 
-       <b>-i</b>     When reading a message from standard  input,  don't
-              treat  a line with only a <b>.</b> character as the end of
+       <b>-i</b>     When  reading  a message from standard input, don't
+              treat a line with only a <b>.</b> character as the end  of
               input.
 
        <b>-m</b> (ignored)
@@ -152,14 +158,15 @@ SENDMAIL(1)                                           SENDMAIL(1)
               Backwards compatibility.
 
        <b>-oA</b><i>alias_database</i>
-              Non-default alias  database.  Specify  <i>pathname</i>  or
+              Non-default  alias  database.  Specify  <i>pathname</i> or
               <i>type</i>:<i>pathname</i>. See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
 
        <b>-o7</b> (ignored)
 
        <b>-o8</b> (ignored)
-              The  message  body  type. Currently, Postfix imple-
-              ments <b>just-send-eight</b>.
+              To send 8-bit or binary content, use an appropriate
+              MIME  encapsulation  and specify the appropriate <b>-B</b>
+              command-line option.
 
        <b>-oi</b>    When reading a message from standard  input,  don't
               treat  a line with only a <b>.</b> character as the end of
@@ -203,7 +210,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
               tiple <b>-v</b> options  make  the  software  increasingly
-              verbose.
+              verbose.  For  compatibility  with  mailx and other
+              mail submission software, a single <b>-v</b>  option  pro-
+              duces no output.
 
 <b>SECURITY</b>
        By  design,  this  program  is not set-user (or group) id.
@@ -245,7 +254,7 @@ SENDMAIL(1)                                           SENDMAIL(1)
               The amount of original message context that is sent
               along with a non-delivery notification.
 
-       <b>database</b><i>_</i><b>type</b>
+       <b>default</b><i>_</i><b>database</b><i>_</i><b>type</b>
               Default alias etc. database type. On many UNIX sys-
               tems the default type is either <b>dbm</b> or <b>hash</b>.
 
@@ -292,12 +301,10 @@ SENDMAIL(1)                                           SENDMAIL(1)
               processes.
 
        <b>command</b><i>_</i><b>directory</b>
-              Directory with Postfix support  commands  (default:
-              <b>$program</b><i>_</i><b>directory</b>).
+              Directory with Postfix support commands.
 
        <b>daemon</b><i>_</i><b>directory</b>
-              Directory  with  Postfix  daemon programs (default:
-              <b>$program</b><i>_</i><b>directory</b>).
+              Directory with Postfix daemon programs.
 
        <b>queue</b><i>_</i><b>directory</b>
               Top-level directory of the Postfix queue.  This  is
@@ -314,6 +321,7 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
 <b>SEE</b> <b>ALSO</b>
        <a href="pickup.8.html">pickup(8)</a> mail pickup daemon
+       <a href="postsuper.1.html">postsuper(1)</a> queue maintenance
        <a href="postalias.1.html">postalias(1)</a> maintain alias database
        <a href="postdrop.1.html">postdrop(1)</a> mail posting utility
        <a href="postfix.1.html">postfix(1)</a> mail system control

@@ -19,6 +19,7 @@
   */
 typedef struct RECIPIENT {
     long    offset;			/* REC_TYPE_RCPT byte */
+    char   *orig_addr;			/* null or original recipient */
     char   *address;			/* complete address */
 } RECIPIENT;
 
@@ -29,7 +30,7 @@ typedef struct RECIPIENT_LIST {
 } RECIPIENT_LIST;
 
 extern void recipient_list_init(RECIPIENT_LIST *);
-extern void recipient_list_add(RECIPIENT_LIST *, long, const char *);
+extern void recipient_list_add(RECIPIENT_LIST *, long, const char *, const char *);
 extern void recipient_list_free(RECIPIENT_LIST *);
 
 /* LICENSE

@@ -78,8 +78,16 @@ mail bad-sender@ok.domain
 recipient_restrictions hash:./smtpd_check_access
 # Expect: REJECT
 rcpt reject@dunno.domain
+# Expect: REJECT
+recipient_delimiter +
+rcpt reject+ext@dunno.domain
+recipient_delimiter |
 # Expect: OK
 rcpt ok@dunno.domain
+# Expect: OK
+recipient_delimiter +
+rcpt ok+ext@dunno.domain
+recipient_delimiter |
 # Expect: OK
 rcpt anyone@dunno.domain
 # Expect: OK

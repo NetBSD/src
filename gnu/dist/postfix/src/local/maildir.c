@@ -103,7 +103,7 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     buf = vstring_alloc(100);
     why = vstring_alloc(100);
 
-    copy_flags = MAIL_COPY_TOFILE | MAIL_COPY_RETURN_PATH;
+    copy_flags = MAIL_COPY_TOFILE | MAIL_COPY_RETURN_PATH | MAIL_COPY_ORIG_RCPT;
     if (local_deliver_hdr_mask & DELIVER_HDR_FILE)
 	copy_flags |= MAIL_COPY_DELIVERED;
 

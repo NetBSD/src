@@ -70,6 +70,7 @@
 
 #include <msg.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <vstream.h>
 #include <vstring.h>
 #include <msg_vstream.h>
@@ -79,7 +80,7 @@ static void usage(char *progname)
     msg_fatal("usage: %s [-v] patterns string", progname);
 }
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     STRING_LIST *list;
     char   *string;
