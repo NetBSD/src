@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.13 2005/01/26 13:07:32 simonb Exp $
+.\"	$NetBSD: vmstat.1,v 1.14 2005/01/26 13:41:47 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,40 +68,21 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl efHilLmsUvW
-.Bk -words
-.Op Fl M Ar core
-.Ek
-.Bk -words
-.Op Fl N Ar system
-.Ek
-.Bk -words
+.Op Fl efHiLlmsUvW
 .Op Fl c Ar count
-.Ek
-.Bk -words
 .Op Fl h Ar hashname
-.Ek
-.Bk -words
+.Op Fl M Ar core
+.Op Fl N Ar system
 .Op Fl u Ar histname
-.Ek
-.Bk -words
 .Op Fl w Ar wait
-.Ek
 .Op Ar disks
 .Sh DESCRIPTION
 .Nm
 reports certain kernel statistics kept about process, virtual memory,
-disk, trap and CPU activity.
+disk, trap, and CPU activity.
 .Pp
 The options are as follows:
 .Bl -tag -width xxxhistname
-.It Fl M Ar core
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/mem .
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /netbsd .
 .It Fl c Ar count
 Repeat the display
 .Ar count
@@ -115,38 +96,45 @@ interval is specified, the default is 1 second.
 Report the values of system event counters.
 .It Fl f
 Report fork statistics.
+.It Fl H
+Report all hash table statistics.
 .It Fl h Ar hashname
 Report hash table statistics for
 .Ar hashname .
-.It Fl H
-Report all hash table statistics.
 .It Fl i
 Report the values of system interrupt counters.
-.It Fl l
-List the UVM histories being maintained by the kernel.
 .It Fl L
 List all the hashes supported for
 .Fl h
 and
 .Fl H .
+.It Fl l
+List the UVM histories being maintained by the kernel.
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/mem .
 .It Fl m
 Report on the usage of kernel dynamic memory listed first by size of
-allocation and then by type of usage.
-Followed by a list of the kernel memory pools and their usage.
+allocation and then by type of usage,
+followed by a list of the kernel memory pools and their usage.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the default
+.Pa /netbsd .
 .It Fl s
 Display the contents of the
 .Dv uvmexp
 structure.
 This contains various paging event and memory status counters.
-.It Fl u Ar histname
-Dump the specified UVM history.
 .It Fl U
 Dump all UVM histories.
+.It Fl u Ar histname
+Dump the specified UVM history.
 .It Fl v
 Print more verbose information.
 When used with the
 .Fl i ,
-.Fl e
+.Fl e ,
 or
 .Fl m
 options prints out all counters, not just those with non-zero values.
@@ -278,8 +266,8 @@ options are only available with the default output.
 .Pp
 The
 .Fl l ,
-.Fl u ,
+.Fl U ,
 and
-.Fl U
+.Fl u
 options are useful only if the system was compiled with support for UVM
 history.
