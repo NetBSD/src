@@ -80,10 +80,10 @@ file	arch/i386/isa/mcd.c		mcd needs-count
 major	{mcd = 7}
 
 
-define	scsi {target = -1}
+define	scsi {}
 
 device	aha at isa: scsi, dma
-file	arch/i386/isa/aha1542.c		aha
+file	arch/i386/isa/aha1542.c		aha needs-count
 device	ahb at isa: scsi, dma
 file	arch/i386/isa/aha1742.c		ahb
 device	bt at isa: scsi, dma
@@ -93,19 +93,23 @@ file	arch/i386/isa/ultra14f.c	uha
 device	wds at isa: scsi, dma
 file	arch/i386/isa/wd7000.c		wds
 
-device	tg at scsi {drive = -1}
+device	scsibus at scsi {target = -1, lun = -1}
 
-device	cd at tg: disk
+device	cd at scsibus: disk
 file	scsi/cd.c			cd needs-flag
 major	{cd = 6}
-device	ch at tg: disk
-file	scsi/ch.c			ch needs-flag
-device	sd at tg: disk
+device	sd at scsibus: disk
 file	scsi/sd.c			sd needs-flag
 major	{sd = 4}
-device	st at tg: tape
+device	st at scsibus: tape
 file	scsi/st.c			st needs-flag
 major	{st = 5}
+device	ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device	uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device	su at scsibus: disk
+file	scsi/su.c			su needs-flag
 
 
 pseudo-device	fpe
@@ -129,4 +133,6 @@ file	arch/i386/i386/pmap.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
