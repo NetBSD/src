@@ -1,5 +1,5 @@
 /*
- * $NetBSD: samachdep.h,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: samachdep.h,v 1.2 1998/11/25 14:50:14 frueauf Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -38,7 +38,7 @@
 /* "hardware" init: */
 
 int configure(void *);
-int pain(void);
+int pain(void *);
 
 /* console functions not declared MI: */
 
