@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.6 2001/03/22 18:37:32 uch Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.7 2001/03/24 17:33:12 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -461,7 +461,9 @@ static u_int8_t pocketpostpet_keytrans[] = {
 #endif /* hpcmips */
 
 #ifdef hpcsh
-/* HP Jornada 680/690 */
+/* 
+ * HP Jornada 680/690 
+ */
 /* Japanese */
 const u_int8_t jornada6x0_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
@@ -507,6 +509,35 @@ const u_int8_t jornada6x0_hu_keytrans[] = {
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+/* 
+ * HP 620LX
+ */
+/* Japanese */
+const u_int8_t hp620lx_jp_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */	2  , 16 , 112, UNK, IGN, UNK, 42 , 30 , /* REC button */
+/* 1 */	3  , 17 , 58 , 44 , UNK, 45 , 15 , 31 ,
+/* 2 */	4  , 18 , UNK, 56 , 59 , 46 , 1  , 32 ,
+/* 3 */	5  , 19 , UNK, UNK, 60 , 123, UNK, 33 ,
+/* 4 */	6  , 20 , 47 , 57 , 61 , 48 , UNK, 34 ,
+/* 5 */	7  , 21 , UNK, 121, 62 , 49 , UNK, 35 ,
+/* 6 */	8  , 22 , UNK, 125, 63 , 50 , UNK, 36 ,
+/* 7 */	9  , 23 , 52 , 115, 64 , 51 , UNK, 37 ,
+/* 8 */	10 , 24 , 53 , 203, 65 , 200, 39 , 38 ,
+/* 9 */	11 , 25 , 40 , 208, 66 , 205, 27 , 26 ,
+/*10 */	12 , 13 , 28 , UNK, UNK, UNK, 41 , 43 ,
+/*11 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN, /* ON button */
+/*12 */	29 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*13 */	14 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*14 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
+};
+
+const int hp620lx_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_LIGHT]	= 120
 };
 
 #endif /* hpcsh */
@@ -614,6 +645,9 @@ const struct hpckbd_keymap_table {
 		KB_JP },
 #endif /* hpcmips */
 #ifdef hpcsh
+	/*
+	 * HP Jornada 680/690
+	 */
 	/* Japanese */
 	{	&platid_mask_MACH_HP_JORNADA_680JP,
 		jornada6x0_jp_keytrans,
@@ -647,6 +681,15 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
 		NULLCMDMAP,
 		KB_DE },
+	/*
+	 * HP 620LX
+	 */
+	/* Japanese */
+	{	&platid_mask_MACH_HP_LX_620JP,
+		hp620lx_jp_keytrans,
+		hp620lx_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
 #endif /* hpcsh */
 	{ NULL } /* end mark */
 };
