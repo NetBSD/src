@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.17 1998/10/26 07:09:37 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.18 1998/11/14 03:01:31 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -71,6 +71,12 @@
 #include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
 
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
+
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 #define printf_intr printf
@@ -85,12 +91,6 @@
 #define ADB_HW_PB		0x3	/* PowerBook series */
 #define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
 #endif /* __NetBSD__ */
-
-#ifdef DEBUG
-#ifndef ADB_DEBUG
-#define ADB_DEBUG
-#endif
-#endif
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -1027,6 +1027,7 @@ switch_start:
 			if (adb_debug) {
 				printf_intr("strange state!!! (0x%x)\n",
 				    adbBusState);
+			}
 #endif
 			break;
 		}
