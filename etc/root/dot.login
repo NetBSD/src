@@ -1,10 +1,6 @@
-#	$NetBSD: dot.login,v 1.4.2.1 2000/02/18 19:32:00 he Exp $
+#	$NetBSD: dot.login,v 1.4.2.2 2000/02/22 22:27:02 he Exp $
 
-if ( $TERM == unknown ) then
-	tset -Q \?$TERM
-else
-	echo "Terminal type is '$TERM'."
-endif
+eval `tset -sQrm 'unknown:?unknown'`
 
 # Do not display in 'su -' case
 if ( ! $?SU_FROM ) then
