@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.45 1999/01/28 10:28:43 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.46 1999/01/29 08:42:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.45 1999/01/28 10:28:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.46 1999/01/29 08:42:27 kleink Exp $");
 
 #include "opt_ddb.h"
 
@@ -230,7 +230,7 @@ struct speedtab sccspeedtab[] = {
 	{ 14400,	14,	},	/* non-POSIX */
 	{ 19200,	10,	},
 	{ 28800,	6,	},	/* non-POSIX */
-	{ 38400,	4,	},	/* non-POSIX */
+	{ 38400,	4,	},
 	{ 57600,	2,	},	/* non-POSIX */
 #ifndef SCC_NO_HIGHSPEED
 	{ 76800,	1,	},	/* non-POSIX, doesn't work reliably */
