@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.9 1996/12/28 23:52:50 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.10 1997/05/10 11:06:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -43,7 +43,7 @@ extern int boothowto;
 
 /*
  * This array will be patched to contain a file-system image.
- * See the program rdsetimage(8) for details.
+ * See the program mdsetimage(8) for details.
  */
 u_int32_t md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
