@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.22 1998/12/15 19:37:06 itohy Exp $
+#	$NetBSD: files.mvme68k,v 1.23 1999/02/14 17:54:27 scw Exp $
 
 # config file for mvme68k
 
@@ -13,9 +13,16 @@ device pcc { [ ipl = -1 ] }
 attach pcc at mainbus
 file arch/mvme68k/dev/pcc.c			pcc needs-flag
 
+# MVME-166,167 and 177 Peripheral Channel Controller Chip2
+device pcctwo { [ ipl = -1 ] }
+attach pcctwo at mainbus
+file arch/mvme68k/dev/pcctwo.c			pcctwo needs-flag
+
 device clock
 attach clock at pcc with clock_pcc
+attach clock at pcctwo with clock_pcctwo
 file arch/mvme68k/dev/clock_pcc.c		clock_pcc
+file arch/mvme68k/dev/clock_pcctwo.c		clock_pcctwo
 
 device zsc { channel = -1 }
 file arch/mvme68k/dev/zs.c			zsc
@@ -28,14 +35,27 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-# printer
+# Parallel printer
 device lpt
 attach lpt at pcc with lpt_pcc
+attach lpt at pcctwo with lpt_pcctwo
 file arch/mvme68k/dev/lpt.c			lpt needs-flag
+file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
+file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
+
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
 file arch/mvme68k/dev/if_le.c			le
+
+# i82596 Ethernet Interface on MVME1[67]7
+device ie: ifnet, ether, arp, i82586
+attach ie at pcctwo with ie_pcctwo
+file arch/mvme68k/dev/if_ie.c			ie
+
+# CD2401 Quad Serial Controller
+attach clmpcc at pcctwo with clmpcc_pcctwo
+file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
 # Generic VME support
 device vmechip { }
@@ -84,6 +104,7 @@ file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/mvme68k/mvme68k/vm_machdep.c
+file arch/m68k/m68k/cacheops.c
 file dev/cons.c
 file dev/cninit.c
 

@@ -1,10 +1,11 @@
-/*	$NetBSD: lpt.c,v 1.4 1998/08/15 03:02:41 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.5 1999/02/14 17:54:28 scw Exp $	*/
 
-/*
- * Copyright (c) 1996 Steve Woodford
- * Copyright (c) 1993, 1994 Charles M. Hannum.
- * Copyright (c) 1990 William F. Jolitz, TeleMuse
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,46 +17,28 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This software is a component of "386BSD" developed by 
- *	William F. Jolitz, TeleMuse.
- * 4. Neither the name of the developer nor the name "386BSD"
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS A COMPONENT OF 386BSD DEVELOPED BY WILLIAM F. JOLITZ 
- * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS 
- * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT. 
- * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT 
- * NOT MAKE USE OF THIS WORK.
- *
- * FOR USERS WHO WISH TO UNDERSTAND THE 386BSD SYSTEM DEVELOPED
- * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN 
- * REFERENCES SUCH AS THE  "PORTING UNIX TO THE 386" SERIES 
- * (BEGINNING JANUARY 1991 "DR. DOBBS JOURNAL", USA AND BEGINNING 
- * JUNE 1991 "UNIX MAGAZIN", GERMANY) BY WILLIAM F. JOLITZ AND 
- * LYNNE GREER JOLITZ, AS WELL AS OTHER BOOKS ON UNIX AND THE 
- * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS 
- * OF 386BSD ENTITLED "386BSD FROM THE INSIDE OUT" WILL BE AVAILABLE LATE 1992.
- *
- * THIS SOFTWARE IS PROVIDED BY THE DEVELOPER ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE DEVELOPER BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Device Driver for the MVME147's parallel printer port
- * Based mostly on the AT parallel port driver by Charles Hannum and
- * William F. Jolitz.
- * Some additional code is based on the NetBSD/atari parallel port
- * driver, by Leo Weppelman.
+ * Device Driver for an MVME1xx board's parallel printer port
+ * This driver attaches above the board-specific back-end.
  */
 
 #include <sys/param.h>
@@ -72,9 +55,8 @@
 
 #include <machine/cpu.h>
 
-#include <mvme68k/dev/lptreg.h>
-#include <mvme68k/dev/pccreg.h>
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/lptvar.h>
+
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -89,106 +71,27 @@
 int lptdebug = 1;
 #endif
 
-struct lpt_softc {
-	struct device sc_dev;
-	union lpt_regs *sc_regs;
-	size_t sc_count;
-	struct buf *sc_inbuf;
-	u_char *sc_cp;
-	int sc_spinmax;
-	int sc_ipl;
-	u_char sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char sc_flags;
-#define	LPT_FAST_STROBE	0x10	/* Select 1.6uS strobe pulse */
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-	u_char sc_prir;
-	u_char sc_laststatus;
-};
-
 /* {b,c}devsw[] function prototypes */
 dev_type_open(lptopen);
 dev_type_close(lptclose);
 dev_type_write(lptwrite);
 dev_type_ioctl(lptioctl);
 
-int lptintr __P((void *));
-
-
-/*
- * Autoconfig stuff
- */
-static int  lpt_pcc_match  __P((struct device *, struct cfdata *, void *));
-static void lpt_pcc_attach __P((struct device *, struct device *, void *));
-
-struct cfattach lpt_pcc_ca = {
-	sizeof(struct lpt_softc), lpt_pcc_match, lpt_pcc_attach
-};
-
-extern struct cfdriver lpt_cd;
 
 #define	LPTUNIT(s)	(minor(s) & 0x0f)
 #define	LPTFLAGS(s)	(minor(s) & 0xf0)
 
-#define	LPS_INVERT	(LPS_SELECT)
-#define	LPS_MASK	(LPS_SELECT|LPS_FAULT|LPS_BUSY|LPS_PAPER_EMPTY)
-#define	NOT_READY()	((sc->sc_regs->pr_status ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(sc->sc_regs->pr_status, sc)
-static int not_ready __P((u_char, struct lpt_softc *));
-
-static void lptwakeup __P((void *arg));
+static void lpt_wakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
+extern struct cfdriver lpt_cd;
 
-/*ARGSUSED*/
-static	int
-lpt_pcc_match(pdp, cf, auxp)
-	struct device *pdp;
-	struct cfdata *cf;
-	void *auxp;
+
+void
+lpt_attach_subr(sc)
+	struct lpt_softc *sc; 
 {
-	struct pcc_attach_args *pa = auxp;
-
-	if (strcmp(pa->pa_name, lpt_cd.cd_name))
-		return (0);
-
-	pa->pa_ipl = cf->pcccf_ipl;
-	return (1);
-}
-
-/*ARGSUSED*/
-static void
-lpt_pcc_attach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
-{
-	struct lpt_softc *sc = (void *)dp;
-	struct pcc_attach_args *pa = auxp;
-
-	/*
-	 * Get pointer to regs
-	 */
-	sc->sc_regs = (union lpt_regs *) PCC_VADDR(pa->pa_offset);
-
-	sc->sc_ipl = pa->pa_ipl & PCC_IMASK;
 	sc->sc_state = 0;
-	sc->sc_laststatus = 0;
-
-	/*
-	 * Hook into the printer interrupt
-	 */
-	pccintr_establish(PCCV_PRINTER, lptintr, sc->sc_ipl, sc);
-
-	/*
-	 * Disable interrupts until device is opened
-	 */
-	sys_pcc->pr_int = 0;
-
-	printf("\n");
 }
 
 /*
@@ -228,18 +131,17 @@ lptopen(dev, flag, mode, p)
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert Input Prime for 100 usec to start up printer */
-		sys_pcc->pr_cr = LPC_INPUT_PRIME;
-		delay(100);
+		(sc->sc_funcs->lf_iprime)(sc);
 	}
 
 	/* select fast or slow strobe depending on minor device number */
 	if ( flags & LPT_FAST_STROBE )
-		sys_pcc->pr_cr = LPC_FAST_STROBE;
+		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_FAST);
 	else
-		sys_pcc->pr_cr = 0;
+		(sc->sc_funcs->lf_speed)(sc, LPT_STROBE_SLOW);
 
 	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
+	for (spin = 0; (sc->sc_funcs->lf_notrdy)(sc, 1); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
 			return EBUSY;
@@ -256,61 +158,28 @@ lptopen(dev, flag, mode, p)
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
-	sc->sc_prir = 0;
 
-	sys_pcc->pr_int = LPI_ACKINT | LPI_FAULTINT;
+	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
+		lpt_wakeup(sc);
 
-	if ((sc->sc_flags & LPT_NOINTR) == 0)
-	{
-		int sps;
-
-		lptwakeup(sc);
-
-		sc->sc_prir = sc->sc_ipl | LPI_ENABLE;
-		sps = splhigh();
-		sys_pcc->pr_int = sc->sc_prir;
-		splx(sps);
-	}
+	(sc->sc_funcs->lf_open)(sc, sc->sc_flags & LPT_NOINTR);
 
 	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
 	return 0;
 }
 
-int
-not_ready(status, sc)
-	u_char status;
-	struct lpt_softc *sc;
-{
-	u_char new;
-
-	status = (status ^ LPS_INVERT) & LPS_MASK;
-	new = status & ~sc->sc_laststatus;
-	sc->sc_laststatus = status;
-
-	if (new & LPS_SELECT)
-		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_PAPER_EMPTY)
-		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_FAULT)
-		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
-
-	sys_pcc->pr_int = sc->sc_prir | LPI_FAULTINT;
-
-	return status;
-}
-
 void
-lptwakeup(arg)
+lpt_wakeup(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
 	int s;
 
 	s = spltty();
-	lptintr(sc);
+	lpt_intr(sc);
 	splx(s);
 
-	timeout(lptwakeup, sc, STEP);
+	timeout(lpt_wakeup, sc, STEP);
 }
 
 /*
@@ -329,17 +198,10 @@ lptclose(dev, flag, mode, p)
 	if (sc->sc_count)
 		(void) pushbytes(sc);
 
-	if ((sc->sc_flags & LPT_NOINTR) == 0)
-	{
-		int sps;
+	if ( (sc->sc_flags & LPT_NOINTR) == 0 )
+		untimeout(lpt_wakeup, sc);
 
-		untimeout(lptwakeup, sc);
-
-		sc->sc_prir = 0;
-		sps = splhigh();
-		sys_pcc->pr_int = LPI_ACKINT | LPI_FAULTINT;
-		splx(sps);
-	}
+	(sc->sc_funcs->lf_close)(sc);
 
 	sc->sc_state = 0;
 	brelse(sc->sc_inbuf);
@@ -359,13 +221,13 @@ pushbytes(sc)
 
 		while (sc->sc_count > 0) {
 			spin = 0;
-			while (NOT_READY()) {
+			while ( (sc->sc_funcs->lf_notrdy)(sc, 0) ) {
 				if (++spin < sc->sc_spinmax)
 					continue;
 				tic = 0;
 				/* adapt busy-wait algorithm */
 				sc->sc_spinmax++;
-				while (NOT_READY_ERR()) {
+				while((sc->sc_funcs->lf_notrdy)(sc,1)) {
 					/* exponential backoff */
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
@@ -378,7 +240,7 @@ pushbytes(sc)
 				break;
 			}
 
-			sc->sc_regs->pr_data = *sc->sc_cp++;
+			(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
 			sc->sc_count--;
 
 			/* adapt busy-wait algorithm */
@@ -394,7 +256,7 @@ pushbytes(sc)
 				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
 				    sc->sc_count));
 				s = spltty();
-				(void) lptintr(sc);
+				(void) lpt_intr(sc);
 				splx(s);
 			}
 			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
@@ -442,30 +304,16 @@ lptwrite(dev, uio, flags)
  * another char.
  */
 int
-lptintr(arg)
-	void *arg;
+lpt_intr(sc)
+	struct lpt_softc *sc;
 {
-	struct lpt_softc *sc = arg;
-
-#if 0
-	if ((sc->sc_state & LPT_OPEN) == 0)
-		return 0;
-#endif
-
-	/* is printer online and ready for output */
-	if (NOT_READY() && NOT_READY_ERR())
-		return 0;
-
 	if (sc->sc_count) {
 		/* send char */
-		sc->sc_regs->pr_data = *sc->sc_cp++;
+		(sc->sc_funcs->lf_wrdata)(sc, *sc->sc_cp++);
 		sc->sc_count--;
 		sc->sc_state |= LPT_OBUSY;
 	} else
 		sc->sc_state &= ~LPT_OBUSY;
-
-	if ( sys_pcc->pr_int & LPI_ACKINT )
-		sys_pcc->pr_int = sc->sc_prir | LPI_ACKINT;
 
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */

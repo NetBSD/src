@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 1998/10/01 00:29:52 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.11 1999/02/14 17:54:29 scw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -159,8 +159,10 @@ define	SPL6			PSL_S | PSL_IPL6
 
 # magic
 define	FC_USERD		FC_USERD
-define	INTIOBASE		INTIOBASE
-define	IIOMAPSIZE		IIOMAPSIZE
+define	INTIOBASE147	INTIOBASE147
+define	INTIOTOP147		INTIOTOP147
+define	INTIOBASE167	INTIOBASE167
+define	INTIOTOP167		INTIOTOP167
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
@@ -193,6 +195,7 @@ define	SIZEOF_PCB		sizeof(struct pcb)
 define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
+define	FR_SIZE			sizeof(struct trapframe)
 
 # system calls
 define	SYS_exit		SYS_exit
