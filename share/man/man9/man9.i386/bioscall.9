@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.2 2001/06/05 11:33:35 wiz Exp $
+.\"	$NetBSD: bioscall.9,v 1.3 2001/06/21 12:03:29 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,11 +59,11 @@ The register values specified by
 .Fa *regs
 (with one exception) are installed before the BIOS interrupt is called.
 The processor flags are handled specially.  Only the following flags are
-passed to the 
+passed to the
 BIOS from the registers in
-.Fa regs 
+.Fa regs
 (the remainder come from the processor's flags register at the time
-of the call): 
+of the call):
 .Ar PSL_C ,
 .Ar PSL_PF ,
 .Ar PSL_AF ,
@@ -113,7 +113,8 @@ bioscall(APM_SYSTEM_BIOS, &regs);
 .Xr apm 4
 .Sh HISTORY
 .Nm
-first appeared in NetBSD-1.3.
+first appeared in
+.Nx 1.3 .
 .Sh BUGS
 Not all BIOS functions are safe to call through the trampoline, as they
 may depend on system state which has been disturbed or used for other
