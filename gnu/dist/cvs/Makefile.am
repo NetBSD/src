@@ -37,10 +37,12 @@ EXTRA_DIST = \
 	TESTS \
 	build.com \
 	cvs-format.el \
+	cvsnt.dep \
 	cvsnt.dsp \
 	cvsnt.dsw \
 	cvsnt.mak \
-	cvs.spec
+	cvs.spec \
+	mktemp.sh
 
 
 ## MAINTAINER Targets
