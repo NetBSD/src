@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.41 1999/09/30 20:30:06 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.42 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -153,6 +153,7 @@ struct pci_quirkdata {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
+pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
 int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
 int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.25 2000/05/08 10:45:52 kleink Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -325,6 +325,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_MEM_SIZE(mr)						\
 	    (PCI_MAPREG_MEM_ADDR(mr) & -PCI_MAPREG_MEM_ADDR(mr))
 #define	PCI_MAPREG_MEM_ADDR_MASK		0xfffffff0
+
+#define	PCI_MAPREG_MEM64_ADDR(mr)					\
+	    ((mr) & PCI_MAPREG_MEM64_ADDR_MASK)
+#define	PCI_MAPREG_MEM64_SIZE(mr)					\
+	    (PCI_MAPREG_MEM64_ADDR(mr) & -PCI_MAPREG_MEM64_ADDR(mr))
+#define	PCI_MAPREG_MEM64_ADDR_MASK		0xfffffffffffffff0
 
 #define	PCI_MAPREG_IO_ADDR(mr)						\
 	    ((mr) & PCI_MAPREG_IO_ADDR_MASK)
