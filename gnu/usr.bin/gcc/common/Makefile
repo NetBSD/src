@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 1996/06/07 07:56:30 phil Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 1996/06/07 08:08:24 phil Exp $
 
 LIB=	cc1
 
