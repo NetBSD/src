@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2002/03/06 12:04:55 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.5 2002/03/29 00:15:07 matt Exp $
 
 IMAGESIZE=	7m
 IMAGEENDIAN=	le
@@ -10,6 +10,6 @@ IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
 		${KERNOBJDIR}/GENERIC/netbsd \
 		${_SRC_TOP_}/share/termcap/termcap.src
 
-# XXXIMAGE: disklabel needs to be MI and work on image files
+# XXXIMAGE installboot needs to be MI
 image_md_post:
-	${DESTDIR}/sbin/disklabel -B -b ${DESTDIR}/usr/mdec/xxboot ${IMAGE}
+	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
