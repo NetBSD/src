@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.24 1999/03/09 11:10:40 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.25 1999/03/15 08:57:12 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.24 1999/03/09 11:10:40 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.25 1999/03/15 08:57:12 christos Exp $");
 #endif
 #endif
 
@@ -113,12 +113,12 @@ islinktodir(char *fname)
 {
     struct stat sb;
 
-    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode))
+    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode)) {
         if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
 	    return TRUE; /* link to dir! */
         else
 	    return FALSE; /* link to non-dir */
-    else
+    } else
         return FALSE;  /* non-link */
 }
 
@@ -178,7 +178,7 @@ isURL(char *fname)
      */
     if (!fname)
 	return FALSE;
-    while (isspace(*fname))
+    while (isspace((unsigned char)*fname))
 	++fname;
     if (!strncmp(fname, "ftp://", 6))
 	return TRUE;
@@ -191,7 +191,7 @@ fileURLHost(char *fname, char *where, int max)
 {
     char *ret;
 
-    while (isspace(*fname))
+    while (isspace((unsigned char)*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
     fname += strlen("ftp://");
@@ -216,7 +216,7 @@ fileURLFilename(char *fname, char *where, int max)
 {
     char *ret;
 
-    while (isspace(*fname))
+    while (isspace((unsigned char)*fname))
 	++fname;
     /* Don't ever call this on a bad URL! */
     fname += strlen("ftp://");
