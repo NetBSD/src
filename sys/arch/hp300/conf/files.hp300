@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.45 2001/06/18 02:00:49 christos Exp $
+#	$NetBSD: files.hp300,v 1.46 2001/10/11 15:04:44 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -204,6 +204,7 @@ file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
 file	arch/hp300/dev/md_root.c		memory_disk_hooks
 
+file	dev/clock_subr.c
 file	dev/cons.c
 file	dev/cninit.c
 
