@@ -1,4 +1,4 @@
-/*	$NetBSD: nan.c,v 1.2 2003/10/22 23:57:04 kleink Exp $	*/
+/*	$NetBSD: nan.c,v 1.3 2003/10/24 15:54:46 kleink Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -10,19 +10,19 @@
 
 /*
  * Check that NAN (alias __nanf) really is not-a-number.
- * Alternatively, check that isnan() minimally works.
+ * Alternatively, check that isnan() and _isnanl() minimally work.
  */
 
-#include <err.h>
+#include "namespace.h"
+#include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 
 int
 main(int argc, char **argv)
 {
 
 	/* NAN is meant to be a NaN. */
-	if (!isnan(NAN))
-		errx(1, "NAN is a number");
+	assert(isnan(NAN));
+	assert(_isnanl(NAN));
 	return 0;
 }
