@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rates.5,v 1.3 2002/01/19 03:17:42 wiz Exp $
+.\" $NetBSD: isdnd.rates.5,v 1.4 2003/06/27 19:09:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rates.5,v 1.3 2002/01/19 03:17:42 wiz Exp $
+.\"	$Id: isdnd.rates.5,v 1.4 2003/06/27 19:09:24 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -39,8 +39,8 @@
 The file
 .Pa isdnd.rates
 contains descriptions how long charging units last at a given time of day,
-day of week and the distance to the destination. If this file is available,
-this information may be used by the
+day of week and the distance to the destination.
+If this file is available, this information may be used by the
 .Xr isdnd 8
 ISDN connection management daemon to calculate the short hold time for a
 connection.
@@ -70,9 +70,11 @@ start_hour.start_minutes-end_hour.end_minutes:charge_unit_length
 .Ed
 .Pp
 Start_hour and start_minutes define the begin of a time section and end_hour
-and end_minutes define the end. Charge_unit_length define the length of a
-charging unit in the previously defined time section. No spaces or tabs are
-allowed inside this field. The hour and minutes specifications MUST have
+and end_minutes define the end.
+Charge_unit_length define the length of a
+charging unit in the previously defined time section.
+No spaces or tabs are allowed inside this field.
+The hour and minutes specifications MUST have
 exactly 2 digits, in case just one digit is needed, a leading 0 must be used.
 .Pp
 For example,
