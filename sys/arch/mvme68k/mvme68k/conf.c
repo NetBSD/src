@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1996/11/08 22:00:42 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1996/11/09 03:52:55 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -122,6 +122,14 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 
+#include "lpt.h"
+cdev_decl(lpt);
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*)))enodev,  \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*)))enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0}
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -135,7 +143,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_notdef(),			/* 9 */
 	cdev_notdef(),			/* 10 */
-	cdev_notdef(),			/* 11: parallel interface */
+	cdev_lpt_init(NLPT,lpt),	/* 11: parallel interface */
 	cdev_tty_init(NZSTTY,zs),	/* 12: SCC serial ports */
 	cdev_notdef(),			/* 13 */
 	cdev_notdef(),			/* 14 */
