@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.43 2001/10/02 04:06:26 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.44 2001/10/22 08:00:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
-#include <sparc64/dev/ebusreg.h>
+#include <dev/ebus/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
 extern u_int64_t cpu_clockrate;
