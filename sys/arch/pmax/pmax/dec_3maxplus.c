@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.16 1999/10/29 16:50:23 drochner Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.9.2.17 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.16 1999/10/29 16:50:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.17 1999/11/12 11:07:20 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -83,19 +83,18 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.16 1999/10/29 16:50:23 drochn
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/pmaxtype.h> 
-#include <pmax/pmax/kn03.h>		/* baseboard addresses (constants) */
+#include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
+#include <mips/mips/mips_mcclock.h>
 
-#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
-#include <dev/tc/ioasicvar.h>		/* ioasic_base */
-#include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+#include <pmax/tc/ioasicreg.h>
 
 #include <dev/ic/z8530sc.h>
-#include <pmax/tc/zs_ioasicvar.h>	/* console */
+#include <pmax/tc/zs_ioasicvar.h>
 
-#include "zskbd.h"
+#include "wsdisplay.h"
 
 void dec_3maxplus_init __P((void));
 void dec_3maxplus_bus_reset __P((void));
@@ -103,17 +102,14 @@ void dec_3maxplus_cons_init __P((void));
 void dec_3maxplus_device_register __P((struct device *, void *));
 int  dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn03_wbflush __P((void));
-unsigned kn03_clkread __P((void));
 
 static void dec_3maxplus_memerr __P ((void));
+static unsigned kn03_clkread __P((void));
+static unsigned latched_cycle_cnt;
 
-extern unsigned (*clkread) __P((void));
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int tc_fb_cnattach __P((int));
-
-static unsigned latched_cycle_cnt;
-extern char cpu_model[];
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
@@ -128,35 +124,27 @@ struct splsw spl_3maxplus = {
 	{ _splrestore_ioasic,	0 },
 };
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
 
-/*
- * Fill in platform struct. 
- */
 void
 dec_3maxplus_init()
 {
 	u_int32_t prodtype;
-
-	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
-	prodtype &= KN03_INTR_PROD_JUMPER;
-	/* the bit is persist even if INTR register is assigned value 0 */
+	extern char cpu_model[];
 
 	platform.iobus = "tc3maxplus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
+	platform.iointr = dec_3maxplus_intr;
+	platform.clkread = kn03_clkread;
+	/* 3MAX+ has IOASIC free-running high resolution timer */
 
-	/* clear any memory errors from probes */
+	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
-	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_3maxplus_intr;
-
-	/* 3MAX+ has IOASIC free-running high resolution timer */
-	clkread = kn03_clkread;
 
 	/*
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
@@ -174,7 +162,8 @@ dec_3maxplus_init()
 	splvec.splstatclock = MIPS_SPL_0_1;
 #endif
 
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -187,13 +176,14 @@ dec_3maxplus_init()
 	/* XXX hard-reset LANCE */
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= 0x100;
 
-	/*
-	 * Initialize interrupts.
-	 */
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KN03_INTR_PSWARN;
+	/* sanitize interrupt mask */
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KN03_INTR_PSWARN;
 	kn03_wbflush();
 
+	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
+	prodtype &= KN03_INTR_PROD_JUMPER;
+	/* the bit persists even if INTR register is assigned value 0 */
 	if (prodtype)
 		sprintf(cpu_model, "DECstation 5000/%s (3MAXPLUS)",
 		    (CPUISMIPS3) ? "260" : "240");
@@ -202,9 +192,6 @@ dec_3maxplus_init()
 		    (CPUISMIPS3) ? "-260" : "");
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_3maxplus_bus_reset()
 {
@@ -228,11 +215,11 @@ dec_3maxplus_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NZSKBD > 0
+#if NWSDISPLAY > 0
 		zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
-#endif
 		if (tc_fb_cnattach(crt) > 0)
 			return;
+#endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
 	}
@@ -386,16 +373,17 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 static void
 dec_3maxplus_memerr()
 {
-	register u_int erradr, errsyn;
+	u_int32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
-	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
+	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
-	dec_mtasic_err(erradr, errsyn);
+	dec_mtasic_err(erradr, errsyn, csr & KN03_CSR_BNK32M);
 }
 
 void

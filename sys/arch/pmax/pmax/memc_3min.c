@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.4.2.2 1999/05/21 01:17:30 nisimura Exp $ */
+/* $NetBSD: memc_3min.c,v 1.4.2.3 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.4.2.2 1999/05/21 01:17:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.4.2.3 1999/11/12 11:07:20 nisimura Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -61,12 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.4.2.2 1999/05/21 01:17:30 nisimura E
 #include <pmax/pmax/memc.h>
 
 /* forward declarations */
-static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
+static u_int32_t kn02ba_recover_erradr __P((u_int32_t, u_int32_t ));
 
 
-static unsigned
+static u_int32_t
 kn02ba_recover_erradr(phys, mer)
-	unsigned phys, mer;
+	u_int32_t phys, mer;
 {
 	/* phys holds bits 28:2, mer knows which byte */
 	switch (mer & KMIN_MER_LASTBYTE) {
@@ -92,7 +92,7 @@ kn02ba_recover_erradr(phys, mer)
 void
 kn02ba_memerr()
 {
-	register int mer, adr, siz;
+	u_int32_t mer, adr, siz;
 	static int memerr_cnt = 0;
 
 	siz = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
@@ -100,7 +100,7 @@ kn02ba_memerr()
 	adr = *(volatile int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_AER);
 
 	/* clear interrupt bit */
-	*(unsigned int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 
 	memerr_cnt++;
 	printf("(%d)%s%x [%x %x %x]\n", memerr_cnt,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.13 1999/09/05 09:48:48 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.7.4.14 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.13 1999/09/05 09:48:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.14 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.13 1999/09/05 09:48:48 nisimura E
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/kmin.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/memc.h>		/* memory errors */
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
+#include <pmax/pmax/kmin.h>
+#include <pmax/pmax/memc.h>
+#include <mips/mips/mips_mcclock.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
@@ -105,17 +104,16 @@ int  dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 void dec_3min_mcclock_cpuspeed
 	__P((struct chiptime *mcclock_addr, int clockmask));
 void kn02ba_wbflush __P((void));
-unsigned kn02ba_clkread __P((void));
 
-extern unsigned (*clkread) __P((void));
-extern void prom_haltbutton __P((void));
-extern void prom_findcons __P((int *, int *, int *));
-extern int tc_fb_cnattach __P((int));
-
+static unsigned kn02ba_clkread __P((void));
 #ifdef MIPS3
 static unsigned latched_cycle_cnt;
 extern u_int32_t mips3_cycle_count __P((void));
 #endif
+
+extern void prom_haltbutton __P((void));
+extern void prom_findcons __P((int *, int *, int *));
+extern int tc_fb_cnattach __P((int));
 
 extern char cpu_model[];
 extern int zs_major;
@@ -134,11 +132,7 @@ struct splsw spl_3min = {
 	{ _splrestore_ioasic,	0 },
 };
 
-extern struct chiptime *mcclock_addr;	/* XXX */
 
-/*
- * Fill in platform struct.
- */
 void
 dec_3min_init()
 {
@@ -146,17 +140,15 @@ dec_3min_init()
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
+	platform.iointr = dec_3min_intr;
+	platform.clkread = kn02ba_clkread;
 
 	/* clear any memory errors from probes */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
 	kn02ba_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
-	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_3min_intr;
-
-	/* R4000 3MIN can ultilize on-chip counter */
-	clkread = kn02ba_clkread;
 
 	/*
 	 * Since all the motherboard interrupts come through the
@@ -174,7 +166,10 @@ dec_3min_init()
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 #endif
-	dec_3min_mcclock_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
+
+	/* calribrate cpu_mhz value */
+	dec_3min_mcclock_cpuspeed(
+	    (void *)(ioasic_base + IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -183,12 +178,11 @@ dec_3min_init()
 	*(u_int32_t *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
 #endif
-	/*
-	 * Initialize interrupts.
-	 */
+
+	/* sanitize interrupt mask */
+	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK)
 		= KMIN_INTR_CLOCK|KMIN_INTR_PSWARN|KMIN_INTR_TIMEOUT;
-	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 
 	/*
 	 * The kmin memory hardware seems to wrap memory addresses
@@ -206,9 +200,6 @@ dec_3min_init()
 	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_3min_bus_reset()
 {

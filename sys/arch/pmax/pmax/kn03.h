@@ -1,4 +1,4 @@
-/*	$NetBSD: kn03.h,v 1.6.4.2 1999/05/07 02:33:31 nisimura Exp $	*/
+/* $NetBSD: kn03.h,v 1.6.4.3 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@
 #define KN03_TC_MAX		2		/* don't look at system slot */
 
 /*
- * System module space (IO ASIC)
+ * System module space (IOASIC)
  */
 
 #define KN03_SYS_ASIC		( KN03_PHYS_TC_3_START + 0x0000000 )
@@ -127,7 +127,7 @@
 #define KN03_SYS_CSR		( KN03_SYS_ASIC + IOASIC_SLOT_11_START )
 #define KN03_SYS_SCSI		( KN03_SYS_ASIC + IOASIC_SLOT_12_START )
 #define KN03_SYS_SCSI_DMA	( KN03_SYS_ASIC + IOASIC_SLOT_14_START )
-#define KN03_SYS_BOOT_ROM_START ( KN03_PHYS_TC_3_START + 0x400000 )
+#define KN03_SYS_BOOT_ROM_START	( KN03_PHYS_TC_3_START + 0x400000 )
 #define KN03_SYS_BOOT_ROM_END	( KN03_PHYS_TC_3_START + 0x43ffff )
 
 /*
@@ -184,38 +184,35 @@
 /* (re)defines for the system Status and Control register (SSR) */
 /* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
 
-#define KN03_CSR_DIAGDN		0x00008000	/* rw */
-#define KN03_CSR_TXDIS_2	0x00004000	/* rw */
-#define KN03_CSR_TXDIS_1	0x00002000	/* rw */
-#define KN03_CSR_SCC_ENABLE	0x00000800	/* rw */
-#define KN03_CSR_RTC_ENABLE	0x00000400	/* rw */
-#define KN03_CSR_SCSI_ENABLE	0x00000200	/* rw */
-#define KN03_CSR_LANCE_ENABLE	0x00000100	/* rw */
 #define KN03_CSR_LEDS		0x000000ff	/* rw */
+#define KN03_CSR_BNK32M		0x00000400	/* rw  Memory bank stride */
+#define KN03_CSR_CORRECT	0x00002000	/* rw  ECC corrects single bit */
+#define KN03_CSR_ECCMD		0x0000c000	/* rw  ECC logic mode */
 
 /* (re)defines for the System Interrupt and Mask Registers */
 /* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
 
-#define KN03_INTR_PROD_JUMPER	0x00008000	/* ro */
-#define KN03_INTR_NVR_JUMPER	0x00004000	/* ro */
-#define KN03_INTR_TC_2		0x00002000	/* ro */
-#define KN03_INTR_TC_1		0x00001000	/* ro */
-#define KN03_INTR_TC_0		0x00000800	/* ro */
-#define KN03_INTR_NRMOD_JUMPER	0x00000400	/* ro */
-#define KN03_INTR_SCSI		0x00000200	/* ro */
-#define KN03_INTR_LANCE		0x00000100	/* ro */
-#define KN03_INTR_SCC_1		0x00000080	/* ro */
-#define KN03_INTR_SCC_0		0x00000040	/* ro */
-#define KN03_INTR_CLOCK		0x00000020	/* ro */
-#define KN03_INTR_PSWARN	0x00000010	/* ro */
-#define KN03_INTR_SCSI_FIFO	0x00000004	/* ro */
-#define KN03_INTR_PBNC		0x00000002	/* ro */
 #define KN03_INTR_PBNO		0x00000001	/* ro */
+#define KN03_INTR_PBNC		0x00000002	/* ro */
+#define KN03_INTR_SCSI_FIFO	0x00000004	/* ro */
+#define KN03_INTR_PSWARN	0x00000010	/* ro */
+#define KN03_INTR_CLOCK		0x00000020	/* ro */
+#define KN03_INTR_SCC_0		0x00000040	/* ro */
+#define KN03_INTR_SCC_1		0x00000080	/* ro */
+#define KN03_INTR_LANCE		0x00000100	/* ro */
+#define KN03_INTR_SCSI		0x00000200	/* ro */
+#define KN03_INTR_NRMOD_JUMPER	0x00000400	/* ro */
+#define KN03_INTR_TC_0		0x00000800	/* ro */
+#define KN03_INTR_TC_1		0x00001000	/* ro */
+#define KN03_INTR_TC_2		0x00002000	/* ro */
+#define KN03_INTR_NVR_JUMPER	0x00004000	/* ro */
+#define KN03_INTR_PROD_JUMPER	0x00008000	/* ro */
+
 #define KN03_INTR_ASIC		0xff0f0004
 #define KN03_IM0		0xff0f3bf0	/* all good ones enabled */
 
 /*
- * XXX I made a wild guess this register looks the same as for the KN02.
+ * Error Address Register Bit Definitions
  */
 
 #define KN03_ERR_ADDRESS	0x07ffffff	/* phys address */
@@ -228,12 +225,12 @@
 /* ECC check/syndrome status register */
 
 #define KN03_ECC_SYNLO		0x0000007f	/* syndrome, even bank	*/
-#define KN03_ECC_SNGLO		0x00000080	/* single bit err, "	*/
+#define KN03_ECC_SNGLO		0x00000080	/* single bit err, " 	*/
 #define KN03_ECC_CHKLO		0x00007f00	/* check bits,	"  "	*/
 #define KN03_ECC_VLDLO		0x00008000	/* info valid for  "	*/
 #define KN03_ECC_SYNHI		0x007f0000	/* syndrome, odd bank	*/
 #define KN03_ECC_SNGHI		0x00800000	/* single bit err, "	*/
-#define KN03_ECC_CHKHI		0x7f000000	/* check bits,	"  "	*/
+#define KN03_ECC_CHKHI		0x7f000000	/* check bits,  "  "	*/
 #define KN03_ECC_VLDHI		0x80000000	/* info valid for  "	*/
 
 #endif	/* MIPS_KN03_H */

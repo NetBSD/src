@@ -1,4 +1,4 @@
-/*	$NetBSD: kmin.h,v 1.6.4.2 1999/06/11 00:53:35 nisimura Exp $	*/
+/* $NetBSD: kmin.h,v 1.6.4.3 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,17 +43,17 @@
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -68,25 +68,25 @@
  * HISTORY
  * Log:	kmin.h,v
  * Revision 2.3  92/03/02  18:33:43  rpd
- * 	Split out the ASIC defns into separate file, which is
- * 	in common with MAXine.  Added some nitwits defines.
- * 	[92/03/02  02:28:27  af]
- * 
+ *	Split out the ASIC defns into separate file, which is
+ *	in common with MAXine.  Added some nitwits defines.
+ *	[92/03/02  02:28:27  af]
+ *
  * Revision 2.2  91/08/24  12:21:08  af
- * 	Documented new SCSI registers, which were missing in the 3min prototype.
- * 	[91/08/22  11:14:57  af]
- * 
- * 	Created, from the DEC specs:
- * 	"3MIN System Module Functional Specification"  Revision 1.7
- * 	Workstation Systems Engineering, Palo Alto, CA. Sept 14, 1990.
- * 	"KN02BA Daughter Card Functional Specification" Revision 1.0
- * 	Workstation Systems Engineering, Palo Alto, CA. Aug  14, 1990.
- * 	[91/06/21            af]
- * 
+ *	Documented new SCSI registers, which were missing in the 3min prototype.
+ *	[91/08/22  11:14:57  af]
+ *
+ *	Created, from the DEC specs:
+ *	"3MIN System Module Functional Specification"  Revision 1.7
+ *	Workstation Systems Engineering, Palo Alto, CA. Sept 14, 1990.
+ *	"KN02BA Daughter Card Functional Specification" Revision 1.0
+ *	Workstation Systems Engineering, Palo Alto, CA. Aug  14, 1990.
+ *	[91/06/21            af]
+ *
  */
 /*
  *	File: kmin.h
- * 	Author: Alessandro Forin, Carnegie Mellon University
+ *	Author: Alessandro Forin, Carnegie Mellon University
  *	Date:	6/91
  *
  *	Definitions specific to the KN02BA/KN02DA processors and 3MIN

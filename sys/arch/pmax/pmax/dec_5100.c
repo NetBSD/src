@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.12 1999/06/11 11:37:57 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.2.4.13 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,28 +31,24 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.12 1999/06/11 11:37:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.13 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/termios.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/pmaxtype.h>
-
-#include <pmax/pmax/kn01.h>		/* common definitions */
+#include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn230.h>
+#include <mips/mips/mips_mcclock.h>
 
+#include <machine/bus.h>
 #include <pmax/ibus/ibusvar.h>
-
-/* XXX XXX XXX */
-#define	SYS_DEV_SCC2 SERIAL2_INTR
-/* XXX XXX XXX */
 
 void dec_5100_init __P((void));
 void dec_5100_bus_reset __P((void));
@@ -64,13 +60,13 @@ void dec_5100_intr_establish __P((struct device *, void *,
 void dec_5100_intr_disestablish __P((struct device *, void *));
 void dec_5100_memerr __P((void));
 
-extern void prom_haltbutton __P((void));
 extern void kn230_wbflush __P((void));
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+
+extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void mips_set_wbflush __P((void (*)(void)));
 
 static u_int32_t kn230imsk;
-extern char cpu_model[];
 
 int _splraise_kn230 __P((int));
 int _spllower_kn230 __P((int));
@@ -86,33 +82,23 @@ struct splsw spl_5100 = {
 	{ _splrestore_kn230,	0 },
 };
 
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
 
-/*
- * Fill in platform struct. 
- */
 void
 dec_5100_init()
 {
-	extern void mips_set_wbflush __P((void (*)(void)));
+	extern char cpu_model[];
 
 	platform.iobus = "baseboard";
-
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
+	platform.iointr = dec_5100_intr;
+	/* no high resolution timer available */
 
 	/* set correct wbflush routine for this motherboard */
 	mips_set_wbflush(kn230_wbflush);
 
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
 	mips_hardware_intr = dec_5100_intr;
-	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
 
 #ifdef NEWSPL
 	__spl = &spl_5100;
@@ -124,14 +110,14 @@ dec_5100_init()
 	splvec.splclock = MIPS_SPL_0_1_2;
 	splvec.splstatclock = MIPS_SPL_0_1_2;
 #endif
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
+
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(
+	    (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
 
 	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_5100_bus_reset()
 {
@@ -142,11 +128,6 @@ dec_5100_bus_reset()
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 }
-
-#include <dev/cons.h>
-#include <sys/termios.h>
-
-extern int dc_cnattach __P((paddr_t, int, int, int));
 
 void
 dec_5100_cons_init()
@@ -178,8 +159,8 @@ struct {
 	{ SYS_DEV_SCC0, KN230_CSR_INTR_DZ0 },
 	{ SYS_DEV_LANCE, KN230_CSR_INTR_LANCE },
 	{ SYS_DEV_SCSI, KN230_CSR_INTR_SII },
-	{ SYS_DEV_SCC1, KN230_CSR_INTR_OPT0 },
-	{ SYS_DEV_SCC2, KN230_CSR_INTR_OPT1 },
+	{ SYS_DEV_OPT0, KN230_CSR_INTR_OPT0 },
+	{ SYS_DEV_OPT1, KN230_CSR_INTR_OPT1 },
 };
 
 void
@@ -237,12 +218,9 @@ dec_5100_intr(cpumask, pc, status, cause)
 
 	if (cpumask & MIPS_INT_MASK_2) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
-		clk = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-		temp = clk->regc;	/* XXX clear interrupt bits */
-
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -264,8 +242,8 @@ dec_5100_intr(cpumask, pc, status, cause)
 	icsr &= kn230imsk;	
 	if (cpumask & (MIPS_INT_MASK_0 | MIPS_INT_MASK_1)) {
 		CHECKINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
-		CHECKINTR(SYS_DEV_SCC1, KN230_CSR_INTR_OPT0);
-		CHECKINTR(SYS_DEV_SCC2, KN230_CSR_INTR_OPT1);
+		CHECKINTR(SYS_DEV_OPT0, KN230_CSR_INTR_OPT0);
+		CHECKINTR(SYS_DEV_OPT1, KN230_CSR_INTR_OPT1);
 		CHECKINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
 		CHECKINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
 	}

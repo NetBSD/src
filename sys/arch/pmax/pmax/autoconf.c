@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.4.6 1999/10/26 03:45:44 nisimura Exp $	*/
+/* $NetBSD: autoconf.c,v 1.31.4.7 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.6 1999/10/26 03:45:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.7 1999/11/12 11:07:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ struct device	*booted_device;
 int	booted_slot, booted_unit, booted_partition;
 char	*booted_protocol;
 
-void	calculate_iplmask __P((void));
-int	nullintr __P((void *));
+static void calculate_iplmask __P((void));
+static int  nullintr __P((void *));
 
 void
 cpu_configure()
@@ -152,7 +152,7 @@ makebootdev(cp)
 	}
 }
 
-void
+static void
 calculate_iplmask()
 {
 	/*
@@ -183,7 +183,7 @@ calculate_iplmask()
 	iplmask[IPL_HIGH] |= iplmask[IPL_CLOCK];
 }
 
-int
+static int
 nullintr(v)
 	void *v;
 {

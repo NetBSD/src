@@ -1,4 +1,4 @@
-/*	$NetBSD: kn02.h,v 1.5.2.1 1999/05/07 02:33:30 nisimura Exp $	*/
+/* $NetBSD: kn02.h,v 1.5.2.2 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,17 +43,17 @@
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -68,30 +68,30 @@
  * HISTORY
  * Log:	kn02.h,v
  * Revision 2.5  91/05/14  17:23:30  mrt
- * 	Correcting copyright
- * 
+ *	Correcting copyright
+ *
  * Revision 2.4  91/02/05  17:42:03  mrt
- * 	Added author notices
- * 	[91/02/04  11:14:23  mrt]
- * 
- * 	Changed to use new Mach copyright
- * 	[91/02/02  12:12:58  mrt]
- * 
+ *	Added author notices
+ *	[91/02/04  11:14:23  mrt]
+ *
+ *	Changed to use new Mach copyright
+ *	[91/02/02  12:12:58  mrt]
+ *
  * Revision 2.3  90/12/05  23:32:04  af
- * 
- * 
+ *
+ *
  * Revision 2.1.1.2  90/11/01  02:48:10  af
- * 	Reworked a bit, made reentrant.
- * 
+ *	Reworked a bit, made reentrant.
+ *
  * Revision 2.1.1.1  90/10/03  11:48:22  af
- * 	Created, from the DEC specs:
- * 	"DECstation 5000/200 KN02 System Module Functional Specification"
- * 	Workstation Systems Engineering, Palo Alto, CA. Aug 27, 1990.
- * 	[90/09/03            af]
+ *	Created, from the DEC specs:
+ *	"DECstation 5000/200 KN02 System Module Functional Specification"
+ *	Workstation Systems Engineering, Palo Alto, CA. Aug 27, 1990.
+ *	[90/09/03            af]
  */
 /*
  *	File: kn02.h
- * 	Author: Alessandro Forin, Carnegie Mellon University
+ *	Author: Alessandro Forin, Carnegie Mellon University
  *	Date:	9/90
  *
  *	Definitions specific to the KN02 processor (3max)
@@ -153,16 +153,16 @@
  * System devices
  */
 
-#define	KN02_SYS_ROM_START	KN02_PHYS_TC_7_START+0x000000
-#define	KN02_SYS_ROM_END	KN02_PHYS_TC_7_START+0x07ffff
+#define KN02_SYS_ROM_START	KN02_PHYS_TC_7_START+0x000000
+#define KN02_SYS_ROM_END	KN02_PHYS_TC_7_START+0x07ffff
 #define KN02_SYS_RESERVED	KN02_PHYS_TC_7_START+0x080000
-#define	KN02_SYS_CHKSYN		KN02_PHYS_TC_7_START+0x100000
-#define	KN02_SYS_ERRADR		KN02_PHYS_TC_7_START+0x180000
-#define	KN02_SYS_DZ		KN02_PHYS_TC_7_START+0x200000
-#define	KN02_SYS_CLOCK		KN02_PHYS_TC_7_START+0x280000
-#define	KN02_SYS_CSR		KN02_PHYS_TC_7_START+0x300000
-#define	KN02_SYS_ROM1_START	KN02_PHYS_TC_7_START+0x380000
-#define	KN02_SYS_ROM1_END	KN02_PHYS_TC_7_START+0x3fffff
+#define KN02_SYS_CHKSYN		KN02_PHYS_TC_7_START+0x100000
+#define KN02_SYS_ERRADR		KN02_PHYS_TC_7_START+0x180000
+#define KN02_SYS_DZ		KN02_PHYS_TC_7_START+0x200000
+#define KN02_SYS_CLOCK		KN02_PHYS_TC_7_START+0x280000
+#define KN02_SYS_CSR		KN02_PHYS_TC_7_START+0x300000
+#define KN02_SYS_ROM1_START	KN02_PHYS_TC_7_START+0x380000
+#define KN02_SYS_ROM1_END	KN02_PHYS_TC_7_START+0x3fffff
 
 
 /*
