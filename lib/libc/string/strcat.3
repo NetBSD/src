@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcat.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcat.3,v 1.7 1999/09/28 02:15:07 lukem Exp $
+.\"	$NetBSD: strcat.3,v 1.8 2001/03/22 07:37:04 kleink Exp $
 .\"
 .Dd June 4, 1993
 .Dt STRCAT 3
@@ -48,9 +48,9 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strcat "char *s" "const char *append"
+.Fn strcat "char * restrict s" "const char * restrict append"
 .Ft char *
-.Fn strncat "char *s" "const char *append" "size_t count"
+.Fn strncat "char * restrict s" "const char * restrict append" "size_t count"
 .Sh DESCRIPTION
 The
 .Fn strcat
@@ -96,4 +96,4 @@ and
 .Fn strncat
 functions
 conform to
-.St -ansiC .
+.St -isoC99 .
