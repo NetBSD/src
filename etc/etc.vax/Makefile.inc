@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.6 1999/07/25 04:23:49 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2000/05/17 21:40:45 matt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-#EXTRA_KERNELS+=
+# 
+# We need this to build the sysinst kernel.
+BUILD_KERNELS+=INSTALL
 
 distribution: pcs750.bin
 
-pcs750.bin:
-	(cd etc.vax;uudecode pcs750.bin.uu)
-	(cd etc.vax; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
+pcs750.bin: etc.vax/pcs750.bin.uu
+	(cd etc.vax; uudecode pcs750.bin.uu)
+	(cd etc.vax; install -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
+	
 
