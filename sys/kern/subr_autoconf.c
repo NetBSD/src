@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.48 2000/01/25 13:23:26 enami Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.49 2000/02/01 04:01:19 danw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,8 +409,7 @@ config_attach(parent, cf, aux, print)
 				cf->cf_unit++;
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
 		}
-#if defined(__alpha__) || defined(hp300) || defined(__i386__) || \
-	defined(__sparc__) || defined(__vax__) || defined(x68k)
+#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
