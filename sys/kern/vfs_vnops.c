@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.48 2001/04/09 10:22:02 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.48.2.1 2001/07/10 13:49:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,7 @@ static int  vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
-	vn_statfile, vn_closefile
+	vn_statfile, vn_closefile, vn_kqfilter
 };
 
 /*
@@ -585,6 +585,20 @@ vn_poll(fp, events, p)
 {
 
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
+}
+
+/*
+ * File table vnode kqfilter routine.
+ */
+int
+vn_kqfilter(fp, kn)
+	struct file *fp;
+	struct knote *kn;
+{
+	struct vnode *vp;
+
+	vp = (struct vnode *)fp->f_data;
+	return (VOP_KQFILTER(vp, kn));
 }
 
 /*
