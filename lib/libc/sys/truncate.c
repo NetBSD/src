@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.3 1995/02/27 11:23:11 cgd Exp $	*/
+/*	$NetBSD: truncate.c,v 1.4 1995/04/19 23:31:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: truncate.c,v 1.3 1995/02/27 11:23:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: truncate.c,v 1.4 1995/04/19 23:31:15 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ static char rcsid[] = "$NetBSD: truncate.c,v 1.3 1995/02/27 11:23:11 cgd Exp $";
  */
 int
 truncate(path, length)
-	char 	*path;
-	off_t	length;
+	const char *path;
+	off_t length;
 {
 
 	return(__syscall((quad_t)SYS_truncate, path, 0, length));
