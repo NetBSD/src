@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 1996/03/11 22:50:17 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 1996/03/28 05:00:06 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -146,18 +146,14 @@ ENTRY(proc_trampoline)
 ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 	cmpqd	0,S_ARG0	/*	2 cycles;  80 ns */
 	beq	2f		/*	2 cycles;  80 ns */
-	movd	S_ARG0,r0	/* 	2 cycles;  80 ns */
-	acbd	-1,r0,0f	/*      5 cycles; 200 ns */
-				/*                ====== */
-				/*                520 ns */
 	nop; nop; nop; nop	/*	8 cycles; 320 ns */
+	movd	S_ARG0,r0	/* 	2 cycles;  80 ns */
+	acbd	-1,r0,1f	/*      5 cycles; 200 ns */
+				/*                ====== */
+				/*                840 ns */
 	ret	0		/*	4 cycles; 160 ns */
 				/*                ====== */
 				/*		 1000 ns */
-
-				/*		  520 ns */
-0:	nop; nop; nop; nop	/*	8 cycles; 320 ns */
-				/*	          ====== */
 				/*		  840 ns */
 1:	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
 	nop; nop: nop: nop; nop	/*     10 cycles; 400 ns */
