@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/11/08 07:01:33 gmcgarry Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.12.1 2004/04/12 05:22:11 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,11 +105,12 @@ bbc_to_gmt(timbuf)
 	day   = bbc_to_decimal(8, 7);
 	month = bbc_to_decimal(10, 9);
 	year  = bbc_to_decimal(12, 11) + 1900;
+	if (year < STARTOFTIME)
+		year += 100;
 
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
 
 	tmp = 0;
 
