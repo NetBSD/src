@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.16 1998/10/04 00:02:34 fvdl Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.17 1998/10/19 22:37:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
