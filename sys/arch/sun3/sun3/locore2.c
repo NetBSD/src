@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.70 1997/10/06 20:04:05 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.71 1997/10/30 00:59:40 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 #include <machine/pmap.h>
 #include <machine/idprom.h>
 #include <machine/obio.h>
-#include <machine/obmem.h>
 #include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
@@ -67,16 +66,7 @@ extern char kernel_text[];
 extern char etext[], edata[], end[];
 char *esym;	/* DDB */
 
-
-/*
- * Globals shared between pmap.c and here (sigh).
- * For simplicity, this interface retains the variables
- * that were used in the old interface (without NONCONTIG).
- */
-vm_offset_t virtual_avail, virtual_end;
-vm_offset_t avail_start, avail_end;
-/* used to skip the Sun3/50 video RAM */
-vm_offset_t hole_start, hole_size;
+/* Basically a flag: "Do we have a VAC?" */
 int cache_size;
 
 /*
@@ -259,8 +249,6 @@ _verify_hardware()
 
 	case SUN3_MACH_50 :
 		cpu_match++;
-		hole_start = OBMEM_BW50_ADDR;
-		hole_size  = OBMEM_BW2_SIZE;
 		cpu_string = "50";
 		delay_divisor = 128;	/* 16 MHz */
 		break;
