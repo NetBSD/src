@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_name.c,v 1.1.1.1 2001/08/03 11:35:36 drochner Exp $";
+static const char rcsid[] = "$Id: ns_name.c,v 1.2 2003/01/15 00:29:13 groo Exp $";
 #endif
 
 #include <sys/types.h>
@@ -254,6 +254,11 @@ ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	cp = src;
 	dn = dst;
 	eom = dst + dstsiz;
+
+	if (dn >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
 
 	while ((n = *cp++) != 0) {
 		if ((n & NS_CMPRSFLGS) != 0) {
