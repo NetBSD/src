@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.128 2004/01/03 06:06:36 atatat Exp $
+.\"	$NetBSD: sysctl.3,v 1.129 2004/01/03 13:09:44 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -258,7 +258,7 @@ The bytes of non-kernel memory as a 64-bit integer.
 .It Li HW_PAGESIZE
 The software page size.
 .It Li HW_MACHINE_ARCH
-The machine cpu class.
+The machine CPU class.
 .It Li HW_ALIGNBYTES
 Alignment constraint for all possible data types.
 This shows the value
@@ -363,7 +363,7 @@ information.
 The maximum bytes of argument to
 .Xr execve 2 .
 .It Li KERN_AUTONICETIME
-The number of seconds of cpu-time a non-root process may accumulate before
+The number of seconds of CPU-time a non-root process may accumulate before
 having its priority lowered from the default to the value of KERN_AUTONICEVAL.
 If set to 0, automatic lowering of priority is not performed, and if set to \-1
 all non-root processes are immediately lowered.
@@ -387,8 +387,8 @@ skew rate.
 Returns an array of CPUSTATES longs.
 This array contains the
 number of clock ticks spent in different CPU states.
-On multi-processor system, the sum across all cpus is returned unless
-appropriate space is given for one data set for each cpu.
+On multi-processor system, the sum across all CPUs is returned unless
+appropriate space is given for one data set for each CPU.
 .It Li KERN_DEFCORENAME
 Default template for the name of core dump files (see also PROC_PID_CORENAME
 in the per-process variables CTL_PROC, and
@@ -1423,7 +1423,7 @@ system calls.
 The fourth level name is one of:
 .Bl -tag -width PROC_PID_LIMIT_MEMLOCKAA
 .It Li PROC_PID_LIMIT_CPU
-The maximum amount of cpu time (in seconds) to be used by each process.
+The maximum amount of CPU time (in seconds) to be used by each process.
 .It Li PROC_PID_LIMIT_FSIZE
 The largest size (in bytes) file that may be created.
 .It Li PROC_PID_LIMIT_DATA
@@ -1724,7 +1724,7 @@ tree.
 .Pp
 The core interface to all of these meta-functions is the structure
 that the kernel uses to describe the tree internally, as defined in
-.Ao Pa sys/sysctl.h Ac
+.Aq Pa sys/sysctl.h
 as:
 .Pp
 .Bd -literal
@@ -1836,10 +1836,12 @@ The
 and
 .Fa sysctl_alias
 members are used by the kernel to link the tree together and must be
-NULL or 0.
+.Dv NULL
+or 0.
 Nodes created in this manner cannot have helper functions, so
 .Fa sysctl_func
-must also be NULL.
+must also be
+.Dv NULL .
 If the
 .Fa sysctl_ver
 member is non-zero, it must match either the version of the parent or
@@ -1882,7 +1884,7 @@ node.sysctl_data = "audiodebug"; /* kernel symbol to be used */
 sysctl(\*[Am]mib[0], 2, NULL, NULL, \*[Am]node, len);
 .Ed
 .Pp
-The process is for deleting nodes is similar, but less data needs to
+The process for deleting nodes is similar, but less data needs to
 be supplied.
 Only the
 .Fa sysctl_num
