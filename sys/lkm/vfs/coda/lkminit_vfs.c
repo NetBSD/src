@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.3 2001/11/12 23:23:29 lukem Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.3.8.1 2002/05/16 12:38:39 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.3 2001/11/12 23:23:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.3.8.1 2002/05/16 12:38:39 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.3 2001/11/12 23:23:29 lukem Exp $"
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-
-#include <coda/coda_psdev.h>
 
 int coda_lkmentry __P((struct lkm_table *, int, int));
 
@@ -72,24 +70,14 @@ struct lkm_vfs coda_lkm_vfs = {
 /*
  * declare up/down call device
  */
-struct cdevsw codadevsw = {
-	vc_nb_open,		/* open */
-	vc_nb_close,		/* close */
-	vc_nb_read,		/* read */
-	vc_nb_write,		/* write */
-	vc_nb_ioctl,		/* ioctl */
-	0,			/* stop */
-	0,			/* tty */
-	vc_nb_poll,		/* poll */
-	0,			/* mmap */
-};
+extern const struct cdevsw vcoda_cdevsw;
 
 /*
-MOD_DEV("codadev", LM_DT_CHAR, 60, &codadevsw);
+MOD_DEV("codadev", NULL, NULL, -1, &vcoda_cdevsw, 60);
 */
 struct lkm_dev coda_lkm_dev = {
-	LM_DEV, LKM_VERSION, "codadev", 60, LM_DT_CHAR,
-	{ (void *) &codadevsw }
+	LM_DEV, LKM_VERSION, "codadev", -1, NULL,
+	NULL, -1, &vcoda_cdevsw, 60,
 };
 
 
