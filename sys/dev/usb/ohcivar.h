@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.33 2004/07/17 20:24:15 mycroft Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.34 2004/12/21 16:41:24 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -139,6 +139,9 @@ typedef struct ohci_softc {
 	device_ptr_t sc_child;
 
 	char sc_dying;
+#ifdef __NetBSD__
+	struct usb_dma_reserve sc_dma_reserve;
+#endif
 } ohci_softc_t;
 
 struct ohci_xfer {

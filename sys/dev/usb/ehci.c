@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.89 2004/12/03 08:51:31 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.89 2004/12/03 08:51:31 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.90 2004/12/21 16:41:24 fvdl Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -366,6 +366,9 @@ ehci_init(ehci_softc_t *sc)
 	}
 
 	sc->sc_bus.usbrev = USBREV_2_0;
+
+	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	    USB_MEM_RESERVE);
 
 	/* Reset the controller */
 	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
@@ -1083,6 +1086,8 @@ ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 	usbd_status err;
 
 	err = usb_allocmem(&sc->sc_bus, size, 0, dma);
+	if (err == USBD_NOMEM)
+		err = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
 #ifdef EHCI_DEBUG
 	if (err)
 		printf("ehci_allocm: usb_allocmem()=%d\n", err);
@@ -1095,6 +1100,11 @@ ehci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)bus;
 
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&((struct ehci_softc *)bus)->sc_dma_reserve,
+		    dma);
+		return;
+	}
 	usb_freemem(&sc->sc_bus, dma);
 }
 

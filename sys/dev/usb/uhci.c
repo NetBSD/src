@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.182 2004/10/26 20:46:16 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.183 2004/12/21 16:41:24 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.182 2004/10/26 20:46:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.183 2004/12/21 16:41:24 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.182 2004/10/26 20:46:16 augustss Exp $");
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/select.h>
+#include <sys/extent.h>
+#include <uvm/uvm_extern.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
@@ -414,6 +416,11 @@ uhci_init(uhci_softc_t *sc)
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
+#ifdef __NetBSD__
+	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	    USB_MEM_RESERVE);
+#endif
+
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus,
 		  UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
@@ -587,6 +594,7 @@ usbd_status
 uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
+	usbd_status status;
 	u_int32_t n;
 
 	/*
@@ -611,12 +619,25 @@ uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 		free(stds, M_TEMP);
 	}
 
-	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
+
+	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
+#ifdef __NetBSD__
+	if (status == USBD_NOMEM)
+		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
+#endif
+	return status;
 }
 
 void
 uhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
+#ifdef __NetBSD__
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&((struct uhci_softc *)bus)->sc_dma_reserve,
+		    dma);
+		return;
+	}
+#endif
 	usb_freemem(&((struct uhci_softc *)bus)->sc_bus, dma);
 }
 
