@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.460 2002/03/29 02:33:43 itojun Exp $
+# $NetBSD: mi,v 1.461 2002/03/29 10:26:12 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -890,6 +890,7 @@
 ./usr/share/man/cat4/sparc/magma.0		man-sys-catman
 ./usr/share/man/cat4/sparc/mem.0		man-sys-catman
 ./usr/share/man/cat4/sparc/ms.0			man-sys-catman
+./usr/share/man/cat4/sparc/nell.0		man-sys-catman
 ./usr/share/man/cat4/sparc/openprom.0		man-sys-catman
 ./usr/share/man/cat4/sparc/tcx.0		man-sys-catman
 ./usr/share/man/cat4/speaker.0			man-sys-catman
@@ -2569,6 +2570,7 @@
 ./usr/share/man/man4/sparc/magma.4		man-sys-man
 ./usr/share/man/man4/sparc/mem.4		man-sys-man
 ./usr/share/man/man4/sparc/ms.4			man-sys-man
+./usr/share/man/man4/sparc/nell.4		man-sys-man
 ./usr/share/man/man4/sparc/openprom.4		man-sys-man
 ./usr/share/man/man4/sparc/tcx.4		man-sys-man
 ./usr/share/man/man4/speaker.4			man-sys-man
