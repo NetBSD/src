@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.inc.mk,v 1.2 1997/03/27 17:39:31 christos Exp $
+#	$NetBSD: bsd.inc.mk,v 1.3 1997/05/06 20:54:33 mycroft Exp $
+
+.PHONY:		inclinstall
 
 .if defined(INCS) && !empty(INCS)
 .for I in ${INCS}

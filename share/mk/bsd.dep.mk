@@ -1,6 +1,8 @@
-#	$NetBSD: bsd.dep.mk,v 1.13 1997/03/07 23:10:18 gwr Exp $
+#	$NetBSD: bsd.dep.mk,v 1.14 1997/05/06 20:54:31 mycroft Exp $
 
-MKDEP?=	mkdep
+.PHONY:		beforedepend afterdepend cleandepend
+
+MKDEP?=		mkdep
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
