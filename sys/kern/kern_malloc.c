@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.87 2003/09/23 16:36:59 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.88 2003/09/27 23:10:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.87 2003/09/23 16:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.88 2003/09/27 23:10:47 mycroft Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -158,8 +158,8 @@ hitmlog(void *a)
 	long l;
 
 #define	PRT do { \
-	if (malloclog[l].addr == a && malloclog[l].action) { \
-		lp = &malloclog[l]; \
+	lp = &malloclog[l]; \
+	if (lp->addr == a && lp->action) { \
 		printf("malloc log entry %ld:\n", l); \
 		printf("\taddr = %p\n", lp->addr); \
 		printf("\tsize = %ld\n", lp->size); \
@@ -175,6 +175,7 @@ hitmlog(void *a)
 
 	for (l = 0; l < malloclogptr; l++)
 		PRT;
+#undef PRT
 }
 #endif /* MALLOCLOG */
 
