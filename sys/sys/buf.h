@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.26 1997/10/10 02:12:21 fvdl Exp $	*/
+/*	$NetBSD: buf.h,v 1.27 1997/10/10 08:19:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,7 +158,6 @@ int	bufpages;		/* Number of memory pages in the buffer pool. */
 struct	buf *swbuf;		/* Swap I/O buffer headers. */
 int	nswbuf;			/* Number of swap I/O buffer headers. */
 struct	buf bswlist;		/* Head of swap I/O buffer headers free list. */
-struct	buf *bclnlist;		/* Head of cleaned page list. */
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
