@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.4 2001/08/31 18:44:12 chuck Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.5 2001/09/08 13:23:09 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -49,7 +49,11 @@
 
 #include <compat/vax1k/vax1k_exec.h>
 
+#if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
+#else
+#define COMPAT_43	/* enable 4.3BSD binaries for lkm */
+#endif
 
 int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
 				      int, int));
