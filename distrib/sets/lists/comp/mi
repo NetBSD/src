@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.510 2003/01/05 23:40:05 sommerfeld Exp $
+#	$NetBSD: mi,v 1.511 2003/01/10 03:22:00 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2073,6 +2073,7 @@
 ./usr/share/man/cat3/gmtime_r.0	comp-c-catman
 ./usr/share/man/cat3/group_from_gid.0	comp-c-catman
 ./usr/share/man/cat3/gtty.0	comp-c-catman
+./usr/share/man/cat3/halfdelay.0		comp-c-catman
 ./usr/share/man/cat3/has_colors.0		comp-c-catman
 ./usr/share/man/cat3/has_ic.0		comp-c-catman
 ./usr/share/man/cat3/has_il.0		comp-c-catman
@@ -5070,6 +5071,7 @@
 ./usr/share/man/man3/gmtime_r.3		comp-c-man
 ./usr/share/man/man3/group_from_gid.3		comp-c-man
 ./usr/share/man/man3/gtty.3		comp-c-man
+./usr/share/man/man3/halfdelay.3		comp-c-man
 ./usr/share/man/man3/has_colors.3		comp-c-man
 ./usr/share/man/man3/has_ic.3		comp-c-man
 ./usr/share/man/man3/has_il.3		comp-c-man
