@@ -3,8 +3,10 @@
 ./usr/include/x68k/ansi.h
 ./usr/include/x68k/aout_machdep.h
 ./usr/include/x68k/asm.h
+./usr/include/x68k/bootinfo.h
 ./usr/include/x68k/bsd_audioio.h
 ./usr/include/x68k/bswap.h
+./usr/include/x68k/bus.h
 ./usr/include/x68k/cdefs.h
 ./usr/include/x68k/cpu.h
 ./usr/include/x68k/cpufunc.h
@@ -17,6 +19,7 @@
 ./usr/include/x68k/grfioctl.h
 ./usr/include/x68k/ieee.h
 ./usr/include/x68k/ieeefp.h
+./usr/include/x68k/intr.h
 ./usr/include/x68k/iteioctl.h
 ./usr/include/x68k/kbd.h
 ./usr/include/x68k/kbio.h
