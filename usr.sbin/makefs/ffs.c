@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.9 2002/01/18 08:39:23 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.10 2002/01/26 13:22:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.9 2002/01/18 08:39:23 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.10 2002/01/26 13:22:16 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: ffs.c,v 1.9 2002/01/18 08:39:23 lukem Exp $");
 #define	DFL_FRAGSIZE		1024		/* fragment size */
 #define	DFL_BLKSIZE		8192		/* block size */
 #define	DFL_SECSIZE		512		/* sector size */
-#define	DFL_CYLSPERGROUP	16		/* cylinders per group */
+#define	DFL_CYLSPERGROUP	65536		/* cylinders per group */
 #define	DFL_FRAGSPERINODE	4		/* fragments per inode - XXX */
 #define	DFL_ROTDELAY		0		/* rotational delay */
 #define	DFL_NRPOS		1		/* rotational positions */
@@ -227,6 +227,9 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	ffs_validate(dir, root, fsopts);
 	TIMER_RESULTS(start, "ffs_validate");
 
+	printf("Image size: %lld bytes, %lld inodes\n",
+	    (long long)fsopts->size, (long long)fsopts->inodes);
+
 		/* create image */
 	TIMER_START(start);
 	if (ffs_create_image(image, fsopts) == -1)
@@ -258,7 +261,10 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 static void
 ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
-	int32_t	spc, nspf, ncyl, ncg, fssize;
+	int32_t	ncg = 1;
+#if notyet
+	int32_t	spc, nspf, ncyl, fssize;
+#endif
 
 	assert(dir != NULL);
 	assert(root != NULL);
@@ -278,6 +284,8 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->bsize = MIN(DFL_BLKSIZE, 8 * fsopts->fsize);
 	if (fsopts->cpg == -1)
 		fsopts->cpg = DFL_CYLSPERGROUP;
+	else
+		fsopts->cpgflg = 1;
 				/* fsopts->density is set below */
 	if (fsopts->ntracks == -1)
 		fsopts->ntracks = DFL_NTRACKS;
@@ -321,6 +329,7 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->size =
 		    fsopts->size * (100 + fsopts->freeblockpc) / 100;
 
+#if notyet
 		/*
 		 * estimate number of cylinder groups
 		 */
@@ -337,12 +346,14 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		printf(
 		    "ffs_validate: spc %d nspf %d fssize %d ncyl %d ncg %d\n",
 		    spc, nspf, fssize, ncyl, ncg);
+#endif	/* notyet */
 
 		/* add space needed for superblocks */
 	fsopts->size += (SBOFF + SBSIZE) * ncg;
 		/* add space needed to store inodes, x3 for blockmaps, etc */
 	fsopts->size += ncg * DINODE_SIZE * 3 * 
 	    roundup(fsopts->inodes / ncg, fsopts->bsize / DINODE_SIZE);
+
 		/* add minfree */
 	if (fsopts->minfree > 0)
 		fsopts->size =
@@ -745,7 +756,7 @@ ffs_write_file(struct dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 		chunk = MIN(bufleft, fsopts->bsize);
 		if (isfile) {
 			if (read(ffd, fbuf, chunk) != chunk)
-				err(1, "reading %s, %lld bytes to go",
+				err(1, "Reading `%s', %lld bytes to go",
 				    (char *)buf, (long long)bufleft);
 			p = fbuf;
 		}
@@ -762,14 +773,18 @@ ffs_write_file(struct dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	 *	sized chunk. however, ffs_balloc() handles this for us
 	 */
 		errno = ffs_balloc(&in, offset, chunk, &bp);
+ bad_ffs_write_file:
 		if (errno != 0)
 			err(1,
-			    "ffs_write_file: ffs_balloc %lld %lld",
+			    "Writing inode %d (%s), bytes %lld + %lld",
+			    ino,
+			    isfile ? (char *)buf :
+			      inode_type(din->di_mode & S_IFMT),
 			    (long long)offset, (long long)chunk);
 		memcpy(bp->b_data, p, chunk);
 		errno = bwrite(bp);
 		if (errno != 0)
-			err(1, "ffs_write_file: bwrite");
+			goto bad_ffs_write_file;
 		brelse(bp);
 		if (!isfile)
 			p += chunk;
