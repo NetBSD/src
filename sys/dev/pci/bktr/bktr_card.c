@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.17 2004/04/23 02:58:29 simonb Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.18 2004/05/12 20:42:10 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.17 2004/04/23 02:58:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.18 2004/05/12 20:42:10 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -540,10 +540,11 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
 #define PCI_VENDOR_STB		0x10B4
 #define PCI_VENDOR_ASKEY	0x144F
 #endif
-/* Following not confirmed with http://members.hyperlink.net.au/~chart,
+/* Following not confirmed with http://www.pcidatabase.com/,
    so not added to NetBSD's pcidevs */
 #define PCI_VENDOR_LEADTEK_ALT	0x6606
 #define PCI_VENDOR_LEADTEK_ALT_2	0x6607
+#define PCI_VENDOR_LEADTEK_ALT_3	0x107D
 #define PCI_VENDOR_FLYVIDEO	0x1851
 #define PCI_VENDOR_FLYVIDEO_2	0x1852
 #define PCI_VENDOR_PINNACLE_ALT	0xBD11
@@ -669,7 +670,8 @@ probeCard(bktr_ptr_t bktr, int verbose, int unit)
                 }
 
                 if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
-                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)) {
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_3)) {
                     bktr->card = cards[(card = CARD_LEADTEK)];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
