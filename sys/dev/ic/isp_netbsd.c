@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.60 2003/08/07 01:10:53 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.59 2003/03/21 18:05:16 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.60 2003/08/07 01:10:53 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -378,8 +378,10 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 		hba->fc_scsi_supported = 1;
 		hba->fc_topology = FCPARAM(isp)->isp_topo + 1;
 		hba->fc_loopid = FCPARAM(isp)->isp_loopid;
-		hba->active_node_wwn = FCPARAM(isp)->isp_nodewwn;
-		hba->active_port_wwn = FCPARAM(isp)->isp_portwwn;
+		hba->nvram_node_wwn = FCPARAM(isp)->isp_nodewwn;
+		hba->nvram_port_wwn = FCPARAM(isp)->isp_portwwn;
+		hba->active_node_wwn = ISP_NODEWWN(isp);
+		hba->active_port_wwn = ISP_PORTWWN(isp);
 		ISP_UNLOCK(isp);
 		break;
 	}
@@ -793,6 +795,7 @@ isp_fc_worker(void *arg)
 				splx(s);
 				goto skip;
 			}
+			isp->isp_osinfo.loop_checked = 1;
 			isp->isp_osinfo.threadwork = 1;
 			splx(s);
 			delay(500 * 1000);
