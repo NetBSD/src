@@ -32,8 +32,9 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.8.5.3 (Berkeley) 1/21/97')
-#
+
 divert(0)
-# Configuration version number
-DZ8.8.5`'ifdef(`confCF_VERSION', `/confCF_VERSION')
+VERSIONID(`@(#)osf1.m4	8.4 (Berkeley) 9/25/96')
+define(`ALIAS_FILE', /usr/adm/sendmail/aliases)dnl
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/adm/sendmail/sendmail.st)')dnl
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /usr/share/lib/sendmail.hf)')dnl

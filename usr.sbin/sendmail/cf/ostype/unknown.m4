@@ -32,8 +32,10 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.8.5.3 (Berkeley) 1/21/97')
-#
+
 divert(0)
-# Configuration version number
-DZ8.8.5`'ifdef(`confCF_VERSION', `/confCF_VERSION')
+VERSIONID(`@(#)unknown.m4	8.1 (Berkeley) 4/21/95')
+errprint(`*** ERROR: You have not specified a valid operating system type.')
+errprint(`	Use the OSTYPE macro to select a valid system type.  This')
+errprint(`	is necessary in order to get the proper pathnames and flags')
+errprint(`	appropriate for your environment.')
