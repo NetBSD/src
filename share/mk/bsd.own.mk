@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.233 2001/12/12 03:39:27 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.234 2001/12/12 05:50:09 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -87,25 +87,38 @@ TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 .endif
 
 # Define default locations for common tools.
+.if ${USETOOLS_BINUTILS:Uyes} == "yes"
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
-ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
+LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
+NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
+OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
+OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
+RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
+SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
+STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+.endif
+
+.if ${USETOOLS_GCC:Uyes} == "yes"
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
+OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+.endif
+
+ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
 COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
 CONFIG=		${TOOLDIR}/bin/nbconfig
-CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 CRUNCHGEN=	MAKE=${.MAKE:Q} ${TOOLDIR}/bin/nbcrunchgen
-CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 EQN=		${TOOLDIR}/bin/nbeqn
-FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
 GENCAT=		${TOOLDIR}/bin/nbgencat
 #GRIND=		${TOOLDIR}/bin/nbvgrind -f
 GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
 INDXBIB=	${TOOLDIR}/bin/nbindxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
 INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
-LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/nblorder
@@ -117,18 +130,11 @@ MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/nbmkdep
 MKLOCALE=	${TOOLDIR}/bin/nbmklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
 MTREE=		${TOOLDIR}/bin/nbmtree
-NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
-OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
-OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 PIC=		${TOOLDIR}/bin/nbpic
 PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
-RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 REFER=		${TOOLDIR}/bin/nbrefer
 RPCGEN=		${TOOLDIR}/bin/nbrpcgen
-SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 SOELIM=		${TOOLDIR}/bin/nbsoelim
-STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
 TBL=		${TOOLDIR}/bin/nbtbl
 TSORT=		${TOOLDIR}/bin/nbtsort -q
 YACC=		${TOOLDIR}/bin/nbyacc
