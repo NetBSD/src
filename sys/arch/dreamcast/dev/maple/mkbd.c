@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.8 2001/05/26 19:04:40 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.9 2001/07/22 15:46:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -275,7 +275,7 @@ mkbd_intr(sc, kbddata, sz)
 	    else
 	      KEY_DOWN(kbddata->key[j]);
 
-	  bcopy(kbddata, &sc->sc_condition, sizeof(struct mkbd_condition));
+	  memcpy(&sc->sc_condition, kbddata, sizeof(struct mkbd_condition));
 	}
 }
 
