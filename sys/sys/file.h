@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.20 1999/07/03 20:04:10 kleink Exp $	*/
+/*	$NetBSD: file.h,v 1.21 1999/08/03 20:19:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,6 +70,8 @@ struct file {
 					    struct uio *uio,
 					    struct ucred *cred, int flags));
 		int	(*fo_ioctl)	__P((struct file *fp, u_long com,
+					    caddr_t data, struct proc *p));
+		int	(*fo_fcntl)	__P((struct file *fp, u_int com,
 					    caddr_t data, struct proc *p));
 		int	(*fo_poll)	__P((struct file *fp, int events,
 					    struct proc *p));

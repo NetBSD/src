@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.64 1999/07/08 01:26:27 wrstuden Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.65 1999/08/03 20:19:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,6 +108,7 @@ int	kernfs_getattr	__P((void *));
 int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
+#define	kernfs_fcntl	genfs_fcntl
 #define	kernfs_ioctl	genfs_enoioctl
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
@@ -156,6 +157,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
 	{ &vop_read_desc, kernfs_read },		/* read */
 	{ &vop_write_desc, kernfs_write },		/* write */
+	{ &vop_fcntl_desc, kernfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
 	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */

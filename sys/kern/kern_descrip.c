@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.60 1999/06/20 08:54:13 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.61 1999/08/03 20:19:16 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -192,6 +192,8 @@ sys_dup2(p, v, retval)
 	return (finishdup(p, old, new, retval));
 }
 
+int	fcntl_forfs	__P((int, struct proc *, int, void *));
+
 /*
  * The file control system call.
  */
@@ -211,7 +213,7 @@ sys_fcntl(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
-	int i, tmp, error = 0, flg = F_POSIX;
+	int i, tmp, error = 0, flg = F_POSIX, cmd;
 	struct flock fl;
 	int newmin;
 
@@ -222,7 +224,13 @@ sys_fcntl(p, v, retval)
 
 	FILE_USE(fp);
 
-	switch (SCARG(uap, cmd)) {
+	cmd = SCARG(uap, cmd);
+	if ((cmd & F_FSCTL)) {
+		error = fcntl_forfs(fd, p, cmd, SCARG(uap, arg));
+		goto out;
+	}
+
+	switch (cmd) {
 
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
@@ -253,8 +261,12 @@ sys_fcntl(p, v, retval)
 		break;
 
 	case F_SETFL:
+		tmp = FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
+		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, (caddr_t)&tmp, p);
+		if (error)
+			return (error);
 		fp->f_flag &= ~FCNTLFLAGS;
-		fp->f_flag |= FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
+		fp->f_flag |= tmp;
 		tmp = fp->f_flag & FNONBLOCK;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		if (error)
@@ -1249,6 +1261,76 @@ dupfdopen(p, indx, dfd, mode, error)
 		return (error);
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * fcntl call which is being passed to the file's fs.
+ */
+int
+fcntl_forfs(fd, p, cmd, arg)
+	int fd, cmd;
+	struct proc *p;
+	void *arg;
+{
+	register struct file *fp;
+	register struct filedesc *fdp;
+	register int error;
+	register u_int size;
+	caddr_t data, memp;
+#define STK_PARAMS	128
+	char stkbuf[STK_PARAMS];
+
+	/* fd's value was validated in sys_fcntl before calling this routine */
+	fdp = p->p_fd;
+	fp = fdp->fd_ofiles[fd];
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+		return (EBADF);
+
+	/*
+	 * Interpret high order word to find amount of data to be
+	 * copied to/from the user's address space.
+	 */
+	size = (size_t)F_PARAM_LEN(cmd);
+	if (size > F_PARAM_MAX)
+		return (EINVAL);
+	memp = NULL;
+	if (size > sizeof(stkbuf)) {
+		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		data = memp;
+	} else
+		data = stkbuf;
+	if (cmd & F_FSIN) {
+		if (size) {
+			error = copyin(arg, data, size);
+			if (error) {
+				if (memp)
+					free(memp, M_IOCTLOPS);
+				return (error);
+			}
+		} else
+			*(caddr_t *)data = arg;
+	} else if ((cmd & F_FSOUT) && size)
+		/*
+		 * Zero the buffer so the user always
+		 * gets back something deterministic.
+		 */
+		memset(data, 0, size);
+	else if (cmd & F_FSVOID)
+		*(caddr_t *)data = arg;
+
+
+	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, p);
+
+	/*
+	 * Copy any data to user, size was
+	 * already set and checked above.
+	 */
+	if (error == 0 && (cmd & F_FSOUT) && size)
+		error = copyout(data, arg, size);
+	if (memp)
+		free(memp, M_IOCTLOPS);
+	return (error);
 }
 
 /*
