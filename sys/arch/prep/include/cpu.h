@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2001/05/30 12:28:49 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2001/06/14 22:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -82,8 +82,6 @@ extern char *bootpath;
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32
 #endif
-
-void child_return __P((void *));
 
 #include <powerpc/cpu.h>
 
