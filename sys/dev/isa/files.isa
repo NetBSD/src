@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.33.2.3 1997/08/27 23:31:37 thorpej Exp $
+#	$NetBSD: files.isa,v 1.33.2.4 1997/08/28 22:41:57 marc Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -244,14 +244,6 @@ file	dev/isa/wss.c			wss needs-flag
 device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
-
-# PCIC pcmcia contoller
-device	pcic {[controller = -1], [socket = -1]}
-attach	pcic at isa
-file	dev/isa/i82365.c		pcic
-
-# device declaration in dev/pcmcia/files.pcmcia
-attach	pcmcia at pcic
 
 #
 # PlanetConnect satellite receiver driver.
