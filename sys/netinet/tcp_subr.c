@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.128 2002/05/26 16:05:44 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.129 2002/05/28 10:17:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.128 2002/05/26 16:05:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.129 2002/05/28 10:17:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2002,7 +2002,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #if NRND > 0
 		rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
 #else
-		tcp_iss = random();
+		tcp_iss = arc4random();
 #endif
 
 		/*
