@@ -115,7 +115,7 @@ open_mem(block, length, file)
 
 void
 out1str(p)
-	char *p;
+	const char *p;
 	{
 	outstr(p, out1);
 }
@@ -123,7 +123,7 @@ out1str(p)
 
 void
 out2str(p)
-	char *p;
+	const char *p;
 	{
 	outstr(p, out2);
 }
@@ -131,7 +131,7 @@ out2str(p)
 
 void
 outstr(p, file)
-	register char *p;
+	const register char *p;
 	register struct output *file;
 	{
 	while (*p)
