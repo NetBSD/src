@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.1 2002/07/15 16:28:04 ichiro Exp $	*/
+/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2 2002/08/17 16:36:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@ _C_LABEL(ixp12x0_cache_clean_size):
 
 	.text
 
-Lixp12x0_cache_clean_addr:
+.Lixp12x0_cache_clean_addr:
 	.word   _C_LABEL(ixp12x0_cache_clean_addr)
-Lixp12x0_cache_clean_size:
+.Lixp12x0_cache_clean_size:
 	.word   _C_LABEL(ixp12x0_cache_clean_size)

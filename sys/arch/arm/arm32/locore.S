@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2002/08/15 01:37:02 briggs Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2002/08/17 16:36:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -77,7 +77,7 @@ ASENTRY_NP(start)
 
 	bl	_C_LABEL(main)		/* call main()! */
 
-	add	r0, pc, #Lmainreturned - . - 8
+	add	r0, pc, #.Lmainreturned - . - 8
 	b	_C_LABEL(panic)
 	/* NOTEACHED */
 
@@ -86,7 +86,7 @@ ASENTRY_NP(start)
 	.word	_end
 	.word	svcstk + INIT_ARM_STACK_SIZE
 
-Lmainreturned:
+.Lmainreturned:
 	.asciz	"main() returned"
 	.align	0
 
@@ -100,7 +100,7 @@ svcstk:
 #ifndef OFW
 	/* OFW based systems will used OF_boot() */
 	
-Lcpufuncs:	
+.Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
@@ -110,10 +110,10 @@ ENTRY_NP(cpu_reset)
 	orr	r2, r2, #(I32_bit | F32_bit)
 	msr     cpsr_all, r2
 
-	ldr	r4, Lcpu_reset_address
+	ldr	r4, .Lcpu_reset_address
 	ldr	r4, [r4]
 
-	ldr	r0, Lcpufuncs
+	ldr	r0, .Lcpufuncs
 	add	lr, pc, #.Lboot_cache_purged - . - 8
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
@@ -124,7 +124,7 @@ ENTRY_NP(cpu_reset)
 	 * necessary.
 	 */
 
-	ldr	r1, Lcpu_reset_needs_v4_MMU_disable
+	ldr	r1, .Lcpu_reset_needs_v4_MMU_disable
 	ldr	r1, [r1]
 	cmp	r1, #0
 
@@ -142,7 +142,7 @@ ENTRY_NP(cpu_reset)
 	 * the cpu reset after turning the MMU off
 	 * This variable is provided by the hardware specific code
 	 */
-Lcpu_reset_address:
+.Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
 
 	/*
@@ -151,7 +151,7 @@ Lcpu_reset_address:
 	 * on f.e. ARM6/7 that locks up the computer in an endless illegal
 	 * instruction / data-abort / reset loop.
 	 */
-Lcpu_reset_needs_v4_MMU_disable:
+.Lcpu_reset_needs_v4_MMU_disable:
 	.word	_C_LABEL(cpu_reset_needs_v4_MMU_disable)
 
 #endif	/* OFW */
