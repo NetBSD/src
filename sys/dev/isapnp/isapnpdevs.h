@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.h,v 1.22 1999/03/22 09:41:59 mycroft Exp $	*/
+/*	$NetBSD: isapnpdevs.h,v 1.23 1999/03/22 22:36:49 bad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.22 1999/03/22 09:41:10 mycroft Exp 
+ *	NetBSD: isapnpdevs,v 1.23 1999/03/22 22:36:10 bad Exp 
  */
 
 
@@ -83,6 +83,8 @@ extern const struct isapnp_devinfo isapnp_ne_devinfo;
 extern const struct isapnp_devinfo isapnp_pcic_devinfo;
 /* Creative Soundblaster */
 extern const struct isapnp_devinfo isapnp_sb_devinfo;
+/* TROPIC Token-Ring */
+extern const struct isapnp_devinfo isapnp_tr_devinfo;
 /* Western Digital Disk Controller */
 extern const struct isapnp_devinfo isapnp_wdc_devinfo;
 /* Microsoft Sound System */

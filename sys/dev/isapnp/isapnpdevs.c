@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.25 1999/03/22 09:41:58 mycroft Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.26 1999/03/22 22:36:49 bad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.22 1999/03/22 09:41:10 mycroft Exp 
+ *	NetBSD: isapnpdevs,v 1.23 1999/03/22 22:36:10 bad Exp 
  */
 
 /*-
@@ -210,6 +210,16 @@ static const struct isapnp_matchinfo isapnp_sb_devcompat[] = {
 const struct isapnp_devinfo isapnp_sb_devinfo = {
 	isapnp_sb_devlogic, 13,
 	isapnp_sb_devcompat, 4,
+};
+
+/* TROPIC Token-Ring */
+static const struct isapnp_matchinfo isapnp_tr_devlogic[] = {
+	{"IBM0000", 0},	/* IBM TROPIC Token-Ring */
+	{"TCM3190", 0},	/* 3Com TokenLink Velocity ISA */
+};
+const struct isapnp_devinfo isapnp_tr_devinfo = {
+	isapnp_tr_devlogic, 2,
+	NULL, 0,
 };
 
 /* Western Digital Disk Controller */
