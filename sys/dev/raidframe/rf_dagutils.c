@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.31 2004/03/05 03:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.32 2004/03/06 22:59:42 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.31 2004/03/05 03:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.32 2004/03/06 22:59:42 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.31 2004/03/05 03:22:05 oster Exp $
 
 const RF_RedFuncs_t rf_xorFuncs = {
 	rf_RegularXorFunc, "Reg Xr",
-rf_SimpleXorFunc, "Simple Xr"};
+	rf_SimpleXorFunc, "Simple Xr"};
 
 const RF_RedFuncs_t rf_xorRecoveryFuncs = {
 	rf_RecoveryXorFunc, "Recovery Xr",
-rf_RecoveryXorFunc, "Recovery Xr"};
+	rf_RecoveryXorFunc, "Recovery Xr"};
 
 #if RF_DEBUG_VALIDATE_DAG
 static void rf_RecurPrintDAG(RF_DagNode_t *, int, int);
