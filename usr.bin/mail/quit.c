@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.16 2002/03/05 20:57:28 wiz Exp $	*/
+/*	$NetBSD: quit.c,v 1.17 2002/03/05 21:11:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.16 2002/03/05 20:57:28 wiz Exp $");
+__RCSID("$NetBSD: quit.c,v 1.17 2002/03/05 21:11:46 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: quit.c,v 1.16 2002/03/05 20:57:28 wiz Exp $");
  */
 
 extern char *tmpdir;
-extern char *tempResid;
 
 /*
  * The "quit" command.
@@ -128,9 +127,14 @@ nolock:
 	rbuf = NULL;
 	if (fstat(fileno(fbuf), &minfo) >= 0 && minfo.st_size > mailsize) {
 		printf("New mail has arrived.\n");
-		rbuf = Fopen(tempResid, "w");
-		if (rbuf == NULL || fbuf == NULL)
+		(void)snprintf(tempname, sizeof(tempname),
+		    "%s/mail.RqXXXXXXXXXX", tmpdir);
+		if ((fd = mkstemp(tempname)) == -1 ||
+		    (rbuf = Fdopen(fd, "w")) == NULL) {
+		    	if (fd != -1)
+				close(fd);
 			goto newmail;
+		}
 #ifdef APPEND
 		fseek(fbuf, (long)mailsize, 0);
 		while ((c = getc(fbuf)) != EOF)
@@ -146,16 +150,16 @@ nolock:
 #endif
 		(void) fflush(rbuf);
 		if (ferror(rbuf)) {
-			warn("%s", tempResid);
+			warn("%s", tempname);
 			Fclose(rbuf);
 			Fclose(fbuf);
 			dot_unlock(mailname);
 			return;
 		}
 		Fclose(rbuf);
-		if ((rbuf = Fopen(tempResid, "r")) == NULL)
+		if ((rbuf = Fopen(tempname, "r")) == NULL)
 			goto newmail;
-		rm(tempResid);
+		rm(tempname);
 	}
 
 	/*
