@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: INSTALL,v 1.5 2000/03/22 00:58:19 cgd Exp $
 #
 # First try for BEBOX config file
 #
@@ -70,6 +70,7 @@ pseudo-device	pty		64
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 mainbus0 at root
 

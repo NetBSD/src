@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.5 1999/09/12 01:17:23 chs Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.6 2000/03/22 00:58:22 cgd Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -96,6 +96,7 @@ options 	DEBUG
 ## Make SCSI/PCI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
 options 	PCIVERBOSE
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
 ## This allows writing to /dev/mem, loading kernel modules while multi-user,

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.5 2000/02/24 17:07:35 msaitoh Exp $
+#	$NetBSD: MMEYE,v 1.6 2000/03/22 00:58:21 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -51,6 +51,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 # Kernel root file system and dump configuration.

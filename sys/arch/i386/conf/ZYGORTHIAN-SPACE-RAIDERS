@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.24 2000/03/06 18:45:42 itojun Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.25 2000/03/22 00:58:21 cgd Exp $
 #	From: GENERIC,v 1.299 2000/02/03 20:31:42 dante Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32		# estimated number of users
 
@@ -157,6 +157,7 @@ options 	INET6		# IPV6
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages

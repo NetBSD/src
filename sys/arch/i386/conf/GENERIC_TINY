@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.13 2000/01/17 17:47:06 augustss Exp $
+#	$NetBSD: GENERIC_TINY,v 1.14 2000/03/22 00:58:20 cgd Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -127,6 +127,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages

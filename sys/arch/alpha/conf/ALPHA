@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.116 2000/03/09 22:26:41 cjs Exp $
+# $NetBSD: ALPHA,v 1.117 2000/03/22 00:58:16 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.116 $"
+ident		"ALPHA-$Revision: 1.117 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -125,6 +125,7 @@ options 	LKM
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
