@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 1996/01/31 23:16:24 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.2 1996/02/05 21:25:33 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Created      : 17/09/94
  * Last updated : 25/12/95
  *
- *    $Id: machdep.c,v 1.1 1996/01/31 23:16:24 mark Exp $
+ *    $Id: machdep.c,v 1.2 1996/02/05 21:25:33 mark Exp $
  */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@
 #include <machine/undefined.h>
 #include <machine/rtc.h>
 
-#include "hydra.h"
+#include "hydrabus.h"
 
 /* Describe different actions to take when boot() is called */
 
@@ -147,7 +147,7 @@ pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
 pv_addr_t kernelstack;
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 pv_addr_t hydrascratch;
 #endif
 
@@ -301,7 +301,7 @@ boot(howto)
 	if (curpcb)
 		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);
 
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 /*
  * If we are halting the master then we should halt the slaves :-)
  * otherwise it can get a bit disconcerting to have 4 other
@@ -708,7 +708,7 @@ initarm(bootconf)
 		    bootconfig.kernphysicalbase + logical);
 	}
 
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 	for (logical = 0; logical < 0x200000; logical += NBPG) {
 		map_entry(l2pagetable + 0x2000, logical,
 		    bootconfig.dram[0].address + logical + NBPG);
@@ -850,7 +850,7 @@ initarm(bootconf)
  * Simplest thing is to nick the bottom page of physical memory.
  */
 
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 	hydrascratch.physical = physical_start;
 	physical_start += NBPG;
 	--free_pages;
