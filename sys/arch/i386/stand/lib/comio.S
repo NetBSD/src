@@ -1,13 +1,10 @@
-/*	$NetBSD: comio.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: comio.S,v 1.4 2003/04/16 14:23:11 dsl Exp $	*/
 
 /* serial console handling
   modelled after code in FreeBSD:sys/i386/boot/netboot/start2.S
  */
 
 #include <machine/asm.h>
-
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
 
 	.text
 
