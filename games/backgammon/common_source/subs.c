@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.10 1999/02/10 12:29:48 hubertf Exp $	*/
+/*	$NetBSD: subs.c,v 1.11 1999/07/26 20:50:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.10 1999/02/10 12:29:48 hubertf Exp $");
+__RCSID("$NetBSD: subs.c,v 1.11 1999/07/26 20:50:44 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,11 @@ getarg(arg)
 		case 's':
 			s++;
 			/* recover file */
-			recover(s[0]);
+			if (s[0] == NULL) {
+				writel("No save file named\n");
+				getout(0);
+			} else
+				recover(s[0]);
 			break;
 		}
 		s++;
