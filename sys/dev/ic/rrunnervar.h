@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.4 1998/06/08 07:11:51 thorpej Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.5 1998/11/20 04:12:58 kml Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,6 +43,7 @@
 /* RoadRunner software status per interface */
 
 struct rr_tuning {
+
 	/* Performance tuning registers: */
 
 	u_int32_t		rt_mode_and_status;
@@ -75,10 +76,13 @@ struct rr_eeprom {
 #define EIOCGEEPROM 3	/* get eeprom */
 #define EIOCSEEPROM 4	/* set eeprom */
 #define EIOCGSTATS  5	/* get statistics */
+#define EIOCRESET   6   /* reset the card */
 
 #ifdef _KERNEL
 
-struct esh_ring_ctl {
+/* Per-ring information for the SNAP (network) receive ring */
+
+struct esh_snap_ring_ctl {
 	bus_dmamap_t ec_dma[RR_MAX_DESCR];
 	struct mbuf *ec_m[RR_MAX_DESCR];
 	struct mbuf *ec_cur_pkt;	/* current packet being processed */
@@ -87,8 +91,56 @@ struct esh_ring_ctl {
 	u_int16_t ec_producer;		/* latest buffer driver produced */
 	u_int16_t ec_consumer;		/* latest buffer runcode consumed */
 	struct rr_descr *ec_descr;	/* array of descriptors for ring */
-	struct rr2_descr *ec2_descr;
 };
+
+TAILQ_HEAD(esh_dmainfo_list, esh_dmainfo);
+
+struct esh_dmainfo {
+	u_int32_t ed_flags;
+#define ESH_DI_BUSY	0x1
+#define ESH_DI_READING	0x2
+	bus_dmamap_t ed_dma;
+	struct buf *ed_buf;
+	int ed_read_len;
+	int ed_error;
+	TAILQ_ENTRY(esh_dmainfo) ed_list;
+};
+
+struct esh_send_ring_ctl {
+	bus_dmamap_t ec_dma;		/* dmamap for data to transmit */
+	int ec_offset;			/* offset in dmamap to send next */
+	size_t ec_len;			/* total length of current buf */
+	struct mbuf *ec_cur_mbuf;	/* current mbuf being processed */
+	struct buf *ec_cur_buf;		/* current buf being processed */
+	struct esh_dmainfo *ec_cur_dmainfo;	
+					/* current dmainfo being processed */
+	struct buf *ec_queue;		/* queue of bufs to send */
+	struct buf *ec_lastqueue;	/* last entry in the queue */
+	int ec_error;			/* encountered error? */
+	u_int16_t ec_producer;		/* latest buffer driver produced */
+	u_int16_t ec_consumer;		/* latest buffer runcode consumed */
+	struct rr_descr *ec_descr;	/* array of descriptors for ring */
+	struct esh_dmainfo_list ec_di_queue;
+};
+
+struct esh_fp_ring_ctl {
+	struct esh_dmainfo *ec_dmainfo[RR_MAX_DESCR];
+	struct esh_dmainfo *ec_cur_dmainfo;
+	int ec_offset;			/* offset of current buf */
+	int ec_error;			/* encountered error? */
+	int ec_seen_end;		/* seen the end of the buffer? */
+	int ec_dmainfo_count;		/* dmainfo buffers in use count */
+	u_int16_t ec_producer;		/* latest buffer driver produced */
+	u_int16_t ec_consumer;		/* latest buffer runcode consumed */
+	u_int32_t ec_read_len;		/* length of packet being read in */
+	struct rr_descr *ec_descr;	/* array of descriptors for ring */
+	struct esh_dmainfo_list ec_queue;
+	u_int ec_ulp;			/* ULP for this ring */
+	int ec_index;			/* index into list of active rings */
+	bus_dmamap_t ec_dma;
+	bus_dma_segment_t ec_dmaseg;
+};
+
 
 struct esh_softc {
 	struct device		sc_dev;
@@ -96,11 +148,16 @@ struct esh_softc {
 	struct ifmedia		sc_media;
 
 	volatile int		sc_flags;
-#define ESH_FL_INITIALIZED	0x01
-#define ESH_FL_RUNCODE_UP	0x02
-#define ESH_FL_LINK_UP		0x04
-#define ESH_FL_RRING_UP		0x08
-#define ESH_FL_EEPROM_BUSY	0x10
+#define ESH_FL_INITIALIZING	0x001
+#define ESH_FL_INITIALIZED	0x002
+#define ESH_FL_RUNCODE_UP	0x004
+#define ESH_FL_LINK_UP		0x008
+#define ESH_FL_SNAP_RING_UP	0x010
+#define ESH_FL_FP_RING_UP	0x020
+#define ESH_FL_EEPROM_BUSY	0x040
+#define ESH_FL_FP_OPEN		0x080
+#define ESH_FL_CRASHED		0x100
+#define ESH_FL_CLOSING_SNAP	0x200
 
 	void			*sc_ih;
 
@@ -146,8 +203,12 @@ struct esh_softc {
 	 * know we want to keep track of.
 	 */
 
-	struct esh_ring_ctl	sc_send;
-	struct esh_ring_ctl	sc_snap_recv;
+	struct esh_send_ring_ctl
+				sc_send;
+	struct esh_snap_ring_ctl
+				sc_snap_recv;
+	struct esh_fp_ring_ctl	*sc_fp_recv[RR_ULP_COUNT];
+	struct esh_fp_ring_ctl	*sc_fp_recv_index[RR_MAX_RECV_RING];
 	int			sc_event_consumer;
 	int			sc_event_producer;
 	int			sc_cmd_consumer;
@@ -168,6 +229,7 @@ struct esh_softc {
 	u_int32_t		sc_runcode_version;
 	u_int32_t		sc_version; /* interface of runcode (1 or 2) */
 	u_int16_t		sc_options; /* options in current RunCode */
+	u_int			sc_max_rings;
 
 	u_int32_t		sc_pci_latency;
 	u_int32_t		sc_pci_lat_gnt;
@@ -185,6 +247,10 @@ struct esh_softc {
 
 	u_int32_t		sc_misaligned_bufs;
 	u_int32_t		sc_bad_lens;
+
+	struct esh_dmainfo_list sc_dmainfo_freelist;
+	u_int			sc_dmainfo_freelist_count;
+	u_int			sc_fp_rings;
 };
 
 void	eshconfig __P((struct esh_softc *));
@@ -193,6 +259,7 @@ int	eshintr __P((void *));
 
 /* Define a few constants for future use */
 
+#define ESH_MAX_NSEGS			512     /* room for 2MB of data */
 #define ESH_STATS_TIMER_DEFAULT		1030900  
 	/* 1000000 usecs / 0.97 usecs/tick */
 
@@ -201,11 +268,6 @@ int	eshintr __P((void *));
 #define NEXT_RECV(i)  (((i) + 1) & (RR_SNAP_RECV_RING_SIZE - 1))
 
 #define PREV_SEND(i)  (((i) + RR_SEND_RING_SIZE - 1) & (RR_SEND_RING_SIZE - 1))
-#define PREV_RECV(i)  (((i) + RR_SNAP_RECV_RING_SIZE - 1) & (RR_SNAP_RECV_RING_SIZE - 1))
-
-#define NEXT_SEND2(i)  (((i) + 1) & (RR2_SEND_RING_SIZE - 1))
-#define NEXT_RECV2(i)  (((i) + 1) & (RR2_SNAP_RECV_RING_SIZE - 1))
-
-#define PREV_SEND2(i)  (((i) + RR2_SEND_RING_SIZE - 1) & (RR2_SEND_RING_SIZE - 1))
-#define PREV_RECV2(i)  (((i) + RR2_SNAP_RECV_RING_SIZE - 1) & (RR2_SNAP_RECV_RING_SIZE - 1))
+#define PREV_RECV(i)  \
+	(((i) + RR_SNAP_RECV_RING_SIZE - 1) & (RR_SNAP_RECV_RING_SIZE - 1))
 
