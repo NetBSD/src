@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.15 1999/06/07 20:31:30 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.16 1999/06/22 01:48:33 sakamoto Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -95,9 +95,9 @@ file	arch/bebox/isa/lms.c		lms needs-flag
 device	mms
 attach	mms at isa
 file	arch/bebox/isa/mms.c		mms needs-flag
-device	pms
-attach	pms at pckbcport with pms_hack
-attach	pms at pckbc with pms_pckbc
+device	opms
+attach	opms at pckbcport with pms_hack
+attach	opms at pckbc with pms_pckbc
 file	arch/bebox/isa/pms.c		pms | pms_hack | pms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
