@@ -1,3 +1,4 @@
+/*	$NetBSD: disklabel.h,v 1.67 2001/01/08 07:48:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
