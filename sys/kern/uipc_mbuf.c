@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.83 2004/06/24 04:15:50 jonathan Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.83 2004/06/24 04:15:50 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.84 2004/07/21 12:06:46 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -1069,6 +1069,7 @@ m_copyback(struct mbuf *m0, int off, int len, caddr_t cp)
 	}
 	while (len > 0) {
 		mlen = min (m->m_len - off, len);
+		KASSERT(mlen == 0 || !M_READONLY(m));
 		memcpy(mtod(m, caddr_t) + off, cp, (unsigned)mlen);
 		cp += mlen;
 		len -= mlen;
