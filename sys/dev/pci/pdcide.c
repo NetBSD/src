@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.5 2003/10/25 18:31:12 christos Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.6 2003/10/29 02:33:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -190,27 +190,31 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	pcireg_t interface, st = 0, mode; /* XXX: gcc */
+	pcireg_t interface, st, mode;
 	bus_size_t cmdsize, ctlsize;
 
 	if (!PDC_IS_268(sc)) {
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
 		WDCDEBUG_PRINT(("pdc202xx_setup_chip: controller state 0x%x\n",
 		    st), DEBUG_PROBE);
-	}
+		/* turn off  RAID mode */
+		if (st & PDC2xx_STATE_IDERAID) {
+			WDCDEBUG_PRINT(("pdc202xx_setup_chip: turning off RAID mode\n"), DEBUG_PROBE);
+			st &= ~PDC2xx_STATE_IDERAID;
+			pci_conf_write(sc->sc_pc, sc->sc_tag, PDC2xx_STATE, st);
+		}
+	} else
+		st = PDC2xx_STATE_NATIVE | PDC262_STATE_EN(0) | PDC262_STATE_EN(1);
+
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-
-	/* turn off  RAID mode */
-	if (!PDC_IS_268(sc))
-		st &= ~PDC2xx_STATE_IDERAID;
 
 	/*
 	 * can't rely on the PCI_CLASS_REG content if the chip was in raid
 	 * mode. We have to fake interface
 	 */
 	interface = PCIIDE_INTERFACE_SETTABLE(0) | PCIIDE_INTERFACE_SETTABLE(1);
-	if (PDC_IS_268(sc) || (st & PDC2xx_STATE_NATIVE))
+	if (st & PDC2xx_STATE_NATIVE)
 		interface |= PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
 	aprint_normal("%s: bus-master DMA support present",
@@ -312,7 +316,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		if (!PDC_IS_268(sc) && (st & (PDC_IS_262(sc) ?
+		if ((st & (PDC_IS_262(sc) ?
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -321,11 +325,6 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    PDC_IS_265(sc) ? pdc20265_pci_intr : pdc202xx_pci_intr);
-	}
-	if (!PDC_IS_268(sc)) {
-		WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state "
-		    "0x%x\n", st), DEBUG_PROBE);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PDC2xx_STATE, st);
 	}
 	return;
 }
