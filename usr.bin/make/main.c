@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.32 1996/12/31 17:54:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.32 1996/12/31 17:54:16 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#if __STDC__
+#include <stdlib.h>
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -1014,7 +1015,7 @@ bad:
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Error(char *fmt, ...)
 #else
 Error(va_alist)
@@ -1022,7 +1023,7 @@ Error(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;
@@ -1049,7 +1050,7 @@ Error(va_alist)
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Fatal(char *fmt, ...)
 #else
 Fatal(va_alist)
@@ -1057,7 +1058,7 @@ Fatal(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;
@@ -1091,7 +1092,7 @@ Fatal(va_alist)
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Punt(char *fmt, ...)
 #else
 Punt(va_alist)
@@ -1099,7 +1100,7 @@ Punt(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	char *fmt;
