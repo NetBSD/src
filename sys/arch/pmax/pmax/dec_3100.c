@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.18 1999/12/03 03:06:11 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.19 1999/12/22 22:10:07 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -134,7 +134,7 @@ dec_3100_init()
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
-	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 2 : 3);
 }
 
 /*
