@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.23 2002/05/17 21:42:38 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.24 2002/05/23 23:05:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.23 2002/05/17 21:42:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.24 2002/05/23 23:05:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	int s;
 	struct buf *bp;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct mount *mp;
 	extern int lfs_dirvcount;
 #ifdef LFS_MALLOC_SUMMARY
@@ -205,12 +205,14 @@ lfs_segunlock(struct lfs *fs)
 	loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 		     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
 		     vp = LIST_NEXT(vp, v_mntvnodes));
-		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+		for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
+			nvp = BACK_VP(vp);
 #else
 	loop:
 		 for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 		     vp != NULL;
-		     vp = LIST_NEXT(vp, v_mntvnodes)) {
+		     vp = nvp) {
+			nvp = LIST_NEXT(vp, v_mntvnodes);
 #endif
 			if (vp->v_mount != mp) {
 				printf("lfs_segunlock: starting over\n");
