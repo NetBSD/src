@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.3 1996/03/17 01:33:33 thorpej Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.4 1996/03/20 05:10:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -196,7 +196,7 @@ struct cfattach sbc_ca = {
 };
 
 struct cfdriver sbc_cd = {
-	NULL, sbc_name, DV_DULL, NULL, 0,
+	NULL, sbc_name, DV_DULL
 };
 
 
@@ -211,18 +211,18 @@ sbc_print(aux, name)
 }
 
 static int
-sbc_match(parent, vcf, args)
+sbc_match(parent, match, args)
 	struct device	*parent;
-	void		*vcf, *args;
+	void		*match, *args;
 {
-	struct cfdata	*cf = vcf;
+	struct device   *self = match;	/* XXX mainbus is "indirect" */
 	struct confargs *ca = args;
 
-	if (matchbyname(parent, cf, ca) == 0)
+	if (matchbyname(parent, match, ca) == 0)
 		return 0;
 	if (!mac68k_machine.scsi80)
 		return 0;
-	if (cf->cf_unit != 0)
+	if (self->dv_cfdata->cf_unit != 0)
 		return 0;
 	return 1;
 }
