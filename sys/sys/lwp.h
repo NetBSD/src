@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.22 2004/05/18 11:59:11 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.23 2004/06/20 18:55:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
+#define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
 
 /*
  * Status values.
