@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.4 2001/01/18 05:42:23 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -78,6 +78,25 @@ static int
 find_cur_line(FIELD *cur);
 
 /*
+ * Open the debug file if it is not already open....
+ */
+#ifdef DEBUG
+int
+_formi_create_dbg_file(void)
+{
+	if (dbg == NULL) {
+		dbg = fopen("___form_dbg.out", "w");
+		if (dbg == NULL) {
+			fprintf(stderr, "Cannot open debug file!\n");
+			return E_SYSTEM_ERROR;
+		}
+	}
+
+	return E_OK;
+}
+#endif
+
+/*
  * Set the form's current field to the first valid field on the page.
  * Assume the fields have been sorted and stitched.
  */
@@ -130,18 +149,29 @@ _formi_pos_new_field(FORM *form, unsigned direction, unsigned use_sorted)
 	do {
 		if (direction == _FORMI_FORWARD) {
 			if (use_sorted == TRUE) {
+				if ((form->wrap == FALSE) &&
+				    (cur == CIRCLEQ_LAST(&form->sorted_fields)))
+					return E_REQUEST_DENIED;
 				cur = CIRCLEQ_NEXT(cur, glue);
 				i = cur->index;
 			} else {
+				if ((form->wrap == FALSE) &&
+				    ((i + 1) >= form->field_count))
+					return E_REQUEST_DENIED;
 				i++;
 				if (i >= form->field_count)
 					i = 0;
 			}
 		} else {
 			if (use_sorted == TRUE) {
+				if ((form->wrap == FALSE) &&
+				    (cur == CIRCLEQ_FIRST(&form->sorted_fields)))
+					return E_REQUEST_DENIED;
 				cur = CIRCLEQ_PREV(cur, glue);
 				i = cur->index;
 			} else {
+				if ((form->wrap == FALSE) && (i <= 0))
+					return E_REQUEST_DENIED;
 				i--;
 				if (i < 0)
 					i = form->field_count - 1;
@@ -653,11 +683,16 @@ _formi_redraw_field(FORM *form, int field)
 
 	wmove(form->subwin, (int) cur->form_row, (int) cur->form_col);
 	for (row = 0; row <= cur->row_count; row++) {
-		if ((str[end] == '\0') || (str[end + 1] == '\0') || (row == 0))
-			start = end;
-		else
-			start = end + 1;
-
+		if (str == NULL) {
+			start = end = 0;
+		} else {
+			if ((str[end] == '\0') || (str[end + 1] == '\0')
+			    || (row == 0))
+				start = end;
+			else
+				start = end + 1;
+		}
+		
 		if (cur->buffers[0].length > 0) {
 			end = _formi_find_eol(str, start);
 			slen = end - start + 1;
@@ -724,7 +759,11 @@ _formi_redraw_field(FORM *form, int field)
 #ifdef DEBUG
 		fprintf(dbg, "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
 			start, pre, slen, flen, post, cur->hscroll);
-		strncpy(buffer, &str[cur->start_char], flen);
+		if (str != NULL) {
+			strncpy(buffer, &str[cur->start_char], flen);
+		} else {
+			strcpy(buffer, "(null)");
+		}
 		buffer[flen] = '\0';
 		fprintf(dbg, "redraw_field: %s\n", buffer);
 #endif
