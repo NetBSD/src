@@ -428,8 +428,8 @@ kvm_getprocs(what, arg)
 			return (-1);
 		}
 		copysize = ret;
-		if (copysize > ocopysize) {
-			if (ocopysize == -1)
+		if (copysize > ocopysize || !kvmprocbase) {
+			if (ocopysize == -1 || !kvmprocbase)
 				kvmprocbase =
 					(struct kinfo_proc *)malloc(copysize);
 			else
