@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.40 1998/08/09 20:37:52 perry Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.41 1998/10/01 03:26:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1446,8 +1446,6 @@ hpux_sys_pause_6x(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigsuspend_args bsa;
 
-	SCARG(&bsa, mask) = p->p_sigmask;
-	return (sys_sigsuspend(p, &bsa, retval));
+	return (sigsuspend1(p, &p->p_sigmask));
 }
