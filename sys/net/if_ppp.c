@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.44 1998/07/08 18:05:48 sommerfe Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.45 1998/07/09 22:30:01 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -82,6 +82,7 @@
 #define PPP_COMPRESS
 
 #include "opt_inet.h"
+#include "opt_gateway.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1422,6 +1423,10 @@ ppp_inproc(sc, m)
 	m->m_pkthdr.len -= PPP_HDRLEN;
 	m->m_data += PPP_HDRLEN;
 	m->m_len -= PPP_HDRLEN;
+#ifdef GATEWAY
+	if (ipflow_fastforward(m))
+		return;
+#endif
 	schednetisr(NETISR_IP);
 	inq = &ipintrq;
 	break;
