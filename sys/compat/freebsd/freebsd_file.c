@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.4 1996/09/03 03:12:17 mycroft Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.5 1997/01/31 02:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -523,7 +523,7 @@ freebsd_sys_statfs(p, v, retval)
 	return sys_statfs(p, uap, retval);
 }
 
-#ifdef NFSCLIENT
+#ifdef NFS
 int
 freebsd_sys_getfh(p, v, retval)
 	struct proc *p;
@@ -539,7 +539,7 @@ freebsd_sys_getfh(p, v, retval)
 	FREEBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, fname));
 	return sys_getfh(p, uap, retval);
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 int
 freebsd_sys_stat(p, v, retval)
