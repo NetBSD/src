@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2001/06/11 01:50:54 wiz Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2001/07/26 22:47:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -91,7 +91,7 @@ struct mips_voldir {			/* Disk volume directory */
 
 struct mips_partitions {
 	int32_t 	pt_size;	/* # of logical blocks in partition */
-	int32_t 	pt_offset;	/* first logical block of partiton */
+	int32_t 	pt_offset;	/* first logical block of partition */
 	int32_t 	pt_fstype;
 };
 
