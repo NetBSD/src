@@ -1,22 +1,19 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/06 12:39:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/03/06 13:25:49 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
+.include <bsd.kernobj.mk>
 
 KERNELS=	INSTALL 
-
-STRIP?=		strip
 
 RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk-${DISTRIBREV}.fs
 
 CLEANFILES+=	netbsd.tmp ${KERNELS:C/^.*$/netbsd.&.gz/g}
-MDSETIMAGE?=	mdsetimage
 
-all:	${KERNELS:C/^.*$/netbsd.&.gz/g}
+realall:	${KERNELS:C/^.*$/netbsd.&.gz/g}
 
 .for kern in ${KERNELS}
 netbsd.${kern}.gz: ${KERNOBJDIR}/${kern}/netbsd ${RAMDISK}
@@ -27,7 +24,4 @@ netbsd.${kern}.gz: ${KERNOBJDIR}/${kern}/netbsd ${RAMDISK}
 	mv netbsd.tmp.gz ${.TARGET}
 .endfor
 
-clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
