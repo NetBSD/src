@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.23 1995/11/30 17:50:26 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.24 1995/11/30 19:00:57 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -643,7 +643,7 @@ createde(dep, ddep, depp, cnp)
 				ddep->de_fndoffset -= sizeof(struct direntry);
 				if (error = pcbmap(ddep,
 				    de_cluster(pmp, ddep->de_fndoffset),
-				    &bn, &dirclust, &blsize))
+				    &bn, 0, &blsize))
 					return error;
 
 				if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
