@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1995/07/04 22:57:35 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.34 1996/03/14 00:55:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -826,4 +826,23 @@ bad:
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
+}
+ 
+/*      
+ * Process the tail end of a fork() for the child. 
+ */                     
+void            
+child_return(p) 
+	struct proc *p;
+{
+
+	/*      
+	 * Return values in the frame set by cpu_fork().    
+	 */     
+	userret(p, p->p_md.md_tf->tf_pc, 0);
+#ifdef KTRACE   
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep,
+			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+#endif  
 }
