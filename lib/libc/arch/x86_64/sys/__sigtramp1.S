@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.3 2002/12/13 17:43:02 fvdl Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.4 2003/03/15 12:34:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
 NENTRY(__sigtramp_sigcontext_1)
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
-	movq	$SYS___sigreturn14,%rax
+	movl	$SYS___sigreturn14,%eax
 	int	$0x80			/* to avoid clobbering registers */
-	movq	$SYS_exit,%rax
+	movl	$SYS_exit,%eax
 	syscall
