@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1999/02/24 19:31:03 drochner Exp $
+#	$NetBSD: Makefile,v 1.28 1999/03/30 22:02:39 cgd Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -14,9 +14,9 @@ CPPFLAGS=	-I. ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 #COPTS+= -ansi -pedantic -Wall
 
 # stand routines
-SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
-	memcmp.c memcpy.c panic.c printf.c snprintf.c sprintf.c \
-	strerror.c subr_prf.c twiddle.c vsprintf.c
+SRCS+=	alloc.c bcopy.c bzero.c errno.c exit.c exec.c getfile.c gets.c \
+	globals.c memcmp.c memcpy.c memset.c panic.c printf.c snprintf.c \
+	sprintf.c strerror.c subr_prf.c twiddle.c vsprintf.c
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
