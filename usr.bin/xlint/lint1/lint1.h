@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.11 2001/12/13 23:56:00 augustss Exp $ */
+/* $NetBSD: lint1.h,v 1.12 2002/01/31 19:33:27 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,6 +34,11 @@
 
 #include "lint.h"
 #include "op.h"
+
+/* XXX - works for most systems, but the whole ALIGN thing needs to go away */
+#ifndef ALIGN
+#define ALIGN(x) (((x) + 7) & ~7)
+#endif
 
 /*
  * Describes the position of a declaration or anything else.
