@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_esdb.c,v 1.3 2004/01/02 12:19:25 itojun Exp $	*/
+/*	$NetBSD: citrus_esdb.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_esdb.c,v 1.3 2004/01/02 12:19:25 itojun Exp $");
+__RCSID("$NetBSD: citrus_esdb.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -63,7 +63,8 @@ __RCSID("$NetBSD: citrus_esdb.c,v 1.3 2004/01/02 12:19:25 itojun Exp $");
 const char *
 _citrus_esdb_alias(const char *esname, char *buf, size_t bufsize)
 {
-	return _lookup_alias(_PATH_ESDB "/" ESDB_ALIAS, esname, buf, bufsize);
+	return _lookup_alias(_PATH_ESDB "/" ESDB_ALIAS, esname, buf, bufsize,
+			     _LOOKUP_CASE_IGNORE);
 }
 
 
@@ -199,10 +200,12 @@ _citrus_esdb_open(struct _citrus_esdb *db, const char *esname)
 	_DIAGASSERT(esname != NULL);
 
 	snprintf(path, sizeof(path), "%s/%s", _PATH_ESDB, ESDB_ALIAS);
-	realname = _lookup_alias(path, esname, buf1, sizeof(buf1));
+	realname = _lookup_alias(path, esname, buf1, sizeof(buf1),
+				 _LOOKUP_CASE_IGNORE);
 
 	snprintf(path, sizeof(path), "%s/%s", _PATH_ESDB, ESDB_DIR);
-	encfile = _lookup_simple(path, realname, buf2, sizeof(buf2));
+	encfile = _lookup_simple(path, realname, buf2, sizeof(buf2),
+				 _LOOKUP_CASE_IGNORE);
 	if (encfile==NULL)
 		return ENOENT;
 
@@ -270,11 +273,13 @@ _citrus_esdb_get_list(char ***rlist, size_t *rnum)
 
 	num = 0;
 
-	ret = _lookup_seq_open(&cla, _PATH_ESDB "/" ESDB_ALIAS);
+	ret = _lookup_seq_open(&cla, _PATH_ESDB "/" ESDB_ALIAS,
+			       _LOOKUP_CASE_IGNORE);
 	if (ret)
 		goto quit0;
 
-	ret = _lookup_seq_open(&cld, _PATH_ESDB "/" ESDB_DIR);
+	ret = _lookup_seq_open(&cld, _PATH_ESDB "/" ESDB_DIR,
+			       _LOOKUP_CASE_IGNORE);
 	if (ret)
 		goto quit1;
 
