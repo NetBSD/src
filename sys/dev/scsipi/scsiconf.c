@@ -1,7 +1,7 @@
-/*	$NetBSD: scsiconf.c,v 1.222 2004/08/06 09:27:43 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.223 2004/08/10 15:46:44 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.222 2004/08/06 09:27:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.223 2004/08/10 15:46:44 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,9 @@ scsibusattach(parent, self, aux)
 	    chan->chan_nluns,
 	    chan->chan_nluns == 1 ? "" : "s");
 
+	if (scsipi_adapter_addref(chan->chan_adapter))
+		return;
+
 	/* Initialize the channel structure first */
 	chan->chan_init_cb = scsibus_config;
 	chan->chan_init_cb_arg = sc;
@@ -240,6 +243,8 @@ scsibus_config(chan, arg)
 	wakeup(&scsi_initq_head);
 
 	config_pending_decr();
+
+	scsipi_adapter_delref(chan->chan_adapter);
 }
 
 int
