@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.50 1997/08/12 00:46:11 cgd Exp $
+# $NetBSD: files.alpha,v 1.51 1997/08/12 02:08:12 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -248,10 +248,11 @@ file	arch/alpha/pci/apecs_pci.c	apecs
 device	cia: pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte64
 attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
-file	arch/alpha/pci/cia_bus_io.c	cia
-file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_dma.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
+file	arch/alpha/pci/cia_swiz_bus_io.c cia
+file	arch/alpha/pci/cia_swiz_bus_mem.c cia
+file	arch/alpha/pci/cia_swiz_pci.c	cia
 
 device	dwlpx:	pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte32
 attach	dwlpx at kft
@@ -348,6 +349,7 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # CPU support
+file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
