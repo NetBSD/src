@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.14 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.15 2003/10/21 00:07:17 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.14 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.15 2003/10/21 00:07:17 fvdl Exp $");
 #endif
 #endif
 
@@ -650,7 +650,7 @@ got_entry(relp, nconf)
 		if ((strcmp(nconf->nc_proto, rmap->r_nc_proto) == 0) &&
 		    (strcmp(nconf->nc_protofmly, rmap->r_nc_protofmly) == 0) &&
 		    (nconf->nc_semantics == rmap->r_nc_semantics) &&
-		    (rmap->r_maddr != NULL) && (rmap->r_maddr[0] != NULL)) {
+		    (rmap->r_maddr != NULL) && (rmap->r_maddr[0] != 0)) {
 			na = uaddr2taddr(nconf, rmap->r_maddr);
 #ifdef ND_DEBUG
 			fprintf(stderr, "\tRemote address is [%s].\n",
@@ -926,7 +926,7 @@ regular_rpcbind:
 		    (xdrproc_t) xdr_wrapstring, (char *)(void *) &ua,
 		    tottimeout);
 		if (clnt_st == RPC_SUCCESS) {
-			if ((ua == NULL) || (ua[0] == NULL)) {
+			if ((ua == NULL) || (ua[0] == 0)) {
 				/* address unknown */
 				rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
 				goto error;
@@ -1180,7 +1180,7 @@ rpcb_gettime(host, timep)
 	enum clnt_stat st;
 
 
-	if ((host == NULL) || (host[0] == NULL)) {
+	if ((host == NULL) || (host[0] == 0)) {
 		time(timep);
 		return (TRUE);
 	}
