@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.19 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.20 2005/02/05 14:49:36 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.19 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.20 2005/02/05 14:49:36 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,24 +78,19 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int	main __P((int, char *[]));
-int	mount_cd9660 __P((int argc, char **argv));
-static void	usage __P((void));
+int	mount_cd9660(int argc, char **argv);
+static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_cd9660(argc, argv);
 }
 #endif
 
 int
-mount_cd9660(argc, argv)
-	int argc;
-	char **argv;
+mount_cd9660(int argc, char **argv)
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
@@ -177,7 +172,7 @@ mount_cd9660(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: mount_cd9660 [-o options] special node\n");
