@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 1998/09/02 14:58:02 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.12 1998/11/19 15:38:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,5 +216,5 @@ mmmmap(dev, off, prot)
 	int off, prot;
 {
 
-	return (EOPNOTSUPP);
+	return (-1);
 }

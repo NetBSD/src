@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1998/06/02 20:41:50 mark Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1998/11/19 15:38:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,7 +209,7 @@ mmmmap(dev, off, prot)
 
 	/* minor device 0 is physical memory */
 
-	if (off > ctob(physmem) &&
+	if ((unsigned)off >= ctob(physmem) &&
 	    suser(p->p_ucred, &p->p_acflag) != 0)
 		return -1;
 	return arm_byte_to_page(off);
