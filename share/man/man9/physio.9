@@ -1,4 +1,4 @@
-.\"	$NetBSD: physio.9,v 1.8 2001/06/21 10:03:49 wiz Exp $
+.\"	$NetBSD: physio.9,v 1.9 2001/06/21 12:13:36 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,9 +71,9 @@ normally describes user space addresses,
 needs to lock the appropriate data area into memory before each transaction
 with
 .Fa strategy ( see
-.Xr vslock 9
+.Xr uvm_vslock 9
 and
-.Xr vsunlock 9 ) .
+.Xr uvm_vsunlock 9 ) .
 .Fn physio
 always awaits the completion of the entire requested transfer before
 returning, unless an error condition is detected earlier.
