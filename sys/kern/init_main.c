@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.65 1994/09/22 02:17:00 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.66 1994/10/11 09:26:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -331,7 +331,7 @@ start_init(p, framep)
 	vm_offset_t addr;
 	struct execve_args args;
 	int options, i, retval[2], error;
-	char flags[4] = "-", *flagsp;
+	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
 
 	initproc = p;
@@ -360,8 +360,10 @@ start_init(p, framep)
 		/*
 		 * Construct the boot flag argument.
 		 */
-		flagsp = flags + 1;
+		flagsp = flags;
+		*flagsp++ = '-';
 		options = 0;
+
 		if (boothowto & RB_SINGLE) {
 			*flagsp++ = 's';
 			options = 1;
