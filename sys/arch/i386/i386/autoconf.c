@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1999/01/29 11:20:34 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1999/03/08 00:12:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,7 @@
 #include <machine/bootinfo.h>
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
+static void matchbiosdisks __P((void));
 void findroot __P((struct device **, int *));
 
 /*
@@ -113,12 +114,97 @@ cpu_rootconf()
 	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
+	matchbiosdisks();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, i386_nam2blk);
 }
+
+static void
+matchbiosdisks()
+{
+	struct btinfo_biosgeom *big;
+	struct bi_biosgeom_entry *be;
+	struct device *dv;
+	struct devnametobdevmaj *d;
+	int i, ck;
+	struct vnode *tv;
+	struct buf *bp;
+	char *mbr;
+
+	big = lookup_bootinfo(BTINFO_BIOSGEOM);
+
+	if (big == NULL) {
+		printf("matchbiosdisks: no BIOS_GEOM info\n");
+		return;
+	}
+
+	/* XXX code duplication from findroot() */
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_class != DV_DISK)
+			continue;
+#ifdef GEOM_DEBUG
+		printf("matchbiosdisks: trying to match (%s) %s\n",
+		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
+#endif
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+			for (d = i386_nam2blk; d->d_name &&
+			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
+			   d++);
+			if (d->d_name == NULL)
+				return;
+			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
+			    &tv))
+				panic("matchbiosdisks: can't alloc vnode");
+			bp = getblk(tv, 0, DEV_BSIZE, 0, 0);
+			bp->b_flags = B_BUSY | B_READ;
+			VOP_STRATEGY(bp);
+			if (biowait(bp)) {
+#ifdef GEOM_DEBUG
+				printf("matchbiosdisks: %s: MBR read failure\n",
+				    dv->dv_xname);
+#endif
+				brelse(bp);
+				vrele(tv);
+				continue;
+			}
+			mbr = (char *)bp->b_data;
+			for (ck = i = 0; i < DEV_BSIZE; i++)
+				ck += mbr[i];
+			for (i = 0; i < big->num; i++) {
+				be = &big->disk[i];
+#ifdef GEOM_DEBUG
+				printf("match %s with %d\n", dv->dv_xname, i);
+				printf("dev ck %x bios ck %x\n", ck, be->cksum);
+#endif
+				if (be->flags & BI_GEOM_INVALID)
+					continue;
+				if (be->cksum == ck &&
+				    !memcmp(&mbr[MBR_PARTOFF], be->dosparts,
+					NMBRPART *
+					    sizeof (struct mbr_partition))) {
+					sprintf(be->devname, "%s%d",
+					    dv->dv_cfdata->cf_driver->cd_name,
+					    dv->dv_unit);
+#ifdef GEOM_DEBUG
+					printf("matched bios disk %x with %s\n",
+					    be->dev, be->devname);
+#endif
+					if (be->flags & BI_GEOM_MATCHED)
+						be->flags |= BI_GEOM_MULTIPLE;
+					else
+						be->flags |= BI_GEOM_MATCHED;
+				}
+			}
+			brelse(bp);
+			vrele(tv);
+		}
+	}
+}
+
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 struct device *booted_device;
@@ -127,7 +213,8 @@ struct device *booted_device;
  * helper function for "findroot()":
  * return nonzero if disk device matches bootinfo
  */
-static int match_harddisk(dv, bid)
+static int
+match_harddisk(dv, bid)
 	struct device *dv;
 	struct btinfo_bootdisk *bid;
 {

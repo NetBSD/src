@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.338 1999/02/27 06:39:35 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.339 1999/03/08 00:12:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
-#include "opt_bufcache.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_vm86.h"
@@ -1129,6 +1128,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	dev_t consdev;
 	struct btinfo_bootpath *bibp;
+	struct btinfo_biosgeom *bigp;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1157,6 +1157,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	        if(!bibp)
 			return(ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
+	case CPU_BIOS_GEOM:
+		bigp = lookup_bootinfo(BTINFO_BIOSGEOM);
+		if (!bigp)
+			return (ENOENT);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, bigp->disk,
+		    bigp->num * sizeof (struct bi_biosgeom_entry)));
 
 	default:
 		return (EOPNOTSUPP);
