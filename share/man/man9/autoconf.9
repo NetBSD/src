@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.4 2001/09/05 05:37:41 gmcgarry Exp $
+.\"     $NetBSD: autoconf.9,v 1.5 2001/09/13 21:41:01 briggs Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -195,7 +195,9 @@ value is UNCONF or UNSUPP respectively; otherwise the function should
 return the value QUIET.
 .Pp
 .Fn config_found_sm
-returns 1 if the device get attached, 0 otherwise.  Most callers can
+returns a pointer to the attached device's
+.Em softc
+structure if the device is attached, NULL otherwise.  Most callers can
 ignore this value, since the system will already have printed a
 diagnostic.
 .It Fn config_found "parent" "aux" "print"
@@ -209,6 +211,11 @@ Attach a found device.  Allocates the memory for the
 .Em softc
 structure and calls the drivers attach function according to the
 configuration table.
+If successful,
+.Fn config_attach
+returns the
+.Em softc .
+If unsuccessful, it returns NULL.
 .It Fn config_detach "dev" "flags"
 Called by the parent to detach the child device.  The second argument
 .Em flags
