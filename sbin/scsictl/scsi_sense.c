@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.5 2003/06/23 11:53:42 agc Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.6 2005/02/05 13:37:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_sense.c,v 1.5 2003/06/23 11:53:42 agc Exp $");
+__RCSID("$NetBSD: scsi_sense.c,v 1.6 2005/02/05 13:37:39 xtraeme Exp $");
 #endif
 
 
@@ -281,13 +281,10 @@ static const struct {
 { 0x00, 0x00, NULL }
 };
 
-static void asc2ascii __P((unsigned char, unsigned char, char *, size_t));
+static void asc2ascii(unsigned char, unsigned char, char *, size_t);
 
 static void
-asc2ascii(asc, ascq, result, reslen)
-	unsigned char asc, ascq;
-	char *result;
-	size_t reslen;
+asc2ascii(unsigned char asc, unsigned char ascq, char *result, size_t reslen)
 {
 	int i = 0;
 
@@ -310,9 +307,7 @@ asc2ascii(asc, ascq, result, reslen)
 }
 
 void
-scsi_print_sense_data(s, slen, verbosity)
-	const unsigned char *s;
-	int slen, verbosity;
+scsi_print_sense_data(const unsigned char *s, int slen, int verbosity)
 {
 	int32_t info;
 	int i, j, k;
@@ -429,11 +424,8 @@ scsi_print_sense_data(s, slen, verbosity)
 }
 
 char *
-scsi_decode_sense(snsbuf, flag, rqsbuf, rqsbuflen)
-	const unsigned char *snsbuf;
-	int flag;
-	char *rqsbuf;
-	size_t rqsbuflen;
+scsi_decode_sense(const unsigned char *snsbuf, int flag, char *rqsbuf, 
+	size_t rqsbuflen)
 {
 	unsigned char skey;
 	char localbuf[64];
@@ -495,10 +487,7 @@ scsi_decode_sense(snsbuf, flag, rqsbuf, rqsbuflen)
 }
 
 void
-scsi_print_sense(name, req, verbosity)
-	const char *name;
-	const scsireq_t *req;
-	int verbosity;
+scsi_print_sense(const char *name, const scsireq_t *req, int verbosity)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.9 2003/09/08 09:05:08 agc Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.10 2005/02/05 13:37:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_subr.c,v 1.9 2003/09/08 09:05:08 agc Exp $");
+__RCSID("$NetBSD: scsi_subr.c,v 1.10 2005/02/05 13:37:39 xtraeme Exp $");
 #endif
 
 
@@ -66,13 +66,8 @@ __RCSID("$NetBSD: scsi_subr.c,v 1.9 2003/09/08 09:05:08 agc Exp $");
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 void
-scsi_command(fd, cmd, cmdlen, data, datalen, timeout, flags)
-	int fd;
-	void *cmd;
-	size_t cmdlen;
-	void *data;
-	size_t datalen;
-	int timeout, flags;
+scsi_command(int fd, void *cmd, size_t cmdlen, void *data, size_t datalen, 
+	int timeout, int flags)
 {
 	scsireq_t req;
 
@@ -107,11 +102,7 @@ scsi_command(fd, cmd, cmdlen, data, datalen, timeout, flags)
 }
 
 void
-scsi_mode_sense(fd, pgcode, pctl, buf, len)
-	int fd;
-	u_int8_t pgcode, pctl;
-	void *buf;
-	size_t len;
+scsi_mode_sense(int fd, u_int8_t pgcode, u_int8_t pctl, void *buf, size_t len)
 {
 	struct scsipi_mode_sense cmd;
 
@@ -126,11 +117,7 @@ scsi_mode_sense(fd, pgcode, pctl, buf, len)
 }
 
 void
-scsi_mode_select(fd, byte2, buf, len)
-	int fd;
-	u_int8_t byte2;
-	void *buf;
-	size_t len;
+scsi_mode_select(int fd, u_int8_t byte2, void *buf, size_t len)
 {
 	struct scsipi_mode_select cmd;
 
@@ -144,10 +131,7 @@ scsi_mode_select(fd, byte2, buf, len)
 }
 
 void
-scsi_request_sense(fd, buf, len)
-	int fd;
-	void *buf;
-	size_t len;
+scsi_request_sense(int fd, void *buf, size_t len)
 {
 	struct scsipi_sense cmd;
 
@@ -160,11 +144,7 @@ scsi_request_sense(fd, buf, len)
 }
 
 void
-scsi_strvis(sdst, dlen, ssrc, slen)
-	char *sdst;
-	size_t dlen;
-	const char *ssrc;
-	size_t slen;
+scsi_strvis(char *sdst, size_t dlen, const char *ssrc, size_t slen)
 {
 	u_char *dst = (u_char *)sdst;
 	const u_char *src = (const u_char *)ssrc;

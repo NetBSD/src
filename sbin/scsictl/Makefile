@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/10/18 01:14:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2005/02/05 13:37:39 xtraeme Exp $
 
 SRCS=	scsictl.c scsi_sense.c scsi_subr.c
 
@@ -7,5 +7,7 @@ MAN=	scsictl.8
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
+
+WARNS=	3
 
 .include <bsd.prog.mk>
