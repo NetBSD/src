@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.17 2001/02/19 23:22:52 cgd Exp $	*/
+/*	$NetBSD: yppush.c,v 1.18 2002/07/06 00:46:12 wiz Exp $	*/
 
 /*
  *
@@ -93,11 +93,11 @@ int     verbo = 0;		/* verbose */
  * prototypes
  */
 
-int	main __P((int, char *[]));
-int	pushit __P((int, char *, int, char *, int, char *));
-void	push __P((char *, int, struct yppush_info *));
-void	_svc_run __P((void));
-void	usage __P((void));
+int	main(int, char *[]);
+int	pushit(int, char *, int, char *, int, char *);
+void	push(char *, int, struct yppush_info *);
+void	_svc_run(void);
+void	usage(void);
 
 
 /*
@@ -105,9 +105,7 @@ void	usage __P((void));
  */
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 
 {
 	char   *targhost = NULL;
@@ -285,7 +283,7 @@ main(argc, argv)
  * usage: print usage and exit
  */
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-d domain] [-h host] [-v] map\n",
 	    getprogname());
@@ -297,9 +295,8 @@ usage()
  * the key/value pairs are from the ypservers map.
  */
 int
-pushit(instatus, inkey, inkeylen, inval, invallen, indata)
-	int     instatus, inkeylen, invallen;
-	char   *inkey, *inval, *indata;
+pushit(int instatus, char *inkey, int inkeylen, char *inval,
+       int invallen, char *indata)
 {
 	struct yppush_info *ypi = (struct yppush_info *) indata;
 
@@ -311,10 +308,7 @@ pushit(instatus, inkey, inkeylen, inval, invallen, indata)
  * push: push a specific map on a specific host
  */
 void
-push(host, hostlen, ypi)
-	char   *host;
-	int     hostlen;
-	struct yppush_info *ypi;
+push(char *host, int hostlen, struct yppush_info *ypi)
 {
 	char    target[YPMAXPEER];
 	CLIENT *ypserv;
@@ -434,7 +428,7 @@ error:
  * to await the reply from ypxfr.
  */
 void
-_svc_run()
+_svc_run(void)
 {
 	fd_set  readfds;
 	struct timeval tv;
