@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.294 2004/09/25 03:34:02 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.295 2004/09/28 18:22:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.294 2004/09/25 03:34:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.295 2004/09/28 18:22:33 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -202,6 +202,7 @@ static void bad144intern(struct wd_softc *);
 #endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
+#define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
@@ -227,6 +228,14 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
+
+	/*
+	 * This seagate drive seems to have issue addressing sector 0xfffffff
+	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
+	 * LBA48
+	 */
+	{ "ST3200822A",
+	  WD_QUIRK_FORCE_LBA48 },
 
 	{ NULL,
 	  0 }
@@ -708,7 +717,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
-	if (wd->sc_flags & WDF_LBA48 && wd->sc_wdc_bio.blkno > LBA48_THRESHOLD)
+	if (wd->sc_flags & WDF_LBA48 &&
+	    (wd->sc_wdc_bio.blkno > LBA48_THRESHOLD ||
+	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
@@ -1527,7 +1538,9 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wd->sc_flags & WDF_LBA48 && blkno > LBA48_THRESHOLD)
+		if (wd->sc_flags & WDF_LBA48 &&
+		    (blkno > LBA48_THRESHOLD ||
+	    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
