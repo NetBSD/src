@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.4 1993/08/06 22:18:26 mycroft Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.5 1993/12/07 23:05:26 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -183,7 +183,7 @@ findid(name)
 	/* NOTREACHED */
 }
 
-char *
+const char *
 sigstr(s)
 	int s;
 {
