@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.21 2002/09/12 01:31:41 kim Exp $	*/
+/*	$NetBSD: finger.c,v 1.22 2003/07/26 20:34:13 salo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 /*
- * Luke Mewburn <lukem@netbsd.org> added the following on 961121:
+ * Luke Mewburn <lukem@NetBSD.org> added the following on 961121:
  *    - mail status ("No Mail", "Mail read:...", or "New Mail ...,
  *	Unread since ...".)
  *    - 4 digit phone extensions (3210 is printed as x3210.)
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.21 2002/09/12 01:31:41 kim Exp $");
+__RCSID("$NetBSD: finger.c,v 1.22 2003/07/26 20:34:13 salo Exp $");
 #endif
 #endif /* not lint */
 

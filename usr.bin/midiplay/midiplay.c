@@ -1,11 +1,11 @@
-/*	$NetBSD: midiplay.c,v 1.19 2003/06/23 13:05:49 agc Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.20 2003/07/26 20:34:14 salo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.19 2003/06/23 13:05:49 agc Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.20 2003/07/26 20:34:14 salo Exp $");
 #endif
 
 
