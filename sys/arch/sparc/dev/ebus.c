@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.2 2002/01/31 11:51:25 uwe Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.3 2002/02/08 13:10:42 uwe Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,10 +33,11 @@
  * EBus is documented in PCIO manual (Sun Part#: 802-7837-01).
  */
 
-#undef DEBUG
-#define DEBUG
+#if defined(DEBUG) && !defined(EBUS_DEBUG)
+#define EBUS_DEBUG
+#endif
 
-#ifdef DEBUG
+#ifdef EBUS_DEBUG
 #define	EDB_PROM	0x01
 #define EDB_CHILD	0x02
 #define	EDB_INTRMAP	0x04
@@ -368,7 +369,7 @@ ebus_alloc_bus_tag(sc)
 	bt = (bus_space_tag_t)
 		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
 	if (bt == NULL)
-		panic("could not allocate ebus bus tag");
+		panic("unable to allocate ebus bus tag");
 
 	memset(bt, 0, sizeof *bt);
 	bt->cookie = sc;
@@ -390,7 +391,7 @@ ebus_alloc_dma_tag(sc, pdt)
 	dt = (bus_dma_tag_t)
 		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (dt == NULL)
-		panic("could not allocate ebus dma tag");
+		panic("unable to allocate ebus dma tag");
 
 	memset(dt, 0, sizeof *dt);
 	dt->_cookie = sc;
