@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.604 2004/05/21 03:30:40 atatat Exp $
+# $NetBSD: GENERIC,v 1.605 2004/05/22 03:16:26 grant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.604 $"
+#ident 		"GENERIC-$Revision: 1.605 $"
 
 maxusers	32		# estimated number of users
 
@@ -889,7 +889,8 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
+scsibus* at umass?
+wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.61 2004/03/14 08:09:42 minoura Exp $
+#	$NetBSD: GENERIC_TINY,v 1.62 2004/05/22 03:16:26 grant Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -470,6 +470,8 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#scsibus* at umass?
+#wd*	at umass?
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
