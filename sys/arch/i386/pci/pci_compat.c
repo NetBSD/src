@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_compat.c,v 1.2 1996/10/11 00:27:20 christos Exp $	*/
+/*	$NetBSD: pci_compat.c,v 1.3 1996/10/13 03:20:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -73,9 +73,9 @@ pci_map_int(tag, level, func, arg)
 	intrstr = pci_intr_string(NULL, ih);
 	rv = pci_intr_establish(NULL, ih, level, func, arg);
 	if (rv == NULL)
-		kprintf("pci_map_int: failed to map interrupt\n");
+		printf("pci_map_int: failed to map interrupt\n");
 	else if (intrstr != NULL)
-		kprintf("pci_map_int: interrupting at %s\n", intrstr);
+		printf("pci_map_int: interrupting at %s\n", intrstr);
 	return (rv);
 }
 

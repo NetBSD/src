@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.28 1996/10/11 00:27:07 christos Exp $	*/
+/*	$NetBSD: lms.c,v 1.29 1996/10/13 03:20:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -133,7 +133,7 @@ lmsattach(parent, self, aux)
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Other initialization was done by lmsprobe. */
 	sc->sc_bc = ia->ia_bc;

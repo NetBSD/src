@@ -1,7 +1,7 @@
-/*	$NetBSD: npx.c,v 1.58 1996/10/11 00:27:09 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.59 1996/10/13 03:20:05 christos Exp $	*/
 
 #if 0
-#define IPRINTF(x)	kprintf x
+#define IPRINTF(x)	printf x
 #else
 #define	IPRINTF(x)
 #endif
@@ -327,16 +327,16 @@ npxattach(parent, self, aux)
 
 	switch (npx_type) {
 	case NPX_INTERRUPT:
-		kprintf("\n");
+		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 		    IST_EDGE, IPL_NONE, npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
-		kprintf(": using exception 16\n");
+		printf(": using exception 16\n");
 		break;
 	case NPX_BROKEN:
-		kprintf(": error reporting broken; not using\n");
+		printf(": error reporting broken; not using\n");
 		npx_type = NPX_NONE;
 		return;
 	case NPX_NONE:
@@ -346,7 +346,7 @@ npxattach(parent, self, aux)
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0)
-		kprintf("WARNING: Pentium FDIV bug detected!\n");
+		printf("WARNING: Pentium FDIV bug detected!\n");
 	lcr0(rcr0() | (CR0_TS));
 }
 
@@ -378,7 +378,7 @@ npxintr(arg)
 	IPRINTF(("Intr"));
 
 	if (p == 0 || npx_type == NPX_NONE) {
-		kprintf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
+		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
 		    p, curproc, npx_type);
 		panic("npxintr from nowhere");
 	}

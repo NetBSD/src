@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.11 1996/10/11 00:26:37 christos Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.12 1996/10/13 03:19:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -374,7 +374,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 		return 0;
 	}
 #ifdef DIAGNOSTIC
-	kprintf("freebsd_ptrace_getregs: *(0x%08lx)\n", offset);
+	printf("freebsd_ptrace_getregs: *(0x%08lx)\n", offset);
 #endif
 	return EFAULT;
 }
@@ -401,7 +401,7 @@ freebsd_ptrace_setregs(fregs, addr, data)
 		return 0;
 	}
 #ifdef DIAGNOSTIC
-	kprintf("freebsd_ptrace_setregs: *(0x%08lx) = 0x%08x\n", offset, data);
+	printf("freebsd_ptrace_setregs: *(0x%08lx) = 0x%08x\n", offset, data);
 #endif
 	return EFAULT;
 }

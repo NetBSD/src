@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 1996/10/11 00:26:48 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.210 1996/10/13 03:19:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -202,9 +202,9 @@ cpu_startup()
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
-	kprintf(version);
+	printf(version);
 	identifycpu();
-	kprintf("real mem  = %d\n", ctob(physmem));
+	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -280,8 +280,8 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	kprintf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
 	/*
@@ -306,7 +306,7 @@ cpu_startup()
 		   TRUE);		/* wired down */
 	bcopy(biostramp_image, (caddr_t)APM_BIOSTRAMP, biostramp_image_size);
 #ifdef DEBUG
-	kprintf("biostramp installed @ %x\n", APM_BIOSTRAMP);
+	printf("biostramp installed @ %x\n", APM_BIOSTRAMP);
 #endif
 #endif
 	/*
@@ -422,12 +422,12 @@ identifycpu()
 {
 	extern char cpu_vendor[];
 
-	kprintf("CPU: ");
+	printf("CPU: ");
 #ifdef DIAGNOSTIC
 	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
 		panic("unknown cpu type %d\n", cpu);
 #endif
-	ksprintf(cpu_model, "%s (", i386_cpus[cpu].cpu_name);
+	sprintf(cpu_model, "%s (", i386_cpus[cpu].cpu_name);
 	if (cpu_vendor[0] != '\0') {
 		strcat(cpu_model, cpu_vendor);
 		strcat(cpu_model, " ");
@@ -449,7 +449,7 @@ identifycpu()
 		break;
 	}
 	strcat(cpu_model, "-class CPU)");
-	kprintf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
+	printf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
 
 	/*
 	 * Now that we have told the user what they have,
@@ -461,25 +461,25 @@ identifycpu()
 #endif
 #ifndef I586_CPU
 	case CPUCLASS_586:
-		kprintf("NOTICE: this kernel does not support Pentium CPU class\n");
+		printf("NOTICE: this kernel does not support Pentium CPU class\n");
 #ifdef I486_CPU
-		kprintf("NOTICE: lowering CPU class to i486\n");
+		printf("NOTICE: lowering CPU class to i486\n");
 		cpu_class = CPUCLASS_486;
 		break;
 #endif
 #endif
 #ifndef I486_CPU
 	case CPUCLASS_486:
-		kprintf("NOTICE: this kernel does not support i486 CPU class\n");
+		printf("NOTICE: this kernel does not support i486 CPU class\n");
 #ifdef I386_CPU
-		kprintf("NOTICE: lowering CPU class to i386\n");
+		printf("NOTICE: lowering CPU class to i386\n");
 		cpu_class = CPUCLASS_386;
 		break;
 #endif
 #endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
-		kprintf("NOTICE: this kernel does not support i386 CPU class\n");
+		printf("NOTICE: this kernel does not support i386 CPU class\n");
 		panic("no appropriate CPU class available");
 #endif
 	default:
@@ -488,12 +488,12 @@ identifycpu()
 
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
-		kprintf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
+		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
 #else
 #ifndef CYRIX_CACHE_REALLY_WORKS
-		kprintf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
 #else
-		kprintf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
 #endif
 #endif
 	}
@@ -789,13 +789,13 @@ haltsys:
 		delay(500000);
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
 #endif
-		kprintf("\n");
-		kprintf("The operating system has halted.\n");
-		kprintf("Please press any key to reboot.\n\n");
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
 
-	kprintf("rebooting...\n");
+	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -886,12 +886,12 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	kprintf("dump ");
+	printf("dump ");
 	if (psize == -1) {
-		kprintf("area unavailable\n");
+		printf("area unavailable\n");
 		return;
 	}
 
@@ -920,7 +920,7 @@ dumpsys()
 		/* Print out how many MBs we to go. */
 		n = bytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			kprintf("%d ", n / (1024 * 1024));
+			printf("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
@@ -945,34 +945,34 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		kprintf("device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		kprintf("device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		kprintf("area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		kprintf("i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	case EINTR:
-		kprintf("aborted from console\n");
+		printf("aborted from console\n");
 		break;
 
 	case 0:
-		kprintf("succeeded\n");
+		printf("succeeded\n");
 		break;
 
 	default:
-		kprintf("error %d\n", error);
+		printf("error %d\n", error);
 		break;
 	}
-	kprintf("\n\n");
+	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }
 
@@ -1225,7 +1225,7 @@ init386(first_avail)
 	avail_next = avail_start;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
-		kprintf("warning: too little memory available; running in degraded mode\n"
+		printf("warning: too little memory available; running in degraded mode\n"
 		    "press a key to confirm\n\n");
 		cngetc();
 	}
@@ -1500,9 +1500,9 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 			if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 			    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 				/* XXX panic? */
-				kprintf("bus_mem_map: pa 0x%lx, size 0x%lx\n",
+				printf("bus_mem_map: pa 0x%lx, size 0x%lx\n",
 				    bpa, size);
-				kprintf("bus_mem_map: can't free region\n");
+				printf("bus_mem_map: can't free region\n");
 			}
 		}
 		return (1);
@@ -1549,9 +1549,9 @@ bus_mem_unmap(t, memh, size)
 	if (bpa >= iomem_ex->ex_start && bpa < iomem_ex->ex_end) {
 		if (extent_free(iomem_ex, bpa, size,
 		    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			kprintf("bus_mem_unmap: pa %p, size 0x%lx\n",
+			printf("bus_mem_unmap: pa %p, size 0x%lx\n",
 			    memh, size);
-			kprintf("bus_mem_unmap: can't free region\n");
+			printf("bus_mem_unmap: can't free region\n");
 		}
 	}
 
@@ -1589,8 +1589,8 @@ bus_io_unmap(t, ioh, size)
 	error = extent_free(ioport_ex, ioh, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
 	if (error) {
-		kprintf("bus_io_unmap: port 0x%lx, size 0x%lx\n",
+		printf("bus_io_unmap: port 0x%lx, size 0x%lx\n",
 		    ioh, size);
-		kprintf("bus_io_unmap: can't free region\n");
+		printf("bus_io_unmap: can't free region\n");
 	}
 }

@@ -230,12 +230,12 @@ update_led(void)
 	{
 		if(kbd_cmd(KEYB_C_LEDS) != 0)
 		{
-			kprintf("Keyboard LED command timeout\n");
+			printf("Keyboard LED command timeout\n");
 			return;
 		}
 
 		if(kbd_cmd(new_ledstate) != 0) {
-			kprintf("Keyboard LED data timeout\n");
+			printf("Keyboard LED data timeout\n");
 			return;
 		}
 
@@ -261,9 +261,9 @@ settpmrate(int rate)
 {
 	tpmrate = rate & 0x7f;
 	if(kbd_cmd(KEYB_C_TYPEM) != 0)
-		kprintf("Keyboard TYPEMATIC command timeout\n");
+		printf("Keyboard TYPEMATIC command timeout\n");
 	else if(kbd_cmd(tpmrate) != 0)
-		kprintf("Keyboard TYPEMATIC data timeout\n");
+		printf("Keyboard TYPEMATIC data timeout\n");
 }
 
 /*---------------------------------------------------------------------------*
@@ -391,7 +391,7 @@ void doreset(void)
 
 	/* Enable interrupts and keyboard, etc. */
 	if(kbc_8042cmd(CONTR_WRITE) != 0)
-		kprintf("pcvt: doreset() - timeout controller write command\n");
+		printf("pcvt: doreset() - timeout controller write command\n");
 
 #if PCVT_USEKBDSEC		/* security enabled */
 
@@ -413,7 +413,7 @@ void doreset(void)
 #endif /* PCVT_USEKBDSEC */
 
 	if(kbd_cmd(KBDINITCMD) != 0)
-		kprintf("pcvt: doreset() - timeout writing keyboard init command\n");
+		printf("pcvt: doreset() - timeout writing keyboard init command\n");
 
 	/*
 	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
@@ -427,7 +427,7 @@ void doreset(void)
 	opri = spltty();
 
 	if(kbd_cmd(KEYB_C_RESET) != 0)
-		kprintf("pcvt: doreset() - timeout for keyboard reset command\n");
+		printf("pcvt: doreset() - timeout for keyboard reset command\n");
 
 	/* Wait for the first response to reset and handle retries */
 
@@ -436,17 +436,17 @@ void doreset(void)
 		if(response < 0)
 		{
 			if(!again)	/* print message only once ! */
-				kprintf("pcvt: doreset() - response != ack and response < 0 [one time only msg]\n");
+				printf("pcvt: doreset() - response != ack and response < 0 [one time only msg]\n");
 			response = KEYB_R_RESEND;
 		}
 		if(response == KEYB_R_RESEND)
 		{
 			if(!again)	/* print message only once ! */
-				kprintf("pcvt: doreset() - got KEYB_R_RESEND response ... [one time only msg]\n");
+				printf("pcvt: doreset() - got KEYB_R_RESEND response ... [one time only msg]\n");
 
 			if(++again > PCVT_NONRESP_KEYB_TRY)
 			{
-				kprintf("pcvt: doreset() - Caution - no PC keyboard detected!\n");
+				printf("pcvt: doreset() - Caution - no PC keyboard detected!\n");
 				keyboard_type = KB_UNKNOWN;
 				splx(opri);
 				return;
@@ -455,7 +455,7 @@ void doreset(void)
 			if((kbd_cmd(KEYB_C_RESET) != 0) && (once == 0))
 			{
 				once++;		/* print message only once ! */
-				kprintf("pcvt: doreset() - timeout for loop keyboard reset command [one time only msg]\n");
+				printf("pcvt: doreset() - timeout for loop keyboard reset command [one time only msg]\n");
 			}
 		}
 	}
@@ -478,7 +478,7 @@ void doreset(void)
 
 		if(seen_negative_response && (wait_retries >= 10))
 		{
-			kprintf("pcvt: doreset() - response != OK and response < 0\n");
+			printf("pcvt: doreset() - response != OK and response < 0\n");
 
 			/*
 			 * If KEYB_R_SELFOK never arrives, the loop will
@@ -500,7 +500,7 @@ query_kbd_id:
 
 	if(kbd_cmd(KEYB_C_ID) != 0)
 	{
-		kprintf("pcvt: doreset() - timeout for keyboard ID command\n");
+		printf("pcvt: doreset() - timeout for keyboard ID command\n");
 		keyboard_type = KB_UNKNOWN;
 	}
 	else
@@ -533,7 +533,7 @@ r_entry:
 			}
 			else
 			{
-				kprintf("\npcvt: doreset() - kbdid, response 2 = [%d]\n",
+				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n",
 				       response);
 				keyboard_type = KB_UNKNOWN;
 			}
@@ -548,7 +548,7 @@ r_entry:
 		}
 		else
 		{
-			kprintf("\npcvt: doreset() - kbdid, response 1 = [%d]\n", response);
+			printf("\npcvt: doreset() - kbdid, response 1 = [%d]\n", response);
 		}
 	}
 

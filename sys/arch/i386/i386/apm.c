@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8 1996/10/10 23:56:50 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.9 1996/10/13 03:19:40 christos Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -67,7 +67,7 @@
 #include <machine/apmvar.h>
 
 #if defined(DEBUG) || defined(APMDEBUG)
-#define DPRINTF(x)	kprintf x
+#define DPRINTF(x)	printf x
 #define STATIC /**/
 #else
 #define	DPRINTF(x)	/**/
@@ -128,7 +128,7 @@ STATIC void apm_periodic_check __P((void *));
 STATIC void apm_disconnect __P((void *));
 #endif
 STATIC void apm_perror __P((const char *, struct apmregs *, ...))
-	    __kprintf_attribute__((__format__(__kprintf__,1,3)));
+	    __printf_attribute__((__format__(__printf__,1,3)));
 #if 0
 STATIC void apm_powmgt_enable __P((int));
 #endif
@@ -153,7 +153,7 @@ int function;
 struct apmregs *regs;
 {
     if (apmcalldebug)
-	kprintf("apmcall line %d func %d\n", line, function);
+	printf("apmcall line %d func %d\n", line, function);
     /*   Debugger();*/
     return apmcall(function, regs);
 }
@@ -199,10 +199,11 @@ STATIC void
 apm_perror(const char *str, struct apmregs *regs, ...)
 {
 	va_list ap;
+
 	va_start(ap, regs);
-	kprintf("APM %:: %s (%d)\n", str, ap,
-	       apm_err_translate(APM_ERR_CODE(regs)),
-	       APM_ERR_CODE(regs));
+	printf("APM %::%s (%d)\n", str, ap,
+	    apm_err_translate(APM_ERR_CODE(regs)),
+	    APM_ERR_CODE(regs));
 	va_end(ap);
 }
 
@@ -212,64 +213,64 @@ struct apm_softc *sc;
 struct apmregs *regs;
 {
 	if (APM_BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
-		kprintf("%s: battery life expectancy %d%%\n",
+		printf("%s: battery life expectancy %d%%\n",
 		       sc->sc_dev.dv_xname,
 		       APM_BATT_LIFE(regs));
 	}
-	kprintf("%s: A/C state: ", sc->sc_dev.dv_xname);
+	printf("%s: A/C state: ", sc->sc_dev.dv_xname);
 	switch (APM_AC_STATE(regs)) {
 	case APM_AC_OFF:
-		kprintf("off\n");
+		printf("off\n");
 		break;
 	case APM_AC_ON:
-		kprintf("on\n");
+		printf("on\n");
 		break;
 	case APM_AC_BACKUP:
-		kprintf("backup power\n");
+		printf("backup power\n");
 		break;
 	default:
 	case APM_AC_UNKNOWN:
-		kprintf("unknown\n");
+		printf("unknown\n");
 		break;
 	}
-	kprintf("%s: battery charge state:", sc->sc_dev.dv_xname);
+	printf("%s: battery charge state:", sc->sc_dev.dv_xname);
 	if (apm_minver == 0)
 		switch (APM_BATT_STATE(regs)) {
 		case APM_BATT_HIGH:
-			kprintf("high\n");
+			printf("high\n");
 			break;
 		case APM_BATT_LOW:
-			kprintf("low\n");
+			printf("low\n");
 			break;
 		case APM_BATT_CRITICAL:
-			kprintf("critical\n");
+			printf("critical\n");
 			break;
 		case APM_BATT_CHARGING:
-			kprintf("charging\n");
+			printf("charging\n");
 			break;
 		case APM_BATT_UNKNOWN:
-			kprintf("unknown\n");
+			printf("unknown\n");
 			break;
 		default:
-			kprintf("undecoded state %x\n", APM_BATT_STATE(regs));
+			printf("undecoded state %x\n", APM_BATT_STATE(regs));
 			break;
 		}
 	else if (apm_minver >= 1) {
 		if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
-			kprintf(" no battery");
+			printf(" no battery");
 		else {
 			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
-				kprintf(" high");
+				printf(" high");
 			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
-				kprintf(" low");
+				printf(" low");
 			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
-				kprintf(" critical");
+				printf(" critical");
 			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
-				kprintf(" charging");
+				printf(" charging");
 		}
-		kprintf("\n");
+		printf("\n");
 		if (APM_BATT_REM_VALID(regs))
-			kprintf("%s: estimated %d:%02d minutes\n",
+			printf("%s: estimated %d:%02d minutes\n",
 			       sc->sc_dev.dv_xname,
 			       APM_BATT_REMAINING(regs) / 60,
 			       APM_BATT_REMAINING(regs)%60);
@@ -292,7 +293,7 @@ u_int dev;
     regs.bx = dev;
     rval = APMCALL(APM_GET_POWER_STATE, &regs);
     if (rval == 0) {
-	kprintf("apm dev %04x state %04x\n", dev, regs.cx);
+	printf("apm dev %04x state %04x\n", dev, regs.cx);
     }
 }
 
@@ -419,7 +420,7 @@ struct apmregs *regs;
 		apm_record_event(sc, regs->bx);
 		break;
 	default:
-		kprintf("APM nonstandard event code %x\n", regs->bx);
+		printf("APM nonstandard event code %x\n", regs->bx);
 	}
 }
 
@@ -495,7 +496,7 @@ u_int dev;
 	 */
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (APMCALL(APM_DEVICE_MGMT_ENABLE, &regs) != 0)
-		kprintf("APM device engage (device %x): %s (%d)\n",
+		printf("APM device engage (device %x): %s (%d)\n",
 		       dev, apm_err_translate(APM_ERR_CODE(&regs)),
 		       APM_ERR_CODE(&regs));
 }
@@ -570,23 +571,23 @@ struct apm_softc *self;
 		apm_majver = 1;
 		apm_minver = 0;
 	}
-	kprintf(": Power Management spec V%d.%d",
+	printf(": Power Management spec V%d.%d",
 	       apm_majver, apm_minver);
 	apminited = 1;
 	if (apmidleon && (apminfo.apm_detail & APM_IDLE_SLOWS)) {
 #ifdef DEBUG
 	/* not relevant much */
-		kprintf(" (slowidle)");
+		printf(" (slowidle)");
 #endif
 	} else
 	    apmidleon = 0;
 #ifdef DIAGNOSTIC
 	if (apminfo.apm_detail & APM_BIOS_PM_DISABLED)
-		kprintf(" (BIOS mgmt disabled)");
+		printf(" (BIOS mgmt disabled)");
 	if (apminfo.apm_detail & APM_BIOS_PM_DISENGAGED)
-		kprintf(" (BIOS managing devices)");
+		printf(" (BIOS managing devices)");
 #endif
-	kprintf("\n");
+	printf("\n");
 }
 
 STATIC int
@@ -612,7 +613,7 @@ void *xxx;
 	if (APMCALL(APM_DISCONNECT, &regs))
 		apm_perror("disconnect failed", &regs);
 	else
-		kprintf("APM disconnected\n");
+		printf("APM disconnected\n");
 }
 #endif
 

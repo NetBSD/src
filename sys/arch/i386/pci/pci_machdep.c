@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 1996/10/11 00:27:21 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 1996/10/13 03:20:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@ pci_attach_hook(parent, self, pba)
 {
 
 	if (pba->pba_bus == 0)
-		kprintf(": configuration mode %d", pci_mode);
+		printf(": configuration mode %d", pci_mode);
 }
 
 int
@@ -266,7 +266,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	}
 
 	if (pin > 4) {
-		kprintf("pci_intr_map: bad interrupt pin %d\n", pin);
+		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -285,15 +285,15 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == 255) {
-		kprintf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
-			kprintf("pci_intr_map: bad interrupt line %d\n", line);
+			printf("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
 		if (line == 2) {
-			kprintf("pci_intr_map: changed line 2 to line 9\n");
+			printf("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
 	}
@@ -316,7 +316,7 @@ pci_intr_string(pc, ih)
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
 
-	ksprintf(irqstr, "irq %d", ih);
+	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
 }

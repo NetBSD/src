@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.95 1996/10/11 00:27:04 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.96 1996/10/13 03:19:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -313,7 +313,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		kprintf(" drive %d", fa->fa_drive);
+		printf(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 
@@ -342,7 +342,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
-	kprintf("\n");
+	printf("\n");
 
 #ifdef NEWCONFIG
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
@@ -407,10 +407,10 @@ fdprobe(parent, match, aux)
 #ifdef FD_DEBUG
 	{
 		int i;
-		kprintf("fdprobe: status");
+		printf("fdprobe: status");
 		for (i = 0; i < n; i++)
-			kprintf(" %x", fdc->sc_status[i]);
-		kprintf("\n");
+			printf(" %x", fdc->sc_status[i]);
+		printf("\n");
 	}
 #endif
 	/* turn off motor */
@@ -439,10 +439,10 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		kprintf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
-		kprintf(": density unknown\n");
+		printf(": density unknown\n");
 
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
@@ -491,7 +491,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	case NVRAM_DISKETTE_720K:
 		return &fd_types[4];
 	default:
-		kprintf("%s: drive %d: unknown device type 0x%x\n",
+		printf("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
 		return NULL;
 	}
@@ -548,7 +548,7 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	kprintf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
 
@@ -562,7 +562,7 @@ fdstrategy(bp)
 	else {
 		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 		if (fdc->sc_state == DEVIDLE) {
-			kprintf("fdstrategy: controller inactive\n");
+			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
 		}
 	}
@@ -793,7 +793,7 @@ fdcstart(fdc)
 	/* only got here if controller's drive queue was inactive; should
 	   be in idle state */
 	if (fdc->sc_state != DEVIDLE) {
-		kprintf("fdcstart: not idle\n");
+		printf("fdcstart: not idle\n");
 		return;
 	}
 #endif
@@ -814,19 +814,19 @@ fdcstatus(dv, n, s)
 		n = 2;
 	}
 
-	kprintf("%s: %s", dv->dv_xname, s);
+	printf("%s: %s", dv->dv_xname, s);
 
 	switch (n) {
 	case 0:
-		kprintf("\n");
+		printf("\n");
 		break;
 	case 2:
-		kprintf(" (st0 %b cyl %d)\n",
+		printf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -834,7 +834,7 @@ fdcstatus(dv, n, s)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		kprintf("\nfdcstatus: weird size");
+		printf("\nfdcstatus: weird size");
 		break;
 #endif
 	}
@@ -969,7 +969,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 kprintf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -985,7 +985,7 @@ loop:
 #endif
 		bus_io_write_1(bc, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
-		kprintf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
+		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
 #endif
@@ -1058,7 +1058,7 @@ loop:
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			kprintf("blkno %d nblks %d\n",
+			printf("blkno %d nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
@@ -1074,7 +1074,7 @@ loop:
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-			kprintf("\n");
+			printf("\n");
 			fdc->sc_errors = 0;
 		}
 		fd->sc_blkno += fd->sc_nblks;
@@ -1176,7 +1176,7 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
