@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1995/02/09 10:28:32 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.33 1995/02/09 14:38:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -791,7 +791,7 @@ me_alloc(mh, newpm, newvseg)
 	i = NPTESG;
 	do {
 		tpte = getpte(va);
-		if (tpte & (PG_V | PG_TYPE) == (PG_V | PG_OBMEM)) {
+		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
 			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR(tpte);
@@ -867,7 +867,7 @@ me_free(pm, pmeg)
 	i = NPTESG;
 	do {
 		tpte = getpte(va);
-		if (tpte & (PG_V | PG_TYPE) == (PG_V | PG_OBMEM)) {
+		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
 			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR(tpte);
