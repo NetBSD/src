@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.70 2005/01/31 09:11:49 enami Exp $	*/
+/*	$NetBSD: gzip.c,v 1.71 2005/02/22 21:45:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.70 2005/01/31 09:11:49 enami Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.71 2005/02/22 21:45:44 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -193,6 +193,7 @@ static	void	print_list(int fd, off_t, const char *, time_t);
 static	void	usage(void);
 static	void	display_version(void);
 static	const suffixes_t *check_suffix(char *, int);
+static	ssize_t	read_retry(int, void *, size_t);
 
 #ifdef SMALL
 #define unlink_input(f, sb) unlink(f)
@@ -687,6 +688,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 	int error, done_reading = 0;
 	uLong crc;
 	ssize_t wr;
+	int needmore = 0;
 
 #define ADVANCE()       { z.next_in++; z.avail_in--; }
 
@@ -712,8 +714,15 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 	out_tot = 0;
 
 	for (;;) {
-		if (z.avail_in == 0 && done_reading == 0) {
-			size_t in_size = read(in, inbufp, BUFLEN);
+		if ((z.avail_in == 0 || needmore) && done_reading == 0) {
+			size_t in_size;
+
+			if (z.avail_in > 0) {
+				memmove(inbufp, z.next_in, z.avail_in);
+			}
+			z.next_in = inbufp;
+			in_size = read(in, z.next_in + z.avail_in,
+			    BUFLEN - z.avail_in);
 
 			if (in_size == -1) {
 #ifndef SMALL
@@ -723,11 +732,12 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				maybe_warn("failed to read stdin");
 				out_tot = -1;
 				goto stop;
-			} else if (in_size == 0)
+			} else if (in_size == 0) {
 				done_reading = 1;
+			}
 
-			z.avail_in = in_size;
-			z.next_in = inbufp;
+			z.avail_in += in_size;
+			needmore = 0;
 
 			in_tot += in_size;
 		}
@@ -891,17 +901,17 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			break;
 		case GZSTATE_CRC:
 			{
-				static int empty_buffer = 0;
 				uLong origcrc;
 
 				if (z.avail_in < 4) {
-					if (!done_reading && empty_buffer++ < 4)
+					if (!done_reading) {
+						needmore = 1;
 						continue;
+					}
 					maybe_warnx("truncated input");
 					out_tot = -1;
 					goto stop;
 				}
-				empty_buffer = 0;
 				origcrc = ((unsigned)z.next_in[0] & 0xff) |
 					((unsigned)z.next_in[1] & 0xff) << 8 |
 					((unsigned)z.next_in[2] & 0xff) << 16 |
@@ -917,23 +927,24 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			z.avail_in -= 4;
 			z.next_in += 4;
 
-			if (!z.avail_in)
+			if (!z.avail_in && done_reading) {
 				goto stop;
+			}
 			state++;
 			break;
 		case GZSTATE_LEN:
 			{
-				static int empty_buffer = 0;
 				uLong origlen;
 
 				if (z.avail_in < 4) {
-					if (!done_reading && empty_buffer++ < 4)
+					if (!done_reading) {
+						needmore = 1;
 						continue;
+					}
 					maybe_warnx("truncated input");
 					out_tot = -1;
 					goto stop;
 				}
-				empty_buffer = 0;
 				origlen = ((unsigned)z.next_in[0] & 0xff) |
 					((unsigned)z.next_in[1] & 0xff) << 8 |
 					((unsigned)z.next_in[2] & 0xff) << 16 |
@@ -1501,6 +1512,7 @@ handle_stdin(void)
 	unsigned char header1[4];
 	off_t usize, gsize;
 	enum filetype method;
+	ssize_t bytes_read;
 #ifndef NO_COMPRESS_SUPPORT
 	FILE *in;
 #endif
@@ -1524,8 +1536,12 @@ handle_stdin(void)
 		return;
 	}
 
-	if (read(STDIN_FILENO, header1, sizeof header1) != sizeof header1) {
+	bytes_read = read_retry(STDIN_FILENO, header1, sizeof header1);
+	if (bytes_read == -1) {
 		maybe_warn("can't read stdin");
+		return;
+	} else if (bytes_read != sizeof(header1)) {
+		maybe_warnx("unexpected EOF");
 		return;
 	}
 
@@ -1919,3 +1935,25 @@ display_version(void)
 #ifndef NO_COMPRESS_SUPPORT
 #include "zuncompress.c"
 #endif
+
+static ssize_t
+read_retry(int fd, void *buf, size_t sz)
+{
+	char *cp = buf;
+	ssize_t left = sz;
+
+	while (left > 0) {
+		ssize_t ret;
+
+		ret = read(fd, cp, sz);
+		if (ret == -1) {
+			return ret;
+		} else if (ret == 0) {
+			break; /* EOF */
+		}
+		cp += ret;
+		left -= ret;
+	}
+
+	return sz - left;
+}
