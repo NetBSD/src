@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.22.4.1 1996/05/26 06:13:58 jtc Exp $	 */
+/*	$NetBSD: yplib.c,v 1.22.4.2 1997/02/03 05:01:23 rat Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.22.4.1 1996/05/26 06:13:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.22.4.2 1997/02/03 05:01:23 rat Exp $";
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,13 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.22.4.1 1996/05/26 06:13:58 jtc Exp $
 struct dom_binding *_ypbindlist;
 char _yp_domain[MAXHOSTNAMELEN];
 
-struct timeval _yplib_timeout = { 10, 0 };
+#define YPLIB_TIMEOUT		10
+#define YPLIB_RPC_RETRIES	4
+
+struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
+struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
+	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
+int _yplib_nerrs = 5;
 
 void _yp_unbind __P((struct dom_binding *));
 
@@ -73,7 +79,7 @@ _yp_dobind(dom, ypdb)
 	int             clnt_sock, fd, gpid;
 	CLIENT         *client;
 	int             new = 0, r;
-	int             count = 0;
+	int             nerrs = 0;
 
 	if (dom == NULL || *dom == 0)
 		return YPERR_BADARGS;
@@ -190,11 +196,12 @@ trynet:
 		    xdr_ypdomain_wrap_string, &dom, xdr_ypbind_resp,
 		    &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
-			if (new == 0 || count)
+			if (new == 0 && ++nerrs == _yplib_nerrs) {
+				nerrs = 0;
 				fprintf(stderr,
 		    "YP server for domain %s not responding, still trying\n",
-					dom);
-			count++;
+				    dom);
+			}
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
 			goto again;
@@ -220,8 +227,7 @@ gotit:
 		clnt_destroy(ysd->dom_client);
 	ysd->dom_socket = RPC_ANYSOCK;
 	ysd->dom_client = clntudp_create(&ysd->dom_server_addr,
-				      YPPROG, YPVERS, _yplib_timeout,
-				      &ysd->dom_socket);
+	    YPPROG, YPVERS, _yplib_rpc_timeout, &ysd->dom_socket);
 	if (ysd->dom_client == NULL) {
 		clnt_pcreateerror("clntudp_create");
 		ysd->dom_vers = -1;
