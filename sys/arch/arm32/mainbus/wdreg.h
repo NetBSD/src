@@ -1,4 +1,4 @@
-/*	$NetBSD: wdreg.h,v 1.1 1996/01/31 23:25:18 mark Exp $	*/
+/*	$NetBSD: wdreg.h,v 1.2 1997/02/04 02:04:55 mark Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,29 +36,31 @@
  * SUCH DAMAGE.
  *
  *	@(#)wdreg.h	7.1 (Berkeley) 5/9/91
+ *	from: wdreg.h,v 1.13 1995/03/29 21:56:46 briggs Exp
  */
 
 /*
  * Disk Controller register definitions.
  */
 #define	wd_data		0x000	/* data register (R/W - 16 bits) */
-#define wd_error	0x004	/* error register (R) */
-#define	wd_precomp	0x004	/* write precompensation (W) */
-#define	wd_features	0x004	/* features (W) */
-#define	wd_seccnt	0x008	/* sector count (R/W) */
-#define	wd_sector	0x00c	/* first sector number (R/W) */
-#define	wd_cyl_lo	0x010	/* cylinder address, low byte (R/W) */
-#define	wd_cyl_hi	0x014	/* cylinder address, high byte (R/W) */
-#define	wd_sdh		0x018	/* sector size/drive/head (R/W) */
-#define	wd_command	0x01c	/* command register (W)	*/
-#define	wd_status	0x01c	/* immediate status (R)	*/
+#define wd_error	0x001	/* error register (R) */
+#define	wd_precomp	0x001	/* write precompensation (W) */
+#define	wd_features	0x001	/* features (W) */
+#define	wd_seccnt	0x002	/* sector count (R/W) */
+#define	wd_sector	0x003	/* first sector number (R/W) */
+#define	wd_cyl_lo	0x004	/* cylinder address, low byte (R/W) */
+#define	wd_cyl_hi	0x005	/* cylinder address, high byte (R/W) */
+#define	wd_sdh		0x006	/* sector size/drive/head (R/W) */
+#define	wd_command	0x007	/* command register (W)	*/
+#define	wd_status	0x007	/* immediate status (R)	*/
 
-#define	wd_altsts	0x818	/* alternate fixed disk status (via 1015) (R) */
-#define	wd_ctlr		0x818	/* fixed disk controller control (via 1015) (W) */
+#define WD_ALTSTATUS	0x206	/* base offset for alt status */
+#define	wd_altsts	0x000	/* alternate fixed disk status (via 1015) (R) */
+#define	wd_ctlr		0x000	/* fixed disk controller control (via 1015) (W) */
 #define  WDCTL_4BIT	 0x08	/* use four head bits (wd1003) */
 #define  WDCTL_RST	 0x04	/* reset the controller */
 #define  WDCTL_IDS	 0x02	/* disable controller interrupts */
-#define	wd_digin	0x81c	/* disk controller input (via 1015) (R) */
+#define	wd_digin	0x001	/* disk controller input (via 1015) (R) */
 
 /*
  * Status bits.
