@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.25 2002/05/20 17:38:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.26 2002/08/31 00:08:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <ucontext.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -572,9 +573,15 @@ pthread__sa_start(void)
 {
 	pthread_t self, t;
 	stack_t upcall_stacks[PT_UPCALLSTACKS];
-	int ret, i, errnosave;
+	int ret, i, errnosave, flags;
+	char *value;
 
-	ret = sa_register(pthread__upcall, NULL);
+	flags = 0;
+	value = getenv("PTHREAD_PREEMPT");
+	if (value && strcmp(value, "yes") == 0)
+		flags |= SA_FLAG_PREEMPT;
+
+	ret = sa_register(pthread__upcall, NULL, flags);
 	if (ret)
 		err(1, "sa_register failed");
 
