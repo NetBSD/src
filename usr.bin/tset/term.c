@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.9 1997/10/20 01:07:53 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.10 1998/07/26 23:09:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: term.c,v 1.9 1997/10/20 01:07:53 lukem Exp $");
+__RCSID("$NetBSD: term.c,v 1.10 1998/07/26 23:09:50 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,20 +54,22 @@ __RCSID("$NetBSD: term.c,v 1.9 1997/10/20 01:07:53 lukem Exp $");
 
 char    tbuf[1024];      		/* Termcap entry. */
 
-char	*askuser __P((char *));
+const	char *askuser __P((const char *));
 char	*ttys __P((char *));
 
 /*
  * Figure out what kind of terminal we're dealing with, and then read in
  * its termcap entry.
  */
-char *
+const char *
 get_termcap_entry(userarg, tcapbufp)
-	char *userarg, **tcapbufp;
+	const char *userarg;
+	char **tcapbufp;
 {
 	struct ttyent *t;
 	int rval;
-	char *p, *ttype, *ttypath;
+	char *p, *ttypath;
+	const char *ttype;
 
 	if (userarg) {
 		ttype = userarg;
@@ -128,9 +130,9 @@ found:	if ((p = getenv("TERMCAP")) != NULL && *p != '/')
 }
 
 /* Prompt the user for a terminal type. */
-char *
+const char *
 askuser(dflt)
-	char *dflt;
+	const char *dflt;
 {
 	static char answer[256];
 	char *p;

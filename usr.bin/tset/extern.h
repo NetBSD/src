@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/10/20 01:07:50 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/07/26 23:09:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,10 +43,10 @@ extern struct termios mode, oldmode;
 extern int columns, isreset, lines;
 extern int erasechar, intrchar, killchar;
 
-void	 add_mapping __P((char *, char *));
+void	 add_mapping __P((const char *, char *));
 void	 cat __P((char *));
-char	*get_termcap_entry __P((char *, char **));
-char	*mapped __P((char *));
+const	 char *get_termcap_entry __P((const char *, char **));
+const	 char *mapped __P((const char *));
 void	 outc __P((int));
 void	 reset_mode __P((void));
 void	 set_control_chars __P((void));

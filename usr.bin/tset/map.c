@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.8 1997/10/20 01:07:51 lukem Exp $	*/
+/*	$NetBSD: map.c,v 1.9 1998/07/26 23:09:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: map.c,v 1.8 1997/10/20 01:07:51 lukem Exp $");
+__RCSID("$NetBSD: map.c,v 1.9 1998/07/26 23:09:50 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,8 +61,8 @@ int	baudrate __P((char *));
 
 typedef struct map {
 	struct map *next;	/* Linked list of maps. */
-	char *porttype;		/* Port type, or "" for any. */
-	char *type;		/* Terminal type to select. */
+	const char *porttype;	/* Port type, or "" for any. */
+	const char *type;	/* Terminal type to select. */
 	int conditional;	/* Baud rate conditionals bitmask. */
 	int speed;		/* Baud rate to compare against. */
 } MAP;
@@ -76,7 +76,8 @@ MAP *cur, *maplist;
  */
 void
 add_mapping(port, arg)
-	char *port, *arg;
+	const char *port;
+	char *arg;
 {
 	MAP *mapp;
 	char *copy, *p, *termp;
@@ -105,7 +106,7 @@ add_mapping(port, arg)
 	}
 
 	if (arg == mapp->porttype)		/* [><@=! baud]:term */
-		termp = mapp->porttype = NULL;
+		mapp->porttype = termp = NULL;
 	else
 		termp = arg;
 
@@ -188,9 +189,9 @@ badmopt:		errx(1, "illegal -m option format: %s", copy);
  * by the first applicable mapping in 'map'.  If no mappings apply, return
  * 'type'.
  */
-char *
+const char *
 mapped(type)
-	char *type;
+	const char *type;
 {
 	MAP *mapp;
 	int match;

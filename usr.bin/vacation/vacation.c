@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.14 1998/07/08 00:34:53 cgd Exp $	*/
+/*	$NetBSD: vacation.c,v 1.15 1998/07/26 23:11:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.14 1998/07/08 00:34:53 cgd Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.15 1998/07/26 23:11:09 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: vacation.c,v 1.14 1998/07/08 00:34:53 cgd Exp $");
 
 typedef struct alias {
 	struct alias *next;
-	char *name;
+	const char *name;
 } ALIAS;
 ALIAS *names;
 
@@ -97,7 +97,7 @@ int junkmail __P((void));
 int nsearch __P((const char *, const char *));
 void readheaders __P((void));
 int recent __P((void));
-void sendmessage __P((char *));
+void sendmessage __P((const char *));
 void setinterval __P((time_t));
 void setreply __P((void));
 void usage __P((void));
@@ -400,7 +400,7 @@ setreply()
  */
 void
 sendmessage(myname)
-	char *myname;
+	const char *myname;
 {
 	FILE *mfp, *sfp;
 	int i;
