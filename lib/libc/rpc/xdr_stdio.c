@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.15 2004/01/03 23:01:41 martin Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.16 2004/01/03 23:50:47 martin Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.15 2004/01/03 23:01:41 martin Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.16 2004/01/03 23:50:47 martin Exp $");
 #endif
 #endif
 
@@ -132,7 +132,7 @@ xdrstdio_putlong(xdrs, lp)
 	XDR *xdrs;
 	const long *lp;
 {
-	int32_t mycopy = htonl((int32_t)*lp);
+	int32_t mycopy = htonl((u_int32_t)*lp);
 
 	if (fwrite(&mycopy, sizeof(int32_t), 1, (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
