@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.2 1993/11/29 00:32:58 briggs Exp $
+ * $Id: ser.c,v 1.3 1994/01/10 23:52:04 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -673,7 +673,6 @@ serparam(tp, t)
         tp->t_ospeed = t->c_ospeed;
         tp->t_cflag = cflag;
 
-printf("ospeed %d\n", ospeed);
 	/* Start of serial specific param code */
 	if(ospeed == 0)	{
 		serctl(unit, 0, DMSET);	/* hang up line */
@@ -749,7 +748,7 @@ serstart(tp)
 	register struct tty *tp;
 {
 	int s, s1;
-	int i, space, unit, c, need_start;
+	int i, space, unit, c, need_start, first_char;
  
 	unit = UNIT(tp->t_dev);
 	s = spltty();
@@ -769,7 +768,7 @@ serstart(tp)
 	tp->t_state |= TS_BUSY;
 
 	if(ser_outlen[unit] == 0){
-		c = (char)getc(&tp->t_outq);
+		first_char = (char)getc(&tp->t_outq);
 		need_start = 1;
 	} else
 		need_start = 0;
@@ -797,7 +796,7 @@ serstart(tp)
 	if (need_start) {
 		s1 = splhigh();
 		ser_status[unit].flags |= SER_BUSY;
-		SCCRDWR(unit) = c;	/* to start chain */
+		SCCRDWR(unit) = first_char;	/* to start chain */
 		splx(s1);
 	}
 

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	from: from: from: from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.2 1993/11/29 00:32:32 briggs Exp $
+ *	$Id: grf.c,v 1.3 1994/01/10 23:52:01 briggs Exp $
  */
 
 /*
@@ -670,6 +670,7 @@ params
 	gi->gd_fbrowbytes=image->rowbytes;
 	gi->gd_fbaddr=(caddr_t) ((u_long)image->offset+(u_long)nu->addr);
 	gp->g_fbkva=gi->gd_fbaddr;
+	gNumGrfDev++;
 	
 	return 1;
 }
