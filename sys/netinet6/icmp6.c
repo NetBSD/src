@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75 2002/03/05 08:13:56 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.76 2002/05/24 09:13:59 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75 2002/03/05 08:13:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.76 2002/05/24 09:13:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1540,6 +1540,11 @@ ni6_input(m, off)
 }
 #undef hostnamelen
 
+#define isupper(x) ('A' <= (x) && (x) <= 'Z')
+#define isalpha(x) (('A' <= (x) && (x) <= 'Z') || ('a' <= (x) && (x) <= 'z'))
+#define isalnum(x) (isalpha(x) || ('0' <= (x) && (x) <= '9'))
+#define tolower(x) (isupper(x) ? (x) + 'a' - 'A' : (x))
+
 /*
  * make a mbuf with DNS-encoded string.  no compression support.
  *
@@ -1617,8 +1622,17 @@ ni6_nametodns(name, namelen, old)
 			if (i <= 0 || i >= 64)
 				goto fail;
 			*cp++ = i;
-			bcopy(p, cp, i);
-			cp += i;
+			if (!isalpha(p[0]) || !isalnum(p[i - 1]))
+				goto fail;
+			while (i > 0) {
+				if (!isalnum(*p) && *p != '-')
+					goto fail;
+				if (isupper(*p))
+					*cp++ = tolower(*p++);
+				else
+					*cp++ = *p++;
+				i--;
+			}
 			p = q;
 			if (p < name + namelen && *p == '.')
 				p++;
