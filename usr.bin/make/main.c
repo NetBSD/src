@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1993/08/01 18:11:47 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1993/08/23 05:29:31 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -365,12 +365,11 @@ main(argc, argv)
 		exit(2);
 	}
 	if (!lstat(path, &sb)) {
-		obj_is_elsewhere = 1;
-		if (chdir(path)) {
-			(void)fprintf(stderr, "make: %s: %s.\n",
+		if (chdir(path))
+			(void)fprintf(stderr, "make warning: %s: %s.\n",
 			    path, strerror(errno));
-			exit(2);
-		}
+		else
+			obj_is_elsewhere = 1;
 	}
 
 	create = Lst_Init(FALSE);
