@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.62 1998/04/16 19:48:14 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.63 1998/04/30 06:18:45 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.56 1998/04/16 19:46:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.57 1998/04/30 06:18:11 mycroft Exp 
  */
 
 /*
@@ -572,6 +572,9 @@
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
 #define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ethernet & SCSI */
+
+/* Apple products */
+#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI Controller */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
