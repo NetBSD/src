@@ -1,38 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/09 15:23:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2002/04/11 15:34:56 lukem Exp $
 
-.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
-.include <bsd.kernobj.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-STRIP?= strip
-MDSETIMAGE?=	mdsetimage
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+TARGETS=	INSTALL		${RAMDISK}	\
+		GENERIC_MD	${RAMDISK}
 
-KERNELS= netbsd.INSTALL.gz netbsd.GENERIC_MD.gz
-CLEANFILES+= ${KERNELS} netbsd
+MDSETDIR=	binary/kernel
 
-RAMDISKDIR!= cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
-RAMDISK= ${RAMDISKDIR}/ramdisk.fs
-
-realall: ${KERNELS}
-
-netbsd.INSTALL.gz: ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
-	cp ${KERNOBJDIR}/INSTALL/netbsd .
-	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	${STRIP} netbsd
-	gzip -9 netbsd
-	mv netbsd.gz ${.TARGET}
-
-netbsd.GENERIC_MD.gz: ${KERNOBJDIR}/GENERIC_MD/netbsd ${RAMDISK}
-	cp ${KERNOBJDIR}/GENERIC_MD/netbsd .
-	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	gzip -9 netbsd
-	mv netbsd.gz ${.TARGET}
-
-release: netbsd.INSTALL.gz netbsd.GENERIC_MD.gz
-	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp ${KERNELS} ${RELEASEDIR}/binary/kernel
-
-clean cleandir distclean:
-	rm -f *.core ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include "${DISTRIBDIR}/common/Makefile.mdset"
