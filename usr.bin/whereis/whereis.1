@@ -1,4 +1,4 @@
-.\"	$NetBSD: whereis.1,v 1.7 1998/02/06 06:20:06 perry Exp $
+.\"	$NetBSD: whereis.1,v 1.8 1999/03/11 10:42:43 fair Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,8 @@
 .Nd locate programs
 .Sh SYNOPSIS
 .Nm
+.Op Fl p
+.Ar program
 .Op Ar program ...
 .Sh DESCRIPTION
 The
@@ -48,11 +50,17 @@ The
 utility checks the standard binary directories for the specified programs,
 printing out the paths of any it finds.
 .Pp
-The path searched is the string returned by the
+The default path searched is the string returned by the
 .Xr sysctl 8
 utility for the
 .Dq user.cs_path
 string.
+If the 
+.Op Fl p 
+option is specified, then the value of the environment
+variable
+.Ev PATH
+is used instead.
 .Sh SEE ALSO
 .Xr sysctl 8
 .Sh COMPATIBILITY
