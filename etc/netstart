@@ -1,7 +1,11 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.32 1997/04/01 19:36:19 perry Exp $
+#	$NetBSD: netstart,v 1.33 1997/04/29 04:55:05 scottr Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
+
+if [ -f /etc/rc.conf ]; then
+	. /etc/rc.conf
+fi
 
 # /etc/myname contains my symbolic name
 #
