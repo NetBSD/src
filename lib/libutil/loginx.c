@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $	*/
+/*	$NetBSD: loginx.c,v 1.1 2002/09/27 20:42:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,11 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $");
-#endif
+__RCSID("$NetBSD: loginx.c,v 1.1 2002/09/27 20:42:48 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,23 +48,11 @@ __RCSID("$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <utmpx.h>
 
 void
-login(const struct utmp *ut)
+loginx(const struct utmpx *ut)
 {
-	int fd;
-	int tty;
-
-	_DIAGASSERT(ut != NULL);
-
-	tty = ttyslot();
-	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
-	}
-	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
-	}
+	(void)pututxline(ut);
+	(void)updwtmpx(_PATH_WTMPX, ut);
 }
