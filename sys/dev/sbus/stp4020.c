@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.31 2003/01/02 20:01:57 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.32 2003/01/03 11:57:49 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.31 2003/01/02 20:01:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.32 2003/01/03 11:57:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,93 @@ stp4020_wr_winctl(h, win, idx, v)
 	bus_space_write_2(h->tag, h->regs, o, v);
 }
 
+#if __FULL_SPARC_BUS_SPACE
+#ifdef sparc64
+#error "sparc64 does not want (need) __FULL_SPARC_BUS_SPACE"
+#endif
+static	u_int16_t stp4020_read_2(bus_space_tag_t,
+				 bus_space_handle_t,
+				 bus_size_t);
+static	u_int32_t stp4020_read_4(bus_space_tag_t,
+				 bus_space_handle_t,
+				 bus_size_t);
+static	u_int64_t stp4020_read_8(bus_space_tag_t,
+				 bus_space_handle_t,
+				 bus_size_t);
+static	void	stp4020_write_2(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,
+				u_int16_t);
+static	void	stp4020_write_4(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,
+				u_int32_t);
+static	void	stp4020_write_8(bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,
+				u_int64_t);
+
+static u_int16_t
+stp4020_read_2(space, handle, offset)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+{
+	return (le16toh(*(volatile u_int16_t *)(handle + offset)));
+}
+
+static u_int32_t
+stp4020_read_4(space, handle, offset)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+{
+	return (le32toh(*(volatile u_int32_t *)(handle + offset)));
+}
+
+static u_int64_t
+stp4020_read_8(space, handle, offset)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+{
+	return (le64toh(*(volatile u_int64_t *)(handle + offset)));
+}
+
+static void
+stp4020_write_2(space, handle, offset, value)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int16_t value;
+{
+	(*(volatile u_int16_t *)(handle + offset)) = htole16(value);
+}
+
+static void
+stp4020_write_4(space, handle, offset, value)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int32_t value;
+{
+	(*(volatile u_int32_t *)(handle + offset)) = htole32(value);
+}
+
+static void
+stp4020_write_8(space, handle, offset, value)
+	bus_space_tag_t space;
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int64_t value;
+{
+	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
+}
+#else
+#if 0	/* XXX */
+#error "stp4020 needs __FULL_SPARC_BUS_SPACE defined as well"
+#endif
+#endif
 
 int
 stp4020print(aux, busname)
@@ -284,6 +371,7 @@ stp4020attach(parent, self, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_softc *sc = (void *)self;
+	bus_space_tag_t tag;
 	int rev;
 	int i, sbus_intno;
 	bus_space_handle_t bh;
@@ -292,12 +380,25 @@ stp4020attach(parent, self, aux)
 	sbus_intno = sc->sc_dev.dv_cfdata->cf_flags & 1;
 
 	/* Transfer bus tags */
-	sc->sc_bustag = sa->sa_bustag;
+#if __FULL_SPARC_BUS_SPACE
+	tag = (bus_space_tag_t)
+	    malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	*tag = *sa->sa_bustag;
+	tag->sparc_read_2 = stp4020_read_2;
+	tag->sparc_read_4 = stp4020_read_4;
+	tag->sparc_read_8 = stp4020_read_8;
+	tag->sparc_write_2 = stp4020_write_2;
+	tag->sparc_write_4 = stp4020_write_4;
+	tag->sparc_write_8 = stp4020_write_8;
+#else
+	tag = sa->sa_bustag;
+#endif
+	sc->sc_bustag = tag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Set up per-socket static initialization */
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
-	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
+	sc->sc_socks[0].tag = sc->sc_socks[1].tag = tag;
 	sc->sc_socks[0].sbus_intno =
 		sc->sc_socks[1].sbus_intno = sbus_intno;
 
