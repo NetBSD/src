@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+/*	$NetBSD: localconf.c,v 1.1.1.3 2005/02/24 20:53:34 manu Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -104,6 +104,7 @@ setdefault()
 {
 	lcconf->uid = 0;
 	lcconf->gid = 0;
+	lcconf->chroot = NULL;
 	lcconf->autograbaddr = 1;
 	lcconf->port_isakmp = PORT_ISAKMP;
 	lcconf->port_isakmp_natt = PORT_ISAKMP_NATT;
