@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.16 2001/11/13 06:58:17 lukem Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.17 2002/03/11 16:00:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.16 2001/11/13 06:58:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.17 2002/03/11 16:00:55 pk Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -112,11 +112,9 @@ cs4231_attach_sbus(parent, self, aux)
 	if (sa->sa_npromvaddrs) {
 		bh = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	} else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot, sa->sa_offset, sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
 				self->dv_xname);
 			return;
