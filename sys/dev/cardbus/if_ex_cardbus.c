@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.6 1999/11/01 09:59:23 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.7 1999/11/17 07:59:57 thorpej Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -254,7 +254,7 @@ ex_cardbus_attach(parent, self, aux)
 
   switch (psc->sc_cardtype) {
   case EX_3C575:
-    sc->ex_conf = EX_CONF_MII|EX_CONF_INTPHY;
+    sc->ex_conf = EX_CONF_MII;
     break;
   case EX_3C575B:
     sc->ex_conf = EX_CONF_90XB|EX_CONF_MII|EX_CONF_INTPHY;
