@@ -247,7 +247,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 
