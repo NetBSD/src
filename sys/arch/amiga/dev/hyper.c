@@ -1,7 +1,7 @@
-/*	$NetBSD: hyper.c,v 1.4 1998/12/14 20:33:45 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.5 1998/12/26 22:22:58 is Exp $ */
 
 /*
- * Copyright (c) 1997 Ignatios Souvatzis
+ * Copyright (c) 1997, 1998 Ignatios Souvatzis
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,25 @@ struct cfattach hyper_ca = {
 	sizeof(struct hyper_softc), hypermatch, hyperattach
 };
 
+struct hyper_prods {
+	char *name;
+	unsigned baseoff;
+} hyperproducts [] = {
+	{0, 0},			/* 0: not used */
+	{0, 0},			/* 1: handled by aster driver */
+	{"4", 1},		/* 2 */
+	{"Z3", 0},		/* 3 */
+	{0, 0},			/* 4: not used */
+	{0, 0},			/* 5: not used */
+	{"4+", 0x8000},		/* 6 */
+	{"3+", 0x8000}		/* 7 */
+};
+
+#define HYPERPROD3	(1<<3)
+#define HYPERPROD4	(1<<2)
+#define HYPERPROD4PLUS	(1<<6)
+#define HYPERPROD3PLUS	(1<<7)
+
 int
 hypermatch(parent, cfp, auxp)
 	struct device *parent;
@@ -81,53 +100,33 @@ hypermatch(parent, cfp, auxp)
 	if (zap->manid != 5001)
 		return (0);
 
-	if (zap->prodid != 2 && zap->prodid != 3  &&
-	    zap->prodid != 6 && zap->prodid != 7)
-		return (0);
+	if (prodid < sizeof(hyperproducts)/sizeof(*hyperproducts) &&
+	    hyperproducts[prodid].name)
 
-	return (1);
+		return (1);
+
+	return (0);
 }
 
 struct hyper_devs {
 	char *name;
 	unsigned off;
 	int arg;
-};
-
-struct hyper_devs hyper3devs[] = {
-	{ "com", 0x00, 115200 * 16 * 4 },
-	{ "com", 0x08, 115200 * 16 * 4 },
-	/* not yet { "lpt", 0x40, 0 }, */
-	{ 0 }
-};
-
-struct hyper_devs hyper4devs[] = {
-	{ "com", 0x00, 115200 * 16 * 4 },
-	{ "com", 0x08, 115200 * 16 * 4 },
-	{ "com", 0x10, 115200 * 16 * 4 },
-	{ "com", 0x18, 115200 * 16 * 4 },
-	{ 0 }
-};
-
-struct hyper_devs hyper3Pdevs[] = {
-	{ "com", 0x0400, 115200 * 16 * 4 },
-	{ "com", 0x0000, 115200 * 16 * 4 },
+	u_int32_t productmask;	/* XXX only prodid 0..31 */
+} hyperdevices[] = {
+	{ "com", 0x00, 115200 * 16 * 4, HYPERPROD3 | HYPERPROD4 },
+	{ "com", 0x08, 115200 * 16 * 4, HYPERPROD3 | HYPERPROD4 },
+	{ "com", 0x10, 115200 * 16 * 4, HYPERPROD4 },
+	{ "com", 0x18, 115200 * 16 * 4, HYPERPROD4 },
+	/* not yet { "lpt", 0x40, 0, HYPERPROD3 }, */
+	{ "com", 0x0400, 115200 * 16 * 4, HYPERPROD3PLUS | HYPERPROD4PLUS },
+	{ "com", 0x0000, 115200 * 16 * 4, HYPERPROD3PLUS | HYPERPROD4PLUS },
+	{ "com", 0x0c00, 115200 * 16 * 4, HYPERPROD4PLUS },
+	{ "com", 0x1000, 115200 * 16 * 4, HYPERPROD4PLUS },
 #ifdef notyet
-	{ "lpt", 0x0800, 0 },
+	{ "lpt", 0x0800, 0, HYPERPROD3PLUS | HYPERPROD4PLUS },
+	{ "lpt", 0x1400, 0, HYPERPROD4PLUS },
 #endif
-	{ 0 }
-};
-
-struct hyper_devs hyper4Pdevs[] = {
-	{ "com", 0x0400, 115200 * 16 * 4 },
-	{ "com", 0x0000, 115200 * 16 * 4 },
-	{ "com", 0x0c00, 115200 * 16 * 4 },
-	{ "com", 0x1000, 115200 * 16 * 4 },
-#ifdef notyet
-	{ "lpt", 0x0800, 0 },
-	{ "lpt", 0x1400, 0 },
-#endif
-	{ 0 }
 };
 
 void
@@ -139,44 +138,28 @@ hyperattach(parent, self, auxp)
 	struct hyper_devs  *hprsd;
 	struct zbus_args *zap;
 	struct supio_attach_args supa;
+	struct hyper_products *hprpp;
 
 	hprsc = (struct hyper_softc *)self;
 	zap = auxp;
+	hprpp = &hyper_products[zap->prodid];
 
-	if (zap->prodid == 2) {
-		if (parent)
-			printf(": HyperCom 4\n");
-		hprsc->sc_bst.base = (u_long)zap->va + 1;
-		hprsc->sc_bst.stride = 2;
-		hprsd = hyper4devs;
-	} else if (zap->prodid == 3) {
-		if (parent)
-			printf(": HyperCom 3Z\n");
-		hprsc->sc_bst.base = (u_long)zap->va + 0;
-		hprsc->sc_bst.stride = 2;
-		hprsd = hyper3devs;
-	} else if (zap->prodid == 6) {
-		if (parent)
-			printf(": HyperCom 4+\n");
-		hprsc->sc_bst.base = (u_long)zap->va + 0x8000;
-		hprsc->sc_bst.stride = 2;
-		hprsd = hyper4Pdevs;
-	} else /* if (zap->prodid == 7) */ {
-		if (parent)
-			printf(": HyperCom 3+\n");
-		hprsc->sc_bst.base = (u_long)zap->va + 0x8000;
-		hprsc->sc_bst.stride = 2;
-		hprsd = hyper3Pdevs;
-	}
+	if (parent)
+		printf(": Hypercom %s\n", hprpp->name);
+
+	hprsc->sc_bst.base = (u_long)zap->va + hprpp->baseoff;
+	hprsc->sc_bst.stride = 2;
 
 	supa.supio_iot = &hprsc->sc_bst;
 	supa.supio_ipl = 6;
 
 	while (hprsd->name) {
-		supa.supio_name = hprsd->name;
-		supa.supio_iobase = hprsd->off;
-		supa.supio_arg = hprsd->arg;
-		config_found(self, &supa, hyperprint); /* XXX */
+		if (hprsd->productmask && (1 << zap->prodid)) {
+			supa.supio_name = hprsd->name;
+			supa.supio_iobase = hprsd->off;
+			supa.supio_arg = hprsd->arg;
+			config_found(self, &supa, hyperprint); /* XXX */
+		}
 		++hprsd;
 	}
 }
