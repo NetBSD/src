@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2001/05/30 15:24:31 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2001/10/24 21:05:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -70,6 +70,11 @@
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#endif
+
+#include "ukbd.h"
+#if (NUKBD > 0)
+#include <dev/usb/ukbdvar.h>
 #endif
 
 #ifndef CONSDEVNAME
@@ -167,6 +172,9 @@ dokbd:
 #if (NPCKBC > 0)
 		pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
+#endif
+#if NPCKBC == 0 && NUKBD > 0
+		ukbd_cnattach();
 #endif
 		return;
 	}
