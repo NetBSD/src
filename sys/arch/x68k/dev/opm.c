@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.3.10.1 1999/01/31 10:34:25 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.3.10.2 1999/02/02 23:45:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -93,6 +93,7 @@ opm_attach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 	int r;
 
+	printf ("\n");
 	ia->ia_size = 0x2000;
 	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
