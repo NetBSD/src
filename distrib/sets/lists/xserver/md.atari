@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.5 1999/08/01 20:08:15 abs Exp $
+# $NetBSD: md.atari,v 1.6 2000/01/11 14:20:44 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF68_SVGA
 ./usr/X11R6/bin/XF68_W32
@@ -8,7 +8,6 @@
 ./usr/X11R6/bin/Xwrapper
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/doc/AccelCards
-./usr/X11R6/lib/X11/doc/BetaReport
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/Devices
 ./usr/X11R6/lib/X11/doc/Monitors
@@ -43,6 +42,7 @@
 ./usr/X11R6/lib/X11/doc/README.i740
 ./usr/X11R6/lib/X11/doc/README.mouse
 ./usr/X11R6/lib/X11/doc/README.neo
+./usr/X11R6/lib/X11/doc/README.r128
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.trident
 ./usr/X11R6/lib/X11/doc/README.tseng
