@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.6 2000/03/15 22:41:29 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.7 2000/04/26 00:00:41 thorpej Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -290,19 +290,33 @@ struct ac97_codec_if_vtbl ac97civ = {
 	ac97_get_portnum_by_name
 };
 
-static struct ac97_codecid {
+#define AC97_CODEC_ID(a0, a1, a2, x)					\
+	(((a0) << 24) | ((a1) << 16) | ((a2) << 8) | (x))
+
+#define	AC97_GET_CODEC_ID(id, cp)					\
+do {									\
+	(cp)[0] = ((id) >> 24) & 0xff;					\
+	(cp)[1] = ((id) >> 16) & 0xff;					\
+	(cp)[2] = ((id) >> 8)  & 0xff;					\
+	(cp)[3] = (id) & 0xff;						\
+} while (0)
+
+static const struct ac97_codecid {
 	u_int32_t id;
-	char *name;
+	const char *name;
 } ac97codecid[] = {
-	{ 0x414B4D00, "Asahi Kasei AK4540" 	},
-	/*0x43525900, "Cirrus Logic CS4297" 	},*/
-	{ 0x43525903, "Cirrus Logic CS4297" 	},
-	{ 0x83847600, "SigmaTel STAC????" 	},
-	{ 0x83847604, "SigmaTel STAC9701/3/4/5" },
-	{ 0x83847605, "SigmaTel STAC9704" 	},
-	{ 0x83847608, "SigmaTel STAC9708" 	},
-	{ 0x83847609, "SigmaTel STAC9721" 	},
-	{ 0, 	      NULL			}
+	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
+#if 0
+	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
+#endif
+	{ AC97_CODEC_ID('C', 'R', 'Y', 3),	"Crystal CS4297"	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 19),	"Crystal CS4297A"	},
+	{ 0x83847600,				"SigmaTel STAC????"	},
+	{ 0x83847604,				"SigmaTel STAC9701/3/4/5" },
+	{ 0x83847605,				"SigmaTel STAC9704" 	},
+	{ 0x83847608,				"SigmaTel STAC9708" 	},
+	{ 0x83847609,				"SigmaTel STAC9721" 	},
+	{ 0,					NULL			}
 };
 
 static char *ac97enhancement[] = {
@@ -523,16 +537,15 @@ ac97_attach(hostIf)
 		}
 		if (ac97codecid[i].id == 0) {
 			char pnp[4];
-			pnp[0] = id >> 24;
-			pnp[1] = id >> 16;
-			pnp[2] = id >>  8;
-			pnp[3] = '\0';
+
+			AC97_GET_CODEC_ID(id, pnp);
 #define ISASCII(c) ((c) >= ' ' && (c) < 0x7f)
 			if (ISASCII(pnp[0]) && ISASCII(pnp[1]) &&
 			    ISASCII(pnp[2]))
-				printf("%s%d", pnp, id & 0xff);
+				printf("%c%c%c%d", pnp[0], pnp[1], pnp[2],
+				    pnp[3]);
 			else
-				printf("unknown (0x%8x)", id);
+				printf("unknown (0x%08x)", id);
 			break;
 		}
 	}
