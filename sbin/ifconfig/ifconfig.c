@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.45 1998/08/08 01:30:18 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.46 1998/08/08 18:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.45 1998/08/08 01:30:18 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.46 1998/08/08 18:14:20 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,19 +161,19 @@ int	media_current;
 int	mediaopt_set;
 int	mediaopt_clear;
 
-int	deferred_actions;		/* Actions to be deferred */
+int	actions;			/* Actions performed */
 
-#define	DA_MEDIA	0x0001		/* media command */
-#define	DA_MEDIAOPTSET	0x0002		/* mediaopt command */
-#define	DA_MEDIAOPTCLR	0x0004		/* -mediaopt command */
-#define	DA_MEDIAOPT	(DA_MEDIAOPTSET|DA_MEDIAOPTCLR)
+#define	A_MEDIA		0x0001		/* media command */
+#define	A_MEDIAOPTSET	0x0002		/* mediaopt command */
+#define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
+#define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 
 #define	NEXTARG		0xffffff
 
 struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
-	int	c_deferred_action;	/* defered action */
+	int	c_action;	/* defered action */
 	void	(*c_func) __P((char *, int));
 } cmds[] = {
 	{ "up",		IFF_UP,		0,		setifflags } ,
@@ -209,9 +209,9 @@ struct	cmd {
 	{ "-link1",	-IFF_LINK1,	0,		setifflags } ,
 	{ "link2",	IFF_LINK2,	0,		setifflags } ,
 	{ "-link2",	-IFF_LINK2,	0,		setifflags } ,
-	{ "media",	NEXTARG,	DA_MEDIA,	setmedia },
-	{ "mediaopt",	NEXTARG,	DA_MEDIAOPTSET,	setmediaopt },
-	{ "-mediaopt",	NEXTARG,	DA_MEDIAOPTCLR,	unsetmediaopt },
+	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
+	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
+	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
@@ -388,7 +388,7 @@ main(argc, argv)
 				argc--, argv++;
 			} else
 				(*p->c_func)(argv[0], p->c_parameter);
-			deferred_actions |= p->c_deferred_action;
+			actions |= p->c_action;
 		}
 		argc--, argv++;
 	}
@@ -692,7 +692,7 @@ init_current_media()
 	 * If we have not yet done so, grab the currently-selected
 	 * media.
 	 */
-	if ((deferred_actions & (DA_MEDIA|DA_MEDIAOPT)) == 0) {
+	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
 		(void) memset(&ifmr, 0, sizeof(ifmr));
 		(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
 
@@ -717,7 +717,7 @@ void
 process_media_commands()
 {
 
-	if ((deferred_actions & (DA_MEDIA|DA_MEDIAOPT)) == 0) {
+	if ((actions & (A_MEDIA|A_MEDIAOPT)) == 0) {
 		/* Nothing to do. */
 		return;
 	}
@@ -746,11 +746,11 @@ setmedia(val, d)
 	init_current_media();
 
 	/* Only one media command may be given. */
-	if (deferred_actions & DA_MEDIA)
+	if (actions & A_MEDIA)
 		errx(1, "only one `media' command may be issued");
 
 	/* Must not come after mediaopt commands */
-	if (deferred_actions & DA_MEDIAOPT)
+	if (actions & A_MEDIAOPT)
 		errx(1, "may not issue `media' after `mediaopt' commands");
 
 	type = IFM_TYPE(media_current);
@@ -774,7 +774,7 @@ setmediaopt(val, d)
 	init_current_media();
 
 	/* Can only issue `mediaopt' once. */
-	if (deferred_actions & DA_MEDIAOPTSET)
+	if (actions & A_MEDIAOPTSET)
 		errx(1, "only one `mediaopt' command may be issued");
 
 	mediaopt_set = get_media_options(IFM_TYPE(media_current), val);
@@ -791,11 +791,11 @@ unsetmediaopt(val, d)
 	init_current_media();
 
 	/* Can only issue `-mediaopt' once. */
-	if (deferred_actions & DA_MEDIAOPTCLR)
+	if (actions & A_MEDIAOPTCLR)
 		errx(1, "only one `-mediaopt' command may be issued");
 
 	/* May not issue `media' and `-mediaopt'. */
-	if (deferred_actions & DA_MEDIA)
+	if (actions & A_MEDIA)
 		errx(1, "may not issue both `media' and `-mediaopt'");
 
 	mediaopt_clear = get_media_options(IFM_TYPE(media_current), val);
