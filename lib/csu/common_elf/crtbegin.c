@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.15 2001/12/30 23:26:20 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.16 2001/12/30 23:45:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,13 @@ static char __EH_FRAME_BEGIN__[]
     __attribute__((section(".eh_frame"), aligned(4))) = { };
 #endif
 
+#if defined(JCR) && defined(__GNUC__)
+extern void _Jv_RegisterClasses(void *) __attribute__((weak));
+
+static void *__JCR_LIST__[]
+    __attribute__((section(".jcr"))) = { };
+#endif
+
 static void __dtors(void);
 static void __ctors(void);
 
@@ -128,6 +135,11 @@ _init()
 			__register_frame_info(__EH_FRAME_BEGIN__, &object);
 #endif /* __GNUC__ */
 #endif /* DWARF2_EH */
+
+#if defined(JCR) && defined(__GNUC__)
+		if (__JCR_LIST__[0] != NULL && _Jv_RegisterClasses != NULL)
+			_Jv_RegisterClasses(__JCR_LIST__);
+#endif /* JCR && __GNUC__ */
 
 		__ctors();
 	}
