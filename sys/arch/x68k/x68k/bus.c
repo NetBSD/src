@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.25 2005/01/18 07:12:16 chs Exp $	*/
+/*	$NetBSD: bus.c,v 1.26 2005/03/09 19:04:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25 2005/01/18 07:12:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26 2005/03/09 19:04:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,11 @@ x68k_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct x68k_bus_dmamap *)mapstore;
 	map->x68k_dm_size = size;
 	map->x68k_dm_segcnt = nsegments;
-	map->x68k_dm_maxsegsz = maxsegsz;
+	map->x68k_dm_maxmaxsegsz = maxsegsz;
 	map->x68k_dm_boundary = boundary;
 	map->x68k_dm_bounce_thresh = t->_bounce_thresh;
 	map->x68k_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -152,6 +153,7 @@ x68k_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 	if (buflen > map->x68k_dm_size)
 		return (EINVAL);
@@ -182,6 +184,7 @@ x68k_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -228,6 +231,7 @@ x68k_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -291,6 +295,7 @@ x68k_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_maxsegsz = map->x68k_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
@@ -595,7 +600,7 @@ x68k_bus_dmamap_load_buffer(bus_dmamap_t map, void *buf, bus_size_t buflen,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->x68k_dm_maxsegsz &&
+			     map->dm_maxsegsz &&
 			    (map->x68k_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
