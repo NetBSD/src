@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:03:33 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -29,7 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 
@@ -41,52 +40,60 @@
 #include <biosdisk.h>
 
 static struct {
-    char *name;
-    int biosdev;
-} biosdevtab[] = {
-    {"fd", 0},
-    {"wd", 0x80},
-    {"sd", 0x80},
-    {"hd", 0x80}
+	char           *name;
+	int             biosdev;
+}               biosdevtab[] = {
+	{
+		"fd", 0
+	},
+	{
+		"wd", 0x80
+	},
+	{
+		"sd", 0x80
+	},
+	{
+		"hd", 0x80
+	}
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
 static int
 dev2bios(devname, unit, biosdev)
-char *devname;
-unsigned int unit;
-int *biosdev;
+	char           *devname;
+	unsigned int    unit;
+	int            *biosdev;
 {
-    int i;
+	int             i;
 
-    for(i = 0; i < NUMBIOSDEVS; i++)
-	if(!strcmp(devname, biosdevtab[i].name)) {
-	    *biosdev = biosdevtab[i].biosdev + unit;
-	    break;
-	}
-    if(i == NUMBIOSDEVS)
-	return(ENXIO);
+	for (i = 0; i < NUMBIOSDEVS; i++)
+		if (!strcmp(devname, biosdevtab[i].name)) {
+			*biosdev = biosdevtab[i].biosdev + unit;
+			break;
+		}
+	if (i == NUMBIOSDEVS)
+		return (ENXIO);
 
-    if(unit >= 4)  /* ??? */
-	return(EUNIT);
+	if (unit >= 4)		/* ??? */
+		return (EUNIT);
 
-    return(0);
+	return (0);
 }
 
 int
 bios2dev(biosdev, devname, unit)
-int biosdev;
-char **devname;
-unsigned int *unit;
+	int             biosdev;
+	char          **devname;
+	unsigned int   *unit;
 {
-    if(biosdev & 0x80) /* call it "hd", we don't know better */
-	*devname = biosdevtab[3].name;
-    else
-	*devname = biosdevtab[0].name;
+	if (biosdev & 0x80)	/* call it "hd", we don't know better */
+		*devname = biosdevtab[3].name;
+	else
+		*devname = biosdevtab[0].name;
 
-    *unit = biosdev & 0x7f;
+	*unit = biosdev & 0x7f;
 
-    return(0);
+	return (0);
 }
 
 /*
@@ -94,22 +101,22 @@ unsigned int *unit;
  */
 int
 devopen(f, fname, file)
-struct open_file *f;
-const char *fname;
-char **file;
+	struct open_file *f;
+	const char     *fname;
+	char          **file;
 {
-    char *fsname, *devname;
-    unsigned int unit, partition;
-    int biosdev;
-    int error;
-    struct devsw *dp;
+	char           *fsname, *devname;
+	unsigned int    unit, partition;
+	int             biosdev;
+	int             error;
+	struct devsw   *dp;
 
-    if((error = parsebootfile(fname, &fsname, &devname,
-			      &unit, &partition, (const char**)file))
-       || (error = dev2bios(devname, unit, &biosdev)))
-	return(error);
+	if ((error = parsebootfile(fname, &fsname, &devname,
+				   &unit, &partition, (const char **) file))
+	    || (error = dev2bios(devname, unit, &biosdev)))
+		return (error);
 
-    dp = &devsw[0]; /* must be biosdisk */
-    f->f_dev = dp;
-    return(biosdiskopen(f, biosdev, partition));
+	dp = &devsw[0];		/* must be biosdisk */
+	f->f_dev = dp;
+	return (biosdiskopen(f, biosdev, partition));
 }
