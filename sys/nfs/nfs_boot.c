@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.37 1997/09/09 21:39:17 gwr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.38 1997/09/13 06:16:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ int nfs_boot_init(nd, procp)
  * This is defined as BSS so machine-dependent code
  * may provide a data definition to override this.
  */
-int nfs_boot_rfc951; /* 0: BOOTP. 1: RARP/SUNRPC */
+int nfs_boot_rfc951; /* 1: BOOTP. 0: RARP/SUNRPC */
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
