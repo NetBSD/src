@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.24 2004/01/17 05:42:50 dbj Exp $	*/
+/*	$NetBSD: args.c,v 1.25 2004/01/17 20:48:57 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.24 2004/01/17 05:42:50 dbj Exp $");
+__RCSID("$NetBSD: args.c,v 1.25 2004/01/17 20:48:57 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ jcl(char **argv)
 		 * and didn't want the bs semantics, so we don't warn.
 		 */
 		if (ddflags & (C_BLOCK | C_LCASE | C_SWAB | C_UCASE |
-		    C_UNBLOCK | C_OSYNC | C_ASCII | C_EBCDIC)) {
+		    C_UNBLOCK | C_OSYNC | C_ASCII | C_EBCDIC | C_SPARSE)) {
 			ddflags &= ~C_BS;
 			ddflags |= C_IBS|C_OBS;
 		}
@@ -306,6 +306,7 @@ static const struct conv {
 	{ "oldebcdic",	C_EBCDIC,	C_ASCII,	a2e_32V },
 	{ "oldibm",	C_EBCDIC,	C_ASCII,	a2ibm_32V },
 	{ "osync",	C_OSYNC,	C_BS,		NULL },
+	{ "sparse",	C_SPARSE,	0,		NULL },
 	{ "swab",	C_SWAB,		0,		NULL },
 	{ "sync",	C_SYNC,		0,		NULL },
 	{ "ucase",	C_UCASE,	C_LCASE,	NULL },
