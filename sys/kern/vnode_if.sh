@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.20 2000/09/13 15:50:26 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -177,15 +177,16 @@ function doit() {
 	printf("};\n");
 	printf("extern struct vnodeop_desc %s_desc;\n", name);
 	# Prototype it.
-	protoarg = sprintf("static __inline int %s __P((", toupper(name));
+	printf("#ifndef VNODE_OP_NOINLINE\n");
+	printf("static __inline\n");
+	printf("#endif\n");
+	protoarg = sprintf("int %s(", toupper(name));
 	protolen = length(protoarg);
 	printf("%s", protoarg);
 	for (i=0; i<argc; i++) {
 		protoarg = sprintf("%s", argtype[i]);
 		if (i < (argc-1)) protoarg = (protoarg ", ");
 		arglen = length(protoarg);
-		if (i == (argc-1))
-			arglen += length(" __attribute__((__unused__))");
 		if ((protolen + arglen) > 77) {
 			protoarg = ("\n    " protoarg);
 			arglen += 4;
@@ -194,8 +195,13 @@ function doit() {
 		printf("%s", protoarg);
 		protolen += arglen;
 	}
-	printf(")) __attribute__((__unused__));\n");
+	printf(")\n");
+	printf("#ifndef VNODE_OP_NOINLINE\n");
+	printf("__attribute__((__unused__))\n");
+	printf("#endif\n");
+	printf(";\n");
 	# Define inline function.
+	printf("#ifndef VNODE_OP_NOINLINE\n");
 	printf("static __inline int %s(", toupper(name));
 	for (i=0; i<argc; i++) {
 		printf("%s", argname[i]);
@@ -212,6 +218,7 @@ function doit() {
 	}
 	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
 		argname[0], arg0special, name);
+	printf("#endif\n");
 }
 BEGIN	{
 	arg0special="";
@@ -248,6 +255,7 @@ echo -n "$copyright"
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/buf.h>
 #include <sys/vnode.h>
 
 struct vnodeop_desc vop_default_desc = {
@@ -327,6 +335,29 @@ function doit() {
 	do_offset("struct componentname *");
 	# transport layer information
 	printf ("\tNULL,\n};\n");
+
+	# Define function.
+	printf("#ifdef VNODE_OP_NOINLINE\n");
+	printf("int\n%s(", toupper(name));
+	for (i=0; i<argc; i++) {
+		printf("%s", argname[i]);
+		if (i < (argc-1)) printf(", ");
+	}
+	printf(")\n");
+	for (i=0; i<argc; i++) {
+		printf("\t%s %s;\n", argtype[i], argname[i]);
+	}
+	printf("{\n\tstruct %s_args a;\n", name);
+	printf("\ta.a_desc = VDESC(%s);\n", name);
+	for (i=0; i<argc; i++) {
+		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
+	}
+	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
+		argname[0], arg0special, name);
+	printf("#endif\n");
+}
+BEGIN	{
+	arg0special="";
 }
 END	{
 	printf("\n/* Special cases: */\n");
@@ -334,6 +365,7 @@ END	{
 	argdir[0]="IN";
 	argtype[0]="struct buf *";
 	argname[0]="bp";
+	arg0special="->b_vp";
 	willrele[0]=0;
 	name="vop_strategy";
 	doit();
