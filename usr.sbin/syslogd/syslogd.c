@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.25 2004/11/18 01:13:25 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.26 2004/11/18 01:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.25 2004/11/18 01:13:25 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.26 2004/11/18 01:45:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,19 +233,18 @@ int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
 int	SyncKernel = 0;		/* write kernel messages synchronously */
-volatile sig_atomic_t gothup = 0; /* got SIGHUP */
 
 void	cfline(char *, struct filed *, char *, char *);
 char   *cvthname(struct sockaddr_storage *);
 void	deadq_enter(pid_t, const char *);
 int	deadq_remove(pid_t);
 int	decode(const char *, CODE *);
-void	die(int);
+void	die(struct kevent *);	/* SIGTERM kevent dispatch routine */
 void	domark(int);
 void	fprintlog(struct filed *, int, char *);
 int	getmsgbufsize(void);
 int*	socksetup(int);
-void	init(void);
+void	init(struct kevent *);	/* SIGHUP kevent dispatch routine */
 void	logerror(const char *, ...);
 void	logmsg(int, char *, char *, int);
 void	log_deadchild(pid_t, int, const char *);
@@ -254,7 +253,6 @@ int	matches_spec(const char *, const char *,
 void	printline(char *, char *);
 void	printsys(char *);
 int	p_open(char *, pid_t *);
-void	sighup(int);
 void	trim_localdomain(char *);
 void	reapchild(int);
 void	usage(void);
@@ -288,8 +286,6 @@ main(int argc, char *argv[])
 	int funixsize = 0, funixmaxsize = 0;
 	struct kevent events[16];
 	struct sockaddr_un sunx;
-	struct sigaction sact;
-	sigset_t mask;
 	char **pp;
 	struct kevent *ev;
 	uid_t uid = 0;
@@ -369,7 +365,7 @@ main(int argc, char *argv[])
 			if (uid != l) {
 				errno = 0;
 				logerror("UID out of range");
-				die(0);
+				die(NULL);
 			}
 		} else {
 getuser:
@@ -378,7 +374,7 @@ getuser:
 			} else {
 				errno = 0;  
 				logerror("Cannot find user `%s'", user);
-				die (0);
+				die(NULL);
 			}
 		}
 	}
@@ -394,7 +390,7 @@ getuser:
 			if (gid != l) {
 				errno = 0;
 				logerror("GID out of range");
-				die(0);
+				die(NULL);
 			}
 		} else {
 getgroup:
@@ -403,14 +399,14 @@ getgroup:
 			} else {
 				errno = 0;
 				logerror("Cannot find group `%s'", group);
-				die(0);
+				die(NULL);
 			}
 		}
 	}
 
 	if (access (root, F_OK | R_OK)) {
 		logerror("Cannot access `%s'", root);
-		die (0);
+		die(NULL);
 	}
 
 	consfile.f_type = F_CONSOLE;
@@ -423,23 +419,30 @@ getgroup:
 	linebuf = malloc(linebufsize);
 	if (linebuf == NULL) {
 		logerror("Couldn't allocate line buffer");
-		die(0);
+		die(NULL);
 	}
-	(void)signal(SIGTERM, die);
-	(void)signal(SIGINT, Debug ? die : SIG_IGN);
-	(void)signal(SIGQUIT, Debug ? die : SIG_IGN);
+
 	/*
-	 * We don't want the SIGCHLD and SIGHUP handlers to interfere
-	 * with each other; they are likely candidates for being called
-	 * simultaneously (SIGHUP closes pipe descriptor, process dies,
-	 * SIGCHLD happens).
+	 * Always exit on SIGTERM.  Also exit on SIGINT and SIGQUIT
+	 * if we're debugging.
 	 */
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGHUP);
-	sact.sa_handler = reapchild;
-	sact.sa_mask = mask;
-	sact.sa_flags = SA_RESTART;
-	(void)sigaction(SIGCHLD, &sact, NULL);
+	(void)signal(SIGTERM, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+	ev = allocevchange();
+	EV_SET(ev, SIGTERM, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) die);
+	if (Debug) {
+		ev = allocevchange();
+		EV_SET(ev, SIGINT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+		    (intptr_t) die);
+
+		ev = allocevchange();
+		EV_SET(ev, SIGQUIT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+		    (intptr_t) die);
+	}
+
+	(void)signal(SIGCHLD, reapchild);
 	(void)signal(SIGALRM, domark);
 	(void)signal(SIGPIPE, SIG_IGN);	/* We'll catch EPIPE instead. */
 
@@ -452,7 +455,7 @@ getgroup:
 	funix = (int *)malloc(sizeof(int) * funixsize);
 	if (funix == NULL) {
 		logerror("Couldn't allocate funix descriptors");
-		die(0);
+		die(NULL);
 	}
 	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
 		dprintf("Making unix dgram socket `%s'\n", *pp);
@@ -465,12 +468,12 @@ getgroup:
 		    (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
 		    chmod(*pp, 0666) < 0) {
 			logerror("Cannot create `%s'", *pp);
-			die(0);
+			die(NULL);
 		}
 		dprintf("Listening on unix dgram socket `%s'\n", *pp);
 	}
 
-	init();
+	init(NULL);
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("Can't open `%s' (%d)\n", _PATH_KLOG, errno);
@@ -480,18 +483,16 @@ getgroup:
 
 	if ((fkq = kqueue()) < 0) {
 		logerror("Cannot create event queue");
-		die(0);
+		die(NULL);
 	}
 
 	dprintf("Off & running....\n");
 
-	/* prevent SIGHUP and SIGCHLD handlers from running together */
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGCHLD);
-	sact.sa_handler = sighup;
-	sact.sa_mask = mask;
-	sact.sa_flags = SA_RESTART;
-	(void)sigaction(SIGHUP, &sact, NULL);
+	/* Re-read configuration on SIGHUP. */
+	(void) signal(SIGHUP, SIG_IGN);
+	ev = allocevchange();
+	EV_SET(ev, SIGHUP, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) init);
 
 	if (fklog >= 0) {
 		ev = allocevchange();
@@ -517,17 +518,17 @@ getgroup:
 	dprintf("Attempt to chroot to `%s'\n", root);  
 	if (chroot(root)) {
 		logerror("Failed to chroot to `%s'", root);
-		die(0);
+		die(NULL);
 	}
 	dprintf("Attempt to set GID/EGID to `%d'\n", gid);  
 	if (setgid(gid) || setegid(gid)) {
 		logerror("Failed to set gid to `%d'", gid);
-		die(0);
+		die(NULL);
 	}
 	dprintf("Attempt to set UID/EUID to `%d'\n", uid);  
 	if (setuid(uid) || seteuid(uid)) {
 		logerror("Failed to set uid to `%d'", uid);
-		die(0);
+		die(NULL);
 	}
 
 	/* 
@@ -557,10 +558,6 @@ getgroup:
 		if (rv < 0) {
 			if (errno != EINTR)
 				logerror("kevent() failed");
-			if (gothup) {
-				init();
-				gothup = 0;
-			}
 			continue;
 		}
 		dprintf("Got a message (%d)\n", rv);
@@ -707,14 +704,14 @@ logpath_add(char ***lp, int *szp, int *maxszp, char *new)
 		nlp = realloc(*lp, sizeof(char *) * (newmaxsz + 1));
 		if (nlp == NULL) {
 			logerror("Couldn't allocate line buffer");
-			die(0);
+			die(NULL);
 		}
 		*lp = nlp;
 		*maxszp = newmaxsz;
 	}
 	if (((*lp)[(*szp)++] = strdup(new)) == NULL) {
 		logerror("Couldn't allocate logpath");
-		die(0);
+		die(NULL);
 	}
 	(*lp)[(*szp)] = NULL;		/* always keep it NULL terminated */
 }
@@ -730,7 +727,7 @@ logpath_fileadd(char ***lp, int *szp, int *maxszp, char *file)
 	fp = fopen(file, "r");
 	if (fp == NULL) {
 		logerror("Could not open socket file list `%s'", file);
-		die(0);
+		die(NULL);
 	}
 
 	while ((line = fgetln(fp, &len))) {
@@ -1256,13 +1253,6 @@ wallmsg(struct filed *f, struct iovec *iov)
 }
 
 void
-sighup(int signo)
-{
-
-	gothup = 1;
-}
-
-void
 reapchild(int signo)
 {
 	int status;
@@ -1441,7 +1431,7 @@ logerror(const char *fmt, ...)
 }
 
 void
-die(int signo)
+die(struct kevent *ev)
 {
 	struct filed *f;
 	char **p;
@@ -1455,8 +1445,8 @@ die(int signo)
 			(void) close(f->f_file);
 	}
 	errno = 0;
-	if (signo)
-		logerror("Exiting on signal %d", signo);
+	if (ev != NULL)
+		logerror("Exiting on signal %d", (int) ev->ident);
 	else
 		logerror("Fatal error, exiting");
 	for (p = LogPaths; p && *p; p++)
@@ -1468,7 +1458,7 @@ die(int signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init(void)
+init(struct kevent *ev)
 {
 	int i;
 	FILE *cf;
@@ -1536,7 +1526,7 @@ init(void)
 		for (i = 0; i < *finet; i++) {
 			if (close(finet[i+1]) < 0) {
 				logerror("close() failed");
-				die(0);
+				die(NULL);
 			}
 		}
 	}
@@ -1669,7 +1659,7 @@ init(void)
 			for (i = 0; i < *finet; i++) {
 				if (shutdown(finet[i+1], SHUT_RD) < 0) {
 					logerror("shutdown() failed");
-					die(0);
+					die(NULL);
 				}
 			}
 		} else
@@ -1681,10 +1671,9 @@ init(void)
 	dprintf("syslogd: restarted\n");
 	/*
 	 * Log a change in hostname, but only on a restart (we detect this
-	 * by looking for an empty oldLocalHostName).
+	 * by checking to see if we're passed a kevent).
 	 */
-	if (oldLocalHostName[0] == '\0' &&
-	    strcmp(oldLocalHostName, LocalHostName) != 0) {
+	if (ev != NULL && strcmp(oldLocalHostName, LocalHostName) != 0) {
 		(void)snprintf(hostMsg, sizeof(hostMsg),
 		    "syslogd: host name changed, \"%s\" to \"%s\"",
 		    oldLocalHostName, LocalHostName);
@@ -1973,7 +1962,7 @@ socksetup(int af)
 	if (error) {
 		logerror(gai_strerror(error));
 		errno = 0;
-		die(0);
+		die(NULL);
 	}
 
 	/* Count max number of sockets we may open */
@@ -1982,7 +1971,7 @@ socksetup(int af)
 	socks = malloc((maxs+1) * sizeof(int));
 	if (!socks) {
 		logerror("Couldn't allocate memory for sockets");
-		die(0);
+		die(NULL);
 	}
 
 	*socks = 0;   /* num of sockets counter at start of array */
@@ -2014,7 +2003,7 @@ socksetup(int af)
 		if(Debug)
 			return(NULL);
 		else
-			die(0);
+			die(NULL);
 	}
 	if (res)
 		freeaddrinfo(res);
