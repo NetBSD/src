@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.28 1997/09/13 09:05:52 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.29 1997/09/21 01:06:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.28 1997/09/13 09:05:52 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.29 1997/09/21 01:06:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1221,7 +1221,7 @@ shell(argc, argv)
 	pid_t pid;
 	sig_t old1, old2;
 	char shellnam[MAXPATHLEN], *shell, *namep;
-	union wait status;
+	int wait_status;
 
 	old1 = signal (SIGINT, SIG_IGN);
 	old2 = signal (SIGQUIT, SIG_IGN);
@@ -1256,7 +1256,7 @@ shell(argc, argv)
 		exit(1);
 	}
 	if (pid > 0)
-		while (wait((int *)&status) != pid)
+		while (wait(&wait_status) != pid)
 			;
 	(void)signal(SIGINT, old1);
 	(void)signal(SIGQUIT, old2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 1997/08/23 07:32:55 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.14 1997/09/21 01:06:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.13 1997/08/23 07:32:55 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.14 1997/09/21 01:06:32 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -197,6 +197,7 @@ login(host, user, pass)
 	char *acct;
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
 	char hostname[MAXHOSTNAMELEN];
+	struct passwd *pw;
 	int n, aflag = 0;
 
 	acct = NULL;
@@ -217,7 +218,12 @@ login(host, user, pass)
 		/*
 		 * Set up anonymous login password.
 		 */
-		user = getlogin();
+		if ((user = getlogin()) == NULL) {
+			if ((pw = getpwuid(getuid())) == NULL)
+				user = "anonymous";
+			else
+				user = pw->pw_name;
+		}
 		gethostname(hostname, MAXHOSTNAMELEN);
 #ifndef DONT_CHEAT_ANONPASS
 		/*
@@ -240,12 +246,8 @@ login(host, user, pass)
 	while (user == NULL) {
 		char *myname = getlogin();
 
-		if (myname == NULL) {
-			struct passwd *pp = getpwuid(getuid());
-
-			if (pp != NULL)
-				myname = pp->pw_name;
-		}
+		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
+			myname = pw->pw_name;
 		if (myname)
 			printf("Name (%s:%s): ", host, myname);
 		else
@@ -500,8 +502,10 @@ remotemodtime(file, noisy)
 {
 	int overbose;
 	time_t rtime;
+	int ocode;
 
 	overbose = verbose;
+	ocode = code;
 	rtime = -1;
 	if (debug == 0)
 		verbose = -1;
@@ -526,6 +530,8 @@ remotemodtime(file, noisy)
 	} else if (noisy && debug == 0)
 		puts(reply_string);
 	verbose = overbose;
+	if (rtime == -1)
+		code = ocode;
 	return (rtime);
 }
 
