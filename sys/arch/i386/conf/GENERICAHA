@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.47 1994/07/01 20:09:57 mycroft Exp $
+#	$Id: GENERICAHA,v 1.48 1994/07/04 20:22:38 cgd Exp $
 #
 
 machine		"i386"
@@ -13,7 +13,7 @@ timezone	8 dst
 maxusers	10
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
-options		INET,ISOFS,NFSCLIENT
+options		INET,"CD9660",NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
