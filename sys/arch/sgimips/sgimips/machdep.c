@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2001/11/11 17:21:41 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2001/11/14 22:47:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -198,7 +198,15 @@ mach_init(argc, argv, envp)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
+#if 0
+		/*
+		 * This isn't right:  end is a KSEG0 address, and the
+		 * kernel entry is a KSEG0 address.  Adding them overflows
+		 * into user address space and will hang during boot.
+		 * For now, leave esym pointing to end.
+		 */
 		esym += ((Elf_Ehdr *)end)->e_entry;
+#endif
 		kernend = (caddr_t)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
