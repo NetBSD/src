@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.121 2000/11/01 23:51:38 eeh Exp $	*/
+/*	$NetBSD: tty.c,v 1.122 2000/11/05 15:37:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -770,8 +770,7 @@ ttioctl(tp, cmd, data, flag, p)
 #endif
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
-		    !sigismember(&p->p_sigignore, SIGTTOU) &&
-		    !sigismember(&p->p_sigmask, SIGTTOU)) {
+		    !sigismasked(p, SIGTTOU)) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
 			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH, ttybg, 0);
 			if (error)
