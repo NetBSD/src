@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.9 1998/02/28 10:38:55 ross Exp $ */
+/* $NetBSD: loadfile.c,v 1.10 1998/06/25 06:45:46 ross Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@ elf_exec(fd, elf, entryp)
 	Elf_Off off;
 	int i;
 	int first = 1;
+	int havesyms;
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		Elf_Phdr phdr;
@@ -276,24 +277,31 @@ elf_exec(fd, elf, entryp)
 
 	/*
 	 * Now load the symbol sections themselves.  Make sure the
-	 * sections are aligned.
+	 * sections are aligned. Don't bother with string tables if
+	 * there are no symbol sections.
 	 */
 	off = roundup((sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr))),
 	    sizeof(long));
+	for (havesyms = i = 0; i < elf->e_shnum; i++)
+		if (shp[i].sh_type == Elf_sht_symtab)
+			havesyms = 1;
 	for (first = 1, i = 0; i < elf->e_shnum; i++) {
 		if (shp[i].sh_type == Elf_sht_symtab ||
 		    shp[i].sh_type == Elf_sht_strtab) {
 			printf("%s%ld", first ? " [" : "+", shp[i].sh_size);
-			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1)  {
-				printf("\nlseek symbols: %s\n",
-				    strerror(errno));
-				return (1);
-			}
-			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
-			    shp[i].sh_size) {
-				printf("\nread symbols: %s\n",
-				    strerror(errno));
-				return (1);
+			if (havesyms) {
+				if (lseek(fd, shp[i].sh_offset, SEEK_SET)
+					== -1) {
+					printf("\nlseek symbols: %s\n",
+					    strerror(errno));
+					return (1);
+				}
+				if (read(fd, (void *)ffp_save, shp[i].sh_size)
+					!= shp[i].sh_size) {
+					printf("\nread symbols: %s\n",
+					    strerror(errno));
+					return (1);
+				}
 			}
 			ffp_save += roundup(shp[i].sh_size, sizeof(long));
 			shp[i].sh_offset = off;
