@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.8 1999/11/02 10:55:47 lukem Exp $	*/
+/*	$NetBSD: split.c,v 1.9 2003/03/20 14:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.8 1999/11/02 10:55:47 lukem Exp $");
+__RCSID("$NetBSD: split.c,v 1.9 2003/03/20 14:12:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,28 +56,26 @@ __RCSID("$NetBSD: split.c,v 1.8 1999/11/02 10:55:47 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#define DEFLINE	1000			/* Default num lines per file. */
+#define DEFLINE	1000		/* Default num lines per file. */
 
-long	 bytecnt;			/* Byte count to split on. */
-long	 numlines;			/* Line count to split on. */
-int	 file_open;			/* If a file open. */
-int	 ifd = -1, ofd = -1;		/* Input/output file descriptors. */
-char	 bfr[MAXBSIZE];			/* I/O buffer. */
-char	 fname[MAXPATHLEN];		/* File name prefix. */
+static int file_open;		/* If a file open. */
+static int ifd = -1, ofd = -1;	/* Input/output file descriptors. */
+static char fname[MAXPATHLEN];	/* File name prefix. */
 
-int  main __P((int, char **));
-void newfile __P((void));
-void split1 __P((void));
-void split2 __P((void));
-void usage __P((void));
+int  main(int, char **);
+static void newfile(void);
+static void split1(unsigned long long);
+static void split2(unsigned long long);
+static void usage(void) __attribute__((__noreturn__));
+static unsigned long long bigwrite __P((int, const void *, unsigned long long));
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *ep, *p;
+	unsigned long long bytecnt = 0;	/* Byte count to split on. */
+	unsigned long long numlines = 0;/* Line count to split on. */
 
 	while ((ch = getopt(argc, argv, "-0123456789b:l:")) != -1)
 		switch (ch) {
@@ -105,18 +103,18 @@ main(argc, argv)
 			ifd = 0;
 			break;
 		case 'b':		/* Byte count. */
-			if ((bytecnt = strtol(optarg, &ep, 10)) <= 0 ||
+			if ((bytecnt = strtoull(optarg, &ep, 10)) <= 0 ||
 			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
 				errx(1, "%s: illegal byte count.", optarg);
 			if (*ep == 'k')
 				bytecnt *= 1024;
 			else if (*ep == 'm')
-				bytecnt *= 1048576;
+				bytecnt *= 1024 * 1024;
 			break;
 		case 'l':		/* Line count. */
 			if (numlines != 0)
 				usage();
-			if ((numlines = strtol(optarg, &ep, 10)) <= 0 || *ep)
+			if ((numlines = strtoull(optarg, &ep, 10)) <= 0 || *ep)
 				errx(1, "%s: illegal line count.", optarg);
 			break;
 		default:
@@ -145,23 +143,24 @@ main(argc, argv)
 		ifd = 0;
 
 	if (bytecnt) {
-		split1();
-		exit (0);
+		split1(bytecnt);
+	} else {
+		split2(numlines);
 	}
-	split2();
-	exit(0);
+	return 0;
 }
 
 /*
  * split1 --
  *	Split the input by bytes.
  */
-void
-split1()
+static void
+split1(unsigned long long bytecnt)
 {
-	long bcnt;
-	int dist, len;
+	unsigned long long bcnt, dist;
+	ssize_t len;
 	char *C;
+	char bfr[MAXBSIZE];
 
 	for (bcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
@@ -177,26 +176,26 @@ split1()
 			}
 			if (bcnt + len >= bytecnt) {
 				dist = bytecnt - bcnt;
-				if (write(ofd, bfr, dist) != dist)
+				if (bigwrite(ofd, bfr, dist) != dist)
 					err(1, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
 				    len -= bytecnt, C += bytecnt) {
 					newfile();
-					if (write(ofd,
+					if (bigwrite(ofd,
 					    C, (int)bytecnt) != bytecnt)
 						err(1, "write");
 				}
 				if (len) {
 					newfile();
-					if (write(ofd, C, len) != len)
+					if (bigwrite(ofd, C, len) != len)
 						err(1, "write");
 				} else
 					file_open = 0;
 				bcnt = len;
 			} else {
 				bcnt += len;
-				if (write(ofd, bfr, len) != len)
+				if (bigwrite(ofd, bfr, len) != len)
 					err(1, "write");
 			}
 		}
@@ -206,12 +205,13 @@ split1()
  * split2 --
  *	Split the input by lines.
  */
-void
-split2()
+static void
+split2(unsigned long long numlines)
 {
-	long lcnt;
-	int len, bcnt;
+	unsigned long long lcnt, bcnt;
+	ssize_t len;
 	char *Ce, *Cs;
+	char bfr[MAXBSIZE];
 
 	for (lcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
@@ -228,7 +228,7 @@ split2()
 			for (Cs = Ce = bfr; len--; Ce++)
 				if (*Ce == '\n' && ++lcnt == numlines) {
 					bcnt = Ce - Cs + 1;
-					if (write(ofd, Cs, bcnt) != bcnt)
+					if (bigwrite(ofd, Cs, bcnt) != bcnt)
 						err(1, "write");
 					lcnt = 0;
 					Cs = Ce + 1;
@@ -239,7 +239,7 @@ split2()
 				}
 			if (Cs < Ce) {
 				bcnt = Ce - Cs;
-				if (write(ofd, Cs, bcnt) != bcnt)
+				if (bigwrite(ofd, Cs, bcnt) != bcnt)
 					err(1, "write");
 			}
 		}
@@ -249,10 +249,10 @@ split2()
  * newfile --
  *	Open a new output file.
  */
-void
-newfile()
+static void
+newfile(void)
 {
-	static long fnum;
+	static int fnum;
 	static int defname;
 	static char *fpnt;
 
@@ -285,10 +285,28 @@ newfile()
 		err(1, "%s", fname);
 }
 
-void
-usage()
+static unsigned long long
+bigwrite(int fd, const void *buf, unsigned long long len)
+{
+	const char *ptr = buf;
+	unsigned long long sofar = 0;
+
+	while (len != 0) {
+		ssize_t w, nw = (len > INT_MAX) ? INT_MAX : (ssize_t)len;
+		if  ((w = write(fd, ptr, nw)) == -1)
+			return sofar;
+		len -= w;
+		ptr += w;
+		sofar += w;
+	}
+	return sofar;
+}
+
+
+static void
+usage(void)
 {
 	(void)fprintf(stderr,
-"usage: split [-b byte_count] [-l line_count] [file [prefix]]\n");
+"Usage: %s [-b byte_count] [-l line_count] [file [prefix]]\n", getprogname());
 	exit(1);
 }
