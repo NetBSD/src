@@ -384,13 +384,34 @@
 
 9. Finalizing your installation.
 
-	Congratulations, you have successfully installed NetBSD _VER. When
-	you reboot into NetBSD, you should log in as "root" at the login
-	prompt.  There is no initial password, but if you're using the
-	machine in a networked environment, you should create yourself
-	an account and protect it and the "root" account with good passwords.
+	Congratulations, you have successfully installed NetBSD _VER.
+	You can now reboot the machine, and boot from harddisk. NetBSD
+	will enter single-user mode, and you will be presented with
+	a shell prompt. You should now edit the /etc/rc.conf file
+	to configure the system to suit your needs. To do this,
+	you might want to first make all local filesystems accessible
+	and set the terminal type, so that, for example, vi will work
+	properly. The following commands will do this:
 
-	Some of the files in the NetBSD _VER distribution might need to be
+		mount -a
+		TERM=pc3 ; export TERM
+
+	You should at least do the following in /etc/rc.conf:
+
+		* Change rc_configured=NO to rc_configured=YES
+		* Set the hostname in the 'hostname' line, e.g.
+		  hostname="somename"
+
+	You are advised to take a look at the other items in the
+	/etc/rc.conf file, and change them if you wish. After you
+	have made and saved the changes, reboot the machine again.
+
+	After reboot, you can log in "root" at the login prompt.  There
+	is no initial password, but if you're using the machine in a
+	networked environment, you should create yourself an account
+	and protect it and the "root" account with good passwords.
+
+	Some other files in the NetBSD _VER distribution might need to be
 	tailored for your site.  In particular, the /etc/sendmail.cf file will
 	almost definitely need to be adjusted, and other files in /etc will
 	probably need to be modified, as well.
@@ -399,7 +420,6 @@
 	depending on the procedure you followed. If you find any of
 	the files, you should remove them:
 
-		/.profile
 		/.termcap
 		/sysinst
 
