@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.18 1999/06/18 06:32:05 thorpej Exp $	*/
+/*	$NetBSD: gdt.c,v 1.19 1999/07/20 23:07:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lock.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -56,9 +57,7 @@ int gdt_count;		/* number of GDT entries in use */
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-int gdt_flags;
-#define	GDT_LOCKED	0x1
-#define	GDT_WANTED	0x2
+struct lock gdt_lock_store;
 
 static __inline void gdt_lock __P((void));
 static __inline void gdt_unlock __P((void));
@@ -82,22 +81,14 @@ static __inline void
 gdt_lock()
 {
 
-	while ((gdt_flags & GDT_LOCKED) != 0) {
-		gdt_flags |= GDT_WANTED;
-		tsleep(&gdt_flags, PZERO, "gdtlck", 0);
-	}
-	gdt_flags |= GDT_LOCKED;
+	(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
 }
 
 static __inline void
 gdt_unlock()
 {
 
-	gdt_flags &= ~GDT_LOCKED;
-	if ((gdt_flags & GDT_WANTED) != 0) {
-		gdt_flags &= ~GDT_WANTED;
-		wakeup(&gdt_flags);
-	}
+	(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
 }
 
 /*
@@ -168,7 +159,7 @@ gdt_compact()
 }
 
 /*
- * Grow or shrink the GDT.
+ * Initialize the GDT.
  */
 void
 gdt_init()
@@ -176,6 +167,8 @@ gdt_init()
 	size_t max_len, min_len;
 	struct region_descriptor region;
 	union descriptor *old_gdt;
+
+	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);
@@ -195,6 +188,9 @@ gdt_init()
 	lgdt(&region);
 }
 
+/*
+ * Grow or shrink the GDT.
+ */
 void
 gdt_grow()
 {
