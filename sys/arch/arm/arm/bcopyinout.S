@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.9.4.2 2002/11/18 02:36:47 he Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.9.4.3 2003/02/10 06:09:50 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,12 +38,13 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <sys/errno.h>
+
+RCSID("$NetBSD: bcopyinout.S,v 1.9.4.3 2003/02/10 06:09:50 jmc Exp $")	
 
 	.text
 	.align	0
 
-Lcurpcb:
+.Lcurpcb:
 	.word _C_LABEL(curpcb)
 
 #ifdef __PROG32
@@ -79,11 +80,11 @@ ENTRY(copyin)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -93,43 +94,43 @@ ENTRY(copyin)
 	 * If not too many bytes, take the slow path.
 	 */
 	cmp	r2, #0x08
-	blt	Licleanup
+	blt	.Licleanup
 
 	/*
 	 * Align destination to word boundary.
 	 */
 	and	r6, r1, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Lialend
-	.word	Lialend
-	.word	Lial1
-	.word	Lial2
-	.word	Lial3
-Lial3:	ldrbt	r6, [r0], #1
+	b	.Lialend
+	.word	.Lialend
+	.word	.Lial3
+	.word	.Lial2
+	.word	.Lial1
+.Lial3:	ldrbt	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lial2:	ldrbt	r7, [r0], #1
+.Lial2:	ldrbt	r7, [r0], #1
 	sub	r2, r2, #1
 	strb	r7, [r1], #1
-Lial1:	ldrbt	r6, [r0], #1
+.Lial1:	ldrbt	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lialend:
+.Lialend:
 
 	/*
 	 * If few bytes left, finish slow.
 	 */
 	cmp	r2, #0x08
-	blt	Licleanup
+	blt	.Licleanup
 
 	/*
 	 * If source is not aligned, finish slow.
 	 */
 	ands	r3, r0, #0x03
-	bne	Licleanup
+	bne	.Licleanup
 
 	cmp	r2, #0x60	/* Must be > 0x5f for unrolled cacheline */
-	blt	Licleanup8
+	blt	.Licleanup8
 
 	/*
 	 * Align destination to cacheline boundary.
@@ -139,34 +140,34 @@ Lialend:
 	 */
 	and	r6, r1, #0x1f
 	ldr	pc, [pc, r6]
-	b	Licaligned
-	.word	Licaligned
-	.word	Lical4
-	.word	Lical8
-	.word	Lical12
-	.word	Lical16
-	.word	Lical20
-	.word	Lical24
-	.word	Lical28
-Lical28:ldrt	r6, [r0], #4
+	b	.Licaligned
+	.word	.Licaligned
+	.word	.Lical28
+	.word	.Lical24
+	.word	.Lical20
+	.word	.Lical16
+	.word	.Lical12
+	.word	.Lical8
+	.word	.Lical4
+.Lical28:ldrt	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lical24:ldrt	r7, [r0], #4
+.Lical24:ldrt	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lical20:ldrt	r6, [r0], #4
+.Lical20:ldrt	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lical16:ldrt	r7, [r0], #4
+.Lical16:ldrt	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lical12:ldrt	r6, [r0], #4
+.Lical12:ldrt	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lical8:	ldrt	r7, [r0], #4
+.Lical8:ldrt	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lical4:	ldrt	r6, [r0], #4
+.Lical4:ldrt	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
 
@@ -184,7 +185,7 @@ Lical4:	ldrt	r6, [r0], #4
 	 * bytes -= 0x20;
 	 * copy cacheline
 	 */
-Licaligned:
+.Licaligned:
 	PREFETCH(r0, 32)
 	PREFETCH(r1, 32)
 
@@ -203,7 +204,7 @@ Licaligned:
 	stmia	r1!, {r6-r11}
 
 	cmp	r2, #0x40
-	bge	Licaligned
+	bge	.Licaligned
 
 	sub	r2, r2, #0x20
 
@@ -220,47 +221,47 @@ Licaligned:
 	stmia	r1!, {r6-r11}
 
 	cmp	r2, #0x08
-	blt	Liprecleanup
+	blt	.Liprecleanup
 
-Licleanup8:
+.Licleanup8:
 	ldrt	r8, [r0], #4
 	ldrt	r9, [r0], #4
 	sub	r2, r2, #8
 	stmia	r1!, {r8, r9}
 	cmp	r2, #8
-	bge	Licleanup8
+	bge	.Licleanup8
 
-Liprecleanup:
+.Liprecleanup:
 	/*
 	 * If we're done, bail.
 	 */
 	cmp	r2, #0
-	beq	Lout
+	beq	.Lout
 
-Licleanup:
+.Licleanup:
 	and	r6, r2, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Licend
-	.word	Lic4
-	.word	Lic1
-	.word	Lic2
-	.word	Lic3
-Lic4:	ldrbt	r6, [r0], #1
+	b	.Licend
+	.word	.Lic4
+	.word	.Lic1
+	.word	.Lic2
+	.word	.Lic3
+.Lic4:	ldrbt	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lic3:	ldrbt	r7, [r0], #1
+.Lic3:	ldrbt	r7, [r0], #1
 	sub	r2, r2, #1
 	strb	r7, [r1], #1
-Lic2:	ldrbt	r6, [r0], #1
+.Lic2:	ldrbt	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lic1:	ldrbt	r7, [r0], #1
+.Lic1:	ldrbt	r7, [r0], #1
 	subs	r2, r2, #1
 	strb	r7, [r1], #1
-Licend:
-	bne	Licleanup
+.Licend:
+	bne	.Licleanup
 
-Liout:
+.Liout:
 	mov	r0, #0
 
 	str	r5, [r4, #PCB_ONFAULT]
@@ -268,9 +269,7 @@ Liout:
 
 	mov	pc, lr
 
-Lcopyfault:
-	mov	r0, #EFAULT
-
+.Lcopyfault:
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
@@ -294,11 +293,11 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -308,77 +307,77 @@ ENTRY(copyout)
 	 * If not too many bytes, take the slow path.
 	 */
 	cmp	r2, #0x08
-	blt	Lcleanup
+	blt	.Lcleanup
 
 	/*
 	 * Align destination to word boundary.
 	 */
 	and	r6, r1, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Lalend
-	.word	Lalend
-	.word	Lal1
-	.word	Lal2
-	.word	Lal3
-Lal3:	ldrb	r6, [r0], #1
+	b	.Lalend
+	.word	.Lalend
+	.word	.Lal3
+	.word	.Lal2
+	.word	.Lal1
+.Lal3:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strbt	r6, [r1], #1
-Lal2:	ldrb	r7, [r0], #1
+.Lal2:	ldrb	r7, [r0], #1
 	sub	r2, r2, #1
 	strbt	r7, [r1], #1
-Lal1:	ldrb	r6, [r0], #1
+.Lal1:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strbt	r6, [r1], #1
-Lalend:
+.Lalend:
 
 	/*
 	 * If few bytes left, finish slow.
 	 */
 	cmp	r2, #0x08
-	blt	Lcleanup
+	blt	.Lcleanup
 
 	/*
 	 * If source is not aligned, finish slow.
 	 */
 	ands	r3, r0, #0x03
-	bne	Lcleanup
+	bne	.Lcleanup
 
 	cmp	r2, #0x60	/* Must be > 0x5f for unrolled cacheline */
-	blt	Lcleanup8
+	blt	.Lcleanup8
 
 	/*
 	 * Align source & destination to cacheline boundary.
 	 */
 	and	r6, r1, #0x1f
 	ldr	pc, [pc, r6]
-	b	Lcaligned
-	.word	Lcaligned
-	.word	Lcal4
-	.word	Lcal8
-	.word	Lcal12
-	.word	Lcal16
-	.word	Lcal20
-	.word	Lcal24
-	.word	Lcal28
-Lcal28:	ldr	r6, [r0], #4
+	b	.Lcaligned
+	.word	.Lcaligned
+	.word	.Lcal28
+	.word	.Lcal24
+	.word	.Lcal20
+	.word	.Lcal16
+	.word	.Lcal12
+	.word	.Lcal8
+	.word	.Lcal4
+.Lcal28:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	strt	r6, [r1], #4
-Lcal24:	ldr	r7, [r0], #4
+.Lcal24:ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	strt	r7, [r1], #4
-Lcal20:	ldr	r6, [r0], #4
+.Lcal20:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	strt	r6, [r1], #4
-Lcal16:	ldr	r7, [r0], #4
+.Lcal16:ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	strt	r7, [r1], #4
-Lcal12:	ldr	r6, [r0], #4
+.Lcal12:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	strt	r6, [r1], #4
-Lcal8:	ldr	r7, [r0], #4
+.Lcal8:	ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	strt	r7, [r1], #4
-Lcal4:	ldr	r6, [r0], #4
+.Lcal4:	ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	strt	r6, [r1], #4
 
@@ -396,7 +395,7 @@ Lcal4:	ldr	r6, [r0], #4
 	 * bytes -= 0x20;
 	 * copy cacheline
 	 */
-Lcaligned:
+.Lcaligned:
 	PREFETCH(r0, 32)
 	PREFETCH(r1, 32)
 
@@ -415,7 +414,7 @@ Lcaligned:
 	strt	r7, [r1], #4
 
 	cmp	r2, #0x40
-	bge	Lcaligned
+	bge	.Lcaligned
 
 	sub	r2, r2, #0x20
 
@@ -432,47 +431,47 @@ Lcaligned:
 	strt	r7, [r1], #4
 
 	cmp	r2, #0x08
-	blt	Lprecleanup
+	blt	.Lprecleanup
 
-Lcleanup8:
+.Lcleanup8:
 	ldmia	r0!, {r8-r9}
 	sub	r2, r2, #8
 	strt	r8, [r1], #4
 	strt	r9, [r1], #4
 	cmp	r2, #8
-	bge	Lcleanup8
+	bge	.Lcleanup8
 
-Lprecleanup:
+.Lprecleanup:
 	/*
 	 * If we're done, bail.
 	 */
 	cmp	r2, #0
-	beq	Lout
+	beq	.Lout
 
-Lcleanup:
+.Lcleanup:
 	and	r6, r2, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Lcend
-	.word	Lc4
-	.word	Lc1
-	.word	Lc2
-	.word	Lc3
-Lc4:	ldrb	r6, [r0], #1
+	b	.Lcend
+	.word	.Lc4
+	.word	.Lc1
+	.word	.Lc2
+	.word	.Lc3
+.Lc4:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strbt	r6, [r1], #1
-Lc3:	ldrb	r7, [r0], #1
+.Lc3:	ldrb	r7, [r0], #1
 	sub	r2, r2, #1
 	strbt	r7, [r1], #1
-Lc2:	ldrb	r6, [r0], #1
+.Lc2:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strbt	r6, [r1], #1
-Lc1:	ldrb	r7, [r0], #1
+.Lc1:	ldrb	r7, [r0], #1
 	subs	r2, r2, #1
 	strbt	r7, [r1], #1
-Lcend:
-	bne	Lcleanup
+.Lcend:
+	bne	.Lcleanup
 
-Lout:
+.Lout:
 	mov	r0, #0
 
 	str	r5, [r4, #PCB_ONFAULT]
@@ -497,11 +496,11 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -511,77 +510,77 @@ ENTRY(kcopy)
 	 * If not too many bytes, take the slow path.
 	 */
 	cmp	r2, #0x08
-	blt	Lkcleanup
+	blt	.Lkcleanup
 
 	/*
 	 * Align destination to word boundary.
 	 */
 	and	r6, r1, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Lkalend
-	.word	Lkalend
-	.word	Lkal1
-	.word	Lkal2
-	.word	Lkal3
-Lkal3:	ldrb	r6, [r0], #1
+	b	.Lkalend
+	.word	.Lkalend
+	.word	.Lkal3
+	.word	.Lkal2
+	.word	.Lkal1
+.Lkal3:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lkal2:	ldrb	r7, [r0], #1
+.Lkal2:	ldrb	r7, [r0], #1
 	sub	r2, r2, #1
 	strb	r7, [r1], #1
-Lkal1:	ldrb	r6, [r0], #1
+.Lkal1:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lkalend:
+.Lkalend:
 
 	/*
 	 * If few bytes left, finish slow.
 	 */
 	cmp	r2, #0x08
-	blt	Lkcleanup
+	blt	.Lkcleanup
 
 	/*
 	 * If source is not aligned, finish slow.
 	 */
 	ands	r3, r0, #0x03
-	bne	Lkcleanup
+	bne	.Lkcleanup
 
 	cmp	r2, #0x60	/* Must be > 0x5f for unrolled cacheline */
-	blt	Lkcleanup8
+	blt	.Lkcleanup8
 
 	/*
 	 * Align source & destination to cacheline boundary.
 	 */
 	and	r6, r1, #0x1f
 	ldr	pc, [pc, r6]
-	b	Lkcaligned
-	.word	Lkcaligned
-	.word	Lkcal4
-	.word	Lkcal8
-	.word	Lkcal12
-	.word	Lkcal16
-	.word	Lkcal20
-	.word	Lkcal24
-	.word	Lkcal28
-Lkcal28:ldr	r6, [r0], #4
+	b	.Lkcaligned
+	.word	.Lkcaligned
+	.word	.Lkcal28
+	.word	.Lkcal24
+	.word	.Lkcal20
+	.word	.Lkcal16
+	.word	.Lkcal12
+	.word	.Lkcal8
+	.word	.Lkcal4
+.Lkcal28:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lkcal24:ldr	r7, [r0], #4
+.Lkcal24:ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lkcal20:ldr	r6, [r0], #4
+.Lkcal20:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lkcal16:ldr	r7, [r0], #4
+.Lkcal16:ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lkcal12:ldr	r6, [r0], #4
+.Lkcal12:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
-Lkcal8:	ldr	r7, [r0], #4
+.Lkcal8:ldr	r7, [r0], #4
 	sub	r2, r2, #4
 	str	r7, [r1], #4
-Lkcal4:	ldr	r6, [r0], #4
+.Lkcal4:ldr	r6, [r0], #4
 	sub	r2, r2, #4
 	str	r6, [r1], #4
 
@@ -599,7 +598,7 @@ Lkcal4:	ldr	r6, [r0], #4
 	 * bytes -= 0x20;
 	 * copy cacheline
 	 */
-Lkcaligned:
+.Lkcaligned:
 	PREFETCH(r0, 32)
 	PREFETCH(r1, 32)
 
@@ -613,7 +612,7 @@ Lkcaligned:
 	stmia	r1!, {r6, r7}
 
 	cmp	r2, #0x40
-	bge	Lkcaligned
+	bge	.Lkcaligned
 
 	sub	r2, r2, #0x20
 
@@ -625,46 +624,46 @@ Lkcaligned:
 	stmia	r1!, {r6-r7}
 
 	cmp	r2, #0x08
-	blt	Lkprecleanup
+	blt	.Lkprecleanup
 
-Lkcleanup8:
+.Lkcleanup8:
 	ldmia	r0!, {r8-r9}
 	sub	r2, r2, #8
 	stmia	r1!, {r8-r9}
 	cmp	r2, #8
-	bge	Lkcleanup8
+	bge	.Lkcleanup8
 
-Lkprecleanup:
+.Lkprecleanup:
 	/*
 	 * If we're done, bail.
 	 */
 	cmp	r2, #0
-	beq	Lkout
+	beq	.Lkout
 
-Lkcleanup:
+.Lkcleanup:
 	and	r6, r2, #0x3
 	ldr	pc, [pc, r6, lsl #2]
-	b	Lkcend
-	.word	Lkc4
-	.word	Lkc1
-	.word	Lkc2
-	.word	Lkc3
-Lkc4:	ldrb	r6, [r0], #1
+	b	.Lkcend
+	.word	.Lkc4
+	.word	.Lkc1
+	.word	.Lkc2
+	.word	.Lkc3
+.Lkc4:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lkc3:	ldrb	r7, [r0], #1
+.Lkc3:	ldrb	r7, [r0], #1
 	sub	r2, r2, #1
 	strb	r7, [r1], #1
-Lkc2:	ldrb	r6, [r0], #1
+.Lkc2:	ldrb	r6, [r0], #1
 	sub	r2, r2, #1
 	strb	r6, [r1], #1
-Lkc1:	ldrb	r7, [r0], #1
+.Lkc1:	ldrb	r7, [r0], #1
 	subs	r2, r2, #1
 	strb	r7, [r1], #1
-Lkcend:
-	bne	Lkcleanup
+.Lkcend:
+	bne	.Lkcleanup
 
-Lkout:
+.Lkout:
 	mov	r0, #0
 
 	str	r5, [r4, #PCB_ONFAULT]
