@@ -1,8 +1,9 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This manual is derived from one contributed to Berkeley by
 .\" Michael Rendell of Memorial University of Newfoundland.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -31,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)tsort.1	6.3 (Berkeley) 4/23/91
+.\"     @(#)tsort.1	8.3 (Berkeley) 4/1/94
 .\"
-.Dd April 23, 1991
+.Dd April 1, 1994
 .Dt TSORT 1
 .Os
 .Sh NAME
@@ -41,6 +42,7 @@
 .Nd topological sort of a directed graph
 .Sh SYNOPSIS
 .Nm tsort
+.Op Fl l
 .Op Ar file
 .Sh DESCRIPTION
 .Nm Tsort
@@ -51,8 +53,8 @@ Input is taken from the named
 or from standard input if no file
 is given.
 .Pp
-Node names in the input are separated by white space and there must be an
-even number of nodes.
+Node names in the input are separated by white space and there must
+be an even number of node pairs.
 .Pp
 Presence of a node in a graph can be represented by an arc from the node
 to itself.
@@ -61,6 +63,13 @@ This is useful when a node is not connected to any other nodes.
 If the graph contains a cycle (and therefore cannot be properly sorted),
 one of the arcs in the cycle is ignored and the sort continues.
 Cycles are reported on standard error.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl l 
+Search for and display the longest cycle.
+Can take a very long time.
+.El
 .Sh SEE ALSO
 .Xr ar 1
 .Sh HISTORY
