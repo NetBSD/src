@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.8 1995/04/23 10:33:27 cgd Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,13 +106,12 @@ int *fdp;
 		}
 	}
 
-	hp = gethostbyname(host);
-	if (hp != 0) {
+	if (inet_aton(host, &ina) == 0) {
+		hp = gethostbyname(host);
+		if (hp == 0)
+			return (EINVAL);
 		ipp = (struct in_addr **) hp->h_addr_list;
 	} else {
-		ina.s_addr = inet_addr(host);
-		if (ina.s_addr == INADDR_NONE)
-			return (EINVAL);
 		ip[0] = &ina;
 		ip[1] = 0;
 		ipp = ip;
