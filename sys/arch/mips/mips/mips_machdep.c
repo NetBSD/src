@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.102 2000/09/16 07:20:16 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.103 2000/09/18 18:17:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.102 2000/09/16 07:20:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.103 2000/09/18 18:17:32 uch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -375,7 +375,8 @@ mips_vector_init()
 			mips_L1DCacheLSize = 16;
 			break;
 		}
-		mips1_ConfigCache();
+		mips_L1ICacheSize = mips1_icsize();
+		mips_L1DCacheSize = mips1_dcsize();
 		break;
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
