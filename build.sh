@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.123 2003/10/31 01:46:39 lukem Exp $
+#	$NetBSD: build.sh,v 1.124 2003/11/12 15:51:45 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,7 +87,7 @@ initdefaults()
 	# XXX Except that doesn't work on Solaris.
 	#
 	unset PWD
-	TOP=$(/bin/pwd -P)
+	TOP=$(/bin/pwd -P 2>/dev/null)
 
 	# Set defaults.
 	#
@@ -774,7 +774,7 @@ validatemakeparams()
 	if ${do_build} || ${do_distribution} || ${do_release}; then
 		if ! ${do_expertmode} && \
 		    [ $(id -u 2>/dev/null) -ne 0 ] && \
-		    [ -z "${MKUNPRIVED}" ] ; then
+		    [ "${MKUNPRIVED}" = "no" ] ; then
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
         fi
@@ -829,7 +829,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.123 2003/10/31 01:46:39 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.124 2003/11/12 15:51:45 lukem Exp $
 #
 
 EOF
@@ -859,7 +859,7 @@ buildtools()
 		    bomb "Failed to make obj-tools"
 	fi
 	${runcmd} cd tools
-	if [ -z "${MKUPDATE}" ]; then
+	if [ "${MKUPDATE}" = "no" ]; then
 		cleandir=cleandir
 	else
 		cleandir=
@@ -917,7 +917,7 @@ buildkernel()
 	statusmsg "Build directory:  ${kernelbuildpath}"
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
-	if [ -z "${MKUPDATE}" ]; then
+	if [ "${MKUPDATE}" = "no" ]; then
 		${runcmd} cd "${kernelbuildpath}"
 		${runcmd} "${makewrapper}" cleandir ||
 		    bomb "Failed to make cleandir in ${kernelbuildpath}"
