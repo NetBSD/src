@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2003/08/31 01:26:37 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2004/01/05 02:25:33 chs Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -96,6 +96,9 @@ struct pmap {
 extern pmap_t	kernel_pmap;			/* The kernel's map */
 
 #ifdef _KERNEL
+
+#define PMAP_NC		0x100
+
 #define cache_align(x)	(((x) + dcache_line_mask) & ~(dcache_line_mask))
 extern int dcache_line_mask;
 
@@ -142,10 +145,11 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 static __inline int
-pmap_prot(struct pmap *pmap, int prot)
+pmap_prot(struct pmap *pmap, vm_prot_t prot)
 {
 	extern u_int kern_prot[], user_prot[];
-	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
+
+	return (pmap == kernel_pmap ? kern_prot : user_prot)[prot];
 }
 
 #endif /* _KERNEL */
