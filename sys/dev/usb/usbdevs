@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.235 2002/03/10 19:55:23 augustss Exp $
+$NetBSD: usbdevs,v 1.236 2002/03/18 14:01:02 christos Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ vendor SIGMATEL		0x066f	Sigmatel
 vendor AIWA		0x0677	Aiwa
 vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
+vendor SIEMENS		0x067c	Siemens
 vendor ADVANCELOGIC	0x0680	Avance Logic
 vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
@@ -1060,6 +1061,9 @@ product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
 product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
+
+/* Siemens products */
+product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
