@@ -1,4 +1,4 @@
-.\" $NetBSD: rpcbind.8,v 1.5 2001/04/26 23:28:42 wiz Exp $
+.\" $NetBSD: rpcbind.8,v 1.6 2002/02/02 01:44:31 wiz Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
@@ -99,12 +99,11 @@ Without this flag, local connections are only allowed over a local socket,
 .Pa /var/run/rpcbind.sock
 .El
 .Sh NOTES
-.Pp
 All RPC servers must be restarted if
 .Nm
 is restarted.
+.Sh FILES
+.Pa /var/run/rpcbind.sock
 .Sh SEE ALSO
 .Xr rpcbind 3 ,
 .Xr rpcinfo 8
-.Sh FILES
-.Pa /var/run/rpcbind.sock
