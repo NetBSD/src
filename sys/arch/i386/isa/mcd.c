@@ -1,6 +1,7 @@
 /*
  * Copyright 1993 by Holger Veit (data part)
  * Copyright 1993 by Brian Moore (audio part)
+ * CHANGES Copyright 1993 Gary Clark II (gclarkii@freefall.cdrom.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,8 +35,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1 1993/11/04 09:13:07 cgd Exp $
+ *	$Id: mcd.c,v 1.2 1993/11/17 12:22:50 cgd Exp $
  */
+
 static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";
 
 #include "mcd.h"
