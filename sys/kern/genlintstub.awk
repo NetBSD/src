@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.2 2001/05/15 22:32:02 perry Exp $
+#	$NetBSD: genlintstub.awk,v 1.3 2001/05/16 03:58:14 perry Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@
 # something like an ENTRY designation. The special formats are:
 #
 # /* LINTSTUB: Func: type function(args) */
-# type must be void or int. A return is faked up for ints.
+# type must be void, int or long. A return is faked up for ints and longs.
 #
 # /* LINTSTUB: Var: type variable, variable; */
 # This is often appropriate for assembly bits that the rest of the
@@ -70,7 +70,7 @@ BEGIN	{
 
 
 /^\/\* LINTSTUB: Func:.*\)[ \t]*[;]?[ \t]+\*\/[ \t]*$/ { 
-		if ($4 == "int")
+		if (($4 == "int") || ($4 == "long"))
 			retflag = 1;
 		else if ($4 == "void")
 			retflag = 0;
