@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/exec.c,v 1.1 1993/10/13 05:41:30 cgd Exp $
+ * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/exec.c,v 1.2 1993/10/16 07:57:41 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -47,9 +47,10 @@
 
 #include <a.out.h>
 
+#include "salibc.h"
+
 #include "netboot.h"
 #include "netif.h"
-#include "exec_var.h"
 
 char *kern_names[] = {
     "netbsd", "onetbsd", "netbsd.old",
