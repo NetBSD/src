@@ -164,6 +164,8 @@ supply_xmmregs (sxmm)
 
   RF (FDOFF_REGNUM,   sxmm->operand);
 
+  RF (FOP_REGNUM, sxmm->opcode);
+
   /* The kernel has provided us the "tag" info in XMM format, but
      GDB expects it in i387 format; convert it.  */
   for (reg = 0, i = 0; i < 8; i++)
