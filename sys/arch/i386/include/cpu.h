@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.13 2000/09/23 17:30:07 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.14 2000/11/18 22:50:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,8 @@
 struct cpu_info {
 	struct device ci_dev;		/* pointer to our device */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-
+	struct cpu_info *ci_next;	/* next cpu */
+	
 	/*
 	 * Public members.
 	 */
@@ -148,6 +149,9 @@ struct cpu_info {
 #endif
 #define aston(ci)	((ci)->ci_astpending = 1, i386_ipisend(ci))
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
+extern  struct cpu_info *i386_boot_cpu;
+#define CPU_INFO_ITERATOR int
+#define CPU_INFO_FOREACH(cii, ci) cii=0,ci = i386_boot_cpu; ci != NULL; ci = ci->ci_next
 
 void cpu_boot_secondary_processors __P((void));
 void cpu_init_idle_pcbs __P((void));
