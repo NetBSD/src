@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.136 1998/02/19 09:23:38 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.137 1998/02/19 09:33:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1179,7 +1179,6 @@ comparam(tp, t)
 
 	splx(s);
 
-skip:
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
