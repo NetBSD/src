@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.7.10.1 2000/07/13 03:23:33 simonb Exp $	*/
+/*	$NetBSD: pr.c,v 1.7.10.2 2000/10/25 16:29:11 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.7.10.1 2000/07/13 03:23:33 simonb Exp $");
+__RCSID("$NetBSD: pr.c,v 1.7.10.2 2000/10/25 16:29:11 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ char	schar;			/* text column separation character */
 int	sflag;			/* -s option for multiple columns */
 int	nohead;			/* do not write head and trailer */
 int	pgwd;			/* page width with multiple col output */
-char	*timefrmt;		/* time conversion string */
+char	*timefrmt = TIMEFMT;	/* time conversion string */
 
 /*
  * misc globals
@@ -1605,7 +1605,7 @@ setup(argc, argv)
 		}
 	} else
 		err = stderr;
-	while ((c = egetopt(argc, argv, "#adFmrte?h:i?l:n?o:s?w:")) != -1) {
+	while ((c = egetopt(argc, argv, "#adFmrte?h:i?l:n?o:s?T:w:")) != -1) {
 		switch (c) {
 		case '+':
 			if ((pgnm = atoi(eoptarg)) < 1) {
@@ -1734,6 +1734,9 @@ setup(argc, argv)
 				return(1);
 			}
 			break;
+		case 'T':
+			timefrmt = eoptarg;
+			break;
 		case 't':
 			++nohead;
 			break;
@@ -1834,7 +1837,5 @@ setup(argc, argv)
 		}
 	}
 
-	if ((timefrmt = getenv("LC_TIME")) == NULL)
-		timefrmt = TIMEFMT;
 	return(0);
 }
