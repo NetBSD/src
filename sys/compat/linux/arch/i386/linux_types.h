@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.13 2005/03/10 14:12:27 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.14 2005/03/10 23:39:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct linux_stat {
 #define LINUX_STAT64_HAS_NSEC	1
 struct linux_stat64 {
 	unsigned long long lst_dev;
-	unsigned int	__pad0;
+	unsigned int	__pad1;
 
 #define LINUX_STAT64_HAS_BROKEN_ST_INO	1
 	unsigned int	__lst_ino;
@@ -96,13 +96,12 @@ struct linux_stat64 {
 	unsigned int	lst_gid;
 
 	unsigned long long	lst_rdev;
-	unsigned int	__pad1;
+	unsigned int	__pad2;
 
 	long long	lst_size;
 	unsigned int	lst_blksize;
 
-	unsigned int lst_blocks;	/* Number 512-byte blocks allocated. */
-	unsigned int __pad2;
+	unsigned long long lst_blocks;	/* Number 512-byte blocks allocated. */
 
 	unsigned int	lst_atime;
 	unsigned int	lst_atime_nsec;
@@ -111,7 +110,7 @@ struct linux_stat64 {
 	unsigned int	lst_mtime_nsec;
 
 	unsigned int	lst_ctime;
-	unsigned int	lst_ctime_nsec;	/* will be high 32 bits of ctime someday */
+	unsigned int	lst_ctime_nsec;
 
 	unsigned long long lst_ino;
 };
