@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.3 2000/10/15 20:46:33 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.4 2000/10/17 15:13:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.3 2000/10/15 20:46:33 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.4 2000/10/17 15:13:40 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -95,8 +95,7 @@ enterkey(keybuf, line, size, fieldtable)
 				/* don't include rec_delimiter */
 	keypos = keybuf->data;
 
-	for (i = 0; i < ncols; i++) {
-		clpos = clist + i;
+	for (i = 0, clpos = clist; i < ncols; i++, clpos++) {
 		for (; (col < clpos->num) && (pos < lineend); col++)
 			{ NEXTCOL(pos); }
 		if (pos >= lineend)
