@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.19 1998/05/13 21:21:16 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.20 1998/05/29 15:25:07 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 1998/05/13 21:21:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 1998/05/29 15:25:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,13 +150,17 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 	int first;
 {
 	bus_size_t sgsize;
-	vm_offset_t curaddr, lastaddr;
+	vm_offset_t curaddr, lastaddr, baddr, bmask;
 	vm_offset_t vaddr = (vm_offset_t)buf;
 	int seg;
 
 	lastaddr = *lastaddrp;
+	if (map->_dm_boundary > 0)
+		bmask = ~(map->_dm_boundary - 1);
+	else
+		bmask = 0;
 
-	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -181,6 +185,14 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+		/*
+		 * Make sure we don't cross any boundaries
+		 */
+		if (bmask) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (baddr - curaddr < sgsize)
+				sgsize = baddr - curaddr;
+		}
 
 		/*
 		 * Insert chunk into a segment, coalescing with
@@ -193,10 +205,14 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			    map->_dm_maxsegsz)
+			    map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     ((curaddr + sgsize - 1) & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
+				if (++seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
