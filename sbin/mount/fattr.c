@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.3 2004/10/29 19:11:15 dsl Exp $ */
+/* $NetBSD: fattr.c,v 1.4 2005/03/03 21:15:26 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.3 2004/10/29 19:11:15 dsl Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.4 2005/03/03 21:15:26 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -53,60 +53,46 @@ __RCSID("$NetBSD: fattr.c,v 1.3 2004/10/29 19:11:15 dsl Exp $");
 
 #include "fattr.h"
 
+static int
+num_id(const char *s, const char *id_type)
+{
+	int id;
+	char *ep;
+
+	id = strtol(s, &ep, 0);
+	if (*ep || s == ep || id < 0)
+		errx(1, "unknown %s id: %s", id_type, s);
+	return id;
+}
+
 gid_t
-a_gid(s)
-	char *s;
+a_gid(const char *s)
 {
 	struct group *gr;
-	char *gname;
-	gid_t gid;
 
 	if ((gr = getgrnam(s)) != NULL)
-		gid = gr->gr_gid;
-	else {
-		for (gname = s; *s && isdigit((unsigned char)*s); ++s);
-		if (!*s)
-			gid = atoi(gname);
-		else
-			errx(1, "unknown group id: %s", gname);
-	}
-	return (gid);
+		return gr->gr_gid;
+	return num_id(s, "group");
 }
 
 uid_t
-a_uid(s)
-	char *s;
+a_uid(const char *s)
 {
 	struct passwd *pw;
-	char *uname;
-	uid_t uid;
 
 	if ((pw = getpwnam(s)) != NULL)
-		uid = pw->pw_uid;
-	else {
-		for (uname = s; *s && isdigit((unsigned char)*s); ++s);
-		if (!*s)
-			uid = atoi(uname);
-		else
-			errx(1, "unknown user id: %s", uname);
-	}
-	return (uid);
+		return pw->pw_uid;
+	return num_id(s, "user");
 }
 
 mode_t
-a_mask(s)
-	char *s;
+a_mask(const char *s)
 {
-	int done, rv;
+	int rv;
 	char *ep;
 
-	done = 0;
-	rv = -1;
-	if (*s >= '0' && *s <= '7') {
-		done = 1;
-		rv = strtol(optarg, &ep, 8);
-	}
-	if (!done || rv < 0 || *ep)
+	rv = strtol(optarg, &ep, 8);
+	if (s == ep || *ep || rv < 0)
 		errx(1, "invalid file mode: %s", s);
-	return (rv);
+	return rv;
 }
