@@ -1,9 +1,20 @@
-/*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
+/*	$NetBSD: cdio.h,v 1.12 1997/06/11 18:46:42 jeremy Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
 
 /* Shared between kernel & process */
+
+union msf_lba {
+	struct {
+		u_char unused;
+		u_char minute;
+		u_char second;
+		u_char frame;
+	} msf;
+	u_int32_t lba;
+	u_char	addr[4];
+};
 
 struct cd_toc_entry {
 	u_char	nothing1;
@@ -17,7 +28,7 @@ struct cd_toc_entry {
 #endif
 	u_char	track;
 	u_char	nothing2;
-	u_char	addr[4];
+	union msf_lba	addr;
 };
 
 struct cd_sub_channel_header {
@@ -44,8 +55,8 @@ struct cd_sub_channel_position_data {
 #endif
 	u_char	track_number;
 	u_char	index_number;
-	u_char	absaddr[4];
-	u_char	reladdr[4];
+	union msf_lba	absaddr;
+	union msf_lba	reladdr;
 };
 
 struct cd_sub_channel_media_catalog {
