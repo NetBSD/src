@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.190 2001/11/05 21:39:24 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.191 2001/11/13 13:14:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.191 2001/11/13 13:14:36 lukem Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.30 2001/11/07 20:01:58 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.31 2001/11/13 13:14:43 lukem Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -60,11 +60,11 @@
  *	- Does not support 8-bit busses
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.31 2001/11/13 13:14:43 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
-
-__RCSID("$NetBSD: seeq8005.c,v 1.30 2001/11/07 20:01:58 bjh21 Exp $");
-
 #include <sys/systm.h>
 #include <sys/endian.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.15 2001/07/31 13:15:28 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.16 2001/11/13 13:14:43 lukem Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.16 2001/11/13 13:14:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,13 +1,4 @@
-/*	$NetBSD: aha.c,v 1.36 2001/08/20 12:00:52 wiz Exp $	*/
-
-#include "opt_ddb.h"
-
-#undef AHADIAG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: aha.c,v 1.37 2001/11/13 13:14:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +51,18 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.37 2001/11/13 13:14:33 lukem Exp $");
+
+#include "opt_ddb.h"
+
+#undef AHADIAG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
