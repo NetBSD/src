@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.17 1997/10/14 22:07:47 mark Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.18 1998/01/13 02:10:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -86,10 +86,6 @@ struct scsipi_device ptsc_scsidev = {
 
 struct cfattach ptsc_ca = {
 	sizeof(struct ptsc_softc), ptscmatch, ptscattach
-};
-
-struct cfdriver ptsc_cd = {
-	NULL, "ptsc", DV_DULL, NULL, 0
 };
 
 int ptsc_intr		 __P((void *arg));

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.16 1997/10/14 22:31:50 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.17 1998/01/13 02:10:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -166,10 +166,6 @@ void eaattach __P((struct device *, struct device *, void *));
 
 struct cfattach ea_ca = {
 	sizeof(struct ea_softc), eaprobe, eaattach
-};
-
-struct cfdriver ea_cd = {
-	NULL, "ea", DV_IFNET
 };
 
 #if 0

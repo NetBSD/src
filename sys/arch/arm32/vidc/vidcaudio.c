@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.20 1997/10/19 07:41:41 augustss Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.21 1998/01/13 02:10:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -110,11 +110,6 @@ static int sound_dma_intr;
 struct cfattach vidcaudio_ca = {
 	sizeof(struct vidcaudio_softc), vidcaudio_probe, vidcaudio_attach
 };
-
-struct cfdriver vidcaudio_cd = {
-	NULL, "vidcaudio", DV_DULL
-};
-
 
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
 int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));

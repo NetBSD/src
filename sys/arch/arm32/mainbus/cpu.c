@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 1997/11/06 00:51:02 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 1998/01/13 02:10:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -128,10 +128,7 @@ struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpumatch, cpuattach
 };
 
-struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_DULL, 0
-};
-
+extern struct cfdriver cpu_cd;
 
 /*
  * Used to test for an FPA. The following function is installed as a coproc1

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.1 1997/10/14 11:52:08 mark Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.2 1998/01/13 02:10:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -66,10 +66,6 @@ static int  vidcsearch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach vidc_ca = {
 	sizeof (struct vidc20_softc), vidcmatch, vidcattach
-};
-
-struct cfdriver vidc_cd = {
-	NULL, "vidc", DV_DULL
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.15 1997/10/14 22:31:55 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.16 1998/01/13 02:10:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -166,10 +166,6 @@ void ebattach __P((struct device *, struct device *, void *));
 
 struct cfattach eb_ca = {
 	sizeof(struct eb_softc), ebprobe, ebattach
-};
-
-struct cfdriver eb_cd = {
-	NULL, "eb", DV_IFNET
 };
 
 #if 0

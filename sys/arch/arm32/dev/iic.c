@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.10 1997/10/14 19:35:40 mark Exp $	*/
+/*	$NetBSD: iic.c,v 1.11 1998/01/13 02:10:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -78,6 +78,7 @@ extern void iic_set_state_and_ack	__P((int, int));
 extern void iic_set_state		__P((int, int));
 extern void iic_delay			__P((int));
 
+extern struct cfdriver iic_cd;
 
 /*
  * Main entry to IIC driver.
@@ -223,10 +224,6 @@ iic_stop_bit()
 }
 
 /* driver structures */
-
-struct cfdriver iic_cd = {
-	NULL, "iic", DV_DULL, 0
-};
 
 /*
  * int iicprint(void *aux, const char *name)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.14 1997/10/14 22:32:04 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.15 1998/01/13 02:10:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -176,15 +176,11 @@ int ieprobe __P((struct device *, struct cfdata *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
 /*
- * Our cfdriver structure for the autoconfig system to chew on
+ * Our cfattach structure for the autoconfig system to chew on
  */
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach
-};
-
-struct cfdriver ie_cd = {
-	NULL, "ie", DV_IFNET
 };
 
 /* Let's go! */

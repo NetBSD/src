@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.1 1997/10/14 19:57:42 mark Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.2 1998/01/13 02:10:20 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -100,10 +100,6 @@ static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
 
 struct cfattach pioc_ca = {
 	sizeof(struct pioc_softc), piocmatch, piocattach
-};
-
-struct cfdriver pioc_cd = {
-	NULL, "pioc", DV_DULL, 0
 };
 
 /*

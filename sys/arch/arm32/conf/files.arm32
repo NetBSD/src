@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.33 1998/01/05 20:51:32 perry Exp $
+#	$NetBSD: files.arm32,v 1.34 1998/01/13 02:09:58 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -6,27 +6,27 @@
 maxpartitions	8
 maxusers 2 8 64
 
-device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+device	mainbus class dull { [base = -1], [dack = -1], [irq = -1] }
 attach	mainbus at root
 file	arch/arm32/mainbus/mainbus.c		mainbus
 file	arch/arm32/mainbus/mainbus_io.c		mainbus
 file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
 
-device	cpu
+device	cpu class cpu
 attach	cpu at mainbus
 file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 major	{cpu = 38}
 
 # PIOC (Peripheral IO Controller) device
 # parent to wdc, fdc, com lpt
-device	pioc { [offset = -1], [dack = -1], [irq = -1] }
+device	pioc class dull { [offset = -1], [dack = -1], [irq = -1] }
 attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
 # Standard NetBSD wd driver
 define ata {drive=-1}
-device  wdc: atapi, ata
-device  wd: disk
+device  wdc class dull: atapi, ata
+device  wd class disk: disk
 attach  wd at ata
 file    arch/arm32/dev/wdc.c           wdc needs-flag
 file    arch/arm32/dev/wd.c            wd needs-flag
@@ -36,15 +36,15 @@ attach	wdc at pioc with wdc_pioc
 file    arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard NetBSD fd driver
-device  fdc {drive = -1}
+device  fdc class dull {drive = -1}
 attach	fdc at pioc
-device  fd: disk
+device  fd class disk: disk
 attach	fd at fdc
 file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Standard parallel driver
-device	lpt
+device	lpt class dull
 file	dev/ic/lpt.c				lpt needs-flag
 major   {lpt = 8}
 
@@ -64,7 +64,7 @@ major   {md = 18}
 # IOMD device
 # parent to kbd, qms, pms, iic
 # also provides irq and timer services
-device	iomd {}
+device	iomd class dull {}
 attach	iomd at mainbus
 file	arch/arm32/iomd/iomd.c			iomd needs-flag
 file	arch/arm32/iomd/iomd_io.c		iomd
@@ -76,12 +76,12 @@ file	arch/arm32/iomd/iomd_dma.c		iomd
 
 # IOMD mouse devices
 # clock device
-device  clock
+device  clock class dull
 attach	clock at iomd
 file	arch/arm32/iomd/iomd_clock.c		iomd
 
 # quadmouse device
-device  qms: tty
+device  qms class dull: tty
 file    arch/arm32/dev/qms.c			qms needs-flag
 major   {qms = 9}
 
@@ -89,7 +89,7 @@ attach	qms at iomd with qms_iomd
 file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 
 # PS/2 mouse device
-device	pms: tty
+device	pms class dull: tty
 file	arch/arm32/dev/pms.c			pms needs-flag
 major	{pms = 40}
 
@@ -97,7 +97,7 @@ attach	pms at iomd with pms_iomd
 file	arch/arm32/iomd/pms_iomd.c		pms_iomd
 
 # Standard keyboard driver
-device	kbd
+device	kbd class dull
 file	arch/arm32/dev/kbd.c			kbd needs-flag
 major	{kbd = 11}
 
@@ -105,7 +105,7 @@ attach	kbd at iomd with kbd_iomd
 file	arch/arm32/iomd/kbd_iomd.c		kbd_iomd
 
 # IIC device
-device	iic { addr = -1 }
+device	iic class dull { addr = -1 }
 file	arch/arm32/dev/iic.c			iic	needs-flag
 
 attach iic at iomd with iic_iomd
@@ -113,38 +113,38 @@ file	arch/arm32/iomd/iic_iomd.c		iic_iomd
 file	arch/arm32/iomd/iomd_iic.S		iic_iomd
 
 # IIC based RTC
-device	rtc {}
+device	rtc class dull {}
 attach	rtc at iic
 file	arch/arm32/dev/rtc.c			rtc	needs-flag
 
-device	todclock
+device	todclock class dull
 attach	todclock at rtc
 file	arch/arm32/dev/todclock.c		todclock	needs-count
 
 # VIDC device
 # parent to vidcvideo, vidcaudio, beep
-device	vidc { [base = -1], [dack = -1], [irq = -1] }
+device	vidc class dull { [base = -1], [dack = -1], [irq = -1] }
 attach	vidc at mainbus
 file	arch/arm32/vidc/vidc20.c		vidc needs-count
 
 # Audio devices
-device	beep
+device	beep class dull
 attach	beep at vidc
 file	arch/arm32/vidc/beep.c			beep needs-flag
 major	{beep = 10}
 
-device	vidcaudio: audio
+device	vidcaudio class dull: audio
 attach	vidcaudio at vidc
 file	arch/arm32/vidc/vidcaudio.c		vidcaudio needs-flag
 major	{vidcaudio = 36}
 
-device	lmcaudio: audio
+device	lmcaudio class dull: audio
 attach	lmcaudio at vidc
 file	arch/arm32/vidc/lmcaudio.c		lmcaudio needs-flag
 file	arch/arm32/vidc/lmc1982.S		lmcaudio
 
 # Podule bus device
-device	podulebus { [slot = -1] }
+device	podulebus class dull { [slot = -1] }
 attach	podulebus at root
 file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 file	arch/arm32/podulebus/podulebus_io.c	podulebus
@@ -156,27 +156,27 @@ define	dp8390pio
 file	arch/arm32/dev/dp8390_pio.c		dp8390pio
 file	arch/arm32/dev/dp8390.c			dp8390pio
 
-device	em: ether, ifnet, dp8390pio, arp
+device	em class ifnet: ether, ifnet, dp8390pio, arp
 attach 	em at podulebus
 file	arch/arm32/podulebus/if_em.c		em
 
-device	ea: ether, ifnet, arp
+device	ea class ifnet: ether, ifnet, arp
 attach	ea at podulebus
 file	arch/arm32/podulebus/if_ea.c		ea
 
-device	eb: ether, ifnet, arp
+device	eb class ifnet: ether, ifnet, arp
 attach	eb at podulebus
 file	arch/arm32/podulebus/if_eb.c		eb
 
-device	eh: ether, ifnet, arp
+device	eh class ifnet: ether, ifnet, arp
 attach	eh at podulebus
 file	arch/arm32/podulebus/if_eh.c		eh
 
-device	ie: ether, ifnet, arp
+device	ie class ifnet: ether, ifnet, arp
 attach	ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 
-device	es: ether, ifnet, arp
+device	es class ifnet: ether, ifnet, arp
 attach	es at mainbus
 file	arch/arm32/rc7500/if_es.c		es & rc7500
 
@@ -206,7 +206,7 @@ define	sbic
 file	arch/arm32/podulebus/sbic.c		sbic
 
 # Acorn SCSI I specific layer for sbic
-device  asc: scsi, sbic
+device  asc class dull: scsi, sbic
 attach	asc at podulebus
 file	arch/arm32/podulebus/asc.c		asc needs-flag
 
@@ -215,7 +215,7 @@ define	esc
 file	arch/arm32/podulebus/esc.c		esc
 
 # Connect32 specific layer for esc
-device	cosc: scsi, esc
+device	cosc class dull: scsi, esc
 attach	cosc at podulebus
 file	arch/arm32/podulebus/cosc.c		cosc
 
@@ -223,7 +223,7 @@ file	arch/arm32/podulebus/cosc.c		cosc
 define	sfas
 file	arch/arm32/podulebus/sfas.c		sfas
 
-device	ptsc: scsi, sfas
+device	ptsc class dull: scsi, sfas
 attach	ptsc at podulebus
 file	arch/arm32/podulebus/ptsc.c		ptsc
 
@@ -232,12 +232,12 @@ define	ncr
 file	arch/arm32/dev/ncr5380sbc.c		ncr
 
 # Oak specific layer for ncr
-device	oak: scsi, ncr
+device	oak class dull: scsi, ncr
 attach	oak at podulebus
 file	arch/arm32/podulebus/oak.c		oak
 
 # ICS IDE driver
-device	icside {}
+device	icside class dull {}
 attach	icside at podulebus
 file	arch/arm32/podulebus/icside.c		icside
 file	arch/arm32/podulebus/icside_io.c	icside
@@ -246,7 +246,7 @@ file	arch/arm32/podulebus/icside_io_asm.S	icside
 attach	wdc at icside with wdc_ics
 
 # Yellowstone RapIDE driver
-device	rapide {}
+device	rapide class dull {}
 attach	rapide at podulebus
 file	arch/arm32/podulebus/rapide.c		rapide
 file	arch/arm32/podulebus/rapide_io_asm.S	rapide
@@ -254,7 +254,7 @@ file	arch/arm32/podulebus/rapide_io_asm.S	rapide
 attach	wdc at rapide with wdc_rapide
 
 # Simtec IDE driver
-device	simide {}
+device	simide class dull {}
 attach	simide at podulebus
 file	arch/arm32/podulebus/simide.c		simide
 file	arch/arm32/podulebus/simide_io_asm.S	simide
@@ -262,16 +262,16 @@ file	arch/arm32/podulebus/simide_io_asm.S	simide
 attach	wdc at simide with wdc_sim
 
 # Atomwide Multi-Port Serial driver
-device	amps {}
+device	amps class dull {}
 attach	amps at podulebus
 attach	com at amps with com_amps
 file	arch/arm32/podulebus/amps.c		amps
 
-device  vidcvideo
+device  vidcvideo class dull
 attach	vidcvideo at vidc
 file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
 major	{vidcvideo = 37}
-device  vt: tty
+device  vt class tty: tty
 attach	vt at vidc
 
 file    arch/arm32/vidc/console/console.c	vt needs-count

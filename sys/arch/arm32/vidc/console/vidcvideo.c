@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcvideo.c,v 1.1 1997/10/14 11:47:17 mark Exp $	*/
+/*	$NetBSD: vidcvideo.c,v 1.2 1998/01/13 02:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -111,9 +111,7 @@ struct cfattach vidcvideo_ca = {
 	sizeof (struct vidcvideo_softc), vidcvideo_probe, vidcvideo_attach
 };
 
-struct cfdriver vidcvideo_cd = {
-	NULL, "vidcvideo", DV_DULL
-};
+extern struct cfdriver vidcvideo_cd;
 
 int
 vidcvideoopen(dev, flags, fmt, p)

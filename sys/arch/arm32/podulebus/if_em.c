@@ -1,4 +1,4 @@
-/*	$NetBSD: if_em.c,v 1.2 1997/10/18 04:39:12 mark Exp $	*/
+/*	$NetBSD: if_em.c,v 1.3 1998/01/13 02:10:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -90,10 +90,6 @@ static void emattach	__P((struct device *, struct device *, void *));
 
 struct cfattach em_ca = {
 	sizeof(struct em_softc), emprobe, emattach
-};
-
-struct cfdriver em_cd = {
-	NULL, "em", DV_IFNET
 };
 
 static struct bus_space em_bs_tag;

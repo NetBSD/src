@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.15 1997/10/14 19:35:36 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.16 1998/01/13 02:10:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -62,11 +62,9 @@
 
 static void qmsputbuffer	__P((struct qms_softc *sc, struct mousebufrec *buf));
 
-/* qms device structure */
+extern struct cfdriver pms_cd;
 
-struct cfdriver	qms_cd = {
-	NULL, "qms", DV_DULL
-};
+/* qms device structure */
 
 /* Offsets of hardware registers */
 #define QMS_MOUSEX	0		/* 16 bit X register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.11 1997/10/17 05:45:40 mark Exp $	*/
+/*	$NetBSD: console.c,v 1.12 1998/01/13 02:10:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -90,7 +90,6 @@ struct vconsole *vconsole_master = &vconsole_master_store;
 struct vconsole *vconsole_current;
 struct vconsole *vconsole_head;
 struct vconsole *vconsole_default;
-/*struct cfdriver rpc_cd;*/
 extern struct vconsole *debug_vc;	/* rename this to vconsole_debug */
 int physcon_major=4;
 static char undefined_string[] = "UNDEFINED";
@@ -1218,17 +1217,11 @@ struct cfattach rpc_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
 };
 
-struct cfdriver rpc_cd = {
-	NULL, "rpc", DV_TTY
-};
+extern struct cfdriver rpc_cd;
 */
 
 struct cfattach vt_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
-};
-
-struct cfdriver vt_cd = {
-	NULL, "rpc", DV_TTY
 };
 
 extern struct terminal_emulator vt220;

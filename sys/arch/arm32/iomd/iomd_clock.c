@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.14 1997/10/14 11:09:56 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.15 1998/01/13 02:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -80,10 +80,6 @@ static void clockattach	__P((struct device *parent, struct device *self, void *a
 
 struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
-};
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL, 0
 };
 
 /*
