@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $	*/
+/*	$NetBSD: i82586.c,v 1.47 2003/09/14 13:01:40 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,12 +144,9 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.47 2003/09/14 13:01:40 junyoung Exp $");
 
 #include "bpfilter.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
