@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.6 1998/04/30 04:31:19 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.7 1998/05/05 22:01:31 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.6 1998/04/30 04:31:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.7 1998/05/05 22:01:31 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,6 +133,8 @@ pci_kn300_pickintr(ccp, first)
 		mcpcia_eisaccp = ccp;
 		dec_kn300_cons_init();	/* XXXXXXXXXXXXXXXXXXX */
 	}
+#else
+#error	"It will be impossible for you to have a console"
 #endif
 }
 
