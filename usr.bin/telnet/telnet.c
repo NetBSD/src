@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)telnet.c	5.53 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: telnet.c,v 1.2 1993/08/01 18:07:19 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)telnet.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$Id: telnet.c,v 1.3 1994/02/25 03:00:46 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,6 +100,7 @@ int
 	autoflush = 0,	/* flush output when interrupting? */
 	autosynch,	/* send interrupt characters with SYNCH? */
 	localflow,	/* we handle flow control locally */
+	restartany,	/* if flow control enabled, restart on any character */
 	localchars,	/* we recognize interrupt/quit */
 	donelclchars,	/* the user has set "localchars" */
 	donebinarytoggle,	/* the user has put us in binary */
@@ -128,6 +129,11 @@ cc_t echoc;
 #define	TS_SE		8		/* looking for sub-option end */
 
 static int	telrcv_state;
+#ifdef	OLD_ENVIRON
+unsigned char telopt_environ = TELOPT_NEW_ENVIRON;
+#else
+# define telopt_environ TELOPT_NEW_ENVIRON
+#endif
 
 jmp_buf	toplevel = { 0 };
 jmp_buf	peerdied;
@@ -172,9 +178,10 @@ init_telnet()
     ClearArray(options);
 
     connected = In3270 = ISend = localflow = donebinarytoggle = 0;
-#if	defined(ENCRYPT) || defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION) 
     auth_encrypt_connect(connected);
-#endif
+#endif	/* defined(AUTHENTICATION)  */
+    restartany = -1;
 
     SYNCHing = 0;
 
@@ -360,11 +367,8 @@ willoption(option)
 		settimer(modenegotiated);
 		/* FALL THROUGH */
 	    case TELOPT_STATUS:
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 	    case TELOPT_AUTHENTICATION:
-#endif
-#if	defined(ENCRYPT)
-	    case TELOPT_ENCRYPT:
 #endif
 		new_state_ok = 1;
 		break;
@@ -395,10 +399,6 @@ willoption(option)
 	    }
 	}
 	set_my_state_do(option);
-#if	defined(ENCRYPT)
-	if (option == TELOPT_ENCRYPT)
-		encrypt_send_support();
-#endif
 }
 
 	void
@@ -486,13 +486,24 @@ dooption(option)
 	    case TELOPT_LFLOW:		/* local flow control */
 	    case TELOPT_TTYPE:		/* terminal type option */
 	    case TELOPT_SGA:		/* no big deal */
-	    case TELOPT_ENVIRON:	/* environment variable option */
-#if	defined(ENCRYPT)
-	    case TELOPT_ENCRYPT:	/* encryption variable option */
+		new_state_ok = 1;
+		break;
+
+	    case TELOPT_NEW_ENVIRON:	/* New environment variable option */
+#ifdef	OLD_ENVIRON
+		if (my_state_is_will(TELOPT_OLD_ENVIRON))
+			send_wont(TELOPT_OLD_ENVIRON, 1); /* turn off the old */
+		goto env_common;
+	    case TELOPT_OLD_ENVIRON:	/* Old environment variable option */
+		if (my_state_is_will(TELOPT_NEW_ENVIRON))
+			break;		/* Don't enable if new one is in use! */
+	    env_common:
+		telopt_environ = option;
 #endif
 		new_state_ok = 1;
 		break;
-#if	defined(AUTHENTICATE)
+
+#if	defined(AUTHENTICATION)
 	    case TELOPT_AUTHENTICATION:
 		if (autologin)
 			new_state_ok = 1;
@@ -565,6 +576,16 @@ dontoption(option)
 	    case TELOPT_LINEMODE:
 		linemode = 0;	/* put us back to the default state */
 		break;
+#ifdef	OLD_ENVIRON
+	    case TELOPT_NEW_ENVIRON:
+		/*
+		 * The new environ option wasn't recognized, try
+		 * the old one.
+		 */
+		send_will(TELOPT_OLD_ENVIRON, 1);
+		telopt_environ = TELOPT_OLD_ENVIRON;
+		break;
+#endif
 	    }
 	    /* we always accept a DONT */
 	    set_my_want_state_wont(option);
@@ -782,8 +803,10 @@ gettermname()
     static void
 suboption()
 {
+    unsigned char subchar;
+
     printsub('<', subbuffer, SB_LEN()+2);
-    switch (SB_GET()) {
+    switch (subchar = SB_GET()) {
     case TELOPT_TTYPE:
 	if (my_want_state_is_wont(TELOPT_TTYPE))
 	    return;
@@ -841,10 +864,16 @@ suboption()
 	if (SB_EOF())
 	    return;
 	switch(SB_GET()) {
-	case 1:
+	case LFLOW_RESTART_ANY:
+	    restartany = 1;
+	    break;
+	case LFLOW_RESTART_XON:
+	    restartany = 0;
+	    break;
+	case LFLOW_ON:
 	    localflow = 1;
 	    break;
-	case 0:
+	case LFLOW_OFF:
 	    localflow = 0;
 	    break;
 	default:
@@ -883,17 +912,20 @@ suboption()
 	}
 	break;
 
-    case TELOPT_ENVIRON:
+#ifdef	OLD_ENVIRON
+    case TELOPT_OLD_ENVIRON:
+#endif
+    case TELOPT_NEW_ENVIRON:
 	if (SB_EOF())
 	    return;
 	switch(SB_PEEK()) {
 	case TELQUAL_IS:
 	case TELQUAL_INFO:
-	    if (my_want_state_is_dont(TELOPT_ENVIRON))
+	    if (my_want_state_is_dont(subchar))
 		return;
 	    break;
 	case TELQUAL_SEND:
-	    if (my_want_state_is_wont(TELOPT_ENVIRON)) {
+	    if (my_want_state_is_wont(subchar)) {
 		return;
 	    }
 	    break;
@@ -932,7 +964,7 @@ suboption()
 	}
 	break;
 
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 	case TELOPT_AUTHENTICATION: {
 		if (!autologin)
 			break;
@@ -962,67 +994,6 @@ suboption()
 		}
 	}
 	break;
-#endif
-#if	defined(ENCRYPT)
-	case TELOPT_ENCRYPT:
-		if (SB_EOF())
-			return;
-		switch(SB_GET()) {
-		case ENCRYPT_START:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_start(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_END:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_end();
-			break;
-		case ENCRYPT_SUPPORT:
-			if (my_want_state_is_wont(TELOPT_ENCRYPT))
-				return;
-			encrypt_support(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_REQSTART:
-			if (my_want_state_is_wont(TELOPT_ENCRYPT))
-				return;
-			encrypt_request_start(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_REQEND:
-			if (my_want_state_is_wont(TELOPT_ENCRYPT))
-				return;
-			/*
-			 * We can always send an REQEND so that we cannot
-			 * get stuck encrypting.  We should only get this
-			 * if we have been able to get in the correct mode
-			 * anyhow.
-			 */
-			encrypt_request_end();
-			break;
-		case ENCRYPT_IS:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_is(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_REPLY:
-			if (my_want_state_is_wont(TELOPT_ENCRYPT))
-				return;
-			encrypt_reply(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_ENC_KEYID:
-			if (my_want_state_is_dont(TELOPT_ENCRYPT))
-				return;
-			encrypt_enc_keyid(subpointer, SB_LEN());
-			break;
-		case ENCRYPT_DEC_KEYID:
-			if (my_want_state_is_wont(TELOPT_ENCRYPT))
-				return;
-			encrypt_dec_keyid(subpointer, SB_LEN());
-			break;
-		default:
-			break;
-		}
-		break;
 #endif
     default:
 	break;
@@ -1445,6 +1416,26 @@ slc_update()
 	return(need_update);
 }
 
+#ifdef	OLD_ENVIRON
+# ifdef	ENV_HACK
+/*
+ * Earlier version of telnet/telnetd from the BSD code had
+ * the definitions of VALUE and VAR reversed.  To ensure
+ * maximum interoperability, we assume that the server is
+ * an older BSD server, until proven otherwise.  The newer
+ * BSD servers should be able to handle either definition,
+ * so it is better to use the wrong values if we don't
+ * know what type of server it is.
+ */
+int env_auto = 1;
+int old_env_var = OLD_ENV_VAR;
+int old_env_value = OLD_ENV_VALUE;
+# else
+#  define old_env_var OLD_ENV_VAR
+#  define old_env_value OLD_ENV_VALUE
+# endif
+#endif
+
 	void
 env_opt(buf, len)
 	register unsigned char *buf;
@@ -1460,7 +1451,28 @@ env_opt(buf, len)
 			env_opt_add(NULL);
 		} else for (i = 1; i < len; i++) {
 			switch (buf[i]&0xff) {
-			case ENV_VALUE:
+#ifdef	OLD_ENVIRON
+			case OLD_ENV_VAR:
+# ifdef	ENV_HACK
+				if (telopt_environ == TELOPT_OLD_ENVIRON
+				    && env_auto) {
+					/* Server has the same definitions */
+					old_env_var = OLD_ENV_VAR;
+					old_env_value = OLD_ENV_VALUE;
+				}
+				/* FALL THROUGH */
+# endif
+			case OLD_ENV_VALUE:
+				/*
+				 * Although OLD_ENV_VALUE is not legal, we will
+				 * still recognize it, just in case it is an
+				 * old server that has VAR & VALUE mixed up...
+				 */
+				/* FALL THROUGH */
+#else
+			case NEW_ENV_VAR:
+#endif
+			case ENV_USERVAR:
 				if (ep) {
 					*epc = 0;
 					env_opt_add(ep);
@@ -1475,10 +1487,10 @@ env_opt(buf, len)
 					*epc++ = buf[i];
 				break;
 			}
-			if (ep) {
-				*epc = 0;
-				env_opt_add(ep);
-			}
+		}
+		if (ep) {
+			*epc = 0;
+			env_opt_add(ep);
 		}
 		env_opt_end(1);
 		break;
@@ -1514,7 +1526,7 @@ env_opt_start()
 	opt_replyend = opt_reply + OPT_REPLY_SIZE;
 	*opt_replyp++ = IAC;
 	*opt_replyp++ = SB;
-	*opt_replyp++ = TELOPT_ENVIRON;
+	*opt_replyp++ = telopt_environ;
 	*opt_replyp++ = TELQUAL_IS;
 }
 
@@ -1536,8 +1548,14 @@ env_opt_add(ep)
 		return;			/*XXX*/
 
 	if (ep == NULL || *ep == '\0') {
-		env_default(1);
-		while (ep = env_default(0))
+		/* Send user defined variables first. */
+		env_default(1, 0);
+		while (ep = env_default(0, 0))
+			env_opt_add(ep);
+
+		/* Now add the list of well know variables.  */
+		env_default(1, 1);
+		while (ep = env_default(0, 1))
 			env_opt_add(ep);
 		return;
 	}
@@ -1557,29 +1575,56 @@ env_opt_add(ep)
 		opt_replyp = opt_reply + len - (opt_replyend - opt_replyp);
 		opt_replyend = opt_reply + len;
 	}
-	*opt_replyp++ = ENV_VAR;
+	if (opt_welldefined(ep))
+#ifdef	OLD_ENVIRON
+		if (telopt_environ == TELOPT_OLD_ENVIRON)
+			*opt_replyp++ = old_env_var;
+		else
+#endif
+			*opt_replyp++ = NEW_ENV_VAR;
+	else
+		*opt_replyp++ = ENV_USERVAR;
 	for (;;) {
 		while (c = *ep++) {
 			switch(c&0xff) {
 			case IAC:
 				*opt_replyp++ = IAC;
 				break;
-			case ENV_VALUE:
-			case ENV_VAR:
+			case NEW_ENV_VAR:
+			case NEW_ENV_VALUE:
 			case ENV_ESC:
+			case ENV_USERVAR:
 				*opt_replyp++ = ENV_ESC;
 				break;
 			}
 			*opt_replyp++ = c;
 		}
 		if (ep = vp) {
-			*opt_replyp++ = ENV_VALUE;
+#ifdef	OLD_ENVIRON
+			if (telopt_environ == TELOPT_OLD_ENVIRON)
+				*opt_replyp++ = old_env_value;
+			else
+#endif
+				*opt_replyp++ = NEW_ENV_VALUE;
 			vp = NULL;
 		} else
 			break;
 	}
 }
 
+	int
+opt_welldefined(ep)
+	char *ep;
+{
+	if ((strcmp(ep, "USER") == 0) ||
+	    (strcmp(ep, "DISPLAY") == 0) ||
+	    (strcmp(ep, "PRINTER") == 0) ||
+	    (strcmp(ep, "SYSTEMTYPE") == 0) ||
+	    (strcmp(ep, "JOB") == 0) ||
+	    (strcmp(ep, "ACCT") == 0))
+		return(1);
+	return(0);
+}
 	void
 env_opt_end(emptyok)
 	register int emptyok;
@@ -1631,10 +1676,6 @@ telrcv()
 	}
 
 	c = *sbp++ & 0xff, scc--; count++;
-#if	defined(ENCRYPT)
-	if (decrypt_input)
-		c = (*decrypt_input)(c);
-#endif
 
 	switch (telrcv_state) {
 
@@ -1659,10 +1700,6 @@ telrcv()
 		*Ifrontp++ = c;
 		while (scc > 0) {
 		    c = *sbp++ & 0377, scc--; count++;
-#if	defined(ENCRYPT)
-		    if (decrypt_input)
-			c = (*decrypt_input)(c);
-#endif
 		    if (c == IAC) {
 			telrcv_state = TS_IAC;
 			break;
@@ -1681,10 +1718,6 @@ telrcv()
 	    if ((c == '\r') && my_want_state_is_dont(TELOPT_BINARY)) {
 		if (scc > 0) {
 		    c = *sbp&0xff;
-#if	defined(ENCRYPT)
-		    if (decrypt_input)
-			c = (*decrypt_input)(c);
-#endif
 		    if (c == 0) {
 			sbp++, scc--; count++;
 			/* a "true" CR */
@@ -1694,10 +1727,6 @@ telrcv()
 			sbp++, scc--; count++;
 			TTYADD('\n');
 		    } else {
-#if	defined(ENCRYPT)
-		        if (decrypt_input)
-			    (*decrypt_input)(-1);
-#endif
 
 			TTYADD('\r');
 			if (crmod) {
@@ -2134,28 +2163,23 @@ telnet(user)
 {
     sys_telnet_init();
 
-#if defined(ENCRYPT) || defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION) 
     {
 	static char local_host[256] = { 0 };
-	int len = sizeof(local_host);
 
 	if (!local_host[0]) {
-		gethostname(local_host, &len);
+		gethostname(local_host, sizeof(local_host));
 		local_host[sizeof(local_host)-1] = 0;
 	}
 	auth_encrypt_init(local_host, hostname, "TELNET", 0);
 	auth_encrypt_user(user);
     }
-#endif
+#endif	/* defined(AUTHENTICATION)  */
 #   if !defined(TN3270)
     if (telnetport) {
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 	if (autologin)
 		send_will(TELOPT_AUTHENTICATION, 1);
-#endif
-#if	defined(ENCRYPT)
-	send_do(TELOPT_ENCRYPT, 1);
-	send_will(TELOPT_ENCRYPT, 1);
 #endif
 	send_do(TELOPT_SGA, 1);
 	send_will(TELOPT_TTYPE, 1);
@@ -2163,7 +2187,7 @@ telnet(user)
 	send_will(TELOPT_TSPEED, 1);
 	send_will(TELOPT_LFLOW, 1);
 	send_will(TELOPT_LINEMODE, 1);
-	send_will(TELOPT_ENVIRON, 1);
+	send_will(TELOPT_NEW_ENVIRON, 1);
 	send_do(TELOPT_STATUS, 1);
 	if (env_getvalue((unsigned char *)"DISPLAY"))
 	    send_will(TELOPT_XDISPLOC, 1);
