@@ -1,6 +1,4 @@
 /*
- * modunload.c
- *
  * This is the loadable kernel module unload program.  The interface
  * is nearly identical to the SunOS 4.1.3 not because I lack
  * imagination but because I liked Sun's approach in this particular
@@ -43,11 +41,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modunload.c,v 1.3 1993/12/03 10:38:08 deraadt Exp $
+ *	$Id: modunload.c,v 1.4 1994/04/01 04:19:06 mycroft Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
+#include <string.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -58,54 +58,55 @@
 #include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include "pathnames.h"
 
-extern int	errno;	/* should be in errno.h*/
-
-
-#ifdef sun
-/* these are defined in stdlib.h for everything but sun*/
-extern char *optarg;
-extern int optind;
-#endif	/* sun*/
-
-#define	LKM_DEV		"/dev/lkm"
-
-
-extern int dostat();
-
-
+void
 usage()
 {
-	fprintf( stderr, "usage:\n");
-	fprintf( stderr,
-		 "modunload [-i <module id>] [-n <module name>]\n");
-	exit( 1);
+
+	fprintf(stderr, "usage:\n");
+	fprintf(stderr, "modunload [-i <module id>] [-n <module name>]\n");
+	exit(1);
 }
 
+int devfd;
 
-main( ac, av)
-int	ac;
-char	*av[];
+void
+cleanup()
 {
-	int			devfd;
-	int			ch;
-	int			err = 0;
-	int			modnum = -1;
-	char			*modname = NULL;
-	struct lmc_unload	ulbuf;
 
-	while( ( ch = getopt( ac, av, "i:n:")) != EOF) {
-		switch(ch) {
-		case 'i':	modnum = atoi( optarg);	break;	/* number*/
-		case 'n':	modname = optarg;	break;	/* name*/
-		case '?':	usage();
-		default:	printf( "default!\n");
+	close(devfd);
+}
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int c;
+	int modnum = -1;
+	char *modname = NULL;
+	struct lmc_unload ulbuf;
+
+	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+		switch (c) {
+		case 'i':
+			modnum = atoi(optarg);
+			break;	/* number */
+		case 'n':
+			modname = optarg;
+			break;	/* name */
+		case '?':
+			usage();
+		default:
+			printf("default!\n");
+			break;
 		}
 	}
-	ac -= optind;
-	av += optind;
+	argc -= optind;
+	argv += optind;
 
-	if( ac != 0)
+	if (argc != 0 || (modnum == -1 && modname == NULL))
 		usage();
 
 
@@ -113,52 +114,27 @@ char	*av[];
 	 * Open the virtual device device driver for exclusive use (needed
 	 * to ioctl() to retrive the loaded module(s) status).
 	 */
-	if( ( devfd = open( LKM_DEV, O_RDWR, 0)) == -1) {
-		perror( LKM_DEV);
-		exit( 2);
-	}
+	if ((devfd = open(_PATH_LKM, O_RDWR, 0)) == -1)
+		err(2, _PATH_LKM);
 
-	/*
-	 * Not specified?
-	 */
-	if( modnum == -1 && modname == NULL)
-		usage();
+	atexit(cleanup);
 
 	/*
 	 * Unload the requested module.
 	 */
-
-/*
-	if( modname != NULL)
-		strcpy( ulbuf.name, modname);
-*/
-ulbuf.name = modname;
-
+	ulbuf.name = modname;
 	ulbuf.id = modnum;
 
-	if( ioctl( devfd, LMUNLOAD, &ulbuf) == -1) {
-		switch( errno) {
-		case EINVAL:		/* out of range*/
-			fprintf( stderr, "modunload: id out of range\n");
-			err = 3;
-			break;
-		case ENOENT:		/* no such entry*/
-			fprintf( stderr, "modunload: no such module\n");
-			err = 4;
-			break;
-		default:		/* other error (EFAULT, etc)*/
-			perror( "LMUNLOAD");
-			err = 5;
-			break;
+	if (ioctl(devfd, LMUNLOAD, &ulbuf) == -1) {
+		switch (errno) {
+		case EINVAL:		/* out of range */
+			errx(3, "id out of range");
+		case ENOENT:		/* no such entry */
+			errx(3, "no such module");
+		default:		/* other error (EFAULT, etc) */
+			err(5, "LMUNLOAD");
 		}
 	}
 
-done:
-	close( devfd);
-	exit( err);
+	return 0;
 }
-
-
-/*
- * EOF -- This file has not been truncated.
- */
