@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.17 2001/10/13 20:20:58 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2001/10/29 22:50:43 augustss Exp $
 #
 ###########################################################################
 #
@@ -120,39 +120,40 @@ raminst)
 
 wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 wsmouse0
-	sh $0 wskbd0
 	sh $0 ttyEcfg
-	sh $0 wsmux
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
+	sh $0 wsmouse wskbd
 	;;
 
-wsmux|wsmouse|wskbd)
-	rm -f wsmouse wskbd
+wsmouse)
+	rm -f wsmouse
 	mknod wsmouse c 45 0
-	mknod wskbd c 45 1
-	chown root.wheel wsmouse wskbd
-	chmod 600 wsmouse wskbd
+	chown root.wheel wsmouse
+	chmod 600 wsmouse
 	;;
 
-wsmuxctl*)
-	unit=${i#wsmuxctl}
-	minor=$(($unit + 128))
-	wsmuxctl=wsmuxctl$unit
-	major=45
-	rm -f $wsmuxctl
-	mknod $wsmuxctl c $major $minor
-	chown root.wheel $wsmuxctl
-	chmod 200 $wsmuxctl
+wskbd)
+	rm -f wskbd
+	mknod wskbd c 45 1
+	chown root.wheel wskbd
+	chmod 600 wskbd
 	;;
 
 wsmux*)
 	unit=${i#wsmux}
+	unitctl=$(($unit + 128))
 	wsmux=wsmux$unit
+	wsmuxctl=wsmuxctl$unit
 	major=45
-	rm -f $wsmux
+	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
 	chown root.wheel $wsmux
 	chmod 600 $wsmux
+	mknod $wsmuxctl c $major $unitctl
+	chown root.wheel $wsmuxctl
+	chmod 200 $wsmuxctl
 	;;
 
 ttyEcfg)
