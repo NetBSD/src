@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 1999/05/10 05:58:44 cgd Exp $
+	$NetBSD: syscalls.master,v 1.31 2000/11/17 03:06:28 erh Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -372,7 +372,8 @@
 253	UNIMPL		audgen
 254	UNIMPL		sysfs
 255	UNIMPL		subsys_info
-256	UNIMPL		getsysinfo
+256	STD		{ int osf1_sys_getsysinfo(u_long op, caddr_t buffer, \
+			    u_long nbytes, caddr_t arg, u_long flag); }
 257	STD		{ int osf1_sys_setsysinfo(u_long op, caddr_t buffer, \
 			    u_long nbytes, caddr_t arg, u_long flag); }
 258	UNIMPL		afs_syscall
