@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.91 2003/03/23 05:11:22 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.91 2003/03/23 05:11:22 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.91 2003/03/23 05:11:22 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.92 2003/03/23 22:48:35 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -658,6 +658,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     /*
      * We don't want to make every target dependent on sources for
      * other targets.  This is the bit of ParseDoSrc which is relevant.
+     * The main difference is we don't link the resolved src to all targets.
      */
     gn = Targ_FindNode (cp, TARG_CREATE);
     if (ss->op) {
@@ -771,7 +772,8 @@ ParseDoSrc(int tOp, char *src, Lst allsrc, Boolean resolve)
 	    ss.allsrc = allsrc;
 
 	    /*
-	     * This will come back to us in a sec if possible.
+	     * If src cannot be fully resolved, we'll be called again
+	     * with resolve==FALSE.
 	     */
 	    Lst_ForEach(targets, ParseDoSpecialSrc, (ClientData)&ss);
 	    return;
