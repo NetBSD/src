@@ -1,4 +1,4 @@
-/* $NetBSD: sbrk.S,v 1.2 1996/05/12 19:55:24 mark Exp $ */
+/*	$NetBSD: sbrk.S,v 1.3 1997/10/06 00:07:16 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,17 +45,42 @@ curbrk:	.long	_end
 	.text
 	.align	0
 
+
+/*
+ * Change the data segment size
+ */
+
 ENTRY(sbrk)
+#ifdef PIC
+	/* Setup the GOT */
+	ldr	r3, got
+	add	r3, pc, r3
+L1:
 	ldr	r2, Lcurbrk
+	ldr	r2, [r3, r2]
+#else
+	ldr	r2, Lcurbrk
+#endif
+	/* Get the current brk address */
 	ldr	r1, [r2]
+
+	/* Calculate new value */
 	mov	r3, r0
 	add	r0, r0, r1
 	swi	SYS_break
 	bcs	cerror
+
+	/* Store new curbrk value */
 	ldr	r0, [r2]
 	add	r1, r0, r3
 	str	r1, [r2]
 	mov	r15, r14
+
+#ifdef PIC
+	.align	0
+got:
+	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+#endif
 
 Lcurbrk:
 	.word	curbrk
