@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.h,v 1.14 1998/02/22 12:55:45 christos Exp $	*/
+/*	$NetBSD: gprof.h,v 1.15 1998/05/06 22:07:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -63,6 +63,9 @@
 #endif
 #if pmax
 #   include "pmax.h"
+#endif
+#if powerpc
+#   include "powerpc.h"
 #endif
 #if sparc
 #   include "sparc.h"
