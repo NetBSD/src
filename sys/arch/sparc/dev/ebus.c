@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.14 2003/07/15 00:04:54 lukem Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.15 2003/08/27 15:59:50 mrg Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.14 2003/07/15 00:04:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.15 2003/08/27 15:59:50 mrg Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -270,7 +270,7 @@ ebus_attach(parent, self, aux)
 	 * 
 	 */
 	error = PROM_getprop(node, "reg", sizeof(struct ofw_pci_register),
-			     &sc->sc_nreg, (void **)&sc->sc_reg);
+			     &sc->sc_nreg, &sc->sc_reg);
 	if (error)
 		panic("%s: unable to read ebus registers (error %d)",
 		      self->dv_xname, error);
@@ -303,7 +303,7 @@ ebus_setup_attach_args(sc, node, ea)
 
 	memset(ea, 0, sizeof(struct ebus_attach_args));
 
-	err = PROM_getprop(node, "name", 1, &n, (void **)&ea->ea_name);
+	err = PROM_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (err != 0)
 		return (err);
 	ea->ea_name[n] = '\0';
@@ -313,7 +313,7 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_dmatag = sc->sc_dmatag;
 
 	err = PROM_getprop(node, "reg", sizeof(struct ebus_regs),
-			   &ea->ea_nreg, (void **)&ea->ea_reg);
+			   &ea->ea_nreg, &ea->ea_reg);
 	if (err != 0)
 		return (err);
 
@@ -331,7 +331,7 @@ ebus_setup_attach_args(sc, node, ea)
 
 
 	err = PROM_getprop(node, "address", sizeof(u_int32_t),
-			   &ea->ea_nvaddr, (void **)&ea->ea_vaddr);
+			   &ea->ea_nvaddr, &ea->ea_vaddr);
 	if (err != ENOENT) {
 		if (err != 0)
 			return (err);

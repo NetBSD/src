@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.8 2003/07/15 00:05:03 lukem Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.9 2003/08/27 15:59:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.8 2003/07/15 00:05:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.9 2003/08/27 15:59:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -117,7 +117,7 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	error = PROM_getprop(sc->sc_node, "ranges",
 	    sizeof(struct openprom_range), &sc->sc_bustag->nranges,
-	    (void **) &sc->sc_bustag->ranges);
+	    &sc->sc_bustag->ranges);
 	if (error) {
 		printf("%s: error %d getting \"ranges\" property\n",
 		    sc->sc_dev.dv_xname, error);
@@ -157,13 +157,13 @@ cpuunit_setup_attach_args(struct cpuunit_softc *sc, bus_space_tag_t bustag,
 
 	memset(cpua, 0, sizeof(*cpua));
 
-	error = PROM_getprop(node, "name", 1, &n, (void **) &cpua->cpua_name);
+	error = PROM_getprop(node, "name", 1, &n, &cpua->cpua_name);
 	if (error)
 		return (error);
 	cpua->cpua_name[n] = '\0';
 
 	error = PROM_getprop(node, "device_type", 1, &n,
-	    (void **) &cpua->cpua_type);
+	    &cpua->cpua_type);
 	if (error) {
 		free(cpua->cpua_name, M_DEVBUF);
 		return (error);
