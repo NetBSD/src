@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1999/03/23 03:00:51 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.8 1999/03/27 01:10:56 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -546,4 +546,7 @@
 365	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 366	UNIMPL		adjtimex
-;367-369	UNIMPL(sys_ni_syscall)
+367	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
+368	UNIMPL		capget
+369	UNIMPL		capset
+370	UNIMPL		sendfile
