@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1996/10/05 09:19:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 1996/10/14 07:58:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,6 +55,11 @@
 	.text
 	.globl  _kernel_text
 _kernel_text:
+
+/*
+ * Clear and skip the first page of text; it will not be mapped.
+ */
+	.fill	NBPG/4,4,0
 
 /*
  * Temporary stack for a variety of purposes.
@@ -776,8 +781,11 @@ Lnosir:
 Ldorte:
 	rte				| real return
 
-#define	RELOC(var, ar)	\
-	lea	var,ar;	\
+/*
+ * Macro to relocate a symbol, used before MMU is enabled.
+ */
+#define	RELOC(var, ar)		\
+	lea	var,ar;		\
 	addl	a5,ar
 
 /*
@@ -817,6 +825,17 @@ start:
 	RELOC(_internalhpib, a0)
 	movl	#0,a0@			| no, clear associated address
 Lhaveihpib:
+
+	RELOC(_boothowto, a0)		| save reboot flags
+	movl	d7,a0@
+	RELOC(_bootdev, a0)		|   and boot device
+	movl	d6,a0@
+
+	/*
+	 * All data registers are now free.  All address registers
+	 * except a5 are free.  a5 is used by the RELOC() macro,
+	 * and cannot be used until after the MMU is enabled.
+	 */
 
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
 	movl	#INTIOBASE+MMUBASE,a1
@@ -986,6 +1005,13 @@ Lcodecopy:
 	 */
 
 Lhighcode:
+	/*
+	 * Set up the vector table, and race to get the MMU
+	 * enabled.
+	 */
+	movl	#_vectab,d0		| set Vector Base Register
+	movc	d0,vbr
+
 	RELOC(_mmutype, a0)
 	tstl	a0@			| HP MMU?
 	jeq	Lhpmmu3			| yes, skip
@@ -1009,6 +1035,7 @@ Lhighcode:
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
+	RELOC(_prototc, a2)
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 	jmp	Lenab1
@@ -1019,7 +1046,7 @@ Lhpmmu3:
 Lehighcode:
 
 	/*
-	 * END MMU TRAMPOLINE.
+	 * END MMU TRAMPOLINE.  Address register a5 is now free.
 	 */
 
 /*
@@ -1053,12 +1080,8 @@ Lenab1:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* final setup for C code */
-	movl	#_vectab,d0		| set Vector Base Register
-	movc	d0,vbr
 	jbsr	_isrinit		| be ready for stray ints
 	jbsr	_hp300_calibrate_delay	| calibrate delay
-	movl	d7,_boothowto		| save reboot flags
-	movl	d6,_bootdev		|   and boot device
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -2015,6 +2038,13 @@ LmotommuE:
 #endif
 	jmp	MAXADDR+8		| jump to last page
 
+#define DOREBOOT						\
+	/* Reset Vector Base Register to what PROM expects. */	\
+	movl	#0,d0;						\
+	movc	d0,vbr;						\
+	/* Jump to REQ_REBOOT */				\
+	jmp	0x1A4;
+
 Lbootcode:
 	lea	MAXADDR+0x800,sp	| physical SP in case of NMI
 #if defined(M68040)
@@ -2024,7 +2054,7 @@ Lbootcode:
 	movc	d0,cacr			| caches off
 	.long	0x4e7b0003		| movc d0,tc
 	movl	d2,MAXADDR+NBPG-4	| restore old high page contents
-	jmp	0x1A4			| goto REQ_REBOOT
+	DOREBOOT
 LmotommuF:
 #endif
 #if defined(M68K_MMU_MOTOROLA)
@@ -2032,19 +2062,21 @@ LmotommuF:
 	jeq	LhpmmuB			| yes, skip
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
 	pmove	a0@,tc			| disable MMU
-	jmp	0x1A4			| goto REQ_REBOOT
+	DOREBOOT
 LhpmmuB:
 #endif
 #if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	#0xFFFF0000,a0@(MMUCMD)	| totally disable MMU
 	movl	d2,MAXADDR+NBPG-4	| restore old high page contents
-	jmp	0x1A4			| goto REQ_REBOOT
+	DOREBOOT
 #endif
 Lebootcode:
 
+#undef DOREBOOT
+
 	.data
-	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp
+	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp,_prototc
 _machineid:
 	.long	HP_320		| default to 320
 _mmutype:
@@ -2055,6 +2087,8 @@ _ectype:
 	.long	EC_NONE		| external cache type, default to none
 _protorp:
 	.long	0,0		| prototype root pointer
+_prototc:
+	.long	0		| prototype translation control
 	.globl	_internalhpib
 _internalhpib:
 	.long	1		| has internal HP-IB, default to yes
@@ -2065,7 +2099,7 @@ _cold:
 _want_resched:
 	.long	0
 	.globl	_intiobase, _intiolimit, _extiobase, _CLKbase, _MMUbase
-	.globl	_proc0paddr
+	.globl	_proc0paddr, _pagezero
 _proc0paddr:
 	.long	0		| KVA of proc0 u-area
 _intiobase:
@@ -2078,6 +2112,8 @@ _CLKbase:
 	.long	0		| KVA of base of clock registers
 _MMUbase:
 	.long	0		| KVA of base of HP MMU registers
+_pagezero:
+	.long	0		| PA of first page of kernel text
 #ifdef USELEDS
 heartbeat:
 	.long	0		| clock ticks since last pulse of heartbeat
