@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.22 1999/03/18 20:30:22 is Exp $
+.\"	$NetBSD: rc.conf.5,v 1.23 1999/03/24 17:29:07 mellon Exp $
 .\"
 .\"  Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -124,13 +124,22 @@ If empty or not set, then the contents of
 .El
 .Pp
 .Ss Boottime file-system and swap configuration:
-.Bl -tag -width critical_filesystems
+.Bl -tag -width critfs_require_network
 .It Sy critical_filesystems
 File systems mounted very early in the system boot, except for the
 .Pa /usr
 and
 .Pa /var
 file-systems.
+.It Sy critfs_require_network
+YES or NO.
+Set the 
+.Sy critfs_require_network
+variable to YES if the network must be configured before critical filesystems
+can be mounted.   This should be set to NO if you are using the DHCP client,
+because the DHCP client needs to store its lease database in the
+.Pa /var/db 
+directory.
 .It Sy no_swap
 Set the
 .Sy no_swap
@@ -226,6 +235,36 @@ YES or NO.
 Flushes the route table on networking startup.
 Useful when coming up to multiuser mode after going down to
 single-user mode.
+.It Sy dhclient
+YES or NO.
+Set to YES to configure some or all network interfaces using
+the DHCP client.   If you set
+.Sy dhclient
+to YES, you must either set 
+.Sy critfs_require_network
+to NO or direct the DHCP client to store the leases file on the root
+filesystem by modifying the
+.Sy dhclient_flags
+variable.   You must not provide ifconfig information or ifaliases
+information for any interface that is to be configured using the DHCP
+client.   Interface aliases can be set up in the DHCP client configuration
+file if needed - see
+.Xr dhclient.conf 5
+for details.
+.It Sy dhclient_flags
+Flags to pass to the DHCP client.   See
+.Xr dhclient 8
+for complete documentation.   If you wish to configure all broadcast
+network interfaces using the DHCP client, you can leave this blank.
+To configure only specific interfaces, name the interfaces to be configured
+on the command line.
+.Pp
+If you must run the DHCP client before mounting critical filesystems,
+then you should specify an alternate location for the DHCP client's lease
+file in the
+.Sy dhclient_flags
+variable - for example, "-lf /tmp/dhclient.leases".
+
 .It Sy ntpdate
 YES or NO.
 Runs
