@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.11 1998/04/02 10:25:09 kleink Exp $	*/
+/*	$NetBSD: lock.c,v 1.12 1998/07/05 08:22:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.11 1998/04/02 10:25:09 kleink Exp $");
+__RCSID("$NetBSD: lock.c,v 1.12 1998/07/05 08:22:36 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -105,15 +105,17 @@ main(argc, argv)
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
 
+	if (!(pw = getpwuid(getuid())))
+		errx(1, "unknown uid %d.", getuid());
+
+	setuid(getuid());		/* discard privs */
+
 	sectimeout = TIMEOUT;
 	mypw = NULL;
 	usemine = 0;
 
-	if (!(pw = getpwuid(getuid())))
-		errx(1, "unknown uid %d.", getuid());
-
 	while ((ch = getopt(argc, argv, "pt:")) != -1)
-		switch((char)ch) {
+		switch ((char)ch) {
 		case 't':
 			if ((sectimeout = atoi(optarg)) <= 0)
 				errx(1, "illegal timeout value: %s", optarg);
@@ -127,14 +129,13 @@ main(argc, argv)
 			(void)fprintf(stderr,
 			    "usage: lock [-p] [-t timeout]\n");
 			exit(1);
-	}
+		}
 	timeout.tv_sec = sectimeout * 60;
-
-	setuid(getuid());		/* discard privs */
 
 	if (tcgetattr(0, &tty) < 0)	/* get information for header */
 		exit(1);
 	gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	if (!(ttynam = ttyname(0)))
 		errx(1, "not a terminal?");
 	if (gettimeofday(&timval, (struct timezone *)NULL))
@@ -221,7 +222,8 @@ main(argc, argv)
  * for our needs. Instead we roll our own.
  */
 int
-skey_auth(char *user)
+skey_auth(user)
+	char *user;
 {
 	char s[128], *ask, *skey_keyinfo __P((char *name));
 	int ret = 0;
