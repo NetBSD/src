@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.8.2 2001/09/18 19:13:52 fvdl Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.8.3 2001/09/20 11:15:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ wsmuxopen(devvp, flags, mode, p)
 {
 	struct wsmux_softc *sc;
 	struct wsplink *m;
+	struct vnode *vp2;
 	int unit, error, nopen, lasterror;
 
 	unit = minor(devvp->v_rdev);
@@ -252,9 +253,15 @@ wsmuxopen(devvp, flags, mode, p)
 			KASSERT(m->sc_pdevvp == NULL);
 			error = cdevvp(makedev(m->pmajor, m->sc->dv_unit),
 			    &m->sc_pdevvp);
-			if (error == 0)
-				error = m->sc_ops->dopen(m->sc_pdevvp, flags,
-				    mode, p);
+			if (error == 0) {
+				vp2 = NULL;
+				error = VOP_OPEN(m->sc_pdevvp, flags,
+				    p->p_ucred, p, &vp2);
+				if (error == 0 && vp2 != NULL) {
+					vput(m->sc_pdevvp);
+					m->sc_pdevvp = vp2;
+				}
+			}
 			if (error) {
 				/* Ignore opens that fail */
 				lasterror = error;
@@ -263,6 +270,7 @@ wsmuxopen(devvp, flags, mode, p)
 				DPRINTF(("wsmuxopen: open failed %d\n", 
 					 error));
 			} else {
+				VOP_UNLOCK(m->sc_pdevvp, 0);
 				nopen++;
 				*m->sc_muxp = sc;
 			}
@@ -399,6 +407,7 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops, pmajor)
 	int pmajor;
 {
 	struct wsplink *m;
+	struct vnode *vp2;
 	int error;
 
 	DPRINTF(("wsmux_attach_sc: %s: type=%d dsc=%p, *psp=%p\n",
@@ -446,14 +455,22 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops, pmajor)
 		/* mux already open, join in */
 		error = cdevvp(makedev(m->pmajor, m->sc->dv_unit),
 		    &m->sc_pdevvp);
-		if (error == 0)
-			error = m->sc_ops->dopen(m->sc_pdevvp, sc->sc_flags,
-			    sc->sc_mode, sc->sc_p);
+		if (error == 0) {
+			vp2 = NULL;
+			error = VOP_OPEN(m->sc_pdevvp, sc->sc_flags,
+			    sc->sc_p->p_ucred, sc->sc_p, &vp2);
+			if (error == 0 && vp2 != NULL) {
+				vput(m->sc_pdevvp);
+				m->sc_pdevvp = vp2;
+			}
+		}
 		if (error) {
-			vrele(m->sc_pdevvp);
+			vput(m->sc_pdevvp);
 			m->sc_pdevvp = NULL;
-		} else
+		} else {
+			VOP_UNLOCK(m->sc_pdevvp, 0);
 			*m->sc_muxp = sc;
+		}
 	} else {
 		DPRINTF(("wsmux_attach_sc: %s not open\n",
 			 sc->sc_dv.dv_xname));
