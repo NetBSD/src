@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.1 1997/05/05 20:54:35 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.2 1998/03/21 07:45:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 extern caddr_t	ledbase;	/* kva of LED page */
 u_int8_t	*ledaddr;	/* actual address of LEDs */
-static int	inledcontrol;	/* mutex */
+static volatile u_int8_t currentleds; /* current LED status */
 
 /*
  * Map the LED page and setup the KVA to access it.
@@ -69,29 +69,18 @@ ledinit()
  *	`ons' is a mask of LEDs to turn on,
  *	`offs' is a mask of LEDs to turn off,
  *	`togs' is a mask of LEDs to toggle.
- * Note we don't use splclock/splx for mutual exclusion.
- * They are expensive and we really don't need to be that precise.
- * Besides we would like to be able to profile this routine.
+ * Note that we don't use splclock/splx for mutual exclusion.  They are
+ * expensive and we really don't need to be that precise.  Besides, we
+ * would like to be able to profile this routine.
  */
 void
 ledcontrol(ons, offs, togs)
 	int ons, offs, togs;
 {
-	static u_int8_t currentleds;
-	u_int8_t leds;
 
-	if (inledcontrol)
-		return;
-
-	inledcontrol = 1;
-	leds = currentleds;
-	if (ons)
-		leds |= ons;
-	if (offs)
-		leds &= ~offs;
-	if (togs)
-		leds ^= togs;
-	currentleds = leds;
-	*ledaddr = ~leds;
-	inledcontrol = 0;
+	__asm __volatile ("	orb	%0,_currentleds;
+				andb	%1,_currentleds;
+				eorb	%2,_currentleds"
+				    : : "d" (ons), "d" (~offs), "d" (togs));
+	*ledaddr = ~currentleds;
 }
