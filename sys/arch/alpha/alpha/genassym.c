@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.21 1999/04/19 23:22:19 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.22 1999/04/20 21:08:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.21 1999/04/19 23:22:19 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.22 1999/04/20 21:08:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -223,10 +223,6 @@ struct nv assyms[] = {
 	off(CPU_INFO_FPCURPROC, struct cpu_info, ci_fpcurproc),
 	off(CPU_INFO_CURPCB, struct cpu_info, ci_curpcb),
 	off(CPU_INFO_IDLE_THREAD, struct cpu_info, ci_idle_thread),
-
-	/* Instruction fault codes */
-	def1(ALPHA_IF_CODE_BPT),
-	def1(ALPHA_IF_CODE_BUGCHK),
 };
 int nassyms = sizeof(assyms)/sizeof(assyms[0]);
 
