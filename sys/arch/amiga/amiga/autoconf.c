@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.22 1994/06/04 11:58:38 chopps Exp $
+ *	$Id: autoconf.c,v 1.23 1994/06/13 08:12:30 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,14 +198,14 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "kbd", simple_devprint);
 	config_found(dp, "grfcc", simple_devprint);
 	config_found(dp, "fdc", simple_devprint);
+	if (is_a4000())
+		config_found(dp, "idesc", simple_devprint);
 	config_found(dp, "ztwobus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
 	if (is_a3000() || is_a4000()) {
 		config_found(dp, "zthreebus", simple_devprint);
 	}
-	if (is_a4000())
-		config_found(dp, "idesc", simple_devprint);
 }
 
 int

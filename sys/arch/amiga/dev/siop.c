@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.10 1994/05/22 07:22:33 chopps Exp $
+ *	$Id: siop.c,v 1.11 1994/06/13 08:13:06 chopps Exp $
  */
 
 /*
@@ -62,9 +62,9 @@ extern u_int	kvtop();
  * SCSI delays
  * In u-seconds, primarily for state changes on the SPC.
  */
-#define	SCSI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
-#define	SCSI_DATA_WAIT	50000	/* wait per data in/out step */
-#define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
+#define	SCSI_CMD_WAIT	500000	/* wait per step of 'immediate' cmds */
+#define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
+#define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
 int  siopicmd __P((struct siop_softc *, int, void *, int, void *, int));
 int  siopgo __P((struct siop_softc *, struct scsi_xfer *));
@@ -486,7 +486,7 @@ siopabort(dev, regs, where)
           /* ok, get more drastic.. */
           
 	  SET_SBIC_cmd (regs, SBIC_CMD_RESET);
-	  DELAY(25);
+	  delay(25);
 	  SBIC_WAIT(regs, SBIC_ASR_INT, 0);
 	  GET_SBIC_csr (regs, csr);       /* clears interrupt also */
 
@@ -588,7 +588,7 @@ siopreset(dev)
 
 	splx (s);
 
- 	DELAY (siop_reset_delay * 10000);
+ 	delay (siop_reset_delay * 1000);
 	printf("siop id %d reset\n", my_id);
 	dev->sc_flags |= SIOP_ALIVE;
 	dev->sc_flags &= ~(SIOP_SELECTED | SIOP_DMA);
@@ -707,7 +707,9 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 	else
 		regs->siop_scratch = regs->siop_scratch & ~0xff00;
 	regs->siop_dsa = (long) kvtop(&dev->sc_ds);
+#if 1
 	DCIS();				/* push data cache */
+#endif
 	regs->siop_dsp = (long) kvtop(scripts);
 }
 
@@ -786,7 +788,9 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 				scsi_period_to_siop (dev, target);
 			}
 		}
+#if 1
 		DCIAS(kvtop(&dev->sc_stat));	/* XXX */
+#endif
 		*status = dev->sc_stat[0];
 		return 1;
 	}
@@ -977,7 +981,7 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 				i = siop_cmd_wait << 2;
 				/* XXXX need an upper limit and reset */
 			}
-			DELAY(1);
+			delay(1);
 		}
 		dstat = regs->siop_dstat;
 		sstat0 = regs->siop_sstat0;

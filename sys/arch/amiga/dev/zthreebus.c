@@ -142,11 +142,6 @@ zthreeattach(pdp, dp, auxp)
 	if (amiga_realconfig) {
 		if (ZTHREEAVAIL)
 			printf (" I/O size 0x%08x", ZTHREEAVAIL);
-#if 0
-		if (ZTHREEMEMADDR)
-			printf(" mem %08x-%08x\n", ZTHREEMEMADDR,
-			    ZTHREEMEMADDR + NZTHREEMEMPG * NBPG - 1);
-#endif
 		printf("\n");
 	}
 
@@ -167,9 +162,9 @@ zthreeattach(pdp, dp, auxp)
 		else {
 			/*
 			 * check that its from zorro III space
+			 * (board type = Zorro III and not memory)
 			 */
-			if ((u_long)za.pa >= ZTHREETOP ||
-			    (u_long)za.pa < ZTHREEBASE)
+			if ((cdp->rom.type & 0xe0) != 0x80)
 				continue;
 			za.va = (void *)(iszthreepa(za.pa) ?
 			    zthreemap(za.pa, za.size) : 0);
