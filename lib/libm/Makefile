@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.49 1999/08/16 23:10:20 kleink Exp $
+#  $NetBSD: Makefile,v 1.50 1999/08/19 21:53:03 is Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -60,12 +60,20 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S s_sin.S \
 	    s_sinf.S s_tan.S s_tanf.S
 .endif
-.elif (${MACHINE_ARCH} == "m68k") && !defined(M68060) && !defined(M68040)
+.elif (${MACHINE_ARCH} == "m68k")
+.if defined(M68060)
+.PATH:	${.CURDIR}/arch/m68060
+.include "${.CURDIR}/arch/m68060/Makefile.list"
+COPTS+=-m68060
+.elif defined(M68040)
+.else
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
+.endif
+# end of m68k
 .elif (${MACHINE_ARCH} == "vax")
 #.PATH:	${.CURDIR}/arch/vax
 #NOIEEE_ARCH= n_infnan.S n_argred.S n_sqrt.S
@@ -127,6 +135,10 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
 .else
 SRCS=	${COMMON_SRCS}
+.endif
+
+.ifdef ARCH_ADDS
+SRCS+= ${ARCH_ADDS}
 .endif
 
 # Substitute common sources with any arch specific sources
