@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1999/03/18 04:56:03 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1999/06/28 08:20:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,6 +92,14 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+
+#ifdef INET6
+# if 0	/*ifndef INET*/
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
@@ -1009,6 +1017,12 @@ interrupt(statusReg, causeReg, pc, what, args)
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef INET6
+		if (netisr & (1 << NETISR_IPV6)) {
+			netisr &= ~(1 << NETISR_IPV6);
+			ip6intr();
 		}
 #endif
 #ifdef NETATALK

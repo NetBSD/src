@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 1999/03/24 05:51:06 mrg Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 1999/06/28 08:20:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -299,6 +299,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ip6intr();
 	}
 #endif
 #ifdef NETATALK

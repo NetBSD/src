@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 1999/05/29 09:38:28 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.111 1999/06/28 08:20:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 1999/05/29 09:38:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 1999/06/28 08:20:45 itojun Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -104,6 +104,14 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 1999/05/29 09:38:28 nisimura Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #include "ppp.h"
 
@@ -771,6 +779,9 @@ interrupt(status, cause, pc)
 			if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
 			if (isr & (1 << NETISR_IP)) ipintr();
+#endif
+#ifdef INET6
+			if (isr & (1 << NETISR_IPV6)) ip6intr();
 #endif
 #ifdef NETATALK
 			if (isr & (1 << NETISR_ATALK)) atintr();
