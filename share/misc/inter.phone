@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.14 2000/11/30 14:07:17 soren Exp $
+#	$NetBSD: inter.phone,v 1.15 2000/12/11 15:35:09 hubertf Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -319,8 +319,19 @@
 354:1:Reykjavik:Iceland
 356:::Malta
 357:21:Nicosia:Cyprus
+358:2:Turku & Pori:Finland
+358:3:Häme:Finland
+358:5:Kymi:Finland
+358:6:Vaasa:Finland
+358:8:Oulu:Finland
 358:9:Helsinki:Finland
-358:3:Tampere:Finland
+358:13:Pohjois-Karjala:Finland
+358:14:Keski-Suomi:Finland
+358:15:Mikkeli:Finland
+358:16:Lappi:Finland
+358:17:Kuopio:Finland
+358:18:Ahvenanmaa:Finland
+358:19:Uusimaa:Finland
 359:2:Sofia:Bulgaria
 420:2:Prague:Czech Republic
 421:7:Bratislava:Slovak Republic
