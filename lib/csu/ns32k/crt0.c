@@ -27,18 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.5 1995/05/17 16:00:58 mycroft Exp $
+ *	$Id: crt0.c,v 1.6 1995/06/02 21:30:56 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.5 1995/05/17 16:00:58 mycroft Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.6 1995/06/02 21:30:56 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-extern void exit();
-int _callmain();
-
 #include <sys/param.h>
+#include <stdlib.h>
+
+int		_callmain __P((void));
+int		main __P((int, char **, char **));
+static char	*_strrchr __P((char *, char));
+extern void	start __P((long)) asm("start");
+
+char			**environ;
+int			errno;
+static char		empty[1];
+char			*__progname = empty;
+extern unsigned char	etext;
+extern unsigned char	eprol asm ("eprol");
 
 #ifdef DYNAMIC
 #include <sys/types.h>
@@ -58,11 +68,14 @@ int _callmain();
 #endif
 #include <link.h>
 
-extern struct _dynamic _DYNAMIC;
+extern struct _dynamic	_DYNAMIC;
 static struct ld_entry	*ld_entry;
-static void	__do_dynamic_link ();
-static char	*_getenv();
-static int	_strncmp();
+static void		__do_dynamic_link __P((void));
+extern int		__syscall __P((int, ...));
+#ifdef DEBUG
+static char		*_getenv __P((char *));
+static int		_strncmp __P((char *, char *, int));
+#endif
 
 #ifdef sun
 #define LDSO	"/usr/lib/ld.so"
@@ -72,21 +85,6 @@ static int	_strncmp();
 #endif
 
 #endif /* DYNAMIC */
-
-static char		*_strrchr();
-
-char			**environ;
-
-#ifdef BSD
-extern	unsigned char	etext;
-extern	unsigned char	eprol asm ("eprol");
-extern			start() asm("start");
-extern			mcount() asm ("mcount");
-
-int			errno;
-static char		empty[1];
-char			*__progname = empty;
-#endif
 
 /*
  * We need these system calls, but can't use library stubs
@@ -112,8 +110,9 @@ char			*__progname = empty;
 	write(2, str, sizeof(str)), \
 	_exit(1);
 
-
-start(long param)
+void
+start(param)
+	long param;
 {
 	struct kframe {
 		int	kargc;
@@ -126,7 +125,8 @@ start(long param)
 	 */
 	register struct kframe *kfp;
 	register char **argv, *ap;
-	extern void _mcleanup();
+	extern void monstartup __P((u_long, u_long));
+	extern void _mcleanup __P((void));
 #ifdef DYNAMIC
 	volatile caddr_t x;
 #endif
@@ -158,7 +158,7 @@ asm("eprol:");
 
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup(&eprol, &etext);
+	monstartup((u_long)&eprol, (u_long)&etext);
 #endif MCRT0
 
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
@@ -172,8 +172,7 @@ __do_dynamic_link ()
 	struct crt_ldso	crt;
 	struct exec	hdr;
 	char		*ldso;
-	int		dupzfd;
-	int		(*entry)();
+	int		(*entry) __P((int, struct crt_ldso *));
 
 #ifdef DEBUG
 	/* Provision for alternate ld.so - security risk! */
@@ -238,7 +237,8 @@ __do_dynamic_link ()
 	crt.crt_bp = (caddr_t)_callmain;
 	crt.crt_prog = __progname;
 
-	entry = (int (*)())(crt.crt_ba + sizeof hdr);
+	entry = (int (*) __P((int, struct crt_ldso *)))
+		(crt.crt_ba + sizeof hdr);
 	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
 		_FATAL("ld.so failed\n");
 	}
@@ -298,10 +298,11 @@ int	cmd;
  * Support routines
  */
 
+#ifdef DEBUG
 static int
 _strncmp(s1, s2, n)
 	register char *s1, *s2;
-	register n;
+	register int n;
 {
 
 	if (n == 0)
@@ -331,6 +332,7 @@ _getenv(name)
 			}
 	return (char *)0;
 }
+#endif
 
 	asm("	___syscall:");
 	asm("		movd tos,r1");		/* return address */
