@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.232 2004/03/27 19:29:36 snj Exp $
+.\"	$NetBSD: options.4,v 1.232.2.1 2004/04/05 06:02:27 tron Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 27, 2004
+.Dd April 2, 2004
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2133,6 +2133,29 @@ other purpose (e.g., hardware breakpoint) if you turn this on.
 Include support for accessing MTRR registers from user-space.
 See
 .Xr i386_get_mtrr 2 .
+.It Cd options BEEP_ONHALT
+Make the system speaker emit several beeps when it is completely safe to
+power down the computer after a
+.Xr halt 8
+command.
+Requires
+.Xr sysbeep 4
+support.
+.It Cd options BEEP_ONHALT_COUNT=times
+Number of times to beep the speaker when
+.Cd options BEEP_ONHALT
+is enabled.
+Defaults to 3.
+.It Cd options BEEP_ONHALT_PITCH=hz
+The tone frequency used when
+.Cd options BEEP_ONHALT
+option, in hertzs.
+Defaults to 1500.
+.It Cd options BEEP_ONHALT_PERIOD=msecs
+The duration of each beep when
+.Cd options BEEP_ONHALT
+is enabled, in milliseconds.
+Defaults to 250.
 .El
 .Ss isa-specific Options
 Options specific to
