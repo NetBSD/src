@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/07/21 14:46:09 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2001/07/30 21:38:22 jdolecek Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,6 +11,6 @@ KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
 
 DISKTYPE=	floppy
 DISKSIZE=	2880
-BLOCK8K=	149
+BLOCK8K=	179
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
