@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ite.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: ite.4,v 1.2 1997/10/13 11:21:55 lukem Exp $
+.\"	$NetBSD: ite.4,v 1.2.2.1 1998/02/07 06:24:23 mellon Exp $
 .\"
 .Dd August 30, 1994
 .Dt ITE 4 amiga
@@ -48,6 +48,11 @@ Internal Terminal Emulator
 .Cd "ite0 at grf0"
 .Cd "ite1 at grf1"
 .Cd "ite2 at grf2"
+.Cd "ite3 at grf3"
+.Cd "ite4 at grf4"
+.Cd "ite5 at grf5"
+.Cd "ite6 at grf6"
+.Cd "ite7 at grf7"
 .Sh DESCRIPTION
 .Tn TTY
 special files of the form ``ttye?''
@@ -97,11 +102,8 @@ device
 to use as the system console
 .Pq Pa /dev/console .
 If a display exists at any hardware address, it will be the console.
-The kernel looks for, in order:
-.Nm ite2 ,
-.Nm ite1
-then
-.Nm ite0
+The kernel looks for them in decreasing order (that is, choosing the
+hightest-numbered one).
 .Pp
 On most systems,
 a display is used both as an
@@ -133,7 +135,7 @@ The
 .Tn Amiga
 .Nm
 first appeared in
-.Nx 0.9a
+.Nx 1.0
 .Sh SEE ALSO
 .Xr grf 4 ,
 .Xr kbd 4
