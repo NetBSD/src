@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.48.14.3 2001/06/17 22:27:10 he Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.48.14.4 2002/09/04 04:09:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -248,9 +248,8 @@ i386_set_ldt(p, args, retval)
 	    ua.num, ua.desc);
 #endif
 
-	if (ua.start < 0 || ua.num < 0)
-		return (EINVAL);
-	if (ua.start > 8192 || (ua.start + ua.num) > 8192)
+	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
+	    ua.start + ua.num > 8192)
 		return (EINVAL);
 
 	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
