@@ -31,9 +31,11 @@
  *	BBN uses a negative OR zero value.
  */
 
-extern int	errno;
-extern int	sys_nerr;
-extern char	*sys_errlist[];
+#include "supcdefs.h"
+#include "supextern.h"
+
+#ifndef __NetBSD__
+static char *itoa __P((char *, unsigned));
 
 static char *itoa(p,n)
 char *p;
@@ -44,10 +46,15 @@ unsigned n;
     *p++ = (n%10)+'0';
     return(p);
 }
+#endif
 
 char *errmsg(cod)
 int cod;
 {
+#ifndef __NetBSD__
+	extern int	errno;
+	extern int	sys_nerr;
+	extern char	*sys_errlist[];
 	static char unkmsg[] = "Unknown error ";
 	static char unk[sizeof(unkmsg)+11];		/* trust us */
 
@@ -60,4 +67,7 @@ int cod;
 	*itoa(&unk[sizeof(unkmsg)-1],cod) = '\0';
 
 	return(unk);
+#else
+	return strerror(cod);
+#endif
 }

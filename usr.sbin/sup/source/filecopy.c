@@ -52,6 +52,8 @@
  */
 
 #define BUFFERSIZE 10240
+#include "supcdefs.h"
+#include "supextern.h"
 
 int filecopy (here,there)
 int here,there;

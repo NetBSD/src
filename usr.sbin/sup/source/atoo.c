@@ -37,6 +37,8 @@
  *	Rewritten for VAX.
  *
  */
+#include "supcdefs.h"
+#include "supextern.h"
 
 unsigned int atoo(ap)
 char *ap;

@@ -69,6 +69,12 @@
  *	since Tahoe version of <netinet/in.h> does not define them.
  *
  * $Log: scm.c,v $
+ * Revision 1.4  1996/12/23 19:42:12  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.3  1996/09/05 16:50:05  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -206,7 +212,8 @@
 #else
 #include <varargs.h>
 #endif
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 
 #ifndef INADDR_NONE
 #define	INADDR_NONE		0xffffffff		/* -1 return */
@@ -216,7 +223,6 @@
 #endif
 
 extern int errno;
-static char *myhost ();
 
 char scmversion[] = "4.3 BSD";
 extern int silent;
@@ -242,15 +248,15 @@ static struct in_addr remoteaddr;	/* remote host address */
 static char *remotename = NULL;		/* remote host name */
 static int swapmode;			/* byte-swapping needed on server? */
 
-#if __STDC__
-int scmerr(int,char *,...);
-#endif
+
+static char *myhost __P((void));
 
 /***************************************************
  ***    C O N N E C T I O N   R O U T I N E S    ***
  ***    F O R   S E R V E R                      ***
  ***************************************************/
 
+int
 servicesetup (server)		/* listen for clients */
 char *server;
 {
@@ -288,6 +294,7 @@ char *server;
 	return (SCMOK);
 }
 
+int
 service ()
 {
 	struct sockaddr_in from;
@@ -312,6 +319,7 @@ service ()
 	return (SCMOK);
 }
 
+int
 serviceprep ()		/* kill temp socket in daemon */
 {
 	if (sock >= 0) {
@@ -321,6 +329,7 @@ serviceprep ()		/* kill temp socket in daemon */
 	return (SCMOK);
 }
 
+int
 servicekill ()		/* kill net file in daemon's parent */
 {
 	if (netfile >= 0) {
@@ -334,6 +343,7 @@ servicekill ()		/* kill net file in daemon's parent */
 	return (SCMOK);
 }
 
+int
 serviceend ()		/* kill net file after use in daemon */
 {
 	if (netfile >= 0) {
@@ -352,7 +362,7 @@ serviceend ()		/* kill net file after use in daemon */
  ***    F O R   C L I E N T                      ***
  ***************************************************/
 
-dobackoff (t,b)
+int dobackoff (t,b)
 int *t,*b;
 {
 	struct timeval tt;
@@ -375,6 +385,7 @@ int *t,*b;
 	return (1);
 }
 
+int
 request (server,hostname,retry)		/* connect to server */
 char *server;
 char *hostname;
@@ -431,6 +442,7 @@ int *retry;
 	return (SCMOK);
 }
 
+int
 requestend ()			/* end connection to server */
 {
 	(void) readflush ();
@@ -551,7 +563,7 @@ char *name;
 	return (0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 int scmerr (int errno,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -559,24 +571,24 @@ int scmerr (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap,fmt);
+#else
 	int errno;
 	char *fmt;
+
+	va_start(ap);
+	errno = va_arg(ap,int);
+	fmt = va_arg(ap,char *);
 #endif
-	va_list ap;
 
 	(void) fflush (stdout);
 	if (progpid > 0)
 		fprintf (stderr,"%s %d: ",program,progpid);
 	else
 		fprintf (stderr,"%s: ",program);
-#if __STDC__
-	va_start(ap,fmt);
-#else
-	va_start(ap);
-	errno = va_arg(ap,int);
-	fmt = va_arg(ap,char *);
-#endif
+
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (errno >= 0)

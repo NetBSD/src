@@ -39,6 +39,12 @@
  **********************************************************************
  * HISTORY
  * $Log: supscan.c,v $
+ * Revision 1.2  1996/12/23 19:42:23  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -124,12 +130,8 @@
 #endif
 #include <sys/time.h>
 #include <sys/types.h>
-#include "sup.h"
-
-#ifdef	lint
-/*VARARGS1*//*ARGSUSED*/
-static void quit(status) {};
-#endif	/* lint */
+#include "supcdefs.h"
+#include "supextern.h"
 
 #define PGMVERSION 6
 
@@ -137,13 +139,13 @@ static void quit(status) {};
  ***    D A T A   S T R U C T U R E S    ***
  *******************************************/
 
-struct collstruct {			/* one per collection to be upgraded */
+struct scan_collstruct {		/* one per collection to be upgraded */
 	char *Cname;			/* collection name */
 	char *Cbase;			/* local base directory */
 	char *Cprefix;			/* local collection pathname prefix */
-	struct collstruct *Cnext;	/* next collection */
+	struct scan_collstruct *Cnext;	/* next collection */
 };
-typedef struct collstruct COLLECTION;
+typedef struct scan_collstruct SCAN_COLLECTION;
 
 /*********************************************
  ***    G L O B A L   V A R I A B L E S    ***
@@ -151,7 +153,7 @@ typedef struct collstruct COLLECTION;
 
 int trace;				/* -v flag */
 
-COLLECTION *firstC;			/* collection list pointer */
+SCAN_COLLECTION *firstC;		/* collection list pointer */
 char *collname;				/* collection name */
 char *basedir;				/* base directory name */
 char *prefix;				/* collection pathname prefix */
@@ -164,17 +166,27 @@ TREELIST *listTL;	/* list of all files specified by <coll>.list */
 TREE *listT;		/* final list of files in collection */
 TREE *refuseT = NULL;	/* list of all files specified by <coll>.list */
 
-long time ();
+
+void usage __P((void));
+void init __P((int, char **));
+static SCAN_COLLECTION *getscancoll __P((char *, char *, char *));
+int localhost __P((char *));
+int main __P((int, char **));
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
  *************************************/
 
+int
 main (argc,argv)
 int argc;
 char **argv;
 {
-	register COLLECTION *c;
+	SCAN_COLLECTION *c;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &c;
+#endif
 
 	init (argc,argv);		/* process arguments */
 	for (c = firstC; c; c = c->Cnext) {
@@ -196,7 +208,7 @@ char **argv;
 				ctime (&scantime));
 		(void) fflush (stdout);
 	}
-	while (c = firstC) {
+	while ((c = firstC) != NULL) {
 		firstC = firstC->Cnext;
 		free (c->Cname);
 		free (c->Cbase);
@@ -210,6 +222,7 @@ char **argv;
  ***    I N I T I A L I Z A T I O N    ***
  *****************************************/
 
+void
 usage ()
 {
 	fprintf (stderr,"Usage: supscan [ -v ] collection [ basedir ]\n");
@@ -218,15 +231,16 @@ usage ()
 	exit (1);
 }
 
+void
 init (argc,argv)
 int argc;
 char **argv;
 {
 	char buf[STRINGLENGTH],fbuf[STRINGLENGTH],*p,*q;
 	FILE *f;
-	COLLECTION **c, *getcoll();
+	SCAN_COLLECTION **c;
 	int fflag,sflag;
-	char *filename;
+	char *filename = NULL;
 
 	trace = FALSE;
 	fflag = FALSE;
@@ -273,7 +287,7 @@ char **argv;
 			collname = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
 			if (!localhost (p))  continue;
-			*c = getcoll(filename,salloc (collname),
+			*c = getscancoll(filename,salloc (collname),
 					(char *)NULL);
 			if (*c)  c = &((*c)->Cnext);
 		}
@@ -285,13 +299,13 @@ char **argv;
 		c = &firstC;
 		if ((f = fopen (filename,"r")) == NULL)
 			quit (1,"supscan: Unable to open %s\n",filename);
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = index (p,'\n');
 			if (q)  *q = 0;
 			if (index ("#;:",*p))  continue;
 			q = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
-			*c = getcoll(filename,salloc (q),salloc (p));
+			*c = getscancoll(filename,salloc (q),salloc (p));
 			if (*c)  c = &((*c)->Cnext);
 		}
 		(void) fclose (f);
@@ -299,21 +313,21 @@ char **argv;
 	}
 	if (argc < 2 || argc > 3)
 		usage ();
-	firstC = getcoll(filename,salloc (argv[1]),
+	firstC = getscancoll(filename,salloc (argv[1]),
 			argc > 2 ? salloc (argv[2]) : (char *)NULL);
 }
 
-COLLECTION *
-getcoll(filename, collname, basedir)
+static SCAN_COLLECTION *
+getscancoll(filename, collname, basedir)
 register char *filename,*collname,*basedir;
 {
 	char buf[STRINGLENGTH],*p,*q;
 	FILE *f;
-	COLLECTION *c;
+	SCAN_COLLECTION *c;
 
 	if (basedir == NULL) {
-		if (f = fopen (filename,"r")) {
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+		if ((f = fopen (filename,"r")) != NULL) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				q = index (p,'\n');
 				if (q)  *q = 0;
 				if (index ("#;:",*p))  continue;
@@ -338,8 +352,8 @@ register char *filename,*collname,*basedir;
 	}
 	prefix = NULL;
 	(void) sprintf (buf,FILEPREFIX,collname);
-	if (f = fopen (buf,"r")) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+	if ((f = fopen (buf,"r")) != NULL) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = index (p,'\n');
 			if (q) *q = 0;
 			if (index ("#;:",*p))  continue;
@@ -353,7 +367,7 @@ register char *filename,*collname,*basedir;
 		}
 		(void) fclose (f);
 	}
-	if ((c = (COLLECTION *) malloc (sizeof(COLLECTION))) == NULL)
+	if ((c = (SCAN_COLLECTION *) malloc (sizeof(SCAN_COLLECTION))) == NULL)
 		quit (1,"supscan: can't malloc collection structure\n");
 	c->Cname = collname;
 	c->Cbase = basedir;
@@ -361,7 +375,9 @@ register char *filename,*collname,*basedir;
 	c->Cnext = NULL;
 	return (c);
 }
-#if __STDC__
+
+void
+#ifdef __STDC__
 goaway (char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -369,14 +385,13 @@ goaway (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif

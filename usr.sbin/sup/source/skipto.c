@@ -50,11 +50,14 @@
  *	and partly due to popular usage of this function.
  */
 
-static unsigned char tab[256] = {
+#include "supcdefs.h"
+#include "supextern.h"
+
+static char tab[256] = {
 	0};
 
 char *skipto (string,charset)
-unsigned char *string, *charset;
+char *string, *charset;
 {
 	register unsigned char *setp,*strp;
 
@@ -66,7 +69,7 @@ unsigned char *string, *charset;
 }
 
 char *skipover (string,charset)
-unsigned char *string, *charset;
+char *string, *charset;
 {
 	register unsigned char *setp,*strp;
 

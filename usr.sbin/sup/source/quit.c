@@ -36,6 +36,12 @@
  **********************************************************************
  * HISTORY
  * $Log: quit.c,v $
+ * Revision 1.2  1996/12/23 19:42:09  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -47,17 +53,30 @@
  */
 
 #include <stdio.h>
-#include <varargs.h>
+#include "supcdefs.h"
+#include "supextern.h"
 
-quit (status, fmt, va_alist)
-int status;
-char *fmt;
+void 
+#ifdef __STDC__
+quit (int status, char * fmt, ...)
+#else
+quit (va_alist)
 va_dcl
+#endif
 {
 	va_list args;
+#ifdef __STDC__
+	va_start(args, fmt);
+#else
+	int status;
+	char *fmt;
+
+	va_start(args);
+	status = va_arg(args, int);
+	fmt = va_arg(args, char *);
+#endif
 
 	fflush(stdout);
-	va_start(args);
 	(void) vfprintf(stderr, fmt, args);
 	va_end(args);
 	exit(status);

@@ -22,6 +22,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
+ */
 /*
  * supfilesrv -- SUP File Server
  *
@@ -43,6 +44,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.10  1996/12/23 19:42:22  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.9  1996/09/05 16:50:12  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -290,19 +297,12 @@
 # include <sys/statvfs.h>
 #endif 
 
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 #define MSGFILE
 #include "supmsg.h"
 
-#ifdef	lint
-/*VARARGS1*//*ARGSUSED*/
-static void quit(status) {};
-#endif	/* lint */
-
 extern int errno;
-long time ();
-uid_t getuid ();
-
 int maxchildren;
 
 /*
@@ -377,15 +377,43 @@ HASH *uidH[HASHSIZE];			/* for uid and gid lookup */
 HASH *gidH[HASHSIZE];
 HASH *inodeH[HASHSIZE];			/* for inode lookup for linked file check */
 
-char *fmttime ();			/* time format routine */
-#if __STDC__
-int goaway(char *fmt,...);
-#endif
+
+/* supfilesrv.c */
+int main __P((int, char **));
+void chldsig __P((int));
+void usage __P((void));
+void init __P((int, char **));
+void answer __P((void));
+void srvsignon __P((void));
+void srvsetup __P((void));
+void docrypt __P((void));
+void srvlogin __P((void));
+void listfiles __P((void));
+int denyone __P((TREE *, void *));
+void sendfiles __P((void));
+int sendone __P((TREE *, void *));
+int senddir __P((TREE *, void *));
+int sendfile __P((TREE *, void *));
+void srvfinishup __P((long));
+void Hfree __P((HASH **));
+HASH *Hlookup __P((HASH **, int, int ));
+void Hinsert __P((HASH **, int, int , char *, TREE *));
+TREE *linkcheck __P((TREE *, int, int ));
+char *uconvert __P((int));
+char *gconvert __P((int));
+char *changeuid __P((char *, char *, int, int ));
+void goaway __P((char *, ...));
+char *fmttime __P((long));
+int local_file __P((int, struct stat *));
+int stat_info_ok __P((struct stat *, struct stat *));
+int link_nofollow __P((int));
+int link_nofollow __P((int));
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
  *************************************/
 
+int
 main (argc,argv)
 int argc;
 char **argv;
@@ -393,7 +421,6 @@ char **argv;
 	register int x,pid;
 	sigset_t nset, oset;
 	struct sigaction chld,ign;
-	void chldsig ();
 	long tloc;
 
 	/* initialize global variables */
@@ -473,11 +500,13 @@ chldsig(snum)
  ***    I N I T I A L I Z A T I O N    ***
  *****************************************/
 
+void
 usage ()
 {
 	quit (1,"Usage: supfilesrv [ -l | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
 }
 
+void
 init (argc,argv)
 int argc;
 char **argv;
@@ -560,8 +589,8 @@ char **argv;
 	f = fopen (cryptkey,"r");
 	if (f == NULL)
 		quit (1,"Unable to open cryptfile %s\n",cryptkey);
-	if (p = fgets (buf,STRINGLENGTH,f)) {
-		if (q = index (p,'\n'))  *q = '\0';
+	if ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
+		if ((q = index (p,'\n')) != NULL)  *q = '\0';
 		if (*p == '\0')
 			quit (1,"No cryptkey found in %s\n",cryptkey);
 		cryptkey = salloc (buf);
@@ -638,6 +667,7 @@ char **argv;
  ***    A N S W E R   R E Q U E S T    ***
  *****************************************/
 
+void
 answer ()
 {
 	long starttime;
@@ -657,10 +687,10 @@ answer ()
 	lockfd = -1;
 	starttime = time ((long *)NULL);
 	if (!setjmp (sjbuf)) {
-		signon ();
-		setup ();
+		srvsignon ();
+		srvsetup ();
 		docrypt ();
-		login ();
+		srvlogin ();
 		if (xpatch) {
 			int fd;
 
@@ -682,7 +712,7 @@ answer ()
 		listfiles ();
 		sendfiles ();
 	}
-	finishup (starttime);
+	srvfinishup (starttime);
 	if (collname)  free (collname);
 	if (basedir)  free (basedir);
 	if (prefix)  free (prefix);
@@ -712,7 +742,8 @@ answer ()
  ***    S I G N   O N   C L I E N T    ***
  *****************************************/
 
-signon ()
+void
+srvsignon ()
 {
 	register int x;
 
@@ -729,7 +760,8 @@ signon ()
  ***    E X C H A N G E   S E T U P   I N F O R M A T I O N    ***
  *****************************************************************/
 
-setup ()
+void
+srvsetup ()
 {
 	register int x;
 	char *p,*q;
@@ -751,7 +783,6 @@ setup ()
 	}
 	if (xpatch) {
 		register struct passwd *pw;
-		extern int link_nofollow(), local_file();
 
 		if ((pw = getpwnam (xuser)) == NULL) {
 			setupack = FSETUPSAME;
@@ -776,7 +807,7 @@ setup ()
 			if ((f = fopen (buf,"r")) != NULL) {
 				struct stat fsbuf;
 
-				while (p = fgets (buf,STRINGLENGTH,f)) {
+				while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 					q = index (p,'\n');
 					if (q)  *q = 0;
 					if (index ("#;:",*p))  continue;
@@ -829,7 +860,7 @@ setup ()
 		(void) sprintf (buf,FILEDIRS,DEFDIR);
 		f = fopen (buf,"r");
 		if (f) {
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				q = index (p,'\n');
 				if (q)  *q = 0;
 				if (index ("#;:",*p))  continue;
@@ -852,7 +883,7 @@ setup ()
 	(void) sprintf (buf,FILEPREFIX,collname);
 	f = fopen (buf,"r");
 	if (f) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = index (p,'\n');
 			if (q)  *q = 0;
 			if (index ("#;:",*p))  continue;
@@ -897,7 +928,7 @@ setup ()
 		f = fopen (buf,"r");
 		if (f) {
 			int hostok = FALSE;
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				int not;
 				q = index (p,'\n');
 				if (q)  *q = 0;
@@ -944,6 +975,7 @@ setup ()
 	if (x != SCMOK)  goaway ("Error sending setup reply to client");
 }
 
+void
 /** Test data encryption **/
 docrypt ()
 {
@@ -952,7 +984,6 @@ docrypt ()
 	char buf[STRINGLENGTH];
 	register FILE *f;
 	struct stat sbuf;
-	extern int  link_nofollow(), local_file();
 
 	if (!xpatch) {
 		(void) sprintf (buf,FILECRYPT,collname);
@@ -968,7 +999,8 @@ docrypt ()
 
 				if (cryptkey == NULL &&
 				    (p = fgets (buf,STRINGLENGTH,f))) {
-					if (q = index (p,'\n'))  *q = '\0';
+					if ((q = index (p,'\n')) != NULL)
+						*q = '\0';
 					if (*p)  cryptkey = salloc (buf);
 				}
 				if (local_file(fileno(f), &fsbuf) > 0
@@ -1002,10 +1034,10 @@ docrypt ()
  ***    C O N N E C T   T O   P R O P E R   A C C O U N T    ***
  ***************************************************************/
 
-login ()
+void
+srvlogin ()
 {
-	char *changeuid ();
-	register int x,fileuid,filegid;
+	register int x,fileuid = -1,filegid = -1;
 
 	(void) netcrypt (PSWDCRYPT);	/* encrypt acct name and password */
 	x = msglogin ();
@@ -1054,9 +1086,9 @@ login ()
  ***    M A K E   N A M E   L I S T    ***
  *****************************************/
 
+void
 listfiles ()
 {
-	int denyone();
 	register int x;
 
 	refuseT = NULL;
@@ -1073,22 +1105,24 @@ listfiles ()
 	if (x != SCMOK)
 		goaway ("Error reading needed files list from client");
 	denyT = NULL;
-	(void) Tprocess (needT,denyone);
+	(void) Tprocess (needT,denyone, NULL);
 	Tfree (&needT);
 	x = msgdeny ();
 	if (x != SCMOK)  goaway ("Error sending denied files list to client");
 	Tfree (&denyT);
 }
 
-denyone (t)
+
+int
+denyone (t, v)
 register TREE *t;
+void *v;
 {
 	register TREELIST *tl;
 	register char *name = t->Tname;
 	register int update = (t->Tflags&FUPDATE) != 0;
 	struct stat sbuf;
 	register TREE *tlink;
-	TREE *linkcheck ();
 	char slinkname[STRINGLENGTH];
 	register int x;
 
@@ -1141,9 +1175,9 @@ register TREE *t;
  ***    S E N D   F I L E S    ***
  *********************************/
 
+void
 sendfiles ()
 {
-	int sendone(),senddir(),sendfile();
 	register TREELIST *tl;
 	register int x;
 
@@ -1168,12 +1202,12 @@ sendfiles ()
                         }
                 }
 #endif
-		(void) Tprocess (tl->TLtree,sendone);
+		(void) Tprocess (tl->TLtree,sendone, NULL);
 	}
 	/* send directories in reverse order */
 	for (tl = listTL; tl != NULL; tl = tl->TLnext) {
 		cdprefix (tl->TLprefix);
-		(void) Trprocess (tl->TLtree,senddir);
+		(void) Trprocess (tl->TLtree,senddir, NULL);
 	}
 	x = msgsend ();
 	if (x != SCMOK)
@@ -1184,16 +1218,13 @@ sendfiles ()
 		goaway ("Error sending file to client");
 }
 
-sendone (t)
+int
+sendone (t, v)
 TREE *t;
+void *v;
 {
 	register int x,fd;
-	register int fdtmp;
-	char temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
-        int status;
-	char *uconvert(),*gconvert();
-	int sendfile ();
-	int ac;
+	char temp_file[STRINGLENGTH];
 	char *av[50];	/* More than enough */
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
@@ -1311,12 +1342,12 @@ TREE *t;
 	return (SCMOK);
 }
 
-senddir (t)
+int
+senddir (t, v)
 TREE *t;
+void *v;
 {
 	register int x;
-	char *uconvert(),*gconvert();
-	int sendfile ();
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
 		return (SCMOK);
@@ -1332,10 +1363,12 @@ TREE *t;
 	return (SCMOK);
 }
 
-sendfile (t,ap)
+int
+sendfile (t,v)
 register TREE *t;
-va_list ap;
+void *v;
 {
+	va_list ap = v;
 	register int x;
 	int fd = va_arg(ap,int);
 	if ((t->Tmode&S_IFMT) != S_IFREG || listonly || (t->Tflags&FUPDATE))
@@ -1350,13 +1383,13 @@ va_list ap;
  ***    E N D   C O N N E C T I O N    ***
  *****************************************/
 
-finishup (starttime)
+void
+srvfinishup (starttime)
 long starttime;
 {
 	register int x = SCMOK;
 	char tmpbuf[BUFSIZ], *p, lognam[STRINGLENGTH];
 	int logfd;
-	struct stat sbuf;
 	long finishtime;
 	char *releasename;
 
@@ -1424,13 +1457,14 @@ long starttime;
  ***    H A S H   T A B L E   R O U T I N E S    ***
  ***************************************************/
 
+void
 Hfree (table)
 HASH **table;
 {
 	register HASH *h;
 	register int i;
 	for (i = 0; i < HASHSIZE; i++)
-		while (h = table[i]) {
+		while ((h = table[i]) != NULL) {
 			table[i] = h->Hnext;
 			if (h->Hname)  free (h->Hname);
 			free ((char *)h);
@@ -1448,6 +1482,7 @@ int num1,num2;
 	return (h);
 }
 
+void
 Hinsert (table,num1,num2,name,tree)
 HASH **table;
 int num1,num2;
@@ -1515,7 +1550,6 @@ char *changeuid (namep,passwordp,fileuid,filegid)
 char *namep,*passwordp;
 int fileuid,filegid;
 {
-	char *okpassword ();
 	char *group,*account,*pswdp;
 	struct passwd *pwd;
 	struct group *grp;
@@ -1529,7 +1563,7 @@ int fileuid,filegid;
 #if	CMUCS
 	int *grps;
 #endif	/* CMUCS */
-	char *p;
+	char *p = NULL;
 
 	if (namep == NULL) {
 		pwd = getpwuid (fileuid);
@@ -1688,7 +1722,8 @@ int fileuid,filegid;
 	return (NULL);
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 goaway (char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -1696,19 +1731,19 @@ goaway (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	register char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	(void) netcrypt ((char *)NULL);
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	register char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
+	(void) netcrypt ((char *)NULL);
+
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	goawayreason = salloc (buf);

@@ -32,6 +32,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.8  1996/12/23 19:42:18  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.7  1996/09/05 16:50:09  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -154,12 +160,8 @@
  */
 
 #include "supcdefs.h"
+#include "supextern.h"
 #include <sys/wait.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 TREE *lastT;				/* last filenames in collection */
 jmp_buf sjbuf;				/* jump location for network errors */
@@ -171,22 +173,27 @@ extern COLLECTION *thisC;		/* collection list pointer */
 extern int rpauseflag;			/* don't disable resource pausing */
 extern int portdebug;			/* network debugging ports */
 
-#if __STDC__
-int done(int,char *,...);
-int goaway(char *,...);
-#endif
-
 /*************************************************
  ***    U P G R A D E   C O L L E C T I O N    ***
  *************************************************/
 
+static int needone __P((TREE *, void *));
+static int recvone __P((TREE *, void *));
+static int denyone __P((TREE *, void *));
+static int deleteone __P((TREE *, void *));
+static int linkone __P((TREE *, void *));
+static int execone __P((TREE *, void *));
+static int finishone __P((TREE *, void *));
+
+
 /* The next two routines define the fsm to support multiple fileservers
  * per collection.
  */
-getonehost (t,state)
+int getonehost (t,v)
 register TREE *t;
-int *state;
+void *v;
 {
+	long *state = v;
 	if (t->Tflags != *state)
 		return (SCMOK);
 	if (*state != 0 && t->Tmode == SCMEOF) {
@@ -202,9 +209,10 @@ int *state;
 }
 
 TREE *getcollhost (tout,backoff,state,nhostsp)
-int *tout,*backoff,*state,*nhostsp;
+int *tout,*backoff,*nhostsp;
+long *state;
 {
-	static int laststate = 0;
+	static long laststate = 0;
 	static int nhosts = 0;
 
 	if (*state != laststate) {
@@ -212,7 +220,7 @@ int *tout,*backoff,*state,*nhostsp;
 		laststate = *state;
 		nhosts = 0;
 	}
-	if (Tprocess (thisC->Chtree,getonehost,*state) == SCMEOF) {
+	if (Tprocess (thisC->Chtree, getonehost, state) == SCMEOF) {
 		if (*state != 0 && nhosts == 0 && !dobackoff (tout,backoff))
 			return (NULL);
 		nhosts++;
@@ -231,11 +239,12 @@ int *tout,*backoff,*state,*nhostsp;
  *  host machine.
  */
 
-getcoll ()
+void getcoll (void)
 {
 	register TREE *t;
 	register int x;
-	int tout,backoff,state,nhosts;
+	int tout,backoff,nhosts;
+	long state;
 
 	collname = thisC->Cname;
 	tout = thisC->Ctimeout;
@@ -336,11 +345,11 @@ int *tout;
 
 /***  Tell file server what to connect to ***/
 
-setup (t)
+int setup (t)
 register TREE *t;
 {
 	char relsufix[STRINGLENGTH];
-	register int f,x;
+	register int x;
 	struct stat sbuf;
 
 	if (chdir (thisC->Cbase) < 0)
@@ -421,11 +430,12 @@ register TREE *t;
 		goaway ("Unrecognized file server setup status %d",setupack);
 	}
 	/* NOTREACHED */
+	return FALSE;
 }
 
 /***  Tell file server what account to use ***/
 
-int login ()
+void login (void)
 {
 	char buf[STRINGLENGTH];
 	register int f,x;
@@ -509,9 +519,8 @@ int login ()
  *  which are no longer on the repository.
  */
 
-int listfiles ()
+void listfiles ()
 {
-	int needone(), denyone(), deleteone();
 	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
 	register char *p,*q;
@@ -526,8 +535,8 @@ int listfiles ()
 	(void) sprintf (buf,FILELAST,collname,relsufix);
 	f = fopen (buf,"r");
 	if (f) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
-			if (q = index (p,'\n'))  *q = '\0';
+		while ((p = fgets (buf,STRINGLENGTH,f))) {
+			if ((q = index (p,'\n')))  *q = '\0';
 			if (index ("#;:",*p))  continue;
 			(void) Tinsert (&lastT,p,FALSE);
 		}
@@ -537,8 +546,8 @@ int listfiles ()
 	(void) sprintf (buf,FILEREFUSE,collname);
 	f = fopen (buf,"r");
 	if (f) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
-			if (q = index (p,'\n'))  *q = '\0';
+		while ((p = fgets (buf,STRINGLENGTH,f))) {
+			if ((q = index (p,'\n')))  *q = '\0';
 			if (index ("#;:",*p))  continue;
 			(void) Tinsert (&refuseT,p,FALSE);
 		}
@@ -554,7 +563,7 @@ int listfiles ()
 		goaway ("Error reading file list from file server");
 	if (thisC->Cprefix)  (void) chdir (thisC->Cprefix);
 	needT = NULL;
-	(void) Tprocess (listT,needone);
+	(void) Tprocess (listT,needone, NULL);
 	Tfree (&listT);
 	x = msgneed ();
 	if (x != SCMOK)
@@ -565,15 +574,16 @@ int listfiles ()
 	if (x != SCMOK)
 		goaway ("Error reading denied files list from file server");
 	if (thisC->Cflags&CFVERBOSE)
-		(void) Tprocess (denyT,denyone);
+		(void) Tprocess (denyT,denyone, NULL);
 	Tfree (&denyT);
 	if (thisC->Cflags&(CFALL|CFDELETE|CFOLD))
-		(void) Trprocess (lastT,deleteone);
+		(void) Trprocess (lastT,deleteone, NULL);
 	Tfree (&refuseT);
 }
 
-needone (t)
+static int needone (t, dummy)
 register TREE *t;
+void *dummy;
 {
 	register TREE *newt;
 	register int exists, fetch;
@@ -620,15 +630,17 @@ register TREE *t;
 	return (SCMOK);
 }
 
-denyone (t)
+static int denyone (t, v)
 register TREE *t;
+void *v;
 {
 	vnotify ("SUP: Access denied to %s\n",t->Tname);
 	return (SCMOK);
 }
 
-deleteone (t)
+static int deleteone (t, v)
 TREE *t;
+void *v;
 {
 	struct stat sbuf;
 	register int x;
@@ -724,10 +736,9 @@ TREE *t;
  * badly and best just stop the program as soon as possible.
  */
 
-recvfiles ()
+void recvfiles (void)
 {
 	register int x;
-	int recvone ();
 	int recvmore;
 
 	/* Does the protocol support compression */
@@ -755,7 +766,7 @@ recvfiles ()
 }
 
 /* prepare the target, if necessary */
-prepare (name,mode,newp,statp)
+int prepare (name,mode,newp,statp)
 char *name;
 int mode,*newp;
 struct stat *statp;
@@ -807,14 +818,14 @@ struct stat *statp;
 	return (TRUE);
 }
 
-recvone (t,ap)
+static int recvone (t,v)
 register TREE *t;
-va_list ap;
+void  *v;
 {
-	register int x;
+	va_list ap = v;
+	int x = 0;
 	int new;
 	struct stat sbuf;
-	int linkone (),execone ();
 	int *recvmore = va_arg(ap,int *);
 
 	/* check for end of file list */
@@ -859,7 +870,7 @@ va_list ap;
 	}
 	if ((t->Tmode&S_IFMT) == S_IFREG)
 		(void) Tprocess (t->Tlink,linkone,t->Tname);
-	(void) Tprocess (t->Texec,execone);
+	(void) Tprocess (t->Texec,execone, NULL);
 	return (SCMOK);
 }
 
@@ -1040,21 +1051,22 @@ register struct stat *statp;
 	return (FALSE);
 }
 
-linkone (t,fname)			/* link to file already received */
+static int linkone (t,fv)			/* link to file already received */
 register TREE *t;
-register char **fname;
+void *fv;
 {
+	register char *fname = fv;
 	struct stat fbuf,sbuf;
 	register char *name = t->Tname;
 	int new,x;
 	char *type;
 
-	if (stat(*fname,&fbuf) < 0) {	/* source file */
+	if (stat(fname,&fbuf) < 0) {	/* source file */
 		if (thisC->Cflags&CFLIST) {
-			vnotify ("SUP Would link %s to %s\n",name,*fname);
+			vnotify ("SUP Would link %s to %s\n",name,fname);
 			return (SCMOK);
 		}
-		notify ("SUP: Can't link %s to missing file %s\n",name,*fname);
+		notify ("SUP: Can't link %s to missing file %s\n",name,fname);
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
 	}
@@ -1067,25 +1079,26 @@ register char **fname;
 	    fbuf.st_dev == sbuf.st_dev && fbuf.st_ino == sbuf.st_ino)
 		return (SCMOK);
 	if (thisC->Cflags&CFLIST) {
-		vnotify ("SUP Would link %s to %s\n",name,*fname);
+		vnotify ("SUP Would link %s to %s\n",name,fname);
 		return (SCMOK);
 	}
 	(void) unlink (name);
 	type = "";
-	if ((x = link (*fname,name)) < 0) {
+	if ((x = link (fname,name)) < 0) {
 		type = "symbolic ";
-		x = symlink (*fname,name);
+		x = symlink (fname,name);
 	}
 	if (x < 0 || lstat(name,&sbuf) < 0) {
 		notify ("SUP: Unable to create %slink %s\n",type,name);
 		return (TRUE);
 	}
-	vnotify ("SUP Created %slink %s to %s\n",type,name,*fname);
+	vnotify ("SUP Created %slink %s to %s\n",type,name,fname);
 	return (SCMOK);
 }
 
-execone (t)			/* execute command for file */
+static int execone (t, v)			/* execute command for file */
 register TREE *t;
+void *v;
 {
 	int w;
 
@@ -1123,7 +1136,7 @@ char *from;		/* 0 if reading from network */
 	register int fromf,tof,istemp,x;
 	char dpart[STRINGLENGTH],fpart[STRINGLENGTH];
 	char tname[STRINGLENGTH];
-	struct stat sbuf;
+	static int true = 1;
 
 	static int thispid = 0;		/* process id # */
 
@@ -1189,7 +1202,8 @@ char *from;		/* 0 if reading from network */
 			if (x != SCMOK)
 				goaway ("Can't skip file transfer");
 		}
-		return (TRUE);
+		if (true)
+			return (TRUE);
 	}
 	if (fromf >= 0) {		/* read file */
 		x = filecopy (fromf,tof);
@@ -1314,7 +1328,7 @@ char *from;		/* 0 if reading from network */
 
 /***  Finish connection with file server ***/
 
-finishup (x)
+void finishup (x)
 int x;
 {
 	char tname[STRINGLENGTH],fname[STRINGLENGTH];
@@ -1322,7 +1336,6 @@ int x;
 	char collrelname[STRINGLENGTH];
 	long tloc;
 	FILE *finishfile;		/* record of all filenames */
-	int f,finishone();
 
 	if ((thisC->Cflags&CFURELSUF) && release) {
 		(void) sprintf (relsufix,".%s",release);
@@ -1411,16 +1424,18 @@ int x;
 	Tfree (&lastT);
 }
 
-finishone (t,finishfile)
+int finishone (t,fv)
 TREE *t;
-FILE **finishfile;
+void *fv;
 {
+	FILE *finishfile = fv;
 	if ((thisC->Cflags&CFDELETE) == 0 || (t->Tflags&FUPDATE))
-		fprintf (*finishfile,"%s\n",t->Tname);
+		fprintf (finishfile,"%s\n",t->Tname);
 	return (SCMOK);
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 done (int value,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -1428,21 +1443,21 @@ done (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	int value;
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	(void) netcrypt ((char *)NULL);
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	int value;
+	char *fmt;
+
 	va_start(ap);
 	value = va_arg(ap,int);
 	fmt = va_arg(ap,char *);
 #endif
+	(void) netcrypt ((char *)NULL);
+
 	if (fmt) 
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
@@ -1460,7 +1475,9 @@ va_dcl
 	if (!dontjump)
 		longjmp (sjbuf,TRUE);
 }
-#if __STDC__
+
+void
+#ifdef __STDC__
 goaway (char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -1468,19 +1485,19 @@ goaway (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	register char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	(void) netcrypt ((char *)NULL);
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	register char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
+
+	(void) netcrypt ((char *)NULL);
 	if (fmt) {
 		vsnprintf(buf, sizeof(buf), fmt, ap);
 		goawayreason = buf;

@@ -48,6 +48,12 @@
  **********************************************************************
  * HISTORY
  * $Log: run.c,v $
+ * Revision 1.4  1996/12/23 19:42:09  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.3  1996/09/05 16:50:03  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -115,7 +121,9 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <varargs.h>
+
+#include "supcdefs.h"
+#include "supextern.h"
 
 #ifndef __STDC__
 #ifndef const
@@ -123,17 +131,28 @@
 #endif
 #endif
 
-static int dorun();
+static int dorun __P((char *, char **, int));
 
-int run (name,va_alist)
-char *name;
+int
+#ifdef __STDC__
+run(char *name, ...)
+#else
+run(va_alist)
 va_dcl
+#endif
 {
 	int val;
 	va_list ap;
+#ifdef __STDC__
+	va_start(ap, name);
+#else
+	char *name;
 
 	va_start(ap);
-	val = runv (name,ap);
+	name = va_arg(ap, char *);
+#endif
+
+	val = runv (name, (char **) ap);
 	va_end(ap);
 	return(val);
 }
@@ -144,15 +163,26 @@ char *name,**argv;
 	return (dorun (name, argv, 0));
 }
 
-int runp (name,va_alist)
-char *name;
+int
+#ifdef __STDC__
+runp(char *name, ...)
+#else
+runp (va_alist)
 va_dcl
+#endif
 {
 	int val;
 	va_list ap;
+#ifdef __STDC__
+	va_start(ap, name);
+#else
+	char *name;
 
 	va_start(ap);
-	val = runvp (name,ap);
+	name = va_arg(ap, char *);
+#endif
+
+	val = runvp (name, (char **) ap);
 	va_end(ap);
 	return (val);
 }
@@ -172,8 +202,6 @@ int usepath;
 	register int pid;
 	struct sigaction ignoresig,intsig,quitsig;
 	int status;
-	int execvp(), execv();
-	int (*execrtn)() = usepath ? execvp : execv;
 
 	if ((pid = vfork()) == -1)
 		return(-1);	/* no more process's, so exit with error */
@@ -181,7 +209,10 @@ int usepath;
 	if (pid == 0) {			/* child process */
 		setgid (getgid());
 		setuid (getuid());
-		(*execrtn) (name,argv);
+		if (usepath)
+		    execvp(name,argv);
+		else
+		    execv(name,argv);
 		fprintf (stderr,"run: can't exec %s\n",name);
 		_exit (0377);
 	}

@@ -39,6 +39,12 @@
  *	across the network to save BandWidth
  *
  * $Log: sup.h,v $
+ * Revision 1.4  1996/12/23 19:42:15  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.3  1995/06/03 21:21:54  christos
  * Changes to write ascii timestamps in the when files.
  * Looked into making it 64 bit clean, but it is hopeless.
@@ -258,8 +264,8 @@ typedef struct tliststruct TREELIST;
 #define MAXCHILDREN 3			/* maximum number of children allowed
 					   to sup at the same time */
 
-/* scm and stree external declarations */
-char *remotehost();
-TREE *Tinsert(),*Tsearch(),*Tlookup();
-long getwhen();
-int putwhen();
+#ifdef __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif

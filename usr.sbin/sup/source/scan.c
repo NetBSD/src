@@ -28,6 +28,12 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.6  1996/12/23 19:42:11  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.5  1996/09/05 16:50:04  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -128,7 +134,8 @@
 #endif
 #include <sys/file.h>
 #include <unistd.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 
 /*************************
  ***    M A C R O S    ***
@@ -203,34 +210,35 @@ extern char *rcs_branch;
 extern int candorcs;
 #endif
 
-extern long time();
-
 /*************************************************
  ***   STATIC   R O U T I N E S    ***
  *************************************************/
+static void passdelim __P((char **, int ));
+static char *parserelease __P((TREELIST **, char *, char *));
+static int scanone __P((TREE *, void *));
+static void makescan __P((char *, char *));
+static void getscan __P((char *, char *));
+static void doscan __P((char *));
+static void readlistfile __P((char *));
+static void expTinsert __P((char *, TREE **, int, char *));
+static int listone __P((TREE *, void *));
+static void listentry __P((char *, char *, char *, int));
+static void listname __P((char *, struct stat *));
+static void listdir __P((char *, int));
+static int omitanyone __P((TREE *, void *));
+static int anyglob __P((char *, char *));
+static int getscanfile __P((char *));
+static void chkscanfile __P((char *));
+static void makescanfile __P((char *));
+static int recordone __P((TREE *, void *));
+static int recordexec __P((TREE *, void *));
 
-static makescan();
-static getscan();
-static doscan();
-static readlistfile();
-static expTinsert();
-static listone();
-static listentry();
-static listname();
-static listdir();
-static omitanyone();
-static anyglob();
-static int getscanfile();
-static chkscanfile();
-static makescanfile();
-static recordone();
-static recordexec();
 
 /*************************************************
  ***    L I S T   S C A N   R O U T I N E S    ***
  *************************************************/
 
-static
+static void
 passdelim (ptr,delim)		/* skip over delimiter */
 char **ptr,delim;
 {
@@ -302,6 +310,7 @@ char *relname,*args;
 	return (nextrel);
 }
 
+int
 getrelease (release)
 char *release;
 {
@@ -360,6 +369,7 @@ char *release;
 	return (TRUE);
 }
 
+void
 makescanlists ()
 {
 	TREELIST *tl;
@@ -372,7 +382,7 @@ makescanlists ()
 	(void) sprintf (buf,FILERELEASES,collname);
 	f = fopen (buf,"r");
 	if (f != NULL) {
-		while (p = fgets (buf,sizeof(buf),f)) {
+		while ((p = fgets (buf,sizeof(buf),f)) != NULL) {
 			q = index (p,'\n');
 			if (q)  *q = 0;
 			if (index ("#;:",*p))  continue;
@@ -395,9 +405,10 @@ makescanlists ()
 		makescan ((char *)NULL,(char *)NULL);
 }
 
-static
-scanone (t)
+static int
+scanone (t, v)
 register TREE *t;
+void *v;
 {
 	register TREE *newt;
 
@@ -412,6 +423,7 @@ register TREE *t;
 	return (SCMOK);
 }
 
+void
 getscanlists ()
 {
 	TREELIST *tl,*stl;
@@ -428,10 +440,10 @@ getscanlists ()
 	}
 	listT = NULL;
 	for (tl = listTL; tl != NULL; tl = tl->TLnext)
-		(void) Tprocess (tl->TLtree,scanone);
+		(void) Tprocess (tl->TLtree, scanone, NULL);
 }
 
-static
+static void
 makescan (listfile,scanfile)
 char *listfile,*scanfile;
 {
@@ -442,12 +454,10 @@ char *listfile,*scanfile;
 	Tfree (&listT);			/* free file list tree */
 }
 
-static
+static void
 getscan (listfile,scanfile)
 char *listfile,*scanfile;
 {
-        struct tm *utc_time;
-        
 	listT = NULL;
 	if (!getscanfile(scanfile)) {	/* check for pre-scanned file list */
 		scantime = time ((long *)NULL);
@@ -455,12 +465,11 @@ char *listfile,*scanfile;
 	}
 }
 
-static
+static void
 doscan (listfile)
 	char *listfile;
 {
 	char buf[STRINGLENGTH];
-	int listone ();
 
 	upgT = NULL;
 	flagsT = NULL;
@@ -473,7 +482,7 @@ doscan (listfile)
 		listfile = FILELISTDEF;
 	(void) sprintf (buf,FILELIST,collname,listfile);
 	readlistfile (buf);		/* get contents of list file */
-	(void) Tprocess (upgT,listone); /* build list of files specified */
+	(void) Tprocess (upgT,listone, NULL); /* build list of files specified */
 	cdprefix ((char *)NULL);
 	Tfree (&upgT);
 	Tfree (&flagsT);
@@ -484,7 +493,7 @@ doscan (listfile)
 	Tfree (&rsymT);
 }
 
-static
+static void
 readlistfile (fname)
 char *fname;
 {
@@ -492,15 +501,15 @@ char *fname;
 	register char *q,*r;
 	register FILE *f;
 	register int ltn,n,i,flags;
-	register TREE **t;
+	register TREE **t = NULL;
 	register LISTTYPE lt;
 	char *speclist[SPECNUMBER];
 
 	f = fopen (fname,"r");
 	if (f == NULL)  goaway ("Can't read list file %s",fname);
 	cdprefix (prefix);
-	while (p = fgets (buf,sizeof(buf),f)) {
-		if (q = index (p,'\n'))  *q = '\0';
+	while ((p = fgets (buf,sizeof(buf),f)) != NULL) {
+		if ((q = index (p,'\n')) != NULL) *q = '\0';
 		if (index ("#;:",*p))  continue;
 		q = nxtarg (&p," \t");
 		if (*q == '\0') continue;
@@ -580,7 +589,7 @@ char *fname;
 	(void) fclose (f);
 }
 
-static
+static void
 expTinsert (p,t,flags,exec)
 char *p;
 TREE **t;
@@ -604,22 +613,22 @@ char *exec;
 	}
 }
 
-static
-listone (t)		/* expand and add one name from upgrade list */
+static int
+listone (t, v)		/* expand and add one name from upgrade list */
 TREE *t;
+void *v;
 {
 	listentry(t->Tname,t->Tname,(char *)NULL,(t->Tflags&FALWAYS) != 0);
 	return (SCMOK);
 }
 
-static
+static void
 listentry(name,fullname,updir,always)
 register char *name, *fullname, *updir;
 int always;
 {
 	struct stat statbuf;
 	int link = 0;
-	int omitanyone ();
 
 	if (Tlookup (refuseT,fullname))  return;
 	if (!always) {
@@ -682,7 +691,7 @@ int always;
 	listname (fullname,&statbuf);
 }
 
-static
+static void
 listname (name,st)
 register char *name;
 register struct stat *st;
@@ -694,7 +703,7 @@ register struct stat *st;
 	new = st->st_ctime > lasttime;
 	if (newonly && !new) {
 		for (tl = listTL; tl != NULL; tl = tl->TLnext)
-			if (ts = Tsearch (tl->TLtree,name))
+			if ((ts = Tsearch (tl->TLtree,name)) != NULL)
 				ts->Tflags &= ~FNEW;
 		return;
 	}
@@ -704,15 +713,15 @@ register struct stat *st;
 	t->Tctime = st->st_ctime;
 	t->Tmtime = st->st_mtime;
 	if (new)  t->Tflags |= FNEW;
-	if (ts = Tsearch (flagsT,name))
+	if ((ts = Tsearch (flagsT,name)) != NULL)
 		t->Tflags |= ts->Tflags;
-	if (ts = Tsearch (execT,name)) {
+	if ((ts = Tsearch (execT,name)) != NULL) {
 		t->Texec = ts->Texec;
 		ts->Texec = NULL;
 	}
 }
 
-static
+static void
 listdir (name,always)		/* expand directory */
 char *name;
 int always;
@@ -736,13 +745,13 @@ int always;
 		p += 2;
 		while (*p == '/') p++;
 	}
-	while (*newp++ = *p++) ;	/* copy string */
+	while ((*newp++ = *p++) != '\0') ;	/* copy string */
 	--newp;				/* trailing null */
 	while (newp > newname && newp[-1] == '/') --newp; /* trailing / */
 	*newp = 0;
 	if (strcmp (newname,".") == 0) newname[0] = 0;	/* "." ==> "" */
 
-	while (dentry=readdir(dirp)) {
+	while ((dentry=readdir(dirp)) != NULL) {
 		if (dentry->d_ino == 0) continue;
 		if (strcmp(dentry->d_name,".") == 0) continue;
 		if (strcmp(dentry->d_name,"..") == 0) continue;
@@ -758,17 +767,18 @@ int always;
 	closedir (dirp);
 }
 
-static
-omitanyone (t,filename)
+static int
+omitanyone (t,fv)
 TREE *t;
-char **filename;
+void *fv;
 {
-	if (anyglob (t->Tname,*filename))
+	char *filename = fv;
+	if (anyglob (t->Tname,filename))
 		return (SCMERR);
 	return (SCMOK);
 }
 
-static
+static int
 anyglob (pattern,match)
 char *pattern,*match;
 {
@@ -860,7 +870,7 @@ char *scanfile;
 		(void) fclose (f);
 		return (FALSE);
 	}
-	if (q = index (p,'\n'))  *q = '\0';
+	if ((q = index (p,'\n')) != NULL)  *q = '\0';
 	if (*p++ != 'V') {
 		(void) fclose (f);
 		return (FALSE);
@@ -876,7 +886,7 @@ char *scanfile;
 		return (TRUE);
 	}
 	notwanted = FALSE;
-	while (p = fgets (buf,sizeof(buf),f)) {
+	while ((p = fgets (buf,sizeof(buf),f)) != NULL) {
 		q = index (p,'\n');
 		if (q)  *q = 0;
 		ts.Tflags = 0;
@@ -915,7 +925,7 @@ char *scanfile;
 			ts.Tflags |= FNEW;
 		else if (newonly) {
 			for (tl = listTL; tl != NULL; tl = tl->TLnext)
-				if (tmp = Tsearch (tl->TLtree,fname))
+				if ((tmp = Tsearch (tl->TLtree,fname)) != NULL)
 					tmp->Tflags &= ~FNEW;
 			notwanted = TRUE;
 			continue;
@@ -938,7 +948,7 @@ char *scanfile;
  ***    W R I T E   S C A N   F I L E    ***
  *******************************************/
 
-static chkscanfile (scanfile)
+static void chkscanfile (scanfile)
 char *scanfile;
 {
 	char tname[STRINGLENGTH], fname[STRINGLENGTH];
@@ -956,13 +966,12 @@ char *scanfile;
 	}
 }
 
-static makescanfile (scanfile)
+static void makescanfile (scanfile)
 char *scanfile;
 {
 	char tname[STRINGLENGTH],fname[STRINGLENGTH];
 	struct timeval tbuf[2];
 	FILE *scanF;			/* output file for scanned file list */
-	int recordone ();
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
@@ -982,34 +991,36 @@ char *scanfile;
 	(void) utimes (fname,tbuf);
 }
 
-static
-recordone (t,scanF)
+static int
+recordone (t,v)
 TREE *t;
-FILE **scanF;
+void *v;
 {
-	int recordexec ();
+	FILE *scanF = v;
 	char fname[MAXPATHLEN*4+1];
 
-	if (t->Tflags&FBACKUP)  fprintf (*scanF,"B");
-	if (t->Tflags&FNOACCT)  fprintf (*scanF,"N");
+	if (t->Tflags&FBACKUP)  fprintf (scanF,"B");
+	if (t->Tflags&FNOACCT)  fprintf (scanF,"N");
 	strvis(fname, t->Tname, VIS_WHITE);
-	fprintf (*scanF,"%o %d %d %s\n",
+	fprintf (scanF,"%o %d %d %s\n",
 		t->Tmode,t->Tctime,t->Tmtime,fname);
-	(void) Tprocess (t->Texec,recordexec,*scanF);
+	(void) Tprocess (t->Texec,recordexec, scanF);
 	return (SCMOK);
 }
 
-static
-recordexec (t,scanF)
+static int
+recordexec (t,v)
 TREE *t;
-FILE **scanF;
+void *v;
 {
+	FILE *scanF = v;
 	char fname[MAXPATHLEN*4+1];
 	strvis(fname, t->Tname, VIS_WHITE);
-	fprintf(*scanF,"X%s\n",fname);
+	fprintf(scanF,"X%s\n",fname);
 	return (SCMOK);
 }
 
+void
 cdprefix (prefix)
 char *prefix;
 {
