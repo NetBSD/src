@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.250 2003/04/02 14:38:26 perry Exp $
+#	$NetBSD: Makefile,v 1.251 2003/04/18 05:41:47 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -195,6 +195,7 @@ install-etc-files: check_DESTDIR
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    namedb/${file} ${DESTDIR}/etc/namedb
 .endfor
+	(cd ${.CURDIR}/powerd; ${MAKE} install)
 	(cd ${.CURDIR}/rc.d; ${MAKE} install)
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    postinstall ${DESTDIR}/etc
