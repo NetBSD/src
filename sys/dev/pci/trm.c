@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.7 2002/03/06 12:32:49 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.8 2002/03/13 22:23:50 wiz Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.7 2002/03/06 12:32:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.8 2002/03/13 22:23:50 wiz Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -104,7 +104,7 @@ struct trm_sg_entry {
 struct nvram_target {
 	u_int8_t config0;		/* Target configuration byte 0 */
 #define NTC_DO_WIDE_NEGO	0x20	/* Wide negotiate	     */
-#define NTC_DO_TAG_QUEUING	0x10	/* Enable SCSI tag queuing   */
+#define NTC_DO_TAG_QUEUING	0x10	/* Enable SCSI tagged queuing  */
 #define NTC_DO_SEND_START	0x08	/* Send start command SPINUP */
 #define NTC_DO_DISCONNECT	0x04	/* Enable SCSI disconnect    */
 #define NTC_DO_SYNC_NEGO	0x02	/* Sync negotiation	     */
@@ -304,9 +304,9 @@ struct trm_softc {
  */
 #define SCSI_COND_MET		0x04	/* Condition Met              */
 #define SCSI_INTERM_COND_MET	0x14	/* Intermediate condition met */
-#define SCSI_UNEXP_BUS_FREE	0xFD	/* Unexpect Bus Free          */
-#define SCSI_BUS_RST_DETECT	0xFE	/* Scsi Bus Reset detected    */
-#define SCSI_SEL_TIMEOUT	0xFF	/* Selection Time out         */
+#define SCSI_UNEXP_BUS_FREE	0xFD	/* Unexpected Bus Free        */
+#define SCSI_BUS_RST_DETECT	0xFE	/* SCSI Bus Reset detected    */
+#define SCSI_SEL_TIMEOUT	0xFF	/* Selection Timeout          */
 
 static int  trm_probe(struct device *, struct cfdata *, void *);
 static void trm_attach(struct device *, struct device *, void *);
@@ -551,7 +551,7 @@ trm_init(sc)
 	sc->sc_flag = 0;
 
 	/*
-	 * initialize and link all device's SRB queue of this adapter
+	 * initialize and link all device's SRB queues of this adapter
 	 */
 	TAILQ_INIT(&sc->sc_freesrb);
 	TAILQ_INIT(&sc->sc_readysrb);
@@ -584,7 +584,7 @@ trm_init(sc)
 	}
 
 	/*
-	 * initialize all target info structure
+	 * initialize all target info structures
 	 */
 	for (target = 0; target < TRM_MAX_TARGETS; target++) {
 		ti = &sc->sc_tinfo[target];
@@ -625,7 +625,7 @@ trm_init(sc)
 	/* 250ms selection timeout */
 	bus_space_write_1(iot, ioh, TRM_SCSI_TIMEOUT, SEL_TIMEOUT);
 
-	/* Mask all the interrupt */
+	/* Mask all interrupts */
 	bus_space_write_1(iot, ioh, TRM_DMA_INTEN, 0);
 	bus_space_write_1(iot, ioh, TRM_SCSI_INTEN, 0);
 
@@ -635,10 +635,10 @@ trm_init(sc)
 	/* program Host ID */
 	bus_space_write_1(iot, ioh, TRM_SCSI_HOSTID, sc->sc_id);
 
-	/* set ansynchronous transfer */
+	/* set asynchronous transfer */
 	bus_space_write_1(iot, ioh, TRM_SCSI_OFFSET, 0);
 
-	/* Trun LED control off */
+	/* Turn LED control off */
 	bus_space_write_2(iot, ioh, TRM_GEN_CONTROL,
 	    bus_space_read_2(iot, ioh, TRM_GEN_CONTROL) & ~EN_LED);
 
@@ -1029,7 +1029,7 @@ trm_select(sc, srb)
 	bus_space_write_multi_1(iot, ioh, TRM_SCSI_FIFO, srb->cmd, srb->cmdlen);
 
 	/*
-	 * If trm_select return 0: current interrupt status
+	 * If trm_select returns 0: current interrupt status
 	 * is interrupt enable.  It's said that SCSI processor is
 	 * unoccupied.
 	 */
@@ -1300,7 +1300,7 @@ trm_msgout_phase1(sc)
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
 
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_FIFO_OUT);
 }
@@ -1327,7 +1327,7 @@ trm_command_phase1(sc)
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
 
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_FIFO_OUT);
 }
@@ -1375,11 +1375,11 @@ trm_dataout_phase0(sc, stat)
 			leftcnt <<= 1;
 	}
 	/*
-	 * caculate all the residue data that not yet tranfered
+	 * calculate all the residue data that was not yet transferred
 	 * SCSI transfer counter + left in SCSI FIFO data
 	 *
 	 * .....TRM_SCSI_XCNT (24bits)
-	 * The counter always decrement by one for every SCSI
+	 * The counter always decrements by one for every SCSI
 	 * byte transfer.
 	 * .....TRM_SCSI_FIFOCNT ( 5bits)
 	 * The counter is SCSI FIFO offset counter
@@ -1482,7 +1482,7 @@ trm_datain_phase0(sc, stat)
 		/*
 		 * parsing the case:
 		 * when a transfer not yet complete
-		 * but be disconnected by uper layer
+		 * but be disconnected by upper layer
 		 * if transfer not yet complete
 		 * there were some data residue in SCSI FIFO or
 		 * SCSI transfer counter not empty
@@ -1586,7 +1586,7 @@ trm_dataio_xfer(sc, iodir)
 			    DO_DATALATCH);
 									
 			/*
-			 * SCSI cammand
+			 * SCSI command
 			 */
 			bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND,
 			    (iodir == XFERDATAOUT) ?
@@ -1609,7 +1609,7 @@ trm_dataio_xfer(sc, iodir)
 			    DO_DATALATCH);
 			
 			/*
-			 * SCSI cammand
+			 * SCSI command
 			 */
 			bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND,
 			    (iodir == XFERDATAOUT) ?
@@ -1671,7 +1671,7 @@ trm_status_phase1(sc)
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_COMP);
 }
@@ -1772,7 +1772,7 @@ trm_msgin_phase0(sc)
 	} else {
 		/*
 		 * when extend message in: sc->sc_state = TRM_EXTEND_MSGIN
-		 * Parsing incomming extented messages
+		 * Parsing incoming extented messages
 		 */
 		*sc->sc_msg++ = msgin_code;
 		sc->sc_msgcnt++;
@@ -1971,7 +1971,7 @@ trm_msgin_phase0(sc)
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_MSGACCEPT);
 }
@@ -1993,7 +1993,7 @@ trm_msgin_phase1(sc)
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
 
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_FIFO_IN);
 }
@@ -2154,7 +2154,7 @@ trm_reselect(sc)
 	/* it's important for atn stop */
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 	/*
-	 * SCSI cammand
+	 * SCSI command
 	 */
 	/* to rls the /ACK signal */
 	bus_space_write_1(iot, ioh, TRM_SCSI_COMMAND, SCMD_MSGACCEPT);
@@ -2421,7 +2421,7 @@ trm_scsi_reset_detect(sc)
 
 /*
  * read seeprom 128 bytes to struct eeprom and check checksum.
- * If it is wrong, updated with default value.
+ * If it is wrong, update with default value.
  */
 static void
 trm_check_eeprom(sc, eeprom)
