@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.5 2000/01/28 02:25:25 nisimura Exp $ */
+/* $NetBSD: disksubr.c,v 1.6 2000/03/07 15:55:15 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -88,9 +88,6 @@
  * back to reading UniOS/ISI label when no BSD label is found.  Plus,
  * (4) reads SunOS label if found in place of UniOS/ISI label.
  */
-
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkpart(dev)		(minor(dev) & 7)
 
 #define	b_cylin	b_resid
 
@@ -276,7 +273,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct partition *p;
 	int sz, maxsz;
 
-	p = lp->d_partitions + dkpart(bp->b_dev);
+	p = lp->d_partitions + DISKPART(bp->b_dev);
 	maxsz = p->p_size;
 	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 

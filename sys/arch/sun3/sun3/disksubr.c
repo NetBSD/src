@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2000/01/18 19:49:53 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 2000/03/07 15:55:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -52,9 +52,6 @@
 #include <sys/dkbad.h>
 
 #include <dev/sun/disklabel.h>
-
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkpart(dev)		(minor(dev) & 7)
 
 #if LABELSECTOR != 0
 #error	"Default value of LABELSECTOR no longer zero?"
@@ -240,7 +237,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct partition *p;
 	int sz, maxsz;
 
-	p = lp->d_partitions + dkpart(bp->b_dev);
+	p = lp->d_partitions + DISKPART(bp->b_dev);
 	maxsz = p->p_size;
 	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
