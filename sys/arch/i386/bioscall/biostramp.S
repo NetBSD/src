@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.8 1999/08/23 08:24:36 kleink Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.9 2001/05/02 13:12:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,9 +90,10 @@
 	.set ESI_REGADDR,(EDX_REGADDR-4)
 	.set EDI_REGADDR,(ESI_REGADDR-4)
 	.set EFLAGS_REGADDR,(EDI_REGADDR-4)
-	.set ENDREGADDR,(EFLAGS_REGADDR-4)
+	.set ES_REGADDR, (EFLAGS_REGADDR-4)
+	.set ENDREGADDR,(ES_REGADDR-4)
 	
-	.set REALSTACK,ENDREGADDR-16		# leave a red zone?
+	.set REALSTACK,ENDREGADDR-20		# leave a red zone?
 
 #define COPY_FLAGS (PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
 
@@ -135,6 +136,7 @@ ENTRY(do_bios_call)
 	andl $COPY_FLAGS,%ecx
 	orl %ecx,%eax
 	movl %eax,EFLAGS_REGADDR
+	movl $0, ES_REGADDR 
 	
 	# save flags, disable interrupts, do real mode stuff
 	pushfl
@@ -263,6 +265,8 @@ intaddr:
 	pop %eax
 	addr32
 	movw %eax,EFLAGS_REGADDR-MYBASE
+	addr32
+	movw %es,ES_REGADDR-MYBASE
 
 	# and return to protected mode
 	cli	# just to be sure
@@ -318,6 +322,8 @@ x32:
 	movl %eax,BIOSCALLREG_EDI(%ebx)
 	movl EFLAGS_REGADDR,%eax
 	movl %eax,BIOSCALLREG_EFLAGS(%ebx)
+	movl ES_REGADDR, %eax
+	movl %eax,BIOSCALLREG_ES(%ebx)
 	
 	# finish up, restore registers, and return
 	popfl
