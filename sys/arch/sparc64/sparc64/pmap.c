@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2000/07/18 20:19:56 pk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2000/07/27 13:59:26 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -1223,7 +1223,7 @@ remap_data:
 			 ("Done inserting cpu_info into pmap_kernel()\r\n"));
 	}
 
-	vmmap = reserve_dumppages(vmmap);
+	vmmap = (vaddr_t)reserve_dumppages((caddr_t)(u_long)vmmap);
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
 	 */

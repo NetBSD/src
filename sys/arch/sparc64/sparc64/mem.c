@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2000/06/29 07:37:58 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.15 2000/07/27 13:59:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,7 +211,8 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			msgbufsz = msgbufp->msg_bufs +
 				offsetof(struct kern_msgbuf, msg_bufc);
-			if (v >= msgbufp && v < (msgbufp + msgbufsz)) {
+			if (v >= (vaddr_t)msgbufp &&
+			    v < (vaddr_t)(msgbufp + msgbufsz)) {
 				c = min(iov->iov_len, msgbufsz);
 #if 1		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
 			} else if (v >= prom_vstart && v < prom_vend &&
