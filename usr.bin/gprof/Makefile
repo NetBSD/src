@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 1998/02/23 01:03:25 jonathan Exp $
+#	$NetBSD: Makefile,v 1.22 1998/02/23 01:04:08 jonathan Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/29/93
 
-WARNS=	0
 # XXX not ELF?
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && \
      ${MACHINE_ARCH} != "powerpc")
