@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.1 2000/11/04 18:53:30 thorpej Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.2 2000/11/06 07:48:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -46,6 +46,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <string.h>
 
 #define	_PATH_WATCHDOG		"/dev/watchdog"
 
