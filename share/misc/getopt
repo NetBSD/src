@@ -2,7 +2,7 @@
  * Main/getopt(3) fragment.
  *
  *	from: @(#)getopt	5.2 (Berkeley) 3/17/94
- *	$Id: getopt,v 1.1 1994/03/26 03:24:53 cgd Exp $
+ *	$Id: getopt,v 1.2 1994/03/26 04:00:44 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -33,6 +33,6 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: program:\n");
+	(void)fprintf(stderr, "usage: program\n");
 	exit(1);
 }
