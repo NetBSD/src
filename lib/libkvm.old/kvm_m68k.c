@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.3 1996/05/14 21:59:57 scottr Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.4 1997/08/14 15:59:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: kvm_m68k.c,v 1.3 1996/05/14 21:59:57 scottr Exp $";
+static char rcsid[] = "$NetBSD: kvm_m68k.c,v 1.4 1997/08/14 15:59:45 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -235,4 +235,21 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	return (_kvm_vatop(kd, (u_long)kd->vmst->Sysseg, va, pa));
+}
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+
+	return (0);
 }
