@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.11 1996/08/22 04:29:43 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.12 1996/09/21 03:25:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,9 +115,13 @@
  */
 
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
+
+#if 0
 void fbKbdEvent(), fbMouseEvent(), fbMouseButtons();
 void fbBlitc __P((int c,  struct fbinfo *fi));
 void fbPutc __P((dev_t dev, int c));
+#endif
+
 extern int pmax_boardtype;
 
 extern void fbScreenInit __P (( struct fbinfo *fi));
