@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1998/06/12 09:27:37 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1998/07/08 04:35:24 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -359,7 +359,8 @@ u_int		hw_addr, hw_pages;
 		uvm_page_physload(atop(usable_segs[i].start),
 				 atop(usable_segs[i].end),
 				 atop(usable_segs[i].start),
-				 atop(usable_segs[i].end));
+				 atop(usable_segs[i].end),
+				 VM_FREELIST_DEFAULT);
 #else
 		vm_page_physload(atop(usable_segs[i].start),
 				 atop(usable_segs[i].end),

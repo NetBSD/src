@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 1998/07/05 18:27:18 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 1998/07/08 04:35:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,7 +217,7 @@ hp300_init()
 	 */
 #if defined(UVM)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end));
+	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 #else
 	vm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end));
