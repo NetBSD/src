@@ -1,6 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 1997/02/03 17:32:57 scottr Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -116,6 +117,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/bus.h>
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
@@ -2483,13 +2485,11 @@ mac68k_set_io_offsets(base)
 	vm_offset_t base;
 {
 	extern volatile u_char *sccA;
-	extern volatile u_char *ASCBase;
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
@@ -2510,13 +2510,11 @@ mac68k_set_io_offsets(base)
 		 */
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc020;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base + 0x10000;
 		break;
 	case MACH_CLASSAV:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base + 0x18000;
 		break;
 	case MACH_CLASSII:
@@ -2527,7 +2525,6 @@ mac68k_set_io_offsets(base)
 	case MACH_CLASSLC:
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0x4000;
-		ASCBase = (volatile u_char *) base + 0x14000;
 		SCSIBase = base;
 		break;
 	default:
@@ -2861,4 +2858,113 @@ printstar(void)
 				movl sp@+,d0;
 				movl sp@+,a1;
 				movl sp@+,a0");
+}
+
+int
+bus_space_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	vm_offset_t	va;
+	u_long		pa, endpa;
+
+	pa = mac68k_trunc_page(bpa + t);
+	endpa = mac68k_round_page((bpa + t + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_space_map: overflow");
+#endif
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return 1;
+	*bshp = (caddr_t)(va + (bpa & PGOFSET));
+
+	for(; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
+				VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		if (!cacheable)
+			pmap_changebit(pa, PG_CI, TRUE);
+	}
+	return (0);
+}
+
+void
+bus_space_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	vm_offset_t	va, endva;
+
+	va = mac68k_trunc_page(bsh);
+	endva = mac68k_round_page((bsh + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endva <= va)
+		panic("bus_space_unmap: overflow");
+#endif
+
+	kmem_free(kernel_map, va, endva - va);
+}
+
+int
+bus_space_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+
+	*nbshp = bsh + offset;
+	return (0);
+}
+
+int
+bus_probe(t, bsh, offset, sz)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	int sz;
+{
+	int i;
+	label_t faultbuf;
+
+#ifdef lint
+	i = *addr;
+	if (i)
+		return (0);
+#endif
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
+		return (0);
+	}
+
+	switch (sz) {
+	case 1:
+		i = bus_space_read_1(t, bsh, offset);
+		break;
+	case 2:
+		i = bus_space_read_2(t, bsh, offset);
+		break;
+	case 4:
+		i = bus_space_read_4(t, bsh, offset);
+		break;
+	case 8:
+		/*FALLTHROUGH*/
+	default:
+#ifdef DIAGNOSTIC
+		printf("bus_probe: unsupported data size %d\n", sz);
+#endif
+		nofault = (int *) 0;
+		return (0);
+	}
+
+	nofault = (int *) 0;
+	return (1);
 }
