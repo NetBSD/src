@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.13 2004/03/29 03:10:41 jmc Exp $
+#	$NetBSD: BRANCHES,v 1.14 2004/11/15 10:31:50 rtr Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -606,6 +606,21 @@ Notes:		No longer active due to lack of time, and introduction
 
 		Any other wrstuden-devbsize tag may (and should) go away.
 
+
+Branch:		rtr-xorg-branch
+Description:	xorg & static build alterations to src/x11
+Status:		Active
+Start Date:	Nov 15 2004
+End Date:	
+Base tag:	rtr-xorg-branch-base
+Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
+Scope:		x11
+		distrib/sets/lists
+		share/mk/bsd.x11.mk
+		etc/mtree/NetBSD.dist
+Notes:		Requires parts of xsrc/xfree (HEAD)
+		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
+		Requires xorg (XORG-6_8_1)
 
 
 # Other:
