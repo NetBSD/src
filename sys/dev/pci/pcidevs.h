@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.589 2003/11/03 15:58:48 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.590 2003/11/22 20:56:53 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.591 2003/11/03 15:57:46 cube Exp 
+ *	NetBSD: pcidevs,v 1.592 2003/11/22 20:54:01 fvdl Exp 
  */
 
 /*
@@ -2084,23 +2084,31 @@
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
 
 /* Promise products */
-#define	PCI_PRODUCT_PROMISE_ULTRA100X	0x0d30		/* Ultra100X/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA66_0	0x0d38		/* Ultra66/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_MBULTRA133	0x1275		/* Ultra133/ATA Bus Master IDE Accelerator (MB) */
-#define	PCI_PRODUCT_PROMISE_SATA150TX2PLUSO	0x3375		/* Serial ATA/150 TX2 Controller plus one parallel IDE bus */
-#define	PCI_PRODUCT_PROMISE_SATA150TX2PLUS	0x3376		/* Serial ATA/150 TX2plus Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_SATA150FT378	0x3373		/* FastTrak 378 Serial ATA/150 Controller */
-#define	PCI_PRODUCT_PROMISE_SATA150TX4	0x3318		/* Serial ATA/150 TX4 Controller */
-#define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA100TX2	0x4d68		/* Ultra100TX2/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA133	0x4d69		/* Ultra133/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA133TX2	0x5275		/* Ultra133TX2/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
-#define	PCI_PRODUCT_PROMISE_ULTRA100TX2v2	0x6268		/* Ultra100TX2v2/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_ULTRA133TX2v2	0x6269		/* Ultra133TX2v2/ATA Bus Master IDE Accelerator */
-#define	PCI_PRODUCT_PROMISE_FASTTRAK133LITE	0x7275		/* Fasttrak133 Lite Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_PDC20246	0x4d33		/* PDC20246 Ultra/33 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20262	0x4d38		/* PDC20262 Ultra/66 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20263	0x0d38		/* PDC20263 Ultra/66 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20265	0x0d30		/* PDC20265 Ultra/100 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20267	0x4d30		/* PDC20267 Ultra/100 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20268	0x4d68		/* PDC20268 Ultra/100 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20269	0x4d69		/* PDC20269 Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20270	0x6268		/* PDC20270 Ultra/100 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20271	0x6269		/* PDC20271 Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20275	0x1275		/* PDC20275 Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20276	0x5275		/* PDC20276 Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20277	0x7275		/* PDC20277 Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20318	0x3318		/* PDC20318 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20319	0x3319		/* PDC20319 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20371	0x3371		/* PDC20371 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20375	0x3375		/* PDC20375 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20376	0x3376		/* PDC20376 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20377	0x3377		/* PDC20377 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20378	0x3373		/* PDC20378 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20379	0x3372		/* PDC20379 SATA/150 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20617	0x6617		/* PDC20617 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20618	0x6626		/* PDC20618 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20619	0x6629		/* PDC20619 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20620	0x6620		/* PDC20620 dual Ultra/133 IDE controller */
+#define	PCI_PRODUCT_PROMISE_PDC20621	0x6621		/* PDC20621 dual Ultra/133 IDE controller */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
