@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.7 1999/12/15 22:07:33 abs Exp $
+.\"	$NetBSD: mii.4,v 1.8 2001/07/25 22:21:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,17 +42,25 @@
 .Nm mii
 .Nd IEEE 802.3 Media Independent Interface network bus
 .Sh SYNOPSIS
-.Cd "exphy*  at mii? phy ?		# 3Com internal PHYs"
-.Cd "icsphy* at mii? phy ?		# Integrated Circuit Systems ICS1890 PHYs"
-.Cd "inphy*  at mii? phy ?		# Intel 82555 PHYs"
-.Cd "iophy*  at mii? phy ?		# Intel 82553 PHYs"
-.Cd "lxtphy* at mii? phy ?		# Level One LXT-970 PHYs"
-.Cd "nsphy*  at mii? phy ?		# National Semiconductor NS83840 PHYs"
-.Cd "qsphy*  at mii? phy ?		# Quality Semiconductor QS6612 PHYs"
-.Cd "sqphy*  at mii? phy ?		# Seeq 80220/80221/80223 PHYs"
-.Cd "tlphy*  at mii? phy ?		# ThunderLAN internal PHYs"
-.Cd "tqphy*  at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs"
-.Cd "ukphy*  at mii? phy ?		# Generic/unknown PHYs"
+.Cd "bmtphy*   at mii? phy ?		# Broadcom BCM5201/5202 PHYs"
+.Cd "brgphy*   at mii? phy ?		# Broadcom BCM5400/5401 Gig-E PHYs"
+.Cd "dmphy*    at mii? phy ?		# Davicom DM9101 PHYs"
+.Cd "exphy*    at mii? phy ?		# 3Com internal PHYs"
+.Cd "gentbi*   at mii? phy ?		# Generic ten-bit 1000BASE-X PHYs"
+.Cd "glxtphy*  at mii? phy ?		# Level One LXT-1000 Gig-E PHYs"
+.Cd "gphyter*  at mii? phy ?		# NatSemi DP83861 Gig-E PHYs"
+.Cd "icsphy*   at mii? phy ?		# Integrated Circuit Systems ICS1890 PHYs"
+.Cd "inphy*    at mii? phy ?		# Intel 82555 PHYs"
+.Cd "iophy*    at mii? phy ?		# Intel 82553 PHYs"
+.Cd "lxtphy*   at mii? phy ?		# Level One LXT-970 PHYs"
+.Cd "makphy*   at mii? phy ?		# Marvel 88E1000 Gig-E PHYs"
+.Cd "nsphy*    at mii? phy ?		# NatSemi DP83840 PHYs"
+.Cd "nsphyter* at mii? phy ?		# NatSemi DP83843/DP83815 PHYs"
+.Cd "qsphy*    at mii? phy ?		# Quality Semiconductor QS6612 PHYs"
+.Cd "sqphy*    at mii? phy ?		# Seeq 80220/80221/80223/80225 PHYs"
+.Cd "tlphy*    at mii? phy ?		# ThunderLAN internal PHYs"
+.Cd "tqphy*    at mii? phy ?		# TSC Semiconductor 78Q2120 PHYs"
+.Cd "ukphy*    at mii? phy ?		# Generic/unknown PHYs"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -85,14 +93,22 @@ for use with the
 .Xr ifconfig 8
 program.
 .Sh SEE ALSO
+.Xr bmtphy 4 ,
+.Xr brgphy 4 ,
+.Xr dmphy 4 ,
 .Xr exphy 4 ,
+.Xr gentbi 4 ,
+.Xr glxtphy 4 ,
+.Xr gphyter 4 ,
 .Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr inphy 4 ,
 .Xr iophy 4 ,
 .Xr intro 4 ,
 .Xr lxtphy 4 ,
+.Xr makphy 4 ,
 .Xr nsphy 4 ,
+.Xr nsphyter 4 ,
 .Xr qsphy 4 ,
 .Xr sqphy 4 ,
 .Xr tlphy 4 ,
