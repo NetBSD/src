@@ -1,4 +1,4 @@
-/*	$NetBSD: tags.c,v 1.1.1.2 1997/04/22 13:45:25 mrg Exp $	*/
+/*	$NetBSD: tags.c,v 1.1.1.3 1997/09/21 12:22:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -33,9 +33,9 @@
 
 #if TAGS
 
-public char *tagfile;
 public char *tags = "tags";
 
+static char *tagfile;
 static char *tagpattern;
 static int taglinenum;
 static int tagendline;
@@ -62,7 +62,10 @@ findtag(tag)
 	int err;
 	char tline[TAGLINE_SIZE];
 
-	if ((f = fopen(tags, "r")) == NULL)
+	p = unquote_file(tags);
+	f = fopen(p, "r");
+	free(p);
+	if (f == NULL)
 	{
 		error("No tags file", NULL_PARG);
 		tagfile = NULL;
@@ -110,6 +113,7 @@ findtag(tag)
 		if (*p == '\0')
 			/* Pattern is missing! */
 			continue;
+		tagfile = save(tagfile);
 
 		/*
 		 * First see if it is a line number. 
@@ -149,6 +153,19 @@ findtag(tag)
 	tagfile = NULL;
 }
 
+	public int
+edit_tagfile()
+{
+	int r;
+
+	if (tagfile == NULL)
+		return (1);
+	r = edit(tagfile);
+	free(tagfile);
+	tagfile = NULL;
+	return (r);
+}
+
 /*
  * Search for a tag.
  * This is a stripped-down version of search().
@@ -163,6 +180,7 @@ tagsearch()
 {
 	POSITION pos, linepos;
 	int linenum;
+	int len;
 	char *line;
 
 	/*
@@ -217,8 +235,9 @@ tagsearch()
 		 * If tagendline is set, make sure we match all
 		 * the way to end of line (no extra chars after the match).
 		 */
-		if (strncmp(tagpattern, line, strlen(tagpattern)) == 0 &&
-		    (!tagendline || line[strlen(tagpattern)] == '\0'))
+		len = strlen(tagpattern);
+		if (strncmp(tagpattern, line, len) == 0 &&
+		    (!tagendline || line[len] == '\0' || line[len] == '\r'))
 			break;
 	}
 

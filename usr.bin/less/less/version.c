@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.2 1997/04/22 13:45:53 mrg Exp $	*/
+/*	$NetBSD: version.c,v 1.1.1.3 1997/09/21 12:23:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -550,6 +550,26 @@ v318   5/29/96	Port to OS-9 Microware compiler; minor fixes
 v319   7/8/96	Fix Windows port (thanks to Jeff Paquette).
 v320   7/11/96	Final fixes for Windows port.
 v321   7/18/96	Minor fixes.
+		Posted to Web page.
+-----------------------------------------------------------------
+v322   8/13/96	Fix bug in shell escape from help file; add support for 
+		Microsoft Visual C under Windows; numerous small fixes.
+v323   8/19/96	Fixes for Windows version (thanks to Simon Munton);
+		fix for Linux library weirdness (thanks to Jim Diamond);
+		port to DJGPP (thanks to Eli Zaretskii).
+v324   8/21/96	Add support for spaces in filenames (thanks to Simon Munton).
+v325   8/21/96	Add lessecho, for spaces in filenames under Unix.
+v326   8/27/96	Fix DJGPP version.
+v327   9/1/96	Reorganize lglob, make spaces in filenames work better in Unix.
+v328   10/7/96	Append / to directory name in filename completion.
+		Fix MS-DOS and OS-9 versions.
+v329   10/11/96	Fix more MS-DOS bugs; add LESSSEPARATOR; add -" option.
+		Add LESSMETACHARS, LESSMETAESCAPE.
+v330   10/21/96	Minor fixes.
+		Posted to Web page.
+-----------------------------------------------------------------
+v331   4/22/97	Various Windows fixes (thanks to Gurusamy Sarathy).
+v332   4/22/97	Enter filenames from cmd line into edit history.
 */
 
-char version[] = "321";
+char version[] = "332";

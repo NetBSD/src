@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.2 1997/04/22 13:45:34 mrg Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.3 1997/09/21 12:23:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -80,6 +80,8 @@ public int reading;
 
 static jmp_buf read_label;
 
+extern int sigs;
+
 /*
  * Like read() system call, but is deliberately interruptible.
  * A call to intread() from a signal handler will interrupt
@@ -93,7 +95,11 @@ iread(fd, buf, len)
 {
 	register int n;
 
-#if MSDOS_COMPILER
+#if MSDOS_COMPILER==WIN32C
+	if (ABORT_SIGS())
+		return (READ_INTR);
+#else
+#if MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC
 	if (kbhit())
 	{
 		int c;
@@ -103,6 +109,7 @@ iread(fd, buf, len)
 			return (READ_INTR);
 		ungetch(c);
 	}
+#endif
 #endif
 	if (SET_JUMP(read_label))
 	{
@@ -122,6 +129,23 @@ iread(fd, buf, len)
 
 	flush();
 	reading = 1;
+#if MSDOS_COMPILER==DJGPPC
+	if (isatty(fd))
+	{
+		/*
+		 * Don't try reading from a TTY until a character is
+		 * available, because that makes some background programs
+		 * believe DOS is busy in a way that prevents those
+		 * programs from working while "less" waits.
+		 */
+		fd_set readfds;
+
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+		if (select(fd+1, &readfds, 0, 0, 0) == -1)
+			return (-1);
+	}
+#endif
 	n = read(fd, buf, len);
 	reading = 0;
 	if (n < 0)

@@ -1,7 +1,8 @@
 =========================================================================
-=== This is the distribution of less, version 321, released 18 Jul 96 ===
-===     Please report any problems to the author at markn@3do.com.    ===
-===   See http://members.aol.com/marknudel/less for the latest info.  ===
+    This is the distribution of less, version 332, released 22 Apr 97
+    Please report any problems to the author at markn@fog.net.
+        (Please note change of email address.)
+    See http://www.fog.net/markn/less for the latest info.
 =========================================================================
 
 This is the distribution of "less", a paginator similar to "more" or "pg".
@@ -9,18 +10,17 @@ This is the distribution of "less", a paginator similar to "more" or "pg".
 The formatted manual page is in less.man.
 The manual page nroff source is in less.nro.
 Major changes made since the last posted version are in NEWS.
-Known bugs in this version are in BUGS.
 
 ===================
 ===== WARNING =====
 ===================
 	The Microsoft C port for MS-DOS and the Ultra C port 
 		for OS-9 are not currently working.  
-	Until these are fixed, for MS-DOS use Borland C, 
+	Until these are fixed, for MS-DOS use Borland C or DJGPP, 
 		and for OS-9 use Microware C.
 	If you have fixes for either of these ports, 
-		send them to markn@3do.com.
-	
+		send them to markn@fog.net.
+
 =======================================================================
 INSTALLATION (Unix systems only):
 
@@ -47,20 +47,21 @@ INSTALLATION (Unix systems only):
 
 4. Type "make" and watch the fun.
 
-5. If the make succeeds, it will generate the programs "less" and
-   "lesskey" in your current directory.  Test the generated programs.
+5. If the make succeeds, it will generate the programs "less",
+   "lesskey" and "lessecho" in your current directory.  Test the 
+   generated programs.
 
 6. When satisfied that it works, if you wish to install it
    in a public place, type "make install".
 
    The default install destinations are:
-	Executables (less, lesskey) in /usr/local/bin
-	Documentation (less.nro, lesskey.nro) in /usr/local/man/man1
+        Executables (less, lesskey, lessecho) in /usr/local/bin
+        Documentation (less.nro, lesskey.nro) in /usr/local/man/man1
    If you want to install any of these files elsewhere, define
    bindir and/or mandir to the appropriate directories.
 
 If you have any problems building or running "less", suggestions, 
-complaints, etc., you may mail to the author at markn@3do.com
+complaints, etc., you may mail to the author at markn@fog.net.
 
 Note to hackers: comments noting possible improvements are enclosed
 in double curly brackets {{ like this }}.
@@ -68,23 +69,26 @@ in double curly brackets {{ like this }}.
 
 
 =======================================================================
-INSTALLATION (MS-DOS systems only)
+INSTALLATION (MS-DOS systems only,
+              with Microsoft C, Borland C, or DJGPP)
 
 1. Move the distributed source to its own directory.
-   Make sure the source has been converted to have CR-LF rather than 
-   LF as line terminators.
+   Depending on your compiler, you may need to convert the source 
+   to have CR-LF rather than LF as line terminators.
 
-2. If you are using Microsoft C, rename MAKEFILE.DOS to MAKEFILE.
-   If you are using Borland C, rename MAKEFILE.BCC to MAKEFILE.
+2. If you are using Microsoft C, rename MAKEFILE.DSM to MAKEFILE.
+   If you are using Borland C, rename MAKEFILE.DSB to MAKEFILE.
+   If you are using DJGPP, rename MAKEFILE.DSG to MAKEFILE.
 
 3. Look at MAKEFILE to make sure that the definitions for CC and LIBDIR
    are correct.  CC should be the name of your C compiler and
-   LIBDIR should be the directory where the C libraries
-   reside.  If these definitions need to be changed, you can either 
-   modify the definitions directly in MAKEFILE, or set your environment 
-   variables CC and/or LIBDIR to override the definitions in MAKEFILE.
+   LIBDIR should be the directory where the C libraries reside (for
+   Microsoft C only).  If these definitions need to be changed, you can
+   either modify the definitions directly in MAKEFILE, or set your
+   environment variables CC and/or LIBDIR to override the definitions
+   in MAKEFILE.
 
-4. If you wish, you may edit DEFINES.DOS to remove some optional features.
+4. If you wish, you may edit DEFINES.DS to remove some optional features.
    If you choose not to include some features in your version, you may
    wish to edit the manual page LESS.MAN and the help page HELP.C
    to remove the descriptions of the features which you are removing.
@@ -104,15 +108,17 @@ INSTALLATION (MS-DOS systems only)
 
 
 =======================================================================
-INSTALLATION (Windows-95 and Windows-NT systems only)
+INSTALLATION (Windows-95 and Windows-NT systems only,
+              with Borland C or Microsoft Visual C++)
 
 1. Move the distributed source to its own directory.
 
-2. Rename Makefile.w32 to Makefile.
+2. If you are using Borland C, rename Makefile.wnb to Makefile.
+   If you are using Microsoft Visual C++, rename Makefile.wnm to Makefile.
 
 3. Check the Makefile to make sure the definitions look ok.
 
-4. If you wish, you may edit defines.w32 to remove some optional features.
+4. If you wish, you may edit defines.wn to remove some optional features.
    If you choose not to include some features in your version, you may
    wish to edit the manual page less.man and the help page help.c
    to remove the descriptions of the features which you are removing.
@@ -130,15 +136,16 @@ INSTALLATION (Windows-95 and Windows-NT systems only)
 
 
 =======================================================================
-INSTALLATION (OS/2 systems only)
+INSTALLATION (OS/2 systems only,
+              with EMX C)
 
 1. Move the distributed source to its own directory.
 
-2. Rename Makefile.os2 to Makefile.
+2. Rename Makefile.o2e to Makefile.
 
 3. Check the Makefile to make sure the definitions look ok.
 
-4. If you wish, you may edit defines.os2 to remove some optional features.
+4. If you wish, you may edit defines.o2 to remove some optional features.
    If you choose not to include some features in your version, you may
    wish to edit the manual page less.man and the help page help.c
    to remove the descriptions of the features which you are removing.
@@ -160,7 +167,8 @@ INSTALLATION (OS/2 systems only)
 
 
 =======================================================================
-INSTALLATION (OS-9 systems only)
+INSTALLATION (OS-9 systems only,
+              with Microware C or Ultra C)
 
 1. Move the distributed source to its own directory.
 

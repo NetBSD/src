@@ -1,4 +1,4 @@
-/*	$NetBSD: ifile.c,v 1.1.1.2 1997/04/22 13:45:30 mrg Exp $	*/
+/*	$NetBSD: ifile.c,v 1.1.1.3 1997/09/21 12:23:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -48,7 +48,8 @@ struct ifile {
 	char *h_filename;		/* Name of the file */
 	void *h_filestate;		/* File state (used in ch.c) */
 	int h_index;			/* Index within command line list */
-	int h_opened;			/* Only need one bit */
+	int h_hold;			/* Hold count */
+	char h_opened;			/* Has this ifile been opened? */
 	struct scrpos h_scrpos;		/* Saved position within the file */
 };
 
@@ -127,6 +128,8 @@ new_ifile(filename, prev)
 	p->h_filename = save(filename);
 	p->h_scrpos.pos = NULL_POSITION;
 	p->h_opened = 0;
+	p->h_hold = 0;
+	p->h_filestate = NULL;
 	link_ifile(p, prev);
 	return (p);
 }
@@ -304,6 +307,21 @@ opened(ifile)
 	IFILE ifile;
 {
 	return (int_ifile(ifile)->h_opened);
+}
+
+	public void
+hold_ifile(ifile, incr)
+	IFILE ifile;
+	int incr;
+{
+	int_ifile(ifile)->h_hold += incr;
+}
+
+	public int
+held_ifile(ifile)
+	IFILE ifile;
+{
+	return (int_ifile(ifile)->h_hold);
 }
 
 	public void *
