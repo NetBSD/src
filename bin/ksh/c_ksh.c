@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.12 2004/10/28 20:15:36 dsl Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.11 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.12 2004/10/28 20:15:36 dsl Exp $");
 #endif
 
 #include "sh.h"
@@ -1196,7 +1196,8 @@ c_kill(wp)
 	int i, n, rv, sig;
 
 	/* assume old style options if -digits or -UPPERCASE */
-	if ((p = wp[1]) && *p == '-' && (digit(p[1]) || isupper(p[1]))) {
+	if ((p = wp[1]) && *p == '-'
+	    && (digit(p[1]) || isupper((unsigned char)p[1]))) {
 		if (!(t = gettrap(p + 1, TRUE))) {
 			bi_errorf("bad signal `%s'", p + 1);
 			return 1;
