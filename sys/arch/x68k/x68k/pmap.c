@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 1997/10/16 16:24:47 oki Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.1 1997/12/25 07:35:18 perry Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2747,6 +2747,7 @@ pmap_check_wiring(str, va)
  *  See the functions in sys/vm that #ifdef MACHINE_NONCONTIG.
  */
 
+#ifdef MACHINE_NONCONTIG
 /*
  * pmap_free_pages()
  *
@@ -2782,7 +2783,6 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
-#ifdef MACHINE_NONCONTIG
 /*
  * pmap_page_index()
  *
@@ -2809,7 +2809,6 @@ pmap_page_index(pa)
 	}
 	return -1;
 }
-#endif
 
 void
 pmap_virtual_space(startp, endp)
@@ -2818,3 +2817,4 @@ pmap_virtual_space(startp, endp)
 	*startp = virtual_avail;
 	*endp = virtual_end;
 }
+#endif
