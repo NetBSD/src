@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.11 2003/03/23 08:28:06 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.12 2003/03/23 10:01:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.11 2003/03/23 08:28:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.12 2003/03/23 10:01:31 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,10 +255,19 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x\n", rqp->sr_mid, 0, 0, 0);
 	m_dumpm(rqp->sr_rq.mb_top);
 	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_WAIT);
-	error = rqp->sr_lerror = m ? SMB_TRAN_SEND(vcp, m, p) : ENOBUFS;
+	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, p) : ENOBUFS;
 	if (error == 0) {
-		microtime(&rqp->sr_timesent);
-		iod->iod_lastrqsent = rqp->sr_timesent;
+		int s;
+		struct timeval ts, tstimeout;
+
+		SMB_TRAN_GETPARAM(vcp, SMBTP_TIMEOUT, &tstimeout);
+		s = splclock();
+		ts = mono_time;
+		splx(s);
+		timeradd(&ts, &tstimeout, &rqp->sr_sendtimo);
+#if 0
+		iod->iod_lastrqsent = ts;
+#endif
 		rqp->sr_flags |= SMBR_SENT;
 		rqp->sr_state = SMBRQ_SENT;
 		return 0;
@@ -531,10 +540,9 @@ smb_iod_waitrq(struct smb_rq *rqp)
 static int
 smb_iod_sendall(struct smbiod *iod)
 {
-	struct smb_vc *vcp = iod->iod_vc;
 	struct smb_rq *rqp;
-	struct timeval ts, tstimeout;
-	int herror;
+	struct timeval ts;
+	int herror, s;
 
 	herror = 0;
 	/*
@@ -543,7 +551,7 @@ smb_iod_sendall(struct smbiod *iod)
 	SMB_IOD_RQLOCK(iod);
 	TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
 		switch (rqp->sr_state) {
-		    case SMBRQ_NOTSENT:
+		case SMBRQ_NOTSENT:
 			rqp->sr_flags |= SMBR_XLOCK;
 			SMB_IOD_RQUNLOCK(iod);
 			herror = smb_iod_sendrq(iod, rqp);
@@ -554,16 +562,15 @@ smb_iod_sendall(struct smbiod *iod)
 				wakeup(rqp);
 			}
 			break;
-		    case SMBRQ_SENT:
-			SMB_TRAN_GETPARAM(vcp, SMBTP_TIMEOUT, &tstimeout);
-			timeradd(&tstimeout, &tstimeout, &tstimeout);
-			microtime(&ts);
-			timersub(&ts, &tstimeout, &ts);
-			if (timercmp(&ts, &rqp->sr_timesent, >)) {
+		case SMBRQ_SENT:
+			s = splclock();
+			ts = mono_time;
+			splx(s);
+			if (timercmp(&ts, &rqp->sr_sendtimo, >)) {
 				smb_iod_rqprocessed(rqp, ETIMEDOUT);
 			}
 			break;
-		    default:
+		default:
 			break;
 		}
 		if (herror)
@@ -673,7 +680,9 @@ smb_iod_create(struct smb_vc *vcp)
 	iod->iod_vc = vcp;
 	iod->iod_sleeptimo = hz * SMBIOD_SLEEP_TIMO;
 	iod->iod_pingtimo.tv_sec = SMBIOD_PING_TIMO;
+#if 0
 	microtime(&iod->iod_lastrqsent);
+#endif
 	vcp->vc_iod = iod;
 	smb_sl_init(&iod->iod_rqlock, "smbrql");
 	TAILQ_INIT(&iod->iod_rqlist);
