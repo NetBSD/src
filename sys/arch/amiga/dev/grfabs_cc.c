@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.23 2002/03/13 20:33:35 jandberg Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.24 2003/04/01 21:26:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,12 +38,14 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.23 2002/03/13 20:33:35 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24 2003/04/01 21:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
@@ -314,7 +316,7 @@ alloc_bitmap(u_short width, u_short height, u_short depth, u_short flags)
 #endif
 	total_size = m68k_round_page(plane_size * depth) +	/* for length */
 	    (temp_size) + (array_size) + sizeof(bmap_t) +
-	    NBPG;		/* for alignment */
+	    PAGE_SIZE;		/* for alignment */
 	bm = alloc_chipmem(total_size);
 	if (bm) {
 		if (flags & BMF_CLEAR) {

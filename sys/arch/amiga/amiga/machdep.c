@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2003/01/17 22:17:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2003/01/17 22:17:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,8 @@ cpu_startup()
 	 */
 
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
@@ -300,7 +300,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -340,7 +340,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -606,7 +606,7 @@ cpu_dumpconf()
 	 * Intitialize the `dispatcher' portion of the header.
 	 */
 	strcpy(h->name, machine);
-	h->page_size = NBPG;
+	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
 	/*
@@ -666,11 +666,11 @@ cpu_dumpconf()
 	}
 	--dumplo;	/* XXX assume header fits in one block */
 	/*
-	 * Don't dump on the first NBPG (why NBPG?)
+	 * Don't dump on the first PAGE_SIZE (why PAGE_SIZE?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(NBPG))
-		dumplo = btodb(NBPG);
+	if (dumplo < btodb(PAGE_SIZE))
+		dumplo = btodb(PAGE_SIZE);
 }
 
 /*
@@ -760,9 +760,9 @@ dumpsys()
 			n = BYTES_PER_DUMP;
 
 		if (maddr == 0) {	/* XXX kvtop chokes on this */
-			maddr += NBPG;
-			n -= NBPG;
-			i += NBPG;
+			maddr += PAGE_SIZE;
+			n -= PAGE_SIZE;
+			i += PAGE_SIZE;
 			++blkno;	/* XXX skip physical page 0 */
 		}
 		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.14 2003/01/01 00:28:57 thorpej Exp $ */
+/*	$NetBSD: drsupio.c,v 1.15 2003/04/01 21:26:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.14 2003/01/01 00:28:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.15 2003/04/01 21:26:31 thorpej Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.14 2003/01/01 00:28:57 thorpej Exp $")
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/param.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -112,7 +114,7 @@ drsupioattach(struct device *parent, struct device *self, void *auxp)
 	if (parent)
 		printf("\n");
 
-	drsc->sc_bst.base = DRCCADDR + NBPG * DRSUPIOPG + 1;
+	drsc->sc_bst.base = DRCCADDR + PAGE_SIZE * DRSUPIOPG + 1;
 	drsc->sc_bst.absm = &amiga_bus_stride_4;
 
 	supa.supio_iot = &drsc->sc_bst;
@@ -127,7 +129,7 @@ drsupioattach(struct device *parent, struct device *self, void *auxp)
 	}
 
 	drlptintack(0);
-	ioct = (struct drioct *)(DRCCADDR + NBPG * DRIOCTLPG);
+	ioct = (struct drioct *)(DRCCADDR + PAGE_SIZE * DRIOCTLPG);
 	ioct->io_status2 |= DRSTAT2_PARIRQENA;
 }
 
@@ -137,7 +139,7 @@ drlptintack(void *p)
 	struct drioct *ioct;
 
 	(void)p;
-	ioct = (struct drioct *)(DRCCADDR + NBPG * DRIOCTLPG);
+	ioct = (struct drioct *)(DRCCADDR + PAGE_SIZE * DRIOCTLPG);
 
 	ioct->io_parrst = 0;	/* any value works */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.50 2003/01/01 00:16:46 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.51 2003/04/01 21:26:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,11 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.50 2003/01/01 00:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.51 2003/04/01 21:26:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <amiga/amiga/cfdev.h>
@@ -275,7 +278,8 @@ zbusattach(struct device *pdp, struct device *dp, void *auxp)
 	if (amiga_realconfig) {
 		if (ZTWOMEMADDR)
 			printf(": mem 0x%08lx-0x%08lx",
-			    ZTWOMEMADDR, ZTWOMEMADDR + NBPG * NZTWOMEMPG - 1);
+			    ZTWOMEMADDR,
+			    ZTWOMEMADDR + PAGE_SIZE * NZTWOMEMPG - 1);
 		if (ZBUSAVAIL)
 			printf (": i/o size 0x%08x", ZBUSAVAIL);
 		printf("\n");

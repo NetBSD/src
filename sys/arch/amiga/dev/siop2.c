@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.19 2002/02/24 15:20:06 is Exp $ */
+/*	$NetBSD: siop2.c,v 1.20 2003/04/01 21:26:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.19 2002/02/24 15:20:06 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.20 2003/04/01 21:26:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.19 2002/02/24 15:20:06 is Exp $");
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -820,7 +823,7 @@ siopng_start(struct siop_softc *sc, int target, int lun, u_char *cbuf,
 	dmaend = NULL;
 	while (count > 0) {
 		acb->ds.chain[nchain].databuf = (char *) kvtop (addr);
-		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
+		if (count < (tcount = PAGE_SIZE - ((int) addr & PGOFSET)))
 			tcount = count;
 
 #if DEBUG_ONLY_IF_DESPERATE

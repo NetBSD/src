@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 2003/01/06 13:10:25 wiz Exp $ */
+/*	$NetBSD: fd.c,v 1.59 2003/04/01 21:26:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2003/01/06 13:10:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2003/04/01 21:26:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2003/01/06 13:10:25 wiz Exp $");
 #include <sys/dkbad.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
@@ -866,10 +869,10 @@ fdsetdisklabel(struct fd_softc *sc, struct disklabel *lp)
 	 * make sure selected partition is within bounds
 	 * XXX on the second check, its to handle a bug in
 	 * XXX the cluster routines as they require mutliples
-	 * XXX of NBPG currently
+	 * XXX of PAGE_SIZE currently
 	 */
 	if ((pp->p_offset + pp->p_size >= lp->d_secperunit) ||
-	    (pp->p_frag * pp->p_fsize % NBPG))
+	    (pp->p_frag * pp->p_fsize % PAGE_SIZE))
 		return(EINVAL);
 done:
 	bcopy(lp, clp, sizeof(struct disklabel));
