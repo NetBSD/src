@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1997/06/19 06:30:47 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1997/06/20 04:34:38 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -474,8 +474,8 @@ pmap_release(pmap)
 
 #ifdef MIPS3
 			if (CPUISMIPS3) {
-					
-				MachHitFlushDCache((caddr_t)pte, PAGE_SIZE);
+				/* XXX why flush page full of freed PTEs?  */
+				mips3_HitFlushDCache((caddr_t)pte, PAGE_SIZE);
 				vm_page_free1(
 				    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
 			}
