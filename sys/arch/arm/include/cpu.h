@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2001/02/27 17:35:49 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2001/02/28 00:17:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -48,16 +48,35 @@
 #ifndef _ARM32_CPU_H_
 #define _ARM32_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+/*
+ * User-visible definitions
+ */
+
+/*  CTL_MACHDEP definitions. */
+#define	CPU_DEBUG		1	/* int: misc kernel debug control */
+#define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
+#define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
+#define	CPU_CONSDEV		4	/* struct: dev_t of our console */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "debug", CTLTYPE_INT }, \
+	{ "booted_device", CTLTYPE_STRING }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}    
+
+#ifdef _KERNEL
+
+/*
+ * Kernel-only definitions
+ */
+
+#ifndef _LKM
 #include "opt_cputypes.h"
 #include "opt_lockdebug.h"
 #include "opt_progmode.h"
-#endif
-
-#ifndef _LOCORE
-#include <machine/frame.h>
-#endif	/* !_LOCORE */
-#include <machine/psl.h>
 
 #if defined(PROG26) && defined(PROG32)
 #error "26-bit and 32-bit CPU support are not compatible"
@@ -81,8 +100,23 @@
 #endif
 #endif /* CPU_ARM7500 */
 
+#endif /* !_LKM */
+
+
+#ifndef _LOCORE
+#include <machine/frame.h>
+#endif	/* !_LOCORE */
+
+#ifdef arm26
+extern int astpending;
+#define setsoftast() (astpending = 1)
+#else
+#include <machine/psl.h>
+#endif
+
 #include <arm/armreg.h>
 
+#ifdef PROG32
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
@@ -102,7 +136,11 @@
 #define IRQdisable SetCPSR(I32_bit, I32_bit);
 #define IRQenable SetCPSR(I32_bit, 0);
 #endif	/* _LOCORE */
+#endif
 
+/* All the CLKF_* macros take a struct clockframe * as an argument. */
+
+#ifdef PROG32
 /*
  * Return TRUE/FALSE (1/0) depending on whether the frame came from USR
  * mode or not.
@@ -111,8 +149,8 @@
 #define CLKF_USERMODE(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 
 /*
- * This needs straighening, prob is the frame does not have info on the priority
- * a guess that needs trying is (current_spl_level == SPL0)
+ * This needs straighening, prob is the frame does not have info on the
+ * priority a guess that needs trying is (current_spl_level == SPL0)
  */
 
 #define CLKF_BASEPRI(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
@@ -125,6 +163,23 @@
 #define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
 #define	PROC_PC(p)	((p)->p_md.md_regs->tf_pc)
+
+#elif defined(PROG26)
+
+/* True if we took the interrupt in user mode */
+#define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
+
+/* True if we were at spl0 before the interrupt */
+#define CLKF_BASEPRI(frame)	0	/* FIXME */
+
+/* Extract the program counter from a clockframe */
+#define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
+
+/* True if we took the interrupt from inside another interrupt handler. */
+/* Non-trivial to check because we handle interrupts in SVC mode. */
+#define CLKF_INTR(frame)	0	/* FIXME */
+
+#endif
 
 /*
  * definitions of cpu-dependent requirements
@@ -156,7 +211,7 @@ extern struct cpu_info cpu_info_store;
 #define cpu_wait(p)	/* nothing */
 #define cpu_number()	0
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#ifndef _LOCORE
 extern int current_intr_depth;
 
 /*
@@ -181,8 +236,10 @@ void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
+#ifndef arm26
 /* ast.c */
 void userret		__P((register struct proc *p));
+#endif
 
 /* machdep.h */
 void bootsync		__P((void));
@@ -193,24 +250,9 @@ char *strstr		__P((const char *s1, const char *s2));
 /* syscall.c */
 void child_return	__P((void *));
 
-#endif	/* _KERNEL && !_LOCORE */
+#endif	/* !_LOCORE */
 
-/* 
- * CTL_MACHDEP definitions.
- */
-#define	CPU_DEBUG		1	/* int: misc kernel debug control */
-#define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
-#define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
-#define	CPU_CONSDEV		4	/* struct: dev_t of our console */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "booted_device", CTLTYPE_STRING }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}    
+#endif /* _KERNEL */
 
 #endif /* !_ARM32_CPU_H_ */
 
