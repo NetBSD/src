@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.141 1999/11/12 18:40:07 drochner Exp $
+#	$NetBSD: files.i386,v 1.142 1999/11/17 01:22:29 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -36,6 +36,10 @@ defopt	opt_xserver.h XSERVER XSERVER_DDB
 
 # understand boot device passed by pre-1.3 bootblocks
 defopt	COMPAT_OLDBOOT
+
+# PCI BIOS options
+defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE PCIBIOS_INTR_FIXUP
+	PCIINTR_DEBUG
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
@@ -79,19 +83,24 @@ major	{wd = 0}
 file arch/i386/i386/md_root.c	memory_disk_hooks
 major	{md = 17}
 
+# attribute used to bring in BIOS trampoline code for real-mode probing
+# of certain devices/BIOS features
+define bioscall
+file	arch/i386/i386/bioscall.s	bioscall needs-flag
+
+# BIOS32 routines
+define	bios32
+file	arch/i386/i386/bios32.c		bios32 needs-flag
+
 #
 # System bus types
 #
 
 define mainbus { }
-device	mainbus: isabus, eisabus, pcibus, mainbus
+# XXX BIOS32 only if something that uses it is configured!
+device	mainbus: isabus, eisabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
-
-# attribute used to bring in BIOS trampoline code for real-mode probing
-# of certain devices/BIOS features
-define bioscall
-file	arch/i386/i386/bioscall.s	bioscall needs-flag
 
 #device	mca at root {...}
 
@@ -103,6 +112,13 @@ file	arch/i386/i386/bioscall.s	bioscall needs-flag
 
 include "dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
+file	arch/i386/pci/pcibios.c		pcibios
+file	arch/i386/pci/pci_intr_fixup.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/piix.c		pcibios & pcibios_intr_fixup
+file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
 defopt PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
