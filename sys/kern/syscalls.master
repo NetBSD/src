@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.143 2005/01/02 16:08:29 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.144 2005/02/19 22:15:51 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -746,3 +746,5 @@
 			    int attrnamespace, void *data, size_t nbytes); }
 372	STD		{ int sys_extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
+373	UNIMPL		sys_pselect
+374	UNIMPL		sys_pollts
