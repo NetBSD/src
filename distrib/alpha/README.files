@@ -1,4 +1,4 @@
-$NetBSD: README.files,v 1.5 1996/06/06 19:20:46 cgd Exp $
+$NetBSD: README.files,v 1.6 1996/06/13 20:50:33 cgd Exp $
 
 README.files			This list.
 
@@ -22,8 +22,6 @@ bin/				Directory with binaries for this snapshot.
 	etc.tar.gz		/etc from the disk image.
 	netbsd.gz		Gzipped GENERIC kernel (also on disk image).
 	netbsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
-	netbsd_nfs.gz		Gzipped GENERIC_NFS kernel.
-	netbsd_nfs.gdb.gz	Gzipped GENERIC_NFS kernel w/debugging symbols.
 	rz25-image.gz		Disk image, of an RZ25, for installation.
 	x11.tar.gz		/usr/X11R6 from the disk image.
 
