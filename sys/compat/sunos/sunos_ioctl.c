@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.26 1997/05/11 05:41:13 jeremy Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.27 1997/10/19 20:59:32 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -711,8 +711,6 @@ sunos_sys_ioctl(p, v, retval)
 		sunos_aui.record = *(struct sunos_audio_prinfo *)&aui.record;
 
 		/* `avail_ports' is `seek' in BSD */
-#define AUDIO_SPEAKER	1
-#define AUDIO_HEADPHONE	2
 		sunos_aui.play.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
 		sunos_aui.record.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
 
@@ -747,7 +745,7 @@ sunos_sys_ioctl(p, v, retval)
 		aui.blocksize = ~0;
 		aui.hiwat = ~0;
 		aui.lowat = ~0;
-		aui.backlog = ~0;
+		/* XXX somebody check this please. - is: aui.backlog = ~0; */
 		aui.mode = ~0;
 		/*
 		 * The bsd driver does not distinguish between paused and
