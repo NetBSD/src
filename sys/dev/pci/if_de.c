@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.42 1997/06/06 23:14:58 mellon Exp $	*/
+/*	$NetBSD: if_de.c,v 1.43 1997/06/08 18:46:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: if_de.c,v 1.42 1997/06/06 23:14:58 mellon Exp $
+ * Id: if_de.c,v 1.89 1997/06/03 19:19:55 thomas Exp
  *
  */
 
