@@ -2717,6 +2717,10 @@ datafault:
 	_ALIGN
 2:
 #endif
+	!! In the medium anywhere model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+					
 	/* Use trap type to see what handler to call */
 	cmp	%o0, T_FIMMU_MISS
 	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y	
@@ -3017,6 +3021,10 @@ textfault:
 	brnz,pt	%g7, 1b
 	 dec	8, %g7
 	
+	!! In the medium anywhere model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+					
 	/* Use trap type to see what handler to call */
 	flushw						! Get rid of any user windows so we don't deadlock
 	cmp	%o0, T_FIMMU_MISS
@@ -3119,6 +3127,10 @@ Lslowtrap_reenter:
 	CHKPT(%g2,%g3,0x24)
 	wrpr	%g0, %g1, %tl		! Revert to kernel mode
 #endif
+	!! In the medium anywhere model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+					
 !	flushw			! DEBUG
 	call	_C_LABEL(trap)			! trap(type, pstate, pc, &tf)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3500,6 +3512,10 @@ syscall_setup:
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 	
+	!! In the medium anywhere model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+					
 !	flushw			! DEBUG
 !	ldx	[%sp + CC64FSZ + STKB + TF_G + ( 1*8)], %o0	! (code)
 	call	_C_LABEL(syscall)		! syscall(code, &tf, pc, suncompat)
@@ -3689,7 +3705,7 @@ iv_halt:
  *
  *       IRQ# = %tt - 0x40
  */
-	.comm	_C_LABEL(intrhand), 15 * 4	! intrhand[0..14]; 0 => error
+	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
 	.globl _C_LABEL(sparc_interrupt)		! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG
@@ -3730,6 +3746,10 @@ _C_LABEL(sparc_interrupt):
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
 	
+	!! In the medium anywhere model %g4 points to the start of the data segment.
+	!! In our case we need to clear it before calling any C-code
+	clr	%g4
+					
 	flushw			! DEBUG
 	rd	%y, %l6
 #if defined(UVM)
@@ -4749,19 +4769,14 @@ dostart:
 	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE
 	restore;restore;restore;restore;restore;restore;restore;restore;restore;restore
  	set	estack0 - CC64FSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
+#ifdef _LP64
+	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
+	sub	%l0, BIAS, %l0			! and biased
+#endif
 	save	%g0, %l0, %sp
 !!! Make sure our stack's OK.
 	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE;	SAVE
 	restore;restore;restore;restore;restore;restore;restore;restore;restore;restore
-
-#ifdef _LP64
-	/*
-	 * This code sets up a proper v9 stack.  We won't need it till we get a
-	 * 64-bit kernel.
-	 */
-	set	SA64(USRSTACK-CC64FSZ)-BIAS, %fp
-	set	SA64(estack0-CC64FSZ)-BIAS, %sp
-#endif
 
 	/*
 	 * Step 3: clear BSS.  This may just be paranoia; the boot
@@ -4782,7 +4797,7 @@ dostart:
 	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
 	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#ifdef DEBUG
+#if 0
 	/*
 	 * Step 5: save prom configuration so we can panic properly.
 	 */	
@@ -4806,7 +4821,7 @@ dostart:
 	 * Ready to run C code; finish bootstrap.
 	 */
 	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	set	-1, %o2
+	sub	%g0, 1, %o2
 	stxa	%o2, [%o1] ASI_DMMU
 	membar	#Sync
 	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
@@ -5627,6 +5642,7 @@ _C_LABEL(sigcode):
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 _C_LABEL(esigcode):
+#endif
 #endif
 
 #ifdef COMPAT_SVR4

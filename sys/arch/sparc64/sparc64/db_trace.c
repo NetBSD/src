@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1998/08/13 02:10:46 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -49,7 +50,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
-	struct frame	*frame;
+	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
 
 	{
@@ -63,44 +64,70 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		count = 65535;
 
 	if (!have_addr)
-		frame = (struct frame *)DDB_TF->tf_out[6];
+		frame = (vaddr_t)DDB_TF->tf_out[6];
 	else
-		frame = (struct frame *)addr;
+		frame = (vaddr_t)addr;
 
 	while (count--) {
-		int		i;
-		db_expr_t	offset;
-		char		*name;
-		db_addr_t	pc;
+			int		i;
+			db_expr_t	offset;
+			char		*name;
+			db_addr_t	pc;
+			struct frame64	*f64;
+			struct frame32  *f32;
 
-		pc = frame->fr_pc;
-		if (!INKERNEL(pc))
-			break;
-
-		/*
-		 * Switch to frame that contains arguments
-		 */
-		frame = frame->fr_fp;
-		if (!INKERNEL(frame))
-			break;
-
-		db_find_sym_and_offset(pc, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-		db_printf("%s(", name);
-
-		/*
-		 * Print %i0..%i5, hope these still reflect the
-		 * actual arguments somewhat...
-		 */
-		for (i=0; i < 5; i++)
-			db_printf("%x, ", frame->fr_arg[i]);
-		db_printf("%x) at ", frame->fr_arg[i]);
-		db_printsym(pc, DB_STGY_PROC);
-		db_printf("\n");
-
-	}
+			if (frame & 1) {
+				f64 = (struct frame64 *)(frame + BIAS);
+				pc = f64->fr_pc;
+				if (!INKERNEL(pc))
+					break;
+			
+				/*
+				 * Switch to frame that contains arguments
+				 */
+				frame = f64->fr_fp;
+			} else {
+				f32 = (struct frame32 *)(frame);
+				pc = f32->fr_pc;
+				if (!INKERNEL(pc))
+					break;
+			
+				/*
+				 * Switch to frame that contains arguments
+				 */
+				frame = (long)f32->fr_fp;
+			}
+			if (!INKERNEL(frame))
+				break;
+			
+			db_find_sym_and_offset(pc, &name, &offset);
+			if (name == NULL)
+				name = "?";
+			
+			db_printf("%s(", name);
+			
+			if (frame & 1) {
+				f64 = (struct frame64 *)(frame + BIAS);
+				/*
+				 * Print %i0..%i5, hope these still reflect the
+				 * actual arguments somewhat...
+				 */
+				for (i=0; i < 5; i++)
+					db_printf("%lx, ", (long)f64->fr_arg[i]);
+				db_printf("%lx) at ", (long)f64->fr_arg[i]);
+			} else {
+				f32 = (struct frame32 *)(frame);
+				/*
+				 * Print %i0..%i5, hope these still reflect the
+				 * actual arguments somewhat...
+				 */
+				for (i=0; i < 5; i++)
+					db_printf("%x, ", f32->fr_arg[i]);
+				db_printf("%x) at ", f32->fr_arg[i]);
+			}
+			db_printsym(pc, DB_STGY_PROC);
+			db_printf("\n");
+		}
 }
 
 
@@ -121,8 +148,8 @@ db_dump_window(addr, have_addr, count, modif)
 	/* Traverse window stack */
 	for (i=0; i<addr && frame; i++) {
 		if (frame & 1) 
-			frame = ((struct frame64 *)(frame + BIAS))->fr_fp;
-		else frame = ((struct frame *)frame)->fr_fp;
+			frame = (u_int64_t)((struct frame64 *)(frame + BIAS))->fr_fp;
+		else frame = (u_int64_t)((struct frame32 *)frame)->fr_fp;
 	}
 
 	db_printf("Window %x ", addr);
@@ -152,7 +179,7 @@ u_int64_t frame;
 			db_printf("frame64 in user space not supported\n");
 	 
 	} else {
-		struct frame* f = (struct frame*)frame;
+		struct frame32* f = (struct frame32*)frame;
 
 		db_printf("frame %x locals, ins:\n", f);
 		if (INKERNEL(f)) {
@@ -201,9 +228,9 @@ db_dump_stack(addr, have_addr, count, modif)
 		count = 65535;
 
 	if (!have_addr)
-		frame = (struct frame *)DDB_TF->tf_out[6];
+		frame = DDB_TF->tf_out[6];
 	else
-		frame = (struct frame *)addr;
+		frame = addr;
 
 	/* Traverse window stack */
 	oldframe = 0;
@@ -220,18 +247,18 @@ db_dump_stack(addr, have_addr, count, modif)
 			db_printf("Window %x ", i);
 			db_print_window(frame - BIAS);
 			if (!INKERNEL(((struct frame64 *)(frame))))
-				frame = fuword(((vaddr_t)&((struct frame64 *)frame)->fr_fp)+4);
+				frame = fuword(((caddr_t)&((struct frame64 *)frame)->fr_fp)+4);
 			else
 				frame = ((struct frame64 *)frame)->fr_fp;
 		} else {
-			if (!INKERNEL(((struct frame *)frame))
+			if (!INKERNEL(((struct frame32 *)frame))
 			    && kernel_only) break;
 			db_printf("Window %x ", i);
 			db_print_window(frame);
-			if (!INKERNEL(((struct frame *)frame)))
-				frame = fuword(&((struct frame *)frame)->fr_fp);
+			if (!INKERNEL(((struct frame32 *)frame)))
+				frame = (u_int64_t)fuword(&((struct frame32 *)frame)->fr_fp);
 			else
-				frame = ((struct frame *)frame)->fr_fp;
+				frame = (u_int64_t)((struct frame32 *)frame)->fr_fp;
 		}
 	}
 
@@ -245,7 +272,6 @@ db_dump_trap(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	int		i;
 	struct trapframe *tf;
 
 	/* Use our last trapframe? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_netbsd.c,v 1.3 1998/08/29 18:16:57 eeh Exp $	*/
+/*	$NetBSD: sparc32_netbsd.c,v 1.4 1998/08/30 15:32:20 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,6 +28,8 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ipc.h>
@@ -41,6 +43,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/signalvar.h>
 
 #include <vm/vm.h>
 #include <sys/syscallargs.h>
@@ -49,6 +52,33 @@
 
 #include <compat/sparc32/sparc32.h>
 #include <compat/sparc32/sparc32_syscallargs.h>
+
+#include <machine/frame.h>
+
+static __inline void sparc32_from_timeval __P((struct timeval *, struct sparc32_timeval *));
+static __inline void sparc32_to_timeval __P((struct sparc32_timeval *, struct timeval *));
+static __inline void sparc32_from_itimerval __P((struct itimerval *, struct sparc32_itimerval *));
+static __inline void sparc32_to_itimerval __P((struct sparc32_itimerval *, struct itimerval *));
+static __inline void sparc32_to_timespec __P((struct sparc32_timespec *, struct timespec *));
+static __inline void sparc32_from_timespec __P((struct timespec *, struct sparc32_timespec *));
+static __inline void sparc32_from_rusage __P((struct rusage *, struct sparc32_rusage *));
+static __inline void sparc32_to_rusage __P((struct sparc32_rusage *, struct rusage *));
+static __inline void sparc32_to_iovec __P((struct sparc32_iovec *, struct iovec *, int));
+static __inline void sparc32_to_msghdr __P((struct sparc32_msghdr *, struct msghdr *));
+static __inline void sparc32_from_statfs __P((struct statfs *, struct sparc32_statfs *));
+static __inline void sparc32_from_timex __P((struct timex *, struct sparc32_timex *));
+static __inline void sparc32_to_timex __P((struct sparc32_timex *, struct timex *));
+static __inline void sparc32_from___stat13 __P((struct stat *, struct sparc32_stat *));
+static __inline void sparc32_to_ipc_perm __P((struct sparc32_ipc_perm *, struct ipc_perm *));
+static __inline void sparc32_from_ipc_perm __P((struct ipc_perm *, struct sparc32_ipc_perm *));
+static __inline void sparc32_to_msg __P((struct sparc32_msg *, struct msg *));
+static __inline void sparc32_from_msg __P((struct msg *, struct sparc32_msg *));
+static __inline void sparc32_to_msqid_ds __P((struct sparc32_msqid_ds *, struct msqid_ds *));
+static __inline void sparc32_from_msqid_ds __P((struct msqid_ds *, struct sparc32_msqid_ds *));
+static __inline void sparc32_to_shmid_ds __P((struct sparc32_shmid_ds *, struct shmid_ds *));
+static __inline void sparc32_from_shmid_ds __P((struct shmid_ds *, struct sparc32_shmid_ds *));
+static __inline void sparc32_to_semid_ds __P((struct  sparc32_semid_ds *, struct  semid_ds *));
+static __inline void sparc32_from_semid_ds __P((struct  semid_ds *, struct  sparc32_semid_ds *));
 
 /* converters for structures that we need */
 static __inline void
@@ -1527,6 +1557,7 @@ compat_sparc32_sigreturn(p, v, retval)
 	struct sparc32_sigcontext sc;
 	register struct trapframe *tf;
 	struct rwindow32 *rwstack, *kstack;
+	int i;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();

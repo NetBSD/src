@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 1998/08/23 15:49:02 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.6 1998/08/30 15:32:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,7 +86,7 @@ pagemove(from, to, size)
 {
 	register paddr_t pa;
 
-	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
+	if (size & CLOFSET || (long)from & CLOFSET || (long)to & CLOFSET)
 		panic("pagemove 1");
 #if 1
 	cache_flush((caddr_t)from, size);
@@ -201,7 +201,11 @@ vunmapbuf(bp, len)
 /*
  * The offset of the topmost frame in the kernel stack.
  */
-#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame))
+#ifdef _LP64
+#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame64))
+#else
+#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame32))
+#endif
 
 #ifdef DEBUG
 char cpu_forkname[] = "cpu_fork()";
@@ -275,10 +279,10 @@ cpu_fork(p1, p2)
 	 * the tippity-top of the u. area.)
 	 */
 	tf2 = p2->p_md.md_tf = (struct trapframe *)
-			((int)npcb + USPACE - sizeof(*tf2));
+			((long)npcb + USPACE - sizeof(*tf2));
 
 	/* Copy parent's trapframe */
-	*tf2 = *(struct trapframe *)((int)opcb + USPACE - sizeof(*tf2));
+	*tf2 = *(struct trapframe *)((long)opcb + USPACE - sizeof(*tf2));
 
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
@@ -310,13 +314,13 @@ cpu_fork(p1, p2)
 	}
 #endif
 	/* Construct kernel frame to return to in cpu_switch() */
-	rp = (struct rwindow32 *)((u_int)npcb + TOPFRAMEOFF);
-	*rp = *(struct rwindow32 *)((u_int)opcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (int)child_return;	/* Function to call */
-	rp->rw_local[1] = (int)p2;		/* and its argument */
+	rp = (struct rwindow32 *)((u_long)npcb + TOPFRAMEOFF);
+	*rp = *(struct rwindow32 *)((u_long)opcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)child_return;	/* Function to call */
+	rp->rw_local[1] = (long)p2;		/* and its argument */
 
-	npcb->pcb_pc = (int)proc_trampoline - 8;
-	npcb->pcb_sp = (int)rp;
+	npcb->pcb_pc = (long)proc_trampoline - 8;
+	npcb->pcb_sp = (long)rp;
 
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
@@ -357,9 +361,9 @@ cpu_set_kpc(p, pc)
 
 	pcb = &p->p_addr->u_pcb;
 
-	rp = (struct rwindow32 *)((u_int)pcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (int)pc;		/* Function to call */
-	rp->rw_local[1] = (int)p;		/* and its argument */
+	rp = (struct rwindow32 *)((u_long)pcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)pc;		/* Function to call */
+	rp->rw_local[1] = (long)p;		/* and its argument */
 
 #ifdef NOTDEF_DEBUG
 	/* Let's see if this is ever called */
@@ -377,8 +381,8 @@ cpu_set_kpc(p, pc)
 	 *	- point it at the stack frame constructed above
 	 *	- make it run in a clear set of register windows
 	 */
-	pcb->pcb_pc = (int)proc_trampoline - 8 ;
-	pcb->pcb_sp = (int)rp;
+	pcb->pcb_pc = (long)proc_trampoline - 8 ;
+	pcb->pcb_sp = (long)rp;
 }
 
 /*
@@ -439,8 +443,6 @@ cpu_coredump(p, vp, cred, chdr)
 	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
 	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
 	for (i=0; i<8; i++) {
-		struct rwindow32 *rw = (struct rwindow32 *)p->p_md.md_tf->tf_out[6];
-
 		md_core.md_tf.tf_global[i] = p->p_md.md_tf->tf_global[i];
 		md_core.md_tf.tf_out[i] = p->p_md.md_tf->tf_out[i];
 	}
