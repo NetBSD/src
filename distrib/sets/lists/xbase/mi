@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2001/03/19 11:18:42 tsutsui Exp $
+# $NetBSD: mi,v 1.20 2001/04/29 11:05:59 wiz Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -569,3 +569,8 @@
 ./usr/X11R6/man/cat1/xwininfo.0
 ./usr/X11R6/man/cat1/xwud.0
 ./usr/X11R6/man/cat3
+./usr/X11R6/man/cat7
+./usr/X11R6/man/cat7/X.0
+./usr/X11R6/man/cat7/XConsortium.0
+./usr/X11R6/man/cat7/XStandards.0
+./usr/X11R6/man/cat7/Xsecurity.0
