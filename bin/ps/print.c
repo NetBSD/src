@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.62 2001/01/09 01:21:59 itojun Exp $	*/
+/*	$NetBSD: print.c,v 1.63 2001/01/15 16:16:51 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.62 2001/01/09 01:21:59 itojun Exp $");
+__RCSID("$NetBSD: print.c,v 1.63 2001/01/15 16:16:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,6 +155,9 @@ printheader()
 	}
 }
 
+/* 
+ * See if it looks like its a special system process or kernel thread
+ */
 static int
 titlecmp(name, argv)
 	char *name;
@@ -162,6 +165,7 @@ titlecmp(name, argv)
 {
 	char *title;
 	int namelen;
+
 
 	if (argv == 0 || argv[0] == 0)
 		return (1);
@@ -302,6 +306,10 @@ command(ki, ve, mode)
 					fmt_putc(' ', &left);
 				}
 			}
+			/* 
+			 * Special system process / kernel threads are
+			 * shown within parentheses.
+			 */
 			if (titlecmp(name, argv)) {
 				fmt_putc('(', &left);
 				fmt_puts(name, &left);
