@@ -1,4 +1,4 @@
-# $NetBSD: std.next68k,v 1.3 1998/07/21 06:17:35 dbj Exp $
+# $NetBSD: std.next68k,v 1.4 1998/11/16 04:37:56 dbj Exp $
 
 # Standard information for next68k
 machine	next68k m68k
@@ -43,3 +43,5 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER
+
+options         UVM
