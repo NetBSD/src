@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)lpd.8	6.6 (Berkeley) 3/16/91
+.\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd March 16, 1991
+.Dd April 19, 1994
 .Dt LPD 8
 .Os BSD 4.2
 .Sh NAME
@@ -100,7 +100,7 @@ file can be edited with your favorite text editor.
 .Pp
 The daemon begins processing files
 after it has successfully set the lock for exclusive
-access (descibed a bit later),
+access (described a bit later),
 and scans the spool directory
 for files beginning with 
 .Em cf .
@@ -151,7 +151,7 @@ output.
 DVI File.  The file contains
 .Tn Tex l
 output
-DVI format from Standford).
+DVI format from Standford.
 .It g
 Graph File.  The file contains data produced by
 .Xr plot 3 .
@@ -186,7 +186,7 @@ for the standard input (when
 is invoked in a pipeline).
 .El
 .Pp
-If a file can not be opened, a message will be logged via
+If a file cannot be opened, a message will be logged via
 .Xr syslog 3
 using the
 .Em LOG_LPR
@@ -200,7 +200,7 @@ skip the file to be printed.
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
-deamons from becoming active simultaneously.  If the daemon should be killed
+daemons from becoming active simultaneously.  If the daemon should be killed
 or die unexpectedly, the lock file need not be removed.
 The lock file is kept in a readable
 .Tn ASCII

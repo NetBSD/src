@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.9 (Berkeley) 5/13/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpf
 NOMAN=	noman
