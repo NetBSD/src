@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 1995/06/26 06:56:14 cgd Exp $ */
+/*	$NetBSD: param.h,v 1.15 1995/06/26 22:36:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,6 +156,30 @@ extern int nbpg, pgofset, pgshift;
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
+
+/*
+ * dvmamap manages a range of DVMA addresses intended to create double
+ * mappings of physical memory. In a way, `dvmamap' is a submap of the
+ * VM map `phys_map'. The difference is the use of the `resource map'
+ * routines to manage page allocation, allowing DVMA addresses to be
+ * allocated and freed from within interrupt routines.
+ *
+ * Note that `phys_map' can still be used to allocate memory-backed pages
+ * in DVMA space.
+ */
+#ifdef _KERNEL
+#ifndef LOCORE
+extern vm_offset_t	dvmabase;
+extern struct map	*dvmamap;
+#endif
+#endif
+/*
+ * The dvma resource map is defined in page units, which are numbered 1 to N.
+ * Use these macros to convert to/from virtual addresses.
+ */
+#define rctov(n)		(ctob(((n)-1))+dvmabase)
+#define vtorc(v)		((btoc((v)-dvmabase))+1)
+
 
 #ifdef _KERNEL
 #ifndef LOCORE
