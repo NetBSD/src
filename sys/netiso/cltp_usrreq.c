@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.24 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.25 2004/04/25 21:13:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.24 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.25 2004/04/25 21:13:13 matt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -79,13 +79,7 @@ struct cltpstat cltpstat;
 
 /* ARGUSED */
 void
-#if __STDC__
 cltp_input(struct mbuf *m0, ...)
-#else
-cltp_input(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct sockaddr *srcsa, *dstsa;
 	u_int           cons_channel;
@@ -222,13 +216,7 @@ cltp_ctlinput(cmd, sa, dummy)
 }
 
 int
-#if __STDC__
 cltp_output(struct mbuf *m, ...)
-#else
-cltp_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct isopcb *isop;
 	int    len;
