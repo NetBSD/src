@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# $NetBSD: sysdb,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: databases
+# REQUIRE: systemfs
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="sysdb"
+start_cmd="sysdb_start"
+stop_cmd=":"
+
+sysdb_start()
+{
+	#	Build ps databases. If this kernel supports
+	#	machdep.booted_kernel, use that to build the KVM db so dmesg
+	#	will run work when we boot /netbsd.new, etc.
+	#
+	echo "Building databases..."
+	sysctl machdep 2>/dev/null | grep -q booted_kernel
+	if [ $? -eq 0 ] ; then
+		kvm_mkdb `sysctl -n machdep.booted_kernel` || kvm_mkdb /netbsd
+	else
+		kvm_mkdb /netbsd
+	fi
+	dev_mkdb
+}
+
+run_rc_command "$1"

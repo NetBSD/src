@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $NetBSD: local,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# REQUIRE: daemon
+# PROVIDE: local
+# BEFORE: login
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="local"
+start_cmd="do_local start"
+stop_cmd="do_local stop"
+
+do_local()
+{
+	if [ -f /etc/rc.local ]; then
+		set $1 ; . /etc/rc.local
+	fi
+}
+
+run_rc_command "$1"

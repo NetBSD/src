@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $NetBSD: login,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: login
+# REQUIRE: gated routed mrouted timed xntpd dhcpd dhcrelay rwho lpd bootparams
+# REQUIRE: xfs rarpd rbootd mopd apmd screenblank motd local
+# REQUIRE: route6d rtadvd rtsold wscons yppasswdd
+
+
+#	This is a dummy to ensure that xdm, inetd, cron and kerberos are
+#	started after everything else, incase the user has increased the
+#	system security level, and because we want to delay user logins
+#	until the system is (almost) fully operational.

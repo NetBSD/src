@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: sshd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: sshd
+# REQUIRE: login
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="sshd"
+command="/usr/pkg/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/${name}_config /etc/ssh_host_key"
+
+run_rc_command "$1" "reload"

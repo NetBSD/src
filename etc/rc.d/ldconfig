@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $NetBSD: ldconfig,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: ldconfig
+# REQUIRE: mountall
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="ldconfig"
+start_cmd="ldconfig_start"
+stop_cmd=":"
+
+ldconfig_start()
+{
+	if [ -f /sbin/ldconfig ]; then
+		echo "Creating runtime link editor directory cache."
+		ldconfig
+	fi
+}
+
+run_rc_command "$1"

@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# $NetBSD: virecover,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: virecover
+# REQUIRE: systemfs
+#
+# XXX: should require `mail'!
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="virecover"
+start_cmd="virecover_start" 
+stop_cmd=":"
+
+virecover_start()
+{
+	#	XXX: replace me with a script that works!
+	#
+	virecovery=`echo /var/tmp/vi.recover/recover.*`
+	if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
+		echo "Preserving editor files."
+		for i in $virecovery; do
+			if [ -f $i ]; then
+				sendmail -t < $i
+			fi
+		done
+	fi
+}
+
+run_rc_command "$1"

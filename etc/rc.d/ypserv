@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $NetBSD: ypserv,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: ypserv
+# REQUIRE: portmap
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="ypserv"
+command="/usr/sbin/${name}"
+required_vars="portmap"
+start_precmd="ypserv_precmd"
+
+ypserv_precmd()
+{
+	if [ -z "$domainname" ]; then
+		warn "\$domainname is not set; ${name} not started"
+		return 1
+	fi
+
+	if [ ! -d /var/yp/$domainname/. ]; then
+		warn "/var/yp/$domainname is not a directory; ${name} not started"
+		return 1
+	fi
+}
+
+run_rc_command "$1"

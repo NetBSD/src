@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: dhclient,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: dhclient
+# REQUIRE: systemfs syslogd
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="dhclient"
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/${name}.conf /var/db/${name}.leases"
+
+run_rc_command "$1"

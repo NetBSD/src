@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $NetBSD: mopd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: mopd
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="mopd"
+command="/usr/sbin/${name}"
+
+run_rc_command "$1"

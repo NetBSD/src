@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# $NetBSD: mountall,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: mountall
+# REQUIRE: beforemountlkm
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="mountall"
+start_cmd="echo 'Mounting all filesystems...'; mount -a"
+stop_cmd=":"
+
+run_rc_command "$1"

@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# $NetBSD: wscons,v 1.1.1.1 2000/03/10 11:53:23 lukem Exp $
+#
+
+# PROVIDE: wscons
+# REQUIRE: systemfs
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="wscons"
+start_cmd="do_wscons start"
+stop_cmd="do_wscons stop"
+
+do_wscons()
+{
+	if [ -f /etc/rc.wscons ]; then
+		set $1 ; . /etc/rc.wscons
+	fi
+}
+
+run_rc_command "$1"

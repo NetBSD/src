@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $NetBSD: systemfs,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: systemfs
+# REQUIRE: network mountcritremote
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="systemfs"
+start_cmd="systemfs_start"
+stop_cmd=":"
+
+systemfs_start()
+{
+	#	clean up left-over files.
+	#	this could include the cleanup of lock files and /var/run, etc.
+	#
+	rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
+	(cd /var/run && {
+		rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp;
+	})
+}
+
+run_rc_command "$1"

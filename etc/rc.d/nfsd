@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: nfsd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: nfsd
+# REQUIRE: mountd
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="nfsd"
+rcvar="nfs_server"
+command="/usr/sbin/${name}"
+required_vars="portmap"
+
+run_rc_command "$1"

@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: dmesg,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: dmesg
+# REQUIRE: systemfs
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="dmesg"
+start_precmd="checkyesno dmesg"
+start_cmd="dmesg $dmesg_flags > /var/run/dmesg.boot"
+stop_cmd=":"
+
+run_rc_command "$1"

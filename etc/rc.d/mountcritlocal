@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# $NetBSD: mountcritlocal,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: mountcritlocal
+# REQUIRE: root
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="mountcritlocal"
+start_cmd="mount_critical_filesystems local"
+stop_cmd=":"
+
+run_rc_command "$1"

@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $NetBSD: nfslocking,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: nfslocking
+# REQUIRE: nfsd nfsiod
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+arg=$1
+
+start_precmd='checkyesno nfs_server || checkyesno nfs_client'
+stop_precmd=$start_precmd
+status_precmd=$start_precmd
+
+name="statd"
+command="/usr/sbin/rpc.${name}"
+run_rc_command "$arg"
+
+name="lockd"
+command="/usr/sbin/rpc.${name}"
+run_rc_command "$arg"

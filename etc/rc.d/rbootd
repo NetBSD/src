@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: rbootd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: rbootd
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="rbootd"
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/${name}.conf"
+
+run_rc_command "$1" "reload"

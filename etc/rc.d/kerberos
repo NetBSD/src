@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# $NetBSD: kerberos,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: kerberos
+# REQUIRE: daemon login
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="kerberos"
+command="/usr/sbin/${name}"
+command_args=">> /var/log/${name}.log &"
+
+run_rc_command "$1"
+
+
+name="kadmind"
+rcvar="kerberos"
+command="/usr/sbin/${name}"
+command_args="-n >> /var/log/${name}.log &"
+
+run_rc_command "$1"

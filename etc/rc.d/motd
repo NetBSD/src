@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# $NetBSD: motd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: motd
+# REQUIRE: systemfs
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="motd"
+start_precmd="checkyesno update_motd"
+start_cmd="motd_start"
+stop_cmd=":"
+
+motd_start()
+{
+	#	Update kernel info in /etc/motd
+	#	Must be done *before* interactive logins are possible
+	#	to prevent possible race conditions.
+	#
+	echo "Updating motd."
+	if [ ! -f /etc/motd ]; then
+		install -c -o root -g wheel -m 664 /dev/null /etc/motd
+	fi
+	T=/etc/_motd
+	rm -f $T
+	sysctl -n kern.version | sed 1q > $T
+	echo "" >> $T
+	sed '1,/^$/d' < /etc/motd >> $T
+	cmp -s $T /etc/motd || cp $T /etc/motd
+	rm -f $T
+}
+
+run_rc_command "$1"

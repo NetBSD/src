@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $NetBSD: pwcheck,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: pwcheck
+# REQUIRE: systemfs syslogd
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="pwcheck"
+start_cmd="pwcheck_start"
+stop_cmd=":"
+
+pwcheck_start()
+{
+	#	check the password temp/lock file
+	#
+	if [ -f /etc/ptmp ]; then
+		logger -s -p auth.err \
+		    "password file may be incorrect -- /etc/ptmp exists"
+	fi
+}
+
+run_rc_command "$1"

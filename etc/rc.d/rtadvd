@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# $NetBSD: rtadvd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: rtadvd
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="rtadvd"
+command="/usr/sbin/${name}"
+start_precmd="rtadvd_precmd"
+
+rtadvd_precmd()
+{
+	if [ "$ip6mode" != "router" ]; then
+		warn \
+	"${name} cannot be used on IPv6 host, only on an IPv6 router."
+		return 1
+	fi
+}
+
+run_rc_command "$1"

@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# $NetBSD: xdm,v 1.1.1.1 2000/03/10 11:53:23 lukem Exp $
+#
+
+# PROVIDE: xdm
+# REQUIRE: daemon login wscons
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="xdm"
+command="/usr/X11R6/bin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/usr/X11R6/lib/X11/xdm/xdm-config"
+
+run_rc_command "$1" "reload"

@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# $NetBSD: ipfilter,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: ipfilter
+# REQUIRE: root beforenetlkm mountcritlocal tty
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="ipfilter"
+start_cmd="ipfilter_start"
+stop_precmd="checkyesno ipfilter && [ -f /etc/ipf.conf ]"
+stop_cmd="ipfilter_stop"
+reload_precmd="$stop_precmd"
+reload_cmd="ipfilter_reload"
+
+ipfilter_start()
+{
+	if [ ! checkyesno ipfilter ]; then
+		return 0
+	fi
+
+	#	if /etc/ipf.conf isn't readable, abort the boot rather
+	#	than risk a security problem
+	#
+	if [ ! -f /etc/ipf.conf ]; then
+		err 1 "/etc/ipf.conf not readable; ipfilter start aborted."
+	fi
+	echo "Enabling ipfilter."
+	/sbin/ipf -E -Fa -f /etc/ipf.conf
+}
+
+ipfilter_stop()
+{
+	echo "Disabling ipfilter."
+	/sbin/ipf -D
+}
+
+ipfilter_reload()
+{
+	echo "Reloading ipfilter rules."
+	/sbin/ipf -I -Fa -f /etc/ipf.conf
+	if [ $? -eq 0 ]; then
+		/sbin/ipf -s
+	else
+		warn "Reload failed; not swapping to new ruleset."
+	fi
+}
+
+run_rc_command "$1" "reload"
