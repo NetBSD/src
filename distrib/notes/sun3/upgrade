@@ -1,91 +1,138 @@
-	$NetBSD: upgrade,v 1.4 1998/01/09 18:47:37 perry Exp $	
-
+.\"	$NetBSD: upgrade,v 1.5 1999/01/13 07:30:09 ross Exp $	
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.
+.if r_sun3 \{\
 It is possible to easily upgrade your existing NetBSD/sun3 system
-using the upgrade program in the miniroot.  If you wish to upgrade
+using the upgrade program in the miniroot. If you wish to upgrade
 your system by this method, simply select the `upgrade' option once
-the miniroot has booted.  The upgrade program with then guide you
-through the procedure.  The upgrade program will:
-
-	* Enable the network based on your system's current
-	  network configuration.
-
-	* Mount your existing filesystems.
-
-	* Extract binary sets from the media of your choice.
-
-	* Make new device nodes in your root filesystem.
-
-	* Copy a new kernel onto your root partition.
-	  NOTE: the existing kernel WILL NOT be backed up; doing
-	  so would be pointless, since older kernels may not be
-	  capable of running NetBSD _VER executables.
-
-	* Install a new boot block.
-
-	* Check your filesystems for integrity.
-
-While using the miniroot's upgrade program is the preferred method
-of upgrading your system, it is possible to upgrade your system
-manually.  To do this, follow the following procedure:
-
-	* Place _at least_ the `base' binary set in a filesystem
-	  accessible to the target machine.  A local filesystem
-	  is preferred, since the NFS subsystem in the NetBSD _VER
-	  kernel may be incompatible with your old binaries.
-
-	* Back up your pre-existing kernel and copy the _VER
-	  kernel into your root partition.
-
-	* Reboot with the _VER kernel into single-user mode.
-	  (Otherwise you can not install the boot block.)
-
-	* Check all filesystems:
-
-		/sbin/fsck -pf
-
-	* Mount all local filesystems:
-
-		/sbin/mount -a -t nonfs
-
-	* If you keep /usr or /usr/share on an NFS server, you
-	  will want to mount those filesystems as well.  To do
-	  this, you will need to enable the network:
-
-		sh /etc/netstart
-
-	* Run the update(8) daemon, to ensure that new programs
-	  are actually stored on disk.
-
-		update
-
-	* Make sure you are in the root filesystem and extract
-	  the `base' binary set:
-
-		cd /
-		tar --unlink -zxvpf /path/to/base.tar.gz
-
-	  NOTE: the `--unlink' option is _very_ important!
-
-	* Install a new boot block:
-	  (assuming root is on /dev/rsd0a)
-
-		cd /usr/mdec
-		cp -p ./ufsboot /mnt/ufsboot
-		sync ; sleep 1 ; sync
-		./installboot -v /ufsboot bootxx /dev/rsd0a
-
-	* Sync the filesystems:
-
-		sync
-
-	* At this point you may extract any other binary sets
-	  you may have placed on local filesystems, or you may
-	  wish to extract additional sets at a later time.
-	  To extract these sets, use the following commands:
-
-		cd /
-		tar --unlink -zxvpf <path to set>
-
-NOTE: you SHOULD NOT extract the `etc' set if upgrading.  Instead, you
-should extract that set into another area and carefully merge the changes
-by hand.
+the miniroot has booted. The upgrade program with then guide you
+through the procedure. The upgrade program will:
+.	Bl -bullet -offset indent
+.	It
+Enable the network based on your system's current network configuration.
+.	It
+Mount your existing filesystems.
+.	It
+Extract binary sets from the media of your choice.
+.	It
+Make new device nodes in your root filesystem.
+.	It
+Copy a new kernel onto your root partition.
+.	(Note
+the existing kernel
+.	Em will not
+be backed up; doing
+so would be pointless, since older kernels may not be
+capable of running
+.	Nx \*V
+executables.
+.	Note)
+.	It
+Install a new boot block.
+.	It
+Check your filesystems for integrity.
+.	El
+.	Pp
+Using the miniroot's upgrade program is the preferred method
+of upgrading your system.
+.\}
+.Pp
+However, it is possible to upgrade your system
+manually. To do this, follow the following procedure:
+.Bl -bullet -offset indent
+.It
+Place
+.Em at least
+the `base' binary set in a filesystem
+accessible to the target machine. A local filesystem
+is preferred, since the NFS subsystem in the
+.Nx \*V
+kernel may be incompatible with your old binaries.
+.It
+Back up your pre-existing kernel and copy the \*V
+kernel into your root partition.
+.It
+Reboot with the \*V kernel into single-user mode.
+(Otherwise you can not install the boot block.)
+.It
+Check all filesystems:
+.D1 Ic /sbin/fsck -pf
+.It
+Mount all local filesystems:
+.D1 Ic /sbin/mount -a -t nonfs
+.It
+If you keep /usr or /usr/share on an NFS server, you
+will want to mount those filesystems as well. To do
+this, you will need to enable the network:
+.D1 Ic sh /etc/netstart
+.It
+Run the update(8) daemon, to ensure that new programs
+are actually stored on disk.
+.D1 Ic update
+.It
+Make sure you are in the root filesystem and extract
+the `base' binary set:
+.D1 Ic cd /
+.D1 Ic tar --unlink -zxvpf Ar /path/to/base.tar.gz
+.(Note
+The
+.Cm --unlink
+option is
+.Em very No important!
+.Note)
+.It
+Install a new boot block:
+(assuming root is on /dev/rsd0a)
+.D1 Ic "cd /usr/mdec
+.D1 Ic "cp -p \&./ufsboot /mnt/ufsboot
+.D1 Ic "sync ; sleep 1 ; sync
+.D1 Ic "\&./installboot -v /ufsboot bootxx /dev/rsd0a
+.It
+Sync the filesystems:
+.D1 Ic sync
+.It
+At this point you may extract any other binary sets
+you may have placed on local filesystems, or you may
+wish to extract additional sets at a later time.
+To extract these sets, use the following commands:
+.D1 Ic cd /
+.D1 Ic tar --unlink -zxvpf Ar "path to set
+.El
+.(Note
+.No You Em should not
+extract the
+.Sy etc
+set if upgrading. Instead, you should extract that set into another
+area and carefully merge the changes by hand.
+.Note)

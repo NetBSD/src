@@ -1,25 +1,36 @@
-	$NetBSD: hardware,v 1.5 1998/01/19 20:34:33 phil Exp $
-
-NetBSD/pc532 _VER runs on a PC532 computer.  It supports a subset of the
-"standard" hardware to date.  This is defined as:
-
-	4 - 32 Megs of memory
-	8 serial lines done by 4 scn2681 chips
-	the NCR DP8490 SCSI chip (scsi only)
-		Most SCSI disks work (fixed and floppy)
-		A few SCSI tapes work
-		Some SCSI CD-ROM drives work
-	The Matthias Pfaller Parallel Port.
-
+.\"	$NetBSD: hardware,v 1.6 1999/01/13 07:30:07 ross Exp $
+.
+NetBSD/pc532 \*V runs on a
+.Tn PC532
+computer. It supports a subset of the
+.Dq standard
+hardware to date. This is defined as:
+.Bl -bullet
+.It
+4 - MB of memory
+.It
+8 serial lines done by 4 scn2681 chips
+.It
+the NCR DP8490 SCSI chip (scsi only)
+.Bl -hyphen
+.It
+Most SCSI disks work (fixed and floppy)
+.It
+A few SCSI tapes work
+.It
+Some SCSI CD-ROM drives work
+.El
+.It
+The Matthias Pfaller Parallel Port.
+.El
+.Pp
 NetBSD/pc532 currently expects the ROM monitor to be the "autoboot
-monitor" of Oct/Nov 1991.  It includes support to set up auto booting
+monitor" of Oct/Nov 1991. It includes support to set up auto booting
 of NetBSD, including a secondary boot program that the autoboot monitor
 will load that in turn loads the NetBSD kernel from a NetBSD file system.
-(Source and ROM images of the autoboot monitor are located at
-ftp://ftp.cs.wwu.edu/pub/pc532/mon.auto.tar.gz.)
-
+Source and ROM images of the autoboot monitor are located at
+.Lk ftp://ftp.cs.wwu.edu/pub/pc532/mon.auto.tar.gz
+.Pp
 Most of the pc532 specific development of NetBSD/pc532 was done on a
-machine with 8-Megs of memory.  It should run with 4-Megs of memory
+machine with 8 MB of memory. It should run with 4 MB of memory
 although it may be slower.
-
-

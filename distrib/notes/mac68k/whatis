@@ -1,36 +1,47 @@
-	$NetBSD: whatis,v 1.11 1998/01/09 18:46:45 perry Exp $	
-
-NetBSD _VER is the fourth "real" release of NetBSD for the 68k-based
-Macintosh.
-
-For the mac68k port, NetBSD _VER brings a number of improvements:
-
-    -  A host of new drivers and kernel changes enable support for
-       many 68040-based Macintosh systems.
-
-    -  Many previously unsupported 68030-based Macintoshes are now working.
-
-    -  Support for SONIC (DP83932) and MACE (Am79C940) Ethernet controllers
-       has been added (via the "sn" and "mc" devices).
-
-    -  The "ae" driver for DP8390-based Ethernet cards now handles more
-       NuBus ethernet cards.
-
-    -  The "grf" video driver supports many more NuBus video cards and
-       most onboard video configurations.
-
-    -  The serial driver code has been converted to use the machine
-       independent driver.  This change enables the use of cdtrcts flow
-       control, but support for externally clocked serial ports is still
-       incomplete.
-
-    -  The "adb" driver now supports the ADB hardware on most Mac models,
-       and a wider variety of third party mice and trackballs are handled
-       as well.
-
-There is still a lot of work to be done and help is welcomed.  Please jump
-in!
-
-NetBSD _VER on mac68k is, as usual, also fully backward compatible with
-old NetBSD mac68k binaries, so you don't need to recompile all of your
-local programs.
+.\"	$NetBSD: whatis,v 1.12 1999/01/13 07:30:06 ross Exp $	
+.Nx \*V
+is the fourth 
+.Dq real
+release of
+.Nx
+for the 68k-based Macintosh.
+.Pp
+For the mac68k port,
+.Nx \*V
+brings a number of improvements:
+.Bl -bullet
+.It
+A host of new drivers and kernel changes enable support for
+many 68040-based Macintosh systems.
+.It
+Many previously unsupported 68030-based Macintoshes are now working.
+.It
+Support for SONIC (DP83932) and MACE (Am79C940) Ethernet controllers
+has been added (via the "sn" and "mc" devices).
+.It
+The 
+.Xr mac68k/ae 4
+driver for DP8390-based Ethernet cards now handles more
+NuBus ethernet cards.
+.It
+The
+.Xr mac68k/grf 4
+video driver supports many more NuBus video cards and
+most onboard video configurations.
+.It
+The serial driver code has been converted to use the machine
+independent driver. This change enables the use of cdtrcts flow
+control, but support for externally clocked serial ports is still
+incomplete.
+.It
+The
+.Xr mac68k/adb 4
+driver now supports the ADB hardware on most Mac models,
+and a wider variety of third party mice and trackballs are handled
+as well.
+.El
+There is still a lot of work to be done and help is welcomed. Please jump in!
+.Nx \*V
+on mac68k is, as usual, also fully backward compatible with old
+.Nx
+mac68k binaries, so you don't need to recompile all of your local programs.

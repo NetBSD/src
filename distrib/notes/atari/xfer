@@ -1,70 +1,73 @@
-	$NetBSD: xfer,v 1.9 1998/01/14 06:50:28 scottr Exp $	
-
+.\"	$NetBSD: xfer,v 1.10 1999/01/13 07:30:04 ross Exp $	
 Installation is supported from several media types, including:
-	* TOS HD partitions
-	* Tape
-
+.Pp
+.Bl -bullet -compact
+.It
+TOS HD partitions
+.It
+Tape
+.El
+.Pp
 No matter what you do, however, you'll need to have three disks handy,
 on which you will put the install and boot floppy images.
-
+.Pp
 All the images are available from the directory "installation/floppies"
 under the root of the NetBSD/atari tree at your favorite archive site.
-
+.Pp
 If you are using NetBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
 the disk. As an example, to write the first part of the miniroot filesystem
 onto a 720KB floppy in fd0 use:
-
-	dd if=miniroot.fs.1 of=/dev/rfd0b bs=9b
-
+.Dl dd if=miniroot.fs.1 of=/dev/rfd0b bs=9b
+.Pp
 If you are using TOS to make the floppies, grab the 'rawwrite' utility
 from the "atari/utils" directory and issue the command:
-
-	rawwrite miniroot.fs
-
+.Dl rawwrite miniroot.fs
+.Pp
 This will create the boot-floppy on the floppy in drive a. The floppies
 should be pre-formatted on 720Kb/1.44Mb for both the 'dd' and 'rawwrite'
 commands to work. Pre-formatting can be best done using the desktop format
 command.  Some other utilities seem to be giving problems.
-
+.Pp
 Since the 1.3 release, it is also possible to use HD-floppies. You should
 than use the floppy device '/dev/rfd0c' or add the '-H' flag to 'rawwrite'.
-
-
+.Pp
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
 you choose.  The various methods are explained below.
-
+.Bl -bullet
+.It
 To prepare for installing via an GEMDOS partition:
-
-	To install NetBSD from an GEMDOS partition, you need to
-	get the NetBSD distribution sets you wish to install
-	on your system on to an GEMDOS partition.
-
-	Note where you placed the files, you will need this later.
-
-	Once you have done this, you can proceed to the next
-	step in the installation process, preparing your hard disk.
-
+.Pp
+To install NetBSD from an GEMDOS partition, you need to
+get the NetBSD distribution sets you wish to install
+on your system on to an GEMDOS partition.
+.Pp
+Note where you placed the files, you will need this later.
+.Pp
+Once you have done this, you can proceed to the next
+step in the installation process, preparing your hard disk.
+.It
 To prepare for installing via a tape:
-
-	To install NetBSD from a tape, you need to somehow
-	get the NetBSD filesets you wish to install on
-	your system on to the appropriate kind of tape. If you make
-	the tape on a UN*X-like system, you can create it as follows:
-
-		cd .../NetBSD-1.3/atari/binary/sets
-		T=<tape_device>
-		mt -f $T rewind
-		for f in base etc comp games man misc text
-			dd if=$f.tgz of=$T conv=sync bs=5k
-		done
-		mt -f $T rewind
-
-	where "<tape_device>" is the name of the (non-rewinding!) tape
-	device that you're using (probably something like /dev/nrst0,
-	but we make no guarantees 8-).
-	If you can't figure it out, ask your system administrator.
-
-	Once you have done this, you can proceed to the next
-	step in the installation process, preparing your hard disk.
+.Pp
+To install NetBSD from a tape, you need to somehow
+get the NetBSD filesets you wish to install on
+your system on to the appropriate kind of tape. If you make
+the tape on a UN*X-like system, you can create it as follows:
+.Bd -literal
+cd .../NetBSD-1.3/atari/binary/sets
+T=\*<tape_device\*>
+mt -f $T rewind
+for f in base etc comp games man misc text
+	dd if=$f.tgz of=$T conv=sync bs=5k
+done
+mt -f $T rewind
+.Ed
+where "\*<tape_device\*>" is the name of the (non-rewinding!) tape
+device that you're using (probably something like /dev/nrst0,
+but we make no guarantees 8-).
+If you can't figure it out, ask your system administrator.
+.Pp
+Once you have done this, you can proceed to the next
+step in the installation process, preparing your hard disk.
+.El

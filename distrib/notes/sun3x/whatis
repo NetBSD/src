@@ -1,4 +1,6 @@
-	$NetBSD: whatis,v 1.2 1998/01/09 18:47:48 perry Exp $	
-
-NetBSD _VER is the first official release of NetBSD for the Sun3x family
-of machines.
+.\" $NetBSD: whatis,v 1.3 1999/01/13 07:30:09 ross Exp $	
+.
+.Nx \*V
+is the first official release of
+.Nx
+for the Sun3x family of machines.

@@ -1,11 +1,11 @@
-	$NetBSD: legal,v 1.2 1998/01/09 18:47:56 perry Exp $	
+.\" $NetBSD: legal,v 1.3 1999/01/13 07:30:10 ross Exp $	
 
-	This product includes software developed at Ludd,
-	University of Lule}, Sweden.
+This product includes software developed at Ludd,
+University of Lule}, Sweden.
 
-	This product includes software developed by Gordon W. Ross.
+This product includes software developed by Gordon W. Ross.
 
-	This product includes software developed by Ben Harris.
+This product includes software developed by Ben Harris.
 
-	This product includes software developed by Adam Glass,
-	David Jones, and Gordon Ross.
+This product includes software developed by Adam Glass,
+David Jones, and Gordon Ross.
