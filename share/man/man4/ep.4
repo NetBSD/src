@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.24 1999/12/17 16:23:21 abs Exp $
+.\"	$NetBSD: ep.4,v 1.25 2000/01/28 01:55:27 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -71,7 +71,9 @@ devices are supported by the
 .Xr ex 4
 driver.
 .Pp
-The 3c575 is a CardBus device, and is not currently supported.
+The 3c575 is a CardBus device, and is supported by
+.Xr ex 4
+driver.
 .Sh MEDIA SELECTION
 There are 3 main chipset classes supported by the
 .Nm
@@ -163,7 +165,8 @@ This means that someone has scribbled with pencil in the test area on the
 card.  Erase the pencil mark and reboot.  (This is not a joke).
 .El
 .Sh SEE ALSO
-.Xr ifconfig 8 ,
+.Xr eisa 4 ,
+.Xr ex 4 ,
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
 .Xr nsphy 4 ,
@@ -171,6 +174,7 @@ card.  Erase the pencil mark and reboot.  (This is not a joke).
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
-.Xr eisa 4 ,
+.Xr mii 4 ,
 .Xr pci 4 ,
-.Xr pcmcia 4
+.Xr pcmcia 4 ,
+.Xr ifconfig 8
