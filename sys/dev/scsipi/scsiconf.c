@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.37 1995/07/12 09:56:09 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.38 1995/08/06 00:04:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -305,19 +305,21 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S SUN0207", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MST     ", "SnapLink        ", "0001", SDEV_NOLUNS},
+	 "MST     ", "SnapLink        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "QUANTUM ", "LPS525S         ", "3110", SDEV_NOLUNS},
+	 "QUANTUM ", "LPS525S         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "QUANTUM ", "P105S 910-10-94x", "A.3",  SDEV_NOLUNS},
+	 "QUANTUM ", "P105S 910-10-94x", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "QUANTUM ", "PD1225S         ", "3110", SDEV_NOLUNS},
+	 "QUANTUM ", "PD1225S         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "RODIME  ", "RO3000S         ", "2.33", SDEV_NOLUNS},
+	 "RODIME  ", "RO3000S         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST157N          ", "\004|j", SDEV_NOLUNS},
+	 "SEAGATE ", "ST157N          ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST296           ", "921",  SDEV_NOLUNS},
+	 "SEAGATE ", "ST296           ", "",     SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST296N          ", "",     SDEV_NOLUNS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{T_SEQUENTIAL, T_REMOV,
