@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:48 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2002/05/07 09:03:52 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -25,11 +25,7 @@ INCLUDES+=	-I${.CURDIR} -I${.CURDIR}/obj.${MACHINE} -I${S}/arch -I${S} -I${S}/li
 DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEBUG -DSCSI_DEBUG # -DEN_DEBUG   -DNETIF_DEBUG  
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
-.if (${HAVE_GCC28} != "")
-CWARNFLAGS+=	-Wno-main
-.endif
-CFLAGS+=	 -nostdinc ${INCLUDES} ${DEFS}
+CFLAGS+=	 -ffreestanding -nostdinc ${INCLUDES} ${DEFS}
 LIBCRT0=
 
 PROG=	boot
@@ -57,7 +53,7 @@ function x(v) { printf "\0%c%c%c", v / 65536, v / 256, v } \
 	printf "\0\0\0\0\04\070\0\0\0\0\0\0\0\0\0\0" \
 }'
 
-${PROG}: links srt0.o ${OBJS} ${LIBS}
+${PROG}: srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
 	@${SIZE} $@.elf
 	@${OBJCOPY} -O binary $@.elf $@.raw
@@ -86,12 +82,12 @@ vers.c: version
 
 # utilities
 
-links:
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
 	rm -f machine
 	ln -s ${S}/arch/${MACHINE}/include machine
 	rm -f ${MACHINE_ARCH}
 	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-	rm -f limits.h
-	ln -s machine/limits.h limits.h
+.endif
 
 .include <bsd.prog.mk>
