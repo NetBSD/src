@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.453 2001/08/04 11:38:58 enami Exp $
+#	$NetBSD: files,v 1.454 2001/08/17 00:48:29 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -29,12 +29,14 @@ defopt	NFSSERVER
 
 defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+defopt	opt_malloc_debug.h MALLOC_DEBUG
 defopt	opt_pool.h	POOL_DIAGNOSTIC
 defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64
+			EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
@@ -852,6 +854,7 @@ file	kern/kern_ktrace.c
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c
