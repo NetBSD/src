@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.374 2000/10/19 14:32:20 ad Exp $
+#	$NetBSD: GENERIC,v 1.375 2000/11/08 19:50:07 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.374 $"
+#ident 		"GENERIC-$Revision: 1.375 $"
 
 maxusers	32		# estimated number of users
 
@@ -145,6 +145,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+options		I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -378,6 +379,10 @@ lpt2	at isa? port 0x3bc
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
 
+# I2O devices
+iop*	at pci? dev ? function ?	# I/O processor
+iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+lsu*	at iop? tid ?			# block devices
 
 # SCSI Controllers and Devices
 
@@ -439,6 +444,7 @@ scsibus* at bha?
 scsibus* at dpt?
 scsibus* at esp?
 scsibus* at isp?
+scsibus* at iopsp?
 #scsibus* at nca?
 #scsibus* at ncr?
 scsibus* at pcscp?
