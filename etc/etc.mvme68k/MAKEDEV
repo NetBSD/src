@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.28 2002/01/13 14:22:18 manu Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2002/01/19 18:59:20 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,7 +88,8 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
-	sh $0 ipl random local raid0 raid1 raid2 raid3
+	sh $0 ipl random local 
+	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 clockctl
 	;;

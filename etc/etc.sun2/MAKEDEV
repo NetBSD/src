@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 2002/01/13 14:29:45 manu Exp $
+#	$NetBSD: MAKEDEV,v 1.5 2002/01/19 18:59:23 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,7 +93,7 @@ case $arg in
 all)
 	sh $0 std pty0 pty1 pty2 pty3
 	sh $0 bwtwo0 cgtwo0 
-	sh $0 raid0 raid1 raid2 raid3
+	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	sh $0 cd0 cd1 st0 st1 st2 md0 md1
 	sh $0 xd0 xd1 xd2 xd3

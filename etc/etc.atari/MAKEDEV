@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.47 2002/01/13 14:14:18 manu Exp $
+#	$NetBSD: MAKEDEV,v 1.48 2002/01/19 18:59:18 oster Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -133,7 +133,7 @@ all)
 	sh $0 pty0 pty1 pty2 pty3
 	sh $0 vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3
-	sh $0 raid0 raid1 raid2 raid3
+	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh $0 ss0 ch0 uk0 uk1 wd0 wd1
 	sh $0 tun0 tun1 lkm ttyA0 ttyA1 ttyB0 lpt0 local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
