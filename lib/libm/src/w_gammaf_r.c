@@ -13,8 +13,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.4 1995/11/20 22:06:50 jtc Exp $";
+__RCSID("$NetBSD: w_gammaf_r.c,v 1.5 1997/10/09 11:34:57 lukem Exp $");
 #endif
 
 /* 
@@ -23,6 +24,8 @@ static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.4 1995/11/20 22:06:50 jtc Exp $
 
 #include "math.h"
 #include "math_private.h"
+
+float gammaf_r __P((float, int *));
 
 
 #ifdef __STDC__

@@ -12,6 +12,11 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
+#if defined(LIBM_SCCS) && !defined(lint)
+__RCSID("$NetBSD: w_pow.c,v 1.5 1997/10/09 11:35:48 lukem Exp $");
+#endif
+
 /* 
  * wrapper pow(x,y) return x**y
  */
