@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/05/28 22:34:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/05/28 23:25:25 thorpej Exp $
 
 KDIR=	/sys/arch/algor/include
 INCSDIR=/usr/include/algor
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bsd-aout.h bus.h \
-	cdefs.h conf.h cpu.h \
+	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
