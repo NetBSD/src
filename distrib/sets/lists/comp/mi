@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.279 2000/12/06 13:40:32 tron Exp $
+#	$NetBSD: mi,v 1.280 2000/12/11 09:18:03 jdolecek Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1397,10 +1397,6 @@
 ./usr/share/lkm/syscall/module/newsyscall.c	comp-lkm-share
 ./usr/share/lkm/syscall/test/Makefile	comp-lkm-share
 ./usr/share/lkm/syscall/test/testsyscall.c	comp-lkm-share
-./usr/share/lkm/vfs/Makefile	comp-lkm-share
-./usr/share/lkm/vfs/README	comp-lkm-share
-./usr/share/lkm/vfs/module/Makefile	comp-lkm-share
-./usr/share/lkm/vfs/module/kernfsmod.c	comp-lkm-share
 ./usr/share/locale/da/LC_MESSAGES/gettext.mo	comp-miscutil-bin
 ./usr/share/locale/de/LC_MESSAGES/gettext.mo	comp-miscutil-bin
 ./usr/share/locale/es/LC_MESSAGES/gettext.mo	comp-miscutil-bin
