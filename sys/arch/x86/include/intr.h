@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2003/06/16 20:01:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ spllower(int nlevel)
 /*
  * Miscellaneous
  */
-#define	splvm()		splraise(IPL_IMP)
+#define	splvm()		splraise(IPL_VM)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 #define	splsched()	splraise(IPL_SCHED)
