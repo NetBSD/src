@@ -1,4 +1,4 @@
-/*	$NetBSD: __errlist14.c,v 1.8 2003/08/07 16:42:45 agc Exp $	*/
+/*	$NetBSD: __errlist14.c,v 1.9 2005/01/20 13:14:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: __errlist14.c,v 1.8 2003/08/07 16:42:45 agc Exp $");
+__RCSID("$NetBSD: __errlist14.c,v 1.9 2005/01/20 13:14:09 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,8 +162,9 @@ static const char *const __errlist14[] = {
 /* XSI STREAMS option errors  */
 	"No message available",			/* 89 - ENODATA */
 	"No STREAM resources",			/* 90 - ENOSR */
-	"Not a STREAM"				/* 91 - ENOSTR */
-	"STREAM ioctl timeout"			/* 92 - ETIME */
+	"Not a STREAM",				/* 91 - ENOSTR */
+	"STREAM ioctl timeout",			/* 92 - ETIME */
+	"Attribute not found"			/* 93 - ENOATTR */
 };
 
 const int __sys_nerr14 = sizeof(__errlist14) / sizeof(__errlist14[0]);
