@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.4.2.2 2002/06/01 22:59:59 tv Exp $ */
+/* $NetBSD: pms.c,v 1.4.2.3 2002/07/10 02:34:46 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4.2.2 2002/06/01 22:59:59 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4.2.3 2002/07/10 02:34:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ struct pms_softc {		/* driver status information */
 	int sc_enabled;		/* input enabled? */
 #ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
+	int sc_suspended;	/* suspended? */
 #endif /* !PMS_DISABLE_POWERHOOK */
 	int inputstate;		/* number of bytes received for this packet */
 	u_int buttons;		/* mouse button status */
@@ -244,6 +245,7 @@ pmsattach(parent, self, aux)
 
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pms_power, sc);
+	sc->sc_suspended = 0;
 #endif /* !PMS_DISABLE_POWERHOOK */
 }
 
@@ -355,15 +357,19 @@ pms_power(why, v)
 	struct pms_softc *sc = v;
 
 	switch (why) {
-	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		if (sc->sc_enabled)
+		break;
+	case PWR_SUSPEND:
+		if (sc->sc_enabled) {
 			do_disable(sc);
+			sc->sc_suspended = 1;
+		}
 		break;
 	case PWR_RESUME:
-		if (sc->sc_enabled) {
+		if (sc->sc_enabled && sc->sc_suspended) {
 			sc->protocol = PMS_UNKNOWN;	/* recheck protocol & init mouse */
-			do_enable(sc);
+			sc->sc_suspended = 0;
+			do_enable(sc); /* only if we were suspended */
 		}
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
