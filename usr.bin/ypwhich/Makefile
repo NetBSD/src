@@ -1,8 +1,7 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$Id: Makefile,v 1.3 1993/07/30 11:10:53 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/02/18 03:10:03 cgd Exp $
 
 PROG=	ypwhich
 NOMAN=
-BINDIR=/usr/bin
 
 .include <bsd.prog.mk>
