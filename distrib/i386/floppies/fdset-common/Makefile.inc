@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2001/10/04 04:11:26 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2001/11/07 03:54:13 christos Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -28,12 +28,12 @@ realall:	unconfig netbsd boot
 	@echo Making disk number one
 	-mv -f ${IMAGE1} ${IMAGE1}.tmp
 	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}.tmp
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CRDEV} ${IMAGE1}.tmp
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -rw ${VND_CRDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
 	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${VND_RDEV}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND_CRDEV}
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -98,7 +98,7 @@ release:
 	
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND_CRDEV}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
