@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.3 2004/04/24 18:55:02 cl Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4 2004/04/26 22:05:04 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.3 2004/04/24 18:55:02 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4 2004/04/26 22:05:04 cl Exp $");
 
 #include "opt_xen.h"
 
@@ -224,7 +224,6 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 
 
 #define XEN_PAGE_OFFSET 0xC0100000
-void xpmap_init(void);
 
 static pd_entry_t
 xpmap_get_bootpde(paddr_t va)
@@ -242,7 +241,7 @@ xpmap_get_vbootpde(paddr_t va)
 	if ((pde & PG_V) == 0)
 		return (pde & ~PG_FRAME);
 	return (pde & ~PG_FRAME) |
-		(xpmap_mtop(pde & PG_FRAME) + XEN_PAGE_OFFSET);
+		(xpmap_mtop(pde & PG_FRAME) + KERNBASE);
 }
 
 static pt_entry_t *
@@ -271,7 +270,7 @@ xpmap_dump_pt(pt_entry_t *ptp, int p)
 	int j;
 	int bufpos;
 
-	pte = xpmap_ptom((uint32_t)ptp - KERNTEXTOFF);
+	pte = xpmap_ptom((uint32_t)ptp - KERNBASE);
 	PRINTK(("%03x: %p(%p) %08x\n", p, ptp, (void *)pte, p << PDSHIFT));
 
 	bufpos = 0;
@@ -297,7 +296,7 @@ xpmap_dump_pt(pt_entry_t *ptp, int p)
 #endif
 
 void
-xpmap_init()
+xpmap_init(void)
 {
 	pd_entry_t *xen_pdp;
 	pd_entry_t pde;
@@ -355,7 +354,7 @@ xpmap_init()
 		/* update our pte's */
 		ptp = (pt_entry_t *)(PTDpaddr + (i << PAGE_SHIFT));
 #if 0
-		pte = xpmap_ptom((uint32_t)ptp - KERNTEXTOFF);
+		pte = xpmap_ptom((uint32_t)ptp - KERNBASE);
 		XENPRINTK(("%03x: %p(%p) %08x\n", i, ptp, pte, i << PDSHIFT));
 #endif
 		for (j = 0; j < PTES_PER_PTP; j++) {
@@ -396,15 +395,15 @@ xpmap_init()
 	for (i = 0x300; i < 0x305; i++)
 		xpmap_dump_pt((pt_entry_t *)
 		    (xpmap_mtop(((pt_entry_t *)xen_start_info.pt_base)[i] &
-			PG_FRAME) + KERNTEXTOFF), i);
+			PG_FRAME) + KERNBASE), i);
 	xpmap_dump_pt((pt_entry_t *)xen_start_info.pt_base, 0);
 #endif
 
 	XENPRINTK(("switching pdp: %p, %08lx, %p, %p, %p\n", (void *)PTDpaddr,
-		      PTDpaddr - KERNTEXTOFF,
-		      (void *)xpmap_ptom(PTDpaddr - KERNTEXTOFF),
+		      PTDpaddr - KERNBASE,
+		      (void *)xpmap_ptom(PTDpaddr - KERNBASE),
 		      (void *)xpmap_get_bootpte(PTDpaddr),
-		      (void *)xpmap_mtop(xpmap_ptom(PTDpaddr - KERNTEXTOFF))));
+		      (void *)xpmap_mtop(xpmap_ptom(PTDpaddr - KERNBASE))));
 
 #if defined(XENDEBUG)
 	xpmap_dump_pt((pt_entry_t *)PTDpaddr, 0);
@@ -419,6 +418,41 @@ xpmap_init()
 	xpq_flush_queue();
 	XENPRINTK(("pt_switch done!\n"));
 }
+
+/*
+ * Do a binary search to find out where physical memory ends on the
+ * real hardware.  Xen will fail our updates if they are beyond the
+ * last available page (max_page in xen/common/memory.c).
+ */
+paddr_t
+find_pmap_mem_end(vaddr_t va)
+{
+	mmu_update_t r;
+	int start, end;
+	pt_entry_t old;
+
+	start = xen_start_info.nr_pages;
+	end = HYPERVISOR_VIRT_START >> PAGE_SHIFT;
+
+	r.ptr = (unsigned long)&PTE_BASE[x86_btop(va)];
+	old = PTE_BASE[x86_btop(va)];
+
+	while (start + 1 < end) {
+		r.val = (((start + end) / 2) << PAGE_SHIFT) | PG_V;
+
+		if (HYPERVISOR_mmu_update_fail_ok(&r, 1) < 0)
+			end = (start + end) / 2;
+		else
+			start = (start + end) / 2;
+	}
+	r.val = old;
+	if (HYPERVISOR_mmu_update_fail_ok(&r, 1) < 0)
+		printf("pmap_mem_end find: old update failed %08x\n",
+		    old);
+
+	return end << PAGE_SHIFT;
+}
+
 
 #if 0
 void xpmap_find_memory(paddr_t);
@@ -526,6 +560,15 @@ xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
 
 	xpq_queue[xpq_idx].pte.ptr = ptr;
 	xpq_queue[xpq_idx].pte.val = val;
+	xpq_increment_idx();
+}
+
+void
+xpq_queue_unchecked_pte_update(pt_entry_t *ptr, pt_entry_t val)
+{
+
+	xpq_queue[xpq_idx].pa.ptr = (paddr_t)ptr | MMU_UNCHECKED_PT_UPDATE;
+	xpq_queue[xpq_idx].pa.val = val;
 	xpq_increment_idx();
 }
 
