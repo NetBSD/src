@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.16 2004/09/19 15:06:32 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.17 2004/09/19 16:50:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,8 @@ struct linux_statfs {
 	u_int32_t	l_fffree;
 	linux_fsid_t	l_ffsid;
 	u_int32_t	l_fnamelen;
-	u_int32_t	l_fspare[6];
+	u_int32_t	l_ffrsize;
+	u_int32_t	l_fspare[5];
 };
 #endif /* !__sparc64__ */
 
