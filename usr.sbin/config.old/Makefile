@@ -1,7 +1,7 @@
 #	@(#)Makefile	5.12 (Berkeley) 1/16/91
 
 PROG=	config
-CFLAGS=-I. -I${.CURDIR} -g
+CFLAGS+=-I. -I${.CURDIR}
 SRCS=	config.c main.c lang.c mkioconf.c mkmakefile.c mkglue.c mkheaders.c \
 	mkswapconf.c specfile.c
 MAN8=	config.0
