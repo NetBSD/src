@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: mace.c,v 1.2 2004/07/10 07:39:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.2 2004/07/10 07:39:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,18 +269,18 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 		panic("invalid interrupt number");
 
 	for (i = 0; i < MACE_NINTR; i++)
-		if (maceintrtab[intr].func == NULL) {
-		        maceintrtab[intr].func = func;
-		        maceintrtab[intr].arg = arg;
-			maceintrtab[intr].irq = (1 << intr);
-			maceintrtab[intr].intrmask = level;
+		if (maceintrtab[i].func == NULL) {
+		        maceintrtab[i].func = func;
+		        maceintrtab[i].arg = arg;
+			maceintrtab[i].irq = (1 << intr);
+			maceintrtab[i].intrmask = level;
 			break;
 		}
 
 	crime_intr_mask(intr);
 	aprint_normal("mace: established interrupt %d (level %x)\n",
 	    intr, level);
-	return (void *)&maceintrtab[intr];
+	return (void *)&maceintrtab[i];
 }
 
 void
