@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.91.2.1 2002/01/05 18:03:30 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.91.2.2 2002/01/16 10:15:30 he Exp $ */
 
 
 /*
@@ -188,10 +188,18 @@ wdcprobe(chp)
 
 	if (chp->wdc == NULL ||
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+
+		if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+			chp->wdc->select(chp,0);
+
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM);
 		delay(10);
 		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+		
+		if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+			chp->wdc->select(chp,1);
+
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10);
 		delay(10);
@@ -209,6 +217,8 @@ wdcprobe(chp)
 			return 0;
 	}
 
+	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
+		chp->wdc->select(chp,0);
 	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM);
@@ -241,6 +251,8 @@ wdcprobe(chp)
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
+		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+			chp->wdc->select(chp,drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
 		delay(10);
@@ -345,6 +357,8 @@ wdcattach(chp)
 			 * Test registers writability (Error register not
 			 * writable, but cyllo is), then try an ATA command.
 			 */
+			if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+				chp->wdc->select(chp,i);
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 			    WDSD_IBM | (i << 4));
 			delay(10);
@@ -362,6 +376,8 @@ wdcattach(chp)
 				    chp->channel, i), DEBUG_PROBE);
 				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 			}
+			if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+				chp->wdc->select(chp,i);
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 			    WDSD_IBM | (i << 4));
 			delay(100);
@@ -455,6 +471,8 @@ wdcattach(chp)
 		 */
 		for (i = 1; i >= 0; i--) {
 			if (chp->ch_drive[i].drive_flags & DRIVE) {
+				if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+					chp->wdc->select(chp,i);
 				bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
 				    wd_sdh, WDSD_IBM | (i << 4));
 				if (wait_for_unbusy(chp, 10000) < 0)
@@ -717,6 +735,8 @@ wdcreset(chp, verb)
 {
 	int drv_mask1, drv_mask2;
 
+	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		chp->wdc->select(chp,0);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM); /* master */
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
@@ -757,6 +777,8 @@ __wdcwait_reset(chp, drv_mask)
 #endif
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
+		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+			chp->wdc->select(chp,0);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM); /* master */
 		delay(10);
@@ -767,6 +789,8 @@ __wdcwait_reset(chp, drv_mask)
 		cl0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
 		ch0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
 #endif
+		if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+			chp->wdc->select(chp,1);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10); /* slave */
 		delay(10);
@@ -1283,6 +1307,9 @@ __wdccommand_start(chp, xfer)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
 	    DEBUG_FUNCS);
 
+	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		chp->wdc->select(chp,drive);
+
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
 	if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
@@ -1417,6 +1444,9 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	    chp->channel, drive, command, cylin, head, sector, count, precomp),
 	    DEBUG_FUNCS);
 
+	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		chp->wdc->select(chp,drive);
+
 	/* Select drive, head, and addressing mode. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4) | head);
@@ -1447,6 +1477,9 @@ wdccommandshort(chp, drive, command)
 	WDCDEBUG_PRINT(("wdccommandshort %s:%d:%d command 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drive, command),
 	    DEBUG_FUNCS);
+
+	if (chp->wdc->cap & WDC_CAPABILITY_SELECT)
+		chp->wdc->select(chp,drive);
 
 	/* Select drive. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
