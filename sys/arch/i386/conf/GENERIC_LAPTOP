@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.6 2004/07/04 15:21:36 he Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.7 2004/07/14 09:08:04 tron Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.6 $"
+#ident 		"GENERIC-$Revision: 1.90.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -468,6 +468,7 @@ aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+#geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
