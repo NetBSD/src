@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.19 1999/09/16 21:53:58 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.20 1999/09/30 23:13:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -826,10 +826,10 @@ umass_scsipi_scsi_cmd(xs)
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun));
 
 	if (sc->sc_dying) {
-		xs->flags |= ITSDONE;
+		xs->xs_status |= XS_STS_DONE;
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
-		if (xs->flags & SCSI_POLL)
+		if (xs->xs_control & XS_CTL_POLL)
 			return (SUCCESSFULLY_QUEUED);
 		else
 			return (COMPLETE);
@@ -847,11 +847,11 @@ umass_scsipi_scsi_cmd(xs)
 
 	dir = DIR_NONE;
 	if (xs->datalen) {
-		switch (xs->flags & (SCSI_DATA_IN|SCSI_DATA_OUT)) {
-		case SCSI_DATA_IN:
+		switch (xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) {
+		case XS_CTL_DATA_IN:
 			dir = DIR_IN;
 			break;
-		case SCSI_DATA_OUT:
+		case XS_CTL_DATA_OUT:
 			dir = DIR_OUT;
 			break;
 		}
@@ -907,7 +907,7 @@ umass_scsipi_scsi_cmd(xs)
 	DPRINTF(UDMASS_SCSI, ("%s: umass_scsi_cmd: error = %d, resid = 0x%x\n",
 	    USBDEVNAME(sc->sc_dev), xs->error, xs->resid));
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	/* We are done with the softc for now. */
@@ -920,7 +920,7 @@ umass_scsipi_scsi_cmd(xs)
 	 * XXXJRT freed twice: once in scsipi_done(), and once in
 	 * XXXJRT scsi_scsipi_cmd().
 	 */
-	if ((xs->flags & SCSI_POLL) == 0)
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
 		return (SUCCESSFULLY_QUEUED);
 
 	return (COMPLETE);
