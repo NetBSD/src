@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.51 2003/04/18 21:55:35 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.52 2003/04/18 23:19:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.51 2003/04/18 21:55:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.52 2003/04/18 23:19:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case Pproc:	/* /proc/N = dr-xr-xr-x */
 	case Pfd:
 		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
-			pfs->pfs_mode =
-			    S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+			pfs->pfs_mode = S_IRUSR|S_IXUSR;
 			vp->v_type = VDIR;
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
 			struct file *fp;
