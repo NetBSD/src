@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1996/04/23 22:46:42 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 1996/04/25 05:57:38 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,8 +61,6 @@
 
 /* XXX - Put this in some header file? */
 void child_return __P((struct proc *, struct frame));
-void cpu_exit __P((struct proc *));
-void pagemove __P((register caddr_t, register caddr_t, size_t));
 
 
 /*
@@ -118,7 +116,7 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc	*p;
-	void		(*pc)(struct proc *);
+	void		(*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
