@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,15 +35,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dcm.c	7.3 (Berkeley) 5/7/91
- *	$Id: dcm.c,v 1.2 1993/05/22 07:58:52 cgd Exp $
+ * from: @(#)dcm.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: dcm.c,v 1.3 1994/01/26 02:38:28 brezak Exp $
  */
 
 #ifdef DCMCONSOLE
-#include "sys/param.h"
-#include "../hp300/cons.h"
-#include "../dev/device.h"
-#include "../dev/dcmreg.h"
+#include <sys/param.h>
+#include <hp300/hp300/cons.h>
+#include <hp300/dev/device.h>
+#include <hp300/dev/dcmreg.h>
 
 struct dcmdevice *dcmcnaddr = NULL;
 
@@ -55,7 +56,7 @@ dcmprobe(cp)
 	register struct dcmdevice *dcm;
 
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
-	        if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
+		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
 			break;
 	if (!HW_ISDEV(hw, D_COMMDCM)) {
 		cp->cn_pri = CN_DEAD;

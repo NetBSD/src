@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_tc.c 1.9 89/02/20
  *	from: @(#)ite_tc.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_tc.c,v 1.3 1993/08/01 19:25:17 mycroft Exp $
+ *	$Id: ite_tc.c,v 1.4 1994/01/26 02:38:48 brezak Exp $
  */
 
 #include "samachdep.h"
@@ -50,8 +50,8 @@
 #include "../dev/grfvar.h"
 #include "../dev/grf_tcreg.h"
 
-#define REGBASE	    	((struct tcboxfb *)(ip->regbase))
-#define WINDOWMOVER 	topcat_windowmove
+#define REGBASE		((struct tcboxfb *)(ip->regbase))
+#define WINDOWMOVER	topcat_windowmove
 
 topcat_init(ip)
 	register struct ite_softc *ip;
@@ -95,7 +95,7 @@ topcat_init(ip)
 
 topcat_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-        register int dy, dx;
+	register int dy, dx;
 	int c, mode;
 {
 	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -105,7 +105,7 @@ topcat_putc(ip, c, dy, dx, mode)
 
 topcat_cursor(ip, flag)
 	register struct ite_softc *ip;
-        register int flag;
+	register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -123,14 +123,14 @@ topcat_clear(ip, sy, sx, h, w)
 {
 	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			  sy * ip->ftheight, sx * ip->ftwidth, 
-			  h  * ip->ftheight, w  * ip->ftwidth,
+			  h  * ip->ftheight, w	* ip->ftwidth,
 			  RR_CLEAR);
 }
 
 topcat_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
-        register int sy, count;
-        int dir, sx;
+	register struct ite_softc *ip;
+	register int sy, count;
+	int dir, sx;
 {
 	register int dy = sy - count;
 	register int height = ip->rows - sy;
@@ -147,7 +147,7 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_softc *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-  	register struct tcboxfb *rp = REGBASE;
+	register struct tcboxfb *rp = REGBASE;
 	
 	if (h == 0 || w == 0)
 		return;

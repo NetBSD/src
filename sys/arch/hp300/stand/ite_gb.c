@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_gb.c 1.8 89/02/23
  *	from: @(#)ite_gb.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_gb.c,v 1.3 1993/09/02 19:05:54 mycroft Exp $
+ *	$Id: ite_gb.c,v 1.4 1994/01/26 02:38:43 brezak Exp $
  */
 
 #include "samachdep.h"
@@ -51,8 +51,8 @@
 #include "../dev/grfvar.h"
 #include "../dev/grf_gbreg.h"
 
-#define REGBASE     	((struct gboxfb *)(ip->regbase))
-#define WINDOWMOVER 	gatorbox_windowmove
+#define REGBASE		((struct gboxfb *)(ip->regbase))
+#define WINDOWMOVER	gatorbox_windowmove
 
 gatorbox_init(ip)
 	register struct ite_softc *ip;
@@ -110,7 +110,7 @@ gatorbox_init(ip)
 
 gatorbox_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-        register int dy, dx;
+	register int dy, dx;
 	int c, mode;
 {
 	gatorbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -120,7 +120,7 @@ gatorbox_putc(ip, c, dy, dx, mode)
 
 gatorbox_cursor(ip, flag)
 	register struct ite_softc *ip;
-        register int flag;
+	register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -148,14 +148,14 @@ gatorbox_clear(ip, sy, sx, h, w)
 			    (sx) * ip->ftwidth, \
 			    (dy) * ip->ftheight, \
 			    (dx) * ip->ftwidth, \
-			    (h)  * ip->ftheight, \
-			    (w)  * ip->ftwidth, \
+			    (h)	 * ip->ftheight, \
+			    (w)	 * ip->ftwidth, \
 			    RR_COPY)
 
 gatorbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
-        register int sy;
-        int dir, sx, count;
+	register struct ite_softc *ip;
+	register int sy;
+	int dir, sx, count;
 {
 	register int height, dy, i;
 	

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_dv.c 1.1 89/02/28
  *	from: @(#)ite_dv.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_dv.c,v 1.3 1993/08/01 19:25:14 mycroft Exp $
+ *	$Id: ite_dv.c,v 1.4 1994/01/26 02:38:41 brezak Exp $
  */
 
 #include "samachdep.h"
@@ -68,13 +68,13 @@ dvbox_init(ip)
 	 * Lastly, turn on the box.
 	 */
 	REGBASE->interrupt = 0x04;
-	REGBASE->drive     = 0x10;		
- 	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
-	REGBASE->opwen     = 0x01;
-	REGBASE->fbwen     = 0x0;
-	REGBASE->fold      = 0x01;
-	REGBASE->vdrive    = 0x0;
-	REGBASE->dispen    = 0x01;
+	REGBASE->drive	   = 0x10;		
+	REGBASE->rep_rule  = RR_COPY << 4 | RR_COPY;
+	REGBASE->opwen	   = 0x01;
+	REGBASE->fbwen	   = 0x0;
+	REGBASE->fold	   = 0x01;
+	REGBASE->vdrive	   = 0x0;
+	REGBASE->dispen	   = 0x01;
 
 	/*
 	 * Video enable top overlay plane.
@@ -85,10 +85,10 @@ dvbox_init(ip)
 	/*
 	 * Make sure that overlay planes override frame buffer planes.
 	 */
-	REGBASE->ovly0p  = 0x0;
-	REGBASE->ovly0s  = 0x0;
-	REGBASE->ovly1p  = 0x0;
-	REGBASE->ovly1s  = 0x0;
+	REGBASE->ovly0p	 = 0x0;
+	REGBASE->ovly0s	 = 0x0;
+	REGBASE->ovly1p	 = 0x0;
+	REGBASE->ovly1s	 = 0x0;
 	REGBASE->fv_trig = 0x1;
 	DELAY(400);
 
@@ -130,7 +130,7 @@ dvbox_init(ip)
 
 dvbox_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-        register int dy, dx;
+	register int dy, dx;
 	int c, mode;
 {
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -140,7 +140,7 @@ dvbox_putc(ip, c, dy, dx, mode)
 
 dvbox_cursor(ip, flag)
 	register struct ite_softc *ip;
-        register int flag;
+	register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -163,9 +163,9 @@ dvbox_clear(ip, sy, sx, h, w)
 }
 
 dvbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
-        register int sy, count;
-        int dir, sx;
+	register struct ite_softc *ip;
+	register int sy, count;
+	int dir, sx;
 {
 	register int dy = sy - count;
 	register int height = ip->rows - sy;
@@ -200,7 +200,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 dv_reset(dbp)
 	register struct dvboxfb *dbp;
 {
-  	dbp->reset = 0x80;
+	dbp->reset = 0x80;
 	DELAY(400);
 
 	dbp->interrupt = 0x04;

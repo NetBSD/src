@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,16 +30,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)samachdep.h	7.2 (Berkeley) 5/7/91
- *	$Id: samachdep.h,v 1.2 1993/05/22 07:59:19 cgd Exp $
+ * from: @(#)samachdep.h	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: samachdep.h,v 1.3 1994/01/26 02:38:57 brezak Exp $
  */
 
 #define	NHPIB		4
-#define NITE		4
 #define	NSCSI		2
-#define NRD		(NHPIB * 8)
-#define NCT		(NHPIB * 8)
-#define NSD		(NSCSI * 8)
+#define NRD		8
+#define NCT		8
+#define NSD		8
+
+#define NITE		4
 
 /* from cpu.h */
 #define IIOV(x)		(x)
@@ -55,8 +57,19 @@
 #define HP_370		4	/* 33Mhz 68030+64K external cache */
 #define HP_340		5	/* 16Mhz 68030 */
 #define HP_375		6	/* 50Mhz 68030+32K external cache */
+#define HP_380		7	/* 25Mhz 68040 */
+#define HP_433		8	/* 33Mhz 68040 */
 
-extern	int howto, devtype;
+#define MHZ_8		1
+#define MHZ_16		2
+#define MHZ_25		3
+#define MHZ_33		4
+#define MHZ_50		6
+
+extern	int cpuspeed, machineid;
+extern	int howto;
+extern	unsigned int bootdev;
+extern	char *getmachineid();
 
 /* bogon grfinfo structure to keep grf_softc happy */
 struct grfinfo {

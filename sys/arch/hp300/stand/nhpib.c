@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,17 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nhpib.c	7.2 (Berkeley) 12/16/90
- *	$Id: nhpib.c,v 1.2 1993/05/22 07:59:13 cgd Exp $
+ * from: @(#)nhpib.c	8.1 (Berkeley) 6/10/93
+ *	$Id: nhpib.c,v 1.3 1994/01/26 02:38:51 brezak Exp $
  */
 
 /*
  * Internal/98624 HPIB driver
  */
 
-#include "sys/param.h"
-#include "../dev/nhpibreg.h"
-#include "hpibvar.h"
+#include <sys/param.h>
+#include <hp300/dev/nhpibreg.h>
+#include <hp300/stand/hpibvar.h>
 
 nhpibinit(unit)
 {

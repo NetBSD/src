@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_subr.c 1.1 89/02/17
  *	from: @(#)ite_subr.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_subr.c,v 1.3 1993/08/01 19:25:16 mycroft Exp $
+ *	$Id: ite_subr.c,v 1.4 1994/01/26 02:38:46 brezak Exp $
  */
 
 #include "samachdep.h"
@@ -72,7 +72,7 @@ ite_devinfo(ip)
 		 */
 		ip->fontx    = ip->dwidth;
 		ip->fonty    = 0;
-		ip->cpl      = (ip->fbwidth - ip->dwidth) / ip->ftwidth;
+		ip->cpl	     = (ip->fbwidth - ip->dwidth) / ip->ftwidth;
 		ip->cblankx  = ip->dwidth;
 		ip->cblanky  = ip->fonty + ((128 / ip->cpl) +1) * ip->ftheight;
 	}
@@ -82,7 +82,7 @@ ite_devinfo(ip)
 		 */
 		ip->fontx   = 0;
 		ip->fonty   = ip->dheight;
-		ip->cpl     = ip->fbwidth / ip->ftwidth;
+		ip->cpl	    = ip->fbwidth / ip->ftwidth;
 		ip->cblankx = 0;
 		ip->cblanky = ip->fonty + ((128 / ip->cpl) + 1) * ip->ftheight;
 	}

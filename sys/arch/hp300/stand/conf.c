@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,34 +30,34 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)conf.c	7.3 (Berkeley) 5/5/91
- *	$Id: conf.c,v 1.2 1993/05/22 07:58:46 cgd Exp $
+ *	from: @(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	     $Id: conf.c,v 1.3 1994/01/26 02:38:21 brezak Exp $
  */
 
 #include <sys/param.h>
-#include "saio.h"
+#include "stand.h"
 
-extern int	nullsys(), nodev(), noioctl();
-
-#ifndef BOOT
-int	ctstrategy(), ctopen(), ctclose();
-#define	ctioctl	noioctl
+#ifdef BOOT
+#define	ctstrategy	nullsys
+#define	ctopen		nodev
+#define	ctclose		nullsys
+#else
+extern int	ctstrategy(), ctopen(), ctclose();
 #endif
+#define	ctioctl	noioctl
 
-int	rdstrategy(), rdopen();
+extern int	rdstrategy(), rdopen();
 #define	rdioctl	noioctl
 
-int	sdstrategy(), sdopen();
+extern int	sdstrategy(), sdopen();
 #define	sdioctl	noioctl
 
-
 struct devsw devsw[] = {
-	{ "rd",	rdstrategy,	rdopen,	nullsys, noioctl },	/* 0 = rd */
-	{ "sd",	sdstrategy,	sdopen,	nullsys, noioctl },	/* 1 = sd */
-#ifndef BOOT
-	{ "ct",	ctstrategy,	ctopen,	ctclose, noioctl },	/* 2 = ct */
-#endif
-	{ NULL },
+	{ "ct",	ctstrategy,	ctopen,	ctclose,	ctioctl }, /*0*/
+	{ "??",	nullsys,	nodev,	nullsys,	noioctl }, /*1*/
+	{ "rd",	rdstrategy,	rdopen,	nullsys,	rdioctl }, /*2*/
+	{ "??",	nullsys,	nodev,	nullsys,	noioctl }, /*3*/
+	{ "sd",	sdstrategy,	sdopen,	nullsys,	sdioctl }, /*4*/
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));

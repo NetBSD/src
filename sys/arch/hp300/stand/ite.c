@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.20 91/01/21
  *	from: @(#)ite.c	7.3 (Berkeley) 5/7/91
- *	$Id: ite.c,v 1.3 1993/08/01 19:25:13 mycroft Exp $
+ *	$Id: ite.c,v 1.4 1994/01/26 02:38:38 brezak Exp $
  */
 
 /*
@@ -74,13 +74,13 @@ struct itesw itesw[] = {
 	rbox_init,		nodev,			rbox_clear,
 	rbox_putc,		rbox_cursor,		rbox_scroll,
 
-      	dvbox_init,		nodev,			dvbox_clear,
+	dvbox_init,		nodev,			dvbox_clear,
 	dvbox_putc,		dvbox_cursor,		dvbox_scroll,
 };
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct  ite_softc ite_softc[NITE] = { 0 };
+struct	ite_softc ite_softc[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
@@ -95,7 +95,7 @@ iteconfig()
 
 	i = 0;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++) {
-	        if (!HW_ISDEV(hw, D_BITMAP))
+		if (!HW_ISDEV(hw, D_BITMAP))
 			continue;
 		gr = (struct grfreg *) hw->hw_kva;
 		/* XXX: redundent but safe */

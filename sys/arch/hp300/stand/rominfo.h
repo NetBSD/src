@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: rominfo.h 1.2 88/05/24
- *	from: @(#)rominfo.h	7.1 (Berkeley) 5/8/90
- *	$Id: rominfo.h,v 1.3 1993/08/01 19:25:19 mycroft Exp $
+ * from: Utah $Hdr: rominfo.h 1.2 88/05/24$
+ * from: @(#)rominfo.h	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: rominfo.h,v 1.4 1994/01/26 02:38:56 brezak Exp $
  */
 
 #define ROMADDR	0xFFFFF000
@@ -49,19 +50,18 @@ struct jmpvec {
 
 struct rominfo {
 	char p1[0xDC0];
-	short boottype;		/* ??                           (FFFFFDC0) */
+	short boottype;		/* ??				(FFFFFDC0) */
 	char  name[10];		/* HP system name, e.g. SYSHPUX (FFFFFDC2) */
-	short p2;		/* ??                           (FFFFFDCC) */
-	long  lowram;		/* lowest useable RAM location  (FFFFFDCE) */
-	char  p3[0x100];	/* ??                           (FFFFFDD2) */
-	char  sysflag;		/* HP system flags              (FFFFFED2) */
-	char  p4;		/* ??                           (FFFFFED3) */
-	long  rambase;		/* physaddr of lowest RAM       (FFFFFED4) */
-	char  ndrives;		/* number of drives             (FFFFFED8) */
-	char  p5;		/* ??                           (FFFFFED9) */
-	char  sysflag2;		/* more system flags            (FFFFFEDA) */
-	char  p6;		/* ??                           (FFFFFEDB) */
-	long  msus;		/* ??                           (FFFFFEDC) */
-	struct jmpvec jvec[48];	/* jump vectors                 (FFFFFEE0) */
+	short p2;		/* ??				(FFFFFDCC) */
+	long  lowram;		/* lowest useable RAM location	(FFFFFDCE) */
+	char  p3[0x100];	/* ??				(FFFFFDD2) */
+	char  sysflag;		/* HP system flags		(FFFFFED2) */
+	char  p4;		/* ??				(FFFFFED3) */
+	long  rambase;		/* physaddr of lowest RAM	(FFFFFED4) */
+	char  ndrives;		/* number of drives		(FFFFFED8) */
+	char  p5;		/* ??				(FFFFFED9) */
+	char  sysflag2;		/* more system flags		(FFFFFEDA) */
+	char  p6;		/* ??				(FFFFFEDB) */
+	long  msus;		/* ??				(FFFFFEDC) */
+	struct jmpvec jvec[48];	/* jump vectors			(FFFFFEE0) */
 };
-

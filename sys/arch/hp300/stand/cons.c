@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,14 +35,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cons.c 1.5 89/08/22
- *	from: @(#)cons.c	7.4 (Berkeley) 5/5/91
- *	$Id: cons.c,v 1.3 1993/08/01 19:25:13 mycroft Exp $
+ * from: Utah Hdr: cons.c 1.7 92/02/28
+ * from: @(#)cons.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: cons.c,v 1.4 1994/01/26 02:38:22 brezak Exp $
  */
 
-#include "sys/param.h"
+#include <sys/param.h>
+#include <hp300/hp300/cons.h>
 #include "samachdep.h"
-#include "../hp300/cons.h"
 
 #ifdef ITECONSOLE
 int	iteprobe(), iteinit(), itegetchar(), iteputchar();
@@ -98,6 +99,13 @@ cngetc()
 cnputc(c)
 	int c;
 {
+#ifdef ROMPRF
+	extern int userom;
+
+	if (userom)
+		romputchar(c);
+	else
+#endif
 	if (cn_tab)
 		(*cn_tab->cn_putc)(c);
 }

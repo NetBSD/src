@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,66 +35,83 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.6 88/05/24
- *	from: @(#)machdep.c	7.4 (Berkeley) 5/5/91
- *	$Id: machdep.c,v 1.3 1993/08/01 19:25:17 mycroft Exp $
+ * from: Utah $Hdr: machdep.c 1.10 92/06/18
+ * from: @(#)machdep.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: machdep.c,v 1.4 1994/01/26 02:38:49 brezak Exp $
  */
 
-#include "sys/param.h"
+#include <sys/param.h>
+#include "samachdep.h"
 
-/*
- * Copy bytes within kernel
- */
-bcopy(from, to, count)
-	register caddr_t from, to;
-	register unsigned count;
+char *
+getmachineid()
 {
-	while (count--)
-		*to++ = *from++;
+	extern int machineid;
+	char *cp;
+
+	switch (machineid) {
+	case HP_320:
+		cp = "320"; break;
+	case HP_330:
+		cp = "318/319/330"; break;
+	case HP_340:
+		cp = "340"; break;
+	case HP_350:
+		cp = "350"; break;
+	case HP_360:
+		cp = "360"; break;
+	case HP_370:
+		cp = "370"; break;
+	case HP_375:
+		cp = "345/375/400"; break;
+	case HP_380:
+		cp = "380/425"; break;
+	case HP_433:
+		cp = "433"; break;
+	default:
+		cp = "???"; break;
+	}
+	return(cp);
 }
 
-bzero(to, count)
-	register caddr_t to;
-	register unsigned count;
-{
-	while (count--)
-		*to++ = 0;
-}
+#ifdef ROMPRF
+int userom;
+#endif
 
-bcmp(s1, s2, len)
-	register char *s1, *s2;
-	register int len;
-{
-	while (len--)
-		if (*s1++ != *s2++)
-			return (1);
-	return (0);
-}
+struct trapframe {
+	int dregs[8];
+	int aregs[8];
+	int whoknows;
+	short sr;
+	int pc;
+	short frame;
+};
 
 trap(fp)
- struct frame {
-	 int dregs[8];
-	 int aregs[8];
-	 int whoknows;
-	 short sr;
-	 int pc;
-	 short frame;
- } *fp;
+	struct trapframe *fp;
 {
 	static int intrap = 0;
 
 	if (intrap)
-		return;
+		return(0);
 	intrap = 1;
-	printf("Got unexpected trap, vector = %x, ps = %x, pc = %x\n",
-	       fp->frame&0xFFF, fp->sr, fp->pc);
+#ifdef ROMPRF
+	userom = 1;
+#endif
+	printf("Got unexpected trap: format=%x vector=%x ps=%x pc=%x\n",
+		  (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
 	       fp->dregs[0], fp->dregs[1], fp->dregs[2], fp->dregs[3], 
 	       fp->dregs[4], fp->dregs[5], fp->dregs[6], fp->dregs[7]);
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
 	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
 	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
+#ifdef ROMPRF
+	userom = 0;
+#endif
 	intrap = 0;
+	return(0);
 }
 
 #ifdef ROMPRF
@@ -102,7 +119,7 @@ trap(fp)
 #define COLS	128
 
 romputchar(c)
- register int c;
+	register int c;
 {
 	static char buf[COLS];
 	static int col = 0, row = 0;
@@ -112,6 +129,7 @@ romputchar(c)
 	case '\0':
 		break;
 	case '\r':
+		break;	/* ignore */
 	case '\n':
 		for (i = col; i < COLS-1; i++)
 			buf[i] = ' ';

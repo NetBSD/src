@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory and the Systems
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: sd.c 1.2 90/01/23
- *	from: @(#)sd.c	7.4 (Berkeley) 5/5/91
- *	$Id: sd.c,v 1.3 1993/08/01 19:25:21 mycroft Exp $
+ * from: Utah $Hdr: sd.c 1.9 92/12/21$
+ * from: @(#)sd.c	8.1 (Berkeley) 6/10/93
+ *
+ * $Id: sd.c,v 1.4 1994/01/26 02:39:00 brezak Exp $
  */
 
 /*
@@ -45,54 +46,60 @@
  */
 
 #include <sys/param.h>
-#include "saio.h"
+#include <sys/disklabel.h>
+#include "stand.h"
 #include "samachdep.h"
 
-#include "../dev/scsireg.h"
+#define _IOCTL_
+#include <hp300/dev/scsireg.h>
+
+struct	disklabel sdlabel;
+
+struct	sdminilabel {
+	u_short	npart;
+	u_long	offset[MAXPARTITIONS];
+};
 
 struct	sd_softc {
+	int	sc_ctlr;
+	int	sc_unit;
+	int	sc_part;
 	char	sc_retry;
 	char	sc_alive;
 	short	sc_blkshift;
-} sd_softc[NSD];
-
-int sdpartoff[] = {
-	1024,	17408,	0,	17408,
-	115712,	218112,	82944,	0
-};
+	struct	sdminilabel sc_pinfo;
+} sd_softc[NSCSI][NSD];
 
 #define	SDRETRY		2
 
-sdinit(unit)
-	register int unit;
+sdinit(ctlr, unit)
+	int ctlr, unit;
 {
-	register struct sd_softc *ss;
+	register struct sd_softc *ss = &sd_softc[ctlr][unit];
 	u_char stat;
 	int capbuf[2];
 
-	if (unit > NSD)
-		return (0);
-	ss = &sd_softc[unit];
-	/* NB: HP6300 won't boot if next printf is removed (???) - vj */
-	printf("sd%d: ", unit);
-	if ((stat = scsi_test_unit_rdy(unit)) == 0) {
+	stat = scsi_test_unit_rdy(ctlr, unit);
+	if (stat) {
 		/* drive may be doing RTZ - wait a bit */
-		printf("not ready - retrying ... ");
 		if (stat == STS_CHECKCOND) {
 			DELAY(1000000);
-			if (scsi_test_unit_rdy(unit) == 0) {
-				printf("giving up.\n");
-				return (0);
-			}
+			stat = scsi_test_unit_rdy(ctlr, unit);
+		}
+		if (stat) {
+			printf("sd(%d,%d,0,0): init failed (stat=%x)\n",
+			       ctlr, unit, stat);
+			return (0);
 		}
 	}
-	printf("unit ready.\n");
 	/*
 	 * try to get the drive block size.
 	 */
 	capbuf[0] = 0;
 	capbuf[1] = 0;
-	if (scsi_read_capacity(unit, (u_char *)capbuf, sizeof(capbuf)) != 0) {
+	stat = scsi_read_capacity(ctlr, unit,
+				  (u_char *)capbuf, sizeof(capbuf));
+	if (stat == 0) {
 		if (capbuf[1] > DEV_BSIZE)
 			for (; capbuf[1] > DEV_BSIZE; capbuf[1] >>= 1)
 				++ss->sc_blkshift;
@@ -101,49 +108,130 @@ sdinit(unit)
 	return (1);
 }
 
-sdreset(unit)
+sdreset(ctlr, unit)
+	int ctlr, unit;
 {
 }
 
-sdopen(io)
-	struct iob *io;
-{
-	register int unit = io->i_unit;
-	register struct sd_softc *ss = &sd_softc[unit];
-	struct sdinfo *ri;
+#ifdef COMPAT_NOLABEL
+struct	sdminilabel defaultpinfo = {
+	8,
+	{ 1024, 17408, 0, 17408, 115712, 218112, 82944, 115712 }
+};
+#endif
 
-	if (scsialive(unit) == 0)
-		_stop("scsi controller not configured");
-	if (ss->sc_alive == 0)
-		if (sdinit(unit) == 0)
-			_stop("sd init failed");
-	if (io->i_boff < 0 || io->i_boff > 7)
-		_stop("sd bad minor");
-	io->i_boff = sdpartoff[io->i_boff];
+char io_buf[MAXBSIZE];
+
+sdgetinfo(ss)
+	register struct sd_softc *ss;
+{
+	register struct sdminilabel *pi = &ss->sc_pinfo;
+	register struct disklabel *lp = &sdlabel;
+	char *msg, *getdisklabel();
+	int sdstrategy(), i, err;
+
+	bzero((caddr_t)lp, sizeof *lp);
+	lp->d_secsize = (DEV_BSIZE << ss->sc_blkshift);
+
+	if (err = sdstrategy(ss, F_READ,
+		       LABELSECTOR,
+		       lp->d_secsize ? lp->d_secsize : DEV_BSIZE,
+		       io_buf, &i) < 0) {
+	    printf("sdgetinfo: sdstrategy error %d\n", err);
+	    return(0);
+	}
+	
+	msg = getdisklabel(io_buf, lp);
+	if (msg) {
+		printf("sd(%d,%d,%d): WARNING: %s, ",
+		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
+#ifdef COMPAT_NOLABEL
+		printf("using old default partitioning\n");
+		*pi = defaultpinfo;
+#else
+		printf("defining `c' partition as entire disk\n");
+		pi->npart = 3;
+		pi->offset[0] = pi->offset[1] = -1;
+		pi->offset[2] = 0;
+#endif
+	} else {
+		pi->npart = lp->d_npartitions;
+		for (i = 0; i < pi->npart; i++)
+			pi->offset[i] = lp->d_partitions[i].p_size == 0 ?
+				-1 : lp->d_partitions[i].p_offset;
+	}
+	return(1);
 }
 
-sdstrategy(io, func)
-	register struct iob *io;
-	register int func;
+sdopen(f, ctlr, unit, part)
+	struct open_file *f;
+	int ctlr, unit, part;
 {
-	register int unit = io->i_unit;
-	register struct sd_softc *ss = &sd_softc[unit];
+	register struct sd_softc *ss;
+
+#ifdef DEBUG
+	printf("sdopen: ctlr=%d unit=%d part=%d\n",
+	    ctlr, unit, part);
+#endif
+	
+	if (ctlr >= NSCSI || scsialive(ctlr) == 0)
+		return (EADAPT);
+	if (unit >= NSD)
+		return (ECTLR);
+	ss = &sd_softc[ctlr][unit];
+	if (ss->sc_alive == 0) {
+		if (sdinit(ctlr, unit) == 0)
+			return (ENXIO);
+		if (sdgetinfo(ss) == 0)
+			return (ERDLAB);
+	}
+	if (part >= ss->sc_pinfo.npart || ss->sc_pinfo.offset[part] == -1)
+		return (EPART);
+
+	ss->sc_part = part;
+	ss->sc_unit = unit;
+	ss->sc_ctlr = ctlr;
+	f->f_devdata = (void *)ss;
+	return (0);
+}
+
+sdstrategy(ss, func, dblk, size, buf, rsize)
+	register struct sd_softc *ss;
+	int func;
+	daddr_t dblk;
+	u_int size;
+	char *buf;
+	u_int *rsize;
+{
+	register int ctlr = ss->sc_ctlr;
+	register int unit = ss->sc_unit;
+	daddr_t blk = (dblk + ss->sc_pinfo.offset[ss->sc_part])>> ss->sc_blkshift;
+	u_int nblk = size >> ss->sc_blkshift;
 	char stat;
-	daddr_t blk = io->i_bn >> ss->sc_blkshift;
-	u_int nblk = io->i_cc >> ss->sc_blkshift;
+
+	if (size == 0)
+		return(0);
 
 	ss->sc_retry = 0;
+
+#ifdef DEBUG
+	printf("sdstrategy(%d,%d): size=%d blk=%d nblk=%d\n",
+	    ctlr, unit, size, blk, nblk);
+#endif
+
 retry:
 	if (func == F_READ)
-		stat = scsi_tt_read(unit, io->i_ma, io->i_cc, blk, nblk);
+		stat = scsi_tt_read(ctlr, unit, buf, size, blk, nblk);
 	else
-		stat = scsi_tt_write(unit, io->i_ma, io->i_cc, blk, nblk);
+		stat = scsi_tt_write(ctlr, unit, buf, size, blk, nblk);
 	if (stat) {
-		printf("sd(%d,?) err: 0x%x\n", unit, stat);
+		printf("sd(%d,%d,%d): block=%x, error=0x%x\n",
+		       ctlr, unit, ss->sc_part, blk, stat);
 		if (++ss->sc_retry > SDRETRY)
-			return(-1);
-		else
-			goto retry;
+			return(EIO);
+		goto retry;
 	}
-	return(io->i_cc);
+	*rsize = size;
+	
+	return(0);
 }

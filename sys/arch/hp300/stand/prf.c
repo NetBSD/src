@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,22 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)prf.c	7.4 (Berkeley) 5/5/91
- *	$Id: prf.c,v 1.2 1993/05/22 07:59:15 cgd Exp $
+ * from: @(#)prf.c	8.1 (Berkeley) 6/10/93
+ *	$Id: prf.c,v 1.3 1994/01/26 02:38:53 brezak Exp $
  */
-
-scankbd()
-{
-	register int c;
-
-	c = cngetc();
-	if (c == ('c'&037)) {
-		printf("^C");
-		_stop("");
-		/* NOTREACHED */
-	}
-	return(c);
-}
 
 getchar()
 {
@@ -56,11 +43,29 @@ getchar()
 	if (c == '\r')
 		c = '\n';
 	else if (c == ('c'&037)) {
-		printf("^C");
-		_stop("");
+		panic("^C");
 		/* NOTREACHED */
 	}
-	putchar(c);
+	if (c != '\b' && c != '\177')
+		putchar(c);
+	return(c);
+}
+
+tgetchar()
+{
+	register int c;
+
+	if ((c = cngetc()) == 0)
+		return(0);
+	
+	if (c == '\r')
+		c = '\n';
+	else if (c == ('c'&037)) {
+		panic("^C");
+		/* NOTREACHED */
+	}
+	if (c != '\b' && c != '\177')
+		putchar(c);
 	return(c);
 }
 
