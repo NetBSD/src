@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.13 2003/11/08 05:12:51 simonb Exp $	*/
+/*	$NetBSD: aucom.c,v 1.14 2004/05/01 19:03:59 thorpej Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.13 2003/11/08 05:12:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.14 2004/05/01 19:03:59 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -469,7 +469,7 @@ com_attach_subr(struct com_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
-#ifdef COM16650
+#ifdef COM_16650
 	u_int8_t lcr;
 #endif
 #ifdef COM_HAYESP
@@ -540,7 +540,7 @@ com_attach_subr(struct com_softc *sc)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
-#ifdef COM16650
+#ifdef COM_16650
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
 			 * on 16650s. We also know IIR != 0 at this point.
@@ -569,7 +569,7 @@ com_attach_subr(struct com_softc *sc)
 #endif
 				sc->sc_fifolen = 16;
 
-#ifdef COM16650
+#ifdef COM_16650
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 			if (sc->sc_fifolen == 0)
 				fifo_msg = "st16650, broken fifo";
