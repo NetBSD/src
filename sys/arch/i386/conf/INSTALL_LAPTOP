@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.6 2000/10/31 15:54:51 fvdl Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.7 2000/12/12 21:14:51 he Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -376,6 +376,7 @@ ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
 
 # PCMCIA network interfaces
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
