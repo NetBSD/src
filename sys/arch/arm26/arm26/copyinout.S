@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.2 2000/08/13 12:31:27 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.3 2001/01/01 16:00:42 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,15 +33,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.2 2000/08/13 12:31:27 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.3 2001/01/01 16:00:42 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
-
-/*
- * Note that most of these need special handling on data aborts.  I
- * haven't coded that bit yet.
- */
 
 /*
  * int copyin(const void *ua, void *ka, size_t len);
@@ -112,9 +107,9 @@ Lkcopyloop:
 	ldmdb	fp, {r4, fp, sp, pc}^
 
 Lcopyfault:
-	mov	r0, #0
-	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
-	mov	r0, #EFAULT
+	mov	r1, #0
+	str	r1, [r4, #(U_PCB + PCB_ONFAULT)]
+	/* Return value is provided by fault handler. */
 	ldmdb	fp, {r4, fp, sp, pc}^
 
 /* int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done); */
@@ -142,6 +137,7 @@ Lcopyinstrloop:
 	teq	r4, #0
 	movne	r0, #ENAMETOOLONG
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
+
 /* int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done); */
 ENTRY(copyoutstr)
 	mov	ip, sp
@@ -198,9 +194,9 @@ Lcopystrfault:
 	teq	r3, #0
 	subne	r6, r1, r6
 	strne	r6, [r3]
-	mov	r0, #0
-	str	r0, [r5, #(U_PCB + PCB_ONFAULT)]
-	mov	r0, #EFAULT
+	mov	r1, #0
+	str	r1, [r5, #(U_PCB + PCB_ONFAULT)]
+	/* Return value is provided by fault handler. */
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}^
 
 /* int fubyte(void *base); */

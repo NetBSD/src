@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.22 2000/12/27 18:35:18 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.23 2001/01/01 16:00:42 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,13 +32,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.22 2000/12/27 18:35:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23 2001/01/01 16:00:42 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 
+#include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
@@ -470,6 +471,7 @@ do_fault(struct trapframe *tf, struct proc *p,
 #endif
 		curpcb = &p->p_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
+			tf->tf_r0 = EFAULT;
 			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
 			    (register_t)curpcb->pcb_onfault;
 			return;
