@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.10 1994/10/30 21:49:18 cgd Exp $	*/
+/*	$NetBSD: ch.c,v 1.11 1994/11/21 10:39:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -112,7 +112,7 @@ chattach(parent, self, aux)
 	 */
 	ch->sc_link = sc_link;
 	sc_link->device = &ch_switch;
-	sc_link->dev_unit = ch->sc_dev.dv_unit;
+	sc_link->device_softc = ch;
 
 	/*
 	 * Use the subdriver to request information regarding

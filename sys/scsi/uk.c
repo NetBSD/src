@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.9 1994/10/30 21:49:39 cgd Exp $	*/
+/*	$NetBSD: uk.c,v 1.10 1994/11/21 10:39:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -88,7 +88,7 @@ ukattach(parent, self, aux)
 	 */
 	uk->sc_link = sc_link;
 	sc_link->device = &uk_switch;
-	sc_link->dev_unit = uk->sc_dev.dv_unit;
+	sc_link->device_softc = uk;
 
 	printf(": unknown device\n");
 }

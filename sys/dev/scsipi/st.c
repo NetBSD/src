@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.39 1994/10/30 21:49:34 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.40 1994/11/21 10:39:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -309,7 +309,7 @@ stattach(parent, self, aux)
 	SC_DEBUG(sc_link, SDEV_DB2, ("stattach: "));
 
 	sc_link->device = &st_switch;
-	sc_link->dev_unit = st->sc_dev.dv_unit;
+	sc_link->device_softc = st;
 
 	/*
 	 * Store information needed to contact our base driver
@@ -876,21 +876,17 @@ void
 ststrategy(bp)
 	struct buf *bp;
 {
+	struct st_data *st = stcd.cd_devs[STUNIT(bp->b_dev)];
 	struct buf *dp;
-	int unit;
 	int opri;
-	struct st_data *st;
 
-	unit = STUNIT(bp->b_dev);
-	st = stcd.cd_devs[unit];
 	SC_DEBUG(st->sc_link, SDEV_DB1,
 	    ("ststrategy %d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If it's a null transfer, return immediatly
 	 */
-	if (bp->b_bcount == 0) {
+	if (bp->b_bcount == 0)
 		goto done;
-	}
 	/*
 	 * Odd sized request on fixed drives are verboten
 	 */
@@ -931,7 +927,7 @@ ststrategy(bp)
 	 * not doing anything, otherwise just wait for completion
 	 * (All a bit silly if we're only allowing 1 open but..)
 	 */
-	ststart(unit);
+	ststart(st);
 
 	splx(opri);
 	return;
@@ -960,10 +956,9 @@ done:
  * ststart() is called at splbio
  */
 void 
-ststart(unit)
-	int unit;
+ststart(st)
+	struct st_data *st;
 {
-	struct st_data *st = stcd.cd_devs[unit];
 	struct scsi_link *sc_link = st->sc_link;
 	register struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
@@ -1675,8 +1670,7 @@ st_interpret_sense(xs)
 	struct scsi_sense_data *sense = &xs->sense;
 	boolean silent = xs->flags & SCSI_SILENT;
 	struct buf *bp = xs->bp;
-	int unit = sc_link->dev_unit;
-	struct st_data *st = stcd.cd_devs[unit];
+	struct st_data *st = sc_link->device_softc;
 	u_int key;
 	int info;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.15 1994/11/03 22:05:10 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.16 1994/11/21 10:39:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -147,15 +147,15 @@ struct scsi_link {
 /*  2*/	u_int8	target;			/* targ of this dev */
 /*  3*/	u_int8	lun;			/* lun of this dev */
 /*  4*/	u_int8	adapter_targ;		/* what are we on the scsi bus */
-/*  5*/	u_int8	dev_unit;		/* e.g. the 0 in sd0 */
-/*  6*/	u_int8	opennings;		/* available operations */
-/*  7*/	u_int8	active;			/* operations in progress */
-/*  8*/ u_int8	sparea[1];
+/*  5*/	u_int8	opennings;		/* available operations */
+/*  6*/	u_int8	active;			/* operations in progress */
+/*  8*/ u_int8	sparea[2];
 /* 12*/	int	flags;			/* flags that all devices have */
-/* 16*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
-/* 20*/	struct	scsi_device *device;	/* device entry points etc. */
-/* 24*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-/* 28*/	void	*fordriver;		/* for private use by the driver */
+/* 16*/	struct	scsi_device *device;	/* device entry points etc. */
+/* 20*/	void	*device_softc;		/* needed for call to foo_start */
+/* 24*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
+/* 28*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
+/* 32*/	void	*fordriver;		/* for private use by the driver */
 };
 #define	SDEV_MEDIA_LOADED 	0x01	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x02	/* a process is waiting for this */
