@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.15 2002/10/28 00:06:09 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.16 2002/11/01 17:06:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@ int	pthread_detach(pthread_t thread);
 
 int	pthread_kill(pthread_t thread, int sig);
 int	pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
+
+int	pthread_getrrtimer_np(void);
+int	pthread_setrrtimer_np(int);
 
 int	pthread_attr_destroy(pthread_attr_t *attr);
 int	pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate);
