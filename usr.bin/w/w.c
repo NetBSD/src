@@ -317,15 +317,20 @@ pr_args(kp)
 	char **argv;
 	int left;
 
+	if (kp == 0)
+		goto nothing;
 	left = argwidth;
 	argv = kvm_getargv(kd, kp, argwidth);
-	if (argv) {
-		while (*argv) {
-			fmt_puts(*argv, &left);
-			argv++;
-			fmt_putc(' ', &left);
-		}
+	if (argv == 0)
+		goto nothing;
+	while (*argv) {
+		fmt_puts(*argv, &left);
+		argv++;
+		fmt_putc(' ', &left);
 	}
+	return;
+nothing:
+	putchar('-');
 }
 
 static void
