@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.26 1999/09/12 01:17:42 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26.2.1 1999/10/20 22:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -350,13 +350,13 @@ static void
 uvn_reference(uobj)
 	struct uvm_object *uobj;
 {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 #endif
 	UVMHIST_FUNC("uvn_reference"); UVMHIST_CALLED(maphist);
 
 	simple_lock(&uobj->vmobjlock);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		printf("uvn_reference: ref=%d, flags=0x%x\n", uvn->u_flags,
 		    uobj->uo_refs);
@@ -459,7 +459,7 @@ uvn_detach(uobj)
 	 */
 
 	if (uobj->uo_npages) {		/* I/O pending.  iodone will free */
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		/* 
 		 * XXXCDC: very unlikely to happen until we have async i/o
 		 * so print a little info message in case it does.
@@ -605,7 +605,7 @@ uvm_vnp_terminate(vp)
 	 */
 
 	while (uvn->u_obj.uo_npages) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		struct vm_page *pp;
 		for (pp = uvn->u_obj.memq.tqh_first ; pp != NULL ; 
 		     pp = pp->listq.tqe_next) {
@@ -860,10 +860,11 @@ uvn_flush(uobj, start, stop, flags)
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
+#ifdef DEBUG
 		if (stop > round_page(uvn->u_size))
 			printf("uvn_flush: strange, got an out of range "
 			    "flush (fixed)\n");
-
+#endif
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
 	}
@@ -1632,7 +1633,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	if (file_offset >= uvn->u_size) {
 			simple_unlock(&uvn->u_obj.vmobjlock);
 			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 			printf("uvn_io: note: size check fired\n");
 #endif
 			return(VM_PAGER_BAD);
@@ -2042,7 +2043,7 @@ uvm_vnp_sync(mp)
 
 	for (uvn = uvn_sync_q.sqh_first ; uvn ; uvn = uvn->u_syncq.sqe_next) {
 		simple_lock(&uvn->u_obj.vmobjlock);
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		if (uvn->u_flags & UVM_VNODE_DYING) {
 			printf("uvm_vnp_sync: dying vnode on sync list\n");
 		}
