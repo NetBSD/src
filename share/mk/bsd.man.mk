@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.71 2001/11/28 23:32:16 jmc Exp $
+#	$NetBSD: bsd.man.mk,v 1.72 2001/12/17 21:27:45 tv Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -55,8 +55,8 @@ maninstall:	manlinks
 manpages::	# ensure target exists
 MANPAGES=	${MAN:C/.$/&${MANSUFFIX}/}
 
-.if !empty(MANSUFFIX)
 realall:	${MANPAGES}
+.if !empty(MANSUFFIX)
 .NOPATH:	${MANPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
 
