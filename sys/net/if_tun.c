@@ -11,7 +11,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * $Id: if_tun.c,v 1.12 1994/05/15 19:20:02 deraadt Exp $
+ * $Id: if_tun.c,v 1.13 1994/05/26 00:47:19 deraadt Exp $
  */
 
 #include "tun.h"
@@ -413,7 +413,7 @@ tunread(dev, uio)
 	splx(s);
 
 	while (m0 && uio->uio_resid > 0 && error == 0) {
-		len = MIN(uio->uio_resid, m0->m_len);
+		len = min(uio->uio_resid, m0->m_len);
 		if (len == 0)
 			break;
 		error = uiomove(mtod(m0, caddr_t), len, uio);
@@ -459,7 +459,7 @@ tunwrite(dev, uio)
 	top = 0;
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
-		m->m_len = MIN (mlen, uio->uio_resid);
+		m->m_len = min(mlen, uio->uio_resid);
 		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
