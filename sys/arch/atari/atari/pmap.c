@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1999/03/24 05:50:58 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1999/03/26 23:41:28 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1226,12 +1226,13 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vaddr_t va;
 	register paddr_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register u_int *pte;
 	register int npte;

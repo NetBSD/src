@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1999/03/26 23:41:27 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -798,7 +798,7 @@ pmap_map(virt, start, end, prot)
 		printf("pmap_map(%lx, %lx, %lx, %x)\n", virt, start, end, prot);
 #endif
 	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE);
+		pmap_enter(pmap_kernel(), virt, start, prot, FALSE, 0);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -1326,12 +1326,13 @@ pmap_protect(pmap, sva, eva, prot)
 extern int kernel_copyback;
 
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register u_int *pte;
 	register int npte;

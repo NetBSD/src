@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1999/03/24 05:51:16 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1999/03/26 23:41:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -579,7 +579,8 @@ static void pmap_page_upload __P((void));
 #ifdef INCLUDED_IN_PMAP_H
 void   pmap_bootstrap __P((void));
 void  *pmap_bootstrap_alloc __P((int));
-void   pmap_enter __P((pmap_t, vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+void   pmap_enter __P((pmap_t, vm_offset_t, vm_offset_t, vm_prot_t, boolean_t,
+	   vm_prot_t));
 pmap_t pmap_create __P((vm_size_t));
 void   pmap_destroy __P((pmap_t));
 void   pmap_reference __P((pmap_t));
@@ -1683,12 +1684,13 @@ pmap_stroll(pmap, va, a_tbl, b_tbl, c_tbl, pte, a_idx, b_idx, pte_idx)
  * This function ought to be easier to read.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t	pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */

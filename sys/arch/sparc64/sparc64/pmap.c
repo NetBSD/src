@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1999/03/26 04:29:23 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1999/03/26 23:41:36 mycroft Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1394,12 +1394,13 @@ pmap_deactivate(p)
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 void
-pmap_enter(pm, va, pa, prot, wired)
+pmap_enter(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_type;
 {
 	register u_int64_t phys;
 

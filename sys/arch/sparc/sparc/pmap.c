@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.140 1999/03/24 05:51:12 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.141 1999/03/26 23:41:35 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -494,8 +494,8 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 void		(*pmap_clear_modify_p) __P((paddr_t pa));
 void		(*pmap_clear_reference_p) __P((paddr_t pa));
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t,
-				     vm_prot_t, boolean_t));
+void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
+		    boolean_t, vm_prot_t));
 paddr_t		(*pmap_extract_p) __P((pmap_t, vaddr_t));
 boolean_t	(*pmap_is_modified_p) __P((paddr_t pa));
 boolean_t	(*pmap_is_referenced_p) __P((paddr_t pa));
@@ -2708,7 +2708,8 @@ pv_table_map(base, mapit)
 			/* Map this piece of pv_table[] */
 			for (va = sva; va < eva; va += PAGE_SIZE) {
 				pmap_enter(pmap_kernel(), va, pa,
-					   VM_PROT_READ|VM_PROT_WRITE, 1);
+				    VM_PROT_READ|VM_PROT_WRITE, 1,
+				    VM_PROT_READ|VM_PROT_WRITE);
 				pa += PAGE_SIZE;
 			}
 			bzero((caddr_t)sva, eva - sva);
@@ -3594,7 +3595,7 @@ pmap_alloc_cpu(sc)
 	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | (cachebit ? 0 : PMAP_NC),
-			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
 		va += NBPG;
 	}
 
@@ -3712,7 +3713,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, 1);
+		pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -5228,12 +5229,13 @@ out:
 #if defined(SUN4) || defined(SUN4C)
 
 void
-pmap_enter4_4c(pm, va, pa, prot, wired)
+pmap_enter4_4c(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_type;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
@@ -5595,12 +5597,13 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
  */
 
 void
-pmap_enter4m(pm, va, pa, prot, wired)
+pmap_enter4m(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_type;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
@@ -6108,7 +6111,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 				   (pte & PPROT_WRITE)
 					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
-				   0);
+				   0, 0);
 			src_addr += NBPG;
 			dst_addr += NBPG;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1999/03/24 05:51:14 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.15 1999/03/26 23:41:36 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,7 +96,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		    (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
+		    VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -150,7 +151,7 @@ vmapbuf(bp, len)
 		/* Now map the page into kernel space. */
 		pmap_enter(pmap_kernel(), kva,
 			   pa /* | PMAP_NC */,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
