@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.12 1999/06/24 14:18:10 kleink Exp $
+.\"	$NetBSD: sysconf.3,v 1.13 1999/09/27 16:24:40 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,9 @@ or
 .Xr writev 2 .
 .It Li _SC_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise \-1.
+.It Li _SC_LOGIN_NAME_MAX
+Returns the size of the storage required for a login name, in bytes,
+including the terminating NUL.
 .It Li _SC_MAPPED_FILES
 Return 1 if the Memory Mapped Files Option is available on this system,
 otherwise \-1.

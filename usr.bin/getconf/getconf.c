@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.10 1999/06/24 14:18:12 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.11 1999/09/27 16:24:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.10 1999/06/24 14:18:12 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.11 1999/09/27 16:24:41 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -143,6 +143,9 @@ const struct conf_variable conf_table[] =
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
 
   { "_POSIX_SYNC_IO",		PATHCONF,	_PC_SYNC_IO		},
+
+  /* POSIX.1c Configurable System Variables */
+  { "LOGIN_NAME_MAX",		SYSCONF,	_SC_LOGIN_NAME_MAX	},
 
   /* XPG4.2 Configurable System Variables */
   { "IOV_MAX",			SYSCONF,	_SC_IOV_MAX		},

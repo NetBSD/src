@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.17 1999/06/24 14:18:12 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.18 1999/09/27 16:24:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -154,6 +154,7 @@
 #define	_SC_MEMLOCK		34
 #define	_SC_MEMLOCK_RANGE	35
 #define	_SC_MEMORY_PROTECTION	36
+#define	_SC_LOGIN_NAME_MAX	37
 
 /* configurable system strings */
 #define	_CS_PATH		 1
