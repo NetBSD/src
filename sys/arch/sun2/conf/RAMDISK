@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.7 2001/11/26 17:51:08 fredette Exp $
+# $NetBSD: RAMDISK,v 1.8 2001/11/30 15:54:33 fredette Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -66,6 +66,8 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
+options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -175,6 +177,9 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ss*	at scsibus? target ? lun ?		# SCSI scanners
 #ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE
 #uk*	at scsibus? target ? lun ?		# unknown SCSI
+
+# support old SCSI devices that don't understand the INQUIRY command
+options 	SCSI_OLD_NOINQUIRY
 
 ## Xylogics 450 or 451 Multibus/VME SMD disk controllers and disks.
 #xyc0	at mbio0 addr 0xee40 ipl 2
