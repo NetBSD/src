@@ -1,4 +1,4 @@
-/*	$NetBSD: wmemcpy.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
+/*	$NetBSD: wmemcpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,11 +30,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wmemcpy.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
+__RCSID("$NetBSD: wmemcpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <wchar.h>
+#include <assert.h>
 #include <string.h>
+#include <wchar.h>
 
 wchar_t *
 wmemcpy(d, s, n)
@@ -42,5 +43,9 @@ wmemcpy(d, s, n)
 	const wchar_t *s;
 	size_t n;
 {
+
+	_DIAGASSERT(d != NULL);
+	_DIAGASSERT(s != NULL);
+
 	return (wchar_t *)memcpy(d, s, n * sizeof(wchar_t));
 }
