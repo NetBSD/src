@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/09/25 22:46:22 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2004/12/09 00:39:41 simonb Exp $
 
 KMINCLUDES=
 KMSRCS=	
 
 SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S
 
-.if (${MKSOFTFLOAT} != "no")
-CPPFLAGS+= -DSOFTFLOAT_NEED_FIXUNS
+.if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 .include <softfloat/Makefile.inc>
 .endif
