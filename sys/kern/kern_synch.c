@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.127 2003/05/08 02:04:11 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.128 2003/05/20 13:48:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.127 2003/05/08 02:04:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.128 2003/05/20 13:48:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1189,7 +1189,7 @@ setrunqueue(struct lwp *l)
 		panic("setrunqueue");
 #endif
 	whichq = l->l_priority / 4;
-	sched_whichqs |= (1<<whichq);
+	sched_whichqs |= (1 << whichq);
 	rq = &sched_qs[whichq];
 	prev = rq->ph_rlink;
 	l->l_forw = (struct lwp *)rq;
@@ -1206,7 +1206,7 @@ remrunqueue(struct lwp *l)
 
 	whichq = l->l_priority / 4;
 #ifdef DIAGNOSTIC
-	if (((sched_whichqs & (1<<whichq)) == 0))
+	if (((sched_whichqs & (1 << whichq)) == 0))
 		panic("remrunqueue");
 #endif
 	prev = l->l_back;
@@ -1215,7 +1215,7 @@ remrunqueue(struct lwp *l)
 	prev->l_forw = next;
 	next->l_back = prev;
 	if (prev == next)
-		sched_whichqs &= ~(1<<whichq);
+		sched_whichqs &= ~(1 << whichq);
 }
 
 #endif
