@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 1995/03/28 18:16:58 jtc Exp $	*/
+/*	$NetBSD: param.h,v 1.26 1995/06/26 06:55:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,13 +113,13 @@
 #define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
 #endif
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)		((unsigned)(x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((unsigned)(x) >> (PGSHIFT - DEV_BSHIFT))
+/* pages ("clicks") to disk blocks */
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* bytes to pages */
-#define	ctob(x)		((unsigned)(x) << PGSHIFT)
-#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
