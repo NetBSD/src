@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.110 1998/12/23 23:01:44 itohy Exp $
+#	$NetBSD: bsd.own.mk,v 1.111 1998/12/31 19:58:59 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -111,20 +111,6 @@ NOPROFILE=
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
-.endif
-
-# Some platforms are already transitioned to egcs.
-.if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "arm32") || \
-    (${MACHINE_ARCH} == "i386") || \
-    (${MACHINE_ARCH} == "m68k") || \
-    (${MACHINE_ARCH} == "ns32k") || \
-    (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "sparc") || \
-    (${MACHINE_ARCH} == "sparc64") || \
-    (${MACHINE_ARCH} == "vax")
-USE_EGCS=1
 .endif
 
 # GNU sources and packages sometimes see architecture names differently.
