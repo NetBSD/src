@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.301 2004/06/24 17:26:38 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.302 2004/06/25 02:35:05 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4487,3 +4487,11 @@ sys/arch/macppc/conf/GENERIC			1.177
 
 	Add re; Realtek GbE
 	[mrg, ticket #548]
+
+usr.sbin/makefs/ffs/newfs_extern.h		1.2
+usr.sbin/makefs/ffs/mkfs.c			1.20
+usr.sbin/makefs/ffs.c				1.30
+
+	Define FFS_MAXBSIZE to 65536 and use instead of MAXBSIZE. 
+	Deprecate unused MAXINOPB. PR#25603 fixed.
+	[lukem, ticket #549]
