@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.8 1994/01/24 00:17:24 deraadt Exp $
+ *	$Id: if_ep.c,v 1.9 1994/01/25 10:46:29 deraadt Exp $
  */
 /*
  * TODO:
@@ -358,7 +358,7 @@ startagain:
 		splx(s);
 		return;
 	}
-#if 1
+#if 0
 	len = m->m_pkthdr.len;
 #else
 	for (len = 0, top = m; m; m = m->m_next)
