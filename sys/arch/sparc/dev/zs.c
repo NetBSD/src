@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 1994/12/06 00:01:39 deraadt Exp $ */
+/*	$NetBSD: zs.c,v 1.22 1995/01/29 18:56:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1158,7 +1158,11 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	case TIOCSDTR:
+		zs_modem(cs, 1);
+		break;
 	case TIOCCDTR:
+		zs_modem(cs, 0);
+		break;
 	case TIOCMSET:
 	case TIOCMBIS:
 	case TIOCMBIC:
