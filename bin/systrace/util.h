@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.3 2002/10/08 14:49:24 provos Exp $	*/
+/*	$NetBSD: util.h,v 1.4 2003/06/03 01:20:06 provos Exp $	*/
 /*	$OpenBSD: util.h,v 1.1 2002/07/19 14:38:58 itojun Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #define _UTIL_H_
 
 void simplify_path(char *);
+char *strescape(char *);
 char *strrpl(char *, size_t, char *, char *);
 
 #endif /* !_UTIL_H_ */
