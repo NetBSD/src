@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.6 1997/07/15 13:02:04 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.7 1997/07/26 01:50:36 thorpej Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -18,6 +18,8 @@ DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 
 CPPFLAGS += -I${.OBJDIR} -I$S -I${.CURDIR}/../lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
+
+CLEANFILES+= vers.c vers.o
 
 .BEGIN: ${.OBJDIR}/machine
 depend all: ${.OBJDIR}/machine
@@ -51,21 +53,25 @@ I386DIR= ${.CURDIR}/../lib	# XXX
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-${PROG}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
-	${LD} -o ${PROG}.sym -M -e _start -N -Ttext 0 $(BSSTART) $(OBJS) \
-	${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
+vers.o:
+	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	${COMPILE.c} vers.c
 
-${PROG}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+${PROG}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+	${LD} -o ${PROG}.sym -M -e _start -N -Ttext 0 $(BSSTART) $(OBJS) \
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
+
+${PROG}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${PROG}.sym -M -e _start -N -Ttext ${RELOC} $(ROMSTART) $(OBJS) \
-	${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
 	cp ${PROG}.sym ${PROG}.bin
 	strip ${PROG}.bin
 	dd if=${PROG}.bin ibs=32 skip=1 | ${GENPROM} $(ROM_SIZE) > ${PROG}.rom || (rm ${PROG}.rom; false)
 	rm -f ${PROG}.bin
 
-${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+${PROG}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${PROG}.sym -M -e _start -N -Ttext 0x100 $(DOSSTART) $(OBJS) \
-	${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
+	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${PROG}.list
 	cp ${PROG}.sym ${PROG}.bin
 	strip ${PROG}.bin
 	dd if=${PROG}.bin of=${PROG}.com ibs=32 skip=1 obs=1024b
