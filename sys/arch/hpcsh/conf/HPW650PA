@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.17 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: HPW650PA,v 1.18 2005/03/07 18:25:22 uwe Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -10,13 +10,13 @@ include 	"arch/hpcsh/conf/std.hpcsh"
 maxusers	32			# estimated number of users
 
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
-options		KLOADER_DEBUG
+options 	KLOADER_DEBUG
 
-options		SH4			# SH7750V 128MHz
+options 	SH4			# SH7750V 128MHz
 options 	PCLOCK=32000000		# 32MHz
 
-options		HPC_DEBUG_INTERRUPT_MONITOR
-options		HPC_DEBUG_LCD
+options 	HPC_DEBUG_INTERRUPT_MONITOR
+options 	HPC_DEBUG_LCD
 
 options 	DDB			# in-kernel debugger
 #options 	KGDB			# in-kernel debugger
@@ -27,7 +27,7 @@ options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 
 options 	USERCONF		# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
