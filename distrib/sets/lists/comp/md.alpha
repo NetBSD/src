@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.18 1999/04/19 04:20:13 ross Exp $
+# $NetBSD: md.alpha,v 1.19 1999/04/30 00:58:30 ross Exp $
 ./usr/include/alpha
 ./usr/include/alpha/_G_config.h
 ./usr/include/alpha/alpha_cpu.h
@@ -49,3 +49,4 @@
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/vuid_event.h
 ./usr/include/alpha/z8530var.h
+./usr/include/alpha/sysarch.h
