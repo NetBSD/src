@@ -1,7 +1,22 @@
-/*	$NetBSD: wd.c,v 1.112 1994/11/22 05:50:48 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.113 1994/11/22 09:33:59 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Charles Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -91,16 +106,6 @@
 				/* shares an entry in the buf struct */
 
 /*
- * Drive states.  Used to initialize drive.
- */
-#define	CLOSED		0		/* disk is closed */
-#define	RECAL		1		/* recalibrate */
-#define	RECAL_WAIT	2		/* done recalibrating */
-#define	GEOMETRY	3		/* upload geometry */
-#define	GEOMETRY_WAIT	4		/* done uploading geometry */
-#define	OPEN		5		/* done with open */
-
-/*
  * Drive status.
  */
 struct wd_softc {
@@ -108,18 +113,27 @@ struct wd_softc {
 	struct dkdevice sc_dk;
 
 	long	sc_bcount;	/* byte count left */
-	long	sc_mbcount;	/* total byte count left */
 	short	sc_skip;	/* blocks already transferred */
-	short	sc_mskip;	/* blocks already transferred for multi */
 	char	sc_drive;	/* physical unit number */
 	char	sc_state;	/* control state */
-	
+#define	RECAL		0		/* recalibrate */
+#define	RECAL_WAIT	1		/* done recalibrating */
+#define	GEOMETRY	2		/* upload geometry */
+#define	GEOMETRY_WAIT	3		/* done uploading geometry */
+#define	MULTIMODE	4		/* set multiple mode */
+#define	MULTIMODE_WAIT	5		/* done setting multiple mode */
+#define	OPEN		6		/* done with open */
+	char	sc_mode;	/* transfer mode */
+#define	WDM_PIOSINGLE	0		/* single-sector PIO */
+#define	WDM_PIOMULTI	1		/* multi-sector PIO */
+#define	WDM_DMA		2		/* DMA */
+	u_char	sc_multiple;	/* multiple for WDM_PIOMULTI */
 	u_char	sc_flags;	/* drive characteistics found */
 #define	WDF_LOCKED	0x01
 #define	WDF_WANTED	0x02
 #define	WDF_LOADED	0x04
-#define	WDF_BSDLABEL	0x08	/* has a BSD disk label */
-#define	WDF_WLABEL	0x10	/* label is writable */
+#define	WDF_BSDLABEL	0x08		/* has a BSD disk label */
+#define	WDF_WLABEL	0x10		/* label is writable */
 	TAILQ_ENTRY(wd_softc) sc_drivechain;
 	struct buf sc_q;
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
@@ -131,13 +145,15 @@ struct wdc_softc {
 	struct intrhand sc_ih;
 
 	u_char	sc_flags;
-#define	WDCF_ACTIVE	0x00001	/* controller is active */
-#define	WDCF_SINGLE	0x00004	/* sector at a time mode */
-#define	WDCF_ERROR	0x00008	/* processing a disk error */
+#define	WDCF_ACTIVE	0x01	/* controller is active */
+#define	WDCF_SINGLE	0x02	/* sector at a time mode */
+#define	WDCF_ERROR	0x04	/* processing a disk error */
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
-	int	sc_iobase;	/* i/o port base */
+	int	sc_iobase;	/* I/O port base */
+	int	sc_drq;		/* DMA channel */
 	int	sc_errors;	/* count of errors during current transfer */
+	int	sc_nblks;	/* number of blocks currently transferring */
 	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
 };
 
@@ -174,7 +190,6 @@ static int wdcreset __P((struct wdc_softc *));
 static void wdcrestart __P((void *arg));
 static void wdcunwedge __P((struct wdc_softc *));
 static void wdctimeout __P((void *arg));
-void wddisksort __P((struct buf *, struct buf *));
 static void wderror __P((void *, struct buf *, char *));
 int wdcwait __P((struct wdc_softc *, int));
 /* ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
@@ -253,6 +268,7 @@ wdcattach(parent, self, aux)
 	struct wdc_attach_args wa;
 
 	TAILQ_INIT(&wdc->sc_drives);
+	wdc->sc_drq = ia->ia_drq;
 
 	printf("\n");
 
@@ -291,6 +307,7 @@ wdattach(parent, self, aux)
 	void *aux;
 {
 	struct wd_softc *wd = (void *)self;
+	struct wdc_softc *wdc = (void *)parent;
 	struct wdc_attach_args *wa = aux;
 	int i, blank;
 
@@ -319,6 +336,24 @@ wdattach(parent, self, aux)
 			blank = 1;
 	}
 	printf(">\n");
+
+	if ((wd->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
+	    wdc->sc_drq != DRQUNK) {
+		wd->sc_mode = WDM_DMA;
+	} else if (wd->sc_params.wdp_maxmulti > 1) {
+		wd->sc_mode = WDM_PIOMULTI;
+		wd->sc_multiple = min(wd->sc_params.wdp_maxmulti, 8);
+	} else {
+		wd->sc_mode = WDM_PIOSINGLE;
+		wd->sc_multiple = 1;
+	}
+
+	if (wd->sc_mode == WDM_DMA)
+		printf("%s: using dma\n", wd->sc_dev.dv_xname);
+	else
+		printf("%s: using %d-sector pio\n", wd->sc_dev.dv_xname,
+		    wd->sc_multiple);
+
 	wd->sc_dk.dk_driver = &wddkdriver;
 }
 
@@ -379,7 +414,7 @@ wdstrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	wddisksort(&wd->sc_q, bp);
+	disksort(&wd->sc_q, bp);
 	if (!wd->sc_q.b_active)
 		wdstart(wd);		/* Start drive. */
 #ifdef DIAGNOSTIC
@@ -399,20 +434,6 @@ bad:
 done:
 	/* Toss transfer; we're done early. */
 	biodone(bp);
-}
-
-/*
- * Need to skip over multitransfer bufs.
- */
-void
-wddisksort(dp, bp)
-	struct buf *dp, *bp;
-{
-	struct buf *ap;
-
-	while ((ap = dp->b_actf) && ap->b_flags & B_XXX)
-		dp = ap;
-	disksort(dp, bp);
 }
 
 /*
@@ -449,27 +470,18 @@ wdfinish(wd, bp)
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR);
 	wdc->sc_errors = 0;
 	/*
-	 * If this is the only buf or the last buf in the transfer (taking into
-	 * account any residual, in case we erred)...
+	 * Move this drive to the end of the queue to give others a `fair'
+	 * chance.
 	 */
-	wd->sc_mbcount -= wd->sc_bcount;
-	if (wd->sc_mbcount == 0) {
-		wd->sc_mskip = 0;
-		/*
-		 * ...then move this drive to the end of the queue to give
-		 * others a `fair' chance.
-		 */
-		if (wd->sc_drivechain.tqe_next) {
-			TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
-			if (bp->b_actf) {
-				TAILQ_INSERT_TAIL(&wdc->sc_drives, wd,
-				    sc_drivechain);
-			} else
-				wd->sc_q.b_active = 0;
-		}
+	if (wd->sc_drivechain.tqe_next) {
+		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
+		if (bp->b_actf) {
+			TAILQ_INSERT_TAIL(&wdc->sc_drives, wd,
+			    sc_drivechain);
+		} else
+			wd->sc_q.b_active = 0;
 	}
 	bp->b_resid = wd->sc_bcount;
-	bp->b_flags &= ~B_XXX;
 	wd->sc_skip = 0;
 	wd->sc_q.b_actf = bp->b_actf;
 	biodone(bp);
@@ -488,6 +500,7 @@ wdcstart(wdc)
 {
 	struct wd_softc *wd;	/* disk unit for IO */
 	struct buf *bp;
+	int nblks;
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
@@ -538,7 +551,7 @@ loop:
 		wdc->sc_flags &= ~WDCF_ERROR;
 		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
 			wdc->sc_flags |= WDCF_SINGLE;
-			wd->sc_skip = wd->sc_mskip = 0;
+			wd->sc_skip = 0;
 		}
 	}
 
@@ -559,32 +572,10 @@ loop:
 #endif
 	}
 
-	if (wd->sc_mskip == 0) {
-		wd->sc_mbcount = wd->sc_bcount;
-		/* If multi-sector, try to cluster. */
-		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
-			struct buf *oldbp, *nextbp;
-			oldbp = bp;
-			nextbp = bp->b_actf;
-			oldbp->b_flags |= B_XXX;
-			while (nextbp && oldbp->b_dev == nextbp->b_dev &&
-			    nextbp->b_blkno ==
-			    (oldbp->b_blkno + (oldbp->b_bcount / wd->sc_dk.dk_label.d_secsize)) &&
-			    (oldbp->b_flags & B_READ) == (nextbp->b_flags & B_READ)) {
-				if ((wd->sc_mbcount + nextbp->b_bcount) / wd->sc_dk.dk_label.d_secsize >= 240)
-					break;
-				wd->sc_mbcount += nextbp->b_bcount; 
-				nextbp->b_flags |= B_XXX;
-				oldbp = nextbp;
-				nextbp = nextbp->b_actf;
-			}
-		}
-	}
-    
 	/* If starting a multisector transfer, or doing single transfers. */
-	if (wd->sc_mskip == 0 || (wdc->sc_flags & WDCF_SINGLE)) {
+	if (wd->sc_skip == 0 || (wdc->sc_flags & WDCF_SINGLE) != 0) {
 		struct disklabel *lp;
-		long blkno, nblks;
+		long blkno;
 		long cylin, head, sector;
 		int command;
 
@@ -595,7 +586,9 @@ loop:
 		if (wdc->sc_flags & WDCF_SINGLE)
 			nblks = 1;
 		else
-			nblks = howmany(wd->sc_mbcount, lp->d_secsize);
+			nblks = howmany(wd->sc_bcount, lp->d_secsize);
+		if (wd->sc_mode == WDM_DMA && nblks > 8)
+			nblks = 8;
 
 		/*
 		 * Check for bad sectors if we have them, and not formatting.  Only do
@@ -614,30 +607,17 @@ loop:
 				blkdiff -= blkno;
 				if (blkdiff < 0)
 					continue;
-				if (blkdiff >= nblks)
-					break;
 				if (blkdiff == 0) {
 					/* Replace current block of transfer. */
 					blkno =
 					    lp->d_secperunit - lp->d_nsectors - i - 1;
-					if (wdc->sc_flags & WDCF_SINGLE)
-						break;
-				} else {
-					/* If clustered, try unclustering. */
-					if (wd->sc_mbcount > wd->sc_bcount) {
-						nblks = howmany(wd->sc_bcount, lp->d_secsize);
-						if (blkdiff >= nblks) {
-							/* Unclustering was enough. */
-							wd->sc_mbcount = wd->sc_bcount;
-							break;
-						}
-					}
-					/* Bad block inside transfer. */
 				}
-				/* Force single-sector mode. */
-				wd->sc_mbcount = wd->sc_bcount;
-				wdc->sc_flags |= WDCF_SINGLE;
-				nblks = 1;
+				if (blkdiff < nblks) {
+					/* Bad block inside transfer. */
+					wdc->sc_flags |= WDCF_SINGLE;
+					nblks = 1;
+				}
+				break;
 			}
 			/* Tranfer is okay now. */
 		}
@@ -659,8 +639,22 @@ loop:
 			command = WDCC_FORMAT;
 		} else
 #endif
-			command =
-			    (bp->b_flags & B_READ) ? WDCC_READ : WDCC_WRITE;
+		switch (wd->sc_mode) {
+		case WDM_DMA:
+			command = (bp->b_flags & B_READ) ?
+			    WDCC_READDMA : WDCC_WRITEDMA;
+			isa_dmastart(bp->b_flags & B_READ, bp->b_data,
+			    nblks * DEV_BSIZE, wdc->sc_drq);
+			break;
+		case WDM_PIOMULTI:
+			command = (bp->b_flags & B_READ) ?
+			    WDCC_READMULTI : WDCC_WRITEMULTI;
+			break;
+		case WDM_PIOSINGLE:
+			command = (bp->b_flags & B_READ) ?
+			    WDCC_READ : WDCC_WRITE;
+			break;
+		}
 	
 		/* Initiate command! */
 		if (wdcommand(wd, command, cylin, head, sector, nblks) != 0) {
@@ -675,19 +669,29 @@ loop:
 #endif
 	}
 
-	/* If this is a read operation, just go away until it's done. */
-	if (bp->b_flags & B_READ)
-		return;
+	if (wd->sc_mode == WDM_PIOSINGLE ||
+	    (wdc->sc_flags & WDCF_SINGLE) != 0)
+		nblks = 1;
+	else if (wd->sc_mode == WDM_PIOMULTI)
+		nblks = min(wd->sc_bcount / DEV_BSIZE, wd->sc_multiple);
+	else
+		nblks = min(wd->sc_bcount / DEV_BSIZE, 8);
+	wdc->sc_nblks = nblks;
     
-	if (wait_for_drq(wdc) < 0) {
-		wderror(wd, NULL, "wdcstart: timeout waiting for drq");
-		wdcunwedge(wdc);
-		return;
-	}
+	/* If this was a write and not using DMA, push the data. */
+	if (wd->sc_mode != WDM_DMA &&
+	    (bp->b_flags & B_READ) == 0) {
+		if (wait_for_drq(wdc) < 0) {
+			wderror(wd, NULL, "wdcstart: timeout waiting for drq");
+			wdcunwedge(wdc);
+			return;
+		}
 
-	/* Then send it! */
-	outsw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip * DEV_BSIZE,
-	    DEV_BSIZE / sizeof(short));
+		/* Then send it! */
+		outsw(wdc->sc_iobase+wd_data,
+		    bp->b_data + wd->sc_skip * DEV_BSIZE,
+		    nblks * DEV_BSIZE / sizeof(short));
+	}
 }
 
 /*
@@ -702,6 +706,7 @@ wdcintr(wdc)
 {
 	struct wd_softc *wd;
 	struct buf *bp;
+	int nblks;
 
 	if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
 		/* Clear the pending interrupt. */
@@ -730,7 +735,12 @@ wdcintr(wdc)
 
 	wdc->sc_flags &= ~WDCF_ACTIVE;
 	untimeout(wdctimeout, wdc);
+	nblks = wdc->sc_nblks;
     
+	if (wd->sc_mode == WDM_DMA)
+		isa_dmadone(bp->b_flags & B_READ, bp->b_data,
+		    nblks * DEV_BSIZE, wdc->sc_drq);
+
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
 	lose:
@@ -760,9 +770,9 @@ wdcintr(wdc)
 	if (wdc->sc_status & WDCS_CORR)
 		wderror(wd, bp, "soft ecc");
     
-	/* If this was a read, fetch the data. */
-	if (bp->b_flags & B_READ) {
-		/* Ready to receive data? */
+	/* If this was a read and not using DMA, fetch the data. */
+	if (wd->sc_mode != WDM_DMA &&
+	    (bp->b_flags & B_READ) != 0) {
 		if ((wdc->sc_status & (WDCS_DRDY | WDCS_DSC | WDCS_DRQ))
 		    != (WDCS_DRDY | WDCS_DSC | WDCS_DRQ)) {
 			wderror(wd, NULL, "wdcintr: read intr before drq");
@@ -773,7 +783,7 @@ wdcintr(wdc)
 		/* Suck in data. */
 		insw(wdc->sc_iobase+wd_data,
 		    bp->b_data + wd->sc_skip * DEV_BSIZE, 
-		    DEV_BSIZE / sizeof(short));
+		    nblks * DEV_BSIZE / sizeof(short));
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
@@ -783,10 +793,8 @@ wdcintr(wdc)
 	}
     
 	/* Ready for the next block, if any. */
-	wd->sc_skip++;
-	wd->sc_mskip++;
-	wd->sc_bcount -= DEV_BSIZE;
-	wd->sc_mbcount -= DEV_BSIZE;
+	wd->sc_skip += nblks;
+	wd->sc_bcount -= nblks * DEV_BSIZE;
 
 	/* See if more to transfer. */
 	if (wd->sc_bcount > 0)
@@ -936,6 +944,8 @@ wdgetdisklabel(wd)
 	wd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
 	wd->sc_dk.dk_label.d_checksum = dkcksum(&wd->sc_dk.dk_label);
 
+	wd->sc_badsect[0] = -1;
+
 	if (wd->sc_state > RECAL)
 		wd->sc_state = RECAL;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
@@ -980,25 +990,22 @@ wdcontrol(wd)
 	switch (wd->sc_state) {
 	case RECAL:			/* Set SDH, step rate, do recal. */
 		if (wdcommandshort(wdc, wd->sc_drive, WDCC_RECAL) != 0) {
-			wderror(wd, NULL, "wdcontrol: wdcommandshort failed");
-			wdcunwedge(wdc);
-			return 0;
+			wderror(wd, NULL, "wdcontrol: recal failed (1)");
+			goto bad;
 		}
 		wd->sc_state = RECAL_WAIT;
 		return 0;
 
 	case RECAL_WAIT:
 		if (wdc->sc_status & WDCS_ERR) {
-			wderror(wd, NULL, "wdcontrol: recal failed");
-			wdcunwedge(wdc);
-			return 0;
+			wderror(wd, NULL, "wdcontrol: recal failed (2)");
+			goto bad;
 		}
 		/* fall through */
 	case GEOMETRY:
 		if (wdsetctlr(wd) != 0) {
 			/* Already printed a message. */
-			wdcunwedge(wdc);
-			return 0;
+			goto bad;
 		}
 		wd->sc_state = GEOMETRY_WAIT;
 		return 0;
@@ -1006,16 +1013,37 @@ wdcontrol(wd)
 	case GEOMETRY_WAIT:
 		if (wdc->sc_status & WDCS_ERR) {
 			wderror(wd, NULL, "wdcontrol: geometry failed");
-			wdcunwedge(wdc);
-			return 0;
+			goto bad;
 		}
+		/* fall through */
+	case MULTIMODE:
+		if (wd->sc_mode != WDM_PIOMULTI)
+			goto open;
+		outb(wdc->sc_iobase+wd_seccnt, wd->sc_multiple);
+		if (wdcommandshort(wdc, wd->sc_drive, WDCC_SETMULTI) != 0) {
+			wderror(wd, NULL, "wdcontrol: setmulti failed (1)");
+			goto bad;
+		}
+		wd->sc_state = MULTIMODE_WAIT;
+		return 0;
 
+	case MULTIMODE_WAIT:
+		if (wdc->sc_status & WDCS_ERR) {
+			wderror(wd, NULL, "wdcontrol: setmulti failed (2)");
+			goto bad;
+		}
+		/* fall through */
+	open:
 		wdc->sc_errors = 0;
 		wd->sc_state = OPEN;
 		/*
 		 * The rest of the initialization can be done by normal means.
 		 */
 		return 1;
+
+	bad:
+		wdcunwedge(wdc);
+		return 0;
 	}
 
 #ifdef DIAGNOSTIC
@@ -1136,7 +1164,6 @@ wd_get_parms(wd)
 		wd->sc_params.wdp_cylinders = 1024;
 		wd->sc_params.wdp_heads = 8;
 		wd->sc_params.wdp_sectors = 17;
-		wd->sc_params.wdp_buftype = WD_BUF_SINGLEPORTSECTOR;
 		wd->sc_params.wdp_maxmulti = 0;
 		wd->sc_params.wdp_usedmovsd = 0;
 		wd->sc_params.wdp_capabilities = 0;
@@ -1188,10 +1215,10 @@ wdclose(dev, flag, fmt)
 	}
 	wd->sc_dk.dk_openmask = wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-#if 0
 	if (wd->sc_dk.dk_openmask == 0) {
 		wd->sc_flags |= WDF_LOCKED;
 
+#if 0
 		s = splbio();
 		while (...) {
 			wd->sc_flags |= WDF_WAITING;
@@ -1199,6 +1226,7 @@ wdclose(dev, flag, fmt)
 				return error;
 		}
 		splx(s);
+#endif
 
 		wd->sc_flags &= ~WDF_LOCKED;
 		if ((wd->sc_flags & WDF_WANTED) != 0) {
@@ -1206,7 +1234,6 @@ wdclose(dev, flag, fmt)
 			wakeup(wd);
 		}
 	}
-#endif
 
 	return 0;
 }
