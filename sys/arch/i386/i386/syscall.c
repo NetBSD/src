@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23 2003/09/06 22:08:15 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2003/09/06 22:08:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2003/10/08 00:28:41 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -282,7 +282,8 @@ syscall_vm86(frame)
 	struct lwp *l;
 	struct proc *p;
 	ksiginfo_t ksi;
-	memset(&ksi, 0, sizeof(ksi));
+
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGBUS;
 	ksi.ksi_code = BUS_OBJERR;
 	ksi.ksi_trap = T_PROTFLT;

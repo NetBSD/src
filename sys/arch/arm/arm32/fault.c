@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.34 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.35 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.34 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.35 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ copyfault:
 	/* check if this was a failed fixup */
 	if (error == ABORT_FIXUP_FAILED) {
 		if (user) {
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = 0;
 			ksi.ksi_addr = (u_int32_t *)fault_address;
@@ -462,7 +462,7 @@ we_re_toast:
 		if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 			report_abort("UND32", fault_status,
 			    fault_address, fault_pc);
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = fault_status;
 			ksi.ksi_addr = (u_int32_t *)fault_address;
@@ -564,7 +564,7 @@ we_re_toast:
 
 	report_abort("", fault_status, fault_address, fault_pc);
 
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_code = 0;
 	ksi.ksi_addr = (u_int32_t *)fault_address;
@@ -682,7 +682,7 @@ prefetch_abort_handler(frame)
 		printf("prefetch: pc (%08lx) not in user process space\n",
 		    fault_pc);
 #endif
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
 		ksi.ksi_addr = (u_int32_t *)fault_pc;
@@ -711,7 +711,7 @@ prefetch_abort_handler(frame)
 	if (error == 0)
 		goto prefetch_out;
 	
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGSEGV;
 	ksi.ksi_code = 0;
 	ksi.ksi_errno = error;

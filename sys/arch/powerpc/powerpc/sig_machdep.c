@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.17 2003/09/27 03:51:54 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/09/27 03:51:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -67,7 +67,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (sd->sd_vers < 2) {
 #ifdef COMPAT_16
-		sendsig_sigcontext(ksi->ksi_signo, mask, ksi->ksi_trap);
+		sendsig_sigcontext(ksi->ksi_signo, mask, KSI_TRAPCODE(ksi));
 		return;
 #else
 		goto nosupport;

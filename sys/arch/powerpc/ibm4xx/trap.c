@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2003/09/26 00:00:17 eeh Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2003/09/26 00:00:17 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -164,7 +164,7 @@ trap(struct trapframe *frame)
 		 */
 	case EXC_TRC|EXC_USER:
 		frame->srr1 &= ~PSL_SE;
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_trap = EXC_TRC;
 		ksi.ksi_addr = (void *)frame->srr0;
@@ -252,7 +252,7 @@ trap(struct trapframe *frame)
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)frame->dar;
@@ -288,7 +288,7 @@ trap(struct trapframe *frame)
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)frame->srr0;
@@ -315,7 +315,7 @@ trap(struct trapframe *frame)
 	case EXC_ALI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		if (fix_unaligned(l, frame) != 0) {
-			memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_trap = EXC_ALI;
 			ksi.ksi_addr = (void *)frame->dar;
@@ -340,7 +340,7 @@ trap(struct trapframe *frame)
 
 		if ((rv = fpu_emulate(frame,
 			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
-			memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = rv;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)frame->srr0;

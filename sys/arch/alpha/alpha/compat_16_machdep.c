@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.1 2003/10/07 17:04:18 skd Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.2 2003/10/08 00:28:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/10/07 17:04:18 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/10/08 00:28:40 thorpej Exp $");
 
 
 #ifdef DEBUG
@@ -216,10 +216,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* sigcontext specific trap frame */
 	tf->tf_regs[FRAME_A0] = sig;
 
-	/* ksi_code is probably more accurate, but ksi_trap is (closer to) */
-	/* binary compatability */
 	/* tf->tf_regs[FRAME_A1] = ksi->ksi_code; */
-	tf->tf_regs[FRAME_A1] = ksi->ksi_trap;
+	tf->tf_regs[FRAME_A1] = KSI_TRAPCODE(ksi);
 	tf->tf_regs[FRAME_A2] = (u_int64_t)&fp->sf_sc;
 
 	/* Remember that we're now on the signal stack. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28 2003/10/05 09:57:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.29 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -215,7 +215,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		printf("ksp=0x%lx\n", (vaddr_t)tf);
 		if (traptype & T_USER) {
 			/* This shouldn't happen ... */
-			(void) memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLTRP;
 			ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
@@ -234,7 +234,7 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	case T_EXECPROT|T_USER:
 	case T_READPROT|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
@@ -244,7 +244,7 @@ trap(struct lwp *l, struct trapframe *tf)
 	case T_IADDERR|T_USER:
 	case T_RADDERR|T_USER:
 	case T_WADDERR|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_code = BUS_ADRERR;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
@@ -352,7 +352,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		if ((traptype & T_USER) == 0)
 			goto copyfault;
 
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_MAPERR;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_tea;
@@ -397,7 +397,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		return;
 
 	case T_BREAK|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_BRKPT;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
@@ -406,7 +406,7 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	case T_RESINST|T_USER:
 	case T_FPUDIS|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
@@ -415,7 +415,7 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	case T_ILLSLOT|T_USER:
 	case T_SLOTFPUDIS|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC; /* XXX: Could do with ILL_DELAYSLOT */
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
@@ -423,7 +423,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		break;
 
 	case T_FPUEXC|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
 		ksi.ksi_trap = T_FPUEXC;
@@ -486,7 +486,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		/*FALLTHROUGH*/
 
 	case T_TRAP|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLTRP;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
@@ -494,7 +494,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		break;
 
 	case T_DIVZERO|T_USER:
-		(void) memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_code = FPE_INTDIV;
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;

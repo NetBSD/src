@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.165 2003/10/07 00:23:17 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.166 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.165 2003/10/07 00:23:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.166 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -870,7 +870,8 @@ trapsignal(struct lwp *l, int signum, u_long code)
 {
 #define trapsignal _trapsignal
 	ksiginfo_t ksi;
-	memset(&ksi, 0, sizeof(ksi));
+
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = signum;
 	ksi.ksi_trap = (int)code;
 	trapsignal(l, &ksi);
@@ -883,6 +884,8 @@ trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 	struct proc	*p;
 	struct sigacts	*ps;
 	int signum = ksi->ksi_signo;
+
+	KASSERT(KSI_TRAP_P(ksi));
 
 	p = l->l_proc;
 	ps = p->p_sigacts;
@@ -1306,9 +1309,9 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA; 
 		si = pool_get(&siginfo_pool, PR_WAITOK);
-		si->_info = *ksi;
+		si->_info = ksi->ksi_info;
 		le = li = NULL;
-		if (ksi->ksi_trap)
+		if (KSI_TRAP_P(ksi))
 			le = l;
 		else
 			li = l;
@@ -1322,7 +1325,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef __HAVE_SIGINFO
 	(*p->p_emul->e_sendsig)(ksi, mask);
 #else
-	(*p->p_emul->e_sendsig)(ksi->ksi_signo, mask, ksi->ksi_trap);
+	(*p->p_emul->e_sendsig)(ksi->ksi_signo, mask, KSI_TRAPCODE(ksi));
 #endif
 }
 

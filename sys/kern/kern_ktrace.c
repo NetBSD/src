@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.79 2003/09/25 21:59:18 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.80 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.79 2003/09/25 21:59:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.80 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -317,9 +317,9 @@ ktrpsig(p, sig, action, mask, ksi)
 	kbuf.kp.mask = *mask;
 	kth.ktr_buf = (caddr_t)&kbuf;
 	if (ksi) {
-		kbuf.kp.code = ksi->ksi_code > 0 ? ksi->ksi_trap : 0;
+		kbuf.kp.code = KSI_TRAPCODE(ksi);
 		(void)memset(&kbuf.si, 0, sizeof(kbuf.si));
-		kbuf.si._info = *ksi;
+		kbuf.si._info = ksi->ksi_info;
 		kth.ktr_len = sizeof(kbuf);
 	} else {
 		kbuf.kp.code = 0;
