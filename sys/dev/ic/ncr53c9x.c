@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.50 2000/06/05 07:59:54 nisimura Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.51 2000/06/05 15:19:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ static struct scsipi_adapter ncr53c9x_adapter = {
 	ncr53c9x_scsi_cmd,	/* cmd */
 	minphys,		/* minphys */
 	NULL,			/* ioctl */
+	NULL,			/* enable */
 	NULL,			/* getgeom */
 };
 
