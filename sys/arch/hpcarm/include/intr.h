@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.5 2001/06/20 02:26:30 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.6 2001/11/26 20:43:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -70,7 +70,7 @@
 #define SOFTIRQ_BIT(x)	(1 << x)
 
 #include <machine/irqhandler.h>
-#include <machine/psl.h>
+#include <arm/arm32/psl.h>
 
 #ifndef _LOCORE
 void *softintr_establish(int, void (*)(void *), void *);
