@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/6/93
- *	$Id: defs.h,v 1.5 1994/02/03 23:44:51 cgd Exp $
+ *	$Id: defs.h,v 1.6 1995/03/09 11:19:28 mycroft Exp $
  */
 
 /*
@@ -101,6 +101,7 @@ enum e_args {
 	TEXT,			/* a c i */
 	NONSEL,			/* ! */
 	GROUP,			/* { */
+	ENDGROUP,		/* } */
 	COMMENT,		/* # */
 	BRANCH,			/* b t */
 	LABEL,			/* : */
