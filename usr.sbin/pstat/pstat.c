@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.49 1999/11/18 08:27:39 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.50 1999/11/18 08:34:38 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.49 1999/11/18 08:27:39 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.50 1999/11/18 08:34:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,11 +123,17 @@ struct {
 	{ MNT_UNION, "union" },
 	{ MNT_ASYNC, "async" },
 	{ MNT_NOCOREDUMP, "nocoredump" },
+	{ MNT_NOATIME, "noatime" },
+	{ MNT_SYMPERM, "symperm" },
+	{ MNT_NODEVMTIME, "nodevmtime" },
+	{ MNT_SOFTDEP, "softdep" },
 	{ MNT_EXRDONLY, "exrdonly" },
 	{ MNT_EXPORTED, "exported" },
 	{ MNT_DEFEXPORTED, "defexported" },
 	{ MNT_EXPORTANON, "exportanon" },
 	{ MNT_EXKERB, "exkerb" },
+	{ MNT_EXNORESPORT, "exnoresport" },
+	{ MNT_EXPUBLIC, "expublic" },
 	{ MNT_LOCAL, "local" },
 	{ MNT_QUOTA, "quota" },
 	{ MNT_ROOTFS, "rootfs" },
@@ -283,6 +289,7 @@ vnodemode()
 	struct vnode *vp;
 	struct mount *maddr, *mp;
 	int numvnodes;
+	int (*vnode_fsprint) __P((struct vnode *)); /* per-fs data printer */
 
 	mp = NULL;
 	e_vnodebase = loadvnodes(&numvnodes);
@@ -294,7 +301,10 @@ vnodemode()
 	(void)printf("%d active vnodes\n", numvnodes);
 
 #define	ST	mp->mnt_stat
+#define	FSTYPE_IS(mp, name)						\
+	(strncmp((mp)->mnt_stat.f_fstypename, (name), MFSNAMELEN) == 0)
 	maddr = NULL;
+	vnode_fsprint = NULL;
 	for (evp = e_vnodebase; evp < endvnode; evp++) {
 		vp = &evp->vnode;
 		if (vp->v_mount != maddr) {
@@ -306,28 +316,26 @@ vnodemode()
 			maddr = vp->v_mount;
 			mount_print(mp);
 			vnode_header();
-			if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN))
+			if (FSTYPE_IS(mp, MOUNT_FFS) ||
+			    FSTYPE_IS(mp, MOUNT_MFS)) {
 				ufs_header();
-			else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
-			    MFSNAMELEN))
+				vnode_fsprint = ufs_print;
+			} else if (FSTYPE_IS(mp, MOUNT_NFS)) {
 				nfs_header();
-			else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
-				MFSNAMELEN))
+				vnode_fsprint = nfs_print;
+			} else if (FSTYPE_IS(mp, MOUNT_EXT2FS)) {
 				ufs_header();
-			else if (!strcmp(ST.f_fstypename, "union"))
+				vnode_fsprint = ext2fs_print;
+			} else if (FSTYPE_IS(mp, MOUNT_UNION)) {
 				union_header();
+				vnode_fsprint = union_print;
+			} else
+				vnode_fsprint = NULL;
 			(void)printf("\n");
 		}
 		vnode_print(evp->avnode, vp);
-		if (!strncmp(ST.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-		    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
-			ufs_print(vp);
-		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
-			nfs_print(vp);
-		} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS, MFSNAMELEN)) {
-			ext2fs_print(vp);
-		}
+		if (VTOI(vp) != NULL && vnode_fsprint != NULL)
+			(*vnode_fsprint)(vp);
 		(void)printf("\n");
 	}
 	free(e_vnodebase);
@@ -396,6 +404,10 @@ vnode_print(avnode, vp)
 		*fp++ = 'A';
 	if (flag & VDIROP)
 		*fp++ = 'D';
+	if (flag & VLAYER)
+		*fp++ = 'Y';
+	if (flag & VONWORKLST)
+		*fp++ = 'O';
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
@@ -484,11 +496,9 @@ ext2fs_print(vp)
 	type = ip->i_e2fs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode))
 		if (usenumflag ||
-		    ((name = devname(ip->i_din.e2fs_din.e2di_rdev, type)) ==
-			NULL))
+		    ((name = devname(ip->i_e2fs_rdev, type)) == NULL))
 			(void)printf("   %2d,%-2d",
-			    major(ip->i_din.e2fs_din.e2di_rdev),
-			    minor(ip->i_din.e2fs_din.e2di_rdev));
+			    major(ip->i_e2fs_rdev), minor(ip->i_e2fs_rdev));
 		else
 			(void)printf(" %7s", name);
 	else
