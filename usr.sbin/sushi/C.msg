@@ -5,7 +5,7 @@ $set 1 errors
 4 nlist failed
 5 function not found
 6 empty endpoint
-7 select failed but no child died
+7 poll failed but no child died
 8 failed to allocate status window
 9 failed to allocate status box
 10 failed to allocate output window
@@ -15,7 +15,7 @@ $set 1 errors
 14 invalid field type
 15 error return from new form
 16 cannot allocate scroll widget
-17 select failure
+17 poll failure
 18 can't stat
 19 No menu hierarchy found.
 20 Bad keybinding
