@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1997/06/12 15:46:26 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1997/07/31 02:59:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -245,14 +245,13 @@ extern void hydrastop	__P((void));
 
 /*
  * Debug function just to park the CPU
- *
- * This should be updated to power down an ARM7500
  */
 
 void
 halt()
 {
-	while (1);
+	while (1)
+		cpu_sleep(0);
 }
 
 
@@ -811,12 +810,12 @@ initarm(bootconf)
 	 * Needs to be 2MB aligned
 	 */
  
-	for (logical = 0; logical < 0x200000; logical += NBPG) {
+	for (logical = 0; logical < 0x400000; logical += NBPG) {
 		map_entry(l2pagetable + 0x2000, logical,
 		    bootconfig.dram[0].address + logical + NBPG);
 	}
 #else
-	for (logical = 0; logical < 0x200000; logical += NBPG) {
+	for (logical = 0; logical < 0x400000; logical += NBPG) {
 		map_entry(l2pagetable + 0x2000, logical,
 		    bootconfig.dram[0].address + logical);
 	}
@@ -862,9 +861,6 @@ initarm(bootconf)
 	
 	if (bootconfig.vram[0].pages == 0)
 		vidcconsole_blank(vconsole_current, BLANK_OFF);
-
-	/* XXX - Is this really needed ? - no as the setttb() function cleans the caches */
-	cpu_cache_syncI();
 
 	/* If we don't have VRAM ..
 	 * Ahhhhhhhhhhhhhhhhhhhhhh
@@ -930,7 +926,7 @@ initarm(bootconf)
 
 	/* Zero down the memory we mapped in for the secondary bootstrap */
 
-	bzero(0x00000000, 0x200000);	/* XXX */
+	bzero(0x00000000, 0x400000);	/* XXX */
 
 	/* Set up the variables that define the availablilty of physcial memory */
 
@@ -1286,9 +1282,6 @@ initarm(bootconf)
 
 	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
 
-	/* XXX - Is this really needed ? - no as the setttb() function cleans the caches */
-	cpu_cache_syncI();
-
 	/* Switch tables */
 
 	setttb(kernel_pt_table[KERNEL_PT_PAGEDIR]);
@@ -1311,7 +1304,7 @@ initarm(bootconf)
 	bcopy(page0, (char *)0x00000000, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_cache_syncI_rng(0, page0_end - page0);
 
 /*
  * Pages were allocated during the secondary bootstrap for the
@@ -1361,9 +1354,6 @@ initarm(bootconf)
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 	console_flush();
 
-	/* XXX - Is this really needed */
-	cpu_cache_syncI();
-
 /* Diagnostic stuff. while writing the boot code */
 
 /*	for (loop = 0x0; loop < 0x1000; ++loop) {
@@ -1399,17 +1389,11 @@ initarm(bootconf)
 	undefined_init();
 	console_flush();
 
-	/* XXX - Is this really needed */
-	cpu_cache_syncI();
-
 	/* Boot strap pmap telling it where the kernel page table is */
 
 	printf("pmap ");
 	pmap_bootstrap(PAGE_DIRS_BASE);
 	console_flush();
-
-	/* XXX - Is this really needed */
-	cpu_cache_syncI();
 
 	/* Setup the IRQ system */
 
@@ -1479,17 +1463,17 @@ initarm(prom_id)
 	memory_disc_size = MEMORY_DISK_SIZE * 1024;
 
 #ifdef MEMORY_DISK_HOOKS
-	boot_args = "root=/dev/md0a swapsize=0";
+	boot_args = "root=/dev/md0a";
 #else
 	if (strcmp(prom_id->bootdev, "fd") == 0) {
-		boot_args = "root=/dev/fd0a swapsize=0";
+		boot_args = "root=/dev/fd0a";
 	} else {
 		strcpy(bootstring, "root=/dev/");
 		strcat(bootstring, prom_id->bootdev);
 		if (((prom_id->bootdevnum >> B_UNITSHIFT) & B_UNITMASK) == 0)
-			strcat(bootstring, "0a swap=/dev/wd0b");
+			strcat(bootstring, "0a");
 		else
-			strcat(bootstring, "1a swap=/dev/wd1b");
+			strcat(bootstring, "1a");
 		boot_args = bootstring;
 	}
 #endif
