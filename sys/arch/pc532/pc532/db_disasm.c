@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 1994/10/26 08:24:55 cgd Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 1996/10/09 07:44:56 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -45,14 +45,15 @@
 
 #define STATIC static
 
-/* #include <mach/boolean.h> */
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>
+
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_variables.h>
-#include <machine/pmap.h>
-#include <vm/vm_map.h>
-/* #include <kern/thread.h> */
 
 struct operand {
 	int	o_mode;		/* address mode */
@@ -834,6 +835,15 @@ char fmt14_table[][6] = {
 #define FMT14_SMR   0x3 /* store memory management register */
 #define FMT14_CINV  0x9 /* cache invalidate */
 
+/* undef syms from reg.h */
+#undef REG_R0
+#undef REG_PC
+#undef REG_FP
+#undef REG_SP
+#undef REG_SB
+#undef REG_DB
+#undef REG_PSR
+
 /*
  * These are indices into regTable.  Keep in sync!
  */
@@ -956,12 +966,11 @@ STATIC unsigned char mmuRegTable [] = {
 
 void db_reverseBits();
 
-#define get_byte(l,t) ((unsigned char) db_get_task_value(l, 1, FALSE, t))
+#define get_byte(l) ((unsigned char) db_get_value(l, 1, FALSE))
 
-void db_formatOperand(operand, loc, task)
+void db_formatOperand(operand, loc)
 	struct operand *operand;
 	db_addr_t loc;
-	task_t task;
 {
 	int need_comma, i, mask, textlen;
 	
@@ -974,24 +983,20 @@ void db_formatOperand(operand, loc, task)
 		break;
 		
 	      case AMODE_MREL:
-		db_task_printsym((db_addr_t) operand->o_disp1,
-				 DB_STGY_ANY, task);
+		db_printsym((db_addr_t) operand->o_disp1, DB_STGY_ANY);
 		db_printf("(");
-		db_task_printsym((db_addr_t) operand->o_disp0,
-				 DB_STGY_ANY, task);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
 		db_printf("(%s))",regTable[operand->o_reg0].name);
 		break;
 		
 	      case AMODE_QUICK:
 	      case AMODE_IMM:
-		db_task_printsym((db_addr_t) operand->o_disp0,
-				 DB_STGY_ANY, task);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
 		break;
 		
 	      case AMODE_ABS:
 		db_printf("@");
-		db_task_printsym((db_addr_t) operand->o_disp0,
-				 DB_STGY_ANY, task);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY);
 		break;
 		
 	      case AMODE_EXT:
@@ -1006,8 +1011,7 @@ void db_formatOperand(operand, loc, task)
 		
 	      case AMODE_RREL:
 	      case AMODE_MSPC:
-		db_task_printsym((db_addr_t) operand->o_disp0,
-				 DB_STGY_XTRN, task);
+		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_XTRN);
 		db_printf("(%s)",regTable[operand->o_reg0].name);
 		break;
 		
@@ -1093,10 +1097,9 @@ bitlist:
 	}
 }
 
-void db_formatAsm(insn, loc, task, altfmt)
+void db_formatAsm(insn, loc, altfmt)
 	struct insn *insn;
 	db_addr_t loc;
-	task_t task;
 	boolean_t altfmt;
 {
 	int i, j;
@@ -1107,7 +1110,7 @@ void db_formatAsm(insn, loc, task, altfmt)
 		if (i != 0) {
 			db_printf(",");
 		}
-		db_formatOperand(&insn->i_opr[i], loc, task);
+		db_formatOperand(&insn->i_opr[i], loc);
 	}
 	j = 0;
 	for (i = 0; i < 4 && insn->i_opr[i].o_mode != AMODE_NONE; i++) {
@@ -1130,17 +1133,16 @@ void db_formatAsm(insn, loc, task, altfmt)
 						break;
 					}
 				}
-				db_read_write_variable(regp, &value,
-						       DB_VAR_GET, 0);
+				db_read_variable(regp, &value);
 			}
 			if (j != 0) {
 				db_printf(",");
 			} else {
 				db_printf("\t<");
 			}
-			db_task_printsym((db_addr_t)
+			db_printsym((db_addr_t)
 					 insn->i_opr[i].o_disp0 + value,
-					 DB_STGY_XTRN, task);
+					 DB_STGY_XTRN);
 			j++;
 		}
 	}
@@ -1162,43 +1164,41 @@ void db_initInsn (insn)
 	insn->i_opr[3].o_iscale = 0;
 }
 
-int db_disp(loc, result, task)
+int db_disp(loc, result)
 	db_addr_t loc;
 	long *result;
-	task_t task;
 {
 	unsigned int b;
 	
-	b = get_byte(loc, task);
+	b = get_byte(loc);
 	if (!(b & 0x80)) {			/* one byte */
 		*result = ((b & 0x40) ? 0xffffffc0L : 0) | (b & 0x3f);
 		return(1);
 	} else if (!(b & 0x40)) {		/* two byte */
 		*result =
 		    ((b & 0x20) ? 0xffffe000L : 0) | ((b & 0x1f) << 8);
-		b = get_byte(loc + 1, task);
+		b = get_byte(loc + 1);
 		*result |= b;
 		return 2;
 	} else {					/* four byte */
 		*result = 
 		    ((b & 0x20) ? 0xe0000000L : 0) |	/* bug fix 8/28 */
 			((b & 0x1f) << 24);		/* bug fix 7/21 */
-		b = get_byte(loc + 1, task);
+		b = get_byte(loc + 1);
 		*result |= (b << 16);
-		b = get_byte(loc + 2, task);
+		b = get_byte(loc + 2);
 		*result |= (b << 8);
-		b = get_byte(loc + 3, task);
+		b = get_byte(loc + 3);
 		*result |= b;
 		return(4);
 	}
 }
 
-int db_decode_operand(loc, byte, operand, iol, task)
+int db_decode_operand(loc, byte, operand, iol)
 	db_addr_t loc;
 	unsigned char byte;
 	struct operand *operand;
 	unsigned char iol;
-	task_t task;
 {
 	register int i, consumed = 0;
 	unsigned long value;
@@ -1247,9 +1247,9 @@ int db_decode_operand(loc, byte, operand, iol, task)
 	      case GEN_IMM:
 		operand->o_mode = AMODE_IMM;
 		/* fix to sign extend */
-		value = (get_byte(loc, task) & 0x80)? 0xffffffff: 0;
+		value = (get_byte(loc) & 0x80)? 0xffffffff: 0;
 		for (i = 0; i < iol; i++) {
-			value = (value << 8) + get_byte(loc + i, task);
+			value = (value << 8) + get_byte(loc + i);
 		}
 		operand->o_disp0 = value;
 		consumed = iol;
@@ -1292,23 +1292,22 @@ int db_decode_operand(loc, byte, operand, iol, task)
 		break;
 		
 two_disp:
-		consumed = db_disp(loc, &operand->o_disp0, task);
-		consumed += db_disp(loc + consumed, &operand->o_disp1, task);
+		consumed = db_disp(loc, &operand->o_disp0);
+		consumed += db_disp(loc + consumed, &operand->o_disp1);
 		break;
 	
 one_disp:
-		consumed = db_disp(loc, &operand->o_disp0, task);
+		consumed = db_disp(loc, &operand->o_disp0);
 		break;
 	}
 	return(consumed);
 }
 
-int db_gen(insn, loc, mask, byte0, byte1, task)
+int db_gen(insn, loc, mask, byte0, byte1)
 	struct insn *insn;
 	db_addr_t loc;
 	int mask;		/* 1 to get gen1, 2 to get gen2 */
 	unsigned char byte0, byte1;
-	task_t task;
 {
 	int opr = 0, opr2, consumed = 0;
 	unsigned char gen0, gen1;
@@ -1321,7 +1320,7 @@ int db_gen(insn, loc, mask, byte0, byte1, task)
 	
 	if (mask & 0x1) {
 		if (insn->i_opr[opr].o_iscale = GetGenSI(gen0)) {
-			ScaledFields(get_byte(loc, task),
+			ScaledFields(get_byte(loc),
 				     insn->i_opr[opr].o_ireg, gen0);
 			consumed++;
 		}
@@ -1332,35 +1331,37 @@ int db_gen(insn, loc, mask, byte0, byte1, task)
 	
 	if (mask & 0x2 &&
 	    (insn->i_opr[opr2].o_iscale = GetGenSI(gen1))) {
-		ScaledFields(get_byte(loc + consumed, task),
+		ScaledFields(get_byte(loc + consumed),
 			     insn->i_opr[opr2].o_ireg, gen1);
 		consumed++;
 	}
 	
 	if (mask & 0x1) {
 		consumed += db_decode_operand(loc + consumed, gen0,
-					   &insn->i_opr[opr], insn->i_iol,
-					   task);
+					   &insn->i_opr[opr], insn->i_iol);
 	}
 	if (mask & 0x2) {
 		consumed += db_decode_operand(loc + consumed, gen1,
-					   &insn->i_opr[opr2], insn->i_iol,
-					   task);
+					   &insn->i_opr[opr2], insn->i_iol);
 	}
 	return(consumed);
 }	
 
-int db_dasm_ns32k(insn, loc, task)
+int db_dasm_ns32k(insn, loc)
 	struct insn *insn;
 	db_addr_t loc;			/* start addr of this insn */
-	task_t task;
 {
 	unsigned char byte0, byte1, byte2;
 	int i, j;
 	int consumed;
-	
-	insn->i_iol = IOL_NONE;	    /* Don't assume any operand length */
-	byte0 = get_byte(loc, task);    /* look at first byte in insn */
+	struct insn dummy;
+
+	if (insn == NULL) {
+		insn = &dummy;
+		db_initInsn(insn);	
+	}
+	insn->i_iol = IOL_NONE;		/* Don't assume any operand length */
+	byte0 = get_byte(loc);		/* look at first byte in insn */
 	consumed = 1;
 	i = byte0 / 2;	    /* get index into fmttab */
 	if (byte0 % 2)
@@ -1379,8 +1380,7 @@ int db_dasm_ns32k(insn, loc, task)
 		insn->i_monic[3] = '\0';
 		insn->i_opr[0].o_mode = AMODE_IMM;	/* MSPC implied */
 		insn->i_opr[0].o_reg0 = REG_PC;
-		consumed += db_disp(loc + consumed, &insn->i_opr[0].o_disp0,
-				 task);
+		consumed += db_disp(loc + consumed, &insn->i_opr[0].o_disp0);
 		insn->i_opr[0].o_disp0 += loc;
 		break;
 		
@@ -1394,14 +1394,14 @@ int db_dasm_ns32k(insn, loc, task)
 		      case FMT1_RETT:
 			insn->i_opr[0].o_mode = AMODE_IMM;
 			consumed += db_disp(loc + consumed,
-					 &insn->i_opr[0].o_disp0, task);
+					 &insn->i_opr[0].o_disp0);
 			break;
 			
 		      case FMT1_BSR:
 			insn->i_opr[0].o_mode = AMODE_IMM; /* MSPC implied */
 			insn->i_opr[0].o_reg0 = REG_PC;
 			consumed += db_disp(loc + consumed,
-					 &insn->i_opr[0].o_disp0, task);
+					    &insn->i_opr[0].o_disp0);
 			insn->i_opr[0].o_disp0 += loc;
 			break;
 			
@@ -1410,7 +1410,7 @@ int db_dasm_ns32k(insn, loc, task)
 		      case FMT1_ENTER:
 		      case FMT1_EXIT:
 			insn->i_opr[0].o_mode = AMODE_REGLIST;
-			insn->i_opr[0].o_reg0 = get_byte(loc + consumed, task);
+			insn->i_opr[0].o_reg0 = get_byte(loc + consumed);
 			consumed++;
 			if (insn->i_op == FMT1_EXIT ||
 			    insn->i_op == FMT1_RESTORE) /* WBC bug fix */
@@ -1420,15 +1420,14 @@ int db_dasm_ns32k(insn, loc, task)
 				insn->i_opr[1].o_mode = AMODE_IMM;
 				insn->i_opr[1].o_reg0 = REG_PC;
 				consumed += db_disp(loc + consumed,
-						 &insn->i_opr[1].o_disp0,
-						 task);
+						 &insn->i_opr[1].o_disp0);
 			}
 			break;
 		}
 		break;
 		
 	      case ITYPE_FMT2:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT2_OP(byte0);
 		insn->i_iol = IOL(byte0);
@@ -1459,11 +1458,11 @@ int db_dasm_ns32k(insn, loc, task)
 			insn->i_opr[0].o_mode = AMODE_AREG;
 			break;
 		}
-		consumed += db_gen(insn, loc + consumed, 0x1, 0, byte1, task);
+		consumed += db_gen(insn, loc + consumed, 0x1, 0, byte1);
 		strcat(insn->i_monic, iol_table[insn->i_iol]);
 		if (insn->i_op == FMT2_ACB) {
 			consumed += db_disp(loc + consumed,
-					 &insn->i_opr[2].o_disp0, task);
+					 &insn->i_opr[2].o_disp0);
 			insn->i_opr[2].o_disp0 += loc;
 			insn->i_opr[2].o_mode = AMODE_IMM;
 		}
@@ -1471,12 +1470,12 @@ int db_dasm_ns32k(insn, loc, task)
 		
 	      case ITYPE_FMT3:
 		insn->i_format = ITYPE_FMT3;
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT3_OP(byte1);
 		insn->i_iol = IOL(byte0);
 		strcpy(insn->i_monic, fmt3_table[insn->i_op]);
-		consumed += db_gen(insn, loc + consumed, 0x1, 0, byte1, task);
+		consumed += db_gen(insn, loc + consumed, 0x1, 0, byte1);
 		switch (insn->i_op) {
 			
 		      case FMT3_CXPD:
@@ -1513,13 +1512,12 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT4:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT4_OP(byte0);
 		insn->i_iol = IOL(byte0);
 		strcpy(insn->i_monic, fmt4_table[insn->i_op]);
-		consumed += db_gen(insn, loc + consumed, 0x3, byte0,
-				byte1, task);
+		consumed += db_gen(insn, loc + consumed, 0x3, byte0, byte1);
 		if (insn->i_op == FMT4_ADDR) {
 			if (insn->i_iol != IOL_DOUBLE)
 			    insn->i_format = ITYPE_UNDEF;
@@ -1529,7 +1527,7 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT5:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT5_OP(byte1);
 		if (insn->i_op > FMT5_SKPS) {
@@ -1537,7 +1535,7 @@ int db_dasm_ns32k(insn, loc, task)
 			break;
 		}
 		strcpy(insn->i_monic, fmt5_table[insn->i_op]);
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_opr[0].o_disp0 = GetShort(byte1, byte2);
 		insn->i_iol = IOL(byte1);
@@ -1561,9 +1559,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT6:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT6_OP(byte1);
 		insn->i_iol = IOL(byte1);
@@ -1580,34 +1578,32 @@ int db_dasm_ns32k(insn, loc, task)
 			insn->i_format = ITYPE_UNDEF;
 			break;
 		}
-		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2,
-				   task);
+		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2);
 		break;
 		
 	      case ITYPE_FMT7:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT7_OP(byte1);
 		strcpy(insn->i_monic, fmt7_table[insn->i_op]);
 		insn->i_iol = IOL(byte1);
 		strcat(insn->i_monic, iol_table[insn->i_iol]);
-		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2,
-				   task);
+		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2);
 		switch (insn->i_op) {
 			
 		      case FMT7_MOVM:
 		      case FMT7_CMPM:
 			consumed += db_disp(loc + consumed,
-					 &insn->i_opr[2].o_disp0, task);
+					 &insn->i_opr[2].o_disp0);
 			/* WBC bug fix */
 			insn->i_opr[2].o_mode = AMODE_IMM;
 			break;
 			
 		      case FMT7_INSS:
 		      case FMT7_EXTS:
-			byte2 = get_byte(loc + consumed, task);
+			byte2 = get_byte(loc + consumed);
 			consumed++;
 			insn->i_opr[2].o_disp0 = ((byte2&0xe0)>>5);
 			insn->i_opr[2].o_mode = AMODE_IMM;
@@ -1627,9 +1623,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT8:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT8_OP(byte0, byte1);
 		strcpy(insn->i_monic, fmt8_table[insn->i_op]);
@@ -1660,12 +1656,11 @@ int db_dasm_ns32k(insn, loc, task)
 				insn->i_opr[0].o_mode = AMODE_REG;
 			}
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_op == FMT8_EXT ||
 			    insn->i_op == FMT8_INS) {
 				consumed += db_disp(loc + consumed,
-						 &insn->i_opr[3].o_disp0,
-						 task);
+						 &insn->i_opr[3].o_disp0);
 				insn->i_opr[3].o_mode = AMODE_IMM;
 			}
 			break;
@@ -1677,9 +1672,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT9:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT9_OP(byte1);
 		strcpy(insn->i_monic, fmt9_table[insn->i_op]);
@@ -1691,7 +1686,7 @@ int db_dasm_ns32k(insn, loc, task)
 			strcat(insn->i_monic, iol_table[insn->i_iol]);
 			strcat(insn->i_monic, fol_table[i]);
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_opr[1].o_mode == AMODE_REG)
 			    insn->i_opr[1].o_reg0 =
 				REG_F0 + (insn->i_opr[1].o_reg0 - REG_R0);
@@ -1699,18 +1694,18 @@ int db_dasm_ns32k(insn, loc, task)
 			
 		      case FMT9_LFSR:
 			consumed += db_gen(insn, loc + consumed, 0x1,
-					byte1, byte2, task);
+					byte1, byte2);
 			break;
 			
 		      case FMT9_SFSR:
 			consumed += db_gen(insn, loc + consumed, 0x2,
-					byte1, byte2, task);
+					byte1, byte2);
 			break;
 			
 		      case FMT9_MOVLF:
 		      case FMT9_MOVFL:
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_opr[0].o_mode == AMODE_REG)
 			    insn->i_opr[0].o_reg0 =
 				REG_F0 + (insn->i_opr[0].o_reg0 - REG_R0);
@@ -1725,7 +1720,7 @@ int db_dasm_ns32k(insn, loc, task)
 			strcat(insn->i_monic, fol_table[i]);
 			strcat(insn->i_monic, iol_table[insn->i_iol]);
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_opr[0].o_mode == AMODE_REG)
 			    insn->i_opr[0].o_reg0 =
 				REG_F0 + (insn->i_opr[0].o_reg0 - REG_R0);
@@ -1739,9 +1734,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT11:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT11_OP(byte1);
 		switch (insn->i_op) {
@@ -1757,7 +1752,7 @@ int db_dasm_ns32k(insn, loc, task)
 			strcpy(insn->i_monic, fmt11_table[insn->i_op]);
 			strcat(insn->i_monic, fol_table[FMT11_F(byte1)]);
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_opr[0].o_mode == AMODE_REG)
 			    insn->i_opr[0].o_reg0 =
 				REG_F0 + (insn->i_opr[0].o_reg0 - REG_R0);
@@ -1774,9 +1769,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT12:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT12_OP(byte1);
 		switch (insn->i_op) {
@@ -1788,7 +1783,7 @@ int db_dasm_ns32k(insn, loc, task)
 			strcpy(insn->i_monic, fmt12_table[insn->i_op]);
 			strcat(insn->i_monic, fol_table[FMT12_F(byte1)]);
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
-					byte2, task);
+					byte2);
 			if (insn->i_opr[0].o_mode == AMODE_REG)
 			    insn->i_opr[0].o_reg0 =
 				REG_F0 + (insn->i_opr[0].o_reg0 - REG_R0);
@@ -1809,9 +1804,9 @@ int db_dasm_ns32k(insn, loc, task)
 		break;
 		
 	      case ITYPE_FMT14:
-		byte1 = get_byte(loc + consumed, task);
+		byte1 = get_byte(loc + consumed);
 		consumed++;
-		byte2 = get_byte(loc + consumed, task);
+		byte2 = get_byte(loc + consumed);
 		consumed++;
 		insn->i_op = FMT14_OP(byte1);
 		insn->i_iol = 4;
@@ -1822,7 +1817,7 @@ int db_dasm_ns32k(insn, loc, task)
 			insn->i_opr[0].o_disp0 = GetShort(byte1, byte2);
 			insn->i_opr[0].o_mode = AMODE_CINV;
 			consumed += db_gen(insn, loc + consumed, 0x1,
-					byte1/* was 0*/, byte2, task);
+					byte1/* was 0*/, byte2);
 			break;
 			
 		      case FMT14_LMR:
@@ -1835,7 +1830,7 @@ int db_dasm_ns32k(insn, loc, task)
 		      case FMT14_RDVAL:
 		      case FMT14_WRVAL:
 			consumed += db_gen(insn, loc + consumed, 0x1,
-					byte1/* was 0*/, byte2, task);
+					byte1/* was 0*/, byte2);
 			break;
 		}
 		break;
@@ -1871,29 +1866,26 @@ void db_reverseBits (ip)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt, task)
+db_disasm(loc, altfmt)
 	db_addr_t	loc;
 	boolean_t	altfmt;
-	task_t		task;
 {
 	int ate;
 	struct insn insn;
 	
-	db_initInsn(&insn);
-	ate =  db_dasm_ns32k(&insn, loc, task);
+	db_initInsn(&insn);	
+	ate =  db_dasm_ns32k(&insn, loc);
 	if (altfmt) {
 		int i;
 		
 		for(i = 0; i < ate; i++) {
-			db_printf("%02x",
-				  db_get_task_value(loc + i, 1, FALSE,
-						    task) & 0xff);
+			db_printf("%02x", get_byte(loc + i) & 0xff );
 		}
 		if (i < 4)
 		    db_printf("\t");
 		db_printf("\t");
 	}
-	db_formatAsm(&insn, loc, task, altfmt);
+	db_formatAsm(&insn, loc, altfmt);
 	db_printf("\n");
 	return loc + ate;
 }
