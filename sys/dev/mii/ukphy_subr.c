@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.3 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.4 2001/08/25 18:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,7 @@
  * by decoding the NWay autonegotiation, use this routine.
  */
 void
-ukphy_status(phy)
-	struct mii_softc *phy;
+ukphy_status(struct mii_softc *phy)
 {
 	struct mii_data *mii = phy->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

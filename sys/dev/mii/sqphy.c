@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.23 2001/06/19 20:10:54 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.24 2001/08/25 18:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,16 +88,16 @@
 
 #include <dev/mii/sqphyreg.h>
 
-int	sqphymatch __P((struct device *, struct cfdata *, void *));
-void	sqphyattach __P((struct device *, struct device *, void *));
+int	sqphymatch(struct device *, struct cfdata *, void *);
+void	sqphyattach(struct device *, struct device *, void *);
 
 struct cfattach sqphy_ca = {
 	sizeof(struct mii_softc), sqphymatch, sqphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	sqphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	sqphy_status __P((struct mii_softc *));
+int	sqphy_service(struct mii_softc *, struct mii_data *, int);
+void	sqphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs sqphy_funcs = {
 	sqphy_service, sqphy_status, mii_phy_reset,
@@ -115,10 +115,7 @@ const struct mii_phydesc sqphys[] = {
 };
 
 int
-sqphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sqphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -129,9 +126,7 @@ sqphymatch(parent, match, aux)
 }
 
 void
-sqphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -161,10 +156,7 @@ sqphyattach(parent, self, aux)
 }
 
 int
-sqphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -226,8 +218,7 @@ sqphy_service(sc, mii, cmd)
 }
 
 void
-sqphy_status(sc)
-	struct mii_softc *sc;
+sqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

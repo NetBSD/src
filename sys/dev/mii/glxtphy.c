@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.1 2001/07/12 21:54:40 thorpej Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.2 2001/08/25 18:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -87,16 +87,16 @@
 
 #include <dev/mii/glxtphyreg.h>
 
-int	glxtphymatch __P((struct device *, struct cfdata *, void *));
-void	glxtphyattach __P((struct device *, struct device *, void *));
+int	glxtphymatch(struct device *, struct cfdata *, void *);
+void	glxtphyattach(struct device *, struct device *, void *);
 
 struct cfattach glxtphy_ca = {
 	sizeof(struct mii_softc), glxtphymatch, glxtphyattach,
 	    mii_phy_detach, mii_phy_activate
 };
 
-int	glxtphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	glxtphy_status __P((struct mii_softc *));
+int	glxtphy_service(struct mii_softc *, struct mii_data *, int);
+void	glxtphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs glxtphy_funcs = {
 	glxtphy_service, glxtphy_status, mii_phy_reset,
@@ -114,10 +114,7 @@ const struct mii_phydesc glxtphys[] = {
 };
 
 int
-glxtphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+glxtphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -128,9 +125,7 @@ glxtphymatch(parent, match, aux)
 }
 
 void
-glxtphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+glxtphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -164,10 +159,7 @@ glxtphyattach(parent, self, aux)
 }
 
 int
-glxtphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+glxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -226,8 +218,7 @@ glxtphy_service(sc, mii, cmd)
 }
 
 void
-glxtphy_status(sc)
-	struct mii_softc *sc;
+glxtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.10 2001/06/02 21:39:38 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.11 2001/08/25 18:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,16 +88,16 @@
 
 #include <dev/mii/dmphyreg.h>
 
-int	dmphymatch __P((struct device *, struct cfdata *, void *));
-void	dmphyattach __P((struct device *, struct device *, void *));
+int	dmphymatch(struct device *, struct cfdata *, void *);
+void	dmphyattach(struct device *, struct device *, void *);
 
 struct cfattach dmphy_ca = {
 	sizeof(struct mii_softc), dmphymatch, dmphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	dmphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	dmphy_status __P((struct mii_softc *));
+int	dmphy_service(struct mii_softc *, struct mii_data *, int);
+void	dmphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs dmphy_funcs = {
 	dmphy_service, dmphy_status, mii_phy_reset,
@@ -115,10 +115,7 @@ const struct mii_phydesc dmphys[] = {
 };
 
 int
-dmphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+dmphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -129,9 +126,7 @@ dmphymatch(parent, match, aux)
 }
 
 void
-dmphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -161,10 +156,7 @@ dmphyattach(parent, self, aux)
 }
 
 int
-dmphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+dmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -226,8 +218,7 @@ dmphy_service(sc, mii, cmd)
 }
 
 void
-dmphy_status(sc)
-	struct mii_softc *sc;
+dmphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

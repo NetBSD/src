@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.1 2001/08/25 04:06:26 thorpej Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.2 2001/08/25 18:04:01 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,10 +80,7 @@ const struct mii_phydesc amhphys[] = {
 };
 
 int
-amhphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+amhphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -94,9 +91,7 @@ amhphymatch(parent, match, aux)
 }
 
 void
-amhphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+amhphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -126,10 +121,7 @@ amhphyattach(parent, self, aux)
 }
 
 int
-amhphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+amhphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -188,8 +180,7 @@ amhphy_service(sc, mii, cmd)
 }
 
 void
-amhphy_status(sc)
-	struct mii_softc *sc;
+amhphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
