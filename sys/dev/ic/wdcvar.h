@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.49 2004/01/01 17:18:53 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.50 2004/01/01 20:18:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_WDCVAR_H_
+#define	_DEV_IC_WDCVAR_H_
 
 /* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
@@ -124,35 +127,35 @@ struct wdc_softc { /* Per controller state */
 	struct atapi_adapter sc_atapi_adapter;
 
 	/* Function used to probe for drives. */
-	void		(*drv_probe) __P((struct channel_softc *));
+	void		(*drv_probe)(struct channel_softc *);
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
-	int            (*dma_init) __P((void *, int, int, void *, size_t,
-	                int));
-	void           (*dma_start) __P((void *, int, int));
-	int            (*dma_finish) __P((void *, int, int, int));
+	int            (*dma_init)(void *, int, int, void *, size_t, int);
+	void           (*dma_start)(void *, int, int);
+	int            (*dma_finish)(void *, int, int, int);
 /* flags passed to dma_init */
 #define WDC_DMA_READ	0x01
 #define WDC_DMA_IRQW	0x02
 #define WDC_DMA_LBA48	0x04
+
 	int		dma_status; /* status returned from dma_finish() */
 #define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
 #define WDC_DMAST_ERR	0x02	/* DMA error */
 #define WDC_DMAST_UNDER	0x04	/* DMA underrun */
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
-	int            (*claim_hw) __P((void *, int));
-	void            (*free_hw) __P((void *));
+	int            (*claim_hw)(void *, int);
+	void            (*free_hw)(void *);
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
-	void 		(*set_modes) __P((struct channel_softc *));
+	void 		(*set_modes)(struct channel_softc *);
 
 	/* if WDC_CAPABILITY_SELECT set in 'cap' */
-	void		(*select) __P((struct channel_softc *,int));
+	void		(*select)(struct channel_softc *,int);
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
-	void		(*irqack) __P((struct channel_softc *));
+	void		(*irqack)(struct channel_softc *);
 };
 
 /*
@@ -160,45 +163,51 @@ struct wdc_softc { /* Per controller state */
  * or bus-specific backends.
  */
 
-int   wdcprobe __P((struct channel_softc *));
-void  wdcattach __P((struct channel_softc *));
-int   wdcdetach __P((struct device *, int));
-int   wdcactivate __P((struct device *, enum devact));
-int   wdcintr __P((void *));
-void  wdc_exec_xfer __P((struct channel_softc *, struct ata_xfer *));
-struct ata_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
+int	wdcprobe(struct channel_softc *);
+void	wdcattach(struct channel_softc *);
+int	wdcdetach(struct device *, int);
+int	wdcactivate(struct device *, enum devact);
+int	wdcintr(void *);
+void	wdc_exec_xfer(struct channel_softc *, struct ata_xfer *);
+
+struct ata_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP 0x00
 #define WDC_NOSLEEP 0x01
-void   wdc_free_xfer  __P((struct channel_softc *, struct ata_xfer *));
-void  wdcstart __P((struct channel_softc *));
-void  wdcrestart __P((void*));
-int   wdcreset	__P((struct channel_softc *, int));
+
+void	wdc_free_xfer (struct channel_softc *, struct ata_xfer *);
+void	wdcstart(struct channel_softc *);
+void	wdcrestart(void*);
+
+int	wdcreset(struct channel_softc *, int);
 #define RESET_POLL 1 
 #define RESET_SLEEP 0 /* wdcreset will use tsleep() */
-int   wdcwait __P((struct channel_softc *, int, int, int, int));
+
+int	wdcwait(struct channel_softc *, int, int, int, int);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
-int   wdc_dmawait __P((struct channel_softc *, struct ata_xfer *, int));
-void  wdcbit_bucket __P(( struct channel_softc *, int));
-void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
-    u_int8_t, u_int8_t, u_int8_t, u_int8_t));
-void  wdccommandext __P((struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
-    u_int16_t));
-void   wdccommandshort __P((struct channel_softc *, int, int));
-void  wdctimeout	__P((void *arg));
-void wdc_reset_channel __P((struct ata_drive_datas *, int));
-int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
+
+int	wdc_dmawait(struct channel_softc *, struct ata_xfer *, int);
+void	wdcbit_bucket( struct channel_softc *, int);
+void	wdccommand(struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
+		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
+void	wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
+		      u_int16_t);
+void	wdccommandshort(struct channel_softc *, int, int);
+void	wdctimeout(void *arg);
+void	wdc_reset_channel(struct ata_drive_datas *, int);
+
+int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 #define WDC_COMPLETE 0x01
 #define WDC_QUEUED   0x02
 #define WDC_TRY_AGAIN 0x03
 
-int	wdc_addref __P((struct channel_softc *));
-void	wdc_delref __P((struct channel_softc *));
-void	wdc_kill_pending __P((struct channel_softc *));
+int	wdc_addref(struct channel_softc *);
+void	wdc_delref(struct channel_softc *);
+void	wdc_kill_pending(struct channel_softc *);
 
 void	wdc_print_modes (struct channel_softc *);
-void	wdc_probe_caps __P((struct ata_drive_datas*));
+void	wdc_probe_caps(struct ata_drive_datas*);
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
@@ -210,11 +219,14 @@ void	wdc_probe_caps __P((struct ata_drive_datas*));
 		wdcwait((chp), 0, 0, (timeout), (flags))
 #define wait_for_ready(chp, timeout, flags) \
 		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags))
+
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000
 
-void wdc_atapibus_attach __P((struct atabus_softc *));
+void	wdc_atapibus_attach(struct atabus_softc *);
 
 /* XXX */
 struct atabus_softc;
 void	atabusconfig(struct atabus_softc *);
+
+#endif /* _DEV_IC_WDCVAR_H_ */
