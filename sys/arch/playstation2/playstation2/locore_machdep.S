@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.5 2004/07/09 10:04:35 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.6 2004/07/09 10:31:14 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,21 +128,21 @@ END(spllowersofthigh)
  *	must be PIC.
  */
 LEAF_NOPROFILE(kloader_playstation2_boot)
-	di			# disable cache
+	lui	t0, 0x1040	# Cu0 | BEV
+	mtc0	t0, $12
+	sync.p
 	/*
 	 * 1. load kernel image.
 	 */
 	move	t6, a1		# p
-1:
-	beqz	t6, 3f
+1:	beqz	t6, 3f
 	 move	t7, t6
 	lw	t6, 0(t7)	# p = next
 	lw	t0, 4(t7)	# src
 	lw	t4, 8(t7)	# dst
 	lw	t2, 12(t7)	# sz
 	addu	t5, t4, t2	# dst + sz
-2:
-	lw	t3, 0(t0)	# copy
+2:	lw	t3, 0(t0)	# copy
 	sw	t3, 0(t4)
 	addiu	t4, t4, 4
 	addiu	t0, t0, 4
@@ -150,17 +150,15 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	 nop
 	b	1b
 	 nop
-3:
-	nop
+3:	nop
 
 	/* 
 	 * 2. Cache flush
 	 */
-	li	t2, CACHE_R5900_SIZE_D
-
 	/*
 	 * Flush the data cache.
 	 */
+	li	t2, CACHE_R5900_SIZE_D
 	li	t0, MIPS_KSEG0_START
 	srl	t2, 1		# Two way set assoc
 	addu	t1, t0, t2	# End address
@@ -215,8 +213,13 @@ LEAF_NOPROFILE(kloader_playstation2_boot)
 	 * 3. jump to kernel entry 
 	 */
 	lw	a0, 0(a0)
-	jr	a0
+1:	jr	a0
+ 	 move	sp, a0
 	nop
+	nop
+	nop
+	b	1b
+	 nop
 	/* NOTREACHED */
 END(kloader_playstation2_boot)
 #endif /* KLOADER */
