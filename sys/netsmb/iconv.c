@@ -1,9 +1,9 @@
-/*	$NetBSD: iconv.c,v 1.6 2003/02/19 12:01:37 martin Exp $	*/
+/*	$NetBSD: iconv.c,v 1.7 2003/05/16 05:14:40 itojun Exp $	*/
 
 /* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.6 2003/02/19 12:01:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.7 2003/05/16 05:14:40 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ iconv_convstr(void *handle, char *dst, const char *src)
 	int error;
 
 	if (handle == NULL) {
-		strcpy(dst, src);
+		strcpy(dst, src);	/*XXX need to know dstlen */
 		return dst;
 	}
 	inlen = outlen = strlen(src);
