@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.94 2000/06/14 13:55:15 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.95 2000/06/19 15:15:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.94 2000/06/14 13:55:15 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.95 2000/06/19 15:15:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,6 +243,7 @@ main(int argc, char *argv[])
 	usedefault = 1;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 	hostname[0] = '\0';
+	gidcount = 0;
 
 	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv")) != -1) {
 		switch (ch) {
@@ -343,7 +344,7 @@ main(int argc, char *argv[])
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
-			lreply(530, "%s", line);
+			reply(-530, "%s", line);
 		}
 		(void) fflush(stdout);
 		(void) fclose(fd);
@@ -734,6 +735,7 @@ end_login(void)
 	pw = NULL;
 	logged_in = 0;
 	quietmessages = 0;
+	gidcount = 0;
 	curclass.type = CLASS_REAL;
 }
 
@@ -847,6 +849,7 @@ pass(const char *passwd)
 		goto bad;
 	}
 	(void) initgroups(pw->pw_name, pw->pw_gid);
+	gidcount = getgroups(sizeof(gidlist), gidlist);
 
 	/* open wtmp before chroot */
 	logwtmp(ttyline, pw->pw_name, remotehost);
@@ -932,7 +935,7 @@ pass(const char *passwd)
 				    pw->pw_name, pw->pw_dir);
 				goto bad;
 			} else
-				lreply(230,
+				reply(-230,
 				    "No directory! Logging in with home=/");
 		} else
 			home = pw->pw_dir;
@@ -993,7 +996,7 @@ pass(const char *passwd)
 void
 retrieve(char *argv[], const char *name)
 {
-	FILE *fin = NULL, *dout;
+	FILE *fin, *dout;
 	struct stat st;
 	int (*closefunc)(FILE *) = NULL;
 	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
@@ -1004,6 +1007,7 @@ retrieve(char *argv[], const char *name)
 	isconversion = isdata = isls = log = 0;
 	tdp = NULL;
 	dispname = name;
+	fin = dout = NULL;
 	if (argv == NULL) {
 		log = 1;
 		isdata = 1;
@@ -1075,10 +1079,10 @@ retrieve(char *argv[], const char *name)
 	(void)gettimeofday(&start, NULL);
 	sendrv = send_data(fin, dout, st.st_blksize, isdata);
 	(void)gettimeofday(&finish, NULL);
-	(void) fclose(dout);
+	(void) fclose(dout);		/* close now to affect timing stats */
+	dout = NULL;
 	timersub(&finish, &start, &td);
 	tdp = &td;
-	data = -1;
  done:
 	if (log)
 		logcmd("get", byte_count, name, NULL, tdp, NULL);
@@ -1088,7 +1092,7 @@ retrieve(char *argv[], const char *name)
 		struct stat sb;
 
 		if (!isls && argv != NULL && closerv != 0) {
-			lreply(226,
+			reply(-226,
 			    "Command returned an exit status of %d",
 			    closerv);
 			if (isconversion)
@@ -1101,12 +1105,12 @@ retrieve(char *argv[], const char *name)
 		    ((err = fdopen(stderrfd, "r")) != NULL)) {
 			char *cp, line[LINE_MAX];
 
-			lreply(226, "Command error messages:");
+			reply(-226, "Command error messages:");
 			rewind(err);
 			while (fgets(line, sizeof(line), err) != NULL) {
 				if ((cp = strchr(line, '\n')) != NULL)
 					*cp = '\0';
-				lreply(0, "  %s", line);
+				reply(0, "  %s", line);
 			}
 			(void) fflush(stdout);
 			(void) fclose(err);
@@ -1115,9 +1119,7 @@ retrieve(char *argv[], const char *name)
 		reply(226, "Transfer complete.");
 	}
  cleanupretrieve:
-	if (pdata >= 0)
-		(void)close(pdata);
-	pdata = -1;
+	closedataconn(dout);
 	if (stderrfd != -1)
 		(void)close(stderrfd);
 	if (isconversion)
@@ -1133,6 +1135,7 @@ store(const char *name, const char *mode, int unique)
 	struct timeval start, finish, td, *tdp;
 	char *desc;
 
+	din = NULL;
 	desc = (*mode == 'w') ? "put" : "append";
 	if (unique && stat(name, &st) == 0 &&
 	    (name = gunique(name)) == NULL) {
@@ -1190,17 +1193,15 @@ store(const char *name, const char *mode, int unique)
 			reply(226, "Transfer complete.");
 	}
 	(void)gettimeofday(&finish, NULL);
-	(void) fclose(din);
+	(void) fclose(din);		/* close now to affect timing stats */
+	din = NULL;
 	timersub(&finish, &start, &td);
 	tdp = &td;
-	data = -1;
  done:
 	logcmd(desc, byte_count, name, NULL, tdp, NULL);
 	(*closefunc)(fout);
  cleanupstore:
-	if (pdata >= 0)
-		(void)close(pdata);
-	pdata = -1;
+	closedataconn(din);
 }
 
 static FILE *
@@ -1336,6 +1337,18 @@ dataconn(const char *name, off_t size, const char *mode)
 	reply(150, "Opening %s mode data connection for '%s'%s.",
 	     type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);
 	return (file);
+}
+
+void
+closedataconn(FILE *fd)
+{
+
+	if (fd != NULL)
+		(void)fclose(fd);
+	data = -1;
+	if (pdata >= 0)
+		(void)close(pdata);
+	pdata = -1;
 }
 
 /*
@@ -1605,10 +1618,10 @@ receive_data(FILE *instr, FILE *outstr)
 		if (ferror(outstr))
 			goto file_err;
 		if (bare_lfs) {
-			lreply(226,
+			reply(-226,
 			    "WARNING! %d bare linefeeds received in ASCII mode",
 			    bare_lfs);
-			lreply(0, "File may not have transferred correctly.");
+			reply(0, "File may not have transferred correctly.");
 		}
 		rval = 0;
 		goto cleanup_recv_data;
@@ -1649,50 +1662,50 @@ statcmd(void)
 
 	a = p = (u_char *)NULL;
 
-	lreply(211, "%s FTP server status:", hostname);
-	lreply(0, "Version: %s", FTPD_VERSION);
+	reply(-211, "%s FTP server status:", hostname);
+	reply(0, "Version: %s", FTPD_VERSION);
 	ntop_buf[0] = '\0';
 	if (!getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
 	    && strcmp(remotehost, ntop_buf) != 0) {
-		lreply(0, "Connected to %s (%s)", remotehost, ntop_buf);
+		reply(0, "Connected to %s (%s)", remotehost, ntop_buf);
 	} else
-		lreply(0, "Connected to %s", remotehost);
+		reply(0, "Connected to %s", remotehost);
 	if (logged_in) {
 		if (curclass.type == CLASS_GUEST)
-			lreply(0, "Logged in anonymously");
+			reply(0, "Logged in anonymously");
 		else
-			lreply(0, "Logged in as %s%s", pw->pw_name,
+			reply(0, "Logged in as %s%s", pw->pw_name,
 			    curclass.type == CLASS_CHROOT ? " (chroot)" : "");
 	} else if (askpasswd)
-		lreply(0, "Waiting for password");
+		reply(0, "Waiting for password");
 	else
-		lreply(0, "Waiting for user name");
-	lreply(-2, "    TYPE: %s", typenames[type]);
+		reply(0, "Waiting for user name");
+	cprintf(stdout, "    TYPE: %s", typenames[type]);
 	if (type == TYPE_A || type == TYPE_E)
-		lreply(-2, ", FORM: %s", formnames[form]);
+		cprintf(stdout, ", FORM: %s", formnames[form]);
 	if (type == TYPE_L) {
 #if NBBY == 8
-		lreply(-2, " %d", NBBY);
+		cprintf(stdout, " %d", NBBY);
 #else
 			/* XXX: `bytesize' needs to be defined in this case */
-		lreply(-2, " %d", bytesize);
+		cprintf(stdout, " %d", bytesize);
 #endif
 	}
-	lreply(-1, "; STRUcture: %s; transfer MODE: %s",
+	cprintf(stdout, "; STRUcture: %s; transfer MODE: %s\r\n",
 	    strunames[stru], modenames[mode]);
 	ispassive = 0;
 	if (data != -1) {
-  		lreply(0, "Data connection open");
+  		reply(0, "Data connection open");
 		su = NULL;
 	} else if (pdata != -1) {
-		lreply(0, "in Passive mode");
+		reply(0, "in Passive mode");
 		su = (union sockunion *)&pasv_addr;
 		ispassive = 1;
 		goto printaddr;
 	} else if (usedefault == 0) {
 		if (epsvall) {
-			lreply(0, "EPSV only mode (EPSV ALL)");
+			reply(0, "EPSV only mode (EPSV ALL)");
 			goto epsvonly;
 		}
 		su = (union sockunion *)&data_dest;
@@ -1702,7 +1715,7 @@ statcmd(void)
 			a = (u_char *) &su->su_sin.sin_addr;
 			p = (u_char *) &su->su_sin.sin_port;
 #define UC(b) (((int) b) & 0xff)
-			lreply(0, "%s (%d,%d,%d,%d,%d,%d)",
+			reply(0, "%s (%d,%d,%d,%d,%d,%d)",
 				ispassive ? "PASV" : "PORT" ,
 				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				UC(p[0]), UC(p[1]));
@@ -1731,11 +1744,11 @@ statcmd(void)
 			break;
 		}
 		if (af) {
-			lreply(-2, "    %s (%d,%d",
+			cprintf(stdout, "    %s (%d,%d",
 			    ispassive ? "LPSV" : "LPRT", af, alen);
 			for (i = 0; i < alen; i++)
-				lreply(-2, ",%d", UC(a[i]));
-			lreply(-1, ",%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
+				cprintf(stdout, ",%d", UC(a[i]));
+			cprintf(stdout, ",%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
 #undef UC
 		}
 	    }
@@ -1757,88 +1770,86 @@ statcmd(void)
 			if (getnameinfo((struct sockaddr *)su, su->su_len,
 				    ntop_buf, sizeof(ntop_buf), NULL, 0,
 					NI_NUMERICHOST) == 0) {
-				lreply(0, "%s (|%d|%s|%d|)",
+				reply(0, "%s (|%d|%s|%d|)",
 				    ispassive ? "EPSV" : "EPRT",
 				    af, ntop_buf, ntohs(su->su_port));
 			}
 		}
 	} else
-		lreply(0, "No data connection");
+		reply(0, "No data connection");
 
 	if (logged_in) {
-		lreply(0, "Data sent:        %qd byte%s in %qd file%s",
+		reply(0, "Data sent:        %qd byte%s in %qd file%s",
 		    (qdfmt_t)total_data_out, PLURAL(total_data_out),
 		    (qdfmt_t)total_files_out, PLURAL(total_files_out));
-		lreply(0, "Data received:    %qd byte%s in %qd file%s",
+		reply(0, "Data received:    %qd byte%s in %qd file%s",
 		    (qdfmt_t)total_data_in, PLURAL(total_data_in),
 		    (qdfmt_t)total_files_in, PLURAL(total_files_in));
-		lreply(0, "Total data:       %qd byte%s in %qd file%s",
+		reply(0, "Total data:       %qd byte%s in %qd file%s",
 		    (qdfmt_t)total_data, PLURAL(total_data),
 		    (qdfmt_t)total_files, PLURAL(total_files));
 	}
 	otbi = total_bytes_in;
 	otbo = total_bytes_out;
 	otb = total_bytes;
-	lreply(0, "Traffic sent:     %qd byte%s in %qd transfer%s",
+	reply(0, "Traffic sent:     %qd byte%s in %qd transfer%s",
 	    (qdfmt_t)otbo, PLURAL(otbo),
 	    (qdfmt_t)total_xfers_out, PLURAL(total_xfers_out));
-	lreply(0, "Traffic received: %qd byte%s in %qd transfer%s",
+	reply(0, "Traffic received: %qd byte%s in %qd transfer%s",
 	    (qdfmt_t)otbi, PLURAL(otbi),
 	    (qdfmt_t)total_xfers_in, PLURAL(total_xfers_in));
-	lreply(0, "Total traffic:    %qd byte%s in %qd transfer%s",
+	reply(0, "Total traffic:    %qd byte%s in %qd transfer%s",
 	    (qdfmt_t)otb, PLURAL(otb),
 	    (qdfmt_t)total_xfers, PLURAL(total_xfers));
 
 	if (logged_in) {
 		struct ftpconv *cp;
 
-		lreply(0, "");
-		lreply(0, "Class: %s, type: %s",
+		reply(0, "");
+		reply(0, "Class: %s, type: %s",
 		    curclass.classname, CURCLASSTYPE);
-		lreply(0, "Check PORT/LPRT commands: %sabled",
+		reply(0, "Check PORT/LPRT commands: %sabled",
 		    curclass.checkportcmd ? "en" : "dis");
 		if (curclass.display != NULL)
-			lreply(0, "Display file: %s", curclass.display);
+			reply(0, "Display file: %s", curclass.display);
 		if (curclass.notify != NULL)
-			lreply(0, "Notify fileglob: %s", curclass.notify);
-		lreply(0, "Idle timeout: %d, maximum timeout: %d",
+			reply(0, "Notify fileglob: %s", curclass.notify);
+		reply(0, "Idle timeout: %d, maximum timeout: %d",
 		    curclass.timeout, curclass.maxtimeout);
-		lreply(0, "Current connections: %d", connections);
+		reply(0, "Current connections: %d", connections);
 		if (curclass.limit == -1)
-			lreply(0, "Maximum connections: unlimited");
+			reply(0, "Maximum connections: unlimited");
 		else
-			lreply(0, "Maximum connections: %d", curclass.limit);
+			reply(0, "Maximum connections: %d", curclass.limit);
 		if (curclass.limitfile)
-			lreply(0, "Connection limit exceeded file: %s",
+			reply(0, "Connection limit exceeded file: %s",
 			    curclass.limitfile);
 		if (curclass.motd != NULL)
-			lreply(0, "MotD file: %s", curclass.motd);
-		lreply(0,
+			reply(0, "MotD file: %s", curclass.motd);
+		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
 		    curclass.modify ? "en" : "dis");
-		lreply(0,
-	    "Upload commands (APPE, STOR, STOU): %sabled",
+		reply(0, "Upload commands (APPE, STOR, STOU): %sabled",
 		    curclass.upload ? "en" : "dis");
 		if (curclass.portmin && curclass.portmax)
-			lreply(0, "PASV port range: %d - %d",
+			reply(0, "PASV port range: %d - %d",
 			    curclass.portmin, curclass.portmax);
 		if (curclass.rateget)
-			lreply(0, "Rate get limit: %d bytes/sec",
+			reply(0, "Rate get limit: %d bytes/sec",
 			    curclass.rateget);
 		else
-			lreply(0, "Rate get limit: disabled");
+			reply(0, "Rate get limit: disabled");
 		if (curclass.rateput)
-			lreply(0, "Rate put limit: %d bytes/sec",
+			reply(0, "Rate put limit: %d bytes/sec",
 			    curclass.rateput);
 		else
-			lreply(0, "Rate put limit: disabled");
-		lreply(0, "Umask: %.04o", curclass.umask);
+			reply(0, "Rate put limit: disabled");
+		reply(0, "Umask: %.04o", curclass.umask);
 		for (cp = curclass.conversions; cp != NULL; cp=cp->next) {
 			if (cp->suffix == NULL || cp->types == NULL ||
 			    cp->command == NULL)
 				continue;
-			lreply(0,
-			    "Conversion: %s [%s] disable: %s, command: %s",
+			reply(0, "Conversion: %s [%s] disable: %s, command: %s",
 			    cp->suffix, cp->types, cp->disable, cp->command);
 		}
 	}
@@ -1858,8 +1869,11 @@ fatal(const char *s)
 
 /*
  * reply() --
- *	display the final line of a reply, with a trailing CRLF
- *	i.e, n + " " + fmt + CRLF
+ *	depending on the value of n, display fmt with a trailing CRLF and
+ *	prefix of:
+ *	n < -1		prefix the message with abs(n) + "-"	(initial line)
+ *	n == 0		prefix the message with 4 spaces	(middle lines)
+ *	n >  0		prefix the message with n + " "		(final line)
  */
 void
 reply(int n, const char *fmt, ...)
@@ -1869,53 +1883,19 @@ reply(int n, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	b = 0;
-	b += printf("%d ", n);
-	b += vprintf(fmt, ap);
-	b += printf("\r\n");
+	if (n == 0)
+		cprintf(stdout, "    ");
+	else if (n < 0)
+		cprintf(stdout, "%d-", -n);
+	else
+		cprintf(stdout, "%d ", n);
+	b = vprintf(fmt, ap);
 	total_bytes += b;
 	total_bytes_out += b;
+	cprintf(stdout, "\r\n");
 	(void)fflush(stdout);
 	if (debug) {
-		syslog(LOG_DEBUG, "<--- %d ", n);
-		vsyslog(LOG_DEBUG, fmt, ap);
-	}
-}
-
-/*
- * lreply() --
- *	depending on the value of n, display a line with a trailing CRLF:
- *	n == -2		freeform text, but no trailing CRLF
- *	n == -1		freeform text
- *	n ==  0		prefix the message with 4 spaces
- *	n  >  0		prefix the message with n + "-"
- */
-void
-lreply(int n, const char *fmt, ...)
-{
-	off_t b;
-	va_list ap;
-
-	va_start(ap, fmt);
-	b = 0;
-	switch (n) {
-		case 0:
-			b += printf("    ");
-		case -1:
-		case -2:
-			break;
-		default:
-			b += printf("%d-", n);
-			break;
-	}
-	b += vprintf(fmt, ap);
-	if (n != -2)
-		b += printf("\r\n");
-	total_bytes += b;
-	total_bytes_out += b;
-	if (n != -2)
-		(void)fflush(stdout);
-	if (debug && n >= 0) {
-		syslog(LOG_DEBUG, "<--- %d- ", n);
+		syslog(LOG_DEBUG, "<--- %d%c", abs(n), (n < 0) ? '-' : ' ');
 		vsyslog(LOG_DEBUG, fmt, ap);
 	}
 }
@@ -2290,15 +2270,7 @@ send_file_list(const char *whichf)
 				goto out;
 			}
 			perror_reply(550, whichf);
-			if (dout != NULL) {
-				(void) fclose(dout);
-				transflag = 0;
-				data = -1;
-				if (pdata >= 0)
-					(void)close(pdata);
-				pdata = -1;
-			}
-			goto out;
+			goto cleanup_send_file_list;
 		}
 
 		if (S_ISREG(st.st_mode)) {
@@ -2368,13 +2340,9 @@ send_file_list(const char *whichf)
 	else
 		reply(226, "Transfer complete.");
 
+ cleanup_send_file_list:
 	transflag = 0;
-	if (dout != NULL)
-		(void) fclose(dout);
-	else if (pdata >= 0)
-		(void)close(pdata);
-	data = -1;
-	pdata = -1;
+	closedataconn(dout);
  out:
 	total_xfers++;
 	total_xfers_out++;
@@ -2460,4 +2428,20 @@ xstrdup(const char *s)
 		fatal("Local resource failure: malloc");
 		/* NOTREACHED */
 	return (new);
+}
+
+/*
+ * As per fprintf(), but increment total_bytes and total_bytes_out,
+ * by the appropriate amount.
+ */
+void
+cprintf(FILE *fd, const char *fmt, ...)
+{
+	off_t b;
+	va_list ap;
+
+	va_start(ap, fmt);
+	b = vfprintf(fd, fmt, ap);
+	total_bytes += b;
+	total_bytes_out += b;
 }
