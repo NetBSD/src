@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.3 2002/11/30 06:18:54 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.4 2002/12/01 12:09:56 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.3 2002/11/30 06:18:54 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.4 2002/12/01 12:09:56 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -831,7 +831,7 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 		     abuf->ab_length));
 
 #ifdef SBP2_DEBUG
-        if (sbp2debug > 2) {
+        if ((sbp2debug > 3) && orb->lun) {
 		orb->lun->status.ab_addr = 
 		    orb->lun->cmdreg + SBP2_CMDREG_AGENT_STATE;
 		orb->lun->status.ab_cb = sbp2_agent_status;
@@ -990,7 +990,7 @@ sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 	simple_lock(&orb->orb_lock);
 
 	addr = orb->data_map.laddr;
-	offset = orb->data_map.fwaddr - abuf->ab_addr;
+	offset = abuf->ab_addr - orb->data_map.fwaddr;
 	switch (abuf->ab_tcode) {
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 		memcpy(addr + offset, abuf->ab_data, abuf->ab_retlen);
@@ -1102,10 +1102,10 @@ sbp2_free_orb(struct sbp2_orb *orb)
 {
 	simple_lock(&orb->orb_lock);
 	if (orb->data_map.laddr) {
-		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
-		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
+		if (0) orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
+		if (0) sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
 	}
-	sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
+	if (0) sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
 
 	simple_lock(&sbp2_freeorbs_lock);
 	memset(orb->cmd.ab_data, 0, SBP2_MAX_ORB);
@@ -1130,7 +1130,8 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 	unsigned char bit;
 	
 	size = datalen / SBP_DATA_BLOCK_SIZE;
-	size++;
+	if (datalen % SBP_DATA_BLOCK_SIZE)
+		size++;
 
 	map->laddr = data;
 	map->size = datalen;
@@ -1160,6 +1161,8 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 	}
 
 	/* Gets a little complicated to handle crossing bytes on the ends. */
+	
+	/* Handle the bits on the front end if they start in the middle */
 	if (startbit) {
 		if (size < CHAR_BIT) 
 			count = CHAR_BIT - (size - 1);
@@ -1172,6 +1175,8 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 		}
 		startbyte++;
 	}
+
+	/* Allocate bytes at a time */
 	if (size) {
 		for (byte = startbyte; byte < (size / CHAR_BIT); byte++) {
 			for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
@@ -1180,6 +1185,7 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 				sbp2->map->datamap[byte] |= bit;
 			}
 		}
+		/* If any bits are left allocate them out of the next byte */
 		if (size) {
 			for (bitpos = 0; bitpos < size; bitpos++) {
 				bit = 0x1 << bitpos;
@@ -1187,6 +1193,10 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 			}
 		}
 	}
+
+	sbp2->map->next_data = startbyte;
+
+	/* Adjust back one if the bits started 1 byte back */
 	if (startbit)
 		startbyte--;
 	map->fwaddr = SBP_DATA_BEG +
