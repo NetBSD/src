@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.2 2003/12/04 13:05:17 keihan Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.3 2003/12/10 00:22:29 lonewolf Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.2 2003/12/04 13:05:17 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.3 2003/12/10 00:22:29 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.2 2003/12/04 13:05:17 keihan Exp $")
 struct pckbc_hpc_softc {
 	struct pckbc_softc sc_pckbc;
 
-	int             sc_irq[PCKBC_NSLOTS];
+	int	sc_irq;
+	int	sc_hasintr;
 };
 
 static int      pckbc_hpc_match(struct device *, struct cfdata *, void *);
 static void     pckbc_hpc_attach(struct device *, struct device *, void *);
-void            pckbc_hpc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static void     pckbc_hpc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 CFATTACH_DECL(pckbc_hpc, sizeof(struct pckbc_hpc_softc),
 	      pckbc_hpc_match, pckbc_hpc_attach, NULL, NULL);
@@ -88,25 +89,34 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
 
-	msc->sc_irq[PCKBC_KBD_SLOT] =
-		msc->sc_irq[PCKBC_AUX_SLOT] = haa->ha_irq;
+	msc->sc_irq = haa->ha_irq;
+
+	msc->sc_hasintr = 0;
 
 	sc->intr_establish = pckbc_hpc_intr_establish;
 
-	/* XXX should be bus_space_map() */
-	if (bus_space_subregion(haa->ha_st, haa->ha_sh,
-				haa->ha_devoff + KBDATAP, 1, &ioh_d) ||
-	    bus_space_subregion(haa->ha_st, haa->ha_sh,
-				haa->ha_devoff + KBCMDP, 1, &ioh_c))
-		panic("pckbc_attach: couldn't map");
+	/* XXX Ugly hack & kludge XXX */
+	if (pckbc_is_console(haa->ha_st, MIPS_KSEG1_TO_PHYS(haa->ha_sh +
+	    haa->ha_devoff))) {
+		t = &pckbc_consdata;
+		pckbc_console_attached = 1;
+	} else {
+		/* XXX should be bus_space_map() */
+		if (bus_space_subregion(haa->ha_st, haa->ha_sh,
+					haa->ha_devoff + KBDATAP, 1, &ioh_d) ||
+		    bus_space_subregion(haa->ha_st, haa->ha_sh,
+					haa->ha_devoff + KBCMDP, 1, &ioh_c))
+			panic("pckbc_hpc_attach: couldn't map");
 
-	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK | M_ZERO);
-	t->t_iot = haa->ha_st;
-	t->t_ioh_d = ioh_d;
-	t->t_ioh_c = ioh_c;
-	t->t_addr = haa->ha_sh;
-	t->t_cmdbyte = KC8_CPU;	/* Enable ports */
-	callout_init(&t->t_cleanup);
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		t->t_iot = haa->ha_st;
+		t->t_ioh_d = ioh_d;
+		t->t_ioh_c = ioh_c;
+		t->t_addr = haa->ha_sh;
+		t->t_cmdbyte = KC8_CPU;	/* Enable ports */
+		callout_init(&t->t_cleanup);
+	}
 
 	t->t_sc = sc;
 	sc->id = t;
@@ -117,8 +127,6 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 	pckbc_attach(sc);
 }
 
-/* XXX */
-
 /*
  * glue code to support old console code with the
  * mi keyboard controller driver
@@ -126,13 +134,21 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 int
 pckbc_machdep_cnattach(pckbc_tag_t kbctag, pckbc_slot_t kbcslot)
 {
-
 	return (ENXIO);
 }
 
-void
+static void
 pckbc_hpc_intr_establish(struct pckbc_softc * sc, pckbc_slot_t slot)
 {
+	struct pckbc_hpc_softc *msc = (void *) sc;
 
-	cpu_intr_establish(msc->sc_irq, 0, pckbcintr, sc);
+	if (msc->sc_hasintr)
+		return;
+
+	if (cpu_intr_establish(msc->sc_irq, IPL_TTY, pckbcintr, sc) == NULL) {
+		printf("%s: unable to establish interrupt for %s slot\n",
+		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+	} else {
+		msc->sc_hasintr = 1;
+	}
 }
