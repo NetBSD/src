@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.12 2002/05/14 06:18:52 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.13 2002/05/14 06:40:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.12 2002/05/14 06:18:52 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.13 2002/05/14 06:40:33 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -55,12 +55,6 @@ __RCSID("$NetBSD: sun68k.c,v 1.12 2002/05/14 06:18:52 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if HAVE_CONFIG_H
-#include "../../sys/sys/bootblock.h"
-#else
-#include <sys/bootblock.h>
-#endif
 
 #include "installboot.h"
 
