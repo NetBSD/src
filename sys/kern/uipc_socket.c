@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.100 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.101 2004/05/01 02:24:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.100 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.101 2004/05/01 02:24:38 matt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -116,6 +116,10 @@ struct evcnt sosend_kvalimit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 
 #define	SOSEND_COUNTER_INCR(ev)		(ev)->ev_count++
 
+EVCNT_ATTACH_STATIC(sosend_loan_big);
+EVCNT_ATTACH_STATIC(sosend_copy_big);
+EVCNT_ATTACH_STATIC(sosend_copy_small);
+EVCNT_ATTACH_STATIC(sosend_kvalimit);
 #else
 
 #define	SOSEND_COUNTER_INCR(ev)		/* nothing */
@@ -130,12 +134,6 @@ soinit(void)
 	if (sb_max_set(sb_max))
 		panic("bad initial sb_max value: %lu\n", sb_max);
 
-#ifdef SOSEND_COUNTERS
-	evcnt_attach_static(&sosend_loan_big);
-	evcnt_attach_static(&sosend_copy_big);
-	evcnt_attach_static(&sosend_copy_small);
-	evcnt_attach_static(&sosend_kvalimit);
-#endif /* SOSEND_COUNTERS */
 }
 
 #ifdef SOSEND_NO_LOAN
