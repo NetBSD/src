@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.17 2000/07/03 02:51:43 matt Exp $	*/
+/*	$NetBSD: write.c,v 1.18 2001/01/03 13:14:26 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.17 2000/07/03 02:51:43 matt Exp $");
+__RCSID("$NetBSD: write.c,v 1.18 2001/01/03 13:14:26 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: write.c,v 1.17 2000/07/03 02:51:43 matt Exp $");
 #include <signal.h>
 #include <time.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <utmp.h>
@@ -114,8 +115,8 @@ main(argc, argv)
 		do_write(tty, mytty, myuid);
 		break;
 	case 3:
-		if (!strncmp(argv[2], "/dev/", 5))
-			argv[2] += 5;
+		if (!strncmp(argv[2], _PATH_DEV, strlen(_PATH_DEV)))
+			argv[2] += strlen(_PATH_DEV);
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
@@ -239,7 +240,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 	struct stat s;
 	char path[MAXPATHLEN];
 
-	(void)snprintf(path, sizeof path, "/dev/%s", tty);
+	(void)snprintf(path, sizeof path, _PATH_DEV "%s", tty);
 	if (stat(path, &s) < 0) {
 		if (showerror)
 			warn("%s", path);
@@ -270,7 +271,7 @@ do_write(tty, mytty, myuid)
 			login = pwd->pw_name;
 		else	login = "???";
 	}
-	(void)snprintf(path, sizeof path, "/dev/%s", tty);
+	(void)snprintf(path, sizeof path, _PATH_DEV "%s", tty);
 	if ((freopen(path, "w", stdout)) == NULL)
 		err(1, "%s", path);
 
