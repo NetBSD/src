@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.2 1996/01/30 22:35:11 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.3 1996/02/19 04:34:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -185,7 +185,7 @@ zstty_attach(parent, self, aux)
 	dev_t dev;
 
 	cf = zst->zst_dev.dv_cfdata;
-	tty_unit = cf->cf_unit;
+	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = zst;
@@ -224,7 +224,6 @@ zstty_attach(parent, self, aux)
 	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	tp->t_sc = zst; 	/* XXX - Quick access! */
 
 	/*
 	 * Hardware init
@@ -540,7 +539,7 @@ zsstart(tp)
 	register struct zs_chanstate *cs;
 	register int s, nch;
 
-	zst = tp->t_sc;
+	zst = zsttycd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = spltty();
@@ -603,7 +602,7 @@ zsstop(tp, flag)
 	register struct zs_chanstate *cs;
 	register int s;
 
-	zst = tp->t_sc;
+	zst = zsttycd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = splzs();
@@ -635,7 +634,7 @@ zsparam(tp, t)
 	register int s, bps, cflag, tconst;
 	u_char tmp3, tmp4, tmp5, reset;
 
-	zst = tp->t_sc;
+	zst = zsttycd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	/*
@@ -780,6 +779,10 @@ zs_modem(zst, onoff)
 /****************************************************************
  * Interface to the lower layer (zscc)
  ****************************************************************/
+
+/*
+ * XXX: need to do input flow-control to avoid ring overrun.
+ */
 
 static int
 zstty_rxint(cs)
