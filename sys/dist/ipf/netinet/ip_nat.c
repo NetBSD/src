@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.2 2004/12/16 16:37:52 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -4631,7 +4631,7 @@ u_short *csump;
 			if (cp + 1 >= ep)
 				break;
 			advance = cp[1];
-			if (cp + advance > ep)
+			if ((cp + advance > ep) || (advance <= 0))
 				break;
 			switch (opt)
 			{
