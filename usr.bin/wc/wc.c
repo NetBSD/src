@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wc.c,v 1.4 1993/08/17 00:37:11 jtc Exp $";
+static char rcsid[] = "$Id: wc.c,v 1.5 1993/08/27 22:31:06 jtc Exp $";
 #endif /* not lint */
 
 /* wc line, word and char count */
@@ -52,15 +52,18 @@ static char rcsid[] = "$Id: wc.c,v 1.4 1993/08/17 00:37:11 jtc Exp $";
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define DEL	0177			/* del char */
 #define NL	012			/* newline char */
 #define SPACE	040			/* space char */
 #define TAB	011			/* tab char */
 
+static void	cnt();
 static long	tlinect, twordct, tcharct;
 static int	doline, doword, dochar;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -122,6 +125,7 @@ main(argc, argv)
 	exit(0);
 }
 
+static void
 cnt(file)
 	char *file;
 {
@@ -146,7 +150,7 @@ cnt(file)
 			 * the word count requires some logic.
 			 */
 			if (doline) {
-				while(len = read(fd, buf, MAXBSIZE)) {
+				while((len = read(fd, buf, MAXBSIZE)) != 0) {
 					if (len == -1) {
 						fprintf (stderr, "wc: %s: %s\n",
 							file, strerror(errno));
@@ -196,7 +200,7 @@ cnt(file)
 	else
 		fd = 0;
 	/* do it the hard way... */
-	for (gotsp = 1; len = read(fd, buf, MAXBSIZE);) {
+	for (gotsp = 1; (len = read(fd, buf, MAXBSIZE));) {
 		if (len == -1) {
 			fprintf (stderr, "wc: %s: %s\n", file, strerror(errno));
 			exit(1);

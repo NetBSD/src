@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfifo.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: mkfifo.c,v 1.3 1993/08/01 18:11:11 mycroft Exp $";
+static char rcsid[] = "$Id: mkfifo.c,v 1.4 1993/08/27 22:30:31 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,9 +49,11 @@ static char rcsid[] = "$Id: mkfifo.c,v 1.3 1993/08/01 18:11:11 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 
+static void usage();
 extern void *setmode();
 extern mode_t getmode();
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -95,6 +97,7 @@ main(argc, argv)
 	exit(exitval);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: mkfifo [-m mode] fifoname ...\n");

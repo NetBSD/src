@@ -42,11 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cut.c	5.4 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: cut.c,v 1.4 1993/08/16 22:44:51 jtc Exp $";
+static char rcsid[] = "$Id: cut.c,v 1.5 1993/08/27 22:30:16 jtc Exp $";
 #endif /* not lint */
 
-#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <ctype.h>
 
 int	cflag;
@@ -55,6 +57,7 @@ int	dflag;
 int	fflag;
 int	sflag;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;

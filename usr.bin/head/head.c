@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: head.c,v 1.3 1993/08/01 18:14:54 mycroft Exp $";
+static char rcsid[] = "$Id: head.c,v 1.4 1993/08/27 22:30:27 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ static void usage ();
  * Bill Joy UCB August 24, 1977
  */
 
+int
 main(argc, argv)
 	int	argc;
 	char	**argv;

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)whois.c	5.11 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: whois.c,v 1.3 1993/08/01 18:02:49 mycroft Exp $";
+static char rcsid[] = "$Id: whois.c,v 1.4 1993/08/27 22:31:09 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,9 +47,15 @@ static char rcsid[] = "$Id: whois.c,v 1.3 1993/08/01 18:02:49 mycroft Exp $";
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define	NICHOST	"whois.internic.net"
 
+static void usage();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -125,6 +131,7 @@ main(argc, argv)
 	exit(0);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: whois [-h hostname] name ...\n");

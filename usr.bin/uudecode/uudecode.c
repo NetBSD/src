@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uudecode.c	5.10 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uudecode.c,v 1.2 1993/08/01 18:03:42 mycroft Exp $";
+static char rcsid[] = "$Id: uudecode.c,v 1.3 1993/08/27 22:30:54 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -47,15 +47,18 @@ static char rcsid[] = "$Id: uudecode.c,v 1.2 1993/08/01 18:03:42 mycroft Exp $";
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
+static int decode();
+static void usage();
 char *filename;
 
 /* ARGSUSED */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
 	int rval;
 
 	if (*++argv) {
@@ -76,6 +79,7 @@ main(argc, argv)
 	exit(rval);
 }
 
+static int
 decode()
 {
 	extern int errno;
@@ -174,6 +178,7 @@ decode()
 	return(0);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: uudecode [file ...]\n");

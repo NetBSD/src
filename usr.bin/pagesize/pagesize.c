@@ -39,9 +39,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pagesize.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: pagesize.c,v 1.3 1993/08/01 18:10:22 mycroft Exp $";
+static char rcsid[] = "$Id: pagesize.c,v 1.4 1993/08/27 22:30:37 jtc Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int
 main()
 {
 	printf("%d\n", getpagesize());
