@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1995/03/23 08:46:35 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 1997/02/17 15:18:41 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	rcp
 SRCS=	rcp.c util.c
-BINOWN=	root
-BINMODE=4555
 #INSTALLFLAGS=-fschg
 
 .if defined(KERBEROS)
