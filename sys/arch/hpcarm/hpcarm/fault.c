@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.3 2001/03/15 06:10:39 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.4 2001/03/21 14:40:00 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -620,6 +620,7 @@ cowfault(va)
 	vaddr_t va;
 {
 	struct vmspace *vm;
+	int error;
 
 	if (va >= VM_MAXUSER_ADDRESS)
 		return (EFAULT);
