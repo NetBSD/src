@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.7 2001/02/25 23:59:48 reinoud Exp $	*/
+/*	$NetBSD: iomd.c,v 1.8 2001/03/02 01:46:57 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -91,8 +91,8 @@ struct cfattach iomd_ca = {
 
 extern struct bus_space iomd_bs_tag;
 
-int iomd_found;
-int *iomd_base	= (int *) IOMD_BASE;
+int       iomd_found;
+u_int32_t iomd_base = IOMD_BASE;
 
 /* Declare prototypes */
 

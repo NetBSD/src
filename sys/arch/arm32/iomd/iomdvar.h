@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdvar.h,v 1.2 2001/02/27 20:23:11 reinoud Exp $	*/
+/*	$NetBSD: iomdvar.h,v 1.3 2001/03/02 01:46:57 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -119,5 +119,6 @@ union iomd_attach_args {
 /*
  * IOMD_BASE register variable
  */
-extern int *iomd_base;
+extern u_int32_t iomd_base;
+
 /* End of iomdvar.h */
