@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.158 2002/01/17 09:56:44 joda Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.159 2002/01/30 11:24:21 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp 
+ *	NetBSD: pcmciadevs,v 1.160 2002/01/30 11:20:23 is Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -90,6 +90,7 @@
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
+#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -97,6 +98,7 @@
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
 #define	PCMCIA_VENDOR_DUAL	0x890f	/* Dual */
+#define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
 #define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
@@ -108,9 +110,7 @@
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
 #define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
-#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
-#define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 
 /*
  * List of known products.  Grouped by vendor, sorted by number within the
@@ -645,6 +645,7 @@
 #define	PCMCIA_VENDOR_GEMTEK	-1	/* Gem Tek */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_LANTECH	-1	/* Lantech Computer Company */
 #define	PCMCIA_VENDOR_NAKAGAWAMETAL	-1	/* NAKAGAWA METAL */
 #define	PCMCIA_VENDOR_NDC	-1	/* NDC */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -739,6 +740,9 @@
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
+#define	PCMCIA_CIS_LANTECH_FASTNETTX	{ "AMBIX", "AX88190", NULL, NULL }
+#define	PCMCIA_PRODUCT_LANTECH_FASTNETTX	-1
+#define	PCMCIA_STR_LANTECH_FASTNETTX	"Lantex Fastnet/TX"
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
