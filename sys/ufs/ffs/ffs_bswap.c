@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.20 2003/04/16 14:20:25 yamt Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.21 2003/10/05 17:48:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -13,11 +13,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.20 2003/04/16 14:20:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.21 2003/10/05 17:48:50 bouyer Exp $");
 #endif
 
 #if HAVE_CONFIG_H
