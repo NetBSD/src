@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.7 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.8 1998/08/13 02:11:02 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -93,7 +93,7 @@
 struct vm_page *
 uvm_pagelookup(obj, off)
 	struct uvm_object *obj;
-	vm_offset_t off;
+	vaddr_t off;
 {
 	struct vm_page *pg;
 	struct pglist *buck;

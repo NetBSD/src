@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.h,v 1.6 1994/06/29 06:48:49 cgd Exp $	*/
+/*	$NetBSD: vnode_pager.h,v 1.7 1998/08/13 02:11:09 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -49,7 +49,7 @@
 struct vnpager {
 	int		vnp_flags;	/* flags */
 	struct vnode	*vnp_vp;	/* vnode */
-	vm_size_t	vnp_size;	/* vnode current size */
+	vsize_t	vnp_size;	/* vnode current size */
 };
 typedef struct vnpager	*vn_pager_t;
 

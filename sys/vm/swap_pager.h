@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.h,v 1.7 1997/01/03 18:03:19 mrg Exp $	*/
+/*	$NetBSD: swap_pager.h,v 1.8 1998/08/13 02:11:05 eeh Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -77,7 +77,7 @@ typedef struct swblock	*sw_blk_t;
  * Swap pager private data.
  */
 struct swpager {
-	vm_size_t    sw_osize;	/* size of object we are backing (bytes) */
+	vsize_t    sw_osize;	/* size of object we are backing (bytes) */
 	int	     sw_bsize;	/* size of swap blocks (DEV_BSIZE units) */
 	int	     sw_nblocks;/* number of blocks in list (sw_blk_t units) */
 	sw_blk_t     sw_blocks;	/* pointer to list of swap blocks */
