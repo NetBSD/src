@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.10 1997/04/22 20:32:08 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.11 1997/04/30 19:47:11 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -52,7 +52,6 @@
 #include <machine/viareg.h>
 
 #include "nubus.h"
-#include "if_aereg.h"	/* For AE_VENDOR values */
 #include "if_snreg.h"
 #include "if_snvar.h"
 
@@ -87,8 +86,8 @@ sn_nubus_match(parent, cf, aux)
 		default:
 			break;
 
-		case AE_VENDOR_APPLE:
-		case AE_VENDOR_DAYNA:
+		case SN_VENDOR_APPLE:
+		case SN_VENDOR_DAYNA:
 			rv = 1;
 			break;
 		}
@@ -131,7 +130,7 @@ sn_nubus_attach(parent, self, aux)
 	sc->slotno = na->slot;
 
 	switch (sn_nb_card_vendor(na)) {
-	case AE_VENDOR_DAYNA:
+	case SN_VENDOR_DAYNA:
 		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
 		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
@@ -154,7 +153,7 @@ sn_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
-	case AE_VENDOR_APPLE:
+	case SN_VENDOR_APPLE:
 		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
 		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
@@ -216,52 +215,26 @@ static int
 sn_nb_card_vendor(na)
 	struct nubus_attach_args *na;
 {
-	int vendor;
+	int vendor = SN_VENDOR_UNKNOWN;
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
-		switch (na->drhw) {
-		case NUBUS_DRHW_APPLE_SN:
-			vendor = AE_VENDOR_APPLE;
-			break;
-		default:
-			vendor = AE_VENDOR_UNKNOWN;
-			break;
-		}
+		if (na->drhw == NUBUS_DRHW_APPLE_SN)
+			vendor = SN_VENDOR_APPLE;
 		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
-		vendor = AE_VENDOR_APPLE;
-		break;
-	case NUBUS_DRSW_ASANTE:
-		vendor = AE_VENDOR_ASANTE;
-		break;
-	case NUBUS_DRSW_FARALLON:
-		vendor = AE_VENDOR_FARALLON;
-		break;
-	case NUBUS_DRSW_FOCUS:
-		vendor = AE_VENDOR_FOCUS;
+		vendor = SN_VENDOR_APPLE;
 		break;
 	case NUBUS_DRSW_GATOR:
-		switch (na->drhw) {
-		default:
-		case NUBUS_DRHW_INTERLAN:
-			vendor = AE_VENDOR_INTERLAN;
-			break;
-		case NUBUS_DRHW_KINETICS:
-			if (strncmp(
-			    nubus_get_card_name(na->fmt), "EtherPort", 9) == 0)
-				vendor = AE_VENDOR_KINETICS;
-			else
-				vendor = AE_VENDOR_DAYNA;
-			break;
-		}
+		if (na->drhw == NUBUS_DRHW_KINETICS &&
+		    strncmp(nubus_get_card_name(na->fmt), "EtherPort", 9) != 0)
+			vendor = SN_VENDOR_DAYNA;
 		break;
 	case NUBUS_DRSW_DAYNA:
-		vendor = AE_VENDOR_DAYNA;
+		vendor = SN_VENDOR_DAYNA;
 		break;
-	default:
-		vendor = AE_VENDOR_UNKNOWN;
 	}
+
 	return vendor;
 }
