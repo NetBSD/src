@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.5 1998/08/15 04:49:50 mycroft Exp $	*/
+/*	$NetBSD: dma.c,v 1.6 1998/08/22 14:38:36 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 /* region of physical memory known to be contiguous */
 caddr_t dma_dataaddr[NDMA];
 caddr_t dma_bouncebuf[NDMA];
-vm_size_t dma_bouncebytes[NDMA];
+vsize_t dma_bouncebytes[NDMA];
 char dma_bounced[NDMA];
 
 /*
@@ -102,10 +102,11 @@ char dma_bounced[NDMA];
  */
 int
 dmarangecheck(va, length)
-	vm_offset_t va;
-	u_long length;
+	vaddr_t va;
+	vsize_t length;
 {
-	vm_offset_t phys, priorpage = 0, endva;
+	paddr_t phys, priorpage = 0;
+	vaddr_t endva;
 	u_int dma_pgmsk = ~PGOFSET;
 
 	endva = round_page(va + length);
@@ -134,12 +135,12 @@ void
 x68k_dmastart(flag, addr, nbytes, chan)
 	int flag;
 	caddr_t addr;
-	int nbytes;
+	vsize_t nbytes;
 	int chan;
 {
 	volatile struct dmac *dmac = &IODEVbase->io_dma[chan];
 
-	if (dmarangecheck((vm_offset_t)addr, nbytes)) {
+	if (dmarangecheck((vaddr_t)addr, nbytes)) {
 		dma_bouncebytes[chan] = nbytes;
 		dma_dataaddr[chan] = addr;
 		if (!(flag)) {
@@ -171,8 +172,8 @@ x68k_dmastart(flag, addr, nbytes, chan)
 void
 isa_dmadone(flags, addr, nbytes, chan)
 	int flags;
-	caddr_t addr;
-	vm_size_t nbytes;
+	vaddr_t addr;
+	vsize_t nbytes;
 	int chan;
 {
 	u_char tc;
