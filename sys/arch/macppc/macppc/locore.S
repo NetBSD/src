@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 2001/02/25 20:34:24 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 2001/03/07 08:12:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -375,5 +375,8 @@ _C_LABEL(cpu_spinup_trampoline):
 /*
  * Pull in common trap vector code.
  */
+#if defined(MULTIPROCESSOR)
+#include <powerpc/powerpc/trap_subr_mp.S>
+#else
 #include <powerpc/powerpc/trap_subr.S>
-
+#endif
