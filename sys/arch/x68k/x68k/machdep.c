@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1999/03/26 23:41:38 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1999/03/30 04:25:08 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@
 #include "opt_m060sp.h"
 #include "opt_panicbutton.h"
 #include "opt_sysv.h"
+#include "opt_extmem.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
