@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.3 1999/02/01 06:03:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.6.2.4 1999/02/03 07:55:48 cgd Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -31,7 +31,7 @@ all: ${CBIN}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	disklabel -W ${VND_CDEV}
-	newfs -m 0 -o space -i 8192 -c 92 ${VND_RDEV}
+	newfs -m 0 -o space -i 4096 -c 92 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${MINIROOT} REALCURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
