@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.69 2001/04/20 18:00:50 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.70 2001/04/26 03:10:45 ross Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center, and by Charles M. Hannum.
+ * NASA Ames Research Center, by Charles M. Hannum, and by Ross Harvey.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,12 +95,11 @@
  */
 
 #include "opt_fix_unaligned_vax_fp.h"
-#include "opt_compat_osf1.h"
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2001/04/20 18:00:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2001/04/26 03:10:45 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +117,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2001/04/20 18:00:50 thorpej Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
-#include <alpha/alpha/db_instruction.h>		/* for handle_opdec() */
+#include <alpha/alpha/db_instruction.h>
 #include <machine/userret.h>
 
-int		unaligned_fixup(unsigned long, unsigned long,
-		    unsigned long, struct proc *);
-int		handle_opdec(struct proc *p, u_int64_t *ucodep);
+static int unaligned_fixup(u_long, u_long, u_long, struct proc *);
+static int handle_opdec(struct proc *p, u_int64_t *ucodep);
 
 /*
  * Initialize the trap vectors for the current processor.
@@ -262,21 +260,16 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		goto dopanic;
 
 	case ALPHA_KENTRY_ARITH:
-		/* 
-		 * If user-land, just give a SIGFPE.  Should do
-		 * software completion and IEEE handling, if the
-		 * user has requested that.
+		/*
+		 * Resolve trap shadows, interpret FP ops requiring infinities,
+		 * NaNs, or denorms, and maintain FPCR corrections.
 		 */
 		if (user) {
-#ifdef COMPAT_OSF1
-			extern struct emul emul_osf1;
-
-			/* just punt on OSF/1.  XXX THIS IS EVIL */
-			if (p->p_emul == &emul_osf1) 
+			KERNEL_PROC_LOCK(p);
+			i = alpha_fp_complete(a0, a1, p, &ucode);
+			KERNEL_PROC_UNLOCK(p);
+			if (i == 0)
 				goto out;
-#endif
-			i = SIGFPE;
-			ucode =  a0;		/* exception summary */
 			break;
 		}
 
@@ -329,48 +322,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			break;
 
 		case ALPHA_IF_CODE_FEN:
-		    {
-			struct cpu_info *ci = curcpu();
-#if defined(MULTIPROCESSOR)
-			int s;
-#endif
-
-			/*
-			 * on exit from the kernel, if proc == fpcurproc,
-			 * FP is enabled.
-			 */
-			if (ci->ci_fpcurproc == p) {
-				printf("trap: fp disabled for fpcurproc == %p",
-				    p);
-				goto dopanic;
-			}
-	
-			if (ci->ci_fpcurproc != NULL)
-				fpusave_cpu(ci, 1);
-
-			KDASSERT(ci->ci_fpcurproc == NULL);
-
-#if defined(MULTIPROCESSOR)
-			if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-				fpusave_proc(p, 1);
-#else
-			KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
-#endif
-
-			FPCPU_LOCK(&p->p_addr->u_pcb, s);
-
-			p->p_addr->u_pcb.pcb_fpcpu = ci;
-			ci->ci_fpcurproc = p;
-
-			FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
-
-			alpha_pal_wrfen(1);
-			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
+			alpha_enable_fp(p, 0);
 			alpha_pal_wrfen(0);
-
-			p->p_md.md_flags |= MDP_FPUSED;
 			goto out;
-		    }
 
 		default:
 			printf("trap: unknown IF type 0x%lx\n", a0);
@@ -566,6 +520,50 @@ dopanic:
 #endif
 
 	panic("trap");
+}
+
+/*
+ * Set the float-point enable for the current process, and return
+ * the FPU context to the named process. If check == 0, it is an
+ * error for the named process to already be fpcurproc.
+ */
+void
+alpha_enable_fp(struct proc *p, int check)
+{
+#if defined(MULTIPROCESSOR)
+	int s;
+#endif
+	struct cpu_info *ci = curcpu();
+
+	if (check && ci->ci_fpcurproc == p) {
+		alpha_pal_wrfen(1);
+		return;
+	}
+	if (ci->ci_fpcurproc == p)
+		panic("trap: fp disabled for fpcurproc == %p", p);
+
+	if (ci->ci_fpcurproc != NULL)
+		fpusave_cpu(ci, 1);
+
+	KDASSERT(ci->ci_fpcurproc == NULL);
+
+#if defined(MULTIPROCESSOR)
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(p, 1);
+#else
+	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
+#endif
+
+	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
+	p->p_addr->u_pcb.pcb_fpcpu = ci;
+	ci->ci_fpcurproc = p;
+
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+
+	p->p_md.md_flags |= MDP_FPUSED;
+	alpha_pal_wrfen(1);
+	restorefpstate(&p->p_addr->u_pcb.pcb_fp);
 }
 
 /*
@@ -774,9 +772,6 @@ Gfloat_reg_cvt(u_long input)
 	return (result);
 }
 #endif /* FIX_UNALIGNED_VAX_FP */
-
-extern int	alpha_unaligned_print, alpha_unaligned_fix;
-extern int	alpha_unaligned_sigbus;
 
 struct unaligned_fixup_data {
 	const char *type;	/* opcode name */

@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
+/* $NetBSD: cia.c,v 1.57 2001/04/26 03:10:46 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.57 2001/04/26 03:10:46 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $");
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/sysarch.h>
+#include <machine/alpha.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -219,8 +220,7 @@ cia_init(ccp, mallocsafe)
 	 *	- It hasn't been disbled by the user,
 	 *	- it's enabled in CNFG,
 	 *	- we're implementation version ev5,
-	 *	- BWX is enabled in the CPU's capabilities mask (yes,
-	 *	  the bit is really cleared if the capability exists...)
+	 *	- BWX is enabled in the CPU's capabilities mask
 	 */
 	if ((pci_use_bwx || bus_use_bwx) &&
 	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
