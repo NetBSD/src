@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.44 1997/09/02 01:37:19 mikel Exp $	*/
+/*	$NetBSD: lpt.c,v 1.45 1997/09/27 22:44:15 is Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -50,7 +50,7 @@
  */
 
 /*
- * Device Driver for AT parallel printer port
+ * Device Driver for AT style parallel printer port
  */
 
 #include <sys/param.h>
@@ -68,14 +68,16 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/lptreg.h>
+#include <dev/ic/lptreg.h>
+#include <dev/ic/lptvar.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
 
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
+
+#define LPTDEBUG
 
 #ifndef LPTDEBUG
 #define LPRINTF(a)
@@ -84,44 +86,8 @@
 int lptdebug = 0;
 #endif
 
-struct lpt_softc {
-	struct device sc_dev;
-	void *sc_ih;
-
-	size_t sc_count;
-	struct buf *sc_inbuf;
-	u_char *sc_cp;
-	int sc_spinmax;
-	int sc_iobase;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	int sc_irq;
-	u_char sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char sc_flags;
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-	u_char sc_control;
-	u_char sc_laststatus;
-};
-
 /* XXX does not belong here */
 cdev_decl(lpt);
-
-#ifdef __BROKEN_INDIRECT_CONFIG
-int lptprobe __P((struct device *, void *, void *));
-#else
-int lptprobe __P((struct device *, struct cfdata *, void *));
-#endif
-void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((void *));
-
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptprobe, lptattach
-};
 
 struct cfdriver lpt_cd = {
 	NULL, "lpt", DV_TTY
@@ -139,150 +105,19 @@ static int not_ready __P((u_char, struct lpt_softc *));
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
-int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    bus_size_t, u_char, u_char));
-
-/*
- * Internal routine to lptprobe to do port tests of one byte value.
- */
-int
-lpt_port_test(iot, ioh, base, off, data, mask)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	bus_size_t off;
-	u_char data, mask;
-{
-	int timeout;
-	u_char temp;
-
-	data &= mask;
-	bus_space_write_1(iot, ioh, off, data);
-	timeout = 1000;
-	do {
-		delay(10);
-		temp = bus_space_read_1(iot, ioh, off) & mask;
-	} while (temp != data && --timeout);
-	LPRINTF(("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n",
-	    (unsigned)(base + off), (unsigned)data, (unsigned)temp, timeout));
-	return (temp == data);
-}
-
-/*
- * Logic:
- *	1) You should be able to write to and read back the same value
- *	   to the data port.  Do an alternating zeros, alternating ones,
- *	   walking zero, and walking one test to check for stuck bits.
- *
- *	2) You should be able to write to and read back the same value
- *	   to the control port lower 5 bits, the upper 3 bits are reserved
- *	   per the IBM PC technical reference manauls and different boards
- *	   do different things with them.  Do an alternating zeros, alternating
- *	   ones, walking zero, and walking one test to check for stuck bits.
- *
- *	   Some printers drag the strobe line down when the are powered off
- * 	   so this bit has been masked out of the control port test.
- *
- *	   XXX Some printers may not like a fast pulse on init or strobe, I
- *	   don't know at this point, if that becomes a problem these bits
- *	   should be turned off in the mask byte for the control port test.
- *
- *	3) Set the data and control ports to a value of 0
- */
-int
-lptprobe(parent, match, aux)
-	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_long base;
-	u_char mask, data;
-	int i, rv;
-
-#ifdef DEBUG
-#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
-		    goto out;} while (0)
-#else
-#define	ABORT	goto out
-#endif
-
-	iot = ia->ia_iot;
-	base = ia->ia_iobase;
-	if (bus_space_map(iot, base, LPT_NPORTS, 0, &ioh))
-		return 0;
-
-	rv = 0;
-	mask = 0xff;
-
-	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-		ABORT;
-
-	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-		ABORT;
-
-	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
-		data = ~(1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-			ABORT;
-	}
-
-	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
-		data = (1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
-			ABORT;
-	}
-
-	bus_space_write_1(iot, ioh, lpt_data, 0);
-	bus_space_write_1(iot, ioh, lpt_control, 0);
-
-	ia->ia_iosize = LPT_NPORTS;
-	ia->ia_msize = 0;
-
-	rv = 1;
-
-out:
-	bus_space_unmap(iot, ioh, LPT_NPORTS);
-	return rv;
-}
-
 void
-lptattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_attach_subr(sc)
+	struct lpt_softc *sc;
 {
-	struct lpt_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	if (ia->ia_irq != IRQUNK)
-		printf("\n");
-	else
-		printf(": polled\n");
-
-	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_irq = ia->ia_irq;
 	sc->sc_state = 0;
 
-	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, sc->sc_iobase, LPT_NPORTS, 0, &ioh))
-		panic("lptattach: couldn't map I/O ports");
-	sc->sc_ioh = ioh;
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
-
-	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-		    IPL_TTY, lptintr, sc);
 }
 
 /*
@@ -310,8 +145,10 @@ lptopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
+#if 0	/* XXX what to do? */
 	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
 		return ENXIO;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
