@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.93 2000/07/30 06:22:04 simonb Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.94 2000/08/23 09:59:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -429,8 +429,8 @@ nfs_decode_args(nmp, argp)
 	adjsock |= ((nmp->nm_flag & NFSMNT_NOCONN) !=
 		    (argp->flags & NFSMNT_NOCONN));
 
-	/* Update flags atomically.  Don't change the lock bits. */
-	nmp->nm_flag = argp->flags | nmp->nm_flag;
+	/* Update flags. */
+	nmp->nm_flag = argp->flags;
 	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
