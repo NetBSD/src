@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1996/05/15 07:28:53 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1996/07/12 13:17:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -186,8 +186,7 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
-int fubail();
-int subail();
+extern char fubail[], subail[];
 
 static void
 userret(p, pc, oticks)
