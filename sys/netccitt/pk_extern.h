@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.5 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.6 2000/07/02 17:34:01 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  */
 
 #ifdef _KERNEL
+
+#include <netccitt/x25isr.h>
+
 struct pklcd;
 struct mbuf_cache;
 struct x25_ifaddr;
@@ -55,7 +58,6 @@ void pk_trace __P((struct x25config *, struct mbuf *, char *));
 void mbuf_cache __P((struct mbuf_cache *, struct mbuf *));
 
 /* pk_input.c */
-void ccittintr __P((void));
 struct pkcb *pk_newlink __P((struct x25_ifaddr *, caddr_t));
 int pk_dellink __P((struct pkcb *));
 int pk_resize __P((struct pkcb *));
