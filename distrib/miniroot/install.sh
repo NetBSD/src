@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2 1996/02/28 00:47:42 thorpej Exp $
+#	$NetBSD: install.sh,v 1.3 1996/05/20 00:32:24 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -204,8 +204,7 @@ while [ "X$resp" != X"done" ]; do
 				# Invalid response; no multiple roots
 				_first_char="X"
 			else
-				_first_char=`echo ${_mount_point} | \
-				    cut -c 1`
+				_first_char=`firstchar ${_mount_point}`
 			fi
 		done
 		echo "${_device_name}	${_mount_point}" >> \
