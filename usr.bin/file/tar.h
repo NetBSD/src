@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.1.1.2 1998/09/19 18:07:39 christos Exp $	*/
+/*	$NetBSD: tar.h,v 1.1.1.3 1999/11/01 17:30:09 christos Exp $	*/
 
 /*
  * Header file for public domain tar (tape archive) program.
@@ -7,7 +7,7 @@
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
  *
- * Id: tar.h,v 1.4 1998/06/27 13:57:23 christos Exp  # checkin only
+ * Id: tar.h,v 1.5 1999/01/13 15:44:10 christos Exp  # checkin only
  */
 
 /*
@@ -174,10 +174,6 @@ TAR_EXTERN char		read_error_flag;
  * Declarations of functions available to the world.
  */
 /*LINTLIBRARY*/
-union record *findrec();
-void userec();
-union record *endofrecs();
-void anno();
 #define	 annorec(stream, msg)	anno(stream, msg, 0)	/* Cur rec */
 #define	annofile(stream, msg)	anno(stream, msg, 1)	/* Saved rec */
 #endif
