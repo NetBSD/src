@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.9 2003/10/26 21:32:51 jdolecek Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.10 2003/10/30 08:25:19 wiz Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -154,6 +154,8 @@ function read1line() {
 				page = "edc"
 			else if (target == "ttye#")
 				page = "ite"
+			else if (target == "ttyh#")
+				page = "sab"
 			else if (target == "ttyU#")
 				page = "ucom"
 			else if (target == "fd")
