@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.54 1999/06/13 17:21:29 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.55 1999/06/18 05:30:53 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -902,25 +902,26 @@ again:
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
 		case SCSI_PHASE_DATAI:
-			if ((asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
-			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN) {
+		case SCSI_PHASE_DATAO:
+			ASC_TC_GET(regs, len);
+			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
+			if (len != 0 && (
+			    (asc->script - asc_scripts) == SCRIPT_DATA_IN + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_IN ||
+			    (asc->script - asc_scripts) == SCRIPT_DATA_OUT + 1 ||
+			    (asc->script - asc_scripts) == SCRIPT_CONTINUE_OUT)) {
 			    	/*
 			    	 * From the Mach driver:
-			    	 * After a reconnect and restart dma in, we
+			    	 * After a reconnect and restart dma in/out, we
 			    	 * seem to have gotten an interrupt even though
 			    	 * the DMA is running.  The Mach driver just
 			    	 * ignores this interrupt.
 			    	 */
-				ASC_TC_GET(regs, len);
-				fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 			    	printf("asc_intr: ignoring strange interrupt");
-			    	printf(" tc %d fifo residue %d\n", len, fifo);
+			    	printf(" tc %d fifo residue %d script %d\n",
+				    len, fifo, asc->script - asc_scripts);
 			    	goto done;
 			}
-			/* FALLTHROUGH */
-		case SCSI_PHASE_DATAO:
-			ASC_TC_GET(regs, len);
-			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 			printf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo);
 			goto abort;
