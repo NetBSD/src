@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.3 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.4 1999/04/07 21:55:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -266,7 +266,7 @@ notfound:
 	if (cnp->cn_flags & MAKEENTRY)
 		cache_enter(vdp, *vpp, cnp);
 	if (nameiop == CREATE || nameiop == RENAME)
-		return (EJUSTRETURN);
+		return (EROFS);
 	return (ENOENT);
 	
 found:
