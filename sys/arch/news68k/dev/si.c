@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.11 2002/12/20 16:23:47 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.12 2003/04/19 16:43:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * This file contains the machine-dependent parts of the Sony CXD1180
  * controller. The machine-independent parts are in ncr5380sbc.c.
  * Written by Izumi Tsutsui.
- * 
+ *
  * This code is based on arch/vax/vsa/ncr.c and sun3/dev/si.c
  */
 
@@ -110,9 +110,9 @@ int si_options = 0x0f;
 
 int
 si_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct hb_attach_args *ha = aux;
 	int addr;
@@ -134,8 +134,8 @@ si_match(parent, cf, aux)
 
 void
 si_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct si_softc *sc = (struct si_softc *)self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -249,7 +249,7 @@ si_dma_alloc(ncr_sc)
 			goto found;
 	}
 	panic("si_dma_alloc(): no free DMA handles");
-found:
+ found:
 	dh = &sc->ncr_dma[i];
 	dh->dh_flags = SIDH_BUSY;
 	dh->dh_addr = ncr_sc->sc_dataptr;
@@ -281,6 +281,7 @@ void
 si_dma_setup(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+
 	/* Do nothing here */
 }
 
@@ -367,16 +368,18 @@ void
 si_dma_poll(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+
 	printf("si_dma_poll\n");
 }
 
 /*
- * news68k (probabry) does not use the EOP signal.
+ * news68k (probably) does not use the EOP signal.
  */
 void
 si_dma_eop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+
 	printf("si_dma_eop\n");
 }
 
@@ -438,7 +441,7 @@ si_dma_stop(ncr_sc)
 		PCIA();
 	}
 
-out:
+ out:
 	NCR5380_WRITE(ncr_sc, sci_mode, NCR5380_READ(ncr_sc, sci_mode) &
 	    ~(SCI_MODE_DMA));
 	NCR5380_WRITE(ncr_sc, sci_icmd, 0);
