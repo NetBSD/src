@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2001/10/22 16:44:03 thorpej Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.6 2001/10/22 23:01:17 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-#include <machine/autoconf.h>
+#include <machine/platform.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
