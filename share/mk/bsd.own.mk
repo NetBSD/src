@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.194 2001/10/24 02:34:33 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.195 2001/10/24 23:58:21 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -60,7 +60,7 @@ LINT=		CC="${CC}" ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
 #MAKE=		${TOOLDIR}/bin/bmake
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
-MDSETIMAGE=	${TOOLDIR}/bin/mdsetimage
+MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
 MKDEP=		CC="${CC}" ${TOOLDIR}/bin/mkdep
 MKLOCALE=	${TOOLDIR}/bin/mklocale
