@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.124 2000/11/08 18:19:19 kleink Exp $
+.\"	$NetBSD: options.4,v 1.125 2000/11/24 10:09:46 itojun Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1124,6 +1124,8 @@ protocol stack.
 See
 .Xr iso 4
 for details.
+This option assumes
+.Em INET .
 .It Cd options EON
 Include support for tunneling
 .Tn OSI
@@ -1138,6 +1140,8 @@ Include support for the
 .Tn X.25
 protocol stack.
 The state of this code is currently unknown, and probably contains bugs.
+This option assumes
+.Em INET .
 .It Cd options NETATALK
 Include support for the
 .Tn AppleTalk
@@ -1182,6 +1186,8 @@ This option turns on the packet filter interface hooks.
 See
 .Xr pfil 9
 for details.
+This option assumes
+.Em INET .
 .It Cd options IPFILTER_LOG
 This option, in conjunction with
 .Em pseudo-device ipfilter ,
