@@ -1,4 +1,4 @@
-/*	$NetBSD: fixsfdi.c,v 1.2 1995/02/27 17:29:56 cgd Exp $	*/
+/*	$NetBSD: fixsfdi.c,v 1.3 1997/07/13 20:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fixsfdi.c	5.1 (Berkeley) 7/7/92";
 #else
-static char rcsid[] = "$NetBSD: fixsfdi.c,v 1.2 1995/02/27 17:29:56 cgd Exp $";
+__RCSID("$NetBSD: fixsfdi.c,v 1.3 1997/07/13 20:00:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +54,7 @@ static char rcsid[] = "$NetBSD: fixsfdi.c,v 1.2 1995/02/27 17:29:56 cgd Exp $";
  *
  * N.B.: must use new ANSI syntax (sorry).
  */
-long long
+quad_t
 __fixsfdi(float x)
 {
 	if (x < 0)
