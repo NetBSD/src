@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.30 2003/08/11 08:16:34 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.31 2003/11/10 09:02:08 wiz Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,15 +36,12 @@
  */
 
 /*
- * Simple datasheet
- * http://www.prolific.com.tw/download/DataSheet/pl2303_ds11.PDF
- * http://www.nisseisg.co.jp/jyouhou/_cp/@gif/2303.pdf
- * 	(english)
- *
+ * General information: http://www.prolific.com.tw/fr_pl2303.htm
+ * http://www.hitachi-hitec.com/jyouhou/prolific/2303.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.30 2003/08/11 08:16:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.31 2003/11/10 09:02:08 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
