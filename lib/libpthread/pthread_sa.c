@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.28 2002/10/21 22:19:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.29 2002/10/21 22:21:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		deliversig = 1;
 		break;
 	case SA_UPCALL_SIGEV:
+		PTHREADD_ADD(PTHREADD_UP_SIGEV);
 		si = arg;
 		/* Run the alarm queue */
 		if (si->si_value.sival_int == PT_ALARMTIMER_MAGIC)
@@ -175,11 +176,10 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	if (deliversig) {
 		si = arg;
 		if (ev)
-			pthread__signal(pthread__sa_id(sas[1]),
-			    si->si_signo, si->si_code);
+			pthread__signal(pthread__sa_id(sas[1]), si->si_signo,
+			    si->si_code);
 		else
-			pthread__signal(NULL, 
-			    si->si_signo, si->si_code);
+			pthread__signal(NULL, si->si_signo, si->si_code);
 	}
 	
 	/*
