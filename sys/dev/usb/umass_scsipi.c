@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.10 2003/09/08 19:31:00 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.11 2003/09/10 02:49:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.10 2003/09/08 19:31:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.11 2003/09/10 02:49:19 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -486,6 +486,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
 		/* fetch sense data */
+		sc->sc_sense = 1;
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
 		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
 		scbus->sc_sense_cmd.byte2 = periph->periph_lun <<
@@ -534,20 +535,11 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	DPRINTF(UDMASS_CMD,("umass_scsipi_sense_cb: xs=%p residue=%d "
 		"status=%d\n", xs, residue, status));
 
+	sc->sc_sense = 0;
 	switch (status) {
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen ||
-		    (sc->sc_quirks & UMASS_QUIRK_RS_NO_CLEAR_UA /* XXX */))) {
-			/*
-			 * Some drivers return SENSE errors even after INQUIRY.
-			 * The upper layer doesn't like that.
-			 */
-			xs->error = XS_NOERROR;
-			break;
-		}
-		/* XXX look at residue */
 		if (residue == 0 || residue == 14)/* XXX */
 			xs->error = XS_SENSE;
 		else
