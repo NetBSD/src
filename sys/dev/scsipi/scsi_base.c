@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.18 1994/11/22 00:05:36 deraadt Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.19 1994/12/01 12:04:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -282,12 +282,10 @@ scsi_done(xs)
  	 * xs when the user returns. (and restarting the device's queue).
  	 */
 	if (xs->flags & SCSI_USER) {
-		biodone(xs->bp);
-#ifdef	NOTNOW
 		SC_DEBUG(sc_link, SDEV_DB3, ("calling user done()\n"));
 		scsi_user_done(xs); /* to take a copy of the sense etc. */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n "));
-#endif
+
 		free_xs(xs, sc_link, SCSI_NOSLEEP); /* restarts queue too */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
