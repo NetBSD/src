@@ -1,11 +1,11 @@
-/*	$NetBSD: auich.c,v 1.71 2004/10/31 20:00:42 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.72 2004/10/31 20:15:16 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.71 2004/10/31 20:00:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.72 2004/10/31 20:15:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
