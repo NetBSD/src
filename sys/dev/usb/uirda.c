@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.7 2001/12/14 15:44:04 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.8 2001/12/18 14:50:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.7 2001/12/14 15:44:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.8 2001/12/18 14:50:01 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ USB_ATTACH(uirda)
 	err = usbd_get_desc(sc->sc_udev, UDESC_IRDA, 0,
 		  USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	if (err) {
-		/* maybe it's embedded in the config desc */
+		/* maybe it's embedded in the config desc? */
 		void *d = usb_find_desc(sc->sc_udev, UDESC_IRDA);
 		if (d == NULL) {
 			printf("%s: Cannot get IrDA descriptor\n",
@@ -345,7 +345,9 @@ USB_ATTACH(uirda)
 		}
 		memcpy(&sc->sc_irdadesc, d, USB_IRDA_DESCRIPTOR_SIZE);
 	}
-	DPRINTF(("uirda_attach: bmDataSize=0x%02x bmWindowSize=0x%02x bmMinTurnaroundTime=0x%02x wBaudRate=0x%04x bmAdditionalBOFs=0x%02x bIrdaSniff=%d bMaxUnicastList=%d\n",
+	DPRINTF(("uirda_attach: bmDataSize=0x%02x bmWindowSize=0x%02x "
+		 "bmMinTurnaroundTime=0x%02x wBaudRate=0x%04x "
+		 "bmAdditionalBOFs=0x%02x bIrdaSniff=%d bMaxUnicastList=%d\n",
 		 sc->sc_irdadesc.bmDataSize,
 		 sc->sc_irdadesc.bmWindowSize,
 		 sc->sc_irdadesc.bmMinTurnaroundTime,
@@ -355,8 +357,8 @@ USB_ATTACH(uirda)
 		 sc->sc_irdadesc.bMaxUnicastList));
 
 	specrev = UGETW(sc->sc_irdadesc.bcdSpecRevision);
-	printf("%s: version %x.%02x\n", USBDEVNAME(sc->sc_dev),
-	       specrev >> 8, specrev & 0xff);
+	printf("%s: USB-IrDA protocol version %x.%02x\n",
+	       USBDEVNAME(sc->sc_dev), specrev >> 8, specrev & 0xff);
 
 	DPRINTFN(10, ("uirda_attach: %p\n", sc->sc_udev));
 
@@ -894,25 +896,4 @@ uirda_start_read(struct uirda_softc *sc)
 		return (err);
 	}
 	return (USBD_NORMAL_COMPLETION);
-}
-
-
-
-
-usb_descriptor_t *
-usb_find_desc(usbd_device_handle dev, int type)
-{
-	usb_descriptor_t *desc;
-	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
-        uByte *p = (uByte *)cd;
-        uByte *end = p + UGETW(cd->wTotalLength);
-
-	while (p < end) {
-		desc = (usb_descriptor_t *)p;
-		if (desc->bDescriptorType == type)
-			return (desc);
-		p += desc->bLength;
-	}
-
-	return (NULL);
 }

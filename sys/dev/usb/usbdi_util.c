@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.37 2001/11/15 15:15:59 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.38 2001/12/18 14:50:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.37 2001/11/15 15:15:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.38 2001/12/18 14:50:01 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,3 +464,21 @@ usb_detach_wakeup(device_ptr_t dv)
 	DPRINTF(("usb_detach_wakeup: for %s\n", USBDEVPTRNAME(dv)));
 	wakeup(dv);
 }       
+
+usb_descriptor_t *
+usb_find_desc(usbd_device_handle dev, int type)
+{
+	usb_descriptor_t *desc;
+	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
+        uByte *p = (uByte *)cd;
+        uByte *end = p + UGETW(cd->wTotalLength);
+
+	while (p < end) {
+		desc = (usb_descriptor_t *)p;
+		if (desc->bDescriptorType == type)
+			return (desc);
+		p += desc->bLength;
+	}
+
+	return (NULL);
+}
