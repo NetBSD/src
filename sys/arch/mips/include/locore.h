@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.66 2003/10/05 16:34:51 tsutsui Exp $ */
+/* $NetBSD: locore.h,v 1.67 2003/10/29 23:39:16 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -285,6 +285,12 @@ typedef int mips_prid_t;
 #define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
 #define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
 #define	    MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
+#define	    MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
+#define	    MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
+#define	    MIPS_PRID_CID_LSI		0x08	/* LSI */
+				/*	0x09	unannounced */
+				/*	0x0a	unannounced */
+#define	    MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
 #define	MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL
