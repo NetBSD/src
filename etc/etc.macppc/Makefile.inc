@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/06/07 20:29:00 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/06/12 23:04:36 matt Exp $
 
-BUILD_KERNELS+=		INSTALL
+BUILD_KERNELS+=		INSTALL GENERIC_MD
 INSTALLATION_DIRS+=	installation
 
 snap_md_post:
