@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.15 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.16 2002/03/02 15:27:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.15 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.16 2002/03/02 15:27:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ extern char *tmpdir;
 void
 setptr(FILE *ibuf, off_t offset)
 {
-	int c, count;
+	int c, len;
 	char *cp, *cp2;
 	struct message this;
 	FILE *mestmp;
@@ -107,23 +107,23 @@ setptr(FILE *ibuf, off_t offset)
 			makemessage(mestmp, omsgCount);
 			return;
 		}
-		count = strlen(linebuf);
+		len = strlen(linebuf);
 		/*
 		 * Transforms lines ending in <CR><LF> to just <LF>.
 		 * This allows mail to be able to read Eudora mailboxes
 		 * that reside on a DOS partition.
 		 */
-		if (count >= 2 && linebuf[count-1] == '\n' && linebuf[count-2] == '\r') {
-			linebuf[count-2] = '\n';
-			count--;
+		if (len >= 2 && linebuf[len-1] == '\n' && linebuf[len-2] == '\r') {
+			linebuf[len-2] = '\n';
+			len--;
 		}
-		(void) fwrite(linebuf, sizeof *linebuf, count, otf);
+		(void) fwrite(linebuf, sizeof *linebuf, len, otf);
 		if (ferror(otf)) {
 			perror("/tmp");
 			exit(1);
 		}
-		if(count)
-			linebuf[count - 1] = 0;
+		if(len)
+			linebuf[len - 1] = 0;
 		if (maybe && linebuf[0] == 'F' && ishead(linebuf)) {
 			msgCount++;
 			if (append(&this, mestmp)) {
@@ -157,8 +157,8 @@ setptr(FILE *ibuf, off_t offset)
 					break;
 			}
 		}
-		offset += count;
-		this.m_size += count;
+		offset += len;
+		this.m_size += len;
 		this.m_lines++;
 		maybe = linebuf[0] == 0;
 	}
@@ -332,7 +332,7 @@ expand(char *name)
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
 	int pid, l;
-	char *cp, *shell;
+	char *cp, *shellcmd;
 	int pivec[2];
 	struct stat sbuf;
 
@@ -375,9 +375,9 @@ expand(char *name)
 		return name;
 	}
 	snprintf(cmdbuf, PATHSIZE, "echo %s", name);
-	if ((shell = value("SHELL")) == NOSTR)
-		shell = _PATH_CSHELL;
-	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
+	if ((shellcmd = value("SHELL")) == NOSTR)
+		shellcmd = _PATH_CSHELL;
+	pid = start_command(shellcmd, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
 	if (pid < 0) {
 		close(pivec[0]);
 		close(pivec[1]);

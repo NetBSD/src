@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.22 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.23 2002/03/02 15:27:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.22 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.23 2002/03/02 15:27:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,9 +334,9 @@ cont:
 				break;
 
 			if (*cp == '!') {	/* insert stdout of command */
-				char *shell;
+				char *shellcmd;
 				int nullfd;
-				int rc;
+				int rc2;
 
 				if((nullfd = open("/dev/null", O_RDONLY, 0)) == -1) {
 					perror("/dev/null");
@@ -349,14 +349,14 @@ cont:
 				}
 				(void) unlink(tempEdit);
 
-				if ((shell = value("SHELL")) == NOSTR)
-					shell = _PATH_CSHELL;
+				if ((shellcmd = value("SHELL")) == NOSTR)
+					shellcmd = _PATH_CSHELL;
 
-				rc = run_command(shell, 0, nullfd, fileno(fbuf), "-c", cp+1, NOSTR);
+				rc2 = run_command(shellcmd, 0, nullfd, fileno(fbuf), "-c", cp+1, NOSTR);
 
 				close(nullfd);
 
-				if (rc < 0) {
+				if (rc2 < 0) {
 					(void) Fclose(fbuf);
 					break;
 				}
@@ -556,7 +556,7 @@ mespipe(FILE *fp, char cmd[])
 {
 	FILE *nf;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shell;
+	char *shellcmd;
 
 	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
 		perror(tempEdit);
@@ -567,9 +567,9 @@ mespipe(FILE *fp, char cmd[])
 	 * stdin = current message.
 	 * stdout = new message.
 	 */
-	if ((shell = value("SHELL")) == NOSTR)
-		shell = _PATH_CSHELL;
-	if (run_command(shell,
+	if ((shellcmd = value("SHELL")) == NOSTR)
+		shellcmd = _PATH_CSHELL;
+	if (run_command(shellcmd,
 	    0, fileno(fp), fileno(nf), "-c", cmd, NOSTR) < 0) {
 		(void) Fclose(nf);
 		goto out;
