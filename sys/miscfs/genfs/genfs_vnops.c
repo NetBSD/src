@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.86 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.87 2004/05/27 12:53:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.86 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.87 2004/05/27 12:53:25 yamt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -531,7 +531,7 @@ genfs_getpages(void *v)
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 
-	/* vnode is VOP_LOCKed, uobj is locked */
+	/* uobj is locked */
 
 	if (write && (vp->v_flag & VONWORKLST) == 0) {
 		vn_syncer_add_to_worklist(vp, filedelay);
@@ -1625,6 +1625,7 @@ genfs_compat_getpages(void *v)
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
 		uio.uio_procp = curproc;
+		/* XXX vn_lock */
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
 			break;
@@ -1678,6 +1679,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
 	uio.uio_procp = curproc;
+	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
 	s = splbio();
