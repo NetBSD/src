@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.20 2000/02/18 18:55:31 soren Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.21 2000/03/07 00:30:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -721,10 +721,12 @@ enable_function(sc, cdstatus, function)
      int function;
 {
 
-    if(sc->sc_poweron_func == 0) {
-	if (cdstatus & CARDBUS_3V_CARD) {
+    if (sc->sc_poweron_func == 0) {
+	/* switch to 3V and/or wait for power to stabilize */
+	if (cdstatus & CARDBUS_3V_CARD)
 	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_3V);
-	}
+	else
+	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_5V);
 	(sc->sc_cf->cardbus_ctrl)(sc->sc_cc, CARDBUS_RESET);
     }
     sc->sc_poweron_func |= (1 << function);
@@ -737,7 +739,7 @@ disable_function(sc, function)
 {
 
     sc->sc_poweron_func &= ~(1 << function);
-    if(sc->sc_poweron_func == 0) {
+    if (sc->sc_poweron_func == 0) {
 	/* power-off because no functions are enabled */
 	sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_0V);
     }
