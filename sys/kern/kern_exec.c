@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.160 2002/10/29 12:31:23 blymn Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.161 2002/11/01 19:27:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.160 2002/10/29 12:31:23 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.161 2002/11/01 19:27:05 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -132,7 +132,7 @@ const struct emul emul_netbsd = {
 	EMUL_HAS_SYS___syscall,
 	NULL,
 	SYS_syscall,
-	SYS_MAXSYSCALL,
+	SYS_NSYSENT,
 #endif
 	sysent,
 #ifdef SYSCALL_DEBUG
