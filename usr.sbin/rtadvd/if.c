@@ -1,5 +1,5 @@
-/*	$NetBSD: if.c,v 1.6 2000/07/06 12:37:56 itojun Exp $	*/
-/*	$KAME: if.c,v 1.11 2000/07/06 08:20:04 jinmei Exp $	*/
+/*	$NetBSD: if.c,v 1.7 2000/08/31 16:40:04 itojun Exp $	*/
+/*	$KAME: if.c,v 1.12 2000/08/31 16:35:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -147,7 +147,7 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-#if 0
+#ifdef SIOCGIFMTU
 	struct ifreq ifr;
 	int s;
 
