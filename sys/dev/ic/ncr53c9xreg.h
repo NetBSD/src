@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.6.2.1 2000/11/20 11:40:48 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.6.2.2 2000/12/16 19:40:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
