@@ -1,9 +1,15 @@
+# gcc is the NetBSD native compiler; we don't need to bootstrap
+# basic math operations.
 LIBGCC1=libgcc1.null
 CROSS_LIBGCC1=libgcc1.null
 LIBGCC1_TEST=
 
-# Don't run fixproto
+# Don't run fixproto.
 STMP_FIXPROTO =
 
-# Don't install "assert.h" in gcc. We use the one in glibc.
+# Don't install "assert.h" in gcc. We use the one in NetBSD's libc.
 INSTALL_ASSERT_H =
+
+# The stdarg, varargs, etc. that comes with NetBSD is already sane.
+# Don't override these with local versions.
+USER_H = $(EXTRA_HEADERS) $(LANG_EXTRA_HEADERS)
