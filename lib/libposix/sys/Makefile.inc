@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.9 1999/02/24 15:10:17 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1999/07/05 15:54:18 kleink Exp $
 
 # sys sources
-.PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
+.PATH: ${.CURDIR}/sys
 
 # stubs providing an entry "foo" but calling "__posix_foo()"
 PSEUDO=	chown.o fchown.o lchown.o rename.o
@@ -37,22 +37,10 @@ ${PSEUDO}: ${ARCHDIR}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
-LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
-DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+LSRCS+=	LintSysPseudo.c
+DPSRCS+=LintSysPseudo.c
 
-CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
-
-LintSysNormal.c: ${.CURDIR}/../libc/sys/makelintstub \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} \
-	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
-
-LintSysNoerr.c: ${.CURDIR}/../libc/sys/makelintstub \
-    ${DESTDIR}/usr/include/sys/syscall.h
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -n \
-	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
+CLEANFILES+= LintSysPseudo.c
 
 LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
