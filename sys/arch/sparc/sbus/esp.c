@@ -42,7 +42,7 @@
  *	@(#)esp.c	8.4 (Berkeley) 5/6/94
  *
  * from: Header: esp.c,v 1.28 93/04/27 14:40:44 torek Exp (LBL)
- * $Id: esp.c,v 1.5 1994/05/27 02:38:15 deraadt Exp $
+ * $Id: esp.c,v 1.5.2.1 1994/08/13 09:30:24 mycroft Exp $
  *
  * Loosely derived from Mary Baker's devSCSIC90.c from the Berkeley
  * Sprite project, which is:
@@ -1036,6 +1036,7 @@ espicmd(hba, targ, cdb, buf, len, rw)
 	register volatile struct dmareg *dma = sc->sc_dma;
 	register int r, s, wait;
 	register struct sq *sq;
+	register char old_busy;
 
 	/*
 	 * Wait for any ongoing operation to complete.
@@ -1045,6 +1046,7 @@ espicmd(hba, targ, cdb, buf, len, rw)
 		sc->sc_iwant = 1;
 		tsleep((caddr_t)&sc->sc_iwant, PRIBIO, "espicmd", 0);
 	}
+	old_busy = sc->sc_hba.hba_busy;
 	sc->sc_hba.hba_busy = 1;
 	splx(s);
 
@@ -1110,14 +1112,16 @@ reset:
 done:
 	sc->sc_state = S_IDLE;
 	s = splbio();
-	if (sc->sc_iwant) {
-		sc->sc_iwant = 0;
-		wakeup((caddr_t)&sc->sc_iwant);
-	} else if ((sq = sc->sc_hba.hba_head) != NULL) {
-		sc->sc_hba.hba_head = sq->sq_forw;
-		(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdbspace);
-	} else
-		sc->sc_hba.hba_busy = 0;
+	if (!old_busy) {
+		if (sc->sc_iwant) {
+			sc->sc_iwant = 0;
+			wakeup((caddr_t)&sc->sc_iwant);
+		} else if ((sq = sc->sc_hba.hba_head) != NULL) {
+			sc->sc_hba.hba_head = sq->sq_forw;
+			(*sq->sq_dgo)(sq->sq_dev, &sc->sc_cdbspace);
+		} else
+			sc->sc_hba.hba_busy = 0;
+	}
 	splx(s);
 	return (r);
 }
