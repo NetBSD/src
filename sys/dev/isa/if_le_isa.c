@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.14 1997/10/19 18:57:06 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.15 1997/10/20 18:43:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -447,9 +447,11 @@ le_isa_attach(parent, self, aux)
 		int i;
 
 		/* Map shared memory. */
-		if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize,
-		    0, &memh))
-			panic("le_isa_attach: can't map shared memory");
+		if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+			printf("%s: can't map mem space\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 
 		lesc->sc_memh = memh;
 

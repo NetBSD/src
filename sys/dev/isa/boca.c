@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.26 1997/10/19 18:56:50 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.27 1997/10/20 18:43:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -154,6 +154,8 @@ bocaattach(parent, self, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase;
 
+	printf("\n");
+
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -161,11 +163,12 @@ bocaattach(parent, self, aux)
 		iobase = sc->sc_iobase + i * COM_NPORTS;
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
-			&sc->sc_slaveioh[i]))
-			panic("bocaattach: couldn't map slave %d", i);
+			&sc->sc_slaveioh[i])) {
+			printf("%s: can't map i/o space for slave %d\n",
+			     sc->sc_dev.dv_xname, i);
+			return;
+		}
 	}
-
-	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 

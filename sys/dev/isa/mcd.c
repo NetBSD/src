@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.56 1997/10/19 18:57:11 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.57 1997/10/20 18:43:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -222,8 +222,10 @@ mcdattach(parent, self, aux)
 	struct mcd_mbox mbx;
 
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh))
-		panic("mcdattach: bus_space_map failed!");
+	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
@@ -231,8 +233,10 @@ mcdattach(parent, self, aux)
 	sc->probe = 0;
 	sc->debug = 0;
 
-	if (!mcd_find(iot, ioh, sc))
-		panic("mcdattach: mcd_find failed!");
+	if (!mcd_find(iot, ioh, sc)) {
+		printf(": mcd_find failed\n");
+		return
+	}
 
 	/*
 	 * Initialize and attach the disk structure.

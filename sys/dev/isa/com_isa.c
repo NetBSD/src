@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.9 1997/10/19 18:56:52 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.10 1997/10/20 18:43:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -134,9 +134,11 @@ com_isa_attach(parent, self, aux)
 	 */
 	iobase = sc->sc_iobase = ia->ia_iobase;
 	iot = sc->sc_iot = ia->ia_iot;
-	if(!com_is_console(iot, iobase, &sc->sc_ioh)
-		&& bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh))
-			panic("comattach: io mapping failed");
+	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
+	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_frequency = COM_FREQ;
 	irq = ia->ia_irq;
@@ -153,7 +155,7 @@ com_isa_attach(parent, self, aux)
 	 * without a disabled FIFO.
 	 */
 	if (shutdownhook_establish(com_isa_cleanup, sc) == NULL)
-		panic("comisa: could not establish shutdown hook");
+		panic("com_isa_attach: could not establish shutdown hook");
 }
 
 void
