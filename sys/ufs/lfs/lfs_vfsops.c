@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.3 1994/12/14 13:03:49 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.4 1994/12/15 19:51:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -190,20 +190,15 @@ lfs_mount(mp, path, data, ndp, p)
 	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
 	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
 	    MNAMELEN);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void) ufs_statfs(mp, &mp->mnt_stat, p);
 #else
 	(void)copyinstr(path, fs->lfs_fsmnt, sizeof(fs->lfs_fsmnt) - 1, &size);
 	bzero(fs->lfs_fsmnt + size, sizeof(fs->lfs_fsmnt) - size);
 	bcopy((caddr_t)fs->lfs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
 	    MNAMELEN);
+#endif
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void) lfs_statfs(mp, &mp->mnt_stat, p);
-#endif
 	return (0);
 }
 
