@@ -48,13 +48,17 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.2 2003/06/27 05:13:5
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
+#ifdef __FreeBSD__
 #include <machine/atomic.h>
+#endif
  
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
@@ -66,10 +70,14 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.2 2003/06/27 05:13:5
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef __FreeBSD__
 #include <crypto/rc4/rc4.h>
 #define	arc4_ctxlen()			sizeof (struct rc4_state)
 #define	arc4_setkey(_c,_k,_l)		rc4_init(_c,_k,_l)
 #define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
+#else
+#include <crypto/arc4/arc4.h>
+#endif
 
 static	void ieee80211_crc_init(void);
 static	u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);

@@ -52,13 +52,17 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.3 2003/07/20 21:36:08
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 
+#ifdef __FreeBSD__
 #include <machine/atomic.h>
+#endif
  
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
@@ -103,7 +107,9 @@ ieee80211_proto_attach(struct ifnet *ifp)
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 
+#ifdef __FreeBSD__
 	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_name, "mgmt send q", MTX_DEF);
+#endif
 
 	/* protocol state change handler */
 	ic->ic_newstate = ieee80211_newstate;
@@ -293,6 +299,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
+	ieee80211_node_critsec_decl(s);
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
@@ -312,7 +319,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_ASSOC_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				mtx_lock(&ic->ic_nodelock);
+				ieee80211_node_critsec_begin(ic, s);
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					if (ni->ni_associd == 0)
 						continue;
@@ -320,7 +327,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 					    IEEE80211_FC0_SUBTYPE_DISASSOC,
 					    IEEE80211_REASON_ASSOC_LEAVE);
 				}
-				mtx_unlock(&ic->ic_nodelock);
+				ieee80211_node_critsec_end(ic, s);
 				break;
 			default:
 				break;
@@ -334,13 +341,13 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_AUTH_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				mtx_lock(&ic->ic_nodelock);
+				ieee80211_node_critsec_begin(ic, s);
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
 					    IEEE80211_REASON_AUTH_LEAVE);
 				}
-				mtx_unlock(&ic->ic_nodelock);
+				ieee80211_node_critsec_end(ic, s);
 				break;
 			default:
 				break;

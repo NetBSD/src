@@ -133,7 +133,11 @@ struct ieee80211_channel {
 #define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
 
 struct ieee80211com {
+#ifdef __NetBSD__
+	struct ethercom		ic_ec;
+#else
 	struct arpcom		ic_ac;
+#endif
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, u_int32_t);
@@ -158,13 +162,19 @@ struct ieee80211com {
 	enum ieee80211_opmode	ic_opmode;	/* operation mode */
 	enum ieee80211_state	ic_state;	/* 802.11 state */
 	struct ifmedia		ic_media;	/* interface media config */
+#ifdef __FreeBSD__
 	struct bpf_if		*ic_rawbpf;	/* packet filter structure */
+#else
+	caddr_t			ic_rawbpf;	/* packet filter structure */
+#endif
 	struct ieee80211_node	*ic_bss;	/* information for this node */
 	struct ieee80211_channel *ic_ibss_chan;
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
+#ifdef __FreeBSD__
 	struct mtx		ic_nodelock;	/* on node table */
+#endif
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
 	void			(*ic_node_free)(struct ieee80211com *,
 					struct ieee80211_node *);
@@ -191,7 +201,11 @@ struct ieee80211com {
 	void			*ic_wep_ctx;	/* wep crypt context */
 	u_int32_t		ic_iv;		/* initial vector for wep */
 };
+#ifdef __NetBSD__
+#define	ic_if		ic_ec.ec_if
+#else
 #define	ic_if		ic_ac.ac_if
+#endif
 #define	ic_softc	ic_if.if_softc
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)

@@ -47,7 +47,9 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.4 2003/07/20 21:36:08
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
@@ -712,6 +714,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
+#ifdef __FreeBSD__
 int
 ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -959,7 +962,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		case IEEE80211_IOCT_RTSTHRESHOLD:
 			if (!(IEEE80211_RTS_MIN < ireq->i_val &&
-			      ireq->i_val < IEEE80211_RTS_MAX)) {
+			      ireq->i_val <= IEEE80211_RTS_MAX + 1)) {
 				error = EINVAL;
 				break;
 			}
@@ -986,3 +989,249 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 	return error;
 }
+#endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+int
+ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+{
+	struct ieee80211com *ic = (void *)ifp;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int i, error = 0;
+	struct ieee80211_nwid nwid;
+	struct ieee80211_nwkey *nwkey;
+	struct ieee80211_power *power;
+	struct ieee80211_bssid *bssid;
+	struct ieee80211chanreq *chanreq;
+	struct ieee80211_channel *chan;
+	struct ieee80211_wepkey keys[IEEE80211_WEP_NKID];
+	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	switch (cmd) {
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
+		break;
+	case SIOCS80211NWID:
+		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))) != 0)
+			break;
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
+			break;
+		}
+		memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+		ic->ic_des_esslen = nwid.i_len;
+		memcpy(ic->ic_des_essid, nwid.i_nwid, nwid.i_len);
+		error = ENETRESET;
+		break;
+	case SIOCG80211NWID:
+		memset(&nwid, 0, sizeof(nwid));
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			nwid.i_len = ic->ic_des_esslen;
+			memcpy(nwid.i_nwid, ic->ic_des_essid, nwid.i_len);
+			break;
+		default:
+			nwid.i_len = ic->ic_bss->ni_esslen;
+			memcpy(nwid.i_nwid, ic->ic_bss->ni_essid, nwid.i_len);
+			break;
+		}
+		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
+		break;
+	case SIOCS80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0 &&
+		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
+			error = EINVAL;
+			break;
+		}
+		/* check and copy keys */
+		memset(keys, 0, sizeof(keys));
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			keys[i].wk_len = nwkey->i_key[i].i_keylen;
+			if ((keys[i].wk_len > 0 &&
+			    keys[i].wk_len < IEEE80211_WEP_KEYLEN) ||
+			    keys[i].wk_len > sizeof(keys[i].wk_key)) {
+				error = EINVAL;
+				break;
+			}
+			if (keys[i].wk_len <= 0)
+				continue;
+			if ((error = copyin(nwkey->i_key[i].i_keydat,
+			    keys[i].wk_key, keys[i].wk_len)) != 0)
+				break;
+		}
+		if (error)
+			break;
+		i = nwkey->i_defkid - 1;
+		if (i < 0 || i >= IEEE80211_WEP_NKID ||
+		    keys[i].wk_len == 0 ||
+		    (keys[i].wk_len == -1 && ic->ic_nw_keys[i].wk_len == 0)) {
+			if (nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
+				error = EINVAL;
+				break;
+			}
+		} else
+			ic->ic_wep_txkey = i;
+		/* save the key */
+		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN)
+			ic->ic_flags &= ~IEEE80211_F_WEPON;
+		else
+			ic->ic_flags |= IEEE80211_F_WEPON;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			if (keys[i].wk_len < 0)
+				continue;
+			ic->ic_nw_keys[i].wk_len = keys[i].wk_len;
+			memcpy(ic->ic_nw_keys[i].wk_key, keys[i].wk_key,
+			    sizeof(keys[i].wk_key));
+		}
+		error = ENETRESET;
+		break;
+	case SIOCG80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		if (ic->ic_flags & IEEE80211_F_WEPON)
+			nwkey->i_wepon = IEEE80211_NWKEY_WEP;
+		else
+			nwkey->i_wepon = IEEE80211_NWKEY_OPEN;
+		nwkey->i_defkid = ic->ic_wep_txkey + 1;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			if (nwkey->i_key[i].i_keydat == NULL)
+				continue;
+			/* do not show any keys to non-root user */
+			if ((error = suser(curproc->p_ucred,
+			    &curproc->p_acflag)) != 0)
+				break;
+			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_len;
+			if ((error = copyout(ic->ic_nw_keys[i].wk_key,
+			    nwkey->i_key[i].i_keydat,
+			    ic->ic_nw_keys[i].wk_len)) != 0)
+				break;
+		}
+		break;
+	case SIOCS80211POWER:
+		power = (struct ieee80211_power *)data;
+		ic->ic_lintval = power->i_maxsleep;
+		if (power->i_enabled != 0) {
+			if ((ic->ic_flags & IEEE80211_F_HASPMGT) == 0)
+				error = EINVAL;
+			else if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
+				ic->ic_flags |= IEEE80211_F_PMGTON;
+				error = ENETRESET;
+			}
+		} else {
+			if (ic->ic_flags & IEEE80211_F_PMGTON) {
+				ic->ic_flags &= ~IEEE80211_F_PMGTON;
+				error = ENETRESET;
+			}
+		}
+		break;
+	case SIOCG80211POWER:
+		power = (struct ieee80211_power *)data;
+		power->i_enabled = (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0;
+		power->i_maxsleep = ic->ic_lintval;
+		break;
+	case SIOCS80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		if (IEEE80211_ADDR_EQ(bssid->i_bssid, empty_macaddr))
+			ic->ic_flags &= ~IEEE80211_F_DESBSSID;
+		else {
+			ic->ic_flags |= IEEE80211_F_DESBSSID;
+			IEEE80211_ADDR_COPY(ic->ic_des_bssid, bssid->i_bssid);
+		}
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			break;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			error = ENETRESET;
+			break;
+		default:
+			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
+			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid,
+			    ic->ic_bss->ni_bssid))
+				error = ENETRESET;
+			break;
+		}
+		break;
+	case SIOCG80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_myaddr);
+			else if (ic->ic_flags & IEEE80211_F_DESBSSID)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    ic->ic_des_bssid);
+			else
+				memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+			break;
+		default:
+			IEEE80211_ADDR_COPY(bssid->i_bssid,
+			    ic->ic_bss->ni_bssid);
+			break;
+		}
+		break;
+	case SIOCS80211CHANNEL:
+		chanreq = (struct ieee80211chanreq *)data;
+		if (chanreq->i_channel == IEEE80211_CHAN_ANY)
+			ic->ic_des_chan = IEEE80211_CHAN_ANYC;
+		else if (chanreq->i_channel > IEEE80211_CHAN_MAX ||
+		    isclr(ic->ic_chan_active, chanreq->i_channel)) {
+			error = EINVAL;
+			break;
+		} else
+			ic->ic_ibss_chan = ic->ic_des_chan = chanreq->i_channel;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			error = ENETRESET;
+			break;
+		default:
+			if (ic->ic_opmode == IEEE80211_M_STA) {
+				if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
+				    ic->ic_bss->ni_chan != ic->ic_des_chan)
+					error = ENETRESET;
+			} else {
+				if (ic->ic_bss->ni_chan != ic->ic_ibss_chan)
+					error = ENETRESET;
+			}
+			break;
+		}
+		break;
+	case SIOCG80211CHANNEL:
+		chanreq = (struct ieee80211chanreq *)data;
+		switch (ic->ic_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (ic->ic_opmode == IEEE80211_M_STA)
+				chan = ic->ic_des_chan;
+			else
+				chan = ic->ic_ibss_chan;
+			break;
+		default:
+			chan = ic->ic_bss->ni_chan;
+			break;
+		}
+		chanreq->i_channel = ieee80211_chan2ieee(ic, chan);
+		break;
+	case SIOCGIFGENERIC:
+		error = ieee80211_cfgget(ifp, cmd, data);
+		break;
+	case SIOCSIFGENERIC:
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		if (error)
+			break;
+		error = ieee80211_cfgset(ifp, cmd, data);
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
+	}
+	return error;
+}
+#endif /* __NetBSD__ */

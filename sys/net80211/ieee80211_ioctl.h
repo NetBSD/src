@@ -74,11 +74,80 @@ struct ieee80211req {
 #define 	IEEE80211_POWERSAVE_PSP_CAM	3
 #define 	IEEE80211_POWERSAVE_ON		IEEE80211_POWERSAVE_CAM
 #define IEEE80211_IOC_POWERSAVESLEEP	11
-#define	IEEE80211_IOCT_RTSTHRESHOLD	12
+#define	IEEE80211_IOCT_RTSTHRESHOLD	12	/* why IOCT_ ? */
 
 #ifndef IEEE80211_CHAN_ANY
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
 #endif
 #endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+/* nwid is pointed at by ifr.ifr_data */
+struct ieee80211_nwid {
+	u_int8_t	i_len;
+	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
+};
+
+#define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
+#define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
+
+/* the first member must be matched with struct ifreq */
+struct ieee80211_nwkey {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_wepon;		/* wep enabled flag */
+	int		i_defkid;		/* default encrypt key id */
+	struct {
+		int		i_keylen;
+		u_int8_t	*i_keydat;
+	}		i_key[IEEE80211_WEP_NKID];
+};
+#define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
+#define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
+/* i_wepon */
+#define	IEEE80211_NWKEY_OPEN	0		/* No privacy */
+#define	IEEE80211_NWKEY_WEP	1		/* WEP enabled */
+#define	IEEE80211_NWKEY_EAP	2		/* EAP enabled */
+#define	IEEE80211_NWKEY_PERSIST	0x100		/* designate persist keyset */
+
+/* power management parameters */
+struct ieee80211_power {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_enabled;		/* 1 == on, 0 == off */
+	int		i_maxsleep;		/* max sleep in ms */
+};
+#define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
+#define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
+
+struct ieee80211_auth {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_authtype;
+};
+
+#define	IEEE80211_AUTH_NONE	0
+#define	IEEE80211_AUTH_OPEN	1
+#define	IEEE80211_AUTH_SHARED	2
+
+#define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
+#define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
+
+struct ieee80211_channel {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int16_t	i_channel;
+};
+
+#define	IEEE80211_CHAN_ANY	0xffff
+#define	IEEE80211_CHAN_ANYC	IEEE80211_CHAN_ANY /* XXX make NULL */
+
+#define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211_channel)
+#define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211_channel)
+
+struct ieee80211_bssid {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+};
+
+#define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
+#define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
+#endif
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */
