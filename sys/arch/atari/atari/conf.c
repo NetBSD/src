@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1996/03/14 21:41:06 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1996/03/27 10:23:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -113,6 +113,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
 	dev_init(c,n,select), dev_init(c,n,mmap) }
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	(dev_type_read((*))) enodev, dev_init(c,n,write), \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0}
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -158,6 +165,7 @@ cdev_decl(tun);
 #define NLKM 0
 #endif
 cdev_decl(lkm);
+cdev_decl(lpt);
 
 struct cdevsw	cdevsw[] =
 {
@@ -192,6 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
+	cdev_lpt_init(1, lpt),		/* 29: Centronics */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -283,6 +292,7 @@ static int chrtoblktab[] = {
 	/* 26 */	NODEV,
 	/* 27 */	13,
 	/* 28 */	NODEV,
+	/* 29 */	NODEV,
 };
 
 /*
