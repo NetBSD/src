@@ -319,7 +319,7 @@ PERLPATH=@PERLPATH@
 SH_SCRIPT_SED_CMD=@SH_SCRIPT_SED_CMD@
 
 # The program to create directory hierarchies.
-mkinstalldirs=$(top_srcdir)/mkinstalldirs
+mkinstalldirs=@SHELL@ $(top_srcdir)/mkinstalldirs
 
 PURIFY=purify
 PURIFYCCFLAGS=
