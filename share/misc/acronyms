@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.83 2001/03/30 22:38:33 christos Exp $
+$NetBSD: acronyms,v 1.84 2001/04/30 19:54:04 mycroft Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -33,6 +33,7 @@ DWIM	do what I mean
 EG	evil grin
 EMSG	email message
 ETLA	extended three letter acronym
+EWAG	experienced wild-ass guess
 FAQ	frequently asked question
 FIIK	fuck[ed] if I know
 FIIR	fuck[ed] if I remember
@@ -131,6 +132,7 @@ TTYL	talk to you later
 TYVM	thank you very much
 UTSL	use the source, Luke
 VEG	very evil grin
+WAG	wild-ass guess
 WIBNI	wouldn't it be nice if
 WOFTAM	waste of fucking time and money
 WTF	{what,where,who,why} the fuck
