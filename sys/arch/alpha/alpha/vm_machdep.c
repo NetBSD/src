@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.58 2000/06/26 14:20:28 mrg Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.59 2000/06/29 09:02:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2000/06/26 14:20:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2000/06/29 09:02:56 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2000/06/26 14:20:28 mrg Exp $");
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
