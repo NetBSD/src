@@ -1,3 +1,4 @@
+.\"	$NetBSD: nchan2.ms,v 1.2 2001/06/23 19:37:39 itojun Exp $
 .TL
 OpenSSH Channel Close Protocol 2.0 Implementation
 .SH
