@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_fork.c	8.6 (Berkeley) 4/8/94
- *	$Id: kern_fork.c,v 1.17 1994/05/19 05:57:48 cgd Exp $
+ *	$Id: kern_fork.c,v 1.18 1994/06/15 19:59:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -259,7 +259,7 @@ again:
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	p1->p_flag |= P_NOSWAP;
+	p1->p_holdcnt++;
 	/*
 	 * Set return values for child before vm_fork,
 	 * so they can be copied to child stack.
@@ -292,7 +292,7 @@ again:
 	/*
 	 * Now can be swapped.
 	 */
-	p1->p_flag &= ~P_NOSWAP;
+	p1->p_holdcnt--;
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
