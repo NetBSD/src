@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.4 2001/02/26 16:04:22 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.5 2001/03/03 21:34:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -54,12 +54,6 @@
 #define CPU_CLASS_SARM	2	/* Guess */
 #define CPU_CLASS_I486	3	/* 486/586 */
 
-#define CPU_HOST_NONE		0	/* No host */
-#define CPU_HOST_MAINBUS	1	/* Hosted via motherboard */
-
-#define CPU_FLAG_PRESENT	0x01
-#define CPU_FLAG_HALTED		0x02
-
 #define FPU_CLASS_NONE		0	/* no Floating point support */
 #define FPU_CLASS_FPE		1	/* Floating point emulator installed */
 #define FPU_CLASS_FPA		2	/* Floating point accelerator installed */
@@ -77,8 +71,6 @@ typedef struct _cpu {
 /* These are generic CPU variables */
 
 	u_int	cpu_class;	/* The CPU class */
-	u_int	cpu_host;	/* The CPU host interface */
-	u_int	cpu_flags;	/* The CPU flags */
 	char	cpu_model[256];	/* Text description of CPU */
 
 /* These are generic FPU variables */
