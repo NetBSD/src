@@ -1,3 +1,5 @@
+#undef DIAGNOSTIC
+#define DIAGNOSTIC
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.54 1994/04/04 23:07:22 mycroft Exp $
+ *	$Id: locore.s,v 1.55 1994/04/05 07:59:55 mycroft Exp $
  */
 
 /*
@@ -1313,23 +1315,26 @@ ENTRY(longjmp)
  */
 ENTRY(setrq)
 	movl	4(%esp),%eax
+#ifdef DIAGNOSTIC
 	cmpl	$0,P_RLINK(%eax)	# should not be on q already
 	jne	1f
+#endif
 	movzbl	P_PRI(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
-	shll	$3,%edx
-	addl	$_qs,%edx		# locate q hdr
+	leal	_qs(,%edx,8),%edx	# locate q hdr
 	movl	%edx,P_LINK(%eax)	# link process on tail of q
 	movl	P_RLINK(%edx),%ecx
-	movl	%ecx,P_RLINK(%eax)
 	movl	%eax,P_RLINK(%edx)
+	movl	%ecx,P_RLINK(%eax)
 	movl	%eax,P_LINK(%ecx)
 	ret
+#ifdef DIAGNOSTIC
 1:	pushl	$2f
 	call	_panic
 	/*NOTREACHED*/
 2:	.asciz	"setrq"
+#endif
 
 /*
  * Remrq(p)
@@ -1337,32 +1342,30 @@ ENTRY(setrq)
  * Call should be made at spl6().
  */
 ENTRY(remrq)
-	movl	4(%esp),%eax
-	movzbl	P_PRI(%eax),%edx
-	shrl	$2,%edx
-	btrl	%edx,_whichqs		# clear full bit, panic if clear already
-	jnb	1f
-	pushl	%edx
-	movl	P_LINK(%eax),%ecx	# unlink process
-	movl	P_RLINK(%eax),%edx
+	pushl	%esi
+	movl	8(%esp),%esi
+	movzbl	P_PRI(%esi),%eax
+	shrl	$2,%eax
+#ifdef DIAGNOSTIC
+	btl	%eax,_whichqs
+	jnc	1f
+#endif
+	movl	P_LINK(%esi),%ecx	# unlink process
+	movl	P_RLINK(%esi),%edx
 	movl	%edx,P_RLINK(%ecx)
-	movl	P_RLINK(%eax),%ecx
-	movl	P_LINK(%eax),%edx
-	movl	%edx,P_LINK(%ecx)
-	popl	%edx
-	movl	$_qs,%ecx
-	shll	$3,%edx
-	addl	%edx,%ecx
-	cmpl	P_LINK(%ecx),%ecx	# q still has something?
-	je	2f
-	shrl	$3,%edx			# yes, set bit as still full
-	btsl	%edx,_whichqs
-2:	movl	$0,P_RLINK(%eax)	# zap reverse link to indicate off list
+	movl	%ecx,P_LINK(%edx)
+	movl	$0,P_RLINK(%esi)	# zap reverse link to indicate off list
+	cmpl	%edx,%ecx		# q still has something?
+	jne	2f
+	btrl	%eax,_whichqs		# no; clear bit
+2:	popl	%esi
 	ret
+#ifdef DIAGNOSTIC
 1:	pushl	$3f
 	call	_panic
 	/*NOTREACHED*/
 3:	.asciz	"remrq"
+#endif
 
 /*
  * When no processes are on the runq, Swtch branches to idle
@@ -1405,6 +1408,7 @@ ENTRY(swtch)
 	movl	_curproc,%esi
 	movl	$0,_curproc
 
+swtch_search:
 	/*
 	 * First phase: find new process.
 	 *
@@ -1562,23 +1566,50 @@ swtch_return:
 	popl	%ebx
 	ret
 
-/*
- * struct proc *swtch_to_inactive(p) ; struct proc *p;
- *
- * At exit of a process, move off the address space of the
- * process and onto a "safe" one. Then, on a temporary stack
- * return and run code that disposes of the old state.
- * Since this code requires a parameter from the "old" stack,
- * pass it back as a return value.
- */
-ENTRY(swtch_to_inactive)
-	popl	%edx			# old pc
-	popl	%eax			# arg, our return value
-	movl	_IdlePTD,%ecx
-	movl	%ecx,%cr3		# good bye address space
- #write buffer?
-	movl	$tmpstk-4,%esp		# temporary stack, compensated for call
-	jmp	%edx			# return, execute remainder of cleanup
+	.globl	_proc0, _vmspace_free, _kernel_map, _kmem_free
+ENTRY(swtch_exit)
+	movl	4(%esp),%edi		# old process
+	movl	$_proc0,%ebx
+
+	incl	_cnt+V_SWTCH
+
+	/* Restore proc0's context. */
+	cli
+	movl	P_ADDR(%ebx),%esi
+
+	/* Switch address space. */
+	movl	PCB_CR3(%esi),%ecx
+	movl	%ecx,%cr3
+
+	/* Don't need to worry about ldt. */
+
+	/* Restore stack and segments. */
+	movl	PCB_ESP(%esi),%esp
+	movl	PCB_EBP(%esi),%ebp
+	movl	PCB_FS(%esi),%ecx	# XXX necessary?
+	movl	%cx,%fs			# XXX necessary?
+	movl	PCB_GS(%esi),%ecx	# XXX necessary?
+	movl	%cx,%gs			# XXX necessary?
+
+	/* Record new pcb. */
+	movl	%esi,_curpcb
+
+	/* Interrupts are okay again. */
+	sti
+
+	/* Thoroughly nuke the old process's resources. */
+	pushl	P_VMSPACE(%edi)
+	call	_vmspace_free
+	pushl	$(UPAGES << PGSHIFT)
+	pushl	P_ADDR(%edi)
+	pushl	_kernel_map
+	call	_kmem_free
+	addl	$16,%esp
+
+	/* Jump into swtch() with the right state. */
+	movl	%ebx,%esi
+	movl	$0,_curproc
+	jmp	swtch_search
 
 /*
  * savectx(pcb, altreturn)
