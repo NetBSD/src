@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.1 1995/10/05 21:03:13 pk Exp $
+#	$NetBSD: binstall.sh,v 1.2 1995/10/11 13:32:57 pk Exp $
 #
 
 vecho () {
@@ -100,6 +100,7 @@ case $WHAT in
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
+	sync; sync; sync
 	vecho installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	$DOIT installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	;;
