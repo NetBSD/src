@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.6 1999/06/12 18:58:05 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.7 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.6 1999/06/12 18:58:05 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.7 1999/07/02 15:21:26 simonb Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -135,8 +135,8 @@ _move_history(op)
 }
 
 
-/* 
- * READLINE compatibility stuff 
+/*
+ * READLINE compatibility stuff
  */
 
 /*
@@ -513,7 +513,7 @@ _history_expand_command(command, cmdlen, result)
 				with[len] = '\0';
 				to = with;
 
-				tempcmd = _rl_compat_sub(line, from, to, 
+				tempcmd = _rl_compat_sub(line, from, to,
 				    (g_on) ? 1 : 0);
 				free(line);
 				line = tempcmd;
@@ -1393,7 +1393,7 @@ rl_complete(ignore, invoking_key)
 }
 
 /*
- * misc other functions	
+ * misc other functions
  */
 
 /*

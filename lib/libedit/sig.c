@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.4 1997/07/06 18:25:35 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.5 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.4 1997/07/06 18:25:35 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.5 1999/07/02 15:21:27 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -98,7 +98,7 @@ sig_handler(signo)
 	break;
     }
 
-    for (i = 0; sighdl[i] != -1; i++) 
+    for (i = 0; sighdl[i] != -1; i++)
 	if (signo == sighdl[i])
 	    break;
 
@@ -127,7 +127,7 @@ sig_init(el)
 #define SIGSIZE (sizeof(sighdl) / sizeof(sighdl[0]) * sizeof(sig_t))
 
     el->el_signal = (sig_t *) el_malloc(SIGSIZE);
-    for (i = 0; sighdl[i] != -1; i++) 
+    for (i = 0; sighdl[i] != -1; i++)
 	el->el_signal[i] = SIG_ERR;
 
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
@@ -191,7 +191,7 @@ sig_clr(el)
 #undef _DO
     (void) sigprocmask(SIG_BLOCK, &nset, &oset);
 
-    for (i = 0; sighdl[i] != -1; i++) 
+    for (i = 0; sighdl[i] != -1; i++)
 	if (el->el_signal[i] != SIG_ERR)
 	    (void) signal(sighdl[i], el->el_signal[i]);
 

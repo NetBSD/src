@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regexp.c,v 1.10 1999/05/04 17:15:51 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.11 1999/07/02 15:16:42 simonb Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -343,7 +343,7 @@ int *flagp;
 	}
 
 	/* Make a closing node, and hook it on the end. */
-	ender = regnode((paren) ? CLOSE+parno : END);	
+	ender = regnode((paren) ? CLOSE+parno : END);
 	regtail(ret, ender);
 
 	/* Hook the tails of the branches to the closing node. */
@@ -573,7 +573,7 @@ int *flagp;
 		 * On entry, the char at regparse[-1] is going to go
 		 * into the string, no matter what it is.  (It could be
 		 * following a \ if we are entered from the '\' case.)
-		 * 
+		 *
 		 * Basic idea is to pick up a good char in  ch  and
 		 * examine the next char.  If it's *+? then we twiddle.
 		 * If it's \ then we frozzle.  If it's other magic char
@@ -628,7 +628,7 @@ int *flagp;
 					default:
 						/* Backup point is \, scan							 * point is after it. */
 						regprev = regparse;
-						regparse++; 
+						regparse++;
 						continue;	/* NOT break; */
 					}
 				}
@@ -951,7 +951,7 @@ char *prog;
 				if (*opnd != *reginput)
 					return(0);
 				len = strlen(opnd);
-				if (len > 1 && strncmp(opnd, reginput, 
+				if (len > 1 && strncmp(opnd, reginput,
 				    (size_t)len) != 0)
 					return(0);
 				reginput += len;
@@ -1179,7 +1179,7 @@ regexp *r;
 		next = regnext(s);
 		if (next == NULL)		/* Next ptr. */
 			printf("(0)");
-		else 
+		else
 			printf("(%d)", (s-r->program)+(next-s));
 		s += 3;
 		if (op == ANYOF || op == ANYBUT || op == EXACTLY) {

@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.6 1998/05/20 01:38:53 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.7 1999/07/02 15:21:28 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -96,7 +96,7 @@ complete(el, ch)
     EditLine *el;
     int ch;
 {
-    DIR *dd = opendir("."); 
+    DIR *dd = opendir(".");
     struct dirent *dp;
     const char* ptr;
     const LineInfo *lf = el_line(el);
@@ -191,7 +191,7 @@ main(argc, argv)
 	     * Append to the right event in case the user
 	     * moved around in history.
 	     */
-	    if (history(hist, &ev, H_SET, lastevent) == -1) 
+	    if (history(hist, &ev, H_SET, lastevent) == -1)
 		err(1, "%d: %s\n", lastevent, ev.str);
 	    history(hist, &ev, H_ADD , buf);
 	}
