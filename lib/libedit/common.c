@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.5 1998/02/03 19:12:38 perry Exp $	*/
+/*	$NetBSD: common.c,v 1.6 1998/05/20 01:00:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.5 1998/02/03 19:12:38 perry Exp $");
+__RCSID("$NetBSD: common.c,v 1.6 1998/05/20 01:00:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -166,8 +166,10 @@ ed_delete_next_char(el, c)
 {
 #ifdef notdef /* XXX */
 #define EL el->el_line
-fprintf(stderr, "\nD(b: %x(%s)  c: %x(%s) last: %x(%s) limit: %x(%s)\n", 
-	EL.buffer, EL.buffer, EL.cursor, EL.cursor, EL.lastchar, EL.lastchar, EL.limit, EL.limit);
+	(void) fprintf(el->el_errlfile,
+	    "\nD(b: %x(%s)  c: %x(%s) last: %x(%s) limit: %x(%s)\n", 
+	    EL.buffer, EL.buffer, EL.cursor, EL.cursor, EL.lastchar,
+	    EL.lastchar, EL.limit, EL.limit);
 #endif
     if (el->el_line.cursor == el->el_line.lastchar) {/* if I'm at the end */
 	if (el->el_map.type == MAP_VI) {
@@ -263,7 +265,7 @@ ed_move_to_beg(el, c)
 
     if (el->el_map.type == MAP_VI) {
         /* We want FIRST non space character */
-        while (isspace(*el->el_line.cursor)) 
+        while (isspace((unsigned char) *el->el_line.cursor)) 
 	    el->el_line.cursor++;
 	if (el->el_chared.c_vcmd.action & DELETE) {
 	    cv_delfini(el);
