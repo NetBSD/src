@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.28 1994/12/10 11:46:25 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.29 1995/07/13 12:35:29 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -341,7 +341,7 @@ vm_object_terminate(object)
 		cnt.v_pfree++;
 		vm_page_unlock_queues();
 	}
-	if ((object->flags & OBJ_INTERNAL) == 0)
+	if ((object->flags & OBJ_INTERNAL) != 0)
 		vm_object_unlock(object);
 
 	/*
