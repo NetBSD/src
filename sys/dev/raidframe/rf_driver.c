@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.35 2000/05/28 03:00:32 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.36 2000/05/29 01:43:04 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -785,12 +785,12 @@ rf_SuspendNewRequestsAndWait(raidPtr)
 	if (raidPtr->waiting_for_quiescence) {
 		raidPtr->access_suspend_release = 0;
 		while (!raidPtr->access_suspend_release) {
-			printf("Suspending: Waiting for Quiesence\n");
+			printf("Suspending: Waiting for Quiescence\n");
 			WAIT_FOR_QUIESCENCE(raidPtr);
 			raidPtr->waiting_for_quiescence = 0;
 		}
 	}
-	printf("Quiesence reached..\n");
+	printf("Quiescence reached..\n");
 
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
 	return (raidPtr->waiting_for_quiescence);
