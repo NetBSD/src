@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.1 1997/04/04 20:56:37 mycroft Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.2 1997/05/24 03:45:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -59,7 +59,7 @@
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 
-#ifndef __CGD_INDIRECT_CONFIG
+#ifdef __BROKEN_INDIRECT_CONFIG
 int com_isa_probe __P((struct device *, void *, void *));
 #else
 int com_isa_probe __P((struct device *, struct cfdata *, void *));
@@ -74,7 +74,7 @@ struct cfattach com_isa_ca = {
 int
 com_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifndef __CGD_INDIRECT_CONFIG
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
 	struct cfdata *match;
