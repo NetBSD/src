@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.16 2003/02/25 10:35:45 wiz Exp $
+.\"	$NetBSD: kdump.1,v 1.17 2003/06/28 17:15:07 darrenr Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display kernel trace data
 .Sh SYNOPSIS
 .Nm
-.Op Fl dlNnRT
+.Op Fl dlLNnRT
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
@@ -73,6 +73,8 @@ Display the specified file instead of
 .It Fl l
 Loop reading the trace file, once the end-of-file is reached, waiting for
 more data.
+.It Fl L
+Show light weight process id's as well as the process id.
 .It Fl m Ar maxdata
 Display at most
 .Ar maxdata
