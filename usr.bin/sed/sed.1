@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.19 2003/02/25 10:35:54 wiz Exp $
+.\"	$NetBSD: sed.1,v 1.20 2003/06/27 09:06:23 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,9 +155,7 @@ starts looking again for the first address.
 .Pp
 Editing commands can be applied to non-selected pattern spaces by use
 of the exclamation character
-.Po
-.Dq !
-.Pc
+.Pq Dq \&!
 function.
 .Sh SED REGULAR EXPRESSIONS
 The
@@ -238,7 +236,7 @@ The
 .Dq t ,
 .Dq w ,
 .Dq y ,
-.Dq ! ,
+.Dq \&! ,
 and
 .Dq \&:
 functions all accept additional arguments.
