@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.20 1997/10/19 23:05:16 lukem Exp $	*/
+/*	$NetBSD: process.c,v 1.21 1997/10/22 19:51:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.20 1997/10/19 23:05:16 lukem Exp $");
+__RCSID("$NetBSD: process.c,v 1.21 1997/10/22 19:51:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,7 @@ flush_appends()
 			if ((f = fopen(appends[i].s, "r")) == NULL)
 				break;
 			while ((count =
-			    fread(buf, sizeof(char), sizeof(buf), f)) > 0);
+			    fread(buf, sizeof(char), sizeof(buf), f)) > 0)
 				(void)fwrite(buf, sizeof(char), count, stdout);
 			(void)fclose(f);
 			break;
