@@ -1,4 +1,4 @@
-# $NetBSD: lint.mi,v 1.13 2003/07/17 02:26:18 matt Exp $
+# $NetBSD: lint.mi,v 1.14 2003/07/23 21:56:35 itojun Exp $
 ./usr/libdata/lint/llib-lbsdmalloc.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lc.ln		comp-c-lintlib
@@ -6,6 +6,7 @@
 ./usr/libdata/lint/llib-lcrypt.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lcrypto.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lcurses.ln	comp-c-lintlib
+./usr/libdata/lint/llib-ldes.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-ledit.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lform.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lgnumalloc.ln	comp-c-lintlib
