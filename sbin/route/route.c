@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.63 2003/04/21 13:42:50 jrf Exp $	*/
+/*	$NetBSD: route.c,v 1.64 2003/05/17 23:02:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.63 2003/04/21 13:42:50 jrf Exp $");
+__RCSID("$NetBSD: route.c,v 1.64 2003/05/17 23:02:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -489,17 +489,15 @@ routename(sa, nm, flags)
 	if (first) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.'))) {
-			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
-			domain[sizeof(domain) - 1] = '\0';
-		} else
+		    (cp = strchr(domain, '.')))
+			(void)strlcpy(domain, cp + 1, sizeof(domain));
+		else
 			domain[0] = 0;
 	}
 
-	if (sa->sa_len == 0) {
-		strncpy(line, "default", sizeof(line) - 1);
-		line[sizeof(line) - 1] = '\0';
-	} else switch (sa->sa_family) {
+	if (sa->sa_len == 0)
+		strlcpy(line, "default", sizeof(line));
+	else switch (sa->sa_family) {
 
 	case AF_INET:
 		in = ((struct sockaddr_in *)sa)->sin_addr;
@@ -528,10 +526,9 @@ routename(sa, nm, flags)
 			}
 		}
 		if (cp)
-			(void)strncpy(line, cp, sizeof(line) - 1);
+			(void)strlcpy(line, cp, sizeof(line));
 		else
-			(void)strncpy(line, inet_ntoa(in), sizeof(line) - 1);
-		line[sizeof(line) - 1] = '\0';
+			(void)strlcpy(line, inet_ntoa(in), sizeof(line));
 		break;
 
 	case AF_LINK:
@@ -568,10 +565,8 @@ routename(sa, nm, flags)
 #endif
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
-			if (nml == 0) {
-				strncpy(line, "::", sizeof(line) - 1);
-				line[sizeof(line) - 1] = '\0';
-			}
+			if (nml == 0)
+				strlcpy(line, "::", sizeof(line));
 			else
 				/* noncontiguous never happens in ipv6 */
 				snprintf(line, sizeof(line), "::/%d", nml);
@@ -579,7 +574,7 @@ routename(sa, nm, flags)
 
 		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 		    line, sizeof(line), NULL, 0, niflags) != 0)
-			strncpy(line, "invalid", sizeof(line));
+			strlcpy(line, "invalid", sizeof(line));
 		break;
 	    }
 #endif
@@ -667,10 +662,9 @@ netname(sa, nm)
 			if (np)
 				cp = np->n_name;
 		}
-		if (cp) {
-			(void)strncpy(line, cp, sizeof(line) - 1);
-			line[sizeof(line) - 1] = '\0';
-		} else {
+		if (cp)
+			(void)strlcpy(line, cp, sizeof(line));
+		else {
 #if 0	/* XXX - This is silly... */
 #define C(x)	((x) & 0xff)
 			if ((i & 0xffffff) == 0)
@@ -687,7 +681,7 @@ netname(sa, nm)
 				    C(i >> 24), C(i >> 16), C(i >> 8), C(i));
 #undef C
 #else /* XXX */
-			(void)strncpy(line, inet_ntoa(in), sizeof(line) - 1);
+			(void)strlcpy(line, inet_ntoa(in), sizeof(line));
 #endif /* XXX */
 		}
 		break;
@@ -726,10 +720,8 @@ netname(sa, nm)
 #endif
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
-			if (nml == 0) {
-				strncpy(line, "::", sizeof(line) - 1);
-				line[sizeof(line) - 1] = '\0';
-			}
+			if (nml == 0)
+				strlcpy(line, "::", sizeof(line));
 			else
 				/* noncontiguous never happens in ipv6 */
 				snprintf(line, sizeof(line), "::/%d", nml);
@@ -737,7 +729,7 @@ netname(sa, nm)
 
 		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 		    line, sizeof(line), NULL, 0, niflags) != 0)
-			strncpy(line, "invalid", sizeof(line));
+			strlcpy(line, "invalid", sizeof(line));
 		break;
 	    }
 #endif
