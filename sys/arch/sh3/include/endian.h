@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.1 1999/09/13 10:31:17 itojun Exp $ */
+/*	$NetBSD: endian.h,v 1.2 2000/01/14 15:46:02 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -60,6 +60,8 @@
 #define _QUAD_LOWWORD	0
 #endif
 
+#ifndef _LOCORE
+#include <machine/types.h>
 #include <sys/cdefs.h>
 
 typedef u_int32_t	in_addr_t;
@@ -93,5 +95,7 @@ __END_DECLS
 #define	HTONL(x)	(x) = htonl((in_addr_t)x)
 #define	HTONS(x)	(x) = htons((in_port_t)x)
 #endif
+
+#endif /* !_LOCORE */
 
 #endif /* _MACHINE_ENDIAN_H_ */
