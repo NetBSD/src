@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.10 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: reboot.h,v 1.11 1996/08/10 00:23:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -51,6 +51,7 @@
 #define	RB_RDONLY	0x080	/* mount root fs read-only */
 #define	RB_DUMP		0x100	/* dump kernel memory before reboot */
 #define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
+#define RB_STRING	0x400	/* use provided bootstr */
 
 /*
  * Constants for converting boot-style device number to type,
