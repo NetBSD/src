@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_brk.c,v 1.1 1997/11/06 00:52:52 cgd Exp $	*/
+/*	$NetBSD: Lint_brk.c,v 1.2 1999/03/10 09:52:54 kleink Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -8,9 +8,9 @@
 #include <unistd.h>
 
 /*ARGSUSED*/
-char *
+int
 brk(addr)
-	const char *addr;
+	void *addr;
 {
 	return (0);
 }
