@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2001/01/31 15:17:42 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.176 2001/03/01 16:09:25 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ cpu_startup()
 #endif
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	paddr_t pa;
 	char pbuf[9];
 
 #ifdef DEBUG
@@ -181,19 +182,28 @@ cpu_startup()
 #endif
 
 	/*
-	 * Map the message buffer (physical location 0).
+	 * Re-map the message buffer from its temporary address
+	 * at KERNBASE to MSGBUF_VA.
 	 */
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0,
-	    VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+#if !defined(MSGBUFSIZE) || MSGBUFSIZE == 8192
+	size = 8192;
+
+	/* Get physical address of the message buffer */
+	pmap_extract(pmap_kernel(), (vaddr_t)KERNBASE, &pa);
+
+	/* Invalidate the current mapping at KERNBASE. */
+	pmap_kremove((vaddr_t)KERNBASE, size);
+
+	/* Enter the new mapping */
+	pmap_map(MSGBUF_VA, pa, pa + size, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
-	 * XXX - sun4
-	 * Some boot programs mess up physical page 0, which
-	 * is where we want to put the msgbuf. There's some
-	 * room, so shift it over half a page.
+	 * Re-initialize the message buffer.
 	 */
-	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
+	initmsgbuf((caddr_t)MSGBUF_VA, size);
+#else
+#error MSGBUFSIZE != 8192 not implemented
+#endif
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -255,8 +265,8 @@ cpu_startup()
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+				   VM_PAGE_TO_PHYS(pg),
+				   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1630,8 +1640,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
