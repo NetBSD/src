@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/18 17:42:59 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/10/20 18:11:04 matt Exp $
 
 LIB=		g2c
 
@@ -69,8 +69,11 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${MACHINE_ARCH} \
 		-I${DIST}/libf2c/libI77 -I${DIST}/libf2c/libU77 \
 		-I${DIST}/gcc/config -I${DIST}/gcc/f -I${DIST}/gcc \
 		-DNETBSD_NATIVE -DHAVE_CONFIG_H=1 -DSTDC_HEADERS=1 \
-		-DRETSIGTYPE=void -DIEEE_drem=1 -DSkip_f2c_Undefs=1 \
+		-DRETSIGTYPE=void -DSkip_f2c_Undefs=1 \
 		-DHAVE_TEMPNAM=1 -DNO_EOF_CHAR_CHECK=1
+.if (${MACHINE_ARCH} != "vax")
+CPPFLAGS+=	-DIEEE_drem=1
+.endif
 
 CLEANFILES+=	g2c.h g2ctypes.sed
 
