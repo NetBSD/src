@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.3 2000/12/22 06:24:15 itojun Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.4 2000/12/22 06:29:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.3 2000/12/22 06:24:15 itojun Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.4 2000/12/22 06:29:40 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -234,7 +234,11 @@ wcrtomb(s, wchar, ps)
 	(*___sputrune(rl0))(rl0, wchar, s, (unsigned int)MB_CUR_MAX, &e, state);
 bye:
 	CLEANUP(rl0, state, state0, ps);
-	return (e ? e - s : -1);
+	if (!e) {
+		errno = EILSEQ;
+		return -1;
+	} else
+		return e - s;
 }
 
 int
