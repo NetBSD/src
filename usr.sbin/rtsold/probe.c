@@ -1,3 +1,5 @@
+/*	$NetBSD: probe.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
@@ -40,6 +42,7 @@
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
+#include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
 #include <arpa/inet.h>
@@ -49,10 +52,12 @@
 #include <string.h>
 #include <syslog.h>
 
+#include "rtsold.h"
+
 static struct msghdr sndmhdr;
 static struct iovec sndiov[2];
 static int probesock;
-static void sendprobe(struct in6_addr *addr, int ifindex);
+static void sendprobe __P((struct in6_addr *addr, int ifindex));
 
 int
 probe_init()
