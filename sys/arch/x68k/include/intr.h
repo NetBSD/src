@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1999/08/05 18:08:15 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1999/09/23 15:06:37 minoura Exp $	*/
 
 /*
  *
@@ -40,6 +40,8 @@
 
 #include <machine/psl.h>
 
+#if defined(_KERNEL) && !defined(_LOCORE)
+
 /* spl0 requires checking for software interrupts */
 void	spl0 __P((void));
 
@@ -77,4 +79,5 @@ extern unsigned char ssir;
 #define setsoftserial() ssir |= SIR_SERIAL
 #define setsoftkbd()    ssir |= SIR_KBD
 
+#endif /* _KERNEL && ! _LOCORE */
 #endif
