@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1999/07/08 18:08:53 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 1999/07/08 21:14:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -323,7 +323,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		if (pmap_extract(umap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		uva += PAGE_SIZE;
