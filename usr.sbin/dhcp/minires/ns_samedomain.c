@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_samedomain.c,v 1.1.1.2 2001/04/02 21:57:08 mellon Exp $";
+static const char rcsid[] = "$Id: ns_samedomain.c,v 1.2 2001/06/19 13:54:58 drochner Exp $";
 #endif
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ ns_makecanon(const char *src, char *dst, size_t dstsize) {
 	size_t n = strlen(src);
 
 	if (n + sizeof "." > dstsize) {
-		ISC_R_NOSPACE;
+		return ISC_R_NOSPACE;
 	}
 	strcpy(dst, src);
 	while (n > 0 && dst[n - 1] == '.')		/* Ends in "." */
