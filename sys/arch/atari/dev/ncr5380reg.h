@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.6 1995/12/18 20:37:54 leo Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.7 1996/02/10 22:10:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -236,14 +236,14 @@ static int  scsi_select __P((SC_REQ *, int));
 static int  handle_message __P((SC_REQ *, u_int));
 static void ack_message __P((void));
 static void nack_message __P((SC_REQ *, u_char));
-static int  information_transfer __P((void));
+static int  information_transfer __P((struct ncr_softc *));
 static void reselect __P((struct ncr_softc *));
 static int  dma_ready __P((void));
 static void transfer_dma __P((SC_REQ *, u_int, int));
 static int  check_autosense __P((SC_REQ *, int));
 static int  reach_msg_out __P((struct ncr_softc *, u_long));
 static int  check_intr __P((struct ncr_softc *));
-static void scsi_reset __P((struct ncr_softc *));
+static void scsi_reset __P((struct ncr_softc *, const char *));
 static int  scsi_dmaok __P((SC_REQ *));
 static void run_main __P((struct ncr_softc *));
 static void scsi_main __P((struct ncr_softc *));
