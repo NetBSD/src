@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.36 2003/07/16 11:54:44 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.37 2003/09/26 17:44:51 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -427,6 +427,10 @@ Retrieve
 previously registered with the corresponding
 .Fn el_set
 call.
+.It Dv EL_UNBUFFERED, Fa "int"
+Sets or clears unbuffered mode. In this mode,
+.Fn el_gets
+will return immediately after processing a single character.
 .El
 .It Fn el_source
 Initialise
