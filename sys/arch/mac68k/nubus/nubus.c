@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.8 1994/10/26 08:46:14 cgd Exp $	*/
+/*	$NetBSD: nubus.c,v 1.9 1995/04/12 14:57:40 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -679,11 +679,10 @@ nubus_print(aux, name)
 }
 
 static void
-nubus_attach(parent, dev, aux)
-	struct device	*parent, *dev;
+nubus_attach(parent, self, aux)
+	struct device	*parent, *self;
 	void		*aux;
 {
-	struct cfdriver		 *cf;
 	register struct nubus_hw *nu;
 	int			 i;
 
@@ -697,14 +696,13 @@ nubus_attach(parent, dev, aux)
 		if (!nu->found)
 			continue;
 
-		if (config_found(dev, nu, nubus_print))
+		if (config_found(self, nu, nubus_print))
 			nu->claimed = 1;
 	}
-
 }
 
 extern int matchbyname();
 
 struct cfdriver nubuscd =
       { NULL, "nubus", matchbyname, nubus_attach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
+	DV_DULL, sizeof(struct device), 1, 0 };
