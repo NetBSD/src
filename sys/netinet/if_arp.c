@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.86 2002/06/25 02:53:27 enami Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.87 2002/06/25 02:55:14 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.86 2002/06/25 02:53:27 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.87 2002/06/25 02:55:14 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.86 2002/06/25 02:53:27 enami Exp $");
 #if NFDDI > 0
 #include <net/if_fddi.h>
 #endif
-#include "token.h"
 #include "token.h"
 
 #define SIN(s) ((struct sockaddr_in *)s)
