@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              $Revision: 1.5 $
+ *              xRevision: 34 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.6 2002/12/23 00:22:15 kanaoka Exp $");
 
 #define __RSDUMP_C__
 
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
         ACPI_MODULE_NAME    ("rsdump")
 
 
-#if defined(ACPI_DEBUG) || defined(ENABLE_DEBUGGER)
+#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
 /*******************************************************************************
  *
@@ -978,20 +978,25 @@ AcpiRsDumpAddress64 (
                 ACPI_ADDRESS_FIXED == Address64Data->MaxAddressFixed ?
                 "" : "not ");
 
-    AcpiOsPrintf ("    Granularity: %16X\n",
-                Address64Data->Granularity);
+    AcpiOsPrintf ("    Granularity: %8.8X%8.8X\n",
+                ACPI_HIDWORD (Address64Data->Granularity),
+                ACPI_LODWORD (Address64Data->Granularity));
 
-    AcpiOsPrintf ("    Address range min: %16X\n",
-                Address64Data->MinAddressRange);
+    AcpiOsPrintf ("    Address range min: %8.8X%8.8X\n",
+                ACPI_HIDWORD (Address64Data->MinAddressRange),
+                ACPI_HIDWORD (Address64Data->MinAddressRange));
 
-    AcpiOsPrintf ("    Address range max: %16X\n",
-                Address64Data->MaxAddressRange);
+    AcpiOsPrintf ("    Address range max: %8.8X%8.8X\n",
+                ACPI_HIDWORD (Address64Data->MaxAddressRange),
+                ACPI_HIDWORD (Address64Data->MaxAddressRange));
 
-    AcpiOsPrintf ("    Address translation offset: %16X\n",
-                Address64Data->AddressTranslationOffset);
+    AcpiOsPrintf ("    Address translation offset: %8.8X%8.8X\n",
+                ACPI_HIDWORD (Address64Data->AddressTranslationOffset),
+                ACPI_HIDWORD (Address64Data->AddressTranslationOffset));
 
-    AcpiOsPrintf ("    Address Length: %16X\n",
-                Address64Data->AddressLength);
+    AcpiOsPrintf ("    Address Length: %8.8X%8.8X\n",
+                ACPI_HIDWORD (Address64Data->AddressLength),
+                ACPI_HIDWORD (Address64Data->AddressLength));
 
     if(0xFF != Address64Data->ResourceSource.Index)
     {

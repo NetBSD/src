@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              $Revision: 1.3 $
+ *              xRevision: 92 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.3 2002/06/15 01:47:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
 
 #define __NSXFNAME_C__
 
@@ -280,7 +280,7 @@ AcpiGetName (
 
     /* Validate/Allocate/Clear caller buffer */
 
-    Status = AcpiUtInitializeBuffer (Buffer, PATH_SEGMENT_LENGTH);
+    Status = AcpiUtInitializeBuffer (Buffer, ACPI_PATH_SEGMENT_LENGTH);
     if (ACPI_FAILURE (Status))
     {
         goto UnlockAndExit;

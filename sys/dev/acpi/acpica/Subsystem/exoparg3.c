@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              $Revision: 1.3 $
+ *              xRevision: 15 $
  *
  *****************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.3 2002/11/02 20:58:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
 
 #define __EXOPARG3_C__
 
@@ -184,7 +184,7 @@ AcpiExOpcode_3A_0T_0R (
     case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg)    */
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "FatalOp: Type %X Code %X Arg %X <<\n",
+            "FatalOp: Type %X Code %X Arg %X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
             (UINT32) Operand[0]->Integer.Value, (UINT32) Operand[1]->Integer.Value,
             (UINT32) Operand[2]->Integer.Value));
 
@@ -330,7 +330,10 @@ Cleanup:
 
     /* Set the return object and exit */
 
-    WalkState->ResultObj = ReturnDesc;
+    if (!WalkState->ResultObj)
+    {
+        WalkState->ResultObj = ReturnDesc;
+    }
     return_ACPI_STATUS (Status);
 }
 
