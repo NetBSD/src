@@ -129,7 +129,7 @@ posix_right: posix_only other_two
 
 right_posix: right_only other_two
 
-install: maninstall ${DATA} ${REDO}
+realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
 	    ../obj/zic -d ${TZDIR} -p ${POSIXRULES})
 	/bin/rm -f ${DESTDIR}/etc/localtime
