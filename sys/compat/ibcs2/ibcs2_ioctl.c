@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.13 1997/09/19 21:57:10 jtk Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.14 1998/03/05 04:36:07 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -159,6 +159,7 @@ stios2btios(st, bt)
 	if (l & IBCS2_HUPCL)	r |= HUPCL;
 	if (l & IBCS2_CLOCAL)	r |= CLOCAL;
 	bt->c_cflag = r;
+	bt->c_ispeed = bt->c_ospeed = s2btab[l & 0x0f];
 
 	l = st->c_lflag;	r = 0;
 	if (l & IBCS2_ISIG)	r |= ISIG;
@@ -170,8 +171,6 @@ stios2btios(st, bt)
 	if (l & IBCS2_NOFLSH)	r |= NOFLSH;
 	if (l & IBCS2_TOSTOP)	r |= TOSTOP;
 	bt->c_lflag = r;
-
-	bt->c_ispeed = bt->c_ospeed = s2btab[l & 0x0000000f];
 
 	bt->c_cc[VINTR]	=
 	    st->c_cc[IBCS2_VINTR]  ? st->c_cc[IBCS2_VINTR]  : _POSIX_VDISABLE;

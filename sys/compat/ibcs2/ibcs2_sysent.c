@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sysent.c,v 1.17 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_sysent.c,v 1.18 1998/03/05 04:36:08 scottb Exp $	*/
 
 /*
  * System call switch table.
@@ -245,8 +245,8 @@ struct sysent ibcs2_sysent[] = {
 	    sys___posix_fchown },		/* 94 = __posix_fchown */
 	{ 0, 0,
 	    sys_nosys },			/* 95 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 96 = unimplemented */
+	{ 1, s(struct sys_sigreturn_args),
+	    sys_sigreturn },			/* 96 = sigreturn */
 	{ 0, 0,
 	    sys_nosys },			/* 97 = unimplemented sigaltstack */
 	{ 0, 0,
@@ -259,10 +259,10 @@ struct sysent ibcs2_sysent[] = {
 	    sys_nosys },			/* 101 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 102 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 103 = unimplemented statvfs */
-	{ 0, 0,
-	    sys_nosys },			/* 104 = unimplemented fstatvfs */
+	{ 2, s(struct ibcs2_sys_statvfs_args),
+	    ibcs2_sys_statvfs },		/* 103 = statvfs */
+	{ 2, s(struct ibcs2_sys_fstatvfs_args),
+	    ibcs2_sys_fstatvfs },		/* 104 = fstatvfs */
 	{ 0, 0,
 	    sys_nosys },			/* 105 = unimplemented */
 	{ 0, 0,

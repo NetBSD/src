@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscalls.c,v 1.16 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscalls.c,v 1.17 1998/03/05 04:36:08 scottb Exp $	*/
 
 /*
  * System call names.
@@ -128,15 +128,15 @@ char *ibcs2_syscallnames[] = {
 	"fchmod",			/* 93 = fchmod */
 	"__posix_fchown",			/* 94 = __posix_fchown */
 	"#95 (unimplemented)",		/* 95 = unimplemented */
-	"#96 (unimplemented)",		/* 96 = unimplemented */
+	"sigreturn",			/* 96 = sigreturn */
 	"#97 (unimplemented sigaltstack)",		/* 97 = unimplemented sigaltstack */
 	"#98 (unimplemented)",		/* 98 = unimplemented */
 	"#99 (unimplemented)",		/* 99 = unimplemented */
 	"#100 (unimplemented getcontext/setcontext/sigsetjmp)",		/* 100 = unimplemented getcontext/setcontext/sigsetjmp */
 	"#101 (unimplemented)",		/* 101 = unimplemented */
 	"#102 (unimplemented)",		/* 102 = unimplemented */
-	"#103 (unimplemented statvfs)",		/* 103 = unimplemented statvfs */
-	"#104 (unimplemented fstatvfs)",		/* 104 = unimplemented fstatvfs */
+	"statvfs",			/* 103 = statvfs */
+	"fstatvfs",			/* 104 = fstatvfs */
 	"#105 (unimplemented)",		/* 105 = unimplemented */
 	"#106 (unimplemented)",		/* 106 = unimplemented */
 	"#107 (unimplemented waitid)",		/* 107 = unimplemented waitid */

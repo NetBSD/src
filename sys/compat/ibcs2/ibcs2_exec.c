@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.14 1998/02/09 02:30:46 scottb Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.15 1998/03/05 04:36:07 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -100,8 +100,7 @@ static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
 extern int bsd2ibcs_errno[];
 extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
-extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
-extern char sigcode[], esigcode[];
+extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";
 
@@ -116,8 +115,23 @@ struct emul emul_ibcs2_coff = {
 	0,
 	copyargs,
 	ibcs2_setregs,
-	sigcode,
-	esigcode,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
+};
+
+struct emul emul_ibcs2_xout = {
+	"ibcs2",
+	bsd2ibcs_errno,
+	ibcs2_sendsig,
+	0,
+	IBCS2_SYS_MAXSYSCALL,
+	ibcs2_sysent,
+	ibcs2_syscallnames,
+	0,
+	copyargs,
+	ibcs2_setregs,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
 };
 
 struct emul emul_ibcs2_elf = {
@@ -131,8 +145,8 @@ struct emul emul_ibcs2_elf = {
 	IBCS2_ELF_AUX_ARGSIZ,
 	elf32_copyargs,
 	ibcs2_setregs,
-	sigcode,
-	esigcode,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
 };
 
 
@@ -703,7 +717,7 @@ exec_ibcs2_xout_makecmds(p, epp)
 		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
 	if (error == 0)
-		epp->ep_emul = &emul_ibcs2_coff; /* not really COFF but WTF */
+		epp->ep_emul = &emul_ibcs2_xout;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
