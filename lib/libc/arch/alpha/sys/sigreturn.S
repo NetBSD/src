@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.1 1995/02/10 17:50:42 cgd Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.2 1998/09/29 03:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,4 +35,4 @@
  * (XXX PROFILING)
  */
 
-RSYSCALL(sigreturn)
+PSEUDO(sigreturn,compat_13_sigreturn13)
