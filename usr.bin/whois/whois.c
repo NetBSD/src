@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.23 2003/10/09 15:32:37 christos Exp $   */
+/*      $NetBSD: whois.c,v 1.24 2003/10/11 09:06:03 wiz Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.23 2003/10/09 15:32:37 christos Exp $");
+__RCSID("$NetBSD: whois.c,v 1.24 2003/10/11 09:06:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 #endif
 	country = host = server = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:qQrR6")) != -1)
+	while ((ch = getopt(argc, argv, "6Aac:dgh:ilmp:qQRr")) != -1)
 		switch(ch) {
 		case 'a':
 			host = ANICHOST;
@@ -309,7 +309,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-aAdgilmQrR6] [-c country-code | -h hostname] "
+	    "Usage: %s [-6AadgilmQRr] [-c country-code | -h hostname] "
 		"[-p port] name ...\n", getprogname());
 	exit(1);
 }
