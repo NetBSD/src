@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.44 1996/09/08 03:33:55 mycroft Exp $
+#	$NetBSD: MAKEDEV,v 1.45 1996/10/21 19:58:25 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -100,6 +100,10 @@ floppy)
 	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0
 	;;
 
+ramdisk)
+	sh $0 floppy rd0
+	;;
+
 std)
 	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
 	mknod console		c 0 0
@@ -157,11 +161,15 @@ rd*)
 	case $i in
 	rd*) name=rd;	unit=${i#rd};	chr=24;	blk=17;;
 	esac
-	rm -f $name$unit r$name$unit
-	mknod $name$unit	b $blk $(($unit +  0))
-	mknod r$name$unit	c $chr $(($unit + 16))
-	chgrp operator $name$unit r$name$unit
-	chmod 640 $name$unit r$name$unit
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
 ss*)
