@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.176 2004/07/03 05:08:34 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.176 2004/07/03 05:08:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.177 2005/01/01 03:25:46 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1109,7 +1109,7 @@ setregs(l, pack, stack)
 	f->f_regs[_R_A3] = (int)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = (struct lwp *)0;
+		fpcurlwp = NULL;
 	memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
