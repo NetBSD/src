@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 1997/06/12 15:46:42 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 1997/06/15 18:18:57 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,7 +226,6 @@ extern	void
 mach_init __P((int argc, char *argv[], u_int code,
     const struct callback *cv));
 
-
 #ifdef DS5000_200
 void	kn02_enable_intr __P ((u_int slotno,
 			       int (*handler) __P((intr_arg_t sc)),
@@ -264,7 +263,6 @@ void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
 extern void stacktrace __P((void)); /*XXX*/
 #endif
 
-
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -272,8 +270,7 @@ extern void stacktrace __P((void)); /*XXX*/
 int	safepri = PSL_LOWIPL;
 
 struct	user *proc0paddr;
-struct	proc nullproc;		/* for use by swtch_exit() */
-
+struct	proc nullproc;		/* for use by switch_exit() */
 
 /*
  * XXX locore callback-vector setup should be done via mips_vector_init()
@@ -281,7 +278,12 @@ struct	proc nullproc;		/* for use by swtch_exit() */
  * explicitly call the mips1 setup function.
  */
 extern void mips1_vector_init __P((void));
+extern void mips3_vector_init __P((void));
 
+extern void mips3_SetWIRED __P((int));
+extern void MachHitFlushDCache __P((vm_offset_t, int));
+
+extern void savefpregs __P((struct proc *));
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -324,12 +326,31 @@ mach_init(argc, argv, code, cv)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-#ifdef notyet
-	/* XXX locore doesn't set up cpu type early enough for this */
-	mips_vector_init();
-#else
-	mips1_vector_init();
+
+	switch (cpu_id.cpu.cp_imp) {
+#ifdef MIPS1
+	case MIPS_R2000:
+	case MIPS_R3000:
+		cpu_arch = 1;
+		mips1_TLBFlush();
+		for (i = 0; i < VMMACH_MIPS_3K_FIRST_RAND_ENTRY; ++i)
+			mips1_TLBWriteIndexed(i, MACH_CACHED_MEMORY_ADDR, 0);
+		mips1_vector_init();
+		break;
 #endif
+#ifdef MIPS3
+	case MIPS_R4000:
+		cpu_arch = 3;
+		mips3_SetWIRED(0);
+		mips3_TLBFlush();
+		mips3_SetWIRED(VMMACH_WIRED_ENTRIES);
+		mips3_vector_init();
+		break;
+#endif
+	default:
+		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		prom_halt(RB_HALT, NULL);
+	}
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -383,34 +404,62 @@ mach_init(argc, argv, code, cv)
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
 	start = v;
-	curproc->p_addr = proc0paddr = (struct user *)v;
-	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	curpcb = (struct pcb *)proc0.p_addr;
+	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
 	firstaddr = MACH_CACHED_TO_PHYS(v);
+#ifdef MIPS3
+	for (i = 0; i < UPAGES; i+=2) {
+		struct tlb tlb;
+
+		tlb.tlb_mask = PG_SIZE_4K;
+		tlb.tlb_hi = vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
+		tlb.tlb_lo0 = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
+		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
+		proc0.p_md.md_upte[i] = tlb.tlb_lo0;
+		proc0.p_md.md_upte[i+1] = tlb.tlb_lo1;
+		mips3_TLBWriteIndexedVPS(i,&tlb);
+		firstaddr += NBPG * 2;
+	}
+#else
 	for (i = 0; i < UPAGES; i++) {
-		MachTLBWriteIndexed(i,
+		mips1_TLBWriteIndexed(i,
 			(UADDR + (i << PGSHIFT)) | (1 << VMMACH_TLB_PID_SHIFT),
-			curproc->p_md.md_upte[i] = firstaddr | PG_V | PG_M);
+			proc0.p_md.md_upte[i] = firstaddr | PG_V | PG_M);
 		firstaddr += NBPG;
 	}
+#endif
 	v += UPAGES * NBPG;
 	MachSetPID(1);
 
 	/*
-	 * init nullproc for swtch_exit().
+	 * init nullproc for switch_exit().
 	 * init mapping for u page(s), pm_tlbpid 0
 	 * This could be used for an idle process.
 	 */
 	nullproc.p_addr = (struct user *)v;
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
+#ifdef MIPS3
+	for (i = 0; i < UPAGES; i+=2) {
+		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
+		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
+		firstaddr += NBPG * 2;
+	}
+#else
 	for (i = 0; i < UPAGES; i++) {
 		nullproc.p_md.md_upte[i] = firstaddr | PG_V | PG_M;
 		firstaddr += NBPG;
 	}
+#endif
 	v += UPAGES * NBPG;
 
 	/* clear pages for u areas */
 	bzero(start, v - start);
+#ifdef MIPS3
+	mips3_FlushDCache(MACH_CACHED_TO_PHYS(start), v - start);
+	MachHitFlushDCache(UADDR, UPAGES * NBPG);
+#endif
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -428,7 +477,8 @@ mach_init(argc, argv, code, cv)
 		}
 	}
 	/* check for MIPS based platform */
-	if (((i >> 24) & 0xFF) != 0x82) {
+	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
+	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
 		printf("Unknown System type '%s' 0x%x\n", cp, i);
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
@@ -616,7 +666,11 @@ mach_init(argc, argv, code, cv)
 		Mach_reset_addr =
 		    (u_int*)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT);
 		(*Mach_reset_addr) = 0;
+#ifdef MIPS3
+		strcpy(cpu_model, "5000/50");	/* XXX */
+#else
 		strcpy(cpu_model, "5000/25");
+#endif
 		break;
 #endif /*DS5000_25*/
 
@@ -664,7 +718,11 @@ mach_init(argc, argv, code, cv)
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
+#ifdef MIPS3
+		strcpy(cpu_model, "5000/260");	/*XXX*/
+#else
 		strcpy(cpu_model, "5000/240");
+#endif
 		break;
 #endif /* DS5000_240 */
 
@@ -803,8 +861,6 @@ mach_init(argc, argv, code, cv)
 	 */
 	pmap_bootstrap((vm_offset_t)v);
 }
-
-
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -952,16 +1008,17 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	extern struct proc *machFPCurProcPtr;
+	extern struct proc *fpcurproc;
 
-	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
+	bzero((caddr_t)p->p_md.md_regs, sizeof(struct frame));
+	bzero((caddr_t)&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
         p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	if (fpcurproc == p)
+		fpcurproc = (struct proc *)0;
 }
 
 /*
@@ -1033,20 +1090,19 @@ sendsig(catcher, sig, mask, code)
 	ksc.sc_onstack = oonstack;
 	ksc.sc_mask = mask;
 	ksc.sc_pc = regs[PC];
-	ksc.mullo = regs [MULLO];
-	ksc.mulhi = regs [MULHI];
+	ksc.mullo = regs[MULLO];
+	ksc.mulhi = regs[MULHI];
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
 	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
-		sizeof(ksc.sc_regs) - sizeof(int));
+		sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-		extern struct proc *machFPCurProcPtr;
+		extern struct proc *fpcurproc;
 
 		/* if FPU has current state, save it first */
-		if (p == machFPCurProcPtr)
-			MachSaveCurFPState(p);
-		bcopy((caddr_t)&p->p_md.md_regs[F0], (caddr_t)ksc.sc_fpregs,
-			sizeof(ksc.sc_fpregs));
+		if (p == fpcurproc)
+			savefpregs(p);
+		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
 		/*
@@ -1145,10 +1201,9 @@ sys_sigreturn(p, v, retval)
 	regs[MULLO] = scp->mullo;
 	regs[MULHI] = scp->mulhi;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
-		sizeof(scp->sc_regs) - sizeof(int));
+		sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
-		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs[F0],
-			sizeof(scp->sc_fpregs));
+		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	return (EJUSTRETURN);
 }
 
@@ -1283,7 +1338,7 @@ cpu_reboot(howto, bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr);
+		savectx((struct user *)curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
