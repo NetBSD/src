@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.12 1995/08/18 15:27:49 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.13 1995/09/04 13:04:42 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,7 +55,7 @@ int atzscprint __P((void *auxp, char *));
 void atzscattach __P((struct device *, struct device *, void *));
 int atzscmatch __P((struct device *, struct cfdata *, void *));
 
-void atzsc_dmafree __P((struct sbic_softc *));
+void atzsc_enintr __P((struct sbic_softc *));
 void atzsc_dmastop __P((struct sbic_softc *));
 int atzsc_dmanext __P((struct sbic_softc *));
 int atzsc_dmaintr __P((struct sbic_softc *));
@@ -77,7 +77,6 @@ struct scsi_device atzsc_scsidev = {
 
 
 #ifdef DEBUG
-void	atzsc_dmatimeout __P((struct sbic_softc *));
 int	atzsc_dmadebug = 0;
 #endif
 
@@ -126,16 +125,12 @@ atzscattach(pdp, dp, auxp)
 	 */
 	rp->CNTR = CNTR_PDMD;
 	rp->DAWR = DAWR_ATZSC;
-	sc->sc_dmafree = atzsc_dmafree;
+	sc->sc_enintr = atzsc_enintr;
 	sc->sc_dmago = atzsc_dmago;
 	sc->sc_dmanext = atzsc_dmanext;
 	sc->sc_dmastop = atzsc_dmastop;
 	sc->sc_dmacmd = 0;
 
-#ifdef DEBUG
-	/* make sure timeout is really not needed */
-	timeout((void *)atzsc_dmatimeout, sc, 30 * hz);
-#endif
 	/*
 	 * only 24 bit mem.
 	 */
@@ -194,41 +189,15 @@ atzscprint(auxp, pnp)
 
 
 void
-atzsc_dmafree(dev)
+atzsc_enintr(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int s;
 
 	sdp = dev->sc_cregs;
 
-	s = splbio();
-#ifdef DEBUG
-	dev->sc_dmatimo = 0;
-#endif
-	if (dev->sc_dmacmd) {
-		if ((dev->sc_dmacmd & (CNTR_TCEN | CNTR_DDIR)) == 0) {
-			/*
-			 * only FLUSH if terminal count not enabled, 
-			 * and reading from peripheral
-			 */
-			sdp->FLUSH = 1;
-			while ((sdp->ISTR & ISTR_FE_FLG) == 0)
-				;
-		}
-		/* 
-		 * clear possible interrupt and stop dma
-		 */
-		sdp->CINT = 1;
-		sdp->SP_DMA = 1;
-		dev->sc_dmacmd = 0;
-	}
-	/*
-	 * disable interrupts
-	 */
-	sdp->CNTR = CNTR_PDMD;	/* disable interrupts from dma/scsi */
-	dev->sc_flags &= ~SBICF_INTR;
-	splx(s);
+	dev->sc_flags |= SBICF_INTR;
+	sdp->CNTR = CNTR_PDMD | CNTR_INTEN;
 }
 
 int
@@ -249,7 +218,6 @@ atzsc_dmago(dev, addr, count, flags)
 #ifdef DEBUG
 	if (atzsc_dmadebug & DDB_IO)
 		printf("atzsc_dmago: cmd %x\n", dev->sc_dmacmd);
-	dev->sc_dmatimo = 1;
 #endif
 
 	dev->sc_flags |= SBICF_INTR;
@@ -272,7 +240,6 @@ atzsc_dmastop(dev)
 #ifdef DEBUG
 	if (atzsc_dmadebug & DDB_FOLLOW)
 		printf("atzsc_dmastop()\n");
-	dev->sc_dmatimo = 0;
 #endif
 	if (dev->sc_dmacmd) {
 		s = splbio();
@@ -351,9 +318,6 @@ atzsc_dmanext(dev)
 		atzsc_dmastop(dev);
 		return(0);
 	}
-#ifdef DEBUG
-	dev->sc_dmatimo = 1;
-#endif
 	if ((dev->sc_dmacmd & (CNTR_TCEN | CNTR_DDIR)) == 0) {
 		  /* 
 		   * only FLUSH if terminal count not enabled,
@@ -377,21 +341,13 @@ atzsc_dmanext(dev)
 }
 
 #ifdef DEBUG
-/*ARGSUSED*/
 void
-atzsc_dmatimeout(sc)
-	struct sbic_softc *sc;
+atzsc_dump()
 {
-	int s;
+	int i;
 
-	s = splbio();
-	if (sc->sc_dmatimo) {
-		if (sc->sc_dmatimo > 1)
-			printf("%s: dma timeout #%d\n", 
-			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
-		sc->sc_dmatimo++;
-	}
-	splx(s);
-	timeout((void *)atzsc_dmatimeout, sc, 30 * hz);
+	for (i = 0; i < atzsccd.cd_ndevs; ++i)
+		if (atzsccd.cd_devs[i])
+			sbic_dump(atzsccd.cd_devs[i]);
 }
 #endif

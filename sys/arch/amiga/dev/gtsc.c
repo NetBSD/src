@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.12 1995/08/18 15:27:53 chopps Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.13 1995/09/04 13:04:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,7 +56,7 @@ void gtscattach __P((struct device *, struct device *, void *));
 int gtscmatch __P((struct device *, struct cfdata *, void *));
 int gtscprint __P((void *auxp, char *));
 
-void gtsc_dmafree __P((struct sbic_softc *));
+void gtsc_enintr __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
 int gtsc_dmanext __P((struct sbic_softc *));
 int gtsc_dmaintr __P((struct sbic_softc *));
@@ -82,7 +82,6 @@ int gtsc_dmabounce = 0;
 int gtsc_clock_override = 0;
 
 #ifdef DEBUG
-void gtsc_dmatimeout __P((struct sbic_softc *));
 int gtsc_debug = 0;
 #endif
 
@@ -128,15 +127,10 @@ gtscattach(pdp, dp, auxp)
 		rp->bank = 0;
 	
 	sc->sc_dmago =  gtsc_dmago;
-	sc->sc_dmafree = gtsc_dmafree;
+	sc->sc_enintr = gtsc_enintr;
 	sc->sc_dmanext = gtsc_dmanext;
 	sc->sc_dmastop = gtsc_dmastop;
 	sc->sc_dmacmd = 0;
-
-#ifdef DEBUG
-	/* make sure timeout is really not needed */
-	timeout((void *)gtsc_dmatimeout, sc, 30 * hz);
-#endif
 
 	sc->sc_flags |= SBICF_BADDMA;
 	if (gtsc_dmamask)
@@ -219,36 +213,15 @@ gtscprint(auxp, pnp)
 }
 
 void
-gtsc_dmafree(dev)
+gtsc_enintr(dev)
 	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	int s;
 
 	sdp = dev->sc_cregs;
 
-	s = splbio();
-#ifdef DEBUG
-	dev->sc_dmatimo = 0;
-#endif
-	if (dev->sc_dmacmd) {
-		/* 
-		 * clear possible interrupt and stop dma
-		 */
-		sdp->CNTR &= ~GVP_CNTR_INT_P;
-		sdp->SP_DMA = 1;
-		dev->sc_dmacmd = 0;
-	}
-#ifdef DEBUG
-	if (gtsc_debug & (DDB_IO | DDB_FOLLOW))
-		printf("gtsc_dmafree\n");
-#endif
-	/*
-	 * disable interrupts
-	 */
-	sdp->CNTR = 0;	/* disable interrupts from dma/sbic */
-	dev->sc_flags &= ~SBICF_INTR;
-	splx(s);
+	dev->sc_flags |= SBICF_INTR;
+	sdp->CNTR = GVP_CNTR_INTEN;
 }
 
 int
@@ -270,11 +243,19 @@ gtsc_dmago(dev, addr, count, flags)
 #ifdef DEBUG
 	if (gtsc_debug & DDB_IO)
 		printf("gtsc_dmago: cmd %x\n", dev->sc_dmacmd);
-	dev->sc_dmatimo = 1;
 #endif
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = dev->sc_dmacmd;
-	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
+	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask) {
+#if 1
+		printf("gtsc_dmago: pa %08x->%08x dmacmd %x",
+		    dev->sc_cur->dc_addr,
+		    (u_int)dev->sc_cur->dc_addr & ~dev->sc_dmamask,
+		     dev->sc_dmacmd);
+#endif
+		sdp->ACR = 0x00f80000;	/***********************************/
+	} else
+		sdp->ACR = (u_int) dev->sc_cur->dc_addr;
 	if (dev->gtsc_bankmask)
 		sdp->bank = 
 		    dev->gtsc_bankmask & (((u_int)dev->sc_cur->dc_addr) >> 18);
@@ -285,6 +266,10 @@ gtsc_dmago(dev, addr, count, flags)
 	 */
 	if (dev->sc_tcnt > gtsc_maxdma)
 		dev->sc_tcnt = gtsc_maxdma;
+#if 1
+	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask)
+		printf(" tcnt %d\n", dev->sc_tcnt);
+#endif
 	return(dev->sc_tcnt);
 }
 
@@ -300,7 +285,6 @@ gtsc_dmastop(dev)
 #ifdef DEBUG
 	if (gtsc_debug & DDB_FOLLOW)
 		printf("gtsc_dmastop()\n");
-	dev->sc_dmatimo = 0;
 #endif
 	if (dev->sc_dmacmd) {
 		/* 
@@ -351,9 +335,6 @@ gtsc_dmanext(dev)
 		gtsc_dmastop(dev);
 		return(0);
 	}
-#ifdef DEBUG
-	dev->sc_dmatimo = 1;
-#endif
 	/* 
 	 * clear possible interrupt and stop dma
 	 */
@@ -379,19 +360,12 @@ gtsc_dmanext(dev)
 
 #ifdef DEBUG
 void
-gtsc_dmatimeout(sc)
-	struct sbic_softc *sc;
+gtsc_dump()
 {
-	int s;
+	int i;
 
-	s = splbio();
-	if (sc->sc_dmatimo) {
-		if (sc->sc_dmatimo > 1)
-			printf("%s: dma timeout #%d\n",
-			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
-		sc->sc_dmatimo++;
-	}
-	splx(s);
-	timeout((void *)gtsc_dmatimeout, sc, 30 * hz);
+	for (i = 0; i < gtsccd.cd_ndevs; ++i)
+		if (gtsccd.cd_devs[i])
+			sbic_dump(gtsccd.cd_devs[i]);
 }
 #endif
