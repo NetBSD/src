@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.19 2002/10/19 20:33:19 provos Exp $       */
+/*      $NetBSD: catman.c,v 1.20 2003/05/09 00:43:46 itojun Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -297,9 +297,10 @@ uniquepath(void)
 					}
 				} else {
 					len = readlink(manpaths.gl_pathv[i],
-							path, PATH_MAX - 1);
+							path, sizeof(path) - 1);
 					if (len == -1)
 						continue;
+					path[len] = '\0';
 					if (!strcmp(path, manpaths.gl_pathv[j]))
 						lnk = 1;
 				}
@@ -413,8 +414,10 @@ scanmandir(catdir, mandir)
 			if(S_ISLNK(manstat.st_mode)) {
 				strcpy(buffer, catpage);
 				strcpy(linkname, basename(buffer));
-				len = readlink(manpage, buffer, PATH_MAX);
-				if(len == -1) {
+				len = readlink(manpage, buffer,
+				    sizeof(buffer) - 1);
+				buffer[PATH_MAX - 1] = '\0';
+				if (len == -1) {
 					warn("can't stat read symbolic link %s",
 							manpage);
 					continue;
