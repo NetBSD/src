@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.5 1997/10/10 12:07:11 lukem Exp $	*/
+/*	$NetBSD: caesar.c,v 1.6 1997/10/11 02:40:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,11 +51,12 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.5 1997/10/10 12:07:11 lukem Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.6 1997/10/11 02:40:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <math.h>
 #include <stdio.h>
@@ -95,10 +96,8 @@ main(argc, argv)
 	if (argc > 1)
 		printit(argv[1]);
 
-	if (!(inbuf = malloc(LINELENGTH))) {
-		(void)fprintf(stderr, "caesar: out of memory.\n");
-		exit(1);
-	}
+	if (!(inbuf = malloc(LINELENGTH)))
+		errx(1, "out of memory");
 
 	/* adjust frequency table to weight low probs REAL low */
 	for (i = 0; i < 26; ++i)
@@ -107,10 +106,8 @@ main(argc, argv)
 	/* zero out observation table */
 	memset(obs, 0, 26 * sizeof(int));
 
-	if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0) {
-		(void)fprintf(stderr, "caesar: %s\n", strerror(errno));
-		exit(1);
-	}
+	if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0)
+		err(1, "reading from stdin");
 	for (i = nread; i--;) {
 		ch = inbuf[i];
 		if (islower(ch))
@@ -144,10 +141,8 @@ main(argc, argv)
 		}
 		if (nread < LINELENGTH)
 			break;
-		if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0) {
-			(void)fprintf(stderr, "caesar: %s\n", strerror(errno));
-			exit(1);
-		}
+		if ((nread = read(STDIN_FILENO, inbuf, LINELENGTH)) < 0)
+			err(1, "reading from stdin");
 	}
 	exit(0);
 }
@@ -158,10 +153,8 @@ printit(arg)
 {
 	int ch, rot;
 
-	if ((rot = atoi(arg)) < 0) {
-		(void)fprintf(stderr, "caesar: bad rotation value.\n");
-		exit(1);
-	}
+	if ((rot = atoi(arg)) < 0)
+		errx(1, "bad rotation value.");
 	while ((ch = getchar()) != EOF)
 		putchar(ROTATE(ch, rot));
 	exit(0);
