@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.491.4.3 2002/10/24 09:34:22 lukem Exp $
+# $NetBSD: GENERIC,v 1.491.4.4 2003/01/28 06:28:20 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.491.4.3 $"
+#ident 		"GENERIC-$Revision: 1.491.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -605,6 +605,7 @@ ed*	at edc?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
