@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.3 1998/01/09 06:54:57 perry Exp $
+#
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
 DIR=	psd/20.ipctut
