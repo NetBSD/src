@@ -16,5 +16,6 @@ guest:*:31:root
 nobody:*:39:
 utmp:*:45:
 ingres:*:74:ingres
+users:*:100:
 dialer:*:117:
 nogroup:*:32766:
