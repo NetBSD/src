@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.14 2004/03/17 04:18:38 uwe Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.15 2004/06/28 14:43:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -432,6 +432,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HITACHI PERSONA HPW230JC") },
 	{ &platid_mask_MACH_HITACHI_PERSONA_HPW50PAD,
 	 TEXT("HITACHI PERSONA HPW50PAD") },
+	{ &platid_mask_MACH_HITACHI_PERSONA_HPW200EC,
+	 TEXT("HITACHI PERSONA HPW200EC") },
 	{ &platid_mask_MACH_HITACHI_PERSONA_HPW650PA,
 	 TEXT("HITACHI PERSONA HPW650PA") },
 #endif /* hpcsh */
