@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.72 2001/09/16 16:34:43 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2001/10/31 01:15:57 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -771,25 +771,23 @@ main(argc, argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (Lst_IsEmpty(sysIncPath)) {
-		if (syspath == NULL || *syspath == '\0')
-			syspath = defsyspath;
-		else
-			syspath = strdup(syspath);
-	    
-		for (start = syspath; *start != '\0'; start = cp) {
-			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
-				continue;
-			if (*cp == '\0') {
-				(void) Dir_AddDir(sysIncPath, start);
-			} else {
-				*cp++ = '\0';
-				(void) Dir_AddDir(sysIncPath, start);
-			}
+	if (syspath == NULL || *syspath == '\0')
+		syspath = defsyspath;
+	else
+		syspath = strdup(syspath);
+
+	for (start = syspath; *start != '\0'; start = cp) {
+		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
+			continue;
+		if (*cp == '\0') {
+			(void) Dir_AddDir(defIncPath, start);
+		} else {
+			*cp++ = '\0';
+			(void) Dir_AddDir(defIncPath, start);
 		}
-		if (syspath != defsyspath)
-		    free(syspath);
 	}
+	if (syspath != defsyspath)
+		free(syspath);
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
@@ -800,7 +798,9 @@ main(argc, argv)
 		LstNode ln;
 
 		sysMkPath = Lst_Init (FALSE);
-		Dir_Expand (_PATH_DEFSYSMK, sysIncPath, sysMkPath);
+		Dir_Expand(_PATH_DEFSYSMK,
+			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
+			   sysMkPath);
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
@@ -832,7 +832,7 @@ main(argc, argv)
 	    printf("job_pipe %d %d, maxjobs %d maxlocal %d compat %d\n", job_pipe[0], job_pipe[1], maxJobs,
 	           maxLocal, compatMake);
 
-	ExportMAKEFLAGS(1);		/* initial export */
+	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
 	Check_Cwd_av(0, NULL, 0);	/* initialize it */
 	
@@ -1003,7 +1003,8 @@ ReadMakefile(p, q)
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
-			name = Dir_FindFile(fname, sysIncPath);
+			name = Dir_FindFile(fname,
+				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
 		if (!name || !(stream = fopen(name, "r"))) {
 			free(path);
 			return(FALSE);
@@ -1654,8 +1655,8 @@ PrintOnError(s)
 }
 
 void
-ExportMAKEFLAGS(first)
-     int first;
+Main_ExportMAKEFLAGS(first)
+     Boolean first;
 {
     static int once = 1;
     char tmp[64];
