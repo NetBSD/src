@@ -115,14 +115,14 @@
 #define	SYS_getcontext	174
 #define	SYS_getaccess	190
 #define	SYS_waitpid	200
-#define	SYS_getdirentries	231
+				/* 231 is old getdirentries */
 				/* 232 is old getdomainname */
 				/* 236 is old setdomainname */
 #define	SYS_sigaction	239
 #define	SYS_sigprocmask	240
 #define	SYS_sigpending	241
 #define	SYS_sigsuspend	242
-#define	SYS_getnumfds	268
+				/* 268 is old getdtablesize getnumfds */
 #define	SYS_fchdir	272
 				/* 275 is old accept */
 #define	SYS_bind	276
