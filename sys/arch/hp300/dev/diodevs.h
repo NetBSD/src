@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.8 2002/04/17 20:51:11 gmcgarry Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.9 2003/05/25 04:59:57 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.5 2002/04/17 20:50:45 gmcgarry Exp 
+ *	NetBSD: diodevs,v 1.6 2003/05/25 04:56:36 tsutsui Exp 
  */
 
 /*-
@@ -79,16 +79,16 @@
 
 
 #define	DIO_DEVICE_ID_SCSI0	0x07
-#define	DIO_DEVICE_DESC_SCSI0	"98625A SCSI"
+#define	DIO_DEVICE_DESC_SCSI0	"98265A SCSI"
 
 #define	DIO_DEVICE_ID_SCSI1	0x27
-#define	DIO_DEVICE_DESC_SCSI1	"98625A SCSI"
+#define	DIO_DEVICE_DESC_SCSI1	"98265A SCSI"
 
 #define	DIO_DEVICE_ID_SCSI2	0x47
-#define	DIO_DEVICE_DESC_SCSI2	"98625A SCSI"
+#define	DIO_DEVICE_DESC_SCSI2	"98265A SCSI"
 
 #define	DIO_DEVICE_ID_SCSI3	0x67
-#define	DIO_DEVICE_DESC_SCSI3	"98625A SCSI"
+#define	DIO_DEVICE_DESC_SCSI3	"98265A SCSI"
 
 /* Framebuffer devices; same primary ID, different secondary IDs. */
 
