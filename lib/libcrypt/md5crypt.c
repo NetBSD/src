@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.1 2000/07/06 11:12:42 ad Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.2 2000/08/03 08:32:36 ad Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.1 2000/07/06 11:12:42 ad Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.2 2000/08/03 08:32:36 ad Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -66,11 +66,11 @@ __md5crypt(const char *pw, const char *salt)
 	sp = salt;
 
 	/* If it starts with the magic string, then skip that */
-	if(strncmp(sp, MD5_MAGIC, MD5_MAGIC_LEN) == 0)
+	if (strncmp(sp, MD5_MAGIC, MD5_MAGIC_LEN) == 0)
 		sp += MD5_MAGIC_LEN;
 
 	/* It stops at the first '$', max 8 chars */
-	for(ep = sp; *ep != '\0' && *ep != '$' && ep < (sp + 8); ep++)
+	for (ep = sp; *ep != '\0' && *ep != '$' && ep < (sp + 8); ep++)
 		continue;
 
 	/* get the length of the true salt */
@@ -94,7 +94,7 @@ __md5crypt(const char *pw, const char *salt)
 	MD5Update(&ctx1, (const unsigned char *)pw, pwl);
 	MD5Final(final, &ctx1);
 
-	for(pl = pwl; pl > 0; pl -= 16)
+	for (pl = pwl; pl > 0; pl -= 16)
 		MD5Update(&ctx, final, (unsigned int)(pl > 16 ? 16 : pl));
 
 	/* Don't leave anything around in vm they could use. */
@@ -102,7 +102,7 @@ __md5crypt(const char *pw, const char *salt)
 
 	/* Then something really weird... */
 	for (i = pwl; i != 0; i >>= 1)
-		if((i & 1) != 0)
+		if ((i & 1) != 0)
 		    MD5Update(&ctx, final, 1);
 		else
 		    MD5Update(&ctx, (const unsigned char *)pw, 1);
@@ -119,21 +119,21 @@ __md5crypt(const char *pw, const char *salt)
 	 * Pentium this takes 34 msec, so you would need 30 seconds to build
 	 * a 1000 entry dictionary...
 	 */
-	for(i = 0; i < 1000; i++) {
+	for (i = 0; i < 1000; i++) {
 		MD5Init(&ctx1);
 
-		if((i & 1) != 0)
+		if ((i & 1) != 0)
 			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
 		else
 			MD5Update(&ctx1, final, 16);
 
-		if((i % 3) != 0)
+		if ((i % 3) != 0)
 			MD5Update(&ctx1, (const unsigned char *)sp, sl);
 
-		if((i % 7) != 0)
+		if ((i % 7) != 0)
 			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
 
-		if((i & 1) != 0)
+		if ((i & 1) != 0)
 			MD5Update(&ctx1, final, 16);
 		else
 			MD5Update(&ctx1, (const unsigned char *)pw, pwl);
