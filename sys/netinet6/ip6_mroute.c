@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.51 2003/07/12 15:12:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.52 2003/07/12 15:16:50 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.51 2003/07/12 15:12:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.52 2003/07/12 15:16:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -129,9 +129,8 @@ static void phyint_send __P((struct ip6_hdr *, struct mif6 *, struct mbuf *));
 static int set_pim6 __P((int *));
 static int get_pim6 __P((struct mbuf *));
 static int socket_send __P((struct socket *, struct mbuf *,
-			    struct sockaddr_in6 *));
-static int register_send __P((struct ip6_hdr *, struct mif6 *,
-			      struct mbuf *));
+	    struct sockaddr_in6 *));
+static int register_send __P((struct ip6_hdr *, struct mif6 *, struct mbuf *));
 
 /*
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
@@ -150,17 +149,17 @@ u_char		n6expire[MF6CTBLSIZ];
 static struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
 u_int		mrt6debug = 0;	  /* debug level 	*/
-#define		DEBUG_MFC	0x02
-#define		DEBUG_FORWARD	0x04
-#define		DEBUG_EXPIRE	0x08
-#define		DEBUG_XMIT	0x10
-#define         DEBUG_REG       0x20
-#define         DEBUG_PIM       0x40
+#define DEBUG_MFC	0x02
+#define DEBUG_FORWARD	0x04
+#define DEBUG_EXPIRE	0x08
+#define DEBUG_XMIT	0x10
+#define DEBUG_REG	0x20
+#define DEBUG_PIM	0x40
 #endif
 
 static void	expire_upcalls __P((void *));
-#define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
-#define		UPCALL_EXPIRE	6		/* number of timeouts */
+#define	EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
+#define	UPCALL_EXPIRE	6		/* number of timeouts */
 
 #ifdef INET
 #ifdef MROUTING
