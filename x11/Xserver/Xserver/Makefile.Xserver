@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile.Xserver,v 1.11 2004/01/10 04:34:33 fredb Exp $
+#	$NetBSD: Makefile.Xserver,v 1.12 2004/01/17 04:03:26 rtr Exp $
 
 .PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
 		record randr render xtrap mfb cfb cfb16 cfb24 cfb32 fb \
-		hw/xnest hw/vfb fontbase \
+		hw/xnest hw/vfb fontbase afb \
 		\
 		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \
 		hw/xfree86/xf86config hw/xfree86/loader \
 		\
-		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k hw/netbsd/mac68k
+		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k \
+		hw/netbsd/mac68k hw/netbsd/amiga
 
 .if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
