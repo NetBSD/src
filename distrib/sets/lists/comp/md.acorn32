@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.1 2002/01/31 02:52:51 reinoud Exp $
+# $NetBSD: md.acorn32,v 1.2 2002/01/31 14:55:25 reinoud Exp $
 ./usr/include/acorn32			comp-c-include
 ./usr/include/acorn32/_G_config.h	comp-c-include
 ./usr/include/acorn32/ansi.h		comp-c-include
@@ -11,7 +11,7 @@
 ./usr/include/acorn32/conf.h		comp-c-include
 ./usr/include/acorn32/cpu.h		comp-c-include
 ./usr/include/acorn32/db_machdep.h	comp-c-include
-./usr/include/acorn32/devmap.h		comp-c-include
+#./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32/disklabel.h	comp-c-include
 ./usr/include/acorn32/elf_machdep.h	comp-c-include
 ./usr/include/acorn32/endian.h		comp-c-include
@@ -21,13 +21,14 @@
 ./usr/include/acorn32/frame.h		comp-c-include
 ./usr/include/acorn32/ieee.h		comp-c-include
 ./usr/include/acorn32/ieeefp.h		comp-c-include
-./usr/include/acorn32/iic.h		comp-c-include
+./usr/include/acorn32/int_const.h	comp-c-include
+./usr/include/acorn32/int_fmtio.h	comp-c-include
+./usr/include/acorn32/int_limits.h	comp-c-include
+./usr/include/acorn32/int_mwgwtypes.h	comp-c-include
 ./usr/include/acorn32/int_types.h	comp-c-include
 ./usr/include/acorn32/intr.h		comp-c-include
-./usr/include/acorn32/io.h		comp-c-include
 ./usr/include/acorn32/ipkdb.h		comp-c-include
 ./usr/include/acorn32/joystick.h	comp-c-include
-./usr/include/acorn32/katelib.h		comp-c-include
 ./usr/include/acorn32/kbd.h		comp-c-include
 ./usr/include/acorn32/limits.h		comp-c-include
 ./usr/include/acorn32/lock.h		comp-c-include
@@ -40,7 +41,6 @@
 ./usr/include/acorn32/profile.h		comp-c-include
 ./usr/include/acorn32/ptrace.h		comp-c-include
 ./usr/include/acorn32/reg.h		comp-c-include
-./usr/include/acorn32/rtc.h		comp-c-include
 ./usr/include/acorn32/setjmp.h		comp-c-include
 ./usr/include/acorn32/signal.h		comp-c-include
 ./usr/include/acorn32/stdarg.h		comp-c-include
@@ -49,8 +49,5 @@
 ./usr/include/acorn32/types.h		comp-c-include
 ./usr/include/acorn32/varargs.h		comp-c-include
 ./usr/include/acorn32/vconsole.h	comp-c-include
-./usr/include/acorn32/vidc.h		comp-c-include
 ./usr/include/acorn32/vmparam.h		comp-c-include
 ./usr/include/ieeefp.h			comp-c-include
-./usr/lib/c++rt0.o			comp-cxx-lib
-./usr/lib/scrt0.o			comp-c-lib
