@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.16 2001/11/15 14:23:09 kleink Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.17 2001/11/21 10:26:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.16 2001/11/15 14:23:09 kleink Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.17 2001/11/21 10:26:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,8 @@ __RCSID("$NetBSD: uucpd.c,v 1.16 2001/11/15 14:23:09 kleink Exp $");
 
 #include "pathnames.h"
 
-struct	sockaddr_in hisctladdr;
+struct	sockaddr_storage hisctladdr;
 int hisaddrlen = sizeof hisctladdr;
-struct	sockaddr_in myctladdr;
 int mypid;
 
 char Logname[64], Username[64];
@@ -93,8 +92,8 @@ int	log;
 extern char **environ;
 
 void dologout __P((void));
-void dologin __P((struct passwd *, struct sockaddr_in *));
-void doit __P((struct sockaddr_in *));
+void dologin __P((struct passwd *, struct sockaddr *));
+void doit __P((struct sockaddr *));
 int readline __P((char *, int));
 int main __P((int, char **));
 
@@ -133,7 +132,7 @@ main(argc, argv)
 	case -1:
 		break;
 	case 0:
-		doit(&hisctladdr);
+		doit((struct sockaddr *)&hisctladdr);
 		break;
 	default:
 		dologout();
@@ -142,8 +141,8 @@ main(argc, argv)
 }
 
 void
-doit(sinp)
-	struct sockaddr_in *sinp;
+doit(sa)
+	struct sockaddr *sa;
 {
 	char user[64], passwd[64];
 	char *xpasswd = NULL;	/* XXX gcc */
@@ -193,7 +192,7 @@ doit(sinp)
 	alarm(0);
 	sprintf(Logname, "LOGNAME=%s", user);
 	sprintf(Username, "USER=%s", user);
-	dologin(pw, sinp);
+	dologin(pw, sa);
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0 ||
 	    setgid(pw->pw_gid) < 0 ||
 	    chdir(pw->pw_dir) < 0 ||
@@ -261,22 +260,19 @@ dologout()
  * Record login in wtmp file.
  */
 void
-dologin(pw, sin)
+dologin(pw, sa)
 	struct passwd *pw;
-	struct sockaddr_in *sin;
+	struct sockaddr *sa;
 {
 	char line[UT_LINESIZE+1];
 	char remotehost[UT_HOSTSIZE+1];
+	char hbuf[NI_MAXHOST];
 	int wtmp, f;
-	struct hostent *hp = gethostbyaddr((char *)&sin->sin_addr,
-		sizeof (struct in_addr), AF_INET);
 
-	if (hp) {
-		strncpy(remotehost, hp->h_name, sizeof (remotehost));
-		endhostent();
+	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0)) {
+		strlcpy(remotehost, "?", sizeof(remotehost));
 	} else
-		strncpy(remotehost, inet_ntoa(sin->sin_addr),
-		    sizeof (remotehost));
+		strlcpy(remotehost, hbuf, sizeof(remotehost));
 	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 	if (wtmp >= 0) {
 		/* hack, but must be unique and no tty line */
