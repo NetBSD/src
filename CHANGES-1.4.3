@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.56 2000/09/10 15:22:33 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.57 2000/09/11 21:22:45 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -704,7 +704,7 @@ distrib/utils/x_sh/Makefile			patch
 distrib/notes/common/main			patch
 
   Add major changes between 1.4.2 and 1.4.3.
-  Tweas for 1.4.3.
+  Tweaks for 1.4.3.
 
 sys/conf/osrelease.sh				patch
 sys/sys/param.h					patch
@@ -1299,3 +1299,32 @@ distrib/utils/sysinst/arch/i386/md.h		patch
 
   Update with the "last extension of split files" to account for
   changes in distribution set sizes.
+
+distrib/notes/common/sysinst			patch
+
+  Properly align IRQ num/mask heading, and work around font change
+  problem.
+
+sys/dev/pci/if_ex_pci.c				1.13
+sys/dev/pci/pcidevs				1.247
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+  Recognize 3Com's Home Connect (3c450) and Office Connect (3cSOHO100)
+  Ethernet cards.
+
+lib/libc/time/strftime.c			1.11
+
+  Do not ignore tm_zone field of last parameter, and convert "%Z"
+  in format as proper time zone.  Fixes PR#10950.
+
+distrib/notes/common/main			patch
+
+  Update of
+   o ``Major Changes'' section for 1.4.3
+   o crypto regulations relaxation
+   o source set sizes
+
+distrib/notes/common/contents			patch
+
+  Update of i386 binary set sizes.
