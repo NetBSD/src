@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdef.h,v 1.2 1999/01/22 02:37:00 thorpej Exp $	*/
+/*	$NetBSD: ypdef.h,v 1.3 1999/06/06 02:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -71,6 +71,5 @@ bool_t	xdr_ypresp_xfr __P((XDR *, struct ypresp_xfr *));
 #endif
 
 #define YPXFR_PROC	"/usr/sbin/ypxfr"
-#define YPSERV_PID_PATH	"/var/run/ypserv.pid"
 
 #endif /* !_YPDEF_H_ */

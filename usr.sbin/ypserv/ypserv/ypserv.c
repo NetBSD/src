@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.9 1999/02/18 06:03:47 abs Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.10 1999/06/06 02:43:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.9 1999/02/18 06:03:47 abs Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.10 1999/06/06 02:43:05 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: ypserv.c,v 1.9 1999/02/18 06:03:47 abs Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -357,18 +358,7 @@ main(argc, argv)
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting");
-
-	{
-		FILE *pidfile = fopen(YPSERV_PID_PATH, "w");
-
-		if (pidfile != NULL) {
-			fprintf(pidfile, "%d\n", getpid());
-			fclose(pidfile);
-		} else {
-			_msgout("can't write PID file: %m");
-			exit(1);
-		}
-	}
+	pidfile(NULL);
 
 	sock = RPC_ANYSOCK;
 	(void) pmap_unset(YPPROG, YPVERS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.39 1999/06/06 02:38:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.39 1999/06/06 02:38:00 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $");
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_rmt.h>
 #include <unistd.h>
+#include <util.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
@@ -636,6 +637,7 @@ main(argc, argv)
 			if (!debug)
 #endif
 				daemon(0, 0);
+			pidfile(NULL);
 		}
 	}
 }

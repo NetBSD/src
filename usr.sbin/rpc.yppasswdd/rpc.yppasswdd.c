@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.2 1997/07/18 07:47:30 thorpej Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.3 1999/06/06 02:44:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
@@ -86,6 +87,7 @@ main(argc, argv)
 
 	if (daemon(0, 0))
 		err(1, "can't detach");
+	pidfile(NULL);
 
 	(void) pmap_unset(YPPASSWDPROG, YPPASSWDVERS);
 
