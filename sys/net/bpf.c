@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.57 2000/05/28 18:17:09 jhawk Exp $	*/
+/*	$NetBSD: bpf.c,v 1.57.2.1 2001/01/25 16:29:56 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -434,8 +434,13 @@ bpfread(dev, uio, ioflag)
 		if (d->bd_rtout != -1)
 			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
 					  d->bd_rtout);
-		else
-			error = EWOULDBLOCK; /* User requested non-blocking I/O */
+		else {
+			if (d->bd_rtout == -1) {
+				/* User requested non-blocking I/O */
+				error = EWOULDBLOCK;
+			} else
+				error = 0;
+		}
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
 			return (error);
@@ -1198,9 +1203,8 @@ bpf_freed(d)
 }
 
 /*
- * Attach an interface to bpf.  driverp is a pointer to a (struct bpf_if *)
- * in the driver's softc; dlt is the link layer type; hdrlen is the fixed
- * size of the link header (variable length headers not yet supported).
+ * Attach an interface to bpf.  dlt is the link layer type; hdrlen is the
+ * fixed size of the link header (variable length headers not yet supported).
  */
 void
 bpfattach(driverp, ifp, dlt, hdrlen)
