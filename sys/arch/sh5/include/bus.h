@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2003/01/28 01:08:06 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2003/03/29 22:07:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -416,31 +416,37 @@ bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int8_t *addr, bus_size_t count)
 {
 	while (count--)
-		*addr++ = bus_space_read_1(tag, bsh, offset);
+		*addr++ = bus_space_read_1(tag, bsh, offset++);
 }
 
 static __inline void
 bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int16_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		*addr++ = bus_space_read_2(tag, bsh, offset);
+		offset += 2;
+	}
 }
 
 static __inline void
 bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int32_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		*addr++ = bus_space_read_4(tag, bsh, offset);
+		offset += 4;
+	}
 }
 
 static __inline void
 bus_space_read_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int64_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		*addr++ = bus_space_read_8(tag, bsh, offset);
+		offset += 8;
+	}
 }
 
 /*
@@ -465,31 +471,37 @@ bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, const u_int8_t *addr, bus_size_t count)
 {
 	while (count--)
-		bus_space_write_1(tag, bsh, offset, *addr++);
+		bus_space_write_1(tag, bsh, offset++, *addr++);
 }
 
 static __inline void
 bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, const u_int16_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_2(tag, bsh, offset, *addr++);
+		offset += 2;
+	}
 }
 
 static __inline void
 bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, const u_int32_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_4(tag, bsh, offset, *addr++);
+		offset += 4;
+	}
 }
 
 static __inline void
 bus_space_write_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, const u_int64_t *addr, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_8(tag, bsh, offset, *addr++);
+		offset += 8;
+	}
 }
 
 
@@ -670,31 +682,37 @@ bus_space_set_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int8_t val, bus_size_t count)
 {
 	while (count--)
-		bus_space_write_1(tag, bsh, offset, val);
+		bus_space_write_1(tag, bsh, offset++, val);
 }
 
 static __inline void
 bus_space_set_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int16_t val, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_2(tag, bsh, offset, val);
+		offset += 2;
+	}
 }
 
 static __inline void
 bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int32_t val, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_4(tag, bsh, offset, val);
+		offset += 4;
+	}
 }
 
 static __inline void
 bus_space_set_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
     bus_size_t offset, u_int64_t val, bus_size_t count)
 {
-	while (count--)
+	while (count--) {
 		bus_space_write_8(tag, bsh, offset, val);
+		offset += 8;
+	}
 }
 
 /*
