@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 1998/10/05 19:50:40 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.38 1999/02/08 22:32:58 mjl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,7 +160,7 @@ main(argc, argv)
 	argv += optind;
 	if (argc > 1) {
 usage:
-		(void)fputs("usage: config [-p] [-s srcdir] [-b builddir] sysname\n", stderr);
+		(void)fputs("usage: config [-pv] [-s srcdir] [-b builddir] sysname\n", stderr);
 		exit(1);
 	}
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
