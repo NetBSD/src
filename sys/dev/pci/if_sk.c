@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.7 2004/01/28 17:07:21 chs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.8 2004/05/07 00:03:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -205,7 +205,8 @@ int sk_marv_miibus_readreg(struct device *, int, int);
 void sk_marv_miibus_writereg(struct device *, int, int, int);
 void sk_marv_miibus_statchg(struct device *);
 
-u_int32_t sk_calchash(caddr_t);
+u_int32_t sk_xmac_hash(caddr_t);
+u_int32_t sk_yukon_hash(caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
@@ -567,18 +568,28 @@ sk_marv_miibus_statchg(dev)
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
-#define SK_BITS		6
-#define SK_POLY	0xEDB88320
+#define SK_HASH_BITS		6
 
 u_int32_t
-sk_calchash(caddr_t addr)
+sk_xmac_hash(caddr_t addr)
 {
 	u_int32_t		crc;
 
 	crc = ether_crc32_be(addr,ETHER_ADDR_LEN);
-        crc = ~crc & ((1<< SK_BITS) - 1);	
+	crc = ~crc & ((1<< SK_HASH_BITS) - 1);	
 	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
-        return (crc);
+	return (crc);
+}
+
+u_int32_t
+sk_yukon_hash(caddr_t addr)
+{
+	u_int32_t		crc;
+
+	crc = ether_crc32_be(addr,ETHER_ADDR_LEN);
+	crc &= ((1 << SK_HASH_BITS) - 1);
+	DPRINTFN(2,("multicast hash for %s is %x\n",ether_sprintf(addr),crc));
+	return (crc);
 }
 
 void
@@ -597,7 +608,7 @@ sk_setmulti(struct sk_if_softc *sc_if)
 	struct sk_softc *sc = sc_if->sk_softc;
 	struct ifnet *ifp= &sc_if->sk_ethercom.ec_if;
 	u_int32_t hashes[2] = { 0, 0 };
-	int h, i;
+	int h = 0, i;
 	struct ethercom *ec = &sc_if->sk_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -647,7 +658,14 @@ allmulti:
 				i++;
 			}
 			else {
-				h = sk_calchash(enm->enm_addrlo);
+				switch (sc->sk_type) {
+				case SK_GENESIS:
+					h = sk_xmac_hash(enm->enm_addrlo);
+					break;
+				case SK_YUKON:
+					h = sk_yukon_hash(enm->enm_addrlo);
+					break;
+				}
 				if (h < 32)
 					hashes[0] |= (1 << h);
 				else
