@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.167.4.2 2002/06/10 16:24:59 tv Exp $
+$NetBSD: pcmciadevs,v 1.167.4.3 2002/06/11 01:45:26 lukem Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -63,6 +63,7 @@ vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
 vendor DLINK_2			0x0143	D-Link
+vendor DLINK_3			0x0149	D-Link
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor NETGEAR			0x0149	Netgear
 vendor SIMPLETECH		0x014d	Simple Technology
@@ -413,6 +414,7 @@ product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
 product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL } D-Link DE-660+
+product DLINK DFE670TXD		{ "D-Link", "DFE-670TXD", NULL, NULL } D-Link DFE-670TXD
 /*
  * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
  * it conflicts with Fujitsu Towa LA501 Ethernet.
