@@ -836,6 +836,7 @@
 ./usr/include/sys/resourcevar.h
 ./usr/include/sys/rnd.h
 ./usr/include/sys/scanio.h
+./usr/include/sys/sched.h
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
 ./usr/include/sys/sem.h
