@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.3 1994/02/01 06:01:25 deraadt Exp $
+ * $Id: cpu.h,v 1.4 1994/03/22 08:08:43 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -162,6 +162,25 @@ void	intr_establish __P((int level, struct intrhand *));
  * trap window).  Such functions must be written in assembly.
  */
 void	intr_fasttrap __P((int level, void (*vec)(void)));
+
+/*
+ *
+ * The SPARC has a Trap Base Register (TBR) which holds the upper 20 bits
+ * of the trap vector table.  The next eight bits are supplied by the
+ * hardware when the trap occurs, and the bottom four bits are always
+ * zero (so that we can shove up to 16 bytes of executable code---exactly
+ * four instructions---into each trap vector).
+ *
+ * The hardware allocates half the trap vectors to hardware and half to
+ * software.
+ *
+ * Traps have priorities assigned (lower number => higher priority).
+ */
+
+struct trapvec {
+	int	tv_instr[4];		/* the four instructions */
+};
+extern struct trapvec trapbase[256];	/* the 256 vectors */
 
 #endif /* KERNEL */
 #endif /* _CPU_H_ */

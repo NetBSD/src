@@ -42,31 +42,11 @@
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: trap.h,v 1.9 92/11/26 02:04:47 torek Exp 
- * $Id: trap.h,v 1.2 1993/11/10 03:13:19 deraadt Exp $
+ * $Id: trap.h,v 1.3 1994/03/22 08:08:44 deraadt Exp $
  */
 
 #ifndef	_MACHINE_TRAP_H
 #define	_MACHINE_TRAP_H
-/*
- *
- * The SPARC has a Trap Base Register (TBR) which holds the upper 20 bits
- * of the trap vector table.  The next eight bits are supplied by the
- * hardware when the trap occurs, and the bottom four bits are always
- * zero (so that we can shove up to 16 bytes of executable code---exactly
- * four instructions---into each trap vector).
- *
- * The hardware allocates half the trap vectors to hardware and half to
- * software.
- *
- * Traps have priorities assigned (lower number => higher priority).
- */
-
-#if defined(KERNEL) && !defined(LOCORE)
-struct trapvec {
-	int	tv_instr[4];		/* the four instructions */
-};
-extern struct trapvec trapbase[256];	/* the 256 vectors */
-#endif
 
 /*	trap		vec	  (pri) description	*/
 #define	T_RESET		0x00	/* (1) not actually vectored; jumps to 0 */
