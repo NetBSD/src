@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.3 1996/12/22 11:31:37 cgd Exp $	*/
+/*	$NetBSD: chk.c,v 1.3.2.1 1997/11/04 21:42:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: chk.c,v 1.3 1996/12/22 11:31:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: chk.c,v 1.3.2.1 1997/11/04 21:42:37 thorpej Exp $";
 #endif
 
 #include <stdlib.h>
@@ -261,7 +261,7 @@ chkdnu(hte)
 }
 
 /*
- * Print a warning if the name has been declared, but is not used
+ * Print a warning if the variable has been declared, but is not used
  * or defined.
  */
 static void
@@ -272,13 +272,15 @@ chkdnud(hte)
 
 	if (hte->h_syms == NULL || hte->h_used || hte->h_def)
 		return;
-	
-	if ((sym = hte->h_syms) != NULL) {
-		if (sym->s_def != DECL)
-			errx(1, "internal error: chkdnud() 1");
-		/* %s declared( %s ), but never used or defined */
-		msg(2, hte->h_name, mkpos(&sym->s_pos));
-	}
+
+	sym = hte->h_syms;
+	if (TP(sym->s_type)->t_tspec == FUNC)
+		return;
+
+	if (sym->s_def != DECL)
+		errx(1, "internal error: chkdnud() 1");
+	/* %s declared( %s ), but never used or defined */
+	msg(2, hte->h_name, mkpos(&sym->s_pos));
 }
 
 /*

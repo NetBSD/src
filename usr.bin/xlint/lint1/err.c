@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.8.4.1 1997/11/04 21:42:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.8.4.1 1997/11/04 21:42:23 thorpej Exp $";
 #endif
 
 /* number of errors found */
@@ -366,6 +366,8 @@ const	char *msgs[] = {
 	"static variable %s set but not used",			      /* 307 */
 	"",							      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
+	"symbol renaming can't be used on function arguments",	      /* 310 */
+	"symbol renaming can't be used on automatic variables",	      /* 311 */
 };
 
 /*
