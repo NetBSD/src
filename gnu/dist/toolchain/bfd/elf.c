@@ -5514,8 +5514,6 @@ typedef psinfo32_t elfcore_psinfo32_t;
 #endif
 #endif
 
-#if defined (HAVE_PRPSINFO_T) || defined (HAVE_PSINFO_T)
-
 /* return a malloc'ed copy of a string at START which is at
    most MAX bytes long, possibly without a terminating '\0'.
    the copy will always have a terminating '\0'.  */
@@ -5544,6 +5542,8 @@ elfcore_strndup (abfd, start, max)
 
   return dup;
 }
+
+#if defined (HAVE_PRPSINFO_T) || defined (HAVE_PSINFO_T)
 
 static boolean
 elfcore_grok_psinfo (abfd, note)
@@ -5850,6 +5850,109 @@ elfcore_grok_note (abfd, note)
 }
 
 static boolean
+elfcore_netbsd_get_lwpid (note, lwpidp)
+     Elf_Internal_Note *note;
+     int *lwpidp;
+{
+  char *cp;
+
+  cp = strchr (note->namedata, '@');
+  if (cp != NULL)
+    {
+      *lwpidp = atoi(cp);
+      return true;
+    }
+  return false;
+}
+
+static boolean
+elfcore_grok_netbsd_procinfo (abfd, note)
+     bfd *abfd;
+     Elf_Internal_Note *note;
+{
+
+  /* Signal number at offset 0x08. */
+  elf_tdata (abfd)->core_signal
+    = bfd_h_get_32 (abfd, (bfd_byte *) note->descdata + 0x08);
+
+  /* Process ID at offset 0x50. */
+  elf_tdata (abfd)->core_pid
+    = bfd_h_get_32 (abfd, (bfd_byte *) note->descdata + 0x50);
+
+  /* Command name at 0x7c (max 32 bytes, including nul). */
+  elf_tdata (abfd)->core_command
+    = elfcore_strndup (abfd, note->descdata + 0x7c, 31);
+
+  return true;
+}
+
+static boolean
+elfcore_grok_netbsd_note (abfd, note)
+     bfd *abfd;
+     Elf_Internal_Note *note;
+{
+  int lwp;
+
+  if (elfcore_netbsd_get_lwpid (note, &lwp))
+    elf_tdata (abfd)->core_lwpid = lwp;
+
+  if (note->type == 1)
+    {
+      /* NetBSD-specific core "procinfo".  Note that we expect to
+         find this note before any of the others, which is fine,
+         since the kernel writes this note out first when it
+         creates a core file.  */
+
+      return elfcore_grok_netbsd_procinfo (abfd, note);
+    }
+
+  /* There are not currently any other machine-independent notes defined
+     for NetBSD ELF core files.  If the note type is less than the start
+     of the machine-dependent note types, we don't understand it.  */
+
+  if (note->type < 32)
+    return true;
+
+
+  switch (bfd_get_arch (abfd))
+    {
+    /* On the Alpha, SPARC (32-bit and 64-bit), PT_GETREGS == mach+0 and
+       PT_GETFPREGS == mach+2.  */
+
+    case bfd_arch_alpha:
+    case bfd_arch_sparc:
+      switch (note->type)
+        {
+        case 32+0:
+          return elfcore_make_note_pseudosection (abfd, ".reg", note);
+
+        case 32+2:
+          return elfcore_make_note_pseudosection (abfd, ".reg2", note);
+
+        default:
+          return true;
+        }
+
+    /* On all other arch's, PT_GETREGS == mach+1 and
+       PT_GETFPREGS == mach+3.  */
+
+    default:
+      switch (note->type)
+        {
+        case 32+1:
+          return elfcore_make_note_pseudosection (abfd, ".reg", note);
+
+        case 32+3:
+          return elfcore_make_note_pseudosection (abfd, ".reg2", note);
+
+        default:
+          return true;
+        }
+    }
+    /* NOTREACHED */
+}
+
+static boolean
 elfcore_read_notes (abfd, offset, size)
      bfd *abfd;
      bfd_vma offset;
@@ -5891,8 +5994,16 @@ elfcore_read_notes (abfd, offset, size)
       in.descdata = in.namedata + BFD_ALIGN (in.namesz, 4);
       in.descpos = offset + (in.descdata - buf);
 
-      if (! elfcore_grok_note (abfd, &in))
-	goto error;
+      if (strncmp (in.namedata, "NetBSD-CORE", 11) == 0)
+        {
+          if (! elfcore_grok_netbsd_note (abfd, &in))
+            goto error;
+        }
+      else
+        {
+          if (! elfcore_grok_note (abfd, &in))
+            goto error;
+        }
 
       p = in.descdata + BFD_ALIGN (in.descsz, 4);
     }
