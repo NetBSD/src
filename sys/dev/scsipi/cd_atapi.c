@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.1.2.6 1997/07/01 23:45:01 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.1.2.7 1997/07/04 11:28:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -86,7 +86,7 @@ struct scsipi_inquiry_pattern cd_atapibus_patterns[] = {
 	{T_WORM, T_REMOV,
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
-	 "NEC                 CD-ROM DRIVE:260", "", "3.04"},
+	 "NEC                 CD-ROM DRIVE:260", "", ""},
 };
 
 int	cd_atapibus_setchan __P((struct cd_softc *, int, int, int, int));
