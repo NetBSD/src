@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.5 1997/05/25 12:40:18 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.6 1997/05/27 01:21:33 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.5 1997/05/25 12:40:18 darrenr Exp $
+ * $Id: ip_nat.h,v 1.6 1997/05/27 01:21:33 thorpej Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -154,7 +154,11 @@ typedef	struct	natlog {
 
 extern u_long fr_defnatage;
 extern nat_t *nat_table[2][NAT_SIZE];
+#if defined(__NetBSD__)
+extern int nat_ioctl __P((caddr_t, u_long, int));
+#else
 extern int nat_ioctl __P((caddr_t, int, int));
+#endif
 extern nat_t *nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_short, int));
 extern nat_t *nat_outlookup __P((void *, int, struct in_addr, u_short,
 				 struct in_addr, u_short));
