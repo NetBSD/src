@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.30 1999/05/21 10:15:23 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.31 1999/06/09 19:40:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2154,7 +2154,7 @@ ohci_device_intr_close(pipe)
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
-		--sc->sc_bws[(pos * nslots + j) & OHCI_NO_INTRS];
+		--sc->sc_bws[(pos * nslots + j) % OHCI_NO_INTRS];
 
 	ohci_free_std(sc, opipe->tail);
 	ohci_free_sed(sc, opipe->sed);
