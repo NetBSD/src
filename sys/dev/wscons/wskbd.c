@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.61 2002/03/17 19:41:06 atatat Exp $ */
+/* $NetBSD: wskbd.c,v 1.61.4.1 2002/05/16 04:54:51 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.61 2002/03/17 19:41:06 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.61.4.1 2002/05/16 04:54:51 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -243,6 +243,17 @@ struct cfattach wskbd_ca = {
 
 extern struct cfdriver wskbd_cd;
 
+dev_type_open(wskbdopen);
+dev_type_close(wskbdclose);
+dev_type_read(wskbdread);
+dev_type_ioctl(wskbdioctl);
+dev_type_poll(wskbdpoll);
+
+const struct cdevsw wskbd_cdevsw = {
+	wskbdopen, wskbdclose, wskbdread, nowrite, wskbdioctl,
+	nostop, notty, wskbdpoll, nommap,
+};
+
 #ifndef WSKBD_DEFAULT_BELL_PITCH
 #define	WSKBD_DEFAULT_BELL_PITCH	1500	/* 1500Hz */
 #endif
@@ -272,8 +283,6 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 	WSKBD_DEFAULT_KEYREPEAT_DEL1,
 	WSKBD_DEFAULT_KEYREPEAT_DELN,
 };
-
-cdev_decl(wskbd);
 
 #if NWSDISPLAY > 0 || NWSMUX > 0
 struct wssrcops wskbd_srcops = {
@@ -542,9 +551,7 @@ wskbd_detach(struct device  *self, int flags)
 	}
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wskbdopen)
-			break;
+	maj = cdevsw_lookup_major(&wskbd_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
