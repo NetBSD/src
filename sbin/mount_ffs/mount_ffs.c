@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.16 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.17 2005/02/05 14:54:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.17 2005/02/05 14:54:35 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,8 @@ __RCSID("$NetBSD: mount_ffs.c,v 1.16 2005/01/31 05:19:19 erh Exp $");
 
 #include <mntopts.h>
 
-static void	ffs_usage __P((void));
-int	main __P((int, char *[]));
-int	mount_ffs __P((int argc, char **argv));
+static void	ffs_usage(void);
+int	mount_ffs(int argc, char **argv);
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -77,18 +76,14 @@ static const struct mntopt mopts[] = {
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_ffs(argc, argv);
 }
 #endif
 
 int
-mount_ffs(argc, argv)
-	int argc;
-	char *argv[];
+mount_ffs(int argc, char *argv[])
 {
 	struct ufs_args args;
 	int ch, mntflags;
@@ -156,7 +151,7 @@ mount_ffs(argc, argv)
 }
 
 static void
-ffs_usage()
+ffs_usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_ffs [-o options] special node\n");
 	exit(1);
