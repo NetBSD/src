@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/17 19:26:43 chuck Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/17 19:43:48 chuck Exp $
 #
-# DO NOT OPTMIZE THIS FILE!!!
+# DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
-CFLAGS=-I${.CURDIR}/../../include -fomit-frame-pointer
+CFLAGS=-I${.CURDIR}/../../include -I${.CURDIR}/../libbug -fomit-frame-pointer
 
 OBJS=bugcrt.o
 
