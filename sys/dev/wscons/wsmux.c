@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.6.1 2001/09/08 04:55:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -298,6 +298,19 @@ wsmuxpoll(dev, events, p)
 		return (EACCES);
 
 	return (wsevent_poll(&sc->sc_events, events, p));
+}
+
+int
+wsmuxkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
+
+	if (!sc->sc_events.io)
+		return (1);
+
+	return (wsevent_kqfilter(&sc->sc_events, kn));
 }
 
 int

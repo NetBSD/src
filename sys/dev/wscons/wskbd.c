@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.41.2.1 2001/08/25 06:16:45 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.41.2.2 2001/09/08 04:55:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.41.2.1 2001/08/25 06:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.41.2.2 2001/09/08 04:55:31 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -1061,6 +1061,16 @@ wskbdpoll(dev, events, p)
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	return (wsevent_poll(&sc->sc_events, events, p));
+}
+
+int
+wskbdkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+
+	return (wsevent_kqfilter(&sc->sc_events, kn));
 }
 
 #if NWSDISPLAY > 0
