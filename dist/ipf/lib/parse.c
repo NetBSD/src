@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2004/11/13 19:16:10 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -33,7 +33,7 @@ int     linenum;
 			return NULL;
 	}
 
-	while (*line && isspace(*line))
+	while (*line && ISSPACE(*line))
 		line++;
 	if (!*line)
 		return NULL;
