@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.1 1997/10/10 01:47:02 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.2 1997/10/16 23:50:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/socketvar.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -56,6 +57,37 @@
 
 #include <sys/syscallargs.h>
 
+static void cvtstat __P((struct stat *, struct stat12 *));
+
+/*
+ * Convert from an old to a new stat structure.
+ */
+static void
+cvtstat(st, ost)
+	struct stat *st;
+	struct stat12 *ost;
+{
+
+	ost->st_dev = st->st_dev;
+	ost->st_ino = st->st_ino;
+	ost->st_mode = st->st_mode;
+	ost->st_nlink = st->st_nlink;
+	if (st->st_nlink >= (1 << 15))
+		ost->st_nlink = (1 << 15) - 1;
+	else
+		ost->st_nlink = st->st_nlink;
+	ost->st_uid = st->st_uid;
+	ost->st_gid = st->st_gid;
+	ost->st_rdev = st->st_rdev;
+	ost->st_size = st->st_size;
+	ost->st_atime = st->st_atime;
+	ost->st_mtime = st->st_mtime;
+	ost->st_ctime = st->st_ctime;
+	ost->st_blksize = st->st_blksize;
+	ost->st_blocks = st->st_blocks;
+	ost->st_flags = st->st_flags;
+	ost->st_gen = st->st_gen;
+}
 /*
  * Read a block of directory entries in a file system independent format.
  */
@@ -88,4 +120,115 @@ compat_12_sys_getdirentries(p, v, retval)
 	error = copyout(&loff, SCARG(uap, basep), sizeof(long));
 	*retval = done;
 	return error;
+}
+
+/*
+ * Get file status; this version follows links.
+ */
+/* ARGSUSED */
+int
+compat_12_sys_stat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct compat_12_sys_stat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct stat12 *) ub;
+	} */ *uap = v;
+	struct stat sb;
+	struct stat12 osb;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	cvtstat(&sb, &osb);
+	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	return (error);
+}
+
+
+/*
+ * Get file status; this version does not follow links.
+ */
+/* ARGSUSED */
+int
+compat_12_sys_lstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct compat_12_sys_lstat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct stat12 *) ub;
+	} */ *uap = v;
+	struct stat sb;
+	struct stat12 osb;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
+	if (error)
+		return (error);
+	cvtstat(&sb, &osb);
+	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
+	return (error);
+}
+
+
+/*
+ * Return status information about a file descriptor.
+ */
+/* ARGSUSED */
+int
+compat_12_sys_fstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct compat_12_sys_fstat_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct stat12 *) sb;
+	} */ *uap = v;
+	int fd = SCARG(uap, fd);
+	register struct filedesc *fdp = p->p_fd;
+	register struct file *fp;
+	struct stat ub;
+	struct stat12 oub;
+	int error;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
+		return (EBADF);
+	switch (fp->f_type) {
+
+	case DTYPE_VNODE:
+		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		break;
+
+	case DTYPE_SOCKET:
+		error = soo_stat((struct socket *)fp->f_data, &ub);
+		break;
+
+	default:
+		panic("compat_12_sys_fstat");
+		/*NOTREACHED*/
+	}
+	cvtstat(&ub, &oub);
+	if (error == 0)
+		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		    sizeof (oub));
+	return (error);
 }

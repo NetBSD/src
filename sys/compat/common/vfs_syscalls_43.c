@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.7 1997/10/10 13:03:32 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.8 1997/10/16 23:50:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-static void cvtstat __P((struct stat *, struct ostat *));
+static void cvtstat __P((struct stat *, struct stat43 *));
 
 /*
  * Convert from an old to a new stat structure.
@@ -70,7 +70,7 @@ static void cvtstat __P((struct stat *, struct ostat *));
 static void
 cvtstat(st, ost)
 	struct stat *st;
-	struct ostat *ost;
+	struct stat43 *ost;
 {
 
 	ost->st_dev = st->st_dev;
@@ -105,10 +105,10 @@ compat_43_sys_stat(p, v, retval)
 {
 	register struct compat_43_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	struct stat sb;
-	struct ostat osb;
+	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
@@ -138,10 +138,10 @@ compat_43_sys_lstat(p, v, retval)
 {
 	register struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
 	struct stat sb;
-	struct ostat osb;
+	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
@@ -171,13 +171,13 @@ compat_43_sys_fstat(p, v, retval)
 {
 	register struct compat_43_sys_fstat_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct ostat *) sb;
+		syscallarg(struct stat43 *) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct stat ub;
-	struct ostat oub;
+	struct stat43 oub;
 	int error;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
