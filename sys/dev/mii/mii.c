@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.10 1999/01/29 07:35:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ mii_media_from_bmcr(bmcr)
 		rv |= IFM_100_TX;
 	else
 		rv |= IFM_10_T;
-	if (bmcr & IFM_FDX)
+	if (bmcr & BMCR_FDX)
 		rv |= IFM_FDX;
 
 	return (rv);
