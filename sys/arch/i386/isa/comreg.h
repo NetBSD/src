@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.4 1994/10/27 04:17:02 cgd Exp $	*/
+/*	$NetBSD: comreg.h,v 1.5 1995/01/29 02:58:22 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -35,7 +35,7 @@
  *	@(#)comreg.h	7.2 (Berkeley) 5/9/91
  */
 
-#include <i386/isa/ic/ns16550.h>
+#include <dev/ic/ns16550.h>
 
 #define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
