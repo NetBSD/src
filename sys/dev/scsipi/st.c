@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.37 1994/08/12 08:57:18 deraadt Exp $	*/
+/*	$NetBSD: st.c,v 1.38 1994/10/20 20:31:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1220,7 +1220,7 @@ stioctl(dev, cmd, arg, flag)
 		break;
 	default:
 		if (STMODE(dev) == CTLMODE)
-			error = scsi_do_ioctl(st->sc_link,cmd,arg,flag);
+			error = scsi_do_ioctl(st->sc_link, dev, cmd, arg, flag);
 		else
 			error = ENOTTY;
 		break;

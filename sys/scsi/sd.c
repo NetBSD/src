@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.41 1994/10/20 16:54:44 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.42 1994/10/20 20:31:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -614,7 +614,7 @@ sdioctl(dev, cmd, addr, flag)
 	default:
 		if (part != RAW_PART)
 			return ENOTTY;
-		return scsi_do_ioctl(sd->sc_link, cmd, addr, flag);
+		return scsi_do_ioctl(sd->sc_link, dev, cmd, addr, flag);
 	}
 #ifdef DIAGNOSTIC
 	panic("sdioctl: impossible");
