@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.41 2001/01/08 06:21:13 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.42 2001/01/28 23:30:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -540,7 +540,8 @@ uvn_flush(uobj, start, stop, flags)
 			 */
 			if ((pp->flags & PG_CLEAN) != 0 && 
 			    (flags & PGO_FREE) != 0 &&
-			    (pp->pqflags & PQ_ACTIVE) != 0)
+			    /* XXX ACTIVE|INACTIVE test unnecessary? */
+			    (pp->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) != 0)
 				pmap_page_protect(pp, VM_PROT_NONE);
 			if ((pp->flags & PG_CLEAN) != 0 &&
 			    pmap_is_modified(pp))
@@ -564,7 +565,7 @@ uvn_flush(uobj, start, stop, flags)
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(pp, VM_PROT_NONE);
+					pmap_clear_reference(pp);
 					uvm_pagedeactivate(pp);
 				}
 
@@ -756,7 +757,7 @@ ReTry:
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
 				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
-					pmap_page_protect(ptmp, VM_PROT_NONE);
+					pmap_clear_reference(ptmp);
 					uvm_pagedeactivate(ptmp);
 				}
 			} else if (flags & PGO_FREE) {

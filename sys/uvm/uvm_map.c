@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.88 2001/01/14 02:10:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.89 2001/01/28 23:30:44 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2566,10 +2566,8 @@ uvm_map_clean(map, start, end, flags)
 				}
 				KASSERT(pg->uanon == anon);
 
-				/* zap all mappings for the page. */
-				pmap_page_protect(pg, VM_PROT_NONE);
-
 				/* ...and deactivate the page. */
+				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();

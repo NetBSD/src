@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.54 2001/01/23 02:27:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.55 2001/01/28 23:30:43 thorpej Exp $	*/
 
 /*
  *
@@ -205,7 +205,7 @@ uvmfault_anonflush(anons, n)
 		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
-				pmap_page_protect(pg, VM_PROT_NONE);
+				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
 			}
 			uvm_unlock_pageq();

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.37 2000/11/25 06:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.38 2001/01/28 23:30:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -882,10 +882,8 @@ uao_flush(uobj, start, stop, flags)
 			    pp->wire_count != 0)
 				continue;
 
-			/* zap all mappings for the page. */
-			pmap_page_protect(pp, VM_PROT_NONE);
-
 			/* ...and deactivate the page. */
+			pmap_clear_reference(pp);
 			uvm_pagedeactivate(pp);
 
 			continue;
@@ -1543,7 +1541,6 @@ uao_pagein_page(aobj, pageidx)
 	 * deactivate the page (to put it on a page queue).
 	 */
 	pmap_clear_reference(pg);
-	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

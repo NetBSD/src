@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.13 2001/01/23 02:27:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.14 2001/01/28 23:30:42 thorpej Exp $	*/
 
 /*
  *
@@ -526,7 +526,6 @@ anon_pagein(anon)
 	 */
 
 	pmap_clear_reference(pg);
-	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.28 2001/01/25 00:24:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29 2001/01/28 23:30:46 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,8 +80,6 @@
 #include <sys/buf.h>
 
 #include <uvm/uvm.h>
-
-extern struct uvm_pagerops uvm_vnodeops;
 
 /*
  * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedeamon will reactivate
@@ -514,7 +512,7 @@ uvmpd_scan_inactive(pglst)
 				uobj = p->uobject;
 				KASSERT(uobj != NULL);
 				if (vnode_only &&
-				    uobj->pgops != &uvm_vnodeops) {
+				    UVM_OBJ_IS_VNODE(uobj) == 0) {
 					uvm_pageactivate(p);
 					continue;
 				}
@@ -533,9 +531,15 @@ uvmpd_scan_inactive(pglst)
 
 			/*
 			 * we now have the object and the page queues locked.
-			 * the page is not busy.   if the page is clean we
-			 * can free it now and continue.
+			 * the page is not busy.  remove all the permissions
+			 * from the page so we can sync the modified info
+			 * without any race conditions.  if the page is clean
+			 * we can free it now and continue.
 			 */
+
+			pmap_page_protect(p, VM_PROT_NONE);
+			if ((p->flags & PG_CLEAN) != 0 && pmap_is_modified(p))
+				p->flags &= ~PG_CLEAN;
 
 			if (p->flags & PG_CLEAN) {
 				if (p->pqflags & PQ_SWAPBACKED) {
@@ -1105,7 +1109,6 @@ uvmpd_scan()
 
 		if (inactive_shortage > 0 &&
 		    pmap_clear_reference(p) == FALSE) {
-			pmap_page_protect(p, VM_PROT_NONE);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;
