@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.10 1997/10/19 14:06:28 mrg Exp $	*/
+/*	$NetBSD: lprint.c,v 1.11 1998/07/26 15:14:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.10 1997/10/19 14:06:28 mrg Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.11 1998/07/26 15:14:54 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,8 @@ lprint(pn)
 	int cpr, len, maxlen;
 	struct tm *tp;
 	int oddfield;
-	char *t, *tzn;
+	char *t;
+	const char *tzn;
 
 	cpr = 0;
 	/*
