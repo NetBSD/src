@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.15 2002/11/15 22:39:17 nathanw Exp $	*/
+/*	$NetBSD: ldd.c,v 1.16 2002/12/02 14:05:11 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -104,76 +104,74 @@ static void print_needed(Obj_Entry *);
 static int ldd_aout(char *, int);
 
 int
-main(
-    int argc,
-    char **argv)
+main(int argc, char **argv)
 {
 #ifdef DEBUG
-    debug = 1;
+	debug = 1;
 #endif
-    _rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
+	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
-    _rtld_pagesz = sysconf(_SC_PAGESIZE);
+	_rtld_pagesz = sysconf(_SC_PAGESIZE);
 
-    _rtld_trust = geteuid() == getuid() && getegid() == getgid();
-    if (_rtld_trust) {
-	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
-    }
-
-    _rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
-
-    for (argc--, argv++; argc != 0; argc--, argv++) {
-	int fd = open(*argv, O_RDONLY);
-	if (fd == -1) {
-	    warn("%s", *argv);
-	    continue;
-	}
-	_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, NULL);
-	if (_rtld_objmain == NULL) {
-		if (ldd_aout(*argv, fd) < 0)
-		    warnx("%s", error_message);
-	    close(fd);
-	    continue;
-	}
-	close(fd);
-
-	_rtld_objmain->path = xstrdup(*argv);
-	_rtld_objmain->mainprog = true;
-	_rtld_digest_dynamic(_rtld_objmain);
-
-	/* Link the main program into the list of objects. */
-	*_rtld_objtail = _rtld_objmain;
-	_rtld_objtail = &_rtld_objmain->next;
-	++_rtld_objmain->refcount;
-
-	(void) _rtld_load_needed_objects(_rtld_objmain, 0);
-
-	printf("%s:\n", _rtld_objmain->path);
-	print_needed(_rtld_objmain);
-
-	while (_rtld_objlist != NULL) {
-	    Obj_Entry *obj = _rtld_objlist;
-	    _rtld_objlist = obj->next;
-	    while (obj->rpaths != NULL) {
-		const Search_Path *rpath = obj->rpaths;
-		obj->rpaths = rpath->sp_next;
-		free((void *) rpath->sp_path);
-		free((void *) rpath);
-	    }
-	    while (obj->needed != NULL) {
-		const Needed_Entry *needed = obj->needed;
-		obj->needed = needed->next;
-		free((void *) needed);
-	    }
-	    (void) munmap(obj->mapbase, obj->mapsize);
-	    free(obj->path);
-	    free(obj);
+	_rtld_trust = geteuid() == getuid() && getegid() == getgid();
+	if (_rtld_trust) {
+		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
 
-	_rtld_objmain = NULL;
-	_rtld_objtail = &_rtld_objlist;
-    }
-    return 0;
+	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
+
+	for (argc--, argv++; argc != 0; argc--, argv++) {
+		int fd = open(*argv, O_RDONLY);
+		if (fd == -1) {
+			warn("%s", *argv);
+			continue;
+		}
+		_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, NULL);
+		if (_rtld_objmain == NULL) {
+			if (ldd_aout(*argv, fd) < 0)
+				warnx("%s", error_message);
+			close(fd);
+			continue;
+		}
+		close(fd);
+
+		_rtld_objmain->path = xstrdup(*argv);
+		_rtld_objmain->mainprog = true;
+		_rtld_digest_dynamic(_rtld_objmain);
+
+		/* Link the main program into the list of objects. */
+		*_rtld_objtail = _rtld_objmain;
+		_rtld_objtail = &_rtld_objmain->next;
+		++_rtld_objmain->refcount;
+
+		(void) _rtld_load_needed_objects(_rtld_objmain, 0);
+
+		printf("%s:\n", _rtld_objmain->path);
+		print_needed(_rtld_objmain);
+
+		while (_rtld_objlist != NULL) {
+			Obj_Entry *obj = _rtld_objlist;
+			_rtld_objlist = obj->next;
+			while (obj->rpaths != NULL) {
+				const Search_Path *rpath = obj->rpaths;
+				obj->rpaths = rpath->sp_next;
+				free((void *) rpath->sp_path);
+				free((void *) rpath);
+			}
+			while (obj->needed != NULL) {
+				const Needed_Entry *needed = obj->needed;
+				obj->needed = needed->next;
+				free((void *) needed);
+			}
+			(void) munmap(obj->mapbase, obj->mapsize);
+			free(obj->path);
+			free(obj);
+		}
+
+		_rtld_objmain = NULL;
+		_rtld_objtail = &_rtld_objlist;
+	}
+	return 0;
 }
 
 /*
@@ -182,15 +180,14 @@ main(
  * will return the message.
  */
 void
-_rtld_error(
-    const char *fmt, ...)
+_rtld_error(const char *fmt, ...)
 {
-    static char buf[512];
-    va_list ap;
-    va_start(ap, fmt);
-    xvsnprintf(buf, sizeof buf, fmt, ap);
-    error_message = buf;
-    va_end(ap);
+	static char buf[512];
+	va_list ap;
+	va_start(ap, fmt);
+	xvsnprintf(buf, sizeof buf, fmt, ap);
+	error_message = buf;
+	va_end(ap);
 }
 
 char *
@@ -200,34 +197,34 @@ _rtld_dlerror()
 	error_message = NULL;
 	return msg;
 }
-
-static void
-print_needed(
-    Obj_Entry *obj)
-{
-    const Needed_Entry *needed;
 
-    for (needed = obj->needed; needed != NULL; needed = needed->next) {
-	char libnamebuf[200];
-	const char *libname = obj->strtab + needed->name, *cp;
-	if (strncmp(libname, "lib", 3) == 0
-		&& (cp = strstr(libname, ".so")) != NULL) {
-	    strcpy(libnamebuf, "-l");
-	    memcpy(&libnamebuf[2], libname + 3, cp - (libname + 3));
-	    strcpy(&libnamebuf[cp - (libname + 3) + 2], cp + 3);
-	    libname = libnamebuf;
+static void
+print_needed(Obj_Entry *obj)
+{
+	const Needed_Entry *needed;
+
+	for (needed = obj->needed; needed != NULL; needed = needed->next) {
+		char libnamebuf[200];
+		const char *libname = obj->strtab + needed->name, *cp;
+		if (strncmp(libname, "lib", 3) == 0
+		    && (cp = strstr(libname, ".so")) != NULL) {
+			strcpy(libnamebuf, "-l");
+			memcpy(&libnamebuf[2], libname + 3, cp - (libname + 3));
+			strcpy(&libnamebuf[cp - (libname + 3) + 2], cp + 3);
+			libname = libnamebuf;
+		}
+
+		if (needed->obj != NULL) {
+			print_needed(needed->obj);
+			if (!needed->obj->printed) {
+				printf("\t %s => %s\n", libname,
+				    needed->obj->path);
+				needed->obj->printed = 1;
+			}
+		} else {
+			printf("\t %s => not found\n", libname);
+		}
 	}
-	
-	if (needed->obj != NULL) {
-	    print_needed(needed->obj);
-	    if (!needed->obj->printed) {
-		printf("\t %s => %s\n", libname, needed->obj->path);
-		needed->obj->printed = 1;
-	    }
-	} else {
-	    printf("\t %s => not found\n", libname);
-	}
-    }
 }
 
 static int
