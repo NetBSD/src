@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2004/03/22 17:08:23 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2004/03/25 07:48:34 skrll Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -15,7 +15,8 @@ CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${G_EXTRA_HEADERS:H:u}
 CPPFLAGS+=	-I${DIST}/gcc/cp -I${GCCARCHXX} -I.
 
-LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c} ${G_LIB2FUNCS_ST:=.c}
+LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c}
+LIB2FUNCS_ST=	${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${G_LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 .if !empty(G_LIB1ASMFUNCS)
@@ -49,7 +50,7 @@ _TRADITIONAL_CPP=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 .endif
 
-${LIB2FUNCS}: ${.CURDIR}/Makefile
+${LIB2FUNCS} ${LIB2FUNCS_ST}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
