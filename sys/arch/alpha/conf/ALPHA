@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.25 1996/11/12 18:05:54 cgd Exp $
+#	$NetBSD: ALPHA,v 1.26 1996/11/15 19:37:21 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -20,7 +20,6 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
