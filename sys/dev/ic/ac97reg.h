@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.9 2003/09/07 11:27:33 kent Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.10 2005/04/04 02:08:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -136,6 +136,36 @@
 #define		AC97_SPDIF_PRO			0x0001
 
 /* Modem -- 0x3c-0x58 */
+#define	AC97_REG_EXT_MODEM_ID		0x3c	/* extended modem id */
+#define		AC97_EXT_MODEM_LINE1		0x0001
+#define		AC97_EXT_MODEM_LINE2		0x0002
+#define		AC97_EXT_MODEM_HANDSET		0x0004
+#define		AC97_EXT_MODEM_CID1		0x0008
+#define		AC97_EXT_MODEM_CID2		0x0010
+#define	AC97_REG_EXT_MODEM_STATUS	0x3e	/* extended modem status */
+#define		AC97_MEA_GPIO			0x0001	/* gpio is ready */
+#define		AC97_MEA_ADC1			0x0004
+#define		AC97_MEA_DAC1			0x0008
+#define		AC97_MEA_ADC2			0x0010
+#define		AC97_MEA_DAC2			0x0020
+#define		AC97_MEA_HADC			0x0040
+#define		AC97_MEA_HDAC			0x0080
+
+#define AC97_REG_LINE1_RATE		0x40
+#define	AC97_REG_LINE2_RATE		0x42
+#define	AC97_REG_HANDSET_RATE		0x44
+#define	AC97_REG_LINE1_LEVEL		0x46
+#define	AC97_REG_LINE2_LEVEL		0x48
+#define	AC97_REG_HANDSET_LEVEL		0x4a
+#define	AC97_REG_GPIO_CFG		0x4c	/* gpio config */
+#define	AC97_REG_GPIO_POLARITY		0x4e	/* gpio pin polarity */
+#define	AC97_REG_GPIO_STICKY		0x50	/* gpio pin sticky */
+#define	AC97_REG_GPIO_WAKEUP		0x52	/* gpio pin wakeup */
+#define	AC97_REG_GPIO_STATUS		0x54
+#define		AC97_GPIO_LINE1_OH		0x0001	/* off-hook */
+#define		AC97_GPIO_LINE1_RI		0x0002	/* ring detect */
+#define		AC97_GPIO_LINE1_CID		0x0004	/* caller-id */
+#define	AC97_REG_MISC_AFE		0x56	/* misc modem afe status & control */
 
 /* Vendor specific -- 0x5a-0x7b */
 
