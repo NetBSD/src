@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/19 01:58:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/08/09 12:04:55 mrg Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -252,5 +252,8 @@ CLEANFILES+=	igen dgen gentmap *.lo \
 .SUFFIXES: .lo
 .c.lo:
 	${HOST_COMPILE.c} -o ${.TARGET} $<
+
+corefile.c: hw.h
+cpu.c: spreg.h idecode.h itable.h model.h
 
 .PATH: ${DIST}/sim/ppc ${DIST}/sim/common
