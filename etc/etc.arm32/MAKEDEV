@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.65 2002/01/08 02:46:12 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.66 2002/01/13 14:13:50 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	i4btrc*	trace device
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	md	memory disk
 #	kbd	raw keyboard
 #	kbdctl	keyboard control
@@ -114,7 +115,6 @@
 #	wsmux*	wscons event multiplexor
 #	wsfont*	console font control
 #	pci*	PCI bus access devices
-#	clockctl clock control for non root users
 #
 
 dialin=0
@@ -140,6 +140,7 @@ all)
 	sh $0 mouse-qms0 random openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 clockctl
 	;;
 
 ramdisk|floppy)
@@ -697,11 +698,11 @@ pci*)
 	;;
 
 clockctl)
-        rm -f clockctl 
-        mknod clockctl 94 0
-        chown root.daemon clockctl
-        chmod 660 clockctl
-        ;;
+	rm -f clockctl
+	mknod clockctl c 84 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
+	;;
 
 local)
 	umask 0
