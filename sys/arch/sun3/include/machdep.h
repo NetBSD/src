@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.7 1997/03/18 23:28:32 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.8 1997/04/09 20:42:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -143,8 +143,6 @@ void	proc_trampoline __P((void));
 void	pmap_bootstrap __P((void));
 void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));
-
-void	regdump __P((struct trapframe *, int));
 
 void	savectx __P((struct pcb *));
 
