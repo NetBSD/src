@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.74 1999/10/07 02:05:22 simonb Exp $	*/
+/*	$NetBSD: util.c,v 1.75 1999/10/09 03:00:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.74 1999/10/07 02:05:22 simonb Exp $");
+__RCSID("$NetBSD: util.c,v 1.75 1999/10/09 03:00:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -384,12 +384,12 @@ another(pargc, pargv, prompt)
 
 	if (len >= sizeof(line) - 3) {
 		fputs("sorry, arguments too long.\n", ttyout);
-		intr();
+		intr(0);
 	}
 	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
 	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL)
-		intr();
+		intr(0);
 	len += strlen(&line[len]);
 	if (len > 0 && line[len - 1] == '\n')
 		line[len - 1] = '\0';
@@ -415,7 +415,7 @@ remglob(argv, doswitch, errbuf)
         static char buf[MAXPATHLEN];
         static FILE *ftemp = NULL;
         static char **args;
-        int oldverbose, oldhash, fd;
+        int oldverbose, oldhash, fd, len;
         char *cp, *mode;
 
         if (!mflag) {
@@ -437,8 +437,8 @@ remglob(argv, doswitch, errbuf)
                 return (cp);
         }
         if (ftemp == NULL) {
-		(void)strlcpy(temp, tmpdir, sizeof(temp));
-		if (temp[strlen(temp) - 1] != '/')
+		len = strlcpy(temp, tmpdir, sizeof(temp));
+		if (temp[len - 1] != '/')
 			(void)strlcat(temp, "/", sizeof(temp));
 		(void)strlcat(temp, TMPFILE, sizeof(temp));
                 if ((fd = mkstemp(temp)) < 0) {
@@ -647,9 +647,8 @@ static void
 updateprogressmeter(dummy)
 	int dummy;
 {
-	int oerrno;
+	int oerrno = errno;
 
-	oerrno = errno;
 	progressmeter(0);
 	errno = oerrno;
 }
@@ -908,9 +907,8 @@ void
 psummary(notused)
 	int notused;
 {
-	int oerrno;
+	int oerrno = errno;
 
-	oerrno = errno;
 	if (bytes > 0)
 		ptransfer(1);
 	errno = oerrno;
@@ -966,9 +964,8 @@ setttywidth(a)
 	int a;
 {
 	struct winsize winsize;
-	int oerrno;
+	int oerrno = errno;
 
-	oerrno = errno;
 	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1 &&
 	    winsize.ws_col != 0)
 		ttywidth = winsize.ws_col;
@@ -1259,8 +1256,8 @@ xsignal(sig, func)
 	 * not affected.  Some signals should cause program flow to change;
 	 * these signals should not be restartable, so that the system call
 	 * will return with EINTR, and the program will go do something
-	 * different.  If the signal handler calls longjmp(), it doesn't
-	 * matter if it's restartable.
+	 * different.  If the signal handler calls longjmp() or siglongjmp(),
+	 * it doesn't matter if it's restartable.
 	 */
 
 	switch(sig) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 1999/10/05 13:05:41 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.61 1999/10/09 03:00:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.60 1999/10/05 13:05:41 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.61 1999/10/09 03:00:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ __RCSID("$NetBSD: main.c,v 1.60 1999/10/05 13:05:41 lukem Exp $");
 #include <sys/socket.h>
 
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -421,9 +422,9 @@ main(argc, argv)
 		} else {
 			char *xargv[5];
 
-			if (setjmp(toplevel))
+			if (sigsetjmp(toplevel, 1))
 				exit(0);
-			(void)xsignal(SIGINT, (sig_t)intr);
+			(void)xsignal(SIGINT, intr);
 			(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 			xargv[0] = __progname;
 			xargv[1] = argv[0];
@@ -448,9 +449,9 @@ main(argc, argv)
 #ifndef NO_EDITCOMPLETE
 	controlediting();
 #endif /* !NO_EDITCOMPLETE */
-	top = setjmp(toplevel) == 0;
+	top = sigsetjmp(toplevel, 1) == 0;
 	if (top) {
-		(void)xsignal(SIGINT, (sig_t)intr);
+		(void)xsignal(SIGINT, intr);
 		(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 	}
 	for (;;) {
@@ -460,16 +461,18 @@ main(argc, argv)
 }
 
 void
-intr()
+intr(dummy)
+	int dummy;
 {
 
 	alarmtimer(0);
-	longjmp(toplevel, 1);
+	siglongjmp(toplevel, 1);
 }
 
 void
 lostpeer()
 {
+	int oerrno = errno;
 
 	alarmtimer(0);
 	if (connected) {
@@ -496,6 +499,7 @@ lostpeer()
 	}
 	proxflag = 0;
 	pswitch(0);
+	errno = oerrno;
 }
 
 /*
@@ -601,7 +605,7 @@ cmdscanner(top)
 		if (c->c_handler != help)
 			break;
 	}
-	(void)xsignal(SIGINT, (sig_t)intr);
+	(void)xsignal(SIGINT, intr);
 	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 }
 

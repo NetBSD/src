@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.71 1999/10/05 13:05:39 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.72 1999/10/09 03:00:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.71 1999/10/05 13:05:39 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.72 1999/10/09 03:00:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,8 +385,9 @@ mput(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mabort);
-	(void)setjmp(jabort);
+	oldintr = xsignal(SIGINT, mintr);
+	if (sigsetjmp(jabort, 1))
+		mabort();
 	if (proxy) {
 		char *cp;
 
@@ -415,9 +416,7 @@ mput(argc, argv)
 				}
 			}
 		}
-		(void)xsignal(SIGINT, oldintr);
-		mflag = 0;
-		return;
+		goto cleanupmput;
 	}
 	for (i = 1; i < argc; i++) {
 		char **cpp;
@@ -467,6 +466,7 @@ mput(argc, argv)
 		}
 		globfree(&gl);
 	}
+cleanupmput:
 	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
 }
@@ -565,13 +565,20 @@ freegetit:
 
 /* ARGSUSED */
 void
-mabort(signo)
+mintr(signo)
 	int signo;
+{
+
+	alarmtimer(0);
+	write(fileno(ttyout), "\n", 1);
+	siglongjmp(jabort, 1);
+}
+
+void
+mabort()
 {
 	int ointer, oconf;
 
-	alarmtimer(0);
-	putc('\n', ttyout);
 	if (mflag && fromatty) {
 		ointer = interactive;
 		oconf = confirmrest;
@@ -580,13 +587,12 @@ mabort(signo)
 		if (confirm("Continue with", mname)) {
 			interactive = ointer;
 			confirmrest = oconf;
-			longjmp(jabort, 0);
+			return;
 		}
 		interactive = ointer;
 		confirmrest = oconf;
 	}
 	mflag = 0;
-	longjmp(jabort, 0);
 }
 
 /*
@@ -608,8 +614,9 @@ mget(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mabort);
-	(void)setjmp(jabort);
+	oldintr = xsignal(SIGINT, mintr);
+	if (sigsetjmp(jabort, 1))
+		mabort();
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
@@ -1112,8 +1119,9 @@ mdelete(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mabort);
-	(void)setjmp(jabort);
+	oldintr = xsignal(SIGINT, mintr);
+	if (sigsetjmp(jabort, 1))
+		mabort();
 	while ((cp = remglob(argv, 0, NULL)) != NULL) {
 		if (*cp == '\0') {
 			mflag = 0;
@@ -1256,8 +1264,9 @@ usage:
 	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
-	oldintr = xsignal(SIGINT, mabort);
-	(void)setjmp(jabort);
+	oldintr = xsignal(SIGINT, mintr);
+	if (sigsetjmp(jabort, 1))
+		mabort();
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
 		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
@@ -1667,7 +1676,7 @@ proxabort(notused)
 		proxflag = 0;
 	}
 	pswitch(0);
-	longjmp(abortprox, 1);
+	siglongjmp(abortprox, 1);
 }
 
 void
@@ -1700,7 +1709,7 @@ doproxy(argc, argv)
 		code = -1;
 		return;
 	}
-	if (setjmp(abortprox)) {
+	if (sigsetjmp(abortprox, 1)) {
 		code = -1;
 		return;
 	}

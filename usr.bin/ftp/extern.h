@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.43 1999/10/05 01:16:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.44 1999/10/09 03:00:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -105,8 +105,7 @@ struct tm;
 
 void	abort_remote __P((FILE *));
 void	abortpt __P((int));
-void	abortrecv __P((int));
-void	abortsend __P((int));
+void	abortxfer __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -148,7 +147,7 @@ void	help __P((int, char **));
 char   *hookup __P((char *, char *));
 void	idlecmd __P((int, char **));
 int	initconn __P((void));
-void	intr __P((void));
+void	intr __P((int));
 int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
@@ -156,12 +155,13 @@ void	lostpeer __P((void));
 void	lpage __P((int, char **));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
-void	mabort __P((int));
+void	mabort __P((void));
 void	macdef __P((int, char **));
 void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
+void	mintr __P((int));
 void	mls __P((int, char **));
 void	modtime __P((int, char **));
 void	mput __P((int, char **));
