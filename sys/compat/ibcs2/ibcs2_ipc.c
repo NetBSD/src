@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.6 1996/05/03 17:05:23 christos Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.7 1997/01/18 01:51:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -65,6 +65,8 @@
 #define IBCS2_IPC_RMID	0
 #define IBCS2_IPC_SET	1
 #define IBCS2_IPC_STAT	2
+
+#ifdef SYSVMSG
 
 /*
  * iBCS2 msgsys call
@@ -185,6 +187,9 @@ ibcs2_sys_msgsys(p, v, retval)
 	}
 }
 
+#endif /* SYSVMSG */
+
+#ifdef SYSVSEM
 
 /*
  * iBCS2 semsys call
@@ -331,6 +336,9 @@ ibcs2_sys_semsys(p, v, retval)
 	return EINVAL;
 }
 
+#endif /* SYSVSEM */
+
+#ifdef SYSVSHM
 
 /*
  * iBCS2 shmsys call
@@ -456,3 +464,5 @@ ibcs2_sys_shmsys(p, v, retval)
 #endif
 	return EINVAL;
 }
+
+#endif /* SYSVSHM */
