@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.40 2003/04/26 11:05:08 ragge Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.41 2003/04/26 17:35:57 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -347,7 +347,7 @@ initarm(bootargs)
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
-
+	
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
@@ -373,7 +373,7 @@ initarm(bootargs)
 	 * Once all the memory map changes are complete we can call consinit()
 	 * and not have to worry about things moving.
 	 */
-/*	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);*/
+	/* fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode); */
 
 	/* Talk to the user */
 	printf("NetBSD/cats booting ...\n");
@@ -486,11 +486,16 @@ initarm(bootargs)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
+#ifdef ARM32_PMAP_NEW
+			valloc_pages(kernel_pt_table[loop1],
+					L2_TABLE_SIZE / PAGE_SIZE);
+#else
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
 			    L2_TABLE_SIZE / PAGE_SIZE);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
-			++loop1;
+#endif
+			++loop1;			
 		}
 	}
 
@@ -617,13 +622,28 @@ initarm(bootargs)
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
 	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
+#ifndef ARM32_PMAP_NEW
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#else
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
+		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	}
+#endif
+	
 	/* Map the page table that maps the kernel pages */
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
+#else
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
@@ -634,12 +654,24 @@ initarm(bootargs)
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
+#ifndef ARM32_PMAP_NEW
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE
+#else
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE
+#endif
+			      );
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+#else
+	pmap_map_entry(l1pagetable,
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#endif			
+
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
@@ -684,14 +716,26 @@ initarm(bootargs)
 	printf("switching to new L1 page table\n");
 #endif
 
-	setttb(kernel_l1pt.pv_pa);
-
 	/*
-	 * Ok the DC21285 CSR registers have just moved.
-	 * Detach the diagnostic serial port and reattach at the new address.
+	 * Ok the DC21285 CSR registers are about to be moved.
+	 * Detach the diagnostic serial port.
 	 */
-/*	fcomcndetach();*/
-
+	/* fcomcndetach(); */
+	
+#ifdef ARM32_PMAP_NEW
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#endif
+	setttb(kernel_l1pt.pv_pa);
+	cpu_tlb_flushID();
+#ifdef ARM32_PMAP_NEW
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+	/*
+	 * Moved from cpu_startup() as data_abort_handler() references
+	 * this during uvm init
+	 */
+	proc0paddr = (struct user *)kernelstack.pv_va;
+	lwp0.l_addr = proc0paddr;
+#endif
 	/*
 	 * XXX this should only be done in main() but it useful to
 	 * have output earlier ...
@@ -825,8 +869,11 @@ initarm(bootargs)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
+#ifndef ARM32_PMAP_NEW
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
-
+#else
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+#endif
 	/* Setup the IRQ system */
 	printf("irq ");
 	footbridge_intr_init();
