@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.16 2004/01/10 07:47:02 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.17 2004/01/10 07:51:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.16 2004/01/10 07:47:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.17 2004/01/10 07:51:16 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1568,8 +1568,6 @@ atw_rf3000_tune(sc, chan)
 	u_int32_t reg;
 	u_int16_t txpower, lpf_cutoff, lna_gs_thresh;
 
-	atw_rfio_enable(sc, 1);
-
 	txpower = sc->sc_srom[ATW_SR_TXPOWER(chan)];
 	lpf_cutoff = sc->sc_srom[ATW_SR_LPF_CUTOFF(chan)];
 	lna_gs_thresh = sc->sc_srom[ATW_SR_LNA_GS_THRESH(chan)];
@@ -1592,6 +1590,8 @@ atw_rf3000_tune(sc, chan)
 	DPRINTF(sc, ("%s: chan %d txpower %02x, lpf_cutoff %02x, "
 	    "lna_gs_thresh %02x\n",
 	    sc->sc_dev.dv_xname, chan, txpower, lpf_cutoff, lna_gs_thresh));
+
+	atw_rfio_enable(sc, 1);
 
 	if ((rc = atw_rf3000_write(sc, RF3000_GAINCTL,
 	    LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK))) != 0)
