@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.55 1999/10/19 21:16:04 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.56 1999/10/28 06:41:40 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.55 1999/10/19 21:15:35 augustss Exp 
+ *	NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp 
  */
 
 /*
@@ -106,6 +106,7 @@
 #define	USB_VENDOR_MIDIMAN	0x0763		/* Midiman */
 #define	USB_VENDOR_SANDISK	0x0781		/* SanDisk Corp */
 #define	USB_VENDOR_SIIG	0x07cc		/* SIIG */
+#define	USB_VENDOR_HANDSPRING	0x082d		/* Handspring Inc. */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
 #define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
@@ -306,6 +307,9 @@
 
 /* SIIG products */
 #define	USB_PRODUCT_SIIG_DIGIFILMREADER	0x0004		/* DigiFilm-Combo Reader */
+
+/* Handspring Inc. */
+#define	USB_PRODUCT_HANDSPRING_VISOR	0x0100		/* Handspring Visor */
 
 /* ActiveWire Inc. products */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD	0x0100		/* I/O Board */
