@@ -125,21 +125,21 @@
 #define	  MAL0_IER_OPB		  0x00000002	/* OPB Error Interrupt */
 #define	  MAL0_IER_PLB		  0x00000001	/* PLB Error Interrupt */
 #define	DCR_MAL0_TXCASR		0x184	/* Tx Channel Active Register (Set) */
-#define	  MAL0_TXCASR_CHAN0	  0x8000000	/* Channel 0 Set Active */
-#define	  MAL0_TXCASR_CHAN1	  0x4000000	/* Channel 1 Set Active */
+#define	  MAL0_TXCASR_CHAN0	  0x80000000	/* Channel 0 Set Active */
+#define	  MAL0_TXCASR_CHAN1	  0x40000000	/* Channel 1 Set Active */
 #define	DCR_MAL0_TXCARR		0x185	/* Tx Channel Active Register (Reset) */
-#define	  MAL0_TXCARR_CHAN0	  0x8000000	/* Channel 0 Reset Active */
-#define	  MAL0_TXCARR_CHAN1	  0x4000000	/* Channel 1 Reset Active */
+#define	  MAL0_TXCARR_CHAN0	  0x80000000	/* Channel 0 Reset Active */
+#define	  MAL0_TXCARR_CHAN1	  0x40000000	/* Channel 1 Reset Active */
 #define	DCR_MAL0_TXEOBISR	0x186	/* Tx End of Buffer Interrupt Status Register */
-#define	  MAL0_TXEOBISR_CHAN0	  0x8000000	/* Channel 0 finished */
-#define	  MAL0_TXEOBISR_CHAN1	  0x4000000	/* Channel 1 finished */
+#define	  MAL0_TXEOBISR_CHAN0	  0x80000000	/* Channel 0 finished */
+#define	  MAL0_TXEOBISR_CHAN1	  0x40000000	/* Channel 1 finished */
 #define	DCR_MAL0_TXDEIR		0x187	/* Tx Descriptor Error Interrupt Register */
 #define	DCR_MAL0_RXCASR		0x190	/* Rx Channel Active Register (Set) */
-#define	  MAL0_RXCASR_CHAN0	  0x8000000	/* Channel 0 Set Active */
+#define	  MAL0_RXCASR_CHAN0	  0x80000000	/* Channel 0 Set Active */
 #define	DCR_MAL0_RXCARR		0x191	/* Rx Channel Active Register (Reset) */
-#define	  MAL0_RXCARR_CHAN0	  0x8000000	/* Channel 0 Reset Active */
+#define	  MAL0_RXCARR_CHAN0	  0x80000000	/* Channel 0 Reset Active */
 #define	DCR_MAL0_RXEOBISR	0x192	/* Rx End of Buffer Interrupt Status Register */
-#define	  MAL0_RXEOBISR_CHAN0	  0x8000000	/* Channel 0 finished */
+#define	  MAL0_RXEOBISR_CHAN0	  0x80000000	/* Channel 0 finished */
 #define	DCR_MAL0_RXDEIR		0x193	/* Rx Descriptor Error Interrupt Register */
 #define	DCR_MAL0_TXCTP0R	0x1a0	/* Channel Tx 0 Channel Table Pointer Register */
 #define	DCR_MAL0_TXCTP1R	0x1a1	/* Channel Tx 1 Channel Table Pointer Register */
