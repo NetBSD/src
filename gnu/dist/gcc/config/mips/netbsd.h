@@ -279,6 +279,4 @@ do {                                                                         \
    GO_IF_LEGITIMATE_ADDRESS ever accepting such addresses. */
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_GAS|TARGET_DEBUG_A_MODE)
-
-
+#define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A)
