@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.41 2005/03/27 21:00:58 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.42 2005/03/30 01:33:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.41 2005/03/27 21:00:58 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.42 2005/03/30 01:33:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ char	**environ;
 void
 doit(struct sockaddr *fromp)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	in_port_t port;
 	struct pollfd set[2];
 	int cc, pv[2], pid, s = -1;	/* XXX gcc */
@@ -271,6 +271,7 @@ doit(struct sockaddr *fromp)
 	int gaierror;
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
 	const char *errormsg = NULL, *errorstr = NULL;
+	char pwbuf[1024];
 
 	(void)signal(SIGINT, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
@@ -482,8 +483,7 @@ doit(struct sockaddr *fromp)
  	}
 #endif /* USE_PAM */
 	setpwent();
-	pwd = getpwnam(locuser);
-	if (pwd == NULL) {
+	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 		syslog(LOG_INFO|LOG_AUTH,
 		    "%s@%s as %s: unknown login. cmd='%.80s'",
 		    remuser, hostname, locuser, cmdbuf);
