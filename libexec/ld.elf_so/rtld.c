@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.81 2002/09/26 20:42:10 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.82 2002/09/26 22:26:26 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,10 +161,6 @@ _rtld_init(mapbase, relocbase)
 #ifndef __mips__
 	/* MIPS has a bogus DT_TEXTREL. */
 	assert(!_rtld_objself.pltgot && !_rtld_objself.textrel);
-#endif
-
-#ifdef __vax__
-	_rtld_relocate_nonplt_objects(&_rtld_objself);
 #endif
 
 	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
