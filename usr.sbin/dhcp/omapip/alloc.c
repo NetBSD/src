@@ -368,8 +368,10 @@ isc_result_t omapi_object_reference (omapi_object_t **r,
 	}
 	*r = h;
 	h -> refcnt++;
-	rc_register (file, line, r, h, h -> refcnt);
-	dmalloc_reuse (h, file, line, 1);
+	if (!h -> type -> freer) {
+		rc_register (file, line, r, h, h -> refcnt);
+		dmalloc_reuse (h, file, line, 1);
+	}
 	return ISC_R_SUCCESS;
 }
 
@@ -467,14 +469,16 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 			if (outer_reference)
 				omapi_object_dereference
 					(&(*h) -> outer -> inner, file, line);
-			rc_register (file, line, h, *h, 0);
+			if (!(*h) -> type -> freer)
+				rc_register (file, line, h, *h, 0);
 			if ((*h) -> type -> destroy)
 				(*((*h) -> type -> destroy)) (*h, file, line);
 			dfree (*h, file, line);
 		}
 	} else {
 		(*h) -> refcnt--;
-		rc_register (file, line, h, *h, (*h) -> refcnt);
+		if (!(*h) -> type -> freer)
+			rc_register (file, line, h, *h, (*h) -> refcnt);
 	}
 	*h = 0;
 	return ISC_R_SUCCESS;
