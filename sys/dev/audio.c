@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.136 2001/05/02 12:49:41 minoura Exp $	*/
+/*	$NetBSD: audio.c,v 1.137 2001/06/03 23:52:51 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -894,7 +894,7 @@ audio_sleep_timo(chan, label, timo)
 	*chan = 0;
 #ifdef AUDIO_DEBUG
 	if (st != 0 && st != EINTR)
-	    printf("audio_sleep: woke up st=%d\n", st);
+	    DPRINTF(("audio_sleep: woke up st=%d\n", st));
 #endif
 	return (st);
 }
