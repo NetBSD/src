@@ -88,3 +88,4 @@ pseudo-device	loop
 pseudo-device	ether
 
 pseudo-device	clock
+pseudo-device	vn	4
