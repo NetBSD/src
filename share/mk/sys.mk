@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.40 1998/04/09 00:32:36 tv Exp $
+#	$NetBSD: sys.mk,v 1.41 1998/04/09 00:45:10 tv Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -23,7 +23,7 @@ CFLAGS?=	-O
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
-CXX?=		g++
+CXX?=		c++
 CXXFLAGS?=	${CFLAGS}
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
