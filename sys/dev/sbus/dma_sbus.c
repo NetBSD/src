@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.13 2002/09/27 05:07:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.13 2002/09/27 05:07:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_burst = (burst & SBUS_BURST_32) ? 32 :
 		       (burst & SBUS_BURST_16) ? 16 : 0;
 
-	if (sc->sc_dev.dv_cfdata->cf_attach == &ledma_ca) {
+	if (strcmp(sc->sc_dev.dv_cfdata->cf_name, "ledma") == 0) {
 		char *cabletype;
 		u_int32_t csr;
 		/*
