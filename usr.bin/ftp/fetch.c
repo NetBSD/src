@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.51 1999/03/15 08:52:17 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.52 1999/03/22 07:36:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.51 1999/03/15 08:52:17 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.52 1999/03/22 07:36:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -81,10 +81,9 @@ typedef enum {
 void    	aborthttp __P((int));
 static int	auth_url __P((const char *, char **));
 static void	base64_encode __P((const char *, size_t, char *));
-static int	go_fetch __P((const char *, const char *));
-static int	fetch_ftp __P((const char *, const char *));
-static int	fetch_url __P((const char *, const char *, const char *,
-				char *, char *));
+static int	go_fetch __P((const char *));
+static int	fetch_ftp __P((const char *));
+static int	fetch_url __P((const char *, const char *, char *, char *));
 static int	parse_url __P((const char *, const char *, url_t *, char **,
 				char **, char **, in_port_t *, char **));
 static void	url_decode __P((char *));
@@ -246,6 +245,11 @@ url_decode(url)
  * Sets type to url_t, each of the given char ** pointers to a
  * malloc(3)ed strings of the relevant section, and port to
  * the number given, or ftpport if ftp://, or httpport if http://.
+ *
+ * XXX: this is not totally RFC1738 compliant; path will have the
+ * leading `/' unless it's an ftp:// URL; this makes things easier
+ * for file:// and http:// URLs. ftp:// URLs have all leading `/'s
+ * removed.
  */
 static int
 parse_url(url, desc, type, user, pass, host, port, path)
@@ -302,7 +306,6 @@ cleanup_parse_url:
 		thost = (char *)xmalloc(len + 1);
 		strncpy(thost, url, len);
 		thost[len] = '\0';
-		ep++;			/* skip first / for all URLs */
 		if (*type == FTP_URL_T)	/* skip all leading /'s for ftp URLs */
 			while (*ep && *ep == '/')
 				ep++;
@@ -359,9 +362,8 @@ jmp_buf	httpabort;
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
+fetch_url(url, proxyenv, proxyauth, wwwauth)
 	const char	*url;
-	const char	*outfile;
 	const char	*proxyenv;
 	char		*proxyauth;
 	char		*wwwauth;
@@ -387,7 +389,7 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 	s = -1;
 	buf = savefile = NULL;
 	auth = location = message = NULL;
-	ischunked = isproxy = 0;
+	ischunked = isproxy = hcode = 0;
 	rval = 1;
 	hp = NULL;
 	user = pass = host = path = decodedpath = NULL;
@@ -420,7 +422,7 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 
 	if (EMPTYSTRING(path)) {
 		if (urltype == FTP_URL_T) {
-			rval = fetch_ftp(url, outfile);
+			rval = fetch_ftp(url);
 			goto cleanup_fetch_url;
 		}
 		if (urltype != HTTP_URL_T || outfile == NULL)  {
@@ -443,11 +445,14 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 	}
 	if (EMPTYSTRING(savefile)) {
 		if (urltype == FTP_URL_T) {
-			rval = fetch_ftp(url, outfile);
+			rval = fetch_ftp(url);
 			goto cleanup_fetch_url;
 		}
 		warnx("Invalid URL (no file after directory) `%s'", url);
 		goto cleanup_fetch_url;
+	} else {
+		if (debug)
+			fprintf(ttyout, "got savefile as `%s'\n", savefile);
 	}
 
 	filesize = -1;
@@ -786,67 +791,74 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 
 		}
 		FREEPTR(buf);
-	}
 
-	switch (hcode) {
-	case 200:
-		break;
-	case 300:
-	case 301:
-	case 302:
-	case 303:
-	case 305:
-		if (EMPTYSTRING(location)) {
-			warnx("No redirection Location provided by server");
-			goto cleanup_fetch_url;
-		}
-		if (redirect_loop++ > 5) {
-			warnx("Too many redirections requested");
-			goto cleanup_fetch_url;
-		}
-		if (hcode == 305) {
-			if (verbose)
-				fprintf(ttyout, "Redirected via %s\n",
-				    location);
-			rval = fetch_url(url, outfile, location, proxyauth,
-			    wwwauth);
-		} else {
-			if (verbose)
-				fprintf(ttyout, "Redirected to %s\n", location);
-			rval = go_fetch(location, outfile);
-		}
-		goto cleanup_fetch_url;
-	case 401:
-	case 407:
-	    {
-		char **authp;
-
-		fprintf(ttyout, "%s\n", message);
-		if (EMPTYSTRING(auth)) {
-			warnx("No authentication challenge provided by server");
-			goto cleanup_fetch_url;
-		}
-		authp = (hcode == 401) ? &wwwauth : &proxyauth;
-		if (*authp != NULL) {
-			char reply[10];
-
-			fprintf(ttyout, "Authorization failed. Retry (y/n)? ");
-			if (fgets(reply, sizeof(reply), stdin) != NULL &&
-			    tolower(reply[0]) != 'y')
+		switch (hcode) {
+		case 200:
+			break;
+		case 300:
+		case 301:
+		case 302:
+		case 303:
+		case 305:
+			if (EMPTYSTRING(location)) {
+				warnx(
+				"No redirection Location provided by server");
 				goto cleanup_fetch_url;
+			}
+			if (redirect_loop++ > 5) {
+				warnx("Too many redirections requested");
+				goto cleanup_fetch_url;
+			}
+			if (hcode == 305) {
+				if (verbose)
+					fprintf(ttyout, "Redirected via %s\n",
+					    location);
+				rval = fetch_url(url, location,
+				    proxyauth, wwwauth);
+			} else {
+				if (verbose)
+					fprintf(ttyout, "Redirected to %s\n",
+					    location);
+				rval = go_fetch(location);
+			}
+			goto cleanup_fetch_url;
+		case 401:
+		case 407:
+		    {
+			char **authp;
+
+			fprintf(ttyout, "%s\n", message);
+			if (EMPTYSTRING(auth)) {
+				warnx(
+			    "No authentication challenge provided by server");
+				goto cleanup_fetch_url;
+			}
+			authp = (hcode == 401) ? &wwwauth : &proxyauth;
+			if (*authp != NULL) {
+				char reply[10];
+
+				fprintf(ttyout,
+				    "Authorization failed. Retry (y/n)? ");
+				if (fgets(reply, sizeof(reply), stdin) != NULL
+				    && tolower(reply[0]) != 'y')
+					goto cleanup_fetch_url;
+			}
+			if (auth_url(auth, authp) == 0) {
+				rval = fetch_url(url, proxyenv,
+				    proxyauth, wwwauth);
+				memset(*authp, '\0', strlen(*authp));
+				FREEPTR(*authp);
+			}
+			goto cleanup_fetch_url;
+		    }
+		default:
+			if (message)
+				warnx("Error retrieving file - `%s'", message);
+			else
+				warnx("Unknown error retrieving file");
+			goto cleanup_fetch_url;
 		}
-		if (auth_url(auth, authp) == 0) {
-			rval = fetch_url(url, outfile, proxyenv, proxyauth,
-			    wwwauth);
-			memset(*authp, '\0', strlen(*authp));
-			FREEPTR(*authp);
-		}
-		goto cleanup_fetch_url;
-	    }
-	default:
-		warnx("Error retrieving file - `%s'", message);
-		goto cleanup_fetch_url;
-	}
+	}		/* end of ftp:// or http:// specific setup */
 
 	oldintr = oldintp = NULL;
 
@@ -1012,9 +1024,8 @@ aborthttp(notused)
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-fetch_ftp(url, outfile)
+fetch_ftp(url)
 	const char *url;
-	const char *outfile;
 {
 	char		*cp, *xargv[5], rempath[MAXPATHLEN];
 	char		portnum[6];		/* large enough for "65535\0" */
@@ -1148,10 +1159,10 @@ fetch_ftp(url, outfile)
 			xargv[3] = NULL;
 			xargc++;
 		}
-		get(xargc, xargv);
-		if (outfile != NULL && strcmp(outfile, "-") != 0
-		    && outfile[0] != '|')
-			outfile = NULL;
+		if (restartautofetch)
+			reget(xargc, xargv);
+		else
+			get(xargc, xargv);
 	}
 
 	if ((code / 100) == COMPLETE)
@@ -1178,9 +1189,8 @@ cleanup_fetch_ftp:
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-go_fetch(url, outfile)
+go_fetch(url)
 	const char *url;
-	const char *outfile;
 {
 
 #ifndef SMALL
@@ -1209,7 +1219,7 @@ go_fetch(url, outfile)
 	 */
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
 	    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0)
-		return (fetch_url(url, outfile, NULL, NULL, NULL));
+		return (fetch_url(url, NULL, NULL, NULL));
 
 	/*
 	 * Try FTP URL-style and host:file arguments next.
@@ -1217,9 +1227,9 @@ go_fetch(url, outfile)
 	 * Othewise, use fetch_ftp().
 	 */
 	if (ftpproxy && strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0)
-		return (fetch_url(url, outfile, NULL, NULL, NULL));
+		return (fetch_url(url, NULL, NULL, NULL));
 
-	return (fetch_ftp(url, outfile));
+	return (fetch_ftp(url));
 }
 
 /*
@@ -1235,10 +1245,9 @@ go_fetch(url, outfile)
  * Otherwise, 0 is returned if all files retrieved successfully.
  */
 int
-auto_fetch(argc, argv, outfile)
+auto_fetch(argc, argv)
 	int argc;
 	char *argv[];
-	char *outfile;
 {
 	volatile int	argpos;
 	int		rval;
@@ -1261,7 +1270,10 @@ auto_fetch(argc, argv, outfile)
 			break;
 		redirect_loop = 0;
 		anonftp = 1;		/* Handle "automatic" transfers. */
-		rval = go_fetch(argv[argpos], outfile);
+		rval = go_fetch(argv[argpos]);
+		if (outfile != NULL && strcmp(outfile, "-") != 0
+		    && outfile[0] != '|')
+			outfile = NULL;
 		if (rval > 0)
 			rval = argpos + 1;
 	}
