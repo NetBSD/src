@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.39 2003/02/14 21:39:46 pk Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.40 2003/02/20 02:49:51 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.39 2003/02/14 21:39:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.40 2003/02/20 02:49:51 jmc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -453,7 +453,6 @@ nchreinit(void)
 	struct ncvhashhead *oldhash2, *hash2;
 	u_long i, oldmask1, oldmask2, mask1, mask2;
 
-	simple_lock(&namecache_slock);
 	hash1 = hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask1);
 	hash2 =
 #ifdef NAMECACHE_ENTER_REVERSE
@@ -461,6 +460,7 @@ nchreinit(void)
 #else
 	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
 #endif
+	simple_lock(&namecache_slock);
 	oldhash1 = nchashtbl;
 	oldmask1 = nchash;
 	nchashtbl = hash1;
