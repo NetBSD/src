@@ -1,3 +1,5 @@
+/*	$NetBSD: strcasecmp.c,v 1.6 1997/07/13 20:24:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static const char sccsid[] = "from: @(#)strcasecmp.c	5.10 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strcasecmp.c,v 1.5 1997/06/02 09:52:39 kleink Exp $";
+#if 0
+static const char sccsid[] = "@(#)strcasecmp.c	5.10 (Berkeley) 1/26/91";
+#else
+__RCSID("$NetBSD: strcasecmp.c,v 1.6 1997/07/13 20:24:20 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>

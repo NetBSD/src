@@ -1,3 +1,5 @@
+/*	$NetBSD: strspn.c,v 1.5 1997/07/13 20:24:33 christos Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strspn.c	5.8 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strspn.c,v 1.4 1995/06/15 00:08:37 jtc Exp $";
+#if 0
+static char *sccsid = "@(#)strspn.c	5.8 (Berkeley) 1/26/91";
+#else
+__RCSID("$NetBSD: strspn.c,v 1.5 1997/07/13 20:24:33 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>

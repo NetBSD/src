@@ -1,3 +1,5 @@
+/*	$NetBSD: bcmp.c,v 1.7 1997/07/13 20:24:11 christos Exp $	*/
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bcmp.c,v 1.6 1996/10/24 23:47:27 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)bcmp.c	5.6 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: bcmp.c,v 1.7 1997/07/13 20:24:11 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
