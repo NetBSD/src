@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 1997/10/27 03:34:34 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.2 1997/10/29 01:09:54 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,28 +36,38 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the pc532 */
+/* md.h -- Machine specific definitions for the pmax */
 
 /* Constants and defines */
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 100
 
-/* Definition of files to retreive from ftp. */
-EXTERN char ftp_prefix[STRSIZE] INIT("");
-EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
-EXTERN char ftp_postfix[STRSIZE] INIT(".tar.gz");
-EXTERN char *dist_list[]
+/* Disk names. */
+EXTERN	char *disk_names[]
 #ifdef MAIN
-= { "kern%s%s", "base%s/%s", "comp%s%s", "etc%s%s", "games%s%s", "man%s%s",
-    "misc%s%s", "text%s%s", NULL }
+= {"rz", "sd", NULL}
 #endif
 ;
 
-/* no support for floppies, yet -- SCSCI floppies? */
-EXTERN char *fd_last[]
+/* Legal start character for a disk for checking input. */
+#define ISDISKSTART(dn)	(dn == 'r' || dn == 's')
+
+/* Definition of files to retreive from ftp. */
+EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
+EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
+EXTERN distinfo dist_list[]
 #ifdef MAIN
-= { /* "ab", "ab", "ab", "ab", "ab", "ab", "ab", "ab", */ NULL}
+= { {"kern%s%s", 1, NULL, "Kernel       : "},
+    {"etc%s%s",  1, NULL, "System (/etc): "},
+    {"base%s%s", 1, NULL, "Base         : "}, 
+    {"comp%s%s", 1, NULL, "Compiler     : "},
+    {"games%s%s", 1, NULL,"Games        : "},
+    {"man%s%s",  1, NULL, "Manuals      : "},
+    {"misc%s%s", 1, NULL, "Miscellaneous: "},
+    {"text%s%s", 1, NULL, "Text tools   : "},
+    {NULL, 0, NULL }
+}
 #endif
 ;
 
