@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.31 2002/10/23 09:14:32 jdolecek Exp $
+#	$NetBSD: vnode_if.src,v 1.32 2003/04/10 20:26:57 jdolecek Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -200,7 +200,7 @@ vop_write {
 vop_ioctl {
 	IN struct vnode *vp;
 	IN u_long command;
-	IN caddr_t data;
+	IN void *data;
 	IN int fflag;
 	IN struct ucred *cred;
 	IN struct proc *p;
@@ -212,7 +212,7 @@ vop_ioctl {
 vop_fcntl {
 	IN struct vnode *vp;
 	IN u_int command;
-	IN caddr_t data;
+	IN void *data;
 	IN int fflag;
 	IN struct ucred *cred;
 	IN struct proc *p;
@@ -468,7 +468,7 @@ vop_pathconf {
 #
 vop_advlock {
 	IN struct vnode *vp;
-	IN caddr_t id;
+	IN void *id;
 	IN int op;
 	IN struct flock *fl;
 	IN int flags;
