@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1995/07/03 21:24:39 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/06 20:45:57 gwr Exp $
 
-.PATH:	${.CURDIR}/../lint1
+.PATH.c: ${.CURDIR}/../lint1
 
 PROG=	lint2
 SRCS=	main2.c hash.c read.c mem.c mem2.c chk.c msg.c emit.c emit2.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1997/03/24 21:59:52 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1997/05/06 20:45:43 gwr Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -99,7 +99,7 @@ depend: .depend
 
 .include <bsd.prog.mk>
 
-.PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
-.PATH: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet
-.PATH: ${.CURDIR}/../../../lib/libtelnet
+.PATH.c: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
+.PATH.c: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet
+.PATH.c: ${.CURDIR}/../../../lib/libtelnet
 

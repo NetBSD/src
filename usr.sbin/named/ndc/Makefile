@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/04/14 08:49:09 veego Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/06 20:46:32 gwr Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
-.PATH:	${.CURDIR}/../man
+.PATH.c: ${.CURDIR}/../man
 
 all:	ndc
 CLEANFILES+= ndc

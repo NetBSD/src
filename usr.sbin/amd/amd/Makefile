@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
-#	$Id: Makefile,v 1.8 1995/03/17 05:55:49 jtc Exp $
+#	$Id: Makefile,v 1.9 1997/05/06 20:45:59 gwr Exp $
 
 .include "../config/Makefile.config"
 
@@ -31,6 +31,6 @@ LDADD+=	-lcompat
 vers.${PROG}.c: ${SRCS:.c=.o}
 	@d=${.CURDIR}/ sh ${.CURDIR}/../config/newvers.sh ${PROG} ${MACHINE} ${OS}
 
-.PATH: ${.CURDIR}/../rpcx ${.CURDIR}/../config
+.PATH.c: ${.CURDIR}/../rpcx ${.CURDIR}/../config
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

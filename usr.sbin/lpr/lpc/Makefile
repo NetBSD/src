@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/11/15 22:27:27 pk Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/06 20:46:15 gwr Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpc
@@ -7,7 +7,7 @@ MAN=	lpc.8
 SRCS=	lpc.c cmds.c cmdtab.c startdaemon.c common.c
 BINGRP=	daemon
 BINMODE=2555
-.PATH:	${.CURDIR}/../common_source
+.PATH.c: ${.CURDIR}/../common_source
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/24 22:02:49 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/06 20:46:28 gwr Exp $
 
-.PATH:	${.CURDIR}/../man
+.PATH.c: ${.CURDIR}/../man
 
 PROG=	dnsquery
 

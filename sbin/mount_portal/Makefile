@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1995/03/18 14:57:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.11 1997/05/06 20:45:16 gwr Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 PROG=	mount_portal
@@ -8,7 +8,7 @@ MAN=	mount_portal.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+= -I${.CURDIR}/../../sys -I${MOUNT}
-.PATH:	${MOUNT}
+.PATH.c: ${MOUNT}
 
 DPADD=	$(LIBCOMPAT)
 LDADD=	-lcompat

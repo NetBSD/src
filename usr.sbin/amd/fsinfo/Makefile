@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/28/93
-#	$Id: Makefile,v 1.7 1994/12/22 11:32:15 cgd Exp $
+#	$Id: Makefile,v 1.8 1997/05/06 20:46:01 gwr Exp $
 
 .include "../config/Makefile.config"
 
@@ -28,6 +28,6 @@ fsi_lex.c: ../fsinfo/fsi_lex.l
 	${LEX} ${.CURDIR}/fsi_lex.l
 	mv lex.yy.c fsi_lex.c
 
-.PATH: ${.CURDIR}/../config
+.PATH.c: ${.CURDIR}/../config
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

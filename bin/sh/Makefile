@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1997/04/17 08:13:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 1997/05/06 20:44:59 gwr Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -20,7 +20,10 @@ CFLAGS+=-DSHELL -I. -I${.CURDIR}
 CFLAGS+= -w
 .endif
 
-.PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
+# echo.c
+.PATH.c: ${.CURDIR}/bltin
+# printf.c
+.PATH.c: ${.CURDIR}/../../usr.bin/printf
 
 CLEANFILES+= builtins.h mkinit mknodes mksyntax \
 	nodes.h syntax.h token.h y.tab.h

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/01/09 09:43:51 tls Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/06 20:45:14 gwr Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	mount_nfs
@@ -9,7 +9,7 @@ MAN=	mount_nfs.8
 #
 #MOUNT=	${.CURDIR}/../mount
 #CFLAGS+= -DNFS -I${MOUNT}
-#.PATH:	${MOUNT}
+#.PATH.c: ${MOUNT}
 CFLAGS+=-DNFS
 
 .if defined(notdef)			# XXX no kernel kerb NFS support!

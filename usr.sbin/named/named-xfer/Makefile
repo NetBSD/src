@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/04/14 09:46:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/06 20:46:30 gwr Exp $
 # from: $Id: Makefile,v 8.2 1995/12/31 23:28:01 vixie Exp 
 
-.PATH:	${.CURDIR}/../named \
+.PATH.c: ${.CURDIR}/../named \
 	${.CURDIR}/../man
 
 PROG=	named-xfer

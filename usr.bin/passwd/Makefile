@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 1997/01/07 04:02:11 tls Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/06 20:45:38 gwr Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
-.PATH:  ${.CURDIR}/../../lib/libc/gen
+.PATH.c:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lrpcsvc -lcrypt -lutil
 CFLAGS+=-I${.CURDIR} -DYP
