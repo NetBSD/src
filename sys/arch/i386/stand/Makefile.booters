@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile.booters,v 1.37 2002/11/23 23:34:39 fvdl Exp $
+#	$NetBSD: Makefile.booters,v 1.38 2003/01/14 23:51:34 thorpej Exp $
 
 .include <bsd.own.mk>
 
 STRIPFLAG=
 BINMODE=444
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
 
 # Make sure we override any optimization options specified by the
 # user.
