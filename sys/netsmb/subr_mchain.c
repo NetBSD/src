@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.6 2003/03/24 07:09:34 jdolecek Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.7 2003/03/24 07:36:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -31,11 +31,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/kern/subr_mchain.c,v 1.4 2002/02/21 16:23:38 bp Exp $
+ * FreeBSD: src/sys/kern/subr_mchain.c,v 1.4 2002/02/21 16:23:38 bp Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.6 2003/03/24 07:09:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.7 2003/03/24 07:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
