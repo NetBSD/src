@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2002/04/09 21:00:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47 2002/04/09 21:11:31 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -342,10 +342,10 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L2_CACHE_MASK_xscale	(L2_B|L2_C)
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
-#define	L1_S_PROTO_xscale	(L1_TYPE_S | L1_S_IMP)	/* XXX IMP */
+#define	L1_S_PROTO_xscale	(L1_TYPE_S)
 
 #define	L1_C_PROTO_generic	(L1_TYPE_C | L1_C_IMP2)
-#define	L1_C_PROTO_xscale	(L1_TYPE_C | L1_C_IMP2)	/* XXX IMP */
+#define	L1_C_PROTO_xscale	(L1_TYPE_C)
 
 #define	L2_L_PROTO		(L2_TYPE_L)
 
