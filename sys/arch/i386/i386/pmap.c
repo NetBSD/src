@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155.2.3 2004/09/21 13:16:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155.2.4 2004/10/19 15:56:36 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.3 2004/09/21 13:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.4 2004/10/19 15:56:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -132,8 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.3 2004/09/21 13:16:44 skrll Exp $")
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
@@ -2273,7 +2271,7 @@ pmap_zero_page(pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
@@ -2298,15 +2296,20 @@ pmap_pageidlezero(pa)
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	caddr_t zerova = VASLEW(zerop, id);
 	boolean_t rv = TRUE;
-	int i, *ptr;
+	int *ptr;
+	int *ep;
+#if defined(I686_CPU)
+	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
-		panic("pmap_zero_page_uncached: lock botch");
+		panic("pmap_pageidlezero: lock botch");
 #endif
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
+	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
+	    ptr < ep; ptr++) {
 		if (sched_whichqs != 0) {
 
 			/*
@@ -2319,8 +2322,19 @@ pmap_pageidlezero(pa)
 			rv = FALSE;
 			break;
 		}
-		*ptr++ = 0;
+#if defined(I686_CPU)
+		if (cpu_features & CPUID_SSE2)
+			__asm __volatile ("movnti %1, %0" :
+			    "=m"(*ptr) : "r" (0));
+		else
+#endif /* defined(I686_CPU) */
+			*ptr = 0;
 	}
+
+#if defined(I686_CPU)
+	if (cpu_features & CPUID_SSE2)
+		__asm __volatile ("sfence" ::: "memory");
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
@@ -2349,8 +2363,8 @@ pmap_copy_page(srcpa, dstpa)
 		panic("pmap_copy_page: lock botch");
 #endif
 
-	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
-	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
+	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW | PG_U;
+	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U;
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 	memcpy(cdstva, csrcva, PAGE_SIZE);
 #ifdef DIAGNOSTIC
@@ -3019,6 +3033,7 @@ pmap_clear_attrs(pg, clearbits)
 	*myattrs &= ~clearbits;
 
 	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
+		pt_entry_t *ptep;
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
@@ -3026,7 +3041,8 @@ pmap_clear_attrs(pg, clearbits)
 #endif
 
 		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
-		opte = ptes[x86_btop(pve->pv_va)];
+		ptep = &ptes[x86_btop(pve->pv_va)];
+		opte = *ptep;
 		if (opte & clearbits) {
 			/* We need to do something */
 			if (clearbits == PG_RW) {
@@ -3038,9 +3054,8 @@ pmap_clear_attrs(pg, clearbits)
 				 */
 
 				/* First zap the RW bit! */
-				x86_atomic_clearbits_l(
-				    &ptes[x86_btop(pve->pv_va)], PG_RW); 
-				opte = ptes[x86_btop(pve->pv_va)];
+				x86_atomic_clearbits_l(ptep, PG_RW); 
+				opte = *ptep;
 
 				/*
 				 * Then test if it is not cached as RW the TLB
@@ -3055,8 +3070,7 @@ pmap_clear_attrs(pg, clearbits)
 			 */
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(
-			    &ptes[x86_btop(pve->pv_va)],
+			opte = x86_atomic_testset_ul(ptep,
 			    (opte & ~(PG_U | PG_M)));
 
 			result |= (opte & clearbits);
@@ -3260,6 +3274,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
+	pt_entry_t *ptep;
 	struct vm_page *ptp, *pg;
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh, *new_pvh;
@@ -3315,7 +3330,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * on SMP the PTE might gain PG_U and PG_M flags
 	 * before we zap it later
 	 */
-	opte = ptes[x86_btop(va)];		/* old PTE */
+	ptep = &ptes[x86_btop(va)];
+	opte = *ptep;		/* old PTE */
 
 	/*
 	 * is there currently a valid mapping at our VA and does it
@@ -3335,7 +3351,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
-		opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);
+		opte = x86_atomic_testset_ul(ptep, npte);
 
 		/*
 		 * Any change in the protection level that the CPU
@@ -3347,8 +3363,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			 * No need to flush the TLB.
 			 * Just add old PG_M, ... flags in new entry.
 			 */
-			x86_atomic_setbits_l(&ptes[x86_btop(va)],
-			    opte & (PG_M | PG_U));
+			x86_atomic_setbits_l(ptep, opte & (PG_M | PG_U));
 			goto out_ok;
 		}
 
@@ -3428,7 +3443,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pmap_lock_pvhs(old_pvh, new_pvh);
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);
+			opte = x86_atomic_testset_ul(ptep, npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3457,7 +3472,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		simple_unlock(&new_pvh->pvh_lock);
 	}
 
-	opte = x86_atomic_testset_ul(&ptes[x86_btop(va)], npte);   /* zap! */
+	opte = x86_atomic_testset_ul(ptep, npte);   /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.19.2.3 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.19.2.4 2004/10/19 15:56:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19.2.3 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19.2.4 2004/10/19 15:56:59 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -832,7 +832,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the alloted number of segments, or we
-		 * were short on resources.  For the too-may-segments
+		 * were short on resources.  For the too-many-segments
 		 * case, we simply report an error and drop the packet,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.

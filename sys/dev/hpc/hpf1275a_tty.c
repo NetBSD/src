@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.1.2.4 2004/09/21 13:27:37 skrll Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.1.2.5 2004/10/19 15:56:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.1.2.4 2004/09/21 13:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.1.2.5 2004/10/19 15:56:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -284,6 +284,12 @@ hpf1275a_detach(struct device *self, int flags)
 int
 hpf1275a_open(dev_t dev, struct tty *tp)
 {
+	static struct cfdata hpf1275a_cfdata = {
+		.cf_name = "hpf1275a",
+		.cf_atname = "hpf1275a",
+		.cf_unit = DVUNIT_ANY,
+		.cf_fstate = FSTATE_STAR,
+	};
 	struct proc *p = curproc;		/* XXX */
 	struct hpf1275a_softc *sc;
 	int error, s;
@@ -293,8 +299,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 
 	s = spltty();
 
-	sc = (struct hpf1275a_softc *)
-		config_attach_pseudo("hpf1275a", DVUNIT_ANY);
+	sc = (struct hpf1275a_softc *) config_attach_pseudo(&hpf1275a_cfdata);
 	if (sc == NULL) {
 		splx(s);
 		return (EIO);

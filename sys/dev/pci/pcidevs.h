@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.543.2.5 2004/09/21 13:31:05 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.543.2.6 2004/10/19 15:56:59 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.651 2004/09/18 08:47:46 martin Exp 
+ *	NetBSD: pcidevs,v 1.656 2004/10/13 18:42:17 augustss Exp 
  */
 
 /*
@@ -738,14 +738,18 @@
 #define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
+#define	PCI_PRODUCT_ALI_M1563	0x1563		/* M1563 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Decoder */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5257	0x5257		/* M5257 PCI Software Modem */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
-#define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
+#define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB 1.1 Host Controller */
+#define	PCI_PRODUCT_ALI_M5239	0x5239		/* M5239 USB 2.0 Host Controller */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 PCI-AGP Bridge */
+#define	PCI_PRODUCT_ALI_M5249	0x5249		/* M5249 Hypertransport to PCI bridge */
 #define	PCI_PRODUCT_ALI_M5451	0x5451		/* M5451 AC-Link Controller Audio Device */
 #define	PCI_PRODUCT_ALI_M5453	0x5453		/* M5453 AC-Link Controller Modem Device */
+#define	PCI_PRODUCT_ALI_M5455	0x5455		/* M5455 AC-Link Controller Audio Device */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
@@ -1036,6 +1040,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_9200SE	0x5964		/* Radeon 9200SE */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 Series */
 #define	PCI_PRODUCT_ATI_RADEON_X300_S	0x5b70		/* Radeon X300 Series Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_9200SE_S	0x5d44		/* Radeon 9200SE Secondary */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -1049,6 +1054,7 @@
 #define	PCI_PRODUCT_AMCIRCUITS_CAMAC	0x812d		/* FZJ/ZEL CAMAC controller */
 #define	PCI_PRODUCT_AMCIRCUITS_VICBUS	0x812e		/* FZJ/ZEL VICBUS interface */
 #define	PCI_PRODUCT_AMCIRCUITS_PCISYNC	0x812f		/* FZJ/ZEL Synchronisation module */
+#define	PCI_PRODUCT_AMCIRCUITS_ADDI7800	0x818e		/* ADDI-DATA APCI-7800 8-port serial */
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
 
 /* Atheros Communications, Inc. products */
@@ -1761,10 +1767,19 @@
 #define	PCI_PRODUCT_INTEL_82801EB_HPB	0x2573		/* 82801EB Hub-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82875P_HB	0x2578		/* 82875P Host */
 #define	PCI_PRODUCT_INTEL_82875P_AGP	0x2579		/* 82875P AGP */
+#define	PCI_PRODUCT_INTEL_82875P_CSA	0x257b		/* 82875P PCI-CSA Bridge */
 #define	PCI_PRODUCT_INTEL_82915P_HB	0x2584		/* 82915P Host */
 #define	PCI_PRODUCT_INTEL_82915P_EXP	0x2585		/* 82915P PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_6300ESB_LPC	0x25a1		/* 6300ESB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_IDE	0x25a2		/* 6300ESB IDE Controller */
 #define	PCI_PRODUCT_INTEL_6300ESB_SATA	0x25a3		/* 6300ESB SATA Controller */
+#define	PCI_PRODUCT_INTEL_6300ESB_SMB	0x25a4		/* 6300ESB SMBus Controller */
+#define	PCI_PRODUCT_INTEL_6300ESB_USB_0	0x25a9		/* 6300ESB USB UHCI Controller #0 */
+#define	PCI_PRODUCT_INTEL_6300ESB_USB_1	0x25aa		/* 6300ESB USB UHCI Controller #1 */
+#define	PCI_PRODUCT_INTEL_6300ESB_WDT	0x25ab		/* 6300ESB Watchdog Timer */
+#define	PCI_PRODUCT_INTEL_6300ESB_APIC	0x25ac		/* 6300ESB Advanced Interrupt Controller */
+#define	PCI_PRODUCT_INTEL_6300ESB_EHCI	0x25ad		/* 6300ESB USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FR_SATA	0x2652		/* 82801FR Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_USB_0	0x2658		/* 82801FB/FR USB UHCI Controller #0 */

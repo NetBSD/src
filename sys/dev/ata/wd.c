@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.7 2004/09/21 13:27:24 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.8 2004/10/19 15:56:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.7 2004/09/21 13:27:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.8 2004/10/19 15:56:44 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -195,13 +195,14 @@ void  wd_shutdown(void *);
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
 
-struct dkdriver wddkdriver = { wdstrategy };
+struct dkdriver wddkdriver = { wdstrategy, minphys };
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern(struct wd_softc *);
 #endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
+#define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
@@ -227,6 +228,14 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
+
+	/*
+	 * This seagate drive seems to have issue addressing sector 0xfffffff
+	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
+	 * LBA48
+	 */
+	{ "ST3200822A",
+	  WD_QUIRK_FORCE_LBA48 },
 
 	{ NULL,
 	  0 }
@@ -274,8 +283,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	char buf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
-
-	lockinit(&wd->sc_lock, PRIBIO | PCATCH, "wdlock", 0, 0);
 
 	callout_init(&wd->sc_restart_ch);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
@@ -389,6 +396,9 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&wd->sc_dk);
 }
 
 int
@@ -428,6 +438,9 @@ wddetach(struct device *self, int flags)
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
 
+	/* Delete all of our wedges. */
+	dkwedge_delall(&sc->sc_dk);
+
 	s = splbio();
 
 	/* Kill off any queued buffers. */
@@ -465,7 +478,6 @@ wddetach(struct device *self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 	sc->drvp->drive_flags = 0; /* no drive any more here */
 
 	return (0);
@@ -705,7 +717,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
-	if (wd->sc_flags & WDF_LBA48 && wd->sc_wdc_bio.blkno > LBA48_THRESHOLD)
+	if (wd->sc_flags & WDF_LBA48 &&
+	    (wd->sc_wdc_bio.blkno > LBA48_THRESHOLD ||
+	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
@@ -870,16 +884,27 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
+	part = WDPART(dev);
+
+	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (wd->sc_dk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
+
 	/*
 	 * If this is the first open of this device, add a reference
 	 * to the adapter.
 	 */
 	if (wd->sc_dk.dk_openmask == 0 &&
 	    (error = wd->atabus->ata_addref(wd->drvp)) != 0)
-		return (error);
-
-	if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		goto bad4;
+		goto bad1;
 
 	if (wd->sc_dk.dk_openmask != 0) {
 		/*
@@ -888,7 +913,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
 			error = EIO;
-			goto bad3;
+			goto bad2;
 		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
@@ -902,14 +927,12 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		}
 	}
 
-	part = WDPART(dev);
-
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= wd->sc_dk.dk_label->d_npartitions ||
 	     wd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
-		goto bad;
+		goto bad2;
 	}
 
 	/* Insure only one open at a time. */
@@ -924,18 +947,14 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
 
-bad:
-	if (wd->sc_dk.dk_openmask == 0) {
-	}
-
-bad3:
-	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
-bad4:
+ bad2:
 	if (wd->sc_dk.dk_openmask == 0)
 		wd->atabus->ata_delref(wd->drvp);
+ bad1:
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return error;
 }
 
@@ -947,7 +966,8 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	int error;
 
 	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
-	if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+
+	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -970,7 +990,7 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		wd->atabus->ata_delref(wd->drvp);
 	}
 
-	lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
+	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -1236,7 +1256,8 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = lockmgr(&wd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
+		if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE,
+				     NULL)) != 0)
 			goto bad;
 		wd->sc_flags |= WDF_LABELLING;
 
@@ -1260,7 +1281,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;
-		lockmgr(&wd->sc_lock, LK_RELEASE, NULL);
+		(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
@@ -1385,6 +1406,37 @@ bad:
 		return(error);
 		}
 
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, wd->sc_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) addr;
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, wd->sc_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) addr;
+
+		return (dkwedge_list(&wd->sc_dk, dkwl, l));
+	    }
+
 	default:
 		return ENOTTY;
 	}
@@ -1486,7 +1538,9 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		wd->sc_bp = NULL;
 		wd->sc_wdc_bio.blkno = blkno;
 		wd->sc_wdc_bio.flags = ATA_POLL;
-		if (wd->sc_flags & WDF_LBA48 && blkno > LBA48_THRESHOLD)
+		if (wd->sc_flags & WDF_LBA48 &&
+		    (blkno > LBA48_THRESHOLD ||
+	    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
 			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;

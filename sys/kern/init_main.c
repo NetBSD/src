@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221.2.5 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.6 2004/10/19 15:58:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.5 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.6 2004/10/19 15:58:02 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.5 2004/09/21 13:35:03 skrll Ex
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/disk.h>
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -279,7 +278,6 @@ main(void)
 	 * The following things must be done before autoconfiguration.
 	 */
 	evcnt_init();		/* initialize event counters */
-	disk_init();		/* initialize disk list */
 	tty_init();		/* initialize tty list */
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
@@ -561,6 +559,7 @@ main(void)
 	proclist_lock_read();
 	s = splsched();
 	LIST_FOREACH(p, &allproc, p_list) {
+		KASSERT((p->p_flag & P_MARKER) == 0);
 		p->p_stats->p_start = mono_time = boottime = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_cpu != NULL)

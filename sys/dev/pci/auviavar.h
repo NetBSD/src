@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.5 2002/10/16 15:27:28 kent Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.5.6.1 2004/10/19 15:56:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,6 +73,10 @@ struct auvia_softc {
 	struct auvia_dma *sc_dmas;
 
 	struct auvia_softc_chan sc_play, sc_record;
+
+	/* Power Management */
+	void *sc_powerhook;
+	int sc_suspend;
 };
 
 #define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \

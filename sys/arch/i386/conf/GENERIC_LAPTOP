@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.74.2.6 2004/09/21 13:16:35 skrll Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.74.2.7 2004/10/19 15:56:36 skrll Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74.2.6 $"
+#ident 		"GENERIC-$Revision: 1.74.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -707,6 +707,7 @@ irframe* at oboe?
 # Audio Devices
 
 # PCI audio devices
+auacer*	at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio

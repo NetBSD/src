@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15.2.3 2004/09/21 13:20:34 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.4 2004/10/19 15:56:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.3 2004/09/21 13:20:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.4 2004/10/19 15:56:38 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -181,7 +181,7 @@ void setleds(int leds);
  * Force cpu_info to be in the data segment to avoid the
  * memset() blowing away the data set up by locore.S.
  */
-struct cpu_info cpu_info[1] = {{{{1}}}};
+struct cpu_info cpu_info[1] = {{{{{1}}}}};
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)

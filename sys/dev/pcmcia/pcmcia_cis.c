@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.31.6.4 2004/09/21 13:32:21 skrll Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.31.6.5 2004/10/19 15:57:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.4 2004/09/21 13:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.5 2004/10/19 15:57:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,25 +77,18 @@ create_pf(struct cis_state *state)
 void
 pcmcia_free_pf(struct pcmcia_function_head *pfhead)
 {
-	struct pcmcia_function *pf, *opf = NULL;
-	struct pcmcia_config_entry *cfe, *ocfe = NULL;
+	struct pcmcia_function *pf, *npf;
+	struct pcmcia_config_entry *cfe, *ncfe;
 
-	SIMPLEQ_FOREACH(pf, pfhead, pf_list) {
-		SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-			if (ocfe)
-				free(ocfe, M_DEVBUF);
-			ocfe = cfe;
+	for (pf = SIMPLEQ_FIRST(pfhead); pf != NULL; pf = npf) {
+		npf = SIMPLEQ_NEXT(pf, pf_list);
+		for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
+		    cfe = ncfe) {
+			ncfe = SIMPLEQ_NEXT(cfe, cfe_list);
+			free(cfe, M_DEVBUF);
 		}
-		if (ocfe) {
-			free(ocfe, M_DEVBUF);
-			ocfe = NULL;
-		}
-		if (opf)
-			free(opf, M_DEVBUF);
-		opf = pf;
+		free(pf, M_DEVBUF);
 	}
-	if (opf)
-		free(opf, M_DEVBUF);
 
 	SIMPLEQ_INIT(pfhead);
 }

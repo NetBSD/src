@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564.2.7 2004/09/21 13:16:35 skrll Exp $
+# $NetBSD: GENERIC,v 1.564.2.8 2004/10/19 15:56:35 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.564.2.7 $"
+#ident 		"GENERIC-$Revision: 1.564.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -745,6 +745,7 @@ esh*	at pci? dev ? function ?	# Essential HIPPI card
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
@@ -1016,6 +1017,7 @@ irframe* at oboe?
 # Audio Devices
 
 # PCI audio devices
+auacer*	at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio

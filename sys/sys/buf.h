@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.61.2.4 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: buf.h,v 1.61.2.5 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -330,6 +330,36 @@ int	buf_setvalimit(vsize_t);
 #ifdef DDB
 void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 #endif
+
+void	bufq_fcfs_init(struct bufq_state *);
+void	bufq_disksort_init(struct bufq_state *);
+void	bufq_readprio_init(struct bufq_state *);
+void	bufq_priocscan_init(struct bufq_state *);
+
+static __inline int buf_inorder(const struct buf *, const struct buf *, int)
+    __unused;
+
+#include <sys/null.h> /* for NULL */
+
+/*
+ * Check if two buf's are in ascending order.
+ */
+static __inline int
+buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
+{
+
+	if (bp == NULL || bq == NULL)
+		return (bq == NULL);
+
+	if (sortby == BUFQ_SORT_CYLINDER) {
+		if (bp->b_cylinder != bq->b_cylinder)
+			return bp->b_cylinder < bq->b_cylinder;
+		else
+			return bp->b_rawblkno < bq->b_rawblkno;
+	} else
+		return bp->b_rawblkno < bq->b_rawblkno;
+}
+
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.6 2004/09/21 13:32:19 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.7 2004/10/19 15:57:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.6 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.7 2004/10/19 15:57:26 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -158,6 +158,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(221),			KS_Menu,
 };
 
+#ifndef WSKBD_USONLY
 static const keysym_t pckbd_keydesc_de[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,		KS_quotedbl,	KS_twosuperior,
@@ -509,6 +510,7 @@ static const keysym_t pckbd_keydesc_iopener[] = {
     KC(87),  KS_Cmd_Screen9,	KS_f10,
     KC(88), 			KS_f11,
 };
+#endif /* WSKBD_USONLY */
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
@@ -518,6 +520,7 @@ static const keysym_t pckbd_keydesc_iopener[] = {
 
 const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
+#ifndef WSKBD_USONLY
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),
@@ -542,9 +545,11 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
 	KBD_MAP(KB_PT,			KB_US,	pckbd_keydesc_pt),
+#endif /* WSKBD_USONLY */
 
 	/* placeholders */
 	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
+#ifndef WSKBD_USONLY
 	KBD_NULLMAP(KB_DE | KB_MACHDEP,	KB_DE),
 	KBD_NULLMAP(KB_FR | KB_MACHDEP,	KB_FR),
 	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
@@ -552,6 +557,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 		    KB_US | KB_SWAPCTRLCAPS),
 	KBD_NULLMAP(KB_JP | KB_MACHDEP | KB_SWAPCTRLCAPS,
 		    KB_JP | KB_SWAPCTRLCAPS),
+#endif /* WSKBD_USONLY */
 
 	{0, 0, 0, 0}
 };

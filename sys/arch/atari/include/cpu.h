@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.4 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.5 2004/10/19 15:56:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -79,6 +79,8 @@
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
+#if defined(_KERNEL)
+
 /*
  * Exported definitions unique to atari/68k cpu support.
  */
@@ -98,7 +100,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
-#ifdef _KERNEL
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()	(&cpu_info_store)
@@ -162,8 +163,6 @@ struct clockframe {
 extern int	astpending;	/* need trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
 
-#endif /* _KERNEL */
-
 /* include support for software interrupts */
 #include <machine/mtpr.h>
 
@@ -172,6 +171,7 @@ extern int	want_resched;	/* resched() was called */
  * although some of it could probably be put into generic 68k headers.
  */
 #define	BASEPRI(sr)	((sr & PSL_IPL) == 0)
+#endif /* _KERNEL */
 
 /*
  * Values for machineid.
@@ -194,9 +194,9 @@ extern int	want_resched;	/* resched() was called */
 
 #define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES|ATARI_MILAN)
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
 extern int machineid;
-#endif
+#endif /* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.

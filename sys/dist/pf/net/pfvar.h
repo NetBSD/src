@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.4.2.4 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.4.2.5 2004/10/19 15:58:02 skrll Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -796,11 +796,11 @@ struct pfr_ktable {
 
 RB_HEAD(pf_state_tree_lan_ext, pf_state);
 RB_PROTOTYPE(pf_state_tree_lan_ext, pf_state,
-    u.s.entry_lan_ext, pf_state_compare_lan_ext);
+    u.s.entry_lan_ext, pf_state_compare_lan_ext)
 
 RB_HEAD(pf_state_tree_ext_gwy, pf_state);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
-    u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
+    u.s.entry_ext_gwy, pf_state_compare_ext_gwy)
 
 struct pfi_if {
 	char				 pfif_name[IFNAMSIZ];

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.14 2003/04/28 23:16:29 bjh21 Exp $	*/
+/*	$NetBSD: msg.h,v 1.14.2.1 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -197,9 +197,6 @@ struct msgmap {
 };
 
 extern struct msginfo msginfo;
-extern char *msgpool;		/* MSGMAX byte long msg buffer pool */
-extern struct msgmap *msgmaps;	/* MSGSEG msgmap structures */
-extern struct __msg *msghdrs;	/* MSGTQL msg headers */
 extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
 #define MSG_LOCKED	01000	/* Is this msqid_ds locked? */

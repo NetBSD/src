@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.5 2004/09/21 13:35:08 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.6 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.5 2004/09/21 13:35:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.6 2004/10/19 15:58:04 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -88,7 +88,7 @@ static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
 static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 
-sigset_t	contsigmask, stopsigmask, sigcantmask, sigtrapmask;
+sigset_t	contsigmask, stopsigmask, sigcantmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 
@@ -238,12 +238,6 @@ signal_init(void)
 
 	exithook_establish(ksiginfo_exithook, NULL);
 	exechook_establish(ksiginfo_exithook, NULL);
-
-	sigaddset(&sigtrapmask, SIGSEGV);
-	sigaddset(&sigtrapmask, SIGBUS);
-	sigaddset(&sigtrapmask, SIGILL);
-	sigaddset(&sigtrapmask, SIGFPE);
-	sigaddset(&sigtrapmask, SIGTRAP);
 }
 
 /*
@@ -818,7 +812,7 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast 
 		 */
 		proclist_lock_read();
-		LIST_FOREACH(p, &allproc, p_list) {
+		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
 				continue;
@@ -1035,44 +1029,47 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	/*
 	 * If proc is traced, always give parent a chance.
 	 */
-	action = SIG_DFL;
-	if ((p->p_flag & P_TRACED) == 0) {
-		if (KSI_TRAP_P(ksi)) {
-			/*
-			 * If the signal was the result of a trap, only catch
-			 * the signal if it isn't masked and there is a
-			 * non-default non-ignore handler installed for it.
-			 * Otherwise take the default action.
-			 */
-			if (!sigismember(&p->p_sigctx.ps_sigmask, signum) &&
-			    sigismember(&p->p_sigctx.ps_sigcatch, signum))
-				action = SIG_CATCH;
-			/*
-			 * If we are to take the default action, reset the
-			 * signal back to its defaults.
-			 */
-			if (action == SIG_DFL) {
-				sigdelset(&p->p_sigctx.ps_sigignore, signum);
-				sigdelset(&p->p_sigctx.ps_sigcatch, signum);
-				sigdelset(&p->p_sigctx.ps_sigmask, signum);
-				SIGACTION(p, signum).sa_handler = SIG_DFL;
-			}
-		} else {
-			/*
-			 * If the signal is being ignored,
-			 * then we forget about it immediately.
-			 * (Note: we don't set SIGCONT in p_sigctx.ps_sigignore,
-			 * and if it is set to SIG_IGN,
-			 * action will be SIG_DFL here.)
-			 */
-			if (sigismember(&p->p_sigctx.ps_sigignore, signum))
-				return;
-			if (sigismember(&p->p_sigctx.ps_sigmask, signum))
-				action = SIG_HOLD;
-			else if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
-				action = SIG_CATCH;
+	if (p->p_flag & P_TRACED) {
+		action = SIG_DFL;
+
+		/*
+		 * If the process is being traced and the signal is being
+		 * caught, make sure to save any ksiginfo.
+		 */
+		if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
+			ksiginfo_put(p, ksi);
+	} else {
+		/*
+		 * If the signal was the result of a trap, reset it
+		 * to default action if it's currently masked, so that it would
+		 * coredump immediatelly instead of spinning repeatedly
+		 * taking the signal.
+		 */
+		if (KSI_TRAP_P(ksi)
+		    && sigismember(&p->p_sigctx.ps_sigmask, signum)
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, signum)) {
+			sigdelset(&p->p_sigctx.ps_sigignore, signum);
+			sigdelset(&p->p_sigctx.ps_sigcatch, signum);
+			sigdelset(&p->p_sigctx.ps_sigmask, signum);
+			SIGACTION(p, signum).sa_handler = SIG_DFL;
 		}
-		if (action == SIG_DFL) {
+
+		/*
+		 * If the signal is being ignored,
+		 * then we forget about it immediately.
+		 * (Note: we don't set SIGCONT in p_sigctx.ps_sigignore,
+		 * and if it is set to SIG_IGN,
+		 * action will be SIG_DFL here.)
+		 */
+		if (sigismember(&p->p_sigctx.ps_sigignore, signum))
+			return;
+		if (sigismember(&p->p_sigctx.ps_sigmask, signum))
+			action = SIG_HOLD;
+		else if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
+			action = SIG_CATCH;
+		else {
+			action = SIG_DFL;
+
 			if (prop & SA_KILL && p->p_nice > NZERO)
 				p->p_nice = NZERO;
 
@@ -1085,13 +1082,6 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
 				return;
 		}
-	} else {
-		/*
-		 * If the process is being traced and the signal is being
-		 * caught, make sure to save any ksiginfo.
-		 */
-		if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
-			ksiginfo_put(p, ksi);
 	}
 
 	if (prop & SA_CONT)

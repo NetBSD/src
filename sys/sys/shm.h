@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.34.2.3 2004/09/21 13:38:50 skrll Exp $	*/
+/*	$NetBSD: shm.h,v 1.34.2.4 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,10 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
+#ifdef _KERNEL
+#define _SHM_RMLINGER	040000	/* Attach even if segment removed */
+#endif
+
 /* Segment low boundry address multiple */
 #if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
 #define	SHMLBA		PAGE_SIZE
@@ -187,7 +191,6 @@ void	shminit __P((void));
 void	shmfork __P((struct vmspace *, struct vmspace *));
 void	shmexit __P((struct vmspace *));
 int	shmctl1 __P((struct proc *, int, int, struct shmid_ds *));
-int	shmat1 __P((struct proc *, int, const void *, int, vaddr_t *, int));
 #else /* !_KERNEL */
 
 __BEGIN_DECLS

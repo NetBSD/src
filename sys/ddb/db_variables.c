@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.28.2.4 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.28.2.5 2004/10/19 15:56:44 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.28.2.4 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.28.2.5 2004/10/19 15:56:44 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -65,6 +65,15 @@ int		db_onpanic = DDB_ONPANIC;
 #endif
 int		db_fromconsole = DDB_FROMCONSOLE;
 
+/*
+ * Output DDB output to the message buffer?
+ */
+#ifndef DDB_TEE_MSGBUF
+#define DDB_TEE_MSGBUF 0
+#endif
+int		db_tee_msgbuf = DDB_TEE_MSGBUF;
+
+
 static int	db_rw_internal_variable(const struct db_variable *, db_expr_t *,
 		    int);
 static int	db_find_variable(const struct db_variable **);
@@ -78,6 +87,7 @@ const struct db_variable db_vars[] = {
 	{ "lines",	(void *)&db_max_line,	db_rw_internal_variable },
 	{ "onpanic",	(void *)&db_onpanic,	db_rw_internal_variable },
 	{ "fromconsole", (void *)&db_fromconsole, db_rw_internal_variable },
+	{ "tee_msgbuf",	(void *)&db_tee_msgbuf,	db_rw_internal_variable },
 };
 const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
@@ -150,6 +160,12 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 				    "console"),
 		       NULL, 0, &db_fromconsole, 0,
 		       CTL_DDB, DDBCTL_FROMCONSOLE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "tee_msgbuf",
+		       SYSCTL_DESCR("Whether to tee ddb output to the msgbuf"),
+		       NULL, 0, &db_tee_msgbuf, 0,
+		       CTL_DDB, CTL_CREATE, CTL_EOL);
 }
 
 int

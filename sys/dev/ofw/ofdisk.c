@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.27.2.3 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.27.2.4 2004/10/19 15:56:57 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.3 2004/09/21 13:31:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.4 2004/10/19 15:56:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,11 +57,12 @@ struct ofdisk_softc {
 	struct disk sc_dk;
 	int sc_ihandle;
 	u_long max_transfer;
-	char sc_name[16];
 };
 
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
+
+#define	OFDISK_FLOPPY_P(of)		((of)->sc_flags & OFDF_ISFLOPPY)
 
 static int ofdisk_match (struct device *, struct cfdata *, void *);
 static void ofdisk_attach (struct device *, struct device *, void *);
@@ -90,7 +91,9 @@ const struct cdevsw ofdisk_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
+static void ofminphys(struct buf *);
+
+struct dkdriver ofdisk_dkdriver = { ofdisk_strategy, ofminphys };
 
 void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
 void ofdisk_getdisklabel (dev_t);
@@ -133,13 +136,16 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
 	of->sc_dk.dk_driver = &ofdisk_dkdriver;
-	of->sc_dk.dk_name = of->sc_name;
-	strlcpy(of->sc_name, of->sc_dev.dv_xname, sizeof(of->sc_name));
+	of->sc_dk.dk_name = of->sc_dev.dv_xname;
 	disk_attach(&of->sc_dk);
 	printf("\n");
 
 	if (strcmp(child, "floppy") == 0)
 		of->sc_flags |= OFDF_ISFLOPPY;
+	else {
+		/* Discover wedges on this disk. */
+		dkwedge_discover(&of->sc_dk);
+	}
 }
 
 int
@@ -148,18 +154,34 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
 	char path[256];
-	int l;
+	int error, l, part;
 	
 	if (unit >= ofdisk_cd.cd_ndevs)
 		return ENXIO;
 	if (!(of = ofdisk_cd.cd_devs[unit]))
 		return ENXIO;
 
+	part = DISKPART(dev);
+
+	if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (of->sc_dk.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto bad1;
+	}
+
 	if (!of->sc_ihandle) {
 		if ((l = OF_package_to_path(of->sc_phandle, path,
 		    sizeof path - 3)) < 0 ||
-		    l >= sizeof path - 3)
-			return ENXIO;
+		    l >= sizeof path - 3) {
+			error = ENXIO;
+			goto bad1;
+		}
 		path[l] = 0;
 
 		/*
@@ -177,8 +199,10 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 		strlcat(path, ":0", sizeof(path));
 
-		if ((of->sc_ihandle = OF_open(path)) == -1)
-			return ENXIO;
+		if ((of->sc_ihandle = OF_open(path)) == -1) {
+			error = ENXIO;
+			goto bad1;
+		}
 
 		/*
 		 * Try to get characteristics of the disk.
@@ -193,22 +217,31 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 	switch (fmt) {
 	case S_IFCHR:
-		of->sc_dk.dk_copenmask |= 1 << DISKPART(dev);
+		of->sc_dk.dk_copenmask |= 1 << part;
 		break;
 	case S_IFBLK:
-		of->sc_dk.dk_bopenmask |= 1 << DISKPART(dev);
+		of->sc_dk.dk_bopenmask |= 1 << part;
 		break;
 	}
 	of->sc_dk.dk_openmask =
 	    of->sc_dk.dk_copenmask | of->sc_dk.dk_bopenmask;
-	
+
+	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
+
+ bad1:
+	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	return (error);
 }
 
 int
 ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	int error;
+
+	if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -231,6 +264,7 @@ ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
 		of->sc_ihandle = 0;
 	}
 
+	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return 0;
 }
 
@@ -352,7 +386,11 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		
+
+		if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE,
+				     NULL)) != 0)
+			return (error);
+
 		error = setdisklabel(of->sc_dk.dk_label,
 		    lp, /*of->sc_dk.dk_openmask */0,
 		    of->sc_dk.dk_cpulabel);
@@ -364,6 +402,8 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = writedisklabel(MAKEDISKDEV(major(dev),
 			    DISKUNIT(dev), RAW_PART), ofdisk_strategy,
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
+
+		(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
 
 		return error;
 	}
@@ -379,6 +419,46 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		if (OFDISK_FLOPPY_P(of))
+			return (ENOTTY);
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, of->sc_dev.dv_xname);
+		return (dkwedge_add(dkw));
+	    }
+
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		if (OFDISK_FLOPPY_P(of))
+			return (ENOTTY);
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, of->sc_dev.dv_xname);
+		return (dkwedge_del(dkw));
+	    }
+	
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) data;
+
+		if (OFDISK_FLOPPY_P(of))
+			return (ENOTTY);
+
+		return (dkwedge_list(&of->sc_dk, dkwl, p));
+	    }
 
 	default:
 		return ENOTTY;
@@ -473,7 +553,7 @@ ofdisk_getdisklabel(dev)
 	 * floppy driver does, but we don't deal with
 	 * density stuff.)
 	 */
-	if (of->sc_flags & OFDF_ISFLOPPY) {
+	if (OFDISK_FLOPPY_P(of)) {
 		lp->d_npartitions = MAXPARTITIONS;
 		for (l = 0; l < lp->d_npartitions; l++) {
 			if (l == RAW_PART)

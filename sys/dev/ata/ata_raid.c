@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.4.2.3 2004/09/21 13:27:23 skrll Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.4.2.4 2004/10/19 15:56:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.4.2.3 2004/09/21 13:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.4.2.4 2004/10/19 15:56:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -130,6 +130,12 @@ ata_raid_type_name(u_int type)
 static int
 ata_raid_finalize(struct device *self)
 {
+	static struct cfdata ataraid_cfdata = {
+		.cf_name = "ataraid",
+		.cf_atname = "ataraid",
+		.cf_unit = DVUNIT_ANY,
+		.cf_fstate = FSTATE_STAR,
+	};
 	extern struct cfdriver ataraid_cd;
 	static int done_once;
 	int error;
@@ -153,7 +159,7 @@ ata_raid_finalize(struct device *self)
 		goto out;
 	}
 
-	if (config_attach_pseudo(ataraid_cd.cd_name, -1) == NULL)
+	if (config_attach_pseudo(&ataraid_cfdata) == NULL)
 		printf("%s: unable to attach an instance\n",
 		    ataraid_cd.cd_name);
 

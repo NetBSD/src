@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.32.6.3 2004/09/21 13:18:38 skrll Exp $
+#	$NetBSD: Makefile.mips,v 1.32.6.4 2004/10/19 15:56:37 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -45,7 +45,16 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${GP} -mno-abicalls -msoft-float
-AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
+
+LP64?=no
+.if ${LP64} == "yes"
+# 64-bit kernels
+CPPFLAGS+=	-D_LP64 -mabi=64
+AFLAGS+=	-mabi=64
+RANLIB=		true
+LD+=		-m elf64bmip
+.endif
 
 ##
 ## (3) libkern and compat
@@ -71,7 +80,7 @@ TEXTADDR?=		${DEFTEXTADDR}
 KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
 LINKFORMAT+=		-T ${KERNLDSCRIPT}
-EXTRA_LINKFLAGS=	${GP}
+EXTRA_LINKFLAGS=	${GP} ${LDOPTS}
 LINKFLAGS_NORMAL=	-x
 STRIPFLAGS=		-g -X -x
 

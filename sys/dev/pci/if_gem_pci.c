@@ -1,7 +1,7 @@
-/*	$NetBSD: if_gem_pci.c,v 1.14.2.3 2004/09/21 13:31:03 skrll Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.14.2.4 2004/10/19 15:56:59 skrll Exp $ */
 
 /*
- * 
+ *
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14.2.3 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14.2.4 2004/10/19 15:56:59 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14.2.3 2004/09/21 13:31:03 skrll Ex
 #include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -102,12 +102,12 @@ gem_match_pci(parent, cf, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
 		return (1);
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3))
@@ -140,11 +140,11 @@ gem_attach_pci(parent, self, aux)
 
 	sc->sc_pci = 1;		/* XXX */
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
 		sc->sc_variant = GEM_SUN_GEM;
-	else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
+	else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
 		sc->sc_variant = GEM_APPLE_GMAC;

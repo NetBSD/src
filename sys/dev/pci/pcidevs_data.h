@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.5 2004/09/21 13:31:05 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.6 2004/10/19 15:56:59 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.651 2004/09/18 08:47:46 martin Exp 
+ *	NetBSD: pcidevs,v 1.656 2004/10/13 18:42:17 augustss Exp 
  */
 
 /*
@@ -2672,6 +2672,10 @@ const struct pci_product pci_products[] = {
 	    "M1543 PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1563,
+	    "M1563 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
 	    "M3309 MPEG Decoder",
 	},
@@ -2689,11 +2693,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
-	    "M5237 USB Host Controller",
+	    "M5237 USB 1.1 Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5239,
+	    "M5239 USB 2.0 Host Controller",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
 	    "M5243 PCI-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249,
+	    "M5249 Hypertransport to PCI bridge",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
@@ -2702,6 +2714,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453,
 	    "M5453 AC-Link Controller Modem Device",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5455,
+	    "M5455 AC-Link Controller Audio Device",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
@@ -3712,6 +3728,10 @@ const struct pci_product pci_products[] = {
 	    "Radeon X300 Series Secondary",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200SE_S,
+	    "Radeon 9200SE Secondary",
+	},
+	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
 	    "VxP524 PCI Video Processor",
 	},
@@ -3738,6 +3758,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC,
 	    "FZJ/ZEL Synchronisation module",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_ADDI7800,
+	    "ADDI-DATA APCI-7800 8-port serial",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
@@ -5956,6 +5980,10 @@ const struct pci_product pci_products[] = {
 	    "82875P AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_CSA,
+	    "82875P PCI-CSA Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
 	    "82915P Host",
 	},
@@ -5964,12 +5992,44 @@ const struct pci_product pci_products[] = {
 	    "82915P PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
+	    "6300ESB LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
 	    "6300ESB IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SATA,
 	    "6300ESB SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB,
+	    "6300ESB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0,
+	    "6300ESB USB UHCI Controller #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_1,
+	    "6300ESB USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT,
+	    "6300ESB Watchdog Timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_APIC,
+	    "6300ESB Advanced Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_EHCI,
+	    "6300ESB USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_PCIX,
+	    "6300ESB PCI-X Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
@@ -9668,4 +9728,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1841;
+const int pci_nproducts = 1856;

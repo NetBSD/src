@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.3 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.4 2004/10/19 15:58:15 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.3 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.4 2004/10/19 15:58:15 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -737,6 +737,14 @@ spd_done:
 	hlen = ip->ip_hl << 2;
 #endif /* PFIL_HOOKS */
 
+#if IFA_STATS
+	/*
+	 * search for the source address structure to
+	 * maintain output statistics.
+	 */
+	INADDR_TO_IA(ip->ip_src, ia);
+#endif
+
 	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
@@ -744,11 +752,6 @@ spd_done:
 	 */
 	if (ip_len <= mtu) {
 #if IFA_STATS
-		/*
-		 * search for the source address structure to
-		 * maintain output statistics.
-		 */
-		INADDR_TO_IA(ip->ip_src, ia);
 		if (ia)
 			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
 #endif
@@ -816,15 +819,9 @@ spd_done:
 		m->m_nextpkt = 0;
 		if (error == 0) {
 #if IFA_STATS
-			/*
-			 * search for the source address structure to
-			 * maintain output statistics.
-			 */
-			INADDR_TO_IA(ip->ip_src, ia);
-			if (ia) {
+			if (ia)
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 				    ntohs(ip->ip_len);
-			}
 #endif
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */

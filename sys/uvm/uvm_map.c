@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.136.2.3 2004/09/21 13:39:27 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.136.2.4 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.3 2004/09/21 13:39:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.4 2004/10/19 15:58:30 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3867,8 +3867,13 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
 	    map->nentries, map->size, map->ref_count, map->timestamp,
 	    map->flags);
-	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap,
+#ifdef pmap_wired_count
+	(*pr)("\tpmap=%p(resident=%ld, wired=%ld)\n", map->pmap,
+	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
+#else
+	(*pr)("\tpmap=%p(resident=%ld)\n", map->pmap,
 	    pmap_resident_count(map->pmap));
+#endif
 	if (!full)
 		return;
 	for (entry = map->header.next; entry != &map->header;

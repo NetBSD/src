@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.154.2.4 2004/09/21 13:35:16 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.154.2.5 2004/10/19 15:58:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.4 2004/09/21 13:35:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.5 2004/10/19 15:58:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ unsigned char const char_type[] = {
 #define	ISSET(t, f)	((t) & (f))
 
 struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
-struct ttylist_head ttylist;	/* TAILQ_HEAD */
+struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 
 POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
@@ -2504,9 +2504,6 @@ tty_init(void)
 {
 
 	ttyldisc_init();
-
-	TAILQ_INIT(&ttylist);
-	tty_count = 0;
 }
 
 /*

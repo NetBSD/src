@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.10.2.3 2004/09/21 13:22:41 skrll Exp $	*/
+/*	$NetBSD: auxio.c,v 1.10.2.4 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.10.2.3 2004/09/21 13:22:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.10.2.4 2004/10/19 15:56:42 skrll Exp $");
 
 #include "opt_auxio.h"
 
@@ -98,6 +98,9 @@ static struct callout blink_ch = CALLOUT_INITIALIZER;
 
 static void auxio_blink(void *);
 
+/* let someone disable it if it's already turned on; XXX sysctl? */
+int do_blink = 1;
+
 static void
 auxio_blink(x)
 	void *x;
@@ -106,15 +109,16 @@ auxio_blink(x)
 	int s;
 	u_int32_t led;
 
+	if (do_blink == 0)
+		return;
+
 	s = splhigh();
 	if (sc->sc_flags & AUXIO_EBUS)
 		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
 	else
 		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
-	if (led & AUXIO_LED_LED)
-		led = 0;
-	else
-		led = AUXIO_LED_LED;
+
+	led = led ^ AUXIO_LED_LED;
 	if (sc->sc_flags & AUXIO_EBUS)
 		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
 	else

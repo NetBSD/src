@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.8.2.3 2004/09/21 13:35:04 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.8.2.4 2004/10/19 15:58:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.3 2004/09/21 13:35:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.4 2004/10/19 15:58:04 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -300,7 +300,7 @@ int
 sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_wakeup_args /* {
-		syscallarg(lwpid_t) wakeup;
+		syscallarg(lwpid_t) target;
 	} */ *uap = v;
 	lwpid_t target_lid;
 	struct lwp *t;
