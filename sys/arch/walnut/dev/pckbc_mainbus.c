@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mainbus.c,v 1.3 2001/10/29 01:42:11 simonb Exp $	*/
+/*	$NetBSD: pckbc_mainbus.c,v 1.4 2002/03/13 19:18:55 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,10 +73,10 @@ int pckbcfound = 0;
 int
 pckbc_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
 
 	/* match only pckbc devices */
-	if (strcmp(maa->mba_rmb.rmb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
 	return (pckbcfound < 1);
@@ -89,17 +89,17 @@ pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_mainbus_softc *msc = (void *)self;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
-	union mainbus_attach_args *maa = aux;
+	struct mainbus_attach_args *maa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
 	bus_space_tag_t iot = galaxy_make_bus_space_tag(0, 0);
-	u_long addr = maa->mba_rmb.rmb_addr;
+	u_long addr = maa->mb_addr;
 	
 	/*
 	 * Set up IRQs
 	 */
-	msc->sc_irq[PCKBC_KBD_SLOT] = maa->mba_rmb.rmb_irq;
-	msc->sc_irq[PCKBC_AUX_SLOT] = maa->mba_rmb.rmb_irq + 1;	/* XXX */
+	msc->sc_irq[PCKBC_KBD_SLOT] = maa->mb_irq;
+	msc->sc_irq[PCKBC_AUX_SLOT] = maa->mb_irq + 1;	/* XXX */
 
 	sc->intr_establish = pckbc_mainbus_intr_establish;
 
