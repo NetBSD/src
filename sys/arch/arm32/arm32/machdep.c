@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2001/04/12 21:54:06 reinoud Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2001/04/19 07:19:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,18 +76,23 @@
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
 
+#if !defined(SHARK)
 #include <arm/mainbus/mainbus.h>
+#endif
+
+#if !defined(SHARK) && !defined(FOOTBRIDGE)
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/dev/rpckbdvar.h>
 #include <machine/vidc.h>
 #include <arm32/vidc/vidcvideo.h>
 
-#include "opt_ipkdb.h"
-#include "md.h"
-#include "opt_mdsize.h"
-
 #include "vidcvideo.h"
 #include "rpckbd.h"
+#endif
+
+#include "opt_ipkdb.h"
+#include "opt_mdsize.h"
+#include "md.h"
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -143,7 +148,6 @@ void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
 extern void dumpsys	__P((void));
-
 
 /*
  * Debug function just to park the CPU
