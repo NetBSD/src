@@ -1,8 +1,8 @@
-/*	$NetBSD: pci_subr.c,v 1.35.4.1 2000/08/10 22:48:15 soda Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.35.4.2 2001/10/25 17:54:51 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
- * Copyright (c) 1995, 1996, 1998
+ * Copyright (c) 1995, 1996, 1998, 2000
  *	Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
  *
@@ -87,6 +87,7 @@ struct pci_class pci_subclass_mass_storage[] = {
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
+	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -97,6 +98,8 @@ struct pci_class pci_subclass_network[] = {
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
 	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
 	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
+	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,		},
+	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -134,6 +137,8 @@ struct pci_class pci_subclass_bridge[] = {
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
 	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,		},
+	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,		},
+	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
 	{ 0 },
 };
@@ -192,6 +197,10 @@ struct pci_class pci_subclass_serialbus[] = {
 	/* XXX Fiber Channel/_FIBRECHANNEL */
 	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
 	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,		},
+	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND,	},
+	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,		},
+	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,		},
+	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,		},
 	{ 0 },
 };
 
@@ -204,7 +213,7 @@ struct pci_class pci_subclass_wireless[] = {
 };
 
 struct pci_class pci_subclass_i2o[] = {
-	{ "1.0",		PCI_SUBCLASS_I2O_10,			},
+	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
 	{ 0 },
 };
 
@@ -225,6 +234,7 @@ struct pci_class pci_subclass_crypto[] = {
 
 struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
+	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
@@ -727,6 +737,9 @@ pci_conf_print_type0(pc, tag, regs)
 
 			printf("      type: 0x%02x (", PCI_CAPLIST_CAP(rval));
 			switch (PCI_CAPLIST_CAP(rval)) {
+			case PCI_CAP_RESERVED0:
+				printf("reserved");
+				break;
 			case PCI_CAP_PWRMGMT:
 				printf("Power Management, rev. %d.0",
 				    (rval >> 0) & 0x07); /* XXX not clear */
@@ -745,11 +758,29 @@ pci_conf_print_type0(pc, tag, regs)
 			case PCI_CAP_MBI:
 				printf("MBI");
 				break;
-			case PCI_CAP_HOTSWAP:
-				printf("Hot-swapping");
+			case PCI_CAP_CPCI_HOTSWAP:
+				printf("CompactPCI Hot-swapping");
+				break;
+			case PCI_CAP_PCIX:
+				printf("PCI-X");
+				break;
+			case PCI_CAP_LDT:
+				printf("LDT");
+				break;
+			case PCI_CAP_VENDSPEC:
+				printf("Vendor-specific");
+				break;
+			case PCI_CAP_DEBUGPORT:
+				printf("Debug Port");
+				break;
+			case PCI_CAP_CPCI_RSRCCTL:
+				printf("CompactPCI Resource Control");
+				break;
+			case PCI_CAP_HOTPLUG:
+				printf("Hot-Plug");
 				break;
 			default:
-				printf("unknown/reserved");
+				printf("unknown");
 			}
 			printf(")\n");
 		}
