@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.9 2004/10/05 23:31:32 heas Exp $	*/
+/*	$NetBSD: twereg.h,v 1.10 2004/10/05 23:49:15 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -298,6 +298,9 @@ struct twe_param {
 
 #define TWE_PARAM_FEATURES			0x404
 #define TWE_PARAM_FEATURES_DriverShutdown	2	/* set to 1 if driver supports shutdown notification [1] */
+
+#define TWE_PARAM_PROC				0x406
+#define TWE_PARAM_PROC_PERCENT			2	/* Per-sub-unit % complete of init/verify/rebuild or 0xff [16] */
 
 struct twe_unit_descriptor {
 	u_int8_t	num_subunits;	/* must be zero */
