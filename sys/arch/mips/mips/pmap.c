@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 1999/05/27 01:56:34 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 1999/06/08 03:44:18 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 1999/05/27 01:56:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 1999/06/08 03:44:18 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1326,7 +1326,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			printf("pmap_enter: flush I cache va %lx (%lx)\n",
 			    va - NBPG, pa);
 #endif
-		MachFlushICache(va - NBPG, PAGE_SIZE);
+		MachFlushICache(va, PAGE_SIZE);
 	}
 #endif
 }
