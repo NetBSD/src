@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.57 2003/08/07 09:05:32 agc Exp $	*/
+/*	$NetBSD: expand.c,v 1.58 2003/09/17 16:01:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.57 2003/08/07 09:05:32 agc Exp $");
+__RCSID("$NetBSD: expand.c,v 1.58 2003/09/17 16:01:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -608,7 +608,7 @@ evalvar(char *p, int flag)
 	int easy;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
-	varflags = *p++;
+	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
 	var = p;
 	special = 0;
@@ -643,7 +643,8 @@ again: /* jump here after setting a variable with ${var=text} */
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
-			varvalue(var, varflags & VSQUOTE, flag & EXP_FULL);
+			varvalue(var, varflags & VSQUOTE,
+			    flag & (EXP_FULL|EXP_CASE));
 			if (subtype == VSLENGTH) {
 				varlen = expdest - stackblock() - startloc;
 				STADJUST(-varlen, expdest);
