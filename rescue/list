@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2005/01/13 03:50:08 lukem Exp $
+#	$NetBSD: list,v 1.17 2005/04/01 08:35:17 lukem Exp $
 
 SRCDIRS	bin
 
@@ -133,6 +133,10 @@ SRCDIRS	usr.sbin
 PROG	chown		chgrp
 PROG	chroot
 PROG	installboot
+
+SRCDIRS	games
+
+PROG	tetris
 
 LIBS	liboverride.o
 LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -ltermcap -lutil -lz -levent
