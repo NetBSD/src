@@ -1,4 +1,4 @@
-/*	$NetBSD: katelib.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: katelib.h,v 1.2 2001/05/30 00:16:36 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -62,21 +62,8 @@
 /* Assembly modules */
 
 /* In blockio.S */
+#include <arm/blockio.h>
 
-void insw	__P((u_int io, void *dest, u_int size));
-void outsw	__P((u_int io, void *src, u_int size));
-void insw16	__P((u_int io, void *dest, u_int size));
-void outsw16	__P((u_int io, void *src, u_int size));
-/*
-void insl	__P((u_int io, void *dest, u_int size));
-void outsl	__P((u_int io, void *src, u_int size));
-*/
-#define insl(io, dest, size) \
-	panic("insl: Function not implemented\n");
-	
-#define outsl(io, src, size) \
-	panic("outsl: Function not implemented\n");
-	
 /* Macros for reading and writing words, shorts, bytes */
 
 #define WriteWord(a, b) \
