@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.1 1998/07/02 01:25:38 thorpej Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwrite.c,v 1.1 1998/07/02 01:25:38 thorpej Exp $");
+__RCSID("$NetBSD: pwrite.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: pwrite.c,v 1.1 1998/07/02 01:25:38 thorpej Exp $");
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
-int
+ssize_t
 pwrite(fd, buf, nbyte, offset)
 	int fd;
 	const void *buf;
