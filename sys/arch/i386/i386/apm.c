@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.22 1997/06/17 06:06:25 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.23 1997/07/10 03:07:29 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	struct	apm_event_info event_list[APM_NEVENTS];
+	int	apm_enabled;
 };
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
@@ -811,7 +812,12 @@ apmprobe(parent, match, aux)
 				 apminfo.apm_code32_seg_base,
 				 apminfo.apm_code32_seg_base +
 				 apminfo.apm_code32_seg_len-1));
+#if 0
 			goto bail;
+#else
+			apminfo.apm_code32_seg_len =
+			    IOM_END - apminfo.apm_code32_seg_base;
+#endif
 		}
 		if (apminfo.apm_code16_seg_base < IOM_BEGIN ||
 		    apminfo.apm_code16_seg_base >= IOM_END) {
@@ -901,6 +907,10 @@ apmattach(parent, self, aux)
 	struct apm_softc *apmsc = (void *)self;
 	struct apmregs regs;
 	int error;
+#if defined(DEBUG) || defined(APMDEBUG)
+	char bits[128];
+#endif
+
 	/*
 	 * set up GDT descriptors for APM
 	 */
@@ -939,11 +949,29 @@ apmattach(parent, self, aux)
 			 * need page zero or biosbasemem area mapping.
 			 */
 			bus_space_handle_t memh;
-			/* XXX cheat and use knowledge of
-			   bus_space_map() implementation on i386 */
-			(void) bus_space_map(I386_BUS_SPACE_MEM,
+			/*
+			 * XXX cheat and use knowledge of
+			 * bus_space_map() implementation on i386
+			 * so it can be done without extent checking.
+			 */
+			if (_i386_memio_map(I386_BUS_SPACE_MEM,
 			    apminfo.apm_data_seg_base,
-			    apminfo.apm_data_seg_len, 0, &memh);
+			    apminfo.apm_data_seg_len, 0, &memh)) {
+				printf(": couldn't map BIOS data area, kernel APM support disabled\n");
+
+				/* disconnect from the APM BIOS */
+				regs.ax = APM_BIOS_FN(APM_DISCONNECT);
+				regs.bx = APM_DEV_APM_BIOS;
+				regs.cx = regs.dx = regs.si = regs.di =
+				    regs.flags = 0;
+				bioscall(APM_SYSTEM_BIOS, &regs);
+				DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
+				    regs.ax, regs.bx, regs.cx, regs.dx,
+				    bitmask_snprintf(regs.flags, I386_FLAGBITS,
+				    bits, sizeof(bits)), regs.si, regs.di));
+
+				return;
+			}
 			DPRINTF((": mapping bios data area %x @ 0x%lx\n%s",
 				 apminfo.apm_data_seg_base, memh,
 				 apmsc->sc_dev.dv_xname));
@@ -980,6 +1008,7 @@ apmattach(parent, self, aux)
 		   being disabled when other calls are made.  sigh. */
 		if (apminfo.apm_detail & APM_BIOS_PM_DISABLED)
 			apm_powmgt_enable(1);
+		apmsc->apm_enabled = 1;
 		/*
 		 * Engage cooperative power mgt (we get to do it)
 		 * on all devices (v1.1).
@@ -1022,6 +1051,9 @@ apmopen(dev, flag, mode, p)
 		return ENXIO;
 	sc = apm_cd.cd_devs[unit];
 	if (!sc)
+		return ENXIO;
+
+	if (!sc->apm_enabled)
 		return ENXIO;
 	
 	switch (ctl) {
