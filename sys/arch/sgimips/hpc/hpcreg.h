@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.7 2003/09/18 15:01:33 lonewolf Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.8 2003/11/22 03:58:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -357,4 +357,8 @@ struct hpc_dma_desc {
 #define HPC_PBUS_BBRAM		0x00060000	/* PBus battery-backed RAM
 						 * external registers
 						 */
+
+/* HPC1/HPC1.5 differs from HPC3 in several details. */
+
+#define HPC1_PBUS_BBRAM		0x00000e00
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

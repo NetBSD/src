@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.17 2003/11/20 08:34:05 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.18 2003/11/22 03:58:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.17 2003/11/20 08:34:05 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.18 2003/11/22 03:58:52 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ const struct hpc_device {
 	bus_addr_t hd_dmaoff;
 	int hd_irq;
 	int hd_sysmask;
-#define	HPCDEV_IP22		(1U << 0)	/* Indigo2 */
-#define	HPCDEV_IP24		(1U << 1)	/* Indy */
 } hpc_devices[] = {
 	{ "zsc",
 	  /* XXX Magic numbers */
@@ -87,6 +85,11 @@ const struct hpc_device {
 	  HPC_SCSI1_DEVREGS, HPC_SCSI1_REGS,
 	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP22 },
+
+	{ "dpclock",
+	  HPC1_PBUS_BBRAM, 0,
+	  -1,
+	  HPCDEV_IP20 },
 
 	{ "dsclock",
 	  HPC_PBUS_BBRAM, 0,
