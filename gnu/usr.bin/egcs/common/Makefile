@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1998/11/15 04:31:06 jonathan Exp $
+#	$NetBSD: Makefile,v 1.21 1998/11/16 09:45:48 frueauf Exp $
 
 .include "../Makefile.inc"
 
@@ -55,7 +55,7 @@ gengenrtl: gengenrtl.lo
 genrtl.h genrtl.c: s-genrtl
 s-genrtl: gengenrtl rtl.h rtl.def gansidecl.h machmode.h machmode.def
 	@rm -f ${DIST}/genrtl.h ${DIST}/genrtl.c
-	./gengenrtl tmp-genrtl.h tmp-genrtl.c
+	${.OBJDIR}/gengenrtl tmp-genrtl.h tmp-genrtl.c
 	${DIST}/move-if-change  tmp-genrtl.h genrtl.h
 	${DIST}/move-if-change  tmp-genrtl.c genrtl.c
 	touch s-genrtl
@@ -66,7 +66,7 @@ gencheck: gencheck.lo
 tree-check.h: s-check
 s-check: gencheck
 	@rm -f ${DIST}/tree-check.h
-	./gencheck >tmp-tree-check.h
+	${.OBJDIR}/gencheck >tmp-tree-check.h
 	${DIST}/move-if-change  tmp-tree-check.h tree-check.h
 	touch s-check
 
@@ -84,7 +84,7 @@ gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 insn-${_GEN_}.c: s-${_GEN_}
 s-${_GEN_}: gen${_GEN_} ${MD}
 	@rm -f ${DIST}/insn-${_GEN_}.c
-	./gen${_GEN_} ${MD} > tmp-${_GEN_}
+	${.OBJDIR}/gen${_GEN_} ${MD} > tmp-${_GEN_}
 	${DIST}/move-if-change  tmp-${_GEN_} insn-${_GEN_}.c
 	touch s-${_GEN_}
 .endfor
@@ -101,7 +101,7 @@ gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 insn-${_GEN_}.h: s-${_GEN_}
 s-${_GEN_}: gen${_GEN_} ${MD}
 	@rm -f ${DIST}/insn-${_GEN_}.h
-	./gen${_GEN_} ${MD} > tmp-${_GEN_}
+	${.OBJDIR}/gen${_GEN_} ${MD} > tmp-${_GEN_}
 	${DIST}/move-if-change  tmp-${_GEN_} insn-${_GEN_}.h
 	touch s-${_GEN_}
 .endfor
