@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.74.2.2 2004/06/07 10:21:10 tron Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.74.2.3 2004/06/13 08:46:36 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -486,13 +486,15 @@ message ftpsource
 {Vous trouverez ci dessous le site ftp, le répertoire, le code utilisateur
 et le mot de passe prêt à l'emplois actuellement.
 Si l'utilisateur est ftp, alors le mot de passe n'est pas nécessaire.
+Le répertoire des composants est relatif au répertoire de base, et
+doit contenir les fichiers .tgz.
 
-serveur:	%s 
-répertoire:	%s 
-répertoire:	%s 
-utilisateur:	%s 
-mot de passe:	%s 
-proxy:		%s
+serveur:		   %s 
+répertoire de base:	   %s 
+répertoire des composants: %s 
+utilisateur:		   %s 
+mot de passe:		   %s 
+proxy:			   %s
 }
 
 message email
@@ -504,12 +506,13 @@ message dev
 message nfssource
 {Donnez le nom du serveur nfs et du répertoire sur ce serveur
 où se trouvent les composants. 
-Rappelez vous que le répertoire doit contenir les
-fichiers .tgz et qu'il doit être accessible par nfs.
+Le répertoire de base doit etre accessible par NFS, le répertoire des
+composants est relatif au répertoire de base et doit contenir les fichiers
+.tgz.
 
-serveur:	%s 
-répertoire:	%s 
-répertoire:	%s
+serveur:		   %s 
+répertoire de base:	   %s 
+répertoire des composants: %s
 }
 
 message nfsbadmount
@@ -528,12 +531,13 @@ répertoire:	%s
 message localfssource
 {Donnez le nom du périphérique local (non-monté) à utiliser
 ainsi que le répertoire contenant les composants. 
-Rappelez vous que le répertoire doit contenir les fichiers .tgz .
+Le répertoire des composants est relatif au répertoire de base et doit
+contenir les fichiers .tgz.
 
-device:			%s 
-système de fichiers:	%s 
-répertoire:		%s 
-répertoire:		%s
+device:			   %s 
+système de fichiers:	   %s 
+répertoire de base:	   %s 
+répertoire des composants: %s
 }
 
 message localdir
@@ -629,7 +633,7 @@ Adresse du serveur de noms IPv6: %s
 }
 
 message netok_ok
-{Veuillez confirmer?}
+{Les valeurs sont-elles correctes ?}
 
 message netagain
 {Veuillez indiquer à nouveau les informations sur votre réseau.
@@ -1035,8 +1039,8 @@ message Custom_installation {Installation personnalisée}
 message Change {Changer}
 message hidden {** caché **}
 message Host {Serveur ftp}
-message Base_dir {Répertoire}
-message Set_dir {Répertoire}
+message Base_dir {Répertoire de base}
+message Set_dir {Répertoire des composants}
 message Directory {Répertoire}
 message User {Utilisateur}
 message Password {Mot de passe}
