@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6 2000/05/01 00:46:29 thorpej Exp $ */
+/*	$NetBSD: lock.h,v 1.7 2000/05/02 04:41:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
  * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores
  * `lock_data' given its address (and the fact that SPARC is big-endian).
  */
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
 #define	__SIMPLELOCK_LOCKED	0xff000000
 #define	__SIMPLELOCK_UNLOCKED	0
 
@@ -63,24 +66,24 @@
 	__v;								\
 })
 
-static __inline void __cpu_simple_lock_init __P((__volatile int *))
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__volatile int *))
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__volatile int *))
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__volatile int *))
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
 static __inline void
-__cpu_simple_lock_init(__volatile int *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline void
-__cpu_simple_lock(__volatile int *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
 	/*
@@ -97,14 +100,14 @@ __cpu_simple_lock(__volatile int *alp)
 }
 
 static __inline int
-__cpu_simple_lock_try(__volatile int *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 
 	return (__ldstub(alp) == __SIMPLELOCK_UNLOCKED);
 }
 
 static __inline void
-__cpu_simple_unlock(__volatile int *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
