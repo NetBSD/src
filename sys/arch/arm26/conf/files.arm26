@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.19 2001/02/11 17:03:05 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.20 2001/02/25 15:33:33 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -41,8 +41,8 @@ major   {sd = 5}
 major   {cd = 6}
 
 # CPU
-device	cpu { }
-attach	cpu at root
+#device	cpu { }
+attach	cpu at root with cpu_root
 defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3
 file	arch/arm26/arm26/cpu.c			cpu
 
