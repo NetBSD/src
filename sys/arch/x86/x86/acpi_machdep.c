@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.3 2003/09/02 20:10:30 fvdl Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.4 2003/09/06 14:38:43 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2003/09/02 20:10:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.4 2003/09/06 14:38:43 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2003/09/02 20:10:30 fvdl Exp $"
 #include <machine/acpi_machdep.h>
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
+#include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/pic.h>
 
@@ -117,10 +118,12 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	struct acpi_intr_defer *aip;
 #ifdef MPACPI
 	int i, h;
-	struct mp_intr_map *mip;
 #endif
 #if NIOAPIC > 0
 	struct ioapic_softc *sc;
+#endif
+#if defined(MPACPI) || NIOAPIC > 0
+	struct mp_intr_map *mip = NULL;
 #endif
 
 	if (acpi_intrcold) {
@@ -185,6 +188,7 @@ nomap:
 			       "I/O apic for SCI, assuming %s\n",
 			    sc->sc_pic.pic_dev.dv_xname);
 		pic = (struct pic *)sc;
+		mip = sc->sc_pins[pin].ip_map;
 		irq = -1;
 	} else
 #endif
@@ -195,6 +199,19 @@ nomap:
 
 #if defined(MPACPI) && NIOAPIC > 0
 found:
+#endif
+
+#if defined(MPACPI) || NIOAPIC > 0
+	/*
+	 * If there was no ACPI interrupt source override,
+	 * mark the SCI interrupt as active low in the
+	 * table.
+	 */
+	if (mip != NULL && ((mip->sflags & MPI_OVR) == 0)) {
+		mip->flags &= ~3;
+		mip->flags |= MPS_INTPO_ACTLO;
+		mip->redir |= IOAPIC_REDLO_ACTLO;
+	}
 #endif
 
 	/*
