@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char serial_rcsid[] = "$Id: serial.c,v 1.4 1998/02/04 14:33:15 christos Exp $";
+const char serial_rcsid[] = "$Id: serial.c,v 1.5 1998/02/14 07:25:55 mycroft Exp $";
 #endif
 
 #include "uudefs.h"
@@ -2027,6 +2027,11 @@ fsysdep_modem_end_dial (qconn, qdial)
 	  {
 	    boolean fbad;
 	    int iflags;
+
+#ifdef __GNUC__
+	    /* XXX This hack is to shut up GCC. */
+	    (void) &iflags;
+#endif
 
 	    fbad = FALSE;
 
