@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.6 1998/05/09 17:22:08 kleink Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.7 1998/07/04 21:31:59 mrg Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -67,7 +67,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.6 1998/05/09 17:22:08 kleink Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.7 1998/07/04 21:31:59 mrg Exp $");
 #endif
 #endif
 
@@ -377,7 +377,7 @@ main(argc, argv)
 		hp->h_length = sizeof(target_addr);
 		hp->h_addr_list = (char **)malloc(2 * sizeof(char *));
 		hp->h_addr_list[0] = malloc(hp->h_length);
-		memcpy(hp->h_addr_list[0], &target_addr, hp->h_length);
+		memcpy(hp->h_addr_list[0], &target_addr, sizeof(hp->h_addr_list[0]));
 		hp->h_addr_list[1] = 0;
 	} else
 		hp = gethostbyname(host);
@@ -393,7 +393,7 @@ main(argc, argv)
 
 	/* Check all addresses; mrouters often have unreachable interfaces */
 	for (curaddr = 0; hp->h_addr_list[curaddr] != NULL; curaddr++) {
-	    memcpy(&target_addr, hp->h_addr_list[curaddr], hp->h_length);
+	    memcpy(&target_addr, hp->h_addr_list[curaddr], sizeof(target_addr));
 	    {			/* Find a good local address for us. */
 		int     udp;
 		struct sockaddr_in addr;
