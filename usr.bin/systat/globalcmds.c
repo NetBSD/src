@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.1 1999/12/16 04:40:03 jwise Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.2 1999/12/16 04:49:33 jwise Exp $ */
 
 /*-
  * Copyright (c) 1980, 1992, 1993 Jim Wise
@@ -33,7 +33,8 @@
 
 
 void
-global_help()
+global_help(args)
+	char *args;
 {
 	int col, len;
 	struct mode *p;
@@ -51,7 +52,8 @@ global_help()
 }
 
 void
-global_load()
+global_load(args)
+	char *args;
 {
 	(void)getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
 	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
@@ -60,13 +62,15 @@ global_load()
 }
 
 void
-global_quit()
+global_quit(args)
+	char *args;
 {
 	die(0);
 }
 
 void
-global_stop()
+global_stop(args)
+	char *args;
 {
 	alarm(0);
 	mvaddstr(CMDLINE, 0, "Refresh disabled.");

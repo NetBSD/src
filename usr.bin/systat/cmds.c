@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.11 1999/12/16 04:02:22 jwise Exp $	*/
+/*	$NetBSD: cmds.c,v 1.12 1999/12/16 04:49:32 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.11 1999/12/16 04:02:22 jwise Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.12 1999/12/16 04:49:32 jwise Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -73,7 +73,7 @@ command(cmd)
 
 	for (c = global_commands; c->c_name; c++) {
 		if (strcmp(cmd, c->c_name) == 0) {
-			(c->c_cmd)();
+			(c->c_cmd)(cp);
 			goto done;
 		}
 	}
