@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 1999/01/03 16:22:04 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2 1999/01/03 16:22:04 eeh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ ENTRY(__setjmp14)
 	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
 	add	%o0, 0x38, %o2		/* build sigcontext in [%o2]->sc.sc_mask */
 	mov	1, %o0			/* SIG_BLOCK */
-	mov	SYS_compat_13_sigprocmask13, %g1
+	mov	SYS___sigprocmask14, %g1
 	clr	%o1			/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *)a) */
 	t	ST_SYSCALL
 	
@@ -111,8 +111,8 @@ ENTRY(__longjmp14)
 	orcc	%o2, %o3, %g0
 	bz,pn	%xcc, Lbotch
 	 movrz	%i1, 1, %i1		/* if (v == 0) v = 1; */
-	st	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
-	mov	SYS_compat_13_sigreturn13, %g1
+	stx	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
+	mov	SYS___sigreturn14, %g1
 	mov	%i0, %o0
 	t	ST_SYSCALL		/* sigreturn(scp); */
 
