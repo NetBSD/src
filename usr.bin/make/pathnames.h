@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 2002/04/24 20:38:47 bjh21 Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 2002/04/27 15:14:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,10 +35,17 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
 
+#ifndef MAKE_BOOTSTRAP
+#include <paths.h>
+#endif
+
 #define	_PATH_OBJDIR		"obj"
 #define	_PATH_OBJDIRPREFIX	"/usr/obj"
 #ifndef _PATH_DEFSHELLDIR
 #define	_PATH_DEFSHELLDIR	"/bin"
+#endif
+#ifndef _PATH_BSHELL
+#define _PATH_BSHELL		"/bin/sh"
 #endif
 #define	_PATH_DEFSYSMK		"sys.mk"
 #ifndef _PATH_DEFSYSPATH
