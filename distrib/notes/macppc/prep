@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.24 2002/01/03 03:52:15 mbw Exp $
+.\"	$NetBSD: prep,v 1.25 2002/04/22 00:37:01 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -148,11 +148,6 @@ known to have some problems.
 Some PowerMacintosh users find that their third-party 
 RAM has been disabled.  See the discussion at
 .Lk http://www.macfixit.com/archives/april.01.a.shtml#firm-04-07
-.Pp
-The PowerBook (FireWire) and PowerBook G4 
-(Titanium) models with BootROM 4.1.8 are not supported in this release.  
-If your system has this BootROM, you must use a kernel from the -current
-branch.
 .Pp
 There are reports that FirmWare Update 4.1.9 on iMac (Summer 2000) will
 prevent the CD-ROM and the hard drive from operating together.  You may get
@@ -486,6 +481,10 @@ is
 (i.e. you have a PowerMacintosh 7300 - 8600 system), there is a chance that
 your monitor will not sync. See
 .Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
+.Pp
+If you have a Performa 5500 or 6500, you may need to apply NVRAMRC patches
+to use your built-in video.  See the information in the NetBSD/macppc
+Model Support webpage.
 .Pp
 You should now see the Open Firmware command prompt on your screen:
 .Pp
