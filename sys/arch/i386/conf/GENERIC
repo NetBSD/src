@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.88 1997/08/03 05:26:35 mikel Exp $
+#	$NetBSD: GENERIC,v 1.89 1997/08/03 21:59:11 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -112,6 +112,7 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+#options 	COM_HAYESP		# adds Hayes ESP serial board support
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
