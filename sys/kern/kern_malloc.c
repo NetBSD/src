@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.81 2003/08/07 16:31:46 agc Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.82 2003/08/26 21:48:53 manu Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.81 2003/08/07 16:31:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.82 2003/08/26 21:48:53 manu Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -903,3 +903,45 @@ dump_kmemstats(void)
 #endif /* KMEMSTATS */
 }
 #endif /* DDB */
+
+
+#if 0
+/* 
+ * Diagnostic messages about "Data modified on
+ * freelist" indicate a memory corruption, but
+ * they do not help tracking it down.
+ * This function can be called at various places 
+ * to sanity check malloc's freelist and discover
+ * where does the corruption take place.
+ */
+int
+freelist_sanitycheck(void) {
+	int i,j;
+	struct kmembuckets *kbp;
+	struct freelist *freep;
+	int rv = 0;
+		
+	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
+		kbp = &bucket[i];	
+		freep = (struct freelist *)kbp->kb_next;
+		j = 0;
+		while(freep) {
+			vm_map_lock(kmem_map);
+			rv = uvm_map_checkprot(kmem_map, (vaddr_t)freep,
+			    (vaddr_t)freep + sizeof(struct freelist), 
+			    VM_PROT_WRITE);
+			vm_map_unlock(kmem_map);
+
+			if ((rv == 0) || (*(int *)freep != WEIRD_ADDR)) {
+				printf("bucket %i, chunck %d at %p modified\n",
+				    i, j, freep);
+				return 1;
+			}
+			freep = (struct freelist *)freep->next;
+			j++;
+		}
+	}
+
+	return 0;
+}
+#endif
