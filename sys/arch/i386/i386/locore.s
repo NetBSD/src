@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.73 1994/05/29 06:48:35 mycroft Exp $
+ *	$Id: locore.s,v 1.74 1994/06/11 20:44:13 mycroft Exp $
  */
 
 /*
@@ -240,8 +240,8 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	jnz	2f			# if flags changed, Intel chip
 
 	movl	$CPU_486DLC,_cpu-KERNBASE # set CPU value for Cyrix
-	movl	$0x69727943,_cpu_vendor	# store vendor string
-	movw	$0x0078,_cpu_vendor+4
+	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
+	movw	$0x0078,_cpu_vendor-KERNBASE+4
 
 	/* Set cache parameters */
 	invd				# Start with guaranteed clean cache
@@ -289,10 +289,10 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	.byte	0x0f,0xa2		# cpuid 0
-	movl	%ebx,_cpu_vendor	# store vendor string
-	movl	%edx,_cpu_vendor+4
-	movl	%ecx,_cpu_vendor+8
-	movb	$0,_cpu_vendor+12
+	movl	%ebx,_cpu_vendor-KERNBASE	# store vendor string
+	movl	%edx,_cpu_vendor-KERNBASE+4
+	movl	%ecx,_cpu_vendor-KERNBASE+8
+	movb	$0,_cpu_vendor-KERNBASE+12
 
 	movl	$1,%eax
 	.byte	0x0f,0xa2		# cpuid 1
