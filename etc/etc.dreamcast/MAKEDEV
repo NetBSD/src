@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.32 2002/12/29 18:31:12 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.33 2003/03/30 17:41:52 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -50,7 +50,7 @@
 #	mcd*	Mitsumi CD-ROM
 #	vnd*	"file" pseudo-disks
 #	md*	memory pseudo-disks
-#	ccd*	contatenated disk devices
+#	ccd*	concatenated disk devices
 #	cgd*	cryptographic disk devices
 #
 # Console ports:
@@ -63,7 +63,7 @@
 #	wskbd*	wscons keyboard events
 #
 # Terminal ports:
-#	scif*	serial communcation interface with FIFO
+#	scif*	serial communication interface with FIFO
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #
@@ -80,10 +80,10 @@
 #	clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
-#	ipl	ip filter
+#	ipl	IP filter
 #	cbq	Alternate Queueing (ALTQ)
 #	random	Random number generator
-#	speaker	pc speaker				(XXX - installed)
+#	speaker	PC speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
 #	tun*	network tunnel driver
