@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.2.2.5 1998/11/16 07:05:13 cgd Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.2.2.6 1998/11/23 07:11:59 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,9 +45,9 @@ choose to install NetBSD on the entire disk, or on part of the disk.
 Partial-disk installation creates a partition, or `slice', for NetBSD
 in your disk's MBR partition table. Whole-disk installation is
 `dangerously dedicated': it takes over the entire MBR. This WILL
-overwrite all existing data and OSes on the disk. It also makes it
-impossible to install other OSes in future (unless you re-install
-NetBSD from scratch, using only part of the disk).
+overwrite all existing data and OSes on the disk. It also prohibits later
+installation of multiple OSes on that disk (unless you overwrite NetBSD and
+re-install using only part of the disk).
 
 Which would you like to do?
 }
