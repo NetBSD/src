@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.38 1999/09/09 06:41:08 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.39 1999/09/28 08:05:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -182,9 +182,17 @@ ioasicattach(parent, self, aux)
 		panic("ioasicattach: shouldn't be here, really...");
 	}
 
-	sc->sc_base = ta->ta_addr;
+	sc->sc_bst = ta->ta_memt;
+	if (bus_space_map(ta->ta_memt, ta->ta_addr,
+			0x400000, 0, &sc->sc_bsh)) {
+		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		return;
+	}
+	sc->sc_dmat = ta->ta_dmat;
+	sc->sc_cookie = ta->ta_cookie;
 
-	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
+	sc->sc_base = ta->ta_addr; 		/* XXX XXX XXX */
+	ioasic_base = sc->sc_base;		/* XXX XXX XXX */
 
 	printf("\n");
 
@@ -210,5 +218,5 @@ char *
 ioasic_lance_ether_address()
 {
 
-	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
+	return (char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 }
