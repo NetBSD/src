@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.44 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.45 2003/12/03 18:18:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.44 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.45 2003/12/03 18:18:43 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -824,6 +824,13 @@ mach_right_put_exclocked(mr, right)
 			mach_notify_port_dead_name(mr->mr_lwp, mr);
 		}
 		if (mr->mr_port != NULL) {
+			/* There is no more receiver */
+#ifdef DIAGNOSTIC
+			if (mr->mr_port->mp_recv != mr)
+				printf("several receiver on a single port\n");
+#endif
+			mr->mr_port->mp_recv = NULL;
+
 			mr->mr_port->mp_refcount--;
 			if (mr->mr_port->mp_refcount <= 0)
 				mach_port_put(mr->mr_port);
@@ -946,13 +953,12 @@ mach_right_newname(l, hint)
 void 
 mach_debug_port(void)
 {
-	struct lwp *l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	struct mach_right *mrs;
-	struct proc *p = l->l_proc;
+	struct proc *p;
 
-	LIST_FOREACH(l, &alllwp, l_list) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if ((p->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
 		    (p->p_emul != &emul_darwin) &&
@@ -965,7 +971,7 @@ mach_debug_port(void)
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				printf("pid %d: %p(%x)=>%p", 
 				    p->p_pid, mr, mr->mr_type, mr->mr_port);
-				if (mr->mr_port != NULL) 
+				if (mr->mr_port && mr->mr_port->mp_recv)
 					printf("[%p]\n", 
 					    mr->mr_port->mp_recv->mr_sethead);
 				else
@@ -980,7 +986,7 @@ mach_debug_port(void)
 			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {
 				printf("%p(%x)=>%p", 
 				    mrs, mrs->mr_type, mrs->mr_port);
-				if (mrs->mr_port != NULL) 
+				if (mrs->mr_port && mrs->mr_port->mp_recv) 
 					printf("[%p]", 
 					    mrs->mr_port->mp_recv->mr_sethead);
 				else
