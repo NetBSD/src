@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.30 1994/07/15 22:27:46 cgd Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.31 1994/07/16 06:26:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -162,9 +162,9 @@ Huh? Slip without inet?
 Huh?  SLMTU way too small.
 #endif
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
-#ifndef __NetBSD__						/* XXX - cgd */
+#ifndef NetBSD						/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
-#endif	/* !__NetBSD__ */
+#endif	/* !NetBSD */
 
 /*
  * SLIP ABORT ESCAPE MECHANISM:
@@ -252,7 +252,7 @@ slopen(dev, tp)
 	register struct sl_softc *sc;
 	register int nsl;
 	int error;
-#ifdef __NetBSD__
+#ifdef NetBSD
 	int s;
 #endif
 
@@ -270,7 +270,7 @@ slopen(dev, tp)
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef __NetBSD__
+#ifdef NetBSD
 			/*
 			 * make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -293,7 +293,7 @@ slopen(dev, tp)
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
 			splx(s);
-#endif /* __NetBSD__ */
+#endif /* NetBSD */
 			return (0);
 		}
 	return (ENXIO);
@@ -323,7 +323,7 @@ slclose(tp)
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
 	}
-#ifdef __NetBSD__
+#ifdef NetBSD
 	/* if necessary, install a new outq buffer of the appropriate size */
 	if (sc->sc_oldbufsize != 0) {
 		clfree(&tp->t_outq);
@@ -450,7 +450,7 @@ slstart(tp)
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
 	register int len;
 #endif
-#ifndef __NetBSD__						/* XXX - cgd */
+#ifndef NetBSD						/* XXX - cgd */
 	extern int cfreecount;
 #endif
 
@@ -471,7 +471,7 @@ slstart(tp)
 		if (sc == NULL)
 			return;
 
-#ifdef __NetBSD__						/* XXX - cgd */
+#ifdef NetBSD						/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
@@ -480,7 +480,7 @@ slstart(tp)
 		 */
 		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*SLMTU+2)
 			return;
-#endif /* __NetBSD__ */
+#endif /* NetBSD */
 
 		/*
 		 * Get a packet and send it to the interface.
@@ -543,7 +543,7 @@ slstart(tp)
 #endif
 		sc->sc_if.if_lastchange = time;
 
-#ifndef __NetBSD__						/* XXX - cgd */
+#ifndef NetBSD						/* XXX - cgd */
 		/*
 		 * If system is getting low on clists, just flush our
 		 * output queue (if the stuff was important, it'll get
@@ -554,7 +554,7 @@ slstart(tp)
 			sc->sc_if.if_collisions++;
 			continue;
 		}
-#endif /* !__NetBSD__ */
+#endif /* !NetBSD */
 		/*
 		 * The extra FRAME_END will start up a new packet, and thus
 		 * will flush any accumulated garbage.  We do this whenever
@@ -590,7 +590,7 @@ slstart(tp)
 					 * Put n characters at once
 					 * into the tty output queue.
 					 */
-#ifdef __NetBSD__						/* XXX - cgd */
+#ifdef NetBSD						/* XXX - cgd */
 					if (b_to_q((u_char *)bp, cp - bp,
 #else
 					if (b_to_q((char *)bp, cp - bp,
