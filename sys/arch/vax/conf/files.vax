@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.34 1998/03/21 10:02:40 ragge Exp $
+#       $NetBSD: files.vax,v 1.35 1998/05/17 18:58:07 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -97,10 +97,15 @@ device	dhu: tty
 attach	dhu at uba
 file	arch/vax/uba/dhu.c		dhu needs-count
 
-# DZ11 at UBA
+# DZ11(-compatible) at UBA/vsbus
 device	dz: tty
-attach	dz at uba
 file	arch/vax/uba/dz.c		dz needs-count
+
+attach	dz at uba with dz_uba
+file	arch/vax/uba/dz_uba.c		dz_uba
+
+attach	dz at vsbus with dz_vsbus
+file	arch/vax/vsa/dz_vsbus.c		dz_vsbus
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
@@ -130,7 +135,7 @@ file	arch/vax/vsa/ncr.c		ncr needs-flag
 # LANCE ethernet controller on VAXstation
 device	ln: ifnet, ether
 attach	ln at vsbus
-file	arch/vax/if/if_le.c		ln
+file	arch/vax/vsa/if_ln.c		ln
 
 # DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
 # controls keyboard, mouse, modem, and printer/console)
@@ -297,7 +302,6 @@ file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
 file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650
-file	arch/vax/vax/dzcons.c		vax410 | vax43
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c		vax750
