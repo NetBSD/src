@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.30 1999/12/06 01:46:11 deberg Exp $
+.\" $NetBSD: main,v 1.31 1999/12/06 04:35:30 jonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -799,7 +799,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Aaron Brown Ta Mt abrown@NetBSD.ORG
 .It Ta David Brownlee Ta Mt abs@NetBSD.ORG
 .It Ta Frederick Bruckman Ta Mt fredb@NetBSD.ORG
-.It Ta John Buller Ta Mt jonb@NetBSD.ORG
+.It Ta Jon Buller Ta Mt jonb@NetBSD.ORG
 .It Ta Simon Burge Ta Mt simonb@NetBSD.ORG
 .It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
 .It Ta D'Arcy J.M. Cain Ta Mt darcy@NetBSD.ORG
