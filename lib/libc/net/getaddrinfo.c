@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.32 2000/02/20 14:44:30 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.33 2000/02/20 17:07:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1506,18 +1506,20 @@ _yp_getaddrinfo(rv, cb_data, ap)
 	__ypcurrent = NULL;
 
 	/* hosts.byname is only for IPv4 (Solaris8) */
-	r = yp_match(__ypdomain, "hosts.byname", name,
-		(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
-	if (r == 0) {
-		struct addrinfo ai4;
+	if (pai->ai_family == PF_UNSPEC || pai->ai_family == PF_INET) {
+		r = yp_match(__ypdomain, "hosts.byname", name,
+			(int)strlen(name), &__ypcurrent, &__ypcurrentlen);
+		if (r == 0) {
+			struct addrinfo ai4;
 
-		ai4 = *pai;
-		ai4.ai_family = AF_INET;
-		ai = _yphostent(__ypcurrent, &ai4);
-		if (ai) {
-			cur->ai_next = ai;
-			while (cur && cur->ai_next)
-				cur = cur->ai_next;
+			ai4 = *pai;
+			ai4.ai_family = AF_INET;
+			ai = _yphostent(__ypcurrent, &ai4);
+			if (ai) {
+				cur->ai_next = ai;
+				while (cur && cur->ai_next)
+					cur = cur->ai_next;
+			}
 		}
 	}
 
