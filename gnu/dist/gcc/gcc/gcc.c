@@ -1482,12 +1482,11 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 		static_name, "}}%{shared:",
 /* XXX NH XXX */
 #if defined(LINK_EH_SPEC) || 1
-		"%{shared-libgcc:", shared_name,
-		"}%{!shared-libgcc:", static_name, 
+		"%{shared-libgcc:", shared_name, "} ",
+		static_name, 
 #ifdef LIBGCC_PICSUFFIX
 		LIBGCC_PICSUFFIX ,
 #endif
-		"}",
 #else
 		shared_name,
 #endif
