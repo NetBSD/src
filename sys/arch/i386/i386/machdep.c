@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 1994/11/06 23:43:24 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 1994/11/07 05:57:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -645,8 +645,7 @@ sigreturn(p, uap, retval)
 		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-	p->p_sigmask = context.sc_mask &~
-	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
+	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	/*
 	 * Restore signal context.
