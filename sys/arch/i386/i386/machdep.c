@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 1998/01/12 18:59:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.270 1998/01/13 12:52:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -223,8 +223,10 @@ vm_map_t buffer_map;
 
 extern	int biosbasemem, biosextmem;
 extern	vm_offset_t avail_start, avail_end;
-static	vm_offset_t hole_start, hole_end;
+extern	vm_offset_t hole_start, hole_end;
+#if !defined(MACHINE_NEW_NONCONTIG)
 static	vm_offset_t avail_next;
+#endif
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -1629,7 +1631,9 @@ init386(first_avail)
 	hole_start = biosbasemem * 1024;
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
+#if !defined(MACHINE_NEW_NONCONTIG)
 	avail_next = avail_start;
+#endif
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
@@ -1811,6 +1815,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return error;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 u_int
 pmap_free_pages()
 {
@@ -1849,6 +1854,7 @@ pmap_page_index(pa)
 		return i386_btop(pa - hole_end + hole_start - avail_start);
 	return -1;
 }
+#endif
 
 void *
 lookup_bootinfo(type)
