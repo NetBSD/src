@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.5 1996/02/28 21:01:27 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.6 1996/03/05 01:27:16 jtc Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -42,22 +42,22 @@ $version = "2.7.2";
 
 @ccof = ("gcc.1");
 
-@cc1f = ("c-parse.c", "c-lang.c");
+@cc1f = ("c-lang.c");
 
-@cc1of = ("c-parse.y");
+@cc1of = ();
 
-@cc1objf = ("objc-parse.c", "objc-act.c");
+@cc1objf = ("objc-act.c");
 
 @cc1objof = ("objc-tree.def", "objc-act.h", "objc-parse.y");
 
 @cc1plusf = ("call.c", "decl.c", "errfn.c", "expr.c", "pt.c", "sig.c",
 	     "typeck2.c", "class.c", "decl2.c", "error.c", "gc.c",
-	     "lex.c", "parse.c", "ptree.c", "spew.c", "typeck.c",
+	     "lex.c", "ptree.c", "spew.c", "typeck.c",
 	     "cvt.c", "edsel.c", "except.c", "init.c", "method.c",
 	     "search.c", "tree.c", "xref.c", "repo.c");
 
 @cc1plusof = ("tree.def", "class.h", "cp-tree.h", "decl.h", "hash.h",
-	      "lex.h", "parse.h", "input.c", "parse.y");
+	      "lex.h", "input.c", "parse.y");
 
 @commonf = ("bc-emit.c", "bc-optab.c", "bi-reverse.c", "c-aux-info.c",
 	    "c-common.c", "c-convert.c", "c-decl.c", "c-iterate.c",
@@ -77,9 +77,9 @@ $version = "2.7.2";
 @commonof = ("bc-typecd.def", "bytecode.def", "machmode.def",
 	     "modemap.def", "rtl.def", "stab.def", "tree.def",
 	     "assert.h", "basic-block.h", "bc-emit.h", "bc-optab.h",
-	     "bc-typecd.h", "bi-defs.h", "bi-parser.h", "bi-run.h",
+	     "bc-typecd.h", "bi-defs.h", "bi-run.h",
 	     "bytecode.h", "bytetypes.h", "c-gperf.h", "c-lex.h",
-	     "c-parse.h", "c-pragma.h", "c-tree.h", "conditions.h",
+	     "c-parse.y", "c-pragma.h", "c-tree.h", "conditions.h",
 	     "convert.h", "defaults.h", "dwarf.h", "expr.h",
 	     "flags.h", "function.h", "gstab.h", "gsyms.h",
 	     "hard-reg-set.h", "input.h", "integrate.h", "loop.h",
@@ -435,7 +435,7 @@ BINDIR=	/usr/libexec
 XXXX!= cd $(.CURDIR)/../common; \
 	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
 
 YFLAGS=
@@ -459,7 +459,7 @@ NOPROFILE=
 XXXX != cd $(.CURDIR)/../common; \
 	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
 
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
+CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
 
 MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md
@@ -471,6 +471,26 @@ BCDEF= ${.CURDIR}/bytecode.def
 %% srcs common
 
 %% gens
+
+CLEANFILES += bi-parser.c bi-parser.h
+
+bi-lexer.o: bi-parser.h
+
+bi-parser.h: bi-parser.c
+bi-parser.c: bi-parser.y
+        $(YACC) -b bi -d $(.IMPSRC)
+        mv -f bi.tab.c bi-parser.c
+        mv -f bi.tab.h bi-parser.h
+
+CLEANFILES += c-parse.c c-parse.h
+
+c-lex.o: c-parse.h
+
+c-parse.h: c-parse.c
+c-parse.c: c-parse.y
+        $(YACC) -b c -d $(.IMPSRC)
+        mv -f c.tab.c c-parse.c
+        mv -f c.tab.h c-parse.h
 
 install:
 
@@ -513,6 +533,9 @@ PROG=		cc1
 PROG=	cc1plus
 
 %% srcs cc1plus
+
+CLEANFILES+=	c-parse.c
+.PATH:		$(.CURDIR)/../common
 
 .include <../Makefile.cc1>
 %% file cc1obj/Makefile
