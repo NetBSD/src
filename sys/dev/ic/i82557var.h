@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.4 1999/08/04 00:17:29 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.5 1999/08/04 05:21:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -150,15 +150,6 @@ struct fxp_txsoft {
 };
 
 /*
- * Software state for receive descriptors.
- */
-struct fxp_rxdesc {
-	struct fxp_rxdesc *fr_next;	/* next in the chain */
-	struct mbuf *fr_mbhead;		/* pointer to mbuf chain */
-	bus_dmamap_t fr_dmamap;		/* our DMA map */
-};
-
-/*
  * Software state per device.
  */
 struct fxp_softc {
@@ -181,12 +172,14 @@ struct fxp_softc {
 #define	sc_cddma	sc_dmamap->dm_segs[0].ds_addr
 
 	/*
-	 * Software state for transmit and receive descriptors.
+	 * Software state for transmit descriptors.
 	 */
 	struct fxp_txsoft sc_txsoft[FXP_NTXCB];
 
-	bus_dmamap_t sc_rx_dmamaps[FXP_NRFABUFS];
-	struct fxp_rxdesc sc_rxdescs[FXP_NRFABUFS];
+	struct ifqueue sc_rxq;		/* receive buffer queue */
+	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS]; /* free receive buffer DMA maps */
+	int	sc_rxfree;		/* free map index */
+	int	sc_rxidle;		/* # of seconds RX has been idle */
 
 	/*
 	 * Control data structures.
@@ -202,10 +195,6 @@ struct fxp_softc {
 	int	sc_txdirty;		/* first dirty TX descriptor */
 	int	sc_txlast;		/* last used TX descriptor */
 
-	struct fxp_rxdesc *rfa_head;	/* first mbuf in receive frame area */
-	struct fxp_rxdesc *rfa_tail;	/* last mbuf in receive frame area */
-	int rx_idle_secs;		/* # of seconds RX has been idle */
-
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
@@ -213,6 +202,9 @@ struct fxp_softc {
 	rndsource_element_t rnd_source;	/* random source */
 #endif
 };
+
+#define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
+#define	FXP_RXMAP_PUT(sc, map)	(sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map)
 
 #define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
 #define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
@@ -241,6 +233,62 @@ struct fxp_softc {
 #define	FXP_CDMCSSYNC(sc, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDMCSOFF, sizeof(struct fxp_cb_mcs), (ops))
+
+#define	FXP_RXBUFSIZE(m)	((m)->m_ext.ext_size -			\
+				 (sizeof(struct fxp_rfa) +		\
+				  RFA_ALIGNMENT_FUDGE))
+
+#define	FXP_RFASYNC(sc, m, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
+	    RFA_ALIGNMENT_FUDGE, sizeof(struct fxp_rfa), (ops))
+
+#define	FXP_RXBUFSYNC(sc, m, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, M_GETCTX((m), bus_dmamap_t),	\
+	    RFA_ALIGNMENT_FUDGE + sizeof(struct fxp_rfa),		\
+	    FXP_RXBUFSIZE((m)), (ops))
+
+#define	FXP_MTORFA(m)	(struct fxp_rfa *)((m)->m_ext.ext_buf +		\
+					   RFA_ALIGNMENT_FUDGE)
+
+#define	FXP_INIT_RFABUF(sc, m)						\
+do {									\
+	bus_dmamap_t __rxmap = M_GETCTX((m), bus_dmamap_t);		\
+	struct mbuf *__p_m;						\
+	struct fxp_rfa *__rfa, *__p_rfa;				\
+	u_int32_t __v;							\
+									\
+	(m)->m_data = (m)->m_ext.ext_buf + sizeof(struct fxp_rfa) +	\
+	    RFA_ALIGNMENT_FUDGE;					\
+									\
+	__rfa = FXP_MTORFA((m));					\
+	__rfa->size = FXP_RXBUFSIZE((m));				\
+	__rfa->rfa_status = 0;						\
+	__rfa->rfa_control = FXP_RFA_CONTROL_EL;			\
+	__rfa->actual_size = 0;						\
+									\
+	/* NOTE: the RFA is misaligned, so we must copy. */		\
+	__v = -1;							\
+	memcpy((void *)&__rfa->link_addr, &__v, sizeof(__v));		\
+	memcpy((void *)&__rfa->rbd_addr, &__v, sizeof(__v));		\
+									\
+	FXP_RFASYNC((sc), (m),						\
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
+									\
+	FXP_RXBUFSYNC((sc), (m), BUS_DMASYNC_PREREAD);			\
+									\
+	if ((__p_m = (sc)->sc_rxq.ifq_tail) != NULL) {			\
+		__p_rfa = FXP_MTORFA(__p_m);				\
+		__v = __rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;\
+		FXP_RFASYNC((sc), __p_m,				\
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
+		memcpy((void *)&__p_rfa->link_addr, &__v,		\
+		    sizeof(__v));					\
+		__p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;		\
+		FXP_RFASYNC((sc), __p_m,				\
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
+	}								\
+	IF_ENQUEUE(&(sc)->sc_rxq, (m));					\
+} while (0)
 
 /* Macros to ease CSR access. */
 #define	CSR_READ_1(sc, reg)						\
