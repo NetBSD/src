@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.3.2.5 2003/01/27 06:44:39 jmc Exp $
+# $NetBSD: etcupdate,v 1.3.2.6 2003/04/28 06:30:45 tron Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -164,7 +164,7 @@ diff_and_merge_file() {
 	fi
 
 	if [ "${AUTOMATIC}" = "YES" -a -f "/etc/etcupdate/${1}"  ] ; then
-		SUM1=`sum "${1}"`
+		SUM1=`md5 "${1}"`
 		SUM2=`cat "/etc/etcupdate/${1}"`
 		if [ "${SUM1}" = "${SUM2}" ] ; then
 			install_file "${1}"
