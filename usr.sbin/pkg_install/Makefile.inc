@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15 2001/03/23 14:06:16 tron Exp $
+# $NetBSD: Makefile.inc,v 1.16 2001/04/08 14:11:48 hubertf Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -17,23 +17,24 @@ OPSYS="unknown"
 .endif
 
 .if ${OPSYS} == "NetBSD"
-CHMOD= /bin/chmod
-CHOWN= /usr/sbin/chown
-CHGRP= /usr/bin/chgrp
+CHMOD?= /bin/chmod
+CHOWN?= /usr/sbin/chown
+CHGRP?= /usr/bin/chgrp
 .elif ${OPSYS} == "SunOS"
 LOCALBASE?= /usr/local
 TAR_CMD?= tar
-TAR_FULLPATHNAME?= ${LOCALBASE}/bsd/bin/${TAR_CMD}
+ZOULARISBASE?=	${LOCALBASE}/bsd
+TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
 CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
-BINDIR=${LOCALBASE}/bsd/bin
-CHMOD= /usr/bin/chmod
-CHOWN= /usr/bin/chown
-CHGRP= /usr/bin/chgrp
+BINDIR=${ZOULARISBASE}/bin
+CHMOD?= /usr/bin/chmod
+CHOWN?= /usr/bin/chown
+CHGRP?= /usr/bin/chgrp
 WARNS=0
 .elif ${OPSYS} == "Linux"
-CHMOD= /bin/chmod
-CHOWN= /bin/chown
-CHGRP= /bin/chgrp
+CHMOD?= /bin/chmod
+CHOWN?= /bin/chown
+CHGRP?= /bin/chgrp
 .endif
 
 CPPFLAGS+= -DCHMOD='"${CHMOD}"' -DCHOWN='"${CHOWN}"' -DCHGRP='"${CHGRP}"'
