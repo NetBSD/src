@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.10 1999/12/31 21:58:14 agc Exp $ */
+/* $NetBSD: user.c,v 1.11 2000/02/02 15:12:10 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -30,6 +30,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__COPYRIGHT(
+	"@(#) Copyright (c) 1999 \
+	        The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: user.c,v 1.11 2000/02/02 15:12:10 agc Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
