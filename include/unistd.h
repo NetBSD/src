@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.70 1999/03/09 12:46:22 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.71 1999/03/09 20:33:22 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ pid_t	 getsid __P((pid_t));
 #define F_TLOCK		2
 #define F_TEST		3
 
-char	*brk __P((const char *));
+int	 brk __P((void *));
 int	 fchdir __P((int));
 #if defined(_XOPEN_SOURCE)
 int	 fchown __P((int, uid_t, gid_t)) __RENAME(__posix_fchown);
