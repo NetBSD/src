@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.500 2004/09/11 01:19:14 ian Exp $
+# $NetBSD: mi,v 1.501 2004/09/13 23:35:19 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -626,6 +626,7 @@
 ./usr/bin/uucp					base-uucp-bin		uucp
 ./usr/bin/uudecode				base-util-bin
 ./usr/bin/uuencode				base-util-bin
+./usr/bin/uuidgen				base-util-bin
 ./usr/bin/uulog					base-uucp-bin		uucp
 ./usr/bin/uuname				base-uucp-bin		uucp
 ./usr/bin/uupick				base-uucp-bin		uucp

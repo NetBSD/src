@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.724 2004/09/05 06:32:03 manu Exp $
+# $NetBSD: mi,v 1.725 2004/09/13 23:35:19 thorpej Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -435,6 +435,7 @@
 ./usr/share/man/cat1/uucp.0			man-uucp-catman		uucp,.cat
 ./usr/share/man/cat1/uudecode.0			man-uucp-catman		.cat
 ./usr/share/man/cat1/uuencode.0			man-uucp-catman		.cat
+./usr/share/man/cat1/uuidgen.0			man-util-catman		.cat
 ./usr/share/man/cat1/uustat.0			man-uucp-catman		uucp,.cat
 ./usr/share/man/cat1/uux.0			man-uucp-catman		uucp,.cat
 ./usr/share/man/cat1/vacation.0			man-mail-catman		.cat
@@ -2566,6 +2567,7 @@
 ./usr/share/man/man1/uucp.1			man-uucp-man		uucp,.man
 ./usr/share/man/man1/uudecode.1			man-uucp-man		.man
 ./usr/share/man/man1/uuencode.1			man-uucp-man		.man
+./usr/share/man/man1/uuidgen.1			man-util-man		.man
 ./usr/share/man/man1/uustat.1			man-uucp-man		uucp,.man
 ./usr/share/man/man1/uux.1			man-uucp-man		uucp,.man
 ./usr/share/man/man1/vacation.1			man-mail-man		.man
