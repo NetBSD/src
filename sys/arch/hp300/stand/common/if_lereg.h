@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.1 1997/02/04 03:52:29 thorpej Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.2 2001/05/27 05:31:58 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@ struct lereg0 {
 	vu_char	ler0_id;	/* ID */
 	u_char	ler0_pad1;
 	vu_char	ler0_status;	/* interrupt enable/status */
-};
+} __attribute__((__packed__));
 
 /*
  * Control and status bits -- lereg0
@@ -69,7 +69,7 @@ struct lereg0 {
 struct lereg1 {
 	vu_short	ler1_rdp;	/* data port */
 	vu_short	ler1_rap;	/* register select port */
-};
+} __attribute__((__packed__));
 
 /*
  * Control and status bits -- lereg1
@@ -112,7 +112,7 @@ struct init_block {
         u_short rlen;           /* high order pointer and no. rings */
         u_short tdra;           /* low order pointer to transmit ring */
         u_short tlen;           /* high order pointer and no rings */
-};
+} __attribute__((__packed__));
 
 /*
  * Mode bits -- init_block
@@ -135,7 +135,7 @@ struct mds {
 	u_short flags;
 	u_short bcnt;
 	u_short mcnt;
-};
+} __attribute__((__packed__));
 
 /* Message descriptor flags */
 #define LE_OWN		0x8000		/* owner bit, 0=host, 1=LANCE */
