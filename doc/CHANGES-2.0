@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.439 2004/09/11 13:13:16 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.440 2004/09/11 13:28:43 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7281,3 +7281,10 @@ sys/dev/ic/ncr53c9x.c				1.112
 	Reserve one element for the ncr53c9x_ecb pool to ensure that
 	we will not deadlock against other pool users.
 	[bouyer, ticket #838]
+
+sys/dev/pci/amr.c				1.21
+
+	Make this driver recognize LSI Logic MegaRAID 320-2 RAID controllers.
+	Fixes PR#26834, patch from that PR.
+	[he, ticket #826]
+
