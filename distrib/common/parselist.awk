@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.5 2002/03/06 04:47:58 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.6 2002/03/07 01:36:34 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -79,6 +79,8 @@
 #	C	LIBS	libspec ...	as per crunchgen(1) `libs'
 #
 #	M P	LINK	src d1 [d2 ...]	hard link src to d1, d2, ...
+#
+#	M	MTREE	arg1 [...]	output arguments `as-is' to specfile
 #
 #	C M P	PROG	prog [links...]	program(s) to crunch/mtree/populate.
 #					for M and P, the first prog listed
@@ -255,6 +257,18 @@ $1 == "CMD" \
 	}
 	next;
 }
+
+$1 == "MTREE" \
+{
+	if (NF < 2)
+		err("Usage: MTREE ...");
+	if (mode == "mtree") {
+		sub(/^[^ \t]+[ \t]+/, "");	# strip first word ("MTREE")
+		print;
+	}
+	next;
+}
+
 
 {
 	err("Unknown keyword '" $1 "'");
