@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 1998/09/27 14:31:18 pk Exp $ */
+/*	$NetBSD: lock.h,v 1.2 1998/10/05 19:58:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ static __inline__ void
 simple_lock_init (alp)
 	__volatile struct simplelock *alp;
 {
+
 	alp->lock_data = 0;
 }
 
@@ -63,13 +64,25 @@ static __inline__ void
 simple_lock (alp)
 	__volatile struct simplelock *alp;
 {
-	while (ldstub(&alp->lock_data)) /*void*/;
+
+	/*
+	 * If someone else holds the lock use simple
+	 * reads until it is released, then retry the
+	 * atomic operation. This reduces memory bus contention
+	 * becaused the cache-coherency logic does not have to
+	 * broadcast invalidates on the lock while we spin on it.
+	 */
+	while (ldstub(&alp->lock_data) != 0) {
+		while (alp->lock_data != 0)
+			/*void*/;
+	}
 }
 
 static __inline__ int
 simple_lock_try (alp)
 	__volatile struct simplelock *alp;
 {
+
 	return (ldstub(&alp->lock_data) == 0);
 }
 
@@ -77,6 +90,7 @@ static __inline__ void
 simple_unlock (alp)
 	__volatile struct simplelock *alp;
 {
+
 	alp->lock_data = 0;
 }
 #endif /* _KERNEL */
