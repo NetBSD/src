@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.5 2001/11/21 03:29:01 briggs Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.6 2001/11/21 05:55:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -113,6 +113,8 @@
 	lmw	r14, (_REG_R0 + 14*4)(r4)		; \
 	lwz	 r0, _REG_LR(r4)			; \
 	mtlr	 r0					; \
+	lwz	 r0, _REG_PC(r4)			; \
+	mtctr	 r0					; \
 							; \
 	andi.	 r5, r3, _UC_FPU			; \
 	beq	 1f					; \
@@ -145,7 +147,7 @@
 1:							; \
 	lwz	 r0, _REG_CR(r4)			; \
 	mtcr	 r0					; \
-	blr						; \
+	bctr						; \
 2:							; \
 	mr	r3, r4					; \
 	b	PIC_PLT(_C_LABEL(setcontext))		; \
