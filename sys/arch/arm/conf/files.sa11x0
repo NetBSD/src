@@ -1,0 +1,64 @@
+#	$NetBSD: files.sa11x0,v 1.1 2001/07/08 23:20:05 rjs Exp $
+#
+# First try for arm-specific configuration info
+#
+
+# SA11[01]0 integrated peripherals
+# parent to sacom, gpio, fb, saost,  XXX
+# also provides irq and timer services
+device saip { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1], [gpio=-1]}
+attach saip at mainbus
+file	arch/arm/sa11x0/sa11x0.c		saip needs-flag
+file	arch/arm/sa11x0/sa11x0_io.c		saip
+file	arch/arm/sa11x0/sa11x0_io_asm.S		saip
+file	arch/arm/sa11x0/sa11x0_irq.S		saip
+file	arch/arm/sa11x0/sa11x0_irqhandler.c	saip
+
+# clock device
+device	saost
+attach	saost at saip
+file	arch/arm/sa11x0/sa11x0_ost.c		saost needs-flag
+
+device	sacom: tty
+attach	sacom at saip
+file	arch/arm/sa11x0/sa11x0_com.c		sacom needs-flag
+
+# SA11[01]0 companion chips
+device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
+attach	sacc at saip
+file	arch/arm/sa11x0/sa1111.c		sacc
+
+# LCD
+#device	salcd: hpcfbif
+#attach	salcd at saip
+#file	arch/arm/sa11x0/sa11x0_lcd.c		salcd
+
+#device	sed: hpcfbif
+#attach	sed at saip
+#file	arch/arm/dev/sed_saip.c			sed
+
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+
+# XXX this is a hack to use dev/pcmcia without fdc.c
+device	fdc
+
+# PCMCIA
+include "dev/pcmcia/files.pcmcia"
+
+device	sacpcic: pcmciabus
+attach	sacpcic at sacc
+file	arch/arm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
+
+device	sagpcic: pcmciabus
+attach	sagpcic at saip
+file	arch/arm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
+
+file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
+
+# USB
+
+include "dev/mii/files.mii"
+include "dev/usb/files.usb"
