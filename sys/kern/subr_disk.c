@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.30 2001/07/09 10:54:12 simonb Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.31 2001/11/13 13:33:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *
  *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.31 2001/11/13 13:33:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
