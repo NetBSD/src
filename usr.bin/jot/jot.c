@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.7 2001/03/14 07:50:06 jdolecek Exp $	*/
+/*	$NetBSD: jot.c,v 1.8 2001/03/17 11:43:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.7 2001/03/14 07:50:06 jdolecek Exp $");
+__RCSID("$NetBSD: jot.c,v 1.8 2001/03/17 11:43:06 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -378,12 +378,12 @@ getformat()
 	sz = sizeof(format) - strlen(format) - 1;
 	if (!*p) {
 		if (chardata) {
-			if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
-				errx(1, "-w word too long");
-		} else {
 			if (strlcpy(p, "%c", sz) >= sz)
 				errx(1, "-w word too long");
 			dox = 1;
+		} else {
+			if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
+				errx(1, "-w word too long");
 		}
 	} else if (!*(p+1)) {
 		if (sz <= 0)
