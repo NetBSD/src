@@ -1,29 +1,29 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/27 15:16:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/10 16:14:37 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	Xmacppc
 BINMODE=4711
 
-MKMAN=	no
+MAN=	Xmacppc.1
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc
 
 .include "../Makefile.Xserver"
 
-LDADD+=	${LDADD.dix} ${LDADD.mi} ${LDADD.os} -lXau -lXdmcp ${LDADD.hw/netbsd/macppc} \
-	${LDADD.cfb} ${LDADD.mfb} \
+LDADD+=	${LDADD.dix} ${LDADD.mi} ${LDADD.os} -lXau -lXdmcp \
+	${LDADD.hw/netbsd/macppc} ${LDADD.cfb} ${LDADD.mfb} \
 	${LDADD.Xext/exts} ${LDADD.xkb} ${LDADD.xinput} ${LDADD.lbx} \
 	-llbxutil ${LDADD.randr} ${LDADD.render} ${LDADD.dix/xpstubs} \
 	${LDADD.mi} ${LDADD.Xext/exts} ${LDADD.xkb} ${LDADD.xinput} \
 	${LDADD.lbx} -llbxutil ${LDADD.randr} ${LDADD.render} \
-	${LDADD.hw/netbsd/macppc} ${LDADD.Xext/ext} ${LDADD.dbe} ${LDADD.record} \
-	${LDADD.GL/glx} ${LDADD.GL/GLcore} ${LDADD.xtrap} ${LIBCWRAPPER} \
-	-lXfont -lfreetype ${LDADD.dix/xpstubs} \
+	${LDADD.hw/netbsd/macppc} ${LDADD.Xext/ext} ${LDADD.dbe} \
+	${LDADD.record} ${LDADD.GL/glx} ${LDADD.GL/GLcore} ${LDADD.xtrap} \
+	${LIBCWRAPPER} -lXfont -lfreetype ${LDADD.dix/xpstubs} \
 	-lXext -lX11 -lz -lm
 
-DPADD+=	${DPADD.dix} ${DPADD.mi} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.hw/netbsd/macppc} \
-	${DPADD.cfb} ${DPADD.mfb} \
+DPADD+=	${DPADD.dix} ${DPADD.mi} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} \
+	${DPADD.hw/netbsd/macppc} ${DPADD.cfb} ${DPADD.mfb} \
 	${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} ${DPADD.lbx} \
 	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
 	${DPADD.mi} ${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} \
