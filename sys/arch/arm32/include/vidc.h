@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.h,v 1.13 2001/07/09 21:46:19 reinoud Exp $	*/
+/*	$NetBSD: vidc.h,v 1.14 2001/07/10 20:10:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -54,10 +54,6 @@
 
 #ifndef	_ARM32_VIDC_H_
 #define	_ARM32_VIDC_H_
-
-#if defined(_KERNEL_OPT)
-#include "opt_cputypes.h"
-#endif
 
 /* VIDC20 Base addresses */
 
