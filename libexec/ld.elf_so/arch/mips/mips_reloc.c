@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.30 2002/09/13 17:36:00 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.31 2002/09/13 19:27:19 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -272,5 +272,6 @@ int
 _rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
 {
+	/* PLT fixups were done above in the GOT relocation. */
 	return 0;
 }
