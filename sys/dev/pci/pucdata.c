@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.32 2002/10/29 08:59:36 chs Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.33 2003/09/28 07:22:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.32 2002/10/29 08:59:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.33 2003/09/28 07:22:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,6 +741,16 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xfffc,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers Quattro-PCI serial ports */
+	{   "Lava Quattro-PCI 4-port serial",
+	    {   0x1407, 0x0120, 0,	0	},
+	    {   0xffff, 0xfffc, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
