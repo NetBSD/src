@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.569 2003/04/27 12:45:37 fvdl Exp $
+# $NetBSD: mi,v 1.570 2003/04/27 15:28:25 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1296,6 +1296,8 @@
 ./usr/share/man/cat8/alpha/setnetbootinfo.0	man-sysutil-catman
 ./usr/share/man/cat8/altqd.0			man-router-catman
 ./usr/share/man/cat8/amd.0			man-amd-catman
+./usr/share/man/cat8/amd64/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/amd64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/binpatch.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/boot.0		man-sys-catman
@@ -1806,8 +1808,6 @@
 ./usr/share/man/cat8/x68k/newdisk.0		man-sysutil-catman
 ./usr/share/man/cat8/x68k/poffd.0		man-sysutil-catman
 ./usr/share/man/cat8/x68k/rtcalarm.0		man-sysutil-catman
-./usr/share/man/cat8/amd64/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/amd64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/yp.0			man-nis-catman
 ./usr/share/man/cat8/ypbind.0			man-nis-catman
 ./usr/share/man/cat8/ypinit.0			man-nis-catman
@@ -3088,6 +3088,8 @@
 ./usr/share/man/man8/alpha/setnetbootinfo.8	man-sysutil-man
 ./usr/share/man/man8/altqd.8			man-router-man
 ./usr/share/man/man8/amd.8			man-amd-man
+./usr/share/man/man8/amd64/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/amd64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/amiga/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/amiga/binpatch.8		man-sysutil-man
 ./usr/share/man/man8/amiga/boot.8		man-sys-man
@@ -3598,8 +3600,6 @@
 ./usr/share/man/man8/x68k/newdisk.8		man-sysutil-man
 ./usr/share/man/man8/x68k/poffd.8		man-sysutil-man
 ./usr/share/man/man8/x68k/rtcalarm.8		man-sysutil-man
-./usr/share/man/man8/amd64/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/amd64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/yp.8			man-nis-man
 ./usr/share/man/man8/ypbind.8			man-nis-man
 ./usr/share/man/man8/ypinit.8			man-nis-man
