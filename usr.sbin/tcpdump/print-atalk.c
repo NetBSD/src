@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.7 2000/04/04 05:44:35 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.8 2000/10/31 12:17:07 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: print-atalk.c,v 1.48 97/05/28 12:50:58 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.7 2000/04/04 05:44:35 itojun Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.8 2000/10/31 12:17:07 he Exp $");
 #endif
 #endif
 
@@ -522,7 +522,7 @@ ataddr_string(u_short atnet, u_char athost)
 {
 	register struct hnamemem *tp, *tp2;
 	register int i = (atnet << 8) | athost;
-	char nambuf[256];
+	char nambuf[MAXHOSTNAMELEN + 20];
 	static int first = 1;
 	FILE *fp;
 
@@ -569,7 +569,8 @@ ataddr_string(u_short atnet, u_char athost)
 		if (tp2->addr == i) {
 			tp->addr = (atnet << 8) | athost;
 			tp->nxt = newhnamemem();
-			(void)sprintf(nambuf, "%s.%d", tp2->name, athost);
+			(void)snprintf(nambuf, sizeof(nambuf), 
+					"%s.%d", tp2->name, athost);
 			tp->name = savestr(nambuf);
 			return (tp->name);
 		}

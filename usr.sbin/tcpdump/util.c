@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2000/08/01 17:29:48 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2000/10/31 12:17:07 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: util.c,v 1.58 97/05/09 14:52:17 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: util.c,v 1.7 2000/08/01 17:29:48 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.8 2000/10/31 12:17:07 he Exp $");
 #endif
 #endif
 
@@ -161,7 +161,7 @@ tok2str(register const struct tok *lp, register const char *fmt,
 	}
 	if (fmt == NULL)
 		fmt = "#%d";
-	(void)sprintf(buf, fmt, v);
+	(void)snprintf(buf, sizeof(buf), fmt, v);
 	return (buf);
 }
 
