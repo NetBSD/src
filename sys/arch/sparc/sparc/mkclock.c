@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.5 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: mkclock.c,v 1.6 2003/03/02 21:42:48 pk Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -267,8 +267,8 @@ mk_nvram_wenable(onoff)
 {
 	int s;
 	vm_prot_t prot;/* nonzero => change prot */
-	int npages;
 	vaddr_t base;
+	vsize_t size;
 	static int writers;
 
 	s = splhigh();
@@ -278,10 +278,10 @@ mk_nvram_wenable(onoff)
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
 
-	npages = round_page((vsize_t)mk_nvram_size) << PAGE_SHIFT;
+	size = round_page((vsize_t)mk_nvram_size);
 	base = trunc_page((vaddr_t)mk_nvram_base);
 	if (prot)
-		pmap_changeprot(pmap_kernel(), base, prot, npages);
+		pmap_kprotect(base, size, prot);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.79 2003/01/23 22:33:41 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.80 2003/03/02 21:42:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -487,13 +487,12 @@ inst_fasttrap(int level, void (*vec)(void))
 	s = splhigh();
 
 	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
-	    VM_PROT_READ|VM_PROT_WRITE, 1);
+	pmap_kprotect((vaddr_t)tv & -NBPG, NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	cpuinfo.cache_flush_all();
 	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
 	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
 	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
+	pmap_kprotect((vaddr_t)tv & -NBPG, NBPG, VM_PROT_READ);
 	cpuinfo.cache_flush_all();
 	fastvec |= 1 << level;
 	splx(s);
@@ -516,13 +515,12 @@ uninst_fasttrap(int level)
 		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
 
 	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
-	    VM_PROT_READ|VM_PROT_WRITE, 1);
+	pmap_kprotect((vaddr_t)tv & -NBPG, NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	cpuinfo.cache_flush_all();
 	tv->tv_instr[0] = I_MOVi(I_L3, level);
 	tv->tv_instr[1] = I_BA(0, displ);
 	tv->tv_instr[2] = I_RDPSR(I_L0);
-	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
+	pmap_kprotect((vaddr_t)tv & -NBPG, NBPG, VM_PROT_READ);
 	cpuinfo.cache_flush_all();
 	fastvec &= ~(1 << level);
 	splx(s);
