@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.28 1998/09/28 15:44:18 ws Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.29 1998/10/02 17:23:22 ws Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.28 1998/09/28 15:44:18 ws Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.29 1998/10/02 17:23:22 ws Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -666,17 +666,21 @@ change_part(part, csysid, cstart, csize)
 	partp = &mboot.parts[part];
 
 	if (s_flag) {
-		partp->dp_typ = csysid;
+		if (csysid == 0 && cstart == 0 && csize == 0)
+			memset(partp, 0, sizeof *partp);
+		else {
+			partp->dp_typ = csysid;
 #if 0
-		checkcyl(cstart / dos_cylindersectors);
+			checkcyl(cstart / dos_cylindersectors);
 #endif
-		putlong(&partp->dp_start, cstart);
-		putlong(&partp->dp_size, csize);
-		dos(getlong(&partp->dp_start),
-		    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-		dos(getlong(&partp->dp_start)
-		    + getlong(&partp->dp_size) - 1,
-		    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+			putlong(&partp->dp_start, cstart);
+			putlong(&partp->dp_size, csize);
+			dos(getlong(&partp->dp_start),
+			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
+			dos(getlong(&partp->dp_start)
+			    + getlong(&partp->dp_size) - 1,
+			    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+		}
 		if (f_flag)
 			return;
 	}
@@ -728,14 +732,22 @@ change_part(part, csysid, cstart, csize)
 			partp->dp_esect = DOSSECT(tsector, tcylinder);
 		} else {
 
+			if (partp->dp_typ == 0
+			    && getlong(&partp->dp_start) == 0
+			    && getlong(&partp->dp_size) == 0)
+				memset(partp, 0, sizeof *partp);
+			else {
 #if 0
-			checkcyl(getlong(&partp->dp_start) / dos_cylindersectors);
+				checkcyl(getlong(&partp->dp_start)
+					 / dos_cylindersectors);
 #endif
-			dos(getlong(&partp->dp_start),
-			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-			dos(getlong(&partp->dp_start)
-			    + getlong(&partp->dp_size) - 1,
-			    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+				dos(getlong(&partp->dp_start), &partp->dp_scyl,
+				    &partp->dp_shd, &partp->dp_ssect);
+				dos(getlong(&partp->dp_start)
+				    + getlong(&partp->dp_size) - 1,
+				    &partp->dp_ecyl, &partp->dp_ehd,
+				    &partp->dp_esect);
+			}
 		}
 
 		print_part(part);
