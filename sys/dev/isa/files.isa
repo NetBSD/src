@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.91 1999/10/29 21:38:04 matt Exp $
+#	$NetBSD: files.isa,v 1.92 1999/11/15 21:13:38 mcr Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -43,6 +43,11 @@ file	dev/isa/boca.c			boca
 device	rtfps: commulti
 attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
+
+# BOCA 6-port board (3x 16552)
+device  ioat: commulti
+attach  ioat at isa
+file    dev/isa/ioat66.c                ioat
 
 #
 # Serial and parallel drivers
