@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.8 2003/05/08 08:35:40 martin Exp $ */
+/* $NetBSD: monitor.c,v 1.9 2003/05/13 07:07:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -833,16 +833,20 @@ monitor_command(struct monitor_connection * con, int fd, int rights)
 	};
 #define	NUMCMD	(sizeof cmd_tab / sizeof cmd_tab[0])
 
-	int avail, bytes;
+	int avail, bytes, err;
 
 	/* Network transfer may deliver two or more packets concatenated.
 	 * Peek at the header and read only one event at a time... */
 
-	ioctl(fd, FIONREAD, &avail);
+	avail = 0;
+	err = ioctl(fd, FIONREAD, &avail);
 
-	if (avail < I4B_MON_CMD_HDR)
+	if (err == -1 || avail < I4B_MON_CMD_HDR)
 	{
-		if (avail == 0)
+		if (err == -1 && errno == EINTR)
+			return 0;	/* try again later */
+
+		if (err == -1 || avail == 0)
 		{
 			/* logit(LL_MER, "monitor read 0 bytes"); */
 			/* socket closed by peer */
