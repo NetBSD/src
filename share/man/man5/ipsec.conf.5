@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.conf.5,v 1.1 2001/02/23 02:32:27 hubertf Exp $
+.\"	$NetBSD: ipsec.conf.5,v 1.2 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,11 +38,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-file is read at system startup time if 
+file is read at system startup time if
 .Sy ipsec
-is set to 
+is set to
 .Dq yes
-in 
+in
 .Xr rc.conf 5 .
 .Xr setkey 8
 is run with the
@@ -51,7 +51,7 @@ option to load in IPsec manual keys and policies from
 .Pa /etc/ipsec.conf
 at boot time, before any interfaces are configured.
 .Pp
-Please see the 
+Please see the
 .Xr setkey 8
 manpage for all the commands available.
 .Sh FILES
