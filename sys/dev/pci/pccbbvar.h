@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.10 2000/03/15 00:38:40 haya Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.11 2000/03/22 09:35:08 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -155,6 +155,7 @@ struct pccbb_softc {
 
 	/* interrupt handler list on the bridge */
 	struct pccbb_intrhand_list *sc_pil;
+	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
 };
 
 /*
