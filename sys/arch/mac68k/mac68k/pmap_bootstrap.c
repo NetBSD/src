@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 1995/07/19 16:39:03 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12 1995/07/23 21:54:47 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -429,11 +429,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	Sysmap = (pt_entry_t *)mac68k_ptob(nptpages * NPTEPG);
 
-	/*
-	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
-	 * IIOMAPSIZE pages prior to external IO space at end of static
-	 * kernel page table. XXX update me.
-	 */
 	IOBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
 			(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
 
@@ -442,6 +437,10 @@ pmap_bootstrap(nextpa, firstpa)
 	oldROMBase = ROMBase;
 	ROMBase = (char *)mac68k_ptob(nptpages*NPTEPG -
 					(ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
+
+	if (mac68k_machine.do_graybars)
+		printf("Moving ROMBase from 0x%x to 0x%x.\n",
+			oldROMBase, ROMBase);
 
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
@@ -580,16 +579,27 @@ bootstrap_mac68k(tc)
 {
 	extern caddr_t	esym;
 	extern u_long	videoaddr, boothowto;
+	u_long		newvideoaddr = 0;
 	vm_offset_t	nextpa;
 
+	if (mac68k_machine.do_graybars)
+		printf("Bootstrapping NetBSD/mac68k.\n");
+
 	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
+
+		if (mac68k_machine.do_graybars)
+			printf("Getting mapping from MMU.\n");
 		get_mapping();
+		if (mac68k_machine.do_graybars)
+			printf("Done.\n");
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
 		nbnumranges = 0;
 		numranges = 1;
 		low[0] = 0;
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
+		if (mac68k_machine.do_graybars)
+			printf("Faked range to byte 0x%x.\n", high[0]);
 	}
 	nextpa = load_addr + ((int)esym + NBPG - 1) & PG_FRAME;
 
@@ -601,18 +611,32 @@ bootstrap_mac68k(tc)
 		if ((v = mfs_initminiroot(nextpa-load_addr)) == 0) {
 			printf("Error loading miniroot.\n");
 		}
+		if (mac68k_machine.do_graybars)
+			printf("Loaded %d byte miniroot.\n", v);
 		nextpa += v;
 	}
 #endif
 
+	if (mac68k_machine.do_graybars)
+		printf("Bootstrapping the pmap system.\n");
+
 	pmap_bootstrap(nextpa, load_addr);
 
+	if (mac68k_machine.do_graybars)
+		printf("Pmap bootstrapped.\n");
+
 	if (mac68k_vidlog)
-		videoaddr = mac68k_vidlog;
+		newvideoaddr = mac68k_vidlog;
 	else {
 		if (NBBASE <= videoaddr && videoaddr <= NBTOP)
-			videoaddr = videoaddr - NBBASE + NuBusBase;
+			newvideoaddr = videoaddr - NBBASE + NuBusBase;
 		else
 			panic("Don't know how to relocate video!\n");
 	}
+
+	if (mac68k_machine.do_graybars)
+		printf("Video address 0x%x -> 0x%x.\n",
+			videoaddr, newvideoaddr);
+
+	videoaddr = newvideoaddr;
 }
