@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2000/08/08 19:06:52 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.87 2000/08/27 14:14:50 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -410,6 +410,7 @@ pmap_create()
 	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK);
 	bzero(pmap, sizeof(struct pmap));
 	pmap_pinit(pmap);
+	simple_lock_init(&pmap->pm_lock);
 	return(pmap);
 }
 
@@ -702,8 +703,6 @@ if (startpmapdebug)
 			newpte = (p >> VAX_PGSHIFT) |
 			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		}
-		if (flags & PMAP_WIRED)
-			newpte |= PG_W;
 
 		/*
 		 * Check if a pte page must be mapped in.
@@ -742,6 +741,8 @@ if (startpmapdebug)
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
 	}
+	if (flags & PMAP_WIRED)
+		newpte |= PG_W;
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
