@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.21 1998/01/31 12:37:55 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.22 2001/01/07 22:19:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.21 1998/01/31 12:37:55 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.22 2001/01/07 22:19:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ fmtstr(va_alist)
  * Formatted output.  This routine handles a subset of the printf formats:
  * - Formats supported: d, u, o, p, X, s, and c.
  * - The x format is also accepted but is treated like X.
- * - The l and q modifiers are accepted.
+ * - The l, ll and q modifiers are accepted.
  * - The - and # flags are accepted; # only works with the o format.
  * - Width and precision may be specified with any format except c.
  * - An * may be given for the width or precision.
@@ -404,8 +404,12 @@ doformat(dest, f, ap)
 			}
 		}
 		if (*f == 'l') {
-			islong++;
 			f++;
+			if (*f == 'l') {
+				isquad++;
+				f++;
+			} else
+				islong++;
 		} else if (*f == 'q') {
 			isquad++;
 			f++;
