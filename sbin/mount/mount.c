@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.22 1995/07/12 06:05:04 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.23 1995/08/22 19:58:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.22 1995/07/12 06:05:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.23 1995/08/22 19:58:33 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ main(argc, argv)
 
 	all = forceall = init_flags = 0;
 	options = NULL;
-	vfstype = "ufs";
+	vfstype = "ffs";
 	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != EOF)
 		switch (ch) {
 		case 'A':
@@ -544,9 +544,9 @@ usage()
 
 	(void)fprintf(stderr,
 		"usage: mount %s %s\n       mount %s\n       mount %s\n",
-		"[-dfruvw] [-o options] [-t ufs | external_type]",
+		"[-dfruvw] [-o options] [-t ffs | external_type]",
 			"special node",
-		"[-adfruvw] [-t ufs | external_type]",
+		"[-adfruvw] [-t ffs | external_type]",
 		"[-dfruvw] special | node");
 	exit(1);
 }
