@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.25 2002/10/14 13:43:29 wiz Exp $
+.\"	$NetBSD: pool.9,v 1.26 2002/11/12 15:45:42 minoura Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Fd #include \*[Lt]sys/pool.h\*[Gt]
 .Ft void
 .Fo pool_init
-.Fa "struct pool *"
+.Fa "struct pool *pp"
 .Fa "size_t size"
 .Fa "u_int align"
 .Fa "u_int align_offset"
@@ -140,7 +140,7 @@ The arguments are:
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa flags
-One or more of of
+One or more of
 .Dv PR_URGENT ,
 .Dv PR_WAITOK
 or
