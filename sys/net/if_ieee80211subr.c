@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.18 2002/10/01 09:28:10 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.19 2002/10/04 04:25:05 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.18 2002/10/01 09:28:10 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.19 2002/10/04 04:25:05 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -230,10 +230,14 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
+	struct ether_header *eh;
 	void (*rh)(struct ieee80211com *, struct mbuf *, int, u_int);
+	struct mbuf *m1;
+	int error, len;
 	u_int8_t dir, subtype;
 	u_int8_t *bssid;
 	u_int16_t rxseq;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/* trim CRC here for WEP can find its own CRC at the end of packet. */
 	if (m->m_flags & M_HASFCS) {
@@ -325,6 +329,30 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		case IEEE80211_M_HOSTAP:
 			if (dir != IEEE80211_FC1_DIR_TODS)
 				goto out;
+			/* check if source STA is associated */
+			ni = ieee80211_find_node(ic, wh->i_addr2);
+			if (ni == NULL) {
+				DPRINTF(("ieee80211_input: "
+				    "data from unknown src %s\n",
+				    ether_sprintf(wh->i_addr2)));
+				if ((ni = ieee80211_alloc_node(ic, wh->i_addr2,
+				    1)) != NULL) {
+					IEEE80211_SEND_MGMT(ic, ni,
+					    IEEE80211_FC0_SUBTYPE_DEAUTH,
+					    IEEE80211_REASON_NOT_AUTHED);
+					ieee80211_free_node(ic, ni);
+				}
+				goto err;
+			}
+			if (ni->ni_associd == 0) {
+				DPRINTF(("ieee80211_input: "
+				    "data from unassoc src %s\n",
+				    ether_sprintf(wh->i_addr2)));
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DISASSOC,
+				    IEEE80211_REASON_NOT_ASSOCED);
+				goto err;
+			}
 			break;
 		}
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -344,12 +372,53 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL)
 			goto err;
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
 		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, m);
+
+		/* perform as a bridge within the AP */
+		m1 = NULL;
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			eh = mtod(m, struct ether_header *);
+			if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+				m1 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+				if (m1 == NULL)
+					ifp->if_oerrors++;
+				else
+					m1->m_flags |= M_MCAST;
+			} else {
+				ni = ieee80211_find_node(ic, eh->ether_dhost);
+				if (ni != NULL && ni->ni_associd != 0) {
+					m1 = m;
+					m = NULL;
+				}
+			}
+			if (m1 != NULL) {
+#ifdef ALTQ
+				if (ALTQ_IS_ENABLED(&ifp->if_snd))
+					altq_etherclassify(&ifp->if_snd, m1,
+					    &pktattr);
+#endif
+				len = m1->m_pkthdr.len;
+				IFQ_ENQUEUE(&ifp->if_snd, m1, &pktattr, error);
+				if (error)
+					ifp->if_oerrors++;
+				else {
+					if (m != NULL)
+						ifp->if_omcasts++;
+					ifp->if_obytes += len;
+				}
+			}
+		}
+		if (m != NULL) {
+#if NBPFILTER > 0
+			/*
+			 * If we forward packet into transmitter of the AP,
+			 * we don't need to duplicate for DLT_EN10MB.
+			 */
+			if (ifp->if_bpf && m1 == NULL)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
+			(*ifp->if_input)(ifp, m);
+		}
 		return;
 
 	case IEEE80211_FC0_TYPE_MGT:
@@ -452,6 +521,9 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */
 		if (ic->ic_opmode == IEEE80211_M_IBSS ||
+#ifdef IEEE80211_DEBUG
+		    ieee80211_debug > 1 ||
+#endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			printf("%s: sending %s to %s\n", ifp->if_xname,
