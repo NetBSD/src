@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.1.1.1 1995/03/26 07:12:15 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.2 1995/03/28 06:35:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -96,15 +96,46 @@ struct bitmap {
  * Colormap stuff.
  */
 struct colormap {
-    u_short	nentries;	/* number of entries in the map		*/
-    u_short	*centry;	/* actual colormap			*/
+    u_char	type;		/* what type of entries these are.	*/
+    union {
+        u_char	grey;		/* CM_GREYSCALE				*/
+        struct {		/* CM_COLOR				*/
+            u_char	red;
+            u_char	green;
+            u_char	blue;
+        } rgb_mask;
+    } valid_mask;
+    u_short	first;		/* color register entry[0] refers to	*/
+    u_short	size;		/* number of entries			*/
+    u_long	*entry;		/* the table of actual color values	*/
 };
 
 /*
+ * Mask short-hands
+ */
+#define grey_mask  valid_mask.grey
+#define red_mask   valid_mask.rgb_mask.red
+#define green_mask valid_mask.rgb_mask.green
+#define blue_mask  valid_mask.rgb_mask.blue
+
+enum colormap_type {
+	CM_MONO,		/* only on or off allowed		*/
+	CM_GREYSCALE,		/* grey values				*/
+	CM_COLOR		/* RGB values				*/
+};
+
+#define	MAX_CENTRIES		256		/* that all there is	*/
+/*
  * Create a colormap entry
  */
-#define	MAKE_CENTRY(r,g,b)	(((r & 0xf)<<8)|((g & 0xf)<<4)|(b & 0xf))
-#define	MAX_CENTRIES		256		/* that all there is	*/
+#define	MAKE_COLOR_ENTRY(r,g,b)	(((r & 0xff)<<16)|((g & 0xff)<<8)|(b & 0xf))
+#define MAKE_MONO_ENTRY(x)	((x) ? 1 : 0)
+#define MAKE_GREY_ENTRY(l)	(l & 0xff)
+
+#define CM_LTOW(v) \
+    (((0x000f0000 & (v)) >> 8) | ((0x00000f00 & (v)) >> 4) | (0xf & (v)))
+#define CM_WTOL(v) \
+    (((0xf00 & (v)) << 8) | ((0x0f0 & (v)) << 4) | (0xf & (v)))
 
 /* display mode */
 struct display_mode {
