@@ -55,7 +55,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$Id: netdb.h,v 1.7 1997/04/13 09:26:21 mrg Exp $
+ *	$NetBSD: netdb.h,v 1.8 1997/10/13 09:26:06 lukem Exp $
  */
 
 #ifndef _NETDB_H_

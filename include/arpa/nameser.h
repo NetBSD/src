@@ -77,7 +77,7 @@
 
 /*
  *      @(#)nameser.h	8.1 (Berkeley) 6/2/93
- *	$Id: nameser.h,v 1.9 1997/04/13 09:26:24 mrg Exp $
+ *	$NetBSD: nameser.h,v 1.10 1997/10/13 09:26:09 lukem Exp $
  */
 
 #ifndef _NAMESER_H_
