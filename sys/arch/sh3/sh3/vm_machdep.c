@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.6.5 2002/12/16 16:20:00 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.6.6 2002/12/18 17:09:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -109,20 +109,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
 	 * cause virtual-aliasing.
 	 */
-	if (CPU_IS_SH3) {
+	if (CPU_IS_SH3)
 		pcb = (struct pcb *)P1ADDR((vaddr_t)&l2->l_addr->u_pcb);
-		l2->l_md.md_pcb = pcb;
-		fptop = (vaddr_t)pcb + NBPG;
-	}
 #endif /* SH3 */
 #ifdef SH4
 	/* SH4 can make wired entry, no need to convert to P1. */
-	if (CPU_IS_SH4) {
+	if (CPU_IS_SH4)
 		pcb = &l2->l_addr->u_pcb;
-		l2->l_md.md_pcb = pcb;
-		fptop = (vaddr_t)pcb + NBPG;
-	}
 #endif /* SH4 */
+
+	l2->l_md.md_pcb = pcb;
+	fptop = (vaddr_t)pcb + NBPG;
 
 	/* set up the kernel stack pointer */
 	spbase = (vaddr_t)l2->l_addr + NBPG;
@@ -197,10 +194,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	vaddr_t spbase;
-#ifdef KSTACK_DEBUG
-	vaddr_t fptop;
-#endif
+	vaddr_t fptop, spbase;
 
 #ifdef SH3
 	/*
@@ -209,17 +203,16 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	 * exception. For SH3, we are 4K page, P3/P1 conversion don't
 	 * cause virtual-aliasing.
 	 */
-	if (CPU_IS_SH3) {
+	if (CPU_IS_SH3)
 		pcb = (struct pcb *)P1ADDR((vaddr_t)&l->l_addr->u_pcb);
-	}
 #endif /* SH3 */
 #ifdef SH4
 	/* SH4 can make wired entry, no need to convert to P1. */
-	if (CPU_IS_SH4) {
+	if (CPU_IS_SH4)
 		pcb = &l->l_addr->u_pcb;
-	}
 #endif /* SH4 */
 
+	fptop = (vaddr_t)pcb + NBPG;
 	l->l_md.md_pcb = pcb;
 
 	/* set up the kernel stack pointer */
@@ -247,12 +240,14 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 #ifdef KSTACK_DEBUG
 	/* Fill magic number for tracking */
-	fptop = (vaddr_t)pcb + NBPG;
 	memset((char *)fptop - NBPG + sizeof(struct user), 0x5a,
 	    NBPG - sizeof(struct user));
 	memset((char *)spbase, 0xa5, (USPACE - NBPG));
 	memset(&pcb->pcb_sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */
+
+	l->l_md.md_regs = tf = (struct trapframe *)fptop - 1;
+	tf->tf_ssr = PSL_USERSET;
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;
