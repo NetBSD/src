@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.72 2000/12/03 12:29:28 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.73 2000/12/19 10:42:04 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 maxusers	8
 
@@ -352,3 +352,4 @@ pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation

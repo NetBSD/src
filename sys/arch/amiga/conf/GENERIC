@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.151 2000/10/04 20:38:11 is Exp $
+#	$NetBSD: GENERIC,v 1.152 2000/12/19 10:42:02 bouyer Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.151 $"
+#ident 		"GENERIC-$Revision: 1.152 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -443,6 +443,7 @@ pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
