@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.20 2004/12/27 01:51:49 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.19 2004/12/23 06:08:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.20 2004/12/27 01:51:49 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -308,31 +308,24 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 	/* RTS is always sent at 1 Mb/s.  (XXX Really?) */
 	d->d_rts_plcp_len = sizeof(struct ieee80211_frame_rts) * 8;
 #endif
-	d->d_plcp_svc = 0;
+	d->d_residue = 0;
+	data_dur = (bitlen * 2) / rate;
 
 	switch (rate) {
 	case 2:		/* 1 Mb/s */
 	case 4:		/* 2 Mb/s */
-		data_dur = (bitlen * 2) / rate;
-
 		/* 1 - 2 Mb/s WLAN: send ACK/CTS at 1 Mb/s */
 		cts = IEEE80211_DUR_DS_SLOW_CTS;
 		ack = IEEE80211_DUR_DS_SLOW_ACK;
 		break;
-	case 44:	/* 22  Mb/s */
-		d->d_plcp_svc = IEEE80211_PLCP_SERVICE_PBCC;
-		/*FALLTHROUGH*/
 	case 11:	/* 5.5 Mb/s */
 	case 22:	/* 11  Mb/s */
+	case 44:	/* 22  Mb/s */
 		remainder = (bitlen * 2) % rate;
-
-		if (remainder != 0)
-			data_dur = (bitlen * 2) / rate + 1;
-		else
-			data_dur = (bitlen * 2) / rate;
-
-		if (rate == 22 && remainder <= 6)
-			d->d_plcp_svc |= IEEE80211_PLCP_SERVICE_LENEXT;
+		if (remainder != 0) {
+			data_dur++;
+			d->d_residue = (rate - remainder) / 16;
+		}
 
 		/* 5.5 - 11 Mb/s WLAN: send ACK/CTS at 2 Mb/s */
 		cts = IEEE80211_DUR_DS_FAST_CTS;
