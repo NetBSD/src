@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.19 2003/07/15 00:04:55 lukem Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.20 2003/11/11 15:01:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.19 2003/07/15 00:04:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.20 2003/11/11 15:01:05 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -100,14 +100,6 @@ extern struct cfdriver le_cd;
 #include "opt_ddb.h"
 #endif
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
 static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 
@@ -117,9 +109,11 @@ lewrcsr(sc, port, val)
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t t = lesc->sc_bustag;
+	bus_space_handle_t h = lesc->sc_reg;
 
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, val);
+	bus_space_write_2(t, h, LEREG1_RAP, port);
+	bus_space_write_2(t, h, LEREG1_RDP, val);
 }
 
 static u_int16_t
@@ -128,9 +122,11 @@ lerdcsr(sc, port)
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t t = lesc->sc_bustag;
+	bus_space_handle_t h = lesc->sc_reg;
 
-	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
-	return (bus_space_read_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP));
+	bus_space_write_2(t, h, LEREG1_RAP, port);
+	return (bus_space_read_2(t, h, LEREG1_RDP));
 }
 
 int
