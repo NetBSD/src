@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.49 2002/05/15 18:13:01 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.50 2002/05/16 01:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -50,6 +50,7 @@
  */
 typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
+struct pci_softc;
 
 #ifdef _KERNEL
 /*
@@ -69,6 +70,12 @@ struct pcibus_attach_args {
 	int		pba_flags;	/* flags; see below */
 
 	int		pba_bus;	/* PCI bus number */
+
+	/*
+	 * Pointer to the pcitag of our parent bridge.  If there is no
+	 * parent bridge, then we assume we are a root bus.
+	 */
+	pcitag_t	*pba_bridgetag;
 
 	/*
 	 * Interrupt swizzling information.  These fields
@@ -143,6 +150,7 @@ struct pci_softc {
 	bus_dma_tag_t sc_dmat; 
 	pci_chipset_tag_t sc_pc; 
 	int sc_bus, sc_maxndevs;
+	pcitag_t *sc_bridgetag;
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 	int sc_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34 2002/05/15 17:30:04 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35 2002/05/16 01:01:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -171,6 +171,7 @@ void		*auxp;
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= &pci_bus_dma_tag;
 	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.63 2002/05/06 22:41:10 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.64 2002/05/16 01:01:41 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -45,19 +45,6 @@ attach	psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
-
-#
-# OF PCI stuff
-#
-
-device	ofpci: pci
-attach	ofpci at pcibus
-file	arch/sparc64/dev/ofpci.c		ofpci needs-flag
-
-# PCI-PCI bridge chips
-device	ofppb: pcibus
-attach	ofppb at pci
-file	arch/sparc64/dev/ofppb.c		ofppb
 
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho
