@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.26 2001/01/23 20:31:28 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.27 2001/01/25 21:41:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -723,7 +723,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 				 * move to a new virtual page.
 				 */
 				offset = (segs[i].ds_addr & PGOFSET);
-				if (trunc_page(pa) != trunc_page(segs[i].ds_addr)) 
+				if (trunc_page(pa) != trunc_page(segs[i].ds_addr))
 					dvmaddr += NBPG;
 
 				pa = segs[i].ds_addr;
@@ -734,6 +734,11 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 			}
 		}
 		map->dm_nsegs = i;
+
+		if (i > map->_dm_segcnt) {
+			iommu_dvmamap_unload(t, is, map);
+			return (E2BIG);
+		}
 
 		return (0);
 	}
