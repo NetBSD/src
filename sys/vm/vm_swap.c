@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.16 1997/05/11 14:09:30 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.17 1997/05/11 19:31:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -114,6 +114,7 @@ struct swapdev {
 	int			swd_mapsize;
 	struct extent		*swd_ex;
 	struct vnode		*swd_vp;
+	int			swd_bsize;
 	CIRCLEQ_ENTRY(swapdev)	swd_next;
 };
 
@@ -402,6 +403,11 @@ swap_on(p, sdp)
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			goto bad;
 		nblks = (int)btodb(va.va_size);
+		if ((error =
+		     VFS_STATFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
+			goto bad;
+
+		sdp->swd_bsize = btodb(vp->v_mount->mnt_stat.f_iosize);
 #else
 		error = ENXIO;
 		goto bad;
@@ -646,48 +652,95 @@ swwrite(dev, uio, ioflag)
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
+int doswvnlock = 0;
+
 void
 swstrategy(bp)
 	struct buf *bp;
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
-	daddr_t addr;
+	daddr_t nbn;
+	int bn, off, nra, error;
 
-	addr = bp->b_blkno;
-	sdp = swap_getsdpfromaddr(addr);
+	bn = bp->b_blkno;
+	sdp = swap_getsdpfromaddr(bn);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
-	bp->b_lblkno = bp->b_blkno = addr - sdp->swd_mapoffset;
+
+	bn -= sdp->swd_mapoffset;
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("swstrategy(%s): mapoff %x, addr %x, blkno %d\n",
+		printf("swstrategy(%s): mapoff %x, bn %x, bcount %ld\n",
 			((bp->b_flags & B_READ) == 0) ? "write" : "read",
-			sdp->swd_mapoffset, addr, bp->b_lblkno);
+			sdp->swd_mapoffset, bn, bp->b_bcount);
 #endif
 
-	VHOLD(sdp->swd_vp);
-	if ((bp->b_flags & B_READ) == 0) {
-		if ((vp = bp->b_vp) != NULL) {
-			vp->v_numoutput--;
-			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-				vp->v_flag &= ~VBWAIT;
-				wakeup((caddr_t)&vp->v_numoutput);
-			}
+	switch (sdp->swd_vp->v_type) {
+	default:
+		panic("swstrategy: vnode type %x", sdp->swd_vp->v_type);
+	case VBLK:
+		bp->b_blkno = bn;
+		vp = sdp->swd_vp;
+		bp->b_dev = sdp->swd_dev;
+		break;
+	case VREG:
+		/*
+		 * Translate the device logical block numbers into physical
+		 * block numbers of the underlying filesystem device.
+		 */
+		off = bn % sdp->swd_bsize;
+		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
+		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
+				 &vp, &nbn, &nra);
+		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
+		if (error == 0 && (long)nbn == -1)
+			error = EIO;
+
+		if (error != 0) {
+			bp->b_error = error;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+			return;
 		}
-		sdp->swd_vp->v_numoutput++;
+
+		if (btodb(bp->b_bcount) <= off + (1 + nra) * sdp->swd_bsize) {
+			/*
+			 * The requested blocks can be had with one transaction.
+			 */
+			bp->b_blkno = nbn + off;
+			bp->b_dev = (vp->v_type == VBLK || vp->v_type == VCHR)
+				? vp->v_rdev
+				: NODEV;
+			break;
+		}
+
+		/* Must break into more than one transfer */
+	printf("swstrategy: EFBIG: %ld\n", bp->b_bcount);
+		bp->b_error = EFBIG;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return;
+
+	}
+
+	VHOLD(vp);
+	if ((bp->b_flags & B_READ) == 0) {
+		int s = splbio();
+		vwakeup(bp);
+		vp->v_numoutput++;
+		splx(s);
 	}
 
 	if (bp->b_vp != NULL)
 		brelvp(bp);
-	bp->b_vp = sdp->swd_vp;
-	if (bp->b_vp->v_type == VBLK)
-		bp->b_dev = sdp->swd_dev;
+
+	bp->b_vp = vp;
 	VOP_STRATEGY(bp);
 }
 
@@ -696,7 +749,6 @@ swapinit()
 {
 	struct buf *sp = swbuf;
 	struct proc *p = &proc0;       /* XXX */
-	u_long size, addr;
 	int i;
 
 #ifdef SWAPDEBUG
@@ -707,21 +759,14 @@ swapinit()
 	nswapdev = 0;
 
 	LIST_INIT(&swap_priority);
+
 	/*
-	 * XXX
-	 * this is really just wanting to create a Large Address Space
-	 * that we can map each swap devive into.  if VM_{MIN,MAX}_ADDRESS
-	 * are bad things to use here, change it!
+	 * Create swap block resource map. The range [1..INT_MAX] allows
+	 * for a grand total of 2 gigablocks of swap resource.
+	 * (start at 1 because "block #0" will be interpreted as
+	 *  an allocation failure).
 	 */
-	size = VM_MAX_ADDRESS - VM_MIN_ADDRESS;
-	addr = VM_MIN_ADDRESS;
-	if (addr == 0)
-		addr = 0x1000;	/* So we can't have 0 as a valid address */
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWALLOC)
-		printf("swapinit: swapmap size=%08lx addr=%08lx\n", size, addr);
-#endif
-	swapmap = extent_create("swapmap", addr, addr + size,
+	swapmap = extent_create("swapmap", 1, INT_MAX,
 				M_VMSWAP, 0, 0, EX_WAITOK);
 	if (swapmap == 0)
 		panic("swapinit: extent_create failed");
