@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.24 1997/12/05 14:01:07 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.25 1997/12/05 14:26:27 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -269,11 +269,11 @@ get_via_ftp (void)
 		}
 		snprintf (filename, SSTRSIZE, "%s%s", list->name, dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s",
+			ret = run_prog("/usr/bin/ftp -a 'ftp://%s/%s/%s'",
 				       ftp_host, ftp_dir,
 				       filename);
 		else
-			ret = run_prog("/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
+			ret = run_prog("/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
 				       ftp_user, ftp_pass, ftp_host, ftp_dir,
 				       filename);
 		if (ret) {
