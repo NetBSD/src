@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.24 2000/06/28 17:13:04 mrg Exp $	*/
+/*	$NetBSD: siop.c,v 1.25 2000/07/19 16:07:00 pk Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1072,7 +1072,7 @@ siop_handle_reset(sc)
 	siop_reset(sc);
 	TAILQ_INIT(&reset_list);
 	/* find all active commands */
-	for (target = 0; target < sc->sc_link.scsipi_scsi.max_target;
+	for (target = 0; target <= sc->sc_link.scsipi_scsi.max_target;
 	    target++) {
 		if (sc->targets[target] == NULL)
 			continue;
