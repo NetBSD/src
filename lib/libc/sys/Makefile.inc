@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.156 2005/02/26 18:04:19 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.157 2005/03/18 11:23:44 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -73,9 +73,8 @@ ASM=	access.S acct.S \
 		mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
 		munlock.S munlockall.S munmap.S \
 	nfssvc.S ntp_gettime.S \
-	pathconf.S pmc_get_info.S pmc_control.S pollts.S __posix_chown.S \
+	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
-		pselect.S \
 	quotactl.S \
 	rasctl.S readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
@@ -96,7 +95,7 @@ ASM=	access.S acct.S \
 WEAKASM= accept.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
 	kill.S msgrcv.S msgsnd.S __msync13.S \
-	nanosleep.S open.S poll.S read.S readv.S \
+	nanosleep.S open.S poll.S pollts.S pselect.S read.S readv.S \
 	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S
 
