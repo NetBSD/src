@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.11 2001/07/01 01:57:29 gmcgarry Exp $ */
+/*	$NetBSD: if_xi.c,v 1.12 2001/07/07 16:50:14 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -1383,8 +1383,7 @@ xi_ether_ioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 					LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-					LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 					ifp->if_addrlen);
 			/* Set new address. */
 			xi_init(sc);
