@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.17 2002/01/31 22:43:57 tv Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.18 2002/02/05 22:03:01 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.17 2002/01/31 22:43:57 tv Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.18 2002/02/05 22:03:01 christos Exp $");
 #endif
 #endif
 
@@ -384,10 +384,11 @@ penumdef(def)
 	enumval_list *l;
 	char   *last = NULL;
 	int     count = 0;
+	char   *first = "";
 
 	f_print(fout, "enum %s {\n", name);
 	for (l = def->def.en.vals; l != NULL; l = l->next) {
-		f_print(fout, "\t%s", l->name);
+		f_print(fout, "%s\t%s", first, l->name);
 		if (l->assignment) {
 			f_print(fout, " = %s", l->assignment);
 			last = l->assignment;
@@ -399,9 +400,9 @@ penumdef(def)
 				f_print(fout, " = %s + %d", last, count++);
 			}
 		}
-		f_print(fout, ",\n");
+		first = ",\n";
 	}
-	f_print(fout, "};\n");
+	f_print(fout, "\n};\n");
 	f_print(fout, "typedef enum %s %s;\n", name, name);
 }
 
