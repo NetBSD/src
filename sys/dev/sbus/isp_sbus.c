@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.10.2.2 2000/01/08 22:44:56 he Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.10.2.3 2000/01/15 16:19:44 he Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -125,6 +125,7 @@ isp_match(parent, cf, aux)
 	return (rv);
 }
 
+
 static void
 isp_sbus_attach(parent, self, aux)
         struct device *parent, *self;
@@ -180,7 +181,7 @@ isp_sbus_attach(parent, self, aux)
 	 */
 	if (strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 	    strcmp("ptisp", sa->sa_name) == 0) {
-		sbc->sbus_mdvec.dv_fwlen = 0;
+		sbc->sbus_mdvec.dv_ispfw = NULL;
 	}
 
 	isp->isp_mdvec = &sbc->sbus_mdvec;
@@ -337,7 +338,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
+	int cansleep = (xs->flags & SCSI_NOSLEEP) == 0;
 	int in = (xs->flags & SCSI_DATA_IN) != 0;
 
 	if (xs->datalen == 0) {
@@ -351,7 +352,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap, xs->data, xs->datalen,
-	    NULL, dosleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+	    NULL, cansleep? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
