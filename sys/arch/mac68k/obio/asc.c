@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39 2000/07/30 21:40:49 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.4.1 2001/09/12 19:07:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -284,6 +284,14 @@ ascpoll(dev, events, p)
 	struct proc *p;
 {
 	return (events & (POLLOUT | POLLWRNORM));
+}
+
+int
+asckqfilter(dev_t dev, struct knote *)
+{
+
+	/* XXXLUKEM (thorpej): not supported (why is poll?) */
+	return (1);
 }
 
 paddr_t
