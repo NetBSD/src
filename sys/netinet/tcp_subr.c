@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.186 2005/03/16 00:38:27 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.187 2005/03/16 00:39:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.186 2005/03/16 00:38:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.187 2005/03/16 00:39:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1241,6 +1241,8 @@ tcp_freeq(tp)
 		pool_put(&tcpipqent_pool, qe);
 		rv = 1;
 	}
+	tp->t_segqlen = 0;
+	KASSERT(TAILQ_EMPTY(&tp->timeq));
 	return (rv);
 }
 
