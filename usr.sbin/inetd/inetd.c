@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.36 1997/10/05 16:40:25 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.37 1997/10/08 07:15:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.36 1997/10/05 16:40:25 mrg Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.37 1997/10/08 07:15:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,9 +467,10 @@ main(argc, argv, envp)
 	    readable = allsock;
 	    if ((n = select(maxsock + 1, &readable, (fd_set *)0,
 		(fd_set *)0, (struct timeval *)0)) <= 0) {
-		    if (n < 0 && errno != EINTR)
+		    if (n == -1 && errno != EINTR) {
 			syslog(LOG_WARNING, "select: %m");
-		    sleep(1);
+			sleep(1);
+		    }
 		    continue;
 	    }
 	    for (sep = servtab; n && sep; sep = nsep) {
