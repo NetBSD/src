@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.5 1999/07/30 10:35:35 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.6 2000/01/06 07:31:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,9 +33,7 @@
  * RFC1826/2402 authentication header.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +61,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #endif
@@ -84,9 +80,7 @@
 
 #ifdef INET
 extern struct protosw inetsw[];
-#if defined(__bsdi__) || defined(__NetBSD__)
 extern u_char ip_protox[];
-#endif
 
 void
 #if __STDC__
@@ -234,12 +228,7 @@ ah4_input(m, va_alist)
 	 * some of IP header fields are flipped to the host endian.
 	 * convert them back to network endian.  VERY stupid.
 	 */
-#ifndef __NetBSD__
-	ip->ip_len = htons(ip->ip_len + hlen);
-	ip->ip_id = htons(ip->ip_id);
-#else
 	ip->ip_len = htons(ip->ip_len);
-#endif
 	ip->ip_off = htons(ip->ip_off);
 #endif
 	if (ah4_calccksum(m, (caddr_t)cksum, algo, sa)) {
@@ -252,12 +241,7 @@ ah4_input(m, va_alist)
 	/*
 	 * flip them back.
 	 */
-#ifndef __NetBSD__
-	ip->ip_len = ntohs(ip->ip_len) - hlen;
-	ip->ip_id = ntohs(ip->ip_id);
-#else
 	ip->ip_len = ntohs(ip->ip_len);
-#endif
 	ip->ip_off = ntohs(ip->ip_off);
 #endif
     }
