@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.8 1994/05/07 04:26:58 cgd Exp $
+ *	$Id: rtsock.c,v 1.9 1994/05/11 09:26:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -54,6 +54,7 @@ struct sockaddr route_src = { 2, PF_ROUTE, };
 struct sockproto route_proto = { PF_ROUTE, };
 
 /*ARGSUSED*/
+int
 route_usrreq(so, req, m, nam, control)
 	register struct socket *so;
 	int req;
@@ -107,6 +108,7 @@ route_usrreq(so, req, m, nam, control)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*ARGSUSED*/
+int
 route_output(m, so)
 	register struct mbuf *m;
 	struct socket *so;
@@ -365,6 +367,7 @@ cleanup:
 	return (error);
 }
 
+void
 rt_setmetrics(which, in, out)
 	u_long which;
 	register struct rt_metrics *in, *out;
@@ -391,7 +394,6 @@ m_copyback(m0, off, len, cp)
 	register int off;
 	register int len;
 	caddr_t cp;
-
 {
 	register int mlen;
 	register struct mbuf *m = m0, *n;
@@ -437,10 +439,10 @@ out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 /* 
  * The miss message and losing message are very similar.
  */
-
+void
 rt_missmsg(type, dst, gate, mask, src, flags, error)
-register struct sockaddr *dst;
-struct sockaddr *gate, *mask, *src;
+	register struct sockaddr *dst;
+	struct sockaddr *gate, *mask, *src;
 {
 	register struct rt_msghdr *rtm;
 	register struct mbuf *m;
