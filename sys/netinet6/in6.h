@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.43 2003/08/07 16:33:24 agc Exp $	*/
+/*	$NetBSD: in6.h,v 1.44 2003/11/12 15:25:19 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -538,9 +538,10 @@ struct in6_pktinfo {
 #define IPV6CTL_LOWPORTMAX	31	/* maximum reserved port */
 /* 32 to 40: resrved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
+#define IPV6CTL_IFQ		42	/* ip6intrq node */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
-#define IPV6CTL_MAXID		42
+#define IPV6CTL_MAXID		43
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -585,6 +586,7 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "maxfrags", CTLTYPE_INT }, \
+	{ "ifq", CTLTYPE_NODE }, \
 }
 
 #endif /* _NETBSD_SOURCE */
