@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.68 2002/06/12 03:37:14 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.69 2002/06/12 03:46:16 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.68 2002/06/12 03:37:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.69 2002/06/12 03:46:16 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -355,6 +355,7 @@ static struct mbuf *key_setsadblifetime __P((u_int16_t, u_int32_t,
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
+static int key_ismyaddr __P((struct sockaddr *));
 #ifdef INET6
 static int key_ismyaddr6 __P((struct sockaddr_in6 *));
 #endif
@@ -367,6 +368,7 @@ static int key_cmpsaidx_withoutmode
 static int key_sockaddrcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
 static void key_srandom __P((void));
+static u_long key_random __P((void));
 static u_int16_t key_satype2proto __P((u_int8_t));
 static u_int8_t key_proto2satype __P((u_int16_t));
 
@@ -3533,7 +3535,7 @@ key_newbuf(src, len)
  * OUT:	1: true, i.e. my address.
  *	0: false
  */
-int
+static int
 key_ismyaddr(sa)
 	struct sockaddr *sa;
 {
@@ -4229,7 +4231,7 @@ key_srandom()
 	return;
 }
 
-u_long
+static u_long
 key_random()
 {
 	u_long value;
