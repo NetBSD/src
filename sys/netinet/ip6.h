@@ -1,4 +1,5 @@
-/*	$NetBSD: ip6.h,v 1.5 2000/02/24 09:55:24 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.6 2000/03/03 17:42:14 itojun Exp $	*/
+/*	$KAME: ip6.h,v 1.6 2000/02/26 12:53:07 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +81,7 @@ struct ip6_hdr {
 			u_int8_t  ip6_un1_nxt;	/* next header */
 			u_int8_t  ip6_un1_hlim;	/* hop limit */
 		} ip6_un1;
-		u_int8_t ip6_un2_vfc;	/* 4 bits version, 4 bits class */
+		u_int8_t ip6_un2_vfc;	/* 4 bits version, top 4 bits class */
 	} ip6_ctlun;
 	struct in6_addr ip6_src;	/* source address */
 	struct in6_addr ip6_dst;	/* destination address */
@@ -261,25 +262,39 @@ do {									\
 do {									\
 	struct mbuf *t;							\
 	int tmp;							\
-	t = m_pulldown((m), (off), (len), &tmp);			\
-	if (t) {							\
-		if (t->m_len < tmp + (len))				\
-			panic("m_pulldown malfunction");		\
-		(val) = (typ)(mtod(t, caddr_t) + tmp);			\
-	} else								\
-		(val) = (typ)NULL;					\
+	ip6stat.ip6s_exthdrget++;					\
+	if ((m)->m_len >= (off) + (len))				\
+		(val) = (typ)(mtod((m), caddr_t) + (off));		\
+	else {								\
+		t = m_pulldown((m), (off), (len), &tmp);		\
+		if (t) {						\
+			if (t->m_len < tmp + (len))			\
+				panic("m_pulldown malfunction");	\
+			(val) = (typ)(mtod(t, caddr_t) + tmp);		\
+		} else {						\
+			(val) = (typ)NULL;				\
+			(m) = NULL;					\
+		}							\
+	}								\
 } while (0)
 
 #define IP6_EXTHDR_GET0(val, typ, m, off, len) \
 do {									\
 	struct mbuf *t;							\
-	t = m_pulldown((m), (off), (len), NULL);			\
-	if (t) {							\
-		if (t->m_len < (len))					\
-			panic("m_pulldown malfunction");		\
-		(val) = (typ)mtod(t, caddr_t);				\
-	} else								\
-		(val) = (typ)NULL;					\
+	ip6stat.ip6s_exthdrget0++;					\
+	if ((off) == 0)							\
+		(val) = (typ)mtod(m, caddr_t);				\
+	else {								\
+		t = m_pulldown((m), (off), (len), NULL);		\
+		if (t) {						\
+			if (t->m_len < (len))				\
+				panic("m_pulldown malfunction");	\
+			(val) = (typ)mtod(t, caddr_t);			\
+		} else {						\
+			(val) = (typ)NULL;				\
+			(m) = NULL;					\
+		}							\
+	}								\
 } while (0)
 #endif /*_KERNEL*/
 
