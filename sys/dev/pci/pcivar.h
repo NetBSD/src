@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.31 1998/05/18 17:25:18 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.32 1998/05/25 22:11:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -53,11 +53,14 @@ struct pcibus_attach_args;
 /*
  * Machine-dependent definitions.
  */
-#if (alpha + atari + bebox + i386 + macppc != 1)
+#if (alpha + arm32 + atari + bebox + i386 + macppc != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if alpha
 #include <alpha/pci/pci_machdep.h>
+#endif
+#if arm32
+#include <arm32/pci/pci_machdep.h>
 #endif
 #if atari
 #include <atari/pci/pci_machdep.h>
