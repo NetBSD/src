@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1997/03/27 21:01:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1997/04/16 22:38:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,16 +76,35 @@ char *bootpath;
 /*
  * We use the page just above the interrupt vector as message buffer
  */
+#if 0
 struct msgbuf *msgbufp = (struct msgbuf *)0x3000;
 int msgbufmapped = 1;		/* message buffer is always mapped */
+#else
+int msgbufmapped = 0;
+#endif
 
 caddr_t allocsys __P((caddr_t));
 
-static void fake_splx __P((int));
+static int fake_spl __P((void));
+static int fake_splx __P((int));
+static void fake_setsoft __P((void));
+static void fake_clock_return __P((struct clockframe *, int));
 static void fake_irq_establish __P((int, int, void (*)(void *), void *));
 
 struct machvec machine_interface = {
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
+	fake_spl,
 	fake_splx,
+	fake_setsoft,
+	fake_setsoft,
+	fake_clock_return,
 	fake_irq_establish,
 };
 
@@ -214,7 +233,7 @@ initppc(startkernel, endkernel, args)
 	 * Parse arg string.
 	 */
 	bootpath = args;
-	while ( *++args && *args != ' ');
+	while (*++args && *args != ' ');
 	if (*args) {
 		*args++ = 0;
 		while (*args) {
@@ -252,7 +271,7 @@ initppc(startkernel, endkernel, args)
  */
 int cpu;
 char cpu_model[80];
-char machine[] = "PowerPC";	/* cpu architecture */
+char machine[] = "powerpc";	/* cpu architecture */
 
 void
 identifycpu()
@@ -311,7 +330,7 @@ install_extint(handler)
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
+	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
@@ -412,21 +431,29 @@ cpu_startup()
 	bufinit();
 
 	/*
+	 * For now, use soft spl handling.
+	 */
+	{
+		extern struct machvec soft_machvec;
+
+		machine_interface = soft_machvec;
+	}
+
+	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
 		int msr;
 		
 		splhigh();
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
+		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
 	
 	/*
 	 * Configure devices.
 	 */
 	configure();
-	
 }
 
 /*
@@ -493,7 +520,7 @@ consinit()
 }
 
 /*
- * Clear registers on exec
+ * Set set up registers on exec.
  */
 void
 setregs(p, pack, stack, retval)
@@ -503,10 +530,38 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	struct trapframe *tf = trapframe(p);
+	struct ps_strings arginfo;
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);
-	tf->fixreg[3] = *retval = stack;	/* bug in init_main.c		XXX */
+
+	/*
+	 * XXX Machine-independent code has already copied arguments and
+	 * XXX environment to userland.  Get them back here.
+	 */
+	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof(arginfo));
+
+	/*
+	 * Set up arguments for _start():
+	 *	_start(argc, argv, envp, obj, cleanup, ps_strings);
+	 *
+	 * Notes:
+	 *	- obj and cleanup are the auxilliary and termination
+	 *	  vectors.  They are fixed up by ld.elf_so.
+	 *	- ps_strings is a NetBSD extention, and will be
+	 * 	  ignored by executables which are strictly
+	 *	  compliant with the SVR4 ABI.
+	 *
+	 * XXX We have to set both regs and retval here due to different
+	 * XXX calling convention in trap.c and init_main.c.
+	 */
+	tf->fixreg[3] = retval[0] = arginfo.ps_nargvstr;
+	tf->fixreg[4] = retval[1] = (register_t)arginfo.ps_argvstr;
+	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
+	tf->fixreg[6] = 0;			/* auxillary vector */
+	tf->fixreg[7] = 0;			/* termination vector */
+	tf->fixreg[8] = (register_t)PS_STRINGS;	/* NetBSD extension */
+
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
@@ -631,9 +686,6 @@ dumpsys()
 	printf("dumpsys: TBD\n");
 }
 
-int cpl;
-int clockpending, softclockpending, softnetpending;
-
 /*
  * Soft networking interrupts.
  */
@@ -683,148 +735,6 @@ strayintr(irq)
 	int irq;
 {
 	log(LOG_ERR, "stray interrupt %d\n", irq);
-}
-
-int
-splraise(bits)
-	int bits;
-{
-	int old;
-	
-	old = cpl;
-	cpl |= bits;
-
-	if ((bits & SPLMACHINE) & ~old)
-		(*machine_interface.splx)(cpl & SPLMACHINE);
-
-	return old;
-}
-
-int
-splx(new)
-	int new;
-{
-	int pending, old = cpl;
-	int emsr, dmsr;
-	
-	asm ("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr & ~PSL_EE;
-	
-	cpl = new;
-	
-	if ((new & SPLMACHINE) != (old & SPLMACHINE))
-		(*machine_interface.splx)(new & SPLMACHINE);
-
-	while (1) {
-		cpl = new;
-		
-		asm volatile ("mtmsr %0" :: "r"(dmsr));
-		if (clockpending && !(cpl & SPLCLOCK)) {
-			struct clockframe frame;
-			extern int intr_depth;
-			
-			cpl |= SPLCLOCK;
-			clockpending--;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			
-			/*
-			 * Fake a clock interrupt frame
-			 */
-			frame.pri = new;
-			frame.depth = intr_depth + 1;
-			frame.srr1 = 0;
-			frame.srr0 = (int)splx;
-			/*
-			 * Do standard timer interrupt stuff
-			 */
-			hardclock(&frame);
-			continue;
-		}
-		if (softclockpending && !(cpl & SPLSOFTCLOCK)) {
-			
-			cpl |= SPLSOFTCLOCK;
-			softclockpending = 0;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			
-			softclock();
-			continue;
-		}
-		if (softnetpending && !(cpl & SPLSOFTNET)) {
-			cpl |= SPLSOFTNET;
-			softnetpending = 0;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			softnet();
-			continue;
-		}
-		
-		asm volatile ("mtmsr %0" :: "r"(emsr));
-		
-		return old;
-	}
-}
-
-/*
- * This one is similar to the above, but returns with interrupts disabled.
- * It is intended for use during interrupt exit (as the name implies :-)).
- */
-void
-intr_return(level)
-	int level;
-{
-	int pending, old = cpl;
-	int emsr, dmsr;
-	
-	asm ("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr & ~PSL_EE;
-	
-	cpl = level;
-	
-	if ((level & SPLMACHINE) != (old & SPLMACHINE))
-		(*machine_interface.splx)(level & SPLMACHINE);
-
-	while (1) {
-		cpl = level;
-		
-		asm volatile ("mtmsr %0" :: "r"(dmsr));
-		if (clockpending && !(cpl & SPLCLOCK)) {
-			struct clockframe frame;
-			extern int intr_depth;
-			
-			cpl |= SPLCLOCK;
-			clockpending--;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			
-			/*
-			 * Fake a clock interrupt frame
-			 */
-			frame.pri = level | (clockpending ? SPLSOFTCLOCK : 0);
-			frame.depth = intr_depth + 1;
-			frame.srr1 = 0;
-			frame.srr0 = (int)splx;
-			/*
-			 * Do standard timer interrupt stuff
-			 */
-			hardclock(&frame);
-			continue;
-		}
-		if (softclockpending && !(cpl & SPLSOFTCLOCK)) {
-			
-			cpl |= SPLSOFTCLOCK;
-			softclockpending = 0;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			
-			softclock();
-			continue;
-		}
-		if (softnetpending && !(cpl & SPLSOFTNET)) {
-			cpl |= SPLSOFTNET;
-			softnetpending = 0;
-			asm volatile ("mtmsr %0" :: "r"(emsr));
-			softnet();
-			continue;
-		}
-		break;
-	}
 }
 
 /*
@@ -886,12 +796,37 @@ callback(p)
 }
 
 /*
- * Fake routines for spl/interrupt handling before autoconfig
+ * Initial Machine Interface.
  */
+static int
+fake_spl()
+{
+	int scratch;
+
+	asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
+	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
+	return -1;
+}
+
 static void
+fake_setsoft()
+{
+	/* Do nothing */
+}
+
+static int
 fake_splx(new)
 	int new;
 {
+	return fake_spl();
+}
+
+static void
+fake_clock_return(frame, nticks)
+	struct clockframe *frame;
+	int nticks;
+{
+	/* Do nothing */
 }
 
 static void
