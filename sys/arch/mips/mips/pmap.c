@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2000/06/09 04:37:52 soda Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2000/05/09 13:40:13 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2000/06/09 04:37:52 soda Exp $");
 
 /*
  *	Manages physical address maps.
@@ -704,7 +704,7 @@ pmap_remove(pmap, sva, eva)
 
 		/* remove entries from kernel pmap */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -893,7 +893,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * read-only.
 		 */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= virtual_end)
 			panic("pmap_protect: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -976,13 +976,16 @@ pmap_procwr(p, va, len)
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (CPUISMIPS3) {
+#ifdef MIPS3
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
 		MachFlushDCache(va, len);
 		MachFlushICache(MIPS_PHYS_TO_KSEG0(va &
 		    (mips_L1ICacheSize - 1)), len);
+#endif /* MIPS3 */
 	} else {
+#ifdef MIPS1
 		pt_entry_t *pte;
 		unsigned entry;
 
@@ -996,7 +999,7 @@ printf("pmap_procwr: va %lx", va);
 		if (!mips_pg_v(entry))
 			return;
 #if 0
-printf(" flush %lx", pfn_to_vad(entry) + (va & PGOFSET));
+printf(" flush %llx", (long long)pfn_to_vad(entry) + (va & PGOFSET));
 #endif
 		mips1_FlushICache(MIPS_PHYS_TO_KSEG0(mips1_pfn_to_vad(entry)
 		    + (va & PGOFSET)),
@@ -1004,6 +1007,7 @@ printf(" flush %lx", pfn_to_vad(entry) + (va & PGOFSET));
 #if 0
 printf("\n");
 #endif
+#endif /* MIPS1 */
 	}
 }
 
@@ -1118,21 +1122,27 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef PARANOIADIAG
 	if (!pmap)
 		panic("pmap_enter: pmap");
+#endif
+#if defined(DEBUG) || defined(DIAGNOSTIC) || defined(PARANOIADIAG)
 	if (pmap == pmap_kernel()) {
 #ifdef DEBUG
 		enter_stats.kernel++;
 #endif
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_enter: kva");
+			panic("pmap_enter: kva too big");
 	} else {
 #ifdef DEBUG
 		enter_stats.user++;
 #endif
 		if (va >= VM_MAXUSER_ADDRESS)
-			panic("pmap_enter: uva");
+			panic("pmap_enter: uva too big");
 	}
-	if (pa & 0x80000000)
+#endif
+#ifdef PARANOIADIAG
+#if defined(cobalt) || defined(newsmips) || defined(pmax) /* otherwise ok */
+	if (pa & 0x80000000)	/* this is not error in general. */
 		panic("pmap_enter: pa");
+#endif
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
@@ -1847,7 +1857,7 @@ pmap_set_modified(pa)
 #endif
 }
 
-vaddr_t
+paddr_t
 pmap_phys_address(ppn)
 	int ppn;
 {
