@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.4 1999/12/06 14:10:49 msaitoh Exp $	*/
+/*	$NetBSD: shb.c,v 1.5 1999/12/27 10:50:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -403,9 +403,11 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (irl >= INTEVT_SOFT) {
 		/* This is software interrupt */
 		irq_num = (irl - INTEVT_SOFT);
-	} else if (irl == INTEVT_TMU1)
+	} else if (irl == INTEVT_TMU1) {
 		irq_num = TMU1_IRQ;
-	else
+	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
+		irq_num = SCI_IRQ;
+	} else
 		irq_num = (irl - 0x200) >> 5;
 
 	mask_irq(irq_num);
@@ -524,7 +526,8 @@ mask_irq(irq)
 }
 
 void
-unmask_irq(int irq)
+unmask_irq(irq)
+	int irq;
 {
 
 	switch (irq) {
