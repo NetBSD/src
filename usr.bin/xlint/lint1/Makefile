@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/08/01 17:04:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2003/10/19 04:27:52 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,9 @@ LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
 LINT1?=		./${PROG}
 
 ${MAN}:		makeman ${LINT1:C/^\.\///} Makefile
-	sh ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	${HOST_SH} ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
 
 LDADD+=		-lm
 .ifndef HOSTPROG
