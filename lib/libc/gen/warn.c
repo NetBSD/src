@@ -1,4 +1,4 @@
-/*	$NetBSD: warn.c,v 1.3 1997/07/17 21:33:28 thorpej Exp $	*/
+/*	$NetBSD: warn.c,v 1.4 1999/08/17 03:43:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: warn.c,v 1.3 1997/07/17 21:33:28 thorpej Exp $");
+__RCSID("$NetBSD: warn.c,v 1.4 1999/08/17 03:43:59 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,10 @@ __RCSID("$NetBSD: warn.c,v 1.3 1997/07/17 21:33:28 thorpej Exp $");
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(warn, _warn)
 #endif
 
 void
