@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.9 2001/09/08 11:19:06 thomas Exp $
+#	$NetBSD: GENERIC.in,v 1.10 2001/11/20 11:29:41 lukem Exp $
 #
 # Generic atari
 #
@@ -51,30 +51,30 @@ options 	M060SP		# MC68060 software support (Required for 060)
 #
 # Networking options
 #
-options 	INET            # IP + ICMP + TCP + UDP
+options 	INET		# IP + ICMP + TCP + UDP
 
 #ifndef INSTALL_KERNEL
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	GATEWAY         # packet forwarding
-#options 	MROUTING        # IP multicast routing
-options 	NS              # XNS
-#options 	NSIP            # XNS tunneling over IP
-options 	ISO,TPIP        # OSI
-#options 	EON             # OSI tunneling over IP
-options 	CCITT,LLC,HDLC  # X.25
-options 	NETATALK        # AppleTalk networking protocols
+#options 	GATEWAY		# packet forwarding
+#options 	MROUTING	# IP multicast routing
+options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
 #endif
 
-options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
-options 	PPP_DEFLATE     # Deflate compression support for PPP
-options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 #ifndef INSTALL_KERNEL
-options 	PFIL_HOOKS      # pfil(9) packet filter hooks
-options 	IPFILTER_LOG    # ipmon(8) log support
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -104,7 +104,7 @@ file-system 	LFS		# log-structured file system
 # File system options
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -136,8 +136,8 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #endif
-options		COMPAT_AOUT_M68K # Compatibility to a.out executables
-options		EXEC_AOUT	# a.out format executables
+options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
+options 	EXEC_AOUT	# a.out format executables
 
 #ifndef INSTALL_KERNEL
 #
