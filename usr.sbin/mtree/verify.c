@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.24 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.25 2001/11/09 06:55:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.24 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.25 2001/11/09 06:55:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: verify.c,v 1.24 2001/11/07 08:01:52 lukem Exp $");
 #include "extern.h"
 
 static NODE *root;
-static char path[MAXPATHLEN + 1];
+static char path[MAXPATHLEN];
 
 static void	miss(NODE *, char *);
 static int	vwalk(void);
