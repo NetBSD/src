@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.12 2003/07/16 06:33:11 itojun Exp $ */
+/* $NetBSD: moused.c,v 1.13 2004/04/23 02:58:30 simonb Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.12 2003/07/16 06:33:11 itojun Exp $");
+__RCSID("$NetBSD: moused.c,v 1.13 2004/04/23 02:58:30 simonb Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -816,7 +816,7 @@ main(int argc, char *argv[])
 	        /*
 	         * We cannot continue because of error.  Exit if the 
 		 * program has not become a daemon.  Otherwise, block 
-		 * until the the user corrects the problem and issues SIGHUP. 
+		 * until the user corrects the problem and issues SIGHUP. 
 	         */
 	        if (!background)
 		    exit(1);

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.16 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.17 2004/04/23 02:58:29 simonb Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.16 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.17 2004/04/23 02:58:29 simonb Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -503,7 +503,7 @@ static int locate_eeprom_address(bktr_ptr_t bktr) {
  *
  * However some makes of card (eg Hauppauge) come with a configuration eeprom
  * which tells us the make of the card. Most eeproms also tell us the
- * tuner type and other features of the the cards.
+ * tuner type and other features of the cards.
  *
  * The current probe code works as follows
  * A) If the card uses a Bt878/879:

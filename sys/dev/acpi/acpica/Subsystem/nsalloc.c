@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.13 2004/02/14 16:57:24 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.14 2004/04/23 02:58:29 simonb Exp $");
 
 #define __NSALLOC_C__
 
@@ -358,7 +358,7 @@ AcpiNsInstallNode (
     {
 #ifdef ACPI_ALPHABETIC_NAMESPACE
         /*
-         * Walk the list whilst searching for the the correct
+         * Walk the list whilst searching for the correct
          * alphabetic placement.
          */
         PreviousChildNode = NULL;
