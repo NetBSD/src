@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.14 1998/10/01 06:35:09 thorpej Exp $	*/
+/*	$NetBSD: hpux.h,v 1.15 1999/08/25 04:50:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -258,35 +258,6 @@ struct hpux_flock {
 #define HPUXF_RDLCK	1
 #define HPUXF_WRLCK	2
 #define HPUXF_UNLCK	3
-
-/* HP-UX only sysV shmctl() commands */
-#define SHM_LOCK	3	/* Lock segment in core */
-#define SHM_UNLOCK	4	/* Unlock segment */
-
-/* SHM stuff reflecting POSIX types */
-struct hpux_ipc_perm {
-	long	uid;	/* owner's user id */
-	long	gid;	/* owner's group id */
-	long	cuid;	/* creator's user id */
-	long	cgid;	/* creator's group id */
-	u_short	mode;	/* access modes */
-	u_short	seq;	/* slot usage sequence number */
-	long	key;	/* key */
-};
-
-struct hpux_shmid_ds {
-	struct hpux_ipc_perm shm_perm;	/* operation permission struct */
-	int		shm_segsz;	/* segment size (bytes) */
-	struct pte	*shm_ptbl;	/* ptr to associated page table */
-	long		shm_lpid;	/* pid of last shmop */
-	long		shm_cpid;	/* pid of creator */
-	u_short		shm_nattch;	/* current # attached */
-	u_short		shm_cnattch;	/* in memory # attached */
-	time_t		shm_atime;	/* last shmat time */
-	time_t		shm_dtime;	/* last shmdt time */
-	time_t		shm_ctime;	/* last change time */
-	/* actually longer */
-};
 
 /* HP-UX rtprio values */
 #define RTPRIO_MIN	0
