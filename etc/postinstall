@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.66 2003/12/27 23:00:55 martin Exp $
+# $NetBSD: postinstall,v 1.67 2004/01/06 13:16:53 lukem Exp $
 #
-# Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -326,20 +326,32 @@ stat()
 #
 
 #
-#	rc
+#	postinstall
 #
 additem postinstall "/etc/postinstall being up to date"
 do_postinstall()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_postinstall  fix|check"
-	op=$1
-	failed=0
 
-	compare_dir ${op} ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
+	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
 		postinstall
-	failed=$(( ${failed} + $? ))
+}
 
-	return ${failed}
+#
+#	release
+#
+additem etc_release "/etc/release being up to date"
+do_etc_release()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_etc_release  fix|check"
+
+	if [  -f "${SRC_DIR}/etc/Makefile" -a \
+	    ! -f "${SRC_DIR}/etc/release" ] ; then
+		msg "etc/release is built by ${SRC_DIR}/etc/Makefile; skipping ${op}"
+		return 0
+	fi
+	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
+		release
 }
 
 #
@@ -616,7 +628,7 @@ do_makedev()
 	    ${SCRATCHDIR} ${SRC_DIR}/dev \
 	    || return 1
 
-	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV || return 1
+	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
 }
 
 #
@@ -875,7 +887,9 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
 	If no items are provided, all checks or fixes are applied.
 
 	Options:
-	-s srcdir	Source directory to compare from.  [${SRC_DIR:-/}]
+	-s srcdir	Source directory to compare from.
+			This can either be src/etc or
+			an extracted copy of "etc.tgz".    [${SRC_DIR:-/}]
 	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
 	-m machine	Machine architecture.              [${MACHINE}]
 	-a arch		Machine architecture.              [${MACHINE_ARCH}]
