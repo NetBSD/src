@@ -9,12 +9,15 @@ out as follows:
 			security/	mac68k security distribution;
 					see below.
 
+			X11/		mac68k X distribution sets;
+					see below.
+
 			utils/		The mac68k installation utilities.
 
 The NetBSD/mac68k binary distribution sets contain the binaries which
 comprise the NetBSD _VER release for the mac68k.  There are eight binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "mac68k/binary"
+distribution sets, the "security" distribution set, and five X distribution
+sets.  The binary distribution sets can be found in the "mac68k/binary"
 subdirectory of the NetBSD _VER distribution tree, and are as follows:
 
 	netbsd13 The NetBSD/mac68k _VER kernel binary.  You MUST
@@ -79,13 +82,40 @@ it.  (Remember, because of United States law, it may not be legal to
 distribute this set to locations outside of the United States and Canada.)
 [ 779K gzipped, 2.5M uncompressed ]
 
-The mac68k binary distribution sets are distributed as full .tar.gz
-files (without that extension).  The instructions given for extracting
-the source sets work equally well for the binary sets, but it is worth
-noting that if you use that method, the files are extracted "below" the
-current directory.  That is, if you want to extract the binaries "into"
-your system, i.e. replace the system binaries with them, you have to run
-the "tar xfp" from /.  Also note that if you upgrade or install this way,
+The NetBSD _VER distribution includes a full X11 build for NetBSD/mac68k
+systems.  Except for some minor changes to facilitate building under
+NetBSD in general, the X clients and related libraries were built "out of
+the box" from an XFree86 3.3.1 tree, which in turn was based on X11R6.3.
+The binaries were built on, and require, a NetBSD/mac68k _VER system.  The
+mac68k X distribution sets can be found in the "mac68k/X11" subdirectory
+of the NetBSD _VER distribution tree, and are as follows:
+
+        xbase13		X clients, shared libraries, and related man pages.
+			Also includes bitmaps and miscellaneous
+			configuration files.
+			[ 2.34 M gzipped, 7.46M uncompressed ]
+
+        xserver13	The Xmac68k _monochrome_ server with man pages.
+			[ 1.32M gzipped, 3.25M uncompressed ]
+
+	xfont13		X fonts.
+			[ 5.66M gzipped, 6.99M uncompressed ]
+
+        xcomp13		Static libraries, include files (except bitmaps),
+			X config files (for xmkmf), and related man pages.
+			[ 1.57M gzipped, 6.38M uncompressed ]
+
+	xcontrib	User-contributed X binaries (e.g. xev, xload) with
+			man pages and default config files.
+			[ 178K gzipped, 661K uncompressed ]
+
+The mac68k binary distribution sets are distributed as full .tar.gz files
+(without that extension).  The instructions given for extracting the
+source sets work equally well for the binary sets, but it is worth noting
+that if you use that method, the files are extracted "below" the current
+directory.  That is, if you want to extract the binaries "into" your
+system, i.e. replace the system binaries with them, you have to run the
+"tar xfp" from /.  Also note that if you upgrade or install this way,
 those programs that you are using at the time will NOT be replaced.  If
 you follow the normal installation or upgrade procedures, this will be
 taken care of for you.
