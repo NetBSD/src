@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.7 2002/04/28 19:42:13 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.8 2002/04/29 16:01:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.7 2002/04/28 19:42:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.8 2002/04/29 16:01:12 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -200,17 +200,16 @@ static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	/* 
 	 * Setting up child stack 
 	 */
-	if (len == 0) 
-		len = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	if (sp == NULL) {
-		sp = (caddr_t)(round_page(tf->f_regs[SP]) 
-		    - IRIX_SPROC_STACK_OFFSET - len);
-		while (trunc_page((u_long)sp) >= 
-		    (u_long)p->p_vmspace->vm_maxsaddr)
-			sp -= IRIX_SPROC_STACK_OFFSET;
-	}
-
 	if (inh & IRIX_PR_SADDR) {
+		if (len == 0) 
+			len = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+		if (sp == NULL)
+			sp = (caddr_t)(round_page(tf->f_regs[SP]) 
+			    - IRIX_SPROC_STACK_OFFSET - len);
+			while (trunc_page((u_long)sp) >= 
+			    (u_long)p->p_vmspace->vm_maxsaddr)
+				sp -= IRIX_SPROC_STACK_OFFSET;
+
 		bzero(&vmc, sizeof(vmc));
 		vmc.ev_addr = trunc_page((u_long)sp);
 		vmc.ev_len = round_page(len);
