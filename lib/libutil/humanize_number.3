@@ -1,4 +1,4 @@
-.\"	$NetBSD: humanize_number.3,v 1.1 2002/08/08 16:50:38 abs Exp $
+.\"	$NetBSD: humanize_number.3,v 1.2 2002/08/08 17:03:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Ft int
 .Fn humanize_number "char *buf" "size_t len" "int64_t number" "const char *suffix" "int scale" "int flags"
 .Sh DESCRIPTION
-.Ss humanize_number
 The
 .Fn humanize_number
 function formats the signed 64 bit quantity given in
@@ -89,7 +88,7 @@ in order to ensure a useful result is generated into
 .Fa buffer .
 To use a specific prefix, specify this as
 .Fa scale
-(Multiplier = 1024 ^ scale). This can not be combined with any of the
+(Multiplier = 1024 ^ scale).  This can not be combined with any of the
 .Fa scale
 flags below.
 .Pp
@@ -110,27 +109,26 @@ The following flags may be passed in
 .It Dv HN_DECIMAL
 If the final result is less than 10, display it using one digit.
 .It Dv HN_NOSPACE
-Do not put a space between 
+Do not put a space between
 .Fa number
 and the prefix.
 .It Dv HN_B
 Use 'B' (bytes) as prefix if the original result does not have a prefix.
 .It Dv HN_DIVISOR_1000
-Divide 
+Divide
 .Fa number
 with 1000 instead of 1024.
 .El
-.Pp
 .Sh RETURN VALUES
 .Fn humanize_number
 returns the number of characters stored in
 .Fa buffer
-(excluding the terminating NUL) upon success, or -1 upon failure. If
-HN_GETSCALE is specified, the prefix index number will be returned
-instead.
+(excluding the terminating NUL) upon success, or \-1 upon failure.  If
+.Dv HN_GETSCALE
+is specified, the prefix index number will be returned instead.
 .Sh SEE ALSO
 .Xr humanize_number 9
 .Sh HISTORY
 .Fn humanize_number
 first appeared in
-.Nx 1.6 .
+.Nx 2.0 .
