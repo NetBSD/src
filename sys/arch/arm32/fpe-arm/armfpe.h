@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe.h,v 1.9 2001/02/26 16:40:00 bjh21 Exp $ */
+/* $NetBSD: armfpe.h,v 1.10 2001/11/23 19:46:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -44,7 +44,7 @@
 #ifndef _ARMFPE_H_
 #define _ARMFPE_H_
 
-#include <machine/cpus.h>
+#include <arm/cpus.h>
 #include <machine/fp.h>
 #include <machine/ieeefp.h>
 #include <machine/reg.h>
