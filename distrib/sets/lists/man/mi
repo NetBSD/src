@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.629 2003/11/24 22:47:37 wiz Exp $
+# $NetBSD: mi,v 1.630 2003/11/25 06:28:55 dyoung Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1645,14 +1645,14 @@
 ./usr/share/man/cat8/rpc.lockd.0		man-nfsserver-catman
 ./usr/share/man/cat8/rpc.pcnfsd.0		man-nfsserver-catman
 ./usr/share/man/cat8/rpc.rquotad.0		man-nfsserver-catman
-./usr/share/man/cat8/rpc.rstatd.0		man-netutil-catman
-./usr/share/man/cat8/rpc.rusersd.0		man-netutil-catman
-./usr/share/man/cat8/rpc.rwalld.0		man-netutil-catman
-./usr/share/man/cat8/rpc.sprayd.0		man-netutil-catman
+./usr/share/man/cat8/rpc.rstatd.0		man-rpcserver-catman
+./usr/share/man/cat8/rpc.rusersd.0		man-rpcserver-catman
+./usr/share/man/cat8/rpc.rwalld.0		man-rpcserver-catman
+./usr/share/man/cat8/rpc.sprayd.0		man-rpcserver-catman
 ./usr/share/man/cat8/rpc.statd.0		man-nfsserver-catman
 ./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman
-./usr/share/man/cat8/rpcbind.0			man-netutil-catman
-./usr/share/man/cat8/rpcinfo.0			man-netutil-catman
+./usr/share/man/cat8/rpcbind.0			man-rpcserver-catman
+./usr/share/man/cat8/rpcinfo.0			man-rpcutil-catman
 ./usr/share/man/cat8/rquotad.0			man-nfsserver-catman
 ./usr/share/man/cat8/rrestore.0			man-netutil-catman
 ./usr/share/man/cat8/rshd.0			man-netutil-catman
@@ -1689,8 +1689,8 @@
 ./usr/share/man/cat8/sparc64/boot.0		man-sys-catman
 ./usr/share/man/cat8/sparc64/ofwboot.0		man-sys-catman
 ./usr/share/man/cat8/spawn.0			man-postfix-catman
-./usr/share/man/cat8/spray.0			man-netutil-catman
-./usr/share/man/cat8/sprayd.0			man-netutil-catman
+./usr/share/man/cat8/spray.0			man-rpcutil-catman
+./usr/share/man/cat8/sprayd.0			man-rpcserver-catman
 ./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman
 ./usr/share/man/cat8/sshd.0			man-secsh-catman
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman
@@ -3398,14 +3398,14 @@
 ./usr/share/man/man8/rpc.lockd.8		man-nfsserver-man
 ./usr/share/man/man8/rpc.pcnfsd.8		man-nfsserver-man
 ./usr/share/man/man8/rpc.rquotad.8		man-nfsserver-man
-./usr/share/man/man8/rpc.rstatd.8		man-netutil-man
-./usr/share/man/man8/rpc.rusersd.8		man-netutil-man
-./usr/share/man/man8/rpc.rwalld.8		man-netutil-man
-./usr/share/man/man8/rpc.sprayd.8		man-netutil-man
+./usr/share/man/man8/rpc.rstatd.8		man-rpcserver-man
+./usr/share/man/man8/rpc.rusersd.8		man-rpcserver-man
+./usr/share/man/man8/rpc.rwalld.8		man-rpcserver-man
+./usr/share/man/man8/rpc.sprayd.8		man-rpcserver-man
 ./usr/share/man/man8/rpc.statd.8		man-nfsserver-man
 ./usr/share/man/man8/rpc.yppasswdd.8		man-nis-man
-./usr/share/man/man8/rpcbind.8			man-netutil-man
-./usr/share/man/man8/rpcinfo.8			man-netutil-man
+./usr/share/man/man8/rpcbind.8			man-rpcserver-man
+./usr/share/man/man8/rpcinfo.8			man-rpcutil-man
 ./usr/share/man/man8/rquotad.8			man-nfsserver-man
 ./usr/share/man/man8/rrestore.8			man-netutil-man
 ./usr/share/man/man8/rshd.8			man-netutil-man
@@ -3442,8 +3442,8 @@
 ./usr/share/man/man8/sparc64/boot.8		man-sys-man
 ./usr/share/man/man8/sparc64/ofwboot.8		man-sys-man
 ./usr/share/man/man8/spawn.8			man-postfix-man
-./usr/share/man/man8/spray.8			man-netutil-man
-./usr/share/man/man8/sprayd.8			man-netutil-man
+./usr/share/man/man8/spray.8			man-rpcutil-man
+./usr/share/man/man8/sprayd.8			man-rpcserver-man
 ./usr/share/man/man8/ssh-keysign.8		man-secsh-man
 ./usr/share/man/man8/sshd.8			man-secsh-man
 ./usr/share/man/man8/statd.8			man-nfsserver-man

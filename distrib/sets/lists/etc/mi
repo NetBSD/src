@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 2003/04/24 01:05:49 perry Exp $
+# $NetBSD: mi,v 1.124 2003/11/25 06:28:55 dyoung Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -140,7 +140,7 @@
 ./etc/rc.d/root				etc-sys-rc
 ./etc/rc.d/route6d			etc-router-rc
 ./etc/rc.d/routed			etc-router-rc
-./etc/rc.d/rpcbind			etc-net-rc
+./etc/rc.d/rpcbind			etc-rpcbind-rc
 ./etc/rc.d/rtadvd			etc-net-rc
 ./etc/rc.d/rtsold			etc-net-rc
 ./etc/rc.d/rwho				etc-net-rc
