@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/08/21 06:30:11 simonb Exp $
+#	$NetBSD: Makefile,v 1.19 2000/01/23 22:11:49 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>		# for UNPRIVILEGED
@@ -14,7 +14,7 @@ USETBL=
 MAN=	phantasia.6
 CLEANFILES+=map setup setup.o host_phantglobs.o
 
-all: setup phantasia
+realall: setup phantasia
 
 setup: host_phantglobs.o setup.o monsters.asc ${LIBM} 
 	${HOST_CC} host_phantglobs.o setup.o -o ${.TARGET} -lm

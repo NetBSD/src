@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/25 10:11:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2000/01/23 22:17:11 mycroft Exp $
 
 PROG=		eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
@@ -15,7 +15,7 @@ lex.o:	eqn.cc
 FILES=neqn
 FILESMODE=${BINMODE}
 
-all: neqn
+realall: neqn
 
 neqn:	neqn.sh
 	sed -e 's/@g@/$(g)/g' ${.ALLSRC} > ${.TARGET}
