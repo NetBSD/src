@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.57 1998/05/10 12:35:58 mrg Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.58 1998/05/30 22:21:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -619,7 +619,7 @@ sys_mlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mlock_args /* {
-		syscallarg(void *) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
@@ -669,7 +669,7 @@ sys_munlock(p, v, retval)
 	register_t *retval;
 {
 	struct sys_munlock_args /* {
-		syscallarg(void *) addr;
+		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vm_offset_t addr;
