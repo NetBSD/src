@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.5 1996/10/09 00:49:40 thorpej Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.6 1996/10/10 17:52:03 christos Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -592,8 +592,8 @@ ultrix_sys_ioctl(p, v, retval)
 #else
 		result= (*ctl)(fp, ULTRIX_TCSETA -  SCARG(uap, com) + TIOCSETA,
 		    (caddr_t)&bts, p);
-		printf("ultrix TCSETA %lx returns %d\n",
-		       ULTRIX_TCSETA - SCARG(uap, com), result);
+		kprintf("ultrix TCSETA %lx returns %d\n",
+		    ULTRIX_TCSETA - SCARG(uap, com), result);
 		return result;
 #endif
 

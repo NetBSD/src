@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.15 1996/10/10 17:56:44 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -78,7 +78,7 @@ X_db_sym_init(symtab, esymtab, name)
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
-		printf ("DDB: no symbols\n");
+		kprintf ("DDB: no symbols\n");
 		return;
 	}
 #endif
@@ -94,10 +94,10 @@ X_db_sym_init(symtab, esymtab, name)
 	slen = *(int *)strtab;
 
 #ifdef	SYMTAB_SPACE
-	printf("DDB: found symbols [%d + %d bytes]\n",
+	kprintf("DDB: found symbols [%d + %d bytes]\n",
 		   *symtab, slen);
 	if ((*symtab + slen) > db_symtabsize) {
-		printf("DDB: symbols larger than SYMTAB_SPACE?\n");
+		kprintf("DDB: symbols larger than SYMTAB_SPACE?\n");
 		return;
 	}
 #else

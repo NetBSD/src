@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.5 1996/10/10 17:52:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -182,8 +182,8 @@ make_ultrix_mntent(sp, tem)
 	strncpy(tem->ufsd_devname, sp->f_mntfromname, ULTRIX_MAXPATHLEN);
 #if 0
 	/* In NetBSD-1.1, filesystem type is unused and always 0 */
-	printf("mntent: %s type %d\n", tem->ufsd_devname, tem->ufsd_fstype);
-	printf("mntent: %s tot %d free %d user%d\n",
+	kprintf("mntent: %s type %d\n", tem->ufsd_devname, tem->ufsd_fstype);
+	kprintf("mntent: %s tot %d free %d user%d\n",
 	 tem->ufsd_devname, sp->f_blocks, sp->f_bfree, sp->f_bavail);
 #endif
 }
@@ -393,8 +393,8 @@ ultrix_sys_mount(p, v, retval)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
 			SCARG(&nuap, flags) |= MNT_UPDATE;
-			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
-			       fsname);
+			kprintf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
+			    fsname);
 		}
 	} else if (otype == ULTRIX_FSTYPE_NFS) {
 		struct ultrix_nfs_args una;
@@ -413,7 +413,7 @@ ultrix_sys_mount(p, v, retval)
 		 * compatibility on 4.3style sockaddrs here.
 		 */
 		if ((error = copyin(una.addr, &osa, sizeof osa)) != 0) {
-			printf("ultrix_mount: nfs copyin osa\n");
+			kprintf("ultrix_mount: nfs copyin osa\n");
 			return (error);
 		}
 		sap->sin_family = (u_char)osa.sin_family;
