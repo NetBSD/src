@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.169 1999/11/01 20:43:51 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.170 1999/11/04 09:39:17 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp 
+ *	NetBSD: pcidevs,v 1.163 1999/11/04 09:38:38 joda Exp 
  */
 
 /*
@@ -1390,6 +1390,13 @@
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */
+
+/* Xircom products */
+/* is the `-3' here just indicating revision 3, or is it really part
+   of the device name? */
+#define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
+/* this is the device id `indicating 21143 driver compatibility' */
+#define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
