@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuwrap,v 1.7 2001/11/14 20:05:23 tv Exp $
+#	$NetBSD: Makefile.gnuwrap,v 1.8 2001/11/22 08:20:07 jmc Exp $
 #
 # Wrapper for GNU Makefiles.
 
@@ -16,6 +16,7 @@ _srcdir:=	${srcdir}
 
 # Don't rebuild .gmo files, or lex/yacc (which GNU puts in the source tree).
 .po.gmo .l.c .y.c .y.h .x.1:
+	@true
 
 # Make sure this file gets re-loaded recursively.
 .ifndef _NOWRAPPER
