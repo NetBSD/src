@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.614 2004/03/25 14:09:46 drochner Exp $
+$NetBSD: pcidevs,v 1.615 2004/03/26 22:05:08 gendalia Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -758,6 +758,7 @@ product ADP2 AIC7899P		0x00cf	AIC-7899P U160
 product ADP2 AAC2622		0x0282	AAC-2622
 product ADP2 ASR2200S		0x0285	ASR-2200S
 product ADP2 ASR2120S		0x0286	ASR-2120S
+product ADP2 ASR2200S_SUB2M	0x0287	ASR-2200S
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
