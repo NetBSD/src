@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.9 1998/12/11 17:43:31 augustss Exp $
+$NetBSD: usbdevs,v 1.10 1998/12/21 15:42:59 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ vendor AGILER		0x056e	Agiler
 vendor BELKIN		0x05ab	Belkin
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
+vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor INTEL		0x8086	Intel
@@ -131,8 +132,11 @@ product EIZO MONITOR		0x0001	monitor
 product EIZONANAO HUB		0x0000	hub
 product EIZONANAO MONITOR	0x0001	monitor
 
-/* Chic Technology */
+/* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
+
+/* ADS products */
+product ADS			0x0008	Ethernet adapter
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
