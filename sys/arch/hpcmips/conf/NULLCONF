@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.6 2000/03/14 08:31:07 uch Exp $
+# 	$NetBSD: NULLCONF,v 1.7 2000/03/16 01:45:51 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
@@ -15,6 +15,7 @@ options		WINCE_DEFAULT_SETTING # Debugging use
 options		DUMP_GIU_LEVEL2_INTR  # Debugging use
 options		DEBUG_FIND_PCIC       # Debugging use XXX harmful don't define until read source.
 #options		DEBUG_FIND_PCIC_I82365SL_ONLY
+makeoptions	CWARNFLAGS=""	# override CWARNFLAGS?= -Werror ...
 
 file-system 	FFS             # fast filesystem with user and group quotas
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
