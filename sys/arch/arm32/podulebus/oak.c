@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.8 1996/10/13 03:06:47 christos Exp $ */
+/* $NetBSD: oak.c,v 1.9 1996/10/14 23:42:18 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -30,10 +30,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * oak.c
- *
- * Oak SCSI Driver.
+ */
+
+/*
+ * Oak SCSI Driver using the NCR5380 generic driver
  */
 
 #undef USE_OWN_PIO_ROUTINES
@@ -65,13 +65,12 @@
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/ncr5380reg.h>
 #include <arm32/podulebus/ncr5380var.h>
+#include <arm32/podulebus/podules.h>
 
 /****************************************************************************/
 /* Some useful definitions **************************************************/
 /****************************************************************************/
 
-#define MY_MANUFACTURER	(0x21)
-#define MY_PODULE	(0x58)
 #define MAX_DMA_LEN	(0xe000)
 
 /****************************************************************************/
@@ -89,13 +88,13 @@ struct oak_softc {
 /* Function and data prototypes *********************************************/
 /****************************************************************************/
 
-int  oakprobe 	__P(( struct device *, void *, void * ));
-void oakattach 	__P(( struct device *, struct device *, void * ));
-void oakminphys __P(( struct buf * ));
+int  oakprobe 	__P((struct device *, void *, void *));
+void oakattach 	__P((struct device *, struct device *, void *));
+void oakminphys __P((struct buf *));
 
 #ifdef USE_OWN_PIO_ROUTINES
-int oak_pio_in  __P(( struct ncr5380_softc *, int, int, unsigned char * ));
-int oak_pio_out __P(( struct ncr5380_softc *, int, int, unsigned char * ));
+int oak_pio_in  __P((struct ncr5380_softc *, int, int, unsigned char *));
+int oak_pio_out __P((struct ncr5380_softc *, int, int, unsigned char *));
 #endif
 
 struct scsi_adapter oak_adapter = {
@@ -122,7 +121,7 @@ oakprobe(parent, match, aux)
 
 /* Look for the card */
 
-	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_OAK, PODULE_OAK_SCSI, -1) == 0)
 		return(0);
 
 	return 1;
@@ -195,7 +194,7 @@ oakattach(parent, self, aux)
 	config_found(self, &(ncr_sc->sc_link), scsiprint);
 }
 
-int
+
 void
 oakminphys(bp)
 	struct buf *bp;
@@ -204,7 +203,7 @@ oakminphys(bp)
 		printf("oak: DEBUG reducing dma length\n");
 		bp->b_bcount = MAX_DMA_LEN;
 	}
-	return (minphys(bp));
+	minphys(bp);
 }
 
 struct cfattach oak_ca = {
