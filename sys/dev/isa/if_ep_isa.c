@@ -1,8 +1,8 @@
-/*	$NetBSD: if_ep_isa.c,v 1.3 1996/05/03 19:06:25 christos Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.4 1996/05/10 05:27:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

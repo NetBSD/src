@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ep_pci.c,v 1.3 1996/05/03 19:08:00 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.4 1996/05/10 05:28:03 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

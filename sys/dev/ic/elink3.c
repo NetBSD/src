@@ -1,7 +1,7 @@
-/*	$NetBSD: elink3.c,v 1.5 1996/05/07 01:43:13 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.6 1996/05/10 05:28:06 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
+ * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
