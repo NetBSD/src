@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.16 2002/06/05 21:32:25 itojun Exp $
+#	$NetBSD: aliases,v 1.17 2002/06/05 21:56:46 itojun Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -23,7 +23,7 @@ nobody:		root
 postfix:	root
 toor:		root
 named:		root
-ndpd:		root
+ntpd:		root
 sshd:		root
 smmsp:		root
 
