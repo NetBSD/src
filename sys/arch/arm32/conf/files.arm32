@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.48 1998/07/08 04:51:12 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.49 1998/07/22 22:09:59 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -461,7 +461,7 @@ attach  pc at ofisapc
 file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 
 # cs8900 Crystal Ethernet Controller
-device	cs: ether, ifnet, isadma, arp
+device	cs: ether, ifnet, isadma, arp, of_network_dev
 attach	cs at ofisacs
 file	arch/arm32/isa/if_cs_isa.c		cs
 
