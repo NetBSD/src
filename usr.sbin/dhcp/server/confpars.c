@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.5 2000/07/08 20:52:19 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.6 2000/09/04 23:19:37 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -584,12 +584,6 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		return declaration;
 	}
 
-	if (declaration) {
-		parse_warn (cfile,
-			    "parameters not allowed after first declaration.");
-		return 1;
-	}
-
 	return 0;
 }
 
@@ -610,8 +604,7 @@ void parse_failover_peer (cfile, group, type)
 	int i;
 	struct expression *expr;
 	isc_result_t status;
-	struct option_cache **paddr;
-	int *pport;
+	dhcp_failover_config_t *cp;
 
 	token = next_token (&val, cfile);
 	if (token != PEER) {
@@ -685,12 +678,14 @@ void parse_failover_peer (cfile, group, type)
 	peer -> name = name;
 
 	/* Set the initial state. */
-	peer -> my_state = communications_interrupted;
-	peer -> my_stos = cur_time;
-	peer -> partner_state = unknown_state;
-	peer -> partner_stos = cur_time;
+	peer -> me.state = potential_conflict;
+	peer -> me.stos = cur_time;
+	peer -> partner.state = unknown_state;
+	peer -> partner.stos = cur_time;
 
 	do {
+		cp = &peer -> me;
+	      peer:
 		token = next_token (&val, cfile);
 		switch (token) {
 		      case RBRACE:
@@ -709,54 +704,33 @@ void parse_failover_peer (cfile, group, type)
 			break;
 
 		      case PEER:
-			token = next_token (&val, cfile);
-			switch (token) {
-			      case ADDRESS:
-				paddr = &peer -> address;
-				goto doaddr;
-			      case PORT:
-				pport = &peer -> port;
-				goto doport;
-			      default:
-				parse_warn (cfile,
-					    "expecting 'address' or 'port'");
-				skip_to_rbrace (cfile, 1);
-				dhcp_failover_state_dereference (&peer, MDL);
-				return;
-			}
-			break;
+			cp = &peer -> partner;
+			goto peer;
 
 		      case ADDRESS:
-			paddr = &peer -> server_addr;
-		      doaddr:
 			expr = (struct expression *)0;
 			if (!parse_ip_addr_or_hostname (&expr, cfile, 0)) {
 				skip_to_rbrace (cfile, 1);
 				dhcp_failover_state_dereference (&peer, MDL);
 				return;
 			}
-			option_cache (paddr, (struct data_string *)0, expr,
+			option_cache (&cp -> address,
+				      (struct data_string *)0, expr,
 				      (struct option *)0);
 			expression_dereference (&expr, MDL);
 			break;
 
 		      case PORT:
-			pport = &peer -> listen_port;
-		      doport:
 			token = next_token (&val, cfile);
 			if (token != NUMBER) {
 				parse_warn (cfile, "expecting number");
 				skip_to_rbrace (cfile, 1);
 			}
-			*pport = atoi (val);
+			cp -> port = atoi (val);
 			break;
 
-		      case MAX_TRANSMIT_IDLE:
-			tp = &peer -> max_transmit_idle;
-			goto parse_idle;
-
 		      case MAX_RESPONSE_DELAY:
-			tp = &peer -> max_response_delay;
+			tp = &cp -> max_response_delay;
 		      parse_idle:
 			token = next_token (&val, cfile);
 			if (token != NUMBER) {
@@ -769,7 +743,7 @@ void parse_failover_peer (cfile, group, type)
 			break;
 
 		      case MAX_UNACKED_UPDATES:
-			tp = &peer -> max_flying_updates;
+			tp = &cp -> max_flying_updates;
 			goto parse_idle;
 
 		      case MCLT:
@@ -893,6 +867,7 @@ void parse_failover_state_declaration (struct parse *cfile,
 	const char *val;
 	char *name;
 	dhcp_failover_state_t *state;
+	dhcp_failover_config_t *cp;
 
 	if (!peer) {
 		token = next_token (&val, cfile);
@@ -949,25 +924,21 @@ void parse_failover_state_declaration (struct parse *cfile,
 		      case RBRACE:
 			break;
 		      case MY:
+			cp = &state -> me;
+		      do_state:
 			token = next_token (&val, cfile);
 			if (token != STATE) {
 				parse_warn (cfile, "expecting 'state'");
 				goto bogus;
 			}
 			parse_failover_state (cfile,
-					      &state -> my_state,
-					      &state -> my_stos);
+					      &cp -> state, &cp -> stos);
 			break;
+
 		      case PARTNER:
-			token = next_token (&val, cfile);
-			if (token != STATE) {
-				parse_warn (cfile, "expecting 'state'");
-				goto bogus;
-			}
-			parse_failover_state (cfile,
-					      &state -> partner_state,
-					      &state -> partner_stos);
-			break;
+			cp = &state -> partner;
+			goto do_state;
+
 		      default:
 		      bogus:
 			parse_warn (cfile, "expecting state setting.");
@@ -991,6 +962,10 @@ void parse_failover_state (cfile, state, stos)
 
 	token = next_token (&val, cfile);
 	switch (token) {
+	      case UNKNOWN_STATE:
+		state_in = unknown_state;
+		break;
+
 	      case PARTNER_DOWN:
 		state_in = partner_down;
 		break;
@@ -1003,11 +978,11 @@ void parse_failover_state (cfile, state, stos)
 		state_in = communications_interrupted;
 		break;
 
-	      case POTENTIAL_CONFLICT:
-		state_in = potential_conflict;
+	      case RESOLUTION_INTERRUPTED:
+		state_in = resolution_interrupted;
 		break;
 
-	      case POTENTIAL_CONFLICT_NIC:
+	      case POTENTIAL_CONFLICT:
 		state_in = potential_conflict;
 		break;
 
@@ -1015,8 +990,20 @@ void parse_failover_state (cfile, state, stos)
 		state_in = recover;
 		break;
 		
-	      case UNKNOWN_STATE:
-		state_in = unknown_state;
+	      case RECOVER_DONE:
+		state_in = recover_done;
+		break;
+		
+	      case SHUTDOWN:
+		state_in = shut_down;
+		break;
+		
+	      case PAUSED:
+		state_in = paused;
+		break;
+		
+	      case STARTUP:
+		state_in = startup;
 		break;
 
 	      default:
@@ -1491,11 +1478,14 @@ void parse_host_declaration (cfile, group)
 		if (host -> named_group && host -> named_group -> group) {
 			if (host -> group -> statements ||
 			    (host -> group -> authoritative !=
-			     host -> named_group -> group -> authoritative))
+			     host -> named_group -> group -> authoritative)) {
+				if (host -> group -> next)
+				    group_dereference (&host -> group -> next,
+						       MDL);
 				group_reference (&host -> group -> next,
 						 host -> named_group -> group,
 						 MDL);
-			else {
+			} else {
 				group_dereference (&host -> group, MDL);
 				group_reference (&host -> group,
 						 host -> named_group -> group,
@@ -1613,8 +1603,8 @@ int parse_class_declaration (cp, cfile, group, type)
 			memset (&data, 0, sizeof data);
 			if (!parse_cshl (&data, cfile)) {
 				class_dereference (&pc, MDL);
-			}
 				return 0;
+			}
 		} else {
 			parse_warn (cfile, "Expecting string or hex list.");
 			class_dereference (&pc, MDL);
@@ -1754,6 +1744,7 @@ int parse_class_declaration (cp, cfile, group, type)
 				break;
 			}
 			token = next_token (&val, cfile);
+			class -> spawning = 1;
 			token = next_token (&val, cfile);
 			if (token != WITH) {
 				parse_warn (cfile,
@@ -1761,7 +1752,6 @@ int parse_class_declaration (cp, cfile, group, type)
 				skip_to_semi (cfile);
 				break;
 			}
-			class -> spawning = 1;
 		      submatch:
 			if (class -> submatch) {
 				parse_warn (cfile,
@@ -2550,8 +2540,15 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 			
 			seenbit = 0;
 		      special_set:
-			binding = find_binding (&lease -> scope, val);
+			if (lease -> scope)
+				binding = find_binding (lease -> scope, val);
+			else
+				binding = (struct binding *)0;
 			if (!binding) {
+			    if (!lease -> scope)
+				if (!(binding_scope_allocate
+				      (&lease -> scope, MDL)))
+					log_fatal ("no memory for scope");
 				binding = dmalloc (sizeof *binding, MDL);
 				if (!binding)
 					log_fatal ("No memory for lease %s.",
@@ -2660,8 +2657,8 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 			}
 				
 			if (newbinding) {
-				binding -> next = lease -> scope.bindings;
-				lease -> scope.bindings = binding;
+				binding -> next = lease -> scope -> bindings;
+				lease -> scope -> bindings = binding;
 			}
 			parse_semi (cfile);
 			break;
