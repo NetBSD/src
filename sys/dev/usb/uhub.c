@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.6 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.7 1998/12/02 17:20:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ uhub_attach(parent, self, aux)
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
 	usbd_devinfo(dev, 1, devinfo);
-	printf(": %s\n", devinfo);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfo);
 
 	r = usbd_set_config_no(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.3 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.4 1998/12/02 17:20:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,8 +163,8 @@ ulpt_attach(parent, self, aux)
 	
 	DPRINTFN(2,("ulpt_attach: sc=%p\n", sc));
 	usbd_devinfo(dev, 0, devinfo);
-	printf(": %s (interface class %d/%d)\n", devinfo,
-	       id->bInterfaceClass, id->bInterfaceSubClass);
+	printf("\n%s: %s, interface class %d/%d\n", sc->sc_dev.dv_xname,
+	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 
 	/* Figure out which endpoint is the bulk out endpoint. */
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
