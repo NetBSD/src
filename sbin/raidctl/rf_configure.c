@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.12 2000/12/31 01:58:03 wiz Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.13 2001/01/27 19:32:47 oster Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -76,6 +76,63 @@
      _p_ = _cast_ malloc((u_long)_size_); \
      bzero((char *)_p_, _size_); \
   }
+
+int     distSpareYes = 1;
+int     distSpareNo = 0;
+
+/* The mapsw[] table below contains all the various RAID types that might
+be supported by the kernel.  The actual supported types are found
+in sys/dev/raidframe/rf_layout.c. */
+
+static RF_LayoutSW_t mapsw[] = {
+	/* parity declustering */
+	{'T', "Parity declustering",
+	 rf_MakeLayoutSpecificDeclustered, &distSpareNo},
+	/* parity declustering with distributed sparing */
+	{'D', "Distributed sparing parity declustering",
+	 rf_MakeLayoutSpecificDeclustered, &distSpareYes},
+	/* declustered P+Q */
+	{'Q', "Declustered P+Q",
+	 rf_MakeLayoutSpecificDeclustered, &distSpareNo},
+	/* RAID 5 with rotated sparing */
+	{'R', "RAID Level 5 rotated sparing", rf_MakeLayoutSpecificNULL, NULL},
+	/* Chained Declustering */
+	{'C', "Chained Declustering", rf_MakeLayoutSpecificNULL, NULL},
+	/* Interleaved Declustering */
+	{'I', "Interleaved Declustering", rf_MakeLayoutSpecificNULL, NULL},
+	/* RAID level 0 */
+	{'0', "RAID Level 0", rf_MakeLayoutSpecificNULL, NULL},
+	/* RAID level 1 */
+	{'1', "RAID Level 1", rf_MakeLayoutSpecificNULL, NULL},
+	/* RAID level 4 */
+	{'4', "RAID Level 4", rf_MakeLayoutSpecificNULL, NULL},
+	/* RAID level 5 */
+	{'5', "RAID Level 5", rf_MakeLayoutSpecificNULL, NULL},
+	/* Evenodd */
+	{'E', "EvenOdd", rf_MakeLayoutSpecificNULL, NULL},
+	/* Declustered Evenodd */
+	{'e', "Declustered EvenOdd",
+	 rf_MakeLayoutSpecificDeclustered, &distSpareNo},
+	/* parity logging */
+	{'L', "Parity logging", rf_MakeLayoutSpecificNULL, NULL},
+	/* end-of-list marker */
+	{'\0', NULL, NULL, NULL}
+};
+RF_LayoutSW_t *
+rf_GetLayout(RF_ParityConfig_t parityConfig)
+{
+	RF_LayoutSW_t *p;
+
+	/* look up the specific layout */
+	for (p = &mapsw[0]; p->parityConfig; p++)
+		if (p->parityConfig == parityConfig)
+			break;
+	if (!p->parityConfig)
+		return (NULL);
+	RF_ASSERT(p->parityConfig == parityConfig);
+	return (p);
+}
+
 
 char *rf_find_non_white(char *p);
 char *rf_find_white(char *p);
@@ -235,13 +292,7 @@ rf_MakeConfig(configname, cfgPtr)
 		goto out;
 	}
 
-	/*
-	 * XXX who cares.. it's not going into the kernel, so we should ignore
-	 * this...
-	 */
-#ifndef _KERNEL
 	retcode = lp->MakeLayoutSpecific(fp, cfgPtr, lp->makeLayoutSpecificArg);
-#endif
 out:
 	fclose(fp);
 	if (retcode < 0)
