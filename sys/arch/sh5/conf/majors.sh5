@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.4 2002/09/28 13:13:23 scw Exp $
+#	$NetBSD: majors.sh5,v 1.5 2002/10/04 18:28:34 elric Exp $
 #
 # Device majors for sh5
 #
@@ -45,3 +45,4 @@ device-major	esh		char 50			esh
 device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	pci		char 54			pci
+device-major	cgd		char 55  block 19	cgd

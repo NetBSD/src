@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.3 2002/10/03 17:06:18 uwe Exp $
+#	$NetBSD: majors.sparc,v 1.4 2002/10/04 18:28:35 elric Exp $
 #
 # Device majors for sparc
 #
@@ -92,3 +92,4 @@ device-major	pci		char 123		pci
 device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
 device-major	systrace	char 126		systrace
+device-major	cgd		char 127 block 26	cgd
