@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 1999/04/09 10:24:42 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.27 1999/04/09 10:44:00 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,7 +152,7 @@ void	md_post_newfs (void)
 	}
 	
 	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 	return 0;
 }
@@ -342,7 +342,7 @@ int	md_make_bsd_partitions (void)
 	get_labelname();
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -417,9 +417,9 @@ int	md_copy_filesystem (void)
 
 
 	/* test returns 0  on success */
-	dir_exists = (run_prog(0, 0, "test -d %s", diskimage_usr) == 0);
+	dir_exists = (run_prog(0, 0, NULL, "test -d %s", diskimage_usr) == 0);
 	if (dir_exists) {
-		if (run_prog ( 0, 1, "pax -Xrwpe -s /%s// %s /usr",
+		if (run_prog ( 0, 1, NULL, "pax -Xrwpe -s /%s// %s /usr",
 			diskimage_usr, diskimage_usr) != 0)
 				return 1;
 	}
@@ -429,14 +429,14 @@ int	md_copy_filesystem (void)
 	  	/* The diskimage /usr subset has served its purpose. */
 	  	/* (but leave it for now, in case of errors.) */
 #if 0
-		run_prog(0, 0, "rm -fr %s", diskimage_usr);
+		run_prog(0, 0, NULL, "rm -fr %s", diskimage_usr);
 #endif
 		return 0;
 	}
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog (0, 1, "pax -X -r -w -pe / /mnt") != 0)
+	if (run_prog (0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
 		return 1;
 
 	/* Make sure target has a copy of install kernel. */
