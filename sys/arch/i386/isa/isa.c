@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.10 1993/05/08 00:50:10 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.11 1993/05/11 04:06:23 deraadt Exp $";
 
 /*
  * code to manage AT bus
@@ -137,6 +137,8 @@ config_isadev(isdp, mp)
 			isdp->id_maddr += atdevbase;
 		}
 		isdp->id_alive = (*dp->probe)(isdp);
+		if (isdp->id_irq == (u_short)-1)
+			isdp->id_alive = 0;
 		if (isdp->id_alive) {
 			printf("%s%d", dp->name, isdp->id_unit);
 			printf(" at 0x%x", isdp->id_iobase);
@@ -145,7 +147,7 @@ config_isadev(isdp, mp)
 				printf("-0x%x",
 				       isdp->id_iobase + isdp->id_alive - 1);
 			printf(" ");
-			if (isdp->id_irq != 0x0ffff)
+			if (isdp->id_irq != 0)
 				printf("irq %d ", ffs(isdp->id_irq)-1);
 			if (isdp->id_drq != -1)
 				printf("drq %d ", isdp->id_drq);
