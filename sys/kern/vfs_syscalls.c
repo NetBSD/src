@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.197 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.198 2003/10/15 17:26:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.197 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.198 2003/10/15 17:26:38 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -301,10 +301,9 @@ sys_mount(l, v, retval)
 
 	/*
 	 * The underlying file system may refuse the mount for
-	 * various reasons.  Allow root to force it to happen.
+	 * various reasons.  Allow the user to force it to happen.
 	 */
-	if (p->p_ucred->cr_uid == 0)
-		mp->mnt_flag |= SCARG(uap, flags) & MNT_FORCE;
+	mp->mnt_flag |= SCARG(uap, flags) & MNT_FORCE;
  update:
 	/*
 	 * Set the mount level flags.
