@@ -1,4 +1,40 @@
-/* $NetBSD: sem.c,v 1.2 2003/01/20 20:52:24 christos Exp $ */
+/*	$NetBSD: sem.c,v 1.3 2003/01/22 22:51:42 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
@@ -27,47 +63,37 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: src/lib/libc/sys/sem.c,v 1.3 2003/01/14 03:36:45 tjr Exp $
  */
 
+#include <sys/types.h>
+#include <sys/ksem.h>
+#include <sys/queue.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <stdarg.h>
-#include <pthread.h>
-#include <semaphore.h>
-#include <sys/queue.h>
-#include <sys/ksem.h>
 
+#include "pthread.h"
+#include "pthread_int.h"
 
-/*
- * Semaphore definitions.
- */
 struct _sem_st {
-#define SEM_MAGIC       ((u_int32_t) 0x09fa4012)
-        u_int32_t       magic;
-        pthread_mutex_t lock;
-        pthread_cond_t  gtzero;
-        u_int32_t       count;
-        u_int32_t       nwaiters;
-#define SEM_USER        (NULL)
-        semid_t         semid;  /* semaphore id if kernel (shared) semaphore */
-        int             syssem; /* 1 if kernel (shared) semaphore */
-        LIST_ENTRY(_sem_st) entry;
-        struct _sem_st  **backpointer;
+	unsigned int	usem_magic;
+#define	USEM_MAGIC	0x09fa4012
+
+	LIST_ENTRY(_sem_st) usem_list;
+	semid_t		usem_semid;	/* 0 -> user (non-shared) */
+#define	USEM_USER	0		/* assumes kernel does not use NULL */
+	sem_t		*usem_identity;
+
+	/* Protects data below. */
+	pthread_spin_t	usem_interlock;
+
+	struct pthread_queue_t usem_waiters;
+	unsigned int	usem_count;
 };
 
-
-#define _SEM_CHECK_VALIDITY(sem)		\
-	if ((*(sem))->magic != SEM_MAGIC) {	\
-		errno = EINVAL;			\
-		retval = -1;			\
-		goto RETURN;			\
-	}
-
-static sem_t sem_alloc(unsigned int value, semid_t semid, int system_sem);
+static int sem_alloc(unsigned int value, semid_t semid, sem_t *semp);
 static void sem_free(sem_t sem);
 
 static LIST_HEAD(, _sem_st) named_sems = LIST_HEAD_INITIALIZER(&named_sems);
@@ -77,173 +103,143 @@ static void
 sem_free(sem_t sem)
 {
 
-	pthread_mutex_destroy(&sem->lock);
-	pthread_cond_destroy(&sem->gtzero);
-	sem->magic = 0;
+	sem->usem_magic = 0;
 	free(sem);
 }
 
-static sem_t
-sem_alloc(unsigned int value, semid_t semid, int system_sem)
+static int
+sem_alloc(unsigned int value, semid_t semid, sem_t *semp)
 {
 	sem_t sem;
 
-	if (value > SEM_VALUE_MAX) {
-		errno = EINVAL;
-		return (NULL);
-	}
+	if (value > SEM_VALUE_MAX)
+		return (EINVAL);
 
-	sem = (sem_t)malloc(sizeof(struct _sem_st));
-	if (sem == NULL) {
-		errno = ENOSPC;
-		return (NULL);
-	}
+	if ((sem = malloc(sizeof(struct _sem_st))) == NULL)
+		return (ENOSPC);
 
-	/*
-	 * Initialize the semaphore.
-	 */
-	if (pthread_mutex_init(&sem->lock, NULL) != 0) {
-		free(sem);
-		errno = ENOSPC;
-		return (NULL);
-	}
+	sem->usem_magic = USEM_MAGIC;
+	pthread_lockinit(&sem->usem_interlock);
+	PTQ_INIT(&sem->usem_waiters);
+	sem->usem_count = value;
+	sem->usem_semid = semid;
 
-	if (pthread_cond_init(&sem->gtzero, NULL) != 0) {
-		pthread_mutex_destroy(&sem->lock);
-		free(sem);
-		errno = ENOSPC;
-		return (NULL);
-	}
-	
-	sem->count = (u_int32_t)value;
-	sem->nwaiters = 0;
-	sem->magic = SEM_MAGIC;
-	sem->semid = semid;
-	sem->syssem = system_sem;
-	return (sem);
+	*semp = sem;
+	return (0);
 }
 
 int
 sem_init(sem_t *sem, int pshared, unsigned int value)
 {
-	int	retval, got_system_sem;
 	semid_t	semid;
+	int error;
 
-	got_system_sem = 0;
-	semid = SEM_USER;
-	/*
-	 * Range check the arguments.
-	 */
-	if (pshared != 0) {
-		retval = _ksem_init(value, &semid);
-		if (retval == -1)
-			goto RETURN;
-		got_system_sem = 1;
+	semid = USEM_USER;
+
+	if (pshared && _ksem_init(value, &semid) == -1)
+		return (-1);
+
+	if ((error = sem_alloc(value, semid, sem)) != 0) {
+		_ksem_destroy(semid);
+		errno = error;
+		return (-1);
 	}
 
-	(*sem) = sem_alloc(value, semid, got_system_sem);
-	if ((*sem) == NULL)
-		retval = -1;
-	else
-		retval = 0;
-  RETURN:
-	if (retval != 0 && got_system_sem)
-		_ksem_destroy(semid);
-	return retval;
+	return (0);
 }
 
 int
 sem_destroy(sem_t *sem)
 {
-	int	retval;
-	
-	_SEM_CHECK_VALIDITY(sem);
+	pthread_t self;
 
-	pthread_mutex_lock(&(*sem)->lock);
-	/*
-	 * If this is a system semaphore let the kernel track it otherwise
-	 * make sure there are no waiters.
-	 */
-	if ((*sem)->syssem != 0) {
-		retval = _ksem_destroy((*sem)->semid);
-		if (retval == -1) {
-			pthread_mutex_unlock(&(*sem)->lock);
-			goto RETURN;
-		}
-	} else if ((*sem)->nwaiters > 0) {
-		pthread_mutex_unlock(&(*sem)->lock);
-		errno = EBUSY;
-		retval = -1;
-		goto RETURN;
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
 	}
-	pthread_mutex_unlock(&(*sem)->lock);
+#endif
 
-	sem_free(*sem);	
+	if ((*sem)->usem_semid != USEM_USER) {
+		if (_ksem_destroy((*sem)->usem_semid))
+			return (-1);
+	} else {
+		self = pthread__self();
+		pthread_spinlock(self, &(*sem)->usem_interlock);
+		if (!PTQ_EMPTY(&(*sem)->usem_waiters)) {
+			pthread_spinunlock(self, &(*sem)->usem_interlock);
+			errno = EBUSY;
+			return (-1);
+		}
+		pthread_spinunlock(self, &(*sem)->usem_interlock);
+	}
 
-	retval = 0;
-  RETURN:
-	return retval;
+	sem_free(*sem);
+
+	return (0);
 }
 
 sem_t *
 sem_open(const char *name, int oflag, ...)
 {
-	sem_t *sem;
-	sem_t s;
+	sem_t *sem, s;
 	semid_t semid;
 	mode_t mode;
 	unsigned int value;
+	int error;
+	va_list ap;
 
 	mode = 0;
 	value = 0;
 
-	if ((oflag & O_CREAT) != 0) {
-		va_list ap;
-
+	if (oflag & O_CREAT) {
 		va_start(ap, oflag);
 		mode = va_arg(ap, int);
 		value = va_arg(ap, unsigned int);
 		va_end(ap);
 	}
+
 	/*
-	 * we can be lazy and let the kernel handle the "oflag",
+	 * We can be lazy and let the kernel handle the oflag,
 	 * we'll just merge duplicate IDs into our list.
 	 */
 	if (_ksem_open(name, oflag, mode, value, &semid) == -1)
 		return (SEM_FAILED);
+
 	/*
-	 * search for a duplicate ID, we must return the same sem_t *
+	 * Search for a duplicate ID, we must return the same sem_t *
 	 * if we locate one.
 	 */
 	pthread_mutex_lock(&named_sems_mtx);
-	LIST_FOREACH(s, &named_sems, entry) {
-	    if (s->semid == semid) {
-		    pthread_mutex_unlock(&named_sems_mtx);
-		    return (s->backpointer);
-	    }
+	LIST_FOREACH(s, &named_sems, usem_list) {
+		if (s->usem_semid == semid) {
+			pthread_mutex_unlock(&named_sems_mtx);
+			return (s->usem_identity);
+		}
 	}
-	sem = (sem_t *)malloc(sizeof(*sem));
-	if (sem == NULL)
-		goto err;
-	*sem = sem_alloc(value, semid, 1);
-	if ((*sem) == NULL)
-		goto err;
-	LIST_INSERT_HEAD(&named_sems, *sem, entry);
-	(*sem)->backpointer = sem;
+
+	if ((sem = malloc(sizeof(*sem))) == NULL) {
+		error = ENOSPC;
+		goto bad;
+	}
+	if ((error = sem_alloc(value, semid, sem)) != 0)
+		goto bad;
+
+	LIST_INSERT_HEAD(&named_sems, *sem, usem_list);
+	(*sem)->usem_identity = sem;
 	pthread_mutex_unlock(&named_sems_mtx);
+
 	return (sem);
-err:
+
+ bad:
 	pthread_mutex_unlock(&named_sems_mtx);
 	_ksem_close(semid);
 	if (sem != NULL) {
 		if (*sem != NULL)
 			sem_free(*sem);
-		else
-			errno = ENOSPC;
 		free(sem);
-	} else {
-		errno = ENOSPC;
 	}
+	errno = error;
 	return (SEM_FAILED);
 }
 
@@ -251,16 +247,24 @@ int
 sem_close(sem_t *sem)
 {
 
-	if ((*sem)->syssem == 0) {
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
 		errno = EINVAL;
 		return (-1);
 	}
+#endif
+
+	if ((*sem)->usem_semid == USEM_USER) {
+		errno = EINVAL;
+		return (-1);
+	}
+
 	pthread_mutex_lock(&named_sems_mtx);
-	if (_ksem_close((*sem)->semid) == -1) {
+	if (_ksem_close((*sem)->usem_semid) == -1) {
 		pthread_mutex_unlock(&named_sems_mtx);
 		return (-1);
 	}
-	LIST_REMOVE((*sem), entry);
+	LIST_REMOVE((*sem), usem_list);
 	pthread_mutex_unlock(&named_sems_mtx);
 	sem_free(*sem);
 	free(sem);
@@ -277,101 +281,138 @@ sem_unlink(const char *name)
 int
 sem_wait(sem_t *sem)
 {
-	int	retval;
+	pthread_t self;
 
-	_SEM_CHECK_VALIDITY(sem);
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
+	}
+#endif
 
-	if ((*sem)->syssem != 0) {
-		retval = _ksem_wait((*sem)->semid);
-		goto RETURN;
+	self = pthread__self();
+
+	if ((*sem)->usem_semid != USEM_USER) {
+		pthread__testcancel(self);
+		return (_ksem_wait((*sem)->usem_semid));
 	}
 
-	pthread_mutex_lock(&(*sem)->lock);
+	for (;;) {
+		pthread_spinlock(self, &(*sem)->usem_interlock);
+		pthread_spinlock(self, &self->pt_statelock);
+		if (self->pt_cancel) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &(*sem)->usem_interlock);
+			pthread_exit(PTHREAD_CANCELED);
+		}
 
-	while ((*sem)->count == 0) {
-		(*sem)->nwaiters++;
-		pthread_cond_wait(&(*sem)->gtzero, &(*sem)->lock);
-		(*sem)->nwaiters--;
+		if ((*sem)->usem_count > 0) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			break;
+		}
+
+		PTQ_INSERT_TAIL(&(*sem)->usem_waiters, self, pt_sleep);
+		self->pt_state = PT_STATE_BLOCKED_QUEUE;
+		self->pt_sleepobj = *sem;
+		self->pt_sleepq = &(*sem)->usem_waiters;
+		self->pt_sleeplock = &(*sem)->usem_interlock;
+		pthread_spinunlock(self, &self->pt_statelock);
+
+		/* XXX What about signals? */
+
+		pthread__block(self, &(*sem)->usem_interlock);
+		/* interlock is not held when we return */
 	}
-	(*sem)->count--;
 
-	pthread_mutex_unlock(&(*sem)->lock);
+	(*sem)->usem_count--;
 
-	retval = 0;
-  RETURN:
-	return retval;
+	pthread_spinunlock(self, &(*sem)->usem_interlock);
+
+	return (0);
 }
 
 int
 sem_trywait(sem_t *sem)
 {
-	int	retval;
+	pthread_t self;
 
-	_SEM_CHECK_VALIDITY(sem);
-
-	if ((*sem)->syssem != 0) {
-		retval = _ksem_trywait((*sem)->semid);
-		goto RETURN;
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
 	}
+#endif
 
-	pthread_mutex_lock(&(*sem)->lock);
+	if ((*sem)->usem_semid != USEM_USER)
+		return (_ksem_trywait((*sem)->usem_semid));
 
-	if ((*sem)->count > 0) {
-		(*sem)->count--;
-		retval = 0;
-	} else {
+	self = pthread__self();
+
+	pthread_spinlock(self, &(*sem)->usem_interlock);
+
+	if ((*sem)->usem_count == 0) {
+		pthread_spinunlock(self, &(*sem)->usem_interlock);
 		errno = EAGAIN;
-		retval = -1;
+		return (-1);
 	}
-	
-	pthread_mutex_unlock(&(*sem)->lock);
 
-  RETURN:
-	return retval;
+	(*sem)->usem_count--;
+
+	pthread_spinunlock(self, &(*sem)->usem_interlock);
+
+	return (0);
 }
 
 int
 sem_post(sem_t *sem)
 {
-	int	retval;
+	pthread_t self, blocked;
 
-	_SEM_CHECK_VALIDITY(sem);
-
-	if ((*sem)->syssem != 0) {
-		retval = _ksem_post((*sem)->semid);
-		goto RETURN;
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
 	}
+#endif
 
-	pthread_mutex_lock(&(*sem)->lock);
+	if ((*sem)->usem_semid != USEM_USER)
+		return (_ksem_post((*sem)->usem_semid));
 
-	(*sem)->count++;
-	if ((*sem)->nwaiters > 0)
-		pthread_cond_signal(&(*sem)->gtzero);
+	self = pthread__self();
 
-	pthread_mutex_unlock(&(*sem)->lock);
+	pthread_spinlock(self, &(*sem)->usem_interlock);
+	(*sem)->usem_count++;
+	blocked = PTQ_FIRST(&(*sem)->usem_waiters);
+	if (blocked)
+		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
+	pthread_spinunlock(self, &(*sem)->usem_interlock);
 
-	retval = 0;
-  RETURN:
-	return retval;
+	/* Give the head of the blocked queue another try. */
+	if (blocked)
+		pthread__sched(self, blocked);
+
+	return (0);
 }
 
 int
 sem_getvalue(sem_t * __restrict sem, int * __restrict sval)
 {
-	int	retval;
+	pthread_t self;
 
-	_SEM_CHECK_VALIDITY(sem);
-
-	if ((*sem)->syssem != 0) {
-		retval = _ksem_getvalue((*sem)->semid, sval);
-		goto RETURN;
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
 	}
+#endif
+	if ((*sem)->usem_semid != USEM_USER)
+		return (_ksem_getvalue((*sem)->usem_semid, sval));
 
-	pthread_mutex_lock(&(*sem)->lock);
-	*sval = (int)(*sem)->count;
-	pthread_mutex_unlock(&(*sem)->lock);
+	self = pthread__self();
 
-	retval = 0;
-  RETURN:
-	return retval;
+	pthread_spinlock(self, &(*sem)->usem_interlock);
+	*sval = (int) (*sem)->usem_count;
+	pthread_spinunlock(self, &(*sem)->usem_interlock);
+
+	return (0);
 }
