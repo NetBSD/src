@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib_private.h,v 1.5 1999/08/20 02:21:48 simonb Exp $	*/
+/*	$NetBSD: bzlib_private.h,v 1.6 1999/08/30 05:12:58 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Private header file for the library.                  ---*/
@@ -156,7 +156,7 @@ extern void bz_internal_error ( int errcode );
 
 /*-- Stuff for randomising repetitive blocks. --*/
 
-extern Int32 __BZrNums[512];
+extern Int32 _BZrNums[512];
 
 #define BZ_RAND_DECLS                          \
    Int32 rNToGo;                               \
@@ -170,7 +170,7 @@ extern Int32 __BZrNums[512];
 
 #define BZ_RAND_UPD_MASK                       \
    if (s->rNToGo == 0) {                       \
-      s->rNToGo = __BZrNums[s->rTPos];         \
+      s->rNToGo = _BZrNums[s->rTPos];          \
       s->rTPos++;                              \
       if (s->rTPos == 512) s->rTPos = 0;       \
    }                                           \
@@ -180,7 +180,7 @@ extern Int32 __BZrNums[512];
 
 /*-- Stuff for doing CRCs. --*/
 
-extern UInt32 __BZcrc32Table[256];
+extern UInt32 _BZcrc32Table[256];
 
 #define BZ_INITIALISE_CRC(crcVar)              \
 {                                              \
@@ -195,7 +195,7 @@ extern UInt32 __BZcrc32Table[256];
 #define BZ_UPDATE_CRC(crcVar,cha)              \
 {                                              \
    crcVar = (crcVar << 8) ^                    \
-            __BZcrc32Table[(crcVar >> 24) ^    \
+            _BZcrc32Table[(crcVar >> 24) ^     \
                        ((UChar)cha)];          \
 }
 
@@ -291,19 +291,19 @@ typedef
 /*-- externs for compression. --*/
 
 extern void 
-__BZblockSort ( EState* );
+_BZblockSort ( EState* );
 
 extern void 
-__BZcompressBlock ( EState*, Bool );
+_BZcompressBlock ( EState*, Bool );
 
 extern void 
-__BZbsInitWrite ( EState* );
+_BZbsInitWrite ( EState* );
 
 extern void 
-__BZhbAssignCodes ( Int32*, UChar*, Int32, Int32, Int32 );
+_BZhbAssignCodes ( Int32*, UChar*, Int32, Int32, Int32 );
 
 extern void 
-__BZhbMakeCodeLengths ( UChar*, Int32*, Int32, Int32 );
+_BZhbMakeCodeLengths ( UChar*, Int32*, Int32, Int32 );
 
 
 
@@ -490,20 +490,20 @@ typedef
    (((UInt32)s->ll16[i]) | (GET_LL4(i) << 16))
 
 #define BZ_GET_SMALL(cccc)                     \
-      cccc = __BZindexIntoF ( s->tPos, s->cftab );    \
+      cccc = _BZindexIntoF ( s->tPos, s->cftab );    \
       s->tPos = GET_LL(s->tPos);
 
 
 /*-- externs for decompression. --*/
 
 extern Int32 
-__BZindexIntoF ( Int32, Int32* );
+_BZindexIntoF ( Int32, Int32* );
 
 extern Int32 
-__BZdecompress ( DState* );
+_BZdecompress ( DState* );
 
 extern void 
-__BZhbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
+_BZhbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
                            Int32,  Int32, Int32 );
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: blocksort.c,v 1.5 1999/08/20 02:21:48 simonb Exp $	*/
+/*	$NetBSD: blocksort.c,v 1.6 1999/08/30 05:12:58 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Block sorting machinery                               ---*/
@@ -667,7 +667,7 @@ static void randomiseBlock ( EState* s )
 
 
 /*---------------------------------------------*/
-void __BZblockSort ( EState* s )
+void _BZblockSort ( EState* s )
 {
    Int32 i;
 
