@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.57 2002/01/31 06:35:25 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.58 2002/01/31 07:05:43 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.57 2002/01/31 06:35:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.58 2002/01/31 07:05:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3839,7 +3839,8 @@ key_bbcmp(p1, p2, bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(void)
+key_timehandler(arg)
+	void *arg;
 {
 	u_int dir;
 	int s;
@@ -4075,8 +4076,7 @@ key_timehandler(void)
 		key_srandom();
 	}
 
-	callout_reset(&key_timehandler_ch, hz,
-	    (void *)key_timehandler, (void *)0);
+	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
 
 	splx(s);
 	return;
@@ -6899,8 +6899,7 @@ key_init()
 	ip6_def_policy.refcnt++;	/*never reclaim this*/
 #endif
 
-	callout_reset(&key_timehandler_ch, hz,
-	    (void *)key_timehandler, (void *)0);
+	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
 
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
