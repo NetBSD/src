@@ -270,7 +270,7 @@ arm_pc_is_thumb_dummy (bfd_vma memaddr)
 CORE_ADDR
 arm_addr_bits_remove (CORE_ADDR val)
 {
-  if (arm_apcs_32)
+  if (!arm_apcs_32)
     return (val & 0x03fffffc);
   else if (arm_pc_is_thumb (val))
     return (val & 0xfffffffe);
