@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.68 2002/11/07 07:46:39 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.69 2002/11/15 03:30:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.68 2002/11/07 07:46:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.69 2002/11/15 03:30:26 enami Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -406,11 +406,11 @@ fxp_attach(struct fxp_softc *sc)
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	/* 
+	/*
   	 * Add suspend hook, for similar reasons..
 	 */
 	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
-	if (sc->sc_powerhook == NULL) 
+	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
@@ -556,14 +556,14 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 
 	sc->sc_eeprom_size = 0;
 	fxp_autosize_eeprom(sc);
-	if(sc->sc_eeprom_size == 0) {
-	    printf("%s: failed to detect EEPROM size\n", sc->sc_dev.dv_xname);
-	    sc->sc_eeprom_size = 6; /* XXX panic here? */
+	if (sc->sc_eeprom_size == 0) {
+		printf("%s: failed to detect EEPROM size\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_eeprom_size = 6; /* XXX panic here? */
 	}
 #ifdef DEBUG
-	printf("%s: detected %d word EEPROM\n", 
-	       sc->sc_dev.dv_xname, 
-	       1 << sc->sc_eeprom_size);
+	printf("%s: detected %d word EEPROM\n",
+	    sc->sc_dev.dv_xname, 1 << sc->sc_eeprom_size);
 #endif
 
 	/*
@@ -603,9 +603,15 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
 		fxp_read_eeprom(sc, &data, 10, 1);
 		if (data & 0x02) {		/* STB enable */
-			printf("%s: WARNING: Disabling dynamic standby mode in EEPROM to work around a\n", sc->sc_dev.dv_xname);
-			printf("%s: WARNING: hardware bug.  You must reset the system before using this\n", sc->sc_dev.dv_xname);
-			printf("%s: WARNING: interface.\n", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: "
+			    "Disabling dynamic standby mode in EEPROM "
+			    "to work around a\n",
+			    sc->sc_dev.dv_xname);
+			printf("%s: WARNING: hardware bug.  You must reset "
+			    "the system before using this\n",
+			    sc->sc_dev.dv_xname);
+			printf("%s: WARNING: interface.\n",
+			    sc->sc_dev.dv_xname);
 			data &= ~0x02;
 			fxp_write_eeprom(sc, &data, 10, 1);
 			printf("%s: new EEPROM ID: 0x%04x\n",
@@ -657,7 +663,7 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
  * contents with a varying number of address bits, but no such
  * register seem to be available. The high bits of register 10 are 01
  * on the 558 and 559, but apparently not on the 557.
- * 
+ *
  * The Linux driver computes a checksum on the EEPROM data, but the
  * value of this checksum is not very well documented.
  */
@@ -681,7 +687,7 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
 		DELAY(4);
-		if((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & 
+		if ((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 		    FXP_EEPROM_EEDO) == 0)
 			break;
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
@@ -689,10 +695,10 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 	}
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 	DELAY(4);
-	if(x != 6 && x != 8) {
+	if (x != 6 && x != 8) {
 #ifdef DEBUG
-		printf("%s: strange EEPROM size (%d)\n", 
-		       sc->sc_dev.dv_xname, 1 << x);
+		printf("%s: strange EEPROM size (%d)\n",
+		    sc->sc_dev.dv_xname, 1 << x);
 #endif
 	} else
 		sc->sc_eeprom_size = x;
@@ -1089,7 +1095,7 @@ fxp_txintr(struct fxp_softc *sc)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
-	     i = FXP_NEXTTX(i), sc->sc_txpending--) {
+	    i = FXP_NEXTTX(i), sc->sc_txpending--) {
 		txd = FXP_CDTX(sc, i);
 		txs = FXP_DSTX(sc, i);
 
@@ -1446,7 +1452,7 @@ fxp_init(struct ifnet *ifp)
 	 */
 	fxp_stop(ifp, 0);
 
-	/* 
+	/*
 	 * XXX just setting sc_flags to 0 here clears any FXPF_MII
 	 * flag, and this prevents the MII from detaching resulting in
 	 * a panic. The flags field should perhaps be split in runtime
@@ -1618,7 +1624,7 @@ fxp_init(struct ifnet *ifp)
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
-		return ETIMEDOUT;
+		return (ETIMEDOUT);
 	}
 
 	/*
@@ -1650,7 +1656,7 @@ fxp_init(struct ifnet *ifp)
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
-		return ETIMEDOUT;
+		return (ETIMEDOUT);
 	}
 
 	/*
@@ -1772,12 +1778,12 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
-	if(sc->sc_enabled == 0) {
+	if (sc->sc_enabled == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
 		return;
 	}
-	
+
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -1856,8 +1862,8 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 	CSR_WRITE_4(sc, FXP_CSR_MDICONTROL,
 	    (FXP_MDI_READ << 26) | (reg << 16) | (phy << 21));
 
-	while (((value = CSR_READ_4(sc, FXP_CSR_MDICONTROL)) & 0x10000000) == 0
-	    && count--)
+	while (((value = CSR_READ_4(sc, FXP_CSR_MDICONTROL)) &
+	    0x10000000) == 0 && count--)
 		DELAY(10);
 
 	if (count <= 0)
@@ -1883,7 +1889,7 @@ fxp_mdi_write(struct device *self, int phy, int reg, int value)
 	    (FXP_MDI_WRITE << 26) | (reg << 16) | (phy << 21) |
 	    (value & 0xffff));
 
-	while((CSR_READ_4(sc, FXP_CSR_MDICONTROL) & 0x10000000) == 0 &&
+	while ((CSR_READ_4(sc, FXP_CSR_MDICONTROL) & 0x10000000) == 0 &&
 	    count--)
 		DELAY(10);
 
@@ -2107,7 +2113,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	if (uc->bundle_max_offset)
 		*(uint16_t *) &cbp->ucode[uc->bundle_max_offset] =
 		    htole16(fxp_bundle_max);
-	
+
 	FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/*
@@ -2156,7 +2162,7 @@ fxp_enable(struct fxp_softc *sc)
 			return (EIO);
 		}
 	}
-	
+
 	sc->sc_enabled = 1;
 	return (0);
 }
