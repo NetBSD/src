@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2 2003/02/04 01:42:32 perry Exp $
+#	$NetBSD: devlist2h.awk,v 1.3 2003/12/12 06:50:54 jmc Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,7 +62,9 @@ NR == 1 {
 	nproducts++
 
 	products[nproducts, 1] = toupper($1);
-	products[nproducts, 2] = $2;
+	$1 = "";
+	sub ("^ *", "");
+	products[nproducts, 2] = $0;
 	next
 }
 END {
@@ -76,4 +78,5 @@ END {
 		printf("\t},\n") > dfile
 	}
 	printf("};\n") > dfile
+	close(dfile)
 }
