@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.2 2003/07/26 22:53:44 jonathan Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.3 2003/07/27 03:34:40 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.2 2003/07/26 22:53:44 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.3 2003/07/27 03:34:40 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,13 +84,6 @@ static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
-
-/*
- * NB: These came over from openbsd and are kept private
- *     to the crypto code for now.
- */
-extern	int m_apply(struct mbuf *m, int off, int len,
-		    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t fstate);
 
 /*
  * Apply a symmetric encryption/decryption algorithm.
@@ -577,7 +570,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		break;
 	case CRYPTO_BUF_MBUF:
 		err = m_apply((struct mbuf *) buf, crd->crd_skip, crd->crd_len,
-		    (int (*)(caddr_t, caddr_t, unsigned int)) axf->Update,
+		    (int (*)(void*, caddr_t, unsigned int)) axf->Update,
 		    (caddr_t) &ctx);
 		if (err)
 			return err;
