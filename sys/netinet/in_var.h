@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.45 2003/06/15 02:49:33 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.46 2003/06/26 00:43:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct	in_aliasreq {
 
 #define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
 #define IN_MULTI_HASH(x, ifp) \
-        (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
+	(in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
 
 LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.85 2003/06/18 06:42:34 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.86 2003/06/26 00:43:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.85 2003/06/18 06:42:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.86 2003/06/26 00:43:31 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -546,38 +546,38 @@ in_purgeaddr(ifa, ifp)
 	struct ifnet *ifp;
 {
 	struct in_ifaddr *ia = (void *) ifa;
-        struct in_ifaddr *nia;
-        struct inpcb *inp, *inp_ialink;
+	struct in_ifaddr *nia;
+	struct inpcb *inp, *inp_ialink;
 
 	in_ifscrub(ifp, ia);
 
-        nia = ia;
-        NEXT_IA_WITH_SAME_ADDR(nia);
-        /*
-         * Kick all the sockets!
-         */
-        for (inp = LIST_FIRST(&ia->ia_inpcbs); inp != NULL; inp = inp_ialink) {
-                inp_ialink = LIST_NEXT(inp, inp_ialink);
-                KASSERT(inp != inp_ialink);
-                LIST_REMOVE(inp, inp_ialink);
-                IFAFREE(&ia->ia_ifa);
-                inp->inp_ia = NULL;
-                if (nia != NULL) {
-                        KASSERT(nia != ia);
-                        inp->inp_ia = nia;
-                        IFAREF(&nia->ia_ifa); 
-                        LIST_INSERT_HEAD(&nia->ia_inpcbs, inp, inp_ialink);
-                } else if (inp->inp_socket != NULL) {
-                        if ((inp->inp_socket->so_state & SS_NOFDREF) &&
-                            inp->inp_socket->so_head == NULL) {
-                                soabort(inp->inp_socket);
-                        } else {
-                                inp->inp_socket->so_error = ECONNABORTED;
-                                sorwakeup(inp->inp_socket);
-                                sowwakeup(inp->inp_socket);
-                        }
-                }
-        }
+	nia = ia;
+	NEXT_IA_WITH_SAME_ADDR(nia);
+	/*
+	 * Kick all the sockets!
+	 */
+	for (inp = LIST_FIRST(&ia->ia_inpcbs); inp != NULL; inp = inp_ialink) {
+		inp_ialink = LIST_NEXT(inp, inp_ialink);
+		KASSERT(inp != inp_ialink);
+		LIST_REMOVE(inp, inp_ialink);
+		IFAFREE(&ia->ia_ifa);
+		inp->inp_ia = NULL;
+		if (nia != NULL) {
+			KASSERT(nia != ia);
+			inp->inp_ia = nia;
+			IFAREF(&nia->ia_ifa); 
+			LIST_INSERT_HEAD(&nia->ia_inpcbs, inp, inp_ialink);
+		} else if (inp->inp_socket != NULL) {
+			if ((inp->inp_socket->so_state & SS_NOFDREF) &&
+			    inp->inp_socket->so_head == NULL) {
+				soabort(inp->inp_socket);
+			} else {
+				inp->inp_socket->so_error = ECONNABORTED;
+				sorwakeup(inp->inp_socket);
+				sowwakeup(inp->inp_socket);
+			}
+		}
+	}
 
 	LIST_REMOVE(ia, ia_hash);
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
@@ -1085,9 +1085,9 @@ in_addmulti(ap, ifp)
 		inm->inm_addr = *ap;
 		inm->inm_ifp = ifp;
 		inm->inm_refcount = 1;
-                LIST_INSERT_HEAD(
-                    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
-                    inm, inm_list); 
+		LIST_INSERT_HEAD(
+		    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
+		    inm, inm_list); 
 		/*
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
