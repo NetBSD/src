@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.3 2002/07/12 19:52:22 scw Exp $
+#	$NetBSD: SIMULATOR,v 1.4 2002/07/12 20:41:55 scw Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -11,7 +11,7 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"SIMULATOR-$Revision: 1.3 $"
+#ident		"SIMULATOR-$Revision: 1.4 $"
 
 options 	CPU_STB1
 
@@ -53,9 +53,20 @@ mainbus0	at root
 superhyway0	at mainbus0
 
 #
-# Only the CPU module exists on the simulator.
+# Only the CPU and a cut-down Peripheral Bridge module exists on the simulator.
 #
 cpu0		at superhyway0 pport 0x0d	# A single CPU
+pbridge0	at superhyway0 pport 0x09	# Peripheral Bridge
+
+#
+# The simulated Peripheral Bridge has the following devices:
+#
+cprc0		at pbridge0			# Clock, Power & Reset Control
+intc0		at pbridge0			# Interrupt controller
+tmu0		at pbridge0 ipl 14 intevt 0x400	# Timer
+rtc0		at pbridge0			# Battery-backed Date/Time chip
+
+clock0		at cprc0			# Primary clock generator
 
 #
 # The DTF debug interface.
