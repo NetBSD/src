@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.294 1998/03/05 04:20:44 scottb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.295 1998/03/06 14:53:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1749,7 +1749,8 @@ init386(first_avail)
 #endif
 
 #if NBIOSCALL > 0
-	avail_start = 2*NBPG;	/* save us a page! */
+	avail_start = 3*NBPG;	/* save us a page for trampoline code and
+				 one additional PT page! */
 #else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
@@ -1770,6 +1771,10 @@ init386(first_avail)
 	avail_next = avail_start;
 #endif
 
+#if NBIOSCALL > 0
+	/* install page 2 (reserved above) as PT page for first 4M */
+	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
+#endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr, VM_PROT_ALL, TRUE);
 	idt = (union descriptor *)idt_vaddr;
