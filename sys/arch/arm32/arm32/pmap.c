@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 1999/03/27 14:13:42 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 1999/03/28 22:01:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -563,18 +563,13 @@ pmap_map_in_l1(pmap, va, l2pa)
 {
 	vm_offset_t ptva;
 
-	/* Calculate the index into the L1 page table */
+	/* Calculate the index into the L1 page table. */
 	ptva = (va >> PDSHIFT) & ~3;
-
-	/*
-	 * XXX, rather than clearing the botton two bits of ptva test
-	 * for zero and panic if not as this should always be the case
-	 */
 
 	PDEBUG(0, printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
 	    pmap->pm_pdir, L1_PTE(l2pa), ptva));
 
-	/* Map page table into the L1 */
+	/* Map page table into the L1. */
 	pmap->pm_pdir[ptva + 0] = L1_PTE(l2pa + 0x000);
 	pmap->pm_pdir[ptva + 1] = L1_PTE(l2pa + 0x400);
 	pmap->pm_pdir[ptva + 2] = L1_PTE(l2pa + 0x800);
@@ -583,13 +578,37 @@ pmap_map_in_l1(pmap, va, l2pa)
 	PDEBUG(0, printf("pt self reference %lx in %lx\n",
 	    L2_PTE_NC_NB(l2pa, AP_KRW), pmap->pm_vptpt));
 
-	/* Map the page table into the page table area */
-	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
-	    L2_PTE_NC_NB(l2pa, AP_KRW);
+	/* Map the page table into the page table area. */
+	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) = L2_PTE_NC_NB(l2pa, AP_KRW);
 
 	/* XXX should be a purge */
 /*	cpu_tlb_flushD();*/
 }
+
+#if 0
+static /*__inline*/ void
+pmap_unmap_in_l1(pmap, va)
+	pmap_t pmap;
+	vm_offset_t va;
+{
+	vm_offset_t ptva;
+
+	/* Calculate the index into the L1 page table. */
+	ptva = (va >> PDSHIFT) & ~3;
+
+	/* Unmap page table from the L1. */
+	pmap->pm_pdir[ptva + 0] = 0;
+	pmap->pm_pdir[ptva + 1] = 0;
+	pmap->pm_pdir[ptva + 2] = 0;
+	pmap->pm_pdir[ptva + 3] = 0;
+
+	/* Unmap the page table from the page table area. */
+	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) = 0;
+
+	/* XXX should be a purge */
+/*	cpu_tlb_flushD();*/
+}
+#endif
 
 
 /*
@@ -1515,6 +1534,64 @@ pmap_next_phys_page(addr)
 	return(addr);
 }
 
+#if 0
+void
+pmap_pte_addref(pmap, va)
+	pmap_t pmap;
+	vm_offset_t va;
+{
+	pd_entry_t *pde;
+	vm_offset_t pa;
+	struct vm_page *m;
+
+	if (pmap == pmap_kernel())
+		return;
+
+	pde = pmap_pde(pmap, va & ~(3 << PDSHIFT));
+	pa = pmap_pte_pa(pde);
+	m = PHYS_TO_VM_PAGE(pa);
+	++m->wire_count;
+#ifdef MYCROFT_HACK
+	printf("addref pmap=%p va=%08lx pde=%p pa=%08lx m=%p wire=%d\n",
+	    pmap, va, pde, pa, m, m->wire_count);
+#endif
+}
+
+void
+pmap_pte_delref(pmap, va)
+	pmap_t pmap;
+	vm_offset_t va;
+{
+	pd_entry_t *pde;
+	vm_offset_t pa;
+	struct vm_page *m;
+
+	if (pmap == pmap_kernel())
+		return;
+
+	pde = pmap_pde(pmap, va & ~(3 << PDSHIFT));
+	pa = pmap_pte_pa(pde);
+	m = PHYS_TO_VM_PAGE(pa);
+	--m->wire_count;
+#ifdef MYCROFT_HACK
+	printf("delref pmap=%p va=%08lx pde=%p pa=%08lx m=%p wire=%d\n",
+	    pmap, va, pde, pa, m, m->wire_count);
+#endif
+	if (m->wire_count == 0) {
+#ifdef MYCROFT_HACK
+		printf("delref pmap=%p va=%08lx pde=%p pa=%08lx m=%p\n",
+		    pmap, va, pde, pa, m);
+#endif
+		pmap_unmap_in_l1(pmap, va);
+		uvm_pagefree(m);
+		--pmap->pm_stats.resident_count;
+	}
+}
+#else
+#define	pmap_pte_addref(pmap, va)
+#define	pmap_pte_delref(pmap, va)
+#endif
+
 /*
  * Since we have a virtually indexed cache, we may need to inhibit caching if
  * there is more than one mapping and at least one of them is writable.
@@ -1654,8 +1731,9 @@ pmap_remove(pmap, sva, eva)
 		/* We've found a valid PTE, so this page of PTEs has to go. */
 		if (pmap_pte_v(pte)) {
 			int bank, off;
+
 			/* Update statistics */
-			pmap->pm_stats.resident_count--;
+			--pmap->pm_stats.resident_count;
 
 			/*
 			 * Add this page to our cache remove list, if we can.
@@ -1667,52 +1745,53 @@ pmap_remove(pmap, sva, eva)
 			 * penalty, so will carry on unhindered). Otherwise,
 			 * when we fall out, we just clean the list.
 			 */
-			if (pte) {
-				PDEBUG(10, printf("remove: inv pte at %p(%x) ", pte, *pte));
-				pa = pmap_pte_pa(pte);
+			PDEBUG(10, printf("remove: inv pte at %p(%x) ", pte, *pte));
+			pa = pmap_pte_pa(pte);
 
-				if (cleanlist_idx < PMAP_REMOVE_CLEAN_LIST_SIZE) {
-					/* Add to the clean list. */
-					cleanlist[cleanlist_idx].pte = pte;
-					cleanlist[cleanlist_idx].va = sva;
-					cleanlist_idx++;
-				} else if (cleanlist_idx == PMAP_REMOVE_CLEAN_LIST_SIZE) {
-					int cnt;
+			if (cleanlist_idx < PMAP_REMOVE_CLEAN_LIST_SIZE) {
+				/* Add to the clean list. */
+				cleanlist[cleanlist_idx].pte = pte;
+				cleanlist[cleanlist_idx].va = sva;
+				cleanlist_idx++;
+			} else if (cleanlist_idx == PMAP_REMOVE_CLEAN_LIST_SIZE) {
+				int cnt;
 
-					/* Nuke everything if needed. */
-					if (pmap_active) {
-						cpu_cache_purgeID();
-						cpu_tlb_flushID();
-					}
-
-					/*
-					 * Roll back the previous PTE list,
-					 * and zero out the current PTE.
-					 */
-					for (cnt = 0; cnt < PMAP_REMOVE_CLEAN_LIST_SIZE; cnt++)
-						*cleanlist[cnt].pte = 0;
-					*pte = 0;
-					cleanlist_idx++;
-				} else {
-					/*
-					 * We've already nuked the cache and
-					 * TLB, so just carry on regardless,
-					 * and we won't need to do it again
-					 */
-					*pte = 0;
+				/* Nuke everything if needed. */
+				if (pmap_active) {
+					cpu_cache_purgeID();
+					cpu_tlb_flushID();
 				}
 
 				/*
-				 * Update flags. In a number of circumstances,
-				 * we could cluster a lot of these and do a
-				 * number of sequential pages in one go.
+				 * Roll back the previous PTE list,
+				 * and zero out the current PTE.
 				 */
-				if ((bank = vm_physseg_find(atop(pa), &off))
-				    != -1) {
-					pv = &vm_physmem[bank].pmseg.pvent[off];
-					pmap_remove_pv(pmap, sva, pv);
-					pmap_vac_me_harder(pmap, pv);
+				for (cnt = 0; cnt < PMAP_REMOVE_CLEAN_LIST_SIZE; cnt++) {
+					*cleanlist[cnt].pte = 0;
+					pmap_pte_delref(pmap, cleanlist[cnt].va);
 				}
+				*pte = 0;
+				pmap_pte_delref(pmap, sva);
+				cleanlist_idx++;
+			} else {
+				/*
+				 * We've already nuked the cache and
+				 * TLB, so just carry on regardless,
+				 * and we won't need to do it again
+				 */
+				*pte = 0;
+				pmap_pte_delref(pmap, sva);
+			}
+
+			/*
+			 * Update flags. In a number of circumstances,
+			 * we could cluster a lot of these and do a
+			 * number of sequential pages in one go.
+			 */
+			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
+				pv = &vm_physmem[bank].pmseg.pvent[off];
+				pmap_remove_pv(pmap, sva, pv);
+				pmap_vac_me_harder(pmap, pv);
 			}
 		}
 		sva += NBPG;
@@ -1733,6 +1812,7 @@ pmap_remove(pmap, sva, eva)
 				cpu_tlb_flushID_SE(cleanlist[cnt].va);
 			} else
 				*cleanlist[cnt].pte = 0;
+			pmap_pte_delref(pmap, cleanlist[cnt].va);
 		}
 	}
 }
@@ -1781,11 +1861,11 @@ pmap_remove_all(pa)
 		/*
 		 * Update statistics
 		 */
-		pmap->pm_stats.resident_count--;
+		--pmap->pm_stats.resident_count;
 
 		/* Wired bit */
 		if (pv->pv_flags & PT_W)
-			pmap->pm_stats.wired_count--;
+			--pmap->pm_stats.wired_count;
 
 		/*
 		 * Invalidate the PTEs.
@@ -1798,6 +1878,7 @@ reduce wiring count on page table pages as references drop
 #endif
 
 		*pte = 0;
+		pmap_pte_delref(pmap, pv->pv_va);
 
 		npv = pv->pv_next;
 		if (pv == ph)
@@ -1953,14 +2034,14 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	/* Valid address ? */
 	if (va >= (KERNEL_VM_BASE + KERNEL_VM_SIZE))
 		panic("pmap_enter: too big");
-	if (va >= VM_MAXUSER_ADDRESS && va < VM_MAX_ADDRESS)
-		panic("pmap_enter: entering PT page");
 	if (pmap != pmap_kernel() && va != 0) {
 		if (va < VM_MIN_ADDRESS || va >= VM_MAXUSER_ADDRESS)
 			panic("pmap_enter: kernel page in user map");
 	} else {
 		if (va >= VM_MIN_ADDRESS && va < VM_MAXUSER_ADDRESS)
 			panic("pmap_enter: user page in kernel map");
+		if (va >= VM_MAXUSER_ADDRESS && va < VM_MAX_ADDRESS)
+			panic("pmap_enter: entering PT page");
 	}
 #endif
 
@@ -1971,13 +2052,13 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 */
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
-		struct vm_page *page;
 		vm_offset_t l2pa;
-
+		struct vm_page *m;
+	
 		/* Allocate a page table */
 		for (;;) {
-			page = uvm_pagealloc(NULL, 0, NULL);
-			if (page != NULL)
+			m = uvm_pagealloc(NULL, 0, NULL);
+			if (m != NULL)
 				break;
 			
 			/*
@@ -1995,22 +2076,22 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			 * XXX sleep here if it's a user pmap.
 			 */
 			if (pmap == pmap_kernel())
-				panic("pmap_enter: kernel pmap and no more free pages");
-			else {
+				panic("pmap_enter: no free pages");
+			else
 				uvm_wait("pmap_enter");
-			}
 		}
 
-		/* Wire this page table into the L1 */
-		l2pa = VM_PAGE_TO_PHYS(page);
+		/* Wire this page table into the L1. */
+		l2pa = VM_PAGE_TO_PHYS(m);
 		pmap_zero_page(l2pa);
 		pmap_map_in_l1(pmap, va, l2pa);
+		++pmap->pm_stats.resident_count;
 
-		/* Now try and get the pte again */
 		pte = pmap_pte(pmap, va);
+#ifdef DIAGNOSTIC
 		if (!pte)
-			panic("Failure 04 in pmap_enter(pmap=%p, va=%08lx pa=%08lx)\n",
-			    pmap, va, pa);
+			panic("pmap_enter: no pte");
+#endif
 	}
 
 	flags = 0;
@@ -2064,6 +2145,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		}
 	} else {
 		opa = 0;
+		pmap_pte_addref(pmap, va);
 
 		/* pte is not valid so we must be hooking in a new page */
 		++pmap->pm_stats.resident_count;
@@ -2091,15 +2173,10 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		npte |= PT_AP(AP_U);
 
 	if (bank != -1) {
-		/*
-		 * An obvious question here is why a page would be entered in
-		 * response to a fault, but with permissions less than those
-		 * requested.  This can happen in the case of a copy-on-write
-		 * page that's not currently mapped being accessed; the first
-		 * fault will map the original page read-only, and another
-		 * fault will be taken to do the copy and make it read-write.
-		 */
-		access_type &= prot;
+#ifdef DIAGNOSTIC
+		if (access_type & ~prot)
+			panic("pmap_enter: access_type exceeds prot");
+#endif
 		npte |= PT_C | PT_B;
 		if (access_type & VM_PROT_WRITE) {
 			npte |= L2_SPAGE | PT_AP(AP_W);
