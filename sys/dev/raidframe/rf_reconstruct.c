@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.15 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.16 2000/02/23 02:03:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -583,16 +583,11 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		raidread_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					 raidPtr->raid_cinfo[row][col].ci_vp,
 					 &c_label);
-		
-		c_label.version = RF_COMPONENT_LABEL_VERSION; 
-		c_label.mod_counter = raidPtr->mod_counter;
-		c_label.serial_number = raidPtr->serial_number;
+
+		raid_init_component_label(raidPtr, &c_label);
+
 		c_label.row = row;
 		c_label.column = col;
-		c_label.num_rows = raidPtr->numRow;
-		c_label.num_columns = raidPtr->numCol;
-		c_label.clean = RF_RAID_DIRTY;
-		c_label.status = rf_ds_optimal;
 		
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
