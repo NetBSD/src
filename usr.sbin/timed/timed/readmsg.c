@@ -1,3 +1,5 @@
+/*	$NetBSD: readmsg.c,v 1.6 1997/10/17 08:56:35 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -32,11 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
+static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include "globals.h"
