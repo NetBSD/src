@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 1999/11/26 14:39:47 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.36 2000/03/23 20:44:40 ws Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -44,7 +44,7 @@ COMMON_SRCS= version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
 	c-valprint.c cp-valprint.c ch-valprint.c f-valprint.c m2-valprint.c \
 	nlmread.c serial.c mdebugread.c os9kread.c top.c utils.c
 YYSRCS= c-exp.y f-exp.y jv-exp.y m2-exp.y
-REMOTE_SRCS= remote.c dcache.c remote-utils.c tracepoint.c
+REMOTE_SRCS= remote.c dcache.c remote-utils.c tracepoint.c remote-ipkdb.c
 DEPFILES= ${TDEPFILES.${MACHINE_ARCH}} ${XDEPFILES} ${SER_HARDWIRE} \
 	${NATDEPFILES} ${REMOTE_SRCS} ${SIM_SRCS}
 
