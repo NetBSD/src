@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2004/05/13 12:15:01 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2004/08/05 15:25:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -524,17 +524,24 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/*
 	 * Calculate the size of the kernel page table directory, and
-	 * how many entries it will have.
+	 * how many entries it will have.  Adjust nkpde to the actual
+	 * kernel size automatically.  Account for the bootstrap tables,
+	 * round up, and add an extra 4MB.
 	 */
+	leal	TABLESIZE+NBPD+PDOFSET(%edi),%eax
+	shrl	$PDSHIFT,%eax
 	movl	RELOC(nkpde),%ecx		# get nkpde
-	cmpl	$NKPTP_MIN,%ecx			# larger than min?
+	cmpl	%ecx,%eax
+	jb	1f
+	movl	%eax,%ecx
+1:	cmpl	$NKPTP_MIN,%ecx			# larger than min?
 	jge	1f
 	movl	$NKPTP_MIN,%ecx			# set at min
 	jmp	2f
 1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
 	jle	2f
 	movl	$NKPTP_MAX,%ecx
-2:
+2:	movl	%ecx,RELOC(nkpde)
 
 	/* Clear memory for bootstrap tables. */
 	shll	$PGSHIFT,%ecx
