@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.10 2002/10/19 05:55:09 junyoung Exp $
+# $NetBSD: GENERIC,v 1.11 2002/11/22 12:20:58 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -118,7 +118,7 @@ options 	NTP		# Kernel PLL for ntpd(8).
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 
