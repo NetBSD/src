@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.43 2004/08/13 13:45:46 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 2004/08/13 13:45:46 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ Boolean File2Pkg = FALSE;
 Boolean Quiet = FALSE;
 char   *InfoPrefix = "";
 char   *BuildInfoVariable = "";
-char    PlayPen[FILENAME_MAX];
+char    PlayPen[MaxPathSize];
 size_t  PlayPenSize = sizeof(PlayPen);
 char   *CheckPkg = NULL;
 size_t  termwidth = 0;

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.39 2004/04/09 18:27:48 tv Exp $	*/
+/*	$NetBSD: perform.c,v 1.40 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.39 2004/04/09 18:27:48 tv Exp $");
+__RCSID("$NetBSD: perform.c,v 1.40 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -42,7 +42,7 @@ static char *Home;
 static void
 make_dist(const char *home, const char *pkg, const char *suffix, const package_t *plist)
 {
-	char    tball[FILENAME_MAX];
+	char    tball[MaxPathSize];
 	const plist_t *p;
 	int     ret;
 	char   *args[50];	/* Much more than enough. */
@@ -219,7 +219,7 @@ pkg_perform(lpkg_head_t *pkgs)
 	package_t plist;
 	char   *suffix;		/* What we tack on to the end of the finished package */
 	lpkg_t *lpp;
-	char    installed[FILENAME_MAX];
+	char    installed[MaxPathSize];
 
 	lpp = TAILQ_FIRST(pkgs);
 	pkg = lpp->lp_name;	/* Only one arg to create */

@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.46 2004/08/13 13:37:04 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2004/12/29 11:34:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.46 2004/08/13 13:37:04 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 2004/12/29 11:34:59 agc Exp $");
 #endif
 
 /*
@@ -90,8 +90,8 @@ check1pkg(const char *pkgdir)
 	plist_t *p;
 	package_t Plist;
 	char   *PkgName, *dirp = NULL, *md5file;
-	char    file[FILENAME_MAX];
-	char    dir[FILENAME_MAX];
+	char    file[MaxPathSize];
+	char    dir[MaxPathSize];
 
 	f = fopen(CONTENTS_FNAME, "r");
 	if (f == NULL)
@@ -129,7 +129,7 @@ check1pkg(const char *pkgdir)
 							free(md5file);
 						}
 					} else if (strncmp(p->next->name, SYMLINK_HEADER, SymlinkHeaderLen) == 0) {
-						char	buf[FILENAME_MAX + SymlinkHeaderLen];
+						char	buf[MaxPathSize + SymlinkHeaderLen];
 						int	cc;
 
 						(void) strlcpy(buf, SYMLINK_HEADER, sizeof(buf));
@@ -199,10 +199,10 @@ add1pkg(const char *pkgdir)
 	FILE	       *f;
 	plist_t	       *p;
 	package_t	Plist;
-	char 		contents[FILENAME_MAX];
+	char 		contents[MaxPathSize];
 	char	       *PkgDBDir, *PkgName, *dirp;
-	char 		file[FILENAME_MAX];
-	char		dir[FILENAME_MAX];
+	char 		file[MaxPathSize];
+	char		dir[MaxPathSize];
 	int		cnt = 0;
 
 	if (!pkgdb_open(ReadWrite))
@@ -294,7 +294,7 @@ rebuild(void)
 	DIR	       *dp;
 	struct dirent  *de;
 	char	       *PkgDBDir;
-	char		cachename[FILENAME_MAX];
+	char		cachename[MaxPathSize];
 
 	pkgcnt = 0;
 	filecnt = 0;
@@ -423,8 +423,8 @@ main(int argc, char *argv[])
 	const char	*prog;
 	Boolean		 use_default_sfx = TRUE;
 	Boolean 	 show_basename_only = FALSE;
-	char		 lsdir[FILENAME_MAX];
-	char		 sfx[FILENAME_MAX];
+	char		 lsdir[MaxPathSize];
+	char		 sfx[MaxPathSize];
 	char		*lsdirp = NULL;
 	int		 ch;
 
@@ -529,7 +529,7 @@ main(int argc, char *argv[])
 					rc = chdir(*argv);
 					if (rc == -1) {
 						/* found nothing - try 'pkg-[0-9]*' */
-						char try[FILENAME_MAX];
+						char try[MaxPathSize];
 					
 						snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
 						if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
@@ -578,8 +578,8 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char cwd[MAXPATHLEN];
-			char base[FILENAME_MAX];
+			char cwd[MaxPathSize];
+			char base[MaxPathSize];
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
@@ -620,8 +620,8 @@ main(int argc, char *argv[])
 			/* args specified */
 			int     rc;
 			const char *basep, *dir;
-			char cwd[MAXPATHLEN];
-			char base[FILENAME_MAX];
+			char cwd[MaxPathSize];
+			char base[MaxPathSize];
 			char *p;
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);
