@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2004/03/25 15:06:37 pooka Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2004/04/10 22:48:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2004/03/25 15:06:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2004/04/10 22:48:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -263,12 +263,23 @@ void
 mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		 u_int32_t ipending)
 {
+	struct clockframe cf;
 
-	return;
+	cf.pc = pc;
+	cf.sr = status;
+
+	hardclock(&cf);
+
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+		/* XXX - we need to strobe on ip12. abstract me?! */
+		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fb801e0) = 1;
+		break;
+	}
 }
 
 unsigned long
-mips1_clkread(void)
+mips1_clkread()
 {
 
 	return 0;
@@ -306,7 +317,7 @@ mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 }
 
 unsigned long
-mips3_clkread(void)
+mips3_clkread()
 {
 	uint32_t res, count;
 
