@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.9 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.macppc,v 1.10 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/macppc
 ./usr/include/macppc/_G_config.h
 ./usr/include/macppc/adbsys.h
@@ -27,6 +27,7 @@
 ./usr/include/macppc/keyboard.h
 ./usr/include/macppc/limits.h
 ./usr/include/macppc/machine_type.h
+./usr/include/macppc/math.h
 ./usr/include/macppc/param.h
 ./usr/include/macppc/pcb.h
 ./usr/include/macppc/pio.h

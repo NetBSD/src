@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.31 1999/04/19 21:34:16 kleink Exp $
+# $NetBSD: md.atari,v 1.32 1999/12/23 10:22:59 kleink Exp $
 ./usr/include/atari
 ./usr/include/atari/_G_config.h
 ./usr/include/atari/ahdilabel.h
@@ -24,6 +24,7 @@
 ./usr/include/atari/kbdreg.h
 ./usr/include/atari/kcore.h
 ./usr/include/atari/limits.h
+./usr/include/atari/math.h
 ./usr/include/atari/msioctl.h
 ./usr/include/atari/mtpr.h
 ./usr/include/atari/param.h

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.1 1999/11/24 01:37:48 eeh Exp $
+# $NetBSD: md.sparc64,v 1.2 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/sparc64/_G_config.h
 ./usr/include/sparc64/ansi.h
 ./usr/include/sparc64/aout_machdep.h
@@ -31,6 +31,7 @@
 ./usr/include/sparc64/kbio.h
 ./usr/include/sparc64/kcore.h
 ./usr/include/sparc64/limits.h
+./usr/include/sparc64/math.h
 ./usr/include/sparc64/oldmon.h
 ./usr/include/sparc64/openpromio.h
 ./usr/include/sparc64/param.h

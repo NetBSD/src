@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.26 1999/06/10 00:54:13 simonb Exp $
+# $NetBSD: md.arm32,v 1.27 1999/12/23 10:22:59 kleink Exp $
 ./usr/include/arm32
 ./usr/include/arm32/_G_config.h
 ./usr/include/arm32/ansi.h
@@ -32,6 +32,7 @@
 ./usr/include/arm32/katelib.h
 ./usr/include/arm32/kbd.h
 ./usr/include/arm32/limits.h
+./usr/include/arm32/math.h
 ./usr/include/arm32/mouse.h
 ./usr/include/arm32/param.h
 ./usr/include/arm32/pcb.h

@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.26 1999/08/30 00:53:58 mrg Exp $
+# $NetBSD: md.pc532,v 1.27 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/pc532
 ./usr/include/pc532/_G_config.h
 ./usr/include/pc532/ansi.h
@@ -23,6 +23,7 @@
 ./usr/include/pc532/jmpbuf.h
 ./usr/include/pc532/kcore.h
 ./usr/include/pc532/limits.h
+./usr/include/pc532/math.h
 ./usr/include/pc532/mtpr.h
 ./usr/include/pc532/param.h
 ./usr/include/pc532/pcb.h

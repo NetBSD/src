@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.30 1999/04/19 21:34:16 kleink Exp $
+# $NetBSD: md.amiga,v 1.31 1999/12/23 10:22:59 kleink Exp $
 ./usr/include/amiga
 ./usr/include/amiga/_G_config.h
 ./usr/include/amiga/ansi.h
@@ -22,6 +22,7 @@
 ./usr/include/amiga/intr.h
 ./usr/include/amiga/kcore.h
 ./usr/include/amiga/limits.h
+./usr/include/amiga/math.h
 ./usr/include/amiga/mtpr.h
 ./usr/include/amiga/param.h
 ./usr/include/amiga/pcb.h

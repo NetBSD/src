@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.36 1999/11/08 22:41:30 mycroft Exp $
+# $NetBSD: md.sparc,v 1.37 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/sparc
 ./usr/include/sparc/_G_config.h
 ./usr/include/sparc/ansi.h
@@ -32,6 +32,7 @@
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
 ./usr/include/sparc/loadfile_machdep.h
+./usr/include/sparc/math.h
 ./usr/include/sparc/oldmon.h
 ./usr/include/sparc/openpromio.h
 ./usr/include/sparc/param.h

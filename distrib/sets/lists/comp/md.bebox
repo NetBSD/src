@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.4 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.bebox,v 1.5 1999/12/23 10:22:59 kleink Exp $
 ./usr/include/bebox
 ./usr/include/bebox/_G_config.h
 ./usr/include/bebox/ansi.h
@@ -28,6 +28,7 @@
 ./usr/include/bebox/kgdb.h
 ./usr/include/bebox/limits.h
 ./usr/include/bebox/machine_type.h
+./usr/include/bebox/math.h
 ./usr/include/bebox/mouse.h
 ./usr/include/bebox/param.h
 ./usr/include/bebox/pcb.h
