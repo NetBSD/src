@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 1997/01/31 02:07:29 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.66.2.1 1997/03/02 16:17:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -916,7 +916,6 @@ configure()
 	bootpartition = bp == NULL ? 0 : bp->val[2];
 
 	setroot(bootdv, bootpartition, sparc_nam2blk);
-	swapconf();
 	dumpconf();
 	cold = 0;
 }

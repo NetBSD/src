@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1997/02/03 21:08:48 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.1 1997/03/02 16:17:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -78,7 +78,6 @@ configure()
 
 	setroot(booted_device, booted_partition, x68k_nam2blk);
 
-	swapconf();
 	dumpconf();
 	if (dumplo < 0)
 		dumplo = 0;

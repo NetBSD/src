@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1997/02/05 20:56:29 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33.2.1 1997/03/02 16:17:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -337,7 +337,6 @@ configure()
 		boothowto |= RB_ASKNAME;
 
 	setroot(dv, booted_partition, hp300_nam2blk);
-	swapconf();
 	dumpconf();
 
 	/*
