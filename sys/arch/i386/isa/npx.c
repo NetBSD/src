@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.9 2002/03/04 21:47:31 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.10 2002/03/04 23:05:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.9 2002/03/04 21:47:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.10 2002/03/04 23:05:16 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -582,6 +582,7 @@ npxsave(void)
 #else
 	if (npx_nointr != 0)
 		panic("npxsave: masked");
+#endif
 #endif
 	IPRINTF(("Fork"));
 	clts();
