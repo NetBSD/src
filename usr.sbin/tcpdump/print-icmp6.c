@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.10 2001/01/28 10:05:06 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.11 2001/02/19 09:53:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.10 2001/01/28 10:05:06 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.11 2001/02/19 09:53:50 enami Exp $");
 #endif
 #endif
 
@@ -511,7 +511,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 			printf("%u", (u_int32_t)ntohl(opp->nd_opt_pi_valid_time));
 		}
 		printf(", ");
-		printf("preffered_ltime=");
+		printf("preferred_ltime=");
 		if ((u_int32_t)ntohl(opp->nd_opt_pi_preferred_time) == ~0U)
 			printf("infinity");
 		else {
