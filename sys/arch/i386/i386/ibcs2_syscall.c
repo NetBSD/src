@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.25 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.26 2004/02/13 18:57:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.25 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.26 2004/02/13 18:57:19 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -229,8 +229,10 @@ ibcs2_syscall_fancy(frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
