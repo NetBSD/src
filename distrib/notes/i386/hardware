@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.55 1999/09/29 17:26:53 ad Exp $	
+.\"	$NetBSD: hardware,v 1.56 1999/10/06 13:30:59 drochner Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -80,7 +80,7 @@ Supported devices include:
 					the SYM 8125)
 			Tekram DC-390U/F
 			Tyan Yorktown
-		Symbios Logic (NCR) 5380/53C400-based ISA SCSI host adapters [*] [+]
+		Symbios Logic (NCR) 5380/53C400-based ISA SCSI host adapters [*]
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI and TMC-7000 host adapters
 			(ISA cards only)
@@ -211,7 +211,7 @@ Supported devices include:
 		Gravis Ultrasound Plug\*&Play [*] [+]
 		Ensoniq AudioPCI [*] [+]
 		Yamaha OPL3-SA3 [*] [+]
-		Aria based sound cards [*] [+]
+		Aria based sound cards [*]
 		S3 SonicVibes [*] [+]
 		ESS Technology ES1777/1868/1869/1887/1888/888 and
 			Solo-1 ES1938/1946 audio [*] [+]
@@ -313,10 +313,6 @@ AMD PCscsi-PCI based SCSI host adapters
 BusLogic BT445, BT74x, or BT9xx SCSI host adapters
 		bha0 	0x330	any	any
 		bha1 	0x334	any	any
-
-Symbios Logic/NCR 5380/53C400 based ISA SCSI host adapters
-		nca0	0x360	15
-		nca1		5		iomem 0xd8000
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
 		ncr0	any  	any	any
