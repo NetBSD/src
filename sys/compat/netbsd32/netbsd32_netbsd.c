@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.37 2000/09/24 13:09:31 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.38 2000/09/28 19:05:07 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1926,6 +1926,7 @@ netbsd32_execve(p, v, retval)
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
+	vm->vm_minsaddr = (char *) pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -1950,19 +1951,26 @@ netbsd32_execve(p, v, retval)
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
-	stack = (char *) (USRSTACK - len);
+	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
 	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
 		goto exec_abort;
 
+	/* fill process ps_strings info */
+	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
+	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
+	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
+	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
+	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
+
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo)))
 		goto exec_abort;
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_emul->e_sigcode,
-		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
+		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode))
 			goto exec_abort;
 #ifdef PMAP_NEED_PROCWR

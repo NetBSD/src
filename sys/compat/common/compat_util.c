@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.16 2000/08/29 14:33:25 sommerfeld Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.17 2000/09/28 19:05:08 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -233,9 +233,11 @@ caddr_t
 stackgap_init(e)
 	struct emul *e;
 {
+	struct proc *p = curproc;		/* XXX */
 
 #define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
-	return STACKGAPBASE;
+	return (caddr_t)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
+		- STACKGAPLEN) & ~ALIGNBYTES);
 #undef szsigcode
 }
 
@@ -245,17 +247,18 @@ stackgap_alloc(sgp, sz)
 	caddr_t *sgp;
 	size_t sz;
 {
-	void *p = (void *) *sgp;
+	void *n = (void *) *sgp;
 	caddr_t nsgp;
-	struct emul *e = curproc->p_emul;	 /* XXX */
+	struct proc *p = curproc;		/* XXX */
+	struct emul *e = p->p_emul;
 	int sigsize = e->e_esigcode - e->e_sigcode;
 	
 	sz = ALIGN(sz);
 	nsgp = *sgp + sz;
-	if (nsgp > (((caddr_t)PS_STRINGS) - sigsize))
+	if (nsgp > (((caddr_t)p->p_psstr) - sigsize))
 		return NULL;
 	*sgp = nsgp;
-	return p;
+	return n;
 }
 
 void

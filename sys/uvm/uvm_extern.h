@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.50 2000/09/21 17:46:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.51 2000/09/28 19:05:06 eeh Exp $	*/
 
 /*
  *
@@ -353,6 +353,7 @@ struct vmspace {
 	caddr_t	vm_taddr;	/* user virtual address of text XXX */
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+	caddr_t vm_minsaddr;	/* user VA at top of stack */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.10 2000/09/26 23:28:01 thorpej Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.11 2000/09/28 19:05:07 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -116,7 +116,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	aiov.iov_len = sizeof(pss);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)PS_STRINGS;
+	auio.uio_offset = (vaddr_t)p->p_psstr;
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
