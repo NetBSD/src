@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.42 1995/07/23 22:09:11 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.43 1995/09/14 12:41:32 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -7,6 +7,7 @@
  * Copyright (c) 1992, 1993, Garrett A. Wollman.
  *
  * Portions:
+ * Copyright (c) 1993, 1994, 1995, Rodney W. Grimes
  * Copyright (c) 1994, 1995, Rafal K. Boni
  * Copyright (c) 1990, 1991, William F. Jolitz
  * Copyright (c) 1990, The Regents of the University of California
@@ -54,6 +55,9 @@
  * BPF support code taken from hpdev/if_le.c, supplied with tcpdump.
  *
  * 3C507 support is loosely based on code donated to NetBSD by Rafal Boni.
+ *
+ * Intel EtherExpress 16 support taken from FreeBSD's if_ix.c, written
+ * by Rodney W. Grimes.
  *
  * Majorly cleaned up and 3C507 code merged by Charles Hannum.
  */
@@ -149,6 +153,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <dev/ic/i82586reg.h>
 #include <dev/isa/if_ieatt.h>
 #include <dev/isa/if_ie507.h>
+#include <dev/isa/if_iee16.h>
 #include <dev/isa/elink.h>
 
 #define	IED_RINT	0x01
@@ -252,6 +257,8 @@ struct ie_softc {
 	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
 	int mcast_count;
 
+	u_short	irq_encoded;		/* encoded interrupt on IEE16 */
+
 #ifdef IEDEBUG
 	int sc_debug;
 #endif
@@ -268,6 +275,15 @@ static void sl_reset_586 __P((struct ie_softc *));
 static void el_chan_attn __P((struct ie_softc *));
 static void sl_chan_attn __P((struct ie_softc *));
 static void slel_get_address __P((struct ie_softc *));
+
+static void ee16_reset_586 __P((struct ie_softc *));
+static void ee16_chan_attn __P((struct ie_softc *));
+static void ee16_interrupt_enable __P((struct ie_softc *));
+void ee16_eeprom_outbits __P((struct ie_softc *, int, int));
+void ee16_eeprom_clock __P((struct ie_softc *, int));
+u_short ee16_read_eeprom __P((struct ie_softc *, int));
+int ee16_eeprom_inbits __P((struct ie_softc *));
+
 void iereset __P((struct ie_softc *));
 void ie_readframe __P((struct ie_softc *, int));
 void ie_drop_packet_buffer __P((struct ie_softc *));
@@ -352,6 +368,8 @@ ieprobe(parent, match, aux)
 	if (sl_probe(sc, ia))
 		return 1;
 	if (el_probe(sc, ia))
+		return 1;
+	if (ee16_probe(sc, ia))
 		return 1;
 	return 0;
 }
@@ -523,6 +541,208 @@ el_probe(sc, ia)
 	return 1;
 }
 
+/* Taken almost exactly from Rod's if_ix.c. */
+
+int
+ee16_probe(sc, ia)
+	struct ie_softc *sc;
+	struct isa_attach_args *ia;
+{
+	int i;
+	int cnt_id;
+	u_short board_id, id_var1, id_var2, checksum = 0;
+	u_short eaddrtemp, irq;
+        u_short pg, adjust, decode, edecode;
+        u_char lock_bit;
+	u_char c;
+	u_char	bart_config;
+
+	short	irq_translate[] = {0, 0x09, 0x03, 0x04, 0x05, 0x0a, 0x0b, 0};
+
+	/* Need this for part of the probe. */
+	sc->reset_586 = ee16_reset_586;
+	sc->chan_attn = ee16_chan_attn;
+
+	/* reset any ee16 at the current iobase */
+	outb(ia->ia_iobase + IEE16_ECTRL, IEE16_RESET_ASIC);
+	outb(ia->ia_iobase + IEE16_ECTRL, 0);
+	delay(240);
+
+	/* now look for ee16. */
+	board_id = id_var1 = id_var2 = 0;
+	for (i=0; i<4 ; i++) {
+		id_var1 = inb(ia->ia_iobase + IEE16_ID_PORT);
+		id_var2 = ((id_var1 & 0x03) << 2);
+		board_id |= (( id_var1 >> 4)  << id_var2);
+		}
+
+	if (board_id != IEE16_ID)
+		return 0;		
+
+	/* need sc->sc_iobase for ee16_read_eeprom */
+	sc->sc_iobase = ia->ia_iobase;
+	sc->hard_type = IE_EE16;
+
+	/*
+	 * If ia->maddr == MADDRUNK, use value in eeprom location 6.
+	 *
+	 * The shared RAM location on the EE16 is encoded into bits
+	 * 3-7 of EEPROM location 6.  We zero the upper byte, and 
+	 * shift the 5 bits right 3.  The resulting number tells us
+	 * the RAM location.  Because the EE16 supports either 16k or 32k
+	 * of shared RAM, we only worry about the 32k locations. 
+	 *
+	 * NOTE: if a 64k EE16 exists, it should be added to this switch.
+	 *       then the ia->msize would need to be set per case statement.
+	 *
+	 *	value	msize	location
+	 *	=====	=====	========
+	 *	0x03	0x8000	0xCC000
+	 *	0x06	0x8000	0xD0000
+	 *	0x0C	0x8000	0xD4000
+	 *	0x18	0x8000	0xD8000
+	 *
+	 */ 
+
+	if (ia->ia_maddr == MADDRUNK) {
+		i = (ee16_read_eeprom(sc, 6) & 0x00ff ) >> 3;
+		switch(i) {
+			case 0x03:
+				ia->ia_maddr = 0xCC000;
+				break;
+			case 0x06:
+				ia->ia_maddr = 0xD0000;
+				break;
+			case 0x0c:
+				ia->ia_maddr = 0xD4000;
+				break;
+			case 0x18:
+				ia->ia_maddr = 0xD8000;
+				break;
+			default:
+				return 0 ;
+				break; /* NOTREACHED */
+		}
+		ia->ia_msize = 0x8000; 
+	}
+
+	/* need to set these after checking for MADDRUNK */
+	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
+	sc->sc_msize = ia->ia_msize; 
+
+	/* need to put the 586 in RESET, and leave it */
+	outb( PORT + IEE16_ECTRL, IEE16_RESET_586);  
+
+	/* read the eeprom and checksum it, should == IEE16_ID */
+	for(i=0 ; i< 0x40 ; i++)
+		checksum += ee16_read_eeprom(sc, i);
+
+	if (checksum != IEE16_ID)
+		return 0;	
+
+	/*
+	 * Size and test the memory on the board.  The size of the memory
+	 * can be one of 16k, 32k, 48k or 64k.  It can be located in the
+	 * address range 0xC0000 to 0xEFFFF on 16k boundaries. 
+	 *
+	 * If the size does not match the passed in memory allocation size
+	 * issue a warning, but continue with the minimum of the two sizes.
+	 */
+
+	switch (ia->ia_msize) {
+		case 65536:
+		case 32768: /* XXX Only support 32k and 64k right now */
+			break;
+		case 16384:
+		case 49512:
+		default:
+			printf("ieprobe mapped memory size out of range\n");
+			return 0;
+			break; /* NOTREACHED */
+	}
+
+	if ((kvtop(sc->sc_maddr) < 0xC0000) ||
+	    (kvtop(sc->sc_maddr) + sc->sc_msize > 0xF0000)) {
+		printf("ieprobe mapped memory address out of range\n");
+		return 0;
+	}
+
+	pg = (kvtop(sc->sc_maddr) & 0x3C000) >> 14;
+	adjust = IEE16_MCTRL_FMCS16 | (pg & 0x3) << 2;
+	decode = ((1 << (sc->sc_msize / 16384)) - 1) << pg;
+	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
+
+	/* ZZZ This should be checked against eeprom location 6, low byte */
+	outb(PORT + IEE16_MEMDEC, decode & 0xFF);
+	/* ZZZ This should be checked against eeprom location 1, low byte */
+	outb(PORT + IEE16_MCTRL, adjust);
+	/* ZZZ Now if I could find this one I would have it made */
+	outb(PORT + IEE16_MPCTRL, (~decode & 0xFF));
+	/* ZZZ I think this is location 6, high byte */
+	outb(PORT + IEE16_MECTRL, edecode); /*XXX disable Exxx */
+
+	/*
+	 * first prime the stupid bart DRAM controller so that it
+	 * works, then zero out all of memory.
+	 */
+	bzero(sc->sc_maddr, 32);
+	bzero(sc->sc_maddr, sc->sc_msize);
+
+	/*
+	 * Get the encoded interrupt number from the EEPROM, check it
+	 * against the passed in IRQ.  Issue a warning if they do not
+	 * match, and fail the probe.  If irq is 'IRQUNK' then we
+	 * use the EEPROM irq, and continue.
+	 */
+	irq = ee16_read_eeprom(sc, IEE16_EEPROM_CONFIG1);
+	irq = (irq & IEE16_EEPROM_IRQ) >> IEE16_EEPROM_IRQ_SHIFT;
+	sc->irq_encoded = irq;
+	irq = irq_translate[irq];
+	if (ia->ia_irq != IRQUNK) {
+		if (irq != ia->ia_irq) {
+#ifdef DIAGNOSTIC
+			printf("\nie%d: fatal: board IRQ %d does not match kernel\n", sc->sc_dev.dv_unit, irq);
+#endif /* DIAGNOSTIC */
+			return 0; 	/* _must_ match or probe fails */
+		}
+	} else
+		ia->ia_irq = irq;
+
+	/*
+	 * Get the hardware ethernet address from the EEPROM and
+	 * save it in the softc for use by the 586 setup code.
+	 */
+	eaddrtemp = ee16_read_eeprom(sc, IEE16_EEPROM_ENET_HIGH);
+	sc->sc_arpcom.ac_enaddr[1] = eaddrtemp & 0xFF;
+	sc->sc_arpcom.ac_enaddr[0] = eaddrtemp >> 8;
+	eaddrtemp = ee16_read_eeprom(sc, IEE16_EEPROM_ENET_MID);
+	sc->sc_arpcom.ac_enaddr[3] = eaddrtemp & 0xFF;
+	sc->sc_arpcom.ac_enaddr[2] = eaddrtemp >> 8;
+	eaddrtemp = ee16_read_eeprom(sc, IEE16_EEPROM_ENET_LOW);
+	sc->sc_arpcom.ac_enaddr[5] = eaddrtemp & 0xFF;
+	sc->sc_arpcom.ac_enaddr[4] = eaddrtemp >> 8;
+
+	/* disable the board interrupts */
+	outb(PORT + IEE16_IRQ, sc->irq_encoded);
+
+	/* enable loopback to keep bad packets off the wire */
+	if(sc->hard_type == IE_EE16) {
+		bart_config = inb(PORT + IEE16_CONFIG);
+		bart_config |= IEE16_BART_LOOPBACK;
+		bart_config |= IEE16_BART_MCS16_TEST; /* inb doesn't get bit! */
+		outb(PORT + IEE16_CONFIG, bart_config);
+		bart_config = inb(PORT + IEE16_CONFIG);
+	}
+
+	outb(PORT + IEE16_ECTRL, 0);
+	delay(100);
+	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
+		return 0;
+
+	ia->ia_iosize = 16;	/* the number of I/O ports */
+	return 1;		/* found */
+}
+
 /*
  * Taken almost exactly from Bill's if_is.c, then modified beyond recognition.
  */
@@ -589,6 +809,10 @@ ieintr(arg)
 	if (sc->hard_type == IE_3C507)
 		outb(PORT + IE507_ICTRL, 1);
 
+	/* disable interrupts on the EE16. */
+	if (sc->hard_type == IE_EE16)
+		outb(PORT + IEE16_IRQ, sc->irq_encoded);
+
 	status = sc->scb->ie_status & IE_ST_WHENCE;
 	if (status == 0)
 		return 0;
@@ -637,8 +861,12 @@ loop:
 		outb(PORT + IE507_ICTRL, 1);
 
 	status = sc->scb->ie_status & IE_ST_WHENCE;
-	if (status == 0)
+	if (status == 0) {
+		/* enable interrupts on the EE16. */
+		if (sc->hard_type == IE_EE16)
+		    outb(PORT + IEE16_IRQ, sc->irq_encoded | IEE16_IRQ_ENABLE);
 		return 1;
+	}
 
 	goto loop;
 }
@@ -1392,6 +1620,17 @@ sl_reset_586(sc)
 }
 
 void
+ee16_reset_586(sc)
+	struct ie_softc *sc;
+{
+
+	outb(PORT + IEE16_ECTRL, IEE16_RESET_586);
+	delay(100);
+	outb(PORT + IEE16_ECTRL, 0);
+	delay(100);
+}
+
+void
 el_chan_attn(sc)
 	struct ie_softc *sc;
 {
@@ -1407,6 +1646,104 @@ sl_chan_attn(sc)
 	outb(PORT + IEATT_ATTN, 0);
 }
 
+void
+ee16_chan_attn(sc)
+	struct ie_softc *sc;
+{
+	outb(PORT + IEE16_ATTN, 0);
+}
+
+u_short
+ee16_read_eeprom(sc, location)
+	struct ie_softc *sc;
+	int location;
+{
+	int ectrl, edata;
+
+	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl &= IEE16_ECTRL_MASK;
+	ectrl |= IEE16_ECTRL_EECS;
+	outb(PORT + IEE16_ECTRL, ectrl);
+
+	ee16_eeprom_outbits(sc, IEE16_EEPROM_READ, IEE16_EEPROM_OPSIZE1);
+	ee16_eeprom_outbits(sc, location, IEE16_EEPROM_ADDR_SIZE);
+	edata = ee16_eeprom_inbits(sc);
+	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl &= ~(IEE16_RESET_ASIC | IEE16_ECTRL_EEDI | IEE16_ECTRL_EECS);
+	outb(PORT + IEE16_ECTRL, ectrl);
+	ee16_eeprom_clock(sc, 1);
+	ee16_eeprom_clock(sc, 0);
+	return edata;
+}
+
+void
+ee16_eeprom_outbits(sc, edata, count)
+	struct ie_softc *sc;
+	int edata, count;
+{
+	int ectrl, i;
+
+	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl &= ~IEE16_RESET_ASIC;
+	for (i = count - 1; i >= 0; i--) {
+		ectrl &= ~IEE16_ECTRL_EEDI;
+		if (edata & (1 << i)) {
+			ectrl |= IEE16_ECTRL_EEDI;
+		}
+		outb(PORT + IEE16_ECTRL, ectrl);
+		delay(1);	/* eeprom data must be setup for 0.4 uSec */
+		ee16_eeprom_clock(sc, 1);
+		ee16_eeprom_clock(sc, 0);
+	}
+	ectrl &= ~IEE16_ECTRL_EEDI;
+	outb(PORT + IEE16_ECTRL, ectrl);
+	delay(1);		/* eeprom data must be held for 0.4 uSec */
+}
+
+int
+ee16_eeprom_inbits(sc)
+	struct ie_softc *sc;
+{
+	int ectrl, edata, i;
+
+	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl &= ~IEE16_RESET_ASIC;
+	for (edata = 0, i = 0; i < 16; i++) {
+		edata = edata << 1;
+		ee16_eeprom_clock(sc, 1);
+		ectrl = inb(PORT + IEE16_ECTRL);
+		if (ectrl & IEE16_ECTRL_EEDO) {
+			edata |= 1;
+		}
+		ee16_eeprom_clock(sc, 0);
+	}
+	return (edata);
+}
+
+void
+ee16_eeprom_clock(sc, state)
+	struct ie_softc *sc;
+	int state;
+{
+	int ectrl;
+
+	ectrl = inb(PORT + IEE16_ECTRL);
+	ectrl &= ~(IEE16_RESET_ASIC | IEE16_ECTRL_EESK);
+	if (state) {
+		ectrl |= IEE16_ECTRL_EESK;
+	}
+	outb(PORT + IEE16_ECTRL, ectrl);
+	delay(9);		/* EESK must be stable for 8.38 uSec */
+}
+
+static inline void
+ee16_interrupt_enable(sc)
+	struct ie_softc *sc;
+{
+	delay(100);
+	outb(PORT + IEE16_IRQ, sc->irq_encoded | IEE16_IRQ_ENABLE);
+	delay(100);
+}
 void
 slel_get_address(sc)
 	struct ie_softc *sc;
@@ -1743,6 +2080,21 @@ ieinit(sc)
 
 	ie_ack(sc, IE_ST_WHENCE);
 
+	/* take the ee16 out of loopback */
+	{
+	u_char	bart_config;
+
+	if(sc->hard_type == IE_EE16) {
+		bart_config = inb(PORT + IEE16_CONFIG);
+		bart_config &= ~IEE16_BART_LOOPBACK;
+		bart_config |= IEE16_BART_MCS16_TEST; /* inb doesn't get bit! */
+		outb(PORT + IEE16_CONFIG, bart_config);
+		}
+	}
+
+	ee16_interrupt_enable(sc); 
+	ee16_chan_attn(sc);
+
 	return 0;
 }
 
@@ -1899,3 +2251,4 @@ print_rbd(rbd)
 	    rbd->mbz);
 }
 #endif
+
