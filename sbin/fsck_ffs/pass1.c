@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.14 1996/01/18 21:55:27 mycroft Exp $	*/
+/*	$NetBSD: pass1.c,v 1.15 1996/09/23 16:18:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.14 1996/01/18 21:55:27 mycroft Exp $";
+static char rcsid[] = "$NetBSD: pass1.c,v 1.15 1996/09/23 16:18:36 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,12 +53,11 @@ static char rcsid[] = "$NetBSD: pass1.c,v 1.14 1996/01/18 21:55:27 mycroft Exp $
 
 #include "fsck.h"
 #include "extern.h"
+#include "util.h"
 
 static daddr_t badblk;
 static daddr_t dupblk;
-int pass1check();
-struct dinode *getnextinode();
-void checkinode __P((ino_t, struct inodesc *));
+static void checkinode __P((ino_t, struct inodesc *));
 
 void
 pass1()
@@ -102,7 +101,7 @@ pass1()
 	freeinodebuf();
 }
 
-void
+static void
 checkinode(inumber, idesc)
 	ino_t inumber;
 	register struct inodesc *idesc;
@@ -119,7 +118,7 @@ checkinode(inumber, idesc)
 		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
 		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
-			pfatal("PARTIALLY ALLOCATED INODE I=%lu", inumber);
+			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
 				clearinode(dp);
@@ -169,8 +168,8 @@ checkinode(inumber, idesc)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
-				printf("convert symlink %d(%s) of size %d\n",
-					inumber, symbuf, (long)dp->di_size);
+				printf("convert symlink %d(%s) of size %qd\n",
+					inumber, symbuf, dp->di_size);
 			}
 			dp = ginode(inumber);
 			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
@@ -195,7 +194,7 @@ checkinode(inumber, idesc)
 	for (j = ndb; j < NDADDR; j++)
 		if (dp->di_db[j] != 0) {
 			if (debug)
-				printf("bad direct addr: %ld\n", dp->di_db[j]);
+				printf("bad direct addr: %d\n", dp->di_db[j]);
 			goto unknown;
 		}
 	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
@@ -203,7 +202,7 @@ checkinode(inumber, idesc)
 	for (; j < NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
-				printf("bad indirect addr: %ld\n",
+				printf("bad indirect addr: %d\n",
 					dp->di_ib[j]);
 			goto unknown;
 		}
@@ -216,7 +215,7 @@ checkinode(inumber, idesc)
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0)
-				errexit("");
+				errexit("%s", "");
 		} else {
 			zlnp->zlncnt = inumber;
 			zlnp->next = zlnhead;
@@ -246,7 +245,7 @@ checkinode(inumber, idesc)
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.fs_fsize);
 	if (dp->di_blocks != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%lu (%ld should be %ld)",
+		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
 		    inumber, dp->di_blocks, idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
@@ -258,7 +257,7 @@ checkinode(inumber, idesc)
 	}
 	return;
 unknown:
-	pfatal("UNKNOWN FILE TYPE I=%lu", inumber);
+	pfatal("UNKNOWN FILE TYPE I=%u", inumber);
 	statemap[inumber] = FCLEAR;
 	if (reply("CLEAR") == 1) {
 		statemap[inumber] = USTATE;
@@ -281,12 +280,12 @@ pass1check(idesc)
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%lu",
+			pwarn("EXCESSIVE BAD BLKS I=%u",
 				idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
-				errexit("");
+				errexit("%s", "");
 			return (STOP);
 		}
 	}
@@ -299,19 +298,19 @@ pass1check(idesc)
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 			if (dupblk++ >= MAXDUP) {
-				pwarn("EXCESSIVE DUP BLKS I=%lu",
+				pwarn("EXCESSIVE DUP BLKS I=%u",
 					idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)
-					errexit("");
+					errexit("%s", "");
 				return (STOP);
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0)
-					errexit("");
+					errexit("%s", "");
 				return (STOP);
 			}
 			new->dup = blkno;
