@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.2 2003/05/10 01:51:56 uwe Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.3 2003/05/30 22:41:52 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.2 2003/05/10 01:51:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.3 2003/05/30 22:41:52 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,8 +280,8 @@ igsfb_init_ext(dc)
 	igs_ext_write(iot, ioh, 0x31, 0x00); /* segment write ptr */
 	igs_ext_write(iot, ioh, 0x32, 0x00); /* segment read ptr */
 
-	/* IGS_EXT_BIU_MISC_CTL: linear, segon */
-	igs_ext_write(iot, ioh, 0x33, 0x11);
+	/* IGS_EXT_BIU_MISC_CTL: linearen, copren, copaselb, segon */
+	igs_ext_write(iot, ioh, 0x33, 0x1d);
 
 	/* sprite location */
 	igs_ext_write(iot, ioh, 0x50, 0x00);
