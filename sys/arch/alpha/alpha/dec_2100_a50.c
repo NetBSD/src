@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.18 1996/11/25 03:59:19 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.18.2.1 1996/12/07 02:04:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,6 +48,9 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <alpha/wscons/wsdisplayvar.h>
+#include <alpha/wscons/wskbdvar.h>
 
 cpu_decl(dec_2100_a50);
 
@@ -119,21 +122,31 @@ dec_2100_a50_cons_init()
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 			cominit(comconstag, comconsbah, comdefaultrate);
 
-			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
+			cn_tab = &comcons;
 			break;
 		}
 
 	case 3:
 		/* display console ... */
 		/* XXX */
-		if (ctb->ctb_turboslot == 0)
-			isa_display_console(acp->ac_iot, acp->ac_memt);
-		else
-			pci_display_console(acp->ac_iot, acp->ac_memt,
-			    &acp->ac_pc, (ctb->ctb_turboslot >> 8) & 0xff,
-			    ctb->ctb_turboslot & 0xff, 0);
-		break;
+		{
+			static struct consdev wscons = { NULL, NULL,
+			    wskbd_cngetc, wsdisplay_cnputc, wskbd_cnpollc,
+			    NODEV, 1 };
+
+			if (ctb->ctb_turboslot == 0)
+				isa_display_console(acp->ac_iot, acp->ac_memt);
+			else
+				pci_display_console(acp->ac_iot, acp->ac_memt,
+				    &acp->ac_pc,
+				    (ctb->ctb_turboslot >> 8) & 0xff,
+				    ctb->ctb_turboslot & 0xff, 0);
+		
+			wscons.cn_dev = makedev(25, 0);	/* XXX */
+			cn_tab = &wscons;
+			break;
+		}
 
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
