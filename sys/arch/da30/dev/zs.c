@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: zs.c,v 1.2 1994/06/18 12:10:24 paulus Exp $
+ *	$Id: zs.c,v 1.3 1994/08/25 06:15:39 paulus Exp $
  */
 /*
  * Serial I/O via an SCC,
@@ -209,7 +209,6 @@ zs_ttydef(struct zs *zp)
 {
     struct tty *tp = zp->tty;
 
-    ttychars(tp);
     if( (zp->flags & ZS_CONSOLE) == 0 ){
 	tp->t_iflag = TTYDEF_IFLAG;
 	tp->t_oflag = TTYDEF_OFLAG;
@@ -218,6 +217,7 @@ zs_ttydef(struct zs *zp)
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
     } else
 	tp->t_termios = zs_cons_termios;
+    ttychars(tp);
     ttsetwater(tp);
     tp->t_oproc = zsstart;
     tp->t_param = zsparam;
@@ -282,11 +282,7 @@ zsclose(dev, flag, mode, p)
     zp = &dv->zs[zsside(dev)];
     tp = zp->tty;
 
-    /*
-     * Don't shut it down if it's the console: it might be open
-     * as /dev/console.
-     */
-    if( zp->nkbd_open == 0 && (zp->flags & ZS_CONSOLE) == 0 ){
+    if( zp->nkbd_open == 0){
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = splzs();
 	if( (tp->t_cflag & HUPCL) != 0 && (zp->flags & ZS_SCSI) == 0 ){
