@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/03/04 16:43:10 shiba Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/05 20:41:28 thorpej Exp $
 
 TOP=            ${.CURDIR}/..
 
@@ -6,9 +6,8 @@ TOP=            ${.CURDIR}/..
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-RAMDISK!=cd ${.CURDIR}/../ramdisk; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-	${MAKE} -s -f-
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETIMAGE?=	mdsetimage
 INSTALL_KERNEL?=netbsd-INSTALL
