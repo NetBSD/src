@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.7 1999/01/13 07:30:04 ross Exp $	
+.\"	$NetBSD: whatis,v 1.8 1999/04/23 12:17:27 leo Exp $	
 The Atari release stepped in in March 1995. The first official release was
 .Nx 1.1 .
 About a year later, 
@@ -6,10 +6,34 @@ About a year later,
 was released for the Atari. This
 release fixed a large number of bugs and made the Atari-port a stable member
 of the NetBSD family.
-And now, finally, a
+The saga continued with the
 .Nx 1.3
-release is available! This release adds support
-for a brand new atari-compatible platform: The Hades. Both the 040 and
-060 flavours are supported, unfortunately only the et4000-PCI console is
-currently supported. Also new in this release is the ethernet support for the
-TT030 by means of a Riebl driver and the IDE support for the Falcon.
+release. In this release, support was added for the Medusa Hades, Riebl
+ethernet and Falcon IDE support.
+And now, yet another release is emerging!
+.Pp
+New on the
+.Nx 1.4
+release (atari specific):
+.Bl -bullet
+.It
+Crazy Dots VME et4000 graphics adapter
+.It
+Circad Leonardo 24-bit VME graphics adapter
+.It
+VME BVME410 ethernet
+.It
+ATAPI support on IDE
+.It
+Hades PCI-devices
+.Bl -hyphen
+.	It
+Adaptec 2940U
+.El
+.It
+Hades ISA-devices
+.Bl -hyphen
+.	It
+Teles 16.3 card (Requires isdn4bsd package).
+.El
+.El
