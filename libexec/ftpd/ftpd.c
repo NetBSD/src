@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.138.2.1 2002/09/30 13:07:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.138.2.1 2002/09/30 13:07:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -563,7 +563,7 @@ sgetpwnam(const char *name)
 static int	login_attempts;	/* number of failed login attempts */
 static int	askpasswd;	/* had USER command, ask for PASSwd */
 static int	permitted;	/* USER permitted */
-static char	curname[10];	/* current USER name */
+static char	curname[LOGIN_NAME_MAX];	/* current USER name */
 
 /*
  * USER command.
