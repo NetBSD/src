@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.7 2001/07/04 15:01:08 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.8 2001/11/13 07:23:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -73,9 +73,10 @@
  * <URL:http://www.armlinux.org/~webmail/linux-arm/1997-08/msg00042.html>.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.8 2001/11/13 07:23:15 lukem Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.7 2001/07/04 15:01:08 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.2 2001/06/13 18:29:40 bjh21 Exp $ */
+/* $NetBSD: dtide.c,v 1.3 2001/11/13 07:23:15 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,9 +31,10 @@
  * dtide.c - Driver for the D.T. Software IDE interface.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dtide.c,v 1.3 2001/11/13 07:23:15 lukem Exp $");
 
-__RCSID("$NetBSD: dtide.c,v 1.2 2001/06/13 18:29:40 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/malloc.h>

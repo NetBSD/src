@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.3 2001/03/24 23:37:34 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.4 2001/11/13 07:23:16 lukem Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,9 +36,10 @@
  * if_ea.c - Ether3 device driver
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: if_ea.c,v 1.4 2001/11/13 07:23:16 lukem Exp $");
 
-__RCSID("$NetBSD: if_ea.c,v 1.3 2001/03/24 23:37:34 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/socket.h>
