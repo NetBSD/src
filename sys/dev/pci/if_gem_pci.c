@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.2 2001/09/24 04:39:40 eeh Exp $ */
 
 /*
  * 
@@ -123,6 +123,10 @@ gem_attach_pci(parent, self, aux)
 #endif
 	const char *intrstr;
 	int type;
+	char devinfo[256];
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	if (pa->pa_memt) {
 		type = PCI_MAPREG_TYPE_MEM;
