@@ -55,7 +55,7 @@
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-static	void	ka48_conf __P((struct device*, struct device*, void*));
+static	void	ka48_conf __P((void));
 static	void	ka48_steal_pages __P((void));
 static	void	ka48_memerr __P((void));
 static	int	ka48_mchk __P((caddr_t));
@@ -84,15 +84,13 @@ struct	cpu_dep ka48_calls = {
 
 
 void
-ka48_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka48_conf()
 {
         extern  int clk_adrshift, clk_tweak;
 
-	printf(": KA48\n");
+	printf("cpu: KA48\n");
 	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
-	printf("%s: turning on floating point chip\n", self->dv_xname);
+	printf("cpu: turning on floating point chip\n");
 	mtpr(2, PR_ACCS); /* Enable floating points */
 	/*
 	 * Setup parameters necessary to read time from clock chip.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.15 1999/05/01 16:13:44 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.16 1999/08/07 10:36:48 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
-static void ka630_conf __P((struct device *, struct device *, void *));
+static void ka630_conf __P((void));
 static void ka630_memerr __P((void));
 static int ka630_mchk __P((caddr_t));
 static void ka630_halt __P((void));
@@ -79,9 +79,7 @@ struct	cpu_dep ka630_calls = {
  * uvaxII_conf() is called by cpu_attach to do the cpu_specific setup.
  */
 void
-ka630_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka630_conf()
 {
 	extern	int clk_adrshift, clk_tweak;
 
@@ -96,8 +94,6 @@ ka630_conf(parent, self, aux)
 	 */
 	uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
 	    UVAXIIMSER_LEB);
-
-	printf(": %s\n", "KA630");
 }
 
 /* log crd errors */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.8 1999/05/01 16:13:44 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.9 1999/08/07 10:36:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,7 +54,7 @@
 #include <machine/clock.h>
 #include <machine/vsbus.h>
 
-static	void	ka46_conf __P((struct device*, struct device*, void*));
+static	void	ka46_conf __P((void));
 static	void	ka46_steal_pages __P((void));
 static	void	ka46_memerr __P((void));
 static	int	ka46_mchk __P((caddr_t));
@@ -83,15 +83,13 @@ struct	cpu_dep ka46_calls = {
 
 
 void
-ka46_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka46_conf()
 {
         extern  int clk_adrshift, clk_tweak;
 
-	printf(": KA46\n");
+	printf("cpu: KA46\n");
 	ka46_cpu = (void *)vax_map_physmem(VS_REGS, 1);
-	printf("%s: turning on floating point chip\n", self->dv_xname);
+	printf("cpu: turning on floating point chip\n");
 	mtpr(2, PR_ACCS); /* Enable floating points */
 	/*
 	 * Setup parameters necessary to read time from clock chip.

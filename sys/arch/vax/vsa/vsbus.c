@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.17 1999/04/14 23:14:46 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.18 1999/08/07 10:36:51 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -123,17 +123,9 @@ vsbus_match(parent, cf, aux)
 	struct cfdata	*cf;
 	void	*aux;
 {
-	struct bp_conf *bp = aux;
-	
-	if (strcmp(bp->type, "vsbus"))
-		return 0;
-	/*
-	 * on machines which can have it, the vsbus is always there
-	 */
-	if ((vax_bustype & VAX_VSBUS) == 0)
-		return (0);
-
-	return (1);
+	if (vax_bustype == VAX_VSBUS)
+		return 1;
+	return 0;
 }
 
 void

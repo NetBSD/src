@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.14 1999/05/23 22:56:54 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.15 1999/08/07 10:36:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -40,15 +40,17 @@
 /*
  * Different definitions for nicer autoconf probing.
  */
-#define VAX_SBIBUS      1       /* SBI parent; 780/790 */
-#define VAX_CPUBUS      2       /* Has backplane CPU */
-#define VAX_MEMBUS      4       /* Has backplane memory */ 
-#define VAX_UNIBUS      8       /* Directly attached (630/650) */
-#define VAX_VSBUS       16      /* VAXstation board */
-#define VAX_BIBUS       32      /* BI bus expansions: 8200/8800 */ 
-#define VAX_CMIBUS	64	/* CMI backplane (750) */
-#define VAX_XMIBUS	128	/* XMI backplane 6000/xxx */
-
+enum bustypes {
+	VAX_SBIBUS,		/* SBI parent (780) */
+	VAX_CMIBUS,		/* CMI backplane (750) */
+	VAX_UNIBUS,		/* Direct backplane (730) */
+	VAX_ABUS,		/* SBI placeholder (8600) */
+	VAX_BIBUS,		/* BI bus (8200) */
+	VAX_NBIBUS,		/* NBI backplane (8800) */
+	VAX_VSBUS,		/* Virtual vaxstation bus */
+	VAX_IBUS,		/* Internal Microvax bus */
+	VAX_XMIBUS,		/* XMI master bus (6000) */
+};
 /*
  * Information about nexus's.
  *
