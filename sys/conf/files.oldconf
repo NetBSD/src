@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.30 1993/12/09 00:35:00 hpeyerl Exp $
+#	$Id: files.oldconf,v 1.31 1993/12/13 05:04:34 deraadt Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -96,7 +96,7 @@ net/if_ethersubr.c	optional ether device-driver
 net/if_loop.c		optional loop device-driver
 net/if_ppp.c		optional ppp device-driver
 net/if_sl.c		optional sl device-driver
-net/if_tun.c		optional tun device-driver requires broken
+net/if_tun.c		optional tun device-driver
 net/radix.c		standard
 net/raw_cb.c		standard
 net/raw_usrreq.c	standard
