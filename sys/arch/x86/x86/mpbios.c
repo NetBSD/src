@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.2 2003/03/04 22:19:04 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.3 2003/03/04 23:21:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
 
 
 static struct mpbios_ioapic default_ioapic = {
-    2,0,1,IOAPICENTRY_FLAG_EN,(caddr_t)IOAPIC_BASE_DEFAULT
+    2,0,1,IOAPICENTRY_FLAG_EN,(u_int32_t)IOAPIC_BASE_DEFAULT
 };
 
 /* descriptions of MP basetable entries */
