@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.45 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.46 2001/12/12 15:36:09 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.45 2001/12/03 01:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.46 2001/12/12 15:36:09 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -181,7 +181,7 @@ Static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 };
-#define kue_lookup(v, p) ((struct kue_type *)usb_lookup(kue_devs, v, p))
+#define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
 USB_DECLARE_DRIVER(kue);
 
