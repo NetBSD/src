@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_iconv.c,v 1.3 2004/01/18 08:54:02 yamt Exp $	*/
+/*	$NetBSD: gettext_iconv.c,v 1.4 2004/01/20 12:04:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Citrus Project,
@@ -132,7 +132,7 @@ __gettext_iconv(const char *origmsg, struct domainbinding *db)
 		/*
 		 * codeset isn't specified explicitly by
 		 * bind_textdomain_codeset().
-		 * use current locale(LC_MESSAGE)'s codeset.
+		 * use current locale(LC_CTYPE)'s codeset.
 		 *
 		 * XXX maybe wrong; it can mismatch with
 		 * environment variable setting.
