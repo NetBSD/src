@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1991 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mkdep.gcc.sh	5.3 (Berkeley) 5/6/91
+#	@(#)mkdep.gcc.sh	8.1 (Berkeley) 6/6/93
 #
 
 PATH=/bin:/usr/bin:/usr/ucb
@@ -39,6 +39,7 @@ export PATH
 
 D=.depend			# default dependency file is .depend
 append=0
+pflag=
 
 while :
 	do case "$1" in
@@ -55,7 +56,7 @@ while :
 		# the -p flag produces "program: program.c" style dependencies
 		# so .o's don't get produced
 		-p)
-			SED='s;\.o;;'
+			pflag=p
 			shift ;;
 		*)
 			break ;;
@@ -71,7 +72,11 @@ TMP=/tmp/mkdep$$
 
 trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
 
-cpp -M $* > $TMP
+if [ x$pflag = x ]; then
+	cpp -M $* | sed -e 's; \./; ;g' > $TMP
+else
+	cpp -M $* | sed -e 's;\.o :; :;' -e 's; \./; ;g' > $TMP
+fi
 
 if [ $? != 0 ]; then
 	echo 'mkdep: compile failed.'
