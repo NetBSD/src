@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.91 2004/07/15 10:45:33 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.92 2004/07/22 03:44:12 atatat Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 15, 2004
+.Dd July 21, 2004
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -784,14 +784,17 @@ Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
-The default setting for this is a function that determines if sendmail
-is actually needed, which means the
+The default setting for this calls on a function to determine if
+sendmail is actually needed, which means the
 .Xr rc.d 8
 script that starts sendmail will check to see if
 .Xr sendmail 8
 needs to run in order to facilitate local mail delivery.
 See
-.Pa /etc/defaults/rc.conf
+.Pa /etc/defaults/rc.conf ,
+.Pa /etc/mailer.conf ,
+and
+.Xr mailer.conf 5
 for more details.
 .It Sy sendmail_suidroot
 .Sq YES
