@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2001/05/26 16:32:43 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2001/06/02 16:47:17 matthias Exp $	*/
 
 /*
  *
@@ -789,7 +789,7 @@ pmap_bootstrap(kva_start)
 void
 pmap_init()
 {
-	int npages, lcv;
+	int npages, lcv, i;
 	vaddr_t addr;
 	vsize_t s;
 
@@ -817,6 +817,11 @@ pmap_init()
 		vm_physmem[lcv].pmseg.pvhead = (struct pv_head *) addr;
 		addr = (vaddr_t)(vm_physmem[lcv].pmseg.pvhead +
 				 (vm_physmem[lcv].end - vm_physmem[lcv].start));
+		for (i = 0;
+		     i < (vm_physmem[lcv].end - vm_physmem[lcv].start); i++) {
+			simple_lock_init(
+			    &vm_physmem[lcv].pmseg.pvhead[i].pvh_lock);
+		}
 	}
 
 	/* now allocate attrs */
@@ -2104,6 +2109,7 @@ pmap_page_remove(pg)
 
 	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
 	     pve != NULL; pve = npve) {
+		npve = pve->pv_next;
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
