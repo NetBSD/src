@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.11 2004/12/29 13:41:57 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.12 2004/12/29 13:54:05 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.11 2004/12/29 13:41:57 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.12 2004/12/29 13:54:05 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -306,17 +306,17 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_inports.index = -1;
 	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
-	sc->sc_inports.isenum = 0;
+	sc->sc_inports.isenum = FALSE;
 	sc->sc_inports.allports = 0;
-	sc->sc_inports.isdual = 0;
+	sc->sc_inports.isdual = FALSE;
 	sc->sc_inports.mixerout = -1;
 	sc->sc_inports.cur_port = -1;
 	sc->sc_outports.index = -1;
 	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
-	sc->sc_outports.isenum = 0;
+	sc->sc_outports.isenum = FALSE;
 	sc->sc_outports.allports = 0;
-	sc->sc_outports.isdual = 0;
+	sc->sc_outports.isdual = FALSE;
 	sc->sc_outports.mixerout = -1;
 	sc->sc_outports.cur_port = -1;
 	sc->sc_monitor_port = -1;
@@ -385,7 +385,7 @@ audioactivate(struct device *self, enum devact act)
 		return EOPNOTSUPP;
 
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		sc->sc_dying = TRUE;
 		break;
 	}
 	return 0;
@@ -400,7 +400,7 @@ audiodetach(struct device *self, int flags)
 
 	DPRINTF(("audio_detach: sc=%p flags=%d\n", sc, flags));
 
-	sc->sc_dying = 1;
+	sc->sc_dying = TRUE;
 
 	wakeup(&sc->sc_wchan);
 	wakeup(&sc->sc_rchan);
@@ -451,7 +451,7 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 
 	ports->index = mi->index;
 	if (mi->type == AUDIO_MIXER_ENUM) {
-		ports->isenum = 1;
+		ports->isenum = TRUE;
 		for(i = 0; tbl[i].name; i++)
 		    for(j = 0; j < mi->un.e.num_mem; j++)
 			if (strcmp(mi->un.e.member[j].label.name,
@@ -465,7 +465,7 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 				    mi->mixer_class);
 				if (ports->mixerout != -1 &&
 				    ports->miport[ports->nports++] != -1)
-					ports->isdual = 1;
+					ports->isdual = TRUE;
 			}
 	} else if (mi->type == AUDIO_MIXER_SET) {
 		for(i = 0; tbl[i].name; i++)
@@ -1003,8 +1003,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_rchan = 0;
 	sc->sc_wchan = 0;
 	sc->sc_sil_count = 0;
-	sc->sc_rbus = 0;
-	sc->sc_pbus = 0;
+	sc->sc_rbus = FALSE;
+	sc->sc_pbus = FALSE;
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
@@ -1181,7 +1181,7 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 		if (!sc->sc_full_duplex ||
 		    sc->hw_if->halt_input != sc->hw_if->halt_output)
 			sc->hw_if->halt_input(sc->hw_hdl);
-		sc->sc_rbus = 0;
+		sc->sc_rbus = FALSE;
 	}
 	/*
 	 * Block until output drains, but allow ^C interrupt.
@@ -1195,7 +1195,7 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 		if (!sc->sc_pr.pause && !audio_drain(sc) && hw->drain)
 			(void)hw->drain(sc->hw_hdl);
 		sc->hw_if->halt_output(sc->hw_hdl);
-		sc->sc_pbus = 0;
+		sc->sc_pbus = FALSE;
 	}
 
 	hw->close(sc->hw_hdl);
@@ -1335,12 +1335,12 @@ audio_clear(struct audio_softc *sc)
 	if (sc->sc_rbus) {
 		audio_wakeup(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
-		sc->sc_rbus = 0;
+		sc->sc_rbus = FALSE;
 	}
 	if (sc->sc_pbus) {
 		audio_wakeup(&sc->sc_wchan);
 		sc->hw_if->halt_output(sc->hw_hdl);
-		sc->sc_pbus = 0;
+		sc->sc_pbus = FALSE;
 	}
 	splx(s);
 }
@@ -1637,7 +1637,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	audio_stream_t *last_stream;
 	int error = 0, s, offs, fd;
 	u_long stamp;
-	int rbus, pbus;
+	boolean_t rbus, pbus;
 
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
@@ -2022,7 +2022,7 @@ audiostartr(struct audio_softc *sc)
 		DPRINTF(("audiostartr failed: %d\n", error));
 		return error;
 	}
-	sc->sc_rbus = 1;
+	sc->sc_rbus = TRUE;
 	return 0;
 }
 
@@ -2051,7 +2051,7 @@ audiostartp(struct audio_softc *sc)
 		DPRINTF(("audiostartp failed: %d\n", error));
 		return error;
 	}
-	sc->sc_pbus = 1;
+	sc->sc_pbus = TRUE;
 	return 0;
 }
 
@@ -2422,7 +2422,7 @@ audio_set_defaults(struct audio_softc *sc, u_int mode)
 	/* default parameters */
 	sc->sc_rparams = audio_default;
 	sc->sc_pparams = audio_default;
-	sc->sc_blkset = 0;
+	sc->sc_blkset = FALSE;
 
 	AUDIO_INITINFO(&ai);
 	ai.record.sample_rate = sc->sc_rparams.sample_rate;
@@ -2734,7 +2734,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	int np, nr;
 	unsigned int blks;
 	int oldpblksize, oldrblksize;
-	int rbus, pbus;
+	boolean_t rbus, pbus;
 	u_int gain;
 	int i;
 	boolean_t cleared, modechange;
@@ -3039,11 +3039,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			cleared = TRUE;
 		}
 		if (ai->blocksize == 0) {
-			sc->sc_blkset = 0;
+			sc->sc_blkset = FALSE;
 			audio_calc_blksize(sc, AUMODE_RECORD);
 			audio_calc_blksize(sc, AUMODE_PLAY);
 		} else {
-			sc->sc_blkset = 1;
+			sc->sc_blkset = TRUE;
 			sc->sc_pr.blksize = sc->sc_rr.blksize = ai->blocksize;
 		}
 	}
