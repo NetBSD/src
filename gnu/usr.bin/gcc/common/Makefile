@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/03/01 00:13:51 jtc Exp $
+#	$NetBSD: Makefile,v 1.3 1996/03/05 00:12:50 jtc Exp $
 
 LIB=	cc1
 
@@ -173,11 +173,20 @@ bi-lexer.o: bi-parser.h
 
 bi-parser.h: bi-parser.c
 bi-parser.c: bi-parser.y
-	$(YACC) -d $(.IMPSRC)
-	mv -f y.tab.c bi-parser.c
-	mv -f y.tab.h bi-parser.h
+	$(YACC) -b bi -d $(.IMPSRC)
+	mv -f bi.tab.c bi-parser.c
+	mv -f bi.tab.h bi-parser.h
+
+CLEANFILES += c-parse.c c-parse.h
+
+c-lex.o: c-parse.h
+
+c-parse.h: c-parse.c
+c-parse.c: c-parse.y
+	$(YACC) -b c -d $(.IMPSRC)
+	mv -f c.tab.c c-parse.c
+	mv -f c.tab.h c-parse.h
 
 install:
 
 .include <bsd.lib.mk>
-
