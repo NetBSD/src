@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.4 1997/10/11 21:01:55 christos Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.5 1997/10/11 22:16:45 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.4 1997/10/11 21:01:55 christos Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.5 1997/10/11 22:16:45 mycroft Exp $");
 #endif
 #endif
 
@@ -57,9 +57,9 @@ static char tabstr[TABCOUNT+1] = "\t\t\t\t\t";
 static char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
 static char tbl_end[] = "};\n";
 
-static char null_entry[] = "\n\t(char *(*)())0,\n\
- \t(xdrproc_t) xdr_void,\t\t\t0,\n\
- \t(xdrproc_t) xdr_void,\t\t\t0,\n";
+static char null_entry[] = "\t(char *(*)())0,\n\
+ \t(xdrproc_t) xdr_void,\t\t0,\n\
+ \t(xdrproc_t) xdr_void,\t\t0,\n";
 
 static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
@@ -106,10 +106,12 @@ write_table(def)
 			f_print(fout, null_entry);
 		}
 		for (proc = vp->procs; proc != NULL; proc = proc->next) {
+			if (expected != 0)
+				f_print(fout, "\n");
 			current = atoi(proc->proc_num);
 			if (current != expected++) {
 				f_print(fout,
-			"\n/*\n * WARNING: table out of order\n */\n");
+			"/*\n * WARNING: table out of order\n */\n\n");
 				if (warning == 0) {
 					f_print(stderr,
 				    "WARNING %s table is out of order\n",
@@ -119,7 +121,7 @@ write_table(def)
 				}
 				expected = current + 1;
 			}
-			f_print(fout, "\n\t(char *(*)())RPCGEN_ACTION(");
+			f_print(fout, "\t(char *(*)())RPCGEN_ACTION(");
 
 			/* routine to invoke */
 			if ( !newstyle)
