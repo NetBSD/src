@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.9 2003/02/11 00:03:47 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.10 2003/02/14 20:45:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.9 2003/02/11 00:03:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.10 2003/02/14 20:45:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,7 +531,7 @@ sa_switch(struct lwp *l, int type)
 		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
 		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 
-		cpu_setfunc(l2, sa_switchcall, NULL);
+		cpu_setfunc(l2, sa_switchcall, l2);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL,
 		    sau, &st);
 		if (error) {
@@ -629,7 +629,7 @@ sa_switchcall(void *arg)
 	struct proc *p;
 	struct sadata *sa;
 
-	l = curlwp;
+	l = arg;
 	p = l->l_proc;
 	sa = p->p_sa;
 	sa->sa_vp = l;
@@ -649,12 +649,22 @@ void
 sa_yieldcall(void *arg)
 {
 	struct lwp *l;
+	struct proc *p;
 	struct sadata *sa;
 
 	l = arg;
-	sa = l->l_proc->p_sa;
-
+	p = l->l_proc;
+	sa = p->p_sa;
 	sa->sa_vp = l;
+
+	DPRINTFN(6,("sa_yieldcall(%d.%d)\n", p->p_pid, l->l_lid));
+
+	if (LIST_EMPTY(&sa->sa_lwpcache)) {
+		/* Allocate the next cache LWP */
+		DPRINTFN(6,("sa_yieldcall(%d.%d) allocating LWP\n",
+		    p->p_pid, l->l_lid));
+		sa_newcachelwp(l);
+	}
 
 	sa_yield(l);
 	upcallret(l);
@@ -707,7 +717,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	l->l_flag |= (L_DETACHED | L_SA);
 	PHOLD(l);
 	/* XXX lock sadata */
-	DPRINTFN(5,("sa_addcachelwp(%d.%d) Adding LWP %d to cache\n",
+	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
 	LIST_INSERT_HEAD(&sa->sa_lwpcache, l, l_sibling);
 	sa->sa_ncached++;
