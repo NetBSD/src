@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee.h,v 1.2 2003/04/21 00:07:25 christos Exp $ */
+/*	$NetBSD: float_ieee754.h,v 1.1 2003/05/12 15:22:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,8 @@
  *	@(#)float.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _SYS_FLOAT_IEEE_H_
-#define _SYS_FLOAT_IEEE_H_
+#ifndef _SYS_FLOAT_IEEE754_H_
+#define _SYS_FLOAT_IEEE754_H_
 
 #include <sys/cdefs.h>
 
@@ -101,4 +101,4 @@ __END_DECLS
 #define	LDBL_MAX_10_EXP	4932
 #endif /* LDBL_MANT_DIG */
 
-#endif	/* _SYS_FLOAT_IEEE_H_ */
+#endif	/* _SYS_FLOAT_IEEE754_H_ */
