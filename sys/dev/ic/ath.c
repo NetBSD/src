@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.26 2004/05/25 04:38:36 atatat Exp $	*/
+/*	$NetBSD: ath.c,v 1.27 2004/05/31 11:39:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.26 2004/05/25 04:38:36 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.27 2004/05/31 11:39:39 dyoung Exp $");
 #endif
 
 /*
@@ -1173,8 +1173,6 @@ ath_start(struct ifnet *ifp)
 				goto bad;
 			}
 			wh = mtod(m, struct ieee80211_frame *);
-			if (ic->ic_flags & IEEE80211_F_WEPON)
-				wh->i_fc[1] |= IEEE80211_FC1_WEP;
 		} else {
 			/*
 			 * Hack!  The referenced node pointer is in the
