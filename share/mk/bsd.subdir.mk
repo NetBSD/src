@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.25 1997/10/10 09:12:28 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.26 1997/10/11 07:26:54 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -30,4 +30,5 @@ ${targ}: ${targ}-${dir}
 ${dir}: all-${dir}
 .endfor
 
-.include <bsd.own.mk>
+# Make sure all of the standard targets are defined, even if they do nothing.
+${TARGETS}:
