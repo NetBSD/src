@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13.6.1 1999/11/30 13:33:19 itojun Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,7 +46,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 #define X68K_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
 #define X68K_SEG_SIZE	NBSEG
@@ -61,7 +61,6 @@
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	st_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	int			pm_stfree;	/* 040: free lev2 blocks */
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
@@ -92,14 +91,11 @@ typedef struct pmap	*pmap_t;
 /*
  * Macros for speed
  */
-#define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
-	if ((pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = x68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
-		if (iscurproc) \
-			loadustp((pcbp)->pcb_ustp); \
-		(pmapp)->pm_stchanged = FALSE; \
-	}
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+#define	PMAP_ACTIVATE(pmap, loadhw)					\
+{									\
+	if ((loadhw))							\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
+}
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -108,7 +104,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -141,18 +137,20 @@ extern struct pmap	kernel_pmap_store;
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define	active_user_pmap(pm) \
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
-#ifndef MACHINE_NONCONTIG
-#define pmap_page_index(pa)		atop(pa - vm_first_phys)
-#endif
-#define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
-
-#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+#define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
+
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
+#define PMAP_NEED_PROCWR
 
 #endif /* !_X68K_PMAP_H_ */

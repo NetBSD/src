@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17.6.1 1999/11/30 13:33:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,17 @@
  */
 
 /*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
+#define	M68K_MMU_MOTOROLA
+
+/*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -84,6 +95,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern int want_resched;	/* resched() was called */
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
@@ -99,27 +111,8 @@ struct clockframe {
  */
 #define	signotify(p)	aston()
 
+extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
-
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_SERIAL	0x4
-#define SIR_KBD		0x8
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftserial() ssir |= SIR_SERIAL
-#define setsoftkbd()    ssir |= SIR_KBD
 
 /*
  * CTL_MACHDEP definitions.
@@ -133,32 +126,69 @@ extern unsigned char ssir;
 }
 
 /*
- * The rest of this should probably be moved to ../x68k/x68kcpu.h,
+ * The rest of this should probably be moved to <machine/x68kcpu.h>
  * although some of it could probably be put into generic 68k headers.
  */
 
-/* values for machineid */
-
-/* values for mmutype (assigned for quick testing) */
-#define	MMU_68040	-2	/* 68040 on-chip MMU */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
-#define	MMU_68851	1	/* Motorola 68851 */
-
-/* values for ectype */
-#define	EC_PHYS		-1	/* external physical address cache */
-#define	EC_NONE		0	/* no external cache */
-#define	EC_VIRT		1	/* external virtual address cache */
-
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_50		6
-
 #ifdef _KERNEL
-extern int machineid, mmutype;
+extern int machineid;
 extern char *intiolimit;
+
+/* autoconf.c functions */
+void	config_console __P((void));
+
+/* fpu.c functions */
+int	fpu_probe __P((void));
+
+/* machdep.c functions */
+void	dumpconf __P((void));
+void	dumpsys __P((void));
+
+/* locore.s functions */
+struct pcb;
+struct fpframe;
+int	suline __P((caddr_t, caddr_t));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
+void	loadustp __P((int));
+void	m68881_save __P((struct fpframe *));
+void	m68881_restore __P((struct fpframe *));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vaddr_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+#if defined(M68040) || defined(M68060)
+void	DCFA __P((void));
+void	DCFP __P((vaddr_t));
+void	DCFL __P((vaddr_t));
+void	DCPL __P((vaddr_t));
+void	DCPP __P((vaddr_t));
+void	ICPL __P((vaddr_t));
+void	ICPP __P((vaddr_t));
+#endif
+
+/* machdep.c functions */
+int	badaddr __P((caddr_t));
+int	badbaddr __P((caddr_t));
+
+/* sys_machdep.c functions */
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	dma_cachectl __P((caddr_t, int));
+
+/* vm_machdep.c functions */
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+int	kvtop __P((caddr_t));
+
+/* trap.c functions */
+void	child_return __P((void *));
+
 #endif
 
 /* physical memory sections */
@@ -176,70 +206,5 @@ extern char *intiolimit;
  */
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 4mb */
-
-/*
- * External IO space:
- */
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/*
- * 68040 MMU
- */
-#define	MMU4_RES	0x001
-#define	MMU4_TTR	0x002
-#define	MMU4_WP		0x004
-#define	MMU4_MOD	0x010
-#define	MMU4_CMMASK	0x060
-#define	MMU4_SUP	0x080
-#define	MMU4_U0		0x100
-#define	MMU4_U1		0x200
-#define	MMU4_GLB	0x400
-#define	MMU4_BE		0x800
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control register */
-#define	IC4_ENABLE	0x8000		/* instruction cache enable bit */
-#define	DC4_ENABLE	0x80000000	/* data cache enable bit */
-
-#define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
-#define	CACHE4_OFF	(0)
 
 #endif /* _X68K_CPU_H_ */
