@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.3 2002/07/05 18:45:19 matt Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.4 2002/09/18 01:43:08 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -68,7 +68,7 @@ void	ofwgen_intr_calculate_masks(void);
 #define	B(x)	(1U << (x))
 
 /* Interrupts to mask at each level. */
-static int imask[NIPL];
+int imask[NIPL];
 
 /* Current interrupt priority level. */
 static __volatile int cpl;
@@ -162,7 +162,7 @@ do_pending_int(void)
 {
 	int emsr, dmsr, new;
 
-	__asm __volatile ("mfmsr %0" : "=r"(emsr));
+	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
 
 	new = cpl;
@@ -170,13 +170,13 @@ do_pending_int(void)
 	for (;;) {
 		cpl = new;
 
-		__asm __volatile ("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		if (clockpending && (cpl & B(IPL_CLOCK)) == 0) {
 			struct clockframe frame;
 
 			cpl |= imask[IPL_CLOCK];
 			clockpending--;
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 
 			/*
 			 * Fake a clock interrupt frame
@@ -198,7 +198,7 @@ do_pending_int(void)
 		    (cpl & B(IPL_SOFTCLOCK)) == 0) {
 			cpl |= imask[IPL_SOFTCLOCK];
 			ipending &= ~B(IPL_SOFTCLOCK);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 			softclock(NULL);
 			continue;
 		}
@@ -208,7 +208,7 @@ do_pending_int(void)
 			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 			softnet(pisr);
 			continue;
 		}
@@ -216,14 +216,14 @@ do_pending_int(void)
 		    (cpl & B(IPL_SOFT)) == 0) {
 			cpl |= imask[IPL_SOFT];
 			ipending &= ~B(IPL_SOFT);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 #if 0 /* XXX notyet */
 			softintr_dispatch(&softintrs[SI_SOFT]);
 #endif
 			continue;
 		}
 
-		__asm __volatile ("mtmsr %0" :: "r"(emsr));
+		mtmsr(emsr);
 		return;
 	}
 }
@@ -234,7 +234,7 @@ ofwgen_splraise(int ipl)
 	int old;
 
 	old = cpl;
-	cpl |= imask[ipl];
+	cpl |= ipl;
 
 	return (old);
 }
@@ -244,7 +244,7 @@ ofwgen_spllower(int ipl)
 {
 	int old = cpl;
 
-	splx(imask[ipl]);
+	splx(ipl);
 	return (old);
 }
 
@@ -261,10 +261,10 @@ ofwgen_setsoft(int ipl)
 {
 	int msr;
 
-	__asm __volatile ("mfmsr %0" : "=r"(msr));
-	__asm __volatile ("mtmsr %0" :: "r"(msr & ~PSL_EE));
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
 	ipending |= B(ipl);
-	__asm __volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 
 	if ((cpl & B(ipl)) == 0)
 		splx(cpl);
@@ -294,17 +294,17 @@ intr_return(struct clockframe *frame, int level)
 {
 	int emsr, dmsr;
 
-	__asm __volatile ("mfmsr %0" : "=r"(emsr));
+	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
 
 	for (;;) {
 		cpl = level;
 
-		__asm __volatile ("mtmsr %0" :: "r"(dmsr));
+		mtmsr(dmsr);
 		if (clockpending && (cpl & B(IPL_CLOCK)) == 0) {
 			cpl |= imask[IPL_CLOCK];
 			clockpending--;
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 
 			/*
 			 * Do standard timer interrupt stuff
@@ -319,7 +319,7 @@ intr_return(struct clockframe *frame, int level)
 		    (cpl & B(IPL_SOFTCLOCK)) == 0) {
 			cpl |= imask[IPL_SOFTCLOCK];
 			ipending &= ~B(IPL_SOFTCLOCK);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 			softclock(NULL);
 			continue;
 		}
@@ -329,7 +329,7 @@ intr_return(struct clockframe *frame, int level)
 			netisr = 0;
 			cpl |= imask[IPL_SOFTNET];
 			ipending &= ~B(IPL_SOFTNET);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 			softnet(pisr);
 			continue;
 		}
@@ -337,7 +337,7 @@ intr_return(struct clockframe *frame, int level)
 		    (cpl & B(IPL_SOFT)) == 0) {
 			cpl |= imask[IPL_SOFT];
 			ipending &= ~B(IPL_SOFT);
-			__asm __volatile ("mtmsr %0" :: "r"(emsr));
+			mtmsr(emsr);
 #if 0 /* XXX notyet */
 			softintr_dispatch(&softintrs[SI_SOFT]);
 #endif
@@ -350,7 +350,7 @@ intr_return(struct clockframe *frame, int level)
 void
 ofwgen_clock_return(struct clockframe *frame, int nticks)
 {
-	int pri, msr;
+	int pri;
 
 	pri = cpl;
 	
@@ -360,9 +360,7 @@ ofwgen_clock_return(struct clockframe *frame, int nticks)
 		cpl = pri | imask[IPL_CLOCK];
 
 		/* Reenable interrupts. */
-		__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-		    : "=r"(msr)
-		    : "K"((u_short)PSL_EE));
+		mtmsr(mfmsr() | PSL_EE);
 
 		/*
 		 * Do standard timer interrupt stuff.  Do softclock stuff
