@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2001/01/04 15:39:50 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2001/04/28 22:47:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,34 +42,39 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2001/01/04 15:39:50 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "dd.h"
 #include "extern.h"
 
+#define	tv2mS(tv) ((tv).tv_sec * 1000LL + ((tv).tv_usec + 500) / 1000)
+
 void
 summary()
 {
-	time_t secs;
 	char buf[100];
+	int64_t mS;
+	struct timeval tv;
 
 	if (progress)
 		(void)write(STDERR_FILENO, "\n", 1);
 
-	(void)time(&secs);
-	if ((secs -= st.start) == 0)
-		secs = 1;
+	(void)gettimeofday(&tv, NULL);
+	mS = tv2mS(tv) - tv2mS(st.start);
+	if (mS == 0)
+		mS = 1;
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf, sizeof(buf),
 	    "%lu+%lu records in\n%lu+%lu records out\n",
@@ -86,8 +91,11 @@ summary()
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
-	    "%llu bytes transferred in %lu secs (%llu bytes/sec)\n",
-	    (long long) st.bytes, (long) secs, (long long) (st.bytes / secs));
+	    "%llu bytes transferred in %lu.%03d secs (%llu bytes/sec)\n",
+	    (long long) st.bytes,
+	    (long) (mS / 1000),
+	    (int) (mS % 1000),
+	    (long long unsigned) (st.bytes * 1000LL / mS));
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 
