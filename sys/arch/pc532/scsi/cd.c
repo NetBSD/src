@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.1 1994/04/01 23:18:05 phil Exp $
+ *	$Id: cd.c,v 1.2 1994/06/30 01:12:44 phil Exp $
  */
 
 #define SPLCD splbio
@@ -36,11 +36,11 @@
 #include <sys/errno.h>
 #include <sys/disklabel.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_cd.h>
-#include <scsi/cddefs.h>
-#include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
-#include <scsi/scsiconf.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsi_cd.h"
+#include "../../scsi/cddefs.h"
+#include "../../scsi/scsi_disk.h"  /* rw_big and start_stop come from there */
+#include "../../scsi/scsiconf.h"
 
 long int cdstrats,cdqueues;
 

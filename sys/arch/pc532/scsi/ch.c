@@ -1,5 +1,5 @@
 /*
- *	$Id: ch.c,v 1.1 1994/04/01 23:18:08 phil Exp $
+ *	$Id: ch.c,v 1.2 1994/06/30 01:12:47 phil Exp $
  */
 
 #include "ch.h"
@@ -18,9 +18,9 @@
 #define SECSIZE	512
 #endif /* defined(OSF) */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_changer.h>
-#include <scsi/scsiconf.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsi_changer.h"
+#include "../../scsi/scsiconf.h"
 
 
 struct  scsi_xfer ch_scsi_xfer[NCH];

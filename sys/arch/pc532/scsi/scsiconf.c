@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: scsiconf.c,v 1.1 1994/04/01 23:18:15 phil Exp $
+ *	$Id: scsiconf.c,v 1.2 1994/06/30 01:12:49 phil Exp $
  */
 
 #include <sys/types.h>
@@ -27,8 +27,8 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsiconf.h"
 
 #include "st.h"
 #include "sd.h"

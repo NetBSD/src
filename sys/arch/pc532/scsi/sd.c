@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.2 1994/04/17 07:53:54 phil Exp $
+ *	$Id: sd.c,v 1.3 1994/06/30 01:12:50 phil Exp $
  */
 
 #include "sd.h"
@@ -33,10 +33,10 @@
 #include <sys/errno.h>
 #include <sys/disklabel.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
-#include <scsi/scsiconf.h>
-#include <scsi/sddefs.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsi_disk.h"
+#include "../../scsi/scsiconf.h"
+#include "../../scsi/sddefs.h"
 
 long int sdstrats, sdqueues;
 
