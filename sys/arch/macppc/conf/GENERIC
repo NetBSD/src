@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2002/07/07 19:36:47 matt Exp $
+# $NetBSD: GENERIC,v 1.137 2002/07/07 19:40:05 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 maxusers	32
 
@@ -178,7 +178,7 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-#options 	OFB_ENABLE_CACHE	# Speed up console
+options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 #gm*	at pci? dev ? function ?	# gmac ethernet (old)
