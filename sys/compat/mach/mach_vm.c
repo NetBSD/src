@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.38 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.39 2003/11/28 08:03:14 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.38 2003/11/27 23:44:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.39 2003/11/28 08:03:14 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -525,6 +525,7 @@ mach_make_memory_entry_64(args)
 	return 0;
 }
 
+int debug = 0;
 int
 mach_vm_region(args)
 	struct mach_trap_args *args;
@@ -534,7 +535,9 @@ mach_vm_region(args)
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
 	struct mach_vm_region_basic_info *rbi;
+	struct vm_map *map;
 	struct vm_map_entry *vme;
+	int error;
 	
 	/* Sanity check req_count */
 	if (req->req_count > 9)
@@ -550,12 +553,13 @@ mach_vm_region(args)
 		return mach_msg_error(args, EINVAL);
 	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
 
-	printf("pid = %d\n", tl->l_proc->p_pid);
-	vme = uvm_map_findspace(&tl->l_proc->p_vmspace->vm_map, 
-			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
-			    NULL, 0, 0, UVM_FLAG_FIXED);
-	printf("vme = %p\n", vme);
-	if (vme == NULL)
+	map = &tl->l_proc->p_vmspace->vm_map;
+
+	vm_map_lock(map);
+	error = uvm_map_lookup_entry(map, req->req_addr, &vme);
+	vm_map_unlock(map);
+
+	if (error == 0)
 		return mach_msg_error(args, ENOMEM);
 
 	rep->rep_msgh.msgh_bits =
@@ -599,7 +603,9 @@ mach_vm_region_64(args)
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
 	struct mach_vm_region_basic_info_64 *rbi;
+	struct vm_map *map;
 	struct vm_map_entry *vme;
+	int error;
 
 	/* Sanity check req_count */
 	if (req->req_count > 10)
@@ -615,10 +621,13 @@ mach_vm_region_64(args)
 		return mach_msg_error(args, EINVAL);
 	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
 
-	vme = uvm_map_findspace(&tl->l_proc->p_vmspace->vm_map, 
-			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
-			    NULL, 0, 0, UVM_FLAG_FIXED);
-	if (vme == NULL)
+	map = &tl->l_proc->p_vmspace->vm_map;
+
+	vm_map_lock(map);
+	error = uvm_map_lookup_entry(map, req->req_addr, &vme);
+	vm_map_unlock(map);
+
+	if (error == 0)
 		return mach_msg_error(args, ENOMEM);
 
 	rep->rep_msgh.msgh_bits =
