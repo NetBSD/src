@@ -91,6 +91,10 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
                         on a line
 */
 
+#ifndef lint
+static char rcsid[] = "$Id: listing.c,v 1.3 1994/08/25 07:36:26 pk Exp $";
+#endif
+
 #include <ctype.h>
 
 #include "as.h"
