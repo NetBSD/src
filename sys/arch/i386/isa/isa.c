@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.21 1993/11/08 20:20:03 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.22 1993/12/01 00:55:47 mycroft Exp $
  */
 
 /*
@@ -227,17 +227,15 @@ void isa_memalloc __P((u_int, u_int));
 static int beeping;
 
 static void
-sysbeepstop(int f)
+sysbeepstop(arg)
+	caddr_t arg;
 {
 
 	/* disable counter 2 */
 	disable_intr();
 	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
 	enable_intr();
-	if (f)
-		timeout((timeout_t)sysbeepstop, (caddr_t)0, f);
-	else
-		beeping = 0;
+	beeping = 0;
 }
 
 void
@@ -245,10 +243,8 @@ sysbeep(int pitch, int period)
 {
 	static int last_pitch, last_period;
 
-	if (beeping) {
-		untimeout((timeout_t)sysbeepstop, (caddr_t)(last_period/2));
-		untimeout((timeout_t)sysbeepstop, (caddr_t)0);
-	}
+	if (beeping)
+		untimeout(sysbeepstop, (caddr_t)0);
 	if (!beeping || last_pitch != pitch) {
 		/*
 		 * XXX - move timer stuff to clock.c.
@@ -262,5 +258,5 @@ sysbeep(int pitch, int period)
 	}
 	last_pitch = pitch;
 	beeping = last_period = period;
-	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
+	timeout(sysbeepstop, (caddr_t)0, period);
 }
