@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.18 1997/10/04 19:48:34 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.18.4.1 1998/01/27 19:51:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,13 +48,14 @@
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/dvma.h>
+#include <machine/idprom.h>
+#include <machine/leds.h>
 #include <machine/mon.h>
-#include <machine/pte.h>
 #include <machine/pmap.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
+#include <machine/pte.h>
 
 #include <sun3/sun3/interreg.h>
+#include <sun3/sun3/machdep.h>
 #include <sun3/sun3/vector.h>
 
 /* This is defined in locore.s */
@@ -170,7 +171,7 @@ _vm_init(kehp)
 	vm_offset_t nextva;
 
 	/*
-	 * First, reserve our symbol table which might have been
+	 * First preserve our symbol table, which might have been
 	 * loaded after our BSS area by the boot loader.  However,
 	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
@@ -210,7 +211,6 @@ _vm_init(kehp)
 	pmap_bootstrap(nextva);
 }
 
-
 /*
  * This is called from locore.s just after the kernel is remapped
  * to its proper address, but before the call to main().  The work
@@ -226,20 +226,17 @@ _bootstrap(keh)
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
-	/* set v_handler, get boothowto */
+	/* Set v_handler, get boothowto. */
 	sunmon_init();
+
+	/* Handle kernel mapping, pmap_bootstrap(), etc. */
+	_vm_init(&keh);
 
 	/*
 	 * Find and save OBIO mappings needed early,
 	 * and call some init functions.
 	 */
 	obio_init();
-
-	/* We now may enable the console.  (yea!) */
-	cninit();
-
-	/* handle kernel mapping, pmap_bootstrap(), etc. */
-	_vm_init(&keh);
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
@@ -251,6 +248,17 @@ _bootstrap(keh)
 	 * Done after _vm_init so the PROM can debug that.
 	 */
 	setvbr((void **)vector_table);
-
 	/* Interrupts are enabled later, after autoconfig. */
+
+	/*
+	 * Find the IDPROM and copy it to memory.
+	 * Needs obio_init and setvbr earlier.
+	 */
+	idprom_init();
+
+	/*
+	 * Turn on the LEDs so we know power is on.
+	 * Needs idprom_init and obio_init earlier.
+	 */
+	leds_init();
 }

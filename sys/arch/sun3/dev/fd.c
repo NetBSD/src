@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1998/01/22 21:26:25 gwr Exp $	*/
+/*	$NetBSD: fd.c,v 1.6.4.1 1998/01/27 19:50:53 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -64,9 +64,8 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-#include <sun3x/dev/fdreg.h>
-#include <sun3x/dev/fdvar.h>
-#include <sun3/sun3/interreg.h>
+#include <sun3/dev/fdreg.h>
+#include <sun3/dev/fdvar.h>
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)

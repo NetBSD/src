@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7 1997/04/25 18:46:10 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.7.4.1 1998/01/27 19:51:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,11 +57,13 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/eeprom.h>
 #include <machine/leds.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/machdep.h>
 
 /* XXX - Put this in pmap_pvt.h or something? */
 extern vm_offset_t avail_start;
@@ -300,15 +302,16 @@ promacc(va, len, rw)
 	eva = (vm_offset_t)va + len;
 
 	/* Test for the most common case first. */
-	if (sva < PROM_BASE)
+	if (sva < SUN3X_PROM_BASE)
 		return (0);
 
 	/* Read in the PROM itself is OK. */
-	if ((rw == B_READ) && (eva <= MONEND))
+	if ((rw == B_READ) && (eva <= SUN3X_MONEND))
 		return (1);
 
 	/* PROM data page is OK for read/write. */
-	if ((sva >= MONDATA) && (eva <= (MONDATA+NBPG)))
+	if ((sva >=  SUN3X_MONDATA) &&
+		(eva <= (SUN3X_MONDATA + NBPG)))
 		return (1);
 
 	/* otherwise, not OK to touch */

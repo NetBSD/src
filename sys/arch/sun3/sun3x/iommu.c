@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.7 1998/01/22 22:09:11 gwr Exp $	*/
+/*	$NetBSD: iommu.c,v 1.7.4.1 1998/01/27 19:51:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,8 +49,9 @@
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/obio.h>
-#include "iommu.h"
+
+#include <sun3/sun3x/iommu.h>
+#include <sun3/sun3x/obio.h>
 
 #define IOMMU_SIZE	(IOMMU_NENT * sizeof(iommu_pde_t))
 

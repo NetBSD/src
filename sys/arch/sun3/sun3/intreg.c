@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.10 1998/01/12 20:32:31 thorpej Exp $	*/
+/*	$NetBSD: intreg.c,v 1.10.2.1 1998/01/27 19:51:04 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,11 +51,9 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
-
+#include <sun3/sun3/machdep.h>
 
 struct intreg_softc {
 	struct device sc_dev;
@@ -77,7 +75,7 @@ volatile u_char *interrupt_reg;
 void
 intreg_init()
 {
-	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
+	interrupt_reg = obio_find_mapping(IREG_ADDR, 1);
 	if (!interrupt_reg) {
 		mon_printf("intreg_init\n");
 		sunmon_abort();
@@ -100,7 +98,7 @@ intreg_match(parent, cf, args)
 		return (0);
 
 	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_INTERREG)
+	if (ca->ca_paddr != IREG_ADDR)
 		return (0);
 
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 1997/12/02 23:41:30 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.73.2.1 1998/01/27 19:51:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,7 +69,9 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
-#include <machine/machdep.h>
+
+#include <sun3/sun3/fc.h>
+#include <sun3/sun3/machdep.h>
 
 /* XXX - Later, get this from <m68k/m68k.h> */
 void	regdump __P((struct trapframe *, int));
