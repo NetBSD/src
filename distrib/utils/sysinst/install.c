@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.27 2001/01/07 13:07:57 jdc Exp $	*/
+/*	$NetBSD: install.c,v 1.28 2002/04/04 14:26:44 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,6 +137,8 @@ do_install()
 		return;
 
 	set_timezone();
+
+	set_crypt_type();
 
 	set_root_password();
 	

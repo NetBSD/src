@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.85 2002/03/29 01:03:14 shin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -811,6 +811,19 @@ the timezone selection.
  Default:	%s 
  Selected:	%s 
  Local time: 	%s %s 
+}
+
+message choose_crypt
+{Please choose the password cipher to use. NetBSD can be configured to use
+either the DES or MD5 schemes.
+
+The traditional DES scheme is compatible with most other Unix-like operating
+systems, but only the first 8 characters of any password will be recognised.
+The MD5 scheme allows for longer passwords, and some would argue that it's
+more secure.
+
+If you have a network and intend to use NIS, please bear in mind the
+capabilities of other machines on your network.
 }
 
 message swapactive
