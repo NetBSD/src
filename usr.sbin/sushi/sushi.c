@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.13 2002/11/25 09:11:35 jdc Exp $       */
+/*      $NetBSD: sushi.c,v 1.14 2003/06/13 07:26:41 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -239,8 +239,8 @@ parse_config(void)
 	if (searchpaths[i] == NULL)
 		bailout("malloc: %s", strerror(errno));
 	if (getenv("HOME") != NULL) {
-		strcpy(searchpaths[i], getenv("HOME"));
-		strcat(searchpaths[i], "/sushi");
+		strlcpy(searchpaths[i], getenv("HOME"), PATH_MAX);
+		strlcat(searchpaths[i], "/sushi", PATH_MAX);
 		i++;
 	}
 	searchpaths[i] = NULL;
