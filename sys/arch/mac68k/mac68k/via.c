@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.15 1995/03/23 14:16:38 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.16 1995/03/25 22:30:39 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -238,7 +238,7 @@ static int	nubus_intr_mask = 0;
 int
 add_nubus_intr(addr, func, unit)
 int addr;
-void (*func)();
+int (*func)();
 int unit;
 {
 	int	s = splhigh();
@@ -261,18 +261,15 @@ int unit;
 	return 1;
 }
 
-#if defined(DIAGNOSTIC)
-static int noint_ctr=0;
-#endif
-
 long
 via2_nubus_intr(int bit)
 {
-	register int	i, mask, ints, cnt=0;;
+	register int	i, mask, ints, cnt=0;
 
 try_again:
+	via_reg(VIA2, vIFR) = V2IF_SLOTINT;
 	if (ints = ((~via_reg(VIA2, vBufA)) & nubus_intr_mask)) {
-		via_reg(VIA2, vIFR) = V2IF_SLOTINT;
+		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
 		while (i--) {
@@ -282,22 +279,12 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(20);
-		if (cnt++ < 10)
-			goto try_again;
-#if defined(DIAGNOSTIC)
-		else {
-			if (noint_ctr++ >= 100) {
-				printf("No interrupts to try in "
-					"via2_nubus_intr() "
-					"(%d) .\n", noint_ctr);
-				noint_ctr = 0;
-			}
+		delay(20); /* Just a delay for the fun of it. */
+		if (cnt++ >= 2) {
+			return 1;
 		}
-#endif
 	}
-
-	return 1;
+	goto try_again;
 }
 
 long
@@ -306,8 +293,9 @@ rbv_nubus_intr(int bit)
 	register int	i, mask, ints, cnt=0;;
 
 try_again:
+	via_reg(VIA2, rIFR) = V2IF_SLOTINT;
 	if (ints = ((~via_reg(VIA2, rSlotInt)) & nubus_intr_mask)) {
-		via_reg(VIA2, rIFR) = V2IF_SLOTINT;
+		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
 		while (i--) {
@@ -317,22 +305,12 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(400);
-		if (cnt++ < 10)
-			goto try_again;
-#if defined(DIAGNOSTIC)
-		else {
-			if (noint_ctr++ >= 100) {
-				printf("No interrupts to try in "
-					"rbv_nubus_intr() "
-					"(%d) .\n", noint_ctr);
-				noint_ctr = 0;
-			}
+		delay(20); /* Just a delay for the fun of it. */
+		if (cnt++ >= 2) {
+			return 1;
 		}
-#endif
 	}
-
-	return 1;
+	goto try_again;
 }
 
 int
