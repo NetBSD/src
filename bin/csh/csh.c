@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)csh.c	5.26 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: csh.c,v 1.4 1993/08/01 19:00:50 mycroft Exp $";
+static char rcsid[] = "$Id: csh.c,v 1.5 1993/11/12 15:58:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ static char rcsid[] = "$Id: csh.c,v 1.4 1993/08/01 19:00:50 mycroft Exp $";
 #include "csh.h"
 #include "extern.h"
 #include "pathnames.h"
+#include "proc.h"
 
 extern bool MapsAreInited;
 extern bool NLSMapsAreInited;
@@ -235,11 +236,10 @@ main(argc, argv)
     (void) sigvec(SIGTERM, NULL, &osv);
     parterm = (void (*) ()) osv.sv_handler;
 
-    if (loginsh) {
-	(void) signal(SIGHUP, phup);	/* exit processing on HUP */
-	(void) signal(SIGXCPU, phup);	/* ...and on XCPU */
-	(void) signal(SIGXFSZ, phup);	/* ...and on XFSZ */
-    }
+    /* catch these all, login shell or not */
+    (void) signal(SIGHUP, phup);	/* exit processing on HUP */
+    (void) signal(SIGXCPU, phup);	/* ...and on XCPU */
+    (void) signal(SIGXFSZ, phup);	/* ...and on XFSZ */
 
     /*
      * Process the arguments.
@@ -801,8 +801,44 @@ static void
 phup(sig)
 int sig;
 {
-    rechist();
-    xexit(sig);
+	struct process *pp, *np;
+	int foregnd;
+
+	rechist();
+
+	/*
+	 * the following adopted from tcsh with light mods
+	 *
+	 * We kill the last foreground process group. It then becomes
+	 * responsible to propagate the SIGHUP to its progeny.
+	 */
+	for (pp = proclist.p_next; pp; pp = pp->p_next) {
+		np = pp;
+		foregnd = 0;
+
+		/*
+		 * Find if this job is in the foreground. It could be that
+		 * the process leader has exited and the foreground flag
+		 * is cleared for it.
+		 */
+		do {
+			/*
+			 * If a process is in the foreground; we try to kill
+			 * it's process group. If we succeed, then the
+			 * whole job is gone. Otherwise we keep going...
+			 * But avoid sending HUP to the shell again.
+			 */
+			if ((np->p_flags & PFOREGND) != 0 &&
+			    np->p_jobid != shpgrp &&
+			    killpg(np->p_jobid, SIGHUP) != -1) {
+				/* In case the job was suspended... */
+				(void) killpg(np->p_jobid, SIGCONT);
+				break;
+			}
+		} while ((np = np->p_friends) != pp);
+        }
+
+	xexit(sig);
 }
 
 Char   *jobargv[2] = {STRjobs, 0};
