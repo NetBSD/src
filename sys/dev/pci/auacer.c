@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.1 2004/10/10 16:37:07 augustss Exp $	*/
+/*	$NetBSD: auacer.c,v 1.2 2004/11/09 15:57:11 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.1 2004/10/10 16:37:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.2 2004/11/09 15:57:11 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ struct auacer_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
-	u_int16_t ext_status;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -329,7 +328,6 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
 
-	sc->codec_if->vtbl->set_clock(sc->codec_if, 48000); /* XXX ? */
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 
 	auacer_reset(sc);
@@ -1170,7 +1168,6 @@ auacer_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
-		auacer_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_status);
 		break;
 
 	case PWR_RESUME:
@@ -1186,7 +1183,6 @@ auacer_powerhook(int why, void *addr)
 		auacer_reset_codec(sc);
 		delay(1000);
 		sc->codec_if->vtbl->restore_ports(sc->codec_if);
-		auacer_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_status);
 		break;
 
 	case PWR_SOFTSUSPEND:
