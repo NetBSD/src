@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.20 2004/03/04 00:54:30 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.21 2005/02/12 03:27:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.20 2004/03/04 00:54:30 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.21 2005/02/12 03:27:33 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -296,7 +296,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 #else
              NULL,
 #endif
-	    (void *) (node->dagHdr->raidPtr), 0, b_proc);
+	    (void *) (node->dagHdr->raidPtr), 0, b_proc, PR_NOWAIT);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
@@ -337,7 +337,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    0, b_proc);
+	    0, b_proc, PR_NOWAIT);
 
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
@@ -371,7 +371,7 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	     NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL);
+	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
@@ -402,7 +402,7 @@ rf_DiskUnlockFuncForThreads(RF_DagNode_t *node)
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    RF_UNLOCK_DISK_QUEUE, NULL);
+	    RF_UNLOCK_DISK_QUEUE, NULL, PR_NOWAIT);
 	if (!req)
 		(node->wakeFunc) (node, ENOMEM);
 	else {
