@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswd.c,v 1.2 1993/05/16 02:49:05 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswd.c,v 1.3 1993/06/04 15:52:21 brezak Exp $";
 #endif
 
 #include <stdio.h>
@@ -168,7 +168,7 @@ char **argv;
 	yppasswd.newpw.pw_shell = pw->pw_shell;
 
 	r = callrpc(master, YPPASSWDPROG, YPPASSWDVERS, YPPASSWDPROC_UPDATE,
-		xdr_passwd, &yppasswd, xdr_int, &status);
+		xdr_yppasswd, &yppasswd, xdr_int, &status);
 	if (r)
 		printf("Couldn't change NIS password.\n");
 	else
