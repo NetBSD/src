@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.4 1997/09/06 14:08:29 drochner Exp $ */
+/* $NetBSD: bootxx.c,v 1.5 1998/08/27 12:20:51 tv Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 #include "stand/common/common.h"
 #include "stand/common/bbinfo.h"
 
-extern _end, start;
+extern int _end, start;
 
 extern void puts __P((char*)); /* XXX private, does not append '\n' */
 
