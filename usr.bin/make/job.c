@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.14 1996/02/04 22:20:42 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.15 1996/05/29 15:28:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.14 1996/02/04 22:20:42 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.15 1996/05/29 15:28:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -969,7 +969,7 @@ JobFinish(job, status)
 	job->node->made = MADE;
 	Make_Update(job->node);
 	free((Address)job);
-    } else if (*status == 0) {
+    } else if (*status != 0) {
 	errors += 1;
 	free((Address)job);
     }
