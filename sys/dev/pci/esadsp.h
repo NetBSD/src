@@ -1,4 +1,4 @@
-/* $NetBSD: esadsp.h,v 1.2 2002/01/06 15:41:00 augustss Exp $ */
+/* $NetBSD: esadsp.h,v 1.3 2002/01/06 16:58:23 augustss Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -30,6 +30,7 @@
  * 
  * Lots of magic based on the FreeBSD maestro3 driver and
  * reverse engineering.
+ * Original driver by Don Kim.
  *
  */
 

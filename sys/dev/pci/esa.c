@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.1 2002/01/06 16:06:14 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.2 2002/01/06 16:58:23 augustss Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -29,7 +29,7 @@
  * ESS Allegro-1 / Maestro3 Audio Driver
  * 
  * Based on the FreeBSD maestro3 driver and the NetBSD eap driver.
- *
+ * Original driver by Don Kim.
  */
 
 #include <sys/types.h>
