@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.aout_so.1,v 1.1 2001/05/06 13:54:04 wiz Exp $
+.\"	$NetBSD: ld.aout_so.1,v 1.2 2002/01/15 02:22:54 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,14 +211,12 @@ When set, do not include a set of built-in standard directory paths for
 searching. This might be useful when running on a system with a completely
 non-standard filesystem layout.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact
 .It Pa /var/run/ld.so.hints
 library location hints built by
 .Xr ldconfig 8
 .El
-.Pp
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr ld.elf_so 1 ,
@@ -227,7 +225,6 @@ library location hints built by
 .Xr ldconfig 8
 .Sh HISTORY
 The shared library model employed first appeared in SunOS 4.0.
-.Pp
 .Sh SECURITY CONSIDERATIONS
 The environment variables
 .Ev LD_LIBRARY_PATH
