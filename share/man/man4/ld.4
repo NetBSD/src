@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.4,v 1.10 2003/02/14 15:20:19 grant Exp $
+.\"	$NetBSD: ld.4,v 1.11 2003/05/04 16:18:32 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nd logical disk driver
 .Sh SYNOPSIS
 .Cd ld* at aac? unit ?
+.Cd ld* at amr? unit ?
 .Cd ld* at cac? unit ?
 .Cd ld* at icp? unit ?
 .Cd ld* at iop? tid ?
@@ -68,6 +69,7 @@ partition
 .El
 .Sh SEE ALSO
 .Xr aac 4 ,
+.Xr amr 4 ,
 .Xr cac 4 ,
 .Xr icp 4 ,
 .Xr intro 4 ,
