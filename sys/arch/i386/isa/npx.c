@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.10 1993/12/20 09:06:31 mycroft Exp $
+ *	$Id: npx.c,v 1.11 1993/12/20 09:12:04 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -47,6 +47,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/cpufunc.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
@@ -61,8 +62,6 @@
 
 #ifdef	__GNUC__
 
-#define	disable_intr()		__asm("cli")
-#define	enable_intr()		__asm("sti")
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	fnclex()		__asm("fnclex")
 #define	fninit()		__asm("fninit")
