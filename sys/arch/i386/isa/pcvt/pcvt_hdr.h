@@ -273,9 +273,12 @@ in the config file"
 				 * command rx'd */
 #define	KEYB_R_OVERRUN1	0xff	/* keyboard buffer overflow */
 
-#define KEYB_R_MF2ID1	0xab	/* MF II Keyboard id-byte #1 */
-#define KEYB_R_MF2ID2	0x41	/* MF II Keyboard id-byte #2 */
-#define KEYB_R_MF2ID2HP	0x83	/* MF II Keyboard id-byte #2 from HP keybd's */
+/* MF II Keyboard id-byte #1 */	/* Default keybd's id-byte #1 */
+#define KEYB_R_MF2ID1	0xab	
+/* MF II Keyboard id-byte #2 */
+#define KEYB_R_MF2ID2	0x41	/* Default keybd's id-byte #2 */
+#define KEYB_R_MF2ID2TP	0x54	/* IBM ThinkPad 76X keybd's id-byte #2 */
+#define KEYB_R_MF2ID2HP	0x83	/* HP kybd's id-byte #2 */
 
 /* internal Keyboard Type */
 

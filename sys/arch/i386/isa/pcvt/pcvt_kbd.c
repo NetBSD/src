@@ -523,8 +523,12 @@ r_entry:
 				splx(opri);
 				goto query_kbd_id;
 			}
-			else if(response == KEYB_R_MF2ID2HP)
+			else if(response == KEYB_R_MF2ID2HP ||
+				response == KEYB_R_MF2ID2TP)
 			{
+				/*
+				 * Handle particular vendor responses
+				 */
 				keyboard_type = KB_MFII;
 			}
 			else
