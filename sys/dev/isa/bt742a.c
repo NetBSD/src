@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.24 1994/04/08 18:22:20 mycroft Exp $
+ *      $Id: bt742a.c,v 1.25 1994/04/29 23:16:00 cgd Exp $
  */
 
 /*
@@ -746,7 +746,7 @@ btintr(bt)
 		}
 		wmbi->stat = BT_MBI_FREE;
 		if (ccb) {
-			untimeout(bt_timeout, (caddr_t)ccb);
+			untimeout((timeout_t)bt_timeout, ccb);
 			bt_done(bt, ccb);
 		}
 		/* Set the IN mail Box pointer for next */ bt_nextmbx(wmbi, wmbx, mbi);
@@ -1363,7 +1363,7 @@ bt_scsi_cmd(xs)
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 	if (!(flags & SCSI_NOMASK)) {
-		timeout(bt_timeout, (caddr_t)ccb, (xs->timeout * hz) / 1000);
+		timeout((timeout_t)bt_timeout, ccb, (xs->timeout * hz) / 1000);
 		return SUCCESSFULLY_QUEUED;
 	}
 
@@ -1412,7 +1412,7 @@ bt_poll(bt, xs, ccb)
 		 * because we are polling, take out the timeout entry
 		 * bt_timeout made
 		 */
-		untimeout(bt_timeout, (caddr_t)ccb);
+		untimeout((timeout_t)bt_timeout, ccb);
 		count = 2000;
 		while (count) {
 			/*
@@ -1479,7 +1479,7 @@ bt_timeout(arg)
 		printf("\n");
 		bt_send_mbo(bt, ~SCSI_NOMASK, BT_MBO_ABORT, ccb);
 		/* 2 secs for the abort */
-		timeout(bt_timeout, (caddr_t)ccb, 2 * hz);
+		timeout((timeout_t)bt_timeout, ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
 	}
 	splx(s);

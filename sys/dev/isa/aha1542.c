@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.27 1994/04/21 03:37:19 mycroft Exp $
+ *	$Id: aha1542.c,v 1.28 1994/04/29 23:15:51 cgd Exp $
  */
 
 /*
@@ -701,7 +701,7 @@ ahaintr(aha)
 #endif /*AHADEBUG */
 			}
 			if (ccb) {
-				untimeout(aha_timeout, (caddr_t)ccb);
+				untimeout((timeout_t)aha_timeout, ccb);
 				aha_done(aha, ccb);
 			}
 			aha->aha_mbx.mbi[i].stat = AHA_MBI_FREE;
@@ -1192,7 +1192,7 @@ aha_scsi_cmd(xs)
 		bcopy(xs->cmd, &ccb->scsi_cmd, ccb->scsi_cmd_length);
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();	/* stop instant timeouts */
-		timeout(aha_timeout, (caddr_t)ccb, (xs->timeout * hz) / 1000);
+		timeout((timeout_t)aha_timeout, ccb, (xs->timeout * hz) / 1000);
 		aha_startmbx(ccb->mbx);
 		/*
 		 * Usually return SUCCESSFULLY QUEUED
@@ -1249,7 +1249,7 @@ aha_poll(aha, xs, ccb)
 		 * because we are polling, take out the timeout entry
 		 * aha_timeout made
 		 */
-		untimeout(aha_timeout, (caddr_t)ccb);
+		untimeout((timeout_t)aha_timeout, ccb);
 		count = 2000;
 		while (count) {
 			/*
@@ -1424,7 +1424,7 @@ aha_timeout(arg)
 		printf("\n");
 		aha_abortmbx(ccb->mbx);
 		/* 4 secs for the abort */
-		timeout(aha_timeout, (caddr_t)ccb, 2 * hz);
+		timeout((timeout_t)aha_timeout, ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
 	}
 	splx(s);
