@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.12 1994/02/14 08:59:58 deraadt Exp $
+#	$Id: BSD.usr.dist,v 1.13 1994/05/29 20:42:57 jtc Exp $
 #
 
 .	type=dir
@@ -435,6 +435,8 @@ share	type=dir
 	mk	type=dir uname=bin gname=bin mode=0755
 	..
 	ms	type=dir uname=bin gname=bin mode=0755
+	..
+	nls	type=dir uname=bin gname=bin mode=0755
 	..
 	skel	type=dir uname=bin gname=bin mode=0755
 	..
