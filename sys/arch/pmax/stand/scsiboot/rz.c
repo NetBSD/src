@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.9 1999/01/29 05:37:50 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.10 1999/02/22 10:16:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ rzopen(struct open_file *f, ...)
 	}
 
 	sc = alloc(sizeof(struct rz_softc));
-	bzero(sc, sizeof(struct rz_softc));
+	memset(sc, 0, sizeof(struct rz_softc));
 	f->f_devdata = (void *)sc;
 
 	sc->sc_fd = i;
