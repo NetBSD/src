@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.17 2004/03/09 20:16:16 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.18 2004/03/24 19:10:58 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ main(int argc, char **argv)
 	use_default_colors();
 
 	initCDKColor();
+	curs_set(0);
 	raw();
 
 	tree_init();
@@ -124,6 +125,7 @@ main(int argc, char **argv)
 
 	destroyCDKScreen(cdkscreen);
 	endCDK();
+	curs_set(1);
 	endwin();
 #ifdef DEBUG
 	tree_printtree(cqMenuHeadp);
@@ -340,6 +342,7 @@ display_menu(cqm, title, basedir)
 	if (items == 0) {
 		destroyCDKScreen(cdkscreen);
 		endCDK();
+		curs_set(1);
 		endwin();
 		(void)fprintf(stderr, "%s\n", catgets(catalog, 1, 19,
 		    "No menu hierarchy found"));
@@ -384,6 +387,7 @@ bailout(const char *fmt, ...)
 
 	destroyCDKScreen(cdkscreen);
 	endCDK();
+	curs_set(1);
 	fprintf(stderr, "%s: ", getprogname());
 	if (fmt != NULL)
 		vfprintf(stderr, fmt, ap);
