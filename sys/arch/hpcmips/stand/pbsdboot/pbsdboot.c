@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.c,v 1.2 2000/01/16 03:07:32 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.c,v 1.3 2000/03/19 11:10:58 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -80,6 +80,7 @@ pbsdboot(TCHAR *wkernel_name, int argc, char *argv[], struct bootinfo* bi)
 		goto cancel;
 	}
 
+	/* last chance to cancel */
 	if (CheckCancel(-1)) {
 		goto cancel;
 	}

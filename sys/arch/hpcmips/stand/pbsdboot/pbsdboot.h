@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.7 2000/01/31 12:45:29 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.8 2000/03/19 11:10:58 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -86,6 +86,13 @@ struct preference_s {
 	BOOL reverse_video;
 };
 
+struct path_s {
+	TCHAR* name;
+	LANGID	langid;
+	unsigned long flags;
+#define PATH_SAVE	1
+};
+
 /*
  * Machine dependent information
  */
@@ -162,7 +169,8 @@ void hardware_test(void);
 void pref_init(struct preference_s* pref);
 void pref_dump(struct preference_s* pref);
 int pref_read(TCHAR* filename, struct preference_s* pref);
-int pref_load(TCHAR* load_path[], int pathlen);
+int pref_load(struct path_s load_path[], int pathlen);
+int pref_save(struct path_s load_path[], int pathlen);
 int pref_write(TCHAR* filename, struct preference_s* buf);
 
 
@@ -171,6 +179,15 @@ int pref_write(TCHAR* filename, struct preference_s* buf);
  */
 int set_system_info(platid_t* platid);
 
+
+/*
+ *  palette.c
+ */
+enum palette_status { PAL_ERROR, PAL_NOERROR, PAL_SUCCEEDED };
+extern enum palette_status palette_succeeded;
+void palette_init(HWND hWnd);
+void palette_set(HWND hWnd);
+void palette_check(HWND hWnd);
 
 /*
  *  vr41xx.c

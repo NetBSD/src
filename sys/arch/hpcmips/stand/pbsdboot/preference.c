@@ -1,4 +1,4 @@
-/*	$NetBSD: preference.c,v 1.2 2000/01/16 03:07:33 takemura Exp $	*/
+/*	$NetBSD: preference.c,v 1.3 2000/03/19 11:10:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -119,14 +119,14 @@ pref_read(TCHAR* filename, struct preference_s* pref)
 
 
 int
-pref_load(TCHAR* load_path[], int pathlen)
+pref_load(struct path_s load_path[], int pathlen)
 {
 	int i;
 
 	where_pref_load_from = NULL;
 	for (i = 0; i < pathlen; i++) {
 		wsprintf(filenamebuf, TEXT("%s%s"),
-			 load_path[i], PREFNAME);
+			 load_path[i].name, PREFNAME);
 		debug_printf(TEXT("pref_load: try to '%s'\n"), filenamebuf);
 		if (pref_read(filenamebuf, &pref) == 0) {
 			debug_printf(TEXT("pref_load: succeded, '%s'.\n"),
@@ -136,6 +136,40 @@ pref_load(TCHAR* load_path[], int pathlen)
 			return (0);
 		}
 	}
+
+	return (-1);
+}
+
+
+int
+pref_save(struct path_s load_path[], int pathlen)
+{
+	int i;
+
+	if (where_pref_load_from) {
+		if (pref_write(where_pref_load_from, &pref) != 0) {
+			msg_printf(MSG_ERROR, TEXT("Error()"),
+			    TEXT("Can't write %s"), where_pref_load_from);
+			return -1;
+		}
+		return 0;
+	}
+	for (i = 0; i < pathlen; i++) {
+		if (!(load_path[i].flags & PATH_SAVE)) {
+			continue;
+		}
+		wsprintf(filenamebuf, TEXT("%s%s"),
+		    load_path[i].name, PREFNAME);
+		debug_printf(TEXT("pref_save: try to '%s'\n"), filenamebuf);
+		if (pref_write(filenamebuf, &pref) == 0) {
+			debug_printf(TEXT("pref_write: succeded, '%s'.\n"),
+			    filenamebuf);
+			return (0);
+		}
+	}
+
+	msg_printf(MSG_ERROR, TEXT("Error()"),
+	    TEXT("Can't write %s"), PREFNAME);
 
 	return (-1);
 }
@@ -161,8 +195,6 @@ pref_write(TCHAR* filename, struct preference_s* buf)
 	       	);
 
 	if (file == INVALID_HANDLE_VALUE) {
-		msg_printf(MSG_ERROR, TEXT("pref_write()"),
-			   TEXT("CreateFile(): error=%d"), GetLastError());
 		debug_printf(TEXT("CreateFile(): error=%d\n"), GetLastError());
 		return (-1);
 	}
