@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.3 1999/12/08 04:54:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -186,7 +186,10 @@ main(argc, argv)
 	while (argc--)
 		getconfig(*argv++);
 
-	inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr);
+	if (inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr) != 1) {
+		fprintf(stderr, "fatal: inet_pton failed\n");
+		exit(1);
+	}
 	sock_open();
 
 	if (!fflag)
@@ -483,10 +486,14 @@ rtadvd_input()
 
 	switch(icp->icmp6_type) {
 	 case ND_ROUTER_SOLICIT:
-		 /* hop limit verification - RFC-2461 6.1.1 */
+		 /*
+		  * Message verification - RFC-2461 6.1.1
+		  * XXX: these checks must be done in the kernel as well,
+		  *      but we can't completely rely on them.
+		  */
 		 if (*hlimp != 255) {
 			 syslog(LOG_NOTICE,
-				"<%s> invalid hop limit(%d) "
+				"<%s> RS with invalid hop limit(%d) "
 				"received from %s on %s",
 				__FUNCTION__, *hlimp,
 				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
@@ -494,18 +501,61 @@ rtadvd_input()
 				if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			 return;
 		 }
+		 if (icp->icmp6_code) {
+			 syslog(LOG_NOTICE,
+				"<%s> RS with invalid ICMP6 code(%d) "
+				"received from %s on %s",
+				__FUNCTION__, icp->icmp6_code,
+				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
+					  INET6_ADDRSTRLEN),
+				if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+			 return;
+		 }
+		 if (i < sizeof(struct nd_router_solicit)) {
+			 syslog(LOG_NOTICE,
+				"<%s> RS from %s on %s does not have enough "
+				"length (len = %d)",
+				__FUNCTION__,
+				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
+					  INET6_ADDRSTRLEN),
+				if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
+			 return;
+		 }
 		 rs_input(i, (struct nd_router_solicit *)icp, pi, &from);
 		 break;
 	 case ND_ROUTER_ADVERT:
-		 /* hop limit verification - RFC-2461 6.1.1 */
+		 /*
+		  * Message verification - RFC-2461 6.1.2
+		  * XXX: there's a same dilemma as above... 
+		  */
 		 if (*hlimp != 255) {
 			 syslog(LOG_NOTICE,
-				"<%s> invalid hop limit(%d) "
+				"<%s> RA with invalid hop limit(%d) "
 				"received from %s on %s",
 				__FUNCTION__, *hlimp,
 				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 					  INET6_ADDRSTRLEN),
 				if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+			 return;
+		 }
+		 if (icp->icmp6_code) {
+			 syslog(LOG_NOTICE,
+				"<%s> RA with invalid ICMP6 code(%d) "
+				"received from %s on %s",
+				__FUNCTION__, icp->icmp6_code,
+				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
+					  INET6_ADDRSTRLEN),
+				if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+			 return;
+		 }
+		 if (i < sizeof(struct nd_router_advert)) {
+			 syslog(LOG_NOTICE,
+				"<%s> RA from %s on %s does not have enough "
+				"length (len = %d)",
+				__FUNCTION__,
+				inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
+					  INET6_ADDRSTRLEN),
+				if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
 			 return;
 		 }
 		 ra_input(i, (struct nd_router_advert *)icp, pi, &from);
