@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.7 2002/12/09 21:29:24 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.8 2002/12/15 00:40:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,5 +165,19 @@ extern struct mach_subsystem_namemap mach_namemap[];
 
 int mach_msg_return(struct proc *, mach_msg_header_t *, mach_msg_header_t *, 
     size_t, size_t, mach_msg_header_t *);
+
+
+
+/* In-kernel Mach messages description */
+struct mach_message {
+	mach_msg_header_t *mm_msg;	/* In-kernel copy of the message */
+	size_t mm_size;			/* Message size */
+	TAILQ_ENTRY(mach_message) mm_list;
+					/* List of pending messages */
+};
+
+void mach_message_init(void);
+struct mach_message *mach_message_get(void);
+void mach_message_put(struct mach_message *);
 
 #endif /* !_MACH_MESSAGE_H_ */

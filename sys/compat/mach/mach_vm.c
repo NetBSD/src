@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.19 2002/12/11 21:23:37 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.20 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.19 2002/12/11 21:23:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.20 2002/12/15 00:40:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.19 2002/12/11 21:23:37 manu Exp $");
 
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_map.h>
+
+/* Too much debug output from here, but we might need it later...  */
+#undef DEBUG_MACH
  
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>

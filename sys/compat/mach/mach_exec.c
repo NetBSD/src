@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.14 2002/12/12 23:18:20 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.15 2002/12/15 00:40:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.14 2002/12/12 23:18:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.15 2002/12/15 00:40:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.14 2002/12/12 23:18:20 manu Exp $");
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_exec.h>
+
+static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 
 static void mach_e_proc_exec(struct proc *, struct exec_package *);
 static void mach_e_proc_fork(struct proc *, struct proc *);
 static void mach_e_proc_exit(struct proc *);
+static void mach_init(void);
 
 extern char sigcode[], esigcode[];
 extern struct sysent sysent[];
@@ -220,6 +224,13 @@ mach_e_proc_init(p, vmspace)
 {
 	struct mach_emuldata *med;
 
+	/* 
+	 * Initialize various things if needed. 
+	 * XXX Not the best place for that. 
+	 */
+	if (mach_cold == 1)
+		mach_init();
+
 	if (!p->p_emuldata)
 		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
@@ -227,9 +238,21 @@ mach_e_proc_init(p, vmspace)
 	med = (struct mach_emuldata *)p->p_emuldata;
 	med->med_p = 0;
 
-	/* Initialize semaphores if needed. Not the best place for that... */
-	if (mach_semaphore_cold == 1)
-		mach_semaphore_init();
+	LIST_INIT(&med->med_recv);
+	LIST_INIT(&med->med_send);
+	LIST_INIT(&med->med_sendonce);
+	lockinit(&med->med_rlock, PZERO|PCATCH, "mach_port", 0, 0);
+	lockinit(&med->med_slock, PZERO|PCATCH, "mach_port", 0, 0);
+	lockinit(&med->med_solock, PZERO|PCATCH, "mach_port", 0, 0);
+
+	med->med_bootstrap = mach_port_get(NULL);
+	med->med_kernel = mach_port_get(NULL);
+	med->med_host = mach_port_get(NULL);
+
+	/* Make sure they will not be deallocated */
+	med->med_bootstrap->mp_refcount++;
+	med->med_kernel->mp_refcount++;
+	med->med_host->mp_refcount++;
 
 	return;
 }
@@ -242,6 +265,18 @@ mach_e_proc_exit(p)
 	p->p_emuldata = NULL;
 
 	mach_semaphore_cleanup(p);
+
+	return;
+}
+
+static void
+mach_init(void)
+{
+	mach_semaphore_init();
+	mach_message_init();
+	mach_port_init();
+
+	mach_cold = 0;
 
 	return;
 }

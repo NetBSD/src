@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.1 2002/12/12 23:18:21 manu Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.2 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.1 2002/12/12 23:18:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.2 2002/12/15 00:40:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,12 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.1 2002/12/12 23:18:21 manu Exp 
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
 
-/* Semaphore list, lock, pools and inited flag */
+/* Semaphore list, lock, pools */
 static LIST_HEAD(mach_semaphore_list, mach_semaphore) mach_semaphore_list; 
 static struct lock mach_semaphore_list_lock;
 static struct pool mach_semaphore_list_pool;
 static struct pool mach_waiting_proc_pool;
-int mach_semaphore_cold = 1; 
 
 /* Function to manipulate them */
 static struct mach_semaphore *mach_semaphore_get(int, int);
@@ -198,7 +197,6 @@ mach_semaphore_init(void)
 	    0, 0, 128, "mach_sem_pool", NULL);
 	pool_init(&mach_waiting_proc_pool, sizeof (struct mach_waiting_proc),
 	    0, 0, 128, "mach_waitp_pool", NULL);
-	mach_semaphore_cold = 0;
 
 	return;
 }

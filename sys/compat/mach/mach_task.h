@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.3 2002/12/12 00:29:24 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.4 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,12 @@
 #define	_MACH_TASK_H_
 
 /* task_get_special_port */ 
+
+#define MACH_TASK_KERNEL_PORT		1
+#define MACH_TASK_HOST_PORT		2
+#define MACH_TASK_BOOTSTRAP_PORT	4
+#define MACH_TASK_WIRED_LEDGER_PORT	5
+#define MACH_TASK_PAGED_LEDGER_PORT	6
 
 typedef struct {
 	mach_msg_header_t req_msgh;
