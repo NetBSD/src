@@ -7,15 +7,15 @@
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Dsparc -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
+#define CPP_PREDEFINES "-Dsparc -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
 #undef SIZE_TYPE
-#define SIZE_TYPE "unsigned int"
+#define SIZE_TYPE "long unsigned int"
 
 #undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "int"
+#define PTRDIFF_TYPE "long int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -44,3 +44,5 @@
    and initialization stuff better.  */
 #define DWARF2_UNWIND_INFO 0
 
+/* Name the default cpu target */
+#define TARGET_CPU_DEFAULT	TARGET_CPU_sparc
