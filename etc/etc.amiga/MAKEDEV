@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.6 1994/06/04 12:12:50 chopps Exp $
+#	$Id: MAKEDEV,v 1.7 1994/06/14 09:10:27 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -49,6 +49,7 @@
 # Disks:
 #	fd*	Floppy disks
 #	sd*	SCSI disks, includes flopticals
+#	cd*	SCSI cdrom discs
 #	vnd*	"file" pseudo-disks
 #
 # Console ports:
@@ -83,7 +84,7 @@ all)
 	sh MAKEDEV std st0 ttye0 ttye1 mouse0 mouse1 tty00 grf0 grf1 kbd
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 vnd0 vnd1 vnd2 vnd3 vnd4
 	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
+	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
 	sh MAKEDEV lkm local
 	;;
 
@@ -192,6 +193,27 @@ sd*|vnd*)
 		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
 		fi
+		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		;;
+	*)
+		echo bad unit for disk in: $i
+		;;
+	esac
+	umask 77
+	;;
+
+cd*)
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	cd*) name=cd; blk=7; chr=9;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	case $unit in
+	0|1|2|3|4|5|6)
+		mknod ${name}${unit}a   b $blk `expr $unit '*' 8 + 0`
+		mknod ${name}${unit}d   b $blk `expr $unit '*' 8 + 3`
+		mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
 		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
