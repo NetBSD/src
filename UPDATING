@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.104 2004/01/12 16:19:19 dbj Exp $
+$NetBSD: UPDATING,v 1.105 2004/01/18 12:52:47 bjh21 Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,10 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040117:
+	On acorn32, the sysbeep device is no longer needed, and will
+	need to be deleted from kernel configuration files.
 
 20040109:
 	Compatibility for old ffs superblock layouts has been
