@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.350 2003/07/28 07:03:43 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.351 2003/07/28 08:53:54 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -546,7 +546,7 @@ MK${var}?=	yes
 #
 # MK* options which default to "no".
 #
-.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 CXXSUPCXX \
+.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
 	MANZ OBJDIRS SOFTFLOAT UNPRIVED UPDATE
 MK${var}?=	no
 .endfor
@@ -623,8 +623,12 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 .endif
 
 #
-# Set defaults for the USE_xxx variables.  They all default to "yes"
-# unless the corresponding MKxxx variable is set to "no".
+# Set defaults for the USE_xxx variables.
+#
+
+#
+# USE_* options which default to "yes" unless their corresponding MK*
+# variable is set to "no".
 #
 .for var in HESIOD KERBEROS KERBEROS4 SKEY YP
 .if (${MK${var}} == "no")
@@ -632,6 +636,13 @@ USE_${var}:= no
 .else
 USE_${var}?= yes
 .endif
+.endfor
+
+#
+# USE_* options which default to "yes".
+#
+.for var in LIBSTDCXX
+USE_${var}?= yes
 .endfor
 
 #
