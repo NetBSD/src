@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.25.2.1 1997/11/09 20:03:58 mellon Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.25.2.2 1998/05/05 08:35:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -74,6 +74,7 @@ struct cfattach intvid_ca = {
 
 #define QUADRA_DAFB_BASE	0xF9800000
 #define CIVIC_CONTROL_BASE	0x50036000
+#define VALKYRIE_CONTROL_BASE	0x50f2A000
 
 static int
 grfiv_match(parent, cf, aux)
@@ -108,8 +109,10 @@ grfiv_match(parent, cf, aux)
 
 		sense = (bus_space_read_4(oa->oa_tag, bsh, 0x1C) & 7);
 
+#if 0 /* XXX - fails on Quadras with certain 17" monitors */
 		if (sense == 0)
 			found = 0;
+#endif
 
 		/* Set "Turbo SCSI" configuration to default */
 		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
@@ -139,6 +142,16 @@ grfiv_match(parent, cf, aux)
 		break;
 
 	case MACH_CLASSQ2:
+		if (current_mac_model->machineid == MACH_MACQ630) {
+			base = VALKYRIE_CONTROL_BASE;
+
+			if (bus_space_map(oa->oa_tag, base, 0x40, 0, &bsh)) {
+				panic("failed to map space for Valkyrie regs.\n");
+			}
+			
+			/* Disable interrupts */
+			bus_space_write_1(oa->oa_tag, bsh, 0x18, 0x1);
+		}
 		break;
 
 	default:
