@@ -1,4 +1,4 @@
-.\"	$NetBSD: eshconfig.8,v 1.2 1998/05/17 16:47:26 kml Exp $
+.\"	$NetBSD: eshconfig.8,v 1.3 1998/11/20 17:23:27 kml Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,7 @@
 .Op Fl t
 .Op Fl u Ar filename
 .Op Fl w Ar bytes
+.Op Fl x
 .Op Ar interface
 .Sh DESCRIPTION
 .Nm
@@ -103,6 +104,12 @@ Not currently supported.
 Number of bytes required before write (from NIC to host) DMA
 is started.
 Until this many bytes are ready to be written, the DMA will not start.
+.It Fl x
+Reset the NIC.  This is necessary for the HIPPI-FP support, as
+.Xr ifconfig 8
+will no longer physically reset the NIC when the interfaces goes
+up and down.
+.El
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
