@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57 2001/07/10 15:03:46 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.58 2001/11/13 03:04:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,6 +75,7 @@ struct cachestats cachestats;
 
 int cache_alias_dist;		/* Cache anti-aliasing constants */
 int cache_alias_bits;
+u_long dvma_cachealign;
 
 /*
  * Enable the cache.
@@ -188,7 +189,6 @@ hypersparc_cache_enable()
 {
 	int i, ls, ts;
 	u_int pcr, v;
-	extern u_long dvma_cachealign;
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;

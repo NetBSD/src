@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.60 2001/10/27 17:44:18 darrenr Exp $ */
+/*	$NetBSD: iommu.c,v 1.61 2001/11/13 03:04:50 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -67,7 +67,6 @@ struct iommu_softc {
 };
 struct	iommu_softc *iommu_sc;/*XXX*/
 int	has_iocache;
-u_long	dvma_cachealign;
 
 /*
  * Note: operations on the extent map are being protected with
