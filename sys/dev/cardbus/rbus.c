@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.15 2002/11/25 02:31:14 thorpej Exp $	*/
+/*	$NetBSD: rbus.c,v 1.16 2003/03/22 06:18:22 nakayama Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.15 2002/11/25 02:31:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.16 2003/03/22 06:18:22 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	bus_addr_t decodesize = mask + 1;
 	bus_addr_t boundary, search_addr;
 	int val;
-	bus_addr_t result;
+	u_long result;
 	int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
 	DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
@@ -124,14 +124,14 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
 		if (decodesize == align) {
 			if(extent_alloc_subregion(rbt->rb_ext, substart,
-			    subend, size, align, 0, exflags, (void *)&result)) {
+			    subend, size, align, 0, exflags, &result)) {
 				return 1;
 			}
 		} else if (decodesize == 0) {
 			/* maybe, the resister is overflowed. */
       
 			if (extent_alloc_subregion(rbt->rb_ext, addr,
-			    addr + size, size, 1, 0, exflags, (void *)&result)) {
+			    addr + size, size, 1, 0, exflags, &result)) {
 				return 1;
 			}
 		} else {
@@ -149,7 +149,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			     search_addr += boundary) {
 				val = extent_alloc_subregion(rbt->rb_ext,
 				    search_addr, search_addr + size, size,
-				    align, 0, exflags, (void *)&result);
+				    align, 0, exflags, &result);
 				DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
 				    search_addr, search_addr + size, align));
 				if (val == 0) {
