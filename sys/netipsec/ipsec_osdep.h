@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.9 2004/03/16 22:37:46 jonathan Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.10 2004/04/30 04:12:29 jonathan Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -29,6 +29,7 @@
 #ifndef NETIPSEC_OSDEP_H
 #define NETIPSEC_OSDEP_H
 
+#ifdef _KERNEL
 /* 
  *  Hide porting differences across different 4.4BSD-derived platforms.
  * 
@@ -371,4 +372,5 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * FreeBSD splnet() equates directly to NetBSD's splsoftnet();
  * FreeBSD uses splimp() where (for networking) NetBSD would use splnet().
  */
+#endif /* _KERNEL */
 #endif /* NETIPSEC_OSDEP_H */
