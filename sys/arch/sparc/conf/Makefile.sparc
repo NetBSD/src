@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.82 2002/11/26 18:51:16 thorpej Exp $
+# 	$NetBSD: Makefile.sparc,v 1.83 2004/06/04 04:45:51 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -93,3 +93,8 @@ LINKFORMAT=	-N -p
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

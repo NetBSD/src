@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.4 2003/05/27 16:46:03 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.5 2004/06/04 04:45:50 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -107,3 +107,8 @@ clock.o: config_time.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

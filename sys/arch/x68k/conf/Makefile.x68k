@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.57 2002/11/26 18:51:18 thorpej Exp $
+#	$NetBSD: Makefile.x68k,v 1.58 2004/06/04 04:45:51 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -103,3 +103,8 @@ intio.o vm_machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND
