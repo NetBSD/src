@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.1.1.3 2001/01/27 06:17:12 itojun Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.1.1.4 2001/05/17 20:46:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -92,7 +92,7 @@
 
 /* ns_func.h - declarations for ns_*.c's externally visible functions
  *
- * Id: ns_func.h,v 8.104 2001/01/25 05:50:54 marka Exp
+ * Id: ns_func.h,v 8.105 2001/02/16 04:46:12 marka Exp
  */
 
 /* ++from ns_glue.c++ */
@@ -104,6 +104,7 @@ void			ns_info(int, const char *, ...);
 void			ns_notice(int, const char *, ...);
 void			ns_warning(int, const char *, ...);
 void			ns_error(int, const char *, ...);
+void			ns_critical(int, const char *, ...);
 void			ns_panic(int, int, const char *, ...);
 void			ns_assertion_failed(char *file, int line,
 					    assertion_type type, char *cond,

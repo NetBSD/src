@@ -1,4 +1,4 @@
-/*	$NetBSD: ctk_endian.h,v 1.1.1.1 2001/01/27 08:07:43 itojun Exp $	*/
+/*	$NetBSD: ctk_endian.h,v 1.1.1.2 2001/05/17 20:52:44 itojun Exp $	*/
 
 /*
  * Cylink Corporation © 1998
@@ -127,7 +127,7 @@
 #  else 
 #    if ULONG_MAX == 0xffffffff
 #      define ORD_16
-#    elif ULONG_MAX > 0xffffffff
+#    else
 #      define ORD_32
 #    endif
 #  endif

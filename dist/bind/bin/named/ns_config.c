@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_config.c,v 1.1.1.3 2001/01/27 06:17:02 itojun Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.1.1.4 2001/05/17 20:46:18 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_config.c,v 8.118 2000/12/23 08:14:37 vixie Exp";
+static const char rcsid[] = "Id: ns_config.c,v 8.121 2001/02/08 02:05:53 marka Exp";
 #endif /* not lint */
 
 /*
@@ -690,8 +690,7 @@ update_zone_info(struct zoneinfo *zp, struct zoneinfo *new_zp) {
 			zoneinit(zp);
 		else {
 			/* 
-			** Force secondary to try transfer soon
-			** after SIGHUP.
+			** Force slave to try transfer soon after SIGHUP.
 			*/
 			if ((zp->z_flags & (Z_QSERIAL|Z_XFER_RUNNING)) == 0 &&
 			    reloading && !reconfiging) {
@@ -1527,25 +1526,43 @@ periodic_getnetconf(evContext ctx, void *uap, struct timespec due,
 	getnetconf(1);
 }
 
+static int clean_interval = 0;
+static int interface_interval = 0;
+static int stats_interval = 0;
+static int heartbeat_interval = 0;
+
 static void
 set_interval_timer(int which_timer, int interval) {
 	evTimerID *tid = NULL;
 	evTimerFunc func = NULL;
+	int changed = 0;
 
 	switch (which_timer) {
 	case CLEAN_TIMER:
+		if (clean_interval != interval)
+			changed = 1;
+		clean_interval = interval;
 		tid = &clean_timer;
 		func = ns_cleancache;
 		break;
 	case INTERFACE_TIMER:
+		if (interface_interval != interval)
+			changed = 1;
+		interface_interval = interval;
 		tid = &interface_timer;
 		func = periodic_getnetconf;
 		break;
 	case STATS_TIMER:
+		if (stats_interval != interval)
+			changed = 1;
+		stats_interval = interval;
 		tid = &stats_timer;
 		func = ns_logstats;
 		break;
 	case HEARTBEAT_TIMER:
+		if (heartbeat_interval != interval)
+			changed = 1;
+		heartbeat_interval = interval;
 		tid = &heartbeat_timer;
 		func = ns_heartbeat;
 		break;
@@ -1555,7 +1572,8 @@ set_interval_timer(int which_timer, int interval) {
 	}
 	if ((active_timers & which_timer) != 0) {
 		if (interval > 0) {
-			if (evResetTimer(ev, *tid, func, NULL, 
+			if (changed &&
+			    evResetTimer(ev, *tid, func, NULL, 
 					 evAddTime(evNowTime(), 
 						   evConsTime(interval, 0)),
 					 evConsTime(interval, 0)) < 0)
@@ -2261,41 +2279,59 @@ static struct fwddata *
 find_forwarder(struct in_addr address)
 {
 	struct fwddata *fdp;
+	struct fwddata **fdpp = NULL;
 	struct databuf *ns, *nsdata;
 	register int i;
 
-	for (i=0;i<fwddata_count; i++) {
-		fdp=fwddata[i];
-		if (memcmp(&fdp->fwdaddr.sin_addr,&address,sizeof(address))==0) {
+	for (i = 0; i < fwddata_count; i++) {
+		fdp = fwddata[i];
+		if (fdp == NULL) {
+			if (fdpp == NULL)
+				fdpp = &fwddata[i];
+			continue;
+		}
+		if (memcmp(&fdp->fwdaddr.sin_addr, &address,
+			   sizeof(address)) == 0) {
 			fdp->ref_count++;
-			return fdp;
+			return (fdp);
 		}
 	}
 
 	fdp = (struct fwddata *)memget(sizeof(struct fwddata));
 	if (!fdp)
 		panic("memget failed in find_forwarder", NULL);
+
 	fdp->fwdaddr.sin_family = AF_INET;
 	fdp->fwdaddr.sin_addr = address;
 	fdp->fwdaddr.sin_port = ns_port;
+
 	ns = fdp->ns = (struct databuf *)memget(sizeof(*ns));
 	if (!ns)
 		panic("memget failed in find_forwarder", NULL);
-	memset(ns,0,sizeof(*ns));
+	memset(ns, 0, sizeof(*ns));
+
 	nsdata = fdp->nsdata = (struct databuf *)memget(sizeof(*nsdata));
 	if (!nsdata)
 		panic("memget failed in find_forwarder", NULL);
-	memset(nsdata,0,sizeof(*nsdata));
+	memset(nsdata, 0, sizeof(*nsdata));
+
 	ns->d_type = T_NS; 
 	ns->d_class = C_IN;
-	ns->d_rcnt=1;
+	ns->d_rcnt = 1;
+
 	nsdata->d_type = T_A;
 	nsdata->d_class = C_IN;
 	nsdata->d_nstime = 1 + (int)(25.0*rand()/(RAND_MAX + 1.0));
-	nsdata->d_rcnt=1;
-	fdp->ref_count=1;
+	nsdata->d_rcnt = 1;
+
+	fdp->ref_count = 1;
+
+	if (fdpp != NULL) {
+		*fdpp = fdp;
+		return (fdp);
+	}
 	
-	i=0;
+	i = 0;
 	if (fwddata == NULL) {
 		fwddata = memget(sizeof *fwddata);
 		if (fwddata == NULL)
@@ -2303,6 +2339,7 @@ find_forwarder(struct in_addr address)
 	} else {
 		register size_t size;
 		register struct fwddata **an_tmp;
+
 		size = fwddata_count * sizeof *fwddata;
 		an_tmp = memget(size + sizeof *fwddata);
 		if (an_tmp == NULL) {
@@ -2318,13 +2355,13 @@ find_forwarder(struct in_addr address)
 		fwddata[fwddata_count] = fdp;
 		fwddata_count++;
 	} else {
-		ns_warning(ns_log_config,
-		     "forwarder add failed (memget) [%s]",
-			inet_ntoa(address));
+		ns_warning(ns_log_config, "forwarder add failed (memget) [%s]",
+			   inet_ntoa(address));
 	}
 
-	return fdp;
+	return (fdp);
 }
+
 /*
  * Forwarder glue
  *
@@ -2462,14 +2499,20 @@ add_zone_forwarder(zone_config zh, struct in_addr address) {
 void
 free_forwarders(struct fwdinfo *fwdtab) {
 	struct fwdinfo *ftp, *fnext;
+	int i;
 
 	for (ftp = fwdtab; ftp != NULL; ftp = fnext) {
 		fnext = ftp->next;
-		if (!--ftp->fwddata->ref_count) {
+		if (--ftp->fwddata->ref_count == 0) {
+			for (i = 0 ; i < fwddata_count; i++)
+				if (fwddata[i] == ftp->fwddata) {
+					fwddata[i] = NULL;
+					break;
+				}
 			memput(ftp->fwddata->ns, sizeof *ftp->fwddata->ns);
 			memput(ftp->fwddata->nsdata,
 					sizeof *ftp->fwddata->nsdata);
-			memput(ftp->fwddata,sizeof *ftp->fwddata);
+			memput(ftp->fwddata, sizeof *ftp->fwddata);
 		}
 		memput(ftp, sizeof *ftp);
 	}

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_dump.c,v 1.1.1.2 2001/01/27 06:16:37 itojun Exp $	*/
+/*	$NetBSD: db_dump.c,v 1.1.1.3 2001/05/17 20:46:11 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_dump.c	4.33 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: db_dump.c,v 8.48 2000/12/23 08:14:34 vixie Exp";
+static const char rcsid[] = "Id: db_dump.c,v 8.49 2001/02/06 06:42:19 marka Exp";
 #endif /* not lint */
 
 /*
@@ -219,11 +219,13 @@ zt_dump(FILE *fp) {
 static int
 fwd_dump(FILE *fp) {
 	int i;
+
 	fprintf(fp, ";; ++forwarders table++\n");
-	for (i=0;i<fwddata_count;i++) {
-		fprintf(fp,"; %s rtt=%d\n",
-			inet_ntoa(fwddata[i]->fwdaddr.sin_addr),
-			fwddata[i]->nsdata->d_nstime);
+	for (i = 0; i < fwddata_count; i++) {
+		if (fwddata[i] != NULL)
+			fprintf(fp,"; %s rtt=%d\n",
+				inet_ntoa(fwddata[i]->fwdaddr.sin_addr),
+				fwddata[i]->nsdata->d_nstime);
 	}
 	fprintf(fp, ";; --forwarders table--\n");
 	return (0);
