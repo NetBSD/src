@@ -1,5 +1,3 @@
-/*	$NetBSD: saveregs.S,v 1.2 1994/10/26 06:40:07 cgd Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
+ * from: Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
+ * $Id: saveregs.S,v 1.3 1996/11/18 22:50:35 pk Exp $
  */
 
 /*
@@ -49,7 +48,7 @@
  *
  * We assume the caller has executed a `save' instruction.
  */
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(__builtin_saveregs)
 	st	%i0, [%fp + 0x44]	! fr->fr_argd[0]

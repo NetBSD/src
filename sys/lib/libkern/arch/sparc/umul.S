@@ -1,5 +1,3 @@
-/*	$NetBSD: umul.S,v 1.2 1994/10/26 06:40:10 cgd Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,14 +34,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
+ * from: Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
+ * $Id: umul.S,v 1.3 1996/11/18 22:50:37 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
 	.asciz "@(#)umul.s	8.1 (Berkeley) 6/4/93"
-#endif
-	.asciz "$NetBSD: umul.S,v 1.2 1994/10/26 06:40:10 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,7 +58,7 @@
  *	bnz	overflow	(or tnz)
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 FUNC(.umul)
 	or	%o0, %o1, %o4
 	mov	%o0, %y		! multiplier -> Y
