@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.5 2004/06/09 18:07:03 christos Exp $	*/
+/*	$NetBSD: res_compat.c,v 1.1 2004/06/09 18:07:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,39 +38,46 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.5 2004/06/09 18:07:03 christos Exp $");
+__RCSID("$NetBSD: res_compat.c,v 1.1 2004/06/09 18:07:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <netdb.h>
+#include <string.h>
+#define __OLD_RES_STATE
 #include <resolv.h>
 
-struct __res_state _nres;
+#undef _res
 
-res_state __res_get_state_nothread(void);
-void __res_put_state_nothread(res_state);
+/*
+ * Binary Compatibility; this symbol does not appear in a header file
+ * Most userland programs use this to set res_options before res_init()
+ * is called. There are hooks to res_init() to consult the data in this
+ * structure. The hooks are provided indirectly by the two functions below.
+ * We depend on the fact the the first 440 [32 bit machines] bytes are
+ * shared between the two structures.
+ */
+#ifndef __BIND_NOSTATIC 
+struct __res_state _res
+#if defined(__BIND_RES_TEXT)
+	= { RES_TIMEOUT, }      /* Motorola, et al. */
+# endif 
+;
 
-#ifdef __weak_alias
-__weak_alias(__res_get_state, __res_get_state_nothread)
-__weak_alias(__res_put_state, __res_put_state_nothread)
-/* Source compatibility; only for single threaded programs */
-__weak_alias(__res_state, __res_get_state_nothread)
-#endif
+void *__res_get_old_state(void);
+void __res_put_old_state(void *);
 
-res_state
-__res_get_state_nothread(void)
+void *
+__res_get_old_state(void)
 {
-	if ((_nres.options & RES_INIT) == 0 && res_ninit(&_nres) == -1) {
-		h_errno = NETDB_INTERNAL;
-		return NULL;
-	}
-	return &_nres;
+	return &_res;
 }
 
 void
-/*ARGSUSED*/
-__res_put_state_nothread(res_state res)
+__res_put_old_state(void *res)
 {
+	(void)memcpy(&_res, res, sizeof(_res));
 }
+#endif
