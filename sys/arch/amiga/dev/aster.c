@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.13 2001/02/20 21:55:00 is Exp $ */
+/*	$NetBSD: aster.c,v 1.14 2001/04/26 05:58:41 is Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -110,7 +110,6 @@ asterattach(parent, self, auxp)
 	struct aster_softc *astrsc;
 	struct zbus_args *zap;
 	struct supio_attach_args supa;
-	char *cardname;
 
 	astrsc = (struct aster_softc *)self;
 	zap = auxp;
@@ -121,25 +120,21 @@ asterattach(parent, self, auxp)
 
 	switch (zap->manid) {
 	case 5001:
-		cardname = "VMC ISDN Blaster";
-		supa.supio_name = "isic31";
+		supa.supio_name = "isic31VMC ISDN Blaster";
 		break;
 	case 2092:
-		cardname = "BSC ISDN Master/Master II";
-		supa.supio_name = "isic31";
+		supa.supio_name = "isic31BSC ISDN Master/Master II";
 		break;
 	case 5000:
-		cardname = "ITH ISDN Master II";
-		supa.supio_name = "isic13";
+		supa.supio_name = "isic13ITH ISDN Master II";
 		break;
 	case 2189:
-		cardname = "Zeus ISDN Link";
-		supa.supio_name = "isic@B";
+		supa.supio_name = "isic@BZeus ISDN Link";
 		break;
 	case 4626:
 		if (zap->serno == 0) {
-			cardname = "Individual Comp. ISDN Surfer";
-			supa.supio_name = "isic1C";
+			supa.supio_name =
+				"isic1CIndividual Comp. ISDN Surfer";
 			((volatile u_int8_t *)zap->va)[0x00fe] = 0xff;
 			if (((volatile u_int8_t *)zap->va)[0x00fe] & 0x80)
 				supa.supio_ipl = 6;
@@ -149,7 +144,7 @@ asterattach(parent, self, auxp)
 	}
 
 	if (parent)
-		printf(" IPL %d: %s\n", supa.supio_ipl, cardname);
+		printf(" IPL %d: %s\n", supa.supio_ipl, supa.supio_name+6);
 
 	supa.supio_iot = &astrsc->sc_bst;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_supio.c,v 1.6 2001/03/25 16:14:00 is Exp $ */
+/* $NetBSD: isic_supio.c,v 1.7 2001/04/26 05:58:41 is Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -89,7 +89,7 @@ extern const struct isdn_layer1_bri_driver isic_std_driver;
 /*static*/ void aster_write_fifo __P((struct l1_softc *sc, int what,
 	const void *data, size_t size));
 
-static int supio_isicattach __P((struct l1_softc *sc));
+static int supio_isicattach __P((struct l1_softc *sc, char *));
 
 struct isic_supio_softc {
 	struct l1_softc	sc_isic;
@@ -185,7 +185,7 @@ isic_supio_attach(parent, self, aux)
 	/* MI initialization of card */
 
 	printf("\n");
-	supio_isicattach(sc);
+	supio_isicattach(sc, sap->supio_name+6);
 
  	ssc->sc_isr.isr_intr = isicintr;
 	ssc->sc_isr.isr_arg = sc;
@@ -259,7 +259,7 @@ aster_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 #define	TERMFMT	"\n"
 
 int
-supio_isicattach(struct l1_softc *sc)
+supio_isicattach(struct l1_softc *sc, char *cardname)
 {
   	static char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
@@ -353,7 +353,8 @@ supio_isicattach(struct l1_softc *sc)
 	/* init higher protocol layers */
 	
 	/* MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp); */
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname,
+		cardname, &isic_std_driver);
 
 	/* announce chip versions */
 	
