@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.14 1999/10/18 20:39:01 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.15 1999/11/14 16:23:36 pk Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
 
 TOP= $(.CURDIR)/..
-.include "$(TOP)/distrib/sparc/Makefile.inc"
 
 # Set this for any kernels beyond GENERIC you want to include
 # in the distribution.
