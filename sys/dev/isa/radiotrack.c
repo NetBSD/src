@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.1 2002/01/01 21:51:41 augustss Exp $ */
+/* $NetBSD: radiotrack.c,v 1.2 2002/01/02 04:10:02 augustss Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -138,7 +138,7 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!RT_BASE_VALID(iobase)) {
-		printf("rt: configured iobase 0x%x invalid", iobase);
+		printf("rt: configured iobase 0x%x invalid\n", iobase);
 		return 0;
 	}
 
