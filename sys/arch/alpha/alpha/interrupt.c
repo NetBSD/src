@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.42 1999/12/07 21:35:06 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.43 2000/02/29 21:42:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.42 1999/12/07 21:35:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.43 2000/02/29 21:42:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,9 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	void *rptr;
 {
-	long rcpt;
 	struct mchkinfo *mcp = cpu_mchkinfo();
+	long rcpt;
+	int rv;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	alpha_pal_draina();
@@ -298,10 +299,13 @@ badaddr_read(addr, size, rptr)
 	/* disallow further machine checks */
 	mcp->mc_expected = 0;
 
+	rv = mcp->mc_received;
+	mcp->mc_received = 0;
+
 	/*
 	 * And copy back read results (if no fault occurred).
 	 */
-	if (rptr && mcp->mc_received == 0) {
+	if (rptr && rv == 0) {
 		switch (size) {
 		case sizeof (u_int8_t):
 			*(volatile u_int8_t *)rptr = rcpt;
@@ -321,5 +325,5 @@ badaddr_read(addr, size, rptr)
 		}
 	}
 	/* Return non-zero (i.e. true) if it's a bad address. */
-	return (mcp->mc_received);
+	return (rv);
 }
