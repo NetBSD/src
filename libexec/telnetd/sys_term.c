@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.26 2001/08/20 11:19:29 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.27 2001/08/20 11:34:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.26 2001/08/20 11:19:29 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.27 2001/08/20 11:34:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1892,7 +1892,7 @@ scrub_env()
 		NULL
 	};
 
-	static const char *accept[] = {
+	static const char *acceptstr[] = {
 		"XAUTH=", "XAUTHORITY=", "DISPLAY=",
 		"TERM=",
 		"EDITOR=",
@@ -1918,7 +1918,7 @@ scrub_env()
 		if (reject_it)
 			continue;
 
-		for(p = accept; *p; p++)
+		for(p = acceptstr; *p; p++)
 			if(strncmp(*cpp, *p, strlen(*p)) == 0)
 				break;
 		if(*p != NULL)
