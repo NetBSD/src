@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.158 1999/09/08 21:34:33 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.159 1999/09/08 21:39:54 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp 
  */
 
 /*
@@ -510,6 +510,7 @@
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
+#define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
@@ -816,6 +817,9 @@
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_2	0x0101		/* Cyclom-Y above 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z above 1M */
+
+/* Davicom Semiconductor products */
+#define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* Davicom DM9102 10/100 Ethernet */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI Bridge */
