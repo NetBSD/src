@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.36 1997/10/18 07:59:28 lukem Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.37 1998/06/30 03:30:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -184,7 +184,9 @@ emitdefs(fp)
 		return (1);
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
-		if (ht_lookup(defopttab, nv->nv_name) != NULL)
+
+		/* skip any options output to a header file */
+		if (DEFINED_OPTION(nv->nv_name))
 			continue;
 		if (fprintf(fp, "%s-D%s", sp, nv->nv_name) < 0)
 		    return 1;
