@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.25 2000/06/14 00:34:33 soda Exp $ */
+/* $NetBSD: tga.c,v 1.25.2.1 2000/06/30 16:27:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -79,7 +79,7 @@ static void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 struct tga_devconfig tga_console_dc;
 
 int tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int tga_mmap __P((void *, off_t, int));
+paddr_t tga_mmap __P((void *, off_t, int));
 static void tga_copyrows __P((void *, int, int, int));
 static void tga_copycols __P((void *, int, int, int, int));
 static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -602,7 +602,7 @@ tga_intr(v)
 	return (1);
 }
 
-int
+paddr_t
 tga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

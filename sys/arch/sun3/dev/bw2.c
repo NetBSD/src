@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.14 1998/02/08 05:22:08 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.14.24.1 2000/06/30 16:27:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -323,10 +323,11 @@ bw2ioctl(dev, cmd, data, flags, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 bw2mmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 	int size = sc->sc_fb.fb_fbtype.fb_size;

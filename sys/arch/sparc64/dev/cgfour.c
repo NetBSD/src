@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.5 1999/06/05 21:58:17 eeh Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.5.12.1 2000/06/30 16:27:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -394,13 +394,14 @@ cgfourpoll(dev, events, p)
  * As well, mapping at an offset of 0x04000000 causes the cg4 to map
  * only it's colour plane, at 0.
  */
-int
+paddr_t
 cgfourmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
-	int poff;
+	off_t poff;
 
 #define START_ENABLE	(128*1024)
 #define START_COLOR	((128*1024) + (128*1024))

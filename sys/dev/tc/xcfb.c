@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.17 2000/03/16 05:50:57 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.17.4.1 2000/06/30 16:27:52 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.17 2000/03/16 05:50:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.17.4.1 2000/06/30 16:27:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,14 +136,14 @@ static const struct wsscreen_list xcfb_screenlist = {
 	sizeof(_xcfb_scrlist) / sizeof(struct wsscreen_descr *), _xcfb_scrlist
 };
 
-static int  xcfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int  xcfbmmap __P((void *, off_t, int));
+static int	xcfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static paddr_t	xcfbmmap __P((void *, off_t, int));
 
-static int  xcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void xcfb_free_screen __P((void *, void *));
-static int xcfb_show_screen __P((void *, void *, int,
-				 void (*) (void *, int, int), void *));
+static int	xcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+				       void **, int *, int *, long *));
+static void	xcfb_free_screen __P((void *, void *));
+static int	xcfb_show_screen __P((void *, void *, int,
+				      void (*) (void *, int, int), void *));
 
 static const struct wsdisplay_accessops xcfb_accessops = {
 	xcfbioctl,
@@ -464,7 +464,7 @@ xcfbioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-static int
+static paddr_t
 xcfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;

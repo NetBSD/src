@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.43 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.43.4.1 2000/06/30 16:27:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -698,13 +698,14 @@ _isa_dmamem_unmap(ids, chan, kva, size)
 	bus_dmamem_unmap(ids->ids_dmat, kva, size);
 }
 
-int
+paddr_t
 _isa_dmamem_mmap(ids, chan, addr, size, off, prot, flags)
 	struct isa_dma_state *ids;
 	int chan;
 	bus_addr_t addr;
 	bus_size_t size;
-	int off, prot, flags;
+	off_t off;
+	int prot, flags;
 {
 	bus_dma_segment_t seg;
 
@@ -795,10 +796,10 @@ _isa_free(addr, pool)
 	free(m, pool);
 }
 
-int
+paddr_t
 _isa_mappage(mem, off, prot)
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct isa_mem *m;
