@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.6 2003/07/15 12:37:35 itojun Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.7 2003/09/19 06:24:04 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_coff.c,v 1.6 2003/07/15 12:37:35 itojun Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.7 2003/09/19 06:24:04 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,7 @@ create_knlist_coff(name, db)
 	struct stat st;
 	struct nlist nbuf;
 	DBT key, data;
-	char *mappedfile, *symname, *fsymname;
+	char *mappedfile, *symname, *nsymname, *fsymname;
 	size_t mappedsize, symnamesize, fsymnamesize;
 	u_long symhdroff, extrstroff;
 	u_long symhdrsize, i, nesyms;
@@ -223,11 +223,12 @@ create_knlist_coff(name, db)
 		}
 		
 		while (symnamesize < fsymnamesize + 1) {
-			symnamesize *= 2;
-			if ((symname = realloc(symname, symnamesize)) == NULL){
+			if ((nsymname = realloc(symname, symnamesize * 2)) == NULL){
 				warn("malloc");
 				punt();
 			}
+			symname = nsymname;
+			symnamesize *= 2;
 		}
 #if 0
 		strlcpy(symname, "_", symnamesize); 
