@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.30 1998/04/24 01:25:19 mjacob Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.31 1998/04/25 00:12:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.30 1998/04/24 01:25:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.31 1998/04/25 00:12:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,14 +123,14 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	int device;
 	int kn20aa_irq;
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4) {
-                printf("dec_kn20aa_intr_map: bad interrupt pin %d\n", buspin);
-                return 1;
-        }
+	if (buspin == 0) {
+		/* No IRQ used. */
+		return 1;
+	}
+	if (buspin > 4) {
+		printf("dec_kn20aa_intr_map: bad interrupt pin %d\n", buspin);
+		return 1;
+	}
 
 	/*
 	 * Slot->interrupt translation.  Appears to work, though it

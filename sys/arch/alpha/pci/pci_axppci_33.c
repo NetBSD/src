@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.20 1998/04/24 01:25:19 mjacob Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.21 1998/04/25 00:12:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.20 1998/04/24 01:25:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.21 1998/04/25 00:12:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,15 +115,15 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 	pirq = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4) {
-                printf("dec_axppci_33_intr_map: bad interrupt pin %d\n",
-                    buspin);
-                return 1;
-        }
+	if (buspin == 0) {
+		/* No IRQ used. */
+		return 1;
+	}
+	if (buspin > 4) {
+		printf("dec_axppci_33_intr_map: bad interrupt pin %d\n",
+		    buspin);
+		return 1;
+	}
 
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
