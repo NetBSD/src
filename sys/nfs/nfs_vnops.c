@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.147 2001/12/08 04:10:00 lukem Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.148 2001/12/15 00:32:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.147 2001/12/08 04:10:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.148 2001/12/15 00:32:49 fvdl Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -694,6 +694,8 @@ nfs_setattr(v)
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
  			uvm_vnp_setsize(vp, vap->va_size);
+ 			tsize = np->n_size;
+			np->n_size = vap->va_size;
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
@@ -701,11 +703,10 @@ nfs_setattr(v)
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
 			if (error) {
-				uvm_vnp_setsize(vp, np->n_size);
+				uvm_vnp_setsize(vp, tsize);
 				return (error);
 			}
- 			tsize = np->n_size;
- 			np->n_size = np->n_vattr->va_size = vap->va_size;
+ 			np->n_vattr->va_size = vap->va_size;
   		}
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
