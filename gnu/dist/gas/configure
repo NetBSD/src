@@ -960,7 +960,10 @@ for this_target in $target $canon_targets ; do
 			    fmt=elf ;;
       sparc-*-netbsd*)      em=nbsd bfd_gas=yes
 			    case ${cpu} in
-				sparc) fmt=aout ;;
+				sparc) case ${os} in
+				           *elf*) fmt=elf ;;
+				           *)     fmt=aout ;;
+				       esac ;;
 				sparc64) fmt=elf ;;
 			    esac
 			    ;;
