@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.17 2000/05/25 10:10:56 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.18 2000/06/05 21:47:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -217,7 +217,7 @@ siop_attach(sc)
 #ifdef DEBUG
 	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d\n",
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
-	    sc->sc_ramaddr, sc->sc_script, sc->sc_nshedslots);
+	    sc->sc_scriptaddr, sc->sc_script, sc->sc_nshedslots);
 #endif
 
 	sc->sc_link.adapter_softc = sc;
