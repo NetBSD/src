@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.8 1998/10/12 16:09:11 bouyer Exp $	*/
+/*	$NetBSD: simide.c,v 1.9 1998/11/22 14:36:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -75,7 +75,7 @@
 
 struct simide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct channel_softc	wdc_channel[2]; /* channels definition */
+	struct channel_softc	*wdc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_ctl_reg;		/* Global ctl reg */
@@ -84,6 +84,7 @@ struct simide_softc {
 	bus_space_handle_t	sc_ctlioh;		/* control handle */
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct simide_channel {
+		struct channel_softc wdc_channel; /* generic part */
 		irqhandler_t	sc_ih;			/* interrupt handler */
 		int		sc_irqmask;	/* IRQ mask for this channel */
 	} simide_channels[2];
@@ -160,6 +161,7 @@ simide_attach(parent, self, aux)
 	int status;
 	u_int iobase;
 	int channel;
+	struct simide_channel *scp;
 	struct channel_softc *cp;
 	irqhandler_t *ihp;
 
@@ -241,10 +243,13 @@ simide_attach(parent, self, aux)
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.pio_mode = 0;
-	sc->sc_wdcdev.channels = sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
-		cp = &sc->wdc_channel[channel];
+		scp = &sc->simide_channels[channel];
+		sc->wdc_chanarray[channel] = &scp->wdc_channel;
+		cp = &scp->wdc_channel;
+
 		cp->channel = channel;
 		cp->wdc = &sc->sc_wdcdev;
 		cp->ch_queue = malloc(sizeof(struct channel_queue),
@@ -268,24 +273,23 @@ simide_attach(parent, self, aux)
 			continue;
 		}
 		/* Disable interrupts and clear any pending interrupts */
-		sc->simide_channels[channel].sc_irqmask =
-		    simide_info[channel].irq_mask;
-		sc->sc_ctl_reg &= ~sc->simide_channels[channel].sc_irqmask;
+		scp->sc_irqmask = simide_info[channel].irq_mask;
+		sc->sc_ctl_reg &= ~scp->sc_irqmask;
 		bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
 		    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 		wdcattach(cp);
-		ihp = &sc->simide_channels[channel].sc_ih;
+		ihp = &scp->sc_ih;
 		ihp->ih_func = simide_intr;
-		ihp->ih_arg = cp;
+		ihp->ih_arg = scp;
 		ihp->ih_level = IPL_BIO;
 		ihp->ih_name = "simide";
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
-		ihp->ih_maskbits = sc->simide_channels[channel].sc_irqmask;
+		ihp->ih_maskbits = scp->sc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
 			panic("%s: Cannot claim interrupt %d\n",
 			    self->dv_xname, sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
-		sc->sc_ctl_reg |= sc->simide_channels[channel].sc_irqmask;
+		sc->sc_ctl_reg |= scp->sc_irqmask;
 		bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
 		    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 	}
@@ -321,14 +325,13 @@ int
 simide_intr(arg)
 	void *arg;
 {
-	struct channel_softc *chp = arg;
-	struct simide_softc *sc = (struct simide_softc *)chp->wdc;
-	irqhandler_t *ihp = &sc->simide_channels[chp->channel].sc_ih;
+	struct simide_channel *scp = arg;
+	irqhandler_t *ihp = &scp->sc_ih;
 	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
 	if ((*intraddr) & ihp->ih_maskbits)
-		wdcintr(chp);
+		wdcintr(&scp->wdc_channel);
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.7 1998/10/12 16:09:10 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.8 1998/11/22 14:36:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -54,6 +54,7 @@
 
 struct wdc_pioc_softc {
 	struct	wdc_softc sc_wdcdev;
+	struct	channel_softc *wdc_chanptr;
 	struct	channel_softc wdc_channel;
 	void	*sc_ih;
 };
@@ -149,7 +150,8 @@ wdc_pioc_attach(parent, self, aux)
 		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.pio_mode = 0;
-	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->wdc_chanptr = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
