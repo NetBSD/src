@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
+/*	$NetBSD: dma.h,v 1.2 2001/07/24 16:26:53 tsutsui Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -114,4 +114,3 @@ void picaDmaStart __P((struct dma_softc *, char *, size_t, int));
 void picaDmaFlush __P((struct dma_softc *, char *, size_t, int));
 void asc_dma_init __P((struct dma_softc *));
 void fdc_dma_init __P((struct dma_softc *));
-void sn_dma_init __P((struct dma_softc *, int));

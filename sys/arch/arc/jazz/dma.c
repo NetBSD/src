@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 2001/06/13 15:11:38 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.8 2001/07/24 16:26:53 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -260,25 +260,5 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->dma_reg = (pDmaReg)jazzio_conf->jc_fdcdmareg;
 	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
-	picaDmaTLBAlloc(sc);
-}
-/*
- *  dma_init..
- *	Called from sonic to set up dma
- */
-void
-sn_dma_init(dma_softc_t *sc, int pages)
-{
-	sc->reset = picaDmaNull;
-	sc->enintr = picaDmaNull;
-	sc->start = picaDmaFlush;
-	sc->map = picaDmaMap;
-	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
-	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
-	sc->end = picaDmaNull;
-
-	sc->dma_reg = (pDmaReg)NULL;
-	sc->pte_size = pages;
-	sc->mode = 0;
 	picaDmaTLBAlloc(sc);
 }
