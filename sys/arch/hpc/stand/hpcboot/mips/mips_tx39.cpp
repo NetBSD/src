@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_tx39.cpp,v 1.1 2001/02/09 18:35:06 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_tx39.cpp,v 1.2 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ TX39XX::init()
 
 	// set D-RAM information 
 	_mem->loadBank(0x04000000, // D-RAM bank 0/1
-		       0x04000000);
+	    0x04000000);
 
 	return TRUE;
 }

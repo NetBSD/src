@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.2 2001/03/15 17:24:47 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.3 2001/05/08 18:51:22 uch Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ Architecture::setupBootInfo(Loader &loader)
 	_boot_arg = reinterpret_cast <struct BootArgs *>(v);
 
 	_boot_arg->argc = menu.setup_kernel_args(v + sizeof(struct BootArgs),
-					    p + sizeof(struct BootArgs));
+	    p + sizeof(struct BootArgs));
 	_boot_arg->argv = ptokv(p + sizeof(struct BootArgs));
 	menu.setup_bootinfo(_boot_arg->bi);
 	_boot_arg->bi.bi_cnuse = _cons->getBootConsole();
@@ -91,8 +91,8 @@ Architecture::setupBootInfo(Loader &loader)
 
 	struct bootinfo &bi = _boot_arg->bi;
 	DPRINTF((TEXT("framebuffer: %dx%d type=%d linebytes=%d addr=0x%08x\n"),
-		 bi.fb_width, bi.fb_height, bi.fb_type, bi.fb_line_bytes,
-		 bi.fb_addr));
+	    bi.fb_width, bi.fb_height, bi.fb_type, bi.fb_line_bytes,
+	    bi.fb_addr));
 	DPRINTF((TEXT("console = %d\n"), bi.bi_cnuse));
 
 	return p;
@@ -104,9 +104,8 @@ Architecture::_load_func(const TCHAR * name)
 	if (_dll == 0)
 		_dll = LoadLibrary(TEXT("coredll.dll"));
 
-	return _dll
-		? reinterpret_cast <void *>(GetProcAddress(_dll, name))
-		: 0;
+	return 
+	    _dll ? reinterpret_cast <void *>(GetProcAddress(_dll, name)) : 0;
 }
 
 void
@@ -120,27 +119,27 @@ Architecture::systemInfo(void)
 	// inquire default setting.
 	FrameBufferInfo fb(0, 0);
 	DPRINTF((TEXT("[DISPLAY] %dx%d %dbpp\n"), fb.width(), fb.height(),
-		 fb.bpp()));
+	    fb.bpp()));
 
 	func = reinterpret_cast <int(*)(HDC, int, int, LPCSTR, int, LPSTR)>
-		(_load_func(TEXT("ExtEscape")));
+	    (_load_func(TEXT("ExtEscape")));
 	if (func == 0) {
 		DPRINTF((TEXT("ExtEscape not found.\n")));
 		return;
 	}
 	hdc = GetDC(0);
 	ret = func(hdc, GETVFRAMEPHYSICAL, 0, 0, sizeof(u_int32_t),
-		   reinterpret_cast <char *>(&val));
+	    reinterpret_cast <char *>(&val));
 	if (ret == 0)
 		DPRINTF((TEXT("ExtEscape(GETVFRAMEPHYSICAL) not implemented.\n")));
 	else if (ret < 0)
 		DPRINTF((TEXT("ExtEscape(GETVFRAMEPHYSICAL) failure.\n")));
 	else
 		DPRINTF((TEXT("frame buffer physical address: 0x%08x\n"),
-			 val));
+		    val));
 
 	ret = func(hdc, GETVFRAMELEN, 0, 0, sizeof(u_int32_t),
-		   reinterpret_cast <char *>(&val));
+	    reinterpret_cast <char *>(&val));
 
 	if (ret == 0)
 		DPRINTF((TEXT("ExtEscape(GETVFRAMELEN) not implemented.\n")));
@@ -156,13 +155,13 @@ Architecture::systemInfo(void)
 BOOL(*Architecture::_load_LockPages(void))(LPVOID, DWORD, PDWORD, int)
 {
 	return reinterpret_cast <BOOL(*)(LPVOID, DWORD, PDWORD, int)>
-		(_load_func(TEXT("LockPages")));
+	    (_load_func(TEXT("LockPages")));
 }
 
 BOOL(*Architecture::_load_UnlockPages(void))(LPVOID, DWORD)
 {
 	return reinterpret_cast <BOOL(*)(LPVOID, DWORD)>
-		(_load_func(TEXT("UnlockPages")));
+	    (_load_func(TEXT("UnlockPages")));
 }
 
 //

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.2 2001/03/23 08:48:12 toshii Exp $	*/
+/*	$NetBSD: arm_arch.cpp,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ ARMArchitecture::setupLoader()
 	// chcek 2nd bootloader size.
 	if (sz > _mem->getPageSize()) {
 		DPRINTF((TEXT("2nd bootloader size(%dbyte) is larger than page size(%d).\n"),
-			 sz, _mem->getPageSize()));
+		    sz, _mem->getPageSize()));
 		return FALSE;
 	}
 
@@ -110,10 +110,10 @@ ARMArchitecture::setupLoader()
 		return FALSE;
 	}
 	DPRINTF((TEXT("2nd bootloader vaddr=0x%08x paddr=0x%08x\n"),
-		 (unsigned)v,(unsigned)_loader_addr));
+	    (unsigned)v,(unsigned)_loader_addr));
 
 	memcpy(reinterpret_cast <LPVOID>(v),
-	       reinterpret_cast <LPVOID>(BOOT_FUNC_START), sz);
+	    reinterpret_cast <LPVOID>(BOOT_FUNC_START), sz);
 	DPRINTF((TEXT("2nd bootloader copy done.\n")));
 
 	return TRUE;
@@ -145,15 +145,15 @@ ARMArchitecture::testFramebuffer()
 	paddr_t fbaddr_p = _mem->readPhysical4(0xb0100010); // 0xc0002e00
 	// map frame buffer
 	vaddr_t fbaddr_v = _mem->mapPhysicalPage(fbaddr_p, 0x50000,
-						 PAGE_READWRITE);
+	    PAGE_READWRITE);
 
-  // test frame buffer
+	// test frame buffer
 	int j, k;
 	DI();
 	for (j = 0; j < 480; j++)
 		for (k = 0; k < 640; k++)
 			VOLATILE_REF8(fbaddr_v + 0x200 + j * 640 + k)
-				= j * k & 0xff;
+			    = j * k & 0xff;
 	for (j = 120; j < 360; j++)
 		for (k = 120; k < 520; k++)
 			VOLATILE_REF8(fbaddr_v + 0x200 + j * 640 + k) = 0x3;
@@ -174,7 +174,7 @@ __BEGIN_MACRO								\
 	UTDR_PUTCHAR(c);						\
 __END_MACRO
 	vaddr_t uart = 
-		_mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
+	    _mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
 	_('H');_('e');_('l');_('l');_('o');_(' ');
 	_('W');_('o');_('r');_('l');_('d');_('\r');_('\n');
 	_mem->unmapPhysicalPage(uart);

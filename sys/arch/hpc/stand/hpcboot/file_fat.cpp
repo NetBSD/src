@@ -1,4 +1,4 @@
-/*	$NetBSD: file_fat.cpp,v 1.1 2001/02/09 18:34:37 uch Exp $	*/
+/*	$NetBSD: file_fat.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,10 +68,10 @@ FatFile::open(const TCHAR *name, u_int32_t flags)
 	wcscat(_filename, name);
 	// open it.
 	_handle = CreateFile(_filename, GENERIC_READ | GENERIC_WRITE,
-			     0, 0, flags, 0, 0);
+	    0, 0, flags, 0, 0);
 	if (_handle == INVALID_HANDLE_VALUE) {
 		DPRINTF((TEXT("can't open \"%s\". cause = %d\n"),
-			 name, GetLastError()));
+		    name, GetLastError()));
 		return FALSE;
 	}
 

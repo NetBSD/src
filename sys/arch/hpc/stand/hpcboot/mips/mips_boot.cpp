@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.3 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ MIPSBoot::create()
 		return FALSE;
 	case MEMORY_MANAGER_LOCKPAGES:
 		_mem = new MemoryManager_LockPages(lock_pages, unlock_pages,
-						   _cons, pagesz, shift);
+		    _cons, pagesz, shift);
 		break;
 	case MEMORY_MANAGER_VIRTUALCOPY:
 		_mem = new MemoryManager_VirtualCopy(_cons, pagesz);

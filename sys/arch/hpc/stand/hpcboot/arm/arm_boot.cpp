@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.3 2001/04/24 19:27:59 uch Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.4 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ ARMBoot::create()
 		return FALSE;
 	case MEMORY_MANAGER_LOCKPAGES:
 		_mem = new MemoryManager_LockPages(lock_pages, unlock_pages,
-						   _cons, 4096);
+		    _cons, 4096);
 		break;
 	}
 	_mem->setDebug() = args.memorymanagerDebug;

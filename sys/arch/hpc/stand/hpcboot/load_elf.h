@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_elf.h,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
+/* -*-C++-*-	$NetBSD: load_elf.h,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@ private:
 
 	BOOL is_elf_file(void) {
 		return
-			_eh.e_ident[EI_MAG0] == ELFMAG0 &&
-			_eh.e_ident[EI_MAG1] == ELFMAG1 &&
-			_eh.e_ident[EI_MAG2] == ELFMAG2 &&
-			_eh.e_ident[EI_MAG3] == ELFMAG3;
+		    _eh.e_ident[EI_MAG0] == ELFMAG0 &&
+		    _eh.e_ident[EI_MAG1] == ELFMAG1 &&
+		    _eh.e_ident[EI_MAG2] == ELFMAG2 &&
+		    _eh.e_ident[EI_MAG3] == ELFMAG3;
 	}
 	BOOL read_header(void);
 	struct PageTag *load_page(vaddr_t, off_t, size_t, struct PageTag *);

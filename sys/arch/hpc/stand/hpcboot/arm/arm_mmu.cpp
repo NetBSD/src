@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.1 2001/02/09 18:34:55 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <console.h>
 
 MemoryManager_ArmMMU::MemoryManager_ArmMMU(Console *&cons,
-					   size_t pagesize)
+    size_t pagesize)
 	: MemoryManager(cons, pagesize)
 {
 	DPRINTF((TEXT("Use ARM software MMU.\n")));
@@ -69,7 +69,7 @@ MemoryManager_ArmMMU::init(void)
 	reg = GetCop15Reg2();
 	_table_base =  reg & ARM_MMU_TABLEBASE_MASK;
 	DPRINTF((TEXT("page directory address=0x%08x->0x%08x(0x%08x)\n"),
-		 _table_base, readPhysical4(_table_base), reg));
+	    _table_base, readPhysical4(_table_base), reg));
 
 	return TRUE;
 }
@@ -91,7 +91,7 @@ MemoryManager_ArmMMU::searchPage(vaddr_t vaddr)
 	daddr = _table_base | ARM_MMU_TABLEINDEX(vaddr);
 	desc1 = readPhysical4(daddr);
 	DPRINTF((TEXT("1st level descriptor 0x%08x(addr 0x%08x)\n"),
-		 desc1, daddr));
+	    desc1, daddr));
   
 	switch(ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE(desc1)) {
 	default:
@@ -99,16 +99,16 @@ MemoryManager_ArmMMU::searchPage(vaddr_t vaddr)
 		break;
 	case ARM_MMU_LEVEL1DESC_TRANSLATE_SECTION:
 		paddr = ARM_MMU_SECTION_BASE(desc1) |
-			ARM_MMU_VADDR_SECTION_INDEX(vaddr);
+		    ARM_MMU_VADDR_SECTION_INDEX(vaddr);
 		DPRINTF((TEXT("section Physical Address 0x%08x\n"), paddr));
 		break;
 	case ARM_MMU_LEVEL1DESC_TRANSLATE_PAGE:
 		DPRINTF((TEXT("-> Level2 page descriptor.\n")));
 		daddr = ARM_MMU_PTE_BASE(desc1) |
-			ARM_MMU_VADDR_PTE_INDEX(vaddr);
+		    ARM_MMU_VADDR_PTE_INDEX(vaddr);
 		desc2 = readPhysical4(daddr);
 		DPRINTF((TEXT("2nd level descriptor 0x%08x(addr 0x%08x)\n"),
-			 desc2, daddr));
+		    desc2, daddr));
 		switch(desc2 & 0x3) {
 		default:
 			DPRINTF((TEXT("2nd level descriptor fault.\n")));

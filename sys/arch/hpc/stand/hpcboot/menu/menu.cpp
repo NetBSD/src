@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.1 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,10 +84,10 @@ void
 MainTabWindow::_insert_item(HWND w, TCHAR *name, int id)
 {
 	int idx = SendDlgItemMessage(w, id, CB_ADDSTRING, 0,
-				     reinterpret_cast <LPARAM>(name));
+	    reinterpret_cast <LPARAM>(name));
 	if (idx != CB_ERR)
 		SendDlgItemMessage(w, IDC_MAIN_DIR, CB_SETITEMDATA,
-				   idx, _item_idx++);
+		    idx, _item_idx++);
 }
 
 void
@@ -107,15 +107,15 @@ MainTabWindow::init(HWND w)
 	for (i = 0; entry = menu.dir(i); i++)
 		_insert_item(w, entry, IDC_MAIN_DIR);
 	SendDlgItemMessage(w, IDC_MAIN_DIR, CB_SETCURSEL, menu.dir_default(),
-			   0);
+	    0);
 	// platform
 	for (i = 0; entry = menu.platform_get(i); i++)
 		_insert_item(w, entry, IDC_MAIN_PLATFORM);
 	SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL,
-			   menu.platform_default(), 0);
+	    menu.platform_default(), 0);
 	// kernel file name.
 	Edit_SetText(GetDlgItem(w, IDC_MAIN_KERNEL), pref.kernel_user ?
-		     pref.kernel_user_file : TEXT("netbsd.gz"));
+	    pref.kernel_user_file : TEXT("netbsd.gz"));
 
 	// root file system.
 	int fs = pref.rootfs + IDC_MAIN_ROOT_;
@@ -187,7 +187,7 @@ MainTabWindow::command(int id, int msg)
 	switch (id) {
 	case IDC_MAIN_OPTION_H:
 		EnableWindow(_combobox_serial_speed,
-			     _is_checked(IDC_MAIN_OPTION_H));
+		    _is_checked(IDC_MAIN_OPTION_H));
 		break;
 	case IDC_MAIN_ROOT_WD:
 		/* FALLTHROUGH */
@@ -213,11 +213,8 @@ OptionTabWindow::init(HWND w)
 	TabWindow::init(_window);
 	_spin_edit = GetDlgItem(_window, IDC_OPT_AUTO_INPUT);
 	_spin = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE |
-				    UDS_SETBUDDYINT | UDS_ALIGNRIGHT,
-				    80, 0, 50, 50, _window,
-				    IDC_OPT_AUTO_UPDOWN,
-				    _app._instance, _spin_edit,
-				    60, 1, 30);
+	    UDS_SETBUDDYINT | UDS_ALIGNRIGHT, 80, 0, 50, 50, _window,
+	    IDC_OPT_AUTO_UPDOWN, _app._instance, _spin_edit, 60, 1, 30);
 	BOOL onoff = pref.auto_boot ? TRUE : FALSE;
 	EnableWindow(_spin_edit, onoff);
 	EnableWindow(_spin, onoff);
@@ -342,7 +339,7 @@ ConsoleTabWindow::init(HWND w)
 	TabWindow::init(w);
 	_edit = GetDlgItem(w, IDC_CONS_EDIT);
 	MoveWindow(_edit, 5, 60, _rect.right - _rect.left - 10,
-		   _rect.bottom - _rect.top - 60, TRUE);
+	    _rect.bottom - _rect.top - 60, TRUE);
 	Edit_FmtLines(_edit, TRUE);
 	
 	// log file.
@@ -415,7 +412,7 @@ ConsoleTabWindow::_open_log_file()
 	Edit_GetText(_filename_edit, filename, MAX_PATH);
 	wsprintf(filepath, TEXT("\\%s\\%s"), path, filename);
 	_logfile = CreateFile(filepath, GENERIC_WRITE, 0, 0,
-			      CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (_logfile == INVALID_HANDLE_VALUE)
 		return FALSE;
 

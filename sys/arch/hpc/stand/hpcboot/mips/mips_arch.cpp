@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.1 2001/02/09 18:35:05 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.2 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ MIPSArchitecture::setupLoader()
 	cacheFlush();
 	r0 = VOLATILE_REF(v);
 	DPRINTF((TEXT("kernel address access test: %S\n"),
-		 r0 == TEST_MAGIC ? "OK" : "NG"));
+	    r0 == TEST_MAGIC ? "OK" : "NG"));
 	SetKMode(_kmode);
 #endif // DEBUG_KERNADDR_ACCESS
 
@@ -113,7 +113,7 @@ MIPSArchitecture::setupLoader()
 		return FALSE;
 	}
 	DPRINTF((TEXT("2nd bootloader vaddr=0x%08x paddr=0x%08x\n"),
-		 (unsigned)v,(unsigned)_loader_addr));
+	    (unsigned)v,(unsigned)_loader_addr));
 
 	memcpy(LPVOID(v), LPVOID(_boot_func), _mem->getPageSize());
 	DPRINTF((TEXT("2nd bootloader copy done.\n")));
@@ -143,7 +143,7 @@ MIPSArchitecture::jump(paddr_t info, paddr_t pvec)
 		return;
 	}
 	DPRINTF((TEXT("jump to 0x%08x(info=0x%08x, pvec=0x%08x\n"),
-		 _loader_addr, info, pvec));
+	    _loader_addr, info, pvec));
 
 	// writeback whole D-cache and invalidate whole I-cache.
 	// 2nd boot-loader access data via kseg0 which were writed via kuseg,
@@ -151,8 +151,8 @@ MIPSArchitecture::jump(paddr_t info, paddr_t pvec)
 
 	// jump to 2nd-loader(run kseg0)
 	__asm(".set noreorder;"
-	      "jr	a3;"
-	      "move	sp, a2;"
-	      ".set reorder", info, pvec, sp, _loader_addr);
+	    "jr	a3;"
+	    "move	sp, a2;"
+	    ".set reorder", info, pvec, sp, _loader_addr);
 	// NOTREACHED
 }

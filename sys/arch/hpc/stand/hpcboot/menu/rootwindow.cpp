@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.2 2001/03/02 18:26:38 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,12 +80,11 @@ RootWindow::create(LPCREATESTRUCT aux)
 	// so aux is NULL
 	HINSTANCE inst = _app._instance;
 	TCHAR *wc_name = reinterpret_cast <TCHAR *>
-		(LoadString(inst, IDS_HPCMENU, 0, 0));
+	    (LoadString(inst, IDS_HPCMENU, 0, 0));
     
 	_window = CreateWindow(wc_name, wc_name, WS_VISIBLE,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			       CW_USEDEFAULT, CW_USEDEFAULT,
-			       0, 0, inst, this);
+	    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+	    0, 0, inst, this);
 	if (!_window)
 		return FALSE;
 
@@ -124,7 +123,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 		tc_item.mask = TCIF_PARAM;
 		TabCtrl_GetItem(_base->_window, tab_id, &tc_item);
 		TabWindow *tab = reinterpret_cast <TabWindow *>
-			(tc_item.lParam);
+		    (tc_item.lParam);
 		switch(notify->code) {
 		case TCN_SELCHANGING:
 			tab->hide();
@@ -145,10 +144,9 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 			// inquire current options.
 			menu.get_options();
 			if (menu._pref.safety_message) {
-				if (MessageBox
-				    (_window,
-				     TEXT("Data in memory will be lost.\n Are you sure?"),
-				     TEXT("WARNING"), MB_YESNO) != IDYES)
+				if (MessageBox(_window,
+				    TEXT("Data in memory will be lost.\n Are you sure?"),
+				    TEXT("WARNING"), MB_YESNO) != IDYES)
 					break;
 			}
 		boot:
@@ -257,12 +255,12 @@ BootButton::create(LPCREATESTRUCT aux)
 	int cy = _root._button_height;
 
 	_window = CreateWindow(TEXT("BUTTON"), TEXT("BOOT"),
-			       BS_PUSHBUTTON | BS_NOTIFY |
-			       WS_VISIBLE | WS_CHILD | WS_TABSTOP,
-			       _rect.left, _rect.top, cx, cy, _parent_window,
-			       reinterpret_cast <HMENU>(IDC_BOOTBUTTON),
-			       aux->hInstance,
-			       NULL);
+	    BS_PUSHBUTTON | BS_NOTIFY |
+	    WS_VISIBLE | WS_CHILD | WS_TABSTOP,
+	    _rect.left, _rect.top, cx, cy, _parent_window,
+	    reinterpret_cast <HMENU>(IDC_BOOTBUTTON),
+	    aux->hInstance,
+	    NULL);
 
 	return IsWindow(_window) ? TRUE : FALSE;
 }
@@ -278,12 +276,12 @@ CancelButton::create(LPCREATESTRUCT aux)
 	int x = _rect.right - BOOT_BUTTON_WIDTH;
 
 	_window = CreateWindow(TEXT("BUTTON"), TEXT("CANCEL"),
-			       BS_PUSHBUTTON | BS_NOTIFY | WS_TABSTOP |
-			       WS_VISIBLE | WS_CHILD,
-			       x, _rect.top, cx, cy, _parent_window,
-			       reinterpret_cast <HMENU>(IDC_CANCELBUTTON),
-			       aux->hInstance,
-			       NULL);
+	    BS_PUSHBUTTON | BS_NOTIFY | WS_TABSTOP |
+	    WS_VISIBLE | WS_CHILD,
+	    x, _rect.top, cx, cy, _parent_window,
+	    reinterpret_cast <HMENU>(IDC_CANCELBUTTON),
+	    aux->hInstance,
+	    NULL);
 	return IsWindow(_window) ? TRUE : FALSE;
 }
 
@@ -294,14 +292,14 @@ BOOL
 ProgressBar::create(LPCREATESTRUCT aux)
 {
 	int cx = _rect.right - _rect.left
-		- TABCTRL_TAB_WIDTH - BOOT_BUTTON_WIDTH * 2;
+	    - TABCTRL_TAB_WIDTH - BOOT_BUTTON_WIDTH * 2;
 	int cy = _root._button_height;
 	int x = _rect.left + BOOT_BUTTON_WIDTH;
 	_window = CreateWindow(PROGRESS_CLASS, TEXT(""),
-			       WS_VISIBLE | WS_CHILD,
-			       x, _rect.top, cx, cy, _parent_window,
-			       reinterpret_cast <HMENU>(IDC_PROGRESSBAR),
-			       aux->hInstance, NULL);
+	    WS_VISIBLE | WS_CHILD,
+	    x, _rect.top, cx, cy, _parent_window,
+	    reinterpret_cast <HMENU>(IDC_PROGRESSBAR),
+	    aux->hInstance, NULL);
 	SendMessage(_window, PBM_SETRANGE, 0, MAKELPARAM(0, 12));
 
 	return IsWindow(_window) ? TRUE : FALSE;

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file.cpp,v 1.1 2001/02/09 18:34:36 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ File::_to_ascii(char *m, const TCHAR *w, size_t mlen)
 	size_t len = WideCharToMultiByte(CP_ACP, 0, w, wcslen(w), 0, 0, 0, 0);
 	if (len + 1 > mlen) {
 		DPRINTF((TEXT("buffer insufficeint. %d > %d\n"),
-			 len + 1, mlen));
+		    len + 1, mlen));
 		return FALSE;
 	}
 	int ret = WideCharToMultiByte(CP_ACP, 0, w, len, m, len, 0, 0);

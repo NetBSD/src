@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.5 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.6 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -192,11 +192,11 @@ public:
 	// platform
 	TCHAR *platform_get(int n) {
 		return reinterpret_cast <TCHAR *>
-			(_platform(n, _PLATFORM_OP_GET));
+		    (_platform(n, _PLATFORM_OP_GET));
 	}
 	int platform_default(void) {
 		return reinterpret_cast <int>
-			(_platform(0, _PLATFORM_OP_DEFAULT));
+		    (_platform(0, _PLATFORM_OP_DEFAULT));
 	}
 	void platform_set(int n) { _platform(n, _PLATFORM_OP_SET); }
 };

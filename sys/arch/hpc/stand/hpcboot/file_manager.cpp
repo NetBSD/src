@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.1 2001/02/09 18:34:39 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ FileManager::open(const TCHAR *name, u_int32_t flags)
 	_check_header(); // skip the .gz header
 
 	return TRUE;
-errout:
+ errout:
 	_file->close();
 	return FALSE;
 }
@@ -128,7 +128,7 @@ FileManager::_read(void *buf, size_t len)
 			}
 			if (_stream->avail_out > 0) {
 				got = _file->read(_stream->next_out,
-						  _stream->avail_out);
+				    _stream->avail_out);
 				if (got == -1) {
 					return(got);
 				}
@@ -151,7 +151,7 @@ FileManager::_read(void *buf, size_t len)
 		if (_z_err == Z_STREAM_END) {
 			/* Check CRC and original size */
 			_crc = crc32(_crc, start,(unsigned int)
-				     (_stream->next_out - start));
+			    (_stream->next_out - start));
 			start = _stream->next_out;
 
 			if (_get_long() != _crc ||

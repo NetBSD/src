@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.6 2001/04/24 19:28:01 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.7 2001/05/08 18:51:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ SHArchitecture::setupLoader()
 		return FALSE;
 	}
 	DPRINTF((TEXT("2nd bootloader vaddr=0x%08x paddr=0x%08x\n"),
-		 (unsigned)v,(unsigned)_loader_addr));
+	    (unsigned)v,(unsigned)_loader_addr));
 
 	memcpy(LPVOID(v), LPVOID(_boot_func), _mem->getPageSize());
 	DPRINTF((TEXT("2nd bootloader copy done.\n")));
@@ -114,7 +114,7 @@ SHArchitecture::jump(paddr_t info, paddr_t pvec)
 	pvec = ptokv(pvec);
 	_loader_addr = ptokv(_loader_addr);
 	DPRINTF((TEXT("BootArgs 0x%08x Stack 0x%08x\nBooting kernel...\n"),
-		 info, sp));
+	    info, sp));
 
 	// Change to privilege-mode.
 	SetKMode(1);
@@ -127,8 +127,8 @@ SHArchitecture::jump(paddr_t info, paddr_t pvec)
 
 	// jump to 2nd loader.(run P1) at this time I still use MMU.
 	__asm("mov	r6, r15\n"
-	      "jmp	@r7\n"
-	      "nop\n", info, pvec, sp, _loader_addr);
+	    "jmp	@r7\n"
+	    "nop\n", info, pvec, sp, _loader_addr);
 	// NOTREACHED
 }
 
@@ -138,9 +138,9 @@ suspendIntr(void)
 {
 	u_int32_t sr;
 	__asm("stc	sr, r0\n"
-	      "mov.l	r0, @r4\n"
-	      "or	r5, r0\n"
-	      "ldc	r0, sr\n", &sr, 0x000000f0);
+	    "mov.l	r0, @r4\n"
+	    "or	r5, r0\n"
+	    "ldc	r0, sr\n", &sr, 0x000000f0);
 	return sr & 0x000000f0;
 }
 
@@ -149,9 +149,9 @@ void
 resumeIntr(u_int32_t s)
 {
 	__asm("stc	sr, r0\n"
-	      "and	r5, r0\n"
-	      "or	r4, r0\n"
-	      "ldc	r0, sr\n", s, 0xffffff0f);
+	    "and	r5, r0\n"
+	    "or	r4, r0\n"
+	    "ldc	r0, sr\n", s, 0xffffff0f);
 }
 
 void
@@ -181,9 +181,9 @@ SHArchitecture::systemInfo()
 	DPRINTF((TEXT("Cache ")));
 	if (reg & CCR_CE)
 		DPRINTF((TEXT("Enabled. %s-mode, P0/U0/P3 Write-%s, P1 Write-%s\n"),
-			 reg & CCR_RA ? TEXT("RAM") : TEXT("normal"),
-			 reg & CCR_WT ? TEXT("Through") : TEXT("Back"),
-			 reg & CCR_CB ? TEXT("Back") : TEXT("Through")));
+		    reg & CCR_RA ? TEXT("RAM") : TEXT("normal"),
+		    reg & CCR_WT ? TEXT("Through") : TEXT("Back"),
+		    reg & CCR_CB ? TEXT("Back") : TEXT("Through")));
 	else
 		DPRINTF((TEXT("Disabled.\n")));
 
@@ -192,16 +192,16 @@ SHArchitecture::systemInfo()
 	DPRINTF((TEXT("MMU ")));
 	if (reg & MMUCR_AT)
 		DPRINTF((TEXT("Enabled. %s index-mode, %s virtual storage mode\n"),
-			 reg & MMUCR_IX 
-			 ? TEXT("ASID + VPN") : TEXT("VPN only"),
-			 reg & MMUCR_SV ? TEXT("single") : TEXT("multiple")));
+		    reg & MMUCR_IX 
+		    ? TEXT("ASID + VPN") : TEXT("VPN only"),
+		    reg & MMUCR_SV ? TEXT("single") : TEXT("multiple")));
 	else
 		DPRINTF((TEXT("Disabled.\n")));
 
 	// Status register
 	reg = 0;
 	__asm("stc	sr, r0\n"
-	      "mov.l	r0, @r4", &reg);
+	    "mov.l	r0, @r4", &reg);
 	DPRINTF((TEXT("SR 0x%08x\n"), reg));
 
 	// BSC
@@ -258,7 +258,7 @@ SHArchitecture::icu_priority(void)
 	DPRINTF((TEXT("----interrupt priority----\n")));
 	for (tab = ipr_table; tab->name; tab++) {
 		DPRINTF((TEXT("%-10S %d\n"), tab->name,
-			 (reg_read_2(tab->reg) >> tab->shift) & ICU_IPR_MASK));
+		    (reg_read_2(tab->reg) >> tab->shift) & ICU_IPR_MASK));
 	}
 	DPRINTF((TEXT("--------------------------\n")));
 }
@@ -282,24 +282,24 @@ SHArchitecture::icu_control(void)
 	// NMI
 	r = reg_read_2(ICU_ICR0_REG16);
 	DPRINTF((TEXT("NMI(%S %S-edge),"),
-		 r & ICU_ICR0_NMIL ? "High" : "Low",
-		 r & ICU_ICR0_NMIE ? "raising" : "falling"));
+	    r & ICU_ICR0_NMIL ? "High" : "Low",
+	    r & ICU_ICR0_NMIE ? "raising" : "falling"));
 	r = reg_read_2(ICU_ICR1_REG16);
 	DPRINTF((TEXT(" %S maskable,"), r & ICU_ICR1_MAI ? "" : "never"));
 	DPRINTF((TEXT("  SR.BL %S\n"),
-		 r & ICU_ICR1_BLMSK ? "ignored" : "maskable"));
+	    r & ICU_ICR1_BLMSK ? "ignored" : "maskable"));
 	// IRQ0-5  
 	DPRINTF((TEXT("IRQ[3:0]pin : %S mode\n"),
-		 r & ICU_ICR1_IRQLVL ? "IRL 15level" : "IRQ[0:3]"));
+	    r & ICU_ICR1_IRQLVL ? "IRL 15level" : "IRQ[0:3]"));
 	if (r & ICU_ICR1_IRQLVL) {
 		DPRINTF((TEXT("IRLS[0:3] %S\n"),
-			 r & ICU_ICR1_IRLSEN ? "enabled" : "disabled"));
+		    r & ICU_ICR1_IRLSEN ? "enabled" : "disabled"));
 	}
 	// sense select
 	for (int i = 5; i >= 0; i--) {
 		DPRINTF((TEXT("IRQ[%d] %S\n"), i,
-			 sense_select [
-				 (r >>(i * 2)) & ICU_SENSE_SELECT_MASK]));
+		    sense_select [
+			    (r >>(i * 2)) & ICU_SENSE_SELECT_MASK]));
 	}
 }
 
@@ -343,14 +343,14 @@ SHArchitecture::scif_dump(int bps)
 	r8 = SHREG_SCSMR2;
 	n = 1 <<((r8 & SCSMR2_CKS) << 1);
 	DPRINTF((TEXT("mode: %dbit %S-parity %d stop bit clock PCLOCK/%d\n"),
-		 r8 & SCSMR2_CHR ? 7 : 8,
-		 r8 & SCSMR2_PE	? r8 & SCSMR2_OE ? "odd" : "even" : "non",
-		 r8 & SCSMR2_STOP ? 2 : 1,
-		 n));
+	    r8 & SCSMR2_CHR ? 7 : 8,
+	    r8 & SCSMR2_PE	? r8 & SCSMR2_OE ? "odd" : "even" : "non",
+	    r8 & SCSMR2_STOP ? 2 : 1,
+	    n));
 	/* bit rate */
 	r8 = SHREG_SCBRR2;
 	DPRINTF((TEXT("SCBRR=%d(%dbps) estimated PCLOCK %dHz\n"), r8, bps,
-		 32 * bps *(r8 + 1) * n));
+	    32 * bps *(r8 + 1) * n));
 
 	/* control */
 #define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCSCR2_##m, #m)
@@ -445,13 +445,13 @@ SHArchitecture::tmu_dump()
 	/* TOCR  timer output control register */
 	r8 = reg_read_1(SH3_TOCR_REG8);
 	DPRINTF((TEXT("TCLK = %S\n"),
-		 r8 & TOCR_TCOE ? "RTC output" : "input"));
+	    r8 & TOCR_TCOE ? "RTC output" : "input"));
 	/* TSTR */
 	r8 = reg_read_1(SH3_TSTR_REG8);
 	DPRINTF((TEXT("Timer start(#0:2) [%c][%c][%c]\n"),
-		 r8 & TSTR_STR0 ? 'x' : '_',
-		 r8 & TSTR_STR1 ? 'x' : '_',
-		 r8 & TSTR_STR2 ? 'x' : '_'));
+	    r8 & TSTR_STR0 ? 'x' : '_',
+	    r8 & TSTR_STR1 ? 'x' : '_',
+	    r8 & TSTR_STR2 ? 'x' : '_'));
 
 #define CHANNEL_DUMP(a, x)						\
 	tmu_channel_dump(x, SH##a##_TCOR##x##_REG,			\
@@ -466,7 +466,7 @@ SHArchitecture::tmu_dump()
 
 void
 SHArchitecture::tmu_channel_dump(int unit, paddr_t tcor, paddr_t tcnt,
-				 paddr_t tcr)
+    paddr_t tcr)
 {
 	u_int32_t r32;
 	u_int16_t r16;
@@ -820,19 +820,19 @@ SHArchitecture::hd64461_dump(platid_t &platform)
 }
 
 #ifdef SH7709TEST
-	u_int32_t sh7707_fb_dma_addr;
-	u_int16_t val;
-	int s;
+u_int32_t sh7707_fb_dma_addr;
+u_int16_t val;
+int s;
 	
-	s = suspendIntr();
-	VOLATILE_REF16(SH7707_LCDAR_REG16) = SH7707_LCDAR_LCDDMR0;
-	val = VOLATILE_REF16(SH7707_LCDDMR_REG16);
-	sh7707_fb_dma_addr = val;
-	VOLATILE_REF16(SH7707_LCDAR_REG16) = SH7707_LCDAR_LCDDMR1;	
-	val = VOLATILE_REF16(SH7707_LCDDMR_REG16);
-	sh7707_fb_dma_addr |= (val << 16);
-	resumeIntr(s);
+s = suspendIntr();
+VOLATILE_REF16(SH7707_LCDAR_REG16) = SH7707_LCDAR_LCDDMR0;
+val = VOLATILE_REF16(SH7707_LCDDMR_REG16);
+sh7707_fb_dma_addr = val;
+VOLATILE_REF16(SH7707_LCDAR_REG16) = SH7707_LCDAR_LCDDMR1;	
+val = VOLATILE_REF16(SH7707_LCDDMR_REG16);
+sh7707_fb_dma_addr |= (val << 16);
+resumeIntr(s);
 
-	DPRINTF((TEXT("SH7707 frame buffer dma address: 0x%08x\n"),
-		 sh7707_fb_dma_addr));
+DPRINTF((TEXT("SH7707 frame buffer dma address: 0x%08x\n"),
+    sh7707_fb_dma_addr));
 #endif

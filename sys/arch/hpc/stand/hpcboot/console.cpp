@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.4 2001/04/24 19:27:59 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.5 2001/05/08 18:51:22 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ BOOL
 SerialConsole::setupMultibyteBuffer()
 {
 	size_t len = WideCharToMultiByte(CP_ACP, 0, _bufw, wcslen(_bufw),
-					 0, 0, 0, 0);
+	    0, 0, 0, 0);
 	if (len + 1 > CONSOLE_BUFSIZE)
 		return FALSE;
 	if (!WideCharToMultiByte(CP_ACP, 0, _bufw, len, _bufm, len, 0, 0))
@@ -114,9 +114,9 @@ SerialConsole::openCOM1()
 	int speed = HPC_PREFERENCE.serial_speed;
 
 	if (_handle == INVALID_HANDLE_VALUE) {
-		_handle = CreateFile(TEXT("COM1:"),
-				     GENERIC_READ | GENERIC_WRITE,
-				     0, NULL, OPEN_EXISTING, 0, NULL);
+		_handle = CreateFile(TEXT("COM1:"), 
+		    GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0,
+		    NULL);
 		if (_handle == INVALID_HANDLE_VALUE) {
 			Console::print(TEXT("couldn't open COM1\n"));
 			return FALSE;
@@ -131,13 +131,12 @@ SerialConsole::openCOM1()
 		dcb.BaudRate = speed;
 		if (!SetCommState(_handle, &dcb)) {
 			Console::print(TEXT("couldn't set baud rate to %s.\n"),
-				       speed);
+			    speed);
 			goto bad;
 		}
 
 		Console::print(TEXT("BaudRate %d, ByteSize %#x, Parity %#x, StopBits %#x\n"),
-			       dcb.BaudRate, dcb.ByteSize, dcb.Parity,
-			       dcb.StopBits);
+		    dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 		const char msg[] = "--------HPCBOOT--------\r\n";
 		unsigned long wrote;
 		WriteFile(_handle, msg, sizeof msg, &wrote, 0);
