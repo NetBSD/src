@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.1 2001/06/13 06:01:52 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.2 2001/06/22 11:37:49 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/walnut.h>
 #include <dev/pci/pcivar.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
@@ -84,13 +85,13 @@ void galaxy_setup_pci(void)
 
 	/* Configure PCI bridge */
 	tag = pci_make_tag(0, 0, 0, 0);
-	// x = pci_conf_read(0, tag, 4);	/* Read PCI command register */
-	// pci_conf_write(0, tag, 4, x | 0x6); /* enable bus mastering and memory space */
+	// x = pci_conf_read(0, tag, PCI0_CMD);		/* Read PCI command register */
+	// pci_conf_write(0, tag, PCI0_CMD, x | MA | ME);	/* enable bus mastering and memory space */
   
-	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PTM1MS, 0xF0000001); /* Enable PTM1 */
+	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PTM1MS, 0xF0000001);	/* Enable PTM1 */
 	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PTM1LA, 0);
-	pci_conf_write(0, tag, 0x14, 0); /* Set up proper PCI->Local address base (PCIC0_PTM1BAR). Always enabled */
-	pci_conf_write(0, tag, 0x18, 0); /* */
+	pci_conf_write(0, tag, PCI0_PTM1BAR, 0);	/* Set up proper PCI->Local address base.  Always enabled */
+	pci_conf_write(0, tag, PCI0_PTM2BAR, 0);
 }
 
 void galaxy_show_pci_map(void)
@@ -125,12 +126,12 @@ void galaxy_show_pci_map(void)
 	printf("PCI -> Local map\n");
 
 	tag = pci_make_tag(0, 0, 0, 0);
-	pl = pci_conf_read(0, tag, 0x14); /* Read PCIC0_PTM1BAR */
+	pl = pci_conf_read(0, tag, PCI0_PTM1BAR);
 	la = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PTM1LA);
 	lm = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PTM1MS);
 	printf("1: %08lx -> %08lx,%08lx %s\n", pl, la, lm,
 	    (lm & 1)?"enabled":"disabled");
-	pl = pci_conf_read(0, tag, 0x18); /* Read PCIC0_PTM2BAR */
+	pl = pci_conf_read(0, tag, PCI0_PTM2BAR);
 	la = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PTM2LA);
 	lm = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PTM2MS);
 	printf("2: %08lx -> %08lx,%08lx %s\n", pl, la, lm,
