@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.3 1999/12/26 09:05:38 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,10 +138,10 @@ static u_char zs_init_reg[16] = {
 
 static struct zschan * zs_get_chan_addr __P((int, int));
 static void zs_ap_delay __P((void));
-static void zshard __P((void *));
-static void zssoft __P((void *));
+static void zshard_ap __P((void *));
 static int zs_getc __P((void *));
 static void zs_putc __P((void *, int));
+int zshard __P((void *));
 int zs_get_speed __P((struct zs_chanstate *));
 
 struct zschan *
@@ -182,8 +182,6 @@ int zs_print __P((void *, const char *name));
 struct cfattach zsc_ap_ca = {
 	sizeof(struct zsc_softc), zs_ap_match, zs_ap_attach
 };
-
-extern struct cfdriver zsc_cd;
 
 /*
  * Is the zs chip present?
@@ -317,7 +315,7 @@ zs_ap_attach(parent, self, aux)
 		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 				     NEWS5000_INT1_SCC,
 				     0, /* priority */
-				     zshard, zsc,
+				     zshard_ap, zsc,
 				     apa->apa_name, apa->apa_ctlnum);
 	}
 	/* XXX; evcnt_attach() ? */
@@ -349,70 +347,15 @@ zs_ap_attach(parent, self, aux)
 	splx(s);
 }
 
-static volatile int zssoftpending;
-
 /*
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
 static void
-zshard(arg)
+zshard_ap(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit, rval, softreq;
-
-	rval = softreq = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		softreq |= zsc->zsc_cs[0]->cs_softreq;
-		softreq |= zsc->zsc_cs[1]->cs_softreq;
-	}
-
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = 1;
-		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
-	}
-}
-
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-static void
-zssoft(arg)
-	void *arg;
-{
-	register struct zsc_softc *zsc;
-	register int s, unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return;
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.  The order of
-	 * these next two statements prevents our clearing
-	 * the soft intr bit just after zshard has set it.
-	 */
-	/*isr_soft_clear(ZSSOFT_PRI);*/
-	/*zssoftpending = 0;*/
-
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	splx(s);
-	zssoftpending = 0;
-	return;
+	zshard(arg);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1999/12/23 07:06:44 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1999/12/26 09:05:39 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 1999/12/23 07:06:44 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 1999/12/26 09:05:39 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -150,8 +150,8 @@ void to_monitor __P((int)) __attribute__((__noreturn__));
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 void mach_init __P((int, int, int, int));
-
 void prom_halt __P((int)) __attribute__((__noreturn__));
+static void newsmips_softintr __P((int));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -371,6 +371,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		mips_hardware_intr = news5000_intr;
+		mips_software_intr = newsmips_softintr;
 		strcpy(cpu_model, "news5000");
 		cpuspeed = 50;	/* ??? XXX */
 		break;
@@ -383,6 +384,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		mips_hardware_intr = news3400_intr;
+		mips_software_intr = newsmips_softintr;
 		strcpy(cpu_model, "news3400");
 		cpuspeed = 10;
 		break;
@@ -694,3 +696,17 @@ cpu_exec_ecoff_hook(p, epp)
 	return 0;
 }
 #endif
+
+#include "zsc.h"
+
+int zssoft __P((void));
+
+void
+newsmips_softintr(sisr)
+	int sisr;
+{
+#if NZSC > 0
+	if (sisr & SOFTISR_ZS)
+		zssoft();
+#endif
+}
