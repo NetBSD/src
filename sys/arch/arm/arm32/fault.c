@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.3 2001/11/09 17:58:01 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.4 2001/11/09 19:04:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -606,8 +606,10 @@ prefetch_abort_handler(frame)
 	}
 #endif	/* DEBUG */
 
-	/* Was the prefectch abort from USR32 mode ? */
+	/* Get fault address */
+	fault_pc = frame->tf_pc;
 
+	/* Was the prefectch abort from USR32 mode ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		p->p_addr->u_pcb.pcb_tf = frame;
 	} else {
@@ -615,11 +617,9 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
+	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08x)\n",
+	            frame, fault_pc);
 	}
-
-	/* Get fault address */
-	fault_pc = frame->tf_pc;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
