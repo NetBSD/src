@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.48 2000/12/09 01:29:50 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.156 2000/10/19 19:21:07 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.49 2000/12/11 19:28:47 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.172 2000/12/11 19:27:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1083,12 +1083,7 @@ icmp6_mtudisc_update(ip6cp, validated)
 		    htons(m->m_pkthdr.rcvif->if_index);
 	}
 	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
-	rt = rtalloc1((struct sockaddr *)&sin6, 1);	/*clone*/
-	if (!rt || (rt->rt_flags & RTF_HOST) == 0) {
-		if (rt)
-			RTFREE(rt);
-		rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
-	}
+	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
 
 	if (rt && (rt->rt_flags & RTF_HOST)
 	    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) {
