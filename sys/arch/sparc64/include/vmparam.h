@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1998/08/13 02:10:45 eeh Exp $ */
+/*	$NetBSD: vmparam.h,v 1.5 1999/01/16 20:45:57 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,9 +130,6 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-
-
-#define MACHINE_NEW_NONCONTIG
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
