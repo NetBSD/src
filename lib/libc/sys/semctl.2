@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.6 1999/03/22 19:45:08 garbled Exp $	
+.\"	$NetBSD: semctl.2,v 1.7 1999/08/25 20:55:35 thorpej Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,18 +29,16 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 1995
+.Dd August 25, 1999
 .Dt SEMCTL 2
 .Os
 .Sh NAME
 .Nm semctl
 .Nd semaphore control operations
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/ipc.h>
 .Fd #include <sys/sem.h>
 .Ft int
-.Fn semctl "int semid" "int semnum" "int cmd" "union semun arg"
+.Fn semctl "int semid" "int semnum" "int cmd" "..."
 .Sh DESCRIPTION
 The
 .Fn semctl
@@ -52,8 +50,8 @@ and
 The operation to be performed is specified in
 .Fa cmd
 (see below).
-.Fa arg
-is a union of the following fields:
+The fourth argument is optional and depends upon the opration requested.
+If required, it is a union of the following fields:
 .Bd -literal
     int     val;            /* value for SETVAL */
     struct  semid_ds *buf;  /* buffer for IPC_{STAT,SET} */
@@ -61,46 +59,34 @@ is a union of the following fields:
 .Ed
 .Pp
 The
-.Bf -literal
-semid_ds
-.Ef
+.Sy semid_ds
 structure used in the
 .Dv IPC_SET
 and
 .Dv IPC_STAT
-commands is defined as follows in
-.Aq Pa sys/sem.h :
+commands is defined in
+.Aq Pa sys/sem.h
+and contains the following members:
 .Bd -literal
-struct semid_ds {
-    struct ipc_perm sem_perm;  /* operation permissions */
-    struct  sem *sem_base;     /* semaphore set */
-    u_short sem_nsems;         /* number of sems in set */
-    time_t  sem_otime;         /* last operation time */
-    time_t  sem_ctime;         /* last change time */
-};
+    struct ipc_perm sem_perm; /* operation permissions */
+    unsigned short sem_nsems; /* number of sems in set */
+    time_t sem_otime;         /* last operation time */
+    time_t sem_ctime;         /* last change time */
 .Ed
 .Pp
 The
-.Bf -literal
-ipc_perm
-.Ef
+.Sy ipc_perm
 structure used inside the
-.Bf -literal
-semid_ds
-.Ef
+.Sy semid_ds
 structure is defined in
 .Aq Pa sys/ipc.h
-and looks like this:
+and contains the following members:
 .Bd -literal
-struct ipc_perm {
-    ushort cuid; /* creator user id */
-    ushort cgid; /* creator group id */
-    ushort uid;	 /* user id */
-    ushort gid;	 /* group id */
-    ushort mode; /* r/w permission (see chmod(2)) */
-    ushort seq;	 /* sequence # (to generate unique msg/sem/shm id) */
-    key_t key;	 /* user specified msg/sem/shm key */
-};
+    uid_t cuid;  /* creator user id */
+    gid_t cgid;  /* creator group id */
+    uid_t uid;	 /* user id */
+    gid_t gid;	 /* group id */
+    mode_t mode; /* permission (lower 9 bits) */
 .Ed
 .Pp
 .Fn semctl
@@ -110,7 +96,11 @@ provides the following operations:
 Return the value of the semaphore.
 .It Dv SETVAL
 Set the value of the semaphore to
-.Fa arg.val .
+.Fa arg.val ,
+where
+.Fa arg
+is the fourth arument to
+.Fn semctl .
 .It Dv GETPID
 Return the pid of the last process that did an operation on this semaphore.
 .It Dv GETNCNT
@@ -126,15 +116,19 @@ Set the values of all the semaphores that are associated with the semaphore
 identifier
 .Fa semid
 to the corresponding values in
-.Fa arg.array .
+.Fa arg.array ,
+where
+.Fa arg
+is the fourth argument to
+.Fn semctl .
 .It Dv IPC_STAT
-Gather statistics about a semaphore and place the information in the
-.Bf -literal
-semid_ds
-.Ef
+Gather information about a semaphore and place the information in the
 structure pointed to by
-.Fa arg.buf
-(see above).
+.Fa arg.buf ,
+where
+.Fa arg
+is the fourth argument to
+.Fn semctl .
 .It Dv IPC_SET
 Set the value of the
 .Va sem_perm.uid ,
@@ -144,7 +138,11 @@ and
 fields in the structure associated with the semaphore.
 The values are taken from the corresponding fields in the structure
 pointed to by
-.Fa arg.buf .
+.Fa arg.buf ,
+there
+.Fa arg
+is the fourth argument to
+.Fn semctl .
 This operation can only be executed by the super-user, or a process that
 has an effective user id equal to either
 .Va sem_perm.cuid
@@ -219,8 +217,18 @@ is not a valid message semaphore identifier.
 is not a valid command.
 .It Bq Er EFAULT
 .Fa arg.buf
+or
+.Fa arg.array
 specifies an invalid address.
 .El
 .Sh SEE ALSO
 .Xr semget 2 ,
 .Xr semop 2
+.Sh STANDARDS
+The
+.Nm
+system call conforms to
+.St -xsh5 .
+.Sh HISTORY
+Semaphores appeared in the first release of
+.At V .
