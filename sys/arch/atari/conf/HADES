@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.37 2002/04/25 15:06:24 atatat Exp $
+# $NetBSD: HADES,v 1.38 2002/05/23 06:32:42 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
+#		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
 
 #This configuration file is for a generic Medusa-Hades
 
@@ -207,7 +207,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #PCI network interfaces
 #If unsure, check the port-atari page for tested cards.
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 #This is the only tested audio card at the moment.
