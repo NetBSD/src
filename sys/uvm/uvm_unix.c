@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.12.4.1 2000/07/02 17:41:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.12.4.2 2000/09/07 07:04:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -187,12 +187,13 @@ uvm_coredump(p, vp, cred, chdr)
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
 	vm_map_entry_t entry;
-	vaddr_t start, end;
+	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
@@ -215,10 +216,11 @@ uvm_coredump(p, vp, cred, chdr)
 			end = VM_MAXUSER_ADDRESS;
 
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			flag = CORE_STACK;
-			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-			if (start >= end)
+			if (end <= maxstack)
 				continue;
+			if (start < maxstack)
+				start = maxstack;
+			flag = CORE_STACK;
 		} else
 			flag = CORE_DATA;
 
@@ -266,12 +268,13 @@ uvm_coredump32(p, vp, cred, chdr)
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
 	vm_map_entry_t entry;
-	vaddr_t start, end;
+	vaddr_t start, end, maxstack;
 	struct coreseg32 cseg;
 	off_t offset;
 	int flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
@@ -294,10 +297,11 @@ uvm_coredump32(p, vp, cred, chdr)
 			end = VM_MAXUSER_ADDRESS;
 
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			flag = CORE_STACK;
-			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-			if (start >= end)
+			if (end <= maxstack)
 				continue;
+			if (start < maxstack)
+				start = maxstack;
+			flag = CORE_STACK;
 		} else
 			flag = CORE_DATA;
 
