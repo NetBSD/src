@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.8 2001/03/17 09:53:54 jdolecek Exp $
+#	$NetBSD: PS2,v 1.9 2001/03/17 09:55:32 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -29,7 +29,7 @@ include "arch/i386/conf/std.i386"
 
 makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
-maxusers	2		# estimated number of users
+maxusers	8		# estimated number of users
 
 options 	I386_CPU
 options 	I486_CPU
