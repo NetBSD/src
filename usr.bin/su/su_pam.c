@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.3 2005/01/12 01:45:32 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.4 2005/01/18 21:39:11 manu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.3 2005/01/12 01:45:32 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.4 2005/01/18 21:39:11 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,8 +190,8 @@ main(int argc, char **argv)
 	}
 
 #define PAM_END_ITEM(item)	PAM_END("pam_set_item(" # item ")")
-#define PAM_SET_ITEM(item, var) \
-	if ((pam_err = pam_set_item(pamh, (item), (var))) != PAM_SUCCESS) \
+#define PAM_SET_ITEM(item, var) 					    \
+	if ((pam_err = pam_set_item(pamh, (item), (var))) != PAM_SUCCESS)   \
 		PAM_END_ITEM(item)
 
 	/*
@@ -475,9 +475,9 @@ main(int argc, char **argv)
 	(void)execv(shell, np);
 	err(1, "%s", shell);
 done:
-	syslog(LOG_ERR, "%s: %s", func, pam_strerror(pamh, pam_err));   \
-	warnx("%s: %s", func, pam_strerror(pamh, pam_err));             \
-	pam_end(pamh, pam_err);                                         \
+	syslog(LOG_ERR, "%s: %s", func, pam_strerror(pamh, pam_err));
+	warnx("%s: %s", func, pam_strerror(pamh, pam_err));
+	pam_end(pamh, pam_err);
 	return 1;
 }
 
