@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 1997/03/16 11:05:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 1997/03/17 19:03:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -985,7 +985,7 @@ Lsw2:
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
 
-	tstl	_fpu_type		| Do we have an fpu?
+	tstl	_fputype		| Do we have an fpu?
 	jeq	Lswnofpsave		| No?  Then don't try save.
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -1055,7 +1055,7 @@ Lsame_mmuctx:
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 
-	tstl	_fpu_type		| If we don't have an fpu,
+	tstl	_fputype		| If we don't have an fpu,
 	jeq	Lres_skip		|  don't try to restore it.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -1085,7 +1085,7 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 
-	tstl	_fpu_type		| Do we have FPU?
+	tstl	_fputype		| Do we have FPU?
 	jeq	Lsavedone		| No?  Then don't save state.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
