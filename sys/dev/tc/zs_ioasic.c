@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.12 2002/09/24 13:23:32 ad Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.13 2002/09/26 18:30:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.12 2002/09/24 13:23:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.13 2002/09/26 18:30:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -217,9 +217,6 @@ zs_ioasic_match(parent, cf, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	tc_addr_t zs_addr;
-
-	if (parent->dv_cfdata->cf_driver != &ioasic_cd)
-		return (0);
 
 	/*
 	 * Make sure that we're looking for the right kind of device.
