@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2003/10/16 22:56:29 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4 2004/07/29 16:55:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -106,8 +106,6 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
