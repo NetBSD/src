@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 1998/12/08 21:00:11 erh Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.4 1999/01/03 04:53:59 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,8 +174,8 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	bzero(&sigframe.info, sizeof(struct linux_siginfo));
 	sigframe.info.si_signo = sig;
 	sigframe.info.si_code = LINUX_SI_USER;
-	sigframe.info.si_pid = p->p_pid;
-	sigframe.info.si_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	sigframe.info.lsi_pid = p->p_pid;
+	sigframe.info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
 
 	if (copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize) != 0) {
 #ifdef DEBUG
