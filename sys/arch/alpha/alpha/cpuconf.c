@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.19 1999/03/13 19:46:58 drochner Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.20 1999/03/17 19:00:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -170,6 +170,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("???"),			     /* 31: ??? */
 	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
 	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
+	cpu_notsupp("ST_DEC_6600"),	   	   /* 34: ST_DEC_6600 */
 };
 int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));
 
