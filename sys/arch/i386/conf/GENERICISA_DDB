@@ -1,7 +1,7 @@
 #
 # GENERICISA_DDB -- Generic ISA machine, w/wd and the kernel debugger.
 #
-#	$Id: GENERICISA_DDB,v 1.4 1993/05/07 09:04:56 cgd Exp $
+#	$Id: GENERICISA_DDB,v 1.5 1993/05/07 09:22:40 cgd Exp $
 #
 
 machine		"i386"
@@ -14,7 +14,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
-options		DDB
+options		DDB,"SYMTAB_SPACE=64000"
 
 config		netbsd	root on wd0 swap on wd0
 
