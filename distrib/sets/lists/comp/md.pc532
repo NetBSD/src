@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.38 2002/08/07 21:20:59 briggs Exp $
+# $NetBSD: md.pc532,v 1.39 2002/09/07 12:48:53 gehenna Exp $
 ./usr/include/pc532	comp-c-include
 ./usr/include/pc532/_G_config.h	comp-c-include
 ./usr/include/pc532/ansi.h	comp-c-include
@@ -8,7 +8,6 @@
 ./usr/include/pc532/bswap.h	comp-c-include
 ./usr/include/pc532/byte_swap.h	comp-c-include
 ./usr/include/pc532/cdefs.h	comp-c-include
-./usr/include/pc532/conf.h	comp-c-include
 ./usr/include/pc532/cpu.h	comp-c-include
 ./usr/include/pc532/cpufunc.h	comp-c-include
 ./usr/include/pc532/db_machdep.h	comp-c-include
