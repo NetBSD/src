@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hash.h	5.4 (Berkeley) 12/28/90
- *	$Id: hash.h,v 1.2 1993/08/01 18:12:04 mycroft Exp $
+ *	$Id: hash.h,v 1.3 1994/03/05 00:34:46 cgd Exp $
  */
 
 /* hash.h --
@@ -106,20 +106,12 @@ typedef struct Hash_Search {
 
 #define	Hash_Size(n)	(((n) + sizeof (int) - 1) / sizeof (int))
 
-/*
- * The following procedure declarations and macros
- * are the only things that should be needed outside
- * the implementation code.
- */
+void Hash_InitTable __P((Hash_Table *, int));
+void Hash_DeleteTable __P((Hash_Table *));
+Hash_Entry *Hash_FindEntry __P((Hash_Table *, char *));
+Hash_Entry *Hash_CreateEntry __P((Hash_Table *, char *, Boolean *));
+void Hash_DeleteEntry __P((Hash_Table *, Hash_Entry *));
+Hash_Entry *Hash_EnumFirst __P((Hash_Table *, Hash_Search *));
+Hash_Entry *Hash_EnumNext __P((Hash_Search *));
 
-extern Hash_Entry *	Hash_CreateEntry();
-extern void		Hash_DeleteTable();
-extern void		Hash_DeleteEntry();
-extern void		Hash_DeleteTable();
-extern Hash_Entry *	Hash_EnumFirst();
-extern Hash_Entry *	Hash_EnumNext();
-extern Hash_Entry *	Hash_FindEntry();
-extern void		Hash_InitTable();
-extern void		Hash_PrintStats();
-
-#endif _HASH
+#endif /* _HASH */

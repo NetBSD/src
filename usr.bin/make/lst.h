@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lst.h	5.3 (Berkeley) 6/1/90
- *	$Id: lst.h,v 1.2 1993/08/01 18:12:01 mycroft Exp $
+ *	$Id: lst.h,v 1.3 1994/03/05 00:34:52 cgd Exp $
  */
 
 /*-
@@ -47,6 +47,9 @@
 #define _LST_H_
 
 #include	<sprite.h>
+#if __STDC__
+#include	<stdlib.h>
+#endif
 
 /*
  * basic typedef. This is what the Lst_ functions handle

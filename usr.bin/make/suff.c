@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)suff.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: suff.c,v 1.3 1994/01/13 21:02:06 jtc Exp $";
+/* from: static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90"; */
+static char *rcsid = "$Id: suff.c,v 1.4 1994/03/05 00:35:11 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -91,8 +91,9 @@ static char rcsid[] = "$Id: suff.c,v 1.3 1994/01/13 21:02:06 jtc Exp $";
  */
 
 #include    	  <stdio.h>
-#include          <stdlib.h>
 #include	  "make.h"
+#include	  "hash.h"
+#include	  "dir.h"
 #include    	  "bit.h"
 
 static Lst       sufflist;	/* Lst of suffixes */
@@ -130,9 +131,42 @@ typedef struct _Src {
 				 * this thing too early or never nuke it) */
 } Src;
 
+/*
+ * A structure for passing more than one argument to the Lst-library-invoked
+ * function...
+ */
+typedef struct {
+    Lst            l;
+    Src            *s;
+} LstSrc;
+
 static Suff 	    *suffNull;	/* The NULL suffix for this run */
 static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 				 * single-suffix transformation rules */
+
+
+static char *SuffStrIsPrefix __P((char *, char *));
+static char *SuffSuffIsSuffix __P((Suff *, char *));
+static int SuffSuffIsSuffixP __P((Suff *, char *));
+static int SuffSuffHasNameP __P((Suff *, char *));
+static int SuffSuffIsPrefix __P((Suff *, char *));
+static int SuffGNHasNameP __P((GNode *, char *));
+static void SuffFree __P((Suff *));
+static void SuffInsert __P((Lst, Suff *));
+static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
+static int SuffRebuildGraph __P((GNode *, Suff *));
+static int SuffAddSrc __P((Suff *, LstSrc *));
+static void SuffAddLevel __P((Lst, Src *));
+static void SuffFreeSrc __P((Src *));
+static Src *SuffFindThem __P((Lst));
+static Src *SuffFindCmds __P((Src *));
+static int SuffExpandChildren __P((GNode *, GNode *));
+static Boolean SuffApplyTransform __P((GNode *, GNode *, Suff *, Suff *));
+static void SuffFindArchiveDeps __P((GNode *));
+static void SuffFindNormalDeps __P((GNode *));
+static int SuffPrintName __P((Suff *));
+static int SuffPrintSuff __P((Suff *));
+static int SuffPrintTrans __P((GNode *));
 
 	/*************** Lst Predicates ****************/
 /*-
@@ -207,6 +241,7 @@ SuffSuffIsSuffix (s, str)
  *
  *-----------------------------------------------------------------------
  */
+static int
 SuffSuffIsSuffixP(s, str)
     Suff    	*s;
     char    	*str;
@@ -321,7 +356,7 @@ SuffInsert (l, s)
     Suff          *s;		/* the suffix to insert */
 {
     LstNode 	  ln;		/* current element in l we're examining */
-    Suff          *s2;		/* the suffix descriptor in this element */
+    Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
     if (Lst_Open (l) == FAILURE) {
 	return;
@@ -404,7 +439,7 @@ SuffParseTransform(str, srcPtr, targPtr)
     register char    	*str2;	    /* Extra pointer (maybe target suffix) */
     LstNode 	    	singleLn;   /* element in suffix list of any suffix
 				     * that exactly matches str */
-    Suff    	    	*single;    /* Source of possible transformation to
+    Suff    	    	*single = NULL;/* Source of possible transformation to
 				     * null suffix */
 
     srcLn = NILLNODE;
@@ -416,7 +451,7 @@ SuffParseTransform(str, srcPtr, targPtr)
      * we can find two that meet these criteria, we've successfully
      * parsed the string.
      */
-    while (1) {
+    for (;;) {
 	if (srcLn == NILLNODE) {
 	    srcLn = Lst_Find(sufflist, (ClientData)str, SuffSuffIsPrefix);
 	} else {
@@ -870,14 +905,6 @@ Suff_AddLib (sname)
 }
 
  	  /********** Implicit Source Search Functions *********/
-/*
- * A structure for passing more than one argument to the Lst-library-invoked
- * function...
- */
-typedef struct {
-    Lst            l;
-    Src            *s;
-} LstSrc;
 
 /*-
  *-----------------------------------------------------------------------
@@ -1069,7 +1096,7 @@ SuffFindCmds (targ)
     while ((ln = Lst_Next (t->children)) != NILLNODE) {
 	s = (GNode *)Lst_Datum (ln);
 
-	cp = rindex (s->name, '/');
+	cp = strrchr (s->name, '/');
 	if (cp == (char *)NULL) {
 	    cp = s->name;
 	} else {
@@ -1158,11 +1185,11 @@ SuffExpandChildren(cgn, pgn)
      * to later since the resulting words are tacked on to the end of
      * the children list.
      */
-    if (index(cgn->name, '$') != (char *)NULL) {
+    if (strchr(cgn->name, '$') != (char *)NULL) {
 	if (DEBUG(SUFF)) {
 	    printf("Expanding \"%s\"...", cgn->name);
 	}
-	cp = Var_Subst(cgn->name, pgn, TRUE);
+	cp = Var_Subst(NULL, cgn->name, pgn, TRUE);
 
 	if (cp != (char *)NULL) {
 	    Lst	    members = Lst_Init(FALSE);
@@ -1187,9 +1214,8 @@ SuffExpandChildren(cgn, pgn)
 		char	    *start;
 		char	    *initcp = cp;   /* For freeing... */
 
-		for (start = cp; *start == ' ' || *start == '\t'; start++) {
-		    ;
-		}
+		for (start = cp; *start == ' ' || *start == '\t'; start++) 
+		    continue;
 		for (cp = start; *cp != '\0'; cp++) {
 		    if (*cp == ' ' || *cp == '\t') {
 			/*
@@ -1496,7 +1522,6 @@ SuffFindArchiveDeps(gn)
     };
     char  	*vals[sizeof(copy)/sizeof(copy[0])];
     int	    	i;  	    /* Index into copy and vals */
-    char    	*cp;	    /* Suffix for member */
     Suff    	*ms;	    /* Suffix descriptor for member */
     char    	*name;	    /* Start of member's name */
     
@@ -1504,8 +1529,8 @@ SuffFindArchiveDeps(gn)
      * The node is an archive(member) pair. so we must find a
      * suffix for both of them.
      */
-    eoarch = index (gn->name, '(');
-    eoname = index (eoarch, ')');
+    eoarch = strchr (gn->name, '(');
+    eoname = strchr (eoarch, ')');
 
     *eoname = '\0';	  /* Nuke parentheses during suffix search */
     *eoarch = '\0';	  /* So a suffix can be found */
@@ -1625,7 +1650,6 @@ SuffFindNormalDeps(gn)
 {
     char    	*eoname;    /* End of name */
     char    	*sopref;    /* Start of prefix */
-    Suff    	*s; 	    /* Current suffix */
     LstNode 	ln; 	    /* Next suffix node to check */
     Lst	    	srcs;	    /* List of sources at which to look */
     Lst	    	targs;	    /* List of targets to which things can be
@@ -1684,6 +1708,7 @@ SuffFindNormalDeps(gn)
 	    targ->suff = (Suff *)Lst_Datum(ln);
 	    targ->node = gn;
 	    targ->parent = (Src *)NULL;
+	    targ->children = 0;
 	    
 	    /*
 	     * Allocate room for the prefix, whose end is found by subtracting
@@ -1691,7 +1716,7 @@ SuffFindNormalDeps(gn)
 	     */
 	    prefLen = (eoname - targ->suff->nameLen) - sopref;
 	    targ->pref = emalloc(prefLen + 1);
-	    bcopy(sopref, targ->pref, prefLen);
+	    memcpy(targ->pref, sopref, prefLen);
 	    targ->pref[prefLen] = '\0';
 
 	    /*
@@ -1724,6 +1749,7 @@ SuffFindNormalDeps(gn)
 	targ->suff = suffNull;
 	targ->node = gn;
 	targ->parent = (Src *)NULL;
+	targ->children = 0;
 	targ->pref = strdup(sopref);
 
 	SuffAddLevel(srcs, targ);
@@ -1751,9 +1777,8 @@ SuffFindNormalDeps(gn)
 	 * Work up the transformation path to find the suffix of the
 	 * target to which the transformation was made.
 	 */
-	for (targ = bottom; targ->parent != NULL; targ = targ->parent) {
-	    ;
-	}
+	for (targ = bottom; targ->parent != NULL; targ = targ->parent)
+	    continue;
     }
 
     /*
@@ -2083,6 +2108,7 @@ Suff_Init ()
     suffNull->name =   	    strdup ("");
     suffNull->nameLen =     0;
     suffNull->searchPath =  Lst_Init (FALSE);
+    Dir_Concat(suffNull->searchPath, dirSearchPath);
     suffNull->children =    Lst_Init (FALSE);
     suffNull->parents =	    Lst_Init (FALSE);
     suffNull->sNum =   	    sNum++;
@@ -2120,19 +2146,19 @@ SuffPrintSuff (s)
 		    printf ("LIBRARY");
 		    break;
 	    }
-	    putc(flags ? '|' : ')', stdout);
+	    fputc(flags ? '|' : ')', stdout);
 	}
     }
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tTo: ");
     Lst_ForEach (s->parents, SuffPrintName, (ClientData)0);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tFrom: ");
     Lst_ForEach (s->children, SuffPrintName, (ClientData)0);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tSearch Path: ");
     Dir_PrintPath (s->searchPath);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     return (0);
 }
 
@@ -2144,12 +2170,13 @@ SuffPrintTrans (t)
 
     printf ("%-16s: ", t->name);
     Targ_PrintType (t->type);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     Lst_ForEach (t->commands, Targ_PrintCmd, (ClientData)0);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     return(0);
 }
 
+void
 Suff_PrintAll()
 {
     printf ("#*** Suffixes:\n");

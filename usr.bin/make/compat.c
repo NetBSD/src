@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)compat.c	5.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: compat.c,v 1.4 1994/01/13 21:01:44 jtc Exp $";
+/* from: static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91"; */
+static char *rcsid = "$Id: compat.c,v 1.5 1994/03/05 00:34:37 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -59,10 +59,12 @@ static char rcsid[] = "$Id: compat.c,v 1.4 1994/01/13 21:01:44 jtc Exp $";
 #include    <sys/signal.h>
 #include    <sys/wait.h>
 #include    <sys/errno.h>
+#include    <sys/stat.h>
 #include    <ctype.h>
-#include    <sys/stat.h>				/* 10 Aug 92*/
-#include    <unistd.h>
 #include    "make.h"
+#include    "hash.h"
+#include    "dir.h"
+#include    "job.h"
 extern int errno;
 
 /*
@@ -76,14 +78,15 @@ static char 	    meta[256];
 
 static GNode	    *curTarg = NILGNODE;
 static GNode	    *ENDNode;
-static int  	    CompatRunCommand();
+static void CompatInterrupt __P((int));
+static int CompatRunCommand __P((char *, GNode *));
+static int CompatMake __P((GNode *, GNode *));
 
 /*-
  *-----------------------------------------------------------------------
  * CompatInterrupt --
  *	Interrupt the creation of the current target and remove it if
  *	it ain't precious.
- *    Don't unlink it if it is a directory	XXX 10 Aug 92
  *
  * Results:
  *	None.
@@ -99,16 +102,14 @@ CompatInterrupt (signo)
     int	    signo;
 {
     GNode   *gn;
-    struct stat sbuf;					/* 10 Aug 92*/
     
     if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
 	char 	  *file = Var_Value (TARGET, curTarg);
+	struct stat st;
 
-	stat (file, &sbuf);
-	if (!(sbuf.st_mode & S_IFDIR)) {
-	    if (unlink (file) == SUCCESS) {
-		printf ("*** %s removed\n", file);
-	    }
+	if (lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
+	    unlink(file) != -1) {
+	    printf ("*** %s removed\n", file);
 	}
 
 	/*
@@ -150,7 +151,6 @@ CompatRunCommand (cmd, gn)
     union wait 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
     int	    	  cpid;	    	/* Child actually found */
-    int	    	  numWritten;	/* Number of bytes written for error message */
     ReturnStatus  stat;	    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
     char    	  **av;	    	/* Argument vector for thing to exec */
@@ -163,7 +163,7 @@ CompatRunCommand (cmd, gn)
     errCheck = !(gn->type & OP_IGNORE);
 
     cmdNode = Lst_Member (gn->commands, (ClientData)cmd);
-    cmdStart = Var_Subst (cmd, gn, FALSE);
+    cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
 
     /*
      * brk_string will return an argv with a NULL in av[1], thus causing
@@ -197,14 +197,15 @@ CompatRunCommand (cmd, gn)
 	cmd++;
     }
 
-    while (isspace(*cmd)) cmd++;
+    while (isspace((unsigned char)*cmd))
+	cmd++;
     
     /*
      * Search for meta characters in the command. If there are no meta
      * characters, there's no need to execute a shell to execute the
      * command.
      */
-    for (cp = cmd; !meta[*cp]; cp++) {
+    for (cp = cmd; !meta[(unsigned char)*cp]; cp++) {
 	continue;
     }
 
@@ -262,8 +263,8 @@ CompatRunCommand (cmd, gn)
     if (cpid == 0) {
 	if (local) {
 	    execvp(av[0], av);
-	    numWritten = write (2, av[0], strlen (av[0]));
-	    numWritten = write (2, ": not found\n", sizeof(": not found"));
+	    (void) write (2, av[0], strlen (av[0]));
+	    (void) write (2, ": not found\n", sizeof(": not found"));
 	} else {
 	    (void)execv(av[0], av);
 	}
@@ -493,6 +494,8 @@ CompatMake (gn, pgn)
 	    if (noExecute || Dir_MTime(gn) == 0) {
 		gn->mtime = now;
 	    }
+	    if (gn->cmtime > gn->mtime)
+		gn->mtime = gn->cmtime;
 	    if (DEBUG(MAKE)) {
 		printf("update time: %s\n", Targ_FmtTime(gn->mtime));
 	    }
@@ -534,6 +537,8 @@ CompatMake (gn, pgn)
 		    Make_TimeStamp(pgn, gn);
 		}
 		break;
+	    default:
+		break;
 	}
     }
 
@@ -558,7 +563,7 @@ Compat_Run(targs)
     Lst	    	  targs;    /* List of target nodes to re-create */
 {
     char    	  *cp;	    /* Pointer to string of shell meta-characters */
-    GNode   	  *gn;	    /* Current root target */
+    GNode   	  *gn = NULL;/* Current root target */
     int	    	  errors;   /* Number of targets not remade due to errors */
 
     if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
@@ -575,7 +580,7 @@ Compat_Run(targs)
     }
 
     for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++) {
-	meta[*cp] = 1;
+	meta[(unsigned char) *cp] = 1;
     }
     /*
      * The null character serves as a sentinel in the string.

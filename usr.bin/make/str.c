@@ -37,11 +37,10 @@
  */
 
 #ifndef lint
-/*static char     sccsid[] = "from: @(#)str.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: str.c,v 1.3 1994/01/13 21:02:03 jtc Exp $";
+/* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
+static char *rcsid = "$Id: str.c,v 1.4 1994/03/05 00:35:08 cgd Exp $";
 #endif				/* not lint */
 
-#include <stdlib.h>
 #include "make.h"
 
 /*-
@@ -68,7 +67,7 @@ str_concat(s1, s2, flags)
 	result = emalloc((u_int)(len1 + len2 + 2));
 
 	/* copy first string into place */
-	bcopy(s1, result, len1);
+	memcpy(result, s1, len1);
 
 	/* add separator character */
 	if (flags & STR_ADDSPACE) {
@@ -80,7 +79,7 @@ str_concat(s1, s2, flags)
 	}
 
 	/* copy second string plus EOS into place */
-	bcopy(s2, result + len1, len2 + 1);
+	memcpy(result + len1, s2, len2 + 1);
 
 	/* free original strings */
 	if (flags & STR_DOFREE) {
@@ -117,8 +116,9 @@ brk_string(str, store_argc)
 		argv[0] = Var_Value(".MAKE", VAR_GLOBAL);
 	}
 
-	/* skip leading space chars.
-	for (; *str == ' ' || *str == '\t'; ++str);
+	/* skip leading space chars. */
+	for (; *str == ' ' || *str == '\t'; ++str)
+		continue;
 
 	/* allocate room for a copy of the string */
 	if ((len = strlen(str) + 1) > curlen)
@@ -136,11 +136,11 @@ brk_string(str, store_argc)
 		case '\'':
 			if (inquote)
 				if (inquote == ch)
-					inquote = NULL;
+					inquote = '\0';
 				else
 					break;
 			else
-				inquote = ch;
+				inquote = (char) ch;
 			continue;
 		case ' ':
 		case '\t':
@@ -195,7 +195,7 @@ brk_string(str, store_argc)
 		}
 		if (!start)
 			start = t;
-		*t++ = ch;
+		*t++ = (char) ch;
 	}
 done:	argv[argc] = (char *)NULL;
 	*store_argc = argc;
@@ -251,6 +251,7 @@ Str_FindSubstring(string, substring)
  * 
  * Side effects: None.
  */
+int
 Str_Match(string, pattern)
 	register char *string;		/* String */
 	register char *pattern;		/* Pattern */
@@ -338,4 +339,99 @@ Str_Match(string, pattern)
 thisCharOK:	++pattern;
 		++string;
 	}
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Str_SYSVMatch --
+ *	Check word against pattern for a match (% is wild), 
+ *	
+ * Results:
+ *	Returns the beginning position of a match or null. The number
+ *	of characters matched is returned in len.
+ *
+ * Side Effects:
+ *	None
+ *
+ *-----------------------------------------------------------------------
+ */
+char *
+Str_SYSVMatch(word, pattern, len)
+    char	*word;		/* Word to examine */
+    char	*pattern;	/* Pattern to examine against */
+    int		*len;		/* Number of characters to substitute */
+{
+    char *p = pattern;
+    char *w = word;
+    char *m;
+
+    if (*p == '\0')
+	return NULL;
+
+    if ((m = strchr(p, '%')) != NULL) {
+	/* check that the prefix matches */
+	for (; p != m && *w && *w == *p; w++, p++)
+	     continue;
+
+	if (p != m)
+	    return NULL;	/* No match */
+
+	if (*++p == '\0') {
+	    /* No more pattern, return the rest of the string */
+	    *len = strlen(w);
+	    return w;
+	}
+    }
+
+    m = w;
+
+    /* Find a matching tail */
+    do
+	if (strcmp(p, w) == 0) {
+	    *len = w - m;
+	    return m;
+	}
+    while (*w++ != '\0');
+	    
+    return NULL;
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Str_SYSVSubst --
+ *	Substitute '%' on the pattern with len characters from src.
+ *	If the pattern does not contain a '%' prepend len characters
+ *	from src.
+ *	
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	Places result on buf
+ *
+ *-----------------------------------------------------------------------
+ */
+void
+Str_SYSVSubst(buf, pat, src, len)
+    Buffer buf;
+    char *pat;
+    char *src;
+    int   len;
+{
+    char *m;
+
+    if ((m = strchr(pat, '%')) != NULL) {
+	/* Copy the prefix */
+	Buf_AddBytes(buf, m - pat, (Byte *) pat);
+	/* skip the % */
+	pat = m + 1;
+    }
+
+    /* Copy the pattern */
+    Buf_AddBytes(buf, len, (Byte *) src);
+
+    /* append the rest */
+    Buf_AddBytes(buf, strlen(pat), (Byte *) pat);
 }

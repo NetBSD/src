@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)hash.c	5.5 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: hash.c,v 1.3 1994/01/13 21:01:49 jtc Exp $";
+/* from: static char sccsid[] = "@(#)hash.c	5.5 (Berkeley) 12/28/90"; */
+static char *rcsid = "$Id: hash.c,v 1.4 1994/03/05 00:34:45 cgd Exp $";
 #endif /* not lint */
 
 /* hash.c --
@@ -48,11 +48,8 @@ static char rcsid[] = "$Id: hash.c,v 1.3 1994/01/13 21:01:49 jtc Exp $";
  * 	table.  Hash tables grow automatically as the amount of
  * 	information increases.
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "sprite.h"
+#include "make.h"
 #include "hash.h"
 
 /*
@@ -60,7 +57,7 @@ static char rcsid[] = "$Id: hash.c,v 1.3 1994/01/13 21:01:49 jtc Exp $";
  * defined:
  */
 
-static void		RebuildTable();
+static void RebuildTable __P((Hash_Table *));
 
 /* 
  * The following defines the ratio of # entries to # buckets
@@ -104,7 +101,7 @@ Hash_InitTable(t, numBuckets)
 		i = 16;
 	else {
 		for (i = 2; i < numBuckets; i <<= 1)
-			 /* void */ ;
+			 continue;
 	}
 	t->numEntries = 0;
 	t->size = i;
@@ -136,7 +133,7 @@ void
 Hash_DeleteTable(t)
 	Hash_Table *t;
 {
-	register struct Hash_Entry **hp, *h, *nexth;
+	register struct Hash_Entry **hp, *h, *nexth = NULL;
 	register int i;
 
 	for (hp = t->bucketPtr, i = t->size; --i >= 0;) {
@@ -397,7 +394,7 @@ static void
 RebuildTable(t)
 	register Hash_Table *t;
 {
-	register Hash_Entry *e, *next, **hp, **xp;
+	register Hash_Entry *e, *next = NULL, **hp, **xp;
 	register int i, mask;
         register Hash_Entry **oldhp;
 	int oldsize;
