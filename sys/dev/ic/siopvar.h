@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.8 2000/06/13 13:59:17 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.8.2.1 2000/12/15 04:49:52 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -34,12 +34,14 @@
 
 TAILQ_HEAD(cmd_list, siop_cmd);
 TAILQ_HEAD(cbd_list, siop_cbd);
+TAILQ_HEAD(lunsw_list, siop_lunsw);
 
 /* Driver internal state */
 struct siop_softc {
 	struct device sc_dev;
 	struct scsipi_link sc_link;	/* link to upper level */
 	int features;			/* chip's features */
+	int ram_size;
 	int maxburst;
 	int maxoff;
 	int clock_div;			/* async. clock divider (scntl3) */
@@ -51,18 +53,21 @@ struct siop_softc {
 	bus_addr_t sc_raddr;		/* register adresses */
 	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
 	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
-	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	void (*sc_reset) __P((struct siop_softc*)); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
-	bus_dmamap_t  sc_sheddma;	/* DMA map for scheduler script */
+	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
 	u_int32_t *sc_script;		/* script location in memory */
-	u_int32_t *sc_shed;		/* script scheduler location in mem */
-	int sc_nshedslots;		/* number of scheduler slots */
-	int sc_currshedslot;		/* current scheduler slot */
+	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
+	struct cmd_list urgent_list;	/* hitgh priority cmd descr list */
+	struct cmd_list ready_list;	/* cmd descr ready list */
+	struct lunsw_list lunsw_list;	/* lunsw free list */
+	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
+	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
 	struct siop_target *targets[16]; /* per-target states */
+	int sc_ntargets;		/* number of known targets */
 	u_int32_t sc_flags;
 };
 /* defs for sc_flags */
