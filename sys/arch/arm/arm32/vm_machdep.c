@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 2001/09/20 23:32:23 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 2001/10/18 09:26:08 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -226,7 +226,8 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-
+#if 0
+	/* Don't do this.  See the comment in cpu_swapout().  */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
@@ -237,6 +238,7 @@ cpu_swapin(p)
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(p->p_vmspace->vm_map.pmap);
+#endif
 }
 
 
@@ -244,7 +246,11 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-
+#if 0
+	/* 
+	 * Don't do this!  If the pmap is shared with another process,
+	 * it will loose it's page0 entry.  That's bad news indeed.
+	 */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
@@ -254,6 +260,7 @@ cpu_swapout(p)
 	/* Free the system page mapping */
 	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
 	pmap_update(p->p_vmspace->vm_map.pmap);
+#endif
 }
 
 
