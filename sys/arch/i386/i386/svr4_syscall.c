@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.11 2000/12/12 20:22:50 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.12 2000/12/12 20:30:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ svr4_syscall_plain(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax & (SVR4_SYS_NSYSENT - 1);
+	code = frame.tf_eax;
 	callp = svr4_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -119,6 +119,7 @@ svr4_syscall_plain(frame)
 		break;
 	}
 
+	code &= (SVR4_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
@@ -184,7 +185,7 @@ svr4_syscall_fancy(frame)
 	uvmexp.syscalls++;
 	p = curproc;
 
-	code = frame.tf_eax & (SVR4_SYS_NSYSENT - 1);
+	code = frame.tf_eax;
 	callp = svr4_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
@@ -200,6 +201,7 @@ svr4_syscall_fancy(frame)
 		break;
 	}
 
+	code &= (SVR4_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
