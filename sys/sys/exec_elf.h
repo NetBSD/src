@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.65 2002/11/27 13:15:50 junyoung Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.66 2002/11/27 13:47:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ typedef struct {
 #define	PF_W		0x2	/* Segment is writable */
 #define	PF_X		0x1	/* Segment is executable */
 
-#define	PF_MASKOS	0x0ff00000	/* Opersting system specific values */
+#define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
 
 /*
