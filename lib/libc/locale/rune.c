@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.8 2001/01/21 04:34:11 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.9 2001/01/21 07:13:23 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.8 2001/01/21 04:34:11 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.9 2001/01/21 07:13:23 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -385,11 +385,11 @@ _Read_CTypeAsRune(fp)
 
 		/*
 		 * TWEAKS!
-		 * - many of old locale file declarations do not have
-		 *   proper _B in many cases.
+		 * - old locale file declarations do not have proper _B
+		 *   in many cases.
 		 * - isprint() declaration in ctype.h incorrectly uses _B.
 		 *   _B means "isprint but !isgraph", not "isblank" with the
-		 *   incorrect declaration.
+		 *   declaration.
 		 * - _X and _CTYPE_X have negligible difference in meaning.
 		 * - we don't set digit value, fearing that it would be
 		 *   too much of hardcoding.  we may need to revisit it.
