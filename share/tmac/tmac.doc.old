@@ -314,9 +314,9 @@
 .	if "\\$3"" \{\
 .		\" Volume Title if none given
 .		if \\$2>=1 .if \\$2<=8 \{\
-.			ds vT 386BSD Reference Manual
-.			if \\$2>1 .if \\$2<6 .ds vT 386BSD Programmer's Manual
-.			if "\\$2"8" .ds vT 386BSD System Manager's Manual
+.			ds vT NetBSD Reference Manual
+.			if \\$2>1 .if \\$2<6 .ds vT NetBSD Programmer's Manual
+.			if "\\$2"8" .ds vT NetBSD System Manager's Manual
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
 .		if "\\$2"draft"  .ds vT DRAFT
@@ -328,7 +328,7 @@
 .	if "\\$3"USD"   .ds vT UNIX User's Supplementary Documents
 .	if "\\$3"PS1"   .ds vT UNIX Programmers's Supplementary Documents
 .	if "\\$3"AMD"   .ds vT UNIX Ancestral Manual Documents
-.	if "\\$3"SMM"   .ds vT 386BSD System Manager's Manual
+.	if "\\$3"SMM"   .ds vT NetBSD System Manager's Manual
 .	if "\\$3"URM"   .ds vT UNIX Reference Manual
 .	if "\\$3"PRM"   .ds vT UNIX Programmers's Manual
 .	if "\\$3"IND"   .ds vT UNIX Manual Master Index
