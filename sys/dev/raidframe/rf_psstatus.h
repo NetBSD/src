@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.7 2004/03/03 00:58:03 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.8 2004/03/08 02:25:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -73,7 +73,7 @@ struct RF_ReconParityStripeStatus_s {
 	int     xorBufCount;	/* num buffers waiting to be xored */
 	int     blockCount;	/* count of # proc that have blocked recon on
 				 * this parity stripe */
-	char   *issued;		/* issued[i]==1 <=> column i has already
+	char   issued[RF_MAXCOL];	/* issued[i]==1 <=> column i has already
 				 * issued a read request for the indicated RU */
 	RF_CallbackDesc_t *procWaitList;	/* list of user procs waiting
 						 * for recon to be done */
