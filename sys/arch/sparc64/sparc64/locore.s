@@ -5369,7 +5369,7 @@ _C_LABEL(sigcode):
 	mov	%l6, %g6
 	mov	%l7, %g7
 
-	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
@@ -5503,7 +5503,7 @@ _C_LABEL(sigcode):
 	t	ST_SYSCALL
 _C_LABEL(sparc32_esigcode):
 #else
-	restore	%g0, SYS_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
