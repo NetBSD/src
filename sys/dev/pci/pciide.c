@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.126 2001/08/01 16:29:21 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 
 /*
@@ -2912,7 +2912,7 @@ acer_chip_map(sc, pa)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			if (rev >= 0xC4)
 				sc->sc_wdcdev.UDMA_cap = 5;
-			else if (rev >= 0xC4)
+			else if (rev >= 0xC2)
 				sc->sc_wdcdev.UDMA_cap = 4;
 			else
 				sc->sc_wdcdev.UDMA_cap = 2;
@@ -2950,8 +2950,8 @@ acer_chip_map(sc, pa)
 	/* From linux: enable "Cable Detection" */
 	if (rev >= 0xC2) {
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
-		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B_CDETECT)
-		    | 0x8);
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
+		    | ACER_0x4B_CDETECT);
 		/* set south-bridge's enable bit, m1533, 0x79 */
 		if (rev == 0xC2)
 			/* 1543C-B0 (m1533, 0x79, bit 2) */
