@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2003/01/19 10:49:12 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.27 2003/01/19 12:37:41 tsutsui Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -13,8 +13,5 @@ SRCS=	mount.c vfslist.c
 .if defined(RESCUEDIR)
 CPPFLAGS+= -D_PATH_RESCUE=\"${RESCUEDIR}\"
 .endif
-
-DPADD+=${LIBUTIL}
-LDADD+=-lutil
 
 .include <bsd.prog.mk>
