@@ -33,7 +33,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.1 2001/02/18 13:54:33 martin Exp $ 
+ *	$Id: isic_isa.c,v 1.2 2001/02/20 22:24:38 martin Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -74,10 +74,10 @@
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 
-#include <dev/ic/i4b_isicl1.h>
-#include <dev/ic/i4b_ipac.h>
-#include <dev/ic/i4b_isac.h>
-#include <dev/ic/i4b_hscx.h>
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/ipac.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
