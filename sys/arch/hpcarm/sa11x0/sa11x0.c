@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.13 2001/06/29 17:22:51 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.14 2001/07/07 07:04:56 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -144,11 +144,17 @@ sa11x0_attach(parent, self, aux)
 		panic("%s: Cannot map registers\n", self->dv_xname);
 	saipic_base = sc->sc_ioh;
 
-	/* Map the GPIO registers */
+	/* Map the GPIO and Extended GPIO registers */
 	if (bus_space_map(sc->sc_iot, SAGPIO_BASE, SAGPIO_NPORTS,
 			  0, &sc->sc_gpioh))
 		panic("%s: unable to map GPIO registers\n", self->dv_xname);
 	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_EDR, 0xffffffff);
+
+#ifdef SAEGPIO_BASE
+	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
+		panic("%s: unable to map Extended GPIO registers\n",
+			self->dv_xname);
+#endif
 
 	/* Map the PPC registers */
 	if (bus_space_map(sc->sc_iot, SAPPC_BASE, SAPPC_NPORTS,
