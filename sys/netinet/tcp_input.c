@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.29 1997/07/23 21:26:49 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.30 1997/07/28 01:07:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -280,7 +280,7 @@ tcp_input(m, va_alist)
 	register struct inpcb *inp;
 	caddr_t optp = NULL;
 	int optlen = 0;
-	int len, tlen, off;
+	int len, tlen, off, hdroptlen;
 	register struct tcpcb *tp = 0;
 	register int tiflags;
 	struct socket *so = NULL;
@@ -598,8 +598,9 @@ after_listen:
 	/*
 	 * Drop TCP, IP headers and TCP options.
 	 */
-	m->m_data += sizeof(struct tcpiphdr)+off-sizeof(struct tcphdr);
-	m->m_len  -= sizeof(struct tcpiphdr)+off-sizeof(struct tcphdr);
+	hdroptlen  = sizeof(struct tcpiphdr) + off - sizeof(struct tcphdr);
+	m->m_data += hdroptlen;
+	m->m_len  -= hdroptlen;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -812,6 +813,14 @@ after_listen:
 			    SEQ_GT(ti->ti_seq, tp->rcv_nxt)) {
 				iss = tp->rcv_nxt + TCP_ISSINCR;
 				tp = tcp_close(tp);
+				/*
+				 * We have already advanced the mbuf
+				 * pointers past the IP+TCP headers and
+				 * options.  Restore those pointers before
+				 * attempting to use the TCP header again.
+				 */
+				m->m_data -= hdroptlen;
+				m->m_len  += hdroptlen;
 				goto findpcb;
 			}
 			/*
