@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 1998/10/06 20:46:01 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1998/10/27 21:18:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -220,7 +220,8 @@ mainbus_attach(parent, self, hej)
 		}
 	}
 #endif
-
+	if (dep_call->cpu_subconf)
+		(*dep_call->cpu_subconf)(self);
 }
 
 #if VAX8600

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.31 1998/10/06 20:50:18 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.32 1998/10/27 21:18:53 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -61,6 +61,7 @@ struct	cpu_dep {
 	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
 	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
 	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
+	void	(*cpu_subconf) __P((struct device *));/*config cpu dep. devs */
 };
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
