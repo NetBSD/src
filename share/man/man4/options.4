@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.43 1998/02/22 22:51:47 is Exp $
+.\"	$NetBSD: options.4,v 1.44 1998/03/18 17:17:06 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -436,6 +436,14 @@ file systems, although
 .Xr rpc.rquotad 8
 permits them to be accessed over 
 .Em NFS .
+.It Cd options FFS_EI
+Enable ``Endian-Independant'' FFS support. This allow a system to mount a
+FFS filesystem created for another architecture, at a small performance cost
+for all FFS filesytems. See also
+.Xr newfs 8 ,
+.Xr fsck_ffs 8 ,
+.Xr dumpfs 8 
+for filesystem byte order status and manipulation.
 .It Cd options FIFO
 Augments the system to permit the use of
 .At V
