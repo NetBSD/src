@@ -169,6 +169,22 @@ $ EOVERFLOW
 84 Valeur trop grande pour stocker dans le type de données
 $ EILSEQ
 85 Séquence d'octets illégale
+$ ENOTSUP
+86 Non supporté
+$ ECANCELED
+87 Opération annulée
+$ EBADMSG
+88 Message invalide ou corrompu
+$ ENODATA
+89 Pas de message disponible
+$ ENOSR
+90 Pas de ressource de type STREAM disponible
+$ ENOSTR
+91 N'est pas un STREAM
+$ ETIME 
+92 Délai expiré pour un ioctl STREAM
+$ ENOATTR 
+93 Attribut non trouvé
 $set 2
 $ SIGHUP
 1 Raccroché
