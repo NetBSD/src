@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.5 1996/10/11 00:10:59 christos Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.6 1996/10/13 03:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -85,21 +85,21 @@ fpu_decode_ea(frame, insn, ea, modreg)
     case 010:			/* An */
 	ea->ea_flags = EA_DIRECT;
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea: register direct reg=%d\n", ea->ea_regnum);
+	    printf("  decode_ea: register direct reg=%d\n", ea->ea_regnum);
 	}
 	break;
 
     case 020:			/* (An) */
 	ea->ea_flags = 0;
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea: register indirect reg=%d\n", ea->ea_regnum);
+	    printf("  decode_ea: register indirect reg=%d\n", ea->ea_regnum);
 	}
 	break;
 
     case 030:			/* (An)+ */
 	ea->ea_flags = EA_POSTINCR;
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea: reg indirect postincrement reg=%d\n",
+	    printf("  decode_ea: reg indirect postincrement reg=%d\n",
 		   ea->ea_regnum);
 	}
 	break;
@@ -107,7 +107,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
     case 040:			/* -(An) */
 	ea->ea_flags = EA_PREDECR;
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea: reg indirect predecrement reg=%d\n",
+	    printf("  decode_ea: reg indirect predecrement reg=%d\n",
 		   ea->ea_regnum);
 	}
 	break;
@@ -116,7 +116,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	ea->ea_flags = EA_OFFSET;
 	sig = fetch_disp(frame, insn, 1, &ea->ea_offset);
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea: reg indirect with displacement reg=%d\n",
+	    printf("  decode_ea: reg indirect with displacement reg=%d\n",
 		   ea->ea_regnum);
 	}
 	break;
@@ -134,7 +134,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	    ea->ea_flags = EA_ABS;
 	    sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
 	    if (fpu_debug_level & DL_DECODEEA) {
-		kprintf("  decode_ea: absolute address (word)\n");
+		printf("  decode_ea: absolute address (word)\n");
 	    }
 	    break;
 
@@ -142,7 +142,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	    ea->ea_flags = EA_ABS;
 	    sig = fetch_disp(frame, insn, 2, &ea->ea_absaddr);
 	    if (fpu_debug_level & DL_DECODEEA) {
-		kprintf("  decode_ea: absolute address (long)\n");
+		printf("  decode_ea: absolute address (long)\n");
 	    }
 	    break;
 
@@ -150,7 +150,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	    ea->ea_flags = EA_PC_REL | EA_OFFSET;
 	    sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
 	    if (fpu_debug_level & DL_DECODEEA) {
-		kprintf("  decode_ea: pc relative word displacement\n");
+		printf("  decode_ea: pc relative word displacement\n");
 	    }
 	    break;
 
@@ -163,13 +163,13 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	    ea->ea_flags = EA_IMMED;
 	    sig = fetch_immed(frame, insn, &ea->ea_immed[0]);
 	    if (fpu_debug_level & DL_DECODEEA) {
-		kprintf("  decode_ea: immediate size=%d\n", insn->is_datasize);
+		printf("  decode_ea: immediate size=%d\n", insn->is_datasize);
 	    }
 	    break;
 
 	default:
 	    if (fpu_debug_level & DL_DECODEEA) {
-		kprintf("  decode_ea: invalid addr mode (7,%d)\n", modreg & 7);
+		printf("  decode_ea: invalid addr mode (7,%d)\n", modreg & 7);
 	    }
 	    return SIGILL;
 	} /* switch for mode 7 */
@@ -225,7 +225,7 @@ decode_ea6(frame, insn, ea, modreg)
 	ea->ea_basedisp = idx + basedisp;
 	ea->ea_outerdisp = 0;
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea6: brief ext word idxreg=%d, basedisp=%08x\n",
+	    printf("  decode_ea6: brief ext word idxreg=%d, basedisp=%08x\n",
 		   ea->ea_idxreg, ea->ea_basedisp);
 	}
     } else {
@@ -262,19 +262,19 @@ decode_ea6(frame, insn, ea, modreg)
 	    break;
 	default:
 #ifdef DEBUG
-	    kprintf("  decode_ea6: invalid indirect mode: ext word %04x\n",
+	    printf("  decode_ea6: invalid indirect mode: ext word %04x\n",
 		   extword);
 #endif
 	    return SIGILL;
 	    break;
 	}
 	if (fpu_debug_level & DL_DECODEEA) {
-	    kprintf("  decode_ea6: full ext idxreg=%d, basedisp=%x, outerdisp=%x\n",
+	    printf("  decode_ea6: full ext idxreg=%d, basedisp=%x, outerdisp=%x\n",
 		   ea->ea_idxreg, ea->ea_basedisp, ea->ea_outerdisp);
 	}
     }
     if (fpu_debug_level & DL_DECODEEA) {
-	kprintf("  decode_ea6: regnum=%d, flags=%x\n",
+	printf("  decode_ea6: regnum=%d, flags=%x\n",
 	       ea->ea_regnum, ea->ea_flags);
     }
     return 0;
@@ -303,7 +303,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #endif
 
     if (fpu_debug_level & DL_LOADEA) {
-	kprintf("  load_ea: frame at %p\n", frame);
+	printf("  load_ea: frame at %p\n", frame);
     }
     /* The dst is always int or larger. */
     len = insn->is_datasize;
@@ -315,13 +315,13 @@ fpu_load_ea(frame, insn, ea, dst)
     if (ea->ea_flags & EA_DIRECT) {
 	if (len > 4) {
 #ifdef DEBUG
-	    kprintf("  load_ea: operand doesn't fit cpu reg\n");
+	    printf("  load_ea: operand doesn't fit cpu reg\n");
 #endif
 	    return SIGILL;
 	}
 	if (ea->ea_tdisp > 0) {
 #ifdef DEBUG
-	    kprintf("  load_ea: more than one move from cpu reg\n");
+	    printf("  load_ea: more than one move from cpu reg\n");
 #endif
 	    return SIGILL;
 	}
@@ -330,47 +330,47 @@ fpu_load_ea(frame, insn, ea, dst)
 	if (len < 4) {
 	    src += (4 - len);
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: short/byte opr - addr adjusted\n");
+		printf("  load_ea: short/byte opr - addr adjusted\n");
 	    }
 	}
 	if (fpu_debug_level & DL_LOADEA) {
-	    kprintf("  load_ea: src %p\n", src);
+	    printf("  load_ea: src %p\n", src);
 	}
 	bcopy(src, dst, len);
     } else if (ea->ea_flags & EA_IMMED) {
 	if (fpu_debug_level & DL_LOADEA) {
-	    kprintf("  load_ea: immed %08x%08x%08x size %d\n",
+	    printf("  load_ea: immed %08x%08x%08x size %d\n",
 		   ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len);
 	}
 	src = (char *)&ea->ea_immed[0];
 	if (len < 4) {
 	    src += (4 - len);
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: short/byte immed opr - addr adjusted\n");
+		printf("  load_ea: short/byte immed opr - addr adjusted\n");
 	    }
 	}
 	bcopy(src, dst, len);
     } else if (ea->ea_flags & EA_ABS) {
 	if (fpu_debug_level & DL_LOADEA) {
-	    kprintf("  load_ea: abs addr %08x\n", ea->ea_absaddr);
+	    printf("  load_ea: abs addr %08x\n", ea->ea_absaddr);
 	}
 	src = (char *)ea->ea_absaddr;
 	copyin(src, dst, len);
     } else /* register indirect */ { 
 	if (ea->ea_flags & EA_PC_REL) {
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: using PC\n");
+		printf("  load_ea: using PC\n");
 	    }
 	    reg = NULL;
 	    /* Grab the register contents. 4 is offset to the first
 	       extention word from the opcode */
 	    src = (char *)frame->f_pc + 4;
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: pc relative pc+4 = %p\n", src);
+		printf("  load_ea: pc relative pc+4 = %p\n", src);
 	    }
 	} else /* not PC relative */ {
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: using register %c%d\n",
+		printf("  load_ea: using register %c%d\n",
 		       (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
 	    }
 	    /* point to the register */
@@ -378,7 +378,7 @@ fpu_load_ea(frame, insn, ea, dst)
 
 	    if (ea->ea_flags & EA_PREDECR) {
 		if (fpu_debug_level & DL_LOADEA) {
-		    kprintf("  load_ea: predecr mode - reg decremented\n");
+		    printf("  load_ea: predecr mode - reg decremented\n");
 		}
 		*reg -= step;
 		ea->ea_tdisp = 0;
@@ -387,7 +387,7 @@ fpu_load_ea(frame, insn, ea, dst)
 	    /* Grab the register contents. */
 	    src = (char *)*reg;
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: reg indirect reg = %p\n", src);
+		printf("  load_ea: reg indirect reg = %p\n", src);
 	    }
 	}
 
@@ -401,14 +401,14 @@ fpu_load_ea(frame, insn, ea, dst)
 	if (ea->ea_flags & EA_POSTINCR) {
 	    if (ea->ea_flags & EA_PC_REL) {
 #ifdef DEBUG
-		kprintf("  load_ea: tried to postincrement PC\n");
+		printf("  load_ea: tried to postincrement PC\n");
 #endif
 		return SIGILL;
 	    }
 	    *reg += step;
 	    ea->ea_tdisp = 0;
 	    if (fpu_debug_level & DL_LOADEA) {
-		kprintf("  load_ea: postinc mode - reg incremented\n");
+		printf("  load_ea: postinc mode - reg incremented\n");
 	    }
 	} else {
 	    ea->ea_tdisp += len;
@@ -443,13 +443,13 @@ fpu_store_ea(frame, insn, ea, src)
     if (ea->ea_flags & (EA_IMMED|EA_PC_REL)) {
 	/* not alterable address mode */
 #ifdef DEBUG
-	kprintf("  store_ea: not alterable address mode\n");
+	printf("  store_ea: not alterable address mode\n");
 #endif
 	return SIGILL;
     }
 
     if (fpu_debug_level & DL_STOREEA) {
-	kprintf("  store_ea: frame at %p\n", frame);
+	printf("  store_ea: frame at %p\n", frame);
     }
     /* The src is always int or larger. */
     len = insn->is_datasize;
@@ -460,7 +460,7 @@ fpu_store_ea(frame, insn, ea, src)
 
     if (ea->ea_flags & EA_ABS) {
 	if (fpu_debug_level & DL_STOREEA) {
-	    kprintf("  store_ea: abs addr %08x\n", ea->ea_absaddr);
+	    printf("  store_ea: abs addr %08x\n", ea->ea_absaddr);
 	}
 	dst = (char *)ea->ea_absaddr;
 	copyout(src, dst + ea->ea_tdisp, len);
@@ -468,13 +468,13 @@ fpu_store_ea(frame, insn, ea, src)
     } else if (ea->ea_flags & EA_DIRECT) {
 	if (len > 4) {
 #ifdef DEBUG
-	    kprintf("  store_ea: operand doesn't fit cpu reg\n");
+	    printf("  store_ea: operand doesn't fit cpu reg\n");
 #endif
 	    return SIGILL;
 	}
 	if (ea->ea_tdisp > 0) {
 #ifdef DEBUG
-	    kprintf("  store_ea: more than one move to cpu reg\n");
+	    printf("  store_ea: more than one move to cpu reg\n");
 #endif
 	    return SIGILL;
 	}
@@ -483,16 +483,16 @@ fpu_store_ea(frame, insn, ea, src)
 	if (len < 4) {
 	    dst += (4 - len);
 	    if (fpu_debug_level & DL_STOREEA) {
-		kprintf("  store_ea: short/byte opr - dst addr adjusted\n");
+		printf("  store_ea: short/byte opr - dst addr adjusted\n");
 	    }
 	}
 	if (fpu_debug_level & DL_STOREEA) {
-	    kprintf("  store_ea: dst %p\n", dst);
+	    printf("  store_ea: dst %p\n", dst);
 	}
 	bcopy(src, dst, len);
     } else /* One of MANY indirect forms... */ {
 	if (fpu_debug_level & DL_STOREEA) {
-	    kprintf("  store_ea: using register %c%d\n",
+	    printf("  store_ea: using register %c%d\n",
 		   (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
 	}
 	/* point to the register */
@@ -501,7 +501,7 @@ fpu_store_ea(frame, insn, ea, src)
 	/* do pre-decrement */
 	if (ea->ea_flags & EA_PREDECR) {
 	    if (fpu_debug_level & DL_STOREEA) {
-		kprintf("  store_ea: predecr mode - reg decremented\n");
+		printf("  store_ea: predecr mode - reg decremented\n");
 	    }
 	    *reg -= step;
 	    ea->ea_tdisp = 0;
@@ -513,7 +513,7 @@ fpu_store_ea(frame, insn, ea, src)
 	    return sig;
 
 	if (fpu_debug_level & DL_STOREEA) {
-	    kprintf("  store_ea: dst addr=%p+%d\n", dst, ea->ea_tdisp);
+	    printf("  store_ea: dst addr=%p+%d\n", dst, ea->ea_tdisp);
 	}
 	copyout(src, dst + ea->ea_tdisp, len);
 
@@ -522,7 +522,7 @@ fpu_store_ea(frame, insn, ea, src)
 	    *reg += step;
 	    ea->ea_tdisp = 0;
 	    if (fpu_debug_level & DL_STOREEA) {
-		kprintf("  store_ea: postinc mode - reg incremented\n");
+		printf("  store_ea: postinc mode - reg incremented\n");
 	    }
 	} else {
 	    ea->ea_tdisp += len;
@@ -661,18 +661,18 @@ calc_ea(ea, ptr, eaddr)
     int data, word;
 
     if (fpu_debug_level & DL_EA) {
-	kprintf("  calc_ea: reg indirect (reg) = %p\n", ptr);
+	printf("  calc_ea: reg indirect (reg) = %p\n", ptr);
     }
 
     if (ea->ea_flags & EA_OFFSET) {
 	/* apply the signed offset */
 	if (fpu_debug_level & DL_EA) {
-	    kprintf("  calc_ea: offset %d\n", ea->ea_offset);
+	    printf("  calc_ea: offset %d\n", ea->ea_offset);
 	}
 	ptr += ea->ea_offset;
     } else if (ea->ea_flags & EA_INDEXED) {
 	if (fpu_debug_level & DL_EA) {
-	    kprintf("  calc_ea: indexed mode\n");
+	    printf("  calc_ea: indexed mode\n");
 	}
 
 	if (ea->ea_flags & EA_BASE_SUPPRSS) {
@@ -684,9 +684,9 @@ calc_ea(ea, ptr, eaddr)
 
 	if (ea->ea_flags & EA_MEM_INDIR) {
 	    if (fpu_debug_level & DL_EA) {
-		kprintf("  calc_ea: mem indir mode: basedisp=%08x, outerdisp=%08x\n",
+		printf("  calc_ea: mem indir mode: basedisp=%08x, outerdisp=%08x\n",
 		       ea->ea_basedisp, ea->ea_outerdisp);
-		kprintf("  calc_ea: addr fetched from %p\n", ptr);
+		printf("  calc_ea: addr fetched from %p\n", ptr);
 	    }
 	    /* memory indirect modes */
 	    word = fusword(ptr);
@@ -700,7 +700,7 @@ calc_ea(ea, ptr, eaddr)
 	    }
 	    word |= data;
 	    if (fpu_debug_level & DL_STOREEA) {
-		kprintf(" calc_ea: fetched ptr 0x%08x\n", word);
+		printf(" calc_ea: fetched ptr 0x%08x\n", word);
 	    }
 	    ptr = (char *)word + ea->ea_outerdisp;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.4 1996/10/11 00:11:08 christos Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.5 1996/10/13 03:19:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -51,7 +51,7 @@ fpu_emul_fstore(fe, insn)
     u_int buf[3];
 
     if (fpu_debug_level & DL_FSTORE) {
-	kprintf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
+	printf("  fpu_emul_fstore: frame at %p fpframe at %p\n",
 	       frame, fe->fe_fpframe);
     }
 
@@ -76,12 +76,12 @@ fpu_emul_fstore(fe, insn)
     } else {
 	/* invalid or unsupported operand format */
 	if (fpu_debug_level & DL_FSTORE) {
-	    kprintf("  fpu_emul_fstore: invalid format %d\n", format);
+	    printf("  fpu_emul_fstore: invalid format %d\n", format);
 	}
 	sig = SIGFPE;
     }
     if (fpu_debug_level & DL_FSTORE) {
-	kprintf("  fpu_emul_fstore: format %d, size %d\n",
+	printf("  fpu_emul_fstore: format %d, size %d\n",
 	       format, insn->is_datasize);
     }
 
@@ -89,7 +89,7 @@ fpu_emul_fstore(fe, insn)
     sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
     if (sig) {
 	if (fpu_debug_level & DL_FSTORE) {
-	    kprintf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);
+	    printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);
 	}
 	return sig;
     }
@@ -97,19 +97,19 @@ fpu_emul_fstore(fe, insn)
     if (insn->is_datasize > 4 && insn->is_ea0.ea_flags == EA_DIRECT) {
 	/* trying to store dbl or ext into a data register */
 #ifdef DEBUG
-	kprintf("  fpu_fstore: attempted to store dbl/ext to reg\n");
+	printf("  fpu_fstore: attempted to store dbl/ext to reg\n");
 #endif
 	return SIGILL;
     }
 
     if (fpu_debug_level & DL_OPERANDS)
-	kprintf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
+	printf("  fpu_emul_fstore: saving FP%d (%08x,%08x,%08x)\n",
 	       regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 	       fpregs[regnum * 3 + 2]);
     fpu_explode(fe, &fe->fe_f3, FTYPE_EXT, &fpregs[regnum * 3]);
     if (fpu_debug_level & DL_VALUES) {
 	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
-	kprintf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x,%08x)\n",
+	printf("  fpu_emul_fstore: fpn (%s,%c,%d,%08x,%08x,%08x,%08x)\n",
 	       class_name[fe->fe_f3.fp_class + 2],
 	       fe->fe_f3.fp_sign ? '-' : '+', fe->fe_f3.fp_exp,
 	       fe->fe_f3.fp_mant[0], fe->fe_f3.fp_mant[1],
@@ -119,7 +119,7 @@ fpu_emul_fstore(fe, insn)
 
     fpu_store_ea(frame, insn, &insn->is_ea0, (char *)buf);
     if (fpu_debug_level & DL_RESULT)
-	kprintf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
+	printf("  fpu_emul_fstore: %08x,%08x,%08x size %d\n",
 	       buf[0], buf[1], buf[2], insn->is_datasize);
 
     return 0;
