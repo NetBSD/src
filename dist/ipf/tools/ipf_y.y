@@ -997,9 +997,8 @@ age:	| IPFY_AGE YY_NUMBER		{ DOALL(fr->fr_age[0] = $2; \
 						fr->fr_age[1] = $4;) }
 	;
 
-keep:	| IPFY_KEEP keepstate
-	| IPFY_KEEP keepfrag
-	| IPFY_KEEP keepstate IPFY_KEEP keepfrag
+keep:	| IPFY_KEEP keepstate keep
+	| IPFY_KEEP keepfrag keep
 	;
 
 keepstate:
