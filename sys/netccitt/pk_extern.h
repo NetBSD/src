@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.6 2000/07/02 17:34:01 sommerfeld Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.7 2000/07/02 17:35:00 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  */
 
 #ifdef _KERNEL
+
+#ifndef _NETCCITT_PK_EXTERN_H_
+#define _NETCCITT_PK_EXTERN_H_
 
 #include <netccitt/x25isr.h>
 
@@ -128,3 +131,5 @@ int pk_checksockaddr __P((struct mbuf *));
 int pk_send __P((struct mbuf *, void *));
 
 #endif
+
+#endif /* _NETCCITT_PK_EXTERN_H_ */
