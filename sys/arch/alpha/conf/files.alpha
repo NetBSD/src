@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.127 2000/11/26 17:44:08 ad Exp $
+# $NetBSD: files.alpha,v 1.128 2000/11/27 22:29:26 jdolecek Exp $
 #
 # alpha-specific configuration info
 
@@ -527,6 +527,7 @@ file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/alpha/files.linux_alpha"
+file	arch/alpha/alpha/linux_sigcode.s	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
