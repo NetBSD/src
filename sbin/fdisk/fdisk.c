@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.76 2004/03/22 07:11:00 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.76 2004/03/22 07:11:00 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.77 2004/03/24 02:49:37 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1319,7 +1319,7 @@ configure_bootsel(daddr_t default_ptn)
 	free(off);
 	return default_ptn;
 }
-#endif
+#endif /* BOOTSEL */
 
 
 /* Prerequisite: the disklabel parameters and master boot record must
@@ -2298,6 +2298,7 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		    tabletype, offset);
 		return -1;
 	}
+#ifdef BOOTSEL
 	if (le16toh(boot->mbr_bootsel_magic) == MBR_MAGIC) {
 				/* mbr_bootsel in old location */
 		warnx("%s partition table: using old-style bootsel information",
@@ -2323,6 +2324,7 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 			/* highlight that new bootsel code is necessar */
 	    	boot->mbr_bootsel.mbrbs_flags &= ~ MBR_BS_NEWMBR;
 	}
+#endif /* BOOTSEL */
 	return (0);
 }
 
