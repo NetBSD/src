@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.6 1994/10/26 21:10:09 cgd Exp $	*/
+/*	$NetBSD: varargs.h,v 1.7 1995/01/28 01:52:17 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,6 +63,6 @@ typedef _BSD_VA_LIST_	va_list;
 		(abort(), 0)))[-1]
 #endif
 
-#define	va_end(ap)
+#define	va_end(ap)	((void) 0)
 
 #endif /* !_PMAX_VARARGS_H_ */

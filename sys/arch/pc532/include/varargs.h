@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.6 1994/12/29 19:43:54 phil Exp $	*/
+/*	$NetBSD: varargs.h,v 1.7 1995/01/28 01:52:10 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,6 +63,6 @@ typedef _BSD_VA_LIST_	va_list;
 	((type *)(ap += __va_promote(type), ap - __va_promote(type)))[0]
 #endif
 
-#define	va_end(ap)
+#define	va_end(ap)	((void) 0)
 
 #endif /* !_PC532_VARARGS_H_ */

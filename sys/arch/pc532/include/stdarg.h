@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.7 1994/12/29 19:43:52 phil Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.8 1995/01/28 01:52:09 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,6 +56,6 @@ typedef _BSD_VA_LIST_	va_list;
 	((type *)(ap += __va_promote(type), ap - __va_promote(type)))[0]
 #endif
 
-#define	va_end(ap)
+#define	va_end(ap)	((void) 0)
 
 #endif /* !_PC532_STDARG_H_ */

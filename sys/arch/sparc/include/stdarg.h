@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 1994/11/20 20:53:33 deraadt Exp $ */
+/*	$NetBSD: stdarg.h,v 1.6 1995/01/28 01:52:21 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define va_start(ap, l)	(__builtin_saveregs(), \
 			 (ap) = (va_list)__builtin_next_arg())
 #endif
-#define va_end(ap)	/* empty */
+#define va_end(ap)	((void) 0)
 
 #if __GNUC__ == 1
 #define __extension__	/* hack for bootstrapping via gcc 1.x */
