@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:35 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2003/10/07 17:08:07 skd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,7 @@
  * rights to redistribute these changes.
  */
 
+#define __HAVE_SIGINFO
 #include "SYS.h"
 
 /*
@@ -39,7 +40,7 @@
  */
 NESTED_NOPROFILE(__sigtramp_sigcontext_1,0,0,ra,0,0)
 	mov	sp, a0			/* get pointer to sigcontext */
-	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it */
+	CALLSYS_NOERROR(compat_16___sigreturn14)	/* and call sigreturn() with it */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it */
 END(__sigtramp_sigcontext_1)
