@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 1999/06/28 08:20:45 itojun Exp $	*/
+/*	$NetBSD: trap.c,v 1.112 1999/08/18 04:43:31 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 1999/06/28 08:20:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 1999/08/18 04:43:31 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -254,7 +254,7 @@ syscall(status, cause, opc)
 	uvmexp.syscalls++;
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
+		_splset(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
@@ -417,7 +417,7 @@ trap(status, cause, vaddr, opc, frame)
 	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+		_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	default:
@@ -750,7 +750,7 @@ interrupt(status, cause, pc)
 	uvmexp.intrs++;
 	/* real device interrupt */
 	if ((mask & INT_MASK_REAL_DEV) && mips_hardware_intr) {
-		splx((*mips_hardware_intr)(mask, pc, status, cause));
+		_splset((*mips_hardware_intr)(mask, pc, status, cause));
 	}
 
 #ifdef INT_MASK_FPU_DEAL
