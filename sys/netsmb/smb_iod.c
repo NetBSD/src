@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_iod.c,v 1.2 2002/01/04 02:39:40 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_iod.c,v 1.4 2001/12/09 17:48:08 arr Exp $
+ * FreeBSD: src/sys/netsmb/smb_iod.c,v 1.4 2001/12/09 17:48:08 arr Exp
  */
  
 #include <sys/param.h>
@@ -62,7 +64,9 @@
 #define	smb_iod_wakeup(iod)	wakeup(&(iod)->iod_flags)
 
 
+#ifndef __NetBSD__
 static MALLOC_DEFINE(M_SMBIOD, "SMBIOD", "SMB network io daemon");
+#endif
 
 static int smb_iod_next;
 
@@ -103,12 +107,12 @@ static void
 smb_iod_closetran(struct smbiod *iod)
 {
 	struct smb_vc *vcp = iod->iod_vc;
-	struct thread *td = iod->iod_td;
+	struct proc *p = iod->iod_p;
 
 	if (vcp->vc_tdata == NULL)
 		return;
-	SMB_TRAN_DISCONNECT(vcp, td);
-	SMB_TRAN_DONE(vcp, td);
+	SMB_TRAN_DISCONNECT(vcp, p);
+	SMB_TRAN_DONE(vcp, p);
 	vcp->vc_tdata = NULL;
 }
 
@@ -124,7 +128,7 @@ static int
 smb_iod_connect(struct smbiod *iod)
 {
 	struct smb_vc *vcp = iod->iod_vc;
-	struct thread *td = iod->iod_td;
+	struct proc *p = iod->iod_p;
 	int error;
 
 	SMBIODEBUG("%d\n", iod->iod_state);
@@ -140,13 +144,13 @@ smb_iod_connect(struct smbiod *iod)
 	vcp->vc_genid++;
 	error = 0;
 	itry {
-		ithrow(SMB_TRAN_CREATE(vcp, td));
+		ithrow(SMB_TRAN_CREATE(vcp, p));
 		SMBIODEBUG("tcreate\n");
 		if (vcp->vc_laddr) {
-			ithrow(SMB_TRAN_BIND(vcp, vcp->vc_laddr, td));
+			ithrow(SMB_TRAN_BIND(vcp, vcp->vc_laddr, p));
 		}
 		SMBIODEBUG("tbind\n");
-		ithrow(SMB_TRAN_CONNECT(vcp, vcp->vc_paddr, td));
+		ithrow(SMB_TRAN_CONNECT(vcp, vcp->vc_paddr, p));
 		SMB_TRAN_SETPARAM(vcp, SMBTP_SELECTID, &iod->iod_flags);
 		iod->iod_state = SMBIOD_ST_TRANACTIVE;
 		SMBIODEBUG("tconnect\n");
@@ -208,7 +212,7 @@ smb_iod_treeconnect(struct smbiod *iod, struct smb_share *ssp)
 static int
 smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 {
-	struct thread *td = iod->iod_td;
+	struct proc *p = iod->iod_p;
 	struct smb_vc *vcp = iod->iod_vc;
 	struct smb_share *ssp = rqp->sr_share;
 	struct mbuf *m;
@@ -247,10 +251,10 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	}
 	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x\n", rqp->sr_mid, 0, 0, 0);
 	m_dumpm(rqp->sr_rq.mb_top);
-	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_TRYWAIT);
-	error = rqp->sr_lerror = m ? SMB_TRAN_SEND(vcp, m, td) : ENOBUFS;
+	m = m_copym(rqp->sr_rq.mb_top, 0, M_COPYALL, M_WAIT);
+	error = rqp->sr_lerror = m ? SMB_TRAN_SEND(vcp, m, p) : ENOBUFS;
 	if (error == 0) {
-		getnanotime(&rqp->sr_timesent);
+		microtime(&rqp->sr_timesent);
 		iod->iod_lastrqsent = rqp->sr_timesent;
 		rqp->sr_flags |= SMBR_SENT;
 		rqp->sr_state = SMBRQ_SENT;
@@ -277,7 +281,7 @@ static int
 smb_iod_recvall(struct smbiod *iod)
 {
 	struct smb_vc *vcp = iod->iod_vc;
-	struct thread *td = iod->iod_td;
+	struct proc *p = iod->iod_p;
 	struct smb_rq *rqp;
 	struct mbuf *m;
 	u_char *hp;
@@ -294,7 +298,7 @@ smb_iod_recvall(struct smbiod *iod)
 	}
 	for (;;) {
 		m = NULL;
-		error = SMB_TRAN_RECV(vcp, &m, td);
+		error = SMB_TRAN_RECV(vcp, &m, p);
 		if (error == EWOULDBLOCK)
 			break;
 		if (SMB_TRAN_FATAL(vcp, error)) {
@@ -355,7 +359,7 @@ smb_iod_recvall(struct smbiod *iod)
 	 */
 	SMB_IOD_RQLOCK(iod);
 	TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
-		if (smb_proc_intr(rqp->sr_cred->scr_td->td_proc)) {
+		if (smb_proc_intr(rqp->sr_cred->scr_p)) {
 			smb_iod_rqprocessed(rqp, EINTR);
 		}
 	}
@@ -374,14 +378,18 @@ smb_iod_request(struct smbiod *iod, int event, void *ident)
 	evp->ev_type = event;
 	evp->ev_ident = ident;
 	SMB_IOD_EVLOCK(iod);
-	STAILQ_INSERT_TAIL(&iod->iod_evlist, evp, ev_link);
+	SIMPLEQ_INSERT_TAIL(&iod->iod_evlist, evp, ev_link);
 	if ((event & SMBIOD_EV_SYNC) == 0) {
 		SMB_IOD_EVUNLOCK(iod);
 		smb_iod_wakeup(iod);
 		return 0;
 	}
 	smb_iod_wakeup(iod);
+#ifdef __NetBSD__
+	ltsleep(evp, PWAIT | PNORELOCK, "90evw", 0, SMB_IOD_EVLOCKPTR(iod));
+#else
 	msleep(evp, SMB_IOD_EVLOCKPTR(iod), PWAIT | PDROP, "90evw", 0);
+#endif
 	error = evp->ev_error;
 	free(evp, M_SMBIOD);
 	return error;
@@ -399,7 +407,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 	int error;
 
 	SMBIODEBUG("\n");
-	if (rqp->sr_cred->scr_td->td_proc == iod->iod_p) {
+	if (rqp->sr_cred->scr_p == iod->iod_p) {
 		rqp->sr_flags |= SMBR_INTERNAL;
 		SMB_IOD_RQLOCK(iod);
 		TAILQ_INSERT_HEAD(&iod->iod_rqlist, rqp, sr_link);
@@ -442,8 +450,13 @@ smb_iod_addrq(struct smb_rq *rqp)
 		if (iod->iod_muxcnt < vcp->vc_maxmux)
 			break;
 		iod->iod_muxwant++;
+#ifdef __NetBSD__
+		ltsleep(&iod->iod_muxwant, PWAIT, "90mux", 
+			0, SMB_IOD_RQLOCKPTR(iod));
+#else
 		msleep(&iod->iod_muxwant, SMB_IOD_RQLOCKPTR(iod),
 		    PWAIT, "90mux", 0);
+#endif
 	}
 	iod->iod_muxcnt++;
 	TAILQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
@@ -468,7 +481,11 @@ smb_iod_removerq(struct smb_rq *rqp)
 	SMB_IOD_RQLOCK(iod);
 	while (rqp->sr_flags & SMBR_XLOCK) {
 		rqp->sr_flags |= SMBR_XLOCKWANT;
+#ifdef __NetBSD__
+		ltsleep(rqp, PWAIT, "90xrm", 0, SMB_IOD_RQLOCKPTR(iod));
+#else
 		msleep(rqp, SMB_IOD_RQLOCKPTR(iod), PWAIT, "90xrm", 0);
+#endif
 	}
 	TAILQ_REMOVE(&iod->iod_rqlist, rqp, sr_link);
 	iod->iod_muxcnt--;
@@ -501,7 +518,12 @@ smb_iod_waitrq(struct smb_rq *rqp)
 	}
 	SMBRQ_SLOCK(rqp);
 	if (rqp->sr_rpgen == rqp->sr_rplast)
+#ifdef __NetBSD__
+		ltsleep(&rqp->sr_state, PWAIT, "90wrq", 0, 
+			SMBRQ_SLOCKPTR(rqp));
+#else
 		msleep(&rqp->sr_state, SMBRQ_SLOCKPTR(rqp), PWAIT, "90wrq", 0);
+#endif
 	rqp->sr_rplast++;
 	SMBRQ_SUNLOCK(rqp);
 	error = rqp->sr_lerror;
@@ -525,7 +547,7 @@ smb_iod_sendall(struct smbiod *iod)
 {
 	struct smb_vc *vcp = iod->iod_vc;
 	struct smb_rq *rqp;
-	struct timespec ts, tstimeout;
+	struct timeval ts, tstimeout;
 	int herror;
 
 	herror = 0;
@@ -548,10 +570,10 @@ smb_iod_sendall(struct smbiod *iod)
 			break;
 		    case SMBRQ_SENT:
 			SMB_TRAN_GETPARAM(vcp, SMBTP_TIMEOUT, &tstimeout);
-			timespecadd(&tstimeout, &tstimeout);
-			getnanotime(&ts);
-			timespecsub(&ts, &tstimeout);
-			if (timespeccmp(&ts, &rqp->sr_timesent, >)) {
+			timeradd(&tstimeout, &tstimeout, &tstimeout);
+			microtime(&ts);
+			timersub(&ts, &tstimeout, &ts);
+			if (timercmp(&ts, &rqp->sr_timesent, >)) {
 				smb_iod_rqprocessed(rqp, ETIMEDOUT);
 			}
 			break;
@@ -585,12 +607,12 @@ smb_iod_main(struct smbiod *iod)
 	 */
 	for (;;) {
 		SMB_IOD_EVLOCK(iod);
-		evp = STAILQ_FIRST(&iod->iod_evlist);
+		evp = SIMPLEQ_FIRST(&iod->iod_evlist);
 		if (evp == NULL) {
 			SMB_IOD_EVUNLOCK(iod);
 			break;
 		}
-		STAILQ_REMOVE_HEAD(&iod->iod_evlist, ev_link);
+		SIMPLEQ_REMOVE_HEAD(&iod->iod_evlist, evp, ev_link);
 		evp->ev_type |= SMBIOD_EV_PROCESSING;
 		SMB_IOD_EVUNLOCK(iod);
 		switch (evp->ev_type & SMBIOD_EV_MASK) {
@@ -636,13 +658,15 @@ smb_iod_thread(void *arg)
 {
 	struct smbiod *iod = arg;
 
+#ifdef __FreeBSD__
 	mtx_lock(&Giant);
+#endif
 	/*
 	 * Here we assume that the thread structure will be the same
 	 * for an entire kthread (kproc, to be more precise) life.
 	 */
-	iod->iod_td = curthread;
-	smb_makescred(&iod->iod_scred, iod->iod_td, NULL);
+	iod->iod_p = curproc;
+	smb_makescred(&iod->iod_scred, iod->iod_p, NULL);
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
 		SMBIODEBUG("going to sleep for %d ticks\n", iod->iod_sleeptimo);
@@ -667,14 +691,19 @@ smb_iod_create(struct smb_vc *vcp)
 	iod->iod_vc = vcp;
 	iod->iod_sleeptimo = hz * SMBIOD_SLEEP_TIMO;
 	iod->iod_pingtimo.tv_sec = SMBIOD_PING_TIMO;
-	getnanotime(&iod->iod_lastrqsent);
+	microtime(&iod->iod_lastrqsent);
 	vcp->vc_iod = iod;
 	smb_sl_init(&iod->iod_rqlock, "90rql");
 	TAILQ_INIT(&iod->iod_rqlist);
 	smb_sl_init(&iod->iod_evlock, "90evl");
-	STAILQ_INIT(&iod->iod_evlist);
+	SIMPLEQ_INIT(&iod->iod_evlist);
+#ifdef __NetBSD__
+	error = kthread_create1(smb_iod_thread, iod, &iod->iod_p,
+				"smbiod%d", iod->iod_id);
+#else
 	error = kthread_create(smb_iod_thread, iod, &iod->iod_p,
 	    RFNOWAIT, "smbiod%d", iod->iod_id);
+#endif
 	if (error) {
 		SMBERROR("can't start smbiod: %d", error);
 		free(iod, M_SMBIOD);

@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_subr.h,v 1.2 2002/01/04 02:39:45 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_subr.h,v 1.4 2001/12/10 08:09:48 obrien Exp $
+ * FreeBSD: src/sys/netsmb/smb_subr.h,v 1.4 2001/12/10 08:09:48 obrien Exp
  */
 #ifndef _NETSMB_SMB_SUBR_H_
 #define _NETSMB_SMB_SUBR_H_
@@ -65,24 +67,26 @@ void m_dumpm(struct mbuf *m);
 #define m_dumpm(m)
 #endif
 
+#ifdef __NetBSD__
+#define SIGISMEMBER(s,n) sigismember(&(s),n)
+#endif
+
 #define	SMB_SIGMASK(set) 						\
 	(SIGISMEMBER(set, SIGINT) || SIGISMEMBER(set, SIGTERM) ||	\
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
-#define	smb_suser(cred)	suser_xxx(cred, NULL, 0)
+#define	smb_suser(cred)	suser(cred, 0)
 
 /*
  * Compatibility wrappers for simple locks
  */
 
-#include <sys/mutex.h>
-
-#define	smb_slock			mtx
-#define	smb_sl_init(mtx, desc)		mtx_init(mtx, desc, MTX_DEF)
-#define	smb_sl_destroy(mtx)		mtx_destroy(mtx)
-#define	smb_sl_lock(mtx)		mtx_lock(mtx)
-#define	smb_sl_unlock(mtx)		mtx_unlock(mtx)
+#define	smb_slock			simplelock
+#define	smb_sl_init(mtx, desc)		simple_lock_init(mtx)
+#define	smb_sl_destroy(mtx)		/*simple_lock_destroy(mtx)*/
+#define	smb_sl_lock(mtx)		simple_lock(mtx)
+#define	smb_sl_unlock(mtx)		simple_unlock(mtx)
 
 
 #define SMB_STRFREE(p)	do { if (p) smb_strfree(p); } while(0)
@@ -130,7 +134,8 @@ typedef	smb_unichar	*smb_uniptr;
  * Crediantials of user/process being processing in the connection procedures
  */
 struct smb_cred {
-	struct thread *	scr_td;
+	/* struct thread *	scr_td; */
+	struct proc *	scr_p;
 	struct ucred *	scr_cred;
 };
 
@@ -140,7 +145,7 @@ struct mbchain;
 struct smb_vc;
 struct smb_rq;
 
-void smb_makescred(struct smb_cred *scred, struct thread *td, struct ucred *cred);
+void smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred);
 int  smb_proc_intr(struct proc *);
 char *smb_strdup(const char *s);
 void *smb_memdup(const void *umem, int len);
@@ -149,7 +154,7 @@ void *smb_memdupin(void *umem, int len);
 void smb_strtouni(u_int16_t *dst, const char *src);
 void smb_strfree(char *s);
 void smb_memfree(void *s);
-void *smb_zmalloc(unsigned long size, struct malloc_type *type, int flags);
+void *smb_zmalloc(unsigned long size, int type, int flags);
 
 int  smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN);
 int  smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN);
@@ -160,5 +165,7 @@ int  smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp,
 	const char *src, int caseopt);
 int  smb_put_string(struct smb_rq *rqp, const char *src);
 int  smb_put_asunistring(struct smb_rq *rqp, const char *src);
+
+struct sockaddr *dup_sockaddr(struct sockaddr *, int);
 
 #endif /* !_NETSMB_SMB_SUBR_H_ */

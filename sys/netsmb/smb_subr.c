@@ -1,7 +1,7 @@
-/*	$NetBSD: smb_subr.c,v 1.2 2001/11/13 01:04:47 lukem Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.3 2002/01/04 02:39:44 deberg Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,37 +30,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb_subr.c,v 1.4 2001/12/02 08:47:29 bp Exp
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.2 2001/11/13 01:04:47 lukem Exp $");
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mbuf.h>
 
-#include <sys/tree.h>
-
-#include "iconv.h"
+#include <netsmb/iconv.h>
 
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_rq.h>
 #include <netsmb/smb_subr.h>
-#include <netsmb/netbios.h>
 
-#ifndef NetBSD
-MALLOC_DEFINE(M_SMBDATA, "SMBDATA", "Misc netsmb data");
-MALLOC_DEFINE(M_SMBSTR, "SMBSTR", "netsmb string data");
-MALLOC_DEFINE(M_SMBTEMP, "SMBTEMP", "Temp netsmb data");
+/* freebsd-compatibility macros */
+#ifdef __NetBSD__
+#define p_siglist p_sigctx.ps_siglist
+#define p_sigmask p_sigctx.ps_sigmask
+#define p_sigignore p_sigctx.ps_sigignore
+#define SIGSETNAND(a,b) sigminusset(&(b),&(a))
+#define SIGNOTEMPTY(a) (!sigemptyset(&(a)))
 #endif
 
 smb_unichar smb_unieol = 0;
@@ -80,14 +78,6 @@ smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred)
 int
 smb_proc_intr(struct proc *p)
 {
-#ifndef NetBSD
-#if __FreeBSD_version < 400009
-
-	if (p && p->p_siglist &&
-	    (((p->p_siglist & ~p->p_sigmask) & ~p->p_sigignore) & SMB_SIGMASK))
-		return EINTR;
-	return 0;
-#else
 	sigset_t tmpset;
 
 	if (p == NULL)
@@ -98,21 +88,6 @@ smb_proc_intr(struct proc *p)
 	if (SIGNOTEMPTY(p->p_siglist) && SMB_SIGMASK(tmpset))
                 return EINTR;
 	return 0;
-#endif
-#else
-	sigset_t tmpset;
-
-	if (p == NULL)
-		return 0;
-/*  	tmpsetp = p->p_siglist; */
-	sigemptyset (&tmpset);
-	sigplusset (&p->p_siglist, &tmpset);
-	sigminusset(&p->p_sigmask, &tmpset);
-	sigminusset(&p->p_sigignore, &tmpset);
-	if (SMB_SIGMASK(&tmpset))
-		return EINTR;
-	return 0;
-#endif
 }
 
 char *
@@ -122,9 +97,7 @@ smb_strdup(const char *s)
 	int len;
 
 	len = s ? strlen(s) + 1 : 1;
-	MALLOC(p, char *, len, M_SMBSTR, M_WAITOK);
-	if (p == NULL)
-		return NULL;
+	p = malloc(len, M_SMBSTR, M_WAITOK);
 	if (s)
 		bcopy(s, p, len);
 	else
@@ -150,9 +123,7 @@ smb_strdupin(char *s, int maxlen)
 		if (bt == 0)
 			break;
 	}
-	MALLOC(p, char *, len, M_SMBSTR, M_WAITOK);
-	if (p == NULL)
-		return NULL;
+	p = malloc(len, M_SMBSTR, M_WAITOK);
 	copyin(s, p, len);
 	return p;
 }
@@ -167,9 +138,7 @@ smb_memdupin(void *umem, int len)
 
 	if (len > 8 * 1024)
 		return NULL;
-	MALLOC(p, char *, len, M_SMBSTR, M_WAITOK);
-	if (p == NULL)
-		return NULL;
+	p = malloc(len, M_SMBSTR, M_WAITOK);
 	if (copyin(umem, p, len) == 0)
 		return p;
 	free(p, M_SMBSTR);
@@ -186,7 +155,7 @@ smb_memdup(const void *umem, int len)
 
 	if (len > 8 * 1024)
 		return NULL;
-	MALLOC(p, char *, len, M_SMBSTR, M_WAITOK);
+	p = malloc(len, M_SMBSTR, M_WAITOK);
 	if (p == NULL)
 		return NULL;
 	bcopy(umem, p, len);
@@ -203,6 +172,13 @@ void
 smb_memfree(void *s)
 {
 	free(s, M_SMBSTR);
+}
+
+void *
+smb_zmalloc(unsigned long size, int type, int flags)
+{
+
+	return malloc(size, type, flags | M_ZERO);
 }
 
 void
@@ -251,6 +227,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRbadpath:
 		    case ERRremcd:
 		    case 66:		/* nt returns it when share not available */
+		    case 67:		/* observed from nt4sp6 when sharename wrong */
 			return ENOENT;
 		    case ERRnofids:
 			return EMFILE;
@@ -268,6 +245,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRbaddata:
 			return E2BIG;
 		    case ERRbaddrive:
+		    case ERRnotready:	/* nt */
 			return ENXIO;
 		    case ERRdiffdevice:
 			return EXDEV;
@@ -328,84 +306,66 @@ smb_maperror(int eclass, int eno)
 	return EBADRPC;
 }
 
+static int
+smb_copy_iconv(struct mbchain *mbp, const caddr_t src, caddr_t dst, int len)
+{
+	int outlen = len;
+
+	return iconv_conv((struct iconv_drv*)mbp->mb_udata, (const char **)(&src), &len, &dst, &outlen);
+}
+
 int
-smb_put_dmem(struct mbdata *mbp, struct smb_conn *scp, const char *src,
+smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
 	int size, int caseopt)
 {
-	struct iconv_drv *dp = scp->sc_toserver;
-	struct mbuf *m;
-	char *dst;
-	int error = 0, s, cplen, outlen;
+	struct iconv_drv *dp = vcp->vc_toserver;
 
 	if (size == 0)
 		return 0;
 	if (dp == NULL) {
-		return mb_put_mem(mbp, src, size, MB_MSYSTEM);
+		return mb_put_mem(mbp, (caddr_t)src, size, MB_MSYSTEM);
 	}
-	m = mbp->mb_cur;
-	if (m_getm(m, size) == NULL)
-		return ENOBUFS;
-	while (size > 0) {
-		cplen = M_TRAILINGSPACE(m);
-		if (cplen == 0) {
-			m = m->m_next;
-			continue;
-		}
-		if (cplen > size)
-			cplen = size;
-		s = cplen;
-		dst = mtod(m, caddr_t) + m->m_len;
-		error = iconv_conv(dp, &src, &cplen, &dst, &outlen);
-		if (error)
-			return error;
-		size -= s;
-		m->m_len += s;
-		mbp->mb_count += s;
-	}
-	mbp->mb_pos = mtod(m, caddr_t) + m->m_len;
-	mbp->mb_cur = m;
-	return 0;
+	mbp->mb_copy = smb_copy_iconv;
+	mbp->mb_udata = dp;
+	return mb_put_mem(mbp, (caddr_t)src, size, MB_MCUSTOM);
 }
 
 int
-smb_put_dstring(struct mbdata *mbp, struct smb_conn *scp, const char *src,
+smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
 	int caseopt)
 {
 	int error;
 
-	error = smb_put_dmem(mbp, scp, src, strlen(src), caseopt);
+	error = smb_put_dmem(mbp, vcp, src, strlen(src), caseopt);
 	if (error)
 		return error;
-	return mb_put_byte(mbp, 0);
+	return mb_put_uint8(mbp, 0);
 }
 
 int
 smb_put_asunistring(struct smb_rq *rqp, const char *src)
 {
-	struct mbdata *mbp = &rqp->sr_rq;
-	struct iconv_drv *dp = rqp->sr_conn->sc_toserver;
+	struct mbchain *mbp = &rqp->sr_rq;
+	struct iconv_drv *dp = rqp->sr_vc->vc_toserver;
 	u_char c;
 	int error;
 
 	while (*src) {
 		iconv_convmem(dp, &c, src++, 1);
-		error = mb_put_wordle(mbp, c);
+		error = mb_put_uint16le(mbp, c);
 		if (error)
 			return error;
 	}
-	return mb_put_wordle(mbp, 0);
+	return mb_put_uint16le(mbp, 0);
 }
 
-#define M_NBDATA	M_PCB
 struct sockaddr *
-dup_sockaddr(struct sockaddr *sa, int i)
+dup_sockaddr(struct sockaddr *sa, int canwait)
 {
-	struct sockaddr *p;
-	register int len = sizeof(struct sockaddr_nb);
+	struct sockaddr *sa2;
 
-	MALLOC(p, struct sockaddr *, len, M_NBDATA, M_WAITOK);
-	if (p == NULL)
-		return NULL;
-	bcopy(sa, p, len);
-	return p;
+	sa2 = malloc(sa->sa_len, M_SONAME, canwait ? M_WAITOK : M_NOWAIT);
+	if (sa2)
+		memcpy(sa2, sa, sa->sa_len);
+	return sa2;
 }

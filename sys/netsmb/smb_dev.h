@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_dev.h,v 1.2 2002/01/04 02:39:40 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_dev.h,v 1.3 2001/04/13 10:50:48 bp Exp $
+ * FreeBSD: src/sys/netsmb/smb_dev.h,v 1.3 2001/04/13 10:50:48 bp Exp
  */
 #ifndef _NETSMB_DEV_H_
 #define _NETSMB_DEV_H_
@@ -159,7 +161,7 @@ struct smbioc_rw {
 
 #define SMBST_CONNECTED	1
 
-STAILQ_HEAD(smbrqh, smb_rq);
+SIMPLEQ_HEAD(smbrqh, smb_rq);
 
 struct smb_dev {
 	int		sd_opened;

@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_trantcp.h,v 1.2 2002/01/04 02:39:45 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_trantcp.h,v 1.2 2001/12/10 08:09:49 obrien Exp $
+ * FreeBSD: src/sys/netsmb/smb_trantcp.h,v 1.2 2001/12/10 08:09:49 obrien Exp
  */
 #ifndef _NETSMB_SMB_TRANTCP_H_
 #define	_NETSMB_SMB_TRANTCP_H_
@@ -67,7 +69,7 @@ struct nbpcb {
 #define	NBF_RECVLOCK	0x0004
 
 	enum nbstate	nbp_state;
-	struct timespec	nbp_timo;
+	struct timeval	nbp_timo;
 	int		nbp_sndbuf;
 	int		nbp_rcvbuf;
 	void *		nbp_selectid;

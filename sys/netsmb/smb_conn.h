@@ -1,3 +1,5 @@
+/*	$NetBSD: smb_conn.h,v 1.2 2002/01/04 02:39:39 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/smb_conn.h,v 1.3 2001/12/02 08:47:29 bp Exp $
+ * FreeBSD: src/sys/netsmb/smb_conn.h,v 1.3 2001/12/02 08:47:29 bp Exp
  */
 
 /*
@@ -356,8 +358,8 @@ void smb_co_ref(struct smb_connobj *cp);
 void smb_co_rele(struct smb_connobj *cp, struct smb_cred *scred);
 int  smb_co_get(struct smb_connobj *cp, int flags, struct smb_cred *scred);
 void smb_co_put(struct smb_connobj *cp, struct smb_cred *scred);
-int  smb_co_lock(struct smb_connobj *cp, int flags, struct thread *td);
-void smb_co_unlock(struct smb_connobj *cp, int flags, struct thread *td);
+int  smb_co_lock(struct smb_connobj *cp, int flags);
+void smb_co_unlock(struct smb_connobj *cp, int flags);
 
 /*
  * session level functions
@@ -370,8 +372,8 @@ int  smb_vc_get(struct smb_vc *vcp, int flags, struct smb_cred *scred);
 void smb_vc_put(struct smb_vc *vcp, struct smb_cred *scred);
 void smb_vc_ref(struct smb_vc *vcp);
 void smb_vc_rele(struct smb_vc *vcp, struct smb_cred *scred);
-int  smb_vc_lock(struct smb_vc *vcp, int flags, struct thread *td);
-void smb_vc_unlock(struct smb_vc *vcp, int flags, struct thread *td);
+int  smb_vc_lock(struct smb_vc *vcp, int flags);
+void smb_vc_unlock(struct smb_vc *vcp, int flags);
 int  smb_vc_lookupshare(struct smb_vc *vcp, struct smb_sharespec *shspec,
 	struct smb_cred *scred, struct smb_share **sspp);
 const char * smb_vc_getpass(struct smb_vc *vcp);
@@ -387,8 +389,8 @@ void smb_share_ref(struct smb_share *ssp);
 void smb_share_rele(struct smb_share *ssp, struct smb_cred *scred);
 int  smb_share_get(struct smb_share *ssp, int flags, struct smb_cred *scred);
 void smb_share_put(struct smb_share *ssp, struct smb_cred *scred);
-int  smb_share_lock(struct smb_share *ssp, int flags, struct thread *td);
-void smb_share_unlock(struct smb_share *ssp, int flags, struct thread *td);
+int  smb_share_lock(struct smb_share *ssp, int flags);
+void smb_share_unlock(struct smb_share *ssp, int flags);
 void smb_share_invalidate(struct smb_share *ssp);
 int  smb_share_valid(struct smb_share *ssp);
 const char * smb_share_getpass(struct smb_share *ssp);
@@ -424,7 +426,7 @@ struct smbiod_event {
 	int	ev_type;
 	int	ev_error;
 	void *	ev_ident;
-	STAILQ_ENTRY(smbiod_event)	ev_link;
+	SIMPLEQ_ENTRY(smbiod_event)	ev_link;
 };
 
 #define	SMBIOD_SHUTDOWN		0x0001
@@ -440,12 +442,14 @@ struct smbiod {
 	struct smb_rqhead	iod_rqlist;	/* list of outstanding requests */
 	int			iod_muxwant;
 	struct proc *		iod_p;
+#ifndef __NetBSD__
 	struct thread *		iod_td;
+#endif
 	struct smb_cred		iod_scred;
 	struct smb_slock	iod_evlock;	/* iod_evlist */
-	STAILQ_HEAD(,smbiod_event) iod_evlist;
-	struct timespec 	iod_lastrqsent;
-	struct timespec 	iod_pingtimo;
+	SIMPLEQ_HEAD(,smbiod_event) iod_evlist;
+	struct timeval	 	iod_lastrqsent;
+	struct timeval	 	iod_pingtimo;
 };
 
 int  smb_iod_init(void);
