@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.12 2001/03/29 10:51:16 joda Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.13 2001/05/15 22:17:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -240,6 +240,8 @@ struct bootfile {
 	u_int32_t       bf_volsn;	/* volume ser. num. */
 };
 
+#pragma pack()
+
 typedef wchar (ntfs_wget_func_t) __P((const char **));
 typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
 typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
@@ -270,8 +272,6 @@ struct ntfsmount {
 #define	ntm_mftrecsz	ntm_bootfile.bf_mftrecsz
 #define	ntm_spc		ntm_bootfile.bf_spc
 #define	ntm_bps		ntm_bootfile.bf_bps
-
-#pragma pack()
 
 #define	NTFS_NEXTREC(s, type) ((type)(((caddr_t) s) + (s)->reclen))
 
