@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32 1997/06/16 23:41:47 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.33 1997/06/17 01:40:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2070,34 +2070,40 @@ _C_LABEL(cpu_arch):
 	.word	0
 
 	.globl	_C_LABEL(machDataCacheSize)
-	.globl	_C_LABEL(machInstCacheSize)
 _C_LABEL(machDataCacheSize):
 	.word	0
+
+	.globl	_C_LABEL(machInstCacheSize)
 _C_LABEL(machInstCacheSize):
 	.word	0
 
 	.globl	_C_LABEL(machPrimaryDataCacheSize)
-	.globl	_C_LABEL(machPrimaryInstCacheSize)
-
 _C_LABEL(machPrimaryDataCacheSize):
 	.word	0
+
+.globl	_C_LABEL(machPrimaryInstCacheSize)
 _C_LABEL(machPrimaryInstCacheSize):
 	.word	0
 
 	.globl	_C_LABEL(machPrimaryDataCacheLSize)
-	.globl	_C_LABEL(machPrimaryInstCacheLSize)
 _C_LABEL(machPrimaryDataCacheLSize):
 	.word	0
+
+	.globl	_C_LABEL(machPrimaryInstCacheLSize)
 _C_LABEL(machPrimaryInstCacheLSize):
 	.word	0
 
+	.globl	_C_LABEL(machCacheAliasMask)
+_C_LABEL(machCacheAliasMask):
+	.word 0
+
 	.globl	_C_LABEL(machSecondaryCacheSize)
-	.globl	_C_LABEL(machSecondaryCacheLSize)
 _C_LABEL(machSecondaryCacheSize):
 	.word	0
+
+	.globl	_C_LABEL(machSecondaryCacheLSize)
 _C_LABEL(machSecondaryCacheLSize):
 	.word	0
-
 
 /*
  * The variables below are used to communicate the CPU and FPU
