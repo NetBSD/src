@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.21 1997/03/21 01:26:08 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.22 1997/04/04 20:50:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -100,7 +100,7 @@ dec_2100_a50_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate;			/*XXX*/
+			extern int comconsrate;				/*XXX*/
 			extern int comcngetc __P((dev_t));		/*XXX*/
 			extern void comcnputc __P((dev_t, int));	/*XXX*/
 			extern void comcnpollc __P((dev_t, int));	/*XXX*/
@@ -112,15 +112,15 @@ dec_2100_a50_cons_init()
 			 * FIFO depth * character time,
 			 * character time = (1000000 / (defaultrate / 10))
 			 */
-			DELAY(160000000 / comdefaultrate);
+			DELAY(160000000 / comconsrate);
 
 			comconsaddr = 0x3f8;
 			comconstag = acp->ac_iot;
 			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
-			    0, &comconsbah))
+			    0, &comconsioh))
 				panic("can't map serial console I/O ports");
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-			cominit(comconstag, comconsbah, comdefaultrate);
+			cominit(comconstag, comconsioh, comconsrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
