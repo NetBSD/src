@@ -1,8 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.15 2002/10/05 11:59:06 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.16 2003/03/02 22:03:40 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
- * Portions copyright 2002 Charles M. Hannum <root@ihack.net>
+ * Portions copyright 2002, 2003 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,9 @@
 
 #include <machine/asm.h>
 
-	.data
-.L1:	.long	_DYNAMIC
-
 /* R9 contains the address of PS_STRINGS and since its caller saved,
  * we can just use it.  R6 has a backup copy of the stack pointer which
- * we can use as well.  Since the VAX has perfectly PIC code, we don't
- * need to relocate anything upon startup.
+ * we can use as well.
  */
 ENTRY(_rtld_start, 0)
 	/* Allocate space on the stack for the cleanup and obj_main
@@ -46,7 +42,7 @@ ENTRY(_rtld_start, 0)
 	subl2	$8,%sp
 
 	movab	_DYNAMIC,%r0
-	subl3	.L1,%r0,%r10
+	subl3	_GLOBAL_OFFSET_TABLE_,%r0,%r10
 	pushl	%r10		/* relocbase */
 	pushl	%r0		/* &_DYNAMIC */
 	calls	$2,_rtld_relocate_nonplt_self
