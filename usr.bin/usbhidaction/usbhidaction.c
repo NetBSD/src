@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.8 2002/06/11 06:06:21 itojun Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		reportid = -1;
 	repd = hid_get_report_desc(fd);
 	if (repd == NULL)
-		err(1, "hid_get_report_desc() failed\n");
+		err(1, "hid_get_report_desc() failed");
 
 	commands = parse_conf(conf, repd, reportid, ignore);
 
@@ -346,7 +346,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 		if (ignore) {
 			if (verbose)
-				warnx("ignore item '%s'\n", name);
+				warnx("ignore item '%s'", name);
 			continue;
 		}
 		if (isdemon) {

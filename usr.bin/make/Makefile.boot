@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.14 2001/11/30 01:29:47 thorpej Exp $
+#	$NetBSD: Makefile.boot,v 1.15 2002/06/11 06:06:19 itojun Exp $
 #
 # a very simple makefile...
 #
@@ -6,13 +6,13 @@
 #
 # modify MACHINE and MACHINE_ARCH as appropriate for your target architecture
 #
-CC=gcc -O
+CC=gcc -O -g
 
 .c.o:
 	${CC} ${CFLAGS} -c $< -o $@
 
-MAKE_MACHINE=sun
-MAKE_MACHINE_ARCH=sparc
+MACHINE=i386
+MACHINE_ARCH=i386
 # tested on HP-UX 10.20
 #MAKE_MACHINE=hp700
 #MAKE_MACHINE_ARCH=hppa

@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.17 2002/04/23 06:10:42 itohy Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.18 2002/06/11 06:06:20 itojun Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 				zerokey = 1;
 				break;
 			default:
-				err(1, "Usage: %s [-n count] [-t md4|md5|sha1] [-s] [-x] [-z] [user]\n", argv[0]);
+				errx(1, "Usage: %s [-n count] [-t md4|md5|sha1] [-s] [-x] [-z] [user]", argv[0]);
 		}
 	}
 
