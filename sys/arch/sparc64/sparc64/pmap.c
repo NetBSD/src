@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2001/06/21 00:24:22 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2001/06/21 01:17:18 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3290,6 +3290,7 @@ pmap_page_protect(pg, prot)
 				       npv->pv_pmap, (void *)(u_long)npv->pv_va);
 				printf("vm wire count %d\n", 
 					PHYS_TO_VM_PAGE(pa)->wire_count);
+				pv = npv;
 				continue;
 #endif			
 			}
