@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.4 1999/05/04 20:20:35 fvdl Exp $
+.\" $NetBSD: sysinst,v 1.5 2000/03/08 13:09:00 hubertf Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,9 +116,10 @@ notes that will appear in this document.
 If the kernel by default allocates an interrupt for PCMCIA which is
 allocated to other (typically undetected) hardware, you may use a
 workaround by booting the install kernel with "boot -d" to drop into
-DDB (the in-kernel debugger) and set pcic_isa_intr_alloc_mask to mask
-out the offending interrupt before continuing.  By default the kernel
-masks out IRQ 10, and the corresponding mask is 0xfbff.
+DDB (the in-kernel debugger) and use "write pcic_isa_intr_alloc_mask 0x0808"
+(or any appropriate value for your machine) to mask out the offending
+interrupt before continuing.  By default the kernel masks out IRQ 10, and
+the corresponding mask is 0xfbff.
 .\}
 .\}
 .It_need
