@@ -1,7 +1,7 @@
-/*	$NetBSD: in_cksum.s,v 1.10 2001/03/06 14:55:14 fvdl Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.11 2001/03/06 19:14:37 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -125,45 +125,42 @@ ENTRY(in4_cksum)
 	pushl	%esi
 
 	movl	16(%esp), %ebp
-	movzbl	20(%esp), %eax
-	shl	$8, %eax		/* sum = w[0] (== nxt << 8) */
-	movzwl	28(%esp), %ebx
-	rorw	$8, %bx
-	addl	%ebx, %eax		/* sum += htons(len) */
-
+	movzbl	20(%esp), %eax		/* sum = nxt */
+	movl	28(%esp), %esi
 	movl	M_DATA(%ebp), %ebx
-	ADC(IP_SRC)			/* sum += mtod(m,struct ip *)->ip_src */
-	ADC(IP_DST)
+	addl	%esi, %eax		/* sum += len */
+	movl	24(%esp), %edx		/* %edx = off */
+	shll	$8, %eax		/* sum = htons(sum) */
+
+	ADD(IP_SRC)			/* sum += ip->ip_src */
+	ADC(IP_DST)			/* sum += ip->ip_dst */
 	MOP
 
-	movl	24(%esp), %esi
 mbuf_loop_0:
 	testl	%ebp, %ebp
-	jz	skip_done
-	cmpl	$0, %esi
-	jae	skip_done
-	movl	M_LEN(%ebp), %edx
-	cmpl	%edx, %esi
-	ja	skip_done
-	subl	%edx, %esi
+	jz	out_of_mbufs
+	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
+	subl	%ecx, %edx		/* %edx = off - m_len */
+	jb	skip_done
 	movl	M_NEXT(%ebp), %ebp
 	jmp	mbuf_loop_0
-skip_done:
-	testl	%ebp, %ebp
-	jz	out_of_mbufs
 
-	movl	M_DATA(%ebp), %ebx
-	movl	M_LEN(%ebp), %edx
-	addl	%esi, %ebx
-	subl	%esi, %edx
+skip_done:
+	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
+	movl	M_NEXT(%ebp), %ebp
+	addl	%edx, %ebx		/* %ebx = m_data + off - m_len */
+	negl	%edx			/* %edx = m_len - off */
+	addl	%ecx, %ebx		/* %ebx = m_data + off */
 	xorb	%cl, %cl
 
-	movl	28(%esp), %esi
-
-	testl	%esi, %esi
-	jz	done
-
+	/*
+	 * The len == 0 case is handled really inefficiently, by going through
+	 * the whole short_mbuf path once to get back to mbuf_loop_1 -- but
+	 * this case never happens in practice, so it's sufficient that it
+	 * doesn't explode.
+	 */
 	jmp	in4_entry
+
 
 ENTRY(in_cksum)
 	pushl	%ebp
@@ -185,9 +182,9 @@ mbuf_loop_2:
 
 	movl	M_DATA(%ebp), %ebx
 	movl	M_LEN(%ebp), %edx
-in4_entry:
 	movl	M_NEXT(%ebp), %ebp
 
+in4_entry:
 	cmpl	%esi, %edx
 	jbe	1f
 	movl	%esi, %edx
