@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.53 1999/03/28 17:34:33 kleink Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.54 1999/04/30 05:30:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -49,6 +49,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_43.h"
+#include "opt_compat_osf1.h"
 
 #include <sys/param.h>
 #include <sys/acct.h>
@@ -72,7 +73,8 @@ sys_getpid(p, v, retval)
 
 	*retval = p->p_pid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(__alpha__))
+    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
+    (defined(COMPAT_LINUX) && defined(__alpha__))
 	retval[1] = p->p_pptr->p_pid;
 #endif
 	return (0);
@@ -154,7 +156,8 @@ sys_getuid(p, v, retval)
 
 	*retval = p->p_cred->p_ruid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(__alpha__))
+    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
+    (defined(COMPAT_LINUX) && defined(__alpha__))
 	retval[1] = p->p_ucred->cr_uid;
 #endif
 	return (0);
@@ -182,7 +185,7 @@ sys_getgid(p, v, retval)
 
 	*retval = p->p_cred->p_rgid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD) || \
-    (defined(COMPAT_LINUX) && defined(alpha))
+    defined(COMPAT_OSF1) || (defined(COMPAT_LINUX) && defined(alpha))
 	retval[1] = p->p_ucred->cr_gid;
 #endif
 	return (0);
