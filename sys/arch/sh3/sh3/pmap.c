@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2002/12/16 07:18:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2003/01/18 06:33:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -291,9 +291,9 @@ pmap_reference(pmap_t pmap)
 }
 
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	if (pmap->pm_asid == -1)
 		pmap->pm_asid = __pmap_asid_alloc();
@@ -303,7 +303,7 @@ pmap_activate(struct proc *p)
 }
 
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
 
 	/* Nothing to do */
