@@ -109,6 +109,10 @@ int	fsync();
 int	linux_sigreturn();
 int	compat_09_setdomainname();
 int	linux_uname();
+#ifdef __i386__
+int	linux_modify_ldt();
+#else
+#endif
 int	mprotect();
 int	linux_sigprocmask();
 int	linux_getpgid();
@@ -363,8 +367,13 @@ struct sysent linux_sysent[] = {
 	    compat_09_setdomainname },		/* 121 = compat_09_setdomainname */
 	{ 1, s(struct linux_uname_args),
 	    linux_uname },			/* 122 = linux_uname */
+#ifdef __i386__
+	{ 3, s(struct linux_modify_ldt_args),
+	    linux_modify_ldt },			/* 123 = linux_modify_ldt */
+#else
 	{ 0, 0,
 	    nosys },				/* 123 = unimplemented linux_modify_ldt */
+#endif
 	{ 0, 0,
 	    nosys },				/* 124 = unimplemented linux_adjtimex */
 	{ 3, s(struct mprotect_args),

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1995/04/07 22:23:28 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.5 1995/05/06 18:16:40 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -175,7 +175,12 @@
 120	UNIMPL		linux_clone
 121	NOARGS		{ int compat_09_setdomainname(char *name, int len); }
 122	STD		{ int linux_uname(struct linux_utsname *up); }
+#ifdef __i386__
+123	STD		{ int linux_modify_ldt(int func, void *ptr, \
+				size_t bytecount); }
+#else
 123	UNIMPL		linux_modify_ldt
+#endif
 124	UNIMPL		linux_adjtimex
 125	NOARGS		{ int mprotect(caddr_t addr, int len, int prot); }
 126	STD		{ int linux_sigprocmask(int how, linux_sigset_t *set, \
