@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.28 1995/04/10 13:14:36 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.29 1995/05/01 08:06:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,7 +71,7 @@ mmopen(dev, flag, mode)
 	case 14:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
-			fp = (struct trapframe *)curproc->p_md.md_regs;
+			fp = curproc->p_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
