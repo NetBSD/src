@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.11 2003/06/10 16:57:05 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.12 2003/06/24 00:09:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.11 2003/06/10 16:57:05 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.12 2003/06/24 00:09:26 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,7 @@ __RCSID("$NetBSD: split.c,v 1.11 2003/06/10 16:57:05 bjh21 Exp $");
 
 static int file_open;		/* If a file open. */
 static int ifd = -1, ofd = -1;	/* Input/output file descriptors. */
-static char fname[MAXPATHLEN];	/* File name prefix. */
+static char *fname;		/* File name prefix. */
 static int sfxlen = 2;		/* suffix length. */
 
 int  main(int, char **);
@@ -77,6 +78,8 @@ main(int argc, char *argv[])
 	char *ep, *p;
 	unsigned long long bytecnt = 0;	/* Byte count to split on. */
 	unsigned long long numlines = 0;/* Line count to split on. */
+	size_t namelen;
+	long name_max;
 
 	while ((ch = getopt(argc, argv, "-0123456789b:l:a:")) != -1)
 		switch (ch) {
@@ -137,13 +140,23 @@ main(int argc, char *argv[])
 			++argv;
 		}
 
+	errno = 0;
+	if ((name_max = pathconf(".", _PC_NAME_MAX)) == -1 &&
+	    errno != 0)
+		err(EXIT_FAILURE, "pathconf");
 	if (*argv != NULL) {
-		if (strlen(*argv) + sfxlen > NAME_MAX)
+		namelen = strlen(*argv) + sfxlen;
+		if (name_max != -1 && namelen > name_max)
 			errx(EXIT_FAILURE, "Output file name too long");
+		if ((fname = malloc(namelen + 1)) == NULL)
+			err(EXIT_FAILURE, NULL);
 		(void)strcpy(fname, *argv++);		/* File name prefix. */
 	} else {
-		if (1 + sfxlen > NAME_MAX)
+		if (name_max != -1 && 1 + sfxlen > name_max)
 			errx(EXIT_FAILURE, "Output file name too long");
+		if ((fname = malloc(sfxlen + 2)) == NULL)
+			err(EXIT_FAILURE, NULL);
+		fname[0] = '\0';
 	}
 
 	if (*argv != NULL)
