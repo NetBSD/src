@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.61 2003/09/20 00:17:44 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.62 2003/09/20 22:24:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.61 2003/09/20 00:17:44 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.62 2003/09/20 22:24:00 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -751,8 +751,9 @@ ktrpsig(v, len)
 			printf(": code=%s child pid=%d, uid=%d, "
 			    " status=%u, utime=%lu, stime=%lu)\n", 
 			    code, si->si_pid,
-			    si->si_uid, si->si_status, si->si_utime,
-			    si->si_stime); 
+			    si->si_uid, si->si_status,
+			    (unsigned long) si->si_utime,
+			    (unsigned long) si->si_stime); 
 			return;
 		case SIGILL:
 		case SIGFPE:
