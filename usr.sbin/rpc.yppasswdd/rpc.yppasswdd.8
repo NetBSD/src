@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.yppasswdd.8,v 1.8 2000/07/05 15:45:32 msaitoh Exp $
+.\"	$NetBSD: rpc.yppasswdd.8,v 1.9 2000/12/08 21:51:21 tron Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
-.Op Fl m Ar arg1 arg2 ... 
+.Op Fl m Ar arg1 Op Ar arg2 ... 
 .Sh DESCRIPTION
 .Nm
 must be running on the
@@ -56,7 +56,7 @@ Don't allow changes of the shell field in the passwd file.
 Don't allow changes of the gecos field in the passwd file.
 .It Fl nopw
 Don't allow changes of the password in the passwd file.
-.It Fl m Ar arg1 arg2 ...
+.It Fl m Ar arg1 Op Ar arg2 ...
 Additional arguments to pass to 
 .Ar make 
 in
