@@ -1,11 +1,12 @@
-/*	$NetBSD: pcmciadevs.h,v 1.109 2001/01/16 15:57:54 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.110 2001/01/20 01:58:12 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
+ *	NetBSD: pcmciadevs,v 1.111 2001/01/20 01:56:16 imp Exp 
  */
+/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +71,7 @@
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
+#define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
@@ -181,6 +183,11 @@
 #define	PCMCIA_CIS_MOTOROLA_PM100C	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MOTOROLA_PM100C	0x0302
 #define	PCMCIA_STR_MOTOROLA_PM100C	"Motorola Personal Messenger 100C CDPD Modem"
+
+/* Kingston Products */
+#define	PCMCIA_CIS_KINGSTON_KNE2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_KINGSTON_KNE2	0x0100
+#define	PCMCIA_STR_KINGSTON_KNE2	"Kingston KNE-PC2 Ethernet"
 
 /* Fujitsu Products */
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
@@ -400,6 +407,11 @@
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
 #define	PCMCIA_STR_ALLIEDTELESIS_LA_PCM	"Allied Telesis LA-PCM"
 
+/* RATOC System Inc. Products */
+#define	PCMCIA_CIS_RATOC_REX_R280	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_R280	0x0001
+#define	PCMCIA_STR_RATOC_REX_R280	"RATOC REX-R280"
+
 /* Lucent WaveLAN/IEEE */
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
@@ -465,6 +477,7 @@
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
+#define	PCMCIA_VENDOR_NAKAGAWAMETAL	-1	/* NAKAGAWA METAL */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
@@ -544,6 +557,9 @@
 #define	PCMCIA_CIS_SVEC_PN650TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_PN650TX	-1
 #define	PCMCIA_STR_SVEC_PN650TX	"SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card"
+#define	PCMCIA_CIS_NAKAGAWAMETAL_LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL }
+#define	PCMCIA_PRODUCT_NAKAGAWAMETAL_LNT10TN	-1
+#define	PCMCIA_STR_NAKAGAWAMETAL_LNT10TN	"NAKAGAWA METAL LNT-10TN NE2000 Compatible Card"
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
