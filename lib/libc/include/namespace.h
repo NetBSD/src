@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.9 1998/09/27 17:57:49 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.10 1998/09/27 18:14:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -318,6 +318,7 @@
 #define tcflush			_tcflush
 #define tcgetattr		_tcgetattr
 #define tcgetpgrp		_tcgetpgrp
+#define tcgetsid		_tcgetsid
 #define tcsendbreak		_tcsendbreak
 #define tcsetattr		_tcsetattr
 #define tcsetpgrp		_tcsetpgrp
