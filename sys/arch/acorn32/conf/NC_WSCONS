@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#	$NetBSD: NC_WSCONS,v 1.2 2001/10/17 22:54:25 reinoud Exp $
 #
 #	NC - with wscons
 #
@@ -179,7 +179,7 @@ wsdisplay*      at vidcvideo? console ?  # display itself
 rpckbd*         at iomd?                 # based on old `kbd' driver
 wskbd*          at rpckbd?               # wskbd on RiscPC keyboard
 
-pseudo-device	wsmux	2		 # why 2 ?
+pseudo-device	wsmux	1		 # seems mandatory for now
 
 
 # The origional vidcconsole :
@@ -285,6 +285,7 @@ podulebus0	at root
 #eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
+pseudo-device	wsmux	1		# seems mandatory for now
 pseudo-device	loop	1               # network loopback
 #pseudo-device	bpfilter 8              # packet filter
 #pseudo-device	sl	2               # CSLIP

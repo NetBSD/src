@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.2 2001/10/17 22:54:25 reinoud Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -172,15 +172,16 @@ options         FONT_SONY8x16           # not tested
 #options         FONT_VT220L8x10         # not tested
 #options         FONT_VT220L8x20         # not tested
 
-vidcvideo0      at vidc?                 # wscons driver for VIDC
-wsdisplay*      at vidcvideo? console ?  # display itself
+vidcvideo0      at vidc?                # wscons driver for VIDC
+wsdisplay*      at vidcvideo? console ? # display itself
 
-rpckbd*         at iomd?                 # based on old `kbd' driver
-wskbd*          at rpckbd?               # wskbd on RiscPC keyboard
+rpckbd*         at iomd?                # based on old `kbd' driver
+wskbd*          at rpckbd?              # wskbd on RiscPC keyboard
 
-wsqms*		at iomd?		 # ws quadmouse driver
-wsmouse*	at wsqms?		 # wsmouse on ws quadmouse
+wsqms*		at iomd?		# ws quadmouse driver
+wsmouse*	at wsqms?		# wsmouse on ws quadmouse
 
+pseudo-device	wsmux	1		 # seems to be mandatory for now
 
 # The origional vidcconsole :
 # vidcconsole kbd at IOMD
