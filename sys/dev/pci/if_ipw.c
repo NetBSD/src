@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.8 2004/09/14 00:38:37 lukem Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.9 2005/01/18 04:31:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.8 2004/09/14 00:38:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.9 2005/01/18 04:31:09 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -829,7 +829,7 @@ ipw_start(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
