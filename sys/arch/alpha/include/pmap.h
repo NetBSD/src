@@ -1,8 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.6 1996/07/02 22:42:49 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 1996/07/02 22:51:55 cgd Exp $	*/
 
 /*
- * Mach Operating System
- * Copyright (c) 1993,1992 Carnegie Mellon University
+ * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -25,32 +24,12 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: pmap.h,v $
- * Revision 1.6  1996/07/02 22:42:49  cgd
- * pull in the Mach3 alpha pmap, as a base for the new pmap module.  Modified
- * from the mach3 versions only as much as necessary to allow the old
- * NetBSD/Alpha pmap code to compile.  THESE WILL NOT WORK AS-IS, and at
- * minimum will require code to implement reference- and modified-bit
- * emulation.
- *
- * Revision 2.3  93/01/19  08:59:45  danner
- * 	Do not allocate cpusets as commons, to avoid
- * 	cacheline conflicts.
- * 	[93/01/15            af]
- * 
- * Revision 2.2  93/01/14  17:13:51  danner
- * 	Created, from dbg's i386 pmap module.
- * 	[92/06/15            af]
- * 
- *
- */
 
 /*
  *	File:	pmap.h
  *
- *	Author:  David Golub (mods for Alpha by Alessandro Forin)
+ *	Author: David Golub (mods for Alpha by Alessandro Forin)
+		Mods for use in NetBSD/Alpha by Chris Demetriou.
  *	Date:	1988 ca.
  *
  *	Machine-dependent structures for the physical map module.

@@ -1,8 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.9 1996/07/02 22:42:39 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1996/07/02 22:51:46 cgd Exp $	*/
 
 /*
- * Mach Operating System
- * Copyright (c) 1992 Carnegie Mellon University
+ * Copyright (c) 1992, 1996 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -25,41 +24,6 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: pmap.c,v $
- * Revision 1.9  1996/07/02 22:42:39  cgd
- * pull in the Mach3 alpha pmap, as a base for the new pmap module.  Modified
- * from the mach3 versions only as much as necessary to allow the old
- * NetBSD/Alpha pmap code to compile.  THESE WILL NOT WORK AS-IS, and at
- * minimum will require code to implement reference- and modified-bit
- * emulation.
- *
- * Revision 2.4  93/05/15  19:11:31  mrt
- * 	machparam.h -> machspl.h
- * 
- * Revision 2.3  93/03/09  10:50:31  danner
- * 	GCC quiets.
- * 	[93/03/05            af]
- * 
- * Revision 2.2  93/02/05  07:59:42  danner
- * 	Added pmap_set_modify, for some smart device driver.
- * 	[93/02/04  00:51:56  af]
- * 
- * 	Fixed locking bug: at interrupt time one should not call
- * 	pmap_extract()  !  Made kvtophys() call the safer one.
- * 	[93/01/15            af]
- * 	Added reference to documentation source(s).
- * 	[92/12/16  15:17:39  af]
- * 
- * 	Support for new MI multiP ddb.  Code probably belongs elsewhere.
- * 	[92/12/16  12:45:52  af]
- * 
- * 	Created, starting from i386 version and extending it with
- * 	one more layer in the pagetable tree.
- * 	[92/12/10  15:02:31  af]
- * 
- */
 
 /*
  *	File:	pmap.c
@@ -68,6 +32,7 @@
  *	vax:  Avadis Tevanian, Jr., Michael Wayne Young
  *	i386: Lance Berc, Mike Kupfer, Bob Baron, David Golub, Richard Draves
  *	alpha: Alessandro Forin
+ *	NetBSD/Alpha: Chris Demetriou
  *
  *	Physical Map management code for DEC Alpha
  *
@@ -78,6 +43,7 @@
  *	Digital Press, Burlington, MA 01803
  *	ISBN 1-55558-098-X, Order no. EY-L520E-DP
  */
+
 /*
  *	In addition to hardware address maps, this
  *	module is called upon to provide software-use-only
