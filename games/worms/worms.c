@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)worms.c	5.9 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: worms.c,v 1.3 1993/08/01 18:49:26 mycroft Exp $";
+static char rcsid[] = "$Id: worms.c,v 1.4 1994/04/05 00:21:20 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -62,12 +62,9 @@ static char rcsid[] = "$Id: worms.c,v 1.3 1993/08/01 18:49:26 mycroft Exp $";
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef USG
-#include <termio.h>
-#else
-#include <sgtty.h>
-#endif
+#include <termios.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 static struct options {
 	int nopts;
@@ -163,10 +160,9 @@ static struct options {
 	{ 0, { 0, 0, 0 } }
 };
 
-#define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
+#define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, putchar)
 
 char *tcp;
-int fputchar();
 
 static char	flavor[] = {
 	'O', '*', '#', '$', '%', '0', '@', '~'
@@ -188,7 +184,6 @@ main(argc, argv)
 	char **argv;
 {
 	extern int optind;
-	extern short ospeed;
 	extern char *optarg, *UP;
 	register int x, y, h, n;
 	register struct worm *w;
@@ -201,10 +196,9 @@ main(argc, argv)
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
 	char *field, tcb[100], *mp;
 	long random();
-#ifdef USG
-	struct termio sg;
-#else
-	struct sgttyb sg;
+	struct termios ti;
+#ifdef TIOCGWINSZ
+	struct winsize ws;
 #endif
 
 	length = 16;
@@ -261,27 +255,30 @@ main(argc, argv)
 	}
 	AL = tgetstr("al", &tcp);
 	BC = tgetflag("bs") ? "\b" : tgetstr("bc", &tcp);
-	if ((CO = tgetnum("co")) <= 0)
-		CO = 80;
-	last = CO - 1;
 	EI = tgetstr("ei", &tcp);
 	HO = tgetstr("ho", &tcp);
 	IC = tgetstr("ic", &tcp);
 	IM = tgetstr("im", &tcp);
 	IN = tgetflag("in");
 	IP = tgetstr("ip", &tcp);
-	if ((LI = tgetnum("li")) <= 0)
-		LI = 24;
-	bottom = LI - 1;
 	SR = tgetstr("sr", &tcp);
 	UP = tgetstr("up", &tcp);
-#ifdef USG
-	ioctl(1, TCGETA, &sg);
-	ospeed = sg.c_cflag&CBAUD;
-#else
-	gtty(1, &sg);
-	ospeed = sg.sg_ospeed;
+#ifdef TIOCGWINSZ
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != -1 &&
+	    ws.ws_col && ws.ws_row) {
+		CO = ws.ws_col;
+		LI = ws.ws_row;
+	} else
 #endif
+	{
+		if ((CO = tgetnum("co")) <= 0)
+			CO = 80;
+		if ((LI = tgetnum("li")) <= 0)
+			LI = 24;
+	}
+	last = CO - 1;
+	bottom = LI - 1;
+	tcgetattr(fileno(stdout), &ti);
 	Wrap = tgetflag("am");
 	if (!(ip = (short *)malloc((u_int)(LI * CO * sizeof(short)))))
 		nomem();
@@ -316,67 +313,67 @@ main(argc, argv)
 	(void)signal(SIGTSTP, onsig);
 	(void)signal(SIGTERM, onsig);
 
-	tputs(tgetstr("ti", &tcp), 1, fputchar);
-	tputs(tgetstr("cl", &tcp), 1, fputchar);
+	tputs(tgetstr("ti", &tcp), 1, putchar);
+	tputs(tgetstr("cl", &tcp), 1, putchar);
 	if (field) {
 		register char *p = field;
 
 		for (y = bottom; --y >= 0;) {
 			for (x = CO; --x >= 0;) {
-				fputchar(*p++);
+				putchar(*p++);
 				if (!*p)
 					p = field;
 			}
 			if (!Wrap)
-				fputchar('\n');
+				putchar('\n');
 			(void)fflush(stdout);
 		}
 		if (Wrap) {
 			if (IM && !IN) {
 				for (x = last; --x > 0;) {
-					fputchar(*p++);
+					putchar(*p++);
 					if (!*p)
 						p = field;
 				}
 				y = *p++;
 				if (!*p)
 					p = field;
-				fputchar(*p);
+				putchar(*p);
 				if (BC)
-					tputs(BC, 1, fputchar);
+					tputs(BC, 1, putchar);
 				else
 					cursor(last - 1, bottom);
-				tputs(IM, 1, fputchar);
+				tputs(IM, 1, putchar);
 				if (IC)
-					tputs(IC, 1, fputchar);
-				fputchar(y);
+					tputs(IC, 1, putchar);
+				putchar(y);
 				if (IP)
-					tputs(IP, 1, fputchar);
-				tputs(EI, 1, fputchar);
+					tputs(IP, 1, putchar);
+				tputs(EI, 1, putchar);
 			}
 			else if (SR || AL) {
 				if (HO)
-					tputs(HO, 1, fputchar);
+					tputs(HO, 1, putchar);
 				else
 					cursor(0, 0);
 				if (SR)
-					tputs(SR, 1, fputchar);
+					tputs(SR, 1, putchar);
 				else
-					tputs(AL, LI, fputchar);
+					tputs(AL, LI, putchar);
 				for (x = CO; --x >= 0;) {
-					fputchar(*p++);
+					putchar(*p++);
 					if (!*p)
 						p = field;
 				}
 			}
 			else for (x = last; --x >= 0;) {
-				fputchar(*p++);
+				putchar(*p++);
 				if (!*p)
 					p = field;
 			}
 		}
 		else for (x = CO; --x >= 0;) {
-			fputchar(*p++);
+			putchar(*p++);
 			if (!*p)
 				p = field;
 		}
@@ -387,7 +384,7 @@ main(argc, argv)
 			if ((x = w->xpos[h = w->head]) < 0) {
 				cursor(x = w->xpos[h] = 0,
 				     y = w->ypos[h] = bottom);
-				fputchar(flavor[n % sizeof(flavor)]);
+				putchar(flavor[n % sizeof(flavor)]);
 				ref[y][x]++;
 			}
 			else
@@ -402,7 +399,7 @@ main(argc, argv)
 				if (--ref[y1][x1] == 0) {
 					cursor(x1, y1);
 					if (trail)
-						fputchar(trail);
+						putchar(trail);
 				}
 			}
 			op = &(!x ? (!y ? upleft : (y == bottom ? lowleft : left)) : (x == last ? (!y ? upright : (y == bottom ? lowright : right)) : (!y ? upper : (y == bottom ? lower : normal))))[w->orientation];
@@ -421,7 +418,7 @@ main(argc, argv)
 			cursor(x += xinc[w->orientation],
 			    y += yinc[w->orientation]);
 			if (!Wrap || x != last || y != bottom)
-				fputchar(flavor[n % sizeof(flavor)]);
+				putchar(flavor[n % sizeof(flavor)]);
 			ref[w->ypos[h] = y][w->xpos[h] = x]++;
 		}
 	}
@@ -430,15 +427,9 @@ main(argc, argv)
 void
 onsig()
 {
-	tputs(tgetstr("cl", &tcp), 1, fputchar);
-	tputs(tgetstr("te", &tcp), 1, fputchar);
+	tputs(tgetstr("cl", &tcp), 1, putchar);
+	tputs(tgetstr("te", &tcp), 1, putchar);
 	exit(0);
-}
-
-fputchar(c)
-	char c;
-{
-	putchar(c);
 }
 
 nomem()
