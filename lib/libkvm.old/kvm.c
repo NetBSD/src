@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.3 1996/10/01 18:56:11 cgd Exp $	*/
+/*	$NetBSD: kvm.c,v 1.4 1996/10/12 00:50:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char rcsid[] = "$NetBSD: kvm.c,v 1.3 1996/10/01 18:56:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: kvm.c,v 1.4 1996/10/12 00:50:56 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ static char rcsid[] = "$NetBSD: kvm.c,v 1.3 1996/10/01 18:56:11 cgd Exp $";
 
 #include "kvm_private.h"
 
-static int	kvm_dbopen __P((kvm_t *, const char *));
+static int	kvm_dbopen __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
 
@@ -178,6 +178,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	char *errout;
 {
 	struct stat st;
+	int ufgiven;
 
 	kd->db = 0;
 	kd->pmfd = -1;
@@ -193,7 +194,8 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->vmst = 0;
 	kd->vm_page_buckets = 0;
 
-	if (uf == 0)
+	ufgiven = (uf != NULL);
+	if (!ufgiven)
 		uf = _PATH_UNIX;
 	else if (strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
@@ -237,14 +239,13 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			goto failed;
 		}
 		/*
-		 * Open kvm nlist database.  We go ahead and do this
-		 * here so that we don't have to hold on to the vmunix
-		 * path name.  Since a kvm application will surely do
-		 * a kvm_nlist(), this probably won't be a wasted effort.
-		 * If the database cannot be opened, open the namelist
-		 * argument so we revert to slow nlist() calls.
+		 * Open kvm nlist database.  We only try to use
+		 * the pre-built database if the namelist file name
+		 * pointer is NULL.  If the database cannot or should
+		 * not be opened, open the namelist argument so we
+		 * revert to slow nlist() calls.
 		 */
-		if (kvm_dbopen(kd, uf) < 0 && 
+		if ((ufgiven || kvm_dbopen(kd) < 0) && 
 		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
@@ -349,23 +350,16 @@ kvm_close(kd)
  * Only called for live kernels.  Return 0 on success, -1 on failure.
  */
 static int
-kvm_dbopen(kd, uf)
+kvm_dbopen(kd)
 	kvm_t *kd;
-	const char *uf;
 {
-	char *cp;
 	DBT rec;
 	int dbversionlen;
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
-	char dbname[MAXPATHLEN];
 
-	if ((cp = rindex(uf, '/')) != 0)
-		uf = cp + 1;
-
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
-	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
+	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
 		return (-1);
 	/*
