@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/04/24 05:20:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.6 2002/08/14 18:48:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,24 @@
 #ifndef _LIB_PTHREAD_I386_MD_H
 #define _LIB_PTHREAD_I386_MD_H
 
+extern int (*_md_getcontext_u)(ucontext_t *);
+extern int (*_md_setcontext_u)(const ucontext_t *);
+extern int (*_md_swapcontext_u)(ucontext_t *, const ucontext_t *);
+
+#define _getcontext_u(uc) (*_md_getcontext_u)((uc))
+#define _setcontext_u(uc) (*_md_setcontext_u)((uc))
+#define _swapcontext_u(ouc, nuc) (*_md_swapcontext_u)((ouc), (nuc))
+
+int _getcontext_u_s87(ucontext_t *);
+int _setcontext_u_s87(const ucontext_t *);
+int _swapcontext_u_s87(ucontext_t *, const ucontext_t *);
+int _getcontext_u_xmm(ucontext_t *);
+int _setcontext_u_xmm(const ucontext_t *);
+int _swapcontext_u_xmm(ucontext_t *, const ucontext_t *);
+
+void pthread__i386_init(void);
+
+#define PTHREAD_MD_INIT pthread__i386_init();
 
 static __inline long
 pthread__sp(void)
