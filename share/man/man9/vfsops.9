@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.13 2003/09/06 19:02:42 yamt Exp $
+.\"     $NetBSD: vfsops.9,v 1.14 2003/12/04 19:57:38 atatat Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -122,7 +122,6 @@ int  (*vfs_vptofh)()	VFS_VPTOFH	Vnode to NFS file handle lookup
 void (*vfs_init)()	-	Initialise file system
 void (*vfs_reinit)()	-	Reinitialise file system
 void (*vfs_done)()	-	Cleanup unmounted file system
-int  (*vfs_sysctl)()	-	Query/modify kernel state
 int  (*vfs_mountroot)()	-	Mount the root file system
 int  (*vfs_checkexp)()	VFS_CHECKEXP	Check if file system is exported
 .fi
@@ -170,10 +169,6 @@ Kernel state which affects a specific file system type can be
 queried and modified using the
 .Xr sysctl 8
 interface.
-The
-.Em vfs_sysctl
-member of the vfsops structure is invoked by file system independent
-code for sysctl operations which are file system specific.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn VFS_MOUNT "mp" "path" "data" "ndp" "p"
