@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.81 1997/01/22 01:34:12 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.82 1997/01/28 03:38:40 mikel Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -18,6 +18,8 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # .so used for PIC object files.  .ln used for lint output files.
 .SUFFIXES:
 .SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
+
+CFLAGS+=	${COPTS}
 
 .c.o:
 	@echo ${COMPILE.c:Q} ${.IMPSRC}
