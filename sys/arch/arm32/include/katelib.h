@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.1 1996/01/31 23:22:11 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.2 1996/02/22 22:22:11 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,7 +50,7 @@
  *
  * Based on kate/katelib/prototypes.h
  *
- *    $Id: katelib.h,v 1.1 1996/01/31 23:22:11 mark Exp $
+ *    $Id: katelib.h,v 1.2 1996/02/22 22:22:11 mark Exp $
  */
 
 #include <sys/types.h>
@@ -121,8 +121,6 @@ int shell __P((caddr_t /*ident*/));
 void kstack_stuff __P((struct proc */*p*/));
 void boot0 __P(());
 void bootsync __P((void));
-void delay __P((int));
-void DELAY __P((int));
 #endif
 
 /* End of katelib.h */
