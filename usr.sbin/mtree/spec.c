@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.54 2004/01/30 19:09:03 ross Exp $	*/
+/*	$NetBSD: spec.c,v 1.54.2.1 2004/06/22 07:25:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -65,12 +65,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.54 2004/01/30 19:09:03 ross Exp $");
+__RCSID("$NetBSD: spec.c,v 1.54.2.1 2004/06/22 07:25:17 tron Exp $");
 #endif
 #endif /* not lint */
 
