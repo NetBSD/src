@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/04/12 16:06:36 minoura Exp $
+#	$NetBSD: Makefile,v 1.9 1999/04/14 14:11:56 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -67,6 +67,10 @@ HACKSRC=${TOP}/../../utils/libhack
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
+.if make(clean) || make(cleandir) || make(distclean) || make(depend) || make(obj)
+UTILDIR=	../../../utils
+SUBDIR+=	${UTILDIR}/init_s ${UTILDIR}/x_ifconfig ${UTILDIR}/x_route
+.endif
+
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
