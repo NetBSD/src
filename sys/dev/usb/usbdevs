@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.228 2002/02/16 18:17:35 thorpej Exp $
+$NetBSD: usbdevs,v 1.229 2002/02/19 14:12:02 simonb Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
 vendor ALATION		0x0910	Alation Systems
+vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
@@ -505,6 +506,9 @@ product CHICONY KB8933		0x0001	KB-8933 keyboard
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
+
+/* Concord Camera products */
+product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
 
 /* Connectix products */
 product CONNECTIX QUICKCAM	0x0001	QuickCam
@@ -1162,12 +1166,12 @@ product XIRLINK PCCAM		0x8080	IBM PC Camera
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
-/* Yano products */
-product YANO U640MO		0x0101	U640MO-03
-
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
 product	YAMAHA UX96		0x1008	UX96 MIDI I/F
+
+/* Yano products */
+product YANO U640MO		0x0101	U640MO-03
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
