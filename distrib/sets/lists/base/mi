@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.462 2004/01/13 06:27:16 lukem Exp $
+# $NetBSD: mi,v 1.463 2004/01/13 06:39:26 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2348,6 +2348,16 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
+./usr/share/sendmail				base-sendmail-share
+./usr/share/sendmail/cf				base-sendmail-share
+./usr/share/sendmail/domain			base-sendmail-share
+./usr/share/sendmail/feature			base-sendmail-share
+./usr/share/sendmail/hack			base-sendmail-share
+./usr/share/sendmail/m4				base-sendmail-share
+./usr/share/sendmail/mailer			base-sendmail-share
+./usr/share/sendmail/ostype			base-sendmail-share
+./usr/share/sendmail/sh				base-sendmail-share
+./usr/share/sendmail/siteconfig			base-sendmail-share
 ./usr/share/sushi				base-sushi-share
 ./usr/share/sushi/help				base-sushi-share	share
 ./usr/share/sushi/index				base-sushi-share	share
