@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1999/05/23 02:45:20 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.17 1999/05/30 19:13:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -626,7 +626,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	static const char *const openboot_special[] = {
 		/* find these first */
-		"counter-timer",
 		"",
 
 		/* ignore these (end with NULL) */

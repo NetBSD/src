@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1998/11/22 23:56:49 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.10 1999/05/30 19:13:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,7 @@
 #include <sparc64/sparc64/clockreg.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include "kbd.h"
@@ -120,8 +121,10 @@ extern struct idprom idprom;
 
 #define intersil_clear(CLOCK) CLOCK->clk_intr_reg
 
+static long tick_increment;
 
 static struct intrhand level10 = { clockintr };
+static struct intrhand level0 = { tickintr };
 static struct intrhand level14 = { statintr };
 
 static int	clockmatch __P((struct device *, struct cfdata *, void *));
@@ -334,49 +337,6 @@ timerattach(parent, self, aux)
 
 	timerok = 1;
 
-#if 0
-	/*
-	 * Calibrate delay() by tweaking the magic constant
-	 * until a delay(100) actually reads (at least) 100 us 
-	 * on the clock.  Since we're using the %tick register 
-	 * which should be running at exactly the CPU clock rate, it
-	 * has a period of somewhere between 7ns and 3ns.
-	 */
-
-#ifdef DEBUG
-	printf("Delay calibrarion....\n");
-#endif
-	for (timerblurb = 1; timerblurb>0; timerblurb++) {
-		volatile int discard;
-		register int t0, t1;
-
-		/* Reset counter register by writing some large limit value */
-		discard = *lim;
-		*lim = tmr_ustolim(TMR_MASK-1);
-
-		t0 = *cnt;
-		delay(100);
-		t1 = *cnt;
-
-		if (t1 & TMR_LIMIT)
-			panic("delay calibration");
-
-		t0 = (t0 >> TMR_SHIFT) & TMR_MASK;
-		t1 = (t1 >> TMR_SHIFT) & TMR_MASK;
-
-		if (t1 >= t0 + 100)
-			break;
-	}
-
-	printf(" delay constant %d\n", timerblurb);
-	timerok = 1;
-#endif
-
-#if 0	/* Done earlier */
-	/* link interrupt handlers */
-	intr_establish(10, &level10);
-	intr_establish(14, &level14);
-#endif
 }
 
 /*
@@ -445,10 +405,74 @@ cpu_initclocks()
 	extern int intrdebug;
 #endif
 
+#ifdef DEBUG
+	/* Set a 1s clock */
+	if (intrdebug) {
+		hz = 1;
+		printf("intrdebug set: 1Hz clock\n");
+	}
+#endif
+
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
+	}
+
+	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
+		extern u_int64_t cpu_clockrate;
+		static u_int64_t start_time;
+
+		printf("No counter-timer -- using %%tick at %ldMHz as system clock.\n",
+			(long)(cpu_clockrate/1000000));
+		/* We don't have a counter-timer -- use %tick */
+		level0.ih_clr = 0;
+		/* 
+		 * Establish a level 10 interrupt handler 
+		 *
+		 * We will have a conflict with the softint handler,
+		 * so we set the ih_number to 1.
+		 */
+		level0.ih_number = 1;
+		intr_establish(10, &level0);
+		/* We only have one timer so we have no statclock */
+		stathz = 0;	
+		/* Make sure we have a sane cpu_clockrate -- we'll need it */
+		if (!cpu_clockrate) 
+			/* Default to 200MHz clock XXXXX */
+			cpu_clockrate = 200000000;
+
+		/*
+		 * Calculate the starting %tick value.  We set that to the same
+		 * as time, scaled for the CPU clockrate.  This gets nasty, but
+		 * we can handle it.  time.tv_usec is in microseconds.  
+		 * cpu_clockrate is in MHz.  
+		 */
+		start_time = time.tv_sec * cpu_clockrate;
+		/* Now fine tune the usecs */
+		start_time += cpu_clockrate / 1000000 * time.tv_usec;
+		
+		/* Initialize the %tick register */
+#ifdef __arch64__
+		__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
+#else
+		{
+			int start_hi = (start_time>>32), start_lo = start_time;
+			__asm __volatile("sllx %0,32,%0; or %1,%0,%0; wrpr %0, 0, %%tick" 
+					 : "=&r" (start_hi) /* scratch register */
+					 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
+		}
+#endif
+		/* set the next interrupt time */
+		tick_increment = cpu_clockrate / hz;
+#ifdef DEBUG
+		printf("Using %tick -- intr in %ld cycles...", tick_increment);
+#endif
+		next_tick(tick_increment);
+#ifdef DEBUG
+		printf("done.\n");
+#endif
+		return;
 	}
 
 	if (stathz == 0)
@@ -457,14 +481,7 @@ cpu_initclocks()
 		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
-#ifdef DEBUG
-	/* Set a 1s clock */
-	if (intrdebug) {
-		hz = 1;
-		tick = 1000000;
-		printf("intrdebug set: 1Hz clock\n");
-	}
-#endif
+
 	profhz = stathz;		/* always */
 
 	statint = 1000000 / stathz;
@@ -472,8 +489,6 @@ cpu_initclocks()
 	while (statvar > minint)
 		statvar >>= 1;
 
-	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) 
-		panic("cpu_initclocks(): Timer not attached!\n");
 	/* 
 	 * Enable timers 
 	 *
@@ -548,6 +563,39 @@ clockintr(cap)
 #endif
 	splx(s);
 #endif
+
+	hardclock((struct clockframe *)cap);
+#if	NKBD > 0
+	if (rom_console_input && cnrom())
+		setsoftint();
+#endif
+
+	return (1);
+}
+
+/*
+ * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
+ * console input, we need to check for that here as well, and generate
+ * a software interrupt to read it.
+ *
+ * %tick is really a level-14 interrupt.  We need to remap this in 
+ * locore.s to a level 10.
+ */
+int
+tickintr(cap)
+	void *cap;
+{
+	int s;
+
+#if	NKBD	> 0
+	extern int cnrom __P((void));
+	extern int rom_console_input;
+#endif
+
+	s = splhigh();
+	/* Reset the interrupt */
+	next_tick(tick_increment);
+	splx(s);
 
 	hardclock((struct clockframe *)cap);
 #if	NKBD > 0
@@ -750,6 +798,7 @@ inittodr(base)
 	cl->cl_csr &= ~CLK_READ;	/* time wears on */
 	clk_wenable(0);
 	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
+	time.tv_usec = 0;
 
 	if (time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
