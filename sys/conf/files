@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.368 2000/05/15 08:27:24 bouyer Exp $
+#	$NetBSD: files,v 1.369 2000/05/30 00:48:47 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -477,6 +477,7 @@ define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
+define	fwbus { }			# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
@@ -491,6 +492,11 @@ file	dev/usb/uhci.c			uhci	needs-flag
 # OHCI USB controller
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
+
+# OHCI IEEE 1394 controller
+# (This needs to be here since it will have both PCI and CardBus attachments)
+device	fwohci: fwbus
+file	dev/ieee1394/fwohci.c		fwohci	needs-flag
 
 # legitimate pseudo-devices
 defpseudo vnd: disk
