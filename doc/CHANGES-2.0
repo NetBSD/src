@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.165 2004/04/29 06:06:15 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.166 2004/04/29 06:08:56 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1678,3 +1678,17 @@ distrib/sets/lists/xfont/mi			1.21
 
 	Install VeraIt.ttf. PR#25373
 	[lukem, ticket #228]
+
+x11/bin/x11perf/Makefile			1.6
+x11/bin/xclock/Makefile				1.5
+x11/bin/xditview/Makefile			1.6
+x11/bin/xfd/Makefile				1.4
+x11/bin/xlogo/Makefile				1.5
+x11/bin/xterm/Makefile				1.6
+x11/lib/Xft/Makefile				1.8
+x11/lib/Xft1/Makefile				1.6
+x11/lib/fontconfig/src/Makefile			1.6
+x11/lib/freetype2/Makefile			1.7
+
+	Sync to changes made in XFree86 4.4 and add -DXFREE86_FT2 appropriately.
+	[lukem, ticket #229]
