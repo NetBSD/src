@@ -119,7 +119,7 @@ extraclean: distclean
 	-test -f y.tab.h && mv y.tab.h y_tab.h
 	-test -f y.tab.c && mv y.tab.c y_tab.c
 	mv y_tab.c $(YTABC)
-	if test -n "$(YTABH)"; then mv y_tab.h $(YTABH); fi
+	test -z "$(YTABH)" || mv y_tab.h $(YTABH)
 
 # The next rule is needed for make of Solaris 2.5.1 to override its
 # built-in .y.o rule (which takes precedence over the .y.cpp rule above).
@@ -132,7 +132,7 @@ extraclean: distclean
 	-test -f y.tab.h && mv y.tab.h y_tab.h
 	-test -f y.tab.c && mv y.tab.c y_tab.c
 	mv y_tab.c $(YTABC)
-	if test -n "$(YTABH)"; then mv y_tab.h $(YTABH); fi
+	test -z "$(YTABH)" || mv y_tab.h $(YTABH)
 	$(COMPILE.cpp) $(YTABC)
 
 .man.n:
@@ -235,32 +235,35 @@ install_dev:
 	-test -d $(fontdir) || $(mkinstalldirs) $(fontdir)
 	-test -d $(fontsubdir) || $(mkinstalldirs) $(fontsubdir)
 	-if test -d $(srcdir)/generate; then \
-	  test -d $(fontsubdir)/generate || \
-	    $(mkinstalldirs) $(fontsubdir)/generate; \
+	  test -d $(fontsubdir)/generate \
+	    || $(mkinstalldirs) $(fontsubdir)/generate; \
 	fi
-	-for f in $(DEVFILES); do \
-	  rm -f $(fontsubdir)/$$f; \
-	  if test -f $$f; then \
-	    $(INSTALL_DATA) $$f $(fontsubdir)/$$f; \
-	  else \
-	    $(INSTALL_DATA) $(srcdir)/$$f $(fontsubdir)/$$f; \
-	  fi; \
-	done
-	-for f in $(DEVSCRIPTS); do \
-	  rm -f $(fontsubdir)/$$f; \
-	  if test -f $$f; then \
-	    $(INSTALL_SCRIPT) $$f $(fontsubdir)/$$f; \
-	  else \
-	    $(INSTALL_SCRIPT) $(srcdir)/$$f $(fontsubdir)/$$f; \
-	  fi; \
-	done
+	-test -z "$(DEVFILES)" \
+	  || for f in $(DEVFILES); do \
+	       rm -f $(fontsubdir)/$$f; \
+	       if test -f $$f; then \
+		 $(INSTALL_DATA) $$f $(fontsubdir)/$$f; \
+	       else \
+		 $(INSTALL_DATA) $(srcdir)/$$f $(fontsubdir)/$$f; \
+	       fi; \
+	     done
+	-test -z "$(DEVSCRIPTS)" \
+	  || for f in $(DEVSCRIPTS); do \
+	       rm -f $(fontsubdir)/$$f; \
+	       if test -f $$f; then \
+		 $(INSTALL_SCRIPT) $$f $(fontsubdir)/$$f; \
+	       else \
+		 $(INSTALL_SCRIPT) $(srcdir)/$$f $(fontsubdir)/$$f; \
+	       fi; \
+	     done
 
 .PHONY: uninstall_dev
 uninstall_dev:
-	-for f in $(DEVFILES) $(DEVSCRIPTS); do rm -f $(fontsubdir)/$$f; done
-	-if test -d $(fontsubdir)/generate; then \
-	  rmdir $(fontsubdir)/generate; \
-	fi
+	-test -z "$(DEVFILES)$(DEVSCRIPTS)" \
+	  || for f in $(DEVFILES) $(DEVSCRIPTS); do \
+	       rm -f $(fontsubdir)/$$f; \
+	     done
+	-test -d $(fontsubdir)/generate && rmdir $(fontsubdir)/generate
 	-rmdir $(fontsubdir)
 
 .PHONY: depend_src
@@ -278,10 +281,9 @@ depend.temp: FORCE
 	  || $(CCC) $(ALL_CCFLAGS) -MM $(CCSRCS) $$ytabc >>depend.temp
 	test -z "$(CSRCS)" \
 	  || $(CC) $(ALL_CFLAGS) -MM $(CSRCS) >>depend.temp
-	if test -n "$(YTABH)"; then \
-	  sed -e 's|$(YTABH)|$(YTABC)|g' depend.temp >depend1.temp; \
-	  mv depend1.temp depend.temp; \
-	fi
+	test -z "$(YTABH)" \
+	  || (sed -e 's|$(YTABH)|$(YTABC)|g' depend.temp >depend1.temp; \
+	      mv depend1.temp depend.temp)
 
 .PHONY: TAGS_src
 TAGS_src:
