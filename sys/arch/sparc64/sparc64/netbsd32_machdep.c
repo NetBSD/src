@@ -1,3 +1,4 @@
+/*	$NetBSD: netbsd32_machdep.c,v 1.28 2003/01/18 06:55:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -45,6 +46,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/select.h>
+#include <sys/ucontext.h>
 #include <sys/ioctl.h>
 
 #include <dev/sun/event_var.h>
@@ -66,12 +68,15 @@
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/vuid_event.h>
+
 #include <machine/netbsd32_machdep.h>
 
 /* Provide a the name of the architecture we're emulating */
 char	machine_arch32[] = "sparc";	
 
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
+
+void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
 /*
  * Set up registers on exec.
@@ -80,17 +85,18 @@ static int ev_out32 __P((struct firm_event *, int, struct uio *));
  */
 /* ARGSUSED */
 void
-netbsd32_setregs(p, pack, stack)
-	struct proc *p;
+netbsd32_setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	register struct trapframe64 *tf = p->p_md.md_tf;
+	struct proc *p = l->l_proc;
+	register struct trapframe64 *tf = l->l_md.md_tf;
 	register struct fpstate64 *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
@@ -108,18 +114,18 @@ netbsd32_setregs(p, pack, stack)
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
 		| (tf->tf_tstate & TSTATE_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (l == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
+		l->l_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
@@ -155,7 +161,8 @@ netbsd32_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	register struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	register struct sparc32_sigframe *fp;
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
@@ -165,7 +172,7 @@ netbsd32_sendsig(sig, mask, code)
 	extern char netbsd32_sigcode[], netbsd32_esigcode[];
 #define	szsigcode	(netbsd32_esigcode - netbsd32_sigcode)
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
@@ -229,7 +236,7 @@ netbsd32_sendsig(sig, mask, code)
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	if (rwindow_save(p) || 
+	if (rwindow_save(l) || 
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp)) {
 		/*
@@ -242,7 +249,7 @@ netbsd32_sendsig(sig, mask, code)
 		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -258,6 +265,7 @@ netbsd32_sendsig(sig, mask, code)
 	 */
 	addr = (long)p->p_psstr - szsigcode;
 	tf->tf_global[1] = (long)catcher;
+	addr += 8; /* XXX skip the upcall code */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
@@ -275,18 +283,58 @@ netbsd32_sendsig(sig, mask, code)
 #endif
 }
 
+/*
+ * Set the lwp to begin execution in the upcall handler.  The upcall
+ * handler will then simply call the upcall routine and then exit.
+ *
+ * Because we have a bunch of different signal trampolines, the first
+ * two instructions in the signal trampoline call the upcall handler.
+ * Signal dispatch should skip the first two instructions in the signal
+ * trampolines.
+ */
+void 
+netbsd32_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct proc *p = l->l_proc;
+       	struct trapframe *tf;
+	vaddr_t addr;
+
+	tf = l->l_md.md_tf;
+
+	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+
+	/* Jump to the upcall handler */
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+
+#if 0
+/* XXX */
+	/* The upcall itself is in %g1 */
+	tf->tf_global[1] = upcall;
+
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = ap;
+	tf->tf_out[6] = (vaddr_t)sp;
+#endif
+}
+
 #undef DEBUG
 
 #ifdef COMPAT_13
 int
-compat_13_netbsd32_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_netbsd32_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_netbsd32_sigreturn_args /* {
 		syscallarg(struct netbsd32_sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct netbsd32_sigcontext13 *scp;
 	struct netbsd32_sigcontext13 sc;
 	register struct trapframe64 *tf;
@@ -294,12 +342,12 @@ compat_13_netbsd32_sigreturn(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p)) {
+	if (rwindow_save(l)) {
 #ifdef DEBUG
 		printf("compat_13_netbsd32_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
 		Debugger();
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
@@ -319,7 +367,7 @@ compat_13_netbsd32_sigreturn(p, v, retval)
 	}
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all
@@ -373,25 +421,26 @@ compat_13_netbsd32_sigreturn(p, v, retval)
  */
 /* ARGSUSED */
 int
-netbsd32___sigreturn14(p, v, retval)
-	register struct proc *p;
+netbsd32___sigreturn14(l, v, retval)
+	register struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct netbsd32___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct netbsd32_sigcontext sc, *scp;
 	register struct trapframe64 *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p)) {
+	if (rwindow_save(l)) {
 #ifdef DEBUG
 		printf("netbsd32_sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
 		Debugger();
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
@@ -411,7 +460,7 @@ netbsd32___sigreturn14(p, v, retval)
 	}
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all
@@ -555,8 +604,8 @@ struct fpreg	*regs;
  * 32-bit version of cpu_coredump.
  */
 int
-cpu_coredump32(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump32(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core32 *chdr;
@@ -564,6 +613,7 @@ cpu_coredump32(p, vp, cred, chdr)
 	int i, error;
 	struct md_coredump32 md_core;
 	struct coreseg32 cseg;
+	struct proc *p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -571,30 +621,30 @@ cpu_coredump32(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Fake a v8 trapframe */
-	md_core.md_tf.tf_psr = TSTATECCR_TO_PSR(p->p_md.md_tf->tf_tstate);
-	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
-	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
-	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
+	md_core.md_tf.tf_psr = TSTATECCR_TO_PSR(l->l_md.md_tf->tf_tstate);
+	md_core.md_tf.tf_pc = l->l_md.md_tf->tf_pc;
+	md_core.md_tf.tf_npc = l->l_md.md_tf->tf_npc;
+	md_core.md_tf.tf_y = l->l_md.md_tf->tf_y;
 	for (i=0; i<8; i++) {
-		md_core.md_tf.tf_global[i] = p->p_md.md_tf->tf_global[i];
-		md_core.md_tf.tf_out[i] = p->p_md.md_tf->tf_out[i];
+		md_core.md_tf.tf_global[i] = l->l_md.md_tf->tf_global[i];
+		md_core.md_tf.tf_out[i] = l->l_md.md_tf->tf_out[i];
 	}
 
-	if (p->p_md.md_fpstate) {
-		if (p == fpproc) {
-			savefpstate(p->p_md.md_fpstate);
-			fpproc = NULL;
+	if (l->l_md.md_fpstate) {
+		if (l == fplwp) {
+			savefpstate(l->l_md.md_fpstate);
+			fplwp = NULL;
 		}
 		/* Copy individual fields */
 		for (i=0; i<32; i++)
 			md_core.md_fpstate.fs_regs[i] = 
-				p->p_md.md_fpstate->fs_regs[i];
-		md_core.md_fpstate.fs_fsr = p->p_md.md_fpstate->fs_fsr;
-		i = md_core.md_fpstate.fs_qsize = p->p_md.md_fpstate->fs_qsize;
+				l->l_md.md_fpstate->fs_regs[i];
+		md_core.md_fpstate.fs_fsr = l->l_md.md_fpstate->fs_fsr;
+		i = md_core.md_fpstate.fs_qsize = l->l_md.md_fpstate->fs_qsize;
 		/* Should always be zero */
 		while (i--)
 			md_core.md_fpstate.fs_queue[i] = 
-				p->p_md.md_fpstate->fs_queue[i];
+				l->l_md.md_fpstate->fs_queue[i];
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 
 		      sizeof(md_core.md_fpstate));
@@ -615,6 +665,187 @@ cpu_coredump32(p, vp, cred, chdr)
 		chdr->c_nseg++;
 
 	return error;
+}
+
+void netbsd32_cpu_getmcontext(struct lwp *, mcontext_t  *, unsigned int *);
+
+void
+netbsd32_cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	/* netbsd32_mcontext_t XXX */mcontext_t  *mcp;
+	unsigned int *flags;
+{
+#if 0
+/* XXX */
+	greg32_t *gr = mcp->__gregs;
+	const struct trapframe64 *tf = l->l_md.md_tf;
+
+	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
+	write_user_windows();
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
+
+	/* For now: Erase any random indicators for optional state. */
+	(void)memset(mcp, '0', sizeof (*mcp));
+
+	/* Save general register context. */
+	gr[_REG_PSR] = TSTATECCR_TO_PSR(tf->tf_tstate);
+	gr[_REG_PC]  = tf->tf_pc;
+	gr[_REG_nPC] = tf->tf_npc;
+	gr[_REG_Y]   = tf->tf_y;
+	gr[_REG_G1]  = tf->tf_global[1];
+	gr[_REG_G2]  = tf->tf_global[2];
+	gr[_REG_G3]  = tf->tf_global[3];
+	gr[_REG_G4]  = tf->tf_global[4];
+	gr[_REG_G5]  = tf->tf_global[5];
+	gr[_REG_G6]  = tf->tf_global[6];
+	gr[_REG_G7]  = tf->tf_global[7];
+	gr[_REG_O0]  = tf->tf_out[0];
+	gr[_REG_O1]  = tf->tf_out[1];
+	gr[_REG_O2]  = tf->tf_out[2];
+	gr[_REG_O3]  = tf->tf_out[3];
+	gr[_REG_O4]  = tf->tf_out[4];
+	gr[_REG_O5]  = tf->tf_out[5];
+	gr[_REG_O6]  = tf->tf_out[6];
+	gr[_REG_O7]  = tf->tf_out[7];
+	*flags |= _UC_CPU;
+
+	mcp->__gwins = 0;
+
+
+	/* Save FP register context, if any. */
+	if (l->l_md.md_fpstate != NULL) {
+		struct fpstate fs, *fsp;
+		netbsd32_fpregset_t *fpr = &mcp->__fpregs;
+
+		/*
+		 * If our FP context is currently held in the FPU, take a
+		 * private snapshot - lazy FPU context switching can deal
+		 * with it later when it becomes necessary.
+		 * Otherwise, get it from the process's save area.
+		 */
+		if (p == fplwp) {
+			fsp = &fs;
+			savefpstate(fsp);
+		} else {
+			fsp = l->l_md.md_fpstate;
+		}
+		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
+		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
+		mcp->__fpregs.__fpu_fsr = fs.fs_fsr;
+		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
+		mcp->__fpregs.__fpu_q_entrysize =
+		    sizeof (struct netbsd32_fq);
+		mcp->__fpregs.__fpu_en = 1;
+		*flags |= _UC_FPU;
+	} else {
+		mcp->__fpregs.__fpu_en = 0;
+	}
+
+	mcp->__xrs.__xrs_id = 0;	/* Solaris extension? */
+#endif
+}
+
+
+int netbsd32_cpu_setmcontext(struct lwp *, mcontext_t *, unsigned int);
+
+int
+netbsd32_cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	/* XXX const netbsd32_*/mcontext_t *mcp;
+	unsigned int flags;
+{
+#ifdef NOT_YET
+/* XXX */
+	greg32_t *gr = mcp->__gregs;
+	struct trapframe64 *tf = l->l_md.md_tf;
+
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+	if (rwindow_save(p))
+		sigexit(p, SIGILL);
+
+	if ((flags & _UC_CPU) != 0) {
+		/*
+	 	 * Only the icc bits in the psr are used, so it need not be
+	 	 * verified.  pc and npc must be multiples of 4.  This is all
+	 	 * that is required; if it holds, just do it.
+		 */
+		if (((gr[_REG_PC] | gr[_REG_nPC]) & 3) != 0 ||
+		    gr[_REG_PC] == 0 || gr[_REG_nPC] == 0)
+			return (EINVAL);
+
+		/* Restore general register context. */
+		/* take only tstate CCR (and ASI) fields */
+		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) |
+		    PSRCC_TO_TSTATE(gr[_REG_PSR]);
+		tf->tf_pc        = (u_int64_t)gr[_REG_PC];
+		tf->tf_npc       = (u_int64_t)gr[_REG_nPC];
+		tf->tf_y         = (u_int64_t)gr[_REG_Y];
+		tf->tf_global[1] = (u_int64_t)gr[_REG_G1];
+		tf->tf_global[2] = (u_int64_t)gr[_REG_G2];
+		tf->tf_global[3] = (u_int64_t)gr[_REG_G3];
+		tf->tf_global[4] = (u_int64_t)gr[_REG_G4];
+		tf->tf_global[5] = (u_int64_t)gr[_REG_G5];
+		tf->tf_global[6] = (u_int64_t)gr[_REG_G6];
+		tf->tf_global[7] = (u_int64_t)gr[_REG_G7];
+		tf->tf_out[0]    = (u_int64_t)gr[_REG_O0];
+		tf->tf_out[1]    = (u_int64_t)gr[_REG_O1];
+		tf->tf_out[2]    = (u_int64_t)gr[_REG_O2];
+		tf->tf_out[3]    = (u_int64_t)gr[_REG_O3];
+		tf->tf_out[4]    = (u_int64_t)gr[_REG_O4];
+		tf->tf_out[5]    = (u_int64_t)gr[_REG_O5];
+		tf->tf_out[6]    = (u_int64_t)gr[_REG_O6];
+		tf->tf_out[7]    = (u_int64_t)gr[_REG_O7];
+		/* %asi restored above; %fprs not yet supported. */
+
+		/* XXX mcp->__gwins */
+	}
+
+	/* Restore FP register context, if any. */
+	if ((flags & _UC_FPU) != 0 && mcp->__fpregs.__fpu_en != 0) {
+		struct fpstate *fsp;
+		const netbsd32_fpregset_t *fpr = &mcp->__fpregs;
+		int reload = 0;
+
+		/*
+		 * If we're the current FPU owner, simply reload it from
+		 * the supplied context.  Otherwise, store it into the
+		 * process' FPU save area (which is used to restore from
+		 * by lazy FPU context switching); allocate it if necessary.
+		 */
+		/*
+		 * XXX Should we really activate the supplied FPU context
+		 * XXX immediately or just fault it in later?
+		 */
+		if ((fsp = l->l_md.md_fpstate) == NULL) {
+			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			l->l_md.md_fpstate = fsp;
+		} else if (p == fplwp) {
+			/* Drop the live context on the floor. */
+			savefpstate(fsp);
+			reload = 1;
+		}
+		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
+		memcpy(fsp->fs_regs, fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
+		fsp->fs_fsr = fpr->__fpu_fsr;	/* don't care about fcc1-3 */
+		fsp->fs_qsize = 0;
+
+#if 0
+		/* Need more info! */
+		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
+		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
+#endif
+
+		/* Reload context again, if necessary. */
+		if (reload)
+			loadfpstate(fsp);
+	}
+
+	/* XXX mcp->__xrs */
+	/* XXX mcp->__asrs */
+#endif
+	return (0);
 }
 
 /*
@@ -843,8 +1074,8 @@ netbsd32_md_ioctl(fp, com, data32, p)
 
 
 int
-netbsd32_sysarch(p, v, retval)
-	struct proc *p;
+netbsd32_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

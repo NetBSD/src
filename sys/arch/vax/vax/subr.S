@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.4 2002/04/04 16:40:14 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.5 2003/01/18 07:10:35 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -162,7 +162,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
  */
 
 	.align	2
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
+	.globl	_C_LABEL(sigcode),_C_LABEL(upcallcode),_C_LABEL(esigcode)
 _C_LABEL(sigcode):
 	pushr	$0x3f
 	subl2	$0xc,%sp
@@ -172,6 +172,14 @@ _C_LABEL(sigcode):
 	chmk	$SYS___sigreturn14
 	chmk	$SYS_exit
 	halt	
+
+/*
+ * Trampoline for SA upcalls.  This would be totally unnecessary if we
+ * didn't need to account for the saved registers in the callee.
+ */
+_C_LABEL(upcallcode):
+	callg	(%sp),(%r0)
+	halt
 _C_LABEL(esigcode):
 
 #ifdef COMPAT_IBCS2
@@ -289,14 +297,14 @@ JSBENTRY(Setrq)
 	calls	$1,_C_LABEL(panic)
 setrq:	.asciz	"setrunqueue"
 #endif
-1:	extzv	$2,$6,P_PRIORITY(%r0),%r1		# get priority
+1:	extzv	$2,$6,L_PRIORITY(%r0),%r1		# get priority
 	movaq	_C_LABEL(sched_qs)[%r1],%r2	# get address of queue
 	insque	(%r0),*PH_RLINK(%r2)		# put proc last in queue
 	bbss	%r1,_C_LABEL(sched_whichqs),1f	# set queue bit.
 1:	rsb
 
 JSBENTRY(Remrq)
-	extzv	$2,$6,P_PRIORITY(%r0),%r1
+	extzv	$2,$6,L_PRIORITY(%r0),%r1
 #ifdef DIAGNOSTIC
 	bbs	%r1,_C_LABEL(sched_whichqs),1f
 	pushab	remrq
@@ -306,7 +314,7 @@ remrq:	.asciz	"remrunqueue"
 1:	remque	(%r0),%r2
 	bneq	2f			# Not last process on queue
 	bbsc	%r1,_C_LABEL(sched_whichqs),2f
-2:	clrl	P_BACK(%r0)		# saftey belt
+2:	clrl	L_BACK(%r0)		# saftey belt
 	rsb
 
 #
@@ -335,14 +343,13 @@ idle:
 	brb	lp			# check sched_whichqs again
 
 #
-# cpu_switch, cpu_exit and the idle loop implemented in assembler 
-# for efficiency. %r6 contains pointer to last process.  This is
-# called at IPL_HIGH.
+# cpu_switch, cpu_preempt, cpu_exit and the idle loop implemented in
+# assembler for efficiency.  This is called at IPL_HIGH.
 #
 
 JSBENTRY(Swtch)
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	clrl	CI_CURPROC(%r1)		# Stop process accounting
+	clrl	CI_CURLWP(%r1)		# Stop process accounting
 	svpctx				# Save context if another CPU
 					# get control first (must be on
 					# the interrupt stack when idling)
@@ -352,8 +359,8 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
 	movaq	_C_LABEL(sched_qs)[%r3],%r1	# get address of queue head
-	remque	*(%r1),%r2		# remove proc pointed to by queue head
-					# proc ptr is now in %r2
+	remque	*(%r1),%r2		# remove lwp pointed to by queue head
+					# lwp ptr is now in %r2
 #ifdef DIAGNOSTIC
 	bvc	1f			# check if something on queue
 	pushab	noque
@@ -362,16 +369,16 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 
 1:	bneq	2f			# more processes on queue?
 	bbsc	%r3,_C_LABEL(sched_whichqs),2f	# no, clear bit in whichqs
-2:	clrl	P_BACK(%r2)		# clear proc backpointer
+2:	clrl	L_BACK(%r2)		# clear proc backpointer
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
-	movl	%r1,P_CPU(%r2)		# p->p_cpu = curcpu();
+	movl	%r1,L_CPU(%r2)		# l->l_cpu = curcpu();
 #endif
-	movb	$SONPROC,P_STAT(%r2)	# p->p_stat = SONPROC;
-	movl	%r2,CI_CURPROC(%r1)	# set new process running
+	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
+	movl	%r2,CI_CURLWP(%r1)	# set new process running
 	clrl	CI_WANT_RESCHED(%r1)	# we are now changing process
-	movl	P_ADDR(%r2),%r0		# Get pointer to new pcb.
+	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
 	addl3	%r0,$IFTRAP,%r1		# Save for copy* functions.
 	mtpr	%r1,$PR_ESP		# Use ESP as CPU-specific pointer
 	movl	%r1,ESP(%r0)		# Must save in PCB also.
@@ -384,10 +391,18 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 	extzv	$9,$21,%r0,%r1		# extract offset
 	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
 
-	mtpr	%r3,$PR_PCBB
+	clrl	PCB_R0(%r0)		# Assume switch to same lwp
+	mfpr	$PR_PCBB,%r1		# Get old PCB address
+	cmpl	%r1,%r3			# The same lwp?
+	beql	1f			# Branch if it is
+	movl	$1,PCB_R0(%r0)		# Otherwise, return 1.
+
+1:	mtpr	%r3,$PR_PCBB
 	ldpctx
 #if defined(LOCKDEBUG)
+	pushl	%r0
 	calls	$0,_C_LABEL(sched_unlock_idle)
+	movl	(%sp)+,%r0
 #elif defined(MULTIPROCESSOR)
 	clrl	_C_LABEL(sched_lock)	# clear sched lock
 #endif
@@ -400,6 +415,38 @@ _C_LABEL(tramp):
 	ldpctx
 	rei
 #endif
+
+JSBENTRY(Swtchto)
+	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
+	clrl	CI_CURLWP(%r1)		# Stop process accounting
+	svpctx				# Now on interrupt stack
+
+	# New LWP already in %r2
+	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
+#if defined(MULTIPROCESSOR)
+	movl	r1,L_CPU(%r2)		# l->l_cpu = curcpu();
+#endif
+	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
+	movl	%r2,CI_CURLWP(%r1)	# set new process running
+	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
+	addl3	%r0,$IFTRAP,%r3		# Save for copy* functions.
+	mtpr	%r3,$PR_ESP		# Use ESP as CPU-specific pointer
+	movl	%r3,ESP(%r0)		# Must save in PCB also.
+	movl	%r1,SSP(%r0)		# Put it in new PCB
+
+	extzv	$9,$21,%r0,%r1		# extract offset
+	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
+
+	mtpr	%r3,$PR_PCBB
+	ldpctx
+#if defined(LOCKDEBUG)
+	pushl	%r0
+	calls	$0,_C_LABEL(sched_unlock_idle)
+	movl	(%sp)+,%r0
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# clear sched lock
+#endif
+	rei	
 
 #
 # the last routine called by a process.

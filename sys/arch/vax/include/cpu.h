@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.63 2002/09/06 13:18:43 gehenna Exp $      */
+/*      $NetBSD: cpu.h,v 1.64 2003/01/18 07:10:33 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -120,7 +120,7 @@ struct cpu_info {
 	u_long ci_simple_locks;         /* # of simple locks held */
 #endif
 
-	struct proc *ci_curproc;        /* current owner of the processor */
+	struct lwp *ci_curlwp;          /* current owner of the processor */
 
 	/*
 	 * Private members.
@@ -152,10 +152,11 @@ struct cpu_mp_softc {
 #endif /* defined(MULTIPROCESSOR) */
 
 #define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
-#define	curproc	(curcpu()->ci_curproc)
+#define	curlwp	(curcpu()->ci_curlwp)
 #define	cpu_number() (curcpu()->ci_dev->dv_unit)
 #define	ci_cpuid ci_dev->dv_unit
 #define	need_resched(ci) {(ci)->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
+#define	cpu_proc_fork(x, y)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
@@ -192,7 +193,6 @@ void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
 #endif
 int	badaddr(caddr_t, int);
-void	cpu_swapin(struct proc *);
 void	dumpconf(void);
 void	dumpsys(void);
 void	swapconf(void);

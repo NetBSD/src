@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2002/09/27 15:36:53 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2003/01/18 06:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -418,16 +418,14 @@ void pmap_release __P((pmap_t));
 static inline pmap_t
 current_pmap __P((void))
 {
-	struct proc *p;
 	struct vmspace *vm;
 	struct vm_map *map;
 	pmap_t	pmap;
 
-	p = curproc;	/* XXX */
-	if (p == NULL)
+	if (curlwp == NULL)
 		pmap = kernel_pmap;
 	else {
-		vm = p->p_vmspace;
+		vm = curproc->p_vmspace;
 		map = &vm->vm_map;
 		pmap = vm_map_pmap(map);
 	}
@@ -2216,7 +2214,7 @@ pmap_enter_user(pmap, pgva, new_pte, wired)
 	if (pmap != current_pmap()) {
 #ifdef	PMAP_DEBUG
 		/* Aparently, this never happens. */
-		db_printf("pmap_enter_user: not curproc\n");
+		db_printf("pmap_enter_user: not curlwp\n");
 		Debugger();
 #endif
 		/* Just throw it out (fault it in later). */
@@ -2831,16 +2829,16 @@ _pmap_switch(pmap)
 /*
  * Exported version of pmap_activate().  This is called from the
  * machine-independent VM code when a process is given a new pmap.
- * If (p == curproc) do like cpu_switch would do; otherwise just
+ * If (p == curlwp) do like cpu_switch would do; otherwise just
  * take this as notification that the process has a new pmap.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
-	if (p == curproc) {
+	if (curlwp && l->l_proc == curproc) {
 		_pmap_switch(pmap);
 	}
 }
@@ -2849,8 +2847,8 @@ pmap_activate(p)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 	/* Nothing to do. */
 }

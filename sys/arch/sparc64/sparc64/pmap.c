@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2003/01/15 06:15:06 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2003/01/18 06:55:25 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1312,11 +1312,11 @@ remap_data:
 		/* Initialize our cpu_info structure */
 		bzero((void *)intstk, 8*NBPG);
 		cpus->ci_next = NULL; /* Redundant, I know. */
-		cpus->ci_curproc = &proc0;
+		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
-		cpus->ci_fpproc = NULL;
+		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
@@ -1654,10 +1654,10 @@ pmap_copy_page(src, dst)
  * process is the current process, load the new MMU context.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
 	 * This is essentially the same thing that happens in cpu_switch()
@@ -1666,7 +1666,7 @@ pmap_activate(p)
 	 * the new context.
 	 */
 
-	if (p != curproc) {
+	if (l != curlwp) {
 		return;
 	}
 	write_user_windows();
@@ -1687,8 +1687,8 @@ pmap_activate_pmap(struct pmap *pmap)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 
