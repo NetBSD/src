@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.53 2000/02/01 22:52:04 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.54 2000/02/02 23:28:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -418,9 +418,8 @@ if_detach(ifp)
 			pr = pffindtype(ifa->ifa_addr->sa_family, SOCK_DGRAM);
 			so.so_proto = pr;
 			if (pr->pr_usrreq) {
-				(void) (*pr->pr_usrreq)(&so, PRU_PURGEADDR,
-				    NULL,
-				    (struct mbuf *) ifa,
+				(void) (*pr->pr_usrreq)(&so, PRU_PURGEIF,
+				    NULL, NULL,
 				    (struct mbuf *) ifp, curproc);
 			} else {
 				rtinit(ifa, RTM_DELETE, 0);
@@ -431,10 +430,9 @@ if_detach(ifp)
 	}
 
 	/* Walk the routing table looking for straglers. */
-	for (i = 1; i <= AF_MAX; i++) {
-		if ((rnh = rt_tables[i]) != NULL &&
-		    (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp) != 0)
-			break;
+	for (i = 0; i <= AF_MAX; i++) {
+		if ((rnh = rt_tables[i]) != NULL)
+			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
 	}
 
 	IFAFREE(ifnet_addrs[ifp->if_index]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.8 2000/02/02 16:58:11 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.9 2000/02/02 23:28:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -551,6 +551,7 @@ extern void in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *));
 void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
+void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.20 2000/02/01 22:52:12 thorpej Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.21 2000/02/02 23:28:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -798,8 +798,9 @@ udp6_usrreq(so, req, m, addr6, control, p)
 		return(in6_control(so, (u_long)m, (caddr_t)addr6,
 				   (struct ifnet *)control, p));
 
-	if (req == PRU_PURGEADDR) {
-		in6_purgeaddr((struct ifaddr *)addr6, (struct ifnet *)control);
+	if (req == PRU_PURGEIF) {
+		in6_purgeif((struct ifnet *)control);
+		in6_pcbpurgeif(&udb6, (struct ifnet *)control);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.15 2000/02/01 22:52:12 thorpej Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.16 2000/02/02 23:28:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -307,8 +307,8 @@ cltp_usrreq(so, req, m, nam, control, p)
 		return (iso_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
 
-	if (req == PRU_PURGEADDR) {
-		iso_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+	if (req == PRU_PURGEIF) {
+		iso_purgeif((struct ifnet *)control);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.16 2000/02/01 22:52:13 thorpej Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.17 2000/02/02 23:28:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -371,8 +371,8 @@ idp_usrreq(so, req, m, nam, control, p)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
 
-	if (req == PRU_PURGEADDR) {
-		ns_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+	if (req == PRU_PURGEIF) {
+		ns_purgeif((struct ifnet *)control);
 		return (0);
 	}
 
