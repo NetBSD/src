@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1997/08/23 19:19:38 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.14 1997/10/19 16:04:57 oki Exp $
 
 #
 #	GENERIC
@@ -13,6 +13,7 @@ options 	EXEC_AOUT		# a.out format executables
 # different CPU types; you must have at least the correct one; REQUIRED
 options 	M68030
 options 	M68040
+options 	M68060
 
 # set to indicate RTC is offset from GMT
 options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
@@ -43,7 +44,7 @@ options 	SHMMAXPGS=1024		# 1024 pages in the defualt
 options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options 	COMPAT_12
+options 	COMPAT_12		# compatibility with NetBSD 1.2
 options 	TCP_COMPAT_42		# 4.2 networking ABI
 #options 	COMPAT_SUNOS		# SunOS binaries
 #options 	COMPAT_HPUX		# HP-UX binaries; VERY EXPERIMENTAL
@@ -55,18 +56,17 @@ file-system 	MFS			# memory file system; uses RAM and swap
 file-system 	NFS			# Network File System client
 file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
 file-system 	MSDOSFS			# MS-DOS FAT file system
-#file-system 	FDESC			# /dev/fd
+file-system 	FDESC			# /dev/fd
 file-system 	KERNFS			# kernel file system; recommended
-#file-system 	PROCFS			# /proc
+file-system 	PROCFS			# /proc
 file-system 	NULLFS			# Loop-back filesystem
-#file-system 	PORTAL			# portal filesystem (still experimental)
+file-system 	PORTAL			# portal filesystem (still experimental)
 #file-system 	ADOSFS			# AmigaDOS filesystem
-#file-system 	LFS			# Log-based filesystem (still experimental)
-#file-system 	UMAPFS			# uid/gid remapping filesystem
-#file-system 	UNION			# union mount
+file-system 	LFS			# Log-based filesystem (still experimental)
+file-system 	UMAPFS			# uid/gid remapping filesystem
+file-system 	UNION			# union mount
 
 #options 	QUOTA			# file system quotas
-options 	FASTLINKS		# fast symbolic links in FFS
 #options 	NFSSERVER		# Network File System server
 
 # networking options
@@ -86,7 +86,7 @@ options 	FPSP			# '40 Floating Point Software
 options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	EIOMAPSIZE=0		# do not map PCI address space
-#options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
+options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	BUFPAGES=900
 #options 	NKMEMCLUSTERS=256
 #options 	PROFTIMER, PRF_INTERVAL=500
@@ -103,6 +103,8 @@ par0		at mainbus0		# builtin parallel port
 spc0		at mainbus0		# builtin scsi
 spc1		at mainbus0		# external scsi
 scsibus*	at spc?
+mha0		at mainbus0		# MK-HA1 Mach-2 SCSI
+scsibus*	at mha?
 grfbus0 	at mainbus0		# bitmapped display's
 grf0		at grfbus0		# graphics driver
 ite0		at grf0			# console
