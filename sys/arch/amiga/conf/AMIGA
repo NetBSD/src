@@ -1,0 +1,83 @@
+machine		"amiga"
+cpu		"A3000"
+ident		GODZILLA
+
+timezone	-1 dst
+maxusers	16
+
+# Standard options
+#options	QUOTA
+options		INET
+options		NFS,NFSSERVER,NFSCLIENT
+options		MFS
+options		ISOFS
+options		FIFO
+options		PCFS,KERNFS
+options		FDESC
+options		ISO
+options		TPIP
+
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+options		"COMPAT_NOMID"
+options		"HAVE_USL_UFS"
+
+# Options for all HP machines
+#options		SYSVSHM
+#options		HPUXCOMPAT
+
+# Options specific to this host.
+options		DEBUG,DIAGNOSTIC,FPCOPROC
+# options		PANICBUTTON
+options		KTRACE
+#options		"BUFPAGES=900"
+options		"NKMEMCLUSTERS=256"
+options		GENERIC
+#options		PROFTIMER,"PRF_INTERVAL=500"
+#options		KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
+
+#config		vmunix root on sd6a swap on sd6b
+config		vmunix swap generic
+
+# manufacturer 1 is a pseudo and stands for `builtin'
+master		scsi0	at manufacturer	1	product	1
+#master		floppy0	at manufacturer	1	product	2
+
+# further builtin devices
+device		ser0	at manufacturer	1	product	3
+#device		clock	at manufacturer	1	product 4
+#device		kbd	at manufacturer	1	product 5
+#device		par	at manufacturer	1	product	6
+#device		mouse	at manufacturer	1	product	8
+
+disk		sd0	at scsi0 slave 0
+disk		sd1	at scsi0 slave 1
+disk		sd2	at scsi0 slave 2
+disk		sd3	at scsi0 slave 3
+disk		sd4	at scsi0 slave 4
+disk		sd5	at scsi0 slave 5
+disk		sd6	at scsi0 slave 6
+
+tape		st0	at scsi0 slave 4
+tape		st1	at scsi0 slave 5
+
+device		grf0	at manufacturer	1	product	7
+
+# ethernet board
+#device		le0	at manufacturer ?	product ?
+
+# my dear A2410
+#device		tiga0	at manufacturer 1030	product 0
+
+pseudo-device	sl	4
+pseudo-device	ppp	4
+pseudo-device	bpfilter 16
+pseudo-device	ite	1
+pseudo-device	pty
+pseudo-device	loop
+pseudo-device	ether
+pseudo-device	vn	10
+
+pseudo-device	devpager
+pseudo-device	swappager
+pseudo-device	vnodepager

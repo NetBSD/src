@@ -1,0 +1,203 @@
+******************************************************************************
+
+Here's the initial version of NetBSD for the Amiga. This version is strictly
+for the kernel hackers among you, there's no sense in `normal' users trying
+to install it, possibly killing their other partitions, facing kernel panics and
+not knowing what to do. Please keep that in mind, if you feel like going on...
+
+******************************************************************************
+
+
+Currently supported equipment:
+-----------------------------
+
+o any Amiga with either 68020/68851 or 68030, 6888[12] is currently required
+  (because fpu code is conditionally compilable in the kernel, and this
+   version contains fpu code).
+o A3000 internal SCSI controller. Note that you cannot boot BSD currently
+  with any other SCSI controller (not to mention weird IDE interfaces..).
+o internal RS232 port. This is not by default used as the system console.
+  you have to recompile if you want the console on the RS232.
+o some `sort of' VT200 emulator for the custom chips display, which is
+  an NTSC laced, 640x400 monochrome display. This is the default console.
+o disk and tape drivers using the mentioned A3000 scsi controller.
+  Disks I tried it on include: Wren7, IBM-OEM 0663E12, Quantum LP105S.
+  Only tape tested is my Wangtek 5150ES.
+
+
+Some comments on these:
+----------------------
+68020&68851/68030 support:
+	These cpu's should be fully supported. Note that you cannot run
+	BSD with a '30EC, the MMU is absolutely required. The '40 is
+	currently *NOT* supported, don't try! The reason for this is
+	the braindamaged, mind boggingly stupid '40 MMU, which only
+	implements a very limited subset of the 68851/68030 MMUs. In
+	particular, it doesn't deal with the current 2-level MMU 
+	setup. See the extra doc about AMIGA-MMU for details.
+	Exception handling for the '40 is also different to its predecessors,
+	however this should be easier to implement than revamping
+	the MMU code to work on the '40.
+	
+A3000 internal SCSI controller:
+	This is a driver tested on an AMD33C93A chip, I just hope I
+	didn't do anything that won't run on the dreadful WD33C93A-PROTO
+	still in use in thousands of A3000. It is a *VERY* rough
+	driver, it's really a hack, and should be replaced by a chip-
+	specific low-level driver for use with the generic scsi/*
+	code for the PC. Might even use Mach-drivers as well. The
+	driver would support DMA, if only DMA would work... That is,
+	DMA trashed my memory, so I disabled it for a while, and the
+	driver was degraded to a PIO in the meanwhile.. Hope to get
+	DMA up again RSN ...
+	Note that (contrary to Amiga Unix..) this driver should handle
+	drives ok that send sync-requests (it just rejects those..).
+
+Internal RS232 port:
+	Well, that's not exactly a terribly complicated thing.. It should
+	perform reasonably well, but I didn't really test it with file
+	transfers, just with my old VT100. It should do hardware flow-
+	control, but that's not tested either. The driver supports being
+	a console.
+
+Custom chips display, console:
+	I implemented the console in a two-layer approach stolen from
+	the hp300 implementation. There is a low-level layer (grf*) 
+	responsible for creating a display (`view' in AmigaOS parlance),
+	and a hi-level layer (ite*) dealing with display of characters,
+	scrolling regions, handling keyboard, etc. This approach should
+	it make trivial to support consoles on custom graphics boards.
+	Grf currently opens an interlaced NTSC screen, with a resolution
+	of 1024x1024 pixels, and a visible display size of 640x400. It
+	provides for smooth scrolling of this display window inside the
+	larger bitmap (once the ioctl's are implemented..), and it can
+	handle overscan (by changing the visible display size and moving
+	the display offset). These ioctl's aren't implemented yet either.
+	Oh: don't try to convince me to offer a PAL display, I won't.
+	The console tries to be some sort of VT200 compatible terminal,
+	however, I only implemented a small subset of features. Essentially,
+	I took the existing HP-ite driver, a VT320 manual, and started
+	to replace the control sequences with the ones I found in the
+	manual. Don't expect the driver to do downloadable fonts or other
+	weird features, I think even scrolling regions might be broken
+	at the moment. It should however work reasonably well for most
+	editing purposes.
+	
+
+Keyboard:
+	Default keymap is US-ASCII. However, I reasoned quite a bit about
+	how to do the mapping of keys into characters and character 
+	sequences to easily change the keymap to international layouts.
+	Dead-keys are supported, as well as having a second set of keys
+	reachable with the Alt keys (same usage as AmigaOS). Thus, you
+	should be able to generate an ö (oe) by typing Alt-k o.
+	However, currently any 8bit characters just appear as ^@ on the
+	screen, and I don't know whether the tty is responsible for this
+	misfeature, or whether I have a bug in my alt-key handling...
+	All keys sending <CSI> sequences send <CSI> as <ESC>[ instead of
+	\x9b, as under AmigaOS. This should make use with Emacs, Bash, etc.
+	*much* easier.
+	For information about how keymaps work, look at dev/kbdmap.h and
+	dev/kbdmap.c.
+
+Disks:
+	See the special section on how RDBs map into BSD partitions.
+
+Tapes:
+	The tape driver seems to support a variety of different tape
+	drives. Chances are, your tape will work too. Just give it a try,
+	worst thing that can happen is a kernel panic ;-)
+
+
+
+RDB's and how BSD finds its partitions on disk drives
+-----------------------------------------------------
+BSD partition tables usually look like this:
+	A:	boot partition, ~8M
+	B:	swap partition, twice the (Fast)RAM size you have
+	C:	the entire disk
+	D:	/usr
+	E, F, G, H:	additional partitions
+
+Since Amiga partitions are managed thru a RigidDiskBlock (RDB) stored
+in the first cylinder(s) of a drive, I took the following approach to
+map Amiga partitions to BSD A-H partitions:
+
+C:	still is the entire disk. Take extreme care!!
+A:	has identifier:	BSDR	(Root fs)
+B:	has identifier: BSDS	(Swap fs)
+DEFGH:	have identifiers: BSDD, BSDE, BSDF, BSDG, BSDH.
+
+BSD recognizes at most one partition of each type per drive, but you can
+have multiple BSDD partitions on different drives, for example.
+
+There is no restriction on the volume name for those partitions, and
+there's no restriction on the order of the partitions on the disk, you can
+have BSDD before BSDR, for example.
+
+-> IMPORTANT NOTE: BSD will boot off the last BSDR partition it finds,
+                   ie. if you have a BSDR partition on drives 0 and 6,
+                   it will boot from the one in drive 6 !!
+
+I'm running BSD on my Amiga with BSDR, BSDS, BSDE on drive 6, and a
+BSDD on drive 1. BSDD on drive 6 is a backup root filesystem, I can just
+change its type to BSDR, change the BSDR type to BSDD (ie. swap them), and
+boot off the other partition, without BSD noticing anything.
+
+
+Using UFS partitions formatted under Amiga Unix System V Release 4
+------------------------------------------------------------------
+You can use such partitions under NetBSD-Amiga, however, you cannot use
+partitions formatted (newfs/mkfs) under NetBSD-Amiga under Amix. Amix
+uses the old BSD-4.2 ffs, and doesn't understand the new BSD-4.3 ffs.
+
+
+Other documents
+---------------
+The BSD distribution contains a huge doc directory, so if you want to
+know everything about XYZ, chances are you'll find a manual for it there.
+The other short docs in this distribution cover:
+
+ AMIGA-MMU:	short description of what's going on when initializing
+ 		the system.
+
+ BUGS:		you might guess what this contains :-)
+
+ INSTALL:	quick guide on how to install the included dump of the
+ 		root filesystem on your harddisk. This is quite risky,
+ 		please read the warnings, and only try the installation
+ 		if you feel totally confident that you understood the
+ 		process!
+ 		
+ README.first:	this file.
+ 
+ RECOMPILE:	short notes about how to change the default configuration
+		(throw out unneeded drivers, add drivers for other
+		SCSI units, etc). Recompiling probably requires a lot
+		of experience in this sort of things (possibly from already
+		hacking around with the Mach kernel...), I'd imagine
+		make'ing the kernel requires a lot of unix'ish tools
+		not commonly found on `normal' amigas, however you 
+		should find most of them in the Mach distribution.
+
+
+Distribution of NetBSD-Amiga
+----------------------------
+I'll try to put my updates on ftp.eunet.ch, given that I don't run out
+of diskspace there. After integrating the Amiga changes into the official
+NetBSD sources, you'll also be able to get the (entire) distribution
+from sun-lamp.cs.berkeley.edu, or any of its mirrors. I'm using the
+NetBSD-current sources, and am updating my source tree regularly, however I
+didn't incorporate the most recent changes before the first release, since
+I've worked with this version for some time now, and found it to be
+fairly stable (so no loadable kernel modules yet in this release).
+
+There is going to be a mailing-list for NetBSD-Amiga, I'll post the
+information to comp.unix.amiga when I know its definite name and location.
+
+You can reach me at mw@eunet.ch, please mention `BSD' in your Subject: 
+line, this makes it easier for me to automatically sort incoming mail
+according to topic, thanks!
+
+-Markus Wild
+
