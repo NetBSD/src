@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.4 1999/02/19 20:57:03 leo Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.5 2000/01/19 13:12:55 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,8 +222,6 @@ static void		leb_bus_space_set_region_8 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t,
 				bus_size_t));
 
-bus_space_tag_t		leb_alloc_bus_space_tag __P((void));
-
 /*
  * Define these inline, to avoid function call overhead.
  * XXX: Maybe move to an m68k include file?
@@ -259,12 +257,21 @@ static __inline__ u_int32_t swap32(u_int32_t v)
 #define __write_8(h, o, v)	*((u_int64_t *)((h) + (o))) = bswap64(v)
 
 bus_space_tag_t
-leb_alloc_bus_space_tag()
+leb_alloc_bus_space_tag(storage)
+bus_space_tag_t	storage;
 {
-	bus_space_tag_t	leb_t;
+	bus_space_tag_t			leb_t;
 
-	if ((leb_t = malloc(sizeof(*leb_t), M_TEMP, M_NOWAIT)) == NULL)
+	/*
+	 * Allow the caller to specify storage space for the tag. This
+	 * is used during console config (when malloc() can't be used).
+	 */
+	if (storage != NULL)
+		leb_t = storage;
+	else {
+	    if ((leb_t = malloc(sizeof(*leb_t), M_TEMP, M_NOWAIT)) == NULL)
 		return(NULL);
+	}
 	bzero(leb_t, sizeof(*leb_t));
 	
 	leb_t->abs_p_1   = leb_bus_space_peek_1;

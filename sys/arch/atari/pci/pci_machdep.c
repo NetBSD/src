@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20 1999/11/07 22:23:05 thomas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.21 2000/01/19 13:13:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -126,8 +126,6 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct pcibus_attach_args	pba;
-	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
-
 
 	enable_pci_devices();
 
@@ -136,8 +134,8 @@ void		*auxp;
 	pba.pba_bus     = 0;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_dmat	= BUS_PCI_DMA_TAG;
-	pba.pba_iot     = leb_alloc_bus_space_tag();
-	pba.pba_memt    = leb_alloc_bus_space_tag();
+	pba.pba_iot     = leb_alloc_bus_space_tag(NULL);
+	pba.pba_memt    = leb_alloc_bus_space_tag(NULL);
 	if ((pba.pba_iot == NULL) || (pba.pba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;

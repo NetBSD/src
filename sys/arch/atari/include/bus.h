@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 1999/12/13 15:40:28 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2000/01/19 13:13:07 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,12 @@ void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
 int	bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_size_t, bus_space_handle_t *));
+
+/*
+ * Tag allocation
+ */
+bus_space_tag_t		beb_alloc_bus_space_tag __P((bus_space_tag_t));
+bus_space_tag_t		leb_alloc_bus_space_tag __P((bus_space_tag_t));
 
 /*
  * XXX
