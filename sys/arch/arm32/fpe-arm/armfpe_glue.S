@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.9 1996/12/27 01:39:15 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.10 1997/07/08 19:41:29 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,6 +39,7 @@
  *
  * Created      : 21/12/95
  */
+
 #define CHECK_BEFORE_USERRET
 #include "assym.h"
 #include <machine/cpu.h>
@@ -50,6 +51,10 @@ pc	.req	r15
 
 	.text
 	.align	0
+
+/*
+ * Glue for calling the core entry points
+ */
 
 	.global	_arm_fpe_core_disable
 _arm_fpe_core_disable:
@@ -195,6 +200,55 @@ _arm_fpe_core_deactivatecontext:
 #endif
 	bl	_fpe_arm_core_deactivatecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
+
+/*
+ * Call back functions from the core
+ */
+
+	.global	_arm_fpe_newhandler
+_arm_fpe_newhandler:
+	stmfd	sp!, {r0, lr}
+	ldr	r0, Llocal_handler_addr
+	str	r1, [r0]
+	ldmfd	sp!, {r0, pc}
+
+Llocal_handler_addr:
+	.word	_undefined_handler_address
+
+	.global	_arm_fpe_restorehandler
+_arm_fpe_restorehandler:
+	stmfd	sp!, {r0-r1, lr}
+	ldr	r0, Llocal_handler_addr
+	ldr	r1, Lold_handler_addr
+	ldr	r1, [r1]
+	str	r1, [r0]
+	ldmfd	sp!, {r0-r1, pc}
+
+Lold_handler_addr:
+	.word	_arm_fpe_old_handler_address
+
+	.text
+	.global	_arm_fpe_handle_exception
+_arm_fpe_handle_exception:
+	b	_arm_fpe_exception_glue
+
+	.global	_arm_fpe_get_ws
+_arm_fpe_get_ws:
+	sub	sp, sp, #8
+	str	r0, [sp]
+	ldr	r0, Larm_fpe_core_workspace
+	ldr	r0, [r0]
+	str	r0, [sp, #4]
+	ldr	r0, [sp], #4
+	mov	pc, lr
+
+Larm_fpe_core_workspace:
+	.word	_arm_fpe_core_workspace
+
+	.global	_arm_fpe_post_proc
+_arm_fpe_post_proc:
+	b	_arm_fpe_post_proc_glue
+
 
 /* Simple call back function that panics */
 
@@ -507,4 +561,3 @@ _arm_fpe_set_exception_mask:
 	.global _fpe_nexthandler
 _fpe_nexthandler:
 	.word	_undefinedinstruction_bounce
-
