@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $	*/
+/*	$NetBSD: main.c,v 1.13.4.2 2001/03/20 17:58:09 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.13.4.2 2001/03/20 17:58:09 he Exp $");
 #endif
 
 /*
@@ -37,7 +37,6 @@ __RCSID("$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <db.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
@@ -49,8 +48,6 @@ __RCSID("$NetBSD: main.c,v 1.13.4.1 2000/12/15 04:06:05 he Exp $");
 #include "lib.h"
 
 void    usage(void);
-
-extern const char *__progname;	/* from crt0.o */
 
 int     filecnt;
 int     pkgcnt;
@@ -145,7 +142,6 @@ check1pkg(const char *pkgdir)
 	}
 	free_plist(&Plist);
 	fclose(f);
-
 	pkgcnt++;
 }
 
@@ -258,10 +254,9 @@ rebuild(void)
 		}
 		free_plist(&Plist);
 		fclose(f);
+		pkgcnt++;
 
 		chdir("..");
-
-		pkgcnt++;
 	}
 	closedir(dp);
 	pkgdb_close();
@@ -302,8 +297,6 @@ checkall(void)
 		printf(".");
 
 		chdir("..");
-
-		pkgcnt++;
 	}
 	closedir(dp);
 	pkgdb_close();
@@ -346,7 +339,12 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	if (strcasecmp(argv[1], "rebuild") == 0) {
+	if (strcmp(argv[1], "-V") == 0) {
+
+		show_version();
+		/* NOTREACHED */
+
+	} else if (strcasecmp(argv[1], "rebuild") == 0) {
 
 		rebuild();
 		printf("Done.\n");
@@ -434,7 +432,7 @@ main(int argc, char *argv[])
 			if (rc == -1)
 				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getwd(NULL);
+			cwd = getcwd(NULL, 0);
 			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
 				errx(1, "Error in findmatchingname(\"%s\", \"%s\", ...)",
 				     cwd, base);
@@ -473,7 +471,7 @@ main(int argc, char *argv[])
 			if (rc == -1)
 				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
-			cwd = getwd(NULL);
+			cwd = getcwd(NULL, 0);
 			p = findbestmatchingname(cwd, base);
 			if (p)
 				printf("%s/%s\n", cwd, p);
@@ -556,7 +554,7 @@ main(int argc, char *argv[])
 void 
 usage(void)
 {
-	printf("Usage: %s command args ...\n"
+	printf("usage: pkg_admin [-V] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild          - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]  - check md5 checksum of installed files\n"
@@ -564,8 +562,7 @@ usage(void)
 	    " add key value    - add key & value\n"
 	    " delete key       - delete reference to key\n"
 #endif
-	    " dump             - dump database\n"
-	    ,__progname);
+	    " dump             - dump database\n");
 	exit(1);
 }
 
