@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.21 1997/06/30 18:53:44 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.22 1997/07/06 07:07:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -659,7 +659,7 @@ after_listen:
 	win = sbspace(&so->so_rcv);
 	if (win < 0)
 		win = 0;
-	tp->rcv_wnd = max(win, (int)(tp->rcv_adv - tp->rcv_nxt));
+	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
 
 	switch (tp->t_state) {
