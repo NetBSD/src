@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.60 2002/11/10 03:30:34 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.61 2002/11/15 20:06:04 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.60 2002/11/10 03:30:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.61 2002/11/15 20:06:04 manu Exp $");
 
 #include "opt_ktrace.h"
 
@@ -119,7 +119,8 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 }
 
 void
-ktrsyscall(struct proc *p, register_t code, register_t args[])
+ktrsyscall(struct proc *p, register_t code, 
+    register_t realcode, register_t args[])
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
@@ -134,7 +135,7 @@ ktrsyscall(struct proc *p, register_t code, register_t args[])
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
 	ktp = malloc(len, M_TEMP, M_WAITOK);
-	ktp->ktr_code = code;
+	ktp->ktr_code = realcode;
 	ktp->ktr_argsize = argsize;
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof(*argp)); i++)
