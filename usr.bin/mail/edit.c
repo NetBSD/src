@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.8 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.9 2002/03/02 14:59:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.8 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.9 2002/03/02 14:59:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ extern char *tempEdit;
  * Edit a message list.
  */
 int
-editor(v)
-	void *v;
+editor(void *v)
 {
 	int *msgvec = v;
 
@@ -68,8 +67,7 @@ editor(v)
  * Invoke the visual editor on a message list.
  */
 int
-visual(v)
-	void *v;
+visual(void *v)
 {
 	int *msgvec = v;
 
@@ -82,9 +80,7 @@ visual(v)
  * We get the editor from the stuff above.
  */
 int
-edit1(msgvec, type)
-	int *msgvec;
-	int type;
+edit1(int *msgvec, int type)
 {
 	int c;
 	int i;
@@ -147,10 +143,7 @@ edit1(msgvec, type)
  * "Type" is 'e' for _PATH_EX, 'v' for _PATH_VI.
  */
 FILE *
-run_editor(fp, size, type, readonly)
-	FILE *fp;
-	off_t size;
-	int type, readonly;
+run_editor(FILE *fp, off_t size, int type, int readonly)
 {
 	FILE *nf = NULL;
 	int t;

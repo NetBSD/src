@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.11 1999/01/06 15:53:39 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.12 2002/03/02 14:59:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.11 1999/01/06 15:53:39 kleink Exp $");
+__RCSID("$NetBSD: tty.c,v 1.12 2002/03/02 14:59:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ static	int	ttyset;			/* We must now do erase/kill */
  */
 
 int
-grabh(hp, gflags)
-	struct header *hp;
-	int gflags;
+grabh(struct header *hp, int gflags)
 {
 	struct termios ttybuf;
 	sig_t saveint;
@@ -185,8 +183,7 @@ out:
  */
 
 char *
-readtty(pr, src)
-	char pr[], src[];
+readtty(char pr[], char src[])
 {
 	char ch, canonb[BUFSIZ];
 	int c;
@@ -291,8 +288,7 @@ redo:
  * Receipt continuation.
  */
 void
-ttystop(s)
-	int s;
+ttystop(int s)
 {
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
@@ -308,8 +304,7 @@ ttystop(s)
 
 /*ARGSUSED*/
 void
-ttyint(s)
-	int s;
+ttyint(int s)
 {
 	longjmp(intjmp, 1);
 }

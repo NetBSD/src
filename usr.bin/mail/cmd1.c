@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.14 2001/02/05 02:07:52 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.15 2002/03/02 14:59:35 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.14 2001/02/05 02:07:52 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.15 2002/03/02 14:59:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ extern const struct cmd cmdtab[];
 static int screen;
 
 int
-headers(v)
-	void *v;
+headers(void *v)
 {
 	int *msgvec = v;
 	int n, mesg, flag;
@@ -102,8 +101,7 @@ headers(v)
  * Scroll to the next/previous screen
  */
 int
-scroll(v)
-	void *v;
+scroll(void *v)
 {
 	char *arg = v;
 	int s, size;
@@ -142,7 +140,7 @@ scroll(v)
  * Compute screen size.
  */
 int
-screensize()
+screensize(void)
 {
 	int s;
 	char *cp;
@@ -157,8 +155,7 @@ screensize()
  * in the passed message list.
  */
 int
-from(v)
-	void *v;
+from(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -175,8 +172,7 @@ from(v)
  * This is a slight improvement to the standard one.
  */
 void
-printhead(mesg)
-	int mesg;
+printhead(int mesg)
 {
 	struct message *mp;
 	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
@@ -222,8 +218,7 @@ printhead(mesg)
  * Print out the value of dot.
  */
 int
-pdot(v)
-	void *v;
+pdot(void *v)
 {
 	printf("%d\n", (int)(dot - &message[0] + 1));
 	return(0);
@@ -233,8 +228,7 @@ pdot(v)
  * Print out all the possible commands.
  */
 int
-pcmdlist(v)
-	void *v;
+pcmdlist(void *v)
 {
 	const struct cmd *cp;
 	int cc;
@@ -258,8 +252,7 @@ pcmdlist(v)
  * Paginate messages, honor ignored fields.
  */
 int
-more(v)
-	void *v;
+more(void *v)
 {
 	int *msgvec = v;
 	return (type1(msgvec, 1, 1));
@@ -269,8 +262,7 @@ more(v)
  * Paginate messages, even printing ignored fields.
  */
 int
-More(v)
-	void *v;
+More(void *v)
 {
 	int *msgvec = v;
 
@@ -281,8 +273,7 @@ More(v)
  * Type out messages, honor ignored fields.
  */
 int
-type(v)
-	void *v;
+type(void *v)
 {
 	int *msgvec = v;
 
@@ -293,8 +284,7 @@ type(v)
  * Type out messages, even printing ignored fields.
  */
 int
-Type(v)
-	void *v;
+Type(void *v)
 {
 	int *msgvec = v;
 
@@ -306,9 +296,7 @@ Type(v)
  */
 jmp_buf	pipestop;
 int
-type1(msgvec, doign, page)
-	int *msgvec;
-	int doign, page;
+type1(int *msgvec, int doign, int page)
 {
 	int *ip;
 	struct message *mp;
@@ -368,8 +356,7 @@ close_pipe:
  * probably caused by quitting more.
  */
 void
-brokpipe(signo)
-	int signo;
+brokpipe(int signo)
 {
 	longjmp(pipestop, 1);
 }
@@ -380,8 +367,7 @@ brokpipe(signo)
  * and defaults to 5.
  */
 int
-top(v)
-	void *v;
+top(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -423,8 +409,7 @@ top(v)
  * get mboxed.
  */
 int
-stouch(v)
-	void *v;
+stouch(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -441,8 +426,7 @@ stouch(v)
  * Make sure all passed messages get mboxed.
  */
 int
-mboxit(v)
-	void *v;
+mboxit(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -459,8 +443,7 @@ mboxit(v)
  * List the folders the user currently has.
  */
 int
-folders(v)
-	void *v;
+folders(void *v)
 {
 	char dirname[PATHSIZE];
 	char *cmd;
@@ -480,8 +463,7 @@ folders(v)
  * come in since we started reading mail.
  */
 int
-inc(v)
-	void *v;
+inc(void *v)
 {
 	int nmsg, mdot;
 

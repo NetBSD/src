@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.10 2001/02/05 02:07:53 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.11 2002/03/02 14:59:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.10 2001/02/05 02:07:53 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.11 2002/03/02 14:59:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
 
-int	matchto __P((char *, int));
+int	matchto(char *, int);
 
 /*
  * Mail -- a mail program
@@ -60,9 +60,7 @@ int	matchto __P((char *, int));
  * Returns the count of messages picked up or -1 on error.
  */
 int
-getmsglist(buf, vector, flags)
-	char *buf;
-	int *vector, flags;
+getmsglist(char *buf, int *vector, int flags)
 {
 	int *ip;
 	struct message *mp;
@@ -119,9 +117,7 @@ struct coltab {
 static	int	lastcolmod;
 
 int
-markall(buf, f)
-	char buf[];
-	int f;
+markall(char buf[], int f)
 {
 	char **np;
 	int i;
@@ -351,8 +347,7 @@ number:
  * value.
  */
 int
-evalcol(col)
-	int col;
+evalcol(int col)
 {
 	struct coltab *colp;
 
@@ -370,8 +365,7 @@ evalcol(col)
  * has to be undeleted.
  */
 int
-check(mesg, f)
-	int mesg, f;
+check(int mesg, int f)
 {
 	struct message *mp;
 
@@ -392,10 +386,7 @@ check(mesg, f)
  * for a RAWLIST.
  */
 int
-getrawlist(line, argv, argc)
-	char line[];
-	char **argv;
-	int  argc;
+getrawlist(char line[], char **argv, int argc)
 {
 	char c, *cp, *cp2, quotec;
 	int argn;
@@ -507,8 +498,7 @@ struct lex {
 };
 
 int
-scan(sp)
-	char **sp;
+scan(char **sp)
 {
 	char *cp, *cp2;
 	int c;
@@ -609,8 +599,7 @@ scan(sp)
  * Unscan the named token by pushing it onto the regret stack.
  */
 void
-regret(token)
-	int token;
+regret(int token)
 {
 	if (++regretp >= REGDEP)
 		errx(1, "Too many regrets");
@@ -624,7 +613,7 @@ regret(token)
  * Reset all the scanner global variables.
  */
 void
-scaninit()
+scaninit(void)
 {
 	regretp = -1;
 }
@@ -634,8 +623,7 @@ scaninit()
  * its message number.
  */
 int
-first(f, m)
-	int f, m;
+first(int f, int m)
 {
 	struct message *mp;
 
@@ -657,9 +645,7 @@ first(f, m)
  * if so.
  */
 int
-matchsender(str, mesg)
-	char *str;
-	int mesg;
+matchsender(char *str, int mesg)
 {
 	char *cp, *cp2, *backup;
 
@@ -686,9 +672,7 @@ matchsender(str, mesg)
 static char *to_fields[] = { "to", "cc", "bcc", 0 };
 
 int
-matchto(str, mesg)
-	char *str;
-	int mesg;
+matchto(char *str, int mesg)
 {
 	struct message *mp;
 	char *cp, *cp2, *backup, **to;
@@ -730,9 +714,7 @@ matchto(str, mesg)
 
 char lastscan[STRINGLEN];
 int
-matchsubj(str, mesg)
-	char *str;
-	int mesg;
+matchsubj(char *str, int mesg)
 {
 	struct message *mp;
 	char *cp, *cp2, *backup;
@@ -781,8 +763,7 @@ matchsubj(str, mesg)
  * Mark the named message by setting its mark bit.
  */
 void
-mark(mesg)
-	int mesg;
+mark(int mesg)
 {
 	int i;
 
@@ -796,8 +777,7 @@ mark(mesg)
  * Unmark the named message.
  */
 void
-unmark(mesg)
-	int mesg;
+unmark(int mesg)
 {
 	int i;
 
@@ -811,8 +791,7 @@ unmark(mesg)
  * Return the message number corresponding to the passed meta character.
  */
 int
-metamess(meta, f)
-	int meta, f;
+metamess(int meta, int f)
 {
 	int c, m;
 	struct message *mp;
