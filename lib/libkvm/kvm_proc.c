@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.35 2000/05/27 01:03:00 thorpej Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.36 2000/06/04 23:03:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.35 2000/05/27 01:03:00 thorpej Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.36 2000/06/04 23:03:27 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -200,9 +200,9 @@ _kvm_ureadm(kd, p, va, cnt)
 	struct vm_page pg;
 	u_long slot;
 
-	if (kd->swapspc == 0) {
+	if (kd->swapspc == NULL) {
 		kd->swapspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
-		if (kd->swapspc == 0)
+		if (kd->swapspc == NULL)
 			return NULL;
 	}
 
@@ -481,7 +481,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		 * Clear this pointer in case this call fails.  Otherwise,
 		 * kvm_close() will free it again.
 		 */
-		kd->procbase2 = 0;
+		kd->procbase2 = NULL;
 	}
 
 	if (ISSYSCTL(kd)) {
@@ -500,7 +500,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 
 		mib[5] = size / esize;
 		kd->procbase2 = (struct kinfo_proc2 *)_kvm_malloc(kd, size);
-		if (kd->procbase2 == 0)
+		if (kd->procbase2 == NULL)
 			return NULL;
 		st = sysctl(mib, 6, kd->procbase2, &size, NULL, 0);
 		if (st == -1) {
@@ -668,13 +668,13 @@ kvm_getprocs(kd, op, arg, cnt)
 	size_t size;
 	int mib[4], st, nprocs;
 
-	if (kd->procbase != 0) {
+	if (kd->procbase != NULL) {
 		free(kd->procbase);
 		/*
 		 * Clear this pointer in case this call fails.  Otherwise,
 		 * kvm_close() will free it again.
 		 */
-		kd->procbase = 0;
+		kd->procbase = NULL;
 	}
 	if (ISKMEM(kd)) {
 		size = 0;
@@ -688,7 +688,7 @@ kvm_getprocs(kd, op, arg, cnt)
 			return NULL;
 		}
 		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
-		if (kd->procbase == 0)
+		if (kd->procbase == NULL)
 			return NULL;
 		st = sysctl(mib, 4, kd->procbase, &size, NULL, 0);
 		if (st == -1) {
@@ -713,7 +713,7 @@ kvm_getprocs(kd, op, arg, cnt)
 		nl[1].n_name = "_allproc";
 		nl[2].n_name = "_deadproc";
 		nl[3].n_name = "_zombproc";
-		nl[4].n_name = 0;
+		nl[4].n_name = NULL;
 
 		if (kvm_nlist(kd, nl) != 0) {
 			for (p = nl; p->n_type != 0; ++p)
@@ -728,7 +728,7 @@ kvm_getprocs(kd, op, arg, cnt)
 		}
 		size = nprocs * sizeof(struct kinfo_proc);
 		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
-		if (kd->procbase == 0)
+		if (kd->procbase == NULL)
 			return NULL;
 
 		nprocs = kvm_deadprocs(kd, op, arg, nl[1].n_value,
@@ -750,7 +750,7 @@ _kvm_freeprocs(kd)
 {
 	if (kd->procbase) {
 		free(kd->procbase);
-		kd->procbase = 0;
+		kd->procbase = NULL;
 	}
 }
 
@@ -762,7 +762,7 @@ _kvm_realloc(kd, p, n)
 {
 	void *np = realloc(p, n);
 
-	if (np == 0)
+	if (np == NULL)
 		_kvm_err(kd, kd->program, "out of memory");
 	return (np);
 }
@@ -794,31 +794,31 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	if (narg > ARG_MAX || addr < kd->min_uva || addr >= kd->max_uva)
 		return NULL;
 
-	if (kd->argv == 0) {
+	if (kd->argv == NULL) {
 		/*
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
 		kd->argv = (char **)_kvm_malloc(kd, kd->argc *
 						sizeof(*kd->argv));
-		if (kd->argv == 0)
+		if (kd->argv == NULL)
 			return NULL;
 	} else if (narg + 1 > kd->argc) {
 		kd->argc = MAX(2 * kd->argc, narg + 1);
 		kd->argv = (char **)_kvm_realloc(kd, kd->argv, kd->argc *
 						sizeof(*kd->argv));
-		if (kd->argv == 0)
+		if (kd->argv == NULL)
 			return NULL;
 	}
-	if (kd->argspc == 0) {
+	if (kd->argspc == NULL) {
 		kd->argspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
-		if (kd->argspc == 0)
+		if (kd->argspc == NULL)
 			return NULL;
 		kd->arglen = kd->nbpg;
 	}
-	if (kd->argbuf == 0) {
+	if (kd->argbuf == NULL) {
 		kd->argbuf = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
-		if (kd->argbuf == 0)
+		if (kd->argbuf == NULL)
 			return NULL;
 	}
 	cc = sizeof(char *) * narg;
@@ -830,7 +830,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	/*
 	 * Loop over pages, filling in the argument vector.
 	 */
-	while (argv < kd->argv + narg && *argv != 0) {
+	while (argv < kd->argv + narg && *argv != NULL) {
 		addr = (u_long)*argv & ~(kd->nbpg - 1);
 		if (addr != oaddr) {
 			if (kvm_ureadm(kd, p, addr, kd->argbuf,
@@ -844,7 +844,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		if (maxcnt > 0 && cc > (size_t)(maxcnt - len))
 			cc = (size_t)(maxcnt - len);
 		ep = memchr(cp, '\0', cc);
-		if (ep != 0)
+		if (ep != NULL)
 			cc = ep - cp + 1;
 		if (len + cc > kd->arglen) {
 			int off;
@@ -854,7 +854,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			kd->arglen *= 2;
 			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
 			    (size_t)kd->arglen);
-			if (kd->argspc == 0)
+			if (kd->argspc == NULL)
 				return NULL;
 			/*
 			 * Adjust argv pointers in case realloc moved
@@ -869,7 +869,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		memcpy(np, cp, cc);
 		np += cc;
 		len += cc;
-		if (ep != 0) {
+		if (ep != NULL) {
 			*argv++ = ap;
 			ap = np;
 		} else
@@ -879,7 +879,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			 * We're stopping prematurely.  Terminate the
 			 * current string.
 			 */
-			if (ep == 0) {
+			if (ep == NULL) {
 				*np = '\0';
 				*argv++ = ap;
 			}
@@ -887,7 +887,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		}
 	}
 	/* Make sure argv is terminated. */
-	*argv = 0;
+	*argv = NULL;
 	return (kd->argv);
 }
 
@@ -964,9 +964,9 @@ kvm_doargv(kd, p, nchr, info)
 	/*
 	 * For live kernels, make sure this process didn't go away.
 	 */
-	if (ap != 0 && ISALIVE(kd) &&
+	if (ap != NULL && ISALIVE(kd) &&
 	    !proc_verify(kd, (u_long)p->p_paddr, p))
-		ap = 0;
+		ap = NULL;
 	return (ap);
 }
 
@@ -1026,20 +1026,20 @@ kvm_doargv2(kd, pid, type, nchr)
 	if (sysctl(mib, 4, &narg, &bufs, NULL, NULL) == -1)
 		return NULL;
 
-	if (kd->argv == 0) {
+	if (kd->argv == NULL) {
 		/*
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
 		kd->argv = (char **)_kvm_malloc(kd, kd->argc *
 						sizeof(*kd->argv));
-		if (kd->argv == 0)
+		if (kd->argv == NULL)
 			return NULL;
 	} else if (narg + 1 > kd->argc) {
 		kd->argc = MAX(2 * kd->argc, narg + 1);
 		kd->argv = (char **)_kvm_realloc(kd, kd->argv, kd->argc *
 						sizeof(*kd->argv));
-		if (kd->argv == 0)
+		if (kd->argv == NULL)
 			return NULL;
 	}
 
@@ -1050,7 +1050,7 @@ kvm_doargv2(kd, pid, type, nchr)
 		else
 			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
 			    newarglen);
-		if (kd->argspc == 0)
+		if (kd->argspc == NULL)
 			return NULL;
 		kd->arglen = newarglen;
 	}
@@ -1121,7 +1121,7 @@ kvm_ureadm(kd, p, uva, buf, len)
 		u_long cnt;
 
 		dp = _kvm_ureadm(kd, p, uva, &cnt);
-		if (dp == 0) {
+		if (dp == NULL) {
 			_kvm_err(kd, 0, "invalid address (%x)", uva);
 			return 0;
 		}
