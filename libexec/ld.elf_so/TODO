@@ -9,11 +9,15 @@ binutils/gcc:
 * powerpc: make sure the .got section is always executable
 * powerpc: fix ld scripts so that .rodata is still used for PIC
 
-machine-specific #ifdefs:
+machine-specific:
+* LD_BIND_NOW support for: alpha m68k mips powerpc sh3 sh5 vax x86_64
+* #ifdefs:
+headers.c:#ifndef __mips__
 headers.c:#ifdef __mips__
-reloc.c:#if defined(__i386__) || defined(__arm__)
+reloc.c:#if defined(__hppa__)
+rtld.c:#if !defined(__hppa__)
+rtld.c:#if !defined(__mips__) && !defined(__hppa__)
 rtld.c:#if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
-rtld.c:#ifndef __mips__
 rtld.c:#ifdef __mips__
 rtld.h:#ifdef __mips__
 symbol.c:#ifndef __mips__
@@ -25,9 +29,6 @@ issues to research:
 
 rela: alpha hppa m68k powerpc sh sparc sparc64 vax x86_64
 rel: arm i386 mips
-
-untested/sketchy: hppa sh x86_64
-
 
 - mycroft
   2003/09/24
