@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.124 1999/09/20 06:12:07 veego Exp $
+# $NetBSD: mi,v 1.125 1999/09/21 14:20:38 hubertf Exp $
 .
 ./altroot
 ./bin
@@ -887,6 +887,7 @@
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mvme68k
+./usr/share/man/cat8/next68k
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/sparc
@@ -947,6 +948,7 @@
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/mvme68k
+./usr/share/man/man8/next68k
 ./usr/share/man/man8/pc532
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/sparc

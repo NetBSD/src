@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.67 1999/09/20 03:48:51 sakamoto Exp $
+# $NetBSD: md_share,v 1.68 1999/09/21 14:20:39 hubertf Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -282,6 +282,8 @@
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme68k/makedev.0
+./usr/share/man/cat8/next68k/MAKEDEV.0
+./usr/share/man/cat8/next68k/makedev.0
 ./usr/share/man/cat8/pc532/MAKEDEV.0
 ./usr/share/man/cat8/pc532/bim.0
 ./usr/share/man/cat8/pc532/makedev.0
@@ -599,9 +601,11 @@
 ./usr/share/man/man8/mac68k/boot.8
 ./usr/share/man/man8/mac68k/MAKEDEV.0
 ./usr/share/man/man8/mac68k/makedev.0
-./usr/share/man/man8/mvme68k/installboot.8
 ./usr/share/man/man8/mvme68k/MAKEDEV.0
+./usr/share/man/man8/mvme68k/installboot.8
 ./usr/share/man/man8/mvme68k/makedev.0
+./usr/share/man/man8/next68k/MAKEDEV.0
+./usr/share/man/man8/next68k/makedev.0
 ./usr/share/man/man8/pc532/MAKEDEV.8
 ./usr/share/man/man8/pc532/bim.8
 ./usr/share/man/man8/pc532/makedev.8
