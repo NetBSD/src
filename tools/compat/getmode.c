@@ -1,4 +1,4 @@
-/*	$NetBSD: getmode.c,v 1.4 2004/01/08 12:16:09 simonb Exp $	*/
+/*	$NetBSD: getmode.c,v 1.5 2004/01/12 02:23:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,12 @@ setmode(const char *str)
 mode_t
 getmode(const void *mp, mode_t mode)
 {
+	mode_t m; 
 
-	return *((const mode_t *)mp);
+	m = *((const mode_t *)mp);
+
+	mode &= ~ALLPERMS;	/* input mode less RWX permissions */
+	m &= ALLPERMS;		/* new RWX permissions */
+
+	return m | mode;
 }
