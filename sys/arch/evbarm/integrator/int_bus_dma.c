@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.5 2002/01/25 20:57:43 thorpej Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.6 2002/03/24 03:37:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ integrator_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return arm_byte_to_page((u_long)CM_ALIAS_TO_LOCAL(segs[i].ds_addr) + off);
+		return arm_btop((u_long)CM_ALIAS_TO_LOCAL(segs[i].ds_addr) + off);
 	}
 
 	/* Page not found. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2002/03/23 19:21:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -142,7 +142,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_is_modified(pg)		(((pg)->mdpage.pvh_attrs & PT_M) != 0)
 #define	pmap_is_referenced(pg)		(((pg)->mdpage.pvh_attrs & PT_H) != 0)
 
-#define pmap_phys_address(ppn)		(arm_page_to_byte((ppn)))
+#define pmap_phys_address(ppn)		(arm_ptob((ppn)))
 
 /*
  * Functions that we need to export
@@ -186,11 +186,14 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /* Virtual address to page table entry */
 #define vtopte(va) \
 	((pt_entry_t *)(PTE_BASE + \
-	(arm_byte_to_page((unsigned int)(va)) << 2)))
+	(arm_btop((unsigned int)(va)) << 2)))
 
 /* Virtual address to physical address */
 #define vtophys(va) \
 	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
+
+#define	l2pte_valid(pte)		((pte) != 0)
+#define	l2pte_pa(pte)		((pte) & PG_FRAME)
 
 /* L1 and L2 page table macros */
 #define pmap_pdei(v)	((v & PD_MASK) >> PDSHIFT)
@@ -202,6 +205,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
 #define pmap_pde_fpage(pde)	((*(pde) & L1_MASK) == L1_FPAGE)
 
 #define pmap_pte_v(pte)		(*(pte) != 0)
+
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\

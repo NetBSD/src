@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.5 2002/03/17 19:40:33 atatat Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.6 2002/03/24 03:37:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -714,7 +714,7 @@ vidcrender_mmap(vc, offset, nprot)
 {
 	if ((u_int)offset >= videomemory.vidm_size)
 		return (-1);
-	return(arm_byte_to_page(((videomemory.vidm_pbase) + (offset))));
+	return(arm_btop(((videomemory.vidm_pbase) + (offset))));
 }
 
 extern void vidcrendermc_render __P(( unsigned char *addr, unsigned char *fontaddr,

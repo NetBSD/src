@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.9 2002/03/23 21:27:41 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.10 2002/03/24 03:37:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.9 2002/03/23 21:27:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.10 2002/03/24 03:37:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.9 2002/03/23 21:27:41 reinoud Exp $"
 
 extern videomemory_t videomemory;
 
-#define machine_btop(x) arm_byte_to_page(x)
+#define machine_btop(x) arm_btop(x)
 #define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
 
 /* FOR DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.2 2002/03/04 23:43:01 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.3 2002/03/24 03:37:26 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -232,5 +232,5 @@ ofrommmap(dev, off, prot)
 	if ((u_int)off >= sc->size)
 		return (-1);
 
-	return arm_byte_to_page(sc->base + off);
+	return arm_btop(sc->base + off);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2002/03/24 03:25:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 2002/03/24 03:37:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2002/03/24 03:25:10 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2002/03/24 03:37:21 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1345,7 +1345,7 @@ pmap_alloc_l1pt(void)
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
-		ptes[arm_byte_to_page(va)] &= ~(PT_C | PT_B);
+		ptes[arm_btop(va)] &= ~(PT_C | PT_B);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
@@ -2180,8 +2180,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if ((pmap == npv->pv_pmap 
 			    || kpmap == npv->pv_pmap) && 
 			    (npv->pv_flags & PT_NC) == 0) {
-				ptes[arm_byte_to_page(npv->pv_va)] &= 
-				    ~(PT_C | PT_B);
+				ptes[arm_btop(npv->pv_va)] &= ~(PT_C | PT_B);
  				npv->pv_flags |= PT_NC;
 				/*
 				 * If this page needs flushing from the
@@ -2213,8 +2212,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if ((pmap == npv->pv_pmap ||
 			    (kpmap == npv->pv_pmap && other_writable == 0)) && 
 			    (npv->pv_flags & PT_NC)) {
-				ptes[arm_byte_to_page(npv->pv_va)] |=
-				    pte_cache_mode;
+				ptes[arm_btop(npv->pv_va)] |= pte_cache_mode;
 				npv->pv_flags &= ~PT_NC;
 			}
 		}
@@ -2279,7 +2277,7 @@ pmap_remove(pmap, sva, eva)
 		sva = (sva & PD_MASK) + NBPD;
 	}
 	
-	pte = &ptes[arm_byte_to_page(sva)];
+	pte = &ptes[arm_btop(sva)];
 	/* Note if the pmap is active thus require cache and tlb cleans */
 	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
 	    || (pmap == pmap_kernel()))
@@ -2293,7 +2291,7 @@ pmap_remove(pmap, sva, eva)
 		if (!(sva & PT_MASK))
 			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
 				sva += NBPD;
-				pte += arm_byte_to_page(NBPD);
+				pte += arm_btop(NBPD);
 				continue;
 			}
 
@@ -2425,7 +2423,7 @@ pmap_remove_all(pg)
 	while (pv) {
 		pmap = pv->pv_pmap;
 		ptes = pmap_map_ptes(pmap);
-		pte = &ptes[arm_byte_to_page(pv->pv_va)];
+		pte = &ptes[arm_btop(pv->pv_va)];
 
 		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
 		    pv->pv_va, pv->pv_flags));
@@ -2524,7 +2522,7 @@ pmap_protect(pmap, sva, eva, prot)
 		sva = (sva & PD_MASK) + NBPD;
 	}
 	
-	pte = &ptes[arm_byte_to_page(sva)];
+	pte = &ptes[arm_btop(sva)];
 	
 	while (sva < eva) {
 		/* only check once in a while */
@@ -2532,7 +2530,7 @@ pmap_protect(pmap, sva, eva, prot)
 			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
 				/* We can race ahead here, to the next pde. */
 				sva += NBPD;
-				pte += arm_byte_to_page(NBPD);
+				pte += arm_btop(NBPD);
 				continue;
 			}
 		}
@@ -3051,7 +3049,7 @@ pmap_extract(pmap, va, pap)
 	 */
 	pde = pmap_pde(pmap, va);
 	ptes = pmap_map_ptes(pmap);
-	pte = &ptes[arm_byte_to_page(va)]; 
+	pte = &ptes[arm_btop(va)]; 
 
 	if (pmap_pde_section(pde)) {
 		pa = (*pde & PD_MASK) | (va & (L1_SEC_SIZE - 1));

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.2 2002/03/17 19:40:50 atatat Exp $       */
+/*      $NetBSD: pccons.c,v 1.3 2002/03/24 03:37:26 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -3995,7 +3995,7 @@ pcmmap(dev_t   dev,
 	/* Display memory - allow any address since we
 	** don't know the size
 	*/
-	return arm_byte_to_page(offset);
+	return arm_btop(offset);
     }
 
     pam_io_data  = vtophys(isa_io_data_vaddr());
@@ -4009,7 +4009,7 @@ pcmmap(dev_t   dev,
 	   offset <= pam_io_data + displayInfo(ioBase)
 	   + displayInfo(ioLen))
 	{
-	    return arm_byte_to_page(offset);
+	    return arm_btop(offset);
 	}
 	
     }
@@ -4020,7 +4020,7 @@ pcmmap(dev_t   dev,
 	   offset <= vtophys(vam_mem_data) + VGA_BUF
 	   + VGA_BUF_LEN)
 	{
-	    return arm_byte_to_page(offset);
+	    return arm_btop(offset);
 	}
     }
     return -1;
@@ -4030,7 +4030,7 @@ pcmmap(dev_t   dev,
     {
 	return -1;
     }
-    return arm_byte_to_page(0xa0000 + offset);
+    return arm_btop(0xa0000 + offset);
 #endif
 } /* End pcmmap() */
 

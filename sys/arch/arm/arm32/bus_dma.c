@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2002/01/25 20:57:41 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2002/03/24 03:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -609,7 +609,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (arm_byte_to_page((u_long)segs[i].ds_addr + off));
+		return (arm_btop((u_long)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
