@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.466 2004/09/23 02:55:07 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.467 2004/09/25 21:43:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7608,7 +7608,13 @@ sbin/newfs_msdos/newfs_msdos.8			1.14
 	Change the default volume label from "NO NAME" to "NO_NAME".
 	[thorpej, ticket #870]
 
+distrib/notes/common/main			patch
+
+	Fix the broken build of INSTALL.* files.
+	[oster, ticket #872]
+
 sys/sys/param.h					patched by hand
 share/tmac/doc-common				patched by hand
 
 	Welcome to 2.0_RC1
+
