@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.10 1997/01/30 09:52:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -155,7 +155,8 @@ READ(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
-	ip->i_flag |= IN_ACCESS;
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+		ip->i_flag |= IN_ACCESS;
 	return (error);
 }
 
