@@ -20,14 +20,16 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.12 1995/02/05 06:08:33 briggs Exp $
+#	$Id: MAKEDEV,v 1.13 1995/07/12 05:15:31 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
 #		fd* (unimp.) and ch*
 #
 #	std	standard devices
+#	fd	file descriptor device nodes
 #	local	configuration specific devices
+#	raminst	for RAM disk install
 #
 # Tapes:
 #	st*	scsi tapes
@@ -61,7 +63,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std
+	sh MAKEDEV std fd
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV adb grf0 grf1 ttye0
@@ -69,6 +71,13 @@ all)
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV lkm
 	sh MAKEDEV local
+	;;
+
+raminst)
+	sh MAKEDEV std
+	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh MAKEDEV adb grf0 grf1 ttye0
+	sh MAKEDEV tty00 tty01 pty0
 	;;
 
 std)
@@ -86,6 +95,9 @@ std)
 	mknod stdin		c 21 0	; chmod 666 stdin
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
+	;;
+
+fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
 	(cd fd && eval `echo "" | awk ' BEGIN { \
