@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.46 1998/03/05 02:47:05 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.47 1998/07/05 08:02:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.46 1998/03/05 02:47:05 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.47 1998/07/05 08:02:34 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,9 @@ extern void dkswap __P((void));
 /* Namelist and memory file names. */
 char	*nlistf, *memf;
 
+/* allow old usage [vmstat 1] */
+#define	BACKWARD_COMPATIBILITY
+
 int
 main(argc, argv)
 	int argc;
@@ -317,13 +320,12 @@ main(argc, argv)
 		dkinit(0);	/* Initialize disk stats, no disks selected. */
 		argv = choosedrives(argv);	/* Select disks. */
 		winsize.ws_row = 0;
-		(void) ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&winsize);
+		(void)ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&winsize);
 		if (winsize.ws_row > 0)
 			winlines = winsize.ws_row;
 
 	}
 
-#define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
 		interval = atoi(*argv);
@@ -1185,6 +1187,7 @@ hist_dodump(histp)
 void
 usage()
 {
+
 #if defined(UVM)
 	(void)fprintf(stderr,
 	    "usage: vmstat [-fHilms] [-h histname] [-c count] [-M core] \
