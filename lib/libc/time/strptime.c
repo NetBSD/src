@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
+/*	$NetBSD: strptime.c,v 1.13 1998/03/19 16:21:35 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.13 1998/03/19 16:21:35 tv Exp $");
 #endif
 
 #include "namespace.h"
@@ -73,7 +73,7 @@ strptime(buf, fmt, tm)
 {
 	char c;
 	const char *bp;
-	int alt_format, i, len;
+	int alt_format, i, len, split_year = 0;
 
 	bp = buf;
 
@@ -216,7 +216,12 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
 
-			tm->tm_year = i * 100;
+			if (split_year) {
+				tm->tm_year = (tm->tm_year % 100) + (i * 100);
+			} else {
+				tm->tm_year = i * 100;
+				split_year = 1;
+			}
 			break;
 
 		case 'd':	/* The day of month. */
@@ -240,14 +245,17 @@ literal:
 			/* FALLTHROUGH */
 		case 'I':
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_hour, 0, 11)))
+			if (!(_conv_num(&bp, &tm->tm_hour, 1, 12)))
 				return (0);
+			if (tm->tm_hour == 12)
+				tm->tm_hour = 0;
 			break;
 
 		case 'j':	/* The day of year. */
 			_LEGAL_ALT(0);
-			if (!(_conv_num(&bp, &tm->tm_yday, 1, 366)))
+			if (!(_conv_num(&bp, &i, 1, 366)))
 				return (0);
+			tm->tm_yday = i - 1;
 			break;
 
 		case 'M':	/* The minute. */
@@ -258,29 +266,27 @@ literal:
 
 		case 'm':	/* The month. */
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_mon, 1, 12)))
+			if (!(_conv_num(&bp, &i, 1, 12)))
 				return (0);
+			tm->tm_mon = i - 1;
 			break;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			_LEGAL_ALT(0);
 			/* AM? */
 			if (strcmp(_ctloc(am_pm[0]), bp) == 0) {
-				if (tm->tm_hour > 12)	/* i.e., 13:00 AM ?! */
+				if (tm->tm_hour > 11)
 					return (0);
-				else if (tm->tm_hour == 12)
-					tm->tm_hour = 0;
 
 				bp += strlen(_ctloc(am_pm[0]));
 				break;
 			}
 			/* PM? */
 			else if (strcmp(_ctloc(am_pm[1]), bp) == 0) {
-				if (tm->tm_hour > 12)	/* i.e., 13:00 PM ?! */
+				if (tm->tm_hour > 11)
 					return (0);
-				else if (tm->tm_hour < 12)
-					tm->tm_hour += 12;
 
+				tm->tm_hour += 12;
 				bp += strlen(_ctloc(am_pm[1]));
 				break;
 			}
@@ -290,7 +296,7 @@ literal:
 
 		case 'S':	/* The seconds. */
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_sec, 1, 61)))
+			if (!(_conv_num(&bp, &tm->tm_sec, 0, 61)))
 				return (0);
 			break;
 
@@ -326,6 +332,11 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
 
+			if (split_year) {
+				tm->tm_year = ((tm->tm_year / 100) * 100) + i;
+				break;
+			}
+			split_year = 1;
 			if (i <= 68)
 				tm->tm_year = i + 2000 - TM_YEAR_BASE;
 			else
