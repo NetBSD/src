@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.36 2000/04/14 14:12:11 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.37 2000/04/27 15:26:49 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

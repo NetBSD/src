@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.10 2000/04/06 23:44:21 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.11 2000/04/27 15:26:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without

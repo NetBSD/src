@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.37 2000/03/27 12:33:55 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.38 2000/04/27 15:26:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
