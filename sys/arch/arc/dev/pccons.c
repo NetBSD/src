@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.23 2000/12/24 09:25:27 ur Exp $	*/
+/*	$NetBSD: pccons.c,v 1.24 2001/02/17 04:27:54 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -249,6 +249,7 @@ pcinithandle()
 	case NEC_R94:
 	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_JC94:
 		kbd_cmdp = PICA_SYS_KBD + 0x61;
 		kbd_datap = PICA_SYS_KBD + 0x60;
 		break;
