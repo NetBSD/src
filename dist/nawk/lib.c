@@ -106,7 +106,8 @@ int getrec(uschar **pbuf, int *pbufsize, int isrecord)	/* get next input record 
 	int c;
 	static int firsttime = 1;
 	uschar *buf = *pbuf;
-	int bufsize = *pbufsize;
+	uschar save;
+	int bufsize = *pbufsize, savebufsize = *pbufsize;
 
 	if (firsttime) {
 		firsttime = 0;
@@ -118,6 +119,7 @@ int getrec(uschar **pbuf, int *pbufsize, int isrecord)	/* get next input record 
 		donefld = 0;
 		donerec = 1;
 	}
+	save = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
 		   dprintf( ("argno=%d, file=|%s|\n", argno, file) );
@@ -164,8 +166,9 @@ int getrec(uschar **pbuf, int *pbufsize, int isrecord)	/* get next input record 
 		infile = NULL;
 		argno++;
 	}
+	buf[0] = save;
 	*pbuf = buf;
-	*pbufsize = bufsize;
+	*pbufsize = savebufsize;
 	return 0;	/* true end of file */
 }
 
