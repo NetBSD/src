@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 1996/11/11 23:57:12 pk Exp $	*/
+/*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -86,5 +86,5 @@ cdev_decl(xy);
 bdev_decl(sw);
 cdev_decl(sw);
 
-bdev_decl(rd);
-cdev_decl(rd);
+bdev_decl(md);
+cdev_decl(md);
