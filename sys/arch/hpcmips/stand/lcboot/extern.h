@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.1 2003/05/01 07:02:01 igy Exp $ */
+/* $NetBSD: extern.h,v 1.2 2003/06/24 12:27:04 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,6 +100,12 @@ int iskey(void);
 void start_netbsd(void);
 int i28f128_probe(void *base);
 int i28f128_region_write(void *dst, const void *src, size_t len);
+
+/* dev_flash */
+int flash_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int flash_open(struct open_file *, ...);
+int flash_close(struct open_file *);
+int flash_ioctl(struct open_file *, u_long, void *);
 
 #endif /* !_LOCORE */
 
