@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.57 2000/06/09 00:00:17 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.58 2000/06/27 17:52:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -397,11 +397,11 @@ nfs_safedisconnect(nmp)
  * For the client side:
  * - return EINTR if the RPC is terminated, 0 otherwise
  * - set R_MUSTRESEND if the send fails for any reason
- * - do any cleanup required by recoverable socket errors (???)
+ * - do any cleanup required by recoverable socket errors (? ? ?)
  * For the server side:
  * - return EINTR or ERESTART if interrupted by a signal
  * - return EPIPE if a connection is lost for connection based sockets (TCP...)
- * - do any cleanup required by recoverable socket errors (???)
+ * - do any cleanup required by recoverable socket errors (? ? ?)
  */
 int
 nfs_send(so, nam, top, rep)
@@ -453,7 +453,7 @@ nfs_send(so, nam, top, rep)
 			log(LOG_INFO, "nfsd send error %d\n", error);
 
 		/*
-		 * Handle any recoverable (soft) socket errors here. (???)
+		 * Handle any recoverable (soft) socket errors here. (? ? ?)
 		 */
 		if (error != EINTR && error != ERESTART &&
 			error != EWOULDBLOCK && error != EPIPE)
@@ -733,7 +733,7 @@ nfs_reply(myrep)
 			}
 			nmp->nm_waiters--;
 			/*
-			 * Ignore routing errors on connectionless protocols??
+			 * Ignore routing errors on connectionless protocols? ?
 			 */
 			if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 				nmp->nm_so->so_error = 0;
