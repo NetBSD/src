@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2001/03/10 16:24:54 uch Exp $
+$NetBSD: README,v 1.2 2001/06/19 17:50:39 uch Exp $
 
 How to use
 	'make all' uudecode all binaries.
@@ -16,4 +16,11 @@ How to compile
 		make vc6	# WindowsCE Toolkit for Visual C++ 6.0
 		make evc3	# eMbedded Visual C++ 3.0
 
-	2. Use hpc_stand.dsw or hpc_stand.vcw.
+	2. Open hpc_stand.dsw or hpc_stand.vcw from Visual Studio.
+
+How to commit (for developers)
+	"make install" copies hpcboot.exe to binary/ directory from compile/
+	directory.
+	"make uuencode" uuencode binary/*/hpcboot.exe and
+	increment build number. (this number is used for next build.)
+	commit uudecoded binary and binary/build_number.h.
