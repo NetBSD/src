@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.16 2000/09/05 00:57:04 hubertf Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.17 2001/05/16 14:27:58 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -122,7 +122,7 @@ Copy files from an svr4 system:
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/lib; tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/lib && tar -xpf -'
 .in -5
 .El
 .Pp
@@ -133,17 +133,38 @@ If you are running openwindows:
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/openwin/lib; tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/openwin/lib && tar -xpf -'
 .in -5
 .It (me@svr4) cd /usr/dt/lib
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/dt/lib; tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/dt/lib && tar -xpf -'
 .in -5
 .El
 .Pp
 .It 3.
+You will also probably need the timezone files from your Solaris
+system, otherwise emulated binaries will run on UTC time.
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@netbsd) mkdir -p /emul/svr4/usr/share/lib/zoneinfo
+.br
+.It (me@netbsd) mkdir -p /emul/svr4/etc/default
+.br
+.It (me@svr4) cd /usr/share/lib/zoneinfo
+.br
+.It (me@solaris) tar -cf - . | \e
+.in +5
+.It rsh netbsd 'cd /emul/svr4/usr/share/lib/zoneinfo &&
+.It tar -xpf -'
+.in -5
+.br
+.It (me@netbsd) echo TZ=US/Pacific > /emul/svr4/etc/default/init
+.br
+.El
+.Pp
+.It 4.
 Setup the configuration files and devices:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -153,7 +174,7 @@ Setup the configuration files and devices:
 .br
 .It (me@netbsd) cp SVR4_MAKEDEV /emul/svr4/dev
 .br
-.It (me@netbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
+.It (me@netbsd) cd /emul/svr4/dev && sh SVR4_MAKEDEV all
 .El
 .Pp
 As the major number allocated for emulation of SVR4 devices may vary between
