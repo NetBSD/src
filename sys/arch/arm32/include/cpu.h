@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.11 1996/11/23 03:18:20 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.12 1997/01/26 01:56:20 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -230,8 +230,8 @@
 #define cpu_wait(p)	/* nothing */
 
 #ifndef _LOCORE
-void tlbflush __P(());
-void need_resched __P(());
+void tlbflush __P((void));
+void need_resched __P((void));
 void need_proftick __P((struct proc *p));
 
 extern int current_intr_depth;
