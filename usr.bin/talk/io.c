@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
+/*	$NetBSD: io.c,v 1.5 1997/10/20 00:23:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $";
+__RCSID("$NetBSD: io.c,v 1.5 1997/10/20 00:23:24 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -46,36 +47,37 @@ static char rcsid[] = "$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $";
  * ctl.c
  */
 
+#include "talk.h"
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "talk.h"
+#include <unistd.h>
 
 #define A_LONG_TIME 10000000
-#define STDIN_MASK (1<<fileno(stdin))	/* the bit mask for standard
-					   input */
 
 /*
  * The routine to do the actual talking
  */
+void
 talk()
 {
-	register int read_template, sockt_mask;
-	int read_set, nb;
+	fd_set read_template, read_set;
+	int nb;
 	char buf[BUFSIZ];
 	struct timeval wait;
 
 	message("Connection established\007\007\007");
 	current_line = 0;
-	sockt_mask = (1<<sockt);
 
 	/*
 	 * Wait on both the other process (sockt_mask) and 
 	 * standard input ( STDIN_MASK )
 	 */
-	read_template = sockt_mask | STDIN_MASK;
+	FD_ZERO(&read_template);
+	FD_SET(sockt, &read_template);
+	FD_SET(fileno(stdin), &read_template);
 	for (;;) {
 		read_set = read_template;
 		wait.tv_sec = A_LONG_TIME;
@@ -90,7 +92,7 @@ talk()
 			p_error("Unexpected error from select");
 			quit();
 		}
-		if (read_set & sockt_mask) { 
+		if (FD_ISSET(sockt, &read_set)) { 
 			/* There is data on sockt */
 			nb = read(sockt, buf, sizeof buf);
 			if (nb <= 0) {
@@ -99,7 +101,7 @@ talk()
 			}
 			display(&his_win, buf, nb);
 		}
-		if (read_set & STDIN_MASK) {
+		if (FD_ISSET(fileno(stdin), &read_set)) {
 			/*
 			 * We can't make the tty non_blocking, because
 			 * curses's output routines would screw up
@@ -113,13 +115,11 @@ talk()
 	}
 }
 
-extern	int errno;
-extern	int sys_nerr;
-
 /*
  * p_error prints the system error message on the standard location
  * on the screen and then exits. (i.e. a curses version of perror)
  */
+void
 p_error(string) 
 	char *string;
 {
@@ -135,6 +135,7 @@ p_error(string)
 /*
  * Display string in the standard location
  */
+void
 message(string)
 	char *string;
 {

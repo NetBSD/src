@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.c,v 1.4 1997/04/21 16:15:34 is Exp $	*/
+/*	$NetBSD: talk.c,v 1.5 1997/10/20 00:23:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,21 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: talk.c,v 1.4 1997/04/21 16:15:34 is Exp $";
+__RCSID("$NetBSD: talk.c,v 1.5 1997/10/20 00:23:30 lukem Exp $");
 #endif /* not lint */
 
-#include <locale.h>
 #include "talk.h"
+#include <locale.h>
 
 /*
  * talk:	A visual form of write. Using sockets, a two way 
@@ -63,6 +63,9 @@ static char rcsid[] = "$NetBSD: talk.c,v 1.4 1997/04/21 16:15:34 is Exp $";
  *		Modified to run under 4.1c by Peter Moore 3/17/83
  */
 
+int	main __P((int, char **));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -79,4 +82,6 @@ main(argc, argv)
 	end_msgs();
 	set_edit_chars();
 	talk();
+	/* NOTREACHED */
+	return (0);
 }
