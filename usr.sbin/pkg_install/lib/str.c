@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.12 1999/01/19 17:02:02 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.13 1999/03/06 02:16:25 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.12 1999/01/19 17:02:02 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.13 1999/03/06 02:16:25 hubertf Exp $");
 #endif
 #endif
 
@@ -234,8 +234,7 @@ pmatch(const char *pattern, const char *pkg)
 }
 
 
-/* search dir for pattern, writing the found match in buf */
-/* let's hope there's only one ... - HF */
+/* search dir for pattern, calling match(pkg_found, data) for every match */
 /* returns -1 on error, 1 if found, 0 otherwise. */
 int
 findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
