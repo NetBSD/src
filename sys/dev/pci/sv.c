@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.19 2003/02/01 06:23:39 thorpej Exp $ */
+/*      $NetBSD: sv.c,v 1.20 2003/02/20 12:24:05 hannken Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.19 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.20 2003/02/20 12:24:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,18 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.19 2003/02/01 06:23:39 thorpej Exp $");
 #include <dev/pci/svvar.h>
 
 #include <machine/bus.h>
+
+/* XXX
+ * The SonicVibes DMA is broken and only works on 24-bit addresses.
+ * As long as bus_dmamem_alloc_range() is missing we use the ISA
+ * dma tag on i386.
+ */
+#if defined(i386)
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
+#endif
+#endif
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (svdebug) printf x
@@ -273,8 +285,8 @@ int pci_alloc_io __P((pci_chipset_tag_t pc, pcitag_t pt,
 		      bus_size_t align, bus_size_t bound, int flags,
 		      bus_space_handle_t *ioh));
 
-#define PCI_IO_ALLOC_LOW 0xa000
-#define PCI_IO_ALLOC_HIGH 0xb000
+static pcireg_t pci_io_alloc_low, pci_io_alloc_high;
+
 int
 pci_alloc_io(pc, pt, pcioffs, iot, size, align, bound, flags, ioh)
 	pci_chipset_tag_t pc;
@@ -290,7 +302,7 @@ pci_alloc_io(pc, pt, pcioffs, iot, size, align, bound, flags, ioh)
 	bus_addr_t addr;
 	int error;
 
-	error = bus_space_alloc(iot, PCI_IO_ALLOC_LOW, PCI_IO_ALLOC_HIGH,
+	error = bus_space_alloc(iot, pci_io_alloc_low, pci_io_alloc_high,
 				size, align, bound, flags, &addr, ioh);
 	if (error)
 		return(error);
@@ -312,6 +324,14 @@ sv_defer(self)
 	pcireg_t dmaio;
 
 	DPRINTF(("sv_defer: %p\n", sc));
+
+	/* XXX
+	 * Get a reasonable default for the I/O range.
+	 * Assume the range around SB_PORTBASE is valid on this PCI bus.
+	 */
+	pci_io_alloc_low = pci_conf_read(pc, pt, SV_SB_PORTBASE_SLOT);
+	pci_io_alloc_high = pci_io_alloc_low + 0x1000;
+
 	if (pci_alloc_io(pc, pt, SV_DMAA_CONFIG_OFF, 
 			  sc->sc_iot, SV_DMAA_SIZE, SV_DMAA_ALIGN, 0,
 			  0, &sc->sc_dmaa_ioh)) {
@@ -377,9 +397,16 @@ sv_attach(parent, self, aux)
 	DPRINTF(("sv: IO ports: enhanced=0x%x, OPL=0x%x, MIDI=0x%x\n",
 		 (int)sc->sc_ioh, (int)sc->sc_oplioh, (int)sc->sc_midiioh));
 
-#ifdef alpha
+#if defined(alpha)
 	/* XXX Force allocation through the SGMAP. */
 	sc->sc_dmatag = alphabus_dma_get_tag(pa->pa_dmat, ALPHA_BUS_ISA);
+#elif defined(i386) && NISA > 0
+/* XXX
+ * The SonicVibes DMA is broken and only works on 24-bit addresses.
+ * As long as bus_dmamem_alloc_range() is missing we use the ISA
+ * dma tag on i386.
+ */
+	sc->sc_dmatag = &isa_bus_dma_tag;
 #else
 	sc->sc_dmatag = pa->pa_dmat;
 #endif
