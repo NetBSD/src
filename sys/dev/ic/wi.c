@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.58 2002/03/30 16:44:59 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.59 2002/03/31 05:51:47 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.58 2002/03/30 16:44:59 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.59 2002/03/31 05:51:47 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -965,9 +965,11 @@ static int wi_write_record(sc, ltv)
 			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
 			p2ltv.wi_len = 2;
 			if (le16toh(ltv->wi_val))
-				p2ltv.wi_val = htole16(0x03);
+				p2ltv.wi_val = htole16(PRIVACY_INVOKED |
+						       EXCLUDE_UNENCRYPTED);
 			else
-				p2ltv.wi_val = htole16(0x90);
+				p2ltv.wi_val =
+				    htole16(HOST_ENCRYPT | HOST_DECRYPT);
 			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
