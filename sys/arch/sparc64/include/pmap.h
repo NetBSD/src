@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2002/04/16 23:11:20 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 2002/09/22 07:19:45 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #ifndef _LOCORE
 #include <machine/pte.h>
 #include <sys/queue.h>
+#include <uvm/uvm_object.h>
 #endif
 
 /*
@@ -51,7 +52,7 @@
  * total:						32 bits
  *
  * In 64-bit mode the Spitfire and Blackbird CPUs support only
- * 44-bit virtual addresses.  All addresses between 
+ * 44-bit virtual addresses.  All addresses between
  * 0x0000 07ff ffff ffff and 0xffff f800 0000 0000 are in the
  * "VA hole" and trap, so we don't have to track them.  However,
  * we do need to keep them in mind during PT walking.  If they
@@ -108,18 +109,21 @@ extern struct page_size_map page_size_map[];
 #define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
 
 struct pmap {
+	struct uvm_object pm_obj;
+#define pm_lock pm_obj.vmobjlock
+#define pm_refs pm_obj.uo_refs
+	LIST_ENTRY(pmap) pm_list;
 	int pm_ctx;		/* Current context */
-	int pm_refs;		/* ref count */
-	/* 
-	 * This contains 64-bit pointers to pages that contain 
+
+	/*
+	 * This contains 64-bit pointers to pages that contain
 	 * 1024 64-bit pointers to page tables.  All addresses
-	 * are physical.  
+	 * are physical.
 	 *
 	 * !!! Only touch this through pseg_get() and pseg_set() !!!
 	 */
 	paddr_t pm_physaddr;	/* physical address of pm_segs */
 	int64_t *pm_segs;
-	struct simplelock pm_lock;
 };
 
 /*
@@ -134,44 +138,54 @@ struct prom_map {
 #define PMAP_NC		0x001	/* Set the E bit in the page */
 #define PMAP_NVC	0x002	/* Don't enable the virtual cache */
 #define PMAP_LITTLE	0x004	/* Map in little endian mode */
-/* Large page size hints -- we really should use another param to pmap_enter() */
+/* Large page size hints --
+   we really should use another param to pmap_enter() */
 #define PMAP_8K		0x000
 #define PMAP_64K	0x008	/* Use 64K page */
 #define PMAP_512K	0x010
 #define PMAP_4M		0x018
 #define PMAP_SZ_TO_TTE(x)	(((x)&0x018)<<58)
-/* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
-#define VA_ALIAS_MASK   (1<<14)	
+/* If these bits are different in va's to the same PA
+   then there is an aliasing in the d$ */
+#define VA_ALIAS_MASK   (1 << 14)
 
 typedef	struct pmap *pmap_t;
-
-/* 
- * Encode IO space for pmap_enter() 
- *
- * Since sun4u machines don't have separate IO spaces, this is a noop.
- */
-#define PMAP_IOENC(io)	0
 
 #ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-int pmap_count_res __P((pmap_t pmap));
-int pmap_count_wired __P((pmap_t pmap));
+int pmap_count_res __P((struct pmap *));
+int pmap_count_wired __P((struct pmap *));
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
 #define	pmap_wired_count(pm)		pmap_count_wired((pm))
-#define	pmap_from_phys_address(x,f)	((x)&~PGOFSET)
 #define	pmap_phys_address(x)		(x)
-#define	pmap_update(pmap)		/* nothing (yet) */
+
+void pmap_activate_pmap(struct pmap *);
+
+static __inline void
+pmap_update(struct pmap *pmap)
+{
+
+	if (pmap->pm_refs > 0) {
+		return;
+	}
+	pmap->pm_refs = 1;
+	pmap_activate_pmap(pmap);
+}
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define	PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
+#define PMAP_NEED_PROCWR
+#define __HAVE_PMAP_PREDESTROY
+#define __HAVE_PMAP_ACTIVATE_KERNEL
+
+void pmap_procwr(struct proc *, vaddr_t, size_t);
 
 /* SPARC specific? */
-void		pmap_redzone __P((void));
 int             pmap_dumpsize __P((void));
 int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
                                  daddr_t));
@@ -180,18 +194,10 @@ struct proc;
 void		switchexit __P((struct proc *));
 
 /* SPARC64 specific */
-int	ctx_alloc __P((struct pmap*));
-void	ctx_free __P((struct pmap*));
-
+int	ctx_alloc __P((struct pmap *));
+void	ctx_free __P((struct pmap *));
 
 #endif	/* _KERNEL */
-
-/* This is only for compatibility with the SPARC */ 
-struct segmap {
-	int	*sg_pte;		/* points to NPTESG PTEs */
-	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
-	u_char	sg_npte;		/* number of valid PTEs per seg */
-};
 
 #endif	/* _LOCORE */
 #endif	/* _MACHINE_PMAP_H_ */
