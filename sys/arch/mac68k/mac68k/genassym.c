@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 1996/05/05 06:18:27 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.19 1996/09/12 21:25:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -154,7 +154,7 @@ main(void)
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
-	printf("#define\tCACHE4_OFF %d\n", CACHE4_OFF);
+	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
 	printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
 
