@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.24 2004/03/21 20:12:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.24 2004/03/21 20:12:16 dsl Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -96,12 +96,10 @@ getsblock(int fd, const char *name, struct fs *fs)
 {
 	int i;
 
-	for (i = 0; sblock_try[i] != -1; i++) {
-
-		if (lseek(fd, sblock_try[i] , SEEK_SET) == (off_t) -1)
-			continue;
-
-		if (read(fd, fs, SBLOCKSIZE) != SBLOCKSIZE)
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1)
+			errx(1, "%s: can't find superblock", name);
+		if (pread(fd, fs, SBLOCKSIZE, sblock_try[i]) != SBLOCKSIZE)
 			continue;
 
 		switch(fs->fs_magic) {
@@ -109,22 +107,22 @@ getsblock(int fd, const char *name, struct fs *fs)
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/* FALLTHROUGH */
 		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			goto found;
+			ffs_sb_swap(fs, fs);
+			break;
 		default:
 			continue;
 		}
-	}
 
-	errx(1, "%s: can't find superblock", name);
-found:
-	if (needswap)
-		ffs_sb_swap(fs, fs);
+		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
+			continue;
+		break;
+	}
 
 	if (fs->fs_ncg < 1)
 		errx(1, "%s: bad ncg in superblock", name);
