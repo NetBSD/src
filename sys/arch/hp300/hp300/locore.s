@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.26 1994/07/05 17:08:51 mycroft Exp $
+ *	$Id: locore.s,v 1.27 1994/09/09 02:56:54 mycroft Exp $
  */
 
 /*
@@ -1272,11 +1272,14 @@ ENTRY(longjmp)
  */
 ENTRY(setrunqueue)
 	movl	sp@(4),a0
+#ifdef DIAGNOSTIC
 	tstl	a0@(P_BACK)
-	jeq	Lset1
-	movl	#Lset2,sp@-
-	jbsr	_panic
-Lset1:
+	jne	Lset1
+	tstl	a0@(P_WCHAN)
+	jne	Lset1
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lset1
+#endif
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
@@ -1292,10 +1295,14 @@ Lset1:
 	movl	a0@(P_BACK),a1
 	movl	a0,a1@(P_FORW)
 	rts
-
+#ifdef DIAGNOSTIC
+Lset1:
+	movl	#Lset2,sp@-
+	jbsr	_panic
 Lset2:
 	.asciz	"setrunqueue"
 	.even
+#endif
 
 /*
  * Remrq(p)
@@ -1304,35 +1311,38 @@ Lset2:
  */
 ENTRY(remrq)
 	movl	sp@(4),a0
-	clrl	d0
+#ifdef DIAGNOSTIC
 	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
-	bclr	d0,d1
+	btst	d0,d1
+	jeq	Lrem2
+#endif
+	movl	a0@(P_BACK),a1
+	clrl	a0@(P_BACK)
+	movl	a0@(P_FORW),a0
+	movl	a0,a1@(P_FORW)
+	movl	a1,a0@(P_BACK)
+	cmpal	a0,a1
 	jne	Lrem1
+#ifndef DIAGNOSTIC
+	movb	a0@(P_PRIORITY),d0
+	lsrb	#2,d0
+	movl	_whichqs,d1
+#endif
+	bclr	d0,d1
+	movl	d1,_whichqs
+Lrem1:
+	rts
+#ifdef DIAGNOSTIC
+Lrem2:
 	movl	#Lrem3,sp@-
 	jbsr	_panic
-Lrem1:
-	movl	d1,_whichqs
-	movl	a0@(P_FORW),a1
-	movl	a0@(P_BACK),a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0@(P_FORW),a1@(P_FORW)
-	movl	#_qs,a1
-	movl	d0,d1
-	lslb	#3,d1
-	addl	d1,a1
-	cmpl	a1@(P_FORW),a1
-	jeq	Lrem2
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-Lrem2:
-	clrl	a0@(P_BACK)
-	rts
-
 Lrem3:
 	.asciz	"remrq"
+	.even
+#endif
+
 Lsw0:
 	.asciz	"switch"
 	.even
@@ -1364,14 +1374,12 @@ ENTRY(switch_exit)
  * When no processes are on the runq, Swtch branches to Idle
  * to wait for something to come ready.
  */
-	.globl	idle
-idle:
-	stop	#PSL_LOWIPL
+	.globl	Idle
 Idle:
+	stop	#PSL_LOWIPL
 	movw	#PSL_HIGHIPL,sr
-	tstl	_whichqs
-	jeq	idle
-	movw	#PSL_LOWIPL,sr
+	movl	_whichqs,d0
+	jeq	Idle
 	jra	Lsw1
 
 Lbadsw:
@@ -1399,51 +1407,34 @@ ENTRY(cpu_switch)
 	clrl	_curproc
 	addql	#1,_cnt+V_SWTCH
 
-Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	clrl	d0
-	lea	_whichqs,a0
-	movl	a0@,d1
-Lswchk:
-	btst	d0,d1
-	jne	Lswfnd
-	addqb	#1,d0
-	cmpb	#32,d0
-	jne	Lswchk
-	jra	Idle
-Lswfnd:
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	a0@,d1			| and check again...
-	bclr	d0,d1
-	jeq	Lsw1			| proc moved, rescan
-	movl	d1,a0@			| update whichqs
-	moveq	#1,d1			| double check for higher priority
-	lsll	d0,d1			| process (which may have snuck in
-	subql	#1,d1			| while we were finding this one)
-	andl	a0@,d1
-	jeq	Lswok			| no one got in, continue
-	movl	a0@,d1
-	bset	d0,d1			| otherwise put this one back
-	movl	d1,a0@
-	jra	Lsw1			| and rescan
-Lswok:
+	movl	_whichqs,d0
+	jeq	Idle
+Lsw1:
 	movl	d0,d1
+	negl	d0
+	andl	d1,d0
+	bfffo	d0{#0:#32},d1
+	eorib	#31,d1
+
+	movl	d1,d0
 	lslb	#3,d1			| convert queue number to index
 	addl	#_qs,d1			| locate queue (q)
 	movl	d1,a1
-	cmpl	a1@(P_FORW),a1		| anyone on queue?
-	jeq	Lbadsw			| no, panic
 	movl	a1@(P_FORW),a0		| p = q->p_forw
+	cmpal	d1,a0			| anyone on queue?
+	jeq	Lbadsw			| no, panic
 	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1		| q = p->p_forw
-	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
-	cmpl	a0@(P_FORW),d1		| anyone left on queue?
-	jeq	Lsw2			| no, skip
+	movl	a0@(P_FORW),a1		| n = p->p_forw
+	movl	d1,a1@(P_BACK)		| n->p_back = q
+	cmpal	d1,a1			| anyone left on queue?
+	jne	Lsw2			| yes, skip
 	movl	_whichqs,d1
-	bset	d0,d1			| yes, reset bit
+	bclr	d0,d1			| no, clear bit
 	movl	d1,_whichqs
 Lsw2:
 	movl	a0,_curproc
