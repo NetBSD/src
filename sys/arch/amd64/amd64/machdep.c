@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2003/12/06 17:35:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/12/06 17:35:44 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1785,19 +1785,37 @@ int
 check_mcontext(const mcontext_t *mcp, struct trapframe *tf)
 {
 	const __greg_t *gr;
+	uint16_t sel;
 
 	gr = mcp->__gregs;
 
 	if (((gr[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
-	if (gr[_REG_FS] != 0 && !VALID_USER_DSEL(gr[_REG_FS]))
+
+	sel = gr[_REG_ES] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
 		return EINVAL;
-	if (gr[_REG_GS] != 0 && !VALID_USER_DSEL(gr[_REG_GS]))
+
+	sel = gr[_REG_FS] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
 		return EINVAL;
-	if (gr[_REG_ES] != 0 && !VALID_USER_DSEL(gr[_REG_ES]))
+
+	sel = gr[_REG_GS] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
 		return EINVAL;
-	if (!VALID_USER_DSEL(gr[_REG_DS]) || !VALID_USER_DSEL(gr[_REG_SS]))
+
+	sel = gr[_REG_DS] & 0xffff;
+	if (!VALID_USER_DSEL(sel))
 		return EINVAL;
+
+	sel = gr[_REG_SS] & 0xffff;
+	if (!VALID_USER_DSEL(sel)) 
+		return EINVAL;
+
+	sel = gr[_REG_CS] & 0xffff;
+	if (!VALID_USER_CSEL(sel))
+		return EINVAL;
+
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	return 0;
