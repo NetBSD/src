@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.18 2002/03/30 11:43:33 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.19 2002/04/17 15:23:47 drochner Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.18 2002/03/30 11:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.19 2002/04/17 15:23:47 drochner Exp $");
 
 #include "isdn.h"
 
@@ -721,6 +721,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			msg_l4driver_lookup_t *lookup = (msg_l4driver_lookup_t*)data;
 			lookup->name[L4DRIVER_NAME_SIZ-1] = 0;
 			lookup->driver_id = isdn_l4_find_driverid(lookup->name);
+			if (lookup->driver_id < 0)
+				error = ENXIO;
 			break;
 		}
 		
