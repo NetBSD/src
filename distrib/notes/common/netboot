@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.4.2.8 2003/06/19 02:16:09 grant Exp $
+.\"	$NetBSD: netboot,v 1.4.2.9 2003/10/21 06:33:35 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@ manual page and the manual pages for each daemon you'll be configuring.
 If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
 configure the netboot services on a variety of platforms.
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 .if !\n[next68k] \{\
 .Pp
 You may either netboot the installer so you can install onto a locally
@@ -567,6 +567,14 @@ If you are netbooting the installer, use
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
 .Pp
+.(Note
+Some combinations of Open Firmware version and 
+.Pa ofwboot.xcf
+version have trouble loading compressed kernels.  If you have trouble loading
+a kernel, try uncompressing it with
+.Xr gunzip 1
+.Note)
+.Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
 .No # Ic "gunzip netbsd.GENERIC_MD.gz"
@@ -632,7 +640,7 @@ need to extract and set up the client's installation of
 .Nx .
 The Diskless HOW-TO describes how to provide better security and save
 space on the NFS server over the procedure listed here.
-.Lk http://www.netbsd.org/Documentation/network/netboot/nfs.html
+.Lk http://www.NetBSD.org/Documentation/network/netboot/nfs.html
 .(bullet -compact
 Extracting distribution sets
 .Pp
