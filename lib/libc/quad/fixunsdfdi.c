@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfdi.c,v 1.5 1999/03/26 21:04:24 kristerw Exp $	*/
+/*	$NetBSD: fixunsdfdi.c,v 1.6 2002/10/20 10:15:47 scw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,13 +42,13 @@
 #if 0
 static char sccsid[] = "@(#)fixunsdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixunsdfdi.c,v 1.5 1999/03/26 21:04:24 kristerw Exp $");
+__RCSID("$NetBSD: fixunsdfdi.c,v 1.6 2002/10/20 10:15:47 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
 
-#define	ONE_FOURTH	((long)1 << (LONG_BITS - 2))
+#define	ONE_FOURTH	((int)1 << (INT_BITS - 2))
 #define	ONE_HALF	(ONE_FOURTH * 2.0)
 #define	ONE		(ONE_FOURTH * 4.0)
 
@@ -62,7 +62,7 @@ __fixunsdfdi(x)
 	double x;
 {
 	union uu t;
-	unsigned long tmp;
+	unsigned int tmp;
 
 	if (x < 0)
 		return (UQUAD_MAX);	/* ??? should be 0?  ERANGE??? */
@@ -81,7 +81,7 @@ __fixunsdfdi(x)
 	 * Furthermore, the quotient will fit into a 32-bit integer.
 	 */
 	tmp = x / ONE;
-	t.ul[L] = (unsigned long) (x - tmp * ONE);
+	t.ul[L] = (unsigned int) (x - tmp * ONE);
 	t.ul[H] = tmp;
 	return (t.uq);
 }
