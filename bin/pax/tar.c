@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.31 2002/10/18 15:55:08 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.32 2002/10/27 20:48:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.31 2002/10/18 15:55:08 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.32 2002/10/27 20:48:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,7 +733,7 @@ ustar_id(char *blk, int size)
 	if (strncmp(hd->magic, "ustar  ", 8) == 0 && !is_gnutar &&
 	    !seen_gnu_warning) {
 		seen_gnu_warning = 1;
-		tty_warn(1,
+		tty_warn(0,
 		    "Trying to read GNU tar archive with extensions off");
 	}
 	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
