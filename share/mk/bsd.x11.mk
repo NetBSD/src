@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.14 2003/12/26 08:24:33 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.15 2004/01/01 01:19:36 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -138,6 +138,6 @@ cleanx11man:
 	    -D__miscmansuffix__=7 -D__drivermansuffix__=4 \
 	    -D__projectroot__=${X11ROOTDIR} \
 	    -D__xorgversion__='"Release 6.6" "X Version 11"' \
-	    -D__vendorversion__="XFree86 4.3.0-imakeicideII" \
+	    -D__vendorversion__="XFree86 4.3.0.1" \
 	    ${X11EXTRAMANDEFS} \
 	< ${.IMPSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
