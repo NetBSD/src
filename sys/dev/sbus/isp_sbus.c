@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.18 1999/12/20 00:49:58 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.19 2000/01/09 18:44:40 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -337,7 +337,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int dosleep = (xs->xs_control & XS_CTL_NOSLEEP) != 0;
+	int cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
 	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
 
 	if (xs->datalen == 0) {
@@ -351,7 +351,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 	if (bus_dmamap_load(sbc->sbus_dmatag, dmamap, xs->data, xs->datalen,
-	    NULL, dosleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+	    NULL, cansleep? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
