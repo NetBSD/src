@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.24 1998/01/18 13:30:07 lukem Exp $	*/
+/*	$NetBSD: ls.c,v 1.25 1998/02/03 02:02:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.24 1998/01/18 13:30:07 lukem Exp $");
+__RCSID("$NetBSD: ls.c,v 1.25 1998/02/03 02:02:13 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,11 @@ display(p, list)
 	char *user, *group, buf[20];	/* 32 bits == 10 digits */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;	/* pacify gcc */
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &maxsize;
+#endif
 
 	/*
 	 * If list is NULL there are two possibilities: that the parent
