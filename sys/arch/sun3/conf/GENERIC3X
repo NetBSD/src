@@ -1,12 +1,18 @@
-# $NetBSD: GENERIC3X,v 1.17 1998/01/22 22:27:57 gwr Exp $
+# $NetBSD: GENERIC3X,v 1.17.4.1 1998/01/27 19:13:03 gwr Exp $
 
-# GENERIC Sun3x (3/80, 3/470)
-# Supports root on: le0, sd*
+# GENERIC Sun3X (3/80, 3/470)
+# Supports root on: ie0, le0, sd*, ...
 
-include "arch/sun3x/conf/std.sun3x"
+include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel
-# options 	FPU_EMULATE	# XXX - Ever needed?
+# Machines to be supported by this kernel.  Note:
+# The SUN3 and SUN3X options are mutually exclusive!
+# (Your kernel will only run on one or the other.)
+makeoptions	MACHTYPE=sun3x
+options 	_SUN3X_
+
+# options 	FPU_EMULATE	# Every Sun3X has an FPU, right?
+# options 	HAVE_IOCACHE	# XXX - Not yet supported.
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
@@ -75,6 +81,22 @@ options 	NFS_BOOT_RWSIZE=1024
 
 config		netbsd root on ? type ?
 
+# On-board I/O space (required)
+include "arch/sun3/conf/obio.sun3x"
+
+# On-board memory (optional)
+# See frame-buffers
+obmem0 at mainbus?
+
+# VME bus support (optional)
+# One unit for each address space
+vme0 at mainbus? # A16/D16
+vme1 at mainbus? # A16/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A24/D32
+vme4 at mainbus? # A32/D16
+vme5 at mainbus? # A32/D32
+
 #
 # Serial ports
 #
@@ -126,8 +148,20 @@ fd0  at fdc0	# First (and only) floppy drive.
 #
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
-si0 at vme2 addr 0x200000 ipl 2 vect 0x40
-si1 at vme2 addr 0x204000 ipl 2 vect 0x41
+si0 at vme2  addr 0x200000 ipl 2 vect 0x40
+si1 at vme2  addr 0x204000 ipl 2 vect 0x41
+
+# Xylogics 450/451 controllers (VME A16/D16)
+xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48
+xyc1 at vme0 addr 0xee48 ipl 2 vect 0x49
+xy* at xyc? drive ?
+
+# Xylogics 7053 controllers (VME A16/D32)
+xdc0 at vme1 addr 0xee80 ipl 2 vect 0x44
+xdc1 at vme1 addr 0xee90 ipl 2 vect 0x45
+xd* at xdc? drive ?
+
+# Xylogics 472 tape controllers?
 
 #
 # Frame buffer devices
@@ -161,6 +195,6 @@ pseudo-device	tun		2	# network tunneling over tty
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
