@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.13 2003/03/29 11:04:12 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.14 2003/04/05 21:18:02 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ typedef mach_natural_t mach_port_seqno_t;
 typedef mach_natural_t mach_port_mscount_t;
 typedef mach_natural_t mach_port_msgcount_t;
 typedef mach_natural_t mach_port_rights_t;
+typedef mach_natural_t mach_task_flavor_t;
+typedef int mach_policy_t;
 
 
 /* 
@@ -96,6 +98,11 @@ typedef struct {
 	u_int8_t       float_rep;
 	u_int8_t       reserved2;
 } mach_ndr_record_t;
+
+typedef struct {
+	mach_integer_t seconds;
+	mach_integer_t microseconds;
+} mach_time_value_t;
 
 #ifdef DEBUG_MACH
 #define DPRINTF(a) uprintf a

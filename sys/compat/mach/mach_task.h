@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_task.h,v 1.6 2003/03/29 11:04:12 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.7 2003/04/05 21:18:02 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -146,6 +146,51 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_task_set_exception_ports_reply_t;
 
+/* task_info */
+
+#define MACH_TASK_BASIC_INFO 4
+struct mach_task_basic_info {
+	mach_integer_t mtbi_suspend_count;
+	mach_vm_size_t mtbi_virtual_size;
+	mach_vm_size_t mtbi_resident_size;
+	mach_time_value_t mtbi_user_time;
+	mach_time_value_t mtbi_system_time;
+	mach_policy_t mtbi_policy;
+};
+
+#define MACH_TASK_EVENTS_INFO 2
+struct mach_task_events_info {
+	mach_integer_t mtei_faults;
+	mach_integer_t mtei_pageins;
+	mach_integer_t mtei_cow_faults;
+	mach_integer_t mtei_message_sent;
+	mach_integer_t mtei_message_received;
+	mach_integer_t mtei_syscalls_mach;
+	mach_integer_t mtei_syscalls_unix;
+	mach_integer_t mtei_csw;
+};
+
+#define MACH_TASK_THREAD_TIMES_INFO 3
+struct mach_task_thread_times_info {
+	mach_time_value_t mttti_user_time;
+	mach_time_value_t mttti_system_time;
+};
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_task_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_task_info_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_info[0];
+	mach_msg_trailer_t rep_trailer;
+} mach_task_info_reply_t;
 
 int mach_task_get_special_port(struct mach_trap_args *);
 int mach_ports_lookup(struct mach_trap_args *);
@@ -153,5 +198,6 @@ int mach_task_set_special_port(struct mach_trap_args *);
 int mach_task_threads(struct mach_trap_args *);
 int mach_task_get_exception_ports(struct mach_trap_args *);
 int mach_task_set_exception_ports(struct mach_trap_args *);
+int mach_task_info(struct mach_trap_args *);
 
 #endif /* _MACH_TASK_H_ */

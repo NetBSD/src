@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_task.c,v 1.22 2003/03/29 11:04:11 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.23 2003/04/05 21:18:02 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,12 +39,14 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.22 2003/03/29 11:04:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.23 2003/04/05 21:18:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -365,6 +367,8 @@ mach_task_set_exception_ports(args)
 
 	med = l->l_proc->p_emuldata;
 
+	uprintf("mach_task_set_exception_ports\n");
+
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
@@ -374,6 +378,104 @@ mach_task_set_exception_ports(args)
 
 	*msglen = sizeof(*rep);
 
+	return 0;
+}
+
+int
+mach_task_info(args)
+	struct mach_trap_args *args;
+{
+	mach_task_info_request_t *req = args->smsg;
+	mach_task_info_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
+	size_t *msglen = args->rsize;
+	int count;
+
+	switch(req->req_flavor) {
+	case MACH_TASK_BASIC_INFO: {	
+		struct mach_task_basic_info *mtbi;
+		struct rusage *ru;
+
+		count = sizeof(*mtbi) / sizeof(mach_integer_t);
+		if (req->req_count < count)
+			return mach_msg_error(args, ENOBUFS);
+
+		ru = &l->l_proc->p_stats->p_ru;
+		mtbi = (struct mach_task_basic_info *)&rep->rep_info[0];
+
+		mtbi->mtbi_suspend_count = ru->ru_nvcsw + ru->ru_nivcsw;
+		mtbi->mtbi_virtual_size = ru->ru_ixrss;
+		mtbi->mtbi_resident_size = ru->ru_maxrss;
+		mtbi->mtbi_user_time.seconds = ru->ru_utime.tv_sec;
+		mtbi->mtbi_user_time.microseconds = ru->ru_utime.tv_usec;
+		mtbi->mtbi_system_time.seconds = ru->ru_stime.tv_sec;
+		mtbi->mtbi_system_time.microseconds = ru->ru_stime.tv_usec;
+		mtbi->mtbi_policy = 0;
+
+		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		break;
+	}
+
+	/* XXX this is supposed to be about threads, not processes... */
+	case MACH_TASK_THREAD_TIMES_INFO: {
+		struct mach_task_thread_times_info *mttti;
+		struct rusage *ru;
+
+		count = sizeof(*mttti) / sizeof(mach_integer_t);
+		if (req->req_count < count)
+			return mach_msg_error(args, ENOBUFS);
+
+		ru = &l->l_proc->p_stats->p_ru;
+		mttti = (struct mach_task_thread_times_info *)&rep->rep_info[0];
+
+		mttti->mttti_user_time.seconds = ru->ru_utime.tv_sec;
+		mttti->mttti_user_time.microseconds = ru->ru_utime.tv_usec;
+		mttti->mttti_system_time.seconds = ru->ru_stime.tv_sec;
+		mttti->mttti_system_time.microseconds = ru->ru_stime.tv_usec;
+
+		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		break;
+	}
+
+	/* XXX a few statistics missing here */
+	case MACH_TASK_EVENTS_INFO: {
+		struct mach_task_events_info *mtei;
+		struct rusage *ru;
+
+		count = sizeof(*mtei) / sizeof(mach_integer_t);
+		if (req->req_count < count)
+			return mach_msg_error(args, ENOBUFS);
+
+		mtei = (struct mach_task_events_info *)&rep->rep_info[0];
+		ru = &l->l_proc->p_stats->p_ru;
+
+		mtei->mtei_faults = ru->ru_majflt;
+		mtei->mtei_pageins = ru->ru_minflt;
+		mtei->mtei_cow_faults = 0; /* XXX */
+		mtei->mtei_message_sent = ru->ru_msgsnd;
+		mtei->mtei_message_received = ru->ru_msgrcv;
+		mtei->mtei_syscalls_mach = 0; /* XXX */
+		mtei->mtei_syscalls_unix = 0; /* XXX */
+		mtei->mtei_csw = 0; /* XXX */
+
+		*msglen = sizeof(*rep) + (count * sizeof(mach_integer_t));
+		break;
+	}
+
+	default:
+		uprintf("mach_task_info: unsupported flavor %d\n", 
+		    req->req_flavor);
+		return mach_msg_error(args, EINVAL);
+	};
+	
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_count = count;
+	rep->rep_info[count + 1] = 8; /* Trailer */
+ 
 	return 0;
 }
 
