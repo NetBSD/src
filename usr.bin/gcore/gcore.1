@@ -1,3 +1,5 @@
+.\"     $NetBSD: gcore.1,v 1.5 2003/01/23 17:52:14 jdolecek Exp $
+.\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,9 +32,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)gcore.1	8.2 (Berkeley) 4/18/94
-.\"     $NetBSD: gcore.1,v 1.4 2003/01/23 17:34:50 christos Exp $
 .\"
-.Dd "April 18, 1994"
+.Dd "January 23, 2003"
 .Dt GCORE 1
 .Os
 .Sh NAME
@@ -40,7 +41,8 @@
 .Nd get core images of running process
 .Sh SYNOPSIS
 .Nm
-.Ar pid Op ...pid
+.Ar pid
+.Op Ar pid ...
 .Sh DESCRIPTION
 .Nm 
 creates a core image of the specified processes
@@ -59,7 +61,7 @@ argument is set to.
 .Bl -tag -width /var/log/messages -compact
 .It Pa progname.<core>
 The core image.
-.EL
+.El
 .Dp
 .Sh HISTORY
 .Nm
