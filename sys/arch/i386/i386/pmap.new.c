@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.27 1999/05/20 23:03:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.28 1999/05/25 20:33:33 thorpej Exp $	*/
 
 /*
  *
@@ -635,28 +635,20 @@ vsize_t len;
 
   len = len / NBPG;
 
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+
   for ( /* null */ ; len ; len--, va += NBPG) {
 
     pte = vtopte(va);    
 
-    /* 
-     * XXXCDC: we can get PVLIST if the mapping was created by uvm_fault
-     * as part of a pageable kernel mapping.  in that case we need to
-     * update the pvlists, so we punt the problem to the more powerful
-     * (and complex) pmap_remove() function.   this is kind of ugly...
-     * need to rethink this a bit.
-     */
-    if (*pte & PG_PVLIST) {
-      pmap_remove(pmap_kernel(), va, va + (len*NBPG)); /* punt ... */
-      return;
-    }
+#ifdef DIAGNOSTIC
+    if (*pte & PG_PVLIST)
+      panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n", va);
+#endif
 
-    s = splimp();
-    simple_lock(&pm->pm_obj.vmobjlock);
     pm->pm_stats.resident_count--;
     pm->pm_stats.wired_count--;
-    simple_unlock(&pm->pm_obj.vmobjlock);
-    splx(s);
 
     *pte = 0;		/* zap! */
 #if defined(I386_CPU)
@@ -665,6 +657,9 @@ vsize_t len;
       pmap_update_pg(va);
     
   }
+
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 
 #if defined(I386_CPU)
   if (cpu_class == CPUCLASS_386)
@@ -688,14 +683,16 @@ vaddr_t va;
 
   s = splimp();
   simple_lock(&pm->pm_obj.vmobjlock);
+
   pm->pm_stats.resident_count--;
   pm->pm_stats.wired_count--;
-  simple_unlock(&pm->pm_obj.vmobjlock);
-  splx(s);
 
   pte = vtopte(va);
   *pte = 0;		/* zap! */
   pmap_update_pg(va);
+
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 }
 
 /*
@@ -2233,8 +2230,14 @@ vaddr_t startva, endva;
     /*
      * if we are not on a pv_head list we are done.
      */
-    if ((opte & PG_PVLIST) == 0)
+    if ((opte & PG_PVLIST) == 0) {
+#ifdef DIAGNOSTIC
+      if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
+	panic("pmap_remove_ptes: managed page without PG_PVLIST for 0x%lx",
+	  startva);
+#endif
       continue;
+    }
 
     bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
     if (bank == -1)
@@ -2307,8 +2310,14 @@ vaddr_t va;
   /*
    * if we are not on a pv_head list we are done.
    */
-  if ((opte & PG_PVLIST) == 0)
+  if ((opte & PG_PVLIST) == 0) {
+#ifdef DIAGNOSTIC
+      if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
+	panic("pmap_remove_ptes: managed page without PG_PVLIST for 0x%lx",
+	  va);
+#endif
     return(TRUE);
+  }
 
   bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
   if (bank == -1)
