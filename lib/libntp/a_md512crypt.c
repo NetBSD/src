@@ -74,6 +74,7 @@ MD5auth2crypt(keyno, pkt, length)
     u_int32 *pkt;
     int length;	/* total length of encrypted area */
 {
+    u_char hash[16];
     /*
      *  Don't bother checking the keys.  The first stage would have
      *  handled that.  Finish up the generation by also including the
@@ -81,10 +82,10 @@ MD5auth2crypt(keyno, pkt, length)
      */
 
     MD5Update(&ctx, (unsigned const char *)(pkt) + length - 8, 8);
-    MD5Final(&ctx);
+    MD5Final(hash, &ctx);
 
     memmove((char *) &pkt[NOCRYPT_int32S + length/sizeof(u_int32)],
-	    (char *) ctx.digest,	    
+	    (char *) hash,	    
 	    BLOCK_OCTETS);
     return (4 + BLOCK_OCTETS);
 }
