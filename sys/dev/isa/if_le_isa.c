@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.29 2002/01/07 21:47:08 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.29.10.1 2002/06/29 08:33:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.29 2002/01/07 21:47:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.29.10.1 2002/06/29 08:33:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ le_isa_attach(parent, lesc, ia, p)
 
 	printf(": %s Ethernet\n", p->name);
 
-	if (bus_space_map(iot, ia->ia_io[0].ir_size, p->iosize, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, p->iosize, 0, &ioh))
 		panic("%s: can't map io", sc->sc_dev.dv_xname);
 
 	/*
