@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.14 1998/12/22 05:26:22 mcr Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.15 1998/12/22 05:27:35 mcr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.14 1998/12/22 05:26:22 mcr Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.15 1998/12/22 05:27:35 mcr Exp $");
 #endif
 #endif /* not lint */
 
@@ -1025,6 +1025,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	FD_SET(net, &xbits);
 	MAXFD(net);
     }
+#undef MAXFD
     if ((c = select(maxfd+1, &ibits, &obits, &xbits,
 		    (poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
 	if (c == -1) {
