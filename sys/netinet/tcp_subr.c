@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.25.8.2 1997/06/26 17:58:49 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.25.8.3 1997/06/26 22:22:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -183,14 +183,14 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	ti->ti_x2 = 0;
 	if ((flags & TH_SYN) == 0) {
 		if (tp)
-			ti->ti_win = htons((u_short) (win >> tp->rcv_scale));
+			ti->ti_win = htons((u_int16_t) (win >> tp->rcv_scale));
 		else
-			ti->ti_win = htons((u_short)win);
+			ti->ti_win = htons((u_int16_t)win);
 		ti->ti_off = sizeof (struct tcphdr) >> 2;
 		tlen += sizeof (struct tcphdr);
 	} else
 		tlen += ti->ti_off << 2;
-	ti->ti_len = htons((u_short)tlen);
+	ti->ti_len = htons((u_int16_t)tlen);
 	tlen += sizeof (struct ip);
 	m->m_len = tlen;
 	m->m_pkthdr.len = tlen;
