@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.361 2004/01/03 14:12:57 soren Exp $
+$NetBSD: usbdevs,v 1.362 2004/01/04 01:26:23 augustss Exp $
 
 /*
  * Copyright (c) 1998-2003 The NetBSD Foundation, Inc.
@@ -1533,6 +1533,7 @@ product VIVITAR DSC350		0x0003	DSC350 Camera
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
+product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
  
 /* Xirlink products */
