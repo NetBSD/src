@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.6 2000/04/15 22:02:14 tsarna Exp $
+# $NetBSD: obsolete.mi,v 1.7 2000/04/25 05:36:06 mellon Exp $
 /dev/log
 /sbin/dumpfs
 /sbin/dumplfs
@@ -18,6 +18,8 @@
 /usr/sbin/nsquery
 /usr/sbin/nstest
 /usr/sbin/rdconfig
+/usr/sbin/statmsg
+/usr/sbin/sysconfd
 /usr/sbin/sysctl
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
