@@ -1,4 +1,4 @@
-/*	$NetBSD: kparamb.h,v 1.2 1996/01/19 13:54:12 leo Exp $	*/
+/*	$NetBSD: kparamb.h,v 1.3 1997/05/27 10:28:32 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -55,13 +55,14 @@ struct kparamb {
 #define	ATARI_68020	(1<<2)		/* 68020 CPU			*/
 #define	ATARI_68030	(1<<3)		/* 68030 CPU			*/
 #define	ATARI_68040	(1<<4)		/* 68040 CPU			*/
+#define	ATARI_68060	(1<<6)		/* 68060 CPU			*/
 #define	ATARI_TT	(1L<<11)	/* This is a TT030		*/
 #define	ATARI_FALCON	(1L<<12)	/* This is a Falcon		*/
 
 #define	ATARI_CLKBROKEN	(1<<16)		/* GEMDOS has faulty year base	*/
 
 #define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
-			|ATARI_68040)
+			|ATARI_68040|ATARI_68060)
 
 /*
  * Definitions for boothowto

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.11 1996/01/09 09:55:15 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.12 1997/05/27 10:28:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -52,7 +52,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.11 $";
+const char version[] = "$Revision: 1.12 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -275,6 +275,9 @@ get_sys_info()
 						break;
 					case 40:
 						kparam.bootflags |= ATARI_68040;
+						break;
+					case 60:
+						kparam.bootflags |= ATARI_68060;
 						break;
 					default:
 						fatal(-1, "Unknown CPU-type");
