@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.4 2003/10/14 23:13:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.5 2003/10/15 03:04:03 enami Exp $");
 #endif
 
 /*
@@ -1115,6 +1115,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+#ifdef __FreeBSD__
 		/*
 		 * The upper layer has already installed/removed
 		 * the multicast address(es), just recalculate the
@@ -1122,6 +1123,16 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 */
 		if (ifp->if_flags & IFF_RUNNING)
 			ath_mode_init(sc);
+#endif
+#ifdef __NetBSD__
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ic.ic_ec) :
+		    ether_delmulti(ifr, &sc->sc_ic.ic_ec);
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				ath_mode_init(sc);
+		}
+#endif
 		break;
 	case SIOCGATHSTATS:
 		copyout(&sc->sc_stats, ifr->ifr_data, sizeof (sc->sc_stats));
@@ -1195,6 +1206,7 @@ ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
 static void
 ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
 {
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct ether_multi *enm;
 	struct ether_multistep estep;
 
@@ -1203,11 +1215,13 @@ ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
 		/* XXX Punt on ranges. */
 		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
 			(*mfilt)[0] = (*mfilt)[1] = ~((u_int32_t)0);
-			break;
+			ifp->if_flags |= IFF_ALLMULTI;
+			return;
 		}
 		ath_mcastfilter_accum(enm->enm_addrlo, mfilt);
 		ETHER_NEXT_MULTI(estep, enm);
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 #endif
 
@@ -1235,12 +1249,18 @@ ath_mode_init(struct ath_softc *sc)
 	ath_hal_setrxfilter(ah, rfilt);
 
 	/* calculate and install multicast filter */
+#ifdef __FreeBSD__
 	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
 		mfilt[0] = mfilt[1] = 0;
 		ath_mcastfilter_compute(sc, &mfilt);
 	} else {
 		mfilt[0] = mfilt[1] = ~0;
 	}
+#endif
+#ifdef __NetBSD__
+	mfilt[0] = mfilt[1] = 0;
+	ath_mcastfilter_compute(sc, &mfilt);
+#endif
 	ath_hal_setmcastfilter(ah, mfilt[0], mfilt[1]);
 	DPRINTF(("ath_mode_init: RX filter 0x%x, MC filter %08x:%08x\n",
 		rfilt, mfilt[0], mfilt[1]));
