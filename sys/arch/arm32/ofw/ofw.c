@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.21 1999/03/24 05:50:56 mrg Exp $	*/
+/*	$NetBSD: ofw.c,v 1.22 1999/03/29 10:02:19 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -123,7 +123,6 @@ vm_offset_t physical_start;
 vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
-int physical_memoryblock;
 u_int free_pages;
 int physmem;
 pv_addr_t systempage;
@@ -788,7 +787,7 @@ ofw_configmem(void)
 		int availcnt;
 		int i;
 
-		/* physmem, physical_start, physical_end, physical_memoryblock */
+		/* physmem, physical_start, physical_end */
 		physmem = 0;
 		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem; 
 		    totalcnt++, mp++) {
@@ -800,7 +799,6 @@ ofw_configmem(void)
 		physical_start = OFphysmem[0].start;
 		mp--;
 		physical_end = mp->start + mp->size;
-		physical_memoryblock = 0;
 
 		/* free_pages, physical_freestart, physical_freeend */
 		free_pages = 0;
