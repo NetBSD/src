@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)frame.h	5.2 (Berkeley) 1/18/91
- *	$Id: frame.h,v 1.4 1993/09/16 03:24:42 brezak Exp $
+ *	frame.h,v 1.3 1993/06/27 01:24:55 andrew Exp
  */
 
 /*
@@ -92,3 +92,16 @@ struct intrframe {
 	int	if_esp;
 	int	if_ss;
 };
+
+/*
+ * Signal frame
+ */
+#include <machine/signal.h>
+
+struct sigframe {
+	int	sf_signum;
+	int	sf_code;
+	struct	sigcontext *sf_scp;
+	sig_t	sf_handler;
+	struct	sigcontext sf_sc;
+} ;
