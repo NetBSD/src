@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.22 2002/02/20 08:17:17 joda Exp $	*/
+/*	$NetBSD: k5login.c,v 1.23 2003/05/15 00:52:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.22 2002/02/20 08:17:17 joda Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.23 2003/05/15 00:52:53 itojun Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -433,11 +433,13 @@ k5login(pw, instance, localhost, password)
 	krb5tkfile_env = tkt_location;
 	has_ccache = 1;
 
-	principal = (char *)malloc(strlen(pw->pw_name)+strlen(instance)+2);
-	strcpy(principal, pw->pw_name);	/* XXX strcpy is safe */
-	if (strlen(instance)) {
-		strcat(principal, "/");		/* XXX strcat is safe */
-		strcat(principal, instance);	/* XXX strcat is safe */
+	if (strlen(instance))
+		asprintf(&principal, "%s/%s", pw->pw_name, instance);
+	else
+		principal = strdup(pw->pw_name);
+	if (!principal) {
+		syslog(LOG_NOTICE, "fatal: %s", strerror(errno));
+		return (1);
 	}
 
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
@@ -525,7 +527,7 @@ k5login(pw, instance, localhost, password)
 
 #ifdef KERBEROS
 	if ((kerror = krb5_to4(pw, kcontext, ccache)) != 0)
-	    krb5_warn(kcontext, kerror, "error converting krb4 creds");
+		krb5_warn(kcontext, kerror, "error converting krb4 creds");
 #endif
 
 	/* Success */
