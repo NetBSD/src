@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.20 2002/10/23 09:11:18 jdolecek Exp $ */
+/*	$NetBSD: txcom.c,v 1.21 2003/03/21 14:44:28 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ void	txcom_dump(struct txcom_chip *);
 #endif
 
 struct consdev txcomcons = {
-	NULL, NULL, txcom_cngetc, txcom_cnputc, txcom_cnpollc, 
+	NULL, NULL, txcom_cngetc, txcom_cnputc, txcom_cnpollc, NULL, NULL,
 	NULL, NODEV, CN_NORMAL
 };
 
