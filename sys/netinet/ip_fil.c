@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.20 1997/07/05 05:38:16 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.21 1997/07/06 05:13:00 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.20 1997/07/05 05:38:16 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.21 1997/07/06 05:13:00 thorpej Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -125,6 +125,7 @@ static	int	frrequest __P((int, u_long, caddr_t, int));
 static	int	frrequest __P((int, int, caddr_t, int));
 #endif
 static	void	frzerostats __P((caddr_t));
+static	void	fixskip __P((frentry_t **, frentry_t *, int));
 #ifdef	_KERNEL
 static	int	(*fr_savep) __P((struct ip *, int, struct ifnet *,
 				 int, struct mbuf **));
@@ -185,22 +186,27 @@ char *s;
 # endif /* IPFILTER_LKM */
 
 
-int iplattach()
-=======
 /*
- * Try to detect the case when compiling for NetBSD with pseudo-device
+ * BSD pseudo-device attach routine; this is a no-op.
  */
-# if defined(__NetBSD__) && defined(PFIL_HOOKS)
+/* ARGSUSED */
+# if defined(__NetBSD__)
 void
 ipfilterattach(count)
-int count;
+# else
+void
+iplattach(count)
+# endif /* __NetBSD__ */
+	int count;
 {
-	iplattach();
+
+	/*
+	 * Do nothing here, really.  The filter will be enabled
+	 * by the SIOCFRENB ioctl.
+	 */
 }
-# endif
 
-
-int iplattach()
+int ipl_enable()
 {
 	char *defpass;
 	int s;
@@ -252,7 +258,7 @@ int iplattach()
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-int ipldetach()
+int ipl_disable()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -505,7 +511,6 @@ int mode;
 	SPLX(s);
 	return error;
 }
-
 
 static void fixskip(listp, rp, addremove)
 frentry_t **listp, *rp;
