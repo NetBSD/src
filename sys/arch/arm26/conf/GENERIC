@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2000/12/19 10:42:03 bouyer Exp $
+# $NetBSD: GENERIC,v 1.15 2000/12/19 15:51:48 tsutsui Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -174,7 +174,5 @@ pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux		2	# keyboard/mouse multiplexor
-
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
