@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.11 1999/12/06 14:52:08 augustss Exp $
+.\" $NetBSD: pcmcia.4,v 1.12 2000/01/24 15:26:10 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,6 +79,8 @@ Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
 Megahertz Ethernet/Modem combo cards
 .It ne
 NE2000 compatible cards.
+.It ray
+Raytheon Raylink and WebGear Aviator2.4 802.11 controller.
 .It sm
 Megahertz Ethernet card.
 .It wi
@@ -122,6 +124,7 @@ devices in the kernel config file to accomodate these cards.
 .Xr mbe 4 ,
 .Xr mhzc 4 ,
 .Xr ne 4 ,
+.Xr ray 4 ,
 .Xr sm 4 ,
 .Xr wi 4
 .Sh HISTORY
