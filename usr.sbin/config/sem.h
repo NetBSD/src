@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.12 2000/01/23 23:37:43 hubertf Exp $	*/
+/*	$NetBSD: sem.h,v 1.13 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,29 +44,29 @@
  *	from: @(#)sem.h	8.1 (Berkeley) 6/6/93
  */
 
-void		enddefs __P((void));
+void		enddefs(void);
 
-void		setdefmaxusers __P((int, int, int));
-void		setmaxusers __P((int));
-void		setident __P((const char *));
-int		defattr __P((const char *, struct nvlist *, int));
-void		defdev __P((struct devbase *, struct nvlist *,
-			struct nvlist *, int));
-void		defdevattach __P((struct deva *, struct devbase *,
-			struct nvlist *, struct nvlist *));
-struct devbase *getdevbase __P((const char *name));
-struct deva    *getdevattach __P((const char *name));
-struct attr    *getattr __P((const char *name));
-void		setmajor __P((struct devbase *d, int n));
-void		addconf __P((struct config *));
-void		setconf __P((struct nvlist **, const char *, struct nvlist *));
-void		setfstype __P((const char **, const char *));
-void		adddev __P((const char *, const char *, struct nvlist *, int));
-void		addpseudo __P((const char *name, int number));
-const char     *ref __P((const char *name));
-const char     *starref __P((const char *name));
-const char     *wildref __P((const char *name));
-int		has_attr __P((struct nvlist *, const char *));
+void		setdefmaxusers(int, int, int);
+void		setmaxusers(int);
+void		setident(const char *);
+int		defattr(const char *, struct nvlist *, int);
+void		defdev(struct devbase *, struct nvlist *, struct nvlist *,
+		       int);
+void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
+			     struct nvlist *);
+struct devbase *getdevbase(const char *name);
+struct deva    *getdevattach(const char *name);
+struct attr    *getattr(const char *name);
+void		setmajor(struct devbase *d, int n);
+void		addconf(struct config *);
+void		setconf(struct nvlist **, const char *, struct nvlist *);
+void		setfstype(const char **, const char *);
+void		adddev(const char *, const char *, struct nvlist *, int);
+void		addpseudo(const char *name, int number);
+const char     *ref(const char *name);
+const char     *starref(const char *name);
+const char     *wildref(const char *name);
+int		has_attr(struct nvlist *, const char *);
 
 extern const char *s_qmark;
 extern const char *s_none;

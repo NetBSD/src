@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.2 1998/01/09 08:09:20 perry Exp $	*/
+/*	$NetBSD: strerror.c,v 1.3 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * strerror() - for those systems that don't have it yet.
@@ -10,9 +10,10 @@ extern int sys_nerr;
 
 static char errmsg[80];
 
-char *strerror(en)
-    int en;
+char *
+strerror(int en)
 {
+
     if ((0 <= en) && (en < sys_nerr))
 	return sys_errlist[en];
 

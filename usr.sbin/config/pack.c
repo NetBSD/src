@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.8 1999/12/20 17:19:13 nathanw Exp $	*/
+/*	$NetBSD: pack.c,v 1.9 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
  * (So it goes.)
  */
 
-typedef int (*vec_cmp_func) __P((const void *, int, int));
+typedef int (*vec_cmp_func)(const void *, int, int);
 
 #define	TAILHSIZE	128
 #define	PVHASH(i)	((i) & (TAILHSIZE - 1))
@@ -102,24 +102,24 @@ static int locspace;
 static int pvecspace;
 static int longest_pvec;
 
-static void packdevi __P((void));
-static void packlocs __P((void));
-static void packpvec __P((void));
+static void packdevi(void);
+static void packlocs(void);
+static void packpvec(void);
 
-static void addparents __P((struct devi *src, struct devi *dst));
-static int nparents __P((struct devi **, struct devbase *, int));
-static int sameas __P((struct devi *, struct devi *));
-static int findvec __P((const void *, int, int, vec_cmp_func, int));
-static int samelocs __P((const void *, int, int));
-static int addlocs __P((const char **, int));
-static int loclencmp __P((const void *, const void *));
-static int samepv __P((const void *, int, int));
-static int addpv __P((short *, int));
-static int pvlencmp __P((const void *, const void *));
-static void resettails __P((void));
+static void addparents(struct devi *src, struct devi *dst);
+static int nparents(struct devi **, struct devbase *, int);
+static int sameas(struct devi *, struct devi *);
+static int findvec(const void *, int, int, vec_cmp_func, int);
+static int samelocs(const void *, int, int);
+static int addlocs(const char **, int);
+static int loclencmp(const void *, const void *);
+static int samepv(const void *, int, int);
+static int addpv(short *, int);
+static int pvlencmp(const void *, const void *);
+static void resettails(void);
 
 void
-pack()
+pack(void)
 {
 	struct devi *i;
 	int n;
@@ -162,7 +162,7 @@ pack()
  * if any, of the parents will collapse during packing.
  */
 void
-packdevi()
+packdevi(void)
 {
 	struct devi *firststar, *i, **ip, *l, *p;
 	struct devbase *d;
@@ -245,8 +245,7 @@ packdevi()
  * have the same locators.
  */
 static int
-sameas(i1, i2)
-	struct devi *i1, *i2;
+sameas(struct devi *i1, struct devi *i2)
 {
 	const char **p1, **p2;
 
@@ -265,8 +264,7 @@ sameas(i1, i2)
  * instance "dst".
  */
 static void
-addparents(src, dst)
-	struct devi *src, *dst;
+addparents(struct devi *src, struct devi *dst)
 {
 	struct nvlist *nv;
 	struct devi *i, **p, **q;
@@ -330,10 +328,7 @@ addparents(src, dst)
  * Count up parents, and optionally store pointers to each.
  */
 static int
-nparents(p, dev, unit)
-	struct devi **p;
-	struct devbase *dev;
-	int unit;
+nparents(struct devi **p, struct devbase *dev, int unit)
 {
 	struct devi *i, *l;
 	int n;
@@ -355,7 +350,7 @@ nparents(p, dev, unit)
 }
 
 static void
-packlocs()
+packlocs(void)
 {
 	struct devi **p, *i;
 	int l, o;
@@ -373,7 +368,7 @@ packlocs()
 }
 
 static void
-packpvec()
+packpvec(void)
 {
 	struct devi **p, *i, **par;
 	int l, v, o;
@@ -404,11 +399,7 @@ if (l > longest_pvec) panic("packpvec");
  * sure that next time, we will find it there.
  */
 static int
-findvec(ptr, hash, len, cmp, nextplace)
-	const void *ptr;
-	int hash, len;
-	vec_cmp_func cmp;
-	int nextplace;
+findvec(const void *ptr, int hash, int len, vec_cmp_func cmp, int nextplace)
 {
 	struct tails *t, **hp;
 	int off;
@@ -430,10 +421,7 @@ findvec(ptr, hash, len, cmp, nextplace)
  * Comparison function for locators.
  */
 static int
-samelocs(ptr, off, len)
-	const void *ptr;
-	int off;
-	int len;
+samelocs(const void *ptr, int off, int len)
 {
 	const char **p, **q;
 
@@ -447,9 +435,7 @@ samelocs(ptr, off, len)
  * Add the given locators at the end of the global loc[] table.
  */
 static int
-addlocs(locs, len)
-	const char **locs;
-	int len;
+addlocs(const char **locs, int len)
 {
 	const char **p;
 	int ret;
@@ -467,8 +453,7 @@ addlocs(locs, len)
  * We rashly assume that subtraction of these lengths does not overflow.
  */
 static int
-loclencmp(a, b)
-	const void *a, *b;
+loclencmp(const void *a, const void *b)
 {
 	int l1, l2;
 
@@ -481,10 +466,7 @@ loclencmp(a, b)
  * Comparison function for parent vectors.
  */
 static int
-samepv(ptr, off, len)
-	const void *ptr;
-	int off;
-	int len;
+samepv(const void *ptr, int off, int len)
 {
 	short *p, *q;
 
@@ -498,9 +480,7 @@ samepv(ptr, off, len)
  * Add the given parent vectors at the end of the global pv[] table.
  */
 static int
-addpv(pv, len)
-	short *pv;
-	int len;
+addpv(short *pv, int len)
 {
 	short *p;
 	int ret;
@@ -531,8 +511,7 @@ addpv(pv, len)
  * We rashly assume that subtraction of these lengths does not overflow.
  */
 static int
-pvlencmp(a, b)
-	const void *a, *b;
+pvlencmp(const void *a, const void *b)
 {
 	int l1, l2;
 
@@ -542,7 +521,7 @@ pvlencmp(a, b)
 }
 
 static void
-resettails()
+resettails(void)
 {
 	struct tails **p, *t, *next;
 	int i;
