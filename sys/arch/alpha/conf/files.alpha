@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.32.2.7 1997/06/07 04:43:02 cgd Exp $
+# $NetBSD: files.alpha,v 1.32.2.8 1997/07/22 05:34:38 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -92,10 +92,17 @@ file	arch/alpha/tlsb/gbus.c		gbus
 
 
 #
+# Bus-independent support for DEC devices
+#
+include "dev/dec/files.dec"
+
+#
 # TurboChannel Devices
 #
-
 include "dev/tc/files.tc"
+
+# TC attachment is MD
+attach	tc at tcbus
 
 device	tcasic: tcbus
 attach	tcasic at mainbus
@@ -109,8 +116,7 @@ file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
 # the TurboChannel IOCTL ASIC
-device	ioasic { offset = -1 }
-attach	ioasic at tc
+#  IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
 # Color Frame buffer
@@ -139,12 +145,7 @@ attach	asc at tcds
 file	arch/alpha/tc/asc.c		asc		needs-count
 file	arch/alpha/tc/tcds_dma.c	asc
 
-# Baseboard Lance ethernet.
-attach	le at ioasic with le_ioasic
-attach	le at tc with le_tc
-file	dev/tc/if_le_dec.c		(le_ioasic | le_tc)
-file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
-file	dev/tc/if_le_tc.c		le_tc
+# TC and baseboard ioasic Lance ethernet are in files.tc
 
 #
 # ISA Bus support
