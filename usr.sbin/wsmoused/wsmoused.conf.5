@@ -1,6 +1,6 @@
-.\" $NetBSD: wsmoused.conf.5,v 1.5 2003/08/06 22:11:50 jmmv Exp $
+.\" $NetBSD: wsmoused.conf.5,v 1.6 2004/01/05 10:59:19 jmmv Exp $
 .\"
-.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2003
+.Dd January 5, 2004
 .Dt WSMOUSED.CONF 5
 .Os
 .Sh NAME
@@ -103,6 +103,10 @@ The
 device name to use.
 Defaults to
 .Pa /dev/wsmouse .
+.It fifo = pathname;
+Specify an optional fifo where to redirect all mouse events, no matter
+if they have been processed.
+By default, no fifo is used.
 .It modes = string;
 Whitespace separated list of modes to be activated when running.
 Defaults to
@@ -117,6 +121,17 @@ and have the
 .Sq .pid
 extension automatically added.
 By default it is set to daemon's program name.
+.It ttystat = pathname;
+.Xr wsdisplay 4 Ns 's
+notification device.
+Defaults to
+.Pa /dev/ttyEstat .
+You will not want to change this.
+.It xconsole = integer;
+Virtual console number which holds the X server (if any).
+The argument specifies the console number (the same found in
+.Pa /dev/ttyE? ) .
+Unset by default.
 .El
 .Ss Properties specific to the action mode
 The following properties are only useful when running in the
@@ -147,10 +162,6 @@ The following properties are only useful when running in the
 .Em selection
 mode:
 .Bl -tag -width indent
-.It fifo = pathname;
-Specify an optional fifo where to redirect all mouse events, no matter
-if they have been processed.
-By default, no fifo is used.
 .It lefthanded = boolean;
 Set to 1 to swap mouse buttons, specially useful for left handed users.
 .It slowdown_x = integer;
@@ -164,17 +175,6 @@ Y axis slowdown.
 This positive integer specifies how many events in
 the horizontal direction should be ignored before changing the current row.
 It defaults to 3.
-.It ttystat = pathname;
-.Xr wsdisplay 4 Ns 's
-notification device.
-Defaults to
-.Pa /dev/ttyEstat .
-You will not want to change this.
-.It xconsole = integer;
-Virtual console number which holds the X server (if any).
-The argument specifies the console number (the same found in
-.Pa /dev/ttyE? ) .
-Unset by default.
 .El
 .Sh FILES
 .Bl -tag -width /usr/share/examples/wsmoused/ -compact
