@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.1 2003/10/19 02:20:25 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.2 2003/10/22 23:52:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.1 2003/10/19 02:20:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.2 2003/10/22 23:52:46 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.1 2003/10/19 02:20:25 uwe Exp $");
 #include <sh3/intcreg.h>
 #include <sh3/pfcreg.h>
 #include <sh3/adcreg.h>
+
+#include <sh3/dev/adcvar.h>
+
 
 #define J6X0TP_DEBUG
 #if 0 /* XXX: disabled in favor of local version that uses printf_nolog */
@@ -82,8 +85,6 @@ volatile int j6x0tp_debug = 0;
 /* A/D covnerter channels to get x/y from */
 #define ADC_CHANNEL_TP_Y	1
 #define ADC_CHANNEL_TP_X	2
-
-extern int	adc_sample_channel(int); /* XXX: adcvar.h */
 
 
 struct j6x0tp_softc {

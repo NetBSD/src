@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.3 2003/10/22 23:52:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.3 2003/10/22 23:52:46 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,12 +40,14 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $");
 #include <sys/gmon.h>
 #endif
 
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
 #include <sh3/exception.h>
 #include <sh3/intcreg.h>
 #include <sh3/pfcreg.h>
 
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
+#include <sh3/dev/adcvar.h>
 
 
 /* SH7709_PGDR bits pertinent to Jornada 6x0 power */
@@ -60,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.2 2003/10/19 02:23:51 uwe Exp $");
 /* warn that main battery is low after drops below this value */
 #define J6X0PWR_BATTERY_WARNING_THRESHOLD	200
 
-
-extern int	adc_sample_channel(int); /* XXX: adcvar.h */
 
 struct j6x0pwr_softc {
 	struct device sc_dev;
@@ -163,7 +163,7 @@ j6x0pwr_poll_callout(void *self)
 
 	pgdr = _reg_read_1(SH7709_PGDR);
 
-	/* just check main battery charge it not verbose and battery is in */
+	/* just check main battery charge if not verbose and battery is in */
 	if (!j6x0pwr_poll_verbose) {
 		if (pgdr & PGDR_MAIN_BATTERY_OUT)
 			goto reschedule;

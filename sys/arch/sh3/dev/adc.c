@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.2 2003/10/19 02:22:56 uwe Exp $ */
+/*	$NetBSD: adc.c,v 1.3 2003/10/22 23:52:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.2 2003/10/19 02:22:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.3 2003/10/22 23:52:46 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.2 2003/10/19 02:22:56 uwe Exp $");
 #endif
 
 #include <sh3/adcreg.h>
+#include <sh3/dev/adcvar.h>
 
 #define ADC_(x)    (*((volatile uint8_t *)SH7709_AD ## x))
 
@@ -56,8 +57,6 @@ CFATTACH_DECL(adc, sizeof(struct adc_softc),
 
 static int	adc_search(struct device *, struct cfdata *, void *);
 static int	adc_print(void *, const char *);
-
-extern int	adc_sample_channel(int); /* XXX: adcvar.h */
 
 
 static int
