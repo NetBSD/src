@@ -1,4 +1,4 @@
-.\"	$NetBSD: cron.8,v 1.6 2004/03/20 10:04:13 jdolecek Exp $
+.\"	$NetBSD: cron.8,v 1.7 2004/03/20 18:54:33 wiz Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -21,6 +21,7 @@
 .\"
 .Dd March 20, 2004
 .Dt CRON 8
+.Os
 .Sh NAME
 .Nm cron
 .Nd daemon to execute scheduled commands (Vixie Cron)
@@ -44,12 +45,14 @@ Crontabs found are loaded into memory.
 also searches for
 .Pa /etc/crontab
 which is in a different format (see
-.Xr crontab 5 ).
+.Xr crontab 5 ) .
 .Nm
 then wakes up every minute, examining all stored crontabs, checking each
-command to see if it should be run in the current minute.  When executing
-commands, any output is mailed to the owner of the crontab (or to the user
-named in the MAILTO environment variable in the crontab, if such exists).
+command to see if it should be run in the current minute.
+When executing commands, any output is mailed to the owner of the
+crontab (or to the user named in the
+.Ev MAILTO
+environment variable in the crontab, if such exists).
 .Pp
 Additionally,
 .Nm
@@ -59,9 +62,11 @@ on
 has changed, and if it has,
 .Nm
 will then examine the modtime on all crontabs and reload those which have
-changed.  Thus
+changed.
+Thus
 .Nm
-need not be restarted whenever a crontab file is modified.  Note that the
+need not be restarted whenever a crontab file is modified.
+Note that the
 .Xr crontab 1
 command updates the modtime of the spool directory whenever it changes a
 crontab.
@@ -70,11 +75,11 @@ The
 .Fl x
 flag turns on some debugging flags.
 .Ar debugflags
-is comma separated list of debugging flags to turn on.
+is comma-separated list of debugging flags to turn on.
 If a flag is turned on,
 .Nm
 writes some additional debugging information to system log during
-it's work.
+its work.
 Available debugging flags are:
 .Bl -tag -width proc -compact
 .It Ar sch
@@ -105,6 +110,6 @@ system crontab
 .Sh SEE ALSO
 .Xr crontab 1 ,
 .Xr crontab 5
-.Sh AUTHOR
+.Sh AUTHORS
 .An Paul Vixie
 .Aq paul@vix.com
