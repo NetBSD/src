@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.32 2002/09/11 06:20:10 enami Exp $	*/
+/*	$NetBSD: sem.c,v 1.33 2002/09/26 04:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ static int has_errobj(struct nvlist *, void *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
 static int resolve(struct nvlist **, const char *, const char *,
 		   struct nvlist *, int);
+static struct pspec *getpspec(struct attr *, struct devbase *, int);
 static struct devi *newdevi(const char *, int, struct devbase *d);
 static struct devi *getdevi(const char *);
 static const char *concat(const char *, int);
@@ -97,6 +98,8 @@ initsem(void)
 	TAILQ_INIT(&allbases);
 
 	TAILQ_INIT(&alldevas);
+
+	TAILQ_INIT(&allpspecs);
 
 	cfhashtab = ht_new();
 	TAILQ_INIT(&allcf);
@@ -802,8 +805,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_asame = NULL;
 	i->i_alias = NULL;
 	i->i_at = NULL;
-	i->i_atattr = NULL;
-	i->i_atdev = NULL;
+	i->i_pspec = NULL;
 	i->i_atdeva = NULL;
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
@@ -821,6 +823,7 @@ void
 adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 {
 	struct devi *i;		/* the new instance */
+	struct pspec *p;	/* and its pspec */
 	struct attr *attr;	/* attribute that allows attach */
 	struct devbase *ib;	/* i->i_base */
 	struct devbase *ab;	/* not NULL => at another dev */
@@ -835,6 +838,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 	iba = NULL;
 	if (at == NULL) {
 		/* "at root" */
+		p = NULL;
 		if ((i = getdevi(name)) == NULL)
 			goto bad;
 		/*
@@ -863,7 +867,6 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		if ((i = getdevi(name)) == NULL)
 			goto bad;
 		ib = i->i_base;
-		cp = intern(atbuf);
 
 		/*
 		 * Devices can attach to two types of things: Attributes,
@@ -884,6 +887,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		 *     but is actually named in the config file, we still
 		 *     have to remember its devbase.
 		 */
+		cp = intern(atbuf);
 
 		/* Figure out parent's devbase, to satisfy case (3). */
 		ab = ht_lookup(devbasetab, cp);
@@ -922,6 +926,13 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		goto bad;
 
  findattachment:
+		/*
+		 * Find the parent spec.  If a matching one has not yet been
+		 * created, create one.
+		 */
+		p = getpspec(attr, ab, atunit);
+		p->p_devs = newnv(NULL, NULL, i, 0, p->p_devs);
+
 		/* find out which attachment it uses */
 		hit = 0;
 		for (iba = ib->d_ahead; iba != NULL; iba = iba->d_bsame)
@@ -935,10 +946,8 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL)
 		goto bad;
 	i->i_at = at;
-	i->i_atattr = attr;
-	i->i_atdev = ab;
+	i->i_pspec = p;
 	i->i_atdeva = iba;
-	i->i_atunit = atunit;
 	i->i_cfflags = flags;
 
 	*iba->d_ipp = i;
@@ -1086,6 +1095,34 @@ fixdevis(void)
 
 	TAILQ_FOREACH(i, &allpseudo, i_next)
 		selectbase(i->i_base, NULL);
+}
+
+/*
+ * Look up a parent spec, creating a new one if it does not exist.
+ */
+static struct pspec *
+getpspec(struct attr *attr, struct devbase *ab, int atunit)
+{
+	struct pspec *p;
+
+	TAILQ_FOREACH(p, &allpspecs, p_list) {
+		if (p->p_iattr == attr &&
+		    p->p_atdev == ab &&
+		    p->p_atunit == atunit)
+			return (p);
+	}
+
+	p = emalloc(sizeof(*p));
+	memset(p, 0, sizeof(*p));
+
+	p->p_iattr = attr;
+	p->p_atdev = ab;
+	p->p_atunit = atunit;
+	p->p_inst = npspecs++;
+
+	TAILQ_INSERT_TAIL(&allpspecs, p, p_list);
+
+	return (p);
 }
 
 /*
