@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 1997/08/07 21:37:03 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 1997/11/07 07:33:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -482,6 +482,12 @@ copyfault:
 			siroff(SIR_DTMGR);
 			cnt.v_soft++;
 			mrg_execute_deferred();
+		}
+		if (ssir & SIR_ADB) {
+			void adb_soft_intr __P((void));
+			siroff(SIR_ADB);
+			cnt.v_soft++;
+			adb_soft_intr();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
