@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36.2.3 1999/06/18 17:17:04 perry Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36.2.4 2000/04/30 12:40:26 he Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2300,7 +2300,6 @@ uvmspace_unshare(p)
 	struct proc *p; 
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
-	int s;
  
 	if (ovm->vm_refcnt == 1)
 		/* nothing to do: vmspace isn't shared in the first place */
@@ -2309,11 +2308,9 @@ uvmspace_unshare(p)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
-	s = splhigh();			/* make this `atomic' */
 	pmap_deactivate(p);		/* unbind old vmspace */
 	p->p_vmspace = nvm; 
 	pmap_activate(p);		/* switch to new vmspace */
-	splx(s);			/* end of critical section */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -2330,7 +2327,6 @@ uvmspace_exec(p)
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
-	int s;
 
 #ifdef sparc
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
@@ -2394,11 +2390,9 @@ uvmspace_exec(p)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
-		s = splhigh();
 		pmap_deactivate(p);
 		p->p_vmspace = nvm;
 		pmap_activate(p);
-		splx(s);
 
 		uvmspace_free(ovm);
 	}
