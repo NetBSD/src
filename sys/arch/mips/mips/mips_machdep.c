@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.57 1999/10/18 17:23:00 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.57.2.1 1999/10/20 22:02:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57 1999/10/18 17:23:00 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57.2.1 1999/10/20 22:02:23 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -342,9 +342,6 @@ mips3_vector_init()
 void
 mips_vector_init()
 {
-	int i;
-
-	(void) &i;		/* shut off gcc unused-variable warnings */
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.

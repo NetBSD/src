@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.4.2.1 1999/10/19 17:47:33 thorpej Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.4.2.2 1999/10/20 22:06:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -148,6 +148,8 @@ struct aic_softc {
 #define	AIC_ABORTING	0x02	/* Bailing out */
 #define AIC_DOINGDMA	0x04	/* The FIFO data path is active! */
 	u_char	sc_selid;	/* Reselection ID */
+	struct device *sc_child;/* Our child */
+	u_char	sc_dying;	/* true if device is going */
 
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* Messages we want to send */
@@ -173,8 +175,6 @@ struct aic_softc {
 	int	sc_freq;		/* Clock frequency in MHz */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
-
-	struct device *sc_child;	/* Our child */
 };
 
 #if AIC_DEBUG
