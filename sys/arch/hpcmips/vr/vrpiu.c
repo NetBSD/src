@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.27 2003/01/03 04:36:28 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.28 2003/01/05 08:41:54 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -673,9 +673,9 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 				tpx1 &= sc->sc_pb_paddata_mask;
 				tpy0 &= sc->sc_pb_paddata_mask;
 				tpy1 &= sc->sc_pb_paddata_mask;
-#define ISVALID(n, c, m)	((c) - (m) < (n) && (n) < (c) + (m))
-				if (ISVALID(tpx0 + tpx1, sc->sc_pb_paddata_max, 200) &&
-				    ISVALID(tpy0 + tpy1, sc->sc_pb_paddata_max, 200)) {
+#define ISVALID(n, c)	((c) - (c)/5 < (n) && (n) < (c) + (c)/5)
+				if (ISVALID(tpx0 + tpx1, sc->sc_pb_paddata_max) &&
+				    ISVALID(tpy0 + tpy1, sc->sc_pb_paddata_max)) {
 #if 0
 					DPRINTF(("%04x %04x %04x %04x\n",
 					    tpx0, tpx1, tpy0, tpy1));
