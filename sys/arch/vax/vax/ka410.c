@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.10 1998/06/04 15:52:48 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.11 1998/06/04 19:42:14 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,23 +85,17 @@ ka410_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
-
 	switch (vax_cputype) {
 	case VAX_TYP_UV2:
-		if (vax_confdata & 0x80)	/* MSB in CFGTST */
-			strcpy(cpu_model,"MicroVAX 2000");
-		else
-			strcpy(cpu_model,"VAXstation 2000");
+		printf(": KA410\n");
 		break;
 
 	case VAX_TYP_CVAX:
-		/* if (((vax_siedata >> 8) & 0xff) == 2) */
-		strcpy(cpu_model,"MicroVAX 3100 (KA41)");
+		printf(": KA41/42\n");
+		printf("%s: Enabling primary cache\n", self->dv_xname);
+		mtpr(0xfc, PR_CADR); /* XXX */
 		/* ka41_cache_enable(); */
 	}
-
-	printf(": %s\n", cpu_model);
 }
 
 void

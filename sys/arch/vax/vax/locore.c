@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.24 1998/05/03 12:59:57 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.25 1998/06/04 19:42:14 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -136,19 +136,42 @@ start()
 		vax_boardtype = (vax_cputype<<24) | ((vax_siedata>>24)&0xFF);
 
 		switch (vax_boardtype) {
-#if VAX410
+#if VAX410 || VAX43
 		case VAX_BTYP_420: /* They are very similar */
 		case VAX_BTYP_410:
-			dep_call = &ka410_calls;
-			vax_confdata = *(int *)(0x20020000);
-			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
-			break;
-#endif
-#if VAX43
 		case VAX_BTYP_43:
 			vax_confdata = *(int *)(0x20020000);
 			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
-			dep_call = &ka43_calls;
+			dep_call = (vax_boardtype == VAX_BTYP_43 ?
+			    &ka43_calls : &ka410_calls);
+			strcpy(cpu_model, (vax_confdata & 0x80 ?
+			    "MicroVAX " : "VAXstation "));
+			switch (vax_boardtype) {
+			case VAX_BTYP_410:
+                        	strcat(cpu_model, "2000");
+				break;
+
+			case VAX_BTYP_43:
+                        	strcat(cpu_model, "3100/m76");
+				break;
+
+			case VAX_BTYP_420:
+			default:
+                        	strcat(cpu_model, "3100");
+				switch ((vax_siedata >> 8) & 0xff) {
+				case 0:
+                        		strcat(cpu_model, "/m{30,40}");
+					break;
+
+				case 2:
+					break;
+
+				default:
+					strcat(cpu_model, " unknown model");
+					break;
+				}
+				break;
+			}
 			break;
 #endif
 #if VAX630
