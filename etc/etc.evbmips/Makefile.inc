@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/06/26 00:40:33 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/08/03 05:53:01 simonb Exp $
 
-KERNEL_SETS=		MALTA
+KERNEL_SETS=		MALTA PB1000
 KERNEL_SUFFIXES=	srec
