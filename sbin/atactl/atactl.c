@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.1 1998/11/19 23:55:00 kenh Exp $	*/
+/*	$NetBSD: atactl.c,v 1.2 1998/11/20 18:27:40 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -274,8 +274,8 @@ device_identify(argc, argv)
 	struct ataparams *inqbuf;
 	struct atareq req;
 	unsigned char inbuf[DEV_BSIZE];
-	int i;
 #if BYTE_ORDER == LITTLE_ENDIAN
+	int i;
 	u_int16_t *p;
 #endif
 
