@@ -75,3 +75,6 @@ Preparing you hard disk with HDToolBox:
 	
 	Once this is done NetBSD/amiga will be able to recognize your
 	disks and which partitions it should use.
+
+>>> Should the miniroot transfer to the swap partition instructions
+>>> go here?
