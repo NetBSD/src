@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.8 1999/01/05 21:47:24 pk Exp $
+#	$NetBSD: inter.phone,v 1.9 1999/11/21 20:21:32 tron Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -322,8 +322,8 @@
 354:1:Reykjavik:Iceland
 356:::Malta
 357:21:Nicosia:Cyprus
-358:0:Helsinki:Finland
-358:31:Tampere:Finland
+358:9:Helsinki:Finland
+358:3:Tampere:Finland
 359:2:Sofia:Bulgaria
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
