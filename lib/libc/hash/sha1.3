@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.3 1999/02/28 00:00:03 ross Exp $
+.\"	$NetBSD: sha1.3,v 1.3.10.1 2001/03/30 22:45:55 he Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -168,7 +168,7 @@ SHA1Final(results, &sha);
 /* Print the digest as one long hex value */
 printf("0x");
 for (n = 0; n < 20; n++)
-	printf("%x", results[n]);
+	printf("%02x", results[n]);
 putchar('\\n');
 .Ed
 .Pp
