@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.14 1995/05/18 14:37:03 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.14 1995/05/18 14:37:03 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,12 +83,10 @@ int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-static int needuser, needcomm, needenv, commandonly;
+int	needuser, needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
-static char	*fmt __P((char **(*)(kvm_t *, const struct kinfo_proc *, int),
-		    KINFO *, char *, int));
 static char	*kludge_oldps_options __P((char *));
 static int	 pscomp __P((const void *, const void *));
 static void	 saveuser __P((KINFO *));
@@ -116,7 +114,7 @@ main(argc, argv)
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, ofmt, lineno, nentries;
+	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[256];
 
@@ -131,7 +129,7 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	all = ofmt = prtheader = wflag = xflg = 0;
+	all = fmt = prtheader = wflag = xflg = 0;
 	pid = -1;
 	uid = (uid_t) -1;
 	ttydev = NODEV;
@@ -158,7 +156,7 @@ main(argc, argv)
 			break;
 		case 'j':
 			parsefmt(jfmt);
-			ofmt = 1;
+			fmt = 1;
 			jfmt[0] = '\0';
 			break;
 		case 'L':
@@ -166,7 +164,7 @@ main(argc, argv)
 			exit(0);
 		case 'l':
 			parsefmt(lfmt);
-			ofmt = 1;
+			fmt = 1;
 			lfmt[0] = '\0';
 			break;
 		case 'M':
@@ -183,11 +181,11 @@ main(argc, argv)
 			parsefmt(optarg);
 			parsefmt(o2);
 			o1[0] = o2[0] = '\0';
-			ofmt = 1;
+			fmt = 1;
 			break;
 		case 'o':
 			parsefmt(optarg);
-			ofmt = 1;
+			fmt = 1;
 			break;
 		case 'p':
 			pid = atol(optarg);
@@ -224,13 +222,13 @@ main(argc, argv)
 		case 'u':
 			parsefmt(ufmt);
 			sortby = SORTCPU;
-			ofmt = 1;
+			fmt = 1;
 			ufmt[0] = '\0';
 			break;
 		case 'v':
 			parsefmt(vfmt);
 			sortby = SORTMEM;
-			ofmt = 1;
+			fmt = 1;
 			vfmt[0] = '\0';
 			break;
 		case 'W':
@@ -275,7 +273,7 @@ main(argc, argv)
 	if (kd == 0)
 		errx(1, "%s", errbuf);
 
-	if (!ofmt)
+	if (!fmt)
 		parsefmt(dfmt);
 
 	if (!all && ttydev == NODEV && pid == -1)  /* XXX - should be cleaner */
@@ -334,25 +332,6 @@ main(argc, argv)
 		    (KI_PROC(ki)->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			/*
-			 * get arguments if needed
-			 */
-			if (needcomm) {
-				if (commandonly)
-					ki->ki_args =
-					    strdup(KI_PROC(ki)->p_comm);
-				else
-					ki->ki_args =
-					    fmt(kvm_getargv, ki,
-					    KI_PROC(ki)->p_comm, MAXCOMLEN);
-			} else
-				ki->ki_args = NULL;
-			if (needenv)
-				ki->ki_env =
-				    fmt(kvm_getenvv, ki, (char *)NULL, 0);
-			else
-				ki->ki_env = NULL;
-
 			(vent->var->oproc)(ki, vent);
 			if (vent->next != NULL)
 				(void)putchar(' ');
@@ -386,21 +365,6 @@ scanvars()
 			needcomm = 1;
 	}
 	totwidth--;
-}
-
-static char *
-fmt(fn, ki, comm, maxlen)
-	char **(*fn) __P((kvm_t *, const struct kinfo_proc *, int));
-	KINFO *ki;
-	char *comm;
-	int maxlen;
-{
-	char *s;
-
-	if ((s =
-	    fmt_argv((*fn)(kd, ki->ki_p, termwidth), comm, maxlen)) == NULL)
-		err(1, NULL);
-	return (s);
 }
 
 static void

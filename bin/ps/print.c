@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.21 1995/05/18 20:33:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.21 1995/05/18 20:33:24 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $
 #endif
 
 #include <err.h>
+#include <kvm.h>
 #include <math.h>
 #include <nlist.h>
 #include <stddef.h>
@@ -73,6 +74,22 @@ static char rcsid[] = "$NetBSD: print.c,v 1.20 1995/05/18 15:27:32 mycroft Exp $
 #include <unistd.h>
 
 #include "ps.h"
+
+extern kvm_t *kd;
+extern int needenv, needcomm, commandonly;
+
+static char *cmdpart __P((char *));
+static void fmt_puts __P((char *, int *));
+static void fmt_putc __P((int, int *));
+
+static char *
+cmdpart(arg0)
+	char *arg0;
+{
+	char *cp;
+
+	return ((cp = strrchr(arg0, '/')) != NULL ? cp + 1 : arg0);
+}
 
 void
 printheader()
@@ -95,38 +112,104 @@ printheader()
 	(void)putchar('\n');
 }
 
+static void
+fmt_puts(s, leftp)
+	char *s;
+	int *leftp;
+{
+	static char *v = 0, *nv;
+	static int maxlen = 0;
+	int len;
+
+	if (*leftp == 0)
+		return;
+	len = strlen(s) * 4 + 1;
+	if (len > maxlen) {
+		if (maxlen == 0)
+			maxlen = getpagesize();
+		while (len > maxlen)
+			maxlen *= 2;
+		nv = realloc(v, maxlen);
+		if (nv == 0)
+			return;
+		v = nv;
+	}
+	strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
+	if (*leftp != -1) {
+		len = strlen(v);
+		if (len > *leftp) {
+			printf("%.*s", *leftp, v);
+			*leftp = 0;
+		} else {
+			printf("%s", v);
+			*leftp -= len;
+		}
+	} else
+		printf("%s", v);
+}
+
+static void
+fmt_putc(c, leftp)
+	int c;
+	int *leftp;
+{
+
+	if (*leftp == 0)
+		return;
+	if (*leftp != -1)
+		*leftp -= 1;
+	putchar(c);
+}
+
 void
-command(k, ve)
-	KINFO *k;
+command(ki, ve)
+	KINFO *ki;
 	VARENT *ve;
 {
 	VAR *v;
 	int left;
-	char *cp;
+	char **argv, **p;
 
 	v = ve->var;
-	if (ve->next == NULL) {
-		/* last field */
-		if (termwidth == UNLIMITED) {
-			if (k->ki_env)
-				(void)printf("%s ", k->ki_env);
-			(void)printf("%s", k->ki_args);
-		} else {
+	if (ve->next != NULL || termwidth != UNLIMITED) {
+		if (ve->next == NULL) {
 			left = termwidth - (totwidth - v->width);
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
-			if ((cp = k->ki_env) != NULL) {
-				while (--left >= 0 && *cp)
-					(void)putchar(*cp++);
-				if (--left >= 0)
-					putchar(' ');
-			}
-			for (cp = k->ki_args; --left >= 0 && *cp != '\0';)
-				(void)putchar(*cp++);
-		}
+		} else
+			left = v->width;
 	} else
-		/* XXX env? */
-		(void)printf("%-*.*s", v->width, v->width, k->ki_args);
+		left = -1;
+	if (needenv) {
+		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
+		if (p = argv) {
+			while (*p) {
+				fmt_puts(*p, &left);
+				p++;
+				fmt_putc(' ', &left);
+			}
+		}
+	}
+	if (needcomm) {
+		if (!commandonly) {
+			argv = kvm_getargv(kd, ki->ki_p, termwidth);
+			if (p = argv) {
+				while (*p) {
+					fmt_puts(*p, &left);
+					p++;
+					fmt_putc(' ', &left);
+				}
+			}
+			if (argv == 0 || argv[0] == 0 ||
+			    strcmp(cmdpart(argv[0]), KI_PROC(ki)->p_comm)) {
+				fmt_putc('(', &left);
+				fmt_puts(KI_PROC(ki)->p_comm, &left);
+				fmt_putc(')', &left);
+			}
+		} else {
+			fmt_puts(KI_PROC(ki)->p_comm, &left);
+		}
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.7 1995/05/08 22:39:43 cgd Exp $	*/
+/*	$NetBSD: ps.h,v 1.8 1995/05/18 20:33:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,8 +52,6 @@ struct usave {
 typedef struct kinfo {
 	struct kinfo_proc *ki_p;	/* proc structure */
 	struct usave ki_u;	/* interesting parts of user */
-	char *ki_args;		/* exec args */
-	char *ki_env;		/* environment */
 } KINFO;
 
 /* Variables. */
