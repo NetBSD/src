@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.52 2000/08/15 01:08:00 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.53 2000/08/31 01:10:43 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -971,13 +971,13 @@ set_timezone()
 	rc = readlink(localtime_link, localtime_target,
 		      sizeof(localtime_target));
 	if (rc < 0) {
-		endwin();
-		printf("readlink(\"%s\")\n", localtime_link);
-		exit (1);
+		/* error, default to UTC */
+		tz_default = "UTC";
+	} else {
+		localtime_target[rc] = '\0';
+		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
 	}
-	localtime_target[rc] = '\0';
 
-	tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
 	tz_selected=tz_default;
 	snprintf(tz_env, sizeof(tz_env), "%s/%s",
 		 zoneinfo_dir, tz_selected);
@@ -990,9 +990,7 @@ set_timezone()
 	argv[0] = zoneinfo_dir;
 	argv[1] = NULL;
 	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-		endwin();
-		fprintf(stderr, "ftsopen failed\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	for (nfiles = 0; (entry = fts_read(tree)) != NULL;) {
 		stat(entry->fts_accpath, &sb);
@@ -1000,23 +998,17 @@ set_timezone()
 			nfiles++;
 	}
 	if (errno) {
-		endwin();
-		fprintf(stderr, "fts_read\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	(void)fts_close(tree);
 	
 	tz_menu = malloc(nfiles * sizeof(struct menu_ent));
 	if (tz_menu == NULL) {
-		endwin();
-		fprintf(stderr, "malloc nfiles*menu_ent\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	
 	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
-		endwin();
-		fprintf(stderr, "ftsopen failed\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	n=0;
 	for (rval=0; (entry = fts_read(tree)) != NULL; ) {
@@ -1032,9 +1024,7 @@ set_timezone()
 		}
 	}
 	if (errno) {
-		endwin();
-		fprintf(stderr, "fts_read\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	(void)fts_close(tree);  
 	
@@ -1042,9 +1032,7 @@ set_timezone()
 			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
 			   "\nPlease consult the install documents.");
 	if (menu_no < 0) {
-		endwin();
-		(void) fprintf(stderr, "Dynamic menu creation failed.\n");
-		exit(1);
+		return 1;	/* error - skip timezone setting */
 	}
 	process_menu(menu_no);
 
