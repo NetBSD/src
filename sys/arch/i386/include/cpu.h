@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.4 1993/05/20 15:36:49 cgd Exp $
+ *	$Id: cpu.h,v 1.5 1993/05/21 11:06:37 cgd Exp $
  */
 
 /*
@@ -99,14 +99,9 @@ int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
 /*
- * Kinds of processor
+ * pull in #defines for kinds of processors
  */
-
-#define	CPU_386SX	0
-#define	CPU_386		1
-#define	CPU_486SX	2
-#define	CPU_486		3
-#define	CPU_586		4
+#include "machine/cputypes.h"
 
 #ifdef KERNEL
 extern int cpu;
