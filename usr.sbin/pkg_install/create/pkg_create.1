@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.32.2.2 2002/11/24 22:32:05 tron Exp $
+.\" $NetBSD: pkg_create.1,v 1.32.2.3 2003/02/08 07:48:48 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd April 21, 1995
+.Dd January 10, 2003
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -80,6 +80,9 @@
 .Ek
 .Bk -words
 .Op Fl S Ar size-all-file
+.Ek
+.Bk -words
+.Op Fl n Ar preserve-file
 .Ek
 .Bk -words
 .Op Fl t Ar template
@@ -253,6 +256,10 @@ flag.
 The file is expected to contain the size (in bytes) of all files of
 this package plus any required packages added up and stored as a
 ASCII string, terminated by a newline.
+.It Fl n Ar preserve-file
+The file is used to denote that the package should not be deleted.
+This is intended for use where the deletion of packages may present
+a bootstrap problem.
 .It Fl s Ar size-pkg-file
 Store the given file for later querying with the
 .Xr pkg_info 1
