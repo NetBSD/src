@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.72 1997/10/21 18:56:44 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.73 1997/10/22 23:14:33 lukem Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -72,7 +72,7 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -80,14 +80,14 @@ ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -95,13 +95,13 @@ ${LASM} ${LNOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@sh ${.CURDIR}/sys/makelintstub ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
+	    ${LINT} -z ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -109,14 +109,14 @@ ${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -125,7 +125,7 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DPROF ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -134,7 +134,7 @@ ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CPPPICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 
@@ -143,7 +143,7 @@ ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} ${CPPFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -151,7 +151,7 @@ ${LPSEUDONOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
+	    ${LINT} -z ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
