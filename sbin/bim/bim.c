@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.3 1995/08/25 05:11:36 phil Exp $	*/
+/*	$NetBSD: bim.c,v 1.4 1995/09/28 07:08:49 phil Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -133,14 +133,12 @@ dkcksum(lp)
 void save_images ()
 {
   int count;
-  int start;
 
-  start = LABELOFFSET + sizeof(struct disklabel);
-  count = lseek (disk_fd, start, SEEK_SET);
-  if (count != start)
+  count = (int) lseek (disk_fd, (off_t) 0, SEEK_SET);
+  if (count != 0)
     error ("lseek error in saving image info.","");
-  count = write (disk_fd, (char *) im_table, sizeof(struct imageinfo));
-  if (count != sizeof(struct imageinfo))
+  count = write (disk_fd, disk_info, BLOCK_SIZE);
+  if (count != BLOCK_SIZE)
     error ("write error in saveing image info.","");
   sync ();
 }
@@ -288,7 +286,7 @@ int copy_bytes (from_fd, from_adr, to_fd, to_adr, number)
   /* Do the copy. */
   for (index = 0; index < number; index += BLOCK_SIZE)
     {
-      count = lseek (from_fd, from_adr+index, SEEK_SET);
+      count = lseek (from_fd, (off_t) (from_adr+index), SEEK_SET);
       if (count != from_adr+index)
         {
           printf ("Error in copying (seek from)\n");
@@ -308,7 +306,7 @@ int copy_bytes (from_fd, from_adr, to_fd, to_adr, number)
 	        buffer[count++] = 0;
 	    }
         }
-      count = lseek (to_fd, to_adr+index, SEEK_SET);
+      count = lseek (to_fd, (off_t) (to_adr+index), SEEK_SET);
       if (count != to_adr+index)
         {
           printf ("Error in copying (seek to)\n");
