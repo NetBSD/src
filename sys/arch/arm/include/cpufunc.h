@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 2001/06/02 21:03:32 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5 2001/06/03 18:32:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -206,6 +206,16 @@ void	arm6_setup		__P((char *string));
 #ifdef CPU_ARM7
 void	arm7_setup		__P((char *string));
 #endif	/* CPU_ARM7 */
+
+#ifdef CPU_ARM7TDMI
+int	arm7_dataabt_fixup	__P((void *arg));
+void	arm7tdmi_setup		__P((char *string));
+void	arm7tdmi_setttb		__P((u_int ttb));
+void	arm7tdmi_tlb_flushID	__P((void));
+void	arm7tdmi_tlb_flushID_SE	__P((u_int va));
+void	arm7tdmi_cache_flushID	__P((void));
+void	arm7tdmi_context_switch	__P((void));
+#endif /* CPU_ARM7TDMI */
 
 #ifdef CPU_ARM8
 void	arm8_setttb		__P((u_int ttb));
