@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/06/19 18:27:14 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 2000/06/19 23:46:07 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/krb
 .PATH: ${DIST}/krb4/doc
@@ -119,6 +119,16 @@ $(SRCS:.c=.o): krb_err.h
 
 TEXINFO=	kth-krb.texi
 INFOFLAGS=	-I${DIST}/krb4/doc
+
+# Prevent collisions with old MIT Kerberos includes -- require manual
+# intervention of the operator.
+.BEGIN:
+.ifmake includes
+	@if [ -f ${DESTDIR}${INCSDIR}/mit-copyright.h ]; then \
+		echo "Error: you must first remove the MIT headers from ${DESTDIR}${INCSDIR}" >&2; \
+		false; \
+	fi
+.endif
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>
