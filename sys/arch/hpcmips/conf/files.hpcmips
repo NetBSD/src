@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.13 1999/12/28 03:15:17 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.14 2000/01/07 15:19:14 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -146,10 +146,12 @@ device vrdsu
 attach vrdsu at vrip
 file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
 
+define	mra
+file arch/hpcmips/vr/mra.c			mra
+
 device vrpiu: wsmousedev
-attach vrpiu at vrip
+attach vrpiu at vrip: mra
 file arch/hpcmips/vr/vrpiu.c			vrpiu
-file arch/hpcmips/vr/mra.c			vrpiu
 
 #
 #	TOSHIBA TX3912/3922
@@ -162,12 +164,12 @@ defopt TX39BIUDEBUG
 defopt TX39IODEBUG
 defopt TX39POWERDEBUG
 defopt TX39UARTDEBUG
-defopt IT8368DEBUG
 defopt USE_POLL
 
 device txsim { }
 device txcsbusif {[platform = -1]}
 device txcomif {[slot = -1]}
+device txsibif {[slot = -1]}
 
 attach txsim at mainbus
 file arch/hpcmips/tx/txsim.c		txsim
@@ -200,6 +202,16 @@ device tx39io
 attach tx39io at txsim
 file arch/hpcmips/tx/tx39io.c		tx39io
 
+device tx39sib: txsibif
+attach tx39sib at txsim
+file arch/hpcmips/tx/tx39sib.c		tx39sib
+
+#	PHILIPS UCB1200 modem/audio analog front-end
+device ucb: wsmousedev
+attach ucb at txsibif: mra
+file arch/hpcmips/dev/ucb1200.c		ucb
+
+
 device tx39uart: txcomif
 attach tx39uart at txsim
 file arch/hpcmips/tx/tx39uart.c		tx39uart	needs-flag
@@ -214,10 +226,6 @@ attach it8368e at txcsbus
 file arch/hpcmips/dev/it8368.c	it8368e
 
 device skbdif {}
-#	PHILIPS 74ALVC16241 buffer driver (keyboard)
-device p7416buf: skbdif
-attach p7416buf at txcsbus
-file arch/hpcmips/dev/p7416buf.c	p7416buf	needs-flag
 
 #	MITUBISHI M38813 keryboard controller
 device m38813c: skbdif
@@ -225,6 +233,7 @@ attach m38813c at txcsbus
 file arch/hpcmips/dev/m38813c.c		m38813c		needs-flag
 
 #	TOSHIBA TC5165BTFS buffer driver (keyboard)
+#	PHILIPS 74ALVC16241 buffer driver (keyboard)
 device tc5165buf: skbdif
 attach tc5165buf at txcsbus
 file arch/hpcmips/dev/tc5165buf.c	tc5165buf	needs-flag
