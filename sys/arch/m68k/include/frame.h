@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 1997/05/03 12:49:05 mycroft Exp $	*/
+/*	$NetBSD: frame.h,v 1.16 1999/04/19 20:58:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -308,5 +308,13 @@ struct fpframe060 {
 
 	u_long	fpf6_upper, fpf6_lower;
 };
+
+#if defined(_KERNEL)
+/*
+ * Utility function to relocate the initial frame, make room to restore an
+ * exception frame and reenter the syscall.
+ */
+void reenter_syscall __P((struct frame *, int)) __attribute__((__noreturn__));
+#endif         
 
 #endif	/* _M68K_FRAME_H_ */
