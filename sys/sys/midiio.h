@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.3 1998/08/12 21:33:43 augustss Exp $	*/
+/*	$NetBSD: midiio.h,v 1.4 1998/08/13 00:08:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -195,9 +195,11 @@ struct synth_info {
 	*(short*)&(e)->arr[6] = (w14))
 
 #if _QUAD_LOWWORD == 1
-#define SEQ_PATCHKEY(id) ((id<<8)|0xfd)
-#else
+/* big endian */
 #define SEQ_PATCHKEY(id) (0xfd00|id)
+#else
+/* little endian */
+#define SEQ_PATCHKEY(id) ((id<<8)|0xfd)
 #endif
 struct sysex_info {
 	u_int16_t	key;	/* Use SYSEX_PATCH or MAUI_PATCH here */
