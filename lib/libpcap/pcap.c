@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap.c,v 1.2 1995/03/06 11:39:05 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +40,7 @@ static char rcsid[] =
 
 #include <sys/types.h>
 
+#include <string.h>
 #include <unistd.h>
 
 #include "pcap-int.h"
@@ -151,14 +154,8 @@ pcap_geterr(pcap_t *p)
 char *
 pcap_strerror(int errnum)
 {
-	extern int sys_nerr;
-	extern char *sys_errlist[];
-	static char ebuf[20];
 
-	if ((unsigned int)errnum < sys_nerr)
-		return (sys_errlist[errnum]);
-	(void)sprintf(ebuf, "Unknown error: %d", errnum);
-	return(ebuf);
+	return (strerror(errnum));
 }
 
 void

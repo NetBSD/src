@@ -1,3 +1,5 @@
+/*	$NetBSD: optimize.c,v 1.2 1995/03/06 11:38:35 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
