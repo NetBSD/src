@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.10 2001/11/13 02:08:49 lukem Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.11 2002/02/15 20:02:56 christos Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.10 2001/11/13 02:08:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.11 2002/02/15 20:02:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ static int bsd_to_linux_msf_lba(unsigned address_format, union msf_lba *bml,
 				union linux_cdrom_addr *llml);
 
 #if 0
-#define DPRINTF(x) printf x
+#define DPRINTF(x) uprintf x
 #else
 #define DPRINTF(x)
 #endif
@@ -204,7 +204,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		l_tocentry.cdte_ctrl = t_entry.control;
 		if (bsd_to_linux_msf_lba(t_entry.addr_type, &t_entry.addr,
 		    &l_tocentry.cdte_addr) < 0) {
-			printf("linux_ioctl: unknown format msf/lba\n");
+			uprintf("linux_ioctl: unknown format msf/lba\n");
 			error = EINVAL;
 			break;
 		}
