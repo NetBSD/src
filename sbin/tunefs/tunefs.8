@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.22 2001/06/05 11:22:54 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.23 2001/08/19 09:39:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd May 3, 1995
+.Dd August 19, 2001
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd tune up an existing file system
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl AN
+.Op Fl AFN
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
@@ -51,34 +51,36 @@
 .Op Fl o Ar optimize_preference
 .Ek
 .Op Fl t Ar trackskew
-.Op Ar special | Ar filesys
+.Ar special | Ar filesys
 .Sh DESCRIPTION
 .Nm
 is designed to change the dynamic parameters of a file system
 which affect the layout policies.
-The
-.Fl N
-flag displays all the settable options
-(after any changes from the tuning options)
-but does not cause any of them to be changed.
-The
-.Fl A
-flag causes the values to be updated in all the alternate
+.Pp
+The following options are supported by
+.Nm "" :
+.Bl -tag -width Ds
+.It Fl A
+Cause the values to be updated in all the alternate
 superblocks instead of just the standard superblock.
 If this option is not used,
 then use of a backup superblock by
 .Xr fsck 8
 will lose anything changed by
 .Nm "" .
-The
 .Fl A
-flag is ignored when the
+is ignored when
 .Fl N
-flag is specified.
-.Pp
-The parameters which are to be changed are indicated by the flags
-given below:
-.Bl -tag -width Ds
+is specified.
+.It Fl F
+Indicates that
+.Ar special
+is a file system image in a regular file, rather than a special device
+or file system mount point.
+.It Fl N
+Display all the settable options
+(after any changes from the tuning options)
+but do not cause any of them to be changed.
 .It Fl a Ar maxcontig
 This specifies the maximum number of contiguous blocks that will
 be laid out before forcing a rotational delay (see
@@ -120,13 +122,13 @@ Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
 .\" .It Fl n Ar soft_dependency_enabling
-.\" The soft dependency code allows most filesystem I/O to be done
+.\" The soft dependency code allows most file system I/O to be done
 .\" asynchronously by reordering dependant writes to ensure that the
 .\" on-disk metadata is self-consistent even when updates are deferred. 
 .\" Additionally, metadata updates are aggregated, reducing the total 
 .\" number of writes performed.
-.\" Use of this facility does not require any changes to the filesystem,
-.\" so it can be enabled or disabled any time that the filesystem is unmounted.
+.\" Use of this facility does not require any changes to the file system,
+.\" so it can be enabled or disabled any time that the file system is unmounted.
 .\" This experimental facility is turned off by default.
 .\" It is turned on by using
 .\" .Fl n
@@ -176,7 +178,7 @@ the same rotational position.
 This program should work on mounted and active file systems.
 Because the super-block is not kept in the buffer cache,
 the changes will only take effect if the program
-is run on dismounted file systems.
+is run on unmounted file systems.
 To change the root file system, the system must be rebooted
 after the file system is tuned.
 .Pp
