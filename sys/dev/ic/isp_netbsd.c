@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.15 2001/04/21 17:48:32 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.16 2001/04/23 00:57:48 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -81,8 +81,7 @@
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
 static void ispminphys(struct buf *);
-static void isprequest (struct scsipi_channel *,
-	scsipi_adapter_req_t, void *);
+static void isprequest (struct scsipi_channel *, scsipi_adapter_req_t, void *);
 static int
 ispioctl(struct scsipi_channel *, u_long, caddr_t, int, struct proc *);
 
@@ -99,9 +98,12 @@ isp_attach(struct ispsoftc *isp)
 
 	isp->isp_osinfo._adapter.adapt_dev = &isp->isp_osinfo._dev;
 	isp->isp_osinfo._adapter.adapt_nchannels = IS_DUALBUS(isp) ? 2 : 1;
-	isp->isp_osinfo._adapter.adapt_openings = isp->isp_maxcmds; /* XXX per adapter or per channel ? */
-	isp->isp_osinfo._adapter.adapt_max_periph =
-		(isp->isp_maxcmds > 256) ? 256 : isp->isp_maxcmds;
+	isp->isp_osinfo._adapter.adapt_openings = isp->isp_maxcmds;
+	/*
+	 * It's not stated whether max_periph is limited by SPI
+	 * tag uage, but let's assume that it is.
+	 */
+	isp->isp_osinfo._adapter.adapt_max_periph = min(isp->isp_maxcmds, 255);
 	isp->isp_osinfo._adapter.adapt_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.adapt_request = isprequest;
 	isp->isp_osinfo._adapter.adapt_minphys = ispminphys;
@@ -109,16 +111,17 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._chan.chan_adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._chan.chan_bustype = &scsi_bustype;
 	isp->isp_osinfo._chan.chan_channel = 0;
+
 	/*
 	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
-	isp->isp_osinfo._chan.chan_nluns =
-		(isp->isp_maxluns < 7)? isp->isp_maxluns : 8;
+	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
 	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* The 2nd bus will share.. */
 
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
+		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
 	} else {
 		sdparam *sdp = isp->isp_param;
 		isp->isp_osinfo._chan.chan_ntargets = MAX_TARGETS;
@@ -147,25 +150,9 @@ isp_attach(struct ispsoftc *isp)
 		}
 		ISP_UNLOCK(isp);
 	} else {
-		int defid;
-		fcparam *fcp = isp->isp_param;
-		delay(2 * 1000000);
-		defid = MAX_FC_TARG;
 		ISP_LOCK(isp);
-		/*
-		 * We probably won't have clock interrupts running,
-		 * so we'll be really short (smoke test, really)
-		 * at this time.
-		 */
-		if (isp_control(isp, ISPCTL_FCLINK_TEST, NULL)) {
-			(void) isp_control(isp, ISPCTL_PDB_SYNC, NULL);
-			if (fcp->isp_fwstate == FW_READY &&
-			    fcp->isp_loopstate >= LOOP_PDB_RCVD) { 
-				defid = fcp->isp_loopid;
-			}
-		}
+		isp_fc_runstate(isp, 2 * 1000000);
 		ISP_UNLOCK(isp);
-		isp->isp_osinfo._chan.chan_id = defid;
 	}
 
 	/*
@@ -323,19 +310,11 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		}
 
 		result = isp_start(xs);
-#if	0
-{
-	static int na[16] = { 0 };
-	if (na[isp->isp_unit] < isp->isp_nactive) {
-		isp_prt(isp, ISP_LOGALL, "active hiwater %d", isp->isp_nactive);
-		na[isp->isp_unit] = isp->isp_nactive;
-	}
-}
-#endif
 		switch (result) {
 		case CMD_QUEUED:
 			if (xs->timeout) {
-				callout_reset(&xs->xs_callout, _XT(xs), isp_dog, xs);
+				callout_reset(&xs->xs_callout, _XT(xs),
+				    isp_dog, xs);
 			}
 			break;
 		case CMD_EAGAIN:
@@ -358,30 +337,31 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		{
+	if (IS_SCSI(isp)) {
 		struct scsipi_xfer_mode *xm = arg;
-		if (IS_SCSI(isp)) {
-			int dflags = 0;
-			sdparam *sdp = SDPARAM(isp);
+		int dflags = 0;
+		sdparam *sdp = SDPARAM(isp);
 
-			sdp += chan->chan_channel;
-			if (xm->xm_mode & PERIPH_CAP_TQING)
-				dflags |= DPARM_TQING;
-			if (xm->xm_mode & PERIPH_CAP_WIDE16)
-				dflags |= DPARM_WIDE;
-			if (xm->xm_mode & PERIPH_CAP_SYNC)
-				dflags |= DPARM_SYNC;
-			s = splbio();
-			sdp->isp_devparam[xm->xm_target].dev_flags |= dflags;
-			dflags = sdp->isp_devparam[xm->xm_target].dev_flags;
-			sdp->isp_devparam[xm->xm_target].dev_update = 1;
-			isp->isp_update |= (1 << chan->chan_channel);
-			splx(s);
-			isp_prt(isp, ISP_LOGDEBUG1,
-			    "ispioctl: device flags 0x%x for %d.%d.X",
-			    dflags, chan->chan_channel, xm->xm_target);
-		}
-		}
+		sdp += chan->chan_channel;
+		if (xm->xm_mode & PERIPH_CAP_TQING)
+			dflags |= DPARM_TQING;
+		if (xm->xm_mode & PERIPH_CAP_WIDE16)
+			dflags |= DPARM_WIDE;
+		if (xm->xm_mode & PERIPH_CAP_SYNC)
+			dflags |= DPARM_SYNC;
+		s = splbio();
+		sdp->isp_devparam[xm->xm_target].dev_flags |= dflags;
+		dflags = sdp->isp_devparam[xm->xm_target].dev_flags;
+		sdp->isp_devparam[xm->xm_target].dev_update = 1;
+		isp->isp_update |= (1 << chan->chan_channel);
+		splx(s);
+		isp_prt(isp, ISP_LOGDEBUG1,
+		    "ispioctl: device flags 0x%x for %d.%d.X",
+		    dflags, chan->chan_channel, xm->xm_target);
+		break;
+	}
+	default:
+		break;
 	}
 }
 
