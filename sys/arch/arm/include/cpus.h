@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.2 2001/02/25 18:40:26 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.3 2001/02/26 14:52:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -77,27 +77,6 @@
 
 /* Define the structure used to describe a cpu */
 
-typedef struct cpu_arm {
-	u_int cpu_id;		/* The CPU id */
-	u_int cpu_ctrl;		/* The CPU control register */
-
-	u_int cpu_svc_r13;	/* local data */
-	u_int cpu_und_r13;	/* local data */
-	u_int cpu_abt_r13;	/* local data */
-	u_int cpu_irq_r13;	/* local data */
-} cpu_arm_t;
-
-typedef struct cpu_sarm {
-	u_int cpu_id;		/* The CPU id */
-	u_int cpu_ctrl;		/* The CPU control register */
-} cpu_sarm_t;
-
-typedef struct cpu_i486 {
-	u_int cpu_id;		/* The CPU id */
-	u_int cpu_ctrl;		/* The CPU control register */
-} cpu_i486_t;
-
-
 typedef struct _cpu {
 /* These are generic CPU variables */
 
@@ -123,14 +102,6 @@ typedef struct _cpu {
 	u_int cpu_abt_r13;	/* local data */
 	u_int cpu_irq_r13;	/* local data */
 
-/* Not used yet */
-
-	union {
-		cpu_arm_t	cpu_arm;
-		cpu_sarm_t	cpu_sarm;
-		cpu_i486_t	cpu_i486;
-	} cpu_local;
-	void *cpu_cd;		/* CPU dependant data */
 } cpu_t;
 
 #ifdef _KERNEL
