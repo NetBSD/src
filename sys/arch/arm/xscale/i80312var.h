@@ -1,3 +1,5 @@
+/*	$NetBSD: i80312var.h,v 1.2 2001/11/05 23:38:05 thorpej Exp $	*/
+
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
