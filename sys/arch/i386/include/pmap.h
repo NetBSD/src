@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77 2003/10/23 08:30:21 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.78 2003/10/27 13:44:20 junyoung Exp $	*/
 
 /*
  *
@@ -338,30 +338,29 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * prototypes
  */
 
-void		pmap_activate __P((struct lwp *));
-void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_clear_attrs __P((struct vm_page *, int));
-void		pmap_deactivate __P((struct lwp *));
-void		pmap_page_remove  __P((struct vm_page *));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_activate(struct lwp *);
+void		pmap_bootstrap(vaddr_t);
+boolean_t	pmap_clear_attrs(struct vm_page *, int);
+void		pmap_deactivate(struct lwp *);
+void		pmap_page_remove (struct vm_page *);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+boolean_t	pmap_test_attrs(struct vm_page *, int);
+void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
-void	pmap_tlb_shootnow __P((int32_t));
-void	pmap_do_tlb_shootdown __P((struct cpu_info *));
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
+void	pmap_tlb_shootnow(int32_t);
+void	pmap_do_tlb_shootdown(struct cpu_info *);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t			pmap_pageidlezero __P((paddr_t));
+boolean_t			pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
@@ -492,11 +491,11 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
-paddr_t vtophys __P((vaddr_t));
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
+paddr_t vtophys(vaddr_t);
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 
 #if defined(USER_LDT)
-void	pmap_ldt_cleanup __P((struct lwp *));
+void	pmap_ldt_cleanup(struct lwp *);
 #define	PMAP_FORK
 #endif /* USER_LDT */
 
