@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.69 2000/03/01 03:21:56 enami Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.70 2000/03/06 01:06:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.69 2000/03/01 03:21:56 enami Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.70 2000/03/06 01:06:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,7 @@ printalias(iname, af)
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	int i, siz;
-	char ifrbuf[8192];
+	char ifrbuf[8192], *cp;
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -629,18 +629,23 @@ printalias(iname, af)
 		err(1, "SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len; ) {
-		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, ifr, sizeof(*ifr));
-		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		/* Copy the mininum ifreq into the buffer. */
+		cp = ((caddr_t)ifc.ifc_req + i);
+		memcpy(ifrbuf, cp, sizeof(*ifr));
+
+		/* Now compute the actual size of the ifreq. */
+		ifr = (struct ifreq *)ifrbuf;
+		siz = ifr->ifr_addr.sa_len;
 		if (siz < sizeof(ifr->ifr_addr))
 			siz = sizeof(ifr->ifr_addr);
 		siz += sizeof(ifr->ifr_name);
 		i += siz;
-		/* avoid alignment issue */
+
+		/* Now copy the whole thing. */
 		if (sizeof(ifrbuf) < siz)
 			errx(1, "ifr too big");
-		memcpy(ifrbuf, ifr, siz);
-		ifr = (struct ifreq *)ifrbuf;
+		memcpy(ifrbuf, cp, siz);
+
 		if (!strncmp(iname, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 			if (ifr->ifr_addr.sa_family == af)
 				switch (af) {
@@ -663,7 +668,7 @@ printall()
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	int i, siz, idx;
-	char ifrbuf[8192];
+	char ifrbuf[8192], *cp;
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -675,18 +680,23 @@ printall()
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
-		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		memcpy(ifrbuf, ifr, sizeof(*ifr));
-		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		/* Copy the mininum ifreq into the buffer. */
+		cp = ((caddr_t)ifc.ifc_req + i);
+		memcpy(ifrbuf, cp, sizeof(*ifr));
+
+		/* Now compute the actual size of the ifreq. */
+		ifr = (struct ifreq *)ifrbuf;
+		siz = ifr->ifr_addr.sa_len;
 		if (siz < sizeof(ifr->ifr_addr))
 			siz = sizeof(ifr->ifr_addr);
 		siz += sizeof(ifr->ifr_name);
 		i += siz;
-		/* avoid alignment issue */
+
+		/* Now copy the whole thing. */
 		if (sizeof(ifrbuf) < siz)
 			errx(1, "ifr too big");
-		memcpy(ifrbuf, ifr, siz);
-		ifr = (struct ifreq *)ifrbuf;
+		memcpy(ifrbuf, cp, siz);
+
 		if (ifr->ifr_addr.sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
@@ -1661,7 +1671,7 @@ in6_status(force)
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	int i, siz;
-	char ifrbuf[8192];
+	char ifrbuf[8192], *cp;
 
 	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
@@ -1672,17 +1682,23 @@ in6_status(force)
 		err(1, "SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len; ) {
-		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		siz = sizeof(ifr->ifr_name) +
-			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifr->ifr_addr.sa_len
-				: sizeof(struct sockaddr));
+		/* Copy the mininum ifreq into the buffer. */ 
+		cp = ((caddr_t)ifc.ifc_req + i);
+		memcpy(ifrbuf, cp, sizeof(*ifr));
+
+		/* Now compute the actual size of the ifreq. */
+		ifr = (struct ifreq *)ifrbuf;
+		siz = ifr->ifr_addr.sa_len;
+		if (siz < sizeof(ifr->ifr_addr))
+			siz = sizeof(ifr->ifr_addr);
+		siz += sizeof(ifr->ifr_name);
 		i += siz;
-		/* avoid alignment issue */
+
+		/* Now copy the whole thing. */
 		if (sizeof(ifrbuf) < siz)
 			errx(1, "ifr too big");
 		memcpy(ifrbuf, ifr, siz);
-		ifr = (struct ifreq *)ifrbuf;
+
 		if (!strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 			if (ifr->ifr_addr.sa_family == AF_INET6)
 				in6_alias((struct in6_ifreq *)ifr);
