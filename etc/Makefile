@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.246 2003/02/20 11:40:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.247 2003/02/22 03:20:46 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -134,8 +134,6 @@ TARGET_ENDIANNESS=	-B
 TARGET_ENDIANNESS=
 .endif
 .endif	# install-etc-files						# }
-OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
-OBSOLETE.files=		base comp etc games man misc text
 
 
 # distribution --
@@ -281,11 +279,20 @@ install-etc-files: check_DESTDIR
 .if !defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no"
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
+
+
+# install-obsolete-lists --
+#	Install var/db/obsolete set lists; this is performed by "make build"
+#
+OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
+OBSOLETE.files=		base comp etc games man misc text
+
+install-obsolete-lists:
 	mkdir -p ${OBSOLETE.dir}
 	(cd ${NETBSDSRCDIR}/distrib/sets; sh ./makeobsolete -t ${OBSOLETE.dir})
 .for file in ${OBSOLETE.files}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${OBSOLETE.dir}/${file} ${DESTDIR}/etc/obsolete
+	    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete
 .endfor
 
 

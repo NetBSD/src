@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.382 2003/02/20 11:40:30 lukem Exp $
+# $NetBSD: mi,v 1.383 2003/02/22 03:20:47 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -51,7 +51,7 @@
 ./etc/mail		base-sendmail-root
 ./etc/mtree		base-sys-root
 ./etc/namedb		base-bind-root
-./etc/obsolete		base-sys-root
+./var/db/obsolete	base-sys-root
 ./etc/openssl		base-crypto-root
 ./etc/openssl/certs	base-crypto-root
 ./etc/openssl/misc	base-crypto-root

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.216 2003/02/20 11:40:29 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.217 2003/02/22 03:20:46 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -17,7 +17,6 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
-./etc/obsolete
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc
@@ -819,6 +818,7 @@
 ./var/cron/tabs			mode=0700
 ./var/db
 ./var/db/ns
+./var/db/obsolete
 ./var/games			uname=games gname=games mode=0775
 ./var/games/hackdir		uname=games gname=games mode=0775
 ./var/games/hackdir/save	uname=games gname=games mode=0770

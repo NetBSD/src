@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.13 2003/01/16 22:04:50 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.14 2003/02/22 03:20:48 lukem Exp $
 ./etc/default
 ./etc/default/daily.conf
 ./etc/default/monthly.conf
@@ -18,6 +18,13 @@
 ./etc/fstab.sd7
 ./etc/fstab.tmp
 ./etc/fstab.wd
+./etc/obsolete/base
+./etc/obsolete/comp
+./etc/obsolete/etc
+./etc/obsolete/games
+./etc/obsolete/man
+./etc/obsolete/misc
+./etc/obsolete/text
 ./etc/primes
 ./etc/rc.d/NETWORK
 ./etc/rc.d/fsck.sh
