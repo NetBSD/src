@@ -1,4 +1,4 @@
-/* $NetBSD: elf2aout.c,v 1.3 1996/10/16 00:27:05 jonathan Exp $ */
+/*	$NetBSD: elf2aout.c,v 1.4 1997/01/09 20:18:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1995

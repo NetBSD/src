@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:56:05 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1997/01/09 20:22:49 tls Exp $
 
 CFLAGS += -I${.CURDIR}/../mkhits -I${.CURDIR}/.. -I.
 

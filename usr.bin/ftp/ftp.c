@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.19 1996/12/29 04:05:31 lukem Exp $      */
+/*	$NetBSD: ftp.c,v 1.20 1997/01/09 20:19:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.19 1996/12/29 04:05:31 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.20 1997/01/09 20:19:38 tls Exp $";
 #endif
 #endif /* not lint */
 

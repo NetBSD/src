@@ -1,3 +1,5 @@
+/*	$NetBSD: fstat.c,v 1.17 1997/01/09 20:19:30 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95;*/
-static char *rcsid = "$Id: fstat.c,v 1.16 1996/05/05 19:12:03 mhitch Exp $";
+static char *rcsid = "$NetBSD: fstat.c,v 1.17 1997/01/09 20:19:30 tls Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ranlib.c,v 1.4 1997/01/09 20:21:00 tls Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: ranlib.c,v 1.3 1994/03/03 10:20:10 pk Exp $";
+static char rcsid[] = "$NetBSD: ranlib.c,v 1.4 1997/01/09 20:21:00 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

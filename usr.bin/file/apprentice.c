@@ -1,3 +1,5 @@
+/*	$NetBSD: apprentice.c,v 1.12 1997/01/09 20:18:49 tls Exp $	*/
+
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
  *
@@ -34,7 +36,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.11 1996/10/05 20:20:25 christos Exp $";
+	"@(#)$NetBSD: apprentice.c,v 1.12 1997/01/09 20:18:49 tls Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \

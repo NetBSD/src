@@ -1,3 +1,5 @@
+/*	$NetBSD: getconf.c,v 1.4 1997/01/09 20:19:44 tls Exp $	*/
+
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: getconf.c,v 1.3 1996/04/20 01:15:14 jtc Exp $";
+static char rcsid[] = "$NetBSD: getconf.c,v 1.4 1997/01/09 20:19:44 tls Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

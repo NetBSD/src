@@ -1,3 +1,5 @@
+/*	$NetBSD: odsyntax.c,v 1.5 1997/01/09 20:19:58 tls Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$Id: odsyntax.c,v 1.4 1993/08/01 18:14:46 mycroft Exp $";
+static char rcsid[] = "$NetBSD: odsyntax.c,v 1.5 1997/01/09 20:19:58 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

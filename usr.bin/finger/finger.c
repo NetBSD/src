@@ -1,3 +1,5 @@
+/*	$NetBSD: finger.c,v 1.6 1997/01/09 20:19:20 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -52,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$Id: finger.c,v 1.5 1996/11/21 06:01:48 lukem Exp $";
+static char rcsid[] = "$NetBSD: finger.c,v 1.6 1997/01/09 20:19:20 tls Exp $";
 #endif /* not lint */
 
 /*

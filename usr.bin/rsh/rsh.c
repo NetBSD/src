@@ -1,3 +1,5 @@
+/*	$NetBSD: rsh.c,v 1.4 1997/01/09 20:21:15 tls Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,12 +41,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: rsh.c,v 1.3 1995/06/27 00:31:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.4 1997/01/09 20:21:15 tls Exp $";
 #endif /* not lint */
 
 /*
  * $Source: /cvsroot/src/usr.bin/rsh/rsh.c,v $
- * $Header: /cvsroot/src/usr.bin/rsh/rsh.c,v 1.3 1995/06/27 00:31:00 jtc Exp $
+ * $Header: /cvsroot/src/usr.bin/rsh/rsh.c,v 1.4 1997/01/09 20:21:15 tls Exp $
  */
 
 #include <sys/types.h>

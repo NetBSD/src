@@ -1,4 +1,4 @@
-/* $NetBSD: elfstrip.c,v 1.3 1996/10/16 00:27:10 jonathan Exp $ */
+/*	$NetBSD: elfstrip.c,v 1.4 1997/01/09 20:18:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1995

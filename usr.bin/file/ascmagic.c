@@ -1,3 +1,5 @@
+/*	$NetBSD: ascmagic.c,v 1.9 1997/01/09 20:18:50 tls Exp $	*/
+
 /*
  * ASCII magic -- file types that we know based on keywords
  * that can appear anywhere in the file.
@@ -36,7 +38,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: ascmagic.c,v 1.8 1995/05/21 00:13:27 christos Exp $";
+	"@(#)$NetBSD: ascmagic.c,v 1.9 1997/01/09 20:18:50 tls Exp $";
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */

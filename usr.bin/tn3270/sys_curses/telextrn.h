@@ -1,3 +1,5 @@
+/*	$NetBSD: telextrn.h,v 1.4 1997/01/09 20:22:29 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)telextrn.h	4.2 (Berkeley) 4/26/91
- *	$Id: telextrn.h,v 1.3 1993/08/10 00:08:52 mycroft Exp $
+ *	$NetBSD: telextrn.h,v 1.4 1997/01/09 20:22:29 tls Exp $
  */
 
 /*
