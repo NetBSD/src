@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.39 2003/07/12 16:52:22 itojun Exp $	*/
+/*	$NetBSD: modload.c,v 1.40 2003/07/13 07:45:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.39 2003/07/12 16:52:22 itojun Exp $");
+__RCSID("$NetBSD: modload.c,v 1.40 2003/07/13 07:45:27 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -167,7 +167,7 @@ verify_entry(const char *entry, char *filename)
 	char *s;
 
 	memset(names, 0, sizeof(names));
-	asprintf(&s, "_%s", entry);	/* safe */
+	asprintf(&s, "_%s", entry);
 	if (!s)
 		err(1, "malloc");
 #ifdef	_AOUT_INCLUDE_
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 				p++;
 			else
 				p = modout;
-			asprintf(&entry, "%s%s", p, DFLT_ENTRYEXT); /* safe */
+			asprintf(&entry, "%s%s", p, DFLT_ENTRYEXT);
 			if (!entry)
 				err(1, "malloc");
 			if (verify_entry(entry, modobj))
