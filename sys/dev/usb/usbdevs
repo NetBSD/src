@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.139 2001/01/07 14:46:31 augustss Exp $
+$NetBSD: usbdevs,v 1.140 2001/01/15 20:26:46 tshiozak Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ vendor CONNECTIX	0x0478	Connectix Corp.
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
+vendor YAMAHA		0x0499	YAMAHA Corp.
 vendor COMPAQ		0x049f	Compaq Computers
 vendor ACERP		0x04a5	Acer Peripherals, Inc.
 vendor VISIONEER	0x04a7	Visioneer
@@ -136,6 +137,7 @@ vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM GmbH
 vendor QUICKSHOT	0x057f	Quickshot
+vendor ROLAND		0x0582	Roland Corp.
 vendor ROCKFIRE		0x0583	Rockfire
 vendor ZYXEL		0x0586	ZyXEL Communication Co.
 vendor ALCOR		0x058f	Alcor Micro, Inc.
@@ -709,6 +711,9 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 /* Rainbow Technologies products */
 product	RAINBOW IKEY2000	0x1200	i-Key 2000  
 
+/* Roland products */
+product	ROLAND UM1		0x0009	UM-1 MIDI I/F
+
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
 
@@ -807,6 +812,9 @@ product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
+
+/* Yamaha products */
+product YAMAHA UX256		0x1000	UX256 MIDI I/F
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
