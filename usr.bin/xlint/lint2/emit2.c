@@ -1,4 +1,4 @@
-/*	$NetBSD: emit2.c,v 1.3 1996/12/22 11:31:08 cgd Exp $	*/
+/*	$NetBSD: emit2.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,8 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit2.c,v 1.3 1996/12/22 11:31:08 cgd Exp $";
+__RCSID("$NetBSD: emit2.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
 #endif
 
 #include <err.h>
@@ -43,7 +44,7 @@ static char rcsid[] = "$NetBSD: emit2.c,v 1.3 1996/12/22 11:31:08 cgd Exp $";
 static	void	outtype __P((type_t *));
 static	void	outdef __P((hte_t *, sym_t *));
 static	void	dumpname __P((hte_t *));
-static	void	outfiles __P(());
+static	void	outfiles __P((void));
 
 /*
  * Write type into the output buffer.
@@ -286,7 +287,7 @@ addoutfile(num)
 	return (i);
 }
 
-void
+static void
 outfiles()
 {
 	struct outflist *ofl;

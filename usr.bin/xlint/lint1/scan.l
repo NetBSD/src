@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.10 1997/11/03 22:36:50 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.11 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,8 +33,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.10 1997/11/03 22:36:50 cgd Exp $";
+__RCSID("$NetBSD: scan.l,v 1.11 1998/02/22 15:40:40 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -50,6 +51,7 @@ static char rcsid[] = "$NetBSD: scan.l,v 1.10 1997/11/03 22:36:50 cgd Exp $";
 #include "y.tab.h"
 
 #define CHAR_MASK	(~(~0 << CHAR_BIT))
+#define YY_NO_UNPUT
 
 /* XXX declaration of strtouq() is missing in stdlib.h ? */
 extern	u_quad_t strtouq __P((const char *, char **, int));
@@ -458,8 +460,8 @@ icon(base)
 	const	char *cp;
 	char	c, *eptr;
 	tspec_t	typ;
-	u_long	ul;
-	u_quad_t uq;
+	u_long	ul = 0;
+	u_quad_t uq = 0;
 	int	ansiu;
 	static	tspec_t contypes[2][3] = {
 		{ INT,  LONG,  QUAD },
@@ -560,6 +562,27 @@ icon(base)
 		}
 		break;
 		/* LINTED (enumeration values not handled in switch) */
+	case STRUCT:
+	case VOID:
+	case LDOUBLE:
+	case FUNC:
+	case ARRAY:
+	case PTR:
+	case ENUM:
+	case UNION:
+	case SIGNED:
+	case NOTSPEC:
+	case DOUBLE:
+	case FLOAT:
+	case UQUAD:
+	case ULONG:
+	case USHORT:
+	case SHORT:
+	case UCHAR:
+	case SCHAR:
+	case CHAR:
+	case UNSIGN:
+		break;
 	}
 
 	if (typ != QUAD && typ != UQUAD) {
@@ -642,7 +665,7 @@ fcon()
 	tspec_t typ;
 	char	c, *eptr;
 	double	d;
-	float	f;
+	float	f = 0;
 
 	cp = yytext;
 	len = yyleng;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.13 1997/03/12 18:28:58 mycroft Exp $	*/
+/*	$NetBSD: tree.c,v 1.14 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.13 1997/03/12 18:28:58 mycroft Exp $";
+__RCSID("$NetBSD: tree.c,v 1.14 1998/02/22 15:40:40 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -768,8 +769,8 @@ typeok(op, arg, ln, rn)
 	tnode_t	*ln, *rn;
 {
 	mod_t	*mp;
-	tspec_t	lt, rt, lst, rst, olt, ort;
-	type_t	*ltp, *rtp, *lstp, *rstp;
+	tspec_t	lt, rt = NULL, lst = NULL, rst = NULL, olt = NULL, ort = NULL;
+	type_t	*ltp, *rtp = NULL, *lstp = NULL, *rstp = NULL;
 	tnode_t	*tn;
 
 	mp = &modtab[op];
@@ -1133,6 +1134,32 @@ typeok(op, arg, ln, rn)
 			nulleff(ln);
 		break;
 		/* LINTED (enumeration values not handled in switch) */
+	case CON:
+	case CASE:
+	case PUSH:
+	case LOAD:
+	case ICALL:
+	case CVT:
+	case CALL:
+	case FSEL:
+	case STRING:
+	case NAME:
+	case LOGOR:
+	case LOGAND:
+	case OR:
+	case XOR:
+	case AND:
+	case MOD:
+	case DIV:
+	case MULT:
+	case UMINUS:
+	case UPLUS:
+	case DEC:
+	case INC:
+	case COMPL:
+	case NOT:
+	case NOOP:
+		break;
 	}
 
 	if (mp->m_badeop &&
@@ -1193,8 +1220,8 @@ asgntypok(op, arg, ln, rn)
 	int	arg;
 	tnode_t	*ln, *rn;
 {
-	tspec_t	lt, rt, lst, rst;
-	type_t	*ltp, *rtp, *lstp, *rstp;
+	tspec_t	lt, rt, lst = NULL, rst = NULL;
+	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 	mod_t	*mp;
 	const	char *lts, *rts;
 
@@ -1646,7 +1673,7 @@ convert(op, arg, tp, tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ntn;
-	tspec_t	nt, ot, ost;
+	tspec_t	nt, ot, ost = NULL;
 
 	if (tn->tn_lvalue)
 		lerror("convert() 1");
@@ -1888,7 +1915,7 @@ cvtcon(op, arg, tp, nv, v)
 	val_t	*nv, *v;
 {
 	tspec_t	ot, nt;
-	ldbl_t	max, min;
+	ldbl_t	max = NULL, min = NULL;
 	int	sz, rchk;
 	quad_t	xmask, xmsk1;
 	int	osz, nsz;
@@ -2672,8 +2699,8 @@ fold(tn)
 	val_t	*v;
 	tspec_t	t;
 	int	utyp, ovfl;
-	quad_t	sl, sr, q, mask;
-	u_quad_t ul, ur;
+	quad_t	sl, sr = 0, q = 0, mask;
+	u_quad_t ul, ur = 0;
 	tnode_t	*cn;
 
 	v = xcalloc(1, sizeof (val_t));
@@ -2806,7 +2833,7 @@ static tnode_t *
 foldtst(tn)
 	tnode_t	*tn;
 {
-	int	l, r;
+	int	l, r = 0;
 	val_t	*v;
 
 	v = xcalloc(1, sizeof (val_t));
@@ -2857,7 +2884,7 @@ foldflt(tn)
 {
 	val_t	*v;
 	tspec_t	t;
-	ldbl_t	l, r;
+	ldbl_t	l, r = 0;
 
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = t = tn->tn_type->t_tspec;
@@ -3539,6 +3566,44 @@ chkmisc(tn, vctx, tctx, eqwarn, fcall, rvdisc, szof)
 	case STRING:
 		return;
 		/* LINTED (enumeration values not handled in switch) */
+	case OR:
+	case XOR:
+	case NE:
+	case GE:
+	case GT:
+	case LE:
+	case LT:
+	case SHR:
+	case SHL:
+	case MINUS:
+	case PLUS:
+	case MOD:
+	case DIV:
+	case MULT:
+	case STAR:
+	case UMINUS:
+	case UPLUS:
+	case DEC:
+	case INC:
+	case COMPL:
+	case NOT:
+	case POINT:
+	case ARROW:
+	case NOOP:
+	case AND:
+	case FARG:
+	case CASE:
+	case INIT:
+	case RETURN:
+	case ICALL:
+	case CVT:
+	case COMMA:
+	case FSEL:
+	case COLON:
+	case QUEST:
+	case LOGOR:
+	case LOGAND:
+		break;
 	}
 
 	cvctx = mp->m_vctx;
@@ -3816,8 +3881,8 @@ precconf(tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ln, *rn;
-	op_t	lop, rop;
-	int	lparn, rparn;
+	op_t	lop, rop = NULL;
+	int	lparn, rparn = 0;
 	mod_t	*mp;
 	int	warn;
 
@@ -3877,6 +3942,61 @@ precconf(tn)
 		}
 		break;
 		/* LINTED (enumeration values not handled in switch) */
+	case DECAFT:
+	case XORASS:
+	case SHLASS:
+	case NOOP:
+	case ARROW:
+	case ORASS:
+	case POINT:
+	case NAME:
+	case NOT:
+	case COMPL:
+	case CON:
+	case INC:
+	case STRING:
+	case DEC:
+	case INCBEF:
+	case DECBEF:
+	case INCAFT:
+	case FSEL:
+	case CALL:
+	case COMMA:
+	case CVT:
+	case ICALL:
+	case LOAD:
+	case PUSH:
+	case RETURN:
+	case INIT:
+	case CASE:
+	case FARG:
+	case SUBASS:
+	case ADDASS:
+	case MODASS:
+	case DIVASS:
+	case MULASS:
+	case ASSIGN:
+	case COLON:
+	case QUEST:
+	case LOGAND:
+	case NE:
+	case EQ:
+	case GE:
+	case GT:
+	case LE:
+	case LT:
+	case MINUS:
+	case PLUS:
+	case MOD:
+	case DIV:
+	case MULT:
+	case AMPER:
+	case STAR:
+	case UMINUS:
+	case SHRASS:
+	case UPLUS:
+	case ANDASS:
+		break;
 	}
 
 	if (warn) {
