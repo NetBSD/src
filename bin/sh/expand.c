@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $	*/
+/*	$NetBSD: expand.c,v 1.32 1997/11/30 20:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $");
+__RCSID("$NetBSD: expand.c,v 1.32 1997/11/30 20:57:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ expari(flag)
 	ifslastp = NULL;
 
 	/*
-	 * This routine is slightly over-compilcated for
+	 * This routine is slightly over-complicated for
 	 * efficiency.  First we make sure there is
 	 * enough space for the result, which may be bigger
 	 * than the expression if we add exponentation.  Next we
@@ -374,7 +374,9 @@ expbackq(cmd, quoted, flag)
 	struct ifsregion saveifs, *savelastp;
 	struct nodelist *saveargbackq;
 	char lastc;
+#if 0
 	int startloc = dest - stackblock();
+#endif
 	char const *syntax = quoted? DQSYNTAX : BASESYNTAX;
 	int saveherefd;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
@@ -424,8 +426,15 @@ expbackq(cmd, quoted, flag)
 		ckfree(in.buf);
 	if (in.jp)
 		exitstatus = waitforjob(in.jp);
+#if 0
+	/*
+	 * XXX: We cannot record-region here, because in the case
+	 * of echo ${foo:=`echo 1 2 3 4`} we end up recording the
+	 * region twice. Is that really needed anyway?
+	 */
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
+#endif
 	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
 		(dest - stackblock()) - startloc,
 		(dest - stackblock()) - startloc,
