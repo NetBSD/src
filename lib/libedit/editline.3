@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.7 1997/11/09 00:13:52 lukem Exp $
+.\"	$NetBSD: editline.3,v 1.8 1998/01/21 11:12:34 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,19 +187,6 @@ didn't match, or
 Refer to
 .Xr editrc 5
 for more information.
-.Pp
-.Em NOTE:
-.Va argv[0]
-may be modified by
-.Fn el_parse .
-The colon between
-.Dq prog
-and the command, 
-.Ar command ,
-will be replaced with a NUL
-.Po
-.Dq \e0
-.Pc .
 .It Fn el_set
 Set
 .Nm
