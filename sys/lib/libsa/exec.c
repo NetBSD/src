@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.20 2003/06/23 11:02:08 martin Exp $	*/
+/*	$NetBSD: exec.c,v 1.21 2003/06/23 14:17:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -33,7 +33,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_insecure.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/reboot.h>
