@@ -45,7 +45,8 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 	void *aux;
 
 #define USB_ATTACH_START(dname, sc, uaa) \
-	struct __CONCAT(dname,_softc) *sc = (struct __CONCAT(dname,_softc) *)self; \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
 
 /* Returns from attach */
