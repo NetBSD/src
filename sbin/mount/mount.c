@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.55 2000/11/01 04:10:02 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.56 2001/02/18 06:15:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.55 2000/11/01 04:10:02 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.56 2001/02/18 06:15:49 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,9 @@ static int	mountfs __P((const char *, const char *, const char *,
 static void	prmount __P((struct statfs *));
 static void	usage __P((void));
 
+#ifndef NO_MOUNT_PROGS
 void	checkname __P((int, char *[]));
+#endif
 int	main __P((int, char *[]));
 
 /* Map from mount otions to printable formats. */
@@ -130,8 +132,10 @@ main(argc, argv)
 	char *options;
 	const char *mountopts, *fstypename;
 
+#ifndef NO_MOUNT_PROGS
 	/* if called as specific mount, call it's main mount routine */
 	checkname(argc, argv);
+#endif
 
 	/* started as "mount" */
 	all = forceall = init_flags = 0;
