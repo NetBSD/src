@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21.2.5 1999/05/30 15:17:57 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.6 1999/06/02 05:01:45 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -147,6 +147,7 @@
 #define UFP_NOWAIT	0x1
 #define UFP_NOALLOC	0x2
 #define UFP_NOCACHE	0x4
+#define UFP_NORDONLY	0x8
 
 /*
  * structures
