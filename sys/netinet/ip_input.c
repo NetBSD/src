@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.54 1998/01/05 09:52:04 lukem Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.55 1998/01/12 03:02:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
+
+#include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
