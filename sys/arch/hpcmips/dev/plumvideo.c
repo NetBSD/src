@@ -1,7 +1,7 @@
-/*	$NetBSD: plumvideo.c,v 1.24 2002/02/19 14:21:47 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.25 2002/03/06 15:01:05 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,7 @@
 
 #undef PLUMVIDEODEBUG
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
+#include "bivideo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +71,9 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/hpc/hpcfbvar.h>
 #include <dev/hpc/hpcfbio.h>
+#if NBIVIDEO > 0
+#include <dev/hpc/bivideovar.h>
+#endif
 
 #ifdef PLUMVIDEODEBUG
 int	plumvideo_debug = 1;
@@ -218,6 +222,10 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
 	config_found(self, &ha, hpcfbprint);
+#if NBIVIDEO > 0
+	/* bivideo is no longer need */
+	bivideo_dont_attach = 1;
+#endif /* NBIVIDEO > 0 */
 }
 
 void
