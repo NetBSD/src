@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.3 2000/04/03 03:35:37 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.4 2000/05/01 07:40:05 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.3 2000/04/03 03:35:37 sato Exp $";
+    "$Id: hpcfb.c,v 1.4 2000/05/01 07:40:05 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ hpcfb_cnattach(iot, iobase, type, check)
 			   0, 0, defattr);
 #else /* HPCFB_TVRAM */
 	hpcfb_console_dc.dc_rinfo.ri_ops.alloc_attr(&hpcfb_console_dc.dc_rinfo,
-						 7, 0, 0, &defattr);
+	    WSCOL_GREEN, WSCOL_BLACK, 0, &defattr);
 	wsdisplay_cnattach(&hpcfb_console_wsscreen, &hpcfb_console_dc.dc_rinfo,
 			   0, 0, defattr);
 #endif /* HPCFB_TVRAM */
@@ -460,7 +460,11 @@ hpcfb_init(fbconf, dc)
 	ri->ri_width = fbconf->hf_width;
 	ri->ri_height = fbconf->hf_height;
 	ri->ri_stride = fbconf->hf_bytes_per_line;
+#if 0
 	ri->ri_flg = RI_FORCEMONO | RI_CURSOR;
+#else
+	ri->ri_flg = RI_CURSOR;
+#endif
 	if (rasops_init(ri, 200, 200)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
@@ -482,6 +486,7 @@ hpcfb_init(fbconf, dc)
 	ri->ri_ops = hpcfb_emulops; /* struct copy */
 #endif /* HPCFB_HOOK */
 
+#if 0
 	/*
 	 *  setup color map
 	 *  overriding rasops.c: rasops_init_devcmap().
@@ -490,6 +495,7 @@ hpcfb_init(fbconf, dc)
 	for (i = 1; i < 16; i++) {
 		ri->ri_devcmap[i] = fg;
 	}
+#endif
 
 	return (0);
 }
