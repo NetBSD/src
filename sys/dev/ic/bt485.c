@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.1 2000/03/04 10:25:57 elric Exp $ */
+/* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -68,6 +68,7 @@ int	bt485_get_curmax __P((struct ramdac_cookie *,
 /* XXX const */
 struct ramdac_funcs bt485_funcsstruct = {
 	"Bt485",
+	bt485_register,
 	bt485_init,
 	bt485_set_cmap,
 	bt485_get_cmap,
