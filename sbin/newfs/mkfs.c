@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.24 1995/06/11 05:22:58 mycroft Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$NetBSD: mkfs.c,v 1.24 1995/06/11 05:22:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -847,9 +847,9 @@ fsinit(utime)
 	/*
 	 * initialize the node
 	 */
-	node.di_atime.ts_sec = utime;
-	node.di_mtime.ts_sec = utime;
-	node.di_ctime.ts_sec = utime;
+	node.di_atime = utime;
+	node.di_mtime = utime;
+	node.di_ctime = utime;
 #ifdef LOSTDIR
 	/*
 	 * create the lost+found directory
