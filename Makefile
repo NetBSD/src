@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.211 2003/07/10 10:33:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.212 2003/07/17 07:46:11 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -140,13 +140,18 @@ afterinstall:
 
 postinstall-check:
 	@echo "   === Post installation checks ==="
-	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ check
+	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ check
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN
 	@echo "   === Post installation fixes ==="
-	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix
-	@echo "   ================================"
+	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix
+	@echo "   ==============================="
+
+postinstall-fix-obsolete: .NOTMAIN
+	@echo "   === Removing obsolete files ==="
+	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
+	@echo "   ==============================="
 
 
 #
@@ -216,6 +221,7 @@ distribution buildworld:
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
+	${MAKE} postinstall-fix-obsolete
 	(cd ${.CURDIR}/distrib/sets && ${MAKE} checkflist)
 .endif
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
