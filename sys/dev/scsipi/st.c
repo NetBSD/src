@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.47 1995/03/25 18:41:42 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.48 1995/06/26 05:15:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1748,9 +1748,13 @@ bad:			free(buf, M_TEMP);
 }
 
 int
-stdump()
+stdump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return ENXIO;
 }

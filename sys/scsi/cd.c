@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.68 1995/05/03 19:38:45 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.69 1995/06/26 05:15:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1149,9 +1149,13 @@ cdsize(dev)
 }
 
 int
-cddump()
+cddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return ENXIO;
 }
