@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.50 2002/09/25 15:18:42 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.51 2002/10/01 15:06:31 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -49,7 +49,8 @@
 .Op Ar target ...
 .Ek
 .Sh DESCRIPTION
-Sh is the standard command interpreter for the system.
+.Nm
+is the standard command interpreter for the system.
 The current version of
 .Nm
 is in the process of being changed to conform with the
@@ -328,11 +329,11 @@ with the value
 .Dq "ls -F" ,
 then the input:
 .Pp
-.Dl lf foobar \*[Lt]return\*[Gt]
+.Dl lf foobar Aq return
 .Pp
 would become
 .Pp
-.Dl ls -F foobar \*[Lt]return\*[Gt]
+.Dl ls -F foobar Aq return
 .Pp
 Aliases provide a convenient way for naive users to create shorthands for
 commands without having to learn how to create functions with arguments.
@@ -529,7 +530,8 @@ Unless otherwise stated, the exit status of a command is that of the last
 simple command executed by the command.
 .Ss Pipelines
 A pipeline is a sequence of one or more commands separated
-by the control operator |.  The standard output of all but
+by the control operator |.
+The standard output of all but
 the last command is connected to the standard input
 of the next command.
 The standard output of the last
@@ -565,7 +567,9 @@ For example:
 sends both the standard output and standard error of command1
 to the standard input of command2.
 .Pp
-A ; or \*[Lt]newline\*[Gt] terminator causes the preceding AND-OR-list (described
+A ; or
+.Aq newline
+terminator causes the preceding AND-OR-list (described
 next) to be executed sequentially; a \*[Am] causes asynchronous execution of
 the preceding AND-OR-list.
 .Pp
@@ -664,8 +668,9 @@ pattern) list ;;
 esac
 .Ed
 .Pp
-The pattern can actually be one or more patterns (see Shell
-Patterns described later), separated by
+The pattern can actually be one or more patterns (see
+.Sx Shell Patterns
+described later), separated by
 .Dq \*(Ba
 characters.
 .Ss Grouping Commands Together
@@ -768,7 +773,9 @@ expansion occurs within a double-quoted string it expands to a single
 field with the value of each parameter separated by the first character of
 the
 .Ev IFS
-variable, or by a \*[Lt]space\*[Gt] if
+variable, or by a
+.Aq space
+if
 .Ev IFS
 is unset.
 .It @
@@ -925,7 +932,8 @@ The length in characters of the value of parameter.
 .Pp
 The following four varieties of parameter expansion provide for substring
 processing.
-In each case, pattern matching notation (see Shell Patterns),
+In each case, pattern matching notation (see
+.Sx Shell Patterns ) ,
 rather than regular expression notation, is used to evaluate the patterns.
 If parameter is * or @, the result of the expansion is unspecified.
 Enclosing the full parameter expansion string in double-quotes does not
@@ -971,10 +979,15 @@ version
 The shell expands the command substitution by executing command in a
 subshell environment and replacing the command substitution with the
 standard output of the command, removing sequences of one or more
-\*[Lt]newline\*[Gt]s at the end of the substitution.
-(Embedded \*[Lt]newline\*[Gt]s before
+.Ao newline Ac Ns s
+at the end of the substitution.
+(Embedded
+.Ao newline Ac Ns s
+before
 the end of the output are not removed; however, during field splitting,
-they may be translated into \*[Lt]space\*[Gt]s, depending on the value of
+they may be translated into
+.Ao space Ac Ns s ,
+depending on the value of
 .Ev IFS
 and quoting that is in effect.)
 .Ss Arithmetic Expansion
@@ -1714,8 +1727,12 @@ The secondary prompt string, which defaults to
 .Dq \*[Gt] \  .
 .It Ev IFS
 Input Field Separators.
-This is normally set to \*[Lt]space\*[Gt] \*[Lt]tab\*[Gt] and
-\*[Lt]newline\*[Gt].  See the
+This is normally set to
+.Aq space ,
+.Aq tab ,
+and
+.Aq newline .
+See the
 .Sx White Space Splitting
 section for more details.
 .It Ev TERM
