@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.16 1993/10/14 01:22:32 deraadt Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.17 1993/11/23 07:45:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,6 +45,48 @@ static char rcsid[] = "$Id: mkioconf.c,v 1.16 1993/10/14 01:22:32 deraadt Exp $"
  */
 char	*qu();
 char	*intv();
+
+static char *fakepdevs[] = {
+	"ether",		/* XXX */
+	"log",			/* XXX */
+	NULL,
+};
+
+pseudo_init(fp)
+	FILE *fp;
+{
+	struct device *dp;
+	char **s;
+	int ok, num;
+	
+	fprintf(fp, "\n/* pseudo-devices */\n");
+	for (dp = dtab; dp; dp = dp->d_next) {
+		if (dp->d_type != PSEUDO_DEVICE)
+			continue;
+		for (ok = 1, s = fakepdevs; *s && ok; s++)
+			if (strcmp(dp->d_name, *s) == 0)
+				ok = 0;
+		if (ok == 0)
+			continue;
+		fprintf(fp, "extern void %sattach __P((int));\n",
+			dp->d_name);
+	}
+
+	fprintf(fp, "\nstruct pdevinit pdevinit[] = {\n");
+	for (dp = dtab; dp; dp = dp->d_next) {
+		if (dp->d_type != PSEUDO_DEVICE)
+			continue;
+		for (ok = 1, s = fakepdevs; *s && ok; s++)
+			if (strcmp(dp->d_name, *s) == 0)
+				ok = 0;
+		if (ok == 0)
+			continue;
+		num = dp->d_slave != UNKNOWN ? dp->d_slave : 0;
+		fprintf(fp, "\t{ %sattach, %d },\n",
+			dp->d_name, num);
+	}
+	fprintf(fp, "\t{ 0, 0 }\n};\n");
+}
 
 #if MACHINE_VAX
 vax_ioconf()
@@ -60,6 +102,7 @@ vax_ioconf()
   }
   fprintf(fp, "#include \"vax/include/pte.h\"\n");
   fprintf(fp, "#include \"sys/param.h\"\n");
+  fprintf(fp, "#include \"sys/device.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "#include \"sys/map.h\"\n");
   fprintf(fp, "\n");
@@ -285,6 +328,7 @@ vax_ioconf()
 	    dp->d_flags);
   }
   fprintf(fp, "\t0\n};\n");
+  pseudo_init(fp);
   (void) fclose(fp);
 }
 #endif
@@ -303,6 +347,7 @@ tahoe_ioconf()
   }
   fprintf(fp, "#include \"sys/param.h\"\n");
   fprintf(fp, "#include \"tahoe/include/pte.h\"\n");
+  fprintf(fp, "#include \"sys/device.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "#include \"sys/map.h\"\n");
   fprintf(fp, "\n");
@@ -459,6 +504,7 @@ tahoe_ioconf()
 	    dp->d_flags);
   }
   fprintf(fp, "\t0\n};\n");
+  pseudo_init(fp);
   (void) fclose(fp);
 }
 #endif
@@ -477,6 +523,7 @@ hp300_ioconf()
     exit(1);
   }
   fprintf(fp, "#include \"sys/param.h\"\n");
+  fprintf(fp, "#include \"sys/device.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "#include \"sys/map.h\"\n");
   fprintf(fp, "\n");
@@ -564,6 +611,7 @@ hp300_ioconf()
 	    dp->d_addr, dp->d_dk, dp->d_flags);
   }
   fprintf(fp, "0\n};\n");
+  pseudo_init(fp);
   (void) fclose(fp);
 }
 
@@ -624,6 +672,7 @@ i386_ioconf()
   fprintf(fp, " */\n\n");
   fprintf(fp, "#include \"machine/pte.h\"\n");
   fprintf(fp, "#include \"sys/param.h\"\n");
+  fprintf(fp, "#include \"sys/device.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "\n");
   fprintf(fp, "#if __STDC__ > 0\n");
@@ -679,6 +728,7 @@ i386_ioconf()
     }
     fprintf(fp, "0\n};\n\n");
   }
+  pseudo_init(fp);
   (void) fclose(fp);
 }
 
@@ -816,6 +866,7 @@ pc532_ioconf()
 	}
 	fprintf (fp, "\nint have_rtc = %d;\n", have_rtc);
 
+	pseudo_init(fp);
 	(void) fclose(fp);
 }
 #endif
@@ -896,6 +947,7 @@ pmax_ioconf()
 			dp->d_dk, dp->d_flags);
 	}
 	fprintf(fp, "0\n};\n");
+	pseudo_init(fp);
 	(void) fclose(fp);
 }
 #endif
