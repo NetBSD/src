@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.29 2000/07/11 11:39:47 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.30 2000/07/11 12:06:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.29 2000/07/11 11:39:47 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.30 2000/07/11 12:06:32 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -197,6 +197,8 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	struct passwd *pw;
 	struct group *gr;
 	int nf, lineno, i;
+
+	memset(log, 0, sizeof(*log));
 	
 	if ((line = fparseln(fd, NULL, _lineno, NULL, 0)) == NULL)
 		return (-1);
