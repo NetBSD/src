@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.81 2000/11/13 01:22:41 hubertf Exp $
+.\"	$NetBSD: hardware,v 1.82 2001/01/09 11:39:35 bouyer Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -32,11 +32,11 @@ CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
 .It
 Contaq Microsystems/Cypress CY82C693 IDE Controller
 .It
-HighPoint HPT366 and HPT370 (in Ultra/66 mode only)
+HighPoint HPT366 and HPT370
 .It
 Intel PIIX, PIIX3 and PIIX4 IDE Controllers
 .It
-Intel 82801 (ICH/ICH0) IDE Controllers
+Intel 82801 (ICH/ICH0/ICH2) IDE Controllers
 .It
 Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66) and Ultra/100
 (in Ultra/66 mode only)
