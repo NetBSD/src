@@ -621,9 +621,6 @@ pcrint(void)
 	if((cp = sgetc(1)) == 0)
 		return -1;
 
-	if (kbd_polling)
-		return 1;
-
 	if(!(vs[current_video_screen].openf))	/* XXX was vs[minor(dev)] */
 		return 1;
 	
@@ -811,13 +808,25 @@ pccngetc(Dev_t dev)
 #endif /* !PCVT_USL_VT_COMPAT */
 #endif /* XSERVER */
 
-	s = spltty();		/* block pcrint while we poll */
 	cp = sgetc(0);
-	splx(s);
 
 	if (*cp == '\r')
 		return('\n');
 	return (*cp);
+}
+
+void
+pccnpollc(Dev_t dev, int on)
+{
+	kbd_polling = on;
+	if (!on) {
+		/*
+		 * If disabling polling, make sure there are no bytes left in
+		 * the FIFO, holding up the interrupt line.  Otherwise we
+		 * won't get any further interrupts.
+		 */
+		pcrint();
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -872,14 +881,10 @@ getchar(void)
 	u_char	thechar;
 	int	x;
 
-	kbd_polling = 1;
-
 	x = splhigh();
 
 	sput(">", 1, 1, 0);
 	thechar = *(sgetc(0));
-
-	kbd_polling = 0;
 
 	splx(x);
 
