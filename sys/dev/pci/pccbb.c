@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.31 2000/03/12 11:31:53 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.32 2000/03/14 01:29:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -173,7 +173,7 @@ static void pccbb_pcmcia_wait_ready __P((struct pcic_handle *));
 static void pccbb_pcmcia_do_mem_map __P((struct pcic_handle *, int));
 static void pccbb_powerhook __P((int, void *));
 
-/* bus-space allocation and disallocation functions */
+/* bus-space allocation and deallocation functions */
 #if rbus
 
 static int pccbb_rbus_cb_space_alloc __P((cardbus_chipset_tag_t, rbus_tag_t,
@@ -577,7 +577,7 @@ pccbb_pci_callback(self)
 #endif
 	}
 
-	/* bus bridge initialisation */
+	/* bus bridge initialization */
 	pccbb_chipinit(sc);
 
 	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
@@ -627,7 +627,7 @@ pccbb_pci_callback(self)
 		pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
 		pcireg_t bhlc = pci_conf_read(pc, sc->sc_tag, PCI_BHLC_REG);
 
-		/* initialise cbslot_attach */
+		/* initialize cbslot_attach */
 		cba.cba_busname = "cardbus";
 		cba.cba_iot = sc->sc_iot;
 		cba.cba_memt = sc->sc_memt;
@@ -679,7 +679,7 @@ pccbb_pci_callback(self)
 /*
  * static void pccbb_chipinit(struct pccbb_softc *sc)
  *
- *   This function initialise YENTA chip registers listed below:
+ *   This function initialize YENTA chip registers listed below:
  *     1) PCI command reg,
  *     2) PCI and CardBus latency timer,
  *     3) disable legacy (PCIC-compatible) io,
@@ -816,7 +816,7 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	rbus_tag_t rb;
 #endif
 
-	/* initialise pcmcia part in pccbb_softc */
+	/* initialize pcmcia part in pccbb_softc */
 	ph->ph_parent = (struct device *)sc;
 	ph->sock = sc->sc_function;
 	ph->flags = 0;
@@ -843,7 +843,7 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	Pcic_write(ph, PCIC_CSC_INTR, PCIC_CSC_INTR_CD_ENABLE);
 	Pcic_read(ph, PCIC_CSC);
 
-	/* initialise pcmcia bus attachment */
+	/* initialize pcmcia bus attachment */
 	paa->paa_busname = "pcmcia";
 	paa->pct = sc->sc_pct;
 	paa->pch = ph;
@@ -961,7 +961,7 @@ pccbbintr(arg)
  * static int pccbbintr_function(struct pccbb_softc *sc)
  *
  *    This function calls each interrupt handler registered at the
- *    bridge.  The interrupt handlers are called in registerd order.
+ *    bridge.  The interrupt handlers are called in registered order.
  */
 static int
 pccbbintr_function(sc)
@@ -995,14 +995,14 @@ pci113x_insert(arg)
 		DPRINTF(("%s: 0x%08x", sc->sc_dev.dv_xname, sockevent));
 		DPRINTF((" card inserted, 0x%08x\n", sockstate));
 		sc->sc_flags |= CBB_CARDEXIST;
-		/* call pccard intterupt handler here */
+		/* call pccard interrupt handler here */
 		if (sockstate & CB_SOCKET_STAT_16BIT) {
 			/* 16-bit card found */
 /*      pccbb_pcmcia_attach_card(&sc->sc_pcmcia_h); */
 			cardslot_event_throw(sc->sc_csc,
 			    CARDSLOT_EVENT_INSERTION_16);
 		} else if (sockstate & CB_SOCKET_STAT_CB) {
-			/* cardbus card fuond */
+			/* cardbus card found */
 /*      cardbus_attach_card(sc->sc_csc); */
 			cardslot_event_throw(sc->sc_csc,
 			    CARDSLOT_EVENT_INSERTION_CB);
@@ -1541,8 +1541,8 @@ pccbb_mem_close(ct, win)
  *					void *arg)
  *
  *   This function registers an interrupt handler at the bridge, in
- *   order not to call the interrput handlers of child devices when
- *   a card-deletion interrput occurs.
+ *   order not to call the interrupt handlers of child devices when
+ *   a card-deletion interrupt occurs.
  *
  *   The arguments irq and level are not used.
  */
@@ -1584,8 +1584,8 @@ pccbb_cb_intr_disestablish(ct, ih)
  *				     void *arg)
  *
  *   This function registers an interrupt handler at the bridge, in
- *   order not to call the interrput handlers of child devices when
- *   a card-deletion interrput occurs.
+ *   order not to call the interrupt handlers of child devices when
+ *   a card-deletion interrupt occurs.
  *
  *   The arguments irq and level are not used.
  */
@@ -1601,7 +1601,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
 
 	if (sc->sc_pil == NULL) {
-		/* initialise bridge intr routing */
+		/* initialize bridge intr routing */
 
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
@@ -1621,7 +1621,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	}
 
 	/* 
-	 * Allocate a room for interrut handler structure.
+	 * Allocate a room for interrupt handler structure.
 	 */
 	if (NULL == (newpil =
 	    (struct pccbb_intrhand_list *)malloc(sizeof(struct
@@ -1809,7 +1809,7 @@ pccbb_new_pcmcia_io_alloc(pcmcia_chipset_handle_t pch,
  *                                  struct pcmcia_io_handle *pcihp
  *
  * This function only allocates I/O region for pccard. This function
- * never maps the allcated region to pccard I/O area.
+ * never maps the allocated region to pccard I/O area.
  *
  * XXX: The interface of this function is not very good, I believe.
  */
@@ -2065,7 +2065,7 @@ pccbb_pcmcia_do_io_map(ph, win)
 /*
  * STATIC void pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t *h, int win)
  *
- * This function unmapss I/O region.  No return value.
+ * This function unmaps I/O region.  No return value.
  */
 STATIC void
 pccbb_pcmcia_io_unmap(pch, win)
@@ -2313,7 +2313,7 @@ pccbb_new_pcmcia_mem_alloc(pcmcia_chipset_handle_t pch,
  *                                   struct pcmcia_mem_handle *pcmhp)
  *
  * This function only allocates memory region for pccard. This
- * function never maps the allcated region to pccard memory area.
+ * function never maps the allocated region to pccard memory area.
  *
  * XXX: Why the argument of start address is not in?
  */
@@ -2389,7 +2389,7 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
  * STATIC void pccbb_pcmcia_mem_free(pcmcia_chipset_handle_t pch,
  *                                   struct pcmcia_mem_handle *pcmhp)
  *
- * This function release the memory space allocated by the fuction
+ * This function release the memory space allocated by the function
  * pccbb_pcmcia_mem_alloc().
  */
 STATIC void
@@ -2410,7 +2410,7 @@ pccbb_pcmcia_mem_free(pch, pcmhp)
 /*
  * STATIC void pccbb_pcmcia_do_mem_map(struct pcic_handle *ph, int win)
  *
- * This function release the memory space allocated by the fuction
+ * This function release the memory space allocated by the function
  * pccbb_pcmcia_mem_alloc().
  */
 STATIC void
@@ -2521,7 +2521,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
  *                                 struct pcmcia_mem_handle *pcmhp,
  *                                 bus_addr_t *offsetp, int *windowp)
  *
- * This function maps memory space allocated by the fuction
+ * This function maps memory space allocated by the function
  * pccbb_pcmcia_mem_alloc().
  */
 STATIC int
@@ -2596,7 +2596,7 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
  * STATIC int pccbb_pcmcia_mem_unmap(pcmcia_chipset_handle_t pch,
  *                                   int window)
  *
- * This function unmaps memory space which mapped by the fuction
+ * This function unmaps memory space which mapped by the function
  * pccbb_pcmcia_mem_map().
  */
 STATIC void
@@ -3009,7 +3009,7 @@ pccbb_winset(align, sc, bst)
 			continue;
 		}
 
-		/* Both windows are engagad. */
+		/* Both windows are engaged. */
 		if (win[0].win_flags == win[1].win_flags) {
 			/* same flags */
 			if (win[0].win_flags == chainp->wc_flags) {
