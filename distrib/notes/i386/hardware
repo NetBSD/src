@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.89 2001/05/11 10:05:36 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.90 2001/05/20 23:25:46 jhawk Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -18,7 +18,7 @@ won't be speedy. Note that until you have around 16 MB of RAM, getting
 more RAM is more important than getting a faster CPU.)
 .
 .Ss2 Supported devices
-Explanation of bracketted footnote tags [] is follows this listing.
+Explanation of bracketted footnote tags [] follows this listing.
 .(bullet -offset indent
 Floppy controllers.
 .It
@@ -447,7 +447,7 @@ S3 SonicVibes [*] [+]
 .It
 SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
 .It
-VIA VT82C686A southbridge integrated AC'97 audio [*] [+]
+VIA VT82C686A southbridge integrated AC97 audio [*] [+]
 .It
 Windows Sound System [*] [+]
 .It
