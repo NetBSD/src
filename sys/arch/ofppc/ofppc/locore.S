@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2000/05/26 21:20:05 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2000/05/31 05:09:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_multiprocessor.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -337,6 +338,13 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * XXXSMP
+	 * p->p_cpu = curcpu();
+	 */
+#endif
 
 	/* Process now running on a processor. */
 	li	3,SONPROC		/* p->p_stat = SONPROC */
