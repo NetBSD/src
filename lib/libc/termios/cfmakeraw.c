@@ -1,4 +1,4 @@
-/*	$NetBSD: cfmakeraw.c,v 1.2 1995/06/26 23:04:45 jtc Exp $	*/
+/*	$NetBSD: cfmakeraw.c,v 1.2.4.1 1996/09/17 17:53:33 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,11 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: cfmakeraw.c,v 1.2 1995/06/26 23:04:45 jtc Exp $";
+static char rcsid[] = "$NetBSD: cfmakeraw.c,v 1.2.4.1 1996/09/17 17:53:33 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <termios.h>
+
+#ifdef __weak_alias
+__weak_alias(cfmakeraw,_cfmakeraw);
+#endif
 
 /*
  * Make a pre-existing termios structure into "raw" mode: character-at-a-time

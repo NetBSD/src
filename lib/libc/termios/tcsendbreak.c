@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsendbreak.c,v 1.1 1995/04/25 00:04:46 jtc Exp $	*/
+/*	$NetBSD: tcsendbreak.c,v 1.1.4.1 1996/09/17 17:53:39 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: tcsendbreak.c,v 1.1 1995/04/25 00:04:46 jtc Exp $";
+static char rcsid[] = "$NetBSD: tcsendbreak.c,v 1.1.4.1 1996/09/17 17:53:39 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -51,6 +52,10 @@ static char rcsid[] = "$NetBSD: tcsendbreak.c,v 1.1 1995/04/25 00:04:46 jtc Exp 
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(tcsendbreak,_tcsendbreak);
+#endif
 
 int
 tcsendbreak(fd, len)

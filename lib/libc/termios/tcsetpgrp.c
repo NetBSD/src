@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetpgrp.c,v 1.2 1995/06/26 23:06:13 jtc Exp $	*/
+/*	$NetBSD: tcsetpgrp.c,v 1.2.4.1 1996/09/17 17:53:41 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,13 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: tcsetpgrp.c,v 1.2 1995/06/26 23:06:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: tcsetpgrp.c,v 1.2.4.1 1996/09/17 17:53:41 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+
+#ifdef __weak_alias
+__weak_alias(tcsetpgrp,_tcsetpgrp);
+#endif
 
 int
 #if __STDC__
