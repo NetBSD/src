@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.141 2004/04/27 01:12:44 kleink Exp $
+	$NetBSD: syscalls.master,v 1.142 2004/05/10 22:28:24 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -164,7 +164,7 @@
 56	STD		{ int sys_revoke(const char *path); }
 57	STD		{ int sys_symlink(const char *path, \
 			    const char *link); }
-58	STD		{ int sys_readlink(const char *path, char *buf, \
+58	STD		{ ssize_t sys_readlink(const char *path, char *buf, \
 			    size_t count); }
 59	STD		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
