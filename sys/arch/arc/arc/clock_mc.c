@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.6 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.7 2000/03/03 12:50:19 soda Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -59,6 +59,7 @@
 #include <arc/arc/clockvar.h>
 #include <arc/arc/arctype.h>
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
 #include <arc/algor/algor.h>
 #include <machine/isa_machdep.h>
 #include <arc/isa/timerreg.h>
@@ -68,6 +69,7 @@ extern int	cpu_int_mask;
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
 static void	mcclock_init_pica __P((struct clock_softc *csc));
+static void	mcclock_init_rd94 __P((struct clock_softc *csc));
 static void	mcclock_init_tyne __P((struct clock_softc *csc));
 static void	mcclock_init_algor __P((struct clock_softc *csc));
 static void	mcclock_get __P((struct clock_softc *csc, time_t base,
@@ -91,6 +93,12 @@ static void	mc_write_pica __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_pica __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_pica = { mc_write_pica, mc_read_pica };
+
+/* NEC RISCstation2250 clock access code */
+static void	mc_write_rd94 __P((struct clock_softc *csc, u_int reg,
+		    u_int datum));
+static u_int	mc_read_rd94 __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_rd94 = { mc_write_rd94, mc_read_rd94 };
 
 /* Deskstation clock access code */
 static void	mc_write_tyne __P((struct clock_softc *csc, u_int reg,
@@ -126,6 +134,12 @@ mcclock_attach(parent, self, aux)
 		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 		break;
 
+	case NEC_RD94:
+		csc->sc_init = mcclock_init_rd94;
+		csc->sc_data = &mcclockdata_rd94;
+		mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+		break;
+
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
 		csc->sc_init = mcclock_init_tyne;
@@ -154,6 +168,16 @@ mcclock_init_pica(csc)
 	out32(R4030_SYS_IT_VALUE, 9); /* 10ms - 1 */
 	/* Enable periodic clock interrupt */
 	out32(R4030_SYS_EXT_IMASK, cpu_int_mask);
+}
+
+static void
+mcclock_init_rd94(csc)
+	struct clock_softc *csc;
+{
+/* XXX Does not really belong here but for the moment we don't care */
+	out32(RD94_SYS_IT_VALUE, 9); /* 10ms - 1 */
+	/* Enable periodic clock interrupt */
+	out32(RD94_SYS_EXT_IMASK, cpu_int_mask);
 }
 
 static void
@@ -205,9 +229,11 @@ mcclock_get(csc, base, ct)
 	ct->day = regs[MC_DOM];
 	ct->mon = regs[MC_MONTH];
 	ct->year = regs[MC_YEAR];
-	if (cputype == ALGOR_P4032 ||
-	    cputype == ALGOR_P5064) {
+	switch (cputype) {
+	case ALGOR_P4032:
+	case ALGOR_P5064:
 		ct->year -= 80;
+		break;
 	}
 }
 
@@ -232,11 +258,14 @@ printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs
 	regs[MC_DOW] = ct->dow;
 	regs[MC_DOM] = ct->day;
 	regs[MC_MONTH] = ct->mon;
-	if (cputype == ALGOR_P4032 ||
-	    cputype == ALGOR_P5064) {
+	switch (cputype) {
+	case ALGOR_P4032:
+	case ALGOR_P5064:
 		regs[MC_YEAR] = ct->year + 80;
-	} else {
+		break;
+	default:
 		regs[MC_YEAR] = ct->year;
+		break;
 	}
 
 	MC146818_PUTTOD(csc, &regs);
@@ -267,6 +296,31 @@ mc_read_pica(csc, reg)
 	as = in32(PICA_SYS_ISA_AS) & 0x80;
 	out32(PICA_SYS_ISA_AS, as | reg);
 	i = inb(PICA_SYS_CLOCK);
+	return(i);
+}
+
+static void
+mc_write_rd94(csc, reg, datum)
+	struct clock_softc *csc;
+	u_int reg, datum;
+{
+	int as;
+
+	as = inb(RD94_SYS_CLOCK+1) & 0x80;
+	outb(RD94_SYS_CLOCK+1, as | reg);
+	outb(RD94_SYS_CLOCK, datum);
+}
+
+static u_int
+mc_read_rd94(csc, reg)
+	struct clock_softc *csc;
+	u_int reg;
+{
+	int i,as;
+
+	as = inb(RD94_SYS_CLOCK+1) & 0x80;
+	outb(RD94_SYS_CLOCK+1, as | reg);
+	i = inb(RD94_SYS_CLOCK);
 	return(i);
 }
 
