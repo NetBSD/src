@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2002/03/24 17:16:22 wiz Exp $
+#	$NetBSD: Makefile,v 1.39 2002/03/24 22:12:59 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
-CLEANFILES+=	mkmagic magic magic.mgc magic.mime.mgc
+CLEANFILES+=	mkmagic magic magic.mgc magic.mime magic.mime.mgc
 .if ${MKSHARE} != "no"
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
@@ -33,17 +33,19 @@ MAGFILES=	${.CURDIR}/Header \
 magic:		${MAGFILES}
 	cat ${MAGFILES} > ${.TARGET}
 
-magic.mgc:	mkmagic magic
+magic.mgc: mkmagic magic
 	./mkmagic magic
 
+magic.mime: magic.mime.in
+	cp ${.CURDIR}/magic.mime.in ./magic.mime
+
 magic.mime.mgc:	mkmagic magic.mime
-	[ -f magic.mime ] || cp ${.CURDIR}/magic.mime ./magic.mime
 	./mkmagic ./magic.mime
 .else
 magic:
 .endif
 
-mkmagic:	apprentice.c print.c
+mkmagic: apprentice.c print.c
 	${HOST_LINK.c} -o mkmagic -DHAVE_CONFIG_H -DQUICK -DCOMPILE_ONLY \
 		-I${.CURDIR} ${.CURDIR}/apprentice.c ${.CURDIR}/print.c
 
