@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.30 2003/07/15 02:43:27 lukem Exp $	*/
+/*	$NetBSD: akbd.c,v 1.31 2003/07/24 20:56:24 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.30 2003/07/15 02:43:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.31 2003/07/24 20:56:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,7 +67,6 @@ static int	akbdmatch __P((struct device *, struct cfdata *, void *));
 static void	akbdattach __P((struct device *, struct device *, void *));
 void		kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
-static void kbd_passup __P((struct akbd_softc *sc, int));
 #ifdef notyet
 static u_char	getleds __P((int));
 static int	setleds __P((struct akbd_softc *, u_char));
