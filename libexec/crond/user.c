@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: user.c,v 1.4 1993/08/02 17:50:28 mycroft Exp $";
+static char rcsid[] = "$Id: user.c,v 1.5 1993/09/17 03:46:54 cgd Exp $";
 #endif /* not lint */
 
 
@@ -51,7 +51,7 @@ load_user(crontab_fd, name, uid, gid, dir, shell)
 	char	*dir;
 	char	*shell;
 {
-	char	*malloc(), *sprintf(), **env_init(), **env_set();
+	char	*malloc(), **env_init(), **env_set();
 	int	load_env();
 	entry	*load_entry();
 

@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: env.c,v 1.4 1993/08/02 17:50:25 mycroft Exp $";
+static char rcsid[] = "$Id: env.c,v 1.5 1993/09/17 03:46:49 cgd Exp $";
 #endif
 
 
@@ -92,7 +92,7 @@ load_env(envstr, f)
 	 *		FALSE = not an env setting (file was repositioned)
 	 *		TRUE = was an env setting
 	 */
-	char	*strcpy(), *sprintf();
+	char	*strcpy();
 	long	filepos;
 	int	fileline;
 	char	name[MAX_TEMPSTR], val[MAX_ENVSTR];

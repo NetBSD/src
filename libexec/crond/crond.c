@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: crond.c,v 1.4 1993/08/02 17:50:22 mycroft Exp $";
+static char rcsid[] = "$Id: crond.c,v 1.5 1993/09/17 03:46:44 cgd Exp $";
 #endif /* not lint */
 
 
@@ -262,7 +262,7 @@ sigchld_handler()
 
 	for (;;)
 	{
-		pid = wait3(&waiter, WNOHANG, (struct rusage *)0);
+		pid = wait3((int *)&waiter, WNOHANG, (struct rusage *)0);
 		switch (pid)
 		{
 		case -1:
