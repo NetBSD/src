@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 1996/04/17 21:50:56 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 1996/04/29 16:23:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -142,8 +142,8 @@ cpuattach(parent, dev, aux)
 			printf("%sIEEE FP support", needcomma ? ", " : "");
 			needcomma = 1;
 		}
-		if (p->pcs_proc_var & PCS_VAR_IOACCESS) {
-			printf("%shas I/O access", needcomma ? ", " : "");
+		if (p->pcs_proc_var & PCS_VAR_PE) {
+			printf("%s, Primary Eligible", needcomma ? ", " : "");
 			needcomma = 1;
 		}
 		if (p->pcs_proc_var & PCS_VAR_RESERVED)
