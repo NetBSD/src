@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.214 2003/10/22 06:19:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.215 2003/10/22 06:23:06 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2639,3 +2639,12 @@ libexec/telnetd/utility.c			1.19
 	 syslog(LOG_ERR, "ttloop:  peer died: %m");
 	is a little console spammingly excessive. Switch to LOG_INFO.
 	[abs, ticket #1534]
+
+sys/arch/sparc/sparc/machdep.c			patch
+
+	On small sun4c machines trim the buffer cache to reduce the demand for
+	kernel virtual memory. This leaves more of the precious PMEG resources
+	available for user space VM which speeds up things considerably, since
+	a reasonable PMEG working set can be maintained. "
+	[pk, ticket #1535]
+
