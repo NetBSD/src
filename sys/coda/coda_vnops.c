@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.9.4.3 2000/02/06 17:16:28 he Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.9.4.4 2000/02/12 17:01:32 he Exp $	*/
 
 /*
  * 
@@ -56,6 +56,11 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.9.4.4  2000/02/12 17:01:32  he
+ * Apply patch (requested by he):
+ *   Fix a compile problem under CODA_VERBOSE caused by the v_usecount
+ *   widening.
+ *
  * Revision 1.9.4.3  2000/02/06 17:16:28  he
  * Apply patch (requested by christos):
  *   Fix a compilation problem caused by the widening of v_usecount.
@@ -544,7 +549,7 @@ coda_close(v)
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
 #ifdef	CODA_VERBOSE
-	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
+	    printf("coda_close: destroying container ref %ld, ufs vp %p of vp %p/cp %p\n",
 		    vp->v_usecount, cp->c_ovp, vp, cp);
 #endif
 #ifdef	hmm
