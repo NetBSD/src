@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.88 1998/02/02 23:24:03 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.89 1998/03/19 08:22:53 fair Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -42,7 +42,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
-	getpwent.3 getsubopt.3 getttyent.3 getusershell.3 glob.3 \
+	getpwent.3 getttyent.3 getusershell.3 glob.3 \
 	initgroups.3 isalnum.3 isalpha.3 isascii.3 isblank.3 \
 	iscntrl.3 isdigit.3 isgraph.3 isinf.3 islower.3 isprint.3 \
 	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
