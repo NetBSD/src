@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.52 2002/04/03 03:17:36 thorpej Exp $ */
+/*	$NetBSD: fdisk.c,v 1.53 2002/06/05 12:19:23 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.52 2002/04/03 03:17:36 thorpej Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.53 2002/06/05 12:19:23 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -827,7 +827,8 @@ editentries:
 
 		printf("Enter descriptions (max. 8 characters): ");
 		rewind(stdin);
-		fgets(desc, PARTNAMESIZE + 1, stdin);
+		if (!fgets(desc, PARTNAMESIZE + 1, stdin))
+			errx(1, "EOF");
 		fpurge(stdin);
 		p = strchr(desc, '\n');
 		if (p != NULL)
@@ -1367,6 +1368,8 @@ yesno(const char *str)
 	first = ch = getchar();
 	while (ch != '\n' && ch != EOF)
 		ch = getchar();
+	if (ch == EOF)
+		errx(1, "EOF");
 	return (first == 'y' || first == 'Y');
 }
 
@@ -1379,7 +1382,8 @@ decimal(const char *str, int *num)
 	for (;; printf("%s is not a valid decimal number.\n", lbuf)) {
 		printf("%s: [%d] ", str, *num);
 
-		fgets(lbuf, LBUF, stdin);
+		if (!fgets(lbuf, LBUF, stdin))
+			errx(1, "EOF");
 		lbuf[strlen(lbuf)-1] = '\0';
 		cp = lbuf;
 
