@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.6 2003/03/08 08:03:36 lukem Exp $	*/
+/*	$NetBSD: sem.c,v 1.7 2003/11/24 23:54:13 cl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.6 2003/03/08 08:03:36 lukem Exp $");
+__RCSID("$NetBSD: sem.c,v 1.7 2003/11/24 23:54:13 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -387,13 +387,12 @@ sem_post(sem_t *sem)
 	pthread_spinlock(self, &(*sem)->usem_interlock);
 	(*sem)->usem_count++;
 	blocked = PTQ_FIRST(&(*sem)->usem_waiters);
-	if (blocked)
+	if (blocked) {
 		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
-	pthread_spinunlock(self, &(*sem)->usem_interlock);
-
-	/* Give the head of the blocked queue another try. */
-	if (blocked)
+		/* Give the head of the blocked queue another try. */
 		pthread__sched(self, blocked);
+	}
+	pthread_spinunlock(self, &(*sem)->usem_interlock);
 
 	return (0);
 }
