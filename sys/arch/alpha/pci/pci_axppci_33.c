@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_axppci_33.c,v 1.5 1996/04/23 14:15:28 cgd Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.6 1996/07/14 04:08:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
