@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.34 1995/04/07 22:29:46 fvdl Exp $	*/
+/*	$NetBSD: genassym.c,v 1.35 1995/04/12 15:38:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -97,6 +97,7 @@ main()
 	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
 
 	def("UPAGES", UPAGES);
+	def("USPACE", USPACE);
 	def("PGSHIFT", PGSHIFT);
 	def("PDSHIFT", PDSHIFT);
 
