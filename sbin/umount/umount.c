@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $	*/
+/*	$NetBSD: umount.c,v 1.27 2000/06/06 07:09:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.26 1999/11/09 15:06:34 drochner Exp $");
+__RCSID("$NetBSD: umount.c,v 1.27 2000/06/06 07:09:15 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,6 @@ char	**makevfslist __P((char *));
 int	 main __P((int, char *[]));
 int	 namematch __P((struct hostent *));
 int	 selected __P((int));
-int	 umountall __P((char **));
 int	 umountfs __P((char *, char **));
 void	 usage __P((void));
 int	 xdr_dir __P((XDR *, char *));
@@ -98,8 +97,6 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "AaFfRh:t:v")) != -1)
 		switch (ch) {
 		case 'A':
-			all = 2;
-			break;
 		case 'a':
 			all = 1;
 			break;
@@ -110,7 +107,7 @@ main(argc, argv)
 			fflag = MNT_FORCE;
 			break;
 		case 'h':	/* -h implies -A. */
-			all = 2;
+			all = 1;
 			nfshost = optarg;
 			break;
 		case 'R':
@@ -139,12 +136,10 @@ main(argc, argv)
 		typelist = makevfslist("nfs");
 		
 	errs = 0;
-	switch (all) {
-	case 2:
+	if (all) {
 		if ((mnts = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
 			warn("getmntinfo");
 			errs = 1;
-			break;
 		}
 		for (errs = 0, mnts--; mnts > 0; mnts--) {
 			if (checkvfsname(mntbuf[mnts].f_fstypename, typelist))
@@ -152,47 +147,12 @@ main(argc, argv)
 			if (umountfs(mntbuf[mnts].f_mntonname, typelist) != 0)
 				errs = 1;
 		}
-		break;
-	case 1:
-		if (setfsent() == 0)
-			err(1, "%s", _PATH_FSTAB);
-		errs = umountall(typelist);
-		break;
-	case 0:
+	} else {
 		for (errs = 0; *argv != NULL; ++argv)
 			if (umountfs(*argv, typelist) != 0)
 				errs = 1;
-		break;
 	}
 	exit(errs);
-}
-
-
-int
-umountall(typelist)
-	char **typelist;
-{
-	struct statfs *fs;
-	int n;
-	int rval;
-
-	n = getmntinfo(&fs, MNT_NOWAIT);
-	if (n == 0)
-		err(1, NULL);
-
-	rval = 0;
-	while (--n >= 0) {
-		/* Ignore the root. */
-		if (strncmp(fs[n].f_mntonname, "/", MNAMELEN) == 0)
-			continue;
-
-		if (checkvfsname(fs[n].f_fstypename, typelist))
-			continue;
-
-		if (umountfs(fs[n].f_mntonname, typelist))
-			rval = 1;
-	}
-	return (rval);
 }
 
 int
