@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.3 1994/05/16 06:44:00 deraadt Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.4 1994/06/13 15:09:06 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,21 +49,14 @@ static char *rcsid = "$Id: pstat.c,v 1.3 1994/05/16 06:44:00 deraadt Exp $";
 #include <sys/ucred.h>
 #define KERNEL
 #include <sys/file.h>
-#ifdef notyet
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
-#else
-#include <ufs/quota.h>
-#include <ufs/inode.h>
-#endif
 #define NFS
 #include <sys/mount.h>
 #undef NFS
 #undef KERNEL
 #include <sys/stat.h>
-#ifdef notyet
 #include <nfs/nfsnode.h>
-#endif
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -189,10 +182,8 @@ struct e_vnode *
 struct e_vnode *
 	loadvnodes __P((int *));
 void	mount_print __P((struct mount *));
-#ifdef notyet
 void	nfs_header __P((void));
 int	nfs_print __P((struct vnode *));
-#endif
 void	swapmode __P((void));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *, int));
@@ -322,11 +313,9 @@ vnodemode()
 			if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
 			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 				ufs_header();
-#ifdef notyet
 			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
 			    MFSNAMELEN)) {
 				nfs_header();
-#endif
 			}
 			(void)printf("\n");
 		}
@@ -334,10 +323,8 @@ vnodemode()
 		if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
 		    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 			ufs_print(vp);
-#ifdef notyet
 		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
 			nfs_print(vp);
-#endif
 		}
 		(void)printf("\n");
 	}
@@ -425,7 +412,6 @@ ufs_print(vp)
 	char *name;
 	mode_t type;
 
-#ifdef notyet
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	flag = ip->i_flag;
 	if (flag & IN_LOCKED)
@@ -462,11 +448,9 @@ ufs_print(vp)
 			(void)printf(" %7s", name);
 	else
 		(void)printf(" %7qd", ip->i_size);
-#endif
 	return (0);
 }
 
-#ifdef notyet
 void
 nfs_header() 
 {
@@ -516,7 +500,6 @@ nfs_print(vp)
 		(void)printf(" %7qd", np->n_size);
 	return (0);
 }
-#endif
 	
 /*
  * Given a pointer to a mount structure in kernel space,
