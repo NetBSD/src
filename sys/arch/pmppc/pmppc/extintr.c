@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.1 2002/05/30 20:02:04 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.2 2002/05/31 11:00:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -362,14 +362,18 @@ intr_calculatemasks()
 	 */
 	imask[IPL_IMP] |= imask[IPL_TTY];
 
+#if 0
 	imask[IPL_AUDIO] |= imask[IPL_IMP];
+#endif
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
 	imask[IPL_CLOCK] |= SPL_CLOCK;		/* block the clock */
+#if 0
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+#endif
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
