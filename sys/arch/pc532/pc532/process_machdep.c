@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 1995/09/26 20:16:32 phil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 1996/01/31 21:34:02 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -73,17 +73,13 @@
 #include <machine/reg.h>
 #include <machine/frame.h>
 
+extern struct proc *fpu_proc;
+
 static inline struct reg *
 process_regs(p)
 	struct proc *p;
 {
-	void *ptr;
-
-	if ((p->p_flag & P_INMEM) == 0)
-		return (NULL);
-
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)USRSTACK);
-	return (ptr);
+	return ((struct reg *) p->p_md.md_regs);
 }
 
 int
@@ -127,6 +123,10 @@ process_read_fpregs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
+	if (fpu_proc == p) {
+		save_fpu_context(&p->p_addr->u_pcb);
+		fpu_proc = 0;
+	}
 	bcopy(&p->p_addr->u_pcb.pcb_fsr, regs, sizeof(*regs));
 	return (0);
 }
@@ -139,7 +139,11 @@ process_write_fpregs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
+	if (fpu_proc == p)
+		fpu_proc = 0;
+
 	bcopy(regs, &p->p_addr->u_pcb.pcb_fsr, sizeof(*regs));
+
 	return (0);
 }
 
