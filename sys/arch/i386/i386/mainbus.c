@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 1996/04/03 04:26:38 chuck Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 1996/04/09 22:58:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,15 +36,12 @@
 
 #include <machine/bus.h>
 
-#if 0 /* XXX eisavar.h includes isavar.h, which is not idempotent */
 #include <dev/isa/isavar.h>
-#endif
 #include <dev/eisa/eisavar.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/isa/isareg.h>
+#include <dev/isa/isareg.h>		/* for ISA_HOLE_VADDR */
 #include <i386/isa/isa_machdep.h>
-#include <i386/eisa/eisa_machdep.h>
 
 #include "pci.h"
 
@@ -101,6 +98,7 @@ mainbus_attach(parent, self, aux)
 	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_bc = NULL;
+		mba.mba_eba.eba_ec = NULL;
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
