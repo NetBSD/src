@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: control.c,v 1.7 1994/05/06 07:47:07 gwr Exp $
+ *	$Id: control.c,v 1.8 1994/07/05 03:00:37 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ vm_offset_t get_pte_pmeg(pmeg_num, page_num)
 {
     vm_offset_t pte, va;
 
+    va = temp_seg_va;
     set_segmap(temp_seg_va, pmeg_num);
     va += NBPG*page_num;
     pte = get_pte(va);
