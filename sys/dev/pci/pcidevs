@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.600 2003/12/09 18:58:16 ad Exp $
+$NetBSD: pcidevs,v 1.601 2003/12/14 04:57:16 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -984,6 +984,7 @@ product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VTB		0x5655	Mach64 VTB
 product ATI MACH64_VT4		0x5656	Mach64 VT4
 product ATI RADEON_9200		0x5961	Radeon 9200
+product ATI RADEON_9200SE	0x5964	Radeon 9200SE
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
