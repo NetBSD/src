@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.2 2002/12/25 19:13:53 jmmv Exp $ */
+/* $NetBSD: wsmoused.h,v 1.3 2003/03/04 14:33:55 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ struct mouse {
 	int  fifo_fd;
 	char *device_name;
 	char *fifo_name;
+	char *tstat_name;
 
 	/* Screen coordinates */
 	size_t row, col;
@@ -58,11 +59,45 @@ struct mouse {
 	int but_paste;
 };
 
+struct prop {
+	char *p_name;
+	char *p_value;
+};
+
+#define MAX_EVENTS	10
+#define MAX_BLOCKS	10
+#define MAX_PROPS	100
+#define BLOCK_GLOBAL	1
+#define BLOCK_MODE	2
+#define BLOCK_EVENT	3
+struct block {
+	char *b_name;
+	int b_type;
+	int b_prop_count;
+	int b_child_count;
+	struct prop *b_prop[MAX_BLOCKS];
+	struct block *b_child[MAX_BLOCKS];
+	struct block *b_parent;
+};
+
 /* Prototypes for wsmoused.c */
 void char_invert(struct mouse *, size_t, size_t);
 void mouse_cursor_show(struct mouse *);
 void mouse_cursor_hide(struct mouse *);
 void mouse_open_tty(struct mouse *, int);
+
+/* Prototypes for config.c */
+struct prop *prop_new(void);
+void prop_free(struct prop *);
+struct block *block_new(int);
+void block_free(struct block *);
+void block_add_prop(struct block *, struct prop *);
+void block_add_child(struct block *, struct block *);
+char *block_get_propval(struct block *, char *, char *);
+int block_get_propval_int(struct block *, char *, int);
+struct block *config_get_mode(char *);
+void config_read(char *, int);
+void config_free(void);
 
 /* Prototypes for event.c */
 void mouse_motion_event(struct mouse *, struct wscons_event *);
