@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.3 1997/11/30 15:49:35 drochner Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.4 1998/05/03 18:49:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ X_db_sym_init(symtab, esymtab, name)
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1)
 		printf("[ preserving %lu bytes of %s symbol table ]\n",
-		       (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
+		    (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
 	return;
 
  badheader:
