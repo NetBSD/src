@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.42 2001/01/16 05:32:16 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.43 2001/01/19 05:43:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.42 2001/01/16 05:32:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.43 2001/01/19 05:43:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +161,8 @@ static void sfb_putchar __P((void *, int, int, u_int, long));
 static void sfb_erasecols __P((void *, int, int, int, long));
 static void sfb_eraserows __P((void *, int, int, long));
 static void sfb_copyrows __P((void *, int, int, int));
+static void sfb_do_cursor __P((struct rasops_info *));
 #if 0
-static void sfb_cursor __P((void *, int, int, int));
 static void sfb_copycols __P((void *, int, int, int, int));
 #endif
 
@@ -332,14 +332,13 @@ sfb_getdevconfig(dense_addr, dc)
 	dc->rinfo.ri_ops.erasecols = sfb_erasecols;
 	dc->rinfo.ri_ops.copyrows = sfb_copyrows;
 	dc->rinfo.ri_ops.eraserows = sfb_eraserows;
+	dc->rinfo.ri_do_cursor = sfb_do_cursor;
 
 	/* XXX shouldn't be global */
 	sfb_stdscreen.nrows = dc->rinfo.ri_rows;
 	sfb_stdscreen.ncols = dc->rinfo.ri_cols;
 	sfb_stdscreen.textops = &dc->rinfo.ri_ops;
 	sfb_stdscreen.capabilities = dc->rinfo.ri_caps;
-	/* our accelerated putchar can't underline */
-	sfb_stdscreen.capabilities &= ~WSSCREEN_UNDERLINE;
 }
 
 static void
@@ -880,21 +879,48 @@ set_curpos(sc, curpos)
 #define	SFBBG(p, v) \
 		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_BG) = (v))
 
-#if 0
 /*
- * Paint (or unpaint) the cursor.
+ * Paint the cursor.
  */
 static void
-sfb_cursor(id, on, row, col)
-	void *id;
-	int on, row, col;
+sfb_do_cursor(ri)
+	struct rasops_info *ri;
 {
-	/* use Bt459 sprite cursor */
+	caddr_t sfb, p;
+	int scanspan, height, width, align, x, y;
+	u_int32_t lmask, rmask;
+
+	x = ri->ri_ccol * ri->ri_font->fontwidth;
+	y = ri->ri_crow * ri->ri_font->fontheight;
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight;
+
+	p = ri->ri_bits + y * scanspan + x;
+	align = (long)p & SFBALIGNMASK;
+	p -= align;
+	width = ri->ri_font->fontwidth + align;
+	lmask = SFBSTIPPLEALL1 << align;
+	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
+	sfb = ri->ri_hw;
+
+	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
+	SFBPLANEMASK(sfb, ~0);
+	SFBROP(sfb, 6);  /* ROP_XOR */
+	SFBFG(sfb, ~0);
+
+	lmask = lmask & rmask;
+	while (height > 0) {
+		SFBADDRESS(sfb, (long)p);
+		SFBSTART(sfb, lmask);
+		p += scanspan;
+		height--;
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
+	SFBROP(sfb, 3); /* ROP_COPY */
 }
-#endif
 
 /*
- * Actually write a string to the frame buffer.
+ * Paint a character.
  */
 static void
 sfb_putchar(id, row, col, uc, attr)
@@ -940,6 +966,13 @@ sfb_putchar(id, row, col, uc, attr)
 		g += 2;					/* XXX */
 		height--;
 	}
+	if (attr & 1 /* UNDERLINE */) {
+		p -= scanspan * 2;
+		SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
+		SFBADDRESS(sfb, (long)p);
+		SFBSTART(sfb, lmask);
+	}
+
 	SFBMODE(sfb, MODE_SIMPLE);
 	SFBPIXELMASK(sfb, ~0);		/* entire pixel */
 }
