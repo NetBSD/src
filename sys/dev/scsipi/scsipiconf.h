@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.2 1999/10/19 21:04:27 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.3 1999/10/20 20:38:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -596,6 +596,10 @@ struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
 
 int	scsipi_adapter_addref __P((struct scsipi_adapter *));
 void	scsipi_adapter_delref __P((struct scsipi_adapter *));
+
+void	scsipi_channel_freeze __P((struct scsipi_channel *, int));
+void	scsipi_channel_thaw __P((struct scsipi_channel *, int));
+void	scsipi_channel_timed_thaw __P((void *));
 
 void	scsipi_periph_freeze __P((struct scsipi_periph *, int));
 void	scsipi_periph_thaw __P((struct scsipi_periph *, int));
