@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.8 1998/06/10 11:19:19 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.9 1998/06/19 21:57:44 leo Exp $ */
 
 
 /*
@@ -907,13 +907,9 @@ __wdccommand_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	int needdone = xfer->c_flags & C_NEEDDONE;
-	struct wdc_softc *wdc = chp->wdc;
 	struct wdc_command *wdc_c = xfer->cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done\n"), DEBUG_FUNCS);
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-		(*wdc->free_hw)(wdc);
-	chp->ch_flags &= ~WDCF_ACTIVE;
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
@@ -1048,8 +1044,11 @@ wdc_free_xfer(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 {
+	struct wdc_softc *wdc = chp->wdc;
 	int s;
 
+	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
+		(*wdc->free_hw)(chp);
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
