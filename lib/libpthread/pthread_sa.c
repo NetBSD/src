@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.23 2004/01/02 14:13:16 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.24 2004/01/02 14:29:22 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.23 2004/01/02 14:13:16 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.24 2004/01/02 14:29:22 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -141,8 +141,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_BLOCKED:
 		PTHREADD_ADD(PTHREADD_UP_BLOCK);
 		t = pthread__sa_id(sas[1]);
-		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self, 1, t,
-			     t->pt_type));
+		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self,
+			     sas[1]->sa_id, t, t->pt_type));
 		t->pt_blockuc = sas[1]->sa_context;
 		t->pt_blockedlwp = sas[1]->sa_id;
 		t->pt_blockgen++;
