@@ -1,4 +1,4 @@
-/*	$NetBSD: isfinited.c,v 1.2 2003/10/30 23:34:16 kleink Exp $	*/
+/*	$NetBSD: isfinited.c,v 1.3 2004/01/20 19:33:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isfinited.c,v 1.2 2003/10/30 23:34:16 kleink Exp $");
+__RCSID("$NetBSD: isfinited.c,v 1.3 2004/01/20 19:33:19 matt Exp $");
 #endif
 
 #include <machine/vaxfp.h>
@@ -58,7 +58,7 @@ __isfinited(double x)
 	if (u.dfltu_dflt.dflt_exp == 0 &&
 	    ((u.dfltu_dflt.dflt_frach != 0 ||
 	      u.dfltu_dflt.dflt_fracm != 0 ||
-	      u.dfltu_dflt.dflt_fracl !0 0) ||
+	      u.dfltu_dflt.dflt_fracl != 0) ||
 	     (u.dfltu_dflt.dflt_sgn != 0)))
 		return 0;
 
