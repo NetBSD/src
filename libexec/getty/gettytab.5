@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.16 1997/07/14 01:29:56 mikel Exp $
+.\"	$NetBSD: gettytab.5,v 1.17 1997/10/20 02:36:07 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,10 @@
 .Nm gettytab
 .Nd terminal configuration data base
 .Sh SYNOPSIS
-.Nm gettytab
+.Nm
 .Sh DESCRIPTION
 The
-.Nm gettytab
+.Nm
 file
 is a simplified version of the
 .Xr termcap 5
@@ -52,7 +52,7 @@ used to describe terminal lines.
 The initial terminal login process
 .Xr getty 8
 accesses the
-.Nm gettytab
+.Nm
 file each time it starts, allowing simpler
 reconfiguration of terminal characteristics.
 Each entry in the data base
@@ -383,5 +383,5 @@ format is horrid, something more rational should
 have been chosen.
 .Sh HISTORY
 The
-.Nm gettytab
+.Nm
 file format appeared in 4.2BSD.
