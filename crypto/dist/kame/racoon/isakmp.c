@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.137 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: isakmp.c,v 1.150 2001/07/31 07:08:42 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,6 +140,7 @@ static int ph1_main __P((struct ph1handle *, vchar_t *));
 static int quick_main __P((struct ph2handle *, vchar_t *));
 static int isakmp_ph1begin_r __P((vchar_t *,
 	struct sockaddr *, struct sockaddr *, u_int8_t));
+static int isakmp_ph2begin_i __P((struct ph1handle *, struct ph2handle *));
 static int isakmp_ph2begin_r __P((struct ph1handle *, vchar_t *));
 static int etypesw1 __P((int));
 static int etypesw2 __P((int));
@@ -548,8 +549,9 @@ isakmp_main(msg, remote, local)
 
 	case ISAKMP_ETYPE_NONE:
 	default:
-		plog(LLV_ERROR, LOCATION, remote,
-			"Invalid exchange type %d.\n", isakmp->etype);
+		plog(LLV_ERROR, LOCATION, NULL,
+			"Invalid exchange type %d from %s.\n",
+			isakmp->etype, saddr2str(remote));
 		return -1;
 	}
 
@@ -570,6 +572,18 @@ ph1_main(iph1, msg)
 	if (iph1->status == PHASE1ST_ESTABLISHED)
 		return 0;
 
+	/* add the message to received-list before processing it */
+	if (add_recvedpkt(msg, &iph1->rlist)) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+		    "failed to manage a received packet.\n");
+		return -1;
+	}
+
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	/* receive */
 	if (ph1exchange[etypesw1(iph1->etype)]
 		       [iph1->side]
@@ -593,6 +607,7 @@ ph1_main(iph1, msg)
 			"failed to pre-process packet.\n");
 		return -1;
 #else
+		/* ignore the error and keep phase 1 handler */
 		return 0;
 #endif
 	}
@@ -624,13 +639,21 @@ ph1_main(iph1, msg)
 		return -1;
 	}
 
-	if (add_recvedpkt(msg, &iph1->rlist)) {
-		plog(LLV_ERROR, LOCATION, iph1->remote,
-			"failed to manage a received packet.\n");
-		return -1;
-	}
-
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase1", s_isakmp_state(iph1->etype, iph1->side, iph1->status),
+		timedelta(&start, &end));
+    }
+#endif
 	if (iph1->status == PHASE1ST_ESTABLISHED) {
+
+#ifdef ENABLE_STATS
+		gettimeofday(&iph1->end, NULL);
+		syslog(LOG_NOTICE, "%s(%s): %8.6f",
+			"phase1", s_isakmp_etype(iph1->etype),
+			timedelta(&iph1->start, &iph1->end));
+#endif
 
 		/* save created date. */
 		(void)time(&iph1->created);
@@ -677,6 +700,18 @@ quick_main(iph2, msg)
 	 || iph2->status == PHASE2ST_GETSPISENT)
 		return 0;
 
+	/* add the message to received-list before processing it */
+	if (add_recvedpkt(msg, &iph2->rlist)) {
+		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+		    "failed to manage a received packet.\n");
+		return -1;
+	}
+
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	/* receive */
 	if (ph2exchange[etypesw2(isakmp->etype)]
 		       [iph2->side]
@@ -728,12 +763,14 @@ quick_main(iph2, msg)
 		return -1;
 	}
 
-	if (add_recvedpkt(msg, &iph2->rlist)) {
-		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
-			"failed to manage a received packet.\n");
-		return -1;
-	}
-
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase2",
+		s_isakmp_state(ISAKMP_ETYPE_QUICK, iph2->side, iph2->status),
+		timedelta(&start, &end));
+    }
+#endif
 	return 0;
 }
 
@@ -785,20 +822,36 @@ isakmp_ph1begin_i(rmconf, remote)
 		"begin %s mode.\n",
 		s_isakmp_etype(iph1->etype));
 
+#ifdef ENABLE_STATS
+	gettimeofday(&iph1->start, NULL);
+#endif
+
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	/* start exchange */
 	if ((ph1exchange[etypesw1(iph1->etype)]
 			[iph1->side]
-			[iph1->status])(iph1, NULL) == 0) {
-		/* success */
-		return 0;
-		/* NOTREACHED */
+			[iph1->status])(iph1, NULL) != 0) {
+		/* failed to start phase 1 negotiation */
+		remph1(iph1);
+		delph1(iph1);
+
+		return -1;
 	}
 
-	/* failed to start phase 1 negotiation */
-	remph1(iph1);
-	delph1(iph1);
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase1",
+		s_isakmp_state(iph1->etype, iph1->side, iph1->status),
+		timedelta(&start, &end));
+    }
+#endif
 
-	return -1;
+	return 0;
 }
 
 /* new negotiation of phase 1 for responder */
@@ -860,13 +913,22 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	a = strdup(saddr2str(iph1->local));
 	plog(LLV_INFO, LOCATION, NULL,
-		"responde new phase 1 negotiation: %s<=>%s\n",
+		"respond new phase 1 negotiation: %s<=>%s\n",
 		a, saddr2str(iph1->remote));
 	racoon_free(a);
     }
 	plog(LLV_INFO, LOCATION, NULL,
 		"begin %s mode.\n", s_isakmp_etype(etype));
 
+#ifdef ENABLE_STATS
+	gettimeofday(&iph1->start, NULL);
+#endif
+
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	/* start exchange */
 	if ((ph1exchange[etypesw1(iph1->etype)]
 	                [iph1->side]
@@ -880,7 +942,14 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		delph1(iph1);
 		return -1;
 	}
-
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase1",
+		s_isakmp_state(iph1->etype, iph1->side, iph1->status),
+		timedelta(&start, &end));
+    }
+#endif
 
 	if (add_recvedpkt(msg, &iph1->rlist)) {
 		plog(LLV_ERROR, LOCATION, remote,
@@ -888,6 +957,34 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		return -1;
 	}
 
+	return 0;
+}
+
+/* new negotiation of phase 2 for initiator */
+static int
+isakmp_ph2begin_i(iph1, iph2)
+	struct ph1handle *iph1;
+	struct ph2handle *iph2;
+{
+	/* found ISAKMP-SA. */
+	plog(LLV_DEBUG, LOCATION, NULL, "begin QUICK mode.\n");
+
+#ifdef ENABLE_STATS
+	gettimeofday(&iph2->start, NULL);
+#endif
+	/* found isakmp-sa */
+	bindph12(iph1, iph2);
+	iph2->status = PHASE2ST_STATUS2;
+
+	if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
+			 [iph2->side]
+			 [iph2->status])(iph2, NULL) < 0) {
+		unbindph12(iph2);
+		/* release ipsecsa handler due to internal error. */
+		remph2(iph2);
+		delph2(iph2);
+		return -1;
+	}
 	return 0;
 }
 
@@ -971,11 +1068,16 @@ isakmp_ph2begin_r(iph1, msg)
 
 	a = strdup(saddr2str(iph2->src));
 	plog(LLV_INFO, LOCATION, NULL,
-		"responde new phase 2 negotiation: %s<=>%s\n",
+		"respond new phase 2 negotiation: %s<=>%s\n",
 		a, saddr2str(iph2->dst));
 	racoon_free(a);
     }
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	error = (ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
 	                   [iph2->side]
 	                   [iph2->status])(iph2, msg);
@@ -1004,6 +1106,14 @@ isakmp_ph2begin_r(iph1, msg)
 		/* don't release handler */
 		return -1;
 	}
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase2",
+		s_isakmp_state(ISAKMP_ETYPE_QUICK, iph2->side, iph2->status),
+		timedelta(&start, &end));
+    }
+#endif
 
 	if (add_recvedpkt(msg, &iph2->rlist)) {
 		plog(LLV_ERROR , LOCATION, iph2->ph1->remote,
@@ -1180,7 +1290,9 @@ isakmp_open()
 {
 	const int yes = 1;
 	int ifnum;
+#ifdef INET6
 	int pktinfo;
+#endif
 	struct myaddrs *p;
 
 	ifnum = 0;
@@ -1462,9 +1574,15 @@ isakmp_ph1expire(iph1)
 
 	iph1->status = PHASE1ST_EXPIRED;
 
-	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+	/*
+	 * the phase1 deletion is postponed until there is no phase2.
+	 */
+	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
+		iph1->sce = sched_new(1, isakmp_ph1expire_stub, iph1);
+		return;
+	}
 
-	return;
+	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
 }
 
 /* called from scheduler */
@@ -1595,6 +1713,15 @@ isakmp_post_acquire(iph2)
 		return -1;
 	}
 
+	/* if passive mode, ignore the acquire message */
+	if (rmconf->passive) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"because of passive mode, "
+			"ignore the acquire message for %s.\n",
+			saddrwop2str(iph2->dst));
+		return 0;
+	}
+
 	/* search isakmp status table by address with masking port */
 	iph1 = getph1byaddr(iph2->src, iph2->dst);
 
@@ -1609,7 +1736,7 @@ isakmp_post_acquire(iph2)
 			"due to no phase1 found.\n",
 			saddrwop2str(iph2->dst));
 
-		/* begin ident mode */
+		/* start phase 1 negotiation as a initiator. */
 		if (isakmp_ph1begin_i(rmconf, iph2->dst) < 0) {
 			SCHED_KILL(sc);
 			return -1;
@@ -1637,15 +1764,8 @@ isakmp_post_acquire(iph2)
 	plog(LLV_DEBUG, LOCATION, NULL, "begin QUICK mode.\n");
 
 	/* begin quick mode */
-	bindph12(iph1, iph2);
-	iph2->status = PHASE2ST_STATUS2;
-
-	if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
-	                [iph2->side]
-	                [iph2->status])(iph2, NULL) != 0) {
-		unbindph12(iph2);
+	if (isakmp_ph2begin_i(iph1, iph2))
 		return -1;
-	}
 
 	return 0;
 }
@@ -1657,10 +1777,31 @@ int
 isakmp_post_getspi(iph2)
 	struct ph2handle *iph2;
 {
+	/* don't process it because there is no suitable phase1-sa. */
+	if (iph2->ph1->status == PHASE2ST_EXPIRED) {
+		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+			"the negotiation is stopped, "
+			"because there is no suitable ISAKMP-SA.\n");
+		return -1;
+	}
+
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
 	                [iph2->side]
 	                [iph2->status])(iph2, NULL) != 0)
 		return -1;
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s) %8.6f",
+		"phase2",
+		s_isakmp_state(ISAKMP_ETYPE_QUICK, iph2->side, iph2->status),
+		timedelta(&start, &end));
+    }
+#endif
 
 	return 0;
 }
@@ -1682,7 +1823,10 @@ isakmp_chkph1there(iph2)
 	iph2->retry_checkph1--;
 	if (iph2->retry_checkph1 < 0) {
 		plog(LLV_ERROR, LOCATION, iph2->dst,
-			"phase1 negotiation failed due to time up.\n");
+			"phase2 negotiation failed "
+			"due to time up waiting for phase1. %s\n",
+			sadbsecas2str(iph2->dst, iph2->src,
+				iph2->satype, 0, 0));
 		plog(LLV_INFO, LOCATION, NULL,
 			"delete phase 2 handler.\n");
 
@@ -1703,16 +1847,8 @@ isakmp_chkph1there(iph2)
 	if (iph1 != NULL
 	 && iph1->status == PHASE1ST_ESTABLISHED) {
 		/* found isakmp-sa */
-		bindph12(iph1, iph2);
-		iph2->status = PHASE2ST_STATUS2;
-		if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
-		                 [iph2->side]
-		                 [iph2->status])(iph2, NULL) < 0) {
-			unbindph12(iph2);
-			remph2(iph2);
-			delph2(iph2);
-			/* release ipsecsa handler due to internal error. */
-		}
+		/* begin quick mode */
+		(void)isakmp_ph2begin_i(iph1, iph2);
 		return;
 	}
 
@@ -1831,7 +1967,7 @@ isakmp_newcookie(place, remote, local)
 	struct sockaddr *remote;
 	struct sockaddr *local;
 {
-	vchar_t *buf, *buf2;
+	vchar_t *buf = NULL, *buf2 = NULL;
 	char *p;
 	int blen;
 	int alen;
@@ -1897,14 +2033,13 @@ isakmp_newcookie(place, remote, local)
 	/* copy random value */
 	buf2 = eay_set_random(lcconf->secret_size);
 	if (buf2 == NULL)
-		return -1;
+		goto end;
 	memcpy(p, buf2->v, lcconf->secret_size);
 	p += lcconf->secret_size;
 	vfree(buf2);
 
 	buf2 = eay_sha1_one(buf);
 	memcpy(place, buf2->v, sizeof(cookie_t));
-	vfree(buf2);
 
 	sa1 = val2str(place, sizeof (cookie_t));
 	plog(LLV_DEBUG, LOCATION, NULL, "new cookie:\n%s\n", sa1);
@@ -1912,6 +2047,10 @@ isakmp_newcookie(place, remote, local)
 
 	error = 0;
 end:
+	if (buf != NULL)
+		vfree(buf);
+	if (buf2 != NULL)
+		vfree(buf2);
 	return error;
 }
 
