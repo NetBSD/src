@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.96 1999/11/27 14:54:53 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.97 1999/12/16 20:24:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -334,6 +334,22 @@ static	int cpu_number;
 #endif /* MULTIPROCESSOR */
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * Start secondary processors in motion.
+ */
+void
+cpu_boot_secondary_processors()
+{
+
+	/*
+	 * XXX This is currently a noop; the CPUs are already running, but
+	 * XXX aren't doing anything.  Eventually, this will release a
+	 * XXX semaphore that all those secondary processors are anxiously
+	 * XXX waiting on.
+	 */
+}
+#endif /* MULTIPROCESSOR */
 
 /* */
 void *cpu_hatchstack = 0;
