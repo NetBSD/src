@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.113 2003/09/17 00:12:23 grant Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.114 2003/09/19 05:00:20 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2229,3 +2229,21 @@ crypto/dist/ssh/version.h		1.31 (via patch)
 
 	apply more malloc fixes from OpenSSH 3.7 -> 3.7.1.
 	[christos, no ticket]
+
+gnu/dist/sendmail/sendmail/parseaddr.c	1.13
+gnu/dist/sendmail/sendmail/version.c	1.14 (via patch)
+
+	fix prescan() bug (potentially remotely exploitable), CAN-2003-0694
+	Bump version number after parse8.359.2.8 patch has been applied.
+	[Aymeric, ticket #81]
+
+crypto/dist/ssh/ssh-agent.c		1.23
+
+	typo.  markus@openbsd
+	[itojun, ticket #82]
+
+crypto/dist/ssh/buffer.c		1.5
+
+	protect against double free; #660;  zardoz at users.sf.net
+	from openbsd
+	[christos, ticket #83]
