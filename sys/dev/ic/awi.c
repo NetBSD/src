@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.12 2000/03/23 05:26:00 mycroft Exp $	*/
+/*	$NetBSD: awi.c,v 1.13 2000/03/26 10:09:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -397,7 +397,8 @@ awi_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_invalid = 1;
-		if_deactivate(sc->sc_ifp);
+		if (sc->sc_ifp)
+			if_deactivate(sc->sc_ifp);
 		break;
 	}
 	splx(s);
