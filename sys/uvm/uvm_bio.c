@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.24 2002/02/15 17:45:05 simonb Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.25 2002/02/27 16:02:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.24 2002/02/15 17:45:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.25 2002/02/27 16:02:03 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -323,7 +323,8 @@ again:
 		KASSERT(access_type == VM_PROT_READ ||
 		    (pg->flags & PG_RDONLY) == 0);
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    prot, access_type);
+		    (pg->flags & PG_RDONLY) ? prot & ~VM_PROT_WRITE : prot,
+		    access_type);
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
