@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fts.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: fts.c,v 1.3 1993/08/26 00:44:33 jtc Exp $";
+static char *rcsid = "$Id: fts.c,v 1.4 1993/11/24 19:43:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ fts_load(sp, p)
 	 */
 	len = p->fts_pathlen = p->fts_namelen;
 	bcopy(p->fts_name, sp->fts_path, len + 1);
-	if ((cp = rindex(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
+	if ((cp = strrchr(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
 		len = strlen(++cp);
 		bcopy(cp, p->fts_name, len + 1);
 		p->fts_namelen = len;

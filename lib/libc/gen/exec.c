@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)exec.c	5.9 (Berkeley) 6/17/91";*/
-static char *rcsid = "$Id: exec.c,v 1.4 1993/10/22 19:13:42 pk Exp $";
+static char *rcsid = "$Id: exec.c,v 1.5 1993/11/24 19:43:49 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ execvp(name, argv)
 	char *bp, *cur, *path, buf[MAXPATHLEN];
 
 	/* If it's an absolute or relative path name, it's easy. */
-	if (index(name, '/')) {
+	if (strchr(name, '/')) {
 		bp = (char *)name;
 		cur = path = NULL;
 		goto retry;
