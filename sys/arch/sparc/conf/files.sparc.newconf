@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.26 1995/03/31 02:57:02 christos Exp $
+#	$NetBSD: files.sparc.newconf,v 1.27 1995/04/25 20:07:10 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -16,7 +16,7 @@ device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
 file	arch/sparc/dev/obio.c		obio vmel vmes
 
 device audio at mainbus
-file	arch/sparc/dev/bsd_audio.c		bsdaudio audio needs-flag
+file	arch/sparc/dev/amd7930.c		audio needs-flag
 
 device auxreg at mainbus
 file	arch/sparc/sparc/auxreg.c
@@ -89,7 +89,7 @@ file	arch/sparc/dev/bt_subr.c	cgsix cgthree
 device le at sbus, ledma, obio: ifnet, ether
 file	arch/sparc/dev/if_le.c		le
 
-device ie at obio, vmes: ifnet, ether
+device ie at obio, vmes, vmel: ifnet, ether
 file	arch/sparc/dev/if_ie.c		ie
 
 
@@ -120,7 +120,7 @@ file	arch/sparc/rcons/rcons_subr.c	rconsole
 # N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
 # identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc/sparc/autoconf.c
-file	arch/sparc/sparc/bsd_audiointr.s	bsdaudio audio needs-flag
+file	arch/sparc/sparc/amd7930intr.s	audio
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/in_cksum.c
