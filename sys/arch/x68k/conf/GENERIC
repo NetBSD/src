@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54 2000/12/19 10:42:07 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.55 2000/12/29 15:18:37 minoura Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 maxusers	8
 
@@ -18,6 +18,10 @@ maxusers	8
 options 	M68030
 options 	M68040
 options 	M68060
+## If you want an optimized kernel for a specific processor, use either:
+#makeoptions	CMACHFLAGS="-m68030"
+#makeoptions	CMACHFLAGS="-m68040 -Wa,-m68030 -Wa,-m68851"
+#makeoptions	CMACHFLAGS="-m68060 -Wa,-m68030 -Wa,-m68851"
 
 
 #### System options specific to the x68k port
