@@ -1,6 +1,7 @@
-/*	$NetBSD: pci_subr.c,v 1.21 1997/09/13 08:49:51 enami Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.22 1998/04/14 21:24:50 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -303,4 +304,197 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 			cp += sprintf(cp, ", revision 0x%02x", revision);
 		cp += sprintf(cp, ")");
 	}
+}
+
+/*
+ * Print out most of the PCI configuration registers.  Typically used
+ * in a device attach routine like this:
+ *
+ *	#ifdef MYDEV_DEBUG
+ *		printf("%s: ", sc->sc_dev.dv_xname);
+ *		pci_conf_print(pa->pa_pc, pa->pa_tag);
+ *	#endif
+ */
+void
+pci_conf_print(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	pcireg_t rval;
+	int reg;
+#ifdef PCIVERBOSE
+	struct pci_knowndev *kdp;
+#endif
+	struct pci_class *classp, *subclassp;
+	static const char on_str[] = "ON", off_str[] = "OFF";
+
+	printf("PCI configuration registers:\n");
+
+	rval = pci_conf_read(pc, tag, PCI_ID_REG);
+
+#ifndef PCIVERBOSE
+	printf("  Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+	printf("  Device ID: 0x%04x\n", PCI_PRODUCT(rval));
+#else
+	for (kdp = pci_knowndevs; kdp->vendorname != NULL; kdp++) {
+		if (kdp->vendor == PCI_VENDOR(rval) &&
+		    (kdp->product == PCI_PRODUCT(rval) ||
+		    (kdp->flags & PCI_KNOWNDEV_NOPROD) != 0)) {
+			break;
+		}
+	}
+	if (kdp->vendorname != NULL)
+		printf("  Vendor Name: %s\n", kdp->vendorname);
+	else
+		printf("  Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+
+	if (kdp->productname != NULL && (kdp->flags & PCI_KNOWNDEV_NOPROD) == 0)
+		printf("  Device Name: %s\n", kdp->productname);
+	else
+		printf("  Device ID: 0x%04x\n", PCI_PRODUCT(rval));
+#endif /* PCIVERBOSE */
+
+#define	onoff(reg)	((rval & (reg)) ? on_str : off_str)
+
+	rval = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+
+#ifndef PCIVERBOSE
+	printf("  Command/Status Register: 0x%08x\n", rval);
+#else
+	printf("  Command Register:\n");
+	printf("    I/O space accesses %s\n", onoff(PCI_COMMAND_IO_ENABLE));
+	printf("    Mem space accesses %s\n", onoff(PCI_COMMAND_MEM_ENABLE));
+	printf("    Bus mastering %s\n", onoff(PCI_COMMAND_MASTER_ENABLE));
+	printf("    Special cycles %s\n", onoff(PCI_COMMAND_SPECIAL_ENABLE));
+	printf("    MWI transactions %s\n",
+	    onoff(PCI_COMMAND_INVALIDATE_ENABLE));
+	printf("    Palette snooping %s\n", onoff(PCI_COMMAND_PALETTE_ENABLE));
+	printf("    Parity error checking %s\n",
+	    onoff(PCI_COMMAND_PARITY_ENABLE));
+	printf("    Address/Data stepping %s\n",
+	    onoff(PCI_COMMAND_STEPPING_ENABLE));
+	printf("    System Error (SERR) %s\n", onoff(PCI_COMMAND_SERR_ENABLE));
+	printf("    Fast back-to-back transactions %s\n",
+	    onoff(PCI_COMMAND_BACKTOBACK_ENABLE));
+	printf("  Status Register:\n");
+	printf("    66 MHz capable %s\n", onoff(PCI_STATUS_66MHZ_SUPPORT));
+	printf("    User Definable Features (UDF) support %s\n",
+	    onoff(PCI_STATUS_UDF_SUPPORT));
+	printf("    Fast back-to-back capable %s\n",
+	    onoff(PCI_STATUS_BACKTOBACK_SUPPORT));
+	printf("    Data parity error detected %s\n",
+	    onoff(PCI_STATUS_PARITY_ERROR));
+
+	printf("    DEVSEL timing ");
+	switch (rval & PCI_STATUS_DEVSEL_MASK) {
+	case PCI_STATUS_DEVSEL_FAST:
+		printf("fast");
+		break;
+	case PCI_STATUS_DEVSEL_MEDIUM:
+		printf("medium");
+		break;
+	case PCI_STATUS_DEVSEL_SLOW:
+		printf("slow");
+		break;
+	}
+	printf("\n");
+
+	printf("    Slave signaled Target Abort %s\n",
+	    onoff(PCI_STATUS_TARGET_TARGET_ABORT));
+	printf("    Master received Target Abort %s\n",
+	    onoff(PCI_STATUS_MASTER_TARGET_ABORT));
+	printf("    Master received Master Abort %s\n",
+	    onoff(PCI_STATUS_MASTER_ABORT));
+	printf("    Asserted System Error (SERR) %s\n",
+	    onoff(PCI_STATUS_SPECIAL_ERROR));
+	printf("    Parity error detected %s\n",
+	    onoff(PCI_STATUS_PARITY_DETECT));
+#endif /* PCIVERBOSE */
+
+	rval = pci_conf_read(pc, tag, PCI_CLASS_REG);
+
+	for (classp = pci_class; classp->name != NULL; classp++) {
+		if (PCI_CLASS(rval) == classp->val)
+			break;
+	}
+	subclassp = (classp->name != NULL) ? classp->subclasses : NULL;
+	while (subclassp && subclassp->name != NULL) {
+		if (PCI_SUBCLASS(rval) == subclassp->val)
+			break;
+		subclassp++;
+	}
+	if (classp->name != NULL) {
+		printf("  Class Name: %s\n", classp->name);
+		if (subclassp != NULL && subclassp->name != NULL)
+			printf("  Subclass Name: %s\n", subclassp->name);
+		else
+			printf("  Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+	} else {
+		printf("  Class ID: 0x%02x\n", PCI_CLASS(rval));
+		printf("  Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+	}
+	printf("  Interface: 0x%02x\n", PCI_INTERFACE(rval));
+	printf("  Revision ID: 0x%02x\n", PCI_REVISION(rval));
+
+	rval = pci_conf_read(pc, tag, PCI_BHLC_REG);
+
+	printf("  BIST: 0x%02x\n", PCI_BIST(rval));
+	printf("  Header Type: 0x%02x\n", PCI_HDRTYPE(rval));
+	printf("  Latency Timer: 0x%02x\n", PCI_LATTIMER(rval));
+	printf("  Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
+
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		rval = pci_conf_read(pc, tag, reg);
+		printf("  Mapping register 0x%02x\n", reg);
+		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
+			printf("    Base Address: 0x%08x, size 0x%08x, "
+			    "type = mem", PCI_MAPREG_MEM_ADDR(rval),
+			    PCI_MAPREG_MEM_SIZE(rval));
+			switch (PCI_MAPREG_MEM_TYPE(rval)) {
+			case PCI_MAPREG_MEM_TYPE_32BIT:
+				printf(", 32-bit");
+				break;
+			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+				printf(", 32-bit-1M");
+				break;
+			case PCI_MAPREG_MEM_TYPE_64BIT:
+				printf(", 64-bit");
+				break;
+			}
+			if (PCI_MAPREG_MEM_CACHEABLE(rval))
+				printf(", cacheable");
+			else
+				printf(", not cacheable");
+			printf("\n");
+		} else {
+			printf("    Base Address: 0x%08x, size 0x%08x, "
+			    "type = i/o\n", PCI_MAPREG_IO_ADDR(rval),
+			    PCI_MAPREG_IO_SIZE(rval));
+		}
+	}
+
+	rval = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
+	printf("  Maximum Latency: 0x%08x\n", (rval >> 24) & 0xff);
+	printf("  Minimum Grant: 0x%08x\n", (rval >> 16) & 0xff);
+	printf("  Interrupt pin: 0x%08x", PCI_INTERRUPT_PIN(rval));
+	switch (PCI_INTERRUPT_PIN(rval)) {
+	case PCI_INTERRUPT_PIN_NONE:
+		printf(" (none)");
+		break;
+	case PCI_INTERRUPT_PIN_A:
+		printf(" (pin A)");
+		break;
+	case PCI_INTERRUPT_PIN_B:
+		printf(" (pin B)");
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		printf(" (pin C)");
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		printf(" (pin D)");
+		break;
+	}
+	printf("\n");
+	printf("  Interrupt line: 0x%08x\n", PCI_INTERRUPT_LINE(rval));
 }
