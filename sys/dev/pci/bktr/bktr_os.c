@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.7 2000/06/26 14:21:11 mrg Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.8 2000/06/27 05:14:31 simonb Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
 
@@ -681,8 +681,8 @@ bktr_ioctl( dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr )
 /*
  * 
  */
-paddr_t
-bktr_mmap( dev_t dev, off_t offset, int nprot )
+int
+bktr_mmap( dev_t dev, vm_offset_t offset, int nprot )
 {
 	int		unit;
 	bktr_ptr_t	bktr;
@@ -1153,7 +1153,7 @@ bktr_ioctl( dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr )
  * Note: 2.2.5/2.2.6/2.2.7/3.0 users must manually
  * edit the line below and change  "vm_offset_t" to "int"
  */
-paddr_t bktr_mmap( dev_t dev, off_t offset, int nprot )
+int bktr_mmap( dev_t dev, vm_offset_t offset, int nprot )
 
 {
 	int		unit;
