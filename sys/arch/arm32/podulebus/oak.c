@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.13 1998/03/14 17:06:17 mark Exp $	*/
+/*	$NetBSD: oak.c,v 1.14 1998/09/18 03:23:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ oak_attach(parent, self, aux)
 	struct oak_softc *sc = (struct oak_softc *)self;
 	struct podule_attach_args *pa = aux;
 	u_char *iobase;
+	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
 
 	/* Note the podule number and validate */
 
@@ -171,7 +172,8 @@ oak_attach(parent, self, aux)
 	sc->sc_ncr5380.sc_link.device = &oak_scsidev;
 
 	/* Provide an override for the host id */
-	(void)get_bootconf_option(boot_args, "oak.hostid",
+	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
+	(void)get_bootconf_option(boot_args, hi_option,
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
 	printf(" host=%d, using 8 bit PIO\n",
