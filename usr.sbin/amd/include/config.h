@@ -1781,7 +1781,7 @@
 /* #undef MNTTAB_TYPE_TMPFS */
 
 /* Mount-table entry name for UFS filesystem */
-#define MNTTAB_TYPE_UFS "ufs"
+#define MNTTAB_TYPE_UFS "ffs"
 
 /* Mount-table entry name for UMAPFS (uid/gid mapping) filesystem */
 #define MNTTAB_TYPE_UMAPFS "umapfs"
