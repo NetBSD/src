@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.4 1997/10/07 10:11:31 mrg Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.5 1998/07/04 19:03:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,17 +40,20 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.4 1997/10/07 10:11:31 mrg Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.5 1998/07/04 19:03:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/time.h>
 
 #include <netinet/in.h>
 
+#include <err.h>
 #include <errno.h>
 #include <netdb.h>
 #include <paths.h>
@@ -66,6 +69,15 @@ int main __P((int, char **));
 void doit __P((int, struct sockaddr_in *));
 void getstr __P((char *, int, char *));
 
+char	username[32 + 1] = "USER=";
+char	homedir[PATH_MAX + 1] = "HOME=";
+char	shell[PATH_MAX + 1] = "SHELL=";
+char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
+char	*envinit[] = { homedir, shell, path, username, 0 };
+char	**environ;
+int	log;
+struct	sockaddr_in asin = { AF_INET };
+
 /*
  * remote execute server:
  *	username\0
@@ -79,78 +91,82 @@ main(argc, argv)
 	char **argv;
 {
 	struct sockaddr_in from;
-	int fromlen;
+	int fromlen, ch;
+
+	while ((ch = getopt(argc, argv, "l")) != -1)
+		switch (ch) {
+		case 'l':
+			log = 1;
+			openlog("rexecd", LOG_PID, LOG_DAEMON);
+			break;
+		default:
+			exit(1);
+		}
 
 	fromlen = sizeof (from);
-	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
-		(void)fprintf(stderr,
-		    "rexecd: getpeername: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0)
+		err(1, "getpeername");
+
 	doit(0, &from);
 	exit(0);
 }
-
-char	username[20] = "USER=";
-char	homedir[64] = "HOME=";
-char	shell[64] = "SHELL=";
-char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
-char	*envinit[] =
-	    {homedir, shell, path, username, 0};
-char	**environ;
-
-struct	sockaddr_in asin = { AF_INET };
 
 void
 doit(f, fromp)
 	int f;
 	struct sockaddr_in *fromp;
 {
+	struct pollfd fds[2];
 	char cmdbuf[NCARGS+1], *cp, *namep;
 	char user[16], pass[16];
+	char buf[BUFSIZ], sig;
 	struct passwd *pwd;
 	int s = -1; /* XXX gcc */
-	u_short port;
-	int pv[2], pid, ready, readfrom, cc;
-	char buf[BUFSIZ], sig;
+	int pv[2], pid, cc;
 	int one = 1;
+	in_port_t port;
 
-	(void) signal(SIGINT, SIG_DFL);
-	(void) signal(SIGQUIT, SIG_DFL);
-	(void) signal(SIGTERM, SIG_DFL);
-#ifdef DEBUG
-	{ int t = open(_PATH_TTY, 2);
-	  if (t >= 0) {
-		ioctl(t, TIOCNOTTY, (char *)0);
-		(void) close(t);
-	  }
-	}
-#endif
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
+	(void)signal(SIGTERM, SIG_DFL);
 	dup2(f, 0);
 	dup2(f, 1);
 	dup2(f, 2);
-	(void) alarm(60);
+	(void)alarm(60);
 	port = 0;
 	for (;;) {
 		char c;
-		if (read(f, &c, 1) != 1)
+		if (read(f, &c, 1) != 1) {
+			if (log)
+				syslog(LOG_ERR,
+				    "initial read failed");
 			exit(1);
+		}
 		if (c == 0)
 			break;
 		port = port * 10 + c - '0';
 	}
-	(void) alarm(0);
+	(void)alarm(0);
 	if (port != 0) {
 		s = socket(AF_INET, SOCK_STREAM, 0);
-		if (s < 0)
+		if (s < 0) {
+			if (log)
+				syslog(LOG_ERR, "socket: %m");
 			exit(1);
-		if (bind(s, (struct sockaddr *)&asin, sizeof (asin)) < 0)
+		}
+		if (bind(s, (struct sockaddr *)&asin, sizeof (asin)) < 0) {
+			if (log)
+				syslog(LOG_ERR, "bind: %m");
 			exit(1);
-		(void) alarm(60);
+		}
+		(void)alarm(60);
 		fromp->sin_port = htons(port);
-		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0)
+		if (connect(s, (struct sockaddr *)fromp, sizeof (*fromp)) < 0) {
+			if (log)
+				syslog(LOG_ERR, "connect: %m");
 			exit(1);
-		(void) alarm(0);
+		}
+		(void)alarm(0);
 	}
 	getstr(user, sizeof(user), "username");
 	getstr(pass, sizeof(pass), "password");
@@ -159,80 +175,113 @@ doit(f, fromp)
 	pwd = getpwnam(user);
 	if (pwd == NULL) {
 		error("Login incorrect.\n");
+		if (log)
+			syslog(LOG_ERR, "no such user %s", user);
 		exit(1);
 	}
 	endpwent();
 	if (*pwd->pw_passwd != '\0') {
 		namep = crypt(pass, pwd->pw_passwd);
 		if (strcmp(namep, pwd->pw_passwd)) {
-			error("Password incorrect.\n");
+			error("Password incorrect.\n");	/* XXX: wrong! */
+			if (log)
+				syslog(LOG_ERR, "incorrect password for %s",
+				    user);
 			exit(1);
 		}
-	}
+	} else
+		(void)crypt("dummy password", "PA");	/* must always crypt */
 	if (chdir(pwd->pw_dir) < 0) {
 		error("No remote directory.\n");
+		if (log)
+			syslog(LOG_ERR, "%s does not exist for %s", pwd->pw_dir,
+			    user);
 		exit(1);
 	}
-	(void) write(2, "\0", 1);
+	(void)write(2, "\0", 1);
 	if (port) {
-		(void) pipe(pv);
-		pid = fork();
-		if (pid == -1)  {
+		if (pipe(pv) < 0 || (pid = fork()) == -1) {
 			error("Try again.\n");
+			if (log)
+				syslog(LOG_ERR,"pipe or fork failed for %s: %m",
+				    user);
 			exit(1);
 		}
 		if (pid) {
-			(void) close(0); (void) close(1); (void) close(2);
-			(void) close(f); (void) close(pv[1]);
-			readfrom = (1<<s) | (1<<pv[0]);
-			ioctl(pv[1], FIONBIO, (char *)&one);
+			(void)close(0);
+			(void)close(1);
+			(void)close(2);
+			(void)close(f);
+			(void)close(pv[1]);
+			fds[0].fd = s;
+			fds[1].fd = pv[0];
+			fds[0].events = fds[1].events = POLLIN;
+			if (ioctl(pv[1], FIONBIO, (char *)&one) < 0)
+				_exit(-1);
 			/* should set s nbio! */
 			do {
-				ready = readfrom;
-				(void) select(16, (fd_set *)&ready,
-				    (fd_set *)NULL, (fd_set *)NULL,
-				    (struct timeval *)NULL);
-				if (ready & (1<<s)) {
+				if (poll(fds, 2, 0) < 0) {
+					close(s);
+					close(pv[0]);
+					_exit(-1);
+				}
+				if (fds[0].revents & POLLIN) {
 					if (read(s, &sig, 1) <= 0)
-						readfrom &= ~(1<<s);
+						fds[0].events = 0;
 					else
 						killpg(pid, sig);
 				}
-				if (ready & (1<<pv[0])) {
+				if (fds[1].revents & POLLIN) {
 					cc = read(pv[0], buf, sizeof (buf));
 					if (cc <= 0) {
 						shutdown(s, 1+1);
-						readfrom &= ~(1<<pv[0]);
+						fds[1].events = 0;
 					} else
-						(void) write(s, buf, cc);
+						(void)write(s, buf, cc);
 				}
-			} while (readfrom);
-			exit(0);
+			} while ((fds[0].events | fds[1].events) & POLLIN);
+			_exit(0);
 		}
-		setpgrp(0, getpid());
-		(void) close(s); (void)close(pv[0]);
-		dup2(pv[1], 2);
+		(void)setpgrp(0, getpid());
+		(void)close(s);
+		(void)close(pv[0]);
+		if (dup2(pv[1], 2) < 0) {
+			error("Try again.\n");
+			if (log)
+				syslog(LOG_ERR, "dup2 failed for %s", user);
+			exit(1);
+		}
 	}
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
 	if (f > 2)
-		(void) close(f);
-	setlogin(pwd->pw_name);
-	(void) setgid((gid_t)pwd->pw_gid);
-	initgroups(pwd->pw_name, pwd->pw_gid);
-	(void) setuid((uid_t)pwd->pw_uid);
+		(void)close(f);
+	if (setlogin(pwd->pw_name) < 0 ||
+	    initgroups(pwd->pw_name, pwd->pw_gid) < 0 ||
+	    setgid((gid_t)pwd->pw_gid) < 0 || 
+	    setuid((uid_t)pwd->pw_uid) < 0) {
+		error("Try again.\n");
+		if (log)
+			syslog(LOG_ERR, "could not set permissions for %s: %m",
+			    user);
+		exit(1);
+	}
 	(void)strcat(path, _PATH_DEFPATH);
 	environ = envinit;
-	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
-	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
-	strncat(username, pwd->pw_name, sizeof(username)-6);
+	strncat(homedir, pwd->pw_dir, sizeof(homedir) - 6);
+	strncat(shell, pwd->pw_shell, sizeof(shell) - 7);
+	strncat(username, pwd->pw_name, sizeof(username) - 6);
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
 	else
 		cp = pwd->pw_shell;
+	if (log)
+		syslog(LOG_INFO, "running command for %s: %s", user, cmdbuf);
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	perror(pwd->pw_shell);
+	if (log)
+		syslog(LOG_ERR, "execl failed for %s: %m", user);
 	exit(1);
 }
 
@@ -261,7 +310,7 @@ error(fmt, va_alist)
 #endif
 
 	buf[0] = 1;
-	(void)vsprintf(buf+1, fmt, ap);
+	(void)vsnprintf(buf+1, sizeof(buf) - 1, fmt, ap);
 	(void)write(2, buf, strlen(buf));
 }
 
