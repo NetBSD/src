@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.18 2003/10/16 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.19 2003/10/17 00:20:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.18 2003/10/16 23:39:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.19 2003/10/17 00:20:28 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -439,31 +439,6 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	case STATUS_CMD_UNKNOWN:
-		/* we can't issue REQUEST SENSE */
-		if (xs->xs_periph->periph_quirks & PQUIRK_NOSENSE) {
-			/*
-			 * If no residue and no other USB error,
-			 * command succeeded.
-			 */
-			if (residue == 0) {
-				xs->error = XS_NOERROR;
-				break;
-			}
-
-			/*
-			 * Some devices return a short INQUIRY
-			 * response, omitting response data from the
-			 * "vendor specific data" on...
-			 */
-			if (xs->cmd->opcode == INQUIRY &&
-			    residue < xs->datalen) {
-				xs->error = XS_NOERROR;
-				break;
-			}
-
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
 		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
 		/* fetch sense data */
