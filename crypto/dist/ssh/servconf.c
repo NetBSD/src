@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.17 2002/04/22 07:59:42 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.18 2002/05/13 02:58:18 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.106 2002/04/20 09:02:03 deraadt Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.108 2002/05/04 02:39:35 deraadt Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>
@@ -185,7 +185,7 @@ fill_default_server_options(ServerOptions *options)
 		options->pubkey_authentication = 1;
 #if defined(KRB4) || defined(KRB5)
 	if (options->kerberos_authentication == -1)
-		options->kerberos_authentication = (access(KEYFILE, R_OK) == 0);
+		options->kerberos_authentication = 0;
 	if (options->kerberos_or_local_passwd == -1)
 		options->kerberos_or_local_passwd = 1;
 	if (options->kerberos_ticket_cleanup == -1)
