@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.25 2001/05/17 19:04:01 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.26 2001/12/02 09:14:22 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.25 2001/05/17 19:04:01 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.26 2001/12/02 09:14:22 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,7 +49,8 @@ __RCSID("$NetBSD: newwin.c,v 1.25 2001/05/17 19:04:01 jdc Exp $");
 
 extern struct __winlist	*winlistp;
 
-static WINDOW *__makenew(int nlines, int ncols, int by, int bx, int sub);
+static WINDOW *__makenew(SCREEN *screen, int nlines, int ncols, int by,
+			 int bx, int sub);
 
 /*
  * derwin --
@@ -90,6 +91,12 @@ dupwin(WINDOW *win)
 WINDOW *
 newwin(int nlines, int ncols, int by, int bx)
 {
+	return __newwin(_cursesi_screen, nlines, ncols, by, bx);
+}
+
+WINDOW *
+__newwin(SCREEN *screen, int nlines, int ncols, int by, int bx)
+{
 	WINDOW *win;
 	__LINE *lp;
 	int     i, j;
@@ -100,7 +107,7 @@ newwin(int nlines, int ncols, int by, int bx)
 	if (ncols == 0)
 		ncols = COLS - bx;
 
-	if ((win = __makenew(nlines, ncols, by, bx, 0)) == NULL)
+	if ((win = __makenew(screen, nlines, ncols, by, bx, 0)) == NULL)
 		return (NULL);
 
 	win->nextp = win;
@@ -145,7 +152,8 @@ subwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 		nlines = orig->maxy + orig->begy - by;
 	if (ncols == 0)
 		ncols = orig->maxx + orig->begx - bx;
-	if ((win = __makenew(nlines, ncols, by, bx, 1)) == NULL)
+	if ((win = __makenew(_cursesi_screen, nlines, ncols,
+			     by, bx, 1)) == NULL)
 		return (NULL);
 	win->nextp = orig->nextp;
 	orig->nextp = win;
@@ -187,7 +195,7 @@ __set_subwin(WINDOW *orig, WINDOW *win)
  *	Set up a window buffer and returns a pointer to it.
  */
 static WINDOW *
-__makenew(int nlines, int ncols, int by, int bx, int sub)
+__makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub)
 {
 	WINDOW			*win;
 	__LINE			*lp;
@@ -238,10 +246,10 @@ __makenew(int nlines, int ncols, int by, int bx, int sub)
 		}
 		wlp->winp = win;
 		wlp->nextp = NULL;
-		if (__winlistp == NULL)
-			__winlistp = wlp;
+		if (screen->winlistp == NULL)
+			screen->winlistp = wlp;
 		else {
-			wlp2 = __winlistp;
+			wlp2 = screen->winlistp;
 			while (wlp2->nextp != NULL)
 				wlp2 = wlp2->nextp;
 			wlp2->nextp = wlp;
