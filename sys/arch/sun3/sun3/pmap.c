@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1994/11/21 21:38:54 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1994/11/28 19:17:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -106,15 +106,15 @@ extern vm_offset_t hole_start, hole_size;
 
 /* statistics... */
 struct pmap_stats {
-	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
-	int	ps_unlink_pvsearch;	/* # of pv_unlink searches */
-	int	ps_changeprots;		/* # of calls to changeprot */
-	int	ps_useless_changeprots;	/* # of changeprots for wiring */
 	int	ps_enter_firstpv;	/* pv heads entered */
 	int	ps_enter_secondpv;	/* pv nonheads entered */
-	int	ps_useless_changewire;	/* useless wiring changes */
-	int	ps_npg_prot_all;	/* # of active pages protected */
-	int	ps_npg_prot_actual;	/* # pages actually affected */
+	int	ps_unlink_pvfirst;	/* of pv_unlinks on head */
+	int	ps_unlink_pvsearch;	/* of pv_unlink searches */
+	int ps_pmeg_faultin;	/* pmegs reloaded */
+	int	ps_changeprots;		/* of calls to changeprot */
+	int	ps_changewire;		/* useless wiring changes */
+	int	ps_npg_prot_all;	/* of active pages protected */
+	int	ps_npg_prot_actual;	/* pages actually affected */
 } pmap_stats;
 
 struct context_state {
@@ -186,15 +186,14 @@ struct pv_entry {
 typedef struct pv_entry *pv_entry_t;
 
 pv_entry_t pv_head_table = NULL;
-#ifdef	PMAP_DEBUG
+#ifdef	DIAGNOSTIC
 static struct pv_entry *
 pa_to_pvp(pa)
 	vm_offset_t pa;
 {
 	struct pv_entry *pvp;
 	if (pa < avail_start || pa >= avail_end) {
-		printf("pa_to_pvp: bad pa=0x%x\n", pa);
-		Debugger();
+		panic("pmap:pa_to_pvp: bad pa=0x%x", pa);
 	}
 	pvp = &pv_head_table[PA_PGNUM(pa)];
 	return pvp;
@@ -216,6 +215,7 @@ pa_to_pvp(pa)
 
 #define MAKE_PV_REAL(pv_flags) ((pv_flags & PV_PERM) << PV_SHIFT)
 #define PG_TO_PV_FLAGS(pte) (((PG_PERM) & pte) >> PV_SHIFT)
+
 
 /*
  * cache support
@@ -327,8 +327,6 @@ int tmp_vpages_inuse;
 /*
  * prototypes
  */
-static int get_pte_val __P((pmap_t pmap, vm_offset_t va));
-static void set_pte_val __P((pmap_t pmap, vm_offset_t va, int pte));
 static int get_pte_pmeg __P((int, int));
 static void set_pte_pmeg __P((int, int, int));
 
@@ -387,39 +385,15 @@ static void pmap_protect_range __P((pmap_t, vm_offset_t, vm_offset_t));
 #define PMD_CONTEXT	0x100
 #define PMD_CREATE	0x200
 #define PMD_SEGMAP	0x400
+#define PMD_SETPTE	0x800
+
 #define	PMD_REMOVE	PMD_ENTER
 #define	PMD_UNLINK	PMD_LINK
-int pmap_debug = 0;
 
 #ifdef	PMAP_DEBUG	/* XXX */
+int pmap_debug = 0;
 int pmap_db_watchva = -1;
-int pmap_db_minphys;
-static void
-set_pte_debug(vm_offset_t va, int pte)
-{
-	if ((pte & PG_VALID) && (PG_PA(pte) < pmap_db_minphys))
-	{
-		printf("set_pte_debug: va=%x pa=%x\n", va, PG_PA(pte));
-		Debugger();
-	}
-	set_pte(va, pte);
-}
-#define	set_pte set_pte_debug
-
-int pmap_db_watchpmeg;
-static void
-set_segmap_debug(va, sme)
-	 vm_offset_t va;
-	 unsigned int sme;
-{
-	if (sme == pmap_db_watchpmeg) {
-		printf("set_segmap_debug: watch pmeg %x\n", sme);
-		Debugger();
-	}
-	set_segmap(va,sme);
-}
-#define set_segmap set_segmap_debug
-
+int pmap_db_watchpmeg = -1;
 #endif	/* PMAP_DEBUG */
 
 #ifdef	PMAP_DEBUG	/* XXX */
@@ -431,99 +405,6 @@ extern int getsr();
 #else	/* PMAP_DEBUG */
 #define	CHECK_SPL() (void)0
 #endif	/* PMAP_DEBUG */
-
-/*
- * Get a PTE from either the hardware or the pmeg cache.
- * Return non-zero if PTE was found for this VA.
- */
-static int
-get_pte_val(pmap, va)
-	pmap_t pmap;
-	vm_offset_t va;
-{
-	int old_ctx, in_ctx, sme;
-	pmeg_t pmegp;
-	int pte = PG_INVAL;
-
-#ifdef	PMAP_DEBUG
-	if (pmap == kernel_pmap)
-		panic("get_pte_val: kernel_pmap");
-	sme = pmap->pm_segmap[VA_SEGNUM(va)];
-	if (sme == SEGINV)
-		panic("get_pte_val: SEGINV");
-#endif
-
-	CHECK_SPL();
-
-	old_ctx = CTXINVAL;
-	in_ctx = FALSE;
-	if (has_context(pmap)) {
-		old_ctx = get_context();
-		set_context(pmap->pm_ctxnum);
-		sme = get_segmap(va);
-		if (sme != SEGINV)
-			in_ctx = TRUE;
-	}
-	if (in_ctx == TRUE) {
-#ifdef	PMAP_DEBUG
-		if (sme != pmap->pm_segmap[VA_SEGNUM(va)])
-			panic("get_pte_val: unknown sme!");
-#endif
-		pte = get_pte(va);
-	} else {
-		/* PMEG is not currently in the HW segmap. */
-		sme = pmap->pm_segmap[VA_SEGNUM(va)];
-		pte = get_pte_pmeg(sme, VA_PTE_NUM(va));
-	}
-	if (old_ctx != CTXINVAL)
-		set_context(old_ctx);
-
-	return pte;
-}
-
-static void
-set_pte_val(pmap, va, pte)
-	pmap_t pmap;
-	vm_offset_t va;
-	int pte;
-{
-	int old_ctx, in_ctx, sme;
-	pmeg_t pmegp;
-
-#ifdef	PMAP_DEBUG
-	if (pmap == kernel_pmap)
-		panic("set_pte_val: kernel_pmap");
-	sme = pmap->pm_segmap[VA_SEGNUM(va)];
-	if (sme == SEGINV)
-		panic("set_pte_val: SEGINV");
-#endif
-
-	CHECK_SPL();
-
-	old_ctx = CTXINVAL;
-	in_ctx = FALSE;
-	if (has_context(pmap)) {
-		old_ctx = get_context();
-		set_context(pmap->pm_ctxnum);
-		sme = get_segmap(va);
-		if (sme != SEGINV)
-			in_ctx = TRUE;
-	}
-	if (in_ctx == TRUE) {
-#ifdef	PMAP_DEBUG
-		sme != pmap->pm_segmap[VA_SEGNUM(va)];
-		panic("set_pte_val: unknown sme!");
-#endif
-		set_pte(va, pte);
-	} else {
-		/* PMEG is not currently in the HW segmap. */
-		sme = pmap->pm_segmap[VA_SEGNUM(va)];
-		set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
-	}
-	if (old_ctx != CTXINVAL)
-		set_context(old_ctx);
-	return;
-}
 
 static void
 context_allocate(pmap)
@@ -785,6 +666,12 @@ pmeg_allocate(pmap, va)
 
 	CHECK_SPL();
 
+#ifdef	DIAGNOSTIC
+	if (va & SEGOFSET) {
+		panic("pmap:pmeg_allocate: va=0x%x", va);
+	}
+#endif
+
 	/* Get one onto the free list if necessary. */
 	pmegp = pmeg_free_queue.tqh_first;
 	if (!pmegp) {
@@ -842,7 +729,7 @@ pmeg_allocate(pmap, va)
 		pmegp->pmeg_qstate = PMEGQ_ACTIVE;
 #ifdef	PMAP_DEBUG
 		if (pmap_debug & PMD_SEGMAP) {
-			printf("pm_segmap: pmap=%x i=%x old=%x new=%x (ainv)\n",
+			printf("pm_segmap: pmap=%x i=%x old=%x new=%x (pget)\n",
 				   pmap, VA_SEGNUM(va),
 				   pmap->pm_segmap[VA_SEGNUM(va)],
 				   pmegp->pmeg_index);
@@ -938,7 +825,7 @@ pmeg_cache(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
 {
-	int segnum;
+	int sme, segnum;
 	pmeg_t pmegp;
 
 	CHECK_SPL();
@@ -948,15 +835,22 @@ pmeg_cache(pmap, va)
 		panic("pmeg_cache: kernel_pmap");
 #endif
 
+#ifdef	DIAGNOSTIC
+	if (va & SEGOFSET) {
+		panic("pmap:pmeg_cache: va=0x%x", va);
+	}
+#endif
+
 	if (pmap->pm_segmap == NULL)
 		return PMEG_NULL;
 	segnum = VA_SEGNUM(va);
 	if (segnum > NUSEG)		/* out of range */
 		return PMEG_NULL;
-	if (pmap->pm_segmap[segnum] == SEGINV)	/* nothing cached */
+	sme = pmap->pm_segmap[segnum];
+	if (sme == SEGINV)	/* nothing cached */
 		return PMEG_NULL;
 
-	pmegp = pmeg_p(pmap->pm_segmap[segnum]);
+	pmegp = pmeg_p(sme);
 
 #ifdef	PMAP_DEBUG
 	if (pmegp->pmeg_index == pmap_db_watchpmeg) {
@@ -974,8 +868,8 @@ pmeg_cache(pmap, va)
 		(pmegp->pmeg_va != va))
 	{
 #ifdef	PMAP_DEBUG
-		printf("pm_segmap: pmap=%x i=%x old=%x new=ff (cach)\n",
-			   pmap, segnum, pmap->pm_segmap[segnum]);
+		printf("pmap:pmeg_cache: invalid pmeg: sme=0x%x\n", sme);
+		pmeg_print(pmegp);
 		Debugger(); /* XXX */
 #endif
 		pmap->pm_segmap[segnum] = SEGINV;
@@ -1160,7 +1054,7 @@ pv_changepte(head, set_bits, clear_bits)
 #endif
 		/* Get these while it's easy. */
 		if (pte & PG_MODREF) {
-			head->pv_flags |= (pte & PG_MODREF);
+			head->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
 			pte &= ~PG_MODREF;
 		}
 
@@ -1261,7 +1155,7 @@ pv_syncflags(head)
 #endif
 		/* OK, do what we came here for... */
 		if (pte & PG_MODREF) {
-			head->pv_flags |= (pte & PG_MODREF);
+			head->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
 			pte &= ~PG_MODREF;
 		}
 
@@ -1345,7 +1239,7 @@ pv_link(pmap, pa, va, flags)
 	head = pa_to_pvp(pa);
 	if (head->pv_pmap == NULL) {
 		/* not currently mapped anywhere */
-		/* pmap_stats.ps_enter_firstpv++; */
+		pmap_stats.ps_enter_firstpv++;
 		head->pv_va = va;
 		head->pv_pmap = pmap,
 		head->pv_next = NULL;
@@ -1365,7 +1259,7 @@ pv_link(pmap, pa, va, flags)
 	 * Before entering the new mapping, see if it will cause
 	 * old mappings to become aliased (need cache inhibit).
 	 */
-	/* pmap_stats.ps_enter_secondpv++; */
+	pmap_stats.ps_enter_secondpv++;
 
 	head->pv_flags |= flags;
 	if ((head->pv_flags & PV_NC) == 0) {
@@ -1425,7 +1319,7 @@ pv_unlink(pmap, pa, va)
 	 */
 	npv = head->pv_next;
 	if (head->pv_pmap == pmap && head->pv_va == va) {
-		/* pmap_stats.ps_unlink_pvfirst++; */
+		pmap_stats.ps_unlink_pvfirst++;
 		if (npv != NULL) {
 			/* Copy next entry into (fixed) head. */
 			head->pv_next = npv->pv_next;
@@ -1440,7 +1334,7 @@ pv_unlink(pmap, pa, va)
 		register pv_entry_t prev;
 
 		for (prev = head;; prev = npv, npv = npv->pv_next) {
-			/* pmap_stats.ps_unlink_pvsearch++; */
+			pmap_stats.ps_unlink_pvsearch++;
 			if (npv == NULL)
 				panic("pv_unlink: not on list");
 			if (npv->pv_pmap == pmap && npv->pv_va == va)
@@ -1829,6 +1723,12 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	vm_offset_t va;
 	int pte, sme;
 
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_REMOVE) ||
+		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
+		printf("pmap_remove_range_mmu(%x, %x, %x)\n", pmap, sva, eva);
+#endif
+
 	/* Interrupt level handled by caller. */
 	CHECK_SPL();
 
@@ -1878,6 +1778,12 @@ pmap_remove_range_mmu(pmap, sva, eva)
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), va);
 			}
+#ifdef	PMAP_DEBUG
+			if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
+				printf("pmap: set_pte pmap=%x va=%x old=%x new=%x (rrmmu)\n",
+					   pmap, va, pte, PG_INVAL);
+			}
+#endif
 			set_pte(va, PG_INVAL);
 			pmegp->pmeg_vpages--;
 		}
@@ -1923,6 +1829,12 @@ pmap_remove_range_noctx(pmap, sva, eva)
 	vm_offset_t va;
 	pmeg_t pmegp;
 
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_REMOVE) ||
+		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
+		printf("pmap_remove_range_noctx(%x, %x, %x)\n", pmap, sva, eva);
+#endif
+
 	/* Interrupt level handled by caller. */
 	CHECK_SPL();
 
@@ -1946,6 +1858,12 @@ pmap_remove_range_noctx(pmap, sva, eva)
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), va);
 			}
+#ifdef	PMAP_DEBUG
+			if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
+				printf("pmap: set_pte pmap=%x va=%x old=%x new=%x (rrncx)\n",
+					   pmap, va, pte, PG_INVAL);
+			}
+#endif
 			set_pte_pmeg(pmegp->pmeg_index, ptenum, PG_INVAL);
 			pmegp->pmeg_vpages--;
 		}
@@ -1973,11 +1891,6 @@ pmap_remove_range(pmap, sva, eva)
 
 	PMAP_LOCK();
 
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_REMOVE) ||
-		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
-		printf("pmap_remove_range(%x, %x, %x)\n", pmap, sva, eva);
-#endif
 #ifdef	DIAGNOSTIC
 	if (sun3_trunc_seg(sva) != sun3_trunc_seg(eva-NBPG))
 		panic("pmap_remove_range: bad range!");
@@ -2204,10 +2117,17 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 		do_pv = FALSE;
 	}
 	if (do_pv) {
-		nflags = pv_link(kernel_pmap, pa, va, PG_TO_PV_FLAGS(new_pte));
+		nflags = pv_link(kernel_pmap, pa, va,
+						 PG_TO_PV_FLAGS(new_pte & PG_NC));
 		if (nflags & PV_NC)
 			new_pte |= PG_NC;
 	}
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
+		printf("pmap: set_pte pmap=%x va=%x old=%x new=%x (ek)\n",
+			   kernel_pmap, va, old_pte, new_pte);
+	}
+#endif
 	set_pte(va, new_pte);
 	pmegp->pmeg_vpages++;
 
@@ -2236,6 +2156,8 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 	 * call to pmap_change_wiring() will unwire them.
 	 * XXX - Need a separate list for wired user pmegs
 	 * so they can not be stolen from the active list.
+	 * XXX - Note: vm_fault.c assumes pmap_extract will
+	 * work on wired mappings, so must preserve them...
 	 */
 	if (wired && (pmap_debug & PMD_WIRING)) {
 		printf("pmap_enter_user: attempt to wire user page, ignored\n");
@@ -2381,10 +2303,17 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 		do_pv = FALSE;
 	}
 	if (do_pv) {
-		nflags = pv_link(pmap, pa, va, PG_TO_PV_FLAGS(new_pte));
+		nflags = pv_link(pmap, pa, va,
+						 PG_TO_PV_FLAGS(new_pte & PG_NC));
 		if (nflags & PV_NC)
 			new_pte |= PG_NC;
 	}
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
+		printf("pmap: set_pte pmap=%x va=%x old=%x new=%x (eu)\n",
+			   pmap, va, old_pte, new_pte);
+	}
+#endif
 	set_pte(va, new_pte);
 	pmegp->pmeg_vpages++;
 
@@ -2470,6 +2399,7 @@ int pmap_fault_reload(pmap, va, ftype)
 	vm_prot_t ftype;
 {
 	int rv, s, pte, chkpte, sme, segnum, ctx;
+	vm_offset_t seg_va;
 	pmeg_t pmegp;
 
 #ifdef	PMAP_DEBUG
@@ -2485,6 +2415,7 @@ int pmap_fault_reload(pmap, va, ftype)
 	}
 	if (va >= VM_MAXUSER_ADDRESS)
 		return (0);
+	seg_va = sun3_trunc_seg(va);
 
 	/* Make sure context is correct. */
 	ctx = get_context();
@@ -2504,15 +2435,15 @@ int pmap_fault_reload(pmap, va, ftype)
 	PMAP_LOCK();
 
 	rv = 0;
-	sme = get_segmap(va);
+	sme = get_segmap(seg_va);
 	if (sme == SEGINV) {
 		/* See if there is something to reload. */
-		pmegp = pmeg_cache(pmap, va);
+		pmegp = pmeg_cache(pmap, seg_va);
 		if (pmegp) {
 			/* Found one!  OK, reload it. */
-			/* pmap_stats.ps_pmeg_faultin++ */
+			pmap_stats.ps_pmeg_faultin++;
 			sme = pmegp->pmeg_index;
-			set_segmap(va, sme);
+			set_segmap(seg_va, sme);
 			pte = get_pte(va);
 			if (pte & chkpte)
 				rv = 1;
@@ -2722,30 +2653,37 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *	Function:
  *		Extract the physical page address associated
  *		with the given map/virtual_address pair.
+ *	Returns zero if VA not valid.
  */
 vm_offset_t
 pmap_extract(pmap, va)
 	pmap_t	pmap;
 	vm_offset_t va;
 {
-	unsigned int sme;
-	unsigned int seg;
-	int pte = 0;
-	int s;
+	int s, sme, segnum, ptenum, pte;
 
+	pte = 0;
 	PMAP_LOCK();
 	if (pmap == kernel_pmap) {
 		sme = get_segmap(va);
 		if (sme != SEGINV)
 			pte = get_pte(va);
 	} else {
-		seg = VA_SEGNUM(va);
-		if (pmap->pm_segmap[seg] != SEGINV)
-			pte = get_pte_val(pmap, va);
+		segnum = VA_SEGNUM(va);
+		sme = pmap->pm_segmap[segnum];
+		if (sme != SEGINV) {
+			ptenum = VA_PTE_NUM(va);
+			pte = get_pte_pmeg(sme, ptenum);
+		}
 	}
 	PMAP_UNLOCK();
-	if ((pte & PG_VALID) == 0)
-		panic("pmap_extract: va=0x%x", va);
+	if ((pte & PG_VALID) == 0) {
+		printf("pmap_extract: invalid va=0x%x\n", va);
+#ifdef	DDB
+		Debugger();
+#endif
+		pte = 0;
+	}
 	return PG_PA(pte);
 }
 

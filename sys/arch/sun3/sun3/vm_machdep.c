@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1994/11/21 21:39:23 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1994/11/28 19:17:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -231,8 +231,9 @@ vmapbuf(bp)
 		    (vm_offset_t)addr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		pmap_enter(vm_map_pmap(phys_map), kva,
+			trunc_page(pa) | PMAP_NC,
+			VM_PROT_READ|VM_PROT_WRITE, TRUE);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
@@ -246,17 +247,22 @@ vunmapbuf(bp)
 	register struct buf *bp;
 {
 	register caddr_t addr;
-	register int npf;
-	vm_offset_t kva;
+	vm_offset_t pgva;
+	register int off, npf;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+	off = (int)addr & PGOFSET;
+	pgva = (vm_offset_t)((int)addr & ~PGOFSET);
+
+	npf = btoc(round_page(bp->b_bcount + off));
+	kmem_free_wakeup(phys_map, pgva, ctob(npf));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+#ifdef	HAVECACHE
+	cache_flush(bp->b_data, bp->b_bcount - bp->b_resid);
+#endif
 }
 
 /* idea for implementation borrowed from chris torek */
@@ -297,7 +303,7 @@ caddr_t obio_vm_alloc(npages)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
+ * Both addresses are assumed to reside in the kernel map,
  * and size must be a multiple of CLSIZE.
  */
 void pagemove(from, to, size)
@@ -306,22 +312,20 @@ void pagemove(from, to, size)
 {
 	register vm_offset_t pa;
 
-#ifdef DEBUG
-	if (size & CLOFSET)
-		panic("pagemove");
+#ifdef DIAGNOSTIC
+	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
+		panic("pagemove 1");
 #endif
 	while (size > 0) {
 		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
-			panic("pagemove 3");
 #endif
 		pmap_remove(kernel_pmap,
-			    (vm_offset_t)from, (vm_offset_t)from + NBPG);
+			(vm_offset_t)from, (vm_offset_t)from + NBPG);
 		pmap_enter(kernel_pmap,
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
