@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1998/10/31 02:16:38 jonathan Exp $
+#	$NetBSD: Makefile,v 1.20 1998/11/15 04:31:06 jonathan Exp $
 
 .include "../Makefile.inc"
 
@@ -43,53 +43,67 @@ SRCS+=		haifa-sched.c
 SRCS+=		sched.c
 .endif
 
-DPSRCS+=	genrtl.h tree-check.h
+DPSRCS+=	s-genrtl genrtl.h s-check tree-check.h
 CLEANFILES+=	bitmap.lo obstack.lo print-rtl.lo rtl.lo rtlanal.lo \
 		gengenrtl gengenrtl.lo genrtl.c genrtl.h \
-		gencheck gencheck.lo tree-check.h
+		gencheck gencheck.lo tree-check.h \
+		s-genrtl s-check
 
 gengenrtl: gengenrtl.lo
 	${HOST_LINK.c} -o $@ $>
-.NOPATH: genrtl.h genrtl.c
-genrtl.h genrtl.c: gengenrtl
+.NOPATH: genrtl.h genrtl.c  s-genrtl
+genrtl.h genrtl.c: s-genrtl
+s-genrtl: gengenrtl rtl.h rtl.def gansidecl.h machmode.h machmode.def
 	@rm -f ${DIST}/genrtl.h ${DIST}/genrtl.c
-	./gengenrtl genrtl.h genrtl.c
+	./gengenrtl tmp-genrtl.h tmp-genrtl.c
+	${DIST}/move-if-change  tmp-genrtl.h genrtl.h
+	${DIST}/move-if-change  tmp-genrtl.c genrtl.c
+	touch s-genrtl
 
 gencheck: gencheck.lo
 	${HOST_LINK.c} -o $@ $>
-.NOPATH: tree-check.h
-tree-check.h: gencheck
+.NOPATH: tree-check.h s-check
+tree-check.h: s-check
+s-check: gencheck
 	@rm -f ${DIST}/tree-check.h
-	./gencheck >tree-check.h
+	./gencheck >tmp-tree-check.h
+	${DIST}/move-if-change  tmp-tree-check.h tree-check.h
+	touch s-check
 
 genattrtab: rtlanal.lo
 
 .for _GEN_ in attrtab emit extract opinit output peep recog
-DPSRCS+=	insn-${_GEN_}.c
-CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c
+DPSRCS+=	insn-${_GEN_}.c s-${_GEN_}
+CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c s-${_GEN_}
 
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
 
-.NOPATH: insn-${_GEN_}.c
-insn-${_GEN_}.c: gen${_GEN_}
+.NOPATH: insn-${_GEN_}.c s-${_GEN_}
+insn-${_GEN_}.c: s-${_GEN_}
+s-${_GEN_}: gen${_GEN_} ${MD}
 	@rm -f ${DIST}/insn-${_GEN_}.c
-	./gen${_GEN_} ${MD} >$@
+	./gen${_GEN_} ${MD} > tmp-${_GEN_}
+	${DIST}/move-if-change  tmp-${_GEN_} insn-${_GEN_}.c
+	touch s-${_GEN_}
 .endfor
 
 .for _GEN_ in attr codes config flags
-DPSRCS+=	insn-${_GEN_}.h
-CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h
+DPSRCS+=	insn-${_GEN_}.h s-${_GEN_}
+CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h s-${_GEN_}
 
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
 
-.NOPATH: insn-${_GEN_}.h
-insn-${_GEN_}.h: gen${_GEN_}
+.NOPATH: insn-${_GEN_}.h s-${_GEN_}
+insn-${_GEN_}.h: s-${_GEN_}
+s-${_GEN_}: gen${_GEN_} ${MD}
 	@rm -f ${DIST}/insn-${_GEN_}.h
-	./gen${_GEN_} ${MD} >$@
+	./gen${_GEN_} ${MD} > tmp-${_GEN_}
+	${DIST}/move-if-change  tmp-${_GEN_} insn-${_GEN_}.h
+	touch s-${_GEN_}
 .endfor
 
 .include <bsd.lib.mk>
