@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1999/03/23 13:27:48 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1999/03/23 13:52:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1775,11 +1775,6 @@ pmap_remove_all(pa)
 reduce wiring count on page table pages as references drop
 #endif
 
-		/*
-		 * Update saved attributes for managed page
-		 */
-
-		vm_physmem[bank].pmseg.attrs[off] |= pv->pv_flags & (PT_M | PT_H);
 		*pte = 0;
 
 		npv = pv->pv_next;
@@ -2544,52 +2539,22 @@ pmap_testbit(pa, setbits)
 	vm_offset_t pa;
 	int setbits;
 {
-	struct pv_entry *pv;
 	int bank, off;
-	int s;
 
 	PDEBUG(1, printf("pmap_testbit: pa=%08lx set=%08x\n", pa, setbits));
 
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return(FALSE);
-	pv = &vm_physmem[bank].pmseg.pvent[off];
-	s = splimp();
 
 	/*
-	 * Check saved info first
+	 * Check saved info only
 	 */
 	if (vm_physmem[bank].pmseg.attrs[off] & setbits) {
 		PDEBUG(0, printf("pmap_attributes = %02x\n",
 		    vm_physmem[bank].pmseg.attrs[off]));
-		(void)splx(s);
 		return(TRUE);
 	}
 
-	/*
-	 * Not found, check current mappings returning
-	 * immediately if found.
-	 */
-	if (pv->pv_pmap != NULL) {
-		for (; pv; pv = pv->pv_next) {
-/*			pte = pmap_pte(pv->pv_pmap, pv->pv_va);*/
-
-			/* The write bit is in the flags */
-			if ((pv->pv_flags & setbits) /*|| (*pte & (setbits & PT_Wr))*/) {
-				(void)splx(s);
-				return(TRUE);
-			}
-			if ((setbits & PT_M) && pv->pv_va >= VM_MAXUSER_ADDRESS) {
-				(void)splx(s);
-				return(TRUE);
-			}
-			if ((setbits & PT_H) && pv->pv_va >= VM_MAXUSER_ADDRESS) {
-				(void)splx(s);
-				return(TRUE);
-			}
-		}
-	}
-
-	(void)splx(s);
 	return(FALSE);
 }
 
@@ -2622,7 +2587,6 @@ pmap_changebit(pa, setbits, maskbits)
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-
 	if (maskbits)
 		vm_physmem[bank].pmseg.attrs[off] &= ~maskbits;
 
@@ -2654,10 +2618,8 @@ pmap_changebit(pa, setbits, maskbits)
 				*pte = (*pte) & ~PT_AP(AP_W);
 			if (setbits & PT_Wr)
 				*pte = (*pte) | PT_AP(AP_W);
-#if 0
 			if (maskbits & PT_H)
 				*pte = ((*pte) & ~L2_MASK) | L2_INVAL;
-#endif
 		}
 		cpu_tlb_flushID();
 	}
@@ -2731,13 +2693,17 @@ pmap_modified_emulation(pmap, va)
 	if (!pte)
 		return(0);
 
+	/* Check for a zero pte */
+	if (*pte == 0)
+		return(0);
+
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return(0);
-	pv = &vm_physmem[bank].pmseg.pvent[off];
 
 	/* Get the current flags for this page. */
+	pv = &vm_physmem[bank].pmseg.pvent[off];
 	flags = pmap_modify_pv(pmap, va, pv, 0, 0);
 	PDEBUG(2, printf("pmap_modified_emulation: flags = %08x\n", flags));
 
@@ -2753,13 +2719,11 @@ pmap_modified_emulation(pmap, va)
 
 	PDEBUG(0, printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %p (%08x)\n",
 	    va, pte, *pte));
-	*pte = *pte | PT_AP(AP_W);
+	*pte = (*pte) | PT_AP(AP_W);
 	PDEBUG(0, printf("->(%08x)\n", *pte));
 	cpu_tlb_flushID_SE(va);
     
-/*	pmap_modify_pv(pmap, va, pv, PT_M, PT_M);*/
-
-	vm_physmem[bank].pmseg.attrs[off] |= PT_M;
+	vm_physmem[bank].pmseg.attrs[off] |= PT_M | PT_H;
 
 	/* Return, indicating the problem has been dealt with */
 	return(1);
@@ -2800,7 +2764,6 @@ pmap_handled_emulation(pmap, va)
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
-
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return(0);
 
@@ -2811,7 +2774,6 @@ pmap_handled_emulation(pmap, va)
 	    va, pte, *pte));
 	*pte = ((*pte) & ~L2_MASK) | L2_SPAGE;
 	PDEBUG(0, printf("->(%08x)\n", *pte));
-
 	cpu_tlb_flushID_SE(va);
 
 	vm_physmem[bank].pmseg.attrs[off] |= PT_H;
