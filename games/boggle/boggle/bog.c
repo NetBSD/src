@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.6 1997/01/07 12:00:29 tls Exp $	*/
+/*	$NetBSD: bog.c,v 1.7 1997/10/10 12:04:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: bog.c,v 1.6 1997/01/07 12:00:29 tls Exp $";
+__RCSID("$NetBSD: bog.c,v 1.7 1997/10/10 12:04:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,8 @@ static char rcsid[] = "$NetBSD: bog.c,v 1.6 1997/01/07 12:00:29 tls Exp $";
 #include "bog.h"
 #include "extern.h"
 
-static int	compar __P((const void *, const void *));
+static	int	compar __P((const void *, const void *));
+	int	main __P((int, char *[]));
 
 struct dictindex dictindex[26];
 
@@ -131,12 +132,13 @@ main(argc, argv)
 	int ch, done, i, selfuse, sflag;
 	char *bspec, *p;
 
+	seed = 0;
 	batch = debug = reuse = selfuse = sflag = 0;
 	bspec = NULL;
 	minlength = 3;
 	tlimit = 180;		/* 3 minutes is standard */
 
-	while ((ch = getopt(argc, argv, "bds:t:w:")) != EOF)
+	while ((ch = getopt(argc, argv, "bds:t:w:")) != -1)
 		switch(ch) {
 		case 'b':
 			batch = 1;
@@ -594,7 +596,8 @@ checkdict()
 		}
 		mword[nmwords++] = mwordsp;
 		p = w;
-		while (*mwordsp++ = *p++);
+		while ((*mwordsp++ = *p++) != NULL)
+		    	;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
+/*	$NetBSD: timer.c,v 1.4 1997/10/10 12:04:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $";
+__RCSID("$NetBSD: timer.c,v 1.4 1997/10/10 12:04:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +50,7 @@ static char rcsid[] = "$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $";
 
 #include <curses.h>
 #include <setjmp.h>
+#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 

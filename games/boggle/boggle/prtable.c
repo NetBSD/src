@@ -1,4 +1,4 @@
-/*	$NetBSD: prtable.c,v 1.2 1995/03/21 12:14:42 cgd Exp $	*/
+/*	$NetBSD: prtable.c,v 1.3 1997/10/10 12:04:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,6 +37,11 @@
  *
  *	@(#)prtable.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: prtable.c,v 1.3 1997/10/10 12:04:33 lukem Exp $");
+#endif /* not lint */
 
 #include <curses.h>
 
