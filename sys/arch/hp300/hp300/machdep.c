@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1997/04/06 21:40:37 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,9 @@
 #include <sys/syscallargs.h>
 #include <sys/tty.h>
 #include <sys/user.h>
+#include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 #ifdef SYSVMSG
@@ -85,11 +88,14 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#include <dev/cons.h>
+
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
-#include <dev/cons.h>
 #include <arch/hp300/dev/hilreg.h>
 #include <arch/hp300/dev/hilioctl.h>
 #include <arch/hp300/dev/hilvar.h>
@@ -141,13 +147,20 @@ int	parityerrorfind __P((void));
 void    identifycpu __P((void));
 void    initcpu __P((void));
 void    ledinit __P((void));
-void	dumpmem __P((int *, int, int));
-char	*hexstr __P((int, int));
+
+int	cpu_dumpsize __P((void));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+void	cpu_init_kcore_hdr __P((void));
 
 /* functions called from locore.s */
 void    dumpsys __P((void));
 void    straytrap __P((int, u_short));
 void	nmihand __P((struct frame));
+
+/*
+ * Machine-dependent crash dump header info.
+ */
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
  * Select code of console.  Set to -1 if console is on
@@ -224,6 +237,11 @@ cpu_startup()
 
 	pmapdebug = 0;
 #endif
+
+	/*
+	 * Initialize the kernel crash dump header.
+	 */
+	cpu_init_kcore_hdr();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -634,318 +652,6 @@ ledcontrol(ons, offs, togs)
 }
 #endif
 
-#define SS_RTEFRAME	1
-#define SS_FPSTATE	2
-#define SS_USERREGS	4
-
-struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct	frame ss_frame;		/* original exception frame */
-	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
-};
-
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
-struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigstate sf_state;	/* state of the hardware */
-	struct	sigcontext sf_sc;	/* actual context */
-};
-
-#ifdef DEBUG
-int sigdebug = 0;
-int sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
-
-/*
- * Send an interrupt to process.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-{
-	struct proc *p = curproc;
-	struct sigframe *fp, *kfp;
-	struct frame *frame;
-	struct sigacts *psp = p->p_sigacts;
-	short ft;
-	int oonstack, fsize;
-	extern char sigcode[], esigcode[];
-
-	frame = (struct frame *)p->p_md.md_regs;
-	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
-	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (unsigned)fp);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
-#endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	kfp->sf_signum = sig;
-	kfp->sf_code = code;
-	kfp->sf_scp = &fp->sf_sc;
-	kfp->sf_handler = catcher;
-	/*
-	 * Save necessary hardware state.  Currently this includes:
-	 *	- general registers
-	 *	- original exception frame (if not a "normal" frame)
-	 *	- FP coprocessor state
-	 */
-	kfp->sf_state.ss_flags = SS_USERREGS;
-	bcopy((caddr_t)frame->f_regs,
-	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT7) {
-#ifdef DEBUG
-		if (ft > 15 || exframesize[ft] < 0)
-			panic("sendsig: bogus frame type");
-#endif
-		kfp->sf_state.ss_flags |= SS_RTEFRAME;
-		kfp->sf_state.ss_frame.f_format = frame->f_format;
-		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
-		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
-		/*
-		 * Leave an indicator that we need to clean up the kernel
-		 * stack.  We do this by setting the "pad word" above the
-		 * hardware stack frame to the amount the stack must be
-		 * adjusted by.
-		 *
-		 * N.B. we increment rather than just set f_stackadj in
-		 * case we are called from syscall when processing a
-		 * sigreturn.  In that case, f_stackadj may be non-zero.
-		 */
-		frame->f_stackadj += exframesize[ft];
-		frame->f_format = frame->f_vector = 0;
-#ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
-			printf("sendsig(%d): copy out %d of frame %d\n",
-			       p->p_pid, exframesize[ft], ft);
-#endif
-	}
-	if (fputype) {
-		kfp->sf_state.ss_flags |= SS_FPSTATE;
-		m68881_save(&kfp->sf_state.ss_fpstate);
-	}
-#ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %p\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
-#endif
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	kfp->sf_sc.sc_onstack = oonstack;
-	kfp->sf_sc.sc_mask = mask;
-	kfp->sf_sc.sc_sp = frame->f_regs[SP];
-	kfp->sf_sc.sc_fp = frame->f_regs[A6];
-	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
-	kfp->sf_sc.sc_pc = frame->f_pc;
-	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
-	frame->f_regs[SP] = (int)fp;
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
-		       p->p_pid, sig, kfp->sf_scp, fp,
-		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
-#endif
-	/*
-	 * Signal trampoline code is at base of user stack.
-	 */
-	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
-	free((caddr_t)kfp, M_TEMP);
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp;
-	struct frame *frame;
-	int rf;
-	struct sigcontext tsigc;
-	struct sigstate tstate;
-	int flags;
-
-	scp = SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	if ((int)scp & 1)
-		return (EINVAL);
-
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
-	scp = &tsigc;
-	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
-	/*
-	 * Restore the user supplied information
-	 */
-	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_md.md_regs;
-	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
-	/*
-	 * Grab pointer to hardware state information.
-	 * If zero, the user is probably doing a longjmp.
-	 */
-	if ((rf = scp->sc_ap) == 0)
-		return (EJUSTRETURN);
-	/*
-	 * See if there is anything to do before we go to the
-	 * expense of copying in close to 1/2K of data
-	 */
-	flags = fuword((caddr_t)rf);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): sc_ap %x flags %x\n",
-		       p->p_pid, rf, flags);
-#endif
-	/*
-	 * fuword failed (bogus sc_ap value).
-	 */
-	if (flags == -1)
-		return (EINVAL);
-	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
-		return (EJUSTRETURN);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
-#endif
-	/*
-	 * Restore most of the users registers except for A6 and SP
-	 * which were handled above.
-	 */
-	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
-	/*
-	 * Restore long stack frames.  Note that we do not copy
-	 * back the saved SR or PC, they were picked up above from
-	 * the sigcontext structure.
-	 */
-	if (flags & SS_RTEFRAME) {
-		int sz;
-		
-		/* grab frame type and validate */
-		sz = tstate.ss_frame.f_format;
-		if (sz > 15 || (sz = exframesize[sz]) < 0)
-			return (EINVAL);
-		frame->f_stackadj -= sz;
-		frame->f_format = tstate.ss_frame.f_format;
-		frame->f_vector = tstate.ss_frame.f_vector;
-		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
-#ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
-			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
-#endif
-	}
-
-	/*
-	 * Finally we restore the original FP context
-	 */
-	if (flags & SS_FPSTATE)
-		m68881_restore(&tstate.ss_fpstate);
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
-
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sigreturn(%d): returns\n", p->p_pid);
-#endif
-	return (EJUSTRETURN);
-}
-
 int	waittime = -1;
 
 void
@@ -1011,6 +717,113 @@ cpu_reboot(howto, bootstr)
 }
 
 /*
+ * Initialize the kernel crash dump header.
+ */
+void
+cpu_init_kcore_hdr()
+{
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern char end[];
+
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = NBPG;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK;
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = lowram;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (u_int32_t)end;
+
+	/*
+	 * hp300 has one contiguous memory segment.  Note,
+	 * RAM size is physmem + 1 to account for the msgbuf
+	 * page.
+	 *
+	 * XXX There's actually one more page... the last one mapped
+	 * XXX va == pa.  Should we dump it?  It's not really used
+	 * XXX for anything except to reboot and the MMU trampoline.
+	 */
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size  = ctob(physmem + 1);
+}
+
+/*
+ * Compute the size of the machine-dependent crash dump header.
+ * Returns size in disk blocks.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	return (btodb(roundup(size, dbtob(1))));
+}
+
+/*
+ * Called by dumpsys() to dump the machine-dependent header.
+ */
+int
+cpu_dump(dump, blknop)
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	daddr_t *blknop;
+{
+	int buf[dbtob(1) / sizeof(int)];
+	cpu_kcore_hdr_t *chdr;
+	kcore_seg_t *kseg;
+	int error;
+
+	kseg = (kcore_seg_t *)buf;
+	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
+	    sizeof(int)];
+
+	/* Create the segment header. */
+	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+
+	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	*blknop += btodb(sizeof(buf));
+	return (error);
+}
+
+/*
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
@@ -1027,6 +840,7 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf()
 {
+	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 	int maj;
 
@@ -1038,28 +852,28 @@ cpu_dumpconf()
 	if (bdevsw[maj].d_psize == NULL)
 		return;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
+	chdrsize = cpu_dumpsize();
+
+	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
 
 	/*
-	 * XXX include the final RAM page which is not included in physmem.
+	 * Check do see if we will fit.  Note we always skip the
+	 * first CLBYTES in case there is a disk label there.
 	 */
-	dumpsize = physmem + 1;
+	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
+		dumpsize = 0;
+		dumplo = -1;
+		return;
+	}
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	/*
+	 * Put dump at the end of the partition.
+	 */
+	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
 }
 
 /*
- * Dump physical memory onto the dump device.  Called by doadump()
- * in locore.s or by cpu_reboot() here in machdep.c
+ * Dump physical memory onto the dump device.  Called by cpu_reboot().
  */
 void
 dumpsys()
@@ -1070,6 +884,10 @@ dumpsys()
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
+
+	/* XXX initialized here because of gcc lossage */
+	maddr = lowram;
+	pg = 0;
 
 	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
@@ -1090,7 +908,12 @@ dumpsys()
 	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
 
 	printf("dump ");
-	maddr = lowram;
+
+	/* Write the dump header. */
+	error = cpu_dump(dump, &blkno);
+	if (error)
+		goto bad;
+
 	for (pg = 0; pg < dumpsize; pg++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many MBs we have dumped */
@@ -1101,6 +924,7 @@ dumpsys()
 		    VM_PROT_READ, TRUE);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+ bad:
 		switch (error) {
 		case 0:
 			maddr += NBPG;
@@ -1342,7 +1166,7 @@ parityerror(fp)
 		printf("WARNING: kernel parity error ignored\n");
 #endif
 	} else {
-		regdump(fp, 128);
+		regdump((struct trapframe *)fp, 128);
 		panic("kernel parity error");
 	}
 	return(1);
@@ -1409,97 +1233,6 @@ done:
 	ecacheon();
 	splx(s);
 	return(found);
-}
-
-void
-regdump(fp, sbytes)
-	struct frame *fp; /* must not be */
-	int sbytes;
-{
-	static int doingdump = 0;
-	int i;
-	int s;
-
-	if (doingdump)
-		return;
-	s = splhigh();
-	doingdump = 1;
-	printf("pid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
-	if (sbytes > 0) {
-		if (fp->f_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&fp)-1), 8));
-			dumpmem(((int *)&fp)-1, sbytes, 0);
-		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
-			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
-
-void
-dumpmem(ptr, sz, ustack)
-	int *ptr;
-	int sz, ustack;
-{
-	int i, val;
-
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
-		else
-			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
-	}
-	printf("\n");
-}
-
-char *
-hexstr(val, len)
-	int val;
-	int len;
-{
-	static char nbuf[9];
-	int x, i;
-
-	if (len > 8)
-		return("");
-	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
-		x = val & 0xF;
-		if (x > 9)
-			nbuf[i] = x - 10 + 'A';
-		else
-			nbuf[i] = x + '0';
-		val >>= 4;
-	}
-	return(nbuf);
 }
 
 /*
