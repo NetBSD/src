@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.39 1998/11/02 07:43:37 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.40 1998/12/03 06:28:45 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.39 1998/11/02 07:43:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.40 1998/12/03 06:28:45 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -649,31 +649,30 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	extern struct proc *fpcurproc;
+	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	memset(p->p_md.md_regs, 0, sizeof(struct frame));
-	memset(&p->p_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
-	p->p_md.md_regs[SP] = stack;
-	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
-	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
-	p->p_md.md_regs[SR] = PSL_USERSET;
-	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (fpcurproc == p)
-		fpcurproc = (struct proc *)0;
-	p->p_md.md_ss_addr = 0;
-
+	memset(f, 0, sizeof(struct frame));
+	f->f_regs[SP] = stack;
+	f->f_regs[PC] = pack->ep_entry & ~3;
+	f->f_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
+	f->f_regs[SR] = PSL_USERSET;
 	/*
-	 * Set up arguments for the dld-capable crt0:
-	 *
+	 * Set up arguments for the rtld-capable crt0:
 	 *	a0	stack pointer
 	 *	a1	rtld cleanup (filled in by dynamic loader)
 	 *	a2	rtld object (filled in by dynamic loader)
 	 *	a3	ps_strings
 	 */
-	p->p_md.md_regs[A0] = stack;
-	p->p_md.md_regs[A1] = 0;
-	p->p_md.md_regs[A2] = 0;
-	p->p_md.md_regs[A3] = (u_long)PS_STRINGS;
+	f->f_regs[A0] = (mips_reg_t)stack;
+	f->f_regs[A1] = 0;
+	f->f_regs[A2] = 0;
+	f->f_regs[A3] = (mips_reg_t)PS_STRINGS;
+
+	if (fpcurproc == p)
+		fpcurproc = (struct proc *)0;
+	memset(&p->p_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
+	p->p_md.md_flags &= ~MDP_FPUSED;
+	p->p_md.md_ss_addr = 0;
 }
 
 /*
@@ -708,12 +707,12 @@ sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct sigframe *fp;
-	int *regs;
+	struct frame *f;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	struct sigcontext ksc;
 
-	regs = p->p_md.md_regs;
+	f = (struct frame *)p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack = 
@@ -725,7 +724,7 @@ sendsig(catcher, sig, mask, code)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 						  psp->ps_sigstk.ss_size);
 	else
-		fp = (struct sigframe *)regs[SP];
+		fp = (struct sigframe *)f->f_regs[SP];
 	fp--;
 
 #ifdef DEBUG
@@ -736,20 +735,18 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Build stack frame for signal trampoline. */
-	ksc.sc_pc = regs[PC];
-	ksc.mullo = regs[MULLO];
-	ksc.mulhi = regs[MULHI];
+	ksc.sc_pc = f->f_regs[PC];
+	ksc.mullo = f->f_regs[MULLO];
+	ksc.mulhi = f->f_regs[MULHI];
 
 	/* Save register context. */
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	memcpy(&ksc.sc_regs[1], &regs[1],
+	memcpy(&ksc.sc_regs[1], &f->f_regs[1],
 	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 
 	/* Save the floating-pointstate, if necessary, then copy it. */
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-		extern struct proc *fpcurproc;
-
 		/* if FPU has current state, save it first */
 		if (p == fpcurproc)
 			savefpregs(p);
@@ -788,17 +785,17 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/* Set up the registers to return to sigcode. */
-	regs[A0] = sig;
-	regs[A1] = code;
-	regs[A2] = (int)&fp->sf_sc;
-	regs[A3] = (int)catcher;
+	f->f_regs[A0] = sig;
+	f->f_regs[A1] = code;
+	f->f_regs[A2] = (int)&fp->sf_sc;
+	f->f_regs[A3] = (int)catcher;
 
-	regs[PC] = (int)catcher;
-	regs[T9] = (int)catcher;
-	regs[SP] = (int)fp;
+	f->f_regs[PC] = (int)catcher;
+	f->f_regs[T9] = (int)catcher;
+	f->f_regs[SP] = (int)fp;
 
 	/* Signal trampoline code is at base of user stack. */
-	regs[RA] = (int)psp->ps_sigcode;
+	f->f_regs[RA] = (int)psp->ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -832,9 +829,9 @@ sys___sigreturn14(p, v, retval)
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
-	int error, *regs;
-	struct sigcontext ksc;
+	struct sigcontext *scp, ksc;
+	struct frame *f;
+	int error;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -853,11 +850,11 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Resture the register context. */
-	regs = p->p_md.md_regs;
-	regs[PC] = ksc.sc_pc;
-	regs[MULLO] = ksc.mullo;
-	regs[MULHI] = ksc.mulhi;
-	memcpy(&regs[1], &scp->sc_regs[1],
+	f = (struct frame *)p->p_md.md_regs;
+	f->f_regs[PC] = ksc.sc_pc;
+	f->f_regs[MULLO] = ksc.mullo;
+	f->f_regs[MULHI] = ksc.mulhi;
+	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
 		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
@@ -1246,7 +1243,7 @@ mips_init_proc0(space)
 	u_long pa;
 	int i;
 
-	bzero(space, 2 * USPACE);
+	memset(space, 0, 2 * USPACE);
 
 	proc0.p_addr = proc0paddr = (struct user *)space;
 	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
