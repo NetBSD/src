@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 2002/03/24 04:38:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2002/03/24 18:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -160,7 +160,6 @@ void pmap_debug	__P((int));
 int pmap_handled_emulation __P((struct pmap *, vaddr_t));
 int pmap_modified_emulation __P((struct pmap *, vaddr_t));
 void pmap_postinit __P((void));
-pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
 
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
