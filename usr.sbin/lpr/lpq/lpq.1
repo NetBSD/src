@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpq.1,v 1.11 2002/01/19 03:23:11 wiz Exp $
+.\"	$NetBSD: lpq.1,v 1.12 2002/07/08 14:05:37 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 .Nm
 .Op Fl al
 .Op Fl P Ar printer
+.Op Fl w Ar maxwait
 .Op Ar job# ...
 .Op Ar user ...
 .Sh DESCRIPTION
@@ -72,6 +73,9 @@ Normally, only as much information as will fit on one line is displayed.
 .It Fl a
 Report on the local queues for all printers,
 rather than just the specified printer.
+.It Fl w Ar maxwait
+Specify the maximum time to wait in seconds for remote responses.
+The default is 300 seconds or 5 minutes.
 .El
 .Pp
 For each job submitted (i.e. invocation of

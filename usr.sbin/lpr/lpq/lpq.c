@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.10 2000/04/14 06:26:53 simonb Exp $	*/
+/*	$NetBSD: lpq.c,v 1.11 2002/07/08 14:05:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.10 2000/04/14 06:26:53 simonb Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.11 2002/07/08 14:05:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,6 @@ ckqueue(cap)
 static void
 usage()
 {
-	puts("usage: lpq [-a] [-l] [-Pprinter] [user ...] [job ...]");
+	puts("usage: lpq [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]");
 	exit(1);
 }
