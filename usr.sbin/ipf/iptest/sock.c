@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.3 1997/05/27 23:13:19 thorpej Exp $	*/
+/*	$NetBSD: sock.c,v 1.4 1997/05/28 03:08:40 thorpej Exp $	*/
 
 /*
  * sock.c (C) 1995 Darren Reed
@@ -91,11 +91,12 @@ void	*pos;
 int	n;
 {
 	static	int	kfd = -1;
+	off_t offset = (u_long)pos;
 
 	if (kfd == -1)
 		kfd = open(KMEM, O_RDONLY);
 
-	if (lseek(kfd, (off_t)pos, SEEK_SET) == -1)
+	if (lseek(kfd, offset, SEEK_SET) == -1)
 	    {
 		perror("lseek");
 		return -1;
