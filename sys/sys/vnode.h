@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91.4.2 2001/09/26 15:28:26 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.4.3 2001/09/28 20:37:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -156,6 +156,7 @@ struct vnode {
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 #define VCLONED		0x10000 /* vnode created for cloning device */
+#define VSPECINF	0x20000	/* delayed v_specinfo free */
 
 #define	VSIZENOTSET	((voff_t)-1)
 
