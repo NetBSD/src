@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.133 2003/04/16 11:35:10 salo Exp $
+#	$NetBSD: Makefile,v 1.134 2003/06/26 06:30:12 tshiozak Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -13,8 +13,8 @@ SUBDIR= apply apropos asa at audio banner basename biff \
 	head hexdump id indent innetgr ipcrm ipcs join jot \
 	kdump ktrace ktruss lam last lastcomm ldd leave less \
 	lex locate lock logger login logname look lorder m4 \
-	machine mail make man menuc mesg midiplay mixerctl \
-	mkdep mkfifo mklocale mkstr mktemp modstat msgc msgs \
+	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
+	mkdep mkesdb mkfifo mklocale mkstr mktemp modstat msgc msgs \
 	netgroup netstat newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
