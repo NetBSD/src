@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.8 1997/10/19 05:03:59 lukem Exp $	*/
+/*	$NetBSD: tty.c,v 1.9 1997/10/19 16:49:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.8 1997/10/19 05:03:59 lukem Exp $");
+__RCSID("$NetBSD: tty.c,v 1.9 1997/10/19 16:49:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,8 @@ grabh(hp, gflags)
 	c_erase = ttybuf.c_cc[VERASE];
 	c_kill = ttybuf.c_cc[VKILL];
 #ifndef TIOCSTI
-	ttybuf.c_cc[VERASE] = 0;
-	ttybuf.c_cc[VKILL] = 0;
+	ttybuf.c_cc[VERASE] = _POSIX_VDISABLE;
+	ttybuf.c_cc[VKILL] = _POSIX_VDISABLE;
 	if ((saveint = signal(SIGINT, SIG_IGN)) == SIG_DFL)
 		signal(SIGINT, SIG_DFL);
 	if ((savequit = signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
