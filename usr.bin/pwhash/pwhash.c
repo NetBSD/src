@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.8 2004/11/01 21:12:59 dsl Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.9 2004/11/17 14:57:48 wiz Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.8 2004/11/01 21:12:59 dsl Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.9 2004/11/17 14:57:48 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-b rounds] [-k] [-m] [-S rounds] [-s salt] [-p | string]\n",
+	    "usage: %s [-km] [-b rounds] [-S rounds] [-s salt] [-p | string]\n",
 	    getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwhash.1,v 1.4 2004/10/13 23:46:42 snj Exp $
+.\"	$NetBSD: pwhash.1,v 1.5 2004/11/17 14:57:48 wiz Exp $
 .\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -32,12 +32,11 @@
 .Nd hashes passwords from the command line or standard input
 .Sh SYNOPSIS
 .Nm pwhash
+.Op Fl km
 .Op Fl b Ar rounds
-.Op Fl k
-.Op Fl m
-.Op Fl p | Ar string
 .Op Fl S Ar rounds
 .Op Fl s Ar salt
+.Op Fl p | Ar string
 .Sh DESCRIPTION
 .Nm
 prints the encrypted form of
