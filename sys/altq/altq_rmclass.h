@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.3 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.4 2003/08/20 23:32:25 itojun Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.7 2002/01/11 07:32:54 kjc Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define	RM_MAXPRIO	8	/* Max priority */
 
 #ifdef _KERNEL
 
@@ -113,7 +115,6 @@ struct red;
 #else
 #define	RM_MAXQUEUED	16	/* Max number of packets downstream of CBQ */
 #endif
-#define	RM_MAXPRIO	8	/* Max priority */
 #define	RM_MAXQUEUE	64	/* Max queue length */
 #define	RM_FILTER_GAIN	5	/* log2 of gain, e.g., 5 => 31/32 */
 #define	RM_POWER	(1 << RM_FILTER_GAIN)
