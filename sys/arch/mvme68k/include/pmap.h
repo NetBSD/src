@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2000/05/27 22:37:47 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2000/09/22 08:27:00 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -147,6 +147,12 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
 #define PMAP_NEED_PROCWR
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+boolean_t pmap_zero_page_uncached(paddr_t);
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 #endif /* _KERNEL */
 
