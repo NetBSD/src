@@ -1,7 +1,9 @@
-/* search.c -- searching large bodies of text.
-   $Id: search.c,v 1.1.1.2 2001/07/25 16:20:50 assar Exp $
+/*	$NetBSD: search.c,v 1.1.1.3 2003/01/17 14:54:32 wiz Exp $	*/
 
-   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
+/* search.c -- searching large bodies of text.
+   Id: search.c,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1993, 1997, 1998, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -301,7 +303,7 @@ skip_non_whitespace (string)
 {
   register int i;
 
-  for (i = 0; string && !whitespace (string[i]); i++);
+  for (i = 0; string && string[i] && !whitespace (string[i]); i++);
   return (i);
 }
 

@@ -1,7 +1,9 @@
-/* info.h -- Header file which includes all of the other headers.
-   $Id: info.h,v 1.1.1.2 2001/07/25 16:20:48 assar Exp $
+/*	$NetBSD: info.h,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
 
-   Copyright (C) 1993, 97, 98, 99 Free Software Foundation, Inc.
+/* info.h -- Header file which includes all of the other headers.
+   Id: info.h,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +27,7 @@
 /* We always want these, so why clutter up the compile command?  */
 #define HANDLE_MAN_PAGES
 #define NAMED_FUNCTIONS
+#define INFOKEY
 
 /* System dependencies.  */
 #include "system.h"
@@ -34,12 +37,11 @@ typedef int Function ();
 typedef void VFunction ();
 typedef char *CFunction ();
 
-
 #include "filesys.h"
+#include "doc.h"
 #include "display.h"
 #include "session.h"
 #include "echo-area.h"
-#include "doc.h"
 #include "footnotes.h"
 #include "gc.h"
 
@@ -119,13 +121,13 @@ extern int info_error_rings_bell_p;
 /* Non-zero means default keybindings are loosely modeled on vi(1).  */
 extern int vi_keys_p;
 
+/* Non-zero means don't remove ANSI escape sequences from man pages.  */
+extern int raw_escapes_p;
+
 /* Print FORMAT with ARG1 and ARG2.  If the window system was initialized,
    then the message is printed in the echo area.  Otherwise, a message is
    output to stderr. */
 extern void info_error ();
-
-/* The version numbers of Info. */
-extern int info_major_version, info_minor_version;
 
 /* Error message defines. */
 extern char *msg_cant_find_node;
@@ -146,13 +148,14 @@ extern char *msg_win_too_small;
 extern char *msg_cant_make_help;
 
 
-/* Found in info-utils.c. */
-extern char *filename_non_directory ();
+extern char *filename_non_directory ();	/* Found in info-utils.c. */
+
+#if defined(INFOKEY)
+extern void set_variable_to_value ();	/* Found in variables.c. */
+#endif /* INFOKEY */
 
 #if !defined (BUILDING_LIBRARY)
-/* Found in session.c */
-extern int info_windows_initialized_p;
-
+extern int info_windows_initialized_p;	/* Found in session.c */
 /* Found in window.c. */
 extern void message_in_echo_area (), unmessage_in_echo_area ();
 #endif /* !BUILDING_LIBRARY */
