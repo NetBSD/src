@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.28 1994/04/07 06:50:38 mycroft Exp $
+ *	$Id: icu.s,v 1.29 1994/04/08 20:46:18 mycroft Exp $
  */
 
 /*
@@ -133,10 +133,10 @@ IDTVEC(softtty)
 1:
 
 IDTVEC(softnet)
-	movl	%ebx,%eax
-	orl	$SIR_NETMASK,%eax
+	leal	SIR_NETMASK(%ebx),%eax
 	movl	%eax,_cpl
-	movl	_netisr,%edi
+	xorl	%edi,%edi
+	xchgl	_netisr,%edi
 	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
 	DONET(NETISR_IP, _ipintr)
@@ -160,8 +160,7 @@ IDTVEC(softnet)
 	jmp	%esi
 
 IDTVEC(softclock)
-	movl	%ebx,%eax
-	orl	$SIR_CLOCKMASK,%eax
+	leal	SIR_CLOCKMASK(%ebx),%eax
 	movl	%eax,_cpl
 	pushl   %ebx			# XXX previous cpl (not used)
 	pushl	%esp			# XXX pointer to frame
