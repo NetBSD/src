@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26.6.1 1997/11/09 20:14:52 mellon Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.2 1997/11/20 03:15:31 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.1 1997/11/09 20:14:52 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.2 1997/11/20 03:15:31 mellon Exp $");
 
 #include "rasterconsole.h"
 
@@ -326,7 +326,7 @@ dtopopen(dev, flag, mode, p)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-#if NRASTERRCONSOLE > 0
+#if NRASTERCONSOLE > 0
 	/* handle raster console specially */
 	if (tp == DTOP_TTY(0) && firstopen) {
 	  	extern struct tty *fbconstty;
