@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.29.8.1 2002/05/16 12:55:00 gehenna Exp $	*/
+/*	$NetBSD: sem.c,v 1.29.8.2 2002/05/19 13:55:18 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -966,6 +966,7 @@ void
 adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 {
 	struct devm *dm;
+	char mstr[16];
 
 	if (cmajor < 0 || cmajor >= 4096) {
 		error("character major %d is invalid", cmajor);
@@ -979,6 +980,14 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 		return;
 	}
 
+	(void)snprintf(mstr, sizeof(mstr), "%d", cmajor);
+	if (ht_lookup(alldevmtab, intern(mstr)) != NULL) {
+		xerror(yyfile, currentline(),
+		       "device-major of character major '%d' is already "
+		       "defined", cmajor);
+		return;
+	}
+
 	dm = emalloc(sizeof(*dm));
 	dm->dm_srcfile = yyfile;
 	dm->dm_srcline = currentline();
@@ -987,6 +996,9 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 	dm->dm_bmajor = bmajor;
 	dm->dm_opts = options;
 	dm->dm_next = NULL;
+
+	if (ht_insert(alldevmtab, intern(mstr), dm))
+		panic("adddevm: %s char %d block %d", name, cmajor, bmajor);
 
 	*nextdevm = dm;
 	nextdevm = &dm->dm_next;

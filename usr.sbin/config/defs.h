@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.3 2002/05/16 13:00:43 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.4 2002/05/19 13:55:18 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -316,7 +316,7 @@ struct prefix {
  * Device major informations.
  */
 struct devm {
-	struct devm	*dm_next;	 /* linked list */
+	struct devm	*dm_next;	/* linked list */
 	const char	*dm_srcfile;	/* the name of the "devsw" file */
 	u_short		dm_srcline;	/* the line number */
 	const char	*dm_name;	/* [bc]devsw name */
@@ -364,6 +364,7 @@ struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *alldevmtab;	/* all devm lookup */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 
