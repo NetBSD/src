@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.23 2000/12/09 01:29:45 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.24 2001/01/17 04:05:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -226,6 +226,10 @@ struct rt_msghdr {
 struct rt_addrinfo {
 	int	rti_addrs;
 	struct	sockaddr *rti_info[RTAX_MAX];
+	int	rti_flags;
+	struct	ifaddr *rti_ifa;
+	struct	ifnet *rti_ifp;
+	struct	rt_msghdr *rti_rtm;
 };
 
 struct route_cb {
@@ -305,11 +309,13 @@ void	 rtalloc __P((struct route *));
 struct rtentry *
 	 rtalloc1 __P((struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));
+int	 rt_getifa __P((struct rt_addrinfo *));
 int	 rtinit __P((struct ifaddr *, int, int));
 int	 rtioctl __P((u_long, caddr_t, struct proc *));
 void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
+int	 rtrequest1 __P((int, struct rt_addrinfo *, struct rtentry **));
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

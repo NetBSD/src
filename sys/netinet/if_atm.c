@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.12 2000/03/30 13:24:53 augustss Exp $       */
+/*      $NetBSD: if_atm.c,v 1.13 2001/01/17 04:05:44 itojun Exp $       */
 
 /*
  *
@@ -79,10 +79,10 @@
  */
 
 void
-atm_rtrequest(req, rt, sa)
+atm_rtrequest(req, rt, info)
 	int req;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct atm_pseudoioctl api;

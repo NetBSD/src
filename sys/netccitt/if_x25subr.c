@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.22 2000/03/30 13:53:33 augustss Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.23 2001/01/17 04:05:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -442,10 +442,10 @@ x25_iftimeout(ifp)
  * or deletions of old ones.
  */
 void
-x25_rtrequest(cmd, rt, dst)
+x25_rtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *dst;
+	struct rt_addrinfo *info;
 {
 	struct llinfo_x25 *lx = (struct llinfo_x25 *) rt->rt_llinfo;
 	struct pklcd *lcp;

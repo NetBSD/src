@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.23 2000/03/30 13:10:11 augustss Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.24 2001/01/17 04:05:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -166,10 +166,10 @@ union sockunion {
  * NOTES:		This does a lot of obscure magic;
  */
 void
-llc_rtrequest(req, rt, sa)
+llc_rtrequest(req, rt, info)
 	int             req;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	union sockunion *gate = (union sockunion *) rt->rt_gateway;
 	struct llinfo_llc *lc = (struct llinfo_llc *) rt->rt_llinfo;
@@ -179,7 +179,7 @@ llc_rtrequest(req, rt, sa)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SNPA]) {
-		printf("llc_rtrequest(%d, %p, %p)\n", req, rt, sa);
+		printf("llc_rtrequest(%d, %p, %p)\n", req, rt, info);
 	}
 #endif
 	if (rt->rt_flags & RTF_GATEWAY)
