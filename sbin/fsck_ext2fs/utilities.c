@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.4 1998/03/30 02:07:59 mrg Exp $	*/
+/*	$NetBSD: utilities.c,v 1.5 2000/10/10 20:24:51 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.4 1998/03/30 02:07:59 mrg Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.5 2000/10/10 20:24:51 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,7 @@ dofix(idesc, msg)
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else
-			pwarn(msg);
+			pwarn("%s", msg);
 		if (preen) {
 			printf(" (SALVAGED)\n");
 			idesc->id_fix = FIX;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.19 1999/10/01 04:35:22 perseant Exp $	*/
+/*	$NetBSD: dump.h,v 1.20 2000/10/10 20:24:50 is Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -160,10 +160,10 @@ ino_t	fs_maxino __P((void));
 /* operator interface functions */
 void	broadcast __P((char *message));
 void	lastdump __P((int arg));	/* int should be char */
-void	msg __P((const char *fmt, ...));
-void	msgtail __P((const char *fmt, ...));
+void	msg __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
+void	msgtail __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
 int	query __P((char *question));
-void	quit __P((const char *fmt, ...));
+void	quit __P((const char *fmt, ...)) __attribute__((__format__(__printf__,1,2)));
 void	set_operators __P((void));
 time_t	do_stats __P((void));
 void	statussig __P((int));

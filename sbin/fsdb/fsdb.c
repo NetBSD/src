@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.16 1999/03/09 16:11:47 bouyer Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.17 2000/10/10 20:24:52 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.16 1999/03/09 16:11:47 bouyer Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.17 2000/10/10 20:24:52 is Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -487,7 +487,7 @@ print_blks(buf, size, blknum)
 		}
 		if (chars == 0)
 			printf("%d: ", *blknum);
-		printf(prbuf);
+		printf("%s", prbuf);
 		chars += strlen(prbuf);
 	}
 	printf("\n");

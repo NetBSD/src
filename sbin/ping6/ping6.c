@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.20 2000/10/08 00:26:38 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.21 2000/10/10 20:24:53 is Exp $	*/
 /*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.20 2000/10/08 00:26:38 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.21 2000/10/10 20:24:53 is Exp $");
 #endif
 #endif
 
@@ -787,7 +787,7 @@ main(argc, argv)
 			struct addrinfo *iaip;
 
 			if ((error = getaddrinfo(argv[hops], NULL, &hints, &iaip)))
-				errx(1, gai_strerror(error));
+				errx(1, "%s", gai_strerror(error));
 			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
 				errx(1,
 				     "bad addr family of an intermediate addr");
