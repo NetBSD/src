@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.8 2004/03/22 16:39:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.7 2003/06/29 22:31:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.8 2004/03/22 16:39:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -916,9 +916,6 @@ ntfs_ntlookupfile(
 	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize));
 
 	rdbuf = (caddr_t) malloc(blsize, M_TEMP, M_WAITOK);
-
-	dprintf(("ntfs_ntlookupfile: blksz: %d\n", blsize, rdsize));
-
 
     loop:
 	rdsize = vap->va_datalen;
