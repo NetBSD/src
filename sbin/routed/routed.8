@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.33 2001/10/01 10:31:45 kleink Exp $
+.\"	$NetBSD: routed.8,v 1.34 2001/11/16 12:09:19 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,7 +91,7 @@ non-static routes in kernel table.
 Static routes in the kernel table are preserved and
 included in RIP responses if they have a valid RIP metric
 (see
-.Xr route 8 ).
+.Xr route 8 ) .
 .Pp
 If more than one interface is present (not counting the loopback interface),
 it is assumed that the host should forward packets among the
@@ -116,7 +116,7 @@ with a "hop count" metric (a count of 16 or greater is
 considered "infinite").
 Advertised metrics reflect the metric associated with interface
 (see
-.Xr ifconfig 8 ),
+.Xr ifconfig 8 ) ,
 so setting the metric on an interface
 is an effective way to steer traffic.
 .Pp
@@ -184,7 +184,7 @@ support multicasting.
 If no response is received on a remote interface, if there are errors
 while sending responses,
 or if there are more errors than input or output (see
-.Xr netstat 1 ),
+.Xr netstat 1 ) ,
 then the cable or some other part of the interface is assumed to be
 disconnected or broken, and routes are adjusted appropriately.
 .Pp
@@ -459,7 +459,7 @@ or
 is the name of the destination network or host.
 It may be a symbolic network name or an Internet address
 specified in "dot" notation (see
-.Xr inet 3 ).
+.Xr inet 3 ) .
 (If it is a name, then it must either be defined in
 .Pa /etc/networks
 or
@@ -482,7 +482,7 @@ be forwarded.
 is the hop count to the destination host or network.
 .Ar " Host hname "
 is equivalent to
-.Ar " net  nname/32 ".
+.Ar " net  nname/32 " .
 .Pp
 One of the keywords
 .Cm passive ,
@@ -657,7 +657,6 @@ causes RIP to allow ICMP Redirect messages when the system is acting
 as a router and forwarding packets.
 Otherwise, ICMP Redirect messages are overridden.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/gateways -compact
 .It Pa /etc/gateways
@@ -672,11 +671,11 @@ for distant gateways
 .%R XSIS 028112
 .%Q Xerox System Integration Standard
 .Re
-.Sh BUGS
-It does not always detect unidirectional failures in network interfaces,
-for example, when the output side fails.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+It does not always detect unidirectional failures in network interfaces,
+for example, when the output side fails.
