@@ -1,5 +1,5 @@
 #	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.4 1993/08/15 20:42:43 mycroft Exp $
+#	$Id: bsd.own.mk,v 1.5 1993/08/15 21:36:10 mycroft Exp $
 
 BINGRP?=	bin
 BINOWN?=	bin
@@ -18,8 +18,8 @@ LIBOWN?=	${BINOWN}
 LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=        /usr/share/doc
-DOCGRP?=	${DOCGRP}
-DOCOWN?=	${DOCOWN}
+DOCGRP?=	${BINGRP}
+DOCOWN?=	${BINOWN}
 DOCMODE?=       ${NONBINMODE}
 
 COPY?=		-c
