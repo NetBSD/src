@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: misc.c,v 1.3 1994/09/19 03:34:16 mycroft Exp $";
+static char *rcsid = "$Id: misc.c,v 1.4 1994/09/19 03:35:16 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ void
 badfmt()
 {
 
-	error = EFTYPE;
+	errno = EFTYPE;
 	err(1, "%s", archive);
 }
 
