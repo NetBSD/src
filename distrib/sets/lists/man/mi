@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.695 2004/05/18 05:38:18 christos Exp $
+# $NetBSD: mi,v 1.696 2004/05/19 10:29:21 itojun Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1950,6 +1950,7 @@
 ./usr/share/man/cat8/rmail.0			man-uucp-catman		.cat
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
+./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/route6d.0			man-router-catman	.cat
@@ -4053,6 +4054,7 @@
 ./usr/share/man/man8/rmail.8			man-uucp-man		.man
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
 ./usr/share/man/man8/rndc.8			man-bind-man		.man
+./usr/share/man/man8/rndc-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
 ./usr/share/man/man8/route6d.8			man-router-man		.man
