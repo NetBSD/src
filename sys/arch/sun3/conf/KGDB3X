@@ -1,4 +1,4 @@
-# $NetBSD: KGDB3X,v 1.18 1998/02/05 04:56:29 gwr Exp $
+# $NetBSD: KGDB3X,v 1.19 1998/02/08 05:10:52 gwr Exp $
 
 # KGDB3X Sun3X (3/80, 3/470)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -6,15 +6,10 @@
 #	(gdb) set remotebaud 19200
 #	(gdb) target remote /dev/ttyb
 
-include "arch/sun3/conf/std.sun3"
+include "arch/sun3/conf/std.sun3x"
 
-# Machines to be supported by this kernel.  Note:
-# The SUN3 and SUN3X options are mutually exclusive!
-# (Your kernel will only run on one or the other.)
-makeoptions	MACHTYPE=sun3x
-options 	_SUN3X_
-
-# options 	FPU_EMULATE	# Every Sun3X has an FPU, right?
+# Machines to be supported by this kernel
+# options 	FPU_EMULATE	# XXX - Ever needed?
 # options 	HAVE_IOCACHE	# XXX - Not yet supported.
 
 # Needs to be set per system.  i.e change these as you see fit
@@ -162,8 +157,24 @@ xd* at xdc? drive ?
 # Frame buffer devices
 #
 
-# bwtwo - Monochrome frame buffer.
-bwtwo0 at obmem0 addr 0x50400000 ipl 4
+# P4 Monochrome frame buffer.
+bwtwo0  at obmem0 addr 0x50300000
+
+# P4 8-bit color frame buffer
+cgfour0 at obmem0 addr 0x50300000
+
+# P4 accelerated 8-bit color frame buffer
+# cgsix0  at obmem0 addr 0x50000000
+
+# P4 24-bit color frame buffer
+# cgeight0 at obmem0 addr 0x50300000
+
+# Sun-3 color board, or CG5 8-bit frame buffer (VME A24/D16).
+# This driver is going to need work in its mmap function.
+# cgtwo0 at vme2 addr 0x400000 ipl 4 vect 0xA8
+
+# Support for the CG9 24-bit frame buffer (VME A32/D32).
+# cgnine0 at vme5 addr 0x08000000 ipl 4 vect 0xAA
 
 #
 # SCSI infrastructure

@@ -1,16 +1,11 @@
-#	$NetBSD: FOUR_TTYS,v 1.17 1998/02/05 04:56:26 gwr Exp $
+#	$NetBSD: FOUR_TTYS,v 1.18 1998/02/08 05:10:48 gwr Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
 
 include "arch/sun3/conf/std.sun3"
 
-# Machines to be supported by this kernel.  Note:
-# The SUN3 and SUN3X options are mutually exclusive!
-# (Your kernel will only run on one or the other.)
-makeoptions	MACHTYPE=sun3
-options 	_SUN3_
-
+# Machines to be supported by this kernel
 options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -116,7 +111,7 @@ zstty3	at zsc0 channel 1 flags 1 # ttyd
 # Network devices
 #
 
-# Intel Ethernetc (onboard, or VME)
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x0C0000 ipl 3
 ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
 
