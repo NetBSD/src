@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.179 2003/05/11 15:19:20 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.180 2003/05/21 16:48:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2003/05/11 15:19:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180 2003/05/21 16:48:34 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -570,7 +570,7 @@ copyfault:
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			printf("uvm_fault(%p, 0x%lx, 0, %d) -> 0x%x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}
