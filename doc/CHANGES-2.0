@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.405 2004/08/16 05:51:17 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.406 2004/08/16 17:46:43 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6701,3 +6701,13 @@ sys/netipsec/ipsec_netbsd.c			1.12
 
 	Remove redundant instantiation of esp_net_deflev sysctl node. PR#26672
 	[atatat, ticket #766]
+
+sys/arch/i386/i386/autoconf.c			1.77
+sys/arch/i386/i386/machdep.c			1.557
+sys/arch/i386/stand/pxeboot/Makefile		1.7
+sbin/fdisk/fdisk.c				1.81
+
+	Add support to pxeboot for reading the bios disk geometry
+	as well as fixing several related bugs that occur when the bios
+	geometry is not read by the boot loader.
+	[dbj, ticket #767]
