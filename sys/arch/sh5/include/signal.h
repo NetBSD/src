@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 2003/10/18 18:29:53 briggs Exp $	*/
+/*	$NetBSD: signal.h,v 1.11 2003/12/07 20:01:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,11 +46,7 @@
 
 #include <sys/featuretest.h>
 
-#ifndef _LP64
-typedef long long	sig_atomic_t;
-#else
-typedef long	sig_atomic_t;
-#endif
+typedef __int64_t	sig_atomic_t;
 
 #define __HAVE_SIGINFO
 
