@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 1994/10/26 21:10:04 cgd Exp $	*/
+/*	$NetBSD: trap.h,v 1.5 1996/03/19 04:34:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,5 +60,14 @@
 #define T_RES_INST		10	/* Reserved instruction exception */
 #define T_COP_UNUSABLE		11	/* Coprocessor unusable */
 #define T_OVFLOW		12	/* Arithmetic overflow */
+
+/*
+ * Trap definitions added for r4000 port.
+ */
+#define	T_TRAP			13	/* Trap instruction */
+#define	T_VCEI			14	/* Virtual coherency instruction */
+#define	T_FPE			15	/* Floating point exception */
+#define	T_WATCH			23	/* Watch address reference */
+#define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x10	/* user-mode flag or'ed with type */
