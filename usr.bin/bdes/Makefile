@@ -1,11 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1996/10/18 06:12:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/03/24 21:59:30 christos Exp $
 
 MAN=	bdes.1
-
-SCRIPT=	bdes.sh
-
-realinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/${SCRIPT} ${DESTDIR}${BINDIR}/bdes
+SCRIPTS=bdes.sh
 
 .include <bsd.prog.mk>

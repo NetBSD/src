@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.7 1996/10/18 05:52:26 thorpej Exp $
+#	$Id: Makefile,v 1.8 1997/03/24 21:57:01 christos Exp $
 
 # Missing: connectives, words
 
@@ -8,9 +8,5 @@ NOOBJ=	noobj
 LINKS=	${BINDIR}/dict/web2 ${BINDIR}/dict/words
 
 all clean cleandir depend lint tags:
-
-realinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
-	    ${DESTDIR}${BINDIR}/dict
 
 .include <bsd.prog.mk>

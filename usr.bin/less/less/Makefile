@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/01/09 20:20:32 tls Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 21:59:40 christos Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
 
 .include "../../Makefile.inc"
@@ -15,8 +15,7 @@ DPADD+=	${LIBTERM}
 MLINKS=	less.1 more.1 less.1 page.1
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
-beforeinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/more.help \
-	    ${DESTDIR}/usr/share/misc
+FILES=more.help
+FILESDIR=/usr/share/misc
 
 .include <bsd.prog.mk>

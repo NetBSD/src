@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/01/28 00:49:36 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1997/03/24 21:59:35 christos Exp $
 
-MAGIC=		/etc/magic
-MAGICOWN=	bin
-MAGICGRP=	bin
-MAGICMODE=	444
+FILESDIR=	/etc
+FILES=		magic
+MAGIC=		${FILESDIR}/${FILES}
 
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
@@ -18,11 +17,8 @@ MAGFILES=	$(.CURDIR)/magdir/Header\
 		$(.CURDIR)/magdir/Localstuff\
 		$(.CURDIR)/magdir/netbsd\
 		$(.CURDIR)/magdir/[a-z]*
+
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
-
-afterinstall:
-	${INSTALL} ${COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
-		$(DESTDIR)$(MAGIC)
 
 .include <bsd.prog.mk>
