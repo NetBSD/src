@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.119 2000/04/19 08:44:33 haya Exp $
+# $NetBSD: ALPHA,v 1.120 2000/04/28 13:51:56 ad Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.119 $"
+ident		"ALPHA-$Revision: 1.120 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -214,6 +214,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
@@ -365,6 +366,9 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Floppy drives
 fd*	at	fdc? drive ?
+
+# Hardware RAID devices
+ca*	at	cac? unit ?
 
 # USB bus support
 usb*	at uhci?
