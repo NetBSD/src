@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pwd.1	6.5 (Berkeley) 6/27/91
-.\"	$Id: pwd.1,v 1.5 1993/08/01 07:48:10 mycroft Exp $
+.\"	$Id: pwd.1,v 1.6 1993/08/28 03:57:20 jtc Exp $
 .\"
 .Dd June 27, 1991
 .Dt PWD 1
@@ -50,11 +50,14 @@ the standard output.
 .Pp
 The pwd utility exits 0 on success, and >0 if an error occurs.
 .Sh STANDARDS
-The pwd function is expected to be POSIX 1003.2 compatible
+The 
+.Nm pwd
+utility conforms to 
+.St -p1003.2-92 .
 .Sh SEE ALSO
 .Xr cd 1 ,
 .Xr csh 1 ,
-.Xr getwd 3
+.Xr getcwd 3
 .Sh BUGS
 In
 .Xr csh  1
