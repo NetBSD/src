@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.39 2003/06/15 23:09:05 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.40 2003/11/16 11:09:07 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -438,20 +438,21 @@ int bus_space_probe __P((
 	    ((void)(t), *(volatile u_int64_t *)((h) + (o)))
 
 
-#if __FULL_SPARC_BUS_SPACE
 
-static __inline__ u_int8_t bus_space_read_1 __P((bus_space_tag_t,
-						  bus_space_handle_t,
-						  bus_size_t));
-static __inline__ u_int16_t bus_space_read_2 __P((bus_space_tag_t,
-						  bus_space_handle_t,
-						  bus_size_t));
-static __inline__ u_int32_t bus_space_read_4 __P((bus_space_tag_t,
-						  bus_space_handle_t,
-						  bus_size_t));
-static __inline__ u_int64_t bus_space_read_8 __P((bus_space_tag_t,
-						  bus_space_handle_t,
-						  bus_size_t));
+static u_int8_t bus_space_read_1 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t));
+static u_int16_t bus_space_read_2 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t));
+static u_int32_t bus_space_read_4 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t));
+static u_int64_t bus_space_read_8 __P((bus_space_tag_t,
+					bus_space_handle_t,
+					bus_size_t));
+
+#if __FULL_SPARC_BUS_SPACE
 
 static __inline__ u_int8_t
 bus_space_read_1(t, h, o)
@@ -459,6 +460,7 @@ bus_space_read_1(t, h, o)
 	bus_space_handle_t	h;
 	bus_size_t		o;
 {
+	__insn_barrier();
 	return t->sparc_read_1 ?
 		(*t->sparc_read_1)(t, h, o) :
 		bus_space_read_1_real(t, h, o);
@@ -470,6 +472,7 @@ bus_space_read_2(t, h, o)
 	bus_space_handle_t	h;
 	bus_size_t		o;
 {
+	__insn_barrier();
 	return t->sparc_read_2 ?
 		(*t->sparc_read_2)(t, h, o) :
 		bus_space_read_2_real(t, h, o);
@@ -481,6 +484,7 @@ bus_space_read_4(t, h, o)
 	bus_space_handle_t	h;
 	bus_size_t		o;
 {
+	__insn_barrier();
 	return t->sparc_read_4 ?
 		(*t->sparc_read_4)(t, h, o) :
 		bus_space_read_4_real(t, h, o);
@@ -492,6 +496,7 @@ bus_space_read_8(t, h, o)
 	bus_space_handle_t	h;
 	bus_size_t		o;
 {
+	__insn_barrier();
 	return t->sparc_read_8 ?
 		(*t->sparc_read_8)(t, h, o) :
 		bus_space_read_8_real(t, h, o);
@@ -499,10 +504,45 @@ bus_space_read_8(t, h, o)
 
 #else /* __FULL_SPARC_BUS_SPACE */
 
-#define	bus_space_read_1	bus_space_read_1_real
-#define	bus_space_read_2	bus_space_read_2_real
-#define	bus_space_read_4	bus_space_read_4_real
-#define	bus_space_read_8	bus_space_read_8_real
+static __inline__ u_int8_t
+bus_space_read_1(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	__insn_barrier();
+	return bus_space_read_1_real(t, h, o);
+}
+
+static __inline__ u_int16_t
+bus_space_read_2(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	__insn_barrier();
+	return bus_space_read_2_real(t, h, o);
+}
+
+static __inline__ u_int32_t
+bus_space_read_4(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	__insn_barrier();
+	return bus_space_read_4_real(t, h, o);
+}
+
+static __inline__ u_int64_t
+bus_space_read_8(t, h, o)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+{
+	__insn_barrier();
+	return bus_space_read_8_real(t, h, o);
+}
 
 #endif /* __FULL_SPARC_BUS_SPACE */
 
@@ -538,24 +578,25 @@ bus_space_read_8(t, h, o)
 } while (/* CONSTCOND */ 0)
 
 
-#if __FULL_SPARC_BUS_SPACE
 
-static __inline__ void bus_space_write_1 __P((bus_space_tag_t,
-					      bus_space_handle_t,
-					      bus_size_t,
-					      const u_int8_t));
-static __inline__ void bus_space_write_2 __P((bus_space_tag_t,
-					      bus_space_handle_t,
-					      bus_size_t,
-					      const u_int16_t));
-static __inline__ void bus_space_write_4 __P((bus_space_tag_t,
-					      bus_space_handle_t,
-					      bus_size_t,
-					      const u_int32_t));
-static __inline__ void bus_space_write_8 __P((bus_space_tag_t,
-					      bus_space_handle_t,
-					      bus_size_t,
-					      const u_int64_t));
+static void bus_space_write_1 __P((bus_space_tag_t,
+				   bus_space_handle_t,
+				   bus_size_t,
+				   const u_int8_t));
+static void bus_space_write_2 __P((bus_space_tag_t,
+				   bus_space_handle_t,
+				   bus_size_t,
+				   const u_int16_t));
+static void bus_space_write_4 __P((bus_space_tag_t,
+				   bus_space_handle_t,
+				   bus_size_t,
+				   const u_int32_t));
+static void bus_space_write_8 __P((bus_space_tag_t,
+				   bus_space_handle_t,
+				   bus_size_t,
+				   const u_int64_t));
+
+#if __FULL_SPARC_BUS_SPACE
 
 static __inline__ void
 bus_space_write_1(t, h, o, v)
@@ -564,6 +605,7 @@ bus_space_write_1(t, h, o, v)
 	bus_size_t		o;
 	u_int8_t		v;
 {
+	__insn_barrier();
 	if (t->sparc_write_1)
 		(*t->sparc_write_1)(t, h, o, v);
 	else
@@ -577,6 +619,7 @@ bus_space_write_2(t, h, o, v)
 	bus_size_t		o;
 	u_int16_t		v;
 {
+	__insn_barrier();
 	if (t->sparc_write_2)
 		(*t->sparc_write_2)(t, h, o, v);
 	else
@@ -590,6 +633,7 @@ bus_space_write_4(t, h, o, v)
 	bus_size_t		o;
 	u_int32_t		v;
 {
+	__insn_barrier();
 	if (t->sparc_write_4)
 		(*t->sparc_write_4)(t, h, o, v);
 	else
@@ -603,6 +647,7 @@ bus_space_write_8(t, h, o, v)
 	bus_size_t		o;
 	u_int64_t		v;
 {
+	__insn_barrier();
 	if (t->sparc_write_8)
 		(*t->sparc_write_8)(t, h, o, v);
 	else
@@ -611,10 +656,49 @@ bus_space_write_8(t, h, o, v)
 
 #else /* __FULL_SPARC_BUS_SPACE */
 
-#define	bus_space_write_1	bus_space_write_1_real
-#define	bus_space_write_2	bus_space_write_2_real
-#define	bus_space_write_4	bus_space_write_4_real
-#define	bus_space_write_8	bus_space_write_8_real
+static __inline__ void
+bus_space_write_1(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int8_t		v;
+{
+	__insn_barrier();
+	bus_space_write_1_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_2(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int16_t		v;
+{
+	__insn_barrier();
+	bus_space_write_2_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_4(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int32_t		v;
+{
+	__insn_barrier();
+	bus_space_write_4_real(t, h, o, v);
+}
+
+static __inline__ void
+bus_space_write_8(t, h, o, v)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int64_t		v;
+{
+	__insn_barrier();
+	bus_space_write_8_real(t, h, o, v);
+}
 
 #endif /* __FULL_SPARC_BUS_SPACE */
 
