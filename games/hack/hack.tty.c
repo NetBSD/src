@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.9 2001/03/25 20:44:03 jsm Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.10 2002/05/26 00:12:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.9 2001/03/25 20:44:03 jsm Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.10 2002/05/26 00:12:12 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -143,22 +143,11 @@ setftty()
 /* fatal error */
 /* VARARGS1 */
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
 	if (settty_needed)
 		settty((char *) 0);
 	vprintf(fmt, ap);
