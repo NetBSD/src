@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_input.c,v 1.34 2001/02/07 08:59:48 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.170 2001/02/07 07:50:02 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.35 2001/02/10 04:14:28 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.174 2001/02/09 06:17:41 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,10 +107,6 @@
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
 
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
-
 #include <netinet6/ip6protosw.h>
 
 /* we need it for NLOOP. */
@@ -134,12 +130,6 @@ int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
 
-#ifdef IPV6FIREWALL
-/* firewall hooks */
-ip6_fw_chk_t *ip6_fw_chk_ptr;
-ip6_fw_ctl_t *ip6_fw_ctl_ptr;
-#endif
-
 #ifdef PFIL_HOOKS
 struct pfil_head inet6_pfil_hook;
 #endif
@@ -157,8 +147,8 @@ static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int 
 void
 ip6_init()
 {
-	register struct ip6protosw *pr;
-	register int i;
+	struct ip6protosw *pr;
+	int i;
 	struct timeval tv;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
@@ -174,9 +164,6 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-#ifdef IPV6FIREWALL
-	ip6_fw_init();
-#endif
 	/*
 	 * in many cases, random() here does NOT return random number
 	 * as initialization during bootstrap time occur in fixed order.
@@ -323,23 +310,6 @@ ip6_input(m)
 
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 
-#ifdef IPV6FIREWALL
-	/*
-	 * Check with the firewall...
-	 */
-	if (ip6_fw_chk_ptr) {
-		u_short port = 0;
-		/* If ipfw says divert, we have to just drop packet */
-		/* use port as a dummy argument */
-		if ((*ip6_fw_chk_ptr)(&ip6, NULL, &port, &m)) {
-			m_freem(m);
-			m = NULL;
-		}
-		if (!m)
-			return;
-	}
-#endif
-
 #ifdef ALTQ
 	/* XXX Temporary until ALTQ is changed to use a pfil hook */
 	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
@@ -362,6 +332,12 @@ ip6_input(m)
 	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
 	 * bypass security checks (act as if it was from 127.0.0.1 by using
 	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 *
+	 * This check chokes if we are in SIIT cloud.  As none of BSDs support
+	 * IPv4-less kernel compilation, we cannot support SIIT environment
+	 * at all.  So, it makes more sense for us to reject any malicious
+	 * packets for non-SIIT environment, than try to do a partical support
+	 * for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -384,6 +360,7 @@ ip6_input(m)
 		goto bad;
 	}
 #endif
+
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
@@ -455,9 +432,11 @@ ip6_input(m)
 	if (ip6_forward_rt.ro_rt != NULL &&
 	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 && 
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-			       &ip6_forward_rt.ro_dst.sin6_addr))
+			       &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
 		ip6stat.ip6s_forward_cachehit++;
 	else {
+		struct sockaddr_in6 *dst6;
+
 		if (ip6_forward_rt.ro_rt) {
 			/* route is down or destination is different */
 			ip6stat.ip6s_forward_cachemiss++;
@@ -466,9 +445,10 @@ ip6_input(m)
 		}
 
 		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
-		ip6_forward_rt.ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-		ip6_forward_rt.ro_dst.sin6_family = AF_INET6;
-		ip6_forward_rt.ro_dst.sin6_addr = ip6->ip6_dst;
+		dst6 = (struct sockaddr_in6 *)&ip6_forward_rt.ro_dst;
+		dst6->sin6_len = sizeof(struct sockaddr_in6);
+		dst6->sin6_family = AF_INET6;
+		dst6->sin6_addr = ip6->ip6_dst;
 
 		rtalloc((struct route *)&ip6_forward_rt);
 	}
@@ -742,7 +722,7 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	struct mbuf **mp;
 	int *offp;
 {
-	register struct mbuf *m = *mp;
+	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
 	u_int8_t *opt;
@@ -804,47 +784,49 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 	u_int32_t jumboplen;
 
 	for (; hbhlen > 0; hbhlen -= optlen, opt += optlen) {
-		switch(*opt) {
-		 case IP6OPT_PAD1:
-			 optlen = 1;
-			 break;
-		 case IP6OPT_PADN:
-			 if (hbhlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
-			 optlen = *(opt + 1) + 2;
-			 break;
-		 case IP6OPT_RTALERT:
-			 /* XXX may need check for alignment */
-			 if (hbhlen < IP6OPT_RTALERT_LEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
-			 if (*(opt + 1) != IP6OPT_RTALERT_LEN - 2)
-				  /* XXX: should we discard the packet? */
-				 log(LOG_ERR, "length of router alert opt is inconsitent(%d)",
-				     *(opt + 1));
-			 optlen = IP6OPT_RTALERT_LEN;
-			 bcopy((caddr_t)(opt + 2), (caddr_t)&rtalert_val, 2);
-			 *rtalertp = ntohs(rtalert_val);
-			 break;
-		 case IP6OPT_JUMBO:
+		switch (*opt) {
+		case IP6OPT_PAD1:
+			optlen = 1;
+			break;
+		case IP6OPT_PADN:
+			if (hbhlen < IP6OPT_MINLEN) {
+				ip6stat.ip6s_toosmall++;
+				goto bad;
+			}
+			optlen = *(opt + 1) + 2;
+			break;
+		case IP6OPT_RTALERT:
+			/* XXX may need check for alignment */
+			if (hbhlen < IP6OPT_RTALERT_LEN) {
+				ip6stat.ip6s_toosmall++;
+				goto bad;
+			}
+			if (*(opt + 1) != IP6OPT_RTALERT_LEN - 2) {
+				 /* XXX: should we discard the packet? */
+				log(LOG_ERR, "length of router alert opt is inconsitent(%d)",
+				    *(opt + 1));
+			}
+			optlen = IP6OPT_RTALERT_LEN;
+			bcopy((caddr_t)(opt + 2), (caddr_t)&rtalert_val, 2);
+			*rtalertp = ntohs(rtalert_val);
+			break;
+		case IP6OPT_JUMBO:
 			/* XXX may need check for alignment */
 			if (hbhlen < IP6OPT_JUMBO_LEN) {
 				ip6stat.ip6s_toosmall++;
 				goto bad;
 			}
-			if (*(opt + 1) != IP6OPT_JUMBO_LEN - 2)
-				 /* XXX: should we discard the packet? */
+			if (*(opt + 1) != IP6OPT_JUMBO_LEN - 2) {
+				/* XXX: should we discard the packet? */
 				log(LOG_ERR, "length of jumbopayload opt "
 				    "is inconsistent(%d)\n",
 				    *(opt + 1));
+			}
 			optlen = IP6OPT_JUMBO_LEN;
 
 			/*
 			 * IPv6 packets that have non 0 payload length
-			 * must not contain a jumbo paylod option.
+			 * must not contain a jumbo payload option.
 			 */
 			ip6 = mtod(m, struct ip6_hdr *);
 			if (ip6->ip6_plen) {
@@ -899,18 +881,18 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 			*plenp = jumboplen;
 
 			break;
-		 default:		/* unknown option */
-			 if (hbhlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
-			 if ((optlen = ip6_unknown_opt(opt, m,
-						       sizeof(struct ip6_hdr) +
-						       sizeof(struct ip6_hbh) +
-						       opt - opthead)) == -1)
-				 return(-1);
-			 optlen += 2;
-			 break;
+		default:		/* unknown option */
+			if (hbhlen < IP6OPT_MINLEN) {
+				ip6stat.ip6s_toosmall++;
+				goto bad;
+			}
+			if ((optlen = ip6_unknown_opt(opt, m,
+						      sizeof(struct ip6_hdr) +
+						      sizeof(struct ip6_hbh) +
+						      opt - opthead)) == -1)
+				return(-1);
+			optlen += 2;
+			break;
 		}
 	}
 
@@ -935,26 +917,26 @@ ip6_unknown_opt(optp, m, off)
 {
 	struct ip6_hdr *ip6;
 
-	switch(IP6OPT_TYPE(*optp)) {
-	 case IP6OPT_TYPE_SKIP: /* ignore the option */
-		 return((int)*(optp + 1));
-	 case IP6OPT_TYPE_DISCARD:	/* silently discard */
-		 m_freem(m);
-		 return(-1);
-	 case IP6OPT_TYPE_FORCEICMP: /* send ICMP even if multicasted */
-		 ip6stat.ip6s_badoptions++;
-		 icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, off);
-		 return(-1);
-	 case IP6OPT_TYPE_ICMP: /* send ICMP if not multicasted */
-		 ip6stat.ip6s_badoptions++;
-		 ip6 = mtod(m, struct ip6_hdr *);
-		 if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
-		     (m->m_flags & (M_BCAST|M_MCAST)))
-			 m_freem(m);
-		 else
-			 icmp6_error(m, ICMP6_PARAM_PROB,
-				     ICMP6_PARAMPROB_OPTION, off);
-		 return(-1);
+	switch (IP6OPT_TYPE(*optp)) {
+	case IP6OPT_TYPE_SKIP: /* ignore the option */
+		return((int)*(optp + 1));
+	case IP6OPT_TYPE_DISCARD:	/* silently discard */
+		m_freem(m);
+		return(-1);
+	case IP6OPT_TYPE_FORCEICMP: /* send ICMP even if multicasted */
+		ip6stat.ip6s_badoptions++;
+		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, off);
+		return(-1);
+	case IP6OPT_TYPE_ICMP: /* send ICMP if not multicasted */
+		ip6stat.ip6s_badoptions++;
+		ip6 = mtod(m, struct ip6_hdr *);
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+		    (m->m_flags & (M_BCAST|M_MCAST)))
+			m_freem(m);
+		else
+			icmp6_error(m, ICMP6_PARAM_PROB,
+				    ICMP6_PARAMPROB_OPTION, off);
+		return(-1);
 	}
 
 	m_freem(m);		/* XXX: NOTREACHED */
@@ -974,10 +956,10 @@ ip6_unknown_opt(optp, m, off)
  */
 void
 ip6_savecontrol(in6p, mp, ip6, m)
-	register struct in6pcb *in6p;
-	register struct mbuf **mp;
-	register struct ip6_hdr *ip6;
-	register struct mbuf *m;
+	struct in6pcb *in6p;
+	struct mbuf **mp;
+	struct ip6_hdr *ip6;
+	struct mbuf *m;
 {
 	struct proc *p = curproc;	/* XXX */
 	int privileged;
@@ -1015,7 +997,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 #endif
 
 	/* RFC 2292 sec. 5 */
-	if (in6p->in6p_flags & IN6P_PKTINFO) {
+	if ((in6p->in6p_flags & IN6P_PKTINFO) != 0) {
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		if (IN6_IS_SCOPE_LINKLOCAL(&pi6.ipi6_addr))
@@ -1044,7 +1026,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	 * be some hop-by-hop options which can be returned to normal user.
 	 * See RFC 2292 section 6.
 	 */
-	if ((in6p->in6p_flags & IN6P_HOPOPTS) && privileged) {
+	if ((in6p->in6p_flags & IN6P_HOPOPTS) != 0 && privileged) {
 		/*
 		 * Check if a hop-by-hop options header is contatined in the
 		 * received packet, and if so, store the options as ancillary
@@ -1101,7 +1083,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		 * Note that the order of the headers remains in
 		 * the chain of ancillary data.
 		 */
-		while(1) {	/* is explicit loop prevention necessary? */
+		while (1) {	/* is explicit loop prevention necessary? */
 			struct ip6_ext *ip6e;
 			int elen;
 
@@ -1129,50 +1111,50 @@ ip6_savecontrol(in6p, mp, ip6, m)
 			}
 #endif
 
-			switch(nxt) {
-		         case IPPROTO_DSTOPTS:
-				 if (!in6p->in6p_flags & IN6P_DSTOPTS)
-					 break;
+			switch (nxt) {
+		        case IPPROTO_DSTOPTS:
+				if (!in6p->in6p_flags & IN6P_DSTOPTS)
+					break;
 
-				 /*
-				  * We also require super-user privilege for
-				  * the option.
-				  * See the comments on IN6_HOPOPTS.
-				  */
-				 if (!privileged)
-					 break;
+				/*
+				 * We also require super-user privilege for
+				 * the option.
+				 * See the comments on IN6_HOPOPTS.
+				 */
+				if (!privileged)
+					break;
 
-				 *mp = sbcreatecontrol((caddr_t)ip6e, elen,
-						       IPV6_DSTOPTS,
-						       IPPROTO_IPV6);
-				 if (*mp)
-					 mp = &(*mp)->m_next;
-				 break;
+				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
+						      IPV6_DSTOPTS,
+						      IPPROTO_IPV6);
+				if (*mp)
+					mp = &(*mp)->m_next;
+				break;
 
-			 case IPPROTO_ROUTING:
-				 if (!in6p->in6p_flags & IN6P_RTHDR)
-					 break;
+			case IPPROTO_ROUTING:
+				if (!in6p->in6p_flags & IN6P_RTHDR)
+					break;
 
-				 *mp = sbcreatecontrol((caddr_t)ip6e, elen,
-						       IPV6_RTHDR,
-						       IPPROTO_IPV6);
-				 if (*mp)
-					 mp = &(*mp)->m_next;
-				 break;
+				*mp = sbcreatecontrol((caddr_t)ip6e, elen,
+						      IPV6_RTHDR,
+						      IPPROTO_IPV6);
+				if (*mp)
+					mp = &(*mp)->m_next;
+				break;
 
-			 case IPPROTO_UDP:
-			 case IPPROTO_TCP:
-			 case IPPROTO_ICMPV6:
-			 default:
-				 /*
-				  * stop search if we encounter an upper
-				  * layer protocol headers.
-				  */
-				 goto loopend;
+			case IPPROTO_UDP:
+			case IPPROTO_TCP:
+			case IPPROTO_ICMPV6:
+			default:
+				/*
+				 * stop search if we encounter an upper
+				 * layer protocol headers.
+				 */
+				goto loopend;
 
-			 case IPPROTO_HOPOPTS:
-			 case IPPROTO_AH: /* is it possible? */
-				 break;
+			case IPPROTO_HOPOPTS:
+			case IPPROTO_AH: /* is it possible? */
+				break;
 			}
 
 			/* proceed with the next header. */
@@ -1221,7 +1203,7 @@ ip6_get_prevhdr(m, off)
 		while (len < off) {
 			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + len);
 
-			switch(nxt) {
+			switch (nxt) {
 			case IPPROTO_FRAGMENT:
 				len += sizeof(struct ip6_frag);
 				break;

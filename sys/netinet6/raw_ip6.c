@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.27 2001/02/08 18:43:17 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.28 2001/02/10 04:14:29 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.65 2001/02/08 18:36:17 itojun Exp $	*/
 
 /*
@@ -163,7 +163,8 @@ rip6_input(mp, offp, proto)
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
 	for (in6p = rawin6pcb.in6p_next;
-	     in6p != &rawin6pcb; in6p = in6p->in6p_next) {
+	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
+	{
 		if (in6p->in6p_ip6.ip6_nxt &&
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
