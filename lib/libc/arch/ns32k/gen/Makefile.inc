@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2003/10/25 22:31:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2004/01/15 19:43:45 kleink Exp $
 
 # objects built from assembler sources (need lint stubs)
 ASSRCS+=alloca.S fabs.S modf.S
@@ -20,8 +20,11 @@ SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
 SRCS+=	nanf_ieee754.c
+SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
 SRCS+=	frexp_ieee754.c isinf_ieee754.c isinfl_dbl_ieee754.c isnan_ieee754.c
+SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
 SRCS+=	isnanl_dbl_ieee754.c ldexp_ieee754.c
+SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	makecontext.c
 
