@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.7 2000/10/31 16:57:07 tsubai Exp $	*/
+/*	$NetBSD: mesh.c,v 1.8 2000/12/24 02:42:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -480,6 +480,7 @@ mesh_select(sc, scb)
 	struct mesh_scb *scb;
 {
 	struct mesh_tinfo *ti = &sc->sc_tinfo[scb->target];
+	int timeout;
 
 	DPRINTF("mesh_select\n");
 
@@ -508,7 +509,11 @@ mesh_select(sc, scb)
 	sc->sc_prevphase = MESH_SELECTING;
 	sc->sc_nextstate = MESH_IDENTIFY;
 
-	callout_reset(&scb->xs->xs_callout, 10 * hz, mesh_timeout, scb);
+	timeout = scb->xs->timeout * hz / 1000;
+	if (timeout == 0)
+		timeout = 1;
+
+	callout_reset(&scb->xs->xs_callout, timeout, mesh_timeout, scb);
 }
 
 void
