@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.26 1998/12/22 16:36:41 jtk Exp $
+.\"	$NetBSD: ping.8,v 1.27 1999/03/07 11:02:08 mycroft Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,18 +42,40 @@
 .Tn ICMP ECHO_REQUEST
 packets to network hosts
 .Sh SYNOPSIS
-.Nm
+.Nm ""
+.Bk -words
 .Op Fl dfnoqrvDPQRL
+.Ek
+.Bk -words
 .Op Fl c Ar count
+.Ek
+.Bk -words
 .Op Fl g Ar gateway
+.Ek
+.Bk -words
 .Op Fl i Ar interval
+.Ek
+.Bk -words
 .Op Fl I Ar ifaddr
+.Ek
+.Bk -words
 .Op Fl l Ar preload
+.Ek
+.Bk -words
 .Op Fl p Ar pattern
+.Ek
+.Bk -words
 .Op Fl s Ar packetsize
+.Ek
+.Bk -words
 .Op Fl t Ar tos
+.Ek
+.Bk -words
 .Op Fl T Ar ttl
+.Ek
+.Bk -words
 .Op Fl w Ar maxwait
+.Ek
 .Ar host
 .Sh DESCRIPTION
 .Nm
