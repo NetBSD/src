@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.5 1997/07/23 05:42:55 mikel Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.6 1998/06/27 04:20:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.5 1997/07/23 05:42:55 mikel Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.6 1998/06/27 04:20:59 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ main(argc, argv)
 			break;
 		case 'c':
 			clear = CLEAR;
+			pidset = 1;
 			break;
 		case 'd':
 			ops |= KTRFLAG_DESCEND;
@@ -182,7 +183,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [acgn]\n\tktrace [-aCcid] [-f trfile] [-t [acgn] command\n");
+"usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [cenisw+]]\n\tktrace [-aCcid] [-f trfile] [-t [cenisw+]] command\n");
 	exit(1);
 }
 
