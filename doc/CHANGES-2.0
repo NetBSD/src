@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.58 2004/04/08 20:27:06 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.59 2004/04/08 21:07:56 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -580,53 +580,76 @@ sys/kern/init_sysctl.c				1.25
 	call to sysctl_locate()).
 	[atatat, ticket #85]
 
-src/sys/conf/files				1.663
+sys/conf/files					1.663
 
 	Create opt_sysctl.h which will hold sysctl related options.  I suspect
 	most of these won't be used (well, the description related one will
 	be), but it's good to formalize things.
 	[atatat, ticket #86]
 
-src/sys/sys/sysctl.h				1.117
+sys/sys/sysctl.h				1.117
 
 	Include new opt_sysctl.h here, and use SYSCTL_NO_DESCR for eliminating
 	properly declared descriptions.
 	[atatat, ticket #87]
 
-src/sbin/sysctl/sysctl.c			1.88
+sbin/sysctl/sysctl.c				1.88
 
 	Do nothing else for nodes with no children if -d is used (dflag is
 	set).  Otherwise, some nodes (those with "printers") will also print
 	the "use foo ..." message.
 	[atatat, ticket #88]
 
-src/lib/libc/gen/sysctlbyname.c			1.2
-src/lib/libc/gen/sysctlnametomib.c		1.2
-src/lib/libc/gen/sysctlgetmibinfo.c		1.3
-src/lib/libc/include/namespace.h		1.85
+lib/libc/gen/sysctlbyname.c			1.2
+lib/libc/gen/sysctlnametomib.c			1.2
+lib/libc/gen/sysctlgetmibinfo.c			1.3
+lib/libc/include/namespace.h			1.85
 
 	Weak aliases for sysctlfoobar() functions.
 	[atatat, ticket #90]
 
-src/lib/libc/gen/sysctl.c			1.24
+lib/libc/gen/sysctl.c				1.24
 
 	Descriptions for user.* sysctl nodes.  Mostly copied from sysctl(3).
 	[atatat, ticket #89]
 
-src/share/man/man4/dmoverio.4			r1.6
+share/man/man4/dmoverio.4			1.6
 
 	The device is called /dev/dmoverio, not /dev/dmover.
 	[atatat, ticket #91]
 
-src/sbin/sysctl/sysctl.c			1.89
+sbin/sysctl/sysctl.c				1.89
 
 	Don't copy the size that sysctl gave back directly, copy the size of
 	the description.
 	[atatat, ticket #92]
 
-src/sbin/sysctl/sysctl.c			1.90
+sbin/sysctl/sysctl.c				1.90
 
 	Don't copy the size that sysctl gave back directly, copy the size of
 	the description.  *thwap*
 	[atatat, ticket #94]
+
+sys/arch/sparc/stand/boot/boot.c		1.19
+
+	Compat mode: skip double map at VA 0 if the physical load address is 0.
+	This allows a much wider range of historic kernels to be booted (with
+	`-C').
+	[pk, ticket #95]
+
+sys/arch/sparc/sparc/pmap.c			1.277-1.278
+sys/arch/sparc/include/pmap.h			1.71
+
+	Maintain pmap resident count as pages are mapped and unmapped instead
+	of traversing the page tables each time it's needed.
+	Allow pv_link4_4c() to fail with ENOMEM on pool allocation failures
+	(catching up with pv_link4m()).  
+	Fix return code checking for pv_link4m() calls.
+	Add low water setting to pv pool. 
+	[pk, ticket #96]
+
+sys/arch/sparc/sparc/cache.c			1.83
+
+	For now, disable Hypersparc instruction cache on MP machines.
+	[pk, ticket #97]
 
