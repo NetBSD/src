@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.29 2003/08/07 10:04:20 agc Exp $	*/
+/*	$NetBSD: pass1.c,v 1.30 2004/01/03 10:07:02 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.29 2003/08/07 10:04:20 agc Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.30 2004/01/03 10:07:02 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ checkinode(inumber, idesc)
 	mode_t mode;
 	u_int64_t size, kernmaxfilesize;
 	int64_t blocks;
-	char symbuf[MAXSYMLINKLEN_UFS1];
+	char symbuf[MAXBSIZE];
 	struct inostat *info;
 
 	dp = getnextinode(inumber);
