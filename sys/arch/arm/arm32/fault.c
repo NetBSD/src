@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.3 2002/01/08 00:23:08 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.4 2002/01/11 23:38:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -64,10 +64,13 @@
 #endif
 
 #include <arch/arm/arm/disassem.h>
-
+#include <arm/arm32/machdep.h>
+ 
 int cowfault __P((vaddr_t));
 int fetchuserword __P((u_int address, u_int *location));
 extern char fusubailout[];
+
+static void report_abort __P((const char *, u_int, u_int, u_int));
 
 /* Abort code */
 
@@ -92,7 +95,7 @@ static const char *aborts[16] = {
 	"Permission error (page)"
 };
 
-void
+static void
 report_abort(prefix, fault_status, fault_address, fault_pc)
 	const char *prefix;
 	u_int fault_status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.6.8.2 2001/11/14 19:14:52 nathanw Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.6.8.3 2002/01/11 23:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.6.8.2 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.6.8.3 2002/01/11 23:39:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,37 +265,46 @@ nca_isa_match(parent, match, aux)
 	struct nca_isa_probe_data epd;
 	int rv = 0;
 
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* See if we are looking for a port- or memory-mapped adapter */
-	if (ia->ia_iobase != -1) {
+	if (ia->ia_nio > 0 || ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT) {
 		/* Port-mapped card */
-		if (bus_space_map(iot, ia->ia_iobase, NCA_ISA_IOSIZE, 0, &ioh))
+		if (bus_space_map(iot, ia->ia_io[0].ir_addr, NCA_ISA_IOSIZE,
+		    0, &ioh))
 			return 0;
 
 		/* See if a 53C80/53C400 is there */
 		rv = nca_isa_find(iot, ioh, 0x07, &epd);
 
 		bus_space_unmap(iot, ioh, NCA_ISA_IOSIZE);
-	} else {
+
+		if (rv) {
+			ia->ia_nio = 1;
+			ia->ia_io[0].ir_size = NCA_ISA_IOSIZE;
+
+			ia->ia_niomem = 0;
+			ia->ia_ndrq = 0;
+		}
+	} else if (ia->ia_niomem > 0) {
 		/* Memory-mapped card */
-		if (bus_space_map(memt, ia->ia_maddr, 0x4000, 0, &ioh))
+		if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, 0x4000,
+		    0, &ioh))
 			return 0;
 
 		/* See if a 53C80/53C400 is somewhere in this para. */
 		rv = nca_isa_find(memt, ioh, 0x03ff0, &epd);
 
 		bus_space_unmap(memt, ioh, 0x04000);
-	}
 
-	/* Adjust the attachment args if we found one */
-	if (rv) {
-		if (ia->ia_iobase != -1) {
-			/* Port-mapped */
-			ia->ia_iosize = NCA_ISA_IOSIZE;
-		} else {
-			/* Memory-mapped */
-			ia->ia_maddr += epd.sc_reg_offset;
-			ia->ia_msize = NCA_ISA_IOSIZE;
-			ia->ia_iosize = 0;
+		if (rv) {
+			ia->ia_niomem = 1;
+			ia->ia_iomem[0].ir_addr += epd.sc_reg_offset;
+			ia->ia_iomem[0].ir_size = NCA_ISA_IOSIZE;
+
+			ia->ia_nio = 0;
+			ia->ia_ndrq = 0;
 		}
 	}
 
@@ -320,16 +329,19 @@ nca_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (ia->ia_iobase != -1) {
+	if (ia->ia_nio > 0) {
 		iot = ia->ia_iot;
-		if (bus_space_map(iot, ia->ia_iobase, NCA_ISA_IOSIZE, 0, &ioh)) {
+		if (bus_space_map(iot, ia->ia_io[0].ir_addr, NCA_ISA_IOSIZE,
+		    0, &ioh)) {
 			printf("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
 	} else {
+		KASSERT(ia->ia_niomem > 0);
 		iot = ia->ia_memt;
-		if (bus_space_map(iot, ia->ia_maddr, NCA_ISA_IOSIZE, 0, &ioh)) {
+		if (bus_space_map(iot, ia->ia_iomem[0].ir_addr, NCA_ISA_IOSIZE,
+		    0, &ioh)) {
 			printf("%s: can't map mem space\n",
 			    sc->sc_dev.dv_xname);
 			return;
@@ -366,11 +378,11 @@ nca_isa_attach(parent, self, aux)
 		sc->sc_rev = NCR_VARIANT_NCR53C400;
 		break;
 	case CTLR_PAS16:
-		printf("%s: ProAudio Spectrum 16 detected\n", sc->sc_dev.dv_xname);
+		printf("%s: ProAudio Spectrum 16 detected\n",
+		    sc->sc_dev.dv_xname);
 		sc->sc_rev = NCR_VARIANT_PAS16;
 		break;
 	}
-
 
 	/*
 	 * MD function pointers used by the MI code.
@@ -387,11 +399,12 @@ nca_isa_attach(parent, self, aux)
 	sc->sc_intr_on   = NULL;
 	sc->sc_intr_off  = NULL;
 
-	if (ia->ia_irq != IRQUNK) {
-		esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE,
-				IPL_BIO, ncr5380_intr, esc);
+	if (ia->ia_nirq > 0 && ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT) {
+		esc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq,
+		    IST_EDGE, IPL_BIO, ncr5380_intr, esc);
 		if (esc->sc_ih == NULL) {
-			printf("nca: couldn't establish interrupt\n");
+			printf("%s: couldn't establish interrupt\n",
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 	} else 

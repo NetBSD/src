@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADA,v 1.4.2.5 2002/01/08 00:25:08 nathanw Exp $
+#	$NetBSD: ARMADA,v 1.4.2.6 2002/01/11 23:38:26 nathanw Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.4.2.5 $"
+#ident		"CARDBUS-$Revision: 1.4.2.6 $"
 
 maxusers	32		# estimated number of users
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.16.4.2 2002/01/08 00:32:04 nathanw Exp $	*/
+/*	$NetBSD: hid.c,v 1.16.4.3 2002/01/11 23:39:35 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.16.4.2 2002/01/08 00:32:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.16.4.3 2002/01/11 23:39:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 	u_char *p;
 	struct hid_item *hi;
 	int i;
+	enum hid_kind retkind;
 
  top:
 	DPRINTFN(5,("hid_get_item: multi=%d multimax=%d\n",
@@ -204,10 +205,15 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 0:			/* Main */
 			switch (bTag) {
 			case 8:		/* Input */
-				if (s->kind != hid_input)
-					continue;
-				c->kind = hid_input;
+				retkind = hid_input;
 			ret:
+				if (s->kind != retkind) {
+					s->minset = 0;
+					s->nu = 0;
+					hid_clear_local(c);
+					continue;
+				}
+				c->kind = retkind;
 				c->flags = dval;
 				if (c->flags & HIO_VARIABLE) {
 					s->multimax = c->loc.count;
@@ -230,14 +236,13 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					h->next = NULL;
 					c->loc.pos += 
 					    c->loc.size * c->loc.count;
-					hid_clear_local(c);
 					s->minset = 0;
+					s->nu = 0;
+					hid_clear_local(c);
 					return (1);
 				}
 			case 9:		/* Output */
-				if (s->kind != hid_output)
-					continue;
-				c->kind = hid_output;
+				retkind = hid_output;
 				goto ret;
 			case 10:	/* Collection */
 				c->kind = hid_collection;
@@ -248,9 +253,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				s->nu = 0;
 				return (1);
 			case 11:	/* Feature */
-				if (s->kind != hid_feature)
-					continue;
-				c->kind = hid_feature;
+				retkind = hid_feature;
 				goto ret;
 			case 12:	/* End collection */
 				c->kind = hid_endcollection;

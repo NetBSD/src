@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.14 2001/01/17 19:50:04 jdolecek Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.14.2.1 2002/01/11 23:38:55 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -137,6 +137,7 @@ void db_symbol_values __P((db_sym_t, char **, db_expr_t *));
 	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,0)
 					/* ditto, but no locals */
 
+void db_symstr(char *, db_expr_t, db_strategy_t);
 void db_printsym __P((db_expr_t, db_strategy_t, void(*)(const char *, ...)));
 					/* print closest symbol to a value */
 

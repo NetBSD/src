@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13.2.2 2002/01/08 00:25:00 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13.2.3 2002/01/11 23:38:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -512,22 +512,42 @@ _hpcmips_bd_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	extern paddr_t avail_start, avail_end;		/* XXX */
-	vaddr_t curaddr, lastaddr;
 	psize_t high;
+
+	high = avail_end - PAGE_SIZE;
+
+	return (_hpcmips_bd_mem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, avail_start, high));
+}
+
+/*
+ * Allocate physical memory from the given physical address range.
+ * Called by DMA-safe memory allocation methods.
+ */
+int
+_hpcmips_bd_mem_alloc_range(bus_dma_tag_t t, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary,
+    bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags, paddr_t low, paddr_t high)
+{
+	vaddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
+#ifdef DIAGNOSTIC
+	extern paddr_t avail_start, avail_end;		/* XXX */
 
+	high = high<(avail_end - PAGE_SIZE)? high: (avail_end - PAGE_SIZE);
+	low = low>avail_start? low: avail_start;
+#endif
 	/* Always round the size. */
 	size = round_page(size);
-
-	high = avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
+	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -545,7 +565,7 @@ _hpcmips_bd_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	for (; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < avail_start || curaddr >= high) {
+		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_hpcmips_bd_mem_alloc");

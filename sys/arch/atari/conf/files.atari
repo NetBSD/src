@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.89.4.2 2002/01/08 00:23:35 nathanw Exp $
+#	$NetBSD: files.atari,v 1.89.4.3 2002/01/11 23:38:11 nathanw Exp $
 
 maxpartitions 16
 
@@ -254,3 +254,4 @@ include "dev/mii/files.mii"
 # Wscons related includes
 include	"dev/pckbc/files.pckbc"
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"

@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.2 2002/01/08 00:25:01 nathanw Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.3 2002/01/11 23:38:24 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
+ * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.2 2002/01/08 00:27:12 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.3 2002/01/11 23:38:43 nathanw Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -128,7 +129,25 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	if (have_addr) {
-		frame = (db_addr_t)addr;
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+
+			(*pr)("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				(*pr)("not found\n");
+				return;
+			}	
+			if (!(p->p_flag&P_INMEM)) {
+				(*pr)("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (db_addr_t)u->u_pcb.pcb_sp;
+			(*pr)("at %p\n", frame);
+		} else
+			frame = (db_addr_t)addr;
 	} else {
 		frame = (db_addr_t)ddb_regs.r[1];
 	}

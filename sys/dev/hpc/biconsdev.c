@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.1.4.2 2001/11/14 19:14:05 nathanw Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.1.4.3 2002/01/11 23:38:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,11 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.1.4.2 2001/11/14 19:14:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.1.4.3 2002/01/11 23:38:57 nathanw Exp $");
 
 #include "biconsdev.h"
-#if NBICONSDEV > 0
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -99,7 +97,7 @@ biconsdevattach(int n)
 {
 	struct tty *tp = &biconsdev_tty[0];
 	int maj;
-	
+
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == biconsdevopen)
@@ -219,7 +217,7 @@ int
 biconsdevpoll(dev_t dev, int events, struct proc *p)
 {
 	struct tty *tp = &biconsdev_tty[0];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -250,5 +248,3 @@ biconsdevstop(struct tty *tp, int rw)
 {
 
 }
-
-#endif /* NBICONSDEV > 0 */

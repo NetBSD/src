@@ -1,7 +1,7 @@
-/*	$NetBSD: smb_dev.h,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.1.4.1 2002/01/11 23:39:48 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,25 +30,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb_dev.h,v 1.3 2001/04/13 10:50:48 bp Exp
  */
-
 #ifndef _NETSMB_DEV_H_
 #define _NETSMB_DEV_H_
 
-#define	NSMB_NAME		"net/nsmb"
+#ifndef _KERNEL
+#include <sys/types.h>
+#endif
+#include <sys/ioccom.h>
+
+#include <netsmb/smb.h>
+
+#define	NSMB_NAME		"nsmb"
 #define	NSMB_MAJOR		144
 
 #define NSMB_VERMAJ	1
-#define NSMB_VERMIN	2001
-#define NSMB_VERSION	(NSMB_VERMAJ*100000 + NSMB_VERMIN)
+#define NSMB_VERMIN	3006
+#define NSMB_VERSION	(NSMB_VERMAJ * 100000 + NSMB_VERMIN)
 
 #define NSMBFL_OPEN		0x0001
 
-#define	SMBCOPT_CREATE		0x0001	/* create connection if necessary */
-
 #define	SMBVOPT_CREATE		0x0001	/* create object if necessary */
 #define	SMBVOPT_PRIVATE		0x0002	/* connection should be private */
-#define	SMBVOPT_SINGLESHARE	0x0004	/* keep only ane share at this VC */
+#define	SMBVOPT_SINGLESHARE	0x0004	/* keep only one share at this VC */
 #define	SMBVOPT_PERMANENT	0x0010	/* object will keep last reference */
 
 #define	SMBSOPT_CREATE		0x0001	/* create object if necessary */
@@ -59,10 +65,7 @@
  */
 #define SMBLK_CREATE		0x0001
 
-/*
- * IOCTL structures used to communicate with the kernel engine
- */
-struct smbioc_oconn {
+struct smbioc_ossn {
 	int		ioc_opt;
 	int		ioc_svlen;	/* size of ioc_server address */
 	struct sockaddr*ioc_server;
@@ -73,10 +76,6 @@ struct smbioc_oconn {
 	int		ioc_retrycount;	/* number of retries before giveup */
 	char		ioc_localcs[16];/* local charset */
 	char		ioc_servercs[16];/* server charset */
-};
-
-struct smbioc_ossn {
-	int		ioc_opt;
 	char		ioc_user[SMB_MAXUSERNAMELEN + 1];
 	char		ioc_workgroup[SMB_MAXUSERNAMELEN + 1];
 	char		ioc_password[SMB_MAXPASSWORDLEN + 1];
@@ -127,7 +126,7 @@ struct smbioc_t2rq {
 };
 
 struct smbioc_flags {
-	int		ioc_level;	/* 0 - seesion, 1 - share */
+	int		ioc_level;	/* 0 - session, 1 - share */
 	int		ioc_mask;
 	int		ioc_flags;
 };
@@ -135,7 +134,6 @@ struct smbioc_flags {
 struct smbioc_lookup {
 	int		ioc_level;
 	int		ioc_flags;
-	struct smbioc_oconn	ioc_conn;
 	struct smbioc_ossn	ioc_ssn;
 	struct smbioc_oshare	ioc_sh;
 };
@@ -155,31 +153,19 @@ struct smbioc_rw {
 #define	SMBIOC_REQUEST		_IOWR('n', 102, struct smbioc_rq)
 #define	SMBIOC_T2RQ		_IOWR('n', 103, struct smbioc_t2rq)
 #define	SMBIOC_SETFLAGS		_IOW('n',  104, struct smbioc_flags)
-#define	SMBIOC_OPENCONN		_IOW('n',  105, struct smbioc_oconn)
 #define	SMBIOC_LOOKUP		_IOW('n',  106, struct smbioc_lookup)
 #define	SMBIOC_READ		_IOWR('n', 107, struct smbioc_rw)
 #define	SMBIOC_WRITE		_IOWR('n', 108, struct smbioc_rw)
 
 #ifdef _KERNEL
 
-#ifndef LK_SHARED
-#include <sys/lock.h>
-#endif
-
-#define IF_QEMPTY(ifq)	((ifq)->ifq_len == 0)
-
 #define SMBST_CONNECTED	1
 
-#ifdef NetBSD
 SIMPLEQ_HEAD(smbrqh, smb_rq);
-#else
-STAILQ_HEAD(smbrqh, smb_rq);
-#endif
 
 struct smb_dev {
 	int		sd_opened;
 	int		sd_level;
-	struct smb_conn*sd_conn;	/* reference to connection */
 	struct smb_vc * sd_vc;		/* reference to VC */
 	struct smb_share *sd_share;	/* reference to share if any */
 	int		sd_poll;
@@ -198,10 +184,8 @@ struct smb_cred;
  * Compound user interface
  */
 int  smb_usr_lookup(struct smbioc_lookup *dp, struct smb_cred *scred,
-	struct smb_conn **scpp,	struct smb_vc **vcpp, struct smb_share **sspp);
-int  smb_usr_openconn(struct smbioc_oconn *dp, struct smb_cred *scred,
-	struct smb_conn **scpp);
-int  smb_usr_opensession(struct smbioc_ossn *data, struct smb_conn *scp,
+	struct smb_vc **vcpp, struct smb_share **sspp);
+int  smb_usr_opensession(struct smbioc_ossn *data,
 	struct smb_cred *scred,	struct smb_vc **vcpp);
 int  smb_usr_openshare(struct smb_vc *vcp, struct smbioc_oshare *data,
 	struct smb_cred *scred, struct smb_share **sspp);

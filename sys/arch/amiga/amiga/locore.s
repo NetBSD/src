@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126.2.3 2002/01/08 00:22:55 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.126.2.4 2002/01/11 23:37:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -923,9 +923,10 @@ Lstartnot040:
 	RELOC(start_c, %a0)
 	jbsr	%a0@
 	addl	#28,%sp
-	jmp	Lunshadow
+	jmp	unshadow_fake_global
 
-Lunshadow:
+	.globl unshadow_fake_global
+unshadow_fake_global:
 
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_cleanup)
@@ -1134,12 +1135,14 @@ Lcpydone:
 ASLOCAL(__TBIA)
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jeq	Ltbia040
-	pflusha					| flush entire TLB
 	tstl	_C_LABEL(mmutype)
 	jpl	Lmc68851a			| 68851 implies no d-cache
+	pflusha					| flush entire TLB
 	movl	#DC_CLEAR,%d0
 	movc	%d0,%cacr			| invalidate on-chip d-cache
+	rts
 Lmc68851a:
+	pflusha
 	rts
 Ltbia040:
 	.word	0xf518				| pflusha

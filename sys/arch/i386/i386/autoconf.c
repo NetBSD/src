@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.2.3 2002/01/08 00:25:18 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.4 2002/01/11 23:38:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.3 2002/01/08 00:25:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.4 2002/01/11 23:38:28 nathanw Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -496,7 +496,9 @@ device_register(dev, aux)
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
-			if (bin->addr.iobase == iaa->ia_iobase)
+			/* XXXJRT what about multiple I/O addrs? */
+			if (iaa->ia_nio > 0 &&
+			    bin->addr.iobase == iaa->ia_io[0].ir_addr)
 				goto found;
 		}
 #if NPCI > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.14.6.2 2002/01/08 00:30:21 nathanw Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.14.6.3 2002/01/11 23:39:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.14.6.2 2002/01/08 00:30:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.14.6.3 2002/01/11 23:39:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,12 +122,24 @@ com_isa_probe(parent, match, aux)
 	int rv = 1;
 	struct isa_attach_args *ia = aux;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Don't allow wildcarded IRQ. */
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
 	iot = ia->ia_iot;
-	iobase = ia->ia_iobase;
+	iobase = ia->ia_io[0].ir_addr;
 
 	/* if it's in use as console, it's there. */
 	if (!com_is_console(iot, iobase, 0)) {
@@ -139,8 +151,13 @@ com_isa_probe(parent, match, aux)
 	}
 
 	if (rv) {
-		ia->ia_iosize = COM_NPORTS;
-		ia->ia_msize = 0;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = COM_NPORTS;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
 	}
 	return (rv);
 }
@@ -159,7 +176,7 @@ com_isa_attach(parent, self, aux)
 	/*
 	 * We're living on an isa.
 	 */
-	iobase = sc->sc_iobase = ia->ia_iobase;
+	iobase = sc->sc_iobase = ia->ia_io[0].ir_addr;
 	iot = sc->sc_iot = ia->ia_iot;
 	if (!com_is_console(iot, iobase, &sc->sc_ioh) &&
 	    bus_space_map(iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
@@ -168,14 +185,12 @@ com_isa_attach(parent, self, aux)
 	}
 
 	sc->sc_frequency = COM_FREQ;
-	irq = ia->ia_irq;
+	irq = ia->ia_irq[0].ir_irq;
 
 	com_attach_subr(sc);
 
-	if (irq != IRQUNK) {
-		isc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-		    IST_EDGE, IPL_SERIAL, comintr, sc);
-	}
+	isc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE, IPL_SERIAL,
+	    comintr, sc);
 
 	/*
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.15.4.5 2002/01/08 00:31:54 nathanw Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.15.4.6 2002/01/11 23:39:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.5 2002/01/08 00:31:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.6 2002/01/11 23:39:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.15.4.5 2002/01/08 00:31:54 nathanw Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/dkio.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
@@ -104,10 +105,14 @@ static int	sd_scsibus_get_parms __P((struct sd_softc *,
 static int	sd_scsibus_get_optparms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_flush __P((struct sd_softc *, int));
+static int	sd_scsibus_getcache __P((struct sd_softc *, int *));
+static int	sd_scsibus_setcache __P((struct sd_softc *, int));
 
 const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
 	sd_scsibus_flush,
+	sd_scsibus_getcache,
+	sd_scsibus_setcache,
 };
 
 int
@@ -371,4 +376,102 @@ sd_scsibus_flush(sd, flags)
 		       flags|XS_CTL_IGNORE_ILLEGAL_REQUEST));
 	} else
 		return(0);
+}
+
+int
+sd_scsibus_getcache(sd, bitsp)
+	struct sd_softc *sd;
+	int *bitsp;
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct sd_scsibus_mode_sense_data scsipi_sense;
+	int error, bits = 0;
+
+	if (periph->periph_version < 2)
+		return (EOPNOTSUPP);
+
+	error = sd_scsibus_mode_sense(sd, &scsipi_sense, 8, 0);
+	if (error)
+		return (error);
+
+	if ((scsipi_sense.pages.caching_params.flags & CACHING_RCD) == 0)
+		bits |= DKCACHE_READ;
+	if (scsipi_sense.pages.caching_params.flags & CACHING_WCE)
+		bits |= DKCACHE_WRITE;
+	if (scsipi_sense.pages.caching_params.pg_code & PGCODE_PS)
+		bits |= DKCACHE_SAVE;
+
+	error = sd_scsibus_mode_sense(sd, &scsipi_sense,
+	    SMS_PAGE_CTRL_CHANGEABLE|8, 0);
+	if (error == 0) {
+		if (scsipi_sense.pages.caching_params.flags & CACHING_RCD)
+			bits |= DKCACHE_RCHANGE;
+		if (scsipi_sense.pages.caching_params.flags & CACHING_WCE)
+			bits |= DKCACHE_WCHANGE;
+	}
+
+	*bitsp = bits;
+
+	return (0);
+}
+
+int
+sd_scsibus_setcache(sd, bits)
+	struct sd_softc *sd;
+	int bits;
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct sd_scsibus_mode_sense_data scsipi_sense;
+	int error, size;
+	uint8_t oflags, byte2 = 0;
+
+	if (periph->periph_version < 2)
+		return (EOPNOTSUPP);
+
+	error = sd_scsibus_mode_sense(sd, &scsipi_sense, 8, 0); 
+	if (error)
+		return (error);
+
+	oflags = scsipi_sense.pages.caching_params.flags;
+
+	if (bits & DKCACHE_READ)
+		scsipi_sense.pages.caching_params.flags &= ~CACHING_RCD;
+	else
+		scsipi_sense.pages.caching_params.flags |= CACHING_RCD;
+
+	if (bits & DKCACHE_WRITE)
+		scsipi_sense.pages.caching_params.flags |= CACHING_WCE;
+	else
+		scsipi_sense.pages.caching_params.flags &= ~CACHING_WCE;
+
+	if (oflags == scsipi_sense.pages.caching_params.flags)
+		return (0);
+
+	scsipi_sense.pages.caching_params.pg_code &= PGCODE_MASK;
+
+	if (bits & DKCACHE_SAVE)
+		byte2 |= SMS_SP;
+
+	size = sizeof(scsipi_sense.header) + sizeof(scsipi_sense.blk_desc) +
+	       sizeof(struct scsipi_mode_page_header) +
+	       scsipi_sense.pages.caching_params.pg_length;
+
+	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
+	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
+		scsipi_sense.header.data_length = 0;
+		/* 2nd length byte in BIG header */
+		scsipi_sense.header.medium_type = 0;
+		error = scsipi_mode_select_big(sd->sc_periph, SMS_PF,
+		   (struct scsipi_mode_header_big*)&scsipi_sense.header,
+		    size, /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
+		    SDRETRIES, 10000);
+	} else {
+		scsipi_sense.header.data_length = 0;
+		error = scsipi_mode_select(sd->sc_periph, SMS_PF,
+		    &scsipi_sense.header, size,
+		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
+		    SDRETRIES, 10000);
+	}
+
+	return (error);
 }

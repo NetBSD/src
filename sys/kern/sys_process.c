@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.8 2002/01/09 02:56:55 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.9 2002/01/11 23:39:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.8 2002/01/09 02:56:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.9 2002/01/11 23:39:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,10 @@ sys_ptrace(l, v, retval)
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
 	}
+
+	/* Can't trace a process that's currently exec'ing. */
+	if ((t->p_flag & P_INEXEC) != 0)
+		return EAGAIN;
 
 	/* Make sure we can operate on it. */
 	switch (SCARG(uap, req)) {

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.400.2.9 2002/01/08 00:25:10 nathanw Exp $
+# $NetBSD: GENERIC,v 1.400.2.10 2002/01/11 23:38:27 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.400.2.9 $"
+#ident 		"GENERIC-$Revision: 1.400.2.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -773,9 +773,14 @@ uaudio*	at uhub? port ? configuration ?
 # USB MIDI
 umidi* at uhub? port ? configuration ?
 
-# USB IrDA bridges
+# USB IrDA
+# USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -814,8 +819,8 @@ scsibus* at usscanner? channel ?
 uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
-#udsbr*	at uhub? port ?
-#radio*	at udsbr?
+udsbr*	at uhub? port ?
+radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
@@ -839,6 +844,7 @@ clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
@@ -859,8 +865,8 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
@@ -890,6 +896,7 @@ audio*	at auvia?
 audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
+audio*	at esa?
 audio*	at eap?
 audio*	at emuxki?
 #audio*	at esl?
@@ -902,7 +909,7 @@ audio*	at guspnp?
 audio*	at neo?
 audio*	at pas?
 audio*	at sb?
-audio*	at sp?
+#audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
 audio*	at wss?
@@ -961,6 +968,7 @@ midi*	at umidi?		# USB MIDI
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
+radio* at bktr?
 
 
 # Mice

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.5 2001/11/14 19:13:42 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.6 2002/01/11 23:38:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.5 2001/11/14 19:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.6 2002/01/11 23:38:55 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -169,6 +169,7 @@ int numvnd = 0;
 
 /* called by main() at boot time */
 void	vndattach __P((int));
+void	vnddetach __P((void));
 
 void	vndclear __P((struct vnd_softc *));
 void	vndstart __P((struct vnd_softc *));
@@ -204,6 +205,13 @@ vndattach(num)
 
 	for (i = 0; i < numvnd; i++)
 		BUFQ_INIT(&vnd_softc[i].sc_tab);
+}
+
+void
+vnddetach()
+{
+
+	free(vnd_softc, M_DEVBUF);
 }
 
 int

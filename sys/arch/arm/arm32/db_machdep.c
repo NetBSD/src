@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.5.6.2 2002/01/08 00:23:08 nathanw Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5.6.3 2002/01/11 23:38:00 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #include <sys/vnode.h>
 #include <sys/systm.h>
 
-#include <machine/db_machdep.h>
+#include <arm/arm32/db_machdep.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>

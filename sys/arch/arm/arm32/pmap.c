@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.3 2002/01/08 00:23:09 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.4 2002/01/11 23:38:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.3 2002/01/08 00:23:09 nathanw Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.4 2002/01/11 23:38:01 nathanw Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -253,6 +253,16 @@ static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 			vaddr_t));
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
+
+static u_int pmap_modify_pv __P((struct pmap *, vaddr_t, struct pv_head *,
+	u_int, u_int));
+
+static void pmap_free_l1pt __P((struct l1pt *));
+static int pmap_allocpagedir __P((struct pmap *));
+static int pmap_clean_page __P((struct pv_entry *, boolean_t));
+static struct pv_head *pmap_find_pvh __P((paddr_t));
+static void pmap_remove_all __P((paddr_t));
+
 
 vsize_t npages;
 
@@ -876,7 +886,8 @@ pmap_remove_pv(pvh, pmap, va)
  * Modify a physical-virtual mapping in the pv table
  */
 
-/*__inline */ u_int
+/*__inline */ 
+static u_int
 pmap_modify_pv(pmap, va, pvh, bic_mask, eor_mask)
 	struct pmap *pmap;
 	vaddr_t va;
@@ -1403,7 +1414,7 @@ pmap_alloc_l1pt(void)
 /*
  * Free a L1 page table previously allocated with pmap_alloc_l1pt().
  */
-void
+static void
 pmap_free_l1pt(pt)
 	struct l1pt *pt;
 {
@@ -1428,7 +1439,7 @@ pmap_free_l1pt(pt)
  * a new one via pmap_alloc_l1pt().
  * It will then initialise the l1 page table for use.
  */
-int
+static int
 pmap_allocpagedir(pmap)
 	struct pmap *pmap;
 {
@@ -1972,43 +1983,6 @@ pmap_copy_page(src, dest)
 	cpu_cache_purgeD_rng(page_hook1.va, NBPG);
 }
 
-/*
- * int pmap_next_phys_page(paddr_t *addr)
- *
- * Allocate another physical page returning true or false depending
- * on whether a page could be allocated.
- */
- 
-paddr_t
-pmap_next_phys_page(addr)
-	paddr_t addr;
-	
-{
-	int loop;
-
-	if (addr < bootconfig.dram[0].address)
-		return(bootconfig.dram[0].address);
-
-	loop = 0;
-
-	while (bootconfig.dram[loop].address != 0
-	    && addr > (bootconfig.dram[loop].address + bootconfig.dram[loop].pages * NBPG))
-		++loop;
-
-	if (bootconfig.dram[loop].address == 0)
-		return(0);
-
-	addr += NBPG;
-	
-	if (addr >= (bootconfig.dram[loop].address + bootconfig.dram[loop].pages * NBPG)) {
-		if (bootconfig.dram[loop + 1].address == 0)
-			return(0);
-		addr = bootconfig.dram[loop + 1].address;
-	}
-
-	return(addr);
-}
-
 #if 0
 void
 pmap_pte_addref(pmap, va)
@@ -2488,7 +2462,7 @@ pmap_remove(pmap, sva, eva)
  *		Reflects back modify bits to the pager.
  */
 
-void
+static void
 pmap_remove_all(pa)
 	paddr_t pa;
 {
@@ -2589,6 +2563,8 @@ pmap_protect(pmap, sva, eva, prot)
 	if (~prot & VM_PROT_READ) {
 		/* Just remove the mappings. */
 		pmap_remove(pmap, sva, eva);
+		/* pmap_update not needed as it should be called by the caller
+		 * of pmap_protect */
 		return;
 	}
 	if (prot & VM_PROT_WRITE) {

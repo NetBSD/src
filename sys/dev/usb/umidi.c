@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.5.2.5 2002/01/08 00:32:15 nathanw Exp $	*/
+/*	$NetBSD: umidi.c,v 1.5.2.6 2002/01/11 23:39:36 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.5 2002/01/08 00:32:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.6 2002/01/11 23:39:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,6 @@ struct midi_hw_if umidi_hw_if = {
 };
 
 USB_DECLARE_DRIVER(umidi);
-int umidi_activate __P((device_ptr_t, enum devact));
-int umidi_detach __P((device_ptr_t, int));
 
 USB_MATCH(umidi)
 {
@@ -275,8 +273,8 @@ USB_DETACH(umidi)
 int
 umidi_open(void *addr,
 	   int flags,
-	   void (*iintr)__P((void *, int)),
-	   void (*ointr)__P((void *)),
+	   void (*iintr)(void *, int),
+	   void (*ointr)(void *),
 	   void *arg)
 {
 	struct umidi_mididev *mididev = addr;

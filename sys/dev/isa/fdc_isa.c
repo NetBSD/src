@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.2.8.1 2001/11/14 19:14:46 nathanw Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.2.8.2 2002/01/11 23:39:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.2.8.1 2001/11/14 19:14:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.2.8.2 2002/01/11 23:39:05 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -123,17 +123,35 @@ fdc_isa_probe(struct device *parent,
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh, ctl_ioh, base_ioh;
-	int rv;
+	int rv, iobase;
 
 	iot = ia->ia_iot;
 	rv = 0;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded I/O addresses. */
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Don't allow wildcarded IRQ/DRQ. */
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
+	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
 		return (0);
 
 	/* Map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, 6 /* FDC_NPORT */, 0, &base_ioh))
+	iobase = ia->ia_io[0].ir_addr;
+	if (bus_space_map(iot, iobase, 6 /* FDC_NPORT */, 0, &base_ioh))
 		return (0);
 
 	if (bus_space_subregion(iot, base_ioh, 2, 4, &ioh)) {
@@ -141,7 +159,7 @@ fdc_isa_probe(struct device *parent,
 		return (0);
 	}
 
-	if (bus_space_map(iot, ia->ia_iobase + fdctl + 2, 1, 0, &ctl_ioh)) {
+	if (bus_space_map(iot, iobase + fdctl + 2, 1, 0, &ctl_ioh)) {
 		bus_space_unmap(iot, base_ioh, 6);
 		return (0);
 	}
@@ -160,51 +178,19 @@ fdc_isa_probe(struct device *parent,
 	out_fdc(iot, ioh, 0xdf);
 	out_fdc(iot, ioh, 2);
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase = IOBASEUNK || ia->ia_drq == DRQUNK)
-		return (0);
-
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(fdc_isa_forceintr, aux);
-		if (ia->ia_irq == IRQNONE)
-			goto out;
-
-		/* reset it again */
-		bus_space_write_1(iot, ioh, fdout, 0);
-		delay(100);
-		bus_space_write_1(iot, ioh, fdout, FDO_FRST);
-	}
-#endif
-
 	rv = 1;
-	ia->ia_iosize = FDC_NPORT;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = FDC_NPORT;
+
+	ia->ia_nirq = 1;
+	ia->ia_ndrq = 1;
+
+	ia->ia_niomem = 0;
 
  out:
 	bus_space_unmap(iot, base_ioh, 6 /* FDC_NPORT */);
 	return (rv);
 }
-
-#ifdef NEWCONFIG
-/*
- * XXX This is broken, and needs fixing.  In general, the interface needs
- * XXX to change.
- */
-void
-fdc_isa_forceintr(void *aux)
-{
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/*
-	 * The motor is off; this should generate an error with or
-	 * without a disk drive present.
-	 */
-	out_fdc(iot, ioh, NE7CMD_SEEK);
-	out_fdc(iot, ioh, 0);
-	out_fdc(iot, ioh, 0);
-}
-#endif
 
 void
 fdc_isa_attach(struct device *parent,
@@ -219,10 +205,10 @@ fdc_isa_attach(struct device *parent,
 
 	fdc->sc_iot = ia->ia_iot;
 	fdc->sc_ic = ia->ia_ic;
-	fdc->sc_drq = ia->ia_drq;
+	fdc->sc_drq = ia->ia_drq[0].ir_drq;
 
-	if (bus_space_map(fdc->sc_iot, ia->ia_iobase, 6 /* FDC_NPORT */, 0,
-	    &isc->sc_baseioh)) {
+	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr,
+	    6 /* FDC_NPORT */, 0, &isc->sc_baseioh)) {
 		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
 		return;
 	}
@@ -234,15 +220,15 @@ fdc_isa_attach(struct device *parent,
 		return;
 	}
 
-	if (bus_space_map(fdc->sc_iot, ia->ia_iobase + fdctl + 2, 1, 0,
+	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr + fdctl + 2, 1, 0,
 	    &fdc->sc_fdctlioh)) {
 		printf("%s: unable to map CTL I/O space\n",
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
 
-	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, fdcintr, fdc);
+	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, fdcintr, fdc);
 
 	fdcattach(fdc);
 }

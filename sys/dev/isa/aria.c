@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8.2.2 2001/11/14 19:14:44 nathanw Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.2.3 2002/01/11 23:39:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.2 2001/11/14 19:14:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.8.2.3 2002/01/11 23:39:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,17 +252,28 @@ ariaprobe(parent, cf, aux)
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
 
-	if (!ARIA_BASE_VALID(ia->ia_iobase)) {
-		printf("aria: configured iobase %d invalid\n", ia->ia_iobase);
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (!ARIA_BASE_VALID(ia->ia_io[0].ir_addr)) {
+		printf("aria: configured iobase %d invalid\n",
+		    ia->ia_io[0].ir_addr);
 		return 0;
 	}
 		
-	if (!ARIA_IRQ_VALID(ia->ia_irq)) {
-		printf("aria: configured irq %d invalid\n", ia->ia_irq);
+	if (!ARIA_IRQ_VALID(ia->ia_irq[0].ir_irq)) {
+		printf("aria: configured irq %d invalid\n",
+		    ia->ia_irq[0].ir_irq);
 		return 0;
 	}
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ARIADSP_NPORT, 0, &ioh)) {
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, ARIADSP_NPORT,
+	    0, &ioh)) {
 		DPRINTF(("aria: aria probe failed\n"));
 		return 0;
 	}
@@ -276,9 +287,16 @@ ariaprobe(parent, cf, aux)
 		return 0;
 	}
 
-	bus_space_unmap(ia->ia_iot, ioh,  ARIADSP_NPORT);
+	bus_space_unmap(ia->ia_iot, ioh, ARIADSP_NPORT);
 
-	ia->ia_iosize = ARIADSP_NPORT;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = ARIADSP_NPORT;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	DPRINTF(("aria: aria probe succeeded\n"));
 	return 1;
 }
@@ -320,16 +338,17 @@ aria_prometheus_kludge(ia, ioh1)
         bus_space_write_2(iot, ioh, 0, 0x0f);
         bus_space_write_1(iot, ioh, 1, 0x00);
         bus_space_write_2(iot, ioh, 0, 0x02);
-        bus_space_write_1(iot, ioh, 1, ia->ia_iobase>>2);
+        bus_space_write_1(iot, ioh, 1, ia->ia_io[0].ir_addr>>2);
 
 /* 
  * These next three lines set up the iobase
  * and the irq; and disable the drq.  
  */
 
-	aria_do_kludge(iot, ioh, ioh1, 0x111, ((ia->ia_iobase-0x280)>>2)+0xA0,
-		       0xbf, 0xa0);
-	aria_do_kludge(iot, ioh, ioh1, 0x011, ia->ia_irq-6, 0xf8, 0x00);
+	aria_do_kludge(iot, ioh, ioh1, 0x111,
+	    ((ia->ia_io[0].ir_addr-0x280)>>2)+0xA0, 0xbf, 0xa0);
+	aria_do_kludge(iot, ioh, ioh1, 0x011,
+	    ia->ia_irq[0].ir_irq-6, 0xf8, 0x00);
 	aria_do_kludge(iot, ioh, ioh1, 0x011, 0x00, 0xef, 0x00);
 
 /* The rest of these lines just disable everything else */
@@ -397,15 +416,16 @@ ariaattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	u_short i;
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ARIADSP_NPORT, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, ARIADSP_NPORT,
+	    0, &ioh))
 		panic("%s: can map io port range", self->dv_xname);
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-			IPL_AUDIO, aria_intr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_AUDIO, aria_intr, sc);
 
 	DPRINTF(("isa_intr_establish() returns (%x)\n", (unsigned) sc->sc_ih));
 

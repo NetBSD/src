@@ -1,7 +1,7 @@
-/*	$NetBSD: smb_trantcp.h,v 1.1 2000/12/07 03:48:11 deberg Exp $	*/
+/*	$NetBSD: smb_trantcp.h,v 1.1.4.1 2002/01/11 23:39:49 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb_trantcp.h,v 1.2 2001/12/10 08:09:49 obrien Exp
  */
-
 #ifndef _NETSMB_SMB_TRANTCP_H_
 #define	_NETSMB_SMB_TRANTCP_H_
 
 #ifdef _KERNEL
 
-/*  #define NB_DEBUG */
 #ifdef NB_DEBUG
 #define NBDEBUG(format, args...)	 printf("%s(%d): "format,	\
-					    __FUNCTION__ , __LINE__ ,## args)
+					    __func__ , __LINE__ ,## args)
 #else
 #define NBDEBUG(format, args...)
 #endif
@@ -58,7 +58,7 @@ enum nbstate {
  * socket specific data
  */
 struct nbpcb {
-	struct smb_vc *nbp_vc;
+	struct smb_vc *	nbp_vc;
 	struct socket *	nbp_tso;	/* transport socket */
 	struct sockaddr_nb *nbp_laddr;	/* local address */
 	struct sockaddr_nb *nbp_paddr;	/* peer address */
@@ -68,16 +68,14 @@ struct nbpcb {
 #define	NBF_CONNECTED	0x0002
 #define	NBF_RECVLOCK	0x0004
 
-	int		nbp_timo;
 	enum nbstate	nbp_state;
-	int		nbp_rtt;
+	struct timeval	nbp_timo;
 	int		nbp_sndbuf;
 	int		nbp_rcvbuf;
+	void *		nbp_selectid;
 
 /*	LIST_ENTRY(nbpcb) nbp_link;*/
 };
-
-/*LIST_HEAD(nbst_pcblist_head, nbpcb);*/
 
 /*
  * Nominal space allocated per a NETBIOS socket.
@@ -87,13 +85,6 @@ struct nbpcb {
 
 extern struct smb_tran_desc smb_tran_nbtcp_desc;
 
-void nbst_init(void);
-int  nbst_done(void);
-
-void nbst_slowtimo(void);
-
-int  nb_dupsockaddr(struct sockaddr_nb *src, struct sockaddr_nb **dst);
-
 #endif /* _KERNEL */
 
-#endif /* !_NETIPX_IPX_PCB_H_ */
+#endif /* !_NETSMB_SMB_TRANTCP_H_ */

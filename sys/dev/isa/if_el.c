@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.63.2.2 2001/11/14 19:14:48 nathanw Exp $	*/
+/*	$NetBSD: if_el.c,v 1.63.2.3 2002/01/11 23:39:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.63.2.2 2001/11/14 19:14:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.63.2.3 2002/01/11 23:39:07 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -129,12 +129,27 @@ elprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int iobase = ia->ia_iobase;
+	int iobase;
 	u_int8_t station_addr[ETHER_ADDR_LEN];
 	u_int8_t i;
 	int rval;
 
 	rval = 0;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	iobase = ia->ia_io[0].ir_addr;
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
 
 	/* First check the base. */
 	if (iobase < 0x200 || iobase > 0x3f0)
@@ -175,8 +190,14 @@ elprobe(parent, match, aux)
 	}
 	DPRINTF(("Vendor code ok.\n"));
 
-	ia->ia_iosize = 16;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 16;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	rval = 1;
 
  out:
@@ -207,7 +228,7 @@ elattach(parent, self, aux)
 	DPRINTF(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
@@ -246,8 +267,8 @@ elattach(parent, self, aux)
 	/* Print out some information for the user. */
 	printf("%s: address %s\n", self->dv_xname, ether_sprintf(myaddr));
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, elintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, elintr, sc);
 
 #if NRND > 0
 	DPRINTF(("Attaching to random...\n"));

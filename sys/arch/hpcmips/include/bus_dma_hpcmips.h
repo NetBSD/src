@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hpcmips.h,v 1.2.2.2 2002/01/08 00:25:03 nathanw Exp $	*/
+/*	$NetBSD: bus_dma_hpcmips.h,v 1.2.2.3 2002/01/11 23:38:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -72,5 +72,10 @@ struct bus_dmamap_hpcmips {
 
 extern struct bus_dma_tag_hpcmips hpcmips_default_bus_dma_tag;
 bus_dma_protos(_hpcmips)
+
+int	_hpcmips_bd_mem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    vaddr_t low, vaddr_t high));
 
 #endif /* _BUS_DMA_HPCMIPS_H_ */

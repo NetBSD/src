@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.3.2.3 2001/11/14 19:18:18 nathanw Exp $
+ *	$Id: i4b_isppp.c,v 1.3.2.4 2002/01/11 23:39:47 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.3.2.3 2001/11/14 19:18:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.3.2.4 2002/01/11 23:39:47 nathanw Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.3.2.3 2001/11/14 19:18:18 nathanw Ex
 #include <sys/sockio.h>
 #include <sys/kernel.h>
 #include <sys/protosw.h>
+#include <sys/callout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -86,16 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.3.2.3 2001/11/14 19:18:18 nathanw Ex
 
 #include <net/slcompress.h>
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#ifndef USE_ISPPP
-#include <net/if_sppp.h>
-#else
-#include <machine/i4b_isppp.h>
-#endif /* USE_ISPPP */
-#else
-#include <net/if_sppp.h>
-#endif
-
+#include <net/if_spppvar.h>
 
 #if defined(__FreeBSD_version) &&  __FreeBSD_version >= 400008                
 #include "bpf.h"     
@@ -143,7 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.3.2.3 2001/11/14 19:18:18 nathanw Ex
 
 #elif defined __NetBSD__ || defined __OpenBSD__
 #define	ISPPP_FMT	"%s: "
-#define	ISPPP_ARG(sc)	((sc)->sc_if.if_xname)
+#define	ISPPP_ARG(sc)	((sc)->sc_sp.pp_if.if_xname)
 #define	PDEVSTATIC	/* not static */
 #define IOCTL_CMD_T	u_long
 #define IFP2UNIT(ifp)	((struct i4bisppp_softc *)ifp->if_softc)->sc_unit
@@ -165,17 +157,7 @@ PDEVSTATIC void i4bispppattach(void);
 #define PPP_HDRLEN   		4	/* 4 octetts PPP header length	*/
 
 struct i4bisppp_softc {
-	/*
-	 * struct sppp starts with a struct ifnet, but we gotta allocate
-	 * more space for it.  NB: do not relocate this union, it must
-	 * be first in isppp_softc.  The tls and tlf hooks below want to
-	 * convert a ``struct sppp *'' into a ``struct isppp_softc *''.
-	 */
-	union {
-		struct ifnet scu_if;
-		struct sppp scu_sp;
-	} sc_if_un;
-#define sc_if sc_if_un.scu_if
+	struct sppp sc_sp;	/* we are derived from struct sppp */
 
 	int	sc_state;	/* state of the interface	*/
 
@@ -260,57 +242,57 @@ i4bispppattach()
 	for(i = 0; i < NI4BISPPP; sc++, i++) {
 		i4bisppp_init_linktab(i);
 		
-		sc->sc_if.if_softc = sc;
+		sc->sc_sp.pp_if.if_softc = sc;
 
 #ifdef __FreeBSD__		
-		sc->sc_if.if_name = "isp";
+		sc->sc_sp.pp_if.if_name = "isp";
 #if defined(__FreeBSD_version) && __FreeBSD_version < 300001
-		sc->sc_if.if_next = NULL;
+		sc->sc_sp.pp_if.if_next = NULL;
 #endif
-		sc->sc_if.if_unit = i;
+		sc->sc_sp.pp_if.if_unit = i;
 #else
-		sprintf(sc->sc_if.if_xname, "isp%d", i);
+		sprintf(sc->sc_sp.pp_if.if_xname, "isp%d", i);
 		sc->sc_unit = i;
 #endif
 
-		sc->sc_if.if_mtu = PP_MTU;
+		sc->sc_sp.pp_if.if_mtu = PP_MTU;
 
 #ifdef __NetBSD__
-		sc->sc_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT |
+		sc->sc_sp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT |
 					IFF_MULTICAST;
 #else
-		sc->sc_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT;
+		sc->sc_sp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT;
 #endif
 
-		sc->sc_if.if_type = IFT_ISDNBASIC;
+		sc->sc_sp.pp_if.if_type = IFT_ISDNBASIC;
 		sc->sc_state = ST_IDLE;
 
-		sc->sc_if.if_ioctl = i4bisppp_ioctl;
+		sc->sc_sp.pp_if.if_ioctl = i4bisppp_ioctl;
 
 		/* actually initialized by sppp_attach() */
-		/* sc->sc_if.if_output = sppp_output; */
+		/* sc->sc_sp.pp_if.if_output = sppp_output; */
 
-		sc->sc_if.if_start = i4bisppp_start;
+		sc->sc_sp.pp_if.if_start = i4bisppp_start;
 
-		sc->sc_if.if_hdrlen = 0;
-		sc->sc_if.if_addrlen = 0;
-		sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
+		sc->sc_sp.pp_if.if_hdrlen = 0;
+		sc->sc_sp.pp_if.if_addrlen = 0;
+		sc->sc_sp.pp_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
 
-		sc->sc_if.if_ipackets = 0;
-		sc->sc_if.if_ierrors = 0;
-		sc->sc_if.if_opackets = 0;
-		sc->sc_if.if_oerrors = 0;
-		sc->sc_if.if_collisions = 0;
-		sc->sc_if.if_ibytes = 0;
-		sc->sc_if.if_obytes = 0;
-		sc->sc_if.if_imcasts = 0;
-		sc->sc_if.if_omcasts = 0;
-		sc->sc_if.if_iqdrops = 0;
-		sc->sc_if.if_noproto = 0;
+		sc->sc_sp.pp_if.if_ipackets = 0;
+		sc->sc_sp.pp_if.if_ierrors = 0;
+		sc->sc_sp.pp_if.if_opackets = 0;
+		sc->sc_sp.pp_if.if_oerrors = 0;
+		sc->sc_sp.pp_if.if_collisions = 0;
+		sc->sc_sp.pp_if.if_ibytes = 0;
+		sc->sc_sp.pp_if.if_obytes = 0;
+		sc->sc_sp.pp_if.if_imcasts = 0;
+		sc->sc_sp.pp_if.if_omcasts = 0;
+		sc->sc_sp.pp_if.if_iqdrops = 0;
+		sc->sc_sp.pp_if.if_noproto = 0;
 
 #if I4BISPPPACCT
-		sc->sc_if.if_timer = 0;	
-		sc->sc_if.if_watchdog = i4bisppp_watchdog;	
+		sc->sc_sp.pp_if.if_timer = 0;	
+		sc->sc_sp.pp_if.if_watchdog = i4bisppp_watchdog;	
 		sc->sc_iinb = 0;
 		sc->sc_ioutb = 0;
 		sc->sc_inb = 0;
@@ -320,31 +302,31 @@ i4bispppattach()
 		sc->sc_fn = 1;
 #endif
 
-		sc->sc_if_un.scu_sp.pp_tls = i4bisppp_tls;
-		sc->sc_if_un.scu_sp.pp_tlf = i4bisppp_tlf;
-		sc->sc_if_un.scu_sp.pp_con = i4bisppp_negotiation_complete;
-		sc->sc_if_un.scu_sp.pp_chg = i4bisppp_state_changed;
-		sc->sc_if_un.scu_sp.pp_framebytes = 0;	/* no framing added by hardware */
+		sc->sc_sp.pp_tls = i4bisppp_tls;
+		sc->sc_sp.pp_tlf = i4bisppp_tlf;
+		sc->sc_sp.pp_con = i4bisppp_negotiation_complete;
+		sc->sc_sp.pp_chg = i4bisppp_state_changed;
+		sc->sc_sp.pp_framebytes = 0;	/* no framing added by hardware */
 
 #if defined(__FreeBSD_version) && ((__FreeBSD_version >= 500009) || (410000 <= __FreeBSD_version && __FreeBSD_version < 500000))
 		/* do not call bpfattach in ether_ifattach */
-		ether_ifattach(&sc->sc_if, 0);
+		ether_ifattach(&sc->sc_sp.pp_if, 0);
 #else
-		if_attach(&sc->sc_if);
+		if_attach(&sc->sc_sp.pp_if);
 #endif
 #ifndef USE_ISPPP
-		sppp_attach(&sc->sc_if);
+		sppp_attach(&sc->sc_sp.pp_if);
 #else
-		isppp_attach(&sc->sc_if);
+		isppp_attach(&sc->sc_sp.pp_if);
 #endif
 
 #if NBPFILTER > 0 || NBPF > 0
 #ifdef __FreeBSD__
-		bpfattach(&sc->sc_if, DLT_PPP, PPP_HDRLEN);
+		bpfattach(&sc->sc_sp.pp_if, DLT_PPP, PPP_HDRLEN);
 		CALLOUT_INIT(&sc->sc_ch);
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-		bpfattach(&sc->sc_if, DLT_PPP, sizeof(u_int));
+		bpfattach(&sc->sc_sp.pp_if, DLT_PPP, sizeof(u_int));
 #endif
 #endif		
 	}
@@ -357,18 +339,12 @@ static int
 i4bisppp_ioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data)
 {
 	struct i4bisppp_softc *sc = ifp->if_softc;
-#if 0
-	struct sppp *sp = (struct sppp *)sc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
-	struct ifreq *ifr = (struct ifreq *) data;
-#endif
-
 	int error;
 
 #ifndef USE_ISPPP		
-	error = sppp_ioctl(&sc->sc_if, cmd, data);
+	error = sppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
 #else
-	error = isppp_ioctl(&sc->sc_if, cmd, data);
+	error = isppp_ioctl(&sc->sc_sp.pp_if, cmd, data);
 #endif
 	if (error)
 		return error;
@@ -415,9 +391,9 @@ i4bisppp_start(struct ifnet *ifp)
 	 */
 
 #ifndef USE_ISPPP
-	while ((m = sppp_dequeue(&sc->sc_if)) != NULL)
+	while ((m = sppp_dequeue(&sc->sc_sp.pp_if)) != NULL)
 #else
-	while ((m = isppp_dequeue(&sc->sc_if)) != NULL)
+	while ((m = isppp_dequeue(&sc->sc_sp.pp_if)) != NULL)
 #endif
 	{
 
@@ -442,10 +418,10 @@ i4bisppp_start(struct ifnet *ifp)
 		{
 			IF_ENQUEUE(isdn_linktab[unit]->tx_queue, m);
 #if 0
-			sc->sc_if.if_obytes += m->m_pkthdr.len;
+			sc->sc_sp.pp_if.if_obytes += m->m_pkthdr.len;
 #endif
 			sc->sc_outb += m->m_pkthdr.len;
-			sc->sc_if.if_opackets++;
+			sc->sc_sp.pp_if.if_opackets++;
 		}
 	}
 	isdn_linktab[unit]->bch_tx_start(isdn_linktab[unit]->l1token,
@@ -485,7 +461,7 @@ i4bisppp_watchdog(struct ifnet *ifp)
 		i4b_l4_accounting(BDRV_ISPPP, unit, ACCT_DURING,
 			 sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_outb, sc->sc_inb);
  	}
-	sc->sc_if.if_timer = I4BISPPPACCTINTVL; 	
+	sc->sc_sp.pp_if.if_timer = I4BISPPPACCTINTVL; 	
 
 #if 0 /* old stuff, keep it around */
 	printf(ISPPP_FMT "transmit timeout\n", ISPPP_ARG(sc));
@@ -500,17 +476,6 @@ i4bisppp_watchdog(struct ifnet *ifp)
  *===========================================================================*
  */
 
-#if 0 /* never used ??? */
-/*---------------------------------------------------------------------------*
- *	just an alias for i4bisppp_tls, but of type timeout_t
- *---------------------------------------------------------------------------*/
-static void
-i4bisppp_timeout(void *cookie)
-{
-	i4bisppp_tls((struct sppp *)cookie);
-}
-#endif
-
 /*---------------------------------------------------------------------------*
  *	PPP this-layer-started action
  *---------------------------------------------------------------------------*
@@ -518,8 +483,8 @@ i4bisppp_timeout(void *cookie)
 static void
 i4bisppp_tls(struct sppp *sp)
 {
-	struct i4bisppp_softc *sc = (struct i4bisppp_softc *)sp;
-	struct ifnet *ifp = (struct ifnet *)sp;
+	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
+	struct ifnet *ifp = &sc->sc_sp.pp_if;
 
 	if(sc->sc_state == ST_CONNECTED)
 		return;
@@ -534,16 +499,11 @@ i4bisppp_tls(struct sppp *sp)
 static void
 i4bisppp_tlf(struct sppp *sp)
 {
-	struct i4bisppp_softc *sc = (struct i4bisppp_softc *)sp;
-/*	call_desc_t *cd = sc->sc_cdp;	*/
-        struct ifnet *ifp = (struct ifnet *)sp;	
-	
+	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
+        struct ifnet *ifp = &sp->pp_if;
+
 	if(sc->sc_state != ST_CONNECTED)
 		return;
-
-#if 0 /* never used ??? */
-	UNTIMEOUT(i4bisppp_timeout, (void *)sp, sc->sc_ch);
-#endif
 
 	i4b_l4_drvrdisc(BDRV_ISPPP, IFP2UNIT(ifp));
 }
@@ -554,7 +514,7 @@ i4bisppp_tlf(struct sppp *sp)
 static void
 i4bisppp_state_changed(struct sppp *sp, int new_state)
 {
-	struct i4bisppp_softc *sc = (struct i4bisppp_softc *)sp;
+	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
 	
 	i4b_l4_ifstate_changed(sc->sc_cdp, new_state);
 }
@@ -566,7 +526,7 @@ i4bisppp_state_changed(struct sppp *sp, int new_state)
 static void
 i4bisppp_negotiation_complete(struct sppp *sp)
 {
-	struct i4bisppp_softc *sc = (struct i4bisppp_softc *)sp;
+	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
 	
 	i4b_l4_negcomplete(sc->sc_cdp);
 }
@@ -582,7 +542,7 @@ static void
 i4bisppp_connect(int unit, void *cdp)
 {
 	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
-	struct sppp *sp = &sc->sc_if_un.scu_sp;
+	struct sppp *sp = &sc->sc_sp;
 	int s = splnet();
 
 	sc->sc_cdp = (call_desc_t *)cdp;
@@ -595,7 +555,7 @@ i4bisppp_connect(int unit, void *cdp)
 	sc->sc_outb = 0;
 	sc->sc_linb = 0;
 	sc->sc_loutb = 0;
-	sc->sc_if.if_timer = I4BISPPPACCTINTVL;
+	sc->sc_sp.pp_if.if_timer = I4BISPPPACCTINTVL;
 #endif
 	
 #if 0 /* never used ??? */
@@ -617,7 +577,7 @@ i4bisppp_disconnect(int unit, void *cdp)
 {
 	call_desc_t *cd = (call_desc_t *)cdp;
 	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
-	struct sppp *sp = &sc->sc_if_un.scu_sp;
+	struct sppp *sp = &sc->sc_sp;
 
 	int s = splnet();
 
@@ -630,7 +590,7 @@ i4bisppp_disconnect(int unit, void *cdp)
 	}
 
 #if I4BISPPPACCT
-	sc->sc_if.if_timer = 0;
+	sc->sc_sp.pp_if.if_timer = 0;
 #endif
 
 	i4b_l4_accounting(BDRV_ISPPP, unit, ACCT_FINAL,
@@ -668,15 +628,15 @@ i4bisppp_dialresponse(int unit, int status, cause_t cause)
 		NDBGL4(L4_ISPDBG, "isp%d: clearing queues", unit);
 
 #ifndef USE_ISPPP
-		if(!(sppp_isempty(&sc->sc_if)))
+		if(!(sppp_isempty(&sc->sc_sp.pp_if)))
 #else
-		if(!(isppp_isempty(&sc->sc_if)))
+		if(!(isppp_isempty(&sc->sc_sp.pp_if)))
 #endif		
 		{
 #ifndef USE_ISPPP
-			while((m = sppp_dequeue(&sc->sc_if)) != NULL)
+			while((m = sppp_dequeue(&sc->sc_sp.pp_if)) != NULL)
 #else
-			while((m = isppp_dequeue(&sc->sc_if)) != NULL)
+			while((m = isppp_dequeue(&sc->sc_sp.pp_if)) != NULL)
 #endif
 				m_freem(m);
 		}
@@ -707,13 +667,10 @@ i4bisppp_rx_data_rdy(int unit)
 	if((m = *isdn_linktab[unit]->rx_mbuf) == NULL)
 		return;
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.rcvif = &sc->sc_sp.pp_if;
 	m->m_pkthdr.len = m->m_len;
 
-	sc->sc_if.if_ipackets++;
-#if 0
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
-#endif
+	sc->sc_sp.pp_if.if_ipackets++;
 
 #if I4BISPPPACCT
 	sc->sc_inb += m->m_pkthdr.len;
@@ -726,13 +683,13 @@ i4bisppp_rx_data_rdy(int unit)
 #if NBPFILTER > 0 || NBPF > 0
 
 #ifdef __FreeBSD__	
-	if(sc->sc_if.if_bpf)
-		bpf_mtap(&sc->sc_if, m);
+	if(sc->sc_sp.pp_if.if_bpf)
+		bpf_mtap(&sc->sc_sp.pp_if, m);
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-	if(sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m);
+	if(sc->sc_sp.pp_if.if_bpf)
+		bpf_mtap(sc->sc_sp.pp_if.if_bpf, m);
 #endif
 
 #endif /* NBPFILTER > 0  || NBPF > 0 */
@@ -740,9 +697,9 @@ i4bisppp_rx_data_rdy(int unit)
 	s = splnet();
 
 #ifndef USE_ISPPP
-	sppp_input(&sc->sc_if, m);
+	sppp_input(&sc->sc_sp.pp_if, m);
 #else
-	isppp_input(&sc->sc_if, m);
+	isppp_input(&sc->sc_sp.pp_if, m);
 #endif
 
 	splx(s);
@@ -756,7 +713,7 @@ i4bisppp_rx_data_rdy(int unit)
 static void
 i4bisppp_tx_queue_empty(int unit)
 {
-	i4bisppp_start(&i4bisppp_softc[unit].sc_if);	
+	i4bisppp_start(&i4bisppp_softc[unit].sc_sp.pp_if);
 }
 
 /*---------------------------------------------------------------------------*
@@ -770,12 +727,12 @@ i4bisppp_tx_queue_empty(int unit)
 time_t
 i4bisppp_idletime(int unit)
 {
-#ifdef __NetBSD__
-       return(i4bisppp_softc[unit].sc_cdp->last_active_time);
-#else
 	struct sppp *sp;
 	sp = (struct sppp *) &i4bisppp_softc[unit];
 
+#ifdef __NetBSD__
+       return sp->pp_last_activity;
+#else
 	return((sp->pp_last_recv < sp->pp_last_sent) ?
 			sp->pp_last_sent : sp->pp_last_recv);
 #endif

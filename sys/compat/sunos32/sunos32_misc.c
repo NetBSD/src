@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.7.4.2 2001/11/14 19:13:24 nathanw Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.7.4.3 2002/01/11 23:38:52 nathanw Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.2 2001/11/14 19:13:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.7.4.3 2002/01/11 23:38:52 nathanw Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -971,6 +971,69 @@ sunos32_sys_setsockopt(p, v, retval)
 	FILE_UNUSE(fp, p);
 	return (error);
 }
+
+static __inline__ int sunos32_sys_socket_common(struct proc *, register_t *,
+					      int type);
+static __inline__ int
+sunos32_sys_socket_common(p, retval, type)
+	struct proc *p;
+	register_t *retval;
+	int type;
+{
+	struct socket *so;
+	struct file *fp;
+	int error, fd;
+
+	/* getsock() will use the descriptor for us */
+	fd = (int)*retval;
+	if ((error = getsock(p->p_fd, fd, &fp)) == 0) {
+		so = (struct socket *)fp->f_data;
+		if (type == SOCK_DGRAM)
+			so->so_options |= SO_BROADCAST;
+	}
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+int
+sunos32_sys_socket(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos32_sys_socket_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+	} */ *uap = v;
+	int error;
+
+	error = netbsd32_socket(p, v, retval);
+	if (error)
+		return (error);
+	return sunos32_sys_socket_common(p, retval, SCARG(uap, type));
+}
+
+int
+sunos32_sys_socketpair(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos32_sys_socketpair_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+		syscallarg(int *) rsv;
+	} */ *uap = v;
+	int error;
+
+	error = netbsd32_socketpair(p, v, retval);
+	if (error)
+		return (error);
+	return sunos32_sys_socket_common(p, retval, SCARG(uap, type));
+}
+
 
 /*
  * XXX: This needs cleaning up.

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3.2.7 2002/01/08 00:31:19 nathanw Exp $	*/
+/*	$NetBSD: yds.c,v 1.3.2.8 2002/01/11 23:39:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.3.2.7 2002/01/08 00:31:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.3.2.8 2002/01/11 23:39:28 nathanw Exp $");
 
 #include "mpu.h"
 
@@ -430,7 +430,6 @@ yds_allocate_slots(sc)
 	memsize += (N_PLAY_SLOTS+1)*sizeof(u_int32_t);
 
 	p = &sc->sc_ctrldata;
-	printf("KERNADDR(p) : %p\n", KERNADDR(p));
 	if (KERNADDR(p) == NULL) {
 		i = yds_allocmem(sc, memsize, 16, p);
 		if (i) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.6 2002/01/08 00:33:48 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.7 2002/01/11 23:39:43 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107.2.6 2002/01/08 00:33:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107.2.7 2002/01/11 23:39:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,7 +741,7 @@ msdosfs_remove(v)
 	else
 		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %p, v_usecount %ld\n",
+	printf("msdosfs_remove(), dep %p, v_usecount %d\n",
 		dep, ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)

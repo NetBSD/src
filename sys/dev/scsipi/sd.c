@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.5 2002/01/08 00:31:53 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.6 2002/01/11 23:39:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.5 2002/01/08 00:31:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.6 2002/01/11 23:39:33 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -760,7 +760,7 @@ sdstart(periph)
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
 		} else
-#endif
+#endif /* NSD_SCSIBUS > 0 */
 		{
 			/*
 			 * Need a large cdb.
@@ -914,6 +914,8 @@ sdioctl(dev, cmd, addr, flag, p)
 		case DIOCLOCK:
 		case DIOCEJECT:
 		case ODIOCEJECT:
+		case DIOCGCACHE:
+		case DIOCSCACHE:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1049,6 +1051,41 @@ sdioctl(dev, cmd, addr, flag, p)
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return (0);
 #endif
+
+	case DIOCGCACHE:
+		if (sd->sc_ops->sdo_getcache != NULL)
+			return ((*sd->sc_ops->sdo_getcache)(sd, (int *) addr));
+
+		/* Not supported on this device. */
+		*(int *) addr = 0;
+		return (0);
+
+	case DIOCSCACHE:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (sd->sc_ops->sdo_setcache != NULL)
+			return ((*sd->sc_ops->sdo_setcache)(sd, *(int *) addr));
+
+		/* Not supported on this device. */
+		return (EOPNOTSUPP);
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writeable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (((sd->flags & SDF_DIRTY) != 0 || *(int *)addr != 0) &&
+		    sd->sc_ops->sdo_flush != NULL) {
+			error = (*sd->sc_ops->sdo_flush)(sd, 0);
+			if (error)
+				sd->flags &= ~SDF_FLUSHING;
+			else
+				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+		} else
+			error = 0;
+		return (error);
 
 	default:
 		if (part != RAW_PART)

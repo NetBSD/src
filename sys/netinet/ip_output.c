@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83.2.7 2002/01/08 00:34:09 nathanw Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.8 2002/01/11 23:39:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.7 2002/01/08 00:34:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.8 2002/01/11 23:39:46 nathanw Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -318,6 +318,10 @@ ip_output(m0, va_alist)
 			struct in_ifaddr *ia;
 
 			IFP_TO_IA(ifp, ia);
+			if (!ia) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
 			ip->ip_src = ia->ia_addr.sin_addr;
 		}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: vr.c,v 1.31.4.2 2002/01/08 00:25:06 nathanw Exp $	*/
+/*	$NetBSD: vr.c,v 1.31.4.3 2002/01/11 23:38:26 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999-2001
+ * Copyright (c) 1999-2002
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,8 @@
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/hpc/hpckbdvar.h>
 
@@ -75,19 +77,19 @@
 #endif
 
 #include "com.h"
-#include "sg2com_vrip.h"
-#if NCOM > 0 || NSG2COM_VRIP > 0
+#include "com_vrip.h"
+#include "com_hpcio.h"
+#if NCOM > 0
 #include <sys/termios.h>
 #include <sys/ttydefaults.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#if NCOM > 0
+#if NCOM_VRIP > 0
 #include <hpcmips/vr/siureg.h>
 #include <hpcmips/vr/com_vripvar.h>
 #endif
-#if NSG2COM_VRIP > 0
-#include <hpcmips/vr/sg2comreg.h>
-#include <hpcmips/vr/sg2com_vripvar.h>
+#if NCOM_HPCIO > 0
+#include <hpcmips/dev/com_hpciovar.h>
 #endif
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -179,6 +181,43 @@ STATIC int (*vr_intr_handler[4])(void *, u_int32_t, u_int32_t) =
 };
 STATIC void *vr_intr_arg[4];
 
+#if NCOM > 0
+/*
+ * machine dependent serial console info
+ */
+static struct vr_com_platdep {
+	platid_mask_t *platidmask;
+	int (*attach)(bus_space_tag_t, int, int, int, tcflag_t, int);
+	int addr;
+	int freq;
+} platdep_com_table[] = {
+#if NCOM_HPCIO > 0
+	{
+		&platid_mask_MACH_NEC_MCR_SIGMARION2,
+		com_hpcio_cndb_attach,	/* attach proc */
+		0x0b600000,		/* base address */
+		COM_FREQ,		/* frequency */
+	},
+#endif
+#if NCOM_VRIP > 0
+	{
+		&platid_wild,
+		com_vrip_cndb_attach,	/* attach proc */
+		VRIP_SIU_ADDR,		/* base address */
+		VRCOM_FREQ,		/* frequency */
+	},
+#else
+	/* dummy */
+	{
+		&platid_wild,
+		NULL,			/* attach proc */
+		0,			/* base address */
+		0,			/* frequency */
+	},
+#endif
+};
+#endif /* NCOM > 0 */
+
 void
 vr_init()
 {
@@ -216,9 +255,6 @@ vr_mem_init(paddr_t kernend)
 	vr_find_dram(0x02000000, 0x04000000);
 	vr_find_dram(0x04000000, 0x06000000);
 	vr_find_dram(0x06000000, 0x08000000);
-
-	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
-	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - (KERNBASE + 0x800));
 }
 
 void
@@ -299,55 +335,40 @@ vr_fb_init(caddr_t *kernend)
 void
 vr_cons_init()
 {
-#if NCOM > 0 || NSG2COM_VRIP > 0 || NHPCFB > 0 || NVRKIU > 0
+#if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
 	bus_space_tag_t iot = hpcmips_system_bus_space();
+#endif
+#if NCOM > 0
+	static struct vr_com_platdep *com_info;
 #endif
 
 #if NCOM > 0
+	com_info = platid_search(&platid, platdep_com_table,
+	    sizeof(platdep_com_table)/sizeof(*platdep_com_table),
+	    sizeof(*platdep_com_table));
 #ifdef KGDB
-	/* if KGDB is defined, always use the serial port for KGDB */
-	if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, 9600, VRCOM_FREQ,
-	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
-		printf("%s(%d): can't init kgdb's serial port",
-		    __FILE__, __LINE__);
-	}
+	if (com_info->attach != NULL) {
+		/* if KGDB is defined, always use the serial port for KGDB */
+		if ((*com_info->attach)(iot, com_info->addr, 9600,
+		    com_info->freq,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
+			printf("%s(%d): can't init kgdb's serial port",
+			    __FILE__, __LINE__);
+		}
 #else /* KGDB */
-	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
+	if (com_info->attach != NULL && (bootinfo->bi_cnuse&BI_CNUSE_SERIAL)) {
 		/* Serial console */
-		if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, CONSPEED,
-		    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
+		if ((*com_info->attach)(iot, com_info->addr, CONSPEED,
+		    com_info->freq,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
 			printf("%s(%d): can't init serial console",
 			    __FILE__, __LINE__);
 		} else {
-#if NSG2COM_VRIP == 0
 			return;
-#endif
 		}
 	}
 #endif /* KGDB */
 #endif /* NCOM > 0 */
-
-#if NSG2COM_VRIP > 0
-#ifdef KGDB
-	/* if KGDB is defined, always use the serial port for KGDB */
-	if (sg2com_vrip_cndb_attach(iot, SG2COM_VRIP_ADDR, 9600, SG2COM_FREQ,
-	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
-		printf("%s(%d): can't init kgdb's serial port",
-		    __FILE__, __LINE__);
-	}
-#else /* KGDB */
-	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
-		/* Serial console */
-		if (sg2com_vrip_cndb_attach(iot, SG2COM_ADDR, CONSPEED,
-		    SG2COM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)){
-			printf("%s(%d): can't init serial console",
-			    __FILE__, __LINE__);
-		} else {
-			return;
-		}
-	}
-#endif /* KGDB */
-#endif /* NSG2COM_VRIP > 0 */
 
 #if NHPCFB > 0
 	if (hpcfb_cnattach(NULL)) {

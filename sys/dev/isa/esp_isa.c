@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.21.4.2 2001/11/14 19:14:45 nathanw Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.21.4.3 2002/01/11 23:39:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.21.4.2 2001/11/14 19:14:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.21.4.3 2002/01/11 23:39:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,12 +330,22 @@ esp_isa_match(parent, match, aux)
 	struct esp_isa_probe_data epd;
 	int rv;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	ESP_TRACE(("[esp_isa_match] "));
 
-	if (ia->ia_iobase == -1)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return 0;
 
-	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ESP_ISA_IOSIZE, 0, &ioh))
 		return 0;
 
 	rv = esp_isa_find(iot, ioh, &epd);
@@ -343,17 +353,18 @@ esp_isa_match(parent, match, aux)
 	bus_space_unmap(iot, ioh, ESP_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != IRQUNK && ia->ia_irq != epd.sc_irq) {
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != epd.sc_irq) {
 #ifdef DIAGNOSTIC
 		printf("esp_isa_match: configured IRQ (%0d) does not "
 		       "match board IRQ (%0d), device not configured\n",
-		       ia->ia_irq, epd.sc_irq);
+		       ia->ia_irq[0].ir_irq, epd.sc_irq);
 #endif
 			return 0;
 		}
-		ia->ia_irq = epd.sc_irq;
-		ia->ia_msize = 0;
-		ia->ia_iosize = ESP_ISA_IOSIZE;
+		ia->ia_irq[0].ir_irq = epd.sc_irq;
+		ia->ia_iomem[0].ir_size = 0;
+		ia->ia_io[0].ir_size = ESP_ISA_IOSIZE;
 	}
 	return (rv);
 }
@@ -378,7 +389,7 @@ esp_isa_attach(parent, self, aux)
 	printf("\n");
 	ESP_TRACE(("[esp_isa_attach] "));
 
-	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ESP_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -388,16 +399,16 @@ esp_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if (ia->ia_drq != DRQUNK) {
-		if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
+	if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
+		if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
 			printf("%s: unable to cascade DRQ, error = %d\n",
 			    sc->sc_dev.dv_xname, error);
 			return;
 		}
 	}
 
-	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    ncr53c9x_intr, esc);
+	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	    IPL_BIO, ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);

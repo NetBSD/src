@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4.4.2 2002/01/08 00:25:02 nathanw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4.4.3 2002/01/11 23:38:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@ void
 intr_init()
 {
 #if defined(VR41XX) && defined(TX39XX)
-	__cpu_intr = CPUISMIPS3 ? vr_intr : tx_intr;
 	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;
 #elif defined(VR41XX)
 	ipl_sr_bits = __ipl_sr_bits_vr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.6 2002/01/08 00:25:37 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.7 2002/01/11 23:38:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.6 2002/01/08 00:25:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.7 2002/01/11 23:38:31 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -121,7 +121,6 @@ fpu_save(union savefpu *addr)
 	if (i386_use_fxsave) {
 		fxsave(&addr->sv_xmm);
 		/* FXSAVE doesn't FNINIT like FNSAVE does -- so do it here. */
-		fwait();	/* XXX needed? */
 		fninit();
 	} else
 #endif /* I686_CPU */
@@ -392,7 +391,7 @@ npxintr(void *arg)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		l->l_md.md_regs = (struct trapframe *)&frame->if_es;
+		l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on

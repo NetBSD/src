@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.1.4.2 2002/01/08 00:27:01 nathanw Exp $
+# 	$NetBSD: DEBUG,v 1.1.4.3 2002/01/11 23:38:40 nathanw Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -40,7 +40,8 @@ options 	GSFB_DEBUG_MONITOR, INTR_DEBUG, SIF_DEBUG, SMAP_DEBUG
 options 	EMAC3_DEBUG
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhidev*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?

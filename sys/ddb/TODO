@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7.2.1 2002/01/08 00:29:15 nathanw Exp $
+$NetBSD: TODO,v 1.7.2.2 2002/01/11 23:38:54 nathanw Exp $
 
 In rough order.
 
@@ -106,3 +106,6 @@ done	Numbers starting with [a-f] should work, but symbols
 	isn't available when we detect them.
 
 29.	Make "workXX" variables work.
+
+30.	Write ddb(9) to document how ports should implement the debugger,
+	and the canonical solution to some niggling annoying issues.

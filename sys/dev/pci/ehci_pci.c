@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.3.4.1 2001/11/14 19:15:12 nathanw Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.3.4.2 2002/01/11 23:39:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.3.4.1 2001/11/14 19:15:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.3.4.2 2002/01/11 23:39:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
 	ehci_pci_detach, ehci_activate
 };
-
-static TAILQ_HEAD(, usb_pci) ehci_pci_alldevs =
-	TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
 
 int
 ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -225,20 +222,4 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 	return (0);
-}
-
-void
-usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, struct usbd_bus *bu)
-{
-	TAILQ_INSERT_TAIL(&ehci_pci_alldevs, up, next);
-	up->bus = pa->pa_bus;
-	up->device = pa->pa_device;
-	up->function = pa->pa_function;
-	up->usb = bu;
-}
-
-void
-usb_pci_rem(struct usb_pci *up)
-{
-	TAILQ_REMOVE(&ehci_pci_alldevs, up, next);
 }

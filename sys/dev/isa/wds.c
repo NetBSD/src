@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.41.2.4 2002/01/08 00:30:33 nathanw Exp $	*/
+/*	$NetBSD: wds.c,v 1.41.2.5 2002/01/11 23:39:15 nathanw Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.4 2002/01/08 00:30:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.5 2002/01/11 23:39:15 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -267,11 +267,21 @@ wdsprobe(parent, match, aux)
 	struct wds_probe_data wpd;
 	int rv;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, WDS_ISA_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WDS_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	rv = wds_find(iot, ioh, &wpd);
@@ -280,20 +290,31 @@ wdsprobe(parent, match, aux)
 
 	if (rv) {
 #ifdef notyet
-		if (ia->ia_irq != -1 && ia->ia_irq != wpd.sc_irq)
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != wpd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != wpd.sc_drq)
+		if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+		    ia->ia_drq[0].ir_drq != wpd.sc_drq)
 			return (0);
-		ia->ia_irq = wpd.sc_irq;
-		ia->ia_drq = wpd.sc_drq;
+
+		ia->ia_nirq = 1;
+		ia->ia_irq[0].ir_irq = wpd.sc_irq;
+
+		ia->ia_ndrq = 1;
+		ia->ia_drq[0].ir_drq = wpd.sc_drq;
 #else
-		if (ia->ia_irq == -1)
+		if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 			return (0);
-		if (ia->ia_drq == -1)
+		if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
 			return (0);
+
+		ia->ia_nirq = 1;
+		ia->ia_ndrq = 1;
 #endif
-		ia->ia_msize = 0;
-		ia->ia_iosize = WDS_ISA_IOSIZE;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = WDS_ISA_IOSIZE;
+
+		ia->ia_niomem = 0;
 	}
 	return (rv);
 }
@@ -316,7 +337,7 @@ wdsattach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, WDS_ISA_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WDS_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -342,16 +363,14 @@ wdsattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ic, wpd.sc_irq, IST_EDGE, IPL_BIO,
 	    wdsintr, sc);
 #else
-	if (ia->ia_drq != -1) {
-		if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
-			return;
-		}
+	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
+		printf("%s: unable to cascade DRQ, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    wdsintr, sc);
+	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	    IPL_BIO, wdsintr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3 1998/08/26 11:44:06 tsubai Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3.30.1 2002/01/11 23:38:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -135,3 +135,16 @@ int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
 /* Callback for "external" clock sources */
 void zsmd_setclock  __P((struct zs_chanstate *cs));
 #define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
+
+#define PCLK	(9600 * 384)	/* PCLK pin input clock rate */
+
+/* The layout of this is hardware-dependent (padding, order). */
+struct zschan {
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0[15];
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1[15];
+};
+void	zs_putc __P((/* register volatile struct zschan * */void *, int));
+int	zs_getc __P((/* register volatile struct zschan * */void *));
+void zs_kgdb_init __P((void));

@@ -1,7 +1,10 @@
-#	$NetBSD: std.hpcmips,v 1.11.4.2 2002/01/08 00:24:58 nathanw Exp $
+#	$NetBSD: std.hpcmips,v 1.11.4.3 2002/01/11 23:38:23 nathanw Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
 
 mainbus0 at root
 cpu* at mainbus0

@@ -1,3 +1,5 @@
+/*	$NetBSD: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $	*/
+
 /*
  *   Copyright (c) 1997-1999 Martin Husemann. All rights reserved.
  *
@@ -33,7 +35,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2.2.4 2002/01/08 00:30:28 nathanw Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -43,7 +45,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.4 2002/01/08 00:30:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.5 2002/01/11 23:39:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -137,17 +139,33 @@ isic_isa_probe(parent, cf, aux)
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
 	int flags = cf->cf_flags;
 	struct isic_attach_args args;
-	int ret = 0;
+	int ret = 0, iobase, iosize, maddr, msize;
 
 #if 0
 	printf("isic%d: enter isic_isa_probe\n", cf->cf_unit);
 #endif
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* check irq */
-	if (ia->ia_irq == IRQUNK) {
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 		printf("isic%d: config error: no IRQ specified\n", cf->cf_unit);
 		return 0;
 	}
+
+	iobase = ia->ia_io[0].ir_addr;
+	iosize = ia->ia_io[0].ir_size;
+
+	maddr = ia->ia_iomem[0].ir_addr;
+	msize = ia->ia_iomem[0].ir_size;
 
 	/* setup MI attach args */
 	memset(&args, 0, sizeof(args));
@@ -162,9 +180,9 @@ isic_isa_probe(parent, cf, aux)
 		case FLAG_AVM_A1:
 		case FLAG_USR_ISDN_TA_INT:
 		case FLAG_ITK_IX1:
-			if (setup_io_map(flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
-					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &ia->ia_msize)) {
+			if (setup_io_map(flags, iot, memt, iobase, maddr,
+			    &args.ia_num_mappings, &args.ia_maps[0],
+			    &iosize, &msize)) {
 				ret = 0;
 				goto done;
 			}
@@ -224,27 +242,27 @@ isic_isa_probe(parent, cf, aux)
 
 		default:
 			/* No card type given, try to figure ... */
-			if (ia->ia_iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				ret = 0;
 #ifdef ISICISA_TEL_S0_8
 				/* only Teles S0/8 will work without IO */
 				args.ia_flags = FLAG_TELES_S0_8;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
-					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+				if (setup_io_map(args.ia_flags, iot, memt,
+				    iobase, maddr, &args.ia_num_mappings,
+				    &args.ia_maps[0], &iosize, &msize) == 0)
 				{
 					ret = isic_probe_s08(&args);
 				}
 #endif /* ISICISA_TEL_S0_8 */				
-			} else if (ia->ia_maddr == MADDRUNK) {
+			} else if (maddr == ISACF_IOMEM_DEFAULT) {
 				ret = 0;
 #ifdef ISICISA_TEL_S0_16_3
 				/* no shared memory, only a 16.3 based card,
 				   AVM A1, the usr sportster or an ITK would work */
 				args.ia_flags = FLAG_TELES_S0_163;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_s0163(&args);
 					if (ret)
@@ -254,9 +272,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef	ISICISA_AVM_A1
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_AVM_A1;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_avma1(&args);
 					if (ret)
@@ -266,9 +284,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_USR_STI
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_USR_ISDN_TA_INT;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_usrtai(&args);
 					if (ret)
@@ -279,9 +297,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_ITKIX1
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_ITK_IX1;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_itkix1(&args);
 					if (ret)
@@ -293,9 +311,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_TEL_S0_16_3
 				/* could be anything */
 				args.ia_flags = FLAG_TELES_S0_163;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_s0163(&args);
 					if (ret)
@@ -305,9 +323,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_TEL_S0_16
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_TELES_S0_16;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_s016(&args);
 					if (ret)
@@ -317,9 +335,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_AVM_A1
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_AVM_A1;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_avma1(&args);
 					if (ret)
@@ -329,9 +347,9 @@ isic_isa_probe(parent, cf, aux)
 #ifdef ISICISA_TEL_S0_8
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_TELES_S0_8;
-				if (setup_io_map(args.ia_flags, iot, memt, ia->ia_iobase, ia->ia_maddr,
+				if (setup_io_map(args.ia_flags, iot, memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0],
-					&(ia->ia_iosize), &(ia->ia_msize)) == 0)
+					&iosize, &msize) == 0)
 				{
 					ret = isic_probe_s08(&args);
 				}
@@ -347,6 +365,22 @@ done:
 #if 0
 	printf("isic%d: exit isic_isa_probe, return = %d\n", cf->cf_unit, ret);
 #endif
+
+	if (ret) {
+		if (iosize != 0) {
+			ia->ia_nio = 1;
+			ia->ia_io[0].ir_addr = iobase;
+			ia->ia_io[0].ir_size = iosize;
+		}
+		if (msize != 0) {
+			ia->ia_niomem = 1;
+			ia->ia_iomem[0].ir_addr = maddr;
+			ia->ia_iomem[0].ir_size = msize;
+		}
+		ia->ia_nirq = 1;
+
+		ia->ia_ndrq = 0;
+	}
 
 	return ret;
 }
@@ -789,13 +823,28 @@ isic_isa_attach(parent, self, aux)
 	struct l1_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	int flags = sc->sc_dev.dv_cfdata->cf_flags;
-	int ret = 0;
+	int ret = 0, iobase, iosize, maddr, msize;
 	struct isic_attach_args args;
+
+	if (ia->ia_nio > 0) {
+		iobase = ia->ia_io[0].ir_addr;
+		iosize = ia->ia_io[0].ir_size;
+	} else {
+		iobase = ISACF_PORT_DEFAULT;
+		iosize = 0;
+	}
+	if (ia->ia_niomem > 0) {
+		maddr = ia->ia_iomem[0].ir_addr;
+		msize = ia->ia_iomem[0].ir_size;
+	} else {
+		maddr = ISACF_IOMEM_DEFAULT;
+		msize = 0;
+	}
 
 	/* Setup parameters */
 	sc->sc_unit = sc->sc_dev.dv_unit;
-	sc->sc_irq = ia->ia_irq;
-	sc->sc_maddr = ia->ia_maddr;
+	sc->sc_irq = ia->ia_irq[0].ir_irq;
+	sc->sc_maddr = maddr;
 	sc->sc_num_mappings = 0;
 	sc->sc_maps = NULL;
 	switch(flags)
@@ -805,10 +854,10 @@ isic_isa_attach(parent, self, aux)
 		case FLAG_TELES_S0_163:
 		case FLAG_AVM_A1:
 		case FLAG_USR_ISDN_TA_INT:
-			setup_io_map(flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+			setup_io_map(flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&(sc->sc_num_mappings), NULL, NULL, NULL);
 			MALLOC_MAPS(sc);
-			setup_io_map(flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+			setup_io_map(flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&(sc->sc_num_mappings), &(sc->sc_maps[0]), NULL, NULL);
 			break;
 
@@ -820,25 +869,25 @@ isic_isa_attach(parent, self, aux)
 			args.ia_flags = flags;
 
 			/* Probe cards */
-			if (ia->ia_iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				ret = 0;
 #ifdef ISICISA_TEL_S0_8
 				/* only Teles S0/8 will work without IO */
 				args.ia_flags = FLAG_TELES_S0_8;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_s08(&args);
 				if (ret)
 					goto found;
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 #endif /* ISICISA_TEL_S0_8 */
-			} else if (ia->ia_maddr == MADDRUNK) {
+			} else if (maddr == ISACF_IOMEM_DEFAULT) {
 				/* no shared memory, only a 16.3 based card,
 				   AVM A1, the usr sportster or an ITK would work */
 				ret = 0;
 #ifdef	ISICISA_TEL_S0_16_3
 				args.ia_flags = FLAG_TELES_S0_163;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_s0163(&args);
 				if (ret)
@@ -847,7 +896,7 @@ isic_isa_attach(parent, self, aux)
 #endif /* ISICISA_TEL_S0_16_3 */
 #ifdef ISICISA_AVM_A1
 				args.ia_flags = FLAG_AVM_A1;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_avma1(&args);
  				if (ret)
@@ -856,7 +905,7 @@ isic_isa_attach(parent, self, aux)
 #endif /* ISICISA_AVM_A1 */
 #ifdef ISICISA_USR_STI
  				args.ia_flags = FLAG_USR_ISDN_TA_INT;
- 				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+ 				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
  					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
  				ret = isic_probe_usrtai(&args);
 				if (ret)
@@ -865,7 +914,7 @@ isic_isa_attach(parent, self, aux)
 #endif /* ISICISA_USR_STI */
 #ifdef ISICISA_ITKIX1
  				args.ia_flags = FLAG_ITK_IX1;
- 				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+ 				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
  					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
  				ret = isic_probe_itkix1(&args);
 				if (ret)
@@ -877,7 +926,7 @@ isic_isa_attach(parent, self, aux)
 				ret = 0;
 #ifdef	ISICISA_TEL_S0_16_3
 				args.ia_flags = FLAG_TELES_S0_163;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_s0163(&args);
 				if (ret)
@@ -886,7 +935,7 @@ isic_isa_attach(parent, self, aux)
 #endif	/* ISICISA_TEL_S0_16_3 */
 #ifdef	ISICISA_TEL_S0_16
 				args.ia_flags = FLAG_TELES_S0_16;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_s016(&args);
 				if (ret)
@@ -895,7 +944,7 @@ isic_isa_attach(parent, self, aux)
 #endif /* ISICISA_TEL_S0_16 */
 #ifdef ISICISA_AVM_A1
 				args.ia_flags = FLAG_AVM_A1;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_avma1(&args);
 				if (ret)
@@ -904,7 +953,7 @@ isic_isa_attach(parent, self, aux)
 #endif /* ISICISA_AVM_A1 */
 #ifdef ISICISA_TEL_S0_8
 				args.ia_flags = FLAG_TELES_S0_8;
-				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(args.ia_flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&args.ia_num_mappings, &args.ia_maps[0], NULL, NULL);
 				ret = isic_probe_s08(&args);
 				if (ret)
@@ -920,7 +969,7 @@ isic_isa_attach(parent, self, aux)
 			args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 			if (ret) {
 				MALLOC_MAPS(sc);
-				setup_io_map(flags, ia->ia_iot, ia->ia_memt, ia->ia_iobase, ia->ia_maddr,
+				setup_io_map(flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&(sc->sc_num_mappings), &(sc->sc_maps[0]), NULL, NULL);
 			} else {
 				printf(": could not determine card type - not configured!\n");
@@ -946,9 +995,9 @@ isic_isa_attach(parent, self, aux)
 	 * work (like on NetBSD/Atari, try to establish an edge triggered
 	 * interrupt.
 	 */
-	if (isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_LEVEL,
+	if (isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_LEVEL,
 				IPL_NET, isicintr, sc) == NULL) {
-		if(isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+		if(isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE,
 				IPL_NET, isicintr, sc) == NULL) {
 			args_unmap(&(sc->sc_num_mappings), &(sc->sc_maps[0]));
 			free((sc)->sc_maps, M_DEVBUF);
@@ -988,7 +1037,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 	switch(flags)
 	{
 		case FLAG_TELES_S0_8:
-			if (maddr == MADDRUNK) {
+			if (maddr == ISACF_IOMEM_DEFAULT) {
 				printf("isic: config error: no shared memory specified for Teles S0/8!\n");
 				return 1;
 			}
@@ -1012,11 +1061,11 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			break;
 
 		case FLAG_TELES_S0_16:
-			if (iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				printf("isic: config error: no i/o address specified for Teles S0/16!\n");
 				return 1;
 			}
-			if (maddr == MADDRUNK) {
+			if (maddr == ISACF_IOMEM_DEFAULT) {
 				printf("isic: config error: no shared memory specified for Teles S0/16!\n");
 				return 1;
 			}
@@ -1048,7 +1097,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			break;
 
 		case FLAG_TELES_S0_163:
-			if (iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				printf("isic: config error: no i/o address specified for Teles S0/16!\n");
 				return 1;
 			}
@@ -1102,7 +1151,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			break;
 
 		case FLAG_AVM_A1:
-			if (iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				printf("isic: config error: no i/o address specified for AVM A1/Fritz! card!\n");
 				return 1;
 			}
@@ -1175,7 +1224,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			break;
 
 		case FLAG_USR_ISDN_TA_INT:
-			if (iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				printf("isic: config error: no I/O base specified for USR Sportster TA intern!\n");
 				return 1;
 			}
@@ -1247,7 +1296,7 @@ setup_io_map(flags, iot, memt, iobase, maddr, num_mappings, maps, iosize, msize)
 			break;
 
 		case FLAG_ITK_IX1:
-			if (iobase == IOBASEUNK) {
+			if (iobase == ISACF_PORT_DEFAULT) {
 				printf("isic: config error: no I/O base specified for ITK ix1 micro!\n");
 				return 1;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.7 2002/01/08 00:31:09 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.8 2002/01/11 23:39:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.7 2002/01/08 00:31:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.8 2002/01/11 23:39:21 nathanw Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1036,6 +1036,9 @@ pccbbintr(arg)
 					cardslot_event_throw(sc->sc_csc,
 					    CARDSLOT_EVENT_REMOVAL_CB);
 				}
+			} else if (sc->sc_flags & CBB_INSERTING) {
+				sc->sc_flags &= ~CBB_INSERTING;
+				callout_stop(&sc->sc_insert_ch);
 			}
 		} else if (0x00 == (sockstate & CB_SOCKET_STAT_CD) &&
 		    /*
@@ -1047,7 +1050,7 @@ pccbbintr(arg)
 			if (sc->sc_flags & CBB_INSERTING) {
 				callout_stop(&sc->sc_insert_ch);
 			}
-			callout_reset(&sc->sc_insert_ch, hz / 10,
+			callout_reset(&sc->sc_insert_ch, hz / 5,
 			    pci113x_insert, sc);
 			sc->sc_flags |= CBB_INSERTING;
 		}
@@ -1119,6 +1122,12 @@ pci113x_insert(arg)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)arg;
 	u_int32_t sockevent, sockstate;
+
+	if (!(sc->sc_flags & CBB_INSERTING)) {
+		/* We add a card only under inserting state. */
+		return;
+	}
+	sc->sc_flags &= ~CBB_INSERTING;
 
 	sockevent = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
 	    CB_SOCKET_EVENT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.1.6.1 2001/11/14 19:14:45 nathanw Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.1.6.2 2002/01/11 23:39:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.1.6.1 2001/11/14 19:14:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.1.6.2 2002/01/11 23:39:04 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -135,24 +135,39 @@ depca_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_handle_t memh;
 	int rv = 0;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
 	/* Disallow impossible i/o address. */
-	if (ia->ia_iobase != 0x200 && ia->ia_iobase != 0x300)
+	if (ia->ia_io[0].ir_addr != 0x200 && ia->ia_io[0].ir_addr != 0x300)
 		return (0);
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh))
 		return 0;
 
-	if (ia->ia_maddr == MADDRUNK ||
-	    (ia->ia_msize != 32*1024 && ia->ia_msize != 64*1024))
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT ||
+	    (ia->ia_iomem[0].ir_size != 32*1024 &&
+	     ia->ia_iomem[0].ir_size != 64*1024))
 		goto bad;
 
 	/* Map card RAM. */
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &memh))
 		goto bad;
 
 	/* Just needed to check mapability; don't need it anymore. */
-	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+	bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 
 	/* Stop the LANCE chip and put it in a known state. */
 	bus_space_write_2(iot, ioh, DEPCA_RAP, LE_CSR0);
@@ -171,7 +186,15 @@ depca_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (depca_readprom(iot, ioh, NULL))
 		goto bad;
 
-	ia->ia_iosize = 16;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 16;
+
+	ia->ia_niomem = 1;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
 	rv = 1;
 
  bad:
@@ -191,21 +214,21 @@ depca_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 
-	sc->sc_memsize = ia->ia_msize;
+	sc->sc_memsize = ia->ia_iomem[0].ir_size;
 
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize,
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, 16,
 	    0, &sc->sc_ioh) != 0) {
 		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize,
-	    0, &sc->sc_memh) != 0) {
+	if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &sc->sc_memh) != 0) {
 		printf("%s: unable to map memory space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	isc->sc_ic = ia->ia_ic;
-	isc->sc_irq = ia->ia_irq;
+	isc->sc_irq = ia->ia_irq[0].ir_irq;
 	sc->sc_intr_establish = depca_isa_intr_establish;
 
 	depca_attach(sc);

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.2.2.2 2002/01/08 00:24:57 nathanw Exp $
+# 	$NetBSD: MPC303,v 1.2.2.3 2002/01/11 23:38:22 nathanw Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.2.2.2 $"
+#ident 		"GENERIC-$Revision: 1.2.2.3 $"
 
 maxusers	16
 
@@ -17,8 +17,6 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
 options 	VR4122			# NEC VR4122
-options 	NOFPU			# No FPU
-options 	SOFTFLOAT		# emulate FPU insn
 options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
@@ -92,6 +90,7 @@ options 	INET6		# IPV6
 options 	COMPAT_43
 
 #options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
 
 options 	VR_FIND_DRAMLIM=0x03800000
@@ -126,7 +125,6 @@ vrrtc*	at vrip? addr 0x0f000100 size 0x20 intr 2
 
 #vrkiu*	at vrip? addr 0x0b000180 size 0x20 intr 7
 #hpckbd*	at vrkiu?
-options 	CONSPEED=19200
 com*	at vrip? addr 0x0f000800 size 0x20 intr 9 pwctl PWCTL_COM0
 vrgiu*	at vrip? addr 0x0f000140 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0f0000c0 size 0x20 intr 1 # power switch
@@ -372,6 +370,15 @@ vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a 
 vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
 pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+
+#
+# SigmarionII
+#
+com*	at vrgiu? platform NEC_MCR_SIGMARION2 addr 0x0b600000 port 8
+vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
+isa6	at vrisab6
+ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
+#wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.8.2.2 2002/01/08 00:24:28 nathanw Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.8.2.3 2002/01/11 23:38:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -896,8 +896,8 @@ consinit(void)
 #if NCOM > 0
 	if (comcnattach(&obio_bs_tag, IQ80310_UART2, comcnspeed,
 	    COM_FREQ, comcnmode))
-			panic("can't init serial console @%lx", IQ80310_UART1);
+			panic("can't init serial console @%lx", IQ80310_UART2);
 #else
-	panic("serial console @%lx not configured", IQ80310_UART1);
+	panic("serial console @%lx not configured", IQ80310_UART2);
 #endif
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.10 2002/01/11 21:48:32 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.11 2002/01/11 23:38:53 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -127,6 +127,7 @@ deffs				FILECORE
 deffs	fs_nfs.h		NFS
 deffs				NULLFS
 deffs				OVERLAY
+deffs				SMBFS
 deffs				FDESC
 deffs				PORTAL
 deffs				UMAPFS
@@ -1031,6 +1032,12 @@ file	filecorefs/filecore_node.c	filecore
 file	filecorefs/filecore_utils.c	filecore
 file	filecorefs/filecore_vfsops.c	filecore
 file	filecorefs/filecore_vnops.c	filecore
+file	fs/smbfs/smbfs_io.c		smbfs
+file	fs/smbfs/smbfs_node.c		smbfs
+file	fs/smbfs/smbfs_smb.c		smbfs
+file	fs/smbfs/smbfs_subr.c		smbfs
+file	fs/smbfs/smbfs_vfsops.c		smbfs
+file	fs/smbfs/smbfs_vnops.c		smbfs
 file	isofs/cd9660/cd9660_bmap.c	cd9660
 file	isofs/cd9660/cd9660_lookup.c	cd9660
 file	isofs/cd9660/cd9660_node.c	cd9660

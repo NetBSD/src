@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.16.2.3 2002/01/08 00:30:21 nathanw Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.16.2.4 2002/01/11 23:39:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.16.2.3 2002/01/08 00:30:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.16.2.4 2002/01/11 23:39:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,11 +81,21 @@ bha_isa_probe(parent, match, aux)
 	struct bha_probe_data bpd;
 	int rv;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	rv = bha_probe_inquiry(iot, ioh, &bpd);
@@ -93,14 +103,23 @@ bha_isa_probe(parent, match, aux)
 	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq != -1 && ia->ia_irq != bpd.sc_irq)
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != bpd.sc_irq)
 			return (0);
-		if (ia->ia_drq != -1 && ia->ia_drq != bpd.sc_drq)
+		if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+		    ia->ia_drq[0].ir_drq != bpd.sc_drq)
 			return (0);
-		ia->ia_irq = bpd.sc_irq;
-		ia->ia_drq = bpd.sc_drq;
-		ia->ia_msize = 0;
-		ia->ia_iosize = BHA_ISA_IOSIZE;
+
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = BHA_ISA_IOSIZE;
+
+		ia->ia_nirq = 1;
+		ia->ia_irq[0].ir_irq = bpd.sc_irq;
+
+		ia->ia_ndrq = 1;
+		ia->ia_drq[0].ir_drq = bpd.sc_drq;
+
+		ia->ia_niomem = 0;
 	}
 	return (rv);
 }
@@ -123,7 +142,7 @@ bha_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, BHA_ISA_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}

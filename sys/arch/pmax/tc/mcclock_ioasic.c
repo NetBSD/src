@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ioasic.c,v 1.14 2000/01/10 03:24:41 simonb Exp $ */
+/*	$NetBSD: mcclock_ioasic.c,v 1.14.12.1 2002/01/11 23:38:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,10 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.14 2000/01/10 03:24:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.14.12.1 2002/01/11 23:38:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <dev/dec/mcclockvar.h>
 #include <dev/dec/mcclock_pad32.h>

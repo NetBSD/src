@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.4 2002/01/08 00:30:31 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.5 2002/01/11 23:39:13 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.4 2002/01/08 00:30:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.5 2002/01/11 23:39:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,20 +338,22 @@ seaprobe(parent, match, aux)
 	int i, type = 0;
 	caddr_t maddr;
 
-	/*
-	 * Could try to find a board by looking through all possible addresses.
-	 * This is not done the right way now, because I have not found a way
-	 * to get a boards virtual memory address given its physical.  There is
-	 * a function that returns the physical address for a given virtual
-	 * address, but not the other way around.
-	 */
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
 
-	if (ia->ia_maddr == MADDRUNK) {
-		/* XXX */
-		return 0;
-	} else
-		maddr = ISA_HOLE_VADDR(ia->ia_maddr);
-	
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
+	/* XXX XXX XXX */
+	maddr = ISA_HOLE_VADDR(ia->ia_iomem[0].ir_addr);
+
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
 		if (!memcmp(maddr + signatures[i].offset,
@@ -374,9 +376,14 @@ seaprobe(parent, match, aux)
 		return 0;
 	}
 
-	ia->ia_drq = DRQUNK;
-	ia->ia_msize = 0x2000;
-	ia->ia_iosize = 0;
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_size = 0x2000;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_nio = 0;
+	ia->ia_ndrq = 0;
+
 	return 1;
 }
 
@@ -394,7 +401,8 @@ seaattach(parent, self, aux)
 	struct scsipi_channel *chan = &sea->sc_channel;
 	int i;
 
-	sea->maddr = ISA_HOLE_VADDR(ia->ia_maddr);
+	/* XXX XXX XXX */
+	sea->maddr = ISA_HOLE_VADDR(ia->ia_iomem[0].ir_addr);
 	
 	/* check board type */	/* No way to define this through config */
 	for (i = 0; i < nsignatures; i++)
@@ -464,8 +472,8 @@ seaattach(parent, self, aux)
   
 	printf("\n");
 
-	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, seaintr, sea);
+	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, seaintr, sea);
 
 	/*
 	 * ask the adapter what subunits are present

@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.2.4.2 2001/11/14 19:14:05 nathanw Exp $	*/
+/*	$NetBSD: bicons.c,v 1.2.4.3 2002/01/11 23:38:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.2.4.2 2001/11/14 19:14:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.2.4.3 2002/01/11 23:38:56 nathanw Exp $");
 
 #define HALF_FONT
 
@@ -69,7 +69,7 @@ static void put_oxel_D8_FF(u_int8_t *, u_int8_t, u_int8_t);
 static void put_oxel_D16_0000(u_int8_t *, u_int8_t, u_int8_t);
 static void put_oxel_D16_FFFF(u_int8_t *, u_int8_t, u_int8_t);
 
-struct {
+static const struct {
 	int type;
 	char *name;
 	void (*func)(u_int8_t *, u_int8_t, u_int8_t);
@@ -101,7 +101,7 @@ struct {
 	{ BIFB_D16_FFFF,	BIFBN_D16_FFFF,
 	  put_oxel_D16_FFFF,	0x00,	16	},
 };
-#define FB_TABLE_SIZE (sizeof(fb_table)/sizeof(*fb_table))
+#define FB_TABLE_SIZE (sizeof(fb_table) / sizeof(*fb_table))
 
 static u_int8_t	*fb_vram;
 static int16_t	fb_line_bytes;
@@ -124,7 +124,7 @@ static int16_t curs_y;
 cdev_decl(biconsdev);
 
 static int bicons_priority;
-void biconscninit(struct consdev *);
+int biconscninit(struct consdev *);
 void biconscnprobe(struct consdev *);
 void biconscnputc(dev_t, int);
 int biconscngetc(dev_t);	/* harmless place holder */
@@ -135,27 +135,35 @@ static void scroll(int, int, int);
 static void bicons_puts(char *);
 static void bicons_printf(const char *, ...) __attribute__((__unused__));
 
-void
+int
 bicons_init(struct consdev *cndev)
 {
-	biconscninit(cndev);
+
+	if (biconscninit(cndev) != 0)
+		return (1);
+
 	biconscnprobe(cndev);
+
+	return (0);	/* success */
 }
 
-void
+int
 biconscninit(struct consdev *cndev)
 {
 	int fb_index = -1; 
+
+	if (bootinfo->fb_addr == 0) {
+		/* Bootinfo don't have frame buffer address */
+		return (1);
+	}
 
 	for (fb_index = 0; fb_index < FB_TABLE_SIZE; fb_index++)
 		if (fb_table[fb_index].type == bootinfo->fb_type)
 			break;
 
 	if (FB_TABLE_SIZE <= fb_index || fb_index == -1) {
-		/*
-		 *  Unknown frame buffer type, but what can I do ?
-		 */
-		fb_index = 0;
+		/* Unknown frame buffer type, don't enable bicons. */
+		return (1);
 	}
 
 	fb_vram = (u_int8_t *)bootinfo->fb_addr;
@@ -177,6 +185,8 @@ biconscninit(struct consdev *cndev)
 	bicons_puts("builtin console type = ");
 	bicons_puts(fb_table[fb_index].name);
 	bicons_puts("\n");
+
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.9 2002/01/08 00:31:10 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.10 2002/01/11 23:39:22 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -516,6 +516,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor USR		0x12b9	US Robotics (3Com)
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
+vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
@@ -540,12 +541,15 @@ vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	SiByte, Inc.
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
+vendor COREGA		0x15e8	Corega
+vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -794,7 +798,6 @@ product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI MACH64_VT		0x4654	Mach64 VT
-product ATI MACH64_B		0x4750	Mach64 B
 product ATI MACH64_GB		0x4742	Mach64 GB
 product ATI MACH64_GD		0x4744	Mach64 GD
 product ATI MACH64_GI		0x4749	Mach64 GI
@@ -1009,6 +1012,9 @@ product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
 product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
+/* Corega products */
+product COREGA CGWLPCIA11	0x0130	CGWLPCIA11
+
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 
@@ -1114,6 +1120,9 @@ product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 /* ESS Technology Inc products */
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
+/* Eumitcom products */
+product EUMITCOM WL11000	0x1100	WL11000
+
 /* O2 Micro Inc */
 product O2MICRO  OZ6729 0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO  OZ6730 0x673A	OZ6730 PCI-PCMCIA Bridge
@@ -1154,6 +1163,10 @@ product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
+
+/* Global Sun Tech products */
+product GLOBALSUN GL24110P	0x1101	GL24110P
+product GLOBALSUN GL24110P_2	0x1102	GL24110P
 
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
@@ -1286,8 +1299,22 @@ product	INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
+product INTEL 82801CA_LPC	0x2480	82801CA LPC Interface
+product INTEL 82801CA_USB	0x2482	82801CA/CAM USB Controller
+product INTEL 82801CA_SMB	0x2483	82801CA/CAM SMBus Controller
+product INTEL 82801CA_USBB	0x2484	82801CA/CAM USB Controller
+product INTEL 82801CA_AC	0x2485	82801CA/CAM AC'97 Audio Controller
+product INTEL 82801CA_MOD	0x2486	82801CA/CAM Modem
+product INTEL 82801CA_USBC	0x2487	82801CA/CAM USB Controller
+product INTEL 82801CA_ATAA	0x248A	82801CA UltraATA IDE Controller
+product INTEL 82801CA_ATAB	0x248B	82801CA UltraATA IDE Controller
+product INTEL 82801CAM_LPC	0x2482	82801CAM LPC Interface
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
+product INTEL 82830MP_IO1	0x3575	82830MP CPU to I/O Bridge
+product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
+product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
+product INTEL 82830MP_IO2	0x3578	82830MP CPU to I/O Bridge
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
 product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
@@ -1506,8 +1533,9 @@ product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
-product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
-product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR GA620		0x620a	GA620 1000baseSX Gigabit Ethernet
+product NETGEAR GA620T		0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR MA301		0x4100	MA301
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
@@ -1596,6 +1624,9 @@ product QLOGIC ISP2100	0x2100	ISP2100
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
+
+/* Rainbow Technologies products */
+product	RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
 
 /* Realtek (Creative Labs?) products */
 product	REALTEK	RT8029		0x8029	8029 Ethernet
