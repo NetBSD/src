@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.183 2001/09/26 12:45:56 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.184 2001/10/04 15:52:59 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -9,7 +9,13 @@ MAKECONF?=	/etc/mk.conf
 .include "${MAKECONF}"
 .endif
 
-.ifdef BSD_PKG_MK
+# Temporary; this will become default when all platforms have migrated.
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "sparc64"
+USE_NEW_TOOLCHAIN=	# set
+.endif
+
+.if defined(BSD_PKG_MK) || !defined(USE_NEW_TOOLCHAIN)
 USETOOLS:=	no
 .endif
 USETOOLS?=	yes
@@ -24,13 +30,7 @@ USETOOLS?=	yes
 	@false
 .endif
 
-# Temporary; all USE_NEW_TOOLCHAIN conditionals will be dropped when
-# all platforms have migrated.
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "sparc64"
-USE_NEW_TOOLCHAIN=	# set
-.endif
-
-.if defined(USE_NEW_TOOLCHAIN) && ${USETOOLS} != "no"
+.if ${USETOOLS} != "no"
 # Define default locations for common tools.
 
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
