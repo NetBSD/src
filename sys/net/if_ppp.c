@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.79 2002/09/25 16:10:15 darrenr Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.80 2002/09/25 23:24:37 augustss Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.79 2002/09/25 16:10:15 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.80 2002/09/25 23:24:37 augustss Exp $");
 
 #include "ppp.h"
 
@@ -778,7 +778,6 @@ pppoutput(ifp, m0, dst, rtp)
     struct ifqueue *ifq;
     enum NPmode mode;
     int len;
-    struct mbuf *m;
     ALTQ_DECL(struct altq_pktattr pktattr;)
 
     if (sc->sc_devp == NULL || (ifp->if_flags & IFF_RUNNING) == 0
