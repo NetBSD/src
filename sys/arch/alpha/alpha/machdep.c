@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.11 2002/04/01 07:38:49 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.12 2002/04/02 19:41:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.11 2002/04/01 07:38:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.12 2002/04/02 19:41:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1814,7 +1814,7 @@ setregs(l, pack, stack)
 	tfp->tf_regs[FRAME_A0] = stack;			/* a0 = sp */
 	tfp->tf_regs[FRAME_A1] = 0;			/* a1 = rtld cleanup */
 	tfp->tf_regs[FRAME_A2] = 0;			/* a2 = rtld object */
-	tfp->tf_regs[FRAME_A3] = (u_int64_t)p->p_psstr;	/* a3 = ps_strings */
+	tfp->tf_regs[FRAME_A3] = (u_int64_t)l->l_proc->p_psstr;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	l->l_md.md_flags &= ~MDP_FPUSED;
