@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.4 1996/03/17 20:36:25 christos Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,12 +87,10 @@ mkoneswap(cf)
 {
 	register struct nvlist *nv;
 	register FILE *fp;
-	register char *fname;
-	char buf[200];
+	char fname[200];
 	char *mountroot;
 
-	(void)sprintf(buf, "swap%s.c", cf->cf_name);
-	fname = path(buf);
+	(void)sprintf(fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
 		    fname, strerror(errno));
@@ -129,7 +127,6 @@ mkoneswap(cf)
 		fp = NULL;
 		goto wrerror;
 	}
-	free(fname);
 	return (0);
 wrerror:
 	(void)fprintf(stderr, "config: error writing %s: %s\n",
@@ -137,6 +134,5 @@ wrerror:
 	if (fp != NULL)
 		(void)fclose(fp);
 	/* (void)unlink(fname); */
-	free(fname);
 	return (1);
 }
