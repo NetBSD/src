@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.56 1994/10/07 09:08:29 mycroft Exp $
+ *	$Id: isa.c,v 1.57 1994/10/09 15:06:23 mycroft Exp $
  */
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 
 #include <i386/isa/isareg.h>
 #include <i386/isa/isa_device.h>
