@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.4 2002/11/10 18:10:26 thorpej Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5 2003/02/08 00:28:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,13 +54,13 @@ LEAF(__clone)
 	 * Sanity checks: func and stack may not be NULL.
 	 */
 	li	v0, EINVAL
-	beq	a0, zero, 9f
-	beq	a1, zero, 9f
+	beq	a0, zero, 8f
+	beq	a1, zero, 8f
 
 	/*
 	 * We need to be able to get at the func and arg arguments
 	 * in the child.  Luckily, we have a convenient place to
-	 * do this; the child's stack.
+	 * do this: the child's stack.
 	 */
 	subu	a1, a1, (2 * SZREG)
 	REG_S	a0, 0(a1)
@@ -82,14 +82,19 @@ LEAF(__clone)
 
 9:	/*
 	 * Child: Fetch the function and argument from the new stack,
-	 * and pop it back.
+	 * and create a frame so that the child can be safely called.
+	 *
+	 * There are already register slots on the stack from above.
+	 * We take 4 register slots more.  The lower 4 acommodate o32
+	 * argument save area.  The next higher is used to save GP (if
+	 * ABICALLS).  The highest is unused.
 	 */
 	REG_L	t9, 0(sp)
 	REG_L	a0, SZREG(sp)
-	addu	sp, sp, (2 * SZREG)
+	subu	sp, sp, (4 * SZREG)
 
 #ifdef __ABICALLS__
-	.cprestore
+	.cprestore (4 * SZREG)
 #endif
 
 	/* Call the clone's entry point. */
