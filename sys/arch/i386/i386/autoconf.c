@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1994/10/27 04:15:10 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1994/11/03 23:46:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,10 +71,17 @@ extern int	cold;		/* cold start flag initialized in locore.s */
 configure()
 {
 
-#include "isa.h"
-#if NISA > 0
-	isa_configure();
-#endif
+	startrtclock();
+
+	config_rootfound("isa", NULL);
+	config_rootfound("eisa", NULL);
+	config_rootfound("pci", NULL);
+
+	printf("biomask %x netmask %x ttymask %x\n",
+	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
+	    (u_short)imask[IPL_TTY]);
+
+	spl0();
 
 #if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
