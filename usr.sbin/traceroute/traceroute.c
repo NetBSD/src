@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.43 2001/10/09 12:43:37 yamt Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.44 2001/11/04 23:14:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.43 2001/10/09 12:43:37 yamt Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.44 2001/11/04 23:14:35 atatat Exp $");
 #endif
 #endif
 
@@ -246,6 +246,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.43 2001/10/09 12:43:37 yamt Exp $");
 
 #include "ifaddrlist.h"
 #include "savestr.h"
+#include "as.h"
 
 /* Maximum number of gateways (include room for one noop) */
 #define NGATEWAYS ((int)((MAX_IPOPTLEN - IPOPT_MINOFF - 1) / sizeof(u_int32_t)))
@@ -309,6 +310,9 @@ int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int dump;
+int as_path;			/* print as numbers for each hop */
+char *as_server = NULL;
+void *asn;
 int useicmp;			/* use icmp echo instead of udp packets */
 #ifdef CANT_HACK_CKSUM
 int docksum = 0;		/* don't calculate checksums */
@@ -401,8 +405,17 @@ main(int argc, char **argv)
 		prog = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "dDFPInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
+	while ((op = getopt(argc, argv, "aA:dDFPInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
 		switch (op) {
+
+		case 'a':
+			as_path = 1;
+			break;
+
+		case 'A':
+			as_path = 1;
+			as_server = optarg;
+			break;
 
 		case 'd':
 			options |= SO_DEBUG;
@@ -874,6 +887,16 @@ main(int argc, char **argv)
 	}
 #endif
 
+	if (as_path) {
+		asn = as_setup(as_server);
+		if (asn == NULL) {
+			Fprintf(stderr, "%s: as_setup failed, AS# lookups disabled\n", 
+				prog);
+			(void)fflush(stderr);
+			as_path = 0;
+		}
+	}
+
 	setuid(getuid());
 	Fprintf(stderr, "%s to %s (%s)",
 	    prog, hostname, inet_ntoa(to->sin_addr));
@@ -998,6 +1021,10 @@ again:
 		    (unreachable > 0 && unreachable >= ((nprobes + 1) / 2)))
 			break;
 	}
+
+	if (as_path)
+		as_shutdown(asn);
+
 	exit(0);
 }
 
@@ -1345,6 +1372,9 @@ print(register u_char *buf, register int cc, register struct sockaddr_in *from)
 	hlen = ip->ip_hl << 2;
 	cc -= hlen;
 
+	if (as_path)
+		Printf(" [AS%d]", as_lookup(asn, &from->sin_addr));
+
 	if (nflag)
 		Printf(" %s", inet_ntoa(from->sin_addr));
 	else
@@ -1575,9 +1605,9 @@ usage(void)
 	extern char version[];
 
 	Fprintf(stderr, "Version %s\n", version);
-	Fprintf(stderr, "Usage: %s [-dDFPIlnrvx] [-g gateway] [-i iface] \
-[-f first_ttl] [-m max_ttl]\n\t[ -p port] [-q nqueries] [-s src_addr] [-t tos] \
-[-w waittime]\n\thost [packetlen]\n",
+	Fprintf(stderr, "Usage: %s [-adDFPIlnrvx] [-g gateway] [-i iface] \
+[-f first_ttl]\n\t[-m max_ttl] [-p port] [-q nqueries] [-s src_addr] [-t tos]\n\t\
+[-w waittime] [-A as_server] host [packetlen]\n",
 	    prog);
 	exit(1);
 }
