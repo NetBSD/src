@@ -1,4 +1,4 @@
-/*	$NetBSD: deleteln.c,v 1.11 1999/09/17 13:44:31 simonb Exp $	*/
+/*	$NetBSD: deleteln.c,v 1.12 2000/04/11 13:57:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,11 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)deleteln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: deleteln.c,v 1.11 1999/09/17 13:44:31 simonb Exp $");
+__RCSID("$NetBSD: deleteln.c,v 1.12 2000/04/11 13:57:09 blymn Exp $");
 #endif
 #endif				/* not lint */
-
-#include <string.h>
 
 #include "curses.h"
 
@@ -54,36 +52,5 @@ int
 wdeleteln(win)
 	WINDOW *win;
 {
-	int     y, i;
-	__LINE *temp;
-
-#ifdef DEBUG
-	__CTRACE("deleteln: (%0.2o) cury=%d\n", win, win->cury);
-#endif
-	temp = win->lines[win->cury];
-	for (y = win->cury; y < win->maxy - 1; y++) {
-		win->lines[y]->flags &= ~__ISPASTEOL;
-		win->lines[y + 1]->flags &= ~__ISPASTEOL;
-		if (win->orig == NULL)
-			win->lines[y] = win->lines[y + 1];
-		else
-			(void) memcpy(win->lines[y]->line,
-			    win->lines[y + 1]->line,
-			    win->maxx * __LDATASIZE);
-		__touchline(win, y, 0, (int) win->maxx - 1, 0);
-	}
-
-	if (win->orig == NULL)
-		win->lines[y] = temp;
-	else
-		temp = win->lines[y];
-
-	for (i = 0; i < win->maxx; i++) {
-		temp->line[i].ch = ' ';
-		temp->line[i].attr = 0;
-	}
-	__touchline(win, y, 0, (int) win->maxx - 1, 0);
-	if (win->orig == NULL)
-		__id_subwins(win);
-	return (OK);
+	return(winsdelln(win, -1));
 }

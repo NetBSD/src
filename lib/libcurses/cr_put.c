@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.14 1999/10/04 23:21:18 lukem Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.15 2000/04/11 13:57:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.14 1999/10/04 23:21:18 lukem Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.15 2000/04/11 13:57:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include <string.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 #define	HARDTABS	8
 
@@ -335,7 +336,7 @@ dontcr:while (outline < destline) {
 			outcol = 0;
 	}
 	if (BT)
-		k = strlen(BT);
+		k = (int) strlen(BT);
 	while (outcol > destcol) {
 		if (plodcnt < 0)
 			goto out;
@@ -394,10 +395,10 @@ dontcr:while (outline < destline) {
 			if (plodflg)	/* Avoid a complex calculation. */
 				plodcnt--;
 			else {
-				i = curscr->lines[outline]->line[outcol].ch;
-				if ((curscr->lines[outline]->line[outcol].attr
-					& __STANDOUT) ==
-				    (curscr->flags & __WSTANDOUT))
+				i = curscr->lines[outline]->line[outcol].ch
+				    & __CHARTEXT;
+				if (curscr->lines[outline]->line[outcol].attr
+				    == curscr->wattr)
 					putchar(i);
 				else
 					goto nondes;

@@ -1,4 +1,4 @@
-/*      $Id: notimeout.c,v 1.1 1999/04/13 14:08:18 mrg Exp $  */
+/*      $NetBSD: notimeout.c,v 1.2 2000/04/11 13:57:10 blymn Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -26,29 +26,23 @@
  *
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
-#else
-__RCSID("$NetBSD: notimeout.c,v 1.1 1999/04/13 14:08:18 mrg Exp $");
-#endif
-#endif				/* not lint */
-
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * notimeout --
  *	Turn on and off inter-key timeout when assembling function keys for a
  *	given window.
  */
-void
+int
 notimeout(win, bf)
 	WINDOW *win;
-	int     bf;
+	bool     bf;
 {
 	if (bf)
 		win->flags &= ~__NOTIMEOUT;
 	else
 		win->flags |= __NOTIMEOUT;
+
+	return OK;
 }

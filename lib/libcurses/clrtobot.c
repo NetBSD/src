@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.10 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.11 2000/04/11 13:57:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.11 2000/04/11 13:57:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * wclrtobot --
@@ -50,10 +51,10 @@ __RCSID("$NetBSD: clrtobot.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
  */
 int
 wclrtobot(win)
-	WINDOW *win;
+	WINDOW	*win;
 {
-	int     minx, startx, starty, y;
-	__LDATA *sp, *end, *maxx;
+	int	 minx, startx, starty, y;
+	__LDATA	*sp, *end, *maxx;
 
 #ifdef __GNUC__
 	maxx = NULL;		/* XXX gcc -Wuninitialized */

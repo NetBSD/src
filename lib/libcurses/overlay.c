@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: overlay.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overlay.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include <ctype.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * overlay --
@@ -52,7 +53,8 @@ __RCSID("$NetBSD: overlay.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
  */
 int
 overlay(win1, win2)
-	WINDOW *win1, *win2;
+	const WINDOW *win1;
+	WINDOW *win2;
 {
 
 	int     x, y, y1, y2, endy, endx, starty, startx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.13 1999/12/07 03:18:52 simonb Exp $	*/
+/*	$NetBSD: setterm.c,v 1.14 2000/04/11 13:57:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.13 1999/12/07 03:18:52 simonb Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.14 2000/04/11 13:57:10 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,24 +62,26 @@ static char	*sflags[] = {
 
 static char	*_PC,
 		**sstrs[] = {
-		/*	 AL   bc   bl   bt   cd   ce   cl   cm   cr  */
-			&AL, &BC, &BL, &BT, &CD, &CE, &CL, &CM, &CR,
-		/*	 cs   dc   DL   dm   do   ed   ei   k0   k1  */
-			&CS, &DC, &DL, &DM, &DO, &ED, &EI, &K0, &K1,
-		/*	 k2   k3   k4   k5   k6   k7   k8   k9   ho  */
-			&K2, &K3, &K4, &K5, &K6, &K7, &K8, &K9, &HO,
-		/*	 ic   im   ip   kd   ke   kh   kl   kr   ks  */
-			&IC, &IM, &IP, &KD, &KE, &KH, &KL, &KR, &KS,
-		/*	 ku   ll   ma   mb   md   me   mh   mk   mp  */
-			&KU, &LL, &MA, &MB, &MD, &ME, &MH, &MK, &MP,
-		/*	 mr   nd   nl    pc   rc   sc   se   SF  so  */
-			&MR, &ND, &NL, &_PC, &RC, &SC, &SE, &SF, &SO,
-		/*	 SR   ta   te   ti   uc   ue   up   us   vb  */
-			&SR, &TA, &TE, &TI, &UC, &UE, &UP, &US, &VB,
-		/*	 vs   ve   al   dl   sf   sr   AL	 DL  */
-			&VS, &VE, &al, &dl, &sf, &sr, &AL_PARM, &DL_PARM,
-		/*	 UP	     DO	       LE	   RI	     */
-			&UP_PARM, &DOWN_PARM, &LEFT_PARM, &RIGHT_PARM,
+		/*	 AC   AE   AL   AS   bc   bl   bt   cd   ce  */
+			&AC, &AE, &AL, &AS, &BC, &BL, &BT, &CD, &CE,
+		/*	 cl   cm   cr   cs   dc   DL   dm   do   eA  */
+			&CL, &CM, &CR, &CS, &DC, &DL, &DM, &DO, &Ea,
+		/*	 ed   ei   k0   k1   k2   k3   k4   k5   k6  */
+			&ED, &EI, &K0, &K1, &K2, &K3, &K4, &K5, &K6,
+		/*	 k7   k8   k9   ho   ic   im   ip   kd   ke  */
+			&K7, &K8, &K9, &HO, &IC, &IM, &IP, &KD, &KE,
+		/*	 kh   kl   kr   ks   ku   ll   ma   mb   md  */
+			&KH, &KL, &KR, &KS, &KU, &LL, &MA, &MB, &MD,
+		/*	 me   mh   mk   mp   mr   nd   nl    pc   rc */
+			&ME, &MH, &MK, &MP, &MR, &ND, &NL, &_PC, &RC,
+		/*	 sc   se   SF   so   SR   ta   te   ti   uc  */
+			&SC, &SE, &SF, &SO, &SR, &TA, &TE, &TI, &UC,
+		/*	 ue   up   us   vb   vs   ve   al   dl   sf  */
+			&UE, &UP, &US, &VB, &VS, &VE, &al, &dl, &sf,
+		/*	 sr   AL	DL	  UP	    DO	     */
+			&sr, &AL_PARM, &DL_PARM, &UP_PARM, &DOWN_PARM,
+		/*	 LE	    RI				     */
+			&LEFT_PARM, &RIGHT_PARM,
 		};
 
 static char	*aoftspace;		/* Address of _tspace for relocation */
@@ -92,7 +94,7 @@ setterm(type)
 	char *type;
 {
 	static char genbuf[1024];
-	static char __ttytype[1024];
+	static char __ttytype[128];
 	int unknown;
 	struct winsize win;
 	char *p;
@@ -160,7 +162,7 @@ setterm(type)
 
 	PC = _PC ? _PC[0] : 0;
 	aoftspace = tspace;
-	ttytype = longname(genbuf, __ttytype);
+	ttytype = __longname(genbuf, __ttytype);
 
 	/* If no scrolling commands, no quick change. */
 	__noqch =
@@ -198,7 +200,7 @@ zap()
 		namp += 2;
 
 	} while (*namp);
-	namp = "ALbcblbtcdceclcmcrcsdcDLdmdoedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlpcrcscseSFsoSRtatetiucueupusvbvsvealdlsfsrALDLUPDOLERI";
+	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlpcrcscseSFsoSRtatetiucueupusvbvsvealdlsfsrALDLUPDOLERI";
 	sp = sstrs;
 	do {
 		*tmp = *namp;

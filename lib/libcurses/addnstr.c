@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.5 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.5 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.6 2000/04/11 13:57:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include <string.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * waddnstr --

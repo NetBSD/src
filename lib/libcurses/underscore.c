@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.1 1999/04/13 14:08:19 mrg Exp $	*/
+/*	$NetBSD: underscore.c,v 1.2 2000/04/11 13:57:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1999 Julian. D. Coleman
@@ -26,6 +26,7 @@
  */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * wunderscore
@@ -42,7 +43,7 @@ wunderscore(win)
 #ifdef DEBUG
 		__CTRACE("wunderscore\n");
 #endif
-		win->flags |= __WUNDERSCORE;
+		win->wattr |= __UNDERSCORE;
 	}
 	return (1);
 }
@@ -59,7 +60,7 @@ wunderend(win)
 #ifdef DEBUG
 		__CTRACE("wunderuend\n");
 #endif
-		win->flags &= ~__WUNDERSCORE;
+		win->wattr &= ~__UNDERSCORE;
 	}
         return 1;
 }
