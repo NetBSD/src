@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.35 2003/07/03 05:03:55 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.36 2003/08/07 08:52:33 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.35 2003/07/03 05:03:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.36 2003/08/07 08:52:33 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -439,7 +439,7 @@ ip6_forward(m, srcrt)
 	 * Also, don't send redirect if forwarding using a route
 	 * modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
+	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
