@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.6 1998/06/30 11:29:37 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.7 1998/08/05 16:50:39 kleink Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,10 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
