@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.62 2003/10/03 15:40:27 wiz Exp $ */
+/* $NetBSD: lib.h,v 1.63 2003/10/04 00:50:34 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -222,7 +222,6 @@ int     pmatch(const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
-char   *strnncpy(char *, size_t, char *, size_t);
 void	strip_txz(char *, char *, const char *);
 
 /* callback functions for findmatchingname */

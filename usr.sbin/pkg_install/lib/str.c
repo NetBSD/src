@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.45 2003/09/09 08:22:39 jlam Exp $	*/
+/*	$NetBSD: str.c,v 1.46 2003/10/04 00:50:34 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.45 2003/09/09 08:22:39 jlam Exp $");
+__RCSID("$NetBSD: str.c,v 1.46 2003/10/04 00:50:34 wiz Exp $");
 #endif
 #endif
 
@@ -561,22 +561,6 @@ findbestmatchingname(const char *dir, const char *pattern)
 		return strdup(buf);
 	}
 	return NULL;
-}
-
-/*
- * Bounds-checking strncpy()
- */
-char   *
-strnncpy(char *to, size_t tosize, char *from, size_t cc)
-{
-	size_t  len;
-
-	if ((len = cc) >= tosize - 1) {
-		len = tosize - 1;
-	}
-	(void) strncpy(to, from, len);
-	to[len] = 0;
-	return to;
 }
 
 /*
