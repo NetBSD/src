@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.s,v 1.4 1997/05/27 10:28:30 leo Exp $	*/
+/*	$NetBSD: bsdstart.s,v 1.4.8.1 1997/12/15 05:15:36 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -70,7 +70,8 @@ _bsd_startup:
 	movl	a3@(28),d5		| start of fastram
 	movl	a3@(32),a1		| end of symbols
 	subl	a5,a5			| target, load to 0
-	andb	#0x50,d2		| Is this an 68040/68060?
+	movl	d2,d6
+	andb	#0x50,d6		| Is this an 68040/68060?
 	beqs	0f
 
 	| Turn off 68040 type MMU
