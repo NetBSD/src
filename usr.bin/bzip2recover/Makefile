@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/12 04:09:02 cjs Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.3 1999/02/12 18:55:28 cjs Exp $
 
 PROG=       bzip2recover
 WARNS=	    0
