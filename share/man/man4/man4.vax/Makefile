@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.6 1996/03/03 17:13:09 thorpej Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1994/12/22 10:49:42 cgd Exp $
 
 MAN=	acc.4 ad.4 autoconf.4 cons.4 crl.4 css.4 ct.4 ddn.4 de.4 dh.4 dhu.4 \
 	dmc.4 dmf.4 dmz.4 dn.4 dz.4 ec.4 en.4 ex.4 fl.4 hdh.4 hk.4 hp.4 \

@@ -1,3 +1,5 @@
+/*	$NetBSD: bt459.c,v 1.3 1996/03/03 17:16:03 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: bt459.c,v 1.2 1996/02/15 19:18:22 jonathan Exp $
  */
 
 /*
@@ -52,7 +53,6 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: bt459.c,v 1.2 1996/02/15 19:18:22 jonathan Exp $
  */
 /*
  * Mach Operating System
