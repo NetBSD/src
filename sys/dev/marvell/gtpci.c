@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.3 2003/03/18 05:51:51 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.4 2003/03/18 15:00:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -468,11 +468,12 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 	gtpci_conf_write(pc, tag, 0x1c, pcidata);
 	gtpci_write(gtpc, PCI_SCS3_BAR_SIZE(gtpc->gtpc_busno), datah);
 
+	/*
+	 * Enable I/O, memory, and bus master access.
+	 */
 	pcidata = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-#if 0
 	pcidata |= PCI_COMMAND_IO_ENABLE;
 	pcidata |= PCI_COMMAND_MEM_ENABLE;
-#endif
 	pcidata |= PCI_COMMAND_MASTER_ENABLE;
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, pcidata);
 
