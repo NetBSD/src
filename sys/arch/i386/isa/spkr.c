@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.19 1996/03/03 04:12:48 jtk Exp $	*/
+/*	$NetBSD: spkr.c,v 1.20 1996/03/07 00:54:14 jtk Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -11,6 +11,9 @@
 
 #include "spkr.h"
 #if NSPKR > 0
+#if NSPKR > 1
+#error only one speaker device per system
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -411,10 +414,13 @@ size_t	slen;
 static int spkr_active;	/* exclusion flag */
 static struct buf *spkr_inbuf; /* incoming buf */
 
-int spkrprobe (struct device *parent, void *match, void *aux)
+int spkrprobe (parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-	register struct isa_attach_args *ia = aux;
-	ia->ia_iosize = 0;
+    	register struct isa_attach_args *ia = aux;
+	ia->ia_iosize = 1;
 	return 1;
 }
 
