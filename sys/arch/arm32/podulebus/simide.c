@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.11 2001/03/17 18:46:26 bjh21 Exp $	*/
+/*	$NetBSD: simide.c,v 1.12 2001/03/17 20:34:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -49,11 +49,11 @@
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/simidereg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/podulebus/podules.h>
 
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.29 2001/03/17 18:46:26 bjh21 Exp $ */
+/* $NetBSD: if_ie.c,v 1.30 2001/03/17 20:34:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -69,7 +69,7 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 /* Include for interface to the net and ethernet subsystems */
 
