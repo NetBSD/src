@@ -1,4 +1,4 @@
-/*	$NetBSD: vmereg.h,v 1.1 1997/05/18 19:37:38 pk Exp $ */
+/*	$NetBSD: vmereg.h,v 1.2 1997/06/07 19:10:57 pk Exp $ */
 
 /*
  * Copyright (c) 1997 	Paul Kranenburg
@@ -65,7 +65,10 @@ struct vmebusvec {
 	volatile u_int8_t	vmebusvec[16];
 };
 
-/* sun4m VME I/O spaces */
-#define VME_SUN4M_16	0xc
-#define VME_SUN4M_32	0xd
+/* VME address modifiers */
+#define VMEMOD_A16_D_S	0x2d		/* 16-bit address, data, supervisor */
+#define VMEMOD_A24_D_S	0x3d		/* 24-bit address, data, supervisor */
+#define VMEMOD_A32_D_S	0x0d		/* 32-bit address, data, supervisor */
+
+#define VMEMOD_D32	0x40		/* 32-bit access */
 
