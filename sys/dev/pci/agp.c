@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.14.10.2 2003/01/28 07:36:16 jmc Exp $	*/
+/*	$NetBSD: agp.c,v 1.14.10.3 2003/06/16 12:48:34 grant Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.10.2 2003/01/28 07:36:16 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14.10.3 2003/06/16 12:48:34 grant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,8 @@ agpdev_match(struct pci_attach_args *pa)
 {
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
+		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+		    NULL, NULL))
 		return 1;
 
 	return 0;
