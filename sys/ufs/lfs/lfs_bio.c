@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.68 2003/07/02 13:41:38 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.69 2003/07/02 13:43:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.68 2003/07/02 13:41:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.69 2003/07/02 13:43:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,15 +522,17 @@ lfs_flush(struct lfs *fs, int flags)
 	wakeup(&lfs_subsys_pages);
 
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	    mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
-		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) == 0)
+		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
+		    MFSNAMELEN) == 0)
 			lfs_flush_fs(VFSTOUFS(mp)->um_lfs, flags);
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
@@ -724,8 +726,7 @@ lfs_countlocked(int *count, long *bytes, char *msg)
 	int n = 0;
 	long int size = 0L;
 
-	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
-	    bp = bp->b_freelist.tqe_next) {
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist) {
 		if (bp->b_flags & B_CALL)
 			continue;
 		n++;
