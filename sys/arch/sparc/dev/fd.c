@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1995/04/07 19:46:13 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1995/04/10 07:01:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -755,7 +755,7 @@ Fdopen(dev, flags)
 }
 
 int
-Fdclose(dev, flags)
+fdclose(dev, flags)
 	dev_t dev;
 	int flags;
 {
