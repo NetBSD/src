@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.12 2003/10/19 14:37:12 he Exp $
+.\"	$NetBSD: callout.9,v 1.13 2003/10/27 16:52:01 thorpej Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2003
+.Dd October 26, 2003
 .Dt CALLOUT 9
 .Os
 .Sh NAME
@@ -134,21 +134,20 @@ status is cleared.
 .Pp
 The
 .Fn callout_setfunc
-function initializes the callout handle
+function sets the function and argument of the callout handle
 .Fa c
-for use and sets the function and argument to
+to
 .Fa func
 and
 .Fa arg
 respectively.
+The callout handle must already be initialized.
 If a callout will always be used with the same function and argument,
 then
 .Fn callout_setfunc
 used in conjunction with
 .Fn callout_schedule
 is slightly more efficient than using
-.Fn callout_init
-and
 .Fn callout_reset .
 If it is inconvenient to call
 .Fn callout_setfunc ,
