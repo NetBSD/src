@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.69 1998/03/25 02:16:41 ross Exp $
+# $NetBSD: ALPHA,v 1.70 1998/04/15 00:47:21 mjacob Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -18,6 +18,7 @@ options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+options		DEC_KN300	# KN300:	AlphaServer 4100
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -121,6 +122,12 @@ kft*	at	tlsb? node ? offset ?
 # Gbus Devices
 mcclock* at	gbus? offset 0x20000000
 
+# MCBUS bus support
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ?
+
+#i2c	at	mcbus?
+
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
 
@@ -146,6 +153,7 @@ apecs*	at	mainbus?
 cia*	at	mainbus?
 lca*	at	mainbus?
 dwlpx*	at	kft?
+mcpcia*	at	mcbus? mid ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -153,6 +161,7 @@ pci*	at	cia?
 pci*	at	lca?
 pci*	at	ppb?
 pci*	at	dwlpx?
+pci*	at	mcpcia?
 
 # PCI devices
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
