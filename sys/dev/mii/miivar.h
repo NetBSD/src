@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.33 2002/11/07 07:41:24 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.34 2002/11/07 07:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct mii_data {
 	 * PHY driver fills this in with active media status.
 	 */
 	int mii_media_status;
-	int mii_media_active;
+	u_int mii_media_active;
 
 	/*
 	 * Calls from MII layer into network interface driver.
@@ -134,7 +134,7 @@ struct mii_softc {
 
 	struct callout mii_nway_ch;	/* NWAY callout */
 
-	int mii_media_active;		/* last active media */
+	u_int mii_media_active;		/* last active media */
 	int mii_media_status;		/* last active status */
 };
 typedef struct mii_softc mii_softc_t;
