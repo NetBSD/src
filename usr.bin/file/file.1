@@ -1,5 +1,5 @@
 .TH FILE 1 "Copyright but distributable"
-.\"	$NetBSD: file.1,v 1.12 1997/03/08 14:16:13 mouse Exp $
+.\"	$NetBSD: file.1,v 1.13 1997/09/30 17:00:38 is Exp $
 .SH NAME
 file
 \- determine file type
@@ -43,7 +43,7 @@ meaning anything else (data is usually `binary' or non-printable).
 Exceptions are well-known file formats (core files, tar archives)
 that are known to contain binary data.
 When modifying the file
-.I /etc/magic
+.I /usr/share/misc/magic
 or the program itself, 
 .B "preserve these keywords" .
 People depend on knowing that all the readable files in a directory
@@ -79,7 +79,7 @@ The concept of `magic number' has been applied by extension to data files.
 Any file with some invariant identifier at a small fixed
 offset into the file can usually be described in this way.
 The information in these files is read from the magic file
-.I /etc/magic.
+.I /usr/share/misc/magic
 .PP
 If an argument appears to be an
 .SM ASCII 
@@ -136,7 +136,7 @@ option causes symlinks to be followed, as the like-named option in
 .BR ls (1).
 (on systems that support symbolic links).
 .SH FILES
-.I /etc/magic
+.I /usr/share/misc/magic
 \- default list of magic numbers
 .SH ENVIRONMENT
 The environment variable
@@ -202,7 +202,7 @@ If your old
 command uses a magic file,
 keep the old magic file around for comparison purposes
 (rename it to 
-.IR /etc/magic.orig ).
+.IR /usr/share/misc/magic.orig ).
 .SH HISTORY
 There has been a 
 .B file

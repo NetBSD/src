@@ -1,7 +1,7 @@
-/*	$NetBSD: softmagic.c,v 1.13 1997/01/28 00:49:48 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.14 1997/09/30 17:00:47 is Exp $	*/
 
 /*
- * softmagic - interpret variable magic from /etc/magic
+ * softmagic - interpret variable magic from MAGIC
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -37,7 +37,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$NetBSD: softmagic.c,v 1.13 1997/01/28 00:49:48 christos Exp $";
+	"@(#)$NetBSD: softmagic.c,v 1.14 1997/09/30 17:00:47 is Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -50,7 +50,7 @@ static int mconvert	__P((union VALUETYPE *, struct magic *));
 
 /*
  * softmagic - lookup one file in database 
- * (already read from /etc/magic by apprentice.c).
+ * (already read from MAGIC by apprentice.c).
  * Passed the name and FILE * of one file to be typed.
  */
 /*ARGSUSED1*/		/* nbytes passed for regularity, maybe need later */
