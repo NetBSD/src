@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.30 2000/01/16 13:05:48 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.31 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ uhidopen(dev, flag, mode, p)
 	/* Set up interrupt pipe. */
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
 		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, sc->sc_ibuf, 
-		  sc->sc_isize, uhid_intr);
+		  sc->sc_isize, uhid_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
 			 "error=%d\n",err));

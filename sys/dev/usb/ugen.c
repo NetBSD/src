@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.31 1999/12/18 23:22:54 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.32 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -326,7 +326,8 @@ ugenopen(dev, flag, mode, p)
 			err = usbd_open_pipe_intr(sce->iface, 
 				  edesc->bEndpointAddress, 
 				  USBD_SHORT_XFER_OK, &sce->pipeh, sce, 
-				  sce->ibuf, isize, ugenintr);
+				  sce->ibuf, isize, ugenintr, 
+				  USBD_DEFAULT_INTERVAL);
 			if (err) {
 				free(sce->ibuf, M_USBDEV);
 				clfree(&sce->q);

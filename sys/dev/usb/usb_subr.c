@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.62 2000/01/16 23:11:43 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.63 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -671,10 +671,11 @@ usbd_set_config_index(dev, index, msg)
 /* XXX add function for alternate settings */
 
 usbd_status
-usbd_setup_pipe(dev, iface, ep, pipe)
+usbd_setup_pipe(dev, iface, ep, ival, pipe)
 	usbd_device_handle dev;
 	usbd_interface_handle iface; 
 	struct usbd_endpoint *ep;
+	int ival;
 	usbd_pipe_handle *pipe;
 {
 	usbd_pipe_handle p;
@@ -693,6 +694,7 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	p->intrxfer = 0;
 	p->running = 0;
 	p->repeat = 0;
+	p->interval = ival;
 	SIMPLEQ_INIT(&p->queue);
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
@@ -953,7 +955,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	dev->cookie.cookie = ++usb_cookie_no;
 
 	/* Establish the the default pipe. */
-	err = usbd_setup_pipe(dev, 0, &dev->def_ep, &dev->default_pipe);
+	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+			      &dev->default_pipe);
 	if (err) {
 		usbd_remove_device(dev, up);
 		return (err);

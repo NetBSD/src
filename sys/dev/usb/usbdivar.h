@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.44 2000/01/18 20:11:01 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.45 2000/01/19 00:23:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -158,8 +158,9 @@ struct usbd_pipe {
 	SIMPLEQ_HEAD(, usbd_xfer) queue;
 	LIST_ENTRY(usbd_pipe)	next;
 
-	usbd_xfer_handle     intrxfer; /* used for repeating requests */
+	usbd_xfer_handle	intrxfer; /* used for repeating requests */
 	char			repeat;
+	int			interval;
 
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
@@ -196,7 +197,6 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
-	int			hcprivint; /* ditto */
 
 #if defined(__FreeBSD__)
 	struct callout_handle  timo_handle;
@@ -214,7 +214,7 @@ usbd_status	usbd_reset_port __P((usbd_device_handle dev,
 				     int port, usb_port_status_t *ps));
 usbd_status	usbd_setup_pipe __P((usbd_device_handle dev,
 				     usbd_interface_handle iface,
-				     struct usbd_endpoint *,
+				     struct usbd_endpoint *, int,
 				     usbd_pipe_handle *pipe));
 usbd_status	usbd_new_device __P((device_ptr_t parent, 
 				     usbd_bus_handle bus, int depth,

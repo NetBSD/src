@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.53 2000/01/16 09:41:22 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.54 2000/01/19 00:23:58 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -377,7 +377,8 @@ ukbd_enable(v, on)
 		/* Set up interrupt pipe. */
 		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
 			  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc,
-			  &sc->sc_ndata, sizeof(sc->sc_ndata), ukbd_intr);
+			  &sc->sc_ndata, sizeof(sc->sc_ndata), ukbd_intr,
+			  USBD_DEFAULT_INTERVAL);
 		if (err)
 			return (EIO);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.35 1999/11/24 23:13:19 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.36 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ USB_ATTACH(uhub)
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status, 
-		  sizeof(sc->sc_status), uhub_intr);
+		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n", 
 		       USBDEVNAME(sc->sc_dev));
