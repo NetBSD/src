@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.199 2003/09/17 16:55:20 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.200 2003/09/19 21:36:05 mycroft Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.199 2003/09/17 16:55:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.200 2003/09/19 21:36:05 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -238,7 +238,6 @@ int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
 void pciide_dma_start __P((void*, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
 void pciide_irqack __P((struct channel_softc *));
-void pciide_print_modes __P((struct pciide_channel *));
 
 void artisea_chip_map __P((struct pciide_softc*, struct pci_attach_args *));
 
@@ -730,9 +729,8 @@ int	pciide_chansetup __P((struct pciide_softc *, int, pcireg_t));
 void	pciide_mapchan __P((struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
 	    int (*pci_intr) __P((void *))));
-int	pciide_chan_candisable __P((struct pciide_channel *));
 void	pciide_map_compat_intr __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int, int));
+	    struct pciide_channel *, int));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
 const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
@@ -840,6 +838,8 @@ pciide_attach(parent, self, aux)
 	}
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
+
+	config_interrupts(self, wdcattach);
 }
 
 /* tell whether the chip is enabled or not */
@@ -880,7 +880,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	    PCIIDE_COMPAT_CMD_SIZE, 0, &wdc_cp->cmd_ioh) != 0) {
 		aprint_error("%s: couldn't map %s channel cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		return (0);
+		goto bad;
 	}
 
 	wdc_cp->ctl_iot = pa->pa_iot;
@@ -890,10 +890,17 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
 		    PCIIDE_COMPAT_CMD_SIZE);
-		return (0);
+		goto bad;
 	}
 
+	wdc_cp->data32iot = wdc_cp->cmd_iot;
+	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
+	pciide_map_compat_intr(pa, cp, compatchan);
 	return (1);
+
+bad:
+	cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+	return (0);
 }
 
 int
@@ -914,7 +921,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		if (pci_intr_map(pa, &intrhandle) != 0) {
 			aprint_error("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
-			return 0;
+			goto bad;
 		}	
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
@@ -930,7 +937,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 			if (intrstr != NULL)
 				aprint_normal(" at %s", intrstr);
 			aprint_normal("\n");
-			return 0;
+			goto bad;
 		}
 	}
 	cp->ih = sc->sc_pci_ih;
@@ -939,7 +946,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep) != 0) {
 		aprint_error("%s: couldn't map %s channel cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		return 0;
+		goto bad;
 	}
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
@@ -948,7 +955,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		aprint_error("%s: couldn't map %s channel ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
-		return 0;
+		goto bad;
 	}
 	/*
 	 * In native mode, 4 bytes of I/O space are mapped for the control
@@ -961,9 +968,16 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
 		bus_space_unmap(wdc_cp->cmd_iot, cp->ctl_baseioh, *ctlsizep);
-		return 0;
+		goto bad;
 	}
+
+	wdc_cp->data32iot = wdc_cp->cmd_iot;
+	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
 	return (1);
+
+bad:
+	cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+	return (0);
 }
 
 void
@@ -1391,57 +1405,22 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel))
-		cp->hw_ok = pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep,
-		    pci_intr);
-	else 
-		cp->hw_ok = pciide_mapregs_compat(pa, cp,
-		    wdc_cp->channel, cmdsizep, ctlsizep);
-
-	if (cp->hw_ok == 0)
-		return;
-	wdc_cp->data32iot = wdc_cp->cmd_iot;
-	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
-	wdcattach(wdc_cp);
+		pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr);
+	else
+		pciide_mapregs_compat(pa, cp, wdc_cp->channel, cmdsizep,
+		    ctlsizep);
 }
 
 /*
- * Generic code to call to know if a channel can be disabled. Return 1
- * if channel can be disabled, 0 if not
- */
-int
-pciide_chan_candisable(cp)
-	struct pciide_channel *cp;
-{
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
-
-	if ((wdc_cp->ch_drive[0].drive_flags & DRIVE) == 0 &&
-	    (wdc_cp->ch_drive[1].drive_flags & DRIVE) == 0) {
-		aprint_normal("%s: disabling %s channel (no drives)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		cp->hw_ok = 0;
-		return 1;
-	}
-	return 0;
-}
-
-/*
- * generic code to map the compat intr if hw_ok=1 and it is a compat channel.
- * Set hw_ok=0 on failure
+ * generic code to map the compat intr.
  */
 void
-pciide_map_compat_intr(pa, cp, compatchan, interface)
+pciide_map_compat_intr(pa, cp, compatchan)
 	struct pci_attach_args *pa;
 	struct pciide_channel *cp;
-	int compatchan, interface;
+	int compatchan;
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	struct channel_softc *wdc_cp = &cp->wdc_channel;
-
-	if (cp->hw_ok == 0)
-		return;
-	if ((interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel)) != 0)
-		return;
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
@@ -1450,17 +1429,10 @@ pciide_map_compat_intr(pa, cp, compatchan, interface)
 #endif
 		aprint_error("%s: no compatibility interrupt for use by %s "
 		    "channel\n", sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		cp->hw_ok = 0;
+		cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	}
 #endif
-}
-
-void
-pciide_print_modes(cp)
-	struct pciide_channel *cp;
-{
-	wdc_print_modes(&cp->wdc_channel);
 }
 
 void
@@ -1515,14 +1487,9 @@ default_chip_map(sc, pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		if (interface & PCIIDE_INTERFACE_PCI(channel)) {
-			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
-			    &ctlsize, pciide_pci_intr);
-		} else {
-			cp->hw_ok = pciide_mapregs_compat(pa, cp,
-			    channel, &cmdsize, &ctlsize);
-		}
-		if (cp->hw_ok == 0)
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->wdc_channel.ch_flags & WDCF_DISABLED)
 			continue;
 		/*
 		 * Check to see if something appears to be there.
@@ -1552,22 +1519,7 @@ next:
 			aprint_error("%s: %s channel ignored (%s)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 			    failreason);
-			cp->hw_ok = 0;
-			bus_space_unmap(cp->wdc_channel.cmd_iot,
-			    cp->wdc_channel.cmd_ioh, cmdsize);
-			if (interface & PCIIDE_INTERFACE_PCI(channel))
-				bus_space_unmap(cp->wdc_channel.ctl_iot,
-				    cp->ctl_baseioh, ctlsize);
-			else
-				bus_space_unmap(cp->wdc_channel.ctl_iot,
-				    cp->wdc_channel.ctl_ioh, ctlsize);
-		} else {
-			pciide_map_compat_intr(pa, cp, channel, interface);
-		}
-		if (cp->hw_ok) {
-			cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
-			cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
-			wdcattach(&cp->wdc_channel);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 		}
 	}
 
@@ -1648,7 +1600,6 @@ sata_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -1750,24 +1701,26 @@ piix_chip_map(sc, pa)
 		idetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 		if ((PIIX_IDETIM_READ(idetim, channel) &
 		    PIIX_IDETIM_IDE) == 0) {
+#if 1
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
-		}
-		/* PIIX are compat-only pciide devices */
-		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		if (pciide_chan_candisable(cp)) {
-			idetim = PIIX_IDETIM_CLEAR(idetim, PIIX_IDETIM_IDE,
+#else
+			pcireg_t interface;
+
+			idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE,
 			    channel);
 			pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
 			    idetim);
+			interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
+			    sc->sc_tag, PCI_CLASS_REG));
+			aprint_normal("channel %d idetim=%08x interface=%02x\n",
+			    channel, idetim, interface);
+#endif
 		}
-		pciide_map_compat_intr(pa, cp, channel, 0);
-		if (cp->hw_ok == 0)
-			continue;
-		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+		/* PIIX are compat-only pciide devices */
+		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
 	}
 
 	WDCDEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
@@ -1904,7 +1857,6 @@ end:	/*
 		    idedma_ctl);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
-	pciide_print_modes(cp);
 }
 
 void
@@ -1925,11 +1877,8 @@ piix3_4_setup_channel(chp)
 	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, channel);
 	sidetim &= ~(PIIX_SIDETIM_ISP_MASK(channel) |
 	    PIIX_SIDETIM_RTC_MASK(channel));
-
 	idedma_ctl = 0;
-	/* If channel disabled, no need to go further */
-	if ((PIIX_IDETIM_READ(oidetim, channel) & PIIX_IDETIM_IDE) == 0)
-		return;
+
 	/* set up new idetim: Enable IDE registers decode */
 	idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, channel);
 
@@ -2036,7 +1985,6 @@ pio:		/* use PIO mode */
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM, sidetim);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG, udmareg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_CONFIG, ideconf);
-	pciide_print_modes(cp);
 }
 
 
@@ -2203,18 +2151,11 @@ amd7x6_chip_map(sc, pa)
 		if ((chanenable & AMD7X6_CHAN_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-
-		if (pciide_chan_candisable(cp))
-			chanenable &= ~AMD7X6_CHAN_EN(channel);
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
-
-		amd7x6_setup_channel(&cp->wdc_channel);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN(sc),
 	    chanenable);
@@ -2319,7 +2260,6 @@ pio:		/* setup PIO mode */
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM(sc), datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA(sc), udmatim_reg);
 }
@@ -2436,22 +2376,11 @@ apollo_chip_map(sc, pa)
 		if ((ideconf & APO_IDECONF_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		if (pciide_chan_candisable(cp)) {
-			ideconf &= ~APO_IDECONF_EN(channel);
-			pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF,
-			    ideconf);
-		}
-		pciide_map_compat_intr(pa, cp, channel, interface);
-
-		if (cp->hw_ok == 0)
-			continue;
-		apollo_setup_channel(&sc->pciide_channels[channel].wdc_channel);
 	}
 	WDCDEBUG_PRINT(("apollo_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM),
@@ -2547,7 +2476,6 @@ pio:		/* setup PIO mode */
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM, datatim_reg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_UDMA, udmatim_reg);
 }
@@ -2588,7 +2516,7 @@ apollo_sata_chip_map(sc, pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-		WDC_CAPABILITY_MODE | WDC_CAPABILITY_SINGLE_DRIVE;
+		WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
@@ -2597,9 +2525,6 @@ apollo_sata_chip_map(sc, pa)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		     pciide_pci_intr);
-
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		sata_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -2675,20 +2600,11 @@ cmd_channel_map(pa, sc, channel)
 	if (channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
 		aprint_normal("%s: %s channel ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 		return;
 	}
 
 	pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize, cmd_pci_intr);
-	if (cp->hw_ok == 0)
-		return;
-	if (channel == 1) {
-		if (pciide_chan_candisable(cp)) {
-			ctrl &= ~CMD_CTRL_2PORT;
-			pciide_pci_write(pa->pa_pc, pa->pa_tag,
-			    CMD_CTRL, ctrl);
-		}
-	}
-	pciide_map_compat_intr(pa, cp, channel, interface);
 }
 
 int
@@ -2841,9 +2757,6 @@ cmd0643_9_chip_map(sc, pa)
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		cmd_channel_map(pa, sc, channel);
-		if (cp->hw_ok == 0)
-			continue;
-		cmd0643_9_setup_channel(&cp->wdc_channel);
 	}
 	/*
 	 * note - this also makes sure we clear the irq disable and reset
@@ -2934,7 +2847,6 @@ cmd0643_9_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -2991,9 +2903,6 @@ cmd680_chip_map(sc, pa)
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		cmd680_channel_map(pa, sc, channel);
-		if (cp->hw_ok == 0)
-			continue;
-		cmd680_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -3046,9 +2955,6 @@ cmd680_channel_map(pa, sc, channel)
 	    "native-PCI" : "compatibility");
 
 	pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize, pciide_pci_intr);
-	if (cp->hw_ok == 0)
-		return;
-	pciide_map_compat_intr(pa, cp, channel, interface);
 }
 
 void
@@ -3128,7 +3034,6 @@ cmd680_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -3192,10 +3097,6 @@ cmd3112_chip_map(sc, pa)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		cmd3112_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -3246,7 +3147,6 @@ cmd3112_setup_channel(chp)
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag,
 	    chp->channel == 0 ? SII3112_DTM_IDE0 : SII3112_DTM_IDE1, dtm);
-	pciide_print_modes(cp);
 }
 
 void
@@ -3324,30 +3224,14 @@ cy693_chip_map(sc, pa)
 	    (interface & PCIIDE_INTERFACE_SETTABLE(0)) ?
 	    "configured" : "wired");
 	if (interface & PCIIDE_INTERFACE_PCI(0)) {
-		aprint_normal("native-PCI");
-		cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
+		aprint_normal("native-PCI mode\n");
+		pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
 	} else {
-		aprint_normal("compatibility");
-		cp->hw_ok = pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan,
-		    &cmdsize, &ctlsize);
+		aprint_normal("compatibility mode\n");
+		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan, &cmdsize,
+		    &ctlsize);
 	}
-	aprint_normal(" mode\n");
-	cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
-	cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
-	wdcattach(&cp->wdc_channel);
-	if (pciide_chan_candisable(cp)) {
-		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    PCI_COMMAND_STATUS_REG, 0);
-	}
-	pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan, interface);
-	if (cp->hw_ok == 0)
-		return;
-	WDCDEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)),DEBUG_PROBE);
-	cy693_setup_channel(&cp->wdc_channel);
-	WDCDEBUG_PRINT(("cy693_chip_map: new timings reg 0x%x\n",
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, CY_CMD_CTRL)), DEBUG_PROBE);
 }
 
 void
@@ -3401,8 +3285,6 @@ cy693_setup_channel(chp)
 		    (sc->sc_cy_compatchan == 0) ?
 		    CY_DMA_IDX_PRIMARY : CY_DMA_IDX_SECONDARY, dma_mode);
 	}
-
-	pciide_print_modes(cp);
 
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
@@ -3606,24 +3488,11 @@ sis_chip_map(sc, pa)
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		if (pciide_chan_candisable(cp)) {
-			if (channel == 0)
-				sis_ctr0 &= ~SIS_CTRL0_CHAN0_EN;
-			else
-				sis_ctr0 &= ~SIS_CTRL0_CHAN1_EN;
-			pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_CTRL0,
-			    sis_ctr0);
-		}
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
-		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
 }
 
@@ -3691,7 +3560,6 @@ sis96x_setup_channel(chp)
 		    IDEDMA_CTL+ (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -3796,7 +3664,6 @@ pio:		switch (sc->sis_type) {
 		    IDEDMA_CTL+ (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -3873,20 +3740,12 @@ acer_chip_map(sc, pa)
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		     (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		if (pciide_chan_candisable(cp)) {
-			cr &= ~(PCIIDE_CHAN_EN(channel) << PCI_INTERFACE_SHIFT);
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    PCI_CLASS_REG, cr);
-		}
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		acer_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -3984,7 +3843,6 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 int
@@ -4121,24 +3979,14 @@ hpt_chip_map(sc, pa)
 				aprint_normal(
 				    "%s: %s channel ignored (disabled)\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+				cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 				continue;
 			}
 		}
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
-		if (interface & PCIIDE_INTERFACE_PCI(i)) {
-			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
-			    &ctlsize, hpt_pci_intr);
-		} else {
-			cp->hw_ok = pciide_mapregs_compat(pa, cp, compatchan,
-			    &cmdsize, &ctlsize);
-		}
-		if (cp->hw_ok == 0)
-			return;
-		cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
-		cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
-		wdcattach(&cp->wdc_channel);
-		hpt_setup_channel(&cp->wdc_channel);
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    hpt_pci_intr);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
@@ -4297,7 +4145,6 @@ hpt_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 int
@@ -4501,21 +4348,11 @@ pdc202xx_chip_map(sc, pa)
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
-		if (PDC_IS_265(sc))
-			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-			    pdc20265_pci_intr);
-		else
-			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-			    pdc202xx_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		if (!PDC_IS_268(sc) && pciide_chan_candisable(cp))
-			st &= ~(PDC_IS_262(sc) ?
-			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    PDC_IS_265(sc) ? pdc20265_pci_intr : pdc202xx_pci_intr);
 	}
 	if (!PDC_IS_268(sc)) {
 		WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state "
@@ -4640,7 +4477,6 @@ pdc202xx_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 void
@@ -4692,7 +4528,6 @@ pdc20268_setup_channel(chp)
 		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
 		    idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 int
@@ -4875,16 +4710,11 @@ opti_chip_map(sc, pa)
 		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
-		opti_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -4985,8 +4815,6 @@ opti_setup_channel(chp)
 
 	/* Finally, enable the timings */
 	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_ENABLE);
-
-	pciide_print_modes(cp);
 }
 
 #define	ACARD_IS_850(sc)						\
@@ -5040,19 +4868,8 @@ acard_chip_map(sc, pa)
 		cp = &sc->pciide_channels[i];
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
-		if (interface & PCIIDE_INTERFACE_PCI(i)) {
-			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
-			    &ctlsize, pciide_pci_intr);
-		} else {
-			cp->hw_ok = pciide_mapregs_compat(pa, cp, i,
-			    &cmdsize, &ctlsize);
-		}
-		if (cp->hw_ok == 0)
-			return;
-		cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
-		cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
-		wdcattach(&cp->wdc_channel);
-		acard_setup_channel(&cp->wdc_channel);
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
 	}
 	if (!ACARD_IS_850(sc)) {
 		u_int32_t reg;
@@ -5163,7 +4980,6 @@ acard_setup_channel(chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
 	}
-	pciide_print_modes(cp);
 
 	if (ACARD_IS_850(sc)) {
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
@@ -5276,16 +5092,11 @@ sl82c105_chip_map(sc, pa)
 		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
-		sl82c105_setup_channel(&cp->wdc_channel);
 	}
 }
 
@@ -5358,8 +5169,6 @@ sl82c105_setup_channel(chp)
 		/* ...and set the mode for this drive. */
 		pci_conf_write(sc->sc_pc, sc->sc_tag, pxdx_reg, pxdx);
 	}
-
-	pciide_print_modes(cp);
 }
 
 void
@@ -5415,12 +5224,6 @@ serverworks_chip_map(sc, pa)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    serverworks_pci_intr);
-		if (cp->hw_ok == 0)
-			return;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			return;
-		serverworks_setup_channel(&cp->wdc_channel);
 	}
 
 	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
@@ -5501,7 +5304,6 @@ serverworks_setup_channel(chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
 	}
-	pciide_print_modes(cp);
 }
 
 int
@@ -5586,9 +5388,5 @@ artisea_chip_map(sc, pa)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		sata_setup_channel(&cp->wdc_channel);
 	}
 }

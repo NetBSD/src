@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.13 2003/09/19 21:36:05 mycroft Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.13 2003/09/19 21:36:05 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,8 +154,8 @@ wdc_ofisa_attach(parent, self, aux)
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
-	wdcattach(&sc->wdc_channel);
-	wdc_print_modes(&sc->wdc_channel);
+
+	config_interrupts(self, wdcattach);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);

@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_obio.c,v 1.5 2003/07/15 02:54:50 lukem Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.6 2003/09/19 21:36:00 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.5 2003/07/15 02:54:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.6 2003/09/19 21:36:00 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,5 +144,6 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
-	wdcattach(&sc->wdc_channel);
+
+	config_interrupts(self, wdcattach);
 }
