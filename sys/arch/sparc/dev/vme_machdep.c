@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.13 1998/08/30 21:26:46 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.14 1998/09/19 16:45:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ int 		vmeintr4  __P((void *));
 #if defined(SUN4M)
 int 		vmeintr4m __P((void *));
 #endif
+static int	sparc_vme_error __P((void));
 
 
 static int	sparc_vme_probe __P((void *, bus_space_tag_t, vme_addr_t,
@@ -164,6 +165,8 @@ struct cfattach vme_mainbus_ca = {
 struct cfattach vme_iommu_ca = {
 	sizeof(struct vmebus_softc), vmematch_iommu, vmeattach_iommu
 };
+
+int	(*vmeerr_handler) __P((void));
 
 /* If the PROM does not provide the `ranges' property, we make up our own */
 struct rom_range vmebus_translations[] = {
@@ -358,8 +361,6 @@ vmeattach_iommu(parent, self, aux)
 	struct iommu_attach_args *ia = aux;
 	struct vme_busattach_args vba;
 	bus_space_handle_t bh;
-	struct rom_reg *rr;
-	int nreg;
 	int node;
 	int cline;
 
@@ -387,20 +388,16 @@ vmeattach_iommu(parent, self, aux)
 	/*
 	 * Map VME control space
 	 */
-	rr = NULL;
-	if (getprop(node, "reg", sizeof(*rr), &nreg, (void**)&rr) != 0) {
-		printf("%s: can't get register property\n", self->dv_xname);
-		return;
-	}
-	if (nreg < 2) {
-		printf("%s: only %d register sets\n", self->dv_xname, nreg);
+	if (ia->iom_nreg < 2) {
+		printf("%s: only %d register sets\n", self->dv_xname,
+			ia->iom_nreg);
 		return;
 	}
 
 	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)rr[0].rr_iospace,
-			  (bus_addr_t)rr[0].rr_paddr,
-			  (bus_size_t)rr[0].rr_len,
+			  (bus_type_t)ia->iom_reg[0].ior_iospace,
+			  (bus_addr_t)ia->iom_reg[0].ior_pa,
+			  (bus_size_t)ia->iom_reg[0].ior_size,
 			  BUS_SPACE_MAP_LINEAR,
 			  0, &bh) != 0) {
 		panic("%s: can't map vmebusreg", self->dv_xname);
@@ -408,9 +405,9 @@ vmeattach_iommu(parent, self, aux)
 	sc->sc_reg = (struct vmebusreg *)bh;
 
 	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)rr[1].rr_iospace,
-			  (bus_addr_t)rr[1].rr_paddr,
-			  (bus_size_t)rr[1].rr_len,
+			  (bus_type_t)ia->iom_reg[1].ior_iospace,
+			  (bus_addr_t)ia->iom_reg[1].ior_pa,
+			  (bus_size_t)ia->iom_reg[1].ior_size,
 			  BUS_SPACE_MAP_LINEAR,
 			  0, &bh) != 0) {
 		panic("%s: can't map vmebusvec", self->dv_xname);
@@ -421,8 +418,8 @@ vmeattach_iommu(parent, self, aux)
 	 * Map VME IO cache tags and flush control.
 	 */
 	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)rr[1].rr_iospace,
-			  (bus_addr_t)rr[1].rr_paddr + VME_IOC_TAGOFFSET,
+			  (bus_type_t)ia->iom_reg[1].ior_iospace,
+			  (bus_addr_t)ia->iom_reg[1].ior_pa + VME_IOC_TAGOFFSET,
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
 			  0, &bh) != 0) {
@@ -431,8 +428,8 @@ vmeattach_iommu(parent, self, aux)
 	sc->sc_ioctags = (u_int32_t *)bh;
 
 	if (bus_space_map2(ia->iom_bustag,
-			  (bus_type_t)rr[1].rr_iospace,
-			  (bus_addr_t)rr[1].rr_paddr + VME_IOC_FLUSHOFFSET,
+			  (bus_type_t)ia->iom_reg[1].ior_iospace,
+			  (bus_addr_t)ia->iom_reg[1].ior_pa+VME_IOC_FLUSHOFFSET,
 			  VME_IOC_SIZE,
 			  BUS_SPACE_MAP_LINEAR,
 			  0, &bh) != 0) {
@@ -451,6 +448,7 @@ vmeattach_iommu(parent, self, aux)
 	}
 
 	vmebus_sc = sc;
+	vmeerr_handler = sparc_vme_error;
 
 	/*
 	 * Invalidate all IO-cache entries.
@@ -469,15 +467,19 @@ vmeattach_iommu(parent, self, aux)
 #endif
 }
 
-void sparc_vme_async_fault __P((void));
-void
-sparc_vme_async_fault()
+int
+sparc_vme_error()
 {
 	struct vmebus_softc *sc = vmebus_sc;
-	u_int32_t addr;
+	u_int32_t afsr, afpa;
+	char bits[64];
 
-	addr = sc->sc_reg->vmebus_afar;
-	printf("vme afsr: %x; addr %x\n", sc->sc_reg->vmebus_afsr, addr);
+	afsr = sc->sc_reg->vmebus_afsr,
+	afpa = sc->sc_reg->vmebus_afar;
+	printf("VME error:\n\tAFSR %s\n",
+		bitmask_snprintf(afsr, VMEBUS_AFSR_BITS, bits, sizeof(bits)));
+	printf("\taddress: 0x%x%x\n", afsr, afpa);
+	return (0);
 }
 
 int
@@ -697,7 +699,7 @@ vmeintr4m(arg)
 			*((int*)ICR_SI_PEND),
 			ihp->sc->sc_reg->vmebus_afsr,
 			ihp->sc->sc_reg->vmebus_afar);
-		return 1; /* XXX - pretend we handled it, for now */
+		return (1); /* XXX - pretend we handled it, for now */
 	}
 
 	for (; ihp; ihp = ihp->next)
