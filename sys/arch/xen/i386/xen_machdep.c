@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.6.4 2005/02/12 22:30:23 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.6.5 2005/03/08 14:05:01 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.4 2005/02/12 22:30:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.5 2005/03/08 14:05:01 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -120,11 +120,13 @@ lgdt(struct region_descriptor *rdp)
 void
 xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 {
-	char *cmd_line, *opt, *s;
+	char _cmd_line[128], *cmd_line, *opt, *s;
 	int b, i, ipidx = 0;
 	uint32_t xi_ip[5];
 
-	cmd_line = xen_start_info.cmd_line;
+
+	cmd_line = strncpy(_cmd_line, xen_start_info.cmd_line, 128);
+	cmd_line[127] = '\0';
 
 	switch (what) {
 	case XEN_PARSE_BOOTDEV:
