@@ -39,7 +39,9 @@ Preparing you hard disk with HDToolBox:
 	The important things you need to do above and beyond normal
 	partitioning includes (from Partition Drive section):
 
-		Marking all NetBSD partitions as non-bootable.
+		Marking all NetBSD partitions as non-bootable, with
+		one exception: the root partition, if you want to boot
+		NetBSD directly.
 
 		Changing the file system parameters of the partitions
 		to NetBSD ones.  This must be done from the
@@ -67,6 +69,15 @@ Preparing you hard disk with HDToolBox:
 
 		- Turn custom boot code off
 		- Set Reserved Blocks start and end to 0.
+		- Click Ok.
+
+		On the root (and, for installation, swap) partition,
+		set instead this:
+
+		- Turn custom boot code on
+		- Set Reserved Blocks start and end to 0.
+		- Set Number of Custom Boot Blocks to 16
+		- Set Automount This Partition on
 		- Click Ok.
 
 		Mask and maxtransfer are not used with NetBSD.
