@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.13 2003/08/05 14:55:06 scw Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.14 2005/01/30 19:19:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.13 2003/08/05 14:55:06 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.14 2005/01/30 19:19:24 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -711,6 +711,9 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 			goto give_it_back;
 		}
 
+		/* CRC is included with the packet; trim it off. */
+		buflen -= ETHER_CRC_LEN;
+
 		if (m == NULL) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
@@ -739,7 +742,6 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		memcpy(m->m_data + m->m_len, rxb->rb_data, buflen);
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 #if NBPFILTER > 0
