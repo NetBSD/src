@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.11 2000/08/11 20:47:14 thorpej Exp $
+.\"	$NetBSD: le.4,v 1.12 2001/04/27 18:05:22 jdolecek Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd April 27, 2001
 .Dt LE 4
 .Os
 .Sh NAME
@@ -56,6 +56,8 @@
 .Ss EISA boards
 .Cd "depca* at eisa? slot ?                  # DEC DE422"
 .Cd "le* at depca?"
+.Ss MCA boards
+.Cd "le* at mca? slot ?                      # SKNET Personal/MC2+"
 .Ss PCI boards and mainboard adapters
 .Cd "le* at pci? dev? function ?"
 .Ss Turbochannel PMAD-A or onboard (alpha, pmax)
@@ -182,6 +184,15 @@ interface are:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It DEC DE422
+.El
+.Ss MCA
+The MCA-bus Ethernet cards supported by the
+.Nm
+interface are:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It SKNET Personal MC2
+.It SKNET MC2+
 .El
 .Ss pmax
 All
@@ -417,10 +428,11 @@ and was converted to the
 interface in
 .Nx 1.3
 .Sh SEE ALSO
+.Xr arp 4 ,
 .Xr intro 4 ,
 .Xr inet 4 ,
-.Xr arp 4 ,
 .Xr ifmedia 4 ,
+.Xr mca 4 ,
 .Xr ifconfig 8
 .Rs
 .%R "Am79C90 - CMOS Local Area Network Controller for Ethernet"
