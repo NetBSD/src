@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.14 1995/05/28 05:37:32 jtc Exp $	*/
+/*	$NetBSD: input.c,v 1.15 1995/06/20 22:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.14 1995/05/28 05:37:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.15 1995/06/20 22:27:50 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,49 @@ static char rcsid[] = "$NetBSD: input.c,v 1.14 1995/05/28 05:37:32 jtc Exp $";
  */
 #include "defs.h"
 #include <syslog.h>
+
+
+/*
+ * "Authenticate" router from which message originated.
+ * We accept routing packets from routers directly connected
+ * via broadcast or point-to-point networks,
+ * and from those listed in /etc/gateways.
+ */
+static struct interface *
+rip_verify(from)
+	struct sockaddr *from;
+{
+	struct interface *ifp;
+	char buf[256];
+
+	if ((ifp = if_iflookup(from)) == 0) {
+		syslog(LOG_ERR, "trace command from unknown router, %s",
+		       (*afswitch[from->sa_family].af_format)(from, buf,
+							      sizeof(buf)));
+		return NULL;
+	}
+
+	if ((ifp->int_flags & 
+		(IFF_BROADCAST|IFF_POINTOPOINT|IFF_REMOTE)) == 0) {
+		syslog(LOG_ERR,
+		       "trace command from router %s, with bad flags %x",
+		       (*afswitch[from->sa_family].af_format)(from, buf,
+							      sizeof(buf)),
+		       ifp->int_flags);
+		return NULL;
+	}
+
+	if ((ifp->int_flags & IFF_PASSIVE) != 0) {
+		syslog(LOG_ERR,
+		       "trace command from %s on an active interface",
+		       (*afswitch[from->sa_family].af_format)(from, buf,
+							      sizeof(buf)));
+		return NULL;
+	}
+
+	return ifp;
+}
+
 
 /*
  * Process a newly received packet.
@@ -59,16 +102,16 @@ rip_input(from, rip, size)
 	register struct rt_entry *rt;
 	register struct netinfo *n;
 	register struct interface *ifp;
-	struct interface *if_ifwithdstaddr();
+	struct sockaddr dst, gateway, netmask;
 	int count, changes = 0;
 	register struct afswitch *afp;
-	static struct sockaddr badfrom, badfrom2;
+	static struct sockaddr badfrom;
 	char buf1[256], buf2[256];
 
 	ifp = 0;
 	TRACE_INPUT(ifp, from, (char *)rip, size);
 	if (from->sa_family >= af_max ||
-	    (afp = &afswitch[from->sa_family])->af_hash == (int (*)())0) {
+	    (afp = &afswitch[from->sa_family])->af_hash == NULL) {
 		syslog(LOG_INFO,
 	 "\"from\" address in unsupported address family (%d), cmd %d\n",
 		    from->sa_family, rip->rip_cmd);
@@ -82,6 +125,7 @@ rip_input(from, rip, size)
 		    rip->rip_cmd);
 		return;
 	}
+
 	switch (rip->rip_cmd) {
 
 	case RIPCMD_REQUEST:
@@ -94,16 +138,8 @@ rip_input(from, rip, size)
 				break;
 			count -= sizeof (struct netinfo);
 
-#if BSD < 198810
-			if (sizeof(n->rip_dst.sa_family) > 1)	/* XXX */
-			    n->rip_dst.sa_family = ntohs(n->rip_dst.sa_family);
-#else
-#define osa(x) ((struct osockaddr *)(&(x)))
-			    n->rip_dst.sa_family =
-					ntohs(osa(n->rip_dst)->sa_family);
-			    n->rip_dst.sa_len = sizeof(n->rip_dst);
-#endif
 			n->rip_metric = ntohl(n->rip_metric);
+			n->rip_family = ntohs(n->rip_family);
 			/* 
 			 * A single entry with sa_family == AF_UNSPEC and
 			 * metric ``infinity'' means ``all routes''.
@@ -111,27 +147,23 @@ rip_input(from, rip, size)
 			 * as a supplier, or to anyone other than a router
 			 * (eg, query).
 			 */
-			if (n->rip_dst.sa_family == AF_UNSPEC &&
+			if (n->rip_family == AF_UNSPEC &&
 			    n->rip_metric == HOPCNT_INFINITY && count == 0) {
 			    	if (supplier || (*afp->af_portmatch)(from) == 0)
 					supply(from, 0, 0, 0);
 				return;
 			}
-			if (n->rip_dst.sa_family < af_max &&
-			    afswitch[n->rip_dst.sa_family].af_hash)
-				rt = rtlookup(&n->rip_dst);
+			if (dst.sa_family < af_max &&
+			    afswitch[dst.sa_family].af_hash) {
+				(*afswitch[n->rip_family].af_get)(DESTINATION,
+								  n, &dst);
+				rt = rtlookup(&dst);
+			}
 			else
 				rt = 0;
 #define min(a, b) (a < b ? a : b)
 			n->rip_metric = rt == 0 ? HOPCNT_INFINITY :
 				min(rt->rt_metric + 1, HOPCNT_INFINITY);
-#if BSD < 198810
-			if (sizeof(n->rip_dst.sa_family) > 1)	/* XXX */
-			    n->rip_dst.sa_family = htons(n->rip_dst.sa_family);
-#else
-			    osa(n->rip_dst)->sa_family =
-						htons(n->rip_dst.sa_family);
-#endif
 			n->rip_metric = htonl(n->rip_metric);
 		}
 		rip->rip_cmd = RIPCMD_RESPONSE;
@@ -144,30 +176,9 @@ rip_input(from, rip, size)
 		/* verify message came from a privileged port */
 		if ((*afp->af_portcheck)(from) == 0)
 			return;
-		if ((ifp = if_iflookup(from)) == 0) {
-			syslog(LOG_ERR, "trace command from unknown router, %s",
-			    (*afswitch[from->sa_family].af_format)(from, buf1,
-							       sizeof(buf1)));
-			return;
-		}
 
-		if ((ifp->int_flags & 
-			(IFF_BROADCAST|IFF_POINTOPOINT|IFF_REMOTE)) == 0) {
-			syslog(LOG_ERR,
-			    "trace command from router %s, with bad flags %x",
-			    (*afswitch[from->sa_family].af_format)(from, buf1,
-							       sizeof(buf1)),
-			    ifp->int_flags);
+		if ((ifp = rip_verify(from)) == NULL)
 			return;
-		}
-
-		if ((ifp->int_flags & IFF_PASSIVE) != 0) {
-			syslog(LOG_ERR,
-				"trace command from  %s on a passive interface",
-			    (*afswitch[from->sa_family].af_format)(from, buf1,
-							       sizeof(buf1)));
-			return;
-		}
 
 		((char *)rip)[size] = '\0';
 		if (rip->rip_cmd == RIPCMD_TRACEON)
@@ -192,8 +203,8 @@ rip_input(from, rip, size)
 				return;
 			}
 			rt = rtfind(from);
-			if (rt == 0 || ((rt->rt_state & RTS_INTERFACE) == 0) &&
-			    rt->rt_metric >= ifp->int_metric) 
+			if (rt == 0 || (((rt->rt_state & RTS_INTERFACE) == 0) &&
+			    rt->rt_metric >= ifp->int_metric))
 				addrouteforif(ifp);
 			else
 				rt->rt_timer = 0;
@@ -210,55 +221,41 @@ rip_input(from, rip, size)
 		else if ((ifp = if_ifwithdstaddr(from)) &&
 		    (rt == 0 || rt->rt_metric >= ifp->int_metric))
 			addrouteforif(ifp);
-		/*
-		 * "Authenticate" router from which message originated.
-		 * We accept routing packets from routers directly connected
-		 * via broadcast or point-to-point networks,
-		 * and from those listed in /etc/gateways.
-		 */
-		if ((ifp = if_iflookup(from)) == 0 || (ifp->int_flags &
-		    (IFF_BROADCAST | IFF_POINTOPOINT | IFF_REMOTE)) == 0 ||
-		    ifp->int_flags & IFF_PASSIVE) {
-			if (memcmp(from, &badfrom, sizeof(badfrom)) != 0) {
-				syslog(LOG_ERR,
-				  "packet from unknown router, %s",
-				  (*afswitch[from->sa_family].af_format)(from,
-							 buf1, sizeof(buf1)));
-				badfrom = *from;
-			}
+
+		if ((ifp = rip_verify(from)) == NULL)
 			return;
-		}
+
 		size -= 4 * sizeof (char);
 		n = rip->rip_nets;
 		for (; size > 0; size -= sizeof (struct netinfo), n++) {
 			if (size < sizeof (struct netinfo))
 				break;
-#if BSD < 198810
-			if (sizeof(n->rip_dst.sa_family) > 1)	/* XXX */
-				n->rip_dst.sa_family =
-					ntohs(n->rip_dst.sa_family);
-#else
-			    n->rip_dst.sa_family =
-					ntohs(osa(n->rip_dst)->sa_family);
-			    n->rip_dst.sa_len = sizeof(n->rip_dst);
-#endif
 			n->rip_metric = ntohl(n->rip_metric);
-			if (n->rip_dst.sa_family >= af_max ||
-			    (afp = &afswitch[n->rip_dst.sa_family])->af_hash ==
-			    (int (*)())0) {
+			n->rip_family = ntohs(n->rip_family);
+			if (!(*afswitch[n->rip_family].af_get)(DESTINATION, n,
+							       &dst))
+				continue;
+			if (!(*afswitch[n->rip_family].af_get)(NETMASK,
+							       n, &netmask))
+				memset(&netmask, 0, sizeof(netmask));
+			if (!(*afswitch[n->rip_family].af_get)(GATEWAY,
+							       n, &gateway))
+				memcpy(&gateway, from, sizeof(gateway));
+			if (dst.sa_family >= af_max ||
+			    (afp = &afswitch[dst.sa_family])->af_hash == NULL) {
 				syslog(LOG_INFO,
 		"route in unsupported address family (%d), from %s (af %d)\n",
-				   n->rip_dst.sa_family,
+				   dst.sa_family,
 				   (*afswitch[from->sa_family].af_format)(from,
 							  buf1, sizeof(buf1)),
 				   from->sa_family);
 				continue;
 			}
-			if (((*afp->af_checkhost)(&n->rip_dst)) == 0) {
+			if (((*afp->af_checkhost)(&dst)) == 0) {
 				syslog(LOG_DEBUG,
 				   "bad host %s in route from %s (af %d)\n",
-				   (*afswitch[n->rip_dst.sa_family].af_format)(
-					&n->rip_dst, buf1, sizeof(buf1)),
+				   (*afswitch[dst.sa_family].af_format)(
+					&dst, buf1, sizeof(buf1)),
 				   (*afswitch[from->sa_family].af_format)(from,
 					buf2, sizeof(buf2)),
 				   from->sa_family);
@@ -266,14 +263,14 @@ rip_input(from, rip, size)
 			}
 			if (n->rip_metric == 0 ||
 			    (unsigned) n->rip_metric > HOPCNT_INFINITY) {
-				if (memcmp(from, &badfrom2,
-				    sizeof(badfrom2)) != 0) {
+				if (memcmp(from, &badfrom,
+					   sizeof(badfrom)) != 0) {
 					syslog(LOG_ERR,
 					    "bad metric (%d) from %s\n",
 					    n->rip_metric,
 				  (*afswitch[from->sa_family].af_format)(from,
 						buf1, sizeof(buf1)));
-					badfrom2 = *from;
+					badfrom = *from;
 				}
 				continue;
 			}
@@ -284,7 +281,7 @@ rip_input(from, rip, size)
 				n->rip_metric += ifp->int_metric;
 			if ((unsigned) n->rip_metric > HOPCNT_INFINITY)
 				n->rip_metric = HOPCNT_INFINITY;
-			rt = rtlookup(&n->rip_dst);
+			rt = rtlookup(&dst);
 			if (rt == 0 ||
 			    (rt->rt_state & (RTS_INTERNAL|RTS_INTERFACE)) ==
 			    (RTS_INTERNAL|RTS_INTERFACE)) {
@@ -302,10 +299,11 @@ rip_input(from, rip, size)
 				     * includes this one before adding
 				     * this route.
 				     */
-				    rt = rtfind(&n->rip_dst);
-				    if (rt && equal(from, &rt->rt_router))
+				    rt = rtfind(&dst);
+				    if (rt && equal(&gateway, &rt->rt_router))
 					    continue;
-				    rtadd(&n->rip_dst, from, n->rip_metric, 0);
+				    rtadd(&dst, &gateway, &netmask,
+					  n->rip_metric, 0);
 				    changes++;
 				}
 				continue;
@@ -316,9 +314,10 @@ rip_input(from, rip, size)
 			 * shorter, or equivalent but old route
 			 * is getting stale.
 			 */
-			if (equal(from, &rt->rt_router)) {
+			if (equal(&gateway, &rt->rt_router)) {
 				if (n->rip_metric != rt->rt_metric) {
-					rtchange(rt, from, n->rip_metric);
+					rtchange(rt, &gateway,
+						 &netmask, n->rip_metric);
 					changes++;
 					rt->rt_timer = 0;
 					if (rt->rt_metric >= HOPCNT_INFINITY)
@@ -330,7 +329,7 @@ rip_input(from, rip, size)
 			    (rt->rt_metric == n->rip_metric &&
 			    rt->rt_timer > (EXPIRE_TIME/2) &&
 			    (unsigned) n->rip_metric < HOPCNT_INFINITY)) {
-				rtchange(rt, from, n->rip_metric);
+				rtchange(rt, &gateway, &netmask, n->rip_metric);
 				changes++;
 				rt->rt_timer = 0;
 			}
@@ -353,7 +352,6 @@ rip_input(from, rip, size)
 	if (changes && supplier &&
 	   now.tv_sec - lastfullupdate.tv_sec < SUPPLY_INTERVAL-MAX_WAITTIME) {
 		u_long delay;
-		extern long random();
 
 		if (now.tv_sec - lastbcast.tv_sec >= MIN_WAITTIME &&
 		    timercmp(&nextbcast, &now, <)) {

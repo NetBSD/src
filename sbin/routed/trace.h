@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.7 1995/04/24 13:24:35 cgd Exp $	*/
+/*	$NetBSD: trace.h,v 1.8 1995/06/20 22:28:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -98,3 +98,17 @@ FILE	*ftrace;		/* output trace file */
 		dumppacket(ftrace, "to", (struct sockaddr_in *)dst, packet, \
 		    size, &now); \
 	}
+
+/* trace.c */
+void traceinit __P((struct interface *));
+void traceon __P((char *));
+void traceoff __P((void));
+void sigtrace __P((int));
+void bumploglevel __P((void));
+void trace __P((struct ifdebug *, struct sockaddr *, char *, int, int ));
+void traceaction __P((FILE *, char *, struct rt_entry *));
+void tracenewmetric __P((FILE *, struct rt_entry *, int));
+void dumpif __P((FILE *, struct interface *));
+void dumptrace __P((FILE *, char *, struct ifdebug *));
+void dumppacket __P((FILE *, char *, struct sockaddr_in *, char *, int, struct timeval *));
+
