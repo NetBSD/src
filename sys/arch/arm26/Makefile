@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/09 21:55:54 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2000/11/21 23:47:37 bjh21 Exp $
 
 # Makefile for arm26 tags file and boot blocks
 
@@ -28,6 +28,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	include
+SUBDIR=	stand include
 
 .include <bsd.subdir.mk>
