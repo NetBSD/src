@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.3 1996/03/28 19:23:32 is Exp $	*/
+/*	$NetBSD: empsc.c,v 1.4 1996/04/05 15:53:41 is Exp $	*/
 
 /*
 
@@ -80,7 +80,7 @@ struct cfattach empsc_ca = {
 	sizeof(struct sci_softc), empscmatch, empscattach
 };
 
-struct cfdriver empsccd = {
+struct cfdriver empsc_cd = {
 	NULL, "empsc", DV_DULL, NULL, 0
 };
 
