@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/12/12 01:49:45 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2002/01/07 23:09:53 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -41,7 +41,7 @@ RELOC=		600000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf
+CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf machine powerpc
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
