@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.18 1996/06/25 16:40:38 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.19 1996/10/16 14:35:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.18 1996/06/25 16:40:38 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.19 1996/10/16 14:35:45 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ struct tblentry {
 
 STATIC struct tblentry *cmdtable[CMDTABLESIZE];
 STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
+int exerrno = 0;			/* Last exec error */
 
 
 STATIC void tryexec __P((char *, char **, char **));
@@ -136,7 +137,20 @@ shellexec(argv, envp, path, index)
 			stunalloc(cmdname);
 		}
 	}
-	error2(argv[0], errmsg(e, E_EXEC));
+
+	/* Map to POSIX errors */
+	switch (e) {
+	case EACCES:
+		exerrno = 126;
+		break;
+	case ENOENT:
+		exerrno = 127;
+		break;
+	default:
+		exerrno = 2;
+		break;
+	}
+	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, E_EXEC));
 }
 
 
@@ -313,7 +327,7 @@ padvance(path, name)
 int
 hashcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct tblentry **pp;
 	struct tblentry *cmdp;
@@ -522,7 +536,7 @@ loop:
 	if (cmdp)
 		delete_cmd_entry();
 	if (printerr)
-		outfmt(out2, "%s: %s\n", name, errmsg(e, E_EXEC));
+		outfmt(out2, "here %s: %s\n", name, errmsg(e, E_EXEC));
 	entry->cmdtype = CMDUNKNOWN;
 	return;
 
@@ -755,7 +769,7 @@ delete_cmd_entry() {
 void
 getcmdentry(name, entry)
 	char *name;
-	struct cmdentry *entry; 
+	struct cmdentry *entry;
 	{
 	struct tblentry *cmdp = cmdlookup(name, 0);
 
