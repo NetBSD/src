@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.5 1999/02/13 02:41:40 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.6 1999/05/09 19:40:00 cgd Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.5 1999/02/13 02:41:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6 1999/05/09 19:40:00 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.5 1999/02/13 02:41:40 thorpej Exp $"
 
 /*
  * This would belong in a header file, except noone else needs it
+ *
+ * XXX THESE SHOULD BE CONVERTED TO ra, rb, rc FORMAT.
  */
 typedef union {
 	/*
@@ -893,12 +895,12 @@ operate:
 		 * Nice and uniform, just check for literals
 		 */
 		db_printf("%s\t%s,", opcode,
-		    register_name(i.operate_lit_format.rs));
+		    register_name(i.operate_lit_format.ra));
 		if (i.operate_lit_format.one)
 			db_printf("#0x%x", i.operate_lit_format.literal);
 		else
-			db_printf("%s", register_name(i.operate_reg_format.rt));
-		db_printf(",%s", register_name(i.operate_lit_format.rd));
+			db_printf("%s", register_name(i.operate_reg_format.rb));
+		db_printf(",%s", register_name(i.operate_lit_format.rc));
 		break;
 	case op_vax_float:
 		/*
@@ -915,9 +917,9 @@ operate:
 		opcode = anyf_name(i.float_format.function);
 foperate:
 		db_printf("%s\tf%d,f%d,f%d", opcode,
-			i.float_format.fs,
-			i.float_format.ft,
-			i.float_format.fd);
+			i.float_format.fa,
+			i.float_format.fb,
+			i.float_format.fc);
 		break;
 	case op_special:
 		/*
@@ -933,13 +935,13 @@ foperate:
 			case op_fetch:
 			case op_fetch_m:
 				db_printf("%s\t0(%s)", opcode,
-					register_name(i.mem_format.rs));
+					register_name(i.mem_format.rb));
 				break;
 			case op_rpcc:
 			case op_rc:
 			case op_rs:
 				db_printf("%s\t%s", opcode,
-					register_name(i.mem_format.rd));
+					register_name(i.mem_format.ra));
 				break;
 			case op_draint:
 			case op_mb:
@@ -959,16 +961,16 @@ foperate:
 		case op_jmp:
 		case op_jsr:
 			db_printf("%s\t%s,(%s),", opcode,
-				register_name(i.jump_format.rd),
-				register_name(i.jump_format.rs));
+				register_name(i.jump_format.ra),
+				register_name(i.jump_format.rb));
 			signed_immediate = i.jump_format.hint;
 			goto branch_displacement;
 			break;
 		case op_ret:
 		case op_jcr:
 			db_printf("%s\t%s,(%s)", opcode,
-				register_name(i.jump_format.rd),
-				register_name(i.jump_format.rs));
+				register_name(i.jump_format.ra),
+				register_name(i.jump_format.rb));
 			break;
 		}
 		break;
@@ -1025,14 +1027,14 @@ foperate:
 		 */
 loadstore:
 		if (fstore)
-		    db_printf("%s\tf%d,", opcode, i.mem_format.rd);
+		    db_printf("%s\tf%d,", opcode, i.mem_format.ra);
 		else
 		    db_printf("%s\t%s,", opcode,
-		        register_name(i.mem_format.rd));
+		        register_name(i.mem_format.ra));
 		signed_immediate = (long)i.mem_format.displacement;
 loadstore_address:
 		db_printf("%lz(%s)", signed_immediate,
-			register_name(i.mem_format.rs));
+			register_name(i.mem_format.rb));
 		/*
 		 * For convenience, do the address computation
 		 */
@@ -1040,7 +1042,7 @@ loadstore_address:
 			if (i.mem_format.opcode == op_ldah)
 				signed_immediate <<= 16;
 			db_printf(" <0x%lx>", signed_immediate +
-			    db_register_value(DDB_REGS, i.mem_format.rs));
+			    db_register_value(DDB_REGS, i.mem_format.rb));
 		}
 		break;
 	case op_br:
@@ -1064,7 +1066,7 @@ loadstore_address:
 		 */
 		signed_immediate = (long)i.branch_format.displacement;
 		db_printf("%s\t%s,", opcode,
-			  register_name(i.branch_format.rd));
+			  register_name(i.branch_format.ra));
 branch_displacement:
 		db_printsym(iadr + sizeof(alpha_instruction) +
 		    (signed_immediate << 2), DB_STGY_PROC);
