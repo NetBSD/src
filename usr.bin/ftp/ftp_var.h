@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.47 1999/11/11 02:53:03 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.48 1999/11/12 02:50:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -186,7 +186,8 @@ struct option {
 #endif
 
 #define	DEFAULTPAGER	"more"	/* default pager if $PAGER isn't set */
-#define	DEFAULTPROMPT	"ftp> "	/* default prompt if `set prompt' is empty */
+#define	DEFAULTPROMPT	"ftp> "	/* default prompt  if `set prompt' is empty */
+#define	DEFAULTRPROMPT	""	/* default rprompt if `set rprompt' is empty */
 
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
