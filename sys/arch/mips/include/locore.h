@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.26 2000/03/23 14:49:29 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.27 2000/03/27 05:23:42 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -60,10 +60,11 @@ extern void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
 extern void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
 extern void mips1_ForceCacheUpdate __P((void));
 extern void mips1_SetPID   __P((int pid));
-extern void mips1_clean_tlb __P((void));
-extern void mips1_TLBFlush __P((int numtlb));
-extern void mips1_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
-					  (vaddr_t addr));
+
+extern void mips1_TBIA __P((int));
+extern void mips1_TBIAP __P((int));
+extern void mips1_TBIS __P((vaddr_t));
+
 extern int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
 					    u_int low));
@@ -179,8 +180,8 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachFlushICache		mips1_FlushICache
 #define MachForceCacheUpdate	mips1_ForceCacheUpdate
 #define MachSetPID		mips1_SetPID
-#define MachTLBFlush()		mips1_TLBFlush(MIPS1_TLB_NUM_TLB_ENTRIES)
-#define MachTLBFlushAddr	mips1_TLBFlushAddr
+#define MachTLBFlush()		mips1_TBIAP(MIPS1_TLB_NUM_TLB_ENTRIES)
+#define MachTLBFlushAddr	mips1_TBIS
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.23 2000/03/04 11:37:31 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.24 2000/03/27 05:23:43 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1038,24 +1038,12 @@ LEAF(mips1_TLBFlushPID)
 END(mips1_TLBFlushPID)
 #endif
 
-/*--------------------------------------------------------------------------
+/*
+ * void mips1_TBIS(vaddr_t va)
  *
- * mips1_TLBFlushAddr --
- *
- *	Flush any TLB entries for the given address and TLB PID.
- *
- *	mips1_TLBFlushAddr(highreg)
- *		unsigned highreg;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The process's page is flushed from the TLB.
- *
- *--------------------------------------------------------------------------
+ * Invalidate a TLB entry for given virtual address if found in TLB.
  */
-LEAF(mips1_TLBFlushAddr)
+LEAF(mips1_TBIS)
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
@@ -1075,7 +1063,7 @@ LEAF(mips1_TLBFlushAddr)
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBFlushAddr)
+END(mips1_TBIS)
 
 /*--------------------------------------------------------------------------
  *
@@ -1837,18 +1825,17 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 END(mips1_cpu_switch_resume)
 
 /*
- * void mips1_purge_perprocess_tlb(void)
+ * void mips1_TBIAP(int sizeofTLB)
  *
- * Purge all TLB entries belong to per process user spaces.  Entries for
- * kernel space are preserved.
+ * Invalidate TLB entries belong to per process user spaces while
+ * retaining entries for kernel space marked global.
  */
-LEAF(mips1_purge_perprocess_tlb)
-ALEAF(mips1_TLBFlush)
+LEAF(mips1_TBIAP)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
+	sll	t2, a0, MIPS1_TLB_INDEX_SHIFT
 	li	v0, MIPS_KSEG0_START
 
 	# Align the starting value (t1) and the upper bound (t2)
@@ -1871,14 +1858,14 @@ ALEAF(mips1_TLBFlush)
 
 	j	ra				# new TLBPID will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_purge_perprocess_tlb)
+END(mips1_TBIAP)
 
 /*
- * void mips1_clean_tlb(void)
+ * void mips1_TBIA(int sizeofTLB)
  *
- * Clense the entire TLB at early stage of processor initialization.
+ * Invalidate TLB entirely.
  */
-LEAF(mips1_clean_tlb)
+LEAF(mips1_TBIA)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
@@ -1888,7 +1875,7 @@ LEAF(mips1_clean_tlb)
 
 	# Align the starting value (t1) and the upper bound (t2).
 	move	t1, zero
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
+	sll	t2, a0, MIPS1_TLB_INDEX_SHIFT
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLB index
 	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
@@ -1897,7 +1884,7 @@ LEAF(mips1_clean_tlb)
 
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_clean_tlb)
+END(mips1_TBIA)
 
 	.data
 mips1_excausesw:

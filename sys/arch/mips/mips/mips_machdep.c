@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.70 2000/03/27 02:55:16 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.71 2000/03/27 05:23:42 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.70 2000/03/27 02:55:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.71 2000/03/27 05:23:42 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -134,8 +134,8 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_FlushICache,
 	/*mips1_FlushICache*/ mips1_FlushCache,
 	mips1_SetPID,
-	mips1_TLBFlush,
-	mips1_TLBFlushAddr,
+	mips1_TBIAP,
+	mips1_TBIS,
 	mips1_TLBUpdate,
 	mips1_wbflush,
 	mips1_proc_trampoline,
@@ -439,7 +439,7 @@ mips_vector_init()
 	switch (cpu_arch) {
 #ifdef MIPS1
 	case 1:
-		mips1_clean_tlb();
+		mips1_TBIA(MIPS1_TLB_NUM_TLB_ENTRIES);
 		mips1_vector_init();
 		break;
 #endif
@@ -470,41 +470,40 @@ mips_set_wbflush(flush_fn)
 struct pridtab {
 	int	cpu_imp;
 	char	*cpu_name;
-	int	cpu_isa;
 };
 struct pridtab cputab[] = {
-	{ MIPS_R2000,	"MIPS R2000 CPU",	1 },
-	{ MIPS_R3000,	"MIPS R3000 CPU",	1 },
-	{ MIPS_R6000,	"MIPS R6000 CPU",	2 },
-	{ MIPS_R4000,	"MIPS R4000 CPU",	3 },
-	{ MIPS_R3LSI,	"LSI Logic R3000 derivative", 1 },
-	{ MIPS_R6000A,	"MIPS R6000A CPU",	2 },
-	{ MIPS_R3IDT,	"IDT R3041 or RC36100 CPU", 1 },
-	{ MIPS_R10000,	"MIPS R10000/T5 CPU",	4 },
-	{ MIPS_R4200,	"NEC VR4200 CPU",	3 },
-	{ MIPS_R4300,	"NEC VR4300 CPU",	3 },
-	{ MIPS_R4100,	"NEC VR4100 CPU",	3 },
-	{ MIPS_R8000,	"MIPS R8000 Blackbird/TFP CPU", 4 },
-	{ MIPS_R4600,	"QED R4600 Orion CPU",	3 },
-	{ MIPS_R4700,	"QED R4700 Orion CPU",	3 },
+	{ MIPS_R2000,	"MIPS R2000 CPU",	},
+	{ MIPS_R3000,	"MIPS R3000 CPU",	},
+	{ MIPS_R6000,	"MIPS R6000 CPU",	},
+	{ MIPS_R4000,	"MIPS R4000 CPU",	},
+	{ MIPS_R3LSI,	"LSI Logic R3000 derivative", },
+	{ MIPS_R6000A,	"MIPS R6000A CPU",	},
+	{ MIPS_R3IDT,	"IDT R3041 or RC36100 CPU", },
+	{ MIPS_R10000,	"MIPS R10000/T5 CPU",	},
+	{ MIPS_R4200,	"NEC VR4200 CPU",	},
+	{ MIPS_R4300,	"NEC VR4300 CPU",	},
+	{ MIPS_R4100,	"NEC VR4100 CPU",	},
+	{ MIPS_R8000,	"MIPS R8000 Blackbird/TFP CPU", },
+	{ MIPS_R4600,	"QED R4600 Orion CPU",	},
+	{ MIPS_R4700,	"QED R4700 Orion CPU",	},
 #ifdef ENABLE_MIPS_TX3900
-	{ MIPS_TX3900,	"Toshiba TX3900 CPU", 1 }, /* see below */
+	{ MIPS_TX3900,	"Toshiba TX3900 CPU", }, /* see below */
 #else
-	{ MIPS_TX3900,	"Toshiba TX3900 or QED R4650 CPU", 1 }, /* see below */
+	{ MIPS_TX3900,	"Toshiba TX3900 or QED R4650 CPU", }, /* see below */
 #endif
-	{ MIPS_R5000,	"MIPS R5000 CPU",	4 },
-	{ MIPS_RC32364,	"IDT RC32364 CPU",	3 },
-	{ MIPS_RM5230,	"QED RM5200 CPU",	4 },
-	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	3 },
-	{ MIPS_R5400,	"NEC VR5400 CPU",	4 },
+	{ MIPS_R5000,	"MIPS R5000 CPU",	},
+	{ MIPS_RC32364,	"IDT RC32364 CPU",	},
+	{ MIPS_RM5230,	"QED RM5200 CPU",	},
+	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	},
+	{ MIPS_R5400,	"NEC VR5400 CPU",	},
 #if 0 /* ID crashs */
 	/*
 	 * According to documents from Toshiba and QED, PRid 0x22 is
 	 * used by both of TX3900 (ISA-I) and QED4640/4650 (ISA-III).
 	 * Two PRid conflicts below have not been confirmed this time.
 	 */
-	{ MIPS_R3SONY,	"SONY R3000 derivative", 1},  /* 0x21; crash R4700? */
-	{ MIPS_R3NKK,	"NKK R3000 derivative",	1},   /* 0x23; crash R5000? */
+	{ MIPS_R3SONY,	"SONY R3000 derivative", },  /* 0x21; crash R4700? */
+	{ MIPS_R3NKK,	"NKK R3000 derivative",  },  /* 0x23; crash R5000? */
 #endif
 };
 struct pridtab fputab[] = {
