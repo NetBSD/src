@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.2 2000/06/29 08:32:35 mrg Exp $ */
+/* $NetBSD: start.c,v 1.3 2000/09/18 18:01:39 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,9 +32,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "SId$");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3 2000/09/18 18:01:39 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
+#include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
@@ -58,8 +59,12 @@ extern void main __P((void)); /* XXX Should be in a header file */
 
 struct bootconfig bootconfig;
 
+struct user *proc0paddr;
+
+#ifdef DIAGNOSTIC
 #define BOOT_SANITY 0x89345846
 static int boot_sanity = BOOT_SANITY;
+#endif
 
 #ifndef __ELF__
 /* Odd symbols declared by the linker */
@@ -81,6 +86,7 @@ start(initbootconfig)
 	size_t size;
 	caddr_t v;
 	char pbuf[9];
+	int onstack;
 
 	/*
 	 * State of the world as of BBBB 0.02:
@@ -215,6 +221,13 @@ start(initbootconfig)
 	*(volatile u_char *)(0x03200000 + (IOC_FIQMSK << 2)) = 0;
 #endif
 	int_on();
+
+	/*
+	 * Locate process 0's user structure, in the bottom of its kernel
+	 * stack page.  That's our current stack page too.
+	 */
+	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
+	bzero(proc0paddr, sizeof(*proc0paddr));
 
 	/* TODO: anything else? */
 	
