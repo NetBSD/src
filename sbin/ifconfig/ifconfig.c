@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.42 1998/08/06 02:24:40 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.43 1998/08/06 03:47:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.42 1998/08/06 02:24:40 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.43 1998/08/06 03:47:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -890,6 +890,8 @@ print_media_word(ifmw, print_type)
 	}
 	if (seen_option)
 		printf(">");
+	if (IFM_INST(ifmw) != 0)
+		printf(" [inst %d]", IFM_INST(ifmw));
 }
 
 #define	IFFBITS \
