@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.21 2000/11/02 11:00:53 itohy Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.22 2000/11/02 12:00:49 itohy Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ stripclose(tp)
 	ttywflush(tp);
 
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_linesw = NULL;
+	tp->t_linesw = linesw[0]; /* default line discipline */
 	sc = (struct strip_softc *)tp->t_sc;
 	if (sc != NULL) {
 		/*
