@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahdilabel.8,v 1.1 2001/03/04 20:57:50 jdc Exp $
+.\"	$NetBSD: ahdilabel.8,v 1.2 2001/03/04 21:00:00 jdc Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,10 +102,26 @@ These partitions are mapped from
 up. The filesystem type is msdos.
 .El
 .Pp
-The root, start and size parameters can be entered using sector or
-cylinder/track/sector notation.  Whole numbers of cylinders can be entered
-using the shorthand <cylinder>/.  Likewise, whole numbers of tracks can be
-entered using the shorthand <cylinder>/<track>/.
+The root, start and size parameters can be entered using sector,
+cylinder/track/sector or megabyte notations.  Whole numbers of cylinders can
+be entered using the shorthand <cylinder>/.  Likewise, whole numbers of tracks
+can be entered using the shorthand <cylinder>/<track>/.  Megabytes are entered
+using the suffix
+.Em M.
+.Pp
+The following can also be used to enter partition parameters:
+.Pp
+.Bl -tag -width "-N (start)" -compact
+.It \-N (root)
+Position the root sector for this partition immediately after partition N.
+.It \-N (start)
+Make this partition start after partition N (leaving a gap of 1 sector for a
+root sector, if necessary).
+.It \-N (size)
+Make this partition end immediately before partition N.
+.It -1 (size)
+Make this partition extend to the end of the disk.
+.El
 .Pp
 The sector holding the primary AHDI partition table only has space for four
 partitions.  Thus, if a disk has more than four partitions, the extra
@@ -123,6 +139,9 @@ Show the current partition information.
 Toggle the unit display between sector and cylinder/track/sector notation.
 .It Ar w
 Write the AHDI partition table to the disk.
+.It Ar z
+Options for zero'ing the boot sector and bad sector lists.  The default is to
+preserve them both.
 .It Ar q
 Quit
 .El
