@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.3 2001/07/11 00:10:04 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.4 2001/07/13 06:54:35 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -38,18 +38,7 @@
 #include <hpcarm/sa11x0/sa11x0_dmacreg.h>
 #include <hpcarm/sa11x0/sa11x0_ppcreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-
-/* ipaq softc */
-struct ipaq_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_gpioh;
-	bus_space_handle_t sc_egpioh;
-	bus_space_handle_t sc_ppch;
-	bus_space_handle_t sc_dmach;
-	u_int32_t sc_intrmask;
-};
+#include <hpcarm/dev/ipaq_saipvar.h>
 
 /* prototypes */
 static int	ipaq_match(struct device *, struct cfdata *, void *);
