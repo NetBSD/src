@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 1996/02/22 10:11:20 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.7 1996/04/19 20:35:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -85,7 +85,7 @@ static	int	must_init = 1;		/* Must initialize		*/
 void	cdmaint __P((int));
 
 long	sr;	/* sr at time of interrupt */
-static	void	cdmasoft __P((void));
+static	void	cdmasoft __P((void *, void *));
 static	void	init_queues __P((void));
 
 static void
@@ -186,7 +186,7 @@ int	*lock_stat;
 		 * spl-conflicts.
 		 */
 		*req->lock_stat = DMA_LOCK_GRANT;
-		add_sicallback(req->call_func, req->softc, 0);
+		add_sicallback((si_farg)req->call_func, req->softc, 0);
 	}
 	splx(sps);
 	return;
@@ -209,14 +209,15 @@ int	sr;	/* sr at time of interrupt */
 		}
 		else {
 			spl1();
-			cdmasoft();
+			cdmasoft(NULL, NULL);
 		}
 	}
 	else printf("DMA interrupt discarded\n");
 }
 
 static void
-cdmasoft()
+cdmasoft(arg1, arg2)
+void	*arg1, *arg2;
 {
 	int		s;
 	dma_farg	int_func;
