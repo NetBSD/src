@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.8 1993/12/20 09:06:55 mycroft Exp $
+ *	$Id: wd7000.c,v 1.9 1993/12/20 23:27:40 davidb Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -176,14 +176,7 @@ int wds_cmd(u_short, u_char *, int);
 void wds_wait(int, int, int);
 
 
-struct scsi_switch wds_switch = {
-	"wds",
-	wds_scsi_cmd,
-	wds_minphys,
-	0, 0,
-	wds_adapter_info,
-	0, 0, 0,
-};
+struct scsi_switch wds_switch[NWDS];
 
 struct isa_driver wdsdriver = {
 	wdsprobe,
@@ -584,6 +577,7 @@ int
 wdsattach(struct isa_device *dev)
 {
 	int masunit = dev->id_masunit;
+	static int firstswitch[NWDS];
 	static u_long versprobe		/* max 32 controllers */
 	int r;
 
@@ -593,7 +587,21 @@ wdsattach(struct isa_device *dev)
 			printf("wds%d: getvers failed\n", masunit);
 	}
 
-	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch,
+	if (!firstswitch[masunit]) {
+		firstswitch[masunit] = 1;
+		wds_switch[masunit].name = "wds";
+		wds_switch[masunit].scsi_cmd = wds_scsi_cmd;
+		wds_switch[masunit].scsi_minphys = wdsminphys;
+		wds_switch[masunit].open_target_lu = 0;
+		wds_switch[masunit].close_target_lu = 0;
+		wds_switch[masunit].adapter_info = wds_adapter_info;
+		for (r = 0; r < 8; r++) {
+			wds_switch[masunit].empty[r] = 0;
+			wds_switch[masunit].used[r] = 0;
+			wds_switch[masunit].printed[r] = 0;
+		}
+	}
+	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch[masunit],
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 	return r;
 }
