@@ -1,3 +1,5 @@
+/*      $NetBSD: advlib.c,v 1.3 1998/08/29 13:45:57 dante Exp $        */
+
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
  *

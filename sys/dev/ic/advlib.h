@@ -1,3 +1,5 @@
+/*      $NetBSD: advlib.h,v 1.2 1998/08/29 13:45:57 dante Exp $        */
+
 /*
  * Definitions for low level routines and data structures
  * for the Advanced Systems Inc. SCSI controllers chips.
