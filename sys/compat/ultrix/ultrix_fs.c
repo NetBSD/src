@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.10 1997/05/24 09:56:47 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.11 1997/05/25 10:21:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -143,6 +143,9 @@ struct ultrix_getmnt_args {
 #define ULTRIX_NM_INT      0x0100  /* allow hard mount keyboard interrupts */
 #define ULTRIX_NM_NOAC     0x0200  /* don't cache attributes */
 									
+
+static void
+make_ultrix_mntent __P(( struct statfs *sp, struct ultrix_fs_data *tem));
 
 /*
  * Construct an Ultrix getmnt() ultrix_fs_data from the native NetBSD
