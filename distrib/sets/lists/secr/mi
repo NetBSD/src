@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 1999/11/08 15:14:51 mycroft Exp $
+# $NetBSD: mi,v 1.20 2000/02/20 03:26:16 mycroft Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./sbin/init
@@ -13,6 +13,7 @@
 ./usr/bin/passwd
 ./usr/bin/telnet
 ./usr/bin/yppasswd
+./usr/include/com_err.h
 ./usr/include/gssapi/gssapi.h
 ./usr/include/gssapi/gssapi_generic.h
 ./usr/include/gssapi/gssapi_krb5.h
@@ -42,7 +43,6 @@
 ./usr/include/kadm5/server_internal.h
 ./usr/include/kerberosIV/acl.h
 ./usr/include/kerberosIV/adm_locl.h
-./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/des.h
 ./usr/include/kerberosIV/kadm.h
 ./usr/include/kerberosIV/kadm_err.h

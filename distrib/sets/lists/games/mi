@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2000/01/24 07:25:05 mycroft Exp $
+# $NetBSD: mi,v 1.22 2000/02/20 03:26:15 mycroft Exp $
 ./usr/games/adventure
 ./usr/games/arithmetic
 ./usr/games/atc
@@ -113,6 +113,8 @@
 ./usr/share/games/fortune/limerick
 ./usr/share/games/fortune/limerick-o.dat
 ./usr/share/games/fortune/limerick.dat
+./usr/share/games/fortune/netbsd
+./usr/share/games/fortune/netbsd.dat
 ./usr/share/games/fortune/startrek
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/unamerican-o
@@ -259,3 +261,4 @@
 ./var/games/phantasia/monsters
 ./var/games/phantasia/motd
 ./var/games/phantasia/void
+./var/games/sail
