@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.19 2004/07/01 06:09:57 junyoung Exp $
+.\"	$NetBSD: mk.conf.5,v 1.20 2004/07/02 18:20:27 junyoung Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -197,16 +197,19 @@ acts as
 .Sy MKKERBEROS=no .
 .
 .It Sy MKCRYPTO_IDEA
+.YorN
 Indicates whether IDEA support will be built into
 .Sy libcrypto_idea.a.
 .DFLTn
 .
 .It Sy MKCRYPTO_MDC2
+.YorN
 Indicates whether MDC2 support will be built into
 .Sy libcrypto_mdc2.a.
 .DFLTn
 .
 .It Sy MKCRYPTO_RC5
+.YorN
 Indicates whether RC5 support will be built into
 .Sy libcrypto_rc5.a.
 .DFLTn
@@ -434,7 +437,7 @@ used to generate shared libraries.
 .DFLTy
 .
 .It Sy MKPOSTFIX
-.YonN
+.YorN
 Indicates whether Postfix is built.
 .DFLTy
 .
@@ -450,7 +453,7 @@ however, some platforms turn off
 by default at times due to toolchain problems with profiled code.
 .
 .It Sy MKSENDMAIL
-.YonN
+.YorN
 Indicates whether Sendmail is built.
 .DFLTy
 .
@@ -504,7 +507,7 @@ This also has implications on full builds (see next subsection).
 .DFLTn
 .
 .It Sy MKUUCP
-.YonN
+.YorN
 Indicates whether
 .Xr uucp 1
 and related programs are built.
