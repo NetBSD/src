@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.34 2000/05/09 21:55:53 bjh21 Exp $	*/
+/*	$NetBSD: strtod.c,v 1.35 2001/02/09 18:38:33 bjh21 Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.34 2000/05/09 21:55:53 bjh21 Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.35 2001/02/09 18:38:33 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
@@ -108,7 +108,7 @@ __RCSID("$NetBSD: strtod.c,v 1.34 2000/05/09 21:55:53 bjh21 Exp $");
 #endif
 #endif
 
-#if defined(__arm32__) || defined(__arm26__)
+#if defined(__arm__)
 /*
  * Although the CPU is little endian the FP has different
  * byte and word endianness. The byte order is still little endian
@@ -245,8 +245,7 @@ typedef union {
  * An alternative that might be better on some machines is
  * #define Storeinc(a,b,c) (*a++ = b << 16 | c & 0xffff)
  */
-#if defined(IEEE_LITTLE_ENDIAN) + defined(VAX) + defined(__arm32__) + \
-    defined(__arm26__) 
+#if defined(IEEE_LITTLE_ENDIAN) + defined(VAX) + defined(__arm__)
 #define Storeinc(a,b,c) \
     (((u_short *)(void *)a)[1] = \
 	(u_short)b, ((u_short *)(void *)a)[0] = (u_short)c, a++)
