@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.12 1994/04/24 01:34:16 mycroft Exp $
+ *	$Id: spkr.c,v 1.13 1994/04/24 04:44:16 mycroft Exp $
  */
 
 #include "speaker.h"
@@ -22,6 +22,7 @@
 #include <machine/pio.h>
 #include <machine/spkr.h>
 
+#include <i386/isa/isareg.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
