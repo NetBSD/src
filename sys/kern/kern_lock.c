@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.72 2003/08/07 16:31:46 agc Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.73 2003/11/23 08:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.72 2003/08/07 16:31:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.73 2003/11/23 08:57:17 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.72 2003/08/07 16:31:46 agc Exp $");
 
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
+
+static int acquire(__volatile struct lock *, int, int, int);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
@@ -206,55 +208,74 @@ do {									\
 /*
  * Acquire a resource.
  */
-#define ACQUIRE(lkp, error, extflags, drain, wanted)			\
-	if ((extflags) & LK_SPIN) {					\
-		int interlocked;					\
-		SPINLOCK_SPINCHECK_DECL;				\
-									\
-		if ((drain) == 0)					\
-			(lkp)->lk_waitcount++;				\
-		for (interlocked = 1;;) {				\
-			SPINLOCK_SPINCHECK;				\
-			if (wanted) {					\
-				if (interlocked) {			\
-					INTERLOCK_RELEASE((lkp),	\
-					    LK_SPIN, s);		\
-					interlocked = 0;		\
-				}					\
-				SPINLOCK_SPIN_HOOK;			\
-			} else if (interlocked) {			\
-				break;					\
-			} else {					\
-				INTERLOCK_ACQUIRE((lkp), LK_SPIN, s);	\
-				interlocked = 1;			\
-			}						\
-		}							\
-		if ((drain) == 0)					\
-			(lkp)->lk_waitcount--;				\
-		KASSERT((wanted) == 0);					\
-		error = 0;	/* sanity */				\
-	} else {							\
-		for (error = 0; wanted; ) {				\
-			if ((drain))					\
-				(lkp)->lk_flags |= LK_WAITDRAIN;	\
-			else						\
-				(lkp)->lk_waitcount++;			\
-			/* XXX Cast away volatile. */			\
-			error = ltsleep((drain) ?			\
-			    (void *)&(lkp)->lk_flags :			\
-			    (void *)(lkp), (lkp)->lk_prio,		\
-			    (lkp)->lk_wmesg, (lkp)->lk_timo,		\
-			    &(lkp)->lk_interlock);			\
-			if ((drain) == 0)				\
-				(lkp)->lk_waitcount--;			\
-			if (error)					\
-				break;					\
-			if ((extflags) & LK_SLEEPFAIL) {		\
-				error = ENOLCK;				\
-				break;					\
-			}						\
-		}							\
+static int
+acquire(__volatile struct lock *lkp, int extflags, int drain, int wanted)
+{
+	int error;
+
+	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
+
+	if (extflags & LK_SPIN) {
+		int s = 0; /* XXX gcc */
+		int interlocked;
+
+		SPINLOCK_SPINCHECK_DECL;
+
+		if (!drain) {
+			lkp->lk_waitcount++;
+			lkp->lk_flags |= LK_WAIT_NONZERO;
+		}
+		for (interlocked = 1;;) {
+			SPINLOCK_SPINCHECK;
+			if ((lkp->lk_flags & wanted) != 0) {
+				if (interlocked) {
+					INTERLOCK_RELEASE(lkp, LK_SPIN, s);
+					interlocked = 0;
+				}
+				SPINLOCK_SPIN_HOOK;
+			} else if (interlocked) {
+				break;
+			} else {
+				INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
+				interlocked = 1;
+			}
+		}
+		if (!drain) {
+			lkp->lk_waitcount--;
+			if (lkp->lk_waitcount == 0)
+				lkp->lk_flags &= ~LK_WAIT_NONZERO;
+		}
+		KASSERT((lkp->lk_flags & wanted) == 0);
+		error = 0;	/* sanity */
+	} else {
+		for (error = 0; (lkp->lk_flags & wanted) != 0; ) {
+			if (drain)
+				lkp->lk_flags |= LK_WAITDRAIN;
+			else {
+				lkp->lk_waitcount++;
+				lkp->lk_flags |= LK_WAIT_NONZERO;
+			}
+			/* XXX Cast away volatile. */
+			error = ltsleep(drain ?
+			    (void *)&lkp->lk_flags :
+			    (void *)lkp, lkp->lk_prio,
+			    lkp->lk_wmesg, lkp->lk_timo, &lkp->lk_interlock);
+			if (!drain) {
+				lkp->lk_waitcount--;
+				if (lkp->lk_waitcount == 0)
+					lkp->lk_flags &= ~LK_WAIT_NONZERO;
+			}
+			if (error)
+				break;
+			if (extflags & LK_SLEEPFAIL) {
+				error = ENOLCK;
+				break;
+			}
+		}
 	}
+
+	return error;
+}
 
 #define	SETHOLDER(lkp, pid, lid, cpu_id)				\
 do {									\
@@ -273,7 +294,8 @@ do {									\
 
 #define	WAKEUP_WAITER(lkp)						\
 do {									\
-	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
+	if (((lkp)->lk_flags & (LK_SPIN | LK_WAIT_NONZERO)) ==		\
+	    LK_WAIT_NONZERO) {						\
 		/* XXX Cast away volatile. */				\
 		wakeup((void *)(lkp));					\
 	}								\
@@ -561,11 +583,12 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			/*
 			 * Wait for exclusive locks and upgrades to clear.
 			 */
-			ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
-			    (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE));
+			error = acquire(lkp, extflags, 0,
+			    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE);
 			if (error)
 				break;
 			lkp->lk_sharecount++;
+			lkp->lk_flags |= LK_SHARE_NONZERO;
 			COUNT(lkp, l, cpu_id, 1);
 			break;
 		}
@@ -574,6 +597,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		 * An alternative would be to fail with EDEADLK.
 		 */
 		lkp->lk_sharecount++;
+		lkp->lk_flags |= LK_SHARE_NONZERO;
 		COUNT(lkp, l, cpu_id, 1);
 		/* fall into downgrade */
 
@@ -582,6 +606,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		    lkp->lk_exclusivecount == 0)
 			panic("lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
+		lkp->lk_flags |= LK_SHARE_NONZERO;
 		lkp->lk_exclusivecount = 0;
 		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
@@ -602,6 +627,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		 */
 		if (lkp->lk_flags & LK_WANT_UPGRADE) {
 			lkp->lk_sharecount--;
+			if (lkp->lk_sharecount == 0)
+				lkp->lk_flags &= ~LK_SHARE_NONZERO;
 			COUNT(lkp, l, cpu_id, -1);
 			error = EBUSY;
 			break;
@@ -620,6 +647,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		if (WEHOLDIT(lkp, pid, lid, cpu_id) || lkp->lk_sharecount <= 0)
 			panic("lockmgr: upgrade exclusive lock");
 		lkp->lk_sharecount--;
+		if (lkp->lk_sharecount == 0)
+			lkp->lk_flags &= ~LK_SHARE_NONZERO;
 		COUNT(lkp, l, cpu_id, -1);
 		/*
 		 * If we are just polling, check to see if we will block.
@@ -637,7 +666,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			 * drop to zero, then take exclusive lock.
 			 */
 			lkp->lk_flags |= LK_WANT_UPGRADE;
-			ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount);
+			error = acquire(lkp, extflags, 0, LK_SHARE_NONZERO);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
 			if (error)
 				break;
@@ -688,25 +717,24 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * If we are just polling, check to see if we will sleep.
 		 */
-		if ((extflags & LK_NOWAIT) && ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0)) {
+		if ((extflags & LK_NOWAIT) && (lkp->lk_flags &
+		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+		     LK_SHARE_NONZERO))) {
 			error = EBUSY;
 			break;
 		}
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
-		    (LK_HAVE_EXCL | LK_WANT_EXCL));
+		error = acquire(lkp, extflags, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
 		if (error)
 			break;
 		lkp->lk_flags |= LK_WANT_EXCL;
 		/*
 		 * Wait for shared locks and upgrades to finish.
 		 */
-		ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount != 0 ||
-		       (lkp->lk_flags & LK_WANT_UPGRADE));
+		error = acquire(lkp, extflags, 0,
+		    LK_WANT_UPGRADE | LK_SHARE_NONZERO);
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error)
 			break;
@@ -754,6 +782,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			}
 		} else if (lkp->lk_sharecount != 0) {
 			lkp->lk_sharecount--;
+			if (lkp->lk_sharecount == 0)
+				lkp->lk_flags &= ~LK_SHARE_NONZERO;
 			COUNT(lkp, l, cpu_id, -1);
 		}
 #ifdef DIAGNOSTIC
@@ -775,17 +805,15 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * If we are just polling, check to see if we will sleep.
 		 */
-		if ((extflags & LK_NOWAIT) && ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0)) {
+		if ((extflags & LK_NOWAIT) && (lkp->lk_flags &
+		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+		     LK_SHARE_NONZERO | LK_WAIT_NONZERO))) {
 			error = EBUSY;
 			break;
 		}
-		ACQUIRE(lkp, error, extflags, 1,
-		    ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 ||
-		     lkp->lk_waitcount != 0));
+		error = acquire(lkp, extflags, 1,
+		    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+		    LK_SHARE_NONZERO | LK_WAIT_NONZERO);
 		if (error)
 			break;
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
@@ -810,8 +838,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	}
 	if ((lkp->lk_flags & (LK_WAITDRAIN|LK_SPIN)) == LK_WAITDRAIN &&
 	    ((lkp->lk_flags &
-	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
-	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
+	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
+	      LK_SHARE_NONZERO | LK_WAIT_NONZERO)) == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
 		wakeup((void *)&lkp->lk_flags);
 	}
@@ -909,14 +937,12 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	/*
 	 * Try to acquire the want_exclusive flag.
 	 */
-	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_flags &
-	    (LK_HAVE_EXCL | LK_WANT_EXCL));
+	error = acquire(lkp, LK_SPIN, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
 	lkp->lk_flags |= LK_WANT_EXCL;
 	/*
 	 * Wait for shared locks and upgrades to finish.
 	 */
-	ACQUIRE(lkp, error, LK_SPIN, 0, lkp->lk_sharecount != 0 ||
-	    (lkp->lk_flags & LK_WANT_UPGRADE));
+	error = acquire(lkp, LK_SPIN, 0, LK_SHARE_NONZERO | LK_WANT_UPGRADE);
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;
 	SETHOLDER(lkp, LK_NOPROC, 0, cpu_id);
