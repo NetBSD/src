@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.30 2003/08/07 16:42:47 agc Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.30 2003/08/07 16:42:47 agc Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.31 2004/04/23 14:47:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,11 +66,11 @@ static void	error __P((int));
 #endif
 static int	gettype __P((char *, const char *const *));
 
-static char  	*db_array[2] = { _PATH_DISKTAB, 0 };
+static const char *db_array[2] = { _PATH_DISKTAB, 0 };
 
 int
 setdisktab(name)
-	char *name;
+	const char *name;
 {
 	if (!name || !*name)
 		return -1;
