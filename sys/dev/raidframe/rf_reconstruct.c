@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.41 2002/09/17 03:30:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.41 2002/09/17 03:30:33 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Ex
 
 /* setting these to -1 causes them to be set to their default values if not set by debug options */
 
-#ifdef DEBUG
+#if RF_DEBUG_RECON
 #define Dprintf(s)         if (rf_reconDebug) rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Ex
 #define DDprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define DDprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 
-#else /* DEBUG */
+#else /* RF_DEBUG_RECON */
 
 #define Dprintf(s) {}
 #define Dprintf1(s,a) {}
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.40 2002/09/17 03:21:41 oster Ex
 #define DDprintf1(s,a) {}
 #define DDprintf2(s,a,b) {}
 
-#endif /* DEBUG */
+#endif /* RF_DEBUG_RECON */
 
 
 static RF_FreeList_t *rf_recond_freelist;
@@ -745,9 +745,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			raidPtr->reconControl[row]->percentComplete = 
 				(raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 
 
@@ -770,9 +772,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			(void) ProcessReconEvent(raidPtr, row, event);	/* ignore return code */
 			raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 		reconDesc->state = 5;
 
