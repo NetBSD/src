@@ -1,8 +1,14 @@
-/*	$NetBSD: misc.c,v 1.7 2003/01/20 05:29:54 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2003/06/23 11:39:01 agc Exp $	*/
 
 /*
  * Miscellaneous functions
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: misc.c,v 1.8 2003/06/23 11:39:01 agc Exp $");
+#endif
+
 
 #include "sh.h"
 #include <ctype.h>	/* for FILECHCONV */

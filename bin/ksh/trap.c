@@ -1,8 +1,14 @@
-/*	$NetBSD: trap.c,v 1.4 2001/09/16 16:34:23 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2003/06/23 11:39:05 agc Exp $	*/
 
 /*
  * signal handling
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: trap.c,v 1.5 2003/06/23 11:39:05 agc Exp $");
+#endif
+
 
 /* Kludge to avoid bogus re-declaration of sigtraps[] error on AIX 3.2.5 */
 #define FROM_TRAP_C

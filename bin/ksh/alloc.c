@@ -1,8 +1,14 @@
-/*	$NetBSD: alloc.c,v 1.4 1999/10/20 15:09:58 hubertf Exp $	*/
+/*	$NetBSD: alloc.c,v 1.5 2003/06/23 11:38:51 agc Exp $	*/
 
 /*
  * area-based allocation built on malloc/free
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: alloc.c,v 1.5 2003/06/23 11:38:51 agc Exp $");
+#endif
+
 
 #include "sh.h"
 

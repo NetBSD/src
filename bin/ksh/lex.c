@@ -1,8 +1,14 @@
-/*	$NetBSD: lex.c,v 1.8 2003/01/20 05:29:54 simonb Exp $	*/
+/*	$NetBSD: lex.c,v 1.9 2003/06/23 11:38:59 agc Exp $	*/
 
 /*
  * lexical analysis and source input
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: lex.c,v 1.9 2003/06/23 11:38:59 agc Exp $");
+#endif
+
 
 #include "sh.h"
 #include <ctype.h>
