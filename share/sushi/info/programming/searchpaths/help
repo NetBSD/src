@@ -27,6 +27,7 @@ error, and will be ignored.
 
 The searchpath for sushi can be modified, by adding directories, one
 directory per line, to the file /etc/sushi.conf.  This file overrides the
-built in defaults, which are used if it does not exist.
+built in defaults, which are used if it does not exist.  Each searchpath 
+must be preceeded by the keyword 'searchpath'.
 
-$NetBSD: help,v 1.1 2001/01/05 02:06:56 garbled Exp $
+$NetBSD: help,v 1.2 2001/01/10 10:03:12 garbled Exp $
