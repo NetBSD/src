@@ -431,7 +431,7 @@ for csh:   setenv GZIP "-8v --name"
 for MSDOS: set GZIP=-8v --name
 @end example
 
-On Vax/VMS, the name of the environment variable is @code{GZIP_OPT}, to
+On VAX/VMS, the name of the environment variable is @code{GZIP_OPT}, to
 avoid a conflict with the symbol set for invocation of the program.
 
 @node Tapes, Problems, Environment, Top
