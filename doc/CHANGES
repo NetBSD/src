@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.213 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.214 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,6 +8,8 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 1.6 to NetBSD 2.0:
+	i386: pmap changed from linked list to splay tree for
+		better performance.  [provos 20031022]
 	libcrypt: support bcrypt password entries.  can be chosen with
 		"blowfish" keyword in passwd.conf.  from openbsd
 		[itojun 20020524]
