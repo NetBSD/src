@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1995/08/10 05:17:10 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1995/08/10 10:50:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,6 +192,7 @@ clockattach(parent, self, aux)
 		MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
 
 #ifdef pmax
+	printf("\n");
 	return;
 #endif
 
