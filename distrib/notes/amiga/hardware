@@ -1,4 +1,4 @@
-.\" $NetBSD: hardware,v 1.35 2000/09/11 06:23:30 is Exp $	
+.\" $NetBSD: hardware,v 1.36 2000/09/14 19:57:01 is Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -19,13 +19,13 @@ Here is a table of recommended HD partition sizes for a full install:
 .Bd -literal -offset indent
 partition:	advise,	with X,	needed,	with X
 root (/)	25M	25M	20M	20M
-user (/usr)	220M	250M	120M 	145M
+user (/usr)	245M	270M	120M 	145M
 swap		2 times RAM size below 32 MB, then up to you
 local (/usr/local)	up to you
 .Ed
 .
 .Pp
-As you may note the recommended size of /usr is 100M greater than
+As you may note the recommended size of /usr is 125M greater than
 needed. This is to leave room for a kernel source and compile tree as
 you will probably want to compile your own kernel. GENERIC is large
 and bulky to accommodate all people. For example, most peoples machines
