@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.10 1994/04/10 02:28:28 chopps Exp $
+ *	$Id: param.h,v 1.11 1994/05/08 05:53:58 chopps Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -180,32 +180,36 @@
 #endif
 
 /* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
+#define spl1()	_spl(PSL_S|PSL_IPL1)
+#define spl2()	_spl(PSL_S|PSL_IPL2)
+#define spl3()	_spl(PSL_S|PSL_IPL3)
+#define spl4()	_spl(PSL_S|PSL_IPL4)
+#define spl5()	_spl(PSL_S|PSL_IPL5)
+#define spl6()	_spl(PSL_S|PSL_IPL6)
+#define spl7()	_spl(PSL_S|PSL_IPL7)
 
 #define splnone()	spl0()
-#define splsoftclock()  spl1()
-#define splnet()        spl1()
-#define splbio()        spl3()
-#define splimp()        spl3()
-/* lowered to spl4 to allow for serial input into
-   private ringbuffer inspite of spltty */
-#define spltty()        spl4()
-#define splclock()      spl6()
-#define splvm()         spl6()
-#define splhigh()       spl7()
-#define splsched()      spl7()
+#define splsoftclock()	spl1()
+#define splnet()	spl1()
+#define splbio()	spl3()
+#define splimp()	spl3()
+/*
+ * lowered to spl4 to allow for serial input into
+ * private ringbuffer inspite of spltty
+ */
+#define spltty()	spl4()
+#define splclock()	spl6()
+#define splstatclock()	spl6()
+#define splvm()		spl6()
+#define splhigh()	spl7()
+#define splsched()	spl7()
 
 #define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
 
 #ifdef KERNEL
 int	cpuspeed;
-extern int DELAY __P((int count));
+void delay __P((int));
+void DELAY __P((int));
 #else
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
