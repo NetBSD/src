@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.34 1999/01/21 02:50:21 mycroft Exp $
+#	$NetBSD: HOMEWORLD,v 1.35 1999/01/21 02:54:08 mycroft Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
@@ -204,7 +204,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # ISA console.  You can only configure one of these!
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
@@ -212,6 +212,22 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
+
+# wscons
+pckbc0	at isa?			# pc keyboard controller
+pckbd*	at pckbc?		# PC keyboard
+# "pms" should not be enabled together with "psm" or "psmi"
+#psm*		at pckbc?		# PS/2 mouse for wsmouse
+#psmi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+#pms*		at pckbc?		# backwards compatible PS/2 mouse
+vga0		at isa?
+#vga*		at pci?
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+#wsdisplay*	at pcdisplay? console ?
+wskbd*	at pckbd? console ?
+#wsmouse*	at psm?
+#wsmouse*	at psmi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
