@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.6 2004/07/12 23:41:53 wiz Exp $	*/
+/*	$NetBSD: files.c,v 1.7 2004/07/14 00:12:28 wiz Exp $	*/
 
 /* files.c -- file-related functions for makeinfo.
    Id: files.c,v 1.15 2004/02/28 10:42:50 dirt Exp
@@ -187,7 +187,7 @@ pop_path_from_include_path (void)
 /* Find and load the file named FILENAME.  Return a pointer to
    the loaded file, or NULL if it can't be loaded. */
 char *
-find_and_load (char *filename)
+find_and_load (char *filename, int use_path)
 {
   struct stat fileinfo;
   long file_size;
@@ -197,7 +197,10 @@ find_and_load (char *filename)
 
   result = fullpath = NULL;
 
-  fullpath = get_file_info_in_path (filename, include_files_path, &fileinfo);
+  if (use_path)
+    fullpath = get_file_info_in_path (filename, include_files_path, &fileinfo);
+  else
+    fullpath = get_file_info_in_path (filename, NULL, &fileinfo);
 
   if (!fullpath)
     goto error_exit;
@@ -684,7 +687,7 @@ handle_delayed_writes (void)
 
   while (temp)
     {
-      delayed_buf = find_and_load (temp->filename);
+      delayed_buf = find_and_load (temp->filename, 0);
 
       if (output_paragraph_offset > 0)
         {
