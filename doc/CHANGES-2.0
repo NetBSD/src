@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.484 2004/10/04 05:26:20 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.485 2004/10/04 06:04:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7727,3 +7727,9 @@ sys/sys/param.h					patch+1.201
 	release time.
 	[christos, ticket #887]
 
+sys/netinet/fil.c				1.69-1.70+patch
+
+	Do not allow packets flagged with "out-of-window" (oow) to match 
+	"keep state" rules and try to prevent such rules 
+	("keep state with oow") from being loaded into the kernel. PR#26581
+	[jdolecek, ticket #888]
