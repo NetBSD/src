@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.259 2004/06/07 06:38:28 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.260 2004/06/07 10:09:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3545,6 +3545,7 @@ sys/net/if_ethersubr.c 1.115
 
 sys/net80211/ieee80211.c			1.16
 sys/dev/ic/wi.c					1.161
+
 	Fix for "ifconfig wi0 media DS11" panicing system: in
 	ieee80211_chan2mode(), do not dereference the marker for
 	"any channel", IEEE80211_CHAN_ANYC.
@@ -3553,4 +3554,28 @@ sys/dev/ic/wi.c					1.161
 	lot more conditions than wi_media_change() did.
 	PR#25604.
 	[dyoung, ticket #449]
+
+doc/CHANGES.prev				1.11 via patch
+
+	Add two late entries:
+	- hp300 MI com(4)
+	- wm(4) hwcksum fix on big endian machines
+	[jdc, ticket #450]
+
+doc/CHANGES					1.321 via patch
+sbin/wsconsctl/display.c			1.3-1.4
+sbin/wsconsctl/keyboard.c			1.4
+sys/arch/i386/conf/GENERIC			1.608
+sys/dev/ic/pcdisplay_subr.c			1.26
+sys/dev/ic/pcdisplayvar.h			1.13
+sys/dev/ic/vga.c				1.72-1.74
+sys/dev/wscons/files.wscons			1.30
+sys/dev/wscons/wsconsio.h			1.62-1.64
+sys/dev/wscons/wsdisplay.c			1.77-1.78
+sys/dev/wscons/wsdisplayvar.h			1.26-1.27
+sys/dev/wscons/wskbd.c				1.74-1.76
+sys/dev/wscons/wsksymdef.h			1.49
+
+	PR kern/19925: David Ferlier: Add scrolling support to wscons.
+	[recht, ticket #451]
 
