@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.32 2002/05/16 02:59:57 thorpej Exp $
+#	$NetBSD: files.scsipi,v 1.33 2002/10/09 20:23:56 thorpej Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -14,15 +14,15 @@ defparam opt_scsipi_debug.h	SCSIPI_DEBUG_TYPE
 				SCSIPI_DEBUG_LUN
 				SCSIPI_DEBUG_FLAGS
 
-file	dev/scsipi/scsipiconf.c		scsi | atapibus
-file	dev/scsipi/scsipi_base.c	scsi | atapibus
-file	dev/scsipi/scsipi_ioctl.c	scsi | atapibus
-file	dev/scsipi/scsipi_verbose.c	(scsi | atapibus) & scsiverbose
-file	dev/scsipi/scsi_base.c		scsi 
+file	dev/scsipi/scsipiconf.c		scsi_core | atapibus
+file	dev/scsipi/scsipi_base.c	scsi_core | atapibus
+file	dev/scsipi/scsipi_ioctl.c	scsi_core | atapibus
+file	dev/scsipi/scsipi_verbose.c	(scsi_core | atapibus) & scsiverbose
+file	dev/scsipi/scsi_base.c		scsi_core 
 file	dev/scsipi/atapi_base.c		atapibus
 file	dev/scsipi/atapi_wdc.c		atapibus & wdc_base
 
-device	scsibus {target = -1, lun = -1}
+device	scsibus {target = -1, lun = -1}: scsi_core
 attach	scsibus at scsi
 file	dev/scsipi/scsiconf.c		scsibus			needs-flag
 
