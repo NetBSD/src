@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.21 2003/12/29 16:41:22 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.22 2003/12/29 16:45:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.21 2003/12/29 16:41:22 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.22 2003/12/29 16:45:58 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.21 2003/12/29 16:41:22 bjh21 Exp $")
 #include "vidcaudio.h"
 
 extern int *vidc_base;
-
-#undef DEBUG
 
 struct audio_general {
 	vaddr_t	silence;
@@ -254,7 +252,7 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&vidcaudio_hw_if, sc, &sc->device);
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf(" UNDER DEVELOPMENT (nuts)\n");
 #endif
 }
@@ -264,7 +262,7 @@ vidcaudio_open(void *addr, int flags)
 {
 	struct vidcaudio_softc *sc = addr;
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_open called\n");
 #endif
 
@@ -284,7 +282,7 @@ vidcaudio_close(void *addr)
 
 	vidcaudio_shutdown();
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_close called\n");
 #endif
 
@@ -345,7 +343,7 @@ vidcaudio_start_output(void *addr, void *p, int cc, void (*intr)(void *),
 
 	/* I can only DMA inside 1 page */
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("vidcaudio_start_output (%d) %p %p\n", cc, intr, arg);
 #endif
 
@@ -355,7 +353,7 @@ vidcaudio_start_output(void *addr, void *p, int cc, void (*intr)(void *),
 		 * my buffer
 		 */
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 		printf("vidcaudio: DMA over page boundary requested."
 		    "  Fixing up\n");
 #endif
@@ -392,7 +390,7 @@ int
 vidcaudio_halt_output(void *addr)
 {
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_halt_output\n");
 #endif
 	return EIO;
@@ -402,7 +400,7 @@ int
 vidcaudio_halt_input(void *addr)
 {
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_halt_input\n");
 #endif
 	return EIO;
@@ -412,7 +410,7 @@ int
 vidcaudio_speaker_ctl(void *addr, int newstate)
 {
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("DEBUG: vidcaudio_speaker_ctl\n");
 #endif
 	return 0;
@@ -458,7 +456,7 @@ void
 vidcaudio_dummy_routine(void *arg)
 {
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf("vidcaudio_dummy_routine\n");
 #endif
 }
@@ -532,7 +530,7 @@ vidcaudio_dma_program(vaddr_t cur, vaddr_t end, void (*intr)(void *),
 #ifdef PRINT
 		printf("vidcaudio: start output\n");
 #endif
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 		printf("SE");
 #endif
 		enable_irq(sound_dma_intr);
@@ -549,7 +547,7 @@ vidcaudio_dma_program(vaddr_t cur, vaddr_t end, void (*intr)(void *),
 			PHYS(end - 16, &ag.next_end);
 			ag.next_intr = intr;
 			ag.next_arg = arg;
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 			printf("s");
 #endif
 		}
@@ -596,7 +594,7 @@ vidcaudio_intr(void *arg)
 
 	/* Have I got the generic audio device attached */
 
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 	printf ( "[B%01x]", status );
 #endif
 
@@ -613,7 +611,7 @@ vidcaudio_intr(void *arg)
 	ag.arg = xarg;
 
 	if (nintr) {
-#ifdef DEBUG
+#ifdef VIDCAUDIO_DEBUG
 		printf("i");
 #endif
 		(*nintr)(narg);
