@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.72 2003/01/06 13:10:29 wiz Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.73 2003/01/31 02:17:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.72 2003/01/06 13:10:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.73 2003/01/31 02:17:13 thorpej Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -299,18 +299,18 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	/* What dialect of OHCI is this device?
 	 */
 	val = OHCI_CSR_READ(sc, OHCI_REG_Version);
-	printf("%s: OHCI %u.%u", sc->sc_sc1394.sc1394_dev.dv_xname,
+	aprint_normal("%s: OHCI %u.%u", sc->sc_sc1394.sc1394_dev.dv_xname,
 	    OHCI_Version_GET_Version(val), OHCI_Version_GET_Revision(val));
 
 	LIST_INIT(&sc->sc_nodelist);
 
 	if (fwohci_guidrom_init(sc) != 0) {
-		printf("\n%s: fatal: no global UID ROM\n",
+		aprint_error("\n%s: fatal: no global UID ROM\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
 	}
 
-	printf(", %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+	aprint_normal(", %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
 	    sc->sc_sc1394.sc1394_guid[0], sc->sc_sc1394.sc1394_guid[1],
 	    sc->sc_sc1394.sc1394_guid[2], sc->sc_sc1394.sc1394_guid[3],
 	    sc->sc_sc1394.sc1394_guid[4], sc->sc_sc1394.sc1394_guid[5],
@@ -322,17 +322,18 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	sc->sc_sc1394.sc1394_link_speed =
 	    OHCI_BITVAL(val, OHCI_BusOptions_LinkSpd);
 	if (sc->sc_sc1394.sc1394_link_speed < IEEE1394_SPD_MAX) {
-		printf(", %s",
+		aprint_normal(", %s",
 		    ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed]);
 	} else {
-		printf(", unknown speed %u", sc->sc_sc1394.sc1394_link_speed);
+		aprint_normal(", unknown speed %u",
+		    sc->sc_sc1394.sc1394_link_speed);
 	}
 	
 	/* MaxRec is encoded as log2(max_rec_octets)-1
 	 */
 	sc->sc_sc1394.sc1394_max_receive =
 	    1 << (OHCI_BITVAL(val, OHCI_BusOptions_MaxRec) + 1);
-	printf(", %u max_rec", sc->sc_sc1394.sc1394_max_receive);
+	aprint_normal(", %u max_rec", sc->sc_sc1394.sc1394_max_receive);
 
 	/*
 	 * Count how many isochronous receive ctx we have.
@@ -345,7 +346,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 			i++;
 	}
 	sc->sc_isoctx = i;
-	printf(", %d ir_ctx", sc->sc_isoctx);
+	aprint_normal(", %d ir_ctx", sc->sc_isoctx);
 
 	/*
 	 * Count how many isochronous transmit ctx we have.
@@ -361,9 +362,9 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	}
 	sc->sc_itctx = i;
 
-	printf(", %d it_ctx", sc->sc_itctx);
+	aprint_normal(", %d it_ctx", sc->sc_itctx);
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if 0
 	error = fwohci_dnamem_alloc(sc, OHCI_CONFIG_SIZE,
