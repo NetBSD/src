@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1991 University of Utah.
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Van Jacobson of Lawrence Berkeley Laboratory.
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,26 +35,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)scsivar.h	8.1 (Berkeley) 6/10/93
- *	$Id: scsivar.h,v 1.3 1994/05/23 05:59:23 mycroft Exp $
+ * from: Utah $Hdr: iotypes.h 1.1 91/12/12$
+ *
+ *	from: @(#)iotypes.h	8.1 (Berkeley) 6/10/93
+ *	$Id: iotypes.h,v 1.1 1994/05/23 05:59:01 mycroft Exp $
  */
 
-struct	scsi_softc {
-	struct	hp_ctlr *sc_hc;
-	struct	devqueue sc_dq;
-	struct	devqueue sc_sq;
-	u_char	sc_flags;
-	u_char	sc_sync;
-	u_char	sc_scsi_addr;
-	u_char	sc_stat[2];
-	u_char	sc_msg[7];
-};
+#ifndef _IOTYPES_
+#define	_IOTYPES_
 
-/* sc_flags */
-#define	SCSI_IO		0x80	/* DMA I/O in progress */
-#define	SCSI_DMA32	0x40	/* 32-bit DMA should be used */
-#define	SCSI_HAVEDMA	0x04	/* controller has DMA channel */
-#ifdef DEBUG
-#define	SCSI_PAD	0x02	/* 'padded' transfer in progress */
+/*
+ * Where do these really belong?
+ */
+typedef volatile char			v_char;
+typedef volatile unsigned char		vu_char;
+typedef volatile short			v_short;
+typedef volatile unsigned short		vu_short;
+typedef volatile int			v_int;
+typedef volatile unsigned int		vu_int;
 #endif
-#define	SCSI_ALIVE	0x01	/* controller initialized */
