@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.82 2000/05/29 09:47:19 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.82 2000/05/29 09:47:19 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -678,7 +678,7 @@ setregs(p, pack, stack)
 	f->f_regs[A2] = 0;
 	f->f_regs[A3] = (int)PS_STRINGS;
 
-	if (fpcurproc == p)
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;
 	memset(&p->p_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
 	p->p_md.md_flags &= ~MDP_FPUSED;
