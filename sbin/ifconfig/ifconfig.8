@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.51 2001/06/05 11:22:45 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.52 2001/06/21 13:36:24 onoe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -327,6 +327,18 @@ are used.
 For IEEE 802.11 wireless network, the length of each key is restricted to
 40 bits, i.e. 5-character string or 10 hexadecimal digits,
 while the WaveLAN/IEEE Gold cards accept the 104 bits (13 characters) key.
+.It Cm nwkey Cm persist
+(IEEE 802.11 devices only)
+Enable WEP encryption for IEEE 802.11-based wireless network interfaces
+with the persistent key written in the network card.
+.It Cm nwkey Cm persist: Ns Ar key
+(IEEE 802.11 devices only)
+Write the
+.Ar key
+to the persistent memory of the network card, and
+enable WEP encryption for IEEE 802.11-based wireless network interfaces
+with the
+.Ar key .
 .It Fl nwkey
 (IEEE 802.11 devices only)
 Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
