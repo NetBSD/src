@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.34 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.35 1998/08/20 19:55:07 veego Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -658,7 +658,7 @@ tunpoll(dev, events, p)
 	s = splimp();
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (ifp->if_snd.ifq_len > 0) {
 			TUNDEBUG("%s: tunpoll q=%d\n", ifp->if_xname,
 			    ifp->if_snd.ifq_len);
@@ -667,6 +667,7 @@ tunpoll(dev, events, p)
 			TUNDEBUG("%s: tunpoll waiting\n", ifp->if_xname);
 			selrecord(p, &tp->tun_rsel);
 		}
+	}
 
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
