@@ -51,7 +51,7 @@ main()
 	assert (signal_cought == 0);
 	fpsetsticky(0);
 
-#if 0
+#if 1
 	/* unmask and then trip divide by zero */
 	fpsetmask(FP_X_DZ);
 	x = one / zero;
