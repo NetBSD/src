@@ -1,16 +1,13 @@
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.2 1995/10/08 23:25:24 gwr Exp $
+#	$NetBSD: ttys,v 1.3 1996/10/09 00:40:36 jtc Exp $
 #
 # name	getty				type	status		comments
 #
-# Note: you may want to change the "default" entry in /etc/gettytab
-# to make "no parity" the default (add the :np: flag).
-#
-# Also: the console is one of: kd, ttya, ttyb
-console	"/usr/libexec/getty std.9600"	sun	off secure
-kd	"/usr/libexec/getty std.9600"	sun	on  secure
-ttya	"/usr/libexec/getty std.9600"	unknown	on  secure
+# Note: the console redirects to one of: kd, ttya, ttyb
+console	"/usr/libexec/getty suncons"	unknown	on  secure
+kd	"/usr/libexec/getty suncons"	unknown	off secure
+ttya	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyp0	none				network
 ttyp1	none				network
