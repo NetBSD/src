@@ -292,7 +292,7 @@ strip_usage (stream, exit_status)
      int exit_status;
 {
   fprintf (stream, "\
-Usage: %s [-vVsSpgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-R section]\n\
+Usage: %s [-vVsSpdgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-R section]\n\
        [--input-target=bfdname] [--output-target=bfdname] [--target=bfdname]\n\
        [--strip-all] [--strip-debug] [--strip-unneeded] [--discard-all]\n\
        [--discard-locals] [--keep-symbol symbol] [-K symbol]\n\
@@ -1616,7 +1616,7 @@ strip_main (argc, argv)
   struct section_list *p;
   char *output_file = NULL;
 
-  while ((c = getopt_long (argc, argv, "I:O:F:K:N:R:o:sSpgxXVv",
+  while ((c = getopt_long (argc, argv, "I:O:F:K:N:R:o:sSpdgxXVv",
 			   strip_options, (int *) 0)) != EOF)
     {
       switch (c)
@@ -1640,6 +1640,7 @@ strip_main (argc, argv)
 	  break;
 	case 'S':
 	case 'g':
+	case 'd':
 	  strip_symbols = strip_debug;
 	  break;
 	case OPTION_STRIP_UNNEEDED:
