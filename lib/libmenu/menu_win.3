@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_win.3,v 1.6 2002/02/20 11:47:56 wiz Exp $
+.\"	$NetBSD: menu_win.3,v 1.7 2002/07/03 11:24:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -35,7 +35,7 @@
 .Sh NAME
 .Nm menu_sub ,
 .Nm menu_win ,
-.Nm scale_window ,
+.Nm scale_menu ,
 .Nm set_menu_sub ,
 .Nm set_menu_win
 .Nd sub-menu handling
@@ -48,7 +48,7 @@
 .Ft WINDOW *
 .Fn menu_win "MENU *menu"
 .Ft int
-.Fn scale_window "MENU *menu" "int *rows" "int *cols"
+.Fn scale_menu "MENU *menu" "int *rows" "int *cols"
 .Ft int
 .Fn set_menu_sub "MENU *menu" "WINDOW *sub"
 .Ft int
@@ -65,7 +65,7 @@ function returns a pointer to the window in which the menu subwindow
 will be created when the menu is posted, this pointer is set by the
 .Fn set_menu_win
 function.  The
-.Fn scale_window
+.Fn scale_menu
 function calculates the minimum size a window needs to be to hold the
 items for a given menu, the parameters rows and cols are set to the
 required number of rows and columns respectively.
