@@ -82,6 +82,7 @@
 ./usr/include/machine/vmparam3x.h
 ./usr/include/machine/vuid_event.h
 ./usr/include/machine/z8530var.h
+./usr/include/objc/list.h
 ./usr/include/sun3/_G_config.h
 ./usr/lib/c++rt0.o
 ./usr/sbin/dbsym

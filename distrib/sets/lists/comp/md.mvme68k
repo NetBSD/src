@@ -63,3 +63,4 @@
 ./usr/include/machine/prom.h
 ./usr/include/machine/z8530var.h
 ./usr/include/mvme68k/_G_config.h
+./usr/include/objc/list.h

@@ -107,3 +107,4 @@
 ./usr/include/macppc/varargs.h
 ./usr/include/macppc/vmparam.h
 ./usr/include/macppc/z8530var.h
+./usr/include/objc/list.h

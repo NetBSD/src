@@ -104,4 +104,5 @@
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
+./usr/include/objc/list.h
 ./usr/include/pmax/_G_config.h

@@ -58,6 +58,7 @@
 ./usr/include/g++/stddef
 ./usr/include/g++/tempbuf.cc
 ./usr/include/g++/tree.cc
+./usr/include/objc/list.h
 ./usr/include/vax
 ./usr/include/vax/_G_config.h
 ./usr/include/vax/ansi.h
