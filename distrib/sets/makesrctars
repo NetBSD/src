@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.8 1998/10/12 16:28:35 perry Exp $
+#	$NetBSD: makesrctars,v 1.9 1998/10/28 11:02:37 mycroft Exp $
 #
 # Make source code tarballs.
 
@@ -33,25 +33,28 @@ find . \
     \! \( -path ./sys -prune \) \
     \! \( -path ./usr.sbin/config -prune \) \
     \! \( -path ./usr.sbin/dbsym -prune \) \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -w -d -s'|^./|./usr/src/|' | gzip \
+    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
+	-print | \
+	sort | pax -w -d -s'|^\.|usr/src|' | gzip \
 	> ${DESTDIR}/sets/src.tgz
 
 find gnu \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
+	-print | \
+	sort | pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/gnusrc.tgz
 
 find sys usr.sbin/config usr.sbin/dbsym \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) \
-    \! \( -name compile -prune \) \
+    \! \( -path 'sys/arch/*/compile/*' \! -path 'sys/arch/*/compile/CVS' -prune \) \
+    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
-	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+	sort | pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/syssrc.tgz
 
 find share \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
+	-print | \
+	sort | pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/sharesrc.tgz
 
 (cd ${DESTDIR}/sets
@@ -64,8 +67,9 @@ chmod 444 ${DESTDIR}/sets/*
 mkdir ${DESTDIR}/security
 
 find domestic \
-    \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
-	sort | pax -w -d -s'|^|./usr/src/|' | gzip \
+    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
+	-print | \
+	sort | pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/security/secrsrc.tgz
 
 (cd ${DESTDIR}/security
