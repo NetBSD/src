@@ -36,6 +36,25 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_DEFAULT  
 #define TARGET_DEFAULT TARGET_CPU_DEFAULT 
 
+
+/* Don't try using XFmode on the 68010.  */
+#if 0 /* XXX Can't do this yet.  */
+#undef LONG_DOUBLE_TYPE_SIZE
+#define LONG_DOUBLE_TYPE_SIZE \
+  ((TARGET_68020 || TARGET_68040 || TARGET_68040_ONLY || \
+    TARGET_68060) ? 96 : 64)
+#else
+#if TARGET_DEFAULT == 0
+#undef LONG_DOUBLE_TYPE_SIZE
+#define LONG_DOUBLE_TYPE_SIZE 64
+#endif
+#endif
+
+#ifdef __mc68010__
+#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
+#endif
+
+
 #define bsd4_4
 #undef HAS_INIT_SECTION
 
