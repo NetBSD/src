@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.13 2002/01/06 20:14:29 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.14 2002/01/07 10:49:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Martin Husemann. All rights reserved.
@@ -89,3 +89,17 @@ struct spppidletimeout {
 
 #define	SPPPGETIDLETO	_IOWR('i', 125, struct spppstatus)
 #define	SPPPSETIDLETO	_IOW('i', 126, struct spppstatus)
+
+struct spppauthfailurestats {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	int	auth_failures;		/* number of LCP failures since last successfull TLU */
+	int	max_failures;		/* max. allowed authorization failures */
+};
+
+#define	SPPPGETAUTHFAILURES	_IOWR('i', 127, struct spppauthfailurestats)
+
+struct spppauthfailuresettings {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	int	max_failures;		/* max. allowed authorization failures */
+};
+#define	SPPPSETAUTHFAILURE	_IOW('i', 128, struct spppauthfailuresettings)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.2 2002/01/06 20:14:30 martin Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.3 2002/01/07 10:49:03 martin Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -86,6 +86,8 @@ struct sppp {
 	time_t	pp_last_activity;	/* second of last payload data s/r */
 	time_t	pp_idle_timeout;	/* idle seconds before auto-disconnect,
 					 * 0 = disabled */
+	int	pp_auth_failures;	/* authorization failures */
+	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
