@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.2 1996/08/09 15:09:04 thorpej Exp $
+#	$NetBSD: ypinit.sh,v 1.3 1996/08/09 15:16:30 thorpej Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -180,7 +180,7 @@ if [ X${SERVERTYPE} = X"MASTER" ]; then
 		cat ypservers | ${MAKEDBM} - ypservers
 	)
 
-	echo "Done.  Be sure to run \`make' in /var/yp."
+	echo "Done.  Be sure to run \`make' in ${YP_DIR}."
 fi
 
 if [ X${SERVERTYPE} = X"SLAVE" ]; then
