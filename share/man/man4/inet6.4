@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6.4,v 1.23.2.1 2002/06/07 19:24:56 thorpej Exp $
+.\"	$NetBSD: inet6.4,v 1.23.2.2 2002/06/18 23:13:03 lukem Exp $
 .\"	$KAME: inet6.4,v 1.18 2000/11/24 08:50:32 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -274,6 +274,7 @@ By default,
 does not route IPv4 traffic to
 .Dv AF_INET6
 sockets.
+The default behavior intentionally violates RFC2553 for security reasons.
 Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
 IPv4 traffic may be routed with certain
 per-socket/per-node configuration, however, it is not recommended to do so.
