@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.1 2003/07/25 21:12:47 jonathan Exp $
+#	$NetBSD: files.opencrypto,v 1.2 2003/07/26 13:49:53 he Exp $
 #
 #
 defpseudo opencrypto
@@ -12,11 +12,11 @@ file	opencrypto/crypto_mbuf.c	opencrypto
 
 # crypto  algorithms
 file	opencrypto/blf.c		opencrypto
-file	crypto/sha2/sha2.c		opencrypto
 file	opencrypto/skipjack.c		opencrypto
 file	opencrypto/rmd160.c		opencrypto
 file	opencrypto/cast.c		opencrypto
 file	opencrypto/rijndael.c		opencrypto
+# sha2.c is in crypto/sha2/files.sha2
 
 file	opencrypto/deflate.c		opencrypto
 

@@ -1,5 +1,5 @@
-#	$NetBSD: files.sha2,v 1.1 2003/07/22 03:24:24 itojun Exp $
+#	$NetBSD: files.sha2,v 1.2 2003/07/26 13:49:52 he Exp $
 
 define	sha2
 
-file	crypto/sha2/sha2.c	sha2
+file	crypto/sha2/sha2.c	sha2 | opencrypto
