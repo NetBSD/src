@@ -1,0 +1,1195 @@
+This is gdbint.info, produced by makeinfo version 4.1 from
+./gdbint.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+END-INFO-DIR-ENTRY
+
+   This file documents the internals of the GNU debugger GDB.
+Copyright 1990,1991,1992,1993,1994,1996,1998,1999,2000,2001,2002
+Free Software Foundation, Inc.  Contributed by Cygnus Solutions.
+Written by John Gilmore.  Second Edition by Stan Shebs.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with the Front-Cover Texts being "A GNU Manual,"
+and with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+   (1) Some D10V instructions are actually pairs of 16-bit
+sub-instructions.  However, since you can't jump into the middle of
+such a pair, code addresses can only refer to full 32 bit instructions,
+which is what matters in this explanation.
+
+   (2) The above is from the original example and uses K&R C.  GDB has
+since converted to ISO C but lets ignore that.
+
+
+File: gdbint.info,  Node: Target Vector Definition,  Next: Native Debugging,  Prev: Target Architecture Definition,  Up: Top
+
+Target Vector Definition
+************************
+
+   The target vector defines the interface between GDB's abstract
+handling of target systems, and the nitty-gritty code that actually
+exercises control over a process or a serial port.  GDB includes some
+30-40 different target vectors; however, each configuration of GDB
+includes only a few of them.
+
+File Targets
+============
+
+   Both executables and core files have target vectors.
+
+Standard Protocol and Remote Stubs
+==================================
+
+   GDB's file `remote.c' talks a serial protocol to code that runs in
+the target system.  GDB provides several sample "stubs" that can be
+integrated into target programs or operating systems for this purpose;
+they are named `*-stub.c'.
+
+   The GDB user's manual describes how to put such a stub into your
+target code.  What follows is a discussion of integrating the SPARC
+stub into a complicated operating system (rather than a simple
+program), by Stu Grossman, the author of this stub.
+
+   The trap handling code in the stub assumes the following upon entry
+to `trap_low':
+
+  1. %l1 and %l2 contain pc and npc respectively at the time of the
+     trap;
+
+  2. traps are disabled;
+
+  3. you are in the correct trap window.
+
+   As long as your trap handler can guarantee those conditions, then
+there is no reason why you shouldn't be able to "share" traps with the
+stub.  The stub has no requirement that it be jumped to directly from
+the hardware trap vector.  That is why it calls `exceptionHandler()',
+which is provided by the external environment.  For instance, this could
+set up the hardware traps to actually execute code which calls the stub
+first, and then transfers to its own trap handler.
+
+   For the most point, there probably won't be much of an issue with
+"sharing" traps, as the traps we use are usually not used by the kernel,
+and often indicate unrecoverable error conditions.  Anyway, this is all
+controlled by a table, and is trivial to modify.  The most important
+trap for us is for `ta 1'.  Without that, we can't single step or do
+breakpoints.  Everything else is unnecessary for the proper operation
+of the debugger/stub.
+
+   From reading the stub, it's probably not obvious how breakpoints
+work.  They are simply done by deposit/examine operations from GDB.
+
+ROM Monitor Interface
+=====================
+
+Custom Protocols
+================
+
+Transport Layer
+===============
+
+Builtin Simulator
+=================
+
+
+File: gdbint.info,  Node: Native Debugging,  Next: Support Libraries,  Prev: Target Vector Definition,  Up: Top
+
+Native Debugging
+****************
+
+   Several files control GDB's configuration for native support:
+
+`gdb/config/ARCH/XYZ.mh'
+     Specifies Makefile fragments needed by a _native_ configuration on
+     machine XYZ.  In particular, this lists the required
+     native-dependent object files, by defining `NATDEPFILES=...'.
+     Also specifies the header file which describes native support on
+     XYZ, by defining `NAT_FILE= nm-XYZ.h'.  You can also define
+     `NAT_CFLAGS', `NAT_ADD_FILES', `NAT_CLIBS', `NAT_CDEPS', etc.; see
+     `Makefile.in'.
+
+     _Maintainer's note: The `.mh' suffix is because this file
+     originally contained `Makefile' fragments for hosting GDB on
+     machine XYZ.  While the file is no longer used for this purpose,
+     the `.mh' suffix remains.  Perhaps someone will eventually rename
+     these fragments so that they have a `.mn' suffix._
+
+`gdb/config/ARCH/nm-XYZ.h'
+     (`nm.h' is a link to this file, created by `configure').  Contains
+     C macro definitions describing the native system environment, such
+     as child process control and core file support.
+
+`gdb/XYZ-nat.c'
+     Contains any miscellaneous C code required for this native support
+     of this machine.  On some machines it doesn't exist at all.
+
+   There are some "generic" versions of routines that can be used by
+various systems.  These can be customized in various ways by macros
+defined in your `nm-XYZ.h' file.  If these routines work for the XYZ
+host, you can just include the generic file's name (with `.o', not
+`.c') in `NATDEPFILES'.
+
+   Otherwise, if your machine needs custom support routines, you will
+need to write routines that perform the same functions as the generic
+file.  Put them into `XYZ-nat.c', and put `XYZ-nat.o' into
+`NATDEPFILES'.
+
+`inftarg.c'
+     This contains the _target_ops vector_ that supports Unix child
+     processes on systems which use ptrace and wait to control the
+     child.
+
+`procfs.c'
+     This contains the _target_ops vector_ that supports Unix child
+     processes on systems which use /proc to control the child.
+
+`fork-child.c'
+     This does the low-level grunge that uses Unix system calls to do a
+     "fork and exec" to start up a child process.
+
+`infptrace.c'
+     This is the low level interface to inferior processes for systems
+     using the Unix `ptrace' call in a vanilla way.
+
+Native core file Support
+========================
+
+`core-aout.c::fetch_core_registers()'
+     Support for reading registers out of a core file.  This routine
+     calls `register_addr()', see below.  Now that BFD is used to read
+     core files, virtually all machines should use `core-aout.c', and
+     should just provide `fetch_core_registers' in `XYZ-nat.c' (or
+     `REGISTER_U_ADDR' in `nm-XYZ.h').
+
+`core-aout.c::register_addr()'
+     If your `nm-XYZ.h' file defines the macro `REGISTER_U_ADDR(addr,
+     blockend, regno)', it should be defined to set `addr' to the
+     offset within the `user' struct of GDB register number `regno'.
+     `blockend' is the offset within the "upage" of `u.u_ar0'.  If
+     `REGISTER_U_ADDR' is defined, `core-aout.c' will define the
+     `register_addr()' function and use the macro in it.  If you do not
+     define `REGISTER_U_ADDR', but you are using the standard
+     `fetch_core_registers()', you will need to define your own version
+     of `register_addr()', put it into your `XYZ-nat.c' file, and be
+     sure `XYZ-nat.o' is in the `NATDEPFILES' list.  If you have your
+     own `fetch_core_registers()', you may not need a separate
+     `register_addr()'.  Many custom `fetch_core_registers()'
+     implementations simply locate the registers themselves.
+
+   When making GDB run native on a new operating system, to make it
+possible to debug core files, you will need to either write specific
+code for parsing your OS's core files, or customize `bfd/trad-core.c'.
+First, use whatever `#include' files your machine uses to define the
+struct of registers that is accessible (possibly in the u-area) in a
+core file (rather than `machine/reg.h'), and an include file that
+defines whatever header exists on a core file (e.g. the u-area or a
+`struct core').  Then modify `trad_unix_core_file_p' to use these
+values to set up the section information for the data segment, stack
+segment, any other segments in the core file (perhaps shared library
+contents or control information), "registers" segment, and if there are
+two discontiguous sets of registers (e.g.  integer and float), the
+"reg2" segment.  This section information basically delimits areas in
+the core file in a standard way, which the section-reading routines in
+BFD know how to seek around in.
+
+   Then back in GDB, you need a matching routine called
+`fetch_core_registers'.  If you can use the generic one, it's in
+`core-aout.c'; if not, it's in your `XYZ-nat.c' file.  It will be
+passed a char pointer to the entire "registers" segment, its length,
+and a zero; or a char pointer to the entire "regs2" segment, its
+length, and a 2.  The routine should suck out the supplied register
+values and install them into GDB's "registers" array.
+
+   If your system uses `/proc' to control processes, and uses ELF
+format core files, then you may be able to use the same routines for
+reading the registers out of processes and out of core files.
+
+ptrace
+======
+
+/proc
+=====
+
+win32
+=====
+
+shared libraries
+================
+
+Native Conditionals
+===================
+
+   When GDB is configured and compiled, various macros are defined or
+left undefined, to control compilation when the host and target systems
+are the same.  These macros should be defined (or left undefined) in
+`nm-SYSTEM.h'.
+
+`ATTACH_DETACH'
+     If defined, then GDB will include support for the `attach' and
+     `detach' commands.
+
+`CHILD_PREPARE_TO_STORE'
+     If the machine stores all registers at once in the child process,
+     then define this to ensure that all values are correct.  This
+     usually entails a read from the child.
+
+     [Note that this is incorrectly defined in `xm-SYSTEM.h' files
+     currently.]
+
+`FETCH_INFERIOR_REGISTERS'
+     Define this if the native-dependent code will provide its own
+     routines `fetch_inferior_registers' and `store_inferior_registers'
+     in `HOST-nat.c'.  If this symbol is _not_ defined, and
+     `infptrace.c' is included in this configuration, the default
+     routines in `infptrace.c' are used for these functions.
+
+`FILES_INFO_HOOK'
+     (Only defined for Convex.)
+
+`FP0_REGNUM'
+     This macro is normally defined to be the number of the first
+     floating point register, if the machine has such registers.  As
+     such, it would appear only in target-specific code.  However,
+     `/proc' support uses this to decide whether floats are in use on
+     this target.
+
+`GET_LONGJMP_TARGET'
+     For most machines, this is a target-dependent parameter.  On the
+     DECstation and the Iris, this is a native-dependent parameter,
+     since `setjmp.h' is needed to define it.
+
+     This macro determines the target PC address that `longjmp' will
+     jump to, assuming that we have just stopped at a longjmp
+     breakpoint.  It takes a `CORE_ADDR *' as argument, and stores the
+     target PC value through this pointer.  It examines the current
+     state of the machine as needed.
+
+`I386_USE_GENERIC_WATCHPOINTS'
+     An x86-based machine can define this to use the generic x86
+     watchpoint support; see *Note I386_USE_GENERIC_WATCHPOINTS:
+     Algorithms.
+
+`KERNEL_U_ADDR'
+     Define this to the address of the `u' structure (the "user
+     struct", also known as the "u-page") in kernel virtual memory.
+     GDB needs to know this so that it can subtract this address from
+     absolute addresses in the upage, that are obtained via ptrace or
+     from core files.  On systems that don't need this value, set it to
+     zero.
+
+`KERNEL_U_ADDR_BSD'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using Berkeley-style `nlist' on the kernel's image in
+     the root directory.
+
+`KERNEL_U_ADDR_HPUX'
+     Define this to cause GDB to determine the address of `u' at
+     runtime, by using HP-style `nlist' on the kernel's image in the
+     root directory.
+
+`ONE_PROCESS_WRITETEXT'
+     Define this to be able to, when a breakpoint insertion fails, warn
+     the user that another process may be running with the same
+     executable.
+
+`PREPARE_TO_PROCEED (SELECT_IT)'
+     This (ugly) macro allows a native configuration to customize the
+     way the `proceed' function in `infrun.c' deals with switching
+     between threads.
+
+     In a multi-threaded task we may select another thread and then
+     continue or step.  But if the old thread was stopped at a
+     breakpoint, it will immediately cause another breakpoint stop
+     without any execution (i.e. it will report a breakpoint hit
+     incorrectly).  So GDB must step over it first.
+
+     If defined, `PREPARE_TO_PROCEED' should check the current thread
+     against the thread that reported the most recent event.  If a
+     step-over is required, it returns TRUE.  If SELECT_IT is non-zero,
+     it should reselect the old thread.
+
+`PROC_NAME_FMT'
+     Defines the format for the name of a `/proc' device.  Should be
+     defined in `nm.h' _only_ in order to override the default
+     definition in `procfs.c'.
+
+`PTRACE_FP_BUG'
+     See `mach386-xdep.c'.
+
+`PTRACE_ARG3_TYPE'
+     The type of the third argument to the `ptrace' system call, if it
+     exists and is different from `int'.
+
+`REGISTER_U_ADDR'
+     Defines the offset of the registers in the "u area".
+
+`SHELL_COMMAND_CONCAT'
+     If defined, is a string to prefix on the shell command used to
+     start the inferior.
+
+`SHELL_FILE'
+     If defined, this is the name of the shell to use to run the
+     inferior.  Defaults to `"/bin/sh"'.
+
+`SOLIB_ADD (FILENAME, FROM_TTY, TARG, READSYMS)'
+     Define this to expand into an expression that will cause the
+     symbols in FILENAME to be added to GDB's symbol table. If READSYMS
+     is zero symbols are not read but any necessary low level
+     processing for FILENAME is still done.
+
+`SOLIB_CREATE_INFERIOR_HOOK'
+     Define this to expand into any shared-library-relocation code that
+     you want to be run just after the child process has been forked.
+
+`START_INFERIOR_TRAPS_EXPECTED'
+     When starting an inferior, GDB normally expects to trap twice;
+     once when the shell execs, and once when the program itself execs.
+     If the actual number of traps is something other than 2, then
+     define this macro to expand into the number expected.
+
+`SVR4_SHARED_LIBS'
+     Define this to indicate that SVR4-style shared libraries are in
+     use.
+
+`USE_PROC_FS'
+     This determines whether small routines in `*-tdep.c', which
+     translate register values between GDB's internal representation
+     and the `/proc' representation, are compiled.
+
+`U_REGS_OFFSET'
+     This is the offset of the registers in the upage.  It need only be
+     defined if the generic ptrace register access routines in
+     `infptrace.c' are being used (that is, `infptrace.c' is configured
+     in, and `FETCH_INFERIOR_REGISTERS' is not defined).  If the
+     default value from `infptrace.c' is good enough, leave it
+     undefined.
+
+     The default value means that u.u_ar0 _points to_ the location of
+     the registers.  I'm guessing that `#define U_REGS_OFFSET 0' means
+     that `u.u_ar0' _is_ the location of the registers.
+
+`CLEAR_SOLIB'
+     See `objfiles.c'.
+
+`DEBUG_PTRACE'
+     Define this to debug `ptrace' calls.
+
+
+File: gdbint.info,  Node: Support Libraries,  Next: Coding,  Prev: Native Debugging,  Up: Top
+
+Support Libraries
+*****************
+
+BFD
+===
+
+   BFD provides support for GDB in several ways:
+
+_identifying executable and core files_
+     BFD will identify a variety of file types, including a.out, coff,
+     and several variants thereof, as well as several kinds of core
+     files.
+
+_access to sections of files_
+     BFD parses the file headers to determine the names, virtual
+     addresses, sizes, and file locations of all the various named
+     sections in files (such as the text section or the data section).
+     GDB simply calls BFD to read or write section X at byte offset Y
+     for length Z.
+
+_specialized core file support_
+     BFD provides routines to determine the failing command name stored
+     in a core file, the signal with which the program failed, and
+     whether a core file matches (i.e. could be a core dump of) a
+     particular executable file.
+
+_locating the symbol information_
+     GDB uses an internal interface of BFD to determine where to find
+     the symbol information in an executable file or symbol-file.  GDB
+     itself handles the reading of symbols, since BFD does not
+     "understand" debug symbols, but GDB uses BFD's cached information
+     to find the symbols, string table, etc.
+
+opcodes
+=======
+
+   The opcodes library provides GDB's disassembler.  (It's a separate
+library because it's also used in binutils, for `objdump').
+
+readline
+========
+
+mmalloc
+=======
+
+libiberty
+=========
+
+gnu-regex
+=========
+
+   Regex conditionals.
+
+`C_ALLOCA'
+
+`NFAILURES'
+
+`RE_NREGS'
+
+`SIGN_EXTEND_CHAR'
+
+`SWITCH_ENUM_BUG'
+
+`SYNTAX_TABLE'
+
+`Sword'
+
+`sparc'
+include
+=======
+
+
+File: gdbint.info,  Node: Coding,  Next: Porting GDB,  Prev: Support Libraries,  Up: Top
+
+Coding
+******
+
+   This chapter covers topics that are lower-level than the major
+algorithms of GDB.
+
+Cleanups
+========
+
+   Cleanups are a structured way to deal with things that need to be
+done later.
+
+   When your code does something (e.g., `xmalloc' some memory, or
+`open' a file) that needs to be undone later (e.g., `xfree' the memory
+or `close' the file), it can make a cleanup.  The cleanup will be done
+at some future point: when the command is finished and control returns
+to the top level; when an error occurs and the stack is unwound; or
+when your code decides it's time to explicitly perform cleanups.
+Alternatively you can elect to discard the cleanups you created.
+
+   Syntax:
+
+`struct cleanup *OLD_CHAIN;'
+     Declare a variable which will hold a cleanup chain handle.
+
+`OLD_CHAIN = make_cleanup (FUNCTION, ARG);'
+     Make a cleanup which will cause FUNCTION to be called with ARG (a
+     `char *') later.  The result, OLD_CHAIN, is a handle that can
+     later be passed to `do_cleanups' or `discard_cleanups'.  Unless
+     you are going to call `do_cleanups' or `discard_cleanups', you can
+     ignore the result from `make_cleanup'.
+
+`do_cleanups (OLD_CHAIN);'
+     Do all cleanups added to the chain since the corresponding
+     `make_cleanup' call was made.
+
+`discard_cleanups (OLD_CHAIN);'
+     Same as `do_cleanups' except that it just removes the cleanups from
+     the chain and does not call the specified functions.
+
+   Cleanups are implemented as a chain.  The handle returned by
+`make_cleanups' includes the cleanup passed to the call and any later
+cleanups appended to the chain (but not yet discarded or performed).
+E.g.:
+
+     make_cleanup (a, 0);
+     {
+       struct cleanup *old = make_cleanup (b, 0);
+       make_cleanup (c, 0)
+       ...
+       do_cleanups (old);
+     }
+
+will call `c()' and `b()' but will not call `a()'.  The cleanup that
+calls `a()' will remain in the cleanup chain, and will be done later
+unless otherwise discarded.
+
+   Your function should explicitly do or discard the cleanups it
+creates.  Failing to do this leads to non-deterministic behavior since
+the caller will arbitrarily do or discard your functions cleanups.
+This need leads to two common cleanup styles.
+
+   The first style is try/finally.  Before it exits, your code-block
+calls `do_cleanups' with the old cleanup chain and thus ensures that
+your code-block's cleanups are always performed.  For instance, the
+following code-segment avoids a memory leak problem (even when `error'
+is called and a forced stack unwind occurs) by ensuring that the
+`xfree' will always be called:
+
+     struct cleanup *old = make_cleanup (null_cleanup, 0);
+     data = xmalloc (sizeof blah);
+     make_cleanup (xfree, data);
+     ... blah blah ...
+     do_cleanups (old);
+
+   The second style is try/except.  Before it exits, your code-block
+calls `discard_cleanups' with the old cleanup chain and thus ensures
+that any created cleanups are not performed.  For instance, the
+following code segment, ensures that the file will be closed but only
+if there is an error:
+
+     FILE *file = fopen ("afile", "r");
+     struct cleanup *old = make_cleanup (close_file, file);
+     ... blah blah ...
+     discard_cleanups (old);
+     return file;
+
+   Some functions, e.g. `fputs_filtered()' or `error()', specify that
+they "should not be called when cleanups are not in place".  This means
+that any actions you need to reverse in the case of an error or
+interruption must be on the cleanup chain before you call these
+functions, since they might never return to your code (they `longjmp'
+instead).
+
+Per-architecture module data
+============================
+
+   The multi-arch framework includes a mechanism for adding module
+specific per-architecture data-pointers to the `struct gdbarch'
+architecture object.
+
+   A module registers one or more per-architecture data-pointers using
+the function `register_gdbarch_data':
+
+ - Function: struct gdbarch_data *register_gdbarch_data
+          (gdbarch_data_init_ftype *INIT, gdbarch_data_free_ftype *FREE)
+     The INIT function is used to obtain an initial value for a
+     per-architecture data-pointer.  The function is called, after the
+     architecture has been created, when the data-pointer is still
+     uninitialized (`NULL') and its value has been requested via a call
+     to `gdbarch_data'.  A data-pointer can also be initialize
+     explicitly using `set_gdbarch_data'.
+
+     The FREE function is called when a data-pointer needs to be
+     destroyed.  This occurs when either the corresponding `struct
+     gdbarch' object is being destroyed or when `set_gdbarch_data' is
+     overriding a non-`NULL' data-pointer value.
+
+     The function `register_gdbarch_data' returns a `struct
+     gdbarch_data' that is used to identify the data-pointer that was
+     added to the module.
+
+
+   A typical module has `init' and `free' functions of the form:
+
+     static struct gdbarch_data *nozel_handle;
+     static void *
+     nozel_init (struct gdbarch *gdbarch)
+     {
+       struct nozel *data = XMALLOC (struct nozel);
+       ...
+       return data;
+     }
+     ...
+     static void
+     nozel_free (struct gdbarch *gdbarch, void *data)
+     {
+       xfree (data);
+     }
+
+   Since uninitialized (`NULL') data-pointers are initialized
+on-demand, an `init' function is free to call other modules that use
+data-pointers.  Those modules data-pointers will be initialized as
+needed.  Care should be taken to ensure that the `init' call graph does
+not contain cycles.
+
+   The data-pointer is registered with the call:
+
+     void
+     _initialize_nozel (void)
+     {
+       nozel_handle = register_gdbarch_data (nozel_init, nozel_free);
+     ...
+
+   The per-architecture data-pointer is accessed using the function:
+
+ - Function: void *gdbarch_data (struct gdbarch *GDBARCH, struct
+          gdbarch_data *DATA_HANDLE)
+     Given the architecture ARCH and module data handle DATA_HANDLE
+     (returned by `register_gdbarch_data', this function returns the
+     current value of the per-architecture data-pointer.
+
+   The non-`NULL' data-pointer returned by `gdbarch_data' should be
+saved in a local variable and then used directly:
+
+     int
+     nozel_total (struct gdbarch *gdbarch)
+     {
+       int total;
+       struct nozel *data = gdbarch_data (gdbarch, nozel_handle);
+       ...
+       return total;
+     }
+
+   It is also possible to directly initialize the data-pointer using:
+
+ - Function: void set_gdbarch_data (struct gdbarch *GDBARCH, struct
+          gdbarch_data *handle, void *POINTER)
+     Update the data-pointer corresponding to HANDLE with the value of
+     POINTER.  If the previous data-pointer value is non-NULL, then it
+     is freed using data-pointers FREE function.
+
+   This function is used by modules that require a mechanism for
+explicitly setting the per-architecture data-pointer during
+architecture creation:
+
+     /* Called during architecture creation.  */
+     extern void
+     set_gdbarch_nozel (struct gdbarch *gdbarch,
+                        int total)
+     {
+       struct nozel *data = XMALLOC (struct nozel);
+       ...
+       set_gdbarch_data (gdbarch, nozel_handle, nozel);
+     }
+
+     /* Default, called when nozel not set by set_gdbarch_nozel().  */
+     static void *
+     nozel_init (struct gdbarch *gdbarch)
+     {
+       struct nozel *default_nozel = XMALLOC (struc nozel);
+       ...
+       return default_nozel;
+     }
+
+     void
+     _initialize_nozel (void)
+     {
+       nozel_handle = register_gdbarch_data (nozel_init, NULL);
+       ...
+
+Note that an `init' function still needs to be registered.  It is used
+to initialize the data-pointer when the architecture creation phase
+fail to set an initial value.
+
+Wrapping Output Lines
+=====================
+
+   Output that goes through `printf_filtered' or `fputs_filtered' or
+`fputs_demangled' needs only to have calls to `wrap_here' added in
+places that would be good breaking points.  The utility routines will
+take care of actually wrapping if the line width is exceeded.
+
+   The argument to `wrap_here' is an indentation string which is
+printed _only_ if the line breaks there.  This argument is saved away
+and used later.  It must remain valid until the next call to
+`wrap_here' or until a newline has been printed through the
+`*_filtered' functions.  Don't pass in a local variable and then return!
+
+   It is usually best to call `wrap_here' after printing a comma or
+space.  If you call it before printing a space, make sure that your
+indentation properly accounts for the leading space that will print if
+the line wraps there.
+
+   Any function or set of functions that produce filtered output must
+finish by printing a newline, to flush the wrap buffer, before switching
+to unfiltered (`printf') output.  Symbol reading routines that print
+warnings are a good example.
+
+GDB Coding Standards
+====================
+
+   GDB follows the GNU coding standards, as described in
+`etc/standards.texi'.  This file is also available for anonymous FTP
+from GNU archive sites.  GDB takes a strict interpretation of the
+standard; in general, when the GNU standard recommends a practice but
+does not require it, GDB requires it.
+
+   GDB follows an additional set of coding standards specific to GDB,
+as described in the following sections.
+
+ISO C
+-----
+
+   GDB assumes an ISO/IEC 9899:1990 (a.k.a. ISO C90) compliant compiler.
+
+   GDB does not assume an ISO C or POSIX compliant C library.
+
+Memory Management
+-----------------
+
+   GDB does not use the functions `malloc', `realloc', `calloc', `free'
+and `asprintf'.
+
+   GDB uses the functions `xmalloc', `xrealloc' and `xcalloc' when
+allocating memory.  Unlike `malloc' et.al.  these functions do not
+return when the memory pool is empty.  Instead, they unwind the stack
+using cleanups.  These functions return `NULL' when requested to
+allocate a chunk of memory of size zero.
+
+   _Pragmatics: By using these functions, the need to check every
+memory allocation is removed.  These functions provide portable
+behavior._
+
+   GDB does not use the function `free'.
+
+   GDB uses the function `xfree' to return memory to the memory pool.
+Consistent with ISO-C, this function ignores a request to free a `NULL'
+pointer.
+
+   _Pragmatics: On some systems `free' fails when passed a `NULL'
+pointer._
+
+   GDB can use the non-portable function `alloca' for the allocation of
+small temporary values (such as strings).
+
+   _Pragmatics: This function is very non-portable.  Some systems
+restrict the memory being allocated to no more than a few kilobytes._
+
+   GDB uses the string function `xstrdup' and the print function
+`xasprintf'.
+
+   _Pragmatics: `asprintf' and `strdup' can fail.  Print functions such
+as `sprintf' are very prone to buffer overflow errors._
+
+Compiler Warnings
+-----------------
+
+   With few exceptions, developers should include the configuration
+option `--enable-gdb-build-warnings=,-Werror' when building GDB.  The
+exceptions are listed in the file `gdb/MAINTAINERS'.
+
+   This option causes GDB (when built using GCC) to be compiled with a
+carefully selected list of compiler warning flags.  Any warnings from
+those flags being treated as errors.
+
+   The current list of warning flags includes:
+
+`-Wimplicit'
+     Since GDB coding standard requires all functions to be declared
+     using a prototype, the flag has the side effect of ensuring that
+     prototyped functions are always visible with out resorting to
+     `-Wstrict-prototypes'.
+
+`-Wreturn-type'
+     Such code often appears to work except on instruction set
+     architectures that use register windows.
+
+`-Wcomment'
+
+`-Wtrigraphs'
+
+`-Wformat'
+     Since GDB uses the `format printf' attribute on all `printf' like
+     functions this checks not just `printf' calls but also calls to
+     functions such as `fprintf_unfiltered'.
+
+`-Wparentheses'
+     This warning includes uses of the assignment operator within an
+     `if' statement.
+
+`-Wpointer-arith'
+
+`-Wuninitialized'
+   _Pragmatics: Due to the way that GDB is implemented most functions
+have unused parameters.  Consequently the warning `-Wunused-parameter'
+is precluded from the list.  The macro `ATTRIBUTE_UNUSED' is not used
+as it leads to false negatives -- it is not an error to have
+`ATTRIBUTE_UNUSED' on a parameter that is being used.  The options
+`-Wall' and `-Wunused' are also precluded because they both include
+`-Wunused-parameter'._
+
+   _Pragmatics: GDB has not simply accepted the warnings enabled by
+`-Wall -Werror -W...'.  Instead it is selecting warnings when and where
+their benefits can be demonstrated._
+
+Formatting
+----------
+
+   The standard GNU recommendations for formatting must be followed
+strictly.
+
+   A function declaration should not have its name in column zero.  A
+function definition should have its name in column zero.
+
+     /* Declaration */
+     static void foo (void);
+     /* Definition */
+     void
+     foo (void)
+     {
+     }
+
+   _Pragmatics: This simplifies scripting.  Function definitions can be
+found using `^function-name'._
+
+   There must be a space between a function or macro name and the
+opening parenthesis of its argument list (except for macro definitions,
+as required by C).  There must not be a space after an open
+paren/bracket or before a close paren/bracket.
+
+   While additional whitespace is generally helpful for reading, do not
+use more than one blank line to separate blocks, and avoid adding
+whitespace after the end of a program line (as of 1/99, some 600 lines
+had whitespace after the semicolon).  Excess whitespace causes
+difficulties for `diff' and `patch' utilities.
+
+   Pointers are declared using the traditional K&R C style:
+
+     void *foo;
+
+and not:
+
+     void * foo;
+     void* foo;
+
+Comments
+--------
+
+   The standard GNU requirements on comments must be followed strictly.
+
+   Block comments must appear in the following form, with no `/*'- or
+`*/'-only lines, and no leading `*':
+
+     /* Wait for control to return from inferior to debugger.  If inferior
+        gets a signal, we may decide to start it up again instead of
+        returning.  That is why there is a loop in this function.  When
+        this function actually returns it means the inferior should be left
+        stopped and GDB should read more commands.  */
+
+   (Note that this format is encouraged by Emacs; tabbing for a
+multi-line comment works correctly, and `M-q' fills the block
+consistently.)
+
+   Put a blank line between the block comments preceding function or
+variable definitions, and the definition itself.
+
+   In general, put function-body comments on lines by themselves, rather
+than trying to fit them into the 20 characters left at the end of a
+line, since either the comment or the code will inevitably get longer
+than will fit, and then somebody will have to move it anyhow.
+
+C Usage
+-------
+
+   Code must not depend on the sizes of C data types, the format of the
+host's floating point numbers, the alignment of anything, or the order
+of evaluation of expressions.
+
+   Use functions freely.  There are only a handful of compute-bound
+areas in GDB that might be affected by the overhead of a function call,
+mainly in symbol reading.  Most of GDB's performance is limited by the
+target interface (whether serial line or system call).
+
+   However, use functions with moderation.  A thousand one-line
+functions are just as hard to understand as a single thousand-line
+function.
+
+   _Macros are bad, M'kay._ (But if you have to use a macro, make sure
+that the macro arguments are protected with parentheses.)
+
+   Declarations like `struct foo *' should be used in preference to
+declarations like `typedef struct foo { ... } *foo_ptr'.
+
+Function Prototypes
+-------------------
+
+   Prototypes must be used when both _declaring_ and _defining_ a
+function.  Prototypes for GDB functions must include both the argument
+type and name, with the name matching that used in the actual function
+definition.
+
+   All external functions should have a declaration in a header file
+that callers include, except for `_initialize_*' functions, which must
+be external so that `init.c' construction works, but shouldn't be
+visible to random source files.
+
+   Where a source file needs a forward declaration of a static function,
+that declaration must appear in a block near the top of the source file.
+
+Internal Error Recovery
+-----------------------
+
+   During its execution, GDB can encounter two types of errors.  User
+errors and internal errors.  User errors include not only a user
+entering an incorrect command but also problems arising from corrupt
+object files and system errors when interacting with the target.
+Internal errors include situations where GDB has detected, at run time,
+a corrupt or erroneous situation.
+
+   When reporting an internal error, GDB uses `internal_error' and
+`gdb_assert'.
+
+   GDB must not call `abort' or `assert'.
+
+   _Pragmatics: There is no `internal_warning' function.  Either the
+code detected a user error, recovered from it and issued a `warning' or
+the code failed to correctly recover from the user error and issued an
+`internal_error'._
+
+File Names
+----------
+
+   Any file used when building the core of GDB must be in lower case.
+Any file used when building the core of GDB must be 8.3 unique.  These
+requirements apply to both source and generated files.
+
+   _Pragmatics: The core of GDB must be buildable on many platforms
+including DJGPP and MacOS/HFS.  Every time an unfriendly file is
+introduced to the build process both `Makefile.in' and `configure.in'
+need to be modified accordingly.  Compare the convoluted conversion
+process needed to transform `COPYING' into `copying.c' with the
+conversion needed to transform `version.in' into `version.c'._
+
+   Any file non 8.3 compliant file (that is not used when building the
+core of GDB) must be added to `gdb/config/djgpp/fnchange.lst'.
+
+   _Pragmatics: This is clearly a compromise._
+
+   When GDB has a local version of a system header file (ex `string.h')
+the file name based on the POSIX header prefixed with `gdb_'
+(`gdb_string.h').
+
+   For other files `-' is used as the separator.
+
+Include Files
+-------------
+
+   A `.c' file should include `defs.h' first.
+
+   A `.c' file should directly include the `.h' file of every
+declaration and/or definition it directly refers to.  It cannot rely on
+indirect inclusion.
+
+   A `.h' file should directly include the `.h' file of every
+declaration and/or definition it directly refers to.  It cannot rely on
+indirect inclusion.  Exception: The file `defs.h' does not need to be
+directly included.
+
+   An external declaration should only appear in one include file.
+
+   An external declaration should never appear in a `.c' file.
+Exception: a declaration for the `_initialize' function that pacifies
+`-Wmissing-declaration'.
+
+   A `typedef' definition should only appear in one include file.
+
+   An opaque `struct' declaration can appear in multiple `.h' files.
+Where possible, a `.h' file should use an opaque `struct' declaration
+instead of an include.
+
+   All `.h' files should be wrapped in:
+
+     #ifndef INCLUDE_FILE_NAME_H
+     #define INCLUDE_FILE_NAME_H
+     header body
+     #endif
+
+Clean Design and Portable Implementation
+----------------------------------------
+
+   In addition to getting the syntax right, there's the little question
+of semantics.  Some things are done in certain ways in GDB because long
+experience has shown that the more obvious ways caused various kinds of
+trouble.
+
+   You can't assume the byte order of anything that comes from a target
+(including VALUEs, object files, and instructions).  Such things must
+be byte-swapped using `SWAP_TARGET_AND_HOST' in GDB, or one of the swap
+routines defined in `bfd.h', such as `bfd_get_32'.
+
+   You can't assume that you know what interface is being used to talk
+to the target system.  All references to the target must go through the
+current `target_ops' vector.
+
+   You can't assume that the host and target machines are the same
+machine (except in the "native" support modules).  In particular, you
+can't assume that the target machine's header files will be available
+on the host machine.  Target code must bring along its own header files
+- written from scratch or explicitly donated by their owner, to avoid
+copyright problems.
+
+   Insertion of new `#ifdef''s will be frowned upon.  It's much better
+to write the code portably than to conditionalize it for various
+systems.
+
+   New `#ifdef''s which test for specific compilers or manufacturers or
+operating systems are unacceptable.  All `#ifdef''s should test for
+features.  The information about which configurations contain which
+features should be segregated into the configuration files.  Experience
+has proven far too often that a feature unique to one particular system
+often creeps into other systems; and that a conditional based on some
+predefined macro for your current system will become worthless over
+time, as new versions of your system come out that behave differently
+with regard to this feature.
+
+   Adding code that handles specific architectures, operating systems,
+target interfaces, or hosts, is not acceptable in generic code.
+
+   One particularly notorious area where system dependencies tend to
+creep in is handling of file names.  The mainline GDB code assumes
+Posix semantics of file names: absolute file names begin with a forward
+slash `/', slashes are used to separate leading directories,
+case-sensitive file names.  These assumptions are not necessarily true
+on non-Posix systems such as MS-Windows.  To avoid system-dependent
+code where you need to take apart or construct a file name, use the
+following portable macros:
+
+`HAVE_DOS_BASED_FILE_SYSTEM'
+     This preprocessing symbol is defined to a non-zero value on hosts
+     whose filesystems belong to the MS-DOS/MS-Windows family.  Use this
+     symbol to write conditional code which should only be compiled for
+     such hosts.
+
+`IS_DIR_SEPARATOR (C)'
+     Evaluates to a non-zero value if C is a directory separator
+     character.  On Unix and GNU/Linux systems, only a slash `/' is
+     such a character, but on Windows, both `/' and `\' will pass.
+
+`IS_ABSOLUTE_PATH (FILE)'
+     Evaluates to a non-zero value if FILE is an absolute file name.
+     For Unix and GNU/Linux hosts, a name which begins with a slash `/'
+     is absolute.  On DOS and Windows, `d:/foo' and `x:\bar' are also
+     absolute file names.
+
+`FILENAME_CMP (F1, F2)'
+     Calls a function which compares file names F1 and F2 as
+     appropriate for the underlying host filesystem.  For Posix systems,
+     this simply calls `strcmp'; on case-insensitive filesystems it
+     will call `strcasecmp' instead.
+
+`DIRNAME_SEPARATOR'
+     Evaluates to a character which separates directories in
+     `PATH'-style lists, typically held in environment variables.  This
+     character is `:' on Unix, `;' on DOS and Windows.
+
+`SLASH_STRING'
+     This evaluates to a constant string you should use to produce an
+     absolute filename from leading directories and the file's basename.
+     `SLASH_STRING' is `"/"' on most systems, but might be `"\\"' for
+     some Windows-based ports.
+
+   In addition to using these macros, be sure to use portable library
+functions whenever possible.  For example, to extract a directory or a
+basename part from a file name, use the `dirname' and `basename'
+library functions (available in `libiberty' for platforms which don't
+provide them), instead of searching for a slash with `strrchr'.
+
+   Another way to generalize GDB along a particular interface is with an
+attribute struct.  For example, GDB has been generalized to handle
+multiple kinds of remote interfaces--not by `#ifdef's everywhere, but
+by defining the `target_ops' structure and having a current target (as
+well as a stack of targets below it, for memory references).  Whenever
+something needs to be done that depends on which remote interface we are
+using, a flag in the current target_ops structure is tested (e.g.,
+`target_has_stack'), or a function is called through a pointer in the
+current target_ops structure.  In this way, when a new remote interface
+is added, only one module needs to be touched--the one that actually
+implements the new remote interface.  Other examples of
+attribute-structs are BFD access to multiple kinds of object file
+formats, or GDB's access to multiple source languages.
+
+   Please avoid duplicating code.  For example, in GDB 3.x all the code
+interfacing between `ptrace' and the rest of GDB was duplicated in
+`*-dep.c', and so changing something was very painful.  In GDB 4.x,
+these have all been consolidated into `infptrace.c'.  `infptrace.c' can
+deal with variations between systems the same way any system-independent
+file would (hooks, `#if defined', etc.), and machines which are
+radically different don't need to use `infptrace.c' at all.
+
+   All debugging code must be controllable using the `set debug MODULE'
+command.  Do not use `printf' to print trace messages.  Use
+`fprintf_unfiltered(gdb_stdlog, ...'.  Do not use `#ifdef DEBUG'.
+
+
+File: gdbint.info,  Node: Porting GDB,  Next: Releasing GDB,  Prev: Coding,  Up: Top
+
+Porting GDB
+***********
+
+   Most of the work in making GDB compile on a new machine is in
+specifying the configuration of the machine.  This is done in a
+dizzying variety of header files and configuration scripts, which we
+hope to make more sensible soon.  Let's say your new host is called an
+XYZ (e.g.,  `sun4'), and its full three-part configuration name is
+`ARCH-XVEND-XOS' (e.g., `sparc-sun-sunos4').  In particular:
+
+   * In the top level directory, edit `config.sub' and add ARCH, XVEND,
+     and XOS to the lists of supported architectures, vendors, and
+     operating systems near the bottom of the file.  Also, add XYZ as
+     an alias that maps to `ARCH-XVEND-XOS'.  You can test your changes
+     by running
+
+          ./config.sub XYZ
+
+     and
+
+          ./config.sub `ARCH-XVEND-XOS'
+
+     which should both respond with `ARCH-XVEND-XOS' and no error
+     messages.
+
+     You need to port BFD, if that hasn't been done already.  Porting
+     BFD is beyond the scope of this manual.
+
+   * To configure GDB itself, edit `gdb/configure.host' to recognize
+     your system and set `gdb_host' to XYZ, and (unless your desired
+     target is already available) also edit `gdb/configure.tgt',
+     setting `gdb_target' to something appropriate (for instance, XYZ).
+
+     _Maintainer's note: Work in progress.  The file
+     `gdb/configure.host' originally needed to be modified when either a
+     new native target or a new host machine was being added to GDB.
+     Recent changes have removed this requirement.  The file now only
+     needs to be modified when adding a new native configuration.  This
+     will likely changed again in the future._
+
+   * Finally, you'll need to specify and define GDB's host-, native-,
+     and target-dependent `.h' and `.c' files used for your
+     configuration.
+
+Configuring GDB for Release
+===========================
+
+   From the top level directory (containing `gdb', `bfd', `libiberty',
+and so on):
+
+     make -f Makefile.in gdb.tar.gz
+
+This will properly configure, clean, rebuild any files that are
+distributed pre-built (e.g. `c-exp.tab.c' or `refcard.ps'), and will
+then make a tarfile.  (If the top level directory has already been
+configured, you can just do `make gdb.tar.gz' instead.)
+
+   This procedure requires:
+
+   * symbolic links;
+
+   * `makeinfo' (texinfo2 level);
+
+   * TeX;
+
+   * `dvips';
+
+   * `yacc' or `bison'.
+
+... and the usual slew of utilities (`sed', `tar', etc.).
+
+TEMPORARY RELEASE PROCEDURE FOR DOCUMENTATION
+---------------------------------------------
+
+   `gdb.texinfo' is currently marked up using the texinfo-2 macros,
+which are not yet a default for anything (but we have to start using
+them sometime).
+
+   For making paper, the only thing this implies is the right
+generation of `texinfo.tex' needs to be included in the distribution.
+
+   For making info files, however, rather than duplicating the texinfo2
+distribution, generate `gdb-all.texinfo' locally, and include the files
+`gdb.info*' in the distribution.  Note the plural; `makeinfo' will
+split the document into one overall file and five or so included files.
+

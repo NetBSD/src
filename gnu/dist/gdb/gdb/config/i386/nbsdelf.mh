@@ -1,0 +1,4 @@
+# Host: Intel 386 running NetBSD
+NATDEPFILES= fork-child.o infptrace.o inftarg.o i386bsd-nat.o
+XM_FILE= xm-nbsd.h
+NAT_FILE= nm-nbsd.h
