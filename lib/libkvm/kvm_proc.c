@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.38 2000/06/29 06:34:25 mrg Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.39 2000/07/16 02:04:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.38 2000/06/29 06:34:25 mrg Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.39 2000/07/16 02:04:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ struct miniproc {
 	} while (/*CONSTCOND*/0);
 
 
-#define	PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
+#define	PTRTOINT64(foo)	((u_int64_t)(u_long)(void *)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -469,9 +469,6 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 	int mib[6], st, nprocs;
 	struct user user;
 
-	if (esize < 0)
-		return NULL;
-
 	if (kd->procbase2 != NULL) {
 		free(kd->procbase2);
 		/*
@@ -516,7 +513,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			return NULL;
 
 		kd->procbase2 = _kvm_malloc(kd, nprocs * esize);
-		kp2c = (char *)kd->procbase2;
+		kp2c = (char *)(void *)kd->procbase2;
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
 			memset(kp2p, 0, sizeof(kp2));
@@ -552,6 +549,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_gid = kp->kp_eproc.e_ucred.cr_gid;
 			kp2p->p_rgid = kp->kp_eproc.e_pcred.p_rgid;
 
+			/*CONSTCOND*/
 			memcpy(kp2p->p_groups, kp->kp_eproc.e_ucred.cr_groups,
 			    MIN(sizeof(kp2p->p_groups), sizeof(kp->kp_eproc.e_ucred.cr_groups)));
 			kp2p->p_ngroups = kp->kp_eproc.e_ucred.cr_ngroups;
@@ -596,6 +594,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_xstat = kp->kp_proc.p_xstat;
 			kp2p->p_acflag = kp->kp_proc.p_acflag;
 
+			/*CONSTCOND*/
 			strncpy(kp2p->p_comm, kp->kp_proc.p_comm,
 			    MIN(sizeof(kp2p->p_comm), sizeof(kp->kp_proc.p_comm)));
 
@@ -609,7 +608,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_vm_dsize = kp->kp_eproc.e_vm.vm_dsize;
 			kp2p->p_vm_ssize = kp->kp_eproc.e_vm.vm_ssize;
 
-			kp2p->p_eflag = kp->kp_eproc.e_flag;
+			kp2p->p_eflag = (int32_t)kp->kp_eproc.e_flag;
 
 			if (P_ZOMBIE(&kp->kp_proc) || kp->kp_proc.p_addr == NULL ||
 			    KREAD(kd, (u_long)kp->kp_proc.p_addr, &user)) {
@@ -617,13 +616,19 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			} else {
 				kp2p->p_uvalid = 1;
 
-				kp2p->p_ustart_sec = user.u_stats.p_start.tv_sec;
-				kp2p->p_ustart_usec = user.u_stats.p_start.tv_usec;
+				kp2p->p_ustart_sec = (u_int32_t)
+				    user.u_stats.p_start.tv_sec;
+				kp2p->p_ustart_usec = (u_int32_t)
+				    user.u_stats.p_start.tv_usec;
 
-				kp2p->p_uutime_sec = user.u_stats.p_ru.ru_utime.tv_sec;
-				kp2p->p_uutime_usec = user.u_stats.p_ru.ru_utime.tv_usec;
-				kp2p->p_ustime_sec = user.u_stats.p_ru.ru_stime.tv_sec;
-				kp2p->p_ustime_usec = user.u_stats.p_ru.ru_stime.tv_usec;
+				kp2p->p_uutime_sec = (u_int32_t)
+				    user.u_stats.p_ru.ru_utime.tv_sec;
+				kp2p->p_uutime_usec = (u_int32_t)
+				    user.u_stats.p_ru.ru_utime.tv_usec;
+				kp2p->p_ustime_sec = (u_int32_t)
+				    user.u_stats.p_ru.ru_stime.tv_sec;
+				kp2p->p_ustime_usec = (u_int32_t)
+				    user.u_stats.p_ru.ru_stime.tv_usec;
 
 				kp2p->p_uru_maxrss = user.u_stats.p_ru.ru_maxrss;
 				kp2p->p_uru_ixrss = user.u_stats.p_ru.ru_ixrss;
@@ -640,10 +645,12 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 				kp2p->p_uru_nvcsw = user.u_stats.p_ru.ru_nvcsw;
 				kp2p->p_uru_nivcsw = user.u_stats.p_ru.ru_nivcsw;
 
-				kp2p->p_uctime_sec = user.u_stats.p_cru.ru_utime.tv_sec +
-				    user.u_stats.p_cru.ru_stime.tv_sec;
-				kp2p->p_uctime_usec = user.u_stats.p_cru.ru_utime.tv_usec +
-				    user.u_stats.p_cru.ru_stime.tv_usec;
+				kp2p->p_uctime_sec = (u_int32_t)
+				    (user.u_stats.p_cru.ru_utime.tv_sec +
+				    user.u_stats.p_cru.ru_stime.tv_sec);
+				kp2p->p_uctime_usec = (u_int32_t)
+				    (user.u_stats.p_cru.ru_utime.tv_usec +
+				    user.u_stats.p_cru.ru_stime.tv_usec);
 			}
 
 			memcpy(kp2c, &kp2, esize);
@@ -1002,7 +1009,8 @@ kvm_doargv2(kd, pid, type, nchr)
 	int nchr;
 {
 	size_t bufs;
-	int narg, newarglen, mib[4];
+	int narg, mib[4];
+	size_t newarglen;
 	char **ap, *bp, *endp;
 
 	/*
@@ -1051,7 +1059,7 @@ kvm_doargv2(kd, pid, type, nchr)
 			return NULL;
 		kd->arglen = newarglen;
 	}
-	memset(kd->argspc, 0, kd->arglen);	/* XXX necessary? */
+	memset(kd->argspc, 0, (size_t)kd->arglen);	/* XXX necessary? */
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC_ARGS;
