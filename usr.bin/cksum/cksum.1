@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.14 2000/07/03 05:27:15 enami Exp $
+.\"	$NetBSD: cksum.1,v 1.15 2001/03/20 18:46:25 atatat Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,19 +41,52 @@
 .Os
 .Sh NAME
 .Nm cksum ,
+.Nm md2 ,
+.Nm md4 ,
 .Nm md5 ,
+.Nm sha1 ,
+.Nm rmd160 ,
 .Nm sum
 .Nd display file checksums and block counts
 .Sh SYNOPSIS
 .Nm
 .Oo
 .Fl m |
+.Fl 1 |
+.Fl 2 |
+.Fl 4 |
+.Fl 5 |
+.Fl 6 |
 .Op Fl o Ar 1 | Ar 2
 .Oc
 .Op Ar
 .Nm sum
 .Op Ar
+.Nm md2
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ar string
+.Op Ar
+.Nm md4
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ar string
+.Op Ar
 .Nm md5
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ar string
+.Op Ar
+.Nm sha1
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ar string
+.Op Ar
+.Nm rmd160
 .Op Fl p
 .Op Fl t
 .Op Fl x
@@ -95,10 +128,33 @@ in a secure manner before being encrypted with a private (secret)
 key under a public-key encryption system such as
 .Pa RSA .
 .Pp
+The
+.Nm md2
+and
+.Nm md4
+utilities behave in exactly the same manner as
+.Nm md5
+but use a different algorithms.
+.Pp
+The
+.Nm sha1
+and
+.Nm rmd160
+utilities also produce message digests, however the output from these
+two programs is 160 bits in length, as opposed to 128.
+.Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl m
+.It Fl 1
+Use the SHA1 algorithm rather than the default one.
+.It Fl 2
+Use the MD2 algorithm rather than the default one.
+.It Fl 4
+Use the MD4 algorithm rather than the default one.
+.It Fl m | 5
 Use the MD5 algorithm rather than the default one.
+.It Fl 6
+Use the RMD160 algorithm rather than the default one.
 .It Fl o
 Use historic algorithms instead of the (superior) default one.
 .Pp
@@ -137,17 +193,23 @@ for algorithm 2.
 Partial blocks are rounded up.
 .El
 .Pp
-The following options apply only when using the MD5 algorithm:
+The following options apply only when using the one of the message
+digest algorithms:
 .Bl -tag -width indent
 .It Fl s Ar string
-Print the MD5 checksum of the given string
+Print the hash of the given string
 .Ar string .
 .It Fl p
-Echo input from standard input to standard output, and append an MD5 checksum.
+Echo input from standard input to standard output, and append the
+selected message digest.
 .It Fl t
-Run a built-in MD5 time trial.
+Run a built-in message digest time trial.
 .It Fl x
-Run a built-in MD5 test script.
+Run a built-in message digest test script.  The tests that are run
+are supposed to encompass all the various tests in the suites that
+accompany the algorithms' descriptions with the exception of the the
+last test for the SHA-1 algorithm and the RIPEMD-160 algorithm.  The
+last test for these is one million copies of the lower letter a.
 .El
 .Pp
 The default
@@ -210,6 +272,26 @@ article.
 .%J "Communications of the \\*(tNACM\\*(sP"
 .%D "August 1988"
 .Re
+.Rs
+.%A R. Rivest
+.%T The MD2 Message-Digest Algorithm
+.%O RFC 1319
+.Re
+.Rs
+.%A R. Rivest
+.%T The MD4 Message-Digest Algorithm
+.%O RFC 1186 and RFC 1320
+.Re
+.Rs
+.%A R. Rivest
+.%T The MD5 Message-Digest Algorithm
+.%O RFC 1321
+.Re
+.Rs
+.%A U.S. DOC/NIST
+.%T Secure Hash Standard
+.%O FIPS PUB 180-1
+.Re
 .Sh STANDARDS
 The
 .Nm
@@ -220,6 +302,14 @@ The
 .Nm
 utility appeared in
 .Bx 4.4 .
+The functionality for
+.Nm md2 ,
+.Nm md4 ,
+.Nm sha1 ,
+and
+.Nm rmd160
+was added in
+.Nx 1.6 .
 .\" .Pp
 .\" The
 .\" .Nm sum
