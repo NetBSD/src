@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.5 2003/04/16 14:56:55 dsl Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.6 2003/07/27 07:02:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -111,7 +111,7 @@ comspeed(speed)
 		return divrnd((COM_FREQ / 16), 9600);
 	return (x);
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 /*
