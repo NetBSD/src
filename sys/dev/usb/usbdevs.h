@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.37 1999/08/24 21:25:52 soren Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.38 1999/08/25 20:34:56 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.37 1999/08/24 21:25:22 soren Exp 
+ *	aNetBSD: usbdevs,v 1.38 1999/08/25 16:28:12 augustss Exp 
  */
 
 /*
@@ -85,6 +85,7 @@
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
+#define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
@@ -206,6 +207,9 @@
 
 /* Macally products */
 #define	USB_PRODUCT_MACALLY_MOUSE1	0x0101		/* mouse */
+
+/* MultiTech products */
+#define	USB_PRODUCT_MULTITECH_MT5634ZBA	0xf101		/* MT5634ZBA */
 
 /* ADS products */
 #define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
