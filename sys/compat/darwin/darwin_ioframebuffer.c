@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.5 2003/05/13 20:48:16 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.6 2003/05/14 14:41:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.5 2003/05/13 20:48:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.6 2003/05/14 14:41:05 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,6 @@ static char darwin_iofbconfig[] = "<dict ID=\"0\"><key>IOFBModes</key><array ID=
 
 static char darwin_ioframebuffer_properties[] = "<dict ID=\"0\"><key>IOClass</key><string ID=\"1\">AppleBacklightDisplay</string><key>IOProbeScore</key><integer size=\"32\" ID=\"2\">0xbb8</integer><key>IOProviderClass</key><string ID=\"3\">IODisplayConnect</string><key>CFBundleIdentifier</key><string ID=\"4\">com.apple.iokit.IOGraphicsFamily</string><key>IOMatchCategory</key><string ID=\"5\">IODefaultMatchCategory</string><key>IODisplayConnectFlags</key><data ID=\"6\">AAAIxA==</data><key>AppleDisplayType</key><integer size=\"32\" ID=\"7\">0x2</integer><key>AppleSense</key><integer size=\"32\" ID=\"8\">0x400</integer><key>DisplayVendorID</key><integer size=\"32\" ID=\"9\">0x756e6b6e</integer><key>DisplayProductID</key><integer size=\"32\" ID=\"10\">0x20000</integer><key>IODisplayParameters</key><dict ID=\"11\"><key>brightness</key><dict ID=\"12\"><key>max</key><integer size=\"32\" ID=\"13\">0x73</integer><key>min</key><integer size=\"32\" ID=\"14\">0x3a</integer><key>value</key><integer size=\"32\" ID=\"15\">0x7f</integer></dict><key>commit</key><dict ID=\"16\"><key>reg</key><integer size=\"32\" ID=\"17\">0x0</integer></dict></dict><key>IODisplayGUID</key><integer size=\"64\" ID=\"18\">0x610000000000000</integer><key>Power Management protected data</key><string ID=\"19\">{ theNumberOfPowerStates = 4, version 1, power state 0 = { capabilityFlags 00000000, outputPowerCharacter 00000000, inputPowerRequirement 00000000, staticPower 0, unbudgetedPower 0, powerToAttain 0, timeToAttain 0, settleUpTime 0, timeToLower 0, settleDownTime 0, powerDomainBudget 0 }, power state 1 = { capabilityFlags 00000000, outputPowerCharacter 00000000, inputPowerRequirement 00000000, staticPower 0, unbudgetedPower 0, powerToAttain 0, timeToAttain 0, settleUpTime 0, timeToLower 0, settleDownTime 0, powerDomainBudget 0 }, power state 2 = { capabilityFlags 00008000, outputPowerCharacter 00000000, inputPowerRequirement 00000002, staticPower 0, unbudgetedPower 0, powerToAttain 0, timeToAttain 0, settleUpTime 0, timeToLower 0, settleDownTime 0, powerDomainBudget 0 }, power state 3 = { capabilityFlags 0000c000, outputPowerCharacter 00000000, inputPowerRequirement 00000002, staticPower 0, unbudgetedPower 0, powerToAttain 0, timeToAttain 0, settleUpTime 0, timeToLower 0, settleDownTime 0, powerDomainBudget 0 }, aggressiveness = 0, myCurrentState = 0, parentsCurrentPowerFlags = 00000002, maxCapability = 3 }</string><key>Power Management private data</key><string ID=\"20\">{ this object = 0114c800, interested driver = 0114c800, driverDesire = 0, deviceDesire = 0, ourDesiredPowerState = 0, previousReqest = 0 }</string></dict>";
 
-
 struct mach_iokit_property darwin_ioframebuffer_properties_array[] = {
 	{ "IOFBDependentID", NULL },
 	{ "IOFBDependentIndex", NULL },
@@ -80,6 +79,8 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	darwin_ioframebuffer_properties,
 	darwin_ioframebuffer_properties_array,
 	darwin_ioframebuffer_connect_method_scalari_scalaro,
+	darwin_ioframebuffer_connect_method_scalari_structo,
+	darwin_ioframebuffer_connect_method_structi_structo,
 	NULL,
 	"IOFramebuffer",
 };
@@ -95,6 +96,176 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_scalaro()\n");
+	printf("select = %d, incount = %d, in0 = %d, in1 = %d, in2 = %d\n",
+		req->req_selector, req->req_incount, req->req_in[0],
+		req->req_in[1], req->req_in[2]);
+	printf("outcount = %d\n", req->req_in[req->req_incount]);
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+
+	/*
+	 * XXX this is ugly, but we don't really know what we are doing here.
+	 */
+	if (req->req_in[0] == 0x00000003) {
+#ifdef DEBUG_MACH
+		printf("flavor 1\n");
+#endif
+		rep->rep_outcount = 1;
+		rep->rep_outcount = 0;
+	}
+
+	/* Called from main() */
+	if ((req->req_selector == 0) && (req->req_in[0] == 0x2) &&
+	    (req->req_in[1] == 0x20) && (req->req_in[2] == 0x20) &&
+	    (req->req_in[req->req_incount] >= 0)) {
+#ifdef DEBUG_MACH
+		printf("flavor 2\n");
+#endif
+		rep->rep_outcount = 0;
+	}
+
+	/* called from IOFramebufferServerOpen() */
+	if ((req->req_selector == 0x2) && 
+	    (req->req_in[req->req_incount] >= 2)) {
+#ifdef DEBUG_MACH
+		printf("flavor 3\n");
+#endif
+		rep->rep_outcount = 2;
+		rep->rep_out[0] = 0x2e;
+		rep->rep_out[1] = 2;
+	}
+
+	/* IOFBRebuild gives this */
+	if ((req->req_selector == 0x12) && (req->req_in[0] == 0x6d726466) &&
+	    (req->req_in[req->req_incount] >= 1)) {
+#ifdef DEBUG_MACH
+		printf("flavor 4\n");
+#endif
+		rep->rep_outcount = 1;
+		rep->rep_out[0] = 0;
+	}
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - ((16 - rep->rep_outcount) * sizeof(int));
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	return 0;
+}
+
+int
+darwin_ioframebuffer_connect_method_scalari_structo(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_scalari_structo_request_t *req = args->smsg;
+	mach_io_connect_method_scalari_structo_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_ioframebuffer_connect_method_scalari_structo()\n");
+	printf("select = %d, incount = %d, in0 = %d, in1 = %d, in2 = %d\n",
+		req->req_selector, req->req_incount, req->req_in[0],
+		req->req_in[1], req->req_in[2]);
+	printf("outcount = %d\n", req->req_in[req->req_incount]);
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+
+	/*
+	 * XXX this is ugly, but we don't really know what we are doing here.
+	 */
+	/* IOFBGetPixelInformation gives this */
+	if ((req->req_selector == 1) && (req->req_incount == 3) &&
+	    (req->req_in[0] == 0x2e) && 
+	    (req->req_in[1] == 0x0) &&
+	    (req->req_in[2] == 0x0) && 
+	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
+#ifdef DEBUG_MACH
+		printf("flavor 1\n");
+#endif
+		rep->rep_outcount = req->req_in[req->req_incount];
+		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
+		rep->rep_out[2] = 0x4;
+		rep->rep_out[11] = 0x8;
+		rep->rep_out[19] = 0x1;
+		rep->rep_out[23] = 0x8;
+		rep->rep_out[27] = 0xff;
+		rep->rep_out[88] = 0x50;
+		rep->rep_out[89] = 0x50;
+		rep->rep_out[90] = 0x50;
+		rep->rep_out[91] = 0x50;
+		rep->rep_out[92] = 0x50;
+		rep->rep_out[93] = 0x50;
+		rep->rep_out[94] = 0x50;
+		rep->rep_out[95] = 0x50;
+		rep->rep_out[158] = 0x4;
+		rep->rep_out[162] = 0x3;
+	}
+
+	/* IOFBGetPixelInformation gives this too */
+	if ((req->req_selector == 1) && (req->req_incount == 3) &&
+	    (req->req_in[0] == 0x2e) && 
+	    (req->req_in[1] == 0x1) &&
+	    (req->req_in[2] == 0x0) && 
+	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
+#ifdef DEBUG_MACH
+		printf("flavor 1\n");
+#endif
+		rep->rep_outcount = req->req_in[req->req_incount];
+		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
+		rep->rep_out[2] = 0x8;
+		rep->rep_out[11] = 0x10;
+		rep->rep_out[15] = 0x2;
+		rep->rep_out[19] = 0x3;
+		rep->rep_out[23] = 0x5;
+		rep->rep_out[26] = 0x7c;
+		rep->rep_out[30] = 0x3;
+		rep->rep_out[31] = 0xe0;
+		rep->rep_out[35] = 0x1f;
+		rep->rep_out[88] = 0x2d;
+		rep->rep_out[89] = 0x52;
+		rep->rep_out[90] = 0x52;
+		rep->rep_out[91] = 0x52;
+		rep->rep_out[92] = 0x52;
+		rep->rep_out[93] = 0x52;
+		rep->rep_out[94] = 0x47;
+		rep->rep_out[95] = 0x47;
+		rep->rep_out[96] = 0x47;
+		rep->rep_out[97] = 0x47;
+		rep->rep_out[98] = 0x47;
+		rep->rep_out[99] = 0x42;
+		rep->rep_out[99] = 0x42;
+		rep->rep_out[100] = 0x42;
+		rep->rep_out[101] = 0x42;
+		rep->rep_out[102] = 0x42;
+		rep->rep_out[103] = 0x42;
+		rep->rep_out[158] = 0x4;
+		rep->rep_out[162] = 0x3;
+	}
+	rep->rep_out[rep->rep_outcount + 7] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	return 0;
+}
+
+int
+darwin_ioframebuffer_connect_method_structi_structo(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
+	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_ioframebuffer_connect_method_structi_structo()\n");
 #endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -105,20 +276,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	rep->rep_out[0] = 1;
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
-	/*
-	 * XXX this is ugly, but we don't really know what we are doing here.
-	 */
-	rep->rep_outcount = 1;
-	rep->rep_out[0] = 1;
-	if (req->req_in[0] == 0x00000003) {
-		rep->rep_outcount = 0;
-	}
-	if (req->req_in[0] == 0x6d726466) {
-		rep->rep_outcount = 1;
-		rep->rep_out[0] = 0;
-	}
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
-
-	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
+	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.4 2003/04/29 22:16:38 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.5 2003/05/14 14:41:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.4 2003/04/29 22:16:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.5 2003/05/14 14:41:05 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,8 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	NULL,
 	NULL,
 	darwin_iohidsystem_connect_method_scalari_scalaro,
+	NULL,
+	NULL,
 	darwin_iohidsystem_connect_map_memory,
 	"IOHIDSystem",
 };
