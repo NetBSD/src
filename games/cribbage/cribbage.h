@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.9 2003/08/07 09:37:09 agc Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.10 2004/01/26 09:58:35 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -102,7 +102,7 @@ void	 printcard __P((WINDOW *, int, CARD, BOOLEAN));
 void	 prpeg __P((int, int, BOOLEAN));
 void	 prtable __P((int));
 int	 readchar __P((void));
-void	 rint __P((int)) __attribute__((__noreturn__));
+void	 receive_intr __P((int)) __attribute__((__noreturn__));
 int	 score __P((BOOLEAN));
 int	 scorehand __P((const CARD [], CARD, int, BOOLEAN, BOOLEAN));
 void	 shuffle __P((CARD []));
