@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.12 2004/07/24 18:59:16 christos Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.12.6.1 2005/02/12 18:17:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ struct lm_softc {
 	struct	envsys_tre_data sensors[WB_NUM_SENSORS];
 	struct	envsys_basic_info info[WB_NUM_SENSORS];
 	u_int numsensors;
-	void (*refresh_sensor_data) __P((struct lm_softc *));
+	void (*refresh_sensor_data)(struct lm_softc *);
 
 	int (*lm_banksel)(struct lm_softc *, int);
 	u_int8_t (*lm_readreg)(struct lm_softc *, int);
@@ -171,7 +171,7 @@ struct lm_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-void lm_attach __P((struct lm_softc *));
-int lm_probe __P((bus_space_tag_t, bus_space_handle_t));
+void lm_attach(struct lm_softc *);
+int lm_probe(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */

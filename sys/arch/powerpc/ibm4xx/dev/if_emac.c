@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.21 2005/01/21 15:19:09 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.21.2.1 2005/02/12 18:17:39 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.21 2005/01/21 15:19:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.21.2.1 2005/02/12 18:17:39 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1341,7 +1341,7 @@ emac_rxeob_intr(void *arg)
 		 * No errors; receive the packet.  Note, the 405GP emac
 		 * includes the CRC with every packet.
 		 */
-		len = sc->sc_rxdescs[i].md_data_len;
+		len = sc->sc_rxdescs[i].md_data_len - ETHER_CRC_LEN;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1379,7 +1379,6 @@ emac_rxeob_intr(void *arg)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 

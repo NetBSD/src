@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.h,v 1.7 1999/03/19 18:34:01 ad Exp $	*/
+/*	$NetBSD: lk201.h,v 1.7.52.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 
 /*
@@ -140,6 +140,6 @@
 #define LEFT_BUTTON		0x04
 
 #ifdef _KERNEL
-extern int LKgetc __P((dev_t dev));
-extern void lkdivert __P ((int (*getc_fn)(dev_t dev), dev_t dev));
+extern int LKgetc(dev_t dev);
+extern void lkdivert(int (*getc_fn)(dev_t dev), dev_t dev);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.11 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.11.12.1 2005/02/12 18:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -104,14 +104,14 @@ struct extent_fixed {
 
 struct malloc_type;
 
-struct	extent *extent_create __P((const char *, u_long, u_long,
-	    struct malloc_type *, caddr_t, size_t, int));
-void	extent_destroy __P((struct extent *));
-int	extent_alloc_subregion1 __P((struct extent *, u_long, u_long,
-	    u_long, u_long, u_long, u_long, int, u_long *));
-int	extent_alloc_region __P((struct extent *, u_long, u_long, int));
-int	extent_free __P((struct extent *, u_long, u_long, int));
-void	extent_print __P((struct extent *));
+struct	extent *extent_create(const char *, u_long, u_long,
+	    struct malloc_type *, caddr_t, size_t, int);
+void	extent_destroy(struct extent *);
+int	extent_alloc_subregion1(struct extent *, u_long, u_long,
+	    u_long, u_long, u_long, u_long, int, u_long *);
+int	extent_alloc_region(struct extent *, u_long, u_long, int);
+int	extent_free(struct extent *, u_long, u_long, int);
+void	extent_print(struct extent *);
 
 /* Simple case of extent_alloc_subregion() */
 #define extent_alloc(_ex, _size, _alignment, _boundary, _flags, _result) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: joyvar.h,v 1.3 2004/08/03 18:35:21 drochner Exp $	*/
+/*	$NetBSD: joyvar.h,v 1.3.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -46,7 +46,7 @@ struct joy_softc {
 	int	timeout[2];
 };
 
-void	joyattach __P((struct joy_softc *));
-int	joydetach __P((struct joy_softc *, int));
+void	joyattach(struct joy_softc *);
+int	joydetach(struct joy_softc *, int);
 
 #endif /* ! _JOYVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $	*/
+/*	$NetBSD: elink3.c,v 1.109.4.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.109.4.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,51 +188,50 @@ const struct ep_media ep_509_media[] = {
 	  0 },
 };
 
-void	ep_internalconfig __P((struct ep_softc *sc));
-void	ep_vortex_probemedia __P((struct ep_softc *sc));
-void	ep_509_probemedia __P((struct ep_softc *sc));
+void	ep_internalconfig(struct ep_softc *sc);
+void	ep_vortex_probemedia(struct ep_softc *sc);
+void	ep_509_probemedia(struct ep_softc *sc);
 
-static void eptxstat __P((struct ep_softc *));
-static int epstatus __P((struct ep_softc *));
-int	epinit __P((struct ifnet *));
-void	epstop __P((struct ifnet *, int));
-int	epioctl __P((struct ifnet *, u_long, caddr_t));
-void	epstart __P((struct ifnet *));
-void	epwatchdog __P((struct ifnet *));
-void	epreset __P((struct ep_softc *));
-static void epshutdown __P((void *));
-void	epread __P((struct ep_softc *));
-struct mbuf *epget __P((struct ep_softc *, int));
-void	epmbuffill __P((void *));
-void	epmbufempty __P((struct ep_softc *));
-void	epsetfilter __P((struct ep_softc *));
-void	ep_roadrunner_mii_enable __P((struct ep_softc *));
-void	epsetmedia __P((struct ep_softc *));
+static void eptxstat(struct ep_softc *);
+static int epstatus(struct ep_softc *);
+int	epinit(struct ifnet *);
+void	epstop(struct ifnet *, int);
+int	epioctl(struct ifnet *, u_long, caddr_t);
+void	epstart(struct ifnet *);
+void	epwatchdog(struct ifnet *);
+void	epreset(struct ep_softc *);
+static void epshutdown(void *);
+void	epread(struct ep_softc *);
+struct mbuf *epget(struct ep_softc *, int);
+void	epmbuffill(void *);
+void	epmbufempty(struct ep_softc *);
+void	epsetfilter(struct ep_softc *);
+void	ep_roadrunner_mii_enable(struct ep_softc *);
+void	epsetmedia(struct ep_softc *);
 
 /* ifmedia callbacks */
-int	ep_media_change __P((struct ifnet *ifp));
-void	ep_media_status __P((struct ifnet *ifp, struct ifmediareq *req));
+int	ep_media_change(struct ifnet *ifp);
+void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 
 /* MII callbacks */
-int	ep_mii_readreg __P((struct device *, int, int));
-void	ep_mii_writereg __P((struct device *, int, int, int));
-void	ep_statchg __P((struct device *));
+int	ep_mii_readreg(struct device *, int, int);
+void	ep_mii_writereg(struct device *, int, int, int);
+void	ep_statchg(struct device *);
 
-void	ep_tick __P((void *));
+void	ep_tick(void *);
 
-static int epbusyeeprom __P((struct ep_softc *));
-u_int16_t ep_read_eeprom __P((struct ep_softc *, u_int16_t));
-static inline void ep_reset_cmd __P((struct ep_softc *sc, 
-					u_int cmd, u_int arg));
-static inline void ep_finish_reset __P((bus_space_tag_t, bus_space_handle_t));
-static inline void ep_discard_rxtop __P((bus_space_tag_t, bus_space_handle_t));
-static __inline int ep_w1_reg __P((struct ep_softc *, int));
+static int epbusyeeprom(struct ep_softc *);
+u_int16_t ep_read_eeprom(struct ep_softc *, u_int16_t);
+static inline void ep_reset_cmd(struct ep_softc *sc, u_int cmd, u_int arg);
+static inline void ep_finish_reset(bus_space_tag_t, bus_space_handle_t);
+static inline void ep_discard_rxtop(bus_space_tag_t, bus_space_handle_t);
+static __inline int ep_w1_reg(struct ep_softc *, int);
 
 /*
  * MII bit-bang glue.
  */
-u_int32_t ep_mii_bitbang_read __P((struct device *));
-void ep_mii_bitbang_write __P((struct device *, u_int32_t));
+u_int32_t ep_mii_bitbang_read(struct device *);
+void ep_mii_bitbang_write(struct device *, u_int32_t);
 
 const struct mii_bitbang_ops ep_mii_bitbang_ops = {
 	ep_mii_bitbang_read,

@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.13 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.13.10.1 2005/02/12 18:17:39 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -191,73 +191,88 @@ Lsh5_stb1_init:
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 	ptabs/u	r18, tr0		/* Get return address to tr0 */
-	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
+
+	/*
+	 * Short-circuit if both DTLB and ITLB indices are not valid
+	 */
+	LDC32((TLBCOOKIE_IDX_VALID << TLBCOOKIE_IDX_SHIFT_D) |		\
+	      (TLBCOOKIE_IDX_VALID << TLBCOOKIE_IDX_SHIFT_I), r0)
+	and	r3, r0, r0
+	beq/u	r0, r63, tr0
+
+	/*
+	 * Prepare the PTE
+	 */
 	addz.l	r2, r63, r2		/* Zero-extend the PTEH */
+	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
 
-	pta/u	1f, tr1			/* Pre-load jump targets */
-	pta/u	2f, tr2
-	pta/u	3f, tr3
-
-	/* Data TLB index valid?  */
-	andi	r3, TLBCOOKIE_IDX_VALID, r0
-	beq/u	r0, r63, tr3		/* Nope. Go check instruction TLB */
-
-	/* Yup. Shoot it down */
-	andi	r3, TLBCOOKIE_IDX_MASK, r0
-	shlli	r0, STB1_TLB_IDX_SHIFT, r0	/* Convert to TLB index */
-	LDC32(STB1_DTLB(0), r1)		/* DTLB base */
-	add	r0, r1, r0		/* Point to required group of four */
-
-1:	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry */
-	bne/u	r1, r2, tr3		/* Jump if it wasn't there anyway */
-
-	/* Found the required TLB entry. Disable interrupts and check again */
-	getcon	sr, r4			/* Grab SR */
+	/*
+	 * Disable async interrupts
+	 */
+	getcon	sr, r4
+	pta/u	1f, tr1			/* Preload ITLB path */
+	pta/u	2f, tr2			/* Preload exit path */
 	ori	r4, SH5_CONREG_SR_IMASK_ALL, r1
-	putcon	r1, sr			/* Disable ALL exceptions */
-	synci
-	synco
-	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry again */
-	bne/u	r1, r2, tr2		/* It changed under our noses */
+	putcon	r1, sr
 
 	/*
-	 * Ok, we're about to invalidate a TLB entry.
-	 * At this point, the following registers are live:
-	 *
-	 *  r0 - The TLB configuration register to be invalidated
-	 *  r1 - Available
-	 *  r2 - The PTEH value matched in the TLB. Contains the EPN.
-	 *  r3 - TLB Cookie
-	 *  r4 - Saved SR
+	 * DTLB index valid?
 	 */
-
-	/*
-	 * XXX
-	 * We should add a debug/diagnostic to ensure we're not about
-	 * to invalidate [DI]TLB#0, with disasterous consequences...
-	 * XXX
-	 */
-
-	putcfg	r0, 0, r63		/* Invalidate it */
-	synci
-	synco
-
-2:	putcon	r4, sr			/* Re-enable exceptions */
-	blink	tr3, r63
-	nop
-
-	/*
-	 * Check the instruction TLB if necessary
-	 */
-3:	ptabs/l	r18, tr3		/* Return to caller when done */
-	shlri	r3, TLBCOOKIE_IDX_SHIFT_I, r3
 	andi	r3, TLBCOOKIE_IDX_VALID, r0
-	beq/l	r0, r63, tr3		/* Nope. Just return. */
+	beq/u	r0, r63, tr1		/* Nope. Go check ITLB */
 
-	/* Yup. Shoot it down */
-	andi	r3, TLBCOOKIE_IDX_MASK, r0 /* Fetch ITLB index */
-	shlli	r0, STB1_TLB_IDX_SHIFT, r0	/* Point to reqd. group of 4 */
-	blink	tr1, r63
+	/*
+	 * Construct the DTLB index
+	 */
+	shlli	r0, 16, r0		/* DTLB base */
+	andi	r3, TLBCOOKIE_IDX_MASK, r1
+#ifdef DIAGNOSTIC
+	beq/u	r1, r63, tr1		/* DON'T ZAP DTLB INDEX #0 !!! */
+#endif
+	shlli	r1, STB1_TLB_IDX_SHIFT, r1
+	or	r0, r1, r0		/* Required DTLB slot */
+
+	/*
+	 * Check if the DTLB slot still contains the mapping, and
+	 * zap it if so.
+	 */
+	getcfg	r0, 0, r1		/* Fetch DTLB.PTEH entry */
+	cmpeq	r1, r2, r5		/* r5 == 1 if same mapping. Else 0 */
+	cmvne	r5, r63, r1		/* r1 == 0 is same mapping */
+	putcfg	r0, 0, r1		/* Invalidate it if same */
+
+	/*
+	 * Now do the same for the ITLB
+	 */
+1:	shlri	r3, TLBCOOKIE_IDX_SHIFT_I, r3
+
+	/*
+	 * ITLB index valid?
+	 */
+	andi	r3, TLBCOOKIE_IDX_VALID, r0
+	beq/u	r0, r63, tr2		/* Nope. All done */
+
+	/*
+	 * Construct the ITLB index
+	 */
+	andi	r3, TLBCOOKIE_IDX_MASK, r0
+#ifdef DIAGNOSTIC
+	beq/u	r0, r63, tr2		/* DON'T ZAP ITLB INDEX #0 !!! */
+#endif
+	shlli	r0, STB1_TLB_IDX_SHIFT, r0	/* Required ITLB slot */
+
+	/*
+	 * Check if the ITLB slot still contains the mapping, and
+	 * zap it if so.
+	 */
+	getcfg	r0, 0, r1		/* Fetch ITLB.PTEH entry */
+	cmpeq	r1, r2, r5		/* r5 == 1 if same mapping. Else 0 */
+	cmvne	r5, r63, r1		/* r1 == 0 is same mapping */
+	putcfg	r0, 0, r1		/* Invalidate it if same */
+
+2:	putcon	r4, sr			/* Restore async interrupt mask */
+	blink	tr0, r63
+
 
 
 /******************************************************************************
@@ -271,29 +286,26 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv_all)
 	getcon	sr, r5
 	pta/u	1f, tr0			/* Pre-load branches */
-	pta/u	2f, tr2			/* Pre-load branches */
-	pta/u	3f, tr3			/* Pre-load branches */
 	ptabs/u	r18, tr1		/* Get return address to tr1 */
-	ori	r5, SH5_CONREG_SR_IMASK_ALL, r4
 	LDC32(STB1_DTLB(STB1_TLB_NSLOTS - 1), r0)	/* DTLB Top */
-	putcon	r4, sr
 	movi	STB1_ITLB(STB1_TLB_NSLOTS - 1), r1	/* ITLB Top */
 	movi	(SH5_PTEH_ASID_MASK << SH5_PTEH_ASID_SHIFT), r2
+	ori	r5, SH5_CONREG_SR_IMASK_ALL, r4
+	putcon	r4, sr			/* Block all async interrupts */
 
 1:	getcfg	r0, 0, r3		/* Fetch DTLB entry */
 	and	r3, r2, r4		/* Keep ASID */
-	beq/l	r4, r63, tr2		/* Jump if ASID is zero */
-	putcfg	r0, 0, r63		/* Invalidate DTLB entry */
-2:	addi	r0, -STB1_TLB_IDX_STEP, r0	/* Next DTLB slot */
-
+	cmvne	r4, r63, r3		/* r3 == 0 if non-zero ASID */
+	putcfg	r0, 0, r3		/* Invalidate DTLB entry */
+	addi	r0, -STB1_TLB_IDX_STEP, r0	/* Next DTLB slot */
 	getcfg	r1, 0, r3		/* Fetch ITLB entry */
 	and	r3, r2, r4		/* Keep asid */
-	beq/l	r4, r63, tr3		/* Jump if ASID is zero */
-	putcfg	r1, 0, r63		/* Invalidate ITLB entry */
-3:	addi	r1, -STB1_TLB_IDX_STEP, r1	/* Next ITLB slot */
-
+	cmvne	r4, r63, r3		/* r3 == 0 if non-zero ASID */
+	putcfg	r1, 0, r3		/* Invalidate ITLB entry */
+	addi	r1, -STB1_TLB_IDX_STEP, r1	/* Next ITLB slot */
 	bne/l	r1, r63, tr0		/* Back until all checked */
-	putcon	r5, sr
+
+	putcon	r5, sr			/* Restore async interrupt mask */
 	blink	tr1, r63
 
 
@@ -491,11 +503,8 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
  */
 ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge)
 	pta/l	Lstb1_cacheop_switch_asid, tr1
-	pta/l	1f, tr0
-	blink	tr1, r63
-
-	.balign	0x20			/* Align to cacheline boundary */
-1:	ocbp	r2, 0			/* Purge a line of dcache */
+	blink	tr1, r5
+	ocbp	r2, 0			/* Purge a line of dcache */
 	addi	r2, STB1_CACHE_LINE_SIZE, r2	/* Point to next line */
 	bgtu/l	r4, r2, tr0		/* r4 -> end of region to purge */
 	synco
@@ -507,11 +516,8 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge)
  */
 ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge_iinv)
 	pta/l	Lstb1_cacheop_switch_asid, tr1
-	pta/l	1f, tr0
-	blink	tr1, r63
-
-	.balign	0x20			/* Align to cacheline boundary */
-1:	ocbp	r2, 0			/* Purge a line of dcache */
+	blink	tr1, r5
+	ocbp	r2, 0			/* Purge a line of dcache */
 	icbi	r2, 0			/* Invalidate a line of icache */
 	addi	r2, STB1_CACHE_LINE_SIZE, r2	/* Point to next line */
 	bgtu/l	r4, r2, tr0		/* r4 -> end of region to purge/inv */
@@ -525,11 +531,8 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge_iinv)
  */
 ENTRY_NOPROFILE(_sh5_stb1_cache_dinv)
 	pta/l	Lstb1_cacheop_switch_asid, tr1
-	pta/l	1f, tr0
-	blink	tr1, r63
-
-	.balign	0x20			/* Align to cacheline boundary */
-1:	ocbi	r2, 0			/* Invalidate a line of dcache */
+	blink	tr1, r5
+	ocbi	r2, 0			/* Invalidate a line of dcache */
 	addi	r2, STB1_CACHE_LINE_SIZE, r2	/* Point to next line */
 	bgtu/l	r4, r2, tr0		/* r4 -> end of region to inv */
 	synco
@@ -541,11 +544,8 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_dinv)
  */
 ENTRY_NOPROFILE(_sh5_stb1_cache_dinv_iinv)
 	pta/l	Lstb1_cacheop_switch_asid, tr1
-	pta/l	1f, tr0
-	blink	tr1, r63
-
-	.balign	0x20			/* Align to cacheline boundary */
-1:	ocbi	r2, 0			/* Invalidate a line of dcache */
+	blink	tr1, r5
+	ocbi	r2, 0			/* Invalidate a line of dcache */
 	icbi	r2, 0			/* Invalidate a line of icache */
 	addi	r2, STB1_CACHE_LINE_SIZE, r2	/* Point to next line */
 	bgtu/l	r4, r2, tr0		/* r4 -> end of region to inv */
@@ -559,11 +559,8 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_dinv_iinv)
  */
 ENTRY_NOPROFILE(_sh5_stb1_cache_iinv)
 	pta/l	Lstb1_cacheop_switch_asid, tr1
-	pta/l	1f, tr0
-	blink	tr1, r63
-
-	.balign	0x20			/* Align to cacheline boundary */
-1:	icbi	r2, 0			/* Invalidate a line of icache */
+	blink	tr1, r5
+	icbi	r2, 0			/* Invalidate a line of icache */
 	addi	r2, STB1_CACHE_LINE_SIZE, r2	/* Point to next line */
 	bgtu/l	r4, r2, tr0		/* r4 -> end of region to inv */
 	synci
@@ -578,8 +575,12 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_iinv)
 ENTRY_NOPROFILE(_sh5_stb1_cache_iinv_all)
 	ptabs/l	r18, tr0
 	movi	3, r1			/* Inv/Enable the Cache */
+	synco
+	synci
 	LDC32(STB1_ICCR, r0)		/* Instruction Cache Control Register */
 	putcfg	r0, 0, r1		/* Inv & Enable instruction cache */
+	synco
+	synci
 	blink	tr0, r63
 
 /******************************************************************************
@@ -635,15 +636,16 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_purge_all)
  *
  * On entry:
  *
- *  r2  = Virtual address of region to be purged/invalidated.
- *  r3  = Physical address of regions to be purged/invalidated.
- *  r4  = Length of region.
- *  tr0 = Address of cache-ops routine to call.
+ *  r2 = Virtual address of region to be purged/invalidated.
+ *  r3 = Physical address of regions to be purged/invalidated.
+ *  r4 = Length of region.
+ *  r5 = Address of cache-ops routine to call.
  *
  * The cache-ops routines expect the following registers on entry:
  *
  *  r2  = The virtual address of region to be purged/invalidated.
  *  r4  = The virtual address+1 of the end of the region.
+ *  tr0 = The cache-ops routine (same as was passed in r5)
  *  tr1 = Return address.
  */
 Lstb1_cacheop_switch_asid:
@@ -653,41 +655,36 @@ Lstb1_cacheop_switch_asid:
 #else
 	add	r2, r4, r4		/* r4 == end of region to purge/inv */
 #endif
-	getcon	sr, r19
 
 	/*
 	 * There's no need to do this dance if the region is in KSEG0.
 	 */
-	pta/l	1f, tr1
+	pta/l	1f, tr2
+	ptabs/u	r18, tr1
+	ptabs/u	r5, tr0
+
 #ifndef _LP64
 	LDSC32(SH5_KSEG0_BASE, r0)
 #else
 	LDSC64(SH5_KSEG0_BASE, r0)
 #endif
-	bgtu/l	r0, r2, tr1		/* Region is below KSEG0 (user space) */
+	bgtu/l	r0, r2, tr2		/* Region is below KSEG0 (user space) */
 
 #ifndef _LP64
 	LDSC32(SH5_KSEG1_BASE, r0)
 #else
 	LDSC64(SH5_KSEG1_BASE, r0)
 #endif
-	bgeu/l	r2, r0, tr1		/* Region is in KSEG1 */
-
 	/*
-	 * The region is in KSEG0, which has a permanent TLB entry.
-	 * Just call the cacheop handler directly and arrange for it
-	 * to return directly to the original caller.
+	 * If the region is in KSEG0, which has a permanent TLB entry.
+	 * Just call the cacheop handler directly and let it return to
+	 * the original caller.
 	 */
-	pta/u	99f, tr1
-	ori	r19, SH5_CONREG_SR_IMASK_ALL, r0
-	putcon	r0, sr
-	blink	tr0, r63
-99:	ptabs/l	r18, tr0
-	putcon	r19, sr
-	blink	tr0, r63
+	bgtu/u	r0, r2, tr0
 
 	/*
-	 * The region needs a temporary TLB entry
+	 * The region is in user-space or KSEG1.
+	 * It needs a temporary TLB entry
 	 */
 1:	pta/u	Lstb1_cacheops_return, tr1	/* Cache-ops return here */
 
@@ -695,6 +692,7 @@ Lstb1_cacheop_switch_asid:
 	 * First, block all exceptions. r19 is a handy caller-saved
 	 * register which we'll use to restore SR when done.
 	 */
+	getcon	sr, r19
 	LDC32(SH5_CONREG_SR_BL, r1)
 	or	r19, r1, r0
 	putcon	r0, sr			/* Exceptions are now blocked */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2004/03/24 15:34:48 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.1 2005/02/12 18:17:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2004/03/24 15:34:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.1 2005/02/12 18:17:31 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -293,7 +293,6 @@ consinit()
 void
 cpu_startup()
 {
-	extern char *etext;
 	vaddr_t minaddr, maxaddr;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -337,14 +336,6 @@ cpu_startup()
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map, KERNBASE, m68k_round_page(&etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 }
 
 /*

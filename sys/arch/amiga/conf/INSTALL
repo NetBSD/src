@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.47 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: INSTALL,v 1.47.2.1 2005/02/12 18:17:30 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.27 2005/01/13 16:11:38 is Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.30 2005/01/31 16:54:33 hannken Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.47.2.1 $"
 
 makeoptions	COPTS="-Os"
 
@@ -106,6 +106,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
@@ -417,6 +418,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		2	# pseudo-terminals

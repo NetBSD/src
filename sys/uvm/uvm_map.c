@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.183.2.1 2005/01/25 12:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.183.2.2 2005/02/12 18:17:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.183.2.1 2005/01/25 12:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.183.2.2 2005/02/12 18:17:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1522,16 +1522,16 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 */
 
 	orig_hint = hint;
-	if (hint < map->min_offset) {	/* check ranges ... */
+	if (hint < vm_map_min(map)) {	/* check ranges ... */
 		if (flags & UVM_FLAG_FIXED) {
 			UVMHIST_LOG(maphist,"<- VA below map range",0,0,0,0);
 			return (NULL);
 		}
-		hint = map->min_offset;
+		hint = vm_map_min(map);
 	}
-	if (hint > map->max_offset) {
+	if (hint > vm_map_max(map)) {
 		UVMHIST_LOG(maphist,"<- VA 0x%x > range [0x%x->0x%x]",
-		    hint, map->min_offset, map->max_offset, 0);
+		    hint, vm_map_min(map), vm_map_max(map), 0);
 		return (NULL);
 	}
 
@@ -1561,7 +1561,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 * it, there would be four cases).
 	 */
 
-	if ((flags & UVM_FLAG_FIXED) == 0 && hint == map->min_offset) {
+	if ((flags & UVM_FLAG_FIXED) == 0 && hint == vm_map_min(map)) {
 		entry = map->first_free;
 	} else {
 		if (uvm_map_lookup_entry(map, hint, &entry)) {
@@ -3746,7 +3746,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 */
 
 		pmap_remove_all(map->pmap);
-		uvm_unmap(map, map->min_offset, map->max_offset);
+		uvm_unmap(map, vm_map_min(map), vm_map_max(map));
 		KASSERT(map->header.prev == &map->header);
 		KASSERT(map->nentries == 0);
 
@@ -3754,8 +3754,8 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 * resize the map
 		 */
 
-		map->min_offset = start;
-		map->max_offset = end;
+		vm_map_setmin(map, start);
+		vm_map_setmax(map, end);
 	} else {
 
 		/*
@@ -3811,7 +3811,7 @@ uvmspace_free(struct vmspace *vm)
 		shmexit(vm);
 #endif
 	if (map->nentries) {
-		uvm_unmap_remove(map, map->min_offset, map->max_offset,
+		uvm_unmap_remove(map, vm_map_min(map), vm_map_max(map),
 		    &dead_entries, NULL, 0);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, 0);
@@ -3844,7 +3844,7 @@ uvmspace_fork(struct vmspace *vm1)
 
 	vm_map_lock(old_map);
 
-	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset);
+	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map));
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	    (caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
@@ -4385,7 +4385,8 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
 {
 	struct vm_map_entry *entry;
 
-	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
+	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, vm_map_min(map),
+	    vm_map_max(map));
 	(*pr)("\t#ent=%d, sz=%d, ref=%d, version=%d, flags=0x%x\n",
 	    map->nentries, map->size, map->ref_count, map->timestamp,
 	    map->flags);

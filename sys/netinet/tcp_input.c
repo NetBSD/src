@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.212.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.212.4.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -238,7 +238,7 @@ static struct timeval tcp_rst_ppslim_last;
 static int tcp_ackdrop_ppslim_count = 0;
 static struct timeval tcp_ackdrop_ppslim_last;
 
-#define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
+#define TCP_PAWS_IDLE	(24U * 24 * 60 * 60 * PR_SLOWHZ)
 
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
@@ -338,11 +338,10 @@ extern struct evcnt tcp_reass_fragdup;
 #endif /* TCP_REASS_COUNTERS */
 
 #ifdef INET
-static void tcp4_log_refused __P((const struct ip *, const struct tcphdr *));
+static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
 #endif
 #ifdef INET6
-static void tcp6_log_refused
-    __P((const struct ip6_hdr *, const struct tcphdr *));
+static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
@@ -350,11 +349,7 @@ static void tcp6_log_refused
 POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
 
 int
-tcp_reass(tp, th, m, tlen)
-	struct tcpcb *tp;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int *tlen;
+tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
@@ -701,9 +696,7 @@ present:
 
 #ifdef INET6
 int
-tcp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+tcp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 
@@ -732,9 +725,7 @@ tcp6_input(mp, offp, proto)
 
 #ifdef INET
 static void
-tcp4_log_refused(ip, th)
-	const struct ip *ip;
-	const struct tcphdr *th;
+tcp4_log_refused(const struct ip *ip, const struct tcphdr *th)
 {
 	char src[4*sizeof "123"];
 	char dst[4*sizeof "123"];
@@ -756,9 +747,7 @@ tcp4_log_refused(ip, th)
 
 #ifdef INET6
 static void
-tcp6_log_refused(ip6, th)
-	const struct ip6_hdr *ip6;
-	const struct tcphdr *th;
+tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
 {
 	char src[INET6_ADDRSTRLEN];
 	char dst[INET6_ADDRSTRLEN];
@@ -879,7 +868,7 @@ tcp_input(struct mbuf *m, ...)
 	struct tcpcb *tp = 0;
 	int tiflags;
 	struct socket *so = NULL;
-	int todrop, acked, ourfinisacked, needoutput = 0;
+	int todrop, dupseg, acked, ourfinisacked, needoutput = 0;
 #ifdef TCP_DEBUG
 	short ostate = 0;
 #endif
@@ -1495,6 +1484,19 @@ after_listen:
 		if (tcp_dooptions(tp, optp, optlen, th, m, toff, &opti) < 0)
 			goto drop;
 
+	if (opti.ts_present && opti.ts_ecr) {
+		/*
+		 * Calculate the RTT from the returned time stamp and the
+		 * connection's time base.  If the time stamp is later than
+		 * the current time, or is extremely old, fall back to non-1323
+		 * RTT calculation.  Since ts_ecr is unsigned, we can test both
+		 * at the same time.
+		 */
+		opti.ts_ecr = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
+		if (opti.ts_ecr > TCP_PAWS_IDLE)
+			opti.ts_ecr = 0;
+	}
+
 	/*
 	 * Header prediction: check for the two common cases
 	 * of a uni-directional data xfer.  If the packet has
@@ -1523,22 +1525,22 @@ after_listen:
 		if (opti.ts_present &&
 		    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 		    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen)) {
-			tp->ts_recent_age = TCP_TIMESTAMP(tp);
+			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = opti.ts_val;
 		}
 
 		if (tlen == 0) {
+			/* Ack prediction. */
 			if (SEQ_GT(th->th_ack, tp->snd_una) &&
 			    SEQ_LEQ(th->th_ack, tp->snd_max) &&
 			    tp->snd_cwnd >= tp->snd_wnd &&
-			    tp->t_dupacks < tcprexmtthresh) {
+			    tp->t_partialacks < 0) {
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
 				++tcpstat.tcps_predack;
 				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp,
-					  TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+					tcp_xmit_timer(tp, opti.ts_ecr);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -1553,12 +1555,9 @@ after_listen:
 				sbdrop(&so->so_snd, acked);
 				tp->t_lastoff -= acked;
 
-				/*
-				 * We want snd_recover to track snd_una to
-				 * avoid sequence wraparound problems for
-				 * very large transfers.
-				 */
-				tp->snd_una = tp->snd_recover = th->th_ack;
+				tp->snd_una = th->th_ack;
+				if (SEQ_LT(tp->snd_high, tp->snd_una))
+					tp->snd_high = tp->snd_una;
 				m_freem(m);
 
 				/*
@@ -1683,9 +1682,11 @@ after_listen:
 		if ((tiflags & TH_SYN) == 0)
 			goto drop;
 		if (tiflags & TH_ACK) {
-			tp->snd_una = tp->snd_recover = th->th_ack;
+			tp->snd_una = th->th_ack;
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
+			if (SEQ_LT(tp->snd_high, tp->snd_una))
+				tp->snd_high = tp->snd_una;
 			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		}
 		tp->irs = th->th_seq;
@@ -1781,8 +1782,7 @@ after_listen:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if ((int)(TCP_TIMESTAMP(tp) - tp->ts_recent_age) >
-		    TCP_PAWS_IDLE) {
+		if (tcp_now - tp->ts_recent_age > TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
@@ -1804,6 +1804,7 @@ after_listen:
 	}
 
 	todrop = tp->rcv_nxt - th->th_seq;
+	dupseg = FALSE;
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
@@ -1832,6 +1833,7 @@ after_listen:
 			 */
 			tp->t_flags |= TF_ACKNOW;
 			todrop = tlen;
+			dupseg = TRUE;
 			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
 		} else if ((tiflags & TH_RST) &&
@@ -1930,7 +1932,7 @@ after_listen:
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 	    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen +
 		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
-		tp->ts_recent_age = TCP_TIMESTAMP(tp);
+		tp->ts_recent_age = tcp_now;
 		tp->ts_recent = opti.ts_val;
 	}
 
@@ -2048,7 +2050,7 @@ after_listen:
 	case TCPS_TIME_WAIT:
 
 		if (SEQ_LEQ(th->th_ack, tp->snd_una)) {
-			if (tlen == 0 && tiwin == tp->snd_wnd) {
+			if (tlen == 0 && !dupseg && tiwin == tp->snd_wnd) {
 				tcpstat.tcps_rcvdupack++;
 				/*
 				 * If we have outstanding data (other than
@@ -2077,27 +2079,30 @@ after_listen:
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 ||
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
-				else if (++tp->t_dupacks == tcprexmtthresh) {
-					tcp_seq onxt = tp->snd_nxt;
-					u_int win =
-					    min(tp->snd_wnd, tp->snd_cwnd) /
-					    2 /	tp->t_segsz;
-					if (tcp_do_newreno && SEQ_LT(th->th_ack,
-					    tp->snd_recover)) {
+				else if (++tp->t_dupacks == tcprexmtthresh &&
+					 tp->t_partialacks < 0) {
+					tcp_seq onxt;
+					u_int win;
+
+					if (tcp_do_newreno &&
+					    SEQ_LT(th->th_ack, tp->snd_high)) {
 						/*
 						 * False fast retransmit after
-						 * timeout.  Do not cut window.
+						 * timeout.  Do not enter fast
+						 * recovery.
 						 */
-						tp->snd_cwnd += tp->t_segsz;
 						tp->t_dupacks = 0;
-						(void) tcp_output(tp);
-						goto drop;
+						break;
 					}
 
+					onxt = tp->snd_nxt;
+					win = min(tp->snd_wnd, tp->snd_cwnd) /
+					    2 /	tp->t_segsz;
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_segsz;
 					tp->snd_recover = tp->snd_max;
+					tp->t_partialacks = 0;
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtttime = 0;
 					tp->snd_nxt = th->th_ack;
@@ -2113,42 +2118,30 @@ after_listen:
 					(void) tcp_output(tp);
 					goto drop;
 				}
-			} else if (tlen) {
-				tp->t_dupacks = 0;	/*XXX*/
-				/* drop very old ACKs unless th_seq matches */
-				if (th->th_seq != tp->rcv_nxt &&
+			} else {
+				/*
+				 * If the ack appears to be very old, only
+				 * allow data that is in-sequence.  This
+				 * makes it somewhat more difficult to insert
+				 * forged data by guessing sequence numbers.
+				 * Sent an ack to try to update the send
+				 * sequence number on the other side.
+				 */
+				if (tlen && th->th_seq != tp->rcv_nxt &&
 				    SEQ_LT(th->th_ack,
-				    tp->snd_una - tp->max_sndwnd)) {
-					goto drop;
-				}
-				break;
-			} else
-				tp->t_dupacks = 0;
+				    tp->snd_una - tp->max_sndwnd))
+					goto dropafterack;
+			}
 			break;
 		}
 		/*
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tcp_do_newreno == 0) {
-			if (tp->t_dupacks >= tcprexmtthresh &&
-			    tp->snd_cwnd > tp->snd_ssthresh)
-				tp->snd_cwnd = tp->snd_ssthresh;
-			tp->t_dupacks = 0;
-		} else if (tp->t_dupacks >= tcprexmtthresh &&
-			   tcp_newreno(tp, th) == 0) {
-			tp->snd_cwnd = tp->snd_ssthresh;
-			/*
-			 * Window inflation should have left us with approx.
-			 * snd_ssthresh outstanding data.  But in case we
-			 * would be inclined to send a burst, better to do
-			 * it via the slow start mechanism.
-			 */
-			if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
-				tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
-				    + tp->t_segsz;
-			tp->t_dupacks = 0;
-		}
+		if (!tcp_do_newreno)
+			tcp_reno_newack(tp, th);
+		else
+			tcp_newreno_newack(tp, th);
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -2167,7 +2160,7 @@ after_listen:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
+			tcp_xmit_timer(tp, opti.ts_ecr);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
@@ -2190,14 +2183,17 @@ after_listen:
 		 * (segsz^2 / cwnd per packet), plus a constant
 		 * fraction of a packet (segsz/8) to help larger windows
 		 * open quickly enough.
+		 *
+		 * If we are still in fast recovery (meaning we are using
+		 * NewReno and we have only received partial acks), do not
+		 * inflate the window yet.
 		 */
-		{
-		u_int cw = tp->snd_cwnd;
-		u_int incr = tp->t_segsz;
+		if (tp->t_partialacks < 0) {
+			u_int cw = tp->snd_cwnd;
+			u_int incr = tp->t_segsz;
 
-		if (cw > tp->snd_ssthresh)
-			incr = incr * incr / cw;
-		if (tcp_do_newreno == 0 || SEQ_GEQ(th->th_ack, tp->snd_recover))
+			if (cw >= tp->snd_ssthresh)
+				incr = incr * incr / cw;
 			tp->snd_cwnd = min(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
 		}
@@ -2215,14 +2211,11 @@ after_listen:
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
-		/*
-		 * We want snd_recover to track snd_una to
-		 * avoid sequence wraparound problems for
-		 * very large transfers.
-		 */
-		tp->snd_una = tp->snd_recover = th->th_ack;
+		tp->snd_una = th->th_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
+		if (SEQ_LT(tp->snd_high, tp->snd_una))
+			tp->snd_high = tp->snd_una;
 
 		switch (tp->t_state) {
 
@@ -2729,14 +2722,8 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 #endif
 
 int
-tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
-	struct tcpcb *tp;
-	u_char *cp;
-	int cnt;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int toff;
-	struct tcp_opt_info *oi;
+tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
+    struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
 	int opt, optlen = 0;
@@ -2822,7 +2809,7 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 			if (th->th_flags & TH_SYN) {
 				tp->t_flags |= TF_RCVD_TSTMP;
 				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = TCP_TIMESTAMP(tp);
+				tp->ts_recent_age = tcp_now;
 			}
 			break;
 		case TCPOPT_SACK_PERMITTED:
@@ -2934,11 +2921,8 @@ tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
  * sequencing purposes.
  */
 void
-tcp_pulloutofband(so, th, m, off)
-	struct socket *so;
-	struct tcphdr *th;
-	struct mbuf *m;
-	int off;
+tcp_pulloutofband(struct socket *so, struct tcphdr *th,
+    struct mbuf *m, int off)
 {
 	int cnt = off + th->th_urp - 1;
 
@@ -2966,9 +2950,7 @@ tcp_pulloutofband(so, th, m, off)
  * and update averages and current timeout.
  */
 void
-tcp_xmit_timer(tp, rtt)
-	struct tcpcb *tp;
-	uint32_t rtt;
+tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 {
 	int32_t delta;
 
@@ -3035,28 +3017,57 @@ tcp_xmit_timer(tp, rtt)
 	tp->t_softerror = 0;
 }
 
-/*
- * Checks for partial ack.  If partial ack arrives, force the retransmission
- * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
- * 1.  By setting snd_nxt to th_ack, this forces retransmission timer to
- * be started again.  If the ack advances at least to tp->snd_recover, return 0.
- */
-int
-tcp_newreno(tp, th)
-	struct tcpcb *tp;
-	struct tcphdr *th;
+void
+tcp_reno_newack(struct tcpcb *tp, struct tcphdr *th)
 {
-	tcp_seq onxt = tp->snd_nxt;
-	u_long ocwnd = tp->snd_cwnd;
+	if (tp->t_partialacks < 0) {
+		/*
+		 * We were not in fast recovery.  Reset the duplicate ack
+		 * counter.
+		 */
+		tp->t_dupacks = 0;
+	} else {
+		/*
+		 * Clamp the congestion window to the crossover point and
+		 * exit fast recovery.
+		 */
+		if (tp->snd_cwnd > tp->snd_ssthresh)
+			tp->snd_cwnd = tp->snd_ssthresh;
+		tp->t_partialacks = -1;
+		tp->t_dupacks = 0;
+	}
+}
 
-	if (SEQ_LT(th->th_ack, tp->snd_recover)) {
+/*
+ * Implement the NewReno response to a new ack, checking for partial acks in
+ * fast recovery.
+ */
+void
+tcp_newreno_newack(struct tcpcb *tp, struct tcphdr *th)
+{
+	if (tp->t_partialacks < 0) {
+		/*
+		 * We were not in fast recovery.  Reset the duplicate ack
+		 * counter.
+		 */
+		tp->t_dupacks = 0;
+	} else if (SEQ_LT(th->th_ack, tp->snd_recover)) {
+		/*
+		 * This is a partial ack.  Retransmit the first unacknowledged
+		 * segment and deflate the congestion window by the amount of
+		 * acknowledged data.  Do not exit fast recovery.
+		 */
+		tcp_seq onxt = tp->snd_nxt;
+		u_long ocwnd = tp->snd_cwnd;
+
 		/*
 		 * snd_una has not yet been updated and the socket's send
 		 * buffer has not yet drained off the ACK'd data, so we
 		 * have to leave snd_una as it was to get the correct data
 		 * offset in tcp_output().
 		 */
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
+		if (++tp->t_partialacks == 1)
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtttime = 0;
 		tp->snd_nxt = th->th_ack;
 		/*
@@ -3073,9 +3084,24 @@ tcp_newreno(tp, th)
 		 * not updated yet.
 		 */
 		tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_segsz);
-		return 1;
+	} else {
+		/*
+		 * Complete ack.  Inflate the congestion window to ssthresh
+		 * and exit fast recovery.
+		 *
+		 * Window inflation should have left us with approx.
+		 * snd_ssthresh outstanding data.  But in case we
+		 * would be inclined to send a burst, better to do
+		 * it via the slow start mechanism.
+		 */
+		if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
+			tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
+			    + tp->t_segsz;
+		else
+			tp->snd_cwnd = tp->snd_ssthresh;
+		tp->t_partialacks = -1;
+		tp->t_dupacks = 0;
 	}
-	return 0;
 }
 
 
@@ -3163,7 +3189,7 @@ do {									\
 #define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
 
 void
-syn_cache_init()
+syn_cache_init(void)
 {
 	int i;
 
@@ -3173,9 +3199,7 @@ syn_cache_init()
 }
 
 void
-syn_cache_insert(sc, tp)
-	struct syn_cache *sc;
-	struct tcpcb *tp;
+syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 {
 	struct syn_cache_head *scp;
 	struct syn_cache *sc2;
@@ -3329,8 +3353,7 @@ syn_cache_timer(void *arg)
  * (if there's no tcb entry, syn cache entry will never be used)
  */
 void
-syn_cache_cleanup(tp)
-	struct tcpcb *tp;
+syn_cache_cleanup(struct tcpcb *tp)
 {
 	struct syn_cache *sc, *nsc;
 	int s;
@@ -3357,10 +3380,8 @@ syn_cache_cleanup(tp)
  * Find an entry in the syn cache.
  */
 struct syn_cache *
-syn_cache_lookup(src, dst, headp)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct syn_cache_head **headp;
+syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
+    struct syn_cache_head **headp)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3410,13 +3431,9 @@ syn_cache_lookup(src, dst, headp)
  *	associated with the connection.
  */
 struct socket *
-syn_cache_get(src, dst, th, hlen, tlen, so, m)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
-	unsigned int hlen, tlen;
-	struct socket *so;
-	struct mbuf *m;
+syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
+    struct tcphdr *th, unsigned int hlen, unsigned int tlen,
+    struct socket *so, struct mbuf *m)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3689,6 +3706,8 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	if (sc->sc_win > 0 && SEQ_GT(tp->rcv_nxt + sc->sc_win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + sc->sc_win;
 	tp->last_ack_sent = tp->rcv_nxt;
+	tp->t_partialacks = -1;
+	tp->t_dupacks = 0;
 
 	tcpstat.tcps_sc_completed++;
 	SYN_CACHE_PUT(sc);
@@ -3711,10 +3730,7 @@ abort:
  */
 
 void
-syn_cache_reset(src, dst, th)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
+syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3736,10 +3752,8 @@ syn_cache_reset(src, dst, th)
 }
 
 void
-syn_cache_unreach(src, dst, th)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
+syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst,
+    struct tcphdr *th)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3791,16 +3805,9 @@ syn_cache_unreach(src, dst, th)
  */
 
 int
-syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
-	struct sockaddr *src;
-	struct sockaddr *dst;
-	struct tcphdr *th;
-	unsigned int hlen;
-	struct socket *so;
-	struct mbuf *m;
-	u_char *optp;
-	int optlen;
-	struct tcp_opt_info *oi;
+syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
+    unsigned int hlen, struct socket *so, struct mbuf *m, u_char *optp,
+    int optlen, struct tcp_opt_info *oi)
 {
 	struct tcpcb tb, *tp;
 	long win;
@@ -3962,9 +3969,7 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 }
 
 int
-syn_cache_respond(sc, m)
-	struct syn_cache *sc;
-	struct mbuf *m;
+syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
 	struct route *ro;
 	u_int8_t *optp;

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.11 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.11.10.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -65,12 +65,12 @@ struct daic_isa_softc {
 
 /* local functions */
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int daic_isa_probe __P((struct device *, void *, void *));
+static int daic_isa_probe(struct device *, void *, void *);
 #else
-static int daic_isa_probe __P((struct device *, struct cfdata *, void *));
+static int daic_isa_probe(struct device *, struct cfdata *, void *);
 #endif
-static void daic_isa_attach __P((struct device *, struct device *, void *));
-static int daic_isa_intr __P((void *));
+static void daic_isa_attach(struct device *, struct device *, void *);
+static int daic_isa_intr(void *);
 
 CFATTACH_DECL(daic_isa, sizeof(struct daic_isa_softc),
     daic_isa_probe, daic_isa_attach, NULL, NULL);

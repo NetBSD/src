@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.58 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.58.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.58 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.58.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,14 +90,14 @@ struct lpt_isa_softc {
 
 };
 
-int lpt_isa_probe __P((struct device *, struct cfdata *, void *));
-void lpt_isa_attach __P((struct device *, struct device *, void *));
+int lpt_isa_probe(struct device *, struct cfdata *, void *);
+void lpt_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_isa, sizeof(struct lpt_isa_softc),
     lpt_isa_probe, lpt_isa_attach, NULL, NULL);
 
-int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    bus_size_t, u_char, u_char));
+int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    bus_size_t, u_char, u_char);
 
 /*
  * Internal routine to lptprobe to do port tests of one byte value.

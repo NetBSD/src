@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.22 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.22.10.1 2005/02/12 18:17:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.22 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.22.10.1 2005/02/12 18:17:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -114,10 +114,10 @@ struct bpp_softc {
 	struct hwstate		sc_hwcurrent;
 };
 
-static int	bppmatch	__P((struct device *, struct cfdata *, void *));
-static void	bppattach	__P((struct device *, struct device *, void *));
-static int	bppintr		__P((void *));
-static void	bpp_setparams	__P((struct bpp_softc *, struct hwstate *));
+static int	bppmatch(struct device *, struct cfdata *, void *);
+static void	bppattach(struct device *, struct device *, void *);
+static int	bppintr		(void *);
+static void	bpp_setparams(struct bpp_softc *, struct hwstate *);
 
 CFATTACH_DECL(bpp, sizeof(struct bpp_softc),
     bppmatch, bppattach, NULL, NULL);

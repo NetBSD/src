@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.28 2004/08/12 19:59:07 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.28.6.1 2005/02/12 18:17:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -236,20 +236,19 @@ struct pcmcia_product {
 	const char	*pp_cisinfo[4];
 };
 
-typedef int (*pcmcia_product_match_fn) __P((struct pcmcia_attach_args *,
-    const struct pcmcia_product *, int));
+typedef int (*pcmcia_product_match_fn)(struct pcmcia_attach_args *,
+    const struct pcmcia_product *, int);
 
-const void *
-	pcmcia_product_lookup __P((struct pcmcia_attach_args *, const void *,
-	    size_t, size_t, pcmcia_product_match_fn));
+const void *pcmcia_product_lookup(struct pcmcia_attach_args *, const void *,
+	    size_t, size_t, pcmcia_product_match_fn);
 
-void	pcmcia_devinfo __P((struct pcmcia_card *, int, char *, size_t));
+void	pcmcia_devinfo(struct pcmcia_card *, int, char *, size_t);
 
-void	pcmcia_read_cis __P((struct pcmcia_softc *));
-void	pcmcia_check_cis_quirks __P((struct pcmcia_softc *));
-void	pcmcia_print_cis __P((struct pcmcia_softc *));
-int	pcmcia_scan_cis __P((struct device *,
-	    int (*) (struct pcmcia_tuple *, void *), void *));
+void	pcmcia_read_cis(struct pcmcia_softc *);
+void	pcmcia_check_cis_quirks(struct pcmcia_softc *);
+void	pcmcia_print_cis(struct pcmcia_softc *);
+int	pcmcia_scan_cis(struct device *,
+	    int (*) (struct pcmcia_tuple *, void *), void *);
 
 #define	pcmcia_cis_read_1(tuple, idx0)					\
 	(bus_space_read_1((tuple)->memt, (tuple)->memh, (tuple)->mult*(idx0)))
@@ -281,30 +280,30 @@ int	pcmcia_scan_cis __P((struct device *,
 #define	PCMCIA_SPACE_MEMORY	1
 #define	PCMCIA_SPACE_IO		2
 
-int	pcmcia_ccr_read __P((struct pcmcia_function *, int));
-void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
+int	pcmcia_ccr_read(struct pcmcia_function *, int);
+void	pcmcia_ccr_write(struct pcmcia_function *, int, int);
 
 #define	pcmcia_mfc(sc)	(! SIMPLEQ_EMPTY(&(sc)->card.pf_head) &&	\
 		 SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
 
-void	pcmcia_socket_enable __P((struct device *));
-void	pcmcia_socket_disable __P((struct device *));
-void	pcmcia_socket_settype __P((struct device *, int));
+void	pcmcia_socket_enable(struct device *);
+void	pcmcia_socket_disable(struct device *);
+void	pcmcia_socket_settype(struct device *, int);
 
-int	pcmcia_config_alloc __P((struct pcmcia_function *,
-	    struct pcmcia_config_entry *));
-void	pcmcia_config_free __P((struct pcmcia_function *));
-int	pcmcia_config_map __P((struct pcmcia_function *));
-void	pcmcia_config_unmap __P((struct pcmcia_function *));
+int	pcmcia_config_alloc(struct pcmcia_function *,
+	    struct pcmcia_config_entry *);
+void	pcmcia_config_free(struct pcmcia_function *);
+int	pcmcia_config_map(struct pcmcia_function *);
+void	pcmcia_config_unmap(struct pcmcia_function *);
 
 
-int	pcmcia_function_configure __P((struct pcmcia_function *,
-	    int (*validator)(struct pcmcia_config_entry *)));
-void	pcmcia_function_unconfigure __P((struct pcmcia_function *));
-void	pcmcia_function_init __P((struct pcmcia_function *,
-	    struct pcmcia_config_entry *));
-int	pcmcia_function_enable __P((struct pcmcia_function *));
-void	pcmcia_function_disable __P((struct pcmcia_function *));
+int	pcmcia_function_configure(struct pcmcia_function *,
+	    int (*validator)(struct pcmcia_config_entry *));
+void	pcmcia_function_unconfigure(struct pcmcia_function *);
+void	pcmcia_function_init(struct pcmcia_function *,
+	    struct pcmcia_config_entry *);
+int	pcmcia_function_enable(struct pcmcia_function *);
+void	pcmcia_function_disable(struct pcmcia_function *);
 
 #define	pcmcia_io_alloc(pf, start, size, align, pciop)			\
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, (start),	\
@@ -313,11 +312,11 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 #define	pcmcia_io_free(pf, pciohp)					\
 	(pcmcia_chip_io_free((pf)->sc->pct, (pf)->sc->pch, (pciohp)))
 
-int	pcmcia_io_map __P((struct pcmcia_function *, int,
-	    struct pcmcia_io_handle *, int *));
-void	pcmcia_io_unmap __P((struct pcmcia_function *, int));
+int	pcmcia_io_map(struct pcmcia_function *, int,
+	    struct pcmcia_io_handle *, int *);
+void	pcmcia_io_unmap(struct pcmcia_function *, int);
 
-void	pcmcia_free_pf __P((struct pcmcia_function_head *));
+void	pcmcia_free_pf(struct pcmcia_function_head *);
 
 #define pcmcia_mem_alloc(pf, size, pcmhp)				\
 	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
@@ -332,6 +331,6 @@ void	pcmcia_free_pf __P((struct pcmcia_function_head *));
 #define	pcmcia_mem_unmap(pf, window)					\
 	(pcmcia_chip_mem_unmap((pf)->sc->pct, (pf)->sc->pch, (window)))
 
-void	*pcmcia_intr_establish __P((struct pcmcia_function *, int,
-	    int (*) (void *), void *));
-void 	pcmcia_intr_disestablish __P((struct pcmcia_function *, void *));
+void	*pcmcia_intr_establish(struct pcmcia_function *, int,
+	    int (*) (void *), void *);
+void 	pcmcia_intr_disestablish(struct pcmcia_function *, void *);

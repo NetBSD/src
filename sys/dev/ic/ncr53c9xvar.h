@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.45 2004/12/07 22:23:45 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.45.4.1 2005/02/12 18:17:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -443,12 +443,12 @@ struct ncr53c9x_softc {
 #define	ncr53c9x_cpb2stp(sc, cpb)	\
 	((250 * (cpb)) / (sc)->sc_freq)
 
-void	ncr53c9x_attach __P((struct ncr53c9x_softc *));
-int	ncr53c9x_detach __P((struct ncr53c9x_softc *, int));
-void	ncr53c9x_scsipi_request __P((struct scsipi_channel *chan,
-	    scsipi_adapter_req_t req, void *));
-void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
-int	ncr53c9x_intr __P((void *));
-void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
+void	ncr53c9x_attach(struct ncr53c9x_softc *);
+int	ncr53c9x_detach(struct ncr53c9x_softc *, int);
+void	ncr53c9x_scsipi_request(struct scsipi_channel *chan,
+	    scsipi_adapter_req_t req, void *);
+void	ncr53c9x_reset(struct ncr53c9x_softc *);
+int	ncr53c9x_intr(void *);
+void	ncr53c9x_init(struct ncr53c9x_softc *, int);
 
 #endif /* _DEV_IC_NCR53C9XVAR_H_ */

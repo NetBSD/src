@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.33 2004/11/10 17:54:08 christos Exp $
+#	$NetBSD: INSTALL,v 1.33.6.1 2005/02/12 18:17:41 yamt Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -67,6 +67,7 @@ file-system 	CD9660
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
@@ -213,5 +214,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd	4
 #pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
+#pseudo-device	fss	4		# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	md	1

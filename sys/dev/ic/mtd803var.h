@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.2 2003/09/23 19:37:39 martin Exp $ */
+/* $NetBSD: mtd803var.h,v 1.2.10.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -137,5 +137,5 @@ struct mtd_softc {
 
 #define MTD_RXD_FLEN_SHIFT	16
 
-extern int mtd_config __P((struct mtd_softc *));
-extern int mtd_irq_h __P((void *));
+extern int mtd_config(struct mtd_softc *);
+extern int mtd_irq_h(void *);

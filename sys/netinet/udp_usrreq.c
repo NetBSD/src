@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.129 2004/12/21 05:51:32 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.129.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.129 2004/12/21 05:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.129.4.1 2005/02/12 18:17:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -94,6 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.129 2004/12/21 05:51:32 yamt Exp $"
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+
+#ifdef IPSEC_NAT_T
+#include <netinet6/ipsec.h>
+#include <netinet6/esp.h>
+#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -147,6 +152,10 @@ struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
 #ifdef INET
+#ifdef IPSEC_NAT_T
+static int udp4_espinudp (struct mbuf *, int, struct sockaddr *,
+	struct socket *);
+#endif
 static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
 	struct socket *);
 static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
@@ -740,6 +749,20 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 				return rcvcnt;
 		}
 
+#ifdef IPSEC_NAT_T
+		/* Handle ESP over UDP */
+		if (inp->inp_flags & INP_ESPINUDP_ALL) {
+			struct sockaddr *sa = (struct sockaddr *)src;
+
+			if (udp4_espinudp(m, off, sa, inp->inp_socket) != 0) {
+				rcvcnt++;
+				goto bad;
+			}
+
+			/* Normal UDP processing will take place */
+		}
+#endif
+
 		udp4_sendup(m, off, (struct sockaddr *)src, inp->inp_socket);
 		rcvcnt++;
 	}
@@ -907,6 +930,100 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		    notify);
 	return NULL;
 }
+
+int
+udp_ctloutput(op, so, level, optname, mp) 
+	int op;
+	struct socket *so;
+	int level, optname;
+	struct mbuf **mp;
+{
+	int s;
+	int error = 0;
+	struct mbuf *m;
+	struct inpcb *inp;
+	int family;
+
+	family = so->so_proto->pr_domain->dom_family;
+
+	s = splsoftnet();
+	switch (family) {
+#ifdef INET
+	case PF_INET:
+		if (level != IPPROTO_UDP) {
+			error = ip_ctloutput(op, so, level, optname, mp);
+			goto end;
+		}
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		if (level != IPPROTO_UDP) {
+			error = ip6_ctloutput(op, so, level, optname, mp);
+			goto end;
+		}
+		break;
+#endif
+	default:
+		error = EAFNOSUPPORT;
+		goto end;
+		break;
+	}
+
+
+	switch (op) {
+	case PRCO_SETOPT:
+		m = *mp;
+		inp = sotoinpcb(so);
+
+		switch (optname) {
+		case UDP_ENCAP:
+			if (m == NULL || m->m_len < sizeof (int)) {
+				error = EINVAL;
+				goto end;
+			}
+			
+			switch(*mtod(m, int *)) {
+#ifdef IPSEC_NAT_T
+			case 0:
+				inp->inp_flags &= ~INP_ESPINUDP_ALL;
+				break;
+
+			case UDP_ENCAP_ESPINUDP:
+				inp->inp_flags &= ~INP_ESPINUDP_ALL;
+				inp->inp_flags |= INP_ESPINUDP;
+				break;
+				
+			case UDP_ENCAP_ESPINUDP_NON_IKE:
+				inp->inp_flags &= ~INP_ESPINUDP_ALL;
+				inp->inp_flags |= INP_ESPINUDP_NON_IKE;
+				break;
+#endif
+			default:
+				error = EINVAL;
+				goto end;
+				break;
+			}
+			break;
+
+		default:
+			error = ENOPROTOOPT;
+			goto end;
+			break;
+		}
+		break;
+
+	default:
+		error = EINVAL;
+		goto end;
+		break;
+	}	
+	
+end:
+	splx(s);
+	return error;
+}
+	
 
 int
 udp_output(struct mbuf *m, ...)
@@ -1217,5 +1334,115 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       NULL, 0, &udp_do_loopback_cksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_LOOPBACKCKSUM,
 		       CTL_EOL);
+}
+#endif
+
+#if (defined INET && defined IPSEC_NAT_T)
+/*
+ * Returns:
+ * 1 if the packet was processed
+ * 0 if normal UDP processing should take place
+ */
+static int
+udp4_espinudp(m, off, src, so)
+	struct mbuf *m;
+	int off;
+	struct sockaddr *src;
+	struct socket *so;
+{
+	size_t len;
+	caddr_t data;
+	struct inpcb *inp;
+	size_t skip = 0;
+	size_t minlen;
+	size_t iphdrlen;
+	struct ip *ip;
+	struct mbuf *n;
+
+	/* 
+	 * Collapse the mbuf chain if the first mbuf is too short
+	 * The longest case is: UDP + non ESP marker + ESP
+	 */
+	minlen = off + sizeof(u_int64_t) + sizeof(struct esp);
+	if (minlen > m->m_pkthdr.len)
+		minlen = m->m_pkthdr.len;
+
+	if (m->m_len < minlen) {
+		if ((m = m_pullup(m, minlen)) == NULL) {
+			printf("udp4_espinudp: m_pullup failed\n");
+			return 0;
+		}
+	}
+
+	len = m->m_len - off;	
+	data = mtod(m, caddr_t) + off;
+	inp = sotoinpcb(so);
+
+	/* Ignore keepalive packets */
+	if ((len == 1) && (data[0] == '\xff')) {
+		return 1;
+	}
+
+	/* 
+	 * Check that the payload is long enough to hold 
+	 * an ESP header and compute the length of encapsulation
+	 * header to remove 
+	 */
+	if (inp->inp_flags & INP_ESPINUDP) {
+		u_int32_t *st = (u_int32_t *)data;
+
+		if ((len <= sizeof(struct esp)) || (*st == 0))
+			return 0; /* Normal UDP processing */
+
+		skip = sizeof(struct udphdr);
+	}
+
+	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
+		u_int64_t *st = (u_int64_t *)data;
+
+		if ((len <= sizeof(u_int64_t) + sizeof(struct esp))
+		    || (*st != 0))
+			return 0; /* Normal UDP processing */
+		
+		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
+	}
+
+	/*
+	 * Remove the UDP header (and possibly the non ESP marker)
+	 * IP header lendth is iphdrlen
+	 * Before:   
+	 *   <--- off --->
+	 *   +----+------+-----+
+	 *   | IP |  UDP | ESP |
+	 *   +----+------+-----+
+	 *        <-skip->
+	 * After:
+	 *          +----+-----+
+	 *          | IP | ESP |
+	 *          +----+-----+
+	 *   <-skip->
+	 */
+	iphdrlen = off - sizeof(struct udphdr);
+	memmove(mtod(m, caddr_t) + skip, mtod(m, caddr_t), iphdrlen);
+	m_adj(m, skip);
+
+	ip = mtod(m, struct ip *);
+	ip->ip_len = htons(ntohs(ip->ip_len) - skip);
+	ip->ip_p = IPPROTO_ESP;
+
+	/*
+	 * Copy the mbuf to avoid multiple free, as both 
+	 * esp4_input (which we call) and udp_input (which 
+	 * called us) free the mbuf.
+	 */
+	if ((n = m_dup(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
+		printf("udp4_espinudp: m_dup failed\n");
+		return 0;
+	}
+
+	esp4_input(n, iphdrlen);
+
+	/* We handled it, it shoudln't be handled by UDP */
+	return 1;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.2 2005/01/21 11:55:52 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.2.2.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.2 2005/01/21 11:55:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.2.2.1 2005/02/12 18:17:46 yamt Exp $");
 
 
 /*
@@ -349,6 +349,12 @@ rgephy_status(sc)
 
 	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
 
+	if (bmcr & RGEPHY_BMCR_ISO) {
+		mii->mii_media_active |= IFM_NONE;
+		mii->mii_media_status = 0;
+		return;
+	}
+
 	if (bmcr & RGEPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
@@ -430,8 +436,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-
-	  
 #if 1
 	PHY_WRITE(sc, 31, 0x0001);
 	PHY_WRITE(sc, 21, 0x1000);
@@ -519,10 +523,6 @@ rgephy_load_dspcode(struct mii_softc *sc)
 #endif
 	
 	DELAY(40);
-
-	printf(" complete\n");
-	
-
 }
 
 static void

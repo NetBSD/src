@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.26 2005/01/05 09:01:24 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.26.4.1 2005/02/12 18:17:36 yamt Exp $
 
 #	NEWS1750 config file;
 #
@@ -70,6 +70,7 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	SOFTDEP		# ffs soft updates support
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols
@@ -155,6 +156,7 @@ pseudo-device	md		1	# memory disk device
 pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	sl		2	# SLIP interfaces
 #pseudo-device	ppp		2	# PPP interfaces
 #pseudo-device	tun		4	# Network "tunnel" device

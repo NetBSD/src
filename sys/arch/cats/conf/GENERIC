@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2005/01/17 15:28:51 cube Exp $
+# $NetBSD: GENERIC,v 1.72.2.1 2005/02/12 18:17:31 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -76,6 +76,8 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP		# FFS soft updates support
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -546,6 +548,7 @@ pseudo-device 	crypto			# opencrypto framework
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
+pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files

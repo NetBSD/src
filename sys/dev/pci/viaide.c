@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.20 2005/01/13 20:54:39 jdolecek Exp $	*/
+/*	$NetBSD: viaide.c,v 1.20.4.1 2005/02/12 18:17:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -117,6 +117,21 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA nForce3 250 Serial ATA Controller",
 	  via_sata_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
+	  0,
+	  "NVIDIA nForce4 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
+	  0,
+	  "NVIDIA nForce4 Serial ATA Controller",
+	  via_sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
+	  0,
+	  "NVIDIA nForce4 Serial ATA Controller",
+	  via_sata_chip_map
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -134,6 +149,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  NULL,
 	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
+	  0,
+	  "VIA Technologies VT6421 Serial RAID Controller",
+	  via_sata_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
@@ -304,6 +324,7 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133:
+		case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}

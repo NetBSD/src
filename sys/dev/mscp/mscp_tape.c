@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.22 2004/10/31 12:52:55 he Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.22.6.1 2005/02/12 18:17:46 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.22 2004/10/31 12:52:55 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.22.6.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,17 +81,17 @@ struct mt_softc {
 #define MT_OFFLINE	0
 #define MT_ONLINE	1
 
-int	mtmatch __P((struct device *, struct cfdata *, void *));
-void	mtattach __P((struct device *, struct device *, void *));
-void	mtdgram __P((struct device *, struct mscp *, struct mscp_softc *));
-void	mtiodone __P((struct device *, struct buf *));
-int	mtonline __P((struct device *, struct mscp *));
-int	mtgotstatus __P((struct device *, struct mscp *));
-int	mtioerror __P((struct device *, struct mscp *, struct buf *));
-void	mtfillin __P((struct buf *, struct mscp *));
-int	mtcmd __P((struct mt_softc *, int, int, int));
-void	mtcmddone __P((struct device *, struct mscp *));
-int	mt_putonline __P((struct mt_softc *));
+int	mtmatch(struct device *, struct cfdata *, void *);
+void	mtattach(struct device *, struct device *, void *);
+void	mtdgram(struct device *, struct mscp *, struct mscp_softc *);
+void	mtiodone(struct device *, struct buf *);
+int	mtonline(struct device *, struct mscp *);
+int	mtgotstatus(struct device *, struct mscp *);
+int	mtioerror(struct device *, struct mscp *, struct buf *);
+void	mtfillin(struct buf *, struct mscp *);
+int	mtcmd(struct mt_softc *, int, int, int);
+void	mtcmddone(struct device *, struct mscp *);
+int	mt_putonline(struct mt_softc *);
 
 struct	mscp_device mt_device = {
 	mtdgram,

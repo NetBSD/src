@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.29 2004/12/08 13:28:27 reinoud Exp $
+#	$NetBSD: NC,v 1.29.4.1 2005/02/12 18:17:29 yamt Exp $
 #
 #	NC - with vidcconsole
 #
@@ -265,6 +265,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	fss	4		# file system snapshot device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem

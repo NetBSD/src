@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.33.6.1 2005/02/12 18:17:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.33.6.1 2005/02/12 18:17:42 yamt Exp $");
 
 #include "rnd.h"
 
@@ -104,7 +104,7 @@ ldattach(struct ld_softc *sc)
 	char buf[9];
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
-		printf("%s: disabled\n", sc->sc_dv.dv_xname);
+		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -142,7 +142,7 @@ ldattach(struct ld_softc *sc)
 
 	format_bytes(buf, sizeof(buf), sc->sc_secperunit *
 	    sc->sc_secsize);
-	printf("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
+	aprint_normal("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
 	    sc->sc_dv.dv_xname, buf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 

@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.257 $"
+#ident 		"GENERIC-$Revision: 1.257.6.1 $"
 
 maxusers 32
 
@@ -82,7 +82,9 @@ file-system	PROCFS		# Process file system (/proc)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
@@ -605,6 +607,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

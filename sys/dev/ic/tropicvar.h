@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.8 2000/06/13 20:00:03 soren Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.8.36.1 2005/02/12 18:17:44 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -74,8 +74,8 @@ struct	tr_softc {
 	struct callout sc_init_callout;
 	struct callout sc_reinit_callout;
 
-	int (*sc_mediachange) __P((struct tr_softc *));
-	void (*sc_mediastatus) __P((struct tr_softc *, struct ifmediareq *));
+	int (*sc_mediachange)(struct tr_softc *);
+	void (*sc_mediastatus)(struct tr_softc *, struct ifmediareq *);
 	struct rbcb rbc;	/* receiver buffer control block */
 	bus_size_t sc_aca;	/* offset of adapter ACA */
 	bus_size_t sc_ssb;	/* offset of System Status Block */
@@ -97,21 +97,21 @@ struct	tr_softc {
 	void *sc_sdhook;
 
 	/* Power management hooks */    
-	int (*sc_enable) __P((struct tr_softc *));
-	void (*sc_disable) __P((struct tr_softc *));
+	int (*sc_enable)(struct tr_softc *);
+	void (*sc_disable)(struct tr_softc *);
 	int sc_enabled;
 };
 
-int tr_config __P((struct tr_softc *));
-int tr_attach __P((struct tr_softc *));
-int tr_intr __P((void *));
-void tr_init __P((void *));
-int tr_ioctl __P((struct ifnet *, u_long, caddr_t));
-void tr_stop __P((struct tr_softc *));
-int tr_reset __P((struct tr_softc *));
-void tr_sleep __P((struct tr_softc *));
-int tr_setspeed __P((struct tr_softc *, u_int8_t));
-int tr_enable __P((struct tr_softc *));
-void tr_disable __P((struct tr_softc *));
-int tr_activate __P((struct device *, enum devact));
-int tr_detach __P((struct device *, int flags));
+int tr_config(struct tr_softc *);
+int tr_attach(struct tr_softc *);
+int tr_intr(void *);
+void tr_init(void *);
+int tr_ioctl(struct ifnet *, u_long, caddr_t);
+void tr_stop(struct tr_softc *);
+int tr_reset(struct tr_softc *);
+void tr_sleep(struct tr_softc *);
+int tr_setspeed(struct tr_softc *, u_int8_t);
+int tr_enable(struct tr_softc *);
+void tr_disable(struct tr_softc *);
+int tr_activate(struct device *, enum devact);
+int tr_detach(struct device *, int flags);

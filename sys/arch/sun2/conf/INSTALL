@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.18 2004/11/10 17:54:07 christos Exp $
+# $NetBSD: INSTALL,v 1.18.6.1 2005/02/12 18:17:40 yamt Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.18.6.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -69,6 +69,7 @@ file-system	KERNFS		# /kern
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -227,3 +228,4 @@ pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.12 2003/01/31 00:07:40 thorpej Exp $ */
+/* $NetBSD: btvmei.c,v 1.12.12.1 2005/02/12 18:17:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.12 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.12.12.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.12 2003/01/31 00:07:40 thorpej Exp $");
 #include <dev/pci/btvmeireg.h>
 #include <dev/pci/btvmeivar.h>
 
-static int b3_617_match __P((struct device *, struct cfdata *, void *));
-static void b3_617_attach __P((struct device *, struct device *, void *));
+static int b3_617_match(struct device *, struct cfdata *, void *);
+static void b3_617_attach(struct device *, struct device *, void *);
 #ifdef notyet
-static int b3_617_detach __P((struct device *));
+static int b3_617_detach(struct device *);
 #endif
-void b3_617_slaveconfig __P((struct device *, struct vme_attach_args *));
+void b3_617_slaveconfig(struct device *, struct vme_attach_args *);
 
-static void b3_617_vmeintr __P((struct b3_617_softc *, unsigned char));
+static void b3_617_vmeintr(struct b3_617_softc *, unsigned char);
 
 /*
  * mapping ressources, needed for deallocation
@@ -508,7 +508,7 @@ b3_617_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
 	vme_size_t len;
 	vme_am_t am;
 	vme_datasize_t datasize;
-	int (*callback) __P((void *, bus_space_tag_t, bus_space_handle_t));
+	int (*callback)(void *, bus_space_tag_t, bus_space_handle_t);
 	void *cbarg;
 {
 	bus_space_tag_t tag;
@@ -588,7 +588,7 @@ b3_617_establish_vmeint(vsc, handle, prior, func, arg)
 	void *vsc;
 	vme_intr_handle_t handle;
 	int prior;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct b3_617_vmeintrhand *ih;

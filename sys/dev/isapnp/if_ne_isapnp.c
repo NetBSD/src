@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.18 2004/02/13 10:05:50 wiz Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.18.10.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.18 2004/02/13 10:05:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.18.10.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.18 2004/02/13 10:05:50 wiz Exp $"
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-static int ne_isapnp_match __P((struct device *, struct cfdata *, void *));
-static void ne_isapnp_attach __P((struct device *, struct device *, void *));
+static int ne_isapnp_match(struct device *, struct cfdata *, void *);
+static void ne_isapnp_attach(struct device *, struct device *, void *);
 
 struct ne_isapnp_softc {
 	struct	ne2000_softc sc_ne2000;		/* real "ne2000" softc */

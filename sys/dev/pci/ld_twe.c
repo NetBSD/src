@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.21 2004/10/28 07:07:41 yamt Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.21.6.1 2005/02/12 18:17:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.21 2004/10/28 07:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.21.6.1 2005/02/12 18:17:47 yamt Exp $");
 
 #include "rnd.h"
 
@@ -164,7 +164,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 		statstr = unkstat;
 	}
 
-	printf(": %s%s, status: %s\n", stripebuf, typestr, statstr);
+	aprint_normal(": %s%s, status: %s\n", stripebuf, typestr, statstr);
 	ldattach(ld);
 }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.16 2002/09/11 02:46:42 itojun Exp $       */
+/*      $NetBSD: if_atm.c,v 1.16.16.1 2005/02/12 18:17:53 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.16 2002/09/11 02:46:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.16.16.1 2005/02/12 18:17:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -82,10 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.16 2002/09/11 02:46:42 itojun Exp $");
  */
 
 void
-atm_rtrequest(req, rt, info)
-	int req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct atm_pseudoioctl api;
@@ -227,12 +224,8 @@ failed:
  */
 
 int
-atmresolve(rt, m, dst, desten)
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct atm_pseudohdr *desten;	/* OUT */
-
+atmresolve(struct rtentry *rt, struct mbuf *m, struct sockaddr *dst,
+    struct atm_pseudohdr *desten /* OUT */)
 {
 	struct sockaddr_dl *sdl;
 

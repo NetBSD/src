@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.38 2005/01/21 12:19:25 tsutsui Exp $
+#	$NetBSD: FOUR_TTYS,v 1.38.2.1 2005/02/12 18:17:40 yamt Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -72,6 +72,7 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -197,4 +198,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem

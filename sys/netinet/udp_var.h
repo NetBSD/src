@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.26 2004/12/21 05:51:33 yamt Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.26.4.1 2005/02/12 18:17:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -94,6 +94,7 @@ extern	int	udp_do_loopback_cksum;
 #endif
 
 void	 *udp_ctlinput(int, struct sockaddr *, void *);
+int	 udp_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	 udp_init(void);
 void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.9 2004/10/28 07:07:40 yamt Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.9.6.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.9 2004/10/28 07:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.9.6.1 2005/02/12 18:17:43 yamt Exp $");
 
 #include "rnd.h"
 
@@ -108,7 +108,7 @@ ld_cac_attach(struct device *parent, struct device *self, void *aux)
 
 	if (cac_cmd(cac, CAC_CMD_GET_LOG_DRV_INFO, &dinfo, sizeof(dinfo),
 	    sc->sc_hwunit, 0, CAC_CCB_DATA_IN, NULL)) {
-		printf("%s: CMD_GET_LOG_DRV_INFO failed\n", self->dv_xname);
+		aprint_error(": CMD_GET_LOG_DRV_INFO failed\n");
 		return;
 	}
 
@@ -138,7 +138,7 @@ ld_cac_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf(": %s array\n", type);
+	aprint_normal(": %s array\n", type);
 
 	/* XXX We should verify this... */
 	ld->sc_flags = LDF_ENABLED;

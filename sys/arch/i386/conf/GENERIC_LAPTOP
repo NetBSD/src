@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.129 2005/01/18 10:28:00 scw Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.129.2.1 2005/02/12 18:17:34 yamt Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.129.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -134,6 +134,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
+options 	FFS_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -299,6 +300,7 @@ apm0	at mainbus0			# Advanced power management
 
 #pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 #fdc*		at pnpbios? index ?	# floppy controller
+#npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 #pciide*	at pnpbios? index ?
@@ -589,6 +591,7 @@ ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
+re*	at cardbus? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
@@ -605,6 +608,7 @@ makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S/8110 internal PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -837,6 +841,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files

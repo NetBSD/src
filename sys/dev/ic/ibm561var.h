@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561var.h,v 1.2 2001/12/22 01:38:21 elric Exp $ */
+/* $NetBSD: ibm561var.h,v 1.2.30.1 2005/02/12 18:17:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 struct ramdac_funcs *ibm561_funcs(void);
-struct ramdac_cookie *ibm561_register __P((void *,
+struct ramdac_cookie *ibm561_register(void *,
 	int (*)(void *, void (*)(void *)),
 	void (*)(void *, u_int, u_int8_t),
-	u_int8_t (*)(void *, u_int)));
-void ibm561_cninit __P((void *,
+	u_int8_t (*)(void *, u_int));
+void ibm561_cninit(void *,
 	int (*)(void *, void (*)(void *)),
 	void (*)(void *, u_int, u_int8_t),
-	u_int8_t (*)(void *, u_int), u_int));
+	u_int8_t (*)(void *, u_int), u_int);

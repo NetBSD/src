@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.3 2003/07/14 15:47:20 lukem Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.3.10.1 2005/02/12 18:17:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.3 2003/07/14 15:47:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.3.10.1 2005/02/12 18:17:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -142,7 +142,7 @@ pcctwoprint(aux, cp)
 void
 pcctwointr_establish(vec, hand, lvl, arg, evcnt)
 	int vec;
-	int (*hand) __P((void *)), lvl;
+	int (*hand)(void *), lvl;
 	void *arg;
 	struct evcnt *evcnt;
 {

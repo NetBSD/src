@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.52 2003/05/09 23:51:29 fvdl Exp $	*/
+/*	$NetBSD: isadma.c,v 1.52.12.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.52 2003/05/09 23:51:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.52.12.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ static u_int8_t dmamode[] = {
 	DMA37MD_WRITE | DMA37MD_DEMAND | DMA37MD_LOOP,
 };
 
-static inline void _isa_dmaunmask __P((struct isa_dma_state *, int));
-static inline void _isa_dmamask __P((struct isa_dma_state *, int));
+static inline void _isa_dmaunmask(struct isa_dma_state *, int);
+static inline void _isa_dmamask(struct isa_dma_state *, int);
 
 static inline void
 _isa_dmaunmask(ids, chan)

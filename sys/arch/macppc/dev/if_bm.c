@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.23.6.1 2005/02/12 18:17:35 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.23.6.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
+
+#include <powerpc/spr.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -341,7 +343,10 @@ bmac_init(sc)
 	if (! (sc->sc_flags & BMAC_BMACPLUS))
 		bmac_set_bits(sc, XCVRIF, ClkBit|SerialMode|COLActiveLow);
 
-	__asm __volatile ("mftb %0" : "=r"(tb));
+	if ((mfpvr() >> 16) == MPC601)
+		tb = mfrtcl();
+	else
+		tb = mftbl();
 	bmac_write_reg(sc, RSEED, tb);
 	bmac_set_bits(sc, XIFC, TxOutputEnable);
 	bmac_read_reg(sc, PAREG);
@@ -507,8 +512,11 @@ bmac_rint(v)
 		/* XXX Sometimes bmac reads one extra byte. */
 		if (datalen == ETHER_MAX_LEN + 1)
 			datalen--;
-		m = bmac_get(sc, data, datalen);
 
+		/* Trim the CRC. */
+		datalen -= ETHER_CRC_LEN;
+
+		m = bmac_get(sc, data, datalen);
 		if (m == NULL) {
 			ifp->if_ierrors++;
 			goto next;
@@ -677,7 +685,6 @@ bmac_get(sc, pkt, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_flags |= M_HASFCS;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;

@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.9 2000/06/25 00:23:13 pk Exp $ */
+/* $NetBSD: vmevar.h,v 1.9.34.1 2005/02/12 18:17:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -61,28 +61,28 @@ typedef void *vme_intr_handle_t;
 typedef struct vme_chipset_tag {
 	void *cookie;
 
-	int (*vct_map) __P((void *, vme_addr_t, vme_size_t,
-			    vme_am_t, vme_datasize_t, vme_swap_t,
-			    bus_space_tag_t *, bus_space_handle_t *,
-			    vme_mapresc_t *));
-	void (*vct_unmap) __P((void *, vme_mapresc_t));
+	int (*vct_map)(void *, vme_addr_t, vme_size_t,
+			vme_am_t, vme_datasize_t, vme_swap_t,
+			bus_space_tag_t *, bus_space_handle_t *,
+			vme_mapresc_t *);
+	void (*vct_unmap)(void *, vme_mapresc_t);
 
-	int (*vct_probe) __P((void *, vme_addr_t, vme_size_t,
-			      vme_am_t, vme_datasize_t,
-			int (*)(void *, bus_space_tag_t, bus_space_handle_t),
-			      void *));
+	int (*vct_probe)(void *, vme_addr_t, vme_size_t,
+			 vme_am_t, vme_datasize_t,
+			 int (*)(void *, bus_space_tag_t, bus_space_handle_t),
+			      void *);
 
-	int (*vct_int_map) __P((void *, int, int, vme_intr_handle_t *));
-	const struct evcnt *(*vct_int_evcnt) __P((void *, vme_intr_handle_t));
-	void *(*vct_int_establish) __P((void *, vme_intr_handle_t, int,
-					int (*)(void *), void *));
-	void (*vct_int_disestablish) __P((void *, void *));
+	int (*vct_int_map)(void *, int, int, vme_intr_handle_t *);
+	const struct evcnt *(*vct_int_evcnt)(void *, vme_intr_handle_t);
+	void *(*vct_int_establish)(void *, vme_intr_handle_t, int,
+					int (*)(void *), void *);
+	void (*vct_int_disestablish)(void *, void *);
 
-	int (*vct_dmamap_create) __P((void *, vme_size_t,
-				      vme_am_t, vme_datasize_t, vme_swap_t,
-				      int, vme_size_t, vme_addr_t,
-				      int, bus_dmamap_t *));
-	void (*vct_dmamap_destroy) __P((void *, bus_dmamap_t));
+	int (*vct_dmamap_create)(void *, vme_size_t,
+				 vme_am_t, vme_datasize_t, vme_swap_t,
+				 int, vme_size_t, vme_addr_t,
+				 int, bus_dmamap_t *);
+	void (*vct_dmamap_destroy)(void *, bus_dmamap_t);
 
 	/*
 	 * This sucks: we have to give all the VME specific arguments
@@ -90,10 +90,10 @@ typedef struct vme_chipset_tag {
 	 * give a "dmamap" argument here, meaning: "allocate memory which
 	 * can be accessed through this DMA map".
 	 */
-	int (*vct_dmamem_alloc) __P((void *, vme_size_t,
-				     vme_am_t, vme_datasize_t, vme_swap_t,
-				     bus_dma_segment_t *, int, int *, int));
-	void (*vct_dmamem_free) __P((void *, bus_dma_segment_t *, int));
+	int (*vct_dmamem_alloc)(void *, vme_size_t,
+				vme_am_t, vme_datasize_t, vme_swap_t,
+				bus_dma_segment_t *, int, int *, int);
+	void (*vct_dmamem_free)(void *, bus_dma_segment_t *, int);
 
 	struct vmebus_softc *bus;
 } *vme_chipset_tag_t;
@@ -154,8 +154,8 @@ typedef struct vme_chipset_tag {
  */
 
 struct vme_attach_args;
-typedef void (*vme_slaveconf_callback) __P((struct device *,
-					    struct vme_attach_args *));
+typedef void (*vme_slaveconf_callback)(struct device *,
+				       struct vme_attach_args *);
 
 struct vmebus_attach_args {
 	vme_chipset_tag_t va_vct;
@@ -197,12 +197,10 @@ struct vme_attach_args {
 /*
  * Address space accounting.
  */
-int _vme_space_alloc __P((struct vmebus_softc *, vme_addr_t,
-			  vme_size_t, vme_am_t));
-void _vme_space_free __P((struct vmebus_softc *, vme_addr_t,
-			  vme_size_t, vme_am_t));
-int _vme_space_get __P((struct vmebus_softc *, vme_size_t, vme_am_t,
-			u_long, vme_addr_t*));
+int _vme_space_alloc(struct vmebus_softc *, vme_addr_t, vme_size_t, vme_am_t);
+void _vme_space_free(struct vmebus_softc *, vme_addr_t, vme_size_t, vme_am_t);
+int _vme_space_get(struct vmebus_softc *, vme_size_t, vme_am_t,
+		   u_long, vme_addr_t*);
 
 #define vme_space_alloc(tag, addr, size, ams) \
 	_vme_space_alloc(tag->bus, addr, size, ams)

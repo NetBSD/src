@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.4 2004/11/13 19:14:48 he Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.4.6.1 2005/02/12 18:17:52 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -39,7 +39,7 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.25.2.1 2004/05/04 03:47:49 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 2.25.2.2 2004/12/09 19:41:00 darrenr Exp
  */
 
 #define	IPF_RPCB_PROXY

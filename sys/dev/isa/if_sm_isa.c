@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.13 2004/09/14 20:20:48 drochner Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.13.6.1 2005/02/12 18:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.13 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.13.6.1 2005/02/12 18:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.13 2004/09/14 20:20:48 drochner Exp 
 
 #include <dev/isa/isavar.h>
 
-int	sm_isa_match __P((struct device *, struct cfdata *, void *));
-void	sm_isa_attach __P((struct device *, struct device *, void *));
+int	sm_isa_match(struct device *, struct cfdata *, void *);
+void	sm_isa_attach(struct device *, struct device *, void *);
 
 struct sm_isa_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */

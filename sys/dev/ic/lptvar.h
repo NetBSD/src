@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.50 2000/03/23 07:01:31 thorpej Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.50.38.1 2005/02/12 18:17:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -86,11 +86,11 @@ struct lpt_softc {
 #define NOT_READY()     ((bus_space_read_1(iot, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
 #define NOT_READY_ERR() lptnotready(bus_space_read_1(iot, ioh, lpt_status), sc)
 
-int lptnotready __P((u_char, struct lpt_softc *));
-void lptwakeup __P((void *arg));
-int lptpushbytes __P((struct lpt_softc *));
+int lptnotready(u_char, struct lpt_softc *);
+void lptwakeup(void *arg);
+int lptpushbytes(struct lpt_softc *);
 
-void lpt_attach_subr __P((struct lpt_softc *));
-int lptintr __P((void *));
+void lpt_attach_subr(struct lpt_softc *);
+int lptintr(void *);
 
 #endif /* _LPT_VAR_H_ */

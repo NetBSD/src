@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.5 2003/08/07 16:31:27 agc Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.5.10.1 2005/02/12 18:17:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,4 +61,4 @@ struct le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-void	dec_le_common_attach __P((struct am7990_softc *, u_char *));
+void	dec_le_common_attach(struct am7990_softc *, u_char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.23.6.1 2005/02/12 18:17:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.23 2004/10/30 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.23.6.1 2005/02/12 18:17:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -631,7 +631,10 @@ gmac_init_mac(sc)
 	int i, tb;
 	char *laddr = sc->sc_laddr;
 
-	__asm ("mftb %0" : "=r"(tb));
+	if ((mfpvr() >> 16) == MPC601)
+		tb = mfrtcl();
+	else
+		tb = mftbl();
 	gmac_write_reg(sc, GMAC_RANDOMSEED, tb);
 
 	/* init-mii */
