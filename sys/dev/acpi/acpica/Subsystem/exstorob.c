@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstorob - AML Interpreter object store support, store to object
- *              xRevision: 47 $
+ *              xRevision: 50 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.5 2003/02/13 14:16:21 kanaoka Exp $");
 
 #define __EXSTOROB_C__
 
@@ -150,7 +150,7 @@ AcpiExStoreBufferToBuffer (
     UINT8                   *Buffer;
 
 
-    ACPI_FUNCTION_NAME ("ExStoreBufferToBuffer");
+    ACPI_FUNCTION_TRACE_PTR ("ExStoreBufferToBuffer", SourceDesc);
 
 
     /*
@@ -169,7 +169,7 @@ AcpiExStoreBufferToBuffer (
         TargetDesc->Buffer.Pointer = ACPI_MEM_ALLOCATE (Length);
         if (!TargetDesc->Buffer.Pointer)
         {
-            return (AE_NO_MEMORY);
+            return_ACPI_STATUS (AE_NO_MEMORY);
         }
 
         TargetDesc->Common.Flags &= ~AOPOBJ_STATIC_POINTER;
@@ -202,7 +202,7 @@ AcpiExStoreBufferToBuffer (
     /* Copy flags */
 
     TargetDesc->Buffer.Flags = SourceDesc->Buffer.Flags;
-    return (AE_OK);
+    return_ACPI_STATUS (AE_OK);
 }
 
 
@@ -228,7 +228,7 @@ AcpiExStoreStringToString (
     UINT8                   *Buffer;
 
 
-    ACPI_FUNCTION_ENTRY ();
+    ACPI_FUNCTION_TRACE_PTR ("ExStoreStringToString", SourceDesc);
 
 
     /*
@@ -244,9 +244,9 @@ AcpiExStoreStringToString (
     if ((Length < TargetDesc->String.Length) &&
        (!(TargetDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
     {
-        /* 
+        /*
          * String will fit in existing non-static buffer.
-         * Clear old string and copy in the new one 
+         * Clear old string and copy in the new one
          */
         ACPI_MEMSET (TargetDesc->String.Pointer, 0, (ACPI_SIZE) TargetDesc->String.Length + 1);
         ACPI_MEMCPY (TargetDesc->String.Pointer, Buffer, Length);
@@ -269,7 +269,7 @@ AcpiExStoreStringToString (
         TargetDesc->String.Pointer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
         if (!TargetDesc->String.Pointer)
         {
-            return (AE_NO_MEMORY);
+            return_ACPI_STATUS (AE_NO_MEMORY);
         }
 
         TargetDesc->Common.Flags &= ~AOPOBJ_STATIC_POINTER;
@@ -279,7 +279,7 @@ AcpiExStoreStringToString (
     /* Set the new target length */
 
     TargetDesc->String.Length = Length;
-    return (AE_OK);
+    return_ACPI_STATUS (AE_OK);
 }
 
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisply - debug display commands
- *              xRevision: 83 $
+ *              xRevision: 86 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.6 2002/12/23 00:22:07 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.7 2003/02/13 14:16:16 kanaoka Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -222,14 +222,14 @@ AcpiDbDumpParserDescriptor (
 
 void
 AcpiDbDecodeAndDisplayObject (
-    NATIVE_CHAR             *Target,
-    NATIVE_CHAR             *OutputType)
+    char                    *Target,
+    char                    *OutputType)
 {
     void                    *ObjPtr;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OPERAND_OBJECT     *ObjDesc;
     UINT32                  Display = DB_BYTE_DISPLAY;
-    NATIVE_CHAR             Buffer[80];
+    char                    Buffer[80];
     ACPI_BUFFER             RetBuf;
     ACPI_STATUS             Status;
     UINT32                  Size;
@@ -795,6 +795,12 @@ AcpiDbDisplayLocals (void)
 
     ObjDesc = WalkState->MethodDesc;
     Node = WalkState->MethodNode;
+    if (!Node)
+    {
+        AcpiOsPrintf ("No method node (Executing subtree for buffer or opregion)\n");
+        return;
+    }
+
     AcpiOsPrintf ("Local Variables for method [%4.4s]:\n", Node->Name.Ascii);
 
     for (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++)
@@ -838,6 +844,11 @@ AcpiDbDisplayArguments (void)
 
     ObjDesc = WalkState->MethodDesc;
     Node    = WalkState->MethodNode;
+    if (!Node)
+    {
+        AcpiOsPrintf ("No method node (Executing subtree for buffer or opregion)\n");
+        return;
+    }
 
     NumArgs     = ObjDesc->Method.ParamCount;
     Concurrency = ObjDesc->Method.Concurrency;

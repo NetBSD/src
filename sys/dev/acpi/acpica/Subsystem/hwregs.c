@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              xRevision: 137 $
+ *              xRevision: 140 $
  *
  ******************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.5 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.6 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __HWREGS_C__
 
@@ -143,8 +143,8 @@ __KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.5 2002/12/23 00:22:12 kanaoka Exp $");
 ACPI_STATUS
 AcpiHwClearAcpiStatus (void)
 {
-    NATIVE_UINT_MAX32       i;
-    NATIVE_UINT             GpeBlock;
+    ACPI_NATIVE_UINT        i;
+    ACPI_NATIVE_UINT        GpeBlock;
     ACPI_STATUS             Status;
 
 
@@ -188,7 +188,7 @@ AcpiHwClearAcpiStatus (void)
         for (i = 0; i < AcpiGbl_GpeBlockInfo[GpeBlock].RegisterCount; i++)
         {
             Status = AcpiHwLowLevelWrite (8, 0xFF,
-                        AcpiGbl_GpeBlockInfo[GpeBlock].BlockAddress, i);
+                        AcpiGbl_GpeBlockInfo[GpeBlock].BlockAddress, (UINT32) i);
             if (ACPI_FAILURE (Status))
             {
                 goto UnlockAndExit;
@@ -242,7 +242,7 @@ AcpiGetSleepTypeData (
     /*
      * Evaluate the namespace object containing the values for this state
      */
-    Status = AcpiNsEvaluateByName ((NATIVE_CHAR *) AcpiGbl_DbSleepStates[SleepState],
+    Status = AcpiNsEvaluateByName ((char *) AcpiGbl_DbSleepStates[SleepState],
                     NULL, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {

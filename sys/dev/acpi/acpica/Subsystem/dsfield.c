@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              xRevision: 69 $
+ *              xRevision: 71 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.4 2002/12/23 00:22:08 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.5 2003/02/13 14:16:17 kanaoka Exp $");
 
 #define __DSFIELD_C__
 
@@ -349,7 +349,7 @@ AcpiDsGetFieldNames (
             /* Lookup the name */
 
             Status = AcpiNsLookup (WalkState->ScopeInfo,
-                            (NATIVE_CHAR *) &Arg->Named.Name,
+                            (char *) &Arg->Named.Name,
                             Info->FieldType, ACPI_IMODE_EXECUTE, ACPI_NS_DONT_OPEN_SCOPE,
                             WalkState, &Info->FieldNode);
             if (ACPI_FAILURE (Status))
@@ -526,7 +526,7 @@ AcpiDsInitFieldObjects (
         if (Arg->Common.AmlOpcode == AML_INT_NAMEDFIELD_OP)
         {
             Status = AcpiNsLookup (WalkState->ScopeInfo,
-                            (NATIVE_CHAR *) &Arg->Named.Name,
+                            (char *) &Arg->Named.Name,
                             Type, ACPI_IMODE_LOAD_PASS1,
                             ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE | ACPI_NS_ERROR_IF_FOUND,
                             WalkState, &Node);
