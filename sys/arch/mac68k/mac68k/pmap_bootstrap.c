@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.25 1996/05/15 02:34:33 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.26 1996/05/18 18:54:52 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
+#include <machine/autoconf.h>
 
 #include <ufs/mfs/mfs_extern.h>
 
@@ -558,6 +559,7 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
+	extern void	zs_init __P((void));
 	extern caddr_t	esym;
 	vm_offset_t	nextpa;
 	caddr_t		oldROMBase;
@@ -622,5 +624,19 @@ bootstrap_mac68k(tc)
 			(unsigned long) newvideoaddr);
 
 	mac68k_set_io_offsets(IOBase);
+
+	/*
+	 * If the serial ports are going (for console or 'echo'), then
+	 * we need to make sure the IO change gets propagated properly.
+	 * This resets the base addresses for the 8530 (serial) driver.
+	 *
+	 * WARNING!!! No printfs() (etc) BETWEEN zs_init() and the end
+	 * of this function (where we start using the MMU, so the new
+	 * address is correct.
+	 */
+	if (   (mac68k_machine.serial_boot_echo)
+	    || (mac68k_machine.serial_console))
+		zs_init();
+
 	videoaddr = newvideoaddr;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.46 1996/05/06 06:40:03 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.47 1996/05/18 18:53:50 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -59,9 +59,16 @@ device	ncr96scsi: scsi
 attach	ncr96scsi at obio
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
-device	ser: tty
-attach	ser at obio
-file	arch/mac68k/dev/ser.c		ser needs-flag
+device	zsc { channel = -1 }
+attach	zsc at obio
+file	arch/mac68k/dev/zs.c		zsc needs-flag
+file	arch/mac68k/dev/z8530sc.c	zsc
+#file	dev/ic/z8530sc.c		zsc
+
+device	zstty: tty
+attach	zstty at zsc
+file	arch/mac68k/dev/z8530tty.c	zstty needs-flag
+#file	dev/ic/z8530tty.c		zstty needs-flag
 
 # This one is out of alphabetical order
 device	fpu
