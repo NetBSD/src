@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.2.5 1995/11/14 01:28:42 thorpej Exp $
+#	$NetBSD: install.sh,v 1.1.2.6 1995/11/14 09:40:58 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -666,7 +666,7 @@ __install_ftp_2
 		fi
 
 		_ftp_file=`echo ${resp} | awk '{print $1}'`
-		echo "get ${_ftp_file} |\"tar -zxvpf -\"" >> \
+		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
 
@@ -697,7 +697,7 @@ install_common_nfs_cdrom() {
 	fi
 
 	# Extract file
-	cat $_common_filename | (cd /mnt; tar -zxvpf -)
+	cat $_common_filename | (cd /mnt; tar --unlink -zxvpf -)
 	echo "Extraction complete."
 }
 
@@ -917,14 +917,14 @@ __install_tape_2
 			1)
 				(
 					cd /mnt
-					dd if=$TAPE | tar -zxvpf -
+					dd if=$TAPE | tar --unlink -zxvpf -
 				)
 				;;
 
 			2)
 				(
 					cd /mnt
-					dd if=$TAPE | tar -xvpf -
+					dd if=$TAPE | tar --unlink -xvpf -
 				)
 				;;
 
@@ -1342,7 +1342,7 @@ if [ -f /base.tar.gz ]; then
 				getresp "y"
 				case "$resp" in
 				y*|Y*)
-					cat $_f | (cd /mnt; tar -zxvpf -)
+				     cat $_f | (cd /mnt; tar --unlink -zxvpf -)
 					_yup="TRUE"
 					;;
 				*)
