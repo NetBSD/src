@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.12 1999/03/26 22:39:45 mjacob Exp $ */
-/* release_03_25_99 */
+/* $NetBSD: isp_netbsd.c,v 1.13 1999/04/04 02:29:34 mjacob Exp $ */
+/* release_4_3_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -108,7 +108,7 @@ isp_attach(isp)
 			 * Too much target breakage at present.
 			 */
 #if	0
-			if (isp->isp_fwrev >= ISP_FW_REV(7,55))
+			if (isp->isp_fwrev >= ISP_FW_REV(7,55,0))
 				isp->isp_osinfo._link.scsipi_scsi.max_lun = 31;
 			else
 #endif
