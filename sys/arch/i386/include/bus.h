@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7.8.1 1997/05/13 02:53:11 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.8.2 1997/05/17 00:25:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -563,8 +563,8 @@ struct i386_bus_dma_tag {
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t,
-		    bus_dma_segment_t *, int, int *, int));
+	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int));
 	void	(*_dmamem_free) __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int));
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
@@ -592,8 +592,8 @@ struct i386_bus_dma_tag {
 	(void)((t)->_dmamap_sync ?				\
 	    (*(t)->_dmamap_sync)((t), (p), (o)) : (void)0)
 
-#define	bus_dmamem_alloc(t, s, sg, n, r, f)			\
-	(*(t)->_dmamem_alloc)((t), (s), (sg), (n), (r), (f))
+#define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
+	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
 	(*(t)->_dmamem_free)((t), (sg), (n))
 #define	bus_dmamem_map(t, sg, n, s, k, f)			\
@@ -643,6 +643,7 @@ void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t));
 
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
 void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
@@ -654,6 +655,7 @@ int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, int off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vm_offset_t low, vm_offset_t high));
 #endif /* _I386_BUS_DMA_PRIVATE */
