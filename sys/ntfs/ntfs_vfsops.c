@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.19 1999/10/20 14:25:42 enami Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.20 1999/10/20 14:32:10 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -670,7 +670,8 @@ ntfs_unmount(
 	vnode_pager_uncache(ntmp->ntm_devvp);
 	VOP_UNLOCK(ntmp->ntm_devvp);
 #else
-	ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (ntmp->ntm_devvp->v_type != VBAD)
+		ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
