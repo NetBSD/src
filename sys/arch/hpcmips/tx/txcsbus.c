@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.2 1999/12/03 18:15:41 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.3 1999/12/07 17:08:11 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -43,6 +43,40 @@
 #include <hpcmips/tx/tx39biureg.h>
 
 #include "locators.h"
+
+/* TX39 CS mapping. (nonconfigurationable) */
+const struct csmap {
+	char	*cs_name;
+	paddr_t	cs_addr;
+	psize_t	cs_size;
+} __csmap[] = {
+	[TX39_CS0]	= {"CS0(ROM)"	, TX39_SYSADDR_CS0	,
+			   TX39_SYSADDR_CS_SIZE},
+	[TX39_CS1]	= {"CS1"	, TX39_SYSADDR_CS1	,
+			   TX39_SYSADDR_CS_SIZE},
+	[TX39_CS2]	= {"CS2"	, TX39_SYSADDR_CS2	,
+			   TX39_SYSADDR_CS_SIZE},
+	[TX39_CS3]	= {"CS3"	, TX39_SYSADDR_CS3	,
+			   TX39_SYSADDR_CS_SIZE},
+	[TX39_MCS0]	= {"MCS0"	, TX39_SYSADDR_MCS0	,
+			   TX39_SYSADDR_MCS_SIZE},
+	[TX39_MCS1]	= {"MCS1"	, TX39_SYSADDR_MCS1	,
+			   TX39_SYSADDR_MCS_SIZE},
+#ifdef TX391X
+	[TX39_MCS2]	= {"MCS2"	, TX39_SYSADDR_MCS2	,
+			   TX39_SYSADDR_MCS_SIZE},
+	[TX39_MCS3]	= {"MCS3"	, TX39_SYSADDR_MCS3	,
+			   TX39_SYSADDR_MCS_SIZE},
+#endif /* TX391X */
+	[TX39_CARD1]	= {"CARD1(io/attr)", TX39_SYSADDR_CARD1	,
+			   TX39_SYSADDR_CARD_SIZE},
+	[TX39_CARD2]	= {"CARD2(io/attr)", TX39_SYSADDR_CARD2	,
+			   TX39_SYSADDR_CARD_SIZE},
+	[TX39_CARD1MEM]	= {"CARD1(mem)"	, TX39_SYSADDR_CARD1MEM	,
+			   TX39_SYSADDR_CARD_SIZE},
+	[TX39_CARD2MEM]	= {"CARD2(mem)"	, TX39_SYSADDR_CARD2MEM	,
+			   TX39_SYSADDR_CARD_SIZE},
+};
 
 int	txcsbus_match __P((struct device*, struct cfdata*, void*));
 void	txcsbus_attach __P((struct device*, struct device*, void*));
@@ -112,7 +146,46 @@ txcsbus_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+#define PRINTIRQ(i) i, (i) / 32, (i) % 32
+	struct cs_attach_args *ca = aux;
+	
+	if (ca->ca_csreg.cs != TXCSBUSCF_REGCS_DEFAULT) {
+		printf(" regcs %s %dbit %#x+%#x", 
+		       __csmap[ca->ca_csreg.cs].cs_name,
+		       ca->ca_csreg.cswidth,
+		       ca->ca_csreg.csbase,
+		       ca->ca_csreg.cssize);
+	}
+
+	if (ca->ca_csio.cs != TXCSBUSCF_IOCS_DEFAULT) {
+		printf(" iocs %s %dbit %#x+%#x", 
+		       __csmap[ca->ca_csio.cs].cs_name,
+		       ca->ca_csio.cswidth,
+		       ca->ca_csio.csbase,
+		       ca->ca_csio.cssize);
+	}
+
+	if (ca->ca_csmem.cs != TXCSBUSCF_MEMCS_DEFAULT) {
+		printf(" memcs %s %dbit %#x+%#x", 
+		       __csmap[ca->ca_csmem.cs].cs_name,
+		       ca->ca_csmem.cswidth,
+		       ca->ca_csmem.csbase,
+		       ca->ca_csmem.cssize);
+	}
+	
+	if (ca->ca_irq1 != TXCSBUSCF_IRQ1_DEFAULT) {
+		printf(" irq1 %d(%d:%d)", PRINTIRQ(ca->ca_irq1));
+	}
+
+	if (ca->ca_irq2 != TXCSBUSCF_IRQ2_DEFAULT) {
+		printf(" irq2 %d(%d:%d)", PRINTIRQ(ca->ca_irq2));
+	}
+
+	if (ca->ca_irq3 != TXCSBUSCF_IRQ3_DEFAULT) {
+		printf(" irq3 %d(%d:%d)", PRINTIRQ(ca->ca_irq3));
+	}
+
+	return UNCONF;
 }
 
 int
@@ -169,39 +242,6 @@ __txcsbus_alloc_cstag(sc, csh)
 	struct txcsbus_softc *sc;
 	struct cs_handle *csh;
 {
-	/* TX39 CS mapping. (nonconfigurationable) */
-	struct csmap {
-		char	*cs_name;
-		paddr_t	cs_addr;
-		psize_t	cs_size;
-	} __csmap[] = {
-		[TX39_CS0]	= {"CS0(ROM)"	, TX39_SYSADDR_CS0	,
-				   TX39_SYSADDR_CS_SIZE},
-		[TX39_CS1]	= {"CS1"	, TX39_SYSADDR_CS1	,
-				   TX39_SYSADDR_CS_SIZE},
-		[TX39_CS2]	= {"CS2"	, TX39_SYSADDR_CS2	,
-				   TX39_SYSADDR_CS_SIZE},
-		[TX39_CS3]	= {"CS3"	, TX39_SYSADDR_CS3	,
-				   TX39_SYSADDR_CS_SIZE},
-		[TX39_MCS0]	= {"MCS0"	, TX39_SYSADDR_MCS0	,
-				   TX39_SYSADDR_MCS_SIZE},
-		[TX39_MCS1]	= {"MCS1"	, TX39_SYSADDR_MCS1	,
-				   TX39_SYSADDR_MCS_SIZE},
-#ifdef TX391X
-		[TX39_MCS2]	= {"MCS2"	, TX39_SYSADDR_MCS2	,
-				   TX39_SYSADDR_MCS_SIZE},
-		[TX39_MCS3]	= {"MCS3"	, TX39_SYSADDR_MCS3	,
-				   TX39_SYSADDR_MCS_SIZE},
-#endif /* TX391X */
-		[TX39_CARD1]	= {"CARD1(io/attr)", TX39_SYSADDR_CARD1	,
-				   TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD2]	= {"CARD2(io/attr)", TX39_SYSADDR_CARD2	,
-				   TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD1MEM]	= {"CARD1(mem)"	, TX39_SYSADDR_CARD1MEM	,
-				   TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD2MEM]	= {"CARD2(mem)"	, TX39_SYSADDR_CARD2MEM	,
-				   TX39_SYSADDR_CARD_SIZE},
-	};
 
 	tx_chipset_tag_t tc = sc->sc_tc;
 	int cs = csh->cs;
@@ -213,7 +253,6 @@ __txcsbus_alloc_cstag(sc, csh)
 		panic("txcsbus_alloc_tag: bogus chip select %d\n", cs);
 	}
 
-	printf("(%s)", __csmap[cs].cs_name);
 	/* Already setuped chip select */
 	if (sc->sc_cst[cs]) {
 		return sc->sc_cst[cs];
@@ -311,7 +350,6 @@ __txcsbus_alloc_cstag(sc, csh)
 	}
 	
 	hpcmips_init_bus_space_extent(iot);
-	printf("\n");
 
 	return iot;
 }

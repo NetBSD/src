@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.1 1999/11/20 19:56:33 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.2 1999/12/07 17:08:10 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -89,7 +89,6 @@ tx39clock_attach(parent, self, aux)
 
 	tc = sc->sc_tc = ta->ta_tc;
 
-
 	/* 
 	 *	Enable periodic timer 
 	 *	 but interrupt don't arise yet. see clock_init().
@@ -109,7 +108,9 @@ tx39clock_attach(parent, self, aux)
 #endif
 	clockattach(self, &clockfns);	
 
+#ifdef TX39CLKDEBUG
 	tx39clock_dump(tc);
+#endif /* TX39CLKDEBUG */
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.1 1999/11/20 19:56:34 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.2 1999/12/07 17:08:11 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -129,12 +129,14 @@ tx39io_intr(arg)
 	void *arg;
 {
 #ifdef TX39_DEBUG
+#if 0
 	static int i;
 	if (i ^= 1) {
 		tx39debugflag = 1;
 	} else {
 		tx39debugflag = 0;
 	}
+#endif
 	printf("io (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
 	       tx39intrvec & 0xfff);
 #endif
@@ -146,7 +148,7 @@ tx39mfio_intr(arg)
 	void *arg;
 {
 #ifdef TX39_DEBUG
-#ifdef TX39IODEBUG
+#if 0
 	struct tx39io_softc *sc = arg;
 	tx39io_dump_and_attach_handler(sc, 0);
 #endif
@@ -178,6 +180,20 @@ tx39io_attach(parent, self, aux)
 	tx_intr_establish(tc, MAKEINTR(3, (1<<5)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 	tx_intr_establish(tc, MAKEINTR(4, (1<<30)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 	tx_intr_establish(tc, MAKEINTR(4, (1<<5)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+#endif
+
+#ifdef VICTOR_INTERLINK_INTR
+	/* open panel */
+	tx_intr_establish(tc, MAKEINTR(8, (1<<20)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);	
+	/* close panel */
+	tx_intr_establish(tc, MAKEINTR(8, (1<<4)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);	
+	/* serial session */
+	tx_intr_establish(tc, MAKEINTR(4, (1<<29)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);	
+	tx_intr_establish(tc, MAKEINTR(4, (1<<30)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);	
+	/* REC button */
+	tx_intr_establish(tc, MAKEINTR(8, (1<<7)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
+	/* kbd */
+	tx_intr_establish(tc, MAKEINTR(3, (1<<7)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 #endif
 
 #ifdef TX39IODEBUG
