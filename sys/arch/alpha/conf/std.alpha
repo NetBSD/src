@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.16 1999/03/24 06:06:09 mrg Exp $
+# $NetBSD: std.alpha,v 1.17 1999/09/12 01:16:59 chs Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
@@ -10,5 +10,3 @@ machine		alpha
 options 	EXEC_ECOFF	# (native) ECOFF binary support
 options 	EXEC_ELF64	# (native) ELF64 binary support
 options 	EXEC_SCRIPT	# shell script support
-
-options 	PMAP_NEW	# UVM's new pmap interface

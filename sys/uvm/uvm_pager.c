@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.22 1999/07/22 22:58:39 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.23 1999/09/12 01:17:41 chs Exp $	*/
 
 /*
  *
@@ -35,7 +35,6 @@
  */
 
 #include "opt_uvmhist.h"
-#include "opt_pmap_new.h"
 
 /*
  * uvm_pager.c: generic functions used to assist the pagers.
@@ -329,8 +328,9 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 				if ((pclust->flags & PG_CLEANCHK) == 0) {
 					if ((pclust->flags & (PG_CLEAN|PG_BUSY))
 					   == PG_CLEAN &&
-					   pmap_is_modified(PMAP_PGARG(pclust)))
-					pclust->flags &= ~PG_CLEAN;
+					   pmap_is_modified(pclust))
+						pclust->flags &= ~PG_CLEAN;
+
 					/* now checked */
 					pclust->flags |= PG_CLEANCHK;
 				}
@@ -343,7 +343,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			pclust->flags |= PG_BUSY;		/* busy! */
 			UVM_PAGE_OWN(pclust, "uvm_mk_pcluster");
 			/* XXX: protect wired page?   see above comment. */
-			pmap_page_protect(PMAP_PGARG(pclust), VM_PROT_READ);
+			pmap_page_protect(pclust, VM_PROT_READ);
 			if (!forward) {
 				ppsp--;			/* back up one page */
 				*ppsp = pclust;
@@ -393,7 +393,7 @@ uvm_shareprot(entry, prot)
 
 	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = pp->listq.tqe_next) {
 		if (pp->offset >= start && pp->offset < stop)
-			pmap_page_protect(PMAP_PGARG(pp), prot);
+			pmap_page_protect(pp, prot);
 	}
 	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
 }
@@ -657,8 +657,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 				ppsp[lcv]->flags &= ~(PG_BUSY);
 				UVM_PAGE_OWN(ppsp[lcv], NULL);
 
-				pmap_page_protect(PMAP_PGARG(ppsp[lcv]),
-				    VM_PROT_NONE); /* be safe */
+				pmap_page_protect(ppsp[lcv], VM_PROT_NONE);
 				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 				/* kills anon and frees pg */
 				uvm_anfree(ppsp[lcv]->uanon);
@@ -708,8 +707,8 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 		 * had a successful pageout update the page!
 		 */
 		if (flags & PGO_PDFREECLUST) {
-			pmap_clear_reference(PMAP_PGARG(ppsp[lcv]));
-			pmap_clear_modify(PMAP_PGARG(ppsp[lcv]));
+			pmap_clear_reference(ppsp[lcv]);
+			pmap_clear_modify(ppsp[lcv]);
 			ppsp[lcv]->flags |= PG_CLEAN;
 		}
 

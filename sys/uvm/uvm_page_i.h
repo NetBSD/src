@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.10 1999/05/24 19:10:57 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.11 1999/09/12 01:17:38 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -225,8 +225,8 @@ uvm_pagedeactivate(pg)
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
-		pmap_clear_reference(PMAP_PGARG(pg));
-		if (pmap_is_modified(PMAP_PGARG(pg)))
+		pmap_clear_reference(pg);
+		if (pmap_is_modified(pg))
 			pg->flags &= ~PG_CLEAN;
 	}
 }
