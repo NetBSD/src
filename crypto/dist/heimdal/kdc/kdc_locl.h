@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kdc_locl.h,v 1.2 2000/08/06 18:42:19 thorpej Exp $ 
+ * $Id: kdc_locl.h,v 1.3 2000/09/10 19:29:44 joda Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -72,6 +72,9 @@ extern int enable_524;
 #ifdef KASERVER
 extern krb5_boolean enable_kaserver;
 #endif
+
+#define _PATH_KDC_CONF		"/etc/kdc.conf"
+#define DEFAULT_LOG_DEST	"0-1/FILE:/var/log/kdc.log"
 
 extern struct timeval now;
 #define kdc_time (now.tv_sec)
