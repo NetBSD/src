@@ -1,17 +1,26 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2000/11/20 00:25:24 wiz Exp $
 
-LIB= amu
-SRCS=	mtabutil.c tranputil.c umount_fs.c xutil.c xdr_func.c wire.c \
-util.c nfs_prot_xdr.c mtab.c mount_fs.c misc_rpc.c hasmntopt.c config_local.h
+LIB=	amu
 
-MKLINKLIB=no
- 
+MKLINKLIB=	no
+
+.include "${.CURDIR}/../Makefile.inc"
+
+DIST=	${IDIST}/libamu
+.PATH:	${DIST} ${IDIST}/conf/mtab ${IDIST}/conf/transp ${IDIST}/conf/umount
+
+SRCS=	clnt_sperrno.c hasmntopt.c misc_rpc.c mount_fs.c mtab.c mtab_bsd.c \
+	nfs_prot_xdr.c transp_sockets.c ualarm.c umount_bsd44.c util.c wire.c \
+	xdr_func.c xutil.c
+
+# some host specific compile time settings amd wants to have compiled in
+# XXX: will fail cross compilation
 config_local.h: mkconf
 	@rm -f ${.TARGET}
 	sh ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+=config_local.h
+CLEANFILES+=	config_local.h
 
 .include <bsd.lib.mk>
- 
-${OBJS}: config_local.h
+
+${SRCS}: config_local.h

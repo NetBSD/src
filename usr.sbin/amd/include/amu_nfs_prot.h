@@ -1,7 +1,7 @@
-/*	$NetBSD: amu_nfs_prot.h,v 1.7 1999/09/04 22:38:19 christos Exp $	*/
+/* $NetBSD: amu_nfs_prot.h,v 1.8 2000/11/20 00:25:23 wiz Exp $ */
 
 /*
- * Copyright (c) 1997-1999 Erez Zadok
+ * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_netbsd1_3.h,v 1.3 1999/02/04 07:24:36 ezk Exp 
+ * $Id: amu_nfs_prot.h,v 1.8 2000/11/20 00:25:23 wiz Exp $
  *
  */
 
@@ -53,17 +53,23 @@
 #ifdef HAVE_NFS_RPCV2_H
 # include <nfs/rpcv2.h>
 #endif /* HAVE_NFS_RPCV2_H */
-
 #ifndef NFS_NPROCS
 # define NFS_NPROCS	26
 #endif /* not NFS_NPROCS */
 #ifdef HAVE_NFS_NFS_H
 # include <nfs/nfs.h>
-# include <nfs/nfsmount.h>
 #endif /* HAVE_NFS_NFS_H */
 #ifdef HAVE_NFS_NFSMOUNT_H
 # include <nfs/nfsmount.h>
 #endif /* HAVE_NFS_NFSMOUNT_H */
+
+#ifdef HAVE_UFS_UFS_UFSMOUNT_H
+/* netbsd-1.4 does't protect <ufs/ufs/ufsmount.h> */
+# ifndef _UFS_UFS_UFSMOUNT_H
+#  include <ufs/ufs/ufsmount.h>
+#  define _UFS_UFS_UFSMOUNT_H
+# endif /* not _UFS_UFS_UFSMOUNT_H */
+#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
 
 /* NON-NFS STUFF (doesn't really belong here) */
 #ifndef DEFINED_YPALL_CALLBACK_FXN_T
