@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:50:44 mycroft Exp $
-
+#	$Id: Makefile,v 1.6 1993/11/21 18:56:33 brezak Exp $
 PROG =	rpc.rusersd
-SRCS =	rusersd.c rusers_proc.c
+SRCS =	rusersd.c rusers_proc.c rusersxdr.c
 MAN8 =	rpc.rusersd.0
 
 DPADD=	${LIBRPCSVC} ${LIBUTIL}
