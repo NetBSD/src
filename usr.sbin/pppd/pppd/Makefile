@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/01/26 17:34:19 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2004/07/21 07:00:27 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,6 @@ MAN=	pppd.8
 BINMODE=4555
 BINOWN=	root
 
-# don't strip object so that it can load plugins
-STRIPFLAG=
 LDADD= -lpcap -lcrypt -lutil -Wl,--export-dynamic
 DPADD= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CPPFLAGS+= -I. -DHAVE_PATHS_H -DSUPPORT_UTMP -DSUPPORT_UTMPX -DPLUGIN
