@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.7 2003/07/26 14:22:37 he Exp $
+#	$NetBSD: tc.mi,v 1.8 2004/01/03 15:43:50 lukem Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -158,4 +158,4 @@
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-cxx-include
-./usr/lib/libgcc_p.a				comp-c-proflib
+./usr/lib/libgcc_p.a				comp-c-proflib	profile

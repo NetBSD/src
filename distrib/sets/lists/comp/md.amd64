@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.9 2003/12/29 03:13:26 lukem Exp $
+# $NetBSD: md.amd64,v 1.10 2004/01/03 15:43:50 lukem Exp $
 ./usr/include/amd64			comp-c-include
 ./usr/include/amd64/ansi.h		comp-c-include
 ./usr/include/amd64/aout_machdep.h	comp-c-include
@@ -141,6 +141,6 @@
 ./usr/include/xmmintrin.h		comp-c-include
 ./usr/lib/libx86_64.a			comp-c-lib
 ./usr/lib/libx86_64.so			comp-sys-shlib
-./usr/lib/libx86_64_p.a			comp-c-piclib
+./usr/lib/libx86_64_p.a			comp-c-piclib	profile
 ./usr/lib/libx86_64_pic.a		comp-c-proflib
 ./usr/libdata/lint/llib-lx86_64.ln		comp-c-lintlib

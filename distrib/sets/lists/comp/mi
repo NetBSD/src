@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.654 2004/01/03 15:21:30 lukem Exp $
+#	$NetBSD: mi,v 1.655 2004/01/03 15:43:50 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1570,144 +1570,144 @@
 ./usr/lib/libamu_p.a            	comp-obsolete	obsolete
 ./usr/lib/libamu_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libasn1.a		comp-krb5-lib	kerberos
-./usr/lib/libasn1_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libasn1_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/libbfd.a              	comp-obsolete	obsolete
 ./usr/lib/libbsdmalloc.a	comp-c-lib
-./usr/lib/libbsdmalloc_p.a	comp-c-proflib
+./usr/lib/libbsdmalloc_p.a	comp-c-proflib	profile
 ./usr/lib/libbz2.a		comp-c-lib
-./usr/lib/libbz2_p.a		comp-c-proflib
+./usr/lib/libbz2_p.a		comp-c-proflib	profile
 ./usr/lib/libc.a		comp-c-lib
-./usr/lib/libc_p.a		comp-c-proflib
+./usr/lib/libc_p.a		comp-c-proflib	profile
 ./usr/lib/libcdk.a		comp-c-lib
-./usr/lib/libcdk_p.a		comp-c-proflib
+./usr/lib/libcdk_p.a		comp-c-proflib	profile
 ./usr/lib/libcom_err.a		comp-krb5-lib	kerberos
-./usr/lib/libcom_err_p.a	comp-krb5-proflib	kerberos
+./usr/lib/libcom_err_p.a	comp-krb5-proflib	kerberos,profile
 ./usr/lib/libcompat.a		comp-c-lib
-./usr/lib/libcompat_p.a		comp-c-proflib
+./usr/lib/libcompat_p.a		comp-c-proflib	profile
 ./usr/lib/libcrypt.a		comp-c-lib
-./usr/lib/libcrypt_p.a		comp-c-proflib
+./usr/lib/libcrypt_p.a		comp-c-proflib	profile
 ./usr/lib/libcrypto.a		comp-c-lib
-./usr/lib/libcrypto_p.a		comp-c-proflib
+./usr/lib/libcrypto_p.a		comp-c-proflib	profile
 ./usr/lib/libcrypto_idea.a	comp-c-lib	crypto_idea
-./usr/lib/libcrypto_idea_p.a	comp-c-proflib	crypto_idea
+./usr/lib/libcrypto_idea_p.a	comp-c-proflib	crypto_idea,profile
 ./usr/lib/libcrypto_mdc2.a	comp-c-lib	crypto_mdc2
-./usr/lib/libcrypto_mdc2_p.a	comp-c-proflib	crypto_mdc2
+./usr/lib/libcrypto_mdc2_p.a	comp-c-proflib	crypto_mdc2,profile
 ./usr/lib/libcrypto_rc5.a	comp-c-lib	crypto_rc5
-./usr/lib/libcrypto_rc5_p.a	comp-c-proflib	crypto_rc5
+./usr/lib/libcrypto_rc5_p.a	comp-c-proflib	crypto_rc5,profile
 ./usr/lib/libcurses.a		comp-c-lib
-./usr/lib/libcurses_p.a		comp-c-proflib
+./usr/lib/libcurses_p.a		comp-c-proflib	profile
 ./usr/lib/libdes.a		comp-c-lib
-./usr/lib/libdes_p.a		comp-c-proflib
+./usr/lib/libdes_p.a		comp-c-proflib	profile
 ./usr/lib/libedit.a		comp-c-lib
-./usr/lib/libedit_p.a		comp-c-proflib
+./usr/lib/libedit_p.a		comp-c-proflib	profile
 ./usr/lib/libevent.a		comp-c-lib
-./usr/lib/libevent_p.a		comp-c-proflib
+./usr/lib/libevent_p.a		comp-c-proflib	profile
 ./usr/lib/libfl.a		comp-c-lib
-./usr/lib/libfl_p.a		comp-c-proflib
+./usr/lib/libfl_p.a		comp-c-proflib	profile
 ./usr/lib/libform.a		comp-c-lib
-./usr/lib/libform_p.a		comp-c-proflib
+./usr/lib/libform_p.a		comp-c-proflib	profile
 ./usr/lib/libg++.a              	comp-obsolete	obsolete
 ./usr/lib/libg++_p.a            	comp-obsolete	obsolete
 ./usr/lib/libg++_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libg2c.a		comp-fortran-lib
-./usr/lib/libg2c_p.a		comp-fortran-proflib
+./usr/lib/libg2c_p.a		comp-fortran-proflib	profile
 ./usr/lib/libgcc.a		comp-c-lib
 ./usr/lib/libgnumalloc.a	comp-c-lib
-./usr/lib/libgnumalloc_p.a	comp-c-proflib
+./usr/lib/libgnumalloc_p.a	comp-c-proflib	profile
 ./usr/lib/libgssapi.a		comp-krb5-lib	kerberos
-./usr/lib/libgssapi_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libgssapi_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/libhdb.a		comp-c-lib	kerberos
-./usr/lib/libhdb_p.a		comp-c-proflib	kerberos
+./usr/lib/libhdb_p.a		comp-c-proflib	kerberos,profile
 ./usr/lib/libintl.a		comp-c-lib
-./usr/lib/libintl_p.a		comp-c-proflib
+./usr/lib/libintl_p.a		comp-c-proflib	profile
 ./usr/lib/libipsec.a		comp-c-lib
-./usr/lib/libipsec_p.a		comp-c-proflib
+./usr/lib/libipsec_p.a		comp-c-proflib	profile
 ./usr/lib/libkadm.a		comp-krb4-lib	kerberos4
 ./usr/lib/libkadm5clnt.a	comp-krb5-lib	kerberos
-./usr/lib/libkadm5clnt_p.a	comp-krb5-proflib	kerberos
+./usr/lib/libkadm5clnt_p.a	comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkadm5srv.a		comp-krb5-lib	kerberos
-./usr/lib/libkadm5srv_p.a	comp-krb5-proflib	kerberos
-./usr/lib/libkadm_p.a		comp-krb4-lib	kerberos4
+./usr/lib/libkadm5srv_p.a	comp-krb5-proflib	kerberos,profile
+./usr/lib/libkadm_p.a		comp-krb4-lib	kerberos4,profile
 ./usr/lib/libkafs.a		comp-krb5-lib	kerberos
-./usr/lib/libkafs_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libkafs_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkdb.a		comp-krb4-lib	kerberos4
-./usr/lib/libkdb_p.a		comp-krb4-proflib	kerberos4
+./usr/lib/libkdb_p.a		comp-krb4-proflib	kerberos4,profile
 ./usr/lib/libkrb.a		comp-krb4-lib	kerberos4
 ./usr/lib/libkrb5.a		comp-krb5-lib	kerberos
-./usr/lib/libkrb5_p.a		comp-krb5-proflib	kerberos
-./usr/lib/libkrb_p.a		comp-krb4-proflib	kerberos4
+./usr/lib/libkrb5_p.a		comp-krb5-proflib	kerberos,profile
+./usr/lib/libkrb_p.a		comp-krb4-proflib	kerberos4,profile
 ./usr/lib/libkstream.a		comp-krb4-lib	kerberos4
-./usr/lib/libkstream_p.a	comp-krb4-proflib	kerberos4
+./usr/lib/libkstream_p.a	comp-krb4-proflib	kerberos4,profile
 ./usr/lib/libkvm.a		comp-c-lib
-./usr/lib/libkvm_p.a		comp-c-proflib
+./usr/lib/libkvm_p.a		comp-c-proflib	profile
 ./usr/lib/libl.a		comp-c-lib
-./usr/lib/libl_p.a		comp-c-proflib
+./usr/lib/libl_p.a		comp-c-proflib	profile
 ./usr/lib/libm.a		comp-c-lib
-./usr/lib/libm_p.a		comp-c-proflib
+./usr/lib/libm_p.a		comp-c-proflib	profile
 ./usr/lib/libmagic.a		comp-c-lib
-./usr/lib/libmagic_p.a		comp-c-proflib
+./usr/lib/libmagic_p.a		comp-c-proflib	profile
 ./usr/lib/libmenu.a		comp-c-lib
-./usr/lib/libmenu_p.a		comp-c-proflib
+./usr/lib/libmenu_p.a		comp-c-proflib	profile
 ./usr/lib/libmilter.a		comp-sendmail-lib	sendmail
 ./usr/lib/libntp.a              	comp-obsolete	obsolete
 ./usr/lib/libntp.so             	comp-obsolete	obsolete
 ./usr/lib/libntp_p.a            	comp-obsolete	obsolete
 ./usr/lib/libntp_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libobjc.a		comp-objc-lib
-./usr/lib/libobjc_p.a		comp-objc-proflib
+./usr/lib/libobjc_p.a		comp-objc-proflib	profile
 ./usr/lib/libossaudio.a		comp-c-lib
-./usr/lib/libossaudio_p.a	comp-c-proflib
+./usr/lib/libossaudio_p.a	comp-c-proflib	profile
 ./usr/lib/libpcap.a		comp-c-lib
-./usr/lib/libpcap_p.a		comp-c-proflib
+./usr/lib/libpcap_p.a		comp-c-proflib	profile
 ./usr/lib/libpci.a		comp-c-lib
-./usr/lib/libpci_p.a		comp-c-proflib
+./usr/lib/libpci_p.a		comp-c-proflib	profile
 ./usr/lib/libposix.a		comp-c-lib
-./usr/lib/libposix_p.a		comp-c-proflib
+./usr/lib/libposix_p.a		comp-c-proflib	profile
 ./usr/lib/libpthread.a		comp-c-lib
 ./usr/lib/libpthread_dbg.a	comp-c-lib
-./usr/lib/libpthread_dbg_p.a	comp-c-proflib
-./usr/lib/libpthread_p.a	comp-c-proflib
+./usr/lib/libpthread_dbg_p.a	comp-c-proflib	profile
+./usr/lib/libpthread_p.a	comp-c-proflib	profile
 ./usr/lib/libresolv.a		comp-c-lib
-./usr/lib/libresolv_p.a		comp-c-proflib
+./usr/lib/libresolv_p.a		comp-c-proflib	profile
 ./usr/lib/librmt.a		comp-c-lib
 ./usr/lib/libroken.a		comp-krb5-lib	kerberos
-./usr/lib/libroken_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libroken_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/librpcsvc.a		comp-c-lib
-./usr/lib/librpcsvc_p.a		comp-c-proflib
+./usr/lib/librpcsvc_p.a		comp-c-proflib	profile
 ./usr/lib/librt.a		comp-c-lib
-./usr/lib/librt_p.a		comp-c-proflib
+./usr/lib/librt_p.a		comp-c-proflib	profile
 ./usr/lib/libskey.a		comp-c-lib	skey
-./usr/lib/libskey_p.a		comp-c-proflib	skey
+./usr/lib/libskey_p.a		comp-c-proflib	skey,profile
 ./usr/lib/libsl.a		comp-krb5-lib	kerberos
-./usr/lib/libsl_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libsl_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/libsm.a               	comp-obsolete	obsolete
 ./usr/lib/libss.a		comp-krb5-lib	kerberos
-./usr/lib/libss_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libss_p.a		comp-krb5-proflib	kerberos,profile
 ./usr/lib/libssl.a		comp-c-lib
-./usr/lib/libssl_p.a		comp-c-proflib
+./usr/lib/libssl_p.a		comp-c-proflib	profile
 ./usr/lib/libstdc++.a		comp-cxx-lib
-./usr/lib/libstdc++_p.a		comp-cxx-proflib
+./usr/lib/libstdc++_p.a		comp-cxx-proflib	profile
 ./usr/lib/libtelnet.a           	comp-obsolete	obsolete
 ./usr/lib/libtelnet.so          	comp-obsolete	obsolete
 ./usr/lib/libtelnet_p.a         	comp-obsolete	obsolete
 ./usr/lib/libtelnet_pic.a       	comp-obsolete	obsolete
 ./usr/lib/libtermcap.a		comp-c-lib
-./usr/lib/libtermcap_p.a	comp-c-proflib
+./usr/lib/libtermcap_p.a	comp-c-proflib	profile
 ./usr/lib/libtermlib.a		comp-c-lib
-./usr/lib/libtermlib_p.a	comp-c-proflib
+./usr/lib/libtermlib_p.a	comp-c-proflib	profile
 ./usr/lib/libusb.a              	comp-obsolete	obsolete
 ./usr/lib/libusb_p.a            	comp-obsolete	obsolete
 ./usr/lib/libusb_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libusbhid.a		comp-c-lib
-./usr/lib/libusbhid_p.a		comp-c-proflib
+./usr/lib/libusbhid_p.a		comp-c-proflib	profile
 ./usr/lib/libutil.a		comp-c-lib
-./usr/lib/libutil_p.a		comp-c-proflib
+./usr/lib/libutil_p.a		comp-c-proflib	profile
 ./usr/lib/libwrap.a		comp-c-lib
-./usr/lib/libwrap_p.a		comp-c-proflib
+./usr/lib/libwrap_p.a		comp-c-proflib	profile
 ./usr/lib/liby.a		comp-c-lib
-./usr/lib/liby_p.a		comp-c-proflib
+./usr/lib/liby_p.a		comp-c-proflib	profile
 ./usr/lib/libz.a		comp-c-lib
-./usr/lib/libz_p.a		comp-c-proflib
+./usr/lib/libz_p.a		comp-c-proflib	profile
 ./usr/libdata/lint/llib-lbsdmalloc.ln	comp-c-lintlib	lint
 ./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib	lint
 ./usr/libdata/lint/llib-lc.ln		comp-c-lintlib	lint
