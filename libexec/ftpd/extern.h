@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2000/07/08 18:24:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -105,7 +105,8 @@ void	closedataconn(FILE *);
 char   *conffilename(const char *);
 char  **copyblk(char **);
 void	count_users(void);
-void	cprintf(FILE *, const char *, ...);
+void	cprintf(FILE *, const char *, ...)
+	    __attribute__((__format__(__printf__, 2, 3)));
 void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
@@ -135,7 +136,8 @@ void	pwd(void);
 void	removedir(const char *);
 void	renamecmd(const char *, const char *);
 char   *renamefrom(const char *);
-void	reply(int, const char *, ...);
+void	reply(int, const char *, ...)
+	    __attribute__((__format__(__printf__, 2, 3)));
 void	retrieve(char *[], const char *);
 void	send_file_list(const char *);
 void	show_chdir_messages(int);

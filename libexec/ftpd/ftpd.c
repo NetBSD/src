@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.97 2000/07/05 22:15:04 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.98 2000/07/08 18:24:28 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.97 2000/07/05 22:15:04 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.98 2000/07/08 18:24:28 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -800,7 +800,7 @@ pass(const char *passwd)
 		 * succeeded.
 		 */
 		if (rval) {
-			reply(530, rval == 2 ? "Password expired." :
+			reply(530, "%s", rval == 2 ? "Password expired." :
 			    "Login incorrect.");
 			if (logging) {
 				syslog(LOG_NOTICE,
@@ -1803,7 +1803,7 @@ statcmd(void)
 	if (logged_in) {
 		struct ftpconv *cp;
 
-		reply(0, "");
+		reply(0, "%s", "");
 		reply(0, "Class: %s, type: %s",
 		    curclass.classname, CURCLASSTYPE);
 		reply(0, "Check PORT/LPRT commands: %sabled",
