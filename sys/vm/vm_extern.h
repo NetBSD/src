@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm_extern.h,v 1.3 1994/04/28 03:51:58 cgd Exp $
+ *	$Id: vm_extern.h,v 1.4 1994/05/06 22:45:29 cgd Exp $
  */
 
 struct buf;
@@ -58,3 +58,9 @@ void	vsunlock __P((caddr_t, u_int, int));
 void		swapinit __P((void));
 int		swfree __P((struct proc *, int));
 void		swstrategy __P((struct buf *));
+
+void		 loadav __P((struct loadavg *));
+void		 vmtotal __P((struct vmtotal *));
+
+int vm_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		struct proc *));
