@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.6 2000/07/05 18:14:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,8 +39,11 @@
 #ifndef _NET_IF_GRE_H
 #define _NET_IF_GRE_H
 
+#include <sys/queue.h>
+
 struct gre_softc {
 	struct ifnet sc_if;
+	LIST_ENTRY(gre_softc) sc_list;
 	int gre_unit;
 	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
@@ -147,7 +150,6 @@ struct mobip_h {
 #ifdef _KERNEL
 extern	struct gre_softc gre_softc[];
 
-void	greattach __P((void));
 int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
 int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));
