@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.56 2003/08/07 16:33:30 agc Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.57 2003/08/22 22:05:11 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,9 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.56 2003/08/07 16:33:30 agc Exp $");
-
-#include "opt_ipsec.h"
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.57 2003/08/22 22:05:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -97,10 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.56 2003/08/07 16:33:30 agc Exp $")
 #include <netinet/icmp6.h>
 #include <netinet6/udp6_var.h>
 #include <netinet6/ip6protosw.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif /* IPSEC */
 
 #include "faith.h"
 #if defined(NFAITH) && NFAITH > 0
