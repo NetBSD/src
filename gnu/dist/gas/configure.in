@@ -122,6 +122,7 @@ changequote([,])dnl
       alpha-*-osf*)         fmt=ecoff ;;
       alpha-*-linuxecoff*)  fmt=ecoff ;;
       alpha-*-linux*)       fmt=elf em=linux ;;
+      alpha-*-netbsd*)	    fmt=elf em=nbsd ;;
 
 
       arm-*-riscix*)	    fmt=aout targ=arm-lit em=riscix ;;
