@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogind.8,v 1.5 1997/10/07 10:43:56 mrg Exp $
+.\"	$NetBSD: rlogind.8,v 1.6 1997/10/20 02:44:18 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,17 +40,17 @@
 .Nm rlogind
 .Nd remote login server
 .Sh SYNOPSIS
-.Nm rlogind
+.Nm
 .Op Fl alnL
 .Sh DESCRIPTION
-.Nm Rlogind
+.Nm
 is the server for the 
 .Xr rlogin 1
 program.  The server provides a remote login facility
 with authentication based on privileged port numbers from trusted hosts.
 .Pp
 Options supported by
-.Nm rlogind :
+.Nm "" :
 .Bl -tag -width Ds
 .It Fl a
 Ask hostname for verification.
@@ -68,7 +68,7 @@ as
 messages.
 .El
 .Pp
-.Nm Rlogind
+.Nm 
 listens for service requests at the port indicated in
 the ``login'' service specification; see
 .Xr services 5 .
@@ -99,7 +99,7 @@ Normal authentication is bypassed if the address verification fails.
 .El
 .Pp
 Once the source port and address have been checked, 
-.Nm rlogind
+.Nm
 proceeds with the authentication process described in
 .Xr rshd 8 .
 It then allocates a pseudo terminal (see 
