@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.4 2004/03/24 13:02:23 kochi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.3 2003/10/31 20:54:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.4 2004/03/24 13:02:23 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.3 2003/10/31 20:54:18 mycroft Exp 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_osd.h>
 
 static struct acpi_quirk acpi_quirks[] = {	
 	/*
