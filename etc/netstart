@@ -10,6 +10,7 @@ timedflags=
 rwhod=NO
 rwalld=YES
 nfs_server=NO
+nfs_client=NO
 name_server=NO
 gated=NO
 kerberos_server=NO
