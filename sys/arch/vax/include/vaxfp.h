@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxfp.h,v 1.1 2003/10/27 21:52:03 kleink Exp $	*/
+/*	$NetBSD: vaxfp.h,v 1.2 2003/10/30 12:05:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,14 +51,14 @@
 struct vax_f_floating {
 	u_int	fflt_frach:7;
 	u_int	fflt_exp:8;
-	u_int	fflt_sgn:1;
+	u_int	fflt_sign:1;
 	u_int	fflt_fracl:16;
 };
 
 struct vax_d_floating {
 	u_int	dflt_frach:7;
 	u_int	dflt_exp:8;
-	u_int	dflt_sgn:1;
+	u_int	dflt_sign:1;
 	u_int	dflt_fracm:16;
 	u_int	dflt_fracl;
 };
