@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 1995/05/04 19:39:33 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 1995/06/26 10:14:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -107,6 +107,11 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 void spinwait __P((int));
 
+#define	SECMIN	((unsigned)60)			/* seconds per minute */
+#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
+#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
+#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
+
 __inline u_int
 mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
@@ -141,7 +146,7 @@ startrtclock()
 	outb(IO_TIMER1, TIMER_DIV(hz) % 256);
 	outb(IO_TIMER1, TIMER_DIV(hz) / 256);
 
-        /* Check diagnostic status */
+	/* Check diagnostic status */
 	if (s = mc146818_read(NULL, NVRAM_DIAG))	/* XXX softc */
 		printf("RTC BIOS diagnostic error %b\n", s, NVRAM_DIAG_BITS);
 }
@@ -310,7 +315,7 @@ rtcinit()
 {
 	static int first_rtcopen_ever = 1;
 
-        if (!first_rtcopen_ever)
+	if (!first_rtcopen_ever)
 		return;
 	first_rtcopen_ever = 0;
 
@@ -323,7 +328,7 @@ int
 rtcget(regs)
 	mc_todregs *regs;
 {
-        
+
 	rtcinit();
 	if (mc146818_read(NULL, MC_REGD) & MC_REGD_VRT == 0) /* XXX softc */
 		return (-1);
@@ -376,24 +381,33 @@ void
 inittodr(base)
 	time_t base;
 {
-        /*
-         * We ignore the suggested time for now and go for the RTC
-         * clock time stored in the CMOS RAM.
-         */
 	mc_todregs rtclk;
 	time_t n;
 	int sec, min, hr, dom, mon, yr;
 	int i, days = 0;
 	int s;
 
+	/*
+	 * We mostly ignore the suggested time and go for the RTC clock time
+	 * stored in the CMOS RAM.  If the time can't be obtained from the
+	 * CMOS, or if the time obtained from the CMOS is 5 or more years
+	 * less than the suggested time, we used the suggested time.  (In
+	 * the latter case, it's likely that the CMOS battery has died.)
+	 */
+
+	if (base < 15*SECYR) {	/* if before 1985, something's odd... */
+		printf("WARNING: preposterous time in file system\n");
+		/* read the system clock anyway */
+		base = 17*SECYR + 186*SECDAY + SECDAY/2;
+	}
+
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		return;
+		printf("WARNING: invalid time in clock chip\n");
+		goto fstime;
 	}
 	splx(s);
-
-	timeset = 1;
 
 	sec = hexdectodec(rtclk[MC_SEC]);
 	min = hexdectodec(rtclk[MC_MIN]);
@@ -418,8 +432,25 @@ inittodr(base)
 	n += tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
 		n -= 3600;
+
+	if (base < n - 5*SECYR)
+		printf("WARNING: file system time much less than clock time\n");
+	else if (base > n + 5*SECYR) {
+		printf("WARNING: clock time much less than file system time\n");
+		printf("WARNING: using file system time\n");
+		goto fstime;
+	}
+
+	timeset = 1;
 	time.tv_sec = n;
-        time.tv_usec = 0;
+	time.tv_usec = 0;
+	return;
+
+fstime:
+	timeset = 1;
+	time.tv_sec = base;
+	time.tv_usec = 0;
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
 /*
@@ -442,7 +473,7 @@ resettodr()
 
 	s = splclock();
 	if (rtcget(&rtclk))
-                bzero(&rtclk, sizeof(rtclk));
+		bzero(&rtclk, sizeof(rtclk));
 	splx(s);
 
 	diff = tz.tz_minuteswest * 60;
