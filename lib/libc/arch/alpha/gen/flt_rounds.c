@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.1 1995/04/29 05:09:53 cgd Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.2 1997/07/18 00:30:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,6 +32,7 @@
  */
 
 #include <sys/types.h>
+#include <machine/float.h>
 
 static const int map[] = {
 	0,	/* round to zero */
