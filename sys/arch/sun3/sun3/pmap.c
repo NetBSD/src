@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2003/05/08 18:13:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2003/05/10 21:10:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ int pmap_db_watchpmeg = -1;
  * These are set in pmap_bootstrap() and used in
  * pmap_next_page().
  */
+vaddr_t virtual_avail, virtual_end;
 paddr_t avail_start, avail_end;
 #define	managed(pa)	(((pa) >= avail_start) && ((pa) < avail_end))
 
@@ -1811,6 +1812,19 @@ pmap_kernel_init(pmap)
 /*
  * Support functions for vm_page_bootstrap().
  */
+
+/*
+ * How much virtual space does this kernel have?
+ * (After mapping kernel text, data, etc.)
+ */
+void
+pmap_virtual_space(v_start, v_end)
+	vaddr_t *v_start;
+	vaddr_t *v_end;
+{
+	*v_start = virtual_avail;
+	*v_end   = virtual_end;
+}
 
 /* Provide memory to the VM system. */
 static void

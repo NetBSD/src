@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2003/05/08 18:13:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2003/05/10 21:10:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -105,13 +105,6 @@ pmap_bootstrap()
 	size_t sz;
 	caddr_t v;
 
-	/*
-	 * Define the boundaries of the kernel virtual address
-	 * space.
-	 */
-	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
-
 	/* Steal msgbuf area */
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
@@ -138,7 +131,7 @@ pmap_bootstrap()
 }
 
 vaddr_t
-pmap_steal_memory(vsize_t size)
+pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 {
 	struct vm_physseg *bank;
 	int i, j, npage;
@@ -212,6 +205,14 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	return (__pmap_kve);
  error:
 	panic("pmap_growkernel: out of memory.");
+}
+
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+{
+
+	*start = VM_MIN_KERNEL_ADDRESS;
+	*end = VM_MAX_KERNEL_ADDRESS;
 }
 
 void
