@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.13 2001/11/27 17:59:49 oki Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.14 2001/12/03 06:11:33 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.13 2001/11/27 17:59:49 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.14 2001/12/03 06:11:33 kent Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -128,13 +128,13 @@ pecoff_copyargs(pack, arginfo, stackp, argp)
 	void *argp;
 {
 	int len = sizeof(struct pecoff_args);
-	struct pecoff_imghdr *ap;
+	struct pecoff_args *ap;
 	int error;
 
 	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
 		return error;
 
-	ap = (struct pecoff_imghdr *)pack->ep_emul_arg;
+	ap = (struct pecoff_args *)pack->ep_emul_arg;
 	if ((error = copyout(ap, *stackp, len)) != 0)
 		return error;
 
