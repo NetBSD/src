@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 2000/12/14 20:30:14 scw Exp $
+$NetBSD: TODO,v 1.2 2001/05/29 08:20:42 scw Exp $
 
 NetBSD/mvme68k's "ToDo" List (In no particular order)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,7 +48,8 @@ These are `difficulty' rated on a scale of 1-10, where `1' is easy.
 
 14.   Add/Flesh out evcnt(9) support where useful (1)
 
-15.   The siop driver *badly* needs to be bus_space(9)'d, and made MI (5)
+15.   [DONE. See osiop(4)]
+      The siop driver *badly* needs to be bus_space(9)'d, and made MI (5)
       (Apparently, Manuel Bouyer (bouyer@netbsd.org) is working on this)
 
 16.   The sbic driver *badly* needs re-written from scratch, and made MI (5)
