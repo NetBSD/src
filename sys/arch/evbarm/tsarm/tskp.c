@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.1 2005/01/31 06:12:35 joff Exp $ */
+/* $NetBSD: tskp.c,v 1.2 2005/02/04 05:48:12 joff Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.1 2005/01/31 06:12:35 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.2 2005/02/04 05:48:12 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,22 +74,22 @@ struct tskp_softc {
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t mxkp_keydesc_default[] = {
 /*  pos				normal			shifted		*/
-	KC(1), 			KS_1,
-	KC(2), 			KS_2,
-	KC(3), 			KS_3,
-	KC(4), 			KS_a,
-	KC(5), 			KS_4,
-	KC(6), 			KS_5,
-	KC(7), 			KS_6,
-	KC(8), 			KS_b,
-	KC(9), 			KS_7,
-	KC(10), 		KS_8,
-	KC(11), 		KS_9,
-	KC(12), 		KS_c,
-	KC(13), 		KS_asterisk,
-	KC(14), 		KS_0,
-	KC(15), 		KS_numbersign,
-	KC(16), 		KS_d,
+	KC(0), 			KS_1,
+	KC(1), 			KS_2,
+	KC(2), 			KS_3,
+	KC(3), 			KS_A,
+	KC(4), 			KS_4,
+	KC(5), 			KS_5,
+	KC(6), 			KS_6,
+	KC(7), 			KS_B,
+	KC(8), 			KS_7,
+	KC(9),	 		KS_8,
+	KC(10), 		KS_9,
+	KC(11), 		KS_C,
+	KC(12), 		KS_asterisk,
+	KC(13), 		KS_0,
+	KC(14), 		KS_numbersign,
+	KC(15), 		KS_D,
 };
 #undef KC
 #define KBD_MAP(name, base, map) \
