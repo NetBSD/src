@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.24 2000/06/07 18:52:31 thorpej Exp $	*/
+/*	$NetBSD: man.c,v 1.25 2000/06/12 14:53:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.24 2000/06/07 18:52:31 thorpej Exp $");
+__RCSID("$NetBSD: man.c,v 1.25 2000/06/12 14:53:48 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(argc, argv)
 	size_t len;
 	int ch, f_cat, f_how, found, abs_section;
 	char **ap, *cmd, *p, *p_add, *p_path;
-	const char *machine, *pager, *conffile, *pathsearch;
+	const char *machine, *pager, *conffile, *pathsearch, *sectionname;
 	char buf[MAXPATHLEN * 2];
 
 #ifdef __GNUC__
@@ -99,9 +99,8 @@ main(argc, argv)
 #endif
 
 	f_cat = f_how = 0;
-	conffile = p_add = p_path = NULL;
-	pathsearch = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:S:w")) != -1)
+	sectionname = pathsearch = conffile = p_add = p_path = NULL;
+	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:s:S:w")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;
@@ -133,6 +132,11 @@ main(argc, argv)
 		case 'k':
 			jump(argv, "-k", "apropos");
 			/* NOTREACHED */
+		case 's':
+			if (sectionname != NULL)
+				usage();
+			sectionname = optarg;
+			break;
 		case 'S':
 			pathsearch = optarg;
 			break;
@@ -188,11 +192,14 @@ main(argc, argv)
 	 * specified a section and it had absolute (rather than
 	 * relative) paths in the man.conf file.
 	 */
-	if (argc > 1 && (section = getlist(*argv)) != NULL) {
-		argv++;
-		argc--;
+	if ((argc > 1 || sectionname != NULL) &&
+	    (section = getlist(sectionname ? sectionname : *argv)) != NULL) {
+		if (sectionname == NULL) {
+			argv++;
+			argc--;
+		}
 		abs_section = (TAILQ_FIRST(&section->list) != NULL &&
-			       *(TAILQ_FIRST(&section->list)->s) == '/');
+		    *(TAILQ_FIRST(&section->list)->s) == '/');
 	} else {
 		section = NULL;
 		abs_section = 0;
@@ -780,8 +787,7 @@ static void
 usage()
 {
 	extern char *__progname;
-	(void)fprintf(stderr,
-    "Usage: %s [-achw] [-C file] [-M path] [-m path] [-S srch] [section] title ...\n",
-	    __progname);
+	(void)fprintf(stderr, "Usage: %s [-achw] [-C file] [-M path] [-m path]"
+	    "[-S srch] [[-s] section] title ...\n", __progname);
 	exit(1);
 }
