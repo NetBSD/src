@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.64 2002/05/09 21:43:44 fredette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.64.4.1 2002/10/02 01:14:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.64 2002/05/09 21:43:44 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.64.4.1 2002/10/02 01:14:42 lukem Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -571,6 +571,7 @@ sys_swapctl(p, v, retval)
 			break;
 		}
 		dumpdev = vp->v_rdev;
+		cpu_dumpconf();
 		break;
 
 	case SWAP_CTL:
