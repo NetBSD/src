@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.34 2001/06/06 14:10:46 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.35 2001/07/09 21:33:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.34 2001/06/06 14:10:46 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.35 2001/07/09 21:33:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,6 +99,8 @@ static int	 fts_palloc __P((FTS *, size_t));
 static void	 fts_padjust __P((FTS *, FTSENT *));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
+static int	 fts_safe_changedir __P((const FTS *, const FTSENT *, int,
+    const char *));
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -397,7 +399,7 @@ fts_read(sp)
 		 * FTS_STOP or the fts_info field of the node.
 		 */
 		if (sp->fts_child) {
-			if (CHDIR(sp, p->fts_accpath)) {
+			if (fts_safe_changedir(sp, p, -1, p->fts_accpath)) {
 				p->fts_errno = errno;
 				p->fts_flags |= FTS_DONTCHDIR;
 				for (p = sp->fts_child; p; p = p->fts_link)
@@ -495,36 +497,9 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 		}
 		(void)close(p->fts_symfd);
 	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
-		!ISSET(FTS_NOCHDIR)) {
-		int fd;
-		struct STAT sb;
-
-		if ((fd = open("..", O_RDONLY)) == -1) {
-			SET(FTS_STOP);
-			return (NULL);
-		}
-		if (fstat(fd, &sb) == -1) {
-			saved_errno = errno;
-			(void)close(fd);
-			errno = saved_errno;
-			SET(FTS_STOP);
-			return (NULL);
-		}
-		if (sb.st_ino != p->fts_parent->fts_ino ||
-		    sb.st_dev != p->fts_parent->fts_dev) {
-			(void)close(fd);
-			errno = ENOENT;
-			SET(FTS_STOP);
-			return (NULL);
-		}
-		if (fchdir(fd) == -1) {
-			saved_errno = errno;
-			(void)close(fd);
-			errno = saved_errno;
-			SET(FTS_STOP);
-			return (NULL);
-		}
-		(void)close(fd);
+	    fts_safe_changedir(sp, p->fts_parent, -1, "..")) {
+		SET(FTS_STOP);
+		return (NULL);
 	}
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
 	return (sp->fts_cur = p);
@@ -722,7 +697,7 @@ fts_build(sp, type)
 	 */
 	cderrno = 0;
 	if (nlinks || type == BREAD) {
-		if (FCHDIR(sp, dirfd(dirp))) {
+		if (fts_safe_changedir(sp, cur, dirfd(dirp), NULL)) {
 			if (nlinks && type == BREAD)
 				cur->fts_errno = errno;
 			cur->fts_flags |= FTS_DONTCHDIR;
@@ -871,7 +846,8 @@ mem1:				saved_errno = errno;
 	 */
 	if (descend && (type == BCHILD || !nitems) &&
 	    (cur->fts_level == FTS_ROOTLEVEL ?
-	    FCHDIR(sp, sp->fts_rfd) : CHDIR(sp, ".."))) {
+	    FCHDIR(sp, sp->fts_rfd) :
+	    fts_safe_changedir(sp, cur->fts_parent, -1, ".."))) {
 		cur->fts_info = FTS_ERR;
 		SET(FTS_STOP);
 		return (NULL);
@@ -1168,4 +1144,44 @@ fts_maxarglen(argv)
 		if ((len = strlen(*argv)) > max)
 			max = len;
 	return (max + 1);
+}
+
+/*
+ * Change to dir specified by fd or p->fts_accpath without getting
+ * tricked by someone changing the world out from underneath us.
+ * Assumes p->fts_dev and p->fts_ino are filled in.
+ */
+static int
+fts_safe_changedir(sp, p, fd, path)
+	const FTS *sp;
+	const FTSENT *p;
+	int fd;
+	const char *path;
+{
+	int oldfd = fd, ret = -1;
+	struct STAT sb;
+
+	if (ISSET(FTS_NOCHDIR))
+		return 0;
+
+	if (fd < 0 && (fd = open(path, O_RDONLY)) == -1)
+		return -1;
+
+	if (fstat(fd, &sb) == -1)
+		goto bail;
+
+	if (sb.st_ino != p->fts_ino || sb.st_dev != p->fts_dev) {
+		errno = ENOENT;
+		goto bail;
+	}
+
+	ret = fchdir(fd);
+
+bail:
+	if (oldfd < 0) {
+		int save_errno = errno;
+		(void)close(fd);
+		errno = save_errno;
+	}
+	return ret;
 }
