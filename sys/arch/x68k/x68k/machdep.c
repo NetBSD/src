@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1998/10/19 22:09:19 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1998/11/29 16:20:13 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,6 +156,12 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+#ifdef BUFCACHE
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+#else
+int	bufcache = 0;		/* fallback to old algorithm */
+#endif
+
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -342,23 +348,40 @@ again:
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	
-	/*
-	 * Determine how many buffers to allocate.
-	 * Since HPs tend to be long on memory and short on disk speed,
-	 * we allocate more buffer space than the BSD standard of
-	 * use 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
-#if 0
-		if (physmem < btoc(2 * 1024 * 1024))
+	if (bufpages == 0) {
+		if (bufcache == 0) {		/* use old algorithm */
+			/*
+			 * Determine how many buffers to allocate.
+			 * Since an x68k tends to be long on memory and short
+			 * on disk speed, we allocate more buffer space than
+			 * the BSD standard of use 10% of memory for the first
+			 * 2 Meg, 5% of remaining.
+			 * We just allocate a flat 10%.  Insure a minimum of 16
+			 * buffers.
+			 * We allocate 1/2 as many swap buffer headers as file
+			 * i/o buffers.
+			 */
 			bufpages = physmem / 10 / CLSIZE;
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
-#endif
+			if (physmem < btoc(2 * 1024 * 1024))
+				bufpages = physmem / 10 / CLSIZE;
+			else
+				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+				    (20 * CLSIZE);
+		} else {
+			/*
+			 * Set size of buffer cache to physmem/bufcache * 100
+			 * (i.e., bufcache % of physmem).
+			 */
+			if (bufcache < 5 || bufcache > 95) {
+				printf(
+		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
+				    bufcache);
+				bufcache = 10;
+			}
+			bufpages= physmem / (CLSIZE * 100) * bufcache;
+		}
+	}
+
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
