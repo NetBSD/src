@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.4 1998/04/03 04:29:52 enami Exp $
+#	$NetBSD: ZHADUM,v 1.5 1998/04/03 04:35:39 enami Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -251,6 +251,9 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 
 # PCMCIA SCSI controllers
 #aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+
+# ISA Plug-and-Play SCSI controllers
+#aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
