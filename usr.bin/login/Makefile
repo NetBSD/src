@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.42 2004/01/05 03:53:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.43 2005/01/20 15:41:14 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
 
+WARNS=	2
 PROG=	login
 SRCS=	login.c copyrightstr.c
 DPADD+=	${LIBUTIL} ${LIBCRYPT}

@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.80 2005/01/12 05:34:23 xtraeme Exp $       */
+/*     $NetBSD: login.c,v 1.81 2005/01/20 15:41:14 xtraeme Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.80 2005/01/12 05:34:23 xtraeme Exp $");
+__RCSID("$NetBSD: login.c,v 1.81 2005/01/20 15:41:14 xtraeme Exp $");
 #endif /* not lint */
 
 /*
@@ -99,40 +99,39 @@ int login_krb5_forwardable_tgt = 0;
 int login_krb5_retain_ccache = 0;
 #endif
 
-void	 badlogin (char *);
-void	 checknologin (char *);
+void	 badlogin(char *);
+void	 checknologin(char *);
 #ifdef SUPPORT_UTMP
-static void	 doutmp (void);
-static void	 dolastlog (int);
+static void	 doutmp(void);
+static void	 dolastlog(int);
 #endif
 #ifdef SUPPORT_UTMPX
-static void	 doutmpx (void);
-static void	 dolastlogx (int);
+static void	 doutmpx(void);
+static void	 dolastlogx(int);
 #endif
-static void	 update_db (int);
-void	 getloginname (void);
-int	 main (int, char *[]);
-void	 motd (char *);
-int	 rootterm (char *);
-void	 sigint (int);
-void	 sleepexit (int);
-const	 char *stypeof (const char *);
-void	 timedout (int);
+static void	 update_db(int);
+void	 getloginname(void);
+void	 motd(char *);
+int	 rootterm(char *);
+void	 sigint(int);
+void	 sleepexit(int);
+const	 char *stypeof(const char *);
+void	 timedout(int);
 #if defined(KERBEROS)
-int	 klogin (struct passwd *, char *, char *, char *);
-void	 kdestroy (void);
+int	 klogin(struct passwd *, char *, char *, char *);
+void	 kdestroy(void);
 #endif
 #ifdef KERBEROS5
-int	 k5login (struct passwd *, char *, char *, char *);
-void	 k5destroy (void);
-int	 k5_read_creds (char*);
-int	 k5_write_creds (void);
+int	 k5login(struct passwd *, char *, char *, char *);
+void	 k5destroy(void);
+int	 k5_read_creds(char*);
+int	 k5_write_creds(void);
 #endif
 #if defined(KERBEROS) || defined(KERBEROS5)
-void	 dofork (void);
+void	 dofork(void);
 #endif
-void	 decode_ss (const char *);
-void	 usage (void);
+void	 decode_ss(const char *);
+void	 usage(void);
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 

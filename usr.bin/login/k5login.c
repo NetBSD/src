@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.25 2004/12/22 01:28:56 lha Exp $	*/
+/*	$NetBSD: k5login.c,v 1.26 2005/01/20 15:41:14 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.25 2004/12/22 01:28:56 lha Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.26 2005/01/20 15:41:14 xtraeme Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -117,9 +117,7 @@ krb5_to4 (struct passwd *pw, krb5_context context, krb5_ccache id);
  * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
  */
 int
-k5_verify_creds(c, ccache)
-	krb5_context c;
-	krb5_ccache ccache;
+k5_verify_creds(krb5_context c, krb5_ccache ccache)
 {
 	char phost[MAXHOSTNAMELEN];
 	int retval, have_keys;
@@ -233,8 +231,7 @@ EGRESS:
  *        1 if no forwarded creds.
  */
 int
-k5_read_creds(username)
-	char *username;
+k5_read_creds(char *username)
 {
 	krb5_error_code kerror;
 	krb5_creds mcreds;
@@ -291,7 +288,7 @@ nuke_ccache:
 }
 
 int
-k5_write_creds()
+k5_write_creds(void)
 {
 	krb5_error_code kerror;
 	krb5_ccache ccache;
@@ -384,9 +381,7 @@ krb5_to4 (struct passwd *pw, krb5_context context, krb5_ccache id)
  *	  1 if Kerberos failed (try local password in login)
  */
 int
-k5login(pw, instance, localhost, password)
-	struct passwd *pw;
-	char *instance, *localhost, *password;
+k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 {
         krb5_error_code kerror;
 	krb5_creds my_creds;
@@ -537,7 +532,7 @@ k5login(pw, instance, localhost, password)
  * Remove any credentials
  */
 void
-k5destroy()
+k5destroy(void)
 {
         krb5_error_code kerror;
 	krb5_ccache ccache = NULL;
