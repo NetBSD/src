@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 2002/07/05 13:31:55 scw Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 2002/07/10 12:23:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,9 +77,18 @@
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
  */
+/*
+ * XXX: Yet another hack for the non-native sh5 toolchain
+ */
+#if __GNUC__ < 3
+#define	_BSD_WCHAR_T_		unsigned short int		/* wchar_t */
+#define	_BSD_WINT_T_		int				/* wint_t */
+#define	_BSD_RUNE_T_		unsigned short int		/* rune_t */
+#else
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
+#endif
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte
