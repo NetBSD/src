@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.18 2005/01/31 23:06:42 reinoud Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.19 2005/02/01 00:19:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.18 2005/01/31 23:06:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.19 2005/02/01 00:19:34 reinoud Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -184,12 +184,12 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 static int
 st_scsibus_mode_sense(struct st_softc *st, int flags)
 {
-	uint scsipi_sense_len;
+	u_int scsipi_sense_len;
 	int error;
 	struct scsipi_sense {
 		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		uint8_t sense_data[MAX_PAGE_0_SIZE];
+		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsipi_sense;
 	struct scsipi_periph *periph = st->sc_periph;
 
@@ -235,11 +235,11 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 static int
 st_scsibus_mode_select(struct st_softc *st, int flags)
 {
-	uint scsi_select_len;
+	u_int scsi_select_len;
 	struct scsi_select {
 		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		uint8_t sense_data[MAX_PAGE_0_SIZE];
+		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsi_select;
 	struct scsipi_periph *periph = st->sc_periph;
 
@@ -284,12 +284,12 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 static int
 st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 {
-	uint scsi_dlen;
+	u_int scsi_dlen;
 	int byte2, page;
 	struct scsi_select {
 		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		uint8_t pdata[MAX(sizeof(struct scsi_tape_dev_conf_page),
+		u_char pdata[MAX(sizeof(struct scsi_tape_dev_conf_page),
 		    sizeof(struct scsi_tape_dev_compression_page))];
 	} scsi_pdata;
 	struct scsi_tape_dev_conf_page *ptr;
