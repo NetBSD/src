@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2004/04/24 18:55:02 cl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2004/04/25 14:40:02 cl Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2004/04/24 18:55:02 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2004/04/25 14:40:02 cl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -478,21 +478,23 @@ found:
 	}
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
-	if (xcp.xcp_bootdev[0] == 0)
-		strcat(xcp.xcp_bootdev, "xbd0");
 
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (is_valid_disk(dv) == 0)
 			continue;
 
+		if (xcp.xcp_bootdev[0] == 0) {
+			booted_device = dv;
+			break;
+		}
+
 		if (strncmp(xcp.xcp_bootdev, dv->dv_xname,
 		    strlen(dv->dv_xname)))
 			continue;
 
-		if (strlen(xcp.xcp_bootdev) != strlen(dv->dv_xname)) {
-			booted_partition =
-				toupper(xcp.xcp_bootdev[strlen(dv->dv_xname)])
-				- 'A';
+		if (strlen(xcp.xcp_bootdev) > strlen(dv->dv_xname)) {
+			booted_partition = toupper(
+				xcp.xcp_bootdev[strlen(dv->dv_xname)]) - 'A';
 		}
 
 		booted_device = dv;
