@@ -1,4 +1,4 @@
-.\"	$NetBSD: atc.6,v 1.6 1999/07/17 19:48:40 hubertf Exp $
+.\"	$NetBSD: atc.6,v 1.7 2000/09/23 01:52:50 jhawk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -324,7 +324,7 @@ in highlighted mode on the radar display.  A plane may also be either
 or
 .Em ignored.
 An
-.Em unmarked
+.Em ignored
 plane is drawn in unhighlighted mode, and a line of dashes is displayed in
 the command field of the information area.  The plane will remain this
 way until a mark command has been issued.  Any other command will be issued,
@@ -332,9 +332,10 @@ but the command line will return to a line of dashes when the command
 is completed.  
 .Pp
 An
+.Em unmarked
+plane is treated the same as an
 .Em ignored
-plane is treated the same as an unmarked plane, except that it will
-automatically switch to 
+plane, except that it will automatically switch to
 .Em marked
 status when a delayed command has been processed.  This is useful if
 you want to forget about a plane for a while, but its flight path has
