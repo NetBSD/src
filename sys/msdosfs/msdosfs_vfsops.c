@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.67 2000/03/16 18:08:28 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.68 2000/03/30 02:27:35 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -173,7 +173,6 @@ int
 msdosfs_mountroot()
 {
 	struct mount *mp;
-	extern struct vnode *rootvp;
 	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct msdosfs_args args;
@@ -374,7 +373,6 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
 	struct byte_bpb710 *b710;
-	extern struct vnode *rootvp;
 	u_int8_t SecPerClust;
 	int	ronly, error;
 	int	bsize = 0, dtype = 0, tmp;
