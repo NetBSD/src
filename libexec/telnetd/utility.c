@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.27 2005/02/06 17:30:33 agc Exp $	*/
+/*	$NetBSD: utility.c,v 1.27.2.1 2005/03/19 18:01:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.27 2005/02/06 17:30:33 agc Exp $");
+__RCSID("$NetBSD: utility.c,v 1.27.2.1 2005/03/19 18:01:55 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,8 @@ putf(char *cp, char *where)
 		switch (*++cp) {
 
 		case 't':
-			slash = strrchr(line, '/');
+			if ((slash = strstr(line, "/pts/")) == NULL)
+				slash = strrchr(line, '/');
 			if (slash == (char *) 0)
 				putstr(line);
 			else
