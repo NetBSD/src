@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.64 2000/05/27 03:24:50 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.65 2000/05/27 04:52:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -177,7 +177,7 @@ sys___sysctl(p, v, retval)
 			return (EFAULT);
 		while (memlock.sl_lock) {
 			memlock.sl_want = 1;
-			sleep((caddr_t)&memlock, PRIBIO+1);
+			(void) tsleep(&memlock, PRIBIO+1, "memlock", 0);
 			memlock.sl_locked++;
 		}
 		memlock.sl_lock = 1;
