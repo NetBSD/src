@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.49 1998/03/07 03:37:02 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.50 1998/03/09 22:31:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.49 1998/03/07 03:37:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.50 1998/03/09 22:31:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1178,6 +1178,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 		enter_stats.user++;
 #endif
 		/*
+		 * If we're still referencing the kernel Lev1map, create
+		 * a new level 1 page table.
+		 */
+		if (pmap->pm_lev1map == Lev1map)
+			pmap_create_lev1map(pmap);
+
+		/*
 		 * If this is the first user mapping, allocate KVA
 		 * space for the user level 3 page tables.
 		 */
@@ -2086,13 +2093,6 @@ pmap_enter_ptpage(pmap, va)
 #ifdef PMAPSTATS
 	enter_stats.ptpneeded++;
 #endif
-
-	/*
-	 * If we're still referencing the kernel Lev1map, create a new
-	 * level 1 page table.
-	 */
-	if (pmap->pm_lev1map == Lev1map)
-		pmap_create_lev1map(pmap);
 
 	/*
 	 * Allocate a segment table if necessary.  Note that it is allocated
