@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2002/06/17 16:33:00 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2002/06/30 23:30:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -404,6 +404,9 @@ cdev_decl(isdntel);
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 
+#include "kttcp.h"
+cdev_decl(kttcp);
+
 struct cdevsw cdevsw[] = {
 	cdev_mm_init(1,mm),			/*  0: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),			/*  1: /dev/drum (swap pseudo-device) */
@@ -508,6 +511,7 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),				/* 98: system call tracing */
 #endif
+	cdev__oci_init(NKTTCP,kttcp),		/* 99: kernel ttcp helper */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -649,6 +653,7 @@ static int chrtoblktbl[] = {
     /* 96 */	    NODEV,
     /* 97 */	    NODEV,
     /* 98 */	    NODEV,
+    /* 99 */	    NODEV,
 };
 
 /*
