@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.17 2000/02/02 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.18 2000/02/02 17:50:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ lxtphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = lxtphy_service;
+	sc->mii_status = lxtphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -244,7 +245,7 @@ lxtphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	lxtphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {

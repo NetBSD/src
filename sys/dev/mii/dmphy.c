@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.3 2000/02/02 17:09:43 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.4 2000/02/02 17:50:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ dmphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = dmphy_service;
+	sc->mii_status = dmphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -243,7 +244,7 @@ dmphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	dmphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.10 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.11 2000/02/02 17:50:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -188,6 +188,14 @@ mii_phy_down(sc)
 		sc->mii_flags &= ~MIIF_DOINGAUTO;
 		untimeout(mii_phy_auto_timeout, sc);
 	}
+}
+
+void
+mii_phy_status(sc)
+	struct mii_softc *sc;
+{
+
+	(*sc->mii_status)(sc);
 }
 
 /*
