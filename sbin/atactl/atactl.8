@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdctl.8,v 1.1 1998/11/19 19:50:31 kenh Exp $
+.\"	$NetBSD: atactl.8,v 1.1 1998/11/19 23:55:00 kenh Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,8 @@
 .Dt WDCTL 8
 .Os NetBSD
 .Sh NAME
-.Nm wdctl
-.Nd a program to manipulate Western Digital (ATA, IDE) devices
+.Nm atactl
+.Nd a program to manipulate ATA (IDE) devices
 .Sh SYNOPSIS
 .Nm
 .Ar device
@@ -51,12 +51,12 @@
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to issue commands to and otherwise
-control devices which reside on Western Digital WD100x compatible controllers.
-This includes standard IDE and ATA controllers.  It is used by specifying
-a device or bus to manipulate, the command to perform, and any arguments
+control devices which reside on standard IDE and ATA controllers.  It is
+used by specifying
+a device to manipulate, the command to perform, and any arguments
 the command may require.
 .Sh DEVICE COMMANDS
-The following commands may be used on all IDE and ATA devices.  Note
+The following commands may be used on IDE and ATA devices.  Note
 that not all devices support all commands.
 .Pp
 .Nm identify

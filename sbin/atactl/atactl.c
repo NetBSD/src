@@ -1,4 +1,4 @@
-/*	$NetBSD: wdctl.c,v 1.1 1998/11/19 19:50:31 kenh Exp $	*/
+/*	$NetBSD: atactl.c,v 1.1 1998/11/19 23:55:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
-#include <sys/wdcio.h>
+#include <sys/ataio.h>
 
 struct command {
 	const char *cmd_name;
@@ -67,7 +67,7 @@ struct bitinfo {
 
 int	main __P((int, char *[]));
 void	usage __P((void));
-void	wdc_command __P((struct wdcreq *));
+void	ata_command __P((struct atareq *));
 void	print_bitinfo __P((const char *, u_int, struct bitinfo *));
 
 int	fd;				/* file descriptor for device */
@@ -202,31 +202,31 @@ usage()
 }
 
 /*
- * Wrapper that calls WDCIOCCOMMAND and checks for errors
+ * Wrapper that calls ATAIOCCOMMAND and checks for errors
  */
 
 void
-wdc_command(req)
-	struct wdcreq *req;
+ata_command(req)
+	struct atareq *req;
 {
 	int error;
 
-	error = ioctl(fd, WDCIOCCOMMAND, req);
+	error = ioctl(fd, ATAIOCCOMMAND, req);
 
 	if (error == -1)
-		err(1, "WDCIOCCOMMAND failed");
+		err(1, "ATAIOCCOMMAND failed");
 
 	switch (req->retsts) {
 
-	case WDCCMD_OK:
+	case ATACMD_OK:
 		return;
-	case WDCCMD_TIMEOUT:
+	case ATACMD_TIMEOUT:
 		fprintf(stderr, "ATA command timed out\n");
 		exit(1);
-	case WDCCMD_DF:
+	case ATACMD_DF:
 		fprintf(stderr, "ATA device returned a Device Fault\n");
 		exit(1);
-	case WDCCMD_ERROR:
+	case ATACMD_ERROR:
 		if (req->error & WDCE_ABRT)
 			fprintf(stderr, "ATA device returned Aborted "
 				"Command\n");
@@ -235,7 +235,7 @@ wdc_command(req)
 				"%0x\n", req->error);
 		exit(1);
 	default:
-		fprintf(stderr, "WDCIOCCOMMAND returned unknown result code "
+		fprintf(stderr, "ATAIOCCOMMAND returned unknown result code "
 			"%d\n", req->retsts);
 		exit(1);
 	}
@@ -272,7 +272,7 @@ device_identify(argc, argv)
 	char *argv[];
 {
 	struct ataparams *inqbuf;
-	struct wdcreq req;
+	struct atareq req;
 	unsigned char inbuf[DEV_BSIZE];
 	int i;
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -288,13 +288,13 @@ device_identify(argc, argv)
 
 	inqbuf = (struct ataparams *) inbuf;
 
-	req.flags = WDCCMD_READ;
+	req.flags = ATACMD_READ;
 	req.command = WDCC_IDENTIFY;
 	req.databuf = (caddr_t) inbuf;
 	req.datalen = sizeof(inbuf);
 	req.timeout = 1000;
 
-	wdc_command(&req);
+	ata_command(&req);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/*
@@ -410,7 +410,7 @@ device_idle(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct wdcreq req;
+	struct atareq req;
 
 	/* No arguments. */
 	if (argc != 0)
@@ -427,7 +427,7 @@ device_idle(argc, argv)
 
 	req.timeout = 1000;
 
-	wdc_command(&req);
+	ata_command(&req);
 
 	return;
 usage:
@@ -446,7 +446,7 @@ device_setidle(argc, argv)
 	char *argv[];
 {
 	unsigned long idle;
-	struct wdcreq req;
+	struct atareq req;
 	char *end;
 
 	/* Only one argument */
@@ -481,7 +481,7 @@ device_setidle(argc, argv)
 	req.command = cmdname[3] == 's' ? WDCC_STANDBY : WDCC_IDLE;
 	req.timeout = 1000;
 
-	wdc_command(&req);
+	ata_command(&req);
 
 	return;
 
