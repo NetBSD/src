@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 2000/04/23 16:47:45 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 2000/05/02 03:32:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -993,11 +993,7 @@ loop:
 		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read | DMAMODE_DEMAND, BUS_DMA_NOWAIT);
-#if 0 /* XXX i/o port kludge */
-		bus_space_write_1(iot, ioh, fdctl, type->rate);
-#else
 		bus_space_write_1(iot, fdc->sc_fdctlioh, 0, type->rate);
-#endif
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 			read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
