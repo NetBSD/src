@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.20 1999/09/26 10:32:28 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.21 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.20 1999/09/26 10:32:28 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.21 1999/12/07 14:54:47 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,18 +94,18 @@ __RCSID("$NetBSD: printjob.c,v 1.20 1999/09/26 10:32:28 mrg Exp $");
 #define	FILTERERR	3
 #define	ACCESS		4
 
-static dev_t	 fdev;		/* device of file pointed to by symlink */
-static ino_t	 fino;		/* inode of file pointed to by symlink */
+static dev_t	fdev;		/* device of file pointed to by symlink */
+static ino_t	fino;		/* inode of file pointed to by symlink */
 static FILE	*cfp;		/* control file */
-static int	 child;		/* id of any filters */
-static int	 lfd;		/* lock file descriptor */
-static int	 ofd;		/* output filter file descriptor */
-static int	 ofilter;	/* id of output filter, if any */
-static int	 pfd;		/* prstatic inter file descriptor */
-static int	 pid;		/* pid of lpd process */
-static int	 prchild;	/* id of pr process */
-static char	 title[80];	/* ``pr'' title */
-static int	 tof;		/* true if at top of form */
+static int	child;		/* id of any filters */
+static int	lfd;		/* lock file descriptor */
+static int	ofd;		/* output filter file descriptor */
+static int	ofilter;	/* id of output filter, if any */
+static int	pfd;		/* prstatic inter file descriptor */
+static int	pid;		/* pid of lpd process */
+static int	prchild;	/* id of pr process */
+static char	title[80];	/* ``pr'' title */
+static int	tof;		/* true if at top of form */
 
 static char	class[32];		/* classification field */
 static char	fromhost[32];		/* user's host machine */
@@ -119,25 +119,26 @@ static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXX"; /* file name for filter output */
 static char	width[10] = "-w";	/* page width in static characters */
 
-static void       abortpr __P((int));
-static void       banner __P((char *, char *));
-static int        dofork __P((int));
-static int        dropit __P((int));
-static void       init __P((void));
-static void       openpr __P((void));
-static void       opennet __P((char *));
-static void       opentty __P((void));
-static void       openrem __P((void));
-static int        print __P((int, char *));
-static int        printit __P((char *));
-static void       pstatus __P((const char *, ...));
-static char       response __P((void));
-static void       scan_out __P((int, char *, int));
-static char      *scnline __P((int, char *, int));
-static int        sendfile __P((int, char *));
-static int        sendit __P((char *));
-static void       sendmail __P((char *, int));
-static void       setty __P((void));
+static void	abortpr __P((int));
+static void	banner __P((char *, char *));
+static int	dofork __P((int));
+static int	dropit __P((int));
+static void	init __P((void));
+static void	openpr __P((void));
+static void	opennet __P((char *));
+static void	opentty __P((void));
+static void	openrem __P((void));
+static int	print __P((int, char *));
+static int	printit __P((char *));
+static void	pstatus __P((const char *, ...));
+static char	response __P((void));
+static void	scan_out __P((int, char *, int));
+static char	*scnline __P((int, char *, int));
+static int	sendfile __P((int, char *));
+static int	sendit __P((char *));
+static void	sendmail __P((char *, int));
+static void	setty __P((void));
+static void	alarmer __P((int));
 
 void
 printjob()
@@ -869,7 +870,7 @@ sendfile(type, file)
 		return(ACCESS);
 	amt = snprintf(buf, sizeof(buf), "%c%qd %s\n", type,
 	    (long long)stb.st_size, file);
-	for (i = 0;  ; i++) {
+	for (i = 0; ; i++) {
 		if (write(pfd, buf, amt) != amt ||
 		    (resp = response()) < 0 || resp == '\1') {
 			(void)close(f);
@@ -887,15 +888,27 @@ sendfile(type, file)
 		pstatus("sending to %s", RM);
 	sizerr = 0;
 	for (i = 0; i < stb.st_size; i += BUFSIZ) {
+		struct sigaction osa, nsa;
+
 		amt = BUFSIZ;
 		if (i + amt > stb.st_size)
 			amt = stb.st_size - i;
 		if (sizerr == 0 && read(f, buf, amt) != amt)
 			sizerr = 1;
+		nsa.sa_handler = alarmer;
+		sigemptyset(&nsa.sa_mask);
+		sigaddset(&nsa.sa_mask, SIGALRM);
+		nsa.sa_flags = 0;
+		(void)sigaction(SIGALRM, &nsa, &osa);
+		alarm(wait_time);
 		if (write(pfd, buf, amt) != amt) {
+			alarm(0);
+			(void)sigaction(SIGALRM, &osa, NULL);
 			(void)close(f);
 			return(REPRINT);
 		}
+		alarm(0);
+		(void)sigaction(SIGALRM, &osa, NULL);
 	}
 
 	(void)close(f);
@@ -918,13 +931,22 @@ sendfile(type, file)
 static char
 response()
 {
+	struct sigaction osa, nsa;
 	char resp;
 
+	nsa.sa_handler = alarmer;
+	sigemptyset(&nsa.sa_mask);
+	sigaddset(&nsa.sa_mask, SIGALRM);
+	nsa.sa_flags = 0;
+	(void)sigaction(SIGALRM, &nsa, &osa);
+	alarm(wait_time);
 	if (read(pfd, &resp, 1) != 1) {
 		syslog(LOG_INFO, "%s: lost connection", printer);
-		return(-1);
+		resp = -1;
 	}
-	return(resp);
+	alarm(0);
+	(void)sigaction(SIGALRM, &osa, NULL);
+	return (resp);
 }
 
 /*
@@ -1276,6 +1298,7 @@ openpr()
 {
 	int i, nofile;
 	char *cp;
+	extern int rflag;
 
 	if (!remote && *LP) {
 		if ((cp = strchr(LP, '@')))
@@ -1293,7 +1316,7 @@ openpr()
 	/*
 	 * Start up an output filter, if needed.
 	 */
-	if (!remote && OF) {
+	if ((!remote || rflag) && OF) {
 		int p[2];
 
 		pipe(p);
@@ -1425,6 +1448,13 @@ openrem()
 		sleep(i);
 	}
 	pstatus("sending to %s", RM);
+}
+
+static void
+alarmer(s)
+	int s;
+{
+	/* nothing */
 }
 
 #if !defined(__NetBSD__)

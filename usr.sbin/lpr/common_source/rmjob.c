@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.14 1999/09/26 10:32:27 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.15 1999/12/07 14:54:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.14 1999/09/26 10:32:27 mrg Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.15 1999/12/07 14:54:45 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static char	current[40];		/* active control file name */
 extern uid_t	uid, euid;		/* real and effective user id's */
 
 static	void	do_unlink __P((char *));
+static	void	alarmer __P((int));
 
 void
 rmjob()
@@ -369,14 +370,33 @@ rmremote()
 			printf("%s: ", host);
 		printf("connection to %s is down\n", RM);
 	} else {
+		struct sigaction osa, nsa;
+
 		if (write(rem, s, len) != len)
 			fatal("Lost connection");
 		if (len > sizeof(line))
 			(void)free(s);
-		while ((i = read(rem, line, sizeof(line))) > 0)
+		nsa.sa_handler = alarmer;
+		sigemptyset(&nsa.sa_mask);
+		sigaddset(&nsa.sa_mask, SIGALRM);
+		nsa.sa_flags = 0;
+		(void)sigaction(SIGALRM, &nsa, &osa);
+		alarm(wait_time);
+		while ((i = read(rem, line, sizeof(line))) > 0) {
 			(void)fwrite(line, 1, (size_t)i, stdout);
+			alarm(wait_time);
+		}
+		alarm(0);
+		(void)sigaction(SIGALRM, &osa, NULL);
 		(void)close(rem);
 	}
+}
+
+static void
+alarmer(s)
+	int s;
+{
+	/* nothing */
 }
 
 /*

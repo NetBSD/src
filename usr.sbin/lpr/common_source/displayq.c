@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.16 1999/09/26 10:32:27 mrg Exp $	*/
+/*	$NetBSD: displayq.c,v 1.17 1999/12/07 14:54:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.16 1999/09/26 10:32:27 mrg Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.17 1999/12/07 14:54:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,10 @@ static long	totsize;	/* total print job size in bytes */
 
 static char	*head0 = "Rank   Owner      Job  Files";
 static char	*head1 = "Total Size\n";
+
+static	void	alarmer __P((int));
+
+int wait_time = 300;	/* time out after 5 minutes by default */
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
@@ -257,13 +261,32 @@ displayq(format)
 		(void)printf("connection to %s is down\n", RM);
 	}
 	else {
+		struct sigaction osa, nsa;
+
 		i = strlen(line);
 		if (write(fd, line, (size_t)i) != i)
 			fatal("Lost connection");
-		while ((i = read(fd, line, sizeof(line))) > 0)
+		nsa.sa_handler = alarmer;
+		sigemptyset(&nsa.sa_mask);
+		sigaddset(&nsa.sa_mask, SIGALRM);
+		nsa.sa_flags = 0;
+		(void)sigaction(SIGALRM, &nsa, &osa);
+		alarm(wait_time);
+		while ((i = read(fd, line, sizeof(line))) > 0) {
 			(void)fwrite(line, 1, (size_t)i, stdout);
+			alarm(wait_time);
+		}
+		alarm(0);
+		(void)sigaction(SIGALRM, &osa, NULL);
 		(void)close(fd);
 	}
+}
+
+static void
+alarmer(s)
+	int s;
+{
+	/* nothing */
 }
 
 /*
