@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.16 2001/06/04 03:34:47 toshii Exp $	*/
+/*	$NetBSD: wi.c,v 1.17 2001/06/12 22:32:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -72,7 +72,6 @@
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
 
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -90,14 +89,6 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_ieee80211.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
