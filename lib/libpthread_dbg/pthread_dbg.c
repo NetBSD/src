@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.21 2004/06/03 00:31:28 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.22 2004/06/03 15:22:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.21 2004/06/03 00:31:28 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.22 2004/06/03 15:22:08 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -1074,7 +1074,8 @@ int
 td_thr_suspend(td_thread_t *thread)
 {
 	int tmp, tmp1, val;
-	caddr_t addr, sp, nthread, qaddr;
+	caddr_t addr, sp, nthreadaddr, qaddr;
+	td_thread_t *nthread;
 	struct reg r;
 	struct fpreg fr;
 	ucontext_t uc;
@@ -1151,16 +1152,16 @@ td_thr_suspend(td_thread_t *thread)
 			}
 		}
 
-		nthread = (caddr_t)(void *)qhead.ptqh_first;
-		DPTQ_REMOVE(qaddr, nthread, pt_runq);
+		nthreadaddr = (caddr_t)(void *)qhead.ptqh_first;
+		DPTQ_REMOVE(qaddr, nthreadaddr, pt_runq);
 		val = READ(thread->proc,
-		    nthread + offsetof(struct __pthread_st, pt_trapuc),
+		    nthreadaddr + offsetof(struct __pthread_st, pt_trapuc),
 		    &addr, sizeof(addr));
 		if (val != 0)
 			return val;
 		if (addr == 0) {
 			val = READ(thread->proc,
-			    nthread + offsetof(struct __pthread_st, pt_uc),
+			    nthreadaddr + offsetof(struct __pthread_st, pt_uc),
 			    &addr, sizeof(addr));
 			if (val != 0)
 				return val;
@@ -1177,6 +1178,7 @@ td_thr_suspend(td_thread_t *thread)
 		if (val != 0)
 			return val;
 
+		td__getthread(thread->proc, nthreadaddr, &nthread);
 		nthread->lwp = thread->lwp;
 		thread->lwp = -1;
 		break;
