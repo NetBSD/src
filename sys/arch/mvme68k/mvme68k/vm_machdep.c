@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2000/06/26 14:20:51 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 2000/06/29 08:04:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,8 +53,6 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
