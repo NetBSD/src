@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.32 1997/06/19 06:30:05 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.33 1997/06/21 04:18:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -750,12 +750,12 @@ NLEAF(mips1_TLBModException)
 	tlbp					# find the TLB entry
 	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
 	mfc0	k1, MACH_COP_0_TLB_INDEX	# check to be sure its valid
-	or	k0, k0, VMMACH_TLB_MOD_BIT	# update TLB
+	or	k0, k0, MIPS1_TLB_MOD_BIT	# update TLB
 	blt	k1, zero, 4f			# not found!!!
 	mtc0	k0, MACH_COP_0_TLB_LOW
 	li	k1, MACH_CACHED_MEMORY_ADDR
 	subu	k0, k0, k1
-	srl	k0, k0, VMMACH_TLB_PHYS_PAGE_SHIFT
+	srl	k0, k0, MIPS1_TLB_PHYS_PAGE_SHIFT
 	la	k1, pmap_attributes
 	addu	k0, k0, k1
 	lbu	k1, 0(k0)			# fetch old value
@@ -865,7 +865,7 @@ LEAF(mips1_TLBWriteIndexed)
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
 
-	sll	a0, a0, VMMACH_TLB_INDEX_SHIFT
+	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index.
 	mtc0	a1, MACH_COP_0_TLB_HI		# Set up entry high.
 	mtc0	a2, MACH_COP_0_TLB_LOW		# Set up entry low.
@@ -931,7 +931,7 @@ END(mips1_TLBWriteRandom)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_SetPID)
-	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
+	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
 	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
@@ -963,11 +963,11 @@ LEAF(mips1_TLBFlush)
 /*
  * Align the starting value (t1) and the upper bound (t2).
  */
-	li	t1, VMMACH_FIRST_RAND_ENTRY << VMMACH_TLB_INDEX_SHIFT
-	li	t2, VMMACH_NUM_TLB_ENTRIES << VMMACH_TLB_INDEX_SHIFT
+	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
+	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
 1:
 	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register.
-	addu	t1, t1, 1 << VMMACH_TLB_INDEX_SHIFT	# Increment index.
+	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
 	bne	t1, t2, 1b
 	tlbwi					# Write the TLB entry.
 
@@ -998,19 +998,19 @@ LEAF(mips1_TLBFlushPID)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID
-	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# Align the pid to flush.
+	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# Align the pid to flush.
 /*
  * Align the starting value (t1) and the upper bound (t2).
  */
-	li	t1, VMMACH_FIRST_RAND_ENTRY << VMMACH_TLB_INDEX_SHIFT
-	li	t2, VMMACH_NUM_TLB_ENTRIES << VMMACH_TLB_INDEX_SHIFT
+	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
+	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
 	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register
 1:
-	addu	t1, t1, 1 << VMMACH_TLB_INDEX_SHIFT	# Increment index.
+	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
 	tlbr					# Read from the TLB
 	mfc0	t4, MACH_COP_0_TLB_HI		# Fetch the hi register.
 	nop
-	and	t4, t4, VMMACH_TLB_PID		# compare PIDs
+	and	t4, t4, MIPS1_TLB_PID		# compare PIDs
 	bne	t4, a0, 2f
 	li	v0, MACH_CACHED_MEMORY_ADDR	# invalid address
 	mtc0	v0, MACH_COP_0_TLB_HI		# Mark entry high as invalid
@@ -1094,7 +1094,7 @@ LEAF(mips1_TLBUpdate)
 	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
 	mtc0	a1, MACH_COP_0_TLB_LOW		# init low reg.
 	bltz	v0, 1f				# index < 0 => !found
-	sra	v0, v0, VMMACH_TLB_INDEX_SHIFT	# convert index to regular num
+	sra	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
 	b	2f
 	tlbwi					# update slot found
 1:
@@ -1144,7 +1144,7 @@ LEAF(mips1_TLBFind)
 	mfc0	t2, MACH_COP_0_TLB_LOW		# See what we got
 	sw	t1, tlbhi
 	sw	t2, tlblo
-	srl	v0, v0, VMMACH_TLB_INDEX_SHIFT	# convert index to regular num
+	srl	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
 1:
 	mtc0	t0, MACH_COP_0_TLB_HI		# Restore current PID
 	j	ra
@@ -1173,7 +1173,7 @@ LEAF(mips1_TLBRead)
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
 
-	sll	a0, a0, VMMACH_TLB_INDEX_SHIFT
+	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index register
 	nop
 	tlbr					# Read from the TLB
@@ -1204,9 +1204,9 @@ END(mips1_TLBRead)
 LEAF(mips1_TLBGetPID)
 	mfc0	v0, MACH_COP_0_TLB_HI		# get PID
 	nop
-	and	v0, v0, VMMACH_TLB_PID		# mask off PID
+	and	v0, v0, MIPS1_TLB_PID		# mask off PID
 	j	ra
-	srl	v0, v0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
+	srl	v0, v0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
 END(mips1_TLBGetPID)
 
 
@@ -1601,11 +1601,11 @@ LEAF(mips1_switch_exit)
 	li	v0, MACH_CACHED_MEMORY_ADDR	# clear wired entries for pcb
 	mtc0	v0, MACH_COP_0_TLB_HI
 	mtc0	zero, MACH_COP_0_TLB_LOW
-	li	v0, 2 << VMMACH_TLB_INDEX_SHIFT
+	li	v0, 2 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 2
 	nop
 	tlbwi
-	li	v0, 3 << VMMACH_TLB_INDEX_SHIFT
+	li	v0, 3 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 3
 	nop
 	tlbwi
@@ -1614,7 +1614,7 @@ LEAF(mips1_switch_exit)
 	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
 	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
-	li	t0, 1 << VMMACH_TLB_INDEX_SHIFT
+	li	t0, 1 << MIPS1_TLB_INDEX_SHIFT
 	tlbwi					# Write the TLB entry.
 	addu	v0, v0, NBPG			# 2nd HI entry
 	mtc0	t0, MACH_COP_0_TLB_INDEX	# set the index register
@@ -1649,7 +1649,7 @@ LEAF(mips1_cpu_switch_resume)
 	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
 	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
-	li	s1, 1 << VMMACH_TLB_INDEX_SHIFT
+	li	s1, 1 << MIPS1_TLB_INDEX_SHIFT
 	tlbwi					# Write the TLB entry.
 	addu	v0, v0, NBPG			# 2nd HI entry
 	mtc0	s1, MACH_COP_0_TLB_INDEX	# set the index register
@@ -1658,7 +1658,7 @@ LEAF(mips1_cpu_switch_resume)
 	nop
 	tlbwi					# Write the TLB entry.
  # now map p_addr; may need to flush random TLB entries
-	andi	v0, VMMACH_TLB_PID		# mask PID
+	andi	v0, MIPS1_TLB_PID		# mask PID
 	or	v0, s0				# insert p_addr
 	mtc0	v0, MACH_COP_0_TLB_HI
 	nop
@@ -1674,7 +1674,7 @@ LEAF(mips1_cpu_switch_resume)
 	nop
 	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
 1:
-	li	s1, 2 << VMMACH_TLB_INDEX_SHIFT
+	li	s1, 2 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	s1, MACH_COP_0_TLB_INDEX
 	mtc0	t0, MACH_COP_0_TLB_LOW
 	nop
@@ -1694,7 +1694,7 @@ LEAF(mips1_cpu_switch_resume)
 	nop
 	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
 1:
-	li	s1, 3 << VMMACH_TLB_INDEX_SHIFT
+	li	s1, 3 << MIPS1_TLB_INDEX_SHIFT
 	mtc0	s1, MACH_COP_0_TLB_INDEX
 	mtc0	t1, MACH_COP_0_TLB_LOW
 	nop

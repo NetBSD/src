@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.12 1997/06/19 06:30:08 mhitch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.13 1997/06/21 04:18:17 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -209,7 +209,7 @@ mips_vector_init()
 	case MIPS_R3000:
 		cpu_arch = 1;
 		mips1_TLBFlush();
-		for (i = 0; i < VMMACH_MIPS_3K_FIRST_RAND_ENTRY; ++i)
+		for (i = 0; i < MIPS1_TLB_FIRST_RAND_ENTRY; ++i)
 			mips1_TLBWriteIndexed(i, MACH_CACHED_MEMORY_ADDR, 0);
 		mips1_vector_init();
 		break;
@@ -219,7 +219,7 @@ mips_vector_init()
 		cpu_arch = 3;
 		mips3_SetWIRED(0);
 		mips3_TLBFlush();
-		mips3_SetWIRED(VMMACH_WIRED_ENTRIES);
+		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
 		mips3_vector_init();
 		break;
 #endif

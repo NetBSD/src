@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 1997/06/18 04:51:15 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 1997/06/21 04:18:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -265,9 +265,11 @@ extern void stacktrace __P((void)); /*XXX*/
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
+ * during autoconfiguration or after a panic.  Used as an argument to splx().
+ * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
+ * disables mips1 FPU interrupts.
  */
-int	safepri = PSL_LOWIPL;
+int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by switch_exit() */
