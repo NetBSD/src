@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.49 1997/11/16 21:47:34 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.50 1997/11/16 21:50:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -345,7 +345,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
+	printf("msdosfs_mount(): mp %p, pmp %p\n", mp, pmp); 
 #endif
 	return (0);
 }
@@ -784,12 +784,12 @@ msdosfs_root(mp, vpp)
 	struct denode *ndep;
 	int error;
 
+	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
+		return (error);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %p, pmp %p, ndep %p, vp %p\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
-	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
-		return (error);
 	*vpp = DETOV(ndep);
 	return (0);
 }
