@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.17 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.18 2001/04/27 17:08:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ void
 lance_config(sc)
 	struct lance_softc *sc;
 {
-	int i;
+	int i, nbuf;
 
 	/* Make sure the chip is stopped. */
 	lance_stop(sc);
@@ -266,7 +266,10 @@ lance_config(sc)
 		sc->sc_ntbuf = 32;
 		break;
 	default:
-		panic("lance_config: weird memory size");
+		/* weird memory size; cope with it */
+		nbuf = sc->sc_memsize / LEBLEN;
+		sc->sc_ntbuf = nbuf / 5;
+		sc->sc_nrbuf = nbuf - sc->sc_ntbuf;
 	}
 
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
