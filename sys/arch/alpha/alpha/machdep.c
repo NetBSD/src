@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1995/03/08 00:38:50 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1995/03/24 15:04:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -333,16 +333,16 @@ systype_flamingo:
 			cpu_model = "DEC 3000/300 (\"Pelican\")";
 			break;
 
-		case SV_ST_PELICANL:
-			cpu_model = "DEC 3000/300L (\"???\")";
+		case SV_ST_PELICA:
+			cpu_model = "DEC 3000/300L (\"Pelica\")";
 			break;
 
-		case SV_ST_PELICANX:
-			cpu_model = "DEC 3000/300X (\"???\")";
+		case SV_ST_PELICANPLUS:
+			cpu_model = "DEC 3000/300X (\"Pelican+\")";
 			break;
 
-		case SV_ST_PELICANLX:
-			cpu_model = "DEC 3000/300LX (\"???\")";
+		case SV_ST_PELICAPLUS:
+			cpu_model = "DEC 3000/300LX (\"Pelica+\")";
 			break;
 
 		default:
@@ -497,15 +497,19 @@ systype_flamingo:
 	pmap_bootstrap((vm_offset_t)v, phystok0seg(ptb << PGSHIFT));
 
 	/*
-	 * Initialize the rest of proc 0's PCB, and init the ptes
-	 * which are cached in its md_proc structure, so we can switch
-	 * to it in locore.  Also cache the physical address of the pcb.
+	 * Initialize the rest of proc 0's PCB, and cache its physical
+	 * address.
 	 */
-	for (i = 0; i < UPAGES; i++)
-		proc0.p_md.md_upte[i] = PG_V | PG_KRE | PG_KWE |
-		    (((k0segtophys(proc0paddr) >> PGSHIFT) + i) << PG_SHIFT);
-	proc0.p_md.md_pcbpaddr = (struct pcb *)k0segtophys(&proc0paddr->u_pcb);
-	proc0paddr->u_pcb.pcb_ksp = KSTACKTOP;		/* set the kernel sp */
+	proc0.p_md.md_pcbpaddr =
+	    (struct pcb *)k0segtophys(&proc0paddr->u_pcb);
+
+	/*
+	 * Set the kernel sp, reserving space for an (empty) trapframe,
+	 * and make proc0's trapframe pointer point to it for sanity.
+	 */
+	proc0paddr->u_pcb.pcb_ksp =
+	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
+	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_ksp;
 
 	/*
 	 * Look at arguments and compute bootdev.
@@ -706,8 +710,6 @@ boot(howto)
 
 	/* If system is cold, just halt. */
 	if (cold) {
-		while (1);
-
 		howto |= RB_HALT;
 		goto haltsys;
 	}
