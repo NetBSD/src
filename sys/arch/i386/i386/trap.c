@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.12 1993/11/08 20:21:14 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.13 1993/11/13 06:22:41 mycroft Exp $
  */
 
 /*
@@ -111,6 +111,27 @@ userret(p, pc, oticks)
 	curpri = p->p_pri;
 }
 
+char *trapstr[] = {
+	"privileged instruction fault",		/*  0 T_PRIVINFLT */
+	"breakpoint trap",			/*  1 T_BPTFLT */
+	"arithmetic trap",			/*  2 T_ARITHTRAP */
+	"asynchronous system trap",		/*  3 T_ASTFLT */
+	"protection fault",			/*  4 T_PROTFLT */
+	"trace trap",				/*  5 T_TRCTRAP */
+	"page fault",				/*  6 T_PAGEFLT */
+	"alignment fault",			/*  7 T_ALIGNFLT */
+	"integer divide fault",			/*  8 T_DIVIDE */
+	"non-maskable interrupt",		/*  9 T_NMI */
+	"overflow trap",			/* 10 T_OFLOW */
+	"bounds check fault",			/* 11 T_BOUND */
+	"FPU not available fault",		/* 12 T_DNA */
+	"double fault",				/* 13 T_DOUBLEFLT */
+	"FPU operand fetch fault",		/* 14 T_FPOPFLT */
+	"invalid TSS fault",			/* 15 T_TSSFLT */
+	"segment not present fault",		/* 16 T_SEGNPFLT */
+	"stack fault",				/* 17 T_STKFLT */
+};
+
 /*
  * trap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
@@ -119,7 +140,6 @@ userret(p, pc, oticks)
  * frame after the exception has been processed. Note that the
  * effect is as if the arguments were passed call by reference.
  */
-
 /*ARGSUSED*/
 void
 trap(frame)
@@ -186,6 +206,12 @@ trap(frame)
 			return;
 #endif
 
+		if (frame.tf_trapno < (sizeof(trapstr) / sizeof(trapstr[0])) &&
+		    trapstr[frame.tf_trapno])
+			printf("fatal %s", trapstr[frame.tf_trapno]);
+		else
+			printf("unknown trap %s", frame.tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		       type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
 		panic("trap");
@@ -195,13 +221,11 @@ trap(frame)
 	    case T_STKFLT|T_USER:
 	    case T_PROTFLT|T_USER:		/* protection fault */
 	    case T_ALIGNFLT|T_USER:
-		ucode = code + BUS_SEGM_FAULT ;
+		ucode = type &~ T_USER;
 		i = SIGBUS;
 		break;
 
-	    case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
-	    case T_RESADFLT|T_USER:		/* reserved addressing fault */
-	    case T_RESOPFLT|T_USER:		/* reserved operand fault */
+	    case T_PRIVINFLT|T_USER:		/* privileged instruction fault */
 	    case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		ucode = type &~ T_USER;
 		i = SIGILL;
@@ -235,21 +259,13 @@ trap(frame)
 		       p->p_pid);
 		i = SIGKILL;
 #endif
-		ucode = FPE_FPU_NP_TRAP;
+		ucode = type &~ T_USER;
 		break;
 
 	    case T_BOUND|T_USER:
-		ucode = FPE_SUBRNG_TRAP;
-		i = SIGFPE;
-		break;
-
 	    case T_OFLOW|T_USER:
-		ucode = FPE_INTOVF_TRAP;
-		i = SIGFPE;
-		break;
-
 	    case T_DIVIDE|T_USER:
-		ucode = FPE_INTDIV_TRAP;
+		ucode = type &~ T_USER;
 		i = SIGFPE;
 		break;
 
