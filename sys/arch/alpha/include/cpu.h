@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.23 1998/07/08 17:20:42 mjacob Exp $ */
+/* $NetBSD: cpu.h,v 1.24 1998/07/13 19:10:14 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,7 +145,7 @@ struct mchkinfo {
 extern int cold;
 extern struct proc *fpcurproc;
 extern struct rpb *hwrpb;
-extern struct mchkinfo *mchkinfo;
+struct mchkinfo *cpu_mchkinfo __P((void));
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
 void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
