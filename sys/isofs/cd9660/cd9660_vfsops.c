@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.36.2.1 1999/10/18 05:05:04 cgd Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.36.2.2 2000/01/15 16:48:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -399,8 +399,11 @@ iso_mountfs(devvp, mp, p, argp)
 out:
 	if (bp)
 		brelse(bp);
-	if (needclose)
+	if (needclose) {
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+		VOP_UNLOCK(devvp, 0);
+	}
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT);
 		mp->mnt_data = (qaddr_t)0;
