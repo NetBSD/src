@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.40 1997/05/08 16:43:16 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.41 1997/10/10 01:59:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -77,7 +77,7 @@ struct isoreaddir {
 	struct uio *uio;
 	off_t uio_off;
 	int eofflag;
-	u_long *cookies;
+	off_t *cookies;
 	int ncookies;
 };
 
@@ -422,7 +422,7 @@ cd9660_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	register struct uio *uio = ap->a_uio;

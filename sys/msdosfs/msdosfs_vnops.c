@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.60 1997/07/30 03:47:12 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.61 1997/10/10 01:58:23 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1397,7 +1397,7 @@ msdosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	int error = 0;
@@ -1417,7 +1417,7 @@ msdosfs_readdir(v)
 	struct direntry *dentp;
 	struct dirent dirbuf;
 	struct uio *uio = ap->a_uio;
-	u_long *cookies;
+	off_t *cookies;
 	int ncookies;
 	off_t offset;
 	int chksum = -1;
