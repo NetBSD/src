@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.1.1.1 2000/04/22 14:53:16 simonb Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.2 2003/05/17 01:14:33 itojun Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -899,7 +899,8 @@ crypto_read(
 		msyslog(LOG_ERR, "invalid key file %s", filename);
 		return (0);
 	}
-	if (sscanf(buf, "%d %s", &modulus, encoded_key) != 2) {
+	/* XXX sizeof(encoded_key) == 1024 */
+	if (sscanf(buf, "%d %1023s", &modulus, encoded_key) != 2) {
 		msyslog(LOG_ERR, "invalid key format %s", filename);
 		return (0);
 	}
@@ -1006,7 +1007,8 @@ crypto_line(
 			continue;
 		break;
 	}
-	if (sscanf(buf, "%d %s", &temp, encoded_key) != 2)
+	/* XXX sizeof(encoded_key) == 1024 */
+	if (sscanf(buf, "%d %1023s", &temp, encoded_key) != 2)
 		return;
 	if (temp > MAX_DH_LEN)
 		return;
