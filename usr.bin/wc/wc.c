@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wc.c,v 1.7 1993/10/12 23:32:20 jtc Exp $";
+static char rcsid[] = "$Id: wc.c,v 1.8 1993/11/04 05:43:30 jtc Exp $";
 #endif /* not lint */
 
 /* wc line, word and char count */
@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: wc.c,v 1.7 1993/10/12 23:32:20 jtc Exp $";
 #include <unistd.h>
 #include <err.h>
 
+static void	print_counts();
 static void	cnt();
 static long	tlinect, twordct, tcharct;
 static int	doline, doword, dochar;
@@ -110,13 +111,7 @@ main(argc, argv)
 		} while(*++argv);
 
 		if (dototal) {
-			if (doline)
-				printf(" %7ld", tlinect);
-			if (doword)
-				printf(" %7ld", twordct);
-			if (dochar)
-				printf(" %7ld", tcharct);
-			puts(" total");
+			print_counts (tlinect, twordct, tcharct, "total"); 
 		}
 	}
 
@@ -191,12 +186,8 @@ cnt(file)
 	else
 	{
 		/* do it the hard way... */
-		for (gotsp = 1; (len = read(fd, buf, MAXBSIZE));) {
-			if (len == -1) {
-				warn ("%s", file);
-				rval = 1;
-				break;
-			}
+		gotsp = 1;
+		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 			charct += len;
 			for (C = buf; len--; ++C) {
 				if (isspace (*C)) {
@@ -220,21 +211,41 @@ cnt(file)
 				}
 			}
 		}
+		if (len == -1) {
+			warn ("%s", file);
+			rval = 1;
+		}
 	}
 
-	if (doline) {
-		tlinect += linect;
-		printf(" %7ld", linect);
-	}
-	if (doword) {
-		twordct += wordct;
-		printf(" %7ld", wordct);
-	}
-	if (dochar) {
-		tcharct += charct;
-		printf(" %7ld", charct);
-	}
+	print_counts (linect, wordct, charct, file ? file : "");
 
-	printf (" %s\n", file ? file : "");
-	close(fd);
+	/* don't bother checkint doline, doword, or dochar --- speeds
+           up the common case */
+	tlinect += linect;
+	twordct += wordct;
+	tcharct += charct;
+
+	if (close(fd)) {
+		warn ("%s", file);
+		rval = 1;
+	}
+}
+
+
+void
+print_counts (lines, words, chars, name)
+	long lines;
+	long words;
+	long chars;
+	char *name;
+{
+
+	if (doline)
+		printf(" %7ld", lines);
+	if (doword)
+		printf(" %7ld", words);
+	if (dochar)
+		printf(" %7ld", chars);
+
+	printf (" %s\n", name);
 }
