@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.42 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.43 1999/05/28 19:40:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -310,11 +310,11 @@ malloc(size, type, flags)
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
 
-		vm_map_lock_read(kmem_map);
+		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
 				       addr + sizeof(struct freelist),
 				       VM_PROT_WRITE);
-		vm_map_unlock_read(kmem_map);
+		vm_map_unlock(kmem_map);
 
 		if (!rv)
 								{
