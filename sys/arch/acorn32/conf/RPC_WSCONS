@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.28 2004/03/13 19:27:40 bjh21 Exp $
+#	$NetBSD: RPC_WSCONS,v 1.28.2.1 2004/07/15 20:18:05 he Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.28 $"
+#ident		"GENERIC-$Revision: 1.28.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -129,6 +129,7 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
