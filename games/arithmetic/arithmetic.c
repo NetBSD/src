@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.8 1997/10/10 11:49:44 lukem Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.9 1997/10/15 08:53:24 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.8 1997/10/10 11:49:44 lukem Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.9 1997/10/15 08:53:24 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ problem()
 	int left, op, right, result;
 	char line[80];
 
-	left = result = 0;
+	right = left = result = 0;
 	op = keys[random() % nkeys];
 	if (op != '/')
 		right = getrandom(rangemax + 1, op, 1);
