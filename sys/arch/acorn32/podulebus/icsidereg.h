@@ -1,4 +1,4 @@
-/*	$NetBSD: icsidereg.h,v 1.1 2001/10/05 22:27:56 reinoud Exp $	*/
+/*	$NetBSD: icsidereg.h,v 1.2 2002/09/14 18:12:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -54,6 +54,10 @@
 #define V5_IRQSTAT_BASE			0x0000	/* byte offset from base */
 
 /* ARCIN V6 registers */
+#define V6_ADDRLATCH			0x0000
+#define V6_ADDRLATCH_DMACHAN		0x01 /* XXX doc is unclear, poss 0x02*/
+#define V6_ADDRLATCH_EASI		0x20 /* EASI space enable */
+
 #define V6_P_IDE_BASE			0x2000	/* byte offset from base */
 #define V6_P_AUX_BASE			0x2380	/* byte offset from base */
 #define V6_P_IRQ_BASE			0x2200	/* byte offset from base */
