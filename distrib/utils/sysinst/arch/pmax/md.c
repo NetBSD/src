@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.6 1997/11/02 02:21:04 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.7 1997/11/02 08:16:39 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,7 +112,7 @@ void	md_post_newfs (void)
 {
 	/* XXX boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_noerr ("/sbin/disklabel -B %s /dev/r%sc",
+	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 }
 
