@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.27 1998/08/03 01:49:25 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.28 1998/08/03 19:10:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.27 1998/08/03 01:49:25 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.28 1998/08/03 19:10:29 fvdl Exp $");
 #endif /* not lint */
 
 /*
@@ -213,6 +213,7 @@ url_get(url, proxyenv, outfile)
 	size_t len;
 	char *cp, *ep;
 	const char *savefile;
+	char *psavefile;
 	char *buf;
 	volatile sig_t oldintr, oldintp;
 	off_t hashbytes;
@@ -228,6 +229,7 @@ url_get(url, proxyenv, outfile)
 
 	closefunc = NULL;
 	fin = fout = NULL;
+	psavefile = NULL;
 	s = -1;
 	buf = NULL;
 	isredirected = isproxy = 0;
@@ -240,6 +242,8 @@ url_get(url, proxyenv, outfile)
 	(void)&buf;
 	(void)&savefile;
 	(void)&retval;
+	(void)&psavefile;
+	(void)&isproxy;
 #endif
 
 	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port, &path)
@@ -368,6 +372,8 @@ url_get(url, proxyenv, outfile)
 					port = httpport;
 				else
 					port = pport;
+				psavefile = strdup(savefile);
+				savefile = psavefile;
 				FREEPTR(path);
 				FREEPTR(ppath);
 				path = xstrdup(url);
@@ -654,6 +660,7 @@ cleanup_url_get:
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
+	FREEPTR(psavefile);
 	FREEPTR(user);
 	FREEPTR(pass);
 	FREEPTR(host);
