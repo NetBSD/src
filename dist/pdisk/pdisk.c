@@ -518,7 +518,7 @@ edit(char *name, int ask_logical_size)
 
     printf("Edit %s -\n", name);
     
-#if 0 /* this check has been removed in linux prior to linux fdisk-0.1 */
+#if 0 /* this check is not found in linux fdisk-0.1 */
     if (map != NULL && map->blocks_in_map > MAX_LINUX_MAP) {
 	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
     }
@@ -654,7 +654,7 @@ do_create_partition(partition_map_header *map, int get_type)
     }
     if (get_type == 0) {
 	add_partition_to_map(name, kUnixType, base, length, map);
-#if 0 /* this check has been removed in linux prior to linux fdisk-0.1 */
+#if 0 /* this check is not found in linux fdisk-0.1 */
 	if (map->blocks_in_map > MAX_LINUX_MAP) {
 	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
 	}
@@ -673,7 +673,7 @@ do_create_partition(partition_map_header *map, int get_type)
 	    goto xit2;
 	}
 	add_partition_to_map(name, type_name, base, length, map);
-#if 0 /* this check has been removed in linux prior to linux fdisk-0.1 */
+#if 0 /* this check is not found in linux fdisk-0.1 */
 	if (map->blocks_in_map > MAX_LINUX_MAP) {
 	    error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
 	}
@@ -849,7 +849,7 @@ do_write_partition_map(partition_map_header *map)
 	bad_input("The map is not writeable.");
 	return;
     }
-#if 0 /* this check has been removed in linux prior to linux fdisk-0.1 */
+#if 0 /* this check is not found in linux fdisk-0.1 */
     if (map->blocks_in_map > MAX_LINUX_MAP) {
 	error(-1, "Map contains more than %d blocks - Linux may have trouble", MAX_LINUX_MAP);
     }
