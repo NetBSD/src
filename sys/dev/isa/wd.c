@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.16 1993/05/28 09:10:57 deraadt Exp $
+ *	$Id: wd.c,v 1.17 1993/06/18 20:45:35 cgd Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1174,20 +1174,9 @@ wdgetctlr(int u, struct disk *du)
 		}
 
 		strncpy(du->dk_dd.d_typename, "ST506", sizeof du->dk_dd.d_typename);
-		for(i=0; i<sizeof(wp->wdp_model); i++)
-			wp->wdp_model[i] = ' ';
 		strncpy(du->dk_params.wdp_model, "Unknown Type",
 			sizeof du->dk_params.wdp_model);
 		du->dk_dd.d_type = DTYPE_ST506;
-	
-		/* XXX -- HOW DO WE FAKE THIS?? */
-		du->dk_dd.d_ncylinders = wp->wdp_fixedcyl + wp->wdp_removcyl /*+- 1*/;
-		du->dk_dd.d_ntracks = wp->wdp_heads;
-		du->dk_dd.d_nsectors = wp->wdp_sectors;
-		du->dk_dd.d_secpercyl = du->dk_dd.d_ntracks * du->dk_dd.d_nsectors;
-		du->dk_dd.d_partitions[1].p_size = du->dk_dd.d_secpercyl *
-			wp->wdp_sectors;
-		du->dk_dd.d_partitions[1].p_offset = 0;
 	}
 
 #if 0
