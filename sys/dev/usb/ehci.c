@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.20 2001/11/21 13:42:19 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.21 2001/11/21 13:43:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.20 2001/11/21 13:42:19 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.21 2001/11/21 13:43:38 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,7 @@ ehci_intr1(ehci_softc_t *sc)
 	if (eintrs & (EHCI_STS_INT | EHCI_STS_ERRINT)) {
 		DPRINTF(("ehci_intr1: INT/ERRINT\n"));
 		usb_schedsoftintr(&sc->sc_bus);
-		eintrs &= ~(EHCI_STS_INT | EHCI_STS_HSE);
+		eintrs &= ~(EHCI_STS_INT | EHCI_STS_ERRINT);
 	}
 	if (eintrs & EHCI_STS_HSE) {
 		printf("%s: unrecoverable error, controller halted\n",
