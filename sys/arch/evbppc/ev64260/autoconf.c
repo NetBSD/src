@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2003/03/05 22:08:26 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2003/04/09 15:44:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,9 +77,13 @@ cpu_configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+	printf("biomask %x.%x.%x.%x netmask %x.%x.%x.%x ttymask %x.%x.%x.%x\n",
+	    imask[IPL_BIO].bits[0], imask[IPL_BIO].bits[1],
+	    imask[IPL_BIO].bits[2], imask[IPL_BIO].bits[3],
+	    imask[IPL_NET].bits[0], imask[IPL_NET].bits[1],
+	    imask[IPL_NET].bits[2], imask[IPL_NET].bits[3],
+	    imask[IPL_TTY].bits[0], imask[IPL_TTY].bits[1],
+	    imask[IPL_TTY].bits[2], imask[IPL_TTY].bits[3]);
 
 	curcpu()->ci_cpl = IPL_NONE;
 	extintr_enable();
