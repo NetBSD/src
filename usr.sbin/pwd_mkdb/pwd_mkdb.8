@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: pwd_mkdb.8,v 1.5 1994/09/16 21:05:14 mycroft Exp $
+.\"	$Id: pwd_mkdb.8,v 1.6 1996/11/22 05:37:29 lukem Exp $
 .\"
 .Dd June 6, 1993
 .Dt PWD_MKDB 8
@@ -39,11 +39,12 @@
 .Nm pwd_mkdb
 .Nd "generate the password databases"
 .Sh SYNOPSIS
-.Nm pwd_mkdb
+.Nm
 .Op Fl p
+.Op Fl d Ar directory
 .Ar file
 .Sh DESCRIPTION
-.Nm Pwd_mkdb
+.Nm
 creates
 .Xr db 3
 style secure and insecure databases for the specified file.
@@ -64,6 +65,11 @@ The options are as follows:
 .It Fl p
 Create a Version 7 style password file and install it into
 .Dq Pa /etc/passwd .
+.It Fl d Ar directory
+Change the root directory of the generated files from
+.Dq Pa /
+to
+.Ar directory .
 .El
 .Pp
 The two databases differ in that the secure version contains the user's 
@@ -72,7 +78,7 @@ encrypted password and the insecure version has an asterisk (``*'')
 The databases are used by the C library password routines (see
 .Xr getpwent 3 ) .
 .Pp
-.Nm Pwd_mkdb
+.Nm
 exits zero on success, non-zero on failure.
 .Sh FILES
 .Bl -tag -width Pa -compact
@@ -91,7 +97,7 @@ A temporary file.
 .El
 .Sh BUGS
 Because of the necessity for atomic update of the password files,
-.Nm pwd_mkdb
+.Nm
 uses
 .Xr rename 2
 to install them.
@@ -101,7 +107,7 @@ on the same file system as the
 directory.
 .Pp
 There are the obvious races with multiple people running
-.Nm pwd_mkdb
+.Nm
 on different password files at the same time.
 The front-ends to 
 .Nm pwd_mkdb ,
