@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.11 2000/03/24 08:24:29 nisimura Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.12 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.11 2000/03/24 08:24:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.12 2000/06/03 20:47:41 thorpej Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.11 2000/03/24 08:24:29 nisimura Exp 
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -197,12 +198,10 @@ struct cfattach zsc_ioasic_ca = {
 
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));
-void	zs_ioasic_softintr __P((void));
+void	zs_ioasic_softintr __P((void *));
 
 /* Misc. */
 void	zs_ioasic_enable __P((int));
-
-volatile int zs_ioasic_soft_scheduled;
 
 extern struct cfdriver ioasic_cd;
 extern struct cfdriver zsc_cd;
@@ -357,7 +356,11 @@ zs_ioasic_attach(parent, self, aux)
 	 * Set up the ioasic interrupt handler.
 	 */
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
-	    zs_ioasic_hardintr, (void *) zs);
+	    zs_ioasic_hardintr, zs);
+	zs->zsc_sih = softintr_establish(IPL_SOFTSERIAL,
+	    zs_ioasic_softintr, zs);
+	if (zs->zsc_sih == NULL)
+		panic("zs_ioasic_attach: unable to register softintr");
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.  The
@@ -429,23 +432,20 @@ int
 zs_ioasic_hardintr(arg)
 	void *arg;
 {
-	struct zsc_softc *zs = arg;
-	int softreq;
+	struct zsc_softc *zsc = arg;
 
 	/*
 	 * Call the upper-level MI hardware interrupt handler.
 	 */
-	zsc_intr_hard(zs);
+	zsc_intr_hard(zsc);
 
 	/*
 	 * Check to see if we need to schedule any software-level
 	 * processing interrupts.
 	 */
-	softreq = zs->zsc_cs[0]->cs_softreq | zs->zsc_cs[1]->cs_softreq;
-	if (softreq && (zs_ioasic_soft_scheduled == 0)) {
-		zs_ioasic_soft_scheduled = 1;
-		setsoftserial();
-	}
+	if (zsc->zsc_cs[0]->cs_softreq | zsc->zsc_cs[1]->cs_softreq)
+		softintr_schedule(zsc->zsc_sih);
+
 	return (1);
 }
 
@@ -453,26 +453,14 @@ zs_ioasic_hardintr(arg)
  * Software-level interrupt (character processing, lower priority).
  */
 void
-zs_ioasic_softintr()
+zs_ioasic_softintr(arg)
+	void *arg;
 {
-	struct zsc_softc *zsc;
-	int i, s;
+	struct zsc_softc *zsc = arg;
+	int s;
 
 	s = spltty();
-
-	if (zs_ioasic_soft_scheduled == 0) {
-		splx(s);
-		return;
-	}
-
-	zs_ioasic_soft_scheduled = 0;
-
-	for (i = 0; i < zsc_cd.cd_ndevs; i++) {
-		zsc = zsc_cd.cd_devs[i];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
+	(void) zsc_intr_soft(zsc);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.10 2000/06/01 03:41:24 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.11 2000/06/03 20:47:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,8 @@
  * are one of tcasic, lca, apecs, cia, or tlsb.
  */
 
+struct clockframe;
+
 struct platform {
 	/*
 	 * Platform Information.
@@ -66,7 +68,7 @@ struct platform {
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
 	void	(*iointr) __P((void *, unsigned long));
-	void	(*clockintr) __P((void *));
+	void	(*clockintr) __P((struct clockframe *));
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
 	void	(*powerdown) __P((void));

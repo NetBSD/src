@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.75 2000/05/31 05:14:28 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.76 2000/06/03 20:47:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.75 2000/05/31 05:14:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.76 2000/06/03 20:47:37 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -418,7 +418,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 5:	ldiq	a0, ALPHA_PSL_IPL_SOFT
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
-	CALL(do_sir)
+	CALL(softintr_dispatch)
 
 	/* SIR handled; restore IPL and check again */
 	mov	s2, a0
