@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2000/01/07 00:13:24 msaitoh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2000/01/07 12:01:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -183,7 +183,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-#ifdef	TODO
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -216,7 +215,6 @@ cpu_coredump(p, vp, cred, chdr)
 		return error;
 
 	chdr->c_nseg++;
-#endif
 	return 0;
 }
 
