@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.28 2003/04/28 01:54:50 briggs Exp $	*/
+/*	$NetBSD: fault.c,v 1.29 2003/04/28 15:57:23 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.28 2003/04/28 01:54:50 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.29 2003/04/28 15:57:23 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ we_re_toast:
 	    pmap_handled_emulation(map->pmap, va))
 		goto out;
 #else
-	if (pmap_fault_fixup(map->pmap, va, ftype))
+	if (pmap_fault_fixup(map->pmap, va, ftype, user))
 		goto out;
 #endif
 
@@ -711,7 +711,7 @@ prefetch_abort_handler(frame)
 	/*
 	 * See if the pmap can handle this fault on its own...
 	 */
-	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ))
+	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1))
 		goto out;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.5 2003/04/22 13:49:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.6 2003/04/28 15:57:23 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.5 2003/04/22 13:49:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.6 2003/04/28 15:57:23 scw Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -2815,7 +2815,7 @@ pmap_clear_reference(struct vm_page *pg)
 /* See <arm/arm32/pmap.h> */
 
 int
-pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
+pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 {
 	struct l2_dtable *l2;
 	struct l2_bucket *l2b;
@@ -2849,11 +2849,17 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 		goto out;
 
 	/*
-	 * Finally, check the PTE itself.
+	 * Check the PTE itself.
 	 */
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	pte = *ptep;
 	if (pte == 0)
+		goto out;
+
+	/*
+	 * Catch a userland access to the vector page mapped at 0x0
+	 */
+	if (user && (pte & L2_S_PROT_U) == 0)
 		goto out;
 
 	pa = l2pte_pa(pte);
