@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.18 1995/03/26 20:39:13 jtc Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.19 1997/01/03 18:03:36 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -121,7 +121,16 @@ struct vm_page {
 #define	PG_INACTIVE	0x0001		/* page is in inactive list (P) */
 #define	PG_ACTIVE	0x0002		/* page is in active list (P) */
 #define	PG_LAUNDRY	0x0004		/* page is being cleaned now (P)*/
-#define	PG_CLEAN	0x0008		/* page has not been modified */
+#define	PG_CLEAN	0x0008		/* page has not been modified
+					   There exists a case where this bit
+					   will be cleared, although the page
+					   is not physically dirty, which is
+					   when a collapse operation moves
+					   pages between two different pagers.
+					   The bit is then used as a marker
+					   for the pageout daemon to know it
+					   should be paged out into the target
+					   pager. */
 #define	PG_BUSY		0x0010		/* page is in transit (O) */
 #define	PG_WANTED	0x0020		/* someone is waiting for page (O) */
 #define	PG_TABLED	0x0040		/* page is in VP table (O) */

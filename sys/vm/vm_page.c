@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.29 1997/01/03 18:00:25 mrg Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.30 1997/01/03 18:03:33 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,6 +70,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
