@@ -1,0 +1,5 @@
+#	$NetBSD: example.1,v 1.1.1.1.2.2 1999/12/20 21:01:55 he Exp $
+#
+# block all incoming TCP packets on le0 from host 10.1.1.1 to any destination.
+#
+block in on le0 proto tcp from 10.1.1.1/32 to any
