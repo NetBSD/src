@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 1999/07/10 22:04:59 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -299,6 +299,10 @@ setregs(p, pack, stack)
 	exptr = p->p_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
 	exptr->sp = stack;
+	exptr->r6 = stack;			/* for ELF */
+	exptr->r7 = 0;				/* for ELF */
+	exptr->r8 = 0;				/* for ELF */
+	exptr->r9 = (u_long) PS_STRINGS;	/* for ELF */
 }
 
 void
