@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1999/08/07 10:36:47 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 1999/08/08 16:33:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -156,5 +156,9 @@ device_register(dev, aux)
 {
 	if ((B_TYPE(bootdev) == BDEV_QE) &&
 	    !strcmp("qe", dev->dv_cfdata->cf_driver->cd_name))
+		booted_from = dev;
+
+	if ((B_TYPE(bootdev) == BDEV_ZE) &&
+	    !strcmp("ze", dev->dv_cfdata->cf_driver->cd_name))
 		booted_from = dev;
 }
