@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.3 1997/09/06 14:03:58 drochner Exp $ */
+/* $NetBSD: prom.c,v 1.4 1998/09/22 00:41:13 ross Exp $ */
 
 /*  
  * Mach Operating System
@@ -35,6 +35,8 @@
 
 int console;
 
+static int test_getchar(prom_return_t *, int *);
+
 void
 init_prom_calls()
 {
@@ -54,15 +56,28 @@ init_prom_calls()
 	console = buf[0] - '0';
 }
 
+static int
+test_getchar(xret, xc)
+	prom_return_t *xret;
+	int *xc;
+{
+	xret->bits = prom_dispatch(PROM_R_GETC, console);
+	*xc = xret->u.retval;
+	return xret->u.status == 0 || xret->u.status == 1;
+}
+
 int
 getchar()
 {
+	int c;
 	prom_return_t ret;
 
 	for (;;) {
-		ret.bits = prom_dispatch(PROM_R_GETC, console);
-		if (ret.u.status == 0 || ret.u.status == 1)
-			return (ret.u.retval);
+		if (test_getchar(&ret, &c)) {
+			if (c == 3)
+				halt();
+			return c;
+		}
 	}
 }
 
@@ -72,6 +87,7 @@ putchar(c)
 {
 	prom_return_t ret;
 	char cbuf;
+	int typed_c;
 
 	if (c == '\r' || c == '\n') {
 		cbuf = '\r';
@@ -85,6 +101,13 @@ putchar(c)
 	do {
 		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
 	} while ((ret.u.retval & 1) == 0);
+	ret.bits = prom_dispatch(PROM_R_GETC, console);
+	if (ret.u.status == 0 || ret.u.status == 1)
+		if (ret.u.retval == 3)
+			halt();
+	if (test_getchar(&ret, &typed_c))
+		if (typed_c == 3)
+			halt();
 }
 
 int
