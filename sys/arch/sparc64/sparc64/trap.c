@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2004/01/18 19:41:07 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.115 2004/03/12 13:27:03 drochner Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2004/01/18 19:41:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2004/03/12 13:27:03 drochner Exp $");
 
 #define NEW_FPSTATE
 
@@ -1562,8 +1562,7 @@ text_access_fault(tf, type, pc, sfsr)
 			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+		}
 	}
 	if (rv != 0) {
 
