@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 1995/10/10 04:45:24 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177 1995/10/10 04:54:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -564,10 +564,10 @@ sendsig(catcher, sig, mask, code)
 #ifdef VM86
 	tf->tf_eflags &= ~PSL_VM;
 #endif
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
-	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 /*
