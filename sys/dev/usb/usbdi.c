@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.42 1999/09/15 14:17:15 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.43 1999/09/15 21:08:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -743,8 +743,16 @@ usb_transfer_complete(reqh)
 		pipe->running = 0;
 
 	if (!(reqh->flags & USBD_NO_COPY) && reqh->actlen != 0 &&
-	    usbd_reqh_isread(reqh))
+	    usbd_reqh_isread(reqh)) {
+#ifdef DIAGNOSTIC
+		if (reqh->actlen > reqh->length) {
+			printf("usb_transfer_complete: actlen > len %d > %d\n",
+			       reqh->actlen, reqh->length);
+			reqh->actlen = reqh->length;
+		}
+#endif
 		memcpy(reqh->buffer, KERNADDR(dmap), reqh->actlen);
+	}
 
 	/* if we allocated the buffer in usbd_transfer() we free it here. */
 	if (reqh->rqflags & URQ_AUTO_DMABUF) {
