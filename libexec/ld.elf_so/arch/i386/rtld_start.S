@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 1999/02/12 17:15:52 christos Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 1999/02/19 10:22:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,20 +41,15 @@
 	.text
 	.align	4
 	.globl	.rtld_start
-	.type	.rtld_start@function
+	.type	.rtld_start,@function
 .rtld_start:
 	subl	$8,%esp			# make room of obj_main and exit proc
 	movl	%esp,%eax		# save stack pointer for _rtld
 	pushl	%ebx			# save ps_strings
-	movl	%esp,%ebx		# cleanup
-	movl	%esp,%ecx		# obj_main
-	addl	$4,%ecx
 
-	pushl	%ecx
-	pushl	%ebx
 	pushl	%eax
-	call	_rtld@PLT		# _rtld(sp, exitproc, obj_main)
-	addl	$12,%esp		# pop args
+	call	_rtld@PLT		# _rtld(sp)
+	addl	$4,%esp			# pop args
 
 	popl	%ebx			# %ebx = ps_strings
 	popl	%edx			# %edx = cleanup
