@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2002/03/22 18:10:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 2002/08/02 02:47:58 christos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
 MLINKS= pcnfsd.8 rpc.pcnfsd.8
-CPPFLAGS += -DUSER_CACHE -DWTMP -I.
+CPPFLAGS += -DUSER_CACHE -DWTMP -I. -DSUPPORT_UTMP -DSUPPORT_UTMPX
 
 .if (${USE_YP} != "no")
 CPPFLAGS+=-DUSE_YP
@@ -14,8 +14,8 @@ CPPFLAGS+=-DUSE_YP
 SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 	pcnfsd_cache.c pcnfsd_print.c pcnfsd_svc.c pcnfsd_xdr.c
 
-DPADD=	${LIBRPCSVC} ${LIBCRYPT}
-LDADD=	-lrpcsvc -lcrypt
+DPADD=	${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
+LDADD=	-lrpcsvc -lcrypt -lutil
 
 .ifnmake getrpcgen
 XRPCGEN != cd ${.CURDIR} && ${MAKE} -B getrpcgen
