@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.32 2003/04/27 13:15:39 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.33 2003/07/27 14:18:07 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,6 +73,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	random	Random number generator
 #	speaker	PC speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
@@ -113,7 +114,7 @@ init|all)
 	makedev tty0 tty1 pty0
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
-	makedev lpt0 lpt1 lpt2 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	makedev lpt0 lpt1 lpt2 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl pf
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev speaker lkm audio joy0 joy1 local satlink0
@@ -374,6 +375,12 @@ ipl)
 	mknod ipstate c 44 2
 	mknod ipauth c 44 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 56 0
+	chmod 600 pf
 	;;
 
 speaker)					# (XXX - installed)

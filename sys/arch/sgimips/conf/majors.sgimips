@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.5 2003/04/25 21:11:01 ragge Exp $
+#	$NetBSD: majors.sgimips,v 1.6 2003/07/27 14:18:26 itojun Exp $
 #
 # Device majors for sgimips
 #
@@ -66,3 +66,4 @@ device-major	midi		char 74			midi
 device-major	sequencer	char 75			sequencer
 device-major	uscanner	char 76			uscanner
 device-major	ksyms		char 77			ksyms
+device-major	pf		char 78			pf

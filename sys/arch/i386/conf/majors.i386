@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.14 2003/06/02 04:03:04 gmcgarry Exp $
+#	$NetBSD: majors.i386,v 1.15 2003/07/27 14:18:21 itojun Exp $
 #
 # Device majors for i386
 #
@@ -107,3 +107,4 @@ device-major	ppi		char 104		ppi
 device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
+device-major	pf		char 108		pf

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.8 2003/04/25 21:11:02 ragge Exp $
+#	$NetBSD: majors.sparc,v 1.9 2003/07/27 14:18:27 itojun Exp $
 #
 # Device majors for sparc
 #
@@ -104,3 +104,4 @@ device-major	nsmb		char 134		nsmb
 device-major	sysmon		char 135		sysmon_envsys | sysmon_wdog | sysmon_power
 
 device-major	ksyms		char 136		ksyms
+device-major	pf		char 137		pf

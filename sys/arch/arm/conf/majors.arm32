@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.7 2003/04/25 21:10:49 ragge Exp $
+#	$NetBSD: majors.arm32,v 1.8 2003/07/27 14:18:17 itojun Exp $
 #
 # Device majors for arm32
 #
@@ -102,3 +102,4 @@ device-major	dmoverio	char 102		dmoverio
 device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
 device-major	ksyms		char 105		ksyms
+device-major	pf		char 106		pf

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.6 2003/04/25 21:11:02 ragge Exp $
+#	$NetBSD: majors.sh5,v 1.7 2003/07/27 14:18:26 itojun Exp $
 #
 # Device majors for sh5
 #
@@ -47,3 +47,4 @@ device-major	systrace	char 53			systrace
 device-major	pci		char 54			pci
 device-major	cgd		char 55  block 19	cgd
 device-major	ksyms		char 56			ksyms
+device-major	pf		char 57			pf

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.29 2003/04/27 13:15:31 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.30 2003/07/27 14:17:59 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,6 +91,7 @@
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
 #	pms*	PS/2 mouse
@@ -136,7 +137,7 @@ init|all)
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1 tun2 tun3
 	makedev tty00 tty01 tty02 tty03
-	makedev wskbd0 wsmouse0 lpt0 ipl wd0 wd1 wd2 wd3 fd0 fd1
+	makedev wskbd0 wsmouse0 lpt0 ipl pf wd0 wd1 wd2 wd3 fd0 fd1
 	makedev ttyC0 pms0 joy0
 	makedev random local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
@@ -448,6 +449,12 @@ ipl)
 	mknod ipstate c 31 2
 	mknod ipauth c 31 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 56 0
+	chmod 600 pf
 	;;
 
 random)
