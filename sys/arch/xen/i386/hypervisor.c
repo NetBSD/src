@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: hypervisor.c,v 1.2 2004/04/17 12:46:42 cl Exp $	*/
 
 /*
  *
@@ -76,11 +76,14 @@ stipending()
 	int num, ret;
 
 	ret = 0;
-	ci = &cpu_info_primary;
+	ci = curcpu();
 
-/* 	if (HYPERVISOR_shared_info->events) */
-/* 		printf("stipending events %08lx ilevel %d\n", */
-/* 		    HYPERVISOR_shared_info->events, ci->ci_ilevel); */
+#if 0
+	if (HYPERVISOR_shared_info->events)
+		printf("stipending events %08lx mask %08lx ilevel %d\n",
+		    HYPERVISOR_shared_info->events,
+		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel);
+#endif
 
 	do {
 		/*
@@ -90,28 +93,35 @@ stipending()
 		__cli();
 
 		events = xchg(&HYPERVISOR_shared_info->events, 0);
+		events &= event_mask;
 
 		while (events) {
 			__asm__ __volatile__ (
 				"   bsfl %1,%0		;"
 				"   btrl %0,%1		;"
 				: "=r" (num) : "r" (events));
-			if (num) {
-				ci->ci_ipending |= (1 << num);
-				if (ret == 0 &&
-				    ci->ci_ilevel <
-				    ci->ci_isources[num]->is_handlers->ih_level)
-					ret = 1;
-			}
+			ci->ci_ipending |= (1 << num);
+			if (ret == 0 &&
+			    ci->ci_ilevel <
+			    ci->ci_isources[num]->is_handlers->ih_level)
+				ret = 1;
 		}
 
 		__sti();
 	} while (HYPERVISOR_shared_info->events);
 
+#if 0
+	if (ci->ci_ipending & 0x1)
+		printf("stipending events %08lx mask %08lx ilevel %d ipending %08x\n",
+		    HYPERVISOR_shared_info->events,
+		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel,
+		    ci->ci_ipending);
+#endif
+
 	return (ret);
 }
 
-void do_hypervisor_callback(struct pt_regs *regs)
+void do_hypervisor_callback(struct trapframe *regs)
 {
 	unsigned long events, flags;
 	shared_info_t *shared = HYPERVISOR_shared_info;
@@ -119,7 +129,7 @@ void do_hypervisor_callback(struct pt_regs *regs)
 	int level;
 	extern int once;
 
-	ci = &cpu_info_primary;
+	ci = curcpu();
 	level = ci->ci_ilevel;
 	if (0 && once == 2)
 		printf("hypervisor\n");

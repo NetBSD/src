@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.2 2004/04/10 23:46:26 cl Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.3 2004/04/17 12:46:42 cl Exp $	*/
 
 /*
  * 
@@ -60,7 +60,7 @@ extern union start_info_union start_info_union;
 
 
 /* hypervisor.c */
-void do_hypervisor_callback(struct pt_regs *regs);
+void do_hypervisor_callback(struct trapframe *regs);
 void hypervisor_enable_event(unsigned int ev);
 void hypervisor_disable_event(unsigned int ev);
 void hypervisor_acknowledge_event(unsigned int ev);
