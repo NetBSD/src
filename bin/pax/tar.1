@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.10 2003/04/08 15:13:10 christos Exp $
+.\" $NetBSD: tar.1,v 1.11 2003/04/10 06:07:40 grant Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -240,12 +240,18 @@ Remove files before creating them.
 .It Fl -use-compress-program Ar program
 Use the named program as the program to decompress the input.
 .It Fl -force-local
-Do not interpret filenames that contain a `:' as remote files.
+Do not interpret filenames that contain a
+.Sq \&:
+as remote files.
 .It Fl -insecure
 Normally
 .Nm
-ignores filenames that contain `..' as a path component.
-With this option, files that contain `..' can be processed.
+ignores filenames that contain
+.Sq ..
+as a path component.
+With this option, files that contain
+.Sq ..
+can be processed.
 .El
 .Pp
 The options
