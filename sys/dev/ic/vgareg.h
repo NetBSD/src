@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.7 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: vgareg.h,v 1.8 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -35,6 +35,7 @@ struct reg_vgaattr { /* indexed via port 0x3c0 */
 #define VGA_ATC_INDEX	0x0
 #define VGA_ATC_DATAW	0x0
 #define VGA_ATC_DATAR	0x1
+#define VGA_ATC_OVERSCAN	0x11
 
 struct reg_vgats { /* indexed via port 0x3c4 */
 	u_int8_t syncreset, mode, wrplmask, fontsel, memmode;

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.17 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: vga_subr.c,v 1.18 2004/07/29 22:29:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,8 +26,11 @@
  *
  */
 
+/* for WSDISPLAY_BORDER_COLOR */
+#include "opt_wsdisplay_border.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.17 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.18 2004/07/29 22:29:37 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +347,7 @@ static const u_int8_t vga_atc[] = {
 	0x3e,	/* 0E: internal palette 14 */
 	0x3f,	/* 0F: internal palette 15 */
 	0x0c,	/* 10: attribute mode control */
-	0x00,	/* 11: overscan color */
+	WSDISPLAY_BORDER_COLOR,	/* 11: overscan color */
 	0x0f,	/* 12: color plane enable */
 	0x08,	/* 13: horizontal PEL panning */
 	0x00	/* 14: color select */
