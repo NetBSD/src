@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.39 2000/05/09 22:39:35 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.40 2000/05/10 11:17:50 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -596,6 +596,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_addr_t dva;
 	bus_size_t sgsize;
 	struct pglist *mlist;
+	int pagesz = PAGE_SIZE;
 	int error;
 
 	map->dm_nsegs = 0;
@@ -632,8 +633,8 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 			panic("iommu_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(m);
 		iommu_enter(dva, pa);
-		dva += PAGE_SIZE;
-		sgsize -= PAGE_SIZE;
+		dva += pagesz;
+		sgsize -= pagesz;
 	}
 
 	map->dm_nsegs = 1;
@@ -710,12 +711,13 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	struct pglist *mlist;
 	int cbit;
 	u_long align;
+	int pagesz = PAGE_SIZE;
 
 	if (nsegs != 1)
 		panic("iommu_dmamem_map: nsegs = %d", nsegs);
 
 	cbit = has_iocache ? 0 : PMAP_NC;
-	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
+	align = dvma_cachealign ? dvma_cachealign : pagesz;
 
 	size = round_page(size);
 
@@ -724,7 +726,8 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 * iommu_dmamap_load_raw(), find a region of kernel virtual
 	 * addresses that can accomodate our aligment requirements.
 	 */
-	va = _bus_dma_valloc_skewed(size, 0, align, segs[0].ds_addr & -align);
+	va = _bus_dma_valloc_skewed(size, 0, align,
+				    segs[0].ds_addr & (align - 1));
 	if (va == 0)
 		return (ENOMEM);
 
@@ -749,8 +752,8 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
 #endif
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+		va += pagesz;
+		size -= pagesz;
 	}
 
 	return (0);
