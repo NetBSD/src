@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.30 1997/05/07 00:23:46 lukem Exp $
+#	$NetBSD: GENERIC,v 1.31 1997/05/25 12:41:55 leo Exp $
 #
 # Generic atari
 #
@@ -100,6 +100,7 @@ options 	STATCLOCK		# Separate {stat,prof}clock
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
+options 	SERCONSOLE		# modem1 console support
 
 # Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -130,6 +131,7 @@ le0	at vme0	irq 5		# Lance ethernet (Riebl/PAM).
 
 fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
+ser0	at mainbus0		# Serial support through 68901 (modem1)
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
