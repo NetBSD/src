@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.58 1997/06/23 23:46:27 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.59 1997/07/12 22:07:36 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -161,6 +161,11 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${AMIGA}/amiga/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
+ 
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile

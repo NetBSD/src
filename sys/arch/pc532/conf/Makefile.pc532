@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.43 1997/04/01 16:30:48 matthias Exp $
+#	$NetBSD: Makefile.pc532,v 1.44 1997/07/12 22:08:01 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -150,6 +150,10 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${PC532}/pc532/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.33 1997/06/04 13:51:48 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.34 1997/07/12 22:07:54 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -161,6 +161,10 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ATARI}/atari/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${ATARI}/atari/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration
