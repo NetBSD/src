@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.12.2.4 2005/02/06 08:59:23 skrll Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.12.2.5 2005/02/15 21:33:29 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -157,10 +157,10 @@ RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
 					   RF_SectorCount_t , caddr_t,
 					   RF_StripeNum_t, RF_ReconUnitNum_t,
 					   int (*wakeF) (void *, int),
-					   void *, RF_DiskQueueData_t *, 
+					   void *,
 					   RF_AccTraceEntry_t *, RF_Raid_t *,
 					   RF_DiskQueueDataFlags_t, 
-					   void *);
+					   void *, int);
 void rf_FreeDiskQueueData(RF_DiskQueueData_t *);
 int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 			  RF_RowCol_t, const RF_DiskQueueSW_t *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.15.2.3 2004/09/21 13:27:56 skrll Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.15.2.4 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,8 +52,10 @@
 #define HME_SEB_CFG_BURST16	0x00000000	/* 16 byte bursts */
 #define HME_SEB_CFG_BURST32	0x00000001	/* 32 byte bursts */
 #define HME_SEB_CFG_BURST64	0x00000002	/* 64 byte bursts */
-#define HME_SEB_CFG_64BIT	0x00000004	/* ? */
-#define HME_SEB_CFG_PARITY	0x00000008	/* ? */
+#define HME_SEB_CFG_64BIT	0x00000004	/* 64-bit CEI/SBus DVMA (94) */
+#define HME_SEB_CFG_PARITY	0x00000008	/* DVMA & PIO parity check */
+#define HME_SEB_CFG_VERS	0xf0000000	/* ether channel version */
+#define HME_SEB_CFG_VERSSHIFT	28
 
 #define HME_SEB_STAT_GOTFRAME	0x00000001	/* frame received */
 #define HME_SEB_STAT_RCNTEXP	0x00000002	/* rx frame count expired */
@@ -168,14 +170,15 @@
 #define HME_ERXI_FIFO_SRPTR	(6*4)		/* FIFO shadow read pointer */
 #define HME_ERXI_STATEMACHINE	(7*4)		/* State machine */
 
-/* RXI_CFG bits */
+/* ERXI_CFG bits */
 #define HME_ERX_CFG_DMAENABLE	0x00000001	/* Enable RX DMA */
 #define HME_ERX_CFG_BYTEOFFSET	0x00000038	/* RX first byte offset */
 #define HME_ERX_CFG_RINGSIZE32	0x00000000	/* Descriptor ring size: 32 */
 #define HME_ERX_CFG_RINGSIZE64	0x00000200	/* Descriptor ring size: 64 */
 #define HME_ERX_CFG_RINGSIZE128	0x00000400	/* Descriptor ring size: 128 */
 #define HME_ERX_CFG_RINGSIZE256	0x00000600	/* Descriptor ring size: 256 */
-#define HME_ERX_CFG_CSUMSTART	0x007f0000	/* cksum offset */
+#define HME_ERX_CFG_CSUMSTART	0x007f0000	/* cksum offset (half words) */
+#define	HME_ERX_CFG_CSUMSHIFT	16
 
 /*
  * HME MAC-core register offsets
@@ -214,6 +217,9 @@
 #define HME_MAC_XIF_SQETWIN	0x000003e0	/* SQE time window */
 #define HME_MAC_XIF_LANCE	0x00000010	/* Lance mode enable */
 #define HME_MAC_XIF_LIPG0	0x000003e0	/* Lance mode IPG0 */
+#define HME_MAC_XIF_BITS	"\177\020"				\
+				"b\0OE\0b\1XLBACK\0b\2MLBACK\0"		\
+				"b\4MIIENA\0b\4SQEENA\0\0"
 
 /* Transmit config register. */
 #define HME_MAC_TXCFG_ENABLE	0x00000001	/* Enable the transmitter */
@@ -223,6 +229,10 @@
 #define HME_MAC_TXCFG_DBACKOFF	0x00000100	/* Disable backoff */
 #define HME_MAC_TXCFG_FULLDPLX	0x00000200	/* Enable full-duplex */
 #define HME_MAC_TXCFG_DGIVEUP	0x00000400	/* Don't give up on transmits */
+#define HME_MAC_TXCFG_BITS	"\177\020"				\
+				"b\0ENA\0b\6SMODE\0b\7IGNCOLL\0"	\
+				"b\x8_FCSOFF\0b\x9_DBACKOFF\0"		\
+				"b\xa_FULLDPLX\0b\xc_DGIVEUP\0\0"
 
 /* Receive config register. */
 #define HME_MAC_RXCFG_ENABLE	0x00000001 /* Enable the receiver */
@@ -234,6 +244,10 @@
 #define HME_MAC_RXCFG_PGRP	0x00000400 /* Enable promisc group mode */
 #define HME_MAC_RXCFG_HENABLE	0x00000800 /* Enable the hash filter */
 #define HME_MAC_RXCFG_AENABLE	0x00001000 /* Enable the address filter */
+#define HME_MAC_RXCFG_BITS	"\177\020"				\
+				"b\0ENA\0b\6PSTRIP\0b\7PMISC\0"		\
+				"b\x8ERRDIS\0b\x9CRCDIS\0b\xaME\0"	\
+				"b\xbPGRP\0b\xcHASHENA\0\xd_ADDRENA\0\0"
 
 /*
  * HME MIF register offsets
@@ -255,6 +269,9 @@
 #define HME_MIF_CFG_MDI0	0x00000100	/* MDI_0 (ro) */
 #define HME_MIF_CFG_MDI1	0x00000200	/* MDI_1 (ro) */
 #define HME_MIF_CFG_PPADDR	0x00007c00	/* Poll phy address */
+#define HME_MIF_CFG_BITS	"\177\020"				\
+				"b\0PHYEXT\0b\1POLLENA\0b\3BBMODE\0"	\
+				"b\x8MDI0\0b\x9MDI1\0\0"
 
 /* MIF Frame/Output register */
 #define HME_MIF_FO_ST		0xc0000000	/* Start of frame */
@@ -295,16 +312,21 @@ struct hme_xd {
 	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32((a)) : (a));	\
 } while(/* CONSTCOND */ 0)
 
-/* Descriptor flag values */
+/* Descriptor control word flag values */
 #define HME_XD_OWN	0x80000000	/* ownership: 1=hw, 0=sw */
 #define HME_XD_SOP	0x40000000	/* start of packet marker (tx) */
 #define HME_XD_OFL	0x40000000	/* buffer overflow (rx) */
 #define HME_XD_EOP	0x20000000	/* end of packet marker (tx) */
-#define HME_XD_TXCKSUM	0x10000000	/* checksum enable (tx) */
+#define	HME_XD_TXCKSUM	0x10000000	/* checksum enable (tx) */
+#define	HME_XD_TXCSSTUFF 0xff00000	/* checksum stuff offset (tx) */
+#define	HME_XD_TXCSSTUFFSHIFT  20
+#define	HME_XD_TXCSSTART 0x000fc000	/* checksum start offset (tx) */
+#define	HME_XD_TXCSSTARTSHIFT  14
+#define	HME_XD_TXLENMSK	0x00003fff	/* packet length mask (tx) */
+
 #define HME_XD_RXLENMSK	0x3fff0000	/* packet length mask (rx) */
 #define HME_XD_RXLENSHIFT	16
-#define HME_XD_TXLENMSK	0x00003fff	/* packet length mask (tx) */
-#define HME_XD_RXCKSUM	0x0000ffff	/* packet checksum (rx) */
+#define HME_XD_RXCKSUM	0x0000ffff	/* packet checksum (rx), complement */
 
 /* Macros to encode/decode the receive buffer size from the flags field */
 #define HME_XD_ENCODE_RSIZE(sz)		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_tables.h,v 1.1.14.3 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: aac_tables.h,v 1.1.14.4 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -86,6 +86,7 @@ static const struct aac_code_lookup aac_cpu_variant[] = {
 	{ "i960CX",			CPUI960_CX },
 	{ "i960HX",			CPUI960_HX },
 	{ "i960RX",			CPUI960_RX },
+	{ "i80303",			CPUI80303 },
 	{ "StrongARM SA110",		CPUARM_SA110 },
 	{ "PowerPC 603e",		CPUPPC_603e },
 	{ "Unknown StrongARM",		CPUARM_xxx },

@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.15.8.5 2005/02/04 11:44:13 skrll Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.15.8.6 2005/02/15 21:32:31 skrll Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -55,6 +55,7 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

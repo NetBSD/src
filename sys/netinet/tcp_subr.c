@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142.2.6 2005/02/04 11:47:49 skrll Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.142.2.7 2005/02/15 21:33:40 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.6 2005/02/04 11:47:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.7 2005/02/15 21:33:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -798,7 +798,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		th->th_sum = 0;
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 				tlen);
-		ip6->ip6_plen = ntohs(tlen);
+		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
 			ro = (struct route *)&tp->t_in6pcb->in6p_route;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.7 2002/05/16 19:30:41 wiz Exp $	*/
+/*	$NetBSD: procs.c,v 1.7.8.1 2005/02/15 21:33:40 skrll Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.7 2002/05/16 19:30:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.7.8.1 2005/02/15 21:33:40 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -125,11 +125,11 @@ acttable(f,actstring)
 					fputc('n', astringfile);
 				} else if (*actstring == '\\') {
 					fputc('\\', astringfile);
-					len ++;
+					len++;
 					fputc('\\', astringfile);
 				} else if (*actstring == '\"') {
 					fputc('\\', astringfile);
-					len ++;
+					len++;
 					fputc('\"', astringfile);
 				} else fputc(*actstring, astringfile);
 				actstring++;
@@ -204,7 +204,7 @@ predtable(os, oe, str, action, newstate)
 	struct Object *firste;
 
 	if (oe == (struct Object *)0 ) {
-		Ndefevent ++;
+		Ndefevent++;
 		fprintf(stderr, "DEFAULT EVENTS aren't implemented; trans ignored\n");
 		return (-1);
 	}

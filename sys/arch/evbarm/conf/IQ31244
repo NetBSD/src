@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.3.2.6 2005/02/04 11:44:17 skrll Exp $
+#	$NetBSD: IQ31244,v 1.3.2.7 2005/02/15 21:32:32 skrll Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -49,6 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 
@@ -108,7 +109,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is speed is 115200 baud.
-options 	CONSPEED=9600		# Console speed
+#options 	CONSPEED=9600		# Console speed
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -135,10 +136,11 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=360000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
+config		netbsd-wd0	root on wd0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -159,6 +161,16 @@ iic0		at iopiic?
 iic1		at iopiic?
 iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
+
+# IIC devices
+# XXX These don't seem to work yet
+
+# Temperature sensors
+#lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
+#lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
+
+# RTC
+#strtc0		at iic0 addr 0x68	# M41ST84 RTC
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.8.6.4 2004/11/29 07:24:32 skrll Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.8.6.5 2005/02/15 21:33:29 skrll Exp $	*/
 /*
  * rf_driver.h
  */
@@ -53,7 +53,8 @@ RF_RaidAccessDesc_t *rf_AllocRaidAccDesc(RF_Raid_t *, RF_IoType_t,
 					 const RF_AccessState_t *);
 void rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *);
 int rf_DoAccess(RF_Raid_t *, RF_IoType_t, int, RF_RaidAddr_t, 
-		RF_SectorCount_t, caddr_t, void *, RF_RaidAccessFlags_t);
+		RF_SectorCount_t, caddr_t, struct buf *,
+		RF_RaidAccessFlags_t);
 #if 0
 int rf_SetReconfiguredMode(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t);
 #endif

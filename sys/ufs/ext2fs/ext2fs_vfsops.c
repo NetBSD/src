@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.9 2005/01/17 19:33:10 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.10 2005/02/15 21:33:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.9 2005/01/17 19:33:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.10 2005/02/15 21:33:41 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1012,7 +1012,8 @@ ext2fs_vget(mp, ino, vpp)
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
-		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
+		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
+		(void)ext2fs_setsize(ip, 0);
 		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
 
@@ -1047,7 +1048,7 @@ ext2fs_vget(mp, ino, vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-	vp->v_size = ip->i_e2fs_size;
+	vp->v_size = ext2fs_size(ip);
 	*vpp = vp;
 	return (0);
 }

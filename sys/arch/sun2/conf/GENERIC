@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25.2.6 2005/02/04 11:45:07 skrll Exp $
+# $NetBSD: GENERIC,v 1.25.2.7 2005/02/15 21:33:01 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25.2.6 $"
+#ident 		"GENERIC-$Revision: 1.25.2.7 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -99,6 +99,7 @@ options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

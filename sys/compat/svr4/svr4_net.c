@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.33.2.5 2004/12/18 09:31:45 skrll Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.33.2.6 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33.2.5 2004/12/18 09:31:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33.2.6 2005/02/15 21:33:12 skrll Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -212,7 +212,7 @@ svr4_netopen(dev, flag, mode, l)
 		return error;
 	}
 
-	error = fdclone(l, fp, fd, &svr4_netops, so);
+	error = fdclone(l, fp, fd, flag, &svr4_netops, so);
 	fp->f_type = DTYPE_SOCKET;
 	(void)svr4_stream_get(fp);
 

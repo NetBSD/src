@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111.2.5 2005/02/04 11:44:48 skrll Exp $
+# $NetBSD: GENERIC,v 1.111.2.6 2005/02/15 21:32:51 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include		"arch/pmax/conf/files.pmax_rcons"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.111.2.5 $"
+#ident		"GENERIC-$Revision: 1.111.2.6 $"
 
 maxusers	64
 
@@ -103,6 +103,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 # VNODE_OP_NOINLINE will produce smaller and possibly slightly faster kernels
 #options 	VNODE_OP_NOINLINE	# don't inline vnode op calls

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.74.2.7 2005/01/24 08:36:05 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.74.2.8 2005/02/15 21:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.7 2005/01/24 08:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.8 2005/02/15 21:34:02 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -1080,7 +1080,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		align = 1L << align;
 		if (align < PAGE_SIZE)
 			return(EINVAL);
-		if (align >= map->max_offset)
+		if (align >= vm_map_max(map))
 			return(ENOMEM);
 		if (flags & MAP_FIXED) {
 			if ((*addr & (align-1)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.7 2004/10/27 06:48:23 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.8 2005/02/15 21:33:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.7 2004/10/27 06:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.8 2005/02/15 21:33:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ ntfs_read(ap)
 	if (uio->uio_offset > fp->f_size)
 		toread = 0;
 	else
-		toread = min( uio->uio_resid, fp->f_size - uio->uio_offset );
+		toread = MIN(uio->uio_resid, fp->f_size - uio->uio_offset );
 
 	dprintf((", toread: %d\n",(u_int32_t)toread));
 
@@ -342,7 +342,7 @@ ntfs_strategy(ap)
 		(u_int32_t)bp->b_lblkno));
 #endif
 
-	dprintf(("strategy: bcount: %d flags: 0x%lx\n", 
+	dprintf(("strategy: bcount: %u flags: 0x%x\n", 
 		(u_int32_t)bp->b_bcount,bp->b_flags));
 
 	if (bp->b_flags & B_READ) {
@@ -352,8 +352,8 @@ ntfs_strategy(ap)
 			clrbuf(bp);
 			error = 0;
 		} else {
-			toread = min(bp->b_bcount,
-				 fp->f_size-ntfs_cntob(bp->b_blkno));
+			toread = MIN(bp->b_bcount,
+				 fp->f_size - ntfs_cntob(bp->b_blkno));
 			dprintf(("ntfs_strategy: toread: %d, fsize: %d\n",
 				toread,(u_int32_t)fp->f_size));
 
@@ -378,8 +378,8 @@ ntfs_strategy(ap)
 			bp->b_error = error = EFBIG;
 			bp->b_flags |= B_ERROR;
 		} else {
-			towrite = min(bp->b_bcount,
-				fp->f_size-ntfs_cntob(bp->b_blkno));
+			towrite = MIN(bp->b_bcount,
+				fp->f_size - ntfs_cntob(bp->b_blkno));
 			dprintf(("ntfs_strategy: towrite: %d, fsize: %d\n",
 				towrite,(u_int32_t)fp->f_size));
 
@@ -424,7 +424,7 @@ ntfs_write(ap)
 		return (EFBIG);
 	}
 
-	towrite = min(uio->uio_resid, fp->f_size - uio->uio_offset);
+	towrite = MIN(uio->uio_resid, fp->f_size - uio->uio_offset);
 
 	dprintf((", towrite: %d\n",(u_int32_t)towrite));
 

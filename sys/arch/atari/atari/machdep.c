@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127.2.4 2004/09/21 13:13:56 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.2.5 2005/02/15 21:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.4 2004/09/21 13:13:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127.2.5 2005/02/15 21:32:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -228,7 +228,6 @@ consinit()
 void
 cpu_startup()
 {
-	extern	 void		etext __P((void));
 	extern	 int		iomem_malloc_safe;
 		 char		pbuf[9];
 
@@ -276,26 +275,6 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
-
-	/*
-	 * Tell the VM system that page 0 isn't mapped.
-	 *
-	 * XXX This is bogus; should just fix KERNBASE and
-	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
-	 */
-	if (uvm_map_protect(kernel_map, 0, PAGE_SIZE, UVM_PROT_NONE, TRUE) != 0)
-		panic("can't mark page 0 off-limits");
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 *
-	 * XXX Should be m68k_trunc_page(&kernel_text) instead
-	 * XXX of PAGE_SIZE.
-	 */
-	if (uvm_map_protect(kernel_map, PAGE_SIZE, m68k_round_page(&etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.130.2.7 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: wi.c,v 1.130.2.8 2005/02/15 21:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130.2.7 2005/01/17 19:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130.2.8 2005/02/15 21:33:12 skrll Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -320,16 +320,17 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 		return 1;
 	}
 
-	if (!macaddr) {
-		if (wi_read_xrid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
-		                 IEEE80211_ADDR_LEN) != 0 ||
-		    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
+	if (wi_read_xrid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
+			 IEEE80211_ADDR_LEN) != 0 ||
+	    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
+		if (macaddr != NULL)
+			memcpy(ic->ic_myaddr, macaddr, IEEE80211_ADDR_LEN);
+		else {
 			printf(" could not get mac address, attach failed\n");
 			splx(s);
 			return 1;
 		}
-	} else
-		memcpy(ic->ic_myaddr, macaddr, IEEE80211_ADDR_LEN);
+	}
 
 	printf(" 802.11 address %s\n", ether_sprintf(ic->ic_myaddr));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.6.4 2005/01/17 19:30:27 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.6.5 2005/02/15 21:33:01 skrll Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -434,8 +434,8 @@ main()
 		 * go into askname mode.
 		 */
 		if ((boothowto & RB_ASKNAME) == 0 &&
-		    i != -1 && kernels[++i]) {
-			printf(": trying %s...\n", kernels[i]);
+		    i != -1 && kernels[i + 1]) {
+			printf(": trying %s...\n", kernels[++i]);
 		} else {
 			printf("\n");
 			boothowto |= RB_ASKNAME;

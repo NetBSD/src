@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66.2.8 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: eap.c,v 1.66.2.9 2005/02/15 21:33:13 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.8 2005/01/17 19:31:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.9 2005/02/15 21:33:13 skrll Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -164,7 +164,7 @@ struct eap_softc {
 
 	u_short	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
 	u_int	sc_record_source;	/* recording source mask */
-	u_int	sc_output_source;	/* output source mask */
+	u_int	sc_input_source;	/* input source mask */
 	u_int	sc_mic_preamp;
 	char    sc_1371;		/* Using ES1371/AC97 codec */
 
@@ -703,7 +703,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		eap_hw_if = &eap1370_hw_if;
 
 		/* Enable all relevant mixer switches. */
-		ctl.dev = EAP_OUTPUT_SELECT;
+		ctl.dev = EAP_INPUT_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL |
 			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
@@ -1478,10 +1478,10 @@ eap1370_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		eap1370_set_mixer(sc, AK_IN_MIXER2_R, r2);
 		return 0;
 	}
-	if (cp->dev == EAP_OUTPUT_SELECT) {
+	if (cp->dev == EAP_INPUT_SOURCE) {
 		if (cp->type != AUDIO_MIXER_SET)
 			return EINVAL;
-		m = sc->sc_output_source = cp->un.mask;
+		m = sc->sc_input_source = cp->un.mask;
 		o1 = o2 = 0;
 		if (m & (1 << EAP_VOICE_VOL))
 			o2 |= AK_M_VOICE_L | AK_M_VOICE_R;
@@ -1578,10 +1578,10 @@ eap1370_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 			return EINVAL;
 		cp->un.mask = sc->sc_record_source;
 		return 0;
-	case EAP_OUTPUT_SELECT:
+	case EAP_INPUT_SOURCE:
 		if (cp->type != AUDIO_MIXER_SET)
 			return EINVAL;
-		cp->un.mask = sc->sc_output_source;
+		cp->un.mask = sc->sc_input_source;
 		return 0;
 	case EAP_MIC_PREAMP:
 		if (cp->type != AUDIO_MIXER_ENUM)
@@ -1719,10 +1719,10 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		strcpy(dip->un.s.member[5].label.name, AudioNdac);
 		dip->un.s.member[5].mask = 1 << EAP_VOICE_VOL;
 		return 0;
-	case EAP_OUTPUT_SELECT:
-		dip->mixer_class = EAP_OUTPUT_CLASS;
+	case EAP_INPUT_SOURCE:
+		dip->mixer_class = EAP_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNselect);
+		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
 		dip->un.s.num_mem = 6;
 		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);

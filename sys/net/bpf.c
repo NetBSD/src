@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.82.2.7 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.82.2.8 2005/02/15 21:33:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.7 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.8 2005/02/15 21:33:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ bpfopen(dev, flag, mode, l)
 
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
 
-	return fdclone(l, fp, fd, &bpf_fileops, d);
+	return fdclone(l, fp, fd, flag, &bpf_fileops, d);
 }
 
 /*
