@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
+/*	$NetBSD: log.c,v 1.4 1997/01/13 06:50:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: log.c,v 1.4 1997/01/13 06:50:26 tls Exp $";
 #endif
 #endif not lint
 
@@ -192,19 +192,19 @@ log_score(list_em)
 				if (thisscore.time > score[i].time) {
 					if (num_scores < NUM_SCORES)
 						num_scores++;
-					bcopy(&score[i],
-						&score[num_scores - 1], 
-						sizeof (score[i]));
-					bcopy(&thisscore, &score[i],
-						sizeof (score[i]));
+					memcpy(&score[num_scores - 1],
+					       &score[i],
+					       sizeof (score[i]));
+					memcpy(&score[i], &thisscore,
+					       sizeof (score[i]));
 					changed++;
 					break;
 				}
 			}
 		}
 		if (!found && !changed && num_scores < NUM_SCORES) {
-			bcopy(&thisscore, &score[num_scores], 
-				sizeof (score[num_scores]));
+			memcpy(&score[num_scores], &thisscore,
+			       sizeof (score[num_scores]));
 			num_scores++;
 			changed++;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $	*/
+/*	$NetBSD: update.c,v 1.5 1997/01/13 06:50:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $";
+static char rcsid[] = "$NetBSD: update.c,v 1.5 1997/01/13 06:50:27 tls Exp $";
 #endif
 #endif not lint
 
@@ -304,7 +304,7 @@ addplane()
 	PLANE	p, *pp, *p1;
 	int	i, num_starts, close, rnd, rnd2, pnum;
 
-	bzero(&p, sizeof (p));
+	memset(&p, 0, sizeof (p));
 
 	p.status = S_MARKED;
 	p.plane_type = random() % 2;
@@ -359,7 +359,7 @@ addplane()
 	p.plane_no = pnum;
 
 	pp = newplane();
-	bcopy(&p, pp, sizeof (p));
+	memcpy(pp, &p, sizeof (p));
 
 	if (pp->orig_type == T_AIRPORT)
 		append(&ground, pp);
