@@ -1,4 +1,4 @@
-# $NetBSD: files.podulebus,v 1.13 2001/07/04 15:01:08 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.14 2003/10/08 10:58:13 bouyer Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader
@@ -14,12 +14,12 @@ attach	hcsc at podulebus
 file	dev/podulebus/hcsc.c			hcsc
 
 # D.T. software IDE
-device	dtide: wdc_base, ata, atapi
+device	dtide: wdc_base
 attach	dtide at podulebus
 file	dev/podulebus/dtide.c			dtide
 
 # HCCS IDE
-device	hcide: wdc_base, ata, atapi
+device	hcide: wdc_base
 attach	hcide at podulebus
 file	dev/podulebus/hcide.c			hcide
 

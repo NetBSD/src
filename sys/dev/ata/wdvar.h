@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.18 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.19 2003/10/08 10:58:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -68,7 +68,7 @@ struct ata_bio {
 struct ata_bustype {
 	int bustype_type;	/* symbolic name of type */
 	int (*ata_bio) __P((struct ata_drive_datas*, struct ata_bio *));
-	void (*ata_reset_channel) __P((struct ata_drive_datas *));
+	void (*ata_reset_channel) __P((struct ata_drive_datas *, int));
 	int (*ata_exec_command) __P((struct ata_drive_datas *,
 					struct wdc_command *));
 #define WDC_COMPLETE 0x01
@@ -108,7 +108,6 @@ struct wd_softc {
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transfered */
-	void *wdc_softc;   /* pointer to our parent */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	const struct ata_bustype *atabus;
 	int openings;

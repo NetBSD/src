@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.61 2003/09/18 00:06:31 mycroft Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.62 2003/10/08 10:58:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.61 2003/09/18 00:06:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.62 2003/10/08 10:58:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,10 +112,8 @@ atapiprint(aux, pnp)
 	void *aux;
 	const char *pnp; 
 {
-	struct scsipi_channel *chan = aux;
 	if (pnp)
 		aprint_normal("atapibus at %s", pnp);
-	aprint_normal(" channel %d", chan->chan_channel);
 	return (UNCONF);
 }
 
@@ -131,10 +129,6 @@ atapibusmatch(parent, cf, aux)
 		return (0);
 
 	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_ATAPI)
-		return (0);
-
-	if (cf->cf_loc[ATAPICF_CHANNEL] != chan->chan_channel &&
-	    cf->cf_loc[ATAPICF_CHANNEL] != ATAPICF_CHANNEL_DEFAULT)
 		return (0);
 
 	return (1);

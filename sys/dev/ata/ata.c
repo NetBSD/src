@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.19 2003/09/23 09:19:22 mycroft Exp $      */
+/*      $NetBSD: ata.c,v 1.20 2003/10/08 10:58:12 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.19 2003/09/23 09:19:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.20 2003/10/08 10:58:12 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -173,7 +173,7 @@ ata_set_mode(drvp, mode, flags)
 }
 
 void
-ata_dmaerr(drvp)
+ata_dmaerr(drvp, flags)
 	struct ata_drive_datas *drvp;
 {
 	/*
@@ -185,7 +185,7 @@ ata_dmaerr(drvp)
 	 */
 	drvp->n_dmaerrs++;
 	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
-		wdc_downgrade_mode(drvp);
+		wdc_downgrade_mode(drvp, flags);
 		drvp->n_dmaerrs = NERRS_MAX-1;
 		drvp->n_xfers = 0;
 		return;
