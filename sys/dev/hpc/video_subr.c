@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.3 2000/10/22 10:33:01 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <machine/bootinfo.h>
 
-#include <arch/hpcmips/dev/video_subr.h>
+#include <dev/hpc/video_subr.h>
 
 #define BPP2 ({								\
 	u_int8_t bitmap;						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.38 2001/02/02 08:31:04 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.38 2001/02/02 08:31:04 sato Exp $";
+    "$Id: hpcfb.c,v 1.1 2001/02/22 18:37:55 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,12 +75,12 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <arch/hpcmips/dev/bivideovar.h>
+#include <dev/hpc/bivideovar.h>
 #endif
 
 #ifdef FBDEBUG

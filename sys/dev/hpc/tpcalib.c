@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.3 2000/02/28 12:34:32 takemura Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -32,7 +32,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <dev/wscons/wsconsio.h>
-#include <hpcmips/dev/tpcalibvar.h>
+#include <dev/hpc/tpcalibvar.h>
 
 #define TPCALIBDEBUG
 #ifdef TPCALIBDEBUG
