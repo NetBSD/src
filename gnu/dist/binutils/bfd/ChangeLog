@@ -1,3 +1,9 @@
+2005-01-10  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* elf64-sparc.c (sparc64_elf_adjust_dynamic_symbol): When linking a
+	non-shared object, do not reserve space in .plt and .rela.plt for
+	regular symbols neither defined nor referenced in shared objects.
+
 2003-06-12  Daniel Jacobowitz  <drow@mvista.com>
 
 	* configure.in: Bump version to 2.14.
