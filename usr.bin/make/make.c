@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)make.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: make.c,v 1.2 1993/08/01 18:11:46 mycroft Exp $";
+static char rcsid[] = "$Id: make.c,v 1.3 1994/01/13 21:01:57 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -73,6 +73,7 @@ static char rcsid[] = "$Id: make.c,v 1.2 1993/08/01 18:11:46 mycroft Exp $";
  *				and perform the .USE actions if so.
  */
 
+#include    <stdio.h>
 #include    "make.h"
 
 static Lst     	toBeMade;	/* The current fringe of the graph. These
