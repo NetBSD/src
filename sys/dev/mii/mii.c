@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.10 1999/01/29 07:35:05 pk Exp $	*/
+/*	$NetBSD: mii.c,v 1.11 1999/02/05 02:46:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,35 +69,32 @@ mii_phy_probe(parent, mii, capmask)
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
+	int bmsr;
 
 	LIST_INIT(&mii->mii_phys);
 
 	for (ma.mii_phyno = 0; ma.mii_phyno < MII_NPHY; ma.mii_phyno++) {
 		/*
-		 * Check to see if there is a PHY at this address.  If
-		 * the register contains garbage, assume no.
+		 * Check to see if there is a PHY at this address.  Note,
+		 * many braindead PHYs report 0/0 in their ID registers,
+		 * so we test for media in the BMSR.
+		 */
+		bmsr = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR);
+		if (bmsr == 0 || bmsr == 0xffff ||
+		    (bmsr & BMSR_MEDIAMASK) == 0) {
+			/* Assume no PHY at this address. */
+			continue;
+		}
+
+		/*
+		 * Extract the IDs.  Braindead PHYs will be handled by
+		 * the `ukphy' driver, as we have no ID information to
+		 * match on.
 		 */
 		ma.mii_id1 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR1);
 		ma.mii_id2 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR2);
-		if (ma.mii_id1 == 0 || ma.mii_id1 == 0xffff ||
-		    ma.mii_id2 == 0 || ma.mii_id2 == 0xffff) {
-			/*
-			 * ARGH!!  3Com internal PHYs report 0/0 in their
-			 * ID registers!  If we spot this, check to see
-			 * if the BMSR has reasonable data in it.
-			 */
-			if (MII_OUI(ma.mii_id1, ma.mii_id2) == 0 &&
-			    MII_MODEL(ma.mii_id2) == 0) {
-				int bmsr = (*mii->mii_readreg)(parent,
-				    ma.mii_phyno, MII_BMSR);
-				if (bmsr == 0 || bmsr == 0xffff ||
-				    (bmsr & BMSR_MEDIAMASK) == 0)
-					continue;
-			} else
-				continue;
-		}
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
