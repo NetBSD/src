@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.33 2004/03/15 11:47:52 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.34 2004/03/19 13:52:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -143,6 +143,19 @@
 		memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		}
 
+/*
+ * nfsm_mtofh: dissect a "resulted obj" part of create-like operations
+ * like mkdir.
+ *
+ * for nfsv3, dissect post_op_fh3 and following post_op_attr.
+ * for nfsv2, dissect fhandle and following fattr.
+ *
+ * d: (IN) the vnode of the parent directry.
+ * v: (OUT) the corresponding vnode (we allocate one if needed)
+ * v3: (IN) true for nfsv3.
+ * f: (OUT) true if we got valid filehandle.  always true for nfsv2.
+ */
+
 #define nfsm_mtofh(d, v, v3, f) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
 		if (v3) { \
@@ -170,6 +183,14 @@
 		if (f) \
 			nfsm_loadattr((v), (struct vattr *)0, 0); \
 		}
+
+/*
+ * nfsm_getfh: dissect a filehandle.
+ *
+ * f: (OUT) a filehandle.
+ * s: (OUT) size of the filehandle in bytes.
+ * v3: (IN) true if nfsv3.
+ */
 
 #define nfsm_getfh(f, s, v3) \
 		{ if (v3) { \
