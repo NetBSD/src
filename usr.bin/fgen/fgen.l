@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.25 2003/12/07 01:02:36 dmcmahill Exp $	*/
+/*	$NetBSD: fgen.l,v 1.26 2004/07/09 12:10:43 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -47,7 +47,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.25 2003/12/07 01:02:36 dmcmahill Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.26 2004/07/09 12:10:43 wiz Exp $");
 #endif
 
 %}
@@ -993,7 +993,7 @@ void
 usage(me)
 	char *me;
 {
-	(void)fprintf(stderr, "%s: [-o <outfile>] <infile>\n", me);
+	(void)fprintf(stderr, "%s: [-d level] [-o outfile] infile\n", me);
 	exit(1);
 }
 
