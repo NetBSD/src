@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.51 1998/07/23 08:24:33 pk Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.52 1998/08/02 00:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -111,11 +112,20 @@ struct inpcb *
 int	anonportmin = IPPORT_ANONMIN;
 int	anonportmax = IPPORT_ANONMAX;
 
+struct pool inpcb_pool;
+
 void
 in_pcbinit(table, bindhashsize, connecthashsize)
 	struct inpcbtable *table;
 	int bindhashsize, connecthashsize;
 {
+	static int inpcb_pool_initialized;
+
+	if (inpcb_pool_initialized == 0) {
+		pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0,
+		    "inpcbpl", 0, NULL, NULL, M_PCB);
+		inpcb_pool_initialized = 1;
+	}
 
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_bindhashtbl =
@@ -135,7 +145,7 @@ in_pcballoc(so, v)
 	register struct inpcb *inp;
 	int s;
 
-	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_NOWAIT);
+	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
@@ -446,7 +456,7 @@ in_pcbdetach(v)
 	in_pcbstate(inp, INP_ATTACHED);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	splx(s);
-	FREE(inp, M_PCB);
+	pool_put(&inpcb_pool, inp);
 }
 
 void
