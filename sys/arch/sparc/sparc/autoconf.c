@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
+/*	$NetBSD: autoconf.c,v 1.74 1997/09/18 20:25:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -335,6 +335,10 @@ bootstrap()
 
 		counterreg_4m = (struct counter_4m *)ra.ra_vaddrs[0];
 		timerreg_4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
+		for (i = 0; i < ra.ra_nvaddrs - 1; i++) {
+			extern void stopcounter __P((struct counter_4m *));
+			stopcounter((struct counter_4m *)ra.ra_vaddrs[i]);
+		}
 	}
 #endif /* SUN4M */
 
@@ -1670,8 +1674,16 @@ romgetcursoraddr(rowp, colp)
 void
 romhalt()
 {
+
 	if (CPU_ISSUN4COR4M)
 		*promvec->pv_synchook = NULL;
+
+#if defined(SUN4M)
+	if (0 && CPU_ISSUN4M) {
+		extern void srmmu_restore_prom_ctx __P((void));
+		srmmu_restore_prom_ctx();
+	}
+#endif
 
 	promvec->pv_halt();
 	panic("PROM exit failed");
