@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.23 2000/11/21 00:37:54 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.24 2000/11/27 17:25:25 jdolecek Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -61,10 +61,6 @@ extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
 #endif
-void *netbsd32_copyargs __P((struct exec_package *, struct ps_strings *,
-	void *, void *));
-void *netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-	void *, void *));
 int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
 			     void *, size_t, const void *, const void *));
 
@@ -99,9 +95,9 @@ int
 ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
-	Elf_Ehdr *eh;
+	void *eh;
 	char *itp;
-	Elf_Addr *pos;
+	vaddr_t *pos;
 {
 	int error;
 	size_t i;
@@ -119,7 +115,6 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 			return error;
 		free((void *)bp, M_TEMP);
 	}
-	epp->ep_emul = &ELFNAMEEND(emul_netbsd32);
 	epp->ep_flags |= EXEC_32;
 	*pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
@@ -177,7 +172,6 @@ exec_netbsd32_makecmds(p, epp)
 
 	if (error == 0) {
 		/* set up our emulation information */
-		epp->ep_emul = &emul_netbsd32;
 		epp->ep_flags |= EXEC_32;
 	} else
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -347,7 +341,7 @@ netbsd32_copyargs(pack, arginfo, stack, argp)
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
 
-	dp = (u_long) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	dp = (u_long) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
