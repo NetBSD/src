@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.79 2002/09/27 15:38:09 provos Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.80 2002/10/30 02:48:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.79 2002/09/27 15:38:09 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.80 2002/10/30 02:48:28 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -196,7 +196,7 @@ uvm_pageremove(pg)
 	struct uvm_object *uobj = pg->uobject;
 
 	KASSERT(pg->flags & PG_TABLED);
-	buck = &uvm.page_hash[uvm_pagehash(uobj ,pg->offset)];
+	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
 	simple_lock(&uvm.hashlock);
 	TAILQ_REMOVE(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
