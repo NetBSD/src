@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.11 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.11.2.1 2005/01/31 12:16:09 yamt Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.11 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.11.2.1 2005/01/31 12:16:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,8 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 		    MIPS_PHYS_TO_KSEG1(start));
 	} else {
 		vaddr_t va,
-		    vaddr = uvm_km_valloc(kernel_map, (vsize_t)(end - start));
+		    vaddr = uvm_km_alloc(kernel_map, (vsize_t)(end - start), 0,
+		    UVM_KMF_VAONLY);
 
 		if (vaddr == 0)
 			panic("arc_sparse_bus_space_compose_handle: "
@@ -147,7 +148,9 @@ arc_sparse_bus_space_dispose_handle(bus_space_tag_t bst, bus_space_handle_t bsh,
 	if (start < MIPS_KSEG2_START) /* KSEG0/KSEG1 */
 		return 0;
 
-	uvm_km_free(kernel_map, start, end - start);
+	pmap_kremove(start, end - start);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, start, end - start, UVM_KMF_VAONLY);
 	return 0;
 }
 
