@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.8.2.6 1998/09/20 16:37:21 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.8.2.7 1998/10/12 14:33:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef	int	boolean;
  */
 
 struct buf;
+struct scsipi_link;
 struct scsipi_xfer;
 
 struct scsipi_generic {
@@ -141,12 +142,16 @@ struct scsipi_device {
  * These entrypoints are called by the high-end drivers to get services from
  * whatever low-end drivers they are attached to each adapter type has one of
  * these statically allocated.
+ *
+ *	scsipi_cmd		required
+ *	scsipi_minphys		required
+ *	scsipi_ioctl		optional
  */
 struct scsipi_adapter {
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
 	void	(*scsipi_minphys) __P((struct buf *));
-	int	(*open_target_lu) __P((void));
-	int	(*close_target_lu) __P((void));
+	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
+		    caddr_t, int, struct proc *));
 };
 
 /*
@@ -186,11 +191,12 @@ struct scsipi_link {
 					 * Do not issue START UNIT
 					 * requests in sd.c
 					 */
-#define ADEV_CDROM		0x0100	/* device is a CD-ROM */
-#define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */
-#define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
-#define ADEV_NOTUR		0x0800	/* no TEST_UNIT_READY command */
-#define ADEV_NODOORLOCK		0x1000	/* device can't lock door */
+#define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
+#define ADEV_CDROM		0x0200	/* device is a CD-ROM */
+#define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */
+#define ADEV_NOCAPACITY		0x0800	/* no READ_CD_CAPACITY command */
+#define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
+#define ADEV_NODOORLOCK		0x2000	/* device can't lock door */
 
 
 	struct	scsipi_device *device;	/* device entry points etc. */
@@ -297,6 +303,7 @@ struct scsipi_xfer {
 #define XS_SELTIMEOUT	3	/* The device timed out.. turned off?	  */
 #define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		5	/* The device busy, try again later?	  */
+#define	XS_RESET	6	/* bus was reset; possible retry command  */
 
 /*
  * This describes matching information for scsipi_inqmatch().  The more things
