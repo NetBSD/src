@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 2001/12/15 23:09:50 fredette Exp $ */
+/*	$NetBSD: bootxx.c,v 1.3 2002/04/24 01:40:25 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@
 #include <sys/param.h>
 #include <machine/mon.h>
 
+#include <dev/sun/sun_boot.h>
+
 #include <stand.h>
 #include "libsa.h"
-#include "bbinfo.h"
 
 /*
  * This is the address where we load the second-stage boot loader.
@@ -59,13 +60,13 @@
 #define LOADADDR	0x4000
 
 /*
- * The contents of the bbinfo below are set by installboot(8)
+ * The contents of the sun68k_bbinfo below are set by installboot(8)
  * to hold the filesystem data of the second-stage boot program
  * (typically `/ufsboot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-struct bbinfo bbinfo = {
-	{ BBINFO_MAGIC },
+struct sun68k_bbinfo bbinfo = {
+	{ SUN68K_BBINFO_MAGIC },
 	0,
 	MAXBLOCKNUM,
 	{ 0 }
