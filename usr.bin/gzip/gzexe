@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+# $NetBSD: gzexe,v 1.2 2003/12/28 12:43:43 wiz Exp $
+#
 # $OpenBSD: gzexe,v 1.3 2003/08/05 18:22:17 deraadt Exp $
 #
 #  Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
