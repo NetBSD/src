@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.11 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supscan.c,v 1.12 2004/12/21 16:19:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -117,6 +117,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/param.h>
 #include "supcdefs.h"
 #include "supextern.h"
@@ -170,6 +171,20 @@ int
 main(int argc, char **argv)
 {
 	SCAN_COLLECTION *c;
+#ifdef RLIMIT_DATA
+	struct rlimit dlim;
+
+	if (getrlimit(RLIMIT_DATA, &dlim) == -1)
+		goaway("Error getting resource limit (%s)",
+		    strerror(errno));
+	if (dlim.rlim_cur != dlim.rlim_max) {
+		dlim.rlim_cur = dlim.rlim_max;
+		if (setrlimit(RLIMIT_DATA, &dlim) == -1)
+			goaway("Error setting resource limit (%s)",
+			    strerror(errno));
+	}
+#endif
+
 #if __GNUC__
 	/* Avoid longjmp clobbering */
 	(void) &c;
