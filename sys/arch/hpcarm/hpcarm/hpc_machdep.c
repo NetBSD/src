@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.10 2001/04/17 15:33:39 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.11 2001/04/17 16:10:47 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -172,6 +172,8 @@ extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
 static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
+/* Non-buffered non-cachable memory needed to enter idle mode */
+vaddr_t sa11x0_idle_mem;
 
 /* virtual address for framebuffer */
 /* XXX temporary hack until we have bus_space_map */
@@ -376,7 +378,6 @@ initarm(argc, argv, bi)
 	/* copy bootinfo into known kernel space */
 	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
-
 	bootinfo->fb_addr = (void *)FRAMEBUF_BASE;
 
 #ifdef BOOTINFO_FB_WIDTH
@@ -444,10 +445,10 @@ initarm(argc, argv, bi)
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)			\
 	(var).pv_pa = (var).pv_va = freemempos;	\
-	freemempos += np * NBPG;
+	freemempos += (np) * NBPG;
 #define	alloc_pages(var, np)			\
 	(var) = freemempos;			\
-	freemempos += np * NBPG;
+	freemempos += (np) * NBPG;
 
 
 	valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
@@ -480,6 +481,10 @@ initarm(argc, argv, bi)
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
 
+	/*
+	 * XXX Actually, we only need virtual space and don't need
+	 * XXX physical memory for sa110_cc_base and sa11x0_idle_mem.
+	 */
 #ifdef CPU_SA110
 	/*
 	 * XXX totally stuffed hack to work round problems introduced
@@ -498,6 +503,8 @@ initarm(argc, argv, bi)
 	sa110_cache_clean_addr = sa110_cc_base;
 	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 #endif	/* CPU_SA110 */
+
+	alloc_pages(sa11x0_idle_mem, 1);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
@@ -575,6 +582,9 @@ initarm(argc, argv, bi)
 	/* Map the page table that maps the kernel pages */
 	map_entry_nc(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa);
 
+	/* Map a page for entering idle mode */
+	map_entry_nc(l2pagetable, sa11x0_idle_mem, sa11x0_idle_mem);
+
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
@@ -617,7 +627,7 @@ initarm(argc, argv, bi)
 #ifdef CPU_SA110
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
 	map_chunk(0, l2pagetable, sa110_cache_clean_addr,
-	    sa110_cache_clean_addr, CPU_SA110_CACHE_CLEAN_SIZE,
+	    0xe0000000, CPU_SA110_CACHE_CLEAN_SIZE,
 	    AP_KRW, PT_CACHEABLE);
 #endif
 	/*
