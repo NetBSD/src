@@ -1,0 +1,24 @@
+.\"	$NetBSD: hardware,v 1.1 2003/10/10 23:53:21 mbw Exp $
+.
+Since
+.Nx*M
+is an experimental port, the hardware support is in a constant state of flux.
+Check the
+.Mt port-hp700@NetBSD.org
+mailing list and the
+.Nx*M
+port homepage for an up-to-date list of known supported hardware.
+.Lk http://www.netbsd.org/Ports/hp700/
+.Pp
+.Nx*M
+\*V does not
+have any local disk support, so you must netboot and run diskless.
+.Pp
+.
+.Ss2 Supported hardware
+.
+Unknown.
+.
+.Ss2 Unsupported hardware
+.
+Unknown.
