@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.122 2004/02/28 05:14:55 junyoung Exp $ */
+/* $NetBSD: vmstat.c,v 1.123 2004/10/15 21:29:03 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.122 2004/02/28 05:14:55 junyoung Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.123 2004/10/15 21:29:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,7 @@ void
 dosum(void)
 {
 	struct nchstats nchstats;
-	long nchtotal;
+	u_long nchtotal;
 
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
@@ -731,14 +731,27 @@ dosum(void)
 	    uvmexp.pdanscan);
 	(void)printf("%9u object pages scanned by daemon\n", uvmexp.pdobscan);
 	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
+	(void)printf("%9u anonymous pages reactivated\n", uvmexp.pdreanon);
+	(void)printf("%9u cached file pages reactivated\n", uvmexp.pdrefile);
+	(void)printf("%9u cached executable pages reactivated\n",
+	    uvmexp.pdreexec);
 	(void)printf("%9u pages found busy by daemon\n", uvmexp.pdbusy);
 	(void)printf("%9u total pending pageouts\n", uvmexp.pdpending);
 	(void)printf("%9u pages deactivated\n", uvmexp.pddeact);
+
 	kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
 	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
 	    nchstats.ncs_miss + nchstats.ncs_long;
-	(void)printf("%9ld total name lookups\n", nchtotal);
+	(void)printf("%9lu total name lookups\n", nchtotal);
+	(void)printf("%9lu good hits\n", nchstats.ncs_goodhits);
+	(void)printf("%9lu negative hits\n", nchstats.ncs_neghits);
+	(void)printf("%9lu bad hits\n", nchstats.ncs_badhits);
+	(void)printf("%9lu false hits\n", nchstats.ncs_falsehits);
+	(void)printf("%9lu miss\n", nchstats.ncs_miss);
+	(void)printf("%9lu too long\n", nchstats.ncs_long);
+	(void)printf("%9lu pass2 hits\n", nchstats.ncs_pass2);
+	(void)printf("%9lu 2passes\n", nchstats.ncs_2passes);
 	(void)printf(
 	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-process\n",
 	    "", PCT(nchstats.ncs_goodhits, nchtotal),
