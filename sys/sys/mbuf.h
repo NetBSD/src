@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.98 2004/09/08 12:00:28 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.99 2004/09/21 21:57:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -292,6 +292,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
 #define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
 #define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
+#define	M_EXT_RW	0x08000000	/* ext storage is writable */
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
@@ -519,7 +520,7 @@ do {									\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
-				M_EXT|M_CLUSTER;			\
+				M_EXT|M_CLUSTER|M_EXT_RW;		\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = (pool_cache);			\
@@ -539,7 +540,8 @@ do {									\
 	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;\
+		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
+				M_EXT|M_EXT_RW;				\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -636,12 +638,13 @@ do {									\
 
 /*
  * Determine if an mbuf's data area is read-only.  This is true
- * for non-cluster external storage and for clusters that are
- * being referenced by more than one mbuf.
+ * if external storage is read-only mapped, or not marked as R/W,
+ * or referenced by more than one mbuf.
  */
 #define	M_READONLY(m)							\
 	(((m)->m_flags & M_EXT) != 0 &&					\
-	  (((m)->m_flags & M_CLUSTER) == 0 || MCLISREFERENCED(m)))
+	  (((m)->m_flags & (M_EXT_ROMAP|M_EXT_RW)) != M_EXT_RW ||	\
+	  MCLISREFERENCED(m)))
 
 /*
  * Determine if an mbuf's data area is read-only at the MMU.
