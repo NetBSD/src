@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 1997/07/20 20:48:40 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 1997/07/23 05:36:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,6 +51,34 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
+ */
+
+/*
+ * bcopy() copyright:
+ *
+ * Mach Operating System
+ * Copyright (c) 1993 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
  */
 
 /*
@@ -411,110 +439,152 @@ END(bcmp)
  * memcpy(to, from, len)
  * {ov}bcopy(from, to, len)
  */
-LEAF(memcpy)
+ALEAF(memcpy)
 	move	v0, a0			# swap from and to
 	move	a0, a1
 	move	a1, v0
-ALEAF(bcopy)
+
+LEAF(bcopy)
 ALEAF(ovbcopy)
-	addu	t0, a0, a2		# t0 = end of s1 region
-	sltu	t1, a1, t0
-	sltu	t2, a0, a1
-	and	t1, t1, t2		# t1 = true if from < to < (from+len)
-	beq	t1, zero, forward	# non overlapping, do forward copy
-	slt	t2, a2, 12		# check for small copy
+	.set	noat
+	/*
+	 *	Make sure we can copy forwards.
+	 */
+	sltu	t0,a0,a1	# t0 == a0 < a1
+	addu	a3,a0,a2	# a3 == end of source
+	sltu	t1,a1,a3	# t1 == a1 < a0+a2
+	and	t2,t0,t1	# overlap -- copy backwards
+	bne	t2,zero,backcopy
 
-	ble	a2, zero, 2f
-	addu	t1, a1, a2		# t1 = end of to region
+	/*
+	 * 	There are four alignment cases (with frequency)
+	 *	(Based on measurements taken with a DECstation 5000/200
+	 *	 inside a Mach kernel.)
+	 *
+	 * 	aligned   -> aligned		(mostly)
+	 * 	unaligned -> aligned		(sometimes)
+	 * 	aligned,unaligned -> unaligned	(almost never)
+	 *
+	 *	Note that we could add another case that checks if
+	 *	the destination and source are unaligned but the 
+	 *	copy is alignable.  eg if src and dest are both
+	 *	on a halfword boundary.
+	 */
+	andi	t1,a1,3		# get last 3 bits of dest
+	bne	t1,zero,bytecopy
+	andi	t0,a0,3		# get last 3 bits of src
+	bne	t0,zero,destaligned
+
+	/*
+	 *	Forward aligned->aligned copy, 8*4 bytes at a time.
+	 */
+	li	AT,-32
+	and	t0,a2,AT	/* count truncated to multiple of 32 */
+	addu	a3,a0,t0	/* run fast loop up to this address */
+	sltu	AT,a0,a3	/* any work to do? */
+	beq	AT,zero,wordcopy
+	subu	a2,t0
+
+	/*
+	 *	loop body
+	 */
+cp:
+	lw	v0,0(a0)
+	lw	v1,4(a0)
+	lw	t0,8(a0)
+	lw	t1,12(a0)
+	addu	a0,32
+	sw	v0,0(a1)
+	sw	v1,4(a1)
+	sw	t0,8(a1)
+	sw	t1,12(a1)
+	lw	t1,-4(a0)
+	lw	t0,-8(a0)
+	lw	v1,-12(a0)
+	lw	v0,-16(a0)
+	addu	a1,32
+	sw	t1,-4(a1)
+	sw	t0,-8(a1)
+	sw	v1,-12(a1)
+	bne	a0,a3,cp
+	sw	v0,-16(a1)
+
+	/*
+	 *	Copy a word at a time, no loop unrolling.
+	 */
+wordcopy:
+	andi	t2,a2,3		# get byte count / 4
+	subu	t2,a2,t2	# t2 = number of words to copy * 4
+	beq	t2,zero,bytecopy
+	addu	t0,a0,t2	# stop at t0
+	subu	a2,a2,t2
 1:
-	lb	v1, -1(t0)		# copy bytes backwards,
-	subu	t0, t0, 1		#   doesnt happen often so do slow way
-	subu	t1, t1, 1
-	bne	t0, a0, 1b
-	sb	v1, 0(t1)
+	lw	v0,0(a0)
+	addu	a0,4
+	sw	v0,0(a1)
+	bne	a0,t0,1b
+	addu	a1,4
+
+bytecopy:
+	beq	a2,zero,copydone	# nothing left to do?
+	nop
 2:
+	lb	v0,0(a0)
+	addu	a0,1
+	sb	v0,0(a1)
+	subu	a2,1
+	bgtz	a2,2b
+	addu	a1,1
+
+copydone:
 	j	ra
 	nop
-forward:
-	bne	t2, zero, smallcpy	# do a small bcopy
-	xor	v1, a0, a1		# compare low two bits of addresses
-	and	v1, v1, 3
-	subu	a3, zero, a1		# compute # bytes to word align address
-	beq	v1, zero, aligned	# addresses can be word aligned
-	and	a3, a3, 3
 
-	beq	a3, zero, 1f
-	subu	a2, a2, a3		# subtract from remaining count
-	lwr	v1, 0(a0)		# get next 4 bytes (unaligned)
-	lwl	v1, 3(a0)
-	addu	a0, a0, a3
-	swr	v1, 0(a1)		# store 1, 2, or 3 bytes to align a1
-	addu	a1, a1, a3
-1:
-	and	v1, a2, 3		# compute number of words left
-	subu	a3, a2, v1
-	move	a2, v1
-	addu	a3, a3, a0		# compute ending address
-2:
-	lwr	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
-	lwl	v1, 3(a0)
-	addu	a0, a0, 4
-#ifdef MIPS3
-	sw	v1, 0(a1)
-	addu	a1, a1, 4
-	bne	a0, a3, 2b
-	nop				# We have to do this mmu-bug
-#else
-	addu	a1, a1, 4
-	bne	a0, a3, 2b
-	sw	v1, -4(a1)
-#endif
-	b	smallcpy
+	/*
+	 *	Copy from unaligned source to aligned dest.
+	 */
+destaligned:
+	andi	t0,a2,3		# t0 = bytecount mod 4
+	subu	a3,a2,t0	# number of words to transfer
+	beq	a3,zero,bytecopy
 	nop
-aligned:
-	beq	a3, zero, 1f
-	subu	a2, a2, a3		# subtract from remaining count
-	lwr	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
-	addu	a0, a0, a3
-	swr	v1, 0(a1)
-	addu	a1, a1, a3
-1:
-	and	v1, a2, 3		# compute number of whole words left
-	subu	a3, a2, v1
-	move	a2, v1
-	addu	a3, a3, a0		# compute ending address
-2:
-	lw	v1, 0(a0)		# copy words
-	addu	a0, a0, 4
-#ifdef MIPS3
-	sw	v1, 0(a1)
-	bne	a0, a3, 2b
-	addu	a1, a1, 4
-#else
-	addu	a1, a1, 4
-	bne	a0, a3, 2b
-	sw	v1, -4(a1)
+	move	a2,t0		# this many to do after we are done
+	addu	a3,a0,a3	# stop point
+
+3:
+#if MIPSEL	/* little-endian */
+	lwr	v0,0(a0)
+	lwl	v0,3(a0)
+#else		/* big-endian */
+	lwl	v0,0(a0)
+	lwr	v0,3(a0)
 #endif
-smallcpy:
-	ble	a2, zero, 2f
-	addu	a3, a2, a0		# compute ending address
-1:
-	lbu	v1, 0(a0)		# copy bytes
-	addu	a0, a0, 1
-#ifdef MIPS3
-	sb	v1, 0(a1)
-	addu	a1, a1, 1
-	bne	a0, a3, 1b
-	nop				# MMU BUG ? (cant do -1(a1) !!
-#else
-	addu	a1, a1, 1
-	bne	a0, a3, 1b
-	sb	v1, -1(a1)
-#endif
-2:
+	addi	a0,4
+	sw	v0,0(a1)
+	bne	a0,a3,3b
+	addi	a1,4
+
+	j	bytecopy
+	nop
+
+	/*
+	 *	Copy by bytes backwards.
+	 */
+backcopy:
+	blez	a2,copydone	# nothing left to do?
+	addu	t0,a0,a2	# end of source
+	addu	t1,a1,a2	# end of destination
+4:
+	lb	v0,-1(t0)	
+	subu	t0,1
+	sb	v0,-1(t1)
+	bne	t0,a0,4b
+	subu	t1,1
 	j	ra
 	nop
-END(memcpy)
+	
+	.set	at
+END(bcopy)
 
 /*
  * The following primitives manipulate the run queues.  whichqs tells which
