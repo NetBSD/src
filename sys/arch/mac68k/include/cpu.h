@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.6 1994/02/27 16:42:33 briggs Exp $
+ *	$Id: cpu.h,v 1.7 1994/03/01 15:22:47 briggs Exp $
  */
 
 /*
@@ -146,21 +146,52 @@ extern unsigned char ssir;
 #define setsoftserial()	ssir |= SIR_SERIAL
 
 
-/* values for machineid */
-/* BARF MF - some values from the thinkc gesalt include file */
-#define MACH_MAC2		6
-#define MACH_MAC2X		7
-#define MACH_MAC2CX		8
+/* values for machineid --
+ * 	These are equivalent to the MacOS Gestalt values. */
+#define MACH_MACII		6
+#define MACH_MACIIX		7
+#define MACH_MACIICX		8
 #define MACH_MACSE30		9
-#define MACH_MAC2CI		11
-#define MACH_MAC2FX		13
-#define MACH_MAC2SI		18
+#define MACH_MACIICI		11
+#define MACH_MACIIFX		13
+#define MACH_MACIISI		18
 #define MACH_MACQ900		20
 #define MACH_MACPB170		21
 #define MACH_MACQ700		22
-#define MACH_MACCLASSIC2	23
+#define MACH_MACCLASSICII	23
+#define MACH_MACPB100		24
 #define MACH_MACPB140		25
+#define MACH_MACQ950		26
+#define MACH_MACLCIII		27
+#define MACH_MACPB210		29
+#define MACH_MACC650		30
+#define MACH_MACPB230		32
+#define MACH_MACPB180		33
+#define MACH_MACPB160		34
+#define MACH_MACQ800		35
+#define MACH_MACQ650		36
 #define MACH_MACLCII		37
+#define MACH_MACPB250		38
+#define MACH_MACIIVI		44
+#define MACH_MACP600		45
+#define MACH_MACIIVX		48
+#define MACH_MACCCLASSIC	49
+#define MACH_MACPB165C		50
+#define MACH_MACC610		52
+#define MACH_MACQ610		53
+#define MACH_MACPB145		54
+#define MACH_MACLC520		56
+#define MACH_MACC660AV		60
+#define MACH_MACP460		62
+#define MACH_MACPB180C		71
+#define MACH_MACPB270		77
+#define MACH_MACQ840AV		78
+#define MACH_MACP550		80
+#define MACH_MACPB165		84
+#define MACH_MACTV		88
+#define MACH_MACLC475		89
+#define MACH_MACLC575		92
+#define MACH_MACQ605		94
 
 /* MF processor passed in */
 #define MACH_68020	0
