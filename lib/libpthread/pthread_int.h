@@ -1,4 +1,4 @@
-/* $Id: pthread_int.h,v 1.1.2.2 2001/07/13 02:09:31 nathanw Exp $ */
+/* $Id: pthread_int.h,v 1.1.2.3 2001/07/13 02:09:59 nathanw Exp $ */
 /* Copyright */
 
 #ifndef _LIB_PTHREAD_INT_H
@@ -96,7 +96,7 @@ struct	pthread_st {
 #define PT_ATTR_MAGIC	0x5555FACE
 #define PT_ATTR_DEAD	0xFACEDEAD
 
-#define PT_STACKSIZE	(1<<20) 
+#define PT_STACKSIZE	(1<<16) 
 #define PT_STACKMASK	(PT_STACKSIZE-1)
 
 #define PT_UPCALLSTACKS	16
