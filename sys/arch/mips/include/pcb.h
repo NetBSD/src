@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 1996/03/19 02:12:05 jonathan Exp $	*/
+/*	$NetBSD: pcb.h,v 1.7 1997/06/15 17:36:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,15 +42,18 @@
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <mips/reg.h>
+
 /*
  * MIPS process control block
  */
 struct pcb
 {
-	int	pcb_regs[71];	/* saved CPU and floating point registers */
-	label_t	pcb_context;	/* kernel context for resume */
-	int	pcb_onfault;	/* for copyin/copyout faults */
-	void	*pcb_segtab;	/* copy of pmap pm_segtab */
+	int	pcb_regs[38];		/* XXX saved general registers */
+	struct fpreg pcb_fpregs;	/* saved floating point registers */
+	int	pcb_context[12];	/* kernel context for resume */
+	caddr_t	pcb_onfault;		/* for copyin/copyout faults */
+	void	*pcb_segtab;		/* XXX copy of pmap pm_segtab */
 };
 
 /*
@@ -60,3 +63,7 @@ struct pcb
 struct md_coredump {
 	long	md_pad[8];
 };
+
+#ifdef _KERNEL
+struct pcb *curpcb;			/* the current running pcb */
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 1997/06/02 01:58:38 jonathan Exp $	*/
+/*	$NetBSD: proc.h,v 1.7 1997/06/15 17:36:25 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 /*
- * Machine-dependent part of the proc structure for DEC Station.
+ * Machine-dependent part of the proc structure for MIPS
  */
 struct mdproc {
 	int	*md_regs;		/* registers on current frame */
@@ -52,8 +52,14 @@ struct mdproc {
 /* md_flags */
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
 
+/*
+ * MIPS trapframe
+ */
+struct frame {
+	int	f_regs[38];
+};
+
 #ifdef _KERNEL
 /* kernel single-step emulation */
-struct proc;
 extern int mips_singlestep __P((struct proc *p));
 #endif /* _KERNEL */
