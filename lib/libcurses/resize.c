@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.2 2002/01/02 10:38:29 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.3 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.2 2002/01/02 10:38:29 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.3 2002/07/19 13:22:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -236,6 +236,9 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
 			win->lines[i] = lp;
 			lp->line = &win->wspace[i * ncols];
+#ifdef DEBUG
+			lp->sentinel = SENTINEL_VALUE;
+#endif
 			lp->firstchp = &lp->firstch;
 			lp->lastchp = &lp->lastch;
 			lp->firstch = 0;
