@@ -1,7 +1,7 @@
-/*	$NetBSD: frodo.c,v 1.2 1997/10/04 09:59:51 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.3 1998/01/11 21:55:08 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -157,7 +157,7 @@ frodomatch(parent, match, aux)
 		return (0);
 
 	frodo_matched = 1;
-	ia->ia_addr = va;
+	ia->ia_addr = FRODO_BASE;
 	return (1);
 }
 
@@ -170,7 +170,7 @@ frodoattach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 	int i;
 
-	sc->sc_regs = (volatile u_int8_t *)ia->ia_addr;
+	sc->sc_regs = (volatile u_int8_t *)IIOV(ia->ia_addr);
 
 	if ((FRODO_READ(sc, FRODO_IISR) & FRODO_IISR_SERVICE) == 0)
 		printf(": service mode enabled");
