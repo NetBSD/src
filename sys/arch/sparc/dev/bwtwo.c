@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.28 1996/10/04 20:34:33 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.29 1996/10/11 00:46:20 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -283,7 +283,7 @@ bwtwoattach(parent, self, args)
 	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 	fb->fb_type.fb_cmsize = 0;
 	fb->fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", nam,
+	kprintf(": %s, %d x %d", nam,
 	    fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 #if defined(SUN4)
@@ -322,7 +322,7 @@ bwtwoattach(parent, self, args)
 	bwtwo_set_video(sc, 1);
 
 	if (isconsole) {
-		printf(" (console)\n");
+		kprintf(" (console)\n");
 #ifdef RASTERCONSOLE
 		/*
 		 * XXX rcons doesn't seem to work properly on the overlay
@@ -333,7 +333,7 @@ bwtwoattach(parent, self, args)
 			fbrcons_init(fb);
 #endif
 	} else
-		printf("\n");
+		kprintf("\n");
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
@@ -357,7 +357,7 @@ bwtwoattach(parent, self, args)
 			ovnam = "unknown";
 			break;
 		}
-		printf("%s: %s overlay plane\n", sc->sc_dev.dv_xname, ovnam);
+		kprintf("%s: %s overlay plane\n", sc->sc_dev.dv_xname, ovnam);
 	}
 #endif
 

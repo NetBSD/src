@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 1996/09/26 18:58:33 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.46 1996/10/11 00:47:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -326,7 +326,7 @@ trap(type, psr, pc, tf)
 #endif
 		if (type < 0x80) {
 dopanic:
-			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
+			kprintf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
 			       type, pc, tf->tf_npc, psr, PSR_BITS);
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
@@ -336,7 +336,7 @@ badtrap:
 #endif
 		/* the following message is gratuitous */
 		/* ... but leave it in until we find anything */
-		printf("%s[%d]: unimplemented software trap 0x%x\n",
+		kprintf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
 		trapsignal(p, SIGILL, type);
 		break;
@@ -425,7 +425,7 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+			kprintf("%s[%d]: rwindow: pcb<-stack: %x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
@@ -447,7 +447,7 @@ badtrap:
 		 */
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
+			kprintf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		write_user_windows();
@@ -455,7 +455,7 @@ badtrap:
 			sigexit(p, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
+			kprintf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
 				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
@@ -579,12 +579,12 @@ rwindow_save(p)
 		return (0);
 #ifdef DEBUG
 	if (rwindow_debug)
-		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+		kprintf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
 #endif
 	do {
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf(" %x", rw[1].rw_in[6]);
+			kprintf(" %x", rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -593,7 +593,7 @@ rwindow_save(p)
 	} while (--i > 0);
 #ifdef DEBUG
 	if (rwindow_debug)
-		printf("\n");
+		kprintf("\n");
 #endif
 	pcb->pcb_nsaved = 0;
 	return (0);
@@ -665,7 +665,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x ser=%b\n", pc,
+			kprintf("text fault: pc=%x ser=%b\n", pc,
 				ser, SER_BITS);
 			panic("kernel fault");
 			/* NOTREACHED */
@@ -744,7 +744,7 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x ser=%b\n",
+				kprintf("data fault: pc=%x addr=%x ser=%b\n",
 					pc, v, ser, SER_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
@@ -862,9 +862,9 @@ static int lastdouble;
 	} else if (!(sfsr & SFSR_FAV)) {
 #ifdef DEBUG
 		if (type != T_TEXTFAULT)
-		    printf("mem_access_fault: got fault without valid SFVA\n");
+		    kprintf("mem_access_fault: got fault without valid SFVA\n");
 		if (mmumod == SUN4M_MMU_HS)
-		    printf("mem_access_fault: got fault without valid SFVA on "
+		    kprintf("mem_access_fault: got fault without valid SFVA on "
 			   "HyperSPARC!\n");
 #endif
 		if (type == T_TEXTFAULT)
@@ -890,12 +890,12 @@ static int lastdouble;
 
 #ifdef DEBUG
 	if (lastdouble) {
-		printf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
+		kprintf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
 		lastdouble = 0;
 		if (curproc == NULL)
-			printf("NULL proc\n");
+			kprintf("NULL proc\n");
 		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
+			kprintf("pid %d(%s); sigmask %x, sigcatch %x\n",
 				curproc->p_pid, curproc->p_comm,
 				curproc->p_sigmask, curproc->p_sigcatch);
 	}
@@ -913,12 +913,12 @@ static int lastdouble;
 #ifdef DEBUG
 		if (dfdebug) {
 			lastdouble = 1;
-			printf("mem_access_fault: double text fault @ %x (pc %x); sfsr %x",
+			kprintf("mem_access_fault: double text fault @ %x (pc %x); sfsr %x",
 				sfva, pc, sfsr);
 			if (curproc == NULL)
-				printf("NULL proc\n");
+				kprintf("NULL proc\n");
 			else
-				printf(" pid %d(%s); sigmask %x, sigcatch %x\n",
+				kprintf(" pid %d(%s); sigmask %x, sigcatch %x\n",
 					curproc->p_pid, curproc->p_comm,
 					curproc->p_sigmask, curproc->p_sigcatch);
 		}
@@ -927,7 +927,7 @@ static int lastdouble;
 			if (vm_fault(kernel_map, trunc_page(pc),
 				     VM_PROT_READ, 0) != KERN_SUCCESS)
 #ifdef DEBUG
-				printf("mem_access_fault: "
+				kprintf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
 #endif
 				;
@@ -941,7 +941,7 @@ static int lastdouble;
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x sfsr=%b sfva=%x\n", pc,
+			kprintf("text fault: pc=%x sfsr=%b sfva=%x\n", pc,
 			       sfsr, SFSR_BITS, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
@@ -978,7 +978,7 @@ static int lastdouble;
 	rv = mmu_pagein4m(&vm->vm_pmap, va,
 			sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ);
 	if (rv < 0)
-		printf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
+		kprintf(" sfsr=%x(FT=%x,AT=%x,LVL=%x), sfva=%x, pc=%x, psr=%x\n",
 		       sfsr, (sfsr >> 2) & 7, (sfsr >> 5) & 7, (sfsr >> 8) & 3,
 		       sfva, pc, psr);
 	if (rv > 0)
@@ -1016,7 +1016,7 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x sfsr=%b\n",
+				kprintf("data fault: pc=%x addr=%x sfsr=%b\n",
 				    pc, sfva, sfsr, SFSR_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */

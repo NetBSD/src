@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1996/03/26 15:16:42 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 1996/10/11 00:47:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -133,7 +133,7 @@ clock_attach(parent, self, args)
 			panic("clock: level != %d", CLOCK_PRI);
 	}
 
-	printf(" level %d\n", pri);
+	kprintf(" level %d\n", pri);
 
 	/*
 	 * Can not hook up the ISR until cpu_initclock()
@@ -360,7 +360,7 @@ void inittodr(fs_time)
 		 * unknown instead of preposterous.  Don't bark.
 		 */
 		if (fs_time != 0)
-			printf("WARNING: preposterous time in file system\n");
+			kprintf("WARNING: preposterous time in file system\n");
 		/* 1991/07/01  12:00:00 */
 		fs_time = 21*SECYR + 186*SECDAY + SECDAY/2;
 	}
@@ -369,7 +369,7 @@ void inittodr(fs_time)
 
 	/* Sanity check time from clock. */
 	if (clk_time < long_ago) {
-		printf("WARNING: bad date in battery clock");
+		kprintf("WARNING: bad date in battery clock");
 		clk_bad = 1;
 		clk_time = fs_time;
 	} else {
@@ -378,14 +378,14 @@ void inittodr(fs_time)
 		if (diff < 0)
 			diff = -diff;
 		if (diff >= (SECDAY*2)) {
-			printf("WARNING: clock %s %d days",
+			kprintf("WARNING: clock %s %d days",
 				   (clk_time < fs_time) ? "lost" : "gained",
 				   diff / SECDAY);
 			clk_bad = 1;
 		}
 	}
 	if (clk_bad)
-		printf(" -- CHECK AND RESET THE DATE!\n");
+		kprintf(" -- CHECK AND RESET THE DATE!\n");
 	time.tv_sec = clk_time;
 }
 
@@ -595,9 +595,9 @@ int clkdebug()
 	bzero((char*)&dt, sizeof(dt));
 	clk_get_dt(&dt);
 	lp = (long*)&dt;
-	printf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
+	kprintf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
 
 	dt_to_gmt(&dt, &gmt);
-	printf("clkdebug: gmt=%x\n", gmt);
+	kprintf("clkdebug: gmt=%x\n", gmt);
 }
 #endif

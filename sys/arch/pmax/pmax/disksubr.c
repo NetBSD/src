@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1996/09/21 11:25:51 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 1996/10/11 00:45:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -149,13 +149,13 @@ compat_label(dev, strat, lp, osdep)
 		int part;
 
 		if (dlp->magic != DEC_LABEL_MAGIC) {
-			printf("label: %x\n",dlp->magic);
+			kprintf("label: %x\n",dlp->magic);
 			msg = ((msg != NULL) ? msg: "no disk label");
 			goto done;
 		}
 
 #ifdef DIAGNOSTIC
-/*XXX*/		printf("Interpreting Ultrix label\n");
+/*XXX*/		kprintf("Interpreting Ultrix label\n");
 #endif
 
 		lp->d_magic = DEC_LABEL_MAGIC;
@@ -172,7 +172,7 @@ compat_label(dev, strat, lp, osdep)
 			lp->d_npartitions += 1;
 
 #ifdef DIAGNOSTIC
-			printf(" Ultrix label rz%d%c: start %d len %d\n",
+			kprintf(" Ultrix label rz%d%c: start %d len %d\n",
 			       DISKUNIT(dev), "abcdefgh"[part],
 			       lp->d_partitions[part].p_offset,
 			       lp->d_partitions[part].p_size);
@@ -294,7 +294,7 @@ dk_establish(dk, dev)
 	struct device *dev;
 {
 	/* see also arch/alpha/alpha/disksubr.c */
-	printf("Warning: boot path unknown\n");
+	kprintf("Warning: boot path unknown\n");
 	return;
 }
 

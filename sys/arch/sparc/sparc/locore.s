@@ -84,7 +84,7 @@
  * CCFSZ (C Compiler Frame SiZe) is the size of a stack frame required if
  * a function is to call C code.  It should be just 64, but Sun defined
  * their frame with space to hold arguments 0 through 5 (plus some junk),
- * and varargs routines (such as printf) demand this, and gcc uses this
+ * and varargs routines (such as kprintf) demand this, and gcc uses this
  * area at times anyway.
  */
 #define	CCFSZ	96

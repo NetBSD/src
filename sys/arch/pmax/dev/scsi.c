@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.5 1996/04/07 22:53:55 jonathan Exp $	*/
+/*	$NetBSD: scsi.c,v 1.6 1996/10/11 00:44:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,29 +134,29 @@ scsiPrintSense(sp, len)
 		class = sp0->error >> 4;
 		code = sp0->error & 0xF;
 		if (code >= scsiNumErrors[class])
-			printf("sense error 0x%x", sp0->error);
+			kprintf("sense error 0x%x", sp0->error);
 		else
-			printf("%s", scsiErrors[class][code]);
+			kprintf("%s", scsiErrors[class][code]);
 		if (sp->valid)
-			printf(", blk %d", (sp0->highAddr << 16) |
+			kprintf(", blk %d", (sp0->highAddr << 16) |
 				(sp0->midAddr << 8) | sp0->lowAddr);
 	} else {
 		if (sp->key >= sizeof(Class7Errors) / sizeof(char *))
-			printf("sense class 7 error 0x%x", sp->key);
+			kprintf("sense class 7 error 0x%x", sp->key);
 		else
-			printf("%s", Class7Errors[sp->key]);
+			kprintf("%s", Class7Errors[sp->key]);
 		if (sp->fileMark)
-			printf(", file mark seen");
+			kprintf(", file mark seen");
 		if (sp->endOfMedia)
-			printf(", end of media seen");
+			kprintf(", end of media seen");
 		if (sp->badBlockLen)
-			printf(", block length mis-match");
+			kprintf(", block length mis-match");
 		if (sp->valid)
-			printf(", blk %d", (sp->info1 << 24) |
+			kprintf(", blk %d", (sp->info1 << 24) |
 				(sp->info2 << 16) | (sp->info3 << 8) |
 				sp->info4);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -214,7 +214,7 @@ scsiPrintInquiry(inqbuf, i)
 	int i;
 {
 	if (inqbuf->version > 1 || i < 36)
-		printf(" type 0x%x, qual 0x%x, ver %d",
+		kprintf(" type 0x%x, qual 0x%x, ver %d",
 			inqbuf->type, inqbuf->qualifier, inqbuf->version);
 	else {
 		char vid[9], pid[17], revl[5];
@@ -234,6 +234,6 @@ scsiPrintInquiry(inqbuf, i)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s", vid, pid, revl);
+		kprintf(" %s %s rev %s", vid, pid, revl);
 	}
 }

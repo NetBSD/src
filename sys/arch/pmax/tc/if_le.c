@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 1996/05/07 01:23:31 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 1996/10/11 00:45:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -291,7 +291,7 @@ lewritereg(regptr, val)
 		*regptr = val;
 		wbflush();
 		if (++i > 10000) {
-			printf("le: Reg did not settle (to x%x): x%x\n", val,
+			kprintf("le: Reg did not settle (to x%x): x%x\n", val,
 			    *regptr);
 			return;
 		}

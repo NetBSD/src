@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.14 1996/04/13 17:40:03 abrown Exp $ */
+/*	$NetBSD: auxreg.c,v 1.15 1996/10/11 00:47:11 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,7 @@ auxregattach(parent, self, aux)
 
 	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
 	auxio_reg = AUXIO_REG;
-	printf("\n");
+	kprintf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
 #endif

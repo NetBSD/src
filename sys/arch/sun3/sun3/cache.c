@@ -185,5 +185,5 @@ cache_enable()
 	set_control_byte((char *) SYSTEM_ENAB, enab_reg);
 
 	/* Brag... */
-	printf("cache enabled\n");
+	kprintf("cache enabled\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.9 1996/10/11 00:46:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -111,7 +111,7 @@ eeprom_attach(parent, self, args)
 {
 	struct confargs *ca = args;
 
-	printf("\n");
+	kprintf("\n");
 }
 
 

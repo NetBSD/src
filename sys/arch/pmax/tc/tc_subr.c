@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.7 1996/08/27 21:56:55 cgd Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.8 1996/10/11 00:45:28 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -291,11 +291,11 @@ cpu_tcdesc(cpu)
 #endif /*DS5000_25*/
 	} else if (cpu == DS_PMAX) {
 #ifdef DIAGNOSTIC
-		printf("tcattach: PMAX, no turbochannel\n");
+		kprintf("tcattach: PMAX, no turbochannel\n");
 #endif /*DIAGNOSTIC*/
 		return NULL;
 	} else if (cpu == DS_MIPSFAIR) {
-		printf("tcattach: Mipsfair (5100), no turbochannel\n");
+		kprintf("tcattach: Mipsfair (5100), no turbochannel\n");
 		return NULL;
 	} else {
 		panic("cpu_tc: Unrecognized bus type 0x%x\n", cpu);
@@ -317,7 +317,7 @@ config_tcbus(parent, cputype, printfn)
 	struct tcbus_attach_args * tcbus = cpu_tcdesc(pmax_boardtype);
 
 	if (tcbus == NULL) {
-		printf("no TurboChannel configuration info for this machine\n");
+		kprintf("no TurboChannel configuration info for this machine\n");
 		return;
 	}
 
@@ -402,7 +402,7 @@ tc_consprobeslot(tc_slotaddr)
 	 * framebuffer for which we have a driver. 
 	 */
 
-	/*printf(", trying to init a \"%s\"", name);*/
+	/*kprintf(", trying to init a \"%s\"", name);*/
 
 #define DRIVER_FOR_SLOT(slotname, drivername) \
 	(strcmp (slotname, drivername) == 0)
@@ -445,7 +445,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 
 	/* Never tested on these processors */
 	if (cputype == DS_3MIN || cputype == DS_MAXINE)
-	    printf("tc_enable %s sc %x slot %d\n",
+	    kprintf("tc_enable %s sc %x slot %d\n",
 		   dev->dv_xname, (int)val, cookie);
 
 #ifdef DIAGNOSTIC
@@ -454,7 +454,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 #endif
 
 #ifdef DEBUG
-	printf("tc_intr_establish: slot %d level %d handler %p sc %p on\n",
+	kprintf("tc_intr_establish: slot %d level %d handler %p sc %p on\n",
 		(int) cookie, (int) level, handler,  val);
 #endif
 
@@ -473,7 +473,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 void
 tc_ds_ioasic_intr_setup ()
 {
-	printf("not setting up TC intrs\n");
+	kprintf("not setting up TC intrs\n");
 }
 
 
@@ -499,7 +499,7 @@ tc_ds_ioasic_intr_disestablish(dev, arg)
     void *arg;
 {
 	/*(*tc_enable_interrupt) (ca->ca_slot, handler, 0);*/
-    	printf("cannot dis-establish IOASIC interrupts\n");
+    	kprintf("cannot dis-establish IOASIC interrupts\n");
 }
 
 void
@@ -507,5 +507,5 @@ tc_ds_ioasic_iointr (framep, vec)
     void * framep;
     int vec;
 {
-	printf("bogus interrupt handler fp %x vec %d\n", framep, vec);
+	kprintf("bogus interrupt handler fp %x vec %d\n", framep, vec);
 }

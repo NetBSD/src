@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.17 1996/09/21 03:25:17 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.18 1996/10/11 00:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -261,7 +261,7 @@ mfbattach(parent, self, aux)
 		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 					mfb_intr, fi);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 
@@ -290,14 +290,14 @@ mfbinit(fi, mfbaddr, unit, silent)
 	else {
 		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("mfb%d: no memory for cmap\n", unit);
+			kprintf("mfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
 
 	/* check for no frame buffer */
 	if (badaddr(mfbaddr, 4)) {
-		printf("mfb: bad address 0x%p\n", mfbaddr);
+		kprintf("mfb: bad address 0x%p\n", mfbaddr);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.10 1996/07/01 18:01:28 abrown Exp $ */
+/*	$NetBSD: cache.c,v 1.11 1996/10/11 00:47:12 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -152,12 +152,12 @@ cache_enable()
 			if (cacheinfo.c_hwflush)
 				panic("cache_enable: can't handle 4M with hw-flush cache");
 
-			printf("cache enabled\n");
+			kprintf("cache enabled\n");
 			break;
 
 		case SUN4M_MMU_SS:	/* SuperSPARC */
 			if ((cpumod & 0xf0) != (SUN4M_SS & 0xf0)) {
-				printf(
+				kprintf(
 			"cache NOT enabled for %x/%x cpu/mmu combination\n",
 					cpumod, mmumod);
 				break;	/* ugh, SS and MS have same MMU # */
@@ -186,7 +186,7 @@ cache_enable()
 					 (u_int64_t)MXCC_ENABLE_BIT);
 				cacheinfo.ec_enabled = 1;
 			}
-			printf("cache enabled\n");
+			kprintf("cache enabled\n");
 			break;
 		case SUN4M_MMU_MS1: /* MicroSPARC */
 			/* We "flash-clear" the I/D caches. */
@@ -199,11 +199,11 @@ cache_enable()
 				SRMMU_PCR_ICE);
 			cacheinfo.c_enabled = cacheinfo.dc_enabled = 1;
 
-			printf("cache enabled\n");
+			kprintf("cache enabled\n");
 			break;
 
 		default:
-			printf("Unknown MMU architecture...cache disabled.\n");
+			kprintf("Unknown MMU architecture...cache disabled.\n");
 			/* XXX: not HyperSPARC -- guess for now */
 			cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
 			cache_alias_dist = GUESS_CACHE_ALIAS_DIST;
@@ -218,13 +218,13 @@ cache_enable()
 		     lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_CACHE);
 		cacheinfo.c_enabled = 1;
 
-		printf("cache enabled\n");
+		kprintf("cache enabled\n");
 
 #ifdef notyet
 		if (cpumod == SUN4_400) {
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			     lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_IOCACHE);
-			printf("iocache enabled\n");
+			kprintf("iocache enabled\n");
 		}
 #endif
 	}

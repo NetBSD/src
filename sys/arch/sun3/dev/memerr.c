@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.2 1996/04/07 05:47:28 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.3 1996/10/11 00:46:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ memerr_attach(parent, self, args)
 		break;
 	}
 
-	printf(" (%s memory)\n", sc->sc_typename);
+	kprintf(" (%s memory)\n", sc->sc_typename);
 
 	/* Install interrupt handler. */
 	isr_add_autovect(memerr_interrupt, (void *)sc, ME_PRI);
@@ -186,11 +186,11 @@ memerr_interrupt(arg)
 	pte = get_pte(va);
 	pa = PG_PA(pte);
 
-	printf("\nMemory error on %s cycle!\n",
+	kprintf("\nMemory error on %s cycle!\n",
 		(ctx & 8) ? "DVMA" : "CPU");
-	printf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
+	kprintf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
 		   (ctx & 7), va, pa);
-	printf(" csr=%b\n", csr, sc->sc_csrbits);
+	kprintf(" csr=%b\n", csr, sc->sc_csrbits);
 
 	/*
 	 * If we have parity-checked memory, there is
@@ -209,11 +209,11 @@ memerr_interrupt(arg)
 	 * We have ECC memory.  More complicated...
 	 */
 	if (csr & (ME_ECC_WBTMO | ME_ECC_WBERR)) {
-		printf(" write-back failed, pte=0x%x\n", pte);
+		kprintf(" write-back failed, pte=0x%x\n", pte);
 		goto die;
 	}
 	if (csr & ME_ECC_UE) {
-		printf(" uncorrectable ECC error\n");
+		kprintf(" uncorrectable ECC error\n");
 		goto die;
 	}
 	if (csr & ME_ECC_CE) {
@@ -228,7 +228,7 @@ die:
 	panic("all bets are off...");
 
 noerror:
-	printf("memerr: no error bits set?\n");
+	kprintf("memerr: no error bits set?\n");
 
 recover:
 	/* Clear the error by writing the address register. */

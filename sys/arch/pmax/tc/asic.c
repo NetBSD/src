@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.13 1996/10/06 06:29:54 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.14 1996/10/11 00:45:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -111,7 +111,7 @@ struct asic_slot *asic_slots;
 
 
 #ifdef IOASIC_DEBUG
-#define IOASIC_DPRINTF(x)	printf x
+#define IOASIC_DPRINTF(x)	kprintf x
 #else
 #define IOASIC_DPRINTF(x)	(void) x
 #endif
@@ -136,7 +136,7 @@ asicmatch(parent, cfdata, aux)
 
 	/* The 3MAX (kn02) is special. */
 	if (TC_BUS_MATCHNAME(ta, KN02_ASIC_NAME)) {
-		printf("(configuring KN02 system slot as asic)\n");
+		kprintf("(configuring KN02 system slot as asic)\n");
 		goto gotasic;
 	}
 
@@ -168,7 +168,7 @@ gotasic:
 		asic_slots = kn03_asic_slots;
 		break;
 	default:
-		printf("no ASIC config table for this machine\n");
+		kprintf("no ASIC config table for this machine\n");
 		return (0);
 	}
 
@@ -197,17 +197,17 @@ asicattach(parent, self, aux)
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
 
 #ifdef pmax
-	printf("\n");
+	kprintf("\n");
 #else	/* Alpha AXP: select ASIC speed  */
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
 		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
 		    IOASIC_CSR_FASTMODE;
 		MB();
-		printf(": slow mode\n");
+		kprintf(": slow mode\n");
 	} else
 #endif /*DEC_3000_300*/
-		printf(": fast mode\n");
+		kprintf(": fast mode\n");
 	
 	/* Decstations use hand-craft code to enable asic interrupts */
 	BUS_INTR_ESTABLISH(ta, asic_intr, sc);
@@ -253,9 +253,9 @@ asicprint(aux, pnp)
 	struct ioasicdev_attach_args *d = aux;
 
 	if (pnp)
-		printf("%s at %s", d->iada_modname, pnp);
-	printf(" offset 0x%x", d->iada_offset);
-	printf(" priority %d", (int)d->iada_cookie);
+		kprintf("%s at %s", d->iada_modname, pnp);
+	kprintf(" offset 0x%x", d->iada_offset);
+	kprintf(" priority %d", (int)d->iada_cookie);
 	return (UNCONF);
 }
 
@@ -294,7 +294,7 @@ asic_intr_establish(ca, handler, val)
 
 	/* XXX SHOULD NOT BE THIS LITERAL */
 	if (asic_slots[ca->ca_slot].as_handler != asic_intrnull)
-		/*panic*/ printf("asic_intr_establish: slot %d twice", ca->ca_slot);
+		/*panic*/ kprintf("asic_intr_establish: slot %d twice", ca->ca_slot);
 
 	/*
 	 * XXX  We need to invent a better interface to machine-dependent
@@ -303,7 +303,7 @@ asic_intr_establish(ca, handler, val)
 	 * to "priority" (software pseudo-slot number).  FIXME.
 	 */
 #if defined(IOASIC_DEBUG) && 0
-	printf("asic: %s:  intr for entry %d slot %d pri %d\n", 
+	kprintf("asic: %s:  intr for entry %d slot %d pri %d\n", 
 		 ca->ca_name, ca->ca_slot, ca->ca_slotpri,
 		 (int)asic_slots[ca->ca_slot].as_val);
 #endif	/*IOASIC_DEBUG*/

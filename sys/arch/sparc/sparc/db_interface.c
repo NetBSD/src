@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 1996/05/18 12:27:45 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.13 1996/10/11 00:47:18 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -112,7 +112,7 @@ kdb_kbd_trap(tf)
 	struct trapframe *tf;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
+		kprintf("\n\nkernel: keyboard interrupt\n");
 		kdb_trap(-1, tf);
 	}
 }
@@ -133,7 +133,7 @@ kdb_trap(type, tf)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		printf("kernel: %s trap", trap_type[type & 0xff]);
+		kprintf("kernel: %s trap", trap_type[type & 0xff]);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/

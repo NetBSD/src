@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.18 1996/09/21 08:47:17 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.19 1996/10/11 00:44:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,7 +357,7 @@ rzprobe(xxxsd)
 
 	/* XXX set up the external name */
 	bzero(sc->sc_xname, sizeof(sc->sc_xname));	/* XXX */
-	sprintf(sc->sc_xname, "rz%d", sd->sd_unit);	/* XXX */
+	ksprintf(sc->sc_xname, "rz%d", sd->sd_unit);	/* XXX */
 
 	/* Initialize the disk structure. */
 	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
@@ -376,7 +376,7 @@ rzprobe(xxxsd)
 	sc->sc_tab.b_actf = &sc->sc_buf;
 	rzstart(sd->sd_unit);
 
-/*XXX*/	/*printf("probe rz%d\n", sd->sd_unit);*/
+/*XXX*/	/*kprintf("probe rz%d\n", sd->sd_unit);*/
 
 	if (biowait(&sc->sc_buf) ||
 	    (i = sizeof(inqbuf) - sc->sc_buf.b_resid) < 5)
@@ -389,7 +389,7 @@ rzprobe(xxxsd)
 		break;
 
 	default:			/* not a disk */
-		printf("rz%d: unknown media code 0x%x\n",
+		kprintf("rz%d: unknown media code 0x%x\n",
 		       sd->sd_unit, inqbuf.type);
 		goto bad;
 	}
@@ -402,11 +402,11 @@ rzprobe(xxxsd)
 			goto bad;
 	}
 
-	printf("rz%d at %s%d drive %d slave %d", sd->sd_unit,
+	kprintf("rz%d at %s%d drive %d slave %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
 		sd->sd_slave);
 	if (inqbuf.version < 1 || i < 36)
-		printf(" type 0x%x, qual 0x%x, ver %d",
+		kprintf(" type 0x%x, qual 0x%x, ver %d",
 			inqbuf.type, inqbuf.qualifier, inqbuf.version);
 	else {
 		char vid[9], pid[17], revl[5];
@@ -426,12 +426,12 @@ rzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s", vid, pid, revl);
+		kprintf(" %s %s rev %s", vid, pid, revl);
 	}
-	printf(", %d %d byte blocks\n", sc->sc_blks, sc->sc_blksize);
+	kprintf(", %d %d byte blocks\n", sc->sc_blks, sc->sc_blksize);
 	if (!inqbuf.rmb && sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
-			printf("rz%d: need %d byte blocks - drive ignored\n",
+			kprintf("rz%d: need %d byte blocks - drive ignored\n",
 				sd->sd_unit, DEV_BSIZE);
 			goto bad;
 		}
@@ -483,7 +483,7 @@ rzlblkstrat(bp, bsize)
 	addr = bp->b_un.b_addr;
 #ifdef DEBUG
 	if (rzdebug & RZB_PARTIAL)
-		printf("rzlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
+		kprintf("rzlblkstrat: bp %p flags %lx bn %x resid %x addr %p\n",
 		       bp, bp->b_flags, bn, resid, addr);
 #endif
 
@@ -500,7 +500,7 @@ rzlblkstrat(bp, bsize)
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" readahead: bn %x cnt %x off %x addr %p\n",
+				kprintf(" readahead: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 			rzstrategy(cbp);
@@ -517,7 +517,7 @@ rzlblkstrat(bp, bsize)
 			bcopy(addr, &cbuf[boff], count);
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" writeback: bn %x cnt %x off %x addr %p\n",
+				kprintf(" writeback: bn %x cnt %x off %x addr %p\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 		} else {
@@ -527,7 +527,7 @@ rzlblkstrat(bp, bsize)
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
-				printf(" fulltrans: bn %x cnt %x addr %p\n",
+				kprintf(" fulltrans: bn %x cnt %x addr %p\n",
 				       cbp->b_blkno, count, addr);
 #endif
 		}
@@ -545,7 +545,7 @@ done:
 		addr += count;
 #ifdef DEBUG
 		if (rzdebug & RZB_PARTIAL)
-			printf(" done: bn %x resid %x addr %p\n",
+			kprintf(" done: bn %x resid %x addr %p\n",
 			       bn, resid, addr);
 #endif
 	}
@@ -609,7 +609,7 @@ rzstrategy(bp)
 	}
 	/* don't let disksort() see sc_errbuf */
 	while (sc->sc_flags & RZF_SENSEINPROGRESS)
-		printf("SENSE\n"); /* XXX */
+		kprintf("SENSE\n"); /* XXX */
 	s = splbio();
 	disksort(&sc->sc_tab, bp);
 	if (sc->sc_tab.b_active == 0) {
@@ -661,7 +661,7 @@ rzstart(unit)
 		sc->sc_rwcmd.lowBlockCount = n;
 #ifdef DEBUG
 		if ((bp->b_bcount & (sc->sc_blksize - 1)) != 0)
-			printf("rz%d: partial block xfer -- %lx bytes\n",
+			kprintf("rz%d: partial block xfer -- %lx bytes\n",
 				unit, bp->b_bcount);
 #endif
 		sc->sc_stats.rztransfers++;
@@ -691,7 +691,7 @@ rzdone(unit, error, resid, status)
 	register struct pmax_scsi_device *sd = sc->sc_sd;
 
 	if (bp == NULL) {
-		printf("rz%d: bp == NULL\n", unit);
+		kprintf("rz%d: bp == NULL\n", unit);
 		return;
 	}
 
@@ -704,7 +704,7 @@ rzdone(unit, error, resid, status)
 		if (error || (status & SCSI_STATUS_CHECKCOND)) {
 #ifdef DEBUG
 			if (rzdebug & RZB_ERROR)
-				printf("rz%d: error reading sense data: error %d scsi status 0x%x\n",
+				kprintf("rz%d: error reading sense data: error %d scsi status 0x%x\n",
 					unit, error, status);
 #endif
 			/*
@@ -714,14 +714,14 @@ rzdone(unit, error, resid, status)
 			sc->sc_sense.sense[0] = 0x70;
 			sc->sc_sense.sense[2] = SCSI_CLASS7_NO_SENSE;
 		} else if (!(sc->sc_flags & RZF_NOERR)) {
-			printf("rz%d: ", unit);
+			kprintf("rz%d: ", unit);
 			scsiPrintSense((ScsiClass7Sense *)sc->sc_sense.sense,
 				sizeof(sc->sc_sense.sense) - resid);
 		}
 	} else if (error || (status & SCSI_STATUS_CHECKCOND)) {
 #ifdef DEBUG
 		if (!(sc->sc_flags & RZF_NOERR) && (rzdebug & RZB_ERROR))
-			printf("rz%d: error %d scsi status 0x%x\n",
+			kprintf("rz%d: error %d scsi status 0x%x\n",
 				unit, error, status);
 #endif
 		/* save error info */
@@ -820,7 +820,7 @@ rzgetinfo(dev)
 	msg = readdisklabel(dev, rzstrategy, lp, &cd);
 	if (msg == NULL)
 		return;
-	printf("rz%d: WARNING: %s\n", unit, msg);
+	kprintf("rz%d: WARNING: %s\n", unit, msg);
 
 #ifdef	COMPAT_ULTRIX
 	/*
@@ -828,11 +828,11 @@ rzgetinfo(dev)
 	 */
 	msg = compat_label(dev, rzstrategy, lp, &cd);
 	if (msg == NULL) {
-	  	printf("rz%d: WARNING: using ULTRIX partition information",
+	  	kprintf("rz%d: WARNING: using ULTRIX partition information",
 		       unit);
 		return;
 	}
-	printf("rz%d: WARNING: Ultrix label, %s\n", unit, msg);
+	kprintf("rz%d: WARNING: Ultrix label, %s\n", unit, msg);
 #endif
 	/*
 	 * No label found. Concoct one from compile-time default.
@@ -885,9 +885,9 @@ rzopen(dev, flags, mode, p)
 	lp = sc->sc_label;
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0)
 	{
-		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
+		kprintf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
 			unit, "abcdefg"[part],  unit, part);
-		printf("# partions %d, size of %d = %d\n",
+		kprintf("# partions %d, size of %d = %d\n",
 		       lp->d_npartitions, part,
 		       lp->d_partitions[part].p_size);
 		return (ENXIO);
@@ -1177,22 +1177,22 @@ rzdump(dev, blkno, va, size)
 	if (!scsireq(&sc->sc_dq)) {
 		scsireset(sd->sd_ctlr);
 		sc->sc_stats.rzresets++;
-		printf("[ drive %d reset ] ", unit);
+		kprintf("[ drive %d reset ] ", unit);
 	}
 #else
 	if (!rzready(sc)) {
-		printf("[ drive %d did not reset ] ", unit);
+		kprintf("[ drive %d did not reset ] ", unit);
 		return(ENXIO);
 	}
 #endif
-	printf("[..untested..] dumping %d pages\n", pages);
+	kprintf("[..untested..] dumping %d pages\n", pages);
 
 
 	for (i = 0; i < pages; i++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many Mbs we have dumped */
 		if (i && (i % NPGMB) == 0)
-			printf("%d ", i / NPGMB);
+			kprintf("%d ", i / NPGMB);
 #undef NPBMG
 #ifdef later
 	        /*XXX*/
@@ -1203,7 +1203,7 @@ rzdump(dev, blkno, va, size)
 		stat = scsi_tt_write(sd->sd_ctlr, sd->sd_drive, sd->sd_slave,
 				     vmmap, NBPG, baddr, sc->sc_bshift);
 		if (stat) {
-			printf("rzdump: scsi write error 0x%x\n", stat);
+			kprintf("rzdump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
 #endif

@@ -324,7 +324,7 @@ LKgetc(dev)
 	extern  sccGetc();
 
 #if 0
-/*XXX*/ printf("LK-201 getc 0x%x( [%d %d]) in_dev [%d %d]\n",
+/*XXX*/ kprintf("LK-201 getc 0x%x( [%d %d]) in_dev [%d %d]\n",
 	       raw_kbd_getc,
 	       major(dev), minor(dev),
 	       major(lk_in_dev), minor(lk_in_dev));
@@ -339,7 +339,7 @@ LKgetc(dev)
 		/* c = (*cn_tab.cn_kbdgetc)(cn_tab.cn_dev); */
 		c = (*raw_kbd_getc) (lk_in_dev);
 #if 0
-/*XXX*/ printf(" 0x%x [%c]", c, c);
+/*XXX*/ kprintf(" 0x%x [%c]", c, c);
 #endif
 		if (c == 0)
 			return (-1);
@@ -367,26 +367,26 @@ MouseInit(mdev, putc, getc)
 	(*putc)(mdev, MOUSE_SELF_TEST);
 	id_byte1 = (*getc)(mdev);
 	if (id_byte1 < 0) {
-		printf("MouseInit: Timeout on 1st byte of self-test report\n");
+		kprintf("MouseInit: Timeout on 1st byte of self-test report\n");
 		return;
 	}
 	id_byte2 = (*getc)(mdev);
 	if (id_byte2 < 0) {
-		printf("MouseInit: Timeout on 2nd byte of self-test report\n");
+		kprintf("MouseInit: Timeout on 2nd byte of self-test report\n");
 		return;
 	}
 	id_byte3 = (*getc)(mdev);
 	if (id_byte3 < 0) {
-		printf("MouseInit: Timeout on 3rd byte of self-test report\n");
+		kprintf("MouseInit: Timeout on 3rd byte of self-test report\n");
 		return;
 	}
 	id_byte4 = (*getc)(mdev);
 	if (id_byte4 < 0) {
-		printf("MouseInit: Timeout on 4th byte of self-test report\n");
+		kprintf("MouseInit: Timeout on 4th byte of self-test report\n");
 		return;
 	}
 	if ((id_byte2 & 0x0f) != 0x2)
-		printf("MouseInit: We don't have a mouse!!!\n");
+		kprintf("MouseInit: We don't have a mouse!!!\n");
 	/*
 	 * For some reason, the mouse doesn't see this command if it comes
 	 * too soon after a self test.

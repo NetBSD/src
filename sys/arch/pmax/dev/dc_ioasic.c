@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ioasic.c,v 1.1 1996/09/25 20:48:52 jonathan Exp $	*/
+/*	$NetBSD: dc_ioasic.c,v 1.2 1996/10/11 00:44:47 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -47,7 +47,7 @@ dc_ioasic_consinit(dev)
 {
 
 #if defined(DEBUG)
-	printf("dc_ioasic(%d,%d): serial console at 0x%x\n",
+	kprintf("dc_ioasic(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
 	       MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ));
 	DELAY(100000);
@@ -94,7 +94,7 @@ dc_ioasic_attach(parent, self, aux)
 	caddr_t dcaddr;
 
 	dcaddr = (caddr_t)d->iada_addr;
-	printf("address 0x%p\n", dcaddr);
+	kprintf("address 0x%p\n", dcaddr);
 	(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
 #ifdef HW_FLOW_CONTROL
@@ -107,6 +107,6 @@ dc_ioasic_attach(parent, self, aux)
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
 			     dcintr, self);
 
-	printf("\n");
+	kprintf("\n");
 }
 

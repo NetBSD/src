@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1996/05/29 06:25:01 mhitch Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/10/11 00:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -236,7 +236,7 @@ clockattach(parent, self, aux)
 			MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 
 #ifdef pmax
-	printf("\n");
+	kprintf("\n");
 	return;
 #endif
 
@@ -354,7 +354,7 @@ inittodr(base)
 	int badbase, s;
 
 	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
+		kprintf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
 		base = 6*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
@@ -385,7 +385,7 @@ inittodr(base)
 	splx(s);
 
 #ifdef	DEBUG_CLOCK
-	printf("inittodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
+	kprintf("inittodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
 #endif
 	/* convert from PROM time-of-year convention to actual time */
 	day  += DAY_OFFSET;
@@ -400,7 +400,7 @@ inittodr(base)
 		 */
 		time.tv_sec = base;
 		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
+			kprintf("WARNING: preposterous clock chip time\n");
 			resettodr();
 		}
 		goto bad;
@@ -424,11 +424,11 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
+		kprintf("WARNING: clock %s %ld days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 bad:
-	printf(" -- CHECK AND RESET THE DATE!\n");
+	kprintf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*
@@ -503,7 +503,7 @@ resettodr()
 	wbflush();
 	splx(s);
 #ifdef	DEBUG_CLOCK
-	printf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
+	kprintf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
 #endif
 
 	c->nvram[48*4] |= 1;		/* Set PROM time-valid bit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.52 1996/05/05 06:02:37 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.53 1996/10/11 00:47:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -704,7 +704,7 @@ tracedump(x1)
 /*
  * Handler for monitor vector cmd -
  * For now we just implement the old "g0" and "g4"
- * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
+ * commands and a kprintf hack.  [lifted from freed cmu mach3 sun3 port]
  */
 void
 v_handler(addr, str)
@@ -739,7 +739,7 @@ char *str;
 		mon_printf("%s\n", (char *)addr);
 		break;
 		
-	case '%':			/* p'%'int anything a la printf */
+	case '%':			/* p'%'int anything a la kprintf */
 		mon_printf(str, addr);
 		mon_printf("\n");
 		break;

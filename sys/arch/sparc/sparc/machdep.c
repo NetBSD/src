@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1996/09/26 18:55:51 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.69 1996/10/11 00:47:27 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,12 +159,12 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	kprintf(version);
 	/*identifycpu();*/
 #ifndef MACHINE_NONCONTIG
 	physmem = btoc(avail_end);
 #endif
-	printf("real mem = %d\n", ctob(physmem));
+	kprintf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -264,8 +264,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-	printf("using %d buffers containing %d bytes of memory\n",
+	kprintf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	kprintf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
 	/*
@@ -486,7 +486,7 @@ sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
+		kprintf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
 #endif
 	/*
@@ -532,14 +532,14 @@ sendsig(catcher, sig, mask, code)
 		 */
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
+			kprintf("sendsig: window save or copyout error\n");
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: %s[%d] sig %d scp %p\n",
+		kprintf("sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 #endif
 	/*
@@ -560,7 +560,7 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_out[6] = newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig: about to return to catcher\n");
+		kprintf("sendsig: about to return to catcher\n");
 #endif
 }
 
@@ -592,7 +592,7 @@ sys_sigreturn(p, v, retval)
 		sigexit(p, SIGILL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
+		kprintf("sigreturn: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
@@ -633,7 +633,7 @@ boot(howto, user_boot_string)
 	extern int cold;
 
 	if (cold) {
-		printf("halted\n\n");
+		kprintf("halted\n\n");
 		romhalt();
 	}
 
@@ -657,14 +657,14 @@ boot(howto, user_boot_string)
 	(void) splhigh();		/* ??? */
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		printf("halted\n\n");
+		kprintf("halted\n\n");
 		romhalt();
 	}
 	if (howto & RB_DUMP)
 		dumpsys();
 
 	doshutdownhooks();
-	printf("rebooting\n\n");
+	kprintf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
@@ -775,12 +775,12 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	printf("dump ");
+	kprintf("dump ");
 	if (psize == -1) {
-		printf("area unavailable\n");
+		kprintf("area unavailable\n");
 		return;
 	}
 	blkno = dumplo;
@@ -804,7 +804,7 @@ dumpsys()
 
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
-				printf("%d ", i / (1024*1024));
+				kprintf("%d ", i / (1024*1024));
 
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 					VM_PROT_READ);
@@ -823,27 +823,27 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	case 0:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 		break;
 
 	default:
-		printf("error %d\n", error);
+		kprintf("error %d\n", error);
 		break;
 	}
 }
@@ -858,10 +858,10 @@ stackdump()
 	struct frame *fp = getfp(), *sfp;
 
 	sfp = fp;
-	printf("Frame pointer is at %p\n", fp);
-	printf("Call traceback:\n");
+	kprintf("Frame pointer is at %p\n", fp);
+	kprintf("Call traceback:\n");
 	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
-		printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
+		kprintf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
 		    fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 		    fp->fr_fp);
@@ -952,30 +952,30 @@ oldmon_w_trace(va)
 	struct frame *fp;
 
 	if (curproc)
-		printf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
+		kprintf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
 	else
-		printf("no curproc\n");
+		kprintf("no curproc\n");
 
-	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
+	kprintf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	    cnt.v_swtch, cnt.v_trap, cnt.v_syscall, cnt.v_intr, cnt.v_soft,
 	    cnt.v_faults);
 	write_user_windows();
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
 
-	printf("\nstack trace with sp = %lx\n", va);
+	kprintf("\nstack trace with sp = %lx\n", va);
 	stop = round_up(va);
-	printf("stop at %lx\n", stop);
+	kprintf("stop at %lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
-		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc,
+		kprintf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc,
 		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
 		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
 		fp = fp->fr_fp;
 		if (fp == NULL)
 			break;
 	}
-	printf("end of stack trace\n");
+	kprintf("end of stack trace\n");
 }
 
 void
@@ -989,10 +989,10 @@ oldmon_w_cmd(va, ar)
 		case 0:
 			panic("g0 panic");
 		case 4:
-			printf("w: case 4\n");
+			kprintf("w: case 4\n");
 			break;
 		default:
-			printf("w: unknown case %ld\n", va);
+			kprintf("w: unknown case %ld\n", va);
 			break;
 		}
 		break;
@@ -1000,7 +1000,7 @@ oldmon_w_cmd(va, ar)
 		oldmon_w_trace(va);
 		break;
 	default:
-		printf("w: arg not allowed\n");
+		kprintf("w: arg not allowed\n");
 	}
 }
 #endif /* SUN4 */
@@ -1016,7 +1016,7 @@ caddr_t addr;
 	int s;
 
 	if (CPU_ISSUN4M) {
-		printf("warning: ldcontrolb called in sun4m\n");
+		kprintf("warning: ldcontrolb called in sun4m\n");
 		return 0;
 	}
 

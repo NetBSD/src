@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.26 1996/08/12 20:19:27 chuck Exp $	*/
+/*	$NetBSD: xd.c,v 1.27 1996/10/11 00:46:58 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.26 1996/08/12 20:19:27 chuck Exp $
+ * id: $NetBSD: xd.c,v 1.27 1996/10/11 00:46:58 christos Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -306,7 +306,7 @@ xdgetdisklabel(xd, b)
 			    xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
-		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
+		kprintf("%s: %s\n", xd->sc_dev.dv_xname, err);
 		return(XD_ERR_FAIL);
 	}
 
@@ -315,11 +315,11 @@ xdgetdisklabel(xd, b)
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xd->pcyl = sdl->sl_pcylinders;
 	else {
-		printf("%s: WARNING: no `pcyl' in disk label.\n",
+		kprintf("%s: WARNING: no `pcyl' in disk label.\n",
 							xd->sc_dev.dv_xname);
 		xd->pcyl = xd->sc_dk.dk_label->d_ncylinders +
 			xd->sc_dk.dk_label->d_acylinders;
-		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
+		kprintf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
 
@@ -396,7 +396,7 @@ xdcattach(parent, self, aux)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	xdc->ipl = pil_to_vme[pri];
 	xdc->vector = ca->ca_ra.ra_intr[0].int_vec;
-	printf(" pri %d", pri);
+	kprintf(" pri %d", pri);
 
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
@@ -452,18 +452,18 @@ xdcattach(parent, self, aux)
 
 	rqno = xdc_cmd(xdc, XDCMD_RDP, XDFUN_CTL, 0, 0, 0, 0, XD_SUB_POLL);
 	if (rqno == XD_ERR_FAIL) {
-		printf(": couldn't read controller params\n");
+		kprintf(": couldn't read controller params\n");
 		return;		/* shouldn't ever happen */
 	}
 	ctl = (struct xd_iopb_ctrl *) & xdc->iopbase[rqno];
 	if (ctl->ctype != XDCT_753) {
 		if (xdc->reqs[rqno].errno)
-			printf(": %s: ", xdc_e2str(xdc->reqs[rqno].errno));
-		printf(": doesn't identify as a 753/7053\n");
+			kprintf(": %s: ", xdc_e2str(xdc->reqs[rqno].errno));
+		kprintf(": doesn't identify as a 753/7053\n");
 		XDC_DONE(xdc, rqno, err);
 		return;
 	}
-	printf(": Xylogics 753/7053, PROM=%x.%02x.%02x\n",
+	kprintf(": Xylogics 753/7053, PROM=%x.%02x.%02x\n",
 	    ctl->eprom_partno, ctl->eprom_lvl, ctl->eprom_rev);
 	XDC_DONE(xdc, rqno, err);
 
@@ -472,7 +472,7 @@ xdcattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_CTL, 0, 0, 0, 0, XD_SUB_POLL);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: controller config error: %s\n",
+		kprintf("%s: controller config error: %s\n",
 			xdc->sc_dev.dv_xname, xdc_e2str(err));
 		return;
 	}
@@ -579,7 +579,7 @@ xdattach(parent, self, aux)
 				return;
 			}
 		}
-		printf("%s at %s",
+		kprintf("%s at %s",
 			xd->sc_dev.dv_xname, xd->parent->sc_dev.dv_xname);
 	}
 	/* we now have control */
@@ -592,21 +592,21 @@ xdattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_RST, 0, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err == XD_ERR_NRDY) {
-		printf(" drive %d: off-line\n", xa->driveno);
+		kprintf(" drive %d: off-line\n", xa->driveno);
 		goto done;
 	}
 	if (err) {
-		printf(": ERROR 0x%02x (%s)\n", err, xdc_e2str(err));
+		kprintf(": ERROR 0x%02x (%s)\n", err, xdc_e2str(err));
 		goto done;
 	}
-	printf(" drive %d: ready\n", xa->driveno);
+	kprintf(" drive %d: ready\n", xa->driveno);
 
 	/* now set format parameters */
 
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_FMT, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: write format parameters failed: %s\n",
+		kprintf("%s: write format parameters failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -619,7 +619,7 @@ xdattach(parent, self, aux)
 	}
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: read drive parameters failed: %s\n",
+		kprintf("%s: read drive parameters failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -638,7 +638,7 @@ xdattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: write drive parameters failed: %s\n",
+		kprintf("%s: write drive parameters failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -647,7 +647,7 @@ xdattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive, 0, 1, xa->dvmabuf, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: reading disk label failed: %s\n",
+		kprintf("%s: reading disk label failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -661,10 +661,10 @@ xdattach(parent, self, aux)
 		goto done;
 
 	/* inform the user of what is up */
-	printf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
+	kprintf("%s: <%s>, pcyl %d, hw_spt %d\n", xd->sc_dev.dv_xname,
 		xa->buf, xd->pcyl, spt);
 	mb = xd->ncyl * (xd->nhead * xd->nsect) / (1048576 / XDFM_BPS);
-	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	kprintf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		xd->sc_dev.dv_xname, mb, xd->ncyl, xd->nhead, xd->nsect,
 		XDFM_BPS);
 
@@ -673,7 +673,7 @@ xdattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: write real drive parameters failed: %s\n",
+		kprintf("%s: write real drive parameters failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -689,7 +689,7 @@ xdattach(parent, self, aux)
 	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive, blk, 1, xa->dvmabuf, fmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
-		printf("%s: reading bad144 failed: %s\n",
+		kprintf("%s: reading bad144 failed: %s\n",
 			xd->sc_dev.dv_xname, xdc_e2str(err));
 		goto done;
 	}
@@ -709,7 +709,7 @@ xdattach(parent, self, aux)
 			break;
 	}
 	if (lcv != 126) {
-		printf("%s: warning: invalid bad144 sector!\n",
+		kprintf("%s: warning: invalid bad144 sector!\n",
 			xd->sc_dev.dv_xname);
 	} else {
 		bcopy(xa->buf, &xd->dkb, XDFM_BPS);
@@ -788,7 +788,7 @@ xddump(dev, blkno, va, size)
 
 	xd = xd_cd.cd_devs[unit];
 
-	printf("%s%c: crash dump not supported (yet)\n", xd->sc_dev.dv_xname,
+	kprintf("%s%c: crash dump not supported (yet)\n", xd->sc_dev.dv_xname,
 	    'a' + part);
 
 	return ENXIO;
@@ -1402,9 +1402,9 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	}
 	partno = DISKPART(bp->b_dev);
 #ifdef XDC_DEBUG
-	printf("xdc_startbuf: %s%c: %s block %d\n", xdsc->sc_dev.dv_xname,
+	kprintf("xdc_startbuf: %s%c: %s block %d\n", xdsc->sc_dev.dv_xname,
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
-	printf("xdc_startbuf: b_bcount %d, b_data 0x%x\n",
+	kprintf("xdc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif
 
@@ -1421,7 +1421,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 
 	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */
-		printf("%s: warning: out of DVMA space\n",
+		kprintf("%s: warning: out of DVMA space\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
 		wq = &xdcsc->sc_wq;	/* put at end of queue */
@@ -1492,14 +1492,14 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 	struct xd_iorq *iorq = &xdcsc->reqs[iorqno];
 
 #ifdef XDC_DEBUG
-	printf("xdc_submit_iorq(%s, no=%d, type=%d)\n", xdcsc->sc_dev.dv_xname,
+	kprintf("xdc_submit_iorq(%s, no=%d, type=%d)\n", xdcsc->sc_dev.dv_xname,
 	    iorqno, type);
 #endif
 
 	/* first check and see if controller is busy */
 	if (xdcsc->xdc->xdc_csr & XDC_ADDING) {
 #ifdef XDC_DEBUG
-		printf("xdc_submit_iorq: XDC not ready (ADDING)\n");
+		kprintf("xdc_submit_iorq: XDC not ready (ADDING)\n");
 #endif
 		if (type == XD_SUB_NOQ)
 			return (XD_ERR_FAIL);	/* failed */
@@ -1522,11 +1522,11 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 	{
 		u_char *rio = (u_char *) iorq->iopb;
 		int     sz = sizeof(struct xd_iopb), lcv;
-		printf("%s: aio #%d [",
+		kprintf("%s: aio #%d [",
 			xdcsc->sc_dev.dv_xname, iorq - xdcsc->reqs);
 		for (lcv = 0; lcv < sz; lcv++)
-			printf(" %02x", rio[lcv]);
-		printf("]\n");
+			kprintf(" %02x", rio[lcv]);
+		kprintf("]\n");
 	}
 #endif				/* XDC_DEBUG */
 
@@ -1574,24 +1574,24 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	u_long  count;
 	struct xdc *xdc = xdcsc->xdc;
 #ifdef XDC_DEBUG
-	printf("xdc_piodriver(%s, %d, freeone=%d)\n", xdcsc->sc_dev.dv_xname,
+	kprintf("xdc_piodriver(%s, %d, freeone=%d)\n", xdcsc->sc_dev.dv_xname,
 	    iorqno, freeone);
 #endif
 
 	while (xdcsc->nwait || xdcsc->nrun) {
 #ifdef XDC_DEBUG
-		printf("xdc_piodriver: wait=%d, run=%d\n",
+		kprintf("xdc_piodriver: wait=%d, run=%d\n",
 			xdcsc->nwait, xdcsc->nrun);
 #endif
 		XDC_WAIT(xdc, count, XDC_MAXTIME, (XDC_REMIOPB | XDC_F_ERROR));
 #ifdef XDC_DEBUG
-		printf("xdc_piodriver: done wait with count = %d\n", count);
+		kprintf("xdc_piodriver: done wait with count = %d\n", count);
 #endif
 		/* we expect some progress soon */
 		if (count == 0 && nreset >= 2) {
 			xdc_reset(xdcsc, 0, XD_RSET_ALL, XD_ERR_FAIL, 0);
 #ifdef XDC_DEBUG
-			printf("xdc_piodriver: timeout\n");
+			kprintf("xdc_piodriver: timeout\n");
 #endif
 			return (XD_ERR_FAIL);
 		}
@@ -1608,7 +1608,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 		if (freeone) {
 			if (xdcsc->nrun < XDC_MAXIOPB) {
 #ifdef XDC_DEBUG
-				printf("xdc_piodriver: done: one free\n");
+				kprintf("xdc_piodriver: done: one free\n");
 #endif
 				return (XD_ERR_AOK);
 			}
@@ -1622,7 +1622,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	retval = xdcsc->reqs[iorqno].errno;
 
 #ifdef XDC_DEBUG
-	printf("xdc_piodriver: done, retval = 0x%x (%s)\n",
+	kprintf("xdc_piodriver: done, retval = 0x%x (%s)\n",
 	    xdcsc->reqs[iorqno].errno, xdc_e2str(xdcsc->reqs[iorqno].errno));
 #endif
 
@@ -1657,7 +1657,7 @@ xdc_xdreset(xdcsc, xdsc)
 	XDC_GO(xdcsc->xdc, addr);	/* go! */
 	XDC_WAIT(xdcsc->xdc, del, XDC_RESETUSEC, XDC_REMIOPB);
 	if (del <= 0 || xdcsc->iopbase->errs) {
-		printf("%s: off-line: %s\n", xdcsc->sc_dev.dv_xname,
+		kprintf("%s: off-line: %s\n", xdcsc->sc_dev.dv_xname,
 		    xdc_e2str(xdcsc->iopbase->errno));
 		xdcsc->xdc->xdc_csr = XDC_RESET;
 		XDC_WAIT(xdcsc->xdc, del, XDC_RESETUSEC, XDC_RESET);
@@ -1687,7 +1687,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	/* soft reset hardware */
 
 	if (!quiet)
-		printf("%s: soft reset\n", xdcsc->sc_dev.dv_xname);
+		kprintf("%s: soft reset\n", xdcsc->sc_dev.dv_xname);
 	xdcsc->xdc->xdc_csr = XDC_RESET;
 	XDC_WAIT(xdcsc->xdc, del, XDC_RESETUSEC, XDC_RESET);
 	if (del <= 0) {
@@ -1758,14 +1758,14 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 #ifdef XDC_DIAG
 	del = xdcsc->nwait + xdcsc->nrun + xdcsc->nfree + xdcsc->ndone;
 	if (del != XDC_MAXIOPB)
-		printf("%s: diag: xdc_reset miscount (%d should be %d)!\n",
+		kprintf("%s: diag: xdc_reset miscount (%d should be %d)!\n",
 		    xdcsc->sc_dev.dv_xname, del, XDC_MAXIOPB);
 	else
 		if (xdcsc->ndone > XDC_MAXIOPB - XDC_SUBWAITLIM)
-			printf("%s: diag: lots of done jobs (%d)\n",
+			kprintf("%s: diag: lots of done jobs (%d)\n",
 			    xdcsc->sc_dev.dv_xname, xdcsc->ndone);
 #endif
-	printf("RESET DONE\n");
+	kprintf("RESET DONE\n");
 	return (retval);
 }
 /*
@@ -1810,10 +1810,10 @@ xdc_remove_iorq(xdcsc)
 		 * we dump them all.
 		 */
 		errno = xdc->xdc_f_err;
-		printf("%s: fatal error 0x%02x: %s\n", xdcsc->sc_dev.dv_xname,
+		kprintf("%s: fatal error 0x%02x: %s\n", xdcsc->sc_dev.dv_xname,
 		    errno, xdc_e2str(errno));
 		if (xdc_reset(xdcsc, 0, XD_RSET_ALL, errno, 0) != XD_ERR_AOK) {
-			printf("%s: soft reset failed!\n",
+			kprintf("%s: soft reset failed!\n",
 				xdcsc->sc_dev.dv_xname);
 			panic("xdc_remove_iorq: controller DEAD");
 		}
@@ -1849,10 +1849,10 @@ xdc_remove_iorq(xdcsc)
 		{
 			u_char *rio = (u_char *) iopb;
 			int     sz = sizeof(struct xd_iopb), lcv;
-			printf("%s: rio #%d [", xdcsc->sc_dev.dv_xname, rqno);
+			kprintf("%s: rio #%d [", xdcsc->sc_dev.dv_xname, rqno);
 			for (lcv = 0; lcv < sz; lcv++)
-				printf(" %02x", rio[lcv]);
-			printf("]\n");
+				kprintf(" %02x", rio[lcv]);
+			kprintf("]\n");
 		}
 #endif				/* XDC_DEBUG */
 
@@ -1968,23 +1968,23 @@ xdc_perror(iorq, iopb, still_trying)
 
 	int     error = iorq->lasterror;
 
-	printf("%s", (iorq->xd) ? iorq->xd->sc_dev.dv_xname
+	kprintf("%s", (iorq->xd) ? iorq->xd->sc_dev.dv_xname
 	    : iorq->xdc->sc_dev.dv_xname);
 	if (iorq->buf)
-		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
+		kprintf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
 	if (iopb->comm == XDCMD_RD || iopb->comm == XDCMD_WR)
-		printf("%s %d/%d/%d: ",
+		kprintf("%s %d/%d/%d: ",
 			(iopb->comm == XDCMD_RD) ? "read" : "write",
 			iopb->cylno, iopb->headno, iopb->sectno);
-	printf("%s", xdc_e2str(error));
+	kprintf("%s", xdc_e2str(error));
 
 	if (still_trying)
-		printf(" [still trying, new error=%s]", xdc_e2str(iorq->errno));
+		kprintf(" [still trying, new error=%s]", xdc_e2str(iorq->errno));
 	else
 		if (iorq->errno == 0)
-			printf(" [recovered in %d tries]", iorq->tries);
+			kprintf(" [recovered in %d tries]", iorq->tries);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -2082,26 +2082,26 @@ xdc_tick(arg)
 	bcopy(xdcsc->freereq, fqc, sizeof(fqc));
 	splx(s);
 	if (wait + run + free + done != XDC_MAXIOPB) {
-		printf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",
+		kprintf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",
 		    xdcsc->sc_dev.dv_xname, wait, free, run, done, XDC_MAXIOPB);
 		bzero(mark, sizeof(mark));
-		printf("FREE: ");
+		kprintf("FREE: ");
 		for (lcv = free; lcv > 0; lcv--) {
-			printf("%d ", fqc[lcv - 1]);
+			kprintf("%d ", fqc[lcv - 1]);
 			mark[fqc[lcv - 1]] = 1;
 		}
-		printf("\nWAIT: ");
+		kprintf("\nWAIT: ");
 		lcv = wait;
 		while (lcv > 0) {
-			printf("%d ", wqc[whd]);
+			kprintf("%d ", wqc[whd]);
 			mark[wqc[whd]] = 1;
 			whd = (whd + 1) % XDC_MAXIOPB;
 			lcv--;
 		}
-		printf("\n");
+		kprintf("\n");
 		for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 			if (mark[lcv] == 0)
-				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
+				kprintf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
 				lcv, xdcsc->reqs[lcv].mode,
 				xdcsc->iopbase[lcv].done,
 				xdcsc->iopbase[lcv].errs,
@@ -2110,18 +2110,18 @@ xdc_tick(arg)
 		}
 	} else
 		if (done > XDC_MAXIOPB - XDC_SUBWAITLIM)
-			printf("%s: diag: lots of done jobs (%d)\n",
+			kprintf("%s: diag: lots of done jobs (%d)\n",
 				xdcsc->sc_dev.dv_xname, done);
 
 #endif
 #ifdef XDC_DEBUG
-	printf("%s: tick: csr 0x%x, w/f/r/d %d/%d/%d/%d\n",
+	kprintf("%s: tick: csr 0x%x, w/f/r/d %d/%d/%d/%d\n",
 		xdcsc->sc_dev.dv_xname,
 		xdcsc->xdc->xdc_csr, xdcsc->nwait, xdcsc->nfree, xdcsc->nrun,
 		xdcsc->ndone);
 	for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 		if (xdcsc->reqs[lcv].mode)
-		  printf("running %d: mode %d done %d errs %d errno 0x%x\n",
+		  kprintf("running %d: mode %d done %d errs %d errno 0x%x\n",
 			 lcv,
 			 xdcsc->reqs[lcv].mode, xdcsc->iopbase[lcv].done,
 			 xdcsc->iopbase[lcv].errs, xdcsc->iopbase[lcv].errno);
@@ -2139,7 +2139,7 @@ xdc_tick(arg)
 			reset = 1;
 	}
 	if (reset) {
-		printf("%s: watchdog timeout\n", xdcsc->sc_dev.dv_xname);
+		kprintf("%s: watchdog timeout\n", xdcsc->sc_dev.dv_xname);
 		xdc_reset(xdcsc, 0, XD_RSET_NONE, XD_ERR_FAIL, NULL);
 	}
 	splx(s);

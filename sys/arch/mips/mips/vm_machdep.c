@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 1996/05/19 15:55:31 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 1996/10/11 00:45:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -372,20 +372,20 @@ kvtophys(vm_offset_t kva)
 		pte = kvtopte(kva);
 
 		if ((pte - Sysmap) > Sysmapsize)  {
-			printf("oops: Sysmap overrun, max %d index %d\n",
+			kprintf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
 		}
 		if ((pte->pt_entry & PG_V) == 0) {
-			printf("kvtophys: pte not valid for %lx\n", kva);
+			kprintf("kvtophys: pte not valid for %lx\n", kva);
 		}
 		phys = (pte->pt_entry & PG_FRAME) |
 			(kva & PGOFSET);
 #ifdef DEBUG_VIRTUAL_TO_PHYSICAL
-		printf("kvtophys: kv %p, phys %x", kva, phys);
+		kprintf("kvtophys: kv %p, phys %x", kva, phys);
 #endif
 	}
 	else {
-		printf("Virtual address %lx: cannot map to physical\n",
+		kprintf("Virtual address %lx: cannot map to physical\n",
 		       kva);
                 phys = 0;
 		/*panic("non-kernel address to kvtophys\n");*/

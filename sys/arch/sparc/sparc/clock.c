@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 1996/06/12 23:40:29 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.46 1996/10/11 00:47:14 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,12 +267,12 @@ oclockattach(parent, self, aux)
 		ival = *ireg;			/* clear, save value */
 		intersil_disable(i7);		/* disable clock */
 		if (ival & INTERSIL_INTER_PENDING) {
-			printf(" delay constant %d%s\n", timerblurb,
+			kprintf(" delay constant %d%s\n", timerblurb,
 				(timerblurb == 1) ? " [TOO SMALL?]" : "");
 			break;
 		}
 		if (timerblurb > 10) {
-			printf("\noclock: calibration failing; clamped at %d\n",
+			kprintf("\noclock: calibration failing; clamped at %d\n",
 			       timerblurb);
 			break;
 		}
@@ -324,7 +324,7 @@ eeprom_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	printf("\n");
+	kprintf("\n");
 
 	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE, ca->ca_bustype);
 
@@ -384,7 +384,7 @@ clockattach(parent, self, aux)
 	if (prop == NULL)
 		panic("no prop");
 #endif
-	printf(": %s (eeprom)\n", prop);
+	kprintf(": %s (eeprom)\n", prop);
 
 	/*
 	 * We ignore any existing virtual address as we need to map
@@ -539,7 +539,7 @@ timerattach(parent, self, aux)
 
 	}
 
-	printf(" delay constant %d\n", timerblurb);
+	kprintf(" delay constant %d\n", timerblurb);
 
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
@@ -622,14 +622,14 @@ cpu_initclocks()
 #endif /* SUN4 */
 
 	if (1000000 % hz) {
-		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		kprintf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
 	}
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		kprintf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
 	profhz = stathz;		/* always */
@@ -897,7 +897,7 @@ inittodr(base)
 		 * in stead of preposterous. Don't bark.
 		 */
 		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
+			kprintf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
@@ -924,7 +924,7 @@ inittodr(base)
 forward:
 #endif
 	if (time.tv_sec == 0) {
-		printf("WARNING: bad date in battery clock");
+		kprintf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
@@ -939,10 +939,10 @@ forward:
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		kprintf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
+	kprintf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*

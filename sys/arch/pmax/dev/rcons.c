@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.10 1996/09/02 06:44:03 mycroft Exp $	*/
+/*	$NetBSD: rcons.c,v 1.11 1996/10/11 00:44:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -219,7 +219,7 @@ rasterconsoleattach (n)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
 #ifdef DEBUG
-	printf("rconsattach: %d raster consoles\n", n);
+	kprintf("rconsattach: %d raster consoles\n", n);
 #endif
 
 #ifdef notyet /* ugly console input on pmaxes */
@@ -231,7 +231,7 @@ rasterconsoleattach (n)
 		status = ((*cdevsw[major(cn_in_dev)].d_open)
 			  (cn_in_dev, O_NONBLOCK, S_IFCHR, curproc)); /* XXX */
 		if (status)
-			printf ("rconsattach: input device open failed: %d\n",
+			kprintf ("rconsattach: input device open failed: %d\n",
 			        status);
 	}
 	/* Now the input side has been opened cleanly, we can dispense

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.5 1996/03/17 02:03:43 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.6 1996/10/11 00:46:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ cg2match(parent, vcf, args)
 		return (0);
 
 	/* XXX */
-	/* printf("cg2: id=0x%x\n", x); */
+	/* kprintf("cg2: id=0x%x\n", x); */
 
 	return (1);
 }
@@ -188,7 +188,7 @@ cg2attach(parent, self, args)
 	fbt->fb_height = 900;
 	fbt->fb_size = CG2_MAPPED_SIZE;
 
-	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+	kprintf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 2);
 }
 
@@ -389,6 +389,6 @@ cg2intr(vsc)
 	/* XXX - Just disable interrupts for now. */
 	sc->sc_ctlreg->status.reg.inten = 0;
 
-	printf("cg2intr\n");
+	kprintf("cg2intr\n");
 	return (1);
 }

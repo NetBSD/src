@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.26 1996/08/28 19:00:38 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.27 1996/10/11 00:46:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -455,14 +455,14 @@ si_attach(parent, self, args)
 		/* Impossible case handled above. */
 		break;
 	}
-	printf(" pri %d\n", ra->ra_intr[0].int_pri);
+	kprintf(" pri %d\n", ra->ra_intr[0].int_pri);
 	if (sc->sc_options) {
-		printf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
+		kprintf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
 			sc->sc_options, SI_OPTIONS_BITS);
 	}
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
+		kprintf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -495,7 +495,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef DEBUG
 		if (si_debug) {
-			printf("si_minphys len = %x.\n", MAX_DMA_LEN);
+			kprintf("si_minphys len = %x.\n", MAX_DMA_LEN);
 			Debugger();
 		}
 #endif
@@ -527,11 +527,11 @@ si_intr(void *arg)
 
 	if (csr & SI_CSR_DMA_CONFLICT) {
 		dma_error |= SI_CSR_DMA_CONFLICT;
-		printf("si_intr: DMA conflict\n");
+		kprintf("si_intr: DMA conflict\n");
 	}
 	if (csr & SI_CSR_DMA_BUS_ERR) {
 		dma_error |= SI_CSR_DMA_BUS_ERR;
-		printf("si_intr: DMA bus error\n");
+		kprintf("si_intr: DMA bus error\n");
 	}
 	if (dma_error) {
 		if (sc->ncr_sc.sc_state & NCR_DOINGDMA)
@@ -544,7 +544,7 @@ si_intr(void *arg)
 		claimed = ncr5380_intr(&sc->ncr_sc);
 #ifdef DEBUG
 		if (!claimed) {
-			printf("si_intr: spurious from SBC\n");
+			kprintf("si_intr: spurious from SBC\n");
 			if (si_debug & 4) {
 				Debugger();	/* XXX */
 			}
@@ -564,7 +564,7 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		printf("si_reset_adapter\n");
+		kprintf("si_reset_adapter\n");
 	}
 #endif
 
@@ -640,7 +640,7 @@ si_dma_alloc(ncr_sc)
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if ((addr & 1) || (xlen & 1)) {
-		printf("si_dma_alloc: misaligned.\n");
+		kprintf("si_dma_alloc: misaligned.\n");
 		return;
 	}
 
@@ -656,7 +656,7 @@ si_dma_alloc(ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
-		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
+		kprintf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
 #ifdef DEBUG
 		Debugger();
 #endif
@@ -691,7 +691,7 @@ found:
 	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
 	if (dh->dh_dvma == 0) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
+		kprintf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -764,7 +764,7 @@ si_dma_poll(ncr_sc)
 		if (csr & csr_mask)
 			break;
 		if (--tmo <= 0) {
-			printf("%s: DMA timeout (while polling)\n",
+			kprintf("%s: DMA timeout (while polling)\n",
 			    ncr_sc->sc_dev.dv_xname);
 			/* Indicate timeout as MI code would. */
 			sr->sr_flags |= SR_OVERDUE;
@@ -775,7 +775,7 @@ si_dma_poll(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		printf("si_dma_poll: done, csr=0x%x\n", csr);
+		kprintf("si_dma_poll: done, csr=0x%x\n", csr);
 	}
 #endif
 }
@@ -882,7 +882,7 @@ si_vme_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
+		kprintf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -921,7 +921,7 @@ si_vme_dma_start(ncr_sc)
 
 #ifdef DEBUG
 	if (si->fifo_count != xlen) {
-		printf("si_dma_start: Fifo_count=0x%x, xlen=0x%x\n",
+		kprintf("si_dma_start: Fifo_count=0x%x, xlen=0x%x\n",
 		    si->fifo_count, xlen);
 		Debugger();
 	}
@@ -952,7 +952,7 @@ si_vme_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: started, flags=0x%x\n",
+		kprintf("si_dma_start: started, flags=0x%x\n",
 			   ncr_sc->sc_state);
 	}
 #endif
@@ -980,7 +980,7 @@ si_vme_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: dma not running\n");
+		kprintf("si_dma_stop: dma not running\n");
 #endif
 		return;
 	}
@@ -990,7 +990,7 @@ si_vme_dma_stop(ncr_sc)
 	si->si_csr &= ~SI_CSR_DMA_EN;	/* VME only */
 
 	if (si->si_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
-		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
+		kprintf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -1021,12 +1021,12 @@ si_vme_dma_stop(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
+		kprintf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
 		    resid, ntrans);
 	}
 #endif
 	if (ntrans < MIN_DMA_LEN) {
-		printf("si: fifo count: 0x%x\n", resid);
+		kprintf("si: fifo count: 0x%x\n", resid);
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}
@@ -1039,7 +1039,7 @@ si_vme_dma_stop(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: ntrans=0x%x\n", ntrans);
+		kprintf("si_dma_stop: ntrans=0x%x\n", ntrans);
 	}
 #endif
 
@@ -1052,7 +1052,7 @@ si_vme_dma_stop(ncr_sc)
 	{
 		char *cp = ncr_sc->sc_dataptr;
 #ifdef DEBUG
-		printf("si: Got Left-over bytes!\n");
+		kprintf("si: Got Left-over bytes!\n");
 #endif
 		if (si->si_csr & SI_CSR_BPCON) {
 			/* have SI_CSR_BPCON */
@@ -1183,7 +1183,7 @@ si_obio_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
+		kprintf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
 		    dh, data_pa, xlen);
 	}
 #endif
@@ -1211,7 +1211,7 @@ si_obio_dma_start(ncr_sc)
 		adj = 2;
 #ifdef DEBUG
 		if (si_debug & 2)
-			printf("si_dma_start: adjusted up %d bytes\n", adj);
+			kprintf("si_dma_start: adjusted up %d bytes\n", adj);
 #endif
 	}
 
@@ -1230,7 +1230,7 @@ si_obio_dma_start(ncr_sc)
 			adjlen = ncr5380_pio_out(ncr_sc, PHASE_DATA_OUT,
 			    adj, dh->dh_addr);
 			if (adjlen != adj)
-				printf("%s: bad outgoing adj, %d != %d\n",
+				kprintf("%s: bad outgoing adj, %d != %d\n",
 				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
@@ -1243,7 +1243,7 @@ si_obio_dma_start(ncr_sc)
 			adjlen = ncr5380_pio_in(ncr_sc, PHASE_DATA_IN,
 			    adj, dh->dh_addr);
 			if (adjlen != adj)
-				printf("%s: bad incoming adj, %d != %d\n",
+				kprintf("%s: bad incoming adj, %d != %d\n",
 				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
@@ -1259,7 +1259,7 @@ si_obio_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: started, flags=0x%x\n",
+		kprintf("si_dma_start: started, flags=0x%x\n",
 		    ncr_sc->sc_state);
 	}
 #endif
@@ -1300,7 +1300,7 @@ si_obio_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: dma not running\n");
+		kprintf("si_dma_stop: dma not running\n");
 #endif
 		return;
 	}
@@ -1326,7 +1326,7 @@ si_obio_dma_stop(ncr_sc)
 #else
 	if (si->sw_csr & (SI_CSR_DMA_CONFLICT)) {
 #endif
-		printf("sw: DMA error, csr=0x%x, reset\n", si->sw_csr);
+		kprintf("sw: DMA error, csr=0x%x, reset\n", si->sw_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
@@ -1349,12 +1349,12 @@ si_obio_dma_stop(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: ntrans=0x%x\n", ntrans);
+		kprintf("si_dma_stop: ntrans=0x%x\n", ntrans);
 	}
 #endif
 
 	if (ntrans < MIN_DMA_LEN) {
-		printf("sw: short transfer\n");
+		kprintf("sw: short transfer\n");
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}
@@ -1418,7 +1418,7 @@ si_obio_dma_stop(ncr_sc)
 
 #ifdef DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: ntrans=0x%x\n", ntrans);
+		kprintf("si_dma_stop: ntrans=0x%x\n", ntrans);
 	}
 #endif
 }

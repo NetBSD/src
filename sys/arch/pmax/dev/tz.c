@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.10 1996/04/10 16:33:44 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.11 1996/10/11 00:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,19 +173,19 @@ tzprobe(xxxsd)
 	sc->sc_flags = TZF_ALIVE;
 	sc->sc_modelen = 12;
 	sc->sc_buf.b_flags = 0;
-	printf("tz%d at %s%d drive %d slave %d", sd->sd_unit,
+	kprintf("tz%d at %s%d drive %d slave %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
 		sd->sd_slave);
 	if (i == 5 && inqbuf.version == 1 && inqbuf.qualifier == 0x50) {
-		printf(" TK50\n");
+		kprintf(" TK50\n");
 		sc->sc_tapeid = MT_ISTK50;
 	} else if (i >= 5 && inqbuf.version == 1 && inqbuf.qualifier == 0 &&
 	    inqbuf.length == 0) {
 		/* assume Emultex MT02 controller */
-		printf(" MT02\n");
+		kprintf(" MT02\n");
 		sc->sc_tapeid = MT_ISMT02;
 	} else if (inqbuf.version > 2 || i < 36) {
-		printf(" GENERIC SCSI tape device: qual 0x%x, ver %d\n",
+		kprintf(" GENERIC SCSI tape device: qual 0x%x, ver %d\n",
 			inqbuf.qualifier, inqbuf.version);
 		sc->sc_tapeid = 0;
 	} else {
@@ -206,7 +206,7 @@ tzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s\n", vid, pid, revl);
+		kprintf(" %s %s rev %s\n", vid, pid, revl);
 
 		if (bcmp("EXB-8200", pid, 8) == 0) {
 			sc->sc_tapeid = MT_ISEXABYTE;
@@ -224,7 +224,7 @@ tzprobe(xxxsd)
 		} else if (bcmp("123107 SCSI", pid, 11) == 0) {
 			sc->sc_tapeid = MT_ISMFOUR;
 		} else {
-			printf("tz%d: assuming GENERIC SCSI tape device\n",
+			kprintf("tz%d: assuming GENERIC SCSI tape device\n",
 				sd->sd_unit);
 			sc->sc_tapeid = 0;
 		}
@@ -291,7 +291,7 @@ tzcommand(dev, command, code, count, data)
 	sc->sc_buf.b_flags = 0;
 	sc->sc_cmd.flags = 0;
 	if (sc->sc_buf.b_resid)
-		printf("tzcommand: resid %ld\n", sc->sc_buf.b_resid); /* XXX */
+		kprintf("tzcommand: resid %ld\n", sc->sc_buf.b_resid); /* XXX */
 	if (error == 0)
 		switch (command) {
 		case SCSI_SPACE:
@@ -373,7 +373,7 @@ tzdone(unit, error, resid, status)
 	extern int cold;
 
 	if (bp == NULL) {
-		printf("tz%d: bp == NULL\n", unit);
+		kprintf("tz%d: bp == NULL\n", unit);
 		return;
 	}
 	if (sc->sc_flags & TZF_SENSEINPROGRESS) {
@@ -387,7 +387,7 @@ tzdone(unit, error, resid, status)
 		bp = dp;
 
 		if (error || (status & SCSI_STATUS_CHECKCOND)) {
-			printf("tz%d: error reading sense data: error %d scsi status 0x%x\n",
+			kprintf("tz%d: error reading sense data: error %d scsi status 0x%x\n",
 				unit, error, status);
 			/*
 			 * We got an error during the REQUEST_SENSE,
@@ -457,7 +457,7 @@ tzdone(unit, error, resid, status)
 
 			default:
 			prerr:
-				printf("tz%d: ", unit);
+				kprintf("tz%d: ", unit);
 				scsiPrintSense((ScsiClass7Sense *)
 					sc->sc_sense.sense,
 					sizeof(sc->sc_sense.sense) - resid);
@@ -466,7 +466,7 @@ tzdone(unit, error, resid, status)
 	} else if (error || (status & SCSI_STATUS_CHECKCOND)) {
 #ifdef DEBUG
 		if (!cold && tzdebug)
-			printf("tz%d: error %d scsi status 0x%x\n",
+			kprintf("tz%d: error %d scsi status 0x%x\n",
 				unit, error, status);
 #endif
 		/* save error info */
