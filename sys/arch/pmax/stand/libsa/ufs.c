@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.5 1999/02/01 03:08:05 jonathan Exp $	*/
+/*	$NetBSD: ufs.c,v 1.6 1999/02/22 08:16:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,31 +35,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs.c	8.1 (Berkeley) 6/11/93
- *  
  *
  * Copyright (c) 1990, 1991 Carnegie Mellon University
  * All Rights Reserved.
  *
  * Author: David Golub
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
@@ -68,9 +66,9 @@
  *	Stand-alone file reading package.
  */
 
-#define bcopy(s, d, l) memcpy(d, s, l)	/*XXX none of our copies overlap */
+#define bcopy(s, d, l)	memcpy(d, s, l)	/*XXX none of our copies overlap */
+#define bzero(s, l)	memset(s, 0, l)
 
-#include <string.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
@@ -78,10 +76,18 @@
 #include <ufs/ffs/fs.h>
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
-#include <stand.h>
+#else
+#include <string.h>
+inline u_int
+max(a, b)
+        u_int a, b;
+{
+        return (a > b ? a : b);
+}
 #endif
 
-#include <machine/dec_prom.h>
+#include "stand.h"
+#include "ufs.h"
 
 /*
  * In-core open file.
@@ -108,7 +114,7 @@ static int	block_map __P((struct open_file *, daddr_t, daddr_t *));
 static int	buf_read_file __P((struct open_file *, char **, size_t *));
 static int	search_directory __P((char *, struct open_file *, ino_t *));
 #ifdef COMPAT_UFS
-static void ffs_oldfscompat __P((struct fs *));
+static void	ffs_oldfscompat __P((struct fs *));
 #endif
 
 /*
@@ -125,16 +131,13 @@ read_inode(inumber, f)
 	size_t rsize;
 	int rc;
 
-#ifdef DEBUG
-/*XXX*/printf("ri ");
-#endif
-
 	/*
 	 * Read inode and save it.
 	 */
 	buf = alloc(fs->fs_bsize);
+	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize, 
+		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize,
 		buf, &rsize);
 	if (rc)
 		goto out;
@@ -162,7 +165,7 @@ read_inode(inumber, f)
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (rc);	 
+	return (rc);
 }
 
 /*
@@ -242,9 +245,7 @@ block_map(f, file_block, disk_block_p)
 			if (fp->f_blk[level] == (char *)0)
 				fp->f_blk[level] =
 					alloc(fs->fs_bsize);
-#ifdef DEBUG
-/*XXX*/printf("bm %d", fs->fs_bsize);
-#endif
+			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 				fsbtodb(fp->f_fs, ind_block_num),
 				fs->fs_bsize,
@@ -294,7 +295,6 @@ buf_read_file(f, buf_p, size_p)
 	off = blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
 	block_size = dblksize(fs, &fp->f_di, file_block);
-	if (block_size == 0) block_size = fs->fs_bsize; /*XXX*/
 
 	if (file_block != fp->f_buf_blkno) {
 		rc = block_map(f, file_block, &disk_block);
@@ -308,9 +308,7 @@ buf_read_file(f, buf_p, size_p)
 			bzero(fp->f_buf, block_size);
 			fp->f_buf_size = block_size;
 		} else {
-#ifdef DEBUG
-/*XXX*/printf("brf ");*/
-#endif
+			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 				fsbtodb(fs, disk_block),
 				block_size, fp->f_buf, &fp->f_buf_size);
@@ -404,9 +402,10 @@ ufs_open(path, f)
 	struct fs *fs;
 	int rc;
 	size_t buf_size;
-#if 0
+#ifndef UFS_NOSYMLINK
 	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
+	char *buf = NULL;
 #endif
 
 	/* allocate file system specific data structure */
@@ -417,6 +416,7 @@ ufs_open(path, f)
 	/* allocate space and read super block */
 	fs = alloc(SBSIZE);
 	fp->f_fs = fs;
+	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 		SBLOCK, SBSIZE, (char *)fs, &buf_size);
 	if (rc)
@@ -502,45 +502,49 @@ ufs_open(path, f)
 		if ((rc = read_inode(inumber, f)) != 0)
 			goto out;
 
-#if 0
+#ifndef UFS_NOSYMLINK
 		/*
 		 * Check for symbolic link.
 		 */
-		if ((fp->i_mode & IFMT) == IFLNK) {
+		if ((fp->f_di.di_mode & IFMT) == IFLNK) {
 			int link_len = fp->f_di.di_size;
 			int len;
 
-			len = strlen(cp) + 1;
+			len = strlen(cp);
 
-			if (fp->f_di.di_size >= MAXPATHLEN - 1 ||
+			if (link_len + len > MAXPATHLEN ||
 			    ++nlinks > MAXSYMLINKS) {
 				rc = ENOENT;
 				goto out;
 			}
 
-			strcpy(&namebuf[link_len], cp);
+			bcopy(cp, &namebuf[link_len], len + 1);
 
-			if ((fp->i_flags & IC_FASTLINK) != 0) {
-				bcopy(fp->i_symlink, namebuf, (unsigned) link_len);
+			if (link_len < fs->fs_maxsymlinklen) {
+				bcopy(fp->f_di.di_shortlink, namebuf,
+				      (unsigned) link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
 				 */
-				char *buf;
 				size_t buf_size;
 				daddr_t	disk_block;
 				register struct fs *fs = fp->f_fs;
 
-				(void) block_map(f, (daddr_t)0, &disk_block);
-				rc = device_read(&fp->f_dev,
-						 fsbtodb(fs, disk_block),
-						 blksize(fs, fp, 0),
-						 &buf, &buf_size);
+				if (!buf)
+					buf = alloc(fs->fs_bsize);
+				rc = block_map(f, (daddr_t)0, &disk_block);
+				if (rc)
+					goto out;
+
+				twiddle();
+				rc = (f->f_dev->dv_strategy)(f->f_devdata,
+					F_READ, fsbtodb(fs, disk_block),
+					fs->fs_bsize, buf, &buf_size);
 				if (rc)
 					goto out;
 
 				bcopy((char *)buf, namebuf, (unsigned)link_len);
-				free(buf, buf_size);
 			}
 
 			/*
@@ -553,10 +557,10 @@ ufs_open(path, f)
 			else
 				inumber = (ino_t)ROOTINO;
 
-			if ((rc = read_inode(inumber, fp)) != 0)
+			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
 		}
-#endif
+#endif	/* !UFS_NOSYMLINK */
 	}
 
 	/*
@@ -564,12 +568,20 @@ ufs_open(path, f)
 	 */
 	rc = 0;
 out:
-	if (rc)
+#ifndef UFS_NOSYMLINK
+	if (buf)
+		free(buf, fs->fs_bsize);
+#endif
+	if (rc) {
+		if (fp->f_buf)
+			free(fp->f_buf, fp->f_fs->fs_bsize);
+		free(fp->f_fs, SBSIZE);
 		free(fp, sizeof(struct file));
+	}
 	return (rc);
 }
 
-#ifndef SMALL
+#ifndef UFS_NOCLOSE
 int
 ufs_close(f)
 	struct open_file *f;
@@ -591,7 +603,7 @@ ufs_close(f)
 	free(fp, sizeof(struct file));
 	return (0);
 }
-#endif
+#endif /* !UFS_NOCLOSE */
 
 /*
  * Copy a portion of a file into kernel memory.
@@ -637,7 +649,7 @@ ufs_read(f, start, size, resid)
 /*
  * Not implemented.
  */
-#ifndef SMALL
+#ifndef UFS_NOWRITE
 int
 ufs_write(f, start, size, resid)
 	struct open_file *f;
@@ -648,7 +660,7 @@ ufs_write(f, start, size, resid)
 
 	return (EROFS);
 }
-#endif /*!SMALL*/
+#endif /* !UFS_NOWRITE */
 
 off_t
 ufs_seek(f, offset, where)
