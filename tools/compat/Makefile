@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2002/01/21 23:35:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/01/24 04:05:27 lukem Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c err.c fgetln.c flock.c fparseln.c \
-		getmode.c pread.c pwrite.c setprogname.c strlcat.c strlcpy.c \
-		vis.c
+		getmode.c pread.c pwcache.c pwrite.c setprogname.c \
+		strlcat.c strlcpy.c vis.c
 HOST_CPPFLAGS+=	-I. -I${.CURDIR} -DHAVE_CONFIG_H
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
@@ -12,7 +12,8 @@ HOST_CPPFLAGS+=	-I. -I${.CURDIR} -DHAVE_CONFIG_H
 		${.CURDIR}/../../lib/libutil \
 
 DPSRCS=		config.h
-CLEANFILES=	config.cache config.log config.status config.stamp confdefs.h defs.mk
+CLEANFILES=	config.cache config.log config.status config.stamp \
+		confdefs.h defs.mk
 
 # Get components of Berkeley DB.
 _CURDIR:=	${.CURDIR}
