@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/07 13:32:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2001/06/06 21:31:49 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -14,5 +14,9 @@ KMOD=	compat_sunos32
 # common source files
 SRCS+=	lkminit_emul.c
 SRCS+=	sunos32_exec.c sunos32_ioctl.c sunos32_misc.c sunos32_syscalls.c sunos32_sysent.c
+
+.if (${MACHINE} == "sparc64")
+SRCS+=	sunos32_machdep.c sunos_sigcode.s
+.endif
 
 .include <bsd.kmod.mk>
