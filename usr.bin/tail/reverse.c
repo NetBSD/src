@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.10 1998/02/20 07:35:00 mycroft Exp $	*/
+/*	$NetBSD: reverse.c,v 1.11 1999/07/21 06:38:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.10 1998/02/20 07:35:00 mycroft Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.11 1999/07/21 06:38:50 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,11 +93,11 @@ reverse(fp, style, off, sbp)
 		switch(style) {
 		case FBYTES:
 		case RBYTES:
-			bytes(fp, off);
+			(void)bytes(fp, off);
 			break;
 		case FLINES:
 		case RLINES:
-			lines(fp, off);
+			(void)lines(fp, off);
 			break;
 		case REVERSE:
 			r_buf(fp);
