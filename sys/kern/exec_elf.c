@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.6.4.1 1996/12/05 06:41:12 rat Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -405,8 +405,8 @@ exec_elf_makecmds(p, epp)
 				    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
-	epp->ep_tsize = ELF32_NO_ADDR;
-	epp->ep_dsize = ELF32_NO_ADDR;
+	epp->ep_taddr = epp->ep_tsize = ELF32_NO_ADDR;
+	epp->ep_daddr = epp->ep_dsize = ELF32_NO_ADDR;
 
 	interp[0] = '\0';
 
@@ -467,6 +467,10 @@ exec_elf_makecmds(p, epp)
 			if (eh->e_entry >= addr && eh->e_entry < (addr + size)){
 				epp->ep_taddr = addr;
 				epp->ep_tsize = size;
+				if (epp->ep_daddr == ELF32_NO_ADDR) {
+					epp->ep_daddr = addr;
+					epp->ep_dsize = size;
+				}
 			} else {
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
