@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.10 1997/11/20 06:23:52 mikel Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.11 1998/02/21 13:19:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ joy_isapnp_match(parent, match, aux)
 	struct isapnp_attach_args *ipa = aux;
 
 	if (strcmp(ipa->ipa_devcompat, "PNPB02F") && /* generic */
+	    strcmp(ipa->ipa_devlogic, "CSCA801") && /* Terratec EWS64XL */
  	    strcmp(ipa->ipa_devlogic, "CTL7002") && /* Creative Vibra16CL */
 	    strcmp(ipa->ipa_devlogic, "ESS0001") && /* ESS1868 */
 	    strcmp(ipa->ipa_devlogic, "OPT0001") && /* OPTi Audio 16 */
