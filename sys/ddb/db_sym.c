@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.13 1997/02/03 19:57:03 cgd Exp $	*/
 
 /* 
  * Mach Operating System
@@ -256,7 +256,7 @@ db_search_symbol( val, strategy, offp)
 {
 	register
 	unsigned int	diff;
-	unsigned int	newdiff;
+	db_expr_t	newdiff;
 	register int	i;
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
@@ -320,8 +320,8 @@ db_symbol_values(sym, namep, valuep)
  * add support for symbols in loadable driver modules.
  */
 extern char end[];
-unsigned int	db_lastsym = (unsigned long)end;
-db_expr_t db_maxoff = 0x10000000;
+unsigned long	db_lastsym = (unsigned long)end;
+unsigned int	db_maxoff = 0x10000000;
 
 
 void
@@ -342,7 +342,7 @@ db_printsym(off, strategy)
 		if (name && (d < db_maxoff) && value) {
 			db_printf("%s", name);
 			if (d)
-				db_printf("+%#r", d);
+				db_printf("+%#lr", d);
 			if (strategy == DB_STGY_PROC) {
 				if (db_line_at_pc(cursym, &filename, &linenum, off))
 					db_printf(" [%s:%d]", filename, linenum);
@@ -350,7 +350,7 @@ db_printsym(off, strategy)
 			return;
 		}
 	}
-	db_printf("%#n", off);
+	db_printf("%#ln", off);
 	return;
 }
 
