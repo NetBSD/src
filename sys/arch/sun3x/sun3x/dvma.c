@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.7 1998/01/22 22:12:36 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.8 1998/01/22 22:20:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,7 +93,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/enable.h>
-#include <machine/reg.h>
 #include <machine/pmap.h>
 #include <machine/dvma.h>
 #include <machine/machdep.h>
@@ -105,7 +104,7 @@
  */
 
 /* Number of slots in dvmamap. */
-int dvma_max_segs = 256;
+int dvma_max_segs = btoc(DVMA_MAP_SIZE);
 struct map *dvmamap;
 
 void
@@ -118,15 +117,15 @@ dvma_init()
 	dvmamap = malloc((sizeof(struct map) * dvma_max_segs),
 					 M_DEVBUF, M_WAITOK);
 
-	rminit(dvmamap, btoc(DVMA_SPACE_LENGTH), btoc(0xFF000000),
+	rminit(dvmamap, btoc(DVMA_MAP_AVAIL), btoc(DVMA_MAP_BASE),
 		   "dvmamap", dvma_max_segs);
 
 	/*
 	 * Enable DVMA in the System Enable register.
 	 * Note:  This is only necessary for VME slave accesses.
 	 *        On-board devices are always capable of DVMA.
-	 * *enable_reg |= ENA_SDVMA;
 	 */
+	*enable_reg |= ENA_SDVMA;
 }
 
 
@@ -143,23 +142,17 @@ dvma_kvtopa(kva, bustype)
 	u_long addr, mask;
 
 	addr = (u_long)kva;
-	if ((addr & DVMA_SPACE_START) != DVMA_SPACE_START)
+	if ((addr & DVMA_MAP_BASE) != DVMA_MAP_BASE)
 		panic("dvma_kvtopa: bad dmva addr=0x%x\n", addr);
-	mask = DVMA_SLAVE_MASK;
 
-	/* XXX: Only support a 24 bit mask for now. */
 	switch (bustype) {
 	case BUS_OBIO:
 	case BUS_OBMEM:
-	case BUS_VME32D32:
-	case BUS_VME24D32:
-	case BUS_VME24D16:
+		mask = DVMA_OBIO_SLAVE_MASK;
 		break;
-
-	case BUS_VME16D32:
-	case BUS_VME16D16:
-	default:
-		panic("dvma_kvtopa: bustype=%d\n", bustype);
+	default:	/* VME bus device. */
+		mask = DVMA_VME_SLAVE_MASK;
+		break;
 	}
 
 	return(addr & mask);
