@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.28 2001/06/02 18:09:27 chs Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.29 2001/06/26 17:55:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -237,43 +237,6 @@ do {									\
 	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
 	simple_unlock(&(map)->flags_lock);				\
 } while (0)
-#endif /* _KERNEL */
-
-/*
- *	Interrupt-safe maps must also be kept on a special list,
- *	to assist uvm_fault() in avoiding locking problems.
- */
-struct vm_map_intrsafe {
-	struct vm_map	vmi_map;
-	LIST_ENTRY(vm_map_intrsafe) vmi_list;
-};
-
-LIST_HEAD(vmi_list, vm_map_intrsafe);
-#ifdef _KERNEL
-extern struct simplelock vmi_list_slock;
-extern struct vmi_list vmi_list;
-
-static __inline int vmi_list_lock __P((void));
-static __inline void vmi_list_unlock __P((int));
-
-static __inline int
-vmi_list_lock()
-{
-	int s;
-
-	s = splhigh();
-	simple_lock(&vmi_list_slock);
-	return (s);
-}
-
-static __inline void
-vmi_list_unlock(s)
-	int s;
-{
-
-	simple_unlock(&vmi_list_slock);
-	splx(s);
-}
 #endif /* _KERNEL */
 
 /*
