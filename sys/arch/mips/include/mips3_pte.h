@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.12 2000/06/09 04:37:51 soda Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.13 2000/06/09 05:51:43 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,12 +117,14 @@ struct tlb {
 /* pte accessor macros */
 
 #define mips3_pfn_is_ext(x) ((x) & 0x3c000000)
-#define mips3_vad_to_pfn(x) (((paddr_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
-#define mips3_pfn_to_vad(x) ((paddr_t)((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
+#define mips3_paddr_to_tlbpfn(x) \
+    (((paddr_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
+#define mips3_tlbpfn_to_paddr(x) \
+    ((paddr_t)((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
 #define mips3_vad_to_vpn(x) ((vaddr_t)(x) & MIPS3_PG_SVPN)
 #define mips3_vpn_to_vad(x) ((x) & MIPS3_PG_SVPN)
 
-#define MIPS3_PTE_TO_PADDR(pte) (mips3_pfn_to_vad(pte))
+#define MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
 #define MIPS3_PAGE_IS_RDONLY(pte,va) \
     (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(va), (pte)))
 
