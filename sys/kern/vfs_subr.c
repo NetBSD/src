@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.208 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.209 2003/11/12 20:38:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.208 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.209 2003/11/12 20:38:24 dbj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2919,7 +2919,7 @@ set_statfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 			char *bp;
 			char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 
-			if (!path)
+			if (!path) /* XXX can't happen with M_WAITOK */
 				return ENOMEM;
 
 			bp = path + MAXPATHLEN;
