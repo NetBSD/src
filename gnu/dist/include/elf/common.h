@@ -273,6 +273,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define DT_DEBUG	21
 #define DT_TEXTREL	22
 #define DT_JMPREL	23
+#define DT_RUNPATH      29
 
 /* The next four dynamic tags are used on Solaris.  We support them
    everywhere.  */
