@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.143 1998/09/21 00:33:17 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.144 1998/09/22 03:58:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 1998/09/21 00:33:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 1998/09/22 03:58:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -797,7 +797,7 @@ nobootinfo:
 	 * page table base register in proc 0's PCB.
 	 */
 	pmap_bootstrap(ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT),
-	    hwrpb->rpb_max_asn);
+	    hwrpb->rpb_max_asn, hwrpb->rpb_pcs_cnt);
 
 	/*
 	 * Initialize the rest of proc 0's PCB, and cache its physical
@@ -892,8 +892,7 @@ nobootinfo:
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		struct pcs *pcsp;
 
-		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-		    (i * hwrpb->rpb_pcs_size));
+		pcsp = LOCATE_PCS(hwrpb, i);
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
