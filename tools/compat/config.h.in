@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.18.2.2 2002/11/30 15:10:39 he Exp $	*/
+/*	$NetBSD: config.h.in,v 1.18.2.3 2002/12/01 19:09:59 he Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -11,7 +11,6 @@
 #undef HAVE_DIRENT_H
 #undef HAVE_ERR_H
 #undef HAVE_FEATURES_H
-#undef HAVE_FTS_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGEN_H
 #undef HAVE_NDIR_H
