@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.32 1994/04/20 23:39:38 mycroft Exp $
+#	$Id: TRINITY,v 1.33 1994/04/23 23:24:00 mycroft Exp $
 #
 
 machine		"i386"
@@ -10,6 +10,7 @@ cpu		"I486_CPU"
 options		"DUMMY_NOPS"
 options		"MACHINE_NONCONTIG"
 options		XSERVER,UCONSOLE
+options		"USER_LDT"
 
 ident		TRINITY
 maxusers	16
@@ -77,6 +78,17 @@ tape		st1	at scsibus0 slave ?
 disk		cd0	at scsibus0 slave ?
 disk		cd1	at scsibus0 slave ?
 
+controller	sea0	at isa? iomem 0xc8000 irq 5
+master		scsibus1 at sea0
+disk		sd0	at scsibus1 slave ?
+disk		sd1	at scsibus1 slave ?
+disk		sd2	at scsibus1 slave ?
+disk		sd3	at scsibus1 slave ?
+tape		st0	at scsibus1 slave ?
+tape		st1	at scsibus1 slave ?
+disk		cd0	at scsibus1 slave ?
+disk		cd1	at scsibus1 slave ?
+
 controller	wdc0	at isa? port "IO_WD1" irq 14
 disk		wd0	at wdc0 drive ?
 disk		wd1	at wdc0 drive ?
@@ -84,6 +96,8 @@ disk		wd1	at wdc0 drive ?
 controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
+
+device		mcd0	at isa? port 0x300 irq 10
 
 device		ed0	at isa? port 0x300 irq 9
 
