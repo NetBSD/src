@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $	*/
+/*	$NetBSD: main.c,v 1.44 1998/11/01 03:01:53 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.44 1998/11/01 03:01:53 itohy Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 1998/11/01 03:01:53 itohy Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1012,9 +1012,9 @@ Cmd_Exec(cmd, err)
 	 * install it in the variable.
 	 */
 	res[cc] = '\0';
-	cp = &res[cc] - 1;
+	cp = &res[cc];
 
-	if (*cp == '\n') {
+	if (cc > 0 && *--cp == '\n') {
 	    /*
 	     * A final newline is just stripped
 	     */
