@@ -1,6 +1,4 @@
-/*
- * $Id: warnings.c,v 1.19 1997/07/04 22:15:41 pk Exp $
- */
+/*	$NetBSD: warnings.c,v 1.20 1998/01/05 22:01:01 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>

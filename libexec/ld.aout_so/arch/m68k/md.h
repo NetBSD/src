@@ -1,5 +1,6 @@
+/*	$NetBSD: md.h,v 1.5 1998/01/05 22:00:40 cgd Exp $	*/
+
 /*
- * $Id: md.h,v 1.4 1995/01/17 06:44:40 mycroft Exp $
  *	- m68k dependent definitions
  */
 
