@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.112 2000/01/20 17:14:42 mjacob Exp $
+# $NetBSD: ALPHA,v 1.113 2000/01/25 08:31:57 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -387,6 +387,7 @@ ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
