@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.5 2002/04/01 07:39:51 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.6 2002/06/21 06:01:45 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.5 2002/04/01 07:39:51 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.6 2002/06/21 06:01:45 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -718,7 +718,7 @@ grffindpid(gp)
 	if (gp->g_pid == NULL)
 		MALLOC(gp->g_pid, short *, GRFMAXLCK*sizeof(short),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
-	pid = curproc->l->proc->p_pid;
+	pid = curproc->l_proc->p_pid;
 	ni = limit = gp->g_pid[0];
 	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
 		if (*sp == pid)
