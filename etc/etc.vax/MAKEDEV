@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.3 1996/01/07 16:53:15 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.4 1996/07/14 13:58:38 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -10,17 +10,15 @@
 # Tapes:
 #	ht*	massbus tm03 & tu??
 #	tm*	unibus tm11 & te10 emulations (e.g. Emulex tc-11)
-#	tms*	unibus/qbus TMSCP (e.g. TU81, TK50)
+#	mt*	MSCP tapes (e.g. TU81, TK50)
 #	ts*	unibus ts11
-#	mt*	massbus tu78
 #	ut*	unibus tu45 emulations (e.g.si 9700)
 #	uu*	tu58 cassettes on dl11 controller
 # Disks:
 #	hp*	massbus rm??
 #	hk*	unibus rk06 and rk07
 #	up*	other unibus devices (e.g. on Emulex sc-21v controller)
-#	ra*	unibus uda50 w/ ra??
-#	kra*	bi kdb50 w/ ra??
+#	ra*	MSCP disks (ra??, rd??)
 #	rl*	unibus rl02
 #	rb*	730 idc w/ rb80 and/or rb02
 #	rx*	unibus rx211 floppy disk 
@@ -49,6 +47,8 @@
 #	qv*	qvss (microvax) display
 #	ttyv0	qvss (microvax) display reserved pty
 #	lkm	loadable kernel modules
+#	bpf*	berkeley packet filter
+#	tun*	network tunnel device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 for i
@@ -89,11 +89,11 @@ std)
 	chmod 666 fd/*
 	;;
 
-ht*|tm*|tms*|ts*|ut*)
+ht*|tm*|mt*|ts*|ut*)
 	umask 0 ; unit=`expr $i : '[^0-9]*\(.*\)'`
 	case $i in
 	ht*) name=ht; blk=1; chr=5 ;;
-	tms*) name=tms; blk=15; chr=38;;
+	mt*) name=mt; blk=15; chr=38;;
 	tm*) name=tm; blk=5; chr=14;;
 	ts*) name=ts; blk=6; chr=16;;
 	ut*) name=ut; blk=10; chr=17;;
@@ -134,37 +134,6 @@ ht*|tm*|tms*|ts*|ut*)
 			ln -s r$name$eight rmt$eight
 			ln -s r$name$twelve rmt$twelve
 		fi
-		;;
-	*)
-		echo bad unit for tape in: $1
-		;;
-	esac
-	umask 77
-	;;
-
-mt*)
-	umask 0 ; unit=`expr $i : '..\(.*\)'`
-	case $i in
-	mt*) blk=7; chr=19;;
-	esac
-	case $unit in
-	0|1|2|3|4|5|6|7)
-		eight=`expr $unit + 0`;
-		twelve=`expr $unit + 4`; 
-		sixteen=`expr $unit + 8`;
-		twenty=`expr $unit + 12`;
-		mknod mt8		b $blk $eight
-		mknod mt12		b $blk $twelve
-		mknod mt16		b $blk $sixteen
-		mknod mt20		b $blk $twenty
-		mknod nmt8		b $blk $twelve ;: ditto
-		mknod nrmt8		c $chr $twelve ;: ditto
-		mknod rmt8		c $chr $eight
-		mknod rmt12		c $chr $twelve
-		mknod rmt16		c $chr $sixteen
-		mknod rmt20		c $chr $twenty
-		mknod nmt16		b $blk $twenty ;: ditto
-		mknod nrmt16		c $chr $twenty ;: ditto
 		;;
 	*)
 		echo bad unit for tape in: $1
@@ -382,6 +351,22 @@ dn*|ik*|ps*|ad*|ct*)
 		echo bad unit for ${name} in: $i
 		;;
 	esac
+	;;
+
+bpf*)
+	unit=`expr $i : '...\(.*\)'`
+	rm -f bpf$unit
+	mknod bpf$unit c 56 $unit
+	chmod 600 bpf$unit
+	chown root.wheel bpf$unit
+	;;
+
+tun*)
+	unit=`expr $i : '...\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 57 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
 	;;
 
 lkm)
