@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.7 2002/02/06 23:20:43 nathanw Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.8 2002/02/23 23:06:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -85,6 +85,7 @@ int _pthread_setspecific(pthread_key_t, const void *);
 void* _pthread_getspecific(pthread_key_t);
 pthread_t _pthread_self(void);
 int _pthread_sigmask(int, const sigset_t *, sigset_t *);
+int* _pthread__errno(void);
 
 
 int
@@ -266,10 +267,9 @@ _pthread_sigmask(int h, const sigset_t *s, sigset_t *o)
 	return (0);
 }
 
-void *
+int *
 _pthread__errno(void)
 {
 
 	return NULL;
 }
-	
