@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ibus.c,v 1.6 2000/01/10 03:24:36 simonb Exp $ */
+/*	$NetBSD: mcclock_ibus.c,v 1.7 2000/01/14 15:52:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,8 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.6 2000/01/10 03:24:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.7 2000/01/14 15:52:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.6 2000/01/10 03:24:36 simonb Exp 
 #include <dev/dec/mcclock_pad32.h>
 
 #include <pmax/ibus/ibusvar.h>
-
 
 static int	mcclock_ibus_match __P((struct device *, struct cfdata *,
 		    void *));
@@ -51,7 +49,6 @@ struct cfattach mcclock_ibus_ca = {
 	     (void *)mcclock_ibus_match, mcclock_ibus_attach,
 };
 extern struct cfdriver ibus_cd;
-
 
 static int
 mcclock_ibus_match(parent, match, aux)
