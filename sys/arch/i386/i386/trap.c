@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.33 1994/04/02 08:04:26 cgd Exp $
+ *	$Id: trap.c,v 1.34 1994/04/02 08:42:59 cgd Exp $
  */
 
 /*
@@ -480,8 +480,6 @@ syscall(frame)
 	case SYS_syscall:
 		code = fuword(params);
 		params += sizeof(int);
-		if (code == SYS_sigreturn)
-			code = nsysent;
 		break;
 	
 	case SYS___syscall:
