@@ -20,7 +20,7 @@
    or (US mail) as Mike Haertel c/o Free Software Foundation. */
 
 #ifndef lint
-static char rcsid[] = "$Id: sort.c,v 1.3 1993/08/02 17:48:20 mycroft Exp $";
+static char rcsid[] = "$Id: sort.c,v 1.4 1993/12/03 09:57:46 mycroft Exp $";
 #endif /* not lint */
 
 #define _GNU_SOURCE
@@ -1732,8 +1732,13 @@ Usage: %s [-cmus] [-t separator] [-o output-file] [-bdfiMnr] [+POS1 [-POS2]]\n\
   exit (2);
 }
 
-error(n,e, s,s1) {
-if(e) fprintf(stderr,"error %d:", e);
-fprintf(stderr,s, s1);
-if(n) exit(n);
+error (n, e, s, s1)
+     int n, e;
+     char *s, *s1;
+{
+  if (e)
+    fprintf(stderr,"error %d:", e);
+  fprintf(stderr, s, s1);
+  if (n)
+    exit(n);
 }
