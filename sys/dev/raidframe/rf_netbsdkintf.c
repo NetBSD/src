@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.41 2000/01/08 01:37:37 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.42 2000/01/08 01:52:42 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -662,7 +662,7 @@ raidioctl(dev, cmd, data, flag, p)
 	int     part, pmask;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
-	RF_Raid_t *raid;
+	RF_Raid_t *raidPtr;
 	RF_AccTotals_t *totals;
 	RF_DeviceConfig_t *d_cfg, **ucfgp;
 	u_char *specific_buf;
@@ -681,6 +681,7 @@ raidioctl(dev, cmd, data, flag, p)
 	if (unit >= numraid)
 		return (ENXIO);
 	rs = &raid_softc[unit];
+	raidPtr = raidPtrs[unit];
 
 	db1_printf(("raidioctl: %d %d %d %d\n", (int) dev,
 		(int) DISKPART(dev), (int) unit, (int) cmd));
@@ -737,7 +738,6 @@ raidioctl(dev, cmd, data, flag, p)
 		u_cfg = *((RF_Config_t **) data);
 		RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
 		if (k_cfg == NULL) {
-			db3_printf(("rf_ioctl: ENOMEM for config. Code is %d\n", retcode));
 			return (ENOMEM);
 		}
 		retcode = copyin((caddr_t) u_cfg, (caddr_t) k_cfg,
@@ -769,7 +769,8 @@ raidioctl(dev, cmd, data, flag, p)
 			    k_cfg->layoutSpecificSize);
 			if (retcode) {
 				RF_Free(k_cfg, sizeof(RF_Config_t));
-				RF_Free(specific_buf, k_cfg->layoutSpecificSize);
+				RF_Free(specific_buf, 
+					k_cfg->layoutSpecificSize);
 				db3_printf(("rf_ioctl: retcode=%d copyin.2\n",
 					retcode));
 				return (retcode);
@@ -783,24 +784,24 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* configure the system */
 
-		raidPtrs[unit]->raidid = unit;
+		raidPtr->raidid = unit;
 
-		retcode = rf_Configure(raidPtrs[unit], k_cfg);
+		retcode = rf_Configure(raidPtr, k_cfg);
 
 		if (retcode == 0) {
 
 			/* allow this many simultaneous IO's to 
 			   this RAID device */
-			raidPtrs[unit]->openings = RAIDOUTSTANDING;
+			raidPtr->openings = RAIDOUTSTANDING;
 			
 			/* XXX should be moved to rf_Configure() */
 
-			raidPtrs[unit]->copyback_in_progress = 0;
-			raidPtrs[unit]->parity_rewrite_in_progress = 0;
-			raidPtrs[unit]->recon_in_progress = 0;
+			raidPtr->copyback_in_progress = 0;
+			raidPtr->parity_rewrite_in_progress = 0;
+			raidPtr->recon_in_progress = 0;
 		
-			retcode = raidinit(dev, raidPtrs[unit], unit);
-			rf_markalldirty( raidPtrs[unit] );
+			retcode = raidinit(dev, raidPtr, unit);
+			rf_markalldirty( raidPtr );
 		}
 		/* free the buffers.  No return code here. */
 		if (k_cfg->layoutSpecificSize) {
@@ -833,7 +834,7 @@ raidioctl(dev, cmd, data, flag, p)
 			return (EBUSY);
 		}
 
-		retcode = rf_Shutdown(raidPtrs[unit]);
+		retcode = rf_Shutdown(raidPtr);
 
 		pool_destroy(&rs->sc_cbufpool);
 
@@ -873,15 +874,15 @@ raidioctl(dev, cmd, data, flag, p)
 		row = component_label->row;
 		column = component_label->column;
 
-		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
-		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
+		if ((row < 0) || (row >= raidPtr->numRow) ||
+		    (column < 0) || (column >= raidPtr->numCol)) {
 			RF_Free( component_label, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
 
 		raidread_component_label( 
-                              raidPtrs[unit]->Disks[row][column].dev, 
-			      raidPtrs[unit]->raid_cinfo[row][column].ci_vp, 
+                              raidPtr->Disks[row][column].dev, 
+			      raidPtr->raid_cinfo[row][column].ci_vp, 
 			      component_label );
 
 		retcode = copyout((caddr_t) component_label, 
@@ -913,16 +914,16 @@ raidioctl(dev, cmd, data, flag, p)
 		row = component_label->row;
 		column = component_label->column;
 
-		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
-		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
+		if ((row < 0) || (row >= raidPtr->numRow) ||
+		    (column < 0) || (column >= raidPtr->numCol)) {
 			return(EINVAL);
 		}
 
 		/* XXX this isn't allowed to do anything for now :-) */
 #if 0
 		raidwrite_component_label( 
-                            raidPtrs[unit]->Disks[row][column].dev, 
-			    raidPtrs[unit]->raid_cinfo[row][column].ci_vp, 
+                            raidPtr->Disks[row][column].dev, 
+			    raidPtr->raid_cinfo[row][column].ci_vp, 
 			    component_label );
 #endif
 		return (0);
@@ -936,23 +937,23 @@ raidioctl(dev, cmd, data, flag, p)
 		   set. 
 		   */
 
-		raidPtrs[unit]->serial_number = component_label->serial_number;
+		raidPtr->serial_number = component_label->serial_number;
 		/* current version number */
 		ci_label.version = RF_COMPONENT_LABEL_VERSION; 
 		ci_label.serial_number = component_label->serial_number;
-		ci_label.mod_counter = raidPtrs[unit]->mod_counter;
-		ci_label.num_rows = raidPtrs[unit]->numRow;
-		ci_label.num_columns = raidPtrs[unit]->numCol;
+		ci_label.mod_counter = raidPtr->mod_counter;
+		ci_label.num_rows = raidPtr->numRow;
+		ci_label.num_columns = raidPtr->numCol;
 		ci_label.clean = RF_RAID_DIRTY; /* not clean */
 		ci_label.status = rf_ds_optimal; /* "It's good!" */
 
-		for(row=0;row<raidPtrs[unit]->numRow;row++) {
+		for(row=0;row<raidPtr->numRow;row++) {
 			ci_label.row = row;
-			for(column=0;column<raidPtrs[unit]->numCol;column++) {
+			for(column=0;column<raidPtr->numCol;column++) {
 				ci_label.column = column;
 				raidwrite_component_label( 
-				  raidPtrs[unit]->Disks[row][column].dev, 
-				  raidPtrs[unit]->raid_cinfo[row][column].ci_vp, 
+				  raidPtr->Disks[row][column].dev, 
+				  raidPtr->raid_cinfo[row][column].ci_vp, 
 				  &ci_label );
 			}
 		}
@@ -962,22 +963,22 @@ raidioctl(dev, cmd, data, flag, p)
 		/* initialize all parity */
 	case RAIDFRAME_REWRITEPARITY:
 
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* Parity for RAID 0 is trivially correct */
-			raidPtrs[unit]->parity_good = RF_RAID_CLEAN;
+			raidPtr->parity_good = RF_RAID_CLEAN;
 			return(0);
 		}
 		
-		if (raidPtrs[unit]->parity_rewrite_in_progress == 1) {
+		if (raidPtr->parity_rewrite_in_progress == 1) {
 			/* Re-write is already in progress! */
 			return(EINVAL);
 		}
 
 		/* borrow the thread of the requesting process */
 
-		retcode = RF_CREATE_THREAD(raidPtrs[unit]->parity_rewrite_thread,
+		retcode = RF_CREATE_THREAD(raidPtr->parity_rewrite_thread,
 					   rf_RewriteParityThread,
-					   raidPtrs[unit],"raid_parity");
+					   raidPtr,"raid_parity");
 		return (retcode);
 
 
@@ -985,7 +986,7 @@ raidioctl(dev, cmd, data, flag, p)
 		sparePtr = (RF_SingleComponent_t *) data;
 		memcpy( &hot_spare, sparePtr, sizeof(RF_SingleComponent_t));
 		printf("Adding spare\n");
-		retcode = rf_add_hot_spare(raidPtrs[unit], &hot_spare);
+		retcode = rf_add_hot_spare(raidPtr, &hot_spare);
 		return(retcode);
 
 	case RAIDFRAME_REMOVE_HOT_SPARE:
@@ -993,12 +994,12 @@ raidioctl(dev, cmd, data, flag, p)
 
 	case RAIDFRAME_REBUILD_IN_PLACE:
 
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* Can't do this on a RAID 0!! */
 			return(EINVAL);
 		}
 
-		if (raidPtrs[unit]->recon_in_progress == 1) {
+		if (raidPtr->recon_in_progress == 1) {
 			/* a reconstruct is already in progress! */
 			return(EINVAL);
 		}
@@ -1009,8 +1010,8 @@ raidioctl(dev, cmd, data, flag, p)
 		row = component.row;
 		column = component.column;
 		printf("Rebuild: %d %d\n",row, column);
-		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
-		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
+		if ((row < 0) || (row >= raidPtr->numRow) ||
+		    (column < 0) || (column >= raidPtr->numCol)) {
 			return(EINVAL);
 		}
 
@@ -1018,19 +1019,17 @@ raidioctl(dev, cmd, data, flag, p)
 		if (rrcopy == NULL)
 			return(ENOMEM);
 
-		rrcopy->raidPtr = (void *) raidPtrs[unit];
+		rrcopy->raidPtr = (void *) raidPtr;
 		rrcopy->row = row;
 		rrcopy->col = column;
 
-		retcode = RF_CREATE_THREAD(raidPtrs[unit]->recon_thread,
+		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
 					   rf_ReconstructInPlaceThread,
 					   rrcopy,"raid_reconip");
 		return(retcode);
 
 	case RAIDFRAME_GET_INFO:
-		raid = raidPtrs[unit];
-
-		if (!raid->valid)
+		if (!raidPtr->valid)
 			return (ENODEV);
 		ucfgp = (RF_DeviceConfig_t **) data;
 		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
@@ -1038,28 +1037,28 @@ raidioctl(dev, cmd, data, flag, p)
 		if (d_cfg == NULL)
 			return (ENOMEM);
 		bzero((char *) d_cfg, sizeof(RF_DeviceConfig_t));
-		d_cfg->rows = raid->numRow;
-		d_cfg->cols = raid->numCol;
-		d_cfg->ndevs = raid->numRow * raid->numCol;
+		d_cfg->rows = raidPtr->numRow;
+		d_cfg->cols = raidPtr->numCol;
+		d_cfg->ndevs = raidPtr->numRow * raidPtr->numCol;
 		if (d_cfg->ndevs >= RF_MAX_DISKS) {
 			RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
 			return (ENOMEM);
 		}
-		d_cfg->nspares = raid->numSpare;
+		d_cfg->nspares = raidPtr->numSpare;
 		if (d_cfg->nspares >= RF_MAX_DISKS) {
 			RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
 			return (ENOMEM);
 		}
-		d_cfg->maxqdepth = raid->maxQueueDepth;
+		d_cfg->maxqdepth = raidPtr->maxQueueDepth;
 		d = 0;
 		for (i = 0; i < d_cfg->rows; i++) {
 			for (j = 0; j < d_cfg->cols; j++) {
-				d_cfg->devs[d] = raid->Disks[i][j];
+				d_cfg->devs[d] = raidPtr->Disks[i][j];
 				d++;
 			}
 		}
 		for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++) {
-			d_cfg->spares[i] = raid->Disks[0][j];
+			d_cfg->spares[i] = raidPtr->Disks[0][j];
 		}
 		retcode = copyout((caddr_t) d_cfg, (caddr_t) * ucfgp,
 				  sizeof(RF_DeviceConfig_t));
@@ -1068,40 +1067,38 @@ raidioctl(dev, cmd, data, flag, p)
 		return (retcode);
 
 	case RAIDFRAME_CHECK_PARITY:
-		*(int *) data = raidPtrs[unit]->parity_good;
+		*(int *) data = raidPtr->parity_good;
 		return (0);
 
 	case RAIDFRAME_RESET_ACCTOTALS:
-		raid = raidPtrs[unit];
-		bzero(&raid->acc_totals, sizeof(raid->acc_totals));
+		bzero(&raidPtr->acc_totals, sizeof(raidPtr->acc_totals));
 		return (0);
 
 	case RAIDFRAME_GET_ACCTOTALS:
 		totals = (RF_AccTotals_t *) data;
-		raid = raidPtrs[unit];
-		*totals = raid->acc_totals;
+		*totals = raidPtr->acc_totals;
 		return (0);
 
 	case RAIDFRAME_KEEP_ACCTOTALS:
-		raidPtrs[unit]->keep_acc_totals = *(int *)data;
+		raidPtr->keep_acc_totals = *(int *)data;
 		return (0);
 
 	case RAIDFRAME_GET_SIZE:
-		*(int *) data = raidPtrs[unit]->totalSectors;
+		*(int *) data = raidPtr->totalSectors;
 		return (0);
 
 		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
 
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* Can't do this on a RAID 0!! */
 			return(EINVAL);
 		}
 
 		rr = (struct rf_recon_req *) data;
 
-		if (rr->row < 0 || rr->row >= raidPtrs[unit]->numRow
-		    || rr->col < 0 || rr->col >= raidPtrs[unit]->numCol)
+		if (rr->row < 0 || rr->row >= raidPtr->numRow
+		    || rr->col < 0 || rr->col >= raidPtr->numCol)
 			return (EINVAL);
 
 		printf("raid%d: Failing the disk: row: %d col: %d\n",
@@ -1113,9 +1110,9 @@ raidioctl(dev, cmd, data, flag, p)
 		if (rrcopy == NULL)
 			return(ENOMEM);
 		bcopy(rr, rrcopy, sizeof(*rr));
-		rrcopy->raidPtr = (void *) raidPtrs[unit];
+		rrcopy->raidPtr = (void *) raidPtr;
 
-		retcode = RF_CREATE_THREAD(raidPtrs[unit]->recon_thread,
+		retcode = RF_CREATE_THREAD(raidPtr->recon_thread,
 					   rf_ReconThread,
 					   rrcopy,"raid_recon");
 		return (0);
@@ -1124,53 +1121,54 @@ raidioctl(dev, cmd, data, flag, p)
 		 * needs it, if any */
 	case RAIDFRAME_COPYBACK:
 
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0!! */
 			return(EINVAL);
 		}
 
-		if (raidPtrs[unit]->copyback_in_progress == 1) {
+		if (raidPtr->copyback_in_progress == 1) {
 			/* Copyback is already in progress! */
 			return(EINVAL);
 		}
 
-		retcode = RF_CREATE_THREAD(raidPtrs[unit]->copyback_thread,
+		retcode = RF_CREATE_THREAD(raidPtr->copyback_thread,
 					   rf_CopybackThread,
-					   raidPtrs[unit],"raid_copyback");
+					   raidPtr,"raid_copyback");
 		return (retcode);
 
 		/* return the percentage completion of reconstruction */
 	case RAIDFRAME_CHECK_RECON_STATUS:
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
 			return(EINVAL);
 		}
 		row = 0; /* XXX we only consider a single row... */
-		if (raidPtrs[unit]->status[row] != rf_rs_reconstructing)
+		if (raidPtr->status[row] != rf_rs_reconstructing)
 			*(int *) data = 100;
 		else
-			*(int *) data = raidPtrs[unit]->reconControl[row]->percentComplete;
+			*(int *) data = raidPtr->reconControl[row]->percentComplete;
 		return (0);
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS:
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
 			return(EINVAL);
 		}
-		if (raidPtrs[unit]->parity_rewrite_in_progress == 1) {
-			*(int *) data = 100 * raidPtrs[unit]->parity_rewrite_stripes_done / raidPtrs[unit]->Layout.numStripe;
+		if (raidPtr->parity_rewrite_in_progress == 1) {
+			*(int *) data = 100 * raidPtr->parity_rewrite_stripes_done / raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
 		}
 		return (0);
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS:
-		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
+		if (raidPtr->Layout.map->faultsTolerated == 0) {
 			/* This makes no sense on a RAID 0 */
 			return(EINVAL);
 		}
-		if (raidPtrs[unit]->copyback_in_progress == 1) {
-			*(int *) data = 100 * raidPtrs[unit]->copyback_stripes_done / raidPtrs[unit]->Layout.numStripe;
+		if (raidPtr->copyback_in_progress == 1) {
+			*(int *) data = 100 * raidPtr->copyback_stripes_done /
+				raidPtr->Layout.numStripe;
 		} else {
 			*(int *) data = 100;
 		}
@@ -1183,7 +1181,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 * ioctl code is almost certainly wrong and evil. -- XXX XXX
 		 * -- I should either compute the spare table in the kernel,
 		 * or have a different -- XXX XXX -- interface (a different
-		 * character device) for delivering the table          -- XXX */
+		 * character device) for delivering the table     -- XXX */
 #if 0
 	case RAIDFRAME_SPARET_WAIT:
 		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
@@ -1193,11 +1191,11 @@ raidioctl(dev, cmd, data, flag, p)
 		rf_sparet_wait_queue = rf_sparet_wait_queue->next;
 		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
 
-		*((RF_SparetWait_t *) data) = *waitreq;	/* structure assignment */
+		/* structure assignment */
+		*((RF_SparetWait_t *) data) = *waitreq;	
 
 		RF_Free(waitreq, sizeof(*waitreq));
 		return (0);
-
 
 		/* wakes up a process waiting on SPARET_WAIT and puts an error
 		 * code in it that will cause the dameon to exit */
@@ -1216,7 +1214,7 @@ raidioctl(dev, cmd, data, flag, p)
 	case RAIDFRAME_SEND_SPARET:
 
 		/* install the spare table */
-		retcode = rf_SetSpareTable(raidPtrs[unit], *(void **) data);
+		retcode = rf_SetSpareTable(raidPtr, *(void **) data);
 
 		/* respond to the requestor.  the return status of the spare
 		 * table installation is passed in the "fcol" field */
@@ -1236,7 +1234,7 @@ raidioctl(dev, cmd, data, flag, p)
 
 	}
 
-	if (!raidPtrs[unit]->valid)
+	if (!raidPtr->valid)
 		return (EINVAL);
 
 	/*
@@ -1285,7 +1283,7 @@ raidioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCGDEFLABEL:
-		raidgetdefaultlabel(raidPtrs[unit], rs,
+		raidgetdefaultlabel(raidPtr, rs,
 		    (struct disklabel *) data);
 		break;
 
