@@ -1,4 +1,6 @@
-/*	$NetBSD: menus.md.en,v 1.2 2002/09/09 10:53:50 grant Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.1 2002/12/09 14:13:15 scw Exp $	*/
+/*	Based on english version: */
+/*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:01 thorpej Exp 	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,13 +38,13 @@
  *
  */
 
-/* Menu definitions for sysinst. bebox version, machine dependent. */
+/* Menu definitions for sysinst. sandpoint version, machine dependent. */
 
-menu fullpart, title  "Select your choice";
-	option "Use only part of the disk", exit, action  {usefull = 0;};
-	option "Use the entire disk", 	    exit, action  {usefull = 1;};
+menu fullpart, title  "Wybierz";
+	option "Uzyj tylko czesci dysku", exit, action  {usefull = 0;};
+	option "Uzyj calego dysku", 	    exit, action  {usefull = 1;};
 
-menu wdtype, title  "Select type";
+menu wdtype, title  "Wybierz typ";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
@@ -59,45 +61,46 @@ menu wdtype, title  "Select type";
 		};
 
 
-menu dlgeom, title "Choose an option";
+menu dlgeom, title "Wybierz opcje";
 	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
 				dlsec, disk->dd_cyl, disk->dd_head,
 				disk->dd_sec);
 			};
-	option "Use real geometry", exit, action {
+	option "Uzyj prawdziwej geometrii", exit, action {
 			dlcyl  = disk->dd_cyl;
 			dlhead = disk->dd_head;
 			dlsec  = disk->dd_sec;
 		};
-	option "Use disklabel geometry", exit, action {
+	option "Uzyj geometrii disklabel", exit, action {
 			disk->dd_cyl = dlcyl;
 			disk->dd_head = dlhead;
 			disk->dd_sec = dlsec;
 		};
 
-menu editparttable, title  "Choose your partition", exit;
+menu editparttable, title  "Wybierz swoje partycje", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF], activepart,-1);
+			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
+], activepart,-1);
 			};
-	option "Edit partition 0",  sub menu editpart,
+	option "Edytuj partycje 0",  sub menu editpart,
 		action  { editpart = 0; };
-	option "Edit partition 1",  sub menu editpart,
+	option "Edytuj partycje 1",  sub menu editpart,
 		action  { editpart = 1; };
-	option "Edit partition 2",  sub menu editpart,
+	option "Edytuj partycje 2",  sub menu editpart,
 		action  { editpart = 2; };
-	option "Edit partition 3",  sub menu editpart,
+	option "Edytuj partycje 3",  sub menu editpart,
 		action  { editpart = 3; };
-	option "Reselect size specification",
+	option "Zmien specyfikator rozmiaru",
 		action  { reask_sizemult(bcylsize); }; 
 
-menu editpart, title  "Select to change";
+menu editpart, title  "Wybierz aby zmienic";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,editpart);
 			   msg_display_add(MSG_newline);
 			};
-	option "Kind", sub menu chooseid;
-	option "Start and size", action 
+	option "Rodzaj", sub menu chooseid;
+	option "Poczatek i rozmiar", action 
 		{	char buf[40]; int start, size;
 			msg_prompt_add (MSG_start, NULL, buf, 40);
 			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
@@ -116,10 +119,10 @@ menu editpart, title  "Select to change";
 			part[editpart].mbrp_start = start;
 			part[editpart].mbrp_size = size;
 		};
-	option "Set active", action { activepart = editpart; };
-	option "Partition OK", exit;
+	option "Ustaw aktywna", action { activepart = editpart; };
+	option "Partycje OK", exit;
 
-menu chooseid, title  "Partition Kind?";
+menu chooseid, title  "Rodzaj partycji?";
 	option "NetBSD", 	exit,	action
 	{
 		part[editpart].mbrp_typ = 165;
@@ -132,30 +135,29 @@ menu chooseid, title  "Partition Kind?";
 	{
 		part[editpart].mbrp_typ = 6;
 	};
-	option "unused",	exit,	action
+	option "nie uzywana",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
 	};
-	option "don't change",	exit;
 
 menu cyl1024;
 	display action {
 		msg_display(MSG_cyl1024);
 	};
-	option "Re-edit both MBR and label", exit, action
+	option "Zmien MBR i disklabel", exit, action
 	{
 		/* XXX UGH */
 		extern int c1024_resp;
 
 		c1024_resp = 1;
 	};
-	option "Re-edit the label", exit, action
+	option "Zmien disklabel", exit, action
 	{
 		extern int c1024_resp;
 
 		c1024_resp = 2;
 	};
-	option "Use it anyway",	exit, action
+	option "Uzyj, mimo to",	exit, action
 	{	
 		extern int c1024_resp;
 
@@ -168,25 +170,25 @@ menu editfsparts, y=12, exit;
 			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
-	option "Change a", action { editpart = A;}, sub menu edfspart;
-	option "Change b", action { editpart = B;}, sub menu edfspart;
-	option "NetBSD partition - can't change", action {};
-	option "Whole disk - can't change", action {};
-	option "Change e", action { editpart = E;}, sub menu edfspart;
-	option "Change f", action { editpart = F;}, sub menu edfspart;
-	option "Change g", action { editpart = G;}, sub menu edfspart;
-	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
+	option "Zmien a", action { editpart = A;}, sub menu edfspart;
+	option "Zmien b", action { editpart = B;}, sub menu edfspart;
+	option "partycja NetBSD - nie mozna zmienic", action {};
+	option "Caly dysk - nie mozna zmienic", action {};
+	option "Zmien e", action { editpart = E;}, sub menu edfspart;
+	option "Zmien f", action { editpart = F;}, sub menu edfspart;
+	option "Zmien g", action { editpart = G;}, sub menu edfspart;
+	option "Zmien h", action { editpart = H;}, sub menu edfspart;
+	option "Ustaw nowy przydzial rozmiarow", action { reask_sizemult(dlcylsize); };
  
 
-menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
+menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Base",			 action { toggle_getit (1); };
 	option	"System (/etc)",	 action { toggle_getit (2); };
 	option  "Compiler Tools", 	 action { toggle_getit (3); };
 	option  "Games", 		 action { toggle_getit (4); };
-	option  "Online Manual Pages", 	 action { toggle_getit (5); };
+	option  "Online manual pages", 	 action { toggle_getit (5); };
 	option  "Miscellaneous", 	 action { toggle_getit (6); };
 	option  "Text Processing Tools", action { toggle_getit (7); };
 	option  "X11 base and clients",	 action { toggle_getit (8); };
