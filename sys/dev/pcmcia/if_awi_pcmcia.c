@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.16 2000/06/09 13:05:02 onoe Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.17 2000/07/05 02:27:25 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
  * DS cards based on the same chipset.
  */
 
-#include "opt_awi.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
