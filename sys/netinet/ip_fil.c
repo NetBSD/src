@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.94 2003/08/15 08:11:09 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.95 2003/08/22 22:11:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -15,12 +15,14 @@
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
     (__FreeBSD_version >= 400000) && !defined(KLD_MODULE)
 #include "opt_inet6.h"
+#include "opt_ipsec.h"
 #endif
 #include <sys/param.h>
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)  && !defined(_LKM)
 # include "opt_ipfilter_log.h"
 # include "opt_pfil_hooks.h"
+# include "opt_ipsec.h"
 #endif
 #if defined(__FreeBSD__) && !defined(__FreeBSD_version)
 # if !defined(_KERNEL) || defined(IPFILTER_LKM)
@@ -124,7 +126,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.94 2003/08/15 08:11:09 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.95 2003/08/22 22:11:44 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
