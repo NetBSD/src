@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20 1993/08/01 19:25:40 mycroft Exp $
+ *	$Id: fd.c,v 1.21 1993/12/20 09:05:41 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -44,20 +44,23 @@
 #include "fd.h"
 #if NFDC > 0
 
-#include "param.h"
-#include "dkbad.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "ioctl.h"
-#include "buf.h"
-#include "uio.h"
-#include "machine/cpufunc.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/fdreg.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/rtc.h"
+#include <sys/param.h>
+#include <sys/dkbad.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+
+#include <machine/cpufunc.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/fdreg.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/rtc.h>
 
 #define	FDUNIT(s)	((s>>3)&1)
 #define	FDTYPE(s)	((s)&7)

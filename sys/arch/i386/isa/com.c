@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.13 1993/09/29 02:36:21 cgd Exp $
+ *	$Id: com.c,v 1.14 1993/12/20 09:05:33 mycroft Exp $
  */
 
 #include "com.h"
@@ -40,23 +40,26 @@
  * COM driver, based on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "select.h"
-#include "tty.h"
-#include "proc.h"
-#include "user.h"
-#include "conf.h"
-#include "file.h"
-#include "uio.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "types.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/types.h>
 
-#include "i386/isa/isa_device.h"
-#include "i386/isa/comreg.h"
-#include "i386/isa/ic/ns16550.h"
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
+#include <i386/isa/comreg.h>
+#include <i386/isa/ic/ns16550.h>
+
 #define cominor(d)
 
 int 	comprobe(), comattach(), comintr(), comparam();
@@ -104,7 +107,7 @@ struct speedtab comspeedtab[] = {
 
 extern	struct tty *constty;
 #ifdef KGDB
-#include "machine/remote-sl.h"
+#include <machine/remote-sl.h>
 
 extern int kgdb_dev;
 extern int kgdb_rate;
@@ -606,7 +609,7 @@ commctl(dev, bits, how)
 /*
  * Following are all routines needed for COM to act as console
  */
-#include "i386/i386/cons.h"
+#include <i386/i386/cons.h>
 
 comcnprobe(cp)
 	struct consdev *cp;

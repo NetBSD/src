@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.4 1993/12/16 20:14:10 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.5 1993/12/20 09:05:55 mycroft Exp $
  */
 /*
  * TODO: 
@@ -33,38 +33,45 @@
 #if NEP > 0
 #include "bpfilter.h"
 
-#include "param.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
-#include "select.h"
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/if_dl.h"
-#include "net/if_types.h"
-#include "net/netisr.h"
-#ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
-#endif
-#ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
-#endif
-#if NBPFILTER > 0
-#include "net/bpf.h"
-#include "net/bpfdesc.h"
-#endif
-#include "i386/isa/isa.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/icu.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/select.h>
 
-#include "i386/isa/if_epreg.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/if_epreg.h>
+
 #define ETHER_MIN_LEN 64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
