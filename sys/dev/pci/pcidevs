@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp $
+$NetBSD: pcidevs,v 1.338 2001/07/25 01:44:59 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -539,6 +539,7 @@ vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	SiByte, Inc.
+vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
@@ -737,6 +738,9 @@ product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
 product AMI MEGARAID	0x9010	MegaRAID
 product AMI MEGARAID2	0x9060	MegaRAID 2
 product AMI MEGARAID3	0x1960	MegaRAID 3
+
+/* Antares Microsystems, Inc. products */
+product ANTARES TC9021	0x1021	Antares Gigabit Ethernet
 
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit Host-PCI Bridge
