@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.30 2001/11/01 08:03:03 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.31 2001/12/14 14:43:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.30 2001/11/01 08:03:03 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.31 2001/12/14 14:43:34 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,8 +404,12 @@ trewind(int eject)
 #ifdef RDUMP
 	if (host) {
 		rmtclose();
-		while (rmtopen(tape, 0) < 0)
+		while (rmtopen(tape, 0, 0) < 0)
 			sleep(10);
+		if (eflag && eject) {
+			msg("Ejecting %s\n", tape);
+			(void) rmtioctl(MTOFFL, 0);
+		}
 		rmtclose();
 		return;
 	}
@@ -427,6 +431,8 @@ trewind(int eject)
 void
 close_rewind(void)
 {
+	int i, f;
+
 	trewind(1);
 	(void)do_stats();
 	if (nexttape)
@@ -435,6 +441,23 @@ close_rewind(void)
 		msg("Change Volumes: Mount volume #%d\n", tapeno+1);
 		broadcast("CHANGE DUMP VOLUMES!\7\7\n");
 	}
+	if (lflag) {
+		for (i = 0; i < 12; i++) { /* wait 2 mn */
+			if (host) {
+				if (rmtopen(tape, 0, 0) >= 0) {
+					rmtclose();
+					return;
+				}
+			} else {
+				if ((f = open(tape, 0)) >= 0) {
+					close(f);
+					return;
+				}
+			}
+			sleep (10);
+		}
+	}
+		
 	while (!query("Is the new volume mounted and ready to go?"))
 		if (query("Do you want to abort?")) {
 			dumpabort(0);
@@ -658,7 +681,7 @@ restore_check_point:
 			msg("Dumping volume %d on %s\n", tapeno, tape);
 		}
 #ifdef RDUMP
-		while ((tapefd = (host ? rmtopen(tape, 2) :
+		while ((tapefd = (host ? rmtopen(tape, 2, 1) :
 			pipeout ? 1 : open(tape, O_WRONLY|O_CREAT, 0666))) < 0)
 #else
 		while ((tapefd = (pipeout ? 1 : 

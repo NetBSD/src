@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.42 2001/12/07 19:53:44 wiz Exp $
+.\"	$NetBSD: dump.8,v 1.43 2001/12/14 14:43:33 bouyer Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -43,7 +43,7 @@
 .Nd file system backup
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl 0123456789ceFnStu
+.Op Fl 0123456789ceFlnStu
 .Op Fl B Ar records
 .Op Fl b Ar blocksize
 .Op Fl d Ar density
@@ -187,6 +187,14 @@ but full backups retain them.
 .It Fl k Ar read blocksize
 The size in kilobyte of the read buffers, rounded up to a multiple of the
 file system block size. Default is 32k.
+.It Fl l
+If a tape change is required, eject the tape and wait for the drive to
+be ready again.  This is to be used with tape changers which automatically load
+the next tape when the tape is ejected.  If after 2 minutes the drive is not
+ready
+.Nm
+falls back to the default behavior, and prompts the operator for the next
+tape.
 .It Fl L Ar label
 The user-supplied text string
 .Ar label
