@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.13 1994/06/29 11:18:56 pk Exp $
+ * $Id: warnings.c,v 1.14 1994/07/21 14:59:11 pk Exp $
  */
 
 #include <sys/param.h>
@@ -166,7 +166,6 @@ list_file_locals (entry, outfile)
 
 /* Static vars for do_warnings and subroutines of it */
 static int list_unresolved_refs;	/* List unresolved refs */
-static int list_warning_symbols;	/* List warning syms */
 static int list_multiple_defs;		/* List multiple definitions */
 
 static struct line_debug_entry *init_debug_scan __P((int, struct file_entry *));
@@ -701,7 +700,6 @@ do_warnings(outfile)
 {
 	list_unresolved_refs = !relocatable_output &&
 		(undefined_global_sym_count || undefined_shobj_sym_count);
-	list_warning_symbols = warning_count;
 	list_multiple_defs = multiple_def_count != 0;
 
 	if (!(list_unresolved_refs ||
