@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.23 2000/08/01 00:22:41 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.24 2000/09/28 15:28:43 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -839,7 +839,8 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 		DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: "
 		    "mapping va %lx at %qx\n", va, addr | cbit));
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
