@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.11 2000/07/07 11:39:41 itojun Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.12 2000/12/08 20:08:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,14 +33,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.11 2000/07/07 11:39:41 itojun Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.12 2000/12/08 20:08:43 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-
-#include <netinet/in.h>
 
 #include <err.h>
 #include <netdb.h>
@@ -76,11 +74,6 @@ const char *svcname;
 #define SIG_PF void(*)(int)
 #endif
 
-#define _RPCSVC_CLOSEDOWN 120
-static int _rpcpmstart;		/* Started by a port monitor ? */
-static int _rpcfdtype;		/* Whether Stream or Datagram ? */
-static int _rpcsvcdirty;	/* Still serving ? */
-
 int	usedns;
 #ifdef DEBUG
 int	foreground = 1;
@@ -99,37 +92,14 @@ void	usage __P((void));
 
 void	sighandler __P((int));
 
-static	void closedown __P((void));
 
 static
-void _msgout(char* msg)
+void _msgout(int level, const char *msg)
 {
-	if (foreground && ! _rpcpmstart)
+	if (foreground)
                 warnx("%s", msg);
         else
-                syslog(LOG_ERR, "%s", msg);
-}
-
-static void
-closedown()
-{
-	if (_rpcsvcdirty == 0) {
-		extern fd_set svc_fdset;
-		static int size;
-		int i, openfd;
-
-		if (_rpcfdtype == SOCK_DGRAM)
-			exit(0);
-		if (size == 0) {
-			size = getdtablesize();
-		}
-		for (i = 0, openfd = 0; i < size && openfd < 2; i++)
-			if (FD_ISSET(i, &svc_fdset))
-				openfd++;
-		if (openfd <= (_rpcpmstart?0:1))
-			exit(0);
-	}
-	(void) alarm(_RPCSVC_CLOSEDOWN);
+                syslog(level, "%s", msg);
 }
 
 static void
@@ -152,16 +122,14 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	void *(*local) __P((void *, struct svc_req *));
 #ifdef LIBWRAP
 	struct request_info req;
-	struct sockaddr_in *caller;
+	struct sockaddr *caller;
 #define	SVCNAME(x)	svcname = x
 #else
 #define	SVCNAME(x)	/* nothing */
 #endif
 
-	_rpcsvcdirty = 1;
-
 #ifdef LIBWRAP
-	caller = svc_getcaller(transp);
+	caller = svc_getrpccaller(transp)->buf;
 	request_init(&req, RQ_DAEMON, __progname, RQ_CLIENT_SIN, caller, NULL);
 	sock_methods(&req);
 #endif
@@ -253,7 +221,6 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 
 	default:
 		svcerr_noproc(transp);
-		_rpcsvcdirty = 0;
 		return;
 	}
 
@@ -264,7 +231,6 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 		syslog(deny_severity,
 		    "%s: refused request from %.500s", svcname, clientstr);
 		svcerr_auth(transp, AUTH_FAILED);
-		_rpcsvcdirty = 0;
 		return;
 	}
 #endif
@@ -272,7 +238,6 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	(void) memset((char *)&argument, 0, sizeof (argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
 		svcerr_decode(transp);
-		_rpcsvcdirty = 0;
 		return;
 	}
 	result = (*local)(&argument, rqstp);
@@ -280,10 +245,9 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
-		_msgout("unable to free arguments");
+		_msgout(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
-	_rpcsvcdirty = 0;
 	return;
 }
 
@@ -304,7 +268,6 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 
 	default:
 		svcerr_noproc(transp);
-		_rpcsvcdirty = 0;
 		return;
 	}
 }
@@ -314,13 +277,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	SVCXPRT *transp;
-	int sock, proto;
+	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
+	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
+	int udpsock, tcpsock, udp6sock, tcp6sock;
 	struct sigaction sa;
-	int ch;
-
-	transp = NULL;		/* XXX gcc -Wuninitialized */
-	proto = 0;		/* XXX gcc -Wuninitialized */
+	int ch, xcreated = 0, one = 1;
 
 #ifdef LIBWRAP
 #define	GETOPTSTR	"dfl"
@@ -353,91 +314,143 @@ main(argc, argv)
 	if (geteuid() != 0)
 		errx(1, "must run as root");
 
-	if (!foreground && daemon(0, 0))
+	if (foreground == 0 && daemon(0, 0))
 		err(1, "can't detach");
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting");
 	pidfile(NULL);
 
-	sock = RPC_ANYSOCK;
-	(void) pmap_unset(YPPROG, YPVERS);
-	(void) pmap_unset(YPPROG, YPVERS_ORIG);
+	(void) rpcb_unset(YPPROG, YPVERS, NULL);
+	(void) rpcb_unset(YPPROG, YPVERS_ORIG, NULL);
+
+	udpsock  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	tcpsock  = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	udp6sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	tcp6sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+
+	/*
+	 * We're doing host-based access checks here, so don't allow
+	 * v4-in-v6 to confuse things.
+	 */
+	if (udp6sock != -1 && setsockopt(udp6sock, IPPROTO_IPV6,
+	    IPV6_BINDV6ONLY, &one, sizeof(one)) < 0) {
+		_msgout(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
+		exit(1);
+	}
+	if (tcp6sock != -1 && setsockopt(tcp6sock, IPPROTO_IPV6,
+	    IPV6_BINDV6ONLY, &one, sizeof(one)) < 0) {
+		_msgout(LOG_ERR, "can't disable v4-in-v6 on TCP socket");
+		exit(1);
+	}
 
 	ypdb_init();	/* init db stuff */
 
 	sa.sa_handler = sighandler;
 	sa.sa_flags = 0;
 	if (sigemptyset(&sa.sa_mask)) {
-		_msgout("sigemptyset: %m");
+		_msgout(LOG_ERR, "sigemptyset: %m");
 		exit(1);
 	}
 	if (sigaction(SIGCHLD, &sa, NULL)) {
-		_msgout("sigaction: %m");
+		_msgout(LOG_ERR, "sigaction: %m");
 		exit(1);
 	}
 
-	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_DGRAM)) {
-		transp = svcudp_create(sock);
-		if (transp == NULL) {
-			_msgout("cannot create udp service.");
-			exit(1);
-		}
-		if (transp->xp_port >= IPPORT_RESERVED) {
-			_msgout("udp service not bound to a privileged port.");
-			exit(1);
-		}
-		if (!_rpcpmstart)
-			proto = IPPROTO_UDP;
-		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1,
-		    proto)) {
-			_msgout(
-			    "unable to register (YPPROG, YPVERS_ORIG, udp).");
-			exit(1);
-		}
-		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
-			_msgout("unable to register (YPPROG, YPVERS, udp).");
-			exit(1);
-		}
+	udpconf  = getnetconfigent("udp");
+	tcpconf  = getnetconfigent("tcp");
+	udp6conf = getnetconfigent("udp6");
+	tcp6conf = getnetconfigent("tcp6");
+
+	if (udpsock != -1 && udpconf != NULL) {
+		if (bindresvport(udpsock, NULL) == 0) {
+			udptransp = svc_dg_create(udpsock, 0, 0);
+			if (udptransp != NULL) {
+				if (svc_reg(udptransp, YPPROG, YPVERS_ORIG,
+					    ypprog_1, udpconf) == 0 ||
+				    svc_reg(udptransp, YPPROG, YPVERS,
+					    ypprog_2, udpconf) == 0)
+					_msgout(LOG_WARNING,
+					    "unable to register UDP service");
+				else
+					xcreated++;
+			} else
+				_msgout(LOG_WARNING,
+				    "unable to create UDP service");
+		} else
+			_msgout(LOG_ERR, "unable to bind reserved UDP port");
+		freenetconfigent(udpconf);
 	}
 
-	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_STREAM)) {
-		if (_rpcpmstart)
-			transp = svcfd_create(sock, 0, 0);
-		else
-			transp = svctcp_create(sock, 0, 0);
-		if (transp == NULL) {
-			_msgout("cannot create tcp service.");
-			exit(1);
-		}
-		if (transp->xp_port >= IPPORT_RESERVED) {
-			_msgout("tcp service not bound to a privileged port.");
-			exit(1);
-		}
-		if (!_rpcpmstart)
-			proto = IPPROTO_TCP;
-		if (!svc_register(transp, YPPROG, YPVERS_ORIG, ypprog_1,
-		    proto)) {
-			_msgout(
-			    "unable to register (YPPROG, YPVERS_ORIG, tcp).");
-			exit(1);
-		}
-		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
-			_msgout("unable to register (YPPROG, YPVERS, tcp).");
-			exit(1);
-		}
+	if (tcpsock != -1 && tcpconf != NULL) {
+		if (bindresvport(tcpsock, NULL) == 0) {
+			listen(tcpsock, SOMAXCONN);
+			tcptransp = svc_vc_create(tcpsock, 0, 0);
+			if (tcptransp != NULL) {
+				if (svc_reg(tcptransp, YPPROG, YPVERS_ORIG,
+					    ypprog_1, tcpconf) == 0 ||
+				    svc_reg(tcptransp, YPPROG, YPVERS,
+					    ypprog_2, tcpconf) == 0)
+					_msgout(LOG_WARNING,
+					    "unable to register TCP service");
+				else
+					xcreated++;
+			} else
+				_msgout(LOG_WARNING,
+				    "unable to create TCP service");
+		} else
+			_msgout(LOG_ERR, "unable to bind reserved TCP port");
+		freenetconfigent(tcpconf);
 	}
 
-	if (transp == (SVCXPRT *)NULL) {
-		_msgout("could not create a handle");
+	if (udp6sock != -1 && udp6conf != NULL) {
+		if (bindresvport(udp6sock, NULL) == 0) {
+			udp6transp = svc_dg_create(udp6sock, 0, 0);
+			if (udp6transp != NULL) {
+				if (svc_reg(udp6transp, YPPROG, YPVERS_ORIG,
+					    ypprog_1, udp6conf) == 0 ||
+				    svc_reg(udp6transp, YPPROG, YPVERS,
+					    ypprog_2, udp6conf) == 0)
+					_msgout(LOG_WARNING,
+					    "unable to register UDP6 service");
+				else
+					xcreated++;
+			} else
+				_msgout(LOG_WARNING,
+				    "unable to create UDP6 service");
+		} else
+			_msgout(LOG_ERR, "unable to bind reserved UDP6 port");
+		freenetconfigent(udp6conf);
+	}
+
+	if (tcp6sock != -1 && tcp6conf != NULL) {
+		if (bindresvport(tcp6sock, NULL) == 0) {
+			listen(tcp6sock, SOMAXCONN);
+			tcp6transp = svc_vc_create(tcp6sock, 0, 0);
+			if (tcp6transp != NULL) {
+				if (svc_reg(tcp6transp, YPPROG, YPVERS_ORIG,
+					    ypprog_1, tcp6conf) == 0 ||
+				    svc_reg(tcp6transp,  YPPROG, YPVERS,
+					    ypprog_2, tcp6conf) == 0)
+					_msgout(LOG_WARNING,
+					    "unable to register TCP6 service");
+				else
+					xcreated++;
+			} else
+				_msgout(LOG_WARNING,
+				    "unable to create TCP6 service");
+		} else
+			_msgout(LOG_ERR, "unable to bind reserved TCP6 port");
+		freenetconfigent(tcp6conf);
+	}
+
+	if (xcreated == 0) {
+		_msgout(LOG_ERR, "unable to create any services");
 		exit(1);
 	}
-	if (_rpcpmstart) {
-		(void) signal(SIGALRM, (SIG_PF) closedown);
-		(void) alarm(_RPCSVC_CLOSEDOWN);
-	}
+
 	svc_run();
-	_msgout("svc_run returned");
+	_msgout(LOG_ERR, "svc_run returned");
 	exit(1);
 	/* NOTREACHED */
 }
@@ -466,7 +479,6 @@ usage()
 
 #undef USAGESTR
 }
-
 
 /*
  * _yp_invalid_map: check if given map name isn't legal.
