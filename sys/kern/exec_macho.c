@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.16 2002/11/21 22:01:45 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.17 2002/11/21 22:30:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.16 2002/11/21 22:01:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.17 2002/11/21 22:30:33 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -265,10 +265,6 @@ exec_macho_load_thread(struct exec_macho_thread_command *th) {
 /*
  * exec_macho_load_file(): Load a macho-binary. This is used
  * for the dynamic linker and library recursive loading.
- *
- * XXX: We should be checking for recursive depth, because
- * one can construct a binary that crashes the kernel, by
- * using a self referential dynamic linker section.
  */
 static int
 exec_macho_load_file(struct proc *p, struct exec_package *epp,
@@ -279,6 +275,14 @@ exec_macho_load_file(struct proc *p, struct exec_package *epp,
 	struct vnode *vp;
 	struct vattr attr;
 	struct exec_macho_fat_header fat;
+	struct exec_macho_emul_arg *emea;
+
+	/*
+	 * Check for excessive recursive Mach-O loading
+	 */
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+	if (emea->loadcount++ > EXEC_MACHO_MAXLOADCOUNT)
+		return E2BIG;
 
 	/*
 	 * 1. open file
@@ -533,6 +537,7 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 		return (error);
 
 	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	emea->loadcount = 0;
 	epp->ep_emul_arg = (void *)emea;
 
 	if (!epp->ep_esch->u.mach_probe_func)
