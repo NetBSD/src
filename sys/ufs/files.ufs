@@ -1,0 +1,54 @@
+#	$NetBSD: files.ufs,v 1.1 2002/04/16 23:14:10 thorpej Exp $
+
+deffs					FFS
+deffs					EXT2FS
+deffs	fs_mfs.h			MFS		# XXX
+deffs	fs_lfs.h			LFS		# XXX
+
+defflag	opt_ffs.h			FFS_EI
+
+file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
+file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
+file	ufs/ext2fs/ext2fs_bmap.c	ext2fs
+file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
+file	ufs/ext2fs/ext2fs_inode.c	ext2fs
+file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
+file	ufs/ext2fs/ext2fs_readwrite.c	ext2fs
+file	ufs/ext2fs/ext2fs_subr.c	ext2fs
+file	ufs/ext2fs/ext2fs_vfsops.c	ext2fs
+file	ufs/ext2fs/ext2fs_vnops.c	ext2fs
+
+file	ufs/ffs/ffs_alloc.c		ffs | mfs
+file	ufs/ffs/ffs_balloc.c		ffs | mfs
+file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
+file	ufs/ffs/ffs_inode.c		ffs | mfs
+file	ufs/ffs/ffs_softdep.c		ffs & softdep
+file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
+					    (!ffs & (lfs | mfs | ext2fs))
+file	ufs/ffs/ffs_subr.c		ffs | mfs
+file	ufs/ffs/ffs_tables.c		ffs | mfs
+file	ufs/ffs/ffs_vfsops.c		ffs | mfs
+file	ufs/ffs/ffs_vnops.c		ffs | mfs
+
+file	ufs/lfs/lfs_alloc.c		lfs  
+file	ufs/lfs/lfs_balloc.c		lfs
+file	ufs/lfs/lfs_bio.c		lfs
+file	ufs/lfs/lfs_cksum.c		lfs
+file	ufs/lfs/lfs_debug.c		lfs
+file	ufs/lfs/lfs_inode.c		lfs
+file	ufs/lfs/lfs_segment.c		lfs
+file	ufs/lfs/lfs_subr.c		lfs
+file	ufs/lfs/lfs_syscalls.c		lfs
+file	ufs/lfs/lfs_vfsops.c		lfs
+file	ufs/lfs/lfs_vnops.c		lfs
+
+file	ufs/mfs/mfs_vfsops.c		mfs
+file	ufs/mfs/mfs_vnops.c		mfs
+
+file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs
+file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
+file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
