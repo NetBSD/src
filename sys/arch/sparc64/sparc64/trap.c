@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2000/08/08 19:59:41 tv Exp $ */
+/*	$NetBSD: trap.c,v 1.54 2000/09/28 19:56:13 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -716,8 +716,12 @@ badtrap:
 		 * We may have more FPEs stored up and/or ops queued.
 		 * If they exist, handle them and get out.  Otherwise,
 		 * resolve the FPU state, turn it on, and try again.
+		 *
+		 * Ultras should never have a FPU queue.
 		 */
 		if (fs->fs_qsize) {
+
+			printf("trap: Warning fs_qsize is %d\n",fs->fs_qsize);
 			fpu_cleanup(p, fs);
 			break;
 		}
@@ -880,9 +884,6 @@ rwindow_save(p)
 #ifndef TRAPWIN
 	register struct trapframe64 *tf = p->p_md.md_tf;
 #endif
-
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
 
 	i = pcb->pcb_nsaved;
 #ifdef DEBUG
@@ -1126,7 +1127,7 @@ data_access_fault(type, addr, pc, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
+			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1383,7 +1384,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
+			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1530,7 +1531,7 @@ text_access_fault(type, pc, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
+			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1697,7 +1698,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = btoc(USRSTACK - va);
+			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
