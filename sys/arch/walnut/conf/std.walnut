@@ -1,0 +1,16 @@
+#	$NetBSD: std.walnut,v 1.1 2001/06/13 06:01:51 simonb Exp $
+#
+# Standard/required options for NetBSD/walnut.
+
+machine	walnut powerpc
+
+# standard ("mandatory") kernel options.
+options 	PPC_IBM4XX	# IBM 40x family
+
+# Executable support:
+options 	EXEC_ELF32	# (native) ELF32 binary support
+options 	EXEC_AOUT	# (native) a.out binary support (deprecated)
+options 	EXEC_SCRIPT	# shell script support
+
+#options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
+#options DEBUG

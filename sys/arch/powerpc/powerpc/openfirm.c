@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.8 2001/06/10 15:05:44 tsubai Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.9 2001/06/13 06:01:50 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,8 +40,8 @@
 
 char *OF_buf;
 
-extern void ofw_stack __P((void));
-extern void ofbcopy __P((const void *, void *, size_t));
+void ofw_stack(void);
+void ofbcopy(const void *, void *, size_t);
 
 int
 OF_peer(phandle)

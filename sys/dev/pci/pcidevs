@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.327 2001/06/11 21:12:29 thorpej Exp $
+$NetBSD: pcidevs,v 1.328 2001/06/13 06:01:45 simonb Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1117,6 +1117,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
+product IBM 405GP	0x0156	IBM 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
@@ -1193,6 +1194,7 @@ product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
 product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
 product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
 product INTEL 82439HX		0x1250	82439HX System Controller (TXC)
+product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI

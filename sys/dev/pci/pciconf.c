@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.3 2001/05/27 17:50:40 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.4 2001/06/13 06:01:45 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -137,7 +137,7 @@ typedef struct _s_pciconf_bus_t {
 
 static int	probe_bus(pciconf_bus_t *);
 static void	alloc_busno(pciconf_bus_t *, pciconf_bus_t *);
-static int	pci_do_device_query(pciconf_bus_t *, pcitag_t, int, int);
+static int	pci_do_device_query(pciconf_bus_t *, pcitag_t, int, int, int);
 static int	setup_iowins(pciconf_bus_t *);
 static int	setup_memwins(pciconf_bus_t *);
 static int	configure_bridge(pciconf_dev_t *);
@@ -204,18 +204,24 @@ probe_bus(pciconf_bus_t *pb)
 	pb->max_mingnt = 0;	/* we are looking for the maximum */
 	pb->min_maxlat = 0x100;	/* we are looking for the minimum */
 	pb->bandwidth_used = 0;
+
 	for (device=0; device < maxdevs; device++) {
 		pcitag_t tag;
 		pcireg_t id, bhlcr;
 		int function, nfunction;
+		int confmode;
 
 		tag = pci_make_tag(pb->pc, pb->busno, device, 0);
 		if (pci_conf_debug) {
 			print_tag(pb->pc, tag);
-			printf("probing.\n");
+			printf("probing with tag %x.\n", tag);
 		}
 		id = pci_conf_read(pb->pc, tag, PCI_ID_REG);
 
+		if (pci_conf_debug) {
+			printf("id=%x: Vendor=%x, Product=%x\n",
+			    id, PCI_VENDOR(id),PCI_PRODUCT(id));
+		}
 		/* Invalid vendor ID value? */
 		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
 			continue;
@@ -234,8 +240,16 @@ probe_bus(pciconf_bus_t *pb)
 					    "really probing.\n",
 					PCI_VENDOR(id), PCI_PRODUCT(id));
 				}
+#ifdef __HAVE_PCI_CONF_HOOK
+				confmode = pci_conf_hook(pb->pc, pb->busno,
+				    device, function, id);
+				if (confmode == 0)
+					continue;
+#else
+				confmode = PCI_CONF_ALL;
+#endif
 				if (pci_do_device_query(pb, tag, device,
-				    function))
+				    function, confmode))
 					return -1;
 				pb->ndevs++;
 			}
@@ -365,7 +379,7 @@ err:
 }
 
 static int
-pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
+pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode)
 {
 	pciconf_dev_t	*pd;
 	pciconf_win_t	*pi, *pm;
@@ -377,7 +391,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 	pd->pc = pb->pc;
 	pd->tag = tag;
 	pd->ppb = NULL;
-	pd->enable = 1;
+	pd->enable = mode;
 
 	class = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
 
@@ -476,7 +490,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 			}
 			pb->niowin++;
 			pb->io_total += size;
-		} else {
+		} else if ((mode & PCI_CONF_MAP_MEM)
+			   && (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_MEM)) {
 			switch (PCI_MAPREG_MEM_TYPE(mask)) {
 			case PCI_MAPREG_MEM_TYPE_32BIT:
 			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
@@ -534,30 +549,32 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func)
 		}
 	}
 
-	bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-	pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
-	mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-	pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, bar);
+	if (mode & PCI_CONF_MAP_ROM) {
+		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
+		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
+		mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
+		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, bar);
 
-	if (mask != 0 && mask != 0xffffffff) {
-		if (pb->nmemwin >= MAX_CONF_MEM) {
-			printf("pciconf: too many memory windows");
-			return -1;
-		}
-		size = (u_int64_t) PCI_MAPREG_MEM_SIZE(mask);
+		if (mask != 0 && mask != 0xffffffff) {
+			if (pb->nmemwin >= MAX_CONF_MEM) {
+				printf("pciconf: too many memory windows");
+				return -1;
+			}
+			size = (u_int64_t) PCI_MAPREG_MEM_SIZE(mask);
 
-		pm = get_mem_desc(pb, size);
-		pm->dev = pd;
-		pm->reg = PCI_MAPREG_ROM;
-		pm->size = size;
-		pm->align = 4;
-		pm->prefetch = 1;
-		if (pci_conf_debug) {
-			print_tag(pb->pc, tag);
-			printf("Expansion ROM memory size %llu\n", pm->size);
+			pm = get_mem_desc(pb, size);
+			pm->dev = pd;
+			pm->reg = PCI_MAPREG_ROM;
+			pm->size = size;
+			pm->align = 4;
+			pm->prefetch = 1;
+			if (pci_conf_debug) {
+				print_tag(pb->pc, tag);
+				printf("Expansion ROM memory size %llu\n", pm->size);
+			}
+			pb->nmemwin++;
+			pb->pmem_total += size;
 		}
-		pb->nmemwin++;
-		pb->pmem_total += size;
 	}
 
 	return 0;
@@ -577,7 +594,9 @@ pci_allocate_range(struct extent *ex, u_int64_t amt, int align)
 	r = extent_alloc(ex, amt, align, 0, EX_NOWAIT, &addr);
 	if (r) {
 		addr = (u_long) -1;
-		printf("extent_alloc() returned %d\n", r);
+		printf("extent_alloc(%p, %llu, %d) returned %d\n",
+		    ex, amt, align, r);
+		extent_print(ex);
 	}
 	return (pcireg_t) addr;
 }

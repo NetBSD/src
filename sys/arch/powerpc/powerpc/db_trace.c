@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2001/06/13 06:01:50 simonb Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
+
+#include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +77,15 @@ const struct db_variable db_regs[] = {
 	{ "r31", (long *)&ddb_regs.r[31], FCN_NULL },
 	{ "iar", (long *)&ddb_regs.iar,   FCN_NULL },
 	{ "msr", (long *)&ddb_regs.msr,   FCN_NULL },
+#ifdef PPC_IBM4XX
+	{ "lr",  (long *)&ddb_regs.lr,    FCN_NULL },
+	{ "ctr", (long *)&ddb_regs.ctr,   FCN_NULL },
+	{ "cr",  (long *)&ddb_regs.cr,    FCN_NULL },
+	{ "xer", (long *)&ddb_regs.xer,   FCN_NULL },
+	{ "dear", (long *)&ddb_regs.dear, FCN_NULL },
+	{ "esr", (long *)&ddb_regs.esr,   FCN_NULL },
+	{ "pid", (long *)&ddb_regs.pid,   FCN_NULL },
+#endif
 };
 const struct db_variable * const db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
 
@@ -139,5 +150,35 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			(*pr)("at %p\n", caller);
 		else
 			(*pr)("at %s+%x\n", symname, diff);
+		if (symname && (!strcmp(symname, "trap") ||
+			!strcmp(symname, "pmap_tlbmiss"))) {
+			/*
+			 * XXX - Incorrect offset for the trapframe.
+			 *       We get garbage some/most times.
+			 */
+			struct trapframe *tf = (struct trapframe *)(frame - 16);
+
+			printf("trap ------------------\n");
+			printf("\tr1   = %x\n", tf->fixreg[1]);
+			printf("\tcr   = %x\n", tf->cr);
+			printf("\txer  = %x\n", tf->xer);
+			printf("\tctr  = %x\n", tf->ctr);
+			printf("\tsrr0 = %x\n", tf->srr0);
+			printf("\tsrr1 = %x\n", tf->srr1);
+			printf("\texc  = %x\n", tf->exc);
+#ifdef PPC_IBM4XX
+			printf("\tdear = %x\n", tf->dear);
+			printf("\tesr  = %x\n", tf->esr);
+			printf("\tpid  = %x\n", tf->pid);
+#endif
+			/*
+			 * Switch to the trapframe's stack if it's in the
+			 * kernel. 
+			 */
+			if ((tf->srr1 & PSL_PR) == 0)
+				frame = tf->fixreg[1];
+			else
+				return;
+		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9 2001/06/13 06:01:50 simonb Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -38,12 +38,14 @@ enum function_mask {
 	Op_d	=	Op_const | Op_sign,
 	Op_crbA =	0x00008000,
 	Op_crbB =	0x00010000,
+	Op_WS	=	Op_crbB,	/* kludge, same field as crbB */
 	Op_crbD =	0x00020000,
 	Op_crfD =	0x00040000,
 	Op_crfS =	0x00080000,
 	Op_ds   =	0x00100000,
 	Op_me   =	0x00200000,
 	Op_spr  =	0x00400000,
+	Op_dcr  =	Op_spr,		/* out of bits - cheat with Op_spr */
 	Op_tbr  =	0x00800000,
 
 	Op_L	=	0x01000000,
@@ -70,12 +72,12 @@ struct opcode {
 };
 
 typedef u_int32_t instr_t;
-typedef void (op_class_func) (instr_t);
+typedef void (op_class_func) (instr_t, vaddr_t);
 
 u_int32_t extract_field(u_int32_t value, u_int32_t base, u_int32_t width);
-void disasm_fields(const struct opcode *popcode, instr_t instr,
+void disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
     char *disasm_str);
-void dis_ppc(const struct opcode *opcodeset, instr_t instr);
+void dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc);
 
 op_class_func op_ill, op_base;
 op_class_func op_cl_x13, op_cl_x1e, op_cl_x1f;
@@ -231,6 +233,7 @@ const struct opcode opcodes_1f[] = {
 	{ "neg",	0xfc0003fe, 0x7c0000d0, Op_D | Op_A | Op_OE | Op_Rc },
 	{ "lbzux",	0xfc0007fe, 0x7c0000ee, Op_D | Op_A | Op_B },
 	{ "nor",	0xfc0007fe, 0x7c0000f8, Op_S | Op_A | Op_B | Op_Rc },
+	{ "wrtee",	0xfc0003ff, 0x7c000106, Op_S },
 	{ "subfe",	0xfc0003fe, 0x7c000110, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "adde",	0xfc0003fe, 0x7c000114, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "mtcrf",	0xfc0007fe, 0x7c000120, Op_S | Op_CRM },
@@ -238,6 +241,7 @@ const struct opcode opcodes_1f[] = {
 	{ "stdx",	0xfc0007fe, 0x7c00012a, Op_S | Op_A | Op_B },
 	{ "stwcx.",	0xfc0007ff, 0x7c00012d, Op_S | Op_A | Op_B },
 	{ "stwx",	0xfc0007fe, 0x7c00012e, Op_S | Op_A | Op_B },
+	{ "wrteei",	0xfc0003fe, 0x7c000146 },	/* XXX: out of flags! */
 	{ "stdux",	0xfc0007fe, 0x7c00016a, Op_S | Op_A | Op_B },
 	{ "stwux",	0xfc0007fe, 0x7c00016e, Op_S | Op_A | Op_B },
 	{ "subfze",	0xfc0003fe, 0x7c000190, Op_D | Op_A | Op_OE | Op_Rc },
@@ -260,6 +264,7 @@ const struct opcode opcodes_1f[] = {
 	{ "eciwx",	0xfc0007fe, 0x7c00026c, Op_D | Op_A | Op_B },
 	{ "lhzux",	0xfc0007fe, 0x7c00026e, Op_D | Op_A | Op_B },
 	{ "xor",	0xfc0007fe, 0x7c000278, Op_S | Op_A | Op_B | Op_Rc },
+	{ "mfdcr",	0xfc0007fe, 0x7c000286, Op_D | Op_dcr },
 	{ "mfspr",	0xfc0007fe, 0x7c0002a6, Op_D | Op_spr },
 	{ "lwax",	0xfc0007fe, 0x7c0002aa, Op_D | Op_A | Op_B },
 	{ "lhax",	0xfc0007fe, 0x7c0002ae, Op_D | Op_A | Op_B },
@@ -273,11 +278,13 @@ const struct opcode opcodes_1f[] = {
 	{ "slbie",	0xfc0007fc, 0x7c000364, Op_B },
 	{ "sthux",	0xfc0007fe, 0x7c00036e, Op_S | Op_A | Op_B },
 	{ "or",		0xfc0007fe, 0x7c000378, Op_S | Op_A | Op_B | Op_Rc },
+	{ "mtdcr",	0xfc0007fe, 0x7c000386, Op_S | Op_dcr },
 	{ "divdu",	0xfc0003fe, 0x7c000392, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "divwu",	0xfc0003fe, 0x7c000396, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "mtspr",	0xfc0007fe, 0x7c0003a6, Op_S | Op_spr },
 	{ "dcbi",	0xfc0007fe, 0x7c0003ac, Op_A | Op_B },
 	{ "nand",	0xfc0007fe, 0x7c0003b8, Op_S | Op_A | Op_B | Op_Rc },
+	{ "dcread",	0xfc0007fe, 0x7c0003cc, Op_D | Op_A | Op_B },
 	{ "divd",	0xfc0003fe, 0x7c0003d2, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "divw",	0xfc0003fe, 0x7c0003d6, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "slbia",	0xfc0003fe, 0x7c0003e4, Op_S | Op_A | Op_B | Op_OE | Op_Rc },
@@ -304,15 +311,17 @@ const struct opcode opcodes_1f[] = {
 	{ "stfdux",	0xfc0007fe, 0x7c0005ee, Op_S | Op_A | Op_B },
 	{ "lhbrx",	0xfc0007fe, 0x7c00062c, Op_D | Op_A | Op_B },
 	{ "sraw",	0xfc0007fe, 0x7c000630, Op_S | Op_A | Op_B },
-	{ "srad",	0xfc0007fe, 0x7c000634, Op_S | Op_A | Op_B | Op_Rc},
-	{ "srawi",	0xfc0007fe, 0x7c000670, Op_S | Op_A | Op_B | Op_Rc},
+	{ "srad",	0xfc0007fe, 0x7c000634, Op_S | Op_A | Op_B | Op_Rc },
+	{ "srawi",	0xfc0007fe, 0x7c000670, Op_S | Op_A | Op_B | Op_Rc },
 	{ "sradi",	0xfc0007fc, 0x7c000674, Op_S | Op_A | Op_sh },
 	{ "eieio",	0xfc0007fe, 0x7c0006ac, 0 },
+	{ "tlbsx",	0xfc0007fe, 0x7c000724, Op_S | Op_A | Op_B | Op_Rc },
 	{ "sthbrx",	0xfc0007fe, 0x7c00072c, Op_S | Op_A | Op_B },
 	{ "extsh",	0xfc0007fe, 0x7c000734, Op_S | Op_A | Op_B | Op_Rc },
+	{ "tlbre",	0xfc0007fe, 0x7c000764, Op_D | Op_A | Op_WS },
 	{ "extsb",	0xfc0007fe, 0x7c000774, Op_S | Op_A | Op_Rc },
 	{ "icbi",	0xfc0007fe, 0x7c0007ac, Op_A | Op_B },
-
+	{ "tlbwe",	0xfc0007fe, 0x7c0007a4, Op_S | Op_A | Op_WS },
 	{ "stfiwx",	0xfc0007fe, 0x7c0007ae, Op_S | Op_A | Op_B },
 	{ "extsw",	0xfc0007fe, 0x7c0007b4, Op_S | Op_A | Op_Rc },
 	{ "dcbz",	0xfc0007fe, 0x7c0007ec, Op_A | Op_B },
@@ -385,11 +394,165 @@ const struct opcode opcodes_3f[] = {
 	{ "",		0x0,		0x0, 0 }
 };
 
-/*
-typedef void (op_class_func) (instr_t);
-*/
+
+struct specialreg {
+	int reg;
+	char *name;
+};
+
+const struct specialreg sprregs[] = {
+	{ 0x001, "xer" },
+	{ 0x008, "lr" },
+	{ 0x009, "ctr" },
+	{ 0x012, "dsisr" },
+	{ 0x013, "dar" },
+	{ 0x016, "dec" },
+	{ 0x019, "sdr1" },
+	{ 0x01a, "srr0" },
+	{ 0x01b, "srr1" },
+	{ 0x100, "usprg0" },
+	{ 0x110, "sprg0" },
+	{ 0x111, "sprg1" },
+	{ 0x112, "sprg2" },
+	{ 0x113, "sprg3" },
+	{ 0x114, "sprg4" },
+	{ 0x115, "sprg5" },
+	{ 0x116, "sprg6" },
+	{ 0x117, "sprg7" },
+	{ 0x118, "asr" },
+	{ 0x11a, "aer" },
+	{ 0x11c, "tbl" },
+	{ 0x11d, "tbu" },
+	{ 0x11f, "pvr" },
+	{ 0x210, "ibat0u" },
+	{ 0x211, "ibat0l" },
+	{ 0x212, "ibat1u" },
+	{ 0x213, "ibat1l" },
+	{ 0x214, "ibat2u" },
+	{ 0x215, "ibat2l" },
+	{ 0x216, "ibat3u" },
+	{ 0x217, "ibat3l" },
+	{ 0x218, "dbat0u" },
+	{ 0x219, "dbat0l" },
+	{ 0x21a, "dbat1u" },
+	{ 0x21b, "dbat1l" },
+	{ 0x21c, "dbat2u" },
+	{ 0x21d, "dbat2l" },
+	{ 0x21e, "dbat3u" },
+	{ 0x21f, "dbat3l" },
+	{ 0x3b0, "zpr" },
+	{ 0x3b1, "pid" },
+	{ 0x3b3, "ccr0" },
+	{ 0x3b4, "iac3" },
+	{ 0x3b5, "iac4" },
+	{ 0x3b6, "dvc1" },
+	{ 0x3b7, "dvc2" },
+	{ 0x3b9, "sgr" },
+	{ 0x3ba, "dcwr" },
+	{ 0x3bb, "sler" },
+	{ 0x3bc, "su0r" },
+	{ 0x3bd, "dbcr1" },
+	{ 0x3d3, "icdbdr" },
+	{ 0x3d4, "esr" },
+	{ 0x3d5, "dear" },
+	{ 0x3d6, "evpr" },
+	{ 0x3d8, "tsr" },
+	{ 0x3da, "tcr" },
+	{ 0x3db, "pit" },
+	{ 0x3de, "srr2" },
+	{ 0x3df, "srr3" },
+	{ 0x3f0, "dbsr" },
+	{ 0x3f2, "dbcr0" },
+	{ 0x3f4, "iac1" },
+	{ 0x3f5, "iac2" },
+	{ 0x3f6, "dac1" },
+	{ 0x3f7, "dac2" },
+	{ 0x3f9, "l2cr" },
+	{ 0x3fa, "dccr" },
+	{ 0x3fb, "iccr" },
+	{ 0x3ff, "pir" },
+	{ 0, NULL }
+};
+
+const struct specialreg dcrregs[] = {
+	{ 0x010, "sdram0_cfgaddr" },
+	{ 0x011, "sdram0_cfgdata" },
+	{ 0x012, "ebc0_cfgaddr" },
+	{ 0x013, "ebc0_cfgdata" },
+	{ 0x014, "dcp0_cfgaddr" },
+	{ 0x015, "dcp0_cfgdata" },
+	{ 0x018, "ocm0_isarc" },
+	{ 0x019, "ocm0_iscntl" },
+	{ 0x01a, "ocm0_dsarc" },
+	{ 0x01b, "ocm0_dscntl" },
+	{ 0x084, "plb0_besr" },
+	{ 0x086, "plb0_bear" },
+	{ 0x087, "plb0_acr" },
+	{ 0x0a0, "pob0_besr0" },
+	{ 0x0a2, "pob0_bear" },
+	{ 0x0a4, "pob0_besr1" },
+	{ 0x0b0, "cpc0_pllmr" },
+	{ 0x0b1, "cpc0_cr0" },
+	{ 0x0b2, "cpc0_cr1" },
+	{ 0x0b4, "cpc0_psr" },
+	{ 0x0b5, "cpc0_jtagid" },
+	{ 0x0b8, "cpc0_sr" },
+	{ 0x0b9, "cpc0_er" },
+	{ 0x0ba, "cpc0_fr" },
+	{ 0x0c0, "uic0_sr" },
+	{ 0x0c2, "uic0_er" },
+	{ 0x0c3, "uic0_cr" },
+	{ 0x0c4, "uic0_pr" },
+	{ 0x0c5, "uic0_tr" },
+	{ 0x0c6, "uic0_msr" },
+	{ 0x0c7, "uic0_vr" },
+	{ 0x0c8, "uic0_vcr" },
+	{ 0x100, "dma0_cr0" },
+	{ 0x101, "dma0_ct0" },
+	{ 0x102, "dma0_da0" },
+	{ 0x103, "dma0_sa0" },
+	{ 0x104, "dma0_sg0" },
+	{ 0x108, "dma0_cr1" },
+	{ 0x109, "dma0_ct1" },
+	{ 0x10a, "dma0_da1" },
+	{ 0x10b, "dma0_sa1" },
+	{ 0x10c, "dma0_sg1" },
+	{ 0x110, "dma0_cr2" },
+	{ 0x111, "dma0_ct2" },
+	{ 0x112, "dma0_da2" },
+	{ 0x113, "dma0_sa2" },
+	{ 0x114, "dma0_sg2" },
+	{ 0x118, "dma0_cr3" },
+	{ 0x119, "dma0_ct3" },
+	{ 0x11a, "dma0_da3" },
+	{ 0x11b, "dma0_sa3" },
+	{ 0x11c, "dma0_sg3" },
+	{ 0x120, "dma0_sr" },
+	{ 0x123, "dma0_sgc" },
+	{ 0x125, "dma0_slp" },
+	{ 0x126, "dma0_pol" },
+	{ 0x180, "mal0_cfg" },
+	{ 0x181, "mal0_esr" },
+	{ 0x182, "mal0_ier" },
+	{ 0x184, "mal0_txcasr" },
+	{ 0x185, "mal0_txcarr" },
+	{ 0x186, "mal0_txeobisr" },
+	{ 0x187, "mal0_txdeir" },
+	{ 0x190, "mal0_rxcasr" },
+	{ 0x191, "mal0_rxcarr" },
+	{ 0x192, "mal0_rxeobisr" },
+	{ 0x193, "mal0_rxdeir" },
+	{ 0x1a0, "mal0_txctp0r" },
+	{ 0x1a1, "mal0_txctp1r" },
+	{ 0x1a2, "mal0_txctp2r" },
+	{ 0x1a3, "mal0_txctp3r" },
+	{ 0x1c0, "mal0_rxctp0r" },
+	{ 0x1e0, "mal0_rcbs0" },
+	{ 0, NULL }
+};
+
 void
-op_ill(instr_t instr)
+op_ill(instr_t instr, vaddr_t loc)
 {
 	db_printf("illegal instruction %x\n", instr);
 }
@@ -404,7 +567,8 @@ extract_field(u_int32_t value, u_int32_t base, u_int32_t width)
 const struct opcode * search_op(const struct opcode *);
 
 void
-disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
+disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc, 
+	char *disasm_str)
 {
 	char * pstr;
 	enum function_mask func;
@@ -417,126 +581,141 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		/* also for Op_S (they are the same) */
 		OE = extract_field(instr, 31 - 21, 1);
 		if (OE) {
-			pstr += sprintf (pstr, "o");
+			pstr += sprintf(pstr, "o");
 		}
-		func &= ~Op_D;
+		func &= ~Op_OE;
 	}
-	switch  (func & Op_LKM) {
+	switch (func & Op_LKM) {
 	case Op_Rc:
 		if (instr & 0x1) {
-			pstr += sprintf (pstr,". ");
+			pstr += sprintf(pstr, ".");
 		}
 		break;
 	case Op_AA:
 		if (instr & 0x2) {
-			pstr += sprintf (pstr,"a");
+			pstr += sprintf(pstr, "a");
+			loc = 0; /* Absolute address */
 		}
 	case Op_LK:
 		if (instr & 0x1) {
-			pstr += sprintf (pstr,"l ");
+			pstr += sprintf(pstr, "l");
 		}
 		break;
 	default:
 		func &= ~Op_LKM;
 	}
-	pstr += sprintf (pstr, " ");
+	pstr += sprintf(pstr, "\t");
+
+	/* XXX: special cases here, out of flags in a 32bit word. */
+	if (strcmp(popcode->name, "wrteei") == 0) {
+		int E;
+		E = extract_field(instr, 31 - 16, 5);
+		pstr += sprintf(pstr, "%d", E);
+		return;
+	}
+	/* XXX: end of special cases here. */
+
 	if (func & Op_D) {
 		u_int D;
 		/* also for Op_S (they are the same) */
 		D = extract_field(instr, 31 - 10, 5);
-		pstr += sprintf (pstr, "r%d, ", D);
+		pstr += sprintf(pstr, "r%d, ", D);
 		func &= ~Op_D;
 	}
 	if (func & Op_crbD) {
 		u_int crbD;
 		crbD = extract_field(instr, 31 - 10, 5);
-		pstr += sprintf (pstr, "crb%d, ", crbD);
+		pstr += sprintf(pstr, "crb%d, ", crbD);
 		func &= ~Op_crbD;
 	}
 	if (func & Op_crfD) {
 		u_int crfD;
 		crfD = extract_field(instr, 31 - 8, 3);
-		pstr += sprintf (pstr, "crf%d, ", crfD);
+		pstr += sprintf(pstr, "crf%d, ", crfD);
 		func &= ~Op_crfD;
 	}
 	if (func & Op_L) {
 		u_int L;
 		L = extract_field(instr, 31 - 10, 1);
 		if (L) {
-			pstr += sprintf (pstr, "L, ");
+			pstr += sprintf(pstr, "L, ");
 		}
 		func &= ~Op_L;
 	}
 	if (func & Op_FM) {
 		u_int FM;
 		FM = extract_field(instr, 31 - 10, 8);
-		pstr += sprintf (pstr, "%d, ", FM);
+		pstr += sprintf(pstr, "%d, ", FM);
 		func &= ~Op_FM;
 	}
 	if (func & Op_TO) {
 		u_int TO;
 		TO = extract_field(instr, 31 - 10, 1);
-		pstr += sprintf (pstr, "%d, ", TO);
+		pstr += sprintf(pstr, "%d, ", TO);
 		func &= ~Op_TO;
 	}
 	if (func & Op_crfS) {
 		u_int crfS;
 		crfS = extract_field(instr, 31 - 13, 3);
-		pstr += sprintf (pstr, "%d, ", crfS);
+		pstr += sprintf(pstr, "%d, ", crfS);
 		func &= ~Op_crfS;
 	}
 	if (func & Op_BO) {
 		u_int BO;
 		BO = extract_field(instr, 31 - 10, 5);
-		pstr += sprintf (pstr ,"%d, ", BO);
+		pstr += sprintf(pstr, "%d, ", BO);
 		func &= ~Op_BO;
 	}
 	if (func & Op_A) {
 		u_int A;
 		A = extract_field(instr, 31 - 15, 5);
-		pstr += sprintf (pstr, "r%d, ", A);
+		pstr += sprintf(pstr, "r%d, ", A);
 		func &= ~Op_A;
 	}
 	if (func & Op_B) {
 		u_int B;
 		B = extract_field(instr, 31 - 20, 5);
-		pstr += sprintf (pstr, "r%d, ", B);
+		pstr += sprintf(pstr, "r%d, ", B);
 		func &= ~Op_B;
 	}
 	if (func & Op_C) {
 		u_int C;
 		C = extract_field(instr, 31 - 25, 5);
-		pstr += sprintf (pstr, "r%d, ", C);
+		pstr += sprintf(pstr, "r%d, ", C);
 		func &= ~Op_C;
 	}
 	if (func & Op_BI) {
 		u_int BI;
 		BI = extract_field(instr, 31 - 10, 5);
-		pstr += sprintf (pstr, "%d, ", BI);
+		pstr += sprintf(pstr, "%d, ", BI);
 		func &= ~Op_BI;
 	}
 	if (func & Op_crbA) {
 		u_int crbA;
 		crbA = extract_field(instr, 31 - 15, 5);
-		pstr += sprintf (pstr, "%d, ", crbA);
+		pstr += sprintf(pstr, "%d, ", crbA);
 		func &= ~Op_crbA;
 	}
 	if (func & Op_crbB) {
 		u_int crbB;
 		crbB = extract_field(instr, 31 - 20, 5);
-		pstr += sprintf (pstr, "%d, ", crbB);
+		pstr += sprintf(pstr, "%d, ", crbB);
 		func &= ~Op_crbB;
 	}
 	if (func & Op_CRM) {
 		u_int CRM;
 		CRM = extract_field(instr, 31 - 19, 8);
-		pstr += sprintf (pstr, "0x%x, ", CRM);
+		pstr += sprintf(pstr, "0x%x, ", CRM);
 		func &= ~Op_CRM;
 	}
 	if (func & Op_LI) {
-		u_int LI;
+		int LI;
 		LI = extract_field(instr, 31 - 29, 24);
-		pstr += sprintf (pstr, "0x%x, ", LI);
+		/* Need to sign extend and shift up 2, then add addr */
+		LI = LI << 8;
+		LI = LI >> 6;
+		LI += loc;
+		pstr += sprintf(pstr, "0x%x ", LI);
 		func &= ~Op_LI;
 	}
 	switch (func & Op_SIMM) {
@@ -544,147 +723,51 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 	case Op_SIMM: /* same as Op_d */
 		IMM = extract_field(instr, 31 - 31, 16);
 		if (IMM & 0x8000) {
-			pstr += sprintf (pstr, "-");
+			pstr += sprintf(pstr, "-");
 		}
 			/* no break */
 		func &= ~Op_SIMM;
 	case Op_UIMM:
 		IMM = extract_field(instr, 31 - 31, 16);
-		pstr += sprintf (pstr, "0x%x, ", IMM);
+		pstr += sprintf(pstr, "0x%x, ", IMM);
 		func &= ~Op_UIMM;
 		break;
 	default:
 	}
-	if (func & Op_BD ) {
+	if (func & Op_BD) {
 		u_int BD;
 		BD = extract_field(instr, 31 - 29, 14);
-		pstr += sprintf (pstr, "0x%x, ", BD);
+		pstr += sprintf(pstr, "0x%x, ", BD);
 		func &= ~Op_BD;
 	}
-	if (func & Op_ds ) {
+	if (func & Op_ds) {
 		u_int ds;
 		ds = extract_field(instr, 31 - 29, 14) << 2;
-		pstr += sprintf (pstr, "0x%x, ", ds);
+		pstr += sprintf(pstr, "0x%x, ", ds);
 		func &= ~Op_ds;
 	}
-	if (func & Op_spr ) {
+	if (func & Op_spr) {
 		u_int spr;
 		u_int sprl;
 		u_int sprh;
-		char *reg;
+		const struct specialreg *regs;
+		int i;
 		sprl = extract_field(instr, 31 - 15, 5);
 		sprh = extract_field(instr, 31 - 20, 5);
 		spr = sprh << 5 | sprl;
 
-		/* this table could be written better */
-		switch (spr) {
-		case 	1:
-			reg = "xer";
-			break;
-		case 	8:
-			reg = "lr";
-			break;
-		case 	9:
-			reg = "ctr";
-			break;
-		case 	18:
-			reg = "dsisr";
-			break;
-		case 	19:
-			reg = "dar";
-			break;
-		case 	22:
-			reg = "dec";
-			break;
-		case 	25:
-			reg = "sdr1";
-			break;
-		case 	26:
-			reg = "srr0";
-			break;
-		case 	27:
-			reg = "srr1";
-			break;
-		case 	272:
-			reg = "SPRG0";
-			break;
-		case 	273:
-			reg = "SPRG1";
-			break;
-		case 	274:
-			reg = "SPRG3";
-			break;
-		case 	275:
-			reg = "SPRG3";
-			break;
-		case 	280:
-			reg = "asr";
-			break;
-		case 	282:
-			reg = "aer";
-			break;
-		case 	287:
-			reg = "pvr";
-			break;
-		case 	528:
-			reg = "ibat0u";
-			break;
-		case 	529:
-			reg = "ibat0l";
-			break;
-		case 	530:
-			reg = "ibat1u";
-			break;
-		case 	531:
-			reg = "ibat1l";
-			break;
-		case 	532:
-			reg = "ibat2u";
-			break;
-		case 	533:
-			reg = "ibat2l";
-			break;
-		case 	534:
-			reg = "ibat3u";
-			break;
-		case 	535:
-			reg = "ibat3l";
-			break;
-		case 	536:
-			reg = "dbat0u";
-			break;
-		case 	537:
-			reg = "dbat0l";
-			break;
-		case 	538:
-			reg = "dbat1u";
-			break;
-		case 	539:
-			reg = "dbat1l";
-			break;
-		case 	540:
-			reg = "dbat2u";
-			break;
-		case 	541:
-			reg = "dbat2l";
-			break;
-		case 	542:
-			reg = "dbat3u";
-			break;
-		case 	543:
-			reg = "dbat3l";
-			break;
-		case 	1013:
-			reg = "dabr";
-			break;
-		default:
-			reg = 0;
-		}
-		if (reg == 0) {
-			pstr += sprintf (pstr, ", [unknown spr (%d)]", spr);
-		} else {
-			pstr += sprintf (pstr, ", %s", reg);
-		}
+		/* ugly hack - out of bitfields in the function mask */
+		if (popcode->name[2] == 'd')	/* m.Dcr */
+			regs = dcrregs;
+		else
+			regs = sprregs;
+		for (i = 0; regs[i].name != NULL; i++)
+			if (spr == regs[i].reg)
+				break;
+		if (regs[i].reg == 0)
+			pstr += sprintf(pstr, "[unknown special reg (%d)]", spr);
+		else
+			pstr += sprintf(pstr, "%s", regs[i].name);
 		func &= ~Op_spr;
 	}
 
@@ -693,44 +776,44 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		mel = extract_field(instr, 31 - 25, 4);
 		meh = extract_field(instr, 31 - 26, 1);
 		me = meh << 4 | mel;
-		pstr += sprintf (pstr, ", 0x%x", me);
+		pstr += sprintf(pstr, ", 0x%x", me);
 		func &= ~Op_me;
 	}
-	if ((func & Op_MB ) && (func & Op_sh_mb_sh)) {
+	if ((func & Op_MB) && (func & Op_sh_mb_sh)) {
 		u_int MB;
 		u_int ME;
 		MB = extract_field(instr, 31 - 20, 5);
-		pstr += sprintf (pstr, ", %d", MB);
+		pstr += sprintf(pstr, ", %d", MB);
 		ME = extract_field(instr, 31 - 25, 5);
-		pstr += sprintf (pstr, ", %d", ME);
+		pstr += sprintf(pstr, ", %d", ME);
 	}
-	if ((func & Op_SH ) && (func & Op_sh_mb_sh)) {
+	if ((func & Op_SH) && (func & Op_sh_mb_sh)) {
 		u_int SH;
 		SH = extract_field(instr, 31 - 20, 5);
-		pstr += sprintf (pstr, ", %d", SH);
+		pstr += sprintf(pstr, ", %d", SH);
 	}
-	if ((func & Op_sh ) && ! (func & Op_sh_mb_sh)) {
+	if ((func & Op_sh) && ! (func & Op_sh_mb_sh)) {
 		u_int sh, shl, shh;
 		shl = extract_field(instr, 31 - 19, 4);
 		shh = extract_field(instr, 31 - 20, 1);
 		sh = shh << 4 | shl;
-		pstr += sprintf (pstr, ", %d", sh);
+		pstr += sprintf(pstr, ", %d", sh);
 	}
-	if ((func & Op_mb ) && ! (func & Op_sh_mb_sh)) {
+	if ((func & Op_mb) && ! (func & Op_sh_mb_sh)) {
 		u_int mb, mbl, mbh;
 		mbl = extract_field(instr, 31 - 25, 4);
 		mbh = extract_field(instr, 31 - 26, 1);
 		mb = mbh << 4 | mbl;
-		pstr += sprintf (pstr, ", %d", mb);
+		pstr += sprintf(pstr, ", %d", mb);
 	}
-	if ((func & Op_me ) && ! (func & Op_sh_mb_sh)) {
+	if ((func & Op_me) && ! (func & Op_sh_mb_sh)) {
 		u_int me, mel, meh;
 		mel = extract_field(instr, 31 - 25, 4);
 		meh = extract_field(instr, 31 - 26, 1);
 		me = meh << 4 | mel;
-		pstr += sprintf (pstr, ", %d", me);
+		pstr += sprintf(pstr, ", %d", me);
 	}
-	if (func & Op_tbr ) {
+	if (func & Op_tbr) {
 		u_int tbr;
 		u_int tbrl;
 		u_int tbrh;
@@ -749,104 +832,101 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		default:
 			reg = 0;
 		}
-		if (reg == 0) {
-			pstr += sprintf (pstr, ", [unknown tbr %d ]", tbr);
-		} else {
-			pstr += sprintf (pstr, ", %s", reg);
-		}
+		if (reg == 0)
+			pstr += sprintf(pstr, ", [unknown tbr %d ]", tbr);
+		else
+			pstr += sprintf(pstr, ", %s", reg);
 		func &= ~Op_tbr;
 	}
 	if (func & Op_SR) {
 		u_int SR;
 		SR = extract_field(instr, 31 - 15, 3);
-		pstr += sprintf (pstr, ", sr%d", SR);
+		pstr += sprintf(pstr, ", sr%d", SR);
 		func &= ~Op_SR;
 	}
 	if (func & Op_NB) {
 		u_int NB;
 		NB = extract_field(instr, 31 - 20, 5);
-		if (NB == 0 ) {
-			NB=32;
-		}
-		pstr += sprintf (pstr, ", %d", NB);
+		if (NB == 0)
+			NB = 32;
+		pstr += sprintf(pstr, ", %d", NB);
 		func &= ~Op_SR;
 	}
 	if (func & Op_IMM) {
 		u_int IMM;
 		IMM = extract_field(instr, 31 - 19, 4);
-		pstr += sprintf (pstr, ", %d", IMM);
+		pstr += sprintf(pstr, ", %d", IMM);
 		func &= ~Op_SR;
 	}
 }
 
 void
-op_base(instr_t instr)
+op_base(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes,instr);
+	dis_ppc(opcodes, instr, loc);
 }
 
 void
-op_cl_x13(instr_t instr)
+op_cl_x13(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_13,instr);
+	dis_ppc(opcodes_13, instr, loc);
 }
 
 void
-op_cl_x1e(instr_t instr)
+op_cl_x1e(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_1e,instr);
+	dis_ppc(opcodes_1e, instr, loc);
 }
 
 void
-op_cl_x1f(instr_t instr)
+op_cl_x1f(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_1f,instr);
+	dis_ppc(opcodes_1f, instr, loc);
 }
 
 void
-op_cl_x3a(instr_t instr)
+op_cl_x3a(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_3a,instr);
+	dis_ppc(opcodes_3a, instr, loc);
 }
 
 void
-op_cl_x3b(instr_t instr)
+op_cl_x3b(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_3b,instr);
+	dis_ppc(opcodes_3b, instr, loc);
 }
 
 void
-op_cl_x3e(instr_t instr)
+op_cl_x3e(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_3e,instr);
+	dis_ppc(opcodes_3e, instr, loc);
 }
 
 void
-op_cl_x3f(instr_t instr)
+op_cl_x3f(instr_t instr, vaddr_t loc)
 {
-	dis_ppc (opcodes_3f,instr);
+	dis_ppc(opcodes_3f, instr, loc);
 }
 
 void
-dis_ppc(const struct opcode *opcodeset, instr_t instr)
+dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc)
 {
 	const struct opcode *op;
 	int found = 0;
 	int i;
 	char disasm_str[30];
 
-	for (   i=0, op = &opcodeset[0];
-		found == 0 && op->mask != 0;
-		i++, op= &opcodeset[i] )
-	{
+	for (i = 0, op = &opcodeset[0];
+	    found == 0 && op->mask != 0;
+	    i++, op = &opcodeset[i]) {
 		if ((instr & op->mask) == op->code) {
 			found = 1;
-			disasm_fields(op, instr, disasm_str);
-			db_printf("%s%s",op->name, disasm_str);
+			disasm_fields(op, instr, loc, disasm_str);
+			db_printf("%s%s\n", op->name, disasm_str);
 			return;
 		}
 	}
-	op_ill(instr);
+	op_ill(instr, loc);
 }
 
 db_addr_t
@@ -856,7 +936,21 @@ db_disasm(db_addr_t loc, boolean_t extended)
 	instr_t opcode;
 	opcode = *(instr_t *)(loc);
 	class = opcode >> 26;
-	(opcodes_base[class])(opcode);
+	(opcodes_base[class])(opcode, loc);
 
-	return loc + 4;
+	return (loc + 4);
+}
+
+vaddr_t opc_disasm(vaddr_t loc, int);
+
+vaddr_t
+opc_disasm(vaddr_t loc, int xin)
+{
+	int class;
+	instr_t opcode;
+	opcode = xin;
+	class = opcode >> 26;
+	(opcodes_base[class])(opcode, loc);
+
+	return (loc + 4);
 }

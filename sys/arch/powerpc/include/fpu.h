@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.3 2001/02/04 17:38:10 briggs Exp $	*/
+/*	$NetBSD: fpu.h,v 1.4 2001/06/13 06:01:48 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -33,42 +33,49 @@
 #ifndef	_MACHINE_FPU_H_
 #define	_MACHINE_FPU_H_
 
-#define	FPSCR_FX	0x80000000
-#define	FPSCR_FEX	0x40000000
-#define	FPSCR_VX	0x20000000
-#define	FPSCR_OX	0x10000000
-#define	FPSCR_UX	0x08000000
-#define	FPSCR_ZX	0x04000000
-#define	FPSCR_XX	0x02000000
-#define	FPSCR_VXSNAN	0x01000000
-#define	FPSCR_VXISI	0x00800000
-#define	FPSCR_VXIDI	0x00400000
-#define	FPSCR_VXZDZ	0x00200000
-#define	FPSCR_VXIMZ	0x00100000
-#define	FPSCR_VXVC	0x00080000
-#define	FPSCR_FR	0x00040000
-#define	FPSCR_FI	0x00020000
-#define	FPSCR_FPRF	0x0001f000
-#define	FPSCR_C		0x00010000
+#define	FPSCR_FX	0x80000000	/* Exception Summary */
+#define	FPSCR_FEX	0x40000000	/* Enabled Exception Summary */
+#define	FPSCR_VX	0x20000000	/* Invalid Operation Exception Summary */
+#define	FPSCR_OX	0x10000000	/* Overflow Exception */
+#define	FPSCR_UX	0x08000000	/* Undrflow Exception */
+#define	FPSCR_ZX	0x04000000	/* Zero Divide Exception */
+#define	FPSCR_XX	0x02000000	/* Inexact Exception */
+#define	FPSCR_VXSNAN	0x01000000	/* Invalid Op (NAN) */
+#define	FPSCR_VXISI	0x00800000	/* Invalid Op (INF-INF) */
+#define	FPSCR_VXIDI	0x00400000	/* Invalid Op (INF/INF) */
+#define	FPSCR_VXZDZ	0x00200000	/* Invalid Op (0/0) */
+#define	FPSCR_VXIMZ	0x00100000	/* Invalid Op (INFx0) */
+#define	FPSCR_VXVC	0x00080000	/* Invalid Compare Op */
+#define	FPSCR_FR	0x00040000	/* Fraction Rounded */
+#define	FPSCR_FI	0x00020000	/* Fraction Inexact */
+#define	FPSCR_FPRF	0x0001f000	
+#define	FPSCR_C		0x00010000	/* FP Class Descriptor */
 #define	FPSCR_FPCC	0x0000f000
-#define	FPSCR_FL	0x00008000
-#define	FPSCR_FG	0x00004000
-#define	FPSCR_FE	0x00002000
-#define	FPSCR_FU	0x00001000
-#define	FPSCR_VXSOFT	0x00000400
-#define	FPSCR_VXSQRT	0x00000200
-#define	FPSCR_VXCVI	0x00000100
-#define	FPSCR_VE	0x00000080
-#define	FPSCR_OE	0x00000040
-#define	FPSCR_UE	0x00000020
-#define	FPSCR_ZE	0x00000010
-#define	FPSCR_XE	0x00000008
-#define	FPSCR_NI	0x00000004
+#define	FPSCR_FL	0x00008000	/* < */
+#define	FPSCR_FG	0x00004000	/* > */
+#define	FPSCR_FE	0x00002000	/* == */
+#define	FPSCR_FU	0x00001000	/* unordered */
+#define	FPSCR_VXSOFT	0x00000400	/* Software Invalid Exception */
+#define	FPSCR_VXSQRT	0x00000200	/* Invalid Sqrt Exception */
+#define	FPSCR_VXCVI	0x00000100	/* Invalid Op Integer Cvt Exception */
+#define	FPSCR_VE	0x00000080	/* Invalid Op Exception Enable */
+#define	FPSCR_OE	0x00000040	/* Overflow Exception Enable */
+#define	FPSCR_UE	0x00000020	/* Underflow Exception Enable */
+#define	FPSCR_ZE	0x00000010	/* Zero Divide Exception Enable */
+#define	FPSCR_XE	0x00000008	/* Inexact Exception Enable */
+#define	FPSCR_NI	0x00000004	/* Non-IEEE Mode Enable */
 #define	FPSCR_RN	0x00000003
 
 #ifdef _KERNEL
-void	enable_fpu __P((struct proc *p));
-void	save_fpu __P((struct proc *p));
-#endif
+#include "opt_ppcarch.h"
+
+/* List of PowerPC architectures that support FPUs. */
+#if defined(PPC_MPC6XX)
+#define PPC_HAVE_FPU
+
+void	enable_fpu(struct proc *p);
+void	save_fpu(struct proc *p);
+#endif /* PPC_HAVE_FPU */
+#endif /* _KERNEL */
 
 #endif	/* _MACHINE_FPU_H_ */

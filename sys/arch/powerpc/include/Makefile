@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/06/12 17:20:50 tsubai Exp $
+#	$NetBSD: Makefile,v 1.23 2001/06/13 06:01:48 simonb Exp $
 
 KDIR=	/sys/arch/powerpc/include
 INCSDIR= /usr/include/powerpc
@@ -21,5 +21,4 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	trap.h types.h \
 	varargs.h
 
-SUBDIR=	mpc6xx
 .include <bsd.kinc.mk>

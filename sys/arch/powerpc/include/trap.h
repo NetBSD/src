@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 2000/11/20 15:16:04 tsubai Exp $	*/
+/*	$NetBSD: trap.h,v 1.6 2001/06/13 06:01:49 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #define	_POWERPC_TRAP_H_
 
 #define	EXC_RSVD	0x0000		/* Reserved */
-#define	EXC_RST		0x0100		/* Reset */
+#define	EXC_RST		0x0100		/* Reset; all but IBM4xx */
 #define	EXC_MCHK	0x0200		/* Machine Check */
 #define	EXC_DSI		0x0300		/* Data Storage Interrupt */
 #define	EXC_ISI		0x0400		/* Instruction Storage Interrupt */
@@ -63,6 +63,15 @@
 #define	EXC_IMISS	0x1000		/* Instruction translation miss */
 #define	EXC_DLMISS	0x1100		/* Data load translation miss */
 #define	EXC_DSMISS	0x1200		/* Data store translation miss */
+
+/* The following are only available on 405 (and 403?) */
+#define	EXC_CII		0x0100		/* Critical Input Interrupt */
+#define	EXC_PIT		0x1000		/* Programmable Interval Timer */
+#define	EXC_FIT		0x1010		/* Fixed Interval Timer */
+#define	EXC_WDOG	0x1020		/* Watchdog Timer */
+#define	EXC_DTMISS	0x1100		/* Data TLB Miss */
+#define	EXC_ITMISS	0x1200		/* Instruction TLB Miss */
+#define	EXC_DEBUG	0x2000		/* Debug trap */
 
 #define	EXC_LAST	0x2f00		/* Last possible exception vector */
 
