@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.472 2002/04/23 19:41:31 bouyer Exp $
+# $NetBSD: mi,v 1.473 2002/04/26 02:05:08 ad Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -434,6 +434,7 @@
 ./usr/share/man/cat1/zgrep.0			man-util-catman
 ./usr/share/man/cat1/zmore.0			man-util-catman
 ./usr/share/man/cat1/znew.0			man-util-catman
+./usr/share/man/cat4/aac.0			man-sys-catman
 ./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/arcwskbd.0		man-sys-catman
 ./usr/share/man/cat4/acorn26/arcwsmouse.0		man-sys-catman
@@ -2134,6 +2135,7 @@
 ./usr/share/man/man1/zgrep.1			man-util-man
 ./usr/share/man/man1/zmore.1			man-util-man
 ./usr/share/man/man1/znew.1			man-util-man
+./usr/share/man/man4/aac.4			man-sys-man
 ./usr/share/man/man4/acorn26/arckbd.4		man-sys-man
 ./usr/share/man/man4/acorn26/arcwskbd.4		man-sys-man
 ./usr/share/man/man4/acorn26/arcwsmouse.4		man-sys-man

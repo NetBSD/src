@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.84 2002/04/25 15:06:29 atatat Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.85 2002/04/26 02:05:11 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -326,6 +326,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
+#aac*	at pci? dev ? function ?	# Adaptec AAC family
 #cac*	at eisa? slot ?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 #icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
@@ -333,7 +334,8 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
-#ld*	at cac? unit ?			# logical disk devices
+#ld*	at aac? unit ?			# logical disk devices
+#ld*	at cac? unit ?
 #ld*	at icp? unit ?
 #ld*	at twe? unit ?
 #ld*	at mlx? unit ?

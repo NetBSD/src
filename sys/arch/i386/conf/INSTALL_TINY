@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.52 2002/04/25 15:06:29 atatat Exp $
+#	$NetBSD: INSTALL_TINY,v 1.53 2002/04/26 02:05:11 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -327,6 +327,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
 
 # RAID controllers and devices
+#aac*	at pci? dev ? function ?	# Adaptec AAC family
 #cac*	at eisa? slot ?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 #icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
@@ -334,7 +335,8 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
-#ld*	at cac? unit ?			# logical disk devices
+#ld*	at aac? unit ?			# logical disk devices
+#ld*	at cac? unit ?
 #ld*	at icp? unit ?
 #ld*	at twe? unit ?
 #ld*	at mlx? unit ?

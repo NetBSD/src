@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.171 2002/04/25 00:52:21 kleink Exp $
+#	$NetBSD: files.pci,v 1.172 2002/04/26 02:05:09 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -76,6 +76,10 @@ file	dev/pci/mly.c			mly			needs-flag
 # ICP-Vortex/Intel RAID controllers
 attach	icp at pci with icp_pci
 file	dev/pci/icp_pci.c		icp_pci
+
+# Adaptec FSA RAID controllers
+attach	aac at pci with aac_pci
+file	dev/pci/aac_pci.c		aac_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.522 2002/04/23 06:48:47 manu Exp $
+#	$NetBSD: files,v 1.523 2002/04/26 02:05:09 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -309,6 +309,14 @@ file	dev/ic/ld_icp.c			ld_icp
 device	icpsp: scsi
 file	dev/ic/icpsp.c			icpsp
 attach	icpsp at icp
+
+# Adaptec FSA RAID controllers
+#
+device	aac {unit = -1}
+file	dev/ic/aac.c			aac
+
+attach	ld at aac with ld_aac
+file	dev/ic/ld_aac.c			ld_aac
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 #

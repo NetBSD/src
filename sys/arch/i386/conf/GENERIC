@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.490 2002/04/25 15:22:44 wiz Exp $
+# $NetBSD: GENERIC,v 1.491 2002/04/26 02:05:10 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.490 $"
+#ident 		"GENERIC-$Revision: 1.491 $"
 
 maxusers	32		# estimated number of users
 
@@ -513,6 +513,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # RAID controllers and devices
+aac*	at pci? dev ? function ?	# Adaptec AAC family
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
@@ -520,7 +521,8 @@ mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
-ld*	at cac? unit ?			# logical disk devices
+ld*	at aac? unit ?			# logical disk devices
+ld*	at cac? unit ?
 ld*	at icp? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
