@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.15 1999/11/12 09:55:38 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.16 1999/11/15 09:50:24 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.15 1999/11/12 09:55:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.16 1999/11/15 09:50:24 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,8 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.15 1999/11/12 09:55:38 nisimura Exp $
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/locore.h>		/* wbflush() */
-#include <machine/autoconf.h>		/* intr_arg_t */
+#include <machine/locore.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
@@ -100,8 +99,8 @@ void		dec_3max_init __P((void));
 void		dec_3max_bus_reset __P((void));
 
 void		dec_3max_enable_intr
-		   __P ((u_int slotno, int (*handler)  __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3max_cons_init __P((void));
 void		dec_3max_device_register __P((struct device *, void *));
@@ -116,7 +115,7 @@ dec_3max_init()
 	u_int32_t csr;
 	extern char cpu_model[];
 
-	platform.iobus = "tc3max";
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
@@ -190,7 +189,7 @@ dec_3max_device_register(dev, aux)
 void
 dec_3max_enable_intr(slotno, handler, sc, on)
 	u_int slotno;
-	int (*handler) __P((void* softc));
+	int (*handler) __P((void *));
 	void *sc;
 	int on;
 {

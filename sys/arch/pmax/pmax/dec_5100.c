@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.10 1999/11/12 09:55:39 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.11 1999/11/15 09:50:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -47,8 +47,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/locore.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
-#include <machine/sysconf.h>		/* intr_arg_t */
+#include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
@@ -67,17 +66,17 @@ void		dec_5100_init __P((void));
 void		dec_5100_bus_reset __P((void));
 
 void		dec_5100_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_5100_cons_init __P((void));
 void		dec_5100_device_register __P((struct device *, void *));
 
 void		dec_5100_memintr __P((void));
 
-void	dec_5100_intr_establish __P((void * cookie, int level,
-			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-void	dec_5100_intr_disestablish __P((struct ibus_attach_args *ia));
+void	dec_5100_intr_establish __P((struct device *, void *cookie, int level,
+			 int (*handler) __P((void *)), void * arg));
+void	dec_5100_intr_disestablish __P((struct device *, void *));
 
 extern void kn230_wbflush __P((void));
 
@@ -169,20 +168,23 @@ dec_5100_enable_intr(slotno, handler, sc, on)
 }
 
 void
-dec_5100_intr_establish(cookie, level, handler, arg)
-	void * cookie;
+dec_5100_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
 	int level;
-	int (*handler) __P((intr_arg_t));
-	intr_arg_t arg;
+	int (*handler) __P((void *));
+	void *arg;
 {
-	int slotno = (int) cookie;
+	int slotno = (int)cookie;
 
 	tc_slot_info[slotno].intr = handler;
 	tc_slot_info[slotno].sc = arg;
 }
 
 void
-dec_5100_intr_disestablish(struct ibus_attach_args *ia)
+dec_5100_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
 {
 	printf("dec_5100_intr_distestablish: not implemented\n");
 }

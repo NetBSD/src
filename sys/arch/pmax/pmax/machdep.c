@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.151 1999/11/12 09:55:39 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.152 1999/11/15 09:50:22 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 1999/11/12 09:55:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 1999/11/15 09:50:22 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -132,9 +132,7 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));
 
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
 
-void	(*tc_enable_interrupt)
-     __P ((u_int slotno, int (*handler) __P((void *sc)),
-          void *sc, int onoff));
+void (*tc_enable_interrupt) __P ((unsigned, int (*)(void *), void *, int));
 
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
@@ -190,7 +188,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
-
+	extern void makebootdev __P((char *));
 	extern char edata[], end[];
 
 	/* Set up bootinfo structure.  Note that we can't print messages yet! */

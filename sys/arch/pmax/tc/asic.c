@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.40 1999/10/01 09:19:43 nisimura Exp $	*/
+/* $NetBSD: asic.c,v 1.41 1999/11/15 09:50:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,11 +30,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/bus.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-
-#include <machine/bus.h>			/* wbflush() */
-#include <machine/autoconf.h>
 
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/asic.h>
@@ -83,15 +82,6 @@ struct ioasic_dev xine_ioasic_devs[] = {
 const int xine_ioasic_ndevs  =  ARRAY_SIZEOF(xine_ioasic_devs);
 #endif /* DEC_MAXINE */
 
-#if defined(DEC_3MAX)
-struct ioasic_dev kn02_ioasic_devs[] = {
-	{ "dc",		0x200000, C(7), 0 },
-	{ "mc146818",	0x280000, C(0), 0 },
-};
-const int kn02_ioasic_ndevs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
-#endif /* DEC_3MAX */
-
-
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
@@ -104,41 +94,20 @@ struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
 };
 
-struct ioasic_dev *ioasic_devs;
-
 
 int
-ioasicmatch(parent, cf, aux)
+ioasicmatch(parent, cfdata, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	struct cfdata *cfdata;
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
 
-	/* An IOCTL asic can only occur on the turbochannel, anyway. */
-#ifdef notyet
-	if (parent != &tccd)
-		return (0);
-#endif
-
-	/*
-	 * XXX This is wrong.
-	 * XXX this file will be re-implemented, anyway.
-	 */
-	/* The 3MAX (kn02) is special. */
-	if (TC_BUS_MATCHNAME(ta, "KN02    ")) {
-#if 0
-		printf("(configuring KN02 system slot as asic)\n");
-#endif
-		goto gotasic;
-	}
-
 	/* Make sure that we're looking for this type of device. */
-	if (!TC_BUS_MATCHNAME(ta, "IOCTL   "))
+	if (strncmp("IOCTL   ", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
-gotasic:
 
-	if (cf->cf_unit > 0)
+	if (cfdata->cf_unit > 0)
 		return (0);
 
 	return (1);
@@ -151,6 +120,7 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
+	struct ioasic_dev *ioasic_devs;
 	int ndevs;
 
 	/* See if the unit number is valid. */
@@ -173,9 +143,7 @@ ioasicattach(parent, self, aux)
 
 #ifdef DEC_3MAX
 	case DS_3MAX:
-		ioasic_devs = kn02_ioasic_devs;
-		ndevs = kn02_ioasic_ndevs;
-		break;
+		panic("ioasicattach: no IOASIC disguise for 3max");
 #endif
 
 	default:
@@ -191,8 +159,8 @@ ioasicattach(parent, self, aux)
 	sc->sc_dmat = ta->ta_dmat;
 	sc->sc_cookie = ta->ta_cookie;
 
-	sc->sc_base = ta->ta_addr; 		/* XXX XXX XXX */
-	ioasic_base = sc->sc_base;		/* XXX XXX XXX */
+	sc->sc_base = ta->ta_addr; 
+	ioasic_base = sc->sc_base;
 
 	printf("\n");
 
@@ -206,10 +174,9 @@ void
 ioasic_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
 	void *cookie;
-	tc_intrlevel_t level;
-	intr_handler_t handler;
+	int level;
+	int (*handler) __P((void *));
 	void *val;
 {
-
-	(*tc_enable_interrupt)((int)cookie, handler, val, 1);
+	(*tc_enable_interrupt)((unsigned)cookie, handler, val, 1);
 }

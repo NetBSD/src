@@ -1,8 +1,7 @@
-/*	$NetBSD: ibus_3100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $	*/
-
+/* $NetBSD: ibus_3max.c,v 1.1 1999/11/15 09:50:30 nisimura Exp $ */
 
 /*
- * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
+ * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +13,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Jonathan Stone for
- *      the NetBSD Project.
+ *      This product includes software developed by Tohru Nishimura
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,80 +32,60 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.4 1999/04/24 08:01:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.1 1999/11/15 09:50:30 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-
+#include <dev/tc/tcvar.h>
 #include <pmax/ibus/ibusvar.h>
-
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/pmaxtype.h>
-
-
-int	dec_3100_ibusdev_match
-	    __P((struct device *, struct cfdata *, void *));
-void	dec_3100_ibusdev_attach
-	    __P((struct device *, struct device *, void *));
-
-extern struct cfattach kn01bus_ca;
-struct cfattach kn01bus_ca = {
-	sizeof(struct device), dec_3100_ibusdev_match, dec_3100_ibusdev_attach
-};
-
-extern ibus_intr_establish_t	dec_3100_intr_establish;
-extern ibus_intr_disestablish_t	dec_3100_intr_disestablish;
-
+#include <pmax/pmax/kn02.h>
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
-static struct ibus_attach_args kn01_devs[] = {
-	/* name     cookie   addr			  */
-	{ "pm",		0, KV(KN01_PHYS_FBUF_START)	},
-	{ "dc",  	1, KV(KN01_SYS_DZ)		},
-	{ "lance", 	2, KV(KN01_SYS_LANCE)		},
-	{ "sii",	3, KV(KN01_SYS_SII)		},
-	{ "mc146818",	4, KV(KN01_SYS_CLOCK)		},
+static struct ibus_attach_args kn02sys_devs[] = {
+	{ "mc146818",	0, KV(KN02_SYS_CLOCK),	},
+	{ "dc",  	1, KV(KN02_SYS_DZ),	},
 };
 
-int kn01_attached = 0;
+static int  kn02sys_match __P((struct device *, struct cfdata *, void *));
+static void kn02sys_attach __P((struct device *, struct device *, void *));
+
+struct cfattach kn02sys_ca = {
+        sizeof(struct ibus_softc), kn02sys_match, kn02sys_attach,
+};
+extern struct cfdriver tc_cd;
 
 int
-dec_3100_ibusdev_match(parent, cfdata, aux)
+kn02sys_match(parent, cfdata, aux)
         struct device *parent;
         struct cfdata *cfdata;
         void *aux;
 
 {
+	struct tc_attach_args *ta = aux;
 
-	if (kn01_attached)
+	if (strncmp("KN02SYS ", ta->ta_modname, TC_ROM_LLEN) != 0)
 		return 0;
-	if (systype != DS_PMAX)
-		return (0);
-	return(1);
+	return 1;
 }
 
-
 void
-dec_3100_ibusdev_attach(parent, self, aux)
-        struct device *parent;
-        struct device *self;
+kn02sys_attach(parent, self, aux)
+        struct device *parent, *self;
         void *aux;
 {
-	struct ibus_dev_attach_args ibd;
+	struct ibus_dev_attach_args ida;
+	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	kn01_attached = 1;
+	ida.ida_busname = "ibus";
+	ida.ida_devs = kn02sys_devs;
+	ida.ida_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
+	ida.ida_establish = sc->sc_intr_establish;
+	ida.ida_disestablish = sc->sc_intr_disestablish;
 
-	ibd.ibd_busname = "ibus";
-	ibd.ibd_devs = kn01_devs;
-	ibd.ibd_ndevs = sizeof(kn01_devs) / sizeof(kn01_devs[0]);
-	ibd.ibd_establish = dec_3100_intr_establish;
-	ibd.ibd_disestablish = dec_3100_intr_disestablish;
-	config_found(self, &ibd, ibusprint);	/* XXX*/
+	ibusattach(parent, self, &ida);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: turbochannel.h,v 1.9 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: turbochannel.h,v 1.10 1999/11/15 09:50:19 nisimura Exp $	*/
 
 
 /*-
@@ -134,8 +134,7 @@ typedef struct {
 #ifdef _KERNEL
 extern	tc_option_t	tc_slot_info[];
 
-extern	void (*tc_slot_hand_fill) __P((tc_option_t *));
-extern	void	(*tc_enable_interrupt)  __P ((u_int slotno,
+extern void (*tc_enable_interrupt)  __P ((u_int slotno,
 					      int (*handler) __P ((void *)),
 					      void *sc, int onoff));
 #endif /* _KERNEL */

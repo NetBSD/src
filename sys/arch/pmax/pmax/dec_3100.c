@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.13 1999/11/12 09:55:38 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.14 1999/11/15 09:50:26 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -80,8 +80,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/locore.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
-#include <machine/sysconf.h>		/* intr_arg_t */
+#include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
@@ -99,17 +98,17 @@ void		dec_3100_init __P((void));
 void		dec_3100_bus_reset __P((void));
 
 void		dec_3100_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3100_cons_init __P((void));
 void		dec_3100_device_register __P((struct device *, void *));
 
 static void	dec_3100_errintr __P((void));
 
-void	dec_3100_intr_establish __P((void* cookie, int level,
-			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
+void	dec_3100_intr_establish __P((struct device *, void* cookie, int level,
+			 int (*handler)(void *), void *arg));
+void	dec_3100_intr_disestablish __P((struct device *, void *));
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
@@ -255,18 +254,21 @@ dec_3100_intr(mask, pc, status, cause)
 }
 
 void
-dec_3100_intr_establish(cookie, level, handler, arg)
-	void * cookie;
+dec_3100_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
 	int level;
-	int (*handler) __P((intr_arg_t));
-	intr_arg_t arg;
+	int (*handler) __P((void *));
+	void *arg;
 {
 	dec_3100_enable_intr((u_int)cookie, handler, arg, 1);
 }
 
 
 void
-dec_3100_intr_disestablish(struct ibus_attach_args *ia)
+dec_3100_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
 {
 	printf("dec_3100_intr_distestablish: not implemented\n");
 }

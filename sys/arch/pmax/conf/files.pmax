@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.69 1999/07/07 00:05:30 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.70 1999/11/15 09:50:48 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -47,43 +47,28 @@ file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
 #
 include "dev/dec/files.dec"
 
-# 3100 and 5100 ibus
-define baseboard {}
-device kn01bus {}: baseboard
-attach kn01bus at mainbus
-
-device kn230bus {}: baseboard
-attach kn230bus at mainbus
-
+# 3100 and 5100 ibus under mainbus
 device ibus {}
-attach ibus at baseboard
-
+attach ibus at mainbus with ibus_pmax
 file	arch/pmax/ibus/ibus.c		ibus
-file	arch/pmax/ibus/ibus_3100.c	ibus & dec_3100
-file	arch/pmax/ibus/ibus_5100.c	ibus & dec_5100
-
+file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
 
 #
-# TurboChannel Devices
+# TURBOchannel Devices
 #
-device tcasic {}
-attach tcasic	at mainbus
 include	"dev/tc/files.tc"
-#attach tc	at tcasic
-attach tc	at mainbus
-
-
-file	arch/pmax/tc/tcasic.c		tcasic
-file	arch/pmax/tc/tc_conf.c		tcasic
-file	arch/pmax/tc/tc_subr.c		tc	needs-flag
+attach	tc at mainbus with tcbus
+file	arch/pmax/tc/tcbus.c		tc
 file	arch/pmax/tc/tc_3max.c		tc & dec_3max
 file	arch/pmax/tc/tc_3min.c		tc & dec_3min
 file	arch/pmax/tc/tc_3maxplus.c	tc & dec_3maxplus
 file	arch/pmax/tc/tc_maxine.c	tc & dec_maxine
 
-#
-# The TurboChannel IOCTL ASIC. Present on IOASIC machines,
-# which is all turbochannel machines ever built except the 3MAX (5000/200).
+# 3MAX system slot as a TURBOchannel device
+attach	ibus at tc with kn02sys
+file	arch/pmax/ibus/ibus_3max.c	ibus & dec_3max
+
+# IOCTL ASIC as a TURBOchannel device
 #
 # device defined in files.tc:
 # device ioasic { offset = -1 }

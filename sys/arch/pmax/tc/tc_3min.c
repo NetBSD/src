@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3min.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $	*/
+/*	$NetBSD: tc_3min.c,v 1.2 1999/11/15 09:50:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,18 +31,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.2 1999/11/15 09:50:41 nisimura Exp $ ");
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <dev/cons.h>
+
 #include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
-
 #include <pmax/pmax/kmin.h>
-
-int	tcbus_match_3min(struct device *, void *, void *);
-void	tcbus_attach_3min(struct device *, struct device *, void *);
 
 /* 3MIN slot addreseses */
 static struct tc_slotdesc tc_kmin_slots [] = {
@@ -53,24 +49,23 @@ static struct tc_slotdesc tc_kmin_slots [] = {
 };
 
 /*
- * The only builtin Turbochannel device on the kn03 (and kmin)
+ * The only builtin TURBOchannel device on the kn03 (and kmin)
  * is the IOCTL asic, which is mapped into TC slot 3.
  */
 const struct tc_builtin tc_kn02ba_builtins[] = {
 	{ "IOCTL   ",	3, 0x0, TC_C(3), /*TC_C(3)*/ }
 };
 
-int tc_kmin_nslots =
-    sizeof(tc_kmin_slots) / sizeof(tc_kmin_slots[0]);
+int tc_kmin_nslots = sizeof(tc_kmin_slots) / sizeof(tc_kmin_slots[0]);
 
-/* 3MIN turbochannel autoconfiguration table */
+/* 3MIN TURBOchannel autoconfiguration table */
 struct tcbus_attach_args kmin_tc_desc =
 {
-	"tc",				/* XXX common substructure */
-	0,				/* XXX bus_space_tag */
+	NULL,
+	0,
 	TC_SPEED_12_5_MHZ,
 	KMIN_TC_NSLOTS, tc_kmin_slots,
 	1, tc_kn02ba_builtins, /*XXX*/
-	0 /*tc_ds_ioasic_intr_establish*/ ,
-	0 /**tc_ds_ioasic_intr_disestablish*/,
+	NULL,
+	NULL, 
 };

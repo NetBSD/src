@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3maxplus.c,v 1.2 1999/04/24 08:01:13 simonb Exp $	*/
+/*	$NetBSD: tc_3maxplus.c,v 1.3 1999/11/15 09:50:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,23 +31,17 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.2 1999/04/24 08:01:13 simonb Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.3 1999/11/15 09:50:42 nisimura Exp $ ");
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <dev/cons.h>
-#include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
 
-#include <pmax/pmax/pmaxtype.h>
+#include <dev/tc/tcvar.h>
 #include <pmax/pmax/kn03.h>
 
-
-int	tcbus_match_3maxplus(struct device *, struct cfdata *, void *);
-void	tcbus_attach_3maxplus(struct device *, struct device *, void *);
-
 /*
- * The only builtin Turbochannel device on the kn03 (and kmin)
+ * The only builtin TURBOchannel device on the kn03 (and kmin)
  * is the IOCTL asic, which is mapped into TC slot 3.
  */
 const struct tc_builtin tc_kn03_builtins[] = {
@@ -62,38 +56,18 @@ static struct tc_slotdesc tc_kn03_slots [4] = {
 	{ TC_KV(KN03_PHYS_TC_2_START), TC_C(2) },  /* 2 - tc option slot 2 */
 	{ TC_KV(KN03_PHYS_TC_3_START), TC_C(3) }   /* 3 - IOasic on b'board */
 };
-int tc_kn03_nslots =
-    sizeof(tc_kn03_slots) / sizeof(tc_kn03_slots[0]);
+int tc_kn03_nslots = sizeof(tc_kn03_slots) / sizeof(tc_kn03_slots[0]);
 
 
 /*
- * 3MAXPLUS turbochannel autoconfiguration table
+ * 3MAXPLUS TURBOchannel autoconfiguration table
  */
-struct tcbus_attach_args kn03_tc_desc =
-{
-	"tc",				/* XXX common substructure */
-	0,				/* XXX bus_space_tag */
+struct tcbus_attach_args kn03_tc_desc = {
+	NULL,
+	0,
 	TC_SPEED_25_MHZ,
 	KN03_TC_NSLOTS, tc_kn03_slots,
 	1, tc_kn03_builtins,
-	0, /*,tc_ds_ioasic_intr_establish, */
-	0 /* tc_ds_ioasic_intr_disestablish */
+	NULL,
+	NULL,
 };
-
-int
-tcbus_match_3maxplus(parent, cfdata, aux)
-        struct device *parent;
-        struct cfdata *cfdata;
-        void *aux;
-{
-	return (systype == DS_3MAXPLUS);
-}
-
-
-void
-tcbus_attach_3maxplus(parent, self, aux)
-        struct device *parent;
-        struct device *self;
-        void *aux;
-{
-}

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.23 1999/11/15 03:54:53 mhitch Exp $ */
+/* $NetBSD: dec_3min.c,v 1.24 1999/11/15 09:50:24 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.23 1999/11/15 03:54:53 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.24 1999/11/15 09:50:24 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.23 1999/11/15 03:54:53 mhitch Exp $")
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
@@ -108,8 +107,8 @@ void		dec_3min_init __P((void));
 void		dec_3min_bus_reset __P((void));
 
 void		dec_3min_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3min_device_register __P((struct device *, void *));
 void		dec_3min_cons_init __P((void));
@@ -137,7 +136,7 @@ dec_3min_init()
 	extern char cpu_model[];
 	extern int physmem_boardmax;
 
-	platform.iobus = "tc3min";
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
@@ -235,7 +234,7 @@ dec_3min_device_register(dev, aux)
 void
 dec_3min_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
-	int (*handler) __P((void* softc));
+	int (*handler) __P((void *));
 	void *sc;
 	int on;
 {
@@ -272,7 +271,7 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	printf("3MIN: imask %x, %sabling slot %d, sc %p handler %p\n",
+	printf("3MIN: imask %lx, %sabling slot %d, sc %p handler %p\n",
 	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
@@ -317,8 +316,6 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].intr = 0;
 		tc_slot_info[slotno].sc = 0;
 	}
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
-	kn02ba_wbflush();
 }
 
 
