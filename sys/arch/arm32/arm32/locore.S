@@ -1,7 +1,7 @@
-/* $NetBSD: locore.S,v 1.16 1997/01/06 02:15:17 mark Exp $ */
+/*	$NetBSD: locore.S,v 1.17 1997/02/04 06:49:10 mark Exp $	*/
 
 /*
- * Copyright (C) 1994 Mark Brinicombe
+ * Copyright (C) 1994-1997 Mark Brinicombe
  * Copyright (C) 1994 Brini
  * All rights reserved.
  *
@@ -42,7 +42,7 @@
 
 #define INIT_ARM_STACK_SIZE	2048
 
-#ifdef CPU_SA110
+#if 1
 
 #define PUSHFRAME \
 	str	lr, [sp, #-4]!;		/* Push the return address */ \
