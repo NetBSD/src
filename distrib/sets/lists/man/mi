@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.530 2002/11/29 18:00:54 martin Exp $
+# $NetBSD: mi,v 1.531 2002/11/30 14:09:51 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1269,6 +1269,7 @@
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/acorn32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman
+./usr/share/man/cat8/afterboot.0		man-sysutil-catman
 ./usr/share/man/cat8/algor/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/algor/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
@@ -3036,6 +3037,7 @@
 ./usr/share/man/man8/acorn32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/acorn32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/adduser.8			man-sysutil-man
+./usr/share/man/man8/afterboot.8		man-sysutil-man
 ./usr/share/man/man8/algor/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/algor/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/MAKEDEV.8		man-sysutil-man
