@@ -1,4 +1,4 @@
-.\"    $NetBSD: pcscp.4,v 1.6 2001/09/11 22:52:53 wiz Exp $
+.\"    $NetBSD: pcscp.4,v 1.7 2001/09/22 15:58:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"    $NetBSD: pcscp.4,v 1.6 2001/09/11 22:52:53 wiz Exp $
+.\"    $NetBSD: pcscp.4,v 1.7 2001/09/22 15:58:14 wiz Exp $
 .\"
 .Dd February 21, 1999
 .Dt PCSCP 4
@@ -66,20 +66,20 @@ host adapters, use the
 or
 .Xr siop 4
 driver.
-.Sh BUGS
-The driver currently ignores EEPROM settings, which establish
-per-target parameters etc.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr esp 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
-.Xr scsipi 9 ,
-.Xr esp 4 ,
-.Xr cd 4 ,
-.Xr ch 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr uk 4
+.Xr uk 4 ,
+.Xr scsipi 9
 .Pp
 .Pa http://www.amd.com/
+.Sh BUGS
+The driver currently ignores EEPROM settings, which establish
+per-target parameters etc.

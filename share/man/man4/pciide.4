@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.32 2001/08/23 10:05:51 tsutsui Exp $
+.\"	$NetBSD: pciide.4,v 1.33 2001/09/22 15:58:13 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -86,6 +86,13 @@ The 0x0001 flag forces the
 driver to use DMA when there is no explicit DMA mode setting support for
 the controller but DMA is present. If the BIOS didn't set up the controller
 properly, this can cause a machine hang.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr pnpbios 4 ,
+.Xr scsi 4 ,
+.Xr wd 4 ,
+.Xr wdc 4
 .Sh BUGS
 There's no way to reliably know if a PCI064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless the
@@ -113,10 +120,3 @@ The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
 which supports both 25 and 33 MHz PCI bus timings). This driver may not
 work properly on overclocked systems.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr pci 4 ,
-.Xr pnpbios 4 ,
-.Xr scsi 4 ,
-.Xr wd 4 ,
-.Xr wdc 4

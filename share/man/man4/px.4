@@ -1,4 +1,4 @@
-.\"	$NetBSD: px.4,v 1.2 2001/09/21 17:34:57 ad Exp $
+.\"	$NetBSD: px.4,v 1.3 2001/09/22 15:58:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -33,8 +33,7 @@
 .Os
 .Sh NAME
 .Nm px
-.Nd
-driver for TURBOchannel PX accelerated graphics boards
+.Nd driver for TURBOchannel PX accelerated graphics boards
 .Sh SYNOPSIS
 .Cd "px* at tc? slot ? offset ?"
 .Cd "wsdisplay* at px?"
@@ -49,14 +48,6 @@ video display option card (PMAG-C).
 .Xr pxg 4 ,
 .Xr tc 4 ,
 .Xr wscons 4
-.Sh BUGS
-.Nx Ns /pmax
-does not currently support the machine-independent
-.Xr wscons 4
-interface and uses a machine-dependent driver.
-.Sh AUTHORS
-Andrew Doran
-.Aq ad@netbsd.org .
 .Sh HISTORY
 The
 .Nm
@@ -64,3 +55,11 @@ driver first appeared in
 .Nx 1.3 .
 It became usable as a console device in
 .Nx 1.5 .
+.Sh AUTHORS
+.An Andrew Doran
+.Aq ad@netbsd.org .
+.Sh BUGS
+.Nx Ns /pmax
+does not currently support the machine-independent
+.Xr wscons 4
+interface and uses a machine-dependent driver.
