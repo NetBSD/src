@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.37 1997/10/12 13:52:51 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.38 1997/10/12 14:04:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.37 1997/10/12 13:52:51 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.38 1997/10/12 14:04:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,9 @@ __RCSID("$NetBSD: ftpd.c,v 1.37 1997/10/12 13:52:51 mycroft Exp $");
 #include <unistd.h>
 #ifdef SKEY
 #include <skey.h>
+#endif
+#ifdef KERBEROS5
+#include <krb5.h>
 #endif
 
 #include "extern.h"
@@ -136,10 +139,13 @@ static char confdir[MAXPATHLEN];
 
 extern struct ftpclass curclass;
 
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
 #endif 
+#ifdef KERBEROS5
+extern krb5_context kcontext;
+#endif
 
 /*
  * Timeout intervals for retrying connections
@@ -194,10 +200,11 @@ static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
 
-int main __P((int, char *[], char **));
+int	main __P((int, char *[], char **));
 
-#if defined (KERBEROS)
-int  klogin __P((struct passwd *, char *, char *, char *));
+#if defined(KERBEROS) || defined(KERBEROS5)
+int	klogin __P((struct passwd *, char *, char *, char *));
+void	kdestroy __P((void));
 #endif
 
 static char *
@@ -222,6 +229,9 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
+#ifdef KERBEROS5  
+	krb5_error_code kerror;
+#endif
 
 	debug = 0;
 	logging = 0;
@@ -317,6 +327,15 @@ main(argc, argv, envp)
 	stru = STRU_F;
 	mode = MODE_S;
 	tmpline[0] = '\0';
+
+#ifdef KERBEROS5
+	kerror = krb5_init_context(&kcontext);
+	if (kerror) {
+		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
+		    error_message(kerror));
+		exit(0);
+	}
+#endif KERBEROS5
 
 	/* If logins are disabled, print out the message. */
 	if ((fd = fopen(_PATH_NOLOGIN,"r")) != NULL) {
@@ -435,6 +454,10 @@ user(name)
 		}
 		end_login();
 	}
+
+#if defined(KERBEROS) || defined(KERBEROS5)
+	kdestroy();
+#endif
 
 	guest = 0;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
@@ -593,6 +616,12 @@ pass(passwd)
 			goto skip;
 		}
 #ifdef KERBEROS
+		if (klogin(pw, "", hostname, passwd) == 0) {
+			rval = 0;
+			goto skip;
+		}
+#endif
+#ifdef KERBEROS5
 		if (klogin(pw, "", hostname, passwd) == 0) {
 			rval = 0;
 			goto skip;
