@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.109 2003/01/09 08:52:19 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.110 2003/02/25 00:47:11 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.109 2003/01/09 08:52:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.110 2003/02/25 00:47:11 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1580,6 +1580,10 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (wreq.wi_type) {
 		case WI_RID_MAX_DATALEN:
 			wreq.wi_val[0] = htole16(sc->sc_max_datalen);
+			len = sizeof(u_int16_t);
+			break;
+		case WI_RID_FRAG_THRESH:
+			wreq.wi_val[0] = htole16(sc->sc_frag_thresh);
 			len = sizeof(u_int16_t);
 			break;
 		case WI_RID_RTS_THRESH:
