@@ -1,4 +1,4 @@
-/*	$NetBSD: llib-lstdc,v 1.2 1995/07/03 21:25:11 cgd Exp $	*/
+/*	$NetBSD: llib-lstdc,v 1.3 1995/07/03 21:39:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -155,11 +155,7 @@ int	(vfprintf)(FILE *stream, const char *format, va_list arg);
 int	(vprintf)(const char *format, va_list arg);
 int	(vsprintf)(char *s, const char *format, va_list arg);
 int	(fgetc)(FILE *stream);
-#ifdef __NetBSD__
-char	*(fgets)(char *s, size_t n, FILE *stream);
-#else
 char	*(fgets)(char *s, int n, FILE *stream);
-#endif
 int	(fputc)(int c, FILE *stream);
 int	(fputs)(const char *s, FILE *stream);
 int	(getc)(FILE *stream);
@@ -174,11 +170,7 @@ size_t	(fwrite)(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 int	(fgetpos)(FILE *stream, fpos_t *pos);
 int	(fseek)(FILE *stream, long offset, int whence);
 int	(fsetpos)(FILE *stream, const fpos_t *pos);
-#ifdef __NetBSD__
-long	(ftell)(const FILE *stream);
-#else
 long	(ftell)(FILE *stream);
-#endif
 void	(rewind)(FILE *stream);
 void	(clearerr)(FILE *stream);
 int	(feof)(FILE *stream);
