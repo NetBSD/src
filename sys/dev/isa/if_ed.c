@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.73 1995/04/17 12:08:50 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.74 1995/05/01 02:39:30 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2096,32 +2096,29 @@ ed_pio_write_mbufs(sc, m, dst)
 		int len, wantbyte;
 
 		wantbyte = 0;
-
 		for (; m != 0; m = m->m_next) {
-			data = mtod(m, u_char *);
 			len = m->m_len;
-			if (len > 0) {
-				/* Finish the last word. */
-				if (wantbyte) {
-					savebyte[1] = *data;
-					outw(sc->asic_addr + ED_NOVELL_DATA,
-					    *(u_short *)savebyte);
-					data++;
-					len--;
-					wantbyte = 0;
-				}
-				/* Output contiguous words. */
-				if (len > 1) {
-					outsw(sc->asic_addr + ED_NOVELL_DATA,
-					    data, len >> 1);
-					data += len & ~1;
-					len &= 1;
-				}
-				/* Save last byte, if necessary. */
-				if (len == 1) {
-					savebyte[0] = *data;
-					wantbyte = 1;
-				}
+			if (len == 0)
+				continue;
+			data = mtod(m, u_char *);
+			/* Finish the last word. */
+			if (wantbyte) {
+				savebyte[1] = *data;
+				outw(sc->asic_addr + ED_NOVELL_DATA,
+				    *(u_short *)savebyte);
+				data++;
+				len--;
+				wantbyte = 0;
+			}
+			/* Output contiguous words. */
+			if (len > 1)
+				outsw(sc->asic_addr + ED_NOVELL_DATA,
+				    data, len >> 1);
+			/* Save last byte, if necessary. */
+			if (len & 1) {
+				data += len & ~1;
+				savebyte[0] = *data;
+				wantbyte = 1;
 			}
 		}
 
