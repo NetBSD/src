@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.146 2002/03/07 14:37:02 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.147 2002/03/08 02:30:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.146 2002/03/07 14:37:02 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.147 2002/03/08 02:30:54 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1596,8 +1596,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 				cc, uio);
 		if (cc != n - uio->uio_resid) {
 			printf("audio_write: uiomove didn't move requested "
-			       "amount: requested=%d, actual=%d\n",
-			       cc, n - uio->uio_resid);
+			       "amount: requested=%d, actual=%ld\n",
+			       cc, (long)n - uio->uio_resid);
 		}
 			    /* number of bytes actually moved */
 		cc = sc->sc_input_fragment_length + n - uio->uio_resid;
