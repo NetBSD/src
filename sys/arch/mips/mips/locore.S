@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.153 2003/05/04 02:53:53 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.154 2003/05/04 04:56:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1048,7 +1048,6 @@ LEAF(mips_pagezero)
 #if !defined(MIPS1) && !defined(MIPS32)
 	.set	push
 	.set	mips3
-	li	a1, NBPG >> 6
 	li	a1, PAGE_SIZE >> 6
 
 1:	sd	zero, 0(a0)			# try to miss cache first
