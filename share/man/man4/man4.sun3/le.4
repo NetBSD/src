@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: le.4,v 1.4 1998/06/17 19:53:22 fair Exp $
+.\"	$NetBSD: le.4,v 1.5 1998/06/19 07:43:19 fair Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sun3
@@ -53,7 +53,7 @@ interface provides access to a 10 Mb/s
 .Tn Ethernet
 network via the
 .Tn AMD
-7990
+Am7990 and Am79C90 (CMOS, pin-compatible)
 .Tn LANCE
 (Local Area Network Controller - Ethernet) chip set.
 .Pp
@@ -63,26 +63,45 @@ is specified at boot time with an
 .Xr ioctl 2 .
 The
 .Nm
-interface employs the address resolution protocol described in
+interface employs the Address Resolution Protocol (ARP) described in
 .Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local network.
 .Sh BUGS
-The old
-.Tn LANCE
-Revision C chips have a bug which causes garbage to be inserted in
-front of the received packet occasionally.
+The Am7990 Revision C chips have a bug which causes garbage to
+be inserted in front of the received packet occasionally.
 The work-around is to ignore packets with an invalid destination
 address (garbage will usually not match), by double-checking the
 destination address of every packet in the driver.
 This work-around is enabled with the
-.Cd LANCE_REVC_BUG
+.Dv LANCE_REVC_BUG
 kernel option.
-It is unfortunately computationally costly, and
-this precludes multicast support on Ethernet interfaces with that
-chip in them.
 .Pp
-All sun3 systems are presumed to have this revision of the AM7990,
+When
+.Dv LANCE_REVC_BUG
+is enabled, the
+.Nm
+driver executes one or two calls to an inline ethernet address
+comparison function for every received packet.
+On the 
+.Tn mc68000
+it is exactly eight instructions of 16-bits each.
+There is one comparison for each unicast packet, and two
+comparisons for each broadcast packet.
+.Pp
+In summary, the cost of the LANCE_REVC_BUG option is:
+.Bl -enum -compact
+.It
+loss of multicast support, and
+.It
+eight extra
+.Tn CPU
+instructions per received packet, sometimes sixteen,
+depending on both the processor, and the type of packet.
+.El
+.Pp
+All sun3 systems are presumed to have bad this revision of the Am7990,
 until proven otherwise.
 Alas, the only way to prove what revision of the chip is in a particular
 system is inspection of the date code on the chip package, with a list of
@@ -110,7 +129,8 @@ but will not automatically retry transmission if there is a collision.
 Ethernet extremely busy or jammed,
 outbound packets dropped after 16 attempts to retransmit.
 .Pp
-TDR is
+.Sy TDR
+is
 .Qq Time Domain Reflectometry .
 The
 .Tn LANCE
