@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.32 2002/03/06 00:22:09 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.32.8.1 2003/09/27 15:53:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ cpu_exec_aout_makecmds(p, epp)
 	    && epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}
@@ -217,7 +217,7 @@ mips_elf_makecmds (p, epp)
 	if (epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}
