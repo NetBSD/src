@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1997/08/27 11:24:22 bouyer Exp $ */
+/*	$NetBSD: disksubr.c,v 1.20 1998/01/25 19:59:14 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -108,6 +108,20 @@ dk_establish(dk, dev)
 
 		if (sbsc->sc_link[target][lun] != NULL &&
 		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+			bp->dev = dev;	/* got it! */
+			return;
+		}
+	}
+
+	/*
+	 * xd,xy
+	 */
+	if (strncmp("xd", dev->dv_xname, 2) == 0 ||
+	    strncmp("xy", dev->dv_xname, 2) == 0) {
+
+		/* XXX - dv_unit may not be the driver number.. */
+		if (dev->dv_unit == bp->val[0] &&
+		    strncmp(bp->name, dev->dv_xname, 2) == 0) {
 			bp->dev = dev;	/* got it! */
 			return;
 		}
