@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.14 1998/04/02 10:22:03 kleink Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.15 2003/08/07 11:14:18 agc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.14 1998/04/02 10:22:03 kleink Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.15 2003/08/07 11:14:18 agc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
