@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.51 2004/12/10 21:49:31 erh Exp $
+.\" $NetBSD: pkg_add.1,v 1.52 2004/12/15 17:12:09 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd April 11, 2004
+.Dd December 10, 2004
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -239,9 +239,9 @@ file installation; often this is
 .Pa /usr .
 .It Fl u
 If the package that's being installed is already installed, either
-in the same or a different version, an update is performed.  If this
-is specified twice, then any dependant packages that are too old will
-also be updated to fulfill the dependecy.
+in the same or a different version, an update is performed.
+If this is specified twice, then any dependant packages that are
+too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
@@ -279,7 +279,7 @@ URL pointing at a file available on an ftp or web site.
 Thus you may extract files directly from their anonymous ftp or WWW
 locations (e.g.,
 .Nm
-ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/shells/bash-2.04.tgz
+ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/shells/bash-3.0nb1.tgz
 or
 .Nm
 http://www.example.org/packages/screen-4.0.tbz).
@@ -319,7 +319,8 @@ option is not given.
 If the
 .Fl u
 option is given, it's assumed the package should be replaced by the
-new version instead.  Before doing so, all packages that depend on the
+new version instead.
+Before doing so, all packages that depend on the
 pkg being upgraded are checked if they also work with the new version.
 If that test is successful, replacing is prepared by moving an existing
 .Pa +REQUIRED_BY
@@ -346,11 +347,14 @@ are read from the packing list.
 If any of these required packages are not currently installed,
 an attempt is made to find and install it;
 if the missing package cannot be found or installed,
-the installation is terminated.  If the
+the installation is terminated.
+If the
 .Fl u
 option was specified twice, required packages that are installed,
-but with too old of a version, are also updated.  The dependant
-packages are found according to the normal PKG_PATH rules.
+but with too old of a version, are also updated.
+The dependant packages are found according to the normal
+.Ev PKG_PATH
+rules.
 .It
 A search is made for any
 .Cm @option
@@ -566,9 +570,9 @@ a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
-# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
+# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/mozilla-1.7.3nb2.tgz
 
-# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All
+# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All
 # pkg_add -v mozilla
 .Ed
 .Sh SEE ALSO
