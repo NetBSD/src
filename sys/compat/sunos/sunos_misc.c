@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.36 1994/11/23 07:05:20 deraadt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.37 1994/11/30 09:40:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -450,6 +450,25 @@ sunos_setsockopt(p, uap, retval)
 		m->m_len = sizeof(struct linger);
 		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 		    SO_LINGER, m));
+	}
+	if (SCARG(uap, level) == IPPROTO_IP) {
+#define		SUNOS_IP_MULTICAST_IF		2
+#define		SUNOS_IP_MULTICAST_TTL		3
+#define		SUNOS_IP_MULTICAST_LOOP		4
+#define		SUNOS_IP_ADD_MEMBERSHIP		5
+#define		SUNOS_IP_DROP_MEMBERSHIP	6
+		static int ipoptxlat[] = {
+			IP_MULTICAST_IF,
+			IP_MULTICAST_TTL,
+			IP_MULTICAST_LOOP,
+			IP_ADD_MEMBERSHIP,
+			IP_DROP_MEMBERSHIP
+		};
+		if (SCARG(uap, name) >= SUNOS_IP_MULTICAST_IF &&
+		    SCARG(uap, name) <= SUNOS_IP_DROP_MEMBERSHIP) {
+			SCARG(uap, name) =
+			    ipoptxlat[SCARG(uap, name) - SUNOS_IP_MULTICAST_IF];
+		}
 	}
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
