@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.4 2002/10/02 16:02:11 thorpej Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.5 2002/12/10 12:13:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,8 +213,8 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	level14.ih_fun = statintr_msiiep;
 
 	/* link interrupt handlers */
-	intr_establish(10, &level10);
-	intr_establish(14, &level14);
+	intr_establish(10, 0, &level10, NULL);
+	intr_establish(14, 0, &level14, NULL);
 
 	timerok = 1;
 }
