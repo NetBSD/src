@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.34 1997/10/28 12:40:20 lukem Exp $
+#	$NetBSD: sys.mk,v 1.35 1997/11/03 22:56:27 cgd Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -56,7 +56,7 @@ LD?=		ld
 LDFLAGS?=
 
 LINT?=		lint
-LINTFLAGS?=	-chapbx
+LINTFLAGS?=	-chapbxz
 
 MAKE?=		make
 
