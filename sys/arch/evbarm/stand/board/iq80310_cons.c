@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_cons.c,v 1.1 2002/02/23 05:12:01 thorpej Exp $	*/
+/*	$NetBSD: iq80310_cons.c,v 1.2 2002/03/27 04:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 /* 
  * This file provides the cons_init() function and console I/O routines
  * for boards based on the Intel IQ80310 design.
+ *
+ * This also works with the IQ80321.
  */
 
 #include <sys/types.h>
