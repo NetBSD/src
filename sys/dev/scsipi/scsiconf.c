@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.133 2000/01/13 00:18:27 nisimura Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.134 2000/01/20 17:10:18 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -665,7 +665,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CDL1100         ", ""},     SDEV_NOLUNS},
 
 	{{T_ENCLOSURE, T_FIXED,
-	 "SUN     ", "SENA            ", "1.07"}, SDEV_NOLUNS},
+	 "SUN     ", "SENA            ", ""},     SDEV_NOLUNS},
 };
 
 /*
@@ -744,6 +744,7 @@ scsi_probedev(scsi, target, lun)
 	sa.sa_inqbuf.product = inqbuf.product;
 	sa.sa_inqbuf.revision = inqbuf.revision;
 	sa.scsipi_info.scsi_version = inqbuf.version;
+	sa.sa_inqptr = &inqbuf;
 
 	finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
 	    &sa.sa_inqbuf, (caddr_t)scsi_quirk_patterns,
