@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.62 2001/05/01 17:08:27 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.63 2001/05/02 23:11:29 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4423,3 +4423,59 @@ sys/arch/x68k/conf/GENERIC			1.54
 sys/arch/i386/conf/CARDBUS			1.29 partial, via patch
 
   Add pseudo-device vlan, and an* at pcmcia.
+
+etc/etc.i386/MAKEDEV				patch
+distrib/i386/floppies/ramdisk-big/Makefile	patch
+distrib/i386/floppies/ramdisk-rescuesmall/Makefile patch
+distrib/i386/floppies/ramdisk-rescuetiny/list	patch
+distrib/i386/floppies/ramdisk-small/Makefile	patch
+distrib/i386/floppies/ramdisk-tiny/list		patch
+
+  Fix build problems by:
+   o Decreasing bytes/inode, to fit the increased number of devices
+   o Introduce ramdisk-tiny in MAKEDEV; omit SCSI devices as INSTALL_TINY
+     doesn't have SCSI support
+   o Use the recently introduced ramdisk-tiny in MAKEDEV, so that SCSI
+     device nodes are omitted, since the _TINY kernels don't have SCSI
+     support.
+
+distrib/notes/common/main			patch
+
+  Tweak NFS performance entry in ``Major Changes'' section.
+
+sbin/mount_nfs/mount_nfs.8			1.13
+
+  Add some text explaining NFS performance tuning.
+
+etc/wscons.conf					1.8
+etc/rc.d/wscons					1.7
+
+  Allow to select/modify keyboard map from /etc/wscons.conf.
+  Fixes PR#12760.
+
+share/wscons/keymaps/pckbd.sv.svascii		1.1 (new)
+share/wscons/keymaps/Makefile			1.2
+distrib/sets/lists/base/mi			patch
+
+  Add an example userspace keyboard map.
+
+etc/rc.d/network				1.29-1.30 via patch
+share/man/man5/ifconfig.if.5			1.1-1.2 (new)
+share/man/man5/Makefile				1.36 via patch
+share/man/man5/rc.conf.5			1.42
+distrib/sets/lists/man/mi			1.303
+
+  Add support for "!" and "#" syntax in /etc/ifconfig.*.
+
+share/man/man4/stf.4				1.7,1.10 via patch
+
+  Update draft and RFC numbers.
+
+sys/arch/sparc64/sparc64/pmap.c			patch
+
+  Fix build problem without DEBUG defined.
+
+distrib/macppc/floppies/ramdisk/ramdiskbin.conf	1.14
+distrib/macppc/floppies/ramdisk/Makefile	1.14 (via patch)
+
+  Use libhack to make the image fit on 1.44M floppy.
