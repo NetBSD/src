@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 2002/01/03 03:52:15 mbw Exp $
+.\"	$NetBSD: install,v 1.19 2002/05/09 09:45:29 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -261,7 +261,7 @@ formatted floppy has a bunch of stuff, as well as the two important files:
 Note that 
 .Tn MacOS
 shortened
-.Pa netbsd.ram.gz No to Pa NETBSD~1.GZ
+.Pa netbsd.GENERIC_MD.gz No to Pa NETBSD~1.GZ
 since MS-DOS filesystems can only natively hold 8 characters for the
 filename.  Keep in mind that Open Firmware is often case-sensitive when it
 comes to filenames.
@@ -357,7 +357,7 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,\eofwboot.xcf enet:,/netbsd.ram"
+.No 0 \*> Ic "boot enet:,\eofwboot.xcf enet:,/netbsd.GENERIC_MD.gz"
 .disp)
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
@@ -386,7 +386,7 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0,\eofwboot.xcf enet:0,/netbsd.ram.gz"
+.No 0 \*> Ic "boot enet:0,\eofwboot.xcf enet:0,/netbsd.GENERIC_MD.gz"
 .disp)
 .It
 .To 2 "Booting off the NetBSD/macppc install CD-R"
@@ -444,9 +444,9 @@ The
 and
 .Ic mkhybrid
 programs have a similar problem. For them,
-.Pa netbsd.ram.gz
+.Pa netbsd.GENERIC_MD.gz
 becomes
-.Pa NETBSD_RAM.GZ .
+.Pa NETBSD_GENERIC_MD.GZ .
 .Pp
 Another thing to note is that you
 .Em must
@@ -455,16 +455,19 @@ uses.
 Also, keep in mind what format your CD-R has to be for your version of
 Open Firmware (pure ISO versus hybrid ISO/HFS).
 .Pp
-Here are some examples of what you might use to boot from CD-ROM (Apple
+We'll assume that you've wisely renamed your kernel to
+.Pa netbsd.gz
+to avoid many of these name issues.  Here are some
+examples of what you might use to boot from CD-ROM (Apple
 usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
-.No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi-ext/sd@3:,\eOFWBOOT.XCF NETBSD.MACPPC"
-.No 0 \*> Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.MACPPC"
-.No 0 \*> Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.MACPPC"
-.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
+.No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*> Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*> Ic "boot scsi-ext/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*> Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*> Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.gz"
 .disp)
 .It
 .To 2 "Booting off an IDE or SCSI drive with 'partition zero'"
@@ -534,10 +537,10 @@ Here are some examples of what you might use to boot the installer kernel
 located on an HFS or HFS+ partition:
 .Pp
 .(disp
-.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd.ram.gz"
-.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd.ram.gz"
-.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd.ram.gz"
-.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd.ram.gz"
+.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd.GENERIC_MD.gz"
 .disp)
 .Pp
 .bullet)
@@ -557,7 +560,7 @@ get an idea of what to expect (user-typed commands are in
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
   ok
-.No  0 \*> Ic "boot enet:,\eofwboot.xcf netbsd.ram.gz"
+.No  0 \*> Ic "boot enet:,\eofwboot.xcf netbsd.GENERIC_MD.gz"
  loading XCOFF
  tsize=C280 dsize=14AC bsize=2620 entry=600000
  SECTIONS:
