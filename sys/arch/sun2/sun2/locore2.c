@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.2 2001/03/29 04:07:54 fredette Exp $	*/
+/*	$NetBSD: locore2.c,v 1.3 2001/04/06 14:59:09 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,14 +45,14 @@
 #include <sys/user.h>
 #include <sys/exec_aout.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/dvma.h>
 #include <machine/idprom.h>
 #include <machine/leds.h>
-#include <machine/mon.h>
+#include <machine/promlib.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 
@@ -60,7 +60,6 @@
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
-#include <sun2/sun2/obmem.h>
 #include <sun2/sun2/vector.h>
 
 /* This is defined in locore.s */
@@ -74,10 +73,9 @@ char *esym;	/* DDB */
  * XXX: m68k common code needs these...
  * ... but this port does not need to deal with anything except
  * an mc68010, so these two variables are always ignored.
- * XXX: Need to do something about <m68k/include/cpu.h>
  */
-int cputype = -1;	/* CPU_68010 */
-int mmutype = 2;	/* MMU_SUN */
+int cputype = CPU_68010;
+int mmutype = MMU_SUN;
 
 /*
  * Now our own stuff.
@@ -87,12 +85,6 @@ u_char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_multibus = 0;
 int cpu_has_vme = 0;
-struct sunromvec _captive_romVectorPtr;
-static u_int _mon_memorySize;
-static u_char _mon_inSource;
-static u_char _mon_outSink;
-static struct bootparam *_mon_bootParam;
-static struct bootparam _mon_bootParamBuf;
 
 /*
  * XXX - Should empirically estimate the divisor...
@@ -173,7 +165,7 @@ _save_symtab(kehp)
 	 * will pass zero as the symbol table size.
 	 */
 	*symsz = 0;
-	mon_printf("_save_symtab: %s\n", errdesc);
+	prom_printf("_save_symtab: %s\n", errdesc);
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -245,8 +237,8 @@ _verify_hardware()
 
 	machtype = identity_prom.idp_machtype;
 	if ((machtype & IDM_ARCH_MASK) != IDM_ARCH_SUN2) {
-		mon_printf("Bad IDPROM arch!\n");
-		sunmon_abort();
+		prom_printf("Bad IDPROM arch!\n");
+		prom_abort();
 	}
 
 	cpu_machine_id = machtype;
@@ -267,108 +259,13 @@ _verify_hardware()
 		break;
 
 	default:
-		mon_printf("unknown sun2 model\n");
-		sunmon_abort();
+		prom_printf("unknown sun2 model\n");
+		prom_abort();
 	}
 	if (!cpu_match) {
-		mon_printf("kernel not configured for the Sun 2 model\n");
-		sunmon_abort();
+		prom_printf("kernel not configured for the Sun 2 model\n");
+		prom_abort();
 	}
-}
-
-/*
- * This is definitely a hack.  The PROM keeps its data is in the first
- * four physical pages, and assumes that they're mapped to the first
- * four virtual pages (i.e., segment zero).  Normally we keep segment
- * zero either unmapped or mapped to something else entirely, so
- * before we can call the PROM, we have to set up its mapping.  The
- * pmeg to use is the same one used to map KERNBASE, since KERNBASE
- * points to the first four physical pages.  To make this somewhat
- * transparent, in include/mon.h we capture romVectorPtr and point
- * it to a copy we make of the PROM's vectors, fixed up to call these
- * captive functions. 
- */
-#define _CAPTIVE_PROM_FUNC(func, proto, args)				\
-static int __CONCAT(_mon_, func) __P(proto);			\
-static int __CONCAT(_mon_, func) proto				\
-{									\
-	int sme, rc;							\
-	int saved_ctx;							\
-	saved_ctx = get_context();					\
-	set_context(0);							\
-	sme = get_segmap(0);						\
-	set_segmap(0, get_segmap(KERNBASE));				\
-	rc = (*((struct sunromvec *) SUN2_PROM_BASE)->func) args;	\
-	set_segmap(0, sme);						\
-	set_context(saved_ctx);						\
-	return(rc);							\
-}
-
-_CAPTIVE_PROM_FUNC(fbWriteStr, (char *buf, int len), (buf, len))
-_CAPTIVE_PROM_FUNC(fbWriteChar, (int c), (c))
-_CAPTIVE_PROM_FUNC(putChar, (int c), (c))
-_CAPTIVE_PROM_FUNC(mayGet, (void), ())
-_CAPTIVE_PROM_FUNC(exitToMon, (void), ())
-_CAPTIVE_PROM_FUNC(reBoot, (char *str), (str))
-#undef _CAPTIVE_PROM_FUNC
-
-/*
- * printf is difficult, because it's a varargs function.
- * This is very ugly.  Please fix me!
- */
-static int
-#ifdef __STDC__
-_mon_printf(char *fmt, ...)
-#else
-_mon_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	int sme, rc;
-	int saved_ctx;
-	va_list ap;
-	const char *p1;
-	char c1;
-	struct printf_args {
-		int arg[15];
-	} varargs;
-	int i;
-
-	/*
-	 * Since the PROM obviously doesn't take a va_list, we conjure
-	 * up a structure of ints to hold the arguments, and pass it
-	 * the structure (*not* a pointer to the structure!) to get
-	 * the same effect.  This means there is a limit on the number
-	 * of arguments you can use with mon_printf.  Ugly indeed.
-	 */
-	va_start(ap, fmt);
-	i = 0;
-	for(p1 = fmt; (c1 = *(p1++)) != '\0'; ) {
-		if (c1 == '%') {
-			if (i == (sizeof(varargs.arg) / sizeof(varargs.arg[0]))) {
-				mon_printf("too many args to mon_printf, format %s", fmt);
-				sunmon_abort();
-			}
-			varargs.arg[i++] = va_arg(ap, int);
-		}
-	}
-	va_end(ap);
-
-	/* now call the monitor's printf: */
-	saved_ctx = get_context();
-	set_context(0);
-	sme = get_segmap(0);
-	set_segmap(0, get_segmap(KERNBASE));
-	rc = (*
-	    /* the ghastly type we cast the PROM printf vector to: */
-	    ( (int (*) __P((const char *, struct printf_args)))
-	    /* the PROM printf vector: */
-		(((struct sunromvec *) SUN2_PROM_BASE)->printf))
-		)(fmt, varargs);
-	set_segmap(0, sme);
-	set_context(saved_ctx);
-	return(rc);
 }
 
 /*
@@ -382,38 +279,12 @@ void
 _bootstrap(keh)
 	struct exec keh;	/* kernel exec header */
 {
-	struct sunromvec *v;
 
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
-	/*
-	 * Make our captive ROM vector and data.  See the
-	 * explanation above for an explanation of this hack.
-	 */
-	v = (struct sunromvec *) SUN2_PROM_BASE;
-	_captive_romVectorPtr = *v;
-	_mon_memorySize = *v->memorySize;
-	_mon_inSource = *v->inSource;
-	_mon_outSink = *v->outSink;
-	_mon_bootParam = &_mon_bootParamBuf;
-	_mon_bootParamBuf = **v->bootParam;
-	_captive_romVectorPtr.memorySize = &_mon_memorySize;
-	_captive_romVectorPtr.inSource = &_mon_inSource;
-	_captive_romVectorPtr.outSink = &_mon_outSink;
-	_captive_romVectorPtr.bootParam = &_mon_bootParam;
-#define	_CAPTURE_PROM_FUNC(func) _captive_romVectorPtr.func = __CONCAT(_mon_, func)
-	_CAPTURE_PROM_FUNC(fbWriteStr);
-	_CAPTURE_PROM_FUNC(fbWriteChar);
-	_CAPTURE_PROM_FUNC(putChar);
-	_CAPTURE_PROM_FUNC(mayGet);
-	_CAPTURE_PROM_FUNC(exitToMon);
-	_CAPTURE_PROM_FUNC(reBoot);
-	_CAPTURE_PROM_FUNC(printf);
-#undef	_CAPTURE_PROM_FUNC
-
-	/* Set v_handler, get boothowto. */
-	sunmon_init();
+	/* Initialize the PROM. */
+	prom_init();
 
 	/* Copy the IDPROM from control space. */
 	idprom_init();
@@ -423,13 +294,6 @@ _bootstrap(keh)
 
 	/* Handle kernel mapping, pmap_bootstrap(), etc. */
 	_vm_init(&keh);
-
-	/*
-	 * Find and save OBIO and OBMEM mappings needed early,
-	 * and call some init functions.
-	 */
-	obio_init();
-	obmem_init();
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
