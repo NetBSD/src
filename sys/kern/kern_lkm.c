@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.32 1996/05/29 02:04:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/proc.h>
