@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1998/06/20 12:46:00 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.3 1998/08/30 09:08:52 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,8 +34,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
+
+/* changes from the i386 version made by mrg */
 
 /* md.c -- sparc machine specific routines */
 
@@ -353,7 +354,7 @@ md_make_bsd_partitions()
 			       'a'+i, bsdlabel[i][D_OFFSET],
 			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
-			(void)fprintf (f, "b%c#%d:f%c#%d",
+			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
 				       'a'+i, bsdlabel[i][D_BSIZE],
 				       'a'+i, bsdlabel[i][D_FSIZE]);
 		if (i < 7)
