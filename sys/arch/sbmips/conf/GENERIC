@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.6 2002/06/04 05:53:31 simonb Exp $
+# $NetBSD: GENERIC,v 1.7 2002/06/04 08:35:05 simonb Exp $
 
 include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 #include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -120,6 +120,9 @@ sbtimer*	at sbscd? offset ? intr ?
 sbmac*		at sbobio? offset ?
 sbscn*		at sbobio? offset ?
 #sbgbus*	at sbobio? offset ?
+smbus*		at sbobio? offset ?
+
+rtc*		at smbus? chan ? dev ?
 
 # MII/PHY support
 brgphy*		at mii? phy ?
