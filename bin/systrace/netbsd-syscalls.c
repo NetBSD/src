@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.6 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.7 2002/08/28 03:52:45 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.6 2002/07/30 16:29:30 itojun Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.7 2002/08/28 03:52:45 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,6 +99,7 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.6 2002/07/30 16:29:30 itojun Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <err.h>
 
 #include "intercept.h"
@@ -363,13 +364,13 @@ nbsd_translate_flags(short flags)
 }
 
 static int
-nbsd_translate_errno(int errno)
+nbsd_translate_errno(int nerrno)
 {
-	return (errno);
+	return (nerrno);
 }
 
 static int
-nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
+nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
     short flags)
 {
 	struct systrace_answer ans;
@@ -378,7 +379,7 @@ nbsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = nbsd_translate_policy(policy);
 	ans.stra_flags = nbsd_translate_flags(flags);
-	ans.stra_error = nbsd_translate_errno(errno);
+	ans.stra_error = nbsd_translate_errno(nerrno);
 
 	if (ioctl(fd, STRIOCANSWER, &ans) == -1)
 		return (-1);
@@ -466,8 +467,9 @@ nbsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	}
 
 	ret = ioctl(fd, STRIOCREPLACE, &replace);
-	if (ret == -1)
+	if (ret == -1 && errno != EBUSY) {
 		warn("%s: ioctl", __func__);
+	}
 
 	free(replace.strr_base);
 	
@@ -478,6 +480,7 @@ static int
 nbsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
+	extern int ic_abort;
 
 	memset(&io, 0, sizeof(io));
 	io.strio_pid = pid;
@@ -485,8 +488,11 @@ nbsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	io.strio_len = size;
 	io.strio_offs = addr;
 	io.strio_op = (op == INTERCEPT_READ ? SYSTR_READ : SYSTR_WRITE);
-	if (ioctl(fd, STRIOCIO, &io) == -1)
+	if (ioctl(fd, STRIOCIO, &io) == -1) {
+		if (errno == EBUSY)
+			ic_abort = 1;
 		return (-1);
+	}
 
 	return (0);
 }
@@ -500,6 +506,9 @@ nbsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 		return (NULL);
 
 	path = getcwd(buf, size);
+	if (path == NULL)
+		nbsd_restcwd(fd);
+
 	return (path);
 }
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: intercept.c,v 1.4 2002/07/30 16:29:30 itojun Exp $	*/
-/*	$OpenBSD: intercept.c,v 1.20 2002/07/30 16:09:48 itojun Exp $	*/
+/*	$NetBSD: intercept.c,v 1.5 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,13 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.4 2002/07/30 16:29:30 itojun Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.5 2002/08/28 03:52:45 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,6 +112,7 @@ SPLAY_PROTOTYPE(pidtree, intercept_pid, next, pidcompare);
 SPLAY_GENERATE(pidtree, intercept_pid, next, pidcompare);
 
 extern struct intercept_system intercept;
+int ic_abort;
 
 int
 intercept_init(void)
@@ -488,22 +490,32 @@ intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
-	static char name[MAXPATHLEN];
-	int off = 0, done = 0;
+	static char name[8192];
+	int off = 0, done = 0, stride;
 
+	stride = 32;
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
-			&name[off], 4) == -1) {
-			warn("%s: ioctl", __func__);
-			return (NULL);
+			&name[off], stride) == -1) {
+			/* Did the current system call get interrupted? */
+			if (errno == EBUSY)
+				return (NULL);
+			if (errno != EINVAL || stride == 4) {
+				warn("%s: ioctl", __func__);
+				return (NULL);
+			}
+
+			/* Try smaller stride */
+			stride /= 2;
+			continue;
 		}
 
-		off += 4;
+		off += stride;
 		name[off] = '\0';
 		if (strlen(name) < off)
 			done = 1;
 
-	} while (!done && off + 5 < sizeof(name));
+	} while (!done && off + stride + 1 < sizeof(name));
 
 	if (!done) {
 		warnx("%s: string too long", __func__);
@@ -521,11 +533,16 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
-		err(1, "%s: getstring", __func__);
+		goto abort;
 
-	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-		if (name[0] != '/')
-			err(1, "%s: getcwd", __func__);
+	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL) {
+		if (errno == EBUSY)
+			goto abort;
+		if (strcmp(name, "/") == 0)
+			return (name);
+
+		err(1, "%s: getcwd", __func__);
+	}
 
 	if (name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
@@ -537,10 +554,22 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			goto error;
 	}
 
-	if (userp) {
+	if (userp != ICLINK_NONE) {
 		static char rcwd[2*MAXPATHLEN];
 		int failed = 0;
-		/* If realpath fails then the filename does not exist */
+
+		if (userp == ICLINK_NOLAST) {
+			char *file = basename(cwd);
+
+			/* Check if the last component has special meaning */
+			if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0)
+				userp = ICLINK_ALL;
+			else
+				goto nolast;
+		}
+
+		/* If realpath fails then the filename does not exist,
+		 * or we are supposed to not resolve the last component */
 		if (realpath(cwd, rcwd) == NULL) {
 			char *dir, *file;
 			struct stat st;
@@ -550,6 +579,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 				goto out;
 			}
 
+		nolast:
 			/* Component of path could not be entered */
 			if (strlcpy(rcwd, cwd, sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
@@ -563,7 +593,9 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 				failed = 1;
 				goto out;
 			}
-			if (strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
+			/* If path is not "/" append a "/" */
+			if (strlen(rcwd) > 1 &&
+			    strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
 			if (strlcat(rcwd, file, sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
@@ -571,8 +603,11 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			 * At this point, filename has to exist and has to
 			 * be a directory.
 			 */
-			if (lstat(rcwd, &st) == -1 || !(st.st_mode & S_IFDIR))
+			if (lstat(rcwd, &st) == -1)
 				failed = 1;
+			else if (userp != ICLINK_NOLAST &&
+			    !(st.st_mode & S_IFDIR))
+					failed = 1;
 		}
 	out:
 		if (failed)
@@ -590,6 +625,10 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 		err(1, "%s: restcwd", __func__);
 
 	return (name);
+
+ abort:
+	ic_abort = 1;
+	return (NULL);
 
  error:
 	errx(1, "%s: filename too long", __func__);
@@ -610,6 +649,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (!strcmp(name, "execve")) {
 		struct intercept_pid *icpid;
 		void *addr;
+		char *argname;
 
 		if ((icpid = intercept_getpid(pid)) == NULL)
 			err(1, "intercept_getpid");
@@ -621,7 +661,11 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		icpid->newname = strdup(intercept_filename(fd, pid, addr, 0));
+		argname = intercept_filename(fd, pid, addr, 0);
+		if (argname == NULL)
+			err(1, "%s:%d: intercept_filename",
+			    __func__, __LINE__);
+		icpid->newname = strdup(argname);
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 
@@ -635,14 +679,18 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (sc != NULL) {
 		struct intercept_translate *tl;
 
+		ic_abort = 0;
 		TAILQ_FOREACH(tl, &sc->tls, next) {
 			if (intercept_translate(tl, fd, pid, tl->off,
 				args, argsize) == -1)
 				break;
 		}
 
-		action = (*sc->cb)(fd, pid, policynr, name, code, emulation,
-		    args, argsize, &sc->tls, sc->cb_arg);
+		if (!ic_abort)
+			action = (*sc->cb)(fd, pid, policynr, name, code,
+			    emulation, args, argsize, &sc->tls, sc->cb_arg);
+		else
+			action = ICPOLICY_NEVER;
 	} else if (intercept_gencb != NULL)
 		action = (*intercept_gencb)(fd, pid, policynr, name, code,
 		    emulation, args, argsize, intercept_gencbarg);
@@ -680,10 +728,16 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			    icpid->name, intercept_newimagecbarg);
 
 	} else if (!strcmp("setuid", name)) {
-		intercept.getarg(0, args, argsize, (void **)&icpid->uid);
+		register_t reg;
+
+		intercept.getarg(0, args, argsize, (void **)&reg);
+		icpid->uid = reg;
 		icpid->flags |= ICFLAGS_UIDKNOWN;
 	} else if (!strcmp("setgid", name)) {
-		intercept.getarg(0, args, argsize, (void **)&icpid->gid);
+		register_t reg;
+
+		intercept.getarg(0, args, argsize, (void **)&reg);
+		icpid->gid = reg;
 		icpid->flags |= ICFLAGS_GIDKNOWN;
 	}
  out:
@@ -744,6 +798,9 @@ intercept_child_info(pid_t opid, pid_t npid)
 		if (inpid->name == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 	}
+
+	/* Process tree */
+	inpid->ppid = opid;
 
 	/* Copy some information */
 	inpid->flags = ipid->flags;
