@@ -1,4 +1,5 @@
-/* NetBSD $Id: adutil.c,v 1.4 1994/06/27 19:27:42 cgd Exp $ */
+/*	$NetBSD: adutil.c,v 1.5 1994/06/29 06:29:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.

@@ -1,4 +1,5 @@
-/* NetBSD $Id: iso_rrip.h,v 1.2 1994/06/27 19:41:24 cgd Exp $ */
+/*	$NetBSD: iso_rrip.h,v 1.3 1994/06/29 06:32:02 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

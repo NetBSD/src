@@ -1,3 +1,5 @@
+/*	$NetBSD: route.h,v 1.6 1994/06/29 06:36:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)route.h	8.3 (Berkeley) 4/19/94
- *	$Id: route.h,v 1.5 1994/05/13 06:03:19 mycroft Exp $
+ *	@(#)route.h	8.3 (Berkeley) 4/19/94
  */
 
 /*

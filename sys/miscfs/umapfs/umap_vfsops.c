@@ -1,3 +1,5 @@
+/*	$NetBSD: umap_vfsops.c,v 1.2 1994/06/29 06:35:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)null_vfsops.c       1.5 (Berkeley) 7/10/92
- *	from: @(#)umap_vfsops.c	8.3 (Berkeley) 1/21/94
- *	$Id: umap_vfsops.c,v 1.1 1994/06/08 11:33:53 mycroft Exp $
+ *	@(#)umap_vfsops.c	8.3 (Berkeley) 1/21/94
  */
 
 /*

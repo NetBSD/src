@@ -1,3 +1,5 @@
+/*	$NetBSD: ip.h,v 1.6 1994/06/29 06:38:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip.h	8.1 (Berkeley) 6/10/93
- *	$Id: ip.h,v 1.5 1994/05/13 06:06:16 mycroft Exp $
+ *	@(#)ip.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: pk_acct.c,v 1.6 1994/06/29 06:37:30 cgd Exp $	*/
+
 /*
  * Copyright (c) University of British Columbia, 1984
  * Copyright (c) 1990, 1993
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pk_acct.c	8.1 (Berkeley) 6/10/93
- *	$Id: pk_acct.c,v 1.5 1994/06/18 00:34:33 cgd Exp $
+ *	@(#)pk_acct.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>

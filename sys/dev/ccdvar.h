@@ -1,3 +1,5 @@
+/*	$NetBSD: ccdvar.h,v 1.2 1994/06/29 06:31:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,9 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: cdvar.h 1.1 90/07/09
- *	from: @(#)cdvar.h	7.2 (Berkeley) 11/4/90
- *	$Id: ccdvar.h,v 1.1 1994/06/24 14:11:04 hpeyerl Exp $
+ * from: Utah $Hdr: cdvar.h 1.1 90/07/09$
+ *
+ *	@(#)cdvar.h	7.2 (Berkeley) 11/4/90
  */
 
 #define	NCCDISKS	8		/* max # of component disks */

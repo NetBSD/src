@@ -1,3 +1,5 @@
+/*	$NetBSD: sunos_ioctl.c,v 1.11 1994/06/29 06:30:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Markus Wild.
  * All rights reserved.
@@ -22,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sunos_ioctl.c,v 1.10 1994/05/21 08:22:08 deraadt Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_output.c,v 1.19 1994/06/29 06:38:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	find: @(#)ip_output.c	8.3 (Berkeley) 1/21/94
- *	$Id: ip_output.c,v 1.18 1994/05/13 06:06:26 mycroft Exp $
+ *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>

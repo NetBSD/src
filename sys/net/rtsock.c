@@ -1,3 +1,5 @@
+/*	$NetBSD: rtsock.c,v 1.11 1994/06/29 06:36:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)rtsock.c	8.3 (Berkeley) 1/4/94
- *	$Id: rtsock.c,v 1.10 1994/05/13 06:03:22 mycroft Exp $
+ *	@(#)rtsock.c	8.3 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_icmp.c,v 1.10 1994/06/29 06:38:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
- *	$Id: ip_icmp.c,v 1.9 1994/05/13 06:06:17 mycroft Exp $
+ *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

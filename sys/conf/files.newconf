@@ -1,4 +1,5 @@
-# NetBSD $Id: files.newconf,v 1.31 1994/06/27 19:44:04 cgd Exp $
+#	$NetBSD: files.newconf,v 1.32 1994/06/29 06:30:47 cgd Exp $
+
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # generic attributes

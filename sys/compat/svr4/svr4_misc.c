@@ -1,3 +1,5 @@
+/*	$NetBSD: svr4_misc.c,v 1.5 1994/06/29 06:30:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,6 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
- *	$Id: svr4_misc.c,v 1.4 1994/06/24 07:30:17 deraadt Exp $
  */
 
 /*

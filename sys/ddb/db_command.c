@@ -1,3 +1,5 @@
+/*	$NetBSD: db_command.c,v 1.12 1994/06/29 06:31:01 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -22,8 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: db_command.c,v 1.11 1994/04/27 10:49:07 pk Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_resource.c,v 1.20 1994/06/29 06:32:39 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_resource.c	8.5 (Berkeley) 1/21/94
- *	$Id: kern_resource.c,v 1.19 1994/05/19 08:13:22 cgd Exp $
+ *	@(#)kern_resource.c	8.5 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>

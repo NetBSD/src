@@ -1,3 +1,5 @@
+/*	$NetBSD: msdosfs_fat.c,v 1.5 1994/06/29 06:35:38 cgd Exp $	*/
+
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -12,8 +14,6 @@
  * any damages caused by this software.
  * 
  * October 1992
- * 
- *	$Id: msdosfs_fat.c,v 1.4 1994/04/21 07:48:58 cgd Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: vfs_cache.c,v 1.6 1994/06/29 06:33:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vfs_cache.c	8.1 (Berkeley) 6/10/93
- *	$Id: vfs_cache.c,v 1.5 1994/06/08 11:28:50 mycroft Exp $
+ *	@(#)vfs_cache.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
@@ -70,7 +71,7 @@ long	numcache;			/* number of cache entries allocated */
 struct	namecache *nchhead, **nchtail;	/* LRU chain pointers */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
-int doingcache = 1;			/* 1 => enable the cache */
+int doingcache = 0;			/* 1 => enable the cache */
 
 /*
  * Look for a the name in the cache. We don't do this
