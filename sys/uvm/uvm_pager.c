@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.38 2000/12/09 23:26:27 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.39 2001/01/28 23:30:45 thorpej Exp $	*/
 
 /*
  *
@@ -315,11 +315,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	/*
 	 * attempt to cluster around the left [backward], and then 
 	 * the right side [forward].    
-	 *
-	 * note that for inactive pages (pages that have been deactivated)
-	 * there are no valid mappings and PG_CLEAN should be up to date.
-	 * [i.e. there is no need to query the pmap with pmap_is_modified
-	 * since there are no mappings].
 	 */
 
 	for (forward  = 0 ; forward <= 1 ; forward++) {
@@ -333,24 +328,28 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			if (pclust == NULL) {
 				break;			/* no page */
 			}
-			/* handle active pages */
-			/* NOTE: inactive pages don't have pmap mappings */
-			if ((pclust->pqflags & PQ_INACTIVE) == 0) {
-				if ((flags & PGO_DOACTCLUST) == 0) {
-					/* dont want mapped pages at all */
-					break;
-				}
 
-				/* make sure "clean" bit is sync'd */
-				if ((pclust->flags & PG_CLEANCHK) == 0) {
-					if ((pclust->flags & (PG_CLEAN|PG_BUSY))
-					   == PG_CLEAN &&
-					   pmap_is_modified(pclust))
-						pclust->flags &= ~PG_CLEAN;
+			if ((flags & PGO_DOACTCLUST) == 0) {
+				/* dont want mapped pages at all */
+				break;
+			}
 
-					/* now checked */
-					pclust->flags |= PG_CLEANCHK;
-				}
+			/*
+			 * get an up-to-date view of the "clean" bit.
+			 * note this isn't 100% accurate, but it doesn't
+			 * have to be.  if it's not quite right, the
+			 * worst that happens is we don't cluster as
+			 * aggressively.  we'll sync-it-for-sure before
+			 * we free the page, and clean it if necessary.
+			 */
+			if ((pclust->flags & PG_CLEANCHK) == 0) {
+				if ((pclust->flags & (PG_CLEAN|PG_BUSY))
+				    == PG_CLEAN &&
+				   pmap_is_modified(pclust))
+					pclust->flags &= ~PG_CLEAN;
+
+				/* now checked */
+				pclust->flags |= PG_CLEANCHK;
 			}
 
 			/* is page available for cleaning and does it need it */
