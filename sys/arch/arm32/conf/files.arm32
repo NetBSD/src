@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.63 1998/09/13 08:19:50 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.64 1998/09/22 00:37:51 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -43,15 +43,15 @@ device	pioc { [offset = -1], [dack = -1], [irq = -1] }
 attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
 # Standard NetBSD wd driver
 device	wdc: atapi, ata
-device	wd: disk
-attach	wd at ata
 # XXX shouldn't have to have NWD in wdc.h
-file	dev/ic/wdc.c				wdc & (wd | !wd) & !iomd needs-flag
-file	arch/arm32/dev/wdc.c			wdc & (wd | !wd) & iomd needs-flag
-file	dev/ata/wd.c				wd & !iomd needs-flag
-file	arch/arm32/dev/wd.c			wd & iomd needs-flag
+file	dev/ic/wdc.c				wdc & (wd | !wd) needs-flag
 major	{wd = 16}
 attach	wdc at pioc with wdc_pioc
 file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
