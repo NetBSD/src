@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1994/10/27 04:20:21 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/09/16 15:49:40 jtc Exp $
 
 .if !exists(${.CURDIR}/../Makefile.inc)
 error:
@@ -17,9 +17,7 @@ CAPPATH	=	$(CAPDIR)/keycap.pcvt
 KEYCAPSRC=	keycap.src
 CFLAGS	+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
 SRCS	=	keycap.c
-MAN3	=	keycap.${MAN3EXT}
-MAN5	=	man5/keycap.${MAN5EXT}
-#CLEANFILES+=	keycap.0 man5/keycap.0
+MAN	=	keycap.${MAN3EXT} keycap.${MAN5EXT}
 
 beforeinstall:
 	@if [ ! -d ${LIBDIR} ]; then mkdir ${LIBDIR};fi
