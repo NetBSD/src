@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.17 2005/03/09 07:49:08 hubertf Exp $
+.\"	$NetBSD: rshd.8,v 1.18 2005/03/09 16:42:49 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)rshd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 17, 2004
+.Dd March 9, 2005
 .Dt RSHD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd remote shell server
 .Sh SYNOPSIS
 .Nm
-.Op Fl alnL
+.Op Fl aLln
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,7 +52,9 @@ with authentication based on privileged port numbers from trusted hosts.
 The
 .Nm
 server listens for service requests at the port indicated in
-the ``cmd'' service specification; see
+the
+.Dq cmd
+service specification; see
 .Xr services 5 .
 When a service request is received the following protocol
 is initiated:
@@ -63,7 +65,9 @@ If the port is not in the range 512-1023, the server
 aborts the connection.
 .It
 The server reads characters from the socket up
-to a null (`\e0') byte.
+to a null
+.Pq Sq \e0
+byte.
 The resultant string is interpreted as an
 .Tn ASCII
 number, base 10.
@@ -80,7 +84,7 @@ second connection is also in the range 512-1023.
 The server checks the client's source address
 and requests the corresponding host name (see
 .Xr getnameinfo 3 ,
-.Xr hosts 5
+.Xr hosts 5 ,
 and
 .Xr named 8 ) .
 If the hostname cannot be determined,
@@ -92,7 +96,8 @@ option is given,
 the addresses for the hostname are requested,
 verifying that the name and address correspond.
 If address verification fails, the connection is aborted
-with the message, ``Host address mismatch.''
+with the message
+.Dq Host address mismatch.
 .It
 A null terminated user name of at most 16 characters
 is retrieved on the initial socket.
@@ -123,8 +128,9 @@ The
 .Fl l
 option prevents
 .Xr ruserok 3
-from doing any validation based on the user's ``.rhosts'' file,
-unless the user is the superuser.
+from doing any validation based on the user's
+.Dq Pa .rhosts
+file, unless the user is the superuser.
 .It
 If the file
 .Pa /etc/nologin
@@ -203,8 +209,11 @@ and is not preceded by a flag byte.
 The authentication procedure used here assumes the integrity
 of every machine and every network that can reach the rshd/rlogind
 ports on the server.
-This is insecure, but is useful in an ``open'' environment.
-Sshd or a Kerberized version of this server are much more secure.
+This is insecure, but is useful in an
+.Dq open
+environment.
+.Xr sshd 8
+or a Kerberized version of this server are much more secure.
 .Pp
 A facility to allow all data exchanges to be encrypted should be
 present.
@@ -216,10 +225,11 @@ intentionally rejects accesses from IPv4 mapped address on top of
 .Dv AF_INET6
 socket, since IPv4 mapped address complicates
 host-address based authentication.
-If you would like to accept connections from IPv4 peers, you will need to run
+If you would like to accept connections from IPv4 peers, you will
+need to run
 .Nm
-on top of
+on top of an
 .Dv AF_INET
-socket, not
+socket, not an
 .Dv AF_INET6
 socket.
