@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.37 2002/11/17 03:22:47 lukem Exp $
+# $NetBSD: postinstall,v 1.38 2002/11/17 04:14:00 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -586,7 +586,7 @@ do_obsolete()
 		return 1
 	fi
 
-	( cd ${setdir} && ./makeobsolete -s ${setdir} -t ${SCRATCHDIR} )
+	( cd ${setdir} && ./makeobsolete -s . -t ${SCRATCHDIR} )
 	failed=0
 
 	for obssrcfile in ${SCRATCHDIR}/*_obsolete; do
