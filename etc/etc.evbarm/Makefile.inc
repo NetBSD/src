@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.14 2004/03/17 23:37:20 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2004/12/28 16:51:15 joff Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms
-EVBARM_BOARDS=		ADI_BRH INTEGRATOR IQ80310 IQ80321 TEAMASA_NPWR
+EVBARM_BOARDS=		ADI_BRH INTEGRATOR IQ80310 IQ80321 TEAMASA_NPWR TS7200
 .else
 # Big endian platforms
 EVBARM_BOARDS=		ADI_BRH
