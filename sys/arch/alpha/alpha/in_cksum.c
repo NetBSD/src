@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 1996/05/19 21:41:00 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2.4.1 1996/05/30 23:12:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -54,7 +54,7 @@
 #define REDUCE32							  \
     {									  \
 	q_util.q = sum;							  \
-	sum = q_util.l[0] + q_util.l[1];				  \
+	sum = q_util.s[0] + q_util.s[1] + q_util.s[2] + q_util.s[3];	  \
     }
 #define REDUCE16							  \
     {									  \
