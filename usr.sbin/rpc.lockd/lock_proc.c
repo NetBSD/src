@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.5 2000/06/09 14:00:52 fvdl Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.6 2000/08/12 18:08:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.5 2000/06/09 14:00:52 fvdl Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.6 2000/08/12 18:08:43 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: lock_proc.c,v 1.5 2000/06/09 14:00:52 fvdl Exp $");
 #include <rpcsvc/sm_inter.h>
 
 #include "lockd.h"
-#include "nlm_prot.h"
+#include <rpcsvc/nlm_prot.h>
 #include "lockd_lock.h"
 
 

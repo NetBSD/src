@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.3 2000/07/05 22:21:15 itojun Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.4 2000/08/12 18:08:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -47,7 +47,7 @@
 #include <sys/mount.h>
 #include <sys/wait.h>
 #include <rpcsvc/sm_inter.h>
-#include "nlm_prot.h"
+#include <rpcsvc/nlm_prot.h>
 #include "lockd_lock.h"
 #include "lockd.h"
 
