@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.40 2002/01/14 16:30:31 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.41 2002/02/08 20:04:14 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -624,16 +624,28 @@ psycho_ue(arg)
 	struct psychoreg *regs = sc->sc_regs;
 	long long afsr = regs->psy_ue_afsr;
 	long long afar = regs->psy_ue_afar;
+	long size = NBPG<<(sc->sc_is->is_tsbsize);
+	struct iommu_state *is = sc->sc_is;
 	char bits[128];
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-	panic("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s",
+	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s",
 		sc->sc_dev.dv_xname, afar, 
-		(long long)iommu_extract(sc->sc_is, (vaddr_t)afar), afsr,
+		(long long)iommu_extract(is, (vaddr_t)afar), afsr,
 		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,
 			bits, sizeof(bits)));
+	
+	/* Sometimes the AFAR points to an IOTSB entry */
+	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
+		printf("IOVA %lx IOTTE %llx\n",
+			(afar - is->is_ptsb) * NBPG + is->is_dvmabase,
+			(long long)ldxa(afar, ASI_PHYS_CACHED));
+	}
+	Debugger();
+	regs->psy_ue_afar = 0;
+	regs->psy_ue_afsr = 0;
 	return (1);
 }
 static int 
