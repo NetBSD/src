@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.6 1996/10/21 22:34:25 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.7 1996/11/17 23:58:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -55,6 +55,7 @@ struct ep_softc {
 #define EP_BUS_PCI	  	0x3
 
 #define EP_IS_BUS_32(a)	((a) & 0x2)
+	int ep_pktlenshift;		/* scale factor for pkt lengths */
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.11 1996/10/21 22:34:21 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.12 1996/11/17 23:58:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -146,6 +146,44 @@ epconfig(sc, conn)
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
+	/*
+	 * Vortex-based (3c59x, eisa)? and Boomerang (3c900)cards allow
+	 * FDDI-sized (4500) byte packets.  Commands only take an 11-bit
+	 * parameter, and  11 bits isn't enough to hold a full-size pkt length.
+	 * Commands to these cards implicitly upshift a packet size
+	 * or threshold by 2 bits. 
+	 * To detect  cards with large-packet support, we probe by setting
+	 * the transmit threshold register, then change windows and
+	 * read back the threshold register directly, and see if the
+	 * threshold value was shifted or not.
+	 */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+			  SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE ); 
+	GO_WINDOW(5);
+	i = bus_space_read_2(iot, ioh, EP_W5_TX_AVAIL_THRESH);
+	GO_WINDOW(1);
+	switch (i)  {
+	case EP_THRESH_DISABLE:
+		sc->ep_pktlenshift = 0;
+		break;
+
+	case (EP_THRESH_DISABLE << 2):
+		sc->ep_pktlenshift = 2;
+		break;
+
+	default:
+		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. Interface disabled",
+		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
+		return;
+	}
+	/*
+	 * Ensure Tx-available interrupts are enabled for 
+	 * start the interface.
+	 * XXX should be in epinit().
+	 */
+	bus_space_write_2(iot, ioh, EP_COMMAND,
+	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
+
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
@@ -163,6 +201,18 @@ epconfig(sc, conn)
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
+
+#if 0
+	/* XXX */
+	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
+	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+#else
+	
+	epinit(sc);		/*XXX fix up after probe */	
+	DELAY(20000);
+	epstop(sc);		/*XXX reset after probe, stop interface. */
+	DELAY(20000);
+#endif
 }
 
 /*
@@ -201,10 +251,12 @@ epinit(sc)
 		bus_space_write_1(iot, ioh, EP_W2_ADDR_0 + i,
 		    sc->sc_arpcom.ac_enaddr[i]);
 
-	if (sc->bustype == EP_BUS_PCI || sc->bustype == EP_BUS_EISA)
-		/* Reset the station-address receive filter */
-		for (i = 0; i < 6; i++)
-			bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
+	/*
+	 * Reset the station-address receive filter.
+	 * A bug workaround for busmastering  (Vortex, Demon) cards.
+	 */
+	for (i = 0; i < 6; i++)
+		bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
@@ -344,13 +396,14 @@ startagain:
 
 	if (bus_space_read_2(iot, ioh, EP_W1_FREE_TX) < len + pad + 4) {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | (len + pad + 4));
+		    SET_TX_AVAIL_THRESH |
+		    ((len + pad + 4) >> sc->ep_pktlenshift));
 		/* not enough room in FIFO */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	} else {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | 2044);
+		    SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE );
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m0);
@@ -358,7 +411,7 @@ startagain:
 		return;
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_TX_START_THRESH |
-	    (len / 4 + sc->tx_start_thresh));
+	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/) );
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
