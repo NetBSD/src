@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.5.2.5 2001/03/30 22:36:34 he Exp $
+# $NetBSD: sshd,v 1.5.2.6 2001/03/30 22:37:49 he Exp $
 #
 
 # PROVIDE: sshd
@@ -44,7 +44,8 @@ sshd_keygen()
 
 sshd_precmd()
 {
-	if [ ! -f /etc/ssh_host_key -o ! -f /etc/ssh_host_dsa_key ]; then
+	if [ ! -f /etc/ssh_host_key -o ! -f /etc/ssh_host_dsa_key -o \
+	     ! -f /etc/ssh_host_rsa_key ]; then
 		/etc/rc.d/sshd keygen
 	fi
 }
