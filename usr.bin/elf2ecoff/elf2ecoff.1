@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf2ecoff.1,v 1.5 1999/03/22 18:16:36 garbled Exp $
+.\"	$NetBSD: elf2ecoff.1,v 1.5.10.1 2000/09/04 04:04:32 jhawk Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -17,7 +17,7 @@
 .Os
 .Sh NAME
 .Nm elf2ecoff
-.Nd convert a NetBSD ELF-format executable to NetBSD a.out format
+.Nd convert a NetBSD ELF-format executable to NetBSD ECOFF format
 .Sh SYNOPSIS
 .Nm elf2ecoff
 .Ar elf-file
@@ -31,7 +31,7 @@ The
 utility is used to convert native
 .Nx
 ELF binaries
-to a.out format, for compatibility with DECstation diskless-boot
+to ECOFF format, for compatibility with DECstation diskless-boot
 PROM code and diskless-boot servers that require ECOFF format binaries.
 .Pp
 .\" .Sh DIAGNOSTICS
