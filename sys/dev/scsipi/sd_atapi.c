@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.19 2003/09/08 01:27:09 mycroft Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.20 2003/09/17 19:15:00 mycroft Exp $	*/
 
 /*
  * Copyright 1998
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.19 2003/09/08 01:27:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.20 2003/09/17 19:15:00 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,19 +155,10 @@ sd_atapibus_get_parms(sd, dp, flags)
 	case ATAPI_CAP_DESC_CODE_UNFORMATTED:
 		return SDGP_RESULT_UNFORMATTED;
 
+	case ATAPI_CAP_DESC_CODE_RESERVED:
 	case ATAPI_CAP_DESC_CODE_FORMATTED:
 		break;
 
-	case 0:
-		if (sd->sc_periph->periph_quirks & PQUIRK_BYTE5_ZERO)
-			break;
-
-	default:
-#ifdef DIAGNOSTIC
-		printf("%s: strange capacity descriptor byte5 0x%x\n",
-		    sd->sc_dev.dv_xname, (u_int)descp->byte5);
-#endif
-		/* FALLTHROUGH */
 	case ATAPI_CAP_DESC_CODE_NONE:
 		return SDGP_RESULT_OFFLINE;
 	}

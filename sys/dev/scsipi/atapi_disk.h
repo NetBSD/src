@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_disk.h,v 1.4 2001/05/14 20:35:27 bouyer Exp $	*/
+/*	$NetBSD: atapi_disk.h,v 1.5 2003/09/17 19:14:56 mycroft Exp $	*/
 
 /*
  * Copyright 1998
@@ -61,7 +61,7 @@ struct atapi_capacity_descriptor {
 
 /* codes only valid in the current/maximum capacity descriptor */
 #define	ATAPI_CAP_DESC_CODE_MASK	0x3
-/*	reserved			0x0 */
+#define	ATAPI_CAP_DESC_CODE_RESERVED	0x0
 #define	ATAPI_CAP_DESC_CODE_UNFORMATTED	0x1
 #define	ATAPI_CAP_DESC_CODE_FORMATTED	0x2
 #define	ATAPI_CAP_DESC_CODE_NONE	0x3
