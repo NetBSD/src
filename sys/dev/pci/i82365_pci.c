@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.8 2000/02/01 22:39:53 chopps Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.9 2000/02/22 16:04:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -57,7 +57,7 @@ int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
 void	pcic_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcic_pci_ca = {
-	sizeof(struct pcic_softc), pcic_pci_match, pcic_pci_attach
+	sizeof(struct pcic_pci_softc), pcic_pci_match, pcic_pci_attach
 };
 
 static struct pcmcia_chip_functions pcic_pci_functions = {
@@ -112,6 +112,7 @@ pcic_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcic_softc *sc = (void *) self;
+	struct pcic_pci_softc *psc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
@@ -186,7 +187,7 @@ pcic_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->intr_est = pcic_pci_machdep_intr_est(pc);
+	psc->intr_est = pcic_pci_machdep_intr_est(pc);
 	sc->irq = -1;
 
 #if 0
