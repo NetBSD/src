@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.23 2002/11/25 23:37:08 simonb Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.24 2003/04/21 06:52:47 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.23 2002/11/25 23:37:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.24 2003/04/21 06:52:47 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -147,11 +147,10 @@ gre_input(m, va_alist)
  * proto is the protocol number of the "calling" foo_input()
  * routine.
  */
-
 int
-gre_input2(struct mbuf *m ,int hlen, u_char proto)
+gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
-	struct greip *gip = mtod(m, struct greip *);
+	struct greip *gip;
 	int s;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
@@ -162,12 +161,19 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		return (0);
 	}
 
+	if (m->m_len < sizeof(*gip)) {
+		m = m_pullup(m, sizeof(*gip));
+		if (m == NULL)
+			return (ENOBUFS);
+	}
+	gip = mtod(m, struct greip *);
+
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	switch (proto) {
 	case IPPROTO_GRE:
-		hlen += sizeof (struct gre_h);
+		hlen += sizeof(struct gre_h);
 
 		/* process GRE flags as packet can be of variable len */
 		flags = ntohs(gip->gi_flags);
@@ -181,7 +187,7 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		if (flags & GRE_KP)
 			hlen += 4;
 		if (flags & GRE_SP)
-			hlen +=4;
+			hlen += 4;
 
 		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
@@ -210,8 +216,11 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		return (0);
 	}
 
-	m->m_data += hlen;
-	m->m_len -= hlen;
+	if (hlen > m->m_pkthdr.len) {
+		m_freem(m);
+		return (EINVAL);
+	}
+	m_adj(m, hlen);
 	m->m_pkthdr.len -= hlen;
 
 #if NBPFILTER > 0
@@ -224,7 +233,7 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		m0.m_data = (char *)&af;
 
 		bpf_mtap(sc->sc_if.if_bpf, &m0);
-		}
+	}
 #endif /*NBPFILTER > 0*/
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
@@ -234,7 +243,7 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		IF_DROP(ifq);
 		m_freem(m);
 	} else {
-		IF_ENQUEUE(ifq,m);
+		IF_ENQUEUE(ifq, m);
 	}
 	splx(s);
 
@@ -247,7 +256,6 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
  * encapsulating header was not prepended, but instead inserted
  * between IP header and payload
  */
-
 void
 #if __STDC__
 gre_mobile_input(struct mbuf *m, ...)
@@ -257,15 +265,15 @@ gre_mobile_input(m, va_alist)
         va_dcl
 #endif
 {
-	struct ip *ip = mtod(m, struct ip *);
-	struct mobip_h *mip = mtod(m, struct mobip_h *);
+	struct ip *ip;
+	struct mobip_h *mip;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	int hlen,s;
+	int hlen, s;
 	va_list ap;
 	int msiz;
 
-	va_start(ap,m);
+	va_start(ap, m);
 	hlen = va_arg(ap, int);
 	va_end(ap);
 
@@ -275,19 +283,35 @@ gre_mobile_input(m, va_alist)
 		return;
 	}
 
+	if (m->m_len < sizeof(*mip)) {
+		m = m_pullup(m, sizeof(*mip));
+		if (m == NULL)
+			return;
+	}
+	ip = mtod(m, struct ip *);
+	mip = mtod(m, struct mobip_h *);
+
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	if(ntohs(mip->mh.proto) & MOB_H_SBIT) {
+	if (ntohs(mip->mh.proto) & MOB_H_SBIT) {
 		msiz = MOB_H_SIZ_L;
 		mip->mi.ip_src.s_addr = mip->mh.osrc;
-	} else {
+	} else
 		msiz = MOB_H_SIZ_S;
+
+	if (m->m_len < msiz) {
+		m = m_pullup(m, msiz);
+		if (m == NULL)
+			return;
+		ip = mtod(m, struct ip *);
+		mip = mtod(m, struct mobip_h *);
 	}
+
 	mip->mi.ip_dst.s_addr = mip->mh.odst;
 	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
 
-	if (gre_in_cksum((u_short*)&mip->mh,msiz) != 0) {
+	if (gre_in_cksum((u_short*)&mip->mh, msiz) != 0) {
 		m_freem(m);
 		return;
 	}
@@ -311,7 +335,7 @@ gre_mobile_input(m, va_alist)
 		m0.m_data = (char *)&af;
 
 		bpf_mtap(sc->sc_if.if_bpf, &m0);
-		}
+	}
 #endif /*NBPFILTER > 0*/
 
 	ifq = &ipintrq;
@@ -320,7 +344,7 @@ gre_mobile_input(m, va_alist)
 		IF_DROP(ifq);
 		m_freem(m);
 	} else {
-		IF_ENQUEUE(ifq,m);
+		IF_ENQUEUE(ifq, m);
 	}
 	splx(s);
 }
