@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/11 00:10:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/01/23 23:03:23 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ BUILDTARGETS+=	do-build
 
 START_TIME!=	date
 
-build:
+build: check_X11SRCDIR
 	@echo "X11 build started at: ${START_TIME}"
 .for tgt in ${BUILDTARGETS}
 	@(cd ${.CURDIR} && ${MAKE} ${tgt})
@@ -45,5 +45,19 @@ do-${dir:S/\//-/g}:
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
 .  endfor
 .endfor
+
+
+check_X11SRCDIR: .PHONY .NOTMAIN
+.if !defined(X11SRCDIR)
+	@echo
+	@echo "ERROR: setenv X11SRCDIR before doing that!"
+	@false
+.elif !exists(${X11SRCDIR})
+	@echo
+	@echo "ERROR: X11SRCDIR \`${X11SRCDIR}' does not exist"
+	@false
+.else
+	@true
+.endif
 
 .include <bsd.subdir.mk>
