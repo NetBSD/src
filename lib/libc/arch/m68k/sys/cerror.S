@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 1996/11/07 05:20:33 jtc Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7 1998/07/01 06:44:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,33 +43,33 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.6 1996/11/07 05:20:33 jtc Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.7 1998/07/01 06:44:15 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.even
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 cerror:
 #ifdef	_REENTRANT
 	movl	d0,sp@-
 #ifdef	PIC
-	movl	#__GLOBAL_OFFSET_TABLE_,a0
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a0
 	lea	pc@(0,a0:l),a0
-	movl	a0@(___errno:l),a0
+	movl	a0@(_C_LABEL(__errno):l),a0
 	jsr	a0@
 #else
-	jbsr	___errno
+	jbsr	_C_LABEL(__errno)
 #endif
 	movl	d0,a0
 	movl	sp@+,a0@
 #else
 #ifdef	PIC
-	movl	#__GLOBAL_OFFSET_TABLE_,a0
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a0
 	lea	pc@(0,a0:l),a0
-	movl	a0@(_errno:w),a0
+	movl	a0@(_C_LABEL(errno):w),a0
 	movl	d0,a0@
 #else
-	movl	d0,_errno
+	movl	d0,_C_LABEL(errno)
 #endif
 #endif	/* _REENTRANT */
 	movl	#-1,d0
