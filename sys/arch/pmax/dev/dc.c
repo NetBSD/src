@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.55 1999/12/30 01:01:48 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.56 2000/01/06 05:22:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.55 1999/12/30 01:01:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.56 2000/01/06 05:22:07 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.55 1999/12/30 01:01:48 simonb Exp $");
 #include "tc.h"
 #include "rasterconsole.h"
 
-#include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
+#include <pmax/dev/lk201var.h>		/* XXX KbdReset and friends */
 
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_cons.h>
