@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.26 1993/12/22 13:11:03 cgd Exp $
+#	$Id: files.i386,v 1.27 1994/01/08 11:12:15 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
@@ -13,7 +13,7 @@ arch/i386/i386/mem.c		standard
 arch/i386/i386/microtime.s	standard
 arch/i386/i386/ns_cksum.c	optional ns
 arch/i386/i386/pmap.c		standard
-arch/i386/i386/procfs_machdep.c	optional procfs
+arch/i386/i386/process_machdep.c	standard
 arch/i386/i386/random.s		optional multicast
 arch/i386/i386/sys_machdep.c	standard
 arch/i386/i386/trap.c		standard
