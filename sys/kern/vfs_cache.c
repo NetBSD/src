@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.9 1994/08/30 03:06:11 mycroft Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.10 1994/12/13 09:14:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_cache.c	8.1 (Berkeley) 6/10/93
+ *	@(#)vfs_cache.c	8.3 (Berkeley) 8/22/94
  */
 
 #include <sys/param.h>
