@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.18 1994/10/29 07:35:04 cgd Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.19 1996/02/05 01:53:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -108,7 +108,7 @@ dev_pager_alloc(handle, size, prot, foff)
 {
 	dev_t dev;
 	vm_pager_t pager;
-	int (*mapfunc)();
+	int (*mapfunc) __P((dev_t, int, int));
 	vm_object_t object;
 	dev_pager_t devp;
 	int npages, off;
@@ -131,7 +131,9 @@ dev_pager_alloc(handle, size, prot, foff)
 	 */
 	dev = (dev_t)(long)handle;
 	mapfunc = cdevsw[major(dev)].d_mmap;
-	if (mapfunc == NULL || mapfunc == enodev || mapfunc == nullop)
+	if (mapfunc == NULL ||
+	    mapfunc == (int (*) __P((dev_t, int, int))) enodev ||
+	    mapfunc == (int (*) __P((dev_t, int, int))) nullop)
 		return(NULL);
 
 	/*
@@ -260,7 +262,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 	vm_offset_t offset, paddr;
 	vm_page_t page;
 	dev_t dev;
-	int (*mapfunc)(), prot;
+	int (*mapfunc) __P((dev_t, int, int)), prot;
 	vm_page_t m;
 
 #ifdef DEBUG
@@ -279,7 +281,9 @@ dev_pager_getpage(pager, mlist, npages, sync)
 	prot = PROT_READ;	/* XXX should pass in? */
 	mapfunc = cdevsw[major(dev)].d_mmap;
 #ifdef DIAGNOSTIC
-	if (mapfunc == NULL || mapfunc == enodev || mapfunc == nullop)
+	if (mapfunc == NULL ||
+	    mapfunc == (int (*) __P((dev_t, int, int))) enodev ||
+	    mapfunc == (int (*) __P((dev_t, int, int))) nullop)
 		panic("dev_pager_getpage: no map function");
 #endif
 	paddr = pmap_phys_address((*mapfunc)(dev, (int)offset, prot));

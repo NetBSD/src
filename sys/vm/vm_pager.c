@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.18 1995/05/07 19:27:30 cgd Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.19 1996/02/05 01:54:08 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -72,6 +72,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.27 1996/01/31 03:11:16 mycroft Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -541,7 +541,12 @@ pmap_startup(startp, endp)
 		i = pmap_page_index(paddr) - first_page;
 
 		/* Don't trust pmap_page_index()... */
-		if (i < 0 || i >= vm_page_count)
+		if (
+#if 0
+		    /* Cannot happen; i is unsigned */
+		    i < 0 ||
+#endif
+			    i >= vm_page_count)
 			panic("pmap_startup: bad i=0x%x", i);
 	}
 

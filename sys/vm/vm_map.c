@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.21 1995/04/10 16:54:00 mycroft Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.22 1996/02/05 01:53:57 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -296,7 +296,7 @@ vm_map_entry_create(map)
 		MALLOC(entry, vm_map_entry_t, sizeof(struct vm_map_entry),
 		       M_VMMAPENT, M_WAITOK);
 	} else {
-		if (entry = kentry_free)
+		if ((entry = kentry_free) != NULL)
 			kentry_free = kentry_free->next;
 	}
 	if (entry == NULL)
@@ -1142,7 +1142,7 @@ vm_map_pageable(map, start, end, new_pageable)
 {
 	register vm_map_entry_t	entry;
 	vm_map_entry_t		start_entry;
-	register vm_offset_t	failed;
+	register vm_offset_t	failed = 0;
 	int			rv;
 
 	vm_map_lock(map);
@@ -2363,7 +2363,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 *	it for all possible accesses.
 	 */
 
-	if (*wired = (entry->wired_count != 0))
+	if ((*wired = (entry->wired_count != 0)) != 0)
 		prot = fault_type = entry->protection;
 
 	/*
@@ -2371,7 +2371,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 *	it down.
 	 */
 
-	if (su = !entry->is_a_map) {
+	if ((su = !entry->is_a_map) != 0) {
 	 	share_map = map;
 		share_offset = vaddr;
 	}

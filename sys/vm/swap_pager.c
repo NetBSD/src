@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.24 1994/10/18 06:42:28 cgd Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.25 1996/02/05 01:53:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -350,10 +350,9 @@ swap_pager_dealloc(pager)
 	register int i;
 	register sw_blk_t bp;
 	register sw_pager_t swp;
-	struct swtab *swt;
 	int s;
-
 #ifdef DEBUG
+	struct swtab *swt;
 	/* save panic time state */
 	if ((swpagerdebug & SDB_ANOMPANIC) && panicstr)
 		return;
