@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dma.c	7.5 (Berkeley) 5/4/91
- *	$Id: dma.c,v 1.2 1993/08/01 19:24:02 mycroft Exp $
+ *	$Id: dma.c,v 1.3 1994/05/05 10:10:21 mycroft Exp $
  */
 
 /*
@@ -54,7 +54,6 @@
 extern void isrlink();
 extern void _insque();
 extern void _remque();
-extern void timeout();
 extern u_int kvtop();
 extern void PCIA();
 
@@ -101,7 +100,7 @@ int	dmadebug = 0;
 #define	DDB_FOLLOW	0x04
 #define DDB_IO		0x08
 
-void	dmatimeout();
+void	dmatimeout __P((void *));
 int	dmatimo[NDMA];
 
 long	dmahits[NDMA];
@@ -145,7 +144,7 @@ dmainit()
 	dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(dmatimeout, 0, 30 * hz);
+	timeout(dmatimeout, NULL, 30 * hz);
 #endif
 
 	printf("dma: 98620%c with 2 channels, %d bit DMA\n",
@@ -436,7 +435,8 @@ dmaintr()
 
 #ifdef DEBUG
 void
-dmatimeout()
+dmatimeout(arg)
+	void *arg;
 {
 	register int i, s;
 
@@ -450,6 +450,6 @@ dmatimeout()
 		}
 		splx(s);
 	}
-	timeout(dmatimeout, (caddr_t)0, 30 * hz);
+	timeout(dmatimeout, NULL, 30 * hz);
 }
 #endif

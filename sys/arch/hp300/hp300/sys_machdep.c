@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.3 1993/10/13 08:19:03 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.4 1994/05/05 10:11:31 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -79,7 +79,7 @@ vtrace(p, uap, retval)
 		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (void *)p->p_pid, uap->value);
 		break;
 
 	case VTR_STAMP:
@@ -90,11 +90,12 @@ vtrace(p, uap, retval)
 }
 
 vdoualarm(arg)
-	int arg;
+	void *arg;
 {
+	register int pid = (int)arg;
 	register struct proc *p;
 
-	p = pfind(arg);
+	p = pfind(pid);
 	if (p)
 		psignal(p, 16);
 	nvualarm--;
