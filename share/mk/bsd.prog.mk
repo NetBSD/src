@@ -1,10 +1,10 @@
-#	$NetBSD: bsd.prog.mk,v 1.147 2002/01/04 19:07:19 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.148 2002/01/29 03:09:54 enami Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		cleanprog proginstall scriptsinstall
+.PHONY:		cleanextra cleanobjs cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean:		cleanprog
 
