@@ -4,6 +4,12 @@
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
+/* Define if you don't have vprintf but do have _doprnt.  */
+/* #undef HAVE_DOPRNT */
+
+/* Define if you have the vprintf function.  */
+#define HAVE_VPRINTF 1
+
 /* Define if on MINIX.  */
 /* #undef _MINIX */
 
@@ -20,11 +26,29 @@
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
 
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#define YYTEXT_POINTER 1
+
+/* PACKAGE name */
+#define PACKAGE "bc"
+
+/* Package VERSION number */
+#define VERSION "1.04"
+
 /* define if the math lib is to be loaded from a file. */
 /* #undef BC_MATH_FILE */
 
+/* Define to use the readline library. */
+/* #undef READLINE */
+
+/* Define to `size_t' if <sys/types.h> and <stddef.h> don't define.  */
+/* #undef ptrdiff_t */
+
 /* Define if you have the isgraph function.  */
-/* #undef HAVE_ISGRAPH */
+#define HAVE_ISGRAPH 1
+
+/* Define if you have the <lib.h> header file.  */
+/* #undef HAVE_LIB_H */
 
 /* Define if you have the <limits.h> header file.  */
 #define HAVE_LIMITS_H 1
