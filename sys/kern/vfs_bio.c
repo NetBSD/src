@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.51 1997/07/08 21:42:59 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.52 1997/07/08 22:03:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -379,7 +379,11 @@ bdwrite(bp)
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	/* If this is a tape block, write the block now. */
-	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
+	/* XXX NOTE: the memory filesystem usurpes major device */
+	/* XXX       number 255, which is a bad idea.		*/
+	if (bp->b_dev != NODEV &&
+	    major(bp->b_dev) != 255 &&	/* XXX - MFS buffers! */
+	    bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
 		bawrite(bp);
 		return;
 	}
