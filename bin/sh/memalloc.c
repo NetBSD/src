@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.21 1998/01/31 12:36:17 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.21.10.1 2000/10/22 19:04:50 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.21 1998/01/31 12:36:17 christos Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.21.10.1 2000/10/22 19:04:50 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,10 @@ ckmalloc(nbytes)
 {
 	pointer p;
 
-	if ((p = malloc(nbytes)) == NULL)
+	INTOFF;
+	p = malloc(nbytes);
+	INTON;
+	if (p == NULL)
 		error("Out of space");
 	return p;
 }
