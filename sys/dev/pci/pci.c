@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.37 1998/05/31 06:05:28 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.38 1998/06/09 18:48:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -66,8 +66,10 @@ int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
 /*
- * Callback so that ISA/EISA bridges can attach their child busses
- * after PCI configuration is done.
+ * Important note about PCI-ISA bridges:
+ *
+ * Callbacks are used to configure these devices so that ISA/EISA bridges
+ * can attach their child busses after PCI configuration is done.
  *
  * This works because:
  *	(1) there can be at most one ISA/EISA bridge per PCI bus, and
@@ -85,9 +87,9 @@ int	pcisubmatch __P((struct device *, struct cfdata *, void *));
  * and the bridge is seen before the video board is, the board can show
  * up as an ISA device, and that can (bogusly) complicate the PCI device's
  * attach code, or make the PCI device not be properly attached at all.
+ *
+ * We use the generic config_defer() facility to achieve this.
  */
-static void	(*pci_isa_bridge_callback) __P((void *));
-static void	*pci_isa_bridge_callback_arg;
 
 int
 pcimatch(parent, cf, aux)
@@ -131,9 +133,6 @@ pci_probe_bus(self)
 	pc = sc->sc_pc;
 	bus = sc->sc_bus;
 	maxndevs = sc->sc_maxndevs;
-
-	if (bus == 0)
-		pci_isa_bridge_callback = NULL;
 
 	for (device = 0; device < maxndevs; device++) {
 		pcitag_t tag;
@@ -219,9 +218,6 @@ pci_probe_bus(self)
 			config_found_sm(self, &pa, pciprint, pcisubmatch);
 		}
 	}
-
-	if (bus == 0 && pci_isa_bridge_callback != NULL)
-		(*pci_isa_bridge_callback)(pci_isa_bridge_callback_arg);
 }
 
 void
@@ -331,16 +327,4 @@ pcisubmatch(parent, cf, aux)
 	    cf->pcicf_function != pa->pa_function)
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
-}
-
-void
-set_pci_isa_bridge_callback(fn, arg)
-	void (*fn) __P((void *));
-	void *arg;
-{
-
-	if (pci_isa_bridge_callback != NULL)
-		panic("set_pci_isa_bridge_callback");
-	pci_isa_bridge_callback = fn;
-	pci_isa_bridge_callback_arg = arg;
 }
