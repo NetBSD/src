@@ -1,9 +1,21 @@
-#	$NetBSD: options.awk,v 1.3 2001/03/31 11:37:46 aymeric Exp $
+#	$NetBSD: options.awk,v 1.4 2003/08/28 16:23:41 dsl Exp $
 #
 #	@(#)options.awk	10.1 (Berkeley) 6/8/95
  
 /^\/\* O_[0-9A-Z_]*/ {
-	printf("#define %s %d\n", $2, cnt++);
+	opt = $2
+	printf("#define %s %d\n", opt, cnt++);
+	ofs = FS
+	FS = "\""
+	do getline
+	while ($1 != "	{")
+	FS = ofs
+	opt_name = $2
+	if (opt_name < prev_name) {
+		printf "missorted %s: \"%s\" < \"%s\"\n", opt, opt_name, prev_name >"/dev/stderr"
+		exit 1
+	}
+	prev_name = opt_name
 	next;
 }
 END {
