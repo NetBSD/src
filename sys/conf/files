@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.258 1998/11/22 21:57:47 pk Exp $
+#	$NetBSD: files,v 1.259 1998/11/26 15:31:22 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -342,6 +342,7 @@ define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
 define	vmebus { }			# VME bus attachment
+define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
