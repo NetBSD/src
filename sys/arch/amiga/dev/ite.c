@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.17 1994/05/11 19:06:45 chopps Exp $
+ *	$Id: ite.c,v 1.18 1994/05/31 03:11:42 chopps Exp $
  */
 
 /*
@@ -951,7 +951,7 @@ ite_dnchar(ip, n)
      struct ite_softc *ip;
      int n;
 {
-  n = MIN(n, ip->cols - ip->curx);
+  n = min(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
     {
       SUBR_SCROLL(ip, ip->cury, ip->curx + n, n, SCROLL_LEFT);
@@ -969,7 +969,7 @@ ite_inchar(ip, n)
      struct ite_softc *ip;
      int n;
 {
-  n = MIN(n, ip->cols - ip->curx);
+  n = min(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
     {
       SUBR_SCROLL(ip, ip->cury, ip->curx, n, SCROLL_RIGHT);
@@ -999,7 +999,7 @@ static void inline
 ite_clrtobol(ip)
      struct ite_softc *ip;
 {
-  int y = ip->cury, x = MIN(ip->curx + 1, ip->cols);
+  int y = ip->cury, x = min(ip->curx + 1, ip->cols);
   SUBR_CLEAR(ip, y, 0, 1, x);
   attrclr(ip, y, 0, 1, x);
   SUBR_CURSOR(ip, DRAW_CURSOR);
@@ -1064,7 +1064,7 @@ ite_dnline(ip, n)
   if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
     return;
 
-  n = MIN(n, ip->bottom_margin + 1 - ip->cury);
+  n = min(n, ip->bottom_margin + 1 - ip->cury);
   if (n <= ip->bottom_margin - ip->cury)
     {
       SUBR_SCROLL(ip, ip->cury + n, 0, n, SCROLL_UP);
@@ -1086,7 +1086,7 @@ ite_inline(ip, n)
   if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
     return;
 
-  n = MIN(n, ip->bottom_margin + 1 - ip->cury);
+  n = min(n, ip->bottom_margin + 1 - ip->cury);
   if (n <= ip->bottom_margin - ip->cury)
     {
       SUBR_SCROLL(ip, ip->cury, 0, n, SCROLL_DOWN);
@@ -1667,7 +1667,7 @@ doesc:
 		    *ip->ap = 0;
 		    x = atoi (ip->argbuf);
 		    if (x) x--;
-		    ip->curx = MIN(x, ip->cols - 1);
+		    ip->curx = min(x, ip->cols - 1);
 		    ip->escape = 0;
 		    SUBR_CURSOR(ip, MOVE_CURSOR);
 		    clr_attr (ip, ATTR_INV);
@@ -1682,7 +1682,7 @@ doesc:
 		    if (y) y--;
 		    if (ip->inside_margins)
 		      y += ip->top_margin;
-		    ip->cury = MIN(y, ip->rows - 1);
+		    ip->cury = min(y, ip->rows - 1);
 		    ip->escape = 0;
 		    snap_cury(ip);
 		    SUBR_CURSOR(ip, MOVE_CURSOR);
@@ -1702,8 +1702,8 @@ doesc:
 		    if (y) y--;
 		    if (ip->inside_margins)
 		      y += ip->top_margin;
-		    ip->cury = MIN(y, ip->rows - 1);
-		    ip->curx = MIN(x, ip->cols - 1);
+		    ip->cury = min(y, ip->rows - 1);
+		    ip->curx = min(x, ip->cols - 1);
 		    ip->escape = 0;
 		    snap_cury(ip);
 		    SUBR_CURSOR(ip, MOVE_CURSOR);
@@ -1715,7 +1715,7 @@ doesc:
 		    n = ip->cury - (n ? n : 1);
 		    if (n < 0) n = 0;
 		    if (ip->inside_margins)
-		      n = MAX(ip->top_margin, n);
+		      n = max(ip->top_margin, n);
 		    else if (n == ip->top_margin - 1)
 		      /* allow scrolling outside region, but don't scroll out
 			 of active region without explicit CUP */
@@ -1729,9 +1729,9 @@ doesc:
 		  case 'B':
 		    n = ite_argnum (ip);
 		    n = ip->cury + (n ? n : 1);
-		    n = MIN(ip->rows - 1, n);
+		    n = min(ip->rows - 1, n);
 		    if (ip->inside_margins)
-		      n = MIN(ip->bottom_margin, n);
+		      n = min(ip->bottom_margin, n);
 		    else if (n == ip->bottom_margin + 1)
 		      /* allow scrolling outside region, but don't scroll out
 			 of active region without explicit CUP */
@@ -1745,7 +1745,7 @@ doesc:
 		  case 'C':
 		    n = ite_argnum (ip);
 		    n = n ? n : 1;
-		    ip->curx = MIN(ip->curx + n, ip->cols - 1);
+		    ip->curx = min(ip->curx + n, ip->cols - 1);
 		    ip->escape = 0;
 		    SUBR_CURSOR(ip, MOVE_CURSOR);
 		    clr_attr (ip, ATTR_INV);
@@ -1791,7 +1791,7 @@ doesc:
 
 		  case 'X':
 		    n = ite_argnum(ip) - 1;
-		    n = MIN(n, ip->cols - 1 - ip->curx);
+		    n = min(n, ip->cols - 1 - ip->curx);
 		    for (; n >= 0; n--)
 		      {
 			attrclr(ip, ip->cury, ip->curx + n, 1, 1);
@@ -1826,8 +1826,8 @@ doesc:
 		      }
 		    x--;
 		    y--;
-		    ip->top_margin = MIN(x, ip->rows - 1);
-		    ip->bottom_margin = MIN(y, ip->rows - 1);
+		    ip->top_margin = min(x, ip->rows - 1);
+		    ip->bottom_margin = min(y, ip->rows - 1);
 		    if (ip->inside_margins)
 		      {
 			ip->cury = ip->top_margin;
