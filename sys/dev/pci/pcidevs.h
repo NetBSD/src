@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.20 2003/06/16 21:11:28 grant Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.21 2003/06/19 11:22:02 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.22 2003/06/16 21:09:47 grant Exp 
+ *	NetBSD: pcidevs,v 1.428.2.23 2003/06/19 11:20:09 grant Exp 
  */
 
 /*
@@ -838,6 +838,8 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH_AGP3	0x0034		/* UniNorth AGP Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH5	0x0035		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
+#define	PCI_PRODUCT_APPLE_KAUAI	0x003b		/* Kauai ATA Controller */
+#define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* MAC-IO I/O Controller (Intrepid) */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
