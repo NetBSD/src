@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.10 1998/09/14 21:03:59 pk Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.10.6.1 1999/04/30 15:29:06 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ compat_43_sigstack_to_sigaltstack(ss, sa)
 	struct sigaltstack *sa;
 {
 	sa->ss_sp = ss->ss_sp;
-	sa->ss_size = 0;	/* XXX? */
+	sa->ss_size = SIGSTKSZ;	/* Use the recommended size */
 	sa->ss_flags = 0;
 	if (ss->ss_onstack)
 		sa->ss_flags |= SS_ONSTACK;
