@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.124 2004/04/25 05:47:53 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.125 2004/05/20 06:34:32 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -901,6 +901,27 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oldlenp, newp, newlen, \
 	oname, l, (struct sysctlnode *)node
 
+#ifdef _LKM
+
+#define SYSCTL_SETUP_PROTO(name)				\
+	void name(struct sysctllog **)
+#ifdef SYSCTL_DEBUG_SETUP
+#define SYSCTL_SETUP(name, desc)				\
+	static void __CONCAT(___,name)(struct sysctllog **);	\
+	void name(struct sysctllog **clog) {			\
+		printf("%s\n", desc);				\
+		__CONCAT(___,name)(clog); }			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void __CONCAT(___,name)(struct sysctllog **clog)
+#else /* SYSCTL_DEBUG_SETUP */
+#define SYSCTL_SETUP(name, desc)				\
+	__link_set_add_text(sysctl_funcs, name);		\
+	void name(struct sysctllog **clog)
+#endif /* SYSCTL_DEBUG_SETUP */
+
+#else /* _LKM */
+
+#define SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
 #define SYSCTL_SETUP(name, desc)				\
 	static void __CONCAT(___,name)(struct sysctllog **);	\
@@ -916,6 +937,8 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void name(struct sysctllog **clog)
 #endif /* SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
+
+#endif /* _LKM */
 
 /*
  * Internal sysctl function calling convention:

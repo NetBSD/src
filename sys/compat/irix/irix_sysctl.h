@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysctl.h,v 1.1 2002/11/09 09:03:58 manu Exp $ */
+/*	$NetBSD: irix_sysctl.h,v 1.2 2004/05/20 06:34:24 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,5 +83,9 @@ extern char irix_si_version[128];
 
 int irix_sysctl __P((int *, u_int, void *, size_t *, 
     void *, size_t, struct proc *));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_emul_irix_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 #endif /* _IRIX_SYSCTL_H_ */
