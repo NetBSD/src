@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.13 1993/11/26 11:26:23 deraadt Exp $
+ * $Id: machdep.c,v 1.14 1993/11/28 18:10:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -857,38 +857,19 @@ mapdev(phys, virt, size)
 	return (ret);
 }
 
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
+	int error = ENOEXEC;
+
 #ifdef COMPAT_SUNOS
-struct sunos_aout_magic {
-	u_char	a_dynamic:1;	/* has a __DYNAMIC */
-	u_char	a_toolversion:7;/* version of toolset used to create this file */
-	u_char	a_machtype;	/* machine type */
-	u_short	a_magic;	/* magic number */
-};
-#define	SUNOS_M_SPARC	3		/* runs only on SPARC */
-
-	struct sunos_aout_magic sunmag;
-
-	bcopy(&epp->ep_execp->a_midmag, &sunmag, sizeof(sunmag));
-	if(sunmag.a_machtype != SUNOS_M_SPARC)
-		return (ENOEXEC);
-
-	epp->ep_emul = EMUL_SUNOS;
-	switch (sunmag.a_magic) {
-	case ZMAGIC:
-		return exec_aout_prep_zmagic(p, epp);
-	case NMAGIC:
-		return exec_aout_prep_nmagic(p, epp);
-	case OMAGIC:
-		return exec_aout_prep_omagic(p, epp);
-	default:
-		break;
-	}
-#endif /* COMPAT_SUNOS */
-	return (ENOEXEC);
+	extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+		return 0;
+#endif
+	return error;
 }
 
 int
