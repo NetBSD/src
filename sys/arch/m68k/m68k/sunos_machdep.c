@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.2 1995/04/23 00:27:48 briggs Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.3 1995/04/23 18:22:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,14 @@
 #include <compat/sunos/sunos_syscallargs.h>
 
 #include <machine/reg.h>
+
+#ifdef DEBUG
+extern int sigdebug;
+extern int sigpid;
+#define SDB_FOLLOW      0x01
+#define SDB_KSTACK      0x02
+#define SDB_FPSTATE     0x04
+#endif
 
 /* sigh.. I guess it's too late to change now, but "our" sigcontext
    is plain vax, not very 68000 (ap, for example..) */
