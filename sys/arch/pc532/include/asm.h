@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1996/11/30 02:49:02 jtc Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 1997/05/08 13:44:11 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,16 +41,21 @@
 
 #ifdef __STDC__
 #define CAT(a, b)	a ## b
-#define EX(x)		_ ## x
-#define LEX(x)		_ ## x ## :
 #else
 #define CAT(a, b)	a/**/b
-#define EX(x)		_/**/x
-#define LEX(x)		_/**/x/**/:
 #endif
 
-#define FRAME	enter [],0
-#define EMARF	exit []
+#define _C_LABEL(name)		CAT(_,name)
+#define _ASM_LABEL(name)	name
+
+/* let kernels and others override entrypoint alignment */
+#ifndef _ALIGN_TEXT
+# define _ALIGN_TEXT .align 2,0xa2
+#endif
+
+#ifndef _ALIGN_DATA
+# define _ALIGN_DATA .align 2
+#endif
 
 #define S_ARG0	4(sp)
 #define S_ARG1	8(sp)
@@ -62,16 +67,16 @@
 #define B_ARG2	16(fp)
 #define B_ARG3	20(fp)
 
-#define ALIGN 0
-
 #ifdef PIC
-#define PIC_PROLOGUE \
-	sprd	sb,tos; \
-	addr	__GLOBAL_OFFSET_TABLE_(pc),r1; \
-	lprd	sb,r1
-#define PIC_EPILOGUE \
-	lprd	sb,tos
-#define PIC_GOT(x)	0(x(sb))
+#define PIC_PROLOGUE						\
+		sprd	sb,tos				; 	\
+		addr	_C_LABEL(_GLOBAL_OFFSET_TABLE_)(pc),r1;	\
+		lprd	sb,r1
+
+#define PIC_EPILOGUE						\
+		lprd	sb,tos
+
+#define PIC_GOT(name)	0(name(sb))
 
 #define PIC_S_ARG0	8(sp)
 #define PIC_S_ARG1	12(sp)
@@ -80,7 +85,7 @@
 #else
 #define PIC_PROLOGUE
 #define PIC_EPILOGUE
-#define	PIC_GOT(x)	x(pc)
+#define	PIC_GOT(name)	name(pc)
 
 #define PIC_S_ARG0	4(sp)
 #define PIC_S_ARG1	8(sp)
@@ -88,28 +93,117 @@
 #define PIC_S_ARG3	16(sp)
 #endif
 
+#define _ENTRY(name)						\
+		.text					;	\
+		_ALIGN_TEXT				;	\
+		.globl name				;	\
+		.type name,@function			;	\
+	name:
+
 #ifdef GPROF
-#define	MC1	.data; 1:; .long 0; .text
-#define MC2	enter [r0],0; addr 1b(pc),r0; bsr mcount; exit [r0]
+# ifndef _SAVELIST
+#  define _SAVELIST
+# endif
+# define _PROF_PROLOGUE 					\
+		enter [_SAVELIST],0			;	\
+		bsr _ASM_LABEL(mcount)			;	\
+		exit [_SAVELIST]
 #else
-#define MC1
-#define MC2
+# define _PROF_PROLOGUE
 #endif
 
-#define	DECL(x)	MC1; .globl x; .type x,@function; .align ALIGN; CAT(x,:); MC2
-#define	_DECL(x) .globl x; .type x,@function; .align ALIGN; CAT(x,:)
-#define ALTENTRY(name, rname) \
-	.globl EX(name); \
-	.type EX(name),@function; \
-	.set EX(name),EX(rname)
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 
-#define	ENTRY(x)	DECL(EX(x))
-#define	_ENTRY(x)	_DECL(EX(x))
-#define ASENTRY(x)	DECL(x)
-#define _ASENTRY(x)	_DECL(x)
-#define	ASMSTR		.asciz
-#define RCSID(x)	.text; .asciz x
+#define	ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name))
+#define	ASENTRY_NOPROFILE(name)	_ENTRY(_ASM_LABEL(name))
 
-#define	SVC svc
+#define ALTENTRY(name, rname)					\
+		.globl _C_LABEL(name)			;	\
+		.type _C_LABEL(name),@function		;	\
+		.set _C_LABEL(name),_C_LABEL(rname)
+
+#define	ASMSTR							\
+		.asciz
+
+#define RCSID(string)						\
+		.text					;	\
+		ASMSTR string
+
+/*
+ * Global variables of whatever sort.
+ */
+#define GLOBAL(name)						\
+		.globl	_C_LABEL(name)			;	\
+	_C_LABEL(name):	
+
+#define ASGLOBAL(name)						\
+		.globl	_ASM_LABEL(name)		;	\
+	_ASM_LABEL(name):
+
+/*
+ * ...and local variables.
+ */
+#define	LOCAL(name)						\
+	_C_LABEL(name):
+
+#define	ASLOCAL(name)						\
+	_ASM_LABEL(name):
+
+/*
+ * Items in the DATA segment.
+ */
+
+#define _DATA(name, pseudo, init)				\
+		.data					;	\
+		.globl	name				;	\
+		.type	name,@object			;	\
+		.size	name,9f - name			;	\
+	name:	pseudo	init				;	\
+	9:
+
+#define	DATA_D(name, init) _DATA(_C_LABEL(name), .long, init)
+#define	DATA_W(name, init) _DATA(_C_LABEL(name), .word, init)
+#define	DATA_B(name, init) _DATA(_C_LABEL(name), .byte, init)
+#define DATA_S(name, init) _DATA(_C_LABEL(name), .asciz, init) 
+
+#define	ASDATA_D(name, init) _DATA(_ASM_LABEL(name), .long, init)
+#define	ASDATA_W(name, init) _DATA(_ASM_LABEL(name), .word, init)
+#define	ASDATA_B(name, init) _DATA(_ASM_LABEL(name), .byte, init)
+#define ASDATA_S(name, init) _DATA(_ASM_LABEL(name), .asciz, init) 
+
+/*
+ * Items in the BSS segment.
+ */
+#define	BSS(name, size)					\
+		.comm	_C_LABEL(name),size
+
+#define	ASBSS(name, size)				\
+		.comm	_ASM_LABEL(name),size
+
+#ifdef _KERNEL
+/*
+ * Shorthand for calling panic().
+ * Note the side-effect: it uses up the 9: label, so be careful!
+ */
+#define PANIC(message)						\
+		addr	9f,tos				;	\
+		bsr	_C_LABEL(panic) 		;	\
+	9:	.asciz	message				;	\
+		.even
+
+/*
+ * Shorthand for defining vectors for the vector table.
+ */
+#define	VECTOR(name)						\
+		.long	_C_LABEL(name)
+
+#define	ASVECTOR(name)						\
+		.long	_ASM_LABEL(name)
+
+#define	VECTOR_UNUSED						\
+		.long	0
+
+#endif
 
 #endif
