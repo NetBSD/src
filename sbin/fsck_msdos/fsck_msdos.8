@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_msdos.8,v 1.13 2002/10/01 13:40:32 wiz Exp $
+.\"	$NetBSD: fsck_msdos.8,v 1.14 2003/02/25 10:34:57 wiz Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
 .\" Copyright (c) 1995 Martin Husemann
@@ -38,11 +38,11 @@
 .Nm fsck_msdos
 .Nd DOS/Windows (FAT) filesystem consistency checker
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Fl p
 .Op Fl f
 .Ar filesystem ...
-.Nm ""
+.Nm
 .Op Fl fny
 .Ar filesystem ...
 .Sh DESCRIPTION
@@ -81,7 +81,7 @@ The options are as follows:
 .Bl -hang -offset indent
 .It Fl f
 This option is ignored by
-.Nm "" ,
+.Nm ,
 and is present only for compatibility with programs that
 check other file system types for consistency, such as
 .Xr fsck_ffs 8 .

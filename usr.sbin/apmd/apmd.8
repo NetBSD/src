@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.16 2001/04/03 11:24:20 wiz Exp $
+.\"	$NetBSD: apmd.8,v 1.17 2003/02/25 10:36:04 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm apmd
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl adlqsv
 .Bk -words
 .Op Fl t Ar rate
@@ -133,7 +133,7 @@ and exit without monitoring the APM status.
 Specify an alternate socket name (used by
 .Xr apm 8
 to communicate with
-.Nm "" ) .
+.Nm ) .
 .It Fl t Ar rate
 Change the polling rate from 10 seconds to
 .Ar rate

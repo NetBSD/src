@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcp.1,v 1.13 2002/09/25 15:18:42 wiz Exp $
+.\"	$NetBSD: rcp.1,v 1.14 2003/02/25 10:34:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl Kpx
 .Op Fl k Ar realm
 .Ar file1 file2
-.Nm ""
+.Nm
 .Op Fl Kprx
 .Op Fl k Ar realm
 .Ar file ...
@@ -100,7 +100,7 @@ The
 option turns on
 .Tn DES
 encryption for all data passed by
-.Nm "" .
+.Nm .
 This may impact response time and
 .Tn CPU
 utilization, but provides
@@ -161,4 +161,4 @@ The destination user and hostname may have to be specified as
 ``rhost.rname'' when the destination machine is running the
 .Bx 4.2
 version of
-.Nm "" .
+.Nm .

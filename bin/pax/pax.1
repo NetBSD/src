@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.38 2002/12/28 21:15:25 wiz Exp $
+.\"	$NetBSD: pax.1,v 1.39 2003/02/25 10:34:40 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 .Nm pax
 .Nd read and write file archives and copy directory hierarchies
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl cdnvzO
 .Bk -words
 .Op Fl E Ar limit
@@ -78,7 +78,7 @@
 .Ar ...\&
 .Ek
 .Op Ar pattern ...\&
-.Nm ""
+.Nm
 .Fl r
 .Op Fl cdiknuvzADOYZ
 .Bk -words
@@ -121,7 +121,7 @@
 .Ar ...\&
 .Ek
 .Op Ar pattern ...\&
-.Nm ""
+.Nm
 .Fl w
 .Op Fl dituvzAHLMOPX
 .Bk -words
@@ -168,7 +168,7 @@
 .Ar ...\&
 .Ek
 .Op Ar file ...\&
-.Nm ""
+.Nm
 .Fl r
 .Fl w
 .Op Fl diklntuvzADHLMOPXYZ
@@ -675,7 +675,7 @@ are not selected and will be skipped.
 Reset the access times of any file or directory read or accessed by
 .Nm
 to be the same as they were before being read or accessed by
-.Nm "" ,
+.Nm ,
 if the user has the appropriate permissions required by
 .Xr utime 3 .
 .It Fl u

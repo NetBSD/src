@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.30 2003/01/27 19:50:20 jdc Exp $
+.\"	$NetBSD: termcap.5,v 1.31 2003/02/25 10:35:34 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ by giving a set of capabilities that they have and by describing
 how operations are performed.
 Padding requirements and initialization sequences
 are included in
-.Nm "" .
+.Nm .
 .Pp
 Entries in
 .Nm
@@ -446,9 +446,9 @@ lines.
 .It "ta	str	(P)	Tab to next 8-position hardware tab stop."
 .It "tc	str		Entry of similar terminal \- must be last."
 .It "te	str		String to end programs that use"
-.Nm "" .
+.Nm .
 .It "ti	str		String to begin programs that use"
-.Nm "" .
+.Nm .
 .It "ts	str	(N)	Go to status line, column"
 .Em n .
 .It "UC	bool	(o)	Upper-case only."
@@ -1047,7 +1047,7 @@ may bring down non-blank lines.
 .Ss Insert/Delete Character
 There are two basic kinds of intelligent terminals with respect to
 insert/delete character that can be described using
-.Nm "" .
+.Nm .
 The most common insert/delete character operations affect only the characters
 on the current line and shift characters off the end of the line rigidly.
 Other terminals, such as the Concept\-100 and the Perkin Elmer Owl, make
@@ -1243,7 +1243,7 @@ Not all modes need be supported by
 .Sy \&sa ,
 only those for which corresponding attribute commands exist.
 (It is unlikely that a
-.Nm "" Ns \-using
+.Nm Ns \-using
 program will support this capability, which is defined for compatibility
 with
 .Xr terminfo 5 ) .
@@ -1445,7 +1445,7 @@ the display for cursor addressing to work properly.
 This is also used for the Tektronix 4025, where
 .Sy \&ti
 sets the command character to be the one used by
-.Nm "" .
+.Nm .
 .Pp
 Other capabilities
 include
@@ -1659,7 +1659,7 @@ the number of times to repeat it.
 (This is a
 .Xr terminfo 5
 feature that is unlikely to be supported by a program that uses
-.Nm "" . )
+.Nm . )
 .Pp
 If the terminal has a settable command character, such as the
 Tektronix 4025, this can be indicated with
@@ -1774,7 +1774,7 @@ and
 .Sy \&px
 causes the string to be transmitted to the computer.
 Unfortunately, due to lack of a definition for string parameters in
-.Nm "" ,
+.Nm ,
 only
 .Xr terminfo 5
 supports these capabilities.  The

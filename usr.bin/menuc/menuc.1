@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.12 2002/10/05 11:17:32 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.13 2003/02/25 10:35:48 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@ can be used to specify a different base name.
 .It Ev MENUDEF
 Can be set to point to a different set of
 definition files for
-.Nm "" .
+.Nm .
 The current location defaults to
 .Pa /usr/share/misc .
 .El
@@ -90,7 +90,7 @@ comments do not start in C code
 and comments in the C code are passed verbatim to
 the output.
 The C comments are not recognized by
-.Nm "" .
+.Nm .
 In all cases, C code starts with a left brace
 .Em ({)
 and ends with the matching right brace

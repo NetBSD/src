@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.10 2001/12/08 19:11:33 wiz Exp $
+.\"	$NetBSD: renice.8,v 1.11 2003/02/25 10:35:52 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.10 2001/12/08 19:11:33 wiz Exp $
+.\"	$NetBSD: renice.8,v 1.11 2003/02/25 10:35:52 wiz Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -55,7 +55,7 @@
 .Fl u
 .Ar user ...
 .Oc
-.Nm ""
+.Nm
 .Fl n
 .Ar increment
 .Oo
@@ -78,17 +78,17 @@ The following
 .Ar who
 parameters are interpreted as process ID's, process group
 ID's, or user names.
-.Nm "" Ns 'ing
+.Nm Ns 'ing
 a process group causes all processes in the process group
 to have their scheduling priority altered.
-.Nm "" Ns 'ing
+.Nm Ns 'ing
 a user causes all processes owned by the user to have
 their scheduling priority altered.
 By default, the processes to be affected are specified by
 their process ID's.
 .Pp
 Options supported by
-.Nm "" :
+.Nm :
 .Bl -tag -width Ds
 .It Fl g
 Force

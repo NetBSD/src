@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.37 2003/02/04 23:07:34 perry Exp $
+.\"	$NetBSD: restore.8,v 1.38 2003/02/25 10:35:09 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,26 +47,26 @@
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm ""
+.Nm
 .Fl R
 .Op Fl cduvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm ""
+.Nm
 .Fl r
 .Op Fl cduvyN
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm ""
+.Nm
 .Fl t
 .Op Fl cdhuvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op Ar
-.Nm ""
+.Nm
 .Fl x
 .Op Fl cdhmuvyN
 .Op Fl b Ar blocksize
@@ -221,7 +221,7 @@ restore passes.
 This file should be removed when the last incremental has been
 restored.
 .Pp
-.Nm "" ,
+.Nm ,
 in conjunction with
 .Xr newfs 8
 and
@@ -361,7 +361,7 @@ Do not perform actual writing to disk.
 .El
 .Sh ENVIRONMENT
 If the following environment variable exists it will be used by
-.Nm "" :
+.Nm :
 .Bl -tag -width "TMPDIR" -compact
 .It TMPDIR
 The directory given in TMPDIR will be used
@@ -412,7 +412,7 @@ The fastest way to extract a few files is to
 start with the last volume, and work towards the first volume.
 .Pp
 There are numerous consistency checks that can be listed by
-.Nm "" .
+.Nm .
 Most checks are self-explanatory or can ``never happen''.
 Common errors are given below.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.40 2002/12/18 19:20:05 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.41 2003/02/25 10:35:09 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,7 +172,7 @@ of ICMP Redirect messages are deleted after a while to minimize
 .Em black-holes .
 When a TCP connection suffers a timeout,
 the kernel tells
-.Nm "" ,
+.Nm ,
 which deletes all redirected routes
 through the gateway involved, advances the age of all RIP routes through
 the gateway to allow an alternate to be chosen, and advances of the
@@ -429,7 +429,7 @@ that another routing process
 will install such a route if necessary,
 and that other routes to that destination should not be installed
 by
-.Nm "" .
+.Nm .
 Such entries are only required when both routers may learn of routes
 to the same destination.
 .Pp
@@ -476,7 +476,7 @@ or
 or
 .Xr named 8 ,
 must have been started before
-.Nm "" . )
+.Nm . )
 .Pp
 .Ar Mask
 is an optional number between 1 and 32 indicating the netmask associated

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.11 2002/02/08 01:36:32 ross Exp $
+.\"	$NetBSD: rsh.1,v 1.12 2003/02/25 10:35:53 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl l Ar username
 .Ar host
 .Op command
-.Nm ""
+.Nm
 .Op Fl Kdnx
 .Op Fl k Ar realm
 .Ar username@host
@@ -181,7 +181,7 @@ You cannot run an interactive command
 or
 .Xr vi  1  )
 using
-.Nm ""  ;
+.Nm  ;
 use
 .Xr rlogin  1
 instead.

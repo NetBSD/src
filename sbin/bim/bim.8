@@ -1,4 +1,4 @@
-.\"	$NetBSD: bim.8,v 1.9 2002/12/21 12:41:58 wiz Exp $
+.\"	$NetBSD: bim.8,v 1.10 2003/02/25 10:34:51 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ This ROM monitor understands the
 disklabel and expects a boot image directory following the disklabel.
 Also, it expects an image partition for the storage of bootable images.
 The image directory and the image partition is managed by
-.Nm "" .
+.Nm .
 The
 .Ar device
 is the raw disk partition that includes the disklabel.
@@ -113,7 +113,7 @@ Deletes an image from the image partition.
 Sets the default image boot.
 .It exit
 Exit
-.Nm "" .
+.Nm .
 .It header
 Print a small section of the disklabel.
 .It help
@@ -126,13 +126,13 @@ Initialize the image partition and associated partition table.
 Print the disklabel.
 .It quit
 Terminate
-.Nm "" .
+.Nm .
 .It ?
 Print help.
 .El
 .Pp
 For the details on these commands, ask for help from
-.Nm "" .
+.Nm .
 .Sh SEE ALSO
 .Xr disklabel 8
 .Sh AUTHORS

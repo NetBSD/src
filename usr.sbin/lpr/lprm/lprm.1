@@ -1,4 +1,4 @@
-.\"	$NetBSD: lprm.1,v 1.13 2003/02/04 23:07:37 perry Exp $
+.\"	$NetBSD: lprm.1,v 1.14 2003/02/25 10:36:12 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm lprm
 .Nd remove jobs from the line printer spooling queue
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl
 .Bk -words
 .Op Fl P Ar printer
@@ -104,7 +104,7 @@ If neither arguments or options are given,
 .Nm
 will delete the currently active job if it is
 owned by the user who invoked
-.Nm "" .
+.Nm .
 .Pp
 .Nm
 announces the names of any files it removes and is silent if
@@ -116,7 +116,7 @@ any spooling files.  If a daemon is killed, a new one is
 automatically restarted upon completion of file removals.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is used by
-.Nm "" .
+.Nm .
 .Bl -tag -width PRINTER
 .It Ev PRINTER
 If the environment variable

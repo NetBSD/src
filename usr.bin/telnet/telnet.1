@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.25 2002/09/30 11:09:13 grant Exp $
+.\"	$NetBSD: telnet.1,v 1.26 2003/02/25 10:35:57 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Tn TELNET
 protocol
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl 4
 .Op Fl 6
 .Op Fl 8
@@ -642,7 +642,7 @@ are processed for any given host.
 Close any open
 .Tn TELNET
 session and exit
-.Nm "" .
+.Nm .
 An end of file (in command mode) will also close a session and exit.
 .It Ic send Ar arguments
 Sends one or more special character sequences to the remote host.
@@ -1121,7 +1121,7 @@ command.
 .El
 .It Ic status
 Show the current status of
-.Nm "" .
+.Nm .
 This includes the peer one is connected to, as well
 as the current mode.
 .It Ic toggle Ar arguments ...
@@ -1392,7 +1392,7 @@ commands.
 .El
 .It Ic z
 Suspend
-.Nm ""  .
+.Nm  .
 This command only works when the user is using the
 .Xr csh  1  .
 .It Ic \&! Op Ar command

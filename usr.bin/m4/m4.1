@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.14 2002/02/08 01:36:27 ross Exp $
+.\"	$NetBSD: m4.1,v 1.15 2003/02/25 10:35:46 wiz Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.23 2001/09/29 11:56:18 espie Exp $
 .\"
 .\"
@@ -9,7 +9,7 @@
 .Nm m4
 .Nd macro language processor
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl Pg
 .Oo
 .Fl D Ns Ar name Ns Op Ar =value
@@ -353,7 +353,7 @@ The
 utility is expected to be a superset of the
 .St -xcu5
 specification, and includes some extensions also present in GNU
-.Nm "" .
+.Nm .
 .Pp
 The
 .Fl s
@@ -374,7 +374,7 @@ The output format of tracing and of
 are not specified in any standard,
 are likely to change and should not be relied upon.
 The current format of tracing is closely modelled on GNU
-.Nm "" ,
+.Nm ,
 to allow
 .Nm autoconf
 to work.
@@ -393,7 +393,7 @@ For portability, one should not use the macros
 .Ic __file__ .
 .Pp
 All builtins do expand without arguments in many other
-.Nm "" .
+.Nm .
 .Sh AUTHORS
 Ozan Yigit \*[Lt]oz@sis.yorku.ca\*[Gt] and Richard A. O'Keefe (ok@cs.rmit.edu.au).
 GNU-m4 compatibility extensions by Marc Espie \*[Lt]espie@cvs.openbsd.org\*[Gt].

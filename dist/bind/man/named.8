@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.8,v 1.13 2002/12/21 12:28:59 wiz Exp $
+.\"     $NetBSD: named.8,v 1.14 2003/02/25 10:34:43 wiz Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -96,7 +96,7 @@ flags.
 .Pp
 .Sy NOTE :
 Several of 
-.Nm "" Ns 's
+.Nm Ns 's
 options, and much more of its behaviour, can be controlled in the configuration 
 file.  Please refer to the configuration file guide included with this 
 .Sy BIND
@@ -116,7 +116,7 @@ is set to
 .Sy NOTE :
 The new debugging framework is considerably more sophisticated than it
 was in older versions of 
-.Nm "" .
+.Nm .
 The configuration file's
 .Dq Li logging
 statement allows for multiple, distinct levels of debugging for each of
@@ -141,7 +141,7 @@ was supported; the first port was that used when contacting
 servers, and the second one was the service port bound by the 
 .Em local 
 instance of
-.Nm "" .
+.Nm .
 The current usage is equivalent to the old usage without the 
 .Ar localport#
 specified; this functionality can be specified with the 
