@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/05/02 15:09:49 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2002/10/10 16:58:07 jdolecek Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC
+KERNEL_SETS=		GENERIC GENERIC.MP
 
 BUILD_KERNELS=		INSTALL
 
