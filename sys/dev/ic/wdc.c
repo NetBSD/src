@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.14 1998/09/20 19:00:15 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.15 1998/09/21 17:30:17 bouyer Exp $ */
 
 
 /*
@@ -225,8 +225,9 @@ wdcprobe(chp)
 		return 0;
 
 	/*
-	 * Test presence of drives. First test register signatures,
-	 * then try an ATA command, in case it's an old drive.
+	 * Test presence of drives. First test register signatures looking for
+	 * ATAPI devices , then rescan and try an ATA command, in case it's an
+	 * old drive.
 	 * Fill in drive_flags accordingly
 	 */
 	for (drive = 0; drive < 2; drive++) {
@@ -247,8 +248,15 @@ wdcprobe(chp)
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		if (sc == 0x01 && sn == 0x01 && cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
-			continue;
 		}
+	}
+	for (drive = 0; drive < 2; drive++) {
+		if ((ret_value & (0x01 << drive)) == 0 ||
+		    (chp->ch_drive[drive].drive_flags & DRIVE_ATAPI) != 0)
+			continue;
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+		    WDSD_IBM | (drive << 4));
+		delay(1);
 		/*
 		 * Maybe it's an old device, so don't rely on ATA sig.
 		 * Test registers writability (Error register not writable,
