@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.6 1996/09/16 18:10:59 jonathan Exp $	*/
+/*	$NetBSD: modf.S,v 1.7 1996/09/17 01:32:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995
@@ -36,12 +36,16 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: modf.S,v 1.6 1996/09/16 18:10:59 jonathan Exp $")
+	ASMSTR("$NetBSD: modf.S,v 1.7 1996/09/17 01:32:26 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * double modf(val, iptr)

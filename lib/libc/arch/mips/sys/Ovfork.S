@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.4 1996/09/16 18:11:39 jonathan Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.5 1996/09/17 01:32:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: Ovfork.S,v 1.4 1996/09/16 18:11:39 jonathan Exp $")
+	ASMSTR("$NetBSD: Ovfork.S,v 1.5 1996/09/17 01:32:39 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 /*
  * pid = vfork();
@@ -51,10 +55,16 @@
  */
 
 LEAF(vfork)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	li	v0, SYS_vfork		# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
-	j	_C_LABEL(cerror)
+	la	t9, cerror
+	jr	t9
 1:
 	beq	v1, zero, 2f		# parent process ?
 	move	v0, zero		# return zero in child

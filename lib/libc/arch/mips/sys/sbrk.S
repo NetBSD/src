@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.7 1996/09/16 18:12:00 jonathan Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8 1996/09/17 01:32:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sbrk.S,v 1.7 1996/09/16 18:12:00 jonathan Exp $")
+	ASMSTR("$NetBSD: sbrk.S,v 1.8 1996/09/17 01:32:53 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef ABICALLS
+	.abicalls
+#endif
 
 	.globl	curbrk
 
@@ -50,6 +54,11 @@ curbrk:	.word	_C_LABEL(end)
 	.text
 
 LEAF(sbrk)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
 	lw	v1, curbrk
 	li	v0, SYS_break
 	addu	a0, a0, v1	# compute current break
@@ -59,5 +68,6 @@ LEAF(sbrk)
 	sw	a0, curbrk	# save current val of curbrk from above
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(sbrk)
