@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.21 2002/09/21 18:11:13 christos Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.21 2002/09/21 18:11:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,7 @@ filecore_mount(mp, path, data, ndp, p)
 		args.uid = fcmp->fc_uid;
 		args.gid = fcmp->fc_gid;
 		args.fspec = NULL;
-		args.export = fcmp->fc_export;
+		vfs_showexport(mp, &args.export, &fcmp->fc_export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, (caddr_t)&args, sizeof (struct filecore_args));
