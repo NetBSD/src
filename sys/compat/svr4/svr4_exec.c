@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_exec.c,v 1.40 2000/12/09 12:44:26 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.41 2000/12/11 05:29:02 mycroft Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,26 +52,29 @@
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern const char * const svr4_syscallnames[];
-void svr4_syscall __P((void));
+#ifndef __HAVE_SYSCALL_INTERN
 void syscall __P((void));
+#endif
 
 const struct emul emul_svr4 = {
 	"svr4",
 	"/emul/svr4",
+#ifndef __HAVE_MINIMAL_EMUL
+	0,
 	native_to_svr4_errno,
-	svr4_sendsig,
 	SVR4_SYS_syscall,
 	SVR4_SYS_MAXSYSCALL,
+#endif
 	svr4_sysent,
 	svr4_syscallnames,
+	svr4_sendsig,
 	svr4_sigcode,
 	svr4_esigcode,
 	NULL,
 	NULL,
 	NULL,
-	0,
-#ifdef	SVR4_MACHDEP_HAS_SEPARATED_SYSCALL
-	svr4_syscall,
+#ifdef __HAVE_SYSCALL_INTERN
+	svr4_syscall_intern,
 #else
 	syscall,
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.115 2000/12/09 12:34:14 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.116 2000/12/11 05:29:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -87,13 +87,17 @@ struct ps_strings;
 struct	emul {
 	char	e_name[8];		/* Symbolic name */
 	const char *e_path;		/* Extra emulation path (NULL if none)*/
+#ifndef __HAVE_MINIMAL_EMUL
+	int	e_flags;		/* Miscellaneous flags */
+					/* Syscall handling function */
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
-	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
+#endif
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames;	/* System call name array */
+	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 
@@ -102,10 +106,11 @@ struct	emul {
 	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
 	void	(*e_proc_exit) __P((struct proc *));
 
-	int	e_flags;		/* Miscellaneous flags */
-					/* Syscall handling function */
+#ifdef __HAVE_SYSCALL_INTERN
+	void	(*e_syscall_intern) __P((struct proc *));
+#else
 	void	(*e_syscall) __P((void));
-
+#endif
 };
 
 #define EMUL_HAS_SYS___syscall	0x001	/* has SYS___syscall */

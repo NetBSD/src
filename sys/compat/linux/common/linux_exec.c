@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_exec.c,v 1.43 2000/12/09 12:38:24 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.44 2000/12/11 05:29:01 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,8 +69,9 @@
 extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
-void linux_syscall __P((void));
+#ifndef __HAVE_SYSCALL_INTERN
 void syscall __P((void));
+#endif
 
 static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
 static void linux_e_proc_fork __P((struct proc *, struct proc *));
@@ -110,24 +111,22 @@ linux_sys_execve(p, v, retval)
 const struct emul emul_linux = {
 	"linux",
 	"/emul/linux",
+#ifndef __HAVE_MINIMAL_EMUL
+	0,
 	native_to_linux_errno,
-	linux_sendsig,
 	LINUX_SYS_syscall,
 	LINUX_SYS_MAXSYSCALL,
+#endif
 	linux_sysent,
 	linux_syscallnames,
+	linux_sendsig,
 	linux_sigcode,
 	linux_esigcode,
 	linux_e_proc_exec,
 	linux_e_proc_fork,
 	linux_e_proc_exit,
-#ifdef LINUX_MACHDEP_PASS_PPID_AND_EUID
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
-#else
-	0,
-#endif
-#ifdef LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
-	linux_syscall,
+#ifdef __HAVE_SYSCALL_INTERN
+	linux_syscall_intern,
 #else
 	syscall,
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.152 2000/12/10 19:29:30 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.153 2000/12/11 05:29:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,10 +79,8 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
-#include "opt_ktrace.h"
 #include "opt_cputype.h"
 
 #include <sys/param.h>
@@ -92,9 +90,6 @@
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -126,7 +121,6 @@ void trap __P((struct trapframe));
 #if defined(I386_CPU)
 int trapwrite __P((unsigned));
 #endif
-void syscall __P((struct trapframe));
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -530,131 +524,3 @@ trapwrite(addr)
 	return 0;
 }
 #endif /* I386_CPU */
-
-/*
- * syscall(frame):
- *	System call request from POSIX system call gate interface to kernel.
- * Like trap(), argument is call by reference.
- */
-/*ARGSUSED*/
-void
-syscall(frame)
-	struct trapframe frame;
-{
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
-	int error;
-	size_t argsize;
-	register_t code, args[8], rval[2];
-
-	uvmexp.syscalls++;
-#ifdef DEBUG
-	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
-		panic("syscall");
-#endif
-
-	p = curproc;
-	p->p_md.md_regs = &frame;
-
-	code = frame.tf_eax;
-	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
-
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		break;
-	default:
-		break;
-	}
-	callp += (code & (SYS_NSYSENT - 1));
-	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
-		if (error)
-			goto bad;
-	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
-	rval[0] = 0;
-	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
-	switch (error) {
-	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame.tf_eip -= frame.tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif /* KTRACE */
-}
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-	struct trapframe *tf = p->p_md.md_regs;
-
-	tf->tf_eax = 0;
-	tf->tf_eflags &= ~PSL_C;
-
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
-#endif
-}

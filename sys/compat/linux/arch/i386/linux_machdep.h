@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.h,v 1.15 2000/12/10 14:09:59 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.16 2000/12/11 05:29:01 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -127,9 +127,6 @@ __END_DECLS
 #define LINUX_VT_WAITACTIVE 0x5607
 #define LINUX_VT_DISALLOCATE	0x5608
 
-/*
- * Does the port have separated linux_syscall() ?
- */
-#define	LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
+void linux_syscall_intern __P((struct proc *));
 
 #endif /* _I386_LINUX_MACHDEP_H */

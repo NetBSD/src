@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.11 2000/08/16 04:44:37 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.12 2000/12/11 05:29:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -42,6 +42,8 @@ struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
+					/* Syscall handling function */
+	void	(*md_syscall) __P((struct trapframe));
 };
 
 /* md_flags */

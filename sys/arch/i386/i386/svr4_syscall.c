@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.5 2000/12/10 19:29:30 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.6 2000/12/11 05:29:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -105,9 +105,20 @@
 #include <machine/trap.h>
 #include <machine/userret.h>
 
+#include <compat/svr4/svr4_errno.h>
 #include <compat/svr4/svr4_syscall.h>
+#include <machine/svr4_machdep.h>
 
 void svr4_syscall __P((struct trapframe));
+extern struct sysent svr4_sysent[];
+
+void
+svr4_syscall_intern(p)
+	struct proc *p;
+{
+
+	p->p_md.md_syscall = svr4_syscall;
+}
 
 /*
  * syscall(frame):
@@ -133,10 +144,9 @@ svr4_syscall(frame)
 #endif
 
 	p = curproc;
-	p->p_md.md_regs = &frame;
 
 	code = frame.tf_eax;
-	callp = p->p_emul->e_sysent;
+	callp = svr4_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -197,7 +207,7 @@ svr4_syscall(frame)
 		break;
 	default:
 	bad:
-		error = p->p_emul->e_errno[error];
+		error = native_to_svr4_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.6 2000/12/10 19:29:30 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.7 2000/12/11 05:28:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -107,8 +107,19 @@
 
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+#include <compat/ibcs2/ibcs2_syscall.h>
+#include <machine/ibcs2_machdep.h>
 
 void ibcs2_syscall __P((struct trapframe));
+extern struct sysent ibcs2_sysent[];
+
+void
+ibcs2_syscall_intern(p)
+	struct proc *p;
+{
+
+	p->p_md.md_syscall = ibcs2_syscall;
+}
 
 /*
  * syscall(frame):
@@ -134,12 +145,11 @@ ibcs2_syscall(frame)
 #endif
 
 	p = curproc;
-	p->p_md.md_regs = &frame;
 
 	code = frame.tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
 		code = IBCS2_CVT_HIGH_SYSCALL(code);
-	callp = p->p_emul->e_sysent;
+	callp = ibcs2_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -165,10 +175,7 @@ ibcs2_syscall(frame)
 		break;
 	}
 
-	if ((u_int)code >= (u_int)p->p_emul->e_nsysent)
-		callp += p->p_emul->e_nosys;		/* illegal */
-	else
-		callp += code;
+	callp += (code & (IBCS2_SYS_NSYSENT - 1));
 	argsize = callp->sy_argsize;
 	if (argsize) {
 		error = copyin(params, (caddr_t)args, argsize);
@@ -204,7 +211,7 @@ ibcs2_syscall(frame)
 		break;
 	default:
 	bad:
-		error = p->p_emul->e_errno[error];
+		error = native_to_ibcs2_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.11 2000/12/09 12:44:26 jdolecek Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.12 2000/12/11 05:29:00 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@ struct svr4_ssd {
 #define	SVR4_TRAP_GETHRVTIME	4
 #define	SVR4_TRAP_CLOCK_SETTIME	5
 
-/* i386 has separated svr4_syscall() from syscall() */
-#define SVR4_MACHDEP_HAS_SEPARATED_SYSCALL
+void svr4_syscall_intern __P((struct proc *));
 
 #endif /* !_I386_SVR4_MACHDEP_H_ */

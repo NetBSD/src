@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.78 2000/12/10 11:41:20 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.79 2000/12/11 05:29:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -193,6 +193,9 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);

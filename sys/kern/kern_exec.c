@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.132 2000/12/10 12:42:30 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.133 2000/12/11 05:29:02 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -108,28 +108,38 @@ extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern __P((struct proc *));
+#else
 void syscall __P((void));
+#endif
 
 const struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
+#ifndef __HAVE_MINIMAL_EMUL
+	EMUL_HAS_SYS___syscall,
 	NULL,
-	sendsig,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
+#endif
 	sysent,
 #ifdef SYSCALL_DEBUG
 	syscallnames,
 #else
 	NULL,
 #endif
+	sendsig,
 	sigcode,
 	esigcode,
 	NULL,
 	NULL,
 	NULL,
-	EMUL_HAS_SYS___syscall,
-	syscall
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };
 
 /*
@@ -632,7 +642,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* update p_emul, the old value is no longer needed */
 	p->p_emul = pack.ep_es->es_emul;
-
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
 		ktremul(p);

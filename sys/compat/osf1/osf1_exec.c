@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.19 2000/12/09 12:38:25 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.20 2000/12/11 05:29:01 mycroft Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -47,17 +47,17 @@ void syscall __P((void));
 const struct emul emul_osf1 = {
 	"osf1",
 	"/emul/osf1",
+	0,
 	(int *)osf1_errno_rxlist,
-	sendsig,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
 	osf1_sysent,
 	osf1_syscallnames,
+	sendsig,
 	osf1_sigcode,
 	osf1_esigcode,
 	NULL,
 	NULL,
 	NULL,
-	0,
 	syscall
 };
