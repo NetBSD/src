@@ -1,4 +1,4 @@
-/*	$NetBSD: fmv.c,v 1.1 2002/10/05 15:16:11 tsutsui Exp $	*/
+/*	$NetBSD: fmv.c,v 1.2 2002/10/05 17:52:31 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.1 2002/10/05 15:16:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.2 2002/10/05 17:52:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +139,10 @@ fmv_attach(sc)
 		break;
 	default:
 	  	/* Unknown card type: maybe a new model, but... */
-		panic("%s: unknown FMV-18x card", sc->sc_dev.dv_xname);
+		panic("\n%s: unknown FMV-18x card", sc->sc_dev.dv_xname);
 	}
 
-	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
+	printf(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	sc->sc_flags |= FE_FLAGS_ENABLED;
