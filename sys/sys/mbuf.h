@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.11 1994/09/19 05:03:09 mycroft Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.12 1994/10/29 08:20:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -61,31 +61,31 @@
  * cltom(x) -	convert cluster # to ptr to beginning of cluster
  */
 #define mtod(m,t)	((t)((m)->m_data))
-#define	dtom(x)		((struct mbuf *)((int)(x) & ~(MSIZE-1)))
-#define	mtocl(x)	(((u_int)(x) - (u_int)mbutl) >> MCLSHIFT)
-#define	cltom(x)	((caddr_t)((u_int)mbutl + ((u_int)(x) << MCLSHIFT)))
+#define	dtom(x)		((struct mbuf *)((long)(x) & ~(MSIZE-1)))
+#define	mtocl(x)	(((u_long)(x) - (u_long)mbutl) >> MCLSHIFT)
+#define	cltom(x)	((caddr_t)((u_long)mbutl + ((u_long)(x) << MCLSHIFT)))
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
 	struct	mbuf *mh_next;		/* next buffer in chain */
 	struct	mbuf *mh_nextpkt;	/* next chain in queue/record */
-	int	mh_len;			/* amount of data in this mbuf */
 	caddr_t	mh_data;		/* location of data */
-	short	mh_type;		/* type of data in this mbuf */
-	short	mh_flags;		/* flags; see below */
+	int32_t	mh_len;			/* amount of data in this mbuf */
+	int16_t	mh_type;		/* type of data in this mbuf */
+	int16_t	mh_flags;		/* flags; see below */
 };
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
-	int	len;		/* total packet length */
+	int32_t	len;		/* total packet length */
 	struct	ifnet *rcvif;	/* rcv interface */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)();		/* free routine if not the usual */
 	u_int	ext_size;		/* size of buffer, for ext_free */
+	void	(*ext_free)();		/* free routine if not the usual */
 };
 
 struct mbuf {

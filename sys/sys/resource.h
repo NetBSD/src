@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.9 1994/06/29 06:45:04 cgd Exp $	*/
+/*	$NetBSD: resource.h,v 1.10 1994/10/29 08:20:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -94,8 +94,8 @@ struct	rusage {
 #define	RLIM_INFINITY	(((u_quad_t)1 << 63) - 1)
 
 struct orlimit {
-	long	rlim_cur;		/* current (soft) limit */
-	long	rlim_max;		/* maximum value for rlim_cur */
+	int32_t	rlim_cur;		/* current (soft) limit */
+	int32_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
 struct rlimit {

@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.3 1994/06/29 06:43:48 cgd Exp $	*/
+/*	$NetBSD: core.h,v 1.4 1994/10/29 08:20:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -67,12 +67,12 @@
  */
 
 struct core {
-	u_long	c_midmag;		/* magic, id, flags */
-	u_short	c_hdrsize;		/* Size of this header (machdep algn) */
-	u_short	c_seghdrsize;		/* Size of a segment header */
-	u_long	c_nseg;			/* # of core segments */
+	u_int32_t c_midmag;		/* magic, id, flags */
+	u_int16_t c_hdrsize;		/* Size of this header (machdep algn) */
+	u_int16_t c_seghdrsize;		/* Size of a segment header */
+	u_int32_t c_nseg;		/* # of core segments */
 	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
-	u_long	c_signo;		/* Killing signal */
+	u_int32_t c_signo;		/* Killing signal */
 	u_long	c_ucode;		/* Hmm ? */
 	u_long	c_cpusize;		/* Size of machine dependent segment */
 	u_long	c_tsize;		/* Size of traditional text segment */
@@ -81,8 +81,7 @@ struct core {
 };
 
 struct coreseg {
-	u_long	c_midmag;		/* magic, id, flags */
+	u_int32_t c_midmag;		/* magic, id, flags */
 	u_long	c_addr;			/* Virtual address of segment */
 	u_long	c_size;			/* Size of this segment */
 };
-
