@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.11 1993/10/07 00:24:24 cgd Exp $
+#	$Id: Makefile.inc,v 1.12 1993/10/12 02:16:33 cgd Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/sys ${.CURDIR}/sys
@@ -13,7 +13,7 @@ SRCS+=	Ovfork.s brk.s cerror.s exect.s fork.s pipe.s ptrace.s reboot.s \
 ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	chflags.o chmod.o chown.o chroot.o close.o connect.o dup.o dup2.o \
 	execve.o fchdir.o fchflags.o fchmod.o fchown.o fcntl.o flock.o \
-	fstat.o fstatfs.o fsync.o ftruncate.o getdirentries.o \
+	fstat.o fstatfs.o fsync.o ftruncate.o getdirentries.o getdomainname.o \
 	getdtablesize.o getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
 	getgroups.o gethostid.o gethostname.o getitimer.o getkerninfo.o \
 	getpagesize.o getpeername.o getpgrp.o getpid.o getppid.o \
@@ -22,14 +22,14 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	lseek.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o \
 	mmap.o mount.o mprotect.o msync.o munmap.o nfssvc.o open.o \
 	profil.o quotactl.o read.o readlink.o readv.o recvfrom.o recvmsg.o \
-	rename.o revoke.o rmdir.o select.o sendmsg.o sendto.o setegid.o \
-	seteuid.o setgid.o setgroups.o sethostid.o sethostname.o \
+	rename.o revoke.o rmdir.o select.o sendmsg.o sendto.o setdomainname.o \
+	setegid.o seteuid.o setgid.o setgroups.o sethostid.o sethostname.o \
 	setitimer.o setpgid.o setpriority.o setregid.o setreuid.o \
 	setrlimit.o setsid.o setsockopt.o settimeofday.o setuid.o shmsys.o \
 	shutdown.o sigaction.o sigstack.o socket.o socketpair.o stat.o \
-	statfs.o swapon.o symlink.o sync.o truncate.o umask.o unlink.o \
-	unmount.o utimes.o vadvise.o wait4.o write.o writev.o getdomainname.o \
-	setdomainname.o uname.o sysarch.o
+	statfs.o swapon.o symlink.o sync.o sysarch.o truncate.o umask.o \
+	uname.o unlink.o unmount.o utimes.o vadvise.o wait4.o write.o \
+	writev.o
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
@@ -80,8 +80,8 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
 	chdir.0 chflags.0 chmod.0 chown.0 chroot.0 close.0 connect.0 \
 	dup.0 execve.0 _exit.0 fcntl.0 flock.0 fork.0 fsync.0 \
-	getdirentries.0 getdtablesize.0 getfh.0 getfsstat.0 getgid.0 \
-	getgroups.0 gethostid.0 gethostname.0 getitimer.0 getlogin.0 \
+	getdirentries.0 getdomainname.0 getdtablesize.0 getfh.0 getfsstat.0 \
+	getgid.0 getgroups.0 gethostid.0 gethostname.0 getitimer.0 getlogin.0 \
 	getpagesize.0 getpeername.0 getpgrp.0 getpid.0 getpriority.0 \
 	getrlimit.0 getrusage.0 getsockname.0 getsockopt.0 \
 	gettimeofday.0 getuid.0 intro.0 ioctl.0 kill.0 link.0 listen.0 \
@@ -91,8 +91,8 @@ MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
 	rmdir.0 select.0 send.0 setgroups.0 setpgid.0 setregid.0 setreuid.0 \
 	shutdown.0 sigaction.0 sigprocmask.0 sigreturn.0 sigstack.0 \
 	sigsuspend.0 socket.0 socketpair.0 stat.0 statfs.0 swapon.0 \
-	symlink.0 sync.0 syscall.0 truncate.0 umask.0 unlink.0 utimes.0 \
-	vfork.0 wait.0 write.0 getdomainname.0 uname.0
+	symlink.0 sync.0 sysarch.0 syscall.0 truncate.0 umask.0 uname.0 \
+	unlink.0 utimes.0 vfork.0 wait.0 write.0
 
 MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
@@ -101,6 +101,7 @@ MLINKS+=chflags.2 fchflags.2
 MLINKS+=chmod.2 fchmod.2
 MLINKS+=chown.2 fchown.2
 MLINKS+=getgid.2 getegid.2
+MLINKS+=getdomainname.2 setdomainname.2
 MLINKS+=gethostid.2 sethostid.2
 MLINKS+=gethostname.2 sethostname.2
 MLINKS+=getitimer.2 setitimer.2
@@ -122,4 +123,3 @@ MLINKS+=statfs.2 fstatfs.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2
-MLINKS+=getdomainname.2 setdomainname.2
