@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.198 2003/09/22 18:29:05 jandberg Exp $
+# $NetBSD: GENERIC,v 1.199 2003/10/08 11:03:55 bouyer Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.15 2003/09/22 18:23:01 jandberg Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.16 2003/10/08 11:02:45 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.198 $"
+#ident 		"GENERIC-$Revision: 1.199 $"
 
 
 maxusers	8
@@ -406,8 +406,9 @@ scsibus*	at empsc0
 # <<< comment out the wdc/atapibus entries below if the idesc lines above >>>
 # <<< are uncommented >>>
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
-wd*		at wdc? drive ?		#  + drives
-atapibus*	at wdc? channel ?	# ATAPI bus
+atabus* 	at wdc? channel ?	# ATA bus
+wd*		at atabus? drive ?	#  + drives
+atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 sd*		at atapibus? drive ?	# ATAPI disk drives
 
