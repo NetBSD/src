@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.18 1996/10/13 03:34:55 christos Exp $ */
+/*	$NetBSD: if_qe.c,v 1.19 1997/02/12 17:57:39 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -804,6 +804,9 @@ qeioctl(ifp, cmd, data)
 		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    IFF_RUNNING && (sc->qe_flags & QEF_RUNNING) == 0)
 			qerestart(sc);
+		else
+			qeinit(sc);
+
 		break;
 
 	default:
