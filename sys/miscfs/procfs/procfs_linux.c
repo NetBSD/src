@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.3 2001/11/10 13:33:43 lukem Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.4 2001/12/09 03:07:44 chs Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.3 2001/11/10 13:33:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.4 2001/12/09 03:07:44 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,16 +78,16 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		PGTOB(uvmexp.npages - uvmexp.free),
 		PGTOB(uvmexp.free),
 		0L,
-		PGTOB(uvmexp.vnodepages),
-		PGTOB(uvmexp.anonpages + uvmexp.vnodepages + uvmexp.vtextpages),
+		PGTOB(uvmexp.filepages),
+		PGTOB(uvmexp.anonpages + uvmexp.filepages + uvmexp.execpages),
 		PGTOB(uvmexp.swpages),
 		PGTOB(uvmexp.swpginuse),
 		PGTOB(uvmexp.swpages - uvmexp.swpginuse),
 		PGTOKB(uvmexp.npages),
 		PGTOKB(uvmexp.free),
 		0L,
-		PGTOKB(uvmexp.vnodepages),
-		PGTOKB(uvmexp.anonpages + uvmexp.vnodepages +uvmexp.vtextpages),
+		PGTOKB(uvmexp.filepages),
+		PGTOKB(uvmexp.anonpages + uvmexp.filepages + uvmexp.execpages),
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
 

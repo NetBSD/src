@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.11 2001/03/09 03:05:20 simonb Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.12 2001/12/09 03:07:58 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.11 2001/03/09 03:05:20 simonb Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.12 2001/12/09 03:07:58 chs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,14 +161,14 @@ showbufcache(void)
 	struct ml_entry *ml;
 
 	mvwprintw(wnd, 1, 0,
-	    "There are %*llu pages for vnode page cache using %*llu kBytes of memory.",
-	    pgwidth, (long long)uvmexp.vnodepages,
-	    kbwidth, (long long) uvmexp.vnodepages * getpagesize() / 1024);
+	    "There are %*llu pages for cached file data using %*llu kBytes of memory.",
+	    pgwidth, (long long)uvmexp.filepages,
+	    kbwidth, (long long) uvmexp.filepages * getpagesize() / 1024);
 	wclrtoeol(wnd);
 	mvwprintw(wnd, 2, 0,
 	    "There are %*llu pages for executables using      %*llu kBytes of memory.",
-	    pgwidth, (long long)uvmexp.vtextpages,
-	    kbwidth, (long long) uvmexp.vtextpages * getpagesize() / 1024);
+	    pgwidth, (long long)uvmexp.execpages,
+	    kbwidth, (long long) uvmexp.execpages * getpagesize() / 1024);
 	wclrtoeol(wnd);
 
 	tbuf = tvalid = tsize = 0;
