@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.9 2000/06/14 17:24:55 cgd Exp $ */
+/* $NetBSD: common.c,v 1.10 2000/06/16 20:52:49 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -71,7 +71,6 @@ _rtld_setup(cleanup, obj)
 	if (obj->version != RTLD_VERSION)
 		_FATAL("Dynamic linker version mismatch");
 
-	__mainprog_obj = obj;
 	atexit(cleanup);
 }
 
