@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.9 1998/07/04 20:06:55 mrg Exp $	*/
+/*	$NetBSD: dm.c,v 1.10 1998/09/13 12:34:43 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.9 1998/07/04 20:06:55 mrg Exp $");
+__RCSID("$NetBSD: dm.c,v 1.10 1998/09/13 12:34:43 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ main(argc, argv)
 		exit(0);
 
 	gametty = ttyname(0);
+	unsetenv("TZ");
 	(void)time(&now);
 	read_config();
 #ifdef LOG
