@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.73 2004/07/13 07:29:37 tron Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.74 2004/07/15 15:21:57 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -41,14 +41,13 @@
  * TODO (in order of importance):
  *
  *	- Rework how parameters are loaded from the EEPROM.
- *	- Figure out performance stability issue on i82547 (fvdl).
  *	- Figure out what to do with the i82545GM and i82546GB
  *	  SERDES controllers.
  *	- Fix hw VLAN assist.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.73 2004/07/13 07:29:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.74 2004/07/15 15:21:57 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -115,19 +114,21 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
  * Transmit descriptor list size.  Due to errata, we can only have
  * 256 hardware descriptors in the ring.  We tell the upper layers
  * that they can queue a lot of packets, and we go ahead and manage
- * up to 64 of them at a time.  We allow up to 40 DMA segments per
- * packet (there have been reports of jumbo frame packets with as
- * many as 30 DMA segments!).
+ * up to 64 (16 for the i82547) of them at a time.  We allow up to
+ * 40 DMA segments per packet (there have been reports of jumbo frame
+ * packets with as many as 30 DMA segments!).
  */
 #define	WM_NTXSEGS		40
 #define	WM_IFQUEUELEN		256
-#define	WM_TXQUEUELEN		64
-#define	WM_TXQUEUELEN_MASK	(WM_TXQUEUELEN - 1)
-#define	WM_TXQUEUE_GC		(WM_TXQUEUELEN / 8)
+#define	WM_TXQUEUELEN_MAX	64
+#define	WM_TXQUEUELEN_MAX_82547	16
+#define	WM_TXQUEUELEN(sc)	((sc)->sc_txnum)
+#define	WM_TXQUEUELEN_MASK(sc)	(WM_TXQUEUELEN(sc) - 1)
+#define	WM_TXQUEUE_GC(sc)	(WM_TXQUEUELEN(sc) / 8)
 #define	WM_NTXDESC		256
 #define	WM_NTXDESC_MASK		(WM_NTXDESC - 1)
 #define	WM_NEXTTX(x)		(((x) + 1) & WM_NTXDESC_MASK)
-#define	WM_NEXTTXS(x)		(((x) + 1) & WM_TXQUEUELEN_MASK)
+#define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -234,8 +235,9 @@ struct wm_softc {
 	/*
 	 * Software state for the transmit and receive descriptors.
 	 */
-	struct wm_txsoft sc_txsoft[WM_TXQUEUELEN];
-	struct wm_rxsoft sc_rxsoft[WM_NRXDESC];
+	int			sc_txnum;	/* must be a power of two */
+	struct wm_txsoft	sc_txsoft[WM_TXQUEUELEN_MAX];
+	struct wm_rxsoft	sc_rxsoft[WM_NRXDESC];
 
 	/*
 	 * Control data structures.
@@ -996,10 +998,14 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
 
+
 	/*
 	 * Create the transmit buffer DMA maps.
 	 */
-	for (i = 0; i < WM_TXQUEUELEN; i++) {
+	WM_TXQUEUELEN(sc) =
+	    (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) ?
+	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
 					       WM_NTXSEGS, MCLBYTES, 0, 0,
 					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
@@ -1294,7 +1300,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_rxsoft[i].rxs_dmamap);
 	}
  fail_4:
-	for (i = 0; i < WM_TXQUEUELEN; i++) {
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_txsoft[i].txs_dmamap);
@@ -1497,7 +1503,7 @@ wm_start(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, m0));
 
 		/* Get a work queue entry. */
-		if (sc->sc_txsfree < WM_TXQUEUE_GC) {
+		if (sc->sc_txsfree < WM_TXQUEUE_GC(sc)) {
 			wm_txintr(sc);
 			if (sc->sc_txsfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
@@ -1687,7 +1693,7 @@ wm_start(struct ifnet *ifp)
 		sc->sc_txnext = nexttx;
 
 		sc->sc_txsfree--;
-		sc->sc_txsnext = WM_NEXTTXS(sc->sc_txsnext);
+		sc->sc_txsnext = WM_NEXTTXS(sc, sc->sc_txsnext);
 
 #if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
@@ -1875,8 +1881,8 @@ wm_txintr(struct wm_softc *sc)
 	 * Go through the Tx list and free mbufs for those
 	 * frames which have been transmitted.
 	 */
-	for (i = sc->sc_txsdirty; sc->sc_txsfree != WM_TXQUEUELEN;
-	     i = WM_NEXTTXS(i), sc->sc_txsfree++) {
+	for (i = sc->sc_txsdirty; sc->sc_txsfree != WM_TXQUEUELEN(sc);
+	     i = WM_NEXTTXS(sc, i), sc->sc_txsfree++) {
 		txs = &sc->sc_txsoft[i];
 
 		DPRINTF(WM_DEBUG_TX,
@@ -1939,7 +1945,7 @@ wm_txintr(struct wm_softc *sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (sc->sc_txsfree == WM_TXQUEUELEN)
+	if (sc->sc_txsfree == WM_TXQUEUELEN(sc))
 		ifp->if_timer = 0;
 }
 
@@ -2378,9 +2384,9 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TQSA_HI, 0);
 
 	/* Initialize the transmit job descriptors. */
-	for (i = 0; i < WM_TXQUEUELEN; i++)
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++)
 		sc->sc_txsoft[i].txs_mbuf = NULL;
-	sc->sc_txsfree = WM_TXQUEUELEN;
+	sc->sc_txsfree = WM_TXQUEUELEN(sc);
 	sc->sc_txsnext = 0;
 	sc->sc_txsdirty = 0;
 
@@ -2614,7 +2620,7 @@ wm_stop(struct ifnet *ifp, int disable)
 	CSR_WRITE(sc, WMREG_RCTL, 0);
 
 	/* Release any queued transmit buffers. */
-	for (i = 0; i < WM_TXQUEUELEN; i++) {
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
 		txs = &sc->sc_txsoft[i];
 		if (txs->txs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
