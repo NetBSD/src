@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.66 2005/02/06 23:57:29 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.67 2005/02/08 08:56:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.66 2005/02/06 23:57:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.67 2005/02/08 08:56:21 fvdl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -551,7 +551,7 @@ bufq_free(struct bufq_state *bufq)
 int
 bounds_check_with_mediasize(struct buf *bp, int secsize, u_int64_t mediasize)
 {
-	int sz;
+	int64_t sz;
 
 	sz = howmany(bp->b_bcount, secsize);
 
