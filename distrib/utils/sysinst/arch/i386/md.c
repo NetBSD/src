@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.67 2003/01/10 20:00:30 christos Exp $ */
+/*	$NetBSD: md.c,v 1.68 2003/01/11 22:32:25 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -546,7 +546,11 @@ md_bios_info(dev)
 		mib[1] = CPU_DISKINFO;
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
 			goto nogeom;
-		disklist = (struct disklist *)malloc(len);
+		disklist = malloc(len);
+		if (disklist == NULL) {
+			fprintf(stderr, "Out of memory\n");
+			return -1;
+		}
 		sysctl(mib, 2, disklist, &len, NULL, 0);
 	}
 
