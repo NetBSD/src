@@ -34,8 +34,8 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-__RCSID("$Heimdal: klist.c,v 1.68.2.1 2003/05/08 18:59:56 lha Exp $"
-        "$NetBSD: klist.c,v 1.7 2003/05/15 21:36:38 lha Exp $");
+__RCSID("$Heimdal: klist.c,v 1.68.2.2 2003/10/13 15:13:39 joda Exp $"
+        "$NetBSD: klist.c,v 1.8 2004/04/02 14:59:47 lha Exp $");
 
 static char*
 printable_time(time_t t)
@@ -274,10 +274,10 @@ print_tickets (krb5_context context,
 	rtbl_set_prefix(ct, "  ");
 	rtbl_set_column_prefix(ct, COL_ISSUED, "");
     }
-    while (krb5_cc_next_cred (context,
-			      ccache,
-			      &cursor,
-			      &creds) == 0) {
+    while ((ret = krb5_cc_next_cred (context,
+				     ccache,
+				     &cursor,
+				     &creds)) == 0) {
 	if(do_verbose){
 	    print_cred_verbose(context, &creds);
 	}else{
@@ -285,6 +285,8 @@ print_tickets (krb5_context context,
 	}
 	krb5_free_creds_contents (context, &creds);
     }
+    if(ret != KRB5_CC_END)
+	krb5_err(context, 1, ret, "krb5_cc_get_next");
     ret = krb5_cc_end_seq_get (context, ccache, &cursor);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_end_seq_get");
