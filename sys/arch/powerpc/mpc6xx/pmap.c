@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2002/04/23 12:41:07 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2002/04/23 17:14:45 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2909,8 +2909,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 			if (kernsegs->st_mask & (1 << i)) {
 				pmap_kernel()->pm_sr[i] = kernsegs->st_sr[i];
 				__asm __volatile ("mtsrin %0,%1"
-				    :: "r"(i << ADDR_SR_SHFT),
-				       "r"(kernsegs->st_sr[i]));
+				    :: "r"(pmap_kernel()->pm_sr[i]),
+				       "r"(i << ADDR_SR_SHFT));
 			}
 		}
 	}
