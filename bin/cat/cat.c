@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.27 2001/07/29 22:40:57 wiz Exp $	*/
+/* $NetBSD: cat.c,v 1.28 2001/09/16 12:12:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.27 2001/07/29 22:40:57 wiz Exp $");
+__RCSID("$NetBSD: cat.c,v 1.28 2001/09/16 12:12:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "befnstuv")) != -1)
@@ -268,12 +269,13 @@ skip:
 void
 raw_cat(int rfd)
 {
-	int wfd;
 	static char *buf;
 	static char fb_buf[BUFSIZ];
-	struct stat sbuf;
 	static size_t bsize;
+
+	struct stat sbuf;
 	ssize_t nr, nw, off;
+	int wfd;
 
 	wfd = fileno(stdout);
 	if (buf == NULL) {
