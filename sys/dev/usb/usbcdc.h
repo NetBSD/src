@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.1 1999/01/01 07:43:13 augustss Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.2 1999/01/01 15:28:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,14 +51,14 @@
 #define UDESCSUB_CDC_TOM	8 /* Telephone Operational Modes */
 #define UDESCSUB_CDC_USBT	9 /* USB Terminal */
 
-struct usb_cdc_header_descriptor {
+typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uWord		bcdCDC;
-};
+} usb_cdc_header_descriptor_t;
 
-struct usb_cdc_cm_descriptor {
+typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -66,9 +66,9 @@ struct usb_cdc_cm_descriptor {
 #define USB_CDC_CM_DOES_CM		0x01
 #define USB_CDC_CM_CM_OVER_DATA		0x02
 	uByte		bDataInterface;
-};
+} usb_cdc_cm_descriptor_t;
 
-struct usb_cdc_acm_descriptor {
+typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -77,15 +77,15 @@ struct usb_cdc_acm_descriptor {
 #define USB_CDC_ACM_HAS_LINE		0x02
 #define USB_CDC_ACM_HAS_BREAK		0x04
 #define USB_CDC_ACM_HAS_NETWORK_CONN	0x08
-};
+} usb_cdc_acm_descriptor_t;
 
-struct usb_cdc_union_descriptor {
+typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uByte		bMasterInterface;
 	uByte		bSlaveInterface[1];
-};
+} usb_cdc_union_descriptor_t;
 
 #define UCDC_SEND_ENCAPSULATED_COMMAND	0x00
 #define UCDC_GET_ENCAPSULATED_RESPONSE	0x01
@@ -96,5 +96,26 @@ struct usb_cdc_union_descriptor {
 #define UCDC_CLEAR_COMM_FEATURE		0x04
 #define UCDC_SET_LINE_CODING		0x20
 #define UCDC_GET_LINE_CODING		0x21
+
+typedef struct {
+	uWord	wFeatures;
+#define UCDC_DATA_MULTIPLEXED		0x0001
+#define UCDC_IDLE_SETTING		0x0002
+} usb_cdc_abstract_state_t;
+
+typedef struct {
+	uDWord	dwDTERate;
+	uByte	bCharFormat;
+#define UCDC_STOP_BIT_1			0
+#define UCDC_STOP_BIT_1_5		1
+#define UCDC_STOP_BIT_2			2
+	uByte	bParityType;
+#define UCDC_PARITY_NONE		0
+#define UCDC_PARITY_ODD			1
+#define UCDC_PARITY_EVEN		2
+#define UCDC_PARITY_MARK		3
+#define UCDC_PARITY_SPACE		4
+	uByte	bDataBits;
+} usb_cdc_line_state_t;
 
 #endif /* _USBCDC_H_ */
