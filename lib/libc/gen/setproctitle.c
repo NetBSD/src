@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.3 1995/02/27 05:50:53 cgd Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: setproctitle.c,v 1.3 1995/02/27 05:50:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ setproctitle(fmt, va_alist)
 #endif
 {
 	va_list ap;
-	static char buf[MAX_PROCTITLE];
+	static char buf[MAX_PROCTITLE], *bufp = buf;
 	int used;
 
 #if __STDC__
@@ -80,5 +80,5 @@ setproctitle(fmt, va_alist)
 	va_end(ap);
 
 	PS_STRINGS->ps_nargvstr = 1;
-	PS_STRINGS->ps_argvstr = buf;
+	PS_STRINGS->ps_argvstr = &bufp;
 }
