@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 1995/02/22 21:16:51 pk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.6 1995/04/19 21:24:29 pk Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -902,13 +902,19 @@ db_disasm(loc, altfmt)
 				((insn >> 20) & 0x3)));
 			break;
 		case 'm':
-			db_printf("0x%lx", (loc + (4 * (insn & 0x3fffff))));
+			db_printsym(
+				(db_addr_t)(loc + (4 * (insn & 0x3fffff))),
+				DB_STGY_ANY);
 			break;
 		case 'u':
-			db_printf("0x%lx", (loc + (4 * (insn & 0x7ffff))));
+			db_printsym(
+				(db_addr_t)(loc + (4 * (insn & 0x7ffff))),
+				DB_STGY_ANY);
 			break;
 		case 'n':
-			db_printf("0x%lx", (loc + (4 * (insn & 0x3fffffff))));
+			db_printsym(
+				(db_addr_t)(loc + (4 * (insn & 0x3fffffff))),
+				DB_STGY_PROC);
 			break;
 		case 's':
 			db_printf("%%asi");
