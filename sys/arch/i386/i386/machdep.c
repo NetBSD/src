@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.470 2002/03/20 15:59:27 joda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.471 2002/05/12 23:16:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.470 2002/03/20 15:59:27 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471 2002/05/12 23:16:53 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -179,12 +179,19 @@ extern struct proc *npxproc;
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
+volatile int cpl, ipending, astpending;
+int imask[NIPL];
+
+int want_resched;			/* resched() was called */
+
 u_int cpu_serial[3];
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
 struct cpu_info cpu_info_store;
+
+struct pcb *curpcb;			/* our current running pcb */
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -203,7 +210,6 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
-int	boothowto;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
