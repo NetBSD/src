@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: vnode.c,v 1.2 2003/10/21 09:42:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 	i=0;
 	EV_SET(&event[i], fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
 		NOTE_DELETE | NOTE_WRITE | NOTE_EXTEND | NOTE_ATTRIB |
-		NOTE_LINK | NOTE_RENAME | NOTE_REVOKE, NULL, NULL);
+		NOTE_LINK | NOTE_RENAME | NOTE_REVOKE, 0, 0);
 	i++;
 
 #ifdef READ_TEST
