@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1995/04/10 12:42:23 mycroft Exp $ */
+/*	$NetBSD: pmap.h,v 1.15 1995/04/13 13:48:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,8 +103,10 @@
  * have no software copies.  Its mmu entries are nonetheless kept on lists
  * so that the code that fiddles with mmu lists has something to fiddle.
  */
-#define	NKSEG	((int)((-(unsigned)KERNBASE) / NBPSG))	/* i.e., 512 */
-#define	NUSEG	(4096 - NKSEG)				/* i.e., 3584 */
+#define NKREG	((int)((-(unsigned)KERNBASE) / NBPRG))	/* i.e., 8 */
+#define NUREG	(256 - NKREG)				/* i.e., 248 */
+
+TAILQ_HEAD(mmuhd,mmuentry);
 
 /* data appearing in both user and kernel pmaps */
 struct pmap {
@@ -114,29 +116,29 @@ struct pmap {
 	simple_lock_data_t pm_lock;	/* spinlock */
 #endif
 	int	pm_refcount;		/* just what it says */
-	struct	mmuentry *pm_mmuforw;	/* pmap pmeg chain */
-	struct	mmuentry **pm_mmuback;	/* (two way street) */
-	void	*pm_segstore;
-	pmeg_t	*pm_segmap;		/* points to pm_rsegmap per above */
-	u_char	*pm_npte;		/* points to pm_rnpte */
-	int	**pm_pte;		/* points to pm_rpte */
-	int	pm_gap_start;		/* Starting with this vseg there's */
-	int	pm_gap_end;		/* no valid mapping until here */
+
+#ifdef MMU_3L
+	struct mmuhd	pm_reglist;	/* MMU regions on this pmap */
+#endif
+	struct mmuhd	pm_seglist;	/* MMU segments on this pmap */
+	void		*pm_regstore;
+	struct regmap	*pm_regmap;
+	int		pm_gap_start;	/* Starting with this vreg there's */
+	int		pm_gap_end;	/* no valid mapping until here */
+
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
-/* data appearing only in user pmaps */
-struct usegmap {
-	pmeg_t	us_segmap[NUSEG];	/* segment map */
-	u_char	us_npte[NUSEG];		/* number of valid PTEs per seg */
-	int	*us_pte[NUSEG];		/* points to PTEs for valid segments */
+struct regmap {
+	struct segmap	*rg_segmap;	/* point to NSGPRG PMEGs */
+	smeg_t		rg_smeg;	/* the MMU region number */
+	u_char		rg_nsegmap;	/* number of valid PMEGS */
 };
 
-/* data appearing only in the kernel pmap */
-struct ksegmap {
-	pmeg_t	ks_segmap[NKSEG];	/* segment map */
-	u_char	ks_npte[NKSEG];		/* number of valid PTEs per kseg */
-	int	*ks_pte[NKSEG];		/* always NULL */
+struct segmap {
+	int	*sg_pte;		/* points to NPTESG PTEs */
+	pmeg_t	sg_pmeg;		/* the MMU segment number */
+	u_char	sg_npte;		/* number of valid PTEs per seg */
 };
 
 typedef struct pmap *pmap_t;
@@ -146,7 +148,6 @@ typedef struct pmap *pmap_t;
 #define PMAP_NULL	((pmap_t)0)
 
 extern struct pmap	kernel_pmap_store;
-extern struct ksegmap	kernel_segmap_store;
 extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 /*
@@ -164,7 +165,7 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
 #define	PMAP_TNC	7		/* mask to get PG_TYPE & PG_NC */
 
-void		pmap_bootstrap __P((int nmmu, int nctx));
+void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
 vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
 int		pmap_pa_exists __P((vm_offset_t));
