@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.15 2000/11/28 21:51:09 pk Exp $
+# $NetBSD: dot.profile,v 1.16 2001/06/17 11:57:23 pk Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -156,7 +156,20 @@ EOF
 	# Look for instfs.tgz in MACHINE subdirectory first
 	tf=/cdrom/$MACHINE/installation/bootfs/instfs.tgz
 	[ -f $tf ] || tf=/cdrom/installation/bootfs/instfs.tgz
-	[ -f $tf ] || { echo "instfs.tgz image not found"; rval=1; }
+	[ -f $tf ] || {
+		echo "Note: instfs.tgz image not found in default location"
+		tf=""
+	}
+
+	while :; do
+		echo -n "Path to instfs.tgz [$tf] "
+		[ -z "$tf" ] && echo -n "(<return> to abort) "
+		getresp "$tf"; tf="$_resp"
+		[ -z "$tf" ] && { rval=1; break; }
+		[ -f "$tf" ] && break;
+		echo "$tf not found"
+		tf=""
+	done
 
 	[ $rval = 0 ] && (cd $INSTFS_MP && tar zxpf $tf) || rval=1
 
