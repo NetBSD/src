@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2003/10/06 22:53:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,9 +169,23 @@ struct switchframe {
 /*
  * Signal frame
  */
-struct sigframe {
+struct sigframe_sigcontext {
 	uint64_t sf_ra;
 	struct	sigcontext sf_sc;
 };
+
+struct sigframe_siginfo {
+	uint64_t	sf_ra;		/* return address for handler */
+	siginfo_t	sf_si;		/* actual saved siginfo */
+	ucontext_t	sf_uc;		/* actual saved ucontext */
+};
+
+#ifdef _KERNEL
+void *getframe(struct lwp *, int, int *);
+void buildcontext(struct lwp *, void *, void *);
+#ifdef COMPAT_16
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
+#endif
 
 #endif  /* _AMD64_FRAME_H_ */
