@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfsmount.h,v 1.2 1994/03/27 09:08:58 cgd Exp $
+ *	$Id: msdosfsmount.h,v 1.3 1994/04/07 07:30:33 cgd Exp $
  */
 
 /*
@@ -22,6 +22,10 @@
 struct msdosfsmount {
 	struct mount *pm_mountp;/* vfs mount struct for this fs */
 	dev_t pm_dev;		/* block special device mounted */
+	uid_t pm_mounter;	/* uid of the user who mounted the FS */
+	uid_t pm_uid;		/* uid to set as owner of the files */
+	gid_t pm_gid;		/* gid to set as owner of the files */
+	mode_t pm_mask;		/* mask to and with file protection bits */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
 	u_long pm_fatblk;	/* block # of first FAT */
