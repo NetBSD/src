@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.10 1994/12/22 12:31:07 cgd Exp $
+#	$Id: Makefile,v 1.11 1995/01/02 22:33:21 cgd Exp $
 
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 CFLAGS += -I${.CURDIR} -I.
 
