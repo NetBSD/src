@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.272 2001/08/17 07:23:03 wiz Exp $
+# $NetBSD: mi,v 1.273 2001/08/17 22:23:05 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -65,6 +65,7 @@
 ./sbin			base-sys-root
 ./sbin/atactl		base-sysutil-root
 ./sbin/badsect		base-sysutil-root
+./sbin/brconfig		base-netutil-root
 ./sbin/ccdconfig	base-sysutil-root
 ./sbin/clri		base-sysutil-root
 ./sbin/dhclient		base-dhclient-root
