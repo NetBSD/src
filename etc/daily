@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.21 1997/05/30 05:18:59 mikel Exp $
+#	$NetBSD: daily,v 1.22 1997/06/23 01:45:21 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -13,6 +13,9 @@ umask 077
 if [ -s /etc/daily.conf ]; then
 	. /etc/daily.conf
 fi
+
+echo ""
+echo "Uptime: " `uptime`
 
 #echo ""
 #echo "Removing scratch and junk files:"
