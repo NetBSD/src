@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2001/06/28 21:27:47 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -148,7 +148,7 @@ trap(frame)
 			frame->fixreg[2] = (*fb)[2];
 			frame->fixreg[3] = rv;
 			frame->cr = (*fb)[3];
-			bcopy(&(*fb)[4], &frame->fixreg[13],
+			memcpy(&frame->fixreg[13], &(*fb)[4],
 				      19 * sizeof(register_t));
 			return;
 		}
@@ -360,7 +360,7 @@ syscall_bad:
 				frame->fixreg[2] = (*fb)[2];
 				frame->fixreg[3] = EFAULT;
 				frame->cr = (*fb)[3];
-				bcopy(&(*fb)[4], &frame->fixreg[13],
+				memcpy(&frame->fixreg[13], &(*fb)[4],
 				      19 * sizeof(register_t));
 				return;
 			}
@@ -461,7 +461,7 @@ copyin(udaddr, kaddr, len)
 		if (l > len)
 			l = len;
 		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
-		bcopy(p, kp, l);
+		memcpy(kp, p, l);
 		up += l;
 		kp += l;
 		len -= l;
@@ -493,7 +493,7 @@ copyout(kaddr, udaddr, len)
 		if (l > len)
 			l = len;
 		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
-		bcopy(kp, p, l);
+		memcpy(p, kp, l);
 		up += l;
 		kp += l;
 		len -= l;
@@ -527,7 +527,7 @@ kcopy(src, dst, len)
 		return rv;
 	}
 
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
 
 	curpcb->pcb_onfault = oldfault;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2001/06/12 16:32:00 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -228,7 +228,7 @@ initppc(startkernel, endkernel, args)
 
 	proc0.p_cpu = ci;
 	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
 
 	curpcb = &proc0paddr->u_pcb;
 
@@ -244,7 +244,7 @@ initppc(startkernel, endkernel, args)
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
 		switch (exc) {
 		default:
-			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
+			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
 			break;
 		case EXC_EXI:
 			/*
@@ -252,34 +252,34 @@ initppc(startkernel, endkernel, args)
 			 */
 			break;
 		case EXC_ALI:
-			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
+			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
 			break;
 		case EXC_DSI:
-			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
+			memcpy((void *)EXC_DSI, &dsitrap, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
-			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
+			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
 			break;
 		case EXC_DECR:
-			bcopy(&decrint, (void *)EXC_DECR, (size_t)&decrsize);
+			memcpy((void *)EXC_DECR, &decrint, (size_t)&decrsize);
 			break;
 		case EXC_IMISS:
-			bcopy(&tlbimiss, (void *)EXC_IMISS, (size_t)&tlbimsize);
+			memcpy((void *)EXC_IMISS, &tlbimiss, (size_t)&tlbimsize);
 			break;
 		case EXC_DLMISS:
-			bcopy(&tlbdlmiss, (void *)EXC_DLMISS, (size_t)&tlbdlmsize);
+			memcpy((void *)EXC_DLMISS, &tlbdlmiss, (size_t)&tlbdlmsize);
 			break;
 		case EXC_DSMISS:
-			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
+			memcpy((void *)EXC_DSMISS, &tlbdsmiss, (size_t)&tlbdsmsize);
 			break;
 #if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
 #if defined(DDB)
-			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
 #else
-			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
+			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
 #endif
 			break;
 #endif /* DDB || IPKDB */
@@ -311,8 +311,8 @@ initppc(startkernel, endkernel, args)
 	 * Parse arg string.
 	 */
 #ifdef DDB
-	bcopy(args + strlen(args) + 1, &startsym, sizeof(startsym));
-	bcopy(args + strlen(args) + 5, &endsym, sizeof(endsym));
+	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
+	memcpy(&endsym, args + strlen(args) + 5, sizeof(endsym));
 	if (startsym == NULL || endsym == NULL)
 		startsym = endsym = NULL;
 #endif
@@ -364,7 +364,7 @@ save_ofmap(ofmap, maxlen)
 	mmu = OF_instance_to_package(mmui);
 
 	if (ofmap) {
-		bzero(ofmap, maxlen);	/* to be safe */
+		memset(ofmap, 0, maxlen);	/* to be safe */
 		len = OF_getprop(mmu, "translations", ofmap, maxlen);
 	} else
 		len = OF_getproplen(mmu, "translations");
@@ -426,7 +426,7 @@ install_extint(handler)
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
-	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
+	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));
@@ -784,7 +784,7 @@ cninit()
 		goto nocons;
 
 	node = OF_instance_to_package(stdout);
-	bzero(type, sizeof(type));
+	memset(type, 0, sizeof(type));
 	if (OF_getprop(node, "device_type", type, sizeof(type)) == -1)
 		goto nocons;
 
@@ -859,7 +859,7 @@ cninit_kd()
 	}
 
 	node = OF_instance_to_package(stdin);
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	OF_getprop(node, "name", name, sizeof(name));
 	if (strcmp(name, "keyboard") != 0) {
 		printf("WARNING: stdin is not a keyboard: %s\n", name);
@@ -867,7 +867,7 @@ cninit_kd()
 	}
 
 #if NAKBD > 0
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	OF_getprop(OF_parent(node), "name", name, sizeof(name));
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");

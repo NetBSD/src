@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2001/06/10 11:01:27 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -388,7 +388,7 @@ pmap_bootstrap(kernelstart, kernelend)
 		 */
 		if (sz == 0) {
 		empty:
-			bcopy(mp + 1, mp,
+			memcpy(mp, mp + 1,
 			      (cnt - (mp - avail)) * sizeof *mp);
 			cnt--;
 			mp--;
@@ -402,7 +402,7 @@ pmap_bootstrap(kernelstart, kernelend)
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
+			memcpy(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		} else {
@@ -441,14 +441,14 @@ pmap_bootstrap(kernelstart, kernelend)
 			if (s)
 				mp->size = s;
 			else {
-				bcopy(mp + 1, mp,
+				memcpy(mp, mp + 1,
 				      (cnt - (mp - avail)) * sizeof *mp);
 				mp = avail;
 			}
 			break;
 		}
 		if (s != 0) {
-			bcopy(mp, mp + 1,
+			memcpy(mp + 1, mp,
 			      (cnt - (mp - avail)) * sizeof *mp);
 			mp++->size = s;
 			cnt++;
@@ -461,7 +461,7 @@ pmap_bootstrap(kernelstart, kernelend)
 		panic("not enough memory?");
 
 	npgs -= btoc(HTABSIZE);
-	bzero((void *)ptable, HTABSIZE);
+	memset((void *)ptable, 0, HTABSIZE);
 	ptab_mask = ptab_cnt - 1;
 
 	/*
@@ -481,7 +481,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	mp->size -= sz;
 	mp->start += sz;
 	if (mp->size <= 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
+		memcpy(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
@@ -502,7 +502,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	msgbuf_paddr = mp->start + mp->size - sz;
 	mp->size -= sz;
 	if (mp->size <= 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
+		memcpy(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
 	for (mp = avail; mp->size; mp++)
@@ -581,7 +581,7 @@ pmap_init()
 		pv++->pv_idx = -1;
 	LIST_INIT(&pv_page_freelist);
 	pmap_attrib = (char *)pv;
-	bzero(pv, npgs);
+	memset(pv, 0, npgs);
 
 	pv = pv_table;
 	attr = pmap_attrib;
@@ -620,7 +620,7 @@ pmap_create()
 	struct pmap *pm;
 
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
-	bzero((caddr_t)pm, sizeof *pm);
+	memset((caddr_t)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	return pm;
 }
@@ -729,7 +729,7 @@ pmap_zero_page(pa)
 	paddr_t pa;
 {
 #if 0
-	bzero((caddr_t)pa, NBPG);
+	memset((caddr_t)pa, 0, NBPG);
 #else
 	int i;
 
@@ -747,7 +747,7 @@ void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
+	memcpy((caddr_t)dst, (caddr_t)src, NBPG);
 }
 
 static struct pv_entry *

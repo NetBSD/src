@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.13 2001/06/15 10:35:26 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.14 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ wdc_obio_probe(parent, match, aux)
 	    strcmp(ca->ca_name, "ide") == 0)
 		return 1;
 
-	bzero(compat, sizeof(compat));
+	memset(compat, 0, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "heathrow-ata") == 0 ||
 	    strcmp(compat, "keylargo-ata") == 0)
@@ -200,7 +200,7 @@ wdc_obio_attach(parent, self, aux)
 #define OHARE_FEATURE_REG	0xf3000038
 
 	/* XXX Enable wdc1 by feature reg. */
-	bzero(path, sizeof(path));
+	memset(path, 0, sizeof(path));
 	OF_package_to_path(ca->ca_node, path, sizeof(path));
 	if (strcmp(path, "/bandit@F2000000/ohare@10/ata@21000") == 0) {
 		u_int x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.23 2001/06/10 15:32:57 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.24 2001/07/22 11:29:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -153,7 +153,7 @@ ofbattach(parent, self, aux)
 		int i, len, screenbytes;
 
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
-		bzero(dc, sizeof(struct ofb_devconfig));
+		memset(dc, 0, sizeof(struct ofb_devconfig));
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == 0) {
 			printf(": ofdev not found\n");
@@ -161,7 +161,7 @@ ofbattach(parent, self, aux)
 		}
 
 		/* XXX There are two child screens on PowerBook. */
-		bzero(devinfo, sizeof(devinfo));
+		memset(devinfo, 0, sizeof(devinfo));
 		OF_getprop(node, "device_type", devinfo, sizeof(devinfo));
 		len = strlen(devinfo);
 		if (strcmp(devinfo + len - 7, "-parent") == 0)
@@ -218,7 +218,7 @@ ofb_common_init(node, dc)
 	if (dc->dc_ih == 0) {
 		char name[64];
 
-		bzero(name, 64);
+		memset(name, 0, 64);
 		OF_package_to_path(node, name, sizeof(name));
 		dc->dc_ih = OF_open(name);
 	}
@@ -343,7 +343,7 @@ ofb_ioctl(v, cmd, data, flag, p)
 	/* XXX There are no way to know framebuffer pa from a user program. */
 	case GRFIOCGINFO:
 		gm = (void *)data;
-		bzero(gm, sizeof(struct grfinfo));
+		memset(gm, 0, sizeof(struct grfinfo));
 		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
 		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
 		return 0;
