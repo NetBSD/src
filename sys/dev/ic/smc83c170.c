@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.7 1998/08/08 23:51:40 mycroft Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.8 1998/08/11 00:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/smc83c170reg.h>
 #include <dev/ic/smc83c170var.h>
 
@@ -94,6 +96,14 @@ int	epic_add_rxbuf __P((struct epic_softc *, int));
 void	epic_read_eeprom __P((struct epic_softc *, int, int, u_int16_t *));
 void	epic_set_mchash __P((struct epic_softc *));
 void	epic_fixup_clock_source __P((struct epic_softc *));
+int	epic_mii_read __P((struct device *, int, int));
+void	epic_mii_write __P((struct device *, int, int, int));
+int	epic_mii_wait __P((struct epic_softc *, u_int32_t));
+void	epic_tick __P((void *));
+
+void	epic_statchg __P((struct device *));
+int	epic_mediachange __P((struct ifnet *));
+void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 /*
  * Fudge the incoming packets by this much, to ensure the data after
@@ -240,6 +250,22 @@ epic_attach(sc)
 
 	printf("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    devname, ether_sprintf(enaddr));
+
+	/*
+	 * Initialize our media structures and probe the MII.
+	 */
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = epic_mii_read;
+	sc->sc_mii.mii_writereg = epic_mii_write;
+	sc->sc_mii.mii_statchg = epic_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
+	    epic_mediastatus);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -598,6 +624,11 @@ epic_ioctl(ifp, cmd, data)
 		}
 		break;
 
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		break;
+
 	default:
 		error = EINVAL;
 		break;
@@ -835,6 +866,23 @@ epic_intr(arg)
 }
 
 /*
+ * One second timer, used to tick the MII.
+ */
+void
+epic_tick(arg)
+	void *arg;
+{
+	struct epic_softc *sc = arg;
+	int s;
+
+	s = splimp();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	timeout(epic_tick, sc, hz);
+}
+
+/*
  * Fixup the clock source on the EPIC.
  */
 void
@@ -952,9 +1000,8 @@ epic_init(sc)
 		reg0 |= RXCON_PROMISCMODE;
 	bus_space_write_4(st, sh, EPIC_RXCON, reg0);
 
-	/*
-	 * XXX Media (full-duplex in TXCON).
-	 */
+	/* Set the media.  (XXX full-duplex in TXCON?) */
+	mii_mediachg(&sc->sc_mii);
 
 	/*
 	 * Initialize the transmit descriptors.
@@ -1016,6 +1063,11 @@ epic_init(sc)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/*
+	 * Start the one second clock.
+	 */
+	timeout(epic_tick, sc, hz);
 }
 
 /*
@@ -1031,6 +1083,11 @@ epic_stop(sc)
 	struct epic_descsoft *ds;
 	u_int32_t reg;
 	int i;
+
+	/*
+	 * Stop the one second clock.
+	 */
+	untimeout(epic_tick, sc);
 
 	/* Paranoia... */
 	epic_fixup_clock_source(sc);
@@ -1321,4 +1378,108 @@ epic_set_mchash(sc)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MC1, mchash[1]);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MC2, mchash[2]);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MC3, mchash[3]);
+}
+
+/*
+ * Wait for the MII to become ready.
+ */
+int
+epic_mii_wait(sc, rw)
+	struct epic_softc *sc;
+	u_int32_t rw;
+{
+	int i;
+
+	for (i = 0; i < 50; i++) {
+		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MMCTL) & rw)
+		    == 0)
+			break;
+		delay(2);
+	}
+	if (i == 50) {
+		printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
+		return (1);
+	}
+
+	return (0);
+}
+
+/*
+ * Read from the MII.
+ */
+int
+epic_mii_read(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct epic_softc *sc = (struct epic_softc *)self;
+
+	if (epic_mii_wait(sc, MMCTL_WRITE))
+		return (0);
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMCTL,
+	    MMCTL_ARG(phy, reg, MMCTL_READ));
+
+	if (epic_mii_wait(sc, MMCTL_READ))
+		return (0);
+
+	return (bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MMDATA) &
+	    MMDATA_MASK);
+}
+
+/*
+ * Write to the MII.
+ */
+void
+epic_mii_write(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct epic_softc *sc = (struct epic_softc *)self;
+
+	if (epic_mii_wait(sc, MMCTL_WRITE))
+		return;
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMDATA, val);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MMCTL,
+	    MMCTL_ARG(phy, reg, MMCTL_WRITE));
+}
+
+/*
+ * Callback from PHY when media changes.
+ */
+void
+epic_statchg(self)
+	struct device *self;
+{
+
+	/* XXX Update ifp->if_baudrate */
+}
+
+/*
+ * Callback from ifmedia to request current media status.
+ */
+void
+epic_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct epic_softc *sc = ifp->if_softc;
+
+	mii_pollstat(&sc->sc_mii);
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+}
+
+/*
+ * Callback from ifmedia to request new media setting.
+ */
+int
+epic_mediachange(ifp)
+	struct ifnet *ifp;
+{
+
+	if (ifp->if_flags & IFF_UP)
+		epic_init((struct epic_softc *)ifp->if_softc);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.4 1998/07/05 06:49:15 jonathan Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.5 1998/08/11 00:12:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc83c170reg.h>
 #include <dev/ic/smc83c170var.h>

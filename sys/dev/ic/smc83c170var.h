@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.1 1998/06/02 01:29:42 thorpej Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.2 1998/08/11 00:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct epic_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 
-	struct ifmedia sc_media;	/* media information */
+	struct mii_data sc_mii;		/* MII/media information */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr

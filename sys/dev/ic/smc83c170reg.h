@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.2 1998/07/20 20:45:06 thorpej Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.3 1998/08/11 00:13:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,6 +284,8 @@ struct epic_fraglist {
 #define	MMCTL_RESPONDER		0x00000008	/* phy responder */
 #define	MMCTL_WRITE		0x00000002	/* write to phy */
 #define	MMCTL_READ		0x00000001	/* read from phy */
+
+#define	MMCTL_ARG(phy, reg, cmd)	(((phy) << 9) | ((reg) << 4) | (cmd))
 
 #define	EPIC_MMDATA		0x34 /* MII MANAGEMENT INTERFACE DATA */
 #define	MMDATA_MASK		0x0000ffff	/* MII frame data */
