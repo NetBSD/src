@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.9 1998/02/02 21:07:35 perry Exp $	*/
+/*	$NetBSD: netdb.h,v 1.10 1998/02/03 04:20:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$Id: netdb.h,v 1.9 1998/02/02 21:07:35 perry Exp $
+ *	Id: netdb.h,v 4.9.1.2 1993/05/17 09:59:01 vixie Exp
  * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
  * 
