@@ -109,6 +109,10 @@
  **********************************************************************
  * HISTORY
  * $Log: scmio.c,v $
+ * Revision 1.4  1996/12/31 18:08:02  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.3  1996/12/23 19:42:13  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -529,7 +533,7 @@ int *count;
 	int y;
 	x = readdata (sizeof(int),(char *)&y);
 	if (x != SCMOK)  return (x);
-	x = readdata (-sizeof(int),(char *)&y);
+	x = readdata (- ((int)(sizeof(int))),(char *)&y);
 	if (x != SCMOK)  return (x);
 	*count = byteswap(y);
 	return (SCMOK);

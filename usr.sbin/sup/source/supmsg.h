@@ -33,6 +33,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supmsg.h,v $
+ * Revision 1.3  1996/12/31 18:08:10  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.2  1993/08/04 17:46:24  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -145,7 +149,7 @@ EXTERN	char	*collname;		/* collection name */
 EXTERN	char	*basedir;		/* base directory */
 EXTERN	int	basedev;		/* base directory device */
 EXTERN	int	baseino;		/* base directory inode */
-EXTERN	long	lasttime;		/* time of last upgrade */
+EXTERN	time_t	lasttime;		/* time of last upgrade */
 EXTERN	int	listonly;		/* only listing files, no data xfer */
 EXTERN	int	newonly;		/* only send new files */
 EXTERN	char	*release;		/* release name */
@@ -170,7 +174,7 @@ EXTERN	TREE	*refuseT;		/* tree of files to refuse */
 
 /* msglist */
 EXTERN	TREE	*listT;			/* tree of files to list */
-EXTERN	long	scantime;		/* time that collection was scanned */
+EXTERN	time_t	scantime;		/* time that collection was scanned */
 
 /* msgneed */
 EXTERN	TREE	*needT;			/* tree of files to need */

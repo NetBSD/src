@@ -31,6 +31,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supmsg.c,v $
+ * Revision 1.4  1996/12/31 18:08:09  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.3  1996/12/23 19:42:23  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -137,7 +141,7 @@ extern char	*collname;		/* base directory */
 extern char	*basedir;		/* base directory */
 extern int	basedev;		/* base directory device */
 extern int	baseino;		/* base directory inode */
-extern long	lasttime;		/* time of last upgrade */
+extern time_t	lasttime;		/* time of last upgrade */
 extern int	listonly;		/* only listing files, no data xfer */
 extern int	newonly;		/* only send new files */
 extern char	*release;		/* release name */
@@ -308,7 +312,7 @@ int msgrefuse ()
  * list files message
  */
 extern TREE	*listT;			/* tree of files to list */
-extern long	scantime;		/* time that collection was scanned */
+extern time_t	scantime;		/* time that collection was scanned */
 
 static int listone (t, v)
 register TREE *t;
@@ -459,7 +463,7 @@ void *v;
 
 
 #ifdef __STDC__
-int msgrecv (int (*xferfile)(TREE *, void *),...)
+int msgrecv (int (*xferfile)(TREE *, va_list),...)
 #else
 /*VARARGS*//*ARGSUSED*/
 int msgrecv (va_alist)
