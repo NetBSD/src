@@ -1,0 +1,42 @@
+.\"	$NetBSD: wsmuxctl.8,v 1.1 2001/10/13 20:05:43 augustss Exp $
+.\"
+.Dd October 13, 2001
+.Os
+.Dt WMUXCTL 8
+.Sh NAME
+.Nm wsmuxctl
+.Nd configure wsmuxes
+.Sh SYNOPSIS
+.Nm ""
+.Op Fl a Ar dev
+.Fl f Ar ctldev
+.Op Fl l
+.Op Fl r Ar dev
+.Sh DESCRIPTION
+The
+.Nm
+allows to adding and removing devices to a
+.Xr wsmux 4 .
+.Pp
+Added and removed devices are specified by a name, not a path name.
+Simply use
+.Em wsmouseN ,
+.Em wskbdN ,
+or
+.Em wsmuxN
+where N is the number of the device.
+.Pp
+The options are:
+.Bl -tag -width xxxxxxxxx
+.It Fl a Ar dev
+Add the specified device to the mux.
+.It Fl f Ar ctldev
+Specify the control device of wsmux to operate on.
+.It Fl l
+List all devices connected to a mux.
+.It Fl r Ar dev
+Remove the specified device from the mux.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr wsmux 4
