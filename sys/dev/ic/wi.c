@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.95 2002/10/01 16:11:19 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.96 2002/10/02 17:11:34 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.95 2002/10/01 16:11:19 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.96 2002/10/02 17:11:34 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -602,20 +602,22 @@ wi_init(struct ifnet *ifp)
 	/* Set multicast filter. */
 	wi_write_multi(sc);
 
-	sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
-	if (sc->sc_firmware_type == WI_SYMBOL)
-		sc->sc_buflen = 1585;	/* XXX */
-	for (i = 0; i < WI_NTXBUF; i++) {
-		error = wi_alloc_fid(sc, sc->sc_buflen,
-		    &sc->sc_txd[i].d_fid);
-		if (error) {
-			printf("%s: tx buffer allocation failed\n",
-			    sc->sc_dev.dv_xname);
-			goto out;
+	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
+		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
+		if (sc->sc_firmware_type == WI_SYMBOL)
+			sc->sc_buflen = 1585;	/* XXX */
+		for (i = 0; i < WI_NTXBUF; i++) {
+			error = wi_alloc_fid(sc, sc->sc_buflen,
+			    &sc->sc_txd[i].d_fid);
+			if (error) {
+				printf("%s: tx buffer allocation failed\n",
+				    sc->sc_dev.dv_xname);
+				goto out;
+			}
+			DPRINTF2(("wi_init: txbuf %d allocated %x\n", i,
+			    sc->sc_txd[i].d_fid));
+			sc->sc_txd[i].d_len = 0;
 		}
-		DPRINTF2(("wi_init: txbuf %d allocated %x\n", i,
-		    sc->sc_txd[i].d_fid));
-		sc->sc_txd[i].d_len = 0;
 	}
 	sc->sc_txcur = sc->sc_txnext = 0;
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
@@ -634,7 +636,9 @@ wi_init(struct ifnet *ifp)
 	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
-	if (!wasenabled && ic->ic_opmode == IEEE80211_M_HOSTAP) {
+	if (!wasenabled &&
+	    ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    sc->sc_firmware_type == WI_INTERSIL) {
 		/* XXX: some card need to be re-enabled for hostap */
 		wi_cmd(sc, WI_CMD_DISABLE | WI_PORT0, 0, 0, 0);
 		wi_cmd(sc, WI_CMD_ENABLE | WI_PORT0, 0, 0, 0);
@@ -1052,8 +1056,9 @@ wi_rx_intr(struct wi_softc *sc)
 	struct wi_frame frmhdr;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
+	int fid, len, off, rssi;
 	u_int16_t status;
-	int fid, len, off;
+	u_int32_t rstamp;
 
 	fid = CSR_READ_2(sc, WI_RX_FID);
 
@@ -1075,6 +1080,9 @@ wi_rx_intr(struct wi_softc *sc)
 		DPRINTF(("wi_rx_intr: fid %x error status %x\n", fid, status));
 		return;
 	}
+	rssi = frmhdr.wi_rx_signal;
+	rstamp = (le16toh(frmhdr.wi_rx_tstamp0) << 16) |
+	    le16toh(frmhdr.wi_rx_tstamp1);
 
 	len = le16toh(frmhdr.wi_dat_len);
 	off = ALIGN(sizeof(struct ieee80211_frame));
@@ -1126,7 +1134,7 @@ wi_rx_intr(struct wi_softc *sc)
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
-	ieee80211_input(ifp, m, 0 /*rssi*/, 0 /*rstamp*/);
+	ieee80211_input(ifp, m, rssi, rstamp);
 }
 
 static void
@@ -1141,8 +1149,9 @@ wi_tx_intr(struct wi_softc *sc)
 
 	cur = sc->sc_txcur;
 	if (sc->sc_txd[cur].d_fid != fid) {
-		printf("%s: bad alloc %x != %x\n",
-		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid);
+		printf("%s: bad alloc %x != %x, cur %d nxt %d\n",
+		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid, cur,
+		    sc->sc_txnext);
 		return;
 	}
 	sc->sc_tx_timer = 0;
@@ -1980,7 +1989,7 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 	struct wi_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &ic->ic_bss;
-	int buflen;
+	int i, buflen;
 	u_int16_t val;
 	struct wi_ssid ssid;
 	enum ieee80211_state ostate;
@@ -2006,12 +2015,27 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 		wi_read_rid(sc, WI_RID_CURRENT_CHAN, &val, &buflen);
 		ni->ni_chan = le16toh(val);
 
-		buflen = sizeof(ssid);
-		wi_read_rid(sc, WI_RID_CURRENT_SSID, &ssid, &buflen);
-		ni->ni_esslen = le16toh(ssid.wi_len);
-		if (ni->ni_esslen > IEEE80211_NWID_LEN)
-			ni->ni_esslen = IEEE80211_NWID_LEN;	/*XXX*/
-		memcpy(ni->ni_essid, ssid.wi_ssid, ni->ni_esslen);
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			ni->ni_esslen = ic->ic_des_esslen;
+			memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
+			ni->ni_nrate = 0;
+			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
+				if (ic->ic_sup_rates[i])
+					ni->ni_rates[ni->ni_nrate++] =
+					    ic->ic_sup_rates[i];
+			}
+			ni->ni_intval = ic->ic_lintval;
+			ni->ni_capinfo = IEEE80211_CAPINFO_ESS;
+			if (ic->ic_flags & IEEE80211_F_WEPON)
+				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
+		} else {
+			buflen = sizeof(ssid);
+			wi_read_rid(sc, WI_RID_CURRENT_SSID, &ssid, &buflen);
+			ni->ni_esslen = le16toh(ssid.wi_len);
+			if (ni->ni_esslen > IEEE80211_NWID_LEN)
+				ni->ni_esslen = IEEE80211_NWID_LEN;	/*XXX*/
+			memcpy(ni->ni_essid, ssid.wi_ssid, ni->ni_esslen);
+		}
 		break;
 
 	case IEEE80211_S_SCAN:
