@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.33 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.34 2004/01/01 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 
 #ifndef	_MACH_PORT_H_
 #define	_MACH_PORT_H_
+
+#define MACH_PORT_REF(mp)	(mp)->mp_refcount++
+#define MACH_PORT_UNREF(mp)	if (--(mp)->mp_refcount <= 0) mach_port_put(mp)
 
 #define MACH_PORT_NULL			(struct mach_right *)0
 #define MACH_PORT_DEAD			(struct mach_right *)-1
