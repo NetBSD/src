@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.62 1998/03/18 22:50:50 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.63 1998/03/18 23:11:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.62 1998/03/18 22:50:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.63 1998/03/18 23:11:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ pa_to_pvh(pa)
  * Internal routines
  */
 void	alpha_protection_init __P((void));
-void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, boolean_t));
+void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *));
 void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
 
 /*
@@ -908,7 +908,6 @@ pmap_remove(pmap, sva, eva)
 	register vm_offset_t sva, eva;
 {
 	register pt_entry_t *pte;
-	boolean_t tflush;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -921,8 +920,6 @@ pmap_remove(pmap, sva, eva)
 #ifdef PMAPSTATS
 	remove_stats.calls++;
 #endif
-
-	tflush = active_pmap(pmap) ? TRUE : FALSE;
 
 	while (sva < eva) {
 		/*
@@ -946,7 +943,7 @@ pmap_remove(pmap, sva, eva)
 		 */
 		pte = pmap_l3pte(pmap, sva);
 		if (pmap_pte_v(pte))
-			pmap_remove_mapping(pmap, sva, pte, tflush);
+			pmap_remove_mapping(pmap, sva, pte);
 		sva += PAGE_SIZE;
 	}
 }
@@ -1028,8 +1025,7 @@ pmap_page_protect(pa, prot)
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (!pmap_pte_w(pte))
-			pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-					    pte, TRUE);
+			pmap_remove_mapping(pv->pv_pmap, pv->pv_va, pte);
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1341,7 +1337,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		pmap_ptpage_addref(pte);
 	}
-	pmap_remove_mapping(pmap, va, pte, TRUE);
+	pmap_remove_mapping(pmap, va, pte);
 #ifdef PMAPSTATS
 	enter_stats.mchange++;
 #endif
@@ -2097,11 +2093,10 @@ alpha_protection_init()
  */
 /* static */
 void
-pmap_remove_mapping(pmap, va, pte, tflush)
+pmap_remove_mapping(pmap, va, pte)
 	register pmap_t pmap;
 	register vm_offset_t va;
 	register pt_entry_t *pte;
-	boolean_t tflush;
 {
 	vm_offset_t pa;
 	int s;
@@ -2109,8 +2104,8 @@ pmap_remove_mapping(pmap, va, pte, tflush)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d)\n",
-		       pmap, va, pte, tflush);
+		printf("pmap_remove_mapping(%p, %lx, %p)\n",
+		       pmap, va, pte);
 #endif
 
 	/*
@@ -2144,7 +2139,7 @@ pmap_remove_mapping(pmap, va, pte, tflush)
 #endif
 	*pte = PG_NV;
 
-	if (tflush && active_pmap(pmap)) {
+	if (active_pmap(pmap)) {
 		ALPHA_TBIS(va);
 		alpha_pal_imb();
 	}
