@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.14 1996/06/13 18:42:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -60,7 +60,9 @@
 #include <compat/linux/linux_exec.h>
 
 static void *linux_aout_copyargs __P((struct exec_package *,
-	struct ps_strings *, void *, void *));
+    struct ps_strings *, void *, void *));
+static int linux_elf_signature __P((struct proc *p, struct exec_package *,
+    Elf32_Ehdr *));
 
 #define	LINUX_AOUT_AUX_ARGSIZ	2
 #define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
@@ -362,16 +364,76 @@ exec_linux_aout_prep_qmagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 
-int
-linux_elf_probe(p, epp, itp, pos)
+/*
+ * Take advantage of the fact that all the linux binaries are compiled
+ * with gcc, and gcc sticks in the comment field a signature. Note that
+ * on SVR4 binaries, the gcc signature will follow the OS name signature,
+ * that will not be a problem. We don't bother to read in the string table,
+ * but we check all the progbits headers.
+ */
+static int
+linux_elf_signature(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
+	Elf32_Ehdr *eh;
+{
+	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
+	size_t i;
+	static const char signature[] = "\0GCC: (GNU) ";
+	char buf[sizeof(signature) - 1];
+	Elf32_Shdr *sh;
+	int error;
+
+	sh = (Elf32_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
+
+	if ((error = elf_read_from(p, epp->ep_vp, eh->e_shoff,
+	    (caddr_t) sh, shsize)) != 0)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf32_Shdr *s = &sh[i];
+
+		/*
+		 * Identify candidates for the comment header;
+		 * it cannot have a load address, or flags and
+		 * it must be large enough.
+		 */
+		if (s->sh_type != Elf32_sht_progbits ||
+		    s->sh_addr != 0 ||
+		    s->sh_flags != 0 ||
+		    s->sh_size < sizeof(signature) - 1)
+			continue;
+
+		if ((error = elf_read_from(p, epp->ep_vp, s->sh_offset,
+		    (caddr_t) buf, sizeof(signature) - 1)))
+			goto out;
+
+		if (bcmp(buf, signature, sizeof(signature) - 1) == 0) {
+			error = 0;
+			goto out;
+		}
+	}
+	error = EFTYPE;
+
+out:
+	free(sh, M_TEMP);
+	return error;
+}
+
+int
+linux_elf_probe(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf32_Ehdr *eh;
 	char *itp;
 	u_long *pos;
 {
 	char *bp;
 	int error;
 	size_t len;
+
+	if ((error = linux_elf_signature(p, epp, eh)) != 0)
+		return error;
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
