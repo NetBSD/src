@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2002/07/20 11:28:08 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.30 2002/07/21 15:32:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.29 2002/07/20 11:28:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.30 2002/07/21 15:32:18 hannken Exp $");
 
 #include "opt_md.h"
 
@@ -147,7 +147,7 @@ md_attach(parent, self, aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
-	bufq_init(&sc->sc_buflist, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_buflist, BUFQ_FCFS);
 
 	/* XXX - Could accept aux info here to set the config. */
 #ifdef	MEMORY_DISK_HOOKS

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.39 2002/07/19 16:26:01 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.40 2002/07/21 15:32:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.39 2002/07/19 16:26:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.40 2002/07/21 15:32:20 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -170,10 +170,11 @@ mfs_mountroot()
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	mfsp->mfs_shutdown = 0;
-	bufq_init(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
+		bufq_free(&mfsp->mfs_buflist);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		vrele(rootvp);
@@ -283,7 +284,7 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
-	bufq_init(&mfsp->mfs_buflist, BUFQ_FCFS);
+	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
@@ -353,6 +354,7 @@ mfs_start(mp, flags, p)
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
 	KASSERT(BUFQ_PEEK(&mfsp->mfs_buflist) == NULL);
+	bufq_free(&mfsp->mfs_buflist);
 	return (sleepreturn);
 }
 

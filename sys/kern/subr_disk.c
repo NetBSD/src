@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.39 2002/07/16 18:03:19 hannken Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.40 2002/07/21 15:32:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.39 2002/07/16 18:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.40 2002/07/21 15:32:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -926,9 +926,11 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 	return(bp);
 }
 
-
+/*
+ * Create a device buffer queue.
+ */
 void
-bufq_init(struct bufq_state *bufq, int flags)
+bufq_alloc(struct bufq_state *bufq, int flags)
 {
 	struct bufq_fcfs *fcfs;
 	struct bufq_disksort *disksort;
@@ -945,36 +947,50 @@ bufq_init(struct bufq_state *bufq, int flags)
 			break;
 		/* FALLTHROUGH */
 	default:
-		panic("bufq_init: sort out of range");
+		panic("bufq_alloc: sort out of range");
 	}
 
 	switch (flags & BUFQ_METHOD_MASK) {
 	case BUFQ_FCFS:
 		bufq->bq_get = bufq_fcfs_get;
 		bufq->bq_put = bufq_fcfs_put;
-		MALLOC(bufq->bq_private, struct bufq_fcfs *, sizeof(struct bufq_fcfs),
-		       M_DEVBUF, M_ZERO);
+		MALLOC(bufq->bq_private, struct bufq_fcfs *,
+		    sizeof(struct bufq_fcfs), M_DEVBUF, M_ZERO);
 		fcfs = (struct bufq_fcfs *)bufq->bq_private;
 		TAILQ_INIT(&fcfs->bq_head);
 		break;
 	case BUFQ_DISKSORT:
 		bufq->bq_get = bufq_disksort_get;
 		bufq->bq_put = bufq_disksort_put;
-		MALLOC(bufq->bq_private, struct bufq_disksort *, sizeof(struct bufq_disksort),
-		       M_DEVBUF, M_ZERO);
+		MALLOC(bufq->bq_private, struct bufq_disksort *,
+		    sizeof(struct bufq_disksort), M_DEVBUF, M_ZERO);
 		disksort = (struct bufq_disksort *)bufq->bq_private;
 		TAILQ_INIT(&disksort->bq_head);
 		break;
 	case BUFQ_READ_PRIO:
 		bufq->bq_get = bufq_prio_get;
 		bufq->bq_put = bufq_prio_put;
-		MALLOC(bufq->bq_private, struct bufq_prio *, sizeof(struct bufq_prio),
-		       M_DEVBUF, M_ZERO);
+		MALLOC(bufq->bq_private, struct bufq_prio *,
+		    sizeof(struct bufq_prio), M_DEVBUF, M_ZERO);
 		prio = (struct bufq_prio *)bufq->bq_private;
 		TAILQ_INIT(&prio->bq_read);
 		TAILQ_INIT(&prio->bq_write);
 		break;
 	default:
-		panic("bufq_init: method out of range");
+		panic("bufq_alloc: method out of range");
 	}
+}
+
+/*
+ * Destroy a device buffer queue.
+ */
+void
+bufq_free(struct bufq_state *bufq)
+{
+	KASSERT(bufq->bq_private != NULL);
+	KASSERT(BUFQ_PEEK(bufq) == NULL);
+
+	FREE(bufq->bq_private, M_DEVBUF);
+	bufq->bq_get = NULL;
+	bufq->bq_put = NULL;
 }
