@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.7 2002/12/22 21:51:56 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.8 2002/12/24 15:54:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.7 2002/12/22 21:51:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.8 2002/12/24 15:54:26 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -97,11 +97,10 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	int timeout;
 
 	/*
-	 * Catch unhandled options 
+	 * If neither send nor recieve, do nothing.
 	 */
-	if (SCARG(uap, option) & ~(MACH_SEND_MSG | MACH_RCV_MSG))
-		uprintf("mach_msg: unhandled option 0x%x\n", 
-		    SCARG(uap, option));
+	if (SCARG(uap, option) & ~(MACH_SEND_MSG | MACH_RCV_MSG)) 
+		return 0;
 
 	/* 
 	 * XXX Sanity check on the message size. This is not an accurate
@@ -111,24 +110,31 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	 */
 	send_size = SCARG(uap, send_size);
 	rcv_size = SCARG(uap, rcv_size);
-	if ((send_size > MACH_MAX_MSG_LEN) || (rcv_size > MACH_MAX_MSG_LEN))
-		return E2BIG;
+	if ((send_size > MACH_MAX_MSG_LEN) || (rcv_size > MACH_MAX_MSG_LEN)) {
+		*retval = MACH_SEND_TOO_LARGE;
+		return 0;
+	}
 
 	/* 
 	 * Two options: receive or send. If both are 
-	 * set, we must send, and then receive.
+	 * set, we must send, and then receive. If
+	 * send fail, then we skip recieve.
 	 */
 	if (SCARG(uap, option) & MACH_SEND_MSG) {
-		if (SCARG(uap, msg) == NULL)
-			return EINVAL;
+		if (SCARG(uap, msg) == NULL) {
+			*retval = MACH_SEND_INVALID_DATA;
+			return 0;
+		}
 
 		/* 
 		 * Allocate memory for the message and its reply,
 		 * and copy the whole message in the kernel.
 		 */
 		sm = malloc(send_size, M_EMULDATA, M_WAITOK);
-		if ((error = copyin(SCARG(uap, msg), sm, send_size)) != 0) 
+		if ((error = copyin(SCARG(uap, msg), sm, send_size)) != 0) {
+			*retval = MACH_SEND_INVALID_DATA;	
 			goto out1;
+		}
 
 #ifdef KTRACE
 		/* Dump the Mach message */
@@ -142,7 +148,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		 */
 		if (mach_right_check((struct mach_right *)sm->msgh_remote_port,
 		    p, MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE) == 0) {
-			error = EPERM;
+			*retval = MACH_SEND_INVALID_RIGHT;
 			goto out1;
 		}
 
@@ -169,7 +175,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			if (map->map_handler == NULL) {
 				uprintf("No mach trap handler for id = %d\n",
 				    sm->msgh_id);
-				error = EINVAL;
+				*retval = MACH_SEND_INVALID_DEST;
 				goto out3;
 			}
 #ifdef KTRACE
@@ -193,14 +199,15 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
-			if ((error = (*map->map_handler)(&args)) != 0)
+			if ((*retval = (*map->map_handler)(&args)) != 0) 
 				goto out2;
 			
 			/* 
 			 * Catch potential bug in the handler
 			 */
 			if (rcv_size > SCARG(uap, rcv_size)) {
-				uprintf("mach_msg: reply too big\n");
+				uprintf("mach_msg: reply too big in %s\n",
+				    map->map_name);
 				rcv_size = SCARG(uap, rcv_size);
 			}
 
@@ -213,8 +220,10 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 				urm = SCARG(uap, rcv_msg);
 			else
 				urm = SCARG(uap, msg);
-			if ((error = copyout(rm, urm, rcv_size)) != 0)
+			if ((error = copyout(rm, urm, rcv_size)) != 0) {
+				*retval = MACH_RCV_INVALID_DATA;
 				goto out2;
+			}
 #ifdef KTRACE
 			/* Dump the Mach message */
 			if (KTRPOINT(p, KTR_MMSG))
@@ -224,7 +233,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 out2:			free(rm, M_EMULDATA);
 out3:			free(sm, M_EMULDATA);
 
-			return error;
+			return 0;
 
 		} else {
 
@@ -252,7 +261,7 @@ out3:			free(sm, M_EMULDATA);
 out1:
 		if (error != 0) {
 			free(sm, M_EMULDATA);
-			return error;
+			return 0;
 		}
 	}
 
@@ -267,8 +276,10 @@ out1:
 			urm = SCARG(uap, rcv_msg);
 		else if (SCARG(uap, msg) != NULL)
 			urm = SCARG(uap, msg);
-		else
-			return EINVAL;
+		else {
+			*retval = MACH_RCV_INVALID_DATA;
+			return 0;
+		}
 
 		if (SCARG(uap, option) & MACH_RCV_TIMEOUT)
 			timeout = SCARG(uap, timeout) * hz / 1000;
@@ -285,8 +296,10 @@ out1:
 			 * Is it a port set?
 			 */
 			if ((mach_right_check(mr, p, 
-			    MACH_PORT_TYPE_PORT_SET)) == 0) 
-			return EPERM;
+			    MACH_PORT_TYPE_PORT_SET)) == 0) {
+				*retval = MACH_RCV_INVALID_NAME;
+				return 0;
+			}
 			
 			/* 
 			 * This is a port set. For each port in the
@@ -295,8 +308,10 @@ out1:
 			 */
 			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
 				if ((mach_right_check(cmr, p, 
-				    MACH_PORT_TYPE_RECEIVE)) == 0)
-					return EPERM;
+				    MACH_PORT_TYPE_RECEIVE)) == 0) {
+					*retval = MACH_RCV_INVALID_NAME;
+					return 0;
+				}
 
 				mp = cmr->mr_port;	
 #ifdef DEBUG_MACH
@@ -315,17 +330,35 @@ out1:
 			 */
 			if (cmr == NULL) {
 				error = tsleep(mr, PZERO, "mach_msg", timeout);
-				if ((error == ERESTART) || (error == EINTR))
-					return EINTR;
+				if ((error == ERESTART) || (error == EINTR)) {
+					*retval = MACH_RCV_INTERRUPTED;
+					return 0;
+				}
 
+				/* 
+				 * Check we did not loose the receive right
+				 * while we were sleeping.
+				 */
+				if ((mach_right_check(mr, p, 
+				     MACH_PORT_TYPE_PORT_SET)) == 0) {
+					*retval = MACH_RCV_PORT_DIED;
+					return 0;
+				}
+
+				/*
+				 * Is there any pending message for 
+				 * a port in the port set?
+				 */
 				LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
 					mp = cmr->mr_port;	
 					if (mp->mp_count != 0)
 						break;
 				}
 
-				if (cmr == NULL)
-					return ETIMEDOUT;
+				if (cmr == NULL) {
+					*retval = MACH_RCV_TIMED_OUT;
+					return 0;
+				}
 			}
 			
 			/* 
@@ -347,12 +380,26 @@ out1:
 				    "port/right\n");
 #endif
 			if (mp->mp_count == 0) {
-				error = tsleep(mp->mp_recv, PZERO, 
-				    "mach_msg", timeout);
-				if ((error == ERESTART) || (error == EINTR))
-					return EINTR;
-				if (mp->mp_count == 0)
-					return ETIMEDOUT;
+				error = tsleep(mr, PZERO, "mach_msg", timeout);
+				if ((error == ERESTART) || (error == EINTR)) {
+					*retval = MACH_RCV_INTERRUPTED;
+					return 0;
+				}
+
+				/* 
+				 * Check we did not loose the receive right
+				 * while we were sleeping.
+				 */
+				if ((mach_right_check(mr, p, 
+				     MACH_PORT_TYPE_RECEIVE)) == 0) {
+					*retval = MACH_RCV_PORT_DIED;
+					return 0;
+				}
+
+				if (mp->mp_count == 0) {
+					*retval = MACH_RCV_TIMED_OUT;
+					return 0;
+				}
 			}
 		}
 
@@ -366,13 +413,22 @@ out1:
 		mm = TAILQ_FIRST(&mp->mp_msglist);
 
 		if (mm->mm_size > rcv_size) {
-			lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
-			return ENOBUFS;
+			/* 
+			 * If MACH_RCV_LARGE was not set, destroy the
+			 * message. If it was set, just notice that 
+			 * the message is too big.
+			 */
+			if ((SCARG(uap, option) & MACH_RCV_LARGE) == 0) {
+				free(mm->mm_msg, M_EMULDATA);
+				mach_message_put_shlocked(mm);
+			}		
+			*retval = MACH_RCV_TOO_LARGE;
+			goto unlock;
 		}
 
 		if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
-			lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
-			return error;
+			*retval = MACH_RCV_INVALID_DATA;
+			goto unlock;
 		}
 #ifdef KTRACE
 		/* Dump the Mach message */
@@ -382,6 +438,7 @@ out1:
 
 		free(mm->mm_msg, M_EMULDATA);
 		mach_message_put_shlocked(mm); /* decrease mp_count */
+unlock:
 		lockmgr(&mp->mp_msglock, LK_RELEASE, NULL);
 	}
 
