@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.141 2001/10/24 21:04:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.142 2001/10/25 02:08:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -158,7 +158,8 @@ struct uhci_pipe {
 	} u;
 };
 
-Static void		uhci_busreset(uhci_softc_t *);
+Static void		uhci_globalreset(uhci_softc_t *);
+Static void		uhci_reset(uhci_softc_t *);
 Static void		uhci_shutdown(void *v);
 Static void		uhci_power(int, void *);
 Static usbd_status	uhci_run(uhci_softc_t *, int run);
@@ -283,7 +284,7 @@ void			uhci_dump(void);
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
 
-#define UHCI_RESET_TIMEOUT 100	/* reset timeout */
+#define UHCI_RESET_TIMEOUT 100	/* ms, reset timeout */
 
 #define UHCI_CURFRAME(sc) (UREAD2(sc, UHCI_FRNUM) & UHCI_FRNUM_MASK)
 
@@ -375,7 +376,7 @@ uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
 }
 
 void
-uhci_busreset(uhci_softc_t *sc)
+uhci_globalreset(uhci_softc_t *sc)
 {
 	UHCICMD(sc, UHCI_CMD_GRESET);	/* global reset */
 	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY); /* wait a little */
@@ -399,10 +400,9 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
-	uhci_run(sc, 0);			/* stop the controller */
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
-
-	uhci_busreset(sc);
+	uhci_globalreset(sc);			/* reset the controller */
+	uhci_reset(sc);
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus, 
@@ -1517,7 +1517,6 @@ uhci_poll(struct usbd_bus *bus)
 		uhci_intr1(sc);
 }
 
-#if 0
 void
 uhci_reset(uhci_softc_t *sc)
 {
@@ -1532,7 +1531,6 @@ uhci_reset(uhci_softc_t *sc)
 		printf("%s: controller did not reset\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
 }
-#endif
 
 usbd_status
 uhci_run(uhci_softc_t *sc, int run)
@@ -3168,21 +3166,21 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		x = UREAD2(sc, port);
 		status = change = 0;
-		if (x & UHCI_PORTSC_CCS  )
+		if (x & UHCI_PORTSC_CCS)
 			status |= UPS_CURRENT_CONNECT_STATUS;
-		if (x & UHCI_PORTSC_CSC  ) 
+		if (x & UHCI_PORTSC_CSC) 
 			change |= UPS_C_CONNECT_STATUS;
-		if (x & UHCI_PORTSC_PE   ) 
+		if (x & UHCI_PORTSC_PE) 
 			status |= UPS_PORT_ENABLED;
 		if (x & UHCI_PORTSC_POEDC) 
 			change |= UPS_C_PORT_ENABLED;
-		if (x & UHCI_PORTSC_OCI  ) 
+		if (x & UHCI_PORTSC_OCI) 
 			status |= UPS_OVERCURRENT_INDICATOR;
-		if (x & UHCI_PORTSC_OCIC ) 
+		if (x & UHCI_PORTSC_OCIC) 
 			change |= UPS_C_OVERCURRENT_INDICATOR;
-		if (x & UHCI_PORTSC_SUSP ) 
+		if (x & UHCI_PORTSC_SUSP) 
 			status |= UPS_SUSPEND;
-		if (x & UHCI_PORTSC_LSDA ) 
+		if (x & UHCI_PORTSC_LSDA) 
 			status |= UPS_LOW_SPEED;
 		status |= UPS_PORT_POWER;
 		if (sc->sc_isreset)
