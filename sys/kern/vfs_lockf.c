@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.27 2003/05/01 14:36:43 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.28 2003/05/01 14:59:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.27 2003/05/01 14:36:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.28 2003/05/01 14:59:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 					break;
 				wlwp = waitblock->lf_lwp;
 				if (wlwp == lock->lf_lwp) {
-					free(lock, M_LOCKF);
+					FREE(lock, M_LOCKF);
 					return (EDEADLK);
 				}
 			}
@@ -319,7 +319,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 * a cycle to be safe.
 			 */
 			if (i >= maxlockdepth) {
-				free(lock, M_LOCKF);
+				FREE(lock, M_LOCKF);
 				return (EDEADLK);
 			}
 		}
@@ -361,7 +361,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			lock->lf_next = NOLOCKF;
 		}
 		if (error) {
-			free(lock, M_LOCKF);
+			FREE(lock, M_LOCKF);
 			return (error);
 		}
 	}
@@ -416,7 +416,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 * Check for common starting point and different types.
 			 */
 			if (overlap->lf_type == lock->lf_type) {
-				free(lock, M_LOCKF);
+				FREE(lock, M_LOCKF);
 				lock = overlap; /* for debug output below */
 				break;
 			}
@@ -457,7 +457,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				needtolink = 0;
 			} else
 				*prev = overlap->lf_next;
-			free(overlap, M_LOCKF);
+			FREE(overlap, M_LOCKF);
 			continue;
 
 		case 4: /* overlap starts before lock */
@@ -544,7 +544,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 		case 3: /* lock contains overlap */
 			*prev = overlap->lf_next;
 			lf = overlap->lf_next;
-			free(overlap, M_LOCKF);
+			FREE(overlap, M_LOCKF);
 			continue;
 
 		case 4: /* overlap starts before lock */
