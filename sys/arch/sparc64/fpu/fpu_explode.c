@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.2 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.3 1998/11/24 12:47:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,7 +248,7 @@ fpu_explode(fe, fp, type, reg)
 	u_int64_t l, *xspace;
 
 	space = &fe->fe_fpstate->fs_regs[reg];
-	xspace = &fe->fe_fpstate->fs_regs[reg & ~1];
+	xspace = (u_int64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];
 	s = space[0];
 	l = xspace[0];
 	fp->fp_sign = s >> 31;
