@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4.2.1 2004/07/04 12:56:21 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,16 +94,16 @@ do {									\
 
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
 do {									\
-	memcpy((freg), &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
-	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32));	\
+	memcpy((freg), &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs,	\
+	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs));	\
 	(freg)->r_regs[_R_FSR - _FPBASE] =				\
 	    (uc)->uc_mcontext.__fpregs.__fp_csr;			\
 } while (/*CONSTCOND*/0)
 
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg)				\
 do {						       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32, (freg),	\
-	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32));	\
+	memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs, (freg),	\
+	    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs));	\
 	(uc)->uc_mcontext.__fpregs.__fp_csr =				\
 	    (freg)->r_regs[_R_FSR - _FPBASE];				\
 									\
