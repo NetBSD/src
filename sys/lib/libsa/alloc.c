@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.12 1999/04/01 02:41:08 simonb Exp $	*/
+/*	$NetBSD: alloc.c,v 1.13 1999/04/11 04:02:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -195,7 +195,9 @@ alloc(size)
 	/* we take the best fit */
 	f = bestf;
 
+#ifndef ALLOC_FIRST_FIT
 found:
+#endif
         /* remove from freelist */
         help = (char*)*f;
 	*f = (*f)->next;
