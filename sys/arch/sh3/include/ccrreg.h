@@ -1,4 +1,4 @@
-/* $NetBSD: ccrreg.h,v 1.1 1999/09/13 10:31:15 itojun Exp $ */
+/* $NetBSD: ccrreg.h,v 1.2 2000/01/17 21:41:13 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -49,5 +49,11 @@
 #define SHREG_QACR1	(*(volatile unsigned int *)	0xff00003c)
 
 #endif
+
+#define CCR_CF	0x00000008
+#define CCR_CB	0x00000004
+#define CCR_WT	0x00000002
+#define CCR_CE	0x00000001
+
 
 #endif	/* !_SH3_CCRREG_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: wdtreg.h,v 1.2 1999/09/16 12:48:35 msaitoh Exp $ */
+/* $NetBSD: wdtreg.h,v 1.3 2000/01/17 21:41:14 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -64,5 +64,13 @@
 #define WTCSR_CKS0	0x01
 
 #define WTCSR_CKS	0x07
+#define WTCSR_CKS_1	0x00
+#define WTCSR_CKS_4	0x01
+#define WTCSR_CKS_16	0x02
+#define WTCSR_CKS_32	0x03
+#define WTCSR_CKS_64	0x04
+#define WTCSR_CKS_256	0x05
+#define WTCSR_CKS_1024	0x06
+#define WTCSR_CKS_4096	0x07
 
 #endif	/* !_SH3_WDTREG_H_ */

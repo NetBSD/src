@@ -1,4 +1,4 @@
-/* $NetBSD: tmureg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
+/* $NetBSD: tmureg.h,v 1.3 2000/01/17 21:41:14 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -99,5 +99,12 @@
 #define TCR_TPSC2	0x0004
 #define TCR_TPSC1	0x0002
 #define TCR_TPSC0	0x0001
+
+#define TCR_TPSC_P4	0x0000
+#define TCR_TPSC_P16	0x0001
+#define TCR_TPSC_P64	0x0002
+#define TCR_TPSC_P256	0x0003
+#define TCR_TPSC_RTC	0x0004
+#define TCR_TPSC_TCLK	0x0005
 
 #endif	/* !_SH3_TMUREG_H_ */
