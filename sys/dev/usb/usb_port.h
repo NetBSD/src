@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.14 1999/10/14 01:18:39 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.15 1999/11/16 12:04:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,6 +170,15 @@ __CONCAT(dname,_detach)(self, flags) \
 #define powerhook_establish(fn, sc) 0
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+#define logprintf printf
+
+#define swap_bytes_change_sign16_le swap_bytes_change_sign16
+#define change_sign16_swap_bytes_le change_sign16_swap_bytes
+#define change_sign16_le change_sign16
+
+#define realloc usb_realloc
+void *usb_realloc __P((void *, u_int, int, int));
 
 typedef struct device device_ptr_t;
 #define USBBASEDEVICE struct device
