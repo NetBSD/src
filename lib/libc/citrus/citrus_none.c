@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.10 2003/06/26 12:09:56 tshiozak Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.11 2003/12/29 17:49:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.10 2003/06/26 12:09:56 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.11 2003/12/29 17:49:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -407,8 +407,8 @@ _citrus_NONE_stdenc_cstomb(struct _citrus_stdenc * __restrict ce,
 		return (0);
 	}
 	if (n<1) {
-		*nresult = (size_t)-2;
-		return (0);
+		*nresult = (size_t)-1;
+		return (E2BIG);
 	}
 	if (csid != 0 || (idx&0xFF) != idx)
 		return (EILSEQ);
