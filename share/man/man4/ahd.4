@@ -1,3 +1,4 @@
+.\"	$NetBSD: ahd.4,v 1.2 2004/12/27 14:21:22 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -63,12 +64,12 @@ busses:
 \}
 \{For
 .Tn SCSI
-buses:
+busses:
 .Cd scsibus* at ahd?\}
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
-bus(es) connected to Adaptec
+bus(ses) connected to Adaptec
 .Tn AIC79xx
 host adapter chips.
 .Pp
@@ -164,12 +165,6 @@ Many motherboards with on-board
 .Tn SCSI
 support
 .El
-.if 0 \{
-.Sh BUGS
-The current generation of 79xx chips do not support target mode in Ultra320
-mode.
-Target mode in general has not been well tested in this driver.
-\}
 .Sh SEE ALSO
 .Xr ahc 4 ,
 .Xr cd 4 ,
@@ -181,6 +176,13 @@ Target mode in general has not been well tested in this driver.
 .Xr sd 4 ,
 .Xr ses 4 ,
 .Xr st 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 4.7
+and
+.Nx 2.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -195,10 +197,9 @@ Jason Thorpe, and Allen Briggs.
 This manual page is based on the
 .Xr ahc 4
 manual page.
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Fx 4.7
-and
-.Nx 2.0 .
+.if 0 \{
+.Sh BUGS
+The current generation of 79xx chips do not support target mode in Ultra320
+mode.
+Target mode in general has not been well tested in this driver.
+\}
