@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.18 1993/06/07 19:52:22 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.19 1993/07/11 10:29:55 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -15,10 +15,12 @@ options		"i387"
 options		XSERVER,UCONSOLE
 options		KERNFS,FDESC,PCFS
 options		KTRACE
-options		DDB
 options		FIFO
 options		"COMPAT_NOMID"
 options		LKM
+
+options		DDB
+options		"SYMTAB_SPACE=66000"
 
 options		ACCOUNTING
 
@@ -37,6 +39,7 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
 
 device we0 at isa? port 0x280 net irq 9 iomem 0xd0000 iosiz 8192 vector weintr
+device ed0 at isa? port 0x300 net irq 10 iomem 0xd0000 vector edintr
 
 pseudo-device	loop
 pseudo-device	ether
