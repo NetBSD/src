@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.28 2003/11/09 11:10:11 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.29 2003/11/11 15:00:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.28 2003/11/09 11:10:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.29 2003/11/11 15:00:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,20 +493,12 @@ mach_task_suspend(args)
 	mach_task_suspend_request_t *req = args->smsg;
 	mach_task_suspend_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	mach_port_t mn;
 	struct mach_right *mr;
-	struct lwp *l;
 	struct proc *p;
 	struct mach_emuldata *med;
 	int s;
-
-	/*
-	 * XXX Two bugs when gdb calls this function:
-	 * - gdb uses a port it never allocated (apparently)
-	 * - this makes mach_right_check panic because of the lock operation
-	 *   on a draining lock.
-	 */
-	return mach_msg_error(args, 0);
 
 	/* XXX more permission checks nescessary here? */
 	mn = req->req_msgh.msgh_remote_port;
@@ -555,9 +547,9 @@ mach_task_resume(args)
 	mach_task_resume_request_t *req = args->smsg;
 	mach_task_resume_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	mach_port_t mn;
 	struct mach_right *mr;
-	struct lwp *l = args->l;
 	struct proc *p;
 	struct mach_emuldata *med;
 	int s;
