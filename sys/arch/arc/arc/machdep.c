@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2000/03/25 10:14:13 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2000/04/03 11:44:19 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -193,12 +193,12 @@ static int atoi __P((const char *, int));
 int	safepri = MIPS3_PSL_LOWIPL;
 
 struct splvec	splvec = {			/* XXX will go XXX */
-	MIPS_SPLHIGH, /* splbio */
-	MIPS_SPLHIGH, /* splnet */
-	MIPS_SPLHIGH, /* spltty */
-	MIPS_SPLHIGH, /* splimp */
-	MIPS_SPLHIGH, /* splclock */
-	MIPS_SPLHIGH, /* splstatclock */
+	MIPS_INT_MASK_SPLHIGH, /* splbio */
+	MIPS_INT_MASK_SPLHIGH, /* splnet */
+	MIPS_INT_MASK_SPLHIGH, /* spltty */
+	MIPS_INT_MASK_SPLHIGH, /* splimp */
+	MIPS_INT_MASK_SPLHIGH, /* splclock */
+	MIPS_INT_MASK_SPLHIGH, /* splstatclock */
 };
 
 extern struct user *proc0paddr;
@@ -266,12 +266,12 @@ mach_init(argc, argv, envv)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		splvec.splnet = MIPS_INTMASK_0_to_3;
-		splvec.splbio = MIPS_INTMASK_0_to_3;
-		splvec.splimp = MIPS_INTMASK_0_to_3;
-		splvec.spltty = MIPS_INTMASK_0_to_3;
-		splvec.splclock = MIPS_INTMASK_0_to_5;
-		splvec.splstatclock = MIPS_INTMASK_0_to_5;
+		splvec.splnet = MIPS_INT_MASK_SPL3;
+		splvec.splbio = MIPS_INT_MASK_SPL3;
+		splvec.splimp = MIPS_INT_MASK_SPL3;
+		splvec.spltty = MIPS_INT_MASK_SPL3;
+		splvec.splclock = MIPS_INT_MASK_SPL5;
+		splvec.splstatclock = MIPS_INT_MASK_SPL5;
 		break;
 
 	case NEC_RD94:
@@ -286,12 +286,12 @@ mach_init(argc, argv, envv)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		splvec.splnet = MIPS_INTMASK_0_to_2;
-		splvec.splbio = MIPS_INTMASK_0_to_2;
-		splvec.splimp = MIPS_INTMASK_0_to_2;
-		splvec.spltty = MIPS_INTMASK_0_to_2;
-		splvec.splclock = MIPS_INTMASK_0_to_5;
-		splvec.splstatclock = MIPS_INTMASK_0_to_5;
+		splvec.splnet = MIPS_INT_MASK_SPL2;
+		splvec.splbio = MIPS_INT_MASK_SPL2;
+		splvec.splimp = MIPS_INT_MASK_SPL2;
+		splvec.spltty = MIPS_INT_MASK_SPL2;
+		splvec.splclock = MIPS_INT_MASK_SPL5;
+		splvec.splstatclock = MIPS_INT_MASK_SPL5;
 		break;
 
 	case DESKSTATION_RPC44:

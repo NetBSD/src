@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/03/31 14:51:52 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2000/04/03 11:44:21 soda Exp $	*/
 
 #include <mips/cpuregs.h>
 #include <mips/intr.h>
@@ -50,7 +50,7 @@ extern void		_clrsoftintr(int);
 #define splimp()	splclock()
 #define splstatclock()  splclock()
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1)
+#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 extern unsigned int	intrcnt[];
