@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)vmstat.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: vmstat.8,v 1.8 1994/05/11 07:35:57 cgd Exp $
+.\"	$Id: vmstat.8,v 1.9 1994/06/05 01:43:13 chopps Exp $
 .\"
 .TH VMSTAT 1 "June 6, 1993"
 .UC 4
@@ -79,7 +79,7 @@ instead of the default ``/dev/kmem''.
 .TP
 \-N
 Extract the name list from the specified system instead of the default
-``/vmunix''.
+``/netbsd''.
 .TP
 \-m
 Report on the usage of kernel dynamic memory listed first by size of
@@ -189,7 +189,7 @@ Others vary every second and running the output for a while will make it
 apparent which are recomputed every second.
 .SH FILES
 .ta \w'/dev/kmem  'u
-/vmunix	default kernel namelist
+/netbsd	default kernel namelist
 .br
 /dev/kmem	default memory file
 .SH SEE ALSO
