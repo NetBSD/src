@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.27 2000/06/29 08:53:03 mrg Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.28 2001/02/24 20:12:40 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -59,7 +59,7 @@
 #include <machine/katelib.h>
 
 #include <arm32/iomd/iomdreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include "lmcaudio.h"
 
