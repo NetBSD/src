@@ -26,7 +26,8 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)buf.c	5.5 (Talke Studio) 3/28/93";
+/* static char sccsid[] = "@(#)buf.c	5.5 (Talke Studio) 3/28/93"; */
+static char rcsid[] = "$Id: buf.c,v 1.10 1993/11/23 04:41:48 alm Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,10 +47,10 @@ off_t sfseek;				/* scratch file position */
 int seek_write;				/* seek before writing */
 line_t line0;				/* initial node of line queue */
 
-/* gettxt: get a line of text from the scratch file; return pointer
+/* get_sbuf_line: get a line of text from the scratch file; return pointer
    to the text */
 char *
-gettxt(lp)
+get_sbuf_line(lp)
 	line_t *lp;
 {
 	int len, ct;
@@ -79,13 +80,13 @@ gettxt(lp)
 }
 
 
-extern long curln;
-extern long lastln;
+extern long current_addr;
+extern long addr_last;
 
-/* puttxt: write a line of text to the scratch file and add a line node
+/* put_sbuf_line: write a line of text to the scratch file and add a line node
    to the editor buffer;  return a pointer to the end of the text */
 char *
-puttxt(cs)
+put_sbuf_line(cs)
 	char *cs;
 {
 	line_t *lp;
@@ -104,7 +105,7 @@ puttxt(cs)
 		sprintf(errmsg, "line too long");
 		return NULL;
 	}
-	len = (s - cs);
+	len = s - cs;
 	/* out of position */
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
@@ -115,7 +116,7 @@ puttxt(cs)
 		sfseek = ftell(sfp);
 		seek_write = 0;
 	}
-	/* assert: spl1() */
+	/* assert: SPL1() */
 	if ((ct = fwrite(cs, sizeof(char), len, sfp)) < 0 || ct != len) {
 		sfseek = -1;
 		fprintf(stderr, "%s\n", strerror(errno));
@@ -124,29 +125,29 @@ puttxt(cs)
 	}
 	lp->len = len;
 	lp->seek  = sfseek;
-	lpqueue(lp);
+	add_line_node(lp);
 	sfseek += len;			/* update file position */
 	return ++s;
 }
 
 
-/* lpqueue: add a line node in the editor buffer after the current line */
+/* add_line_node: add a line node in the editor buffer after the current line */
 void
-lpqueue(lp)
+add_line_node(lp)
 	line_t *lp;
 {
 	line_t *cp;
 
-	cp = getlp(curln);				/* this getlp last! */
+	cp = get_addressed_line_node(current_addr);				/* this get_addressed_line_node last! */
 	insqueue(lp, cp);
-	lastln++;
-	curln++;
+	addr_last++;
+	current_addr++;
 }
 
 
-/* getaddr: return line number of pointer */
+/* get_line_node_addr: return line number of pointer */
 long
-getaddr(lp)
+get_line_node_addr(lp)
 	line_t *lp;
 {
 	line_t *cp = &line0;
@@ -162,22 +163,22 @@ getaddr(lp)
 }
 
 
-/* getlp: return pointer to a line node in the editor buffer */
+/* get_addressed_line_node: return pointer to a line node in the editor buffer */
 line_t *
-getlp(n)
+get_addressed_line_node(n)
 	long n;
 {
 	static line_t *lp = &line0;
 	static long on = 0;
 
-	spl1();
+	SPL1();
 	if (n > on)
-		if (n <= (on + lastln) >> 1)
+		if (n <= (on + addr_last) >> 1)
 			for (; on < n; on++)
 				lp = lp->next;
 		else {
 			lp = line0.prev;
-			for (on = lastln; on > n; on--)
+			for (on = addr_last; on > n; on--)
 				lp = lp->prev;
 		}
 	else
@@ -189,15 +190,16 @@ getlp(n)
 			for (on = 0; on < n; on++)
 				lp = lp->next;
 		}
-	spl0();
+	SPL0();
 	return lp;
 }
 
 
 char sfn[15] = "";				/* scratch file name */
 
-/* sbopen: open scratch file */
-sbopen()
+/* open_sbuf: open scratch file */
+int
+open_sbuf()
 {
 	strcpy(sfn, "/tmp/ed.XXXXXX");
 	if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
@@ -209,8 +211,9 @@ sbopen()
 }
 
 
-/* sbclose: close scratch file */
-sbclose()
+/* close_sbuf: close scratch file */
+int
+close_sbuf()
 {
 	if (sfp) {
 		if (fclose(sfp) < 0) {
@@ -226,7 +229,7 @@ sbclose()
 }
 
 
-/* quit: remove scratch file and exit */
+/* quit: remove_lines scratch file and exit */
 void
 quit(n)
 	int n;
@@ -241,13 +244,13 @@ quit(n)
 
 unsigned char ctab[256];		/* character translation table */
 
-/* inited: open scratch buffer; initialize line queue */
+/* init_buffers: open scratch buffer; initialize line queue */
 void
-inited()
+init_buffers()
 {
 	int i = 0;
 
-	if (sbopen() < 0)
+	if (open_sbuf() < 0)
 		quit(2);
 	requeue(&line0, &line0);
 	for (i = 0; i < 256; i++)
@@ -255,9 +258,9 @@ inited()
 }
 
 
-/* translit: translate characters in a string */
+/* translit_text: translate characters in a string */
 char *
-translit(s, len, from, to)
+translit_text(s, len, from, to)
 	char *s;
 	int len;
 	int from;

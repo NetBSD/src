@@ -27,7 +27,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)re.c	5.5 (Talke Studio) 3/28/93";
+/* static char sccsid[] = "@(#)re.c	5.5 (Talke Studio) 3/28/93"; */
+static char rcsid[] = "$Id: re.c,v 1.12 1993/11/23 04:41:55 alm Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,23 +45,24 @@ extern int patlock;
 
 char errmsg[MAXFNAME + 40] = "";
 
-/* optpat: return pointer to compiled pattern from command buffer */
+/* get_compiled_pattern: return pointer to compiled pattern from command 
+   buffer */
 pattern_t *
-optpat()
+get_compiled_pattern()
 {
 	static pattern_t *exp = NULL;
 
 	char *exps;
-	char delim;
+	char delimiter;
 	int n;
 
-	if ((delim = *ibufp) == ' ') {
+	if ((delimiter = *ibufp) == ' ') {
 		sprintf(errmsg, "invalid pattern delimiter");
 		return NULL;
-	} else if (delim == '\n' || *++ibufp == '\n' || *ibufp == delim) {
+	} else if (delimiter == '\n' || *++ibufp == '\n' || *ibufp == delimiter) {
 		if (!exp) sprintf(errmsg, "no previous pattern");
 		return exp;
-	} else if ((exps = getlhs(delim)) == NULL)
+	} else if ((exps = extract_pattern(delimiter)) == NULL)
 		return NULL;
 	/* buffer alloc'd && not reserved */
 	if (exp && !patlock)
@@ -82,21 +84,21 @@ optpat()
 
 extern int isbinary;
 
-/* getlhs: copy a pattern string from the command buffer; return pointer
-   to the copy */
+/* extract_pattern: copy a pattern string from the command buffer; return
+   pointer to the copy */
 char *
-getlhs(delim)
-	int delim;
+extract_pattern(delimiter)
+	int delimiter;
 {
 	char *nd;
 	int len;
 
-	for (nd = ibufp; *nd != delim && *nd != '\n'; nd++)
+	for (nd = ibufp; *nd != delimiter && *nd != '\n'; nd++)
 		switch (*nd) {
 		default:
 			break;
 		case '[':
-			if ((nd = ccl(++nd)) == NULL) {
+			if ((nd = parse_char_class(++nd)) == NULL) {
 				sprintf(errmsg, "unbalanced brackets ([])");
 				return NULL;
 			}
@@ -113,13 +115,13 @@ getlhs(delim)
 	memcpy(lhbuf, ibufp, len);
 	lhbuf[len] = '\0';
 	ibufp = nd;
-	return (isbinary) ? nultonl(lhbuf, len) : lhbuf;
+	return (isbinary) ? NUL_TO_NEWLINE(lhbuf, len) : lhbuf;
 }
 
 
-/* ccl: expand a POSIX character class */
+/* parse_char_class: expand a POSIX character class */
 char *
-ccl(s)
+parse_char_class(s)
 	char *s;
 {
 	int c, d;

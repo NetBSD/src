@@ -38,7 +38,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91";
+/* static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91"; */
+static char rcsid[] = "$Id: cbc.c,v 1.7 1993/11/23 04:41:50 alm Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,7 +61,7 @@ static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91";
 
 /*
  * BSD and System V systems offer special library calls that do
- * block moves and fills, so if possible we take advantage of them
+ * block move_liness and fills, so if possible we take advantage of them
  */
 #define	MEMCPY(dest,src,len)	memcpy((dest),(src),(len))
 #define	MEMZERO(dest,len)	memset((dest), 0, (len))
@@ -68,10 +69,10 @@ static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91";
 /* Hide the calls to the primitive encryption routines. */
 #define	DES_KEY(buf) \
 	if (des_setkey(buf)) \
-		err("des_setkey");
+		des_error("des_setkey");
 #define	DES_XFORM(buf) \
 	if (des_cipher(buf, buf, 0L, (inverse ? -1 : 1))) \
-		err("des_cipher");
+		des_error("des_cipher");
 
 /*
  * read/write - no error checking
@@ -103,14 +104,14 @@ char bits[] = {				/* used to extract bits from a char */
 };
 int pflag;				/* 1 to preserve parity bits */
 
-char des_buf[8];		/* shared buffer for desgetc/desputc */
-int des_ct = 0;			/* count for desgetc/desputc */
-int des_n = 0;			/* index for desputc/desgetc */
+char des_buf[8];		/* shared buffer for get_des_char/put_des_char */
+int des_ct = 0;			/* count for get_des_char/put_des_char */
+int des_n = 0;			/* index for put_des_char/get_des_char */
 
 
-/* desinit: initialize DES */
+/* init_des_cipher: initialize DES */
 void
-desinit()
+init_des_cipher()
 {
 #ifdef DES
 	int i;
@@ -128,28 +129,30 @@ desinit()
 }
 
 
-/* desgetc: return next char in an encrypted file */
-desgetc(fp)
+/* get_des_char: return next char in an encrypted file */
+int
+get_des_char(fp)
 	FILE *fp;
 {
 #ifdef DES
 	if (des_n >= des_ct) {
 		des_n = 0;
-		des_ct = cbcdec(des_buf, fp);
+		des_ct = cbc_decode(des_buf, fp);
 	}
 	return (des_ct > 0) ? des_buf[des_n++] : EOF;
 #endif
 }
 
 
-/* desputc: write a char to an encrypted file; return char written */
-desputc(c, fp)
+/* put_des_char: write a char to an encrypted file; return char written */
+int
+put_des_char(c, fp)
 	int c;
 	FILE *fp;
 {
 #ifdef DES
 	if (des_n == sizeof des_buf) {
-		des_ct = cbcenc(des_buf, des_n, fp);
+		des_ct = cbc_encode(des_buf, des_n, fp);
 		des_n = 0;
 	}
 	return (des_ct >= 0) ? (des_buf[des_n++] = c) : EOF;
@@ -157,16 +160,17 @@ desputc(c, fp)
 }
 
 
-/* desflush: flush an encrypted file's output; return status */
-desflush(fp)
+/* flush_des_file: flush an encrypted file's output; return status */
+int
+flush_des_file(fp)
 	FILE *fp;
 {
 #ifdef DES
 	if (des_n == sizeof des_buf) {
-		des_ct = cbcenc(des_buf, des_n, fp);
+		des_ct = cbc_encode(des_buf, des_n, fp);
 		des_n = 0;
 	}
-	return (des_ct >= 0 && cbcenc(des_buf, des_n, fp) >= 0) ? 0 : EOF;
+	return (des_ct >= 0 && cbc_encode(des_buf, des_n, fp) >= 0) ? 0 : EOF;
 #endif
 }
 
@@ -174,7 +178,8 @@ desflush(fp)
 /*
  * get keyword from tty or stdin
  */
-getkey()
+int
+get_keyword()
 {
 	register char *p;		/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
@@ -187,9 +192,9 @@ getkey()
 		/*
 		 * copy it, nul-padded, into the key area
 		 */
-		cvtkey(BUFFER(msgbuf), p);
+		expand_des_key(BUFFER(msgbuf), p);
 		MEMZERO(p, _PASSWORD_LEN);
-		makekey(msgbuf);
+		set_des_key(msgbuf);
 		MEMZERO(msgbuf, sizeof msgbuf);
 		return 1;
 	}
@@ -203,7 +208,7 @@ extern char errmsg[];
  * print a warning message and, possibly, terminate
  */
 void
-err(s)
+des_error(s)
 	char *s;		/* the message */
 {
 	(void)sprintf(errmsg, "%s", s ? s : strerror(errno));
@@ -212,7 +217,8 @@ err(s)
 /*
  * map a hex character to an integer
  */
-tobinhex(c, radix)
+int
+hex_to_binary(c, radix)
 	int c;			/* char to be converted */
 	int radix;		/* base (2 to 16) */
 {
@@ -244,7 +250,7 @@ tobinhex(c, radix)
  * convert the key to a bit pattern
  */
 void
-cvtkey(obuf, ibuf)
+expand_des_key(obuf, ibuf)
 	char *obuf;			/* bit pattern */
 	char *ibuf;			/* the key itself */
 {
@@ -260,8 +266,8 @@ cvtkey(obuf, ibuf)
 		 * now translate it, bombing on any illegal hex digit
 		 */
 		for (i = 0; ibuf[i] && i < 16; i++)
-			if ((nbuf[i] = tobinhex((int) ibuf[i], 16)) == -1)
-				err("bad hex digit in key");
+			if ((nbuf[i] = hex_to_binary((int) ibuf[i], 16)) == -1)
+				des_error("bad hex digit in key");
 		while (i < 16)
 			nbuf[i++] = 0;
 		for (i = 0; i < 8; i++)
@@ -280,8 +286,8 @@ cvtkey(obuf, ibuf)
 		 * now translate it, bombing on any illegal binary digit
 		 */
 		for (i = 0; ibuf[i] && i < 16; i++)
-			if ((nbuf[i] = tobinhex((int) ibuf[i], 2)) == -1)
-				err("bad binary digit in key");
+			if ((nbuf[i] = hex_to_binary((int) ibuf[i], 2)) == -1)
+				des_error("bad binary digit in key");
 		while (i < 64)
 			nbuf[i++] = 0;
 		for (i = 0; i < 8; i++)
@@ -312,7 +318,7 @@ cvtkey(obuf, ibuf)
  * DES ignores the low order bit of each character.
  */
 void
-makekey(buf)
+set_des_key(buf)
 	Desbuf buf;				/* key block */
 {
 	register int i, j;			/* counter in a for loop */
@@ -341,7 +347,8 @@ makekey(buf)
 /*
  * This encrypts using the Cipher Block Chaining mode of DES
  */
-cbcenc(msgbuf, n, fp)
+int
+cbc_encode(msgbuf, n, fp)
 	char *msgbuf;
 	int n;
 	FILE *fp;
@@ -379,7 +386,8 @@ cbcenc(msgbuf, n, fp)
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-cbcdec(msgbuf, fp)
+int
+cbc_decode(msgbuf, fp)
 	char *msgbuf;		/* I/O buffer */
 	FILE *fp;			/* input file descriptor */
 {
@@ -403,7 +411,7 @@ cbcdec(msgbuf, fp)
 		if ((c = fgetc(fp)) == EOF) {
 			n = CHAR(msgbuf, 7);
 			if (n < 0 || n > 7) {
-				err("decryption failed (block corrupted)");
+				des_error("decryption failed (block corrupted)");
 				return EOF;
 			}
 		} else
@@ -411,9 +419,9 @@ cbcdec(msgbuf, fp)
 		return n;
 	}
 	if (n > 0)
-		err("decryption failed (incomplete block)");
+		des_error("decryption failed (incomplete block)");
 	else if (n < 0)
-		err("cannot read file");
+		des_error("cannot read file");
 	return EOF;
 }
 #endif	/* DES */
