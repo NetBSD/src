@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.3 1999/03/08 02:07:42 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.4 1999/03/11 19:00:58 scottr Exp $
 #
 # GENERIC
 
@@ -105,6 +105,9 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_GRF	# grf interface compatibility
+options 	WSDISPLAY_COMPAT_ITE	# ite compatibility
+options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
 
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
@@ -153,7 +156,7 @@ macfb*	at intvid?
 macfb*	at macvid?
 
 # Workstation Console devices
-wsdisplay0 at fb? console ?
+wsdisplay0 at macfb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
