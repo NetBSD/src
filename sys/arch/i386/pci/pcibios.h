@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.5 2002/01/22 15:07:27 uch Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.6 2004/02/19 12:23:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -64,7 +64,7 @@ struct pcibios_intr_routing {
 /*
  * $PIR header.  Reference:
  *
- *	http://www.microsoft.com/HWDEV/busbios/PCIIRQ.htm
+ *	http://www.microsoft.com/whdc/hwdev/archive/BUSBIOS/pciirq.mspx
  */
 struct pcibios_pir_header {
 	u_int32_t	signature;		/* $PIR */
