@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14 1997/03/31 07:37:27 scottr Exp $	*/
+/*	$NetBSD: itevar.h,v 1.15 2001/12/14 08:25:40 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,12 +197,27 @@ extern	struct ite_softc ite_softc[];
 extern	struct itesw itesw[];
 extern	int nitesw;
 
+struct ite_kbdops {
+	int (*getc)(int *);
+	void (*enable)(void *);
+	void (*bell)(void *);
+	void *arg;
+};
+
+struct ite_kbdmap {
+	u_char *keymap;
+	u_char *shiftmap;
+	u_char *ctrlmap;
+};
+
 /* ite.c prototypes */
 void	ite_attach_grf __P((int, int));
 int	iteon __P((struct ite_data *, int));
 void	iteoff __P((struct ite_data *, int));
 void	itefilter __P((char, char));
-void	itecninit __P((struct grf_data *, struct itesw *));
+void	itedisplaycnattach __P((struct grf_data *, struct itesw *));
+void	itekbdcnattach __P((struct ite_kbdops *, struct ite_kbdmap *));
+void	itecninit __P((void));
 int	itecngetc __P((dev_t));
 void	itecnputc __P((dev_t, int));
 int	ite_major __P((void));
