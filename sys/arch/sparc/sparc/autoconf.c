@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.130 2000/01/12 14:53:17 mjacob Exp $ */
+/*	$NetBSD: autoconf.c,v 1.131 2000/01/12 15:53:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1718,6 +1718,7 @@ device_register(dev, aux)
 				strcpy(bootpath[nbootpath].name, "fd");
 				nbootpath++;
 			}
+			bp->dev = dev;
 			bootpath_store(1, bp + 1);
 			return;
 		}
@@ -1733,6 +1734,9 @@ device_register(dev, aux)
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
+		 * Note that we also have look back past the `scsibus'
+		 * device to determine whether this target is on the
+		 * correct controller in our boot path.
 		 */
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_link *sc_link = sa->sa_sc_link;
@@ -1740,6 +1744,10 @@ device_register(dev, aux)
 			(struct scsibus_softc *)dev->dv_parent;
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
+
+		/* Check the controller that this scsibus is on */
+		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+			return;
 
 		/*
 		 * Bounds check: we know the target and lun widths.
