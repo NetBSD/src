@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.48 1997/05/24 20:16:26 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.49 1997/07/07 16:28:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -224,6 +224,9 @@ lemediastatus(sc, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
+
+	if (lesc->sc_dma == NULL)
+		return;
 
 	/*
 	 * Notify the world which media we're currently using.
@@ -459,7 +462,7 @@ leattach(parent, self, aux)
 	sc->sc_hwreset = lehwreset;
 
 #if defined(SUN4M)
-	if (CPU_ISSUN4M) {
+	if (CPU_ISSUN4M && lesc->sc_dma) {
 		sc->sc_mediachange = lemediachange;
 		sc->sc_mediastatus = lemediastatus;
 		sc->sc_supmedia = lemediasun4m;
