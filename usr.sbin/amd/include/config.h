@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.11 1998/08/08 22:33:37 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.12 1999/01/11 15:57:49 bouyer Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -752,7 +752,7 @@
 /* #undef HAVE_FIELD_UFS_ARGS_T_FLAGS */
 
 /* does ufs_args_t have fspec field? */
-/* #undef HAVE_FIELD_UFS_ARGS_T_FSPEC */
+#define HAVE_FIELD_UFS_ARGS_T_FSPEC 1
 
 /* does efs_args_t have flags field? */
 /* #undef HAVE_FIELD_EFS_ARGS_T_FLAGS */
@@ -1019,7 +1019,7 @@
 /* #undef tmpfs_args_t */
 
 /* Define a type for the ufs_args structure */
-/* #undef ufs_args_t */
+#define ufs_args_t struct ufs_args
 
 /* Define a type for the efs_args structure */
 /* #undef efs_args_t */
