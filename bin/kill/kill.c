@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kill.c	5.3 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: kill.c,v 1.5 1993/08/01 18:59:35 mycroft Exp $";
+static char rcsid[] = "$Id: kill.c,v 1.6 1993/08/06 21:25:21 mycroft Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -48,15 +48,7 @@ static char rcsid[] = "$Id: kill.c,v 1.5 1993/08/01 18:59:35 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-static char *signals[] = {
-	"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT",		/*  1 - 6  */
-	"EMT", "FPE", "KILL", "BUS", "SEGV", "SYS",		/*  7 - 12 */
-	"PIPE", "ALRM", "TERM", "URG", "STOP", "TSTP",		/* 13 - 18 */
-	"CONT", "CHLD", "TTIN", "TTOU", "IO", "XCPU",		/* 19 - 24 */
-	"XFSZ", "VTALRM", "PROF", "WINCH", "INFO", "USR1",	/* 25 - 30 */
-	"USR2", NULL,						/* 31 - 32 */
-};
+#include <unistd.h>
 
 main(argc, argv)
 	int argc;
@@ -163,14 +155,13 @@ int
 signame_to_signum (sig)
 	char *sig;
 {
-	char **p;
+	int n;
 
 	if (!strncasecmp(sig, "sig", 3))
 		sig += 3;
-	for (p = signals; *p; ++p) {
-		if (!strcasecmp(*p, sig)) {
-			return p - signals + 1;
-		}
+	for (n = 1; n < NSIG; n++) {
+		if (!strcasecmp(sys_signame[n], sig))
+			return n;
 	}
 	return -1;
 }
@@ -187,31 +178,21 @@ nosig(name)
 printsig(sig)
 	int sig;
 {
-	printf ("%s\n", signals[sig - 1]);
+	printf ("%s\n", sys_signame[sig]);
 }
 
 printsignals(fp)
 	FILE *fp;
 {
-	register char **p = signals;;
+	int n;
 
-	/* From POSIX 1003.2, Draft 11.2: 
-		When the -l option is specified, the symbolic name of each
-	   signal shall be written in the following format:
-		"%s%c", <signal_name>, <separator>
-           where the <signal_name> is in uppercase, without the SIG prefix,
-	   and the <separator> shall either be a <newline> or a <space>.
-	   For the last signal written, <separator> shall be a <newline> */
-
-	/* This looses if the signals array is empty; But, since it
-	   will "never happen", there is no need to add wrap this 
-	   in a conditional that will always succeed. */
-	(void)fprintf(fp, "%s", *p);
-	
-	for (++p ; *p; ++p) {
-		(void)fprintf(fp, " %s", *p);
-	}
-	(void)fprintf(fp, "\n");
+        for (n = 1; n < NSIG; n++) {
+                (void)fprintf(fp, "%s", sys_signame[n]);
+                if (n == (NSIG / 2) || n == (NSIG - 1))
+                        (void)fprintf(fp, "\n");
+		else
+			(void)fprintf(fp, " ");
+        }
 }
 
 usage()
