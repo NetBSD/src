@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2002/07/31 00:20:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2002/07/31 17:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2002/07/31 00:20:52 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2002/07/31 17:34:23 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -405,61 +405,6 @@ pmap_is_curpmap(struct pmap *pmap)
 
 	return (FALSE);
 }
-
-#include "isadma.h"
-
-#if NISADMA > 0
-/*
- * Used to protect memory for ISA DMA bounce buffers.  If, when loading
- * pages into the system, memory intersects with any of these ranges,
- * the intersecting memory will be loaded into a lower-priority free list.
- */
-bus_dma_segment_t *pmap_isa_dma_ranges;
-int pmap_isa_dma_nranges;
-
-/*
- * Check if a memory range intersects with an ISA DMA range, and
- * return the page-rounded intersection if it does.  The intersection
- * will be placed on a lower-priority free list.
- */
-boolean_t
-pmap_isa_dma_range_intersect(paddr_t pa, psize_t size, paddr_t *pap,
-    psize_t *sizep)
-{
-	bus_dma_segment_t *ds;
-	int i;
-
-	if (pmap_isa_dma_ranges == NULL)
-		return (FALSE);
-
-	for (i = 0, ds = pmap_isa_dma_ranges;
-	     i < pmap_isa_dma_nranges; i++, ds++) {
-		if (ds->ds_addr <= pa && pa < (ds->ds_addr + ds->ds_len)) {
-			/*
-			 * Beginning of region intersects with this range.
-			 */
-			*pap = trunc_page(pa);
-			*sizep = round_page(min(pa + size,
-			    ds->ds_addr + ds->ds_len) - pa);
-			return (TRUE);
-		}
-		if (pa < ds->ds_addr && ds->ds_addr < (pa + size)) {
-			/*
-			 * End of region intersects with this range.
-			 */
-			*pap = trunc_page(ds->ds_addr);
-			*sizep = round_page(min((pa + size) - ds->ds_addr,
-			    ds->ds_len));
-			return (TRUE);
-		}
-	}
-
-	/*
-	 * No intersection found.
-	 */
-	return (FALSE);
-}
-#endif /* NISADMA > 0 */
 
 /*
  * p v _ e n t r y   f u n c t i o n s

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.h,v 1.1 2001/10/27 16:17:51 rearnsha Exp $ */
+/*	$NetBSD: int_bus_dma.h,v 1.2 2002/07/31 17:34:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -34,33 +34,9 @@
 
 #include <machine/bus.h>
 
-#ifdef _ARM32_BUS_DMA_PRIVATE
-
 #define CM_ALIAS_TO_LOCAL(addr) (addr & 0x0fffffff)
 #define LOCAL_TO_CM_ALIAS(addr)	(addr | 0x80000000)
 
-int     integrator_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-            bus_size_t, struct proc *, int));
-int     integrator_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-            struct mbuf *, int));
-int     integrator_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-            struct uio *, int));
+void	integrator_pci_dma_init(bus_dma_tag_t);
 
-int     integrator_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
-            bus_size_t alignment, bus_size_t boundary,
-            bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void    integrator_bus_dmamem_free __P((bus_dma_tag_t tag, 
-	    bus_dma_segment_t *segs, int nsegs));
-int     integrator_bus_dmamem_map __P((bus_dma_tag_t tag,
-	    bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap,
-	    int flags));
-paddr_t integrator_bus_dmamem_mmap __P((bus_dma_tag_t tag,
-	    bus_dma_segment_t *segs, int nsegs, off_t off, int prot,
-	    int flags));
-
-int     integrator_bus_dmamem_alloc_range __P((bus_dma_tag_t tag,
-	    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-            bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-            vaddr_t low, vaddr_t high));
-#endif /* _ARM32_BUS_DMA_PRIVATE */
 #endif /* _INT_BUS_DMA_H */

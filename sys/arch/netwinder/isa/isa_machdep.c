@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2002/03/04 02:19:09 simonb Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2002/07/31 17:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ isa_intr_init(void)
 
 /* Static array of ISA DMA segments. We only have one on CATS */
 #if NISADMA > 0
-static bus_dma_segment_t isa_dma_segments[1];
+struct arm32_dma_range netwinder_isa_dma_ranges[1];
 #endif
 
 void
@@ -512,13 +512,15 @@ isa_netwinder_init(iobase, membase)
 	u_int iobase, membase;
 {
 #if NISADMA > 0
-	extern bus_dma_segment_t *pmap_isa_dma_ranges;
-	extern int pmap_isa_dma_nranges;
+	extern struct arm32_dma_range *footbridge_isa_dma_ranges; 
+	extern int footbridge_isa_dma_nranges;
 
-	pmap_isa_dma_ranges = isa_dma_segments;
-	pmap_isa_dma_nranges = 1;
-	pmap_isa_dma_ranges[0].ds_addr = bootconfig.dram[0].address;
-	pmap_isa_dma_ranges[0].ds_len = (16 * 1024 * 1024);
+	netwinder_isa_dma_ranges[0].dr_sysbase = bootconfig.dram[0].address;
+	netwinder_isa_dma_ranges[0].dr_busbase = bootconfig.dram[0].address;
+	netwinder_isa_dma_ranges[0].dr_len = (16 * 1024 * 1024);
+
+	footbridge_isa_dma_ranges = netwinder_isa_dma_ranges; 
+	footbridge_isa_dma_nranges = 1;
 #endif
 
 	isa_io_init(iobase, membase);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.4 2002/07/30 04:45:42 thorpej Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.5 2002/07/31 17:34:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -127,6 +127,9 @@ struct i80321_softc {
 	struct bus_space sc_pci_memt;
 	struct arm32_bus_dma_tag sc_pci_dmat;
 	struct arm32_pci_chipset sc_pci_chipset;
+
+	/* DMA window info for PCI DMA. */
+	struct arm32_dma_range sc_pci_dma_range;
 
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
