@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2000/06/14 18:43:58 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.7 2000/11/11 22:26:10 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -69,7 +69,7 @@ main(int argc, char **argv)
 {
 	int             ch;
 	int             ret = 0;
-	char           *optstring = "b:C:di:m:npy";
+	char           *optstring = "b:C:dfi:m:npy";
 
 	sync();
 	skipclean = 1;
@@ -90,6 +90,9 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			exitonfail++;
+			break;
+		case 'f':
+			skipclean = 0;
 			break;
 		case 'i':
 			idaddr = strtol(optarg, NULL, 0);
