@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.1 2003/03/05 22:08:22 matt Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,23 +42,40 @@
 
 /*
  */
+struct gtpci_chipset {
+	struct pci_chipset gtpc_pc;
+	int gtpc_busno;
+	bus_space_tag_t gtpc_io_bs;
+	bus_space_tag_t gtpc_mem_bs;
+	bus_space_tag_t gtpc_gt_memt;
+	bus_space_handle_t gtpc_gt_memh;
+	bus_size_t gtpc_cfgaddr;
+	bus_size_t gtpc_cfgdata;
+	bus_size_t gtpc_syncreg;
+};
 
+
+#ifdef _KERNEL
 static uint32_t __inline
-gtpci_read(pci_chipset_tag_t pc, bus_size_t reg)
+gtpci_read(struct gtpci_chipset *gtpc, bus_size_t reg)
 {
 	uint32_t rv;
-	(void) gt_read(pc->pc_md.mdpc_gt, pc->pc_md.mdpc_syncreg);
-	rv = gt_read(pc->pc_md.mdpc_gt, reg);
-	(void) gt_read(pc->pc_md.mdpc_gt, pc->pc_md.mdpc_syncreg);
+	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,
+	    gtpc->gtpc_syncreg);
+	rv = bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh, reg);
+	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,
+	    gtpc->gtpc_syncreg);
 	return rv;
 }
 
 static void __inline
-gtpci_write(pci_chipset_tag_t pc, bus_size_t reg, uint32_t val)
+gtpci_write(struct gtpci_chipset *gtpc, bus_size_t reg, uint32_t val)
 {
-	(void) gt_read(pc->pc_md.mdpc_gt, pc->pc_md.mdpc_syncreg);
-	gt_write(pc->pc_md.mdpc_gt, reg, val);
-	(void) gt_read(pc->pc_md.mdpc_gt, pc->pc_md.mdpc_syncreg);
+	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,
+	    gtpc->gtpc_syncreg);
+	bus_space_write_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh, reg, val);
+	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,
+	    gtpc->gtpc_syncreg);
 }
 
 pcitag_t gtpci_make_tag(pci_chipset_tag_t, int, int, int);
@@ -70,5 +87,6 @@ void	gtpci_md_bus_devorder(pci_chipset_tag_t, int, char []);
 int	gtpci_md_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int	gtpci_md_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 void	gtpci_md_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
+#endif /* _KERNEL */
 
 #endif /* _DEV_MARVELL_GTPCIVAR_H */

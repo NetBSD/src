@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.1 2003/03/05 22:08:21 matt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -106,27 +106,27 @@ unsigned int mpscdebug = 0;
 #define GTMPSCUNIT(x)      (minor(x) & GTMPSCUNIT_MASK)
 #define GTMPSCDIALOUT(x)   (minor(x) & GTMPSCDIALOUT_MASK)
 
-STATIC void gtmpscinit __P((struct gtmpsc_softc *));
-STATIC int  gtmpscmatch __P((struct device *, struct cfdata *, void *));
-STATIC void gtmpscattach __P((struct device *, struct device *, void *));
-STATIC int  compute_cdv __P((unsigned int));
-STATIC void gtmpsc_loadchannelregs __P((struct gtmpsc_softc *));
-STATIC void gtmpscshutdown __P((struct gtmpsc_softc *));
-STATIC void gtmpscstart __P((struct tty *));
-STATIC int  gtmpscparam __P((struct tty *, struct termios *));
-STATIC int  gtmpsc_probe __P((void));
-STATIC int  gtmpsc_intr __P((void *));
+STATIC void gtmpscinit(struct gtmpsc_softc *);
+STATIC int  gtmpscmatch(struct device *, struct cfdata *, void *);
+STATIC void gtmpscattach(struct device *, struct device *, void *);
+STATIC int  compute_cdv(unsigned int);
+STATIC void gtmpsc_loadchannelregs(struct gtmpsc_softc *);
+STATIC void gtmpscshutdown(struct gtmpsc_softc *);
+STATIC void gtmpscstart(struct tty *);
+STATIC int  gtmpscparam(struct tty *, struct termios *);
+STATIC int  gtmpsc_probe(void);
+STATIC int  gtmpsc_intr(void *);
 STATIC int  gtmpsc_softintr(void *);
 
-STATIC void gtmpsc_common_putn __P((struct gtmpsc_softc *));
-STATIC void gtmpsc_common_putc __P((unsigned int, unsigned char));
-STATIC int  gtmpsc_common_getc __P((unsigned int));
-STATIC int  gtmpsc_common_pollc __P((unsigned int, char *, int *));
-STATIC void gtmpsc_poll __P((void *));
+STATIC void gtmpsc_common_putn(struct gtmpsc_softc *);
+STATIC void gtmpsc_common_putc(unsigned int, unsigned char);
+STATIC int  gtmpsc_common_getc(unsigned int);
+STATIC int  gtmpsc_common_pollc(unsigned int, char *, int *);
+STATIC void gtmpsc_poll(void *);
 #ifdef KGDB
-STATIC void gtmpsc_kgdb_poll __P((void *));
+STATIC void gtmpsc_kgdb_poll(void *);
 #endif
-STATIC void gtmpsc_mem_printf __P((const char *, ...));
+STATIC void gtmpsc_mem_printf(const char *, ...);
 
 STATIC void gtmpsc_txdesc_init(gtmpsc_poll_sdma_t *, gtmpsc_poll_sdma_t *);
 STATIC void gtmpsc_rxdesc_init(gtmpsc_poll_sdma_t *, gtmpsc_poll_sdma_t *);
@@ -134,19 +134,21 @@ STATIC unsigned int gtmpsc_get_causes(void);
 STATIC void gtmpsc_hackinit(struct gtmpsc_softc *);
 STATIC void gtmpscinit_stop(struct gtmpsc_softc *, int);
 STATIC void gtmpscinit_start(struct gtmpsc_softc *, int);
+#if 0
 void gtmpsc_printf(const char *fmt, ...);
+#endif
 void gtmpsc_puts(char *);
 
-void gtmpsccnprobe __P((struct consdev *));
-void gtmpsccninit __P((struct consdev *));
-int  gtmpsccngetc __P((dev_t));
-void gtmpsccnputc __P((dev_t, int));
-void gtmpsccnpollc __P((dev_t, int));
-void gtmpsccnhalt __P((dev_t));
+void gtmpsccnprobe(struct consdev *);
+void gtmpsccninit(struct consdev *);
+int  gtmpsccngetc(dev_t);
+void gtmpsccnputc(dev_t, int);
+void gtmpsccnpollc(dev_t, int);
+void gtmpsccnhalt(dev_t);
 
-STATIC void gtmpsc_txflush __P((gtmpsc_softc_t *));
-STATIC void gtmpsc_iflush __P((gtmpsc_softc_t *));
-STATIC void gtmpsc_shutdownhook __P((void *));
+STATIC void gtmpsc_txflush(gtmpsc_softc_t *);
+STATIC void gtmpsc_iflush(gtmpsc_softc_t *);
+STATIC void gtmpsc_shutdownhook(void *);
 
 dev_type_open(gtmpscopen);
 dev_type_close(gtmpscclose);
@@ -168,13 +170,13 @@ CFATTACH_DECL(gtmpsc, sizeof(struct gtmpsc_softc),
 extern struct cfdriver gtmpsc_cd;
 
 #if 0
-struct consdev consdev_mpsc = {
+struct consdev consdev_gtmpsc = {
 	gtmpsccnprobe,
 	gtmpsccninit,
 	gtmpsccngetc,
 	gtmpsccnputc,
 	gtmpsccnpollc,
-	NULL,
+	NULL,		/* cn_bell */
 	NULL,		/* cn_flush */
 	gtmpsccnhalt,
 };
@@ -197,8 +199,8 @@ static int gtmpsc_kgdb_attached;
 
 int kgdb_break_immediate /* = 0 */ ;
 
-STATIC int      gtmpsc_kgdb_getc __P((void *));
-STATIC void     gtmpsc_kgdb_putc __P((void *, int));
+STATIC int      gtmpsc_kgdb_getc(void *);
+STATIC void     gtmpsc_kgdb_putc(void *, int);
 #endif /* KGDB */
 
 /*
@@ -255,7 +257,7 @@ gtmpsc_cache_invalidate(void *p)
 #endif	/* SDMA_COHERENT */
 
 
-extern unsigned int gtbase;
+extern vaddr_t gtbase;
 
 #define GT_READ(d,a) \
 	gtmpsc_reg_read(gtbase, (a))
@@ -291,14 +293,8 @@ gtmpsc_reg_read(unsigned int p, unsigned int off)
 {
 	unsigned int rv;
 
-#undef GCC_R0_OFF_NOT_BROKEN
-#ifdef GCC_R0_OFF_NOT_BROKEN
-	asm volatile("lwbrx %0,%1,%2; eieio;"
-		: "=r"(rv) : "r"(off), "r"(p));
-#else
-	asm volatile("lwbrx %0,0,%1; eieio;"
-		: "=r"(rv) : "r"(p + off));
-#endif
+	__asm __volatile("lwbrx %0,%1,%2; eieio;"
+		: "=r"(rv) : "b"(off), "r"(p));
 	DPRINTF(("READ 0x%x 0x%x\n", off, rv));
 
 	return rv;
@@ -307,13 +303,8 @@ gtmpsc_reg_read(unsigned int p, unsigned int off)
 static volatile inline void
 gtmpsc_reg_write(unsigned int p, unsigned int off, unsigned int v)
 {
-#ifdef GCC_R0_OFF_NOT_BROKEN
-	asm volatile("stwbrx %0,%1,%2; eieio;"
-		:: "r"(v), "r"(off), "r"(p));
-#else
-	asm volatile("stwbrx %0,0,%1; eieio;"
-		:: "r"(v), "r"(p+off));
-#endif
+	__asm __volatile("stwbrx %0,%1,%2; eieio;"
+		:: "r"(v), "b"(off), "r"(p));
 	DPRINTF(("WRITE 0x%x 0x%x\n", off, v));
 }
 
@@ -324,7 +315,7 @@ desc_read(unsigned int *ip)
 {
 	unsigned int rv;
 
-	asm volatile ("lwzx %0,0,%1; eieio;"
+	__asm __volatile ("lwzx %0,0,%1; eieio;"
 		: "=r"(rv) : "r"(ip));
 	return rv;
 }
@@ -332,7 +323,7 @@ desc_read(unsigned int *ip)
 static volatile inline void
 desc_write(unsigned int *ip, unsigned int val)
 {
-	asm volatile ("stwx %0,0,%1; eieio;"
+	__asm __volatile ("stwx %0,0,%1; eieio;"
 		:: "r"(val), "r"(ip));
 }
 
@@ -896,13 +887,13 @@ gtmpsc_get_causes(void)
 		desc_addr[0] =
 		    &sc->gtmpsc_poll_sdmapage->rx[sc->gtmpsc_poll_rxix].rxdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[0]);
-		    asm volatile ("dcbt 0,%0" :: "r"(desc_addr[0]));
+		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[0]));
 	    }
 	    if (sdma_imask & SDMA_INTR_TXBUF(0)) {
 		desc_addr[1] =
 		    &sc->gtmpsc_poll_sdmapage->tx[sc->gtmpsc_poll_txix].txdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[1]);
-		    asm volatile ("dcbt 0,%0" :: "r"(desc_addr[1]));
+		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[1]));
 	    }
 	}
 	sc = gtmpsc_cd.cd_devs[1];
@@ -911,13 +902,13 @@ gtmpsc_get_causes(void)
 		desc_addr[2] =
 		    &sc->gtmpsc_poll_sdmapage->rx[sc->gtmpsc_poll_rxix].rxdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[2]);
-		    asm volatile ("dcbt 0,%0" :: "r"(desc_addr[2]));
+		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[2]));
 	    }
 	    if (sdma_imask & SDMA_INTR_TXBUF(1)) {
 		desc_addr[3] =
 		    &sc->gtmpsc_poll_sdmapage->tx[sc->gtmpsc_poll_txix].txdesc;
 		    GTMPSC_CACHE_INVALIDATE(desc_addr[3]);
-		    asm volatile ("dcbt 0,%0" :: "r"(desc_addr[3]));
+		    __asm __volatile ("dcbt 0,%0" :: "r"(desc_addr[3]));
 	    }
 	}
 
@@ -1022,7 +1013,7 @@ gtmpsc_softintr(void *unused)
 	unsigned int            unit;
 	struct gtmpsc_softc       *sc;
 	struct tty              *tp;
-	int                     (*rint) __P((int c, struct tty *tp));
+	int                     (*rint)(int, struct tty *);
 	int                     jobs;
 	int                     s;
 
@@ -1750,6 +1741,7 @@ gtmpsc_poll(void *arg)
 		}
 	}
 #ifdef DDB
+#ifdef MPSC_CONSOLE
 	if (stat) {
 		struct consdev *ocd = cn_tab;
 		if (ocd->cn_init != gtmpsccninit) {
@@ -1760,6 +1752,7 @@ gtmpsc_poll(void *arg)
 			Debugger();
 		}
 	}
+#endif
 #endif
 	if (kick)
 		setsoftserial();
@@ -1815,6 +1808,7 @@ gtmpsc_kgdb_poll(void *arg)
 
 #endif /* KGDB */
 
+#if 0
 void
 #ifdef __STDC__
 gtmpsc_printf(const char *fmt, ...)
@@ -1838,6 +1832,7 @@ gtmpsc_printf(fmt, va_alist)
 	cn_tab = ocd;
 	splx(s);
 }
+#endif
 
 void
 #ifdef __STDC__
