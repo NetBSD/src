@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettext.3,v 1.1.1.1 2000/10/31 10:45:05 itojun Exp $
+.\"	$NetBSD: gettext.3,v 1.2 2000/10/31 10:53:49 itojun Exp $
 .\"
 .\" Copyright (c) 2000 Citrus Project,
 .\" All rights reserved.
@@ -388,3 +388,7 @@ based on the documentations for GNU gettext.
 .Sh BUGS
 The text was ripped off from Annex C of
 .Dq LI18NUX 2000 Globalization Specification Version 1.0 .
+.Pp
+.Fn bind_textdomain_codeset
+does not work at this moment
+.Pq always fail .
