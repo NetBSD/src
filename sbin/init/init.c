@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.43 2001/06/18 01:38:05 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.44 2002/01/16 18:30:57 abs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.43 2001/06/18 01:38:05 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.44 2002/01/16 18:30:57 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -1316,8 +1316,8 @@ msdosfs_root(void)
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
 	case 0:
-		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "256",
-		    "-s", "384", "-b", "4096", "-f", "512", "swap", "/dev",
+		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "192",
+		    "-s", "512", "-b", "4096", "-f", "512", "swap", "/dev",
 		    NULL);
 		goto done;
 
