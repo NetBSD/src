@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2000/09/08 17:22:02 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.18 2000/09/09 09:36:23 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -326,7 +326,9 @@ int eat __P((void));
 void endfly __P((void));
 int fight __P((int, int));
 int follow __P((void));
+char *getcom __P((char *, int, const char *, const char *));
 void getutmp __P((char *));
+char *getword __P((char *, char *, int));
 int give __P((void));
 int hash __P((const char *));
 void initialize __P((const char *));
@@ -337,9 +339,10 @@ int land __P((void));
 int launch __P((void));
 void light __P((void));
 void live __P((void)) __attribute__((__noreturn__));
+struct wlist *lookup __P((const char *));
 void love __P((void));
-int moveplayer __P((int, int));
 void moveenemy __P((int));
+int moveplayer __P((int, int));
 void murder __P((void));
 void news __P((void));
 void newway __P((int));
@@ -350,6 +353,7 @@ void post __P((char));
 void printobjs __P((void));
 int put __P((void));
 int puton __P((void));
+const char *rate __P((void));
 void ravage __P((void));
 void restore __P((const char *));
 int ride __P((void));
@@ -362,6 +366,7 @@ int take __P((unsigned int[]));
 int takeoff __P((void));
 void target __P((void));
 int throw __P((const char *));
+const char *truedirec __P((int, char));
 int ucard __P((const unsigned int *));
 int use __P((void));
 int visual __P((void));
@@ -371,8 +376,3 @@ int wizard __P((const char *));
 void wordinit __P((void));
 void writedes __P((void));
 int zzz __P((void));
-char   *getcom __P((char *, int, const char *, const char *));
-char   *getword __P((char *, char *, int));
-const char   *rate __P((void));
-const char   *truedirec __P((int, char));
-struct wlist *lookup __P((const char *));
