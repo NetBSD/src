@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.18 2002/05/13 02:58:18 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.19 2002/05/14 23:33:07 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -235,9 +235,9 @@ fill_default_server_options(ServerOptions *options)
 	if (options->authorized_keys_file == NULL)
 		options->authorized_keys_file = _PATH_SSH_USER_PERMITTED_KEYS;
 
-	/* Turn privilege separation _off_ by default */
+	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
-		use_privsep = 0;
+		use_privsep = 1;
 }
 
 /* Keyword tokens. */
