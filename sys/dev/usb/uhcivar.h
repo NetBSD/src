@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.4 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.5 1998/12/26 12:53:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
+#if defined(__FreeBSD__)
+	struct callout_handle timeout_handle;
+#endif /* defined(__FreeBSD__) */
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
@@ -113,12 +116,17 @@ struct uhci_vframe {
 
 typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
+#if defined(__NetBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
+#elif defined(__FreeBSD__)
+	int		sc_iobase;
+	int		unit;
+#endif /* defined(__FreeBSD__) */
 
 	uhci_physaddr_t *sc_pframes;
 	struct uhci_vframe sc_vframes[UHCI_VFRAMELIST_COUNT];
@@ -147,7 +155,9 @@ typedef struct uhci_softc {
 #define UHCI_HAS_LOCK 1
 #define UHCI_WANT_LOCK 2
 
+#if defined(__NetBSD__)
 	usb_dma_t *sc_mallocs;
+#endif
 
 	char sc_vendor[16];
 } uhci_softc_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.3 1998/12/26 12:53:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,11 +73,46 @@ typedef struct usb_hid_descriptor {
 #define HUP_BUTTON		0x0009
 
 /* Usages, generic desktop */
+#define HUG_POINTER		0x0001
 #define HUG_MOUSE		0x0002
+#define HUG_JOYSTICK		0x0004
+#define HUG_GAME_PAD		0x0005
+#define HUG_KEYBOARD		0x0006
+#define HUG_KEYPAD		0x0007
 #define HUG_X			0x0030
 #define HUG_Y			0x0031
 #define HUG_Z			0x0032
+#define HUG_RX			0x0033
+#define HUG_RY			0x0034
+#define HUG_RZ			0x0035
+#define HUG_SLIDER		0x0036
+#define HUG_DIAL		0x0037
 #define HUG_WHEEL		0x0038
+#define HUG_HAT_SWITCH		0x0039
+#define HUG_COUNTED_BUFFER	0x003a
+#define HUG_BYTE_COUNT		0x003b
+#define HUG_MOTION_WAKEUP	0x003c
+#define HUG_VX			0x0040
+#define HUG_VY			0x0041
+#define HUG_VZ			0x0042
+#define HUG_VBRX		0x0043
+#define HUG_VBRY		0x0044
+#define HUG_VBRZ		0x0045
+#define HUG_VNO			0x0046
+#define HUG_SYSTEM_CONTROL	0x0080
+#define HUG_SYSTEM_POWER_DOWN	0x0081
+#define HUG_SYSTEM_SLEEP	0x0082
+#define HUG_SYSTEM_WAKEUP	0x0083
+#define HUG_SYSTEM_CONTEXT_MENU	0x0084
+#define HUG_SYSTEM_MAIN_MENU	0x0085
+#define HUG_SYSTEM_APP_MENU	0x0086
+#define HUG_SYSTEM_MENU_HELP	0x0087
+#define HUG_SYSTEM_MENU_EXIT	0x0088
+#define HUG_SYSTEM_MENU_SELECT	0x0089
+#define HUG_SYSTEM_MENU_RIGHT	0x008a
+#define HUG_SYSTEM_MENU_LEFT	0x008b
+#define HUG_SYSTEM_MENU_UP	0x008c
+#define HUG_SYSTEM_MENU_DOWN	0x008d
 
 #define HID_USAGE2(p,u) (((p) << 16) | u)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.12 1998/12/10 23:16:47 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.13 1998/12/26 12:53:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,12 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#if defined(__NetBSD__)
 #include <sys/device.h>
+#elif defined(__FreeBSD__)
+#include <sys/module.h>
+#include <sys/bus.h>
+#endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/select.h>
@@ -66,6 +71,13 @@
 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
+
+#if defined(__FreeBSD__)
+#include <machine/clock.h>
+#include "dev/usb/queue.addendum.h"
+
+#define delay(d)		DELAY(d)
+#endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
 
@@ -103,7 +115,6 @@ struct uhci_pipe {
  * The uhci_intr_info free list can be global since they contain
  * no dma specific data.  The other free lists do.
  */
-int uhci_global_init_done = 0;
 LIST_HEAD(, uhci_intr_info) uhci_ii_free;
 
 void		uhci_busreset __P((uhci_softc_t *));
@@ -180,10 +191,17 @@ void		uhci_dump __P((void));
 void		uhci_dump_td __P((uhci_soft_td_t *));
 #endif
 
+#if defined(__NetBSD__)
 #define UWRITE2(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
 #define UREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #define UREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
+#elif defined(__FreeBSD__)
+#define UWRITE2(sc,r,x)	outw((sc)->sc_iobase + (r), (x))
+#define UWRITE4(sc,r,x)	outl((sc)->sc_iobase + (r), (x))
+#define UREAD2(sc,r)	inw((sc)->sc_iobase + (r))
+#define UREAD4(sc,r)	inl((sc)->sc_iobase + (r))
+#endif
 
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
@@ -249,6 +267,7 @@ uhci_init(sc)
 	uhci_soft_qh_t *csqh, *bsqh, *sqh;
 	uhci_soft_td_t *std;
 	usb_dma_t dma;
+	static int uhci_global_init_done = 0;
 
 	DPRINTFN(1,("uhci_init: start\n"));
 
@@ -303,7 +322,7 @@ uhci_init(sc)
 		std = uhci_alloc_std(sc);
 		sqh = uhci_alloc_sqh(sc);
 		if (!std || !sqh)
-			return (ENOMEM);
+			return (USBD_NOMEM);
 		std->td->link.sqh = sqh;
 		std->td->td_link = sqh->physaddr | UHCI_PTR_Q;
 		std->td->td_status = UHCI_TD_IOS;	/* iso, inactive */
@@ -343,8 +362,9 @@ static void
 uhci_dumpregs(sc)
 	uhci_softc_t *sc;
 {
-	printf("%s: regs: cmd=%04x, sts=%04x, intr=%04x, frnum=%04x, flbase=%08x, sof=%04x, portsc1=%04x, portsc2=%04x\n",
-	       sc->sc_bus.bdev.dv_xname,
+	printf("%s; regs: cmd=%04x, sts=%04x, intr=%04x, frnum=%04x, "
+	       "flbase=%08x, sof=%04x, portsc1=%04x, portsc2=%04x\n",
+	       USBDEVNAME(sc->sc_bus.bdev),
 	       UREAD2(sc, UHCI_CMD),
 	       UREAD2(sc, UHCI_STS),
 	       UREAD2(sc, UHCI_INTR),
@@ -382,7 +402,6 @@ uhci_dump_td(p)
 		       UHCI_TD_GET_ENDPT(p->td->td_token),
 		       UHCI_TD_GET_DT(p->td->td_token),
 		       UHCI_TD_GET_MAXLEN(p->td->td_token));
-		       
 }
 
 void
@@ -392,6 +411,7 @@ uhci_dump_qh(p)
 	printf("QH(%p) at %08x: hlink=%08x elink=%08x\n", p, (int)p->physaddr,
 	       p->qh->qh_hlink, p->qh->qh_elink);
 }
+
 
 #if 0
 void
@@ -448,7 +468,7 @@ uhci_timo(addr)
 		splx(s);
 	}
 	if (reqh->pipe->intrreqh == reqh) {
-		timeout(uhci_timo, addr, sc->sc_ival);
+		usb_timeout(uhci_timo, reqh, sc->sc_ival, reqh->timo_handle);
 	} else {
 		usb_freemem(sc->sc_dmatag, &upipe->u.intr.datadma);
 	}
@@ -601,7 +621,7 @@ uhci_intr(p)
 	sc->sc_intrs++;
 #if defined(USB_DEBUG)
 	if (uhcidebug > 9) {
-		DPRINTF(("uhci_intr %s, %p\n", sc->sc_bus.bdev.dv_xname, sc));
+		printf("uhci_intr %p\n", sc);
 		uhci_dumpregs(sc);
 	}
 #endif
@@ -617,22 +637,21 @@ uhci_intr(p)
 	}
 	if (status & UHCI_STS_RD) {
 		UWRITE2(sc, UHCI_STS, UHCI_STS_RD); /* acknowledge */
-		printf("%s: resume detect\n", sc->sc_bus.bdev.dv_xname);
+		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
 		ret = 1;
 	}
 	if (status & UHCI_STS_HSE) {
 		UWRITE2(sc, UHCI_STS, UHCI_STS_HSE); /* acknowledge */
-		printf("%s: Host System Error\n", sc->sc_bus.bdev.dv_xname);
+		printf("%s: Host System Error\n", USBDEVNAME(sc->sc_bus.bdev));
 		ret = 1;
 	}
 	if (status & UHCI_STS_HCPE) {
 		UWRITE2(sc, UHCI_STS, UHCI_STS_HCPE); /* acknowledge */
-		printf("%s: Host System Error\n", sc->sc_bus.bdev.dv_xname);
+		printf("%s: Host System Error\n", USBDEVNAME(sc->sc_bus.bdev));
 		ret = 1;
 	}
-	if (status & UHCI_STS_HCH) {
-		printf("%s: controller halted\n", sc->sc_bus.bdev.dv_xname);
-	}
+	if (status & UHCI_STS_HCH)
+		printf("%s: controller halted\n", USBDEVNAME(sc->sc_bus.bdev));
 	if (!ret)
 		return 0;
 
@@ -692,7 +711,7 @@ uhci_check_intr(sc, ii)
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
 	upipe->pipe.endpoint->toggle = upipe->newtoggle;
 	uhci_ii_done(ii, 0);
-	untimeout(uhci_timeout, ii);
+	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 }
 
 void
@@ -728,7 +747,7 @@ uhci_ii_done(ii, timo)
 		status |= tst;
 #ifdef USB_DEBUG
 		if ((tst & UHCI_TD_ERROR) && uhcidebug) {
-			printf("uhci_intr: intr error TD:\n");
+			printf("uhci_ii_done: intr error TD:\n");
 			uhci_dump_td(std);
 		}
 #endif
@@ -739,7 +758,7 @@ uhci_ii_done(ii, timo)
 	DPRINTFN(10, ("uhci_check_intr: len=%d, status=0x%x\n", len, status));
 	if (status != 0) {
 		DPRINTFN(-1+(status==UHCI_TD_STALLED),
-			 ("uhci_intr: error, status 0x%b\n", (long)status, 
+			 ("uhci_ii_done: error, status 0x%b\n", (long)status, 
 			  "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
 			  "STALLED\30ACTIVE"));
 		if (status == UHCI_TD_STALLED)
@@ -758,7 +777,7 @@ uhci_ii_done(ii, timo)
 			std->td->td_status &= ~UHCI_TD_ACTIVE;
 		/* XXX should we wait 1 ms */
 	}
-	DPRINTFN(5, ("uhci_intr: calling handler ii=%p\n", ii));
+	DPRINTFN(5, ("uhci_ii_done: calling handler ii=%p\n", ii));
 
 	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
@@ -779,6 +798,9 @@ uhci_ii_done(ii, timo)
 	reqh->xfercb(reqh);
 }
 
+/*
+ * Called when a request does not complete.
+ */
 void
 uhci_timeout(addr)
 	void *addr;
@@ -796,6 +818,7 @@ uhci_timeout(addr)
  * Wait here until controller claims to have an interrupt.
  * Then call uhci_intr and return.  Use timeout to avoid waiting
  * too long.
+ * Only used during boot when interrupts are not enabled yet.
  */
 void
 uhci_waitintr(sc, reqh)
@@ -804,10 +827,13 @@ uhci_waitintr(sc, reqh)
 {
 	int timo = reqh->timeout;
 	int usecs;
+	uhci_intr_info_t *ii;
+
+	DPRINTFN(10,("uhci_waitintr: timeout = %ds\n", timo));
 
 	reqh->status = USBD_IN_PROGRESS;
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
-		delay(1000);
+		usbd_delay_ms(&sc->sc_bus, 1);
 		DPRINTFN(10,("uhci_waitintr: 0x%04x\n", UREAD2(sc, UHCI_STS)));
 		if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT) {
 			uhci_intr(sc);
@@ -815,8 +841,17 @@ uhci_waitintr(sc, reqh)
 				return;
 		}
 	}
-	reqh->status = USBD_TIMEOUT;
-	reqh->xfercb(reqh);
+
+	/* Timeout */
+	DPRINTF(("uhci_waitintr: timeout\n"));
+	for (ii = LIST_FIRST(&sc->sc_intrhead);
+	     ii && ii->reqh != reqh; 
+	     ii = LIST_NEXT(ii, list))
+		;
+	if (ii)
+		uhci_ii_done(ii, 1);
+	else
+		panic("uhci_waitintr: lost intr_info\n");
 }
 
 void
@@ -843,7 +878,8 @@ uhci_reset(p)
 		    (UREAD2(sc, UHCI_CMD) & UHCI_CMD_HCRESET); n++)
 		delay(100);
 	if (n >= UHCI_RESET_TIMEOUT)
-		printf("%s: controller did not reset\n", sc->sc_bus.bdev.dv_xname);
+		printf("%s: controller did not reset\n", 
+		       USBDEVNAME(sc->sc_bus.bdev));
 }
 #endif
 
@@ -862,17 +898,18 @@ uhci_run(sc, run)
 		return;
 	}
 	UWRITE2(sc, UHCI_CMD, run ? UHCI_CMD_RS : 0);
-	for(n = 0; n < 100; n++) {
+	for(n = 0; n < 10; n++) {
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
 			splx(s);
 			return;
 		}
+		usbd_delay_ms(&sc->sc_bus, 1);
 	}
 	splx(s);
-	printf("%s: cannot %s\n", sc->sc_bus.bdev.dv_xname, 
-	       run ? "start" : "stop");
+	printf("%s: cannot %s\n", USBDEVNAME(sc->sc_bus.bdev),
+	       (run ? "start" : "stop"));
 }
 
 /*
@@ -1142,8 +1179,10 @@ uhci_device_bulk_transfer(reqh)
 	uhci_add_bulk(sc, sqh);
 	LIST_INSERT_HEAD(&sc->sc_intrhead, ii, list);
 
-	if (reqh->timeout && !sc->sc_bus.use_polling)
-		timeout(uhci_timeout, ii, MS_TO_TICKS(reqh->timeout));
+	if (reqh->timeout && !sc->sc_bus.use_polling) {
+		usb_timeout(uhci_timeout, ii,
+                            MS_TO_TICKS(reqh->timeout), ii->timeout_handle);
+	}
 	splx(s);
 
 #ifdef USB_DEBUG
@@ -1379,7 +1418,7 @@ uhci_device_request(reqh)
 	int isread;
 	int s;
 
-	DPRINTFN(1,("uhci_device_control type=0x%02x, request=0x%02x, "
+	DPRINTFN(3,("uhci_device_control type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), UGETW(req->wLength),
@@ -1461,6 +1500,8 @@ uhci_device_request(reqh)
 	if (uhcidebug > 12) {
 		uhci_soft_td_t *std;
 		uhci_soft_qh_t *xqh;
+		uhci_soft_qh_t *sxqh;
+		int maxqh = 0;
 		uhci_physaddr_t link;
 		printf("uhci_enter_ctl_q: follow from [0]\n");
 		for (std = sc->sc_vframes[0].htd, link = 0;
@@ -1469,17 +1510,22 @@ uhci_device_request(reqh)
 			link = std->td->td_link;
 			uhci_dump_td(std);
 		}
-		for (xqh = (uhci_soft_qh_t *)std;
+		for (sxqh = xqh = (uhci_soft_qh_t *)std;
 		     xqh;
-		     xqh = xqh->qh->hlink)
+		     xqh = (maxqh++ == 5 || xqh->qh->hlink==sxqh || 
+                            xqh->qh->hlink==xqh ? NULL : xqh->qh->hlink)) {
 			uhci_dump_qh(xqh);
+			uhci_dump_qh(sxqh);
+		}
 		printf("Enqueued QH:\n");
 		uhci_dump_qh(sqh);
 		uhci_dump_tds(sqh->qh->elink);
 	}
 #endif
-	if (reqh->timeout && !sc->sc_bus.use_polling)
-		timeout(uhci_timeout, ii, MS_TO_TICKS(reqh->timeout));
+	if (reqh->timeout && !sc->sc_bus.use_polling) {
+		usb_timeout(uhci_timeout, ii,
+                            MS_TO_TICKS(reqh->timeout), ii->timeout_handle);
+	}
 	splx(s);
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1852,7 +1898,6 @@ usb_hub_descriptor_t uhci_hubd_piix = {
 	50,			/* power on to power good */
 	0,
 	{ 0x00 },		/* both ports are removable */
-	{ 0x00 },		/* no ports can power down individually */
 };
 
 int
@@ -1907,7 +1952,7 @@ uhci_root_ctrl_transfer(reqh)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_INTERFACE):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
 		/* 
-		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_STALL are no-ops
+		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_HALT are no-ops
 		 * for the integrated root hub.
 		 */
 		break;
@@ -2211,7 +2256,7 @@ void
 uhci_root_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
-	untimeout(uhci_timo, pipe->intrreqh);
+	usb_untimeout(uhci_timo, pipe->intrreqh, pipe->intrreqh->timo_handle);
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }
 
@@ -2220,7 +2265,7 @@ void
 uhci_root_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
-	untimeout(uhci_timo, reqh);
+	usb_untimeout(uhci_timo, reqh, reqh->timo_handle);
 }
 
 /* Start a transfer on the root interrupt pipe */
@@ -2249,7 +2294,7 @@ uhci_root_intr_transfer(reqh)
 		return (r);
 
 	sc->sc_ival = MS_TO_TICKS(reqh->pipe->endpoint->edesc->bInterval);
-	timeout(uhci_timo, reqh, sc->sc_ival);
+	usb_timeout(uhci_timo, reqh, sc->sc_ival, reqh->timo_handle);
 	return (USBD_IN_PROGRESS);
 }
 
@@ -2258,6 +2303,6 @@ void
 uhci_root_intr_close(pipe)
 	usbd_pipe_handle pipe;
 {
-	untimeout(uhci_timo, pipe->intrreqh);
+	usb_untimeout(uhci_timo, pipe->intrreqh, pipe->intrreqh->timo_handle);
 	DPRINTF(("uhci_root_intr_close\n"));
 }

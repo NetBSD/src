@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.4 1998/12/08 14:31:58 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.5 1998/12/26 12:53:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) printf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
-int usbdebug;
+extern int usbdebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -426,7 +426,7 @@ hid_get_data(buf, loc)
 	u_int32_t data;
 	int i, s;
 
-	DPRINTFN(1, ("hid_get_data: loc %d/%d\n", hpos, hsize));
+	DPRINTFN(10, ("hid_get_data: loc %d/%d\n", hpos, hsize));
 
 	if (hsize == 0)
 		return (0);
@@ -440,7 +440,7 @@ hid_get_data(buf, loc)
 	hsize = 32 - hsize;
 	/* Sign extend */
 	data = ((int32_t)data << hsize) >> hsize;
-	DPRINTFN(2,("hid_get_data: loc %d/%d = %lu\n", 
+	DPRINTFN(10,("hid_get_data: loc %d/%d = %lu\n", 
 		    loc->pos, loc->size, (long)data));
 	return (data);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.14 1998/12/10 23:16:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.15 1998/12/26 12:53:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,14 +37,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_usbverbose.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#if defined(__NetBSD__)
+#include <sys/device.h>
+#else
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#endif
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/device.h>
 
 #include <dev/usb/usb.h>
 
@@ -71,6 +75,12 @@ void usbd_do_request_async_cb
 	__P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests;
+
+#if defined(__FreeBSD__)
+#define USB_CDEV_MAJOR	79
+
+extern struct cdevsw usb_cdevsw;
+#endif
 
 usbd_status 
 usbd_open_pipe(iface, address, flags, pipe)
@@ -235,7 +245,7 @@ usbd_start(pipe)
 {
 	usbd_request_handle reqh;
 
-	DPRINTFN(1, ("usbd_start: pipe=%p, running=%d\n", 
+	DPRINTFN(5, ("usbd_start: pipe=%p, running=%d\n", 
 		     pipe, pipe->running));
 	if (pipe->running)
 		return (USBD_IN_PROGRESS);
@@ -513,7 +523,7 @@ usbd_clear_endpoint_stall(pipe)
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_STALL);
+	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
 	r = usbd_do_request(dev, &req, 0);
@@ -537,7 +547,7 @@ usbd_clear_endpoint_stall_async(pipe)
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_STALL);
+	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
 	r = usbd_do_request_async(dev, &req, 0);
@@ -933,9 +943,18 @@ static int usbd_global_init_done = 0;
 void
 usbd_init()
 {
+#if defined(__FreeBSD__)
+	dev_t dev;
+#endif
+	
 	if (!usbd_global_init_done) {
 		usbd_global_init_done = 1;
 		SIMPLEQ_INIT(&usbd_free_requests);
+
+#if defined(__FreeBSD__)
+		dev = makedev(USB_CDEV_MAJOR, 0);
+		cdevsw_add(&dev, &usb_cdevsw, NULL);
+#endif
 	}
 }
 
@@ -956,7 +975,7 @@ usbd_transfer_cb(reqh)
 	if (reqh->status == USBD_NORMAL_COMPLETION &&
 	    reqh->actlen < reqh->length &&
 	    !(reqh->flags & USBD_SHORT_XFER_OK)) {
-		DPRINTFN(-1, ("usbd_transfer_cb: short xfer %d < %d\n",
+		DPRINTFN(-1, ("usbd_transfer_cb: short xfer %d+1<%d+1 (bytes)\n",
 			      reqh->actlen, reqh->length));
 		reqh->status = USBD_SHORT_XFER;
 	}
@@ -1034,10 +1053,8 @@ usbd_do_request(dev, req, data)
 	r = usbd_setup_default_request(
 		reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
 		UGETW(req->wLength), 0, 0);
-	if (r != USBD_NORMAL_COMPLETION) {
-		usbd_free_request(reqh);
-		return (r);
-	}
+	if (r != USBD_NORMAL_COMPLETION)
+		goto bad;
 	r = usbd_sync_transfer(reqh);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
@@ -1049,6 +1066,50 @@ usbd_do_request(dev, req, data)
 		       UGETW(reqh->request.wLength), 
 		       reqh->length, reqh->actlen);
 #endif
+	if (r == USBD_STALLED) {
+		/* 
+		 * The control endpoint has stalled.  Control endpoints
+		 * should not halt, but some may do so anyway so clear
+		 * any halt condition.
+		 */
+		usb_device_request_t treq;
+		usb_status_t status;
+		u_int16_t s;
+		usbd_status nr;
+
+		treq.bmRequestType = UT_READ_ENDPOINT;
+		treq.bRequest = UR_GET_STATUS;
+		USETW(treq.wValue, 0);
+		USETW(treq.wIndex, 0);
+		USETW(treq.wLength, sizeof(usb_status_t));
+		nr = usbd_setup_default_request(
+			reqh, dev, 0, USBD_DEFAULT_TIMEOUT, &treq, &status, 
+			sizeof(usb_status_t), 0, 0);
+		if (nr != USBD_NORMAL_COMPLETION)
+			goto bad;
+		nr = usbd_sync_transfer(reqh);
+		if (nr != USBD_NORMAL_COMPLETION)
+			goto bad;
+		s = UGETW(status.wStatus);
+		DPRINTF(("usbd_do_request: status = 0x%04x\n", s));
+		if (!(s & UES_HALT))
+			goto bad;
+		treq.bmRequestType = UT_WRITE_ENDPOINT;
+		treq.bRequest = UR_CLEAR_FEATURE;
+		USETW(treq.wValue, UF_ENDPOINT_HALT);
+		USETW(treq.wIndex, 0);
+		USETW(treq.wLength, 0);
+		nr = usbd_setup_default_request(
+			reqh, dev, 0, USBD_DEFAULT_TIMEOUT, &treq, &status, 
+			0, 0, 0);
+		if (nr != USBD_NORMAL_COMPLETION)
+			goto bad;
+		nr = usbd_sync_transfer(reqh);
+		if (nr != USBD_NORMAL_COMPLETION)
+			goto bad;
+	}
+
+ bad:
 	usbd_free_request(reqh);
 	return (r);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.3 1998/12/26 12:53:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__NetBSD__)
 typedef struct usb_block_dma {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
@@ -59,3 +60,34 @@ typedef struct {
 
 usbd_status	usb_allocmem __P((bus_dma_tag_t, size_t, size_t, usb_dma_t *));
 void		usb_freemem  __P((bus_dma_tag_t, usb_dma_t *));
+
+#elif define(__FreeBSD__)
+
+/* 
+ * FreeBSD does not have special functions for dma memory, so let's keep it
+ * simple for now.
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/queue.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <vm/vm.h>
+#include <vm/pmap.h>
+
+#include <machine/pmap.h>       /* for vtophys */
+
+
+
+typedef void * usb_dma_t;
+
+#define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
+#define		usb_freemem(t,p)	(free(*(p), M_USB))
+
+#define DMAADDR(dma)	(vtophys(*(dma)))
+#define KERNADDR(dma)	((void *) *(dma))
+#endif
+

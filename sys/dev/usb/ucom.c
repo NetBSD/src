@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.2 1998/12/09 00:18:10 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.3 1998/12/26 12:53:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <dev/usb/usb_port.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#if defined(__NetBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#elif defined(__FreeBSD__)
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/ioccom.h>
+#include <sys/conf.h>
+#endif
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -56,6 +64,7 @@
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
@@ -71,29 +80,18 @@ int	ucomdebug = 0;
 #endif
 
 struct ucom_softc {
-	struct device sc_dev;		/* base device */
+	bdevice sc_dev;			/* base device */
 	usbd_interface_handle sc_iface;	/* interface */
 };
-
-int ucom_match __P((struct device *, struct cfdata *, void *));
-void ucom_attach __P((struct device *, struct device *, void *));
 
 void ucom_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 void ucom_disco __P((void *));
 
-extern struct cfdriver ucom_cd;
+USB_DECLARE_DRIVER(ucom);
 
-struct cfattach ucom_ca = {
-	sizeof(struct ucom_softc), ucom_match, ucom_attach
-};
-
-int
-ucom_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+USB_MATCH(ucom)
 {
-	struct usb_attach_arg *uaa = aux;
+	USB_MATCH_START(ucom, uaa);
 	usb_interface_descriptor_t *id;
 	
 	if (!uaa->iface)
@@ -106,14 +104,9 @@ ucom_match(parent, match, aux)
 	return (UMATCH_IFACECLASS_IFACESUBCLASS);
 }
 
-void
-ucom_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+USB_ATTACH(ucom)
 {
-	struct ucom_softc *sc = (struct ucom_softc *)self;
-	struct usb_attach_arg *uaa = aux;
+	USB_ATTACH_START(ucom, sc, uaa);
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	char devinfo[1024];
@@ -121,6 +114,29 @@ ucom_attach(parent, self, aux)
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
-	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
+	USB_ATTACH_SETUP;
+	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
+
+	USB_ATTACH_SUCCESS_RETURN;
 }
+
+#if defined(__FreeBSD__)
+static int
+ucom_detach(device_t self)
+{       
+        struct ucom_softc *sc = device_get_softc(self);
+	char *devinfo = (char *) device_get_desc(self);
+
+	if (devinfo) {
+		device_set_desc(self, NULL);
+		free(devinfo, M_USB);
+	}
+	return 0;
+}
+#endif
+
+#if defined(__FreeBSD__)
+DRIVER_MODULE(ucom, usb, ucom_driver, ucom_devclass, usb_driver_load, 0);
+#endif
+
