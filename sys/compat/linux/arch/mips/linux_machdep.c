@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 2003/01/18 08:02:49 thorpej Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:51:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2003/01/18 08:02:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:51:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,12 +442,9 @@ linux_sys_sysmips(l, v, retval)
 	case LINUX_MIPS_ATOMIC_SET: {
 		void *addr;
 		int s;
+		u_int8_t value = 0;
 
 		addr = (void *)SCARG(uap, arg1);
-
-		if ((uvm_useracc((caddr_t)addr, sizeof(int), 
-		    B_READ | B_WRITE)) != 1)
-			return EFAULT;
 
 		s = splhigh();
 		/*
@@ -455,8 +452,10 @@ linux_sys_sysmips(l, v, retval)
 		 * it like this. The source aknowledge "This is broken"
 		 * in a comment...
 		 */
-		*retval = (register_t)fubyte(addr);
-		error = subyte(addr, SCARG(uap, arg2));
+		(void) copyin(addr, &value, 1);
+		*retval = value;
+		value = (u_int8_t) SCARG(uap, arg2);
+		error = copyout(&value, addr, 1);
 		splx(s);
 
 		return 0;
