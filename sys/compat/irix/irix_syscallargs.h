@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.2 2001/11/13 02:08:32 lukem Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.3 2001/11/26 21:36:25 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -31,4 +31,9 @@
  * System call prototypes.
  */
 
+int	sys_nosys(struct proc *, void *, register_t *);
+int	sys_exit(struct proc *, void *, register_t *);
+int	sys_fork(struct proc *, void *, register_t *);
+int	sys_read(struct proc *, void *, register_t *);
+int	sys_write(struct proc *, void *, register_t *);
 #endif /* _IRIX_SYS__SYSCALLARGS_H_ */
