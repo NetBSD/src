@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 1995/02/13 21:49:13 cgd Exp $	*/
+/*	$NetBSD: SYS.h,v 1.2 1996/09/26 23:04:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,15 +33,18 @@
 #define CALLSYS(num)						\
 	CONST(num, v0);						\
 	call_pal 0x83;			/* op_callsys */	
-	
+
 #define	SYSCALL_NOLABEL(x)					\
+	.set	noat;						\
 	CALLSYS(SYS_/**/x);					\
-	beq	a3, 9f;						\
-	br	gp, 8f;						\
-8:	SETGP(gp);						\
+	br	gp, L8000;					\
+L8000:							\
+	SETGP(gp);						\
+	beq	a3, L8001;					\
 	lda	at_reg, cerror;					\
 	jmp	zero, (at_reg);					\
-9:
+L8001:							\
+	.set	at
 
 #define	SYSCALL(x)	LEAF(x, 0 /* XXX */); SYSCALL_NOLABEL(x);
 #define RSYSCALL(x)	SYSCALL(x); RET; END(x);

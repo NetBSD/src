@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.3 1995/10/20 00:53:28 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.4 1996/09/26 23:04:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -112,7 +112,7 @@ ifelse(WORDSIZE, `32', `
 	/* kill the special cases. */
 	beq	B, Ldotrap			/* division by zero! */
 
-1:	cmpult	A, B, CC			/* A < B? */
+	cmpult	A, B, CC			/* A < B? */
 	/* RESULT is already zero, from above.  A is untouched. */
 	bne	CC, Lret_result
 
