@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.5 2000/06/24 06:38:32 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.6 2000/07/08 20:40:25 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -923,6 +923,8 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 			else
 				*result = expr -> op == expr_not_equal;
 		}
+		if (!sleft && !sright)
+			*result = expr -> op == expr_equal;
 
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("bool: %sequal (%s, %s) = %s",
@@ -941,17 +943,20 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 			data_string_forget (&left, MDL);
 		if (sright)
 			data_string_forget (&right, MDL);
-		return sleft && sright;
+		return (sleft && sright) || (!sleft && !sright);
 
 	      case expr_and:
 		sleft = evaluate_boolean_expression (&bleft, packet, lease,
 						     in_options, cfg_options,
 						     scope,
 						     expr -> data.and [0]);
-		sright = evaluate_boolean_expression (&bright, packet, lease,
-						      in_options, cfg_options,
-						      scope,
-						      expr -> data.and [1]);
+		if (sleft && bleft)
+			sright = evaluate_boolean_expression
+				(&bright, packet, lease,
+				 in_options, cfg_options,
+				 scope, expr -> data.and [1]);
+		else
+			sright = bright = 0;
 
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("bool: and (%s, %s) = %s",
@@ -971,10 +976,13 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 						     in_options, cfg_options,
 						     scope,
 						     expr -> data.or [0]);
-		sright = evaluate_boolean_expression (&bright, packet, lease,
-						      in_options, cfg_options,
-						      scope,
-						      expr -> data.or [1]);
+		if (sleft && !bleft)
+			sright = evaluate_boolean_expression
+				(&bright, packet, lease,
+				 in_options, cfg_options,
+				 scope, expr -> data.or [1]);
+		else
+			sright = bright = 0;
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("bool: or (%s, %s) = %s",
 		      sleft ? (bleft ? "true" : "false") : "NULL",
@@ -982,6 +990,10 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		      ((sleft && sright)
 		       ? (bleft || bright ? "true" : "false") : "NULL"));
 #endif
+		if (sleft && bleft) {
+			*result = 1;
+			return 1;
+		}
 		if (sleft && sright) {
 			*result = bleft || bright;
 			return 1;
@@ -1065,7 +1077,7 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		} else
 			*result = 0;
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("boolean: %s? = %s", expr -> variable,
+		log_debug ("boolean: %s? = %s", expr -> data.variable,
 			   sleft ? "true" : "false");
 #endif
 		return 1;
@@ -1086,7 +1098,7 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		} else
 			sleft = 0;
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("boolean: %s = %s", expr -> variable,
+		log_debug ("boolean: %s = %s", expr -> data.variable,
 			   sleft ? (*result ? "true" : "false") : "NULL");
 #endif
 		return sleft;
@@ -1835,7 +1847,7 @@ int evaluate_data_expression (result, packet, lease,
 		} else
 			s0 = 0;
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("data: %s = %s", expr -> variable,
+		log_debug ("data: %s = %s", expr -> data.variable,
 			   s0 ? print_hex_1 (result -> len,
 					     result -> data, 50) : "NULL");
 #endif
@@ -1858,7 +1870,7 @@ int evaluate_data_expression (result, packet, lease,
 			binding_value_dereference (&bv, MDL);
 		}
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("data: %s = %s", expr -> funcall.name,
+		log_debug ("data: %s = %s", expr -> data.funcall.name,
 			   s0 ? print_hex_1 (result -> len,
 					     result -> data, 50) : "NULL");
 #endif
@@ -1892,7 +1904,7 @@ int evaluate_data_expression (result, packet, lease,
 
 #if defined (DEBUG_EXPRESSIONS)
 		log_info ("data: filename = \"%s\"",
-			  s0 ? result -> data : "NULL");
+			  s0 ? (char *)(result -> data) : "NULL");
 #endif
 		return s0;
 
@@ -1924,7 +1936,7 @@ int evaluate_data_expression (result, packet, lease,
 
 #if defined (DEBUG_EXPRESSIONS)
 		log_info ("data: sname = \"%s\"",
-			  s0 ? result -> data : "NULL");
+			  s0 ? (char *)(result -> data) : "NULL");
 #endif
 		return s0;
 
@@ -2175,7 +2187,7 @@ int evaluate_numeric_expression (result, packet, lease,
 		} else
 			status = 0;
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("numeric: %s = %s", expr -> variable,
+		log_debug ("numeric: %s = %s", expr -> data.variable,
 			   status ? *result : 0);
 #endif
 		return status;
@@ -2196,7 +2208,7 @@ int evaluate_numeric_expression (result, packet, lease,
 			binding_value_dereference (&bv, MDL);
 		}
 #if defined (DEBUG_EXPRESSIONS)
-		log_debug ("data: %s = %d", expr -> funcall.name,
+		log_debug ("data: %s = %d", expr -> data.funcall.name,
 			   status ? *result : 0);
 #endif
 		break;

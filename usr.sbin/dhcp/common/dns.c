@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.5 2000/06/10 18:04:46 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.6 2000/07/08 20:40:18 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -336,10 +336,10 @@ int dns_zone_dereference (ptr, file, line)
 }
 
 #if defined (NSUPDATE)
-int find_cached_zone (const char *dname, ns_class class,
-		      char *zname, size_t zsize,
-		      struct in_addr *addrs, int naddrs,
-		      struct dns_zone **zcookie)
+ns_rcode find_cached_zone (const char *dname, ns_class class,
+			   char *zname, size_t zsize,
+			   struct in_addr *addrs, int naddrs, int *naddrout,
+			   struct dns_zone **zcookie)
 {
 	isc_result_t status = ISC_R_NOTFOUND;
 	const char *np;
@@ -351,7 +351,7 @@ int find_cached_zone (const char *dname, ns_class class,
 	   succeeded previously, but the update itself failed, meaning
 	   that we shouldn't use the cached zone. */
 	if (!zcookie)
-		return 0;
+		return ns_r_servfail;
 
 	/* For each subzone, try to find a cached zone. */
 	for (np = dname - 1; np; np = strchr (np, '.')) {
@@ -362,18 +362,18 @@ int find_cached_zone (const char *dname, ns_class class,
 	}
 
 	if (status != ISC_R_SUCCESS)
-		return 0;
+		return ns_r_servfail;
 
 	/* Make sure the zone is valid. */
 	if (zone -> timeout && zone -> timeout < cur_time) {
 		dns_zone_dereference (&zone, MDL);
-		return 0;
+		return ns_r_servfail;
 	}
 
 	/* Make sure the zone name will fit. */
 	if (strlen (zone -> name) > zsize) {
 		dns_zone_dereference (&zone, MDL);
-		return 0;
+		return ns_r_servfail;
 	}
 	strcpy (zname, zone -> name);
 
@@ -423,7 +423,9 @@ int find_cached_zone (const char *dname, ns_class class,
 	if (!*zcookie)
 		dns_zone_reference (zcookie, zone, MDL);
 	dns_zone_dereference (&zone, MDL);
-	return ix;
+	if (naddrout)
+		*naddrout = ix;
+	return ns_r_noerror;
 }
 
 void forget_zone (struct dns_zone **zone)

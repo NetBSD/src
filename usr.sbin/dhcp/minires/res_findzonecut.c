@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.2 2000/06/10 18:05:17 mellon Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.3 2000/07/08 20:40:52 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -61,11 +61,11 @@ typedef ISC_LIST(rr_ns) rrset_ns;
 static int	satisfy(res_state,
 			const char *, rrset_ns *, struct in_addr *, int);
 static int	add_addrs(res_state, rr_ns *, struct in_addr *, int);
-static int	get_soa(res_state, const char *, ns_class,
+static ns_rcode	get_soa(res_state, const char *, ns_class,
 			char *, size_t, char *, size_t,
 			rrset_ns *);
 static int	get_ns(res_state, const char *, ns_class, rrset_ns *);
-static int	get_glue(res_state, ns_class, rrset_ns *);
+static ns_rcode	get_glue(res_state, ns_class, rrset_ns *);
 static int	save_ns(res_state, ns_msg *, ns_sect,
 			const char *, ns_class, rrset_ns *);
 static int	save_a(res_state, ns_msg *, ns_sect,
@@ -73,8 +73,8 @@ static int	save_a(res_state, ns_msg *, ns_sect,
 static void	free_nsrrset(rrset_ns *);
 static void	free_nsrr(rrset_ns *, rr_ns *);
 static rr_ns *	find_ns(rrset_ns *, const char *);
-static int	do_query(res_state, const char *, ns_class, ns_type,
-			 u_char *, ns_msg *);
+static ns_rcode	do_query(res_state, const char *, ns_class, ns_type,
+			 u_char *, ns_msg *, int *);
 
 /* Public. */
 
@@ -133,15 +133,16 @@ static int	do_query(res_state, const char *, ns_class, ns_type,
  *	keep going.  for the NS and A queries this means we just give up.
  */
 
-int
+ns_rcode
 res_findzonecut(res_state statp, const char *dname, ns_class class, int opts,
 		char *zname, size_t zsize, struct in_addr *addrs, int naddrs,
-		void *zcookie)
+		int *count, void *zcookie)
 {
 	char mname[NS_MAXDNAME];
 	u_long save_pfcode;
 	rrset_ns nsrrs;
-	int n;
+	int n = 0;
+	ns_rcode rcode;
 
 	DPRINTF(("START dname='%s' class=%s, zsize=%ld, naddrs=%d",
 		 dname, p_class(class), (long)zsize, naddrs));
@@ -152,13 +153,14 @@ res_findzonecut(res_state statp, const char *dname, ns_class class, int opts,
 	ISC_LIST_INIT(nsrrs);
 
 	DPRINTF (("look for a predefined zone statement"));
-	if ((n = find_cached_zone (dname, class, zname, zsize, addrs, naddrs,
-				   zcookie)))
+	rcode = find_cached_zone (dname, class, zname, zsize, addrs, naddrs,
+				  &n, zcookie);
+	if (rcode == ns_r_noerror)
 		goto done;
 
 	DPRINTF(("get the soa, and see if it has enough glue"));
-	if ((n = get_soa(statp, dname, class, zname, zsize,
-			 mname, sizeof mname, &nsrrs)) < 0 ||
+	if ((rcode = get_soa(statp, dname, class, zname, zsize,
+			 mname, sizeof mname, &nsrrs)) != ns_r_noerror ||
 	    ((opts & RES_EXHAUSTIVE) == 0 &&
 	     (n = satisfy(statp, mname, &nsrrs, addrs, naddrs)) > 0))
 		goto done;
@@ -170,14 +172,16 @@ res_findzonecut(res_state statp, const char *dname, ns_class class, int opts,
 		goto done;
 
 	DPRINTF(("get the missing glue and see if it's finally enough"));
-	if ((n = get_glue(statp, class, &nsrrs)) >= 0)
+	if ((rcode = get_glue(statp, class, &nsrrs)) == ns_r_noerror)
 		n = satisfy(statp, mname, &nsrrs, addrs, naddrs);
 
  done:
 	DPRINTF(("FINISH n=%d (%s)", n, (n < 0) ? strerror(errno) : "OK"));
 	free_nsrrset(&nsrrs);
 	statp->pfcode = save_pfcode;
-	return (n);
+	if (count)
+		*count = n;
+	return rcode;
 }
 
 /* Private. */
@@ -227,7 +231,7 @@ add_addrs(res_state statp, rr_ns *nsrr, struct in_addr *addrs, int naddrs) {
 	return (n);
 }
 
-static int
+static ns_rcode
 get_soa(res_state statp, const char *dname, ns_class class,
 	char *zname, size_t zsize, char *mname, size_t msize,
 	rrset_ns *nsrrsp)
@@ -238,6 +242,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 	ns_sect sect;
 	ns_msg msg;
 	u_int rcode;
+	ns_rcode status;
 
 	/*
 	 * Find closest enclosing SOA, even if it's for the root zone.
@@ -245,7 +250,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 
 	/* First canonicalize dname (exactly one unescaped trailing "."). */
 	if (ns_makecanon(dname, tname, sizeof tname) < 0)
-		return (-1);
+		return ns_r_servfail;
 	dname = tname;
 
 	/* Now grovel the subdomains, hunting for an SOA answer or auth. */
@@ -255,17 +260,17 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			dname++;
 
 		/* Is there an SOA? */
-		n = do_query(statp, dname, class, ns_t_soa, resp, &msg);
-		if (n < 0) {
+		rcode = do_query(statp, dname, class, ns_t_soa,
+				 resp, &msg, &n);
+		if (rcode != ns_r_noerror) {
 			DPRINTF(("get_soa: do_query('%s', %s) failed (%d)",
 				 dname, p_class(class), n));
-			return (-1);
+			return rcode;
 		}
 		if (n > 0) {
 			DPRINTF(("get_soa: CNAME or DNAME found"));
 			sect = ns_s_max, n = 0;
 		} else {
-			rcode = ns_msg_getflag(msg, ns_f_rcode);
 			ancount = ns_msg_count(msg, ns_s_an);
 			nscount = ns_msg_count(msg, ns_s_ns);
 			if (ancount > 0 && rcode == ns_r_noerror)
@@ -284,7 +289,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			if (ns_parserr(&msg, sect, i, &rr) < 0) {
 				DPRINTF(("get_soa: ns_parserr(%s, %d) failed",
 					 p_section(sect, ns_o_query), i));
-				return (-1);
+				return ns_r_servfail;
 			}
 			if (ns_rr_type(rr) == ns_t_cname ||
 			    ns_rr_type(rr) == ns_t_dname)
@@ -299,7 +304,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 					DPRINTF(("get_soa: ns_samedomain('%s', '%s') == 0",
 						 dname, t));
 					errno = EPROTOTYPE;
-					return (-1);
+					return ns_r_notzone;
 				}
 				break;
 			case ns_s_ns:
@@ -308,7 +313,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 					DPRINTF(("get_soa: ns_samename() || !ns_samedomain('%s', '%s')",
 						 dname, t));
 					errno = EPROTOTYPE;
-					return (-1);
+					return ns_r_notzone;
 				}
 				break;
 			default:
@@ -318,7 +323,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 				DPRINTF(("get_soa: zname(%d) too small (%d)",
 					 zsize, strlen(t) + 1));
 				errno = EMSGSIZE;
-				return (-1);
+				return ns_r_servfail;
 			}
 			strcpy(zname, t);
 			rdata = ns_rr_rdata(rr);
@@ -326,14 +331,14 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			if (ns_name_uncompress(resp, ns_msg_end(msg), rdata,
 					       mname, msize) < 0) {
 				DPRINTF(("get_soa: ns_name_uncompress failed"));
-				return (-1);
+				return ns_r_servfail;
 			}
 			if (save_ns(statp, &msg, ns_s_ns,
 				    zname, class, nsrrsp) < 0) {
 				DPRINTF(("get_soa: save_ns failed"));
-				return (-1);
+				return ns_r_servfail;
 			}
-			return (0);
+			return ns_r_noerror;
 		}
 
 		/* If we're out of labels, then not even "." has an SOA! */
@@ -345,14 +350,14 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			if (*dname == '\\')
 				if (*++dname == '\0') {
 					errno = EMSGSIZE;
-					return (-1);
+					return ns_r_servfail;
 				}
 			dname++;
 		}
 	}
 	DPRINTF(("get_soa: out of labels"));
 	errno = EDESTADDRREQ;
-	return (-1);
+	return ns_r_servfail;
 }
 
 static int
@@ -360,26 +365,27 @@ get_ns(res_state statp, const char *zname, ns_class class, rrset_ns *nsrrsp) {
 	u_char resp[NS_PACKETSZ];
 	ns_msg msg;
 	int n;
+	ns_rcode rcode;
 
 	/* Go and get the NS RRs for this zone. */
-	n = do_query(statp, zname, class, ns_t_ns, resp, &msg);
-	if (n != 0) {
+	rcode = do_query(statp, zname, class, ns_t_ns, resp, &msg, &n);
+	if (rcode != ns_r_noerror) {
 		DPRINTF(("get_ns: do_query('zname', %s) failed (%d)",
-			 zname, p_class(class), n));
-		return (-1);
+			 zname, p_class(class), rcode));
+		return rcode;
 	}
 
 	/* Remember the NS RRs and associated A RRs that came back. */
 	if (save_ns(statp, &msg, ns_s_an, zname, class, nsrrsp) < 0) {
 		DPRINTF(("get_ns save_ns('%s', %s) failed",
 			 zname, p_class(class)));
-		return (-1);
+		return ns_r_servfail;
 	}
 
-	return (0);
+	return ns_r_noerror;
 }
 
-static int
+static ns_rcode
 get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 	rr_ns *nsrr, *nsrr_n;
 
@@ -388,16 +394,17 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 		u_char resp[NS_PACKETSZ];
 		ns_msg msg;
 		int n;
+		ns_rcode rcode;
 
 		nsrr_n = ISC_LIST_NEXT(nsrr, link);
 
 		if (ISC_LIST_EMPTY(nsrr->addrs)) {
-			n = do_query(statp, nsrr->name, class, ns_t_a,
-				     resp, &msg);
-			if (n < 0) {
+			rcode = do_query(statp, nsrr->name, class, ns_t_a,
+					 resp, &msg, &n);
+			if (rcode != ns_r_noerror) {
 				DPRINTF(("get_glue: do_query('%s', %s') failed",
 					 nsrr->name, p_class(class)));
-				return (-1);
+				return rcode;
 			}
 			if (n > 0) {
 				DPRINTF((
@@ -408,7 +415,7 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 				   &nsrr->addrs) < 0) {
 				DPRINTF(("get_glue: save_r('%s', %s) failed",
 					 nsrr->name, p_class(class)));
-				return (-1);
+				return ns_r_servfail;
 			}
 			/* If it's still empty, it's just chaff. */
 			if (ISC_LIST_EMPTY(nsrr->addrs)) {
@@ -418,7 +425,7 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 			}
 		}
 	}
-	return (0);
+	return ns_r_noerror;
 }
 
 static int
@@ -543,9 +550,9 @@ find_ns(rrset_ns *nsrrsp, const char *dname) {
 	return (NULL);
 }
 
-static int
+static ns_rcode
 do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
-	 u_char *resp, ns_msg *msg)
+	 u_char *resp, ns_msg *msg, int *alias_count)
 {
 	u_char req[NS_PACKETSZ];
 	int i;
@@ -555,21 +562,21 @@ do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
 			 NULL, 0, NULL, req, NS_PACKETSZ);
 	if (n < 0) {
 		DPRINTF(("do_query: res_nmkquery failed"));
-		return (-1);
+		return ns_r_servfail;
 	}
 	n = res_nsend(statp, req, n, resp, NS_PACKETSZ);
 	if (n < 0) {
 		DPRINTF(("do_query: res_nsend failed"));
-		return (-1);
+		return ns_r_servfail;
 	}
 	if (n == 0) {
 		DPRINTF(("do_query: res_nsend returned 0"));
 		errno = EMSGSIZE;
-		return (-1);
+		return ns_r_servfail;
 	}
 	if (ns_initparse(resp, n, msg) < 0) {
 		DPRINTF(("do_query: ns_initparse failed"));
-		return (-1);
+		return ns_r_servfail;
 	}
 	n = 0;
 	for (i = 0; i < ns_msg_count(*msg, ns_s_an); i++) {
@@ -577,11 +584,13 @@ do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
 
 		if (ns_parserr(msg, ns_s_an, i, &rr) < 0) {
 			DPRINTF(("do_query: ns_parserr failed"));
-			return (-1);
+			return ns_r_servfail;
 		}
 		n += (ns_rr_class(rr) == class &&
 		      (ns_rr_type(rr) == ns_t_cname ||
 		       ns_rr_type(rr) == ns_t_dname));
 	}
-	return (n);
+	if (alias_count)
+		*alias_count = n;
+	return (ns_rcode)ns_msg_getflag (*msg, ns_f_rcode);
 }

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.10 2000/06/10 18:05:32 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.11 2000/07/08 20:41:05 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -569,6 +569,29 @@ int db_printable_len (s, len)
 		    s [i] == '"' || s [i] == '\\')
 			return 0;
 	return 1;
+}
+
+void write_named_billing_class (const char *name, unsigned len,
+				struct class *class)
+{
+	/* XXX billing classes that are modified by OMAPI need
+	   XXX to be detected and written out here. */
+}
+
+void write_billing_classes ()
+{
+	struct collection *lp;
+	struct class *cp;
+	struct hash_bucket *bp;
+	int i;
+
+	for (lp = collections; lp; lp = lp -> next) {
+	    for (cp = lp -> classes; cp; cp = cp -> nic) {
+		if (cp -> spawning && cp -> hash) {
+		    class_hash_foreach (cp -> hash, write_named_billing_class);
+		}
+	    }
+	}
 }
 
 /* Write a spawned class to the database file. */
