@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.180 2003/10/05 13:03:08 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.181 2003/10/10 18:07:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2329,4 +2329,24 @@ share/man/man4/bce.4				1.2
 
 	bce appeared in 1.6.2.
 	[wiz, ticket #1511]
+
+sys/dev/pci/pci_map.c				1.11
+
+	When testing for a void region, use PCI_MAPREG_MEM_SIZE() for 32bit
+	memaddr. If the 32bit mask read is 0, wmask will be 0xffffffff00000000,
+	and PCI_MAPREG_MEM64_SIZE() won't make this 0.
+	[kleink, ticket #1513]
+
+gnu/dist/cvs/src/main.c				1.8
+gnu/dist/cvs/src/patch.c			1.2
+gnu/dist/cvs/src/rcs.c				1.11
+
+	Avoid re-entry in the cleanup signal handlers.
+	[christos, ticket #1514]
+
+sys/dev/usb/ohci.c				1.141
+
+	Update actlen even in the case where a TD returns an error -- this is
+	critical for the umass bulk-only STALL case.
+	[bad, ticket #1515]
 
