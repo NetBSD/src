@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.6 2004/01/25 11:43:09 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.7 2004/01/28 09:29:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.6 2004/01/25 11:43:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.7 2004/01/28 09:29:06 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -742,26 +742,14 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 		LPT_INFO_T * status = (LPT_INFO_T *)data; 
 
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
-		if(error) {
+		if (error)
 			break;
-		}
-		else if(val) {
-			status->dma_status = true;
-		}
-		else {
-			status->dma_status = false;
-		}
+		status->dma_status = (val);
 
 		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
-		if(error) {
+		if (error)
 			break;
-		}
-		else if(val) {
-			status->ieee_status = true;
-		}
-		else {
-			status->ieee_status = false;
-		}
+		status->ieee_status = (val);
 
         	switch(ppbus_get_mode(dev->dv_parent)) {
 		case PPBUS_COMPATIBLE:
@@ -785,6 +773,7 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 		}
 		break;
 	}
+
 	default:
 		error = EINVAL;
 	}
