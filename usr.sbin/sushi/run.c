@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.9 2002/09/23 12:48:10 mycroft Exp $       */
+/*      $NetBSD: run.c,v 1.10 2003/07/16 06:40:47 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ launch_subwin(actionwin, args, win, display)
 	command = (char *)malloc(MAXBUF * sizeof(char));
 	command[0] = '\0';
 	for (p = *args; p != NULL; p = *++args) {
-		strcat(command, p);
-		strcat(command, " ");
+		strlcat(command, p, MAXBUF);
+		strlcat(command, " ", MAXBUF);
 	}
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
@@ -353,10 +353,10 @@ run_prog(int display, char **args)
 	char buf2[MAXBUF];
 
 	command = buf2;
-	sprintf(buf2, "%s ", args[0]);
+	snprintf(buf2, sizeof(buf2), "%s ", args[0]);
 	for (i=1; args[i] != NULL; i++) {
-		command = strcat(command, args[i]);
-		command = strcat(command, " ");
+		strlcat(buf2, args[i], sizeof(buf2));
+		strlcat(buf2, " ", sizeof(buf2));
 	}
 
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
