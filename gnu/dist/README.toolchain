@@ -1,4 +1,4 @@
-$NetBSD: README.toolchain,v 1.2 2001/01/12 01:43:57 hubertf Exp $
+$NetBSD: README.toolchain,v 1.3 2001/10/15 18:28:28 bjh21 Exp $
 
 
 HOW TO BUILD A CROSS COMPILER
@@ -13,8 +13,8 @@ IMPORTED VERSIONS
 The following software is in gnusrc/gnu/dist/toolchain, in a unified build
 structure:
 
-    gcc-2.95.2
-    binutils-2.10
+    gcc-2.95.3
+    binutils-2.11.2
     gdb-5.0
 
 
