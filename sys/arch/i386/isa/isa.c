@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.9 1993/10/15 03:16:19 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.10 1993/10/15 03:50:03 mycroft Exp $
  */
 
 /*
@@ -292,7 +292,7 @@ isa_discoverintr(force, aux)
 	last = 0xffff;
 	while (time > 0) {
 		register u_char irr, lo, hi;
-		irr = inb(IO_ICU1);
+		irr = inb(IO_ICU1) & ~IRQ_SLAVE;
 		if (irr)
 			return 1 << (ffs(irr) - 1);
 		irr = inb(IO_ICU2);
@@ -305,7 +305,7 @@ isa_discoverintr(force, aux)
 		if (now <= last)
 			time -= (last - now);
 		else
-			time -= 0xffff - (now - last);
+			time -= 0x10000 - (now - last);
 		last = now;
 	}
 	return IRQNONE;
