@@ -6066,8 +6066,6 @@ main (argc, argv)
   machine_suffix = concat (spec_machine, dir_separator_str,
 			   spec_version, dir_separator_str, NULL);
   just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
-#else
-  machine_suffix = just_machine_suffix = "";
 #endif /* NETBSD_NATIVE */
 
   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK, 0);
