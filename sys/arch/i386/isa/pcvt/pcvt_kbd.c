@@ -1386,7 +1386,7 @@ regular:
  		if(!in_Debugger && pcvt_is_console)
  		{
  			in_Debugger = 1;
- 			Debugger();
+ 			console_debugger();
  			in_Debugger = 0;
  			if(noblock)
  				return NULL;
