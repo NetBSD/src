@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2001/04/21 20:56:50 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2001/07/21 13:38:22 jdolecek Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -7,7 +7,7 @@
 EXTRA_KERNELS+= GENERIC_TINY GENERIC_LAPTOP GENERIC_DIAGNOSTIC
 
 # These are for use by the bootfloppy construction tools
-BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP
+BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP INSTALL_PS2
 EXTRA_KERNEL_SETS=tiny laptop
 INSTALLATION_DIRS += installation/misc
 
