@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.15 2003/08/08 18:57:05 christos Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.16 2003/08/14 02:17:10 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,6 @@
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
 
-#define linux_exec_setup_stack(a, b)	exec_setup_stack(a, b)
+#define linux_exec_setup_stack	exec_setup_stack
 
 #endif /* !_POWERPC_LINUX_EXEC_H */
