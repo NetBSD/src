@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.11 1995/04/05 21:38:50 mycroft Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.12 1995/04/07 22:19:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -83,7 +83,6 @@ extern struct ifqueue pkintrq;
 #endif
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-extern	struct ifnet loif;
 #define senderr(e) { error = (e); goto bad;}
 
 /*
@@ -504,6 +503,7 @@ ether_ifattach(ifp)
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_output = ether_output;
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
