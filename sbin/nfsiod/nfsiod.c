@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.10 1995/09/30 11:39:53 pk Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.11 1996/02/18 23:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,16 +46,17 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsiod.c	8.3 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$NetBSD: nfsiod.c,v 1.10 1995/09/30 11:39:53 pk Exp $";
+static char rcsid[] = "$NetBSD: nfsiod.c,v 1.11 1996/02/18 23:19:20 mycroft Exp $";
 #endif
 #endif not lint
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <syslog.h>
 #include <sys/ucred.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
+#include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
 
@@ -65,6 +66,7 @@ static char rcsid[] = "$NetBSD: nfsiod.c,v 1.10 1995/09/30 11:39:53 pk Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <unistd.h>
 
 /* Global defs */
