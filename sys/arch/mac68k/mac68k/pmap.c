@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1998/01/01 19:53:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1998/01/06 06:51:50 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -799,7 +799,6 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
@@ -807,7 +806,7 @@ pmap_activate(p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
-	PMAP_ACTIVATE(pmap, pcb, p == curproc);
+	PMAP_ACTIVATE(pmap, p == curproc);
 }
 
 /*
@@ -1814,8 +1813,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 * update now to reload hardware.
 				 */
 				if (active_user_pmap(ptpmap))
-					PMAP_ACTIVATE(ptpmap,
-					    &curproc->p_addr->u_pcb, 1);
+					PMAP_ACTIVATE(ptpmap, 1);
 			}
 #ifdef DEBUG
 			else if (ptpmap->pm_sref < 0)
@@ -2032,7 +2030,7 @@ pmap_enter_ptpage(pmap, va)
 		 * process so update now to reload hardware.
 		 */
 		if (active_user_pmap(pmap))
-			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
+			PMAP_ACTIVATE(pmap, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %p stab %p(%p)\n",
