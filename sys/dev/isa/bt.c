@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.1 1996/03/24 22:20:47 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.2 1996/03/24 22:23:58 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -970,8 +970,7 @@ bt_init(sc)
 	printf("%s: %s, %s\n",
 	    sc->sc_dev.dv_xname,
 	    setup.reply.sync_neg ? "sync" : "async",
-	    setup.reply.parity ? "parity" : "no parity",
-	    setup.reply.num_mbx);
+	    setup.reply.parity ? "parity" : "no parity");
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
