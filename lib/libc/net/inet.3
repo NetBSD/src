@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.17 2002/05/14 18:57:31 kleink Exp $
+.\"	$NetBSD: inet.3,v 1.18 2002/07/18 10:41:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,7 @@ as held in a character string) to network format (usually a
 .Ft struct in_addr
 or some other internal binary representation, in network byte order).
 It returns 1 if the address was valid for the specified address family, or
-0 if the address wasn't parseable in the specified address family, or -1
+0 if the address wasn't parsable in the specified address family, or -1
 if some system error occurred (in which case
 .Va errno
 will have been set).
@@ -140,7 +140,7 @@ takes an Internet network number and a local network address (both in
 host order) and constructs an Internet address from it.
 Note that to convert only a single value to a
 .Ft struct in_addr
-form that value shoud be passed as the first parameter and
+form that value should be passed as the first parameter and
 .Ql 0L
 should be given for the second parameter.
 .Pp
