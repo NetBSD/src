@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.78 2001/04/10 06:36:08 leo Exp $
+#	$NetBSD: files.atari,v 1.79 2001/04/10 06:37:08 leo Exp $
 
 maxpartitions 16
 
@@ -167,7 +167,7 @@ file    arch/atari/isa/fdcisa.c		fdcisa
 attach  fdcisa at isa
 device  fdisa: disk
 attach  fdisa at fdcisa
-file    dev/isa/fd.c			fdisa
+file    dev/isa/fd.c			fdisa needs-flag
 major   {fdisa = 2}
 
 attach	wdc at mainbus with wdc_mb: mbdma
