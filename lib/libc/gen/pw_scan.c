@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.16 2005/01/19 22:40:37 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.17 2005/01/19 22:59:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.16 2005/01/19 22:40:37 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.17 2005/01/19 22:59:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -65,6 +65,7 @@ gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 	long l;
 	char *ep;
 
+printf("time %s %x\n", p, flag);
 	if (*p == '\0') {
 		*flags |= flag;
 		*res = 0;
@@ -84,7 +85,7 @@ gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 	return 1;
 done:
 	if (dowarn) {
-		warnx("%s value `%s' for %s time", ep, p,
+		warnx("%s `%s' for %s time", ep, p,
 		    flag == _PASSWORD_NOEXP ? "expiration" : "change");
 	}
 	return 0;
@@ -120,7 +121,7 @@ getid(unsigned long *res, const char *p, int *flags, int dowarn, int flag)
 	return 1;
 done:
 	if (dowarn)
-		warnx("%s %s value `%s'", ep, 
+		warnx("%s %s `%s'", ep, 
 		    flag == _PASSWORD_NOUID ? "uid" : "gid", p);
 	return 0;
 
