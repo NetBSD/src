@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.9 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.10 1999/03/09 02:57:29 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -153,6 +153,7 @@ void rf_UnconfigureVnodes( RF_Raid_t * );
 int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 int raidmarkclean(dev_t dev, struct vnode *b_vp,int);
+void rf_update_component_labels( RF_Raid_t *);
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
@@ -275,124 +276,6 @@ rf_UnconfigureArray()
 			rf_print_unfreed();
 	}
 	RF_UNLOCK_MUTEX(configureMutex);
-}
-
-
-static void rf_update_component_labels( RF_Raid_t *);
-static void
-rf_update_component_labels( raidPtr )
-	RF_Raid_t *raidPtr;
-{
-	RF_ComponentLabel_t c_label;
-	int sparecol;
-	int r,c;
-	int i,j;
-	int srow, scol;
-
-	srow = -1;
-	scol = -1;
-
-	/* XXX should do extra checks to make sure things really are clean, 
-	   rather than blindly setting the clean bit... */
-
-	raidPtr->mod_counter++;
-
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			if (raidPtr->Disks[r][c].status == rf_ds_optimal) {
-				raidread_component_label(
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&c_label);
-				/* make sure status is noted */
-				c_label.status = rf_ds_optimal;
-				raidwrite_component_label( 
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&c_label);
-				if (raidPtr->parity_good == RF_RAID_CLEAN) {
-					raidmarkclean( 
-					      raidPtr->Disks[r][c].dev, 
-					      raidPtr->raid_cinfo[r][c].ci_vp,
-					      raidPtr->mod_counter);
-				}
-			} 
-			/* else we don't touch it.. */
-#if 0
-			else if (raidPtr->Disks[r][c].status !=
-				   rf_ds_failed) {
-				raidread_component_label(
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&c_label);
-				/* make sure status is noted */
-				c_label.status = 
-					raidPtr->Disks[r][c].status;
-				raidwrite_component_label( 
-					raidPtr->Disks[r][c].dev,
-					raidPtr->raid_cinfo[r][c].ci_vp,
-					&c_label);
-				if (raidPtr->parity_good == RF_RAID_CLEAN) {
-					raidmarkclean( 
-					      raidPtr->Disks[r][c].dev, 
-					      raidPtr->raid_cinfo[r][c].ci_vp,
-					      raidPtr->mod_counter);
-				}
-			}
-#endif
-		} 
-	}
-
-	for( c = 0; c < raidPtr->numSpare ; c++) {
-		sparecol = raidPtr->numCol + c;
-		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
-			/* 
-			   
-			   we claim this disk is "optimal" if it's 
-			   rf_ds_used_spare, as that means it should be 
-			   directly substitutable for the disk it replaced. 
-			   We note that too...
-
-			 */
-
-			for(i=0;i<raidPtr->numRow;i++) {
-				for(j=0;j<raidPtr->numCol;j++) {
-					if ((raidPtr->Disks[i][j].spareRow == 
-					     0) &&
-					    (raidPtr->Disks[i][j].spareCol ==
-					     sparecol)) {
-						srow = i;
-						scol = j;
-						break;
-					}
-				}
-			}
-			
-			raidread_component_label( 
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &c_label);
-			/* make sure status is noted */
-			c_label.version = RF_COMPONENT_LABEL_VERSION; 
-			c_label.mod_counter = raidPtr->mod_counter;
-			c_label.serial_number = raidPtr->serial_number;
-			c_label.row = srow;
-			c_label.column = scol;
-			c_label.num_rows = raidPtr->numRow;
-			c_label.num_columns = raidPtr->numCol;
-			c_label.clean = RF_RAID_DIRTY; /* changed in a bit*/
-			c_label.status = rf_ds_optimal;
-			raidwrite_component_label(
-				      raidPtr->Disks[0][sparecol].dev,
-				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
-				      &c_label);
-			if (raidPtr->parity_good == RF_RAID_CLEAN) {
-				raidmarkclean( raidPtr->Disks[0][sparecol].dev,
-			              raidPtr->raid_cinfo[0][sparecol].ci_vp,
-					       raidPtr->mod_counter);
-			}
-		}
-	}
 }
 
 /*
