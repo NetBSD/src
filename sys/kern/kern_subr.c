@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.26 1997/06/14 04:17:32 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.27 1997/06/16 00:25:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -492,7 +492,10 @@ setroot(bootdv, bootpartition, nam2blk)
 					ndumpdev = MAKEDISKDEV(major(nrootdev),
 					    DISKUNIT(nrootdev), 1);
 				}
-				dumpdv = rootdv;
+				if (rootdv->dv_class == DV_IFNET)
+					dumpdv = NULL;
+				else
+					dumpdv = rootdv;
 				break;
 			}
 			if (len == 4 && strcmp(buf, "none") == 0) {
@@ -652,8 +655,17 @@ setroot(bootdv, bootpartition, nam2blk)
 	 *	    of the root device.
 	 */
 
-	if (dumpdv != NULL)
+	if (boothowto & RB_ASKNAME) {
+		if (dumpdv == NULL) {
+			/*
+			 * Just return; dumpdev is already set to NODEV
+			 * and we don't want to print a newline in this
+			 * case.
+			 */
+			return;
+		}
 		goto out;
+	}
 
 	if (dumpspec != NULL) {
 		if (dumpdev == NODEV) {
