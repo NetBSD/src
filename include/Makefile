@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95.2.1 2001/03/05 23:33:26 nathanw Exp $
+#	$NetBSD: Makefile,v 1.95.2.2 2001/04/08 20:31:41 nathanw Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -10,7 +10,7 @@ INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	getopt.h glob.h grp.h hesiod.h ifaddrs.h \
 	iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
-	login_cap.h lwp.h malloc.h math.h md4.h md5.h \
+	login_cap.h lwp.h malloc.h math.h md2.h md4.h md5.h \
 	memory.h mpool.h ndbm.h netconfig.h netdb.h netgroup.h nlist.h \
 	nl_types.h \
 	nsswitch.h paths.h pwd.h ranlib.h re_comp.h regex.h regexp.h \

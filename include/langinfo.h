@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.4 1999/09/05 09:17:14 kleink Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.4.10.1 2001/04/08 20:31:41 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -67,6 +67,8 @@
 #define NOSTR		48	/* Negative response for yes/no queries */
 #define NOEXPR		49	/* Negative response for yes/no queries */
 #define CRNCYSTR	50	/* Currency symbol */
+
+#define CODESET		51	/* codeset name */
 
 __BEGIN_DECLS
 char *nl_langinfo __P((nl_item));
