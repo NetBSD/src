@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.33 2001/07/22 13:33:59 wiz Exp $
+# $NetBSD: network,v 1.34 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: network
 # REQUIRE: ipfilter ipsec mountcritlocal root tty sysctl
+# BEFORE:  NETWORKING
 
 . /etc/rc.subr
 

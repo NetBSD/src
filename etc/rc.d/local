@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: local,v 1.5 2000/08/21 23:33:06 lukem Exp $
+# $NetBSD: local,v 1.6 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # REQUIRE: DAEMON
 # PROVIDE: local
+# BEFORE:  LOGIN
 # KEYWORD: shutdown
 
 . /etc/rc.subr

@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.5 2001/02/11 00:51:35 fredb Exp $
+# $NetBSD: ppp,v 1.6 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: ppp
 # REQUIRE: mountcritremote syslogd
+# BEFORE:  SERVERS
 #
 #	Note that this means that syslogd will not be listening on
 #	any PPP addresses.  This is considered a feature.

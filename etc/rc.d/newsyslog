@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: newsyslog,v 1.3 2002/03/22 04:16:39 lukem Exp $
+# $NetBSD: newsyslog,v 1.4 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: newsyslog
 # REQUIRE: mountcritremote sysdb
-# BEFORE: syslogd
+# BEFORE:  syslogd SERVERS
 
 . /etc/rc.subr
 

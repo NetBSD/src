@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: lkm3,v 1.5 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: lkm3,v 1.6 2002/03/22 04:33:58 thorpej Exp $
 #
 
 # PROVIDE: aftermountlkm
 # REQUIRE: mountall
+# BEFORE:  DAEMON
 
 . /etc/rc.subr
 

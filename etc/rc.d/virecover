@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: virecover,v 1.5 2001/04/11 21:02:44 aymeric Exp $
+# $NetBSD: virecover,v 1.6 2002/03/22 04:34:00 thorpej Exp $
 #
 
 # PROVIDE: virecover
 # REQUIRE: mountcritremote
+# BEFORE:  DAEMON
 #
 # XXX: should require `mail'!
 
