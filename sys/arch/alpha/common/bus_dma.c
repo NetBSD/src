@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.9 1998/01/27 02:35:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 1998/01/27 02:35:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/mbuf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -54,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 1998/01/19 03:12:20 thorpej Exp $");
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+int	_bus_dmamap_load_buffer_direct_common __P((bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int, bus_addr_t,
+	    vm_offset_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -118,40 +123,32 @@ _bus_dmamap_destroy(t, map)
 }
 
 /*
- * Common function for loading a direct-mapped DMA map with a linear
- * buffer.  Called by bus-specific DMA map load functions with the
- * OR value appropriate for indicating "direct-mapped" for that
- * chipset.
+ * Utility function to load a linear buffer.  lastaddrp holds state
+ * between invocations (for multiple-buffer loads).  segp contains
+ * the starting segment on entrance, and the ending segment on exit.
+ * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
-	bus_dma_tag_t t;
+_bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
+    lastaddrp, segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 	bus_addr_t wbase;
+	vm_offset_t *lastaddrp;
+	int *segp;
+	int first;
 {
 	bus_size_t sgsize;
 	vm_offset_t curaddr, lastaddr;
 	vm_offset_t vaddr = (vm_offset_t)buf;
-	int first, seg;
+	int seg;
 
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
+	lastaddr = *lastaddrp;
 
-	if (buflen > map->_dm_size)
-		return (EINVAL);
-
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-
-	lastaddr = ~0;		/* XXX gcc */
-	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -195,6 +192,9 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
 		buflen -= sgsize;
 	}
 
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
 	/*
 	 * Did we fit?
 	 */
@@ -204,24 +204,84 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
 		 */
 		return (EFBIG);		/* XXX better return value here? */
 	}
-
-	map->dm_nsegs = seg + 1;
 	return (0);
+}
+
+/*
+ * Common function for loading a direct-mapped DMA map with a linear
+ * buffer.  Called by bus-specific DMA map load functions with the
+ * OR value appropriate for indicating "direct-mapped" for that
+ * chipset.
+ */
+int
+_bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+	bus_addr_t wbase;
+{
+	vm_offset_t lastaddr;
+	int seg, error;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	seg = 0;
+	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
+	    p, flags, wbase, &lastaddr, &seg, 1);
+	if (error == 0)
+		map->dm_nsegs = seg + 1;
+	return (error);
 }
 
 /*
  * Like _bus_dmamap_load_direct_common(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf_direct_common(t, map, m, flags, wbase)
+_bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	struct mbuf *m;
+	struct mbuf *m0;
 	int flags;
 	bus_addr_t wbase;
 {
+	vm_offset_t lastaddr;
+	int seg, error, first;
+	struct mbuf *m;
 
-	panic("_bus_dmamap_load_mbuf_direct_common: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("_bus_dmamap_load_mbuf_direct_common: no packet header");
+#endif
+
+	if (m0->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
+	first = 1;
+	seg = 0;
+	error = 0;
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		error = _bus_dmamap_load_buffer_direct_common(map,
+		    m->m_data, m->m_len, NULL, flags, wbase, &lastaddr,
+		    &seg, first);
+		first = 0;
+	}
+	if (error == 0)
+		map->dm_nsegs = seg + 1;
+	return (error);
 }
 
 /*
