@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.8 1994/02/08 21:41:47 deraadt Exp $
+ * $Id: conf.c,v 1.9 1994/02/27 08:44:12 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	dev_type_stop(n) 	int n __P((struct tty *, int))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t))
+#define	dev_type_dump(n)	int n __P(())	/* sorry, cannot prototype */
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* error/nullop functions */
@@ -107,19 +107,39 @@ int	ttselect	__P((dev_t, int, struct proc *));
 bdev_decl(no);	/* dummy declarations */
 
 #include "sd.h"
-
 bdev_decl(sd);
+
+#include "vn.h"
+bdev_decl(vn);
+
+#ifdef LKM
+int	lkmenodev();				/* lkm "nodev" routine */
+#else
+#define	lkmenodev	enodev
+#endif
+
+#define bdev_lkm_stub() { \
+	((dev_type_open((*)))lkmenodev), dev_init(0,no,close), \
+	dev_init(0,no,strategy), dev_init(0,no,ioctl), \
+	dev_init(0,no,dump), 0, 0 }
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/* 0 */
-	bdev_notdef(),		/* 1 */
-	bdev_notdef(),		/* 2 */
-	bdev_swap_init(),	/* 3 */
-	bdev_notdef(),		/* 4 */
-	bdev_notdef(),		/* 5 */
-	bdev_notdef(),		/* 6 */
-	bdev_disk_init(NSD,sd),	/* 7: scsi disk */
+	bdev_notdef(),		/*  0 */
+	bdev_notdef(),		/*  1 */
+	bdev_notdef(),		/*  2 */
+	bdev_swap_init(),	/*  3 */
+	bdev_notdef(),		/*  4 */
+	bdev_notdef(),		/*  5 */
+	bdev_notdef(),		/*  6 */
+	bdev_disk_init(NSD,sd),	/*  7: scsi disk */
+	bdev_disk_init(NVN,vn), /*  8: vnode */
+	bdev_lkm_stub(),	/*  9: LKM STUB */
+	bdev_lkm_stub(),	/* 10: LKM STUB */
+	bdev_lkm_stub(),	/* 11: LKM STUB */
+	bdev_lkm_stub(),	/* 12: LKM STUB */
+	bdev_lkm_stub(),	/* 13: LKM STUB */
+	bdev_lkm_stub(),	/* 14: LKM STUB */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -241,11 +261,32 @@ cdev_decl(bwtwo);
 #include "cgthree.h"
 cdev_decl(cgthree);
 
+cdev_decl(vn);
+#define	cdev_vn_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, seltrue, 0, vnstrategy }
+
+#ifdef LKM
+#define NLKM 1
+#else
+#define NLKM 0
+#endif
+cdev_decl(lkm);
+#define	cdev_lkm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), error_read, error_write, \
+	dev_init(c,n,ioctl), 0, 0, 0, error_select, 0, 0 }
+#define cdev_lkm_stub() { \
+	((dev_type_open((*)))lkmenodev), dev_init(0,no,close), \
+	error_read, error_write, error_ioctl, 0, 0, 0, error_select, 0, 0 }
+
 #include "cgsix.h"
 cdev_decl(cgsix);
 
 #include "bsdaudio.h"
 cdev_decl(audio);
+
+#include "tun.h"
+cdev_decl(tun);
 
 cdev_decl(openprom);
 /* open, close, ioctl */
@@ -374,6 +415,15 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 107 */
 	cdev_notdef(),			/* 108 */
 	cdev_notdef(),			/* 109 */
+	cdev_vn_init(NVN,vn),		/* 110: vnode */
+	cdev_gen_init(NTUN,tun),	/* 111: tunnel */
+	cdev_lkm_init(NLKM,lkm),	/* 112: loadable kernel modules */
+	cdev_lkm_stub(),		/* 113: LKM STUB */
+	cdev_lkm_stub(),		/* 114: LKM STUB */
+	cdev_lkm_stub(),		/* 115: LKM STUB */
+	cdev_lkm_stub(),		/* 116: LKM STUB */
+	cdev_lkm_stub(),		/* 117: LKM STUB */
+	cdev_lkm_stub(),		/* 118: LKM STUB */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
