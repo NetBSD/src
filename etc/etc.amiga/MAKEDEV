@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.38 1997/10/19 21:35:37 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.38.2.1 1997/10/29 03:56:01 mellon Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -236,10 +236,10 @@ cd*)
 	cd*) name=cd;	unit=${i#cd};	blk=7;	chr=9;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
+	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
+	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
