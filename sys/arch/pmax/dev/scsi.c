@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.8 1999/04/24 08:01:07 simonb Exp $	*/
+/*	$NetBSD: scsi.c,v 1.9 1999/09/05 06:31:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,7 +206,7 @@ scsiGroup1Cmd(cmd, lun, block, count, c)
 }
 
 /*
- * Print a SCSI identify  resutl
+ * Print a SCSI identify result.
  */
 void
 scsiPrintInquiry(inqbuf, i)
