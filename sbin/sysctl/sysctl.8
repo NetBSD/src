@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.97 2003/08/07 10:11:02 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.98 2003/09/17 18:24:47 grant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,37 +63,19 @@ appropriate privilege to set kernel state.
 The state to be retrieved or set is described using a
 ``Management Information Base'' (``MIB'') style name,
 described as a dotted set of components.
-The
-.Fl a
-flag can be used to list all the currently available string or integer values.
-The
-.Fl A
-flag will list all the known MIB names including tables.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+List all the currently available string or integer values.
+.It Fl A
+List all the known MIB names including tables.
 Those with string or integer values will be printed as with the
 .Fl a
 flag; for the table values,
 the name of the utility to retrieve them is given.
-.Pp
-The
-.Fl n
-flag specifies that the printing of the field name should be
-suppressed and that only its value should be output.
-This flag is useful for setting shell variables.
-For example, to save the pagesize in variable psize, use:
-.Bd -literal -offset indent -compact
-set psize=`sysctl -n hw.pagesize`
-.Ed
-.Pp
-If just a MIB style name is given,
-the corresponding value is retrieved.
-If a value is to be set, the
-.Fl w
-flag must be specified and the MIB name followed
-by an equal sign and the new value to be used.
-.Pp
-The
-.Fl f
-flag specifies the name of a file to read and process.
+.It Fl f
+Specifies the name of a file to read and process.
 Blank lines and comments (beginning with
 .Ql # )
 are ignored.
@@ -109,16 +91,24 @@ The
 .Fl w
 flag is implied by
 .Fl f .
+.It Fl n
+Specifies that the printing of the field name should be
+suppressed and that only its value should be output.
+This flag is useful for setting shell variables.
+For example, to save the pagesize in variable psize, use:
+.Bd -literal -offset indent -compact
+set psize=`sysctl -n hw.pagesize`
+.Ed
+.It Fl q
+Used to indicate that nothing should be printed for writes unless an
+error is detected.
+.It Fl w
+Sets the MIB style name given to the value given.
+The MIB style name and value must be separated by
+.Ql =
+with no whitespace.
 .Pp
-The
-.Fl q
-flag may be used with
-.Fl f
-and
-.Fl w
-to indicate that nothing should be printed for writes unless an error is
-detected.
-.Pp
+.El
 The
 .Ql proc
 top-level MIB has a special semantic: it represent per-process values
