@@ -1,3 +1,5 @@
+/*	$NetBSD: fork.S,v 1.3 1997/05/08 13:39:04 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,17 +19,18 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: fork.S,v 1.2 1994/03/07 23:20:42 phil Exp $
  */
 
 #include "SYS.h"
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: fork.S,v 1.3 1997/05/08 13:39:04 matthias Exp $")
+#endif
+
 /* r0  = pid. r1 = 0 in parent, 1 in child */
 
 SYSCALL(fork)
-	cmpqd	0, r1
-	beq	parent
-	movqd	0, r0
-parent:
-	ret	0	/*  pid = fork() */
+	cmpqd	0,r1
+	beq	0f
+	movqd	0,r0
+0:	ret	0	/*  pid = fork() */

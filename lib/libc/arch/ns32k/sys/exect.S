@@ -1,3 +1,5 @@
+/*	$NetBSD: exect.S,v 1.5 1997/05/08 13:39:03 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,19 +19,17 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: exect.S,v 1.4 1994/05/27 21:56:04 phil Exp $
  */
 
 #include "SYS.h"
 #include <machine/psl.h>
 
-ENTRY(exect)
-	sprb	us, r0
-	orb	PSL_T, r0
-	lprb	us, r0
-	movd	SYS_execve, r0
-	SVC
-	bcs	cerror
-	ret	0
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: exect.S,v 1.5 1997/05/08 13:39:03 matthias Exp $")
+#endif
 
+ENTRY(exect)
+	bispsrb	PSL_T
+	SYSTRAP(execve)
+	bcs	_ASM_LABEL(cerror)
+	ret	0

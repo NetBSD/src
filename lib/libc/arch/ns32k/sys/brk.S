@@ -1,3 +1,5 @@
+/*	$NetBSD: brk.S,v 1.5 1997/05/08 13:39:02 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,31 +19,26 @@
  * HISTORY
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: brk.S,v 1.4 1994/06/10 22:46:14 phil Exp $
  */
 
 #include "SYS.h"
 
-	.globl	_curbrk
-	.globl	minbrk
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: brk.S,v 1.5 1997/05/08 13:39:02 matthias Exp $")
+#endif
 
-ENTRY(_brk)
-	br	ok2
+ASDATA_D(minbrk, _C_LABEL(end))
 
 ENTRY(brk)
 	PIC_PROLOGUE
-	cmpd	PIC_S_ARG0, PIC_GOT(minbrk)
-	bge	ok1
-	movd	PIC_GOT(minbrk), PIC_S_ARG0
-ok1:
-	PIC_EPILOGUE
-ok2:
-	movd	SYS_break, r0
-	SVC
-	bcs	cerror
+	cmpd	PIC_S_ARG0,PIC_GOT(_ASM_LABEL(minbrk))
+	bge	0f
+	movd	PIC_GOT(_ASM_LABEL(minbrk)),PIC_S_ARG0
+0:	PIC_EPILOGUE
+	SYSTRAP(break)
+	bcs	_ASM_LABEL(cerror)
 	PIC_PROLOGUE
-	movd	PIC_S_ARG0, PIC_GOT(_curbrk)
-	movqd	0, r0
+	movd	PIC_S_ARG0,PIC_GOT(_C_LABEL(curbrk))
+	movqd	0,r0
 	PIC_EPILOGUE
 	ret	0
