@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.27 1995/04/02 20:38:09 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.28 1995/05/07 16:54:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -167,8 +167,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	struct cfdev *cd;
 	u_int pstart, pend, vstart, vend, avail;
 	u_int pt, ptpa, ptsize, ptextra;
-	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg1_pa, Sysptmap1_pa;
-	u_int umap1_pa, Sysptmap1, Umap1, sg_proto, pg_proto;
+	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg1_pa;
+	u_int sg_proto, pg_proto;
 	u_int p0_ptpa, p0_u_area_pa, tc, end_loaded, ncd, i;
 	u_int *sg, *pg, *pg2;
 
