@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.20 2004/03/14 00:45:21 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.21 2004/03/14 01:08:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ struct	lwp {
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
-	void	*l_fill1;	/* XXXcl temporarily unused */
+	struct sadata_vp *l_savp; /* SA "virtual processor" */
 
 #define l_endzero l_priority
 
