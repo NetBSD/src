@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.17 2002/01/31 19:27:53 tv Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.17.2.1 2004/04/07 06:57:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.17 2002/01/31 19:27:53 tv Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.17.2.1 2004/04/07 06:57:17 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,9 +203,9 @@ cp_start(void)
  *	start of this record so a flush of this buffer will replace the record
  *	in the archive.
  *	A major problem is rewriting this last record. For archives stored
- *	on disk files, this is trival. However, many devices are really picky
+ *	on disk files, this is trivial. However, many devices are really picky
  *	about the conditions under which they will allow a write to occur.
- *	Often devices restrict the conditions where writes can be made writes,
+ *	Often devices restrict the conditions where writes can be made,
  *	so it may not be feasable to append archives stored on all types of
  *	devices.
  * Return:
@@ -351,7 +351,7 @@ rd_sync(void)
 
 		/*
 		 * Oh well, yet another failed read...
-		 * if error limit reached, ditch. o.w. poke device to move past
+		 * if error limit reached, ditch. otherwise poke device to move past
 		 * bad media and try again. if media is badly damaged, we ask
 		 * the poor (and upset user at this point) for the next archive
 		 * volume. remember the goal on reads is to get the most we
@@ -615,7 +615,16 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 	int cnt;
 	int res = 0;
 	off_t size = arcn->sb.st_size;
-	struct stat sb;
+	struct stat origsb, sb;
+
+	/*
+	 * by default, remember the previously obtained stat information
+	 * (in arcn->sb) for comparing the mtime after reading.
+	 * if Mflag is set, use the actual mtime instead.
+	 */
+	origsb = arcn->sb;
+	if (Mflag && (fstat(ifd, &origsb) < 0))
+		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 
 	/*
 	 * while there are more bytes to write
@@ -643,7 +652,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 		tty_warn(1, "File changed size during read %s", arcn->org_name);
 	else if (fstat(ifd, &sb) < 0)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
-	else if (arcn->sb.st_mtime != sb.st_mtime)
+	else if (origsb.st_mtime != sb.st_mtime)
 		tty_warn(1, "File %s was modified during copy to archive",
 			arcn->org_name);
 	*left = size;
@@ -693,7 +702,8 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
 	} else
-		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+		syswarn(0, errno,
+		    "Unable to obtain block size for file %s", fnm);
 	rem = sz;
 	*left = 0L;
 
@@ -772,7 +782,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
-	struct stat sb;
+	struct stat sb, origsb;
 
 	/*
 	 * check for holes in the source file. If none, we will use regular
@@ -782,6 +792,15 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 		++no_hole;
 
 	/*
+	 * by default, remember the previously obtained stat information
+	 * (in arcn->sb) for comparing the mtime after reading.
+	 * if Mflag is set, use the actual mtime instead.
+	 */
+	origsb = arcn->sb;
+	if (Mflag && (fstat(fd1, &origsb) < 0))
+		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
+
+	/*
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
@@ -789,7 +808,8 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 		if (sb.st_blksize > 0)
 			sz = sb.st_blksize;
 	} else
-		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+		syswarn(0, errno,
+		    "Unable to obtain block size for file %s", fnm);
 	rem = sz;
 
 	/*
@@ -818,7 +838,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 			arcn->org_name, arcn->name);
 	else if (fstat(fd1, &sb) < 0)
 		syswarn(1, errno, "Failed stat of %s", arcn->org_name);
-	else if (arcn->sb.st_mtime != sb.st_mtime)
+	else if (origsb.st_mtime != sb.st_mtime)
 		tty_warn(1, "File %s was modified during copy to %s",
 			arcn->org_name, arcn->name);
 
