@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.3 2001/11/21 03:20:57 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.4 2001/12/08 04:22:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,7 +77,7 @@ void vunmaprange(vaddr_t, vsize_t);
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
@@ -96,7 +96,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
 	 */
 	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 
 #ifdef PPC_HAVE_FPU

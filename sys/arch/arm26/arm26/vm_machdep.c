@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.19.4.3 2001/11/27 00:19:18 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.19.4.4 2001/12/08 04:22:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.19.4.3 2001/11/27 00:19:18 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.19.4.4 2001/12/08 04:22:19 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -105,7 +105,7 @@ extern struct vm_map *phys_map; /* XXX where? */
  */
 
 void
-cpu_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
@@ -114,7 +114,7 @@ cpu_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	char *stacktop;
 
 #if 0
-	printf("cpu_fork: %p -> %p\n", l1, l2);
+	printf("cpu_lwp_fork: %p -> %p\n", l1, l2);
 #endif
 	pcb = &l2->l_addr->u_pcb;
 	/* Copy the pcb */

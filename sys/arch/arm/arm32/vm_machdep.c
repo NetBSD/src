@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.2 2001/11/15 06:39:22 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.3 2001/12/08 04:22:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -104,7 +104,7 @@ extern void proc_trampoline	__P((void));
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1;
 	struct lwp *l2;
 	void *stack;
@@ -118,7 +118,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_fork: %p %p %p %p\n", l1, l2, curproc, &lwp0);
+		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curproc, &lwp0);
 #endif	/* PMAP_DEBUG */
 
 #if 0 /* XXX */

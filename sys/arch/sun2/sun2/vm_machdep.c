@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.4.2 2001/11/18 19:45:51 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.4.3 2001/12/08 04:22:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -88,7 +88,7 @@ static void cpu_set_kpc __P((struct lwp *, void (*)(void *), void *));
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
@@ -108,7 +108,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 		savectx(p1pcb);
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 
 	/* copy over the machdep part of struct proc */
@@ -184,7 +184,7 @@ cpu_setfunc(l, func, arg)
  *
  * Note that it's assumed that when the named lwp returns,
  * rei() should be invoked, to return to user mode.  That is
- * accomplished by having cpu_fork set the initial frame with a
+ * accomplished by having cpu_lwp_fork set the initial frame with a
  * return address pointing to proc_do_uret() which does the rte.
  *
  * The design allows this function to be implemented as a general

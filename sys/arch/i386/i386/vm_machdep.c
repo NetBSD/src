@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.3 2001/09/21 22:35:08 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.4 2001/12/08 04:22:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -95,7 +95,7 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
@@ -128,7 +128,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 	}
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 	*pcb = l1->l_addr->u_pcb;
 

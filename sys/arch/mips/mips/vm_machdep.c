@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85.2.2 2001/11/17 23:43:45 wdk Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.85.2.3 2001/12/08 04:22:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.2 2001/11/17 23:43:45 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.3 2001/12/08 04:22:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ paddr_t kvtophys __P((vaddr_t));	/* XXX */
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
@@ -117,7 +117,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 	 * If l1 != curproc && l1 == &lwp0, we're creating a kernel thread.
 	 */
 	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurproc)
 		savefpregs(l1);

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.3 2001/09/21 22:34:55 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.4 2001/12/08 04:22:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.3 2001/09/21 22:34:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.4 2001/12/08 04:22:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ cpu_exit(struct lwp *l, int proc)
  * accordingly.
  */
 void
-cpu_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct user *up = l2->l_addr;
@@ -184,7 +184,7 @@ cpu_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * thread.
 	 */
 	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 
 	/*
