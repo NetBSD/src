@@ -46,16 +46,45 @@ address, to test the address once it has been offered, and to set the
 interface's final configuration once a lease has been acquired.  If no
 lease is acquired, the script is used to test predefined leases, if
 any, and also called once if no valid lease can be identified.
-.PP
-This script is not meant to be customized by the end user.  However,
-the script may not work on particular versions of particular operating
-systems (indeed, no standard script exists for some operating
-systems), so a pioneering user may well need to create a new script or
-modify an existing one.  In general, customizations specific to a
-particular computer should be done in the
+.SH CUSTOMIZATION
+This script is not meant to be modified by the end user.
+In general, customizations specific to a particular computer should either
+be done in the
 .B /etc/dhclient.conf
+file, or by setting up an
+.B /etc/dhclient-enter-hooks
+or
+.B /etc/dhclient-exit-hooks
 script.   If you find that you can't make such a customization without
 customizing dhclient-script, please submit a bug report.
+.PP
+The
+.B /etc/dhclient-enter-hooks
+script, if it exists, is invoked by
+.B /etc/dhclient-script
+each time it runs, before it does anything.
+It will have the same variable settings as are described later, and
+may modify these settings before dhclient-script sees them, or may
+take additional action.
+.PP
+One special action that may be useful is that dhclient-script defines a
+shell function, make_resolv_conf, which overwrites the existing resolv.conf
+file with the configuration information supplied by the server, as modified
+by any append, prepend or supersede statements in the dhclient.conf file.
+It is normally possible to specify the behaviour you want in the
+dhclient.conf file - for example, if you want to always use your own
+local nameserver, you can specify "supersede domain-name-servers 127.0.0.1;"
+in your dhclient.conf file.   If this behaviour is not sufficient for some
+reason, however, the make_resolv_conf function can itself be superseded
+with a new definition in the dhclient-enter-hooks script.
+.PP
+The
+.B /etc/dhclient-exit-hooks
+script, if it exists, is invoked by
+.B /etc/dhclient-script
+each time it exits.   The environment will be set up just as with the
+dhclient-enter-hooks script, except that the exit_status variable will
+contain the exit status with which dhclient-script will exit.
 .SH OPERATION
 When dhclient needs to invoke the client configuration script, it
 writes a shell script into /tmp which defines a variety of variables.
