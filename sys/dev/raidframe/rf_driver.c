@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.4 1999/01/26 02:33:56 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.5 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -94,10 +94,6 @@
 #include <io/cam/cam.h>
 #include <io/cam/pdrv.h>
 #endif /* DKUSAGE > 0 */
-
-#if RF_DEMO > 0
-#include "rf_demo.h"
-#endif /* RF_DEMO > 0 */
 
 /* rad == RF_RaidAccessDesc_t */
 static RF_FreeList_t *rf_rad_freelist;

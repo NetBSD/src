@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.3 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -116,12 +116,3 @@ RF_DBG_OPTION(totalInCoreLogCapacity,1024*1024) /* target bytes available for in
 #if DFSTRACE > 0
 RF_DBG_OPTION(DFSTraceAccesses,0)
 #endif /* DFSTRACE > 0 */
-
-#if RF_DEMO > 0
-RF_DBG_OPTION(demoMeterHpos,0) /* horizontal position of meters for demo mode */
-RF_DBG_OPTION(demoMeterTag,0)
-RF_DBG_OPTION(demoMeterVpos,0) /* vertical position of meters for demo mode */
-RF_DBG_OPTION(demoMode,0)
-RF_DBG_OPTION(demoSMM,0)
-RF_DBG_OPTION(demoSuppressReconInitVerify,0) /* supress initialization & verify for recon */
-#endif /* RF_DEMO > 0 */
