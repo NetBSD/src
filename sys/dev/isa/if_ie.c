@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.52 1996/10/06 21:24:36 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1143,6 +1143,8 @@ check_eh(sc, eh, to_bpf)
 
 #ifdef DIAGNOSTIC
 	panic("check_eh: impossible");
+#else
+	return 0;			/* dump it */
 #endif
 }
 
