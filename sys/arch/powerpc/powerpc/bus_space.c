@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2003/03/15 08:03:19 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2003/04/09 22:35:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -506,8 +506,13 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	size = _BUS_SPACE_STRIDE(t, size);
 
-	if (bpa + size > t->pbs_limit)
+	if (bpa + size > t->pbs_limit) {
+#ifdef DEBUG
+		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
+		    t, t->pbs_base, t->pbs_limit, bpa, size);
+#endif
 		return (EINVAL);
+	}
 
 	/*
 	 * Can't map I/O space as linear.
@@ -522,8 +527,13 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	error = extent_alloc_region(t->pbs_extent, bpa, size,
 	    EX_NOWAIT | extent_flags);
-	if (error)
+	if (error) {
+#ifdef DEBUG
+		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: %d\n",
+		    t, t->pbs_base, t->pbs_limit, bpa, size, error);
+#endif
 		return (error);
+	}
 
 	pa = t->pbs_offset + bpa;
 #ifdef PPC_OEA
@@ -541,6 +551,10 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 	if (extent_flags == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
+#ifdef DEBUG
+		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: ENOMEM\n",
+		    t, t->pbs_base, t->pbs_limit, bpa, size);
+#endif
 		return (ENOMEM);
 	}
 	/*
@@ -549,6 +563,10 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	*bshp = (bus_space_handle_t) mapiodev(pa, size);
 	if (*bshp == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags);
+#ifdef DEBUG
+		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: ENOMEM\n",
+		    t, t->pbs_base, t->pbs_limit, bpa, size);
+#endif
 		return (ENOMEM);
 	}
 
