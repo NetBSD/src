@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.2 1996/03/17 22:51:48 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.3 1996/03/18 16:47:29 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -201,7 +201,6 @@ dhu_match (parent, match, aux)
 	/* Register the RX interrupt handler and pass unit # as arg */
 
 	ua->ua_ivec = dhurint;
-	ua->ua_iarg = nunits;
 
 	nunits++;
        	return 1;
