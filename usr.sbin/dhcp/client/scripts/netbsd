@@ -1,4 +1,6 @@
 #!/bin/sh
+#
+# $NetBSD: netbsd,v 1.4 1999/02/03 00:19:00 tron Exp $
 
 if [ x$new_network_number != x ]; then
    echo New Network Number: $new_network_number
