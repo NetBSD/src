@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.5 1997/03/27 00:29:57 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.6 1997/03/27 01:16:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -511,21 +511,12 @@ ncr53c9x_scsi_cmd(xs)
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
 	struct ncr53c9x_ecb *ecb;
 	int s, flags;
-	extern int cold;		/* XXX */
 
 	NCR_TRACE(("[ncr53c9x_scsi_cmd] "));
 	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->target));
 
 	flags = xs->flags;
-	/*
-	 * XXX: Hack: During autoconfig, force polling mode.
-	 * Needed as long as sdsize() can be called while cold,
-	 * otherwise timeouts will never call back (grumble).
-	 */
-	if (cold)
-		flags |= SCSI_POLL;
-
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
