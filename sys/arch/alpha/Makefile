@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1995/02/13 23:06:39 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/02/16 02:37:34 cgd Exp $
 
 # Makefile for alpha links
 
