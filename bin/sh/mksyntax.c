@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.23 2000/07/18 19:13:21 cgd Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.24 2002/02/12 20:32:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mksyntax.c,v 1.23 2000/07/18 19:13:21 cgd Exp $";
+    "$NetBSD: mksyntax.c,v 1.24 2002/02/12 20:32:35 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ struct synclass synclass[] = {
 	{ "CBACK",	"a backslash character" },
 	{ "CSQUOTE",	"single quote" },
 	{ "CDQUOTE",	"double quote" },
-	{ "CENDQUOTE",	"a terminating quote" },
 	{ "CBQUOTE",	"backwards single quote" },
 	{ "CVAR",	"a dollar sign" },
 	{ "CENDVAR",	"a '}' character" },
@@ -233,7 +232,7 @@ main(argc, argv)
 	fputs("\n/* syntax table used when in double quotes */\n", cfile);
 	add("\n", "CNL");
 	add("\\", "CBACK");
-	add("\"", "CENDQUOTE");
+	add("\"", "CDQUOTE");
 	add("`", "CBQUOTE");
 	add("$", "CVAR");
 	add("}", "CENDVAR");
@@ -243,7 +242,7 @@ main(argc, argv)
 	init();
 	fputs("\n/* syntax table used when in single quotes */\n", cfile);
 	add("\n", "CNL");
-	add("'", "CENDQUOTE");
+	add("'", "CSQUOTE");
 	/* ':/' for tilde expansion, '-' for [a\-x] pattern ranges */
 	add("!*?[=~:/-", "CCTL");
 	print("sqsyntax");
