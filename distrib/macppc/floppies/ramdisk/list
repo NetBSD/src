@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2002/05/27 10:32:37 wiz Exp $
+#	$NetBSD: list,v 1.20 2002/06/17 15:34:37 itojun Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -24,6 +24,7 @@ PROG	bin/sync
 
 PROG	sbin/disklabel
 PROG	sbin/dmesg
+PROG	sbin/fdisk
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
@@ -35,6 +36,7 @@ PROG	sbin/mount_ffs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
+PROG	sbin/newfs_msdos
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 PROG	sbin/restore	sbin/rrestore
@@ -71,6 +73,7 @@ SPECIAL	umount		srcdir	distrib/utils/x_umount
 LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
 
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
 COPY	${DESTDIR}/usr/mdec/ofwboot	usr/mdec/ofwboot
 
 # various files that we need in /etc for the install
