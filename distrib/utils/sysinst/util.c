@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.36 1999/04/11 22:40:22 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.37 1999/04/13 20:17:48 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <sys/sysctl.h>
 #include <sys/stat.h>
 #include <curses.h>
+#include <errno.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -64,6 +65,7 @@ struct  tarstats {
 
 void	extract_file __P((char *path));
 int	extract_dist __P((void));
+int	cleanup_dist __P((const char *path));
 int	distribution_sets_exist_p __P((const char *path));
 static int check_for __P((const char *type, const char *pathname));
 
@@ -502,7 +504,7 @@ extract_file(path)
 
 
 /*
-* Extract_dist **REQUIRES** an absolute path in ext_dir.  Any code
+ * Extract_dist **REQUIRES** an absolute path in ext_dir.  Any code
  * that sets up dist_dir for use by extract_dist needs to put in the
  * full path name to the directory. 
  */
@@ -522,6 +524,10 @@ extract_dist()
 	while (list->name) {
 		if (list->getit) {
 			tarstats.nselected++;
+			if (cleanup_dist(list->name) == 0) {
+				msg_display(MSG_cleanup_warn);
+				process_menu(MENU_ok);
+			}
 			(void)snprintf(distname, STRSIZE, "%s%s", list->name,
 			    dist_postfix);
 			(void)snprintf(fname, STRSIZE, "%s/%s", ext_dir,
@@ -549,6 +555,174 @@ extract_dist()
 }
 
 /*
+ * Do pre-extract cleanup for set 'name':
+ * open a file named '/dist/<name>_obsolete file', which contain a list of
+ * files to kill from the target. For each file, test if it is present on
+ * the target. Then display the list of files which will be removed,
+ * ask user for confirmation, and process.
+ * Non-empty directories will be renaned to <directory.old>.
+ */
+
+/* definition for a list of files. */
+struct filelist {
+	struct filelist *next;
+	char name[MAXPATHLEN];
+	mode_t type;
+};
+
+int 
+cleanup_dist(name)
+	const char *name;
+{
+	char file_path[MAXPATHLEN];
+	char file_name[MAXPATHLEN];
+	FILE *list_file;
+	struct filelist *head = NULL;
+	struct filelist *current;
+	int saved_errno;
+	struct stat st;
+	int retval = 1;
+	int needok = 0;
+
+	snprintf(file_path, MAXPATHLEN, "/dist/%s_obsolete", name);
+	list_file = fopen(file_path, "r");
+	if (list_file == NULL) {
+		saved_errno = errno;
+		if (logging)
+			fprintf(log, "Open of %s failed: %s\n", file_path,
+			    strerror(saved_errno));
+		if (saved_errno == ENOENT)
+			return 1;
+		msg_display_add(MSG_openfail, name, strerror(saved_errno));
+		process_menu(MENU_ok);
+		return 0;
+	}
+	while (fgets(file_name, MAXPATHLEN, list_file)) {
+		/* ignore lines that don't begin with '/' */
+		if (file_name[0] != '/')
+			continue;
+		/* Remove trailing \n if any */
+		if (file_name[strlen(file_name)-1] == '\n')
+			file_name[strlen(file_name)-1] = '\0';
+		snprintf(file_path, MAXPATHLEN, "%s%s", target_prefix(),
+		    file_name);
+		if (lstat(file_path, &st) != 0) {
+			saved_errno = errno;
+			if (logging)
+				fprintf(log, "stat() of %s failed: %s\n",
+				    file_path, strerror(saved_errno));
+			if (saved_errno == ENOENT)
+				continue;
+			msg_display_add(MSG_statfail, file_path,
+			    strerror(saved_errno));
+			process_menu(MENU_ok);
+			return 0;
+		}
+		if (head == NULL) {
+			head = current = malloc(sizeof(struct filelist));
+			if (head == NULL) {
+				fprintf(stderr, "out of memory\n");
+				exit(1);
+			}
+		} else {
+			current->next = malloc(sizeof(struct filelist));
+			if (head == NULL) {
+				fprintf(stderr, "out of memory\n");
+				exit(1);
+			}
+			current = current->next;
+		}
+		current->next = NULL;
+		snprintf(current->name, MAXPATHLEN, "%s", file_path);
+		current->type = st.st_mode & S_IFMT;
+		if (logging)
+			fprintf(log, "Adding file %s, type %d to list of "
+			    "obsolete file\n", current->name, current->type);
+	}
+	if (head == NULL)
+		return 0;
+#if 0
+	/* XXX doesn't work, too many files printed ! */
+	msg_display(MSG_deleting_files);
+	for (current = head; current != NULL; current = current->next) {
+		if (current->type != S_IFDIR)
+			msg_printf_add("%s ", current->name);
+	}
+	msg_display_add(MSG_deleting_dirs);
+	for (current = head; current != NULL; current = current->next) {
+		if (current->type == S_IFDIR)
+			msg_printf_add("%s ", current->name);
+	}
+	process_menu(MENU_ok);
+#endif
+	/* first remove files */
+	for (current = head; current != NULL; current = current->next) {
+		if (current->type == S_IFDIR)
+			continue;
+		if (scripting)
+			(void)fprintf(script, "rm %s\n", current->name);
+		if (unlink(current->name) != 0) {
+			saved_errno = errno;
+			if (logging)
+				fprintf(log, "rm %s failed: %s\n",
+				    current->name, strerror(saved_errno));
+			msg_display_add(MSG_unlink_fail, current->name,
+			    strerror(saved_errno));
+			retval = 0;
+			needok = 1;
+		}
+
+	}
+	/* now dirs */
+	for (current = head; current != NULL; current = current->next) {
+		if (current->type != S_IFDIR)
+			continue;
+		if (rmdir(current->name) == 0) {
+			if (scripting)
+				(void)fprintf(script, "rmdir %s\n",
+				    current->name);
+			continue;
+		}
+		saved_errno = errno;
+		if (saved_errno == ENOTEMPTY) {
+			if (logging)
+				fprintf(log, "dir %s not empty, "
+				    "trying to rename to %s.old\n",
+				    current->name, current->name);
+			snprintf(file_path, MAXPATHLEN,
+			    "%s.old", current->name);
+			if (scripting)
+				(void)fprintf(script, "mv %s %s\n",
+				    current->name, file_path);
+			needok = 1;
+			if (rename(current->name, file_path) != 0) {
+				saved_errno = errno;
+				if (logging)
+					fprintf(log, "mv %s %s failed: %s\n", 
+					    current->name, file_path,
+					    strerror(saved_errno));
+				msg_display_add(MSG_rename_fail, current->name,
+				    file_path, strerror(errno));
+				 retval = 0;
+			}
+			msg_display_add(MSG_renamed_dir, current->name,
+			    file_path);
+		} else { /* rmdir error */
+			if (logging)
+				fprintf(log, "rm %s failed: %s\n",
+				    current->name, strerror(saved_errno));
+			msg_display_add(MSG_unlink_fail, current->name,
+			    strerror(saved_errno));
+			retval = 0;
+			needok = 1;
+		}
+	}
+	if (needok)
+		process_menu(MENU_ok);
+	return retval;
+}
+
+/*
  * Get and unpack the distribution.
  * show success_msg if installation completes. Otherwise,,
  * show failure_msg and wait for the user to ack it before continuing.
@@ -566,7 +740,12 @@ get_and_unpack_sets(success_msg, failure_msg)
 		(void)fprintf(script, "mkdir /mnt2\nchmod 755 /mnt2\n");
 
 	/* Find out which files to "get" if we get files. */
+	wclear(stdscr);
+	wrefresh(stdscr);
 	process_menu(MENU_distset);
+
+	/* ask user whether to do normal or verbose extraction */
+	ask_verbose_dist();
 
 	/* Get the distribution files */
 	process_menu(MENU_distmedium);
@@ -575,9 +754,6 @@ get_and_unpack_sets(success_msg, failure_msg)
 		return;
 
 	if (got_dist) {
-
-		/* ask user  whether to do normal or verbose extraction */
-		ask_verbose_dist();
 
 		/* Extract the distribution, abort on errors. */
 		if (extract_dist()) {

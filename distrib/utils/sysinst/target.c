@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.20 1999/04/09 10:24:39 bouyer Exp $	*/
+/*	$NetBSD: target.c,v 1.21 1999/04/13 20:17:48 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.20 1999/04/09 10:24:39 bouyer Exp $");
+__RCSID("$NetBSD: target.c,v 1.21 1999/04/13 20:17:48 bouyer Exp $");
 #endif
 
 /*
@@ -74,7 +74,6 @@ int target_on_current_disk __P((void));
 int must_mount_root __P((void));
 
 static void make_prefixed_dir __P((const char *prefix, const char *path));
-const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
 int	target_test(const char *test, const char *path);
