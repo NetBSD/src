@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.4 2001/06/25 20:46:12 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.5 2001/07/17 11:49:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,13 +31,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #endif
-
-/*
- * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
- * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be LKM-safe.
- */
-#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,11 +85,7 @@ netbsd32_recvmsg(p, v, retval)
 		iov = aiov;
 	else
 		return (EMSGSIZE);
-#ifdef COMPAT_OLDSOCK
-	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
-#else
 	msg.msg_flags = SCARG(uap, flags);
-#endif
 	uiov = (struct iovec *)(u_long)msg.msg_iov;
 	error = netbsd32_to_iovecin((struct netbsd32_iovec *)uiov, 
 				   iov, msg.msg_iovlen);
@@ -193,11 +182,6 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 		if (len <= 0 || from == 0)
 			len = 0;
 		else {
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				mtod(from, struct osockaddr *)->sa_family =
-				    mtod(from, struct sockaddr *)->sa_family;
-#endif
 			if (len > from->m_len)
 				len = from->m_len;
 			/* else if len < from->m_len ??? */
@@ -208,36 +192,10 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 		}
 		mp->msg_namelen = len;
 		if (namelenp &&
-		    (error = copyout((caddr_t)&len, namelenp, sizeof(int)))) {
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				error = 0;	/* old recvfrom didn't check */
-			else
-#endif
+		    (error = copyout((caddr_t)&len, namelenp, sizeof(int))))
 			goto out;
-		}
 	}
 	if (mp->msg_control) {
-#ifdef COMPAT_OLDSOCK
-		/*
-		 * We assume that old recvmsg calls won't receive access
-		 * rights and other control info, esp. as control info
-		 * is always optional and those options didn't exist in 4.3.
-		 * If we receive rights, trim the cmsghdr; anything else
-		 * is tossed.
-		 */
-		if (control && mp->msg_flags & MSG_COMPAT) {
-			if (mtod(control, struct cmsghdr *)->cmsg_level !=
-			    SOL_SOCKET ||
-			    mtod(control, struct cmsghdr *)->cmsg_type !=
-			    SCM_RIGHTS) {
-				mp->msg_controllen = 0;
-				goto out;
-			}
-			control->m_len -= sizeof(struct cmsghdr);
-			control->m_data += sizeof(struct cmsghdr);
-		}
-#endif
 		len = mp->msg_controllen;
 		if (len <= 0 || control == 0)
 			len = 0;
@@ -310,9 +268,6 @@ netbsd32_sendmsg(p, v, retval)
 	if (error)
 		goto done;
 	msg.msg_iov = iov;
-#ifdef COMPAT_OLDSOCK
-	msg.msg_flags = 0;
-#endif
 	/* Luckily we can use this directly */
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
@@ -380,9 +335,6 @@ netbsd32_sendto(p, v, retval)
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
-#ifdef COMPAT_OLDSOCK
-	msg.msg_flags = 0;
-#endif
 	aiov.iov_base = (char *)(u_long)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
