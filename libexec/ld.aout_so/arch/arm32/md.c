@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1998/08/05 04:21:51 mycroft Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1998/08/05 04:25:03 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -161,7 +161,7 @@ int			relocatable_output;
 	case 3:
 		put_long(addr,
 			 (get_long(addr)&0xff000000)
-			 | ((relocation&0x3ffffff) >> 2));
+			 | ((relocation>>2)&0xffffff));
 		break;
 	default:
 		errx(1, "Unsupported relocation size: %x",
@@ -248,15 +248,6 @@ u_long		addr;
 	 *	ldr	pc, [pc]
 	 *	<unused>
 	 *	.word	new_addr
-	 *	<unused>
-	 *
-	 * For other jump slots generated (fixed by ld.so)
-	 * just modify the address offset since the slot
-	 * will have been created with md_make_jmpslot().
-	 * i.e.
-	 *	ldr	ip, [pc]
-	 *	add	pc, pc, ip
-	 *	.word	new_rel_addr
 	 *	<unused>
 	 */
 #ifdef RTLD
@@ -395,6 +386,7 @@ int		n;
 	for (; n; n--, j++) {
 		j->opcode1 = md_swap_long(j->opcode1);
 		j->opcode2 = md_swap_long(j->opcode2);
+		j->address = md_swap_long(j->address);
 		j->reloc_index = md_swap_long(j->reloc_index);
 	}
 }
