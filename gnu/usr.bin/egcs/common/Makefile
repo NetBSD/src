@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1998/09/13 23:25:19 tv Exp $
+#	$NetBSD: Makefile,v 1.18 1998/10/14 16:55:52 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -43,12 +43,16 @@ CLEANFILES+=	bitmap.lo obstack.lo print-rtl.lo rtl.lo rtlanal.lo \
 
 gengenrtl: gengenrtl.lo
 	${HOST_LINK.c} -o $@ $>
+.NOPATH: genrtl.h genrtl.c
 genrtl.h genrtl.c: gengenrtl
+	@rm -f ${DIST}/genrtl.h ${DIST}/genrtl.c
 	./gengenrtl genrtl.h genrtl.c
 
 gencheck: gencheck.lo
 	${HOST_LINK.c} -o $@ $>
+.NOPATH: tree-check.h
 tree-check.h: gencheck
+	@rm -f ${DIST}/tree-check.h
 	./gencheck >tree-check.h
 
 genattrtab: rtlanal.lo
@@ -56,20 +60,28 @@ genattrtab: rtlanal.lo
 .for _GEN_ in attrtab emit extract opinit output peep recog
 DPSRCS+=	insn-${_GEN_}.c
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c
+
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
+
+.NOPATH: insn-${_GEN_}.c
 insn-${_GEN_}.c: gen${_GEN_}
+	@rm -f ${DIST}/insn-${_GEN_}.c
 	./gen${_GEN_} ${MD} >$@
 .endfor
 
 .for _GEN_ in attr codes config flags
 DPSRCS+=	insn-${_GEN_}.h
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h
+
 gen${_GEN_}.lo: genrtl.h
 gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
+
+.NOPATH: insn-${_GEN_}.h
 insn-${_GEN_}.h: gen${_GEN_}
+	@rm -f ${DIST}/insn-${_GEN_}.h
 	./gen${_GEN_} ${MD} >$@
 .endfor
 
