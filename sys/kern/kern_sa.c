@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.26 2002/07/17 19:52:26 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.27 2002/07/17 22:14:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ sa_switch(struct lwp *l, int type)
 			mi_switch(l, NULL);
 			return;
 		}
-		
+
 		/*
 		 * XXX We need to allocate the sadata_upcall structure here,
 		 * XXX since we can't sleep while waiting for memory inside
@@ -463,18 +463,18 @@ sa_switch(struct lwp *l, int type)
 		PRELE(l2); /* Remove the artificial hold-count */
 		
 		KDASSERT(l2 != l);
-		KDASSERT(l2->l_wchan == 0);
 	}
 
-	DPRINTFN(4,("sa_switch(%d.%d) switching to ", p->p_pid, l->l_lid));
-
-	if (l2)
-		DPRINTFN(4,("LWP %d(%x).\n", l2->l_lid, l2->l_flag));
-	else
-		DPRINTFN(4,("NULL\n"));
-
-	s->sa_vp = l2;
-	mi_switch(l, l2);
+	if (s->sa_idle) {
+		DPRINTFN(4,("sa_switch(%d.%d) switching to NULL (idle)\n",
+		    p->p_pid, l->l_lid));
+		mi_switch(l, NULL);
+	} else {
+		DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d(%x).\n",
+		    p->p_pid, l->l_lid, l2->l_lid, l2->l_flag));
+		s->sa_vp = l2;
+		mi_switch(l, l2);
+	}
 
 	DPRINTFN(4,("sa_switch(%d.%d) returned.\n", p->p_pid, l->l_lid));
 	KDASSERT(l->l_wchan == 0);
@@ -595,7 +595,6 @@ sa_getcachelwp(struct proc *p)
 		p->p_nlwps++;
 		DPRINTFN(5,("sa_getcachelwp(%d) Got LWP %d from cache.\n",
 		    p->p_pid,l->l_lid));
-
 	}
 	/* XXX unlock */
 	return l;
@@ -631,6 +630,8 @@ sa_upcall_userret(struct lwp *l)
 		 */
 		l2 = sa->sa_vp;
 		sa->sa_vp = l;
+		if (sa->sa_idle == l2)
+			sa->sa_idle = NULL;
 
 		KDASSERT(l2 != l);
 		if (l2) {
