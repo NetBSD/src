@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.10 2002/07/28 07:02:54 chs Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11 2002/11/03 22:36:23 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_PCB_H_
-#define	_MACHINE_PCB_H_
+#ifndef	_POWERPC_PCB_H_
+#define	_POWERPC_PCB_H_
 
 #include <powerpc/reg.h>
 
@@ -67,4 +67,4 @@ extern struct pcb *curpcb;
 extern struct pmap *curpm;
 #endif
 
-#endif	/* _MACHINE_PCB_H_ */
+#endif	/* _POWERPC_PCB_H_ */

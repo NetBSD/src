@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.7 2002/07/28 07:07:44 chs Exp $	*/
+/*	$NetBSD: fpu.h,v 1.8 2002/11/03 22:36:22 matt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_FPU_H_
-#define	_MACHINE_FPU_H_
+#ifndef	_POWERPC_FPU_H_
+#define	_POWERPC_FPU_H_
 
 #define	FPSCR_FX	0x80000000	/* Exception Summary */
 #define	FPSCR_FEX	0x40000000	/* Enabled Exception Summary */
@@ -85,4 +85,4 @@ void	mp_save_fpu_proc(struct proc *);
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
 
-#endif	/* _MACHINE_FPU_H_ */
+#endif	/* _POWERPC_FPU_H_ */
