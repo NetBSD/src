@@ -1,27 +1,27 @@
-/*	$NetBSD: db_lex.h,v 1.12 2000/06/06 05:06:25 jhawk Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.13 2002/02/15 07:33:51 simonb Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -32,19 +32,15 @@
 /*
  * Lexical analyzer.
  */
-int db_read_line __P((void));
-void db_flush_line __P((void));
-int db_read_char __P((void));
-void db_unread_char __P((int));
-void db_unread_token __P((int));
-int db_read_token __P((void));
-char *db_num_to_str __P((db_expr_t));
-void db_flush_lex __P((void));
-int db_lex __P((void));
+void	db_flush_lex(void);
+char   *db_num_to_str(db_expr_t);
+int	db_read_line(void);
+int	db_read_token(void);
+void	db_unread_token(int);
 
-db_expr_t db_tok_number;
-#define	TOK_STRING_SIZE		120 
-char	db_tok_string[TOK_STRING_SIZE];
+extern db_expr_t db_tok_number;
+#define	TOK_STRING_SIZE		120
+extern char	db_tok_string[];
 
 #define	tEOF		(-1)
 #define	tEOL		1
@@ -67,7 +63,3 @@ char	db_tok_string[TOK_STRING_SIZE];
 #define	tSHIFT_L	18
 #define	tSHIFT_R	19
 #define	tDOTDOT		20
-
-
-
-

@@ -1,27 +1,27 @@
-/*	$NetBSD: db_trap.c,v 1.18 2001/11/12 22:54:07 lukem Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.19 2002/02/15 07:33:53 simonb Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.18 2001/11/12 22:54:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.19 2002/02/15 07:33:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,8 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.18 2001/11/12 22:54:07 lukem Exp $");
 void (*db_trap_callback)(int);
 
 void
-db_trap(type, code)
-	int	type, code;
+db_trap(int type, int code)
 {
 	boolean_t	bkpt;
 	boolean_t	watchpt;
@@ -67,32 +66,34 @@ db_trap(type, code)
 	if (db_trap_callback) db_trap_callback(1);
 
 	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
-	    if (db_inst_count) {
-		db_printf("After %d instructions (%d loads, %d stores),\n",
-			  db_inst_count, db_load_count, db_store_count);
-	    }
-	    if (curproc != NULL) {
-		if (bkpt)
-			db_printf("Breakpoint");
+		if (db_inst_count) {
+			db_printf("After %d instructions "
+			    "(%d loads, %d stores),\n",
+			    db_inst_count, db_load_count, db_store_count);
+		}
+		if (curproc != NULL) {
+			if (bkpt)
+				db_printf("Breakpoint");
+			else if (watchpt)
+				db_printf("Watchpoint");
+			else
+				db_printf("Stopped");
+			db_printf(" in pid %d (%s) at\t", curproc->p_pid,
+				curproc->p_comm);
+		} else if (bkpt)
+			db_printf("Breakpoint at\t");
 		else if (watchpt)
-			db_printf("Watchpoint");
+			db_printf("Watchpoint at\t");
 		else
-			db_printf("Stopped");
-		db_printf(" in pid %d (%s) at\t", curproc->p_pid,
-		    curproc->p_comm);
-	    } else if (bkpt)
-		db_printf("Breakpoint at\t");
-	    else if (watchpt)
-		db_printf("Watchpoint at\t");
-	    else
-		db_printf("Stopped at\t");
-	    db_dot = PC_REGS(DDB_REGS);
-	    db_print_loc_and_inst(db_dot);
+			db_printf("Stopped at\t");
+		db_dot = PC_REGS(DDB_REGS);
+		db_print_loc_and_inst(db_dot);
 
-	    db_command_loop();
+		db_command_loop();
 	}
 
 	db_restart_at_pc(DDB_REGS, watchpt);
 
-	if (db_trap_callback) db_trap_callback(0);
+	if (db_trap_callback)
+		db_trap_callback(0);
 }
