@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.16 1994/12/23 20:32:57 pk Exp $
+ *	$Id: ld.h,v 1.17 1995/06/04 21:56:26 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -573,6 +573,7 @@ extern int		rrs_text_size;		/* Size of RRS text additions */
 extern int		rrs_text_start;		/* Location of above */
 extern int		rrs_data_size;		/* Size of RRS data additions */
 extern int		rrs_data_start;		/* Location of above */
+extern char		*rrs_search_paths;	/* `-L' RT paths */
 
 /* Version number to put in __DYNAMIC (set by -V) */
 extern int	soversion;
