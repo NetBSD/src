@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.29 2002/05/29 07:53:41 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.30 2002/05/30 04:39:15 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.29 2002/05/29 07:53:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.30 2002/05/30 04:39:15 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -86,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.29 2002/05/29 07:53:41 itojun Exp $
 
 #include <net/net_osdep.h>
 
-#define M_HASCL(m) ((m)->m_flags & M_EXT)
-
 static int ip6_mdq __P((struct mbuf *, struct ifnet *, struct mf6c *));
 static void phyint_send __P((struct ip6_hdr *, struct mif6 *, struct mbuf *));
 
@@ -102,7 +100,7 @@ static int register_send __P((struct ip6_hdr *, struct mif6 *,
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
  * except for netstat or debugging purposes.
  */
-struct socket  *ip6_mrouter  = NULL;
+struct socket  *ip6_mrouter = NULL;
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto = IPPROTO_PIM;    /* for netstat only */
 struct mrt6stat	mrt6stat;
@@ -111,7 +109,7 @@ struct mrt6stat	mrt6stat;
 #define RTE_FOUND	0x2
 
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
-u_char		nexpire6[MF6CTBLSIZ];
+u_char		n6expire[MF6CTBLSIZ];
 static struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
 u_int		mrt6debug = 0;	  /* debug level 	*/
@@ -408,7 +406,7 @@ ip6_mrouter_init(so, m, cmd)
 	ip6_mrouter_ver = cmd;
 
 	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
-	bzero((caddr_t)nexpire6, sizeof(nexpire6));
+	bzero((caddr_t)n6expire, sizeof(n6expire));
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
@@ -735,7 +733,7 @@ add_m6fc(mfccp)
 			rt->mf6c_wrong_if   = 0;
 
 			rt->mf6c_expire = 0;	/* Don't clean this guy up */
-			nexpire6[hash]--;
+			n6expire[hash]--;
 
 			/* free packets Qed at the end of this entry */
 			for (rte = rt->mf6c_stall; rte != NULL; ) {
@@ -758,7 +756,8 @@ add_m6fc(mfccp)
 	if (nstl == 0) {
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc no upcall h %d o %s g %s p %x\n",
+			log(LOG_DEBUG,
+			    "add_mfc no upcall h %d o %s g %s p %x\n",
 			    hash,
 			    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 			    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
@@ -782,7 +781,7 @@ add_m6fc(mfccp)
 				rt->mf6c_wrong_if   = 0;
 
 				if (rt->mf6c_expire)
-					nexpire6[hash]--;
+					n6expire[hash]--;
 				rt->mf6c_expire	   = 0;
 			}
 		}
@@ -1026,7 +1025,7 @@ ip6_mforward(ip6, ifp, m)
 		 * as other references may modify it in the meantime.
 		 */
 		if (mb0 &&
-		    (M_HASCL(mb0) || mb0->m_len < sizeof(struct ip6_hdr)))
+		    (M_READONLY(mb0) || mb0->m_len < sizeof(struct ip6_hdr)))
 			mb0 = m_pullup(mb0, sizeof(struct ip6_hdr));
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE);
@@ -1140,7 +1139,7 @@ ip6_mforward(ip6, ifp, m)
 			rt->mf6c_mcastgrp.sin6_len = sizeof(struct sockaddr_in6);
 			rt->mf6c_mcastgrp.sin6_addr = ip6->ip6_dst;
 			rt->mf6c_expire = UPCALL_EXPIRE;
-			nexpire6[hash]++;
+			n6expire[hash]++;
 			rt->mf6c_parent = MF6C_INCOMPLETE_PARENT;
 
 			/* link into table */
@@ -1194,7 +1193,7 @@ expire_upcalls(unused)
 
 	s = splsoftnet();
 	for (i = 0; i < MF6CTBLSIZ; i++) {
-		if (nexpire6[i] == 0)
+		if (n6expire[i] == 0)
 			continue;
 		nptr = &mf6ctable[i];
 		while ((mfc = *nptr) != NULL) {
@@ -1224,7 +1223,7 @@ expire_upcalls(unused)
 					rte = n;
 				} while (rte != NULL);
 				mrt6stat.mrt6s_cache_cleanups++;
-				nexpire6[i]--;
+				n6expire[i]--;
 
 				*nptr = mfc->mf6c_next;
 				free(mfc, M_MRTABLE);
@@ -1303,7 +1302,7 @@ ip6_mdq(m, ifp, rt)
 
 				mm = m_copy(m, 0, sizeof(struct ip6_hdr));
 				if (mm &&
-				    (M_HASCL(mm) ||
+				    (M_READONLY(mm) ||
 				     mm->m_len < sizeof(struct ip6_hdr)))
 					mm = m_pullup(mm, sizeof(struct ip6_hdr));
 				if (mm == NULL)
@@ -1426,7 +1425,7 @@ phyint_send(ip6, mifp, m)
 	 */
 	mb_copy = m_copy(m, 0, M_COPYALL);
 	if (mb_copy &&
-	    (M_HASCL(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
+	    (M_READONLY(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
 	if (mb_copy == NULL) {
 		splx(s);
