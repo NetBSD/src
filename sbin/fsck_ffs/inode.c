@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.43 2004/01/03 10:25:06 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.44 2004/01/03 17:27:35 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.43 2004/01/03 10:25:06 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.44 2004/01/03 17:27:35 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,6 +359,7 @@ swap_dinode1(union dinode *dp, int n)
 		if (((iswap16(dp1->di_mode) & IFMT) != IFLNK) ||
 		    (isappleufs && (iswap64(dp1->di_size) >
 		     APPLEUFS_MAXSYMLINKLEN)) ||
+		    doinglevel2 ||
 		    (sblock->fs_maxsymlinklen < 0) ||
 		    (iswap64(dp1->di_size) > sblock->fs_maxsymlinklen)) {
 			for (j = 0; j < (NDADDR + NIADDR); j++)
