@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.13 2002/10/10 23:19:13 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.13.2.1 2002/11/09 16:15:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -244,7 +244,8 @@ setstatclockrate(hz)
 	int statvarticks;
 
 	/* statint == num in counter to drop by desired hz */
-	statint = clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	statint = statprev = clock_sc->sc_statclock_count =
+	    load_timer(TIMER_2_BASE, hz);
 	
 	/* Get the total ticks a second */
 	countpersecond = statint * hz;
@@ -290,7 +291,7 @@ cpu_initclocks()
 	 */
 	clock_sc->sc_clock_ticks_per_256us =
 	    ((((clock_sc->sc_clock_count * hz) / 1000) * 256) / 1000);
-	clock_sc->sc_clockintr = intr_claim(IRQ_TIMER_1, IPL_CLOCK,
+	clock_sc->sc_clockintr = footbridge_intr_claim(IRQ_TIMER_1, IPL_CLOCK,
 	    "tmr1 hard clk", clockhandler, 0);
 
 	if (clock_sc->sc_clockintr == NULL)
@@ -301,7 +302,7 @@ cpu_initclocks()
 	if (stathz) {
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
-       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
+       		clock_sc->sc_statclockintr = footbridge_intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
 			panic("%s: Cannot install timer 2 interrupt handler",
