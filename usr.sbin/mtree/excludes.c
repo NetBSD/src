@@ -31,7 +31,6 @@ static const char rcsid[] =
   "$FreeBSD: src/usr.sbin/mtree/excludes.c,v 1.5 2000/12/29 18:04:54 ben Exp $";
 
 #include <sys/types.h>
-#include <sys/time.h>		/* XXX for mtree.h */
 #include <sys/queue.h>
 
 #include <err.h>
@@ -40,6 +39,7 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <util.h>
 
 #include "extern.h"
