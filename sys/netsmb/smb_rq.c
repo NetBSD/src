@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.20 2003/04/07 19:35:40 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.21 2003/04/08 18:13:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.20 2003/04/07 19:35:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.21 2003/04/08 18:13:41 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ smb_rq_setcallback(struct smb_rq *rqp, void (*recvcallb)(void *), void *arg)
 	SMBRQ_SLOCK(rqp);
 	rqp->sr_recvcallback = recvcallb;
 	rqp->sr_recvarg = arg;
-	SMBRQ_SLOCK(rqp);
+	SMBRQ_SUNLOCK(rqp);
 }
 
 #define ALIGN4(a)	(((a) + 3) & ~3)
