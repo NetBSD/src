@@ -9,6 +9,6 @@ DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBMATH)
 
 CLEANFILES+=	label.cc label.tab.h
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>
