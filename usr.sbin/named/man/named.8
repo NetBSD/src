@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.8,v 1.3 1997/04/13 10:50:55 mrg Exp $
+.\"	$NetBSD: named.8,v 1.4 1997/06/08 05:44:15 lukem Exp $
 .\"
 .\" ++Copyright++ 1985
 .\" -
@@ -357,4 +357,87 @@ Comments are introduced by semicolons and continue to the end of the line.
 Note that there are other resource record types, not shown here.  You should
 consult the \s-1BIND\s+1 Operations Guide (``\s-1BOG\s+1'') for the complete
 list.  Some resource record types may have been standardized in newer RFC's
-but not yet implemented in 
+but not yet implemented in this version of \s-1BIND\s+1.
+.PP
+Each master zone file should begin with an SOA record for the zone.
+An example SOA record is as follows:
+.LP
+.nf
+@ IN SOA ucbvax.Berkeley.EDU. rwh.ucbvax.Berkeley.EDU. (
+.ta \w'x\ IN\ SOA\ 'u +\w'1989020501\ 'u
+	1989020501	; serial
+	10800	; refresh
+	3600	; retry
+	3600000	; expire
+	86400 )	; minimum
+.fi
+.LP
+The SOA specifies a serial number, which should be changed each time the
+master file is changed.  Note that the serial number can be given as a
+dotted number, but this is a \fIvery\fP unwise thing to do since the
+translation to normal integers is via concatenation rather than
+multiplication and addition.  You can spell out the year, month, day of
+month, and 0..99 version number and still fit inside the unsigned 32-bit
+size of this field.  It's true that we will have to rethink this strategy in
+the year 4294 (Greg.) but we're not worried about it.  Secondary servers
+check the serial number at intervals specified by the refresh time in
+seconds; if the serial number changes, a zone transfer will be done to load
+the new data.  If a master server cannot be contacted when a refresh is due,
+the retry time specifies the interval at which refreshes should be attempted.
+If a master server cannot be contacted within the interval given by the
+expire time, all data from the zone is discarded by secondary servers.  The
+minimum value is the time-to-live (``\s-1TTL\s+1'') used by records in the
+file with no explicit time-to-live value.
+.SH NOTES
+The boot file directives ``domain'' and ``suffixes'' have been
+obsoleted by a more useful resolver-based implementation of
+suffixing for partially qualified domain names.  The prior mechanisms
+could fail under a number of situations, especially when then local
+nameserver did not have complete information.
+.sp
+The following signals have the specified effect when sent to the
+server process using the
+.IR kill (1)
+command.
+.IP SIGHUP
+Causes server to read named.boot and reload the database.  If the server
+is built with the FORCED_RELOAD compile-time option, then SIGHUP will
+also cause the server to check the serial number on all secondary zones.
+Normally the serial numbers are only checked at the SOA-specified intervals.
+.IP SIGINT
+Dumps the current data base and cache to /var/tmp/named_dump.db
+.IP SIGIOT
+Dumps statistics data into /var/tmp/named.stats if the server is
+compiled with -DSTATS.  Statistics data is appended to the file.  Some
+systems use SIGABRT rather than SIGIOT for this.
+.IP SIGSYS
+Dumps the profiling data in /var/tmp if the server is compiled
+with profiling (server forks, chdirs and exits).
+.IP SIGTERM
+Dumps the primary and secondary database files.
+Used to save modified data on shutdown if the
+server is compiled with dynamic updating enabled.
+.IP SIGUSR1
+Turns on debugging; each SIGUSR1 increments debug level.
+(SIGEMT on older systems without SIGUSR1)
+.IP SIGUSR2
+Turns off debugging completely.
+(SIGFPE on older systems without SIGUSR2)
+.IP SIGWINCH
+Toggles logging of all incoming queries via syslog(8)
+(requires server to have been built with the QRYLOG option).
+.SH FILES
+.nf
+.ta \w'/var/tmp/named_dump.db   'u
+/etc/named.boot	name server configuration boot file
+/etc/named.pid	the process id (on older systems)
+/var/run/named.pid	the process id (on newer systems)
+/var/tmp/named_dump.db	dump of the name server database
+/var/tmp/named.run	debug output
+/var/tmp/named.stats	nameserver statistics data
+.fi
+.SH "SEE ALSO"
+kill(1), gethostbyname(3), signal(2), 
+resolver(3), resolver(5), hostname(7),
+RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, RFC 1123,
+\fIName Server Operations Guide for \s-1BIND\s+1\fR
