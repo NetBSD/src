@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.5 2004/08/11 19:43:58 jmc Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.6 2004/09/11 18:32:01 he Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.5 2004/08/11 19:43:58 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.6 2004/09/11 18:32:01 he Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -995,6 +995,7 @@ __wdc_reset_channel(struct wdc_channel *chp, int flags)
 	if ((flags & AT_POLL) == 0) {
 		if (chp->ch_flags & WDCF_TH_RESET) {
 			/* no need to schedule a reset more than one time */
+			chp->ch_queue->queue_freeze--;
 			return;
 		}
 		chp->ch_flags |= WDCF_TH_RESET;
