@@ -46,7 +46,7 @@
 
 struct {
 	int	wenc;
-	char	*wname;
+	const char *wname;
 } wavencs[] = {
 	{ WAVE_FORMAT_UNKNOWN, 	"Microsoft Official Unknown" },
 	{ WAVE_FORMAT_PCM,	"Microsoft PCM" },
@@ -59,9 +59,8 @@ struct {
 	{ -1, 			"?Unknown?" },
 };
 
-char *
-wav_enc_from_val(encoding)
-	int encoding;
+const char *
+wav_enc_from_val(int encoding)
 {
 	int	i;
 
@@ -98,14 +97,19 @@ audio_wav_parse_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 	wav_audioheaderfmt fmt;
 	char	*end = (((char *)hdr) + sz);
 	int	newenc, newprec;
-
+	static const char
+	    strfmt[4] = "fmt ",
+	    strRIFF[4] = "RIFF",
+	    strWAVE[4] = "WAVE",
+	    strdata[4] = "data";
+		
 	if (sz < 32)
 		return (AUDIO_ENOENT);
 
-	if (strncmp(where, "RIFF", 4))
+	if (strncmp(where, strRIFF, sizeof strRIFF))
 		return (AUDIO_ENOENT);
 	where += 8;
-	if (strncmp(where,  "WAVE", 4))
+	if (strncmp(where, strWAVE, sizeof strWAVE))
 		return (AUDIO_ENOENT);
 	where += 4;
 
@@ -113,7 +117,7 @@ audio_wav_parse_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 		memcpy(&part, where, sizeof part);
 		owhere = where;
 		where += getle32(part.len) + 8;
-	} while (where < end && strncmp(part.name, "fmt ", 4));
+	} while (where < end && strncmp(part.name, strfmt, sizeof strfmt));
 
 	/* too short ? */
 	if (where + sizeof fmt > end)
@@ -176,7 +180,7 @@ printf("part `%c%c%c%c' len = %d\n", part.name[0], part.name[1], part.name[2], p
 #endif
 		owhere = where;
 		where += (getle32(part.len) + 8);
-	} while ((char *)where < end && strncmp(part.name, "data", 4));
+	} while (where < end && strncmp(part.name, strdata, sizeof strdata));
 
 	if ((where - getle32(part.len)) <= end) {
 		if (channels)

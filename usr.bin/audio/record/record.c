@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.20 2002/01/15 17:17:13 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.21 2002/01/15 23:48:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -52,8 +52,8 @@
 
 audio_info_t info, oinfo;
 ssize_t	total_size = -1;
-char	*device;
-char	*ctldev;
+const char *device;
+const char *ctldev;
 int	format = AUDIO_FORMAT_SUN;
 char	*header_info;
 char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
@@ -328,19 +328,22 @@ write_header_sun(hdrp, lenp, leftp)
 			conv_func = swap_bytes;
 		else if (precision == 32)
 			conv_func = swap_bytes32;
-		encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
 	} else if (encoding == AUDIO_ENCODING_ULINEAR_BE) {
 		if (precision == 16)
 			conv_func = change_sign16_be;
 		else if (precision == 32)
 			conv_func = change_sign32_be;
-		encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
 	} else if (encoding == AUDIO_ENCODING_SLINEAR_LE) {
 		if (precision == 16)
 			conv_func = change_sign16_swap_bytes_le;
 		else if (precision == 32)
 			conv_func = change_sign32_swap_bytes_le;
-		encoding = AUDIO_ENCODING_SLINEAR_BE;
+		if (conv_func)
+			encoding = AUDIO_ENCODING_SLINEAR_BE;
 	}
 	
 	/* if we can't express this as a Sun header, don't write any */
@@ -418,7 +421,10 @@ write_header_wav(hdrp, lenp, leftp)
 	 *	RIFF\^@^C^@WAVEfmt ^P^@^@^@^A^@^B^@D<AC>^@^@^P<B1>^B^@^D^@^P^@data^@^@^C^@^@^@^@^@^@^@^@^@^@
 	 */
 	char	wavheaderbuf[64], *p = wavheaderbuf;
-	char	*riff = "RIFF", *wavefmt = "WAVEfmt ", *fact = "fact", *data = "data";
+	const char *riff = "RIFF",
+	    *wavefmt = "WAVEfmt ",
+	    *fact = "fact",
+	    *data = "data";
 	u_int32_t filelen, fmtsz, sps, abps, factsz = 4, nsample, datalen;
 	u_int16_t fmttag, nchan, align, bps, extln = 0;
 
