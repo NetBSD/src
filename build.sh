@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.27 2001/11/26 05:57:33 jmc Exp $
+#  $NetBSD: build.sh,v 1.28 2001/11/30 02:18:13 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -65,7 +65,8 @@ EOF
 
 # Emulate "mkdir -p" for systems that have an Old "mkdir".
 mkdirp () {
-	IFS=/; set -- $@; unset IFS
+	oifs=$IFS
+	IFS=/; set -- $@; IFS=$oifs
 	_d=
 	if [ -z "$1" ]; then _d=/; shift; fi
 
@@ -230,6 +231,7 @@ if $do_rebuildmake; then
 	$runcmd cd $tmpdir
 
 	$runcmd ${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
+		-DMAKE_MACHINE=\"`uname -m`\" \
 		-o nbmake -I$cwd/usr.bin/make \
 		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c \
 		|| bomb "build of nbmake failed"
@@ -321,7 +323,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.27 2001/11/26 05:57:33 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.28 2001/11/30 02:18:13 thorpej Exp $
 #
 
 EOF
