@@ -1,4 +1,4 @@
-.\"     $NetBSD: ipkdb.9,v 1.1 2002/05/25 02:16:37 gmcgarry Exp $
+.\"     $NetBSD: ipkdb.9,v 1.2 2002/05/25 11:07:28 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,14 +92,14 @@ user has detached from debugging
 .El
 .Sh FUNCTIONS
 The machine-dependent code must provide the following functions for
-the machine-indepent code.
+the machine-independent code.
 .Bl -tag -width compact
 .It Fn ipkdbinit ""
 This routine gets called when the debugger should be entered for the
 first time.
 .It Fn ipkdb_trap ""
 .It Fn ipkdb_poll ""
-This routine gets called after a panic to check for a keypress by the
+This routine gets called after a panic to check for a key press by the
 user.  If implemented it allows the user to press any key on the
 console to do the automatic reboot after a panic.  Otherwise the
 debugging interface will wait forever for some remote debugger to
@@ -123,9 +123,9 @@ mark at least IPKDB_MYHW here
 .It name
 name of the device, only used for a message
 .It start
-routine called everytime IPKDB is entered
+routine called every time IPKDB is entered
 .It leave
-routine called everytime IPKDB is left
+routine called every time IPKDB is left
 .It receive
 routine called to receive a packet
 .It send
