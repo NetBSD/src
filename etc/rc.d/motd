@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: motd,v 1.7 2001/04/25 23:23:37 lukem Exp $
+# $NetBSD: motd,v 1.8 2002/03/22 04:33:59 thorpej Exp $
 #
 
 # PROVIDE: motd
 # REQUIRE: mountcritremote
+# BEFORE:  LOGIN
 
 . /etc/rc.subr
 
