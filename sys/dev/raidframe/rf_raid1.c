@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.23 2004/03/05 03:22:05 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.24 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.23 2004/03/05 03:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.24 2004/03/18 16:54:54 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -580,6 +580,11 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
 
 	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	while(reconCtrlPtr->rb_lock) {
+		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+	}
+	reconCtrlPtr->rb_lock = 1;
+	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 
 	pssPtr = rf_LookupRUStatus(raidPtr, reconCtrlPtr->pssTable,
 	    rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, NULL);
@@ -681,6 +686,9 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
+	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	reconCtrlPtr->rb_lock = 0;
+	wakeup(&reconCtrlPtr->rb_lock);
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 #if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
