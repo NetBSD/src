@@ -3,7 +3,7 @@
    actual type **after default promotions**.
    Thus, va_arg (..., short) is not valid. 
 
-	$Id: gstdarg.h,v 1.2 1993/08/02 17:39:01 mycroft Exp $
+	$Id: gstdarg.h,v 1.3 1993/12/06 09:51:12 cgd Exp $
 */
 
 #ifndef _STDARG_H
@@ -135,13 +135,13 @@ typedef __gnuc_va_list va_list;
    But on BSD NET2 we must not test or define or undef it.
    (Note that the comments in NET 2's ansi.h
    are incorrect for _VA_LIST_--see stdio.h!)  */
-#if !defined (_VA_LIST_) || defined (__BSD_NET2__) || defined (____386BSD____)
+#if !defined (_VA_LIST_) || defined (__NetBSD__)
 /* The macro _VA_LIST is used in SCO Unix 3.2.  */
 #ifndef _VA_LIST
 /* The macro _VA_LIST_T_H is used in the Bull dpx2  */
 #ifndef _VA_LIST_T_H
 #define _VA_LIST_T_H
-#if !(defined (__BSD_NET2__) || defined (____386BSD____))
+#ifndef __NetBSD__
 #define _VA_LIST_
 #endif
 #define _VA_LIST
