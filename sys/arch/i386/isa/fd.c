@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.50 1994/07/31 00:47:52 mycroft Exp $
+ *	$Id: fd.c,v 1.51 1994/07/31 01:20:52 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -891,7 +891,7 @@ again:
 		else
 			out_fdc(iobase, NE7CMD_WRITE);	/* WRITE */
 		out_fdc(iobase, (head << 2) | fd->sc_drive);
-		out_fdc(iobase, fd->sc_track);		/* track */
+		out_fdc(iobase, fd->sc_track / type->step);	/* track */
 		out_fdc(iobase, head);
 		out_fdc(iobase, sec + 1);		/* sector +1 */
 		out_fdc(iobase, type->secsize);		/* sector size */
