@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/09/15 12:45:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/06/11 13:33:48 grant Exp $
 
 PROG=	ccdconfig
-MAN=	ccdconfig.8
+MAN=	ccdconfig.8 ccd.conf.5
 
 BINGRP=	kmem
 BINMODE=2555
