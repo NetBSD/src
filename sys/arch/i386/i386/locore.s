@@ -521,45 +521,11 @@ ENTRY(sigcode)
 _esigcode:
 
 
-	/*
-	 * I/O bus instructions via C
-	 */
-ENTRY(inb)
-	movl	4(%esp),%edx
-	subl	%eax,%eax	# clr eax
-	NOP
-	inb	%dx,%al
-	ret
-
-
-ENTRY(inw)
-	movl	4(%esp),%edx
-	subl	%eax,%eax	# clr eax
-	NOP
-	inw	%dx,%ax
-	ret
-
 ENTRY(rtcin)
 	movl	4(%esp),%eax
 	outb	%al,$0x70
 	subl	%eax,%eax	# clr eax
 	inb	$0x71,%al
-	ret
-
-ENTRY(outb)
-	movl	4(%esp),%edx
-	NOP
-	movl	8(%esp),%eax
-	outb	%al,%dx
-	NOP
-	ret
-
-ENTRY(outw)
-	movl	4(%esp),%edx
-	NOP
-	movl	8(%esp),%eax
-	outw	%ax,%dx
-	NOP
 	ret
 
 	/*
@@ -1222,66 +1188,6 @@ ALTENTRY(suibyte)
 	movb	%eax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
-	ret
-
-	# insb(port, addr, cnt)
-ENTRY(insb)
-	pushl	%edi
-	movl	8(%esp),%edx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
-	cld
-	NOP
-	rep
-	insb
-	NOP
-	movl	%edi,%eax
-	popl	%edi
-	ret
-
-	# insw(port, addr, cnt)
-ENTRY(insw)
-	pushl	%edi
-	movl	8(%esp),%dx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
-	cld
-	NOP
-	rep
-	insw
-	NOP
-	movl	%edi,%eax
-	popl	%edi
-	ret
-
-	# outsw(port,addr,cnt)
-ENTRY(outsw)
-	pushl	%esi
-	movw	8(%esp),%dx
-	movl	12(%esp),%esi
-	movl	16(%esp),%ecx
-	cld
-	NOP
-	rep
-	outsw
-	NOP
-	movl	%esi,%eax
-	popl	%esi
-	ret
-
-	# outsb(port,addr,cnt)
-ENTRY(outsb)
-	pushl	%esi
-	movw	8(%esp),%dx
-	movl	12(%esp),%esi
-	movl	16(%esp),%ecx
-	cld
-	NOP
-	rep
-	outsb
-	NOP
-	movl	%esi,%eax
-	popl	%esi
 	ret
 
 	/*
