@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.68 2000/06/27 17:41:16 mrg Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.69 2000/07/04 15:33:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -691,7 +691,7 @@ falloc(p, resultfp, resultfd)
 	if ((error = fdalloc(p, 0, &i)) != 0)
 		return (error);
 	if (nfiles >= maxfiles) {
-		tablefull("file");
+		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		return (ENFILE);
 	}
 	/*
