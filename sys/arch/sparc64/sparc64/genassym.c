@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.5 1998/09/06 21:53:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,11 +65,13 @@
 #include <machine/reg.h>
 
 #ifdef notyet
+#include <machine/bus.h>
 #include <sparc64/dev/zsreg.h>
 #include <sparc64/dev/zsvar.h>
-#endif
+
 #include <dev/ic/am7930reg.h>
-#include <dev/ic/amd7930var.h>
+#include <dev/ic/am7930var.h>
+#endif
 
 #include <sparc64/dev/fdreg.h>
 #include <sparc64/dev/fdvar.h>

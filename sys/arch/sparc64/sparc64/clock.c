@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1998/09/05 23:57:27 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.8 1998/09/06 21:53:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -323,10 +323,10 @@ timerattach(parent, self, aux)
 
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
-	level10.ih_clr = timerreg_4u.t_clrintr[0];
+/*	level10.ih_clr = (void*)timerreg_4u.t_clrintr[0]; */
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
-	level14.ih_clr = timerreg_4u.t_clrintr[1];
+/*	level14.ih_clr = (void*)timerreg_4u.t_clrintr[1]; */
 	intr_establish(14, &level14);
 	printf(" irq vectors %lx and %lx\n", 
 	       (u_long)level10.ih_number, 
@@ -462,6 +462,7 @@ cpu_initclocks()
 	if (intrdebug) {
 		hz = 1;
 		tick = 1000000;
+		printf("intrdebug set: 1Hz clock\n");
 	}
 #endif
 	profhz = stathz;		/* always */
@@ -527,7 +528,7 @@ clockintr(cap)
 	extern int rom_console_input;
 #endif
 
-#if 0
+#if 1
 	/* Let locore.s clear the interrupt for us. */
 	/*
 	 * Protect the clearing of the clock interrupt.  If we don't
@@ -571,7 +572,7 @@ statintr(cap)
 #ifdef NOT_DEBUG
 	prom_printf("!");
 #endif
-#if 0
+#if 1
 	/* Let locore.s clear the interrupt for us. */
 	/* read the limit register to clear the interrupt */
 #if 0

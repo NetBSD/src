@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1998/09/05 23:57:29 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.8 1998/09/06 21:53:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -202,11 +202,11 @@ vunmapbuf(bp, len)
  * The offset of the topmost frame in the kernel stack.
  */
 #ifdef _LP64
-#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame64))
+#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
 #define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #else
-#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame32))
+#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
 #define rwindow		rwindow32
 #define STACK_OFFSET	0
 #endif
@@ -357,16 +357,6 @@ cpu_set_kpc(p, pc)
 	rp->rw_local[0] = (long)pc;		/* Function to call */
 	rp->rw_local[1] = (long)p;		/* and its argument */
 
-#ifdef NOTDEF_DEBUG
-	/* Let's see if this is ever called */
-	{ int s=splhigh();
-	extern int pmapdebug;
-	pmapdebug = 0;
-	printf("cpu_set_kpc: p=%x pc=%x, sp=%x rsp=%x\n", p, pc, rp, rp->rw_in[6]);
-	splx(s);
-	delay(2000000);
-	}
-#endif
 	/*
 	 * Frob PCB:
 	 *	- arrange to return to proc_trampoline() from cpu_switch()
@@ -375,6 +365,16 @@ cpu_set_kpc(p, pc)
 	 */
 	pcb->pcb_pc = (long)proc_trampoline - 8 ;
 	pcb->pcb_sp = (long)rp - STACK_OFFSET;
+#ifdef NOTDEF_DEBUG
+	/* Let's see if this is ever called */
+	{ int s=splhigh();
+	extern int pmapdebug;
+	pmapdebug = 0;
+	printf("cpu_set_kpc: p=%p pc=%p, sp=%p rsp=%p\n", p, pc, rp, (long)rp->rw_in[6]);
+	splx(s);
+	delay(2000000);
+	}
+#endif
 }
 
 /*
