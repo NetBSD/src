@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.5 2002/03/18 16:00:59 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.6 2003/03/10 00:57:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,10 @@
 #ifndef _h_sys
 #define	_h_sys
 
+#ifdef HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
 #ifndef public
 # define public		/* Externally visible functions/variables */
 #endif
@@ -87,11 +91,10 @@ char	*fgetln(FILE *fp, size_t *len);
 #define	REGEX		/* Use POSIX.2 regular expression functions */
 #undef	REGEXP		/* Use UNIX V8 regular expression functions */
 
-#ifdef SUNOS
+#ifdef notdef
 # undef REGEX
 # undef REGEXP
 # include <malloc.h>
-typedef void (*sig_t)(int);
 # ifdef __GNUC__
 /*
  * Broken hdrs.
@@ -122,10 +125,6 @@ extern ptr_t    memcpy(ptr_t, const ptr_t, size_t);
 extern ptr_t    memset(ptr_t, int, size_t);
 # endif
 extern char    *fgetline(FILE *, int *);
-#endif
-
-#ifdef HAVE_SYS_CDEFS_H
-#include <sys/cdefs.h>
 #endif
 
 #endif /* _h_sys */
