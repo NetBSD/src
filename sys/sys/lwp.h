@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.15 2002/07/25 22:32:40 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.16 2002/07/26 01:19:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -163,6 +163,7 @@ int newlwp(struct lwp *, struct proc *, vaddr_t, int,
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
 int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
+void	lwp_continue(struct lwp *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(struct lwp *);
