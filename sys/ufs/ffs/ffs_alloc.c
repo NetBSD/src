@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.6 1994/12/16 05:55:15 mycroft Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.7 1995/03/24 15:33:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -444,7 +444,8 @@ ffs_reallocblks(ap)
 	} else {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (!doasyncfree)
-			VOP_UPDATE(vp, &time, &time, MNT_WAIT);
+			VOP_UPDATE(vp, (struct timeval *)&time,
+			    (struct timeval *)&time, MNT_WAIT);
 	}
 	if (ssize < len)
 		if (doasyncfree)
