@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.24 2000/12/09 20:35:31 matt Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.25 2000/12/18 21:17:44 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -232,7 +232,7 @@ pcic_isa_probe_interrupts(sc, h)
 		/* Clear any pending interrupt. */
 		(void) pcic_read(h, PCIC_CSC);
 
-		if ((sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
+		if ((sc->ih = isa_intr_establish(ic, irq, IST_LEVEL, IPL_TTY,
 		    pcic_isa_count_intr, h)) == NULL)
 			panic("cant get interrupt");
 
@@ -263,7 +263,7 @@ pcic_isa_probe_interrupts(sc, h)
 	}
 	sc->intr_mask[h->chip] = mask;
 
-	printf("%s\n", sc->intr_mask ? "" : " none");
+	printf("%s\n", sc->intr_mask[h->chip] ? "" : " none");
 }
 
 /*
@@ -334,7 +334,7 @@ pcic_isa_config_interrupts(self)
 				    "detected as available\n",
 				    sc->dev.dv_xname, sc->irq);
 		} else if (chipmask == 0 ||
-		    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
+		    isa_intr_alloc(ic, chipmask, IST_LEVEL, &sc->irq)) {
 			printf("%s: no available irq; ", sc->dev.dv_xname);
 			sc->irq = IRQUNK;
 		} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
@@ -348,7 +348,7 @@ pcic_isa_config_interrupts(self)
 	}
 
 	if (sc->irq != IRQUNK) {
-		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
+		sc->ih = isa_intr_establish(ic, sc->irq, IST_LEVEL, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
 			printf("%s: can't establish interrupt",
@@ -473,7 +473,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	int reg;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
-		ist = IST_EDGE;
+		ist = IST_LEVEL;
 	else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
 		ist = IST_PULSE;
 	else
