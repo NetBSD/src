@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.20 2000/01/20 22:56:22 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.21 2000/02/19 09:08:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.20 2000/01/20 22:56:22 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.21 2000/02/19 09:08:16 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -517,7 +517,7 @@ term_move_to_line(el, where)
 	    if (EL_HAS_AUTO_MARGINS &&
 		el->el_display[el->el_cursor.v][0] != '\0') {
 		/* move without newline */
-		term_move_to_char(el, el->el_term.t_size.h);
+		term_move_to_char(el, el->el_term.t_size.h-1);
 		term_overwrite(el,
 		    &el->el_display[el->el_cursor.v][el->el_cursor.h], 1);
 		/* updates Cursor */
