@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1997/10/27 03:34:33 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1997/10/29 01:09:51 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* md.c -- pc532 machine specific routines */
+/* md.c -- pmax machine specific routines */
 
 #include <stdio.h>
 #include <curses.h>
