@@ -175,6 +175,21 @@ work in NetBSD _VER:
 	/dev/sd0b	none	swap	sw,priority=0
 	/dev/sd1b	none	swap	sw,priority=5
 
+* NFS daemons
+
+  Description:
+	Due to changes in the NFS subsystem, the old NFS daemon
+	binaries (nfsd and nfsiod) from previous releases will not
+	work correctly. Also, the location of these binaries has
+	changed from the /sbin to the /usr/sbin directory. This
+	will cause the old binaries to still be around after an
+	upgrade, and they will be run by the startup scripts
+	instead of the new ones.
+  Fix:
+	Remove the old NFS daemon binaries (/sbin/nfsiod and
+	/sbin/nfsd) after your upgrade has finished.
+
+
 * AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
   from http://www.amanda.org
 
