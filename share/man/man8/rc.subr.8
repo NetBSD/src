@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.3 2002/02/25 13:16:45 wiz Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.4 2002/03/13 04:57:11 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2002
+.Dd March 13, 2002
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -403,11 +403,17 @@ Shell commands to run just before running
 .Ar arg Ns Sy _cmd
 or the default method for
 .Ar arg .
-If this returns a non-zero exit code, the method is not performed.
+If this returns a non-zero exit code, the main method is not performed.
 If the default method is being executed, this check is performed after
 the
 .Sy required_*
 checks and process (non-)existence checks.
+.It Ar arg Ns Sy _postcmd
+Shell commands to run if running
+.Ar arg Ns Sy _cmd
+or the default method for
+.Ar arg 
+returned a zero exit code.
 .It Sy sig_stop
 Signal to send the processes to stop in the default
 .Sy stop
@@ -502,6 +508,7 @@ is started:
 .Li required_vars ,
 .Li Ar arg Ns _cmd ,
 .Li Ar arg Ns _precmd .
+.Li Ar arg Ns _postcmd .
 .Ed
 .Pp
 The startup behaviour of
