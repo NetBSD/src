@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.16 2001/04/23 01:03:34 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.17 2001/04/23 12:33:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1830,9 +1830,9 @@ scsipi_completion_thread(arg)
 		xs = TAILQ_FIRST(&chan->chan_complete);
 		if (xs == NULL &&
 		    (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) == 0) {
-			splx(s);
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
+			splx(s);
 			continue;
 		}
 		if (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) {
