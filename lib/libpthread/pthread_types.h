@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.7 2001/12/30 02:24:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.8 2002/03/01 01:23:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,8 +41,10 @@
 
 #include <machine/lock.h>
 
+/* We use the "pthread_spin_t" name internally; "pthread_spinlock_t" is the
+ * POSIX spinlock object. 
+ */
 typedef __cpu_simple_lock_t	pthread_spin_t;
-
 
 /*
  * Copied from PTQ_HEAD in pthread_queue.h
@@ -61,6 +63,7 @@ struct	pthread_mutex_st;
 struct	pthread_mutexattr_st;
 struct	pthread_cond_st;
 struct	pthread_condattr_st;
+struct	pthread_spin_st;
 
 typedef struct pthread_st *pthread_t;
 typedef struct pthread_attr_st pthread_attr_t;
@@ -69,6 +72,7 @@ typedef struct pthread_mutexattr_st pthread_mutexattr_t;
 typedef struct pthread_cond_st pthread_cond_t;
 typedef struct pthread_condattr_st pthread_condattr_t;
 typedef struct pthread_once_st pthread_once_t;
+typedef struct pthread_spinlock_st pthread_spinlock_t;
 typedef int pthread_key_t;
 
 struct	pthread_attr_st {
@@ -146,4 +150,21 @@ struct	pthread_once_st {
 };
 
 #define PTHREAD_ONCE_INIT	{ PTHREAD_MUTEX_INITIALIZER, 0 }
+
+struct	pthread_spinlock_st {
+	unsigned int	pts_magic;
+	pthread_spin_t	pts_spin;
+	int		pts_flags;
+};
+	
+#define	_PT_SPINLOCK_MAGIC	0x77770007
+#define	_PT_SPINLOCK_DEAD	0xDEAD0007
+#define _PT_SPINLOCK_PSHARED	0x00000001
+
+/* PTHREAD_SPINLOCK_INITIALIZER is an extension not specified by POSIX. */
+#define PTHREAD_SPINLOCK_INITIALIZER { _PT_SPINLOCK_MAGIC,		\
+				       __SIMPLELOCK_UNLOCKED,		\
+				       0				\
+				     }
+
 #endif	/* _LIB_PTHREAD_TYPES_H */
