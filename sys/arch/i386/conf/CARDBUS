@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.20 2000/08/10 21:33:17 soda Exp $
+#	$NetBSD: CARDBUS,v 1.21 2000/08/13 01:31:18 itojun Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -113,7 +113,6 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

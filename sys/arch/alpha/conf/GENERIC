@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164 2000/08/11 18:26:10 thorpej Exp $
+# $NetBSD: GENERIC,v 1.165 2000/08/13 01:31:15 itojun Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.164 $"
+#ident 		"GENERIC-$Revision: 1.165 $"
 
 maxusers 32
 
@@ -57,7 +57,6 @@ options 	SOFTDEP		# FFS soft updates support.
 # Networking options
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
