@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.14 2003/10/21 02:11:21 fvdl Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.15 2004/09/10 18:30:20 he Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.14 2003/10/21 02:11:21 fvdl Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.15 2004/09/10 18:30:20 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@ __RCSID("$NetBSD: netbsd-syscalls.c,v 1.14 2003/10/21 02:11:21 fvdl Exp $");
 #include "kern/syscalls.c"
 
 #include "compat/aout/aout_syscalls.c"
-#include "compat/aoutm68k/aoutm68k_syscalls.c"
 #include "compat/freebsd/freebsd_syscalls.c"
 #include "compat/hpux/hpux_syscalls.c"
 #include "compat/ibcs2/ibcs2_syscalls.c"
@@ -114,7 +113,6 @@ static struct emulation emulations[] = {
 	{ "netbsd",	syscallnames,		SYS_MAXSYSCALL },
 
 	{ "aout",	aout_syscallnames,	AOUT_SYS_MAXSYSCALL },
-	{ "aoutm68k",	aoutm68k_syscallnames,	AOUTM68K_SYS_MAXSYSCALL },
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
 	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
