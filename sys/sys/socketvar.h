@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.43 2001/04/07 09:00:58 jdolecek Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.44 2001/04/09 13:23:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -260,7 +260,7 @@ int	soo_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p);
 int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
 int	soo_poll(struct file *fp, int events, struct proc *p);
 int 	soo_close(struct file *fp, struct proc *p);
-int	soo_stat(void *fdata, struct stat *ub, struct proc *p);
+int	soo_stat(struct file *fp, struct stat *ub, struct proc *p);
 int	uipc_usrreq(struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
