@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.6 2001/01/19 10:12:35 jdolecek Exp $	*/
+/*	$NetBSD: fsort.h,v 1.7 2001/02/19 19:31:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,6 @@
  */
 #define MERGE_FNUM	16
 
-extern const u_char **keylist;
 extern u_char *buffer, *linebuf;
 extern size_t bufsize, linebuf_size;
 
