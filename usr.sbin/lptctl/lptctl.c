@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.3 2004/01/21 00:35:09 bjh21 Exp $ */
+/* $NetBSD: lptctl.c,v 1.4 2004/01/28 09:21:55 jdolecek Exp $ */
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -99,36 +99,37 @@ print_lpt_info(int fd) {
 	LPT_INFO_T lpt_info;
 
 	if (ioctl(fd, LPTIO_GET_STATUS, &lpt_info) == -1) {
-		perror(__func__);
-	} else {
-		printf("dma=%s ", (lpt_info.dma_status) ? "on" : "off");
-		
-		printf("mode=");
-		switch(lpt_info.mode_status) {
-		case standard:
-			printf("standard ");
-			break;
-		case nibble:
-			printf("nibble ");
-			break;
-		case fast:
-			printf("fast ");
-			break;
-		case ps2:
-			printf("ps2 ");
-			break;
-		case ecp:
-			printf("ecp ");
-			break;
-		case epp:
-			printf("epp ");
-			break;
-		}
-		
-		printf("ieee=%s ", (lpt_info.ieee_status) ? "yes" : "no");
-		
-		printf("\n");
+		warnx("%s: ioctl", __func__);
+		return;
 	}
+
+	printf("dma=%s ", (lpt_info.dma_status) ? "on" : "off");
+		
+	printf("mode=");
+	switch(lpt_info.mode_status) {
+	case standard:
+		printf("standard ");
+		break;
+	case nibble:
+		printf("nibble ");
+		break;
+	case fast:
+		printf("fast ");
+		break;
+	case ps2:
+		printf("ps2 ");
+		break;
+	case ecp:
+		printf("ecp ");
+		break;
+	case epp:
+		printf("epp ");
+		break;
+	}
+		
+	printf("ieee=%s ", (lpt_info.ieee_status) ? "yes" : "no");
+		
+	printf("\n");
 }
 
 static void 
