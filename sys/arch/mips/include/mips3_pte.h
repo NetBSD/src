@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.9 1999/05/27 01:56:33 nisimura Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.10 1999/09/25 00:00:37 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,9 +81,15 @@ struct tlb {
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
+#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
+#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
+#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
+#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
+#else
 #define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
 #define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
 #define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
+#endif
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
@@ -91,7 +97,11 @@ struct tlb {
 #define	MIPS3_PG_D	0x00000004	/* Dirty */
 #define	MIPS3_PG_ATTR	0x0000003f
 #define	MIPS3_PG_UNCACHED 0x00000010
-#define	MIPS3_PG_CACHED	0x00000018	/* Cacheable noncoherent */
+#ifdef HPCMIPS_L1CACHE_DISABLE		/* MIPS3_L1CACHE_DISABLE */
+#define MIPS3_PG_CACHED MIPS3_PG_UNCACHED /* XXX: brain damaged!!! */
+#else /* HPCMIPS_L1CACHE_DISABLE */
+#define MIPS3_PG_CACHED 0x00000018 /* Cacheable noncoherent */
+#endif /* ! HPCMIPS_L1CACHE_DISABLE */
 #define	MIPS3_PG_CACHEMODE 0x00000038
 /* Write protected */
 #define	MIPS3_PG_ROPAGE	(MIPS3_PG_V | MIPS3_PG_RO | MIPS3_PG_CACHED)
@@ -104,7 +114,11 @@ struct tlb {
 #define	MIPS3_PG_IOPAGE \
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_UNCACHED)
 #define	MIPS3_PG_FRAME	0x3fffffc0
+#ifdef MIPS3_4100			/* VR4100 core */
+#define MIPS3_PG_SHIFT	4
+#else
 #define MIPS3_PG_SHIFT	6
+#endif
 
 /* pte accessor macros */
 
