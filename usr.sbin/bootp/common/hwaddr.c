@@ -1,8 +1,8 @@
-/*	$NetBSD: hwaddr.c,v 1.7 2002/07/14 00:30:02 wiz Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.8 2003/07/14 06:08:05 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hwaddr.c,v 1.7 2002/07/14 00:30:02 wiz Exp $");
+__RCSID("$NetBSD: hwaddr.c,v 1.8 2003/07/14 06:08:05 itojun Exp $");
 #endif
 
 /*
@@ -138,8 +138,8 @@ setarp(int s, struct in_addr *ia, u_char *ha, int len)
 	char *a;
 
 	a = inet_ntoa(*ia);
-	sprintf(buf, "arp -d %s; arp -s %s %s temp",
-		a, a, haddrtoa(ha, len));
+	snprintf(buf, sizeof(buf), "arp -d %s; arp -s %s %s temp",
+	    a, a, haddrtoa(ha, len));
 	if (debug > 2)
 		report(LOG_INFO, "%s", buf);
 	status = system(buf);
@@ -164,7 +164,8 @@ haddrtoa(u_char *haddr, int hlen)
 
 	bufptr = haddrbuf;
 	while (hlen > 0) {
-		sprintf(bufptr, "%02X:", (unsigned) (*haddr++ & 0xFF));
+		snprintf(bufptr, sizeof(haddrbuf) - (bufptr - haddrbuf),
+		    "%02X:", (unsigned) (*haddr++ & 0xFF));
 		bufptr += 3;
 		hlen--;
 	}
