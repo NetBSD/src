@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.4.4.1 2000/10/18 01:46:25 tv Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.4.4.2 2001/03/22 02:07:28 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -642,10 +642,16 @@ done_cursor:
 #ifdef DEBUG
 	/*
 	 * Sanity checking.  When the repainting code messes up, the usual
-	 * result is we don't repaint the cursor.  Die now.
+	 * result is we don't repaint the cursor and so sc_smap will be
+	 * NULL.  If we're debugging, die, otherwise restart from scratch.
 	 */
 	if (vip->sc_smap == NULL)
 		abort();
+#else
+	if (vip->sc_smap == NULL) {
+		F_SET(sp, SC_SCR_REFORMAT);
+		return (vs_paint(sp, flags));
+	}
 #endif
 
 	/*
