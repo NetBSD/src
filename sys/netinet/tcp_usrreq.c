@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.83 2003/09/04 09:17:02 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.84 2003/09/29 21:39:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.83 2003/09/04 09:17:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.84 2003/09/29 21:39:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -738,11 +738,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 }
 
 #ifndef TCP_SENDSPACE
-#define	TCP_SENDSPACE	1024*16
+#define	TCP_SENDSPACE	1024*32
 #endif
 int	tcp_sendspace = TCP_SENDSPACE;
 #ifndef TCP_RECVSPACE
-#define	TCP_RECVSPACE	1024*16
+#define	TCP_RECVSPACE	1024*32
 #endif
 int	tcp_recvspace = TCP_RECVSPACE;
 
