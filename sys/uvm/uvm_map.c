@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.133 2003/02/23 04:53:51 simonb Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.134 2003/03/02 02:55:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.133 2003/02/23 04:53:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.134 2003/03/02 02:55:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1182,8 +1182,12 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 			PMAP_PREFER(uoffset, &hint);
 #endif
 		if (align != 0) {
-			if ((hint & (align - 1)) != 0)
-				hint = roundup(hint, align);
+			if ((hint & (align - 1)) != 0) {
+				if (topdown)
+					hint &= ~(align-1);
+				else
+					hint = roundup(hint, align);
+			}
 			/*
 			 * XXX Should we PMAP_PREFER() here again?
 			 */
