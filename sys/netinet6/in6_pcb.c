@@ -267,6 +267,7 @@ in6_pcbbind(in6p, nam)
 		else if (head->in6p_lport > IPV6PORT_ANONMAX)
 			head->in6p_lport = IPV6PORT_ANONMIN;
 		last_port = head->in6p_lport;
+		goto startover;	/*to randomize*/
 		for (;;) {
 			lport = htons(head->in6p_lport);
 			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
@@ -283,6 +284,7 @@ in6_pcbbind(in6p, nam)
 			}
 			if (t == 0)
 				break;
+startover:
 			if (head->in6p_lport >= IPV6PORT_ANONMAX)
 				head->in6p_lport = IPV6PORT_ANONMIN;
 			else
