@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.6 1999/03/25 12:08:57 pk Exp $
+.\"	$NetBSD: contents,v 1.7 1999/03/25 20:56:01 leo Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -369,6 +369,7 @@ everything described below.
 .br
 .if r_alpha .Em 13M gzipped, 41M uncompressed
 .if r_arm32 .Em 11M gzipped, 28M uncompressed
+.if r_atari .Em 10.7M gzipped, 30.1M uncompressed
 .if r_i386 .Em 12M gzipped, 29M uncompressed
 .if r_mac68k .Em 8.6M gzipped, 25.1M uncompressed
 .if r_sparc .Em 12.2M gzipped, 35.2M uncompressed
@@ -386,6 +387,7 @@ system call and library manual pages.
 .br
 .if r_alpha .Em 6M gzipped, 31M uncompressed
 .if r_arm32 .Em 7.5M gzipped, 25M uncompressed
+.if r_atari .Em 8.0M gzipped, 27.6M uncompressed
 .if r_i386 .Em 9M gzipped, 29M uncompressed
 .if r_mac68k .Em 6.2M gzipped, 21.6M uncompressed
 .if r_sparc .Em 10M gzipped, 33.2M uncompressed
@@ -405,6 +407,7 @@ upgrade your configuration files by hand.)
 .br
 .if r_alpha .Em 50K gzipped, 320K uncompressed
 .if r_arm32 .Em 52K gzipped, 310K uncompressed
+.if r_atari .Em 56K gzipped, 338K uncompressed
 .if r_i386 .Em 57K gzipped, 337K uncompressed
 .if r_mac68k .Em 49K gzipped, 288K uncompressed
 .if r_sparc .Em 61K gzipped, 348K uncompressed
@@ -414,6 +417,7 @@ This set includes the games and their manual pages.
 .br
 .if r_alpha .Em 3M gzipped, 8M uncompressed
 .if r_arm32 .Em 3M gzipped, 7.4M uncompressed
+.if r_atari .Em 2.9M gzipped, 7.3M uncompressed
 .if r_i386 .Em 2.9M gzipped, 7.1M uncompressed
 .if r_mac68k .Em 2.8M gzipped, 7.2M uncompressed
 .if r_sparc .Em 3.1M gzipped, 7.7M uncompressed
@@ -434,12 +438,11 @@ install this distribution set.
 .\}
 .if \n[atari] \{\
 .Pp
-.It Sy kern
-.It Sy kern_hades
-.It Sy kern_x
+.It Sy netbsd.*.gz
 The NetBSD/\*m \*V kernel binary. You should
 install the appropriate kernel for your system.
-.Em 472K gzipped, 1.01M uncompressed
+.br
+.Em Approx. 500K gzipped, 1M uncompressed
 .\}
 .if \n[mac68k] \{\
 .Pp
@@ -481,6 +484,7 @@ all related programs, and their manual pages.
 .br
 .if r_alpha .Em 1M gzipped, 4M uncompressed
 .if r_arm32 .Em 1M gzipped, 4M uncompressed
+.if r_atari .Em 1.3M gzipped, 4.6M uncompressed
 .if r_i386 .Em 1.3M gzipped, 4.6M uncompressed
 .if r_mac68k .Em 1.0M gzipped, 3.7M uncompressed
 .if r_sparc .Em 1.4M gzipped, 5M uncompressed
