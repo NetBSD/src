@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.22 1995/06/25 06:28:13 cgd Exp $	*/
+/*	$NetBSD: savecore.c,v 1.23 1995/07/24 20:35:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.22 1995/06/25 06:28:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.23 1995/07/24 20:35:02 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -314,6 +314,17 @@ dump_exists()
 
 	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPMAG].n_value)), L_SET);
 	(void)Read(dumpfd, &newdumpmag, sizeof(newdumpmag));
+
+	/* Read the dump size. */
+	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPSIZE].n_value)), L_SET);
+	(void)Read(dumpfd, &dumpsize, sizeof(dumpsize));
+	dumpsize *= getpagesize();
+
+	/*
+	 * Return zero if core dump doesn't seem to be there, and note
+	 * it for syslog.  This check and return happens after the dump size
+	 * is read, so dumpsize is whether or not the core is valid (for -f).
+	 */
 	if (newdumpmag != dumpmag) {
 		if (verbose)
 			syslog(LOG_WARNING, "magic number mismatch (%x != %x)",
@@ -374,15 +385,10 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 		ifd = dumpfd;
 	}
 
-	/* Read the dump size. */
-	Lseek(dumpfd, (off_t)(dumplo + ok(dump_nl[X_DUMPSIZE].n_value)), L_SET);
-	(void)Read(dumpfd, &dumpsize, sizeof(dumpsize));
-
 	/* Seek to the start of the core. */
 	Lseek(ifd, (off_t)dumplo, L_SET);
 
 	/* Copy the core file. */
-	dumpsize *= getpagesize();
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    compress ? "compressed " : "", path);
 	for (; dumpsize > 0; dumpsize -= nr) {
