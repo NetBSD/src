@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.97 2003/08/16 18:08:27 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.98 2003/08/16 18:09:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.97 2003/08/16 18:08:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.98 2003/08/16 18:09:14 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1392,7 +1392,8 @@ nfs_timer(arg)
 				timeo *= nfs_backoff[nmp->nm_timeouts - 1];
 			if (rep->r_rtt <= timeo)
 				continue;
-			if (nmp->nm_timeouts < 8)
+			if (nmp->nm_timeouts <
+			    (sizeof(nfs_backoff) / sizeof(nfs_backoff[0])))
 				nmp->nm_timeouts++;
 		}
 		/*
