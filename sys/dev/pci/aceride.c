@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.9 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -178,7 +178,7 @@ acer_setup_channel(struct wdc_channel *chp)
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
-	WDCDEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n", 
+	ATADEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n", 
 	    acer_fifo_udma), DEBUG_PROBE);
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -199,7 +199,7 @@ acer_setup_channel(struct wdc_channel *chp)
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		WDCDEBUG_PRINT(("acer_setup_channel: old timings reg for "
+		ATADEBUG_PRINT(("acer_setup_channel: old timings reg for "
 		    "channel %d drive %d 0x%x\n", chp->ch_channel, drive,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag,
 		    ACER_IDETIM(chp->ch_channel, drive))), DEBUG_PROBE);
@@ -250,7 +250,7 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 		    ACER_IDETIM(chp->ch_channel, drive),
 		    acer_pio[drvp->PIO_mode]);
 	}
-	WDCDEBUG_PRINT(("acer_setup_channel: new fifo/udma reg 0x%x\n",
+	ATADEBUG_PRINT(("acer_setup_channel: new fifo/udma reg 0x%x\n",
 	    acer_fifo_udma), DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA, acer_fifo_udma);
 	if (idedma_ctl != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.9 2004/08/13 04:10:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -350,7 +350,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 		} else {
 			sis_tim |= sis_pio133new_tim[drvp->PIO_mode];
 		}
-		WDCDEBUG_PRINT(("sis96x_setup_channel: new timings reg for "
+		ATADEBUG_PRINT(("sis96x_setup_channel: new timings reg for "
 		    "channel %d drive %d: 0x%x (reg 0x%x)\n",
 		    chp->ch_channel, drive, sis_tim, regtim), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, regtim, sis_tim);
@@ -372,7 +372,7 @@ sis_setup_channel(struct wdc_channel *chp)
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
-	WDCDEBUG_PRINT(("sis_setup_channel: old timings reg for "
+	ATADEBUG_PRINT(("sis_setup_channel: old timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, 
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel))),
 	    DEBUG_PROBE);
@@ -454,7 +454,7 @@ pio:		switch (sc->sis_type) {
 			    sc->sis_type);
 		}
 	}
-	WDCDEBUG_PRINT(("sis_setup_channel: new timings reg for "
+	ATADEBUG_PRINT(("sis_setup_channel: new timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, sis_tim), DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel),
 		       sis_tim);
@@ -477,7 +477,7 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	if (interface == 0) {
-		WDCDEBUG_PRINT(("sis_sata_chip_map interface == 0\n"),
+		ATADEBUG_PRINT(("sis_sata_chip_map interface == 0\n"),
 		    DEBUG_PROBE);
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
