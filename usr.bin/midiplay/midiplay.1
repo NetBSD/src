@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.9 2001/12/01 16:43:19 wiz Exp $
+.\" $NetBSD: midiplay.1,v 1.10 2002/01/05 00:04:27 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -63,7 +63,8 @@ The program accepts the following options:
 specifies the number of the MIDI device used for output (as listed
 by the
 .Fl l
-flag).  The default is device 0.
+flag).  The default is device is given by environment variable
+.Pa MIDIUNIT .
 .It Fl f Ar file
 specifies the name of the sequencer device.
 .It Fl l
@@ -86,11 +87,11 @@ play a small sample sound instead of the a file.
 .It Pa /dev/music
 MIDI sequencer device
 .El
-.\".Sh ENVIRONMENT
-.\".Bl -tag -width MIDIDEVICE
-.\".It Pa AUDIOCTLDEVICE
-.\"the audio control device to use.
-.\".El
+.Sh ENVIRONMENT
+.Bl -tag -width MIDIUNIT
+.It Pa MIDIUNIT
+the default number of the MIDI device used for output.  The default is 0.
+.El
 .Sh SEE ALSO
 .Xr midi 4
 .Sh HISTORY
