@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.48 1997/03/11 21:54:35 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.49 1997/10/05 20:59:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,15 +56,15 @@
 #include <sys/time.h>
 #include <sys/syslog.h>
 
-#include <dev/cons.h>
-#include <dev/ic/z8530reg.h>
-#include <machine/z8530var.h>
-
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
 #include <machine/mon.h>
+#include <machine/z8530var.h>
+
+#include <dev/cons.h>
+#include <dev/ic/z8530reg.h>
 
 #include <sun3/dev/zs_cons.h>
 #include "kbd.h"
