@@ -248,26 +248,7 @@ find_fileproc (callerdat, finfo)
     xfinfo.rcs = NULL;
 
     vers = Version_TS (&xfinfo, NULL, saved_tag, NULL, 0, 0);
-    if (vers->ts_user == NULL
-	&& vers->vn_user != NULL
-	&& (vers->vn_user[0] == '0' || vers->vn_user[0] == '-'))
-    {
-	if ( vers->vn_user[0] == '0')
-	{
-	    /* This happens when one has `cvs add'ed a file, but it no
-	       longer exists in the working directory at commit time.  */
-	    status = T_ADDED;
-	}
-	else
-	{
-	    /* FIXME: If vn_user is starts with "-" but ts_user is
-	       non-NULL, what classify_file does is print "%s should be
-	       removed and is still there".  I'm not sure what it does
-	       then.  We probably should do the same.  */
-	    status = T_REMOVED;
-	}
-    }
-    else if (vers->vn_user == NULL)
+    if (vers->vn_user == NULL)
     {
 	if (vers->ts_user == NULL)
 	    error (0, 0, "nothing known about `%s'", finfo->fullname);
@@ -277,16 +258,28 @@ find_fileproc (callerdat, finfo)
 	freevers_ts (&vers);
 	return 1;
     }
-    else if (vers->ts_user != NULL
-	     && vers->vn_user != NULL
-	     && vers->vn_user[0] == '0')
-	/* FIXME: If vn_user is "0" but ts_user is NULL, what classify_file
-	   does is print "new-born %s has disappeared" and removes the entry.
-	   We probably should do the same.  No!  Not here.  Otherwise, a commit
-	   would succeed in some cases when it should fail.  See above.  */
+    if (vers->ts_user == NULL)
+    {
+	if (strcmp (vers->vn_user, "0") == 0)
+	    /* This happens when one has `cvs add'ed a file, but it no
+	       longer exists in the working directory at commit time.
+	       FIXME: What classify_file does in this case is print
+	       "new-born %s has disappeared" and removes the entry.
+	       We probably should do the same.  */
+	    status = T_ADDED;
+	else if (vers->vn_user[0] == '-')
+	    status = T_REMOVED;
+	else
+	{
+	    /* FIXME: What classify_file does in this case is print
+	       "%s was lost".  We probably should do the same.  */
+	    freevers_ts (&vers);
+	    return 0;
+	}
+    }
+    else if (strcmp (vers->vn_user, "0") == 0)
 	status = T_ADDED;
-    else if (vers->ts_user != NULL
-	     && vers->ts_rcs != NULL
+    else if (vers->ts_rcs != NULL
 	     && (args->force || strcmp (vers->ts_user, vers->ts_rcs) != 0))
 	/* If we are forcing commits, pretend that the file is
            modified.  */
@@ -427,7 +420,7 @@ commit (argc, argv)
     /* numeric specified revision means we ignore sticky tags... */
     if (saved_tag && isdigit ((unsigned char) *saved_tag))
     {
-        char *p = saved_tag + strlen (saved_tag);
+	char *p = saved_tag + strlen (saved_tag);
 	aflag = 1;
 	/* strip trailing dots and leading zeros */
 	while (*--p == '.') ;
