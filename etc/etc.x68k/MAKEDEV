@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 1996/10/09 00:40:37 jtc Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1997/01/01 23:46:28 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,7 +70,7 @@
 #	par*	motherboard parallel port
 #
 # Special purpose devices:
-#	rd	ram disk
+#	md	memory pseudo-disk
 #	grf*	builtin video
 #	kbd	keyboard
 #	aconf	autoconfig information (not yet)
@@ -99,7 +99,7 @@ all)
 	sh $0 cd0 ss0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh $0 ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm
 	sh $0 sram audio pow0 pow1 bell local
-	sh $0 rd0 rd1 ch0 uk0 uk1 ss0
+	sh $0 md0 md1 ch0 uk0 uk1 ss0
 	;;
 
 floppy)
@@ -261,9 +261,9 @@ cd*)
 	umask 77
 	;;
 
-rd*)
+md*)
 	case $i in
-	rd*) name=rd;	unit=${i#rd};	blk=8; chr=7;;
+	md*) name=md;	unit=${i#md};	blk=8; chr=7;;
 	esac
 	rm -f $name$unit r$name$unit
 	mknod $name$unit	b $blk $(($unit +  0))

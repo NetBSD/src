@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.4 1996/11/09 04:01:32 chuck Exp $
+#	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,7 +36,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
+#	md*	"memory" pseudo-disks
 #	ccd*	contatenated disk devices
 #
 # Pseudo terminals:
@@ -68,7 +68,7 @@ all)
 	sh $0 std fd sd0 sd1 sd2 pty0 
 	sh $0 st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1 
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1
-	sh $0 ccd0 ccd1 ccd2 ccd3 rd0 ss0 ch0 uk0 uk1 lkm
+	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
 	sh $0 local
 	;;
 
@@ -98,9 +98,9 @@ fd)
 	chmod 666 fd/*
 	;;
 
-rd*)
+md*)
 	case $i in
-	rd*) name=rd;	unit=${i#rd};	chr=32;	blk=9;;
+	md*) name=md;	unit=${i#md};	chr=32;	blk=9;;
 	esac
 	rm -f $name$unit r$name$unit
 	mknod $name$unit	b $blk $(($unit +  0))
