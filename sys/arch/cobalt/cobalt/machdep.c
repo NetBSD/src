@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2004/01/07 12:43:43 cdi Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2004/01/07 12:43:43 cdi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2003/12/30 12:33:16 pk Exp $");
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/intr.h>
 #include <mips/locore.h>
 
@@ -93,6 +94,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
@@ -106,7 +108,7 @@ int	bootpart = -1;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(unsigned int);
+void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
 
@@ -125,12 +127,21 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(memsize)
+mach_init(memsize, bim, bip)
 	unsigned int memsize;
+	u_int  bim;
+	char   *bip;
 {
 	caddr_t kernend, v;
 	u_long first, last;
 	extern char edata[], end[];
+	char *bi_msg;
+#if NKSYMS || defined(DDB) || defined(LKM)
+	int nsym = 0;
+	caddr_t ssym = 0;
+	caddr_t esym = 0;
+	struct btinfo_symtab *bi_syms;
+#endif
 
 	/*
 	 * Clear the BSS segment.
@@ -149,9 +160,37 @@ mach_init(memsize)
 		memset(edata, 0, kernend - edata);
 	}
 
+	/* Check for valid bootinfo passed from bootstrap */
+	if (bim == BOOTINFO_MAGIC) {
+		struct btinfo_magic *bi_magic;
+
+		bootinfo = bip;
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bi_msg = "invalid bootinfo structure.\n";
+		else
+			bi_msg = NULL;
+	} else
+		bi_msg = "invalid bootinfo (standalone boot?)\n";
+
+#if NKSYMS || defined(DDB) || defined(LKM)
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+
+	/* Load symbol table if present */
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (caddr_t)bi_syms->ssym;
+		esym = (caddr_t)bi_syms->esym;
+		kernend = (caddr_t)mips_round_page(esym);
+	}
+#endif
+
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
 	consinit();
+
+	if (bi_msg != NULL)
+		printf(bi_msg);
 
 	uvm_setpagesize();
 
@@ -177,7 +216,11 @@ mach_init(memsize)
 	decode_bootstring();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);
+	/* init symbols if present */
+	if ((bi_syms != NULL) && (esym != NULL))
+		ksyms_init(esym - ssym, ssym, esym);
+	else
+		ksyms_init(0, NULL, NULL);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -537,3 +580,30 @@ strtok_light(str, sep)
 	return head;
 }
 
+/*
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL) {
+		printf("##### help == NULL\n");
+		return (NULL);
+	}
+
+	do {
+		bt = (struct btinfo_common *)help;
+		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}

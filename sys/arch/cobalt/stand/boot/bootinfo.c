@@ -1,11 +1,11 @@
-/*	$NetBSD: start.S,v 1.2 2004/01/07 12:43:44 cdi Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.1 2004/01/07 12:43:44 cdi Exp $	*/
 
-/*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles
+ * by Jonathan Stone, Michael Hitch and Simon Burge.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,30 +36,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mips/asm.h>
+#include <machine/types.h>
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-LEAF(start)
-	.set	noreorder
-#ifdef __GP_SUPPORT__
-	la      gp, _C_LABEL (_gp)
-#endif
-	la	sp, start - CALLFRAME_SIZ
-	sw	zero, CALLFRAME_RA(sp)		# clear ra for debugger
-	sw	zero, CALLFRAME_SP(sp)		# clear fp for debugger
-	move	s0, a0				# save argc
-	move	s1, a1				# save argv
+#include "boot.h"
+#include "bootinfo.h"
 
-	la	a0, _C_LABEL (edata)		# clear BSS
-	move	a1, zero
-	la	a2, _C_LABEL (end)
-	jal	_C_LABEL(memset)		# memset(edata, 0, end - edata)
-	subu	a2, a2, a0
+static char *bootinfo = NULL;
+static char *bi_next;
+static int bi_size;
 
-	move	a0, s0				# restore argc
-	jal	_C_LABEL(main)			# main(unsigned int)
-	move	a1, s1				# restore argv
+char* bi_init(void)
+{
+	struct btinfo_common *bi;
+	struct btinfo_magic bi_magic;
 
-XLEAF(_xtt)
-	jal	_C_LABEL(cpu_reboot)		# failed, reboot
-	nop
-END(start)
+	if ( (bootinfo = (char*)alloc(BOOTINFO_SIZE)) != NULL) {
+		bi = (struct btinfo_common *)bootinfo;
+		bi->next = bi->type = 0;
+		bi_next = bootinfo;
+		bi_size = 0;
+
+		bi_magic.magic = BOOTINFO_MAGIC;
+		bi_add(&bi_magic, BTINFO_MAGIC, sizeof(bi_magic));
+	}
+
+	return (bootinfo);
+}
+
+void bi_add(new, type, size)
+	void *new;
+	int type, size;
+{
+	struct btinfo_common *bi;
+
+	if (bi_size + size > BOOTINFO_SIZE)
+		return;				/* XXX error? */
+
+	if (bootinfo != NULL) {
+		DPRINTF(("Adding %d of size %d @0x%x\n",
+					type, size, (char*)bi_next));
+
+		bi = new;
+		bi->next = size;
+		bi->type = type;
+		memcpy(bi_next, new, size);
+		bi_next += size;
+
+		bi = (struct btinfo_common *)bi_next;
+		bi->next = bi->type = 0;
+	}
+}

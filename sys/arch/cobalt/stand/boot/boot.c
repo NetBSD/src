@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2003/08/07 16:27:17 agc Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2004/01/07 12:43:44 cdi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include "boot.h"
 #include "cons.h"
 #include "common.h"
+#include "bootinfo.h"
 
 char *kernelnames[] = {
 	"netbsd",
@@ -102,7 +103,9 @@ char *kernelnames[] = {
 	NULL
 };
 
-extern long end;
+extern u_long end;		/* Boot loader code end address */
+void start(void);
+
 static char *bootstring;
 
 static int patch_bootstring	(char *bootspec);
@@ -110,8 +113,8 @@ static int get_bsdbootname	(char **dev, char **name, char **kname);
 static int prominit		(unsigned int memsize);
 static int print_banner		(unsigned int memsize);
 
-void start(void);
 int cpu_reboot(void);
+
 int main(unsigned int memsize);
 
 /*
@@ -255,8 +258,7 @@ print_banner(memsize)
 {
 	printf("\n");
 	printf(">> %s " NETBSD_VERS " Bootloader, Revision %s [@%p]\n",
-			bootprog_name, bootprog_rev,
-			(unsigned long)&start & ~PAGE_MASK);
+			bootprog_name, bootprog_rev, (void*)&start);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory:\t\t%u k\n", (memsize - MIPS_KSEG0_START) / 1024);
 	printf(">> PROM boot string:\t%s\n", bootstring);
@@ -270,16 +272,25 @@ int
 main(memsize)
 	unsigned int memsize;
 {
-	char *name, **namep, *dev, *kernel, *spec;
+	char *name, **namep, *dev, *kernel, *spec, *bi_addr;
 	char bootpath[PATH_MAX];
 	int win;
 	u_long marks[MARK_MAX];
-	void (*entry) __P((unsigned int));
+	void (*entry) __P((unsigned int, u_int, char*));
+
+	struct btinfo_flags bi_flags;
+	struct btinfo_symtab bi_syms;
+	struct btinfo_bootpath bi_bpath;
 
 	int addr, speed;
 
+	/* Initialize boot info early */
+	bi_flags.bi_flags = 0x0;
+	bi_addr = bi_init();
+
 	prominit(memsize);
-	cninit(&addr, &speed);
+	if (cninit(&addr, &speed) != NULL)
+		bi_flags.bi_flags |= BI_SERIAL_CONSOLE;
 
 	print_banner(memsize);
 
@@ -293,6 +304,7 @@ main(memsize)
 	} else {
 		win = 0;
 		DPRINTF(("kernel: NULL\n"));
+		DPRINTF(("Kernel names: %p\n", kernelnames));
 		for (namep = kernelnames, win = 0;
 				(*namep != NULL) && !win;
 				namep++) {
@@ -311,10 +323,22 @@ main(memsize)
 	}
 
 	if (win) {
+		strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
+		bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
+
+		entry = (void *) marks[MARK_ENTRY];
+		bi_syms.nsym = marks[MARK_NSYM];
+		bi_syms.ssym = marks[MARK_SYM];
+		bi_syms.esym = marks[MARK_END];
+		bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
+
+		bi_add(&bi_flags, BTINFO_FLAGS, sizeof(bi_flags));
+
 		entry = (void *) marks[MARK_ENTRY];
 
+		DPRINTF(("Bootinfo @ 0x%x\n", bi_addr));
 		printf("Starting at 0x%x\n\n", (u_int)entry);
-		(*entry)(memsize);
+		(*entry)(memsize, BOOTINFO_MAGIC, bi_addr);
 	}
 
 	(void)printf("Boot failed! Rebooting...\n");
