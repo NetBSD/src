@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.18 1999/07/11 03:04:14 thorpej Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.19 1999/12/16 06:00:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.18 1999/07/11 03:04:14 thorpej Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.19 1999/12/16 06:00:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,7 +548,7 @@ main(argc, argv)
 	}
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
-	if (from.__ss_family == AF_INET) {
+	if (((struct sockaddr *)&from)->sa_family == AF_INET) {
 # if	defined(HAS_GETTOS)
 		struct tosent *tp;
 		if (tos < 0 && (tp = gettosbyname("telnet", "tcp")))
