@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.22 2000/05/22 15:05:37 uch Exp $ */
+/* $Id: platid_mask.c,v 1.23 2000/06/03 08:00:43 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -450,4 +450,24 @@ platid_t platid_mask_MACH_IBM_WORKPAD_Z50 = {{
 platid_t platid_mask_MACH_IBM_WORKPAD_26011AU = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_IBM_WORKPAD_26011AU
+}};
+platid_t platid_mask_MACH_VADEM = {{
+	PLATID_WILD,
+	PLATID_MACH_VADEM
+}};
+platid_t platid_mask_MACH_VADEM_CLIO = {{
+	PLATID_WILD,
+	PLATID_MACH_VADEM_CLIO
+}};
+platid_t platid_mask_MACH_VADEM_CLIO_C = {{
+	PLATID_WILD,
+	PLATID_MACH_VADEM_CLIO_C
+}};
+platid_t platid_mask_MACH_VADEM_CLIO_C1000 = {{
+	PLATID_CPU_MIPS_VR_4111,
+	PLATID_MACH_VADEM_CLIO_C1000
+}};
+platid_t platid_mask_MACH_VADEM_CLIO_C1050 = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_VADEM_CLIO_C1050
 }};

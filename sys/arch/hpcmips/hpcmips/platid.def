@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.20 2000/05/22 15:03:46 uch Exp $	*/
+/*	$NetBSD: platid.def,v 1.21 2000/06/03 08:00:43 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -183,6 +183,15 @@ IBM {
   WorkPad {
     z50 {
       CPU=MIPS_VR_4121 26011AU -" z50 2601 1AU"
+    }
+  }
+}
+
+VADEM {
+  CLIO {
+    C {
+      CPU=MIPS_VR_4111 C1000 "-1000"
+      CPU=MIPS_VR_4121 C1050 "-1050"
     }
   }
 }
