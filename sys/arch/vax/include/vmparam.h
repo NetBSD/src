@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.2 1994/08/16 23:41:57 ragge Exp $
+ *	$Id: vmparam.h,v 1.3 1994/10/08 15:43:59 ragge Exp $
  */
 #ifndef ASSEMBLER
 #include <vm/vm_param.h>
@@ -57,7 +57,7 @@
  */
 
 #define	USRTEXT		0
-#define	USRSTACK	0x80000000
+#define	USRSTACK	0x7fffe000
 
 /*
  * Virtual memory related constants, all in bytes
@@ -79,10 +79,9 @@
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 
-/* (We think) the page table will only need to grow this much */
-#define VAX_MAX_PT_SIZE ((MAXTSIZ+MAXDSIZ+MAXSSIZ)>>7)
-/* XXX Text size is already set to a predefined size, why alloc 
-       more page tables for it than needed??? */
+#define PxTOP0(x) ((x&0x40000000) ?                          \
+                   (x+MAXTSIZ+MAXDSIZ+MAXSSIZ-0x80000000):   \
+                   (x&0x7fffffff))
 
 /*
  * Default sizes of swap allocation chunks (see dmap.h).
@@ -104,23 +103,14 @@
 
 /*
  * Sizes of the system and user portions of the system page table.
+ * We can have at most maxproc userpt on syspt.
+ * Ptsizes are in pte:s.
  */
-/*
+/* XXX Text size is already set to a predefined size, why alloc 
+       more page tables for it than needed??? */
 
-#define	SYSPTSIZE 	(2*NPTEPG)
-#define	USRPTSIZE 	(2*NPTEPG)
-
-*/
-/*
- * Size of User Raw I/O map
- */
-/* #define	USRIOSIZE 	300 */
-
-/*
- * The size of the clock loop.
- */
-
-/* #define	LOOPPAGES	(maxfree - firstfree) */
+#define	USRPTSIZE 	((MAXTSIZ+MAXDSIZ+MAXSSIZ)>>9) /* PTEs */
+#define	SYSPTSIZE 	((((USRPTSIZE>>9)+UPAGES)*maxproc)+120*1024)
 
 /*
  * The time for a process to be blocked before being very swappable.
@@ -152,49 +142,20 @@
 					   protected against replacement */
 
 /*
- * DISKRPM is used to estimate the number of paging i/o operations
- * which one can expect from a single disk controller.
- */
-
-/* #define	DISKRPM		60 */
-
-/*
- * Klustering constants.  Klustering is the gathering
- * of pages together for pagein/pageout, while clustering
- * is the treatment of hardware page size as though it were
- * larger than it really is.
- *
- * KLMAX gives maximum cluster size in CLSIZE page (cluster-page)
- * units.  Note that KLMAX*CLSIZE must be <= DMMIN in dmap.h.
- */
-
-/*#define	KLMAX	(4/CLSIZE)      /*                              */
-/*#define	KLSEQL	(2/CLSIZE)	/* in klust if vadvise(VA_SEQL) */
-/*#define	KLIN	(4/CLSIZE)	/* default data/stack in klust  */
-/*#define	KLTXT	(4/CLSIZE)	/* default text in klust        */
-/*#define	KLOUT	(4/CLSIZE)      /*                              */
-
-/*
- * KLSDIST is the advance or retard of the fifo reclaim for sequential
- * processes data space.
- */
-
-/*#define	KLSDIST	3	    /* klusters advance/retard for seq. fifo */
-
-/*
  * Paging thresholds (see vm_sched.c).
  * Strategy of 1/19/85:
  *	lotsfree is 512k bytes, but at most 1/4 of memory
  *	desfree is 200k bytes, but at most 1/8 of memory
  *	minfree is 64k bytes, but at most 1/2 of desfree
  */
-
+/*
 #define	LOTSFREE	(512 * 1024)
 #define	LOTSFREEFRACT	4
 #define	DESFREE		(200 * 1024)
 #define	DESFREEFRACT	8
 #define	MINFREE		(64 * 1024)
 #define	MINFREEFRACT	2
+*/
 
 /*
  * There are two clock hands, initially separated by HANDSPREAD bytes
@@ -225,12 +186,6 @@
 /*
  * Mach derived constants
  */
-
-/* # of kernel PT pages */
-
-#define VM_KERNEL_PT_PAGES	2*1024      /* XXX: SYSPTSIZE */
-                                            /* Will give this # times 64 */
-                                            /* kilobytes virtual memory */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
