@@ -1,7 +1,7 @@
-/*	$NetBSD: intvec.s,v 1.25 1997/11/13 10:43:27 veego Exp $   */
+/*	$NetBSD: intvec.s,v 1.26 1998/01/31 12:17:36 ragge Exp $   */
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -214,23 +214,67 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
+/*
+ * Translation fault, used only when simulating page reference bit.
+ * Therefore it is done a fast revalidation of the page if it is
+ * referenced. Trouble here is the hardware bug on KA650 CPUs that
+ * put in a need for an extra check when the fault is gotten during
+ * PTE reference.
+ */
 		.align	2
-transl_v:	.globl	transl_v	# Translation violation, 20
-	pushl	$T_TRANSFLT
-L3:	bbc	$1,4(sp),L1
-	bisl2	$T_PTEFETCH, (sp)
-L1:	bbc	$2,4(sp),L2
-	bisl2	$T_WRITE, (sp)
-L2:	movl	(sp), 4(sp)
-	addl2	$4, sp
-	jbr	trap
+transl_v: .globl transl_v	# Translation violation, 20
+#ifdef DEBUG
+	bbc	$0,(sp),1f	# pte len illegal in trans fault
+	pushab	2f
+	calls	$1,_panic
+2:	.asciz	"pte trans"
+#endif
+1:	pushr	$3		# save r0 & r1
+	movl	12(sp),r0	# Save faulted address in r0
+	blss	2f		# Jump if in kernelspace
 
+	ashl	$1,r0,r0
+	blss	3f		# Jump if P1
+	mfpr	$PR_P0BR,r1
+	brb	4f
+3:	mfpr	$PR_P1BR,r1
+
+4:	bbc	$1,8(sp),5f	# Jump if not indirect
+	extzv	$10,$21,r0,r0	# extract pte number
+	moval	(r1)[r0],r0	# get address of pte
+#if defined(VAX650) || defined(DEBUG)
+	extzv	$10,$20,r0,r1
+	movl	_Sysmap,r0
+	movaq	(r0)[r1],r0
+	tstl	(r0)		# If pte clear, found HW bug.
+	bneq	6f
+	popr	$3
+	brb	access_v
+#endif
+2:	extzv	$10,$20,r0,r1	# get pte index
+	movl	_Sysmap,r0
+	movaq	(r0)[r1],r0	# pte address
+6:	bisl2	$0x80000000,(r0)+ # set valid bit
+	bisl2	$0x80000000,(r0)
+	popr	$3
+	addl2	$8,sp
+	rei
+
+5:	extzv	$11,$20,r0,r0
+	movaq	(r1)[r0],r0
+	brb	6b
 
 		.align	2
 access_v:.globl access_v	# Access cntrl viol fault,	24
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
-	jbr	L3
+	bbc	$1,4(sp),1f
+	bisl2	$T_PTEFETCH,(sp)
+1:	bbc	$2,4(sp),2f
+	bisl2	$T_WRITE,(sp)
+2:	movl	(sp), 4(sp)
+	addl2	$4, sp
+	jbr	trap
 
 ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	jbr trap;
