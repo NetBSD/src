@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.7 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.8 2004/03/26 22:11:46 gendalia Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.7 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.8 2004/03/26 22:11:46 gendalia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,24 @@ struct aac_ident {
 		AAC_HWIF_I960RX,
 		0,
 		"Adaptec ADP-2622"
+	},
+	{
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec ASR-2200S"
+	},
+	{
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_DELL,
+		PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
+		AAC_HWIF_I960RX,
+		0,
+		"Dell PERC 320/DC"
 	},
 	{
 		PCI_VENDOR_ADP2,
