@@ -38,18 +38,34 @@
  *
  *	%W% (Berkeley) %G%
  *
- * Id: conf_parse.y,v 1.2 1999/01/10 21:53:44 ezk Exp 
+ * Id: conf_parse.y,v 1.3 1999/04/16 14:20:59 ezk Exp 
  *
  */
 
 %{
-/*	$NetBSD: conf_parse.y,v 1.5 1999/02/01 19:05:10 christos Exp $	*/
+/*	$NetBSD: conf_parse.y,v 1.5.2.1 1999/09/21 04:55:10 cgd Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+/* AIX requires this to be the first thing in the file. */
+#ifndef __GNUC__
+# if HAVE_ALLOCA_H
+#  include <alloca.h>
+# else /* not HAVE_ALLOCA_H */
+#  ifdef _AIX
+#pragma alloca
+#  else /* not _AIX */
+#   ifndef alloca
+  /* predefined by HP cc +Olibcalls */
+voidp alloca();
+#   endif /* not alloca */
+#  endif /* not _AIX */
+# endif /* not HAVE_ALLOCA_H */
+#endif /* not __GNUC__ */
 
 extern char *yytext;
 extern int yylineno;
