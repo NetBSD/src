@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.8 1994/04/17 07:52:15 phil Exp $
+ *	$Id: scn.c,v 1.9 1994/04/19 17:10:37 phil Exp $
  */
 
 #include "scn.h"
@@ -1044,7 +1044,7 @@ scncnputc (dev_t dev, char c)
 {
   int x = splhigh();
 
-  if (c == '\n') cnputc('\r');
+  if (c == '\n') scncnputc(dev,'\r');
   if (_mapped) {
     while (0 == (RD_ADR (u_char, SCN_CON_MAP_STAT) & SR_TX_RDY));
     WR_ADR (u_char, SCN_CON_MAP_DATA, c);
@@ -1061,10 +1061,10 @@ scncnputc (dev_t dev, char c)
     {
      if (++___lines == 22) {
 	___lines = 0;
-	scnputc(dev,'m');scnputc(dev,'o');scnputc(dev,'r');scnputc(dev,'e');
-	scnputc(dev,':');scnputc(dev,' ');
+	scncnputc(dev,'m');scncnputc(dev,'o');scncnputc(dev,'r');
+	scncnputc(dev,'e');scncnputc(dev,':');scncnputc(dev,' ');
 	scncngetc();
-	scnputc(dev,'\n');
+	scncnputc(dev,'\n');
      }
   }
 #endif

@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ncr.c,v 1.6 1994/03/22 00:15:21 phil Exp $
+ * $Id: ncr.c,v 1.7 1994/04/19 17:10:34 phil Exp $
  *
  */
 
@@ -117,7 +117,7 @@ static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0xffd00000;
 static volatile long			*sci_4byte_addr=  (long *) 0xffe00000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0xffe00000;
 
-static unsigned long	ncr5380_adapter_info(int adapter_number);
+static long		ncr5380_adapter_info(int adapter_number);
 static void		ncr5380_minphys(struct buf *bp);
 static int32		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
@@ -153,7 +153,7 @@ struct	pc532_driver ncrdriver = {
 	ncrprobe, ncrattach, "ncr",
 };
 
-static char scsi_name[] = "ncr5380";
+static char scsi_name[] = "ncr";
 
 struct scsi_switch	ncr5380_switch = {
 	scsi_name,			/* name			*/
@@ -208,8 +208,6 @@ int ncrattach(struct pc532_device *dev)
 	struct ncr5380_data	*ncr5380;
 	int	r, unit=0;
 
-/* 	printf("ncrattach\n"); */
-
 	r = scsi_attach(0, 7, &ncr5380_switch,
 		&dev->pd_drive, &dev->pd_unit, dev->pd_flags);
 
@@ -262,7 +260,7 @@ struct cfdriver ncrcd =
 	DV_DULL, sizeof(struct device), NULL, 0 };
 #endif
 
-static unsigned long
+static long
 ncr5380_adapter_info(int adapter_number)
 {
 	return 1;
