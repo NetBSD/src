@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.71 2003/03/22 14:13:06 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.72 2003/03/26 17:50:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.71 2003/03/22 14:13:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.72 2003/03/26 17:50:16 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -963,8 +963,7 @@ selrecord(struct proc *selector, struct selinfo *sip)
 		return;
 	collision = 0;
 	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {
-		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
-		     l = LIST_NEXT(l, l_sibling)) {
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_wchan == (caddr_t)&selwait) {
 				collision = 1;
 				sip->sel_flags |= SI_COLL;
