@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.10 1997/10/04 09:59:35 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.11 1998/01/12 18:30:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -114,9 +114,7 @@ struct cfattach ac_ca = {
 	sizeof(struct ac_softc), acmatch, acattach
 };
 
-struct cfdriver ac_cd = {
-	NULL, "ac", DV_DULL
-};
+extern struct cfdriver ac_cd;
 
 void	acstart __P((void *));
 void	acgo __P((void *));

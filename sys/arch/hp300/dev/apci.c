@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.2 1997/10/04 09:59:38 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.3 1998/01/12 18:30:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -142,9 +142,7 @@ struct cfattach apci_ca = {
 	sizeof(struct apci_softc), apcimatch, apciattach
 };
 
-struct cfdriver apci_cd = {
-	NULL, "apci", DV_TTY
-};
+extern struct cfdriver apci_cd;
 
 int	apciintr __P((void *));
 void	apcieint __P((struct apci_softc *, int));

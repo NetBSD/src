@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.42 1997/10/04 09:59:45 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.43 1998/01/12 18:30:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -312,9 +312,7 @@ struct cfattach dcm_ca = {
 	sizeof(struct dcm_softc), dcmmatch, dcmattach
 };
 
-struct cfdriver dcm_cd = {
-	NULL, "dcm", DV_TTY
-};
+extern struct cfdriver dcm_cd;
 
 int
 dcmmatch(parent, match, aux)
