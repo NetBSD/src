@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/12/12 19:06:53 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11 2000/12/12 22:40:23 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -42,7 +42,7 @@ SRCS+=	compat_util.c
 .if ${MACHINE} == "i386"
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
-	linux_ipccall.c linux_oldmmap.c linux_olduname.c
+	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
 SRCS+=	linux_ptrace.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
