@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.14 1998/02/19 15:15:29 drochner Exp $
+.\"	$NetBSD: fdisk.8,v 1.15 1998/09/28 15:44:18 ws Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -22,7 +22,7 @@ Newer BIOS programs want the entire first track reserved.
 BIOS partitions can be used to break the disk up into several pieces.
 The BIOS brings in sector 0, verifies the magic number, and begins
 executing the code at the first byte.
-This code is turn searches the DOS partition table for an `active'
+This code in turn searches the DOS partition table for an `active'
 partition.
 If one is found, the boot block from that partition is loaded and replaces
 the original boot block.
@@ -107,6 +107,15 @@ This mode is designed not to change any data unless you explicitly tell it to;
 .Nm
 selects defaults for its questions to guarantee that behavior.
 .Pp
+At the start the
+.Nm
+program will determine whether the disk sector 0 is valid as a boot sector.
+(This is determined by checking the magic number.)
+If not,
+.Nm
+will initialize the boot code as well as the partition table.
+During this, all four partitions will be marked empty.
+.Pp
 If the 
 .Fl u
 flag is used, it displays each partition and asks if you want to edit it.
@@ -150,20 +159,9 @@ write anything to the disk.
 .Pp
 The
 .Fl i
-initializes the partition table.  This initialization is done
-before any work is done for the
-.Fl a
-or
-.Fl u
-flags.
-The
-.Fl i
-flag instructs
-.Nm
-to start by making the first 3 partitions empty, setting the last partition
-to use the whole disk for 
-.Nx ,
-and marking the last partition active.
+explicitly requests initialization of the master boot code,
+even if the magic number in the first sector is ok.
+The partition table is left alone by this (but see above).
 .Pp
 The flags
 .Fl 0 ,
@@ -184,10 +182,8 @@ The
 .Fl b
 flag allows the user to specify the BIOS parameters for
 cylinders, heads and sectors.  It is used only in conjunction with the
-.Fl i 
-and 
 .Fl u
-flags.
+flag.
 .Pp
 The
 .Fl f

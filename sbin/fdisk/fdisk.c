@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.27 1998/08/10 18:46:29 rvb Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.28 1998/09/28 15:44:18 ws Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.27 1998/08/10 18:46:29 rvb Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.28 1998/09/28 15:44:18 ws Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,10 +82,12 @@ int dos_cylindersectors;
 
 #define DOSSECT(s,c)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 #define DOSCYL(c)	((c) & 0xff)
+
+#define	MAXCYL	1024
 int partition = -1;
 
 int a_flag;		/* set active partition */
-int i_flag;		/* replace partition data */
+int i_flag;		/* init bootcode */
 int u_flag;		/* update partition data */
 int sh_flag;		/* Output data as shell defines */
 int f_flag;		/* force --not interactive */
@@ -249,7 +251,7 @@ struct part_type {
 void	usage __P((void));
 void	print_s0 __P((int));
 void	print_part __P((int));
-void	init_sector0 __P((int));
+void	init_sector0 __P((int, int));
 void	intuit_translated_geometry __P((void));
 int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
 		       quad_t));
@@ -339,6 +341,8 @@ main(argc, argv)
 					       argv[0]);
 				exit (1);
 			}
+			if (b_cyl > MAXCYL)
+				b_cyl = MAXCYL;
 			break;
 		default:
 			usage();
@@ -362,7 +366,7 @@ main(argc, argv)
 		exit(1);
 
 	if (read_s0())
-		init_sector0(sectors > 63 ? 63 : sectors);
+		init_sector0(sectors > 63 ? 63 : sectors, 1);
 
 	intuit_translated_geometry();
 
@@ -374,7 +378,7 @@ main(argc, argv)
 		get_params_to_use();
 
 	if (i_flag)
-		init_sector0(dos_sectors > 63 ? 63 : dos_sectors);
+		init_sector0(dos_sectors > 63 ? 63 : dos_sectors, 0);
 
 	if (!sh_flag && !f_flag)
 		printf("Warning: BIOS sector numbering starts with sector 1\n");
@@ -529,33 +533,18 @@ print_part(part)
 }
 
 void
-init_sector0(start)
-	int start;
+init_sector0(start, dopart)
+	int start, dopart;
 {
 	int i;
-	struct dos_partition *partp;
-
-	int dos_disksectors = dos_cylinders * dos_heads * dos_sectors;
 
 	memcpy(mboot.bootinst, bootcode, sizeof(bootcode));
 	putshort(&mboot.signature, BOOT_MAGIC);
 	
-	for (i=0; i<3; i++) 
-		memset (&mboot.parts[i], 0, sizeof(struct dos_partition));
+	if (dopart)
+		for (i=0; i<3; i++) 
+			memset (&mboot.parts[i], 0, sizeof(struct dos_partition));
 
-	partp = &mboot.parts[3];
-	partp->dp_typ = DOSPTYP_NETBSD;
-	partp->dp_flag = ACTIVE;
-	putlong(&partp->dp_start, start);
-	putlong(&partp->dp_size, dos_disksectors - start);
-
-	dos(getlong(&partp->dp_start),
-	    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
-	dos(getlong(&partp->dp_start) + getlong(&partp->dp_size) - 1,
-	    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
-
-	if (!sh_flag)
-		printf ("DOS partition table initialized.\n");
 }
 
 /* Prerequisite: the disklabel parameters and master boot record must
@@ -678,6 +667,9 @@ change_part(part, csysid, cstart, csize)
 
 	if (s_flag) {
 		partp->dp_typ = csysid;
+#if 0
+		checkcyl(cstart / dos_cylindersectors);
+#endif
 		putlong(&partp->dp_start, cstart);
 		putlong(&partp->dp_size, csize);
 		dos(getlong(&partp->dp_start),
@@ -716,6 +708,9 @@ change_part(part, csysid, cstart, csize)
 			thead = partp->dp_shd;
 			tsector = DPSECT(partp->dp_ssect);
 			decimal("beginning cylinder", &tcylinder);
+#if 0
+			checkcyl(tcylinder);
+#endif
 			decimal("beginning head", &thead);
 			decimal("beginning sector", &tsector);
 			partp->dp_scyl = DOSCYL(tcylinder);
@@ -732,6 +727,10 @@ change_part(part, csysid, cstart, csize)
 			partp->dp_ehd = thead;
 			partp->dp_esect = DOSSECT(tsector, tcylinder);
 		} else {
+
+#if 0
+			checkcyl(getlong(&partp->dp_start) / dos_cylindersectors);
+#endif
 			dos(getlong(&partp->dp_start),
 			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
 			dos(getlong(&partp->dp_start)
@@ -759,7 +758,7 @@ print_params()
 	printf("parameters extracted from in-core disklabel are:\n");
 	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
 	    cylinders, heads, sectors, cylindersectors);
-	if (dos_sectors > 63 || dos_cylinders > 1023 || dos_heads > 255)
+	if (dos_sectors > 63 || dos_heads > 255)
 		printf("Figures below won't work with BIOS for partitions not in cylinder 1\n");
 	printf("parameters to be used for BIOS calculations are:\n");
 	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
@@ -835,17 +834,28 @@ dos(sector, cylinderp, headp, sectorp)
 	int cylinder, head;
 
 	cylinder = sector / dos_cylindersectors;
+
 	sector -= cylinder * dos_cylindersectors;
 
 	head = sector / dos_sectors;
 	sector -= head * dos_sectors;
 
-	if (cylinder > 1023)
- 		cylinder = 1023;
+	if (cylinder >= MAXCYL)
+		cylinder = MAXCYL - 1;
 	*cylinderp = DOSCYL(cylinder);
 	*headp = head;
 	*sectorp = DOSSECT(sector + 1, cylinder);
 }
+
+#if 0
+void
+checkcyl(cyl)
+	int cyl;
+{
+	if (cyl >= MAXCYL)
+		warnx("partition start beyond BIOS limit");
+}
+#endif
 
 int fd;
 
@@ -930,7 +940,6 @@ read_s0()
 	}
 	if (getshort(&mboot.signature) != BOOT_MAGIC) {
 		warnx("invalid fdisk partition table found");
-		/* So should we initialize things? */
 		return (-1);
 	}
 	return (0);
