@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.24 2004/04/21 07:05:07 simonb Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.25 2004/04/25 06:23:40 matt Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.24 2004/04/21 07:05:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.25 2004/04/25 06:23:40 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.24 2004/04/21 07:05:07 simonb Exp
  * Support gets added as things turn up....
  */
 
-static struct speedtab sptab[] = {
+static const struct speedtab sptab[] = {
 	{ 0, 0 },
 	{ 50, 1 },
 	{ 75, 2 },
@@ -87,7 +87,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = { 
+static const u_long s2btab[] = { 
 	0,
 	50,
 	75,
