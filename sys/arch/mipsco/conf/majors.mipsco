@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.mipsco,v 1.10 2003/10/25 17:50:30 jdolecek Exp $
 #
 # Device majors for mipsco
 #
@@ -35,6 +35,7 @@ device-major	uk		char 54			uk
 device-major	cd		char 55  block 16	cd
 device-major	ss		char 56			ss
 device-major	ch		char 57			ch
+device-major	ses		char 58			ses
 
 device-major	scsibus		char 73			scsibus
 device-major	raid		char 74  block 32	raid
