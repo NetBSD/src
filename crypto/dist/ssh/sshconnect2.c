@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.25 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.26 2005/03/17 20:40:42 kleink Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,9 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect2.c,v 1.138 2004/06/13 12:53:24 djm Exp $");
-__RCSID("$NetBSD: sshconnect2.c,v 1.25 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.26 2005/03/17 20:40:42 kleink Exp $");
+
+#include <sys/queue.h>
 
 #ifdef KRB5
 #include <krb5.h>
