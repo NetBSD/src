@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.122.2.1 2004/08/11 19:55:46 jmc Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.122.2.2 2004/08/15 13:59:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122.2.1 2004/08/11 19:55:46 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122.2.2 2004/08/15 13:59:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,9 +282,9 @@ linux_sys_brk(l, v, retval)
 	SCARG(&oba, nsize) = nbrk;
 
 	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(l, &oba, retval) == 0)
-		ed->p_break = (char*)nbrk;
+		ed->s->p_break = (char*)nbrk;
 	else 
-		nbrk = ed->p_break;
+		nbrk = ed->s->p_break;
 
 	retval[0] = (register_t)nbrk;
 
