@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/02/07 05:47:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2004/02/08 21:57:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -42,12 +42,14 @@ STRINGS_FILES=	StringDefs.c StringDefs.h Shell.h
 STRINGS_TMPLS=	util/StrDefs.ct util/StrDefs.ht util/Shell.ht
 STRINGS_LIST=	util/string.list
 
-${STRINGS_FILES}: ${MAKESTRS} ${STRINGS_LIST} ${STRINGS_TMPLS}
-	${_MKTARGET_CREATE}
+${STRINGS_FILES}: strings_files.stamp
+strings_files.stamp: ${MAKESTRS} ${STRINGS_LIST} ${STRINGS_TMPLS}
+	${_MKMSG_CREATE} ${STRINGS_FILES}
 	rm -f ${.TARGET} util
 	ln -s ${X11SRCDIR.xc}/lib/${LIB}/util util
 	${MAKESTRS} < ${STRINGS_LIST} > StringDefs.c
-CLEANFILES+=	${STRINGS_FILES} util
+	touch ${.TARGET}
+CLEANFILES+=	${STRINGS_FILES} util strings_files.stamp
 DPSRCS+=	${STRINGS_FILES}
 
 .include <bsd.x11.mk>
