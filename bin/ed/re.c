@@ -27,23 +27,15 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)re.c	5.5 (Talke Studio) 3/28/93"; */
-static char rcsid[] = "$Id: re.c,v 1.12 1993/11/23 04:41:55 alm Exp $";
+static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #endif /* not lint */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "ed.h"
 
-extern char *lhbuf;
-extern int lhbufsz;
-extern char *ibufp;
-extern int ibufsz;
+
 extern int patlock;
 
-char errmsg[MAXFNAME + 40] = "";
+char errmsg[MAXPATHLEN + 40] = "";
 
 /* get_compiled_pattern: return pointer to compiled pattern from command 
    buffer */
@@ -82,14 +74,15 @@ get_compiled_pattern()
 }
 
 
-extern int isbinary;
-
 /* extract_pattern: copy a pattern string from the command buffer; return
    pointer to the copy */
 char *
 extract_pattern(delimiter)
 	int delimiter;
 {
+	static char *lhbuf = NULL;	/* buffer */
+	static int lhbufsz = 0;		/* buffer size */
+
 	char *nd;
 	int len;
 
@@ -111,7 +104,7 @@ extract_pattern(delimiter)
 			break;
 		}
 	len = nd - ibufp;
-	CKBUF(lhbuf, lhbufsz, len + 1, NULL);
+	REALLOC(lhbuf, lhbufsz, len + 1, NULL);
 	memcpy(lhbuf, ibufp, len);
 	lhbuf[len] = '\0';
 	ibufp = nd;

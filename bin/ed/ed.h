@@ -24,19 +24,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ed.h	5.5 (Talke Studio) 3/28/93
+ *	@(#)ed.h,v 1.5 1994/02/01 00:34:39 alm Exp
  */
 
-#include <unistd.h>
-#include <errno.h>
-#if defined(BSD) && BSD >= 199103 || defined(__NetBSD__)
+#include <sys/types.h>
+#if defined(BSD) && BSD >= 199103 || defined(__386BSD__)
 # include <sys/param.h>		/* for MAXPATHLEN */
+#endif
+#include <errno.h>
+#if defined(sun) || defined(__NetBSD__)
+# include <limits.h>
 #endif
 #include <regex.h>
 #include <signal.h>
-#ifdef sun
-# include <limits.h>
-#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define ERR		(-2)
 #define EMOD		(-3)
@@ -46,7 +50,6 @@
 # define MAXPATHLEN 255		/* _POSIX_PATH_MAX */
 #endif
 
-#define MAXFNAME MAXPATHLEN	/* max file name size */
 #define MINBUFSZ 512		/* minimum buffer size - must be > 0 */
 #define SE_MAX 30		/* max subexpressions in a regular expression */
 #ifdef INT_MAX
@@ -55,12 +58,19 @@
 # define LINECHARS MAXINT	/* max chars per line */
 #endif
 
+/* gflags */
+#define GLB 001		/* global command */
+#define GPR 002		/* print after command */
+#define GLS 004		/* list after command */
+#define GNP 010		/* enumerate after command */
+#define GSG 020		/* global substitute */
+
 typedef regex_t pattern_t;
 
 /* Line node */
 typedef struct	line {
-	struct line	*next;
-	struct line	*prev;
+	struct line	*q_forw;
+	struct line	*q_back;
 	off_t		seek;		/* address of line in scratch buffer */
 	int		len;		/* length of line */
 } line_t;
@@ -86,10 +96,8 @@ typedef struct undo {
 # define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-#define INC_MOD(l, k)	((l)+1 > (k) ? 0 : (l)+1)
-#define DEC_MOD(l, k)	((l)-1 < 0 ? (k) : (l)-1)
-
-#define	SKIPBLANKS() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
+#define INC_MOD(l, k)	((l) + 1 > (k) ? 0 : (l) + 1)
+#define DEC_MOD(l, k)	((l) - 1 < 0 ? (k) : (l) - 1)
 
 /* SPL1: disable some interrupts (requires reliable signals) */
 #define SPL1() mutex++
@@ -97,13 +105,23 @@ typedef struct undo {
 /* SPL0: enable all interrupts; check sigflags (requires reliable signals) */
 #define SPL0() \
 if (--mutex == 0) { \
-	if (sigflags & (1 << SIGHUP)) handle_hup(SIGHUP); \
-	if (sigflags & (1 << SIGINT)) handle_int(SIGINT); \
+	if (sigflags & (1 << (SIGHUP - 1))) handle_hup(SIGHUP); \
+	if (sigflags & (1 << (SIGINT - 1))) handle_int(SIGINT); \
+}
+
+/* STRTOL: convert a string to long */
+#define STRTOL(i, p) { \
+	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
+	    errno == ERANGE) { \
+		sprintf(errmsg, "number out of range"); \
+	    	i = 0; \
+		return ERR; \
+	} \
 }
 
 #if defined(sun) || defined(NO_REALLOC_NULL)
-/* CKBUF: assure at least a minimum size for buffer b */
-#define CKBUF(b,n,i,err) \
+/* REALLOC: assure at least a minimum size for buffer b */
+#define REALLOC(b,n,i,err) \
 if ((i) > (n)) { \
 	int ti = (n); \
 	char *ts; \
@@ -128,8 +146,8 @@ if ((i) > (n)) { \
 	SPL0(); \
 }
 #else /* NO_REALLOC_NULL */
-/* CKBUF: assure at least a minimum size for buffer b */
-#define CKBUF(b,n,i,err) \
+/* REALLOC: assure at least a minimum size for buffer b */
+#define REALLOC(b,n,i,err) \
 if ((i) > (n)) { \
 	int ti = (n); \
 	char *ts; \
@@ -146,18 +164,20 @@ if ((i) > (n)) { \
 }
 #endif /* NO_REALLOC_NULL */
 
-/* requeue: link pred before succ */
-#define requeue(pred, succ) (pred)->next = (succ), (succ)->prev = (pred)
+/* REQUE: link pred before succ */
+#define REQUE(pred, succ) (pred)->q_forw = (succ), (succ)->q_back = (pred)
 
-/* insqueue: insert elem in circular queue after pred */
-#define insqueue(elem, pred) \
+#ifdef NEED_INSQUE
+/* insque: insert elem in circular queue after pred */
+#define insque(elem, pred) \
 { \
-	requeue((elem), (pred)->next); \
-	requeue((pred), elem); \
+	REQUE((elem), (pred)->q_forw); \
+	REQUE((pred), elem); \
 }
 
-/* remqueue: remove_lines elem from circular queue */
-#define remqueue(elem) requeue((elem)->prev, (elem)->next);
+/* remque: remove_lines elem from circular queue */
+#define remque(elem) REQUE((elem)->q_back, (elem)->q_forw);
+#endif /* NEED_INSQUE */
 
 /* NUL_TO_NEWLINE: overwrite ASCII NULs with newlines */
 #define NUL_TO_NEWLINE(s, l) translit_text(s, l, '\0', '\n')
@@ -165,7 +185,7 @@ if ((i) > (n)) { \
 /* NEWLINE_TO_NUL: overwrite newlines with ASCII NULs */
 #define NEWLINE_TO_NUL(s, l) translit_text(s, l, '\n', '\0')
 
-#ifndef strerror
+#ifdef sun
 # define strerror(n) sys_errlist[n]
 #endif
 
@@ -198,22 +218,23 @@ long exec_global __P((int, int));
 void expand_des_key __P((char *, char *));
 int extract_addr_range __P((void));
 char *extract_pattern __P((int));
-int extract_subst_tail __P((void));
+int extract_subst_tail __P((int *, int *));
 char *extract_subst_template __P((void));
+int filter_lines __P((long, long, char *));
 int flush_des_file __P((FILE *));
 line_t *get_addressed_line_node __P((long));
-int get_des_char __P((FILE *));
 pattern_t *get_compiled_pattern __P((void));
+int get_des_char __P((FILE *));
 char *get_extended_line __P((int *, int));
-int get_file_line __P((FILE *));
 char *get_filename __P((void));
-int get_input_line __P((void));
 int get_keyword __P((void));
 long get_line_node_addr __P((line_t *));
 long get_matching_node_addr __P((pattern_t *, int));
 long get_marked_node_addr __P((int));
 char *get_sbuf_line __P((line_t *));
 int get_shell_command __P((void));
+int get_stream_line __P((FILE *));
+int get_tty_line __P((void));
 void handle_hup __P((int));
 void handle_int __P((int));
 void handle_winch __P((int));
@@ -228,25 +249,49 @@ int move_lines __P((long));
 line_t *next_active_node __P(());
 long next_addr __P((void));
 int open_sbuf __P((void));
-void output_line __P((char *, int, long, int));
 char *parse_char_class __P((char *));
 int pop_undo_stack __P((void));
 undo_t *push_undo_stack __P((int, long, long));
 int put_des_char __P((int, FILE *));
 char *put_sbuf_line __P((char *));
+int put_stream_line __P((FILE *, char *, int));
+int put_tty_line __P((char *, int, long, int));
 void quit __P((int));
-long read_file __P((long, char *));
-int search_and_replace __P((pattern_t *, int));
+long read_file __P((char *, long));
+long read_stream __P((FILE *, long));
+int search_and_replace __P((pattern_t *, int, int));
 int set_active_node __P((line_t *));
 void set_des_key __P((char *));
 void signal_hup __P((int));
 void signal_int __P((int));
 char *strip_escapes __P((char *));
-int substitute_matching_text __P((pattern_t *, line_t *, int));
+int substitute_matching_text __P((pattern_t *, line_t *, int, int));
 char *translit_text __P((char *, int, int, int));
 void unmark_line_node __P((line_t *));
 void unset_active_nodes __P((line_t *, line_t *));
-long write_file __P((long, long, char *, char *));
+long write_file __P((char *, char *, long, long));
+long write_stream __P((FILE *, long, long));
 
+/* global buffers */
+extern char stdinbuf[];
+extern char *ibuf;
+extern char *ibufp;
+extern int ibufsz;
+
+/* global flags */
+extern int isbinary;
+extern int isglobal;
+extern int modified;
 extern int mutex;
 extern int sigflags;
+
+/* global vars */
+extern long addr_last;
+extern long current_addr;
+extern char errmsg[];
+extern long first_addr;
+extern int lineno;
+extern long second_addr;
+#ifdef sun
+extern char *sys_errlist[];
+#endif
