@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.77 2003/08/07 16:31:45 agc Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.78 2003/09/19 22:51:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.77 2003/08/07 16:31:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.78 2003/09/19 22:51:05 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -297,25 +297,34 @@ ktrgenio(p, fd, rw, iov, len, error)
 }
 
 void
-ktrpsig(p, sig, action, mask, code)
+ktrpsig(p, sig, action, mask, ksi)
 	struct proc *p;
 	int sig;
 	sig_t action;
 	sigset_t *mask;
-	int code;
+	ksiginfo_t *ksi;
 {
 	struct ktr_header kth;
-	struct ktr_psig	kp;
+	struct {
+		struct ktr_psig	kp;
+		siginfo_t	si;
+	} kbuf;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_PSIG);
-	kp.signo = (char)sig;
-	kp.action = action;
-	kp.mask = *mask;
-	kp.code = code;
-	kth.ktr_buf = (caddr_t)&kp;
-	kth.ktr_len = sizeof(struct ktr_psig);
-
+	kbuf.kp.signo = (char)sig;
+	kbuf.kp.action = action;
+	kbuf.kp.mask = *mask;
+	kth.ktr_buf = (caddr_t)&kbuf;
+	if (ksi) {
+		kbuf.kp.code = ksi->ksi_code > 0 ? ksi->ksi_trap : 0;
+		(void)memset(&kbuf.si, 0, sizeof(kbuf.si));
+		kbuf.si._info = *ksi;
+		kth.ktr_len = sizeof(kbuf);
+	} else {
+		kbuf.kp.code = 0;
+		kth.ktr_len = sizeof(struct ktr_psig);
+	}
 	(void) ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }

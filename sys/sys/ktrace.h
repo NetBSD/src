@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.32 2003/08/07 16:34:06 agc Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.33 2003/09/19 22:50:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -120,6 +120,9 @@ struct ktr_psig {
 	sig_t	action;
 	sigset_t mask;
 	int	code;
+	/*
+	 * followed by optional siginfo_t
+	 */
 };
 
 /*
@@ -214,7 +217,7 @@ void ktrcsw(struct proc *, int, int);
 void ktremul(struct proc *);
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
 void ktrnamei(struct proc *, char *);
-void ktrpsig(struct proc *, int, sig_t, sigset_t *, int);
+void ktrpsig(struct proc *, int, sig_t, sigset_t *, ksiginfo_t *);
 void ktrsyscall(struct proc *, register_t, register_t, 
     const struct sysent *, register_t []);
 void ktrsysret(struct proc *, register_t, int, register_t *);
