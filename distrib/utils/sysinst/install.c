@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.35 2003/06/25 15:45:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,8 +58,6 @@ do_install(void)
 	
 	get_ramsize();
 
-	process_menu(MENU_distset, NULL);
-
 	if (find_disks() < 0)
 		return;
 
@@ -69,9 +67,12 @@ do_install(void)
 		if (check_swap(diskdev, 1) < 0) {
 			msg_display(MSG_swapdelfailed);
 			process_menu(MENU_ok, NULL);
-			return;
+			if (!debug)
+				return;
 		}
 	}
+
+	process_menu(MENU_distset, NULL);
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
