@@ -38,16 +38,18 @@
  */
 
 #ifdef RPC_HDR
+%#include <sys/param.h>
 %#include <rpc/types.h>
 %#include <sys/time.h>
 %#include <sys/errno.h>
+%#include <sys/ucred.h>
 %#include <nfs/nfsv2.h>
 %#include <nfs/nfs.h>
 #else
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: bootparam_prot.x,v 1.1 1993/10/08 05:26:47 cgd Exp $";
+%static char rcsid[] = "$Id: bootparam_prot.x,v 1.2 1994/06/13 00:19:12 cgd Exp $";
 %#endif /* not lint */
 #endif
 
