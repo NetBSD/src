@@ -103,6 +103,10 @@ device ie: ether, ifnet
 attach ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 
+device es: ether, ifnet
+attach es at mainbus
+file  arch/arm32/mainbus/if_es.c              es
+
 # IIC/RTC files
 device iic { addr = -1 }
 attach iic at mainbus
