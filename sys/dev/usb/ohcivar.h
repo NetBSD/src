@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.12 1999/10/12 11:21:26 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.13 1999/10/13 08:10:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,12 +102,3 @@ int		ohci_detach __P((ohci_softc_t *, int));
 int		ohci_activate __P((device_ptr_t, enum devact));
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
-
-#ifdef USB_DEBUG
-#define DPRINTF(x)	if (ohcidebug) printf x
-#define DPRINTFN(n,x)	if (ohcidebug>(n)) printf x
-extern int ohcidebug;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif

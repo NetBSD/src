@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.45 1999/10/12 11:54:56 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.46 1999/10/13 08:10:57 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -410,15 +410,13 @@ ukbd_activate(self, act)
 	return (rv);
 }
 
-int
-ukbd_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(ukbd)
 {
-	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	USB_DETACH_START(ukbd, sc);
 	int rv = 0;
 
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
+
 	if (sc->sc_console_keyboard) {
 		/*
 		 * XXX Should probably disconnect our consops,

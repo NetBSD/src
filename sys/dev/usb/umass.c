@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.20 1999/09/30 23:13:41 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.21 1999/10/13 08:10:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -401,12 +401,9 @@ umass_activate(self, act)
 	return (rv);
 }
 
-int
-umass_detach(self, flags)
-	struct device *self;
-	int flags;
+USB_DETACH(umass)
 {
-	struct umass_softc *sc = (struct umass_softc *) self;
+	USB_DETACH_START(umass, sc);
 	int s, rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_detach: flags 0x%x\n",
