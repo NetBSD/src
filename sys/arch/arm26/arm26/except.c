@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.19 2000/12/16 16:45:11 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.20 2000/12/23 15:12:54 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,13 +32,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.19 2000/12/16 16:45:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.20 2000/12/23 15:12:54 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_syscall_debug.h"
 
+#include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -71,7 +72,7 @@ static vm_prot_t data_abort_atype(struct trapframe *);
 static void printregs(struct trapframe *tf);
 #endif
 #ifdef DIAGNOSTIC
-void checkvectors();
+void checkvectors(void);
 #endif
 
 int want_resched;
@@ -386,7 +387,13 @@ prefetch_abort_handler(struct trapframe *tf)
 
 	if (pmap_fault(p->p_vmspace->vm_map.pmap, pc, VM_PROT_EXECUTE))
 		goto out;
-	ret = uvm_fault(&p->p_vmspace->vm_map, pc, 0, VM_PROT_EXECUTE);
+	for (;;) {
+		ret = uvm_fault(&p->p_vmspace->vm_map, pc, 0, VM_PROT_EXECUTE);
+		if (ret != KERN_RESOURCE_SHORTAGE)
+			break;
+		log(LOG_WARNING, "pid %d: VM shortage, sleeping\n", p->p_pid);
+		tsleep(&lbolt, PVM, "abtretry", 0);
+	}
 
 	if (ret != KERN_SUCCESS) {
 #ifdef DEBUG
@@ -442,7 +449,13 @@ data_abort_handler(struct trapframe *tf)
 	map = va >= VM_MIN_KERNEL_ADDRESS ? kernel_map : &p->p_vmspace->vm_map;
 	if (pmap_fault(map->pmap, va, atype))
 		goto out;
-	ret = uvm_fault(map, va, 0, atype);
+	for (;;) {
+		ret = uvm_fault(map, va, 0, atype);
+		if (ret != KERN_RESOURCE_SHORTAGE)
+			break;
+		log(LOG_WARNING, "pid %d: VM shortage, sleeping\n", p->p_pid);
+		tsleep(&lbolt, PVM, "abtretry", 0);
+	}
 
 	if (ret != KERN_SUCCESS) {
 #ifdef DEBUG
