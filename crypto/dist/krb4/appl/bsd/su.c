@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID ("$Id: su.c,v 1.1.1.2 2000/12/29 01:42:23 assar Exp $");
+RCSID ("$Id: su.c,v 1.2 2001/01/11 03:01:28 lukem Exp $");
 
 #ifdef SYSV_SHADOW
 #include "sysv_shadow.h"
@@ -126,7 +126,7 @@ main (int argc, char **argv)
     if (errno)
 	prio = 0;
     setpriority (PRIO_PROCESS, 0, -2);
-    openlog ("su", LOG_CONS, LOG_AUTH);
+    openlog ("su", 0, LOG_AUTH);
 
     /* get current login name and shell */
     ruid = getuid ();

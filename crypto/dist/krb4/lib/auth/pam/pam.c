@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include<config.h>
-RCSID("$Id: pam.c,v 1.1.1.2 2000/12/29 01:43:54 assar Exp $");
+RCSID("$Id: pam.c,v 1.2 2001/01/11 03:00:31 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -64,7 +64,7 @@ psyslog(int level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);
-  openlog("pam_krb4", LOG_CONS|LOG_PID, LOG_AUTH);
+  openlog("pam_krb4", LOG_PID, LOG_AUTH);
   vsyslog(level, format, args);
   va_end(args);
   closelog();
@@ -128,7 +128,7 @@ pdeb(const char *format, ...)
   if (ctrl_off(KRB4_DEBUG))
     return;
   va_start(args, format);
-  openlog("pam_krb4", LOG_CONS|LOG_PID, LOG_AUTH);
+  openlog("pam_krb4", LOG_PID, LOG_AUTH);
   vsyslog(LOG_DEBUG, format, args);
   va_end(args);
   closelog();

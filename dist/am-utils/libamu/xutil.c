@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.3 2000/11/21 01:35:37 wiz Exp $	*/
+/*	$NetBSD: xutil.c,v 1.4 2001/01/11 02:58:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -811,9 +811,6 @@ switch_to_logfile(char *logfile, int old_umask)
       new_logfp = stderr;
       openlog(am_get_progname(),
 	      LOG_PID
-# ifdef LOG_CONS
-	      | LOG_CONS
-# endif /* LOG_CONS */
 # ifdef LOG_NOWAIT
 	      | LOG_NOWAIT
 # endif /* LOG_NOWAIT */
