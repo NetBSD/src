@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.2 1996/10/05 23:41:54 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.3 1996/12/20 08:40:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -53,9 +53,8 @@ struct packet_filter_hook {
 
 #define PFIL_IN		0x00000001
 #define PFIL_OUT	0x00000002
-#define PFIL_BAD	0x00000004
 #define PFIL_WAITOK	0x00000008
-#define PFIL_ALL	(PFIL_IN|PFIL_OUT|PFIL_BAD)
+#define PFIL_ALL	(PFIL_IN|PFIL_OUT)
 
 struct packet_filter_hook *pfil_hook_get __P((int));
 void	pfil_add_hook __P((int (*func) __P((void *, int,
