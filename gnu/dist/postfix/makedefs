@@ -170,6 +170,10 @@ case "$SYSTEM.$RELEASE" in
 			;;
 		*)	echo "Unknown AIX version: `uname -v`." 1>&2; exit 1;;
 		esac;;
+		# Tested with RedHat 3.03 on 20020729.
+    Linux.1*)	SYSTYPE=LINUX1
+		SYSLIBS="-ldb"
+		;;
     Linux.2*)	SYSTYPE=LINUX2
 		# Postfix no longer needs DB 1.85 compatibility
 		if [ -f /usr/include/db.h ]
@@ -187,6 +191,10 @@ case "$SYSTEM.$RELEASE" in
 		    echo "See the RELEASE_NOTES file for more information." 1>&2
 		    exit 1
 		fi
+		if [ -f /usr/include/pcre/pcre.h ]
+		then
+		    CCARGS="$CCARGS -DHAS_PCRE -I/usr/include/pcre"
+		fi
 		# GDBM locks the DBM .pag file after open. This breaks postmap.
 		# if [ -f /usr/include/gdbm-ndbm.h ]
 		# then
@@ -198,7 +206,7 @@ case "$SYSTEM.$RELEASE" in
 		#     GDBM_LIBS=gdbm
 		# fi
 		SYSLIBS="-ldb"
-		for name in nsl resolv $GDBM_LIBS
+		for name in nsl resolv pcre $GDBM_LIBS
 		do
 		    test -e /usr/lib/lib$name.a -o -e /usr/lib/lib$name.so \
 			-o -e /lib/lib$name.a -o -e /lib/lib$name.so \
@@ -309,5 +317,5 @@ OPT	= $OPT
 DEBUG	= $DEBUG
 AWK	= $AWK
 STRCASE = $STRCASE
-EXPORT	= AUXLIBS="$AUXLIBS" CCARGS="$CCARGS" OPT="$OPT" DEBUG="$DEBUG"
+EXPORT	= AUXLIBS='$AUXLIBS' CCARGS='$CCARGS' OPT='$OPT' DEBUG='$DEBUG'
 EOF

@@ -34,11 +34,11 @@
 /*	RFC 1123 (Host requirements)
 /*	RFC 1652 (8bit-MIME transport)
 /*	RFC 1869 (SMTP service extensions)
-/*	RFC 1854 (SMTP Pipelining)
 /*	RFC 1870 (Message Size Declaration)
 /*	RFC 1985 (ETRN command)
 /*	RFC 2554 (AUTH command)
 /*	RFC 2821 (SMTP protocol)
+/*	RFC 2920 (SMTP Pipelining)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
@@ -102,9 +102,9 @@
 /* .fi
 /* .IP \fBalways_bcc\fR
 /*	Address to send a copy of each message that enters the system.
-/* .IP \fBcommand_directory\fR
-/*	Location of Postfix support commands (default:
-/*	\fB$program_directory\fR).
+/* .IP \fBauthorized_verp_clients\fR
+/*	Hostnames, domain names and/or addresses of clients that are
+/*	authorized to use the XVERP extension.
 /* .IP \fBdebug_peer_level\fR
 /*	Increment in verbose logging level when a remote host matches a
 /*	pattern in the \fBdebug_peer_list\fR parameter.
@@ -119,10 +119,6 @@
 /*	Recipient of protocol/policy/resource/software error notices.
 /* .IP \fBhopcount_limit\fR
 /*	Limit the number of \fBReceived:\fR message headers.
-/* .IP \fBlocal_recipient_maps\fR
-/*	List of maps with user names that are local to \fB$myorigin\fR
-/*	or \fB$inet_interfaces\fR. If this parameter is defined,
-/*	then the SMTP server rejects mail for unknown local users.
 /* .IP \fBnotify_classes\fR
 /*	List of error classes. Of special interest are:
 /* .RS
@@ -136,6 +132,9 @@
 /* .RE
 /* .IP \fBsmtpd_banner\fR
 /*	Text that follows the \fB220\fR status code in the SMTP greeting banner.
+/* .IP \fBsmtpd_expansion_filter\fR
+/*	Controls what characters are allowed in $name expansion of
+/*	rbl template responses and other text.
 /* .IP \fBsmtpd_recipient_limit\fR
 /*	Restrict the number of recipients that the SMTP server accepts
 /*	per message delivery.
@@ -147,6 +146,30 @@
 /*	This can be useful for testing purposes.
 /* .IP \fBverp_delimiter_filter\fR
 /*	The characters that Postfix accepts as VERP delimiter characters.
+/* .SH "Known versus unknown recipients"
+/* .ad
+/* .fi
+/* .IP \fBshow_user_unknown_table_name\fR
+/*	Whether or not to reveal the table name in the "User unknown"
+/*	responses. The extra detail makes trouble shooting easier
+/*	but also reveals information that is nobody elses business.
+/* .IP \fBunknown_local_recipient_reject_code\fR
+/*	The response code when a client specifies a recipient whose domain
+/*	matches \fB$mydestination\fR or \fB$inet_interfaces\fR, while
+/*	\fB$local_recipient_maps\fR is non-empty and does not list
+/*	the recipient address or address local-part.
+/* .IP \fBunknown_relay_recipient_reject_code\fR
+/*	The response code when a client specifies a recipient whose domain
+/*	matches \fB$relay_domains\fR, while \fB$relay_recipient_maps\fR
+/*	is non-empty and does not list the recipient address.
+/* .IP \fBunknown_virtual_alias_reject_code\fR
+/*	The response code when a client specifies a recipient whose domain
+/*	matches \fB$virtual_alias_domains\fR, while the recipient is not
+/*	listed in \fB$virtual_alias_maps\fR.
+/* .IP \fBunknown_virtual_mailbox_reject_code\fR
+/*	The response code when a client specifies a recipient whose domain
+/*	matches \fB$virtual_mailbox_domains\fR, while the recipient is not
+/*	listed in \fB$virtual_mailbox_maps\fR.
 /* .SH "Resource controls"
 /* .ad
 /* .fi
@@ -199,6 +222,9 @@
 /* .IP \fBsmtpd_etrn_restrictions\fR
 /*	Restrict what domain names can be used in \fBETRN\fR commands,
 /*	and what clients may issue \fBETRN\fR commands.
+/* .IP \fBsmtpd_data_restrictions\fR
+/*	Restrictions on the \fBDATA\fR command. Currently, the only restriction
+/*	that makes sense here is \fBreject_unauth_pipelining\fR.
 /* .IP \fBallow_untrusted_routing\fR
 /*	Allow untrusted clients to specify addresses with sender-specified
 /*	routing.  Enabling this opens up nasty relay loopholes involving
@@ -210,41 +236,56 @@
 /* .IP \fBsmtpd_null_access_lookup_key\fR
 /*	The lookup key to be used in SMTPD access tables instead of the
 /*	null sender address. A null sender address cannot be looked up.
-/* .IP \fBmaps_rbl_domains\fR
+/* .IP "\fBmaps_rbl_domains\fR (deprecated)"
 /*	List of DNS domains that publish the addresses of blacklisted
-/*	hosts.
+/*	hosts. This is used with the deprecated \fBreject_maps_rbl\fR
+/*	restriction.
 /* .IP \fBpermit_mx_backup_networks\fR
 /*	Only domains whose primary MX hosts match the listed networks
 /*	are eligible for the \fBpermit_mx_backup\fR feature.
 /* .IP \fBrelay_domains\fR
-/*	Restrict what domains or networks this mail system will relay
-/*	mail from or to.
+/*	Restrict what domains this mail system will relay
+/*	mail to. The domains are routed to the delivery agent
+/*	specified with the \fBrelay_transport\fR setting.
 /* .SH "UCE control responses"
 /* .ad
 /* .fi
 /* .IP \fBaccess_map_reject_code\fR
-/*	Server response when a client violates an access database restriction.
+/*	Response code when a client violates an access database restriction.
+/* .IP \fBdefault_rbl_reply\fR
+/*	Default template reply when a request is RBL blacklisted.
+/*	This template is used by the \fBreject_rbl_*\fR and
+/*	\fBreject_rhsbl_*\fR restrictions. See also:
+/*	\fBrbl_reply_maps\fR and \fBsmtpd_expansion_filter\fR.
+/* .IP \fBdefer_code\fR
+/*	Response code when a client request is rejected by the \fBdefer\fR
+/*	restriction.
 /* .IP \fBinvalid_hostname_reject_code\fR
-/*	Server response when a client violates the \fBreject_invalid_hostname\fR
+/*	Response code when a client violates the \fBreject_invalid_hostname\fR
 /*	restriction.
 /* .IP \fBmaps_rbl_reject_code\fR
-/*	Server response when a client violates the \fBmaps_rbl_domains\fR
-/*	restriction.
+/*	Response code when a request is RBL blacklisted.
+/* .IP \fBrbl_reply_maps\fR
+/*	Table with template responses for RBL blacklisted requests, indexed by
+/*	RBL domain name. These templates are used by the \fBreject_rbl_*\fR
+/*	and \fBreject_rhsbl_*\fR restrictions. See also:
+/*	\fBdefault_rbl_reply\fR and \fBsmtpd_expansion_filter\fR.
 /* .IP \fBreject_code\fR
 /*	Response code when the client matches a \fBreject\fR restriction.
 /* .IP \fBrelay_domains_reject_code\fR
-/*	Server response when a client attempts to violate the mail relay
+/*	Response code when a client attempts to violate the mail relay
 /*	policy.
 /* .IP \fBunknown_address_reject_code\fR
-/*	Server response when a client violates the \fBreject_unknown_address\fR
+/*	Response code when a client violates the \fBreject_unknown_address\fR
 /*	restriction.
 /* .IP \fBunknown_client_reject_code\fR
-/*	Server response when a client without address to name mapping
-/*	violates the \fBreject_unknown_clients\fR restriction.
+/*	Response code when a client without address to name mapping
+/*	violates the \fBreject_unknown_client\fR restriction.
 /* .IP \fBunknown_hostname_reject_code\fR
-/*	Server response when a client violates the \fBreject_unknown_hostname\fR
+/*	Response code when a client violates the \fBreject_unknown_hostname\fR
 /*	restriction.
 /* SEE ALSO
+/*	trivial-rewrite(8) address resolver
 /*	cleanup(8) message canonicalization
 /*	master(8) process manager
 /*	syslogd(8) system logging
@@ -312,6 +353,9 @@
 #include <tok822.h>
 #include <verp_sender.h>
 #include <string_list.h>
+#include <quote_822_local.h>
+#include <lex_822.h>
+#include <namadr_list.h>
 
 /* Single-threaded server skeleton. */
 
@@ -346,6 +390,7 @@ char   *var_helo_checks;
 char   *var_mail_checks;
 char   *var_rcpt_checks;
 char   *var_etrn_checks;
+char   *var_data_checks;
 int     var_unk_client_code;
 int     var_bad_name_code;
 int     var_unk_name_code;
@@ -354,8 +399,10 @@ int     var_relay_code;
 int     var_maps_rbl_code;
 int     var_access_map_code;
 char   *var_maps_rbl_domains;
+char   *var_rbl_reply_maps;
 int     var_helo_required;
 int     var_reject_code;
+int     var_defer_code;
 int     var_smtpd_err_sleep;
 int     var_non_fqdn_code;
 char   *var_always_bcc;
@@ -366,9 +413,8 @@ int     var_strict_rfc821_env;
 bool    var_disable_vrfy_cmd;
 char   *var_canonical_maps;
 char   *var_rcpt_canon_maps;
-char   *var_virtual_maps;
+char   *var_virt_alias_maps;
 char   *var_virt_mailbox_maps;
-char   *var_relocated_maps;
 char   *var_alias_maps;
 char   *var_local_rcpt_maps;
 bool    var_allow_untrust_route;
@@ -383,6 +429,15 @@ char   *var_smtpd_snd_auth_maps;
 char   *var_smtpd_noop_cmds;
 char   *var_smtpd_null_key;
 int     var_smtpd_hist_thrsh;
+char   *var_smtpd_exp_filter;
+char   *var_def_rbl_reply;
+char   *var_relay_rcpt_maps;
+int     var_local_rcpt_code;
+int     var_virt_alias_code;
+int     var_virt_mailbox_code;
+int     var_relay_rcpt_code;
+char   *var_verp_clients;
+int     var_show_unk_rcpt_table;
 
  /*
   * Silly little macros.
@@ -395,6 +450,8 @@ int     var_smtpd_hist_thrsh;
   */
 #define VERP_CMD	"XVERP"
 #define VERP_CMD_LEN	5
+
+static NAMADR_LIST *verp_clients;
 
  /*
   * Forward declarations.
@@ -428,8 +485,6 @@ static int helo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "501 Syntax: HELO hostname");
 	return (-1);
     }
-    if (state->helo_name != 0)
-	helo_reset(state);
     if (argc > 2)
 	collapse_args(argc - 1, argv + 1);
     if (SMTPD_STAND_ALONE(state) == 0
@@ -438,8 +493,14 @@ static int helo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
+    if (state->helo_name != 0)
+	helo_reset(state);
+    chat_reset(state, var_smtpd_hist_thrsh);
+    mail_reset(state);
+    rcpt_reset(state);
     state->helo_name = mystrdup(printable(argv[1].strval, '?'));
-    state->protocol = "SMTP";
+    if (strcmp(state->protocol, MAIL_PROTO_ESMTP) != 0)
+	state->protocol = MAIL_PROTO_SMTP;
     smtpd_chat_reply(state, "250 %s", var_myhostname);
     return (0);
 }
@@ -460,13 +521,6 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "501 Syntax: EHLO hostname");
 	return (-1);
     }
-    if (state->helo_name != 0)
-	helo_reset(state);
-#ifndef RFC821_SYNTAX
-    chat_reset(state, var_smtpd_hist_thrsh);
-    mail_reset(state);
-    rcpt_reset(state);
-#endif
     if (argc > 2)
 	collapse_args(argc - 1, argv + 1);
     if (SMTPD_STAND_ALONE(state) == 0
@@ -475,8 +529,13 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
+    if (state->helo_name != 0)
+	helo_reset(state);
+    chat_reset(state, var_smtpd_hist_thrsh);
+    mail_reset(state);
+    rcpt_reset(state);
     state->helo_name = mystrdup(printable(argv[1].strval, '?'));
-    state->protocol = "ESMTP";
+    state->protocol = MAIL_PROTO_ESMTP;
     smtpd_chat_reply(state, "250-%s", var_myhostname);
     smtpd_chat_reply(state, "250-PIPELINING");
     if (var_message_limit)
@@ -494,7 +553,8 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    smtpd_chat_reply(state, "250-AUTH=%s", state->sasl_mechanism_list);
     }
 #endif
-    smtpd_chat_reply(state, "250-%s", VERP_CMD);
+    if (namadr_list_match(verp_clients, state->name, state->addr))
+	smtpd_chat_reply(state, "250-%s", VERP_CMD);
     smtpd_chat_reply(state, "250 8BITMIME");
     return (0);
 }
@@ -532,13 +592,13 @@ static void mail_open_stream(SMTPD_STATE *state)
      */
     if (SMTPD_STAND_ALONE(state) == 0) {
 	state->dest = mail_stream_service(MAIL_CLASS_PUBLIC,
-					  MAIL_SERVICE_CLEANUP);
+					  var_cleanup_service);
 	if (state->dest == 0
 	    || attr_print(state->dest->stream, ATTR_FLAG_NONE,
 			ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, CLEANUP_FLAG_FILTER,
 			  ATTR_TYPE_END) != 0)
 	    msg_fatal("unable to connect to the %s %s service",
-		      MAIL_CLASS_PUBLIC, MAIL_SERVICE_CLEANUP);
+		      MAIL_CLASS_PUBLIC, var_cleanup_service);
     }
 
     /*
@@ -663,6 +723,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     int     narg;
     char   *arg;
     char   *verp_delims = 0;
+    char   *encoding = 0;
 
     state->msg_size = 0;
 
@@ -703,10 +764,11 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     }
     for (narg = 3; narg < argc; narg++) {
 	arg = argv[narg].strval;
-	if (strcasecmp(arg, "BODY=8BITMIME") == 0
-	    || strcasecmp(arg, "BODY=7BIT") == 0) {
-	     /* void */ ;
-	} else if (strncasecmp(arg, "SIZE=", 5) == 0) {
+	if (strcasecmp(arg, "BODY=8BITMIME") == 0) {	/* RFC 1652 */
+	    encoding = MAIL_ATTR_ENC_8BIT;
+	} else if (strcasecmp(arg, "BODY=7BIT") == 0) {	/* RFC 1652 */
+	    encoding = MAIL_ATTR_ENC_7BIT;
+	} else if (strncasecmp(arg, "SIZE=", 5) == 0) {	/* RFC 1870 */
 	    /* Reject non-numeric size. */
 	    if (!alldig(arg + 5)) {
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
@@ -726,16 +788,18 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 		return (-1);
 	    }
 #endif
-	} else if (strcasecmp(arg, VERP_CMD) == 0) {
-	    verp_delims = var_verp_delims;
-	} else if (strncasecmp(arg, VERP_CMD, VERP_CMD_LEN) == 0
-		   && arg[VERP_CMD_LEN] == '=') {
-	    verp_delims = arg + VERP_CMD_LEN + 1;
-	    if (verp_delims_verify(verp_delims) != 0) {
-		state->error_mask |= MAIL_ERROR_PROTOCOL;
-		smtpd_chat_reply(state, "501 %s needs two characters from %s",
-				 VERP_CMD, var_verp_filter);
-		return (-1);
+	} else if (namadr_list_match(verp_clients, state->name, state->addr)) {
+	    if (strcasecmp(arg, VERP_CMD) == 0) {
+		verp_delims = var_verp_delims;
+	    } else if (strncasecmp(arg, VERP_CMD, VERP_CMD_LEN) == 0
+		       && arg[VERP_CMD_LEN] == '=') {
+		verp_delims = arg + VERP_CMD_LEN + 1;
+		if (verp_delims_verify(verp_delims) != 0) {
+		    state->error_mask |= MAIL_ERROR_PROTOCOL;
+		    smtpd_chat_reply(state, "501 %s needs two characters from %s",
+				     VERP_CMD, var_verp_filter);
+		    return (-1);
+		}
 	    }
 	} else {
 	    state->error_mask |= MAIL_ERROR_PROTOCOL;
@@ -754,8 +818,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
-    if ((SMTPD_STAND_ALONE(state) || var_smtpd_delay_reject == 0)
-	&& (err = smtpd_check_size(state, state->msg_size)) != 0) {
+    if ((err = smtpd_check_size(state, state->msg_size)) != 0) {
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
@@ -779,6 +842,22 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     if (*var_filter_xport)
 	rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
     rec_fputs(state->cleanup, REC_TYPE_FROM, argv[2].strval);
+    if (encoding != 0)
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_ENCODING, encoding);
+    if (SMTPD_STAND_ALONE(state) == 0) {
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_CLIENT_NAME, state->name);
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_CLIENT_ADDR, state->addr);
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_ORIGIN, state->namaddr);
+	if (state->helo_name != 0)
+	    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+			MAIL_ATTR_HELO_NAME, state->helo_name);
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_PROTO_NAME, state->protocol);
+    }
     if (verp_delims)
 	rec_fputs(state->cleanup, REC_TYPE_VERP, verp_delims);
     state->sender = mystrdup(argv[2].strval);
@@ -904,6 +983,7 @@ static void rcpt_reset(SMTPD_STATE *state)
 
 static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 {
+    char   *err;
     char   *start;
     int     len;
     int     curr_rec_type;
@@ -930,6 +1010,10 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	smtpd_chat_reply(state, "501 Syntax: DATA");
 	return (-1);
     }
+    if (SMTPD_STAND_ALONE(state) == 0 && (err = smtpd_check_data(state)) != 0) {
+	smtpd_chat_reply(state, "%s", err);
+	return (-1);
+    }
 
     /*
      * Terminate the message envelope segment. Start the message content
@@ -948,9 +1032,9 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		    "\tby %s (%s) with %s id %s",
 		    var_myhostname, var_mail_name,
 		    state->protocol, state->queue_id);
-	/* XXX Should RFC 822 externalize recipient address */
+	quote_822_local(state->buffer, state->recipient);
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
-		"\tfor <%s>; %s", state->recipient, mail_date(state->time));
+	      "\tfor <%s>; %s", STR(state->buffer), mail_date(state->time));
     } else {
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
 		    "\tby %s (%s) with %s",
@@ -959,9 +1043,9 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		    "\tid %s; %s", state->queue_id, mail_date(state->time));
     }
 #ifdef RECEIVED_ENVELOPE_FROM
-    /* XXX Should RFC 822 externalize sender address */
+    quote_822_local(state->buffer, state->sender);
     rec_fprintf(state->cleanup, REC_TYPE_NORM,
-		"\t(envelope-from %s)", state->sender);
+		"\t(envelope-from %s)", STR(state->buffer));
 #endif
     smtpd_chat_reply(state, "354 End data with <CR><LF>.<CR><LF>");
 
@@ -994,7 +1078,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		continue;
 	    }
 	    first = 0;
-	    if (len > 0 && ISSPACE(start[0]))
+	    if (len > 0 && IS_SPACE_TAB(start[0]))
 		rec_put(state->cleanup, REC_TYPE_NORM, "", 0);
 	}
 	if (prev_rec_type != REC_TYPE_CONT
@@ -1323,6 +1407,8 @@ static SMTPD_CMD smtpd_cmd_table[] = {
     "ETRN", etrn_cmd, SMTPD_CMD_FLAG_LIMIT,
     "QUIT", quit_cmd, 0,
     "Received:", 0, SMTPD_CMD_FLAG_HEADER,
+    "Reply-To:", 0, SMTPD_CMD_FLAG_HEADER,
+    "Message-ID:", 0, SMTPD_CMD_FLAG_HEADER,
     "Subject:", 0, SMTPD_CMD_FLAG_HEADER,
     "From:", 0, SMTPD_CMD_FLAG_HEADER,
     0,
@@ -1375,6 +1461,13 @@ static void smtpd_proto(SMTPD_STATE *state)
 	break;
 
     case 0:
+	if (var_smtpd_delay_reject == 0
+	    && (state->access_denied = smtpd_check_client(state)) != 0) {
+	    smtpd_chat_reply(state, "%s", state->access_denied);
+	} else {
+	    smtpd_chat_reply(state, "220 %s", var_smtpd_banner);
+	}
+
 	for (;;) {
 	    if (state->error_count > var_smtpd_hard_erlim) {
 		state->reason = "too many errors";
@@ -1407,8 +1500,8 @@ static void smtpd_proto(SMTPD_STATE *state)
 		continue;
 	    }
 	    if (cmdp->flags & SMTPD_CMD_FLAG_HEADER) {
-		msg_warn("%s sent message header instead of SMTP command: %.100s",
-			 state->namaddr, vstring_str(state->buffer));
+		msg_warn("%s sent %s header instead of SMTP command: %.100s",
+		    state->namaddr, cmdp->name, vstring_str(state->buffer));
 		smtpd_chat_reply(state, "221 Error: I can break rules, too. Goodbye.");
 		break;
 	    }
@@ -1476,23 +1569,12 @@ static void smtpd_service(VSTREAM *stream, char *unused_service, char **argv)
      * machines.
      */
     smtpd_state_init(&state, stream);
+    msg_info("connect from %s[%s]", state.name, state.addr);
 
     /*
      * See if we need to turn on verbose logging for this client.
      */
     debug_peer_check(state.name, state.addr);
-
-    /*
-     * See if we want to talk to this client at all. Then, log the connection
-     * event.
-     */
-    if (var_smtpd_delay_reject == 0
-	&& (state.access_denied = smtpd_check_client(&state)) != 0) {
-	smtpd_chat_reply(&state, "%s", state.access_denied);
-    } else {
-	smtpd_chat_reply(&state, "220 %s", var_smtpd_banner);
-	msg_info("connect from %s[%s]", state.name, state.addr);
-    }
 
     /*
      * Provide the SMTP service.
@@ -1528,6 +1610,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      * case they specify a filename pattern.
      */
     smtpd_noop_cmds = string_list_init(MATCH_FLAG_NONE, var_smtpd_noop_cmds);
+    verp_clients = namadr_list_init(MATCH_FLAG_NONE, var_verp_clients);
     smtpd_check_init();
     debug_peer_init();
 
@@ -1557,9 +1640,14 @@ int     main(int argc, char **argv)
 	VAR_MAPS_RBL_CODE, DEF_MAPS_RBL_CODE, &var_maps_rbl_code, 0, 0,
 	VAR_ACCESS_MAP_CODE, DEF_ACCESS_MAP_CODE, &var_access_map_code, 0, 0,
 	VAR_REJECT_CODE, DEF_REJECT_CODE, &var_reject_code, 0, 0,
+	VAR_DEFER_CODE, DEF_DEFER_CODE, &var_defer_code, 0, 0,
 	VAR_NON_FQDN_CODE, DEF_NON_FQDN_CODE, &var_non_fqdn_code, 0, 0,
 	VAR_SMTPD_JUNK_CMD, DEF_SMTPD_JUNK_CMD, &var_smtpd_junk_cmd_limit, 1, 0,
 	VAR_SMTPD_HIST_THRSH, DEF_SMTPD_HIST_THRSH, &var_smtpd_hist_thrsh, 1, 0,
+	VAR_LOCAL_RCPT_CODE, DEF_LOCAL_RCPT_CODE, &var_local_rcpt_code, 0, 0,
+	VAR_VIRT_ALIAS_CODE, DEF_VIRT_ALIAS_CODE, &var_virt_alias_code, 0, 0,
+	VAR_VIRT_MAILBOX_CODE, DEF_VIRT_MAILBOX_CODE, &var_virt_mailbox_code, 0, 0,
+	VAR_RELAY_RCPT_CODE, DEF_RELAY_RCPT_CODE, &var_relay_rcpt_code, 0, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_table[] = {
@@ -1575,6 +1663,7 @@ int     main(int argc, char **argv)
 	VAR_ALLOW_UNTRUST_ROUTE, DEF_ALLOW_UNTRUST_ROUTE, &var_allow_untrust_route,
 	VAR_SMTPD_SASL_ENABLE, DEF_SMTPD_SASL_ENABLE, &var_smtpd_sasl_enable,
 	VAR_BROKEN_AUTH_CLNTS, DEF_BROKEN_AUTH_CLNTS, &var_broken_auth_clients,
+	VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
 	0,
     };
     static CONFIG_STR_TABLE str_table[] = {
@@ -1585,24 +1674,32 @@ int     main(int argc, char **argv)
 	VAR_MAIL_CHECKS, DEF_MAIL_CHECKS, &var_mail_checks, 0, 0,
 	VAR_RCPT_CHECKS, DEF_RCPT_CHECKS, &var_rcpt_checks, 0, 0,
 	VAR_ETRN_CHECKS, DEF_ETRN_CHECKS, &var_etrn_checks, 0, 0,
+	VAR_DATA_CHECKS, DEF_DATA_CHECKS, &var_data_checks, 0, 0,
 	VAR_MAPS_RBL_DOMAINS, DEF_MAPS_RBL_DOMAINS, &var_maps_rbl_domains, 0, 0,
+	VAR_RBL_REPLY_MAPS, DEF_RBL_REPLY_MAPS, &var_rbl_reply_maps, 0, 0,
 	VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
 	VAR_REST_CLASSES, DEF_REST_CLASSES, &var_rest_classes, 0, 0,
 	VAR_CANONICAL_MAPS, DEF_CANONICAL_MAPS, &var_canonical_maps, 0, 0,
 	VAR_RCPT_CANON_MAPS, DEF_RCPT_CANON_MAPS, &var_rcpt_canon_maps, 0, 0,
-	VAR_VIRTUAL_MAPS, DEF_VIRTUAL_MAPS, &var_virtual_maps, 0, 0,
+	VAR_VIRT_ALIAS_MAPS, DEF_VIRT_ALIAS_MAPS, &var_virt_alias_maps, 0, 0,
 	VAR_VIRT_MAILBOX_MAPS, DEF_VIRT_MAILBOX_MAPS, &var_virt_mailbox_maps, 0, 0,
-	VAR_RELOCATED_MAPS, DEF_RELOCATED_MAPS, &var_relocated_maps, 0, 0,
 	VAR_ALIAS_MAPS, DEF_ALIAS_MAPS, &var_alias_maps, 0, 0,
 	VAR_LOCAL_RCPT_MAPS, DEF_LOCAL_RCPT_MAPS, &var_local_rcpt_maps, 0, 0,
 	VAR_SMTPD_SASL_OPTS, DEF_SMTPD_SASL_OPTS, &var_smtpd_sasl_opts, 0, 0,
-	VAR_SMTPD_SASL_REALM, DEF_SMTPD_SASL_REALM, &var_smtpd_sasl_realm, 1, 0,
+	VAR_SMTPD_SASL_REALM, DEF_SMTPD_SASL_REALM, &var_smtpd_sasl_realm, 0, 0,
 	VAR_FILTER_XPORT, DEF_FILTER_XPORT, &var_filter_xport, 0, 0,
 	VAR_PERM_MX_NETWORKS, DEF_PERM_MX_NETWORKS, &var_perm_mx_networks, 0, 0,
 	VAR_SMTPD_SND_AUTH_MAPS, DEF_SMTPD_SND_AUTH_MAPS, &var_smtpd_snd_auth_maps, 0, 0,
 	VAR_SMTPD_NOOP_CMDS, DEF_SMTPD_NOOP_CMDS, &var_smtpd_noop_cmds, 0, 0,
 	VAR_SMTPD_NULL_KEY, DEF_SMTPD_NULL_KEY, &var_smtpd_null_key, 0, 0,
+	VAR_RELAY_RCPT_MAPS, DEF_RELAY_RCPT_MAPS, &var_relay_rcpt_maps, 0, 0,
+	VAR_VERP_CLIENTS, DEF_VERP_CLIENTS, &var_verp_clients, 0, 0,
+	0,
+    };
+    static CONFIG_RAW_TABLE raw_table[] = {
+	VAR_SMTPD_EXP_FILTER, DEF_SMTPD_EXP_FILTER, &var_smtpd_exp_filter, 1, 0,
+	VAR_DEF_RBL_REPLY, DEF_DEF_RBL_REPLY, &var_def_rbl_reply, 1, 0,
 	0,
     };
 
@@ -1612,6 +1709,7 @@ int     main(int argc, char **argv)
     single_server_main(argc, argv, smtpd_service,
 		       MAIL_SERVER_INT_TABLE, int_table,
 		       MAIL_SERVER_STR_TABLE, str_table,
+		       MAIL_SERVER_RAW_TABLE, raw_table,
 		       MAIL_SERVER_BOOL_TABLE, bool_table,
 		       MAIL_SERVER_TIME_TABLE, time_table,
 		       MAIL_SERVER_PRE_INIT, pre_jail_init,

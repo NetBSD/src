@@ -111,6 +111,7 @@
 #include <iostuff.h>
 #include <timed_connect.h>
 #include <stringops.h>
+#include <host_port.h>
 
 /* Global library. */
 
@@ -233,7 +234,7 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      */
     stream = vstream_fdopen(sock, O_RDWR);
     if ((ch = VSTREAM_GETC(stream)) == VSTREAM_EOF) {
-	vstring_sprintf(why, "connect to %s[%s]: server dropped connection",
+	vstring_sprintf(why, "connect to %s[%s]: server dropped connection without sending the initial greeting",
 			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	vstream_fclose(stream);
@@ -325,49 +326,21 @@ static char *smtp_parse_destination(char *destination, char *def_service,
 				            char **hostp, unsigned *portp)
 {
     char   *buf = mystrdup(destination);
-    char   *host = buf;
     char   *service;
     struct servent *sp;
     char   *protocol = "tcp";		/* XXX configurable? */
     unsigned port;
-    char   *cruft;
+    const char *err;
 
     if (msg_verbose)
 	msg_info("smtp_parse_destination: %s %s", destination, def_service);
 
     /*
-     * Strip quoting. We're working with a copy of the destination argument
-     * so the stripping can be destructive.
+     * Parse the host/port information. We're working with a copy of the
+     * destination argument so the parsing can be destructive.
      */
-    if (*host == '[') {
-	host++;
-	cruft = split_at(host, ']');
-    } else
-	cruft = 0;
-
-    /*
-     * Separate host and service information, or use the default service
-     * specified by the caller. XXX the ":" character is used in the IPV6
-     * address notation, so we will have to deprecate the use of [host:port]
-     * in favor of [host]:port.
-     */
-    if (cruft && *cruft) {
-	if ((service = split_at_right(cruft, ':')) == 0)
-	    service = def_service;
-    } else {
-	if ((service = split_at_right(host, ':')) == 0)
-	    service = def_service;
-#if 0
-	else if (cruft) {
-	    msg_warn("old-style address form: %s", destination);
-	    msg_warn("support for [host:port] forms will go away");
-	    msg_warn("specify [host]:port instead");
-	}
-#endif
-    }
-    if (*service == 0)
-	msg_fatal("empty service name: %s", destination);
-    *hostp = host;
+    if ((err = host_port(buf, hostp, &service, def_service)) != 0)
+	msg_fatal("%s in SMTP server description: %s", err, destination);
 
     /*
      * Convert service to port number, network byte order.
@@ -391,9 +364,9 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
     char   *host;
     unsigned port;
     char   *def_service = "smtp";	/* XXX configurable? */
-    char   *save;
+    ARGV   *sites;
     char   *dest;
-    char   *cp;
+    char  **cpp;
     int     found_myself = 0;
 
     /*
@@ -401,9 +374,11 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
      * to the optional fall-back relays. Each can be a list of destinations
      * by itself, with domain, host, [], numerical address, and port.
      */
-    cp = save = concatenate(destination, " ", var_fallback_relay, (char *) 0);
+    sites = argv_alloc(1);
+    argv_add(sites, destination, (char *) 0);
+    argv_split_append(sites, var_fallback_relay, ", \t\r\n");
 
-    while ((dest = mystrtok(&cp, ", \t\r\n")) != 0) {
+    for (cpp = sites->argv; (dest = *cpp) != 0; cpp++) {
 
 	/*
 	 * Parse the destination. Default is to use the SMTP port.
@@ -448,8 +423,8 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
 		     VAR_RELAYHOST, var_relayhost);
 	    smtp_errno = SMTP_RETRY;
 	}
-	if (*var_fallback_relay) {
-	    msg_warn("%s configuration problem: %s",
+	if (cpp > sites->argv && sites->argc > 1) {
+	    msg_warn("%s problem: %s",
 		     VAR_FALLBACK_RELAY, var_fallback_relay);
 	    smtp_errno = SMTP_RETRY;
 	}
@@ -458,6 +433,6 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
     /*
      * Cleanup.
      */
-    myfree(save);
+    argv_free(sites);
     return (session);
 }
