@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.14 1997/03/26 20:28:11 cgd Exp $	*/
+/*	$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1985, 1987, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: date.c,v 1.14 1997/03/26 20:28:11 cgd Exp $";
+__RCSID("$NetBSD: date.c,v 1.15 1997/07/20 05:17:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +67,7 @@ static char rcsid[] = "$NetBSD: date.c,v 1.14 1997/03/26 20:28:11 cgd Exp $";
 time_t tval;
 int retval, nflag;
 
+int main __P((int, char *[]));
 static void setthetime __P((char *));
 static void badformat __P((void));
 static void usage __P((void));
@@ -73,7 +75,7 @@ static void usage __P((void));
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	extern int optind;
 	extern char *optarg;
