@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 1998/06/08 20:21:18 mark Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.1 1998/06/08 20:21:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,33 +43,79 @@
  * Created      : 04/10/94
  */
 
-#ifndef _ARM32_DISKLABEL_H_
-#define _ARM32_DISKLABEL_H_
+#define NRISCBSD_PARTITIONS MAXPARTITIONS
 
-#define LABELSECTOR	1		/* sector containing label */
-#define LABELOFFSET	0		/* offset of label in sector */
-#define MAXPARTITIONS	8		/* number of partitions */
-#define RAW_PART	2		/* raw partition: XX?c */
+#define PARTITION_TYPE_UNUSED  0
+#define PARTITION_TYPE_ADFS    1
+#define PARTITION_TYPE_RISCIX  2
 
-#include <sys/dkbad.h>
-#include <machine/disklabel_acorn.h>
-#include <machine/disklabel_mbr.h>
+#define PARTITION_FORMAT_RISCIX  2
+#define PARTITION_FORMAT_RISCBSD 0x42
 
-struct cpu_disklabel {
-#if 0 /* XXX not actually used by anything */
-	u_int pad0;
-	u_int pad1;
-	struct riscbsd_partition partitions[NRISCBSD_PARTITIONS];
-#endif
-	struct mbr_partition mbrparts[NMBRPART];
-	struct dkbad bad;
+#define FILECORE_BOOT_SECTOR 6
+
+/* Stuff to deal with RISCiX partitions */
+
+#define NRISCIX_PARTITIONS 8
+#define RISCIX_PARTITION_OFFSET 8
+
+struct riscix_partition {
+	u_int rp_start;
+	u_int rp_length;
+	u_int rp_type;
+	char rp_name[16];
 };
 
-#ifdef _KERNEL
+struct riscix_partition_table {
+	u_int pad0;
+	u_int pad1;
+	struct riscix_partition partitions[NRISCIX_PARTITIONS];
+};
+
+struct riscbsd_partition {
+	u_int rp_start;
+	u_int rp_length;
+	u_int rp_type;
+	char rp_name[16];
+};
+
+struct filecore_bootblock {
+	u_char  padding0[0x1c0];
+	u_char  log2secsize;
+	u_char  secspertrack;
+	u_char  heads;
+	u_char  density;
+	u_char  idlen;
+	u_char  log2bpmb;
+	u_char  skew;
+	u_char  bootoption;
+	u_char  lowsector;
+	u_char  nzones;
+	u_short zone_spare;
+	u_int   root;
+	u_int   disc_size;
+	u_short disc_id;
+	u_char  disc_name[10];
+	u_int   disc_type;
+
+	u_char  padding1[24];
+
+	u_char partition_type;
+	u_char partition_cyl_low;
+	u_char partition_cyl_high;
+	u_char checksum;
+};
+
+#if defined(_KERNEL) && !defined(__ASSEMBLER__)
+struct buf;
+struct cpu_disklabel;
 struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif /* _KERNEL */
 
-#endif /* _ARM32_DISKLABEL_H_ */
-
-/* End of disklabel.h */
+/* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
+int	filecore_label_read __P((dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *, char **, int *,
+	    int *));
+/* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
+int	filecore_label_locate __P((dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *, int *, int *));
+#endif
