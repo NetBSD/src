@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.17 1999/02/07 12:27:50 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.18 1999/02/07 13:14:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.17 1999/02/07 12:27:50 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.18 1999/02/07 13:14:06 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -98,8 +98,9 @@ complete_ambiguous(word, list, words)
 		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		(void)strcpy(insertstr, words->sl_str[0]);
-		if (el_insertstr(el, insertstr + wordlen) == -1)
+		char *p = words->sl_str[0] + wordlen;
+		ftpvis(insertstr, sizeof(insertstr), p, strlen(p));
+		if (el_insertstr(el, insertstr) == -1)
 			return (CC_ERROR);
 		else
 			return (CC_REFRESH);
@@ -117,9 +118,9 @@ complete_ambiguous(word, list, words)
 				matchlen = j;
 		}
 		if (matchlen > wordlen) {
-			(void)strncpy(insertstr, lastmatch, matchlen);
-			insertstr[matchlen] = '\0';
-			if (el_insertstr(el, insertstr + wordlen) == -1)
+			ftpvis(insertstr, sizeof(insertstr),
+			    lastmatch + wordlen, matchlen);
+			if (el_insertstr(el, insertstr) == -1)
 				return (CC_ERROR);
 			else	
 				return (CC_REFRESH_BEEP);
