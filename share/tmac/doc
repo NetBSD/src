@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.7 1998/12/26 09:40:45 ross Exp $
+.\"	$NetBSD: doc,v 1.8 1999/01/13 07:05:09 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -284,6 +284,7 @@
 .nr lK \\n(.c
 .ev 2
 .fi
+.if \\n(Db .tm BEGIN eB DIVERSION AT #\\n(.c
 .di eB
 ..
 .\"
@@ -612,7 +613,7 @@
 .\" NS fD register subroutine test (in synopsis only)
 .\" NS fY register subroutine count (in synopsis only) (fortran only)
 .\" NS fZ register also subroutine count (in synopsis only)
-.de Fd
+.de Fd-In-common
 .ds mN Fd
 .if \\n(nS>0 \{\
 .\"	if a variable type was the last thing given, want vertical space
@@ -632,7 +633,17 @@
 .\}
 .nr cF \\n(.f
 .nr cZ \\n(.s
+..
+.de Fd
+.Fd-In-common
 \&\\*(fD\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.br
+.ft \\n(cF
+.fs \\n(cZ
+..
+.de In
+.Fd-In-common
+\&\\*(fD#include <\\$1>
 .br
 .ft \\n(cF
 .fs \\n(cZ
@@ -815,6 +826,33 @@
 .de Sy
 .if \\n(aC==0 \{\
 .       ie \\n(.$==0 .tm Usage: .Sy symbolic_text ... \\*(Pu (#\\n(.c)
+. 	el \{\
+.		ds mN Sy
+.               ds A1 \\$1
+.               ds A2 \\$2
+.               ds A3 \\$3
+.               ds A4 \\$4
+.               ds A5 \\$5
+.               ds A6 \\$6
+.               ds A7 \\$7
+.               ds A8 \\$8
+.               ds A9 \\$9
+. 		nr fV \\n(.$
+. 		fV
+.	\}
+.\}
+.if \\n(aC>\\n(aP \{\
+.	as b1 \\*(sY
+.	nr aP \\n(aP+1
+.       nr cF \\n(.f
+.	nr cZ \\n(.s
+.       nR
+.\}
+..
+.\" NS Me macro - Menu Entries
+.de Me
+.if \\n(aC==0 \{\
+.       ie \\n(.$==0 .tm Usage: .Me menu entry ... \\*(Pu (#\\n(.c)
 . 	el \{\
 .		ds mN Sy
 .               ds A1 \\$1
@@ -1176,6 +1214,7 @@
 .			nr lK \\n(.c
 .			ev 2
 .			fi
+.			if \\n(Db .tm BEGIN eB DIVERSION AT #\\n(.c
 .			di eB
 .		\}
 .	\}
@@ -1677,7 +1716,7 @@
 .de Ed
 .ds mN Ed
 .br
-.if \\n(dP==0 .tm mdoc: Extraneous .Ed
+.if \\n(dP==0 .tm mdoc: Extraneous .Ed (#\\n[.c])
 .if "\\*(d\\n(dP"dL" \{\
 .	ft \\n(cF
 .	fz \\n(cZ
@@ -3455,3 +3494,41 @@ File:
 .	\}
 .\}
 ..
+.als Mt Pa
+.als It-span It
+.de Lk
+.	if \\n(Db .tm .Lk \\$*
+.	nr doc-tmp-1 0
+.	nr aT 0
+.	nr sW 0
+.	ds doc-tmp-1 Sy \&\\$*
+.	sW "\\$1"
+.	if \\n(.$>=2 \{\
+.		sW "\\$2"
+.		aT \\$2
+.		if \\n(Db .tm arg type==\\n(aT len==\\n(sW
+.		ie \\n(aT<3 \{\
+.			Em \&\\$2:
+.			ds doc-tmp-1 Sy "\&\\$1"
+.			sW "\\$1"
+.			shift
+.			shift
+.			as doc-tmp-1 \\$*
+.		\}
+.		el .sW "\\$1"
+.	\}
+.	if n .nr doc-tmp-1 26
+.	if t .nr doc-tmp-1 38
+.	ie \\n(sW>=\\n[doc-tmp-1] .D1 \\*[doc-tmp-1]
+.	el .\\*[doc-tmp-1]
+..
+.
+.ds T "	x\" embedded tab is important
+.chop T
+.
+.rn em e@
+.de em
+.	tm End-macro (.em) respecification is not allowed. (#\\n(.c)
+.	tm Should this have been .Em ...?
+..
+.
