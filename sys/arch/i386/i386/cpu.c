@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.19 2001/01/10 04:38:32 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.20 2001/05/07 16:51:46 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -175,6 +175,42 @@ cpu_match(parent, match, aux)
 	return 0;
 }
 
+static void
+cpu_vm_init(struct cpu_info *ci)
+{
+	int ncolors = 2, i;
+	
+	for (i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
+		struct i386_cache_info *cai;
+		int tcolors;
+
+		cai = &ci->ci_cinfo[i];
+
+		tcolors = atop(cai->cai_totalsize);
+		switch(cai->cai_associativity) {
+		case ~0:
+			tcolors = 1;
+			break;
+		case 0:
+		case 1:			
+			break;
+		default:
+			tcolors /= cai->cai_associativity;
+		}
+		ncolors = max(ncolors, tcolors);
+	}
+	
+	/*
+	 * Knowing the size of the largest cache on this CPU, re-color
+	 * our pages.
+	 */
+	if (ncolors <= uvmexp.ncolors)
+		return;
+	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	uvm_page_recolor(ncolors);
+}
+
+
 void 
 cpu_attach(parent, self, aux)   
 	struct device *parent, *self;
@@ -296,6 +332,9 @@ cpu_attach(parent, self, aux)
 	default:
 		panic("unknown processor type??\n");
 	}
+	cpu_vm_init(ci);
+
+	
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.21 2001/04/30 16:23:13 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.22 2001/05/07 16:51:47 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,25 @@
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
 
+struct i386_cache_info {
+	int		cai_index;
+	u_int32_t	cai_desc;
+	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
+	u_int		cai_linesize;	/* or page size for TLB */
+	u_int		cai_associativity;
+	const char	*cai_string;
+};
+
+#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
+#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
+#define	CAI_DTLB	2		/* Data TLB (4K pages) */
+#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
+#define	CAI_ICACHE	4		/* Instruction cache */
+#define	CAI_DCACHE	5		/* Data cache */
+#define	CAI_L2CACHE	6		/* Level 2 cache */
+
+#define	CAI_COUNT	7
+
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
  */
@@ -113,13 +132,16 @@ struct cpu_info {
 	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
 
+#if 0
 	const struct i386_cache_info *ci_itlb_info;
 	const struct i386_cache_info *ci_itlb2_info;
 	const struct i386_cache_info *ci_dtlb_info;
 	const struct i386_cache_info *ci_dtlb2_info;	
 	const struct i386_cache_info *ci_icache_info;
 	const struct i386_cache_info *ci_dcache_info;
-	const struct i386_cache_info *ci_l2cache_info;	
+	const struct i386_cache_info *ci_l2cache_info;
+#endif
+	struct i386_cache_info ci_cinfo[CAI_COUNT];
 };
 
 /*
@@ -277,6 +299,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_name;
 	int cpu_class;
 	void (*cpu_setup) __P((struct cpu_info *));
+	void (*cpu_cacheinfo) __P((struct cpu_info *));
 };
 
 
@@ -288,6 +311,7 @@ struct cpu_cpuid_nameclass {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((struct cpu_info *));
+		void (*cpu_probe) __P((struct cpu_info *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
