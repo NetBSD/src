@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.18 2000/03/15 16:57:12 oster Exp $
+#	$NetBSD: files.arc,v 1.19 2000/03/15 17:08:37 soren Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -164,7 +164,7 @@ file arch/arc/dev/md_root.c		memory_disk_hooks
 major {md = 8}
 
 # RAIDframe
-major {md = 9}
+major {raid = 9}
 
 #
 #	Common files
