@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uda.c	7.32 (Berkeley) 2/13/91
- *	$Id: uda.c,v 1.1 1994/08/02 20:21:30 ragge Exp $
+ *	$Id: uda.c,v 1.2 1994/10/08 15:46:17 ragge Exp $
  */
 
 /*
@@ -1029,14 +1029,14 @@ udastrat1(bp)
 	 */
 	um = (ui = udadinfo[unit])->ui_mi;
 	dp = &udautab[unit];
-	APPEND(bp, dp, b_actf);
+	MSCP_APPEND(bp, dp, b_actf);
 	if (dp->b_active == 0 && (ui->ui_flags & UNIT_REQUEUE) == 0) {
-		APPEND(dp, &um->um_tab, b_hash.le_next);
+		MSCP_APPEND(dp, &um->um_tab, b_hash.le_next);
 		dp->b_active++;
 	}
-/* Was:  APPEND(bp, dp, av_forw);
+/* Was:  MSCP_APPEND(bp, dp, av_forw);
         if (dp->b_active == 0 && (ui->ui_flags & UNIT_REQUEUE) == 0) {
-                APPEND(dp, &um->um_tab, b_forw);
+                MSCP_APPEND(dp, &um->um_tab, b_forw);
                 dp->b_active++;
         }
 */
