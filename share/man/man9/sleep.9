@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.19 2002/02/13 08:18:51 ross Exp $
+.\"	$NetBSD: sleep.9,v 1.20 2002/09/29 17:14:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,6 @@
 .Os
 .Sh NAME
 .Nm ltsleep ,
-.Nm sleep ,
 .Nm tsleep ,
 .Nm wakeup
 .Nd process context sleep and and wakeup
@@ -50,15 +49,12 @@
 .Ft int
 .Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
 .Ft void
-.Fn "sleep" "void *ident" "int priority"
-.Ft void
 .Fn "wakeup" "void *ident"
 .Sh DESCRIPTION
 These functions implement voluntary context switching.
-.Fn ltsleep ,
-.Fn tsleep
+.Fn ltsleep
 and
-.Fn sleep
+.Fn tsleep
 are used throughout the kernel whenever processing in the current context
 can not continue for any of the following reasons:
 .Bl -bullet -offset indent
@@ -150,14 +146,6 @@ The
 macro is functionally equivalent to:
 .Bd -literal -offset indent
 ltsleep(ident, priority, wmesg, timo, NULL)
-.Ed
-.Pp
-The
-.Fn sleep
-function puts the process in an uninterruptible sleep.
-It is functionally equivalent to:
-.Bd -literal -offset indent
-ltsleep(ident, priority \*[Am] PRIMASK, 0, 0, NULL)
 .Ed
 .Pp
 The
