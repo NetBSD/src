@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.63 2000/01/18 20:23:42 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.64 2000/01/19 00:23:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1610,6 +1610,7 @@ ohci_open(pipe)
 	u_int32_t fmt;
 	usbd_status err;
 	int s;
+	int ival;
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
@@ -1670,7 +1671,10 @@ ohci_open(pipe)
 			break;
 		case UE_INTERRUPT:
 			pipe->methods = &ohci_device_intr_methods;
-			return (ohci_device_setintr(sc, opipe, ed->bInterval));
+			ival = pipe->interval;
+			if (ival == USBD_DEFAULT_INTERVAL)
+				ival = ed->bInterval;
+			return (ohci_device_setintr(sc, opipe, ival));
 		case UE_ISOCHRONOUS:
 			pipe->methods = &ohci_device_isoc_methods;
 			return (ohci_setup_isoc(pipe));

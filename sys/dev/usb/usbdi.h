@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.38 2000/01/16 23:11:43 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.39 2000/01/19 00:23:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ typedef void (*usbd_callback) __P((usbd_xfer_handle, usbd_private_handle,
 /* Open flags */
 #define USBD_EXCLUSIVE_USE	0x01
 
+/* Use default (specified by ep. desc.) interval on interrupt pipe */
+#define USBD_DEFAULT_INTERVAL	(-1)
+
 /* Request flags */
 #define USBD_NO_COPY		0x01	/* do not copy data to DMA buffer */
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
@@ -139,7 +142,7 @@ usbd_status usbd_open_pipe_intr
 	__P((usbd_interface_handle iface, u_int8_t address,
 	     u_int8_t flags, usbd_pipe_handle *pipe,
 	     usbd_private_handle priv, void *buffer,
-	     u_int32_t length, usbd_callback));
+	     u_int32_t length, usbd_callback, int));
 usbd_status usbd_do_request 
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async
