@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.32 2001/05/23 14:50:04 jhawk Exp $
+.\"	$NetBSD: main,v 1.61.2.33 2001/05/28 19:38:10 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -322,7 +322,7 @@ Once you start using more than 8 partitions, you can no longer
 downgrade to a 1.5 kernel.
 .It
 The user-land tools which handle disklabels in 1.5.1 can not be
-used running under a 1.5 kernel.
+used under a 1.5 kernel.
 .El
 .\}
 .Ss Changes Between The NetBSD 1.4 and 1.5 Releases
