@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.26 2001/09/17 17:03:45 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.27 2001/09/23 14:32:53 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
 #include "opt_tx39_debug.h"
 #include "m38813c.h"
 #include "tc5165buf.h"
@@ -83,7 +85,14 @@ u_int32_t tx39debugflag;
 #endif
 
 void	tx_init(void);
-int	tx39icu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+#if defined(VR41XX) && defined(TX39XX)
+#define	TX_INTR	tx_intr
+#else
+#define	TX_INTR	cpu_intr	/* locore_mips3 directly call this */
+#endif
+
+extern void TX_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
 void	tx39clock_cpuspeed(int *, int *);
 
 /* TX39-specific initialization vector */
@@ -92,7 +101,6 @@ void    tx_fb_init(caddr_t *);
 void    tx_mem_init(paddr_t);
 void	tx_find_dram(paddr_t, paddr_t);
 void	tx_reboot(int, char *);
-int	tx_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 void
 tx_init()
@@ -105,12 +113,13 @@ tx_init()
 	/*
 	 * Platform Specific Function Hooks
 	 */
+	platform.cpu_intr	= TX_INTR;
 	platform.cpu_idle	= NULL; /* not implemented yet */
 	platform.cons_init	= tx_cons_init;
 	platform.fb_init	= tx_fb_init;
 	platform.mem_init	= tx_mem_init;
 	platform.reboot		= tx_reboot;
-	platform.iointr		= tx39icu_intr;
+
 
 	model = MIPS_PRID_REV(cpu_id);
 
