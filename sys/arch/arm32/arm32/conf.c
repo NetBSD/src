@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1996/09/07 12:40:26 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1996/09/08 00:11:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -171,13 +171,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, read, ioctl */
-#define cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
 /* open, close, write, ioctl */
 #define cdev_iic_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -279,7 +272,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NCD,cd),	    	/* 26: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),	 	/* 27: SCSI autochanger */
 	cdev_ch_init(NUK,uk),	 	/* 28: SCSI unknown */
-	cdev_ss_init(NSS,ss),	 	/* 29: SCSI scanner */
+	cdev_scanner_init(NSS,ss),	/* 29: SCSI scanner */
 	cdev_lkm_dummy(),		/* 30: */
 	cdev_lkm_dummy(),		/* 31: */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 32: Berkeley packet filter */

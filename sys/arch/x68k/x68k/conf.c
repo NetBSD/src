@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1996/09/07 12:40:42 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1996/09/08 00:11:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -129,13 +129,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, read, ioctl */
-#define cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -227,7 +220,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pow_init(NPOW,pow),	/* 32: power switch device */
 	cdev_bell_init(NBELL,bell),	/* 33: opm bell device */
 	cdev_disk_init(NCCD,ccd),	/* 34: concatenated disk driver */
-	cdev_ss_init(NSS,ss),		/* 35: SCSI scanner */
+	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
