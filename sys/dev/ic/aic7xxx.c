@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $
+ * $Id: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.109 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4387,14 +4387,18 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 }
 
 void
-ahc_controller_info(struct ahc_softc *ahc, char *buf)
+ahc_controller_info(struct ahc_softc *ahc, char *buf, size_t l)
 {
 	int len;
+	char *ep;
 
-	len = sprintf(buf, "%s: ", ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
+	ep = buf + l;
+
+	len = snprintf(buf, ep - buf, "%s: ",
+	    ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
 	buf += len;
 	if ((ahc->features & AHC_TWIN) != 0)
- 		len = sprintf(buf, "Twin Channel, A SCSI Id=%d, "
+ 		len = snprintf(buf, ep - buf, "Twin Channel, A SCSI Id=%d, "
 			      "B SCSI Id=%d, primary %c, ",
 			      ahc->our_id, ahc->our_id_b,
 			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
@@ -4415,16 +4419,16 @@ ahc_controller_info(struct ahc_softc *ahc, char *buf)
 		} else {
 			type = "Single";
 		}
-		len = sprintf(buf, "%s%s Channel %c, SCSI Id=%d, ",
+		len = snprintf(buf, ep - buf, "%s%s Channel %c, SCSI Id=%d, ",
 			      speed, type, ahc->channel, ahc->our_id);
 	}
 	buf += len;
 
 	if ((ahc->flags & AHC_PAGESCBS) != 0)
-		sprintf(buf, "%d/%d SCBs",
+		snprintf(buf, ep - buf, "%d/%d SCBs",
 			ahc->scb_data->maxhscbs, AHC_MAX_QUEUE);
 	else
-		sprintf(buf, "%d SCBs", ahc->scb_data->maxhscbs);
+		snprintf(buf, ep - buf, "%d SCBs", ahc->scb_data->maxhscbs);
 }
 
 /*
