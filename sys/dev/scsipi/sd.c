@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.141 1999/01/29 11:17:59 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.142 1999/02/08 16:33:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -744,6 +744,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	int part = SDPART(dev);
 	int error;
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
@@ -757,11 +758,12 @@ sdioctl(dev, cmd, addr, flag, p)
 		case DIOCWLABEL:
 		case DIOCLOCK:
 		case DIOCEJECT:
+		case ODIOCEJECT:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
 		case SCIOCDEBUG:
-			if (SDPART(dev) == RAW_PART)
+			if (part == RAW_PART)
 				break;
 		/* FALLTHROUGH */
 		default:
@@ -780,7 +782,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sd->sc_dk.dk_label->d_partitions[SDPART(dev)];
+		    &sd->sc_dk.dk_label->d_partitions[part];
 		return (0);
 
 	case DIOCWDINFO:
@@ -818,8 +820,28 @@ sdioctl(dev, cmd, addr, flag, p)
 	case DIOCLOCK:
 		return (scsipi_prevent(sd->sc_link,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
-
+	
 	case DIOCEJECT:
+		if ((sd->sc_link->flags & SDEV_REMOVABLE) == 0)
+			return (ENOTTY);
+		if (*(int *)addr == 0) {
+			/*
+			 * Don't force eject: check that we are the only
+			 * partition open. If so, unlock it.
+			 */
+			if ((sd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
+			    sd->sc_dk.dk_bopenmask + sd->sc_dk.dk_copenmask ==
+			    sd->sc_dk.dk_openmask) {
+				error =  scsipi_prevent(sd->sc_link, PR_ALLOW,
+				    SCSI_IGNORE_NOT_READY);
+				if (error)
+					return (error);
+			} else {
+				return (EBUSY);
+			}
+		}
+		/* FALLTHROUGH */
+	case ODIOCEJECT:
 		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
 		    scsipi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
@@ -828,7 +850,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		return (0);
 
 	default:
-		if (SDPART(dev) != RAW_PART)
+		if (part != RAW_PART)
 			return (ENOTTY);
 		return (scsipi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p));
 	}
