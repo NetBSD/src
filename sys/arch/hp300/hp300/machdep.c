@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1997/02/02 07:58:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 1997/03/15 23:25:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -425,21 +425,21 @@ setregs(p, pack, stack, retval)
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
 	frame->f_regs[A2] = (int)PS_STRINGS;
-#ifdef FPCOPROC
+
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-#endif
+	if (fputype)
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+
 #ifdef COMPAT_HPUX
 	p->p_md.md_flags &= ~MDP_HPUXMMAP;
 	if (p->p_emul == &emul_hpux) {
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
-#ifdef FPCOPROC
-		retval[1] = 1;		/* yes 68881 */
-#else
-		retval[1] = 0;		/* no 68881 */
-#endif
+		if (fputype)
+			retval[1] = 1;	/* yes 68881 */
+		else
+			retval[1] = 0;	/* no 68881 */
 	}
 	/*
 	 * XXX This doesn't have much to do with setting registers but
@@ -847,15 +847,15 @@ sendsig(catcher, sig, mask, code)
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
-#ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
+	if (fputype) {
+		kfp->sf_state.ss_flags |= SS_FPSTATE;
+		m68881_save(&kfp->sf_state.ss_fpstate);
+	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %x\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
-#endif
 #endif
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -1076,20 +1076,19 @@ sys_sigreturn(p, v, retval)
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
-#ifdef FPCOPROC
+
 	/*
 	 * Finally we restore the original FP context
 	 */
 	if (flags & SS_FPSTATE)
 		m68881_restore(&tstate.ss_fpstate);
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
+
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
