@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd-bpf.c,v 1.5 2002/09/19 16:46:00 mycroft Exp $	*/
+/*	$NetBSD: ndbootd-bpf.c,v 1.6 2003/07/15 12:32:07 itojun Exp $	*/
 
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
@@ -48,7 +48,7 @@
 #if o
 static const char _ndbootd_bpf_c_rcsid[] = "<<Id: ndbootd-bpf.c,v 1.4 2001/05/23 02:35:49 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd-bpf.c,v 1.5 2002/09/19 16:46:00 mycroft Exp $");
+__RCSID("$NetBSD: ndbootd-bpf.c,v 1.6 2003/07/15 12:32:07 itojun Exp $");
 #endif
 
 /* includes: */
@@ -119,7 +119,8 @@ ndbootd_raw_open(struct ndbootd_interface * interface)
 
 		/* form the name of the next device to try, then try opening
 		 * it. if we succeed, we're done: */
-		sprintf(dev_bpf_filename, DEV_BPF_FORMAT, minor);
+		snprintf(dev_bpf_filename, sizeof(dev_bpf_filename),
+		    DEV_BPF_FORMAT, minor);
 		_NDBOOTD_DEBUG((fp, "bpf: trying %s", dev_bpf_filename));
 		if ((network_fd = open(dev_bpf_filename, O_RDWR)) >= 0) {
 			_NDBOOTD_DEBUG((fp, "bpf: opened %s", dev_bpf_filename));
