@@ -170,50 +170,30 @@
 ;;  ""
 ;;  "movh %1,%0")
 
-(define_insn "*clrdi"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g")
-        (const_int 0))]
-  ""
-  "clrq %0")
-
 (define_insn "movdi"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g")
-	(match_operand:DI 1 "general_operand" "g"))]
+  [(set (match_operand:DI 0 "general_operand" "=g,g")
+	(match_operand:DI 1 "general_operand" "I,g"))]
   ""
-  "*
-{
-  if (GET_CODE (operands[1]) == CONST_INT)
-    {
-      rtx lo, hi;
+  "@
+   clrq %0
+   movq %D1,%0")
 
-      if (operands[1] == const0_rtx)
-	return \"clrq %0\";
-      lo = operand_subword (operands[1], 0, 0, DImode);
-      hi = operand_subword (operands[1], 1, 0, DImode);
-      if (hi == const0_rtx && (unsigned int) INTVAL (lo) < 64)
-	return \"movq %D1,%0\";
-      if (push_operand (operands[0], DImode))
-	{
-	  /* If this isn't a 32bit quantity, punt!
-	   */
-	  if (hi != const0_rtx && hi != constm1_rtx)
-	    return \"movq %D1,%0\";
-	  if (hi == const0_rtx && lo == const0_rtx)
-	    return \"clrq %0\";
-	  if (hi == const0_rtx)
-	    output_asm_insn(\"pushl $0\", operands);
-	  else if (hi == constm1_rtx)
-	    output_asm_insn(\"mnegl $1,-(sp)\", operands);
+;; The VAX move instructions have space-time tradeoffs.  On a microVAX
+;; register-register mov instructions take 3 bytes and 2 CPU cycles.  clrl
+;; takes 2 bytes and 3 cycles.  mov from constant to register takes 2 cycles
+;; if the constant is smaller than 4 bytes, 3 cycles for a longword
+;; constant.  movz, mneg, and mcom are as fast as mov, so movzwl is faster
+;; than movl for positive constants that fit in 16 bits but not 6 bits.  cvt
+;; instructions take 4 cycles.  inc takes 3 cycles.  The machine description
+;; is willing to trade 1 byte for 1 cycle (clrl instead of movl $0; cvtwl
+;; instead of movl).
 
-	  /* push the low 32bits
-	   */
-	  operands[0] = operand_subword (operands[0], 0, 0, DImode);
-	  operands[1] = lo;
-	  return OUT_FCN (CODE_FOR_movgensi) (operands, insn);
-	}
-    }
-  return \"movq %D1,%0\";
-}")
+;; Cycle counts for other models may vary (on a VAX 750 they are similar,
+;; but on a VAX 9000 most move and add instructions with one constant
+;; operand take 1 cycle).
+
+;;  Loads of constants between 64 and 128 used to be done with
+;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
 
 (define_expand "movsi"
   [(set (match_operand:SI 0 "general_operand" "")
@@ -238,24 +218,6 @@
       DONE;
     }
 }")
-
-
-;; The VAX move instructions have space-time tradeoffs.  On a microVAX
-;; register-register mov instructions take 3 bytes and 2 CPU cycles.  clrl
-;; takes 2 bytes and 3 cycles.  mov from constant to register takes 2 cycles
-;; if the constant is smaller than 4 bytes, 3 cycles for a longword
-;; constant.  movz, mneg, and mcom are as fast as mov, so movzwl is faster
-;; than movl for positive constants that fit in 16 bits but not 6 bits.  cvt
-;; instructions take 4 cycles.  inc takes 3 cycles.  The machine description
-;; is willing to trade 1 byte for 1 cycle (clrl instead of movl $0; cvtwl
-;; instead of movl).
-
-;; Cycle counts for other models may vary (on a VAX 750 they are similar,
-;; but on a VAX 9000 most move and add instructions with one constant
-;; operand take 1 cycle).
-
-;;  Loads of constants between 64 and 128 used to be done with
-;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
 
 (define_insn "movgensi"
   [(set (match_operand:SI 0 "general_operand" "=g")
@@ -716,94 +678,18 @@
 }")
 
 ;; The add-with-carry (adwc) instruction only accepts two operands.
-(define_expand "adddi3"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=g")
-	(plus:DI (match_operand:DI 1 "general_operand" "g")
-		 (match_operand:DI 2 "general_operand" "g")))]
-  ""
-  "")
-
-(define_insn "*incdi"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=ro>")
-	(plus:DI (match_operand:DI 1 "general_operand" "0")
-		 (const_int 1)))]
-  ""
-  "*
-{
-  rtx low[1];
-  split_quadword_operands (operands, low, 1);
-  output_asm_insn (\"incl %0\", low);
-  return \"adwc $0,%0\";
-}")
-
-(define_insn "*pushaddimmdi3"
-  [(set (match_operand:DI 0 "push_operand" "=g")
-	(plus:DI (match_operand:DI 1 "general_operand" "ro")
-		 (match_operand:DI 2 "const_int_operand" "i")))]
-  ""
-  "*
-{
-  int subtract = 0;
-  rtx lo, hi;
-
-  if (operands[2] == const0_rtx)
-    return \"movq %D1,%0\";
-  output_asm_insn (\"movq %D1,%0\", operands);
-  lo = operand_subword (operands[2], 0, 0, DImode);
-  hi = operand_subword (operands[2], 1, 0, DImode);
-  if (lo != const0_rtx)
-    {
-      if (lo == const1_rtx)
-	output_asm_insn (\"incl (sp)\", operands);
-      else if (INTVAL (hi) == -1 && INTVAL (lo) != 0x80000000 &&
-	       INTVAL (lo) < 0)
-	{
-	  if (lo == constm1_rtx)
-	    output_asm_insn (\"decl (sp)\", operands);
-	  else
-	    output_asm_insn (\"subl2 $%n0,(sp)\", &lo);
-	  subtract = 1;
-	}
-      else
-	output_asm_insn (\"addl2 %0,(sp)\", &lo);
-    }
-  operands[2] = hi;
-  if (lo == const0_rtx)
-    {
-      if (hi == const1_rtx)
-	return \"incl 4(sp)\";
-      else if (hi == constm1_rtx)
-	return \"decl 4(sp)\";
-      else if (INTVAL (hi) < 0 && INTVAL (hi) != 0x80000000)
-	return \"subl2 $%n2,4(sp)\";
-      else
-	return \"addl2 %2,4(sp)\";
-    }
-  if (subtract)
-    return \"sbwc $0,4(sp)\";
-  else
-    return \"adwc %2,4(sp)\";
-}")
-
-(define_insn "*addgendi3"
-  [(set (match_operand:DI 0 "vax_lvalue_operand" "=ro,ro")
-	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro")
-		 (match_operand:DI 2 "general_operand" "iro,i")))]
+(define_insn "adddi3"
+  [(set (match_operand:DI 0 "general_operand" "=ro>,ro>")
+	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
+		 (match_operand:DI 2 "general_operand" "Fro,F")))]
   ""
   "*
 {
   rtx low[3];
-  const char *pattern;
+  char *pattern;
   int carry = 1;
-  int subtract = 0;
 
   split_quadword_operands (operands, low, 3);
-
-  if (GET_CODE (operands[2]) == CONST_INT &&
-      INTVAL (operands[2]) == -1 &&
-      INTVAL (low[2]) != 0x80000000 && INTVAL (low[2]) < 0)
-    subtract = 1;
-
   /* Add low parts.  */
   if (rtx_equal_p (operands[0], operands[1]))
     {
@@ -812,22 +698,13 @@
 	pattern = \"tstl %0\", carry = 0;
       else if (low[2] == const1_rtx)
         pattern = \"incl %0\";
-      else if (subtract)
-	{
-	  if (low[2] == constm1_rtx)
-	    pattern = \"decl %0\";
-	  else
-	    pattern = \"subl2 $%n2,%0\";
-	}
       else
         pattern = \"addl2 %2,%0\";
     }
   else
     {
       if (low[2] == const0_rtx)
-	pattern = \"movq %1,%0\";
-      else if (subtract)
-	pattern = \"subl3 $%n2,%1,%0\";
+	pattern = \"movl %1,%0\", carry = 0;
       else
 	pattern = \"addl3 %2,%1,%0\";
     }
@@ -836,14 +713,11 @@
   if (!carry)
     /* If CARRY is 0, we don't have any carry value to worry about.  */
     return OUT_FCN (CODE_FOR_addsi3) (operands, insn);
-  /* %0 = %1 + %2 + C */
-  /* %0 = %1 - %2 - C (negative constant int) */
+  /* %0 = C + %1 + %2 */
   if (!rtx_equal_p (operands[0], operands[1]))
     output_asm_insn ((operands[1] == const0_rtx
 		      ? \"clrl %0\"
 		      : \"movl %1,%0\"), operands);
-  if (subtract)
-      return \"sbwc $0,%0\";
   return \"adwc %2,%0\";
 }")
 
@@ -922,7 +796,7 @@
       if (low[2] == constm1_rtx)
 	pattern = \"decl %0\";
       else if (low[2] == const0_rtx)
-	pattern = OUT_FCN (CODE_FOR_movgensi) (low, insn), carry = 0;
+	pattern = OUT_FCN (CODE_FOR_movsi) (low, insn), carry = 0;
       else
 	pattern = \"subl3 %2,%1,%0\";
     }
@@ -2284,283 +2158,3 @@
   operands[3] = GEN_INT (INTVAL (operands[3]) & ~((1 << INTVAL (operands[2])) - 1));
   return \"rotl %2,%1,%0\;bicl2 %N3,%0\";
 }")
-
-(define_peephole
-  [(set (reg:SI 14)
-	(plus:SI (reg:SI 14)
-		 (const_int -2)))
-   (set (mem:HI (pre_dec:SI (reg:SI 14)))
-	(match_operand:HI 0 "general_operand" "g"))]
-  ""
-  "*
-{
-  if (GET_CODE (operands[0]) == CONST_INT)
-    {
-      if (INTVAL (operands[0]) >= 0)
-	return \"pushl %0\";
-      return \"mnegl %n0,-(sp)\";
-    }
-  return \"cvtwl %0,-(sp)\";
-}")
-
-(define_peephole
-  [(set (reg:SI 14)
-	(plus:SI (reg:SI 14)
-		 (const_int -3)))
-   (set (mem:QI (pre_dec:SI (reg:SI 14)))
-	(match_operand:QI 0 "general_operand" "g"))]
-  ""
-  "*
-{
-  if (GET_CODE (operands[0]) == CONST_INT)
-    {
-      if (INTVAL (operands[0]) >= 0)
-	return \"pushl %0\";
-      return \"mnegl %n0,-(sp)\";
-    }
-  return \"cvtbl %0,-(sp)\";
-}")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
-   (set (match_dup 0)
-        (plus:SI (match_dup 0)
-                 (match_operand:SI 2 "const_int_operand" "i")))]
-  "-64 < INTVAL (operands[2]) && INTVAL (operands[2]) < 0"
-  "subl3 $%n2,%1,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "register_operand" "r"))
-   (set (match_dup 0)
-        (plus:SI (match_dup 0)
-                 (match_operand:SI 2 "const_int_operand" "i")))]
-  "(unsigned) INTVAL (operands[2]) > 64"
-  "movab %c2(%1),%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
-   (set (match_dup 0)
-        (plus:SI (match_dup 0)
-                 (match_operand:SI 2 "vax_nonsymbolic_operand" "g")))
-   (set (match_operand:SI 3 "vax_nonsymbolic_operand" "=g")
-        (match_dup 0))]
-  "dead_or_set_p (insn, operands[0])
-   && !vax_reg_used_p (operands[2], REGNO (operands[0]))
-   && !vax_reg_used_p (operands[3], REGNO (operands[0]))
-   && GET_CODE (operands[2]) != SYMBOL_REF
-   && !rtx_equal_p (operands[0], operands[2])"
-  "addl3 %2,%1,%3")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
-   (set (match_dup 0)
-        (plus:SI (match_dup 0)
-                 (match_dup 0)))]
-  ""
-  "addl3 %1,%1,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
-   (set (match_operand:SI 2 "push_operand" "=g")
-        (plus:SI (match_dup 0)
-                 (match_operand:SI 3 "vax_nonsymbolic_operand" "g")))]
-  "!rtx_equal_p (operands[0], operands[3]) &&
-   dead_or_set_p (insn, operands[0]) &&
-   !vax_reg_used_p (operands[2], REGNO (operands[0]))"
-  "*
-{
-  if (GET_CODE (operands[3]) == CONST_INT && INTVAL (operands[3]) < 0)
-    return \"subl3 $%n3,%1,%2\";
-  return \"addl3 %3,%1,%2\";
-}")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "vax_nonsymbolic_operand" "g"))
-   (set (match_dup 0)
-        (plus:SI (match_dup 0)
-                 (match_operand:SI 2 "vax_nonsymbolic_operand" "g")))]
-  "!rtx_equal_p (operands[0], operands[2]) &&
-   dead_or_set_p (insn, operands[0]) &&
-   !vax_reg_used_p (operands[2], REGNO (operands[0]))"
-  "addl3 %2,%1,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "push_operand" "=g")
-        (match_operand:SI 1 "register_operand" "r"))
-   (set (match_dup 0)
-        (match_operand:SI 2 "register_operand" "r"))]
-   "REGNO (operands[1]) == REGNO (operands[2]) + 1"
-   "movq %2,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r") 
-        (const_int 0))
-   (set (match_operand:SI 1 "register_operand" "=r")
-        (const_int 0))]
-   "REGNO (operands[0]) == REGNO (operands[1]) - 1"
-   "clrq %0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r") 
-        (const_int 0))
-   (set (match_operand:SI 1 "register_operand" "=r")
-        (const_int 0))]
-   "REGNO (operands[0]) == REGNO (operands[1]) + 1"
-   "clrq %1")
-
-(define_peephole
-  [(set (match_operand:SI 0 "memory_operand" "=o")
-        (const_int 0))
-   (set (match_operand:SI 1 "memory_operand" "=o")
-        (const_int 0))]
-   "(GET_CODE (operands[0]) == MEM
-     && GET_CODE (XEXP (operands[0], 0)) == PLUS
-     && GET_CODE (XEXP (XEXP (operands[0], 0), 0)) == REG
-     && REGNO (XEXP (XEXP (operands[0], 0), 0)) == FRAME_POINTER_REGNUM
-     && GET_CODE (XEXP (XEXP (operands[0], 0), 1)) == CONST_INT)
-    && (GET_CODE (operands[1]) == MEM
-	&& GET_CODE (XEXP (operands[1], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == REG
-	&& REGNO (XEXP (XEXP (operands[1], 0), 0)) == FRAME_POINTER_REGNUM
-	&& GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == CONST_INT)
-    && (4 == INTVAL (XEXP (XEXP (operands[1], 0), 1))
-	   - INTVAL (XEXP (XEXP (operands[0], 0), 1))
-        || 4 == INTVAL (XEXP (XEXP (operands[0], 0), 1))
-	      - INTVAL (XEXP (XEXP (operands[1], 0), 1)))"
-   "*
-{
-  if (INTVAL (XEXP (XEXP (operands[0], 0), 1)) < INTVAL (XEXP (XEXP (operands[1], 0), 1)))
-    return \"clrq %0\";
-  else
-    return \"clrq %1\";
-}")
-
-(define_peephole
-  [(set (match_operand:SI 0 "memory_operand" "=m")
-        (match_operand:SI 1 "register_operand" "r"))
-   (set (match_operand:SI 2 "memory_operand" "=m")
-        (match_operand:SI 3 "register_operand" "r"))]
-   "REGNO (operands[1]) == REGNO (operands[3]) - 1
-    && (GET_CODE (operands[0]) == MEM
-	&& GET_CODE (XEXP (operands[0], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[0], 0), 0)) == REG
-	&& GET_CODE (XEXP (XEXP (operands[0], 0), 1)) == CONST_INT)
-    && (GET_CODE (operands[2]) == MEM
-	&& GET_CODE (XEXP (operands[2], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[2], 0), 0)) == REG
-	&& GET_CODE (XEXP (XEXP (operands[2], 0), 1)) == CONST_INT)
-    && (   REGNO (XEXP (XEXP (operands[0], 0), 0))
-	== REGNO (XEXP (XEXP (operands[2], 0), 0)))
-    && (4 == INTVAL (XEXP (XEXP (operands[2], 0), 1))
-	   - INTVAL (XEXP (XEXP (operands[0], 0), 1)))"
-   "movq %1,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (match_operand:SI 1 "memory_operand" "m"))
-   (set (match_operand:SI 2 "register_operand" "=r")
-        (match_operand:SI 3 "memory_operand" "m"))]
-   "REGNO (operands[0]) == REGNO (operands[2]) - 1
-    && (GET_CODE (operands[1]) == MEM
-	&& GET_CODE (XEXP (operands[1], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == REG
-	&& GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == CONST_INT)
-    && (GET_CODE (operands[3]) == MEM
-	&& GET_CODE (XEXP (operands[3], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[3], 0), 0)) == REG
-	&& GET_CODE (XEXP (XEXP (operands[3], 0), 1)) == CONST_INT)
-    && (   REGNO (XEXP (XEXP (operands[1], 0), 0))
-	== REGNO (XEXP (XEXP (operands[3], 0), 0)))
-    && (4 == INTVAL (XEXP (XEXP (operands[3], 0), 1))
-	   - INTVAL (XEXP (XEXP (operands[1], 0), 1)))"
-   "movq %1,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "push_operand" "=g")
-        (match_operand:SI 1 "memory_operand" "m"))
-   (set (match_dup 0)
-        (match_operand:SI 2 "memory_operand" "m"))]
-   "(GET_CODE (operands[1]) == MEM
-    && GET_CODE (XEXP (operands[1], 0)) == PLUS
-    && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) == REG
-    && GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == CONST_INT)
-    && (GET_CODE (operands[2]) == MEM
-	&& GET_CODE (XEXP (operands[2], 0)) == PLUS
-	&& GET_CODE (XEXP (XEXP (operands[2], 0), 0)) == REG
-	&& GET_CODE (XEXP (XEXP (operands[2], 0), 1)) == CONST_INT)
-    && (   REGNO (XEXP (XEXP (operands[2], 0), 0))
-	== REGNO (XEXP (XEXP (operands[1], 0), 0)))
-    && (4 == INTVAL (XEXP (XEXP (operands[1], 0), 1))
-	   - INTVAL (XEXP (XEXP (operands[2], 0), 1)))"
-   "movq %2,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "push_operand" "=g")
-        (const_int 0))
-   (set (match_dup 0)
-        (match_operand:SI 1 "immediate_operand" "i"))]
-   "GET_CODE (operands[1]) == CONST_INT
-    && (unsigned int) INTVAL (operands[1]) < 64"
-   "*
-{
-  if (operands[1] == const0_rtx)
-    return \"clrq %0\";
-  return \"movq %1,%0\";
-}")
-
-(define_peephole
-  [(set (match_operand:SI 0 "push_operand" "=g")
-	(const:SI (plus:SI (match_operand:SI 1 "vax_symbolic_operand" "p")
-			   (match_operand:SI 2 "const_int_operand" "i"))))]
-   "!flag_pic"
-   "pushab %a1+%c2")
-
-(define_peephole
-  [(set (match_operand:SI 0 "vax_lvalue_operand" "=g")
-	(const:SI (plus:SI (match_operand:SI 1 "vax_symbolic_operand" "p")
-			   (match_operand:SI 2 "const_int_operand" "i"))))]
-   "!flag_pic"
-   "movab %a1+%c2,%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(plus:SI (match_dup 0)
-		 (match_operand:SI 1 "vax_symbolic_operand" "g")))]
-  ""
-  "movab %a1[%0],%0")
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(minus:SI (match_operand:SI 1 "register_operand" "r")
-		  (match_operand:SI 2 "vax_symbolic_operand" "p")))]
-  "GET_CODE (operands[1]) == REG && REGNO (operands[1]) != REGNO (operands[0])"
-  "movab %a2,%0; subl3 %0,%1,%0")
-
-
-(define_peephole
-  [(set (match_operand:SI 0 "register_operand" "=r")
-        (plus:SI (match_dup 0)
-		 (const_int -1)))
-   (set (match_operand:SI 1 "vax_lvalue_operand" "=g")
-        (match_dup 0))]
-  "dead_or_set_p (insn, operands[0]) &&
-   !vax_reg_used_p (operands[1], REGNO (operands[0]))"
-  "subl3 $1,%0,%1")
-
-;;(define_peephole2
-;;  [(match_scratch:SI 3 "r")
-;;   (set (match_operand:SI 0 "register_operand" "=r")
-;;	(minus:SI (match_operand:SI 1 "vax_nonsymbolic_operand" "g")
-;;		  (match_operand:SI 2 "vax_symbolic_operand" "p")))]
-;;  ""
-;;  [(set (match_dup 3)
-;;        (match_dup 2))
-;;   (set (match_dup 0)
-;;        (minus:SI (match_dup 1)
-;;		  (match_dup 3)))])
