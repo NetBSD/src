@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.2 1999/05/11 19:57:05 drochner Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3 2001/11/01 09:37:17 yamt Exp $	*/
 
 /*
  * Polling driver for National Semiconductor DS8390/WD83C690 based
@@ -23,6 +23,9 @@
 
 #include <dev/ic/dp8390reg.h>
 #include "dp8390.h"
+#ifdef SUPPORT_NE2000
+#include "ne.h"
+#endif
 
 #include "etherdrv.h"
 
@@ -159,8 +162,8 @@ dp8390_config()
 	}
 #endif
 
-	rec_page_start = ED_TXBUF_SIZE;
-	rec_page_stop = dp8390_memsize >> ED_PAGE_SHIFT;
+	rec_page_start = TX_PAGE_START + ED_TXBUF_SIZE;
+	rec_page_stop = TX_PAGE_START + (dp8390_memsize >> ED_PAGE_SHIFT);
 
 	dp8390_init();
 
@@ -192,14 +195,18 @@ EtherSend(pkt, len)
 char *pkt;
 int len;
 {
+#ifdef SUPPORT_NE2000
+	ne2000_writemem(pkt, dp8390_membase, len);
+#else
 #ifdef _STANDALONE
 	vpbcopy(pkt, (void *)dp8390_membase, len);
 #else
 	bbcopy(pkt, vmembase, len);
 #endif
+#endif
 
 	/* Set TX buffer start page. */
-	NIC_PUT(ED_P0_TPSR, 0);
+	NIC_PUT(ED_P0_TPSR, TX_PAGE_START);
 
 	/* Set TX length. */
 	NIC_PUT(ED_P0_TBCR0, len < 60 ? 60 : len);
@@ -224,20 +231,28 @@ dp8390_read(buf, dest, len)
 		tmp_amount = dp8390_membase + dp8390_memsize - buf;
 
 		/* Copy amount up to end of NIC memory. */
+#ifdef SUPPORT_NE2000
+		ne2000_readmem(buf, dest, tmp_amount);
+#else
 #ifdef _STANDALONE
 		pvbcopy((void *)buf, dest, tmp_amount);
 #else
 		bbcopy(vmembase + buf - dp8390_membase, dest, tmp_amount);
 #endif
+#endif
 
 		len -= tmp_amount;
-		buf = dp8390_membase + (rec_page_start << ED_PAGE_SHIFT);
+		buf = RX_BUFBASE + (rec_page_start << ED_PAGE_SHIFT);
 		dest += tmp_amount;
 	}
+#ifdef SUPPORT_NE2000
+	ne2000_readmem(buf, dest, len);
+#else
 #ifdef _STANDALONE
 	pvbcopy((void *)buf, dest, len);
 #else
 	bbcopy(vmembase + buf - dp8390_membase, dest, len);
+#endif
 #endif
 }
 
@@ -277,16 +292,20 @@ int maxlen;
 		return(0);
 
 	/* Get pointer to this buffer's header structure. */
-	packet_ptr = dp8390_membase + (next_packet << ED_PAGE_SHIFT);
-
+	packet_ptr = RX_BUFBASE + (next_packet << ED_PAGE_SHIFT);
+	
 	/*
 	 * The byte count includes a 4 byte header that was added by
 	 * the NIC.
 	 */
+#ifdef SUPPORT_NE2000
+	ne2000_readmem(packet_ptr, (void *)&packet_hdr, 4);
+#else
 #ifdef _STANDALONE
 	pvbcopy((void *)packet_ptr, &packet_hdr, 4);
 #else
 	bbcopy(vmembase + packet_ptr - dp8390_membase, &packet_hdr, 4);
+#endif
 #endif
 
 	len = packet_hdr.count;
@@ -311,8 +330,8 @@ int maxlen;
 	len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 	if (len != packet_hdr.count) {
-		printf("we: length does not match next packet pointer\n");
-		printf("we: len %04x nlen %04x start %02x "
+		printf(IFNAME ": length does not match next packet pointer\n");
+		printf(IFNAME ": len %04x nlen %04x start %02x "
 		       "first %02x curr %02x next %02x stop %02x\n",
 		       packet_hdr.count, len,
 		       rec_page_start, next_packet, current,
@@ -323,7 +342,7 @@ int maxlen;
 
 	if (packet_hdr.next_packet < rec_page_start ||
 	    packet_hdr.next_packet >= rec_page_stop)
-		panic("we: RAM corrupt");
+		panic(IFNAME ": RAM corrupt");
 
 	len -= sizeof(struct dp8390_ring);
 	if (len < maxlen) {
