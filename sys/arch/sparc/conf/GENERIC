@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.96 2000/01/23 23:46:18 hubertf Exp $
+# 	$NetBSD: GENERIC,v 1.97 2000/01/28 16:08:52 cjs Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 maxusers	32
 
@@ -276,6 +276,8 @@ zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 zstty2	at zs2 channel 0	# ttyc
 zstty3	at zs2 channel 1	# ttyd
 
+# Parallel port.
+bpp*	at sbus? slot? offset ?
 
 ## Magma Serial/Parallel driver
 magma*	at sbus? slot ? offset ?
