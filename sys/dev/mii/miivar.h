@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.11 1999/11/04 00:22:08 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.9 1999/09/25 00:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,8 +67,6 @@ struct mii_data {
 	struct ifmedia mii_media;	/* media information */
 	struct ifnet *mii_ifp;		/* pointer back to network interface */
 
-	int mii_flags;			/* misc. flags; see below */
-
 	/*
 	 * For network interfaces with multiple PHYs, a list of all
 	 * PHYs is required so they can all be notified when a media
@@ -130,20 +128,8 @@ struct mii_softc {
 typedef struct mii_softc mii_softc_t;
 
 /* mii_flags */
-#define	MIIF_INITDONE	0x0001		/* has been initialized (mii_data) */
-#define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
-#define	MIIF_NOLOOP	0x0004		/* no loopback capability */
-#define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
-
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
-
-/*
- * Special `locators' passed to mii_phy_probe.  If one of these is not
- * an `any' value, we look for *that* PHY and configure it.  If both
- * are not `any', that is an error, and mii_phy_probe() will panic.
- */
-#define	MII_OFFSET_ANY		-1
-#define	MII_PHY_ANY		-1
+#define	MIIF_NOISOLATE	0x0001		/* do not isolate the PHY */
+#define	MIIF_DOINGAUTO	0x0002		/* doing autonegotiation */
 
 /*
  * Used to attach a PHY to a parent.
@@ -157,22 +143,6 @@ struct mii_attach_args {
 };
 typedef struct mii_attach_args mii_attach_args_t;
 
-/*
- * An array of these structures map MII media types to BMCR/ANAR settings.
- */
-struct mii_media {
-	int	mm_bmcr;		/* BMCR settings for this media */
-	int	mm_anar;		/* ANAR settings for this media */
-};
-
-#define	MII_MEDIA_NONE		0
-#define	MII_MEDIA_10_T		1
-#define	MII_MEDIA_10_T_FDX	2
-#define	MII_MEDIA_100_T4	3
-#define	MII_MEDIA_100_TX	4
-#define	MII_MEDIA_100_TX_FDX	5
-#define	MII_NMEDIA		6
-
 #ifdef _KERNEL
 #include "locators.h"
 
@@ -184,13 +154,15 @@ struct mii_media {
 	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
 	    (p)->mii_phy, (r), (v))
 
+int	mii_anar __P((int));
 int	mii_mediachg __P((struct mii_data *));
 void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
-void	mii_phy_probe __P((struct device *, struct mii_data *, int, int, int));
-void	mii_add_media __P((struct mii_softc *));
+void	mii_phy_probe __P((struct device *, struct mii_data *, int));
+void	mii_add_media __P((struct mii_data *, int, int));
 
-void	mii_phy_setmedia __P((struct mii_softc *));
+int	mii_media_from_bmcr __P((int));
+
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 

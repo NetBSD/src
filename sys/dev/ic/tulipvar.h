@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.20 1999/11/04 01:20:58 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.18 1999/09/30 17:48:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -194,18 +194,18 @@ struct tulip_txthresh_tab {
 };
 
 /*
- * Settings for Tulip SIA media.
+ * Description of 21040/21041 SIA media.
  */
-struct tulip_sia_media {
+struct tulip_21040_21041_sia_media {
 	u_int32_t	tsm_siaconn;	/* CSR13 value */
 	u_int32_t	tsm_siatxrx;	/* CSR14 value */
 	u_int32_t	tsm_siagen;	/* CSR15 value */
 };
 
 /*
- * Description of 2x14x media.
+ * Description of 2114x media.
  */
-struct tulip_21x4x_media {
+struct tulip_2114x_media {
 	int		tm_type;	/* type of media; see tulipreg.h */
 	const char	*tm_name;	/* name of media */
 
@@ -222,15 +222,9 @@ struct tulip_21x4x_media {
 	int		tm_reset_offset;/* MII reset sequence offset */
 
 	u_int32_t	tm_opmode;	/* OPMODE bits for this media */
-	u_int32_t	tm_gpctl;	/* GPIO control bits for this media */
 	u_int32_t	tm_gpdata;	/* GPIO bits for this media */
 	u_int32_t	tm_actmask;	/* `active' bits for this data */
 	u_int32_t	tm_actdata;	/* active high/low info */
-
-	struct tulip_sia_media tm_sia;	/* SIA settings */
-#define	tm_siaconn	tm_sia.tsm_siaconn
-#define	tm_siatxrx	tm_sia.tsm_siatxrx
-#define	tm_siagen	tm_sia.tsm_siagen
 };
 
 /*
@@ -242,15 +236,13 @@ struct tulip_srom_to_ifmedia {
 	int		tsti_options;	/* ifmedia options */
 	const char	*tsti_name;	/* media name */
 
-	u_int32_t	tsti_opmode;	/* OPMODE bits for this media */
-
 	/*
-	 * Settings for 21040, 21041, and 21142/21143 SIA, in the event
+	 * These members provide 21041 SIA default settings in case
 	 * the SROM doesn't have them.
 	 */
-	struct tulip_sia_media tsti_21040;
-	struct tulip_sia_media tsti_21041;
-	struct tulip_sia_media tsti_21142;
+	u_int32_t	tsti_21041_siaconn;
+	u_int32_t	tsti_21041_siatxrx;
+	u_int32_t	tsti_21041_siagen;
 };
 
 /*
@@ -291,7 +283,7 @@ struct tulip_softc {
 	 * variables required for autonegotiation.
 	 */
 	int		sc_nway_ticks;	/* tick counter */
-	struct ifmedia_entry *sc_nway_active; /* the active media */
+	int		sc_nway_active;	/* last active media */
 
 	tulip_chip_t	sc_chip;	/* chip type */
 	int		sc_rev;		/* chip revision */
@@ -305,9 +297,7 @@ struct tulip_softc {
 	const struct tulip_txthresh_tab *sc_txth;
 	int		sc_txthresh;	/* current transmit threshold */
 
-	u_int8_t	sc_gp_dir;	/* GPIO pin direction bits (21140) */
-	int		sc_media_seen;	/* ISV media block types seen */
-	int		sc_tlp_minst;	/* Tulip internal media instance */
+	u_int8_t	sc_gp_dir;	/* GPIO pin direction bits */
 
 	/* Reset function. */
 	void		(*sc_reset) __P((struct tulip_softc *));
@@ -370,27 +360,8 @@ struct tulip_softc {
 #define	TULIPF_DOING_SETUP	0x00000002	/* doing multicast setup */
 #define	TULIPF_HAS_MII		0x00000004	/* has media on MII */
 #define	TULIPF_IC_FS		0x00000008	/* IC bit on first tx seg */
-#define	TULIPF_MRL		0x00000010	/* memory read line okay */
-#define	TULIPF_MRM		0x00000020	/* memory read multi okay */
-#define	TULIPF_MWI		0x00000040	/* memory write inval okay */
-#define	TULIPF_LINK_UP		0x00000100	/* link is up (non-MII) */
-#define	TULIPF_LINK_VALID	0x00000200	/* link state valid */
-#define	TULIPF_DOINGAUTO	0x00000400	/* doing autoneg (non-MII) */
-
-/*
- * This macro returns the current media entry for *non-MII* media.
- */
-#define	TULIP_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
-
-/*
- * This macro determines if a change to media-related OPMODE bits requires
- * a chip reset.
- */
-#define	TULIP_MEDIA_NEEDSRESET(sc, newbits)				\
-	(((sc)->sc_opmode & OPMODE_MEDIA_BITS) !=			\
-	 ((newbits) & OPMODE_MEDIA_BITS))
+#define	TULIPF_LINK_UP		0x00000010	/* link is up (non-MII) */
+#define	TULIPF_DOINGAUTO	0x00000020	/* doing autoneg (non-MII) */
 
 #define	TULIP_CDTXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDTXOFF((x)))
 #define	TULIP_CDRXADDR(sc, x)	((sc)->sc_cddma + TULIP_CDRXOFF((x)))

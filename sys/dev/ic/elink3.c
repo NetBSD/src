@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.65 1999/11/04 20:27:11 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.63 1999/10/30 12:07:08 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -469,8 +469,7 @@ epconfig(sc, chipset, enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
-			    MII_PHY_ANY, MII_OFFSET_ANY);
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
 				    IFM_ETHER|IFM_NONE, 0, NULL);
@@ -1349,7 +1348,11 @@ eptxstat(sc)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
+#if 1
+			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+#else
 			epreset(sc);
+#endif
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -1360,7 +1363,11 @@ eptxstat(sc)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
+#if 1
+			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
+#else
 			epreset(sc);
+#endif
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);

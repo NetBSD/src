@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.170 1999/11/04 16:18:41 tsarna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.167 1999/11/01 20:43:51 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.165 1999/11/04 16:02:20 tsarna Exp 
+ *	NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp 
  */
 
 /*
@@ -766,12 +766,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 LP",
 	},
 	{
-	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
-	    0,
-	    "Aureal Semiconductor",
-	    "AU8820 Vortex Digital Audio Processor",
-	},
-	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
 	    0,
 	    "Applied Micro Circuits",
@@ -1214,12 +1208,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Corrollary",
 	    "\"C-Bus II\"-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
-	    0,
-	    "Creative Labs",
-	    "SBLive! EMU 10000",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
@@ -3512,18 +3500,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F Ethernet",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
-	    0,
-	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
-	    0,
-	    "Xircom",
-	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
@@ -6319,12 +6295,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_AUREAL, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Aureal Semiconductor",
 	    NULL,
 	},
 	{

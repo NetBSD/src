@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.20 1999/11/04 02:53:03 simonb Exp $ */
+/* 	$NetBSD: px.c,v 1.19 1999/10/24 15:33:45 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.20 1999/11/04 02:53:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19 1999/10/24 15:33:45 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -449,6 +449,7 @@ px_qvss_init(pxi)
 	fi->fi_base = (caddr_t)pxi;
 	fi->fi_fbu = &pxi->pxi_fbuaccess;
 	fi->fi_type.fb_width = 1280;
+	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_PX;
 	fi->fi_type.fb_cmsize = 256;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.7 1999/11/03 23:06:35 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.6 1999/10/27 17:59:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ ifmedia_init(ifm, dontcare_mask, change_callback, status_callback)
 	ifm_stat_cb_t status_callback;
 {
 
-	TAILQ_INIT(&ifm->ifm_list);
+	LIST_INIT(&ifm->ifm_list);
 	ifm->ifm_cur = NULL;
 	ifm->ifm_media = 0;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
@@ -156,7 +156,7 @@ ifmedia_add(ifm, mword, data, aux)
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
 
-	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
+	LIST_INSERT_HEAD(&ifm->ifm_list, entry, ifm_list);
 }
 
 /*
@@ -302,7 +302,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		(*ifm->ifm_status)(ifp, ifmr);
 
 		count = 0;
-		ep = TAILQ_FIRST(&ifm->ifm_list);
+		ep = ifm->ifm_list.lh_first;
 
 		if (ifmr->ifm_count != 0) {
 			kptr = (int *)malloc(ifmr->ifm_count * sizeof(int),
@@ -312,7 +312,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 			 * Get the media words from the interface's list.
 			 */
 			for (; ep != NULL && count < ifmr->ifm_count;
-			    ep = TAILQ_NEXT(ep, ifm_list), count++)
+			    ep = ep->ifm_list.le_next, count++)
 				kptr[count] = ep->ifm_media;
 
 			if (ep != NULL)
@@ -325,7 +325,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		 * to 0 on the first call to know how much space to
 		 * callocate.
 		 */
-		for (; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
+		for (; ep != NULL; ep = ep->ifm_list.le_next)
 			count++;
 
 		/*
@@ -372,8 +372,8 @@ ifmedia_match(ifm, target, mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
-	     next = TAILQ_NEXT(next, ifm_list)) {
+	for (next = ifm->ifm_list.lh_first; next != NULL;
+	    next = next->ifm_list.le_next) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
