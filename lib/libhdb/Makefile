@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2001/09/17 12:34:41 assar Exp $
+# $NetBSD: Makefile,v 1.8 2001/09/21 22:59:00 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,13 @@ MKLINT= no
 
 LIB=	hdb
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+.ifndef USE_NEW_TOOLCHAIN
+COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILE_ET=	${COMPILEETOBJ}/compile_et
+.endif
 
 hdb_err.c hdb_err.h: hdb_err.et
-	${COMPILEET}/compile_et ${DIST}/heimdal/lib/hdb/hdb_err.et
+	${COMPILE_ET} ${DIST}/heimdal/lib/hdb/hdb_err.et
 
 ERR_FILES = hdb_err.c
 
