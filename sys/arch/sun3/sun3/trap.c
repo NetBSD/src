@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 1997/02/11 00:01:15 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 1997/02/12 01:10:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,6 +56,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#ifdef	KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -73,16 +76,13 @@
 extern struct emul emul_sunos;
 #endif
 
-#ifdef	KGDB
-#include <kgdb/kgdb.h>
-#endif
-
 /* Special labels in m68k/copy.s */
 extern char fubail[], subail[];
 
 /* These are called from locore.s */
 void syscall __P((register_t code, struct trapframe));
 void trap __P((int type, u_int code, u_int v, struct trapframe));
+void trap_kdebug __P((int type, struct trapframe tf));
 int _nodb_trap __P((int type, struct trapframe *));
 
 static void userret __P((struct proc *, struct trapframe *, u_quad_t));
@@ -407,9 +407,13 @@ trap(type, code, v, tf)
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+		/* Hacks to avoid calling VM code from debugger. */
 #ifdef	DDB
-		/* Hack to avoid calling VM code from DDB. */
 		if (db_recover != 0)
+			goto dopanic;
+#endif
+#ifdef	KGDB
+		if (kgdb_recover != 0)
 			goto dopanic;
 #endif
 		/*
