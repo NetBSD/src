@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.467 2002/04/19 09:47:10 wiz Exp $
+# $NetBSD: mi,v 1.468 2002/04/22 21:05:20 ad Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -680,6 +680,7 @@
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman
 ./usr/share/man/cat4/icmp.0			man-sys-catman
 ./usr/share/man/cat4/icmp6.0			man-sys-catman
+./usr/share/man/cat4/icp.0			man-sys-catman
 ./usr/share/man/cat4/icsphy.0			man-sys-catman
 ./usr/share/man/cat4/idp.0			man-sys-catman
 ./usr/share/man/cat4/ifmedia.0			man-sys-catman
@@ -2370,6 +2371,7 @@
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man
 ./usr/share/man/man4/icmp.4			man-sys-man
 ./usr/share/man/man4/icmp6.4			man-sys-man
+./usr/share/man/man4/icp.4			man-sys-man
 ./usr/share/man/man4/icsphy.4			man-sys-man
 ./usr/share/man/man4/idp.4			man-sys-man
 ./usr/share/man/man4/ifmedia.4			man-sys-man
