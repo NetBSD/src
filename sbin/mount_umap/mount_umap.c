@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.3 1995/03/18 14:58:17 cgd Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.4 1995/04/24 13:23:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_umap.c,v 1.3 1995/03/18 14:58:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_umap.c,v 1.4 1995/04/24 13:23:11 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,8 @@ main(argc, argv)
 	struct umap_args args;
 	FILE *fp, *gfp;
 	long d1, d2;
-	uid_t mapdata[MAPFILEENTRIES][2];
-	gid_t gmapdata[GMAPFILEENTRIES][2];
+	u_long mapdata[MAPFILEENTRIES][2];
+	u_long gmapdata[GMAPFILEENTRIES][2];
 	int ch, count, gnentries, mntflags, nentries;
 	char *gmapfile, *mapfile, *source, *target, buf[20];
 
