@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.86 1997/08/16 01:05:51 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.87 1997/08/17 16:25:11 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -408,6 +408,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
+	{{T_DIRECT, T_REMOV,
+	 "MPL     ", "MC-DISK-        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -466,6 +468,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
+	 "SONY    ", "GY-10C          ", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09"}, SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-5000        ", "3."},   SDEV_NOSYNCWIDE},
@@ -488,8 +492,12 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNCWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
+
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
+
+	{{T_PROCESSOR, T_FIXED,
+	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
 };
 
 /*
