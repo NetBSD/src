@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2002/02/28 16:54:28 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2002/03/02 22:26:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "opt_memsize.h"
+#include "scif.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +104,7 @@
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#include <sh3/dev/scifvar.h>
 #endif
 
 #ifdef DDB
@@ -413,12 +415,17 @@ dreamcast_startup()
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-#if 1
-	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-#endif
+	consinit();
 
 	splraise(-1);
 	_cpu_exception_resume(0);	/* SR.BL = 0 */
+
+#if defined(KGDB) && NSCIF > 0
+	if (scif_kgdb_init() == 0) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif /* KGDB && NSCIF > 0 */
 
 	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartvar.h,v 1.3 2002/02/11 17:21:48 uch Exp $	*/
+/*	$NetBSD: hd64461uartvar.h,v 1.4 2002/03/02 22:26:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _LOCORE
+int hd64461uart_kgdb_init(void);
+#endif
 
 #define HD64461COM_TX_BUSY()						\
 	while ((*(volatile u_int8_t *)HD64461_ULSR_REG8 & LSR_TXRDY) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.29 2002/02/28 18:18:51 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.30 2002/03/02 22:26:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,11 @@
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME "nodev"
 #endif
+const char kgdb_devname[] = KGDB_DEVNAME;
+#endif /* KGDB */
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.21 2002/02/22 19:44:04 uch Exp $ */
+/*	$NetBSD: scif.c,v 1.22 2002/03/02 22:26:27 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -116,18 +116,19 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kgdb.h>
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
 #include <sh3/clock.h>
 #include <sh3/scifreg.h>
-//#include <sh3/tmureg.h>
+#include <sh3/dev/scifvar.h>
 
 #include <machine/shbvar.h>
 
 static void	scifstart(struct tty *);
 static int	scifparam(struct tty *, struct termios *);
+static int kgdb_attached;
 
 void scifcnprobe(struct consdev *);
 void scifcninit(struct consdev *);
@@ -442,11 +443,16 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 
 	irq = ia->ia_irq;
 
-	if (scifisconsole) {
+	if (scifisconsole || kgdb_attached) {
 		/* InitializeScif(scifcn_speed); */
 		SET(sc->sc_hwflags, SCIF_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
-		printf("\n%s: console\n", sc->sc_dev.dv_xname);
+		if (kgdb_attached) {
+			SET(sc->sc_hwflags, SCIF_HW_KGDB);
+			printf("\n%s: kgdb\n", sc->sc_dev.dv_xname);
+		} else {
+			printf("\n%s: console\n", sc->sc_dev.dv_xname);
+		}
 	} else {
 		InitializeScif(9600);
 		printf("\n");
@@ -454,17 +460,10 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_diag_ch);
 
-#if 0
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(irq,
-		    IST_EDGE, IPL_SERIAL, scifintr, sc);
-	}
-#else
 	if (irq != IRQUNK) {
 		sc->sc_ih = shb_intr_establish(SCIF_IRQ,
 		    IST_EDGE, IPL_SERIAL, scifintr, sc);
 	}
-#endif
 
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
@@ -720,7 +719,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 	 */
 	if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB))
 		return (EBUSY);
-#endif
+#endif /* KGDB */
 
 	tp = sc->sc_tty;
 
@@ -1230,18 +1229,16 @@ scifintr(void *arg)
 	ssr2 = SHREG_SCSSR2;
 	if (ISSET(ssr2, SCSSR2_BRK)) {
 		SHREG_SCSSR2 &= ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR);
-#if defined(DDB) || defined(KGDB)
 #ifdef DDB
 		if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
 			console_debugger();
 		}
-#endif
+#endif /* DDB */
 #ifdef KGDB
 		if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
 			kgdb_connect(1);
 		}
-#endif
-#endif /* DDB || KGDB */
+#endif /* KGDB */
 	}
 	count = SHREG_SCFDR2 & SCFDR2_RECVCNT;
 	if (count != 0) {
@@ -1484,3 +1481,25 @@ scifcnputc(dev_t dev, int c)
 	scif_putc((u_char)c);
 	splx(s);
 }
+
+#ifdef KGDB
+int
+scif_kgdb_init()
+{
+
+	if (strcmp(kgdb_devname, "scif") != 0)
+		return (1);
+
+	if (scifisconsole)
+		return (1);	/* can't share with console */
+
+	InitializeScif(kgdb_rate);
+
+	kgdb_attach((int (*)(void *))scifcngetc,
+	    (void (*)(void *, int))scifcnputc, NULL);
+	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
+	kgdb_attached = 1;
+	
+	return (0);
+}
+#endif /* KGDB */
