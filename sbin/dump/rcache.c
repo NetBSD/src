@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.17 2003/02/04 08:43:16 enami Exp $	*/
+/*	$NetBSD: rcache.c,v 1.18 2003/02/06 23:00:08 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.17 2003/02/04 08:43:16 enami Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.18 2003/02/06 23:00:08 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -196,7 +196,7 @@ rawread(daddr_t blkno, char *buf, int size)
 #endif
 
 loop:
-	if (lseek(diskfd, ((off_t) blkno << dev_bshift), SEEK_SET) < 0) {
+	if (lseek(diskfd, ((off_t) blkno << dev_bshift), SEEK_SET) == -1) {
 		msg("rawread: lseek fails\n");
 		goto err;
 	}
@@ -241,7 +241,7 @@ err:
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
 		if (lseek(diskfd, ((off_t)blkno << dev_bshift),
-		    SEEK_SET) < 0) {
+		    SEEK_SET) == -1) {
 			msg("rawread: lseek2 fails: %s!\n",
 			    strerror(errno));
 			continue;
@@ -399,7 +399,7 @@ retry:
 			cdesc[idx].cd_blocksRead = 0;
 
 			if (lseek(diskfd, ((off_t) blockBlkNo << dev_bshift),
-			    SEEK_SET) < 0) {
+			    SEEK_SET) == -1) {
 				msg("readBlocks: lseek fails: %s\n",
 				    strerror(errno));
 				rsize = -1;
