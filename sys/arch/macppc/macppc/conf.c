@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1998/05/15 10:15:57 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1998/06/05 12:24:44 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -122,7 +122,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 8: Openfirmware disk */
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
-	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
+	cdev_bpftun_init(NTUN,tun),	/* 11: network tunnel */
 	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
@@ -135,7 +135,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ipf_init(NIPFILTER,ipl),	/* 21: ip-filter device */
 	cdev_tty_init(NITE,ite),	/* 22: console terminal emulator */
 	cdev_fb_init(NGRF,grf),		/* 23: frame buffer */
-	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
+	cdev_rnd_init(NRND,rnd),	/* 24: random source pseudo-device */
 	cdev_disk_init(NVND,vnd),	/* 25: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 26: concatenated disk driver */
 	cdev_lkm_dummy(),		/* 27: */
@@ -143,6 +143,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 29: */
 	cdev_lkm_dummy(),		/* 30: */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
+	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -209,6 +210,7 @@ static int chrtoblktbl[] = {
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
+	/* 32 */	NODEV,
 };
 
 /*
