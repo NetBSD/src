@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1997/10/14 06:47:44 sakamoto Exp $	*/
+/*	$NetBSD: locore.s,v 1.1.2.1 1997/11/28 19:34:54 mellon Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -43,11 +43,6 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
-
-/*
- * Some instructions gas doesn't understand (yet?)
- */
-#define	bdneq	bdnzf 2,
 
 /*
  * Globals
@@ -115,16 +110,20 @@ __start:
 
 __start_cpu1:
 	addi	9, 9, 1
+#if 0
 	lis	7, 0x100
+#else
+	lis	7, 0x10
+#endif
 __start_cpu1_loop:
 	subi	7, 7, 1
 	cmpi	0, 7, 0
 	bne	__start_cpu1_loop
 	lis	8, 0x8000
 	ori	8, 8, 0x0c00
-#if 0
+	lis	9,_C_LABEL(cpl)@ha
+	lwz	9,_C_LABEL(cpl)@l(9)
 	stb	9, 0(8)
-#endif 0
 	b	__start_cpu1
 
 __start_cpu0:
@@ -171,13 +170,6 @@ ASENTRY(Idle)
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
-
-#if 1
-	mfdec	9
-	lis	8, 0x8000
-	ori	8, 8, 0x0c00
-	stb	9, 0(8)
-#endif 1
 
 	lis	8,_C_LABEL(whichqs)@ha
 	lwz	9,_C_LABEL(whichqs)@l(8)
@@ -229,10 +221,7 @@ ENTRY(cpu_switch)
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
 	xor	3,3,3
-	lis	4,_C_LABEL(machine_interface)+SPLX@ha
-	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
-	mtlr	0
-	blrl
+	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
 /* Find a new process */
@@ -268,16 +257,14 @@ ENTRY(cpu_switch)
 	stw	9,_C_LABEL(whichqs)@l(8) /* mark it empty */
 
 1:
-	/* just did this resched thing */
 	xor	3,3,3
 	lis	4,_C_LABEL(want_resched)@ha
-	stw	3,_C_LABEL(want_resched)@l(4)
+	stw	3,_C_LABEL(want_resched)@l(4) /* just did this resched thing */
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
-	/* record new process */
 	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
+	stw	31,_C_LABEL(curproc)@l(4) /* record new process */
 
 	mfmsr	3
 	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
@@ -303,15 +290,14 @@ switch_exited:
 					   actually switching */
 	mtmsr	3
 
-	/* indicate new pcb */
 	lwz	4,P_ADDR(31)
 	lis	5,_C_LABEL(curpcb)@ha
-	stw	4,_C_LABEL(curpcb)@l(5)
+	stw	4,_C_LABEL(curpcb)@l(5) /* indicate new pcb */
 
-	/* save real pmap pointer for spill fill */
 	lwz	5,PCB_PMR(4)
 	lis	6,_C_LABEL(curpm)@ha
-	stwu	5,_C_LABEL(curpm)@l(6)
+	stwu	5,_C_LABEL(curpm)@l(6)  /* save real pmap pointer
+					   for spill fill */
 	stwcx.	5,0,6			/* clear possible reservation */
 
 	addic.	5,5,64
@@ -343,10 +329,7 @@ switch_exited:
 switch_return:
 	mr	30,7			/* save proc pointer */
 	lwz	3,PCB_SPL(4)
-	lis	4,_C_LABEL(machine_interface)+SPLX@ha
-	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
-	mtlr	0
-	blrl
+	bl	_C_LABEL(lcsplx)
 
 	mr	3,30			/* get curproc for special fork
 					   returns */
@@ -417,14 +400,12 @@ _C_LABEL(dsitrap):
 	mfdar	31			/* get fault address */
 	rlwinm	31,31,7,25,28		/* get segment * 8 */
 
-	/* get batu */
 	addis	31,31,_C_LABEL(battable)@ha
-	lwz	30,_C_LABEL(battable)@l(31)
+	lwz	30,_C_LABEL(battable)@l(31) /* get batu */
 	mtcr	30
 	bc	4,30,1f			/* branch if supervisor valid is
 					   false */
-	/* get batl */
-	lwz	31,_C_LABEL(battable)+4@l(31)
+	lwz	31,_C_LABEL(battable)+4@l(31) /* get batl */
 /* We randomly use the highest two bat registers here */
 	mftb	28
 	andi.	28,28,1
@@ -533,6 +514,8 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
 #define	IMISS	980
 #define	ICMP	981
 #define	RPA	982
+
+#define	bdneq	bdnzf 2,
 
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
@@ -908,10 +891,7 @@ trapexit:
 	.globl	_C_LABEL(fork_trampoline)
 _C_LABEL(fork_trampoline):
 	xor	3,3,3
-	lis	4,_C_LABEL(machine_interface)+SPLX@ha
-	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
-	mtlr	0
-	blrl
+	bl	_C_LABEL(lcsplx)
 	mtlr	31
 	mr	3,30
 	blrl				/* jump indirect to r31 */
@@ -1069,7 +1049,7 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
@@ -1331,4 +1311,11 @@ _C_LABEL(disable_intr):
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l
 	mtmsr	3
+	blr
+
+	.globl	_C_LABEL(debug_led)
+_C_LABEL(debug_led):
+	lis	4, 0x8000
+	ori	4, 4, 0x0c00
+	stb	3, 0(4)
 	blr
