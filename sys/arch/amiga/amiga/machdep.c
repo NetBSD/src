@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 1997/12/04 15:33:17 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 1998/01/06 20:50:22 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -745,9 +745,10 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
+	if (ft >= FMT4) {
 #ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
+		if (ft != FMT4 && ft != FMT7 && 
+		    ft != FMT9 && ft != FMTA && ft != FMTB)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
