@@ -1,6 +1,6 @@
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.44";
+static char	elsieid[] = "@(#)localtime.c	7.50";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -190,7 +190,7 @@ const char * const	codep;
 	register long	result;
 	register int	i;
 
- 	result = (codep[0] & 0x80) ? ~0L : 0L;
+	result = (codep[0] & 0x80) ? ~0L : 0L;
 	for (i = 0; i < 4; ++i)
 		result = (result << 8) | (codep[i] & 0xff);
 	return result;
@@ -199,8 +199,8 @@ const char * const	codep;
 static void
 settzname P((void))
 {
-	register struct state * const		sp = lclptr;
-	register int				i;
+	register struct state * const	sp = lclptr;
+	register int			i;
 
 	tzname[0] = wildabbr;
 	tzname[1] = wildabbr;
@@ -415,7 +415,7 @@ register const char *	strp;
 {
 	register char	c;
 
-	while ((c = *strp) != '\0' && !isdigit(c) && c != ',' && c != '-' &&
+	while ((c = *strp) != '\0' && !is_digit(c) && c != ',' && c != '-' &&
 		c != '+')
 			++strp;
 	return strp;
@@ -438,15 +438,15 @@ const int		max;
 	register char	c;
 	register int	num;
 
-	if (strp == NULL || !isdigit(*strp))
+	if (strp == NULL || !is_digit(c = *strp))
 		return NULL;
 	num = 0;
-	while ((c = *strp) != '\0' && isdigit(c)) {
+	do {
 		num = num * 10 + (c - '0');
 		if (num > max)
 			return NULL;	/* illegal value */
-		++strp;
-	}
+		c = *++strp;
+	} while (is_digit(c));
 	if (num < min)
 		return NULL;		/* illegal value */
 	*nump = num;
@@ -508,14 +508,13 @@ getoffset(strp, offsetp)
 register const char *	strp;
 long * const		offsetp;
 {
-	register int	neg;
+	register int	neg = 0;
 
 	if (*strp == '-') {
 		neg = 1;
 		++strp;
-	} else if (isdigit(*strp) || *strp++ == '+')
-		neg = 0;
-	else	return NULL;		/* illegal offset */
+	} else if (*strp == '+')
+		++strp;
 	strp = getsecs(strp, offsetp);
 	if (strp == NULL)
 		return NULL;		/* illegal time */
@@ -560,7 +559,7 @@ register struct rule * const	rulep;
 		if (*strp++ != '.')
 			return NULL;
 		strp = getnum(strp, &rulep->r_day, 0, DAYSPERWEEK - 1);
-	} else if (isdigit(*strp)) {
+	} else if (is_digit(*strp)) {
 		/*
 		** Day of year.
 		*/
@@ -802,7 +801,8 @@ const int			lastditch;
 			for (i = 0; i < sp->timecnt; ++i) {
 				j = sp->types[i];
 				if (!sp->ttis[j].tt_isdst) {
-					theirstdoffset = -sp->ttis[j].tt_gmtoff;
+					theirstdoffset =
+						-sp->ttis[j].tt_gmtoff;
 					break;
 				}
 			}
@@ -810,7 +810,8 @@ const int			lastditch;
 			for (i = 0; i < sp->timecnt; ++i) {
 				j = sp->types[i];
 				if (sp->ttis[j].tt_isdst) {
-					theirdstoffset = -sp->ttis[j].tt_gmtoff;
+					theirdstoffset =
+						-sp->ttis[j].tt_gmtoff;
 					break;
 				}
 			}
@@ -1173,19 +1174,18 @@ register struct tm * const		tmp;
 	if (tmp->tm_wday < 0)
 		tmp->tm_wday += DAYSPERWEEK;
 	y = EPOCH_YEAR;
-	if (days >= 0)
-		for ( ; ; ) {
-			yleap = isleap(y);
-			if (days < (long) year_lengths[yleap])
-				break;
-			++y;
-			days = days - (long) year_lengths[yleap];
-		}
-	else do {
-		--y;
-		yleap = isleap(y);
-		days = days + (long) year_lengths[yleap];
-	} while (days < 0);
+#define LEAPS_THRU_END_OF(y)	((y) / 4 - (y) / 100 + (y) / 400)
+	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
+		register int	newy;
+
+		newy = y + days / DAYSPERNYEAR;
+		if (days < 0)
+			--newy;
+		days -= (newy - y) * DAYSPERNYEAR +
+			LEAPS_THRU_END_OF(newy - 1) -
+			LEAPS_THRU_END_OF(y - 1);
+		y = newy;
+	}
 	tmp->tm_year = y - TM_YEAR_BASE;
 	tmp->tm_yday = (int) days;
 	ip = mon_lengths[yleap];
@@ -1384,10 +1384,10 @@ int * const		okayp;
 		if (sp == NULL)
 			return WRONG;
 #endif /* defined ALL_STATE */
-		for (i = 0; i < sp->typecnt; ++i) {
+		for (i = sp->typecnt - 1; i >= 0; --i) {
 			if (sp->ttis[i].tt_isdst != yourtm.tm_isdst)
 				continue;
-			for (j = 0; j < sp->typecnt; ++j) {
+			for (j = sp->typecnt - 1; j >= 0; --j) {
 				if (sp->ttis[j].tt_isdst == yourtm.tm_isdst)
 					continue;
 				newt = t + sp->ttis[j].tt_gmtoff -
@@ -1419,7 +1419,7 @@ label:
 static time_t
 time1(tmp, funcp, offset)
 struct tm * const	tmp;
-void (* const		funcp) P((const time_t*, long, struct tm*));
+void (* const		funcp) P((const time_t *, long, struct tm *));
 const long		offset;
 {
 	register time_t			t;
@@ -1458,10 +1458,10 @@ const long		offset;
 	if (sp == NULL)
 		return WRONG;
 #endif /* defined ALL_STATE */
-	for (samei = 0; samei < sp->typecnt; ++samei) {
+	for (samei = sp->typecnt - 1; samei >= 0; --samei) {
 		if (sp->ttis[samei].tt_isdst != tmp->tm_isdst)
 			continue;
-		for (otheri = 0; otheri < sp->typecnt; ++otheri) {
+		for (otheri = sp->typecnt - 1; otheri >= 0; --otheri) {
 			if (sp->ttis[otheri].tt_isdst == tmp->tm_isdst)
 				continue;
 			tmp->tm_sec += sp->ttis[otheri].tt_gmtoff -
