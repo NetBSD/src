@@ -1,13 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.2 2000/05/13 08:45:08 lukem Exp $
+# $NetBSD: ppp,v 1.3 2000/07/26 00:11:49 lukem Exp $
 #
 
-#	should provide `network' perhaps?
 # PROVIDE: ppp
-#	note that this means that syslogd will not be listening on
-#	any PPP addresses.  this is considered a feature.
-# REQUIRE: systemfs syslogd
+# REQUIRE: mountcritremote syslogd
+#
+#	Note that this means that syslogd will not be listening on
+#	any PPP addresses.  This is considered a feature.
+#
 
 . /etc/rc.subr
 

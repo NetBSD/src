@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.3 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: ntpdate,v 1.4 2000/07/26 00:11:49 lukem Exp $
 #
 
 # PROVIDE: ntpdate
-# REQUIRE: syslogd network
+# REQUIRE: NETWORK syslogd
 
 . /etc/rc.subr
 
