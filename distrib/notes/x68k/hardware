@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2001/11/25 05:46:51 isaki Exp $
+.\"	$NetBSD: hardware,v 1.14 2002/05/26 03:37:18 isaki Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -72,6 +72,8 @@ The builtin serial (RS-232C)
 .It
 The builtin parallel (Centronics printer interface)
 .It
+The builtin ADPCM voice synthesizer
+.It
 The standard keyboard
 .It
 The mouse / trackball
@@ -82,5 +84,3 @@ Neptune-X ethernet
 .It
 Nereid ethernet
 .bullet)
-.Pp
-Hopefully, the AD-PCM sound device will be supported in the future releases.
