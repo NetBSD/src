@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcpdump.8,v 1.5 2002/05/31 09:45:46 itojun Exp $
+.\"	$NetBSD: tcpdump.8,v 1.6 2002/09/22 16:59:16 thorpej Exp $
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1,v 1.120 2002/05/17 09:57:50 guy Exp (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
@@ -21,14 +21,20 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH TCPDUMP 8  "3 January 2001"
+.TH TCPDUMP 8  "22 September 2002"
 .SH NAME
 tcpdump \- dump traffic on a network
 .SH SYNOPSIS
 .na
 .B tcpdump
 [
-.B \-aAdeflnNOpqRStuvxX
+.B \-aAdeflLnNOpqRStuvxX
+]
+.br
+.ti +8
+[
+.B \-D
+.I datalinktype
 ] [
 .B \-c
 .I count
@@ -166,6 +172,9 @@ not 1,048,576 bytes).
 Dump the compiled packet-matching code in a human readable form to
 standard output and stop.
 .TP
+.B \-D
+Set the data link type to use while capturing packets to \fIdatalinktype\fP.
+.TP
 .B \-dd
 Dump packet-matching code as a
 .B C
@@ -223,6 +232,9 @@ E.g.,
 .br
 ``tcpdump\ \ \-l\ \ |\ \ tee dat'' or
 ``tcpdump\ \ \-l \ \ > dat\ \ &\ \ tail\ \ \-f\ \ dat''.
+.TP
+.B \-L
+List the known data link types and exit.
 .TP
 .B \-m
 Load SMI MIB module definitions from file \fImodule\fR.
