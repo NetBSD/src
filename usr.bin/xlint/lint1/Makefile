@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/03 02:51:44 matt Exp $
 
 PROG=	lint1
 SRCS=	cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
@@ -7,7 +7,7 @@ MKMAN=	no
 LDADD+=	-ll
 DPADD+=	${LIBL}
 YHEADER=1
-CPPFLAGS+=-I.
+CPPFLAGS+=-I${.CURDIR} -I.
 LINTFLAGS=-aehpz
 
 BINDIR=	/usr/libexec

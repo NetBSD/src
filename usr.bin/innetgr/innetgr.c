@@ -1,4 +1,4 @@
-/*	$NetBSD: innetgr.c,v 1.1 1999/03/02 13:59:17 christos Exp $	*/
+/*	$NetBSD: innetgr.c,v 1.2 2000/07/03 02:51:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: innetgr.c,v 1.1 1999/03/02 13:59:17 christos Exp $");
+__RCSID("$NetBSD: innetgr.c,v 1.2 2000/07/03 02:51:20 matt Exp $");
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <netgroup.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $	*/
+/*	$NetBSD: renice.c,v 1.7 2000/07/03 02:51:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $");
+__RCSID("$NetBSD: renice.c,v 1.7 2000/07/03 02:51:33 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: renice.c,v 1.6 1998/12/19 21:07:12 christos Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 static int	getnum __P((const char *, const char *, int *));
