@@ -1,4 +1,4 @@
-$NetBSD: STATUS,v 1.3 1996/04/25 04:28:04 cgd Exp $
+$NetBSD: STATUS,v 1.4 1996/06/13 20:36:10 cgd Exp $
 
 NetBSD/Alpha's Status
 
@@ -64,12 +64,8 @@ Supported hardware:
 	or run diskless.)  AlphaStation 500 systems may work, but
 	have not been tested.
 
-	AXPpci systems, with the same supported hardware list as
-	the AlphaStation {200,250,255,400} systems.
-
-NOTE: As far as I know, testers have not tested current kernels
-throughly on DEC 3000/[3-900] systems, or AT ALL AlphaStation 600
-systems!
+	AXPpci systems (including Multia), with the same supported
+	hardware list as the AlphaStation {200,250,255,400} systems.
 
 At this time none of the following systems are supported:
 	DECpc AXP 150 systems (EISA-bus PC-like systems)
