@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.456 2002/01/02 03:23:07 augustss Exp $
+# $NetBSD: GENERIC,v 1.457 2002/01/02 04:08:41 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.456 $"
+#ident 		"GENERIC-$Revision: 1.457 $"
 
 maxusers	32		# estimated number of users
 
@@ -937,8 +937,13 @@ midi*	at umidi?		# USB MIDI
 # FM-Radio devices
 # ISA radio devices
 #az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
-#rt0	at isa? port 0x350      # AIMS Lab Radiotrack & compatible
-#rtii0	at isa? port 0x384      # AIMS Lab Radiotrack II FM Radio Card
+#az1	at isa? port 0x358
+#rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
+#rt1	at isa? port 0x284
+#rt2	at isa? port 0x30c
+#rt3	at isa? port 0x384
+#rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
+#rtii1	at isa? port 0x30c
 #sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
 
 # PCI radio devices
