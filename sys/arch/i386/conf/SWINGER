@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.10 2000/07/27 14:34:08 mrg Exp $
+#	$NetBSD: SWINGER,v 1.11 2000/08/21 07:39:44 itohy Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.10 $"
+#ident 		"SWINGER-$Revision: 1.11 $"
 
 maxusers	64		# estimated number of users
 
@@ -372,7 +372,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
 #dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
-#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
 #nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 #sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
