@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.11 2003/10/10 15:20:30 fvdl Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.12 2003/11/18 21:40:13 briggs Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.11 2003/10/10 15:20:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.12 2003/11/18 21:40:13 briggs Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -355,7 +355,7 @@ ahd_pci_attach(parent, self, aux)
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahd_pci_busdata), M_DEVBUF, M_NOWAIT);
 	if (bd == NULL) {
-		printf("%s: unable to allocate bus-specific data\n", ahd_name(ahd));
+		aprint_error("%s: unable to allocate bus-specific data\n", ahd_name(ahd));
 		return;
 	}
 	memset(bd, 0, sizeof(struct ahd_pci_busdata));
@@ -372,7 +372,7 @@ ahd_pci_attach(parent, self, aux)
 	ahd->seep_config = malloc(sizeof(*ahd->seep_config),
 				  M_DEVBUF, M_NOWAIT);
 	if (ahd->seep_config == NULL) {
-		printf("%s: cannot malloc seep_config!\n", ahd_name(ahd));
+		aprint_error("%s: cannot malloc seep_config!\n", ahd_name(ahd));
 		return;
 	}
 	memset(ahd->seep_config, 0, sizeof(*ahd->seep_config));
@@ -419,7 +419,7 @@ ahd_pci_attach(parent, self, aux)
 	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
 	    &bd->pcix_off, NULL)) {
 		if (ahd->chip & AHD_PCIX)
-			printf("%s: warning: can't find PCI-X capability\n",
+			aprint_error("%s: warning: can't find PCI-X capability\n",
 			    ahd->sc_dev.dv_xname);
 		ahd->chip &= ~AHD_PCIX;
 		ahd->chip |= AHD_PCI;
@@ -451,7 +451,7 @@ ahd_pci_attach(parent, self, aux)
 			break;
 		default:	
 			memh_valid = 0;
-			printf("%s: unknown memory type: 0x%x\n",
+			aprint_error("%s: unknown memory type: 0x%x\n",
 			       ahd_name(ahd), memtype);
 			break;
 		}
@@ -497,11 +497,12 @@ ahd_pci_attach(parent, self, aux)
 	}
 
 	if (memh_valid == 0 && (ioh_valid == 0 || ioh2_valid == 0)) {
-		printf("%s: unable to map registers\n", ahd_name(ahd));
+		aprint_error("%s: unable to map registers\n", ahd_name(ahd));
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	/*
          * Set Power State D0.
@@ -535,7 +536,7 @@ ahd_pci_attach(parent, self, aux)
 	if ((ahd->flags & (AHD_39BIT_ADDRESSING|AHD_64BIT_ADDRESSING)) != 0) {
 		uint32_t devconfig;
 
-		printf("%s: Enabling 39Bit Addressing\n", ahd_name(ahd));
+		aprint_normal("%s: Enabling 39Bit Addressing\n", ahd_name(ahd));
 		devconfig = pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
 		devconfig |= DACEN;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, devconfig);
@@ -560,23 +561,23 @@ ahd_pci_attach(parent, self, aux)
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahd_name(ahd));
+		aprint_error("%s: couldn't map interrupt\n", ahd_name(ahd));
 		ahd_free(ahd);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	ahd->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahd_intr, ahd);
 	if (ahd->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		       ahd_name(ahd));
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		ahd_free(ahd);
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahd_name(ahd),
+		aprint_normal("%s: interrupting at %s\n", ahd_name(ahd),
 		       intrstr);
 
 	/* Get the size of the cache */
@@ -813,7 +814,7 @@ ahd_check_extport(struct ahd_softc *ahd)
 #endif
 
 	if (!have_seeprom) {
-		printf("%s: No SEEPROM available.\n", ahd_name(ahd));
+		aprint_error("%s: No SEEPROM available.\n", ahd_name(ahd));
 		ahd->flags |= AHD_USEDEFAULTS;
 		error = ahd_default_config(ahd);
 		adapter_control = CFAUTOTERM|CFSEAUTOTERM;
@@ -905,7 +906,7 @@ ahd_configure_termination(struct ahd_softc *ahd, u_int adapter_control)
 
 	error = ahd_write_flexport(ahd, FLXADDR_TERMCTL, termctl);
 	if (error != 0) {
-		printf("%s: Unable to set termination settings!\n",
+		aprint_error("%s: Unable to set termination settings!\n",
 		       ahd_name(ahd));
 	} else {
 		if (bootverbose) {
@@ -1149,7 +1150,7 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 	printf("\n%s: aic7902 chip revision 0x%x\n", ahd_name(ahd), rev);
 #endif
 	if (rev < ID_AIC7902_PCI_REV_A4) {
-		printf("%s: Unable to attach to unsupported chip revision %d\n",
+		aprint_error("%s: Unable to attach to unsupported chip revision %d\n",
 		       ahd_name(ahd), rev);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, 0);
 		return (ENXIO);
