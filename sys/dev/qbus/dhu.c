@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.20 2000/06/05 00:09:18 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -251,8 +251,10 @@ dhu_attach(parent, self, aux)
 		dhurint, sc, &sc->sc_rintrcnt);
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4,
 		dhuxint, sc, &sc->sc_tintrcnt);
-	evcnt_attach(&sc->sc_dev, "rintr", &sc->sc_rintrcnt);
-	evcnt_attach(&sc->sc_dev, "tintr", &sc->sc_tintrcnt);
+	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "rintr");
+	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "tintr");
 }
 
 /* Receiver Interrupt */

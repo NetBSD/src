@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.52 2000/06/04 02:14:12 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.53 2000/06/05 00:09:18 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -215,6 +215,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 	ua.ua_br = br;
 	ua.ua_cvec = vec;
 	ua.ua_iaddr = cf->cf_loc[0];
+	ua.ua_evcnt = NULL;
 
 	config_attach(parent, cf, &ua, ubaprint);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.21 2000/06/04 18:04:39 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.22 2000/06/05 00:09:19 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -138,7 +138,8 @@ mbaattach(struct device *parent, struct device *self, void *aux)
 	for (i = 14; i < 18; i++)
 		scb_vecalloc(vecnum(0, i, sa->sa_nexnum),
 		    mbaintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
 	sc->sc_first = 0;
 	sc->sc_last = (void *)&sc->sc_first;

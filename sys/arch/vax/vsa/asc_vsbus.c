@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.15 2000/06/04 02:19:28 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.16 2000/06/05 00:09:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.15 2000/06/04 02:19:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.16 2000/06/05 00:09:20 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,7 +275,8 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
 	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
-	evcnt_attach(self, "intr", &asc->sc_intrcnt);
+	evcnt_attach_dynamic(&asc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
