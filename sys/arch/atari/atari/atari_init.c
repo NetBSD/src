@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.39 1998/07/04 22:18:21 jonathan Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.40 1998/09/02 14:58:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -115,7 +115,7 @@ extern struct pcb	*curpcb;
 /*
  * This is the virtual address of physical page 0. Used by 'do_boot()'.
  */
-vm_offset_t	page_zero;
+vaddr_t	page_zero;
 
 /*
  * Crude support for allocation in ST-ram. Currently only used to allocate
@@ -641,7 +641,7 @@ pt_entry_t	*pt;
 u_int		ptsize;		/* Size of 'pt' in bytes	*/
 u_int		ptextra;	/* #of additional I/O pte's	*/
 {
-	vm_offset_t	ioaddr;
+	vaddr_t		ioaddr;
 	pt_entry_t	*pg, *epg;
 	pt_entry_t	pg_proto;
 	u_long		mask;
