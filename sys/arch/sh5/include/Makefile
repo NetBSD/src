@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/30 10:50:55 scw Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/28 11:16:36 scw Exp $
 
 KDIR=	/sys/arch/sh5/include
 INCSDIR= /usr/include/sh5
@@ -14,6 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	limits.h lock.h \
 	math.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h pte.h ptrace.h \
+	pci_machdep.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \

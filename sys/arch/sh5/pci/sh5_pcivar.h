@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2002/09/28 11:16:38 scw Exp $	*/
+/*	$NetBSD: sh5_pcivar.h,v 1.1 2002/09/28 11:16:37 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,15 +35,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EVBSH5_INTR_H
-#define	_EVBSH5_INTR_H
+#ifndef _SH5_PCIVAR_H
+#define _SH5_PCIVAR_H
 
-#include <sh5/intr.h>
+#define	SH5PCI_IH_LINE(ih)	((ih) & 0xff)
+#define	SH5PCI_IH_PIN(ih)	(((ih) >> 8) & 0xff)
+#define	SH5PCI_IH_COOKIE(ih)	(((ih) >> 16) & 0xffff)
+#define	SH5PCI_IH_CREATE(l,p,c)	\
+	    ((pci_intr_handle_t)(((l) & 0xff) |			\
+	                          (((p) & 0xff) << 8) |		\
+				  (((c) & 0xffff) << 16)))
 
-#define	IPL_SUPERIO	5	/* SuperIO interrupts at this level */
-#define	IPL_SH5PCI	6	/* PCI1 & PCI2 interrupt at this level */
+struct sh5pci_icookie;
+SLIST_HEAD(sh5pci_ilist, sh5pci_icookie);
 
-#define	splsuperio()		splraise(IPL_SUPERIO)
-#define	spllpt()		splsuperio()
+struct sh5pci_ihead {
+        struct sh5pci_ilist ih_handlers;
+	void *ih_cookie;
+	struct evcnt *ih_evcnt;
+	int ih_level;
+	int ih_intevt;
+};
 
-#endif /* _EVBSH5_INTR_H */
+struct sh5pci_intr_hooks {
+	const char *ih_name;
+	void *	(*ih_init)(struct sh5_pci_chipset_tag *,
+		    void **, int (*)(void *), void *,
+		    void **, int (*)(void *), void *);
+	void	(*ih_intr_conf)(void *, int, int, int, int, int *);
+	int	(*ih_intr_map)(void *, struct pci_attach_args *,
+		    pci_intr_handle_t *);
+	struct sh5pci_ihead * (*ih_intr_ihead)(void *, pci_intr_handle_t);
+	void *	(*ih_intr_establish)(void *, pci_intr_handle_t, int,
+		    int (*)(void *), void *);
+	void	(*ih_intr_disestablish)(void *, pci_intr_handle_t, void *);
+};
+
+extern const struct sh5pci_intr_hooks *
+	sh5pci_get_intr_hooks(struct sh5_pci_chipset_tag *);
+
+#endif /* _SH5_PCIVAR_H */
