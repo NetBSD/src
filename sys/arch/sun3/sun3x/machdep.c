@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2001/04/24 04:31:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2001/05/28 20:56:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,6 +122,8 @@ char *cpu_string = NULL;
 int cpu_has_vme = 0;
 int has_iocache = 0;
 
+vaddr_t dumppage;
+
 static void identifycpu __P((void));
 static void initcpu __P((void));
 
@@ -204,6 +206,12 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
+
+	/*
+	 * Get scratch page for dumpsys().
+	 */
+	if ((dumppage = uvm_km_alloc(kernel_map, NBPG)) == 0)
+		panic("startup: alloc dumppage");
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -575,8 +583,11 @@ cpu_dumpconf()
 	int (*getsize)__P((dev_t));
 
 	/* Validate space in page zero for the kcore header. */
-	if (MSGBUFOFF < (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t)))
+	if (MSGBUFOFF < (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t))) {
+		printf("%d %d\n",
+MSGBUFOFF, (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t)));
 		panic("cpu_dumpconf: MSGBUFOFF too small");
+	}
 
 	if (dumpdev == NODEV)
 		return;
@@ -619,7 +630,7 @@ void
 dumpsys()
 {
 	struct bdevsw *dsw;
-	kcore_seg_t	*kseg_p;
+	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	struct sun3x_kcore_hdr *sh;
 	phys_ram_seg_t *crs_p;
@@ -662,8 +673,8 @@ dumpsys()
 	 */
 
 	/* Set pointers to all three parts. */
-	kseg_p = (kcore_seg_t *)KERNBASE;
-	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
+	kseg_p = (kcore_seg_t *)dumppage;
+	chdr_p = (cpu_kcore_hdr_t *)(kseg_p + 1);
 	sh = &chdr_p->un._sun3x;
 
 	/* Fill in kcore_seg_t part. */
@@ -685,7 +696,7 @@ dumpsys()
 
 	blkno = dumplo;
 	todo = dumpsize;	/* pages */
-	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
+	vaddr = (char *)vmmap;	/* Borrow /dev/mem VA */
 
 	for (seg = 0; seg < SUN3X_NPHYS_RAM_SEGS; seg++) {
 		crs_p = &sh->ram_segs[seg];
