@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.174 1999/11/06 13:50:02 rh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.175 1999/11/07 07:03:08 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.167 1999/11/06 13:48:29 rh Exp 
+ *	NetBSD: pcidevs,v 1.168 1999/11/07 06:59:46 cgd Exp 
  */
 
 /*
@@ -521,7 +521,6 @@
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
-#define	PCI_VENDOR_SIIG	0x131f		/* SIIG Inc */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -1210,28 +1209,6 @@
 
 /* Sigma Designs products */
 #define	PCI_PRODUCT_SIGMA_HOLLYWOODPLUS	0x8300		/* REALmagic Hollywood-Plus MPEG-2 Decoder */
-
-/* SIIG Inc products */
-#define	PCI_PRODUCT_SIIG_CYBER_P	0x2020		/* Cyber Parallel PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2P	0x2021		/* Cyber Parallel Dual PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_S550	0x2000		/* Cyber Serial 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_S650	0x2001		/* Cyber Serial 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_S850	0x2002		/* Cyber Serial 16850 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_IO550	0x2010		/* Cyber I/O 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_IO650	0x2011		/* Cyber I/O 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_IO850	0x2010		/* Cyber I/O 16850 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S550	0x2030		/* Cyber Serial Dual 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S650	0x2031		/* Cyber Serial Dual 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S850	0x2032		/* Cyber Serial Dual 16850 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2P1S550	0x2040		/* Cyber 2P1S 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2P1S650	0x2041		/* Cyber 2P1S 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2P1S850	0x2042		/* Cyber 2P1S 16850 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_4S550	0x2050		/* Cyber 4S 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_4S650	0x2051		/* Cyber 4S 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_4S850	0x2052		/* Cyber 4S 16850 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S1P550	0x2060		/* Cyber 2S1P 16550 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S1P650	0x2061		/* Cyber 2S1P 16650 PCI */
-#define	PCI_PRODUCT_SIIG_CYBER_2S1P850	0x2062		/* Cyber 2S1P 16850 PCI */
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 */
