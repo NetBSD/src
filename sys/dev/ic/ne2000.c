@@ -1,7 +1,7 @@
-/*	$NetBSD: ne2000.c,v 1.7 1998/01/26 19:21:39 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.8 1998/01/26 20:30:09 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ec.c,v 1.4 1998/01/26 19:21:36 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.5 1998/01/26 20:30:06 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
