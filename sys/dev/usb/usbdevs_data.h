@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.20 1999/01/25 01:09:13 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.21 1999/01/26 22:32:22 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.20 1999/01/25 01:02:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.21 1999/01/26 22:21:55 augustss Exp 
  */
 
 /*
@@ -170,6 +170,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Jazz",
 	    "J-6502 speakers",
+	},
+	{
+	    USB_VENDOR_AKS, USB_PRODUCT_AKS_USBHASP,
+	    0,
+	    "Aladdin Knowledge Systems",
+	    "USB-HASP 0.06",
 	},
 	{
 	    USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC1284,
@@ -367,6 +373,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_JAZZ, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Jazz",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_AKS, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Aladdin Knowledge Systems",
 	    NULL,
 	},
 	{
