@@ -58,7 +58,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)slattach.c	4.6 (Berkeley) 6/1/90";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/slattach/slattach.c,v 1.5 1993/04/28 23:13:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/slattach/slattach.c,v 1.6 1993/06/29 19:16:38 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,11 +243,17 @@ struct sg_spds {
 #ifdef B9600
 	{ 9600, B9600 },
 #endif
-#ifdef EXTA
-	{ 19200, EXTA },
+#ifdef B19200
+	{ 19200, B19200 },
 #endif
-#ifdef EXTB
-	{ 38400, EXTB },
+#ifdef B38400
+	{ 38400, B38400 },
+#endif
+#ifdef B57600
+	{ 57600, B57600 },
+#endif
+#ifdef B115200
+	{ 115200, B115200 },
 #endif
 	{ 0, 0 }
 };
