@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.91 2000/10/11 14:46:03 is Exp $	*/
+/*	$NetBSD: cmds.c,v 1.92 2000/11/15 00:10:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.91 2000/10/11 14:46:03 is Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.92 2000/11/15 00:10:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -552,6 +552,8 @@ get(int argc, char *argv[])
 
 /*
  * Receive one file.
+ * If restartit is  1, restart the xfer always.
+ * If restartit is -1, restart the xfer only if the remote file is newer.
  */
 int
 getit(int argc, char *argv[], int restartit, const char *mode)
@@ -664,8 +666,9 @@ void
 mget(int argc, char *argv[])
 {
 	sigfunc oldintr;
-	int ch, ointer;
-	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN];
+	int ointer;
+	char *cp, *tp;
+	int restartit;
 
 	if (argc == 0 ||
 	    (argc == 1 && !another(&argc, &argv, "remote-files"))) {
@@ -675,6 +678,16 @@ mget(int argc, char *argv[])
 	}
 	mname = argv[0];
 	mflag = 1;
+	restart_point = 0;
+	restartit = 0;
+	if (strcmp(argv[0], "mreget") == 0) {
+		if (! features[FEAT_REST_STREAM]) {
+			fprintf(ttyout,
+		    "Restart is not supported by the remote server.\n");
+			return;
+		}
+		restartit = 1;
+	}
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
 		mabort();
@@ -683,30 +696,32 @@ mget(int argc, char *argv[])
 			mflag = 0;
 			continue;
 		}
-		if (mflag && confirm(argv[0], cp)) {
-			tp = cp;
-			if (mcase) {
-				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
-					*tp2++ = isupper(ch) ? tolower(ch) : ch;
-				*tp2 = '\0';
-				tp = tmpbuf;
-			}
-			if (ntflag) {
-				tp = dotrans(tp);
-			}
-			if (mapflag) {
-				tp = domap(tp);
-			}
-			recvrequest("RETR", tp, cp, "w",
-			    tp != cp || !interactive, 1);
-			if (!mflag && fromatty) {
-				ointer = interactive;
-				interactive = 1;
-				if (confirm("Continue with", "mget")) {
-					mflag++;
-				}
-				interactive = ointer;
-			}
+		if (! mflag || !confirm(argv[0], cp))
+			continue;
+		tp = cp;
+		if (mcase)
+			tp = docase(tp);
+		if (ntflag)
+			tp = dotrans(tp);
+		if (mapflag)
+			tp = domap(tp);
+		if (restartit) {
+			struct stat stbuf;
+
+			if (stat(tp, &stbuf) == 0)
+				restart_point = stbuf.st_size;
+			else
+				warn("stat %s", tp);
+		}
+		recvrequest("RETR", tp, cp, restart_point ? "r+w" : "w",
+		    tp != cp || !interactive, 1);
+		restart_point = 0;
+		if (!mflag && fromatty) {
+			ointer = interactive;
+			interactive = 1;
+			if (confirm("Continue with", "mget"))
+				mflag++;
+			interactive = ointer;
 		}
 	}
 	(void)xsignal(SIGINT, oldintr);
@@ -1136,7 +1151,7 @@ lcd(int argc, char *argv[])
 	code = -1;
 	if (argc == 1) {
 		argc++;
-		argv[1] = home;
+		argv[1] = localhome;
 	}
 	if (argc != 2) {
 		fprintf(ttyout, "usage: %s [local-directory]\n", argv[0]);
