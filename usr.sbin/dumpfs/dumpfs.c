@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.18 1998/08/27 20:31:00 ross Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.19 1999/04/05 19:54:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.18 1998/08/27 20:31:00 ross Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.19 1999/04/05 19:54:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,9 +142,9 @@ dumpfs(name)
 #else
 	if (!needswap)
 #endif
-		printf("Endian big-endian ");
+		printf("endian\tbig-endian\n");
 	else
-		printf("Endian little-endian ");
+		printf("endian\tlittle-endian\n");
 	if (afs.fs_postblformat == FS_42POSTBLFMT)
 		afs.fs_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
@@ -189,11 +189,12 @@ dumpfs(name)
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
 	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
 	    afs.fs_contigsumsize);
+	printf("maxfilesize 0x%016qx\n", afs.fs_maxfilesize);
 	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
 	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
-	printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
+	printf("sbsize\t%d\tcgsize\t%d\toffset\t%d\tmask\t0x%08x\n",
 	    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset, afs.fs_cgmask);
 	printf("csaddr\t%d\tcssize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
