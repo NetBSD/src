@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.15.2.1 2000/07/25 04:24:47 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.15.2.2 2000/08/15 21:49:53 thorpej Exp $	*/
 /*	$KAME: ah_input.c,v 1.30 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
@@ -60,8 +60,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_ecn.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
+
+#ifdef INET6
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #endif
