@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 2003/02/23 23:23:09 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 2003/03/27 19:40:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@ struct devsw devsw[] = {
 	{ "rz", rzstrategy, rzopen, rzclose, rzioctl },			/* 0 */
 #ifdef BOOTNET
 	{ "tftp", net_strategy, net_open, net_close, net_ioctl },	/* 1 */
+	{ "mop", net_strategy, net_open, net_close, net_ioctl },	/* 1 */
 #endif
 };
 
