@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.6.2.4 2002/12/19 00:44:32 thorpej Exp $ */
+/*	$NetBSD: mach_host.c,v 1.6.2.5 2002/12/29 19:53:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.4 2002/12/19 00:44:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.5 2002/12/29 19:53:16 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6.2.4 2002/12/19 00:44:32 thorpej Ex
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_errno.h>
 
 int 
@@ -154,6 +156,10 @@ mach_host_get_clock_service(args)
 	mach_host_get_clock_service_request_t *req = args->smsg;
 	mach_host_get_clock_service_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
+	struct mach_right *mr;
+
+	mr = mach_right_get(mach_clock_port, p, MACH_PORT_TYPE_SEND);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -162,7 +168,7 @@ mach_host_get_clock_service(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
-	rep->rep_clock_serv.name = 0x60b; /* XXX */
+	rep->rep_clock_serv.name = (mach_port_t)mr;
 	rep->rep_clock_serv.disposition = 0x11; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 

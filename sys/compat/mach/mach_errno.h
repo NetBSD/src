@@ -1,4 +1,4 @@
-	/*	$NetBSD: mach_errno.h,v 1.1.2.4 2002/12/19 00:44:32 thorpej Exp $ */
+/*	$NetBSD: mach_errno.h,v 1.1.2.5 2002/12/29 19:53:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ extern int native_to_mach_errno[];
 #define	MACH_KERN_NODE_DOWN			47
 #define MACH_KERN_NOT_WAITING			48
 #define	MACH_KERN_OPERATION_TIMED_OUT		49
+
 
 typedef struct {
 	mach_msg_header_t rep_msgh;

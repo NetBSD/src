@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.h,v 1.2.2.3 2002/12/19 00:44:32 thorpej Exp $ */
+/*	$NetBSD: mach_clock.h,v 1.2.2.4 2002/12/29 19:53:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

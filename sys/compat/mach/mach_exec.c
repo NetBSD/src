@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.2.4.9 2002/12/19 00:44:32 thorpej Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2.4.10 2002/12/29 19:53:15 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.9 2002/12/19 00:44:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.2.4.10 2002/12/29 19:53:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,18 +238,19 @@ mach_e_proc_init(p, vmspace)
 	med = (struct mach_emuldata *)p->p_emuldata;
 	med->med_p = 0;
 
-	LIST_INIT(&med->med_recv);
-	LIST_INIT(&med->med_send);
-	LIST_INIT(&med->med_sendonce);
+	LIST_INIT(&med->med_right);
 
-	med->med_bootstrap = mach_port_get(NULL);
-	med->med_kernel = mach_port_get(NULL);
-	med->med_host = mach_port_get(NULL);
+	med->med_kernel = mach_port_get();
+	med->med_host = mach_port_get();
+	med->med_exception = mach_port_get();
 
 	/* Make sure they will not be deallocated */
-	med->med_bootstrap->mp_refcount++;
 	med->med_kernel->mp_refcount++;
 	med->med_host->mp_refcount++;
+	med->med_exception->mp_refcount++;
+
+	med->med_bootstrap = mach_bootstrap_port;
+	med->med_bootstrap->mp_refcount++;
 
 	return;
 }
@@ -266,21 +267,18 @@ mach_e_proc_exit(p)
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
-	while ((mr = LIST_FIRST(&med->med_recv)) != NULL)
-		mach_right_put_exclocked(mr);
-	while ((mr = LIST_FIRST(&med->med_send)) != NULL)
-		mach_right_put_exclocked(mr);
-	while ((mr = LIST_FIRST(&med->med_sendonce)) != NULL)
+	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr);
 	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 
-	med->med_bootstrap->mp_refcount--;
-	med->med_kernel->mp_refcount--;
-	med->med_host->mp_refcount--;
-
-	mach_port_put(med->med_bootstrap);
-	mach_port_put(med->med_kernel);
-	mach_port_put(med->med_host);
+	if (--med->med_bootstrap->mp_refcount == 0)
+		mach_port_put(med->med_bootstrap);
+	if (--med->med_kernel->mp_refcount == 0) 
+		mach_port_put(med->med_kernel);
+	if (--med->med_host->mp_refcount == 0)  
+		mach_port_put(med->med_host);  
+	if (--med->med_exception->mp_refcount == 0)
+		mach_port_put(med->med_exception);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.1.2.4 2002/12/19 00:44:33 thorpej Exp $ */
+/*	$NetBSD: mach_port.h,v 1.1.2.5 2002/12/29 19:53:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #ifndef	_MACH_PORT_H_
 #define	_MACH_PORT_H_
 
+#define MACH_PORT_NULL			(struct mach_right *)0
+#define MACH_PORT_DEAD			(struct mach_right *)-1
+
 #define MACH_PORT_RIGHT_SEND		0
 #define MACH_PORT_RIGHT_RECEIVE		1
 #define MACH_PORT_RIGHT_SEND_ONCE	2
@@ -49,8 +52,15 @@
 #define MACH_PORT_TYPE_SEND		(1 << (MACH_PORT_RIGHT_SEND + 16))
 #define MACH_PORT_TYPE_RECEIVE		(1 << (MACH_PORT_RIGHT_RECEIVE + 16))
 #define MACH_PORT_TYPE_SEND_ONCE	(1 << (MACH_PORT_RIGHT_SEND_ONCE + 16))
+#define MACH_PORT_TYPE_PORT_SET		(1 << (MACH_PORT_RIGHT_PORT_SET + 16))
+#define MACH_PORT_TYPE_DEAD_NAME	(1 << (MACH_PORT_RIGHT_DEAD_NAME + 16))
 #define MACH_PORT_TYPE_PORT_RIGHTS \
     (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE | MACH_PORT_TYPE_SEND_ONCE)
+#define MACH_PORT_TYPE_PORT_OR_DEAD \
+    (MACH_PORT_TYPE_PORT_RIGHTS | MACH_PORT_TYPE_DEAD_NAME)
+#define MACH_PORT_TYPE_ALL_RIGHTS \
+    (MACH_PORT_TYPE_PORT_OR_DEAD|MACH_PORT_TYPE_PORT_SET)
+	
 
 /* port_deallocate */
 
@@ -198,14 +208,27 @@ int mach_port_set_attributes(struct mach_trap_args *);
 int mach_port_insert_member(struct mach_trap_args *);
 int mach_port_move_member(struct mach_trap_args *);
 
+extern struct mach_port *mach_clock_port;
+extern struct mach_port *mach_bootstrap_port;
 
 /* In-kernel Mach port right description */
 struct mach_right {
-	struct mach_port *mr_port;	/* Port we have the right on */
 	struct proc *mr_p;		/* points back to struct proc */
 	int mr_type;			/* right type (recv, send, sendonce) */
 	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
 	LIST_ENTRY(mach_right) mr_listall; /* All processes right list */
+	int mr_refcount;		/* Reference count */
+
+	/* Revelant only if the right is on a port set */
+	LIST_HEAD(mr_set, mach_right) mr_set;
+					/* The right set list */
+
+	/* Revelant only if the right is not on a port set */
+	struct mach_port *mr_port;	/* Port we have the right on */
+	LIST_ENTRY(mach_right) mr_setlist; /* Set list */
+
+	/* Revelant only if the right is part of a port set */
+	struct mach_right *mr_sethead;	/* Points back to right set */
 };
 
 struct mach_right *mach_right_get(struct mach_port *, struct proc *, int);
@@ -213,6 +236,7 @@ void mach_right_put(struct mach_right *);
 void mach_right_put_shlocked(struct mach_right *);
 void mach_right_put_exclocked(struct mach_right *);
 int mach_right_check(struct mach_right *, struct proc *, int);
+int mach_right_check_all(struct mach_right *, int);
 
 /* In-kernel Mach port description */
 struct mach_port {
@@ -233,7 +257,7 @@ void mach_remove_recvport(struct mach_port *);
 void mach_add_recvport(struct mach_port *, struct proc *);
 int mach_port_check(struct mach_port *);
 #ifdef DEBUG_MACH
-void mach_debug_port(struct proc *);
+void mach_debug_port(struct proc *, int);
 #endif
 
 #endif /* _MACH_PORT_H_ */
