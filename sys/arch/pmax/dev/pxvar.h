@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.6 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.7 1999/10/24 15:33:45 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,12 +100,12 @@ struct px_info {
 
 /* Map returned by ioctl QIOCGMAP for Xserver */
 typedef struct px_map {
-	struct px_info	info;
-	u_char		__pad0[NBPG - sizeof(struct px_info)];
-	u_char		rbuf[65536];
-	u_char		ibuf[16384];
 	struct stic_regs stic;
 	u_char		__pad1[NBPG - sizeof(struct stic_regs)];
+	int32_t		poll[4096];
+	struct px_info	info;
+	u_char		__pad0[NBPG - sizeof(struct px_info)];
+	u_char		rbuf[81920];
 } px_map;
 
 /*
