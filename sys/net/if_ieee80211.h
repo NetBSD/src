@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.3 2000/06/09 05:31:20 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.4 2000/07/05 02:35:53 onoe Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -111,7 +111,12 @@ struct ieee80211_frame {
 
 #define	IEEE80211_NWID_LEN			32
 
-/* nwid is u_int8_t array of IEEE80211_NWID_LEN pointed at by ifr.ifr_data */
+/* nwid is pointed at by ifr.ifr_data */
+struct ieee80211_nwid {
+	u_int8_t	i_len;
+	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
+};
+
 #define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
 #define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
 
