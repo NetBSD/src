@@ -1,20 +1,39 @@
 .\"	dhcp-options.5
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about the Internet Software Consortium, see
+.\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
 .TH dhcpd-options 5
 .SH NAME
 dhcp-options - Dynamic Host Configuration Protocol options
@@ -107,20 +126,11 @@ For example:
 .fi
 .SH STANDARD DHCP OPTIONS
 The documentation for the various options mentioned below is taken
-from the latest IETF draft document on DHCP options.   Options which
-are not listed by name may be defined by the name option-\fInnn\fR,
-where \fInnn\fR is the decimal number of the option code.   These
-options may be followed either by a string, enclosed in quotes, or by
-a series of octets, expressed as two-digit hexadecimal numbers seperated
-by colons.   For example:
-.PP
-.nf
-option option-133 "my-option-133-text";
-option option-129 1:54:c9:2b:47;
-.fi
-.PP
-Because dhcpd does not know the format of these undefined option codes,
-no checking is done to ensure the correctness of the entered data.
+from the latest IETF draft document on DHCP options.  Options not
+listed below may not yet be implemented, but it is possible to use
+such options by defining them in the configuration file.  Please see
+the DEFINING NEW OPTIONS heading later in this document for more
+information.
 .PP
 The standard options are:
 .PP
@@ -629,6 +639,10 @@ Please note that in this option and the slp-service-scope option, the
 term "SLP Agent" is being used to refer to a Service Location Protocol
 agent running on a machine that is being configured using the DHCP
 protocol.
+.PP
+Also, please be aware that some companies may refer to SLP as NDS.
+If you have an NDS directory agent whose address you need to
+configure, the slp-directory-agent option should work.
 .RE
 .PP
 .B option slp-service-scope \fIboolean text\fR\fB;\fR
@@ -785,6 +799,16 @@ https).  If the list includes a URL that does not contain a path
 component, the path /uap is assumed.   If more than one URL is
 specified in this list, the URLs are seperated by spaces.
 .RE
+.PP
+.B option \fBuser-class\fR \fIstring\fR\fB;\fR
+.RS 0.25i
+.PP
+This option is used by some DHCP clients as a way for users to
+specify identifying information to the client.   This can be used in a
+similar way to the vendor-class-identifier option, but the value of
+the option is specified by the user, not the vendor.   Most recent
+DHCP clients have a way in the user interface to specify the value for
+this identifier, usually as a text string.
 .PP
 .B option \fBvendor-class-identifier\fR \fIstring\fR\fB;\fR
 .RS 0.25i

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.3 2000/10/17 16:10:42 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.4 2001/04/02 23:45:56 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -305,8 +305,8 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 	  if (len + data < buf + bufix + buflen)
 		  log_debug ("accepting packet with data after udp payload.");
 	  if (len + data > buf + bufix + buflen) {
-		  log_debug ("dropping packet with bogus uh_ulen %d",
-			     len + sizeof *udp);
+		  log_debug ("dropping packet with bogus uh_ulen %ld",
+			     (long)(len + sizeof *udp));
 		  return -1;
 	  }
   }

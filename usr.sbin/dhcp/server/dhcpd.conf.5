@@ -1,20 +1,39 @@
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about the Internet Software Consortium, see
+.\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
 .TH dhcpd.conf 5
 .SH NAME
 dhcpd.conf - dhcpd configuration file
@@ -84,12 +103,12 @@ based on information the client sends.
 .PP
 When a client is to be booted, its boot parameters are determined by
 consulting that client's \fIhost\fR declaration (if any), and then
-consulting the any \fIclass\fR declarations matching the client,
+consulting any \fIclass\fR declarations matching the client,
 followed by the \fIpool\fR, \fIsubnet\fR and \fIshared-network\fR
 declarations for the IP address assigned to the client.   Each of
 these declarations itself appears within a lexical scope, and all
 declarations at less specific lexical scopes are also consulted for
-client option declarations as well.   Scopes are never considered
+client option declarations.   Scopes are never considered
 twice, and if parameters are declared in more than one scope, the
 parameter declared in the most specific scope is the one that is
 used.
@@ -198,7 +217,7 @@ You may have noticed that while some parameters start with the
 \fIoption\fR keyword, some do not.   Parameters starting with the
 \fIoption\fR keyword correspond to actual DHCP options, while
 parameters that do not start with the option keyword either control
-the behaviour of the DHCP server (e.g., how long a lease dhcpd will
+the behavior of the DHCP server (e.g., how long a lease dhcpd will
 give out), or specify client parameters that are not optional in the
 DHCP protocol (for example, server-name and filename).
 .PP
@@ -212,7 +231,7 @@ which the parameter appears.
 .PP
 Imagine that you have a site with a lot of NCD X-Terminals.   These
 terminals come in a variety of models, and you want to specify the
-boot files for each models.   One way to do this would be to have host
+boot files for each model.   One way to do this would be to have host
 declarations for each server and group them by model:
 .nf
 
@@ -291,27 +310,37 @@ aren't.  Each entry in a pool's permit list is introduced with the
 .I allow
 or \fIdeny\fR keyword.   If a pool has a permit list, then only those
 clients that match specific entries on the permit list will be
-elegible to be assigned addresses from the pool.   If a pool has a
+eligible to be assigned addresses from the pool.   If a pool has a
 deny list, then only those clients that do not match any entries on
-the deny list will be elegible.    If both permit and deny lists exist
+the deny list will be eligible.    If both permit and deny lists exist
 for a pool, then only clients that match the permit list and do not
 match the deny list will be allowed access.
-.SH ADDRESS ALLOCATION
+.SH DYNAMIC ADDRESS ALLOCATION
 Address allocation is actually only done when a client is in the INIT
 state and has sent a DHCPDISCOVER message.  If the client thinks it
 has a valid lease and sends a DHCPREQUEST to initiate or renew that
 lease, the server has only three choices - it can ignore the
 DHCPREQUEST, send a DHCPNAK to tell the client it should stop using
 the address, or send a DHCPACK, telling the client to go ahead and use
-the address for a while.  If the server finds the address the client
-is requesting, and that address is available to the client, the server
-will send a DHCPACK.  If the address is no longer available, or the
-client isn't permitted to have it, the server will send a DHCPNAK.  If
-the server knows nothing about the, it will remain silent, unless the
-address is incorrect for the network segment to which the client has
-been attached and the server is authoritative for that network
-segment, in which case the server will send a DHCPNAK even though it
-doesn't know about the address.
+the address for a while.
+.PP
+If the server finds the address the client is requesting, and that
+address is available to the client, the server will send a DHCPACK.
+If the address is no longer available, or the client isn't permitted
+to have it, the server will send a DHCPNAK.  If the server knows
+nothing about the address, it will remain silent, unless the address
+is incorrect for the network segment to which the client has been
+attached and the server is authoritative for that network segment, in
+which case the server will send a DHCPNAK even though it doesn't know
+about the address.
+.PP
+There may be a host declaration matching the client's identification,
+and that host declaration contains a fixed-address declaration that is
+valid for the network segment to which the client is connected.  In
+this case, the DHCP server will never do dynamic address allocation.
+In this case, the client is \fIrequired\fB to take the address
+specified in the host declaration.   If the client is requesting some
+other address, the server will respond with a DHCPNAK.
 .PP
 When the DHCP server allocates a new address for a client (remember,
 this only happens if the client has sent a DHCPDISCOVER), it first
@@ -344,6 +373,33 @@ immediately allocated to the client.   If the address is available for
 allocation but has been previously assigned to a different client, the
 server will keep looking in hopes of finding an address that has never
 before been assigned to a client.
+.SH IP ADDRESS CONFLICT PREVENTION
+The DHCP server checks IP addresses to see if they are in use before
+allocating them to clients.   It does this by sending an ICMP Echo
+request message to the IP address being allocated.   If no ICMP Echo
+reply is received within a second, the address is assumed to be free.
+This is only done for leases that have been specified in range
+statements, and only when the lease is thought by the DHCP server to
+be free - i.e., the DHCP server or its failover peer has not listed
+the lease as in use.
+.PP
+If a response is received to an ICMP Echo request, the DHCP server
+assumes that there is a configuration error - the IP address is in use
+by some host on the network that is not a DHCP client.   It marks the
+address as abandoned, and will not assign it to clients.
+.PP
+If a DHCP client tries to get an IP address, but none are available,
+but there are abandoned IP addresses, then the DHCP server will
+attempt to reclaim an abandoned IP address.   It marks one IP address
+as free, and then does the same ICMP Echo request check described
+previously.   If there is no answer to the ICMP Echo request, the
+address is assigned to the client.
+.PP
+The DHCP server does not cycle through abandoned IP addresses if the
+first IP address it tries to reclaim is free.   Rather, when the next
+DHCPDISCOVER comes in from the client, it will attempt a new
+allocation using the same method described here, and will typically
+try a new IP address.
 .SH DHCP FAILOVER
 This version of the ISC DHCP server supports the DHCP failover
 protocol as documented in draft-ietf-dhc-failover-07.txt.   This is
@@ -429,58 +485,63 @@ include "/etc/dhcpd.master";
 .PP
 The statements in the peer declaration are as follows:
 .PP
-.B The 
+The 
 .I primary
-.B and
+and
 .I secondary
-.B statements
+statements
+.RS 0.25i
 .PP
-[ \fBprimary\fR | \fBsecondary\fR ]
+[ \fBprimary\fR | \fBsecondary\fR ]\fB;\fR
 .PP
 This determines whether the server is primary or secondary, as
 described earlier under DHCP FAILOVER.
+.RE
 .PP
-.B The 
+The 
 .I address
-.B statement
+statement
+.RS 0.25i
 .PP
-.B address
-.I address
+.B address \fIaddress\fR\fB;\fR
 .PP
 The \fBaddress\fR statement declares the IP address on which the
 server should listen for connections from its failover peer, and also
 the value to use for the DHCP Failover Protocol server identifier.
 Because this value is used as an identifier, it may not be omitted.
+.RE
 .PP
-.B The 
+The 
 .I peer address
-.B statement
+statement
+.RS 0.25i
 .PP
-.B peer address
-.I address
+.B peer address \fIaddress\fR\fB;\fR
 .PP
 The \fBpeer address\fR statement declares the IP address to which the
 server should connect to reach its failover peer for failover
 messages.
+.RE
 .PP
-.B The 
+The 
 .I port
-.B statement
+statement
+.RS 0.25i
 .PP
-.B port
-.I port-number
+.B port \fIport-number\fR\fB;\fR
 .PP
 The \fBport\fR statement declares the TCP port on which the server
 should listen for connections from its failover peer.   This statement
 may not currently be omitted, because the failover protocol does not
 yet have a reserved TCP port number.
+.RE
 .PP
-.B The 
+The 
 .I peer port
-.B statement
+statement
+.RS 0.25i
 .PP
-.B peer port
-.I port-number
+.B peer port \fIport-number\fR\fB;\fR
 .PP
 The \fBpeer port\fR statement declares the TCP port to which the
 server should connect to reach its failover peer for failover
@@ -488,15 +549,14 @@ messages.   This statement may not be omitted because the failover
 protocol does not yet have a reserved TCP port number.   The port
 number declared in the \fBpeer port\fR statement may be the same as
 the port number declared in the \fBport\fR statement.
+.RE
 .PP
-.B The 
+The 
 .I max-response-delay
-.B statement
+statement
+.RS 0.25i
 .PP
-.nf
-.B max-response-delay
-.I seconds
-.fi
+.B max-response-delay \fIseconds\fR\fB;\fR
 .PP
 The \fBmax-response-delay\fR statement tells the DHCP server how
 many seconds may pass without receiving a message from its failover
@@ -506,26 +566,28 @@ the connection will not result in the servers being out of
 communication for a long time, but large enough that the server isn't
 constantly making and breaking connections.   This parameter must be
 specified.
+.RE
 .PP
-.B The 
+The 
 .I max-unacked-updates
-.B statement
+statement
+.RS 0.25i
 .PP
-.B max-unacked-updates
-.I count
+.B max-unacked-updates \fIcount\fR\fB;\fR
 .PP
 The \fBmax-unacked-updates\fR statement tells the DHCP server how
-many many BINDUPD messages it can send before it receives a BNDACK
+many BNDUPD messages it can send before it receives a BNDACK
 from the failover peer.   We don't have enough operational experience
 to say what a good value for this is, but 10 seems to work.   This
 parameter must be specified.
+.RE
 .PP
-.B The 
+The 
 .I mclt
-.B statement
+statement
+.RS 0.25i
 .PP
-.B mclt
-.I seconds
+.B mclt \fIseconds\fR\fB;\fR
 .PP
 The \fBmclt\fR statement defines the Maximum Client Lead Time.   It
 must be specified on the primary, and may not be specified on the
@@ -537,13 +599,14 @@ shorter you set it, the more load your servers will experience when
 they are not communicating.   A value of something like 3600 is
 probably reasonable, but again bear in mind that we have no real
 operational experience with this.
+.RE
 .PP
-.B The 
+The 
 .I split
-.B statement
+statement
+.RS 0.25i
 .PP
-.B split
-.I index
+.B split \fIindex\fR\fB;\fR
 .PP
 The split statement specifies the split between the primary and
 secondary for the purposes of load balancing.   Whenever a client
@@ -552,13 +615,14 @@ identification.   If the hash comes out to less than the split value,
 the primary answers.   If it comes out to equal to or more than the
 split, the secondary answers.   This value should generally be set to
 128, and can only be configured on the primary.
+.RE
 .PP
-.B The 
+The 
 .I hba
-.B statement
+statement
+.RS 0.25i
 .PP
-.B hba
-.I colon-seperated-hex-list
+.B hba \fIcolon-seperated-hex-list\fB;\fR
 .PP
 The hba statement specifies the split between the primary and
 secondary as a bitmap rather than a cutoff, which theoretically allows
@@ -569,13 +633,14 @@ for such fine-grained control, however.   An example hba statement:
   hba ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
       00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00;
 .fi
+.RE
 .PP
-.B The 
+The 
 .I load balance max seconds
-.B statement
+statement
+.RS 0.25i
 .PP
-.B load balance max seconds
-.I seconds
+.B load balance max seconds \fIseconds\fR\fB;\fR
 .PP
 This statement allows you to configure a cutoff after which load
 balancing is disabled.  The cutoff is based on the number of seconds
@@ -587,6 +652,7 @@ failover peers gets into a state where it is responding to failover
 messages but not responding to some client requests, the other
 failover peer will take over its client load automatically as the
 clients retry.
+.RE
 .SH CLIENT CLASSING
 Clients can be seperated into classes, and treated differently
 depending on what class they are in.   This seperation can be done
@@ -597,13 +663,13 @@ hold leases at one time, and it is possible to specify automatic
 subclassing based on the contents of the client packet.
 .PP
 To add clients to classes based on conditional evaluation, you would
-write an conditional statement to match the clients you wanted in the
+write a conditional statement to match the clients you wanted in the
 class, and then put an
 .B add
 statement in the conditional's list of statements:
 .PP
 .nf
-if substring (option dhcp-client-identifier, 0, 3) = "RAS" {
+if substring (option dhcp-client-identifier, 1, 3) = "RAS " {
   add "ras-clients";
 }
 .fi
@@ -613,7 +679,7 @@ expression as a matching expression in the class statement:
 .PP
 .nf
 class "ras-clients" {
-  match if substring (option dhcp-client-identifier, 0, 3) = "RAS";
+  match if substring (option dhcp-client-identifier, 1, 3) = "RAS";
 }
 .fi
 Note that whether you use matching expressions or add statements (or
@@ -634,7 +700,7 @@ that a client that's a member of a class due to an add statement will not
 be affected by pool permits related to that class - when the pool permit list
 is computed, the client will not yet be a member of the pool.   This is an
 inconsistency that will probably be addressed in later versions of the DHCP
-server, but it important to be aware of it at lease for the time being.
+server, but it is important to be aware of it at least for the time being.
 .SH SUBCLASSES
 .PP
 In addition to classes, it is possible to declare subclasses.   A
@@ -701,8 +767,9 @@ allocation on a per-client basis.  However, it's also possible to use
 subclassing in ways that are not specific to clients - for example, to
 use the value of the vendor-class-identifier option to determine what
 values to send in the vendor-encapsulated-options option.  An example
-of this is shown under the VENDOR ENCAPSULATED OPTIONS head later on
-in this document.
+of this is shown under the VENDOR ENCAPSULATED OPTIONS head in the
+.B dhcp-options(5)
+manual page.
 .SH PER-CLASS LIMITS ON DYNAMIC ADDRESS ALLOCATION
 .PP
 You may specify a limit to the number of clients in a class that can
@@ -794,53 +861,59 @@ the Domain Name System to be updated.  These updates are RFC 2136
 compliant so any DNS server supporting RFC 2136 should be able to
 accept updates from the DHCP server.
 .PP
-The Dynamic DNS update scheme implemented in this version of the ISC
-DHCP server is an interim implementation, which does not implement any
-of the standard update methods that have been discussed in the working
-group, but rather implements some very basic, yet useful, update
-capabilities.
+Two DNS update schemes are currently implemented, and another is
+planned.   The two that are currently available are the ad-hoc DNS
+update mode and the interim DHCP-DNS interaction draft update mode.
+If and when the DHCP-DNS interaction draft and the DHCID draft make it
+through the IETF standards process, there will be a third mode, which
+will be the standard DNS update method.   The DHCP server must be
+configured to use one of the two currently-supported methods, or not
+to do dns updates.   This can be done with the
+.I ddns-update-style
+configuration parameter.
+.SH THE AD-HOC DNS UPDATE SCHEME
+The ad-hoc Dynamic DNS update scheme implemented in this version of
+the ISC DHCP server is a prototype design, which does not
+have much to do with the standard update method that is being
+standardized in the IETF DHC working group, but rather implements some
+very basic, yet useful, update capabilities.   This mode
+.B does not work
+with the
+.I failover protocol
+because it does not account for the possibility of two different DHCP
+servers updating the same set of DNS records.
 .PP
-There are three parameters, which may vary according to the scope,
-that control how DDNS updates will be done.   The first two are the
+For the ad-hoc DNS update method, the client's FQDN is derived in two
+parts.   First, the hostname is determined.   Then, the domain name is
+determined, and appended to the hostname.
+.PP
+The DHCP server determines the client's hostname by first looking for
+a \fIddns-hostname\fR configuration option, and using that if it is
+present.  If no such option is present, the server looks for a
+valid hostname in the FQDN option sent by the client.  If one is
+found, it is used; otherwise, if the client sent a host-name option,
+that is used.  Otherwise, if there is a host declaration that applies
+to the client, the name from that declaration will be used.  If none
+of these applies, the server will not have a hostname for the client,
+and will not be able to do a DNS update.
+.PP
+The domain name is determined based strictly on the server
+configuration, not on what the client sends.   First, if there is a 
 .I ddns-domainname
-and
-.I ddns-rev-domainname
-statements.   The
-.I ddns-domainname
-parameter sets the domain name that will be appended to the client's
-hostname to form a fully-qualified domain-name (FQDN).   For example,
-if the client's hostname is "hutson" and the
-.I ddns-domainname
-is set to "sneedville.edu", then the client's FQDN will be
-"hutson.sneedville.edu".
+configuration option, it is used.   Second, if there is a
+\fIdomain-name\fR option configured, that is used.  Otherwise, the
+server will not do the DNS update.
 .PP
-The
-.I ddns-rev-domainname
-parameter sets the domain name that will be appended to the client's
-reversed IP address to produce a name for use in the client's PTR
-record.   Normally, you would set this to "in-addr.arpa", but this is
-not required.
-.PP
-A third parameter,
-.I ddns-hostname
-can be used to specify the hostname that will be used as the client's
-hostname.   If no ddns-hostname is specified in scope, then the server
-will use a host-name option sent by the client.   If the client did
-not send a host-name option, then if there is a host declaration that
-applies to the client, the name from that declaration will be used.
-If none of these applies, the server will not have a hostname for the
-client, and will not be able to do a DDNS update.
-.SH HOW DNS UPDATES WORK
-.PP
-The client's FQDN, derived as we have described, is used as the name
-on which an "A" record will be stored.   The A record will contain the
-IP address that the client was assigned in its lease.   If there is
-already an A record with the same name in the DNS server, no update of
-either the A or PTR records will occur - this prevents a client from
-claiming that its hostname is the name of some network server.   For
-example, if you have a fileserver called "fs.sneedville.edu", and the
-client claims its hostname is "fs", no DNS update will be done for
-that client, and an error message will be logged.
+The client's fully-qualified domain name, derived as we have
+described, is used as the name on which an "A" record will be stored.
+The A record will contain the IP address that the client was assigned
+in its lease.   If there is already an A record with the same name in
+the DNS server, no update of either the A or PTR records will occur -
+this prevents a client from claiming that its hostname is the name of
+some network server.   For example, if you have a fileserver called
+"fs.sneedville.edu", and the client claims its hostname is "fs", no
+DNS update will be done for that client, and an error message will be
+logged.
 .PP
 If the A record update succeeds, a PTR record update for the assigned
 IP address will be done, pointing to the A record.   This update is
@@ -850,7 +923,7 @@ server, this should be safe.
 .PP
 Please note that the current implementation assumes clients only have
 a single network interface.   A client with two network interfaces
-will see unpredictable behaviour.   This is considered a bug, and will
+will see unpredictable behavior.   This is considered a bug, and will
 be fixed in a later release.   It may be helpful to enable the
 .I one-lease-per-client
 parameter so that roaming clients do not trigger this same behavior.
@@ -869,6 +942,105 @@ at the time, or when next it operates) will remove the client's A and
 PTR records from the DNS database.   If the client releases its lease
 by sending a DHCPRELEASE message, the server will likewise remove the
 A and PTR records.
+.SH THE INTERIM DNS UPDATE SCHEME
+The interim DNS update scheme operates mostly according to several
+drafts that are being considered by the IETF and are expected to
+become standards, but are not yet standards, and may not be
+standardized exactly as currently proposed.   These are:
+.PP
+.nf
+.ce 3
+draft-ietf-dhc-ddns-resolution-??.txt
+draft-ietf-dhc-fqdn-option-??.txt
+draft-ietf-dnsext-dhcid-rr-??.txt
+.fi
+.PP
+Because our implementation is slightly different than the standard, we
+will briefly document the operation of this update style here.
+.PP
+The first point to understand about this style of DNS update is that
+unlike the ad-hoc style, the DHCP server does not necessarily
+always update both the A and the PTR records.   The FQDN option
+includes a flag which, when sent by the client, indicates that the
+client wishes to update its own A record.   In that case, the server
+can be configured either to honor the client's intentions or ignore
+them.   This is done with the statement \fIallow client-updates;\fR or
+the statement \fIignore client-updates;\fR.   By default, client
+updates are allowed.
+.PP
+If the server is configured to allow client updates, then if the
+client sends a fully-qualified domain name in the FQDN option, the
+server will use that name the client sent in the FQDN option to update
+the PTR record.   For example, let us say that the client is a visitor
+from the "radish.org" domain, whose hostname is "jschmoe".   The
+server is for the "example.org" domain.   The DHCP client indicates in
+the FQDN option that its FQDN is "jschmoe.radish.org.".   It also
+indicates that it wants to update its own A record.   The DHCP server
+therefore does not attempt to set up an A record for the client, but
+does set up a PTR record for the IP address that it assigns the
+client, pointing at jschmoe.radish.org.   Once the DHCP client has an
+IP address, it can update its own A record, assuming that the
+"radish.org" DNS server will allow it to do so.
+.PP
+If the server is configured not to allow client updates, or if the
+client doesn't want to do its own update, the server will simply
+choose a name for the client, possibly using the hostname supplied by
+the client ("jschmoe" in the previous example).   It will use its own
+domain name for the client, just as in the ad-hoc update scheme.
+It will then update both the A and PTR record, using the name that it
+chose for the client.   If the client sends a fully-qualified domain
+name in the fqdn option, the server uses only the leftmost part of the
+domain name - in the example above, "jschmoe" instead of
+"jschmoe.radish.org".
+.PP
+The other difference between the ad-hoc scheme and the interim
+scheme is that with the interim scheme, a method is used that
+allows more than one DHCP server to update the DNS database without
+accidentally deleting A records that shouldn't be deleted nor failing
+to add A records that should be added.   The scheme works as follows:
+.PP
+When the DHCP server issues a client a new lease, it creates a text
+string that is an MD5 hash over the DHCP client's identification (see
+draft-ietf-dnsext-dhcid-rr-??.txt for details).   The update adds an A
+record with the name the server chose and a TXT record containing the
+hashed identifier string (hashid).   If this update succeeds, the
+server is done.
+.PP
+If the update fails because the A record already exists, then the DHCP
+server attempts to add the A record with the prerequisite that there
+must be a TXT record in the same name as the new A record, and that
+TXT record's contents must be equal to hashid.   If this update
+succeeds, then the client has its A record and PTR record.   If it
+fails, then the name the client has been assigned (or requested) is in
+use, and can't be used by the client.   At this point the DHCP server
+gives up trying to do a DNS update for the client until the client
+chooses a new name.
+.PP
+The interim DNS update scheme is called interim for two reasons.
+First, it does not quite follow the drafts.   The current versions of
+the drafts call for a new DHCID RRtype, but this is not yet
+available.   The interim DNS update scheme uses a TXT record
+instead.   Also, the existing ddns-resolution draft calls for the DHCP
+server to put a DHCID RR on the PTR record, but the \fIinterim\fR
+update method does not do this.   It is our position that this is not
+useful, and we are working with the author in hopes of removing it
+from the next version of the draft, or better understanding why it is
+considered useful.
+.PP
+In addition to these differences, the server also does not update very
+aggressively.  Because each DNS update involves a round trip to the
+DNS server, there is a cost associated with doing updates even if they
+do not actually modify the DNS database.   So the DHCP server tracks
+whether or not it has updated the record in the past (this information
+is stored on the lease) and does not attempt to update records that it
+thinks it has already updated.
+.PP
+This can lead to cases where the DHCP server adds a record, and then
+the record is deleted through some other mechanism, but the server
+never again updates the DNS because it thinks the data is already
+there.   In this case the data can be removed from the lease through
+operator intervention, and once this has been done, the DNS will be
+updated the next time the client renews.
 .SH DYNAMIC DNS UPDATE SECURITY
 .PP
 When you set your DNS server up to allow updates from the DHCP server,
@@ -929,6 +1101,12 @@ zone 17.127.10.in-addr.arpa. {
 }
 .fi
 .PP
+Note that the zone declarations have to correspond to authority
+records in your name server - in the above example, there must be an
+SOA record for "example.org." and for "17.10.10.in-addr.arpa.".   For
+example, if there were a subdoman "foo.example.org" with no seperate
+SOA, you could not write a zone declaration for "foo.example.org."
+.PP
 You should choose your own secret key, of course.  The ISC BIND 8 and
 9 distributions come with a program for generating secret keys called
 dnskeygen.  The version that comes with BIND 9 is likely to produce a
@@ -939,7 +1117,7 @@ generated with the command:
 	dnskeygen -H 128 -u -c -n DHCP_UPDATER
 .fi
 .PP
-You may wish to enable logging of DNS transactions on your DNS server.
+You may wish to enable logging of DNS updates on your DNS server.
 To do so, you might write a logging statement like the following:
 .PP
 .nf
@@ -980,11 +1158,11 @@ and the expiry event, when the commitment expires.
 To declare a set of statements to execute when an event happens, you
 must use the \fBon\fR statement, followed by the name of the event,
 followed by a series of statements to execute when the event happens,
-enclosed in braces.   Events are used to implement dynamic DNS
+enclosed in braces.   Events are used to implement DNS
 updates, so you should not define your own event handlers if you are
-using the built-in dynamic DNS update mechanism.
+using the built-in DNS update mechanism.
 .PP
-The built-in version of the dynamic DNS update mechanism is in a text
+The built-in version of the DNS update mechanism is in a text
 string towards the top of server/dhcpd.c.   If you want to use events
 for things other than DNS updates, and you also want DNS updates, you
 will have to start out by copying this code into your dhcpd.conf file
@@ -1148,7 +1326,7 @@ various sorts of requests.  The allow and deny keywords actually have
 different meanings depending on the context.  In a pool context, these
 keywords can be used to set up access lists for address allocation
 pools.  In other contexts, the keywords simply control general server
-behaviour with respect to clients based on scope.   In a non-pool
+behavior with respect to clients based on scope.   In a non-pool
 context, the
 .I ignore
 keyword can be used in place of the
@@ -1171,6 +1349,7 @@ declarations.
 The \fBunknown-clients\fR flag is used to tell dhcpd whether
 or not to dynamically assign addresses to unknown clients.   Dynamic
 address assignment to unknown clients is \fBallow\fRed by default.
+An unknown client is simply a client that has no host declaration.
 .PP
 .B The
 .I bootp
@@ -1242,9 +1421,21 @@ The \fBdeclines\fR flag tells the DHCP server whether or not to honor
 DHCPDECLINE messages.   If it is set to \fBdeny\fR or \fBignore\fR in
 a particular scope, the DHCP server will not respond to DHCPDECLINE
 messages.
+.B The
+.I client-updates
+.B keyword
+.PP
+ \fBallow client-updates;\fR
+ \fBdeny client-updates;\fR
+.PP
+The \fBclient-updates\fR flag tells the DHCP server whether or not to
+honor the client's intention to do its own update of its A record.
+This is only relevant when doing \fIinterim\fR DNS updates.   See the
+documentation under the heading THE INTERIM DNS UPDATE SCHEME for
+details.
 .SH ALLOW AND DENY WITHIN POOL DECLARATIONS
 .PP
-The uses of the allow and deny keyword shown in the previous section
+The uses of the allow and deny keywords shown in the previous section
 work pretty much the same way whether the client is sending a
 DHCPDISCOVER or a DHCPREQUEST message - an address will be allocated
 to the client (either the old address it's requesting, or a new
@@ -1271,7 +1462,7 @@ allocation process is done as described previously in the ADDRESS
 ALLOCATION section.
 .PP
 When declaring permit lists for address allocation pools, the
-following syntaxes are recognized following the allow or deny keyword:
+following syntaxes are recognized following the allow or deny keywords:
 .PP
  \fBknown clients;\fR
 .PP
@@ -1317,265 +1508,54 @@ want to renumber your network quickly, and thus want the server to
 force all clients that have been allocated addresses from this pool to
 obtain new addresses immediately when they next renew.
 .SH REFERENCE: PARAMETERS
-.PP
-.B The
-.I lease-file-name
-.B statement
-.PP
-.B lease-file-name
-.I name\fR\fB;\fR
-.PP
-.I Name
-should be the name of the DHCP server's lease file.   By default, this
-is /var/db/dhcpd.leases.   This statement \fBmust\fR appear in the outer
-scope of the configuration file - if it appears in some other scope,
-it will have no effect.
-.PP
-.B The
-.I pid-file-name
-.B statement
-.PP
-.B pid-file-name
-.I name\fR\fB;\fR
-.PP
-.I Name
-should be the name of the DHCP server's process ID file.   This is the
-file in which the DHCP server's process ID is stored when the server
-starts.   By default, this is /var/run/dhcpd.pid.   Like the
-lease-file-name statement, this statement must appear in the outer scope
-of the configuration file.
-.PP
-.B The
-.I default-lease-time
-.B statement
-.PP
- \fBdefault-lease-time\fR \fItime\fR\fB;\fR
-.PP
-.I Time
-should be the length in seconds that will be assigned to a lease if
-the client requesting the lease does not ask for a specific expiration
-time.
-.PP
-.B The
-.I max-lease-time
-.B statement
-.PP
- \fBmax-lease-time\fR \fItime\fR\fB;\fR
-.PP
-.I Time
-should be the maximum length in seconds that will be assigned to a
-lease.   The only exception to this is that Dynamic BOOTP lease
-lengths, which are not specified by the client, are not limited by
-this maximum.
-.PP
-.B The
-.I min-lease-time
-.B statement
-.PP
- \fBmin-lease-time\fR \fItime\fR\fB;\fR
-.PP
-.I Time
-should be the minimum length in seconds that will be assigned to a
-lease.
-.PP
-.B The
-.I min-secs
-.B statement
-.PP
- \fBmin-secs\fR \fIseconds\fR\fB;\fR
-.PP
-.I Seconds
-should be the minimum number of seconds since a client began trying to
-acquire a new lease before the DHCP server will respond to its request.
-The number of seconds is based on what the client reports, and the maximum
-value that the client can report is 255 seconds.   Generally, setting this
-to one will result in the DHCP server not responding to the client's first
-request, but always responding to its second request.
-.PP
-This can be used
-to set up a secondary DHCP server which never offers an address to a client
-until the primary server has been given a chance to do so.   If the primary
-server is down, the client will bind to the secondary server, but otherwise
-clients should always bind to the primary.   Note that this does not, by
-itself, permit a primary server and a secondary server to share a pool of
-dynamically-allocatable addresses.
-.PP
-.B The 
-.I hardware
-.B statement
-.PP
- \fBhardware\fR \fIhardware-type\fR \fIhardware-address\fR\fB;\fR
-.PP
-In order for a BOOTP client to be recognized, its network hardware
-address must be declared using a \fIhardware\fR clause in the
-.I host
-statement.
-.I hardware-type
-must be the name of a physical hardware interface type.   Currently,
-only the
-.B ethernet
-and
-.B token-ring
-types are recognized, although support for a
-.B fddi
-hardware type (and others) would also be desirable.
 The
-.I hardware-address
-should be a set of hexadecimal octets (numbers from 0 through ff)
-seperated by colons.   The \fIhardware\fR statement may also be used
-for DHCP clients.
+.I always-broadcast
+statement
+.RS 0.25i
 .PP
-.B The
-.I filename
-.B statement
+.B always-broadcast \fIflag\fR\fB;\fR
 .PP
- \fBfilename\fR \fB"\fR\fIfilename\fR\fB";\fR
+The DHCP and BOOTP protocols both require DHCP and BOOTP clients to
+set the broadcast bit in the flags field of the BOOTP message header.
+Unfortunately, some DHCP and BOOTP clients do not do this, and
+therefore may not receive responses from the DHCP server.   The DHCP
+server can be made to always broadcast its responses to clients by
+setting this flag to 'on' for the relevant scope.   To avoid creating
+excess broadcast traffic on your network, we recommend that you
+restrict the use of this option to as few clients as possible.   For
+example, the Microsoft DHCP client is known not to have this problem,
+as are the OpenTransport and ISC DHCP clients.
+.RE
 .PP
-The \fIfilename\fR statement can be used to specify the name of the
-initial boot file which is to be loaded by a client.  The
-.I filename
-should be a filename recognizable to whatever file transfer protocol
-the client can be expected to use to load the file.
+The
+.I always-reply-rfc1048
+statement
+.RS 0.25i
 .PP
-.B The
-.I server-name
-.B statement
+.B always-reply-rfc1048 \fIflag\fR\fB;\fR
 .PP
- \fBserver-name\fR \fB"\fR\fIname\fR\fB";\fR
+Some BOOTP clients expect RFC1048-style responses, but do not follow
+RFC1048 when sending their requests.   You can tell that a client is
+having this problem if it is not getting the options you have
+configured for it and if you see in the server log the message
+"(non-rfc1048)" printed with each BOOTREQUEST that is logged.
 .PP
-The \fIserver-name\fR statement can be used to inform the client of
-the name of the server from which it is booting.   \fIName\fR should
-be the name that will be provided to the client.
+If you want to send rfc1048 options to such a client, you can set the
+.B always-reply-rfc1048
+option in that client's host declaration, and the DHCP server will
+respond with an RFC-1048-style vendor options field.   This flag can
+be set in any scope, and will affect all clients covered by that
+scope.
+.RE
 .PP
-.B The
-.I next-server
-.B statement
-.PP
- \fBnext-server\fR \fIserver-name\fR\fB;\fR
-.PP
-The \fInext-server\fR statement is used to specify the host address of
-the server from which the initial boot file (specified in the
-\fIfilename\fR statement) is to be loaded.   \fIServer-name\fR should
-be a numeric IP address or a domain name.   If no \fInext-server\fR
-parameter applies to a given client, the DHCP server's IP address is
-used.
-.PP
-.B The
-.I fixed-address
-.B statement
-.PP
- \fBfixed-address\fR \fIaddress\fR [\fB,\fR \fIaddress\fR ... ]\fB;\fR
-.PP
-The \fIfixed-address\fR statement is used to assign one or more fixed
-IP addresses to a client.  It should only appear in a \fIhost\fR
-declaration.  If more than one address is supplied, then when the
-client boots, it will be assigned the address which corresponds to the
-network on which it is booting.  If none of the addresses in the
-\fIfixed-address\fR statement are on the network on which the client
-is booting, that client will not match the \fIhost\fR declaration
-containing that \fIfixed-address\fR statement.  Each \fIaddress\fR
-should be either an IP address or a domain name which resolves to one
-or more IP addresses.
-.PP
-.B The
-.I dynamic-bootp-lease-cutoff
-.B statement
-.PP
- \fBdynamic-bootp-lease-cutoff\fR \fIdate\fR\fB;\fR
-.PP
-The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
-for all leases assigned dynamically to BOOTP clients.  Because BOOTP
-clients do not have any way of renewing leases, and don't know that
-their leases could expire, by default dhcpd assignes infinite leases
-to all BOOTP clients.  However, it may make sense in some situations
-to set a cutoff date for all BOOTP leases - for example, the end of a
-school term, or the time at night when a facility is closed and all
-machines are required to be powered off.
-.PP
-.I Date
-should be the date on which all assigned BOOTP leases will end.  The
-date is specified in the form:
-.PP
-.ce 1
-W YYYY/MM/DD HH:MM:SS
-.PP
-W is the day of the week expressed as a number
-from zero (Sunday) to six (Saturday).  YYYY is the year, including the
-century.  MM is the month expressed as a number from 1 to 12.  DD is
-the day of the month, counting from 1.  HH is the hour, from zero to
-23.  MM is the minute and SS is the second.  The time is always in
-Universal Coordinated Time (UTC), not local time.
-.PP
-.B The
-.I dynamic-bootp-lease-length
-.B statement
-.PP
- \fBdynamic-bootp-lease-length\fR \fIlength\fR\fB;\fR
-.PP
-The \fIdynamic-bootp-lease-length\fR statement is used to set the
-length of leases dynamically assigned to BOOTP clients.   At some
-sites, it may be possible to assume that a lease is no longer in
-use if its holder has not used BOOTP or DHCP to get its address within
-a certain time period.   The period is specified in \fIlength\fR as a
-number of seconds.   If a client reboots using BOOTP during the
-timeout period, the lease duration is reset to \fIlength\fR, so a
-BOOTP client that boots frequently enough will never lose its lease.
-Needless to say, this parameter should be adjusted with extreme
-caution.
-.PP
-.B The
-.I get-lease-hostnames
-.B statement
-.PP
- \fBget-lease-hostnames\fR \fIflag\fR\fB;\fR
-.PP
-The \fIget-lease-hostnames\fR statement is used to tell dhcpd whether
-or not to look up the domain name corresponding to the IP address of
-each address in the lease pool and use that address for the DHCP
-\fIhostname\fR option.  If \fIflag\fR is true, then this lookup is
-done for all addresses in the current scope.   By default, or if
-\fIflag\fR is false, no lookups are done.
-.PP
-.B The
-.I use-host-decl-names
-.B statement
-.PP
- \fBuse-host-decl-names\fR \fIflag\fR\fB;\fR
-.PP
-If the \fIuse-host-decl-names\fR parameter is true in a given scope,
-then for every host declaration within that scope, the name provided
-for the host declaration will be supplied to the client as its
-hostname.   So, for example,
-.PP
-.nf
-    group {
-      use-host-decl-names on;
-
-      host joe {
-	hardware ethernet 08:00:2b:4c:29:32;
-	fixed-address joe.fugue.com;
-      }
-    }
-
-is equivalent to
-
-      host joe {
-	hardware ethernet 08:00:2b:4c:29:32;
-	fixed-address joe.fugue.com;
-        option host-name "joe";
-      }
-.fi
-.PP
-An \fIoption host-name\fR statement within a host declaration will
-override the use of the name in the host declaration.
-.PP
-.B The
+The
 .I authoritative
-.B statement
+statement
+.RS 0.25i
 .PP
- \fBauthoritative;\fR
+.B authoritative;
 .PP
- \fBnot authoritative;\fR
+.B not authoritative;
 .PP
 The DHCP server will normally assume that the configuration
 information about a given network segment is not known to be correct
@@ -1606,48 +1586,383 @@ that the server is authoritative for some subnets within a shared
 network, but not authoritative for others, nor is it meaningful to
 specify that the server is authoritative for some host declarations
 and not others.
+.RE
 .PP
-.B The
-.I always-reply-rfc1048
+The \fIboot-unknown-clients\fR statement
+.RS 0.25i
+.PP
+.B boot-unknown-clients \fIname\fB;\fR
+.PP
+If the \fIboot-unknown-clients\fR statement is present and has a value
+of \fIfalse\fR or \fIoff\fR, then clients for which there is no
+.I host
+declaration will not be allowed to obtain IP addresses.   If this
+statement is not present or has a value of \fItrue\fR or \fIon\fR,
+then clients without host declarations will be allowed to obtain IP
+addresses, as long as those addresses are not restricted by
+.I allow
+and \fIdeny\fR statements within their \fIpool\fR declarations.
+.RE
+.PP
+The \fIddns-hostname\fR statement
+.RS 0.25i
+.PP
+.B ddns-hostname \fIname\fB;\fR
+.PP
+The \fIname\fR parameter should be the hostname that will be used in
+setting up the client's A and PTR records.   If no ddns-hostname is
+specified in scope, then the server will derive the hostname
+automatically, using an algorithm that varies for each of the
+different update methods.
+.RE
+.PP
+The \fIddns-domainname\fR statement
+.RS 0.25i
+.PP
+.B ddns-domainname \fIname\fB;\fR
+.PP
+The \fIname\fR parameter should be the domain name that will be
+appended to the client's hostname to form a fully-qualified
+domain-name (FQDN).
+.RE
+.PP
+The \fIddns-rev-domainname\fR statement
+.RS 0.25i
+.PP
+.B ddns-rev-domainname \fIname\fB;\fR
+The \fIname\fR parameter should be the domain name that will be
+appended to the client's reversed IP address to produce a name for use
+in the client's PTR record.   By default, this is "in-addr.arpa.", but
+the default can be overridden here.
+.PP
+The reversed IP address to which this domain name is appended is
+always the IP address of the client, in dotted quad notation, reversed
+- for example, if the IP address assigned to the client is
+10.17.92.74, then the reversed IP address is 74.92.17.10.   So a
+client with that IP address would, by default, be given a PTR record
+of 10.17.92.74.in-addr.arpa.
+.RE
+.PP
+The \fIddns-update-style\fR parameter
+.RS 0.25i
+.PP
+.B ddns-update-style \fIstyle\fB;\fR
+.PP
+The
+.I style
+parameter must be one of \fBad-hoc\fR, \fBinterim\fR or \fBnone\fR.
+The \fIddns-update-style\fR statement is only meaningful in the outer
+scope - it is evaluated once after reading the dhcpd.conf file, rather
+than each time a client is assigned an IP address, so there is no way
+to use different DNS update styles for different clients.
+.RE
+.PP
+.B The  
+.I ddns-updates
 .B statement
+.RS 0.25i
 .PP
- \fBalways-reply-rfc1048\fR \fIflag\fR\fB;\fR
+ \fBddns-updates \fIflag\fR\fB;\fR
 .PP
-Some BOOTP clients expect RFC1048-style responses, but do not follow
-RFC1048 when sending their requests.   You can tell that a client is
-having this problem if it is not getting the options you have
-configured for it and if you see in the server log the message
-"(non-rfc1048)" printed with each BOOTREQUEST that is logged.
+The \fIddns-updates\fR parameter controls whether or not the server will
+attempt to do a DNS update when a lease is confirmed.   Set this to \fIoff\fR
+if the server should not attempt to do updates within a certain scope.
+The \fIddns-updates\fR parameter is on by default.   To disable DNS
+updates in all scopes, it is preferable to use the
+\fIddns-update-style\fR statement, setting the style to \fInone\fR.
+.RE
 .PP
-If you want to send rfc1048 options to such a client, you can set the
-.B always-reply-rfc1048
-option in that client's host declaration, and the DHCP server will
-respond with an RFC-1048-style vendor options field.   This flag can
-be set in any scope, and will affect all clients covered by that
-scope.
+The
+.I default-lease-time
+statement
+.RS 0.25i
 .PP
-.B The
-.I always-broadcast
-.B statement
+.B default-lease-time \fItime\fR\fB;\fR
 .PP
- \fBalways-broadcast\fR \fIflag\fR\fB;\fR
+.I Time
+should be the length in seconds that will be assigned to a lease if
+the client requesting the lease does not ask for a specific expiration
+time.
+.RE
 .PP
-The DHCP and BOOTP protocols both require DHCP and BOOTP clients to
-set the broadcast bit in the flags field of the BOOTP message header.
-Unfortunately, some DHCP and BOOTP clients do not do this, and
-therefore may not receive responses from the DHCP server.   The DHCP
-server can be made to always broadcast its responses to clients by
-setting this flag to 'on' for the relevant scope.   To avoid creating
-excess broadcast traffic on your network, we recommend that you
-restrict the use of this option to as few clients as possible.   For
-example, the Microsoft DHCP client is known not to have this problem,
-as are the OpenTransport and ISC DHCP clients.
+The
+.I dynamic-bootp-lease-cutoff
+statement
+.RS 0.25i
 .PP
-.B The
+.B dynamic-bootp-lease-cutoff \fIdate\fB;\fR
+.PP
+The \fIdynamic-bootp-lease-cutoff\fR statement sets the ending time
+for all leases assigned dynamically to BOOTP clients.  Because BOOTP
+clients do not have any way of renewing leases, and don't know that
+their leases could expire, by default dhcpd assignes infinite leases
+to all BOOTP clients.  However, it may make sense in some situations
+to set a cutoff date for all BOOTP leases - for example, the end of a
+school term, or the time at night when a facility is closed and all
+machines are required to be powered off.
+.PP
+.I Date
+should be the date on which all assigned BOOTP leases will end.  The
+date is specified in the form:
+.PP
+.ce 1
+W YYYY/MM/DD HH:MM:SS
+.PP
+W is the day of the week expressed as a number
+from zero (Sunday) to six (Saturday).  YYYY is the year, including the
+century.  MM is the month expressed as a number from 1 to 12.  DD is
+the day of the month, counting from 1.  HH is the hour, from zero to
+23.  MM is the minute and SS is the second.  The time is always in
+Universal Coordinated Time (UTC), not local time.
+.RE
+.PP
+The
+.I dynamic-bootp-lease-length
+statement
+.RS 0.25i
+.PP
+.B dynamic-bootp-lease-length\fR \fIlength\fR\fB;\fR
+.PP
+The \fIdynamic-bootp-lease-length\fR statement is used to set the
+length of leases dynamically assigned to BOOTP clients.   At some
+sites, it may be possible to assume that a lease is no longer in
+use if its holder has not used BOOTP or DHCP to get its address within
+a certain time period.   The period is specified in \fIlength\fR as a
+number of seconds.   If a client reboots using BOOTP during the
+timeout period, the lease duration is reset to \fIlength\fR, so a
+BOOTP client that boots frequently enough will never lose its lease.
+Needless to say, this parameter should be adjusted with extreme
+caution.
+.RE
+.PP
+The
+.I filename
+statement
+.RS 0.25i
+.PP
+.B filename\fR \fB"\fR\fIfilename\fR\fB";\fR
+.PP
+The \fIfilename\fR statement can be used to specify the name of the
+initial boot file which is to be loaded by a client.  The
+.I filename
+should be a filename recognizable to whatever file transfer protocol
+the client can be expected to use to load the file.
+.RE
+.PP
+The
+.I fixed-address
+statement
+.RS 0.25i
+.PP
+.B fixed-address address\fR [\fB,\fR \fIaddress\fR ... ]\fB;\fR
+.PP
+The \fIfixed-address\fR statement is used to assign one or more fixed
+IP addresses to a client.  It should only appear in a \fIhost\fR
+declaration.  If more than one address is supplied, then when the
+client boots, it will be assigned the address which corresponds to the
+network on which it is booting.  If none of the addresses in the
+\fIfixed-address\fR statement are on the network on which the client
+is booting, that client will not match the \fIhost\fR declaration
+containing that \fIfixed-address\fR statement.  Each \fIaddress\fR
+should be either an IP address or a domain name which resolves to one
+or more IP addresses.
+.RE
+.PP
+The
+.I get-lease-hostnames
+statement
+.RS 0.25i
+.PP
+.B get-lease-hostnames\fR \fIflag\fR\fB;\fR
+.PP
+The \fIget-lease-hostnames\fR statement is used to tell dhcpd whether
+or not to look up the domain name corresponding to the IP address of
+each address in the lease pool and use that address for the DHCP
+\fIhostname\fR option.  If \fIflag\fR is true, then this lookup is
+done for all addresses in the current scope.   By default, or if
+\fIflag\fR is false, no lookups are done.
+.RE
+.PP
+The 
+.I hardware
+statement
+.RS 0.25i
+.PP
+.B hardware \fIhardware-type hardware-address\fB;\fR
+.PP
+In order for a BOOTP client to be recognized, its network hardware
+address must be declared using a \fIhardware\fR clause in the
+.I host
+statement.
+.I hardware-type
+must be the name of a physical hardware interface type.   Currently,
+only the
+.B ethernet
+and
+.B token-ring
+types are recognized, although support for a
+.B fddi
+hardware type (and others) would also be desirable.
+The
+.I hardware-address
+should be a set of hexadecimal octets (numbers from 0 through ff)
+seperated by colons.   The \fIhardware\fR statement may also be used
+for DHCP clients.
+.RE
+.PP
+The
+.I lease-file-name
+statement
+.RS 0.25i
+.PP
+.B lease-file-name \fIname\fB;\fR
+.PP
+.I Name
+should be the name of the DHCP server's lease file.   By default, this
+is DBDIR/dhcpd.leases.   This statement \fBmust\fR appear in the outer
+scope of the configuration file - if it appears in some other scope,
+it will have no effect.
+.RE
+.PP
+The
+.I local-port
+statement
+.RS 0.25i
+.PP
+.B local-port \fIport\fB;\fR
+.PP
+This statement causes the DHCP server to listen for DHCP requests on
+the UDP port specified in \fIport\fR, rather than on port 67.
+.RE
+.PP
+The
+.I log-facility
+statement
+.RS 0.25i
+.PP
+.B log-facility \fIfacility\fB;\fR
+.PP
+This statement causes the DHCP server to do all of its logging on the
+specified log facility once the dhcpd.conf file has been read.   By
+default the DHCP server logs to the daemon facility.   Possible log
+facilities include auth, authpriv, cron, daemon, ftp, kern, lpr, mail,
+mark, news, ntp, security, syslog, user, uucp, and local0 through
+local7.   Not all of these facilities are available on all systems,
+and there may be other facilities available on other systems.
+.PP
+In addition to setting this value, you may need to modify your
+.I syslog.conf
+file to configure logging of the DHCP server.   For example, you might
+add a line like this:
+.PP
+.nf
+	local7.debug /var/log/dhcpd.log
+.fi
+.PP
+The syntax of the \fIsyslog.conf\fR file may be different on some
+operating systems - consult the \fIsyslog.conf\fR manual page to be
+sure.  To get syslog to start logging to the new file, you must first
+create the file with correct ownership and permissions (usually, the
+same owner and permissions of your /var/log/messages or
+/usr/adm/messages file should be fine) and send a SIGHUP to syslogd.
+Some systems support log rollover using a shell script or program
+called newsyslog or logrotate, and you may be able to configure this
+as well so that your log file doesn't grow uncontrollably.
+.PP
+Because the \fIlog-facility\fR setting is controlled by the dhcpd.conf
+file, log messages printed while parsing the dhcpd.conf file or before
+parsing it are logged to the default log facility.  To prevent this,
+see the README file included with this distribution, which describes
+how to change the default log facility.  When this parameter is used,
+the DHCP server prints its startup message a second time after parsing
+the configuration file, so that the log will be as complete as
+possible.
+.RE
+.PP
+The
+.I max-lease-time
+statement
+.RS 0.25i
+.PP
+.B max-lease-time \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the maximum length in seconds that will be assigned to a
+lease.   The only exception to this is that Dynamic BOOTP lease
+lengths, which are not specified by the client, are not limited by
+this maximum.
+.RE
+.PP
+The
+.I min-lease-time
+statement
+.RS 0.25i
+.PP
+.B min-lease-time \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the minimum length in seconds that will be assigned to a
+lease.
+.RE
+.PP
+The
+.I min-secs
+statement
+.RS 0.25i
+.PP
+.B min-secs \fIseconds\fR\fB;\fR
+.PP
+.I Seconds
+should be the minimum number of seconds since a client began trying to
+acquire a new lease before the DHCP server will respond to its request.
+The number of seconds is based on what the client reports, and the maximum
+value that the client can report is 255 seconds.   Generally, setting this
+to one will result in the DHCP server not responding to the client's first
+request, but always responding to its second request.
+.PP
+This can be used
+to set up a secondary DHCP server which never offers an address to a client
+until the primary server has been given a chance to do so.   If the primary
+server is down, the client will bind to the secondary server, but otherwise
+clients should always bind to the primary.   Note that this does not, by
+itself, permit a primary server and a secondary server to share a pool of
+dynamically-allocatable addresses.
+.RE
+.PP
+The
+.I next-server
+statement
+.RS 0.25i
+.PP
+.B next-server\fR \fIserver-name\fR\fB;\fR
+.PP
+The \fInext-server\fR statement is used to specify the host address of
+the server from which the initial boot file (specified in the
+\fIfilename\fR statement) is to be loaded.   \fIServer-name\fR should
+be a numeric IP address or a domain name.   If no \fInext-server\fR
+parameter applies to a given client, the DHCP server's IP address is
+used.
+.RE
+.PP
+The
+.I omapi-port
+statement
+.RS 0.25i
+.PP
+.B omapi-port\fR \fIport\fR\fB;\fR
+.PP
+The \fIomapi-port\fR statement causes the DHCP server to listen for
+OMAPI connections on the specified port.   This statement is required
+to enable the OMAPI protocol, which is used to examine and modify the
+state of the DHCP server as it is running.
+.RE
+.PP
+The
 .I one-lease-per-client
-.B statement
+statement
+.RS 0.25i
 .PP
- \fBone-lease-per-client\fR \fIflag\fR\fB;\fR
+.B one-lease-per-client \fIflag\fR\fB;\fR
 .PP
 If this flag is enabled, whenever a client sends a DHCPREQUEST for a
 particular lease, the server will automatically free any other leases
@@ -1658,25 +1973,51 @@ DHCPREQUEST - i.e., the client has only a single network interface
 it does not remember leases it's holding on networks to which it is
 not currently attached.   Neither of these assumptions are guaranteed
 or provable, so we urge caution in the use of this statement.
+.RE
 .PP
-.B The
-.I use-lease-addr-for-default-route
-.B statement
+The
+.I pid-file-name
+statement
+.RS 0.25i
 .PP
- \fBuse-lease-addr-for-default-route\fR \fIflag\fR\fB;\fR
+.B pid-file-name
+.I name\fR\fB;\fR
 .PP
-If the \fIuse-lease-addr-for-default-route\fR parameter is true in a
-given scope, then instead of sending the value specified in the
-routers option (or sending no value at all), the IP address of the
-lease being assigned is sent to the client.   This supposedly causes
-Win95 machines to ARP for all IP addresses, which can be helpful if
-your router is configured for proxy ARP.
+.I Name
+should be the name of the DHCP server's process ID file.   This is the
+file in which the DHCP server's process ID is stored when the server
+starts.   By default, this is RUNDIR/dhcpd.pid.   Like the
+lease-file-name statement, this statement must appear in the outer scope
+of the configuration file.
+.RE
 .PP
-.B The
+The
+.I ping-checks
+statement
+.RS 0.25i
+.PP
+.B ping-checks
+.I flag\fR\fB;\fR
+.PP
+When the DHCP server is considering dynamically allocating an IP
+address to a client, it first sends an ICMP Echo request (a \fIping\fR)
+to the address being assigned.   It waits for a second, and if no
+ICMP Echo response has been heard, it assigns the address.   If a
+response \fIis\fR heard, the lease is abandoned, and the server does
+not respond to the client.
+.PP
+This \fIping check\fR introduces a one-second delay in responding to
+DHCPDISCOVER messages, which can be a problem for some clients.   The
+ping-checks configuration parameter can be used to control checking -
+if its value is false, no ping check is done.
+.RE
+.PP
+The
 .I server-identifier
-.B statement
+statement
+.RS 0.25i
 .PP
- \fBserver-identifier \fIhostname\fR\fB;\fR
+.B server-identifier \fIhostname\fR\fB;\fR
 .PP
 The server-identifier statement can be used to define the value that
 is sent in the DHCP Server Identifier option for a given scope.   The
@@ -1699,17 +2040,168 @@ that the clients use this IP address when contacting the server.
 .PP
 Supplying a value for the dhcp-server-identifier option is equivalent
 to using the server-identifier statement.
+.RE
 .PP
-.B The  
-.I ddns-updates
-.B statement
+The
+.I server-name
+statement
+.RS 0.25i
 .PP
- \fBddns-updates \fIflag\fR\fB;\fR
+.B server-name "\fIname\fB";\fR
 .PP
-The \fIddns-updates\fR parameter controls whether or not the server will
-attempt to do a ddns update when a lease is confirmed.   Set this to \fIoff\fR
-if the server should not attempt to do updates within a certain scope.
-The \fIddns-updates\fR parameter is on by default.
+The \fIserver-name\fR statement can be used to inform the client of
+the name of the server from which it is booting.   \fIName\fR should
+be the name that will be provided to the client.
+.RE
+.PP
+The
+.I site-option-space
+statement
+.RS 0.25i
+.PP
+.B site-option-space "\fIname\fB";\fR
+.PP
+The \fIsite-option-space\fR statement can be used to determine from
+what option space site-local options will be taken.   This can be used
+in much the same way as the \fIvendor-option-space\fR statement.
+Site-local options in DHCP are those options whose numeric codes are
+greater than 128.   These options are intended for site-specific
+uses, but are frequently used by vendors of embedded hardware that
+contains DHCP clients.   Because site-specific options are allocated
+on an ad hoc basis, it is quite possible that one vendor's DHCP client
+might use the same option code that another vendor's client uses, for
+different purposes.   The \fIsite-option-space\fR option can be used
+to assign a different set of site-specific options for each such
+vendor, using conditional evaluation (see \fIdhcp-eval.5\fR for
+details).
+.RE
+.PP
+The
+.I stash-agent-options
+statement
+.RS 0.25i
+.PP
+.B stash-agent-options \fIflag\fB;\fR
+.PP
+If the \fIstash-agent-options\fR parameter is true for a given client,
+the server will record the relay agent information options sent during
+the client's initial DHCPREQUEST message when the client was in the
+SELECTING state and behave as if those options are included in all
+subsequent DHCPREQUEST messages sent in the RENEWING state.   This
+works around a problem with relay agent information options, which is
+that they usually not appear in DHCPREQUEST messages sent by the
+client in the RENEWING state, because such messages are unicast
+directly to the server and not sent through a relay agent.
+.PP
+The
+.I update-optimization
+statement
+.RS 0.25i
+.PP
+.B update-optimization \fIflag\fB;\fR
+.PP
+If the \fIupdate-optimization\fR parameter is false for a given client,
+the server will attempt a DNS update for that client each time the
+client renews its lease, rather than only attempting an update when it
+appears to be necessary.   This will allow the DNS to heal from
+database inconsistencies more easily, but the cost is that the DHCP
+server must do many more DNS updates.   We do not recommend enabling
+this on large networks with the current DHCP server.   This option
+only affects the behavior of the interim DNS update scheme,
+and has no effect on the ad-hoc DNS update scheme.   If this
+parameter is not specified, or is false, the DHCP server will only
+update when the client information changes, the client gets a
+different lease, or the client's lease expires.
+.PP
+The
+.I update-static-leases
+statement
+.RS 0.25i
+.PP
+.B update-static-leases \fIflag\fB;\fR
+.PP
+The \fIupdate-static-leases\fR flag, if enabled, causes the DHCP
+server to do DNS updates for clients even if those clients are being
+assigned their IP address using a \fIfixed-address\fR statement - that
+is, the client is being given a static assignment.   This can only
+work with the \fIinterim\fR DNS update scheme.   It is not
+recommended because the DHCP server has no way to tell that the update
+has been done, and therefore will not delete the record when it is not
+in use.   Also, the server must attempt the update each time the
+client renews its lease, which could have a significant performance
+impact in environments that place heavy demands on the DHCP server.
+.PP
+The
+.I use-host-decl-names
+statement
+.RS 0.25i
+.PP
+.B use-host-decl-names \fIflag\fB;\fR
+.PP
+If the \fIuse-host-decl-names\fR parameter is true in a given scope,
+then for every host declaration within that scope, the name provided
+for the host declaration will be supplied to the client as its
+hostname.   So, for example,
+.PP
+.nf
+    group {
+      use-host-decl-names on;
+
+      host joe {
+	hardware ethernet 08:00:2b:4c:29:32;
+	fixed-address joe.fugue.com;
+      }
+    }
+
+is equivalent to
+
+      host joe {
+	hardware ethernet 08:00:2b:4c:29:32;
+	fixed-address joe.fugue.com;
+        option host-name "joe";
+      }
+.fi
+.PP
+An \fIoption host-name\fR statement within a host declaration will
+override the use of the name in the host declaration.
+.PP
+It should be noted here that most DHCP clients completely ignore the
+host-name option sent by the DHCP server, and there is no way to
+configure them not to do this.   So you generally have a choice of
+either not having any hostname to client IP address mapping that the
+client will recognize, or doing DNS updates.   It is beyond
+the scope of this document to describe how to make this
+determination.
+.RE
+.PP
+The
+.I use-lease-addr-for-default-route
+statement
+.RS 0.25i
+.PP
+.B use-lease-addr-for-default-route \fIflag\fR\fB;\fR
+.PP
+If the \fIuse-lease-addr-for-default-route\fR parameter is true in a
+given scope, then instead of sending the value specified in the
+routers option (or sending no value at all), the IP address of the
+lease being assigned is sent to the client.   This supposedly causes
+Win95 machines to ARP for all IP addresses, which can be helpful if
+your router is configured for proxy ARP.   The use of this feature is
+not recommended, because it won't work for many DHCP clients.
+.RE
+.PP
+The
+.I vendor-option-space
+statement
+.RS 0.25i
+.PP
+.B vendor-option-space \fIstring\fR\fB;\fR
+.PP
+The \fIvendor-option-space\fR parameter determines from what option
+space vendor options are taken.   The use of this configuration
+parameter is illustrated in the \fIdhcp-options(5)\fR manual page, in
+the \fIVENDOR ENCAPSULATED OPTIONS\fR section.
+.RE
 .SH SETTING PARAMETER VALUES USING EXPRESSIONS
 Sometimes it's helpful to be able to set the value of a DHCP server
 parameter based on some value that the client has sent.   To do this,
@@ -1729,14 +2221,18 @@ For example:
                                    substring (hardware, 1, 6));
 .fi
 .SH REFERENCE: OPTION STATEMENTS
-.PP
 DHCP option statements are documented in the
 .B dhcp-options(5)
 manual page.
+.SH REFERENCE: EXPRESSIONS
+Expressions used in DHCP option statements and elsewhere are
+documented in the
+.B dhcp-eval(5)
+manual page.
 .SH SEE ALSO
-dhcpd(8), dhcpd.leases(5), RFC2132, RFC2131.
+dhcpd(8), dhcpd.leases(5), dhcp-options(5), dhcp-eval(5), RFC2132, RFC2131.
 .SH AUTHOR
-.B dhcpd(8)
+.B dhcpd.conf(5)
 was written by Ted Lemon <mellon@vix.com>
 under a contract with Vixie Labs.   Funding
 for this project was provided by the Internet Software Consortium.

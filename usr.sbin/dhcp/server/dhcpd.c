@@ -3,7 +3,7 @@
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,14 +43,14 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.23 2000/10/11 20:23:51 is Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.24 2001/04/02 23:46:00 mellon Exp $ Copyright 1995-2001 Internet Software Consortium.";
 #endif
 
-  static const char copyright[] =
-"Copyright 1995-2000 Internet Software Consortium.";
-static const char arr [] = "All rights reserved.";
-static const char message [] = "Internet Software Consortium DHCP Server";
-static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
+  static char copyright[] =
+"Copyright 1995-2001 Internet Software Consortium.";
+static char arr [] = "All rights reserved.";
+static char message [] = "Internet Software Consortium DHCP Server";
+static char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 #include "dhcpd.h"
 #include "version.h"
@@ -63,72 +63,99 @@ TIME cur_time;
 struct iaddr server_identifier;
 int server_identifier_matched;
 
-/* This is the standard name service updater that is executed whenever a
-   lease is committed.   Right now it's not following the DHCP-DNS draft
-   at all, but as soon as I fix the resolver it should try to. */
-
 #if defined (NSUPDATE)
+
+/* This stuff is always executed to figure the default values for certain
+   ddns variables. */
+
 char std_nsupdate [] = "						    \n\
+option server.ddns-hostname =						    \n\
+  pick (option fqdn.hostname, option host-name);			    \n\
+option server.ddns-domainname =	config-option domain-name;		    \n\
+option server.ddns-ttl = encode-int(lease-time / 2, 32);		    \n\
+option server.ddns-rev-domainname = \"in-addr.arpa.\";";
+
+/* This is the old-style name service updater that is executed
+   whenever a lease is committed.  It does not follow the DHCP-DNS
+   draft at all. */
+
+char old_nsupdate [] = "						    \n\
 on commit {								    \n\
-  if (((config-option server.ddns-updates = null) or			    \n\
-       (config-option server.ddns-updates != 0)) and			    \n\
-      (not defined (ddns-fwd-name))) {					    \n\
-    set ddns-fwd-name = concat (pick (config-option server.ddns-hostname,   \n\
-				      option host-name), \".\",		    \n\
-			        pick (config-option server.ddns-domainname, \n\
-				      config-option domain-name));	    \n\
-    if defined (ddns-fwd-name) {					    \n\
-      switch (ns-update (not exists (IN, A, ddns-fwd-name, null),	    \n\
-		         add (IN, A, ddns-fwd-name, leased-address,	    \n\
-			      lease-time / 2))) {			    \n\
-       default:								    \n\
-        unset ddns-fwd-name;						    \n\
-        break;								    \n\
-									    \n\
-       case NOERROR:							    \n\
-        set ddns-rev-name =						    \n\
-		concat (binary-to-ascii (10, 8, \".\",			    \n\
-					 reverse (1,			    \n\
-						  leased-address)), \".\",  \n\
-			pick (config-option server.ddns-rev-domainname,	    \n\
-			      \"in-addr.arpa.\"));			    \n\
-        switch (ns-update (delete (IN, PTR, ddns-rev-name, null),	    \n\
-			   add (IN, PTR, ddns-rev-name, ddns-fwd-name,	    \n\
-				lease-time / 2)))			    \n\
-	{								    \n\
-         default:							    \n\
-	  unset ddns-rev-name;						    \n\
-	  on release or expiry {					    \n\
-	    switch (ns-update (delete (IN, A, ddns-fwd-name,		    \n\
-				       leased-address))) {		    \n\
-	      case NOERROR:						    \n\
-	        unset ddns-fwd-name;					    \n\
-		break;							    \n\
-	    }								    \n\
-	    on release or expiry;					    \n\
-          }								    \n\
-	  break;							    \n\
-									    \n\
-         case NOERROR:							    \n\
-	  on release or expiry {					    \n\
-	    switch (ns-update (delete (IN, PTR, ddns-rev-name, null))) {    \n\
-	      case NOERROR:						    \n\
-	        unset ddns-rev-name;					    \n\
-		break;							    \n\
-	    }								    \n\
-	    switch (ns-update (delete (IN, A, ddns-fwd-name,		    \n\
-			               leased-address))) {		    \n\
-	      case NOERROR:						    \n\
-	        unset ddns-fwd-name;					    \n\
-		break;							    \n\
-	    }								    \n\
-	    on release or expiry;					    \n\
-	  }								    \n\
-        }								    \n\
+  if (not static and							    \n\
+      ((config-option server.ddns-updates = null) or			    \n\
+       (config-option server.ddns-updates != 0))) {			    \n\
+    set new-ddns-fwd-name =						    \n\
+      concat (pick (config-option server.ddns-hostname,			    \n\
+		    option host-name), \".\",				    \n\
+	      pick (config-option server.ddns-domainname,		    \n\
+		    config-option domain-name));			    \n\
+    if (defined (ddns-fwd-name) and ddns-fwd-name != new-ddns-fwd-name) {   \n\
+      switch (ns-update (delete (IN, A, ddns-fwd-name, leased-address))) {  \n\
+      case NOERROR:							    \n\
+	unset ddns-fwd-name;						    \n\
+	on expiry or release {						    \n\
+	}								    \n\
       }									    \n\
     }									    \n\
+									    \n\
+    if (not defined (ddns-fwd-name)) {					    \n\
+      set ddns-fwd-name = new-ddns-fwd-name;				    \n\
+      if defined (ddns-fwd-name) {					    \n\
+	switch (ns-update (not exists (IN, A, ddns-fwd-name, null),	    \n\
+			   add (IN, A, ddns-fwd-name, leased-address,	    \n\
+				lease-time / 2))) {			    \n\
+	default:							    \n\
+	  unset ddns-fwd-name;						    \n\
+	  break;							    \n\
+									    \n\
+	case NOERROR:							    \n\
+	  set ddns-rev-name =						    \n\
+	    concat (binary-to-ascii (10, 8, \".\",			    \n\
+				     reverse (1,			    \n\
+					      leased-address)), \".\",	    \n\
+		    pick (config-option server.ddns-rev-domainname,	    \n\
+			  \"in-addr.arpa.\"));				    \n\
+	  switch (ns-update (delete (IN, PTR, ddns-rev-name, null),	    \n\
+			     add (IN, PTR, ddns-rev-name, ddns-fwd-name,    \n\
+				  lease-time / 2)))			    \n\
+	    {								    \n\
+	    default:							    \n\
+	      unset ddns-rev-name;					    \n\
+	      on release or expiry {					    \n\
+		switch (ns-update (delete (IN, A, ddns-fwd-name,	    \n\
+					   leased-address))) {		    \n\
+		case NOERROR:						    \n\
+		  unset ddns-fwd-name;					    \n\
+		  break;						    \n\
+		}							    \n\
+		on release or expiry;					    \n\
+	      }								    \n\
+	      break;							    \n\
+									    \n\
+	    case NOERROR:						    \n\
+	      on release or expiry {					    \n\
+		switch (ns-update (delete (IN, PTR, ddns-rev-name, null))) {\n\
+		case NOERROR:						    \n\
+		  unset ddns-rev-name;					    \n\
+		  break;						    \n\
+		}							    \n\
+		switch (ns-update (delete (IN, A, ddns-fwd-name,	    \n\
+					   leased-address))) {		    \n\
+		case NOERROR:						    \n\
+		  unset ddns-fwd-name;					    \n\
+		  break;						    \n\
+		}							    \n\
+		on release or expiry;					    \n\
+	      }								    \n\
+	    }								    \n\
+	}								    \n\
+      }									    \n\
+    }									    \n\
+    unset new-ddns-fwd-name;						    \n\
   }									    \n\
 }";
+
+int ddns_update_style;
 #endif /* NSUPDATE */
 
 const char *path_dhcpd_conf = _PATH_DHCPD_CONF;
@@ -138,6 +165,11 @@ const char *path_dhcpd_pid = _PATH_DHCPD_PID;
 int dhcp_max_agent_option_packet_length = DHCP_MTU_MAX;
 
 static omapi_auth_key_t *omapi_key = (omapi_auth_key_t *)0;
+int omapi_port;
+
+#if defined (TRACING)
+trace_type_t *trace_srandom;
+#endif
 
 static isc_result_t verify_addr (omapi_object_t *l, omapi_addr_t *addr) {
 	return ISC_R_SUCCESS;
@@ -170,18 +202,18 @@ int main (argc, argv, envp)
 	omapi_object_t *listener;
 	unsigned seed;
 	struct interface_info *ip;
-	struct data_string db;
-	struct option_cache *oc;
-	struct option_state *options = (struct option_state *)0;
 	struct parse *parse;
 	int lose;
-	int omapi_port;
 	omapi_object_t *auth;
 	struct tsig_key *key;
 	omapi_typed_data_t *td;
 	int no_dhcpd_conf = 0;
 	int no_dhcpd_db = 0;
 	int no_dhcpd_pid = 0;
+#if defined (TRACING)
+	char *traceinfile = (char *)0;
+	char *traceoutfile = (char *)0;
+#endif
 
 	/* Set up the client classification system. */
 	classification_setup ();
@@ -192,9 +224,10 @@ int main (argc, argv, envp)
 		log_fatal ("Can't initialize OMAPI: %s",
 			   isc_result_totext (result));
 
+	/* Set up the OMAPI wrappers for common objects. */
+	dhcp_db_objects_setup ();
 	/* Set up the OMAPI wrappers for various server database internal
 	   objects. */
-	dhcp_db_objects_setup ();
 	dhcp_common_objects_setup ();
 
 	/* Initially, log errors to stderr as well as to syslogd. */
@@ -266,6 +299,20 @@ int main (argc, argv, envp)
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
 			quiet_interface_discovery = 1;
+		} else if (!strcmp (argv [i], "--version")) {
+			log_info ("isc-dhcpd-%s", DHCP_VERSION);
+			exit (0);
+#if defined (TRACING)
+		} else if (!strcmp (argv [i], "-tf")) {
+			if (++i == argc)
+				usage ();
+			traceoutfile = argv [i];
+		} else if (!strcmp (argv [i], "-play")) {
+			if (++i == argc)
+				usage ();
+			traceinfile = argv [i];
+			trace_replay_init ();
+#endif /* TRACING */
 		} else if (argv [i][0] == '-') {
 			usage ();
 		} else {
@@ -307,17 +354,34 @@ int main (argc, argv, envp)
 		log_perror = 0;
 	}
 
+#if defined (TRACING)
+	trace_init (set_time, MDL);
+	if (traceoutfile)
+		trace_begin (traceoutfile, MDL);
+	interface_trace_setup ();
+	parse_trace_setup ();
+	trace_srandom = trace_type_register ("random-seed", (void *)0,
+					     trace_seed_input,
+					     trace_seed_stop, MDL);
+#endif
+
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port)
 	{
-		ent = getservbyname ("dhcp", "udp");
-		if (!ent)
-			local_port = htons (67);
-		else
-			local_port = ent -> s_port;
+		if ((s = getenv ("DHCPD_PORT"))) {
+			local_port = htons (atoi (s));
+			log_debug ("binding to environment-specified port %d",
+				   ntohs (local_port));
+		} else {
+			ent = getservbyname ("dhcp", "udp");
+			if (!ent)
+				local_port = htons (67);
+			else
+				local_port = ent -> s_port;
 #ifndef __CYGWIN32__ /* XXX */
-		endservent ();
+			endservent ();
 #endif
+		}
 	}
   
 	remote_port = htons (ntohs (local_port) + 1);
@@ -344,9 +408,17 @@ int main (argc, argv, envp)
 	initialize_common_option_spaces ();
 	initialize_server_option_spaces ();
 
+	/* Add the ddns update style enumeration prior to parsing. */
+	add_enumeration (&ddns_styles);
+	add_enumeration (&syslog_enum);
+
 	if (!group_allocate (&root_group, MDL))
 		log_fatal ("Can't allocate root group!");
 	root_group -> authoritative = 0;
+
+	/* Set up various hooks. */
+	dhcp_interface_setup_hook = dhcpd_interface_setup_hook;
+	bootp_packet_handler = do_packet;
 
 #if defined (NSUPDATE)
 	/* Set up the standard name service updater routine. */
@@ -366,6 +438,23 @@ int main (argc, argv, envp)
 	end_parse (&parse);
 #endif
 
+	/* Initialize icmp support... */
+	if (!cftest && !lftest)
+		icmp_startup (1, lease_pinged);
+
+#if defined (TRACING)
+	if (traceinfile) {
+	    if (!no_dhcpd_db) {
+		    log_error ("%s", "");
+		    log_error ("** You must specify a lease file with -lf.");
+		    log_error ("   Dhcpd will not overwrite your default");
+		    log_fatal ("   lease file when playing back a trace. **");
+	    }		
+	    trace_file_replay (traceinfile);
+	    exit (0);
+	}
+#endif
+
 	/* Read the dhcpd.conf file... */
 	if (readconf () != ISC_R_SUCCESS)
 		log_fatal ("Configuration file errors encountered -- exiting");
@@ -374,136 +463,8 @@ int main (argc, argv, envp)
  	if (cftest && !lftest) 
  		exit(0);
 
-	/* Now try to get the lease file name. */
-	option_state_allocate (&options, MDL);
+	postconf_initialization (quiet);
 
-	execute_statements_in_scope ((struct binding_value **)0,
-				     (struct packet *)0,
-				     (struct lease *)0,
-				     (struct option_state *)0,
-				     options, &global_scope,
-				     root_group,
-				     (struct group *)0);
-	memset (&db, 0, sizeof db);
-	oc = lookup_option (&server_universe, options, SV_LEASE_FILE_NAME);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		s = dmalloc (db.len + 1, MDL);
-		if (!s)
-			log_fatal ("no memory for lease db filename.");
-		memcpy (s, db.data, db.len);
-		s [db.len] = 0;
-		data_string_forget (&db, MDL);
-		path_dhcpd_db = s;
-	}
-	
-	oc = lookup_option (&server_universe, options, SV_PID_FILE_NAME);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		s = dmalloc (db.len + 1, MDL);
-		if (!s)
-			log_fatal ("no memory for lease db filename.");
-		memcpy (s, db.data, db.len);
-		s [db.len] = 0;
-		data_string_forget (&db, MDL);
-		path_dhcpd_pid = s;
-	}
-
-	omapi_port = -1;
-	oc = lookup_option (&server_universe, options, SV_OMAPI_PORT);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		if (db.len == 2) {
-			omapi_port = getUShort (db.data);
-		} else
-			log_fatal ("invalid omapi port data length");
-		data_string_forget (&db, MDL);
-	}
-
-	oc = lookup_option (&server_universe, options, SV_OMAPI_KEY);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		s = dmalloc (db.len + 1, MDL);
-		if (!s)
-			log_fatal ("no memory for OMAPI key filename.");
-		memcpy (s, db.data, db.len);
-		s [db.len] = 0;
-		data_string_forget (&db, MDL);
-		result = omapi_auth_key_lookup_name (&omapi_key, s);
-		dfree (s, MDL);
-		if (result != ISC_R_SUCCESS)
-			log_fatal ("Invalid OMAPI key: %s", s);
-	}
-
-	oc = lookup_option (&server_universe, options, SV_LOCAL_PORT);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		if (db.len == 2) {
-			local_port = htons (getUShort (db.data));
-		} else
-			log_fatal ("invalid local port data length");
-		data_string_forget (&db, MDL);
-	}
-
-	oc = lookup_option (&server_universe, options, SV_REMOTE_PORT);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		if (db.len == 2) {
-			remote_port = htons (getUShort (db.data));
-		} else
-			log_fatal ("invalid remote port data length");
-		data_string_forget (&db, MDL);
-	}
-
-	oc = lookup_option (&server_universe, options,
-			    SV_LIMITED_BROADCAST_ADDRESS);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		if (db.len == 4) {
-			memcpy (&limited_broadcast, db.data, 4);
-		} else
-			log_fatal ("invalid remote port data length");
-		data_string_forget (&db, MDL);
-	}
-
-	oc = lookup_option (&server_universe, options,
-			    SV_LOCAL_ADDRESS);
-	if (oc &&
-	    evaluate_option_cache (&db, (struct packet *)0,
-				   (struct lease *)0, options,
-				   (struct option_state *)0,
-				   &global_scope, oc, MDL)) {
-		if (db.len == 4) {
-			memcpy (&local_address, db.data, 4);
-		} else
-			log_fatal ("invalid remote port data length");
-		data_string_forget (&db, MDL);
-	}
-
-	/* Don't need the options anymore. */
-	option_state_dereference (&options, MDL);
-	
 	group_write_hook = group_writer;
 
 	/* Start up the database... */
@@ -511,8 +472,6 @@ int main (argc, argv, envp)
 
 	if (lftest)
 		exit (0);
-
-	dhcp_interface_setup_hook = dhcpd_interface_setup_hook;
 
 	/* Discover all the network interfaces and initialize them. */
 	discover_interfaces (DISCOVER_SERVER);
@@ -531,9 +490,9 @@ int main (argc, argv, envp)
 		seed += junk;
 	}
 	srandom (seed + cur_time);
-
-	/* Initialize icmp support... */
-	icmp_startup (1, lease_pinged);
+#if defined (TRACING)
+	trace_seed_stash (trace_srandom, seed + cur_time);
+#endif
 
 	/* Start up a listener for the object management API protocol. */
 	if (omapi_port != -1) {
@@ -578,7 +537,7 @@ int main (argc, argv, envp)
 		if (pid && (pid == getpid() || kill (pid, 0) < 0)) {
 			unlink (path_dhcpd_pid);
 			if ((i = open (path_dhcpd_pid,
-				       O_WRONLY | O_CREAT, 0640)) >= 0) {
+				       O_WRONLY | O_CREAT, 0644)) >= 0) {
 				sprintf (pbuf, "%d\n", (int)getpid ());
 				write (i, pbuf, strlen (pbuf));
 				close (i);
@@ -610,7 +569,7 @@ int main (argc, argv, envp)
 	if (!pidfilewritten) {
 		unlink (path_dhcpd_pid);
 		if ((i = open (path_dhcpd_pid,
-			       O_WRONLY | O_CREAT, 0640)) >= 0) {
+			       O_WRONLY | O_CREAT, 0644)) >= 0) {
 			sprintf (pbuf, "%d\n", (int)getpid ());
 			write (i, pbuf, strlen (pbuf));
 			close (i);
@@ -619,13 +578,14 @@ int main (argc, argv, envp)
 	}
 #endif /* !DEBUG */
 
-	/* Set up the bootp packet handler... */
-	bootp_packet_handler = do_packet;
-
 #if defined (DEBUG_MEMORY_LEAKAGE) || defined (DEBUG_MALLOC_POOL)
 	dmalloc_cutoff_generation = dmalloc_generation;
 	dmalloc_longterm = dmalloc_outstanding;
 	dmalloc_outstanding = 0;
+#endif
+
+#if defined (DEBUG_RC_HISTORY_EXHAUSTIVELY)
+	dump_rc_history ();
 #endif
 
 	/* Receive packets and dispatch them... */
@@ -635,16 +595,269 @@ int main (argc, argv, envp)
 	return 0;
 }
 
+void postconf_initialization (int quiet)
+{
+	struct option_state *options = (struct option_state *)0;
+	struct data_string db;
+	struct option_cache *oc;
+	char *s;
+	isc_result_t result;
+	struct parse *parse;
+	int tmp;
+
+	/* Now try to get the lease file name. */
+	option_state_allocate (&options, MDL);
+
+	execute_statements_in_scope ((struct binding_value **)0,
+				     (struct packet *)0,
+				     (struct lease *)0,
+				     (struct client_state *)0,
+				     (struct option_state *)0,
+				     options, &global_scope,
+				     root_group,
+				     (struct group *)0);
+	memset (&db, 0, sizeof db);
+	oc = lookup_option (&server_universe, options, SV_LEASE_FILE_NAME);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		s = dmalloc (db.len + 1, MDL);
+		if (!s)
+			log_fatal ("no memory for lease db filename.");
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
+		path_dhcpd_db = s;
+	}
+	
+	oc = lookup_option (&server_universe, options, SV_PID_FILE_NAME);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		s = dmalloc (db.len + 1, MDL);
+		if (!s)
+			log_fatal ("no memory for lease db filename.");
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
+		path_dhcpd_pid = s;
+	}
+
+	omapi_port = -1;
+	oc = lookup_option (&server_universe, options, SV_OMAPI_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			omapi_port = getUShort (db.data);
+		} else
+			log_fatal ("invalid omapi port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_OMAPI_KEY);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		s = dmalloc (db.len + 1, MDL);
+		if (!s)
+			log_fatal ("no memory for OMAPI key filename.");
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
+		result = omapi_auth_key_lookup_name (&omapi_key, s);
+		dfree (s, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Invalid OMAPI key: %s", s);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_LOCAL_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			local_port = htons (getUShort (db.data));
+		} else
+			log_fatal ("invalid local port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_REMOTE_PORT);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 2) {
+			remote_port = htons (getUShort (db.data));
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options,
+			    SV_LIMITED_BROADCAST_ADDRESS);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 4) {
+			memcpy (&limited_broadcast, db.data, 4);
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options,
+			    SV_LOCAL_ADDRESS);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, (struct client_state *)0,
+				   options, (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		if (db.len == 4) {
+			memcpy (&local_address, db.data, 4);
+		} else
+			log_fatal ("invalid remote port data length");
+		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_DDNS_UPDATE_STYLE);
+	if (oc) {
+		if (evaluate_option_cache (&db, (struct packet *)0,
+					   (struct lease *)0,
+					   (struct client_state *)0,
+					   options,
+					   (struct option_state *)0,
+					   &global_scope, oc, MDL)) {
+			if (db.len == 1) {
+				ddns_update_style = db.data [0];
+			} else
+				log_fatal ("invalid dns update type");
+			data_string_forget (&db, MDL);
+		}
+	} else {
+		log_info ("%s", "");
+		log_error ("** You must add a ddns-update-style %s%s.",
+			   "statement to ", path_dhcpd_conf);
+		log_error ("   To get the same behaviour as in 3.0b2pl11 %s",
+			   "and previous");
+		log_error ("   versions, add a line that says \"%s\"",
+			   "ddns-update-style ad-hoc;");
+		log_fatal ("   Please read the dhcpd.conf manual page %s",
+			   "for more information. **");
+	}
+
+	oc = lookup_option (&server_universe, options, SV_LOG_FACILITY);
+	if (oc) {
+		if (evaluate_option_cache (&db, (struct packet *)0,
+					   (struct lease *)0,
+					   (struct client_state *)0,
+					   options,
+					   (struct option_state *)0,
+					   &global_scope, oc, MDL)) {
+			if (db.len == 1) {
+				closelog ();
+#ifdef SYSLOG_4_2
+				openlog ("dhcpd", LOG_NDELAY);
+				log_priority = db.data [0];
+#else
+				openlog ("dhcpd",
+					 LOG_NDELAY, db.data [0]);
+#endif
+				/* Log the startup banner into the new
+				   log file. */
+				if (!quiet) {
+					/* Don't log to stderr twice. */
+					tmp = log_perror;
+					log_perror = 0;
+					log_info ("%s %s",
+						  message, DHCP_VERSION);
+					log_info (copyright);
+					log_info (arr);
+					log_info (url);
+					log_perror = tmp;
+				}
+			} else
+				log_fatal ("invalid log facility");
+			data_string_forget (&db, MDL);
+		}
+	}
+
+	/* Don't need the options anymore. */
+	option_state_dereference (&options, MDL);
+	
+#if defined (NSUPDATE)
+	/* If old-style ddns updates have been requested, parse the
+	   old-style ddns updater. */
+	if (ddns_update_style == 1) {
+		struct executable_statement **e, *s;
+
+		if (root_group -> statements) {
+			s = (struct executable_statement *)0;
+			if (!executable_statement_allocate (&s, MDL))
+				log_fatal ("no memory for ddns updater");
+			executable_statement_reference
+				(&s -> next, root_group -> statements, MDL);
+			executable_statement_dereference
+				(&root_group -> statements, MDL);
+			executable_statement_reference
+				(&root_group -> statements, s, MDL);
+			s -> op = statements_statement;
+			e = &s -> data.statements;
+			executable_statement_dereference (&s, MDL);
+		} else {
+			e = &root_group -> statements;
+		}
+
+		/* Set up the standard name service updater routine. */
+		parse = (struct parse *)0;
+		result = new_parse (&parse, -1,
+				 old_nsupdate, (sizeof old_nsupdate) - 1,
+				 "old name service update routine");
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("can't begin parsing old ddns updater!");
+
+		tmp = 0;
+		if (!(parse_executable_statements (e, parse,
+						   &tmp, context_any))) {
+			end_parse (&parse);
+			log_fatal ("can't parse standard ddns updater!");
+		}
+		end_parse (&parse);
+	}
+#endif
+}
+
 /* Print usage message. */
 
 static void usage ()
 {
-	log_info (message);
+	log_info ("%s %s", message, DHCP_VERSION);
 	log_info (copyright);
 	log_info (arr);
 
-	log_fatal ("Usage: dhcpd [-p <UDP port #>] [-d] [-f]%s%s",
+	log_fatal ("Usage: dhcpd [-p <UDP port #>] [-d] [-f]%s%s%s%s",
 		   "\n             [-cf config-file] [-lf lease-file]",
+#if defined (TRACING)
+		   "\n		   [-tf trace-output-file]",
+		   "\n		   [-play trace-input-file]",
+#else
+		   "", "",
+#endif /* TRACING */
 		   "\n             [-t] [-T] [-s server] [if0 [...ifN]]");
 }
 
